@@ -34,6 +34,7 @@ import { PreponderanceRing } from "./components/PreponderanceRing";
 import { ItemMiniCard } from "./components/ItemMiniCard";
 import { SegmentedControl } from "./components/SegmentedControl";
 import { FieldLabel } from "./components/FieldLabel";
+import { InlineSuggestInput } from "./components/InlineSuggestInput";
 import { NumberInputWithCalc } from "./components/NumberInputWithCalc";
 import { spanishText, noSpellCheck } from "./utils/fieldLang";
 import { PhotoDropzone, type DropzonePhoto } from "./components/PhotoDropzone";
@@ -798,13 +799,12 @@ function NewLotIntro() {
           </Box>
           <Box>
             <FieldLabel optional="mina">Mina</FieldLabel>
-            <Box
-              component="input"
-              type="text"
+            <InlineSuggestInput
               value={mina}
-              list="lote-mina-list"
-              {...noSpellCheck}
-              onChange={(e) => setMina((e.target as HTMLInputElement).value)}
+              onValueChange={setMina}
+              suggestions={PROCEDENCIAS}
+              fieldLang={noSpellCheck}
+              ghostColor={foto.ink.mute}
               sx={{
                 width: "100%",
                 background: foto.surfaces.inset,
@@ -814,12 +814,8 @@ function NewLotIntro() {
                 fontSize: 13,
                 color: foto.ink.primary,
               }}
+              aria-label="Mina"
             />
-            <datalist id="lote-mina-list">
-              {PROCEDENCIAS.map((p) => (
-                <option key={p} value={p} />
-              ))}
-            </datalist>
           </Box>
         </Box>
 

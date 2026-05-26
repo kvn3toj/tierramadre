@@ -12,6 +12,7 @@ import {
 } from "../../../../data/vocabularies";
 import { getFoto, fontFamilies } from "../../../../design-system";
 import { FieldLabel } from "./FieldLabel";
+import { InlineSuggestInput } from "./InlineSuggestInput";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
 import { SelectField } from "./SelectField";
 import { spanishText } from "../utils/fieldLang";
@@ -284,7 +285,6 @@ export function JoyaFields({
   const descripcionId = useId();
   const tipoJoyaId = useId();
   const tecnicaId = useId();
-  const tecnicaListId = useId();
   const cantidadId = useId();
   const pesoGrId = useId();
   const preponderanciaId = useId();
@@ -400,24 +400,16 @@ export function JoyaFields({
         <FieldLabel htmlFor={tecnicaId} optional="técnica">
           Técnica
         </FieldLabel>
-        <Box
-          component="input"
+        <InlineSuggestInput
           id={tecnicaId}
-          type="text"
           value={value.tecnica}
+          onValueChange={(tecnica) => onChange({ tecnica })}
+          suggestions={TECNICAS_JOYA}
           disabled={disabled}
-          list={tecnicaListId}
-          {...spanishText}
-          onChange={(e) =>
-            onChange({ tecnica: (e.target as HTMLInputElement).value })
-          }
+          fieldLang={spanishText}
+          ghostColor={foto.ink.mute}
           sx={textInputSx}
         />
-        <datalist id={tecnicaListId}>
-          {TECNICAS_JOYA.map((t) => (
-            <option key={t} value={t} />
-          ))}
-        </datalist>
       </Box>
 
       <ChipMultiSelect

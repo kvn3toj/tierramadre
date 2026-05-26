@@ -16,6 +16,7 @@ import {
   type TipoEsmeralda,
 } from "../../../../data/vocabularies";
 import { FieldLabel } from "./FieldLabel";
+import { InlineSuggestInput } from "./InlineSuggestInput";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
 import { SelectField } from "./SelectField";
 import { spanishText, noSpellCheck } from "../utils/fieldLang";
@@ -165,7 +166,6 @@ export function GemaFields({
   const colorId = useId();
   const calidadId = useId();
   const procedenciaId = useId();
-  const procedenciaListId = useId();
   const preponderanciaId = useId();
   const precioPublicoId = useId();
   const cantidadId = useId();
@@ -454,25 +454,17 @@ export function GemaFields({
       {/* Procedencia */}
       <Box>
         <FieldLabel htmlFor={procedenciaId}>Procedencia</FieldLabel>
-        <Box
-          component="input"
+        <InlineSuggestInput
           id={procedenciaId}
-          type="text"
           value={value.procedencia}
+          onValueChange={(procedencia) => onChange({ procedencia })}
+          suggestions={PROCEDENCIAS}
           placeholder="Muzo, Chivor, Coscuez…"
           disabled={disabled}
-          list={procedenciaListId}
-          {...noSpellCheck}
-          onChange={(e) =>
-            onChange({ procedencia: (e.target as HTMLInputElement).value })
-          }
+          fieldLang={noSpellCheck}
+          ghostColor={foto.ink.mute}
           sx={textInputSx}
         />
-        <datalist id={procedenciaListId}>
-          {PROCEDENCIAS.map((p) => (
-            <option key={p} value={p} />
-          ))}
-        </datalist>
       </Box>
 
       {/* Preponderancia — live cost calc */}

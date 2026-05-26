@@ -9,6 +9,7 @@ import { useNotification } from "../../../../contexts/NotificationContext";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 
 import { FieldLabel } from "./FieldLabel";
+import { InlineSuggestInput } from "./InlineSuggestInput";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
 import { SegmentedControl } from "./SegmentedControl";
 import { CreditoFields } from "./CreditoFields";
@@ -437,21 +438,16 @@ export function EditLotDrawer({
           </Box>
           <Box>
             <FieldLabel optional="mina">Mina</FieldLabel>
-            <Box
-              component="input"
-              type="text"
+            <InlineSuggestInput
               value={mina}
+              onValueChange={setMina}
+              suggestions={PROCEDENCIAS}
               disabled={!editable}
-              list="editlot-mina-list"
-              {...noSpellCheck}
-              onChange={(e) => setMina((e.target as HTMLInputElement).value)}
+              fieldLang={noSpellCheck}
+              ghostColor={foto.ink.mute}
               sx={textInputSx}
+              aria-label="Mina"
             />
-            <datalist id="editlot-mina-list">
-              {PROCEDENCIAS.map((p) => (
-                <option key={p} value={p} />
-              ))}
-            </datalist>
           </Box>
         </Box>
 

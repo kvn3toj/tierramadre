@@ -2,6 +2,7 @@ import { useId } from "react";
 import { Box } from "@mui/material";
 import { getFoto, fontFamilies } from "../../../../design-system";
 import { FieldLabel } from "./FieldLabel";
+import { InlineSuggestInput } from "./InlineSuggestInput";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
 import { spanishText, noSpellCheck } from "../utils/fieldLang";
 import { PROCEDENCIAS } from "../../../../data/vocabularies";
@@ -59,7 +60,6 @@ export function BrutoFields({
   const nombreId = useId();
   const pesoId = useId();
   const procedenciaId = useId();
-  const procedenciaListId = useId();
   const cantidadId = useId();
   const rendimientoId = useId();
   const preponderanciaId = useId();
@@ -149,25 +149,17 @@ export function BrutoFields({
       {/* Procedencia */}
       <Box>
         <FieldLabel htmlFor={procedenciaId}>Procedencia</FieldLabel>
-        <Box
-          component="input"
+        <InlineSuggestInput
           id={procedenciaId}
-          type="text"
           value={value.procedencia}
+          onValueChange={(procedencia) => onChange({ procedencia })}
+          suggestions={PROCEDENCIAS}
           placeholder="Muzo, Chivor, Coscuez…"
           disabled={disabled}
-          list={procedenciaListId}
-          {...noSpellCheck}
-          onChange={(e) =>
-            onChange({ procedencia: (e.target as HTMLInputElement).value })
-          }
+          fieldLang={noSpellCheck}
+          ghostColor={foto.ink.mute}
           sx={textInputSx}
         />
-        <datalist id={procedenciaListId}>
-          {PROCEDENCIAS.map((p) => (
-            <option key={p} value={p} />
-          ))}
-        </datalist>
       </Box>
 
       {/* Cantidad estimada + Rendimiento esperado — two columns */}
