@@ -4,6 +4,7 @@ import { getFoto, fontFamilies } from "../../../../design-system";
 import { FieldLabel } from "./FieldLabel";
 import { SuggestInput } from "./SuggestInput";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
+import { PricePerCaratHint } from "./PricePerCaratHint";
 import { spanishText, noSpellCheck } from "../utils/fieldLang";
 import { PROCEDENCIAS } from "../../../../data/vocabularies";
 
@@ -267,6 +268,10 @@ export function BrutoFields({
           min={0}
           ariaLabel="Precio público en COP"
           disabled={disabled}
+        />
+        <PricePerCaratHint
+          priceCOP={value.precioPublicoCOP}
+          peso={value.pesoTotal}
         />
       </Box>
     </Box>

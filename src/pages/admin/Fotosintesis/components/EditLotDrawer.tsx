@@ -11,6 +11,7 @@ import type { Id } from "../../../../../convex/_generated/dataModel";
 import { FieldLabel } from "./FieldLabel";
 import { SuggestInput } from "./SuggestInput";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
+import { PricePerCaratHint } from "./PricePerCaratHint";
 import { SegmentedControl } from "./SegmentedControl";
 import { CreditoFields } from "./CreditoFields";
 import { spanishText, noSpellCheck } from "../utils/fieldLang";
@@ -499,6 +500,12 @@ export function EditLotDrawer({
             />
           </Box>
         </Box>
+
+        <PricePerCaratHint
+          priceCOP={costoTotalCOP}
+          peso={pesoTotalQuilates}
+          label="Costo por quilate"
+        />
 
         {/* Forma de pago */}
         <Box>

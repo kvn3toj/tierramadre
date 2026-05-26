@@ -36,6 +36,7 @@ import { SegmentedControl } from "./components/SegmentedControl";
 import { FieldLabel } from "./components/FieldLabel";
 import { SuggestInput } from "./components/SuggestInput";
 import { NumberInputWithCalc } from "./components/NumberInputWithCalc";
+import { PricePerCaratHint } from "./components/PricePerCaratHint";
 import { spanishText, noSpellCheck } from "./utils/fieldLang";
 import { PhotoDropzone, type DropzonePhoto } from "./components/PhotoDropzone";
 import { ShortcutTable } from "./components/ShortcutTable";
@@ -134,6 +135,40 @@ const carryJoyaBase = (prev: JoyaDraft): JoyaDraft => ({
   tecnica: prev.tecnica,
   minerales: [...prev.minerales],
   complementos: [...prev.complementos],
+});
+
+// Single-item lots: the lone item IS the lote, so its identity already lives on
+// the lot header. These mappers seed an item draft from the lot so the operator
+// doesn't retype the name (renombre), procedencia (mina), peso, and the trivial
+// 100% preponderancia. Only fields the lot actually carries are patched; the
+// rest keep their draft defaults (e.g. procedencia "Boyacá").
+interface LotSeedFields {
+  renombreLote?: string;
+  mina?: string;
+  pesoTotalQuilates?: number;
+}
+const hasPeso = (
+  lot: LotSeedFields,
+): lot is LotSeedFields & { pesoTotalQuilates: number } =>
+  typeof lot.pesoTotalQuilates === "number" && lot.pesoTotalQuilates > 0;
+const seedGemaFromLot = (lot: LotSeedFields): Partial<GemaDraft> => ({
+  preponderancia: 100,
+  ...(lot.renombreLote?.trim() ? { nombre: lot.renombreLote.trim() } : {}),
+  ...(lot.mina?.trim() ? { procedencia: lot.mina.trim() } : {}),
+  ...(hasPeso(lot) ? { peso: `${lot.pesoTotalQuilates} ct` } : {}),
+});
+const seedBrutoFromLot = (lot: LotSeedFields): Partial<BrutoDraft> => ({
+  preponderancia: 100,
+  ...(lot.renombreLote?.trim() ? { nombre: lot.renombreLote.trim() } : {}),
+  ...(lot.mina?.trim() ? { procedencia: lot.mina.trim() } : {}),
+  ...(hasPeso(lot) ? { pesoTotal: `${lot.pesoTotalQuilates} ct` } : {}),
+});
+const seedJoyaFromLot = (lot: LotSeedFields): Partial<JoyaDraft> => ({
+  preponderancia: 100,
+  ...(lot.renombreLote?.trim() ? { nombre: lot.renombreLote.trim() } : {}),
+  ...(hasPeso(lot)
+    ? { pesoValor: lot.pesoTotalQuilates, pesoUnidad: "ct" as const }
+    : {}),
 });
 
 /** Human label for the base fields a given field kind carries, for helper copy. */
@@ -769,6 +804,12 @@ function NewLotIntro() {
           </Box>
         </Box>
 
+        <PricePerCaratHint
+          priceCOP={costoTotalCOP}
+          peso={pesoTotalQuilates}
+          label="Costo por quilate"
+        />
+
         <Box
           sx={{
             display: "grid",
@@ -1303,6 +1344,31 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   const itemsCount = items?.length ?? 0;
   const isLastItem =
     unidadesDeclaradas > 0 && itemsCount === unidadesDeclaradas - 1;
+  // A lote that declares a single unit: the one item is the lote itself, so its
+  // identity fields live on the header. We seed the draft from the lot below.
+  const isSingleItemLot = unidadesDeclaradas === 1;
+
+  // Single-item prefill — seed the lone item draft from the lot header once the
+  // lot (and its empty item list) have loaded. Fires once per loteId while the
+  // lot is still pristine (estado abierto, zero items captured) so we never
+  // clobber what the operator has already typed. We seed all three drafts so the
+  // carry-over survives a tipo switch.
+  const singleItemSeededRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!lot || items === undefined) return;
+    if (lot.estado !== "abierto") return;
+    if (unidadesDeclaradas !== 1 || items.length !== 0) return;
+    if (singleItemSeededRef.current === loteId) return;
+    singleItemSeededRef.current = loteId;
+    const seed: LotSeedFields = {
+      renombreLote: lot.renombreLote,
+      mina: lot.mina,
+      pesoTotalQuilates: lot.pesoTotalQuilates,
+    };
+    setGema((prev) => ({ ...prev, ...seedGemaFromLot(seed) }));
+    setBruto((prev) => ({ ...prev, ...seedBrutoFromLot(seed) }));
+    setJoya((prev) => ({ ...prev, ...seedJoyaFromLot(seed) }));
+  }, [lot, items, unidadesDeclaradas, loteId]);
 
   // Active draft surface — the form fields below dispatch off `tipo`, but
   // preponderancia + nombre validations are uniform across types.
@@ -1865,30 +1931,21 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
 
             <TypeSelector value={subtipo} onChange={setSubtipo} />
 
-            {/* Repetir datos base — sticky base fields across the lote */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "12px",
-                padding: "10px 12px",
-                background: reuseBaseData
-                  ? foto.accent.soft
-                  : foto.surfaces.inset,
-                border: `1px solid ${
-                  reuseBaseData ? foto.accent.primary : foto.surfaces.edge
-                }`,
-                borderRadius: "10px",
-                transition: "background 120ms ease, border-color 120ms ease",
-              }}
-            >
+            {/* Single-item lote — explain the prefill instead of the per-item
+                "repetir datos base" toggle, which has no "next item" to fill. */}
+            {isSingleItemLot && itemsCount === 0 ? (
               <Box
-                sx={{ display: "flex", flexDirection: "column", gap: "2px" }}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "2px",
+                  padding: "10px 12px",
+                  background: foto.surfaces.inset,
+                  border: `1px solid ${foto.surfaces.edge}`,
+                  borderRadius: "10px",
+                }}
               >
                 <Box
-                  component="label"
-                  htmlFor="reuse-base-data"
                   sx={{
                     fontSize: 12.5,
                     fontWeight: 600,
@@ -1896,7 +1953,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
                     letterSpacing: "-0.01em",
                   }}
                 >
-                  Repetir datos base en cada ítem
+                  Lote de un solo ítem
                 </Box>
                 <Box
                   sx={{
@@ -1905,21 +1962,70 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
                     lineHeight: 1.45,
                   }}
                 >
-                  Al guardar, conservá {BASE_FIELDS_LABEL[tipo]} para el
-                  siguiente ítem. Editás un campo base y se aplica a los
-                  próximos (no a los ya guardados).
+                  Copiamos el nombre, la procedencia, el peso y el 100% de
+                  preponderancia desde el encabezado del lote. Ajustá lo que
+                  haga falta antes de guardar.
                 </Box>
               </Box>
-              <Switch
-                id="reuse-base-data"
-                checked={reuseBaseData}
-                onChange={(e) => toggleReuseBaseData(e.target.checked)}
-                inputProps={{
-                  "aria-checked": reuseBaseData,
-                  "aria-label": "Repetir datos base en cada ítem",
+            ) : null}
+
+            {/* Repetir datos base — sticky base fields across the lote */}
+            {!isSingleItemLot ? (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  padding: "10px 12px",
+                  background: reuseBaseData
+                    ? foto.accent.soft
+                    : foto.surfaces.inset,
+                  border: `1px solid ${
+                    reuseBaseData ? foto.accent.primary : foto.surfaces.edge
+                  }`,
+                  borderRadius: "10px",
+                  transition: "background 120ms ease, border-color 120ms ease",
                 }}
-              />
-            </Box>
+              >
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: "2px" }}
+                >
+                  <Box
+                    component="label"
+                    htmlFor="reuse-base-data"
+                    sx={{
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      color: foto.ink.primary,
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    Repetir datos base en cada ítem
+                  </Box>
+                  <Box
+                    sx={{
+                      fontSize: 10.5,
+                      color: foto.ink.tertiary,
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    Al guardar, conservá {BASE_FIELDS_LABEL[tipo]} para el
+                    siguiente ítem. Editás un campo base y se aplica a los
+                    próximos (no a los ya guardados).
+                  </Box>
+                </Box>
+                <Switch
+                  id="reuse-base-data"
+                  checked={reuseBaseData}
+                  onChange={(e) => toggleReuseBaseData(e.target.checked)}
+                  inputProps={{
+                    "aria-checked": reuseBaseData,
+                    "aria-label": "Repetir datos base en cada ítem",
+                  }}
+                />
+              </Box>
+            ) : null}
 
             {tipo === "bruto" ? (
               <BrutoFields

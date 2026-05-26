@@ -14,14 +14,19 @@ import { getFoto, fontFamilies } from "../../../../design-system";
 import { FieldLabel } from "./FieldLabel";
 import { SuggestInput } from "./SuggestInput";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
+import { PricePerCaratHint } from "./PricePerCaratHint";
 import { SelectField } from "./SelectField";
 import { spanishText } from "../utils/fieldLang";
+
+/** Weight unit for jewelry — gold pieces are weighed in grams, set stones in carats. */
+export type PesoUnidad = "gr" | "ct";
 
 export interface JoyaDraft {
   nombre: string;
   descripcion: string;
   cantidad: number | "";
-  pesoGr: number | "";
+  pesoValor: number | "";
+  pesoUnidad: PesoUnidad;
   tipoJoya: TipoJoya | "";
   tecnica: string;
   minerales: Mineral[];
@@ -34,7 +39,8 @@ export const EMPTY_JOYA_DRAFT: JoyaDraft = {
   nombre: "",
   descripcion: "",
   cantidad: 1,
-  pesoGr: "",
+  pesoValor: "",
+  pesoUnidad: "gr",
   tipoJoya: "",
   tecnica: "",
   minerales: [],
@@ -272,6 +278,57 @@ function ChipMultiSelect({
   );
 }
 
+/** Compact gr / ct segmented toggle that sits under the weight input. */
+function UnitToggle({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: PesoUnidad;
+  onChange: (next: PesoUnidad) => void;
+  disabled?: boolean;
+}) {
+  const foto = getFoto("light");
+  return (
+    <Box
+      role="group"
+      aria-label="Unidad de peso"
+      sx={{ display: "inline-flex", gap: "4px", marginTop: "6px" }}
+    >
+      {(["gr", "ct"] as const).map((u) => {
+        const active = value === u;
+        return (
+          <Box
+            key={u}
+            component="button"
+            type="button"
+            disabled={disabled}
+            aria-pressed={active}
+            onClick={() => onChange(u)}
+            sx={{
+              minWidth: 38,
+              padding: "5px 10px",
+              borderRadius: "999px",
+              border: `1px solid ${
+                active ? foto.accent.primary : foto.surfaces.rule
+              }`,
+              background: active ? foto.accent.soft : foto.surfaces.inset,
+              color: active ? foto.accent.deep : foto.ink.secondary,
+              fontFamily: fontFamilies.mono,
+              fontSize: 11,
+              fontWeight: active ? 600 : 500,
+              cursor: disabled ? "not-allowed" : "pointer",
+              opacity: disabled ? 0.55 : 1,
+            }}
+          >
+            {u}
+          </Box>
+        );
+      })}
+    </Box>
+  );
+}
+
 export function JoyaFields({
   value,
   onChange,
@@ -370,18 +427,25 @@ export function JoyaFields({
           />
         </Box>
         <Box>
-          <FieldLabel htmlFor={pesoGrId}>Peso (gr)</FieldLabel>
+          <FieldLabel htmlFor={pesoGrId} optional="gramos o quilates">
+            Peso
+          </FieldLabel>
           <NumberInputWithCalc
             id={pesoGrId}
-            value={value.pesoGr}
-            onChange={(next) => onChange({ pesoGr: next })}
+            value={value.pesoValor}
+            onChange={(next) => onChange({ pesoValor: next })}
             placeholder="0"
             step={0.1}
             min={0}
-            ariaLabel="Peso en gramos"
+            ariaLabel={`Peso en ${value.pesoUnidad === "gr" ? "gramos" : "quilates"}`}
             disabled={disabled}
-            calcSuffix="gr"
+            calcSuffix={value.pesoUnidad}
             calcVariant="neutral"
+          />
+          <UnitToggle
+            value={value.pesoUnidad}
+            onChange={(next) => onChange({ pesoUnidad: next })}
+            disabled={disabled}
           />
         </Box>
         <SelectField
@@ -482,6 +546,14 @@ export function JoyaFields({
           ariaLabel="Precio público"
           disabled={disabled}
           calcVariant="neutral"
+        />
+        <PricePerCaratHint
+          priceCOP={value.precioPublicoCOP}
+          peso={
+            typeof value.pesoValor === "number"
+              ? `${value.pesoValor} ${value.pesoUnidad}`
+              : ""
+          }
         />
       </Box>
     </Box>

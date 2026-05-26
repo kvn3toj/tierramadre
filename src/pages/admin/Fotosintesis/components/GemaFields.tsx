@@ -18,6 +18,7 @@ import {
 import { FieldLabel } from "./FieldLabel";
 import { SuggestInput } from "./SuggestInput";
 import { NumberInputWithCalc } from "./NumberInputWithCalc";
+import { PricePerCaratHint } from "./PricePerCaratHint";
 import { SelectField } from "./SelectField";
 import { spanishText, noSpellCheck } from "../utils/fieldLang";
 
@@ -611,6 +612,10 @@ export function GemaFields({
             ) : null}
           </Box>
         ) : null}
+        <PricePerCaratHint
+          priceCOP={value.precioPublicoCOP}
+          peso={value.peso}
+        />
       </Box>
     </Box>
   );

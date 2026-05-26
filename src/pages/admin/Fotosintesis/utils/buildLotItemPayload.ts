@@ -79,8 +79,7 @@ export function buildGemaPayload(
     calidad: normalizeCalidad(gema.calidad),
     peso: gema.peso || undefined,
     procedencia: gema.procedencia || undefined,
-    cantidad:
-      typeof gema.cantidad === "number" ? gema.cantidad : undefined,
+    cantidad: typeof gema.cantidad === "number" ? gema.cantidad : undefined,
     talla: gema.corte || undefined,
     categoria: gema.tipoEsmeralda || undefined,
     tipoEsmeralda: gema.tipoEsmeralda || undefined,
@@ -107,7 +106,9 @@ export function buildJoyaPayload(
   mostrarEnCatalogo: boolean,
   extras?: { fotoUrl?: string; certificadoUrl?: string },
 ): SharedCreateFields & Record<string, unknown> {
-  const obsParts = [joya.descripcion.trim(), observacion.trim()].filter(Boolean);
+  const obsParts = [joya.descripcion.trim(), observacion.trim()].filter(
+    Boolean,
+  );
   return {
     loteId,
     tipo: "joya",
@@ -115,12 +116,13 @@ export function buildJoyaPayload(
     preponderancia: joya.preponderancia as number,
     cantidad: typeof joya.cantidad === "number" ? joya.cantidad : undefined,
     peso:
-      typeof joya.pesoGr === "number" ? String(joya.pesoGr) : undefined,
+      typeof joya.pesoValor === "number"
+        ? `${joya.pesoValor} ${joya.pesoUnidad}`
+        : undefined,
     tipoJoya: joya.tipoJoya || undefined,
     tecnicaJoya: joya.tecnica || undefined,
     minerales: joya.minerales.length > 0 ? joya.minerales : undefined,
-    complementos:
-      joya.complementos.length > 0 ? joya.complementos : undefined,
+    complementos: joya.complementos.length > 0 ? joya.complementos : undefined,
     precioPublicoCOP:
       typeof joya.precioPublicoCOP === "number"
         ? joya.precioPublicoCOP
@@ -172,7 +174,9 @@ export function gemaDraftFromProduct(row: {
     preponderancia: "",
     precioPublicoCOP: row.precioCOP ?? "",
     cantidad: row.cantidad ?? 1,
-    tipoEsmeralda: (row.tipoEsmeralda ?? row.categoria ?? "") as GemaDraft["tipoEsmeralda"],
+    tipoEsmeralda: (row.tipoEsmeralda ??
+      row.categoria ??
+      "") as GemaDraft["tipoEsmeralda"],
     corte: (row.talla ?? "") as GemaDraft["corte"],
     medidasAncho: parsed.ancho,
     medidasAlto: parsed.alto,
@@ -209,9 +213,7 @@ export function gemaPatchFromDraft(
     calificacion:
       typeof draft.calificacion === "number" ? draft.calificacion : undefined,
     precioPublicoCOP:
-      typeof draft.precioPublicoCOP === "number"
-        ? draft.precioPublicoCOP
-        : 0,
+      typeof draft.precioPublicoCOP === "number" ? draft.precioPublicoCOP : 0,
     mostrarEnCatalogo,
     preponderancia: draft.preponderancia as number,
   };
