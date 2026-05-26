@@ -6,9 +6,12 @@ import {
 } from "../../../../data/vocabularies";
 import type { GemaDraft } from "../components/GemaFields";
 import type { BrutoDraft } from "../components/BrutoFields";
-import type { JoyaDraft } from "../components/JoyaFields";
+import type { JoyaDraft, PesoUnidad } from "../components/JoyaFields";
 
 type TipoItem = "gema" | "bruto" | "joya" | "insumo" | "lote";
+
+/** Item types the EditItemDrawer can render a dedicated sub-form for. */
+export type EditableTipo = "gema" | "joya" | "bruto";
 
 interface SharedCreateFields {
   loteId: string;
@@ -212,6 +215,160 @@ export function gemaPatchFromDraft(
       typeof draft.nivelRareza === "number" ? draft.nivelRareza : undefined,
     calificacion:
       typeof draft.calificacion === "number" ? draft.calificacion : undefined,
+    precioPublicoCOP:
+      typeof draft.precioPublicoCOP === "number" ? draft.precioPublicoCOP : 0,
+    mostrarEnCatalogo,
+    preponderancia: draft.preponderancia as number,
+  };
+}
+
+/**
+ * Item `tipo` is not stored as a durable column on productInventory — it is
+ * only written to the creation audit row. New items (post this change) carry
+ * `tipo` directly; legacy items are classified by which type-specific fields
+ * the wizard populated. The drawer uses this to render the matching sub-form
+ * instead of always assuming a gema.
+ */
+export function inferItemTipo(row: {
+  tipo?: string;
+  tipoJoya?: string;
+  tecnicaJoya?: string;
+  minerales?: string[];
+  complementos?: string[];
+  cantidadEstimada?: number;
+  rendimientoEsperado?: number;
+}): EditableTipo {
+  if (row.tipo === "gema" || row.tipo === "joya" || row.tipo === "bruto") {
+    return row.tipo;
+  }
+  // A "lote" (lote de joyas) reuses the joya payload shape, so it edits as one.
+  if (row.tipo === "lote") return "joya";
+
+  if (
+    row.tipoJoya ||
+    row.tecnicaJoya ||
+    (row.minerales && row.minerales.length > 0) ||
+    (row.complementos && row.complementos.length > 0)
+  ) {
+    return "joya";
+  }
+  if (row.cantidadEstimada != null || row.rendimientoEsperado != null) {
+    return "bruto";
+  }
+  return "gema";
+}
+
+/**
+ * Split a stored jewelry weight ("5 gr", "2,5 ct", "12") back into a numeric
+ * value + unit so the JoyaFields weight input round-trips. Falls back to grams
+ * (the wizard default) when the unit is absent, and to an empty value for
+ * non-numeric strings ("Plata", "fragmento").
+ */
+export function parseJoyaPeso(peso: string | undefined | null): {
+  value: number | "";
+  unit: PesoUnidad;
+} {
+  if (!peso) return { value: "", unit: "gr" };
+  const raw = peso.trim().toLowerCase();
+  const match = raw.match(/-?\d+(?:[.,]\d+)?/);
+  const unit: PesoUnidad =
+    raw.includes("ct") || raw.includes("quilate") ? "ct" : "gr";
+  if (!match) return { value: "", unit };
+  const n = Number(match[0].replace(",", "."));
+  return { value: Number.isFinite(n) ? n : "", unit };
+}
+
+export function joyaDraftFromProduct(row: {
+  nombre?: string;
+  observacion?: string;
+  cantidad?: number;
+  peso?: string;
+  tipoJoya?: string;
+  tecnicaJoya?: string;
+  minerales?: string[];
+  complementos?: string[];
+  precioCOP?: number;
+}): JoyaDraft {
+  const { value, unit } = parseJoyaPeso(row.peso);
+  return {
+    nombre: row.nombre ?? "",
+    // At create the wizard folds descripcion + observación into `observacion`;
+    // we surface the whole stored string here so it round-trips on save.
+    descripcion: row.observacion ?? "",
+    cantidad: row.cantidad ?? 1,
+    pesoValor: value,
+    pesoUnidad: unit,
+    tipoJoya: (row.tipoJoya ?? "") as JoyaDraft["tipoJoya"],
+    tecnica: row.tecnicaJoya ?? "",
+    minerales: (row.minerales ?? []) as JoyaDraft["minerales"],
+    complementos: (row.complementos ?? []) as JoyaDraft["complementos"],
+    preponderancia: "",
+    precioPublicoCOP: row.precioCOP ?? "",
+  };
+}
+
+export function joyaPatchFromDraft(
+  draft: JoyaDraft,
+  mostrarEnCatalogo: boolean,
+): Record<string, unknown> {
+  return {
+    nombre: draft.nombre,
+    // Empty string clears the field server-side (compareString treats "" as
+    // "unset"); a select cleared back to placeholder should clear too.
+    peso:
+      typeof draft.pesoValor === "number"
+        ? `${draft.pesoValor} ${draft.pesoUnidad}`
+        : "",
+    cantidad: typeof draft.cantidad === "number" ? draft.cantidad : undefined,
+    tipoJoya: draft.tipoJoya || "",
+    tecnicaJoya: draft.tecnica || "",
+    minerales: draft.minerales,
+    complementos: draft.complementos,
+    observacion: draft.descripcion,
+    precioPublicoCOP:
+      typeof draft.precioPublicoCOP === "number" ? draft.precioPublicoCOP : 0,
+    mostrarEnCatalogo,
+    preponderancia: draft.preponderancia as number,
+  };
+}
+
+export function brutoDraftFromProduct(row: {
+  nombre?: string;
+  peso?: string;
+  procedencia?: string;
+  cantidadEstimada?: number;
+  rendimientoEsperado?: number;
+  precioCOP?: number;
+}): BrutoDraft {
+  return {
+    nombre: row.nombre ?? "",
+    pesoTotal: row.peso ?? "",
+    procedencia: row.procedencia ?? "",
+    cantidadEstimada: row.cantidadEstimada ?? "",
+    rendimientoEsperado: row.rendimientoEsperado ?? "",
+    preponderancia: "",
+    precioPublicoCOP: row.precioCOP ?? "",
+  };
+}
+
+export function brutoPatchFromDraft(
+  draft: BrutoDraft,
+  observacion: string,
+  mostrarEnCatalogo: boolean,
+): Record<string, unknown> {
+  return {
+    nombre: draft.nombre,
+    peso: draft.pesoTotal,
+    procedencia: draft.procedencia,
+    cantidadEstimada:
+      typeof draft.cantidadEstimada === "number"
+        ? draft.cantidadEstimada
+        : undefined,
+    rendimientoEsperado:
+      typeof draft.rendimientoEsperado === "number"
+        ? draft.rendimientoEsperado
+        : undefined,
+    observacion,
     precioPublicoCOP:
       typeof draft.precioPublicoCOP === "number" ? draft.precioPublicoCOP : 0,
     mostrarEnCatalogo,

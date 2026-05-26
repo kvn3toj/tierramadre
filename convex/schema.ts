@@ -119,6 +119,10 @@ export default defineSchema({
     // through a lot (lotItems.create). Older items predating Fotosíntesis v2
     // leave these undefined.
     loteId: v.optional(v.string()),
+    // Item kind captured by the wizard ("gema" | "bruto" | "joya" | "insumo" |
+    // "lote"). Optional + free string so legacy rows (which never stored it)
+    // validate; the edit drawer falls back to field-based inference when absent.
+    tipo: v.optional(v.string()),
     preponderancia: v.optional(v.number()),
     costoBaseCOP: v.optional(v.number()),
     mostrarEnCatalogo: v.optional(v.boolean()),

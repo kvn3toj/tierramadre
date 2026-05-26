@@ -196,6 +196,7 @@ export const create = mutation({
       preponderancia: args.preponderancia,
       costoBaseCOP,
       mostrarEnCatalogo: args.mostrarEnCatalogo ?? false,
+      tipo: args.tipo,
       procedencia: args.procedencia,
       observacion: args.observacion,
       rendimientoEsperado: args.rendimientoEsperado,
@@ -385,6 +386,10 @@ export const updateGemaFields = mutation({
       precioPublicoCOP: v.optional(v.number()),
       mostrarEnCatalogo: v.optional(v.boolean()),
       preponderancia: v.optional(v.number()),
+      // Bruto-only informational fields — editable like any other captured
+      // value once the parcel is in the lot.
+      cantidadEstimada: v.optional(v.number()),
+      rendimientoEsperado: v.optional(v.number()),
     }),
     editorEmail: v.optional(v.string()),
   },
@@ -509,6 +514,16 @@ export const updateGemaFields = mutation({
     compareNumber("cantidad", patch.cantidad, product.cantidad);
     compareNumber("nivelRareza", patch.nivelRareza, product.nivelRareza);
     compareNumber("calificacion", patch.calificacion, product.calificacion);
+    compareNumber(
+      "cantidadEstimada",
+      patch.cantidadEstimada,
+      product.cantidadEstimada,
+    );
+    compareNumber(
+      "rendimientoEsperado",
+      patch.rendimientoEsperado,
+      product.rendimientoEsperado,
+    );
     compareNumber(
       "precioEmbajadorCOP",
       patch.precioEmbajadorCOP,

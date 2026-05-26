@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { Box, Dialog, Switch } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { Trash2, X as XIcon } from "lucide-react";
+import { FileText, Trash2, X as XIcon } from "lucide-react";
 
 import { getFoto, fontFamilies } from "../../../../design-system";
 import {
@@ -14,19 +14,37 @@ import type { Id } from "../../../../../convex/_generated/dataModel";
 
 import { FieldLabel } from "./FieldLabel";
 import { GemaFields, EMPTY_GEMA_DRAFT, type GemaDraft } from "./GemaFields";
+import { JoyaFields, EMPTY_JOYA_DRAFT, type JoyaDraft } from "./JoyaFields";
+import { BrutoFields, EMPTY_BRUTO_DRAFT, type BrutoDraft } from "./BrutoFields";
 import { KbdKey } from "./KbdKey";
 import { PhotoDropzone, type DropzonePhoto } from "./PhotoDropzone";
 import { spanishText } from "../utils/fieldLang";
 import {
+  inferItemTipo,
   gemaDraftFromProduct,
   gemaPatchFromDraft,
+  joyaDraftFromProduct,
+  joyaPatchFromDraft,
+  brutoDraftFromProduct,
+  brutoPatchFromDraft,
+  type EditableTipo,
 } from "../utils/buildLotItemPayload";
-import { uploadFotosintesisImages } from "../utils/uploadItemMedia";
+import {
+  uploadFotosintesisImages,
+  uploadFotosintesisCertificado,
+} from "../utils/uploadItemMedia";
 import { convertToProxyUrl } from "../../../../utils/driveUrl";
+
+const TIPO_LABEL: Record<EditableTipo, string> = {
+  gema: "Gema",
+  joya: "Joya",
+  bruto: "Bruto",
+};
 
 interface ProductInventoryRow {
   _id: string;
   itemId: string;
+  tipo?: string;
   nombre?: string;
   peso?: string;
   color?: string;
@@ -42,6 +60,14 @@ interface ProductInventoryRow {
   tipoEsmeralda?: string;
   nivelRareza?: number;
   calificacion?: number;
+  // Joya-specific
+  tipoJoya?: string;
+  tecnicaJoya?: string;
+  minerales?: string[];
+  complementos?: string[];
+  // Bruto-specific
+  cantidadEstimada?: number;
+  rendimientoEsperado?: number;
   fotoUrl?: string;
   certificadoUrl?: string;
 }
@@ -98,6 +124,7 @@ export function EditItemDrawer({
   const foto = getFoto("light");
   const titleId = useId();
   const observacionId = useId();
+  const certificadoId = useId();
   const { notify } = useNotification();
 
   const product = useConvexQuery(convexApi.products.get, { itemId }) as
@@ -110,12 +137,35 @@ export function EditItemDrawer({
   const updateMedia = useConvexMutation(convexApi.lotItems.updateMedia);
   const removeLotItem = useConvexMutation(convexApi.lotItems.remove);
 
+  // The drawer renders the sub-form that matches the item's kind. `tipo` is
+  // inferred from the loaded product (stored `tipo` when present, else the
+  // populated type-specific fields). We keep one draft per kind and only the
+  // matching one is hydrated + submitted.
+  const tipo: EditableTipo = useMemo(
+    () => (product ? inferItemTipo(product) : "gema"),
+    [product],
+  );
+
   const [draft, setDraft] = useState<GemaDraft>(
     () =>
       ({
         ...EMPTY_GEMA_DRAFT,
         preponderancia: currentPreponderancia,
       }) as GemaDraft,
+  );
+  const [joyaDraft, setJoyaDraft] = useState<JoyaDraft>(
+    () =>
+      ({
+        ...EMPTY_JOYA_DRAFT,
+        preponderancia: currentPreponderancia,
+      }) as JoyaDraft,
+  );
+  const [brutoDraft, setBrutoDraft] = useState<BrutoDraft>(
+    () =>
+      ({
+        ...EMPTY_BRUTO_DRAFT,
+        preponderancia: currentPreponderancia,
+      }) as BrutoDraft,
   );
   const [observacion, setObservacion] = useState("");
   const [mostrarEnCatalogo, setMostrarEnCatalogo] = useState(false);
@@ -126,6 +176,12 @@ export function EditItemDrawer({
   const [initialFotoUrl, setInitialFotoUrl] = useState<string | undefined>(
     undefined,
   );
+  // Certificate (PDF / image). Like the photo, it's editable in any lot estado
+  // via `updateMedia`. A freshly chosen file uploads on save.
+  const [certificadoFile, setCertificadoFile] = useState<File | null>(null);
+  const [initialCertificadoUrl, setInitialCertificadoUrl] = useState<
+    string | undefined
+  >(undefined);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -144,11 +200,26 @@ export function EditItemDrawer({
   useEffect(() => {
     if (!open) return;
     if (!product) return;
-    setDraft({
-      ...gemaDraftFromProduct(product),
-      preponderancia: currentPreponderancia,
-    });
-    setObservacion(product.observacion ?? "");
+    const t = inferItemTipo(product);
+    if (t === "joya") {
+      setJoyaDraft({
+        ...joyaDraftFromProduct(product),
+        preponderancia: currentPreponderancia,
+      });
+    } else if (t === "bruto") {
+      setBrutoDraft({
+        ...brutoDraftFromProduct(product),
+        preponderancia: currentPreponderancia,
+      });
+    } else {
+      setDraft({
+        ...gemaDraftFromProduct(product),
+        preponderancia: currentPreponderancia,
+      });
+    }
+    // For a joya the stored free text round-trips through JoyaFields'
+    // `descripcion`, so the shared observación textarea is hidden + left empty.
+    setObservacion(t === "joya" ? "" : (product.observacion ?? ""));
     setMostrarEnCatalogo(product.mostrarEnCatalogo ?? false);
     setPhotos((prev) => {
       revokeLocalPreviews(prev);
@@ -163,6 +234,8 @@ export function EditItemDrawer({
         : [];
     });
     setInitialFotoUrl(product.fotoUrl);
+    setCertificadoFile(null);
+    setInitialCertificadoUrl(product.certificadoUrl);
     setError(null);
     setConfirmDelete(false);
   }, [open, product, currentPreponderancia]);
@@ -171,6 +244,7 @@ export function EditItemDrawer({
   useEffect(() => {
     if (!open) {
       setConfirmDelete(false);
+      setCertificadoFile(null);
       setPhotos((prev) => {
         revokeLocalPreviews(prev);
         return [];
@@ -178,8 +252,15 @@ export function EditItemDrawer({
     }
   }, [open]);
 
+  // The active draft drives the shared preponderancia + name validation,
+  // regardless of which sub-form is rendered.
+  const activeDraft: GemaDraft | JoyaDraft | BrutoDraft =
+    tipo === "joya" ? joyaDraft : tipo === "bruto" ? brutoDraft : draft;
+  const activeNombre = activeDraft.nombre;
+  const activePreponderancia = activeDraft.preponderancia;
+
   const prepNumeric =
-    typeof draft.preponderancia === "number" ? draft.preponderancia : 0;
+    typeof activePreponderancia === "number" ? activePreponderancia : 0;
   const projectedSum = siblingPreponderanciaSum + prepNumeric;
   const overflow = projectedSum - 100;
   const prepHelper = useMemo<{
@@ -201,17 +282,18 @@ export function EditItemDrawer({
   const pendingPhotoFile = photos.find((p) => p.file)?.file;
   const photoRemoved = !!initialFotoUrl && photos.length === 0;
   const photoChanged = !!pendingPhotoFile || photoRemoved;
+  const certificadoChanged = !!certificadoFile;
 
   const canSubmit =
     !!product &&
     !saving &&
     !deleting &&
     (editable
-      ? draft.nombre.trim().length > 0 &&
-        typeof draft.preponderancia === "number" &&
-        draft.preponderancia > 0 &&
+      ? activeNombre.trim().length > 0 &&
+        typeof activePreponderancia === "number" &&
+        activePreponderancia > 0 &&
         overflow <= 0.01
-      : photoChanged);
+      : photoChanged || certificadoChanged);
 
   const handleSubmit = async () => {
     if (!canSubmit || !product) return;
@@ -230,10 +312,28 @@ export function EditItemDrawer({
         nextFotoUrl = ""; // empty string clears the field server-side
       }
 
+      // 2. Resolve the next certificate URL: upload a freshly chosen file.
+      let nextCertificadoUrl: string | undefined;
+      if (certificadoFile) {
+        nextCertificadoUrl = await uploadFotosintesisCertificado(
+          certificadoFile,
+          loteId,
+          itemId,
+        );
+      }
+
       if (editable) {
-        // Open lot — persist every field (photo folded into the same patch).
-        const patch = gemaPatchFromDraft(draft, observacion, mostrarEnCatalogo);
+        // Open/editable lot — persist every field of the matching sub-form
+        // (photo + certificate folded into the same patch).
+        const patch: Record<string, unknown> =
+          tipo === "joya"
+            ? joyaPatchFromDraft(joyaDraft, mostrarEnCatalogo)
+            : tipo === "bruto"
+              ? brutoPatchFromDraft(brutoDraft, observacion, mostrarEnCatalogo)
+              : gemaPatchFromDraft(draft, observacion, mostrarEnCatalogo);
         if (nextFotoUrl !== undefined) patch.fotoUrl = nextFotoUrl;
+        if (nextCertificadoUrl !== undefined)
+          patch.certificadoUrl = nextCertificadoUrl;
         const result = await updateGemaFields({ lotItemId, patch });
         if (result.changed === false) {
           notify("Sin cambios para guardar", "info");
@@ -245,17 +345,21 @@ export function EditItemDrawer({
           );
         }
       } else {
-        // Closed/published lot — only the photo can change here.
-        if (nextFotoUrl === undefined) {
+        // Closed/published lot — only media (foto + certificado) can change.
+        if (nextFotoUrl === undefined && nextCertificadoUrl === undefined) {
           notify("Sin cambios para guardar", "info");
           onClose();
           return;
         }
-        const result = await updateMedia({ lotItemId, fotoUrl: nextFotoUrl });
+        const result = await updateMedia({
+          lotItemId,
+          fotoUrl: nextFotoUrl,
+          certificadoUrl: nextCertificadoUrl,
+        });
         if (result.changed === false) {
           notify("Sin cambios para guardar", "info");
         } else {
-          notify(`Foto del ítem #${product.itemId} actualizada`, "success");
+          notify(`Media del ítem #${product.itemId} actualizada`, "success");
         }
       }
       onClose();
@@ -370,7 +474,7 @@ export function EditItemDrawer({
               fontFamily: fontFamilies.mono,
             }}
           >
-            {ticketLabel}
+            {product ? `${ticketLabel} · ${TIPO_LABEL[tipo]}` : ticketLabel}
           </Box>
           <Box
             id={titleId}
@@ -384,7 +488,9 @@ export function EditItemDrawer({
               lineHeight: 1.2,
             }}
           >
-            Editar ítem
+            {product
+              ? `Editar ${TIPO_LABEL[tipo].toLowerCase()}`
+              : "Editar ítem"}
           </Box>
           <Box
             sx={{
@@ -396,7 +502,7 @@ export function EditItemDrawer({
           >
             {editable
               ? "Cambios persisten en Convex y se sincronizan a la planilla."
-              : "Vista en sólo lectura — la foto sí se puede actualizar."}
+              : "Lote cerrado — foto y certificado sí se pueden actualizar."}
           </Box>
         </Box>
         <Box
@@ -468,14 +574,40 @@ export function EditItemDrawer({
           </Box>
         ) : (
           <>
-            <GemaFields
-              value={draft}
-              onChange={(patch) => setDraft((prev) => ({ ...prev, ...patch }))}
-              lotCostoTotalCOP={lotCostoTotalCOP}
-              preponderanciaHelper={prepHelper?.text}
-              preponderanciaHelperAlert={prepHelper?.alert}
-              disabled={!editable}
-            />
+            {tipo === "joya" ? (
+              <JoyaFields
+                value={joyaDraft}
+                onChange={(patch) =>
+                  setJoyaDraft((prev) => ({ ...prev, ...patch }))
+                }
+                lotCostoTotalCOP={lotCostoTotalCOP}
+                preponderanciaHelper={prepHelper?.text}
+                preponderanciaHelperAlert={prepHelper?.alert}
+                disabled={!editable}
+              />
+            ) : tipo === "bruto" ? (
+              <BrutoFields
+                value={brutoDraft}
+                onChange={(patch) =>
+                  setBrutoDraft((prev) => ({ ...prev, ...patch }))
+                }
+                lotCostoTotalCOP={lotCostoTotalCOP}
+                preponderanciaHelper={prepHelper?.text}
+                preponderanciaHelperAlert={prepHelper?.alert}
+                disabled={!editable}
+              />
+            ) : (
+              <GemaFields
+                value={draft}
+                onChange={(patch) =>
+                  setDraft((prev) => ({ ...prev, ...patch }))
+                }
+                lotCostoTotalCOP={lotCostoTotalCOP}
+                preponderanciaHelper={prepHelper?.text}
+                preponderanciaHelperAlert={prepHelper?.alert}
+                disabled={!editable}
+              />
+            )}
 
             <Box>
               <FieldLabel optional="opcional">Foto del ítem</FieldLabel>
@@ -505,23 +637,86 @@ export function EditItemDrawer({
               />
             </Box>
 
+            {/* Certificado — editable in any lot estado, like the photo. */}
             <Box>
-              <FieldLabel htmlFor={observacionId} optional="opcional">
-                Observación
+              <FieldLabel htmlFor={certificadoId} optional="PDF o imagen">
+                Certificado
               </FieldLabel>
+              {initialCertificadoUrl && !certificadoFile ? (
+                <Box
+                  component="a"
+                  href={
+                    convertToProxyUrl(initialCertificadoUrl) ??
+                    initialCertificadoUrl
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: foto.accent.deep,
+                    textDecoration: "none",
+                    marginBottom: "8px",
+                    "&:hover": { textDecoration: "underline" },
+                  }}
+                >
+                  <FileText size={13} strokeWidth={2} />
+                  Ver certificado actual
+                </Box>
+              ) : null}
               <Box
-                component="textarea"
-                id={observacionId}
-                value={observacion}
-                placeholder="Cualquier detalle libre — talla del corte, particularidades, intenciones de venta…"
-                disabled={!editable}
-                {...spanishText}
-                onChange={(e) =>
-                  setObservacion((e.target as HTMLTextAreaElement).value)
-                }
-                sx={textInputSx}
+                component="input"
+                id={certificadoId}
+                type="file"
+                accept=".pdf,image/*"
+                onChange={(e) => {
+                  const f = (e.target as HTMLInputElement).files?.[0];
+                  setCertificadoFile(f ?? null);
+                }}
+                sx={{
+                  width: "100%",
+                  fontSize: 12,
+                  color: foto.ink.secondary,
+                }}
               />
+              <Box
+                sx={{
+                  fontSize: 11,
+                  color: foto.ink.tertiary,
+                  marginTop: "4px",
+                  lineHeight: 1.45,
+                }}
+              >
+                {certificadoFile
+                  ? `Listo para subir: ${certificadoFile.name}`
+                  : initialCertificadoUrl
+                    ? "Elegí un archivo para reemplazar el certificado."
+                    : "Adjuntá el certificado gemológico. Se sube a Drive al guardar."}
+              </Box>
             </Box>
+
+            {tipo !== "joya" ? (
+              <Box>
+                <FieldLabel htmlFor={observacionId} optional="opcional">
+                  Observación
+                </FieldLabel>
+                <Box
+                  component="textarea"
+                  id={observacionId}
+                  value={observacion}
+                  placeholder="Cualquier detalle libre — talla del corte, particularidades, intenciones de venta…"
+                  disabled={!editable}
+                  {...spanishText}
+                  onChange={(e) =>
+                    setObservacion((e.target as HTMLTextAreaElement).value)
+                  }
+                  sx={textInputSx}
+                />
+              </Box>
+            ) : null}
 
             <Box
               sx={{
