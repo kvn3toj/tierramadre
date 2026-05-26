@@ -456,7 +456,7 @@ export default function FotosintesisLoteResumenPage() {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", lg: "1.5fr 420px" },
+            gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1.5fr) 420px" },
             gap: "32px",
             alignItems: "start",
           }}
@@ -626,7 +626,10 @@ export default function FotosintesisLoteResumenPage() {
                     <Box
                       sx={{
                         display: "grid",
-                        gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+                        gridTemplateColumns: {
+                          xs: "1fr",
+                          sm: "minmax(0, 1fr) minmax(0, 1fr)",
+                        },
                         gap: "16px",
                       }}
                     >

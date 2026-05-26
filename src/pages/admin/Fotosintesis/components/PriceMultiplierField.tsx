@@ -76,6 +76,9 @@ export function PriceMultiplierField({
             gap: "14px",
             marginBottom: "8px",
             paddingLeft: "2px",
+            // Let the row shrink below the slider's intrinsic size so the rail
+            // never spills past its grid cell into the neighbouring column.
+            minWidth: 0,
           }}
         >
           <Slider
@@ -89,6 +92,9 @@ export function PriceMultiplierField({
             aria-label={`Multiplicador · ${label}`}
             sx={{
               flex: 1,
+              // A flex item keeps `min-width: auto` by default and refuses to
+              // shrink below its content; 0 lets the slider track the cell width.
+              minWidth: 0,
               color: foto.accent.primary,
               height: 4,
               padding: "12px 0",
