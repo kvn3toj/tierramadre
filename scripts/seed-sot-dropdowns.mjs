@@ -132,27 +132,28 @@ const TAB_RULES = (V) => ({
     { col: 13, name: "estado", values: V.LOT_ESTADOS },
   ],
   Inventario: [
-    // Layout from create-fotosintesis-sot.mjs INVENTARIO_HEADERS:
+    // Layout from FOTO_INVENTARIO_COLUMNS (price block grouped at L–O):
     // 0 Item, 1 FechaIngreso, 2 Nombre, 3 Peso, 4 Color, 5 Calidad,
-    // 6 Cant., 7 Talla, 8 Medidas, 9 Medidas (valor),
-    // 10 Categoría, 11 Precio COP, 12 UBICACIÓN, 13 ASESOR, 14 ESTADO,
-    // 15 QR, 16 Colección, 17 CAJA, 18 preponderancia, 19 ASESOR ACTUAL,
-    // 20 ESTADO ASESOR
+    // 6 Cant., 7 Talla, 8 Medidas, 9 Medidas (valor), 10 Categoría,
+    // 11 Precio COP, 12 costoBaseCOP, 13 precioEmbajadorCOP,
+    // 14 precioConscienteCOP, 15 UBICACIÓN, 16 ASESOR, 17 ESTADO,
+    // 18 QR, 19 Colección, 20 CAJA, 21 preponderancia, 22 ASESOR ACTUAL,
+    // 23 ESTADO ASESOR
     { col: 4, name: "Color", values: V.COLORS },
     { col: 5, name: "Calidad", values: V.CALIDADES },
     { col: 7, name: "Talla", values: V.TALLAS },
     { col: 8, name: "Medidas (formato)", values: V.MEDIDAS_FORMATO },
     { col: 10, name: "Categoría", values: V.CATEGORIAS },
-    { col: 12, name: "UBICACIÓN", values: V.UBICACIONES },
+    { col: 15, name: "UBICACIÓN", values: V.UBICACIONES },
     // ESTADO uses the productInventory v.union order; "" is filtered out
     // because Sheets won't accept an empty string in a ONE_OF_LIST.
     {
-      col: 14,
+      col: 17,
       name: "ESTADO",
       values: V.PRODUCT_ESTADOS.filter((v) => v !== ""),
     },
-    { col: 16, name: "Colección", values: V.COLECCIONES },
-    { col: 17, name: "CAJA", values: V.CAJAS },
+    { col: 19, name: "Colección", values: V.COLECCIONES },
+    { col: 20, name: "CAJA", values: V.CAJAS },
   ],
   Clientes: [
     // tipo (G, idx 6): embajador | final

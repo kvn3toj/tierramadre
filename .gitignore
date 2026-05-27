@@ -124,3 +124,6 @@ vite.config.js.disabled-by-test
 /docs/Cierres Reels (Opciones)/
 
 .env*
+
+# Live-data snapshots from one-off migration scripts (never commit)
+scripts/.backups/

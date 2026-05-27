@@ -21,11 +21,13 @@
  *      U estadoAsesor
  *
  *  • FOTOSÍNTESIS SOT (target="fotosintesis") — full layout driven by
- *    api/_lib/fotosintesis-inventory-columns.js (A:AQ today). The legacy
- *    block above is the first 21 columns; the Fotosíntesis form fields
- *    (preponderancia at S, then loteId, costoBaseCOP, prices, photos,
- *    minerals, etc. from V onward) extend it. Run
- *    scripts/extend-fotosintesis-headers.mjs once to widen the live sheet.
+ *    api/_lib/fotosintesis-inventory-columns.js (A:AQ today). The price
+ *    fields are grouped right after Precio COP (L): costoBaseCOP (M),
+ *    precioEmbajadorCOP (N), precioConscienteCOP (O); the remaining
+ *    Fotosíntesis form fields (preponderancia, loteId, photos, minerals,
+ *    etc.) follow from V onward. Run scripts/extend-fotosintesis-headers.mjs
+ *    to widen a fresh sheet, or scripts/reorder-fotosintesis-price-columns.mjs
+ *    to migrate an existing one after a column-order change.
  *
  * Strategy: read the current row first to preserve fields we don't edit
  * (notably `fechaIngreso` in column B). Then write the merged row back via

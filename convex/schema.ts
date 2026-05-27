@@ -90,7 +90,15 @@ export default defineSchema({
     medidas: v.optional(v.string()),
     medidasValores: v.optional(v.string()),
     categoria: v.optional(v.string()),
-    precioCOP: v.optional(v.number()),
+    // ── Price block — grouped to mirror the SOT "Inventario" tab layout
+    // (Sheets columns L–O). costoBaseCOP = lot.costoTotalCOP × preponderancia%;
+    // the embajador/consciente tiers are the x1–x4 prices. precioPotencialCOP
+    // has no Sheets column — grouped here for clarity.
+    precioCOP: v.optional(v.number()), // L
+    costoBaseCOP: v.optional(v.number()), // M
+    precioEmbajadorCOP: v.optional(v.number()), // N
+    precioPotencialCOP: v.optional(v.number()),
+    precioConscienteCOP: v.optional(v.number()), // O
     ubicacion: v.optional(v.string()),
     asesor: v.optional(v.string()),
     // 9 values: the 4 we always handled + 5 inherited from the legacy
@@ -124,7 +132,6 @@ export default defineSchema({
     // validate; the edit drawer falls back to field-based inference when absent.
     tipo: v.optional(v.string()),
     preponderancia: v.optional(v.number()),
-    costoBaseCOP: v.optional(v.number()),
     mostrarEnCatalogo: v.optional(v.boolean()),
     // Captured at lotItems.create, editable via lotItems.updateGemaFields, and
     // synced to the SOT "Inventario" tab (target="fotosintesis") through the
@@ -152,9 +159,6 @@ export default defineSchema({
     formulaGema: v.optional(v.string()),
     formulaJoya: v.optional(v.string()),
     rangoDescuento: v.optional(v.string()),
-    precioEmbajadorCOP: v.optional(v.number()),
-    precioPotencialCOP: v.optional(v.number()),
-    precioConscienteCOP: v.optional(v.number()),
     /** ISO timestamp of last successful pull from Sheets */
     lastPulledAt: v.string(),
     /** ISO timestamp of last successful push to Sheets (null if never edited) */

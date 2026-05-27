@@ -6,15 +6,22 @@
  * for the public catalog) keeps its own A:U layout and is written through the
  * `target: "legacy"` branch in admin-product-update.ts — never touch it here.
  *
- * APPEND-ONLY CONTRACT: the sheet is a positional, push-only mirror holding
- * live data. Never reorder or insert a column in the middle — only append new
- * ones at the end. Index 0 is column A, index 1 is B, etc.
+ * POSITIONAL MIRROR: the sheet is a positional, push-only mirror holding live
+ * data — admin-product-update.ts rebuilds each row from this list by key, so
+ * the array order IS the column order. Index 0 is column A, index 1 is B, etc.
+ *
+ * Changing the order (or inserting/removing a column) requires a one-time
+ * migration of the live sheet so existing rows realign:
+ *   - append-only widening → scripts/extend-fotosintesis-headers.mjs
+ *   - reorder existing columns → scripts/reorder-fotosintesis-price-columns.mjs
+ *     (uses moveDimension so each column's data + dropdowns travel with it).
  *
  * Consumers (must all read from this list):
  *   - api/admin-product-update.ts   (writes a row for target="fotosintesis")
  *   - convex/products.ts pushToSheet (builds the `fields` payload)
  *   - scripts/create-fotosintesis-sot.mjs   (seeds the header row on create)
  *   - scripts/extend-fotosintesis-headers.mjs (migrates a live sheet's headers)
+ *   - scripts/reorder-fotosintesis-price-columns.mjs (one-time live reorder)
  *
  * `key` matches the productInventory field name and the `fields` payload key
  * sent by convex/products.ts pushToSheet. Columns flagged `preserve: true`
@@ -24,7 +31,7 @@
  */
 
 export const FOTO_INVENTARIO_COLUMNS = [
-  // ── Legacy catalog block (A–U) — order frozen to match get-treasure-sheets ──
+  // ── Identity + descriptive block (A–K) ──
   { header: "Item", key: "item", id: true }, // A — natural key (itemId)
   { header: "FECHA INGRESO INVENTARIO", key: "fechaIngreso", preserve: true }, // B
   { header: "Nombre", key: "nombre" }, // C
@@ -36,39 +43,41 @@ export const FOTO_INVENTARIO_COLUMNS = [
   { header: "Medidas", key: "medidas" }, // I
   { header: "Medidas (valores)", key: "medidasValores" }, // J
   { header: "Categoría", key: "categoria" }, // K
-  { header: "Precio COP", key: "precioCOP" }, // L
-  { header: "UBICACIÓN", key: "ubicacion" }, // M
-  { header: "ASESOR", key: "asesor" }, // N
-  { header: "ESTADO", key: "estado" }, // O
-  { header: "QR", key: "qr" }, // P
-  { header: "Colección", key: "coleccion" }, // Q
-  { header: "CAJA", key: "caja" }, // R
-  { header: "preponderancia", key: "preponderancia" }, // S — % of lot (Fotosíntesis)
-  { header: "ASESOR ACTUAL", key: "asesorActual" }, // T
-  { header: "ESTADO ASESOR", key: "estadoAsesor" }, // U
-  // ── Fotosíntesis v2 extension (append-only, V onward) ──
-  { header: "loteId", key: "loteId" }, // V — owning lot
-  { header: "costoBaseCOP", key: "costoBaseCOP" }, // W — costoTotalCOP × preponderancia%
-  { header: "mostrarEnCatalogo", key: "mostrarEnCatalogo" }, // X
-  { header: "procedencia", key: "procedencia" }, // Y
-  { header: "observacion", key: "observacion" }, // Z
-  { header: "rendimientoEsperado", key: "rendimientoEsperado" }, // AA — bruto
-  { header: "cantidadEstimada", key: "cantidadEstimada" }, // AB — bruto
-  { header: "nivelRareza", key: "nivelRareza" }, // AC
-  { header: "calificacion", key: "calificacion" }, // AD
-  { header: "tipoEsmeralda", key: "tipoEsmeralda" }, // AE
-  { header: "subtipoForm", key: "subtipoForm" }, // AF — 9-subtype selector
-  { header: "tipoJoya", key: "tipoJoya" }, // AG
-  { header: "tecnicaJoya", key: "tecnicaJoya" }, // AH
-  { header: "minerales", key: "minerales" }, // AI — comma-joined
-  { header: "complementos", key: "complementos" }, // AJ — comma-joined
-  { header: "fotoUrl", key: "fotoUrl" }, // AK
-  { header: "certificadoUrl", key: "certificadoUrl" }, // AL
-  { header: "formulaGema", key: "formulaGema" }, // AM
-  { header: "formulaJoya", key: "formulaJoya" }, // AN
-  { header: "rangoDescuento", key: "rangoDescuento" }, // AO
-  { header: "precioEmbajadorCOP", key: "precioEmbajadorCOP" }, // AP — x1–x4 tier
-  { header: "precioConscienteCOP", key: "precioConscienteCOP" }, // AQ — x1–x4 tier
+  // ── Price block (L–O) — kept consecutive for at-a-glance pricing ──
+  { header: "Precio COP", key: "precioCOP" }, // L — base retail price
+  { header: "costoBaseCOP", key: "costoBaseCOP" }, // M — costoTotalCOP × preponderancia%
+  { header: "precioEmbajadorCOP", key: "precioEmbajadorCOP" }, // N — x1–x4 tier
+  { header: "precioConscienteCOP", key: "precioConscienteCOP" }, // O — x1–x4 tier
+  // ── Inventory / status descriptive fields (P–X) ──
+  { header: "UBICACIÓN", key: "ubicacion" }, // P
+  { header: "ASESOR", key: "asesor" }, // Q
+  { header: "ESTADO", key: "estado" }, // R
+  { header: "QR", key: "qr" }, // S
+  { header: "Colección", key: "coleccion" }, // T
+  { header: "CAJA", key: "caja" }, // U
+  { header: "preponderancia", key: "preponderancia" }, // V — % of lot (Fotosíntesis)
+  { header: "ASESOR ACTUAL", key: "asesorActual" }, // W
+  { header: "ESTADO ASESOR", key: "estadoAsesor" }, // X
+  // ── Fotosíntesis v2 extension (Y onward) ──
+  { header: "loteId", key: "loteId" }, // Y — owning lot
+  { header: "mostrarEnCatalogo", key: "mostrarEnCatalogo" }, // Z
+  { header: "procedencia", key: "procedencia" }, // AA
+  { header: "observacion", key: "observacion" }, // AB
+  { header: "rendimientoEsperado", key: "rendimientoEsperado" }, // AC — bruto
+  { header: "cantidadEstimada", key: "cantidadEstimada" }, // AD — bruto
+  { header: "nivelRareza", key: "nivelRareza" }, // AE
+  { header: "calificacion", key: "calificacion" }, // AF
+  { header: "tipoEsmeralda", key: "tipoEsmeralda" }, // AG
+  { header: "subtipoForm", key: "subtipoForm" }, // AH — 9-subtype selector
+  { header: "tipoJoya", key: "tipoJoya" }, // AI
+  { header: "tecnicaJoya", key: "tecnicaJoya" }, // AJ
+  { header: "minerales", key: "minerales" }, // AK — comma-joined
+  { header: "complementos", key: "complementos" }, // AL — comma-joined
+  { header: "fotoUrl", key: "fotoUrl" }, // AM
+  { header: "certificadoUrl", key: "certificadoUrl" }, // AN
+  { header: "formulaGema", key: "formulaGema" }, // AO
+  { header: "formulaJoya", key: "formulaJoya" }, // AP
+  { header: "rangoDescuento", key: "rangoDescuento" }, // AQ
 ];
 
 /** Ordered header labels (row 1 of the Inventario tab). */
