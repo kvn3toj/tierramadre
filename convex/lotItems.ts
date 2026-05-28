@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 import { bumpInventoryTotal } from "./products";
+import { preponderanciaSum, balancesTo100 } from "./_lib/lotMath";
 
 const tipoItemValidator = v.union(
   v.literal("gema"),
@@ -753,19 +754,39 @@ export const updateMedia = mutation({
 });
 
 export const remove = mutation({
-  args: { lotItemId: v.id("lotItems") },
-  handler: async (ctx, { lotItemId }) => {
+  args: { lotItemId: v.id("lotItems"), editorEmail: v.optional(v.string()) },
+  handler: async (ctx, { lotItemId, editorEmail }) => {
     const item = await ctx.db.get(lotItemId);
-    if (!item) return { removed: false };
+    if (!item) return { removed: false as const };
     // Item removal is allowed in any lot estado — operators may need to
     // pull a mis-captured stone out of a published lot. Sales referencing
     // the productInventory row stay safe because we orphan that row
     // (see below) rather than deleting it.
+    const lot = await ctx.db
+      .query("lots")
+      .withIndex("by_loteId", (q) => q.eq("loteId", item.loteId))
+      .first();
+
+    // BR-2: after removing this item the remaining siblings must still sum to
+    // 100% on a closed/published lot. Compute the post-removal sum BEFORE the
+    // delete so we can warn the operator — previously this invariant broke
+    // silently with no signal. (ISO-audit C7.)
+    const siblings = await ctx.db
+      .query("lotItems")
+      .withIndex("by_loteId", (q) => q.eq("loteId", item.loteId))
+      .collect();
+    const sumAfter = preponderanciaSum(
+      siblings.filter((s) => s._id !== lotItemId),
+    );
+    const balances = balancesTo100(sumAfter);
+
     await ctx.db.delete(lotItemId);
-    // We leave productInventory row in place — the user may want to
-    // re-link it to a new lot, and deleting the row would cascade
-    // problems with sales referencing it. Mark the orphan optional
-    // fields as undefined so the audit script can spot it.
+    // We leave the productInventory row in place — the user may want to
+    // re-link it to a new lot, and deleting the row would cascade problems
+    // with sales referencing it. Orphan it by clearing the lot-derived fields.
+    // We deliberately do NOT push this orphaning to Sheets (pushToSheet routes
+    // by loteId, which is now cleared → it would misroute to the legacy tab);
+    // this matches lots.cancel's orphan path.
     const product = await ctx.db
       .query("productInventory")
       .withIndex("by_itemId", (q) => q.eq("itemId", item.itemId))
@@ -776,7 +797,39 @@ export const remove = mutation({
         preponderancia: undefined,
         costoBaseCOP: undefined,
       });
+      // Audit row so the removal is traceable in the item's history — the old
+      // remove left no record at all. (ISO-audit C7.) Stays "pending" because
+      // the orphan intentionally isn't synced to Sheets (see above).
+      await ctx.db.insert("productEdits", {
+        itemId: product.itemId,
+        editorEmail: editorEmail ?? "fotosintesis-remove",
+        editedAt: new Date().toISOString(),
+        changes: [
+          { field: "loteId", before: item.loteId, after: null },
+          { field: "preponderancia", before: item.preponderancia, after: null },
+          {
+            field: "costoBaseCOP",
+            before: product.costoBaseCOP ?? null,
+            after: null,
+          },
+        ],
+        status: "pending" as const,
+      });
     }
-    return { removed: true };
+
+    const warning =
+      lot && lot.estado !== "abierto" && !balances
+        ? `El lote ${lot.loteId} (${lot.estado}) ya no suma 100% ` +
+          `(ahora ${sumAfter.toFixed(2)}%). Ajustá la preponderancia de los ` +
+          `ítems restantes.`
+        : null;
+
+    return {
+      removed: true as const,
+      lotEstado: lot?.estado ?? null,
+      sumAfter,
+      balances,
+      warning,
+    };
   },
 });
