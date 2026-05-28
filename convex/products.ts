@@ -178,10 +178,11 @@ export const publishedCatalog = query({
       .collect();
 
     // Project ONLY the fields the customer catalog consumes (see
-    // useFotosintesisCatalog.PublishedRow). Returning full docs to anonymous
-    // clients both wastes client bandwidth and leaks internal data —
-    // costoBaseCOP, precioEmbajadorCOP, precioPotencialCOP, sync metadata,
-    // rowIndex, etc. — none of which the public UI reads.
+    // useFotosintesisCatalog.PublishedRow). The public catalog price is the
+    // ambassador tier (precioEmbajadorCOP, sheet column N) — explicit policy
+    // choice; precioCOP (L) and precioConscienteCOP (O) are intentionally NOT
+    // projected so the public can't see them. costoBaseCOP, precioPotencialCOP,
+    // sync metadata and rowIndex stay internal.
     return rows
       .filter((row) => row.loteId !== undefined)
       .map((row) => ({
@@ -195,8 +196,7 @@ export const publishedCatalog = query({
         medidas: row.medidas,
         medidasValores: row.medidasValores,
         categoria: row.categoria,
-        precioCOP: row.precioCOP,
-        precioConscienteCOP: row.precioConscienteCOP,
+        precioEmbajadorCOP: row.precioEmbajadorCOP,
         ubicacion: row.ubicacion,
         asesor: row.asesor,
         estado: row.estado,
@@ -219,7 +219,8 @@ export const publishedCatalog = query({
  *   - Sublote group: subLotes.estado === "activa" && subLotes.mostrarComoLote
  *
  * Returns a uniform shape so the frontend renders both the same way. Per-item
- * price = precioCOP ?? precioConscienteCOP ?? 0; totalPriceCOP = sum. The
+ * price = precioEmbajadorCOP ?? 0 (matches publishedCatalog's policy of
+ * surfacing only the ambassador tier publicly); totalPriceCOP = sum. The
  * frontend emits one card per group and excludes member items from the
  * individual-item catalog (`publishedCatalog`).
  *
@@ -245,7 +246,7 @@ export const publishedGroups = query({
         itemId: p.itemId,
         nombre: p.nombre ?? "",
         fotoUrl: p.fotoUrl,
-        precioCOP: p.precioCOP ?? p.precioConscienteCOP ?? 0,
+        precioCOP: p.precioEmbajadorCOP ?? 0,
         color: p.color,
         calidad: p.calidad,
         peso: p.peso,

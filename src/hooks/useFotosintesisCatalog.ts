@@ -43,8 +43,7 @@ interface PublishedRow {
   medidas?: string;
   medidasValores?: string;
   categoria?: string;
-  precioCOP?: number;
-  precioConscienteCOP?: number;
+  precioEmbajadorCOP?: number;
   ubicacion?: string;
   asesor?: string;
   estado?: string;
@@ -92,9 +91,11 @@ function mapRowToTreasureItem(row: PublishedRow): TreasureItem {
     row.peso,
     row.categoria,
   );
-  // Catalog price: explicit público price if set during capture, else the
-  // "consciente" (retail) tier, else 0 so the item still renders.
-  const precioCOP = row.precioCOP ?? row.precioConscienteCOP ?? 0;
+  // Catalog price: the ambassador tier (Sheets column N). By policy the
+  // public catalog never shows the precioCOP (L) or precioConscienteCOP (O)
+  // tiers — those are scrubbed in publishedCatalog. Items without N render
+  // at 0; set precioEmbajadorCOP to give them a visible price.
+  const precioCOP = row.precioEmbajadorCOP ?? 0;
 
   return {
     item: parseInt(row.itemId, 10),
