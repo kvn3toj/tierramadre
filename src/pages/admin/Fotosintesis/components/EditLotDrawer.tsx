@@ -308,7 +308,7 @@ export function EditLotDrawer({
           >
             {editable
               ? "Datos contables del encabezado. Sincroniza a Sheets al guardar."
-              : "Lote cerrado — no se pueden editar los datos hasta reabrirlo."}
+              : "Lote cerrado: el encabezado contable queda fijo. Corregí cada ítem desde “Editar ítem”; para cambiar el costo del lote, escribí a soporte."}
           </Box>
         </Box>
         <Box

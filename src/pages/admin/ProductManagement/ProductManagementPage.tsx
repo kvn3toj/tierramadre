@@ -766,7 +766,17 @@ export default function ProductManagementPage() {
             `${result.missingCount} no encontrada${result.missingCount === 1 ? "" : "s"}`,
           );
         }
-        notify(parts.join(" · "), "success");
+        // C2 — sale-owned items can't be freed via a bulk estado flip; surface
+        // the skip instead of silently dropping it.
+        if (result.blockedCount > 0) {
+          parts.push(
+            `${result.blockedCount} en venta activa (cancelá la venta para liberar)`,
+          );
+        }
+        notify(
+          parts.join(" · "),
+          result.blockedCount > 0 ? "warning" : "success",
+        );
         clearSelection();
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Error desconocido";
