@@ -18,7 +18,6 @@ import type { Id } from "../../../../../convex/_generated/dataModel";
 import { FieldLabel } from "./FieldLabel";
 import { GemaFields, EMPTY_GEMA_DRAFT, type GemaDraft } from "./GemaFields";
 import { JoyaFields, EMPTY_JOYA_DRAFT, type JoyaDraft } from "./JoyaFields";
-import { BrutoFields, EMPTY_BRUTO_DRAFT, type BrutoDraft } from "./BrutoFields";
 import {
   InsumoFields,
   EMPTY_INSUMO_DRAFT,
@@ -34,8 +33,6 @@ import {
   gemaPatchFromDraft,
   joyaDraftFromProduct,
   joyaPatchFromDraft,
-  brutoDraftFromProduct,
-  brutoPatchFromDraft,
   insumoDraftFromProduct,
   insumoPatchFromDraft,
   tierPricePatch,
@@ -52,7 +49,6 @@ import { itemEstadoCopy, type LotEstado } from "../utils/itemEstadoCopy";
 const TIPO_LABEL: Record<EditableTipo, string> = {
   gema: "Gema",
   joya: "Joya",
-  bruto: "Bruto",
   insumo: "Insumo",
 };
 
@@ -89,7 +85,9 @@ interface ProductInventoryRow {
   tecnicaJoya?: string;
   minerales?: string[];
   complementos?: string[];
-  // Bruto-specific
+  // Legacy bruto-only metadata. Rough stones now edit as gemas (see
+  // inferItemTipo), so these are no longer surfaced; they're kept on the row so
+  // inferItemTipo can read them and the gema patch leaves them untouched.
   cantidadEstimada?: number;
   rendimientoEsperado?: number;
   fotoUrl?: string;
@@ -198,13 +196,6 @@ export function EditItemDrawer({
         preponderancia: currentPreponderancia,
       }) as JoyaDraft,
   );
-  const [brutoDraft, setBrutoDraft] = useState<BrutoDraft>(
-    () =>
-      ({
-        ...EMPTY_BRUTO_DRAFT,
-        preponderancia: currentPreponderancia,
-      }) as BrutoDraft,
-  );
   const [insumoDraft, setInsumoDraft] = useState<InsumoDraft>(
     () =>
       ({
@@ -270,20 +261,13 @@ export function EditItemDrawer({
     if (hydratedKeyRef.current === itemId) return;
     hydratedKeyRef.current = itemId;
     const t = inferItemTipo(product);
-    let seededActive: GemaDraft | JoyaDraft | BrutoDraft | InsumoDraft;
+    let seededActive: GemaDraft | JoyaDraft | InsumoDraft;
     if (t === "joya") {
       const d = {
         ...joyaDraftFromProduct(product),
         preponderancia: currentPreponderancia,
       };
       setJoyaDraft(d);
-      seededActive = d;
-    } else if (t === "bruto") {
-      const d = {
-        ...brutoDraftFromProduct(product),
-        preponderancia: currentPreponderancia,
-      };
-      setBrutoDraft(d);
       seededActive = d;
     } else if (t === "insumo") {
       const d = {
@@ -355,14 +339,8 @@ export function EditItemDrawer({
 
   // The active draft drives the shared preponderancia + name validation,
   // regardless of which sub-form is rendered.
-  const activeDraft: GemaDraft | JoyaDraft | BrutoDraft | InsumoDraft =
-    tipo === "joya"
-      ? joyaDraft
-      : tipo === "bruto"
-        ? brutoDraft
-        : tipo === "insumo"
-          ? insumoDraft
-          : draft;
+  const activeDraft: GemaDraft | JoyaDraft | InsumoDraft =
+    tipo === "joya" ? joyaDraft : tipo === "insumo" ? insumoDraft : draft;
   const activeNombre = activeDraft.nombre;
   const activePreponderancia = activeDraft.preponderancia;
 
@@ -467,15 +445,13 @@ export function EditItemDrawer({
         const patch: Record<string, unknown> =
           tipo === "joya"
             ? joyaPatchFromDraft(joyaDraft, mostrarEnCatalogo)
-            : tipo === "bruto"
-              ? brutoPatchFromDraft(brutoDraft, observacion, mostrarEnCatalogo)
-              : tipo === "insumo"
-                ? insumoPatchFromDraft(
-                    insumoDraft,
-                    observacion,
-                    mostrarEnCatalogo,
-                  )
-                : gemaPatchFromDraft(draft, observacion, mostrarEnCatalogo);
+            : tipo === "insumo"
+              ? insumoPatchFromDraft(
+                  insumoDraft,
+                  observacion,
+                  mostrarEnCatalogo,
+                )
+              : gemaPatchFromDraft(draft, observacion, mostrarEnCatalogo);
         // F2 — fold in the catalog tiers (precioEmbajadorCOP /
         // precioConscienteCOP). tierPricePatch omits blank tiers so a no-op
         // never clears a stored price; insumos never expose the editors and
@@ -817,17 +793,6 @@ export function EditItemDrawer({
                 value={joyaDraft}
                 onChange={(patch) =>
                   setJoyaDraft((prev) => ({ ...prev, ...patch }))
-                }
-                lotCostoTotalCOP={lotCostoTotalCOP}
-                preponderanciaHelper={prepHelper?.text}
-                preponderanciaHelperAlert={prepHelper?.alert}
-                disabled={!editable}
-              />
-            ) : tipo === "bruto" ? (
-              <BrutoFields
-                value={brutoDraft}
-                onChange={(patch) =>
-                  setBrutoDraft((prev) => ({ ...prev, ...patch }))
                 }
                 lotCostoTotalCOP={lotCostoTotalCOP}
                 preponderanciaHelper={prepHelper?.text}
