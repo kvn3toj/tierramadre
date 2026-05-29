@@ -1,4 +1,5 @@
 import { Box } from "@mui/material";
+import { Pencil } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../../design-system";
 
 export interface TicketMeta {
@@ -32,6 +33,16 @@ interface TicketHeaderProps {
   rightSlot?: React.ReactNode;
   /** Variant for missing-provider / error → ID renders in red. */
   alert?: boolean;
+  /**
+   * When provided, renders a discreet "Editar" affordance in the header's
+   * right slot — the natural place to edit the ticket's main data. Used by the
+   * lot pages to surface EditLotDrawer next to the proveedor/costo/peso meta.
+   */
+  onEdit?: () => void;
+  /** Accessible label + tooltip for the edit affordance. */
+  editLabel?: string;
+  /** Greys out the edit affordance (e.g. lot not abierto). */
+  editDisabled?: boolean;
 }
 
 /**
@@ -47,6 +58,9 @@ export function TicketHeader({
   progress,
   rightSlot,
   alert = false,
+  onEdit,
+  editLabel = "Editar lote",
+  editDisabled = false,
 }: TicketHeaderProps) {
   const foto = getFoto("light");
 
@@ -151,11 +165,13 @@ export function TicketHeader({
           ))}
         </Box>
 
-        {rightSlot ? (
+        {rightSlot || onEdit ? (
           <Box
             sx={{
               display: "flex",
               alignItems: { xs: "stretch", md: "end" },
+              justifyContent: { xs: "flex-start", md: "flex-end" },
+              gap: "10px",
               // Horizontal scroll on mobile so the step pill row never
               // clips at the right edge — fits the "stepper as scroller"
               // QA recommendation.
@@ -167,6 +183,45 @@ export function TicketHeader({
             }}
           >
             {rightSlot}
+            {onEdit ? (
+              <Box
+                component="button"
+                type="button"
+                onClick={onEdit}
+                disabled={editDisabled}
+                aria-label={editLabel}
+                title={editLabel}
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  flexShrink: 0,
+                  alignSelf: { xs: "flex-start", md: "center" },
+                  border: `1px solid ${foto.surfaces.rule}`,
+                  background: foto.surfaces.canvas,
+                  color: editDisabled ? foto.ink.mute : foto.ink.secondary,
+                  borderRadius: "8px",
+                  padding: "7px 12px",
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  letterSpacing: "-0.01em",
+                  cursor: editDisabled ? "not-allowed" : "pointer",
+                  whiteSpace: "nowrap",
+                  transition:
+                    "background 120ms ease, color 120ms ease, border-color 120ms ease",
+                  "&:hover": editDisabled
+                    ? undefined
+                    : {
+                        background: foto.surfaces.inset,
+                        color: foto.ink.primary,
+                        borderColor: foto.surfaces.edgeStrong,
+                      },
+                }}
+              >
+                <Pencil size={13} strokeWidth={1.8} />
+                Editar
+              </Box>
+            ) : null}
           </Box>
         ) : null}
       </Box>

@@ -27,9 +27,10 @@
  *   Spacing — contentMaxWidth 1240, centered with 16px gutter on small.
  */
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { Box, Typography, Skeleton } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { useSearchParams } from "react-router-dom";
 
 import { getAtelier, getFoto } from "../../../design-system";
 import {
@@ -269,6 +270,29 @@ export default function ProductManagementPage() {
     convexApi.products.list,
     convexReady ? { estado: filterToEstado(filter) ?? undefined } : "skip",
   );
+
+  // Deep-link: /admin/products?item=<itemId> opens the Bandeja inspector for
+  // that piece — used by the Fotosíntesis "actividad reciente" feed. Applied
+  // once per distinct param (ref-guarded) so it never overrides the operator's
+  // later row clicks, then stripped from the URL.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const appliedItemParamRef = useRef<string | null>(null);
+  useEffect(() => {
+    const itemParam = searchParams.get("item");
+    if (!itemParam || !products) return;
+    if (appliedItemParamRef.current === itemParam) return;
+    if (!products.some((p) => p.itemId === itemParam)) return;
+    appliedItemParamRef.current = itemParam;
+    setSelectedBandejaId(itemParam);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("item");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [searchParams, products, setSearchParams]);
 
   const stats = useConvexQuery(
     convexApi.products.syncStats,

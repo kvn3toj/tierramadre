@@ -21,7 +21,6 @@ import { TicketHeader } from "./components/TicketHeader";
 import { FieldLabel } from "./components/FieldLabel";
 import { PriceMultiplierField } from "./components/PriceMultiplierField";
 import { PhotoDropzone, type DropzonePhoto } from "./components/PhotoDropzone";
-import { EditItemDrawer } from "./components/EditItemDrawer";
 import { EditLotDrawer } from "./components/EditLotDrawer";
 import ConfirmDialog from "../../../components/shared/ConfirmDialog";
 import { uploadFotosintesisImages } from "./utils/uploadItemMedia";
@@ -139,10 +138,6 @@ export default function FotosintesisLoteResumenPage() {
   // Catalog grouping: hero photo + "show as one card" toggle.
   const [heroPhoto, setHeroPhoto] = useState<DropzonePhoto[]>([]);
   const [mostrarComoLote, setMostrarComoLote] = useState(false);
-  // Per-item editor (photos editable in any estado; other fields read-only
-  // once the lot is closed). Lets the operator fix item photos after finishing.
-  const [editingLotItemId, setEditingLotItemId] =
-    useState<Id<"lotItems"> | null>(null);
   const [pricingByItemId, setPricingByItemId] = useState<
     Record<
       string,
@@ -413,6 +408,10 @@ export default function FotosintesisLoteResumenPage() {
           { label: "Preponderancia", value: `${prepSum.toFixed(1)}%` },
           { label: "Costo", value: formatCOP(lot.costoTotalCOP) },
         ]}
+        onEdit={
+          lot.estado === "abierto" ? () => setEditLotOpen(true) : undefined
+        }
+        editLabel="Editar encabezado del lote"
       />
 
       <Box
@@ -703,7 +702,9 @@ export default function FotosintesisLoteResumenPage() {
                         component="button"
                         type="button"
                         onClick={() =>
-                          setEditingLotItemId(li._id as Id<"lotItems">)
+                          navigate(
+                            `/admin/fotosintesis/lots/${loteId}/items/${li._id}/edit`,
+                          )
                         }
                         sx={{
                           display: "inline-flex",
@@ -1037,37 +1038,9 @@ export default function FotosintesisLoteResumenPage() {
         onCancel={() => setReopenDialogOpen(false)}
       />
 
-      {/* Per-item editor — photos editable even on a closed/published lot. */}
-      {(() => {
-        const editingItem = (lotItems ?? []).find(
-          (it) => it._id === editingLotItemId,
-        );
-        if (!editingItem) return null;
-        const editingIndex = (lotItems ?? []).findIndex(
-          (it) => it._id === editingItem._id,
-        );
-        const siblingSum = (lotItems ?? [])
-          .filter((it) => it._id !== editingItem._id)
-          .reduce((s, it) => s + it.preponderancia, 0);
-        return (
-          <EditItemDrawer
-            open
-            onClose={() => setEditingLotItemId(null)}
-            itemId={editingItem.itemId}
-            loteId={loteId}
-            lotItemId={editingItem._id as Id<"lotItems">}
-            currentPreponderancia={editingItem.preponderancia}
-            lotCostoTotalCOP={lot.costoTotalCOP}
-            siblingPreponderanciaSum={siblingSum}
-            ticketLabel={`${loteId} · ${String(editingIndex + 1).padStart(3, "0")}`}
-            lotEstado={lot.estado}
-            // All lot estados are editable from here — server-side
-            // mutations no longer gate by estado either. See
-            // `lotItems.updateGemaFields` / `updatePreponderancia` / `remove`.
-            editable
-          />
-        );
-      })()}
+      {/* Per-item editing now lives on a dedicated page
+          (/admin/fotosintesis/lots/:loteId/items/:lotItemId/edit) — see the
+          "Editar ítem" button above, which navigates there. */}
     </Box>
   );
 }

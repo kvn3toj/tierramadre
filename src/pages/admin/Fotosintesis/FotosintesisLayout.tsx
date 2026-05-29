@@ -65,6 +65,12 @@ export default function FotosintesisLayout() {
       return [base, { label: "Lotes" }];
     }
     if (path.startsWith("/admin/fotosintesis/lots/")) {
+      if (path.endsWith("/edit")) {
+        return [base, { label: "Editar ítem" }];
+      }
+      if (path.endsWith("/sublotes")) {
+        return [base, { label: "Sublotes" }];
+      }
       const isClose = path.endsWith("/close");
       return [base, { label: isClose ? "Cerrar lote" : "Captura de lote" }];
     }

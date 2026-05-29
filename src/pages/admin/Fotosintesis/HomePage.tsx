@@ -884,18 +884,48 @@ export default function FotosintesisHomePage() {
               }
               return top.map((it, idx) => {
                 const isLast = idx === top.length - 1;
+                // Click target: sales open their detail ticket; item edits open
+                // the inventory inspector deep-linked to that piece.
+                const to =
+                  it.kind === "sale" && it.saleId
+                    ? `/admin/fotosintesis/sales/${it.saleId}`
+                    : it.kind === "edit" && it.itemId
+                      ? `/admin/products?item=${encodeURIComponent(it.itemId)}`
+                      : "/admin/fotosintesis";
                 return (
                   <Box
                     key={`${it.kind}-${idx}-${it.ts}`}
+                    component={Link}
+                    to={to}
+                    aria-label={
+                      it.kind === "sale"
+                        ? `Ver venta ${it.saleId}`
+                        : `Ver ítem ${it.itemId}`
+                    }
                     sx={{
                       display: "grid",
                       gridTemplateColumns: "auto 1fr auto",
                       alignItems: "center",
                       gap: "12px",
-                      padding: "11px 0",
+                      padding: "11px 8px",
+                      marginX: "-8px",
+                      borderRadius: "8px",
+                      textDecoration: "none",
+                      color: "inherit",
+                      cursor: "pointer",
                       borderBottom: isLast
                         ? "none"
                         : `1px solid ${foto.surfaces.edge}`,
+                      transition: "background 120ms ease",
+                      "&:hover": { background: foto.surfaces.inset },
+                      "& .activity-go": {
+                        opacity: 0,
+                        transition: "opacity 120ms ease, transform 120ms ease",
+                      },
+                      "&:hover .activity-go": {
+                        opacity: 1,
+                        transform: "translateX(2px)",
+                      },
                     }}
                   >
                     <Box
@@ -972,13 +1002,33 @@ export default function FotosintesisHomePage() {
                     </Box>
                     <Box
                       sx={{
-                        ...monoSx,
-                        fontSize: "10.5px",
-                        color: foto.ink.tertiary,
-                        whiteSpace: "nowrap",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "flex-end",
+                        gap: "6px",
                       }}
                     >
-                      {fmtRelative(new Date(it.ts).toISOString())}
+                      <Box
+                        sx={{
+                          ...monoSx,
+                          fontSize: "10.5px",
+                          color: foto.ink.tertiary,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {fmtRelative(new Date(it.ts).toISOString())}
+                      </Box>
+                      <Box
+                        className="activity-go"
+                        component="span"
+                        aria-hidden
+                        sx={{
+                          display: "inline-flex",
+                          color: foto.ink.tertiary,
+                        }}
+                      >
+                        <ArrowRight size={13} strokeWidth={1.8} />
+                      </Box>
                     </Box>
                   </Box>
                 );
