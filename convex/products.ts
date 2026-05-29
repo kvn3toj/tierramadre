@@ -1425,7 +1425,7 @@ export async function bumpInventoryTotal(ctx: MutationCtx, n: number) {
 }
 
 /** Stamp the singleton's `lastPull` once per pull (NOT once per row). */
-async function setInventoryLastPull(ctx: MutationCtx, lastPull: string) {
+export async function setInventoryLastPull(ctx: MutationCtx, lastPull: string) {
   const stats = await ensureInventoryStats(ctx);
   await ctx.db.patch(stats._id, { lastPull });
 }

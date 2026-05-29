@@ -10,14 +10,15 @@
  * data — admin-product-update.ts rebuilds each row from this list by key, so
  * the array order IS the column order. Index 0 is column A, index 1 is B, etc.
  *
- * ⚠ PUSH-ONLY for the Fotosíntesis-v2 columns (everything past column X /
- * "ESTADO ASESOR"): convex/products.ts pushToSheet WRITES every column in this
- * list, but the pull validators (_upsertFromSheet / _upsertManyFromSheet) only
- * mirror the legacy A–X set back into Convex. So a hand-edit to a v2 column on
- * the sheet (precioEmbajadorCOP, precioConscienteCOP, preponderancia, loteId,
- * mostrarEnCatalogo, the form fields…) will NOT sync back — Convex is the
- * source of truth for those. Edit them through the admin UI, not the sheet.
- * (Audit F6. If two-way editing is ever needed, extend both pull validators.)
+ * TWO-WAY EDITING (delta sync): convex/products.ts pushToSheet WRITES every
+ * column in this list. The reverse direction (Sheet → Convex) is handled by the
+ * bound Apps Script + convex/fotoSync.ts: an edit is captured per-cell and
+ * synced back, restricted to the WRITABLE allowlist in convex/_lib/sheetPullMaps.ts.
+ * That allowlist intentionally EXCLUDES the derived columns `costoBaseCOP` (M)
+ * and `preponderancia` (V) — a sheet edit must never overwrite a figure Convex
+ * computes — and treats `loteId` (Y) as a FLAG field (the mirror is updated but
+ * lot membership is reconciled in the app). Everything else in A–AQ does sync
+ * back. (Audit F6, superseded by the delta sync.)
  *
  * Changing the order (or inserting/removing a column) requires a one-time
  * migration of the live sheet so existing rows realign:
