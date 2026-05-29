@@ -348,13 +348,95 @@ export default defineSchema({
     asesorId: v.optional(v.string()),
     /** See providers.pendingPreviousIdValue — same rename-safety mechanism. */
     pendingPreviousIdValue: v.optional(v.string()),
+
+    // ─── GHL commerce integration (Áreas 2 & 4) ──────────────────────
+    // Additive + all optional so existing Sheets-mirrored rows validate.
+    // The GHL bot / web checkout upsert these. `ghlContactId` is the sync key
+    // to the GoHighLevel contact. `leadScore` is GHL-owned (never written from
+    // here — golden rule #6, one writer per field); `totalCompradoCOP` is
+    // Convex-owned and incremented when a sale is confirmed/paid.
+    ghlContactId: v.optional(v.string()),
+    ambassadorId: v.optional(v.id("ambassadors")),
+    leadScore: v.optional(v.number()),
+    totalCompradoCOP: v.optional(v.number()),
+    ultimaCompraFecha: v.optional(v.string()),
+    tipoInteres: v.optional(v.string()),
+    presupuestoDeclaradoCOP: v.optional(v.number()),
+    canalOrigen: v.optional(v.string()),
+    instagramHandle: v.optional(v.string()),
+    ciudad: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
     ...syncFields,
   })
     .index("by_nit", ["nit"])
     .index("by_email", ["email"])
     .index("by_nombre", ["nombre"])
     .index("by_rowIndex", ["rowIndex"])
-    .index("by_syncStatus", ["syncStatus"]),
+    .index("by_syncStatus", ["syncStatus"])
+    // GHL webhook fan-out resolves a contact by its GoHighLevel id; the bot
+    // matches inbound leads by phone. Both are point lookups, so index them.
+    .index("by_ghlContactId", ["ghlContactId"])
+    .index("by_telefono", ["telefono"]),
+
+  // ─── GHL commerce · Ambassadors (asesores / embajadores) ─────────
+  //
+  // The referral + commission layer for the GoHighLevel funnel. An ambassador
+  // earns `comisionPercent` of every sale attributed to them (sales.ambassadorId,
+  // resolved from `ambassador_slug` at order time = first-touch, spec T4). `nivel`
+  // drives the default commission; `score` is recomputed by the `ambassador-scoring`
+  // cron. Convex-only (not a Sheets mirror).
+  ambassadors: defineTable({
+    slug: v.string(),
+    nombre: v.string(),
+    email: v.string(),
+    celular: v.optional(v.string()),
+    instagramHandle: v.optional(v.string()),
+    nivel: v.union(
+      v.literal("bronce"),
+      v.literal("plata"),
+      v.literal("oro"),
+      v.literal("diamante"),
+    ),
+    comisionPercent: v.number(),
+    score: v.number(),
+    status: v.union(
+      v.literal("invited"),
+      v.literal("active"),
+      v.literal("paused"),
+      v.literal("suspended"),
+      v.literal("archived"),
+    ),
+    referidoPor: v.optional(v.id("ambassadors")),
+    ghlContactId: v.optional(v.string()),
+    createdAt: v.string(),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_email", ["email"])
+    .index("by_status", ["status"]),
+
+  // ─── GHL commerce · Commissions ledger ───────────────────────────
+  //
+  // One row per attributed sale. `ghl.markOrderPaid` inserts it (via
+  // commissions.createFromOrder) when a sale flips to `confirmada` (= paid).
+  // Convex has no UNIQUE constraint, so createFromOrder queries `by_saleId`
+  // first and no-ops if a row exists — emulating the spec's UNIQUE(order_id)
+  // idempotency guard so a replayed MP webhook never double-pays (golden rule #4).
+  commissions: defineTable({
+    /** FK → sales.saleId (string natural key, mirrors sales.itemIds convention). */
+    saleId: v.string(),
+    ambassadorId: v.id("ambassadors"),
+    amountCOP: v.number(),
+    percentApplied: v.number(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("paid"),
+      v.literal("cancelled"),
+    ),
+    createdAt: v.string(),
+  })
+    .index("by_saleId", ["saleId"])
+    .index("by_ambassador", ["ambassadorId"]),
 
   sales: defineTable({
     /**
@@ -399,6 +481,28 @@ export default defineSchema({
     cancelledAt: v.optional(v.string()),
     cancelledBy: v.optional(v.string()),
     cancellationReason: v.optional(v.string()),
+
+    // ─── GHL commerce · Mercado Pago + ambassador attribution ────────
+    // Additive + optional so legacy Fotosíntesis sales validate untouched.
+    // A bot/web order is created `estado:"reservada"` (pending payment) and flips
+    // to `confirmada` (= paid) by the mp-webhook → ghl.markOrderPaid path. The
+    // `mp*` fields snapshot the Mercado Pago preference/payment; `external_reference`
+    // on the MP preference is this row's `saleId`.
+    ambassadorId: v.optional(v.id("ambassadors")),
+    mpPreferenceId: v.optional(v.string()),
+    mpPaymentId: v.optional(v.string()),
+    mpStatus: v.optional(v.string()),
+    paidAt: v.optional(v.string()),
+    promotionCode: v.optional(v.string()),
+    shippingAddress: v.optional(
+      v.object({
+        ciudad: v.optional(v.string()),
+        direccion: v.optional(v.string()),
+        codigoPostal: v.optional(v.string()),
+      }),
+    ),
+    /** Set true when the post-paid GHL fan-out failed; a retry cron drains these. */
+    pendingGhlSync: v.optional(v.boolean()),
     ...syncFields,
   })
     .index("by_saleId", ["saleId"])
