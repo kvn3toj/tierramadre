@@ -127,6 +127,16 @@ export function CreditoFields({
             fontVariantNumeric: "tabular-nums",
           }}
         />
+        <Box
+          sx={{
+            fontSize: 11,
+            color: foto.ink.tertiary,
+            marginTop: "4px",
+            lineHeight: 1.5,
+          }}
+        >
+          Solo calcula la cuota; aún no se guarda.
+        </Box>
       </Box>
       <Box
         sx={{

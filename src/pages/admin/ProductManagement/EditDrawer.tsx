@@ -32,6 +32,7 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { Box, ButtonBase, Drawer, InputBase, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { Link as RouterLink } from "react-router-dom";
 import { getAtelier, getFoto } from "../../../design-system";
 import {
   convexApi,
@@ -84,6 +85,13 @@ export interface EditDrawerProduct {
   coleccion?: string;
   caja?: string;
   estado: EstadoValue;
+  /**
+   * When set, the product belongs to a Fotosíntesis lote. The public catalog
+   * price is the precio embajador (col N), managed in Fotosíntesis; the
+   * "Precio COP" field below (col L) is only an internal/base reference.
+   * Drives the deep-link notice in the Precio section.
+   */
+  loteId?: string;
   syncStatus: "synced" | "pending" | "error";
   syncError?: string;
   lastPushedAt?: string;
@@ -640,6 +648,18 @@ export function EditDrawer({
               inputMode="numeric"
               prefix="$"
             />
+            {/* F8 — para piezas que pertenecen a un lote de Fotosíntesis, este
+                "Precio COP" (col L) es solo una referencia interna/base; el
+                precio público del catálogo (precio embajador, col N) se
+                gestiona en Fotosíntesis. El deep-link es el puente; aquí no se
+                editan los precios por nivel. */}
+            {!isCreate && product?.loteId && (
+              <LotePriceNotice
+                loteId={product.loteId}
+                atelier={atelier}
+                foto={foto}
+              />
+            )}
           </Section>
 
           {/* Phase G — create mode skips the Estado radio: new pieces
@@ -1930,6 +1950,85 @@ function LockBanner({
             {expiryText}
           </Box>
         </Typography>
+      </Box>
+    </Box>
+  );
+}
+
+/**
+ * LotePriceNotice — F8 bridge. Items belonging to a Fotosíntesis lote publish
+ * their public catalog price as the *precio embajador* (SOT col N), managed
+ * inside Fotosíntesis — not as the "Precio COP" field above (col L), which for
+ * lote items is only an internal/base reference. Editing "Precio COP" here
+ * would look successful but never move the price customers actually see, so
+ * this notice names that gap and deep-links to the lote resumen (the `/close`
+ * route, where the embajador/consciente prices are edited).
+ *
+ * Atelier-pure styling, echoing LockBanner: hairline border with an emerald
+ * left edge (informational bridge, not a status pip) and ledger meta type.
+ */
+function LotePriceNotice({
+  loteId,
+  atelier,
+  foto,
+}: {
+  loteId: string;
+  atelier: ReturnType<typeof getAtelier>;
+  foto: ReturnType<typeof getFoto>;
+}) {
+  return (
+    <Box
+      role="note"
+      sx={{
+        mt: "10px",
+        border: `1px solid ${foto.surfaces.edgeStrong}`,
+        borderLeft: `2px solid ${foto.accent.primary}`,
+        backgroundColor: foto.surfaces.inset,
+        borderRadius: "4px",
+        px: "14px",
+        py: "10px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+      }}
+    >
+      <Typography sx={{ ...atelier.type.label, color: atelier.ink.tertiary }}>
+        Esta pieza pertenece a un lote
+      </Typography>
+      <Typography sx={{ ...atelier.type.meta, color: atelier.ink.secondary }}>
+        El precio público del catálogo es el{" "}
+        <Box
+          component="span"
+          sx={{ fontWeight: 600, color: atelier.ink.primary }}
+        >
+          precio embajador
+        </Box>
+        , que se gestiona en Fotosíntesis. Este{" "}
+        <Box component="span" sx={{ fontWeight: 600 }}>
+          Precio COP
+        </Box>{" "}
+        es solo una referencia interna o de base y no cambia lo que ven los
+        clientes.
+      </Typography>
+      <Box
+        component={RouterLink}
+        to={`/admin/fotosintesis/lots/${loteId}/close`}
+        sx={{
+          ...atelier.type.label,
+          alignSelf: "flex-start",
+          color: foto.accent.primary,
+          textDecoration: "none",
+          fontWeight: 600,
+          mt: "2px",
+          "&:hover": { color: foto.accent.deep },
+          "&:focus-visible": {
+            outline: `2px solid ${foto.accent.primary}`,
+            outlineOffset: "2px",
+            borderRadius: "2px",
+          },
+        }}
+      >
+        Gestionar precio en Fotosíntesis →
       </Box>
     </Box>
   );
