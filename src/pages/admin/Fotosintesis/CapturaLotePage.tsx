@@ -204,6 +204,14 @@ const BASE_FIELDS_LABEL: Record<TipoItem, string> = {
 // these kinds: the rough-stone family (Piedra / Ganga / Macla / Canutillo) and
 // Gema all capture the same data via the Gema field set; Joya uses the Joya set;
 // Lote / Lote de joyas / Otros reuse the Joya surface as "lote".
+//
+// `bruto` is INERT here: since c8875ec no `SUBTIPO_OPTIONS` entry maps to it
+// (the rough-stone family resolves to `gema`), so `tipo` is never "bruto" at
+// runtime and every `tipo === "bruto"` branch below is unreachable legacy
+// scaffolding. It's retained only so the type still aligns with the bruto
+// payload builder kept for potential legacy-data migration; rough stones are
+// captured AND edited as gemas (see EditableTipo / inferItemTipo). Safe to
+// excise in a dedicated bruto-retirement pass.
 type TipoItem = "gema" | "bruto" | "joya" | "insumo" | "lote";
 
 // Operator-facing item types, mirroring the FOTOSÍNTESIS form's "TIPO" list.
