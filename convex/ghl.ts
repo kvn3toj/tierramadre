@@ -302,6 +302,7 @@ export const markOrderPaid = mutation({
       saleId,
       totalCOP: sale.totalCOP,
       ambassadorId: sale.ambassadorId ?? null,
+      clientId: sale.clientId,
       ghlContactId,
       clientPhone,
       clientEmail,
