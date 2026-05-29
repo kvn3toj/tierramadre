@@ -373,6 +373,27 @@ export const syncStats = query({
  * Save edits to a product. Patches the mirror immediately for optimistic UI,
  * inserts an audit entry, and schedules an action that pushes to Sheets.
  */
+/**
+ * C2 — sale-integrity guard. Returns the first non-cancelled sale that still
+ * owns `itemId`, or null. The canonical way to free a sold item is
+ * `sales.cancel` (which restores DISPONIBLE + writes an audit row on both
+ * sides); a manual estado flip via `saveEdit` / `saveEditMany` would bypass
+ * BR-6 and leave a phantom re-sellable item, so callers reject the change when
+ * this returns a sale. Sale cardinality in this internal tool is small, so a
+ * `by_estado` scan of the two open states is cheap.
+ */
+async function findOwningActiveSale(ctx: MutationCtx, itemId: string) {
+  for (const estado of ["confirmada", "reservada"] as const) {
+    const sales = await ctx.db
+      .query("sales")
+      .withIndex("by_estado", (q) => q.eq("estado", estado))
+      .collect();
+    const owning = sales.find((s) => s.itemIds.includes(itemId));
+    if (owning) return owning;
+  }
+  return null;
+}
+
 export const saveEdit = mutation({
   args: {
     itemId: v.string(),
@@ -412,6 +433,21 @@ export const saveEdit = mutation({
       .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
       .first();
     if (!existing) throw new Error(`Producto ${itemId} no está en el espejo`);
+
+    // C2 — sale-integrity guard: never move a sold item out of VENDIDA while a
+    // live (non-cancelled) sale still owns it. The canonical reversal is
+    // sales.cancel; a manual flip here would bypass BR-6 and leave a phantom
+    // re-sellable item.
+    if (patch.estado !== undefined && patch.estado !== "VENDIDA") {
+      const owningSale = await findOwningActiveSale(ctx, itemId);
+      if (owningSale) {
+        throw new Error(
+          `El ítem ${itemId} está vendido en la venta ${owningSale.saleId}. ` +
+            `Para liberarlo, cancelá esa venta primero (así el stock se ` +
+            `restaura y queda auditado).`,
+        );
+      }
+    }
 
     // Compute changes for the audit log (only fields that actually changed)
     const changes: Array<{
@@ -789,7 +825,26 @@ export const saveEditMany = mutation({
     let updatedCount = 0;
     let unchangedCount = 0;
     let missingCount = 0;
+    let blockedCount = 0;
     const editedAt = new Date().toISOString();
+
+    // C2 — when this bulk patch moves estado out of VENDIDA, pre-compute the
+    // set of itemIds still owned by a live sale so we can skip (not abort) them.
+    const guardEstadoChange =
+      patch.estado !== undefined && patch.estado !== "VENDIDA";
+    let saleOwnedItemIds: Set<string> | null = null;
+    if (guardEstadoChange) {
+      saleOwnedItemIds = new Set<string>();
+      for (const estado of ["confirmada", "reservada"] as const) {
+        const sales = await ctx.db
+          .query("sales")
+          .withIndex("by_estado", (q) => q.eq("estado", estado))
+          .collect();
+        for (const sale of sales) {
+          for (const id of sale.itemIds) saleOwnedItemIds.add(id);
+        }
+      }
+    }
 
     for (const itemId of itemIds) {
       const existing = await ctx.db
@@ -798,6 +853,12 @@ export const saveEditMany = mutation({
         .first();
       if (!existing) {
         missingCount++;
+        continue;
+      }
+
+      // C2 — never free a sale-owned item via a bulk estado flip.
+      if (saleOwnedItemIds && saleOwnedItemIds.has(itemId)) {
+        blockedCount++;
         continue;
       }
 
@@ -853,6 +914,7 @@ export const saveEditMany = mutation({
       updatedCount,
       unchangedCount,
       missingCount,
+      blockedCount,
     };
   },
 });

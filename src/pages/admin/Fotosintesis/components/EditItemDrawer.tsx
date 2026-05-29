@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { Box, Dialog, Switch } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { FileText, Trash2, X as XIcon } from "lucide-react";
+import { FileText, Lock, Trash2, X as XIcon } from "lucide-react";
 
 import { getFoto, fontFamilies } from "../../../../design-system";
 import {
@@ -10,6 +10,7 @@ import {
   convexApi,
 } from "../../../../lib/convex-safe";
 import { useNotification } from "../../../../contexts/NotificationContext";
+import { useProductLock } from "../../../../hooks/useProductLock";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 
 import { FieldLabel } from "./FieldLabel";
@@ -144,6 +145,17 @@ export function EditItemDrawer({
   );
   const updateMedia = useConvexMutation(convexApi.lotItems.updateMedia);
   const removeLotItem = useConvexMutation(convexApi.lotItems.remove);
+
+  // C3 — shared soft lock by itemId. If another admin (e.g. via the
+  // ProductManagement EditDrawer) currently holds this row, Save + Delete are
+  // disabled so we never clobber their edit. Same productLocks row, either side.
+  const { lockedByOther } = useProductLock(itemId, open);
+  const lockMinutesLeft = useMemo(() => {
+    if (!lockedByOther) return null;
+    const ms = Date.parse(lockedByOther.expiresAt);
+    if (!Number.isFinite(ms)) return null;
+    return Math.max(0, Math.ceil((ms - Date.now()) / 60000));
+  }, [lockedByOther]);
 
   // The drawer renders the sub-form that matches the item's kind. `tipo` is
   // inferred from the loaded product (stored `tipo` when present, else the
@@ -314,6 +326,7 @@ export function EditItemDrawer({
     !!product &&
     !saving &&
     !deleting &&
+    !lockedByOther &&
     (editable
       ? activeNombre.trim().length > 0 &&
         typeof activePreponderancia === "number" &&
@@ -404,7 +417,7 @@ export function EditItemDrawer({
   };
 
   const handleDelete = async () => {
-    if (!editable || deleting) return;
+    if (!editable || deleting || lockedByOther) return;
     if (!confirmDelete) {
       setConfirmDelete(true);
       return;
@@ -579,6 +592,43 @@ export function EditItemDrawer({
           gap: "20px",
         }}
       >
+        {lockedByOther ? (
+          <Box
+            role="status"
+            aria-live="polite"
+            sx={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "10px",
+              background: foto.surfaces.inset,
+              border: `1px solid ${foto.surfaces.rule}`,
+              borderLeft: `3px solid ${foto.status.sold}`,
+              borderRadius: "10px",
+              padding: "11px 13px",
+            }}
+          >
+            <Lock
+              size={15}
+              strokeWidth={2}
+              style={{ marginTop: 1, color: foto.status.sold, flexShrink: 0 }}
+            />
+            <Box
+              sx={{ fontSize: 12, color: foto.ink.secondary, lineHeight: 1.5 }}
+            >
+              <Box
+                component="span"
+                sx={{ fontWeight: 600, color: foto.ink.primary }}
+              >
+                {lockedByOther.holderName?.trim() || lockedByOther.holderEmail}
+              </Box>{" "}
+              está editando este ítem
+              {lockMinutesLeft != null
+                ? ` (su sesión expira en ${lockMinutesLeft} min)`
+                : ""}
+              . Guardado deshabilitado para no sobrescribir sus cambios.
+            </Box>
+          </Box>
+        ) : null}
         {product === undefined ? (
           <Box
             sx={{
@@ -842,8 +892,7 @@ export function EditItemDrawer({
           component="button"
           type="button"
           onClick={() => void handleDelete()}
-          disabled={!editable || deleting || !product}
-          aria-pressed={confirmDelete}
+          disabled={!editable || deleting || !product || !!lockedByOther}
           sx={{
             display: "inline-flex",
             alignItems: "center",
@@ -853,7 +902,10 @@ export function EditItemDrawer({
             fontWeight: 600,
             padding: "11px 14px",
             borderRadius: "9px",
-            cursor: editable && !deleting ? "pointer" : "not-allowed",
+            cursor:
+              editable && !deleting && !lockedByOther
+                ? "pointer"
+                : "not-allowed",
             background: confirmDelete
               ? foto.status.sold
               : alpha(foto.status.sold, 0.08),
@@ -862,13 +914,14 @@ export function EditItemDrawer({
               confirmDelete ? foto.status.sold : alpha(foto.status.sold, 0.32)
             }`,
             transition: "background 120ms ease, color 120ms ease",
-            opacity: editable ? 1 : 0.4,
-            "&:hover": editable
-              ? {
-                  background: foto.status.sold,
-                  color: foto.ink.inverse,
-                }
-              : undefined,
+            opacity: editable && !lockedByOther ? 1 : 0.4,
+            "&:hover":
+              editable && !lockedByOther
+                ? {
+                    background: foto.status.sold,
+                    color: foto.ink.inverse,
+                  }
+                : undefined,
           }}
         >
           <Trash2 size={13} strokeWidth={2} />

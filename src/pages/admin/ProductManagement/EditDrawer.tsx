@@ -36,10 +36,9 @@ import { getAtelier, getFoto } from "../../../design-system";
 import {
   convexApi,
   convexReady,
-  useConvexMutation,
   useConvexQuery,
 } from "../../../lib/convex-safe";
-import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
+import { useProductLock } from "../../../hooks/useProductLock";
 import { StatusPip, type EstadoValue } from "./StatusPip";
 // Phase G — create mode: typed payload for the "+ Nueva piedra" flow.
 import type { NewProductInput } from "../../../utils/createProduct-validate";
@@ -271,9 +270,7 @@ export function EditDrawer({
   const theme = useTheme();
   const atelier = getAtelier(theme.palette.mode);
   const foto = getFoto(theme.palette.mode === "dark" ? "dark" : "light");
-  const { user } = useGoogleAuth();
-  const claimLock = useConvexMutation(convexApi.products.claimLock);
-  const releaseLock = useConvexMutation(convexApi.products.releaseLock);
+  const { lockedByOther } = useProductLock(product?.itemId, open);
   const [draft, setDraft] = useState<DraftState>(() => toDraft(product));
   const [driveState, setDriveState] =
     useState<DriveFolderState>(EMPTY_DRIVE_STATE);
@@ -337,61 +334,10 @@ export function EditDrawer({
   }, [open, product?.itemId]);
 
   // ─── Soft lock ──────────────────────────────────────────────────────
-  // Claim a 5-min lock on drawer open; release on close. If the claim
-  // is rejected (another admin holds), we never release — that admin
-  // owns the row. The `claimedHere` closure flag covers the race where
-  // the claim resolves *after* the user already closed the drawer.
-  useEffect(() => {
-    if (!convexReady || !open || !product?.itemId || !user?.email) return;
-
-    const itemId = product.itemId;
-    const email = user.email;
-    const name = user.name;
-    let cancelled = false;
-    let claimedHere = false;
-
-    void claimLock({ itemId, holderEmail: email, holderName: name })
-      .then((result) => {
-        if (cancelled) {
-          if (result.ok) {
-            void releaseLock({ itemId, holderEmail: email }).catch(() => {});
-          }
-          return;
-        }
-        if (result.ok) {
-          claimedHere = true;
-        }
-      })
-      .catch(() => {
-        // Silent — the lockStatus subscription will surface the conflict
-      });
-
-    return () => {
-      cancelled = true;
-      if (claimedHere) {
-        void releaseLock({ itemId, holderEmail: email }).catch(() => {});
-        claimedHere = false;
-      }
-    };
-  }, [open, product?.itemId, user?.email, user?.name, claimLock, releaseLock]);
-
-  // Reactive lock state. Filters self out — only "someone else holds"
-  // matters for banner + Save gating.
-  const lockStatus = useConvexQuery(
-    convexApi.products.lockStatus,
-    convexReady && open && product?.itemId
-      ? { itemId: product.itemId }
-      : "skip",
-  ) as
-    | { holderEmail: string; holderName?: string; expiresAt: string }
-    | null
-    | undefined;
-
-  const lockedByOther = useMemo(() => {
-    if (!lockStatus || !user?.email) return null;
-    if (lockStatus.holderEmail === user.email) return null;
-    return lockStatus;
-  }, [lockStatus, user?.email]);
+  // shared with the Fotosíntesis EditItemDrawer via useProductLock (called
+  // above): both contend on the same productLocks row by itemId, so the two
+  // editors can't silently clobber each other. `lockedByOther` is non-null
+  // only when a DIFFERENT admin currently holds the lock.
 
   const patch = useMemo(() => diffDraft(draft, product), [draft, product]);
   const hasChanges = Object.keys(patch).length > 0;
