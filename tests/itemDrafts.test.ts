@@ -14,7 +14,6 @@ describe("inferItemTipo", () => {
   it("trusts an explicit stored tipo", () => {
     expect(inferItemTipo({ tipo: "gema" })).toBe("gema");
     expect(inferItemTipo({ tipo: "joya" })).toBe("joya");
-    expect(inferItemTipo({ tipo: "bruto" })).toBe("bruto");
     expect(inferItemTipo({ tipo: "insumo" })).toBe("insumo");
   });
 
@@ -22,13 +21,21 @@ describe("inferItemTipo", () => {
     expect(inferItemTipo({ tipo: "lote" })).toBe("joya");
   });
 
+  // c8875ec retired the standalone "Bruto" capture option and folded the
+  // rough-stone family (Piedra/Ganga/Macla/Canutillo) into the gema field set,
+  // so stones capture/require the full gem data. A legacy `tipo: "bruto"` row —
+  // and the bruto-only signal fields — now edit as a gema.
+  it("collapses a legacy bruto (rough stone) onto the gema field set", () => {
+    expect(inferItemTipo({ tipo: "bruto" })).toBe("gema");
+    expect(inferItemTipo({ cantidadEstimada: 80 })).toBe("gema");
+    expect(inferItemTipo({ rendimientoEsperado: 65 })).toBe("gema");
+  });
+
   it("classifies legacy rows by their populated fields", () => {
     expect(inferItemTipo({ tipoJoya: "Anillo" })).toBe("joya");
     expect(inferItemTipo({ tecnicaJoya: "Engaste" })).toBe("joya");
     expect(inferItemTipo({ minerales: ["Oro"] })).toBe("joya");
     expect(inferItemTipo({ complementos: ["Cadena"] })).toBe("joya");
-    expect(inferItemTipo({ cantidadEstimada: 80 })).toBe("bruto");
-    expect(inferItemTipo({ rendimientoEsperado: 65 })).toBe("bruto");
   });
 
   it("defaults a bare row to gema", () => {
@@ -38,7 +45,7 @@ describe("inferItemTipo", () => {
     );
   });
 
-  it("prefers joya when both joya and bruto signals exist", () => {
+  it("prefers joya when both joya and rough-stone signals exist", () => {
     expect(inferItemTipo({ tipoJoya: "Anillo", cantidadEstimada: 5 })).toBe(
       "joya",
     );
@@ -200,5 +207,41 @@ describe("insumo round-trip", () => {
       mostrarEnCatalogo: false,
       preponderancia: 100,
     });
+  });
+});
+
+describe("precioPublicoCOP zero-handling (F13)", () => {
+  const baseInsumo = {
+    nombre: "Lupa",
+    categoria: "Óptica",
+    cantidad: 1,
+    preponderancia: 100,
+  } as const;
+
+  it("omits a blank price (undefined) so a no-op edit never clears precioCOP", () => {
+    const patch = insumoPatchFromDraft(
+      { ...baseInsumo, precioPublicoCOP: "" } as never,
+      "",
+      false,
+    );
+    expect(patch.precioPublicoCOP).toBeUndefined();
+  });
+
+  it("keeps a literal 0 as a real price, not a clear sentinel", () => {
+    const patch = insumoPatchFromDraft(
+      { ...baseInsumo, precioPublicoCOP: 0 } as never,
+      "",
+      false,
+    );
+    expect(patch.precioPublicoCOP).toBe(0);
+  });
+
+  it("passes a numeric price through unchanged", () => {
+    const patch = insumoPatchFromDraft(
+      { ...baseInsumo, precioPublicoCOP: 250_000 } as never,
+      "",
+      false,
+    );
+    expect(patch.precioPublicoCOP).toBe(250_000);
   });
 });
