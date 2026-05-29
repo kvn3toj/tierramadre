@@ -125,8 +125,14 @@ export default function FotosintesisLayout() {
         open={spotlightOpen}
         onClose={closeSpotlight}
         scope={spotlightOptions.scope}
+        multiSelect={spotlightOptions.multiSelect}
+        selectedProducts={spotlightOptions.selectedProducts}
         onSelect={(product) => {
           spotlightOptions.onSelect?.(product);
+          closeSpotlight();
+        }}
+        onConfirm={(products) => {
+          spotlightOptions.onConfirm?.(products);
           closeSpotlight();
         }}
       />
