@@ -11,8 +11,15 @@ import type { JoyaDraft, PesoUnidad } from "../components/JoyaFields";
 
 type TipoItem = "gema" | "bruto" | "joya" | "insumo" | "lote";
 
-/** Item types the EditItemDrawer can render a dedicated sub-form for. */
-export type EditableTipo = "gema" | "joya" | "bruto" | "insumo";
+/**
+ * Item types the EditItemDrawer can render a dedicated sub-form for.
+ *
+ * `bruto` is intentionally absent: `c8875ec` retired the standalone "Bruto"
+ * capture option and folded the rough-stone family (Piedra / Ganga / Macla /
+ * Canutillo) into the Gema field set, so stones capture and edit the full gem
+ * data. Legacy `tipo: "bruto"` rows now resolve to `gema` (see inferItemTipo).
+ */
+export type EditableTipo = "gema" | "joya" | "insumo";
 
 interface SharedCreateFields {
   loteId: string;
@@ -26,6 +33,12 @@ interface SharedCreateFields {
   certificadoUrl?: string;
 }
 
+/**
+ * @deprecated Legacy. Since c8875ec the rough-stone family captures as `gema`
+ * (no capture path produces `tipo: "bruto"`), so this builder is no longer
+ * reached by the wizard. Retained only as reference / for potential legacy-data
+ * repair — do not wire it back into capture.
+ */
 export function buildBrutoPayload(
   loteId: string,
   bruto: BrutoDraft,
@@ -202,7 +215,11 @@ export function gemaDraftFromProduct(row: {
     procedencia: row.procedencia ?? "",
     preponderancia: "",
     precioPublicoCOP: row.precioCOP ?? "",
-    cantidad: row.cantidad ?? 1,
+    // Preserve "unset" rather than fabricating a 1. A legacy bruto (rough
+    // stone) carries no `cantidad`, and since stones now edit as gemas
+    // (inferItemTipo) this hydrate must not inject a piece-count the operator
+    // never entered — gemaPatchFromDraft omits a blank cantidad on save (F13).
+    cantidad: row.cantidad ?? "",
     tipoEsmeralda: (row.tipoEsmeralda ??
       row.categoria ??
       "") as GemaDraft["tipoEsmeralda"],
@@ -241,8 +258,13 @@ export function gemaPatchFromDraft(
       typeof draft.nivelRareza === "number" ? draft.nivelRareza : undefined,
     calificacion:
       typeof draft.calificacion === "number" ? draft.calificacion : undefined,
+    // F13 — blank → undefined (omitted: a no-op edit never clears precioCOP);
+    // a numeric value (including a literal 0) passes through unchanged. Matches
+    // the create builders + the embajador/consciente tier fields.
     precioPublicoCOP:
-      typeof draft.precioPublicoCOP === "number" ? draft.precioPublicoCOP : 0,
+      typeof draft.precioPublicoCOP === "number"
+        ? draft.precioPublicoCOP
+        : undefined,
     mostrarEnCatalogo,
     preponderancia: draft.preponderancia as number,
   };
@@ -254,6 +276,15 @@ export function gemaPatchFromDraft(
  * `tipo` directly; legacy items are classified by which type-specific fields
  * the wizard populated. The drawer uses this to render the matching sub-form
  * instead of always assuming a gema.
+ *
+ * Rough stones collapse onto the gema field set. `c8875ec` retired the
+ * standalone "Bruto" capture option and folded the whole rough-stone family
+ * (Piedra / Ganga / Macla / Canutillo) into the Gema field kind, so they
+ * capture/require the full gem data (color, calidad, corte, medidas, rareza…).
+ * To keep editing consistent with capture, a stored `tipo: "bruto"` — and the
+ * legacy bruto-only signal fields (cantidadEstimada / rendimientoEsperado) —
+ * now resolve to "gema" so the drawer renders GemaFields. The parcel-only
+ * fields are never cleared: the gema patch simply doesn't touch them.
  */
 export function inferItemTipo(row: {
   tipo?: string;
@@ -264,12 +295,7 @@ export function inferItemTipo(row: {
   cantidadEstimada?: number;
   rendimientoEsperado?: number;
 }): EditableTipo {
-  if (
-    row.tipo === "gema" ||
-    row.tipo === "joya" ||
-    row.tipo === "bruto" ||
-    row.tipo === "insumo"
-  ) {
+  if (row.tipo === "gema" || row.tipo === "joya" || row.tipo === "insumo") {
     return row.tipo;
   }
   // A "lote" (lote de joyas) reuses the joya payload shape, so it edits as one.
@@ -283,9 +309,8 @@ export function inferItemTipo(row: {
   ) {
     return "joya";
   }
-  if (row.cantidadEstimada != null || row.rendimientoEsperado != null) {
-    return "bruto";
-  }
+  // Everything else — bare rows and legacy brutos (stored `tipo: "bruto"` or a
+  // rough-stone signal field) — edits as a gema, matching the capture field set.
   return "gema";
 }
 
@@ -356,13 +381,24 @@ export function joyaPatchFromDraft(
     minerales: draft.minerales,
     complementos: draft.complementos,
     observacion: draft.descripcion,
+    // F13 — blank → undefined (omitted: a no-op edit never clears precioCOP);
+    // a numeric value (including a literal 0) passes through unchanged. Matches
+    // the create builders + the embajador/consciente tier fields.
     precioPublicoCOP:
-      typeof draft.precioPublicoCOP === "number" ? draft.precioPublicoCOP : 0,
+      typeof draft.precioPublicoCOP === "number"
+        ? draft.precioPublicoCOP
+        : undefined,
     mostrarEnCatalogo,
     preponderancia: draft.preponderancia as number,
   };
 }
 
+/**
+ * @deprecated Legacy. Rough stones now hydrate + edit through the gema sub-form
+ * (inferItemTipo collapses `bruto` → `gema`), so the EditItemDrawer no longer
+ * calls this. Kept (with its test) as a reference converter for the bruto data
+ * shape in case a legacy-data migration ever needs it.
+ */
 export function brutoDraftFromProduct(row: {
   nombre?: string;
   peso?: string;
@@ -382,6 +418,12 @@ export function brutoDraftFromProduct(row: {
   };
 }
 
+/**
+ * @deprecated Legacy. Rough stones now save through gemaPatchFromDraft (stones
+ * edit as gemas — see inferItemTipo), so the EditItemDrawer no longer calls
+ * this. Kept (with its test) as a reference for the bruto patch shape for a
+ * possible future legacy-data migration.
+ */
 export function brutoPatchFromDraft(
   draft: BrutoDraft,
   observacion: string,
@@ -400,8 +442,13 @@ export function brutoPatchFromDraft(
         ? draft.rendimientoEsperado
         : undefined,
     observacion,
+    // F13 — blank → undefined (omitted: a no-op edit never clears precioCOP);
+    // a numeric value (including a literal 0) passes through unchanged. Matches
+    // the create builders + the embajador/consciente tier fields.
     precioPublicoCOP:
-      typeof draft.precioPublicoCOP === "number" ? draft.precioPublicoCOP : 0,
+      typeof draft.precioPublicoCOP === "number"
+        ? draft.precioPublicoCOP
+        : undefined,
     mostrarEnCatalogo,
     preponderancia: draft.preponderancia as number,
   };
@@ -432,8 +479,13 @@ export function insumoPatchFromDraft(
     categoria: draft.categoria || undefined,
     cantidad: typeof draft.cantidad === "number" ? draft.cantidad : undefined,
     observacion,
+    // F13 — blank → undefined (omitted: a no-op edit never clears precioCOP);
+    // a numeric value (including a literal 0) passes through unchanged. Matches
+    // the create builders + the embajador/consciente tier fields.
     precioPublicoCOP:
-      typeof draft.precioPublicoCOP === "number" ? draft.precioPublicoCOP : 0,
+      typeof draft.precioPublicoCOP === "number"
+        ? draft.precioPublicoCOP
+        : undefined,
     mostrarEnCatalogo,
     preponderancia: draft.preponderancia as number,
   };
