@@ -243,14 +243,28 @@ export function BrutoFields({
         ) : null}
       </Box>
 
-      {/* Precio público — optional */}
+      {/* Precio base interno (sheet col L) — referencia, NO es el precio
+          público. El precio que ve el cliente es el embajador, editable en el
+          drawer. */}
       <Box>
         <FieldLabel
           htmlFor={precioPublicoId}
-          optional="opcional, se puede definir luego"
+          optional="interno, no es el precio público"
         >
-          Precio público sugerido (COP)
+          Precio base interno (COP)
         </FieldLabel>
+        <Box
+          sx={{
+            fontSize: 11,
+            color: foto.ink.tertiary,
+            marginTop: "-2px",
+            marginBottom: "8px",
+            lineHeight: 1.45,
+          }}
+        >
+          Referencia interna de costo/precio (columna L de la hoja). No se
+          publica en el catálogo: el precio que ve el público es el embajador.
+        </Box>
         <NumberInputWithCalc
           id={precioPublicoId}
           value={value.precioPublicoCOP}
@@ -266,7 +280,7 @@ export function BrutoFields({
           placeholder="0"
           step={1000}
           min={0}
-          ariaLabel="Precio público en COP"
+          ariaLabel="Precio base interno en COP"
           disabled={disabled}
         />
         <PricePerCaratHint

@@ -25,6 +25,7 @@ import { EditItemDrawer } from "./components/EditItemDrawer";
 import { EditLotDrawer } from "./components/EditLotDrawer";
 import ConfirmDialog from "../../../components/shared/ConfirmDialog";
 import { uploadFotosintesisImages } from "./utils/uploadItemMedia";
+import { buildItemPricingPatch } from "./utils/buildLotItemPayload";
 import { convertToProxyUrl } from "../../../utils/driveUrl";
 
 type PublishMode = "all" | "selective" | "reserve";
@@ -259,25 +260,29 @@ export default function FotosintesisLoteResumenPage() {
     });
   };
 
+  // Flush every item's panel pricing (precioEmbajadorCOP / precioConscienteCOP)
+  // and publish/reserva toggle to Convex. Shared by all three submit handlers so
+  // the per-item edits persist in EVERY lot estado — previously only handleClose
+  // (estado === "abierto") ran this loop, so editing the public price on an
+  // already cerrado/publicado lot silently dropped the change (F1).
+  const flushItemPricing = async () => {
+    if (!lotItems) return;
+    for (const li of lotItems) {
+      await updateGemaFields({
+        lotItemId: li._id as Id<"lotItems">,
+        patch: buildItemPricingPatch(
+          pubByItemId[li.itemId] ?? false,
+          pricingByItemId[li.itemId],
+        ),
+      });
+    }
+  };
+
   const handleClose = async () => {
     if (!lot || !lotItems || !validationsOk) return;
     setClosing(true);
     try {
-      for (const li of lotItems) {
-        const pricing = pricingByItemId[li.itemId];
-        await updateGemaFields({
-          lotItemId: li._id as Id<"lotItems">,
-          patch: {
-            mostrarEnCatalogo: pubByItemId[li.itemId] ?? false,
-            ...(typeof pricing?.precioEmbajadorCOP === "number"
-              ? { precioEmbajadorCOP: pricing.precioEmbajadorCOP }
-              : {}),
-            ...(typeof pricing?.precioConscienteCOP === "number"
-              ? { precioConscienteCOP: pricing.precioConscienteCOP }
-              : {}),
-          },
-        });
-      }
+      await flushItemPricing();
 
       await persistLoteDisplay(lot._id as Id<"lots">);
 
@@ -310,6 +315,10 @@ export default function FotosintesisLoteResumenPage() {
     if (!lot || !isClosed) return;
     setClosing(true);
     try {
+      // Persist any per-item price edits BEFORE publishing (F1). publishLot
+      // then force-flips every item to mostrarEnCatalogo:true, which is the
+      // intended "Publicar lote" semantic.
+      await flushItemPricing();
       await persistLoteDisplay(lot._id as Id<"lots">);
       await publishLot({ id: lot._id as Id<"lots"> });
       notify(
@@ -327,12 +336,15 @@ export default function FotosintesisLoteResumenPage() {
     }
   };
 
-  // Manage an already-published lot: just persist the catalog-grouping fields
-  // (hero photo + "Mostrar como lote"). No re-publish, no item changes.
+  // Manage an already-published lot: persist per-item pricing/visibility edits
+  // (F1 — the panel stays editable on a published lot, so an operator can
+  // re-price or hide an individual item here) plus the catalog-grouping fields
+  // (hero photo + "Mostrar como lote"). No re-publish.
   const handleSaveGrouping = async () => {
     if (!lot || !isPublished) return;
     setClosing(true);
     try {
+      await flushItemPricing();
       await persistLoteDisplay(lot._id as Id<"lots">);
       notify(`Lote ${lot.loteId} actualizado`, "success");
       navigate("/admin/fotosintesis");
