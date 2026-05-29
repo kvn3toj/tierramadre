@@ -48,6 +48,7 @@ Las HTTP actions se sirven en `<deployment>.convex.site` (hermano del
 - **Producción:** confirma el slug con `npx convex env list` / `npx convex dashboard`.
   ⚠ `.env.production` muestra un slug `.convex.cloud`; cámbialo a `.convex.site`
   y verifica que sea el deployment donde está desplegado `convex/http.ts`.
+  **Producción (resuelto):** `https://wonderful-tortoise-984.convex.site/sync/foto`
 
 Como la URL vive en Script Properties, corregir un slug equivocado es un cambio
 de 10 segundos (sin redeploy).
