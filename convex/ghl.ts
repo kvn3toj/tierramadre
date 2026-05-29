@@ -1,0 +1,369 @@
+/**
+ * GoHighLevel commerce backend (Áreas 2 & 4, Convex side).
+ *
+ * The HTTP surface lives in Vercel functions (api/ghl-*.ts, api/mp-webhook.ts)
+ * which authenticate the caller and reach these via ConvexHttpClient. The
+ * branchy decisions are delegated to the pure, unit-tested `_lib` modules
+ * (productSearch, commission, applyPayment) so this file stays thin IO glue.
+ *
+ * Flow (GHL/06-FLUJOS): bot → searchProducts → web → createOrder (≤2M gate +
+ * MP preference, set via setMpPreference) → customer pays → mp-webhook →
+ * markOrderPaid (idempotent: sale → confirmada, client total++, commission once).
+ *
+ * Online orders use the `sales` table with sede "O" (saleId `VO-NNNN`) and
+ * estado `reservada` (pending) → `confirmada` (paid). They are Convex-authoritative
+ * for the payment flow; mirroring online sales to the Ventas sheet is a deferred
+ * follow-up (the mp* fields are Convex-only), so no Sheets push is scheduled here.
+ */
+
+import {
+  query,
+  mutation,
+  internalMutation,
+  type MutationCtx,
+} from "./_generated/server";
+import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
+import { allocateNext, formatSaleId } from "./sequences";
+import { rankProducts, type SearchableProduct } from "./_lib/productSearch";
+import { isOverLimit, computeCommissionCOP } from "./_lib/commission";
+import { applyPaymentToSale } from "./_lib/applyPayment";
+
+/** Sequence + sede code for online (bot/web) orders → ids like `VO-0001`. */
+const ONLINE_SEDE = "O";
+const ONLINE_SALE_SEQUENCE = "sale:O";
+
+// ─── search-products (the GHL bot's product tool) ──────────────────────────
+
+export const searchProducts = query({
+  args: {
+    categoria: v.optional(v.string()),
+    presupuesto: v.optional(v.number()),
+    ocasion: v.optional(v.string()),
+    ciudad: v.optional(v.string()),
+    /** Public app origin (APP_URL), passed by the caller so web_link stays pure. */
+    baseUrl: v.string(),
+  },
+  handler: async (ctx, { categoria, presupuesto, ocasion, baseUrl }) => {
+    // Scan ONLY published rows via the dedicated index (bandwidth-friendly).
+    const published = await ctx.db
+      .query("productInventory")
+      .withIndex("by_mostrarEnCatalogo", (q) => q.eq("mostrarEnCatalogo", true))
+      .collect();
+
+    const items: SearchableProduct[] = published.map((p) => ({
+      itemId: p.itemId,
+      nombre: p.nombre,
+      categoria: p.categoria,
+      precioCOP: p.precioCOP,
+      estado: p.estado,
+      mostrarEnCatalogo: p.mostrarEnCatalogo,
+      fotoUrl: p.fotoUrl,
+      certificadoUrl: p.certificadoUrl,
+    }));
+
+    const base = baseUrl.replace(/\/$/, "");
+    const productos = rankProducts(items, {
+      categoria,
+      presupuesto,
+      ocasion,
+    }).map((p) => ({
+      sku: p.itemId,
+      nombre: p.nombre ?? "",
+      descripcion_corta: p.nombre ?? "",
+      precio_cop: p.precioCOP ?? 0,
+      foto_url: p.fotoUrl ?? null,
+      web_link: `${base}/product/${p.itemId}`,
+      certificado_url: p.certificadoUrl ?? null,
+    }));
+    return { productos };
+  },
+});
+
+// ─── create-order (≤2M gate, online sale in `reservada`) ───────────────────
+
+async function upsertClient(
+  ctx: MutationCtx,
+  contact: { celular: string; full_name?: string; email?: string },
+  canalOrigen: string | undefined,
+  ambassadorId: Id<"ambassadors"> | undefined,
+): Promise<Id<"clients">> {
+  let existing = contact.celular
+    ? await ctx.db
+        .query("clients")
+        .withIndex("by_telefono", (q) => q.eq("telefono", contact.celular))
+        .first()
+    : null;
+  if (!existing && contact.email) {
+    existing = await ctx.db
+      .query("clients")
+      .withIndex("by_email", (q) => q.eq("email", contact.email))
+      .first();
+  }
+
+  const now = new Date().toISOString();
+  if (existing) {
+    const patch: Record<string, unknown> = {};
+    if (contact.full_name && !existing.nombre) patch.nombre = contact.full_name;
+    if (contact.email && !existing.email) patch.email = contact.email;
+    // First-touch attribution (spec T4): only set an ambassador if none yet.
+    if (ambassadorId && !existing.ambassadorId)
+      patch.ambassadorId = ambassadorId;
+    if (Object.keys(patch).length) await ctx.db.patch(existing._id, patch);
+    return existing._id;
+  }
+
+  const all = await ctx.db.query("clients").collect();
+  const rowIndex = all.reduce((m, c) => Math.max(m, c.rowIndex), 1) + 1;
+  return ctx.db.insert("clients", {
+    nombre: contact.full_name ?? contact.celular,
+    telefono: contact.celular,
+    email: contact.email,
+    tipo: "final",
+    canalOrigen,
+    ambassadorId,
+    totalCompradoCOP: 0,
+    tags: [],
+    rowIndex,
+    lastPulledAt: now,
+    syncStatus: "pending" as const,
+  });
+}
+
+export const createOrder = mutation({
+  args: {
+    contact: v.object({
+      celular: v.string(),
+      full_name: v.optional(v.string()),
+      email: v.optional(v.string()),
+    }),
+    items: v.array(v.object({ sku: v.string(), qty: v.number() })),
+    promotion_code: v.optional(v.string()),
+    shipping_address: v.optional(
+      v.object({
+        ciudad: v.optional(v.string()),
+        direccion: v.optional(v.string()),
+        codigoPostal: v.optional(v.string()),
+      }),
+    ),
+    ambassador_slug: v.optional(v.string()),
+    canal_origen: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    if (!args.items.length) throw new Error("EMPTY_ITEMS");
+
+    // 1. Reload prices/stock from the DB — never trust client-supplied amounts.
+    let totalCOP = 0;
+    const itemIds: string[] = [];
+    for (const line of args.items) {
+      const product = await ctx.db
+        .query("productInventory")
+        .withIndex("by_itemId", (q) => q.eq("itemId", line.sku))
+        .first();
+      if (!product) throw new Error(`PRODUCT_NOT_FOUND:${line.sku}`);
+      if (product.estado !== "DISPONIBLE")
+        throw new Error(`NOT_AVAILABLE:${line.sku}`);
+      const qty = Math.max(1, Math.floor(line.qty));
+      totalCOP += (product.precioCOP ?? 0) * qty;
+      for (let i = 0; i < qty; i++) itemIds.push(line.sku);
+    }
+
+    // 2. ≤2M COP server-side gate (golden rule #3). The handler maps this to 409.
+    if (isOverLimit(totalCOP)) throw new Error("OVER_LIMIT_2M");
+
+    // 3. Resolve the ambassador (first-touch) from the referral slug.
+    let ambassadorId: Id<"ambassadors"> | undefined;
+    if (args.ambassador_slug) {
+      const amb = await ctx.db
+        .query("ambassadors")
+        .withIndex("by_slug", (q) => q.eq("slug", args.ambassador_slug!))
+        .first();
+      if (amb) ambassadorId = amb._id;
+    }
+
+    // 4. Upsert the contact.
+    const clientId = await upsertClient(
+      ctx,
+      args.contact,
+      args.canal_origen,
+      ambassadorId,
+    );
+
+    // 5. Allocate a race-safe online saleId in the same transaction.
+    const seqValue = await allocateNext(ctx, ONLINE_SALE_SEQUENCE);
+    const saleId = formatSaleId(seqValue, ONLINE_SEDE);
+
+    // 6. Insert the pending sale.
+    const now = new Date().toISOString();
+    const allSales = await ctx.db.query("sales").collect();
+    const rowIndex = allSales.reduce((m, s) => Math.max(m, s.rowIndex), 1) + 1;
+    await ctx.db.insert("sales", {
+      saleId,
+      sede: ONLINE_SEDE,
+      fechaVenta: now,
+      itemIds,
+      clientId,
+      precioAcordadoCOP: totalCOP,
+      totalCOP,
+      formaPago: "mercadopago",
+      estado: "reservada" as const,
+      ambassadorId,
+      promotionCode: args.promotion_code ?? undefined,
+      shippingAddress: args.shipping_address,
+      rowIndex,
+      lastPulledAt: now,
+      syncStatus: "pending" as const,
+    });
+
+    return { saleId, totalCOP };
+  },
+});
+
+/** Persist the Mercado Pago preference id on a sale (called by create-order). */
+export const setMpPreference = mutation({
+  args: { saleId: v.string(), mpPreferenceId: v.string() },
+  handler: async (ctx, { saleId, mpPreferenceId }) => {
+    const sale = await ctx.db
+      .query("sales")
+      .withIndex("by_saleId", (q) => q.eq("saleId", saleId))
+      .first();
+    if (sale) await ctx.db.patch(sale._id, { mpPreferenceId });
+    return { ok: Boolean(sale) };
+  },
+});
+
+// ─── mark-order-paid (idempotent; called by mp-webhook) ────────────────────
+
+export const markOrderPaid = mutation({
+  args: {
+    saleId: v.string(),
+    mpPaymentId: v.string(),
+    mpStatus: v.string(),
+  },
+  handler: async (ctx, { saleId, mpPaymentId, mpStatus }) => {
+    const sale = await ctx.db
+      .query("sales")
+      .withIndex("by_saleId", (q) => q.eq("saleId", saleId))
+      .first();
+    if (!sale) return { updated: false as const, reason: "sale-not-found" };
+
+    const decision = applyPaymentToSale(
+      { estado: sale.estado },
+      { id: mpPaymentId, status: mpStatus },
+      new Date().toISOString(),
+    );
+    if (!decision.changed) {
+      return { updated: false as const, reason: decision.reason };
+    }
+
+    // Flip the sale to confirmada (paid).
+    await ctx.db.patch(sale._id, decision.patch);
+
+    // Increment the client's lifetime total (Convex-owned; lead_score is GHL-owned).
+    let ghlContactId: string | null = null;
+    let clientPhone: string | null = null;
+    let clientEmail: string | null = null;
+    let clientName: string | null = null;
+    const client = await ctx.db.get(sale.clientId);
+    if (client) {
+      await ctx.db.patch(client._id, {
+        totalCompradoCOP: (client.totalCompradoCOP ?? 0) + sale.totalCOP,
+        ultimaCompraFecha: decision.patch.paidAt,
+      });
+      ghlContactId = client.ghlContactId ?? null;
+      clientPhone = client.telefono ?? null;
+      clientEmail = client.email ?? null;
+      clientName = client.nombre ?? null;
+    }
+
+    // Commission — created exactly once per sale (by_saleId guard = idempotent).
+    if (sale.ambassadorId) {
+      const existing = await ctx.db
+        .query("commissions")
+        .withIndex("by_saleId", (q) => q.eq("saleId", saleId))
+        .first();
+      if (!existing) {
+        const amb = await ctx.db.get(sale.ambassadorId);
+        if (amb) {
+          await ctx.db.insert("commissions", {
+            saleId,
+            ambassadorId: sale.ambassadorId,
+            amountCOP: computeCommissionCOP(sale.totalCOP, amb.comisionPercent),
+            percentApplied: amb.comisionPercent,
+            status: "pending" as const,
+            createdAt: decision.patch.paidAt,
+          });
+        }
+      }
+    }
+
+    return {
+      updated: true as const,
+      saleId,
+      totalCOP: sale.totalCOP,
+      ambassadorId: sale.ambassadorId ?? null,
+      ghlContactId,
+      clientPhone,
+      clientEmail,
+      clientName,
+    };
+  },
+});
+
+/** Flag/unflag a sale whose post-paid GHL fan-out failed (webhook best-effort). */
+export const flagGhlSyncPending = mutation({
+  args: { saleId: v.string(), pending: v.boolean() },
+  handler: async (ctx, { saleId, pending }) => {
+    const sale = await ctx.db
+      .query("sales")
+      .withIndex("by_saleId", (q) => q.eq("saleId", saleId))
+      .first();
+    if (sale) await ctx.db.patch(sale._id, { pendingGhlSync: pending });
+    return { ok: Boolean(sale) };
+  },
+});
+
+// ─── client ↔ GHL contact link (used by ghl-sync-contact) ──────────────────
+
+export const getClientByPhone = query({
+  args: { celular: v.string() },
+  handler: async (ctx, { celular }) =>
+    ctx.db
+      .query("clients")
+      .withIndex("by_telefono", (q) => q.eq("telefono", celular))
+      .first(),
+});
+
+export const linkGhlContact = mutation({
+  args: { clientId: v.id("clients"), ghlContactId: v.string() },
+  handler: async (ctx, { clientId, ghlContactId }) => {
+    await ctx.db.patch(clientId, { ghlContactId });
+    return { ok: true };
+  },
+});
+
+// ─── abandoned-cart cron (scheduler) ───────────────────────────────────────
+
+/**
+ * Flag online sales still `reservada` (unpaid) more than 4h after creation.
+ * MVP logs the candidate set; the GHL nudge send (WhatsApp/email via a workflow)
+ * is a documented second-wave follow-up.
+ */
+export const nudgeAbandoned = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = Date.now() - 4 * 60 * 60 * 1000;
+    const reservadas = await ctx.db
+      .query("sales")
+      .withIndex("by_estado", (q) => q.eq("estado", "reservada"))
+      .collect();
+    const stale = reservadas.filter(
+      (s) => new Date(s.fechaVenta).getTime() < cutoff,
+    );
+    console.log(
+      `[abandoned-cart] ${stale.length} reservada sales older than 4h:`,
+      stale.map((s) => s.saleId),
+    );
+    return { candidates: stale.length };
+  },
+});
