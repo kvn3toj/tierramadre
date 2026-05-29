@@ -15,13 +15,17 @@ import {
   convexApi,
 } from "../../../lib/convex-safe";
 import { useNotification } from "../../../contexts/NotificationContext";
+import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { TicketHeader } from "./components/TicketHeader";
 import { FieldLabel } from "./components/FieldLabel";
 import { PriceMultiplierField } from "./components/PriceMultiplierField";
 import { PhotoDropzone, type DropzonePhoto } from "./components/PhotoDropzone";
 import { EditItemDrawer } from "./components/EditItemDrawer";
+import { EditLotDrawer } from "./components/EditLotDrawer";
+import ConfirmDialog from "../../../components/shared/ConfirmDialog";
 import { uploadFotosintesisImages } from "./utils/uploadItemMedia";
+import { buildItemPricingPatch } from "./utils/buildLotItemPayload";
 import { convertToProxyUrl } from "../../../utils/driveUrl";
 
 type PublishMode = "all" | "selective" | "reserve";
@@ -105,6 +109,7 @@ export default function FotosintesisLoteResumenPage() {
   const foto = getFoto("light");
   const navigate = useNavigate();
   const { notify } = useNotification();
+  const { user } = useGoogleAuth();
   const { loteId: loteIdParam } = useParams();
   const loteId = loteIdParam ?? "";
 
@@ -123,6 +128,7 @@ export default function FotosintesisLoteResumenPage() {
 
   const closeLot = useConvexMutation(convexApi.lots.close);
   const publishLot = useConvexMutation(convexApi.lots.publish);
+  const reopenLot = useConvexMutation(convexApi.lots.reopen);
   const updateGemaFields = useConvexMutation(
     convexApi.lotItems.updateGemaFields,
   );
@@ -147,6 +153,10 @@ export default function FotosintesisLoteResumenPage() {
     >
   >({});
   const [closing, setClosing] = useState(false);
+  // C1 — reopen flow + the lot-header editor (only reachable here once reopened).
+  const [editLotOpen, setEditLotOpen] = useState(false);
+  const [reopenDialogOpen, setReopenDialogOpen] = useState(false);
+  const [reopening, setReopening] = useState(false);
 
   useEffect(() => {
     if (!lotItems || !products) return;
@@ -250,25 +260,29 @@ export default function FotosintesisLoteResumenPage() {
     });
   };
 
+  // Flush every item's panel pricing (precioEmbajadorCOP / precioConscienteCOP)
+  // and publish/reserva toggle to Convex. Shared by all three submit handlers so
+  // the per-item edits persist in EVERY lot estado — previously only handleClose
+  // (estado === "abierto") ran this loop, so editing the public price on an
+  // already cerrado/publicado lot silently dropped the change (F1).
+  const flushItemPricing = async () => {
+    if (!lotItems) return;
+    for (const li of lotItems) {
+      await updateGemaFields({
+        lotItemId: li._id as Id<"lotItems">,
+        patch: buildItemPricingPatch(
+          pubByItemId[li.itemId] ?? false,
+          pricingByItemId[li.itemId],
+        ),
+      });
+    }
+  };
+
   const handleClose = async () => {
     if (!lot || !lotItems || !validationsOk) return;
     setClosing(true);
     try {
-      for (const li of lotItems) {
-        const pricing = pricingByItemId[li.itemId];
-        await updateGemaFields({
-          lotItemId: li._id as Id<"lotItems">,
-          patch: {
-            mostrarEnCatalogo: pubByItemId[li.itemId] ?? false,
-            ...(typeof pricing?.precioEmbajadorCOP === "number"
-              ? { precioEmbajadorCOP: pricing.precioEmbajadorCOP }
-              : {}),
-            ...(typeof pricing?.precioConscienteCOP === "number"
-              ? { precioConscienteCOP: pricing.precioConscienteCOP }
-              : {}),
-          },
-        });
-      }
+      await flushItemPricing();
 
       await persistLoteDisplay(lot._id as Id<"lots">);
 
@@ -301,6 +315,10 @@ export default function FotosintesisLoteResumenPage() {
     if (!lot || !isClosed) return;
     setClosing(true);
     try {
+      // Persist any per-item price edits BEFORE publishing (F1). publishLot
+      // then force-flips every item to mostrarEnCatalogo:true, which is the
+      // intended "Publicar lote" semantic.
+      await flushItemPricing();
       await persistLoteDisplay(lot._id as Id<"lots">);
       await publishLot({ id: lot._id as Id<"lots"> });
       notify(
@@ -318,12 +336,15 @@ export default function FotosintesisLoteResumenPage() {
     }
   };
 
-  // Manage an already-published lot: just persist the catalog-grouping fields
-  // (hero photo + "Mostrar como lote"). No re-publish, no item changes.
+  // Manage an already-published lot: persist per-item pricing/visibility edits
+  // (F1 — the panel stays editable on a published lot, so an operator can
+  // re-price or hide an individual item here) plus the catalog-grouping fields
+  // (hero photo + "Mostrar como lote"). No re-publish.
   const handleSaveGrouping = async () => {
     if (!lot || !isPublished) return;
     setClosing(true);
     try {
+      await flushItemPricing();
       await persistLoteDisplay(lot._id as Id<"lots">);
       notify(`Lote ${lot.loteId} actualizado`, "success");
       navigate("/admin/fotosintesis");
@@ -334,6 +355,35 @@ export default function FotosintesisLoteResumenPage() {
       );
     } finally {
       setClosing(false);
+    }
+  };
+
+  // Reopen a cerrado/publicado lot back to abierto so the header (most often a
+  // miskeyed costoTotalCOP) can be corrected via EditLotDrawer. Blocked
+  // server-side if any item is already VENDIDA. (ISO-audit C1.)
+  const handleReopen = async () => {
+    if (!lot) return;
+    setReopening(true);
+    try {
+      const res = await reopenLot({
+        id: lot._id as Id<"lots">,
+        editorEmail: user?.email,
+      });
+      setReopenDialogOpen(false);
+      notify(
+        `Lote ${lot.loteId} reabierto · corregí el encabezado y volvé a cerrarlo` +
+          (res.demotedFromCatalog
+            ? ` (${res.demotedFromCatalog} ítem(s) salieron del catálogo)`
+            : ""),
+        "success",
+      );
+    } catch (err) {
+      notify(
+        err instanceof Error ? err.message : "No pudimos reabrir el lote",
+        "error",
+      );
+    } finally {
+      setReopening(false);
     }
   };
 
@@ -424,6 +474,49 @@ export default function FotosintesisLoteResumenPage() {
                 : "Revisá las validaciones, decidí qué ítems publicar y confirmá el cierre. Después podrás vender desde el catálogo."}
           </Box>
         </Box>
+
+        {/* C7 — persistent flag when removing an item left a closed/published
+            lot no longer summing to 100%. The remove toast is the immediate
+            signal; this is the lingering, actionable one for later visits. */}
+        {(isClosed || isPublished) && !br2Ok ? (
+          <Box
+            role="alert"
+            sx={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "10px",
+              background: foto.surfaces.panel,
+              border: `1px solid ${foto.status.sold}`,
+              borderLeft: `3px solid ${foto.status.sold}`,
+              borderRadius: "12px",
+              padding: "14px 16px",
+              marginBottom: "20px",
+            }}
+          >
+            <AlertCircle
+              size={16}
+              strokeWidth={2}
+              style={{ marginTop: 1, color: foto.status.sold, flexShrink: 0 }}
+            />
+            <Box
+              sx={{
+                fontSize: 12.5,
+                color: foto.ink.secondary,
+                lineHeight: 1.5,
+              }}
+            >
+              <Box
+                component="span"
+                sx={{ fontWeight: 600, color: foto.ink.primary }}
+              >
+                La preponderancia ya no suma 100% ({prepSum.toFixed(2)}%).
+              </Box>{" "}
+              Al quitar un ítem o editar una preponderancia, el lote dejó de
+              balancear. Ajustá la preponderancia de los ítems (Editar ítem)
+              para que vuelva a 100%.
+            </Box>
+          </Box>
+        ) : null}
 
         <Box
           sx={{
@@ -857,9 +950,92 @@ export default function FotosintesisLoteResumenPage() {
                     ? "Publicar lote"
                     : "Cerrar lote"}
             </Box>
+
+            {/* C1 — secondary actions. Reopen a closed/published lot to fix its
+                header; once abierto, edit the header in place. */}
+            {isClosed || isPublished ? (
+              <Box
+                component="button"
+                type="button"
+                disabled={reopening}
+                onClick={() => setReopenDialogOpen(true)}
+                sx={{
+                  width: "100%",
+                  padding: "12px 18px",
+                  borderRadius: "11px",
+                  background: "transparent",
+                  color: foto.ink.secondary,
+                  border: `1px solid ${foto.surfaces.edgeStrong}`,
+                  fontFamily: fontFamilies.system,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: reopening ? "wait" : "pointer",
+                  transition: "background 120ms ease, color 120ms ease",
+                  "&:hover:not(:disabled)": {
+                    background: foto.surfaces.canvas,
+                    color: foto.ink.primary,
+                  },
+                }}
+              >
+                Reabrir lote para corregir el encabezado
+              </Box>
+            ) : null}
+            {lot.estado === "abierto" ? (
+              <Box
+                component="button"
+                type="button"
+                onClick={() => setEditLotOpen(true)}
+                sx={{
+                  width: "100%",
+                  padding: "12px 18px",
+                  borderRadius: "11px",
+                  background: "transparent",
+                  color: foto.ink.secondary,
+                  border: `1px solid ${foto.surfaces.edgeStrong}`,
+                  fontFamily: fontFamilies.system,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "background 120ms ease, color 120ms ease",
+                  "&:hover": {
+                    background: foto.surfaces.canvas,
+                    color: foto.ink.primary,
+                  },
+                }}
+              >
+                Editar encabezado del lote
+              </Box>
+            ) : null}
           </Box>
         </Box>
       </Box>
+
+      {/* C1 — lot-header editor (reachable once the lot is abierto) + the
+          reopen confirmation. */}
+      <EditLotDrawer
+        open={editLotOpen}
+        onClose={() => setEditLotOpen(false)}
+        lot={lot}
+        itemsCount={itemsCount}
+      />
+      <ConfirmDialog
+        open={reopenDialogOpen}
+        title="Reabrir lote"
+        message={
+          `Esto devuelve el lote ${lot.loteId} a “abierto” para corregir el ` +
+          `encabezado (por ejemplo, un costo total mal digitado). ` +
+          (isPublished
+            ? "Sus ítems salen del catálogo hasta que vuelvas a publicarlo. "
+            : "") +
+          "Si algún ítem ya está vendido, primero cancelá esa venta."
+        }
+        confirmLabel={reopening ? "Reabriendo…" : "Reabrir lote"}
+        cancelLabel="Cancelar"
+        confirmColor="primary"
+        confirmDisabled={reopening}
+        onConfirm={() => void handleReopen()}
+        onCancel={() => setReopenDialogOpen(false)}
+      />
 
       {/* Per-item editor — photos editable even on a closed/published lot. */}
       {(() => {
@@ -884,6 +1060,7 @@ export default function FotosintesisLoteResumenPage() {
             lotCostoTotalCOP={lot.costoTotalCOP}
             siblingPreponderanciaSum={siblingSum}
             ticketLabel={`${loteId} · ${String(editingIndex + 1).padStart(3, "0")}`}
+            lotEstado={lot.estado}
             // All lot estados are editable from here — server-side
             // mutations no longer gate by estado either. See
             // `lotItems.updateGemaFields` / `updatePreponderancia` / `remove`.

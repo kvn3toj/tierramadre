@@ -3,7 +3,7 @@
  * Reusable confirmation dialog for destructive actions.
  * iOS HIG-styled with cancel/confirm pattern.
  */
-import React from 'react';
+import React from "react";
 import {
   Dialog,
   DialogTitle,
@@ -12,10 +12,10 @@ import {
   DialogActions,
   Button,
   alpha,
-} from '@mui/material';
-import { emeraldCore } from '../../design-system/tokens/colors';
-import { fontWeights } from '../../design-system';
-import { useLanguage } from '../../contexts/LanguageContext';
+} from "@mui/material";
+import { emeraldCore } from "../../design-system/tokens/colors";
+import { fontWeights } from "../../design-system";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -23,7 +23,9 @@ export interface ConfirmDialogProps {
   message: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  confirmColor?: 'error' | 'primary';
+  confirmColor?: "error" | "primary";
+  /** Disable confirm (and block backdrop/Esc) while an action is in-flight. */
+  confirmDisabled?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -34,7 +36,8 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   message,
   confirmLabel,
   cancelLabel,
-  confirmColor = 'error',
+  confirmColor = "error",
+  confirmDisabled = false,
   onConfirm,
   onCancel,
 }) => {
@@ -44,7 +47,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   return (
     <Dialog
       open={open}
-      onClose={onCancel}
+      onClose={confirmDisabled ? undefined : onCancel}
       PaperProps={{
         sx: {
           borderRadius: 3,
@@ -53,11 +56,13 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         },
       }}
     >
-      <DialogTitle sx={{ fontWeight: fontWeights.bold, fontSize: '1.1rem', pb: 0.5 }}>
+      <DialogTitle
+        sx={{ fontWeight: fontWeights.bold, fontSize: "1.1rem", pb: 0.5 }}
+      >
         {title}
       </DialogTitle>
       <DialogContent>
-        <DialogContentText sx={{ fontSize: '0.875rem' }}>
+        <DialogContentText sx={{ fontSize: "0.875rem" }}>
           {message}
         </DialogContentText>
       </DialogContent>
@@ -67,10 +72,10 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           variant="outlined"
           sx={{
             borderRadius: 2,
-            textTransform: 'none',
+            textTransform: "none",
             fontWeight: fontWeights.semibold,
-            borderColor: alpha('#000', 0.15),
-            color: 'text.primary',
+            borderColor: alpha("#000", 0.15),
+            color: "text.primary",
           }}
         >
           {finalCancelLabel}
@@ -79,13 +84,14 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           onClick={onConfirm}
           variant="contained"
           color={confirmColor}
+          disabled={confirmDisabled}
           sx={{
             borderRadius: 2,
-            textTransform: 'none',
+            textTransform: "none",
             fontWeight: fontWeights.semibold,
-            ...(confirmColor === 'primary' && {
+            ...(confirmColor === "primary" && {
               bgcolor: emeraldCore.primary,
-              '&:hover': { bgcolor: emeraldCore.dark },
+              "&:hover": { bgcolor: emeraldCore.dark },
             }),
           }}
         >

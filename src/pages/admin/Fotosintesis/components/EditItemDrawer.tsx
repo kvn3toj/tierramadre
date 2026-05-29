@@ -1,7 +1,7 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Box, Dialog, Switch } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { FileText, Trash2, X as XIcon } from "lucide-react";
+import { FileText, Globe, Lock, Trash2, X as XIcon } from "lucide-react";
 
 import { getFoto, fontFamilies } from "../../../../design-system";
 import {
@@ -10,6 +10,9 @@ import {
   convexApi,
 } from "../../../../lib/convex-safe";
 import { useNotification } from "../../../../contexts/NotificationContext";
+import { useProductLock } from "../../../../hooks/useProductLock";
+import { useDirtyGuard } from "../../../../hooks/useDirtyGuard";
+import ConfirmDialog from "../../../../components/shared/ConfirmDialog";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 
 import { FieldLabel } from "./FieldLabel";
@@ -23,6 +26,7 @@ import {
 } from "./InsumoFields";
 import { KbdKey } from "./KbdKey";
 import { PhotoDropzone, type DropzonePhoto } from "./PhotoDropzone";
+import { PriceMultiplierField } from "./PriceMultiplierField";
 import { spanishText } from "../utils/fieldLang";
 import {
   inferItemTipo,
@@ -34,13 +38,16 @@ import {
   brutoPatchFromDraft,
   insumoDraftFromProduct,
   insumoPatchFromDraft,
+  tierPricePatch,
   type EditableTipo,
+  type ItemPricingDraft,
 } from "../utils/buildLotItemPayload";
 import {
   uploadFotosintesisImages,
   uploadFotosintesisCertificado,
 } from "../utils/uploadItemMedia";
 import { convertToProxyUrl } from "../../../../utils/driveUrl";
+import { itemEstadoCopy, type LotEstado } from "../utils/itemEstadoCopy";
 
 const TIPO_LABEL: Record<EditableTipo, string> = {
   gema: "Gema",
@@ -60,6 +67,15 @@ interface ProductInventoryRow {
   procedencia?: string;
   observacion?: string;
   precioCOP?: number;
+  // Catalog tiers — the prices the public catalog actually reads.
+  // precioEmbajadorCOP (sheet col N) is the public price; precioConscienteCOP
+  // (col O) is the preferential tier. products.get returns the full doc, so
+  // these always exist at runtime — the interface just under-declared them.
+  precioEmbajadorCOP?: number;
+  precioConscienteCOP?: number;
+  // Cost basis (lot cost × preponderancia, sheet col M) — base for the tier
+  // multipliers when in-session preponderancia is 0/empty.
+  costoBaseCOP?: number;
   mostrarEnCatalogo?: boolean;
   cantidad?: number;
   talla?: string;
@@ -97,6 +113,8 @@ interface EditItemDrawerProps {
   siblingPreponderanciaSum: number;
   /** Display label in the breadcrumb (e.g. "B-008 · 003"). */
   ticketLabel: string;
+  /** Lot lifecycle estado — drives the estado-aware catalog banner (C9). */
+  lotEstado: LotEstado;
   /** When false, all gem fields are read-only and only the photo can change. */
   editable?: boolean;
 }
@@ -127,6 +145,7 @@ export function EditItemDrawer({
   lotCostoTotalCOP,
   siblingPreponderanciaSum,
   ticketLabel,
+  lotEstado,
   editable = true,
 }: EditItemDrawerProps) {
   const foto = getFoto("light");
@@ -144,6 +163,17 @@ export function EditItemDrawer({
   );
   const updateMedia = useConvexMutation(convexApi.lotItems.updateMedia);
   const removeLotItem = useConvexMutation(convexApi.lotItems.remove);
+
+  // C3 — shared soft lock by itemId. If another admin (e.g. via the
+  // ProductManagement EditDrawer) currently holds this row, Save + Delete are
+  // disabled so we never clobber their edit. Same productLocks row, either side.
+  const { lockedByOther } = useProductLock(itemId, open);
+  const lockMinutesLeft = useMemo(() => {
+    if (!lockedByOther) return null;
+    const ms = Date.parse(lockedByOther.expiresAt);
+    if (!Number.isFinite(ms)) return null;
+    return Math.max(0, Math.ceil((ms - Date.now()) / 60000));
+  }, [lockedByOther]);
 
   // The drawer renders the sub-form that matches the item's kind. `tipo` is
   // inferred from the loaded product (stored `tipo` when present, else the
@@ -184,6 +214,14 @@ export function EditItemDrawer({
   );
   const [observacion, setObservacion] = useState("");
   const [mostrarEnCatalogo, setMostrarEnCatalogo] = useState(false);
+  // Catalog tiers (Goal F2) — a SHARED value (sibling of observación /
+  // mostrarEnCatalogo), not a sub-form draft. Seeded from the product in the
+  // hydrate effect and folded into the dirty baseline so any tier edit arms the
+  // discard guard. Insumos never render these, so they stay ""/"".
+  const [pricing, setPricing] = useState<ItemPricingDraft>({
+    precioEmbajadorCOP: "",
+    precioConscienteCOP: "",
+  });
   // Item photo (hero). Seeded from the saved Drive URL; a freshly dropped file
   // carries `file` so submit knows to upload it. Photos are editable in any lot
   // estado — see the `updateMedia` mutation.
@@ -201,6 +239,16 @@ export function EditItemDrawer({
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // C4 — baseline snapshot of the editable fields captured when the drawer
+  // opens. We compare the live values against this (not the live Convex prop)
+  // so a background edit by another admin can't trip a false discard prompt.
+  const baselineRef = useRef<string | null>(null);
+  // Hydrate (seed + baseline) ONCE per open session per item — keyed on the
+  // edited itemId. Without this, a reactive `product` re-emit (a concurrent
+  // admin save or the mirror cron) would re-run the seed effect, clobber the
+  // operator's in-flight edits AND reset the baseline so the dirty guard reads
+  // clean — silently discarding work with no discard prompt. (Review fix.)
+  const hydratedKeyRef = useRef<string | null>(null);
 
   // Revoke any object URLs we created for previews so we don't leak blobs.
   const revokeLocalPreviews = (list: DropzonePhoto[]) => {
@@ -209,38 +257,71 @@ export function EditItemDrawer({
     }
   };
 
-  // Hydrate the local draft from the latest mirror values every time the
-  // drawer (re)opens or the underlying product row changes. We only reset
-  // while the drawer is closed → reopened to avoid clobbering in-flight edits.
+  // Hydrate the local draft from the mirror once per open session (per item).
+  // We deliberately do NOT re-seed on later `product`/`currentPreponderancia`
+  // re-emits while open — that would clobber unsaved edits and reset the dirty
+  // baseline (see hydratedKeyRef). The drawer re-syncs on the next open.
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      hydratedKeyRef.current = null;
+      return;
+    }
     if (!product) return;
+    if (hydratedKeyRef.current === itemId) return;
+    hydratedKeyRef.current = itemId;
     const t = inferItemTipo(product);
+    let seededActive: GemaDraft | JoyaDraft | BrutoDraft | InsumoDraft;
     if (t === "joya") {
-      setJoyaDraft({
+      const d = {
         ...joyaDraftFromProduct(product),
         preponderancia: currentPreponderancia,
-      });
+      };
+      setJoyaDraft(d);
+      seededActive = d;
     } else if (t === "bruto") {
-      setBrutoDraft({
+      const d = {
         ...brutoDraftFromProduct(product),
         preponderancia: currentPreponderancia,
-      });
+      };
+      setBrutoDraft(d);
+      seededActive = d;
     } else if (t === "insumo") {
-      setInsumoDraft({
+      const d = {
         ...insumoDraftFromProduct(product),
         preponderancia: currentPreponderancia,
-      });
+      };
+      setInsumoDraft(d);
+      seededActive = d;
     } else {
-      setDraft({
+      const d = {
         ...gemaDraftFromProduct(product),
         preponderancia: currentPreponderancia,
-      });
+      };
+      setDraft(d);
+      seededActive = d;
     }
     // For a joya the stored free text round-trips through JoyaFields'
     // `descripcion`, so the shared observación textarea is hidden + left empty.
-    setObservacion(t === "joya" ? "" : (product.observacion ?? ""));
-    setMostrarEnCatalogo(product.mostrarEnCatalogo ?? false);
+    const seededObservacion = t === "joya" ? "" : (product.observacion ?? "");
+    const seededMostrar = product.mostrarEnCatalogo ?? false;
+    // F2 — seed the catalog tiers from the persisted product. An unset tier
+    // hydrates as "" (not 0) so the omit-on-blank submit rule never re-sends a
+    // price the operator didn't touch.
+    const seededPricing: ItemPricingDraft = {
+      precioEmbajadorCOP: product.precioEmbajadorCOP ?? "",
+      precioConscienteCOP: product.precioConscienteCOP ?? "",
+    };
+    setObservacion(seededObservacion);
+    setMostrarEnCatalogo(seededMostrar);
+    setPricing(seededPricing);
+    // C4 — capture the dirty baseline from the same seeded values so it can
+    // never drift from what we just hydrated into the form.
+    baselineRef.current = JSON.stringify({
+      draft: seededActive,
+      observacion: seededObservacion,
+      mostrarEnCatalogo: seededMostrar,
+      pricing: seededPricing,
+    });
     setPhotos((prev) => {
       revokeLocalPreviews(prev);
       return product.fotoUrl
@@ -258,7 +339,7 @@ export function EditItemDrawer({
     setInitialCertificadoUrl(product.certificadoUrl);
     setError(null);
     setConfirmDelete(false);
-  }, [open, product, currentPreponderancia]);
+  }, [open, product, itemId, currentPreponderancia]);
 
   // Reset the confirm-delete prompt + drop any local previews on close.
   useEffect(() => {
@@ -287,6 +368,16 @@ export function EditItemDrawer({
 
   const prepNumeric =
     typeof activePreponderancia === "number" ? activePreponderancia : 0;
+  // F2 — base cost the catalog-tier multipliers scale. Recomputed live from the
+  // in-session preponderancia (so dragging prep updates the suggested tier) and
+  // falls back to the persisted costoBaseCOP when prep is 0/empty.
+  const liveCostoBaseCOP = useMemo(
+    () =>
+      lotCostoTotalCOP > 0 && prepNumeric > 0
+        ? Math.round(lotCostoTotalCOP * (prepNumeric / 100))
+        : (product?.costoBaseCOP ?? 0),
+    [lotCostoTotalCOP, prepNumeric, product?.costoBaseCOP],
+  );
   const projectedSum = siblingPreponderanciaSum + prepNumeric;
   const overflow = projectedSum - 100;
   const prepHelper = useMemo<{
@@ -310,10 +401,32 @@ export function EditItemDrawer({
   const photoChanged = !!pendingPhotoFile || photoRemoved;
   const certificadoChanged = !!certificadoFile;
 
+  // C4 — dirty when the live editable state diverges from the open-time
+  // baseline (or a new photo/certificate is staged). Gated on `open` so a
+  // closed drawer never keeps the beforeunload guard armed.
+  const editSnapshot = JSON.stringify({
+    draft: activeDraft,
+    observacion,
+    mostrarEnCatalogo,
+    pricing,
+  });
+  const fieldsDirty =
+    baselineRef.current !== null && editSnapshot !== baselineRef.current;
+  const dirty =
+    open && ((editable && fieldsDirty) || photoChanged || certificadoChanged);
+  const {
+    guardedClose,
+    requestClose,
+    confirmOpen,
+    confirmDiscard,
+    cancelDiscard,
+  } = useDirtyGuard({ dirty, onClose, enabled: !saving && !deleting });
+
   const canSubmit =
     !!product &&
     !saving &&
     !deleting &&
+    !lockedByOther &&
     (editable
       ? activeNombre.trim().length > 0 &&
         typeof activePreponderancia === "number" &&
@@ -363,6 +476,19 @@ export function EditItemDrawer({
                     mostrarEnCatalogo,
                   )
                 : gemaPatchFromDraft(draft, observacion, mostrarEnCatalogo);
+        // F2 — fold in the catalog tiers (precioEmbajadorCOP /
+        // precioConscienteCOP). tierPricePatch omits blank tiers so a no-op
+        // never clears a stored price; insumos never expose the editors and
+        // keep ""/"", so we also gate the merge as belt-and-suspenders.
+        if (tipo !== "insumo") {
+          Object.assign(
+            patch,
+            tierPricePatch(
+              pricing.precioEmbajadorCOP,
+              pricing.precioConscienteCOP,
+            ),
+          );
+        }
         if (nextFotoUrl !== undefined) patch.fotoUrl = nextFotoUrl;
         if (nextCertificadoUrl !== undefined)
           patch.certificadoUrl = nextCertificadoUrl;
@@ -404,7 +530,7 @@ export function EditItemDrawer({
   };
 
   const handleDelete = async () => {
-    if (!editable || deleting) return;
+    if (!editable || deleting || lockedByOther) return;
     if (!confirmDelete) {
       setConfirmDelete(true);
       return;
@@ -412,8 +538,11 @@ export function EditItemDrawer({
     setDeleting(true);
     setError(null);
     try {
-      await removeLotItem({ lotItemId });
+      const res = await removeLotItem({ lotItemId });
       notify(`Ítem #${itemId} eliminado del lote`, "success");
+      // C7 — if removing this stone broke the lot's 100% preponderancia sum on
+      // a closed/published lot, surface it instead of letting it pass silently.
+      if (res?.warning) notify(res.warning, "warning");
       onClose();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "No pudimos eliminar";
@@ -452,7 +581,7 @@ export function EditItemDrawer({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={guardedClose}
       maxWidth={false}
       aria-labelledby={titleId}
       aria-modal
@@ -532,15 +661,13 @@ export function EditItemDrawer({
               lineHeight: 1.55,
             }}
           >
-            {editable
-              ? "Cambios persisten en Convex y se sincronizan a la planilla."
-              : "Lote cerrado — foto y certificado sí se pueden actualizar."}
+            {itemEstadoCopy(lotEstado).subtitle}
           </Box>
         </Box>
         <Box
           component="button"
           type="button"
-          onClick={onClose}
+          onClick={requestClose}
           aria-label="Cerrar"
           sx={{
             width: 32,
@@ -579,6 +706,85 @@ export function EditItemDrawer({
           gap: "20px",
         }}
       >
+        {lockedByOther ? (
+          <Box
+            role="status"
+            aria-live="polite"
+            sx={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "10px",
+              background: foto.surfaces.inset,
+              border: `1px solid ${foto.surfaces.rule}`,
+              borderLeft: `3px solid ${foto.status.sold}`,
+              borderRadius: "10px",
+              padding: "11px 13px",
+            }}
+          >
+            <Lock
+              size={15}
+              strokeWidth={2}
+              style={{ marginTop: 1, color: foto.status.sold, flexShrink: 0 }}
+            />
+            <Box
+              sx={{ fontSize: 12, color: foto.ink.secondary, lineHeight: 1.5 }}
+            >
+              <Box
+                component="span"
+                sx={{ fontWeight: 600, color: foto.ink.primary }}
+              >
+                {lockedByOther.holderName?.trim() || lockedByOther.holderEmail}
+              </Box>{" "}
+              está editando este ítem
+              {lockMinutesLeft != null
+                ? ` (su sesión expira en ${lockMinutesLeft} min)`
+                : ""}
+              . Guardado deshabilitado para no sobrescribir sus cambios.
+            </Box>
+          </Box>
+        ) : null}
+        {/* C9 — estado-aware banner: tells the operator whether this edit is a
+            private fix (cerrado) or an instant public-catalog change (publicado).
+            role="note" (not a live region) so it doesn't compete with the lock
+            banner's aria-live announcement; the two use different accents. */}
+        {(() => {
+          const estadoCopy = itemEstadoCopy(lotEstado);
+          if (!estadoCopy.banner) return null;
+          const accent =
+            estadoCopy.tone === "emerald"
+              ? foto.accent.primary
+              : foto.ink.tertiary;
+          return (
+            <Box
+              role="note"
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "10px",
+                background: foto.surfaces.inset,
+                border: `1px solid ${foto.surfaces.rule}`,
+                borderLeft: `3px solid ${accent}`,
+                borderRadius: "10px",
+                padding: "11px 13px",
+              }}
+            >
+              <Globe
+                size={15}
+                strokeWidth={2}
+                style={{ marginTop: 1, color: accent, flexShrink: 0 }}
+              />
+              <Box
+                sx={{
+                  fontSize: 12,
+                  color: foto.ink.secondary,
+                  lineHeight: 1.5,
+                }}
+              >
+                {estadoCopy.banner}
+              </Box>
+            </Box>
+          );
+        })()}
         {product === undefined ? (
           <Box
             sx={{
@@ -651,6 +857,75 @@ export function EditItemDrawer({
                 disabled={!editable}
               />
             )}
+
+            {/* F2 — Precios del catálogo. ONE shared tier editor for every
+                item kind except insumos (internal supplies never reach the
+                public catalog). The base/col-L price stays in the sub-form
+                above; these two tiers are the ones the customer actually sees.
+                Hidden in read-only media-only sessions so we never surface a
+                non-functional slider. */}
+            {editable && tipo !== "insumo" ? (
+              <Box>
+                <FieldLabel>Precios del catálogo</FieldLabel>
+                <Box
+                  sx={{
+                    fontSize: 11.5,
+                    color: foto.ink.tertiary,
+                    marginTop: "-2px",
+                    marginBottom: "10px",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  El cliente paga el{" "}
+                  <Box
+                    component="span"
+                    sx={{ fontWeight: 600, color: foto.ink.secondary }}
+                  >
+                    precio embajador
+                  </Box>
+                  . El precio base de arriba es solo referencia interna.
+                </Box>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      sm: "minmax(0, 1fr) minmax(0, 1fr)",
+                    },
+                    gap: "16px",
+                  }}
+                >
+                  <PriceMultiplierField
+                    label="Precio embajador"
+                    optional="público"
+                    baseCOP={liveCostoBaseCOP}
+                    defaultMultiplier={2.5}
+                    value={pricing.precioEmbajadorCOP}
+                    onChange={(next) =>
+                      setPricing((prev) => ({
+                        ...prev,
+                        precioEmbajadorCOP: next,
+                      }))
+                    }
+                    ariaLabel="Precio embajador en COP — precio público"
+                  />
+                  <PriceMultiplierField
+                    label="Precio consciente"
+                    optional="consciente"
+                    baseCOP={liveCostoBaseCOP}
+                    defaultMultiplier={3}
+                    value={pricing.precioConscienteCOP}
+                    onChange={(next) =>
+                      setPricing((prev) => ({
+                        ...prev,
+                        precioConscienteCOP: next,
+                      }))
+                    }
+                    ariaLabel="Precio clientes conscientes en COP"
+                  />
+                </Box>
+              </Box>
+            ) : null}
 
             <Box>
               <FieldLabel optional="opcional">Foto del ítem</FieldLabel>
@@ -842,8 +1117,7 @@ export function EditItemDrawer({
           component="button"
           type="button"
           onClick={() => void handleDelete()}
-          disabled={!editable || deleting || !product}
-          aria-pressed={confirmDelete}
+          disabled={!editable || deleting || !product || !!lockedByOther}
           sx={{
             display: "inline-flex",
             alignItems: "center",
@@ -853,7 +1127,10 @@ export function EditItemDrawer({
             fontWeight: 600,
             padding: "11px 14px",
             borderRadius: "9px",
-            cursor: editable && !deleting ? "pointer" : "not-allowed",
+            cursor:
+              editable && !deleting && !lockedByOther
+                ? "pointer"
+                : "not-allowed",
             background: confirmDelete
               ? foto.status.sold
               : alpha(foto.status.sold, 0.08),
@@ -862,13 +1139,14 @@ export function EditItemDrawer({
               confirmDelete ? foto.status.sold : alpha(foto.status.sold, 0.32)
             }`,
             transition: "background 120ms ease, color 120ms ease",
-            opacity: editable ? 1 : 0.4,
-            "&:hover": editable
-              ? {
-                  background: foto.status.sold,
-                  color: foto.ink.inverse,
-                }
-              : undefined,
+            opacity: editable && !lockedByOther ? 1 : 0.4,
+            "&:hover":
+              editable && !lockedByOther
+                ? {
+                    background: foto.status.sold,
+                    color: foto.ink.inverse,
+                  }
+                : undefined,
           }}
         >
           <Trash2 size={13} strokeWidth={2} />
@@ -907,7 +1185,7 @@ export function EditItemDrawer({
           <Box
             component="button"
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             disabled={saving || deleting}
             sx={{
               fontFamily: fontFamilies.system,
@@ -962,6 +1240,17 @@ export function EditItemDrawer({
           </Box>
         </Box>
       </Box>
+
+      {/* C4 — discard guard for close/backdrop/Esc/Cancelar while dirty. */}
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Descartar cambios"
+        message="Tenés cambios sin guardar en este ítem. ¿Querés descartarlos?"
+        confirmLabel="Descartar"
+        cancelLabel="Seguir editando"
+        onConfirm={confirmDiscard}
+        onCancel={cancelDiscard}
+      />
     </Dialog>
   );
 }

@@ -438,3 +438,70 @@ export function insumoPatchFromDraft(
     preponderancia: draft.preponderancia as number,
   };
 }
+
+/** Per-item catalog pricing as held in LoteResumenPage's local panel state. */
+export interface ItemPricingDraft {
+  precioEmbajadorCOP: number | "";
+  precioConscienteCOP: number | "";
+}
+
+/**
+ * Build the `updateGemaFields` patch that persists a lot item's catalog tiers +
+ * visibility from the LoteResumenPage pricing panel.
+ *
+ * Every save handler on that page (cerrar / publicar-cerrado / guardar-grouping)
+ * routes through this so per-item price edits are never silently dropped — the
+ * cerrado/publicado handlers used to skip the per-item flush entirely, which is
+ * why edits to the public price (precioEmbajadorCOP, sheet col N) and the
+ * publish/reserva toggle appeared "not to save" on a live lot.
+ *
+ * Tiers left blank ("") are OMITTED so a no-op edit never clears a stored price;
+ * a numeric value (including 0) is sent verbatim. `mostrarEnCatalogo` always
+ * travels so the publish/reserva toggle round-trips.
+ */
+export function buildItemPricingPatch(
+  mostrarEnCatalogo: boolean,
+  pricing: ItemPricingDraft | undefined,
+): {
+  mostrarEnCatalogo: boolean;
+  precioEmbajadorCOP?: number;
+  precioConscienteCOP?: number;
+} {
+  return {
+    mostrarEnCatalogo,
+    ...(typeof pricing?.precioEmbajadorCOP === "number"
+      ? { precioEmbajadorCOP: pricing.precioEmbajadorCOP }
+      : {}),
+    ...(typeof pricing?.precioConscienteCOP === "number"
+      ? { precioConscienteCOP: pricing.precioConscienteCOP }
+      : {}),
+  };
+}
+
+/**
+ * Build the catalog-tier slice of an `updateGemaFields` patch from the
+ * EditItemDrawer's "Precios del catálogo" block (Goal F2).
+ *
+ * Unlike {@link buildItemPricingPatch} — which always carries the
+ * `mostrarEnCatalogo` publish flag because the LoteResumen panel owns it — the
+ * drawer already sends `mostrarEnCatalogo` through the sub-form converter, so
+ * this helper returns ONLY the two tier prices and the caller `Object.assign`s
+ * it onto the existing patch.
+ *
+ * A blank "" tier is OMITTED so a no-op edit never clears a stored price; a
+ * numeric value (including a literal 0 — a deliberate canje/free tier) is sent
+ * verbatim. Convex's `compareNumber` path for precioEmbajadorCOP /
+ * precioConscienteCOP has no 0→undefined guard, so 0 round-trips exactly.
+ */
+export function tierPricePatch(
+  precioEmbajadorCOP: number | "",
+  precioConscienteCOP: number | "",
+): {
+  precioEmbajadorCOP?: number;
+  precioConscienteCOP?: number;
+} {
+  return {
+    ...(typeof precioEmbajadorCOP === "number" ? { precioEmbajadorCOP } : {}),
+    ...(typeof precioConscienteCOP === "number" ? { precioConscienteCOP } : {}),
+  };
+}

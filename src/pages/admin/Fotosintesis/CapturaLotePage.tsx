@@ -1338,6 +1338,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   const foto = getFoto("light");
   const navigate = useNavigate();
   const { notify } = useNotification();
+  const { user } = useGoogleAuth();
 
   // Reactive data --------------------------------------------------------------
   const lot = useConvexQuery(convexApi.lots.getByLoteId, { loteId });
@@ -2381,6 +2382,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
                 await updateLot({
                   id: lot._id as Id<"lots">,
                   patch: { costoTotalCOP: next },
+                  editorEmail: user?.email,
                 });
                 notify("Costo del lote actualizado", "success");
               } catch (err) {
@@ -2746,6 +2748,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
             lotCostoTotalCOP={costoTotalCOP}
             siblingPreponderanciaSum={siblingSum}
             ticketLabel={`${loteId} · ${String(editingIndex + 1).padStart(3, "0")}`}
+            lotEstado={lot.estado}
             editable={lot.estado === "abierto"}
           />
         ) : null;

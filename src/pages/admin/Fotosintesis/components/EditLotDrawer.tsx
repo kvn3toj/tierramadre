@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Box, Dialog } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { X as XIcon } from "lucide-react";
@@ -6,6 +6,10 @@ import { X as XIcon } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../../design-system";
 import { useConvexMutation, convexApi } from "../../../../lib/convex-safe";
 import { useNotification } from "../../../../contexts/NotificationContext";
+import { useGoogleAuth } from "../../../../contexts/GoogleAuthContext";
+import { useDirtyGuard } from "../../../../hooks/useDirtyGuard";
+import ConfirmDialog from "../../../../components/shared/ConfirmDialog";
+import { recordsEqual, type DirtySnapshot } from "../utils/dirtySnapshot";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 
 import { FieldLabel } from "./FieldLabel";
@@ -81,6 +85,7 @@ export function EditLotDrawer({
   const notasId = useId();
   const fechaId = useId();
   const { notify } = useNotification();
+  const { user } = useGoogleAuth();
 
   const updateLot = useConvexMutation(convexApi.lots.update);
 
@@ -112,28 +117,58 @@ export function EditLotDrawer({
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // C4 — baseline snapshot of the 14 editable fields captured at open, so a
+  // background Convex update can't trip a false discard prompt.
+  const baselineRef = useRef<DirtySnapshot | null>(null);
+  // Hydrate once per open session per lot (keyed on lot._id). A reactive `lot`
+  // re-emit — e.g. the LotMetaCard inline cost/unidades edit on the capture
+  // page mutating the same lot — must NOT re-seed and reset the baseline, or it
+  // would clobber unsaved edits and silently clear the discard guard. (Review.)
+  const hydratedKeyRef = useRef<string | null>(null);
 
   const editable = lot.estado === "abierto";
 
-  // Re-seed from the live lot whenever the drawer opens. We don't reset on
-  // every prop change so the user can edit while a Convex subscription
-  // re-fires; the next open re-syncs us to the canonical state.
+  // Re-seed from the live lot once per open session (per lot). We do NOT re-seed
+  // on later `lot` re-emits so an open edit isn't clobbered; the next open
+  // re-syncs to the canonical state.
   useEffect(() => {
-    if (!open) return;
-    setFechaRecepcion(lot.fechaRecepcion);
-    setRenombreLote(lot.renombreLote ?? "");
-    setTratamiento(lot.tratamiento ?? "");
-    setMina(lot.mina ?? "");
-    setCostoTotalCOP(lot.costoTotalCOP);
-    setUnidadesDeclaradas(lot.unidadesDeclaradas);
-    setPesoTotalQuilates(lot.pesoTotalQuilates ?? "");
-    setFormaPago(lot.formaPago);
-    setMetodoContado(lot.metodoContado ?? "transferencia");
-    setCreditoFechaVenc(lot.fechaVencimiento ?? "");
-    setCreditoCuotas(lot.numeroCuotas ?? 3);
-    setNumeroFactura(lot.numeroFactura ?? "");
-    setUrlFactura(lot.urlFactura ?? "");
-    setNotas(lot.notas ?? "");
+    if (!open) {
+      hydratedKeyRef.current = null;
+      return;
+    }
+    if (hydratedKeyRef.current === lot._id) return;
+    hydratedKeyRef.current = lot._id;
+    const seeded: DirtySnapshot = {
+      fechaRecepcion: lot.fechaRecepcion,
+      renombreLote: lot.renombreLote ?? "",
+      tratamiento: lot.tratamiento ?? "",
+      mina: lot.mina ?? "",
+      costoTotalCOP: lot.costoTotalCOP,
+      unidadesDeclaradas: lot.unidadesDeclaradas,
+      pesoTotalQuilates: lot.pesoTotalQuilates ?? "",
+      formaPago: lot.formaPago,
+      metodoContado: lot.metodoContado ?? "transferencia",
+      creditoFechaVenc: lot.fechaVencimiento ?? "",
+      creditoCuotas: lot.numeroCuotas ?? 3,
+      numeroFactura: lot.numeroFactura ?? "",
+      urlFactura: lot.urlFactura ?? "",
+      notas: lot.notas ?? "",
+    };
+    setFechaRecepcion(seeded.fechaRecepcion as string);
+    setRenombreLote(seeded.renombreLote as string);
+    setTratamiento(seeded.tratamiento as string);
+    setMina(seeded.mina as string);
+    setCostoTotalCOP(seeded.costoTotalCOP as number);
+    setUnidadesDeclaradas(seeded.unidadesDeclaradas as number);
+    setPesoTotalQuilates(seeded.pesoTotalQuilates as number | "");
+    setFormaPago(seeded.formaPago as FormaPago);
+    setMetodoContado(seeded.metodoContado as MetodoContado);
+    setCreditoFechaVenc(seeded.creditoFechaVenc as string);
+    setCreditoCuotas(seeded.creditoCuotas as number);
+    setNumeroFactura(seeded.numeroFactura as string);
+    setUrlFactura(seeded.urlFactura as string);
+    setNotas(seeded.notas as string);
+    baselineRef.current = seeded;
     setError(null);
   }, [open, lot]);
 
@@ -151,6 +186,37 @@ export function EditLotDrawer({
     typeof unidadesDeclaradas === "number" &&
     unidadesDeclaradas >= minUnidades &&
     creditoComplete;
+
+  // C4 — dirty when any field diverges from the open-time baseline. Only an
+  // editable (abierto) lot can be dirty; on a closed lot every field is disabled.
+  const currentFields: DirtySnapshot = {
+    fechaRecepcion,
+    renombreLote,
+    tratamiento,
+    mina,
+    costoTotalCOP,
+    unidadesDeclaradas,
+    pesoTotalQuilates,
+    formaPago,
+    metodoContado,
+    creditoFechaVenc,
+    creditoCuotas,
+    numeroFactura,
+    urlFactura,
+    notas,
+  };
+  const dirty =
+    open &&
+    editable &&
+    baselineRef.current !== null &&
+    !recordsEqual(currentFields, baselineRef.current);
+  const {
+    guardedClose,
+    requestClose,
+    confirmOpen,
+    confirmDiscard,
+    cancelDiscard,
+  } = useDirtyGuard({ dirty, onClose, enabled: !submitting });
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -188,7 +254,11 @@ export function EditLotDrawer({
         patch.fechaVencimiento = undefined;
         patch.numeroCuotas = undefined;
       }
-      await updateLot({ id: lot._id as Id<"lots">, patch });
+      await updateLot({
+        id: lot._id as Id<"lots">,
+        patch,
+        editorEmail: user?.email,
+      });
       notify(`Lote ${lot.loteId} actualizado`, "success");
       onClose();
     } catch (err) {
@@ -228,7 +298,7 @@ export function EditLotDrawer({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={guardedClose}
       maxWidth={false}
       aria-labelledby={titleId}
       aria-modal
@@ -308,13 +378,13 @@ export function EditLotDrawer({
           >
             {editable
               ? "Datos contables del encabezado. Sincroniza a Sheets al guardar."
-              : "Lote cerrado — no se pueden editar los datos hasta reabrirlo."}
+              : "Lote cerrado: el encabezado contable está fijo. Para corregir el costo del lote, reabrílo desde la página del lote (vuelve a “abierto”); si algún ítem ya está vendido, cancelá esa venta primero."}
           </Box>
         </Box>
         <Box
           component="button"
           type="button"
-          onClick={onClose}
+          onClick={requestClose}
           aria-label="Cerrar"
           sx={{
             width: 32,
@@ -689,7 +759,7 @@ export function EditLotDrawer({
           <Box
             component="button"
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             disabled={submitting}
             sx={{
               fontFamily: fontFamilies.system,
@@ -744,6 +814,17 @@ export function EditLotDrawer({
           </Box>
         </Box>
       </Box>
+
+      {/* C4 — discard guard for close/backdrop/Esc/Cancelar while dirty. */}
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Descartar cambios"
+        message="Tenés cambios sin guardar en el encabezado del lote. ¿Querés descartarlos?"
+        confirmLabel="Descartar"
+        cancelLabel="Seguir editando"
+        onConfirm={confirmDiscard}
+        onCancel={cancelDiscard}
+      />
     </Dialog>
   );
 }

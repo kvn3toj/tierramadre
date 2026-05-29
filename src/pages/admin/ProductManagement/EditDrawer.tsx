@@ -37,10 +37,11 @@ import { getAtelier, getFoto } from "../../../design-system";
 import {
   convexApi,
   convexReady,
-  useConvexMutation,
   useConvexQuery,
 } from "../../../lib/convex-safe";
-import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
+import { useProductLock } from "../../../hooks/useProductLock";
+import { useDirtyGuard } from "../../../hooks/useDirtyGuard";
+import ConfirmDialog from "../../../components/shared/ConfirmDialog";
 import { StatusPip, type EstadoValue } from "./StatusPip";
 // Phase G — create mode: typed payload for the "+ Nueva piedra" flow.
 import type { NewProductInput } from "../../../utils/createProduct-validate";
@@ -279,9 +280,7 @@ export function EditDrawer({
   const theme = useTheme();
   const atelier = getAtelier(theme.palette.mode);
   const foto = getFoto(theme.palette.mode === "dark" ? "dark" : "light");
-  const { user } = useGoogleAuth();
-  const claimLock = useConvexMutation(convexApi.products.claimLock);
-  const releaseLock = useConvexMutation(convexApi.products.releaseLock);
+  const { lockedByOther } = useProductLock(product?.itemId, open);
   const [draft, setDraft] = useState<DraftState>(() => toDraft(product));
   const [driveState, setDriveState] =
     useState<DriveFolderState>(EMPTY_DRIVE_STATE);
@@ -345,64 +344,24 @@ export function EditDrawer({
   }, [open, product?.itemId]);
 
   // ─── Soft lock ──────────────────────────────────────────────────────
-  // Claim a 5-min lock on drawer open; release on close. If the claim
-  // is rejected (another admin holds), we never release — that admin
-  // owns the row. The `claimedHere` closure flag covers the race where
-  // the claim resolves *after* the user already closed the drawer.
-  useEffect(() => {
-    if (!convexReady || !open || !product?.itemId || !user?.email) return;
-
-    const itemId = product.itemId;
-    const email = user.email;
-    const name = user.name;
-    let cancelled = false;
-    let claimedHere = false;
-
-    void claimLock({ itemId, holderEmail: email, holderName: name })
-      .then((result) => {
-        if (cancelled) {
-          if (result.ok) {
-            void releaseLock({ itemId, holderEmail: email }).catch(() => {});
-          }
-          return;
-        }
-        if (result.ok) {
-          claimedHere = true;
-        }
-      })
-      .catch(() => {
-        // Silent — the lockStatus subscription will surface the conflict
-      });
-
-    return () => {
-      cancelled = true;
-      if (claimedHere) {
-        void releaseLock({ itemId, holderEmail: email }).catch(() => {});
-        claimedHere = false;
-      }
-    };
-  }, [open, product?.itemId, user?.email, user?.name, claimLock, releaseLock]);
-
-  // Reactive lock state. Filters self out — only "someone else holds"
-  // matters for banner + Save gating.
-  const lockStatus = useConvexQuery(
-    convexApi.products.lockStatus,
-    convexReady && open && product?.itemId
-      ? { itemId: product.itemId }
-      : "skip",
-  ) as
-    | { holderEmail: string; holderName?: string; expiresAt: string }
-    | null
-    | undefined;
-
-  const lockedByOther = useMemo(() => {
-    if (!lockStatus || !user?.email) return null;
-    if (lockStatus.holderEmail === user.email) return null;
-    return lockStatus;
-  }, [lockStatus, user?.email]);
+  // shared with the Fotosíntesis EditItemDrawer via useProductLock (called
+  // above): both contend on the same productLocks row by itemId, so the two
+  // editors can't silently clobber each other. `lockedByOther` is non-null
+  // only when a DIFFERENT admin currently holds the lock.
 
   const patch = useMemo(() => diffDraft(draft, product), [draft, product]);
   const hasChanges = Object.keys(patch).length > 0;
+
+  // C4 — guard the close/backdrop/Esc/Cancelar paths so the "N cambios sin
+  // guardar" the footer already advertises aren't silently discarded. Reuses
+  // the existing diff (hasChanges); create mode has no diff so it's unguarded.
+  const {
+    guardedClose,
+    requestClose,
+    confirmOpen,
+    confirmDiscard,
+    cancelDiscard,
+  } = useDirtyGuard({ dirty: hasChanges, onClose, enabled: !isSaving });
 
   // Phase G — create mode: in create mode the drawer renders without a
   // product (we synthesize headers/footer from the draft). The empty
@@ -440,7 +399,7 @@ export function EditDrawer({
     <Drawer
       anchor="right"
       open={open}
-      onClose={isSaving ? undefined : onClose}
+      onClose={isSaving ? undefined : guardedClose}
       PaperProps={{
         sx: {
           width: `${atelier.spacing.drawerWidth}px`,
@@ -519,7 +478,7 @@ export function EditDrawer({
               </>
             )}
             <CloseButton
-              onClose={onClose}
+              onClose={requestClose}
               disabled={isSaving}
               atelier={atelier}
               foto={foto}
@@ -794,7 +753,7 @@ export function EditDrawer({
           </Typography>
           <Box sx={{ display: "inline-flex", gap: 1 }}>
             <ButtonBase
-              onClick={onClose}
+              onClick={requestClose}
               disabled={isSaving}
               disableRipple
               sx={{
@@ -869,6 +828,19 @@ export function EditDrawer({
           </Box>
         </Box>
       </Box>
+
+      {/* C4 — discard guard for close/backdrop/Esc/Cancelar while dirty. */}
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Descartar cambios"
+        message={`Tenés ${Object.keys(patch).length} cambio${
+          Object.keys(patch).length === 1 ? "" : "s"
+        } sin guardar. ¿Querés descartarlos?`}
+        confirmLabel="Descartar"
+        cancelLabel="Seguir editando"
+        onConfirm={confirmDiscard}
+        onCancel={cancelDiscard}
+      />
     </Drawer>
   );
 }

@@ -194,22 +194,40 @@ export const cancel = mutation({
   handler: async (ctx, { id, operatorEmail, operatorName, reason }) => {
     const sale = await ctx.db.get(id);
     if (!sale) throw new Error(`Sale ${id} not found`);
-    if (sale.estado === "cancelada") return { id, alreadyCancelled: true };
+    if (sale.estado === "cancelada")
+      return {
+        id,
+        alreadyCancelled: true as const,
+        restored: 0,
+        skipped: 0,
+      };
 
     const now = new Date().toISOString();
+
+    // Tally how many items were actually returned to inventory vs left as-is,
+    // so the UI can tell the truth instead of always claiming "stock
+    // restaurado" even when nothing was restored. (ISO-audit C8.)
+    let restored = 0;
+    let skipped = 0;
 
     for (const itemId of sale.itemIds) {
       const product = await ctx.db
         .query("productInventory")
         .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
         .first();
-      if (!product) continue;
+      if (!product) {
+        skipped++;
+        continue;
+      }
       // Only reopen items this sale still owns. If the item moved on after
       // this sale (re-sold by another sale, re-classified to ESMEREOGENESIS /
       // ASESOR, or already DISPONIBLE), leave it untouched — clobbering it to
       // DISPONIBLE would free stock another active sale owns and write a false
       // `before` into the audit trail.
-      if (product.estado !== "VENDIDA") continue;
+      if (product.estado !== "VENDIDA") {
+        skipped++;
+        continue;
+      }
       await ctx.db.patch(product._id, {
         estado: "DISPONIBLE" as const,
         syncStatus: "pending" as const,
@@ -231,6 +249,7 @@ export const cancel = mutation({
         auditId,
         mode: "patch",
       });
+      restored++;
     }
 
     await ctx.db.patch(id, {
@@ -246,7 +265,7 @@ export const cancel = mutation({
       id,
       mode: "patch",
     });
-    return { id };
+    return { id, alreadyCancelled: false as const, restored, skipped };
   },
 });
 
@@ -296,6 +315,13 @@ export const updatePrice = mutation({
 export const setCarnetUrl = mutation({
   args: { id: v.id("sales"), carnetUrl: v.string() },
   handler: async (ctx, { id, carnetUrl }) => {
+    const sale = await ctx.db.get(id);
+    if (!sale) throw new Error(`Sale ${id} not found`);
+    // A cancelled sale is read-only, like updatePrice. The detail-page
+    // re-upload affordance (ISO-audit C6) also hides for cancelled sales, so
+    // this is the server-side backstop.
+    if (sale.estado === "cancelada")
+      throw new Error("No se puede editar una venta cancelada");
     await ctx.db.patch(id, { carnetUrl, syncStatus: "pending" as const });
     await ctx.scheduler.runAfter(0, api.sales._pushToSheet, {
       id,
@@ -308,6 +334,10 @@ export const setCarnetUrl = mutation({
 export const setCertificadoUrl = mutation({
   args: { id: v.id("sales"), certificadoUrl: v.string() },
   handler: async (ctx, { id, certificadoUrl }) => {
+    const sale = await ctx.db.get(id);
+    if (!sale) throw new Error(`Sale ${id} not found`);
+    if (sale.estado === "cancelada")
+      throw new Error("No se puede editar una venta cancelada");
     await ctx.db.patch(id, {
       certificadoUrl,
       syncStatus: "pending" as const,

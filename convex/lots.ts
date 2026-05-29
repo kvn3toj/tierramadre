@@ -17,6 +17,7 @@ import {
   parseLoteId,
   reclaimIfTail,
 } from "./sequences";
+import { canReopenLot, deriveCostoBaseCOP } from "./_lib/lotMath";
 
 // Free text (canonical: B | C | S | M). The capture UI sanitizes a custom
 // write-in to an uppercase, dash-free token before it reaches here, so it stays
@@ -161,8 +162,12 @@ export const create = mutation({
 });
 
 export const update = mutation({
-  args: { id: v.id("lots"), patch: lotPatchValidator },
-  handler: async (ctx, { id, patch }) => {
+  args: {
+    id: v.id("lots"),
+    patch: lotPatchValidator,
+    editorEmail: v.optional(v.string()),
+  },
+  handler: async (ctx, { id, patch, editorEmail }) => {
     const existing = await ctx.db.get(id);
     if (!existing) throw new Error(`Lot ${id} not found`);
     if (existing.estado !== "abierto")
@@ -176,7 +181,62 @@ export const update = mutation({
       id,
       mode: "patch",
     });
-    return { id };
+
+    // Re-fan costoBaseCOP when the lot cost changes. costoBaseCOP is a stone's
+    // share of the lot cost (costoTotalCOP × preponderancia / 100), derived per
+    // item at capture. `update` used to patch only the lot row, leaving every
+    // item's costoBaseCOP stale — so fixing a miskeyed costoTotalCOP (the whole
+    // point of reopening a lot) silently failed to correct the item costs.
+    // Now the new cost fans out to all member items, each as its own audited
+    // push. Items keep their loteId, so the push routes to the SOT tab. (C1.)
+    let refanned = 0;
+    if (
+      patch.costoTotalCOP !== undefined &&
+      patch.costoTotalCOP !== existing.costoTotalCOP
+    ) {
+      const newTotal = patch.costoTotalCOP;
+      const items = await ctx.db
+        .query("lotItems")
+        .withIndex("by_loteId", (q) => q.eq("loteId", existing.loteId))
+        .collect();
+      const now = new Date().toISOString();
+      for (const li of items) {
+        const nextCosto = deriveCostoBaseCOP(newTotal, li.preponderancia);
+        if (nextCosto === li.costoBaseCOP) continue;
+        await ctx.db.patch(li._id, { costoBaseCOP: nextCosto });
+        const product = await ctx.db
+          .query("productInventory")
+          .withIndex("by_itemId", (q) => q.eq("itemId", li.itemId))
+          .first();
+        if (!product) continue;
+        await ctx.db.patch(product._id, {
+          costoBaseCOP: nextCosto,
+          syncStatus: "pending" as const,
+          syncError: undefined,
+        });
+        const auditId = await ctx.db.insert("productEdits", {
+          itemId: product.itemId,
+          editorEmail: editorEmail ?? "fotosintesis-lote",
+          editedAt: now,
+          changes: [
+            {
+              field: "costoBaseCOP",
+              before: li.costoBaseCOP ?? null,
+              after: nextCosto,
+            },
+          ],
+          status: "pending" as const,
+        });
+        await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
+          itemId: product.itemId,
+          auditId,
+          mode: "patch",
+        });
+        refanned++;
+      }
+    }
+
+    return { id, refanned };
   },
 });
 
@@ -260,8 +320,9 @@ export const close = mutation({
  * references survive (Sheets, audit trails), but it no longer appears in
  * the active queue.
  *
- * Only `abierto` lots can be cancelled — closed or published lots have
- * downstream effects (sales, catalog) that need their own undo flow.
+ * Only `abierto` lots can be cancelled — for a closed or published lot the
+ * undo flow is `reopen` (below), which returns it to `abierto` so the header
+ * can be corrected, rather than voiding it outright.
  */
 export const cancel = mutation({
   args: {
@@ -405,6 +466,95 @@ export const publish = mutation({
       mode: "patch",
     });
     return { id, loteId: lot.loteId, flipped };
+  },
+});
+
+/**
+ * Reopen a cerrado/publicado lot back to `abierto` so a miskeyed lot header
+ * (most importantly costoTotalCOP) can be corrected via EditLotDrawer — this is
+ * the "undo flow" the cancel comment refers to, and the only real way to fix a
+ * lot's accounting after close. Guards (ISO-audit C1):
+ *   - estado must be cerrado/publicado (abierto/cancelado are rejected);
+ *   - blocked if ANY member item is already VENDIDA — reopening would let an
+ *     operator edit accounting a sale already depends on. Cancel that sale first.
+ * Reopening a *published* lot pulls its items out of the public catalog
+ * (mostrarEnCatalogo:false) so nothing stays live mid-edit; republish re-adds
+ * them. The reason is appended to the lot's notas (same audit convention as
+ * cancel) since productEdits has no lot-scoped row.
+ */
+export const reopen = mutation({
+  args: {
+    id: v.id("lots"),
+    editorEmail: v.optional(v.string()),
+    reason: v.optional(v.string()),
+  },
+  handler: async (ctx, { id, editorEmail, reason }) => {
+    const lot = await ctx.db.get(id);
+    if (!lot) throw new Error(`Lot ${id} not found`);
+
+    const items = await ctx.db
+      .query("lotItems")
+      .withIndex("by_loteId", (q) => q.eq("loteId", lot.loteId))
+      .collect();
+    const products = await Promise.all(
+      items.map((li) =>
+        ctx.db
+          .query("productInventory")
+          .withIndex("by_itemId", (q) => q.eq("itemId", li.itemId))
+          .first(),
+      ),
+    );
+
+    const verdict = canReopenLot({
+      estado: lot.estado,
+      members: items.map((li, i) => ({
+        itemId: li.itemId,
+        estado: products[i]?.estado,
+      })),
+    });
+    if (!verdict.ok) {
+      if (verdict.reason === "not-closeable")
+        throw new Error("Sólo se pueden reabrir lotes cerrados o publicados");
+      throw new Error(
+        `No se puede reabrir: ítem(s) ${verdict.soldItemIds.join(", ")} ya ` +
+          `vendido(s). Cancelá esa venta primero.`,
+      );
+    }
+
+    // Pull published members out of the public catalog while the lot is edited.
+    let demotedFromCatalog = 0;
+    if (lot.estado === "publicado") {
+      for (const product of products) {
+        if (product && product.mostrarEnCatalogo === true) {
+          await ctx.db.patch(product._id, { mostrarEnCatalogo: false });
+          demotedFromCatalog++;
+        }
+      }
+    }
+
+    const trimmedReason = reason?.trim();
+    const reopenNote = `Reabierto${editorEmail ? ` por ${editorEmail}` : ""}${
+      trimmedReason ? `: ${trimmedReason}` : ""
+    }`;
+    const notasNext = `${lot.notas ? `${lot.notas} | ` : ""}${reopenNote}`;
+
+    await ctx.db.patch(id, {
+      estado: "abierto" as const,
+      notas: notasNext,
+      syncStatus: "pending" as const,
+      syncError: undefined,
+    });
+    await ctx.scheduler.runAfter(0, api.lots._pushToSheet, {
+      id,
+      mode: "patch",
+    });
+
+    return {
+      id,
+      loteId: lot.loteId,
+      reopenedFrom: lot.estado,
+      demotedFromCatalog,
+    };
   },
 });
 

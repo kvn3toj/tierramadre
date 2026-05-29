@@ -410,6 +410,16 @@ export function InsumoFields({
           ariaLabel="Costo en COP"
           disabled={disabled}
         />
+        <Box
+          sx={{
+            fontSize: 11,
+            color: foto.ink.tertiary,
+            marginTop: "6px",
+            lineHeight: 1.45,
+          }}
+        >
+          Lo que pagaste por el insumo. No se publica en el catálogo.
+        </Box>
       </Box>
     </Box>
   );
