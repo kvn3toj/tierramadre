@@ -532,9 +532,24 @@ export function JoyaFields({
       </Box>
 
       <Box>
-        <FieldLabel htmlFor={precioId} optional="opcional">
-          Precio público sugerido (COP)
+        <FieldLabel
+          htmlFor={precioId}
+          optional="interno, no es el precio público"
+        >
+          Precio base interno (COP)
         </FieldLabel>
+        <Box
+          sx={{
+            fontSize: 11,
+            color: foto.ink.tertiary,
+            marginTop: "-2px",
+            marginBottom: "8px",
+            lineHeight: 1.45,
+          }}
+        >
+          Referencia interna de costo/precio (columna L de la hoja). No se
+          publica en el catálogo: el precio que ve el público es el embajador.
+        </Box>
         <NumberInputWithCalc
           id={precioId}
           value={value.precioPublicoCOP}
@@ -543,7 +558,7 @@ export function JoyaFields({
           step={1000}
           min={0}
           format="currency"
-          ariaLabel="Precio público"
+          ariaLabel="Precio base interno en COP"
           disabled={disabled}
           calcVariant="neutral"
         />

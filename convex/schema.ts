@@ -92,11 +92,14 @@ export default defineSchema({
     categoria: v.optional(v.string()),
     // ── Price block — grouped to mirror the SOT "Inventario" tab layout
     // (Sheets columns L–O). costoBaseCOP = lot.costoTotalCOP × preponderancia%;
-    // the embajador/consciente tiers are the x1–x4 prices. precioPotencialCOP
-    // has no Sheets column — grouped here for clarity.
+    // the embajador/consciente tiers are the x1–x4 prices.
     precioCOP: v.optional(v.number()), // L
     costoBaseCOP: v.optional(v.number()), // M
     precioEmbajadorCOP: v.optional(v.number()), // N
+    // DEPRECATED (audit F4): no Sheets column, no UI writer, never pushed or
+    // pulled. The create + updateGemaFields write surfaces were removed; the
+    // field is retained (optional) ONLY so any pre-existing docs validate.
+    // Do not write to it — remove via a data migration if ever cleaned up.
     precioPotencialCOP: v.optional(v.number()),
     precioConscienteCOP: v.optional(v.number()), // O
     ubicacion: v.optional(v.string()),

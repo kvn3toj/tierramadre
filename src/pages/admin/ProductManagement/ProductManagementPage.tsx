@@ -139,6 +139,13 @@ interface ConvexProductDoc {
   coleccion?: string;
   caja?: string;
   estado: EstadoValue;
+  /**
+   * When set, the product belongs to a Fotosíntesis lote. Its public catalog
+   * price (precio embajador, col N) is governed by Fotosíntesis, NOT precioCOP
+   * (col L) — so the EditDrawer surfaces a deep-link instead of pretending this
+   * field is the price.
+   */
+  loteId?: string;
   syncStatus: "synced" | "pending" | "error";
   syncError?: string;
   lastPushedAt?: string;
@@ -176,6 +183,7 @@ function toDrawerProduct(doc: ConvexProductDoc): EditDrawerProduct {
     coleccion: doc.coleccion,
     caja: doc.caja,
     estado: doc.estado,
+    loteId: doc.loteId,
     syncStatus: doc.syncStatus,
     syncError: doc.syncError,
     lastPushedAt: doc.lastPushedAt,

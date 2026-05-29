@@ -18,7 +18,6 @@ import type { Id } from "../../../../../convex/_generated/dataModel";
 import { FieldLabel } from "./FieldLabel";
 import { GemaFields, EMPTY_GEMA_DRAFT, type GemaDraft } from "./GemaFields";
 import { JoyaFields, EMPTY_JOYA_DRAFT, type JoyaDraft } from "./JoyaFields";
-import { BrutoFields, EMPTY_BRUTO_DRAFT, type BrutoDraft } from "./BrutoFields";
 import {
   InsumoFields,
   EMPTY_INSUMO_DRAFT,
@@ -26,6 +25,7 @@ import {
 } from "./InsumoFields";
 import { KbdKey } from "./KbdKey";
 import { PhotoDropzone, type DropzonePhoto } from "./PhotoDropzone";
+import { PriceMultiplierField } from "./PriceMultiplierField";
 import { spanishText } from "../utils/fieldLang";
 import {
   inferItemTipo,
@@ -33,11 +33,11 @@ import {
   gemaPatchFromDraft,
   joyaDraftFromProduct,
   joyaPatchFromDraft,
-  brutoDraftFromProduct,
-  brutoPatchFromDraft,
   insumoDraftFromProduct,
   insumoPatchFromDraft,
+  tierPricePatch,
   type EditableTipo,
+  type ItemPricingDraft,
 } from "../utils/buildLotItemPayload";
 import {
   uploadFotosintesisImages,
@@ -49,7 +49,6 @@ import { itemEstadoCopy, type LotEstado } from "../utils/itemEstadoCopy";
 const TIPO_LABEL: Record<EditableTipo, string> = {
   gema: "Gema",
   joya: "Joya",
-  bruto: "Bruto",
   insumo: "Insumo",
 };
 
@@ -64,6 +63,15 @@ interface ProductInventoryRow {
   procedencia?: string;
   observacion?: string;
   precioCOP?: number;
+  // Catalog tiers — the prices the public catalog actually reads.
+  // precioEmbajadorCOP (sheet col N) is the public price; precioConscienteCOP
+  // (col O) is the preferential tier. products.get returns the full doc, so
+  // these always exist at runtime — the interface just under-declared them.
+  precioEmbajadorCOP?: number;
+  precioConscienteCOP?: number;
+  // Cost basis (lot cost × preponderancia, sheet col M) — base for the tier
+  // multipliers when in-session preponderancia is 0/empty.
+  costoBaseCOP?: number;
   mostrarEnCatalogo?: boolean;
   cantidad?: number;
   talla?: string;
@@ -77,7 +85,9 @@ interface ProductInventoryRow {
   tecnicaJoya?: string;
   minerales?: string[];
   complementos?: string[];
-  // Bruto-specific
+  // Legacy bruto-only metadata. Rough stones now edit as gemas (see
+  // inferItemTipo), so these are no longer surfaced; they're kept on the row so
+  // inferItemTipo can read them and the gema patch leaves them untouched.
   cantidadEstimada?: number;
   rendimientoEsperado?: number;
   fotoUrl?: string;
@@ -186,13 +196,6 @@ export function EditItemDrawer({
         preponderancia: currentPreponderancia,
       }) as JoyaDraft,
   );
-  const [brutoDraft, setBrutoDraft] = useState<BrutoDraft>(
-    () =>
-      ({
-        ...EMPTY_BRUTO_DRAFT,
-        preponderancia: currentPreponderancia,
-      }) as BrutoDraft,
-  );
   const [insumoDraft, setInsumoDraft] = useState<InsumoDraft>(
     () =>
       ({
@@ -202,6 +205,14 @@ export function EditItemDrawer({
   );
   const [observacion, setObservacion] = useState("");
   const [mostrarEnCatalogo, setMostrarEnCatalogo] = useState(false);
+  // Catalog tiers (Goal F2) — a SHARED value (sibling of observación /
+  // mostrarEnCatalogo), not a sub-form draft. Seeded from the product in the
+  // hydrate effect and folded into the dirty baseline so any tier edit arms the
+  // discard guard. Insumos never render these, so they stay ""/"".
+  const [pricing, setPricing] = useState<ItemPricingDraft>({
+    precioEmbajadorCOP: "",
+    precioConscienteCOP: "",
+  });
   // Item photo (hero). Seeded from the saved Drive URL; a freshly dropped file
   // carries `file` so submit knows to upload it. Photos are editable in any lot
   // estado — see the `updateMedia` mutation.
@@ -250,20 +261,13 @@ export function EditItemDrawer({
     if (hydratedKeyRef.current === itemId) return;
     hydratedKeyRef.current = itemId;
     const t = inferItemTipo(product);
-    let seededActive: GemaDraft | JoyaDraft | BrutoDraft | InsumoDraft;
+    let seededActive: GemaDraft | JoyaDraft | InsumoDraft;
     if (t === "joya") {
       const d = {
         ...joyaDraftFromProduct(product),
         preponderancia: currentPreponderancia,
       };
       setJoyaDraft(d);
-      seededActive = d;
-    } else if (t === "bruto") {
-      const d = {
-        ...brutoDraftFromProduct(product),
-        preponderancia: currentPreponderancia,
-      };
-      setBrutoDraft(d);
       seededActive = d;
     } else if (t === "insumo") {
       const d = {
@@ -284,14 +288,23 @@ export function EditItemDrawer({
     // `descripcion`, so the shared observación textarea is hidden + left empty.
     const seededObservacion = t === "joya" ? "" : (product.observacion ?? "");
     const seededMostrar = product.mostrarEnCatalogo ?? false;
+    // F2 — seed the catalog tiers from the persisted product. An unset tier
+    // hydrates as "" (not 0) so the omit-on-blank submit rule never re-sends a
+    // price the operator didn't touch.
+    const seededPricing: ItemPricingDraft = {
+      precioEmbajadorCOP: product.precioEmbajadorCOP ?? "",
+      precioConscienteCOP: product.precioConscienteCOP ?? "",
+    };
     setObservacion(seededObservacion);
     setMostrarEnCatalogo(seededMostrar);
+    setPricing(seededPricing);
     // C4 — capture the dirty baseline from the same seeded values so it can
     // never drift from what we just hydrated into the form.
     baselineRef.current = JSON.stringify({
       draft: seededActive,
       observacion: seededObservacion,
       mostrarEnCatalogo: seededMostrar,
+      pricing: seededPricing,
     });
     setPhotos((prev) => {
       revokeLocalPreviews(prev);
@@ -326,19 +339,23 @@ export function EditItemDrawer({
 
   // The active draft drives the shared preponderancia + name validation,
   // regardless of which sub-form is rendered.
-  const activeDraft: GemaDraft | JoyaDraft | BrutoDraft | InsumoDraft =
-    tipo === "joya"
-      ? joyaDraft
-      : tipo === "bruto"
-        ? brutoDraft
-        : tipo === "insumo"
-          ? insumoDraft
-          : draft;
+  const activeDraft: GemaDraft | JoyaDraft | InsumoDraft =
+    tipo === "joya" ? joyaDraft : tipo === "insumo" ? insumoDraft : draft;
   const activeNombre = activeDraft.nombre;
   const activePreponderancia = activeDraft.preponderancia;
 
   const prepNumeric =
     typeof activePreponderancia === "number" ? activePreponderancia : 0;
+  // F2 — base cost the catalog-tier multipliers scale. Recomputed live from the
+  // in-session preponderancia (so dragging prep updates the suggested tier) and
+  // falls back to the persisted costoBaseCOP when prep is 0/empty.
+  const liveCostoBaseCOP = useMemo(
+    () =>
+      lotCostoTotalCOP > 0 && prepNumeric > 0
+        ? Math.round(lotCostoTotalCOP * (prepNumeric / 100))
+        : (product?.costoBaseCOP ?? 0),
+    [lotCostoTotalCOP, prepNumeric, product?.costoBaseCOP],
+  );
   const projectedSum = siblingPreponderanciaSum + prepNumeric;
   const overflow = projectedSum - 100;
   const prepHelper = useMemo<{
@@ -369,6 +386,7 @@ export function EditItemDrawer({
     draft: activeDraft,
     observacion,
     mostrarEnCatalogo,
+    pricing,
   });
   const fieldsDirty =
     baselineRef.current !== null && editSnapshot !== baselineRef.current;
@@ -427,15 +445,26 @@ export function EditItemDrawer({
         const patch: Record<string, unknown> =
           tipo === "joya"
             ? joyaPatchFromDraft(joyaDraft, mostrarEnCatalogo)
-            : tipo === "bruto"
-              ? brutoPatchFromDraft(brutoDraft, observacion, mostrarEnCatalogo)
-              : tipo === "insumo"
-                ? insumoPatchFromDraft(
-                    insumoDraft,
-                    observacion,
-                    mostrarEnCatalogo,
-                  )
-                : gemaPatchFromDraft(draft, observacion, mostrarEnCatalogo);
+            : tipo === "insumo"
+              ? insumoPatchFromDraft(
+                  insumoDraft,
+                  observacion,
+                  mostrarEnCatalogo,
+                )
+              : gemaPatchFromDraft(draft, observacion, mostrarEnCatalogo);
+        // F2 — fold in the catalog tiers (precioEmbajadorCOP /
+        // precioConscienteCOP). tierPricePatch omits blank tiers so a no-op
+        // never clears a stored price; insumos never expose the editors and
+        // keep ""/"", so we also gate the merge as belt-and-suspenders.
+        if (tipo !== "insumo") {
+          Object.assign(
+            patch,
+            tierPricePatch(
+              pricing.precioEmbajadorCOP,
+              pricing.precioConscienteCOP,
+            ),
+          );
+        }
         if (nextFotoUrl !== undefined) patch.fotoUrl = nextFotoUrl;
         if (nextCertificadoUrl !== undefined)
           patch.certificadoUrl = nextCertificadoUrl;
@@ -770,17 +799,6 @@ export function EditItemDrawer({
                 preponderanciaHelperAlert={prepHelper?.alert}
                 disabled={!editable}
               />
-            ) : tipo === "bruto" ? (
-              <BrutoFields
-                value={brutoDraft}
-                onChange={(patch) =>
-                  setBrutoDraft((prev) => ({ ...prev, ...patch }))
-                }
-                lotCostoTotalCOP={lotCostoTotalCOP}
-                preponderanciaHelper={prepHelper?.text}
-                preponderanciaHelperAlert={prepHelper?.alert}
-                disabled={!editable}
-              />
             ) : tipo === "insumo" ? (
               <InsumoFields
                 value={insumoDraft}
@@ -804,6 +822,75 @@ export function EditItemDrawer({
                 disabled={!editable}
               />
             )}
+
+            {/* F2 — Precios del catálogo. ONE shared tier editor for every
+                item kind except insumos (internal supplies never reach the
+                public catalog). The base/col-L price stays in the sub-form
+                above; these two tiers are the ones the customer actually sees.
+                Hidden in read-only media-only sessions so we never surface a
+                non-functional slider. */}
+            {editable && tipo !== "insumo" ? (
+              <Box>
+                <FieldLabel>Precios del catálogo</FieldLabel>
+                <Box
+                  sx={{
+                    fontSize: 11.5,
+                    color: foto.ink.tertiary,
+                    marginTop: "-2px",
+                    marginBottom: "10px",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  El cliente paga el{" "}
+                  <Box
+                    component="span"
+                    sx={{ fontWeight: 600, color: foto.ink.secondary }}
+                  >
+                    precio embajador
+                  </Box>
+                  . El precio base de arriba es solo referencia interna.
+                </Box>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      sm: "minmax(0, 1fr) minmax(0, 1fr)",
+                    },
+                    gap: "16px",
+                  }}
+                >
+                  <PriceMultiplierField
+                    label="Precio embajador"
+                    optional="público"
+                    baseCOP={liveCostoBaseCOP}
+                    defaultMultiplier={2.5}
+                    value={pricing.precioEmbajadorCOP}
+                    onChange={(next) =>
+                      setPricing((prev) => ({
+                        ...prev,
+                        precioEmbajadorCOP: next,
+                      }))
+                    }
+                    ariaLabel="Precio embajador en COP — precio público"
+                  />
+                  <PriceMultiplierField
+                    label="Precio consciente"
+                    optional="consciente"
+                    baseCOP={liveCostoBaseCOP}
+                    defaultMultiplier={3}
+                    value={pricing.precioConscienteCOP}
+                    onChange={(next) =>
+                      setPricing((prev) => ({
+                        ...prev,
+                        precioConscienteCOP: next,
+                      }))
+                    }
+                    ariaLabel="Precio clientes conscientes en COP"
+                  />
+                </Box>
+              </Box>
+            ) : null}
 
             <Box>
               <FieldLabel optional="opcional">Foto del ítem</FieldLabel>

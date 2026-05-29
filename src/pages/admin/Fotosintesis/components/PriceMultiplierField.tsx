@@ -64,9 +64,11 @@ export function PriceMultiplierField({
 
   return (
     <Box>
-      <FieldLabel htmlFor={sliderId} optional={optional}>
-        {label}
-      </FieldLabel>
+      {/* No htmlFor: MUI v6 puts Slider `id` on the inert root span, not the
+          focusable range input, so a `htmlFor={sliderId}` association would be
+          dead. Both controls below carry their own aria-label, so this is a
+          plain section label. */}
+      <FieldLabel optional={optional}>{label}</FieldLabel>
 
       {hasBase ? (
         <Box

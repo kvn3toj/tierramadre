@@ -127,7 +127,6 @@ export const create = mutation({
     formulaJoya: v.optional(v.string()),
     rangoDescuento: v.optional(v.string()),
     precioEmbajadorCOP: v.optional(v.number()),
-    precioPotencialCOP: v.optional(v.number()),
     precioConscienteCOP: v.optional(v.number()),
     // Bruto-only — informational fields about an unworked parcel.
     rendimientoEsperado: v.optional(v.number()),
@@ -217,7 +216,6 @@ export const create = mutation({
       formulaJoya: args.formulaJoya,
       rangoDescuento: args.rangoDescuento,
       precioEmbajadorCOP: args.precioEmbajadorCOP,
-      precioPotencialCOP: args.precioPotencialCOP,
       precioConscienteCOP: args.precioConscienteCOP,
       lastPulledAt: now,
       syncStatus: "pending" as const,
@@ -389,7 +387,6 @@ export const updateGemaFields = mutation({
       formulaJoya: v.optional(v.string()),
       rangoDescuento: v.optional(v.string()),
       precioEmbajadorCOP: v.optional(v.number()),
-      precioPotencialCOP: v.optional(v.number()),
       precioConscienteCOP: v.optional(v.number()),
       precioPublicoCOP: v.optional(v.number()),
       mostrarEnCatalogo: v.optional(v.boolean()),
@@ -538,11 +535,6 @@ export const updateGemaFields = mutation({
       product.precioEmbajadorCOP,
     );
     compareNumber(
-      "precioPotencialCOP",
-      patch.precioPotencialCOP,
-      product.precioPotencialCOP,
-    );
-    compareNumber(
       "precioConscienteCOP",
       patch.precioConscienteCOP,
       product.precioConscienteCOP,
@@ -579,8 +571,11 @@ export const updateGemaFields = mutation({
     }
 
     if (patch.precioPublicoCOP !== undefined) {
-      const next =
-        patch.precioPublicoCOP === 0 ? undefined : patch.precioPublicoCOP;
+      // F13 — a literal 0 is a real price (e.g. free / canje tier), NOT a
+      // "clear" sentinel. Blank inputs arrive as undefined (the *PatchFromDraft
+      // builders omit them) and are skipped by the guard above, so zero-handling
+      // is now consistent with the precioEmbajador/Consciente tier fields.
+      const next = patch.precioPublicoCOP;
       if (next !== product.precioCOP) {
         productPatch.precioCOP = next;
         changes.push({

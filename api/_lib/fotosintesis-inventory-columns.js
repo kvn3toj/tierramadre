@@ -10,6 +10,15 @@
  * data — admin-product-update.ts rebuilds each row from this list by key, so
  * the array order IS the column order. Index 0 is column A, index 1 is B, etc.
  *
+ * ⚠ PUSH-ONLY for the Fotosíntesis-v2 columns (everything past column X /
+ * "ESTADO ASESOR"): convex/products.ts pushToSheet WRITES every column in this
+ * list, but the pull validators (_upsertFromSheet / _upsertManyFromSheet) only
+ * mirror the legacy A–X set back into Convex. So a hand-edit to a v2 column on
+ * the sheet (precioEmbajadorCOP, precioConscienteCOP, preponderancia, loteId,
+ * mostrarEnCatalogo, the form fields…) will NOT sync back — Convex is the
+ * source of truth for those. Edit them through the admin UI, not the sheet.
+ * (Audit F6. If two-way editing is ever needed, extend both pull validators.)
+ *
  * Changing the order (or inserting/removing a column) requires a one-time
  * migration of the live sheet so existing rows realign:
  *   - append-only widening → scripts/extend-fotosintesis-headers.mjs
