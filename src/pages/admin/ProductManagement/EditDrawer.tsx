@@ -39,6 +39,8 @@ import {
   useConvexQuery,
 } from "../../../lib/convex-safe";
 import { useProductLock } from "../../../hooks/useProductLock";
+import { useDirtyGuard } from "../../../hooks/useDirtyGuard";
+import ConfirmDialog from "../../../components/shared/ConfirmDialog";
 import { StatusPip, type EstadoValue } from "./StatusPip";
 // Phase G — create mode: typed payload for the "+ Nueva piedra" flow.
 import type { NewProductInput } from "../../../utils/createProduct-validate";
@@ -342,6 +344,17 @@ export function EditDrawer({
   const patch = useMemo(() => diffDraft(draft, product), [draft, product]);
   const hasChanges = Object.keys(patch).length > 0;
 
+  // C4 — guard the close/backdrop/Esc/Cancelar paths so the "N cambios sin
+  // guardar" the footer already advertises aren't silently discarded. Reuses
+  // the existing diff (hasChanges); create mode has no diff so it's unguarded.
+  const {
+    guardedClose,
+    requestClose,
+    confirmOpen,
+    confirmDiscard,
+    cancelDiscard,
+  } = useDirtyGuard({ dirty: hasChanges, onClose, enabled: !isSaving });
+
   // Phase G — create mode: in create mode the drawer renders without a
   // product (we synthesize headers/footer from the draft). The empty
   // fallback only applies when *neither* a product nor create mode is
@@ -378,7 +391,7 @@ export function EditDrawer({
     <Drawer
       anchor="right"
       open={open}
-      onClose={isSaving ? undefined : onClose}
+      onClose={isSaving ? undefined : guardedClose}
       PaperProps={{
         sx: {
           width: `${atelier.spacing.drawerWidth}px`,
@@ -457,7 +470,7 @@ export function EditDrawer({
               </>
             )}
             <CloseButton
-              onClose={onClose}
+              onClose={requestClose}
               disabled={isSaving}
               atelier={atelier}
               foto={foto}
@@ -720,7 +733,7 @@ export function EditDrawer({
           </Typography>
           <Box sx={{ display: "inline-flex", gap: 1 }}>
             <ButtonBase
-              onClick={onClose}
+              onClick={requestClose}
               disabled={isSaving}
               disableRipple
               sx={{
@@ -795,6 +808,19 @@ export function EditDrawer({
           </Box>
         </Box>
       </Box>
+
+      {/* C4 — discard guard for close/backdrop/Esc/Cancelar while dirty. */}
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Descartar cambios"
+        message={`Tenés ${Object.keys(patch).length} cambio${
+          Object.keys(patch).length === 1 ? "" : "s"
+        } sin guardar. ¿Querés descartarlos?`}
+        confirmLabel="Descartar"
+        cancelLabel="Seguir editando"
+        onConfirm={confirmDiscard}
+        onCancel={cancelDiscard}
+      />
     </Drawer>
   );
 }

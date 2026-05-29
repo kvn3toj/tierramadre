@@ -1,9 +1,11 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useId, useMemo, useState } from "react";
 import { Box } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useNavigate, useParams } from "react-router-dom";
-import { AlertCircle, Ban, ExternalLink, Link2Off } from "lucide-react";
+import { AlertCircle, Ban, ExternalLink, Link2Off, Upload } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../design-system";
+import { uploadVentaDocument } from "./utils/uploadItemMedia";
+import { cancelToast } from "./utils/cancelToast";
 import { FOTO_PREVIEW_FELT } from "./VentaPage";
 import { FOTO_TOPBAR_HEIGHT } from "./components/FotoTopbar";
 import {
@@ -96,6 +98,10 @@ export default function VentaDetailPage() {
 
   const cancelSale = useConvexMutation(convexApi.sales.cancel);
   const updatePrice = useConvexMutation(convexApi.sales.updatePrice);
+  const setCarnetUrl = useConvexMutation(convexApi.sales.setCarnetUrl);
+  const setCertificadoUrl = useConvexMutation(
+    convexApi.sales.setCertificadoUrl,
+  );
 
   // First item drives the Kardex preview; for multi-item sales the additional
   // itemIds are listed under the comprobante.
@@ -122,14 +128,31 @@ export default function VentaDetailPage() {
       if (!sale) return;
       const operatorEmail = user?.email ?? "unknown@tm";
       const operatorName = user?.name;
-      await cancelSale({
-        id: sale._id as Id<"sales">,
-        operatorEmail,
-        operatorName,
-        reason,
-      });
-      notify("Venta cancelada y stock restaurado", "success");
-      setShowCancel(false);
+      // C8 — own try/catch so the success path tells the truth (tailored to the
+      // restored/skipped counts) and errors are surfaced AND re-thrown so
+      // CancelVentaDialog keeps its inline error + re-enables submit.
+      try {
+        const res = await cancelSale({
+          id: sale._id as Id<"sales">,
+          operatorEmail,
+          operatorName,
+          reason,
+        });
+        if (res.alreadyCancelled) {
+          notify("La venta ya estaba cancelada", "info");
+        } else {
+          const { message, severity } = cancelToast({
+            restored: res.restored,
+            skipped: res.skipped,
+          });
+          notify(message, severity);
+        }
+        setShowCancel(false);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        notify(`No pudimos cancelar la venta: ${msg}`, "error");
+        throw err;
+      }
     },
     [sale, user, cancelSale, notify],
   );
@@ -376,13 +399,45 @@ export default function VentaDetailPage() {
                 label="Kardex"
                 url={sale.carnetUrl}
                 openLabel="Abrir Kardex"
+                uploadLabel="Subir Kardex"
+                disabled={isCancelled}
                 foto={foto}
+                onUpload={async (file) => {
+                  try {
+                    const docUrl = await uploadVentaDocument(file);
+                    await setCarnetUrl({
+                      id: sale._id as Id<"sales">,
+                      carnetUrl: docUrl,
+                    });
+                    notify("Kardex actualizado", "success");
+                  } catch (err) {
+                    const msg =
+                      err instanceof Error ? err.message : String(err);
+                    notify(`No pudimos subir el Kardex: ${msg}`, "error");
+                  }
+                }}
               />
               <DocumentRow
                 label="Certificado"
                 url={sale.certificadoUrl}
                 openLabel="Abrir Certificado"
+                uploadLabel="Subir Certificado"
+                disabled={isCancelled}
                 foto={foto}
+                onUpload={async (file) => {
+                  try {
+                    const docUrl = await uploadVentaDocument(file);
+                    await setCertificadoUrl({
+                      id: sale._id as Id<"sales">,
+                      certificadoUrl: docUrl,
+                    });
+                    notify("Certificado actualizado", "success");
+                  } catch (err) {
+                    const msg =
+                      err instanceof Error ? err.message : String(err);
+                    notify(`No pudimos subir el Certificado: ${msg}`, "error");
+                  }
+                }}
               />
             </Box>
           </Section>
@@ -682,10 +737,45 @@ interface DocumentRowProps {
   label: string;
   url: string | undefined;
   openLabel: string;
+  /** Button label when no document exists yet (e.g. "Subir Kardex"). */
+  uploadLabel: string;
+  /** Suppress the upload affordance (e.g. cancelled sale = read-only). */
+  disabled?: boolean;
   foto: ReturnType<typeof getFoto>;
+  /** Upload the picked file + persist its URL. Owns its own error toast. */
+  onUpload: (file: File) => Promise<void>;
 }
 
-function DocumentRow({ label, url, openLabel, foto }: DocumentRowProps) {
+/**
+ * A sale document row (Kardex / Certificado). When a URL exists it links out;
+ * either way (unless the sale is cancelled) it exposes a file picker to upload
+ * or replace the document — converting the old read-only "Pendiente" dead-end
+ * into a one-step recovery. (ISO-audit C6.)
+ */
+function DocumentRow({
+  label,
+  url,
+  openLabel,
+  uploadLabel,
+  disabled = false,
+  foto,
+  onUpload,
+}: DocumentRowProps) {
+  const inputId = useId();
+  const [uploading, setUploading] = useState(false);
+
+  const handlePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-picking the same filename after a failure
+    if (!file) return;
+    setUploading(true);
+    try {
+      await onUpload(file);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -708,44 +798,84 @@ function DocumentRow({ label, url, openLabel, foto }: DocumentRowProps) {
       >
         {label}
       </Box>
-      {url ? (
-        <Box
-          component="a"
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            padding: "6px 12px",
-            borderRadius: "7px",
-            border: `1px solid ${foto.accent.primary}`,
-            background: foto.accent.soft,
-            color: foto.accent.deep,
-            fontSize: 12,
-            fontWeight: 600,
-            textDecoration: "none",
-            letterSpacing: "-0.005em",
-            transition: "background 120ms ease",
-            "&:hover": { background: alpha(foto.accent.primary, 0.12) },
-          }}
-        >
-          <ExternalLink size={13} strokeWidth={1.8} aria-hidden />
-          {openLabel}
-        </Box>
-      ) : (
-        <Box
-          sx={{
-            fontSize: 11.5,
-            color: foto.ink.mute,
-            fontStyle: "italic",
-            letterSpacing: "0.01em",
-          }}
-        >
-          Pendiente
-        </Box>
-      )}
+      <Box sx={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+        {url ? (
+          <Box
+            component="a"
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 12px",
+              borderRadius: "7px",
+              border: `1px solid ${foto.accent.primary}`,
+              background: foto.accent.soft,
+              color: foto.accent.deep,
+              fontSize: 12,
+              fontWeight: 600,
+              textDecoration: "none",
+              letterSpacing: "-0.005em",
+              transition: "background 120ms ease",
+              "&:hover": { background: alpha(foto.accent.primary, 0.12) },
+            }}
+          >
+            <ExternalLink size={13} strokeWidth={1.8} aria-hidden />
+            {openLabel}
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              fontSize: 11.5,
+              color: foto.ink.mute,
+              fontStyle: "italic",
+              letterSpacing: "0.01em",
+            }}
+          >
+            Pendiente
+          </Box>
+        )}
+        {!disabled ? (
+          <Box
+            component="label"
+            htmlFor={inputId}
+            aria-disabled={uploading}
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 12px",
+              borderRadius: "7px",
+              border: `1px solid ${foto.surfaces.edgeStrong}`,
+              background: foto.surfaces.inset,
+              color: foto.ink.secondary,
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: uploading ? "wait" : "pointer",
+              letterSpacing: "-0.005em",
+              transition: "background 120ms ease, color 120ms ease",
+              "&:hover": {
+                background: foto.surfaces.canvas,
+                color: foto.ink.primary,
+              },
+            }}
+          >
+            <Upload size={13} strokeWidth={1.8} aria-hidden />
+            {uploading ? "Subiendo…" : url ? "Reemplazar" : uploadLabel}
+            <Box
+              component="input"
+              id={inputId}
+              type="file"
+              accept=".pdf,image/*"
+              disabled={uploading}
+              onChange={handlePick}
+              sx={{ display: "none" }}
+            />
+          </Box>
+        ) : null}
+      </Box>
     </Box>
   );
 }

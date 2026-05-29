@@ -1,7 +1,7 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Box, Dialog, Switch } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { FileText, Lock, Trash2, X as XIcon } from "lucide-react";
+import { FileText, Globe, Lock, Trash2, X as XIcon } from "lucide-react";
 
 import { getFoto, fontFamilies } from "../../../../design-system";
 import {
@@ -11,6 +11,8 @@ import {
 } from "../../../../lib/convex-safe";
 import { useNotification } from "../../../../contexts/NotificationContext";
 import { useProductLock } from "../../../../hooks/useProductLock";
+import { useDirtyGuard } from "../../../../hooks/useDirtyGuard";
+import ConfirmDialog from "../../../../components/shared/ConfirmDialog";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 
 import { FieldLabel } from "./FieldLabel";
@@ -42,6 +44,7 @@ import {
   uploadFotosintesisCertificado,
 } from "../utils/uploadItemMedia";
 import { convertToProxyUrl } from "../../../../utils/driveUrl";
+import { itemEstadoCopy, type LotEstado } from "../utils/itemEstadoCopy";
 
 const TIPO_LABEL: Record<EditableTipo, string> = {
   gema: "Gema",
@@ -98,6 +101,8 @@ interface EditItemDrawerProps {
   siblingPreponderanciaSum: number;
   /** Display label in the breadcrumb (e.g. "B-008 · 003"). */
   ticketLabel: string;
+  /** Lot lifecycle estado — drives the estado-aware catalog banner (C9). */
+  lotEstado: LotEstado;
   /** When false, all gem fields are read-only and only the photo can change. */
   editable?: boolean;
 }
@@ -128,6 +133,7 @@ export function EditItemDrawer({
   lotCostoTotalCOP,
   siblingPreponderanciaSum,
   ticketLabel,
+  lotEstado,
   editable = true,
 }: EditItemDrawerProps) {
   const foto = getFoto("light");
@@ -213,6 +219,16 @@ export function EditItemDrawer({
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // C4 — baseline snapshot of the editable fields captured when the drawer
+  // opens. We compare the live values against this (not the live Convex prop)
+  // so a background edit by another admin can't trip a false discard prompt.
+  const baselineRef = useRef<string | null>(null);
+  // Hydrate (seed + baseline) ONCE per open session per item — keyed on the
+  // edited itemId. Without this, a reactive `product` re-emit (a concurrent
+  // admin save or the mirror cron) would re-run the seed effect, clobber the
+  // operator's in-flight edits AND reset the baseline so the dirty guard reads
+  // clean — silently discarding work with no discard prompt. (Review fix.)
+  const hydratedKeyRef = useRef<string | null>(null);
 
   // Revoke any object URLs we created for previews so we don't leak blobs.
   const revokeLocalPreviews = (list: DropzonePhoto[]) => {
@@ -221,38 +237,62 @@ export function EditItemDrawer({
     }
   };
 
-  // Hydrate the local draft from the latest mirror values every time the
-  // drawer (re)opens or the underlying product row changes. We only reset
-  // while the drawer is closed → reopened to avoid clobbering in-flight edits.
+  // Hydrate the local draft from the mirror once per open session (per item).
+  // We deliberately do NOT re-seed on later `product`/`currentPreponderancia`
+  // re-emits while open — that would clobber unsaved edits and reset the dirty
+  // baseline (see hydratedKeyRef). The drawer re-syncs on the next open.
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      hydratedKeyRef.current = null;
+      return;
+    }
     if (!product) return;
+    if (hydratedKeyRef.current === itemId) return;
+    hydratedKeyRef.current = itemId;
     const t = inferItemTipo(product);
+    let seededActive: GemaDraft | JoyaDraft | BrutoDraft | InsumoDraft;
     if (t === "joya") {
-      setJoyaDraft({
+      const d = {
         ...joyaDraftFromProduct(product),
         preponderancia: currentPreponderancia,
-      });
+      };
+      setJoyaDraft(d);
+      seededActive = d;
     } else if (t === "bruto") {
-      setBrutoDraft({
+      const d = {
         ...brutoDraftFromProduct(product),
         preponderancia: currentPreponderancia,
-      });
+      };
+      setBrutoDraft(d);
+      seededActive = d;
     } else if (t === "insumo") {
-      setInsumoDraft({
+      const d = {
         ...insumoDraftFromProduct(product),
         preponderancia: currentPreponderancia,
-      });
+      };
+      setInsumoDraft(d);
+      seededActive = d;
     } else {
-      setDraft({
+      const d = {
         ...gemaDraftFromProduct(product),
         preponderancia: currentPreponderancia,
-      });
+      };
+      setDraft(d);
+      seededActive = d;
     }
     // For a joya the stored free text round-trips through JoyaFields'
     // `descripcion`, so the shared observación textarea is hidden + left empty.
-    setObservacion(t === "joya" ? "" : (product.observacion ?? ""));
-    setMostrarEnCatalogo(product.mostrarEnCatalogo ?? false);
+    const seededObservacion = t === "joya" ? "" : (product.observacion ?? "");
+    const seededMostrar = product.mostrarEnCatalogo ?? false;
+    setObservacion(seededObservacion);
+    setMostrarEnCatalogo(seededMostrar);
+    // C4 — capture the dirty baseline from the same seeded values so it can
+    // never drift from what we just hydrated into the form.
+    baselineRef.current = JSON.stringify({
+      draft: seededActive,
+      observacion: seededObservacion,
+      mostrarEnCatalogo: seededMostrar,
+    });
     setPhotos((prev) => {
       revokeLocalPreviews(prev);
       return product.fotoUrl
@@ -270,7 +310,7 @@ export function EditItemDrawer({
     setInitialCertificadoUrl(product.certificadoUrl);
     setError(null);
     setConfirmDelete(false);
-  }, [open, product, currentPreponderancia]);
+  }, [open, product, itemId, currentPreponderancia]);
 
   // Reset the confirm-delete prompt + drop any local previews on close.
   useEffect(() => {
@@ -321,6 +361,26 @@ export function EditItemDrawer({
   const photoRemoved = !!initialFotoUrl && photos.length === 0;
   const photoChanged = !!pendingPhotoFile || photoRemoved;
   const certificadoChanged = !!certificadoFile;
+
+  // C4 — dirty when the live editable state diverges from the open-time
+  // baseline (or a new photo/certificate is staged). Gated on `open` so a
+  // closed drawer never keeps the beforeunload guard armed.
+  const editSnapshot = JSON.stringify({
+    draft: activeDraft,
+    observacion,
+    mostrarEnCatalogo,
+  });
+  const fieldsDirty =
+    baselineRef.current !== null && editSnapshot !== baselineRef.current;
+  const dirty =
+    open && ((editable && fieldsDirty) || photoChanged || certificadoChanged);
+  const {
+    guardedClose,
+    requestClose,
+    confirmOpen,
+    confirmDiscard,
+    cancelDiscard,
+  } = useDirtyGuard({ dirty, onClose, enabled: !saving && !deleting });
 
   const canSubmit =
     !!product &&
@@ -425,8 +485,11 @@ export function EditItemDrawer({
     setDeleting(true);
     setError(null);
     try {
-      await removeLotItem({ lotItemId });
+      const res = await removeLotItem({ lotItemId });
       notify(`Ítem #${itemId} eliminado del lote`, "success");
+      // C7 — if removing this stone broke the lot's 100% preponderancia sum on
+      // a closed/published lot, surface it instead of letting it pass silently.
+      if (res?.warning) notify(res.warning, "warning");
       onClose();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "No pudimos eliminar";
@@ -465,7 +528,7 @@ export function EditItemDrawer({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={guardedClose}
       maxWidth={false}
       aria-labelledby={titleId}
       aria-modal
@@ -545,15 +608,13 @@ export function EditItemDrawer({
               lineHeight: 1.55,
             }}
           >
-            {editable
-              ? "Cambios persisten en Convex y se sincronizan a la planilla."
-              : "Lote cerrado — foto y certificado sí se pueden actualizar."}
+            {itemEstadoCopy(lotEstado).subtitle}
           </Box>
         </Box>
         <Box
           component="button"
           type="button"
-          onClick={onClose}
+          onClick={requestClose}
           aria-label="Cerrar"
           sx={{
             width: 32,
@@ -629,6 +690,48 @@ export function EditItemDrawer({
             </Box>
           </Box>
         ) : null}
+        {/* C9 — estado-aware banner: tells the operator whether this edit is a
+            private fix (cerrado) or an instant public-catalog change (publicado).
+            role="note" (not a live region) so it doesn't compete with the lock
+            banner's aria-live announcement; the two use different accents. */}
+        {(() => {
+          const estadoCopy = itemEstadoCopy(lotEstado);
+          if (!estadoCopy.banner) return null;
+          const accent =
+            estadoCopy.tone === "emerald"
+              ? foto.accent.primary
+              : foto.ink.tertiary;
+          return (
+            <Box
+              role="note"
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "10px",
+                background: foto.surfaces.inset,
+                border: `1px solid ${foto.surfaces.rule}`,
+                borderLeft: `3px solid ${accent}`,
+                borderRadius: "10px",
+                padding: "11px 13px",
+              }}
+            >
+              <Globe
+                size={15}
+                strokeWidth={2}
+                style={{ marginTop: 1, color: accent, flexShrink: 0 }}
+              />
+              <Box
+                sx={{
+                  fontSize: 12,
+                  color: foto.ink.secondary,
+                  lineHeight: 1.5,
+                }}
+              >
+                {estadoCopy.banner}
+              </Box>
+            </Box>
+          );
+        })()}
         {product === undefined ? (
           <Box
             sx={{
@@ -960,7 +1063,7 @@ export function EditItemDrawer({
           <Box
             component="button"
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             disabled={saving || deleting}
             sx={{
               fontFamily: fontFamilies.system,
@@ -1015,6 +1118,17 @@ export function EditItemDrawer({
           </Box>
         </Box>
       </Box>
+
+      {/* C4 — discard guard for close/backdrop/Esc/Cancelar while dirty. */}
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Descartar cambios"
+        message="Tenés cambios sin guardar en este ítem. ¿Querés descartarlos?"
+        confirmLabel="Descartar"
+        cancelLabel="Seguir editando"
+        onConfirm={confirmDiscard}
+        onCancel={cancelDiscard}
+      />
     </Dialog>
   );
 }

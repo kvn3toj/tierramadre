@@ -6,6 +6,7 @@ export default defineConfig({
     environment: "node",
     include: ["tests/**/*.test.ts"],
     environmentMatchGlobs: [
+      ["tests/useDirtyGuard.test.ts", "jsdom"],
       ["tests/useVaultUnlock.test.ts", "jsdom"],
       ["tests/useVaultReducedMotion.test.ts", "jsdom"],
       ["tests/vault-cinematic-sequence.test.ts", "jsdom"],
