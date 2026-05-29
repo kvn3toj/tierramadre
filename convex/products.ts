@@ -641,7 +641,9 @@ export const pushToSheet = action({
             medidas: row.medidas ?? "",
             medidasValores: row.medidasValores ?? "",
             categoria: row.categoria ?? row.tipoEsmeralda ?? "",
-            precioCOP: row.precioCOP ?? "",
+            // precioCOP (column L) retired from the SOT mirror 2026-05-29 — no
+            // longer pushed; the Convex field stays app-only. See
+            // api/_lib/fotosintesis-inventory-columns.js.
             ubicacion: row.ubicacion ?? "",
             asesor: row.asesor ?? "",
             estado: row.estado ?? "DISPONIBLE",

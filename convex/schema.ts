@@ -91,17 +91,21 @@ export default defineSchema({
     medidasValores: v.optional(v.string()),
     categoria: v.optional(v.string()),
     // ── Price block — grouped to mirror the SOT "Inventario" tab layout
-    // (Sheets columns L–O). costoBaseCOP = lot.costoTotalCOP × preponderancia%;
+    // (Sheets columns L–N). costoBaseCOP = lot.costoTotalCOP × preponderancia%;
     // the embajador/consciente tiers are the x1–x4 prices.
-    precioCOP: v.optional(v.number()), // L
-    costoBaseCOP: v.optional(v.number()), // M
-    precioEmbajadorCOP: v.optional(v.number()), // N
+    // APP-ONLY (audit 2026-05-29): `precioCOP` lost its Sheets column ("Precio
+    // COP" / former column L, ~82% empty). It is still written by the capture
+    // UI and read by the patrones analytics, but is NO LONGER mirrored to or
+    // pulled from the SOT sheet. Kept optional for existing docs.
+    precioCOP: v.optional(v.number()),
+    costoBaseCOP: v.optional(v.number()), // L
+    precioEmbajadorCOP: v.optional(v.number()), // M
     // DEPRECATED (audit F4): no Sheets column, no UI writer, never pushed or
     // pulled. The create + updateGemaFields write surfaces were removed; the
     // field is retained (optional) ONLY so any pre-existing docs validate.
     // Do not write to it — remove via a data migration if ever cleaned up.
     precioPotencialCOP: v.optional(v.number()),
-    precioConscienteCOP: v.optional(v.number()), // O
+    precioConscienteCOP: v.optional(v.number()), // N
     ubicacion: v.optional(v.string()),
     asesor: v.optional(v.string()),
     // 9 values: the 4 we always handled + 5 inherited from the legacy

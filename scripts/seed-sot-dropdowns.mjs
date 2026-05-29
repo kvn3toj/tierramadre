@@ -132,28 +132,29 @@ const TAB_RULES = (V) => ({
     { col: 13, name: "estado", values: V.LOT_ESTADOS },
   ],
   Inventario: [
-    // Layout from FOTO_INVENTARIO_COLUMNS (price block grouped at L–O):
+    // Layout from FOTO_INVENTARIO_COLUMNS (price block grouped at L–N; the
+    // legacy "Precio COP" column L was retired 2026-05-29, shifting every
+    // column from costoBaseCOP onward one position left):
     // 0 Item, 1 FechaIngreso, 2 Nombre, 3 Peso, 4 Color, 5 Calidad,
     // 6 Cant., 7 Talla, 8 Medidas, 9 Medidas (valor), 10 Categoría,
-    // 11 Precio COP, 12 costoBaseCOP, 13 precioEmbajadorCOP,
-    // 14 precioConscienteCOP, 15 UBICACIÓN, 16 ASESOR, 17 ESTADO,
-    // 18 QR, 19 Colección, 20 CAJA, 21 preponderancia, 22 ASESOR ACTUAL,
-    // 23 ESTADO ASESOR
+    // 11 costoBaseCOP, 12 precioEmbajadorCOP, 13 precioConscienteCOP,
+    // 14 UBICACIÓN, 15 ASESOR, 16 ESTADO, 17 QR, 18 Colección, 19 CAJA,
+    // 20 preponderancia, 21 ASESOR ACTUAL, 22 ESTADO ASESOR
     { col: 4, name: "Color", values: V.COLORS },
     { col: 5, name: "Calidad", values: V.CALIDADES },
     { col: 7, name: "Talla", values: V.TALLAS },
     { col: 8, name: "Medidas (formato)", values: V.MEDIDAS_FORMATO },
     { col: 10, name: "Categoría", values: V.CATEGORIAS },
-    { col: 15, name: "UBICACIÓN", values: V.UBICACIONES },
+    { col: 14, name: "UBICACIÓN", values: V.UBICACIONES },
     // ESTADO uses the productInventory v.union order; "" is filtered out
     // because Sheets won't accept an empty string in a ONE_OF_LIST.
     {
-      col: 17,
+      col: 16,
       name: "ESTADO",
       values: V.PRODUCT_ESTADOS.filter((v) => v !== ""),
     },
-    { col: 19, name: "Colección", values: V.COLECCIONES },
-    { col: 20, name: "CAJA", values: V.CAJAS },
+    { col: 18, name: "Colección", values: V.COLECCIONES },
+    { col: 19, name: "CAJA", values: V.CAJAS },
   ],
   Clientes: [
     // tipo (G, idx 6): embajador | final

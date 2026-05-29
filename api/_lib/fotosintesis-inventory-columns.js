@@ -14,10 +14,10 @@
  * column in this list. The reverse direction (Sheet → Convex) is handled by the
  * bound Apps Script + convex/fotoSync.ts: an edit is captured per-cell and
  * synced back, restricted to the WRITABLE allowlist in convex/_lib/sheetPullMaps.ts.
- * That allowlist intentionally EXCLUDES the derived columns `costoBaseCOP` (M)
- * and `preponderancia` (V) — a sheet edit must never overwrite a figure Convex
- * computes — and treats `loteId` (Y) as a FLAG field (the mirror is updated but
- * lot membership is reconciled in the app). Everything else in A–AQ does sync
+ * That allowlist intentionally EXCLUDES the derived columns `costoBaseCOP` (L)
+ * and `preponderancia` (U) — a sheet edit must never overwrite a figure Convex
+ * computes — and treats `loteId` (X) as a FLAG field (the mirror is updated but
+ * lot membership is reconciled in the app). Everything else in A–AP does sync
  * back. (Audit F6, superseded by the delta sync.)
  *
  * Changing the order (or inserting/removing a column) requires a one-time
@@ -53,41 +53,45 @@ export const FOTO_INVENTARIO_COLUMNS = [
   { header: "Medidas", key: "medidas" }, // I
   { header: "Medidas (valores)", key: "medidasValores" }, // J
   { header: "Categoría", key: "categoria" }, // K
-  // ── Price block (L–O) — kept consecutive for at-a-glance pricing ──
-  { header: "Precio COP", key: "precioCOP" }, // L — base retail price
-  { header: "costoBaseCOP", key: "costoBaseCOP" }, // M — costoTotalCOP × preponderancia%
-  { header: "precioEmbajadorCOP", key: "precioEmbajadorCOP" }, // N — x1–x4 tier
-  { header: "precioConscienteCOP", key: "precioConscienteCOP" }, // O — x1–x4 tier
-  // ── Inventory / status descriptive fields (P–X) ──
-  { header: "UBICACIÓN", key: "ubicacion" }, // P
-  { header: "ASESOR", key: "asesor" }, // Q
-  { header: "ESTADO", key: "estado" }, // R
-  { header: "QR", key: "qr" }, // S
-  { header: "Colección", key: "coleccion" }, // T
-  { header: "CAJA", key: "caja" }, // U
-  { header: "preponderancia", key: "preponderancia" }, // V — % of lot (Fotosíntesis)
-  { header: "ASESOR ACTUAL", key: "asesorActual" }, // W
-  { header: "ESTADO ASESOR", key: "estadoAsesor" }, // X
-  // ── Fotosíntesis v2 extension (Y onward) ──
-  { header: "loteId", key: "loteId" }, // Y — owning lot
-  { header: "mostrarEnCatalogo", key: "mostrarEnCatalogo" }, // Z
-  { header: "procedencia", key: "procedencia" }, // AA
-  { header: "observacion", key: "observacion" }, // AB
-  { header: "rendimientoEsperado", key: "rendimientoEsperado" }, // AC — bruto
-  { header: "cantidadEstimada", key: "cantidadEstimada" }, // AD — bruto
-  { header: "nivelRareza", key: "nivelRareza" }, // AE
-  { header: "calificacion", key: "calificacion" }, // AF
-  { header: "tipoEsmeralda", key: "tipoEsmeralda" }, // AG
-  { header: "subtipoForm", key: "subtipoForm" }, // AH — 9-subtype selector
-  { header: "tipoJoya", key: "tipoJoya" }, // AI
-  { header: "tecnicaJoya", key: "tecnicaJoya" }, // AJ
-  { header: "minerales", key: "minerales" }, // AK — comma-joined
-  { header: "complementos", key: "complementos" }, // AL — comma-joined
-  { header: "fotoUrl", key: "fotoUrl" }, // AM
-  { header: "certificadoUrl", key: "certificadoUrl" }, // AN
-  { header: "formulaGema", key: "formulaGema" }, // AO
-  { header: "formulaJoya", key: "formulaJoya" }, // AP
-  { header: "rangoDescuento", key: "rangoDescuento" }, // AQ
+  // ── Price block (L–N) — kept consecutive for at-a-glance pricing ──
+  // NOTE: the legacy "Precio COP" (precioCOP) column was retired from this SOT
+  // mirror on 2026-05-29 (audit: column was ~82% empty; the public price is the
+  // ambassador tier in `precioEmbajadorCOP`). The `precioCOP` field still exists
+  // in Convex (productInventory) as an app-only value — it is no longer mirrored
+  // to or pulled from this sheet. See scripts/delete-fotosintesis-column-l.mjs.
+  { header: "costoBaseCOP", key: "costoBaseCOP" }, // L — costoTotalCOP × preponderancia%
+  { header: "precioEmbajadorCOP", key: "precioEmbajadorCOP" }, // M — x1–x4 tier
+  { header: "precioConscienteCOP", key: "precioConscienteCOP" }, // N — x1–x4 tier
+  // ── Inventory / status descriptive fields (O–W) ──
+  { header: "UBICACIÓN", key: "ubicacion" }, // O
+  { header: "ASESOR", key: "asesor" }, // P
+  { header: "ESTADO", key: "estado" }, // Q
+  { header: "QR", key: "qr" }, // R
+  { header: "Colección", key: "coleccion" }, // S
+  { header: "CAJA", key: "caja" }, // T
+  { header: "preponderancia", key: "preponderancia" }, // U — % of lot (Fotosíntesis)
+  { header: "ASESOR ACTUAL", key: "asesorActual" }, // V
+  { header: "ESTADO ASESOR", key: "estadoAsesor" }, // W
+  // ── Fotosíntesis v2 extension (X onward) ──
+  { header: "loteId", key: "loteId" }, // X — owning lot
+  { header: "mostrarEnCatalogo", key: "mostrarEnCatalogo" }, // Y
+  { header: "procedencia", key: "procedencia" }, // Z
+  { header: "observacion", key: "observacion" }, // AA
+  { header: "rendimientoEsperado", key: "rendimientoEsperado" }, // AB — bruto
+  { header: "cantidadEstimada", key: "cantidadEstimada" }, // AC — bruto
+  { header: "nivelRareza", key: "nivelRareza" }, // AD
+  { header: "calificacion", key: "calificacion" }, // AE
+  { header: "tipoEsmeralda", key: "tipoEsmeralda" }, // AF
+  { header: "subtipoForm", key: "subtipoForm" }, // AG — 9-subtype selector
+  { header: "tipoJoya", key: "tipoJoya" }, // AH
+  { header: "tecnicaJoya", key: "tecnicaJoya" }, // AI
+  { header: "minerales", key: "minerales" }, // AJ — comma-joined
+  { header: "complementos", key: "complementos" }, // AK — comma-joined
+  { header: "fotoUrl", key: "fotoUrl" }, // AL
+  { header: "certificadoUrl", key: "certificadoUrl" }, // AM
+  { header: "formulaGema", key: "formulaGema" }, // AN
+  { header: "formulaJoya", key: "formulaJoya" }, // AO
+  { header: "rangoDescuento", key: "rangoDescuento" }, // AP
 ];
 
 /** Ordered header labels (row 1 of the Inventario tab). */

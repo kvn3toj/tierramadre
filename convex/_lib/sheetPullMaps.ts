@@ -73,7 +73,9 @@ const INVENTORY: TableSpec = {
   medidas: { coerce: "str" },
   medidasValores: { coerce: "str" },
   categoria: { coerce: "str" },
-  precioCOP: { coerce: "num" },
+  // precioCOP (legacy "Precio COP" / column L) was retired from the SOT mirror
+  // on 2026-05-29 — no sheet column means nothing to pull. The Convex field is
+  // kept app-only; see api/_lib/fotosintesis-inventory-columns.js.
   precioEmbajadorCOP: { coerce: "num" },
   precioConscienteCOP: { coerce: "num" },
   ubicacion: { coerce: "str" },

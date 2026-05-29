@@ -57,8 +57,10 @@ describe("planRowPatch — diff-skip", () => {
   });
 
   it("does not clear a number when the cell is blanked", () => {
-    const plan = planRowPatch("inventory", doc({ precioCOP: 1000 }), {
-      precioCOP: "",
+    // precioEmbajadorCOP is a writable num column; precioCOP was retired from
+    // the SOT mirror (2026-05-29) so it is no longer in the allowlist.
+    const plan = planRowPatch("inventory", doc({ precioEmbajadorCOP: 1000 }), {
+      precioEmbajadorCOP: "",
     });
     expect(plan.action).toBe("skip");
   });
