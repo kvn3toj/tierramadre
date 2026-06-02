@@ -82,6 +82,19 @@ export const create = mutation({
     descuentoCOP: v.optional(v.number()),
     totalCOP: v.number(),
     comisionCOP: v.optional(v.number()),
+    // Manual (non-inventory) line items — stored on the sale, kept out of
+    // `itemIds` (which is validated against inventory). Prices already folded
+    // into precioAcordadoCOP / totalCOP by the venta UI.
+    manualItems: v.optional(
+      v.array(
+        v.object({
+          nombre: v.string(),
+          descripcion: v.optional(v.string()),
+          peso: v.optional(v.string()),
+          precioCOP: v.number(),
+        }),
+      ),
+    ),
     formaPago: formaPagoValidator,
     metodoContado: v.optional(metodoContadoValidator),
     fechaVencimiento: v.optional(v.string()),
@@ -96,7 +109,9 @@ export const create = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    if (args.itemIds.length === 0) {
+    // A sale must carry at least one line — an inventory item OR a manual one.
+    // (A manual-only sale is valid: e.g. an accessory not yet in inventory.)
+    if (args.itemIds.length === 0 && (args.manualItems?.length ?? 0) === 0) {
       throw new Error("Una venta debe incluir al menos un ítem");
     }
     if (new Set(args.itemIds).size !== args.itemIds.length) {

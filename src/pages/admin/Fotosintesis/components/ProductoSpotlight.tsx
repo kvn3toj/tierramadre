@@ -15,7 +15,8 @@ import { getFoto, fontFamilies, emeraldCore } from "../../../../design-system";
 import { useConvexQuery, convexApi } from "../../../../lib/convex-safe";
 import type { SpotlightProduct } from "../FotosintesisLayoutContext";
 import { KbdKey } from "./KbdKey";
-import { convertToProxyUrl } from "../../../../utils/driveUrl";
+import { useBatchThumbnails } from "../../../../hooks/useBatchThumbnails";
+import { resolveItemThumbnail } from "../utils/resolveThumbnail";
 import {
   toggleSelection,
   removeSelection,
@@ -84,6 +85,10 @@ export function ProductoSpotlight({
   const foto = getFoto("light");
   const navigate = useNavigate();
   const titleId = useId();
+  // Legacy catalog thumbnails (Drive `products/` folder scan, keyed by item
+  // number) — the fallback for inventory rows that have no Fotosíntesis
+  // `fotoUrl`, which is why most spotlight thumbnails rendered blank.
+  const { thumbnails: batchThumbs } = useBatchThumbnails();
 
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
@@ -170,8 +175,14 @@ export function ProductoSpotlight({
       deduped.push({
         itemId: row.itemId,
         nombre: row.nombre ?? "Sin nombre",
-        // Drive URLs need the proxy to render as an <img> thumbnail.
-        thumbnailUrl: convertToProxyUrl(row.fotoUrl),
+        // Item's own Fotosíntesis photo (proxied) with a fallback to the legacy
+        // catalog thumbnail keyed by item number — so rows without a `fotoUrl`
+        // still show an image instead of bare text.
+        thumbnailUrl: resolveItemThumbnail(
+          row.fotoUrl,
+          row.itemId,
+          batchThumbs,
+        ),
         // Legacy precioCOP col was retired (~82% empty). The picker doesn't yet
         // know the buyer tier, so hint with the embajador order — reusing the
         // same `pickTierPrice` fallback VentaPage applies so the two never drift.
@@ -182,7 +193,7 @@ export function ProductoSpotlight({
     }
     // Cap at 50 to match the design max-height list.
     return deduped.slice(0, 50);
-  }, [open, disponibles, asesor]);
+  }, [open, disponibles, asesor, batchThumbs]);
 
   const loading = open && (disponibles === undefined || asesor === undefined);
 

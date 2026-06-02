@@ -107,6 +107,41 @@ describe("KardexPreview — multi-item carnet (Bug 2)", () => {
   });
 });
 
+describe("KardexPreview — manual (non-inventory) line items", () => {
+  it("renders a manual item's name + detail in a multi-item sale", () => {
+    const items: KardexLineItem[] = [
+      ITEMS[0],
+      {
+        itemId: "",
+        nombre: "Estuche de cuero",
+        descripcion: "forro de gamuza",
+        precioCop: 80_000,
+        isManual: true,
+      },
+    ];
+    renderKardex({ items, subtotalCop: 880_000 });
+    expect(screen.getByText("Estuche de cuero")).toBeTruthy();
+    // descripcion is folded into the item's spec line.
+    expect(screen.getByText(/forro de gamuza/)).toBeTruthy();
+  });
+
+  it("labels a lone manual item 'Manual' where the internal id would be", () => {
+    const items: KardexLineItem[] = [
+      {
+        itemId: "",
+        nombre: "Servicio de engaste",
+        precioCop: 120_000,
+        isManual: true,
+      },
+    ];
+    renderKardex({ items });
+    expect(screen.getByText("Servicio de engaste")).toBeTruthy();
+    // The single-item layout labels the manual item "Manual" where the photo
+    // and the "ID interno" spec would show an inventory id.
+    expect(screen.getAllByText("Manual").length).toBeGreaterThanOrEqual(1);
+  });
+});
+
 describe("KardexPreview — single & empty layouts", () => {
   it("keeps the premium specs grid for a single-item sale (no totals block)", () => {
     renderKardex({ items: [ITEMS[0]] });

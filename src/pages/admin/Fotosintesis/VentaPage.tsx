@@ -54,7 +54,21 @@ import {
   pickTierPrice,
   type CompradorTier,
 } from "./utils/saleItemSelection";
-import { convertToProxyUrl } from "../../../utils/driveUrl";
+import {
+  clampPct,
+  totalFromPct,
+  pctFromTotal,
+  discountAmount,
+} from "./utils/discountCalc";
+import {
+  sumManual,
+  removeManual,
+  toConvexManualItems,
+  type ManualSaleItem,
+} from "./utils/manualSaleItem";
+import { ManualItemForm } from "./components/ManualItemForm";
+import { resolveItemThumbnail } from "./utils/resolveThumbnail";
+import { useBatchThumbnails } from "../../../hooks/useBatchThumbnails";
 import { exportCarnet } from "./exportCarnet";
 import { exportCertificado, isCertificadoApproved } from "./exportCertificado";
 import { slugifyBuyerName } from "../../../utils/slugify";
@@ -112,6 +126,9 @@ export default function FotosintesisVentaPage() {
   const { openSpotlight, registerSpotlightDefault } = useFotosintesisLayout();
   const { notify } = useNotification();
   const { user } = useGoogleAuth();
+  // Legacy catalog thumbnails (Drive `products/` folder scan, keyed by item
+  // number) — fallback when an inventory item carries no Fotosíntesis fotoUrl.
+  const { thumbnails: batchThumbs } = useBatchThumbnails();
 
   // ─── Selection state ───────────────────────────────────────────────────
   // A sale can bundle several pieces. We hold the full product objects the
@@ -122,9 +139,18 @@ export default function FotosintesisVentaPage() {
   const [selectedItems, setSelectedItems] = useState<SpotlightProduct[]>(
     initialItemId ? [{ itemId: initialItemId, nombre: "" }] : [],
   );
-  // Tracks whether the operator hand-edited the agreed price. Until they do, we
-  // keep it synced to the suggested sum of the selected items' prices.
-  const [priceTouched, setPriceTouched] = useState(false);
+  // Manual (non-inventory) line items added to this sale — kept out of the
+  // inventory `itemIds` and stored on the sale itself. Their prices fold into
+  // the subtotal/total alongside the picked inventory items.
+  const [manualItems, setManualItems] = useState<ManualSaleItem[]>([]);
+  // Discount: the operator can drive it by percentage OR by typing the final
+  // (already-discounted) total — each derives the other. `discountDriver`
+  // records which one they last touched so item changes re-derive the right
+  // companion field. `null` = untouched → the price tracks the running subtotal.
+  const [descuentoPct, setDescuentoPct] = useState<number | "">("");
+  const [discountDriver, setDiscountDriver] = useState<"pct" | "total" | null>(
+    null,
+  );
   const [clientId, setClientId] = useState<Id<"clients"> | null>(null);
   // Sede must be picked explicitly every sale — no default. The saleId
   // preview only resolves once the operator has chosen Bogotá or Cali.
@@ -160,7 +186,9 @@ export default function FotosintesisVentaPage() {
     () => selectedItems.map((s) => s.itemId),
     [selectedItems],
   );
-  const itemsCount = selectedItems.length;
+  const inventoryCount = selectedItems.length;
+  const manualCount = manualItems.length;
+  const itemsCount = inventoryCount + manualCount;
   const firstItemId = selectedItems[0]?.itemId ?? null;
 
   // ─── Data ──────────────────────────────────────────────────────────────
@@ -185,7 +213,11 @@ export default function FotosintesisVentaPage() {
       const enriched: SpotlightProduct = {
         itemId: item.itemId,
         nombre: item.nombre ?? "Sin nombre",
-        thumbnailUrl: convertToProxyUrl(item.fotoUrl),
+        thumbnailUrl: resolveItemThumbnail(
+          item.fotoUrl,
+          item.itemId,
+          batchThumbs,
+        ),
         // Picker hint only — mirrors ProductoSpotlight's tier fallback (legacy
         // precioCOP is ~82% empty). The authoritative per-item price still comes
         // from `priceByItemId` once `getManyByItemIds` resolves.
@@ -196,7 +228,7 @@ export default function FotosintesisVentaPage() {
       };
       return [enriched, ...prev.slice(1)];
     });
-  }, [item]);
+  }, [item, batchThumbs]);
   // Reactive batch query for EVERY selected item — drives tier-aware per-item
   // pricing, the live "already VENDIDA" guard for all items (not just the lead),
   // and the multi-line Kardex preview.
@@ -229,25 +261,39 @@ export default function FotosintesisVentaPage() {
   // spotlight objects so the preview never goes blank between picks.
   const kardexItems = useMemo<KardexLineItem[]>(() => {
     const rows = manyItems ?? [];
-    if (rows.length === 0) {
-      return selectedItems.map((s) => ({
-        itemId: s.itemId,
-        nombre: s.nombre || undefined,
-        thumbnailUrl: s.thumbnailUrl,
-        precioCop: priceByItemId.get(s.itemId) ?? s.precioCop,
-      }));
-    }
-    return rows.map((r) => ({
-      itemId: r.itemId,
-      nombre: r.nombre ?? undefined,
-      color: r.color ?? undefined,
-      calidad: r.calidad ?? undefined,
-      peso: r.peso ?? undefined,
-      medidas: r.medidas ?? undefined,
-      thumbnailUrl: convertToProxyUrl(r.fotoUrl),
-      precioCop: priceByItemId.get(r.itemId),
+    const inventory: KardexLineItem[] =
+      rows.length === 0
+        ? selectedItems.map((s) => ({
+            itemId: s.itemId,
+            nombre: s.nombre || undefined,
+            thumbnailUrl: s.thumbnailUrl,
+            precioCop: priceByItemId.get(s.itemId) ?? s.precioCop,
+          }))
+        : rows.map((r) => ({
+            itemId: r.itemId,
+            nombre: r.nombre ?? undefined,
+            color: r.color ?? undefined,
+            calidad: r.calidad ?? undefined,
+            peso: r.peso ?? undefined,
+            medidas: r.medidas ?? undefined,
+            thumbnailUrl: resolveItemThumbnail(
+              r.fotoUrl,
+              r.itemId,
+              batchThumbs,
+            ),
+            precioCop: priceByItemId.get(r.itemId),
+          }));
+    // Manual (non-inventory) lines render after the inventory items.
+    const manual: KardexLineItem[] = manualItems.map((m) => ({
+      itemId: "",
+      nombre: m.nombre,
+      peso: m.peso,
+      descripcion: m.descripcion,
+      precioCop: m.precioCop,
+      isManual: true,
     }));
-  }, [manyItems, selectedItems, priceByItemId]);
+    return [...inventory, ...manual];
+  }, [manyItems, selectedItems, priceByItemId, manualItems, batchThumbs]);
 
   const lot = useConvexQuery(
     convexApi.lots.getByLoteId,
@@ -301,29 +347,48 @@ export default function FotosintesisVentaPage() {
   const precioCop = typeof precioAcordado === "number" ? precioAcordado : 0;
   const totalCop = precioCop;
   const comisionCop = 0; // Slice 1 placeholder — commission % lives in Slice 3
-  // Sum of the selected items' suggested prices — offered as the starting
-  // agreed price and kept in sync until the operator types their own number.
-  // Authoritative + tier-aware: the per-item price comes from the Convex batch
-  // query resolved against the buyer tier, not the (possibly stale) spotlight
-  // hint. Missing prices count as 0 so a partial selection still sums.
-  const suggestedTotal = useMemo(
+  // Subtotal = the pre-discount base: Σ inventory tier prices + Σ manual items.
+  // Authoritative + tier-aware: the per-item inventory price comes from the
+  // Convex batch query resolved against the buyer tier, not the (possibly
+  // stale) spotlight hint. Missing prices count as 0 so a partial selection
+  // still sums. Manual line items add their own price on top.
+  const subtotal = useMemo(
     () =>
       sumSuggested(
         selectedItems.map((s) => ({
           itemId: s.itemId,
           precioCop: priceByItemId.get(s.itemId),
         })),
-      ),
-    [selectedItems, priceByItemId],
+      ) + sumManual(manualItems),
+    [selectedItems, priceByItemId, manualItems],
   );
+  // Discount amount (COP) = max(0, subtotal − agreed price). Flows to the
+  // Kardex preview AND is persisted on the sale (descuentoCOP).
+  const descuentoCop = discountAmount(subtotal, precioCop);
 
-  // Keep the agreed price tracking the suggested sum while it's untouched, so
-  // adding/removing items updates it. Once the operator types a price (or uses
-  // "Usar suma"), `priceTouched` latches and we stop overriding them.
+  // Keep the discount fields consistent with the running subtotal when items
+  // change (add/remove). Direct edits to either field are handled synchronously
+  // in their onChange handlers, so this effect only watches `subtotal`:
+  //   • untouched      → no discount; the price tracks the subtotal exactly.
+  //   • "%" driver      → recompute the price from the sticky percentage.
+  //   • "total" driver  → recompute the displayed % from the sticky total.
   useEffect(() => {
-    if (priceTouched) return;
-    if (suggestedTotal > 0) setPrecioAcordado(suggestedTotal);
-  }, [suggestedTotal, priceTouched]);
+    if (discountDriver === null) {
+      setPrecioAcordado(subtotal > 0 ? subtotal : "");
+      setDescuentoPct("");
+    } else if (discountDriver === "pct") {
+      const pct = typeof descuentoPct === "number" ? descuentoPct : 0;
+      setPrecioAcordado(totalFromPct(subtotal, pct));
+    } else {
+      setDescuentoPct(
+        subtotal > 0 && precioCop < subtotal
+          ? pctFromTotal(subtotal, precioCop)
+          : "",
+      );
+    }
+    // Only re-derive on subtotal changes; field edits sync in their handlers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal]);
   // `fechaVenta` was previously memoized at mount which dated sales to the
   // moment the operator opened the form rather than when they confirmed.
   // Computed inside `onConfirm` now (see below). Kept here only as a
@@ -363,6 +428,51 @@ export default function FotosintesisVentaPage() {
   const onRemoveItem = useCallback((id: string) => {
     setSelectedItems((prev) => removeSelection(prev, id));
   }, []);
+
+  // ─── Manual (non-inventory) line items ─────────────────────────────────
+  const onAddManual = useCallback((manualItem: ManualSaleItem) => {
+    setManualItems((prev) => [...prev, manualItem]);
+  }, []);
+
+  const onRemoveManual = useCallback((id: string) => {
+    setManualItems((prev) => removeManual(prev, id));
+  }, []);
+
+  // ─── Discount handlers ─────────────────────────────────────────────────
+  // Editing the % field drives the final price; editing the price field drives
+  // the %. Each marks the `discountDriver` so item changes re-derive correctly.
+  const onPctChange = useCallback(
+    (next: number | "") => {
+      setDiscountDriver("pct");
+      // Clamp so the field can't show an out-of-range % (the math clamps too).
+      const pct = typeof next === "number" ? clampPct(next) : "";
+      setDescuentoPct(pct);
+      setPrecioAcordado(
+        totalFromPct(subtotal, typeof pct === "number" ? pct : 0),
+      );
+    },
+    [subtotal],
+  );
+
+  const onPrecioChange = useCallback(
+    (next: number | "") => {
+      setDiscountDriver("total");
+      setPrecioAcordado(next);
+      const total = typeof next === "number" ? next : 0;
+      setDescuentoPct(
+        subtotal > 0 && total < subtotal ? pctFromTotal(subtotal, total) : "",
+      );
+    },
+    [subtotal],
+  );
+
+  // "Usar suma sugerida" → charge the full subtotal, no discount, and resume
+  // tracking it as items change.
+  const onUseSuggestedSum = useCallback(() => {
+    setDiscountDriver(null);
+    setDescuentoPct("");
+    setPrecioAcordado(subtotal > 0 ? subtotal : "");
+  }, [subtotal]);
 
   // Register multi-select as the spotlight default so the GLOBAL ⌘K hotkey and
   // the topbar "Buscar" button (which open the spotlight without options) edit
@@ -455,8 +565,12 @@ export default function FotosintesisVentaPage() {
         clientId,
         fechaVenta: confirmedAt,
         precioAcordadoCOP: precioCop,
+        descuentoCOP: descuentoCop || undefined,
         totalCOP: totalCop,
         comisionCOP: comisionCop || undefined,
+        manualItems: manualItems.length
+          ? toConvexManualItems(manualItems)
+          : undefined,
         formaPago,
         metodoContado: formaPago === "contado" ? metodoContado : undefined,
         adicionales: adicionales.trim() || undefined,
@@ -673,6 +787,8 @@ export default function FotosintesisVentaPage() {
     precioCop,
     totalCop,
     comisionCop,
+    descuentoCop,
+    manualItems,
     compradorTipo,
     formaPago,
     metodoContado,
@@ -977,6 +1093,14 @@ export default function FotosintesisVentaPage() {
                       foto={foto}
                     />
                   ))}
+                  {manualItems.map((m) => (
+                    <ManualItemRow
+                      key={m.id}
+                      item={m}
+                      onRemove={onRemoveManual}
+                      foto={foto}
+                    />
+                  ))}
                 </Box>
 
                 {/* Add / remove launcher + selection summary */}
@@ -1028,8 +1152,8 @@ export default function FotosintesisVentaPage() {
                     }}
                   >
                     {itemsCount} ítem{itemsCount === 1 ? "" : "s"}
-                    {suggestedTotal > 0
-                      ? ` · suma sugerida ${formatCop(suggestedTotal)}`
+                    {subtotal > 0
+                      ? ` · suma sugerida ${formatCop(subtotal)}`
                       : ""}
                   </Box>
                 </Box>
@@ -1067,6 +1191,11 @@ export default function FotosintesisVentaPage() {
                 <KbdKey size="sm">K</KbdKey>
               </Box>
             )}
+
+            {/* Manual line item — for things not (yet) in inventory. */}
+            <Box sx={{ marginTop: "12px" }}>
+              <ManualItemForm onAdd={onAddManual} />
+            </Box>
           </Section>
 
           {/* 3. Pago */}
@@ -1162,12 +1291,7 @@ export default function FotosintesisVentaPage() {
               <FieldLabel>Precio acordado (COP)</FieldLabel>
               <NumberInputWithCalc
                 value={precioAcordado}
-                onChange={(next) => {
-                  // First manual edit latches `priceTouched`, so the
-                  // suggested-sum sync stops overriding the operator.
-                  setPriceTouched(true);
-                  setPrecioAcordado(next);
-                }}
+                onChange={onPrecioChange}
                 format="currency"
                 placeholder="Ingresá el precio final"
                 step={1000}
@@ -1176,14 +1300,11 @@ export default function FotosintesisVentaPage() {
                 calcVariant="accent"
                 calcSuffix={`= ${formatCop(precioCop)}`}
               />
-              {suggestedTotal > 0 && precioCop !== suggestedTotal ? (
+              {subtotal > 0 && precioCop !== subtotal ? (
                 <Box
                   component="button"
                   type="button"
-                  onClick={() => {
-                    setPriceTouched(true);
-                    setPrecioAcordado(suggestedTotal);
-                  }}
+                  onClick={onUseSuggestedSum}
                   sx={{
                     marginTop: "8px",
                     display: "inline-flex",
@@ -1202,10 +1323,37 @@ export default function FotosintesisVentaPage() {
                     "&:hover": { background: alpha(foto.accent.primary, 0.12) },
                   }}
                 >
-                  Usar suma sugerida ({formatCop(suggestedTotal)})
+                  Usar suma sugerida ({formatCop(subtotal)})
                 </Box>
               ) : null}
             </Box>
+
+            {/* Discount — type a % and the final price computes; type the final
+                price above and this % computes. Both stay in sync. Only shown
+                once there's a subtotal to discount against. */}
+            {subtotal > 0 ? (
+              <Box sx={{ marginTop: "16px" }}>
+                <FieldLabel optional="o escribí el precio final arriba">
+                  Descuento (%)
+                </FieldLabel>
+                <NumberInputWithCalc
+                  value={descuentoPct}
+                  onChange={onPctChange}
+                  format="decimal"
+                  placeholder="0"
+                  step={1}
+                  min={0}
+                  max={100}
+                  ariaLabel="Descuento en porcentaje"
+                  calcVariant={descuentoCop > 0 ? "accent" : "neutral"}
+                  calcSuffix={
+                    descuentoCop > 0
+                      ? `− ${formatCop(descuentoCop)}`
+                      : "sin descuento"
+                  }
+                />
+              </Box>
+            ) : null}
 
             {/* Totals card */}
             <Box
@@ -1222,13 +1370,21 @@ export default function FotosintesisVentaPage() {
             >
               <TotalsRow
                 label={`Ítems (${itemsCount})`}
-                value={
-                  suggestedTotal > 0
-                    ? formatCop(suggestedTotal)
-                    : `${itemsCount}`
-                }
+                value={subtotal > 0 ? formatCop(subtotal) : `${itemsCount}`}
                 foto={foto}
               />
+              {descuentoCop > 0 ? (
+                <TotalsRow
+                  label={
+                    typeof descuentoPct === "number" && descuentoPct > 0
+                      ? `Descuento (${descuentoPct}%)`
+                      : "Descuento"
+                  }
+                  value={`− ${formatCop(descuentoCop)}`}
+                  foto={foto}
+                  tone="gold"
+                />
+              ) : null}
               <TotalsRow
                 label="Precio acordado"
                 value={formatCop(precioCop)}
@@ -1284,9 +1440,11 @@ export default function FotosintesisVentaPage() {
               </Box>
               <Box component="ol" sx={{ margin: 0, paddingLeft: "18px" }}>
                 <li>
-                  {itemsCount === 1
-                    ? "El ítem pasa a estado VENDIDA en Convex y en Sheets."
-                    : `Los ${itemsCount} ítems pasan a estado VENDIDA en Convex y en Sheets.`}
+                  {inventoryCount === 0
+                    ? "No hay ítems de inventario que marcar (venta de ítems manuales)."
+                    : inventoryCount === 1
+                      ? "El ítem pasa a estado VENDIDA en Convex y en Sheets."
+                      : `Los ${inventoryCount} ítems de inventario pasan a estado VENDIDA en Convex y en Sheets.`}
                 </li>
                 <li>
                   Se genera la venta {peekedSaleId} con esta forma de pago.
@@ -1536,8 +1694,8 @@ export default function FotosintesisVentaPage() {
                   formaPago === "contado" ? metodoContado : undefined,
               }}
               privacyOn={privacyOn}
-              subtotalCop={suggestedTotal}
-              descuentoCop={Math.max(0, suggestedTotal - precioCop)}
+              subtotalCop={subtotal}
+              descuentoCop={descuentoCop}
             />
           </Box>
 
@@ -1772,6 +1930,129 @@ function SelectedItemRow({
         type="button"
         onClick={() => onRemove(product.itemId)}
         aria-label={`Quitar ${product.nombre || "Sin nombre"} (${product.itemId}) de la venta`}
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 32,
+          height: 32,
+          borderRadius: "8px",
+          border: `1px solid ${foto.surfaces.rule}`,
+          background: foto.surfaces.canvas,
+          color: foto.ink.tertiary,
+          cursor: "pointer",
+          transition:
+            "background 120ms ease, color 120ms ease, border-color 120ms ease",
+          "&:hover": {
+            background: alpha(foto.status.sold, 0.08),
+            color: foto.status.sold,
+            borderColor: foto.status.sold,
+          },
+          "&:focus-visible": {
+            outline: "none",
+            boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+          },
+        }}
+      >
+        <Trash2 size={15} strokeWidth={1.8} aria-hidden />
+      </Box>
+    </Box>
+  );
+}
+
+interface ManualItemRowProps {
+  item: ManualSaleItem;
+  onRemove: (id: string) => void;
+  foto: ReturnType<typeof getFoto>;
+}
+
+/**
+ * One row for a manual (non-inventory) line item: a "Manual" badge in place of
+ * the thumbnail, name + detail, its price, and a remove button. Mirrors
+ * {@link SelectedItemRow} so the inventory and manual items read as one list.
+ */
+function ManualItemRow({ item, onRemove, foto }: ManualItemRowProps) {
+  const detail = [item.descripcion, item.peso].filter(Boolean).join(" · ");
+  return (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: "48px minmax(0, 1fr) auto auto",
+        gap: "12px",
+        alignItems: "center",
+        padding: "10px 12px",
+        borderRadius: "10px",
+        border: `1px solid ${foto.surfaces.rule}`,
+        background: foto.surfaces.panel,
+      }}
+    >
+      <Box
+        aria-hidden
+        sx={{
+          width: 48,
+          height: 48,
+          aspectRatio: "1 / 1",
+          borderRadius: "7px",
+          background: foto.accent.soft,
+          border: `1px solid ${foto.accent.primary}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: foto.accent.deep,
+          fontFamily: fontFamilies.mono,
+          fontSize: 8.5,
+          fontWeight: 600,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+        }}
+      >
+        Manual
+      </Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Box
+          sx={{
+            fontSize: 13.5,
+            fontWeight: 600,
+            letterSpacing: "-0.012em",
+            color: foto.ink.primary,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {item.nombre}
+        </Box>
+        <Box
+          sx={{
+            fontSize: 11,
+            color: foto.ink.tertiary,
+            marginTop: "2px",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {detail || "Ítem fuera de inventario"}
+        </Box>
+      </Box>
+      <Box
+        sx={{
+          fontFamily: fontFamilies.mono,
+          fontVariantNumeric: "tabular-nums",
+          fontSize: 12.5,
+          fontWeight: 500,
+          color: foto.ink.secondary,
+          whiteSpace: "nowrap",
+          textAlign: "right",
+        }}
+      >
+        {formatCop(item.precioCop)}
+      </Box>
+      <Box
+        component="button"
+        type="button"
+        onClick={() => onRemove(item.id)}
+        aria-label={`Quitar ${item.nombre} (ítem manual) de la venta`}
         sx={{
           display: "inline-flex",
           alignItems: "center",

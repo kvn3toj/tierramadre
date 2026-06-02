@@ -384,6 +384,23 @@ export default defineSchema({
     descuentoCOP: v.optional(v.number()),
     totalCOP: v.number(),
     comisionCOP: v.optional(v.number()),
+    /**
+     * Manual (non-inventory) line items — things the operator added to the sale
+     * that aren't in productInventory (an accessory, a service, a piece not yet
+     * captured). App-only: NOT in COLUMN_MAPS.sales (never pushed) nor in the
+     * sales pull allowlist (never clobbered), like the cancellation audit fields.
+     * Their prices are already folded into precioAcordadoCOP / totalCOP.
+     */
+    manualItems: v.optional(
+      v.array(
+        v.object({
+          nombre: v.string(),
+          descripcion: v.optional(v.string()),
+          peso: v.optional(v.string()),
+          precioCOP: v.number(),
+        }),
+      ),
+    ),
     // Canonical: contado | credito | esmereogenesis | canje | bajo_pedido |
     // consignacion. Free text so the venta UI can save an operator write-in
     // ("Otra…"); the credito/contado/esmereogenesis branches no-op for customs.

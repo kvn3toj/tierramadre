@@ -18,8 +18,12 @@ export interface KardexItem {
   calidad?: string;
   peso?: string;
   medidas?: string;
+  /** Free-text note for manual (non-inventory) line items. */
+  descripcion?: string;
   thumbnailUrl?: string;
   imageUrl?: string;
+  /** Manual (non-inventory) line item — has no productInventory id. */
+  isManual?: boolean;
 }
 
 /** A sale line item: a {@link KardexItem} plus the tier-resolved price (COP)
@@ -201,7 +205,47 @@ export function KardexPreview({
         }}
       />
 
-      {/* Head: brand TM + carnet ID */}
+      {/* Brand band — centered logo + tagline over an emerald accent rule.
+          Mirrors the cuentas/recibos comprobante header so the Kardex reads as
+          part of the same family. The logo is a same-origin public asset so
+          html2canvas captures it in the exported PDF. */}
+      <Box
+        sx={{
+          textAlign: "center",
+          paddingBottom: "16px",
+          marginBottom: "18px",
+          borderBottom: `2px solid ${accent}`,
+        }}
+      >
+        <Box
+          component="img"
+          src="/logo-tierra-madre.png"
+          alt="Tierra Madre"
+          sx={{
+            height: 50,
+            width: "auto",
+            objectFit: "contain",
+            display: "inline-block",
+          }}
+          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+            e.currentTarget.style.display = "none";
+          }}
+        />
+        <Box
+          sx={{
+            fontSize: 9,
+            fontWeight: 500,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            color: PAPER_INK_MUTE,
+            marginTop: "8px",
+          }}
+        >
+          Esmeraldas Colombianas de Origen
+        </Box>
+      </Box>
+
+      {/* Doc title + carnet ID */}
       <Box
         sx={{
           display: "flex",
@@ -213,31 +257,17 @@ export function KardexPreview({
           borderBottom: `1px solid ${PAPER_RULE}`,
         }}
       >
-        <Box>
-          <Box
-            sx={{
-              fontSize: 9,
-              fontWeight: 600,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: PAPER_INK_MUTE,
-              marginBottom: "6px",
-            }}
-          >
-            Tierra Madre
-          </Box>
-          <Box
-            sx={{
-              fontFamily: fontFamilies.serif,
-              fontSize: 22,
-              fontWeight: 500,
-              letterSpacing: "-0.02em",
-              lineHeight: 1.1,
-              color: PAPER_INK,
-            }}
-          >
-            Kardex de venta
-          </Box>
+        <Box
+          sx={{
+            fontFamily: fontFamilies.serif,
+            fontSize: 20,
+            fontWeight: 500,
+            letterSpacing: "-0.02em",
+            lineHeight: 1.1,
+            color: PAPER_INK,
+          }}
+        >
+          Kardex de venta
         </Box>
         <Box sx={{ textAlign: "right" }}>
           <Box
@@ -259,7 +289,7 @@ export function KardexPreview({
               fontSize: 20,
               fontWeight: 500,
               letterSpacing: "-0.02em",
-              color: PAPER_INK,
+              color: accentDeep,
             }}
           >
             {sale.id}
@@ -341,7 +371,7 @@ export function KardexPreview({
                     letterSpacing: "0.18em",
                   }}
                 >
-                  {single.itemId ?? "—"}
+                  {single.itemId || (single.isManual ? "Manual" : "—")}
                 </Box>
               )}
             </Box>
@@ -369,8 +399,9 @@ export function KardexPreview({
                   letterSpacing: "0.01em",
                 }}
               >
-                {[single.color, single.calidad].filter(Boolean).join(" · ") ||
-                  "—"}
+                {[single.color, single.calidad, single.descripcion]
+                  .filter(Boolean)
+                  .join(" · ") || "—"}
               </Box>
             </Box>
           </Box>
@@ -393,7 +424,11 @@ export function KardexPreview({
             <SpecRow label="Color" value={single.color ?? "—"} />
             <SpecRow label="Medidas" value={single.medidas ?? "—"} />
             <SpecRow label="Comprador" value={compradorValue} />
-            <SpecRow label="ID interno" value={single.itemId ?? "—"} mono />
+            <SpecRow
+              label="ID interno"
+              value={single.itemId || (single.isManual ? "Manual" : "—")}
+              mono
+            />
             <SpecRow
               label="Precio"
               value={formatCop(sale.precioCop)}
@@ -419,7 +454,13 @@ export function KardexPreview({
           >
             {items.map((it, idx) => {
               const thumb = it.thumbnailUrl ?? it.imageUrl;
-              const specs = [it.color, it.calidad, it.peso, it.medidas]
+              const specs = [
+                it.color,
+                it.calidad,
+                it.peso,
+                it.medidas,
+                it.descripcion,
+              ]
                 .filter(Boolean)
                 .join(" · ");
               return (
@@ -478,7 +519,7 @@ export function KardexPreview({
                           overflow: "hidden",
                         }}
                       >
-                        {it.itemId ?? "—"}
+                        {it.itemId || (it.isManual ? "Manual" : "—")}
                       </Box>
                     )}
                   </Box>
@@ -794,6 +835,25 @@ export function KardexPreview({
             `,
             opacity: 0.18,
             border: `1px solid ${PAPER_RULE}`,
+          }}
+        />
+      </Box>
+
+      {/* Diamond flourish — the recibo's signature closing mark. */}
+      <Box
+        aria-hidden
+        sx={{
+          marginTop: "18px",
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <Box
+          sx={{
+            width: 8,
+            height: 8,
+            background: accent,
+            transform: "rotate(45deg)",
           }}
         />
       </Box>

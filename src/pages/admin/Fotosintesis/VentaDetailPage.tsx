@@ -22,7 +22,8 @@ import { CancelVentaDialog } from "./components/CancelVentaDialog";
 import { EditableMetaValue } from "./components/EditableMetaValue";
 import { pickTierPrice } from "./utils/saleItemSelection";
 import type { CompradorTier } from "./utils/saleItemSelection";
-import { convertToProxyUrl } from "../../../utils/driveUrl";
+import { resolveItemThumbnail } from "./utils/resolveThumbnail";
+import { useBatchThumbnails } from "../../../hooks/useBatchThumbnails";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 function formatCop(value: number | undefined | null): string {
@@ -86,6 +87,8 @@ export default function VentaDetailPage() {
   const { saleId: routeSaleId } = useParams();
   const { user } = useGoogleAuth();
   const { notify } = useNotification();
+  // Legacy catalog thumbnails (fallback for items without a Fotosíntesis fotoUrl).
+  const { thumbnails: batchThumbs } = useBatchThumbnails();
 
   const [showCancel, setShowCancel] = useState(false);
 
@@ -147,28 +150,44 @@ export default function VentaDetailPage() {
     return map;
   }, [manyItems, tier]);
 
-  // Ordered Kardex line items, photos routed through the Drive proxy.
+  // Ordered Kardex line items, photos resolved with the legacy-thumbnail
+  // fallback. Manual (non-inventory) lines stored on the sale render after.
   const kardexItems = useMemo<KardexLineItem[]>(() => {
-    return (manyItems ?? []).map((row) => ({
+    const inventory: KardexLineItem[] = (manyItems ?? []).map((row) => ({
       itemId: row.itemId,
       nombre: row.nombre,
       color: row.color,
       calidad: row.calidad,
       peso: row.peso,
       medidas: row.medidas,
-      thumbnailUrl: convertToProxyUrl(row.fotoUrl),
+      thumbnailUrl: resolveItemThumbnail(row.fotoUrl, row.itemId, batchThumbs),
       precioCop: priceByItemId.get(row.itemId),
     }));
-  }, [manyItems, priceByItemId]);
+    const manual: KardexLineItem[] = (sale?.manualItems ?? []).map((m) => ({
+      itemId: "",
+      nombre: m.nombre,
+      peso: m.peso,
+      descripcion: m.descripcion,
+      precioCop: m.precioCOP,
+      isManual: true,
+    }));
+    return [...inventory, ...manual];
+  }, [manyItems, priceByItemId, sale, batchThumbs]);
 
-  // Σ per-item tier prices → Subtotal; Descuento = max(0, subtotal − total).
+  // Σ inventory tier prices + Σ manual items → Subtotal; Descuento prefers the
+  // value persisted on the sale, falling back to max(0, subtotal − total).
   const subtotal = useMemo(() => {
     let sum = 0;
     for (const value of priceByItemId.values()) {
       if (typeof value === "number" && !Number.isNaN(value)) sum += value;
     }
+    for (const m of sale?.manualItems ?? []) {
+      if (typeof m.precioCOP === "number" && !Number.isNaN(m.precioCOP)) {
+        sum += m.precioCOP;
+      }
+    }
     return sum;
-  }, [priceByItemId]);
+  }, [priceByItemId, sale]);
 
   const handleConfirmCancel = useCallback(
     async (reason: string) => {
@@ -596,7 +615,10 @@ export default function VentaDetailPage() {
           <KardexPreview
             items={kardexItems}
             subtotalCop={subtotal}
-            descuentoCop={Math.max(0, subtotal - sale.precioAcordadoCOP)}
+            descuentoCop={
+              sale.descuentoCOP ??
+              Math.max(0, subtotal - sale.precioAcordadoCOP)
+            }
             lot={
               lot
                 ? {
