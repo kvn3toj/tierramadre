@@ -26,6 +26,23 @@ crons.interval(
   {},
 );
 
+/**
+ * Keep the embajador `clients` (the venta "Embajador asignado" dropdown source)
+ * in step with the legacy Asesores tab. The one-shot `bulkImportFromLegacy` only
+ * seeds Convex once; without this, an asesor added to the sheet never appears in
+ * a sale until someone re-runs the import script by hand.
+ *
+ * Daily (not minutes): asesores change rarely and the action also fans out a SOT
+ * Clientes push per changed row, so an idle run is cheap but a frequent one would
+ * re-scan the sheet for nothing. New/changed rows propagate sheet → Convex → SOT.
+ */
+crons.interval(
+  "pull asesores from sheet",
+  { hours: 24 },
+  api.clients.pullAsesoresFromSheet,
+  {},
+);
+
 // Fotosíntesis v2 — the reverse direction (Sheet → Convex) for all 6 SOT tabs
 // (providers, lots, clients, sales, subLotes, inventory) is now event-driven,
 // NOT cron-driven: a bound Apps Script captures edited cells and the manual
