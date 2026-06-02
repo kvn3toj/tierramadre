@@ -96,7 +96,11 @@ export const list = query({
     //     (toDrawerProduct, fed FROM this list array via props, NOT a
     //     separate products.get) + Bandeja inspector.
     //   * Fotosíntesis HomePage → only `estado`.
-    //   * ProductoSpotlight → itemId, nombre, fotoUrl, precioCOP, loteId, estado.
+    //   * ProductoSpotlight → itemId, nombre, fotoUrl, loteId, estado, and the
+    //     tier prices (precioEmbajadorCOP/precioConscienteCOP) shown as the
+    //     per-item price hint in the multi-item venta picker. Legacy `precioCOP`
+    //     lost its Sheets column (audit 2026-05-29) and is ~82% empty, so the
+    //     picker can't rely on it alone — the two tier prices ride along.
     // The edit drawer never touches the heavy fields; saveEdit/pushToSheet
     // re-read the full row server-side, so the push is unaffected.
     return sorted.map((row) => ({
@@ -112,6 +116,8 @@ export const list = query({
       medidas: row.medidas,
       categoria: row.categoria,
       precioCOP: row.precioCOP,
+      precioEmbajadorCOP: row.precioEmbajadorCOP,
+      precioConscienteCOP: row.precioConscienteCOP,
       ubicacion: row.ubicacion,
       coleccion: row.coleccion,
       caja: row.caja,
@@ -135,6 +141,59 @@ export const get = query({
       .query("productInventory")
       .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
       .first();
+  },
+});
+
+/**
+ * Batch-read the kardex-relevant fields for a set of itemIds, preserving the
+ * caller's order. Backs the multi-item Kardex on VentaPage (live selection) and
+ * VentaDetailPage (persisted `sale.itemIds`) — the detail page has no spotlight
+ * objects to read specs from, and a per-item `products.get` would mean N hooks.
+ *
+ * Projected (not full docs) so it stays cheap to subscribe reactively: the
+ * carnet renders name + thumb + the four specs, the per-item tier price, and
+ * `estado` (so the page can live-guard every item against re-selling a VENDIDA
+ * piece). Missing itemIds are skipped, so the result can be shorter than input.
+ */
+export const getManyByItemIds = query({
+  args: { itemIds: v.array(v.string()) },
+  handler: async (ctx, { itemIds }) => {
+    const out: Array<{
+      itemId: string;
+      nombre?: string;
+      peso?: string;
+      color?: string;
+      calidad?: string;
+      medidas?: string;
+      fotoUrl?: string;
+      loteId?: string;
+      estado: string;
+      precioCOP?: number;
+      precioEmbajadorCOP?: number;
+      precioConscienteCOP?: number;
+    }> = [];
+    for (const itemId of itemIds) {
+      const row = await ctx.db
+        .query("productInventory")
+        .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+        .first();
+      if (!row) continue;
+      out.push({
+        itemId: row.itemId,
+        nombre: row.nombre,
+        peso: row.peso,
+        color: row.color,
+        calidad: row.calidad,
+        medidas: row.medidas,
+        fotoUrl: row.fotoUrl,
+        loteId: row.loteId,
+        estado: row.estado,
+        precioCOP: row.precioCOP,
+        precioEmbajadorCOP: row.precioEmbajadorCOP,
+        precioConscienteCOP: row.precioConscienteCOP,
+      });
+    }
+    return out;
   },
 });
 

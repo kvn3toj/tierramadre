@@ -33,7 +33,7 @@ import { SegmentedControl } from "./components/SegmentedControl";
 import { FieldLabel } from "./components/FieldLabel";
 import { NumberInputWithCalc } from "./components/NumberInputWithCalc";
 import { KbdKey } from "./components/KbdKey";
-import { KardexPreview } from "./components/KardexPreview";
+import { KardexPreview, type KardexLineItem } from "./components/KardexPreview";
 import { CertificadoPreview } from "./components/CertificadoPreview";
 import {
   ClienteFinalForm,
@@ -51,6 +51,8 @@ import {
   removeSelection,
   dedupeSelection,
   sumSuggested,
+  pickTierPrice,
+  type CompradorTier,
 } from "./utils/saleItemSelection";
 import { convertToProxyUrl } from "../../../utils/driveUrl";
 import { exportCarnet } from "./exportCarnet";
@@ -184,13 +186,69 @@ export default function FotosintesisVentaPage() {
         itemId: item.itemId,
         nombre: item.nombre ?? "Sin nombre",
         thumbnailUrl: convertToProxyUrl(item.fotoUrl),
-        precioCop: item.precioCOP,
+        // Picker hint only — mirrors ProductoSpotlight's tier fallback (legacy
+        // precioCOP is ~82% empty). The authoritative per-item price still comes
+        // from `priceByItemId` once `getManyByItemIds` resolves.
+        precioCop:
+          item.precioEmbajadorCOP ?? item.precioConscienteCOP ?? item.precioCOP,
         loteId: item.loteId,
         estado: item.estado as string | undefined,
       };
       return [enriched, ...prev.slice(1)];
     });
   }, [item]);
+  // Reactive batch query for EVERY selected item — drives tier-aware per-item
+  // pricing, the live "already VENDIDA" guard for all items (not just the lead),
+  // and the multi-line Kardex preview.
+  const manyItems = useConvexQuery(
+    convexApi.products.getManyByItemIds,
+    itemIds.length ? { itemIds } : "skip",
+  );
+
+  // Buyer tier: an embajador buyer pays the ambassador price; everyone else
+  // ("final" / custom write-ins) pays the consciente price.
+  const tier: CompradorTier =
+    compradorTipo === "embajador" ? "embajador" : "final";
+
+  // itemId → tier-resolved suggested price (COP), order-preserving from manyItems.
+  const priceByItemId = useMemo(() => {
+    const m = new Map<string, number | undefined>();
+    for (const r of manyItems ?? []) m.set(r.itemId, pickTierPrice(r, tier));
+    return m;
+  }, [manyItems, tier]);
+
+  // itemId → estado, so the row + confirm guard know which pieces are VENDIDA.
+  const estadoByItemId = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const r of manyItems ?? []) m.set(r.itemId, r.estado);
+    return m;
+  }, [manyItems]);
+
+  // Ordered Kardex line items — feeds EVERY selected item (with tier price) to
+  // the multi-item preview. Before the batch query resolves we fall back to the
+  // spotlight objects so the preview never goes blank between picks.
+  const kardexItems = useMemo<KardexLineItem[]>(() => {
+    const rows = manyItems ?? [];
+    if (rows.length === 0) {
+      return selectedItems.map((s) => ({
+        itemId: s.itemId,
+        nombre: s.nombre || undefined,
+        thumbnailUrl: s.thumbnailUrl,
+        precioCop: priceByItemId.get(s.itemId) ?? s.precioCop,
+      }));
+    }
+    return rows.map((r) => ({
+      itemId: r.itemId,
+      nombre: r.nombre ?? undefined,
+      color: r.color ?? undefined,
+      calidad: r.calidad ?? undefined,
+      peso: r.peso ?? undefined,
+      medidas: r.medidas ?? undefined,
+      thumbnailUrl: convertToProxyUrl(r.fotoUrl),
+      precioCop: priceByItemId.get(r.itemId),
+    }));
+  }, [manyItems, selectedItems, priceByItemId]);
+
   const lot = useConvexQuery(
     convexApi.lots.getByLoteId,
     item?.loteId ? { loteId: item.loteId } : "skip",
@@ -245,9 +303,18 @@ export default function FotosintesisVentaPage() {
   const comisionCop = 0; // Slice 1 placeholder — commission % lives in Slice 3
   // Sum of the selected items' suggested prices — offered as the starting
   // agreed price and kept in sync until the operator types their own number.
+  // Authoritative + tier-aware: the per-item price comes from the Convex batch
+  // query resolved against the buyer tier, not the (possibly stale) spotlight
+  // hint. Missing prices count as 0 so a partial selection still sums.
   const suggestedTotal = useMemo(
-    () => sumSuggested(selectedItems),
-    [selectedItems],
+    () =>
+      sumSuggested(
+        selectedItems.map((s) => ({
+          itemId: s.itemId,
+          precioCop: priceByItemId.get(s.itemId),
+        })),
+      ),
+    [selectedItems, priceByItemId],
   );
 
   // Keep the agreed price tracking the suggested sum while it's untouched, so
@@ -323,6 +390,9 @@ export default function FotosintesisVentaPage() {
   // items are guarded server-side in `sales.create`, which re-checks every
   // itemId and throws a per-item error surfaced in the banner.
   const itemSold = item?.estado === "VENDIDA";
+  // Now that every item's estado is queried (manyItems), block the sale if ANY
+  // selected piece is already VENDIDA — not just the lead item.
+  const anySold = (manyItems ?? []).some((r) => r.estado === "VENDIDA");
   const canConfirm =
     !!sede &&
     itemsCount > 0 &&
@@ -330,6 +400,7 @@ export default function FotosintesisVentaPage() {
     precioCop > 0 &&
     creditoComplete &&
     !itemSold &&
+    !anySold &&
     !submitting;
 
   const onDownloadPreview = useCallback(async () => {
@@ -353,6 +424,12 @@ export default function FotosintesisVentaPage() {
     }
     if (itemSold) {
       setErrorBanner("El primer ítem ya está vendido. Quitalo o elegí otro.");
+      return;
+    }
+    if (anySold) {
+      setErrorBanner(
+        "Uno o más ítems ya están vendidos. Quitalos para continuar.",
+      );
       return;
     }
     if (formaPago === "credito" && !creditoFechaVenc) {
@@ -592,6 +669,7 @@ export default function FotosintesisVentaPage() {
     itemsCount,
     clientId,
     itemSold,
+    anySold,
     precioCop,
     totalCop,
     comisionCop,
@@ -889,11 +967,12 @@ export default function FotosintesisVentaPage() {
                     gap: "8px",
                   }}
                 >
-                  {selectedItems.map((p, i) => (
+                  {selectedItems.map((p) => (
                     <SelectedItemRow
                       key={p.itemId}
                       product={p}
-                      sold={i === 0 && itemSold}
+                      price={priceByItemId.get(p.itemId)}
+                      sold={estadoByItemId.get(p.itemId) === "VENDIDA"}
                       onRemove={onRemoveItem}
                       foto={foto}
                     />
@@ -1424,18 +1503,7 @@ export default function FotosintesisVentaPage() {
 
           <Box ref={kardexRef}>
             <KardexPreview
-              item={
-                item
-                  ? {
-                      itemId: item.itemId,
-                      nombre: item.nombre ?? undefined,
-                      color: item.color ?? undefined,
-                      calidad: item.calidad ?? undefined,
-                      peso: item.peso ?? undefined,
-                      medidas: item.medidas ?? undefined,
-                    }
-                  : null
-              }
+              items={kardexItems}
               lot={
                 lot
                   ? {
@@ -1468,6 +1536,8 @@ export default function FotosintesisVentaPage() {
                   formaPago === "contado" ? metodoContado : undefined,
               }}
               privacyOn={privacyOn}
+              subtotalCop={suggestedTotal}
+              descuentoCop={Math.max(0, suggestedTotal - precioCop)}
             />
           </Box>
 
@@ -1555,70 +1625,6 @@ export default function FotosintesisVentaPage() {
             <Download size={14} aria-hidden />
             Descargar Kardex (vista previa)
           </Box>
-
-          {/* Multi-item sales: the carnet above features the lead item; the
-              rest are listed here, mirroring the archived VentaDetailPage. */}
-          {itemsCount > 1 ? (
-            <Box
-              sx={{
-                marginTop: "18px",
-                paddingTop: "14px",
-                borderTop: "1px solid rgba(255,255,255,0.10)",
-              }}
-            >
-              <Box
-                sx={{
-                  fontSize: 9,
-                  fontWeight: 500,
-                  letterSpacing: "0.22em",
-                  textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.55)",
-                  marginBottom: "8px",
-                }}
-              >
-                Ítems adicionales en esta venta
-              </Box>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "4px",
-                  fontSize: 12,
-                  color: "rgba(255,255,255,0.85)",
-                }}
-              >
-                {selectedItems.slice(1).map((p) => (
-                  <Box
-                    key={`extra-${p.itemId}`}
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: "12px",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {p.nombre || "Sin nombre"}
-                    </Box>
-                    <Box
-                      sx={{
-                        fontFamily: fontFamilies.mono,
-                        color: "rgba(255,255,255,0.6)",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      #{p.itemId}
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          ) : null}
         </Box>
       </Box>
     </Box>
@@ -1655,7 +1661,10 @@ function Section({ title, children, foto }: SectionProps) {
 
 interface SelectedItemRowProps {
   product: SpotlightProduct;
-  /** Live "already sold" flag (only known for the lead item, which is queried). */
+  /** Tier-resolved suggested price (COP) for THIS item. Falls back to the
+   *  spotlight hint when the batch query hasn't resolved it yet. */
+  price?: number;
+  /** Live "already VENDIDA" flag, now known for every item via the batch query. */
   sold: boolean;
   onRemove: (itemId: string) => void;
   foto: ReturnType<typeof getFoto>;
@@ -1668,6 +1677,7 @@ interface SelectedItemRowProps {
  */
 function SelectedItemRow({
   product,
+  price,
   sold,
   onRemove,
   foto,
@@ -1755,7 +1765,7 @@ function SelectedItemRow({
           textAlign: "right",
         }}
       >
-        {formatCop(product.precioCop)}
+        {formatCop(price ?? product.precioCop)}
       </Box>
       <Box
         component="button"

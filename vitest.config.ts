@@ -13,6 +13,7 @@ export default defineConfig({
       ["tests/vault-audio.test.ts", "jsdom"],
       ["tests/useChromaSamples.test.ts", "jsdom"],
       ["tests/fotosintesis-phone.test.ts", "jsdom"],
+      ["tests/kardexPreview.test.ts", "jsdom"],
     ],
   },
 });

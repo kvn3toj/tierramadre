@@ -20,6 +20,7 @@ import {
   toggleSelection,
   removeSelection,
   isSelected,
+  pickTierPrice,
 } from "../utils/saleItemSelection";
 
 interface ProductoSpotlightProps {
@@ -171,7 +172,10 @@ export function ProductoSpotlight({
         nombre: row.nombre ?? "Sin nombre",
         // Drive URLs need the proxy to render as an <img> thumbnail.
         thumbnailUrl: convertToProxyUrl(row.fotoUrl),
-        precioCop: row.precioCOP,
+        // Legacy precioCOP col was retired (~82% empty). The picker doesn't yet
+        // know the buyer tier, so hint with the embajador order — reusing the
+        // same `pickTierPrice` fallback VentaPage applies so the two never drift.
+        precioCop: pickTierPrice(row, "embajador"),
         loteId: row.loteId,
         estado: row.estado as string | undefined,
       });

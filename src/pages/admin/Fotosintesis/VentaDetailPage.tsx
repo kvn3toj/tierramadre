@@ -17,8 +17,12 @@ import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
 import { useNotification } from "../../../contexts/NotificationContext";
 import { TicketHeader } from "./components/TicketHeader";
 import { KardexPreview } from "./components/KardexPreview";
+import type { KardexLineItem } from "./components/KardexPreview";
 import { CancelVentaDialog } from "./components/CancelVentaDialog";
 import { EditableMetaValue } from "./components/EditableMetaValue";
+import { pickTierPrice } from "./utils/saleItemSelection";
+import type { CompradorTier } from "./utils/saleItemSelection";
+import { convertToProxyUrl } from "../../../utils/driveUrl";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 function formatCop(value: number | undefined | null): string {
@@ -103,12 +107,17 @@ export default function VentaDetailPage() {
     convexApi.sales.setCertificadoUrl,
   );
 
-  // First item drives the Kardex preview; for multi-item sales the additional
-  // itemIds are listed under the comprobante.
+  // First item drives the lineage footer (lot → provider); the full set of
+  // priced line items drives the Kardex preview.
   const firstItemId = sale?.itemIds[0] ?? null;
   const item = useConvexQuery(
     convexApi.products.get,
     firstItemId ? { itemId: firstItemId } : "skip",
+  );
+  // All sale items in one batch — order-preserving, with tier prices.
+  const manyItems = useConvexQuery(
+    convexApi.products.getManyByItemIds,
+    sale ? { itemIds: sale.itemIds } : "skip",
   );
   const lot = useConvexQuery(
     convexApi.lots.getByLoteId,
@@ -122,6 +131,44 @@ export default function VentaDetailPage() {
     convexApi.clients.get,
     sale?.clientId ? { id: sale.clientId } : "skip",
   );
+
+  // The buyer's tier decides which price each line contributes (ambassador vs
+  // consumer). Free-text / "final" write-ins pay the consumer price.
+  const tier: CompradorTier =
+    buyer?.tipo === "embajador" ? "embajador" : "final";
+
+  // itemId → tier-resolved per-item price (COP), recomputed when the batch or
+  // the tier changes.
+  const priceByItemId = useMemo(() => {
+    const map = new Map<string, number | undefined>();
+    for (const row of manyItems ?? []) {
+      map.set(row.itemId, pickTierPrice(row, tier));
+    }
+    return map;
+  }, [manyItems, tier]);
+
+  // Ordered Kardex line items, photos routed through the Drive proxy.
+  const kardexItems = useMemo<KardexLineItem[]>(() => {
+    return (manyItems ?? []).map((row) => ({
+      itemId: row.itemId,
+      nombre: row.nombre,
+      color: row.color,
+      calidad: row.calidad,
+      peso: row.peso,
+      medidas: row.medidas,
+      thumbnailUrl: convertToProxyUrl(row.fotoUrl),
+      precioCop: priceByItemId.get(row.itemId),
+    }));
+  }, [manyItems, priceByItemId]);
+
+  // Σ per-item tier prices → Subtotal; Descuento = max(0, subtotal − total).
+  const subtotal = useMemo(() => {
+    let sum = 0;
+    for (const value of priceByItemId.values()) {
+      if (typeof value === "number" && !Number.isNaN(value)) sum += value;
+    }
+    return sum;
+  }, [priceByItemId]);
 
   const handleConfirmCancel = useCallback(
     async (reason: string) => {
@@ -223,7 +270,6 @@ export default function VentaDetailPage() {
   const isCancelled = sale.estado === "cancelada";
   const buyerTipoLabel =
     buyer?.tipo === "embajador" ? "Embajador" : "Cliente final";
-  const extraItemIds = sale.itemIds.slice(1);
 
   return (
     <Box
@@ -548,18 +594,9 @@ export default function VentaDetailPage() {
           </Box>
 
           <KardexPreview
-            item={
-              item
-                ? {
-                    itemId: item.itemId,
-                    nombre: item.nombre ?? undefined,
-                    color: item.color ?? undefined,
-                    calidad: item.calidad ?? undefined,
-                    peso: item.peso ?? undefined,
-                    medidas: item.medidas ?? undefined,
-                  }
-                : null
-            }
+            items={kardexItems}
+            subtotalCop={subtotal}
+            descuentoCop={Math.max(0, subtotal - sale.precioAcordadoCOP)}
             lot={
               lot
                 ? {
@@ -604,43 +641,6 @@ export default function VentaDetailPage() {
           >
             Comprobante archivado para {sale.saleId}
           </Box>
-
-          {extraItemIds.length > 0 ? (
-            <Box
-              sx={{
-                marginTop: "16px",
-                paddingTop: "14px",
-                borderTop: "1px solid rgba(255,255,255,0.10)",
-              }}
-            >
-              <Box
-                sx={{
-                  fontSize: 9,
-                  fontWeight: 500,
-                  letterSpacing: "0.22em",
-                  textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.55)",
-                  marginBottom: "8px",
-                }}
-              >
-                Ítems adicionales en esta venta
-              </Box>
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                  gap: "6px 12px",
-                  fontFamily: fontFamilies.mono,
-                  fontSize: 12,
-                  color: "rgba(255,255,255,0.85)",
-                }}
-              >
-                {extraItemIds.map((id) => (
-                  <Box key={id}>{id}</Box>
-                ))}
-              </Box>
-            </Box>
-          ) : null}
         </Box>
       </Box>
 
