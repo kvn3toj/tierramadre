@@ -649,6 +649,10 @@ function AppContent() {
               </ProviderRoute>
             }
           />
+          {/* Catch-all — any unmatched in-app path (e.g. a malformed
+              /esmereogenesis/:id/extra) redirects home instead of rendering a
+              blank content area. */}
+          <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
       </IOSLayout>
     </>

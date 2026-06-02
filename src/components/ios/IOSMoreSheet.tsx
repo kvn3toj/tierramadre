@@ -34,6 +34,7 @@ import {
 
 import {
   Vault,
+  Sprout,
   BarChart3,
   ShoppingBag,
   ChevronRight,
@@ -148,6 +149,14 @@ const buildMenuSections = (
       icon: Vault as any,
       route: "/boveda-secreta",
       color: brand.gold[500],
+    },
+    {
+      id: "esmereogenesis",
+      label: t.tools.esmereogenesis.label,
+      subtitle: t.tools.esmereogenesis.subtitle,
+      icon: Sprout as any,
+      route: "/esmereogenesis",
+      color: brand.emerald[500],
     },
   ];
 

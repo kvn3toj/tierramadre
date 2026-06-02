@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 import { ChevronLeft, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useEsmereogenesis } from "../../contexts/EsmereogenesisContext";
 import { useNotification } from "../../contexts/NotificationContext";
 import { useCurrencyFormat } from "../../contexts/CurrencyContext";
@@ -41,6 +41,7 @@ import { emeraldCore } from "../../design-system/tokens/colors";
 import { meshGradients } from "../../design-system/tokens/gradients";
 import { whiteAlpha } from "../../design-system/utils/colorUtils";
 import { useEsmereoThemeTokens } from "../../hooks/useEsmereoThemeTokens";
+import { useOverlayBackButton } from "../../hooks/useOverlayBackButton";
 import type { EsmereoPlan } from "../../types/esmereogenesis";
 
 const VISIBLE_HISTORY = 4;
@@ -119,6 +120,17 @@ const EsmereogenesisGardenPage: React.FC = () => {
     }
   };
 
+  // Hardware/browser Back closes the topmost open overlay instead of exiting
+  // the whole Garden route. The cinematic is intentionally excluded here — it
+  // wires its own back-intercept internally (see AbonoCinematic).
+  useOverlayBackButton(aporteOpen, () => {
+    setAporteOpen(false);
+    setAporteAmount(plan?.weeklySuggestedCOP ?? 0);
+  });
+  useOverlayBackButton(claimOpen, () => setClaimOpen(false));
+  useOverlayBackButton(deleteConfirmOpen, () => setDeleteConfirmOpen(false));
+  useOverlayBackButton(onboardingOpen, dismissOnboarding);
+
   // Sync slider value with current remaining whenever plan progress changes
   useEffect(() => {
     if (!plan) return;
@@ -135,14 +147,6 @@ const EsmereogenesisGardenPage: React.FC = () => {
     plan?.weeklySuggestedCOP,
     plan?.targetCOP,
   ]);
-
-  // Redirect if plan disappears
-  useEffect(() => {
-    if (planId && !plan) {
-      notify("Esa Esmereogénesis no existe", "warning");
-      navigate("/esmereogenesis", { replace: true });
-    }
-  }, [planId, plan, navigate, notify]);
 
   // Per-plan document.title so the browser tab is identifiable when several
   // gardens are open. Restores the global title on unmount.
@@ -174,6 +178,19 @@ const EsmereogenesisGardenPage: React.FC = () => {
   const isCompleted = plan?.state === "completed" || plan?.state === "claimed";
   const isClaimed = plan?.state === "claimed";
 
+  // Render-phase guard: a deep-linked plan that isn't on this device resolves
+  // to undefined. Redirect to the Hub (no null frame, no post-render effect)
+  // and let the Hub own the calm explanation via navigation state — the data
+  // is device-local, so "doesn't exist here" ≠ "never existed".
+  if (planId && !plan) {
+    return (
+      <Navigate
+        to="/esmereogenesis"
+        replace
+        state={{ esmereoNotFound: true }}
+      />
+    );
+  }
   if (!plan) return null;
 
   const productName = plan.productSnapshot.nombre
@@ -302,7 +319,16 @@ const EsmereogenesisGardenPage: React.FC = () => {
         }}
       >
         <IconButton
-          onClick={() => navigate("/esmereogenesis")}
+          onClick={() => {
+            // Honor real history (e.g. arrived from a product CTA → return to
+            // the product). No history (direct/share/refresh) → fall back to
+            // the Hub with replace so no phantom entry is left behind.
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate("/esmereogenesis", { replace: true });
+            }
+          }}
           aria-label="Volver al hub de Esmereogénesis"
           sx={{ color: titleColor }}
         >

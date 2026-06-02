@@ -6,7 +6,7 @@
  * Shows empty state, active garden grid, completed sealed cards, and a settings menu.
  */
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -30,7 +30,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEsmereogenesis } from "../../contexts/EsmereogenesisContext";
 import { useNotification } from "../../contexts/NotificationContext";
 import { useTrackingDispatch } from "../../contexts/TrackingContext";
@@ -40,6 +40,7 @@ import { EsmereoPlanCard } from "../../components/esmereogenesis/EsmereoPlanCard
 import { StreakIndicator } from "../../components/esmereogenesis/StreakIndicator";
 import { OnboardingCoachmarks } from "../../components/esmereogenesis/OnboardingCoachmarks";
 import ConfirmDialog from "../../components/shared/ConfirmDialog";
+import { STORAGE_KEYS } from "../../constants/storage-keys";
 import { emeraldCore, goldAccent } from "../../design-system/tokens/colors";
 import {
   emeraldGradients,
@@ -50,6 +51,7 @@ import { useEsmereoThemeTokens } from "../../hooks/useEsmereoThemeTokens";
 
 const EsmereogenesisHubPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { notify } = useNotification();
   const { track } = useTrackingDispatch();
   const { formatCurrency } = useCurrencyFormat();
@@ -90,6 +92,50 @@ const EsmereogenesisHubPage: React.FC = () => {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+
+  // First Hub visit — surface the explainer once for users who discover
+  // Esmereogénesis from the persistent nav (not via a product Garden). Gated by
+  // the same ESMEREO_ONBOARDING_SEEN flag the Garden uses, so onboarding on
+  // either surface satisfies both. Shorter delay than the Garden's 1500ms — the
+  // Hub has no gem-entrance ceremony to protect.
+  useEffect(() => {
+    let seen = false;
+    try {
+      seen = Boolean(
+        localStorage.getItem(STORAGE_KEYS.ESMEREO_ONBOARDING_SEEN),
+      );
+    } catch {
+      seen = false;
+    }
+    if (seen) return;
+    const t = window.setTimeout(() => setOnboardingOpen(true), 400);
+    return () => window.clearTimeout(t);
+  }, []);
+  const dismissOnboarding = () => {
+    setOnboardingOpen(false);
+    try {
+      localStorage.setItem(STORAGE_KEYS.ESMEREO_ONBOARDING_SEEN, "1");
+    } catch {
+      /* private mode etc. — silent */
+    }
+  };
+
+  // A deep-linked Garden that doesn't exist on this device redirects here with
+  // an `esmereoNotFound` flag. Surface a calm, honest explanation ONCE (info,
+  // not an error — the plan is device-local, so it may simply live elsewhere),
+  // then clear the flag so a refresh/back doesn't re-fire it.
+  useEffect(() => {
+    const notFound = (location.state as { esmereoNotFound?: boolean } | null)
+      ?.esmereoNotFound;
+    if (!notFound) return;
+    notify(
+      "Esta Esmereogénesis vive solo en el dispositivo donde la creaste. Aquí está tu jardín.",
+      "info",
+      { durationMs: 6000 },
+    );
+    navigate(location.pathname + location.search, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.key]);
 
   const handleReset = () => {
     setMenuAnchor(null);
@@ -558,10 +604,7 @@ const EsmereogenesisHubPage: React.FC = () => {
           on first visit, just controlled manually here so users can review
           the explanation any time. We don't reset the localStorage flag, so
           the auto-open contract on first Garden visit stays intact. */}
-      <OnboardingCoachmarks
-        open={onboardingOpen}
-        onClose={() => setOnboardingOpen(false)}
-      />
+      <OnboardingCoachmarks open={onboardingOpen} onClose={dismissOnboarding} />
     </Box>
   );
 };

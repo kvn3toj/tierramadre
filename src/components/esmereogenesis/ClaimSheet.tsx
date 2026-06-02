@@ -98,6 +98,7 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({
       open={open}
       onClose={handleClose}
       ariaLabelledBy="esmereo-claim-title"
+      locked={submitting}
     >
       <AnimatePresence mode="wait">
         {!confirmed ? (

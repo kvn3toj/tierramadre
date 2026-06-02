@@ -11,7 +11,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Box, Typography, alpha } from "@mui/material";
+import { Box, Modal, Typography, alpha } from "@mui/material";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Droplet, Sparkles, Check } from "lucide-react";
 import { LivingEmerald } from "../LivingEmerald";
@@ -27,6 +27,7 @@ import { whiteAlpha } from "../../../design-system/utils/colorUtils";
 import { useCurrencyFormat } from "../../../contexts/CurrencyContext";
 import { useEsmereogenesis } from "../../../contexts/EsmereogenesisContext";
 import { useTrackingDispatch } from "../../../contexts/TrackingContext";
+import { useOverlayBackButton } from "../../../hooks/useOverlayBackButton";
 
 interface AbonoCinematicProps {
   /** Plan AFTER the aporte has been applied. */
@@ -165,6 +166,17 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
     skip();
   };
 
+  // Esc (via Modal) and hardware/browser Back both skip the ceremony — so a
+  // keyboard user is never trapped for ~7.5s and a device Back closes the
+  // takeover instead of exiting the Garden route.
+  const handleModalClose = (
+    _event: object,
+    reason: "backdropClick" | "escapeKeyDown",
+  ) => {
+    if (reason === "escapeKeyDown" || reason === "backdropClick") handleSkip();
+  };
+  useOverlayBackButton(open && phase !== "idle", handleSkip);
+
   // Reset internal progress when sequence starts
   useEffect(() => {
     if (open) {
@@ -192,359 +204,360 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
     phase === "eclosion" || (phase === "release" && isCompletion);
 
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <Box
-          component={motion.div}
-          role="dialog"
-          aria-label="Animación de aporte en curso. Toca para saltar."
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          onClick={handleSkip}
-          sx={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 1500,
-            background: meshGradients.emerald,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            overflow: "hidden",
-          }}
-        >
-          {/* a11y: visually-hidden live region that announces the meaningful
+    <Modal
+      open={isVisible}
+      onClose={handleModalClose}
+      sx={{ zIndex: 1500 }}
+      slotProps={{ backdrop: { invisible: true } }}
+    >
+      <Box
+        component={motion.div}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Animación de aporte en curso. Toca o presiona Escape para saltar."
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        onClick={handleSkip}
+        sx={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 1500,
+          background: meshGradients.emerald,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          overflow: "hidden",
+        }}
+      >
+        {/* a11y: visually-hidden live region that announces the meaningful
               phase transitions to screen readers. Lives at the top so the
               announcement node mounts before any visual layer. */}
-          <Box
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-            sx={{
-              position: "absolute",
-              width: 1,
-              height: 1,
-              padding: 0,
-              margin: -1,
-              overflow: "hidden",
-              clip: "rect(0 0 0 0)",
-              whiteSpace: "nowrap",
-              border: 0,
-            }}
-          >
-            {announcement}
-          </Box>
+        <Box
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          sx={{
+            position: "absolute",
+            width: 1,
+            height: 1,
+            padding: 0,
+            margin: -1,
+            overflow: "hidden",
+            clip: "rect(0 0 0 0)",
+            whiteSpace: "nowrap",
+            border: 0,
+          }}
+        >
+          {announcement}
+        </Box>
 
-          {/* Backdrop dimming */}
-          <Box
-            aria-hidden
-            sx={{
-              position: "absolute",
-              inset: 0,
-              background: `radial-gradient(circle at 50% 45%, ${alpha(emeraldCore.dark, 0.05)} 0%, ${alpha(emeraldCore.dark, 0.65)} 75%)`,
-              pointerEvents: "none",
-            }}
-          />
+        {/* Backdrop dimming */}
+        <Box
+          aria-hidden
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background: `radial-gradient(circle at 50% 45%, ${alpha(emeraldCore.dark, 0.05)} 0%, ${alpha(emeraldCore.dark, 0.65)} 75%)`,
+            pointerEvents: "none",
+          }}
+        />
 
-          {/* Spotlight */}
-          <Box
-            aria-hidden
-            sx={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              width: 520,
-              height: 520,
-              transform: "translate(-50%, -50%)",
-              background: radialGradients.emeraldSpotlight,
-              filter: "blur(20px)",
-              opacity: showEclosion ? 1 : 0.7,
-              transition: "opacity 0.6s ease-out",
-              pointerEvents: "none",
-            }}
-          />
+        {/* Spotlight */}
+        <Box
+          aria-hidden
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            width: 520,
+            height: 520,
+            transform: "translate(-50%, -50%)",
+            background: radialGradients.emeraldSpotlight,
+            filter: "blur(20px)",
+            opacity: showEclosion ? 1 : 0.7,
+            transition: "opacity 0.6s ease-out",
+            pointerEvents: "none",
+          }}
+        />
 
-          {/* Center stage — anchored to the LivingEmerald wrapper so
+        {/* Center stage — anchored to the LivingEmerald wrapper so
               droplet/wash/numbers compose around the gem instead of around
               arbitrary % of the takeover. Gap is tightened so the gem stays
               the dominant subject of every phase. */}
-          <Box
-            sx={{
-              position: "relative",
-              width: "min(360px, 90vw)",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: { xs: 2, sm: 2.5 },
-              textAlign: "center",
-              // Pad-top reserves space for the droplet so it doesn't get
-              // chopped on short viewports.
-              pt: { xs: 8, sm: 10 },
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Eclosion halo (only if completing) */}
-            {showEclosion && (
+        <Box
+          sx={{
+            position: "relative",
+            width: "min(360px, 90vw)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: { xs: 2, sm: 2.5 },
+            textAlign: "center",
+            // Pad-top reserves space for the droplet so it doesn't get
+            // chopped on short viewports.
+            pt: { xs: 8, sm: 10 },
+          }}
+        >
+          {/* Eclosion halo (only if completing) */}
+          {showEclosion && (
+            <Box
+              component={motion.div}
+              aria-hidden
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: [0.6, 1.4, 1.2], opacity: [0, 1, 0.8] }}
+              transition={{ duration: 1.5, ease: "easeOut" }}
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                width: 320,
+                height: 320,
+                transform: "translate(-50%, -50%)",
+                borderRadius: "50%",
+                background: `radial-gradient(circle, ${alpha(goldAccent.primary, 0.6)} 0%, ${alpha(goldAccent.primary, 0)} 70%)`,
+                filter: "blur(8px)",
+                pointerEvents: "none",
+              }}
+            />
+          )}
+
+          {/* Droplet — falls from above the stage and lands just at the
+                top of the LivingEmerald. Sized in pixel offsets so it lands
+                on the gem regardless of viewport height. */}
+          <AnimatePresence>
+            {showDroplet && (
               <Box
                 component={motion.div}
-                aria-hidden
+                initial={{ y: -120, opacity: 0, scale: 0.6 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: 30, opacity: 0, scale: 0.4 }}
+                transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  color: goldAccent.primary,
+                  filter: `drop-shadow(0 0 14px ${alpha(goldAccent.primary, 0.7)})`,
+                  pointerEvents: "none",
+                }}
+              >
+                <Droplet size={36} fill={goldAccent.primary} />
+              </Box>
+            )}
+          </AnimatePresence>
+
+          {/* Wash splash — perfectly centered over the LivingEmerald
+                (which lives at the visual middle of the center stage). */}
+          <AnimatePresence>
+            {showWash && (
+              <Box
+                component={motion.div}
                 initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: [0.6, 1.4, 1.2], opacity: [0, 1, 0.8] }}
-                transition={{ duration: 1.5, ease: "easeOut" }}
+                animate={{ scale: 1.6, opacity: [0, 1, 0] }}
+                transition={{ duration: 0.9 }}
                 sx={{
                   position: "absolute",
                   top: "50%",
                   left: "50%",
-                  width: 320,
-                  height: 320,
                   transform: "translate(-50%, -50%)",
+                  width: "min(260px, 78vw)",
+                  aspectRatio: "1 / 1",
                   borderRadius: "50%",
-                  background: `radial-gradient(circle, ${alpha(goldAccent.primary, 0.6)} 0%, ${alpha(goldAccent.primary, 0)} 70%)`,
-                  filter: "blur(8px)",
+                  background: `radial-gradient(circle, ${alpha(goldAccent.light, 0.55)} 0%, ${alpha(emeraldCore.primary, 0.28)} 45%, transparent 80%)`,
                   pointerEvents: "none",
+                  zIndex: 0,
                 }}
               />
             )}
+          </AnimatePresence>
 
-            {/* Droplet — falls from above the stage and lands just at the
-                top of the LivingEmerald. Sized in pixel offsets so it lands
-                on the gem regardless of viewport height. */}
-            <AnimatePresence>
-              {showDroplet && (
-                <Box
-                  component={motion.div}
-                  initial={{ y: -120, opacity: 0, scale: 0.6 }}
-                  animate={{ y: 0, opacity: 1, scale: 1 }}
-                  exit={{ y: 30, opacity: 0, scale: 0.4 }}
-                  transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
-                  sx={{
-                    position: "absolute",
-                    top: 0,
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    color: goldAccent.primary,
-                    filter: `drop-shadow(0 0 14px ${alpha(goldAccent.primary, 0.7)})`,
-                    pointerEvents: "none",
-                  }}
-                >
-                  <Droplet size={36} fill={goldAccent.primary} />
-                </Box>
-              )}
-            </AnimatePresence>
-
-            {/* Wash splash — perfectly centered over the LivingEmerald
-                (which lives at the visual middle of the center stage). */}
-            <AnimatePresence>
-              {showWash && (
-                <Box
-                  component={motion.div}
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1.6, opacity: [0, 1, 0] }}
-                  transition={{ duration: 0.9 }}
-                  sx={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
-                    width: "min(260px, 78vw)",
-                    aspectRatio: "1 / 1",
-                    borderRadius: "50%",
-                    background: `radial-gradient(circle, ${alpha(goldAccent.light, 0.55)} 0%, ${alpha(emeraldCore.primary, 0.28)} 45%, transparent 80%)`,
-                    pointerEvents: "none",
-                    zIndex: 0,
-                  }}
-                />
-              )}
-            </AnimatePresence>
-
-            {/* Center: LivingEmerald */}
-            <Box
-              component={motion.div}
-              animate={{
-                scale: showBloomBoost
-                  ? [1, 1.05, 1]
-                  : showEclosion
-                    ? [1, 1.08, 1.04]
-                    : 1,
-              }}
-              transition={{
-                duration: showEclosion ? 1.6 : 0.8,
-                ease: "easeInOut",
-              }}
-            >
-              <LivingEmerald
-                imageSrc={plan.productSnapshot.imagen}
-                progress={animatedProgress}
-                state={
-                  isCompletion && phase === "eclosion"
-                    ? "completed"
-                    : plan.state
-                }
-                size="lg"
-                isPulsing={false}
-                recentAporteAt={Date.now()}
-              />
-            </Box>
-
-            {/* Progress numbers */}
-            <AnimatePresence>
-              {showProgressNumbers && (
-                <Box
-                  component={motion.div}
-                  initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.4 }}
-                  sx={{
-                    color: "#FFFFFF",
-                  }}
-                >
-                  <Typography
-                    variant="h2"
-                    sx={{
-                      fontFamily: '"Playfair Display", serif',
-                      fontWeight: 700,
-                      lineHeight: 1,
-                      textShadow: `0 4px 18px ${alpha(emeraldCore.dark, 0.7)}`,
-                    }}
-                  >
-                    {Math.round(animatedProgress * 100)}%
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    sx={{ opacity: 0.85, mt: 0.5, fontWeight: 600 }}
-                  >
-                    {formatCurrency(animatedAbonado)} /{" "}
-                    {formatCurrency(plan.targetCOP)}
-                  </Typography>
-                </Box>
-              )}
-            </AnimatePresence>
-
-            {/* Confirmation chip */}
-            <AnimatePresence>
-              {showConfirmation && !isCompletion && (
-                <Box
-                  component={motion.div}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  sx={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 1,
-                    px: 2,
-                    py: 1,
-                    borderRadius: 999,
-                    background: emeraldGradients.intense,
-                    color: "#FFFFFF",
-                    fontWeight: 700,
-                    boxShadow: `0 12px 28px ${alpha(emeraldCore.dark, 0.5)}`,
-                  }}
-                >
-                  <Check size={16} />
-                  <Typography
-                    variant="body2"
-                    sx={{ fontWeight: 700, color: "inherit" }}
-                  >
-                    + {formatCurrency(aporteAmount)} abonado
-                  </Typography>
-                </Box>
-              )}
-            </AnimatePresence>
-
-            {/* Eclosion message — the climax of the entire feature, so it
-                gets a softer overline + Playfair italic headline that breathes
-                instead of competing with the gem. */}
-            <AnimatePresence>
-              {showEclosion && (
-                <Box
-                  component={motion.div}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
-                  sx={{
-                    color: "#FFFFFF",
-                    textAlign: "center",
-                    px: 1,
-                  }}
-                >
-                  <Box
-                    component={motion.div}
-                    animate={{ rotate: [0, 360] }}
-                    transition={{
-                      duration: 8,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                    sx={{
-                      display: "inline-flex",
-                      mb: 1.25,
-                      color: goldAccent.primary,
-                    }}
-                  >
-                    <Sparkles size={36} />
-                  </Box>
-                  <Typography
-                    variant="overline"
-                    sx={{
-                      display: "block",
-                      color: alpha(goldAccent.light, 0.95),
-                      fontWeight: 700,
-                      letterSpacing: 2.4,
-                      mb: 0.75,
-                    }}
-                  >
-                    Eclosión
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontFamily: '"Playfair Display", serif',
-                      fontWeight: 700,
-                      fontStyle: "italic",
-                      fontSize: { xs: 28, sm: 34 },
-                      lineHeight: 1.15,
-                      textShadow: `0 4px 22px ${alpha(emeraldCore.dark, 0.75)}`,
-                    }}
-                  >
-                    Tu Esmeralda
-                    <br />
-                    ha cobrado vida
-                  </Typography>
-                </Box>
-              )}
-            </AnimatePresence>
+          {/* Center: LivingEmerald */}
+          <Box
+            component={motion.div}
+            animate={{
+              scale: showBloomBoost
+                ? [1, 1.05, 1]
+                : showEclosion
+                  ? [1, 1.08, 1.04]
+                  : 1,
+            }}
+            transition={{
+              duration: showEclosion ? 1.6 : 0.8,
+              ease: "easeInOut",
+            }}
+          >
+            <LivingEmerald
+              imageSrc={plan.productSnapshot.imagen}
+              progress={animatedProgress}
+              state={
+                isCompletion && phase === "eclosion" ? "completed" : plan.state
+              }
+              size="lg"
+              isPulsing={false}
+              recentAporteAt={Date.now()}
+            />
           </Box>
 
-          {/* Skip hint */}
-          {phase !== "release" && (
-            <Box
-              component={motion.div}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.65 }}
-              transition={{ delay: 1.5, duration: 0.6 }}
-              sx={{
-                position: "absolute",
-                bottom: "calc(env(safe-area-inset-bottom, 0) + 24px)",
-                left: "50%",
-                transform: "translateX(-50%)",
-                color: whiteAlpha(0.85),
-                pointerEvents: "none",
-                fontSize: 13,
-                fontWeight: 600,
-                letterSpacing: 1,
-              }}
-            >
-              Toca para continuar
-            </Box>
-          )}
+          {/* Progress numbers */}
+          <AnimatePresence>
+            {showProgressNumbers && (
+              <Box
+                component={motion.div}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4 }}
+                sx={{
+                  color: "#FFFFFF",
+                }}
+              >
+                <Typography
+                  variant="h2"
+                  sx={{
+                    fontFamily: '"Playfair Display", serif',
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    textShadow: `0 4px 18px ${alpha(emeraldCore.dark, 0.7)}`,
+                  }}
+                >
+                  {Math.round(animatedProgress * 100)}%
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ opacity: 0.85, mt: 0.5, fontWeight: 600 }}
+                >
+                  {formatCurrency(animatedAbonado)} /{" "}
+                  {formatCurrency(plan.targetCOP)}
+                </Typography>
+              </Box>
+            )}
+          </AnimatePresence>
+
+          {/* Confirmation chip */}
+          <AnimatePresence>
+            {showConfirmation && !isCompletion && (
+              <Box
+                component={motion.div}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 1,
+                  px: 2,
+                  py: 1,
+                  borderRadius: 999,
+                  background: emeraldGradients.intense,
+                  color: "#FFFFFF",
+                  fontWeight: 700,
+                  boxShadow: `0 12px 28px ${alpha(emeraldCore.dark, 0.5)}`,
+                }}
+              >
+                <Check size={16} />
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 700, color: "inherit" }}
+                >
+                  + {formatCurrency(aporteAmount)} abonado
+                </Typography>
+              </Box>
+            )}
+          </AnimatePresence>
+
+          {/* Eclosion message — the climax of the entire feature, so it
+                gets a softer overline + Playfair italic headline that breathes
+                instead of competing with the gem. */}
+          <AnimatePresence>
+            {showEclosion && (
+              <Box
+                component={motion.div}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
+                sx={{
+                  color: "#FFFFFF",
+                  textAlign: "center",
+                  px: 1,
+                }}
+              >
+                <Box
+                  component={motion.div}
+                  animate={{ rotate: [0, 360] }}
+                  transition={{
+                    duration: 8,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                  sx={{
+                    display: "inline-flex",
+                    mb: 1.25,
+                    color: goldAccent.primary,
+                  }}
+                >
+                  <Sparkles size={36} />
+                </Box>
+                <Typography
+                  variant="overline"
+                  sx={{
+                    display: "block",
+                    color: alpha(goldAccent.light, 0.95),
+                    fontWeight: 700,
+                    letterSpacing: 2.4,
+                    mb: 0.75,
+                  }}
+                >
+                  Eclosión
+                </Typography>
+                <Typography
+                  sx={{
+                    fontFamily: '"Playfair Display", serif',
+                    fontWeight: 700,
+                    fontStyle: "italic",
+                    fontSize: { xs: 28, sm: 34 },
+                    lineHeight: 1.15,
+                    textShadow: `0 4px 22px ${alpha(emeraldCore.dark, 0.75)}`,
+                  }}
+                >
+                  Tu Esmeralda
+                  <br />
+                  ha cobrado vida
+                </Typography>
+              </Box>
+            )}
+          </AnimatePresence>
         </Box>
-      )}
-    </AnimatePresence>
+
+        {/* Skip hint */}
+        {phase !== "release" && (
+          <Box
+            component={motion.div}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.65 }}
+            transition={{ delay: 1.5, duration: 0.6 }}
+            sx={{
+              position: "absolute",
+              bottom: "calc(env(safe-area-inset-bottom, 0) + 24px)",
+              left: "50%",
+              transform: "translateX(-50%)",
+              color: whiteAlpha(0.85),
+              pointerEvents: "none",
+              fontSize: 13,
+              fontWeight: 600,
+              letterSpacing: 1,
+            }}
+          >
+            Toca para continuar
+          </Box>
+        )}
+      </Box>
+    </Modal>
   );
 };
 
