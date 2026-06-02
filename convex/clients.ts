@@ -9,6 +9,7 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { pushTableRowToVercel } from "./_lib/sheetSync";
 import { marshalRow } from "./_lib/columnMaps";
+import { planAsesorUpsert } from "./_lib/asesorSync";
 
 // Free text (canonical: embajador | final). The custom "Otro…" buyer type from
 // the venta comprador picker is captured through the cliente-final form.
@@ -266,5 +267,130 @@ export const bulkImportFromLegacy = mutation({
       skipped: results.filter((r) => r.status === "skipped").length,
       details: results,
     };
+  },
+});
+
+// ─── Ongoing Asesores sheet → Convex pull-sync ───────────────────────────────
+// Unlike the one-shot `bulkImportFromLegacy` (insert-only), this keeps `clients`
+// continuously in step with the legacy Asesores tab: it inserts new asesores AND
+// updates changed contact fields, then propagates each change to the SOT Clientes
+// tab so all three stay aligned. Driven by a daily Convex cron (see convex/crons.ts)
+// → `pullAsesoresFromSheet` (action) → here. Pure diff lives in `_lib/asesorSync`.
+
+export const _upsertManyAsesores = internalMutation({
+  args: {
+    rows: v.array(
+      v.object({
+        nombre: v.string(),
+        email: v.optional(v.string()),
+        telefono: v.optional(v.string()),
+        asesorId: v.optional(v.string()),
+      }),
+    ),
+  },
+  handler: async (ctx, { rows }) => {
+    const existing = await ctx.db.query("clients").collect();
+    const plan = planAsesorUpsert(
+      rows,
+      existing.map((c) => ({
+        _id: c._id,
+        nombre: c.nombre,
+        email: c.email,
+        telefono: c.telefono,
+        asesorId: c.asesorId,
+      })),
+    );
+
+    const now = new Date().toISOString();
+    let nextRow = existing.reduce((m, c) => Math.max(m, c.rowIndex), 1);
+
+    // Insert new asesores at fresh row indices (append-safe in the SOT).
+    for (const row of plan.toInsert) {
+      nextRow += 1;
+      const id = await ctx.db.insert("clients", {
+        nombre: row.nombre,
+        email: row.email,
+        telefono: row.telefono,
+        tipo: "embajador" as const,
+        asesorId: row.asesorId,
+        rowIndex: nextRow,
+        lastPulledAt: now,
+        syncStatus: "pending" as const,
+      });
+      await ctx.scheduler.runAfter(0, api.clients._pushToSheet, {
+        id,
+        mode: "append",
+      });
+    }
+
+    // Patch changed contact fields on known asesores + re-push that row (the
+    // name-match safety check on the Vercel side makes "patch" non-destructive).
+    for (const upd of plan.toUpdate) {
+      await ctx.db.patch(upd.id, {
+        ...upd.patch,
+        lastPulledAt: now,
+        syncStatus: "pending" as const,
+      });
+      await ctx.scheduler.runAfter(0, api.clients._pushToSheet, {
+        id: upd.id,
+        mode: "patch",
+      });
+    }
+
+    return {
+      created: plan.toInsert.length,
+      updated: plan.toUpdate.length,
+      unchanged: plan.unchanged,
+      skipped: plan.skipped,
+    };
+  },
+});
+
+/**
+ * Daily pull: read the legacy Asesores tab via the existing `/api/get-asesores`
+ * endpoint (which already drops inactive rows + cleans emails) and upsert into
+ * `clients`. Mirrors `products.pullFromSheet` — the Vercel side owns Sheets
+ * access, Convex owns the data. No auth needed: get-asesores is public-read.
+ */
+export const pullAsesoresFromSheet = action({
+  args: {},
+  handler: async (
+    ctx,
+  ): Promise<{
+    pulled: number;
+    created: number;
+    updated: number;
+    unchanged: number;
+    skipped: number;
+  }> => {
+    const appUrl: string | undefined = process.env.APP_URL;
+    if (!appUrl) {
+      throw new Error("APP_URL missing on Convex deployment");
+    }
+    const res = await fetch(`${appUrl}/api/get-asesores`);
+    if (!res.ok) {
+      throw new Error(`get-asesores fetch failed: HTTP ${res.status}`);
+    }
+    const payload = (await res.json()) as {
+      asesores?: Array<{
+        name?: string;
+        email?: string | null;
+        whatsapp?: string | null;
+        slug?: string | null;
+      }>;
+    };
+    const rows = (payload.asesores ?? [])
+      .filter((a) => a.name && a.name.trim().length > 0)
+      .map((a) => ({
+        nombre: a.name as string,
+        email: a.email ?? undefined,
+        telefono: a.whatsapp ?? undefined,
+        asesorId: a.slug ?? undefined,
+      }));
+
+    const result = await ctx.runMutation(internal.clients._upsertManyAsesores, {
+      rows,
+    });
+    return { pulled: rows.length, ...result };
   },
 });
