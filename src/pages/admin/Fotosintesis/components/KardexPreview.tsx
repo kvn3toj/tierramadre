@@ -22,6 +22,12 @@ export interface KardexItem {
   imageUrl?: string;
 }
 
+/** A sale line item: a {@link KardexItem} plus the tier-resolved price (COP)
+ *  it contributes to the sale. Resolved upstream via `pickTierPrice`. */
+export interface KardexLineItem extends KardexItem {
+  precioCop?: number;
+}
+
 export interface KardexLot {
   loteId?: string;
   fechaRecepcion?: string;
@@ -50,12 +56,18 @@ export interface KardexSale {
 }
 
 interface KardexPreviewProps {
-  item: KardexItem | null | undefined;
+  /** Ordered sale line items. Empty → "Sin ítems" placeholder; one → premium
+   *  single layout; many → compact line-item list + totals. */
+  items: KardexLineItem[];
   lot: KardexLot | null | undefined;
   provider: KardexProvider | null | undefined;
   buyer: KardexBuyer | null | undefined;
   sale: KardexSale;
   privacyOn: boolean;
+  /** Σ per-item tier prices. Falls back to the local sum when omitted. */
+  subtotalCop?: number;
+  /** max(0, subtotal − total); a Descuento line renders only when > 0. */
+  descuentoCop?: number;
 }
 
 const PAPER_BG = "#FBF8F1";
@@ -97,23 +109,68 @@ function buyerLabel(buyer: KardexBuyer | null | undefined): string {
  * Editorial "carnet" preview for the sale. Pure visual — captured by
  * html2canvas via `exportCarnet`. Lives on the dark sale-page right pane.
  *
- * When `privacyOn`, the buyer ID row swaps to a muted "oculta en versión
+ * Adapts to the line-item count:
+ *   • 0 items  → a muted "Sin ítems" placeholder where the product block was.
+ *   • 1 item   → the premium single layout (108px photo + 2-col specs grid).
+ *   • >1 items → a compact line-item list, a meta block (Comprador / Forma de
+ *                pago) and a "Resumen de montos" totals block (Subtotal,
+ *                optional Descuento, emphasized Total).
+ *
+ * When `privacyOn`, the buyer label swaps to a muted "oculta en versión
  * pública" placeholder. Slice 1 PDF still includes the full version.
  * (Handoff §4.6.1)
  */
 export function KardexPreview({
-  item,
+  items,
   lot,
   provider,
   buyer,
   sale,
   privacyOn,
+  subtotalCop,
+  descuentoCop,
 }: KardexPreviewProps) {
   const accent = emeraldCore.dark;
   const accentDeep = "#006B4A";
   const gold = goldAccent.primary;
 
-  const photoUrl = item?.thumbnailUrl ?? item?.imageUrl;
+  const count = items.length;
+  const single = count === 1 ? items[0] : null;
+  const photoUrl = single?.thumbnailUrl ?? single?.imageUrl;
+
+  // Totals (multi-item). Subtotal falls back to the local sum so a value always
+  // renders even if the caller omits it. Descuento shows only when positive.
+  const localSum = items.reduce(
+    (acc, it) =>
+      acc +
+      (typeof it.precioCop === "number" && !Number.isNaN(it.precioCop)
+        ? it.precioCop
+        : 0),
+    0,
+  );
+  const subtotal =
+    typeof subtotalCop === "number" && !Number.isNaN(subtotalCop)
+      ? subtotalCop
+      : localSum;
+  const descuento =
+    typeof descuentoCop === "number" && !Number.isNaN(descuentoCop)
+      ? descuentoCop
+      : 0;
+
+  const compradorValue = privacyOn ? (
+    <Box
+      component="span"
+      sx={{
+        fontStyle: "italic",
+        color: PAPER_INK_MUTE,
+        letterSpacing: "0.01em",
+      }}
+    >
+      — oculta en versión pública —
+    </Box>
+  ) : (
+    buyerLabel(buyer)
+  );
 
   return (
     <Box
@@ -210,137 +267,410 @@ export function KardexPreview({
         </Box>
       </Box>
 
-      {/* Product block */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "108px 1fr",
-          gap: "18px",
-          alignItems: "center",
-          marginBottom: "22px",
-        }}
-      >
+      {/* ── Body: 0 / 1 / many ─────────────────────────────────────────── */}
+      {count === 0 ? (
+        /* Empty placeholder where the product block would be */
         <Box
           sx={{
-            width: 108,
-            height: 108,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: 120,
+            marginBottom: "22px",
             borderRadius: "4px",
+            border: `1px dashed ${PAPER_RULE}`,
             background: "#EFEAE0",
-            border: `1px solid ${PAPER_RULE}`,
-            overflow: "hidden",
-            position: "relative",
-            aspectRatio: "1 / 1",
+            color: PAPER_INK_MUTE,
+            fontStyle: "italic",
+            fontSize: 13,
+            letterSpacing: "0.02em",
           }}
         >
-          {photoUrl ? (
+          Sin ítems
+        </Box>
+      ) : single ? (
+        /* ── Single item: premium layout ─────────────────────────────── */
+        <>
+          {/* Product block */}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "108px 1fr",
+              gap: "18px",
+              alignItems: "center",
+              marginBottom: "22px",
+            }}
+          >
             <Box
-              component="img"
-              src={photoUrl}
-              alt=""
-              crossOrigin="anonymous"
               sx={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                display: "block",
-              }}
-            />
-          ) : (
-            <Box
-              aria-hidden
-              sx={{
-                width: "100%",
-                height: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: PAPER_INK_MUTE,
-                fontFamily: fontFamilies.mono,
-                fontSize: 11,
-                letterSpacing: "0.18em",
+                width: 108,
+                height: 108,
+                borderRadius: "4px",
+                background: "#EFEAE0",
+                border: `1px solid ${PAPER_RULE}`,
+                overflow: "hidden",
+                position: "relative",
+                aspectRatio: "1 / 1",
               }}
             >
-              {item?.itemId ?? "—"}
+              {photoUrl ? (
+                <Box
+                  component="img"
+                  src={photoUrl}
+                  alt=""
+                  crossOrigin="anonymous"
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
+              ) : (
+                <Box
+                  aria-hidden
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: PAPER_INK_MUTE,
+                    fontFamily: fontFamilies.mono,
+                    fontSize: 11,
+                    letterSpacing: "0.18em",
+                  }}
+                >
+                  {single.itemId ?? "—"}
+                </Box>
+              )}
             </Box>
-          )}
-        </Box>
-        <Box sx={{ minWidth: 0 }}>
-          <Box
-            sx={{
-              fontFamily: fontFamilies.serif,
-              fontSize: 22,
-              fontWeight: 500,
-              letterSpacing: "-0.02em",
-              lineHeight: 1.15,
-              color: PAPER_INK,
-              marginBottom: "6px",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {item?.nombre ?? "Ítem sin nombre"}
-          </Box>
-          <Box
-            sx={{
-              fontSize: 12,
-              color: PAPER_INK_SOFT,
-              letterSpacing: "0.01em",
-            }}
-          >
-            {[item?.color, item?.calidad].filter(Boolean).join(" · ") || "—"}
-          </Box>
-        </Box>
-      </Box>
-
-      {/* Specs grid (2-col, 8 specs) */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          rowGap: "12px",
-          columnGap: "24px",
-          paddingTop: "16px",
-          paddingBottom: "16px",
-          borderTop: `1px solid ${PAPER_RULE_SOFT}`,
-          borderBottom: `1px solid ${PAPER_RULE_SOFT}`,
-        }}
-      >
-        <SpecRow label="Peso" value={item?.peso ?? "—"} />
-        <SpecRow label="Calidad" value={item?.calidad ?? "—"} />
-        <SpecRow label="Color" value={item?.color ?? "—"} />
-        <SpecRow label="Medidas" value={item?.medidas ?? "—"} />
-        <SpecRow
-          label="Comprador"
-          value={
-            privacyOn ? (
+            <Box sx={{ minWidth: 0 }}>
               <Box
-                component="span"
                 sx={{
-                  fontStyle: "italic",
-                  color: PAPER_INK_MUTE,
+                  fontFamily: fontFamilies.serif,
+                  fontSize: 22,
+                  fontWeight: 500,
+                  letterSpacing: "-0.02em",
+                  lineHeight: 1.15,
+                  color: PAPER_INK,
+                  marginBottom: "6px",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {single.nombre ?? "Ítem sin nombre"}
+              </Box>
+              <Box
+                sx={{
+                  fontSize: 12,
+                  color: PAPER_INK_SOFT,
                   letterSpacing: "0.01em",
                 }}
               >
-                — oculta en versión pública —
+                {[single.color, single.calidad].filter(Boolean).join(" · ") ||
+                  "—"}
               </Box>
-            ) : (
-              buyerLabel(buyer)
-            )
-          }
-        />
-        <SpecRow label="ID interno" value={item?.itemId ?? "—"} mono />
-        <SpecRow
-          label="Precio"
-          value={formatCop(sale.precioCop)}
-          mono
-          emphasis
-        />
-        <SpecRow
-          label="Forma de pago"
-          value={formatPago(sale.formaPago, sale.metodoContado)}
-        />
-      </Box>
+            </Box>
+          </Box>
+
+          {/* Specs grid (2-col, 8 specs) */}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              rowGap: "12px",
+              columnGap: "24px",
+              paddingTop: "16px",
+              paddingBottom: "16px",
+              borderTop: `1px solid ${PAPER_RULE_SOFT}`,
+              borderBottom: `1px solid ${PAPER_RULE_SOFT}`,
+            }}
+          >
+            <SpecRow label="Peso" value={single.peso ?? "—"} />
+            <SpecRow label="Calidad" value={single.calidad ?? "—"} />
+            <SpecRow label="Color" value={single.color ?? "—"} />
+            <SpecRow label="Medidas" value={single.medidas ?? "—"} />
+            <SpecRow label="Comprador" value={compradorValue} />
+            <SpecRow label="ID interno" value={single.itemId ?? "—"} mono />
+            <SpecRow
+              label="Precio"
+              value={formatCop(sale.precioCop)}
+              mono
+              emphasis
+            />
+            <SpecRow
+              label="Forma de pago"
+              value={formatPago(sale.formaPago, sale.metodoContado)}
+            />
+          </Box>
+        </>
+      ) : (
+        /* ── Multiple items: line-item list + meta + totals ──────────── */
+        <>
+          {/* (a) Line-item list */}
+          <Box
+            sx={{
+              paddingTop: "4px",
+              borderTop: `1px solid ${PAPER_RULE_SOFT}`,
+              marginBottom: "18px",
+            }}
+          >
+            {items.map((it, idx) => {
+              const thumb = it.thumbnailUrl ?? it.imageUrl;
+              const specs = [it.color, it.calidad, it.peso, it.medidas]
+                .filter(Boolean)
+                .join(" · ");
+              return (
+                <Box
+                  key={`${it.itemId}-${idx}`}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    paddingY: "10px",
+                    borderBottom: `1px solid ${PAPER_RULE_SOFT}`,
+                  }}
+                >
+                  {/* Thumbnail */}
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      flexShrink: 0,
+                      borderRadius: "3px",
+                      background: "#EFEAE0",
+                      border: `1px solid ${PAPER_RULE}`,
+                      overflow: "hidden",
+                      position: "relative",
+                      aspectRatio: "1 / 1",
+                    }}
+                  >
+                    {thumb ? (
+                      <Box
+                        component="img"
+                        src={thumb}
+                        alt=""
+                        crossOrigin="anonymous"
+                        sx={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          display: "block",
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        aria-hidden
+                        sx={{
+                          width: "100%",
+                          height: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: PAPER_INK_MUTE,
+                          fontFamily: fontFamilies.mono,
+                          fontSize: 8.5,
+                          letterSpacing: "0.1em",
+                          textAlign: "center",
+                          padding: "2px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {it.itemId ?? "—"}
+                      </Box>
+                    )}
+                  </Box>
+
+                  {/* Name + specs */}
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box
+                      sx={{
+                        fontFamily: fontFamilies.serif,
+                        fontSize: 14.5,
+                        fontWeight: 500,
+                        letterSpacing: "-0.01em",
+                        lineHeight: 1.25,
+                        color: PAPER_INK,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {it.nombre ?? "Ítem sin nombre"}
+                    </Box>
+                    <Box
+                      sx={{
+                        fontSize: 10.5,
+                        color: PAPER_INK_SOFT,
+                        letterSpacing: "0.01em",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        marginTop: "2px",
+                      }}
+                    >
+                      {specs || "—"}
+                    </Box>
+                  </Box>
+
+                  {/* Per-item price */}
+                  <Box
+                    sx={{
+                      flexShrink: 0,
+                      fontFamily: fontFamilies.mono,
+                      fontVariantNumeric: "tabular-nums",
+                      fontSize: 12.5,
+                      fontWeight: 500,
+                      letterSpacing: "-0.005em",
+                      color: PAPER_INK,
+                      textAlign: "right",
+                    }}
+                  >
+                    {formatCop(it.precioCop)}
+                  </Box>
+                </Box>
+              );
+            })}
+          </Box>
+
+          {/* (b) Meta: Comprador + Forma de pago */}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              columnGap: "24px",
+              rowGap: "12px",
+              paddingBottom: "16px",
+            }}
+          >
+            <SpecRow label="Comprador" value={compradorValue} />
+            <SpecRow
+              label="Forma de pago"
+              value={formatPago(sale.formaPago, sale.metodoContado)}
+            />
+          </Box>
+
+          {/* (c) Totals — "Resumen de montos" in the paper palette */}
+          <Box
+            sx={{
+              paddingTop: "14px",
+              paddingBottom: "4px",
+              borderTop: `1px solid ${PAPER_RULE_SOFT}`,
+              marginBottom: "6px",
+            }}
+          >
+            <Box
+              sx={{
+                fontSize: 8.5,
+                fontWeight: 500,
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                color: PAPER_INK_MUTE,
+                marginBottom: "10px",
+              }}
+            >
+              Resumen de montos
+            </Box>
+
+            {/* Subtotal */}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                marginBottom: descuento > 0 ? "6px" : "0",
+              }}
+            >
+              <Box sx={{ fontSize: 12, color: PAPER_INK_SOFT }}>Subtotal</Box>
+              <Box
+                sx={{
+                  fontFamily: fontFamilies.mono,
+                  fontVariantNumeric: "tabular-nums",
+                  fontSize: 12.5,
+                  fontWeight: 500,
+                  letterSpacing: "-0.005em",
+                  color: PAPER_INK,
+                }}
+              >
+                {formatCop(subtotal)}
+              </Box>
+            </Box>
+
+            {/* Descuento (only when positive) */}
+            {descuento > 0 && (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "baseline",
+                }}
+              >
+                <Box sx={{ fontSize: 12, color: PAPER_INK_SOFT }}>
+                  Descuento
+                </Box>
+                <Box
+                  sx={{
+                    fontFamily: fontFamilies.mono,
+                    fontVariantNumeric: "tabular-nums",
+                    fontSize: 12.5,
+                    fontWeight: 500,
+                    letterSpacing: "-0.005em",
+                    color: PAPER_INK_SOFT,
+                  }}
+                >
+                  −{formatCop(descuento)}
+                </Box>
+              </Box>
+            )}
+
+            {/* Divider */}
+            <Box
+              aria-hidden
+              sx={{
+                height: "1px",
+                background: PAPER_RULE,
+                marginTop: "12px",
+                marginBottom: "12px",
+              }}
+            />
+
+            {/* Total — emphasized */}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+              }}
+            >
+              <Box
+                sx={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: "0.16em",
+                  textTransform: "uppercase",
+                  color: accentDeep,
+                }}
+              >
+                Total
+              </Box>
+              <Box
+                sx={{
+                  fontFamily: fontFamilies.mono,
+                  fontVariantNumeric: "tabular-nums",
+                  fontSize: 19,
+                  fontWeight: 700,
+                  letterSpacing: "-0.01em",
+                  color: accentDeep,
+                }}
+              >
+                {formatCop(sale.precioCop)}
+              </Box>
+            </Box>
+          </Box>
+        </>
+      )}
 
       {/* Lineage footer (provider + lot) */}
       <Box
