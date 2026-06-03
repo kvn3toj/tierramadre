@@ -59,6 +59,21 @@ export function ventasSubPath(date: Date = new Date()): string {
 }
 
 /**
+ * Normalize a Google Drive URL to the in-browser PDF **viewer** form. The upload
+ * endpoint historically returned `drive.google.com/uc?export=view&id=ID` for sale
+ * documents, which a browser can't render as a PDF (it downloads or shows a
+ * "can't preview" page → the broken "Abrir Kardex" link). Rewriting to
+ * `file/d/ID/view` fixes documents already persisted with the old shape, with no
+ * re-upload. Only use for PDFs: image embeds still need `uc?export=view`.
+ * Already-viewer URLs and non-Drive URLs pass through untouched.
+ */
+export function driveDocViewUrl(url: string | undefined): string | undefined {
+  if (!url || !/drive\.google\.com\/uc\?/.test(url)) return url;
+  const idMatch = url.match(/[?&]id=([\w-]+)/);
+  return idMatch ? `https://drive.google.com/file/d/${idMatch[1]}/view` : url;
+}
+
+/**
  * Upload a sale document (carnet/kardex or certificate) to Drive and return its
  * URL. Shares the same `/api/media-upload` contract as the item-media helpers so
  * the sale-detail re-upload affordance (ISO-audit C6) and sale creation use one

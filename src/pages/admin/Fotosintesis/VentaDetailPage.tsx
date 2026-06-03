@@ -11,7 +11,11 @@ import {
   Upload,
 } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../design-system";
-import { uploadVentaDocument, ventasSubPath } from "./utils/uploadItemMedia";
+import {
+  uploadVentaDocument,
+  ventasSubPath,
+  driveDocViewUrl,
+} from "./utils/uploadItemMedia";
 import { exportCarnet } from "./exportCarnet";
 import { slugifyBuyerName } from "../../../utils/slugify";
 import { cancelToast } from "./utils/cancelToast";
@@ -903,7 +907,7 @@ function DocumentRow({
         {url ? (
           <Box
             component="a"
-            href={url}
+            href={driveDocViewUrl(url)}
             target="_blank"
             rel="noopener noreferrer"
             sx={{
