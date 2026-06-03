@@ -69,6 +69,7 @@ import {
 import { ManualItemForm } from "./components/ManualItemForm";
 import { resolveItemThumbnail } from "./utils/resolveThumbnail";
 import { useBatchThumbnails } from "../../../hooks/useBatchThumbnails";
+import { ventasSubPath } from "./utils/uploadItemMedia";
 import { exportCarnet } from "./exportCarnet";
 import { exportCertificado, isCertificadoApproved } from "./exportCertificado";
 import { slugifyBuyerName } from "../../../utils/slugify";
@@ -600,8 +601,8 @@ export default function FotosintesisVentaPage() {
       // PDF + email steps surface as toasts so the operator can retry
       // without losing the sale.
       const slug = slugifyBuyerName(selectedClient?.nombre ?? "cliente");
-      const now = new Date();
-      const subPath = `ventas/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}`;
+      // File the carnet under the month the sale was recorded.
+      const subPath = ventasSubPath(new Date(confirmedAt));
 
       const uploadPdf = async (
         blob: Blob,

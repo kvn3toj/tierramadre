@@ -1,10 +1,19 @@
-import { useCallback, useId, useMemo, useState } from "react";
+import { useCallback, useId, useMemo, useRef, useState } from "react";
 import { Box } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useNavigate, useParams } from "react-router-dom";
-import { AlertCircle, Ban, ExternalLink, Link2Off, Upload } from "lucide-react";
+import {
+  AlertCircle,
+  Ban,
+  ExternalLink,
+  Link2Off,
+  Sparkles,
+  Upload,
+} from "lucide-react";
 import { getFoto, fontFamilies } from "../../../design-system";
-import { uploadVentaDocument } from "./utils/uploadItemMedia";
+import { uploadVentaDocument, ventasSubPath } from "./utils/uploadItemMedia";
+import { exportCarnet } from "./exportCarnet";
+import { slugifyBuyerName } from "../../../utils/slugify";
 import { cancelToast } from "./utils/cancelToast";
 import { FOTO_PREVIEW_FELT } from "./VentaPage";
 import { FOTO_TOPBAR_HEIGHT } from "./components/FotoTopbar";
@@ -91,6 +100,10 @@ export default function VentaDetailPage() {
   const { thumbnails: batchThumbs } = useBatchThumbnails();
 
   const [showCancel, setShowCancel] = useState(false);
+  // Captures the right-pane Kardex comprobante so we can rasterize it → PDF and
+  // archive it to Drive on demand, without asking the operator for a file.
+  const kardexRef = useRef<HTMLDivElement>(null);
+  const [archivingKardex, setArchivingKardex] = useState(false);
 
   // The route param is the human "V-NNNN" id, but `sales.get` expects the
   // Convex `_id`. Look up by saleId via list+find — list is small and the
@@ -222,6 +235,51 @@ export default function VentaDetailPage() {
     },
     [sale, user, cancelSale, notify],
   );
+
+  // Generate the Kardex PDF from the on-screen comprobante and archive it to
+  // Drive — the one-click recovery for sales whose carnet was never uploaded
+  // (e.g. created before auto-upload shipped, or a create-time capture that
+  // raced image loading). No file picker: the preview IS the source of truth.
+  // `captureNodeToPdf` now waits for thumbnails to decode, so the PDF is never
+  // blank. The archive lands in the month of the sale (not "now") so an old
+  // sale's carnet files under `ventas/<saleYear>/<saleMonth>`.
+  const handleGenerateKardex = useCallback(async () => {
+    if (!sale || archivingKardex) return;
+    if (sale.estado === "cancelada") {
+      notify("No se genera Kardex para una venta cancelada", "warning");
+      return;
+    }
+    if (!kardexRef.current) {
+      notify("La vista previa del Kardex aún no está lista", "warning");
+      return;
+    }
+    if (kardexItems.length === 0) {
+      notify("No hay ítems en la venta para generar el Kardex", "warning");
+      return;
+    }
+    setArchivingKardex(true);
+    try {
+      const slug = slugifyBuyerName(buyer?.nombre ?? "cliente");
+      const filename = `${sale.saleId}-${slug}.pdf`;
+      const blob = await exportCarnet(kardexRef.current, filename, {
+        download: false,
+      });
+      const file = new File([blob], filename, { type: "application/pdf" });
+      const docUrl = await uploadVentaDocument(file, {
+        subPath: ventasSubPath(new Date(sale.fechaVenta)),
+      });
+      await setCarnetUrl({
+        id: sale._id as Id<"sales">,
+        carnetUrl: docUrl,
+      });
+      notify("Kardex generado y archivado en Drive", "success");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      notify(`No pudimos generar el Kardex: ${msg}`, "error");
+    } finally {
+      setArchivingKardex(false);
+    }
+  }, [sale, archivingKardex, kardexItems, buyer, setCarnetUrl, notify]);
 
   // ─── Loading / not-found ─────────────────────────────────────────────
   if (sale === undefined) {
@@ -467,6 +525,9 @@ export default function VentaDetailPage() {
                 uploadLabel="Subir Kardex"
                 disabled={isCancelled}
                 foto={foto}
+                onGenerate={handleGenerateKardex}
+                generating={archivingKardex}
+                generateLabel={sale.carnetUrl ? "Regenerar" : "Generar Kardex"}
                 onUpload={async (file) => {
                   try {
                     const docUrl = await uploadVentaDocument(file);
@@ -612,45 +673,47 @@ export default function VentaDetailPage() {
             Comprobante archivado
           </Box>
 
-          <KardexPreview
-            items={kardexItems}
-            subtotalCop={subtotal}
-            descuentoCop={
-              sale.descuentoCOP ??
-              Math.max(0, subtotal - sale.precioAcordadoCOP)
-            }
-            lot={
-              lot
-                ? {
-                    loteId: lot.loteId,
-                    fechaRecepcion: lot.fechaRecepcion,
-                  }
-                : null
-            }
-            provider={
-              provider
-                ? { nombreORazonSocial: provider.nombreORazonSocial }
-                : null
-            }
-            buyer={
-              buyer
-                ? {
-                    nombre: buyer.nombre,
-                    nit: buyer.nit ?? undefined,
-                    cedula: buyer.cedula ?? undefined,
-                    email: buyer.email ?? undefined,
-                    tipo: buyer.tipo,
-                  }
-                : null
-            }
-            sale={{
-              id: sale.saleId,
-              precioCop: sale.precioAcordadoCOP,
-              formaPago: sale.formaPago,
-              metodoContado: sale.metodoContado,
-            }}
-            privacyOn={false}
-          />
+          <Box ref={kardexRef}>
+            <KardexPreview
+              items={kardexItems}
+              subtotalCop={subtotal}
+              descuentoCop={
+                sale.descuentoCOP ??
+                Math.max(0, subtotal - sale.precioAcordadoCOP)
+              }
+              lot={
+                lot
+                  ? {
+                      loteId: lot.loteId,
+                      fechaRecepcion: lot.fechaRecepcion,
+                    }
+                  : null
+              }
+              provider={
+                provider
+                  ? { nombreORazonSocial: provider.nombreORazonSocial }
+                  : null
+              }
+              buyer={
+                buyer
+                  ? {
+                      nombre: buyer.nombre,
+                      nit: buyer.nit ?? undefined,
+                      cedula: buyer.cedula ?? undefined,
+                      email: buyer.email ?? undefined,
+                      tipo: buyer.tipo,
+                    }
+                  : null
+              }
+              sale={{
+                id: sale.saleId,
+                precioCop: sale.precioAcordadoCOP,
+                formaPago: sale.formaPago,
+                metodoContado: sale.metodoContado,
+              }}
+              privacyOn={false}
+            />
+          </Box>
 
           <Box
             sx={{
@@ -766,13 +829,26 @@ interface DocumentRowProps {
   foto: ReturnType<typeof getFoto>;
   /** Upload the picked file + persist its URL. Owns its own error toast. */
   onUpload: (file: File) => Promise<void>;
+  /**
+   * Optional one-click generate+archive action (Kardex only). When present, a
+   * primary "Generar"/"Regenerar" button renders before the file picker so the
+   * operator never has to scan/upload a PDF by hand — the on-screen comprobante
+   * is captured and archived to Drive directly.
+   */
+  onGenerate?: () => Promise<void>;
+  /** True while `onGenerate` is in flight (drives the "Generando…" label). */
+  generating?: boolean;
+  /** Label for the generate button (e.g. "Generar Kardex" / "Regenerar"). */
+  generateLabel?: string;
 }
 
 /**
  * A sale document row (Kardex / Certificado). When a URL exists it links out;
  * either way (unless the sale is cancelled) it exposes a file picker to upload
  * or replace the document — converting the old read-only "Pendiente" dead-end
- * into a one-step recovery. (ISO-audit C6.)
+ * into a one-step recovery. (ISO-audit C6.) The Kardex row additionally gets a
+ * primary one-click "Generar" action that rasterizes the live preview → PDF →
+ * Drive, so "Pendiente" self-heals without a manual file upload.
  */
 function DocumentRow({
   label,
@@ -782,6 +858,9 @@ function DocumentRow({
   disabled = false,
   foto,
   onUpload,
+  onGenerate,
+  generating = false,
+  generateLabel = "Generar",
 }: DocumentRowProps) {
   const inputId = useId();
   const [uploading, setUploading] = useState(false);
@@ -859,6 +938,41 @@ function DocumentRow({
             Pendiente
           </Box>
         )}
+        {onGenerate && !disabled ? (
+          <Box
+            component="button"
+            type="button"
+            onClick={() => {
+              if (!generating && !uploading) void onGenerate();
+            }}
+            disabled={generating || uploading}
+            aria-busy={generating}
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 12px",
+              borderRadius: "7px",
+              border: `1px solid ${foto.accent.primary}`,
+              background: foto.accent.primary,
+              color: "#FFFFFF",
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: "-0.005em",
+              fontFamily: "inherit",
+              cursor: generating ? "wait" : "pointer",
+              transition: "background 120ms ease, transform 120ms ease",
+              "&:hover:not(:disabled)": {
+                background: foto.accent.deep,
+                transform: "translateY(-1px)",
+              },
+              "&:disabled": { opacity: 0.7, cursor: "wait" },
+            }}
+          >
+            <Sparkles size={13} strokeWidth={1.8} aria-hidden />
+            {generating ? "Generando…" : generateLabel}
+          </Box>
+        ) : null}
         {!disabled ? (
           <Box
             component="label"
@@ -885,7 +999,13 @@ function DocumentRow({
             }}
           >
             <Upload size={13} strokeWidth={1.8} aria-hidden />
-            {uploading ? "Subiendo…" : url ? "Reemplazar" : uploadLabel}
+            {uploading
+              ? "Subiendo…"
+              : url
+                ? "Reemplazar"
+                : onGenerate
+                  ? "Subir archivo"
+                  : uploadLabel}
             <Box
               component="input"
               id={inputId}

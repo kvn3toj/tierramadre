@@ -6,6 +6,9 @@
  * it in one place avoids drift in scale/margins/dpi across the two outputs.
  *
  * Behaviour:
+ *  - Waits for every `<img>` inside the node to finish decoding first
+ *    (otherwise html2canvas rasterizes still-loading thumbnails as blank
+ *    pixels — the root cause of "empty" archived Kardex PDFs)
  *  - `html2canvas` at 2× scale on the supplied node
  *  - PNG embedded in a single-page jsPDF (Letter portrait, 48pt margins)
  *  - When `download === true`, triggers `pdf.save(filename)`
@@ -18,6 +21,41 @@ import html2canvas from "html2canvas";
 const PAGE_WIDTH_PT = 612; // 8.5in × 72
 const PAGE_HEIGHT_PT = 792; // 11in × 72
 const MARGIN_PT = 48; // 2/3in
+const IMAGE_LOAD_TIMEOUT_MS = 10000; // per-image cap so a 404 never hangs capture
+
+/**
+ * Resolve once every `<img>` under `node` is decoded (or has errored / timed
+ * out). html2canvas snapshots the DOM synchronously, so any thumbnail that is
+ * still in flight at capture time renders blank in the output. Mirrors the
+ * proven pattern in `utils/slidePdfGenerator.ts`: already-complete images
+ * resolve instantly; the rest race their `load`/`error` against a timeout so a
+ * single stalled Drive image can't block the whole PDF.
+ */
+async function waitForImages(node: HTMLElement): Promise<void> {
+  const images = Array.from(node.querySelectorAll("img"));
+  await Promise.all(
+    images.map((img) => {
+      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        const done = () => {
+          clearTimeout(timer);
+          resolve();
+        };
+        const timer = setTimeout(() => {
+          if (import.meta.env?.DEV) {
+            console.warn(
+              "[captureNodeToPdf] image load timeout:",
+              img.src?.slice(0, 80),
+            );
+          }
+          resolve();
+        }, IMAGE_LOAD_TIMEOUT_MS);
+        img.addEventListener("load", done, { once: true });
+        img.addEventListener("error", done, { once: true });
+      });
+    }),
+  );
+}
 
 export interface CapturePdfOptions {
   /** Filename used when `download` is true. */
@@ -35,6 +73,9 @@ export async function captureNodeToPdf(
   if (!domNode) {
     throw new Error("captureNodeToPdf: domNode is required");
   }
+
+  // Block until thumbnails/logo are decoded so they aren't captured blank.
+  await waitForImages(domNode);
 
   const canvas = await html2canvas(domNode, {
     backgroundColor,
