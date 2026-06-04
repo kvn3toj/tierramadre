@@ -3,7 +3,12 @@
  */
 
 export { LivingEmerald } from "./LivingEmerald";
-export type { LivingEmeraldSize } from "./LivingEmerald";
+export type { LivingEmeraldSize, LivingEmeraldPhase } from "./LivingEmerald";
+export { default as LayeredCssGem } from "./LayeredCssGem";
+export { default as StageChip } from "./StageChip";
+export { STAGE_META } from "./stages";
+export { useCountUp } from "./useCountUp";
+export { default as EsmereoThemeToggle } from "./EsmereoThemeToggle";
 export { OrganicRoots } from "./OrganicRoots";
 export { ProgressGardenRing } from "./ProgressGardenRing";
 export { StreakIndicator } from "./StreakIndicator";
