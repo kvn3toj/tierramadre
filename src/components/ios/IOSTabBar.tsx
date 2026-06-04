@@ -15,9 +15,10 @@ import { createPortal } from "react-dom";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Box, Typography } from "@mui/material";
 import { motion, LayoutGroup } from "framer-motion";
-import { Home, MoreHoriz, People } from "@mui/icons-material";
+import { Home, MoreHoriz } from "@mui/icons-material";
 import { FileText, PlusCircle, Package } from "lucide-react";
 import EmeraldCutIcon from "../icons/EmeraldCutIcon";
+import AmbassadorsGlobeIcon from "../icons/AmbassadorsGlobeIcon";
 import { useIsProvider } from "../../hooks/usePermissions";
 
 // Design tokens
@@ -58,7 +59,7 @@ const getPrimaryTabs = (t: any): TabConfig[] => [
   {
     id: "ambassadors",
     label: t.nav.ambassadors,
-    icon: People,
+    icon: AmbassadorsGlobeIcon as React.ElementType,
     route: "/ambassadors",
   },
   {

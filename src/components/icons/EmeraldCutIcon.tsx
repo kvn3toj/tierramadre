@@ -58,8 +58,6 @@ export default function EmeraldCutIcon({
     >
       {/* outer octagon */}
       <path d="M26 6 L74 6 L94 26 L94 50 L74 70 L26 70 L6 50 L6 26 Z" />
-      {/* step octagon */}
-      <path d="M28 12 L72 12 L88 28 L88 48 L72 64 L28 64 L12 48 L12 28 Z" />
       {/* table octagon */}
       <path d="M35 21 L65 21 L79 35 L79 41 L65 55 L35 55 L21 41 L21 35 Z" />
       {/* 8 corner facets */}
