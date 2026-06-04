@@ -42,7 +42,7 @@ export default function EsmereoSideNav() {
           style={{
             color: "var(--gold)",
             display: "inline-flex",
-            filter: "drop-shadow(0 0 10px rgba(217,169,75,0.4))",
+            filter: "drop-shadow(0 0 10px rgba(212,175,55,0.4))",
           }}
         >
           <EmeraldCutIcon size={30} strokeWidth={1.6} />

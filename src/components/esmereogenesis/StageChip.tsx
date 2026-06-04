@@ -25,8 +25,8 @@ export default function StageChip({
         gap: 8,
         padding: "6px 14px",
         borderRadius: 999,
-        background: "rgba(47,174,134,0.12)",
-        border: "1px solid rgba(47,174,134,0.32)",
+        background: "rgba(51,193,148,0.12)",
+        border: "1px solid rgba(51,193,148,0.32)",
         ...style,
       }}
     >

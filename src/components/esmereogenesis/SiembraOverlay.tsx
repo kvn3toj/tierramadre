@@ -49,7 +49,7 @@ export default function SiembraOverlay({
               width: 160,
               height: 160,
               borderRadius: "50%",
-              border: "1px solid rgba(47,174,134,0.5)",
+              border: "1px solid rgba(51,193,148,0.5)",
               animation: `ecloRing 2.4s ease-out ${d}s infinite`,
             }}
           />

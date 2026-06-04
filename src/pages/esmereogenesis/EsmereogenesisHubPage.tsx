@@ -96,7 +96,7 @@ const EsmereogenesisHubPage = () => {
       <IconButton
         onClick={(e) => setMenuAnchor(e.currentTarget)}
         aria-label="Ajustes de Esmereogénesis"
-        sx={{ width: 38, height: 38, color: "var(--ink-soft)" }}
+        sx={{ width: 44, height: 44, color: "var(--ink-soft)" }}
       >
         <Settings size={19} strokeWidth={1.6} />
       </IconButton>
@@ -317,7 +317,8 @@ const EsmereogenesisHubPage = () => {
               fontSize: 72,
               lineHeight: 0.84,
               color: "var(--ink)",
-              textShadow: "0 6px 38px rgba(11,92,70,0.6)",
+              textShadow:
+                mode === "dark" ? "0 6px 38px rgba(0,140,97,0.6)" : "none",
             }}
           >
             {Math.round(fProgress * 100)}

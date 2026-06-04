@@ -41,8 +41,8 @@ export default function EsmereoThemeToggle({ size = 19 }: { size?: number }) {
       onClick={handleToggle}
       aria-label={label}
       sx={{
-        width: 38,
-        height: 38,
+        width: 44,
+        height: 44,
         color: "var(--gold)",
         "&:hover": { background: "var(--surface)" },
       }}

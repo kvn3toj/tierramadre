@@ -10,9 +10,9 @@
 // Gem palette (literal hex so the gem looks identical with or without a
 // .bov-root ancestor). Matches the prototype's PAL.
 const PAL = {
-  bright: "#46C79C",
-  mid: "#0E7C5A",
-  deep: "#073d2d",
+  bright: "#33C194",
+  mid: "#00AE7A",
+  deep: "#006A48",
   spark: "#EAFBF3",
 };
 
@@ -44,8 +44,8 @@ export default function LayeredCssGem({
         background: `
           radial-gradient(circle at 50% 120%, rgba(0,0,0,0.55), transparent 52%),
           radial-gradient(circle at 50% 46%, ${PAL.bright} 0%, ${PAL.mid} 42%, ${PAL.deep} 76%, #03201a 100%)`,
-        boxShadow: `inset 0 -14px 30px rgba(0,0,0,0.5), inset 0 10px 22px rgba(255,255,255,0.18), inset 0 0 0 1px rgba(0,0,0,0.22), 0 18px 50px -10px rgba(11,92,70,${0.4 + v * 0.5})`,
-        border: "1px solid var(--accent-line, rgba(217,169,75,0.32))",
+        boxShadow: `inset 0 -14px 30px rgba(0,0,0,0.5), inset 0 10px 22px rgba(255,255,255,0.18), inset 0 0 0 1px rgba(0,0,0,0.22), 0 18px 50px -10px rgba(0,140,97,${0.4 + v * 0.5})`,
+        border: "1px solid var(--accent-line, rgba(212,175,55,0.32))",
         overflow: "hidden",
       }}
     >
