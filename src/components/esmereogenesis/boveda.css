@@ -235,6 +235,13 @@
 .bov-root .tap:active {
   transform: scale(0.94);
 }
+/* Keyboard focus affordance for every Bóveda .tap control (WCAG 2.4.7) —
+   reads in both dark and cool-platinum-light themes. */
+.bov-root .tap:focus-visible {
+  outline: 2px solid var(--em-bright);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
 
 /* ── desktop: left side-nav rail + shifted content (Phase 7) ── */
 .bov-sidenav {

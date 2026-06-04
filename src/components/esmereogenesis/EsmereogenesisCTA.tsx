@@ -105,9 +105,13 @@ export const EsmereogenesisCTA = ({
 
   const months = 6;
   const perWeek = calcWeeklySuggested(product.precioCOP, months);
-  const activeProgress = activePlan
-    ? activePlan.totalAbonadoCOP / activePlan.targetCOP
-    : 0.5;
+  const activeProgress =
+    activePlan && activePlan.targetCOP > 0
+      ? Math.min(
+          1,
+          Math.max(0, activePlan.totalAbonadoCOP / activePlan.targetCOP),
+        )
+      : 0.5;
 
   const handleOpen = () => {
     if (activePlan) {
@@ -375,6 +379,7 @@ export const EsmereogenesisCTA = ({
         open={creationOpen}
         onClose={() => setCreationOpen(false)}
         product={product}
+        theme={mode}
       />
     </div>
   );

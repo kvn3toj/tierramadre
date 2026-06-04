@@ -104,10 +104,9 @@ const EsmereogenesisGardenPage = () => {
   // Sync the picked amount with the suggested rhythm whenever the plan changes.
   useEffect(() => {
     if (!plan) return;
-    const remainingNow = plan.targetCOP - plan.totalAbonadoCOP;
-    setAporteAmount(
-      Math.min(plan.weeklySuggestedCOP, Math.max(10_000, remainingNow)),
-    );
+    const remainingNow = Math.max(0, plan.targetCOP - plan.totalAbonadoCOP);
+    // Never default above what's left (a < 10k remainder must not snap to 10k).
+    setAporteAmount(Math.min(plan.weeklySuggestedCOP, remainingNow));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     plan?.id,

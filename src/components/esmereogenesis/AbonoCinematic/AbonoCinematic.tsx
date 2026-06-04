@@ -233,7 +233,7 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
           ? "bloom"
           : phase === "progress"
             ? "count"
-            : phase === "confirm"
+            : phase === "confirm" || phase === "eclosion"
               ? "celebrate"
               : "idle";
 
@@ -244,12 +244,22 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
           component={motion.div}
           className="bov-root bov-screen"
           role="dialog"
-          aria-label="Animación de aporte en curso. Toca para saltar."
+          aria-modal="true"
+          aria-label="Animación de aporte en curso. Toca o presiona Escape para saltar."
+          tabIndex={-1}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
           onClick={handleSkip}
+          onKeyDown={(e) => {
+            // Escape skips the ritual; during the held Eclosión it's a no-op
+            // (the ceremony has explicit Reclamar / Seguir buttons).
+            if (e.key === "Escape" && !showEclosion) {
+              e.preventDefault();
+              handleSkip();
+            }
+          }}
           // Inline position beats the imported `.bov-root { position: relative }`
           // (equal-specificity classes — CSS source order would otherwise win),
           // so the takeover always covers the screen.

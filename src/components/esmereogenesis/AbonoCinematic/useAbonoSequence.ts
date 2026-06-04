@@ -147,7 +147,7 @@ export function useAbonoSequence({
       const climaxDuration = isCompletion ? d.eclosion : d.confirm;
       schedule(cursor, () => setPhase(climaxPhase));
       cursor += climaxDuration;
-      if (hold) return; // hold on the eclosión ceremony — no auto-finish
+      if (hold) return clearTimers; // hold on the eclosión ceremony — no auto-finish
       schedule(cursor, () => setPhase("release"));
       cursor += d.release;
       schedule(cursor, fireCompleteOnce);

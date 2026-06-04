@@ -32,12 +32,15 @@ interface EsmereoCreationSheetProps {
   open: boolean;
   onClose: () => void;
   product: TreasureItem;
+  /** Feature theme so the sheet + siembra overlay match where it was opened from. */
+  theme?: "light" | "dark";
 }
 
 export const EsmereoCreationSheet = ({
   open,
   onClose,
   product,
+  theme = "dark",
 }: EsmereoCreationSheetProps) => {
   const navigate = useNavigate();
   const { createPlan } = useEsmereogenesis();
@@ -82,12 +85,13 @@ export const EsmereoCreationSheet = ({
 
   return (
     <>
-      {seedingName && <SiembraOverlay name={seedingName} />}
+      {seedingName && <SiembraOverlay name={seedingName} theme={theme} />}
       <BottomSheetShell
         open={open}
         onClose={onClose}
         ariaLabelledBy="esmereo-create-title"
         boveda
+        bovedaTheme={theme}
       >
         {/* gem preview + heading */}
         <div

@@ -27,6 +27,7 @@ import { emeraldCore, goldAccent } from "../../design-system/tokens/colors";
 import { emeraldGradients } from "../../design-system/tokens/gradients";
 import { whiteAlpha } from "../../design-system/utils/colorUtils";
 import { BottomSheetShell } from "./BottomSheetShell";
+import { useEsmereoTheme } from "../../contexts/EsmereoThemeContext";
 
 interface ClaimSheetProps {
   open: boolean;
@@ -41,6 +42,7 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({
 }) => {
   const { claimPlan } = useEsmereogenesis();
   const { track } = useTrackingDispatch();
+  const { mode } = useEsmereoTheme();
   const [phone, setPhone] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -99,6 +101,7 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({
       onClose={handleClose}
       ariaLabelledBy="esmereo-claim-title"
       boveda
+      bovedaTheme={mode}
     >
       <AnimatePresence mode="wait">
         {!confirmed ? (
