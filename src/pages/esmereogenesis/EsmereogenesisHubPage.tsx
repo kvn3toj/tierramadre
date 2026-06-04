@@ -24,6 +24,7 @@ import {
   Trash2,
   Vibrate,
   Plus,
+  HelpCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEsmereogenesis } from "../../contexts/EsmereogenesisContext";
@@ -33,6 +34,7 @@ import { useCurrencyFormat } from "../../contexts/CurrencyContext";
 import { useEsmereoTheme } from "../../contexts/EsmereoThemeContext";
 import { EsmereoEmptyState } from "../../components/esmereogenesis/EsmereoEmptyState";
 import { EsmereoPlanCard } from "../../components/esmereogenesis/EsmereoPlanCard";
+import EsmereoExplainerSheet from "../../components/esmereogenesis/EsmereoExplainerSheet";
 import { LivingEmerald } from "../../components/esmereogenesis/LivingEmerald";
 import StageChip from "../../components/esmereogenesis/StageChip";
 import EsmereoThemeToggle from "../../components/esmereogenesis/EsmereoThemeToggle";
@@ -69,6 +71,7 @@ const EsmereogenesisHubPage = () => {
 
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [explainerOpen, setExplainerOpen] = useState(false);
 
   const confirmReset = () => {
     setResetConfirmOpen(false);
@@ -93,7 +96,7 @@ const EsmereogenesisHubPage = () => {
       <IconButton
         onClick={(e) => setMenuAnchor(e.currentTarget)}
         aria-label="Ajustes de Esmereogénesis"
-        sx={{ width: 38, height: 38, color: "var(--ink-soft)" }}
+        sx={{ width: 44, height: 44, color: "var(--ink-soft)" }}
       >
         <Settings size={19} strokeWidth={1.6} />
       </IconButton>
@@ -131,6 +134,16 @@ const EsmereogenesisHubPage = () => {
           </Box>
           <Switch checked={hapticEnabled} size="small" />
         </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setMenuAnchor(null);
+            setExplainerOpen(true);
+          }}
+          sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+        >
+          <HelpCircle size={18} />
+          <Typography variant="body2">¿Qué es Esmereogénesis?</Typography>
+        </MenuItem>
         {hasPlans && (
           <MenuItem
             onClick={() => {
@@ -149,6 +162,12 @@ const EsmereogenesisHubPage = () => {
           </MenuItem>
         )}
       </Menu>
+      <EsmereoExplainerSheet
+        open={explainerOpen}
+        onClose={() => setExplainerOpen(false)}
+        onStart={() => setExplainerOpen(false)}
+        theme={mode}
+      />
     </>
   );
 
@@ -298,7 +317,8 @@ const EsmereogenesisHubPage = () => {
               fontSize: 72,
               lineHeight: 0.84,
               color: "var(--ink)",
-              textShadow: "0 6px 38px rgba(11,92,70,0.6)",
+              textShadow:
+                mode === "dark" ? "0 6px 38px rgba(0,140,97,0.6)" : "none",
             }}
           >
             {Math.round(fProgress * 100)}

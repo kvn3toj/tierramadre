@@ -53,7 +53,7 @@ export function StreakFlame({
         padding: "7px 15px",
         borderRadius: 999,
         background: "var(--accent-bg)",
-        border: `1px solid rgba(217,169,75,${0.28 + grow * 0.2})`,
+        border: `1px solid rgba(212,175,55,${0.28 + grow * 0.2})`,
         boxShadow: milestone
           ? "0 0 22px -4px var(--gold)"
           : `0 0 ${10 + grow * 16}px -6px var(--gold)`,
@@ -110,7 +110,7 @@ export function WaterButton({
 }) {
   return (
     <button
-      className="tap"
+      className="tap bov-water"
       onClick={onClick}
       disabled={busy || disabled}
       style={{
@@ -118,6 +118,8 @@ export function WaterButton({
         borderRadius: 999,
         padding: sub ? "13px" : "17px",
         opacity: busy || disabled ? 0.7 : 1,
+        transition:
+          "transform 0.12s cubic-bezier(0.34,1.56,0.64,1), filter 0.18s ease",
         background:
           "linear-gradient(180deg, var(--em-bright), var(--em) 50%, var(--em-deep))",
         boxShadow: glow
@@ -217,16 +219,17 @@ export function AmountChips({
         return (
           <button
             key={i}
-            className="tap"
+            className="tap bov-chip"
             onClick={() => onPick(o.v)}
             style={{
               flex: 1,
               minWidth: 0,
+              minHeight: 44,
               padding: "9px 4px",
               borderRadius: 13,
               textAlign: "center",
               background: on
-                ? "linear-gradient(180deg, rgba(47,174,134,0.3), rgba(11,92,70,0.18))"
+                ? "linear-gradient(180deg, rgba(51,193,148,0.3), rgba(0,140,97,0.18))"
                 : "var(--surface)",
               border: `1px solid ${on ? "var(--accent-line-strong)" : "var(--line)"}`,
               transition: "all .2s",
@@ -299,8 +302,8 @@ export function TopBar({
           onClick={onBack}
           aria-label={backLabel}
           style={{
-            width: 38,
-            height: 38,
+            width: 44,
+            height: 44,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -310,7 +313,7 @@ export function TopBar({
           <ChevronLeft size={22} strokeWidth={1.7} />
         </button>
       ) : (
-        <span style={{ width: 38, height: 38 }} />
+        <span style={{ width: 44, height: 44 }} />
       )}
       <div style={{ textAlign: "center" }}>
         {sub && (
@@ -332,8 +335,8 @@ export function TopBar({
       </div>
       <div
         style={{
-          minWidth: 38,
-          height: 38,
+          minWidth: 44,
+          height: 44,
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-end",
@@ -358,8 +361,8 @@ export function CloseX({ onClose }: { onClose: () => void }) {
         top: 14,
         right: 16,
         zIndex: 6,
-        width: 30,
-        height: 30,
+        width: 44,
+        height: 44,
         borderRadius: "50%",
         background: "var(--surface-2)",
         border: "1px solid var(--hairline)",

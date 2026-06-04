@@ -175,7 +175,7 @@ export const EsmereoCreationSheet = ({
                     borderRadius: 14,
                     textAlign: "center",
                     background: on
-                      ? "linear-gradient(180deg, rgba(47,174,134,0.32), rgba(11,92,70,0.2))"
+                      ? "linear-gradient(180deg, rgba(51,193,148,0.32), rgba(0,140,97,0.2))"
                       : "var(--surface)",
                     border: `1px solid ${on ? "var(--accent-line-strong)" : "var(--line)"}`,
                     transition: "all .2s",

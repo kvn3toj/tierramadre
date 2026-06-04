@@ -28,7 +28,11 @@ export function stageForProgress(
   state?: EsmereoState,
 ): EsmereoStage {
   if (state === "completed" || state === "claimed") return "eclosion";
-  const pct = Math.max(0, Math.min(1, progress)) * 100;
+  // Non-finite progress (NaN from a 0/0 division, ±Infinity) must NOT fall
+  // through to "eclosion" — a garbage value should read as dormant, never as
+  // claim-ready. Math.max/min propagate NaN, so guard before clamping.
+  const safe = Number.isFinite(progress) ? progress : 0;
+  const pct = Math.max(0, Math.min(1, safe)) * 100;
   if (pct <= 0) return "semilla";
   if (pct < 25) return "brote";
   if (pct < 70) return "creciendo";
@@ -318,7 +322,7 @@ export function seedDemoPlans(items: TreasureItem[]): EsmereoPlan[] {
  * Real implementation would POST to a backend endpoint.
  */
 export async function simulateAbonoBackend(
-  delayMs = 800,
+  delayMs = 300,
   shouldFail = false,
 ): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, delayMs));

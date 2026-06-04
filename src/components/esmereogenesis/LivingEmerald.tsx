@@ -69,9 +69,9 @@ const SIZE_PX: Record<LivingEmeraldSize, number> = {
 };
 
 const PAL = {
-  bright: "#46C79C",
-  mid: "#0E7C5A",
-  deep: "#0B5C46",
+  bright: "#33C194",
+  mid: "#00AE7A",
+  deep: "#008C61",
   spark: "#EAFBF3",
 };
 
@@ -110,9 +110,9 @@ function Ring({
     >
       <defs>
         <linearGradient id={`br-${uid}`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#0E7C5A" />
-          <stop offset="62%" stopColor="#2FAE86" />
-          <stop offset="100%" stopColor="#D9A94B" />
+          <stop offset="0%" stopColor="#00AE7A" />
+          <stop offset="62%" stopColor="#33C194" />
+          <stop offset="100%" stopColor="#D4AF37" />
         </linearGradient>
         <filter id={`bg-${uid}`} x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur stdDeviation={stroke * 0.7} result="b" />
@@ -214,9 +214,9 @@ function Roots({ size, vitality }: { size: number; vitality: number }) {
     >
       <defs>
         <linearGradient id="bov-rootg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#2FAE86" stopOpacity="0.7" />
-          <stop offset="55%" stopColor="#0E7C5A" stopOpacity="0.42" />
-          <stop offset="100%" stopColor="#0B5C46" stopOpacity="0" />
+          <stop offset="0%" stopColor="#33C194" stopOpacity="0.7" />
+          <stop offset="55%" stopColor="#00AE7A" stopOpacity="0.42" />
+          <stop offset="100%" stopColor="#008C61" stopOpacity="0" />
         </linearGradient>
       </defs>
       {roots.map((r) => (
@@ -234,7 +234,7 @@ function Roots({ size, vitality }: { size: number; vitality: number }) {
             cy={r.tipY}
             rx={3.4}
             ry={5}
-            fill="#2FAE86"
+            fill="#33C194"
             opacity="0.5"
             transform={`rotate(${r.tipX < cx ? -28 : 28} ${r.tipX} ${r.tipY})`}
             style={{ transition: "all .8s" }}
@@ -387,7 +387,7 @@ export const LivingEmerald = ({
             height: px * 1.9,
             transformOrigin: "top center",
             background:
-              "linear-gradient(180deg, rgba(47,174,134,0.28), rgba(14,124,90,0.10) 44%, transparent 78%)",
+              "linear-gradient(180deg, rgba(51,193,148,0.28), rgba(0,174,122,0.10) 44%, transparent 78%)",
             clipPath: "polygon(36% 0, 64% 0, 90% 100%, 10% 100%)",
             filter: "blur(13px)",
             animation: reducedMotion
@@ -516,7 +516,7 @@ export const LivingEmerald = ({
                     position: "relative",
                     width: gemBox,
                     height: gemBox,
-                    filter: `drop-shadow(0 ${px * 0.02}px ${px * 0.06}px rgba(7,61,45,0.4)) drop-shadow(0 0 ${px * 0.1 + recentBoost * 28}px rgba(47,174,134,${0.25 + recentBoost * 0.4}))`,
+                    filter: `drop-shadow(0 ${px * 0.02}px ${px * 0.06}px rgba(0,106,72,0.4)) drop-shadow(0 0 ${px * 0.1 + recentBoost * 28}px rgba(51,193,148,${0.25 + recentBoost * 0.4}))`,
                   }}
                 >
                   <img
@@ -560,7 +560,7 @@ export const LivingEmerald = ({
                     overflow: "hidden",
                     position: "relative",
                     background: `radial-gradient(circle at 50% 46%, ${PAL.bright} 0%, ${PAL.mid} 42%, ${PAL.deep} 76%, #03201a 100%)`,
-                    boxShadow: `0 ${px * 0.05}px ${px * 0.18}px rgba(7,61,45,${0.35 + recentBoost * 0.2}), 0 0 ${px * 0.12 + recentBoost * 30}px rgba(47,174,134,${0.3 + recentBoost * 0.4})`,
+                    boxShadow: `0 ${px * 0.05}px ${px * 0.18}px rgba(0,106,72,${0.35 + recentBoost * 0.2}), 0 0 ${px * 0.12 + recentBoost * 30}px rgba(51,193,148,${0.3 + recentBoost * 0.4})`,
                     transition: "box-shadow .6s ease-out",
                   }}
                 >
@@ -618,7 +618,7 @@ export const LivingEmerald = ({
                     height: gemBox * 1.1,
                     borderRadius: "50%",
                     background:
-                      "radial-gradient(circle, rgba(47,174,134,0.5), transparent 65%)",
+                      "radial-gradient(circle, rgba(51,193,148,0.5), transparent 65%)",
                     animation: "bovSurge .7s ease-out forwards",
                     pointerEvents: "none",
                   }}
@@ -724,7 +724,7 @@ export const LivingEmerald = ({
           bottom: 0,
           height: 120,
           background:
-            "radial-gradient(120% 80% at 50% 100%, rgba(47,174,134,0.22), transparent 70%)",
+            "radial-gradient(120% 80% at 50% 100%, rgba(51,193,148,0.22), transparent 70%)",
           filter: "blur(12px)",
           animation: reducedMotion
             ? "none"

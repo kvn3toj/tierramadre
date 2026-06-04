@@ -9,8 +9,8 @@
  * Theme = `data-theme="dark|light"` on the `.bov-root` wrapper, toggled by the
  * feature-local EsmereoThemeContext. Dark is the default; light is a cool
  * brushed-platinum showroom (never warm cream). Note the Bóveda emerald greens
- * (#0E7C5A / #2FAE86 / #0B5C46) are intentionally deeper/distinct from the
- * app-wide emeraldCore (#00AE7A) — a new palette, not a remap.
+ * Palette now aligned with app-wide emeraldCore (#00AE7A / #33C194 / #008C61)
+ * and goldAccent (#D4AF37 / #E5C866) for visual consistency across the app.
  */
 
 /* Hanken Grotesk scoped to the feature; .serif = Playfair Display (already loaded). */
@@ -27,22 +27,22 @@
   --ink: #f2f7f4;
   --ink-soft: rgba(228, 240, 234, 0.62);
   --ink-faint: rgba(228, 240, 234, 0.34);
-  --em: #0e7c5a;
-  --em-deep: #0b5c46;
-  --em-bright: #2fae86;
-  --gold: #d9a94b;
-  --gold-bright: #f0ce86;
-  --accent-bg: rgba(217, 169, 75, 0.1);
-  --accent-bg-soft: rgba(217, 169, 75, 0.07);
-  --accent-line: rgba(217, 169, 75, 0.32);
-  --accent-line-strong: rgba(217, 169, 75, 0.5);
-  --claim-bg: linear-gradient(180deg, #f0ce86, #d9a94b);
+  --em: #00ae7a;
+  --em-deep: #008c61;
+  --em-bright: #33c194;
+  --gold: #d4af37;
+  --gold-bright: #e5c866;
+  --accent-bg: rgba(212, 175, 55, 0.1);
+  --accent-bg-soft: rgba(212, 175, 55, 0.07);
+  --accent-line: rgba(212, 175, 55, 0.32);
+  --accent-line-strong: rgba(212, 175, 55, 0.5);
+  --claim-bg: linear-gradient(180deg, #e5c866, #d4af37);
   --claim-ink: #3a2c08;
-  --btn-sub: #f0ce86;
+  --btn-sub: #e5c866;
   --sheet-shadow: 0 -24px 60px rgba(0, 0, 0, 0.6);
-  --cta-border: rgba(217, 169, 75, 0.42);
+  --cta-border: rgba(212, 175, 55, 0.42);
   --cta-glow:
-    0 0 40px -12px rgba(47, 174, 134, 0.7),
+    0 0 40px -12px rgba(51, 193, 148, 0.7),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   --surface: rgba(255, 255, 255, 0.05);
   --surface-2: rgba(255, 255, 255, 0.07);
@@ -61,12 +61,12 @@
   --app-bg:
     radial-gradient(
       90% 55% at 50% 16%,
-      rgba(14, 124, 90, 0.3),
+      rgba(0, 174, 122, 0.3),
       transparent 56%
     ),
     radial-gradient(
       120% 60% at 50% 110%,
-      rgba(11, 92, 70, 0.26),
+      rgba(0, 140, 97, 0.26),
       transparent 58%
     ),
     radial-gradient(150% 110% at 50% 42%, #0a1712 0%, #061009 46%, #020605 100%);
@@ -94,18 +94,18 @@
   --ink: #15302a;
   --ink-soft: #35484a;
   --ink-faint: #586a6c;
-  --em: #0b5c46;
-  --em-deep: #08402f;
-  --em-bright: #0e7c5a;
-  --gold: #5e6e66;
-  --gold-bright: #46615a;
-  --accent-bg: rgba(150, 168, 170, 0.2);
-  --accent-bg-soft: rgba(150, 168, 170, 0.12);
-  --accent-line: rgba(120, 140, 142, 0.42);
-  --accent-line-strong: rgba(96, 118, 118, 0.58);
-  --claim-bg: linear-gradient(180deg, #d8dcd3, #b2b9ac);
-  --claim-ink: #28332d;
-  --btn-sub: #d6e4dd;
+  --em: #008c61;
+  --em-deep: #006a48;
+  --em-bright: #00ae7a;
+  --gold: #8b6914;
+  --gold-bright: #b8941f;
+  --accent-bg: rgba(212, 175, 55, 0.12);
+  --accent-bg-soft: rgba(212, 175, 55, 0.08);
+  --accent-line: rgba(139, 105, 20, 0.35);
+  --accent-line-strong: rgba(139, 105, 20, 0.55);
+  --claim-bg: linear-gradient(180deg, #e5c866, #d4af37);
+  --claim-ink: #3a2c08;
+  --btn-sub: #b8941f;
   --surface: #e8edef;
   --surface-2: #dee6e8;
   --hairline: #d2dbde;
@@ -113,13 +113,13 @@
   --scrim: rgba(44, 58, 60, 0.34);
   --sheet-bg: linear-gradient(180deg, #ffffff, #eaeff1 72%);
   --sheet-shadow: 0 -18px 48px rgba(54, 74, 80, 0.2);
-  --cta-border: rgba(11, 92, 70, 0.4);
+  --cta-border: rgba(0, 140, 97, 0.4);
   --cta-glow:
-    0 12px 30px -14px rgba(40, 78, 72, 0.42),
-    0 0 30px -10px rgba(14, 124, 90, 0.3);
+    0 12px 30px -14px rgba(0, 140, 97, 0.42),
+    0 0 30px -10px rgba(0, 174, 122, 0.3);
   --dock-fade: rgba(246, 248, 249, 0.88);
   --statusbar: #18302a;
-  --spark: #0e7c5a;
+  --spark: #008c61;
   --veil: radial-gradient(
     90% 60% at 50% 42%,
     rgba(249, 251, 252, 0.97),
@@ -128,12 +128,12 @@
   --app-bg:
     radial-gradient(
       90% 55% at 50% 12%,
-      rgba(14, 124, 90, 0.08),
+      rgba(0, 174, 122, 0.09),
       transparent 56%
     ),
     radial-gradient(
       120% 60% at 50% 112%,
-      rgba(120, 140, 150, 0.1),
+      rgba(0, 140, 97, 0.06),
       transparent 58%
     ),
     linear-gradient(180deg, #fafcfc 0%, #f2f5f7 55%, #ecf1f3 100%);
@@ -168,7 +168,7 @@
   z-index: 0;
   background: radial-gradient(
     circle at 50% 44%,
-    rgba(14, 124, 90, 0.13),
+    rgba(0, 174, 122, 0.14),
     rgba(108, 138, 138, 0.07) 40%,
     transparent 66%
   );
@@ -184,7 +184,7 @@
   border-radius: 50%;
   background: radial-gradient(
     closest-side,
-    rgba(26, 52, 46, 0.22),
+    rgba(0, 106, 72, 0.22),
     transparent 76%
   );
   filter: blur(4px);
@@ -200,7 +200,7 @@
   border-radius: 50%;
   background: radial-gradient(
     closest-side,
-    rgba(14, 124, 90, 0.2),
+    rgba(0, 174, 122, 0.2),
     transparent 72%
   );
   filter: blur(7px);
@@ -209,7 +209,7 @@
 .bov-root[data-theme="light"] .le-beam {
   background: linear-gradient(
     180deg,
-    rgba(14, 124, 90, 0.17),
+    rgba(0, 174, 122, 0.17),
     rgba(118, 148, 148, 0.06) 46%,
     transparent 78%
   ) !important;
@@ -230,10 +230,30 @@
 }
 .bov-root .tap {
   -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
   transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.bov-root .tap:disabled {
+  cursor: default;
 }
 .bov-root .tap:active {
   transform: scale(0.94);
+}
+
+/* Hover affordance — pointer devices only (not touch, not reduced-motion) */
+@media (hover: hover) and (pointer: fine) {
+  /* Primary CTA (WaterButton) — brightness lift */
+  .bov-root .bov-water:hover:not(:disabled) {
+    filter: brightness(1.08) saturate(1.1);
+  }
+  /* Amount/rhythm chips — surface lift */
+  .bov-root .bov-chip:hover:not(:disabled) {
+    background: var(--surface-2) !important;
+  }
+  /* Plan overview cards — accent border glow */
+  .bov-root .bov-card:hover:not(:disabled) {
+    border-color: var(--accent-line) !important;
+  }
 }
 /* Keyboard focus affordance for every Bóveda .tap control (WCAG 2.4.7) —
    reads in both dark and cool-platinum-light themes. */

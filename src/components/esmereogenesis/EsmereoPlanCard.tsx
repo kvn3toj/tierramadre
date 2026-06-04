@@ -29,7 +29,7 @@ export const EsmereoPlanCard = ({ plan }: EsmereoPlanCardProps) => {
 
   return (
     <button
-      className="tap"
+      className="tap bov-card"
       type="button"
       onClick={() => navigate(`/esmereogenesis/${plan.id}`)}
       aria-label={`Abrir jardín de ${displayName}${plan.nickname ? ` (${productName})` : ""} · ${progressPct}% regada`}
@@ -47,6 +47,7 @@ export const EsmereoPlanCard = ({ plan }: EsmereoPlanCardProps) => {
         gap: 6,
         overflow: "hidden",
         color: "var(--ink)",
+        transition: "border-color 0.2s ease",
       }}
     >
       <LivingEmerald

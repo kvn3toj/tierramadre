@@ -260,7 +260,10 @@ const EsmereogenesisGardenPage = () => {
         <TopBar
           title="Jardín"
           sub="Esmereogénesis"
-          onBack={() => navigate("/esmereogenesis")}
+          onBack={() => {
+            if ((window.history.state?.idx ?? 0) > 0) navigate(-1);
+            else navigate("/esmereogenesis", { replace: true });
+          }}
           backLabel="Volver al jardín"
           right={
             <div style={{ display: "flex", alignItems: "center" }}>
@@ -270,8 +273,8 @@ const EsmereogenesisGardenPage = () => {
                 onClick={() => setDeleteConfirmOpen(true)}
                 aria-label="Eliminar plan"
                 style={{
-                  width: 38,
-                  height: 38,
+                  width: 44,
+                  height: 44,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -344,7 +347,8 @@ const EsmereogenesisGardenPage = () => {
               lineHeight: 0.86,
               marginTop: 6,
               color: "var(--ink)",
-              textShadow: "0 6px 34px rgba(11,92,70,0.6)",
+              textShadow:
+                mode === "dark" ? "0 6px 34px rgba(0,140,97,0.6)" : "none",
             }}
           >
             {Math.round(dispPct * 100)}
@@ -464,7 +468,7 @@ const EsmereogenesisGardenPage = () => {
                       width: 28,
                       height: 28,
                       borderRadius: "50%",
-                      background: "rgba(47,174,134,0.16)",
+                      background: "rgba(51,193,148,0.16)",
                       border: "1px solid var(--accent-line)",
                       display: "flex",
                       alignItems: "center",

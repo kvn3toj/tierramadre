@@ -234,7 +234,7 @@ export const EsmereogenesisCTA = ({
           position: "relative",
           overflow: "hidden",
           background:
-            "linear-gradient(135deg, rgba(14,124,90,0.26), rgba(11,92,70,0.08) 70%)",
+            "linear-gradient(135deg, rgba(0,174,122,0.26), rgba(0,140,97,0.08) 70%)",
           border: "1px solid var(--cta-border)",
           boxShadow: "var(--cta-glow)",
           display: "flex",

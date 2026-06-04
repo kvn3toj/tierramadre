@@ -73,8 +73,7 @@ const ALIASES: Record<string, CutKey> = {
 export function resolveCutCharacter(
   corte?: string | null,
 ): CutCharacter | null {
-  const key = ALIASES[normalize(corte)];
-  if (!key) return null;
+  const key = ALIASES[normalize(corte)] ?? "rectangular";
   const grown = pick("grown", key);
   const seed = pick("seed", key);
   if (!grown && !seed) return null;
