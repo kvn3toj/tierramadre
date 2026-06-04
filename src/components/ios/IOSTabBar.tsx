@@ -16,7 +16,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Box, Typography } from "@mui/material";
 import { motion, LayoutGroup } from "framer-motion";
 import { Home, MoreHoriz, People } from "@mui/icons-material";
-import { Gem, FileText, PlusCircle, Package } from "lucide-react";
+import { FileText, PlusCircle, Package } from "lucide-react";
+import EmeraldCutIcon from "../icons/EmeraldCutIcon";
 import { useIsProvider } from "../../hooks/usePermissions";
 
 // Design tokens
@@ -51,7 +52,7 @@ const getPrimaryTabs = (t: any): TabConfig[] => [
   {
     id: "treasure",
     label: t.nav.treasure,
-    icon: Gem as React.ElementType,
+    icon: EmeraldCutIcon as React.ElementType,
     route: "/treasure",
   },
   {

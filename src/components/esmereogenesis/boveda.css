@@ -1,0 +1,531 @@
+/*
+ * boveda.css — Esmereogénesis "Bóveda" theme engine.
+ *
+ * Ported verbatim from the approved Claude Design prototype
+ * (docs/boveda-prototype/project/Esmereogenesis - Boveda.html). Every Bóveda
+ * surface reads `var(--…)` from here, so the exact hex values live in this ONE
+ * token file (the rest of the feature stays hardcoded-hex-free).
+ *
+ * Theme = `data-theme="dark|light"` on the `.bov-root` wrapper, toggled by the
+ * feature-local EsmereoThemeContext. Dark is the default; light is a cool
+ * brushed-platinum showroom (never warm cream). Note the Bóveda emerald greens
+ * (#0E7C5A / #2FAE86 / #0B5C46) are intentionally deeper/distinct from the
+ * app-wide emeraldCore (#00AE7A) — a new palette, not a remap.
+ */
+
+/* Hanken Grotesk scoped to the feature; .serif = Playfair Display (already loaded). */
+.bov-root {
+  font-family: "Hanken Grotesk", system-ui, sans-serif;
+}
+.bov-root .serif {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 500;
+}
+
+/* ───────────────────────── DARK (default) ───────────────────────── */
+.bov-root {
+  --ink: #f2f7f4;
+  --ink-soft: rgba(228, 240, 234, 0.62);
+  --ink-faint: rgba(228, 240, 234, 0.34);
+  --em: #0e7c5a;
+  --em-deep: #0b5c46;
+  --em-bright: #2fae86;
+  --gold: #d9a94b;
+  --gold-bright: #f0ce86;
+  --accent-bg: rgba(217, 169, 75, 0.1);
+  --accent-bg-soft: rgba(217, 169, 75, 0.07);
+  --accent-line: rgba(217, 169, 75, 0.32);
+  --accent-line-strong: rgba(217, 169, 75, 0.5);
+  --claim-bg: linear-gradient(180deg, #f0ce86, #d9a94b);
+  --claim-ink: #3a2c08;
+  --btn-sub: #f0ce86;
+  --sheet-shadow: 0 -24px 60px rgba(0, 0, 0, 0.6);
+  --cta-border: rgba(217, 169, 75, 0.42);
+  --cta-glow:
+    0 0 40px -12px rgba(47, 174, 134, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-2: rgba(255, 255, 255, 0.07);
+  --hairline: rgba(255, 255, 255, 0.12);
+  --line: rgba(255, 255, 255, 0.1);
+  --scrim: rgba(2, 5, 4, 0.66);
+  --sheet-bg: linear-gradient(180deg, #0c1a14, #060f0b 70%);
+  --dock-fade: rgba(3, 8, 6, 0.82);
+  --statusbar: #f2f7f4;
+  --spark: #eafbf3;
+  --veil: radial-gradient(
+    90% 60% at 50% 42%,
+    rgba(20, 40, 30, 0.97),
+    rgba(3, 8, 6, 0.99)
+  );
+  --app-bg:
+    radial-gradient(
+      90% 55% at 50% 16%,
+      rgba(14, 124, 90, 0.3),
+      transparent 56%
+    ),
+    radial-gradient(
+      120% 60% at 50% 110%,
+      rgba(11, 92, 70, 0.26),
+      transparent 58%
+    ),
+    radial-gradient(150% 110% at 50% 42%, #0a1712 0%, #061009 46%, #020605 100%);
+  --vignette: radial-gradient(
+    130% 92% at 50% 44%,
+    transparent 54%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  color: var(--ink);
+  background: var(--app-bg);
+}
+
+/* ──────────────── LIGHT · cool brushed-platinum showroom ──────────────── */
+.bov-root[data-theme="light"] {
+  --ink: #15302a;
+  --ink-soft: #35484a;
+  --ink-faint: #586a6c;
+  --em: #0b5c46;
+  --em-deep: #08402f;
+  --em-bright: #0e7c5a;
+  --gold: #5e6e66;
+  --gold-bright: #46615a;
+  --accent-bg: rgba(150, 168, 170, 0.2);
+  --accent-bg-soft: rgba(150, 168, 170, 0.12);
+  --accent-line: rgba(120, 140, 142, 0.42);
+  --accent-line-strong: rgba(96, 118, 118, 0.58);
+  --claim-bg: linear-gradient(180deg, #d8dcd3, #b2b9ac);
+  --claim-ink: #28332d;
+  --btn-sub: #d6e4dd;
+  --surface: #e8edef;
+  --surface-2: #dee6e8;
+  --hairline: #d2dbde;
+  --line: #dce3e5;
+  --scrim: rgba(44, 58, 60, 0.34);
+  --sheet-bg: linear-gradient(180deg, #ffffff, #eaeff1 72%);
+  --sheet-shadow: 0 -18px 48px rgba(54, 74, 80, 0.2);
+  --cta-border: rgba(11, 92, 70, 0.4);
+  --cta-glow:
+    0 12px 30px -14px rgba(40, 78, 72, 0.42),
+    0 0 30px -10px rgba(14, 124, 90, 0.3);
+  --dock-fade: rgba(246, 248, 249, 0.88);
+  --statusbar: #18302a;
+  --spark: #0e7c5a;
+  --veil: radial-gradient(
+    90% 60% at 50% 42%,
+    rgba(249, 251, 252, 0.97),
+    rgba(228, 234, 236, 0.99)
+  );
+  --app-bg:
+    radial-gradient(
+      90% 55% at 50% 12%,
+      rgba(14, 124, 90, 0.08),
+      transparent 56%
+    ),
+    radial-gradient(
+      120% 60% at 50% 112%,
+      rgba(120, 140, 150, 0.1),
+      transparent 58%
+    ),
+    linear-gradient(180deg, #fafcfc 0%, #f2f5f7 55%, #ecf1f3 100%);
+  --vignette: radial-gradient(
+    135% 100% at 50% 46%,
+    transparent 64%,
+    rgba(70, 92, 96, 0.09) 100%
+  );
+}
+
+.bov-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: var(--vignette);
+}
+
+/* light-mode hero staging: cool halo + pedestal/reflection + clean cone */
+.le-stage {
+  display: none;
+}
+.bov-root[data-theme="light"] .le-stage {
+  display: block;
+  position: absolute;
+  left: 50%;
+  top: 47%;
+  transform: translate(-50%, -50%);
+  width: 132%;
+  height: 132%;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    circle at 50% 44%,
+    rgba(14, 124, 90, 0.13),
+    rgba(108, 138, 138, 0.07) 40%,
+    transparent 66%
+  );
+}
+.bov-root[data-theme="light"] .le-stage::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 12%;
+  transform: translateX(-50%);
+  width: 44%;
+  height: 8%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgba(26, 52, 46, 0.22),
+    transparent 76%
+  );
+  filter: blur(4px);
+}
+.bov-root[data-theme="light"] .le-stage::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  transform: translateX(-50%);
+  width: 30%;
+  height: 11%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgba(14, 124, 90, 0.2),
+    transparent 72%
+  );
+  filter: blur(7px);
+  opacity: 0.6;
+}
+.bov-root[data-theme="light"] .le-beam {
+  background: linear-gradient(
+    180deg,
+    rgba(14, 124, 90, 0.17),
+    rgba(118, 148, 148, 0.06) 46%,
+    transparent 78%
+  ) !important;
+  filter: blur(15px) !important;
+}
+
+/* scroll regions + tap feedback */
+.bov-root .scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 2;
+}
+.bov-root .scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.bov-root .tap {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.bov-root .tap:active {
+  transform: scale(0.94);
+}
+
+/* ── desktop: left side-nav rail + shifted content (Phase 7) ── */
+.bov-sidenav {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 92px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30px 0 26px;
+  background: linear-gradient(180deg, var(--surface), transparent);
+  border-right: 1px solid var(--hairline);
+  backdrop-filter: blur(8px);
+}
+.bov-root[data-bp="desktop"] .screen-anim {
+  left: 92px;
+}
+.bov-root[data-bp="desktop"] .bov-vignette {
+  left: 92px;
+}
+.bov-root[data-bp="ipad"] .focus-col {
+  max-width: 640px;
+  margin: 0 auto;
+}
+.bov-root[data-bp="desktop"] .focus-col {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+/* ───────────────────────── continuous life ───────────────────────── */
+@keyframes bovFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-11px);
+  }
+}
+@keyframes bovBreathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+@keyframes bovSheen {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes bovHalo {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.07);
+  }
+}
+@keyframes bovMist {
+  0% {
+    opacity: 0.5;
+    transform: translateY(4px) scale(1);
+  }
+  100% {
+    opacity: 0.95;
+    transform: translateY(-6px) scale(1.1);
+  }
+}
+@keyframes bovBeam {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: translateX(-50%) scaleY(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scaleY(1.04);
+  }
+}
+@keyframes bovRise {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.5);
+  }
+  14% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx, 0), -290px) scale(1);
+  }
+}
+@keyframes bovBlink {
+  0%,
+  92%,
+  100% {
+    opacity: 0;
+  }
+  96% {
+    opacity: 0.9;
+  }
+}
+
+/* ───────────────────────── ritual ───────────────────────── */
+@keyframes bovDrop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -160px) scale(0.7);
+  }
+  12% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 1;
+    transform: translate(-50%, -6px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 4px) scale(1.2, 0.7);
+  }
+}
+@keyframes bovRipple {
+  0% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.2);
+  }
+}
+@keyframes bovBounce {
+  0% {
+    transform: scale(1);
+  }
+  28% {
+    transform: scale(0.9);
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes bovBurst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(0, 0) scale(0.3);
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(var(--bx, 0), var(--by, 0))
+      scale(1);
+  }
+}
+@keyframes bovSurge {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  30% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.7);
+  }
+}
+@keyframes bovPop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ───────────────────────── eclosión ceremony ───────────────────────── */
+@keyframes ecloRing {
+  0% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(0.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(3.4);
+  }
+}
+@keyframes ecloAscend {
+  0% {
+    transform: translateY(46px) scale(0.62);
+  }
+  60% {
+    transform: translateY(-14px) scale(1.16);
+  }
+  100% {
+    transform: translateY(-10px) scale(1.12);
+  }
+}
+@keyframes ecloGlow {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.12);
+  }
+}
+@keyframes ecloRain {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.6);
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(340px) scale(1);
+  }
+}
+@keyframes siembraPulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+}
+
+.bov-root .fade-up {
+  animation: fadeUp 0.55s cubic-bezier(0.2, 0.85, 0.3, 1);
+}
+
+@keyframes screenIn {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.bov-root .screen-anim {
+  animation: screenIn 0.34s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bov-root .anim-loop,
+  .bov-root .fade-up,
+  .bov-root .screen-anim {
+    animation: none !important;
+  }
+  .bov-root .reduced-hide {
+    display: none !important;
+  }
+}
