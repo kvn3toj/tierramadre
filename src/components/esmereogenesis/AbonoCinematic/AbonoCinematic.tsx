@@ -42,6 +42,8 @@ interface AbonoCinematicProps {
   onComplete: () => void;
   /** Optional pre-aporte progress for animating the count-up correctly. */
   previousProgress?: number;
+  /** Completion only: tap "Reclamar mi esmeralda" in the Eclosión ceremony. */
+  onClaim?: () => void;
 }
 
 export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
@@ -51,6 +53,7 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
   open,
   onComplete,
   previousProgress,
+  onClaim,
 }) => {
   const reducedMotion = useReducedMotion();
   const { hapticEnabled } = useEsmereogenesis();
@@ -92,6 +95,8 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
     active: open,
     reducedMotion: !!reducedMotion,
     isCompletion,
+    // Completion holds on the Eclosión ceremony until the user claims/dismisses.
+    holdAtEclosion: true,
     onComplete,
     onPhaseChange: (next) => {
       switch (next) {
@@ -176,6 +181,30 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
     }
   }, [open, fromProgress, plan.totalAbonadoCOP, aporteAmount]);
 
+  // Typewriter for the Eclosión headline. Reveals once the ceremony shows;
+  // reduced motion renders it whole.
+  const ECLOSION_HEADLINE = "Tu esmeralda ha cobrado vida";
+  const [typed, setTyped] = useState("");
+  const ceremonyActive =
+    open && (phase === "eclosion" || (phase === "release" && isCompletion));
+  useEffect(() => {
+    if (!ceremonyActive) {
+      setTyped("");
+      return;
+    }
+    if (reducedMotion) {
+      setTyped(ECLOSION_HEADLINE);
+      return;
+    }
+    let i = 0;
+    const id = window.setInterval(() => {
+      i += 1;
+      setTyped(ECLOSION_HEADLINE.slice(0, i));
+      if (i >= ECLOSION_HEADLINE.length) window.clearInterval(id);
+    }, 55);
+    return () => window.clearInterval(id);
+  }, [ceremonyActive, reducedMotion]);
+
   if (!open) return null;
 
   // Phase visibility helpers
@@ -213,7 +242,7 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
       {isVisible && (
         <Box
           component={motion.div}
-          className="bov-root"
+          className="bov-root bov-screen"
           role="dialog"
           aria-label="Animación de aporte en curso. Toca para saltar."
           initial={{ opacity: 0 }}
@@ -221,10 +250,11 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
           onClick={handleSkip}
+          // Inline position beats the imported `.bov-root { position: relative }`
+          // (equal-specificity classes — CSS source order would otherwise win),
+          // so the takeover always covers the screen.
+          style={{ position: "fixed", inset: 0, zIndex: 1500 }}
           sx={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 1500,
             background: "var(--app-bg)",
             display: "flex",
             alignItems: "center",
@@ -377,7 +407,7 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
               )}
             </AnimatePresence>
 
-            {/* Center: LivingEmerald */}
+            {/* Center: LivingEmerald (ascends + blooms on Eclosión) */}
             <Box
               component={motion.div}
               animate={{
@@ -386,12 +416,50 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
                   : showEclosion
                     ? [1, 1.08, 1.04]
                     : 1,
+                y: showEclosion && !reducedMotion ? [0, -14, -10] : 0,
               }}
               transition={{
                 duration: showEclosion ? 1.6 : 0.8,
                 ease: "easeInOut",
               }}
+              sx={{ position: "relative" }}
             >
+              {/* Expanding golden rings + central glow */}
+              {showEclosion && !reducedMotion && (
+                <Box
+                  aria-hidden
+                  sx={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+                >
+                  {[0, 0.5, 1].map((d, i) => (
+                    <Box
+                      key={i}
+                      sx={{
+                        position: "absolute",
+                        left: "50%",
+                        top: "50%",
+                        width: 200,
+                        height: 200,
+                        borderRadius: "50%",
+                        border: `1.5px solid ${alpha(goldAccent.light, 0.6)}`,
+                        animation: `ecloRing 2.6s ease-out ${d}s infinite`,
+                      }}
+                    />
+                  ))}
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      left: "50%",
+                      top: "50%",
+                      width: 300,
+                      height: 300,
+                      borderRadius: "50%",
+                      background: `radial-gradient(circle, ${alpha(goldAccent.primary, 0.5)}, ${alpha(emeraldCore.primary, 0.18)} 40%, transparent 70%)`,
+                      filter: "blur(10px)",
+                      animation: "ecloGlow 3s ease-in-out infinite",
+                    }}
+                  />
+                </Box>
+              )}
               <LivingEmerald
                 imageSrc={plan.productSnapshot.imagen}
                 corte={plan.productSnapshot.corte}
@@ -522,26 +590,83 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
                     Eclosión
                   </Typography>
                   <Typography
+                    aria-label={ECLOSION_HEADLINE}
                     sx={{
                       fontFamily: '"Playfair Display", serif',
                       fontWeight: 700,
                       fontStyle: "italic",
                       fontSize: { xs: 28, sm: 34 },
                       lineHeight: 1.15,
+                      minHeight: "1.15em",
                       textShadow: `0 4px 22px ${alpha(emeraldCore.dark, 0.75)}`,
                     }}
                   >
-                    Tu Esmeralda
-                    <br />
-                    ha cobrado vida
+                    {typed || " "}
                   </Typography>
+
+                  {/* Reclamar / seguir admirándola */}
+                  <Box
+                    sx={{
+                      mt: 3,
+                      width: "100%",
+                      maxWidth: 360,
+                      mx: "auto",
+                      px: 1,
+                    }}
+                  >
+                    <button
+                      className="tap"
+                      onClick={() => (onClaim ? onClaim() : onComplete())}
+                      style={{
+                        width: "100%",
+                        borderRadius: 999,
+                        padding: "17px",
+                        background: "var(--claim-bg)",
+                        boxShadow: "0 0 40px -6px var(--gold)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        border: "none",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 16,
+                          fontWeight: 700,
+                          color: "var(--claim-ink)",
+                          letterSpacing: "0.02em",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Reclamar mi esmeralda
+                      </span>
+                    </button>
+                    <button
+                      onClick={onComplete}
+                      style={{
+                        width: "100%",
+                        marginTop: 12,
+                        padding: "8px",
+                        fontSize: 12.5,
+                        color: "var(--ink-faint)",
+                        letterSpacing: "0.04em",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Seguir admirándola
+                    </button>
+                  </Box>
                 </Box>
               )}
             </AnimatePresence>
           </Box>
 
-          {/* Skip hint */}
-          {phase !== "release" && (
+          {/* Skip hint — hidden during the held Eclosión (the ceremony has its
+              own Reclamar / Seguir buttons). */}
+          {phase !== "release" && !showEclosion && (
             <Box
               component={motion.div}
               initial={{ opacity: 0 }}

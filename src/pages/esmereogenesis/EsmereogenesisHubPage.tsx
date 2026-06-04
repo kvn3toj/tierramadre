@@ -153,7 +153,7 @@ const EsmereogenesisHubPage = () => {
   if (!hasPlans || !featured) {
     return (
       <div
-        className="bov-root"
+        className="bov-root bov-screen"
         data-theme={mode}
         style={{ minHeight: "100vh" }}
       >
@@ -196,7 +196,7 @@ const EsmereogenesisHubPage = () => {
 
   return (
     <div
-      className="bov-root"
+      className="bov-root bov-screen"
       data-theme={mode}
       style={{
         minHeight: "100vh",

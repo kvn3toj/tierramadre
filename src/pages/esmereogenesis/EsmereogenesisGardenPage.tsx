@@ -235,7 +235,7 @@ const EsmereogenesisGardenPage = () => {
 
   return (
     <div
-      className="bov-root"
+      className="bov-root bov-screen"
       data-theme={mode}
       style={{
         minHeight: "100vh",
@@ -517,6 +517,10 @@ const EsmereogenesisGardenPage = () => {
           previousProgress={cinematic.previousProgress}
           open
           onComplete={handleCinematicComplete}
+          onClaim={() => {
+            setCinematic(null);
+            setClaimOpen(true);
+          }}
         />
       )}
 

@@ -51,6 +51,27 @@ export const BottomSheetShell: React.FC<BottomSheetShellProps> = ({
   bovedaTheme = "dark",
   children,
 }) => {
+  // Literal Bóveda sheet surface (the prototype's --sheet-bg). Painted directly
+  // on the paper so we DON'T put `.bov-root` on it — that class forces
+  // `position: relative` and would clobber the Drawer paper's positioning. The
+  // CSS vars instead live on the inner content Box (already position:relative).
+  const isLight = bovedaTheme === "light";
+  const sheetBg = boveda
+    ? isLight
+      ? "linear-gradient(180deg, #FFFFFF, #EAEFF1 72%)"
+      : "linear-gradient(180deg, #0c1a14, #060f0b 70%)"
+    : meshGradients.emerald;
+  const sheetBorder = boveda
+    ? isLight
+      ? "1px solid #DCE3E5"
+      : "1px solid rgba(255,255,255,0.1)"
+    : undefined;
+  const sheetShadow = boveda
+    ? isLight
+      ? "0 -18px 48px rgba(54,74,80,0.20)"
+      : "0 -24px 60px rgba(0,0,0,0.6)"
+    : `0 -16px 40px ${blackAlpha(0.45)}`;
+
   return (
     <Drawer
       anchor="bottom"
@@ -60,29 +81,29 @@ export const BottomSheetShell: React.FC<BottomSheetShellProps> = ({
       aria-labelledby={ariaLabelledBy}
       PaperProps={{
         elevation: 0,
-        // The paper itself is the `.bov-root`, so the content can read --sheet-bg,
-        // --ink, etc., and the sheet matches the prototype's surface exactly.
-        ...(boveda ? { className: "bov-root", "data-theme": bovedaTheme } : {}),
         sx: {
           mx: "auto",
           width: "100%",
           maxWidth,
           maxHeight: "calc(100vh - env(safe-area-inset-top, 0px) - 24px)",
           borderRadius: "24px 24px 0 0",
-          background: boveda ? "var(--sheet-bg)" : meshGradients.emerald,
+          background: sheetBg,
           backgroundColor: boveda ? undefined : emeraldCore.dark,
-          border: boveda ? "1px solid var(--line)" : undefined,
+          border: sheetBorder,
           borderBottom: boveda ? "none" : undefined,
           overflowY: "auto",
           overscrollBehavior: "contain",
           pb: "env(safe-area-inset-bottom, 0px)",
-          boxShadow: boveda
-            ? "var(--sheet-shadow)"
-            : `0 -16px 40px ${blackAlpha(0.45)}`,
+          boxShadow: sheetShadow,
         },
       }}
     >
-      <Box sx={{ position: "relative", p: 3, pb: 4 }}>
+      <Box
+        {...(boveda
+          ? { className: "bov-root", "data-theme": bovedaTheme }
+          : {})}
+        sx={{ position: "relative", p: 3, pb: 4, background: "transparent" }}
+      >
         {!hideHandle && (
           <Box
             aria-hidden

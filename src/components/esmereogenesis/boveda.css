@@ -76,10 +76,16 @@
     rgba(0, 0, 0, 0.6) 100%
   );
 
+  /* `.bov-root` carries ONLY the theme vars + font/colour, so it can be attached
+     to any element (incl. MUI surfaces) without clobbering its position or
+     background. Full-bleed screens add `.bov-screen` for the layout/atmosphere. */
+  color: var(--ink);
+}
+
+.bov-screen {
   position: relative;
   width: 100%;
   min-height: 100%;
-  color: var(--ink);
   background: var(--app-bg);
 }
 
