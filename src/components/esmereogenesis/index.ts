@@ -18,3 +18,4 @@ export { EsmereoCreationSheet } from "./EsmereoCreationSheet";
 export { ClaimSheet } from "./ClaimSheet";
 export { AbonoCinematic, useAbonoSequence } from "./AbonoCinematic";
 export { EsmereogenesisCTA } from "./EsmereogenesisCTA";
+export { ProgressRing } from "./BovedaUI";

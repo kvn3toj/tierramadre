@@ -26,6 +26,7 @@ import {
   StreakFlame,
   WaterButton,
   AmountChips,
+  ProgressRing,
 } from "../../components/esmereogenesis/BovedaUI";
 import { useCountUp } from "../../components/esmereogenesis/useCountUp";
 import { useEsmereoBp } from "../../components/esmereogenesis/useEsmereoBp";
@@ -340,21 +341,42 @@ const EsmereogenesisGardenPage = () => {
           <div style={overlineStyle}>
             {isCompleted ? "Eclosionada" : "Tu progreso"}
           </div>
+          {/* Progress ring + percentage */}
           <div
-            className="serif"
             style={{
-              fontSize: 72,
-              lineHeight: 0.86,
-              marginTop: 6,
-              color: "var(--ink)",
-              textShadow:
-                mode === "dark" ? "0 6px 34px rgba(0,140,97,0.6)" : "none",
+              position: "relative",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginTop: 4,
             }}
           >
-            {Math.round(dispPct * 100)}
-            <span style={{ fontSize: 28, color: "var(--gold-bright)" }}>%</span>
+            <ProgressRing
+              progress={dispPct}
+              size={124}
+              strokeWidth={3.5}
+              style={{ position: "absolute" }}
+            />
+            <div
+              className="serif"
+              style={{
+                fontSize: 72,
+                lineHeight: 0.86,
+                color: "var(--ink)",
+                textShadow:
+                  mode === "dark" ? "0 6px 34px rgba(0,140,97,0.6)" : "none",
+                padding: "22px 20px",
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              {Math.round(dispPct * 100)}
+              <span style={{ fontSize: 28, color: "var(--gold-bright)" }}>
+                %
+              </span>
+            </div>
           </div>
-          <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 8 }}>
+          <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>
             {formatCurrency(displayAbonado)}{" "}
             <span style={{ color: "var(--ink-faint)" }}>
               / {formatCurrency(plan.targetCOP)}
@@ -405,48 +427,59 @@ const EsmereogenesisGardenPage = () => {
 
         {/* ficha de la piedra */}
         <div
-          style={{ padding: "24px 26px 0", position: "relative", zIndex: 3 }}
+          style={{ padding: "26px 22px 0", position: "relative", zIndex: 3 }}
         >
-          {ficha.map(([k, v], i) => (
-            <div
-              key={k}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "13px 0",
-                borderTop: i === 0 ? "none" : "1px solid var(--line)",
-              }}
-            >
-              <span
+          <Kicker style={{ fontSize: 8.5, marginBottom: 14 }}>La piedra</Kicker>
+          <div
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--hairline)",
+              borderRadius: 16,
+              overflow: "hidden",
+              padding: "0 16px",
+            }}
+          >
+            {ficha.map(([k, v], i) => (
+              <div
+                key={k}
                 style={{
-                  fontSize: 9.5,
-                  letterSpacing: "0.22em",
-                  textTransform: "uppercase",
-                  color: "var(--ink-faint)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "12px 0",
+                  borderTop: i === 0 ? "none" : "1px solid var(--line)",
                 }}
               >
-                {k}
-              </span>
-              <span
-                className="serif"
-                style={{
-                  fontSize: 15,
-                  whiteSpace: "nowrap",
-                  color: "var(--ink)",
-                }}
-              >
-                {v}
-              </span>
-            </div>
-          ))}
+                <span
+                  style={{
+                    fontSize: 9.5,
+                    letterSpacing: "0.22em",
+                    textTransform: "uppercase",
+                    color: "var(--ink-faint)",
+                  }}
+                >
+                  {k}
+                </span>
+                <span
+                  className="serif"
+                  style={{
+                    fontSize: 15,
+                    whiteSpace: "nowrap",
+                    color: "var(--ink)",
+                  }}
+                >
+                  {v}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* bitácora de riego */}
         <div
-          style={{ padding: "22px 26px 0", position: "relative", zIndex: 3 }}
+          style={{ padding: "22px 22px 0", position: "relative", zIndex: 3 }}
         >
-          <Kicker style={{ fontSize: 8.5, marginBottom: 8 }}>
+          <Kicker style={{ fontSize: 8.5, marginBottom: 14 }}>
             Bitácora de riego · {plan.aportes.length}{" "}
             {plan.aportes.length === 1 ? "gota" : "gotas"}
           </Kicker>
@@ -459,21 +492,21 @@ const EsmereogenesisGardenPage = () => {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    padding: "11px 0",
-                    borderTop: i === 0 ? "none" : "1px solid var(--surface-2)",
+                    padding: "12px 0",
+                    borderTop: i === 0 ? "none" : "1px solid var(--hairline)",
                   }}
                 >
                   <span
                     style={{
-                      width: 28,
-                      height: 28,
+                      width: 32,
+                      height: 32,
                       borderRadius: "50%",
-                      background: "rgba(51,193,148,0.16)",
-                      border: "1px solid var(--accent-line)",
+                      background: "rgba(51,193,148,0.14)",
+                      border: "1px solid rgba(212,175,55,0.28)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      marginRight: 12,
+                      marginRight: 14,
                       flexShrink: 0,
                     }}
                   >
@@ -489,11 +522,18 @@ const EsmereogenesisGardenPage = () => {
                         fontSize: 13,
                         fontWeight: 600,
                         color: "var(--ink)",
+                        letterSpacing: "0.01em",
                       }}
                     >
                       Semana {week}
                     </div>
-                    <div style={{ fontSize: 10.5, color: "var(--ink-faint)" }}>
+                    <div
+                      style={{
+                        fontSize: 10.5,
+                        color: "var(--ink-faint)",
+                        marginTop: 1,
+                      }}
+                    >
                       {fmtAporteDate(a.createdAt)} ·{" "}
                       {a.type === "suggested"
                         ? "Aporte sugerido"
@@ -502,7 +542,11 @@ const EsmereogenesisGardenPage = () => {
                   </div>
                   <span
                     className="serif"
-                    style={{ fontSize: 14, color: "var(--ink-soft)" }}
+                    style={{
+                      fontSize: 14,
+                      color: "var(--ink-soft)",
+                      letterSpacing: "0.01em",
+                    }}
                   >
                     +{formatCurrency(a.amountCOP)}
                   </span>
@@ -510,7 +554,13 @@ const EsmereogenesisGardenPage = () => {
               );
             })
           ) : (
-            <div style={{ fontSize: 12.5, color: "var(--ink-faint)" }}>
+            <div
+              style={{
+                fontSize: 12.5,
+                color: "var(--ink-faint)",
+                fontStyle: "italic",
+              }}
+            >
               Aún no has regado tu esmeralda. La primera gota la despierta.
             </div>
           )}

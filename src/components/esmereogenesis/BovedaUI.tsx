@@ -10,6 +10,63 @@ import { useRef, type CSSProperties, type ReactNode } from "react";
 import { ChevronLeft, Droplet, Flame, X } from "lucide-react";
 import { useCurrencyFormat } from "../../contexts/CurrencyContext";
 
+/** Thin SVG arc ring showing progress (0–1). Gap is at the bottom; 270° sweep. */
+export function ProgressRing({
+  progress,
+  size = 110,
+  strokeWidth = 3.5,
+  style,
+}: {
+  progress: number;
+  size?: number;
+  strokeWidth?: number;
+  style?: CSSProperties;
+}) {
+  const r = (size - strokeWidth * 2) / 2;
+  const cx = size / 2;
+  const cy = size / 2;
+  const C = 2 * Math.PI * r;
+  const arc = (270 / 360) * C;
+  const filled = Math.min(1, Math.max(0, progress)) * arc;
+  const rotation = 135;
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      style={{ overflow: "visible", flexShrink: 0, ...style }}
+      aria-hidden
+    >
+      <circle
+        cx={cx}
+        cy={cy}
+        r={r}
+        fill="none"
+        stroke="rgba(51,193,148,0.18)"
+        strokeWidth={strokeWidth}
+        strokeDasharray={`${arc} ${C - arc}`}
+        strokeLinecap="round"
+        transform={`rotate(${rotation} ${cx} ${cy})`}
+      />
+      <circle
+        cx={cx}
+        cy={cy}
+        r={r}
+        fill="none"
+        stroke="var(--em-bright)"
+        strokeWidth={strokeWidth}
+        strokeDasharray={`${filled} ${C - filled}`}
+        strokeLinecap="round"
+        transform={`rotate(${rotation} ${cx} ${cy})`}
+        style={{
+          filter: "drop-shadow(0 0 4px var(--em-bright))",
+          transition: "stroke-dasharray 0.9s cubic-bezier(0.4, 0, 0.2, 1)",
+        }}
+      />
+    </svg>
+  );
+}
+
 export function Kicker({
   children,
   style,
@@ -150,7 +207,8 @@ export function WaterButton({
           style={{
             fontSize: 11,
             color: "var(--btn-sub)",
-            letterSpacing: "0.03em",
+            letterSpacing: "0.04em",
+            opacity: 0.85,
             whiteSpace: "nowrap",
           }}
         >
@@ -229,10 +287,13 @@ export function AmountChips({
               borderRadius: 13,
               textAlign: "center",
               background: on
-                ? "linear-gradient(180deg, rgba(51,193,148,0.3), rgba(0,140,97,0.18))"
+                ? "linear-gradient(160deg, rgba(51,193,148,0.26) 0%, rgba(0,140,97,0.16) 100%)"
                 : "var(--surface)",
-              border: `1px solid ${on ? "var(--accent-line-strong)" : "var(--line)"}`,
-              transition: "all .2s",
+              border: `1px solid ${on ? "rgba(212,175,55,0.52)" : "var(--line)"}`,
+              boxShadow: on
+                ? "0 0 14px -4px rgba(51,193,148,0.35), inset 0 1px 0 rgba(255,255,255,0.06)"
+                : "none",
+              transition: "all .22s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
           >
             <div

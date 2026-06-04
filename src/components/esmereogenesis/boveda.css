@@ -250,10 +250,33 @@
   .bov-root .bov-chip:hover:not(:disabled) {
     background: var(--surface-2) !important;
   }
-  /* Plan overview cards — accent border glow */
+  /* Plan overview cards — accent border glow + elevation */
   .bov-root .bov-card:hover:not(:disabled) {
-    border-color: var(--accent-line) !important;
+    border-color: rgba(212, 175, 55, 0.36) !important;
+    box-shadow: 0 4px 24px -8px rgba(0, 174, 122, 0.28) !important;
   }
+}
+
+/* WaterButton: subtle ambient breath animation */
+@keyframes bovCtaBreathe {
+  0%,
+  100% {
+    filter: brightness(1) saturate(1);
+  }
+  50% {
+    filter: brightness(1.06) saturate(1.1);
+  }
+}
+.bov-root .bov-water:not(:disabled) {
+  animation: bovCtaBreathe 3.2s ease-in-out infinite;
+}
+@media (hover: hover) and (pointer: fine) {
+  .bov-root .bov-water:hover:not(:disabled) {
+    animation-play-state: paused;
+  }
+}
+.bov-root .bov-water:active:not(:disabled) {
+  animation: none !important;
 }
 /* Keyboard focus affordance for every Bóveda .tap control (WCAG 2.4.7) —
    reads in both dark and cool-platinum-light themes. */

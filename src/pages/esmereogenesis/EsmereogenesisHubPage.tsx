@@ -43,6 +43,7 @@ import {
   Kicker,
   StreakFlame,
   WaterButton,
+  ProgressRing,
 } from "../../components/esmereogenesis/BovedaUI";
 import { useEsmereoBp } from "../../components/esmereogenesis/useEsmereoBp";
 import EsmereoSideNav from "../../components/esmereogenesis/EsmereoSideNav";
@@ -311,18 +312,39 @@ const EsmereogenesisHubPage = () => {
           }}
           aria-live="polite"
         >
+          {/* Progress ring wrapping the big % */}
           <div
-            className="serif"
             style={{
-              fontSize: 72,
-              lineHeight: 0.84,
-              color: "var(--ink)",
-              textShadow:
-                mode === "dark" ? "0 6px 38px rgba(0,140,97,0.6)" : "none",
+              position: "relative",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            {Math.round(fProgress * 100)}
-            <span style={{ fontSize: 28, color: "var(--gold-bright)" }}>%</span>
+            <ProgressRing
+              progress={fProgress}
+              size={132}
+              strokeWidth={3.5}
+              style={{ position: "absolute" }}
+            />
+            <div
+              className="serif"
+              style={{
+                fontSize: 72,
+                lineHeight: 0.84,
+                color: "var(--ink)",
+                textShadow:
+                  mode === "dark" ? "0 6px 38px rgba(0,140,97,0.6)" : "none",
+                padding: "26px 22px",
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              {Math.round(fProgress * 100)}
+              <span style={{ fontSize: 28, color: "var(--gold-bright)" }}>
+                %
+              </span>
+            </div>
           </div>
           <div
             style={{
@@ -330,7 +352,7 @@ const EsmereogenesisHubPage = () => {
               letterSpacing: "0.34em",
               textTransform: "uppercase",
               color: "var(--ink-faint)",
-              marginTop: 5,
+              marginTop: 2,
             }}
           >
             regada
@@ -341,7 +363,7 @@ const EsmereogenesisHubPage = () => {
               alignItems: "center",
               justifyContent: "center",
               gap: 13,
-              marginTop: 12,
+              marginTop: 10,
             }}
           >
             <span
@@ -405,30 +427,28 @@ const EsmereogenesisHubPage = () => {
         )}
 
         {/* Sembrar nueva */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            padding: "26px 22px 0",
-          }}
-        >
+        <div style={{ padding: "26px 22px 0" }}>
           <button
             className="tap"
             onClick={() => navigate("/treasure")}
             style={{
-              display: "inline-flex",
+              display: "flex",
               alignItems: "center",
-              gap: 8,
-              padding: "11px 20px",
-              borderRadius: 999,
+              justifyContent: "center",
+              gap: 9,
+              width: "100%",
+              padding: "14px 20px",
+              borderRadius: 16,
               border: "1px solid var(--accent-line)",
               background: "var(--surface)",
+              backdropFilter: "blur(8px)",
               color: "var(--gold-bright)",
-              fontSize: 13.5,
+              fontSize: 14,
               fontWeight: 600,
+              letterSpacing: "0.015em",
             }}
           >
-            <Plus size={16} strokeWidth={2} />
+            <Plus size={16} strokeWidth={2.5} />
             Sembrar nueva Esmereogénesis
           </button>
         </div>

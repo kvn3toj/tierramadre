@@ -35,10 +35,10 @@ export const EsmereoPlanCard = ({ plan }: EsmereoPlanCardProps) => {
       aria-label={`Abrir jardín de ${displayName}${plan.nickname ? ` (${productName})` : ""} · ${progressPct}% regada`}
       style={{
         position: "relative",
-        background: "var(--surface)",
+        background: `radial-gradient(ellipse 130% 55% at 50% 145%, rgba(0,174,122,${0.04 + progress * 0.07}) 0%, transparent 70%), var(--surface)`,
         border: "1px solid var(--hairline)",
         borderRadius: 20,
-        padding: "14px 12px 16px",
+        padding: "14px 12px 18px",
         cursor: "pointer",
         textAlign: "center",
         display: "flex",
@@ -47,7 +47,7 @@ export const EsmereoPlanCard = ({ plan }: EsmereoPlanCardProps) => {
         gap: 6,
         overflow: "hidden",
         color: "var(--ink)",
-        transition: "border-color 0.2s ease",
+        transition: "border-color 0.2s ease, box-shadow 0.2s ease",
       }}
     >
       <LivingEmerald
@@ -128,6 +128,32 @@ export const EsmereoPlanCard = ({ plan }: EsmereoPlanCardProps) => {
           Adquirida
         </span>
       )}
+      {/* Progress bar at the bottom of the card */}
+      <span
+        aria-hidden
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 2.5,
+          background: "var(--hairline)",
+          borderRadius: "0 0 20px 20px",
+          overflow: "hidden",
+        }}
+      >
+        <span
+          style={{
+            display: "block",
+            height: "100%",
+            width: `${progressPct}%`,
+            background: isComplete
+              ? "linear-gradient(90deg, var(--gold), var(--gold-bright))"
+              : "linear-gradient(90deg, var(--em), var(--em-bright))",
+            transition: "width 1s cubic-bezier(0.4, 0, 0.2, 1)",
+          }}
+        />
+      </span>
     </button>
   );
 };
