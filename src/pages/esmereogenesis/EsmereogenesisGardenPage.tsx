@@ -28,6 +28,8 @@ import {
   AmountChips,
 } from "../../components/esmereogenesis/BovedaUI";
 import { useCountUp } from "../../components/esmereogenesis/useCountUp";
+import { useEsmereoBp } from "../../components/esmereogenesis/useEsmereoBp";
+import EsmereoSideNav from "../../components/esmereogenesis/EsmereoSideNav";
 import { ClaimSheet } from "../../components/esmereogenesis/ClaimSheet";
 import { AbonoCinematic } from "../../components/esmereogenesis/AbonoCinematic";
 import { OnboardingCoachmarks } from "../../components/esmereogenesis/OnboardingCoachmarks";
@@ -74,6 +76,7 @@ const EsmereogenesisGardenPage = () => {
   const { mode } = useEsmereoTheme();
   const { getPlanById, deletePlan } = useEsmereogenesis();
   const { trigger, isProcessing } = useAbonoSimulation();
+  const bp = useEsmereoBp();
 
   const plan = planId ? getPlanById(planId) : undefined;
 
@@ -237,17 +240,20 @@ const EsmereogenesisGardenPage = () => {
     <div
       className="bov-root bov-screen"
       data-theme={mode}
+      data-bp={bp}
       style={{
         minHeight: "100vh",
         paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 96px)",
+        paddingLeft: bp === "desktop" ? 92 : 0,
       }}
     >
       <div className="bov-vignette" />
+      <EsmereoSideNav />
       <div
         style={{
           position: "relative",
           zIndex: 2,
-          maxWidth: 480,
+          maxWidth: bp === "mobile" ? 480 : bp === "ipad" ? 640 : 720,
           margin: "0 auto",
           paddingTop: "calc(env(safe-area-inset-top, 0px) + 8px)",
         }}

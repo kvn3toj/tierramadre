@@ -42,6 +42,8 @@ import {
   StreakFlame,
   WaterButton,
 } from "../../components/esmereogenesis/BovedaUI";
+import { useEsmereoBp } from "../../components/esmereogenesis/useEsmereoBp";
+import EsmereoSideNav from "../../components/esmereogenesis/EsmereoSideNav";
 import ConfirmDialog from "../../components/shared/ConfirmDialog";
 import { stageForProgress } from "../../data/esmereo-mock";
 import "../../components/esmereogenesis/boveda.css";
@@ -52,6 +54,7 @@ const EsmereogenesisHubPage = () => {
   const { track } = useTrackingDispatch();
   const { formatCurrency } = useCurrencyFormat();
   const { mode } = useEsmereoTheme();
+  const bp = useEsmereoBp();
 
   const {
     activePlans,
@@ -155,14 +158,16 @@ const EsmereogenesisHubPage = () => {
       <div
         className="bov-root bov-screen"
         data-theme={mode}
-        style={{ minHeight: "100vh" }}
+        data-bp={bp}
+        style={{ minHeight: "100vh", paddingLeft: bp === "desktop" ? 92 : 0 }}
       >
         <div className="bov-vignette" />
+        <EsmereoSideNav />
         <div
           style={{
             position: "relative",
             zIndex: 2,
-            maxWidth: 480,
+            maxWidth: bp === "mobile" ? 480 : bp === "ipad" ? 640 : 720,
             margin: "0 auto",
             minHeight: "100vh",
             display: "flex",
@@ -198,17 +203,20 @@ const EsmereogenesisHubPage = () => {
     <div
       className="bov-root bov-screen"
       data-theme={mode}
+      data-bp={bp}
       style={{
         minHeight: "100vh",
         paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 96px)",
+        paddingLeft: bp === "desktop" ? 92 : 0,
       }}
     >
       <div className="bov-vignette" />
+      <EsmereoSideNav />
       <div
         style={{
           position: "relative",
           zIndex: 2,
-          maxWidth: 480,
+          maxWidth: bp === "mobile" ? 480 : bp === "ipad" ? 640 : 720,
           margin: "0 auto",
           paddingTop: "calc(env(safe-area-inset-top, 0px) + 8px)",
         }}

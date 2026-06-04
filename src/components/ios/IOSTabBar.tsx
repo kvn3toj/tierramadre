@@ -147,8 +147,24 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
+  // Bóveda only hands the bottom bar to its slim left side-nav at the desktop
+  // tier (≥1180px, matching ESMEREO_DESKTOP_MIN); iPad keeps the bottom bar.
+  const [isEsmereoDesktop, setIsEsmereoDesktop] = useState<boolean>(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(min-width: 1180px)").matches
+      : false,
+  );
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 1180px)");
+    const onChange = () => setIsEsmereoDesktop(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
   const autoHide =
-    isDesktop && location.pathname.startsWith("/admin/fotosintesis");
+    (isDesktop && location.pathname.startsWith("/admin/fotosintesis")) ||
+    (isEsmereoDesktop && location.pathname.startsWith("/esmereogenesis"));
   const [revealed, setRevealed] = useState(false);
   const reduceMotion =
     typeof window !== "undefined" &&
