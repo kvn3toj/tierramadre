@@ -26,6 +26,9 @@ export interface ProductSnapshot {
   precioCOP: number;
   peso: string | number;
   color: string;
+  /** Cut / shape (from TreasureItem.talla). Selects the Esmereogénesis
+   *  cut-character art; optional so legacy persisted plans still load. */
+  corte?: string;
 }
 
 export interface Aporte {

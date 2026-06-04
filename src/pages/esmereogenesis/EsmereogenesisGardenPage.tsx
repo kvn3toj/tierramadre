@@ -351,6 +351,7 @@ const EsmereogenesisGardenPage: React.FC = () => {
               >
                 <LivingEmerald
                   imageSrc={plan.productSnapshot.imagen}
+                  corte={plan.productSnapshot.corte}
                   progress={progress}
                   state={plan.state}
                   size={emeraldSize}

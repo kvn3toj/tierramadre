@@ -376,6 +376,7 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
             >
               <LivingEmerald
                 imageSrc={plan.productSnapshot.imagen}
+                corte={plan.productSnapshot.corte}
                 progress={animatedProgress}
                 state={
                   isCompletion && phase === "eclosion"

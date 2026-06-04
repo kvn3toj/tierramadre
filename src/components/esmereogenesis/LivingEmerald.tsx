@@ -1,15 +1,26 @@
 /**
  * LivingEmerald
  *
- * The visual heart of Esmereogénesis. Renders the product image with seven
- * stacked layers that respond to `progress` (0..1):
+ * The visual heart of Esmereogénesis. Renders a cut-matched emerald CHARACTER
+ * (when the plan's cut is mapped) or, as a fallback, the real product image —
+ * both wrapped in seven stacked layers that respond to `progress` (0..1).
+ *
+ * Character mode (preferred): `corte` resolves to a cut-character that evolves
+ * across two growth stages — an ancestral/mystic "seed" form at low progress
+ * that crossfades into the polished Pixar-"Soul" "grown" form as the plan
+ * matures. Cuts without a seed render the grown art dimmed→bright by progress.
+ *
+ * Photo mode (fallback): the original behaviour — the product image inside a
+ * circular disc with a dynamic dusty→brilliant CSS filter.
+ *
+ * Shared layers:
  *   1. Ambient glow (radial)
  *   2. Particle field (gentle floating motes)
  *   3. Roots layer (OrganicRoots)
- *   4. Emerald crystal (real product image with dynamic CSS filter)
- *   5. Surface dust (musgo overlay, fades out as progress rises)
- *   6. Specular highlight (light reflection)
- *   7. Sparkle field (only when progress > 0.5)
+ *   4. Emerald — cut-character OR product image
+ *   5. Surface dust (photo mode only)
+ *   6. Specular highlight (photo mode only)
+ *   7. Sparkle field (progress > 0.5)
  */
 
 import React, { useMemo, useState } from "react";
@@ -17,6 +28,7 @@ import { Box, alpha } from "@mui/material";
 import { motion, useReducedMotion } from "framer-motion";
 import { Sprout } from "lucide-react";
 import { OrganicRoots } from "./OrganicRoots";
+import { resolveCutCharacter } from "./cutCharacters";
 import type { EsmereoState } from "../../types/esmereogenesis";
 import { emeraldCore, goldAccent } from "../../design-system/tokens/colors";
 import {
@@ -29,6 +41,9 @@ export type LivingEmeraldSize = "sm" | "md" | "lg" | "xl";
 
 interface LivingEmeraldProps {
   imageSrc?: string;
+  /** Cut / shape (e.g. "Corazón", "Cushion", "Rectangular", "Canutillo").
+   *  When it maps to a cut-character, the character replaces the photo. */
+  corte?: string;
   /** 0..1 */
   progress: number;
   state: EsmereoState;
@@ -50,6 +65,11 @@ function clamp01(n: number): number {
   return Math.max(0, Math.min(1, n));
 }
 
+function smoothstep(t: number): number {
+  const x = clamp01(t);
+  return x * x * (3 - 2 * x);
+}
+
 function buildCrystalFilter(progress: number): string {
   const p = clamp01(progress);
   const brightness = 0.5 + 0.7 * p;
@@ -69,6 +89,7 @@ const SPARKLE_POSITIONS = [
 
 export const LivingEmerald: React.FC<LivingEmeraldProps> = ({
   imageSrc,
+  corte,
   progress,
   state,
   size = "lg",
@@ -82,6 +103,14 @@ export const LivingEmerald: React.FC<LivingEmeraldProps> = ({
   const isComplete = state === "completed" || state === "claimed";
   const showSparkles = clampedProgress >= 0.5 || isComplete;
   const dustOpacity = isComplete ? 0 : Math.max(0, 1 - clampedProgress * 1.05);
+
+  // Cut-character (preferred). null → fall back to the product photo.
+  const character = useMemo(() => resolveCutCharacter(corte), [corte]);
+  // Seed → grown blend. Bias so the ancestral form holds through the early
+  // weeks and the polished gem only fully takes over near completion.
+  const growth = smoothstep(clamp01((clampedProgress - 0.08) / 0.84));
+  const hasCrossfade = Boolean(character?.seed && character?.grown);
+
   // When the image proxy fails (dev env / missing fileId) we fall back to the
   // emerald gradient — never leave the user staring at a black sphere.
   const [imageFailed, setImageFailed] = useState(false);
@@ -181,7 +210,7 @@ export const LivingEmerald: React.FC<LivingEmeraldProps> = ({
         reducedMotion={!!reducedMotion}
       />
 
-      {/* Layer 4 — Emerald crystal (idle pulse wrapper) */}
+      {/* Layer 4 — Emerald (idle pulse wrapper) */}
       <Box
         component={motion.div}
         aria-hidden
@@ -197,82 +226,132 @@ export const LivingEmerald: React.FC<LivingEmeraldProps> = ({
         }
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
       >
-        <Box
-          sx={{
-            width: innerPx,
-            height: innerPx,
-            borderRadius: "50%",
-            overflow: "hidden",
-            position: "relative",
-            // Always use the emerald gradient as the underlying surface so a
-            // failed image (dev env, missing fileId) never reveals raw black.
-            background: emeraldGradients.intense,
-            boxShadow: `0 ${px * 0.05}px ${px * 0.18}px ${alpha(emeraldCore.dark, 0.35 + recentBoost * 0.2)}, 0 0 ${px * 0.12 + recentBoost * 30}px ${alpha(emeraldCore.primary, 0.3 + recentBoost * 0.4)}`,
-            transition: "box-shadow 0.6s ease-out",
-          }}
-        >
-          {useImage ? (
+        {character ? (
+          /* ── Cut-character mode ─────────────────────────────────────── */
+          <Box
+            sx={{
+              position: "relative",
+              width: "100%",
+              height: "100%",
+              filter: `drop-shadow(0 ${px * 0.02}px ${px * 0.06}px ${alpha(emeraldCore.dark, 0.4)}) drop-shadow(0 0 ${px * 0.1 + recentBoost * 28}px ${alpha(emeraldCore.primary, 0.25 + recentBoost * 0.4)})`,
+            }}
+          >
+            {/* Seed / early form (or the grown art dimmed by progress when no
+                seed exists yet for this cut). */}
             <Box
               component="img"
-              src={imageSrc}
+              src={character.seed ?? character.grown}
               alt=""
               loading="lazy"
-              onError={() => setImageFailed(true)}
               sx={{
+                position: "absolute",
+                inset: 0,
                 width: "100%",
                 height: "100%",
-                objectFit: "cover",
-                filter: crystalFilter,
-                transition: "filter 0.6s ease-out",
+                objectFit: "contain",
+                opacity: hasCrossfade ? 1 - growth : 1,
+                filter: character.seed ? "none" : crystalFilter,
+                transition: "opacity 0.6s ease-out, filter 0.6s ease-out",
               }}
             />
-          ) : (
-            <Box
-              sx={{
-                width: "100%",
-                height: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#FFFFFF",
-              }}
-            >
-              <Sprout size={Math.round(innerPx * 0.45)} strokeWidth={1.5} />
-            </Box>
-          )}
-
-          {/* Layer 5 — Surface dust overlay */}
+            {/* Grown form crossfades in as the plan matures. */}
+            {hasCrossfade && (
+              <Box
+                component="img"
+                src={character.grown}
+                alt=""
+                loading="lazy"
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  opacity: growth,
+                  transition: "opacity 0.6s ease-out",
+                }}
+              />
+            )}
+          </Box>
+        ) : (
+          /* ── Photo fallback mode (original behaviour) ───────────────── */
           <Box
-            aria-hidden
             sx={{
-              position: "absolute",
-              inset: 0,
-              opacity: dustOpacity,
-              transition: "opacity 0.7s ease-out",
-              background:
-                "radial-gradient(ellipse at 30% 30%, rgba(101,67,33,0.55) 0%, rgba(80,52,28,0.4) 35%, rgba(60,40,22,0.55) 75%, rgba(40,28,16,0.7) 100%)",
-              mixBlendMode: "multiply",
-            }}
-          />
-
-          {/* Layer 6 — Specular highlight */}
-          <Box
-            aria-hidden
-            sx={{
-              position: "absolute",
-              top: "8%",
-              left: "12%",
-              width: "40%",
-              height: "30%",
+              width: innerPx,
+              height: innerPx,
               borderRadius: "50%",
-              background:
-                "radial-gradient(ellipse at center, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.15) 50%, transparent 90%)",
-              opacity: 0.35 + clampedProgress * 0.55,
-              filter: "blur(2px)",
-              pointerEvents: "none",
+              overflow: "hidden",
+              position: "relative",
+              // Always use the emerald gradient as the underlying surface so a
+              // failed image (dev env, missing fileId) never reveals raw black.
+              background: emeraldGradients.intense,
+              boxShadow: `0 ${px * 0.05}px ${px * 0.18}px ${alpha(emeraldCore.dark, 0.35 + recentBoost * 0.2)}, 0 0 ${px * 0.12 + recentBoost * 30}px ${alpha(emeraldCore.primary, 0.3 + recentBoost * 0.4)}`,
+              transition: "box-shadow 0.6s ease-out",
             }}
-          />
-        </Box>
+          >
+            {useImage ? (
+              <Box
+                component="img"
+                src={imageSrc}
+                alt=""
+                loading="lazy"
+                onError={() => setImageFailed(true)}
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  filter: crystalFilter,
+                  transition: "filter 0.6s ease-out",
+                }}
+              />
+            ) : (
+              <Box
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#FFFFFF",
+                }}
+              >
+                <Sprout size={Math.round(innerPx * 0.45)} strokeWidth={1.5} />
+              </Box>
+            )}
+
+            {/* Layer 5 — Surface dust overlay */}
+            <Box
+              aria-hidden
+              sx={{
+                position: "absolute",
+                inset: 0,
+                opacity: dustOpacity,
+                transition: "opacity 0.7s ease-out",
+                background:
+                  "radial-gradient(ellipse at 30% 30%, rgba(101,67,33,0.55) 0%, rgba(80,52,28,0.4) 35%, rgba(60,40,22,0.55) 75%, rgba(40,28,16,0.7) 100%)",
+                mixBlendMode: "multiply",
+              }}
+            />
+
+            {/* Layer 6 — Specular highlight */}
+            <Box
+              aria-hidden
+              sx={{
+                position: "absolute",
+                top: "8%",
+                left: "12%",
+                width: "40%",
+                height: "30%",
+                borderRadius: "50%",
+                background:
+                  "radial-gradient(ellipse at center, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.15) 50%, transparent 90%)",
+                opacity: 0.35 + clampedProgress * 0.55,
+                filter: "blur(2px)",
+                pointerEvents: "none",
+              }}
+            />
+          </Box>
+        )}
       </Box>
 
       {/* Layer 7 — Sparkles (only when revealed) */}

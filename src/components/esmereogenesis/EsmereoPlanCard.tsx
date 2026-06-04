@@ -77,6 +77,7 @@ export const EsmereoPlanCard: React.FC<EsmereoPlanCardProps> = ({ plan }) => {
       <Box sx={{ display: "flex", justifyContent: "center", mb: 1.5 }}>
         <LivingEmerald
           imageSrc={plan.productSnapshot.imagen}
+          corte={plan.productSnapshot.corte}
           progress={progress}
           state={plan.state}
           size="sm"

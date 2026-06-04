@@ -43,6 +43,9 @@ export function snapshotProduct(item: TreasureItem): ProductSnapshot {
     precioCOP: item.precioCOP,
     peso: item.peso,
     color: item.color,
+    // Cut/shape drives the Esmereogénesis cut-character; falls back to photo
+    // when absent or unmapped.
+    corte: item.talla?.trim() || undefined,
   };
 }
 
