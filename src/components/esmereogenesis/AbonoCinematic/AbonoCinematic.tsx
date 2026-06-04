@@ -10,7 +10,7 @@
  * ceremony based on the new plan state.
  */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Typography, alpha } from "@mui/material";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Droplet, Sparkles, Check } from "lucide-react";
@@ -142,7 +142,18 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
     },
   });
 
+  // Single rAF handle for the count-up ramp so a new ramp, a skip, or an unmount
+  // can cancel any in-flight loop instead of leaving an orphan running setState.
+  const rampRef = useRef<number | null>(null);
+  const cancelRamp = () => {
+    if (rampRef.current != null) {
+      cancelAnimationFrame(rampRef.current);
+      rampRef.current = null;
+    }
+  };
+
   const rampProgress = () => {
+    cancelRamp();
     const start = performance.now();
     const duration = 850;
     const startProg = fromProgress;
@@ -157,15 +168,21 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
       setAnimatedProgress(startProg + (endProg - startProg) * eased);
       setAnimatedAbonado(Math.round(startAbon + (endAbon - startAbon) * eased));
       if (t < 1) {
-        requestAnimationFrame(tick);
+        rampRef.current = requestAnimationFrame(tick);
+      } else {
+        rampRef.current = null;
       }
     };
-    requestAnimationFrame(tick);
+    rampRef.current = requestAnimationFrame(tick);
   };
+
+  // Stop any in-flight count-up loop when the cinematic unmounts.
+  useEffect(() => cancelRamp, []);
 
   const handleSkip = () => {
     if (phase === "idle" || phase === "release") return;
     track("esmereo_animation_skipped", { phase });
+    cancelRamp();
     setAnimatedProgress(targetProgress);
     setAnimatedAbonado(plan.totalAbonadoCOP);
     skip();

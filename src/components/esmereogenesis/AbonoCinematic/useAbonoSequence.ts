@@ -89,11 +89,24 @@ export function useAbonoSequence({
   const completedRef = useRef(false);
   const skippedRef = useRef(false);
   const phaseRef = useRef<AbonoPhase>("idle");
+  // Tracks the phase we last handed to `onPhaseChange`. Consumers pass an inline
+  // arrow that changes identity every render, so without this guard the effect
+  // below re-fires `onPhaseChange(phase)` on EVERY parent re-render (not just on
+  // transitions). When a phase callback itself triggers re-renders — e.g. the
+  // 60 fps count-up ramp in AbonoCinematic — that re-entrancy spawns a fresh
+  // animation loop per frame. Gating on the actual transition makes each phase
+  // fire exactly once regardless of callback identity.
+  const lastNotifiedRef = useRef<AbonoPhase | null>(null);
 
-  // Notify on phase change
+  // Notify on phase change (once per transition, not once per render)
   useEffect(() => {
     phaseRef.current = phase;
-    if (phase !== "idle") {
+    if (phase === "idle") {
+      lastNotifiedRef.current = null;
+      return;
+    }
+    if (lastNotifiedRef.current !== phase) {
+      lastNotifiedRef.current = phase;
       onPhaseChange?.(phase);
     }
   }, [phase, onPhaseChange]);

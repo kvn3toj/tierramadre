@@ -260,7 +260,10 @@ const EsmereogenesisGardenPage = () => {
         <TopBar
           title="Jardín"
           sub="Esmereogénesis"
-          onBack={() => navigate("/esmereogenesis")}
+          onBack={() => {
+            if ((window.history.state?.idx ?? 0) > 0) navigate(-1);
+            else navigate("/esmereogenesis", { replace: true });
+          }}
           backLabel="Volver al jardín"
           right={
             <div style={{ display: "flex", alignItems: "center" }}>

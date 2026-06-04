@@ -24,6 +24,7 @@ import {
   Trash2,
   Vibrate,
   Plus,
+  HelpCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEsmereogenesis } from "../../contexts/EsmereogenesisContext";
@@ -33,6 +34,7 @@ import { useCurrencyFormat } from "../../contexts/CurrencyContext";
 import { useEsmereoTheme } from "../../contexts/EsmereoThemeContext";
 import { EsmereoEmptyState } from "../../components/esmereogenesis/EsmereoEmptyState";
 import { EsmereoPlanCard } from "../../components/esmereogenesis/EsmereoPlanCard";
+import EsmereoExplainerSheet from "../../components/esmereogenesis/EsmereoExplainerSheet";
 import { LivingEmerald } from "../../components/esmereogenesis/LivingEmerald";
 import StageChip from "../../components/esmereogenesis/StageChip";
 import EsmereoThemeToggle from "../../components/esmereogenesis/EsmereoThemeToggle";
@@ -69,6 +71,7 @@ const EsmereogenesisHubPage = () => {
 
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [explainerOpen, setExplainerOpen] = useState(false);
 
   const confirmReset = () => {
     setResetConfirmOpen(false);
@@ -131,6 +134,16 @@ const EsmereogenesisHubPage = () => {
           </Box>
           <Switch checked={hapticEnabled} size="small" />
         </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setMenuAnchor(null);
+            setExplainerOpen(true);
+          }}
+          sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+        >
+          <HelpCircle size={18} />
+          <Typography variant="body2">¿Qué es Esmereogénesis?</Typography>
+        </MenuItem>
         {hasPlans && (
           <MenuItem
             onClick={() => {
@@ -149,6 +162,12 @@ const EsmereogenesisHubPage = () => {
           </MenuItem>
         )}
       </Menu>
+      <EsmereoExplainerSheet
+        open={explainerOpen}
+        onClose={() => setExplainerOpen(false)}
+        onStart={() => setExplainerOpen(false)}
+        theme={mode}
+      />
     </>
   );
 

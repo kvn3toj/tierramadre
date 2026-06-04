@@ -318,7 +318,7 @@ export function seedDemoPlans(items: TreasureItem[]): EsmereoPlan[] {
  * Real implementation would POST to a backend endpoint.
  */
 export async function simulateAbonoBackend(
-  delayMs = 800,
+  delayMs = 300,
   shouldFail = false,
 ): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, delayMs));
