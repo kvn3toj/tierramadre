@@ -12,11 +12,13 @@
  * different a11y code paths for what should be the same UX.
  */
 import React from "react";
-import { Box, Drawer, IconButton, alpha } from "@mui/material";
+import { Box, Dialog, Drawer, IconButton, alpha } from "@mui/material";
 import { X } from "lucide-react";
 import { emeraldCore } from "../../design-system/tokens/colors";
 import { meshGradients } from "../../design-system/tokens/gradients";
 import { blackAlpha } from "../../design-system/utils/colorUtils";
+import { useEsmereoBp } from "./useEsmereoBp";
+import "./boveda.css";
 
 export interface BottomSheetShellProps {
   open: boolean;
@@ -31,6 +33,10 @@ export interface BottomSheetShellProps {
   hideCloseButton?: boolean;
   /** Override the close-button aria-label (default "Cerrar"). */
   closeLabel?: string;
+  /** Bóveda re-skin: paint the paper with the feature `--sheet-bg` + CSS vars. */
+  boveda?: boolean;
+  /** Feature theme for the Bóveda surface (default dark). */
+  bovedaTheme?: "light" | "dark";
   children: React.ReactNode;
 }
 
@@ -42,8 +48,102 @@ export const BottomSheetShell: React.FC<BottomSheetShellProps> = ({
   hideHandle = false,
   hideCloseButton = false,
   closeLabel = "Cerrar",
+  boveda = false,
+  bovedaTheme = "dark",
   children,
 }) => {
+  // Literal Bóveda sheet surface (the prototype's --sheet-bg). Painted directly
+  // on the paper so we DON'T put `.bov-root` on it — that class forces
+  // `position: relative` and would clobber the Drawer paper's positioning. The
+  // CSS vars instead live on the inner content Box (already position:relative).
+  const isLight = bovedaTheme === "light";
+  const sheetBg = boveda
+    ? isLight
+      ? "linear-gradient(180deg, #FFFFFF, #EAEFF1 72%)"
+      : "linear-gradient(180deg, #0c1a14, #060f0b 70%)"
+    : meshGradients.emerald;
+  const sheetBorder = boveda
+    ? isLight
+      ? "1px solid #DCE3E5"
+      : "1px solid rgba(255,255,255,0.1)"
+    : undefined;
+  const sheetShadow = boveda
+    ? isLight
+      ? "0 -18px 48px rgba(54,74,80,0.20)"
+      : "0 -24px 60px rgba(0,0,0,0.6)"
+    : `0 -16px 40px ${blackAlpha(0.45)}`;
+
+  const bp = useEsmereoBp();
+  // Bóveda sheets become centered modals from iPad up (spec §5.2 / §7).
+  const asModal = boveda && bp !== "mobile";
+
+  const inner = (
+    <Box
+      {...(boveda ? { className: "bov-root", "data-theme": bovedaTheme } : {})}
+      sx={{ position: "relative", p: 3, pb: 4, background: "transparent" }}
+    >
+      {!hideHandle && !asModal && (
+        <Box
+          aria-hidden
+          sx={{
+            width: 44,
+            height: 4,
+            borderRadius: 2,
+            bgcolor: boveda
+              ? "var(--ink-faint)"
+              : alpha(emeraldCore.primary, 0.25),
+            mx: "auto",
+            mb: 2,
+          }}
+        />
+      )}
+      {!hideCloseButton && (
+        <IconButton
+          onClick={onClose}
+          aria-label={closeLabel}
+          sx={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            color: boveda ? "var(--ink-soft)" : "text.secondary",
+          }}
+        >
+          <X size={20} />
+        </IconButton>
+      )}
+      {children}
+    </Box>
+  );
+
+  if (asModal) {
+    return (
+      <Dialog
+        open={open}
+        onClose={onClose}
+        keepMounted
+        aria-labelledby={ariaLabelledBy}
+        PaperProps={{
+          elevation: 0,
+          sx: {
+            m: 2,
+            width: "100%",
+            maxWidth: Math.min(maxWidth, 520),
+            maxHeight: "90vh",
+            borderRadius: "28px",
+            background: sheetBg,
+            border: sheetBorder,
+            overflowY: "auto",
+            boxShadow: isLight
+              ? "0 40px 110px -30px rgba(40,60,66,0.45)"
+              : "0 40px 110px -30px rgba(0,0,0,0.7)",
+          },
+        }}
+      >
+        {inner}
+      </Dialog>
+    );
+  }
+
   return (
     <Drawer
       anchor="bottom"
@@ -59,45 +159,18 @@ export const BottomSheetShell: React.FC<BottomSheetShellProps> = ({
           maxWidth,
           maxHeight: "calc(100vh - env(safe-area-inset-top, 0px) - 24px)",
           borderRadius: "24px 24px 0 0",
-          background: meshGradients.emerald,
-          backgroundColor: emeraldCore.dark,
+          background: sheetBg,
+          backgroundColor: boveda ? undefined : emeraldCore.dark,
+          border: sheetBorder,
+          borderBottom: boveda ? "none" : undefined,
           overflowY: "auto",
           overscrollBehavior: "contain",
           pb: "env(safe-area-inset-bottom, 0px)",
-          boxShadow: `0 -16px 40px ${blackAlpha(0.45)}`,
+          boxShadow: sheetShadow,
         },
       }}
     >
-      <Box sx={{ position: "relative", p: 3, pb: 4 }}>
-        {!hideHandle && (
-          <Box
-            aria-hidden
-            sx={{
-              width: 44,
-              height: 4,
-              borderRadius: 2,
-              bgcolor: alpha(emeraldCore.primary, 0.25),
-              mx: "auto",
-              mb: 2,
-            }}
-          />
-        )}
-        {!hideCloseButton && (
-          <IconButton
-            onClick={onClose}
-            aria-label={closeLabel}
-            sx={{
-              position: "absolute",
-              top: 12,
-              right: 12,
-              color: "text.secondary",
-            }}
-          >
-            <X size={20} />
-          </IconButton>
-        )}
-        {children}
-      </Box>
+      {inner}
     </Drawer>
   );
 };

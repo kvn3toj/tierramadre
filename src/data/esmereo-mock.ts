@@ -9,11 +9,32 @@ import type {
   AporteType,
   DurationMonths,
   EsmereoPlan,
+  EsmereoStage,
+  EsmereoState,
   ProductSnapshot,
 } from "../types/esmereogenesis";
 import type { TreasureItem } from "../types";
 
 const MS_IN_WEEK = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Map a 0..1 progress (and optional plan state) to a Bóveda growth stage.
+ * Thresholds per the handoff spec §4: 0 → semilla, 1–24% → brote,
+ * 25–69% → creciendo, 70–99% → radiante, 100% → eclosión. A completed/claimed
+ * state forces "eclosion" even if float rounding lands just under 100%.
+ */
+export function stageForProgress(
+  progress: number,
+  state?: EsmereoState,
+): EsmereoStage {
+  if (state === "completed" || state === "claimed") return "eclosion";
+  const pct = Math.max(0, Math.min(1, progress)) * 100;
+  if (pct <= 0) return "semilla";
+  if (pct < 25) return "brote";
+  if (pct < 70) return "creciendo";
+  if (pct < 100) return "radiante";
+  return "eclosion";
+}
 
 /** Returns the ISO timestamp of the Monday 00:00 of the week containing `date`. */
 export function weekStartISO(
@@ -43,6 +64,9 @@ export function snapshotProduct(item: TreasureItem): ProductSnapshot {
     precioCOP: item.precioCOP,
     peso: item.peso,
     color: item.color,
+    // Cut/shape drives the Esmereogénesis cut-character; falls back to photo
+    // when absent or unmapped.
+    corte: item.talla?.trim() || undefined,
   };
 }
 

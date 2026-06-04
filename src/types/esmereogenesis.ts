@@ -15,6 +15,19 @@ export type EsmereoState =
   | "completed" // 100% reached
   | "claimed"; // user requested asesor contact
 
+/**
+ * Bóveda growth stage — drives the gem's brightness/particle density/root
+ * extent and a playful badge label. Derived from progress via stageForProgress().
+ * Note: ASCII "eclosion" matches the AbonoPhase member; the accented "Eclosión"
+ * label is rendered from the badge map, not this union value.
+ */
+export type EsmereoStage =
+  | "semilla" // 0 — seeded/dormant
+  | "brote" // 1–24%
+  | "creciendo" // 25–69%
+  | "radiante" // 70–99%
+  | "eclosion"; // 100% — claim-ready
+
 export type DurationMonths = 3 | 6 | 9 | 12;
 
 export type AporteType = "suggested" | "free";
@@ -26,6 +39,9 @@ export interface ProductSnapshot {
   precioCOP: number;
   peso: string | number;
   color: string;
+  /** Cut / shape (from TreasureItem.talla). Selects the Esmereogénesis
+   *  cut-character art; optional so legacy persisted plans still load. */
+  corte?: string;
 }
 
 export interface Aporte {

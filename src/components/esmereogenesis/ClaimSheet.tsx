@@ -27,6 +27,7 @@ import { emeraldCore, goldAccent } from "../../design-system/tokens/colors";
 import { emeraldGradients } from "../../design-system/tokens/gradients";
 import { whiteAlpha } from "../../design-system/utils/colorUtils";
 import { BottomSheetShell } from "./BottomSheetShell";
+import { useEsmereoTheme } from "../../contexts/EsmereoThemeContext";
 
 interface ClaimSheetProps {
   open: boolean;
@@ -41,6 +42,7 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({
 }) => {
   const { claimPlan } = useEsmereogenesis();
   const { track } = useTrackingDispatch();
+  const { mode } = useEsmereoTheme();
   const [phone, setPhone] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -98,6 +100,8 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({
       open={open}
       onClose={handleClose}
       ariaLabelledBy="esmereo-claim-title"
+      boveda
+      bovedaTheme={mode}
     >
       <AnimatePresence mode="wait">
         {!confirmed ? (
@@ -131,13 +135,13 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({
                 sx={{
                   fontFamily: '"Playfair Display", serif',
                   fontWeight: 600,
-                  color: emeraldCore.dark,
+                  color: "var(--ink)",
                   mb: 0.5,
                 }}
               >
                 Reclamar tu Esmeralda
               </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              <Typography variant="body2" sx={{ color: "var(--ink-soft)" }}>
                 Tu <strong>{productName}</strong> está lista. Un asesor de
                 Tierra Madre coordinará contigo la entrega y certificación.
               </Typography>
@@ -161,7 +165,22 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 2,
-                    bgcolor: whiteAlpha(0.5),
+                    bgcolor: "var(--surface)",
+                    color: "var(--ink)",
+                    "& fieldset": { borderColor: "var(--line)" },
+                    "&:hover fieldset": { borderColor: "var(--accent-line)" },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "var(--em-bright)",
+                    },
+                  },
+                  "& .MuiInputLabel-root": { color: "var(--ink-soft)" },
+                  "& .MuiInputLabel-root.Mui-focused": {
+                    color: "var(--em-bright)",
+                  },
+                  "& .MuiFormHelperText-root": { color: "var(--ink-faint)" },
+                  "& .MuiOutlinedInput-input::placeholder": {
+                    color: "var(--ink-faint)",
+                    opacity: 1,
                   },
                 }}
               />
@@ -169,7 +188,7 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({
                 variant="caption"
                 sx={{
                   display: "block",
-                  color: "text.secondary",
+                  color: "var(--ink-soft)",
                   mt: 1,
                   textAlign: "center",
                 }}
@@ -254,7 +273,7 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({
                 sx={{
                   fontFamily: '"Playfair Display", serif',
                   fontWeight: 600,
-                  color: emeraldCore.dark,
+                  color: "var(--ink)",
                   mb: 1,
                 }}
               >
@@ -262,7 +281,7 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({
               </Typography>
               <Typography
                 variant="body1"
-                sx={{ color: "text.secondary", mb: 3, lineHeight: 1.6 }}
+                sx={{ color: "var(--ink-soft)", mb: 3, lineHeight: 1.6 }}
               >
                 Tu asesor de Tierra Madre te contactará pronto para coordinar la
                 entrega de tu <strong>{productName}</strong>.
@@ -272,7 +291,7 @@ export const ClaimSheet: React.FC<ClaimSheetProps> = ({
                 variant="outlined"
                 size="large"
                 sx={{
-                  color: emeraldCore.dark,
+                  color: "var(--ink)",
                   borderColor: alpha(emeraldCore.primary, 0.4),
                   py: 1.25,
                   px: 4,

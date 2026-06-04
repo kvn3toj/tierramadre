@@ -222,8 +222,10 @@ export const EsmereogenesisProvider: React.FC<{ children: ReactNode }> = ({
       if (!existing) {
         throw new Error(`Plan ${planId} not found`);
       }
-      if (existing.state === "claimed") {
-        throw new Error(`Plan ${planId} already claimed`);
+      if (existing.state === "claimed" || existing.state === "completed") {
+        // A finished plan never accepts more aportes (guards races / direct calls;
+        // the UI already swaps the water CTA for "Reclamar" at 100%).
+        throw new Error(`Plan ${planId} already ${existing.state}`);
       }
 
       // Simulate backend processing
@@ -267,7 +269,7 @@ export const EsmereogenesisProvider: React.FC<{ children: ReactNode }> = ({
       log.info("Aporte added", {
         planId,
         amountCOP,
-        progress: newTotal / existing.targetCOP,
+        progress: existing.targetCOP > 0 ? newTotal / existing.targetCOP : 1,
         justCompleted,
         graceApplied,
       });
