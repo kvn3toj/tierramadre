@@ -1,26 +1,31 @@
 /**
- * EsmereogenesisCTA
+ * EsmereogenesisCTA — the premium product-page entry point (Bóveda).
  *
- * Special call-to-action injected into the product detail page that lets the
- * user start (or continue) an Esmereogénesis plan rooted on the current item.
+ *   - New item → Concepto / Precio·duración variant toggle (persisted) + a
+ *     premium emerald card that opens the "¿Qué es Esmereogénesis?" explainer.
+ *   - Active plan → deep-links to its garden ("Continuar · X%").
+ *   - Completed plan → deep-links ("Reclamada / Adquirida").
  *
- * Behavior:
- *   - No active plan → opens EsmereoCreationSheet
- *   - Active plan → navigates to /esmereogenesis/:planId
- *   - Completed plan → navigates to plan with "Reclamada" badge
+ * Rendered on the product detail page (no EsmereoThemeProvider), so it wraps in
+ * a vars-only `.bov-root` keyed to the GLOBAL theme to match the page.
  */
 
-import React, { useState } from "react";
-import { Box, Typography, alpha } from "@mui/material";
-import { motion } from "framer-motion";
-import { Sparkles, ArrowRight, Sprout, HandHeart } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ChevronRight, Info } from "lucide-react";
 import type { TreasureItem } from "../../types";
 import { useEsmereogenesis } from "../../contexts/EsmereogenesisContext";
-import { EsmereoCreationSheet } from "./EsmereoCreationSheet";
-import { emeraldCore, goldAccent } from "../../design-system/tokens/colors";
-import { whiteAlpha } from "../../design-system/utils/colorUtils";
+import { useThemeMode } from "../../contexts/ThemeContext";
+import { useTrackingDispatch } from "../../contexts/TrackingContext";
 import { useCurrencyFormat } from "../../contexts/CurrencyContext";
+import { calcWeeklySuggested } from "../../data/esmereo-mock";
+import { STORAGE_KEYS } from "../../constants/storage-keys";
+import { EsmereoCreationSheet } from "./EsmereoCreationSheet";
+import EsmereoExplainerSheet from "./EsmereoExplainerSheet";
+import { LivingEmerald } from "./LivingEmerald";
+import "./boveda.css";
+
+type CtaVariant = "concepto" | "precio";
 
 interface EsmereogenesisCTAProps {
   product: TreasureItem;
@@ -28,14 +33,63 @@ interface EsmereogenesisCTAProps {
   disabled?: boolean;
 }
 
-export const EsmereogenesisCTA: React.FC<EsmereogenesisCTAProps> = ({
+function CtaPill({
+  children,
+  gold,
+}: {
+  children: React.ReactNode;
+  gold?: boolean;
+}) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        padding: "4px 9px",
+        borderRadius: 999,
+        fontSize: 10.5,
+        fontWeight: 600,
+        background: gold ? "var(--accent-bg)" : "var(--surface-2)",
+        border: `1px solid ${gold ? "var(--accent-line-strong)" : "var(--hairline)"}`,
+        color: gold ? "var(--gold-bright)" : "var(--ink-soft)",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+export const EsmereogenesisCTA = ({
   product,
   disabled,
-}) => {
+}: EsmereogenesisCTAProps) => {
   const navigate = useNavigate();
+  const { mode } = useThemeMode();
   const { getActivePlanForItem, getLatestPlanForItem } = useEsmereogenesis();
   const { formatCurrency } = useCurrencyFormat();
+  const { track } = useTrackingDispatch();
   const [creationOpen, setCreationOpen] = useState(false);
+  const [explainerOpen, setExplainerOpen] = useState(false);
+  const [variant, setVariantState] = useState<CtaVariant>(() => {
+    try {
+      return (
+        (localStorage.getItem(STORAGE_KEYS.BOVEDA_CTA_VARIANT) as CtaVariant) ||
+        "concepto"
+      );
+    } catch {
+      return "concepto";
+    }
+  });
+  const setVariant = (v: CtaVariant) => {
+    setVariantState(v);
+    try {
+      localStorage.setItem(STORAGE_KEYS.BOVEDA_CTA_VARIANT, v);
+    } catch {
+      /* private mode — non-fatal */
+    }
+    track("esmereo_cta_variant_toggled", { variant: v });
+  };
 
   const activePlan = getActivePlanForItem(product.item);
   const latestPlan = getLatestPlanForItem(product.item);
@@ -45,174 +99,284 @@ export const EsmereogenesisCTA: React.FC<EsmereogenesisCTAProps> = ({
     (latestPlan.state === "completed" || latestPlan.state === "claimed")
       ? latestPlan
       : null;
-
-  const progress = activePlan
-    ? activePlan.totalAbonadoCOP / activePlan.targetCOP
-    : 0;
+  const isNew = !activePlan && !completed;
 
   if (disabled) return null;
 
-  const handleClick = () => {
+  const months = 6;
+  const perWeek = calcWeeklySuggested(product.precioCOP, months);
+  const activeProgress = activePlan
+    ? activePlan.totalAbonadoCOP / activePlan.targetCOP
+    : 0.5;
+
+  const handleOpen = () => {
     if (activePlan) {
       navigate(`/esmereogenesis/${activePlan.id}`);
-    } else if (completed) {
-      navigate(`/esmereogenesis/${completed.id}`);
-    } else {
-      setCreationOpen(true);
+      return;
     }
+    if (completed) {
+      navigate(`/esmereogenesis/${completed.id}`);
+      return;
+    }
+    setExplainerOpen(true);
+    track("esmereo_context_sheet_opened", { itemId: product.item });
   };
 
-  let icon: React.ReactNode = <Sparkles size={20} />;
-  let title = "Esmereogénesis";
-  let subtitle = "Adquiérela ahorrando con propósito · No es crédito";
-  let progressBadge: React.ReactNode = null;
-
+  // Card copy per state.
+  let title: React.ReactNode = (
+    <>
+      {variant === "concepto" && (
+        <span style={{ color: "var(--gold-bright)" }}>✦ </span>
+      )}
+      Esmereógenesis
+    </>
+  );
+  let subtitle = "Hazla tuya, ahorrando con propósito";
+  let ariaLabel = "Esmereógenesis · conoce cómo funciona";
   if (activePlan) {
-    icon = <Sprout size={20} />;
     title = "Continuar Esmereogénesis";
     subtitle = `Ya has aportado ${formatCurrency(activePlan.totalAbonadoCOP)}`;
-    progressBadge = (
-      <Box
-        sx={{
-          ml: "auto",
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 0.5,
-          background: whiteAlpha(0.2),
-          color: "#FFFFFF",
-          px: 1,
-          py: 0.5,
-          borderRadius: 999,
-          fontWeight: 700,
-          fontSize: 13,
-          flexShrink: 0,
-        }}
-      >
-        {Math.round(progress * 100)}%
-      </Box>
-    );
+    ariaLabel = `Continuar Esmereogénesis · ${Math.round(activeProgress * 100)}%`;
   } else if (completed) {
-    icon = <HandHeart size={20} />;
     title =
       completed.state === "claimed"
         ? "Reclamada · ver detalles"
         : "Adquirida · reclamar";
     subtitle = "Tu Esmereogénesis ha cobrado vida";
+    ariaLabel = String(title);
   }
 
   return (
-    <>
-      {/* Visual stance: glassy emerald-tinted surface with a gold breathing
-          accent — distinct enough from the primary "Agregar a Selección"
-          (solid emerald gradient) so they read as siblings, not rivals. */}
-      <Box
-        component={motion.button}
-        onClick={handleClick}
-        type="button"
-        whileHover={{ y: -2 }}
-        whileTap={{ scale: 0.99 }}
-        transition={{ type: "spring", stiffness: 280, damping: 20 }}
-        aria-label={title}
-        sx={{
-          position: "relative",
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
-          width: "100%",
-          minHeight: 60,
-          py: 1.25,
-          px: 2,
-          borderRadius: 2,
-          border: `1px solid ${alpha(goldAccent.primary, 0.45)}`,
-          color: "#FFFFFF",
-          background: `linear-gradient(135deg, ${alpha(emeraldCore.dark, 0.92)} 0%, ${alpha(emeraldCore.primary, 0.85)} 60%, ${alpha(emeraldCore.dark, 0.92)} 100%)`,
-          cursor: "pointer",
-          textAlign: "left",
-          font: "inherit",
-          overflow: "hidden",
-          boxShadow: `0 8px 22px ${alpha(emeraldCore.dark, 0.22)}, 0 0 0 1px ${alpha(goldAccent.primary, 0.08)} inset`,
-          "&:focus-visible": {
-            outline: `2px solid ${goldAccent.primary}`,
-            outlineOffset: 2,
-          },
-          "&:before": {
-            content: '""',
-            position: "absolute",
-            inset: 0,
-            background: `linear-gradient(120deg, ${alpha(goldAccent.primary, 0)} 0%, ${alpha(goldAccent.primary, 0.18)} 50%, ${alpha(goldAccent.primary, 0)} 100%)`,
-            transform: "translateX(-100%)",
-            animation: "esmereoShine 6s ease-in-out infinite",
-            pointerEvents: "none",
-          },
-          "@keyframes esmereoShine": {
-            "0%, 35%": { transform: "translateX(-100%)" },
-            "70%": { transform: "translateX(100%)" },
-            "100%": { transform: "translateX(100%)" },
-          },
-          "@media (prefers-reduced-motion: reduce)": {
-            "&:before": { animation: "none", display: "none" },
-          },
-        }}
-      >
-        <Box
-          component={motion.span}
-          animate={{ scale: [1, 1.06, 1] }}
-          transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
-          sx={{
-            width: 36,
-            height: 36,
-            borderRadius: "50%",
-            display: "inline-flex",
+    <div className="bov-root" data-theme={mode}>
+      {/* variant toggle (new plans only) */}
+      {isNew && (
+        <div
+          style={{
+            display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            background: `radial-gradient(circle, ${alpha(goldAccent.primary, 0.35)} 0%, ${alpha(goldAccent.primary, 0)} 70%)`,
-            color: goldAccent.light,
-            flexShrink: 0,
-            boxShadow: `0 0 12px ${alpha(goldAccent.primary, 0.45)}`,
+            justifyContent: "space-between",
+            marginBottom: 11,
           }}
         >
-          {icon}
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            variant="subtitle2"
-            sx={{
-              fontWeight: 700,
-              color: "inherit",
-              lineHeight: 1.2,
-              letterSpacing: 0.2,
+          <span
+            style={{
+              fontSize: 8.5,
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              color: "var(--ink-faint)",
+              fontWeight: 600,
+            }}
+          >
+            Variante del CTA
+          </span>
+          <div
+            style={{
+              display: "flex",
+              background: "var(--surface)",
+              border: "1px solid var(--hairline)",
+              borderRadius: 999,
+              padding: 3,
+              gap: 2,
+            }}
+          >
+            {(
+              [
+                ["concepto", "Concepto"],
+                ["precio", "Precio · duración"],
+              ] as [CtaVariant, string][]
+            ).map(([v, l]) => {
+              const on = variant === v;
+              return (
+                <button
+                  key={v}
+                  className="tap"
+                  onClick={() => setVariant(v)}
+                  aria-pressed={on}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    whiteSpace: "nowrap",
+                    border: "none",
+                    cursor: "pointer",
+                    background: on
+                      ? "linear-gradient(180deg, var(--em-bright), var(--em-deep))"
+                      : "transparent",
+                    color: on ? "#fff" : "var(--ink-faint)",
+                    boxShadow: on
+                      ? "inset 0 0 0 1px var(--accent-line-strong)"
+                      : "none",
+                  }}
+                >
+                  {l}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* premium emerald CTA */}
+      <button
+        className="tap"
+        onClick={handleOpen}
+        aria-label={ariaLabel}
+        style={{
+          width: "100%",
+          textAlign: "left",
+          borderRadius: 22,
+          padding: "15px 16px",
+          position: "relative",
+          overflow: "hidden",
+          background:
+            "linear-gradient(135deg, rgba(14,124,90,0.26), rgba(11,92,70,0.08) 70%)",
+          border: "1px solid var(--cta-border)",
+          boxShadow: "var(--cta-glow)",
+          display: "flex",
+          alignItems: "center",
+          gap: 13,
+          cursor: "pointer",
+        }}
+      >
+        <div
+          className="anim-loop reduced-hide"
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: "-40% -10%",
+            background:
+              "conic-gradient(from 0deg, transparent 0deg, rgba(248,250,247,0.06) 30deg, transparent 70deg, transparent 360deg)",
+            animation: "bovSheen 18s linear infinite",
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          style={{
+            width: 56,
+            height: 56,
+            flexShrink: 0,
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <LivingEmerald
+            imageSrc={product.imagen}
+            corte={product.talla}
+            progress={activeProgress}
+            state="growing"
+            size={56}
+            showRing={false}
+            showBeam={false}
+            isPulsing={false}
+          />
+        </div>
+        <div style={{ flex: 1, position: "relative", zIndex: 1, minWidth: 0 }}>
+          <div
+            className="serif"
+            style={{
+              fontSize: 20,
+              lineHeight: 1.05,
+              color: "var(--ink)",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
             }}
           >
             {title}
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{
-              color: whiteAlpha(0.78),
-              display: "block",
+          </div>
+          <div
+            style={{
+              fontSize: 12.5,
+              color: "var(--ink-soft)",
+              marginTop: 4,
+              lineHeight: 1.35,
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
             }}
           >
             {subtitle}
-          </Typography>
-        </Box>
-        {progressBadge}
-        <Box sx={{ color: whiteAlpha(0.85), flexShrink: 0 }}>
-          <ArrowRight size={18} />
-        </Box>
-      </Box>
+          </div>
+          {isNew && variant === "precio" && (
+            <div
+              style={{
+                display: "flex",
+                gap: 6,
+                marginTop: 9,
+                flexWrap: "wrap",
+              }}
+            >
+              <CtaPill gold>{formatCurrency(perWeek)} / sem</CtaPill>
+              <CtaPill>{months} meses</CtaPill>
+              <CtaPill>sin intereses</CtaPill>
+            </div>
+          )}
+          {activePlan && (
+            <div
+              style={{
+                marginTop: 8,
+                height: 5,
+                borderRadius: 999,
+                background: "var(--surface-2)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${Math.round(activeProgress * 100)}%`,
+                  background:
+                    "linear-gradient(90deg, var(--em-bright), var(--gold))",
+                  borderRadius: 999,
+                }}
+              />
+            </div>
+          )}
+        </div>
+        <span
+          style={{
+            position: "relative",
+            zIndex: 1,
+            color: "var(--gold)",
+            flexShrink: 0,
+          }}
+        >
+          <ChevronRight size={18} strokeWidth={2} />
+        </span>
+      </button>
 
+      {isNew && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 7,
+            marginTop: 11,
+            color: "var(--ink-faint)",
+          }}
+        >
+          <Info size={13} strokeWidth={1.5} />
+          <span style={{ fontSize: 11 }}>Toca para conocer cómo funciona</span>
+        </div>
+      )}
+
+      <EsmereoExplainerSheet
+        open={explainerOpen}
+        onClose={() => setExplainerOpen(false)}
+        onStart={() => {
+          setExplainerOpen(false);
+          window.setTimeout(() => setCreationOpen(true), 260);
+        }}
+        theme={mode}
+      />
       <EsmereoCreationSheet
         open={creationOpen}
         onClose={() => setCreationOpen(false)}
         product={product}
       />
-    </>
+    </div>
   );
 };
 
