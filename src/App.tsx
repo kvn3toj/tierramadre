@@ -27,6 +27,7 @@ import { useLanguage } from "./contexts/LanguageContext";
 import UpdateToast from "./components/pwa/UpdateToast";
 import { usePWAUpdate } from "./hooks/usePWAUpdate";
 import { AppShellProviders } from "./contexts/AppShellProviders";
+import { EsmereoThemeProvider } from "./contexts/EsmereoThemeContext";
 import { AchievementToast } from "./components/gamification";
 import { useViewportHeight } from "./hooks/useViewportHeight";
 import { lazyWithRetry } from "./utils/lazyWithRetry";
@@ -443,21 +444,25 @@ function AppContent() {
             }
           />
 
-          {/* Esmereogénesis - savings-with-purpose method */}
+          {/* Esmereogénesis - savings-with-purpose method (Bóveda) */}
           <Route
             path="/esmereogenesis"
             element={
-              <Suspense fallback={<LocalizedLoading messageKey="general" />}>
-                <EsmereogenesisHubPage />
-              </Suspense>
+              <EsmereoThemeProvider>
+                <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+                  <EsmereogenesisHubPage />
+                </Suspense>
+              </EsmereoThemeProvider>
             }
           />
           <Route
             path="/esmereogenesis/:planId"
             element={
-              <Suspense fallback={<LocalizedLoading messageKey="general" />}>
-                <EsmereogenesisGardenPage />
-              </Suspense>
+              <EsmereoThemeProvider>
+                <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+                  <EsmereogenesisGardenPage />
+                </Suspense>
+              </EsmereoThemeProvider>
             }
           />
 

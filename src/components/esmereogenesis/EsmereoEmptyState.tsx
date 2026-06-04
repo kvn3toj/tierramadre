@@ -1,174 +1,118 @@
 /**
- * EsmereoEmptyState
- *
- * Shown in the hub when the user has no Esmereogénesis plans yet.
- * Plays a gentle floating-seed loop while inviting the user to explore the catalog.
+ * EsmereoEmptyState — Bóveda "seed" state shown in the Hub when there are no
+ * plans. A dormant living emerald in a soft beam invites the user to the
+ * catalogue, with a discreet demo-garden loader. Renders inside the Hub's
+ * `.bov-root`, so it reads in whichever feature theme is active.
  */
 
-import React from 'react';
-import { Box, Button, Typography, alpha } from '@mui/material';
-import { motion } from 'framer-motion';
-import { Sprout, Compass } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
-import { emeraldGradients, radialGradients } from '../../design-system/tokens/gradients';
-import { useEsmereogenesis } from '../../contexts/EsmereogenesisContext';
-import { useTreasure } from '../../hooks/useTreasure';
+import { useNavigate } from "react-router-dom";
+import { useEsmereogenesis } from "../../contexts/EsmereogenesisContext";
+import { useTrackingDispatch } from "../../contexts/TrackingContext";
+import { useTreasure } from "../../hooks/useTreasure";
+import { LivingEmerald } from "./LivingEmerald";
+import { Kicker, WaterButton } from "./BovedaUI";
 
 interface EsmereoEmptyStateProps {
   onSeedDemo?: () => void;
 }
 
-export const EsmereoEmptyState: React.FC<EsmereoEmptyStateProps> = ({ onSeedDemo }) => {
+export const EsmereoEmptyState = ({ onSeedDemo }: EsmereoEmptyStateProps) => {
   const navigate = useNavigate();
   const { seedDemo } = useEsmereogenesis();
   const { treasure } = useTreasure();
+  const { track } = useTrackingDispatch();
 
   const handleSeedDemo = () => {
     const created = seedDemo(treasure);
     onSeedDemo?.();
-    if (created.length === 0) return;
-    // Optional auto-navigate to first demo plan would be nice but keep user in hub.
+    track("esmereo_demo_seeded", { count: created.length });
   };
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        textAlign: 'center',
-        py: { xs: 6, md: 8 },
-        px: 3,
-        maxWidth: 480,
-        mx: 'auto',
+    <div
+      className="focus-col"
+      style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "0 30px 48px",
+        textAlign: "center",
+        minHeight: 0,
+        position: "relative",
+        zIndex: 2,
       }}
     >
-      <Box
-        sx={{
-          position: 'relative',
-          width: 200,
-          height: 200,
-          mb: 4,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {/* Halo */}
-        <Box
-          component={motion.div}
-          aria-hidden
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            borderRadius: '50%',
-            background: radialGradients.hoverGlow,
-            filter: 'blur(8px)',
+      <LivingEmerald
+        progress={0.02}
+        state="empty"
+        size={210}
+        showRing={false}
+        staged
+      />
+
+      <div style={{ marginTop: -10, position: "relative", zIndex: 3 }}>
+        <Kicker>Comienza tu génesis</Kicker>
+        <div
+          className="serif"
+          style={{
+            fontSize: 31,
+            lineHeight: 1.1,
+            marginTop: 12,
+            color: "var(--ink)",
           }}
-          animate={{ opacity: [0.4, 0.7, 0.4] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        {/* Floating seed */}
-        <Box
-          component={motion.div}
-          sx={{
-            width: 96,
-            height: 96,
-            borderRadius: '50%',
-            background: emeraldGradients.intense,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#FFFFFF',
-            boxShadow: `0 20px 40px ${alpha(emeraldCore.dark, 0.35)}, 0 0 30px ${alpha(emeraldCore.primary, 0.5)}`,
-          }}
-          animate={{ y: [0, -10, 0], rotate: [-3, 3, -3] }}
-          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <Sprout size={44} strokeWidth={1.5} />
-        </Box>
-      </Box>
-
-      <Typography
-        variant="h4"
-        sx={{
-          fontFamily: '"Playfair Display", serif',
-          fontWeight: 600,
-          color: emeraldCore.dark,
-          mb: 1,
-        }}
-      >
-        Tu jardín de esmeraldas espera
-      </Typography>
-
-      <Typography
-        variant="body1"
-        sx={{ color: 'text.secondary', mb: 4, lineHeight: 1.6, maxWidth: 380 }}
-      >
-        Esmereogénesis es un método de ahorro con propósito. Elige una esmeralda
-        del catálogo y comienza a darle vida con cada aporte que le dediques.
-      </Typography>
-
-      <Button
-        variant="contained"
-        onClick={() => navigate('/treasure')}
-        startIcon={<Compass size={18} />}
-        sx={{
-          background: emeraldGradients.intense,
-          color: '#FFFFFF',
-          py: 1.5,
-          px: 3,
-          minHeight: 48,
-          borderRadius: 2,
-          textTransform: 'none',
-          fontWeight: 600,
-          boxShadow: `0 12px 28px ${alpha(emeraldCore.dark, 0.3)}`,
-          '&:hover': { background: emeraldGradients.deep },
-          '&:active': { transform: 'scale(0.98)' },
-        }}
-      >
-        Explorar el catálogo
-      </Button>
-
-      <Box sx={{ mt: 3, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <Box
-          sx={{
-            height: 1,
-            width: 32,
-            bgcolor: alpha(emeraldCore.primary, 0.25),
+          Tu jardín de
+          <br />
+          esmeraldas espera
+        </div>
+        <p
+          style={{
+            fontSize: 13.5,
+            color: "var(--ink-soft)",
+            lineHeight: 1.6,
+            marginTop: 14,
+            maxWidth: 360,
           }}
-        />
-        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-          o
-        </Typography>
-        <Box
-          sx={{
-            height: 1,
-            width: 32,
-            bgcolor: alpha(emeraldCore.primary, 0.25),
-          }}
-        />
-      </Box>
+        >
+          Esmereogénesis es un método de ahorro con propósito. Elige una
+          esmeralda del catálogo y comienza a darle vida con cada aporte.
+        </p>
+      </div>
 
-      <Button
-        variant="text"
-        onClick={handleSeedDemo}
-        sx={{
-          mt: 2,
-          color: goldAccent.dark,
-          textTransform: 'none',
-          fontWeight: 600,
-          '&:hover': { bgcolor: alpha(goldAccent.primary, 0.08) },
+      <div
+        style={{
+          marginTop: 28,
+          width: "100%",
+          maxWidth: 340,
+          position: "relative",
+          zIndex: 3,
         }}
       >
-        Cargar jardín de demostración
-      </Button>
-
-      <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1, opacity: 0.7 }}>
-        (Solo para previsualizar la experiencia)
-      </Typography>
-    </Box>
+        <WaterButton
+          label="Explorar el catálogo"
+          onClick={() => navigate("/treasure")}
+        />
+        <button
+          className="tap"
+          onClick={handleSeedDemo}
+          style={{
+            width: "100%",
+            marginTop: 14,
+            padding: 6,
+            fontSize: 12.5,
+            color: "var(--ink-faint)",
+            letterSpacing: "0.03em",
+            textDecoration: "underline",
+            textUnderlineOffset: 3,
+            background: "none",
+          }}
+        >
+          Cargar jardín de demostración
+        </button>
+      </div>
+    </div>
   );
 };
 

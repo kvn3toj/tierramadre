@@ -17,6 +17,7 @@ import { X } from "lucide-react";
 import { emeraldCore } from "../../design-system/tokens/colors";
 import { meshGradients } from "../../design-system/tokens/gradients";
 import { blackAlpha } from "../../design-system/utils/colorUtils";
+import "./boveda.css";
 
 export interface BottomSheetShellProps {
   open: boolean;
@@ -31,6 +32,10 @@ export interface BottomSheetShellProps {
   hideCloseButton?: boolean;
   /** Override the close-button aria-label (default "Cerrar"). */
   closeLabel?: string;
+  /** Bóveda re-skin: paint the paper with the feature `--sheet-bg` + CSS vars. */
+  boveda?: boolean;
+  /** Feature theme for the Bóveda surface (default dark). */
+  bovedaTheme?: "light" | "dark";
   children: React.ReactNode;
 }
 
@@ -42,6 +47,8 @@ export const BottomSheetShell: React.FC<BottomSheetShellProps> = ({
   hideHandle = false,
   hideCloseButton = false,
   closeLabel = "Cerrar",
+  boveda = false,
+  bovedaTheme = "dark",
   children,
 }) => {
   return (
@@ -53,18 +60,25 @@ export const BottomSheetShell: React.FC<BottomSheetShellProps> = ({
       aria-labelledby={ariaLabelledBy}
       PaperProps={{
         elevation: 0,
+        // The paper itself is the `.bov-root`, so the content can read --sheet-bg,
+        // --ink, etc., and the sheet matches the prototype's surface exactly.
+        ...(boveda ? { className: "bov-root", "data-theme": bovedaTheme } : {}),
         sx: {
           mx: "auto",
           width: "100%",
           maxWidth,
           maxHeight: "calc(100vh - env(safe-area-inset-top, 0px) - 24px)",
           borderRadius: "24px 24px 0 0",
-          background: meshGradients.emerald,
-          backgroundColor: emeraldCore.dark,
+          background: boveda ? "var(--sheet-bg)" : meshGradients.emerald,
+          backgroundColor: boveda ? undefined : emeraldCore.dark,
+          border: boveda ? "1px solid var(--line)" : undefined,
+          borderBottom: boveda ? "none" : undefined,
           overflowY: "auto",
           overscrollBehavior: "contain",
           pb: "env(safe-area-inset-bottom, 0px)",
-          boxShadow: `0 -16px 40px ${blackAlpha(0.45)}`,
+          boxShadow: boveda
+            ? "var(--sheet-shadow)"
+            : `0 -16px 40px ${blackAlpha(0.45)}`,
         },
       }}
     >
@@ -76,7 +90,9 @@ export const BottomSheetShell: React.FC<BottomSheetShellProps> = ({
               width: 44,
               height: 4,
               borderRadius: 2,
-              bgcolor: alpha(emeraldCore.primary, 0.25),
+              bgcolor: boveda
+                ? "var(--ink-faint)"
+                : alpha(emeraldCore.primary, 0.25),
               mx: "auto",
               mb: 2,
             }}
@@ -90,7 +106,7 @@ export const BottomSheetShell: React.FC<BottomSheetShellProps> = ({
               position: "absolute",
               top: 12,
               right: 12,
-              color: "text.secondary",
+              color: boveda ? "var(--ink-soft)" : "text.secondary",
             }}
           >
             <X size={20} />

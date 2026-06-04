@@ -1,23 +1,12 @@
 /**
- * EsmereoPlanCard
- *
- * Compact representation of a single Esmereogénesis plan in the hub.
- * Shows the LivingEmerald in small size + ring + product name + progress.
+ * EsmereoPlanCard — Bóveda overview card for one plan in the Hub grid.
+ * A small living emerald (with its progress ring), the name, the % and a streak
+ * chip. Renders inside the Hub's `.bov-root` (consumes the feature CSS vars).
  */
 
-import React from "react";
-import { Box, Typography, alpha } from "@mui/material";
-import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Flame, Sparkles } from "lucide-react";
 import type { EsmereoPlan } from "../../types/esmereogenesis";
-import { emeraldCore, goldAccent } from "../../design-system/tokens/colors";
-import {
-  emeraldGradients,
-  goldGradients,
-  meshGradients,
-} from "../../design-system/tokens/gradients";
-import { whiteAlpha } from "../../design-system/utils/colorUtils";
 import { useCurrencyFormat } from "../../contexts/CurrencyContext";
 import { LivingEmerald } from "./LivingEmerald";
 
@@ -25,171 +14,120 @@ interface EsmereoPlanCardProps {
   plan: EsmereoPlan;
 }
 
-export const EsmereoPlanCard: React.FC<EsmereoPlanCardProps> = ({ plan }) => {
+export const EsmereoPlanCard = ({ plan }: EsmereoPlanCardProps) => {
   const navigate = useNavigate();
   const { formatCurrency } = useCurrencyFormat();
   const progress =
     plan.targetCOP > 0 ? plan.totalAbonadoCOP / plan.targetCOP : 0;
   const progressPct = Math.round(progress * 100);
   const isComplete = plan.state === "completed" || plan.state === "claimed";
-  // Strip the inventory "L:..." prefix so the gem name reads as a name, not a SKU.
   const productName = plan.productSnapshot.nombre
     .replace(/^L:.*?\s/, "")
     .replace(/^L:/, "")
     .trim();
-  // Prefer the user-given nickname when present — the product name still
-  // surfaces in the aria-label so SR users hear the source product too.
   const displayName = plan.nickname ?? productName;
 
   return (
-    <Box
-      component={motion.button}
-      onClick={() => navigate(`/esmereogenesis/${plan.id}`)}
+    <button
+      className="tap"
       type="button"
-      whileHover={{ y: -4 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      aria-label={`Abrir jardín de ${displayName}${
-        plan.nickname ? ` (${productName})` : ""
-      } · ${progressPct}% completo`}
-      sx={{
+      onClick={() => navigate(`/esmereogenesis/${plan.id}`)}
+      aria-label={`Abrir jardín de ${displayName}${plan.nickname ? ` (${productName})` : ""} · ${progressPct}% regada`}
+      style={{
         position: "relative",
-        background: meshGradients.emerald,
-        border: `1px solid ${alpha(emeraldCore.primary, 0.18)}`,
-        borderRadius: 3,
-        p: 2,
+        background: "var(--surface)",
+        border: "1px solid var(--hairline)",
+        borderRadius: 20,
+        padding: "14px 12px 16px",
         cursor: "pointer",
-        textAlign: "left",
-        font: "inherit",
-        color: "inherit",
-        boxShadow: `0 6px 18px ${alpha(emeraldCore.dark, 0.12)}`,
+        textAlign: "center",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 6,
         overflow: "hidden",
-        "&:hover": {
-          boxShadow: `0 10px 28px ${alpha(emeraldCore.dark, 0.22)}`,
-          borderColor: alpha(emeraldCore.primary, 0.35),
-        },
-        "&:focus-visible": {
-          outline: `2px solid ${emeraldCore.primary}`,
-          outlineOffset: 2,
-        },
+        color: "var(--ink)",
       }}
     >
-      <Box sx={{ display: "flex", justifyContent: "center", mb: 1.5 }}>
-        <LivingEmerald
-          imageSrc={plan.productSnapshot.imagen}
-          corte={plan.productSnapshot.corte}
-          progress={progress}
-          state={plan.state}
-          size="sm"
-          isPulsing={!isComplete}
-        />
-      </Box>
-
-      <Typography
-        variant="subtitle2"
-        sx={{
-          fontFamily: '"Playfair Display", serif',
-          fontWeight: 600,
-          color: emeraldCore.dark,
-          mb: 0.5,
-          textAlign: "center",
+      <LivingEmerald
+        imageSrc={plan.productSnapshot.imagen}
+        corte={plan.productSnapshot.corte}
+        progress={progress}
+        state={plan.state}
+        size={104}
+        showBeam={false}
+        isPulsing={!isComplete}
+      />
+      <div
+        className="serif"
+        style={{
+          fontSize: 15,
+          color: "var(--ink)",
+          whiteSpace: "nowrap",
           overflow: "hidden",
           textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
+          maxWidth: "100%",
         }}
       >
         {displayName}
-      </Typography>
-
-      <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
-        <Box
-          sx={{
-            height: 6,
-            width: "85%",
-            borderRadius: 999,
-            bgcolor: alpha(emeraldCore.primary, 0.1),
-            overflow: "hidden",
-          }}
-        >
-          <Box
-            sx={{
-              height: "100%",
-              width: `${progressPct}%`,
-              background: isComplete
-                ? goldGradients.medium
-                : emeraldGradients.intense,
-              transition: "width 0.6s ease-out",
-            }}
-          />
-        </Box>
-      </Box>
-
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 1,
-          fontSize: 12,
-        }}
-      >
-        <Typography
-          component="span"
-          variant="caption"
-          sx={{ color: emeraldCore.dark, fontWeight: 700 }}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span
+          style={{ fontSize: 13, fontWeight: 700, color: "var(--gold-bright)" }}
         >
           {progressPct}%
-        </Typography>
-        <Typography
-          component="span"
-          variant="caption"
-          sx={{ color: "text.secondary", flex: 1, textAlign: "right" }}
-        >
+        </span>
+        <span
+          style={{
+            width: 3,
+            height: 3,
+            borderRadius: "50%",
+            background: "var(--ink-faint)",
+          }}
+        />
+        <span style={{ fontSize: 11.5, color: "var(--ink-soft)" }}>
           {formatCurrency(plan.totalAbonadoCOP)}
-        </Typography>
-      </Box>
-
+        </span>
+      </div>
       {plan.streak.currentWeeks > 0 && !isComplete && (
-        <Box
-          sx={{
-            display: "flex",
+        <span
+          style={{
+            display: "inline-flex",
             alignItems: "center",
-            justifyContent: "center",
-            gap: 0.5,
-            mt: 1,
-            color: goldAccent.dark,
+            gap: 4,
+            fontSize: 11,
+            color: "var(--gold)",
           }}
         >
-          <Flame size={12} />
-          <Typography variant="caption" sx={{ fontWeight: 600 }}>
-            {plan.streak.currentWeeks} sem
-          </Typography>
-        </Box>
+          <Flame size={11} fill="var(--gold)" stroke="var(--gold-bright)" />
+          {plan.streak.currentWeeks} sem
+        </span>
       )}
-
       {isComplete && (
-        <Box
-          sx={{
+        <span
+          style={{
             position: "absolute",
             top: 8,
             right: 8,
-            color: goldAccent.primary,
-            display: "flex",
+            display: "inline-flex",
             alignItems: "center",
-            gap: 0.25,
-            background: whiteAlpha(0.85),
+            gap: 3,
+            background: "var(--accent-bg)",
+            border: "1px solid var(--accent-line)",
             borderRadius: 999,
-            px: 0.75,
-            py: 0.25,
-            fontSize: 11,
+            padding: "2px 8px",
+            fontSize: 9.5,
             fontWeight: 700,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            color: "var(--gold-bright)",
           }}
         >
-          <Sparkles size={12} />
+          <Sparkles size={11} />
           Adquirida
-        </Box>
+        </span>
       )}
-    </Box>
+    </button>
   );
 };
 
