@@ -15,12 +15,13 @@ import { Box, Typography, alpha } from "@mui/material";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Droplet, Sparkles, Check } from "lucide-react";
 import { LivingEmerald } from "../LivingEmerald";
+import type { LivingEmeraldPhase } from "../LivingEmerald";
 import type { EsmereoPlan } from "../../../types/esmereogenesis";
+import "../boveda.css";
 import { useAbonoSequence } from "./useAbonoSequence";
 import { emeraldCore, goldAccent } from "../../../design-system/tokens/colors";
 import {
   emeraldGradients,
-  meshGradients,
   radialGradients,
 } from "../../../design-system/tokens/gradients";
 import { whiteAlpha } from "../../../design-system/utils/colorUtils";
@@ -191,11 +192,28 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
   const showEclosion =
     phase === "eclosion" || (phase === "release" && isCompletion);
 
+  // Map the ritual phase to the gem's own internal phase visuals (the prototype's
+  // drop / splash / bloom / count / celebrate), so the LivingEmerald brightens,
+  // ripples and blooms in sync with the takeover layers.
+  const gemPhase: LivingEmeraldPhase =
+    phase === "droplet"
+      ? "drop"
+      : phase === "wash" || phase === "reveal"
+        ? "splash"
+        : phase === "bloom"
+          ? "bloom"
+          : phase === "progress"
+            ? "count"
+            : phase === "confirm"
+              ? "celebrate"
+              : "idle";
+
   return (
     <AnimatePresence>
       {isVisible && (
         <Box
           component={motion.div}
+          className="bov-root"
           role="dialog"
           aria-label="Animación de aporte en curso. Toca para saltar."
           initial={{ opacity: 0 }}
@@ -207,7 +225,7 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
             position: "fixed",
             inset: 0,
             zIndex: 1500,
-            background: meshGradients.emerald,
+            background: "var(--app-bg)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -384,6 +402,7 @@ export const AbonoCinematic: React.FC<AbonoCinematicProps> = ({
                     : plan.state
                 }
                 size="lg"
+                phase={gemPhase}
                 isPulsing={false}
                 recentAporteAt={Date.now()}
               />
