@@ -318,9 +318,10 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
           {PRIMARY_TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
-            // Lucide icons: treasure (Gem), provider tabs (FileText, PlusCircle, Package)
+            // Custom SVG icons that accept size/color/strokeWidth (Lucide-compatible interface)
             const lucideIconIds = [
               "treasure",
+              "ambassadors",
               "provider-requests",
               "provider-submit",
               "provider-inventory",
