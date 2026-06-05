@@ -2,11 +2,13 @@ import { useId } from "react";
 import type { CSSProperties } from "react";
 
 /**
- * AmbassadorsGlobeIcon — V5 "Minimal Connections" globe.
- * Globe base + lat/lon grid + continent fills + route arcs radiating from
- * Colombia to NYC, London, Buenos Aires, Africa + city dots + Colombia heart.
- * Paths ported verbatim from the approved V5 Pencil frame (esmereo/esmereogenesis-v2.pen).
- * Lucide-compatible interface (size / color / strokeWidth) for IOSTabBar.
+ * AmbassadorsGlobeIcon — V1 "Hub Routes" globe.
+ * Curved lat/lon grid + continents (stroke-only, always legible) + 5 route arcs
+ * from Colombia to NYC / London / Tokyo / Cape Town / Buenos Aires + city dots +
+ * Colombia heart.
+ * Paths ported verbatim from the V1 Pencil frame (esmereo/esmereogenesis-v2.pen).
+ * All elements use ONLY the `color` prop — no hardcoded hues — so the icon reads
+ * cleanly as white (active) or gray (inactive) in the IOSTabBar.
  * viewBox: 40×40.
  */
 const STROKE_SCALE = 1.15;
@@ -31,9 +33,7 @@ export default function AmbassadorsGlobeIcon({
   "aria-label": ariaLabel,
 }: AmbassadorsGlobeIconProps) {
   const rawId = useId();
-  const uid = rawId.replace(/[^a-zA-Z0-9]/g, "");
-  const clipId = `globe-clip-${uid}`;
-  const glowId = `globe-glow-${uid}`;
+  const clipId = `globe-${rawId.replace(/[^a-zA-Z0-9]/g, "")}`;
   const sw = strokeWidth * STROKE_SCALE;
 
   return (
@@ -54,10 +54,6 @@ export default function AmbassadorsGlobeIcon({
         <clipPath id={clipId}>
           <circle cx="20" cy="20" r="19.5" />
         </clipPath>
-        <radialGradient id={glowId} cx="50%" cy="55%" r="50%">
-          <stop offset="0%" stopColor={color} stopOpacity="0.2" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </radialGradient>
       </defs>
 
       {/* Globe base */}
@@ -65,94 +61,75 @@ export default function AmbassadorsGlobeIcon({
         cx="20"
         cy="20"
         r="19"
-        fill={color}
-        fillOpacity={0.05}
         stroke={color}
-        strokeOpacity={0.35}
-        strokeWidth={sw * 0.5}
+        strokeWidth={sw * 0.55}
+        fill={color}
+        fillOpacity={0.06}
       />
 
-      {/* Lat/lon grid — V5 orthographic-trimmed lines */}
+      {/* Curved lat/lon grid — V1 spherical arcs */}
       <path
         clipPath={`url(#${clipId})`}
-        d="M11.4 2.5l17.2 0m-21.1 2.5l25 0m-27.5 2.5l30 0m-31.7 2.5l33.4 0m-34.7 2.5l36 0m-36.8 2.5l37.6 0m-38.1 2.5l38.6 0m-38.8 2.5l39 0m-38.8 2.5l38.6 0m-38.1 2.5l37.6 0m-36.8 2.5l36 0m-34.7 2.5l33.4 0m-31.7 2.5l30 0m-27.5 2.5l25 0m-21.1 2.5l17.2 0m-26.1-26.1l0 17.2m2.5-21.1l0 25m2.5-27.5l0 30m2.5-31.7l0 33.4m2.5-34.7l0 36m2.5-36.8l0 37.6m2.5-38.1l0 38.6m2.5-38.8l0 39m2.5-38.8l0 38.6m2.5-38.1l0 37.6m2.5-36.8l0 36m2.5-34.7l0 33.4m2.5-31.7l0 30m2.5-27.5l0 25m2.5-21.1l0 17.2"
+        d="M2 20q18 2 36 0m-33-8q15 2 30 0m-30 16q15-2 30 0m-15-26q-2 18 0 36m-8-34q2 16 0 32m16-32q-2 16 0 32"
         stroke={color}
-        strokeWidth={sw * 0.12}
-        strokeOpacity={0.18}
+        strokeWidth={sw * 0.2}
+        strokeOpacity={0.3}
         strokeLinecap="butt"
       />
 
-      {/* Continents — South America, North America, Central America, Africa, Cuba */}
+      {/* Continents — stroke-only so they stay legible at any color */}
       <g
         clipPath={`url(#${clipId})`}
         fill={color}
-        fillOpacity={0.22}
+        fillOpacity={0.14}
         stroke={color}
-        strokeOpacity={0.4}
-        strokeWidth={sw * 0.28}
+        strokeOpacity={0.55}
+        strokeWidth={sw * 0.32}
       >
+        {/* South America */}
         <path d="M18.9 18.8l3.9-1.7 2.7.4 2 1.3 2.5 2.4 4.5 2.8 1 1.5-1 2.5-2 3.5-2.5 3-2.5 2-2.5 1.5-2.5.5-1-1-.7-2.5-1.3-8-1.5-3 0-2z" />
+        {/* North America */}
         <path d="M13.5 15.5l2-2-2-2-.5-1 2.5 0 3 1 2.5-3.5 2.5-5-3.5-1.5-6 1.5-4 3-2 3.5 1 4 3.5 1.5z" />
+        {/* Central America */}
         <path d="M13.5 15.5l2-1 3.5 4-2 1z" />
+        {/* Africa */}
         <path d="M34 14l4 2 1 6-2 7-3 2-2-4 1-6z" />
+        {/* Cuba */}
         <path d="M15.5 12.5l2.5-.5 1.5.5-.5.5-3 0z" />
       </g>
 
-      {/* Colombia glow */}
-      <circle
-        clipPath={`url(#${clipId})`}
-        cx="20"
-        cy="22"
-        r="6"
-        fill={`url(#${glowId})`}
-      />
-
-      {/* Route arcs from Colombia → NYC / London / Buenos Aires / Africa */}
+      {/* Route arcs from Colombia — V1: NYC / London / Tokyo / Cape Town / Buenos Aires */}
       <g
         clipPath={`url(#${clipId})`}
         fill="none"
         stroke={color}
         strokeLinecap="round"
+        strokeWidth={sw * 0.38}
       >
-        <path
-          d="M20.5 21q-5.5-8-8.5-12"
-          strokeWidth={sw * 0.35}
-          strokeOpacity={0.75}
-        />
-        <path
-          d="M20.5 21q7.5-10 11.5-14"
-          strokeWidth={sw * 0.35}
-          strokeOpacity={0.72}
-        />
-        <path
-          d="M20.5 21q-1.5 7 1.5 13"
-          strokeWidth={sw * 0.3}
-          strokeOpacity={0.55}
-        />
-        <path
-          d="M20.5 21q9.5-4 14.5-5"
-          strokeWidth={sw * 0.28}
-          strokeOpacity={0.5}
-        />
+        <path d="M20 19q-6-7-7-11" strokeOpacity={0.85} />
+        <path d="M20 19q6-14 10-10" strokeOpacity={0.82} />
+        <path d="M20 19q11-17 18-12" strokeOpacity={0.72} />
+        <path d="M20 19q10 1 16 8" strokeOpacity={0.65} />
+        <path d="M20 19q-3 6-1 11" strokeOpacity={0.6} />
       </g>
 
       {/* City dots at route endpoints */}
       <g clipPath={`url(#${clipId})`} fill={color}>
-        <circle cx="12" cy="9" r="1.1" fillOpacity={0.85} />
-        <circle cx="32" cy="7" r="1.1" fillOpacity={0.82} />
-        <circle cx="22" cy="34" r="0.9" fillOpacity={0.68} />
-        <circle cx="35" cy="16" r="0.85" fillOpacity={0.6} />
+        <circle cx="13" cy="8" r="1.1" fillOpacity={0.9} />
+        <circle cx="30" cy="9" r="1.0" fillOpacity={0.88} />
+        <circle cx="38" cy="7" r="0.9" fillOpacity={0.78} />
+        <circle cx="36" cy="27" r="0.9" fillOpacity={0.72} />
+        <circle cx="19" cy="30" r="0.9" fillOpacity={0.7} />
       </g>
 
-      {/* Colombia heart */}
+      {/* Colombia heart — the unmistakable focal point */}
       <path
         clipPath={`url(#${clipId})`}
         d="M21 24.5c-3-2.5-3.5-4.5-3-6 0-2 2-1.5 3 0 1-1.5 3-2 3 0 .5 1.5 0 3.5-3 6z"
         fill={color}
-        fillOpacity={0.95}
         stroke={color}
-        strokeOpacity={0.35}
-        strokeWidth={sw * 0.25}
+        strokeWidth={sw * 0.22}
+        strokeOpacity={0.4}
       />
     </svg>
   );
