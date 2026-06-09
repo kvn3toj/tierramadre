@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as _lib_asesorSync from "../_lib/asesorSync.js";
 import type * as _lib_columnMaps from "../_lib/columnMaps.js";
 import type * as _lib_fotosintesisVocab from "../_lib/fotosintesisVocab.js";
 import type * as _lib_lotMath from "../_lib/lotMath.js";
@@ -36,6 +37,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "_lib/asesorSync": typeof _lib_asesorSync;
   "_lib/columnMaps": typeof _lib_columnMaps;
   "_lib/fotosintesisVocab": typeof _lib_fotosintesisVocab;
   "_lib/lotMath": typeof _lib_lotMath;
