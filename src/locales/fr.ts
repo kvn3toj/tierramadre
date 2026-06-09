@@ -397,6 +397,8 @@ export const fr = {
     total: "Total",
     active: "Actives",
     pending: "En attente",
+    expired: "Expirées",
+    noInvitations: "Pas encore d'invitations",
     notFound: "Votre profil d'ambassadeur n'a pas été trouvé.",
     multiplier: "Multiplicateur",
     save: "Enregistrer",

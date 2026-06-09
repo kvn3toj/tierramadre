@@ -662,6 +662,8 @@ export const zh = {
     total: "总计",
     active: "活跃",
     pending: "待处理",
+    expired: "已过期",
+    noInvitations: "暂无邀请",
     notFound: "未找到您的大使资料。",
     multiplier: "倍率",
     save: "保存",

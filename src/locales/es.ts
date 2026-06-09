@@ -683,6 +683,8 @@ export const es = {
     total: "Total",
     active: "Activas",
     pending: "Pendientes",
+    expired: "Expiradas",
+    noInvitations: "Aún no hay invitaciones",
     notFound: "No se encontro tu perfil de embajador.",
     multiplier: "Multiplicador",
     save: "Guardar",

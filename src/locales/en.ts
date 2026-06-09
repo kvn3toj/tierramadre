@@ -680,6 +680,8 @@ export const en = {
     total: "Total",
     active: "Active",
     pending: "Pending",
+    expired: "Expired",
+    noInvitations: "No invitations yet",
     notFound: "Your ambassador profile was not found.",
     multiplier: "Multiplier",
     save: "Save",

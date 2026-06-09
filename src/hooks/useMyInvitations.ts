@@ -27,6 +27,7 @@ interface InvitationMetrics {
   total: number;
   active: number;
   pending: number;
+  expired: number;
 }
 
 interface UseMyInvitationsReturn {
@@ -78,7 +79,8 @@ export function useMyInvitations(creatorEmail: string | null | undefined): UseMy
   const metrics = useMemo<InvitationMetrics>(() => {
     const active = invitations.filter((i) => i.status === 'active').length;
     const pending = invitations.filter((i) => i.status === 'pending').length;
-    return { total: invitations.length, active, pending };
+    const expired = invitations.filter((i) => i.status === 'expired').length;
+    return { total: invitations.length, active, pending, expired };
   }, [invitations]);
 
   const invitationsRef = useRef(invitations);

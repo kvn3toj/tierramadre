@@ -11,7 +11,7 @@ import {
   Popover, Slider, Button, Dialog, DialogTitle,
   DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
-import { Link2, CheckCircle, Clock, XCircle, Send, Ban } from 'lucide-react';
+import { Link2, CheckCircle, Clock, XCircle, Send, Ban, Archive } from 'lucide-react';
 import { emeraldCore, accentColors, iosTypographyScale, primitiveSpacing as spacing, radius, fontFamilies } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useNotification } from '../../../contexts/NotificationContext';
@@ -20,7 +20,7 @@ import type { Invitation } from '../../../hooks/useMyInvitations';
 
 interface InvitationSummaryProps {
   invitations: Invitation[];
-  metrics: { total: number; active: number; pending: number };
+  metrics: { total: number; active: number; pending: number; expired: number };
   isLoading: boolean;
   mutatingCodes: Set<string>;
   onUpdateMultiplier: (shortCode: string, multiplier: number) => Promise<boolean>;
@@ -73,12 +73,33 @@ export function InvitationSummary({
     if (!ok) notify(t.profile.expireError, 'error');
   };
 
-  if (!isLoading && invitations.length === 0) return null;
+  if (!isLoading && invitations.length === 0) {
+    return (
+      <Box>
+        <SectionHeading>{t.profile.invitations}</SectionHeading>
+        <Box
+          sx={{
+            p: spacing.lg,
+            borderRadius: radius.lg,
+            bgcolor: alpha(emeraldCore.primary, 0.04),
+            border: `1px dashed ${alpha(emeraldCore.primary, 0.2)}`,
+            textAlign: 'center',
+          }}
+        >
+          <Archive size={32} style={{ color: emeraldCore.primary, marginBottom: 8, opacity: 0.4 }} />
+          <Typography variant="body2" sx={{ color: 'var(--text-secondary)', fontSize: iosTypographyScale.footnote }}>
+            {t.profile.noInvitations ?? 'No hay invitaciones aún'}
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }
 
   const metricCards = [
     { label: t.profile.total, value: metrics.total, icon: Link2, color: emeraldCore.primary },
     { label: t.profile.active, value: metrics.active, icon: CheckCircle, color: accentColors.success.light },
     { label: t.profile.pending, value: metrics.pending, icon: Clock, color: accentColors.warning.light },
+    ...(metrics.expired > 0 ? [{ label: t.profile.expired ?? 'Expiradas', value: metrics.expired, icon: XCircle, color: accentColors.error?.light || '#f44336' }] : []),
   ];
 
   return (
@@ -86,7 +107,7 @@ export function InvitationSummary({
       <SectionHeading>{t.profile.invitations}</SectionHeading>
 
       {/* Metric Cards */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: spacing.xs, mb: spacing.sm }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${metricCards.length}, 1fr)`, gap: spacing.xs, mb: spacing.sm }}>
         {metricCards.map(({ label, value, icon: Icon, color }) => (
           <Box
             key={label}

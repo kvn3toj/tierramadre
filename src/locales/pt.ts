@@ -691,6 +691,8 @@ export const pt = {
     total: "Total",
     active: "Ativos",
     pending: "Pendentes",
+    expired: "Expirados",
+    noInvitations: "Nenhum convite ainda",
     notFound: "Seu perfil de embaixador não foi encontrado.",
     multiplier: "Multiplicador",
     save: "Salvar",

@@ -126,13 +126,20 @@ export function useProductView({
     const cleanReferrer = referrer.replace(window.location.origin, '');
 
     // Get user info if available (check sessionStorage for guest identity)
+    const inviterFromSession = sessionStorage.getItem(INVITATION_STORAGE_KEYS.INVITER_NAME) || undefined;
     const userInfo: UserInfo | undefined = user
-      ? { name: user.name, email: user.email, role: user.role }
+      ? {
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          // Carry inviterName even for logged-in users who arrived via an invitation link,
+          // so their views appear in the inviter's guest activity feed.
+          inviterName: inviterFromSession,
+        }
       : (() => {
           const guestName = sessionStorage.getItem(INVITATION_STORAGE_KEYS.GUEST_NAME);
-          const inviterName = sessionStorage.getItem(INVITATION_STORAGE_KEYS.INVITER_NAME);
           if (guestName) {
-            return { name: guestName, role: 'Invitado', inviterName: inviterName || undefined };
+            return { name: guestName, role: 'Invitado', inviterName: inviterFromSession };
           }
           return undefined;
         })();
