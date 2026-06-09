@@ -8,7 +8,7 @@
 
 import { chromium } from '@playwright/test';
 
-const APP_URL = process.env.APP_URL || 'https://tierra-madre-studio.vercel.app';
+const APP_URL = process.env.APP_URL || 'https://tierramadre.app';
 
 async function testGoogleAuth() {
   console.log('\n🧪 Google Auth Manual Test\n');

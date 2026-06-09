@@ -24,7 +24,7 @@ import {
   getProxyUrl,
 } from './_lib/index.js';
 
-const BASE_URL = process.env.APP_URL || 'https://tierra-madre-studio.vercel.app';
+const BASE_URL = process.env.APP_URL || 'https://tierramadre.app';
 
 /**
  * Fetch a single product row from the Inventario sheet

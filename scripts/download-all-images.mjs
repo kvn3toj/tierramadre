@@ -24,14 +24,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Fetch from production API
 async function fetchCloudinaryImages() {
-  const response = await fetch('https://tierra-madre-studio.vercel.app/api/check-cloudinary-images');
+  const response = await fetch('https://tierramadre.app/api/check-cloudinary-images');
   if (!response.ok) throw new Error(`API error: ${response.status}`);
   return response.json();
 }
 
 // Fetch inventory to get product names
 async function fetchInventory() {
-  const response = await fetch('https://tierra-madre-studio.vercel.app/api/get-inventory-sheets');
+  const response = await fetch('https://tierramadre.app/api/get-inventory-sheets');
   if (!response.ok) throw new Error(`API error: ${response.status}`);
   return response.json();
 }

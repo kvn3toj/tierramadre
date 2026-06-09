@@ -80,7 +80,7 @@ export type BrandColors = typeof brandColors;
  * Production URL for the application
  * Used for QR codes, product links, and sharing
  */
-export const PRODUCTION_URL = 'tierra-madre-studio.vercel.app';
+export const PRODUCTION_URL = 'tierramadre.app';
 
 // =============================================================================
 // QUOTATION PREVIEW STYLES

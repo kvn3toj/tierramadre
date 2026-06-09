@@ -25,11 +25,11 @@ api/
 
 | Var | Value |
 |---|---|
-| `APP_URL` | Base URL of the Vercel deployment, e.g. `https://tierra-madre-studio.vercel.app` |
+| `APP_URL` | Base URL of the Vercel deployment, e.g. `https://tierramadre.app` |
 | `ADMIN_SYNC_TOKEN` | A long random string. Must match the same value on Vercel below. |
 
 ```bash
-npx convex env set APP_URL https://tierra-madre-studio.vercel.app
+npx convex env set APP_URL https://tierramadre.app
 npx convex env set ADMIN_SYNC_TOKEN $(openssl rand -hex 32)
 ```
 

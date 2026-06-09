@@ -23,7 +23,7 @@ import {
 
 // Default configuration
 const DEFAULT_FROM = "Tierra Madre <notificaciones@tierramadre.studio>";
-const DEFAULT_APP_URL = "https://tierra-madre-studio.vercel.app";
+const DEFAULT_APP_URL = "https://tierramadre.app";
 
 // Email types for easy reference
 export const EMAIL_TYPES = {

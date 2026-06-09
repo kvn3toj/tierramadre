@@ -137,7 +137,7 @@ FEEDBACK_SPREADSHEET_ID=xxx
 RESEND_API_KEY=re_xxx
 ADMIN_EMAILS=admin1@email.com,admin2@email.com
 EMAIL_FROM=Tierra Madre <noti@domain.com>
-APP_URL=https://tierra-madre-studio.vercel.app
+APP_URL=https://tierramadre.app
 ```
 
 ## Design System
@@ -166,7 +166,7 @@ Clean ports before dev server if conflicts occur.
 ## Vercel Deployment
 
 **Project**: `tierra-madre-studio`
-**URL**: https://tierra-madre-studio.vercel.app
+**URL**: https://tierramadre.app
 **Auto-deploy**: Push to `main` branch
 
 ### Rules

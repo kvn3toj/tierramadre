@@ -88,7 +88,7 @@ export const DEFAULT_COTIZACION_INVESTMENTS: CotizacionInvestment[] = [
 export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   contactPhone: '+57 310 XXX XXXX',
   contactEmail: 'tierramadre.co@gmail.com',
-  appUrl: 'tierra-madre-studio.vercel.app',
+  appUrl: 'tierramadre.app',
   footerMessage: 'Gracias por su preferencia',
   footerNote: 'Esta cotización es válida por el tiempo indicado. Los precios están sujetos a disponibilidad. Las esmeraldas Tierra Madre cuentan con certificado de origen y autenticidad.',
 };
