@@ -551,6 +551,40 @@ async function getUserViews(sheets, email, name) {
 }
 
 /**
+ * Get views by inviter name (GET ?action=by-inviter&inviterName=X)
+ */
+async function getViewsByInviter(sheets, inviterName, limit = 500) {
+  if (!inviterName) return { success: true, views: [] };
+
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: APP_SPREADSHEET_ID,
+    range: `'${SHEET_NAME}'!A:L`,
+  });
+
+  const rows = response.data.values || [];
+  if (rows.length <= 1) return { success: true, views: [] };
+
+  const needle = inviterName.toLowerCase().trim();
+  const views = rows.slice(1)
+    .filter(row => (row[11] || '').toLowerCase().trim() === needle)
+    .map(row => ({
+      timestamp: row[0] || '',
+      itemId: parseInt(row[1], 10) || 0,
+      productName: row[2] || '',
+      deviceType: row[5] || '',
+      browser: row[6] || '',
+      userName: row[8] || null,
+      userEmail: row[9] || null,
+      userRole: row[10] || 'Invitado',
+      inviterName: row[11] || null,
+    }))
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, limit);
+
+  return { success: true, views };
+}
+
+/**
  * Get most recent activity (GET ?action=recent)
  */
 async function getRecentActivity(sheets, limit = 50) {
@@ -636,6 +670,13 @@ export default withApiHandler(async (req, res, { sheets }) => {
   // GET - User views
   if (req.method === 'GET' && (action === 'user' || req.query.email || req.query.name)) {
     const result = await getUserViews(sheets, req.query.email, req.query.name);
+    return res.status(200).json(result);
+  }
+
+  // GET - Views by inviter (for asesor profile guest activity)
+  if (req.method === 'GET' && action === 'by-inviter') {
+    const limit = parseInt(req.query.limit) || 500;
+    const result = await getViewsByInviter(sheets, req.query.inviterName, limit);
     return res.status(200).json(result);
   }
 

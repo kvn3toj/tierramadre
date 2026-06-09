@@ -1,17 +1,18 @@
 /**
  * InvitationSummary Component
  *
- * 3 metric cards (total, active, pending) + invitation list with multiplier + actions.
+ * Metric cards + sortable/searchable invitation list with multiplier + actions.
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Chip, alpha, IconButton,
   Popover, Slider, Button, Dialog, DialogTitle,
   DialogContent, DialogContentText, DialogActions,
+  TextField, InputAdornment, ToggleButton, ToggleButtonGroup,
 } from '@mui/material';
-import { Link2, CheckCircle, Clock, XCircle, Send, Ban, Archive } from 'lucide-react';
+import { Link2, CheckCircle, Clock, XCircle, Send, Ban, Archive, Search, ArrowUpDown } from 'lucide-react';
 import { emeraldCore, accentColors, iosTypographyScale, primitiveSpacing as spacing, radius, fontFamilies } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useNotification } from '../../../contexts/NotificationContext';
@@ -49,7 +50,33 @@ export function InvitationSummary({
   const [editCode, setEditCode] = useState<string | null>(null);
   const [editValue, setEditValue] = useState(1);
   const [expireCode, setExpireCode] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'date' | 'name' | 'status'>('date');
   const expireTarget = invitations.find(i => i.shortCode === expireCode);
+
+  const filteredInvitations = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    const filtered = q
+      ? invitations.filter(
+          (inv) =>
+            (inv.guestName ?? '').toLowerCase().includes(q) ||
+            (inv.guestContact ?? '').toLowerCase().includes(q) ||
+            inv.shortCode.toLowerCase().includes(q),
+        )
+      : invitations;
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === 'name') {
+        return (a.guestName ?? a.shortCode).localeCompare(b.guestName ?? b.shortCode);
+      }
+      if (sortBy === 'status') {
+        const order = { active: 0, pending: 1, expired: 2 };
+        return (order[a.status] ?? 1) - (order[b.status] ?? 1);
+      }
+      // date (default): newest first
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [invitations, searchQuery, sortBy]);
 
   const handleEditOpen = (event: React.MouseEvent<HTMLElement>, inv: Invitation) => {
     setEditAnchor(event.currentTarget);
@@ -139,9 +166,75 @@ export function InvitationSummary({
         ))}
       </Box>
 
+      {/* Search + Sort Controls */}
+      {invitations.length > 2 && (
+        <Box sx={{ display: 'flex', gap: spacing.xs, mb: spacing.xs, alignItems: 'center' }}>
+          <TextField
+            size="small"
+            placeholder="Buscar invitado…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search size={14} style={{ color: 'var(--text-tertiary)' }} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{
+              flex: 1,
+              '& .MuiInputBase-root': {
+                borderRadius: radius.md,
+                fontSize: iosTypographyScale.footnote,
+                height: 32,
+                bgcolor: 'var(--surface-primary)',
+              },
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: alpha(emeraldCore.primary, 0.15) },
+            }}
+          />
+          <ToggleButtonGroup
+            size="small"
+            value={sortBy}
+            exclusive
+            onChange={(_, v) => { if (v) setSortBy(v); }}
+            sx={{
+              height: 32,
+              '& .MuiToggleButton-root': {
+                px: 1, py: 0,
+                fontSize: iosTypographyScale.caption2,
+                fontWeight: 600,
+                border: `1px solid ${alpha(emeraldCore.primary, 0.15)}`,
+                color: 'var(--text-secondary)',
+                textTransform: 'none',
+                '&.Mui-selected': { bgcolor: alpha(emeraldCore.primary, 0.1), color: emeraldCore.primary },
+              },
+            }}
+          >
+            <ToggleButton value="date" aria-label="Ordenar por fecha">
+              <ArrowUpDown size={12} style={{ marginRight: 4 }} />Fecha
+            </ToggleButton>
+            <ToggleButton value="name" aria-label="Ordenar por nombre">
+              Nombre
+            </ToggleButton>
+            <ToggleButton value="status" aria-label="Ordenar por estado">
+              Estado
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
+      )}
+
       {/* Invitation List */}
       <Box sx={{ display: 'grid', gap: spacing.xxs }}>
-        {invitations.map((inv) => {
+        {filteredInvitations.length === 0 && searchQuery ? (
+          <Box sx={{ p: spacing.md, textAlign: 'center' }}>
+            <Typography variant="body2" sx={{ color: 'var(--text-tertiary)', fontSize: iosTypographyScale.footnote }}>
+              Sin resultados para "{searchQuery}"
+            </Typography>
+          </Box>
+        ) : null}
+        {filteredInvitations.map((inv) => {
           const statusConf = STATUS_CONFIG[inv.status] || STATUS_CONFIG.pending;
           const isEditable = inv.status === 'active' || inv.status === 'pending';
           const isMutating = mutatingCodes.has(inv.shortCode);
