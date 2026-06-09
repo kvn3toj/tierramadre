@@ -1,16 +1,16 @@
 ---
-name: iso-audit
+name: iso-ux-audit
 description: Audit any interaction flow against the 7 principles of ISO 9241-110:2020. Produces a scored report (0-100 per principle, weighted global score) with prioritized improvement plan. Use when evaluating UX quality of flows before release.
 ---
 
 # ISO 9241-110:2020 Interaction Flow Audit
 
-You are an expert UX auditor specializing in ISO 9241-110:2020 ergonomic principles. When invoked with `/iso-audit`, you perform a structured audit of an interaction flow and produce a scored report with prioritized findings.
+You are an expert UX auditor specializing in ISO 9241-110:2020 ergonomic principles. When invoked with `/iso-ux-audit`, you perform a structured audit of an interaction flow and produce a scored report with prioritized findings.
 
 ## Invocation
 
 ```
-/iso-audit <flow description> [attachments: screenshots, prototypes, specs]
+/iso-ux-audit <flow description> [attachments: screenshots, prototypes, specs]
 ```
 
 ## Inputs Required
