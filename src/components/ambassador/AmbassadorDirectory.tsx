@@ -105,9 +105,10 @@ export default function AmbassadorDirectory({
           <Typography
             sx={{
               color: "text.secondary",
-              fontFamily: fontFamilies.mono,
+              fontFamily: fontFamilies.system,
               fontSize: "0.65rem",
-              letterSpacing: "0.06em",
+              fontWeight: 600,
+              letterSpacing: "0.1em",
               textTransform: "uppercase",
             }}
           >
@@ -133,13 +134,13 @@ export default function AmbassadorDirectory({
       <Box sx={{ textAlign: "center", mb: { xs: 2, sm: 2.5 }, mt: 0.5 }}>
         <Typography
           sx={{
-            fontFamily: fontFamilies.serif,
+            fontFamily: fontFamilies.display,
             fontStyle: "italic",
-            fontSize: { xs: "0.95rem", sm: "1.05rem" },
-            lineHeight: 1.4,
+            fontSize: { xs: "1.15rem", sm: "1.28rem" },
+            lineHeight: 1.35,
             color: "text.primary",
-            opacity: 0.88,
-            maxWidth: 340,
+            opacity: 0.9,
+            maxWidth: 360,
             mx: "auto",
           }}
         >

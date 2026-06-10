@@ -11,11 +11,14 @@
 
 export const fontFamilies = {
   /** System font stack (iOS-style) */
-  system: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Roboto, Arial, sans-serif',
+  system:
+    '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Roboto, Arial, sans-serif',
   /** Brand font for headings */
   brand: '"Libre Baskerville", Georgia, serif',
   /** Editorial serif for printed/document contexts (e.g. Kardex). Alias of brand. */
   serif: '"Libre Baskerville", Georgia, serif',
+  /** Elegant display serif for luxury figures — prices, stats, ratings (haute joaillerie) */
+  display: '"Cormorant Garamond", "Times New Roman", Georgia, serif',
   /** Monospace for prices and data */
   mono: '"SF Mono", "Fira Code", "Monaco", Consolas, monospace',
 } as const;
@@ -26,29 +29,29 @@ export const fontFamilies = {
 
 export const fontSizes = {
   /** 11px - Caption 2 */
-  xs: '0.6875rem',
+  xs: "0.6875rem",
   /** 12px - Caption 1 */
-  sm: '0.75rem',
+  sm: "0.75rem",
   /** 13px - Footnote */
-  md: '0.8125rem',
+  md: "0.8125rem",
   /** 15px - Subheadline */
-  lg: '0.9375rem',
+  lg: "0.9375rem",
   /** 16px - Callout */
-  xl: '1rem',
+  xl: "1rem",
   /** 17px - Body/Headline */
-  '2xl': '1.0625rem',
+  "2xl": "1.0625rem",
   /** 20px - Title 3 */
-  '3xl': '1.25rem',
+  "3xl": "1.25rem",
   /** 22px - Title 2 */
-  '4xl': '1.375rem',
+  "4xl": "1.375rem",
   /** 28px - Title 1 */
-  '5xl': '1.75rem',
+  "5xl": "1.75rem",
   /** 34px - Large Title */
-  '6xl': '2.125rem',
+  "6xl": "2.125rem",
   /** 40px - Display */
-  '7xl': '2.5rem',
+  "7xl": "2.5rem",
   /** 48px - Hero */
-  '8xl': '3rem',
+  "8xl": "3rem",
 } as const;
 
 // =============================================================================
@@ -80,12 +83,12 @@ export const lineHeights = {
 // =============================================================================
 
 export const letterSpacing = {
-  tighter: '-0.05em',
-  tight: '-0.025em',
-  normal: '0',
-  wide: '0.025em',
-  wider: '0.05em',
-  widest: '0.1em',
+  tighter: "-0.05em",
+  tight: "-0.025em",
+  normal: "0",
+  wide: "0.025em",
+  wider: "0.05em",
+  widest: "0.1em",
 } as const;
 
 // =============================================================================
@@ -95,7 +98,7 @@ export const letterSpacing = {
 export const typography = {
   /** 34px / 700 / 1.2 - Large titles */
   largeTitle: {
-    fontSize: fontSizes['6xl'],
+    fontSize: fontSizes["6xl"],
     fontWeight: fontWeights.bold,
     lineHeight: lineHeights.tight,
     letterSpacing: letterSpacing.tight,
@@ -103,7 +106,7 @@ export const typography = {
   },
   /** 28px / 700 / 1.25 - Page titles */
   title1: {
-    fontSize: fontSizes['5xl'],
+    fontSize: fontSizes["5xl"],
     fontWeight: fontWeights.bold,
     lineHeight: 1.25,
     letterSpacing: letterSpacing.tight,
@@ -111,34 +114,34 @@ export const typography = {
   },
   /** 22px / 700 / 1.3 - Section titles */
   title2: {
-    fontSize: fontSizes['4xl'],
+    fontSize: fontSizes["4xl"],
     fontWeight: fontWeights.bold,
     lineHeight: lineHeights.snug,
-    letterSpacing: '-0.01em',
+    letterSpacing: "-0.01em",
     fontFamily: fontFamilies.brand,
   },
   /** 20px / 600 / 1.35 - Subsection titles */
   title3: {
-    fontSize: fontSizes['3xl'],
+    fontSize: fontSizes["3xl"],
     fontWeight: fontWeights.semibold,
     lineHeight: 1.35,
-    letterSpacing: '-0.01em',
+    letterSpacing: "-0.01em",
     fontFamily: fontFamilies.system,
   },
   /** 17px / 600 / 1.4 - Important text */
   headline: {
-    fontSize: fontSizes['2xl'],
+    fontSize: fontSizes["2xl"],
     fontWeight: fontWeights.semibold,
     lineHeight: 1.4,
-    letterSpacing: '-0.01em',
+    letterSpacing: "-0.01em",
     fontFamily: fontFamilies.system,
   },
   /** 17px / 400 / 1.5 - Main body text */
   body: {
-    fontSize: fontSizes['2xl'],
+    fontSize: fontSizes["2xl"],
     fontWeight: fontWeights.normal,
     lineHeight: lineHeights.normal,
-    letterSpacing: '-0.01em',
+    letterSpacing: "-0.01em",
     fontFamily: fontFamilies.system,
   },
   /** 16px / 400 / 1.4 - Secondary text */
@@ -146,7 +149,7 @@ export const typography = {
     fontSize: fontSizes.xl,
     fontWeight: fontWeights.normal,
     lineHeight: 1.4,
-    letterSpacing: '-0.01em',
+    letterSpacing: "-0.01em",
     fontFamily: fontFamilies.system,
   },
   /** 15px / 400 / 1.4 - Subheadlines */
@@ -154,7 +157,7 @@ export const typography = {
     fontSize: fontSizes.lg,
     fontWeight: fontWeights.normal,
     lineHeight: 1.4,
-    letterSpacing: '-0.01em',
+    letterSpacing: "-0.01em",
     fontFamily: fontFamilies.system,
   },
   /** 13px / 400 / 1.4 - Footnotes */
@@ -162,7 +165,7 @@ export const typography = {
     fontSize: fontSizes.md,
     fontWeight: fontWeights.normal,
     lineHeight: 1.4,
-    letterSpacing: '-0.005em',
+    letterSpacing: "-0.005em",
     fontFamily: fontFamilies.system,
   },
   /** 12px / 400 / 1.35 - Captions */
@@ -170,7 +173,7 @@ export const typography = {
     fontSize: fontSizes.sm,
     fontWeight: fontWeights.normal,
     lineHeight: 1.35,
-    letterSpacing: '0',
+    letterSpacing: "0",
     fontFamily: fontFamilies.system,
   },
   /** 11px / 400 / 1.3 - Small captions */
@@ -178,7 +181,7 @@ export const typography = {
     fontSize: fontSizes.xs,
     fontWeight: fontWeights.normal,
     lineHeight: lineHeights.snug,
-    letterSpacing: '0.005em',
+    letterSpacing: "0.005em",
     fontFamily: fontFamilies.system,
   },
   /** Uppercase labels */
@@ -187,25 +190,25 @@ export const typography = {
     fontWeight: fontWeights.medium,
     lineHeight: 1.5,
     letterSpacing: letterSpacing.widest,
-    textTransform: 'uppercase' as const,
+    textTransform: "uppercase" as const,
     fontFamily: fontFamilies.system,
   },
   /** Prices and numeric data */
   price: {
-    fontSize: fontSizes['3xl'],
+    fontSize: fontSizes["3xl"],
     fontWeight: fontWeights.bold,
     lineHeight: lineHeights.tight,
-    letterSpacing: '-0.02em',
+    letterSpacing: "-0.02em",
     fontFamily: fontFamilies.mono,
-    fontVariantNumeric: 'tabular-nums',
+    fontVariantNumeric: "tabular-nums",
   },
   /** Button text */
   button: {
-    fontSize: fontSizes['2xl'],
+    fontSize: fontSizes["2xl"],
     fontWeight: fontWeights.semibold,
     lineHeight: 1.4,
-    letterSpacing: '-0.01em',
-    textTransform: 'none' as const,
+    letterSpacing: "-0.01em",
+    textTransform: "none" as const,
     fontFamily: fontFamilies.system,
   },
 } as const;

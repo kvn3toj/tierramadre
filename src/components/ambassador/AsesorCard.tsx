@@ -258,15 +258,16 @@ export default function AsesorCard({
         >
           <Typography
             sx={{
-              fontWeight: 650,
-              fontSize: "0.9rem",
-              lineHeight: 1.25,
+              fontFamily: fontFamilies.display,
+              fontWeight: 600,
+              fontSize: "1.08rem",
+              lineHeight: 1.15,
               overflow: "hidden",
               textOverflow: "ellipsis",
               display: "-webkit-box",
               WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical",
-              letterSpacing: "-0.01em",
+              letterSpacing: "0.005em",
             }}
           >
             {asesor.name}
@@ -275,15 +276,15 @@ export default function AsesorCard({
           {asesor.especialidad && (
             <Typography
               sx={{
-                fontFamily: fontFamilies.serif,
+                fontFamily: fontFamilies.display,
                 fontStyle: "italic",
-                fontSize: "0.72rem",
+                fontSize: "0.82rem",
                 color: "text.secondary",
-                opacity: 0.85,
+                opacity: 0.9,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-                lineHeight: 1.35,
+                lineHeight: 1.3,
               }}
             >
               {asesor.especialidad}
@@ -304,17 +305,28 @@ export default function AsesorCard({
               sx={{
                 display: "inline-flex",
                 alignItems: "center",
+                gap: 0.45,
                 height: 20,
                 px: 0.85,
-                fontSize: "0.58rem",
-                fontWeight: 700,
+                fontSize: "0.56rem",
+                fontWeight: 600,
                 bgcolor: badge.bgcolor,
                 color: badge.color,
-                borderRadius: "6px",
-                letterSpacing: "0.04em",
+                border: "1px solid",
+                borderColor: alpha(badge.color, 0.22),
+                borderRadius: "999px",
+                letterSpacing: "0.12em",
                 textTransform: "uppercase",
               }}
             >
+              <Box
+                sx={{
+                  width: 3.5,
+                  height: 3.5,
+                  borderRadius: "50%",
+                  bgcolor: badge.color,
+                }}
+              />
               {badge.label}
             </Box>
             {hasProducts && (
@@ -337,9 +349,12 @@ export default function AsesorCard({
                     />
                     <Typography
                       sx={{
-                        fontSize: "0.7rem",
-                        fontWeight: 700,
+                        fontFamily: fontFamilies.display,
+                        fontSize: "0.86rem",
+                        fontWeight: 600,
+                        lineHeight: 1,
                         color: goldAccent.primary,
+                        fontVariantNumeric: "lining-nums",
                       }}
                     >
                       {rating}
@@ -350,9 +365,12 @@ export default function AsesorCard({
                   <Gem size={10} style={{ opacity: 0.45 }} />
                   <Typography
                     sx={{
-                      fontSize: "0.7rem",
+                      fontFamily: fontFamilies.display,
+                      fontSize: "0.86rem",
+                      lineHeight: 1,
                       color: "text.secondary",
-                      fontWeight: 500,
+                      fontWeight: 600,
+                      fontVariantNumeric: "lining-nums",
                     }}
                   >
                     {productCount}
@@ -437,11 +455,14 @@ export default function AsesorCard({
                   >
                     <Typography
                       sx={{
+                        fontFamily: fontFamilies.display,
                         color: "#fff",
-                        fontWeight: 700,
-                        fontSize: "0.82rem",
-                        letterSpacing: "-0.01em",
-                        textShadow: "0 1px 2px rgba(0,0,0,0.4)",
+                        fontWeight: 600,
+                        fontSize: "1rem",
+                        lineHeight: 1,
+                        letterSpacing: "0.01em",
+                        fontVariantNumeric: "lining-nums",
+                        textShadow: "0 1px 3px rgba(0,0,0,0.5)",
                       }}
                     >
                       +{extraCount}

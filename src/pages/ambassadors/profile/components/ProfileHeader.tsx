@@ -9,7 +9,6 @@ import {
   Box,
   Typography,
   Avatar,
-  Chip,
   IconButton,
   Tooltip,
   CircularProgress,
@@ -69,6 +68,22 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
     const isAdmin = (asesor.role || "").toLowerCase().includes("admin");
     const rating = deriveRating(totalProducts);
     const accentColor = isAdmin ? goldAccent.primary : emeraldCore.primary;
+
+    // Shared elegant pill base (full rounded, hairline border, airy tracking)
+    const pillBase = {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 0.55,
+      height: 24,
+      px: 1.15,
+      borderRadius: "999px",
+      fontSize: "0.6rem",
+      fontWeight: 600,
+      letterSpacing: "0.14em",
+      textTransform: "uppercase" as const,
+      border: "1px solid",
+      whiteSpace: "nowrap" as const,
+    };
 
     return (
       <Box sx={{ position: "relative", mb: 2, textAlign: "center" }}>
@@ -209,62 +224,88 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
           </Box>
         </Box>
 
-        {/* Name */}
+        {/* Name — elegant display serif masthead */}
         <Typography
           variant="h5"
           sx={{
-            fontWeight: 700,
-            mb: 0.75,
-            fontSize: { xs: "1.3rem", sm: "1.45rem", md: "1.55rem" },
-            letterSpacing: "-0.02em",
+            fontFamily: fontFamilies.display,
+            fontWeight: 600,
+            mb: 0.85,
+            fontSize: { xs: "1.6rem", sm: "1.8rem", md: "1.95rem" },
+            lineHeight: 1.12,
+            letterSpacing: "0.005em",
           }}
         >
           {asesor.name}
         </Typography>
 
-        {/* Badge Row — refined outlined chips */}
-        <Box
-          sx={{ display: "flex", justifyContent: "center", gap: 0.75, mb: 2 }}
-        >
-          <Chip
-            size="small"
-            variant="outlined"
-            label={(asesor.role || "Embajadora").toUpperCase()}
-            sx={{
-              height: 26,
-              fontSize: "0.62rem",
-              fontWeight: 700,
-              letterSpacing: "0.1em",
-              borderColor: alpha(emeraldCore.primary, 0.4),
-              color: emeraldCore.primary,
-              borderRadius: "8px",
-            }}
-          />
-          {isAdmin && (
-            <Chip
-              size="small"
-              variant="outlined"
-              label="ADMIN"
-              sx={{
-                height: 26,
-                fontSize: "0.62rem",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                borderColor: alpha(goldAccent.primary, 0.4),
-                color: isLight ? goldAccent.dark : goldAccent.light,
-                borderRadius: "8px",
-              }}
-            />
-          )}
-        </Box>
-
-        {/* Stats Row — 3 elegant stat cells */}
+        {/* Badge Row — elegant pills (dot + label), no redundant role text */}
         <Box
           sx={{
             display: "flex",
-            gap: { xs: "8px", sm: "12px" },
-            width: "100%",
-            px: { xs: 1, sm: 2, md: 3 },
+            justifyContent: "center",
+            gap: 0.85,
+            mb: 2.25,
+          }}
+        >
+          <Box
+            sx={{
+              ...pillBase,
+              bgcolor: alpha(emeraldCore.primary, 0.08),
+              borderColor: alpha(emeraldCore.primary, 0.22),
+              color: emeraldCore.primary,
+            }}
+          >
+            <Box
+              sx={{
+                width: 4,
+                height: 4,
+                borderRadius: "50%",
+                bgcolor: emeraldCore.primary,
+              }}
+            />
+            Embajador
+          </Box>
+          {isAdmin && (
+            <Box
+              sx={{
+                ...pillBase,
+                bgcolor: alpha(goldAccent.primary, 0.1),
+                borderColor: alpha(goldAccent.primary, 0.3),
+                color: isLight ? goldAccent.dark : goldAccent.light,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 4,
+                  height: 4,
+                  borderRadius: "50%",
+                  bgcolor: goldAccent.primary,
+                }}
+              />
+              Elite
+            </Box>
+          )}
+        </Box>
+
+        {/* Stats — unified editorial ledger panel with hairline dividers */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "stretch",
+            mx: { xs: 1, sm: 2, md: 3 },
+            borderRadius: "16px",
+            overflow: "hidden",
+            bgcolor: isLight
+              ? surfacesLight.surface.default
+              : surfacesDark.background.secondary,
+            border: "1px solid",
+            borderColor: isLight
+              ? surfacesLight.border.light
+              : surfacesDark.border.light,
+            boxShadow: isLight
+              ? "0 1px 6px rgba(0,0,0,0.05)"
+              : "0 2px 12px rgba(0,0,0,0.28)",
           }}
         >
           {[
@@ -272,64 +313,57 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
               icon: <Gem size={15} color={emeraldCore.primary} />,
               value: String(totalProducts),
               label: "Tesoros",
-              accent: emeraldCore.primary,
             },
             {
               icon: <DollarSign size={15} color={goldAccent.primary} />,
               value: formatCurrency(stats.totalValue),
               label: "Valor",
-              accent: goldAccent.primary,
             },
             {
               icon: <Star size={15} color={goldAccent.primary} />,
               value: rating ? String(rating) : "—",
               label: "Rating",
-              accent: goldAccent.primary,
             },
-          ].map((stat) => (
+          ].map((stat, i) => (
             <Box
               key={stat.label}
               sx={{
+                flex: 1,
+                minWidth: 0,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: { xs: "3px", sm: "5px" },
-                flex: 1,
-                py: { xs: 1.25, sm: 1.5 },
-                borderRadius: "12px",
-                bgcolor: isLight
-                  ? surfacesLight.surface.default
-                  : surfacesDark.background.secondary,
-                border: "1px solid",
-                borderColor: isLight
-                  ? surfacesLight.border.light
-                  : surfacesDark.border.light,
-                boxShadow: isLight
-                  ? "0 1px 4px rgba(0,0,0,0.04)"
-                  : "0 1px 4px rgba(0,0,0,0.12)",
+                gap: { xs: "4px", sm: "6px" },
+                py: { xs: 1.5, sm: 1.75 },
+                px: 0.5,
                 position: "relative",
-                overflow: "hidden",
-                // Subtle top accent line
-                "&::before": {
-                  content: '""',
-                  position: "absolute",
-                  top: 0,
-                  left: "25%",
-                  right: "25%",
-                  height: "1.5px",
-                  bgcolor: alpha(stat.accent, 0.25),
-                  borderRadius: "0 0 2px 2px",
-                },
+                // Hairline divider between columns
+                ...(i > 0 && {
+                  "&::before": {
+                    content: '""',
+                    position: "absolute",
+                    left: 0,
+                    top: "20%",
+                    bottom: "20%",
+                    width: "1px",
+                    bgcolor: isLight
+                      ? surfacesLight.border.light
+                      : surfacesDark.border.light,
+                  },
+                }),
               }}
             >
               {stat.icon}
               <Typography
                 sx={{
-                  fontFamily: fontFamilies.mono,
-                  fontWeight: 700,
-                  fontSize: { xs: "0.82rem", sm: "0.9rem" },
-                  letterSpacing: "-0.02em",
+                  fontFamily: fontFamilies.display,
+                  fontWeight: 600,
+                  fontSize: { xs: "1.15rem", sm: "1.3rem" },
+                  lineHeight: 1.05,
+                  letterSpacing: "0.01em",
+                  fontVariantNumeric: "lining-nums tabular-nums",
+                  whiteSpace: "nowrap",
                 }}
               >
                 {stat.value}
@@ -340,7 +374,7 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
                   fontWeight: 600,
                   color: "text.secondary",
                   textTransform: "uppercase",
-                  letterSpacing: "0.06em",
+                  letterSpacing: "0.08em",
                 }}
               >
                 {stat.label}
@@ -355,8 +389,8 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
             sx={{
               mt: 2,
               color: "text.secondary",
-              fontFamily: fontFamilies.serif,
-              fontSize: { xs: "0.88rem", sm: "0.94rem" },
+              fontFamily: fontFamilies.display,
+              fontSize: { xs: "1.02rem", sm: "1.1rem" },
               lineHeight: 1.55,
               maxWidth: { xs: 340, sm: 420 },
               mx: "auto",
