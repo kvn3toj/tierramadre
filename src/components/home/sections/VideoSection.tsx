@@ -43,8 +43,11 @@ interface HomeVideo {
 }
 
 const VIDEOS: HomeVideo[] = [
-  { id: "mZd_q9IvJZk", title: "Tierra Madre — Esencia y Poder" },
-  { id: "NBslynbfacU", title: "Tierra Madre — Esmeraldas de Colombia" },
+  {
+    id: "mZd_q9IvJZk",
+    title: "This is a Seed of TierraMädre — Emeralds with the DNA of Peace",
+  },
+  { id: "NBslynbfacU", title: "Emeralds DNA of Peace" },
 ];
 
 // =============================================================================
