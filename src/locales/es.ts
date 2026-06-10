@@ -489,6 +489,7 @@ export const es = {
     // Directory page
     pageTitle: "Embajadores",
     pageSubtitle: "Asesores autorizados de esmeraldas colombianas Tierra Madre",
+    directoryTagline: "Quienes custodian la esencia de cada esmeralda",
     activeAmbassadors: "Embajadores activos",
     totalProducts: "Productos totales",
     looseGems: "Gemas sueltas",

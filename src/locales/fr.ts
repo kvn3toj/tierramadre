@@ -622,6 +622,7 @@ export const fr = {
     pageTitle: "Ambassadeurs",
     pageSubtitle:
       "Conseillers autorisés en émeraudes colombiennes Tierra Madre",
+    directoryTagline: "Les gardiens de l'essence de chaque émeraude",
     activeAmbassadors: "Ambassadeurs actifs",
     totalProducts: "Produits totaux",
     looseGems: "Gemmes en vrac",

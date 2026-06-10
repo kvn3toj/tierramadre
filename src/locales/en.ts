@@ -488,6 +488,7 @@ export const en = {
     // Directory page
     pageTitle: "Ambassadors",
     pageSubtitle: "Authorized advisors for Colombian emeralds by Tierra Madre",
+    directoryTagline: "The keepers of each emerald's essence",
     activeAmbassadors: "Active ambassadors",
     totalProducts: "Total products",
     looseGems: "Loose gems",

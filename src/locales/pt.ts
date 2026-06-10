@@ -489,6 +489,7 @@ export const pt = {
     pageTitle: "Embaixadores",
     pageSubtitle:
       "Consultores autorizados de esmeraldas colombianas Tierra Madre",
+    directoryTagline: "Os guardiões da essência de cada esmeralda",
     activeAmbassadors: "Embaixadores ativos",
     totalProducts: "Produtos totais",
     looseGems: "Gemas soltas",

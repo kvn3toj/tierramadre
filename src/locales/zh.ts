@@ -484,6 +484,7 @@ export const zh = {
     },
     pageTitle: "大使",
     pageSubtitle: "Tierra Madre 哥伦比亚祖母绿授权顾问",
+    directoryTagline: "守护每一颗祖母绿之精髓的人",
     activeAmbassadors: "活跃大使",
     totalProducts: "总产品",
     looseGems: "散装宝石",

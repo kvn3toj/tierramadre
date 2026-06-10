@@ -617,6 +617,7 @@ export const it = {
     },
     pageTitle: "Ambasciatori",
     pageSubtitle: "Consulenti autorizzati per smeraldi colombiani Tierra Madre",
+    directoryTagline: "I custodi dell'essenza di ogni smeraldo",
     activeAmbassadors: "Ambasciatori attivi",
     totalProducts: "Prodotti totali",
     looseGems: "Gemme sciolte",
