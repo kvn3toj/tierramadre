@@ -640,7 +640,7 @@ export const en = {
   // Auth
   auth: {
     welcomeTitle: "Tierra Mädre",
-    welcomeSubtitle: "Essence and Power of the Colombian Emerald",
+    welcomeSubtitle: "Colombian Emeralds with the DNA of Peace",
     guestAccess: "Guest Mode",
     guestModeBanner: "Guest Mode: read-only",
     accessRequired: "Request Access",

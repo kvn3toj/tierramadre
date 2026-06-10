@@ -356,7 +356,7 @@ export const fr = {
   // Auth
   auth: {
     welcomeTitle: "Tierra Mädre",
-    welcomeSubtitle: "Essence et Pouvoir de l'Émeraude Colombienne",
+    welcomeSubtitle: "Émeraudes Colombiennes avec un ADN de Paix",
     guestAccess: "Mode Invité",
     guestModeBanner: "Mode Invité : lecture seule",
     accessRequired: "Demander l'Accès",

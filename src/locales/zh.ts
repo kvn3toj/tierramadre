@@ -624,7 +624,7 @@ export const zh = {
   // Auth
   auth: {
     welcomeTitle: "Tierra Mädre",
-    welcomeSubtitle: "哥伦比亚祖母绿的精髓与力量",
+    welcomeSubtitle: "拥有和平基因的哥伦比亚祖母绿",
     guestAccess: "访客模式",
     guestModeBanner: "访客模式：仅可查看",
     accessRequired: "申请访问",

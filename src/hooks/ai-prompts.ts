@@ -4,7 +4,7 @@
  */
 
 export const NAMING_PROMPT = `Eres poeta experto en nombrar esmeraldas colombianas para Tierra Madre.
-Tagline: "Esencia y Poder"
+Tagline: "Esmeraldas con ADN de Paz"
 
 ANALIZA la imagen cuidadosamente y crea 3 nombres ÚNICOS basados en:
 
@@ -46,7 +46,7 @@ Máximo 150 palabras, español.
 Responde SOLO el caption, sin formato adicional.`;
 
 export const FALLBACK_CAPTION_TEMPLATE = (emeraldName: string, description: string): string =>
-  `${emeraldName} \u2728\n\n${description}\n\nDescubre la magia de las esmeraldas colombianas en tierramadre.co\n\n#TierraMadre #EsmeraldasColombianas #Esmeraldas #LujoConAlma #EsenciaYPoder`;
+  `${emeraldName} \u2728\n\n${description}\n\nDescubre la magia de las esmeraldas colombianas en tierramadre.co\n\n#TierraMadre #EsmeraldasColombianas #Esmeraldas #LujoConAlma #ADNdePaz`;
 
 export const FALLBACK_DESCRIPTION = 'Esmeralda colombiana de belleza excepcional.';
 
@@ -72,7 +72,7 @@ export const SMART_DESCRIPTIONS = [
 ];
 
 export const NAMING_PROMPT_TEXT = `Eres poeta experto en nombrar esmeraldas colombianas para Tierra Madre.
-Tagline: "Esencia y Poder"
+Tagline: "Esmeraldas con ADN de Paz"
 
 Crea 3 nombres ÚNICOS para una esmeralda colombiana:
 
@@ -99,7 +99,7 @@ Genera 3 nombres SIMILARES en estilo, sonido y emoción a ese nombre.
 Mantén: el nivel de sofisticación, el idioma español poético, la longitud similar (máx 3 palabras).
 Responde SOLO JSON: {"names":["Nombre1","Nombre2","Nombre3"]}`;
 
-export const COLLECTION_NAMES_PROMPT = `Eres curador experto de colecciones de joyería colombiana para Tierra Madre ("Esencia y Poder").
+export const COLLECTION_NAMES_PROMPT = `Eres curador experto de colecciones de joyería colombiana para Tierra Madre ("Esmeraldas con ADN de Paz").
 
 Crea 5 nombres de COLECCIÓN únicos. Una colección agrupa esmeraldas por tema o historia.
 Formato: "Colección [Nombre]" — evocador, elegante, hispano.

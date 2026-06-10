@@ -651,7 +651,7 @@ export const pt = {
   // Auth
   auth: {
     welcomeTitle: "Tierra Mädre",
-    welcomeSubtitle: "Essência e Poder da Esmeralda Colombiana",
+    welcomeSubtitle: "Esmeraldas Colombianas com DNA de Paz",
     guestAccess: "Modo Visitante",
     guestModeBanner: "Modo Visitante: somente leitura",
     accessRequired: "Solicitar Acesso",

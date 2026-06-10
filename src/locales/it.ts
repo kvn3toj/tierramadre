@@ -354,7 +354,7 @@ export const it = {
   // Auth
   auth: {
     welcomeTitle: "Tierra Mädre",
-    welcomeSubtitle: "Essenza e Potere dello Smeraldo Colombiano",
+    welcomeSubtitle: "Smeraldi Colombiani con il DNA della Pace",
     guestAccess: "Modalità Ospite",
     guestModeBanner: "Modalità Ospite: sola lettura",
     accessRequired: "Richiedi Accesso",

@@ -285,7 +285,7 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
         >
           <VaultDoorFrame
             ariaLabel={`Combinación: ${outerSymbol.name}, ${innerIdx}`}
-            makerMark={isFailure ? `${attemptsLeft} intentos restantes` : 'Tierra Madre · Esencia y Poder'}
+            makerMark={isFailure ? `${attemptsLeft} intentos restantes` : 'Tierra Madre · Esmeraldas con ADN de Paz'}
           >
             {/* Dials */}
             <Box
