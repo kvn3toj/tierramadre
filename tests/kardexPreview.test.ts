@@ -143,14 +143,35 @@ describe("KardexPreview — manual (non-inventory) line items", () => {
 });
 
 describe("KardexPreview — single & empty layouts", () => {
-  it("keeps the premium specs grid for a single-item sale (no totals block)", () => {
-    renderKardex({ items: [ITEMS[0]] });
+  it("keeps the premium specs grid + flat Precio for a single-item sale with NO discount", () => {
+    renderKardex({ items: [ITEMS[0]], subtotalCop: 800_000, descuentoCop: 0 });
     expect(screen.getByText("Esmeralda Uno")).toBeTruthy();
     // Specs grid labels are unique to the single layout.
     expect(screen.getByText("Peso")).toBeTruthy();
     expect(screen.getByText("Forma de pago")).toBeTruthy();
-    // The multi-item totals block must NOT appear for a single item.
+    // No discount → keep the clean flat "Precio" spec, no money breakdown.
+    expect(screen.getByText("Precio")).toBeTruthy();
     expect(screen.queryByText("Resumen de montos")).toBeNull();
+  });
+
+  it("surfaces Subtotal/Descuento/Total in a SINGLE-item sale when a discount applies", () => {
+    // Regression: a single-item sale with a discount used to render only the
+    // flat final "Precio", hiding the discount in both the preview and the PDF.
+    // The money breakdown must now appear so the carnet matches the venta form.
+    renderKardex({
+      items: [ITEMS[0]],
+      subtotalCop: 800_000,
+      descuentoCop: 120_000,
+    });
+    // The premium single layout (product name) is preserved…
+    expect(screen.getByText("Esmeralda Uno")).toBeTruthy();
+    // …and the discount is now visible via the shared money breakdown.
+    expect(screen.getByText("Resumen de montos")).toBeTruthy();
+    expect(screen.getByText("Subtotal")).toBeTruthy();
+    expect(screen.getByText("Descuento")).toBeTruthy();
+    expect(screen.getByText("Total")).toBeTruthy();
+    // The redundant flat "Precio" spec gives way to the Total in the breakdown.
+    expect(screen.queryByText("Precio")).toBeNull();
   });
 
   it("shows a placeholder when there are no items", () => {

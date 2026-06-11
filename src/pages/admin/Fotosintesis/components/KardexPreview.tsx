@@ -429,17 +429,36 @@ export function KardexPreview({
               value={single.itemId || (single.isManual ? "Manual" : "—")}
               mono
             />
-            <SpecRow
-              label="Precio"
-              value={formatCop(sale.precioCop)}
-              mono
-              emphasis
-            />
+            {/* No discount → keep the clean flat Precio inline. With a discount,
+                the price moves into the Resumen below (Subtotal/Descuento/Total)
+                so the carnet mirrors the venta form instead of hiding it. */}
+            {descuento > 0 ? null : (
+              <SpecRow
+                label="Precio"
+                value={formatCop(sale.precioCop)}
+                mono
+                emphasis
+              />
+            )}
             <SpecRow
               label="Forma de pago"
               value={formatPago(sale.formaPago, sale.metodoContado)}
             />
           </Box>
+
+          {/* When a discount applies, surface the full money breakdown so the
+              single-item carnet shows the same Subtotal · Descuento · Total the
+              operator saw in the venta form. The specs grid above already closes
+              with its own rule, so suppress the block's top border. */}
+          {descuento > 0 && (
+            <MontosResumen
+              subtotal={subtotal}
+              descuento={descuento}
+              total={sale.precioCop}
+              accentDeep={accentDeep}
+              topRule={false}
+            />
+          )}
         </>
       ) : (
         /* ── Multiple items: line-item list + meta + totals ──────────── */
@@ -593,123 +612,13 @@ export function KardexPreview({
             />
           </Box>
 
-          {/* (c) Totals — "Resumen de montos" in the paper palette */}
-          <Box
-            sx={{
-              paddingTop: "14px",
-              paddingBottom: "4px",
-              borderTop: `1px solid ${PAPER_RULE_SOFT}`,
-              marginBottom: "6px",
-            }}
-          >
-            <Box
-              sx={{
-                fontSize: 8.5,
-                fontWeight: 500,
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                color: PAPER_INK_MUTE,
-                marginBottom: "10px",
-              }}
-            >
-              Resumen de montos
-            </Box>
-
-            {/* Subtotal */}
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-                marginBottom: descuento > 0 ? "6px" : "0",
-              }}
-            >
-              <Box sx={{ fontSize: 12, color: PAPER_INK_SOFT }}>Subtotal</Box>
-              <Box
-                sx={{
-                  fontFamily: fontFamilies.mono,
-                  fontVariantNumeric: "tabular-nums",
-                  fontSize: 12.5,
-                  fontWeight: 500,
-                  letterSpacing: "-0.005em",
-                  color: PAPER_INK,
-                }}
-              >
-                {formatCop(subtotal)}
-              </Box>
-            </Box>
-
-            {/* Descuento (only when positive) */}
-            {descuento > 0 && (
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "baseline",
-                }}
-              >
-                <Box sx={{ fontSize: 12, color: PAPER_INK_SOFT }}>
-                  Descuento
-                </Box>
-                <Box
-                  sx={{
-                    fontFamily: fontFamilies.mono,
-                    fontVariantNumeric: "tabular-nums",
-                    fontSize: 12.5,
-                    fontWeight: 500,
-                    letterSpacing: "-0.005em",
-                    color: PAPER_INK_SOFT,
-                  }}
-                >
-                  −{formatCop(descuento)}
-                </Box>
-              </Box>
-            )}
-
-            {/* Divider */}
-            <Box
-              aria-hidden
-              sx={{
-                height: "1px",
-                background: PAPER_RULE,
-                marginTop: "12px",
-                marginBottom: "12px",
-              }}
-            />
-
-            {/* Total — emphasized */}
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-              }}
-            >
-              <Box
-                sx={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  letterSpacing: "0.16em",
-                  textTransform: "uppercase",
-                  color: accentDeep,
-                }}
-              >
-                Total
-              </Box>
-              <Box
-                sx={{
-                  fontFamily: fontFamilies.mono,
-                  fontVariantNumeric: "tabular-nums",
-                  fontSize: 19,
-                  fontWeight: 700,
-                  letterSpacing: "-0.01em",
-                  color: accentDeep,
-                }}
-              >
-                {formatCop(sale.precioCop)}
-              </Box>
-            </Box>
-          </Box>
+          {/* (c) Totals — shared Subtotal · Descuento · Total breakdown. */}
+          <MontosResumen
+            subtotal={subtotal}
+            descuento={descuento}
+            total={sale.precioCop}
+            accentDeep={accentDeep}
+          />
         </>
       )}
 
@@ -900,6 +809,153 @@ function SpecRow({
         }}
       >
         {value}
+      </Box>
+    </Box>
+  );
+}
+
+interface MontosResumenProps {
+  /** Pre-discount base = Σ item tier prices (+ manual lines). */
+  subtotal: number;
+  /** max(0, subtotal − total). A Descuento line renders only when > 0. */
+  descuento: number;
+  /** Final agreed price (COP) — the emphasized Total. */
+  total: number | undefined;
+  accentDeep: string;
+  /**
+   * Draw the separating rule above the block. Defaults on (multi-item, where it
+   * follows the meta block). Off for the single-item layout, whose specs grid
+   * already closes with its own border — otherwise the two rules double up.
+   */
+  topRule?: boolean;
+}
+
+/**
+ * "Resumen de montos" — the Subtotal / Descuento / Total money breakdown, in the
+ * paper palette. Shared by the multi-item layout AND the single-item layout (the
+ * latter only when a discount applies) so the carnet always mirrors the discount
+ * shown in the venta form, regardless of how many pieces the sale bundles.
+ */
+function MontosResumen({
+  subtotal,
+  descuento,
+  total,
+  accentDeep,
+  topRule = true,
+}: MontosResumenProps) {
+  return (
+    <Box
+      sx={{
+        paddingTop: topRule ? "14px" : "4px",
+        paddingBottom: "4px",
+        borderTop: topRule ? `1px solid ${PAPER_RULE_SOFT}` : "none",
+        marginBottom: "6px",
+      }}
+    >
+      <Box
+        sx={{
+          fontSize: 8.5,
+          fontWeight: 500,
+          letterSpacing: "0.2em",
+          textTransform: "uppercase",
+          color: PAPER_INK_MUTE,
+          marginBottom: "10px",
+        }}
+      >
+        Resumen de montos
+      </Box>
+
+      {/* Subtotal */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+          marginBottom: descuento > 0 ? "6px" : "0",
+        }}
+      >
+        <Box sx={{ fontSize: 12, color: PAPER_INK_SOFT }}>Subtotal</Box>
+        <Box
+          sx={{
+            fontFamily: fontFamilies.mono,
+            fontVariantNumeric: "tabular-nums",
+            fontSize: 12.5,
+            fontWeight: 500,
+            letterSpacing: "-0.005em",
+            color: PAPER_INK,
+          }}
+        >
+          {formatCop(subtotal)}
+        </Box>
+      </Box>
+
+      {/* Descuento (only when positive) */}
+      {descuento > 0 && (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+          }}
+        >
+          <Box sx={{ fontSize: 12, color: PAPER_INK_SOFT }}>Descuento</Box>
+          <Box
+            sx={{
+              fontFamily: fontFamilies.mono,
+              fontVariantNumeric: "tabular-nums",
+              fontSize: 12.5,
+              fontWeight: 500,
+              letterSpacing: "-0.005em",
+              color: PAPER_INK_SOFT,
+            }}
+          >
+            −{formatCop(descuento)}
+          </Box>
+        </Box>
+      )}
+
+      {/* Divider */}
+      <Box
+        aria-hidden
+        sx={{
+          height: "1px",
+          background: PAPER_RULE,
+          marginTop: "12px",
+          marginBottom: "12px",
+        }}
+      />
+
+      {/* Total — emphasized */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+        }}
+      >
+        <Box
+          sx={{
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            color: accentDeep,
+          }}
+        >
+          Total
+        </Box>
+        <Box
+          sx={{
+            fontFamily: fontFamilies.mono,
+            fontVariantNumeric: "tabular-nums",
+            fontSize: 19,
+            fontWeight: 700,
+            letterSpacing: "-0.01em",
+            color: accentDeep,
+          }}
+        >
+          {formatCop(total)}
+        </Box>
       </Box>
     </Box>
   );
