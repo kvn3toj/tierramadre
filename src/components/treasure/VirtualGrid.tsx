@@ -204,14 +204,9 @@ export default function VirtualGrid({
   // Track scroll position for direction detection
   const lastScrollTop = React.useRef(0);
   const lastDirection = React.useRef<'up' | 'down' | null>(null);
-  // Throttle persistence of the scroll offset while scrolling.
-  const lastSaveRef = useRef(0);
-
-  // Keep latest callback / key in refs for use in unmount cleanup.
+  // Keep the latest onScrollElement callback in a ref for the notify effect.
   const onScrollElementRef = useRef(onScrollElement);
   onScrollElementRef.current = onScrollElement;
-  const restoreKeyRef = useRef(scrollRestorationKey);
-  restoreKeyRef.current = scrollRestorationKey;
 
   // Expose the real scroll container to the parent (and clear it on unmount)
   // so affordances like "back to top" act on the element that truly scrolls.
@@ -221,27 +216,42 @@ export default function VirtualGrid({
     return () => onScrollElementRef.current?.(null);
   }, [gridApi]);
 
-  // Restore the saved offset once the grid scroller exists. restoreScrollWhenReady
-  // retries across frames until the virtual content is tall enough to honor it.
+  // Scroll persistence + restoration, bound directly to the real scroll
+  // element. We own the listener because react-window 2.x does NOT forward the
+  // onScroll prop to its scroller, and reading the element at unmount is too
+  // late (the Grid child detaches before this parent's cleanup runs). Capturing
+  // `el` in the closure keeps the continuous saves — and the final save — valid.
   const didRestoreRef = useRef(false);
   useEffect(() => {
-    if (!gridApi || !scrollRestorationKey || didRestoreRef.current) return;
-    didRestoreRef.current = true;
-    if (!restoreScroll) return;
-    const target = readScrollPos(scrollRestorationKey);
-    if (target && target > 0) {
-      return restoreScrollWhenReady(() => gridApi.element, target);
-    }
-  }, [gridApi, scrollRestorationKey, restoreScroll]);
+    const el = gridApi?.element;
+    if (!el || !scrollRestorationKey) return;
 
-  // Persist the final offset when the grid unmounts (navigating away).
-  useEffect(() => {
-    return () => {
-      const el = gridApi?.element;
-      const key = restoreKeyRef.current;
-      if (el && key) saveScrollPos(key, el.scrollTop);
+    // Restore once, on back/forward navigations.
+    if (!didRestoreRef.current) {
+      didRestoreRef.current = true;
+      if (restoreScroll) {
+        const target = readScrollPos(scrollRestorationKey);
+        if (target && target > 0) restoreScrollWhenReady(() => el, target);
+      }
+    }
+
+    // Persist the offset continuously (rAF-throttled) so navigating away never
+    // loses it, regardless of teardown ordering.
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        saveScrollPos(scrollRestorationKey, el.scrollTop);
+        ticking = false;
+      });
     };
-  }, [gridApi]);
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      saveScrollPos(scrollRestorationKey, el.scrollTop);
+      el.removeEventListener('scroll', onScroll);
+    };
+  }, [gridApi, scrollRestorationKey, restoreScroll]);
 
   // Observe actual container width via ResizeObserver
   useEffect(() => {
@@ -336,34 +346,21 @@ export default function VirtualGrid({
     gap,
   }), [items, columnCount, favorites, comparisonIds, canAddToComparison, onItemClick, onCertClick, onToggleFavorite, renderCard, isMobile, gap]);
 
-  // Stable onScroll handler for react-window Grid
+  // Optional scroll-direction detection. Scroll persistence is handled by the
+  // dedicated listener above (react-window may not forward this prop).
   const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
-    const target = event.currentTarget;
-    const scrollTop = target.scrollTop;
-
-    // Persist position (throttled) so back-navigation can restore it.
-    if (scrollRestorationKey) {
-      const now = Date.now();
-      if (now - lastSaveRef.current > 120) {
-        lastSaveRef.current = now;
-        saveScrollPos(scrollRestorationKey, scrollTop);
+    if (!onScrollDirectionChange) return;
+    const scrollTop = event.currentTarget.scrollTop;
+    const delta = scrollTop - lastScrollTop.current;
+    if (Math.abs(delta) > 10) {
+      const direction = delta > 0 ? 'down' : 'up';
+      if (direction !== lastDirection.current) {
+        lastDirection.current = direction;
+        onScrollDirectionChange(direction);
       }
+      lastScrollTop.current = scrollTop;
     }
-
-    // Direction detection for chrome show/hide.
-    if (onScrollDirectionChange) {
-      const scrollThreshold = 10;
-      const delta = scrollTop - lastScrollTop.current;
-      if (Math.abs(delta) > scrollThreshold) {
-        const direction = delta > 0 ? 'down' : 'up';
-        if (direction !== lastDirection.current) {
-          lastDirection.current = direction;
-          onScrollDirectionChange(direction);
-        }
-        lastScrollTop.current = scrollTop;
-      }
-    }
-  }, [onScrollDirectionChange, scrollRestorationKey]);
+  }, [onScrollDirectionChange]);
 
   if (items.length === 0) {
     return null;
