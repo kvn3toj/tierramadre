@@ -17,6 +17,8 @@ export interface TreasureDesktopResultsSummaryProps {
   filteredTreasureLength: number;
   allTreasureLength: number;
   visibleItemsLength: number;
+  /** Current view — grid renders all filtered items, list paginates. */
+  viewMode: 'grid' | 'list';
   isProviderMode: boolean;
   shouldShowPrices: boolean;
   formatFullCurrency: (n: number) => string;
@@ -33,6 +35,7 @@ export default function TreasureDesktopResultsSummary({
   filteredTreasureLength,
   allTreasureLength,
   visibleItemsLength,
+  viewMode,
   isProviderMode,
   shouldShowPrices,
   formatFullCurrency,
@@ -48,6 +51,12 @@ export default function TreasureDesktopResultsSummary({
           {filteredTreasureLength === allTreasureLength ? (
             <>
               <strong style={{ color: theme.palette.text.primary }}>{allTreasureLength}</strong> {t.treasure.totalEmeralds}
+            </>
+          ) : viewMode === 'grid' ? (
+            // Grid view renders every filtered item (virtualized), so the
+            // paginated "visible" count would understate what's shown.
+            <>
+              <strong style={{ color: theme.palette.text.primary }}>{filteredTreasureLength}</strong> {t.treasure.emeralds}
             </>
           ) : (
             <>

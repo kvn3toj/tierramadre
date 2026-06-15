@@ -13,23 +13,44 @@ import { getMainScrollY, scrollMainTo, addMainScrollListener } from '../../utils
 
 const SCROLL_THRESHOLD = 400;
 
-export default function ScrollToTop() {
+export interface ScrollToTopProps {
+  /**
+   * Element that actually scrolls. Defaults to the <main> shell, but in grid
+   * view the cards scroll inside react-window's own container, so the
+   * TreasureBrowser passes that element here. When null, falls back to <main>.
+   */
+  scrollContainer?: HTMLElement | null;
+}
+
+export default function ScrollToTop({ scrollContainer }: ScrollToTopProps = {}) {
   const [visible, setVisible] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
+    const getY = () =>
+      scrollContainer ? scrollContainer.scrollTop : getMainScrollY();
     const handleScroll = () => {
-      setVisible(getMainScrollY() > SCROLL_THRESHOLD);
+      setVisible(getY() > SCROLL_THRESHOLD);
     };
+    handleScroll(); // sync initial visibility when the container changes
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }
     return addMainScrollListener(handleScroll, { passive: true });
-  }, []);
+  }, [scrollContainer]);
 
   const handleClick = useCallback(() => {
-    scrollMainTo({
+    const opts: ScrollToOptions = {
       top: 0,
       behavior: prefersReducedMotion ? 'auto' : 'smooth',
-    });
-  }, [prefersReducedMotion]);
+    };
+    if (scrollContainer) {
+      scrollContainer.scrollTo(opts);
+    } else {
+      scrollMainTo(opts);
+    }
+  }, [prefersReducedMotion, scrollContainer]);
 
   return (
     <Zoom in={visible} unmountOnExit>

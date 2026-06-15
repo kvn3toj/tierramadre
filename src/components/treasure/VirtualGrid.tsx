@@ -15,11 +15,12 @@
  * This prevents layout shift when the address bar hides/shows on iOS Safari.
  */
 import React, { useCallback, useMemo, ReactElement, CSSProperties, useState, useEffect, useRef } from 'react';
-import { Grid } from 'react-window';
+import { Grid, type GridImperativeAPI } from 'react-window';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import { TreasureItem } from '../../types';
 import { vhCalc } from '../../hooks/useViewportHeight';
 import { usePriceShare } from '../../contexts/PriceShareContext';
+import { saveScrollPos, readScrollPos, restoreScrollWhenReady } from '../../utils/scrollMemory';
 
 interface VirtualGridProps {
   items: TreasureItem[];
@@ -49,6 +50,19 @@ interface VirtualGridProps {
   minHeight?: number;
   /** Callback when scroll direction changes */
   onScrollDirectionChange?: (direction: 'up' | 'down') => void;
+  /**
+   * Stable key (route + active filters) under which the grid's internal scroll
+   * offset is persisted, so returning from a product page restores position.
+   */
+  scrollRestorationKey?: string;
+  /** Restore the saved scroll offset on mount (true for back/forward navigations). */
+  restoreScroll?: boolean;
+  /**
+   * Exposes the grid's internal scroll container to the parent (e.g. so the
+   * "back to top" button can act on the element that actually scrolls in
+   * grid view). Called with the element on mount and null on unmount.
+   */
+  onScrollElement?: (element: HTMLElement | null) => void;
 }
 
 /**
@@ -170,9 +184,15 @@ export default function VirtualGrid({
   renderCard,
   minHeight = 600,
   onScrollDirectionChange,
+  scrollRestorationKey,
+  restoreScroll = false,
+  onScrollElement,
 }: VirtualGridProps) {
   const theme = useTheme();
   const { shouldShowPrices } = usePriceShare();
+
+  // react-window 2.x imperative handle — gives us the scroll container element.
+  const [gridApi, setGridApi] = useState<GridImperativeAPI | null>(null);
 
   // Measure actual container width via ref for accurate row height calculation.
   // This avoids guessing scrollbar widths and parent padding from viewport width.
@@ -184,6 +204,44 @@ export default function VirtualGrid({
   // Track scroll position for direction detection
   const lastScrollTop = React.useRef(0);
   const lastDirection = React.useRef<'up' | 'down' | null>(null);
+  // Throttle persistence of the scroll offset while scrolling.
+  const lastSaveRef = useRef(0);
+
+  // Keep latest callback / key in refs for use in unmount cleanup.
+  const onScrollElementRef = useRef(onScrollElement);
+  onScrollElementRef.current = onScrollElement;
+  const restoreKeyRef = useRef(scrollRestorationKey);
+  restoreKeyRef.current = scrollRestorationKey;
+
+  // Expose the real scroll container to the parent (and clear it on unmount)
+  // so affordances like "back to top" act on the element that truly scrolls.
+  useEffect(() => {
+    const el = gridApi?.element ?? null;
+    onScrollElementRef.current?.(el);
+    return () => onScrollElementRef.current?.(null);
+  }, [gridApi]);
+
+  // Restore the saved offset once the grid scroller exists. restoreScrollWhenReady
+  // retries across frames until the virtual content is tall enough to honor it.
+  const didRestoreRef = useRef(false);
+  useEffect(() => {
+    if (!gridApi || !scrollRestorationKey || didRestoreRef.current) return;
+    didRestoreRef.current = true;
+    if (!restoreScroll) return;
+    const target = readScrollPos(scrollRestorationKey);
+    if (target && target > 0) {
+      return restoreScrollWhenReady(() => gridApi.element, target);
+    }
+  }, [gridApi, scrollRestorationKey, restoreScroll]);
+
+  // Persist the final offset when the grid unmounts (navigating away).
+  useEffect(() => {
+    return () => {
+      const el = gridApi?.element;
+      const key = restoreKeyRef.current;
+      if (el && key) saveScrollPos(key, el.scrollTop);
+    };
+  }, [gridApi]);
 
   // Observe actual container width via ResizeObserver
   useEffect(() => {
@@ -280,22 +338,32 @@ export default function VirtualGrid({
 
   // Stable onScroll handler for react-window Grid
   const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
-    if (!onScrollDirectionChange) return;
-
     const target = event.currentTarget;
     const scrollTop = target.scrollTop;
-    const scrollThreshold = 10;
-    const delta = scrollTop - lastScrollTop.current;
 
-    if (Math.abs(delta) > scrollThreshold) {
-      const direction = delta > 0 ? 'down' : 'up';
-      if (direction !== lastDirection.current) {
-        lastDirection.current = direction;
-        onScrollDirectionChange(direction);
+    // Persist position (throttled) so back-navigation can restore it.
+    if (scrollRestorationKey) {
+      const now = Date.now();
+      if (now - lastSaveRef.current > 120) {
+        lastSaveRef.current = now;
+        saveScrollPos(scrollRestorationKey, scrollTop);
       }
-      lastScrollTop.current = scrollTop;
     }
-  }, [onScrollDirectionChange]);
+
+    // Direction detection for chrome show/hide.
+    if (onScrollDirectionChange) {
+      const scrollThreshold = 10;
+      const delta = scrollTop - lastScrollTop.current;
+      if (Math.abs(delta) > scrollThreshold) {
+        const direction = delta > 0 ? 'down' : 'up';
+        if (direction !== lastDirection.current) {
+          lastDirection.current = direction;
+          onScrollDirectionChange(direction);
+        }
+        lastScrollTop.current = scrollTop;
+      }
+    }
+  }, [onScrollDirectionChange, scrollRestorationKey]);
 
   if (items.length === 0) {
     return null;
@@ -339,6 +407,7 @@ export default function VirtualGrid({
       }}
     >
       <Grid<GridCellProps>
+        gridRef={setGridApi}
         cellComponent={CellRenderer}
         cellProps={cellProps}
         columnCount={columnCount}

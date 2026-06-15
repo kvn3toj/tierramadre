@@ -5,7 +5,8 @@
  * Logic lives in useTreasureBrowserController; desktop chrome is split into browser/* components.
  */
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
+import { useLocation, useNavigationType } from 'react-router-dom';
 import { Box, useTheme } from '@mui/material';
 import { useLanguage } from '../../contexts/LanguageContext';
 import CertificationUpload from './CertificationUpload';
@@ -61,6 +62,14 @@ export default function TreasureBrowser({
 }: TreasureBrowserProps = {}) {
   const { t } = useLanguage();
   const theme = useTheme();
+
+  // Scroll restoration: key the grid's internal scroll offset by the history
+  // entry id (stable across the product round-trip and independent of the
+  // replaceState-based filter sync), and only auto-restore on back/forward (POP).
+  const location = useLocation();
+  const navigationType = useNavigationType();
+  const scrollKey = `treasure-grid:${location.key}`;
+  const [gridScrollEl, setGridScrollEl] = useState<HTMLElement | null>(null);
 
   const c = useTreasureBrowserController({ isProviderMode, defaultViewMode });
 
@@ -131,8 +140,8 @@ export default function TreasureBrowser({
     applySavedPreset,
   } = c;
 
-  const { colors, shapes, qualities, categorias } = filterOptions;
-  const { statusFilter, sortBy, typeFilter, categoriaFilter, colorFilter, shapeFilter, qualityFilter, priceRange } =
+  const { colors, shapes, qualities, categorias, colecciones } = filterOptions;
+  const { statusFilter, sortBy, typeFilter, categoriaFilter, coleccionFilter, colorFilter, shapeFilter, qualityFilter, priceRange } =
     filters;
 
   return (
@@ -178,6 +187,7 @@ export default function TreasureBrowser({
             sortBy={sortBy}
             typeFilter={typeFilter}
             categoriaFilter={categoriaFilter}
+            coleccionFilter={coleccionFilter}
             colorFilter={colorFilter}
             shapeFilter={shapeFilter}
             qualityFilter={qualityFilter}
@@ -188,6 +198,7 @@ export default function TreasureBrowser({
             setSortBy={setSortBy}
             setTypeFilter={setTypeFilter}
             setCategoriaFilter={setCategoriaFilter}
+            setColeccionFilter={setColeccionFilter}
             setColorFilter={setColorFilter}
             setShapeFilter={setShapeFilter}
             setQualityFilter={setQualityFilter}
@@ -198,6 +209,7 @@ export default function TreasureBrowser({
             shapes={shapes}
             qualities={qualities}
             categorias={categorias}
+            colecciones={colecciones}
             priceMinMax={priceMinMax}
             caratMinMax={caratMinMax}
             hasFilters={hasFilters}
@@ -261,6 +273,7 @@ export default function TreasureBrowser({
           filteredTreasureLength={filteredTreasure.length}
           allTreasureLength={allTreasure.length}
           visibleItemsLength={visibleItems.length}
+          viewMode={viewMode}
           isProviderMode={providerMode}
           shouldShowPrices={shouldShowPrices}
           formatFullCurrency={formatFullCurrency}
@@ -298,6 +311,9 @@ export default function TreasureBrowser({
           onToggleFavorite={toggleFavorite}
           onScrollDirectionChange={handleScrollDirectionChange}
           renderCard={renderCard}
+          scrollRestorationKey={scrollKey}
+          restoreScroll={navigationType === 'POP'}
+          onScrollElement={setGridScrollEl}
         />
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -374,7 +390,7 @@ export default function TreasureBrowser({
         />
       )}
 
-      <ScrollToTop />
+      <ScrollToTop scrollContainer={viewMode === 'grid' ? gridScrollEl : null} />
     </Box>
   );
 }

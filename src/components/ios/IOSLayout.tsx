@@ -15,6 +15,7 @@ import IOSTabBar from './IOSTabBar';
 import IOSNavigationBar, { NavigationBarMode, NavigationAction } from './IOSNavigationBar';
 import IOSMoreSheet from './IOSMoreSheet';
 import IOSSettingsSheet from './IOSSettingsSheet';
+import ScrollRestoration from '../shared/ScrollRestoration';
 import { InvitationBanner } from '../invitation';
 import { zIndex, defaultShadows } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -268,6 +269,9 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
       >
         Saltar al contenido principal
       </Box>
+
+      {/* Restores <main> scroll on back/forward and resets to top on new nav */}
+      <ScrollRestoration />
 
       {/* Invitation countdown banner - shows for invited guests */}
       <InvitationBanner />
