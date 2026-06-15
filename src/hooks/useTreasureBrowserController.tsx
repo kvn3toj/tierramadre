@@ -105,6 +105,7 @@ export function useTreasureBrowserController({
   const urlSync = useUrlFilterSync({
     filters,
     priceMinMax: filterOptions.priceMinMax,
+    caratMinMax: filterOptions.caratMinMax,
     clearFilters,
   });
 

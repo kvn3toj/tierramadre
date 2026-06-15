@@ -10,6 +10,7 @@ import { TreasureFilters, TypeFilter, StatusFilter, SortOption, CityFilter, Hero
 export interface UseUrlFilterSyncOptions {
   filters: TreasureFilters;
   priceMinMax: { min: number; max: number };
+  caratMinMax: { min: number; max: number };
   clearFilters: () => void;
 }
 
@@ -124,11 +125,10 @@ export function parseUrlFilters(searchString?: string): Partial<TreasureFilters>
  */
 export function useUrlFilterSync({
   filters,
-  priceMinMax: _priceMinMax,
+  priceMinMax,
+  caratMinMax,
   clearFilters,
 }: UseUrlFilterSyncOptions): UseUrlFilterSyncReturn {
-  // Note: priceMinMax reserved for future URL sync of price range
-  void _priceMinMax;
   // Parse URL params only on mount
   const initialFilters = useMemo(() => parseUrlFilters(), []);
 
@@ -176,19 +176,21 @@ export function useUrlFilterSync({
       params.set('cantidad', filters.cantidadFilter);
     }
 
-    // Price range - only if modified from defaults
-    if (filters.priceRange[0] > 0) {
+    // Price range - only persist when narrowed past the data extent. A full
+    // range is not a filter, and persisting it creates a phantom "active" chip
+    // once the data's min/max recomputes after async loads.
+    if (filters.priceRange[0] > priceMinMax.min) {
       params.set('priceMin', String(filters.priceRange[0]));
     }
-    if (filters.priceRange[1] < Number.MAX_SAFE_INTEGER) {
+    if (filters.priceRange[1] < priceMinMax.max) {
       params.set('priceMax', String(filters.priceRange[1]));
     }
 
-    // Carat range - only if modified from defaults
-    if (filters.caratRange[0] > 0) {
+    // Carat range - only persist when narrowed past the data extent
+    if (filters.caratRange[0] > caratMinMax.min) {
       params.set('caratMin', String(filters.caratRange[0]));
     }
-    if (filters.caratRange[1] < Number.MAX_SAFE_INTEGER) {
+    if (filters.caratRange[1] < caratMinMax.max) {
       params.set('caratMax', String(filters.caratRange[1]));
     }
 
@@ -202,7 +204,7 @@ export function useUrlFilterSync({
         : window.location.pathname;
       window.history.replaceState(null, '', newUrl);
     }
-  }, [filters]);
+  }, [filters, priceMinMax.min, priceMinMax.max, caratMinMax.min, caratMinMax.max]);
 
   // Clear filters and URL params
   const handleClearFilters = useCallback(() => {
