@@ -248,7 +248,13 @@ export default function VirtualGrid({
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => {
-      saveScrollPos(scrollRestorationKey, el.scrollTop);
+      // Only persist here on a genuine effect re-run (element still attached).
+      // On unmount React detaches the subtree BEFORE running this cleanup, so
+      // el.scrollTop would read 0 and clobber the value saved during scrolling.
+      // The continuous listener above already holds the latest offset.
+      if (el.isConnected && el.scrollTop > 0) {
+        saveScrollPos(scrollRestorationKey, el.scrollTop);
+      }
       el.removeEventListener('scroll', onScroll);
     };
   }, [gridApi, scrollRestorationKey, restoreScroll]);
