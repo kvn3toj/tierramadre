@@ -115,6 +115,13 @@ interface EditItemDrawerProps {
   lotEstado: LotEstado;
   /** When false, all gem fields are read-only and only the photo can change. */
   editable?: boolean;
+  /**
+   * Fotosynthia v2 — an AI edit patch merged on top of the hydrated draft when
+   * the drawer opens (before the dirty baseline is captured). Keys are field
+   * names (EDIT_PATCH_KEYS); preponderancia and photos are ignored. The human
+   * reviews + Guardar.
+   */
+  editDraftOverride?: Record<string, unknown>;
 }
 
 /**
@@ -145,6 +152,7 @@ export function EditItemDrawer({
   ticketLabel,
   lotEstado,
   editable = true,
+  editDraftOverride,
 }: EditItemDrawerProps) {
   const foto = getFoto("light");
   const titleId = useId();
@@ -286,8 +294,8 @@ export function EditItemDrawer({
     }
     // For a joya the stored free text round-trips through JoyaFields'
     // `descripcion`, so the shared observación textarea is hidden + left empty.
-    const seededObservacion = t === "joya" ? "" : (product.observacion ?? "");
-    const seededMostrar = product.mostrarEnCatalogo ?? false;
+    let seededObservacion = t === "joya" ? "" : (product.observacion ?? "");
+    let seededMostrar = product.mostrarEnCatalogo ?? false;
     // F2 — seed the catalog tiers from the persisted product. An unset tier
     // hydrates as "" (not 0) so the omit-on-blank submit rule never re-sends a
     // price the operator didn't touch.
@@ -295,6 +303,50 @@ export function EditItemDrawer({
       precioEmbajadorCOP: product.precioEmbajadorCOP ?? "",
       precioConscienteCOP: product.precioConscienteCOP ?? "",
     };
+    // Fotosynthia v2 — merge an AI edit patch ON TOP of the hydrated values,
+    // BEFORE the baseline is captured below so dirty detection stays correct.
+    // preponderancia (lot-derived) and photos are never touched.
+    if (editDraftOverride) {
+      const o: Record<string, unknown> = { ...editDraftOverride };
+      delete o.preponderancia;
+      if (typeof o.observacion === "string") {
+        seededObservacion = o.observacion;
+      }
+      delete o.observacion;
+      if (typeof o.mostrarEnCatalogo === "boolean") {
+        seededMostrar = o.mostrarEnCatalogo;
+      }
+      delete o.mostrarEnCatalogo;
+      if (typeof o.precioEmbajadorCOP === "number") {
+        seededPricing.precioEmbajadorCOP = o.precioEmbajadorCOP;
+      }
+      delete o.precioEmbajadorCOP;
+      if (typeof o.precioConscienteCOP === "number") {
+        seededPricing.precioConscienteCOP = o.precioConscienteCOP;
+      }
+      delete o.precioConscienteCOP;
+      // Remaining keys belong to the active sub-form draft. Re-set it so the
+      // form reflects the merge (last setState wins over the seed above).
+      if (t === "joya") {
+        seededActive = {
+          ...(seededActive as JoyaDraft),
+          ...(o as Partial<JoyaDraft>),
+        };
+        setJoyaDraft(seededActive as JoyaDraft);
+      } else if (t === "insumo") {
+        seededActive = {
+          ...(seededActive as InsumoDraft),
+          ...(o as Partial<InsumoDraft>),
+        };
+        setInsumoDraft(seededActive as InsumoDraft);
+      } else {
+        seededActive = {
+          ...(seededActive as GemaDraft),
+          ...(o as Partial<GemaDraft>),
+        };
+        setDraft(seededActive as GemaDraft);
+      }
+    }
     setObservacion(seededObservacion);
     setMostrarEnCatalogo(seededMostrar);
     setPricing(seededPricing);
@@ -323,7 +375,7 @@ export function EditItemDrawer({
     setInitialCertificadoUrl(product.certificadoUrl);
     setError(null);
     setConfirmDelete(false);
-  }, [open, product, itemId, currentPreponderancia]);
+  }, [open, product, itemId, currentPreponderancia, editDraftOverride]);
 
   // Reset the confirm-delete prompt + drop any local previews on close.
   useEffect(() => {

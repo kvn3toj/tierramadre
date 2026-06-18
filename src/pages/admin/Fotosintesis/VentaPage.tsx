@@ -36,6 +36,7 @@ import { CertificadoPreview } from "./components/CertificadoPreview";
 import {
   ClienteFinalForm,
   type ClienteRow,
+  type ClienteInitialData,
 } from "./components/ClienteFinalForm";
 import {
   CreditoFields,
@@ -96,7 +97,12 @@ export default function FotosintesisVentaPage() {
   const navigate = useNavigate();
   const { saleId } = useParams();
   const [searchParams] = useSearchParams();
-  const { openSpotlight, registerSpotlightDefault } = useFotosintesisLayout();
+  const {
+    openSpotlight,
+    registerSpotlightDefault,
+    consumeDraftForm,
+    draftNonce,
+  } = useFotosintesisLayout();
   const { notify } = useNotification();
   const { user } = useGoogleAuth();
 
@@ -130,6 +136,17 @@ export default function FotosintesisVentaPage() {
   // ─── Slice 3 — Email opcional ─────────────────────────────────────────
   const [sendEmail, setSendEmail] = useState(false);
   const [adicionales, setAdicionales] = useState("");
+
+  // ─── Fotosynthia v2 guided-capture seeding ────────────────────────────
+  // A buyer resolved from a name hint is applied AFTER the compradorTipo reset
+  // effect (below) via pendingClientId so it isn't wiped. guidedClientData
+  // pre-fills the cliente-final creation form.
+  const [pendingClientId, setPendingClientId] = useState<Id<"clients"> | null>(
+    null,
+  );
+  const [guidedClientData, setGuidedClientData] = useState<
+    ClienteInitialData | undefined
+  >(undefined);
 
   const kardexRef = useRef<HTMLDivElement>(null);
   const certificadoRef = useRef<HTMLDivElement>(null);
@@ -186,6 +203,81 @@ export default function FotosintesisVentaPage() {
   useEffect(() => {
     setClientId(null);
   }, [compradorTipo]);
+
+  // Fotosynthia v2 guided seeding — pre-fill the sale (or the cliente-final
+  // creation form) from an AI draft. Waits for the directory so a named buyer
+  // resolves to an id. compradorTipo is seeded here; the resolved buyer is
+  // applied via pendingClientId in the effect below (after the reset above).
+  useEffect(() => {
+    if (allClients === undefined) return;
+    const venta = consumeDraftForm("venta");
+    if (venta) {
+      const d = venta as Record<string, unknown>;
+      if (typeof d.sede === "string") setSede(d.sede as Sede);
+      if (typeof d.compradorTipo === "string")
+        setCompradorTipo(d.compradorTipo as CompradorTipo);
+      if (typeof d.formaPago === "string")
+        setFormaPago(d.formaPago as FormaPago);
+      if (typeof d.metodoContado === "string")
+        setMetodoContado(d.metodoContado as MetodoContado);
+      if (typeof d.precioAcordado === "number")
+        setPrecioAcordado(d.precioAcordado);
+      if (typeof d.adicionales === "string") setAdicionales(d.adicionales);
+      if (typeof d.itemId === "string") setItemId(d.itemId);
+      if (typeof d.creditoFechaVenc === "string")
+        setCreditoFechaVenc(d.creditoFechaVenc);
+      if (typeof d.creditoCuotas === "number")
+        setCreditoCuotas(d.creditoCuotas);
+      if (typeof d.creditoTasa === "number") setCreditoTasa(d.creditoTasa);
+      if (typeof d.esmereoFechaVenc === "string")
+        setEsmereoFechaVenc(d.esmereoFechaVenc);
+      if (typeof d.esmereoCuotas === "number")
+        setEsmereoCuotas(d.esmereoCuotas);
+      if (typeof d.esmereoPlazo === "number") setEsmereoPlazo(d.esmereoPlazo);
+      if (typeof d.esmereoNotas === "string") setEsmereoNotas(d.esmereoNotas);
+      const cfData = d.clienteFinalData;
+      if (cfData && typeof cfData === "object") {
+        setCompradorTipo("final");
+        setGuidedClientData(cfData as ClienteInitialData);
+      } else {
+        const hint = typeof d.clientId === "string" ? d.clientId : undefined;
+        if (hint) {
+          const h = hint.toLowerCase();
+          const match = allClients.find(
+            (c) => c._id === hint || (c.nombre && c.nombre.toLowerCase() === h),
+          );
+          if (match) {
+            if (match.tipo !== "embajador") setCompradorTipo("final");
+            setPendingClientId(match._id);
+          }
+        }
+      }
+      return;
+    }
+    const client = consumeDraftForm("client");
+    if (client) {
+      const d = client as Record<string, unknown>;
+      setCompradorTipo("final");
+      setGuidedClientData({
+        nombre: typeof d.nombre === "string" ? d.nombre : undefined,
+        tipoDocumento:
+          typeof d.tipoDocumento === "string" ? d.tipoDocumento : undefined,
+        documento: typeof d.documento === "string" ? d.documento : undefined,
+        direccion: typeof d.direccion === "string" ? d.direccion : undefined,
+        telefono: typeof d.telefono === "string" ? d.telefono : undefined,
+        email: typeof d.email === "string" ? d.email : undefined,
+      });
+    }
+  }, [draftNonce, consumeDraftForm, allClients]);
+
+  // Apply a guided-resolved buyer AFTER the compradorTipo reset effect above,
+  // so switching tipo (which clears clientId) doesn't wipe it.
+  useEffect(() => {
+    if (pendingClientId) {
+      setClientId(pendingClientId);
+      setPendingClientId(null);
+    }
+  }, [pendingClientId, compradorTipo]);
 
   // ─── Derived ───────────────────────────────────────────────────────────
   const precioCop = typeof precioAcordado === "number" ? precioAcordado : 0;
@@ -662,6 +754,7 @@ export default function FotosintesisVentaPage() {
                   }
                   onCreated={(id) => setClientId(id)}
                   onChange={() => setClientId(null)}
+                  initialData={guidedClientData}
                 />
               ) : (
                 <>

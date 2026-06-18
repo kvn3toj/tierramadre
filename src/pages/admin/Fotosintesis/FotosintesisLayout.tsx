@@ -8,6 +8,11 @@ import {
   FotosintesisLayoutProvider,
   type SpotlightOpenOptions,
 } from "./FotosintesisLayoutContext";
+import type {
+  BatchEditPatch,
+  GuidedDraft,
+  GuidedFlow,
+} from "./copilot/flowSchemas";
 import { ProductoSpotlight } from "./components/ProductoSpotlight";
 import { FotosintesisGuideFab } from "./components/FotosintesisGuideFab";
 
@@ -43,9 +48,74 @@ export default function FotosintesisLayout() {
     [],
   );
 
+  // ─── Fotosynthia v2 · guided-capture hand-off bus ──────────────────
+  // Ref-backed (no re-render on write), mirroring defaultSpotlightRef. The
+  // nonces are the only state — they bump so a target page re-seeds even when
+  // navigation lands on the route it's already on.
+  const draftBusRef = useRef<{ flow: GuidedFlow; data: GuidedDraft } | null>(
+    null,
+  );
+  const editQueueRef = useRef<BatchEditPatch[]>([]);
+  const [draftNonce, setDraftNonce] = useState(0);
+  const [editQueueNonce, setEditQueueNonce] = useState(0);
+
+  const openDraftForm = useCallback(
+    (flow: GuidedFlow, data: GuidedDraft, targetPath: string) => {
+      draftBusRef.current = { flow, data };
+      setDraftNonce((n) => n + 1);
+      navigate(targetPath);
+    },
+    [navigate],
+  );
+  const consumeDraftForm = useCallback(
+    (flow: GuidedFlow): GuidedDraft | null => {
+      const pending = draftBusRef.current;
+      if (pending && pending.flow === flow) {
+        draftBusRef.current = null;
+        return pending.data;
+      }
+      return null;
+    },
+    [],
+  );
+  const enqueueEdits = useCallback((edits: BatchEditPatch[]) => {
+    editQueueRef.current = [...edits];
+    setEditQueueNonce((n) => n + 1);
+  }, []);
+  const peekEdits = useCallback(() => editQueueRef.current, []);
+  const dequeueEdit = useCallback((): BatchEditPatch | null => {
+    const queue = editQueueRef.current;
+    if (queue.length === 0) return null;
+    const [next, ...rest] = queue;
+    editQueueRef.current = rest;
+    return next ?? null;
+  }, []);
+
   const layoutValue = useMemo(
-    () => ({ openSpotlight, closeSpotlight, registerSpotlightDefault }),
-    [openSpotlight, closeSpotlight, registerSpotlightDefault],
+    () => ({
+      openSpotlight,
+      closeSpotlight,
+      registerSpotlightDefault,
+      openDraftForm,
+      consumeDraftForm,
+      draftNonce,
+      enqueueEdits,
+      peekEdits,
+      dequeueEdit,
+      editQueueNonce,
+    }),
+    [
+      openSpotlight,
+      closeSpotlight,
+      registerSpotlightDefault,
+      openDraftForm,
+      consumeDraftForm,
+      draftNonce,
+      enqueueEdits,
+      peekEdits,
+      dequeueEdit,
+      editQueueNonce,
+    ],
   );
 
   useFotosintesisHotkeys({

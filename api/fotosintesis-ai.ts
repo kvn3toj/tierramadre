@@ -20,6 +20,16 @@
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import {
+  buildFlowSchemaText,
+  coerceVocabulary,
+  computeMissing,
+  isGuidedFlow,
+  whitelistDraft,
+  type GuidedDraft,
+  type GuidedEnvelope,
+  type GuidedFlow,
+} from "../src/pages/admin/Fotosintesis/copilot/flowSchemas";
 
 const DEFAULT_MODEL =
   process.env.GROQ_MODEL?.trim() || "llama-3.3-70b-versatile";
@@ -198,6 +208,198 @@ function buildSummary(
   return `P: ${userPart} · R: ${aiPart}`;
 }
 
+// ─── Guided data-entry mode (Fotosynthia v2) ─────────────────────────
+//
+// One non-streaming JSON round-trip per turn. The model classifies the
+// admin's intent into a flow, accumulates a typed draft, and asks only the
+// fields it can't infer. The SERVER is the authority: it whitelists keys,
+// coerces vocabularies, and RECOMPUTES missing/ready (the model never
+// self-certifies completeness). No mutation is ever called here — the
+// envelope only pre-fills a form the human reviews and saves.
+
+function buildGuidedSystemPrompt(): string {
+  return `Eres Fotosynthia, la copiloto de captura del taller Fotosíntesis de Tierra Madre.
+Tu trabajo AHORA es guiar a Maritza para registrar o editar datos: ella dice en lenguaje natural qué quiere y tú conduces una entrevista corta, preguntando SOLO lo que falta. Hablas español de Colombia, cálida y precisa.
+
+DEVUELVE SIEMPRE un único objeto JSON válido (sin texto fuera del JSON) con esta forma exacta:
+{"flow": "<flujo>", "say": "<1-3 frases: tu siguiente pregunta o confirmación>", "draft": {<campos recolectados>}, "missing": ["<campos que faltan>"], "ready": false}
+
+${buildFlowSchemaText()}
+
+REGLAS:
+1. En el primer turno, clasifica la intención en UN flujo. Si es ambiguo, usa flow="advisory", haz UNA pregunta para desambiguar y deja draft vacío.
+2. Aplica los defaults indicados SIN preguntarlos. No vuelvas a pedir nada que ya esté en el borrador acumulado, en el snapshot o en el lote activo.
+3. Pregunta máximo 1-2 campos por turno, los más bloqueantes primero. Pon en "missing" los campos obligatorios que aún faltan.
+4. En los campos con vocabulario controlado usa SOLO esos valores; si Maritza dice algo parecido, mapéalo al valor canónico.
+5. NUNCA inventes IDs (de ítem, proveedor, cliente o lote). Para editar o referenciar un ítem usa "itemHint" con el nombre o descripción que Maritza YA mencionó (ej. "la esmeralda de Chivor" → itemHint: "Chivor"); NO se lo vuelvas a preguntar si ya lo describió. El sistema resuelve el itemHint al ítem real.
+6. NUNCA incluyas "preponderancia" ni fotos en edit-existing ni batch-edit. En captura de ítems, la preponderancia es el % del costo del lote (entre todos los ítems debe sumar 100%): pídela.
+7. Cuando tengas todos los obligatorios, pon ready=true y confirma brevemente en "say" qué vas a precargar; recuerda a Maritza que arrastre la foto antes de guardar si aplica.
+8. Si es una pregunta informativa (no captura), usa flow="advisory" y responde en "say" con datos concretos del snapshot.
+9. loteId (solo en captura de ítems): inclúyelo SOLO si Maritza nombra el lote explícitamente (ej. "B-008"); si no, déjalo vacío y se usa el lote abierto actual.
+10. "sede"/"bóveda" es el ALMACÉN donde se guarda (B=Bogotá, C=Cali, S=Secreta, M=Marketing), NO la mina; si no la dicen, pregúntala. En cambio "mina" (lote) y "procedencia" (gema) son el ORIGEN de la esmeralda (Muzo, Coscuez, Chivor, Boyacá, Gachalá…): captúralos cuando digan "de <lugar>" y JAMÁS los confundas con la sede.
+11. "peso" es texto con unidad (ej. "3.2 ct", "5 gr", o "Plata"/"fragmento").
+Responde únicamente con JSON.`;
+}
+
+function snapshotToGuidedContext(
+  snapshot: unknown,
+  route: string,
+  flow: string | undefined,
+  priorDraft: unknown,
+  loteContext: unknown,
+  candidateItems: unknown,
+): string {
+  const priorKeys =
+    priorDraft && typeof priorDraft === "object"
+      ? Object.keys(priorDraft as Record<string, unknown>).length
+      : 0;
+  return [
+    "Contexto vivo del atelier (úsalo para inferir y NO volver a preguntar):",
+    `Ruta actual: ${route}`,
+    flow && isGuidedFlow(flow)
+      ? `Flujo en curso (no lo cambies salvo que Maritza pida claramente otra cosa): ${flow}`
+      : "Aún sin flujo definido: clasifícalo en este turno.",
+    priorKeys > 0
+      ? `Borrador acumulado (continúa desde aquí, no repreguntes lo que ya está): ${JSON.stringify(priorDraft).slice(0, 2000)}`
+      : "",
+    loteContext
+      ? `Lote activo: ${JSON.stringify(loteContext)}`
+      : "Sin lote activo en la ruta.",
+    Array.isArray(candidateItems) && candidateItems.length > 0
+      ? `Ítems candidatos (para que el sistema resuelva itemHint→itemId; tú solo da el itemHint): ${JSON.stringify(candidateItems).slice(0, 1500)}`
+      : "",
+    `Snapshot JSON: ${JSON.stringify(snapshot).slice(0, 3000)}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function advisoryFallback(say: string, model: string): GuidedEnvelope {
+  return {
+    flow: "advisory",
+    say,
+    draft: {},
+    missing: [],
+    ready: false,
+    coercedKeys: [],
+    model,
+  };
+}
+
+async function buildGuidedEnvelope(args: {
+  messages: Array<{ role: string; content: string }>;
+  model: string;
+  apiKey: string;
+  snapshot: unknown;
+  route: string;
+  flow: string | undefined;
+  priorDraft: unknown;
+  loteContext: unknown;
+  candidateItems: unknown;
+}): Promise<GuidedEnvelope> {
+  const fullMessages = [
+    { role: "system", content: buildGuidedSystemPrompt() },
+    {
+      role: "system",
+      content: snapshotToGuidedContext(
+        args.snapshot,
+        args.route,
+        args.flow,
+        args.priorDraft,
+        args.loteContext,
+        args.candidateItems,
+      ),
+    },
+    ...args.messages.map((m) => ({
+      role: m.role === "assistant" ? "assistant" : "user",
+      content: String(m.content ?? "").slice(0, 4000),
+    })),
+  ];
+
+  let parsed: Record<string, unknown> | null = null;
+  let rawText = "";
+  try {
+    const upstream = await fetch(GROQ_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${args.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: args.model,
+        messages: fullMessages,
+        temperature: 0.2,
+        max_tokens: 1200,
+        response_format: { type: "json_object" },
+      }),
+    });
+    if (!upstream.ok) {
+      return advisoryFallback(
+        `Groq respondió ${upstream.status}. Intentá de nuevo en un momento.`,
+        args.model,
+      );
+    }
+    const data = (await upstream.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    rawText = data.choices?.[0]?.message?.content ?? "";
+    parsed = JSON.parse(rawText) as Record<string, unknown>;
+  } catch {
+    // A schema miss or upstream error degrades to a normal advisory bubble —
+    // the chat never breaks on malformed JSON.
+    return advisoryFallback(
+      rawText.trim()
+        ? rawText.trim().slice(0, 400)
+        : "No te entendí bien, ¿me lo repetís?",
+      args.model,
+    );
+  }
+
+  const modelFlow = isGuidedFlow(parsed?.flow) ? parsed.flow : null;
+  const priorFlow = isGuidedFlow(args.flow) ? args.flow : null;
+  const flow: GuidedFlow = modelFlow ?? priorFlow ?? "advisory";
+
+  const say =
+    typeof parsed?.say === "string" && parsed.say.trim()
+      ? parsed.say.trim()
+      : flow === "advisory"
+        ? "¿En qué te ayudo?"
+        : "Seguimos.";
+
+  const rawDraft =
+    parsed?.draft && typeof parsed.draft === "object"
+      ? (parsed.draft as GuidedDraft)
+      : {};
+
+  // Accumulate across turns: merge the new draft over the prior one when the
+  // flow is unchanged (batch-edit takes the latest edit list, not a merge).
+  const carryBase: GuidedDraft =
+    flow !== "batch-edit" &&
+    priorFlow === flow &&
+    args.priorDraft &&
+    typeof args.priorDraft === "object"
+      ? (args.priorDraft as GuidedDraft)
+      : {};
+  const mergedDraft: GuidedDraft = { ...carryBase, ...rawDraft };
+
+  const whitelisted = whitelistDraft(flow, mergedDraft);
+  const { draft: coerced, coercedKeys } = coerceVocabulary(flow, whitelisted);
+  const missing = computeMissing(flow, coerced);
+  const ready = flow !== "advisory" && missing.length === 0;
+  const isBatch = flow === "batch-edit";
+
+  return {
+    flow,
+    say,
+    draft: isBatch ? {} : coerced,
+    edits: isBatch ? (coerced.edits as GuidedEnvelope["edits"]) : undefined,
+    missing,
+    ready,
+    coercedKeys,
+    model: args.model,
+  };
+}
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse,
@@ -237,6 +439,13 @@ export default async function handler(
     threadId?: string;
     routeAtStart?: string;
     model?: string;
+    // Guided data-entry mode (Fotosynthia v2). Absent/"advisory" → the legacy
+    // streaming Q&A path below, byte-for-byte unchanged.
+    mode?: string;
+    flow?: string; // flow locked in a prior turn, replayed for accumulation
+    priorDraft?: unknown; // draft accumulated so far, replayed for accumulation
+    loteContext?: unknown; // { loteId, costoTotalCOP, unidadesDeclaradas, prepRemaining }
+    candidateItems?: unknown; // [{ itemId, nombre, loteId }] for itemHint resolution
   };
 
   const messages = Array.isArray(body.messages) ? body.messages : [];
@@ -261,6 +470,35 @@ export default async function handler(
   }
 
   const model = body.model?.trim() || DEFAULT_MODEL;
+
+  // Guided data-entry mode (Fotosynthia v2): a single non-streaming JSON
+  // round-trip returning the structured envelope. The advisory path below is
+  // untouched.
+  if (body.mode === "guided") {
+    const envelope = await buildGuidedEnvelope({
+      messages,
+      model,
+      apiKey,
+      snapshot: body.snapshot,
+      route,
+      flow: body.flow,
+      priorDraft: body.priorDraft,
+      loteContext: body.loteContext,
+      candidateItems: body.candidateItems,
+    });
+    res.status(200).json(envelope);
+    void recordSummaryToConvex({
+      threadId,
+      userEmail,
+      userName: body.userName,
+      routeAtStart: body.routeAtStart ?? route,
+      routeLatest: route,
+      summary: buildSummary(messages, envelope.say),
+      turnCount: messages.filter((m) => m.role === "user").length,
+      model,
+    });
+    return;
+  }
 
   // Compose the prompt: persona system + live context + history.
   const fullMessages = [

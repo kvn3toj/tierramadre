@@ -1,10 +1,15 @@
 /**
- * Fotosynthia · in-drawer chat surface.
+ * Fotosynthia v2 · in-drawer guided-capture surface.
  *
- * Lives inside the Copilot tab of `<FotosintesisGuideFab/>`. Owns the
- * Convex workspace snapshot, the message list, and the composer.
- * Convex provider may be absent in dev (no VITE_CONVEX_URL), in which
- * case we fall back to an empty snapshot rather than crashing.
+ * Lives inside the Copilot tab of `<FotosintesisGuideFab/>`. Maritza states
+ * what she wants in plain language; Fotosynthia classifies the intent, runs a
+ * short interview (asking only what it can't infer), and on `ready` shows a
+ * review card that pre-fills the matching form — the AI never writes; she
+ * reviews and clicks the form's own Guardar/Confirmar.
+ *
+ * Owns the Convex workspace snapshot, the message list, the review card, and
+ * the composer. Convex may be absent in dev (no VITE_CONVEX_URL), in which
+ * case the snapshot is empty and the interview just asks for more fields.
  */
 
 import {
@@ -17,13 +22,22 @@ import {
 } from "react";
 import { Box, IconButton, Tooltip } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { useLocation } from "react-router-dom";
-import { Eraser, RefreshCcw, Send, Sparkles, StopCircle } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  ArrowRight,
+  Eraser,
+  RefreshCcw,
+  Send,
+  Sparkles,
+  StopCircle,
+} from "lucide-react";
 import { useQuery } from "convex/react";
 import { fontFamilies, getFoto } from "../../../../design-system";
 import { useGoogleAuth } from "../../../../contexts/GoogleAuthContext";
 import { api } from "../../../../../convex/_generated/api";
 import { useFotosynthiaChat } from "../hooks/useFotosynthiaChat";
+import { useFotosintesisLayout } from "../FotosintesisLayoutContext";
+import type { BatchEditPatch, GuidedFlow } from "../copilot/flowSchemas";
 import { spanishText } from "../utils/fieldLang";
 
 // Convex provider is only mounted when VITE_CONVEX_URL is set in main.tsx.
@@ -47,12 +61,114 @@ interface CopilotPanelProps {
   active: boolean;
 }
 
+// Data-entry oriented openers — guided capture is Fotosynthia's primary role.
 const SUGGESTED_PROMPTS = [
-  "¿Qué le falta a este lote para cerrar?",
-  "¿Cuántas ventas confirmadas tengo este mes?",
-  "¿Hay errores de sincronización ahora mismo?",
-  "¿Quién está invitando más embajadores?",
+  "Registrar una gema nueva en este lote",
+  "Crear un lote nuevo",
+  "Registrar una venta",
+  "Editar el precio de un ítem",
 ];
+
+const FLOW_LABELS: Record<GuidedFlow, string> = {
+  "item-gema": "Gema nueva",
+  "item-joya": "Joya nueva",
+  "item-insumo": "Insumo nuevo",
+  lote: "Lote nuevo",
+  venta: "Venta",
+  provider: "Proveedor nuevo",
+  client: "Cliente nuevo",
+  "edit-existing": "Editar ítem",
+  "batch-edit": "Edición múltiple",
+  advisory: "Consulta",
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  nombre: "Nombre",
+  peso: "Peso",
+  color: "Color",
+  calidad: "Calidad",
+  procedencia: "Procedencia",
+  preponderancia: "Preponderancia",
+  precioPublicoCOP: "Precio público",
+  cantidad: "Cantidad",
+  tipoEsmeralda: "Tipo esmeralda",
+  corte: "Corte",
+  tipoJoya: "Tipo joya",
+  tecnica: "Técnica",
+  minerales: "Minerales",
+  complementos: "Complementos",
+  descripcion: "Descripción",
+  categoria: "Categoría",
+  sede: "Bóveda",
+  providerName: "Proveedor",
+  costoTotalCOP: "Costo total",
+  unidadesDeclaradas: "Unidades",
+  formaPago: "Forma de pago",
+  metodoContado: "Método",
+  renombreLote: "Renombre",
+  mina: "Mina",
+  pesoTotalQuilates: "Peso (ct)",
+  itemId: "Ítem",
+  compradorTipo: "Comprador",
+  precioAcordado: "Precio acordado",
+  nombreORazonSocial: "Razón social",
+  tipo: "Tipo",
+  documento: "Documento",
+  direccion: "Dirección",
+  telefono: "Teléfono",
+  email: "Email",
+};
+
+const ITEM_FLOWS: ReadonlyArray<GuidedFlow> = [
+  "item-gema",
+  "item-joya",
+  "item-insumo",
+];
+
+function fieldLabel(key: string): string {
+  return FIELD_LABELS[key] ?? key;
+}
+
+function formatDraftValue(v: unknown): string {
+  if (v === null || v === undefined || v === "") return "—";
+  if (Array.isArray(v)) return v.length ? v.join(", ") : "—";
+  if (typeof v === "object") {
+    return (
+      Object.entries(v as Record<string, unknown>)
+        .filter(([, val]) => val !== undefined && val !== "")
+        .map(([k, val]) => `${fieldLabel(k)}: ${String(val)}`)
+        .join(" · ") || "—"
+    );
+  }
+  if (typeof v === "number") return v.toLocaleString("es-CO");
+  return String(v);
+}
+
+interface LoteContext {
+  loteId: string;
+  costoTotalCOP?: number;
+  unidadesDeclaradas?: number;
+}
+
+interface CandidateItem {
+  itemId: string;
+  nombre?: string;
+  loteId?: string;
+}
+
+/** Resolve an itemHint against the snapshot's candidate items (best-effort). */
+function resolveCandidate(
+  hint: string | undefined,
+  candidates: CandidateItem[] | undefined,
+): CandidateItem | null {
+  if (!hint || !candidates || candidates.length === 0) return null;
+  const h = hint.trim().toLowerCase();
+  return (
+    candidates.find((c) => String(c.itemId).toLowerCase() === h) ??
+    candidates.find((c) => c.nombre && c.nombre.toLowerCase().includes(h)) ??
+    null
+  );
+}
 
 /**
  * When Convex is wired, this subcomponent is mounted and its `useQuery`
@@ -76,35 +192,78 @@ function SnapshotSource({
 export function CopilotPanel({ active }: CopilotPanelProps) {
   const foto = getFoto("light");
   const location = useLocation();
+  const navigate = useNavigate();
   const route = location.pathname;
   const { user } = useGoogleAuth();
+  const layout = useFotosintesisLayout();
   const listRef = useRef<HTMLDivElement | null>(null);
   const [input, setInput] = useState("");
   const [snapshot, setSnapshot] = useState<unknown>(undefined);
 
-  const { messages, isStreaming, send, reset, cancel, threadId } =
-    useFotosynthiaChat(route);
+  const {
+    messages,
+    isStreaming,
+    sendGuided,
+    latestEnvelope,
+    clearEnvelope,
+    reset,
+    cancel,
+    threadId,
+  } = useFotosynthiaChat(route);
 
   // Auto-scroll to bottom on new messages or stream chunks.
   useEffect(() => {
     if (!listRef.current) return;
     listRef.current.scrollTop = listRef.current.scrollHeight;
-  }, [messages]);
+  }, [messages, latestEnvelope]);
+
+  // Live lot context from the current route + snapshot (lets the model infer
+  // the target lot and avoid re-asking the cost/units).
+  const loteContext = useMemo<LoteContext | undefined>(() => {
+    const m = route.match(/^\/admin\/fotosintesis\/lots\/([^/]+)/);
+    const seg = m?.[1];
+    if (!seg || seg === "new") return undefined;
+    const loteId = decodeURIComponent(seg);
+    const lots = (snapshot as { recentLots?: Array<Record<string, unknown>> })
+      ?.recentLots;
+    const found = lots?.find((l) => l.loteId === loteId);
+    return {
+      loteId,
+      ...(found
+        ? {
+            costoTotalCOP: found.costoTotalCOP as number | undefined,
+            unidadesDeclaradas: found.unidadesDeclaradas as number | undefined,
+          }
+        : {}),
+    };
+  }, [route, snapshot]);
+
+  const candidateItems = useMemo<CandidateItem[] | undefined>(() => {
+    const items = (snapshot as { candidateItems?: CandidateItem[] })
+      ?.candidateItems;
+    return Array.isArray(items) ? items : undefined;
+  }, [snapshot]);
 
   const canSend = input.trim().length > 0 && !isStreaming;
+
+  const dispatchGuided = (text: string) => {
+    void sendGuided({
+      text,
+      snapshot,
+      route,
+      userEmail: user?.email,
+      userName: user?.name,
+      loteContext,
+      candidateItems,
+    });
+  };
 
   const handleSubmit = (e?: FormEvent) => {
     e?.preventDefault();
     if (!canSend) return;
     const text = input.trim();
     setInput("");
-    void send({
-      text,
-      snapshot,
-      route,
-      userEmail: user?.email,
-      userName: user?.name,
-    });
+    dispatchGuided(text);
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -116,14 +275,140 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
 
   const handleSuggested = (prompt: string) => {
     if (isStreaming) return;
-    void send({
-      text: prompt,
-      snapshot,
-      route,
-      userEmail: user?.email,
-      userName: user?.name,
-    });
+    dispatchGuided(prompt);
   };
+
+  // ─── Hand-off planning ────────────────────────────────────────────
+  // The panel computes the target route from the envelope + lot context; the
+  // layout bus carries the draft and the form seeds itself on mount.
+  const env = latestEnvelope;
+  const showCard = !!env && env.flow !== "advisory";
+
+  const handoff = useMemo(() => {
+    if (!env || env.flow === "advisory") {
+      return { kind: "none" as const };
+    }
+    if (env.flow === "batch-edit" || env.flow === "edit-existing") {
+      const edits: BatchEditPatch[] =
+        env.flow === "batch-edit"
+          ? (env.edits ?? [])
+          : (() => {
+              const { itemHint, targetItemId, ...patch } = env.draft as Record<
+                string,
+                unknown
+              >;
+              return [
+                {
+                  itemHint: typeof itemHint === "string" ? itemHint : undefined,
+                  targetItemId:
+                    typeof targetItemId === "string" ? targetItemId : undefined,
+                  patch,
+                },
+              ];
+            })();
+      // Find a lot to land on: current lot, else a resolved candidate's lot.
+      let loteId = loteContext?.loteId;
+      if (!loteId) {
+        for (const e of edits) {
+          const c = resolveCandidate(e.itemHint, candidateItems);
+          if (c?.loteId) {
+            loteId = c.loteId;
+            break;
+          }
+        }
+      }
+      if (edits.length === 0) return { kind: "none" as const };
+      if (!loteId) {
+        return {
+          kind: "blocked" as const,
+          reason: "Abrí el lote del ítem para editarlo.",
+        };
+      }
+      return {
+        kind: "batch" as const,
+        edits,
+        target: `/admin/fotosintesis/lots/${encodeURIComponent(loteId)}`,
+      };
+    }
+    if (ITEM_FLOWS.includes(env.flow)) {
+      const draft = { ...(env.draft as Record<string, unknown>) };
+      const hint = typeof draft.loteId === "string" ? draft.loteId : undefined;
+      delete draft.loteId; // routing-only — keep the form draft clean
+      const loteId = hint || loteContext?.loteId;
+      if (!loteId) {
+        return {
+          kind: "blocked" as const,
+          reason: "Abrí o nombrá el lote para precargar el ítem.",
+        };
+      }
+      return {
+        kind: "form" as const,
+        flow: env.flow,
+        data: draft,
+        target: `/admin/fotosintesis/lots/${encodeURIComponent(loteId)}`,
+      };
+    }
+    if (env.flow === "lote") {
+      return {
+        kind: "form" as const,
+        flow: env.flow,
+        data: env.draft,
+        target: "/admin/fotosintesis/lots/new",
+      };
+    }
+    if (env.flow === "venta") {
+      const itemId =
+        typeof (env.draft as Record<string, unknown>).itemId === "string"
+          ? (env.draft as Record<string, string>).itemId
+          : undefined;
+      return {
+        kind: "form" as const,
+        flow: env.flow,
+        data: env.draft,
+        target: itemId
+          ? `/admin/fotosintesis/sales/new?itemId=${encodeURIComponent(itemId)}`
+          : "/admin/fotosintesis/sales/new",
+      };
+    }
+    if (env.flow === "provider") {
+      // ProveedorNuevoDrawer lives on the new-lot page.
+      return {
+        kind: "form" as const,
+        flow: env.flow,
+        data: env.draft,
+        target: "/admin/fotosintesis/lots/new",
+      };
+    }
+    if (env.flow === "client") {
+      // ClienteFinalForm lives on the new-sale page.
+      return {
+        kind: "form" as const,
+        flow: env.flow,
+        data: env.draft,
+        target: "/admin/fotosintesis/sales/new",
+      };
+    }
+    return { kind: "none" as const };
+  }, [env, loteContext, candidateItems]);
+
+  const canHandoff = !!env && env.ready && handoff.kind !== "blocked";
+
+  const runHandoff = () => {
+    if (!env || !env.ready) return;
+    if (handoff.kind === "form") {
+      layout.openDraftForm(handoff.flow, handoff.data, handoff.target);
+      clearEnvelope();
+    } else if (handoff.kind === "batch") {
+      layout.enqueueEdits(handoff.edits);
+      navigate(handoff.target);
+      clearEnvelope();
+    }
+  };
+
+  const handoffLabel =
+    env?.flow === "batch-edit" || env?.flow === "edit-existing"
+      ? "Aplicar ediciones"
+      : "Abrir formulario";
 
   const snapshotStatus = useMemo(() => {
     if (!HAS_CONVEX)
@@ -188,11 +473,11 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
         </Box>
         <Box sx={{ display: "inline-flex", gap: "4px" }}>
           {isStreaming && (
-            <Tooltip title="Detener respuesta" arrow placement="left">
+            <Tooltip title="Detener" arrow placement="left">
               <IconButton
                 size="small"
                 onClick={cancel}
-                aria-label="Detener respuesta"
+                aria-label="Detener"
                 sx={{
                   width: 26,
                   height: 26,
@@ -204,16 +489,13 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
               </IconButton>
             </Tooltip>
           )}
-          <Tooltip title="Refrescar contexto" arrow placement="left">
+          <Tooltip title="Ir al inicio del hilo" arrow placement="left">
             <IconButton
               size="small"
               onClick={() => {
-                // useQuery is reactive; this forces a re-mount of the
-                // snapshot strip animation by toggling key state. The
-                // actual Convex data is already live via subscriptions.
                 listRef.current?.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              aria-label="Refrescar contexto"
+              aria-label="Ir al inicio del hilo"
               sx={{
                 width: 26,
                 height: 26,
@@ -269,26 +551,19 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
                 marginBottom: "14px",
               }}
             >
-              Soy <strong>Fotosynthia</strong>, tu copiloto del taller. Conozco
-              el flujo Fotosíntesis, los lotes abiertos, las ventas recientes y
-              los embajadores activos. Pregúntame lo que necesites.
+              Soy <strong>Fotosynthia</strong>. Decime qué querés registrar o
+              editar — un lote, una gema, una joya, una venta, un proveedor — y
+              te voy preguntando solo lo que falte. Cuando esté listo, te
+              precargo el formulario para que revises y guardes.
             </Box>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-              }}
-            >
+            <Box sx={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {SUGGESTED_PROMPTS.map((prompt) => (
                 <Box
                   key={prompt}
                   component="button"
                   type="button"
                   onClick={() => handleSuggested(prompt)}
-                  disabled={
-                    isStreaming || (HAS_CONVEX && snapshot === undefined)
-                  }
+                  disabled={isStreaming}
                   sx={{
                     textAlign: "left",
                     fontFamily: "inherit",
@@ -376,34 +651,163 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
                     {m.error}
                   </Box>
                 )}
-                {m.streaming && !m.error && m.content && (
-                  <Box
-                    component="span"
-                    aria-hidden
-                    sx={{
-                      display: "inline-block",
-                      width: "6px",
-                      height: "12px",
-                      marginLeft: "4px",
-                      background: foto.accent.primary,
-                      verticalAlign: "text-bottom",
-                      animation: "fotoCaret 800ms steps(2) infinite",
-                      "@keyframes fotoCaret": {
-                        "0%, 50%": { opacity: 1 },
-                        "51%, 100%": { opacity: 0 },
-                      },
-                      "@media (prefers-reduced-motion: reduce)": {
-                        animation: "none",
-                        opacity: 0.6,
-                      },
-                    }}
-                  />
-                )}
               </Box>
             </Box>
           ))
         )}
       </Box>
+
+      {/* Review card — pinned above the composer when a draft is in progress */}
+      {showCard && env && (
+        <Box
+          sx={{
+            margin: "0 18px",
+            border: `1px solid ${foto.accent.primary}`,
+            background: foto.accent.soft,
+            borderRadius: "12px",
+            padding: "12px 14px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "8px",
+            }}
+          >
+            <Box
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "9px",
+                fontWeight: 600,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: foto.accent.deep,
+              }}
+            >
+              <Sparkles size={11} strokeWidth={2} />
+              {FLOW_LABELS[env.flow]}
+            </Box>
+            {env.coercedKeys.length > 0 && (
+              <Box
+                sx={{
+                  fontSize: "10px",
+                  color: foto.ink.tertiary,
+                }}
+                title={`Ajustado al vocabulario: ${env.coercedKeys.join(", ")}`}
+              >
+                ⚠ {env.coercedKeys.length} ajuste
+                {env.coercedKeys.length > 1 ? "s" : ""}
+              </Box>
+            )}
+          </Box>
+
+          {/* Batch-edit: numbered checklist preview */}
+          {(env.flow === "batch-edit" || env.flow === "edit-existing") &&
+          handoff.kind === "batch" ? (
+            <Box
+              component="ol"
+              sx={{
+                margin: 0,
+                paddingLeft: "18px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
+                fontSize: "11.5px",
+                color: foto.ink.secondary,
+              }}
+            >
+              {handoff.edits.map((e, i) => (
+                <Box component="li" key={i}>
+                  <strong>{e.itemHint ?? e.targetItemId ?? "ítem"}</strong>
+                  {" → "}
+                  {Object.entries(e.patch)
+                    .map(([k, v]) => `${fieldLabel(k)}: ${formatDraftValue(v)}`)
+                    .join(" · ")}
+                </Box>
+              ))}
+            </Box>
+          ) : (
+            // Single-record drafts: field list
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "auto 1fr",
+                rowGap: "3px",
+                columnGap: "10px",
+                fontSize: "11.5px",
+              }}
+            >
+              {Object.entries(env.draft as Record<string, unknown>)
+                .filter(([k]) => k !== "loteId")
+                .map(([k, v]) => (
+                  <Box key={k} sx={{ display: "contents" }}>
+                    <Box sx={{ color: foto.ink.tertiary }}>{fieldLabel(k)}</Box>
+                    <Box
+                      sx={{
+                        color: env.coercedKeys.includes(k)
+                          ? foto.accent.deep
+                          : foto.ink.primary,
+                        fontWeight: env.coercedKeys.includes(k) ? 600 : 400,
+                      }}
+                    >
+                      {formatDraftValue(v)}
+                      {env.coercedKeys.includes(k) ? " ⚠" : ""}
+                    </Box>
+                  </Box>
+                ))}
+            </Box>
+          )}
+
+          {env.missing.length > 0 && (
+            <Box sx={{ fontSize: "10.5px", color: foto.ink.tertiary }}>
+              Faltan: {env.missing.map(fieldLabel).join(", ")}
+            </Box>
+          )}
+
+          {handoff.kind === "blocked" && (
+            <Box sx={{ fontSize: "10.5px", color: foto.status.sold }}>
+              {handoff.reason}
+            </Box>
+          )}
+
+          {canHandoff && (
+            <Box
+              component="button"
+              type="button"
+              onClick={runHandoff}
+              sx={{
+                alignSelf: "flex-end",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                border: "none",
+                borderRadius: "9px",
+                padding: "8px 14px",
+                background: foto.accent.primary,
+                color: foto.ink.inverse,
+                fontSize: "12px",
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "background 120ms ease, transform 120ms ease",
+                "&:hover": {
+                  background: foto.accent.deep,
+                  transform: "translateY(-1px)",
+                },
+              }}
+            >
+              {handoffLabel}
+              <ArrowRight size={13} strokeWidth={2} />
+            </Box>
+          )}
+        </Box>
+      )}
 
       {/* Composer */}
       <Box
@@ -423,7 +827,7 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
           component="textarea"
           rows={1}
           value={input}
-          placeholder="Pregúntale a Fotosynthia…"
+          placeholder="Decile a Fotosynthia qué registrar o editar…"
           {...spanishText}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}

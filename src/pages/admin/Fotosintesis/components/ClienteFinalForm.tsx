@@ -64,6 +64,22 @@ interface ClienteFinalFormProps {
   onCreated: (clientId: Id<"clients">) => void;
   /** Fired when the operator clicks "Cambiar cliente" on the summary card. */
   onChange: () => void;
+  /**
+   * Optional pre-fill from Fotosynthia's guided "client" flow (or a venta's
+   * clienteFinalData). When present, opens the creation form pre-seeded; the
+   * human reviews + Crear. Duplicate detection still runs as they review.
+   */
+  initialData?: ClienteInitialData;
+}
+
+/** Guided-capture pre-fill for the cliente-final creation form. */
+export interface ClienteInitialData {
+  nombre?: string;
+  tipoDocumento?: string;
+  documento?: string;
+  direccion?: string;
+  telefono?: string;
+  email?: string;
 }
 
 function normalizeDocDigits(s: string | undefined | null): string {
@@ -94,6 +110,7 @@ export function ClienteFinalForm({
   selectedClient,
   onCreated,
   onChange,
+  initialData,
 }: ClienteFinalFormProps) {
   const foto = getFoto("light");
 
@@ -135,6 +152,33 @@ export function ClienteFinalForm({
     setDupDismissed(false);
     setSubmitError(null);
   }, [selectedClient]);
+
+  // Fotosynthia v2 guided-capture seeding — pre-fill the CREATION form from an
+  // AI draft. Declared AFTER the reset effect above so it wins on mount; a ref
+  // keyed on the draft identity makes it apply once (the human then reviews +
+  // Crear, with duplicate detection running as usual).
+  const seededInitialRef = useRef<ClienteInitialData | null>(null);
+  useEffect(() => {
+    if (!initialData || seededInitialRef.current === initialData) return;
+    seededInitialRef.current = initialData;
+    setMode("creating");
+    if (typeof initialData.nombre === "string") setNombre(initialData.nombre);
+    if (typeof initialData.tipoDocumento === "string") {
+      setTipoDoc(
+        initialData.tipoDocumento.toLowerCase().includes("nit")
+          ? "NIT"
+          : "Cédula",
+      );
+    }
+    if (typeof initialData.documento === "string")
+      setDocumento(initialData.documento);
+    if (typeof initialData.direccion === "string")
+      setDireccion(initialData.direccion);
+    if (typeof initialData.telefono === "string")
+      setTelefono(formatColombianPhone(initialData.telefono));
+    if (typeof initialData.email === "string") setEmail(initialData.email);
+    setDupDismissed(false);
+  }, [initialData]);
 
   // ── Convex wiring ────────────────────────────────────────────────────
   const createClient = useConvexMutation(convexApi.clients.create);

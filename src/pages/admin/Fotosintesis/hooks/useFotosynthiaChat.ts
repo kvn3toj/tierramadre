@@ -9,6 +9,11 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type {
+  GuidedDraft,
+  GuidedEnvelope,
+  GuidedFlow,
+} from "../copilot/flowSchemas";
 
 const STORAGE_PREFIX = "tierra-madre-fotosynthia";
 
@@ -27,6 +32,10 @@ interface ThreadState {
   messages: ChatMessage[];
   /** Route at thread start — used by Convex summaries. */
   routeAtStart: string;
+  /** Guided mode: the flow locked in so far, persisted for accumulation. */
+  flow?: GuidedFlow;
+  /** Guided mode: the draft accumulated so far, persisted across reloads. */
+  priorDraft?: GuidedDraft;
 }
 
 interface SendArgs {
@@ -38,11 +47,25 @@ interface SendArgs {
   model?: string;
 }
 
+/** Guided data-entry turn — returns a structured envelope instead of a stream. */
+interface GuidedSendArgs extends SendArgs {
+  /** { loteId, costoTotalCOP, unidadesDeclaradas, prepRemaining } when on a lot. */
+  loteContext?: unknown;
+  /** [{ itemId, nombre, loteId }] so the model's itemHint can be resolved. */
+  candidateItems?: unknown;
+}
+
 interface UseFotosynthiaChatResult {
   threadId: string;
   messages: ChatMessage[];
   isStreaming: boolean;
   send: (args: SendArgs) => Promise<void>;
+  /** Guided data-entry turn. Populates `latestEnvelope`. */
+  sendGuided: (args: GuidedSendArgs) => Promise<void>;
+  /** The structured result of the last guided turn (flow, draft, missing, ready). */
+  latestEnvelope: GuidedEnvelope | null;
+  /** Clear the guided envelope + accumulation (call after a successful hand-off). */
+  clearEnvelope: () => void;
   reset: () => void;
   cancel: () => void;
 }
@@ -118,6 +141,9 @@ export function useFotosynthiaChat(
     loadState(initialRoute),
   );
   const [isStreaming, setIsStreaming] = useState(false);
+  const [latestEnvelope, setLatestEnvelope] = useState<GuidedEnvelope | null>(
+    null,
+  );
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -128,12 +154,18 @@ export function useFotosynthiaChat(
     abortRef.current?.abort();
     abortRef.current = null;
     setIsStreaming(false);
+    setLatestEnvelope(null);
     setState({
       threadId: generateThreadId(),
       messages: [],
       routeAtStart: initialRoute,
     });
   }, [initialRoute]);
+
+  const clearEnvelope = useCallback(() => {
+    setLatestEnvelope(null);
+    setState((prev) => ({ ...prev, flow: undefined, priorDraft: undefined }));
+  }, []);
 
   const cancel = useCallback(() => {
     abortRef.current?.abort();
@@ -301,15 +333,146 @@ export function useFotosynthiaChat(
     [isStreaming, state.messages, state.routeAtStart, state.threadId],
   );
 
+  const sendGuided = useCallback(
+    async (args: GuidedSendArgs) => {
+      const trimmed = args.text.trim();
+      if (!trimmed || isStreaming) return;
+
+      const userMessage: ChatMessage = {
+        id: generateMessageId(),
+        role: "user",
+        content: trimmed,
+        createdAt: new Date().toISOString(),
+      };
+      const assistantPlaceholder: ChatMessage = {
+        id: generateMessageId(),
+        role: "assistant",
+        content: "",
+        createdAt: new Date().toISOString(),
+        streaming: true,
+      };
+
+      const wireMessages = state.messages
+        .concat(userMessage)
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      setState((prev) => ({
+        ...prev,
+        messages: prev.messages.concat(userMessage, assistantPlaceholder),
+      }));
+      setIsStreaming(true);
+
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      try {
+        const response = await fetch("/api/fotosintesis-ai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: wireMessages,
+            snapshot: args.snapshot,
+            route: args.route,
+            userEmail: args.userEmail,
+            userName: args.userName,
+            threadId: state.threadId,
+            routeAtStart: state.routeAtStart,
+            model: args.model,
+            mode: "guided",
+            flow: state.flow,
+            priorDraft: state.priorDraft,
+            loteContext: args.loteContext,
+            candidateItems: args.candidateItems,
+          }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          const text = await response.text().catch(() => "");
+          throw new Error(
+            text || `Fotosynthia respondió ${response.status} sin cuerpo.`,
+          );
+        }
+
+        const envelope = (await response.json()) as GuidedEnvelope;
+        setLatestEnvelope(envelope);
+        setState((prev) => ({
+          ...prev,
+          flow: envelope.flow,
+          // Persist the accumulated draft so the next turn continues from it
+          // (batch-edit carries no merge — the model re-proposes the full list).
+          priorDraft: envelope.draft,
+          messages: prev.messages.map((m) =>
+            m.id === assistantPlaceholder.id
+              ? { ...m, streaming: false, content: envelope.say }
+              : m,
+          ),
+        }));
+      } catch (err) {
+        if ((err as { name?: string }).name === "AbortError") {
+          setState((prev) => ({
+            ...prev,
+            messages: prev.messages.map((m) =>
+              m.id === assistantPlaceholder.id
+                ? {
+                    ...m,
+                    streaming: false,
+                    content: m.content || "(consulta cancelada)",
+                  }
+                : m,
+            ),
+          }));
+        } else {
+          const message =
+            err instanceof Error
+              ? err.message
+              : "Algo falló hablando con Fotosynthia.";
+          setState((prev) => ({
+            ...prev,
+            messages: prev.messages.map((m) =>
+              m.id === assistantPlaceholder.id
+                ? { ...m, streaming: false, error: message }
+                : m,
+            ),
+          }));
+        }
+      } finally {
+        setIsStreaming(false);
+        abortRef.current = null;
+      }
+    },
+    [
+      isStreaming,
+      state.flow,
+      state.messages,
+      state.priorDraft,
+      state.routeAtStart,
+      state.threadId,
+    ],
+  );
+
   return useMemo(
     () => ({
       threadId: state.threadId,
       messages: state.messages,
       isStreaming,
       send,
+      sendGuided,
+      latestEnvelope,
+      clearEnvelope,
       reset,
       cancel,
     }),
-    [cancel, isStreaming, reset, send, state.messages, state.threadId],
+    [
+      cancel,
+      clearEnvelope,
+      isStreaming,
+      latestEnvelope,
+      reset,
+      send,
+      sendGuided,
+      state.messages,
+      state.threadId,
+    ],
   );
 }

@@ -41,7 +41,10 @@ import { PricePerCaratHint } from "./components/PricePerCaratHint";
 import { spanishText, noSpellCheck } from "./utils/fieldLang";
 import { PhotoDropzone, type DropzonePhoto } from "./components/PhotoDropzone";
 import { ShortcutTable } from "./components/ShortcutTable";
-import { ProveedorNuevoDrawer } from "./components/ProveedorNuevoDrawer";
+import {
+  ProveedorNuevoDrawer,
+  type ProviderInitialData,
+} from "./components/ProveedorNuevoDrawer";
 import { EntityPicker } from "./components/EntityPicker";
 import { LotSwitcher } from "./components/LotSwitcher";
 import { EditableMetaValue } from "./components/EditableMetaValue";
@@ -91,6 +94,7 @@ import {
 import { CreditoFields } from "./components/CreditoFields";
 import { useNextLoteId } from "./hooks/useNextLoteId";
 import { usePreponderanciaTotal } from "./hooks/usePreponderanciaTotal";
+import { useFotosintesisLayout } from "./FotosintesisLayoutContext";
 
 // -----------------------------------------------------------------------------
 // Helpers
@@ -483,6 +487,7 @@ function NewLotIntro() {
   const foto = getFoto("light");
   const navigate = useNavigate();
   const { user } = useGoogleAuth();
+  const { consumeDraftForm, draftNonce } = useFotosintesisLayout();
 
   const [sede, setSede] = useState<Sede | null>(null);
   const previewLoteId = useNextLoteId(sede);
@@ -523,6 +528,10 @@ function NewLotIntro() {
   const [error, setError] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerInitialName, setDrawerInitialName] = useState<string>("");
+  // Fotosynthia v2: full provider pre-fill when the "provider" flow hands off.
+  const [providerInitialData, setProviderInitialData] = useState<
+    ProviderInitialData | undefined
+  >(undefined);
 
   // Resolve the selected provider object once so the EntityPicker can render
   // avatar + meta without re-scanning the list on every keystroke. When the
@@ -539,6 +548,72 @@ function NewLotIntro() {
     }
     return null;
   }, [providerId, providerName, providers]);
+
+  // Fotosynthia v2 guided-capture seeding — pre-fill the lote header from an
+  // AI draft handed off by the Copilot panel. Waits until the provider
+  // directory resolves so a named proveedor can be matched to its id; the
+  // human reviews and clicks "Empezar captura".
+  useEffect(() => {
+    if (providers === undefined) return;
+    const draft = consumeDraftForm("lote");
+    if (!draft) {
+      // Not a lote hand-off — maybe a "provider" one (same /lots/new target):
+      // open the provider drawer pre-filled; the human reviews + Crear.
+      const provider = consumeDraftForm("provider");
+      if (provider) {
+        const p = provider as Record<string, unknown>;
+        setProviderInitialData({
+          nombreORazonSocial:
+            typeof p.nombreORazonSocial === "string"
+              ? p.nombreORazonSocial
+              : undefined,
+          tipo: typeof p.tipo === "string" ? p.tipo : undefined,
+          tipoDocumento:
+            typeof p.tipoDocumento === "string" ? p.tipoDocumento : undefined,
+          documento: typeof p.documento === "string" ? p.documento : undefined,
+          telefono: typeof p.telefono === "string" ? p.telefono : undefined,
+          email: typeof p.email === "string" ? p.email : undefined,
+          direccion: typeof p.direccion === "string" ? p.direccion : undefined,
+          notas: typeof p.notas === "string" ? p.notas : undefined,
+        });
+        setDrawerInitialName("");
+        setDrawerOpen(true);
+      }
+      return;
+    }
+    const d = draft as Record<string, unknown>;
+    if (typeof d.sede === "string") setSede(d.sede as Sede);
+    if (typeof d.fechaRecepcion === "string")
+      setFechaRecepcion(d.fechaRecepcion);
+    if (typeof d.costoTotalCOP === "number") setCostoTotalCOP(d.costoTotalCOP);
+    if (typeof d.unidadesDeclaradas === "number")
+      setUnidadesDeclaradas(d.unidadesDeclaradas);
+    if (typeof d.formaPago === "string") setFormaPago(d.formaPago as FormaPago);
+    if (typeof d.metodoContado === "string")
+      setMetodoContado(d.metodoContado as MetodoContado);
+    if (typeof d.renombreLote === "string") setRenombreLote(d.renombreLote);
+    if (typeof d.tratamiento === "string") setTratamiento(d.tratamiento);
+    if (typeof d.mina === "string") setMina(d.mina);
+    if (typeof d.pesoTotalQuilates === "number")
+      setPesoTotalQuilates(d.pesoTotalQuilates);
+    if (typeof d.notas === "string") setNotas(d.notas);
+    if (typeof d.creditoFechaVenc === "string")
+      setCreditoFechaVenc(d.creditoFechaVenc);
+    if (typeof d.creditoCuotas === "number") setCreditoCuotas(d.creditoCuotas);
+    if (typeof d.creditoTasa === "number") setCreditoTasa(d.creditoTasa);
+    const providerName =
+      typeof d.providerName === "string" ? d.providerName : undefined;
+    if (providerName) {
+      const match = providers.find(
+        (p) =>
+          p.nombreORazonSocial.toLowerCase() === providerName.toLowerCase(),
+      );
+      if (match) {
+        setProviderId(match._id);
+        setProviderName(match.nombreORazonSocial);
+      }
+    }
+  }, [draftNonce, consumeDraftForm, providers]);
 
   const creditoComplete =
     formaPago !== "credito" ||
@@ -1114,6 +1189,7 @@ function NewLotIntro() {
             : undefined
         }
         initialName={drawerInitialName || undefined}
+        initialData={providerInitialData}
       />
     </Box>
   );
@@ -1347,6 +1423,16 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   const navigate = useNavigate();
   const { notify } = useNotification();
   const { user } = useGoogleAuth();
+  // Fotosynthia v2 guided-capture hand-off: the Copilot panel pre-fills an
+  // item draft here, the human reviews + Guardar. The edit queue drives the
+  // per-item edit/batch-edit review loop through the EditItemDrawer.
+  const {
+    consumeDraftForm,
+    draftNonce,
+    dequeueEdit,
+    peekEdits,
+    editQueueNonce,
+  } = useFotosintesisLayout();
 
   // Reactive data --------------------------------------------------------------
   const lot = useConvexQuery(convexApi.lots.getByLoteId, { loteId });
@@ -1425,6 +1511,54 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   const [editLotOpen, setEditLotOpen] = useState(false);
   const [editingLotItemId, setEditingLotItemId] =
     useState<Id<"lotItems"> | null>(null);
+  // Fotosynthia v2 — the AI edit patch for the currently-open drawer (undefined
+  // for a manual open). Drives the edit-existing / batch-edit review loop.
+  const [editOverride, setEditOverride] = useState<
+    Record<string, unknown> | undefined
+  >(undefined);
+
+  // Open the next queued AI edit (resolving its itemHint/targetItemId to a
+  // lotItem), or clear the drawer when the queue is drained. Items that can't
+  // be resolved against this lot are skipped.
+  const openNextQueuedEdit = useCallback((): boolean => {
+    const list = items ?? [];
+    // Loop so an unresolvable edit doesn't stall the batch.
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const next = dequeueEdit();
+      if (!next) {
+        setEditingLotItemId(null);
+        setEditOverride(undefined);
+        return false;
+      }
+      const hint = (next.itemHint ?? "").toLowerCase();
+      const target =
+        (next.targetItemId
+          ? list.find((it) => it.itemId === next.targetItemId)
+          : undefined) ??
+        (hint
+          ? (list.find((it) => it.itemId.toLowerCase() === hint) ??
+            list.find((it) => (it.nombre ?? "").toLowerCase().includes(hint)))
+          : undefined);
+      if (target) {
+        setEditOverride(next.patch);
+        setEditingLotItemId(target._id as Id<"lotItems">);
+        return true;
+      }
+    }
+  }, [items, dequeueEdit]);
+
+  // Kick off a freshly-enqueued batch once items are loaded and no drawer is
+  // open. Per-item advance happens on the drawer's onClose (below).
+  const queueStartedNonceRef = useRef<number>(-1);
+  useEffect(() => {
+    if (queueStartedNonceRef.current === editQueueNonce) return;
+    if (items === undefined) return;
+    if (editingLotItemId) return; // wait for the current drawer to close
+    if (peekEdits().length === 0) return;
+    queueStartedNonceRef.current = editQueueNonce;
+    openNextQueuedEdit();
+  }, [editQueueNonce, items, editingLotItemId, peekEdits, openNextQueuedEdit]);
 
   // Provider drawer ------------------------------------------------------------
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -1470,6 +1604,40 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     setJoya((prev) => ({ ...prev, ...seedJoyaFromLot(seed) }));
     setInsumo((prev) => ({ ...prev, ...seedInsumoFromLot(seed) }));
   }, [lot, items, unidadesDeclaradas, loteId]);
+
+  // Fotosynthia v2 guided-capture seeding — when the Copilot panel hands off an
+  // item draft, set the matching subtipo and merge the AI fields into the live
+  // draft (same setters as single-item seeding above). preponderancia/precio
+  // and the overflow meter + canSave guard still govern; the human clicks
+  // Guardar. We only attempt once per hand-off (draftNonce) on an open lot.
+  const aiSeededNonceRef = useRef<number>(-1);
+  useEffect(() => {
+    if (!lot || lot.estado !== "abierto") return;
+    if (aiSeededNonceRef.current === draftNonce) return;
+    const gemaDraft = consumeDraftForm("item-gema");
+    if (gemaDraft) {
+      aiSeededNonceRef.current = draftNonce;
+      setSubtipo("gema");
+      setGema((prev) => ({ ...prev, ...(gemaDraft as Partial<GemaDraft>) }));
+      return;
+    }
+    const joyaDraft = consumeDraftForm("item-joya");
+    if (joyaDraft) {
+      aiSeededNonceRef.current = draftNonce;
+      setSubtipo("joya");
+      setJoya((prev) => ({ ...prev, ...(joyaDraft as Partial<JoyaDraft>) }));
+      return;
+    }
+    const insumoDraft = consumeDraftForm("item-insumo");
+    if (insumoDraft) {
+      aiSeededNonceRef.current = draftNonce;
+      setSubtipo("insumo");
+      setInsumo((prev) => ({
+        ...prev,
+        ...(insumoDraft as Partial<InsumoDraft>),
+      }));
+    }
+  }, [lot, draftNonce, consumeDraftForm]);
 
   // Active draft surface — the form fields below dispatch off `tipo`, but
   // preponderancia + nombre validations are uniform across types.
@@ -2554,7 +2722,10 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
                     state="done"
                     onEdit={
                       itemEditable
-                        ? () => setEditingLotItemId(item._id as Id<"lotItems">)
+                        ? () => {
+                            setEditOverride(undefined);
+                            setEditingLotItemId(item._id as Id<"lotItems">);
+                          }
                         : undefined
                     }
                   />
@@ -2748,7 +2919,11 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
         return editingItem ? (
           <EditItemDrawer
             open={true}
-            onClose={() => setEditingLotItemId(null)}
+            // Advance the AI edit/batch queue on close (auto-closes on save);
+            // openNextQueuedEdit clears the drawer when the queue is drained.
+            onClose={() => {
+              openNextQueuedEdit();
+            }}
             itemId={editingItem.itemId}
             loteId={loteId}
             lotItemId={editingItem._id as Id<"lotItems">}
@@ -2758,6 +2933,7 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
             ticketLabel={`${loteId} · ${String(editingIndex + 1).padStart(3, "0")}`}
             lotEstado={lot.estado}
             editable={lot.estado === "abierto"}
+            editDraftOverride={editOverride}
           />
         ) : null;
       })()}
