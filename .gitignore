@@ -127,3 +127,6 @@ vite.config.js.disabled-by-test
 
 # Live-data snapshots from one-off migration scripts (never commit)
 scripts/.backups/
+
+# Vite/Vitest config bundling temp files
+*.timestamp-*.mjs
