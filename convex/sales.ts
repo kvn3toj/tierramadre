@@ -95,6 +95,18 @@ export const create = mutation({
         }),
       ),
     ),
+    // Frozen per-line price snapshot (app-only). Persisted verbatim via the
+    // `...args` spread; read back by the Kardex so the comprobante shows the
+    // price the sale was struck at, immune to later inventory re-pricing.
+    lineItems: v.optional(
+      v.array(
+        v.object({
+          itemId: v.string(),
+          precioCOP: v.number(),
+          tier: v.union(v.literal("embajador"), v.literal("final")),
+        }),
+      ),
+    ),
     formaPago: formaPagoValidator,
     metodoContado: v.optional(metodoContadoValidator),
     fechaVencimiento: v.optional(v.string()),

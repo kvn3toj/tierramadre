@@ -86,7 +86,7 @@ const CONFIGS = {
   },
   lots: {
     patterns: ["lotes", "lots"],
-    col: "N",
+    col: "T",
     columns: [
       "loteId",
       "providerNombre",
@@ -101,7 +101,14 @@ const CONFIGS = {
       "numeroFactura",
       "urlFactura",
       "notas",
-      "estado",
+      "estado", // N
+      // ── Fotosíntesis form fields (append-only, O onward) ──
+      "renombreLote", // O
+      "tratamiento", // P
+      "mina", // Q
+      "sede", // R
+      "operadorNombre", // S
+      "operadorRol", // T
     ],
   },
   clients: {
@@ -137,6 +144,22 @@ const CONFIGS = {
       "carnetUrl",
       "certificadoUrl",
       "estado",
+    ],
+  },
+  subLotes: {
+    patterns: ["sublotes", "sub-lotes", "sublotes (sale-bundles)"],
+    col: "J",
+    columns: [
+      "subLoteId",
+      "parentLoteId",
+      "sede",
+      "nombre",
+      "itemIdsJoined",
+      "unidades",
+      "totalCostoCOP",
+      "estado",
+      "notas",
+      "createdAt",
     ],
   },
 };

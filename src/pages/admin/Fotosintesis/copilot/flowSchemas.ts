@@ -211,6 +211,9 @@ const LOTE_KEYS = [
   "notas",
   "creditoFechaVenc",
   "creditoCuotas",
+  // UI-only on purpose: collected + shown in CapturaLotePage but NOT forwarded
+  // to lots.create (no column yet — see CapturaLotePage "tasaInteres UI-only"
+  // note). Kept here so the copilot still captures it for the operator.
   "creditoTasa",
 ] as const;
 

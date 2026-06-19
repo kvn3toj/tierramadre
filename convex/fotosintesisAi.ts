@@ -10,6 +10,7 @@
 
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { ITEM_SCAN_CAP } from "./_lib/aiCaps";
 
 /**
  * Single source of truth for everything Fotosynthia sees about the atelier.
@@ -32,7 +33,8 @@ const INVITATION_SCAN_CAP = 2000;
 // ("la esmeralda de Chivor") to a real itemId + loteId for edits/batch-edits,
 // without an unbounded reactive read. Most-recent ITEM_SCAN_CAP items only;
 // guided edits beyond this fall back to editing from the lot page directly.
-const ITEM_SCAN_CAP = 300;
+// The cap lives in ./_lib/aiCaps so the client (CopilotPanel) shares the exact
+// same value — see that file for the drift rationale.
 
 export const workspaceSnapshot = query({
   args: {},

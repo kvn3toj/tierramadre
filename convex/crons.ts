@@ -44,16 +44,21 @@ crons.interval(
 );
 
 // Fotosíntesis v2 — the reverse direction (Sheet → Convex) for all 6 SOT tabs
-// (providers, lots, clients, sales, subLotes, inventory) is now event-driven,
-// NOT cron-driven: a bound Apps Script captures edited cells and the manual
+// (providers, lots, clients, sales, subLotes, inventory) is event-driven, NOT
+// cron-driven: a bound Apps Script captures edited cells and the manual
 // "🔄 Convex Sync" button POSTs them to the convex/http.ts `/sync/foto`
-// endpoint (delta mode). A periodic reconcile cron is deliberately NOT
-// scheduled here — it would re-read every (mostly idle) tab on each interval,
-// the exact Vercel+Sheets+Convex bandwidth cost we avoid by syncing only on
-// demand. The "Sincronizar todo (completo)" menu item covers dropped edits.
-// If a dormant backstop is ever wanted, gate it on an env flag so it ships off:
-//   crons.interval("reconcile foto tabs", { minutes: 60 }, internal.fotoSync.runFull, {});
-//   // ...with `if (process.env.FOTO_RECONCILE_CRON !== "on") return;` in the action.
+// endpoint (delta mode). A periodic reconcile would re-read every (mostly idle)
+// tab on each interval — the exact Vercel+Sheets+Convex bandwidth we avoid by
+// syncing on demand — so the backstop below ships OFF: `reconcileBackstop`
+// no-ops unless `FOTO_RECONCILE_CRON === "on"`. Flip that env flag to close the
+// gap where an out-of-band SOT cell edit (e.g. Inventario `estado`) would
+// otherwise wait for the manual "Sincronizar todo (completo)" button.
+crons.interval(
+  "reconcile foto tabs (backstop)",
+  { minutes: 60 },
+  internal.fotoSync.reconcileBackstop,
+  {},
+);
 
 // ─── GHL commerce · Áreas 2 & 4 scheduler ────────────────────────────────
 //

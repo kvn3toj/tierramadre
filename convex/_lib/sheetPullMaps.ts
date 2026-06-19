@@ -172,8 +172,6 @@ const SALES: TableSpec = {
   },
   precioAcordadoCOP: { coerce: "num" },
   descuentoCOP: { coerce: "num" },
-  totalCOP: { coerce: "num" },
-  comisionCOP: { coerce: "num" },
   formaPago: { coerce: "str" },
   metodoContado: { coerce: "str" },
   fechaVencimiento: { coerce: "str" },
@@ -183,7 +181,10 @@ const SALES: TableSpec = {
   // AUTO when → "cancelada": action runs sales.cancel (reopen items + audit).
   // Other transitions (reservada↔confirmada) patch the mirror directly.
   estado: { coerce: "estadoSale", sideEffect: "cancelSale" },
-  // EXCLUDED: saleId (key), clientNombre (denormalized FK).
+  // EXCLUDED: saleId (key), clientNombre (denormalized FK), and the DERIVED
+  // money columns totalCOP / comisionCOP — these are push-only figures Convex
+  // computes (per this file's policy header); a sheet edit must never overwrite
+  // them, and totalCOP feeds the GHL commissions ledger (ghl.markOrderPaid).
 };
 
 const SUBLOTES: TableSpec = {
@@ -388,6 +389,10 @@ export function planRowPatch(
 
     if (fs.sideEffect === "refanLot") {
       // costoTotalCOP is owned by lots.update (patch + re-fan); never patch here.
+      // This is the sibling of the sales money policy: lots.costoTotalCOP stays
+      // Convex-authoritative via this side-effect, while sales.totalCOP /
+      // comisionCOP stay authoritative via allowlist EXCLUSION (see SALES spec).
+      // Change either money-column policy → keep both governing paths in sync.
       if (typeof value === "number" && !sameValue(value, existing[schemaKey])) {
         sideEffects.push({ type: "refanLot", value });
       }

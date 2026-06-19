@@ -101,3 +101,54 @@ export function pickTierPrice(
   }
   return undefined;
 }
+
+/** Frozen per-line price snapshot stored on the sale (app-only, like
+ *  manualItems). Captures the tier-resolved price each inventory line was sold
+ *  at so the Kardex comprobante is a faithful record, immune to later inventory
+ *  re-pricing or a buyer-tier flip. */
+export interface SaleLineSnapshot {
+  itemId: string;
+  precioCOP: number;
+  tier: CompradorTier;
+}
+
+/**
+ * Build the per-line price snapshot at sale time from the SAME tier-resolved
+ * map the subtotal uses. Missing prices snapshot as 0 (matching `sumSuggested`,
+ * which treats undefined as 0), so `Σ snapshot.precioCOP === inventory subtotal`
+ * exactly. Returns an empty array for a manual-only sale.
+ */
+export function buildSaleLineItems(
+  itemIds: string[],
+  priceByItemId: Map<string, number | undefined>,
+  tier: CompradorTier,
+): SaleLineSnapshot[] {
+  return itemIds.map((itemId) => ({
+    itemId,
+    precioCOP: priceByItemId.get(itemId) ?? 0,
+    tier,
+  }));
+}
+
+/**
+ * Resolve the per-item price map the Kardex should render. Prefers the sale's
+ * frozen `lineItems` snapshot (faithful comprobante); falls back to a LIVE
+ * tier recompute only for legacy sales captured before snapshots existed (no
+ * snapshot, or an empty one). This is the read-side counterpart to
+ * `buildSaleLineItems`.
+ */
+export function resolveKardexPrices(
+  lineItems: ReadonlyArray<{ itemId: string; precioCOP: number }> | undefined,
+  manyItems: ReadonlyArray<TierPricedCop & { itemId: string }> | undefined,
+  tier: CompradorTier,
+): Map<string, number | undefined> {
+  const map = new Map<string, number | undefined>();
+  if (lineItems && lineItems.length > 0) {
+    for (const line of lineItems) map.set(line.itemId, line.precioCOP);
+    return map;
+  }
+  for (const row of manyItems ?? []) {
+    map.set(row.itemId, pickTierPrice(row, tier));
+  }
+  return map;
+}

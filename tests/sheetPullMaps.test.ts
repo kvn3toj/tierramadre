@@ -10,6 +10,7 @@ import {
   type FotoSyncTable,
 } from "../convex/_lib/sheetPullMaps";
 import { COLUMN_MAPS } from "../convex/_lib/columnMaps";
+import { TABLE_CONFIGS } from "../api/_lib/admin-table-config";
 // .js source of truth for the Inventario tab layout (no types; runtime import).
 import { FOTO_INVENTARIO_COLUMNS } from "../api/_lib/fotosintesis-inventory-columns.js";
 
@@ -50,6 +51,8 @@ describe("guardrails: dangerous columns are NOT writable", () => {
     expect(WRITABLE.lots).not.toHaveProperty("loteId"); // natural key
     expect(WRITABLE.sales).not.toHaveProperty("clientNombre"); // denormalized FK
     expect(WRITABLE.sales).not.toHaveProperty("saleId");
+    expect(WRITABLE.sales).not.toHaveProperty("totalCOP"); // derived: precioAcordado − descuento
+    expect(WRITABLE.sales).not.toHaveProperty("comisionCOP"); // derived: % of total
     expect(WRITABLE.subLotes).not.toHaveProperty("unidades"); // derived
     expect(WRITABLE.subLotes).not.toHaveProperty("totalCostoCOP"); // derived
     expect(WRITABLE.providers).not.toHaveProperty("nombreORazonSocial");
@@ -58,6 +61,19 @@ describe("guardrails: dangerous columns are NOT writable", () => {
 
   it("covers all 6 tables", () => {
     expect(Object.keys(WRITABLE).sort()).toEqual([...FOTO_SYNC_TABLES].sort());
+  });
+});
+
+describe("drift: Vercel TABLE_CONFIGS ≡ Convex COLUMN_MAPS", () => {
+  // The two declarations of each tab's column layout (the Vercel reader/writer
+  // and the Convex marshaler) MUST agree column-for-column and in order, or an
+  // incoming/outgoing cell silently mis-routes. This is the automated guard the
+  // missing scripts/verify-column-maps.ts was meant to provide.
+  it("the 5 generic tables agree column-for-column (order + membership)", () => {
+    const five = ["providers", "lots", "clients", "sales", "subLotes"] as const;
+    for (const table of five) {
+      expect(COLUMN_MAPS[table], table).toEqual(TABLE_CONFIGS[table].columns);
+    }
   });
 });
 
