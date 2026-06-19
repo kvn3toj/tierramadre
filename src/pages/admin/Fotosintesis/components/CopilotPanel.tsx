@@ -38,6 +38,7 @@ import { api } from "../../../../../convex/_generated/api";
 import { useFotosynthiaChat } from "../hooks/useFotosynthiaChat";
 import { useFotosintesisLayout } from "../FotosintesisLayoutContext";
 import type { BatchEditPatch, GuidedFlow } from "../copilot/flowSchemas";
+import { resolveItemHint, hintMissMessage } from "../copilot/resolveItemHint";
 import { spanishText } from "../utils/fieldLang";
 
 // Convex provider is only mounted when VITE_CONVEX_URL is set in main.tsx.
@@ -156,19 +157,10 @@ interface CandidateItem {
   loteId?: string;
 }
 
-/** Resolve an itemHint against the snapshot's candidate items (best-effort). */
-function resolveCandidate(
-  hint: string | undefined,
-  candidates: CandidateItem[] | undefined,
-): CandidateItem | null {
-  if (!hint || !candidates || candidates.length === 0) return null;
-  const h = hint.trim().toLowerCase();
-  return (
-    candidates.find((c) => String(c.itemId).toLowerCase() === h) ??
-    candidates.find((c) => c.nombre && c.nombre.toLowerCase().includes(h)) ??
-    null
-  );
-}
+// Mirror of ITEM_SCAN_CAP in convex/fotosintesisAi.ts: when the live snapshot
+// holds fewer than this many lot-items it is the complete set, so an itemHint
+// miss is a true not-found rather than "older than the recent-items window".
+const CANDIDATE_ITEM_CAP = 300;
 
 /**
  * When Convex is wired, this subcomponent is mounted and its `useQuery`
@@ -310,18 +302,28 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
       let loteId = loteContext?.loteId;
       if (!loteId) {
         for (const e of edits) {
-          const c = resolveCandidate(e.itemHint, candidateItems);
-          if (c?.loteId) {
-            loteId = c.loteId;
+          const res = resolveItemHint(
+            e.itemHint,
+            candidateItems,
+            CANDIDATE_ITEM_CAP,
+          );
+          if (res.status === "resolved" && res.item.loteId) {
+            loteId = res.item.loteId;
             break;
           }
         }
       }
       if (edits.length === 0) return { kind: "none" as const };
       if (!loteId) {
+        // No lot to land on: explain WHY (ambiguous / not-found / off-cap /
+        // offline) so Maritza can recover instead of hitting a silent dead end.
+        const firstHint = edits.find((e) => e.itemHint)?.itemHint;
         return {
           kind: "blocked" as const,
-          reason: "Abrí el lote del ítem para editarlo.",
+          reason: hintMissMessage(
+            firstHint,
+            resolveItemHint(firstHint, candidateItems, CANDIDATE_ITEM_CAP),
+          ),
         };
       }
       return {
