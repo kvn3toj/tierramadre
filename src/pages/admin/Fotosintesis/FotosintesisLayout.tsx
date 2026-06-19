@@ -14,7 +14,6 @@ import type {
   GuidedFlow,
 } from "./copilot/flowSchemas";
 import { ProductoSpotlight } from "./components/ProductoSpotlight";
-import { FotosintesisGuideFab } from "./components/FotosintesisGuideFab";
 
 /**
  * Shared shell for every /admin/fotosintesis route. Owns the sticky topbar,
@@ -180,15 +179,15 @@ export default function FotosintesisLayout() {
         />
         <Box
           sx={{
-            // Reserve room at the bottom so the floating GuideFab + the
-            // global iOS tab bar never sit on top of page content when
-            // scrolled to the end. QA flagged this at every viewport.
-            paddingBottom: { xs: "220px", md: "88px" },
+            // Reserve room at the bottom so the global iOS tab bar never sits on
+            // top of page content when scrolled to the end (the copilot is now a
+            // docked/overlay rail, not a floating FAB). QA flagged this at every
+            // viewport.
+            paddingBottom: { xs: "180px", md: "56px" },
           }}
         >
           <Outlet />
         </Box>
-        <FotosintesisGuideFab />
       </Box>
 
       <ProductoSpotlight

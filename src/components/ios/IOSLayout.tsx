@@ -6,20 +6,29 @@
  * - Page config system for route-specific settings
  */
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Box, IconButton } from '@mui/material';
-import { Search, FilterList, Fullscreen, FullscreenExit } from '@mui/icons-material';
+import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { Box, IconButton } from "@mui/material";
+import {
+  Search,
+  FilterList,
+  Fullscreen,
+  FullscreenExit,
+} from "@mui/icons-material";
 
-import IOSTabBar from './IOSTabBar';
-import IOSNavigationBar, { NavigationBarMode, NavigationAction } from './IOSNavigationBar';
-import IOSMoreSheet from './IOSMoreSheet';
-import IOSSettingsSheet from './IOSSettingsSheet';
-import ScrollRestoration from '../shared/ScrollRestoration';
-import { InvitationBanner } from '../invitation';
-import { zIndex, defaultShadows } from '../../design-system';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { useThemeMode } from '../../contexts/ThemeContext';
+import IOSTabBar from "./IOSTabBar";
+import IOSNavigationBar, {
+  NavigationBarMode,
+  NavigationAction,
+} from "./IOSNavigationBar";
+import IOSMoreSheet from "./IOSMoreSheet";
+import IOSSettingsSheet from "./IOSSettingsSheet";
+import ScrollRestoration from "../shared/ScrollRestoration";
+import { InvitationBanner } from "../invitation";
+import { CopilotRail } from "../../pages/admin/Fotosintesis/copilot-rail/CopilotRail";
+import { zIndex, defaultShadows } from "../../design-system";
+import { useLanguage } from "../../contexts/LanguageContext";
+import { useThemeMode } from "../../contexts/ThemeContext";
 
 interface PageConfig {
   title: string;
@@ -36,138 +45,145 @@ interface PageConfig {
 }
 
 const DARK_HEADER_GRADIENT = [
-  'linear-gradient(to right, transparent 20%, rgba(0, 174, 122, 0.12) 50%, transparent 80%)',
-  'linear-gradient(to right, #050505 0%, #0d1a14 30%, #0d1a14 70%, #050505 100%)',
-].join(', ');
+  "linear-gradient(to right, transparent 20%, rgba(0, 174, 122, 0.12) 50%, transparent 80%)",
+  "linear-gradient(to right, #050505 0%, #0d1a14 30%, #0d1a14 70%, #050505 100%)",
+].join(", ");
 
 const LIGHT_HEADER_GRADIENT = [
-  'linear-gradient(to right, rgba(0, 174, 122, 0.02) 10%, transparent 40%, transparent 60%, rgba(0, 174, 122, 0.02) 90%)',
-  'linear-gradient(to right, #fafdfb 0%, #ffffff 15%, #ffffff 85%, #fafdfb 100%)',
-].join(', ');
+  "linear-gradient(to right, rgba(0, 174, 122, 0.02) 10%, transparent 40%, transparent 60%, rgba(0, 174, 122, 0.02) 90%)",
+  "linear-gradient(to right, #fafdfb 0%, #ffffff 15%, #ffffff 85%, #fafdfb 100%)",
+].join(", ");
 
-const getPageConfigs = (t: any, isLight: boolean): Record<string, PageConfig> => ({
-  '/gallery': {
+const getPageConfigs = (
+  t: any,
+  isLight: boolean,
+): Record<string, PageConfig> => ({
+  "/gallery": {
     title: t.pages.gallery.title,
-    mode: 'large',
+    mode: "large",
     subtitle: t.pages.gallery.subtitle,
     trailingActions: [
       {
         icon: Search,
         label: t.actions.search,
-        onClick: () => { /* TODO: Implement search */ },
+        onClick: () => {
+          /* TODO: Implement search */
+        },
       },
       {
         icon: FilterList,
         label: t.actions.filter,
-        onClick: () => { /* TODO: Implement filter */ },
+        onClick: () => {
+          /* TODO: Implement filter */
+        },
       },
     ],
   },
-  '/upload': {
+  "/upload": {
     title: t.pages.upload.title,
-    mode: 'large',
+    mode: "large",
     subtitle: t.pages.upload.subtitle,
   },
-  '/treasure': {
+  "/treasure": {
     title: t.pages.treasure.title,
-    mode: 'compact',
-    logoUrl: '/images/logo-horizontal-green.png',
+    mode: "compact",
+    logoUrl: "/images/logo-horizontal-green.png",
     backgroundColor: isLight ? LIGHT_HEADER_GRADIENT : DARK_HEADER_GRADIENT,
-    forceLogoUrl: '/images/logo-horizontal-green.png',
+    forceLogoUrl: "/images/logo-horizontal-green.png",
   },
-  '/ambassadors': {
+  "/ambassadors": {
     title: t.pages.ambassadors.title,
-    mode: 'compact',
+    mode: "compact",
   },
-  '/home': {
-    title: 'Tierra Mädre',
-    mode: 'compact',
-    logoUrl: '/images/logo-horizontal-green.png',
+  "/home": {
+    title: "Tierra Mädre",
+    mode: "compact",
+    logoUrl: "/images/logo-horizontal-green.png",
     backgroundColor: isLight ? LIGHT_HEADER_GRADIENT : DARK_HEADER_GRADIENT,
-    forceLogoUrl: '/images/logo-horizontal-green.png',
+    forceLogoUrl: "/images/logo-horizontal-green.png",
   },
-  '/catalog': {
+  "/catalog": {
     title: t.pages.catalog.title,
-    mode: 'compact',
+    mode: "compact",
     showBackButton: true,
   },
-  '/calendar': {
+  "/calendar": {
     title: t.pages.calendar.title,
-    mode: 'compact',
+    mode: "compact",
     showBackButton: true,
   },
-  '/slides': {
+  "/slides": {
     title: t.pages.slides.title,
-    mode: 'compact',
+    mode: "compact",
     showBackButton: true,
   },
-  '/normalizer': {
+  "/normalizer": {
     title: t.pages.normalizer.title,
-    mode: 'compact',
+    mode: "compact",
     showBackButton: true,
   },
-  '/receipts': {
+  "/receipts": {
     title: t.pages.receipts.title,
-    mode: 'compact',
+    mode: "compact",
     showBackButton: true,
   },
-  '/biblioteca': {
+  "/biblioteca": {
     title: t.pages.library.title,
-    mode: 'compact',
+    mode: "compact",
     showBackButton: true,
   },
-  '/simulator': {
+  "/simulator": {
     title: t.pages.simulator.title,
-    mode: 'compact',
+    mode: "compact",
     showBackButton: true,
   },
-  '/product': {
+  "/product": {
     title: t.pages.gallery.title,
-    mode: 'compact',
+    mode: "compact",
     showBackButton: true,
   },
-  '/cuentas/cotizaciones': {
+  "/cuentas/cotizaciones": {
     title: t.pages.cotizacion.title,
-    mode: 'compact',
+    mode: "compact",
     showBackButton: true,
   },
-  '/cuentas': {
+  "/cuentas": {
     title: t.pages.accounts.title,
-    mode: 'large',
+    mode: "large",
     subtitle: t.pages.accounts.subtitle,
     showBackButton: true,
   },
-  '/boveda-secreta': {
+  "/boveda-secreta": {
     title: t.pages.vault.title,
-    mode: 'large',
+    mode: "large",
     subtitle: t.pages.vault.subtitle,
   },
-  '/cotizacion': {
+  "/cotizacion": {
     title: t.pages.cotizacion.title,
-    mode: 'compact',
+    mode: "compact",
     showBackButton: true,
   },
-  '/certificate': {
+  "/certificate": {
     title: t.pages.certificate.title,
-    mode: 'compact',
+    mode: "compact",
     showBackButton: true,
   },
-  '/admin/analytics': {
-    title: 'Analytics Dashboard',
-    mode: 'large',
-    subtitle: 'Métricas y Business Health Score',
+  "/admin/analytics": {
+    title: "Analytics Dashboard",
+    mode: "large",
+    subtitle: "Métricas y Business Health Score",
     showBackButton: true,
   },
-  '/admin/name-generator': {
-    title: 'Generador de Nombres',
-    mode: 'large',
-    subtitle: 'Nombres únicos para esmeraldas con IA',
+  "/admin/name-generator": {
+    title: "Generador de Nombres",
+    mode: "large",
+    subtitle: "Nombres únicos para esmeraldas con IA",
     showBackButton: true,
   },
-  '/mi-perfil': {
-    title: 'Mi Perfil',
-    mode: 'large',
-    subtitle: 'Tu portafolio y actividad',
+  "/mi-perfil": {
+    title: "Mi Perfil",
+    mode: "large",
+    subtitle: "Tu portafolio y actividad",
     showBackButton: true,
   },
 });
@@ -178,14 +194,14 @@ export interface IOSLayoutProps {
 
 // Detect if already in standalone/PWA mode
 const isStandalone = () =>
-  window.matchMedia('(display-mode: standalone)').matches ||
+  window.matchMedia("(display-mode: standalone)").matches ||
   (navigator as any).standalone === true;
 
 const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   const location = useLocation();
   const { t } = useLanguage();
   const { mode } = useThemeMode();
-  const isLight = mode === 'light';
+  const isLight = mode === "light";
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
   const [settingsSheetOpen, setSettingsSheetOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -193,11 +209,13 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   // Track fullscreen state changes
   useEffect(() => {
     const handler = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', handler);
-    return () => document.removeEventListener('fullscreenchange', handler);
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
-  const supportsFullscreen = typeof document.documentElement.requestFullscreen === 'function' && !isStandalone();
+  const supportsFullscreen =
+    typeof document.documentElement.requestFullscreen === "function" &&
+    !isStandalone();
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -215,30 +233,37 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
     if (exactMatch) return exactMatch;
 
     // Check for partial match (e.g., /product/:id)
-    const partialMatch = Object.keys(configs).find(key =>
-      location.pathname.startsWith(key) && key !== '/'
+    const partialMatch = Object.keys(configs).find(
+      (key) => location.pathname.startsWith(key) && key !== "/",
     );
     if (partialMatch) return configs[partialMatch];
 
     // Default config
     return {
-      title: 'Tierra Mädre',
-      mode: 'compact',
+      title: "Tierra Mädre",
+      mode: "compact",
     };
   }, [location.pathname, t, isLight]);
 
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100dvh',
-        overflow: 'hidden',
+        display: "flex",
+        flexDirection: "column",
+        height: "100dvh",
+        overflow: "hidden",
         // Fallback for browsers without dvh support
-        '@supports not (height: 100dvh)': {
-          height: '100vh',
+        "@supports not (height: 100dvh)": {
+          height: "100vh",
         },
-        backgroundColor: 'var(--surface-primary)',
+        backgroundColor: "var(--surface-primary)",
+        // Copilot rail push: the docked rail sets this var; nav bar + main shift
+        // left so the fixed rail fills the gap. 0 when closed/overlay/off-route.
+        paddingRight: "var(--copilot-rail-width, 0px)",
+        transition: "padding-right 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+        "@media (prefers-reduced-motion: reduce)": {
+          transition: "none",
+        },
       }}
     >
       {/* Skip to content link - WCAG 2.4.1 Bypass Blocks */}
@@ -246,23 +271,23 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         component="a"
         href="#main-content"
         sx={{
-          position: 'absolute',
+          position: "absolute",
           top: -9999,
           left: 0,
           zIndex: zIndex.modal,
-          bgcolor: 'var(--surface-primary)',
-          color: 'text.primary',
+          bgcolor: "var(--surface-primary)",
+          color: "text.primary",
           px: 3,
           py: 1.5,
           fontWeight: 600,
-          fontSize: '0.875rem',
-          textDecoration: 'none',
-          borderRadius: '0 0 8px 0',
+          fontSize: "0.875rem",
+          textDecoration: "none",
+          borderRadius: "0 0 8px 0",
           boxShadow: defaultShadows.sm,
-          '&:focus-visible': {
+          "&:focus-visible": {
             top: 0,
-            outline: '2px solid',
-            outlineColor: 'primary.main',
+            outline: "2px solid",
+            outlineColor: "primary.main",
             outlineOffset: -2,
           },
         }}
@@ -280,25 +305,41 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         mode={pageConfig.mode}
         title={pageConfig.title}
         subtitle={pageConfig.subtitle}
-        logoUrl={pageConfig.forceLogoUrl || (pageConfig.logoUrl ? (isLight ? '/images/logo-horizontal-dark.png' : '/images/logo-horizontal-white.png') : undefined)}
+        logoUrl={
+          pageConfig.forceLogoUrl ||
+          (pageConfig.logoUrl
+            ? isLight
+              ? "/images/logo-horizontal-dark.png"
+              : "/images/logo-horizontal-white.png"
+            : undefined)
+        }
         showBackButton={pageConfig.showBackButton}
         leadingActions={pageConfig.leadingActions}
         trailingActions={pageConfig.trailingActions}
-        trailingElement={supportsFullscreen ? (
-          <IconButton
-            onClick={toggleFullscreen}
-            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-            size="small"
-            sx={{
-              color: 'var(--brand-primary)',
-              padding: '6px',
-              opacity: 0.7,
-              '&:hover': { opacity: 1, backgroundColor: 'var(--surface-tertiary)' },
-            }}
-          >
-            {isFullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
-          </IconButton>
-        ) : undefined}
+        trailingElement={
+          supportsFullscreen ? (
+            <IconButton
+              onClick={toggleFullscreen}
+              aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              size="small"
+              sx={{
+                color: "var(--brand-primary)",
+                padding: "6px",
+                opacity: 0.7,
+                "&:hover": {
+                  opacity: 1,
+                  backgroundColor: "var(--surface-tertiary)",
+                },
+              }}
+            >
+              {isFullscreen ? (
+                <FullscreenExit fontSize="small" />
+              ) : (
+                <Fullscreen fontSize="small" />
+              )}
+            </IconButton>
+          ) : undefined
+        }
         backgroundColor={pageConfig.backgroundColor}
       />
 
@@ -311,15 +352,15 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
           minHeight: 0, // Override flexbox implicit min-height: auto so overflowY works
           // Tab bar: 12px top + 62px pill + 21px bottom + safe-area = 95px + safe-area
           paddingBottom: `calc(95px + env(safe-area-inset-bottom))`,
-          overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch',
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
           // iOS HIG: Improve scroll performance and touch handling
-          position: 'relative',
-          isolation: 'isolate', // Create stacking context
+          position: "relative",
+          isolation: "isolate", // Create stacking context
           // iOS HIG: Ensure smooth scroll momentum
-          scrollBehavior: 'smooth',
-          '@media (prefers-reduced-motion: reduce)': {
-            scrollBehavior: 'auto',
+          scrollBehavior: "smooth",
+          "@media (prefers-reduced-motion: reduce)": {
+            scrollBehavior: "auto",
           },
         }}
       >
@@ -333,7 +374,13 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         onClose={() => setMoreSheetOpen(false)}
         onOpenSettings={() => setSettingsSheetOpen(true)}
       />
-      <IOSSettingsSheet open={settingsSheetOpen} onClose={() => setSettingsSheetOpen(false)} />
+      <IOSSettingsSheet
+        open={settingsSheetOpen}
+        onClose={() => setSettingsSheetOpen(false)}
+      />
+
+      {/* Fotosynthia copilot rail — gates itself to staff + back-office routes. */}
+      <CopilotRail />
     </Box>
   );
 };

@@ -1,7 +1,7 @@
 /**
- * Fotosynthia v2 · in-drawer guided-capture surface.
+ * Fotosynthia v2 · guided-capture + navigation surface.
  *
- * Lives inside the Copilot tab of `<FotosintesisGuideFab/>`. Maritza states
+ * The chat body of the docked Copilot rail (`<CopilotRail/>`). Maritza states
  * what she wants in plain language; Fotosynthia classifies the intent, runs a
  * short interview (asking only what it can't infer), and on `ready` shows a
  * review card that pre-fills the matching form — the AI never writes; she
@@ -21,24 +21,35 @@ import {
   useState,
 } from "react";
 import { Box, IconButton, Tooltip } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import { alpha, keyframes } from "@mui/material/styles";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
+  AlertTriangle,
   ArrowRight,
+  Compass,
   Eraser,
   RefreshCcw,
+  RotateCcw,
   Send,
   Sparkles,
   StopCircle,
+  WifiOff,
 } from "lucide-react";
 import { useQuery } from "convex/react";
 import { fontFamilies, getFoto } from "../../../../design-system";
 import { useGoogleAuth } from "../../../../contexts/GoogleAuthContext";
+import { useAppNavigator } from "../../../../contexts/AppNavigatorContext";
 import { api } from "../../../../../convex/_generated/api";
 import { useFotosynthiaChat } from "../hooks/useFotosynthiaChat";
-import { useFotosintesisLayout } from "../FotosintesisLayoutContext";
-import type { BatchEditPatch, GuidedFlow } from "../copilot/flowSchemas";
+import { useFotosintesisLayoutSafe } from "../FotosintesisLayoutContext";
+import type {
+  BatchEditPatch,
+  GuidedFlow,
+  NavigateAction,
+} from "../copilot/flowSchemas";
 import { resolveItemHint, hintMissMessage } from "../copilot/resolveItemHint";
+import { buildPath, getRouteById } from "../../../../config/adminNavMap";
+import { CopilotEmptyState } from "../copilot-rail/CopilotEmptyState";
 import { spanishText } from "../utils/fieldLang";
 
 // Convex provider is only mounted when VITE_CONVEX_URL is set in main.tsx.
@@ -61,14 +72,6 @@ interface CopilotPanelProps {
    */
   active: boolean;
 }
-
-// Data-entry oriented openers — guided capture is Fotosynthia's primary role.
-const SUGGESTED_PROMPTS = [
-  "Registrar una gema nueva en este lote",
-  "Crear un lote nuevo",
-  "Registrar una venta",
-  "Editar el precio de un ítem",
-];
 
 const FLOW_LABELS: Record<GuidedFlow, string> = {
   "item-gema": "Gema nueva",
@@ -162,6 +165,49 @@ interface CandidateItem {
 // miss is a true not-found rather than "older than the recent-items window".
 const CANDIDATE_ITEM_CAP = 300;
 
+// Three-dot "typing" pulse shown while a guided turn is in flight (the guided
+// response is a single JSON payload, so the bubble has no streamed text yet).
+const typingPulse = keyframes`
+  0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-2px); }
+`;
+
+function TypingDots({ color }: { color: string }) {
+  return (
+    <Box
+      component="span"
+      role="status"
+      aria-label="Fotosynthia está escribiendo"
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "4px",
+        height: "1.55em",
+      }}
+    >
+      {[0, 1, 2].map((i) => (
+        <Box
+          key={i}
+          component="span"
+          aria-hidden
+          sx={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: color,
+            animation: `${typingPulse} 1.2s ${i * 0.16}s infinite ease-in-out`,
+            // Respect reduced-motion: hold dots steady instead of pulsing.
+            "@media (prefers-reduced-motion: reduce)": {
+              animation: "none",
+              opacity: 0.5,
+            },
+          }}
+        />
+      ))}
+    </Box>
+  );
+}
+
 /**
  * When Convex is wired, this subcomponent is mounted and its `useQuery`
  * pushes the live snapshot up via callback. Kept separate so the outer
@@ -186,8 +232,10 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const route = location.pathname;
+  const onFotoRoute = route.startsWith("/admin/fotosintesis");
   const { user } = useGoogleAuth();
-  const layout = useFotosintesisLayout();
+  const layout = useFotosintesisLayoutSafe();
+  const { accessLevel, navigateTo } = useAppNavigator();
   const listRef = useRef<HTMLDivElement | null>(null);
   const [input, setInput] = useState("");
   const [snapshot, setSnapshot] = useState<unknown>(undefined);
@@ -196,6 +244,7 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
     messages,
     isStreaming,
     sendGuided,
+    retryLast,
     latestEnvelope,
     clearEnvelope,
     reset,
@@ -203,11 +252,35 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
     threadId,
   } = useFotosynthiaChat(route);
 
+  // Network awareness: block sending while offline (the request would only
+  // fail and surface as an error) and tell Maritza why the composer is locked.
+  const [online, setOnline] = useState<boolean>(() =>
+    typeof navigator === "undefined" ? true : navigator.onLine,
+  );
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
+
   // Auto-scroll to bottom on new messages or stream chunks.
   useEffect(() => {
     if (!listRef.current) return;
     listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [messages, latestEnvelope]);
+
+  // Focus the composer when the rail OPENS (active false→true), not on initial
+  // mount — so an auto-opened rail on page load doesn't steal focus.
+  const composerRef = useRef<HTMLTextAreaElement | null>(null);
+  const prevActiveRef = useRef(active);
+  useEffect(() => {
+    if (active && !prevActiveRef.current) composerRef.current?.focus();
+    prevActiveRef.current = active;
+  }, [active]);
 
   // Live lot context from the current route + snapshot (lets the model infer
   // the target lot and avoid re-asking the cost/units).
@@ -236,7 +309,14 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
     return Array.isArray(items) ? items : undefined;
   }, [snapshot]);
 
-  const canSend = input.trim().length > 0 && !isStreaming;
+  const canSend = input.trim().length > 0 && !isStreaming && online;
+
+  // Chat-level error = the last turn ended in an error (vs. mid-history ones).
+  const lastMessage = messages[messages.length - 1];
+  const chatError =
+    lastMessage && lastMessage.role === "assistant" && lastMessage.error
+      ? lastMessage.error
+      : null;
 
   const dispatchGuided = (text: string) => {
     void sendGuided({
@@ -247,6 +327,7 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
       userName: user?.name,
       loteContext,
       candidateItems,
+      accessLevel,
     });
   };
 
@@ -266,7 +347,7 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
   };
 
   const handleSuggested = (prompt: string) => {
-    if (isStreaming) return;
+    if (isStreaming || !online) return;
     dispatchGuided(prompt);
   };
 
@@ -397,6 +478,15 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
 
   const runHandoff = () => {
     if (!env || !env.ready) return;
+    if (!layout) {
+      // Off a /admin/fotosintesis/* route the capture bus isn't mounted. Route
+      // INTO Fotosíntesis; the rail (and this envelope) persist, so the button
+      // re-enables on arrival and seeds the form on the second click.
+      if (handoff.kind === "form" || handoff.kind === "batch") {
+        navigate(handoff.target);
+      }
+      return;
+    }
     if (handoff.kind === "form") {
       layout.openDraftForm(handoff.flow, handoff.data, handoff.target);
       clearEnvelope();
@@ -407,10 +497,72 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
     }
   };
 
-  const handoffLabel =
-    env?.flow === "batch-edit" || env?.flow === "edit-existing"
+  const handoffLabel = !layout
+    ? "Ir a Fotosíntesis"
+    : env?.flow === "batch-edit" || env?.flow === "edit-existing"
       ? "Aplicar ediciones"
       : "Abrir formulario";
+
+  // ─── Natural-language navigation ──────────────────────────────────
+  // The envelope may carry a server-validated `navigate`. Static routes arrive
+  // ready; dynamic ones (item/sale by name) arrive with `needsParam` for the
+  // client to resolve against the live candidate list. A clear single match
+  // auto-routes; ambiguity surfaces a chip instead of a silent dead end.
+  type NavPlan =
+    | { kind: "ready"; action: NavigateAction; label: string }
+    | { kind: "blocked"; label: string; message: string };
+
+  const navPlan = useMemo<NavPlan | null>(() => {
+    const nav = env?.navigate;
+    if (!nav) return null;
+    if (!nav.needsParam)
+      return { kind: "ready", action: nav, label: nav.label };
+    const entry = getRouteById(nav.routeId);
+    if (!entry) return null;
+    const needs = nav.needsParam;
+    const spec = entry.params?.find((p) => p.name === needs.name);
+    const hint = nav.params?.[needs.name];
+    if (
+      spec &&
+      (spec.resolver === "itemId" ||
+        spec.resolver === "lotItemId" ||
+        spec.resolver === "saleId")
+    ) {
+      const res = resolveItemHint(hint, candidateItems, CANDIDATE_ITEM_CAP);
+      if (res.status === "resolved") {
+        const built = buildPath(entry, {
+          ...(nav.params ?? {}),
+          [spec.name]: res.item.itemId,
+        });
+        if (built) {
+          return {
+            kind: "ready",
+            action: { ...nav, path: built, needsParam: undefined },
+            label: nav.label,
+          };
+        }
+      }
+      return {
+        kind: "blocked",
+        label: nav.label,
+        message: hintMissMessage(hint, res),
+      };
+    }
+    return {
+      kind: "blocked",
+      label: nav.label,
+      message: `Necesito ${needs.label} para abrir ${nav.label}.`,
+    };
+  }, [env, candidateItems]);
+
+  // Auto-route a clear single match, once per envelope.
+  const handledNavRef = useRef<unknown>(null);
+  useEffect(() => {
+    if (!env?.navigate || navPlan?.kind !== "ready") return;
+    if (handledNavRef.current === env) return;
+    handledNavRef.current = env;
+    navigateTo(navPlan.action);
+  }, [env, navPlan, navigateTo]);
 
   const snapshotStatus = useMemo(() => {
     if (!HAS_CONVEX)
@@ -436,7 +588,10 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
       }}
     >
       {HAS_CONVEX && (
-        <SnapshotSource active={active} onSnapshot={setSnapshot} />
+        <SnapshotSource
+          active={active && onFotoRoute}
+          onSnapshot={setSnapshot}
+        />
       )}
       {/* Snapshot strip */}
       <Box
@@ -544,120 +699,112 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
         aria-label="Conversación con Fotosynthia"
       >
         {messages.length === 0 ? (
-          <Box>
-            <Box
-              sx={{
-                fontSize: "12.5px",
-                color: foto.ink.secondary,
-                lineHeight: 1.55,
-                marginBottom: "14px",
-              }}
-            >
-              Soy <strong>Fotosynthia</strong>. Decime qué querés registrar o
-              editar — un lote, una gema, una joya, una venta, un proveedor — y
-              te voy preguntando solo lo que falte. Cuando esté listo, te
-              precargo el formulario para que revises y guardes.
-            </Box>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {SUGGESTED_PROMPTS.map((prompt) => (
+          <CopilotEmptyState
+            onSuggested={handleSuggested}
+            disabled={isStreaming || !online}
+          />
+        ) : (
+          messages.map((m, idx) => {
+            const isLast = idx === messages.length - 1;
+            return (
+              <Box
+                key={m.id}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: m.role === "user" ? "flex-end" : "flex-start",
+                }}
+              >
                 <Box
-                  key={prompt}
-                  component="button"
-                  type="button"
-                  onClick={() => handleSuggested(prompt)}
-                  disabled={isStreaming}
                   sx={{
-                    textAlign: "left",
-                    fontFamily: "inherit",
-                    fontSize: "12px",
-                    color: foto.ink.primary,
-                    background: foto.surfaces.canvas,
-                    border: `1px solid ${foto.surfaces.rule}`,
-                    borderRadius: "10px",
-                    padding: "10px 12px",
-                    cursor: "pointer",
-                    transition:
-                      "background 120ms ease, border-color 120ms ease",
-                    "&:hover": {
-                      background: foto.surfaces.inset,
-                      borderColor: foto.surfaces.edgeStrong,
-                    },
-                    "&:disabled": {
-                      cursor: "not-allowed",
-                      color: foto.ink.mute,
-                      background: foto.surfaces.panel,
-                    },
-                    "&:focus-visible": {
-                      outline: "none",
-                      boxShadow: `0 0 0 3px ${foto.accent.glow}`,
-                    },
+                    fontSize: "9px",
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: foto.ink.tertiary,
+                    marginBottom: "4px",
+                    paddingX: "2px",
                   }}
                 >
-                  {prompt}
+                  {m.role === "user" ? "Tú" : "Fotosynthia"}
                 </Box>
-              ))}
-            </Box>
-          </Box>
-        ) : (
-          messages.map((m) => (
-            <Box
-              key={m.id}
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: m.role === "user" ? "flex-end" : "flex-start",
-              }}
-            >
-              <Box
-                sx={{
-                  fontSize: "9px",
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  color: foto.ink.tertiary,
-                  marginBottom: "4px",
-                  paddingX: "2px",
-                }}
-              >
-                {m.role === "user" ? "Tú" : "Fotosynthia"}
+                <Box
+                  sx={{
+                    maxWidth: "86%",
+                    background:
+                      m.role === "user"
+                        ? alpha(foto.accent.primary, 0.06)
+                        : foto.surfaces.canvas,
+                    border: `1px solid ${
+                      m.role === "user"
+                        ? alpha(foto.accent.primary, 0.18)
+                        : foto.surfaces.rule
+                    }`,
+                    borderRadius: "12px",
+                    padding: "10px 12px",
+                    fontSize: "13px",
+                    lineHeight: 1.55,
+                    color: foto.ink.primary,
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {m.content ? (
+                    m.content
+                  ) : m.streaming ? (
+                    <TypingDots color={foto.ink.tertiary} />
+                  ) : null}
+                  {/* Mid-history errors stay inline; the latest one is owned
+                      by the rail-level band (which also offers Reintentar). */}
+                  {m.error && !isLast && (
+                    <Box
+                      sx={{
+                        marginTop: "8px",
+                        fontSize: "11px",
+                        color: foto.status.sold,
+                      }}
+                    >
+                      {m.error}
+                    </Box>
+                  )}
+                </Box>
               </Box>
-              <Box
-                sx={{
-                  maxWidth: "86%",
-                  background:
-                    m.role === "user"
-                      ? alpha(foto.accent.primary, 0.06)
-                      : foto.surfaces.canvas,
-                  border: `1px solid ${
-                    m.role === "user"
-                      ? alpha(foto.accent.primary, 0.18)
-                      : foto.surfaces.rule
-                  }`,
-                  borderRadius: "12px",
-                  padding: "10px 12px",
-                  fontSize: "13px",
-                  lineHeight: 1.55,
-                  color: foto.ink.primary,
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                }}
-              >
-                {m.content || (m.streaming ? "Pensando…" : "")}
-                {m.error && (
-                  <Box
-                    sx={{
-                      marginTop: "8px",
-                      fontSize: "11px",
-                      color: foto.status.sold,
-                    }}
-                  >
-                    {m.error}
-                  </Box>
-                )}
-              </Box>
-            </Box>
-          ))
+            );
+          })
         )}
       </Box>
+
+      {/* Navigation chip — confirms an auto-route or surfaces an unresolved hint */}
+      {navPlan && (
+        <Box
+          sx={{
+            margin: "0 18px 2px",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "9px 12px",
+            borderRadius: "10px",
+            border: `1px solid ${
+              navPlan.kind === "ready"
+                ? alpha(foto.accent.primary, 0.25)
+                : foto.surfaces.rule
+            }`,
+            background:
+              navPlan.kind === "ready" ? foto.accent.soft : foto.surfaces.panel,
+            fontSize: "11.5px",
+            lineHeight: 1.45,
+            color:
+              navPlan.kind === "ready" ? foto.accent.deep : foto.ink.secondary,
+          }}
+          role="status"
+        >
+          <Compass size={13} strokeWidth={2} />
+          <Box component="span">
+            {navPlan.kind === "ready"
+              ? `Te llevé a ${navPlan.label}`
+              : navPlan.message}
+          </Box>
+        </Box>
+      )}
 
       {/* Review card — pinned above the composer when a draft is in progress */}
       {showCard && env && (
@@ -811,6 +958,92 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
         </Box>
       )}
 
+      {/* Rail-level error band — concise + actionable. The technical detail
+          stays in the failed bubble above; this offers the retry affordance. */}
+      {chatError && !isStreaming && (
+        <Box
+          role="alert"
+          sx={{
+            margin: "0 18px 2px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            padding: "9px 12px",
+            borderRadius: "10px",
+            border: `1px solid ${alpha(foto.status.sold, 0.35)}`,
+            background: alpha(foto.status.sold, 0.06),
+            fontSize: "11.5px",
+            lineHeight: 1.4,
+            color: foto.status.sold,
+          }}
+        >
+          <AlertTriangle
+            size={14}
+            strokeWidth={2}
+            style={{ flexShrink: 0 }}
+            aria-hidden
+          />
+          <Box component="span" sx={{ flex: 1, minWidth: 0 }}>
+            No pude completar el último mensaje.
+          </Box>
+          <Box
+            component="button"
+            type="button"
+            onClick={retryLast}
+            disabled={!online}
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              flexShrink: 0,
+              border: `1px solid ${alpha(foto.status.sold, 0.4)}`,
+              borderRadius: "8px",
+              padding: "5px 9px",
+              background: "transparent",
+              color: foto.status.sold,
+              fontSize: "11px",
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "background 120ms ease",
+              "&:hover": { background: alpha(foto.status.sold, 0.1) },
+              "&:disabled": {
+                opacity: 0.5,
+                cursor: "not-allowed",
+                "&:hover": { background: "transparent" },
+              },
+            }}
+          >
+            <RotateCcw size={12} strokeWidth={2} aria-hidden />
+            Reintentar
+          </Box>
+        </Box>
+      )}
+
+      {/* Offline band — explains why the composer is locked. */}
+      {!online && (
+        <Box
+          role="status"
+          sx={{
+            margin: "0 18px 2px",
+            display: "flex",
+            alignItems: "center",
+            gap: "9px",
+            padding: "9px 12px",
+            borderRadius: "10px",
+            border: `1px solid ${foto.surfaces.rule}`,
+            background: foto.surfaces.panel,
+            fontSize: "11.5px",
+            lineHeight: 1.4,
+            color: foto.ink.secondary,
+          }}
+        >
+          <WifiOff size={14} strokeWidth={2} aria-hidden />
+          <Box component="span">
+            Sin conexión — Fotosynthia espera a que vuelvas a estar en línea.
+          </Box>
+        </Box>
+      )}
+
       {/* Composer */}
       <Box
         component="form"
@@ -827,6 +1060,7 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
       >
         <Box
           component="textarea"
+          ref={composerRef}
           rows={1}
           value={input}
           placeholder="Decile a Fotosynthia qué registrar o editar…"

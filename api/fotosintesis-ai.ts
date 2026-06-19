@@ -22,14 +22,47 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   buildFlowSchemaText,
+  buildNavCatalogText,
   coerceVocabulary,
   computeMissing,
   isGuidedFlow,
+  resolveNavigate,
   whitelistDraft,
   type GuidedDraft,
   type GuidedEnvelope,
   type GuidedFlow,
 } from "../src/pages/admin/Fotosintesis/copilot/flowSchemas.js";
+import type { AccessLevel } from "../src/types/auth.js";
+
+const ACCESS_LEVELS = [
+  "guest",
+  "asesor",
+  "embajador",
+  "admin",
+  "provider",
+] as const;
+
+/**
+ * Coerce the caller-supplied role. UNTRUSTED — used ONLY to scope the navigation
+ * catalog the model sees; the binding role gate lives client-side + in the route
+ * guards. Defaults to "admin" (the only surface that reaches this endpoint today).
+ */
+function asAccessLevel(value: unknown): AccessLevel {
+  return typeof value === "string" &&
+    (ACCESS_LEVELS as readonly string[]).includes(value)
+    ? (value as AccessLevel)
+    : "admin";
+}
+
+/** Authoritative params the server already knows, e.g. the lote in the active route. */
+function extractServerParams(loteContext: unknown): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (loteContext && typeof loteContext === "object") {
+    const id = (loteContext as Record<string, unknown>).loteId;
+    if (typeof id === "string" && id.trim()) out.loteId = id.trim();
+  }
+  return out;
+}
 
 const DEFAULT_MODEL =
   process.env.GROQ_MODEL?.trim() || "llama-3.3-70b-versatile";
@@ -217,7 +250,7 @@ function buildSummary(
 // self-certifies completeness). No mutation is ever called here — the
 // envelope only pre-fills a form the human reviews and saves.
 
-function buildGuidedSystemPrompt(): string {
+function buildGuidedSystemPrompt(accessLevel: AccessLevel): string {
   return `Eres Fotosynthia, la copiloto de captura del taller Fotosíntesis de Tierra Madre.
 Tu trabajo AHORA es guiar a Maritza para registrar o editar datos: ella dice en lenguaje natural qué quiere y tú conduces una entrevista corta, preguntando SOLO lo que falta. Hablas español de Colombia, cálida y precisa.
 
@@ -238,6 +271,10 @@ REGLAS:
 9. loteId (solo en captura de ítems): inclúyelo SOLO si Maritza nombra el lote explícitamente (ej. "B-008"); si no, déjalo vacío y se usa el lote abierto actual.
 10. "sede"/"bóveda" es el ALMACÉN donde se guarda (B=Bogotá, C=Cali, S=Secreta, M=Marketing), NO la mina; si no la dicen, pregúntala. En cambio "mina" (lote) y "procedencia" (gema) son el ORIGEN de la esmeralda (Muzo, Coscuez, Chivor, Boyacá, Gachalá…): captúralos cuando digan "de <lugar>" y JAMÁS los confundas con la sede.
 11. "peso" es texto con unidad (ej. "3.2 ct", "5 gr", o "Plata"/"fragmento").
+12. NAVEGACIÓN (opcional, ADICIONAL a "say"): si Maritza pide IR / abrir / mostrar una pantalla ("llévame a analytics", "abrí el lote B-001", "muéstrame el directorio"), agrega al JSON un campo "navigate": {"routeId":"<id del catálogo>","label":"<nombre de la pantalla>","params":{...si aplica},"reason":"<1 frase: por qué>"}. Usa SOLO un routeId del catálogo de abajo; NUNCA inventes id ni ruta. Para pantallas con parámetro pon en "params" el dato textual que Maritza dijo (ej. {"loteId":"B-001"} o {"itemId":"Chivor"}) — el sistema lo resuelve al ID real. Podés navegar y además responder/preguntar en "say". Si es solo una pregunta informativa, NO incluyas navigate.
+
+${buildNavCatalogText(accessLevel)}
+
 Responde únicamente con JSON.`;
 }
 
@@ -296,9 +333,10 @@ async function buildGuidedEnvelope(args: {
   priorDraft: unknown;
   loteContext: unknown;
   candidateItems: unknown;
+  accessLevel: AccessLevel;
 }): Promise<GuidedEnvelope> {
   const fullMessages = [
-    { role: "system", content: buildGuidedSystemPrompt() },
+    { role: "system", content: buildGuidedSystemPrompt(args.accessLevel) },
     {
       role: "system",
       content: snapshotToGuidedContext(
@@ -388,6 +426,15 @@ async function buildGuidedEnvelope(args: {
   const ready = flow !== "advisory" && missing.length === 0;
   const isBatch = flow === "batch-edit";
 
+  // Validate + harden any model-proposed navigation. Role-gated server-side; the
+  // client re-checks against the live session before actually routing.
+  const navigate =
+    resolveNavigate(
+      parsed?.navigate,
+      args.accessLevel,
+      extractServerParams(args.loteContext),
+    ) ?? undefined;
+
   return {
     flow,
     say,
@@ -396,6 +443,7 @@ async function buildGuidedEnvelope(args: {
     missing,
     ready,
     coercedKeys,
+    navigate,
     model: args.model,
   };
 }
@@ -446,6 +494,7 @@ export default async function handler(
     priorDraft?: unknown; // draft accumulated so far, replayed for accumulation
     loteContext?: unknown; // { loteId, costoTotalCOP, unidadesDeclaradas, prepRemaining }
     candidateItems?: unknown; // [{ itemId, nombre, loteId }] for itemHint resolution
+    accessLevel?: string; // caller role — scopes the nav catalog ONLY (untrusted)
   };
 
   const messages = Array.isArray(body.messages) ? body.messages : [];
@@ -485,6 +534,7 @@ export default async function handler(
       priorDraft: body.priorDraft,
       loteContext: body.loteContext,
       candidateItems: body.candidateItems,
+      accessLevel: asAccessLevel(body.accessLevel),
     });
     res.status(200).json(envelope);
     void recordSummaryToConvex({

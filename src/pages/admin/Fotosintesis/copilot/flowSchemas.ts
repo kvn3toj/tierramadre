@@ -39,6 +39,14 @@ import {
   normalizeColor,
   sanitizeSedeCode,
 } from "../../../../data/vocabularies.js";
+import type { AccessLevel } from "../../../../types/auth.js";
+import {
+  buildPath,
+  canAccess,
+  firstMissingParam,
+  getRouteById,
+  navRoutesForLevel,
+} from "../../../../config/adminNavMap.js";
 
 // ─── Flow taxonomy ───────────────────────────────────────────────────
 
@@ -84,6 +92,27 @@ export interface BatchEditPatch {
   patch: GuidedDraft;
 }
 
+/**
+ * A server-validated navigation the model proposed this turn. Orthogonal to the
+ * capture flow: the model may answer in `say` AND offer to navigate at once.
+ * Always server-authored (`path` is built from the registry, never the model's
+ * raw guess); absent when the model proposed nothing navigable for this role.
+ */
+export interface NavigateAction {
+  /** Always a real `ADMIN_NAV_MAP` id (validated server-side). */
+  routeId: string;
+  /** Resolved path. Still a `:param` template when `needsParam` is set. */
+  path: string;
+  /** Param hints (model-provided) + any server-resolved values. */
+  params?: Record<string, string>;
+  /** Human label for the confirm chip / a11y announce. */
+  label: string;
+  /** Short "por qué", surfaced near the say bubble. */
+  reason?: string;
+  /** Set when a required dynamic param is still unresolved → client must resolve. */
+  needsParam?: { name: string; label: string };
+}
+
 /** The structured object the model emits each turn, after server hardening. */
 export interface GuidedEnvelope {
   flow: GuidedFlow;
@@ -93,6 +122,8 @@ export interface GuidedEnvelope {
   missing: string[];
   ready: boolean;
   coercedKeys: string[];
+  /** Present iff the model proposed a navigation the server validated for this role. */
+  navigate?: NavigateAction;
   model?: string;
 }
 
@@ -699,4 +730,131 @@ export function buildFlowSchemaText(): string {
   lines.push(`- client.tipo / compradorTipo: ${CLIENT_TIPOS.join(" | ")}`);
 
   return lines.join("\n");
+}
+
+// ─── Navigation (route map) ──────────────────────────────────────────
+
+/**
+ * Resolvers whose param value the SERVER may fill directly from the model's hint
+ * (the hint IS the route segment). Name→ID resolvers (itemId/lotItemId/saleId)
+ * are client-only, so the server leaves them for client resolution via
+ * `resolveItemHint` against the live candidate list.
+ */
+const DIRECT_FILL_RESOLVERS = new Set(["loteId", "guestName", "none"]);
+const MAX_PARAM_LEN = 80;
+
+/**
+ * Catalog of navigable routes for a role, embedded in the guided system prompt so
+ * the model can only emit `routeId`s the user can actually reach. Labels +
+ * keywords + param names only — never paths, never file locations.
+ */
+export function buildNavCatalogText(level: AccessLevel): string {
+  const lines: string[] = [];
+  lines.push(
+    "CATÁLOGO DE PANTALLAS (id · pantalla · palabras clave · parámetro):",
+  );
+  for (const e of navRoutesForLevel(level)) {
+    const param = e.params?.length
+      ? ` · parámetro: ${e.params.map((p) => `${p.name} (${p.label})`).join(", ")}`
+      : "";
+    lines.push(`- ${e.id} · ${e.label} · ${e.keywords.join(", ")}${param}`);
+  }
+  return lines.join("\n");
+}
+
+function sanitizeParams(
+  raw: unknown,
+  allowed: readonly string[],
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!raw || typeof raw !== "object") return out;
+  for (const key of allowed) {
+    const value = (raw as Record<string, unknown>)[key];
+    if (typeof value === "string" && value.trim()) {
+      out[key] = value.trim().slice(0, MAX_PARAM_LEN);
+    } else if (typeof value === "number" && Number.isFinite(value)) {
+      out[key] = String(value);
+    }
+  }
+  return out;
+}
+
+/**
+ * Validate + harden a model-proposed navigation. Mirrors the drop-on-invalid
+ * posture of `whitelistDraft`:
+ *   - unknown `routeId` → null (hallucinated route dropped)
+ *   - role cannot access → null (never navigate a user where their role can't go)
+ *   - static route → fully resolved path
+ *   - dynamic route → fills server-safe params; otherwise returns the param hints
+ *     + `needsParam` so the CLIENT resolves name→ID before navigating.
+ *
+ * @param resolvedParams authoritative params the server already knows (e.g. the
+ *   current lote from context). Takes precedence over model hints.
+ */
+export function resolveNavigate(
+  raw: unknown,
+  level: AccessLevel,
+  resolvedParams: Record<string, string> = {},
+): NavigateAction | null {
+  if (!raw || typeof raw !== "object") return null;
+  const routeId = (raw as Record<string, unknown>).routeId;
+  if (typeof routeId !== "string") return null;
+
+  const entry = getRouteById(routeId);
+  if (!entry) return null;
+  if (!canAccess(entry, level)) return null;
+
+  const reasonRaw = (raw as Record<string, unknown>).reason;
+  const reason =
+    typeof reasonRaw === "string" && reasonRaw.trim()
+      ? reasonRaw.trim().slice(0, 240)
+      : undefined;
+
+  if (!entry.dynamic || !entry.params?.length) {
+    return { routeId: entry.id, path: entry.path, label: entry.label, reason };
+  }
+
+  const allowed = entry.params.map((p) => p.name);
+  const hints = sanitizeParams(
+    (raw as Record<string, unknown>).params,
+    allowed,
+  );
+
+  // Server may fill only direct-fill resolvers from hints; authoritative
+  // resolvedParams always win.
+  const serverParams: Record<string, string> = {};
+  for (const spec of entry.params) {
+    if (resolvedParams[spec.name]) {
+      serverParams[spec.name] = resolvedParams[spec.name];
+    } else if (DIRECT_FILL_RESOLVERS.has(spec.resolver) && hints[spec.name]) {
+      serverParams[spec.name] = hints[spec.name];
+    }
+  }
+
+  // params carried to the client = hints ∪ server-resolved (client uses hints to
+  // resolve name→ID resolvers it owns).
+  const carried = { ...hints, ...serverParams };
+
+  const built = buildPath(entry, serverParams);
+  if (built) {
+    return {
+      routeId: entry.id,
+      path: built,
+      params: carried,
+      label: entry.label,
+      reason,
+    };
+  }
+
+  const missing = firstMissingParam(entry, serverParams);
+  return {
+    routeId: entry.id,
+    path: entry.path,
+    params: carried,
+    label: entry.label,
+    reason,
+    needsParam: missing
+      ? { name: missing.name, label: missing.label }
+      : undefined,
+  };
 }

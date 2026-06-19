@@ -97,3 +97,15 @@ export function useFotosintesisLayout(): FotosintesisLayoutContextValue {
   }
   return ctx;
 }
+
+/**
+ * Like `useFotosintesisLayout`, but returns `null` when used OUTSIDE the
+ * provider instead of throwing. The Copilot rail mounts at the app shell and
+ * renders on every back-office route, so it must read the capture hand-off bus
+ * defensively: the bus exists only while a `/admin/fotosintesis/*` route (which
+ * mounts `FotosintesisLayout`) is active. Off those routes this returns null and
+ * the rail hides the capture hand-off affordance.
+ */
+export function useFotosintesisLayoutSafe(): FotosintesisLayoutContextValue | null {
+  return useContext(FotosintesisLayoutContext) ?? null;
+}
