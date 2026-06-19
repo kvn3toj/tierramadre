@@ -135,6 +135,12 @@ export default function FotosintesisLayout() {
       return [base, { label: "Lotes" }];
     }
     if (path.startsWith("/admin/fotosintesis/lots/")) {
+      if (path.endsWith("/edit")) {
+        return [base, { label: "Editar ítem" }];
+      }
+      if (path.endsWith("/sublotes")) {
+        return [base, { label: "Sublotes" }];
+      }
       const isClose = path.endsWith("/close");
       return [base, { label: isClose ? "Cerrar lote" : "Captura de lote" }];
     }
@@ -189,8 +195,14 @@ export default function FotosintesisLayout() {
         open={spotlightOpen}
         onClose={closeSpotlight}
         scope={spotlightOptions.scope}
+        multiSelect={spotlightOptions.multiSelect}
+        selectedProducts={spotlightOptions.selectedProducts}
         onSelect={(product) => {
           spotlightOptions.onSelect?.(product);
+          closeSpotlight();
+        }}
+        onConfirm={(products) => {
+          spotlightOptions.onConfirm?.(products);
           closeSpotlight();
         }}
       />

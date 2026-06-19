@@ -117,6 +117,23 @@ export const formatCollectionName = (name: string): string => {
     .trim();
 };
 
+/**
+ * Canonical key for a collection name, used to collapse duplicate/variant
+ * spellings (prefix, casing, accents, extra whitespace) into one option and to
+ * match filter selections across those variants. Genuine spelling differences
+ * (e.g. "Montaña" vs "Motaña") intentionally remain distinct.
+ * @param name - The raw collection name from the data source
+ * @returns Lowercased, accent- and prefix-stripped, whitespace-collapsed key
+ */
+export const normalizeCollection = (name: string | null | undefined): string => {
+  return formatCollectionName(name || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '') // strip diacritics
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
 // =============================================================================
 // AMBASSADOR RATING
 // =============================================================================

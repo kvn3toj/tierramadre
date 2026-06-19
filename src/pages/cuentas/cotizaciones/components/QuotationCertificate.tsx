@@ -583,7 +583,7 @@ export const QuotationCertificate = forwardRef<HTMLDivElement, QuotationCertific
                 {/* Contact */}
                 <Box sx={{ textAlign: 'center', flex: 1 }}>
                   <Typography sx={{ fontSize: '0.55rem', color: brandColors.gray }}>
-                    {PRODUCTION_URL} • contacto@tierramadre.co • +57 (1) 234 5678
+                    {PRODUCTION_URL} • direccion.tierramadre@gmail.com • +57 311 305 2755
                   </Typography>
                   <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: brandColors.emeraldDark, mt: 0.5 }}>
                     TIERRA MADRE

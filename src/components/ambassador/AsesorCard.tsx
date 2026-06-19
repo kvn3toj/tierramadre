@@ -1,33 +1,33 @@
 /**
- * AsesorCard Component — Big Directory Card
- * Two-part layout: top row (avatar | info | chevron) + favorites gallery row.
- * Large rounded thumbnails let users preview ambassador's best pieces at a glance.
+ * AsesorCard Component — Directory "Calling Card"
+ * A refined card per ambassador: layered avatar, name + serif tagline,
+ * a hairline-divided stats row, and a curated gallery preview of their
+ * finest pieces (with a "+N" depth cue). Elite/Destacado get a subtle
+ * top accent line — gold for Elite, emerald for the top-ranked card.
  */
 
-import { useMemo } from 'react';
-import {
-  Box,
-  Typography,
-  Avatar,
-  Chip,
-  alpha,
-  useTheme,
-} from '@mui/material';
-import { Star, Gem, ChevronRight } from 'lucide-react';
-import type { TreasureItem } from '../../types';
-import { Asesor } from '../../hooks/useAsesores';
+import { useMemo } from "react";
+import { Box, Typography, Avatar, alpha, useTheme } from "@mui/material";
+import { Star, Gem, ArrowUpRight } from "lucide-react";
+import type { TreasureItem } from "../../types";
+import { Asesor } from "../../hooks/useAsesores";
 import {
   emeraldCore,
   goldAccent,
   surfacesDark,
   surfacesLight,
   cssTransition,
-} from '../../design-system/index';
-import { deriveRating } from '../../utils/formatting';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
+  fontFamilies,
+} from "../../design-system/index";
+import { deriveRating } from "../../utils/formatting";
+import { useReducedMotion } from "../../hooks/useReducedMotion";
 
 /** Resolve top items for card preview: curated favorites first, fallback to highest-priced */
-function resolvePreviewItems(slug: string, products: TreasureItem[] | undefined, max = 3): TreasureItem[] {
+function resolvePreviewItems(
+  slug: string,
+  products: TreasureItem[] | undefined,
+  max = 3,
+): TreasureItem[] {
   if (!products || products.length === 0) return [];
 
   // Check localStorage for curated favorites
@@ -36,15 +36,19 @@ function resolvePreviewItems(slug: string, products: TreasureItem[] | undefined,
     const ids: string[] = stored ? JSON.parse(stored) : [];
     if (ids.length > 0) {
       const matched = ids
-        .map(id => products.find(p => String(p.item) === id))
-        .filter((p): p is TreasureItem => !!p && !!(p.thumbnailUrl || p.imagen));
+        .map((id) => products.find((p) => String(p.item) === id))
+        .filter(
+          (p): p is TreasureItem => !!p && !!(p.thumbnailUrl || p.imagen),
+        );
       if (matched.length > 0) return matched.slice(0, max);
     }
-  } catch { /* noop */ }
+  } catch {
+    /* noop */
+  }
 
   // Fallback: top items by price that have images
   return [...products]
-    .filter(p => !!(p.thumbnailUrl || p.imagen))
+    .filter((p) => !!(p.thumbnailUrl || p.imagen))
     .sort((a, b) => (b.precioCOP || 0) - (a.precioCOP || 0))
     .slice(0, max);
 }
@@ -56,155 +60,186 @@ interface AsesorCardProps {
 }
 
 function getRoleBadge(role: string | undefined, isLight: boolean) {
-  const r = (role || '').toLowerCase();
-  const isAdmin = r.includes('admin');
+  const r = (role || "").toLowerCase();
+  const isAdmin = r.includes("admin");
 
   if (isAdmin) {
     return {
-      label: 'Elite',
+      label: "Elite",
       bgcolor: alpha(goldAccent.primary, 0.14),
       color: isLight ? goldAccent.dark : goldAccent.light,
     };
   }
   return {
-    label: 'Embajador',
+    label: "Embajador",
     bgcolor: alpha(emeraldCore.primary, 0.1),
     color: emeraldCore.primary,
   };
 }
 
-export default function AsesorCard({ asesor, onViewProducts, isTopRanked }: AsesorCardProps) {
+export default function AsesorCard({
+  asesor,
+  onViewProducts,
+  isTopRanked,
+}: AsesorCardProps) {
   const theme = useTheme();
-  const isLight = theme.palette.mode === 'light';
+  const isLight = theme.palette.mode === "light";
   const prefersReducedMotion = useReducedMotion();
 
   const rating = deriveRating(asesor.productCount || 0);
   const badge = getRoleBadge(asesor.role, isLight);
-  const hasProducts = (asesor.productCount || 0) > 0;
-  const isAdmin = (asesor.role || '').toLowerCase().includes('admin');
+  const productCount = asesor.productCount || 0;
+  const hasProducts = productCount > 0;
+  const isAdmin = (asesor.role || "").toLowerCase().includes("admin");
+
+  // Accent: emerald for the destacado (#1) card, gold for Elite (admin)
+  const accent = isTopRanked ? emeraldCore.primary : goldAccent.primary;
+  const showAccentLine = isAdmin || isTopRanked;
+  // Avatar wears gold when Elite, emerald otherwise
+  const avatarAccent = isAdmin ? goldAccent.primary : emeraldCore.primary;
 
   const previewItems = useMemo(
     () => resolvePreviewItems(asesor.slug, asesor.products, 3),
-    [asesor.slug, asesor.products]
+    [asesor.slug, asesor.products],
   );
+  // How many additional pieces beyond the preview — communicates collection depth
+  const extraCount = Math.max(0, productCount - previewItems.length);
 
   return (
     <Box
       role="article"
       tabIndex={0}
-      aria-label={`${asesor.name} - ${asesor.role || 'Embajador'}`}
+      aria-label={`${asesor.name} - ${asesor.role || "Embajador"}`}
       onClick={() => onViewProducts?.(asesor)}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onViewProducts?.(asesor);
         }
       }}
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        borderRadius: '18px',
-        bgcolor: isLight ? surfacesLight.surface.default : surfacesDark.background.secondary,
-        border: isTopRanked ? '1.5px solid' : '1px solid',
+        display: "flex",
+        flexDirection: "column",
+        borderRadius: "20px",
+        bgcolor: isLight
+          ? surfacesLight.surface.default
+          : surfacesDark.background.secondary,
+        border: "1px solid",
         borderColor: isTopRanked
-          ? alpha(emeraldCore.primary, 0.4)
+          ? alpha(emeraldCore.primary, 0.35)
           : isLight
-            ? (isAdmin ? alpha(goldAccent.primary, 0.15) : surfacesLight.border.light)
-            : (isAdmin ? alpha(goldAccent.primary, 0.12) : surfacesDark.border.light),
-        boxShadow: 'none',
-        cursor: 'pointer',
-        transition: prefersReducedMotion ? 'none' : `all ${cssTransition.default}`,
-        position: 'relative',
-        overflow: 'hidden',
-        // Subtle left accent bar for admin or top-ranked cards
-        ...((isAdmin || isTopRanked) && {
-          '&::before': {
+            ? isAdmin
+              ? alpha(goldAccent.primary, 0.18)
+              : surfacesLight.border.light
+            : isAdmin
+              ? alpha(goldAccent.primary, 0.14)
+              : surfacesDark.border.light,
+        // Always-on soft elevation gives the card a premium, lifted feel
+        boxShadow: isLight
+          ? "0 1px 2px rgba(0,0,0,0.04), 0 6px 18px rgba(0,0,0,0.045)"
+          : "0 1px 2px rgba(0,0,0,0.3), 0 6px 18px rgba(0,0,0,0.22)",
+        cursor: "pointer",
+        transition: prefersReducedMotion
+          ? "none"
+          : `all ${cssTransition.default}`,
+        position: "relative",
+        overflow: "hidden",
+        // Top accent hairline for Elite / Destacado cards
+        ...(showAccentLine && {
+          "&::before": {
             content: '""',
-            position: 'absolute',
-            left: 0,
-            top: isTopRanked ? '10%' : '20%',
-            bottom: isTopRanked ? '10%' : '20%',
-            width: '2px',
-            background: isTopRanked
-              ? `linear-gradient(180deg, transparent, ${emeraldCore.primary}, transparent)`
-              : `linear-gradient(180deg, transparent, ${goldAccent.primary}, transparent)`,
-            borderRadius: '0 2px 2px 0',
+            position: "absolute",
+            top: 0,
+            left: "12%",
+            right: "12%",
+            height: "2px",
+            background: `linear-gradient(90deg, transparent, ${accent}, transparent)`,
+            opacity: 0.7,
+            borderRadius: "0 0 2px 2px",
           },
         }),
-        '&:hover': {
-          transform: prefersReducedMotion ? 'none' : 'translateY(-1px)',
+        "&:hover": {
+          transform: prefersReducedMotion ? "none" : "translateY(-3px)",
           zIndex: 2,
           boxShadow: isLight
-            ? `0 2px 8px ${alpha('#000', 0.08)}`
-            : `0 2px 8px ${alpha('#000', 0.25)}`,
-          borderColor: alpha(emeraldCore.primary, 0.35),
+            ? `0 6px 14px ${alpha("#000", 0.06)}, 0 16px 36px ${alpha("#000", 0.08)}`
+            : `0 8px 22px ${alpha("#000", 0.4)}, 0 16px 40px ${alpha("#000", 0.32)}`,
+          borderColor: alpha(
+            isTopRanked ? emeraldCore.primary : avatarAccent,
+            0.4,
+          ),
+          "& .asesor-card-arrow": {
+            bgcolor: alpha(emeraldCore.primary, isLight ? 0.1 : 0.18),
+            color: emeraldCore.primary,
+            transform: prefersReducedMotion ? "none" : "translate(1px, -1px)",
+          },
         },
-        '&:active': {
-          transform: prefersReducedMotion ? 'none' : 'translateY(0)',
+        "&:active": {
+          transform: prefersReducedMotion ? "none" : "translateY(-1px)",
         },
-        '&:focus-visible': {
+        "&:focus-visible": {
           outline: `2px solid ${emeraldCore.primary}`,
           outlineOffset: 2,
         },
       }}
     >
-      {/* Top row: avatar | info | chevron */}
+      {/* Top row: avatar | info | view-profile arrow */}
       <Box
         sx={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
           gap: 1.5,
-          p: previewItems.length > 0 ? '12px 14px 10px 14px' : '14px',
+          p: previewItems.length > 0 ? "14px 15px 12px 15px" : "15px",
         }}
       >
-        {/* Avatar with ambient glow */}
+        {/* Avatar — layered ring + ambient glow */}
         <Box
           sx={{
-            position: 'relative',
-            width: 52,
-            height: 52,
+            position: "relative",
+            width: 56,
+            height: 56,
             flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
+          {/* Ambient glow */}
           <Box
             sx={{
-              position: 'absolute',
-              inset: -6,
-              borderRadius: '50%',
-              background: `radial-gradient(circle, ${alpha(
-                isAdmin ? goldAccent.primary : emeraldCore.primary,
-                0.06
-              )} 0%, transparent 70%)`,
-              pointerEvents: 'none',
+              position: "absolute",
+              inset: -8,
+              borderRadius: "50%",
+              background: `radial-gradient(circle, ${alpha(avatarAccent, 0.1)} 0%, transparent 68%)`,
+              pointerEvents: "none",
             }}
           />
+          {/* Thin outer ring */}
           <Box
             sx={{
-              position: 'absolute',
-              inset: 0,
-              borderRadius: '50%',
-              border: '1.5px solid',
-              borderColor: isAdmin
-                ? alpha(goldAccent.primary, 0.25)
-                : alpha(emeraldCore.primary, 0.12),
+              position: "absolute",
+              inset: -2,
+              borderRadius: "50%",
+              border: "1px solid",
+              borderColor: alpha(avatarAccent, isAdmin ? 0.32 : 0.16),
             }}
           />
           <Avatar
             src={asesor.photoUrl}
             alt={asesor.name}
             sx={{
-              width: 44,
-              height: 44,
-              fontSize: '1.1rem',
+              width: 50,
+              height: 50,
+              fontSize: "1.2rem",
               fontWeight: 700,
-              bgcolor: isAdmin ? alpha(goldAccent.primary, 0.1) : alpha(emeraldCore.primary, 0.1),
-              color: isAdmin ? goldAccent.primary : emeraldCore.primary,
-              border: '2px solid',
-              borderColor: isAdmin ? goldAccent.primary : emeraldCore.primary,
+              bgcolor: isAdmin
+                ? alpha(goldAccent.primary, 0.12)
+                : alpha(emeraldCore.primary, 0.12),
+              color: avatarAccent,
+              border: "2px solid",
+              borderColor: isLight ? "#fff" : surfacesDark.background.secondary,
+              boxShadow: `0 0 0 1.5px ${alpha(avatarAccent, 0.6)}`,
             }}
           >
             {asesor.name.charAt(0).toUpperCase()}
@@ -212,18 +247,27 @@ export default function AsesorCard({ asesor, onViewProducts, isTopRanked }: Ases
         </Box>
 
         {/* Info column */}
-        <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+        <Box
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: 0.35,
+          }}
+        >
           <Typography
             sx={{
-              fontWeight: 650,
-              fontSize: '0.875rem',
-              lineHeight: 1.3,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              display: '-webkit-box',
+              fontFamily: fontFamilies.display,
+              fontWeight: 600,
+              fontSize: "1.08rem",
+              lineHeight: 1.15,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              display: "-webkit-box",
               WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              letterSpacing: '-0.01em',
+              WebkitBoxOrient: "vertical",
+              letterSpacing: "0.005em",
             }}
           >
             {asesor.name}
@@ -232,104 +276,202 @@ export default function AsesorCard({ asesor, onViewProducts, isTopRanked }: Ases
           {asesor.especialidad && (
             <Typography
               sx={{
-                fontSize: '0.69rem',
-                color: 'text.secondary',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                lineHeight: 1.4,
+                fontFamily: fontFamilies.display,
+                fontStyle: "italic",
+                fontSize: "0.82rem",
+                color: "text.secondary",
+                opacity: 0.9,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                lineHeight: 1.3,
               }}
             >
               {asesor.especialidad}
             </Typography>
           )}
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', mt: 0.25 }}>
-            <Chip
-              label={badge.label}
-              size="small"
+          {/* Stats row — role badge · rating · pieces, with a hairline divider */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.75,
+              flexWrap: "wrap",
+              mt: 0.4,
+            }}
+          >
+            <Box
               sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 0.45,
                 height: 20,
-                fontSize: '0.58rem',
-                fontWeight: 700,
+                px: 0.85,
+                fontSize: "0.56rem",
+                fontWeight: 600,
                 bgcolor: badge.bgcolor,
                 color: badge.color,
-                borderRadius: '5px',
-                letterSpacing: '0.03em',
+                border: "1px solid",
+                borderColor: alpha(badge.color, 0.22),
+                borderRadius: "999px",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
               }}
-            />
+            >
+              <Box
+                sx={{
+                  width: 3.5,
+                  height: 3.5,
+                  borderRadius: "50%",
+                  bgcolor: badge.color,
+                }}
+              />
+              {badge.label}
+            </Box>
             {hasProducts && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <>
+                <Box
+                  sx={{
+                    width: "1px",
+                    height: 11,
+                    bgcolor: alpha(isLight ? "#000" : "#fff", 0.12),
+                  }}
+                />
                 {rating && (
-                  <>
-                    <Star size={11} fill={goldAccent.primary} color={goldAccent.primary} />
+                  <Box
+                    sx={{ display: "flex", alignItems: "center", gap: 0.35 }}
+                  >
+                    <Star
+                      size={11}
+                      fill={goldAccent.primary}
+                      color={goldAccent.primary}
+                    />
                     <Typography
-                      sx={{ fontSize: '0.69rem', fontWeight: 700, color: goldAccent.primary }}
+                      sx={{
+                        fontFamily: fontFamilies.display,
+                        fontSize: "0.86rem",
+                        fontWeight: 600,
+                        lineHeight: 1,
+                        color: goldAccent.primary,
+                        fontVariantNumeric: "lining-nums",
+                      }}
                     >
                       {rating}
                     </Typography>
-                    <Typography
-                      sx={{ fontSize: '0.69rem', color: alpha(isLight ? '#000' : '#fff', 0.2) }}
-                    >
-                      ·
-                    </Typography>
-                  </>
+                  </Box>
                 )}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
-                  <Gem size={10} style={{ opacity: 0.4 }} />
-                  <Typography sx={{ fontSize: '0.69rem', color: 'text.secondary' }}>
-                    {asesor.productCount}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.3 }}>
+                  <Gem size={10} style={{ opacity: 0.45 }} />
+                  <Typography
+                    sx={{
+                      fontFamily: fontFamilies.display,
+                      fontSize: "0.86rem",
+                      lineHeight: 1,
+                      color: "text.secondary",
+                      fontWeight: 600,
+                      fontVariantNumeric: "lining-nums",
+                    }}
+                  >
+                    {productCount}
                   </Typography>
                 </Box>
-              </Box>
+              </>
             )}
           </Box>
         </Box>
 
-        {/* Chevron */}
-        <ChevronRight
-          size={18}
-          strokeWidth={1.5}
-          style={{ flexShrink: 0, opacity: 0.3 }}
-        />
+        {/* View-profile arrow — sits in a subtle pill that lights up on hover */}
+        <Box
+          className="asesor-card-arrow"
+          sx={{
+            flexShrink: 0,
+            width: 30,
+            height: 30,
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: isLight ? alpha("#000", 0.03) : alpha("#fff", 0.05),
+            color: "text.secondary",
+            transition: prefersReducedMotion
+              ? "none"
+              : `all ${cssTransition.default}`,
+          }}
+        >
+          <ArrowUpRight size={16} strokeWidth={2} />
+        </Box>
       </Box>
 
-      {/* Favorites gallery — large rounded thumbnails */}
+      {/* Curated gallery — finest pieces, with a "+N" depth cue on the last tile */}
       {previewItems.length > 0 && (
         <Box
           sx={{
-            display: 'flex',
-            gap: '6px',
-            px: '10px',
-            pb: '10px',
+            display: "flex",
+            gap: "6px",
+            px: "11px",
+            pb: "11px",
           }}
         >
-          {previewItems.map((item) => (
-            <Box
-              key={item.item}
-              sx={{
-                flex: 1,
-                aspectRatio: '4/3',
-                borderRadius: '10px',
-                overflow: 'hidden',
-                bgcolor: isLight
-                  ? alpha('#000', 0.04)
-                  : alpha('#fff', 0.04),
-              }}
-            >
-              <img
-                src={item.thumbnailUrl || item.imagen}
-                alt={item.nombre || ''}
-                loading="lazy"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  display: 'block',
+          {previewItems.map((item, idx) => {
+            const isLast = idx === previewItems.length - 1;
+            const showOverlay = isLast && extraCount > 0;
+            return (
+              <Box
+                key={item.item}
+                sx={{
+                  position: "relative",
+                  flex: 1,
+                  aspectRatio: "4/3",
+                  borderRadius: "11px",
+                  overflow: "hidden",
+                  bgcolor: isLight ? alpha("#000", 0.04) : alpha("#fff", 0.04),
+                  // Subtle inset ring lifts the thumbnails off the card
+                  boxShadow: `inset 0 0 0 1px ${alpha(isLight ? "#000" : "#fff", 0.06)}`,
                 }}
-              />
-            </Box>
-          ))}
+              >
+                <img
+                  src={item.thumbnailUrl || item.imagen}
+                  alt={item.nombre || ""}
+                  loading="lazy"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
+                {showOverlay && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      inset: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: `linear-gradient(to top, ${alpha("#000", 0.55)}, ${alpha("#000", 0.3)})`,
+                      backdropFilter: "blur(1px)",
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontFamily: fontFamilies.display,
+                        color: "#fff",
+                        fontWeight: 600,
+                        fontSize: "1rem",
+                        lineHeight: 1,
+                        letterSpacing: "0.01em",
+                        fontVariantNumeric: "lining-nums",
+                        textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+                      }}
+                    >
+                      +{extraCount}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            );
+          })}
         </Box>
       )}
     </Box>

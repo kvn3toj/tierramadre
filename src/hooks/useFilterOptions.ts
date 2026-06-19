@@ -6,6 +6,15 @@
 import { useMemo } from 'react';
 import { TreasureItem } from '../types';
 import { normalizeQuality, normalizeColor } from '../constants/quality-and-colors';
+import { formatCollectionName, normalizeCollection } from '../utils/formatting';
+
+/** Prefer the richest display variant (accented first, then longer) as the
+ *  representative for a group of duplicate collection spellings. */
+const collectionDisplayScore = (raw: string): number => {
+  const display = formatCollectionName(raw);
+  const accents = (display.normalize('NFD').match(/\p{Diacritic}/gu) || []).length;
+  return accents * 1000 + display.length;
+};
 
 export interface FilterOptions {
   colors: string[];
@@ -44,7 +53,9 @@ export function useFilterOptions(treasure: TreasureItem[]): FilterOptions {
     const shapes = new Set<string>();
     const qualities = new Set<string>();
     const cantidades = new Set<number>();
-    const colecciones = new Set<string>();
+    // Collapse duplicate/variant collection spellings (prefix/case/accent/space)
+    // to one option keyed by normalized form, keeping the richest display.
+    const coleccionByKey = new Map<string, string>();
     const categorias = new Set<string>();
 
     treasure.forEach(item => {
@@ -55,7 +66,15 @@ export function useFilterOptions(treasure: TreasureItem[]): FilterOptions {
       if (item.talla) shapes.add(item.talla);
       if (normalizedQuality) qualities.add(normalizedQuality);
       if (item.cantidad) cantidades.add(item.cantidad);
-      if (item.coleccion) colecciones.add(item.coleccion);
+      if (item.coleccion) {
+        const key = normalizeCollection(item.coleccion);
+        if (key) {
+          const existing = coleccionByKey.get(key);
+          if (!existing || collectionDisplayScore(item.coleccion) > collectionDisplayScore(existing)) {
+            coleccionByKey.set(key, item.coleccion);
+          }
+        }
+      }
       if (item.categoria) categorias.add(item.categoria);
     });
 
@@ -64,7 +83,9 @@ export function useFilterOptions(treasure: TreasureItem[]): FilterOptions {
       shapes: Array.from(shapes).sort(),
       qualities: Array.from(qualities).sort(),
       cantidades: Array.from(cantidades).sort((a, b) => a - b),
-      colecciones: Array.from(colecciones).sort(),
+      colecciones: Array.from(coleccionByKey.values()).sort((a, b) =>
+        formatCollectionName(a).localeCompare(formatCollectionName(b), 'es')
+      ),
       categorias: Array.from(categorias).sort(),
       priceMinMax,
       caratMinMax,

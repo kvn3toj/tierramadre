@@ -38,6 +38,7 @@ import type { FilterPreset } from "./useSavedFilters";
 import type { TreasureItem } from "../types";
 import { useCurrencyFormat } from "../contexts/CurrencyContext";
 import { createLogger } from "../utils/logger";
+import { readLoadedPages, saveLoadedPages } from "../utils/scrollMemory";
 import { useLiveRegion } from "../components/shared/LiveRegion";
 import type { FilterContentProps } from "../components/treasure/FilterContent";
 import GridCard from "../components/treasure/GridCard";
@@ -104,6 +105,7 @@ export function useTreasureBrowserController({
   const urlSync = useUrlFilterSync({
     filters,
     priceMinMax: filterOptions.priceMinMax,
+    caratMinMax: filterOptions.caratMinMax,
     clearFilters,
   });
 
@@ -120,10 +122,19 @@ export function useTreasureBrowserController({
 
   const { isFavorite, toggleFavorite, favoritesCount } = useFavorites();
 
+  // Persist "Load More" progress per history entry so returning to the list
+  // (back nav) re-renders the same number of items, letting page-scroll
+  // restoration land at the right offset instead of a truncated list.
+  const pagesKey = `treasure-pages:${location.key}`;
   const pagination = usePagination({
     totalItems: filteredTreasure.length,
     itemsPerPage: 24,
+    initialLoadedPages: readLoadedPages(pagesKey) ?? 1,
   });
+
+  useEffect(() => {
+    saveLoadedPages(pagesKey, pagination.loadedPages);
+  }, [pagesKey, pagination.loadedPages]);
 
   const { addToRecent, recentItems, clearRecent } = useRecentlyViewed();
 

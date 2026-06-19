@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Esmereogénesis · Tierra Mädre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: 'Hanken Grotesk', system-ui, sans-serif;
+    background: #050807;
+    color: #F1F5F2;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow: hidden;
+  }
+
+  /* ── Stage: elegant dark backdrop the device sits on ── */
+  #stage {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(120% 80% at 50% 12%, #0c1a15 0%, #070d0b 46%, #040605 100%);
+  }
+  #stage::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(60% 40% at 50% 50%, rgba(14,124,90,0.10), transparent 70%);
+  }
+  #frame-wrap { transform-origin: center center; }
+
+  /* ── Design tokens (Dirección 1 · Vitrina = default) ── */
+  .app-root {
+    --bg-0: #07100D;
+    --bg-1: #0A1713;
+    --ink: #F1F5F2;
+    --ink-soft: rgba(233,242,237,0.64);
+    --ink-faint: rgba(233,242,237,0.40);
+    --ink-ghost: rgba(233,242,237,0.16);
+
+    --em-deep: #0B5C46;
+    --em: #0E7C5A;
+    --em-bright: #2FAE86;
+    --gold: #D9A94B;
+    --gold-bright: #F0CE86;
+
+    --glass-bg: rgba(255,255,255,0.045);
+    --glass-bg-2: rgba(255,255,255,0.07);
+    --glass-brd: rgba(255,255,255,0.10);
+    --hairline: rgba(217,169,75,0.32);
+
+    --card-r: 20px;
+    --blur: 18px;
+    --halo: 0.85;
+    --particle-count: 1;
+
+    /* spacing scale (8pt-ish) */
+    --pad: 20px;        /* screen horizontal padding */
+    --gap: 13px;        /* rhythm between stacked sections */
+    --card-pad: 18px;   /* inner card padding */
+    --shadow-card: 0 12px 36px -14px rgba(0,0,0,0.6);
+    --shadow-cta: 0 14px 30px -10px rgba(11,92,70,0.55);
+
+    font-family: 'Hanken Grotesk', system-ui, sans-serif;
+    color: var(--ink);
+  }
+
+  /* the painted screen background lives INSIDE the device */
+  .screen-bg {
+    position: relative; width: 100%; height: 100%; overflow: hidden;
+    background:
+      radial-gradient(115% 70% at 50% -8%, rgba(14,124,90,0.30), transparent 52%),
+      radial-gradient(95% 55% at 50% 108%, rgba(11,92,70,0.22), transparent 55%),
+      linear-gradient(180deg, var(--bg-1), var(--bg-0) 60%);
+  }
+
+  /* ── Dirección 2 · Joyero (structured, gold-framed, darker) ── */
+  .app-root[data-dir="joyero"] {
+    --bg-0: #050B09;
+    --bg-1: #081310;
+    --glass-bg: rgba(11,92,70,0.16);
+    --glass-bg-2: rgba(11,92,70,0.24);
+    --glass-brd: rgba(217,169,75,0.30);
+    --hairline: rgba(217,169,75,0.55);
+    --card-r: 10px;
+    --blur: 13px;
+    --halo: 0.6;
+    --particle-count: 0;
+  }
+  .app-root[data-dir="joyero"] .screen-bg {
+    background:
+      radial-gradient(120% 60% at 50% 0%, rgba(14,124,90,0.20), transparent 50%),
+      linear-gradient(180deg, #0a1410, #050b09 70%);
+  }
+  .app-root[data-dir="joyero"] .screen-bg::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background: radial-gradient(135% 95% at 50% 50%, transparent 58%, rgba(0,0,0,0.55) 100%);
+  }
+
+  /* ── Dirección 3 · Aurora (atmospheric, soft, particle-forward) ── */
+  .app-root[data-dir="aurora"] {
+    --bg-0: #06120E;
+    --bg-1: #0C2018;
+    --glass-bg: rgba(255,255,255,0.075);
+    --glass-bg-2: rgba(255,255,255,0.11);
+    --glass-brd: rgba(255,255,255,0.07);
+    --hairline: rgba(217,169,75,0.22);
+    --card-r: 28px;
+    --blur: 28px;
+    --halo: 1.25;
+    --particle-count: 2;
+  }
+  .app-root[data-dir="aurora"] .screen-bg {
+    background:
+      radial-gradient(80% 50% at 22% 8%, rgba(47,174,134,0.30), transparent 55%),
+      radial-gradient(90% 55% at 86% 22%, rgba(14,124,90,0.26), transparent 55%),
+      radial-gradient(120% 60% at 50% 112%, rgba(11,92,70,0.30), transparent 55%),
+      linear-gradient(180deg, var(--bg-1), var(--bg-0) 70%);
+  }
+  .app-root[data-dir="aurora"] .screen-bg::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(60% 30% at 30% 18%, rgba(47,174,134,0.16), transparent 60%),
+      radial-gradient(50% 28% at 78% 70%, rgba(217,169,75,0.06), transparent 60%);
+    animation: auroraDrift 22s ease-in-out infinite alternate;
+  }
+  @keyframes auroraDrift {
+    0%   { transform: translate3d(0,0,0) scale(1); }
+    100% { transform: translate3d(0,-2%,0) scale(1.06); }
+  }
+
+  /* ── Shared atoms ── */
+  /* kicker — gold section/screen eyebrow (one consistent style) */
+  .kicker {
+    font-family: 'Hanken Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.24em;
+    font-weight: 600;
+    font-size: 10px;
+    color: var(--gold);
+    white-space: nowrap;
+  }
+  /* label — faint in-card micro caption */
+  .label {
+    font-family: 'Hanken Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 600;
+    font-size: 9.5px;
+    color: var(--ink-faint);
+  }
+  .serif { font-family: 'Playfair Display', Georgia, serif; }
+
+  .screen-scroll { height: 100%; overflow-y: auto; overflow-x: hidden; position: relative; z-index: 1; }
+  .screen-scroll::-webkit-scrollbar { width: 0; height: 0; }
+
+  .glass {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-brd);
+    border-radius: var(--card-r);
+    backdrop-filter: blur(var(--blur)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--blur)) saturate(150%);
+    box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  .tap { transition: transform .18s cubic-bezier(.2,.8,.3,1), opacity .18s, box-shadow .25s; -webkit-tap-highlight-color: transparent; }
+  .tap:active { transform: scale(0.965); }
+
+  .fade-in { animation: fadeUp .5s cubic-bezier(.2,.8,.3,1); }
+  @keyframes fadeUp { from { transform: translateY(14px); } to { transform: none; } }
+
+  @keyframes gemSheen { to { transform: rotate(360deg); } }
+  @keyframes floatUp {
+    0%   { opacity: 0; transform: translate(0, 0) scale(0.6); }
+    18%  { opacity: 0.9; }
+    100% { opacity: 0; transform: translate(var(--drift, -8px), -120px) scale(1); }
+  }
+  @keyframes shimmerText {
+    0%, 100% { opacity: 0.85; }
+    50% { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; }
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="frame-wrap"></div>
+  </div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="frames/ios-frame.jsx"></script>
+  <script type="text/babel" src="components/emerald-core.jsx"></script>
+  <script type="text/babel" src="components/screens.jsx"></script>
+  <script type="text/babel" src="components/main-app.jsx"></script>
+</body>
+</html>

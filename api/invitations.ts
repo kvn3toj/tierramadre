@@ -249,7 +249,7 @@ async function generateInvitation(sheets: Sheets, body: ApiBody) {
   });
 
   // Always use production URL for invitation links (not preview URLs)
-  const baseUrl = 'https://tierra-madre-studio.vercel.app';
+  const baseUrl = 'https://tierramadre.app';
 
   return {
     success: true,
@@ -635,7 +635,7 @@ export default withApiHandler(async (req: VercelRequest, res: VercelResponse, co
         pin,
         shortCode,
       });
-      const baseUrl = 'https://tierra-madre-studio.vercel.app';
+      const baseUrl = 'https://tierramadre.app';
       return res.status(200).json({
         success: true,
         invitation: {

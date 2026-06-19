@@ -51,7 +51,7 @@ const baseTemplate = (content, previewText = "") => `
                 </tr>
                 <tr>
                   <td align="center" style="font-size: 12px; color: ${COLORS.textLight}; letter-spacing: 2px; padding-top: 4px;">
-                    ESENCIA Y PODER
+                    ESMERALDAS CON ADN DE PAZ
                   </td>
                 </tr>
               </table>

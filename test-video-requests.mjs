@@ -3,11 +3,11 @@
  * from the network on the Collection page.
  *
  * Usage:  node test-video-requests.mjs [url]
- * Default URL: https://tierra-madre-studio.vercel.app/c/ceo-tierra-madre
+ * Default URL: https://tierramadre.app/c/ceo-tierra-madre
  */
 import puppeteer from 'puppeteer';
 
-const TARGET = process.argv[2] || 'https://tierra-madre-studio.vercel.app/c/ceo-tierra-madre';
+const TARGET = process.argv[2] || 'https://tierramadre.app/c/ceo-tierra-madre';
 const WAIT_SECONDS = 20; // wait for splash + preloading to finish
 
 (async () => {

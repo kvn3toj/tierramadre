@@ -111,6 +111,9 @@ export const STORAGE_KEYS = {
   ESMEREO_HAPTIC_ENABLED: "tierra-madre-esmereo-haptic",
   ESMEREO_DEMO_DISMISSED: "tierra-madre-esmereo-demo-dismissed",
   ESMEREO_ONBOARDING_SEEN: "tierra-madre-esmereo-onboarding-seen",
+  // Bóveda re-skin: feature-local theme (independent of global) + product CTA variant
+  ESMEREO_THEME: "tierra-madre-esmereo-theme",
+  BOVEDA_CTA_VARIANT: "tierra-madre-boveda-cta-variant",
 
   // Per-ambassador product overrides (custom name / price). MVP: localStorage,
   // future: server-side via api/ambassador-product-override.

@@ -25,7 +25,7 @@ const outPath = join(rootDir, 'public', 'thumbnails-seed.json');
 
 const API_URL =
   process.env.THUMBNAILS_SEED_URL ||
-  'https://tierra-madre-studio.vercel.app/api/get-batch-thumbnails';
+  'https://tierramadre.app/api/get-batch-thumbnails';
 
 const FETCH_TIMEOUT_MS = 15_000;
 

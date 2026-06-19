@@ -10,7 +10,7 @@ import { Box, Chip, alpha } from '@mui/material';
 import { X } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { TreasureFilters } from '../../hooks/useTreasureFiltering';
-import { formatCurrency, getColorDot } from '../../utils/formatting';
+import { formatCurrency, getColorDot, formatCollectionName } from '../../utils/formatting';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { emeraldCore, goldAccent, semanticColors } from '../../design-system/tokens/colors';
 import { HERO_CATEGORY_LABELS, MainCategory } from '../home/sections/gallery-constants';
@@ -103,8 +103,8 @@ export function ActiveFilterChips({
     });
   }
 
-  // Price range
-  const hasPriceFilter = filters.priceRange[0] !== priceMinMax.min || filters.priceRange[1] !== priceMinMax.max;
+  // Price range — only a real filter once a bound is narrowed past the data extent
+  const hasPriceFilter = filters.priceRange[0] > priceMinMax.min || filters.priceRange[1] < priceMinMax.max;
   if (hasPriceFilter) {
     chips.push({
       key: 'price',
@@ -118,9 +118,9 @@ export function ActiveFilterChips({
     });
   }
 
-  // Carat range
+  // Carat range — only a real filter once a bound is narrowed past the data extent
   const hasCaratFilter = caratMinMax && onClearCarat && (
-    filters.caratRange[0] !== caratMinMax.min || filters.caratRange[1] !== caratMinMax.max
+    filters.caratRange[0] > caratMinMax.min || filters.caratRange[1] < caratMinMax.max
   );
   if (hasCaratFilter) {
     chips.push({
@@ -250,7 +250,7 @@ export function ActiveFilterChips({
   if (filters.coleccionFilter !== 'all' && onClearColeccion) {
     chips.push({
       key: 'coleccion',
-      label: filters.coleccionFilter,
+      label: formatCollectionName(filters.coleccionFilter),
       onDelete: onClearColeccion,
       colors: {
         bg: alpha(emeraldCore.primary, 0.1),

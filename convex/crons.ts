@@ -26,12 +26,34 @@ crons.interval(
   {},
 );
 
-// Fotosíntesis v2 — `providers`, `lots`, `clients`, `sales` rely on the
-// generic /api/get-table.ts primitive but their per-table pullFromSheet
-// actions are not yet implemented. The capture flow goes Convex →
-// Sheets (push), which doesn't need pull. Manual sheet edits won't
-// reflect into Convex until pull actions land — schedule them here
-// when implementing.
+/**
+ * Keep the embajador `clients` (the venta "Embajador asignado" dropdown source)
+ * in step with the legacy Asesores tab. The one-shot `bulkImportFromLegacy` only
+ * seeds Convex once; without this, an asesor added to the sheet never appears in
+ * a sale until someone re-runs the import script by hand.
+ *
+ * Daily (not minutes): asesores change rarely and the action also fans out a SOT
+ * Clientes push per changed row, so an idle run is cheap but a frequent one would
+ * re-scan the sheet for nothing. New/changed rows propagate sheet → Convex → SOT.
+ */
+crons.interval(
+  "pull asesores from sheet",
+  { hours: 24 },
+  api.clients.pullAsesoresFromSheet,
+  {},
+);
+
+// Fotosíntesis v2 — the reverse direction (Sheet → Convex) for all 6 SOT tabs
+// (providers, lots, clients, sales, subLotes, inventory) is now event-driven,
+// NOT cron-driven: a bound Apps Script captures edited cells and the manual
+// "🔄 Convex Sync" button POSTs them to the convex/http.ts `/sync/foto`
+// endpoint (delta mode). A periodic reconcile cron is deliberately NOT
+// scheduled here — it would re-read every (mostly idle) tab on each interval,
+// the exact Vercel+Sheets+Convex bandwidth cost we avoid by syncing only on
+// demand. The "Sincronizar todo (completo)" menu item covers dropped edits.
+// If a dormant backstop is ever wanted, gate it on an env flag so it ships off:
+//   crons.interval("reconcile foto tabs", { minutes: 60 }, internal.fotoSync.runFull, {});
+//   // ...with `if (process.env.FOTO_RECONCILE_CRON !== "on") return;` in the action.
 
 // ─── GHL commerce · Áreas 2 & 4 scheduler ────────────────────────────────
 //

@@ -9,6 +9,8 @@ import {
   CheckCircle2,
   Download,
   ArrowRight,
+  Trash2,
+  Plus,
 } from "lucide-react";
 import {
   getFoto,
@@ -31,7 +33,7 @@ import { SegmentedControl } from "./components/SegmentedControl";
 import { FieldLabel } from "./components/FieldLabel";
 import { NumberInputWithCalc } from "./components/NumberInputWithCalc";
 import { KbdKey } from "./components/KbdKey";
-import { KardexPreview } from "./components/KardexPreview";
+import { KardexPreview, type KardexLineItem } from "./components/KardexPreview";
 import { CertificadoPreview } from "./components/CertificadoPreview";
 import {
   ClienteFinalForm,
@@ -42,7 +44,33 @@ import {
   CreditoFields,
   EsmereogenesisFields,
 } from "./components/CreditoFields";
-import { useFotosintesisLayout } from "./FotosintesisLayoutContext";
+import {
+  useFotosintesisLayout,
+  type SpotlightProduct,
+} from "./FotosintesisLayoutContext";
+import {
+  removeSelection,
+  dedupeSelection,
+  sumSuggested,
+  pickTierPrice,
+  type CompradorTier,
+} from "./utils/saleItemSelection";
+import {
+  clampPct,
+  totalFromPct,
+  pctFromTotal,
+  discountAmount,
+} from "./utils/discountCalc";
+import {
+  sumManual,
+  removeManual,
+  toConvexManualItems,
+  type ManualSaleItem,
+} from "./utils/manualSaleItem";
+import { ManualItemForm } from "./components/ManualItemForm";
+import { resolveItemThumbnail } from "./utils/resolveThumbnail";
+import { useBatchThumbnails } from "../../../hooks/useBatchThumbnails";
+import { ventasSubPath } from "./utils/uploadItemMedia";
 import { exportCarnet } from "./exportCarnet";
 import { exportCertificado, isCertificadoApproved } from "./exportCertificado";
 import { slugifyBuyerName } from "../../../utils/slugify";
@@ -105,10 +133,31 @@ export default function FotosintesisVentaPage() {
   } = useFotosintesisLayout();
   const { notify } = useNotification();
   const { user } = useGoogleAuth();
+  // Legacy catalog thumbnails (Drive `products/` folder scan, keyed by item
+  // number) — fallback when an inventory item carries no Fotosíntesis fotoUrl.
+  const { thumbnails: batchThumbs } = useBatchThumbnails();
 
   // ─── Selection state ───────────────────────────────────────────────────
+  // A sale can bundle several pieces. We hold the full product objects the
+  // operator picked in the multi-select spotlight (id + name + price + thumb),
+  // so the on-page list renders instantly without a second round-trip. A
+  // deep-linked `?itemId=` seeds a stub that the first-item query enriches.
   const initialItemId = searchParams.get("itemId") ?? null;
-  const [itemId, setItemId] = useState<string | null>(initialItemId);
+  const [selectedItems, setSelectedItems] = useState<SpotlightProduct[]>(
+    initialItemId ? [{ itemId: initialItemId, nombre: "" }] : [],
+  );
+  // Manual (non-inventory) line items added to this sale — kept out of the
+  // inventory `itemIds` and stored on the sale itself. Their prices fold into
+  // the subtotal/total alongside the picked inventory items.
+  const [manualItems, setManualItems] = useState<ManualSaleItem[]>([]);
+  // Discount: the operator can drive it by percentage OR by typing the final
+  // (already-discounted) total — each derives the other. `discountDriver`
+  // records which one they last touched so item changes re-derive the right
+  // companion field. `null` = untouched → the price tracks the running subtotal.
+  const [descuentoPct, setDescuentoPct] = useState<number | "">("");
+  const [discountDriver, setDiscountDriver] = useState<"pct" | "total" | null>(
+    null,
+  );
   const [clientId, setClientId] = useState<Id<"clients"> | null>(null);
   // Sede must be picked explicitly every sale — no default. The saleId
   // preview only resolves once the operator has chosen Bogotá or Cali.
@@ -151,11 +200,119 @@ export default function FotosintesisVentaPage() {
   const kardexRef = useRef<HTMLDivElement>(null);
   const certificadoRef = useRef<HTMLDivElement>(null);
 
+  const itemIds = useMemo(
+    () => selectedItems.map((s) => s.itemId),
+    [selectedItems],
+  );
+  const inventoryCount = selectedItems.length;
+  const manualCount = manualItems.length;
+  const itemsCount = inventoryCount + manualCount;
+  const firstItemId = selectedItems[0]?.itemId ?? null;
+
   // ─── Data ──────────────────────────────────────────────────────────────
+  // The first item drives the Kardex carnet (photo + specs) and the
+  // lot/provider lineage — mirroring VentaDetailPage, which also keys its
+  // comprobante off the first item and lists the rest. The remaining items
+  // render from their captured spotlight objects (no extra query).
   const item = useConvexQuery(
     convexApi.products.get,
-    itemId ? { itemId } : "skip",
+    firstItemId ? { itemId: firstItemId } : "skip",
   );
+
+  // Enrich a deep-linked stub (`?itemId=`) once its product doc loads, so the
+  // on-page list, the suggested-sum and the price autofill all have real data.
+  // Guarded on the empty `nombre` the stub carries, so it runs exactly once and
+  // never clobbers an item the operator picked through the spotlight.
+  useEffect(() => {
+    if (!item) return;
+    setSelectedItems((prev) => {
+      const first = prev[0];
+      if (!first || first.itemId !== item.itemId || first.nombre) return prev;
+      const enriched: SpotlightProduct = {
+        itemId: item.itemId,
+        nombre: item.nombre ?? "Sin nombre",
+        thumbnailUrl: resolveItemThumbnail(
+          item.fotoUrl,
+          item.itemId,
+          batchThumbs,
+        ),
+        // Picker hint only — mirrors ProductoSpotlight's tier fallback (legacy
+        // precioCOP is ~82% empty). The authoritative per-item price still comes
+        // from `priceByItemId` once `getManyByItemIds` resolves.
+        precioCop:
+          item.precioEmbajadorCOP ?? item.precioConscienteCOP ?? item.precioCOP,
+        loteId: item.loteId,
+        estado: item.estado as string | undefined,
+      };
+      return [enriched, ...prev.slice(1)];
+    });
+  }, [item, batchThumbs]);
+  // Reactive batch query for EVERY selected item — drives tier-aware per-item
+  // pricing, the live "already VENDIDA" guard for all items (not just the lead),
+  // and the multi-line Kardex preview.
+  const manyItems = useConvexQuery(
+    convexApi.products.getManyByItemIds,
+    itemIds.length ? { itemIds } : "skip",
+  );
+
+  // Buyer tier: an embajador buyer pays the ambassador price; everyone else
+  // ("final" / custom write-ins) pays the consciente price.
+  const tier: CompradorTier =
+    compradorTipo === "embajador" ? "embajador" : "final";
+
+  // itemId → tier-resolved suggested price (COP), order-preserving from manyItems.
+  const priceByItemId = useMemo(() => {
+    const m = new Map<string, number | undefined>();
+    for (const r of manyItems ?? []) m.set(r.itemId, pickTierPrice(r, tier));
+    return m;
+  }, [manyItems, tier]);
+
+  // itemId → estado, so the row + confirm guard know which pieces are VENDIDA.
+  const estadoByItemId = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const r of manyItems ?? []) m.set(r.itemId, r.estado);
+    return m;
+  }, [manyItems]);
+
+  // Ordered Kardex line items — feeds EVERY selected item (with tier price) to
+  // the multi-item preview. Before the batch query resolves we fall back to the
+  // spotlight objects so the preview never goes blank between picks.
+  const kardexItems = useMemo<KardexLineItem[]>(() => {
+    const rows = manyItems ?? [];
+    const inventory: KardexLineItem[] =
+      rows.length === 0
+        ? selectedItems.map((s) => ({
+            itemId: s.itemId,
+            nombre: s.nombre || undefined,
+            thumbnailUrl: s.thumbnailUrl,
+            precioCop: priceByItemId.get(s.itemId) ?? s.precioCop,
+          }))
+        : rows.map((r) => ({
+            itemId: r.itemId,
+            nombre: r.nombre ?? undefined,
+            color: r.color ?? undefined,
+            calidad: r.calidad ?? undefined,
+            peso: r.peso ?? undefined,
+            medidas: r.medidas ?? undefined,
+            thumbnailUrl: resolveItemThumbnail(
+              r.fotoUrl,
+              r.itemId,
+              batchThumbs,
+            ),
+            precioCop: priceByItemId.get(r.itemId),
+          }));
+    // Manual (non-inventory) lines render after the inventory items.
+    const manual: KardexLineItem[] = manualItems.map((m) => ({
+      itemId: "",
+      nombre: m.nombre,
+      peso: m.peso,
+      descripcion: m.descripcion,
+      precioCop: m.precioCop,
+      isManual: true,
+    }));
+    return [...inventory, ...manual];
+  }, [manyItems, selectedItems, priceByItemId, manualItems, batchThumbs]);
+
   const lot = useConvexQuery(
     convexApi.lots.getByLoteId,
     item?.loteId ? { loteId: item.loteId } : "skip",
@@ -223,7 +380,8 @@ export default function FotosintesisVentaPage() {
       if (typeof d.precioAcordado === "number")
         setPrecioAcordado(d.precioAcordado);
       if (typeof d.adicionales === "string") setAdicionales(d.adicionales);
-      if (typeof d.itemId === "string") setItemId(d.itemId);
+      if (typeof d.itemId === "string")
+        setSelectedItems([{ itemId: d.itemId, nombre: "" }]);
       if (typeof d.creditoFechaVenc === "string")
         setCreditoFechaVenc(d.creditoFechaVenc);
       if (typeof d.creditoCuotas === "number")
@@ -283,6 +441,48 @@ export default function FotosintesisVentaPage() {
   const precioCop = typeof precioAcordado === "number" ? precioAcordado : 0;
   const totalCop = precioCop;
   const comisionCop = 0; // Slice 1 placeholder — commission % lives in Slice 3
+  // Subtotal = the pre-discount base: Σ inventory tier prices + Σ manual items.
+  // Authoritative + tier-aware: the per-item inventory price comes from the
+  // Convex batch query resolved against the buyer tier, not the (possibly
+  // stale) spotlight hint. Missing prices count as 0 so a partial selection
+  // still sums. Manual line items add their own price on top.
+  const subtotal = useMemo(
+    () =>
+      sumSuggested(
+        selectedItems.map((s) => ({
+          itemId: s.itemId,
+          precioCop: priceByItemId.get(s.itemId),
+        })),
+      ) + sumManual(manualItems),
+    [selectedItems, priceByItemId, manualItems],
+  );
+  // Discount amount (COP) = max(0, subtotal − agreed price). Flows to the
+  // Kardex preview AND is persisted on the sale (descuentoCOP).
+  const descuentoCop = discountAmount(subtotal, precioCop);
+
+  // Keep the discount fields consistent with the running subtotal when items
+  // change (add/remove). Direct edits to either field are handled synchronously
+  // in their onChange handlers, so this effect only watches `subtotal`:
+  //   • untouched      → no discount; the price tracks the subtotal exactly.
+  //   • "%" driver      → recompute the price from the sticky percentage.
+  //   • "total" driver  → recompute the displayed % from the sticky total.
+  useEffect(() => {
+    if (discountDriver === null) {
+      setPrecioAcordado(subtotal > 0 ? subtotal : "");
+      setDescuentoPct("");
+    } else if (discountDriver === "pct") {
+      const pct = typeof descuentoPct === "number" ? descuentoPct : 0;
+      setPrecioAcordado(totalFromPct(subtotal, pct));
+    } else {
+      setDescuentoPct(
+        subtotal > 0 && precioCop < subtotal
+          ? pctFromTotal(subtotal, precioCop)
+          : "",
+      );
+    }
+    // Only re-derive on subtotal changes; field edits sync in their handlers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal]);
   // `fechaVenta` was previously memoized at mount which dated sales to the
   // moment the operator opened the form rather than when they confirmed.
   // Computed inside `onConfirm` now (see below). Kept here only as a
@@ -292,42 +492,95 @@ export default function FotosintesisVentaPage() {
   const stepBuyer: "done" | "active" | "pending" = clientId ? "done" : "active";
   const stepProduct: "done" | "active" | "pending" = !clientId
     ? "pending"
-    : itemId
+    : itemsCount > 0
       ? "done"
       : "active";
   const stepPay: "done" | "active" | "pending" =
-    clientId && itemId
+    clientId && itemsCount > 0
       ? typeof precioAcordado === "number" && precioAcordado > 0
         ? "done"
         : "active"
       : "pending";
 
   // ─── Spotlight wiring ──────────────────────────────────────────────────
-  const handleSelectItem = useCallback(
-    (product: { itemId: string; precioCop?: number }) => {
-      setItemId(product.itemId);
-      if (typeof product.precioCop === "number" && !precioAcordado) {
-        setPrecioAcordado(product.precioCop);
-      }
+  // The spotlight runs in multi-select mode: it returns the full chosen set,
+  // which replaces our selection (so the picker both adds and removes). Dedupe
+  // is belt-and-suspenders — the picker already keys by itemId.
+  const handleConfirmItems = useCallback((products: SpotlightProduct[]) => {
+    setSelectedItems(dedupeSelection(products));
+  }, []);
+
+  const onEditItems = useCallback(() => {
+    openSpotlight({
+      scope: "Solo vendibles",
+      multiSelect: true,
+      selectedProducts: selectedItems,
+      onConfirm: handleConfirmItems,
+    });
+  }, [openSpotlight, selectedItems, handleConfirmItems]);
+
+  const onRemoveItem = useCallback((id: string) => {
+    setSelectedItems((prev) => removeSelection(prev, id));
+  }, []);
+
+  // ─── Manual (non-inventory) line items ─────────────────────────────────
+  const onAddManual = useCallback((manualItem: ManualSaleItem) => {
+    setManualItems((prev) => [...prev, manualItem]);
+  }, []);
+
+  const onRemoveManual = useCallback((id: string) => {
+    setManualItems((prev) => removeManual(prev, id));
+  }, []);
+
+  // ─── Discount handlers ─────────────────────────────────────────────────
+  // Editing the % field drives the final price; editing the price field drives
+  // the %. Each marks the `discountDriver` so item changes re-derive correctly.
+  const onPctChange = useCallback(
+    (next: number | "") => {
+      setDiscountDriver("pct");
+      // Clamp so the field can't show an out-of-range % (the math clamps too).
+      const pct = typeof next === "number" ? clampPct(next) : "";
+      setDescuentoPct(pct);
+      setPrecioAcordado(
+        totalFromPct(subtotal, typeof pct === "number" ? pct : 0),
+      );
     },
-    [precioAcordado],
+    [subtotal],
   );
 
-  const onBuscarItem = useCallback(() => {
-    openSpotlight({ scope: "Solo vendibles", onSelect: handleSelectItem });
-  }, [openSpotlight, handleSelectItem]);
+  const onPrecioChange = useCallback(
+    (next: number | "") => {
+      setDiscountDriver("total");
+      setPrecioAcordado(next);
+      const total = typeof next === "number" ? next : 0;
+      setDescuentoPct(
+        subtotal > 0 && total < subtotal ? pctFromTotal(subtotal, total) : "",
+      );
+    },
+    [subtotal],
+  );
 
-  // Register the item-select as the spotlight default so the GLOBAL ⌘K hotkey
-  // and the topbar "Buscar" button (which open the spotlight without options)
-  // also land the selection here — otherwise picking an item via ⌘K silently
-  // does nothing, contradicting the ⌘K affordance shown on the dropzone.
+  // "Usar suma sugerida" → charge the full subtotal, no discount, and resume
+  // tracking it as items change.
+  const onUseSuggestedSum = useCallback(() => {
+    setDiscountDriver(null);
+    setDescuentoPct("");
+    setPrecioAcordado(subtotal > 0 ? subtotal : "");
+  }, [subtotal]);
+
+  // Register multi-select as the spotlight default so the GLOBAL ⌘K hotkey and
+  // the topbar "Buscar" button (which open the spotlight without options) edit
+  // THIS sale's item set. We re-register whenever the selection changes so the
+  // keyless entry points always seed from the current bundle.
   useEffect(() => {
     registerSpotlightDefault({
       scope: "Solo vendibles",
-      onSelect: handleSelectItem,
+      multiSelect: true,
+      selectedProducts: selectedItems,
+      onConfirm: handleConfirmItems,
     });
     return () => registerSpotlightDefault(null);
-  }, [registerSpotlightDefault, handleSelectItem]);
+  }, [registerSpotlightDefault, selectedItems, handleConfirmItems]);
 
   // ─── Confirm flow ──────────────────────────────────────────────────────
   const creditoComplete =
@@ -337,14 +590,21 @@ export default function FotosintesisVentaPage() {
   // `item` is a reactive query, so if the piece is sold in another tab this
   // flips live and blocks the submit — instead of failing with a raw server
   // error only after the operator clicks Confirmar.
+  // Live cross-tab guard for the lead item (its full doc is queried). The other
+  // items are guarded server-side in `sales.create`, which re-checks every
+  // itemId and throws a per-item error surfaced in the banner.
   const itemSold = item?.estado === "VENDIDA";
+  // Now that every item's estado is queried (manyItems), block the sale if ANY
+  // selected piece is already VENDIDA — not just the lead item.
+  const anySold = (manyItems ?? []).some((r) => r.estado === "VENDIDA");
   const canConfirm =
     !!sede &&
-    !!itemId &&
+    itemsCount > 0 &&
     !!clientId &&
     precioCop > 0 &&
     creditoComplete &&
     !itemSold &&
+    !anySold &&
     !submitting;
 
   const onDownloadPreview = useCallback(async () => {
@@ -362,12 +622,18 @@ export default function FotosintesisVentaPage() {
       setErrorBanner("Falta elegir bóveda.");
       return;
     }
-    if (!itemId || !clientId || precioCop <= 0) {
-      setErrorBanner("Falta completar comprador, ítem o precio.");
+    if (itemsCount === 0 || !clientId || precioCop <= 0) {
+      setErrorBanner("Falta completar comprador, ítems o precio.");
       return;
     }
     if (itemSold) {
-      setErrorBanner("Este ítem ya está vendido. Elegí otro.");
+      setErrorBanner("El primer ítem ya está vendido. Quitalo o elegí otro.");
+      return;
+    }
+    if (anySold) {
+      setErrorBanner(
+        "Uno o más ítems ya están vendidos. Quitalos para continuar.",
+      );
       return;
     }
     if (formaPago === "credito" && !creditoFechaVenc) {
@@ -389,12 +655,16 @@ export default function FotosintesisVentaPage() {
       const confirmedAt = new Date().toISOString();
       const createArgs: Parameters<typeof createSale>[0] = {
         sede,
-        itemIds: [itemId],
+        itemIds,
         clientId,
         fechaVenta: confirmedAt,
         precioAcordadoCOP: precioCop,
+        descuentoCOP: descuentoCop || undefined,
         totalCOP: totalCop,
         comisionCOP: comisionCop || undefined,
+        manualItems: manualItems.length
+          ? toConvexManualItems(manualItems)
+          : undefined,
         formaPago,
         metodoContado: formaPago === "contado" ? metodoContado : undefined,
         adicionales: adicionales.trim() || undefined,
@@ -407,7 +677,10 @@ export default function FotosintesisVentaPage() {
         if (esmereoFechaVenc) createArgs.fechaVencimiento = esmereoFechaVenc;
       }
 
-      const createStage = beginStage("sales.create", { itemId, formaPago });
+      const createStage = beginStage("sales.create", {
+        itemCount: itemsCount,
+        formaPago,
+      });
       let res: Awaited<ReturnType<typeof createSale>>;
       try {
         res = await createSale(createArgs);
@@ -421,8 +694,8 @@ export default function FotosintesisVentaPage() {
       // PDF + email steps surface as toasts so the operator can retry
       // without losing the sale.
       const slug = slugifyBuyerName(selectedClient?.nombre ?? "cliente");
-      const now = new Date();
-      const subPath = `ventas/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}`;
+      // File the carnet under the month the sale was recorded.
+      const subPath = ventasSubPath(new Date(confirmedAt));
 
       const uploadPdf = async (
         blob: Blob,
@@ -600,12 +873,16 @@ export default function FotosintesisVentaPage() {
     }
   }, [
     sede,
-    itemId,
+    itemIds,
+    itemsCount,
     clientId,
     itemSold,
+    anySold,
     precioCop,
     totalCop,
     comisionCop,
+    descuentoCop,
+    manualItems,
     compradorTipo,
     formaPago,
     metodoContado,
@@ -866,9 +1143,9 @@ export default function FotosintesisVentaPage() {
             </Box>
           </Section>
 
-          {/* 2. Producto */}
-          <Section title="Ítem a vender" foto={foto}>
-            {itemId && item ? (
+          {/* 2. Productos */}
+          <Section title="Ítems a vender" foto={foto}>
+            {itemsCount > 0 ? (
               <Box
                 sx={{ display: "flex", flexDirection: "column", gap: "10px" }}
               >
@@ -889,106 +1166,100 @@ export default function FotosintesisVentaPage() {
                     }}
                   >
                     <AlertCircle size={15} aria-hidden />
-                    Este ítem ya está vendido — elegí otro para continuar.
+                    El primer ítem ya está vendido — quitalo o elegí otro para
+                    continuar.
                   </Box>
                 ) : null}
+
                 <Box
                   sx={{
-                    display: "grid",
-                    gridTemplateColumns: "96px 1fr",
-                    gap: "16px",
-                    padding: "16px",
-                    borderRadius: "11px",
-                    border: `1px solid ${itemSold ? foto.status.sold : foto.surfaces.rule}`,
-                    background: foto.surfaces.panel,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                  }}
+                >
+                  {selectedItems.map((p) => (
+                    <SelectedItemRow
+                      key={p.itemId}
+                      product={p}
+                      price={priceByItemId.get(p.itemId)}
+                      sold={estadoByItemId.get(p.itemId) === "VENDIDA"}
+                      onRemove={onRemoveItem}
+                      foto={foto}
+                    />
+                  ))}
+                  {manualItems.map((m) => (
+                    <ManualItemRow
+                      key={m.id}
+                      item={m}
+                      onRemove={onRemoveManual}
+                      foto={foto}
+                    />
+                  ))}
+                </Box>
+
+                {/* Add / remove launcher + selection summary */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "12px",
+                    flexWrap: "wrap",
+                    marginTop: "2px",
                   }}
                 >
                   <Box
+                    component="button"
+                    type="button"
+                    onClick={onEditItems}
                     sx={{
-                      width: 96,
-                      height: 96,
-                      aspectRatio: "1 / 1",
-                      borderRadius: "7px",
-                      background: foto.surfaces.inset,
-                      border: `1px solid ${foto.surfaces.edge}`,
-                      display: "flex",
+                      display: "inline-flex",
                       alignItems: "center",
-                      justifyContent: "center",
-                      color: foto.ink.mute,
-                      fontFamily: fontFamilies.mono,
-                      fontSize: 11,
-                      overflow: "hidden",
+                      gap: "8px",
+                      padding: "9px 14px",
+                      borderRadius: "9px",
+                      border: `1px dashed ${foto.surfaces.edgeStrong}`,
+                      background: foto.surfaces.panel,
+                      color: foto.ink.secondary,
+                      fontSize: 12.5,
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      transition: "background 120ms ease",
+                      "&:hover": { background: foto.surfaces.inset },
+                      "&:focus-visible": {
+                        outline: "none",
+                        boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+                      },
                     }}
-                    aria-hidden
                   >
-                    {item.itemId}
+                    <Plus size={15} aria-hidden />
+                    Agregar o quitar ítems
+                    <KbdKey size="sm">⌘</KbdKey>
+                    <KbdKey size="sm">K</KbdKey>
                   </Box>
-                  <Box sx={{ minWidth: 0 }}>
-                    <Box
-                      sx={{
-                        fontSize: 16,
-                        fontWeight: 600,
-                        letterSpacing: "-0.018em",
-                        color: foto.ink.primary,
-                        marginBottom: "6px",
-                      }}
-                    >
-                      {item.nombre ?? "Sin nombre"}
-                    </Box>
-                    <Box
-                      sx={{
-                        display: "grid",
-                        gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-                        gap: "6px 18px",
-                        fontSize: 11.5,
-                        color: foto.ink.secondary,
-                      }}
-                    >
-                      <Lineage
-                        label="Procedencia"
-                        value={item.coleccion ?? "—"}
-                        foto={foto}
-                      />
-                      <Lineage
-                        label="Calidad"
-                        value={item.calidad ?? "—"}
-                        foto={foto}
-                      />
-                      <Lineage
-                        label="Peso"
-                        value={item.peso ?? "—"}
-                        foto={foto}
-                      />
-                      <Lineage
-                        label="Color"
-                        value={item.color ?? "—"}
-                        foto={foto}
-                      />
-                      <Lineage
-                        label="Lote"
-                        value={item.loteId ?? "—"}
-                        foto={foto}
-                        mono
-                      />
-                      <Lineage
-                        label="Costo base"
-                        value={formatCop(item.costoBaseCOP)}
-                        foto={foto}
-                        mono
-                      />
-                    </Box>
+                  <Box
+                    sx={{
+                      fontSize: 11.5,
+                      color: foto.ink.tertiary,
+                      letterSpacing: "0.01em",
+                    }}
+                  >
+                    {itemsCount} ítem{itemsCount === 1 ? "" : "s"}
+                    {subtotal > 0
+                      ? ` · suma sugerida ${formatCop(subtotal)}`
+                      : ""}
                   </Box>
                 </Box>
               </Box>
             ) : (
               <Box
-                onClick={onBuscarItem}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") onBuscarItem();
-                }}
+                component="button"
+                type="button"
+                onClick={onEditItems}
                 sx={{
+                  width: "100%",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -999,6 +1270,7 @@ export default function FotosintesisVentaPage() {
                   background: foto.surfaces.panel,
                   color: foto.ink.secondary,
                   fontSize: 13,
+                  fontFamily: "inherit",
                   cursor: "pointer",
                   transition: "background 120ms ease",
                   "&:hover": { background: foto.surfaces.inset },
@@ -1009,11 +1281,16 @@ export default function FotosintesisVentaPage() {
                 }}
               >
                 <Search size={16} aria-hidden />
-                Buscá un ítem
+                Buscá ítems (podés elegir varios)
                 <KbdKey size="sm">⌘</KbdKey>
                 <KbdKey size="sm">K</KbdKey>
               </Box>
             )}
+
+            {/* Manual line item — for things not (yet) in inventory. */}
+            <Box sx={{ marginTop: "12px" }}>
+              <ManualItemForm onAdd={onAddManual} />
+            </Box>
           </Section>
 
           {/* 3. Pago */}
@@ -1109,7 +1386,7 @@ export default function FotosintesisVentaPage() {
               <FieldLabel>Precio acordado (COP)</FieldLabel>
               <NumberInputWithCalc
                 value={precioAcordado}
-                onChange={setPrecioAcordado}
+                onChange={onPrecioChange}
                 format="currency"
                 placeholder="Ingresá el precio final"
                 step={1000}
@@ -1118,7 +1395,60 @@ export default function FotosintesisVentaPage() {
                 calcVariant="accent"
                 calcSuffix={`= ${formatCop(precioCop)}`}
               />
+              {subtotal > 0 && precioCop !== subtotal ? (
+                <Box
+                  component="button"
+                  type="button"
+                  onClick={onUseSuggestedSum}
+                  sx={{
+                    marginTop: "8px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "5px 10px",
+                    borderRadius: "999px",
+                    border: `1px solid ${foto.accent.primary}`,
+                    background: foto.accent.soft,
+                    color: foto.accent.deep,
+                    fontSize: 11.5,
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    transition: "background 120ms ease",
+                    "&:hover": { background: alpha(foto.accent.primary, 0.12) },
+                  }}
+                >
+                  Usar suma sugerida ({formatCop(subtotal)})
+                </Box>
+              ) : null}
             </Box>
+
+            {/* Discount — type a % and the final price computes; type the final
+                price above and this % computes. Both stay in sync. Only shown
+                once there's a subtotal to discount against. */}
+            {subtotal > 0 ? (
+              <Box sx={{ marginTop: "16px" }}>
+                <FieldLabel optional="o escribí el precio final arriba">
+                  Descuento (%)
+                </FieldLabel>
+                <NumberInputWithCalc
+                  value={descuentoPct}
+                  onChange={onPctChange}
+                  format="decimal"
+                  placeholder="0"
+                  step={1}
+                  min={0}
+                  max={100}
+                  ariaLabel="Descuento en porcentaje"
+                  calcVariant={descuentoCop > 0 ? "accent" : "neutral"}
+                  calcSuffix={
+                    descuentoCop > 0
+                      ? `− ${formatCop(descuentoCop)}`
+                      : "sin descuento"
+                  }
+                />
+              </Box>
+            ) : null}
 
             {/* Totals card */}
             <Box
@@ -1133,6 +1463,23 @@ export default function FotosintesisVentaPage() {
                 gap: "8px",
               }}
             >
+              <TotalsRow
+                label={`Ítems (${itemsCount})`}
+                value={subtotal > 0 ? formatCop(subtotal) : `${itemsCount}`}
+                foto={foto}
+              />
+              {descuentoCop > 0 ? (
+                <TotalsRow
+                  label={
+                    typeof descuentoPct === "number" && descuentoPct > 0
+                      ? `Descuento (${descuentoPct}%)`
+                      : "Descuento"
+                  }
+                  value={`− ${formatCop(descuentoCop)}`}
+                  foto={foto}
+                  tone="gold"
+                />
+              ) : null}
               <TotalsRow
                 label="Precio acordado"
                 value={formatCop(precioCop)}
@@ -1187,7 +1534,13 @@ export default function FotosintesisVentaPage() {
                 Las 5 acciones encadenadas
               </Box>
               <Box component="ol" sx={{ margin: 0, paddingLeft: "18px" }}>
-                <li>El ítem pasa a estado VENDIDA en Convex y en Sheets.</li>
+                <li>
+                  {inventoryCount === 0
+                    ? "No hay ítems de inventario que marcar (venta de ítems manuales)."
+                    : inventoryCount === 1
+                      ? "El ítem pasa a estado VENDIDA en Convex y en Sheets."
+                      : `Los ${inventoryCount} ítems de inventario pasan a estado VENDIDA en Convex y en Sheets.`}
+                </li>
                 <li>
                   Se genera la venta {peekedSaleId} con esta forma de pago.
                 </li>
@@ -1403,18 +1756,7 @@ export default function FotosintesisVentaPage() {
 
           <Box ref={kardexRef}>
             <KardexPreview
-              item={
-                item
-                  ? {
-                      itemId: item.itemId,
-                      nombre: item.nombre ?? undefined,
-                      color: item.color ?? undefined,
-                      calidad: item.calidad ?? undefined,
-                      peso: item.peso ?? undefined,
-                      medidas: item.medidas ?? undefined,
-                    }
-                  : null
-              }
+              items={kardexItems}
               lot={
                 lot
                   ? {
@@ -1447,6 +1789,8 @@ export default function FotosintesisVentaPage() {
                   formaPago === "contado" ? metodoContado : undefined,
               }}
               privacyOn={privacyOn}
+              subtotalCop={subtotal}
+              descuentoCop={descuentoCop}
             />
           </Box>
 
@@ -1568,38 +1912,267 @@ function Section({ title, children, foto }: SectionProps) {
   );
 }
 
-interface LineageProps {
-  label: string;
-  value: React.ReactNode;
+interface SelectedItemRowProps {
+  product: SpotlightProduct;
+  /** Tier-resolved suggested price (COP) for THIS item. Falls back to the
+   *  spotlight hint when the batch query hasn't resolved it yet. */
+  price?: number;
+  /** Live "already VENDIDA" flag, now known for every item via the batch query. */
+  sold: boolean;
+  onRemove: (itemId: string) => void;
   foto: ReturnType<typeof getFoto>;
-  mono?: boolean;
 }
 
-function Lineage({ label, value, foto, mono = false }: LineageProps) {
+/**
+ * One compact row in the venta's item list: thumbnail, name + id + lote,
+ * suggested price, and a remove button. Renders from the product object the
+ * operator picked in the spotlight, so it shows instantly with no extra query.
+ */
+function SelectedItemRow({
+  product,
+  price,
+  sold,
+  onRemove,
+  foto,
+}: SelectedItemRowProps) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: "48px minmax(0, 1fr) auto auto",
+        gap: "12px",
+        alignItems: "center",
+        padding: "10px 12px",
+        borderRadius: "10px",
+        border: `1px solid ${sold ? foto.status.sold : foto.surfaces.rule}`,
+        background: foto.surfaces.panel,
+      }}
+    >
       <Box
         sx={{
-          fontSize: 8.5,
-          fontWeight: 500,
-          letterSpacing: "0.2em",
-          textTransform: "uppercase",
-          color: foto.ink.tertiary,
-          marginBottom: "2px",
+          width: 48,
+          height: 48,
+          aspectRatio: "1 / 1",
+          borderRadius: "7px",
+          background: foto.surfaces.inset,
+          border: `1px solid ${foto.surfaces.edge}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: foto.ink.mute,
+          fontFamily: fontFamilies.mono,
+          fontSize: 10,
+          overflow: "hidden",
         }}
+        aria-hidden
       >
-        {label}
+        {product.thumbnailUrl ? (
+          <Box
+            component="img"
+            src={product.thumbnailUrl}
+            alt=""
+            sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : (
+          product.itemId
+        )}
+      </Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Box
+          sx={{
+            fontSize: 13.5,
+            fontWeight: 600,
+            letterSpacing: "-0.012em",
+            color: foto.ink.primary,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {product.nombre || "Sin nombre"}
+        </Box>
+        <Box
+          sx={{
+            fontSize: 11,
+            color: sold ? foto.status.sold : foto.ink.tertiary,
+            fontFamily: fontFamilies.mono,
+            marginTop: "2px",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          #{product.itemId}
+          {product.loteId ? ` · Lote ${product.loteId}` : ""}
+          {sold ? " · VENDIDA" : ""}
+        </Box>
       </Box>
       <Box
         sx={{
-          fontFamily: mono ? fontFamilies.mono : fontFamilies.system,
-          fontVariantNumeric: mono ? "tabular-nums" : undefined,
-          fontSize: 12,
-          color: foto.ink.primary,
+          fontFamily: fontFamilies.mono,
+          fontVariantNumeric: "tabular-nums",
+          fontSize: 12.5,
           fontWeight: 500,
+          color: foto.ink.secondary,
+          whiteSpace: "nowrap",
+          textAlign: "right",
         }}
       >
-        {value}
+        {formatCop(price ?? product.precioCop)}
+      </Box>
+      <Box
+        component="button"
+        type="button"
+        onClick={() => onRemove(product.itemId)}
+        aria-label={`Quitar ${product.nombre || "Sin nombre"} (${product.itemId}) de la venta`}
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 32,
+          height: 32,
+          borderRadius: "8px",
+          border: `1px solid ${foto.surfaces.rule}`,
+          background: foto.surfaces.canvas,
+          color: foto.ink.tertiary,
+          cursor: "pointer",
+          transition:
+            "background 120ms ease, color 120ms ease, border-color 120ms ease",
+          "&:hover": {
+            background: alpha(foto.status.sold, 0.08),
+            color: foto.status.sold,
+            borderColor: foto.status.sold,
+          },
+          "&:focus-visible": {
+            outline: "none",
+            boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+          },
+        }}
+      >
+        <Trash2 size={15} strokeWidth={1.8} aria-hidden />
+      </Box>
+    </Box>
+  );
+}
+
+interface ManualItemRowProps {
+  item: ManualSaleItem;
+  onRemove: (id: string) => void;
+  foto: ReturnType<typeof getFoto>;
+}
+
+/**
+ * One row for a manual (non-inventory) line item: a "Manual" badge in place of
+ * the thumbnail, name + detail, its price, and a remove button. Mirrors
+ * {@link SelectedItemRow} so the inventory and manual items read as one list.
+ */
+function ManualItemRow({ item, onRemove, foto }: ManualItemRowProps) {
+  const detail = [item.descripcion, item.peso].filter(Boolean).join(" · ");
+  return (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: "48px minmax(0, 1fr) auto auto",
+        gap: "12px",
+        alignItems: "center",
+        padding: "10px 12px",
+        borderRadius: "10px",
+        border: `1px solid ${foto.surfaces.rule}`,
+        background: foto.surfaces.panel,
+      }}
+    >
+      <Box
+        aria-hidden
+        sx={{
+          width: 48,
+          height: 48,
+          aspectRatio: "1 / 1",
+          borderRadius: "7px",
+          background: foto.accent.soft,
+          border: `1px solid ${foto.accent.primary}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: foto.accent.deep,
+          fontFamily: fontFamilies.mono,
+          fontSize: 8.5,
+          fontWeight: 600,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+        }}
+      >
+        Manual
+      </Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Box
+          sx={{
+            fontSize: 13.5,
+            fontWeight: 600,
+            letterSpacing: "-0.012em",
+            color: foto.ink.primary,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {item.nombre}
+        </Box>
+        <Box
+          sx={{
+            fontSize: 11,
+            color: foto.ink.tertiary,
+            marginTop: "2px",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {detail || "Ítem fuera de inventario"}
+        </Box>
+      </Box>
+      <Box
+        sx={{
+          fontFamily: fontFamilies.mono,
+          fontVariantNumeric: "tabular-nums",
+          fontSize: 12.5,
+          fontWeight: 500,
+          color: foto.ink.secondary,
+          whiteSpace: "nowrap",
+          textAlign: "right",
+        }}
+      >
+        {formatCop(item.precioCop)}
+      </Box>
+      <Box
+        component="button"
+        type="button"
+        onClick={() => onRemove(item.id)}
+        aria-label={`Quitar ${item.nombre} (ítem manual) de la venta`}
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 32,
+          height: 32,
+          borderRadius: "8px",
+          border: `1px solid ${foto.surfaces.rule}`,
+          background: foto.surfaces.canvas,
+          color: foto.ink.tertiary,
+          cursor: "pointer",
+          transition:
+            "background 120ms ease, color 120ms ease, border-color 120ms ease",
+          "&:hover": {
+            background: alpha(foto.status.sold, 0.08),
+            color: foto.status.sold,
+            borderColor: foto.status.sold,
+          },
+          "&:focus-visible": {
+            outline: "none",
+            boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+          },
+        }}
+      >
+        <Trash2 size={15} strokeWidth={1.8} aria-hidden />
       </Box>
     </Box>
   );

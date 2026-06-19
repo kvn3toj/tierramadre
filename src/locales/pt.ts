@@ -489,6 +489,7 @@ export const pt = {
     pageTitle: "Embaixadores",
     pageSubtitle:
       "Consultores autorizados de esmeraldas colombianas Tierra Madre",
+    directoryTagline: "Os guardiões da essência de cada esmeralda",
     activeAmbassadors: "Embaixadores ativos",
     totalProducts: "Produtos totais",
     looseGems: "Gemas soltas",
@@ -650,7 +651,7 @@ export const pt = {
   // Auth
   auth: {
     welcomeTitle: "Tierra Mädre",
-    welcomeSubtitle: "Essência e Poder da Esmeralda Colombiana",
+    welcomeSubtitle: "Esmeraldas Colombianas com DNA de Paz",
     guestAccess: "Modo Visitante",
     guestModeBanner: "Modo Visitante: somente leitura",
     accessRequired: "Solicitar Acesso",
@@ -691,6 +692,8 @@ export const pt = {
     total: "Total",
     active: "Ativos",
     pending: "Pendentes",
+    expired: "Expirados",
+    noInvitations: "Nenhum convite ainda",
     notFound: "Seu perfil de embaixador não foi encontrado.",
     multiplier: "Multiplicador",
     save: "Salvar",

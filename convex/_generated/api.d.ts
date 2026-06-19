@@ -8,16 +8,21 @@
  * @module
  */
 
+import type * as _lib_asesorSync from "../_lib/asesorSync.js";
 import type * as _lib_columnMaps from "../_lib/columnMaps.js";
 import type * as _lib_fotosintesisVocab from "../_lib/fotosintesisVocab.js";
+import type * as _lib_lotMath from "../_lib/lotMath.js";
 import type * as _lib_publishedGroups from "../_lib/publishedGroups.js";
+import type * as _lib_sheetPullMaps from "../_lib/sheetPullMaps.js";
 import type * as _lib_sheetSync from "../_lib/sheetSync.js";
 import type * as ambassadors from "../ambassadors.js";
 import type * as clients from "../clients.js";
 import type * as commissions from "../commissions.js";
 import type * as crons from "../crons.js";
+import type * as fotoSync from "../fotoSync.js";
 import type * as fotosintesisAi from "../fotosintesisAi.js";
 import type * as ghl from "../ghl.js";
+import type * as http from "../http.js";
 import type * as invitations from "../invitations.js";
 import type * as lotItems from "../lotItems.js";
 import type * as lots from "../lots.js";
@@ -35,16 +40,21 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "_lib/asesorSync": typeof _lib_asesorSync;
   "_lib/columnMaps": typeof _lib_columnMaps;
   "_lib/fotosintesisVocab": typeof _lib_fotosintesisVocab;
+  "_lib/lotMath": typeof _lib_lotMath;
   "_lib/publishedGroups": typeof _lib_publishedGroups;
+  "_lib/sheetPullMaps": typeof _lib_sheetPullMaps;
   "_lib/sheetSync": typeof _lib_sheetSync;
   ambassadors: typeof ambassadors;
   clients: typeof clients;
   commissions: typeof commissions;
   crons: typeof crons;
+  fotoSync: typeof fotoSync;
   fotosintesisAi: typeof fotosintesisAi;
   ghl: typeof ghl;
+  http: typeof http;
   invitations: typeof invitations;
   lotItems: typeof lotItems;
   lots: typeof lots;

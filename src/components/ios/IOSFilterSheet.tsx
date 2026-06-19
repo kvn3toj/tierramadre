@@ -26,7 +26,7 @@ import {
   type SortOption,
 } from '../../hooks/useTreasureFiltering';
 import type { FilterPreset } from '../../hooks/useSavedFilters';
-import { getColorDot } from '../../utils/formatting';
+import { getColorDot, formatCollectionName } from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import {
   emeraldCore,
@@ -47,6 +47,7 @@ export interface IOSFilterSheetProps {
   sortBy: SortOption;
   typeFilter: TypeFilter;
   categoriaFilter: string;
+  coleccionFilter: string;
   colorFilter: string;
   shapeFilter: string;
   qualityFilter: string;
@@ -58,6 +59,7 @@ export interface IOSFilterSheetProps {
   setSortBy: (value: SortOption) => void;
   setTypeFilter: (value: TypeFilter) => void;
   setCategoriaFilter: (value: string) => void;
+  setColeccionFilter: (value: string) => void;
   setColorFilter: (value: string) => void;
   setShapeFilter: (value: string) => void;
   setQualityFilter: (value: string) => void;
@@ -69,6 +71,7 @@ export interface IOSFilterSheetProps {
   shapes: string[];
   qualities: string[];
   categorias: string[];
+  colecciones: string[];
   priceMinMax: { min: number; max: number };
   caratMinMax: { min: number; max: number };
   // Actions
@@ -88,6 +91,7 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
   sortBy,
   typeFilter,
   categoriaFilter,
+  coleccionFilter,
   colorFilter,
   shapeFilter,
   qualityFilter,
@@ -98,6 +102,7 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
   setSortBy,
   setTypeFilter,
   setCategoriaFilter,
+  setColeccionFilter,
   setColorFilter,
   setShapeFilter,
   setQualityFilter,
@@ -108,6 +113,7 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
   shapes,
   qualities,
   categorias,
+  colecciones,
   priceMinMax,
   caratMinMax,
   hasFilters,
@@ -361,6 +367,41 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
             ))}
           </Box>
         </Collapse>
+
+        {/* Colección filter (parity with desktop FilterContent) */}
+        {colecciones.length > 0 && (
+          <>
+            <FilterRow
+              label="Colección"
+              value={coleccionFilter === 'all' ? 'Todas' : formatCollectionName(coleccionFilter)}
+              section="coleccion"
+              isActive={coleccionFilter !== 'all'}
+            />
+            <Collapse in={expandedSection === 'coleccion'}>
+              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
+                <Chip
+                  label="Todas"
+                  onClick={() => {
+                    setColeccionFilter('all');
+                    setExpandedSection(null);
+                  }}
+                  sx={getChipStyle(coleccionFilter === 'all')}
+                />
+                {colecciones.map((coleccion) => (
+                  <Chip
+                    key={coleccion}
+                    label={formatCollectionName(coleccion)}
+                    onClick={() => {
+                      setColeccionFilter(coleccion);
+                      setExpandedSection(null);
+                    }}
+                    sx={getChipStyle(coleccionFilter === coleccion)}
+                  />
+                ))}
+              </Box>
+            </Collapse>
+          </>
+        )}
 
         {/* Type filter */}
         <FilterRow

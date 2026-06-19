@@ -488,6 +488,7 @@ export const en = {
     // Directory page
     pageTitle: "Ambassadors",
     pageSubtitle: "Authorized advisors for Colombian emeralds by Tierra Madre",
+    directoryTagline: "The keepers of each emerald's essence",
     activeAmbassadors: "Active ambassadors",
     totalProducts: "Total products",
     looseGems: "Loose gems",
@@ -639,7 +640,7 @@ export const en = {
   // Auth
   auth: {
     welcomeTitle: "Tierra Mädre",
-    welcomeSubtitle: "Essence and Power of the Colombian Emerald",
+    welcomeSubtitle: "Colombian Emeralds with the DNA of Peace",
     guestAccess: "Guest Mode",
     guestModeBanner: "Guest Mode: read-only",
     accessRequired: "Request Access",
@@ -680,6 +681,8 @@ export const en = {
     total: "Total",
     active: "Active",
     pending: "Pending",
+    expired: "Expired",
+    noInvitations: "No invitations yet",
     notFound: "Your ambassador profile was not found.",
     multiplier: "Multiplier",
     save: "Save",

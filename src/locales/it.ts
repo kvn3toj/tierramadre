@@ -354,7 +354,7 @@ export const it = {
   // Auth
   auth: {
     welcomeTitle: "Tierra Mädre",
-    welcomeSubtitle: "Essenza e Potere dello Smeraldo Colombiano",
+    welcomeSubtitle: "Smeraldi Colombiani con il DNA della Pace",
     guestAccess: "Modalità Ospite",
     guestModeBanner: "Modalità Ospite: sola lettura",
     accessRequired: "Richiedi Accesso",
@@ -395,6 +395,8 @@ export const it = {
     total: "Totale",
     active: "Attivi",
     pending: "In attesa",
+    expired: "Scadute",
+    noInvitations: "Nessun invito ancora",
     notFound: "Il tuo profilo ambasciatore non è stato trovato.",
     multiplier: "Moltiplicatore",
     save: "Salva",
@@ -615,6 +617,7 @@ export const it = {
     },
     pageTitle: "Ambasciatori",
     pageSubtitle: "Consulenti autorizzati per smeraldi colombiani Tierra Madre",
+    directoryTagline: "I custodi dell'essenza di ogni smeraldo",
     activeAmbassadors: "Ambasciatori attivi",
     totalProducts: "Prodotti totali",
     looseGems: "Gemme sciolte",

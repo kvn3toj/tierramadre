@@ -1,97 +1,91 @@
 /**
- * EsmereogenesisGardenPage
+ * EsmereogenesisGardenPage — Bóveda "Jardín" (single plan).
  *
  * Route: /esmereogenesis/:planId
- * The full immersive garden for a single plan. Orchestrates:
- *   - LivingEmerald + ProgressGardenRing (visual centerpiece)
- *   - Suggested rhythm + streak readout
- *   - "Regar mi esmeralda" CTA → triggers AbonoCinematic
- *   - Completed state → "Reclamar tu Esmeralda" → ClaimSheet
+ * Re-skinned to the approved prototype (docs/boveda-prototype PlanScreen): the
+ * living gem + ring centerpiece, big serif %, suggested-rhythm chips + "Regar"
+ * CTA, the stone's ficha, and the watering bitácora. All data/handlers (aporte
+ * trigger, cinematic, claim, delete, onboarding, streak-grace toast) preserved.
  */
 
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  Box,
-  IconButton,
-  Typography,
-  alpha,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
-import { ChevronLeft, Trash2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
+import { Trash2, Droplet } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEsmereogenesis } from "../../contexts/EsmereogenesisContext";
 import { useNotification } from "../../contexts/NotificationContext";
 import { useCurrencyFormat } from "../../contexts/CurrencyContext";
+import { useTrackingDispatch } from "../../contexts/TrackingContext";
 import { useAbonoSimulation } from "../../hooks/useAbonoSimulation";
+import { useEsmereoTheme } from "../../contexts/EsmereoThemeContext";
 import { LivingEmerald } from "../../components/esmereogenesis/LivingEmerald";
-import { ProgressGardenRing } from "../../components/esmereogenesis/ProgressGardenRing";
-import { StreakIndicator } from "../../components/esmereogenesis/StreakIndicator";
-import { AporteHistoryTimeline } from "../../components/esmereogenesis/AporteHistoryTimeline";
+import StageChip from "../../components/esmereogenesis/StageChip";
+import EsmereoThemeToggle from "../../components/esmereogenesis/EsmereoThemeToggle";
+import {
+  TopBar,
+  Kicker,
+  StreakFlame,
+  WaterButton,
+  AmountChips,
+  ProgressRing,
+} from "../../components/esmereogenesis/BovedaUI";
+import { useCountUp } from "../../components/esmereogenesis/useCountUp";
+import { useEsmereoBp } from "../../components/esmereogenesis/useEsmereoBp";
+import EsmereoSideNav from "../../components/esmereogenesis/EsmereoSideNav";
 import { ClaimSheet } from "../../components/esmereogenesis/ClaimSheet";
 import { AbonoCinematic } from "../../components/esmereogenesis/AbonoCinematic";
 import { OnboardingCoachmarks } from "../../components/esmereogenesis/OnboardingCoachmarks";
-import { GardenHero } from "../../components/esmereogenesis/GardenHero";
-import { AporteSlider } from "../../components/esmereogenesis/AporteSlider";
-import { CompletedCelebration } from "../../components/esmereogenesis/CompletedCelebration";
 import ConfirmDialog from "../../components/shared/ConfirmDialog";
+import { stageForProgress } from "../../data/esmereo-mock";
 import { STORAGE_KEYS } from "../../constants/storage-keys";
-import { emeraldCore } from "../../design-system/tokens/colors";
-import { meshGradients } from "../../design-system/tokens/gradients";
-import { whiteAlpha } from "../../design-system/utils/colorUtils";
-import { useEsmereoThemeTokens } from "../../hooks/useEsmereoThemeTokens";
 import type { EsmereoPlan } from "../../types/esmereogenesis";
+import "../../components/esmereogenesis/boveda.css";
 
 const VISIBLE_HISTORY = 4;
+const MESES = [
+  "ene",
+  "feb",
+  "mar",
+  "abr",
+  "may",
+  "jun",
+  "jul",
+  "ago",
+  "sep",
+  "oct",
+  "nov",
+  "dic",
+];
+const fmtAporteDate = (iso: string): string => {
+  const d = new Date(iso);
+  return `${d.getDate()} ${MESES[d.getMonth()]}`;
+};
 
 interface CinematicData {
   plan: EsmereoPlan;
   amount: number;
   isCompletion: boolean;
   previousProgress: number;
-  /** True when this aporte just consumed a Lluvia generosa grace — surfaces
-   *  as a celebratory toast once the cinematic finishes. */
   graceApplied: boolean;
 }
 
-const EsmereogenesisGardenPage: React.FC = () => {
+const EsmereogenesisGardenPage = () => {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
   const { notify } = useNotification();
   const { formatCurrency } = useCurrencyFormat();
+  const { track } = useTrackingDispatch();
+  const { mode } = useEsmereoTheme();
   const { getPlanById, deletePlan } = useEsmereogenesis();
   const { trigger, isProcessing } = useAbonoSimulation();
-  const theme = useTheme();
-  // Desktop gets a larger centerpiece so the gem doesn't drown in white space
-  // when the container expands to its lg/xl maxWidth.
-  const isLargeUp = useMediaQuery(theme.breakpoints.up("lg"));
-  const emeraldSize = isLargeUp ? "xl" : "lg";
-  const ringSize = isLargeUp ? 400 : 320;
-  const {
-    isLight,
-    headerBg,
-    cardBg,
-    cardBorder,
-    headerBorder,
-    cardShadow,
-    titleColor,
-    overlineColor,
-    headlineColor,
-    bodyColor,
-    mutedColor,
-  } = useEsmereoThemeTokens();
+  const bp = useEsmereoBp();
 
   const plan = planId ? getPlanById(planId) : undefined;
 
-  const [aporteOpen, setAporteOpen] = useState(false);
   const [aporteAmount, setAporteAmount] = useState<number>(0);
   const [cinematic, setCinematic] = useState<CinematicData | null>(null);
   const [claimOpen, setClaimOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  // First-visit onboarding — initialised synchronously from localStorage so
-  // the dialog doesn't pop in a frame late (consistent with the rest of the
-  // app's anti-blink pattern).
+  const [lastWateredAt, setLastWateredAt] = useState<number | undefined>();
   const [onboardingOpen, setOnboardingOpen] = useState<boolean>(() => {
     try {
       return !localStorage.getItem(STORAGE_KEYS.ESMEREO_ONBOARDING_SEEN);
@@ -108,15 +102,12 @@ const EsmereogenesisGardenPage: React.FC = () => {
     }
   };
 
-  // Sync slider value with current remaining whenever plan progress changes
+  // Sync the picked amount with the suggested rhythm whenever the plan changes.
   useEffect(() => {
     if (!plan) return;
-    const remainingNow = plan.targetCOP - plan.totalAbonadoCOP;
-    const initial = Math.min(
-      plan.weeklySuggestedCOP,
-      Math.max(10_000, remainingNow),
-    );
-    setAporteAmount(initial);
+    const remainingNow = Math.max(0, plan.targetCOP - plan.totalAbonadoCOP);
+    // Never default above what's left (a < 10k remainder must not snap to 10k).
+    setAporteAmount(Math.min(plan.weeklySuggestedCOP, remainingNow));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     plan?.id,
@@ -125,7 +116,7 @@ const EsmereogenesisGardenPage: React.FC = () => {
     plan?.targetCOP,
   ]);
 
-  // Redirect if plan disappears
+  // Redirect if the plan disappears (invalid :planId, deleted, etc.)
   useEffect(() => {
     if (planId && !plan) {
       notify("Esa Esmereogénesis no existe", "warning");
@@ -138,25 +129,48 @@ const EsmereogenesisGardenPage: React.FC = () => {
       plan && plan.targetCOP > 0 ? plan.totalAbonadoCOP / plan.targetCOP : 0,
     [plan],
   );
-
   const remaining = useMemo(
     () => (plan ? Math.max(0, plan.targetCOP - plan.totalAbonadoCOP) : 0),
     [plan],
   );
-
-  const isCompleted = plan?.state === "completed" || plan?.state === "claimed";
-  const isClaimed = plan?.state === "claimed";
+  const displayAbonado = useCountUp(plan?.totalAbonadoCOP ?? 0);
 
   if (!plan) return null;
 
+  const isCompleted = plan.state === "completed" || plan.state === "claimed";
+  const isClaimed = plan.state === "claimed";
+  const stage = stageForProgress(progress, plan.state);
   const productName = plan.productSnapshot.nombre
     .replace(/^L:.*?\s/, "")
     .replace(/^L:/, "")
     .trim();
+  const weeksLeft =
+    plan.weeklySuggestedCOP > 0
+      ? Math.ceil(remaining / plan.weeklySuggestedCOP)
+      : 0;
+  const dispPct = plan.targetCOP > 0 ? displayAbonado / plan.targetCOP : 0;
 
-  // Extracted so the failure toast can re-fire the exact same aporte via its
-  // "Reintentar" action — the user shouldn't have to re-open the slider and
-  // re-pick the amount after a transient error.
+  // Ficha rows from whatever the snapshot actually froze (origin/cert may be absent).
+  const ficha: [string, string][] = [
+    ["Ritmo sugerido", `${formatCurrency(plan.weeklySuggestedCOP)} / sem`],
+    ...(remaining > 0
+      ? ([
+          ["Faltan", `${weeksLeft} ${weeksLeft === 1 ? "semana" : "semanas"}`],
+        ] as [string, string][])
+      : []),
+    ...(plan.productSnapshot.peso
+      ? ([["Peso", String(plan.productSnapshot.peso)]] as [string, string][])
+      : []),
+    ...(plan.productSnapshot.color
+      ? ([["Color", plan.productSnapshot.color]] as [string, string][])
+      : []),
+    ...(plan.productSnapshot.corte
+      ? ([["Talla", plan.productSnapshot.corte]] as [string, string][])
+      : []),
+  ];
+
+  const log = [...plan.aportes].reverse().slice(0, VISIBLE_HISTORY);
+
   const submitAporte = async (amount: number) => {
     const previousProgress = progress;
     const willComplete = plan.totalAbonadoCOP + amount >= plan.targetCOP;
@@ -173,9 +187,7 @@ const EsmereogenesisGardenPage: React.FC = () => {
         {
           action: {
             label: "Reintentar",
-            onClick: () => {
-              void submitAporte(amount);
-            },
+            onClick: () => void submitAporte(amount),
           },
         },
       );
@@ -188,7 +200,6 @@ const EsmereogenesisGardenPage: React.FC = () => {
       previousProgress,
       graceApplied: result.graceApplied,
     });
-    setAporteOpen(false);
   };
 
   const handleAporteConfirm = () => {
@@ -200,10 +211,6 @@ const EsmereogenesisGardenPage: React.FC = () => {
   };
 
   const handleCinematicComplete = () => {
-    // Forest-style streak forgiveness — fire the celebratory toast once the
-    // cinematic returns the user to the garden, so the two moments don't
-    // collide. Suppressed on completion (the eclosion ceremony is its own
-    // climax; a "rain delay" toast would dilute it).
     if (cinematic?.graceApplied && !cinematic.isCompletion) {
       notify(
         "Lluvia generosa · esta semana cuenta. Tu racha sigue creciendo.",
@@ -211,12 +218,10 @@ const EsmereogenesisGardenPage: React.FC = () => {
         { durationMs: 5000 },
       );
     }
+    setLastWateredAt(Date.now());
     setCinematic(null);
-    setAporteOpen(false);
-    // Slider value will auto-reset via the useEffect that watches plan.totalAbonadoCOP
   };
 
-  const handleDelete = () => setDeleteConfirmOpen(true);
   const confirmDelete = () => {
     setDeleteConfirmOpen(false);
     deletePlan(plan.id);
@@ -224,312 +229,343 @@ const EsmereogenesisGardenPage: React.FC = () => {
     navigate("/esmereogenesis", { replace: true });
   };
 
+  const overlineStyle = {
+    fontSize: 9.5,
+    letterSpacing: "0.34em",
+    textTransform: "uppercase" as const,
+    color: "var(--ink-faint)",
+  };
+
   return (
-    <Box
-      sx={{
-        position: "relative",
+    <div
+      className="bov-root bov-screen"
+      data-theme={mode}
+      data-bp={bp}
+      style={{
         minHeight: "100vh",
-        background: meshGradients.emerald,
-        // Honour bottom navigation + iOS home indicator so the timeline never
-        // hides behind the global tab bar.
-        pb: "calc(env(safe-area-inset-bottom, 0px) + 96px)",
+        paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 96px)",
+        paddingLeft: bp === "desktop" ? 92 : 0,
       }}
     >
-      {/* Header — feature identity strip, theme-aware glass. */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          px: 2,
-          pt: "calc(env(safe-area-inset-top, 0px) + 12px)",
-          pb: 1.5,
-          position: "sticky",
-          top: 0,
-          background: headerBg,
-          backdropFilter: "blur(22px) saturate(160%)",
-          WebkitBackdropFilter: "blur(22px) saturate(160%)",
-          borderBottom: `1px solid ${headerBorder}`,
-          boxShadow: isLight
-            ? `0 1px 0 ${whiteAlpha(0.32)} inset`
-            : `0 1px 0 ${alpha(emeraldCore.light, 0.12)} inset`,
-          zIndex: 10,
+      <div className="bov-vignette" />
+      <EsmereoSideNav />
+      <div
+        style={{
+          position: "relative",
+          zIndex: 2,
+          maxWidth: bp === "mobile" ? 480 : bp === "ipad" ? 640 : 720,
+          margin: "0 auto",
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + 8px)",
         }}
       >
-        <IconButton
-          onClick={() => navigate("/esmereogenesis")}
-          aria-label="Volver al jardín"
-          sx={{ color: titleColor }}
-        >
-          <ChevronLeft />
-        </IconButton>
-        <Typography
-          variant="h6"
-          sx={{
-            fontFamily: '"Playfair Display", serif',
-            fontWeight: 700,
-            color: titleColor,
-            letterSpacing: 0.4,
-            textShadow: isLight
-              ? "none"
-              : `0 2px 12px ${alpha(emeraldCore.dark, 0.6)}`,
+        <TopBar
+          title="Jardín"
+          sub="Esmereogénesis"
+          onBack={() => {
+            if ((window.history.state?.idx ?? 0) > 0) navigate(-1);
+            else navigate("/esmereogenesis", { replace: true });
           }}
-        >
-          Esmereogénesis
-        </Typography>
-        <IconButton
-          onClick={handleDelete}
-          aria-label="Eliminar plan"
-          sx={{ color: alpha(titleColor, 0.78) }}
-        >
-          <Trash2 size={18} />
-        </IconButton>
-      </Box>
-
-      <Box
-        sx={{
-          // Responsive container: phone is fluid, desktop breathes up to 1080px.
-          // Previous hardcoded 720 left a thin mobile column on 1920px screens.
-          maxWidth: { xs: "100%", sm: 720, lg: 920, xl: 1080 },
-          mx: "auto",
-          px: { xs: 2, md: 3, lg: 4 },
-          py: 3,
-        }}
-      >
-        <GardenHero nickname={plan.nickname} productName={productName} />
-
-        {/* Two-column body at lg+ so the wider container actually breathes
-            instead of leaving a single 920-px column stranded in the middle
-            of a 1920-px screen. Below lg, everything stacks single-column. */}
-        <Box
-          sx={{
-            display: { xs: "block", lg: "grid" },
-            gridTemplateColumns: { lg: "minmax(0, 1fr) minmax(0, 1fr)" },
-            columnGap: { lg: 4 },
-            alignItems: { lg: "start" },
-          }}
-        >
-          {/* Centerpiece — LivingEmerald + ring + numbers welded into a single
-            stat group so the ring, the gem and the percentage read as one
-            coherent ceremony, not three stacked widgets. */}
-          <Box
-            component={motion.section}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              mb: { xs: 3, md: 4, lg: 0 },
-            }}
-          >
-            <Box
-              sx={{
-                position: "relative",
-                // Fluid sizing so the ring breathes on phones (≤360 px) without
-                // blowing past the viewport, and never goes bigger than the spec.
-                width: "clamp(260px, 78vw, 320px)",
-                aspectRatio: "1 / 1",
-                mb: 2,
-              }}
-            >
-              <ProgressGardenRing
-                progress={progress}
-                size={ringSize}
-                strokeWidth={10}
-                isComplete={isCompleted}
-              />
-              <Box
-                sx={{
-                  position: "absolute",
-                  inset: 0,
+          backLabel="Volver al jardín"
+          right={
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <EsmereoThemeToggle />
+              <button
+                className="tap"
+                onClick={() => setDeleteConfirmOpen(true)}
+                aria-label="Eliminar plan"
+                style={{
+                  width: 44,
+                  height: 44,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  color: "var(--ink-faint)",
                 }}
               >
-                <LivingEmerald
-                  imageSrc={plan.productSnapshot.imagen}
-                  progress={progress}
-                  state={plan.state}
-                  size={emeraldSize}
-                  isPulsing={!isCompleted}
+                <Trash2 size={18} strokeWidth={1.6} />
+              </button>
+            </div>
+          }
+        />
+
+        {/* stage + gem + name */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <div style={{ position: "relative", zIndex: 3, marginBottom: -6 }}>
+            <StageChip stage={stage} />
+          </div>
+          <LivingEmerald
+            imageSrc={plan.productSnapshot.imagen}
+            corte={plan.productSnapshot.corte}
+            progress={progress}
+            state={plan.state}
+            size={206}
+            staged
+            isPulsing={!isCompleted}
+            recentAporteAt={lastWateredAt}
+            onPet={() => track("esmereo_gem_petted", { planId: plan.id })}
+          />
+          <div
+            style={{
+              textAlign: "center",
+              marginTop: -30,
+              zIndex: 3,
+              position: "relative",
+            }}
+          >
+            <Kicker style={{ fontSize: 8.5 }}>Tu esmeralda</Kicker>
+            <div
+              className="serif"
+              style={{ fontSize: 27, marginTop: 6, color: "var(--ink)" }}
+            >
+              {productName}
+            </div>
+          </div>
+        </div>
+
+        {/* big figure */}
+        <div
+          style={{
+            textAlign: "center",
+            marginTop: 14,
+            position: "relative",
+            zIndex: 3,
+          }}
+          aria-live="polite"
+        >
+          <div style={overlineStyle}>
+            {isCompleted ? "Eclosionada" : "Tu progreso"}
+          </div>
+          {/* Progress ring + percentage */}
+          <div
+            style={{
+              position: "relative",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginTop: 4,
+            }}
+          >
+            <ProgressRing
+              progress={dispPct}
+              size={124}
+              strokeWidth={3.5}
+              style={{ position: "absolute" }}
+            />
+            <div
+              className="serif"
+              style={{
+                fontSize: 72,
+                lineHeight: 0.86,
+                color: "var(--ink)",
+                textShadow:
+                  mode === "dark" ? "0 6px 34px rgba(0,140,97,0.6)" : "none",
+                padding: "22px 20px",
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              {Math.round(dispPct * 100)}
+              <span style={{ fontSize: 28, color: "var(--gold-bright)" }}>
+                %
+              </span>
+            </div>
+          </div>
+          <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>
+            {formatCurrency(displayAbonado)}{" "}
+            <span style={{ color: "var(--ink-faint)" }}>
+              / {formatCurrency(plan.targetCOP)}
+            </span>
+          </div>
+        </div>
+
+        {/* rhythm + CTA */}
+        <div
+          style={{ padding: "20px 24px 0", position: "relative", zIndex: 3 }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginBottom: 16,
+            }}
+          >
+            <StreakFlame weeks={plan.streak.currentWeeks} />
+          </div>
+          {remaining <= 0 ? (
+            isClaimed ? (
+              <WaterButton busy label="Esmeralda reclamada" />
+            ) : (
+              <WaterButton
+                label="Reclamar mi esmeralda"
+                onClick={() => setClaimOpen(true)}
+              />
+            )
+          ) : (
+            <>
+              <AmountChips
+                amount={aporteAmount}
+                suggested={plan.weeklySuggestedCOP}
+                remaining={remaining}
+                onPick={setAporteAmount}
+              />
+              <div style={{ marginTop: 12 }}>
+                <WaterButton
+                  onClick={handleAporteConfirm}
+                  busy={isProcessing}
+                  sub={`Ritmo sugerido ${formatCurrency(plan.weeklySuggestedCOP)} / semana`}
                 />
-              </Box>
-            </Box>
+              </div>
+            </>
+          )}
+        </div>
 
-            {/* Numbers — overline + dramatic % + amount stay tight to the gem
-              so they read as the gem's own caption rather than dead space. */}
-            <Typography
-              variant="overline"
-              sx={{
-                color: overlineColor,
-                fontWeight: 700,
-                letterSpacing: 1.6,
-                opacity: isLight ? 0.85 : 0.78,
-                mb: 0.25,
-              }}
-            >
-              {isCompleted ? "Eclosionada" : "Tu progreso"}
-            </Typography>
-            <Typography
-              sx={{
-                fontFamily: '"Playfair Display", serif',
-                fontWeight: 700,
-                color: headlineColor,
-                lineHeight: 0.95,
-                fontSize: { xs: 56, sm: 64, md: 72 },
-                fontVariantNumeric: "tabular-nums",
-                letterSpacing: -1,
-                textShadow: isLight
-                  ? `0 4px 18px ${alpha(emeraldCore.primary, 0.18)}`
-                  : `0 4px 22px ${alpha(emeraldCore.dark, 0.7)}`,
-              }}
-            >
-              {Math.round(progress * 100)}%
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                color: bodyColor,
-                mt: 0.75,
-                fontWeight: 600,
-                fontVariantNumeric: "tabular-nums",
-                letterSpacing: 0.2,
-                textAlign: "center",
-              }}
-            >
-              {formatCurrency(plan.totalAbonadoCOP)}{" "}
-              <Box component="span" sx={{ opacity: 0.7 }}>
-                / {formatCurrency(plan.targetCOP)}
-              </Box>
-            </Typography>
-          </Box>
-
-          {/* Right column at lg+ — controls (rhythm, streak, regar/slider OR
-            eclosionada) plus history. Below lg, this Box is just a passthrough
-            so the visual flow stays vertical. */}
-          <Box>
-            {!isCompleted ? (
-              <>
-                {/* Rhythm + streak — theme-aware glass. */}
-                <Box
-                  sx={{
-                    background: cardBg,
-                    backdropFilter: "blur(16px) saturate(160%)",
-                    WebkitBackdropFilter: "blur(16px) saturate(160%)",
-                    border: `1px solid ${cardBorder}`,
-                    borderRadius: 3,
-                    p: { xs: 2, md: 2.5 },
-                    mb: { xs: 2.5, md: 3 },
-                    display: "flex",
-                    flexDirection: { xs: "column", sm: "row" },
-                    gap: { xs: 1.5, sm: 2 },
-                    alignItems: { xs: "stretch", sm: "center" },
-                    justifyContent: "space-between",
-                    boxShadow: cardShadow,
+        {/* ficha de la piedra */}
+        <div
+          style={{ padding: "26px 22px 0", position: "relative", zIndex: 3 }}
+        >
+          <Kicker style={{ fontSize: 8.5, marginBottom: 14 }}>La piedra</Kicker>
+          <div
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--hairline)",
+              borderRadius: 16,
+              overflow: "hidden",
+              padding: "0 16px",
+            }}
+          >
+            {ficha.map(([k, v], i) => (
+              <div
+                key={k}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "12px 0",
+                  borderTop: i === 0 ? "none" : "1px solid var(--line)",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 9.5,
+                    letterSpacing: "0.22em",
+                    textTransform: "uppercase",
+                    color: "var(--ink-faint)",
                   }}
                 >
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography
-                      variant="overline"
-                      sx={{
-                        color: overlineColor,
-                        fontWeight: 700,
-                        letterSpacing: 1.4,
-                        opacity: isLight ? 0.85 : 0.78,
-                      }}
-                    >
-                      Ritmo sugerido
-                    </Typography>
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        color: headlineColor,
-                        fontWeight: 700,
-                        fontVariantNumeric: "tabular-nums",
-                        lineHeight: 1.2,
-                        textShadow: isLight
-                          ? "none"
-                          : `0 2px 12px ${alpha(emeraldCore.dark, 0.5)}`,
-                      }}
-                    >
-                      {formatCurrency(plan.weeklySuggestedCOP)}{" "}
-                      <Typography
-                        component="span"
-                        variant="body2"
-                        sx={{ color: mutedColor, fontWeight: 500 }}
-                      >
-                        / semana
-                      </Typography>
-                    </Typography>
-                  </Box>
-                  <Box sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}>
-                    <StreakIndicator
-                      weeks={plan.streak.currentWeeks}
-                      longest={plan.streak.longestWeeks}
-                    />
-                  </Box>
-                </Box>
-
-                {/* Regar CTA — wrapped in an emerald glow halo so it reads as
-                the sacred act of the page, not just another pill button. */}
-                <AporteSlider
-                  open={aporteOpen}
-                  plan={plan}
-                  aporteAmount={aporteAmount}
-                  setAporteAmount={setAporteAmount}
-                  remaining={remaining}
-                  isProcessing={isProcessing}
-                  onOpen={() => setAporteOpen(true)}
-                  onCancel={() => {
-                    setAporteOpen(false);
-                    setAporteAmount(plan.weeklySuggestedCOP);
+                  {k}
+                </span>
+                <span
+                  className="serif"
+                  style={{
+                    fontSize: 15,
+                    whiteSpace: "nowrap",
+                    color: "var(--ink)",
                   }}
-                  onConfirm={handleAporteConfirm}
-                />
-              </>
-            ) : (
-              <CompletedCelebration
-                isClaimed={isClaimed}
-                onClaim={() => setClaimOpen(true)}
-              />
-            )}
+                >
+                  {v}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
 
-            {/* History — theme-aware glass. */}
-            <Box
-              sx={{
-                background: cardBg,
-                backdropFilter: "blur(14px) saturate(150%)",
-                WebkitBackdropFilter: "blur(14px) saturate(150%)",
-                border: `1px solid ${cardBorder}`,
-                borderRadius: 3,
-                p: 2.5,
-                boxShadow: cardShadow,
+        {/* bitácora de riego */}
+        <div
+          style={{ padding: "22px 22px 0", position: "relative", zIndex: 3 }}
+        >
+          <Kicker style={{ fontSize: 8.5, marginBottom: 14 }}>
+            Bitácora de riego · {plan.aportes.length}{" "}
+            {plan.aportes.length === 1 ? "gota" : "gotas"}
+          </Kicker>
+          {log.length > 0 ? (
+            log.map((a, i) => {
+              const week = plan.aportes.length - i;
+              return (
+                <div
+                  key={a.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "12px 0",
+                    borderTop: i === 0 ? "none" : "1px solid var(--hairline)",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: "50%",
+                      background: "rgba(51,193,148,0.14)",
+                      border: "1px solid rgba(212,175,55,0.28)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginRight: 14,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Droplet
+                      size={13}
+                      strokeWidth={1.6}
+                      color="var(--em-bright)"
+                    />
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "var(--ink)",
+                        letterSpacing: "0.01em",
+                      }}
+                    >
+                      Semana {week}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 10.5,
+                        color: "var(--ink-faint)",
+                        marginTop: 1,
+                      }}
+                    >
+                      {fmtAporteDate(a.createdAt)} ·{" "}
+                      {a.type === "suggested"
+                        ? "Aporte sugerido"
+                        : "Aporte libre"}
+                    </div>
+                  </div>
+                  <span
+                    className="serif"
+                    style={{
+                      fontSize: 14,
+                      color: "var(--ink-soft)",
+                      letterSpacing: "0.01em",
+                    }}
+                  >
+                    +{formatCurrency(a.amountCOP)}
+                  </span>
+                </div>
+              );
+            })
+          ) : (
+            <div
+              style={{
+                fontSize: 12.5,
+                color: "var(--ink-faint)",
+                fontStyle: "italic",
               }}
             >
-              <Typography
-                variant="overline"
-                sx={{
-                  display: "block",
-                  color: overlineColor,
-                  fontWeight: 700,
-                  letterSpacing: 1.4,
-                  mb: 1.5,
-                  opacity: isLight ? 0.85 : 0.85,
-                }}
-              >
-                Tus aportes ({plan.aportes.length})
-              </Typography>
-              <AporteHistoryTimeline
-                aportes={plan.aportes}
-                limit={VISIBLE_HISTORY}
-              />
-            </Box>
-          </Box>
-        </Box>
-      </Box>
+              Aún no has regado tu esmeralda. La primera gota la despierta.
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Cinematic overlay */}
       {cinematic && (
@@ -538,20 +574,21 @@ const EsmereogenesisGardenPage: React.FC = () => {
           aporteAmount={cinematic.amount}
           isCompletion={cinematic.isCompletion}
           previousProgress={cinematic.previousProgress}
-          open={true}
+          open
           onComplete={handleCinematicComplete}
+          onClaim={() => {
+            setCinematic(null);
+            setClaimOpen(true);
+          }}
         />
       )}
 
-      {/* Claim sheet */}
       <ClaimSheet
         open={claimOpen}
         onClose={() => setClaimOpen(false)}
         plan={plan}
       />
 
-      {/* Destructive confirmation — replaces window.confirm so focus, styling
-          and a11y stay inside the design system. */}
       <ConfirmDialog
         open={deleteConfirmOpen}
         title="¿Eliminar esta Esmereogénesis?"
@@ -562,10 +599,8 @@ const EsmereogenesisGardenPage: React.FC = () => {
         onCancel={() => setDeleteConfirmOpen(false)}
       />
 
-      {/* First-visit 3-step explainer (aporte sugerido · racha · eclosión).
-          Dismiss persists to localStorage so it never reappears. */}
       <OnboardingCoachmarks open={onboardingOpen} onClose={dismissOnboarding} />
-    </Box>
+    </div>
   );
 };
 

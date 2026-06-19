@@ -4,20 +4,19 @@ import { v } from "convex/values";
 // ─── Queries ────────────────────────────────────────────────────────
 
 /**
- * List active/pending invitations by creator email.
+ * List all invitations by creator email (active, pending, and expired).
  * Replaces: GET /api/invitations?action=list-by-creator&creatorEmail=X
  */
 export const listByCreator = query({
   args: { creatorEmail: v.string() },
   handler: async (ctx, { creatorEmail }) => {
-    const all = await ctx.db
+    return await ctx.db
       .query("invitations")
       .withIndex("by_creatorEmail", (q) =>
         q.eq("creatorEmail", creatorEmail.toLowerCase().trim())
       )
       .order("desc")
       .collect();
-    return all.filter((inv) => inv.status === "active" || inv.status === "pending");
   },
 });
 

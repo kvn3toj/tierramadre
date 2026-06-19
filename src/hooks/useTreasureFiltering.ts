@@ -6,6 +6,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { TreasureItem } from '../types';
 import { fuzzyMatch } from '../utils/fuzzySearch';
+import { normalizeCollection } from '../utils/formatting';
 import { normalizeQuality, normalizeColor } from '../constants/quality-and-colors';
 import { useFilterOptions } from './useFilterOptions';
 import { useTreasureSort, type SortOption } from './useTreasureSort';
@@ -112,10 +113,10 @@ export function useTreasureFiltering({
   const [typeFilter, setTypeFilter] = useState<TypeFilter>(initialFilters.typeFilter || 'all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialFilters.statusFilter || 'available');
   const [shapeFilter, setShapeFilter] = useState(initialFilters.shapeFilter || 'all');
-  const [priceRange, setPriceRange] = useState<[number, number]>(
+  const [priceRange, setPriceRangeRaw] = useState<[number, number]>(
     initialFilters.priceRange || [0, Number.MAX_SAFE_INTEGER]
   );
-  const [caratRange, setCaratRange] = useState<[number, number]>(
+  const [caratRange, setCaratRangeRaw] = useState<[number, number]>(
     initialFilters.caratRange || [0, Number.MAX_SAFE_INTEGER]
   );
   const [sortBy, setSortBy] = useState<SortOption>(initialFilters.sortBy || 'newest');
@@ -126,9 +127,20 @@ export function useTreasureFiltering({
   const [heroCategoryFilter, setHeroCategoryFilter] = useState<HeroCategoryFilter>(initialFilters.heroCategoryFilter || 'all');
   const [itemsFilter] = useState<number[]>(initialFilters.itemsFilter || []);
 
-  // Track if priceRange/caratRange have been initialized to prevent re-syncing
-  const priceRangeInitialized = useRef(!!initialFilters.priceRange);
-  const caratRangeInitialized = useRef(!!initialFilters.caratRange);
+  // Whether the user (or a deep-link URL) has explicitly narrowed the range.
+  // While false, the range tracks the data's full extent so a late min/max
+  // recompute never masquerades as an applied filter (the phantom chip bug).
+  const priceUserNarrowed = useRef(!!initialFilters.priceRange);
+  const caratUserNarrowed = useRef(!!initialFilters.caratRange);
+
+  const setPriceRange = useCallback((range: [number, number]) => {
+    priceUserNarrowed.current = true;
+    setPriceRangeRaw(range);
+  }, []);
+  const setCaratRange = useCallback((range: [number, number]) => {
+    caratUserNarrowed.current = true;
+    setCaratRangeRaw(range);
+  }, []);
 
   // Auto-clear heroCategory when user manually selects a conflicting filter.
   // Without this, heroCategory (hidden on mobile) silently AND-conflicts with
@@ -143,20 +155,25 @@ export function useTreasureFiltering({
     }
   }, [categoriaFilter, typeFilter, cantidadFilter]);
 
-  // Sync priceRange to full range when treasure loads (ensures all products shown by default)
+  // Keep priceRange pinned to the data's full extent until the user narrows it,
+  // so staged min/max recomputes never surface as a phantom "active" filter.
   useEffect(() => {
-    if (!priceRangeInitialized.current && treasure.length > 0 && priceMinMax.max > 0) {
-      priceRangeInitialized.current = true;
-      setPriceRange([priceMinMax.min, priceMinMax.max]);
-    }
+    if (priceUserNarrowed.current || treasure.length === 0 || priceMinMax.max <= 0) return;
+    setPriceRangeRaw(prev =>
+      prev[0] === priceMinMax.min && prev[1] === priceMinMax.max
+        ? prev
+        : [priceMinMax.min, priceMinMax.max]
+    );
   }, [priceMinMax.min, priceMinMax.max, treasure.length]);
 
-  // Sync caratRange to full range when treasure loads
+  // Same for caratRange.
   useEffect(() => {
-    if (!caratRangeInitialized.current && treasure.length > 0 && caratMinMax.max > 0) {
-      caratRangeInitialized.current = true;
-      setCaratRange([caratMinMax.min, caratMinMax.max]);
-    }
+    if (caratUserNarrowed.current || treasure.length === 0 || caratMinMax.max <= 0) return;
+    setCaratRangeRaw(prev =>
+      prev[0] === caratMinMax.min && prev[1] === caratMinMax.max
+        ? prev
+        : [caratMinMax.min, caratMinMax.max]
+    );
   }, [caratMinMax.min, caratMinMax.max, treasure.length]);
 
   // Hide sequential stock duplicates — keep only the first non-sold item per group
@@ -201,6 +218,9 @@ export function useTreasureFiltering({
 
   // Filter treasure
   const filteredTreasure = useMemo(() => {
+    // Match collections by normalized key so a selection covers all duplicate
+    // spellings (prefix/case/accent) that collapsed into one filter option.
+    const coleccionKey = coleccionFilter === 'all' ? '' : normalizeCollection(coleccionFilter);
     return treasure.filter(item => {
       if (hiddenItems.has(item.item)) return false;
       const itemEstado = item.estado?.toUpperCase() || '';
@@ -235,7 +255,7 @@ export function useTreasureFiltering({
         (cantidadFilter === '2+' && item.cantidad > 1);
       const matchesCity = cityFilter === 'all' || item.city === cityFilter;
       const matchesCategoria = categoriaFilter === 'all' || item.categoria === categoriaFilter;
-      const matchesColeccion = coleccionFilter === 'all' || item.coleccion === coleccionFilter;
+      const matchesColeccion = coleccionFilter === 'all' || normalizeCollection(item.coleccion) === coleccionKey;
       const matchesItems = itemsFilter.length === 0 || itemsFilter.includes(item.item);
 
       return matchesSearch && matchesColor && matchesQuality && matchesType && matchesShape && matchesPrice && matchesCarat && matchesCantidad && matchesCity && matchesCategoria && matchesColeccion && matchesItems;
@@ -264,8 +284,10 @@ export function useTreasureFiltering({
     setCategoriaFilter('all');
     setColeccionFilter('all');
     setHeroCategoryFilter('all');
-    setPriceRange([priceMinMax.min, priceMinMax.max]);
-    setCaratRange([caratMinMax.min, caratMinMax.max]);
+    priceUserNarrowed.current = false;
+    caratUserNarrowed.current = false;
+    setPriceRangeRaw([priceMinMax.min, priceMinMax.max]);
+    setCaratRangeRaw([caratMinMax.min, caratMinMax.max]);
   }, [priceMinMax, caratMinMax]);
 
   // Check if any filters are active (note: 'available' is the default status)
@@ -282,10 +304,12 @@ export function useTreasureFiltering({
       categoriaFilter !== 'all' ||
       coleccionFilter !== 'all' ||
       heroCategoryFilter !== 'all' ||
-      priceRange[0] !== priceMinMax.min ||
-      priceRange[1] !== priceMinMax.max ||
-      caratRange[0] !== caratMinMax.min ||
-      caratRange[1] !== caratMinMax.max
+      // A range that still encompasses the full data extent is not a filter —
+      // only treat it as active once the user has narrowed either bound.
+      priceRange[0] > priceMinMax.min ||
+      priceRange[1] < priceMinMax.max ||
+      caratRange[0] > caratMinMax.min ||
+      caratRange[1] < caratMinMax.max
     );
   }, [search, colorFilter, qualityFilter, typeFilter, statusFilter, shapeFilter, cantidadFilter, cityFilter, categoriaFilter, coleccionFilter, heroCategoryFilter, priceRange, priceMinMax, caratRange, caratMinMax]);
 

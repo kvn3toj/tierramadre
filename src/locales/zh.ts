@@ -484,6 +484,7 @@ export const zh = {
     },
     pageTitle: "大使",
     pageSubtitle: "Tierra Madre 哥伦比亚祖母绿授权顾问",
+    directoryTagline: "守护每一颗祖母绿之精髓的人",
     activeAmbassadors: "活跃大使",
     totalProducts: "总产品",
     looseGems: "散装宝石",
@@ -623,7 +624,7 @@ export const zh = {
   // Auth
   auth: {
     welcomeTitle: "Tierra Mädre",
-    welcomeSubtitle: "哥伦比亚祖母绿的精髓与力量",
+    welcomeSubtitle: "拥有和平基因的哥伦比亚祖母绿",
     guestAccess: "访客模式",
     guestModeBanner: "访客模式：仅可查看",
     accessRequired: "申请访问",
@@ -662,6 +663,8 @@ export const zh = {
     total: "总计",
     active: "活跃",
     pending: "待处理",
+    expired: "已过期",
+    noInvitations: "暂无邀请",
     notFound: "未找到您的大使资料。",
     multiplier: "倍率",
     save: "保存",

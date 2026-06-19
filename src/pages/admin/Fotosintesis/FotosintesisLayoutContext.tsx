@@ -8,8 +8,22 @@ import type {
 export interface SpotlightOpenOptions {
   /** Optional scope chip displayed in the search header, e.g. "Solo vendibles". */
   scope?: string;
-  /** Called with the selected product. */
+  /** Called with the selected product (single-select mode). */
   onSelect?: (product: SpotlightProduct) => void;
+  /**
+   * Multi-select mode: rows toggle in/out instead of closing on click, and the
+   * operator confirms a whole set via the footer "Listo" button (or ⌘↵).
+   * VentaPage opts in so a sale can bundle several pieces.
+   */
+  multiSelect?: boolean;
+  /**
+   * Pre-selected products to seed multi-select mode with. Carries the full
+   * product objects (not just ids) so already-chosen items stay visible and
+   * de-selectable even when they fall outside the current search results.
+   */
+  selectedProducts?: SpotlightProduct[];
+  /** Called with the full chosen set when multi-select is confirmed. */
+  onConfirm?: (products: SpotlightProduct[]) => void;
 }
 
 export interface SpotlightProduct {

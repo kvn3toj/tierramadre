@@ -4,7 +4,7 @@
  * Minimal chrome — content speaks for itself.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -16,13 +16,13 @@ import {
   alpha,
   useTheme,
   Button,
-} from '@mui/material';
-import { Search, Gem } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { useAsesores, Asesor } from '../../hooks/useAsesores';
-import { useTreasure } from '../../hooks/useTreasure';
-import AsesorCard from './AsesorCard';
+} from "@mui/material";
+import { Search, Gem } from "lucide-react";
+import { motion } from "framer-motion";
+import { useLanguage } from "../../contexts/LanguageContext";
+import { useAsesores, Asesor } from "../../hooks/useAsesores";
+import { useTreasure } from "../../hooks/useTreasure";
+import AsesorCard from "./AsesorCard";
 import {
   emeraldCore,
   goldAccent,
@@ -30,9 +30,12 @@ import {
   cssTransition,
   surfacesLight,
   surfacesDark,
-} from '../../design-system/index';
-import { staggerContainer, staggerItem } from '../../design-system/tokens/motion';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
+} from "../../design-system/index";
+import {
+  staggerContainer,
+  staggerItem,
+} from "../../design-system/tokens/motion";
+import { useReducedMotion } from "../../hooks/useReducedMotion";
 
 /** Threshold: show search bar only when this many or more ambassadors */
 const SEARCH_THRESHOLD = 6;
@@ -48,17 +51,17 @@ export default function AmbassadorDirectory({
 }: AmbassadorDirectoryProps) {
   const { t } = useLanguage();
   const theme = useTheme();
-  const isLight = theme.palette.mode === 'light';
+  const isLight = theme.palette.mode === "light";
   const prefersReducedMotion = useReducedMotion();
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { treasure } = useTreasure();
   const { asesores, isLoading, error } = useAsesores(treasure);
 
   const embajadores = useMemo(() => {
-    return asesores.filter(a =>
-      (a.role || '').toLowerCase().includes('embajador')
+    return asesores.filter((a) =>
+      (a.role || "").toLowerCase().includes("embajador"),
     );
   }, [asesores]);
 
@@ -67,9 +70,7 @@ export default function AmbassadorDirectory({
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(a =>
-        a.name.toLowerCase().includes(query)
-      );
+      result = result.filter((a) => a.name.toLowerCase().includes(query));
     }
 
     result.sort((a, b) => (b.productCount || 0) - (a.productCount || 0));
@@ -87,15 +88,28 @@ export default function AmbassadorDirectory({
   if (isLoading) {
     return (
       <Box>
-        <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
-          <CircularProgress size={14} aria-label={t.loading.general} sx={{ color: emeraldCore.primary }} />
+        <Box
+          sx={{
+            mb: 3,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1.5,
+          }}
+        >
+          <CircularProgress
+            size={14}
+            aria-label={t.loading.general}
+            sx={{ color: emeraldCore.primary }}
+          />
           <Typography
             sx={{
-              color: 'text.secondary',
-              fontFamily: fontFamilies.mono,
-              fontSize: '0.65rem',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
+              color: "text.secondary",
+              fontFamily: fontFamilies.system,
+              fontSize: "0.65rem",
+              fontWeight: 600,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
             }}
           >
             {t.loading.ambassadors}
@@ -116,6 +130,69 @@ export default function AmbassadorDirectory({
 
   return (
     <Box>
+      {/* Editorial intro — gives the directory a sense of place */}
+      <Box sx={{ textAlign: "center", mb: { xs: 2, sm: 2.5 }, mt: 0.5 }}>
+        <Typography
+          sx={{
+            fontFamily: fontFamilies.display,
+            fontStyle: "italic",
+            fontSize: { xs: "1.15rem", sm: "1.28rem" },
+            lineHeight: 1.35,
+            color: "text.primary",
+            opacity: 0.9,
+            maxWidth: 360,
+            mx: "auto",
+          }}
+        >
+          {t.ambassador.directoryTagline}
+        </Typography>
+
+        {/* Delicate gem divider */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+            mt: 1.25,
+          }}
+        >
+          <Box
+            sx={{
+              height: "1px",
+              width: 32,
+              background: `linear-gradient(90deg, transparent, ${alpha(goldAccent.primary, 0.45)})`,
+            }}
+          />
+          <Gem size={11} style={{ color: goldAccent.primary, opacity: 0.75 }} />
+          <Box
+            sx={{
+              height: "1px",
+              width: 32,
+              background: `linear-gradient(90deg, ${alpha(goldAccent.primary, 0.45)}, transparent)`,
+            }}
+          />
+        </Box>
+
+        {/* Count whisper */}
+        {!hasActiveFilters && embajadores.length > 0 && (
+          <Typography
+            sx={{
+              mt: 1.25,
+              fontSize: "0.62rem",
+              fontWeight: 600,
+              color: "text.secondary",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              opacity: 0.65,
+            }}
+          >
+            {embajadores.length}{" "}
+            {embajadores.length === 1 ? "embajador" : "embajadores"}
+          </Typography>
+        )}
+      </Box>
+
       {/* Search — only for larger lists */}
       {showSearch && (
         <TextField
@@ -133,95 +210,96 @@ export default function AmbassadorDirectory({
           }}
           sx={{
             mb: 2,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '12px',
-              bgcolor: isLight ? alpha('#000', 0.02) : alpha('#fff', 0.03),
-              fontSize: '0.8rem',
-              '& fieldset': {
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "12px",
+              bgcolor: isLight ? alpha("#000", 0.02) : alpha("#fff", 0.03),
+              fontSize: "0.8rem",
+              "& fieldset": {
                 borderColor: isLight
-                  ? alpha('#000', 0.05)
-                  : alpha('#fff', 0.05),
+                  ? alpha("#000", 0.05)
+                  : alpha("#fff", 0.05),
                 transition: cssTransition.default,
               },
-              '&:hover fieldset': {
-                borderColor: isLight
-                  ? alpha('#000', 0.1)
-                  : alpha('#fff', 0.1),
+              "&:hover fieldset": {
+                borderColor: isLight ? alpha("#000", 0.1) : alpha("#fff", 0.1),
               },
-              '&.Mui-focused fieldset': {
+              "&.Mui-focused fieldset": {
                 borderColor: alpha(emeraldCore.primary, 0.35),
-                borderWidth: '1px !important',
+                borderWidth: "1px !important",
               },
             },
           }}
         />
       )}
 
-      {/* Whisper count — only for larger lists */}
-      {embajadores.length >= SEARCH_THRESHOLD && !hasActiveFilters && (
-        <Typography
-          sx={{
-            fontSize: '0.62rem',
-            fontWeight: 500,
-            color: 'text.secondary',
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
-            mb: 1.5,
-            opacity: 0.6,
-          }}
-        >
-          {embajadores.length} {embajadores.length === 1 ? 'embajador' : 'embajadores'}
-        </Typography>
-      )}
-
       {/* Grid */}
       {filteredAsesores.length === 0 ? (
         <Box
           sx={{
-            textAlign: 'center',
+            textAlign: "center",
             py: 8,
             px: 4,
-            borderRadius: '16px',
-            border: '1px solid',
-            borderColor: isLight ? alpha('#000', 0.04) : alpha('#fff', 0.04),
+            borderRadius: "16px",
+            border: "1px solid",
+            borderColor: isLight ? alpha("#000", 0.04) : alpha("#fff", 0.04),
           }}
         >
           <Box
             sx={{
               width: 48,
               height: 48,
-              borderRadius: '50%',
-              border: '1px solid',
+              borderRadius: "50%",
+              border: "1px solid",
               borderColor: alpha(goldAccent.primary, 0.15),
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mx: 'auto',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mx: "auto",
               mb: 2,
             }}
           >
-            <Gem size={20} strokeWidth={1} style={{ color: alpha(goldAccent.primary, 0.4) }} />
+            <Gem
+              size={20}
+              strokeWidth={1}
+              style={{ color: alpha(goldAccent.primary, 0.4) }}
+            />
           </Box>
-          <Typography sx={{ color: 'text.secondary', fontWeight: 500, fontSize: '0.9rem', mb: 0.5 }}>
+          <Typography
+            sx={{
+              color: "text.secondary",
+              fontWeight: 500,
+              fontSize: "0.9rem",
+              mb: 0.5,
+            }}
+          >
             {t.ambassador.noResults}
           </Typography>
-          <Typography sx={{ color: 'text.secondary', fontSize: '0.75rem', opacity: 0.6, mb: 2.5 }}>
-            {hasActiveFilters ? t.ambassador.tryOtherCriteria : t.ambassador.noAmbassadors}
+          <Typography
+            sx={{
+              color: "text.secondary",
+              fontSize: "0.75rem",
+              opacity: 0.6,
+              mb: 2.5,
+            }}
+          >
+            {hasActiveFilters
+              ? t.ambassador.tryOtherCriteria
+              : t.ambassador.noAmbassadors}
           </Typography>
           {hasActiveFilters && (
             <Button
               variant="outlined"
-              onClick={() => setSearchQuery('')}
+              onClick={() => setSearchQuery("")}
               sx={{
-                textTransform: 'none',
+                textTransform: "none",
                 borderColor: alpha(goldAccent.primary, 0.2),
                 color: isLight ? goldAccent.dark : goldAccent.light,
-                fontSize: '0.75rem',
+                fontSize: "0.75rem",
                 fontWeight: 500,
                 px: 2.5,
                 py: 0.5,
-                borderRadius: '10px',
-                '&:hover': {
+                borderRadius: "10px",
+                "&:hover": {
                   borderColor: goldAccent.primary,
                   bgcolor: alpha(goldAccent.primary, 0.04),
                 },
@@ -234,14 +312,14 @@ export default function AmbassadorDirectory({
       ) : (
         <motion.div
           variants={staggerContainer}
-          initial={prefersReducedMotion ? false : 'initial'}
+          initial={prefersReducedMotion ? false : "initial"}
           animate="animate"
         >
           <Box
             sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
-              gap: { xs: '12px', sm: '16px' },
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
+              gap: { xs: "12px", sm: "16px" },
             }}
           >
             {filteredAsesores.map((asesor, index) => (
@@ -261,52 +339,98 @@ export default function AmbassadorDirectory({
 }
 
 /** Skeleton */
-export function AmbassadorDirectorySkeleton({ isLight = false }: { isLight?: boolean }) {
+export function AmbassadorDirectorySkeleton({
+  isLight = false,
+}: {
+  isLight?: boolean;
+}) {
   return (
     <Box
       sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
-        gap: { xs: '12px', sm: '16px' },
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
+        gap: { xs: "12px", sm: "16px" },
       }}
     >
       {[1, 2, 3].map((i) => (
         <Box
           key={i}
           sx={{
-            borderRadius: '18px',
-            bgcolor: isLight ? surfacesLight.surface.default : surfacesDark.background.secondary,
-            border: '1px solid',
-            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-            overflow: 'hidden',
+            borderRadius: "18px",
+            bgcolor: isLight
+              ? surfacesLight.surface.default
+              : surfacesDark.background.secondary,
+            border: "1px solid",
+            borderColor: isLight
+              ? surfacesLight.border.light
+              : surfacesDark.border.light,
+            overflow: "hidden",
           }}
         >
           {/* Top row skeleton */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: '12px 14px 10px 14px' }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              p: "12px 14px 10px 14px",
+            }}
+          >
             <Skeleton
               variant="circular"
               width={44}
               height={44}
-              sx={{ flexShrink: 0, bgcolor: isLight ? alpha('#000', 0.06) : alpha('#fff', 0.06) }}
+              sx={{
+                flexShrink: 0,
+                bgcolor: isLight ? alpha("#000", 0.06) : alpha("#fff", 0.06),
+              }}
             />
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-              <Skeleton variant="text" width="75%" sx={{ bgcolor: isLight ? alpha('#000', 0.05) : alpha('#fff', 0.04) }} />
-              <Skeleton variant="text" width="50%" height={14} sx={{ bgcolor: isLight ? alpha('#000', 0.03) : alpha('#fff', 0.03) }} />
-              <Skeleton variant="rounded" width={70} height={20} sx={{ borderRadius: '5px', bgcolor: isLight ? alpha('#000', 0.04) : alpha('#fff', 0.04) }} />
+            <Box
+              sx={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.5,
+              }}
+            >
+              <Skeleton
+                variant="text"
+                width="75%"
+                sx={{
+                  bgcolor: isLight ? alpha("#000", 0.05) : alpha("#fff", 0.04),
+                }}
+              />
+              <Skeleton
+                variant="text"
+                width="50%"
+                height={14}
+                sx={{
+                  bgcolor: isLight ? alpha("#000", 0.03) : alpha("#fff", 0.03),
+                }}
+              />
+              <Skeleton
+                variant="rounded"
+                width={70}
+                height={20}
+                sx={{
+                  borderRadius: "5px",
+                  bgcolor: isLight ? alpha("#000", 0.04) : alpha("#fff", 0.04),
+                }}
+              />
             </Box>
           </Box>
           {/* Gallery skeleton */}
-          <Box sx={{ display: 'flex', gap: '6px', px: '10px', pb: '10px' }}>
+          <Box sx={{ display: "flex", gap: "6px", px: "10px", pb: "10px" }}>
             {[1, 2, 3].map((j) => (
               <Skeleton
                 key={j}
                 variant="rounded"
                 sx={{
                   flex: 1,
-                  aspectRatio: '4/3',
-                  height: 'auto',
-                  borderRadius: '10px',
-                  bgcolor: isLight ? alpha('#000', 0.04) : alpha('#fff', 0.04),
+                  aspectRatio: "4/3",
+                  height: "auto",
+                  borderRadius: "10px",
+                  bgcolor: isLight ? alpha("#000", 0.04) : alpha("#fff", 0.04),
                 }}
               />
             ))}

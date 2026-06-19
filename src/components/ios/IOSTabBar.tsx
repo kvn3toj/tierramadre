@@ -15,8 +15,10 @@ import { createPortal } from "react-dom";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Box, Typography } from "@mui/material";
 import { motion, LayoutGroup } from "framer-motion";
-import { Home, MoreHoriz, People } from "@mui/icons-material";
-import { Gem, FileText, PlusCircle, Package } from "lucide-react";
+import { Home, MoreHoriz } from "@mui/icons-material";
+import { FileText, PlusCircle, Package } from "lucide-react";
+import EmeraldCutIcon from "../icons/EmeraldCutIcon";
+import AmbassadorsGlobeIcon from "../icons/AmbassadorsGlobeIcon";
 import { useIsProvider } from "../../hooks/usePermissions";
 
 // Design tokens
@@ -51,13 +53,13 @@ const getPrimaryTabs = (t: any): TabConfig[] => [
   {
     id: "treasure",
     label: t.nav.treasure,
-    icon: Gem as React.ElementType,
+    icon: EmeraldCutIcon as React.ElementType,
     route: "/treasure",
   },
   {
     id: "ambassadors",
     label: t.nav.ambassadors,
-    icon: People,
+    icon: AmbassadorsGlobeIcon as React.ElementType,
     route: "/ambassadors",
   },
   {
@@ -146,8 +148,24 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
+  // Bóveda only hands the bottom bar to its slim left side-nav at the desktop
+  // tier (≥1180px, matching ESMEREO_DESKTOP_MIN); iPad keeps the bottom bar.
+  const [isEsmereoDesktop, setIsEsmereoDesktop] = useState<boolean>(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(min-width: 1180px)").matches
+      : false,
+  );
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 1180px)");
+    const onChange = () => setIsEsmereoDesktop(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
   const autoHide =
-    isDesktop && location.pathname.startsWith("/admin/fotosintesis");
+    (isDesktop && location.pathname.startsWith("/admin/fotosintesis")) ||
+    (isEsmereoDesktop && location.pathname.startsWith("/esmereogenesis"));
   const [revealed, setRevealed] = useState(false);
   const reduceMotion =
     typeof window !== "undefined" &&
@@ -300,9 +318,10 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
           {PRIMARY_TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
-            // Lucide icons: treasure (Gem), provider tabs (FileText, PlusCircle, Package)
+            // Custom SVG icons that accept size/color/strokeWidth (Lucide-compatible interface)
             const lucideIconIds = [
               "treasure",
+              "ambassadors",
               "provider-requests",
               "provider-submit",
               "provider-inventory",

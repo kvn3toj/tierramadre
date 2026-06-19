@@ -196,7 +196,7 @@ export default function ThankYouTemplate({
           <BrandText>TIERRA MADRE</BrandText>
 
           {/* Tagline */}
-          <Tagline>ESENCIA Y PODER</Tagline>
+          <Tagline>ESMERALDAS CON ADN DE PAZ</Tagline>
 
           {/* Thank you message */}
           <ThankYouMessage>{message}</ThankYouMessage>

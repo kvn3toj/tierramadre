@@ -356,7 +356,7 @@ export const fr = {
   // Auth
   auth: {
     welcomeTitle: "Tierra Mädre",
-    welcomeSubtitle: "Essence et Pouvoir de l'Émeraude Colombienne",
+    welcomeSubtitle: "Émeraudes Colombiennes avec un ADN de Paix",
     guestAccess: "Mode Invité",
     guestModeBanner: "Mode Invité : lecture seule",
     accessRequired: "Demander l'Accès",
@@ -397,6 +397,8 @@ export const fr = {
     total: "Total",
     active: "Actives",
     pending: "En attente",
+    expired: "Expirées",
+    noInvitations: "Pas encore d'invitations",
     notFound: "Votre profil d'ambassadeur n'a pas été trouvé.",
     multiplier: "Multiplicateur",
     save: "Enregistrer",
@@ -620,6 +622,7 @@ export const fr = {
     pageTitle: "Ambassadeurs",
     pageSubtitle:
       "Conseillers autorisés en émeraudes colombiennes Tierra Madre",
+    directoryTagline: "Les gardiens de l'essence de chaque émeraude",
     activeAmbassadors: "Ambassadeurs actifs",
     totalProducts: "Produits totaux",
     looseGems: "Gemmes en vrac",

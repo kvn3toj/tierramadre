@@ -1,7 +1,14 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Box, Dialog, Switch } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { FileText, Globe, Lock, Trash2, X as XIcon } from "lucide-react";
+import {
+  ChevronLeft,
+  FileText,
+  Globe,
+  Lock,
+  Trash2,
+  X as XIcon,
+} from "lucide-react";
 
 import { getFoto, fontFamilies } from "../../../../design-system";
 import {
@@ -122,6 +129,12 @@ interface EditItemDrawerProps {
    * reviews + Guardar.
    */
   editDraftOverride?: Record<string, unknown>;
+  /**
+   * Chrome variant. "drawer" (default) renders the right-anchored modal sheet.
+   * "page" renders the same form inline as a full routed page (EditItemPage) —
+   * no overlay/focus-trap, a "Volver" back link, and a sticky save footer.
+   */
+  variant?: "drawer" | "page";
 }
 
 /**
@@ -153,7 +166,9 @@ export function EditItemDrawer({
   lotEstado,
   editable = true,
   editDraftOverride,
+  variant = "drawer",
 }: EditItemDrawerProps) {
+  const isPage = variant === "page";
   const foto = getFoto("light");
   const titleId = useId();
   const observacionId = useId();
@@ -249,12 +264,33 @@ export function EditItemDrawer({
   // clean — silently discarding work with no discard prompt. (Review fix.)
   const hydratedKeyRef = useRef<string | null>(null);
 
+  // Page variant: focus the container once on mount so the Escape handler (and
+  // "Esc cierra" hint) work immediately, instead of staying dead until the user
+  // clicks into a field. The Dialog variant gets this for free from MUI's focus
+  // trap, so this is page-only.
+  const pageRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (isPage) pageRef.current?.focus();
+    // run once on mount (per page session)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPage]);
+
   // Revoke any object URLs we created for previews so we don't leak blobs.
   const revokeLocalPreviews = (list: DropzonePhoto[]) => {
     for (const p of list) {
       if (p.url.startsWith("blob:")) URL.revokeObjectURL(p.url);
     }
   };
+
+  // Page variant closes by UNMOUNTING (navigate), not by toggling `open`, so the
+  // open→false revoke effects below never fire there. Mirror `photos` into a ref
+  // and revoke any leftover blob previews once on unmount — covers both variants
+  // (in drawer mode photos are already [] by then, so this is a harmless no-op).
+  const photosRef = useRef<DropzonePhoto[]>([]);
+  useEffect(() => {
+    photosRef.current = photos;
+  });
+  useEffect(() => () => revokeLocalPreviews(photosRef.current), []);
 
   // Hydrate the local draft from the mirror once per open session (per item).
   // We deliberately do NOT re-seed on later `product`/`currentPreponderancia`
@@ -606,41 +642,8 @@ export function EditItemDrawer({
     minHeight: "78px",
   } as const;
 
-  return (
-    <Dialog
-      open={open}
-      onClose={guardedClose}
-      maxWidth={false}
-      aria-labelledby={titleId}
-      aria-modal
-      slotProps={{
-        backdrop: {
-          sx: {
-            background: "rgba(11,16,14,0.32)",
-            backdropFilter: "saturate(80%)",
-          },
-        },
-      }}
-      PaperProps={{
-        sx: {
-          position: "fixed",
-          right: 0,
-          top: 0,
-          bottom: 0,
-          margin: 0,
-          width: { xs: "100vw", sm: 560 },
-          maxWidth: "100vw",
-          height: "100vh",
-          maxHeight: "100vh",
-          borderRadius: 0,
-          boxShadow: "-30px 0 80px rgba(11,16,14,0.18)",
-          background: foto.surfaces.canvas,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        },
-      }}
-    >
+  const inner = (
+    <>
       {/* HEADER */}
       <Box
         sx={{
@@ -692,34 +695,38 @@ export function EditItemDrawer({
             {itemEstadoCopy(lotEstado).subtitle}
           </Box>
         </Box>
-        <Box
-          component="button"
-          type="button"
-          onClick={requestClose}
-          aria-label="Cerrar"
-          sx={{
-            width: 32,
-            height: 32,
-            minWidth: 44,
-            minHeight: 44,
-            borderRadius: "8px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: foto.ink.tertiary,
-            cursor: "pointer",
-            border: `1px solid ${foto.surfaces.edge}`,
-            background: foto.surfaces.canvas,
-            flexShrink: 0,
-            transition: "background 120ms ease, color 120ms ease",
-            "&:hover": {
-              background: foto.surfaces.inset,
-              color: foto.ink.primary,
-            },
-          }}
-        >
-          <XIcon size={14} strokeWidth={2} />
-        </Box>
+        {/* Drawer mode: top-right close (X). Page mode uses the "Volver" back
+            link rendered above the form instead, so we hide this. */}
+        {isPage ? null : (
+          <Box
+            component="button"
+            type="button"
+            onClick={requestClose}
+            aria-label="Cerrar"
+            sx={{
+              width: 32,
+              height: 32,
+              minWidth: 44,
+              minHeight: 44,
+              borderRadius: "8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: foto.ink.tertiary,
+              cursor: "pointer",
+              border: `1px solid ${foto.surfaces.edge}`,
+              background: foto.surfaces.canvas,
+              flexShrink: 0,
+              transition: "background 120ms ease, color 120ms ease",
+              "&:hover": {
+                background: foto.surfaces.inset,
+                color: foto.ink.primary,
+              },
+            }}
+          >
+            <XIcon size={14} strokeWidth={2} />
+          </Box>
+        )}
       </Box>
 
       {/* BODY */}
@@ -1128,6 +1135,9 @@ export function EditItemDrawer({
           alignItems: "center",
           justifyContent: "space-between",
           gap: "12px",
+          // In page mode the whole document scrolls, so pin the save bar to
+          // the viewport bottom (the drawer's flex column does this for free).
+          ...(isPage ? { position: "sticky", bottom: 0, zIndex: 2 } : {}),
         }}
       >
         <Box
@@ -1268,6 +1278,105 @@ export function EditItemDrawer({
         onConfirm={confirmDiscard}
         onCancel={cancelDiscard}
       />
+    </>
+  );
+
+  // PAGE VARIANT — same form, rendered inline as a routed page. The document
+  // scrolls (header is sticky under the topbar, footer sticky at the bottom),
+  // a "Volver" link replaces the drawer's X, and Esc still requests close.
+  if (isPage) {
+    return (
+      <Box
+        ref={pageRef}
+        data-edit-item-page
+        tabIndex={-1}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            requestClose();
+          }
+        }}
+        sx={{
+          maxWidth: 820,
+          margin: "0 auto",
+          width: "100%",
+          background: foto.surfaces.canvas,
+          display: "flex",
+          flexDirection: "column",
+          outline: "none",
+        }}
+      >
+        <Box sx={{ padding: "16px 26px 0" }}>
+          <Box
+            component="button"
+            type="button"
+            onClick={requestClose}
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              border: "none",
+              background: "transparent",
+              color: foto.ink.secondary,
+              fontFamily: fontFamilies.system,
+              fontSize: 12.5,
+              fontWeight: 600,
+              cursor: "pointer",
+              padding: "6px 8px",
+              marginLeft: "-8px",
+              borderRadius: "8px",
+              transition: "background 120ms ease, color 120ms ease",
+              "&:hover": {
+                background: foto.surfaces.inset,
+                color: foto.ink.primary,
+              },
+            }}
+          >
+            <ChevronLeft size={15} strokeWidth={2} />
+            Volver
+          </Box>
+        </Box>
+        {inner}
+      </Box>
+    );
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={guardedClose}
+      maxWidth={false}
+      aria-labelledby={titleId}
+      aria-modal
+      slotProps={{
+        backdrop: {
+          sx: {
+            background: "rgba(11,16,14,0.32)",
+            backdropFilter: "saturate(80%)",
+          },
+        },
+      }}
+      PaperProps={{
+        sx: {
+          position: "fixed",
+          right: 0,
+          top: 0,
+          bottom: 0,
+          margin: 0,
+          width: { xs: "100vw", sm: 560 },
+          maxWidth: "100vw",
+          height: "100vh",
+          maxHeight: "100vh",
+          borderRadius: 0,
+          boxShadow: "-30px 0 80px rgba(11,16,14,0.18)",
+          background: foto.surfaces.canvas,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        },
+      }}
+    >
+      {inner}
     </Dialog>
   );
 }

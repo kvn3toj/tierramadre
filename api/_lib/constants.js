@@ -111,5 +111,5 @@ export const ALL_MEDIA_TYPES = [...IMAGE_MIME_TYPES, ...VIDEO_MIME_TYPES];
 // e.g., "admin1@tierramadre.com,admin2@tierramadre.com"
 export const EMAIL_CONFIG = {
   DEFAULT_FROM: 'Tierra Madre <notificaciones@tierramadre.studio>',
-  DEFAULT_APP_URL: 'https://tierra-madre-studio.vercel.app',
+  DEFAULT_APP_URL: 'https://tierramadre.app',
 };

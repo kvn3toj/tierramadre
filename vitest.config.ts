@@ -10,9 +10,11 @@ export default defineConfig({
       ["tests/useVaultUnlock.test.ts", "jsdom"],
       ["tests/useVaultReducedMotion.test.ts", "jsdom"],
       ["tests/vault-cinematic-sequence.test.ts", "jsdom"],
+      ["tests/useAbonoSequence.test.ts", "jsdom"],
       ["tests/vault-audio.test.ts", "jsdom"],
       ["tests/useChromaSamples.test.ts", "jsdom"],
       ["tests/fotosintesis-phone.test.ts", "jsdom"],
+      ["tests/kardexPreview.test.ts", "jsdom"],
     ],
   },
 });

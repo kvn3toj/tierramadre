@@ -264,12 +264,12 @@ export default function WelcomeScreen() {
         }}
       />
 
-      {/* Branded Logo - includes "TIERRA MADRE" and "Esencia y Poder" */}
+      {/* Branded Logo - includes "TIERRA MADRE" and "Esmeraldas con ADN de Paz" */}
       <Fade in timeout={400}>
         <Box
           component="img"
           src="/logo-brand.png"
-          alt="Tierra Madre - Esencia y Poder"
+          alt="Tierra Madre - Esmeraldas con ADN de Paz"
           sx={{
             width: { xs: "70vw", sm: 360 },
             maxWidth: 400,

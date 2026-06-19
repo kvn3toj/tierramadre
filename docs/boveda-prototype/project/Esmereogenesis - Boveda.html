@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Esmereogénesis · Bóveda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: 'Hanken Grotesk', system-ui, sans-serif;
+    background: #03060a;
+    color: #F2F7F4;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow: hidden;
+  }
+  #stage {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(120% 80% at 50% 18%, #0a1712 0%, #060e0a 48%, #020406 100%);
+  }
+  #frame-wrap { transform-origin: center center; }
+  .serif { font-family: 'Playfair Display', Georgia, serif; font-weight: 500; }
+
+  /* device */
+  .device {
+    width: 390px; height: 844px; border-radius: 48px; position: relative;
+    background: #03060a; overflow: hidden;
+    box-shadow: 0 0 0 11px #0c0f12, 0 0 0 13px #1c2024, 0 40px 90px -20px rgba(0,0,0,0.8);
+  }
+  .island { position: absolute; top: 11px; left: 50%; transform: translateX(-50%); width: 112px; height: 31px; border-radius: 16px; background: #000; z-index: 90; }
+
+  /* iPad + desktop device shells */
+  .device[data-frame="ipad"] {
+    width: 834px; height: 1194px; border-radius: 40px;
+    box-shadow: 0 0 0 13px #0c0f12, 0 0 0 15px #1c2024, 0 60px 130px -34px rgba(0,0,0,0.82);
+  }
+  .device[data-frame="ipad"] .island { width: 9px; height: 9px; border-radius: 50%; top: 16px; background: #11161a; box-shadow: inset 0 0 0 2px #05080b; }
+  .device[data-frame="desktop"] {
+    width: 1440px; height: 900px; border-radius: 26px;
+    box-shadow: 0 0 0 10px #0c0f12, 0 0 0 12px #1c2024, 0 60px 150px -44px rgba(0,0,0,0.86);
+  }
+  .device[data-frame="desktop"] .island { display: none; }
+
+  /* ── desktop: left side-nav rail + shifted content ── */
+  .bov-sidenav {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 92px; z-index: 40;
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    padding: 30px 0 26px;
+    background: linear-gradient(180deg, var(--surface), transparent);
+    border-right: 1px solid var(--hairline);
+    backdrop-filter: blur(8px);
+  }
+  .bov-root[data-bp="desktop"] .screen-anim { left: 92px; }
+  .bov-root[data-bp="desktop"] .bov-vignette { left: 92px; }
+
+  /* ── focus-column: centers narrow screens on iPad / desktop ── */
+  .bov-root[data-bp="ipad"]    .focus-col { max-width: 640px; margin: 0 auto; }
+  .bov-root[data-bp="desktop"] .focus-col { max-width: 680px; margin: 0 auto; }
+
+  /* ── sheets become centered modals on iPad / desktop ── */
+  .bov-root[data-bp="ipad"]    .bov-modal-scrim,
+  .bov-root[data-bp="desktop"] .bov-modal-scrim { z-index: 100; }
+
+  .bov-root {
+    --ink: #F2F7F4;
+    --ink-soft: rgba(228,240,234,0.62);
+    --ink-faint: rgba(228,240,234,0.34);
+    --em: #0E7C5A;
+    --em-deep: #0B5C46;
+    --em-bright: #2FAE86;
+    --gold: #D9A94B;
+    --gold-bright: #F0CE86;
+    --accent-bg: rgba(217,169,75,0.10);
+    --accent-bg-soft: rgba(217,169,75,0.07);
+    --accent-line: rgba(217,169,75,0.32);
+    --accent-line-strong: rgba(217,169,75,0.5);
+    --claim-bg: linear-gradient(180deg, #F0CE86, #D9A94B);
+    --claim-ink: #3a2c08;
+    --btn-sub: #F0CE86;
+    --sheet-shadow: 0 -24px 60px rgba(0,0,0,0.6);
+    --cta-border: rgba(217,169,75,0.42);
+    --cta-glow: 0 0 40px -12px rgba(47,174,134,0.7), inset 0 1px 0 rgba(255,255,255,0.08);
+    /* themeable chrome tokens */
+    --surface: rgba(255,255,255,0.05);
+    --surface-2: rgba(255,255,255,0.07);
+    --hairline: rgba(255,255,255,0.12);
+    --line: rgba(255,255,255,0.1);
+    --scrim: rgba(2,5,4,0.66);
+    --sheet-bg: linear-gradient(180deg, #0c1a14, #060f0b 70%);
+    --dock-fade: rgba(3,8,6,0.82);
+    --statusbar: #F2F7F4;
+    --spark: #EAFBF3;
+    --veil: radial-gradient(90% 60% at 50% 42%, rgba(20,40,30,0.97), rgba(3,8,6,0.99));
+    --app-bg:
+      radial-gradient(90% 55% at 50% 16%, rgba(14,124,90,0.30), transparent 56%),
+      radial-gradient(120% 60% at 50% 110%, rgba(11,92,70,0.26), transparent 58%),
+      radial-gradient(150% 110% at 50% 42%, #0a1712 0%, #061009 46%, #020605 100%);
+    --vignette: radial-gradient(130% 92% at 50% 44%, transparent 54%, rgba(0,0,0,0.6) 100%);
+    width: 100%; height: 100%; position: relative; overflow: hidden;
+    color: var(--ink);
+    background: var(--app-bg);
+  }
+
+  /* ── LIGHT THEME · cool brushed-platinum showroom ── */
+  .bov-root[data-theme="light"] {
+    --ink: #15302A;
+    --ink-soft: #35484A;
+    --ink-faint: #586A6C;
+    --em: #0B5C46;
+    --em-deep: #08402F;
+    --em-bright: #0E7C5A;
+    --gold: #5E6E66;
+    --gold-bright: #46615A;
+    --accent-bg: rgba(150,168,170,0.20);
+    --accent-bg-soft: rgba(150,168,170,0.12);
+    --accent-line: rgba(120,140,142,0.42);
+    --accent-line-strong: rgba(96,118,118,0.58);
+    --claim-bg: linear-gradient(180deg, #D8DCD3, #B2B9AC);
+    --claim-ink: #28332D;
+    --btn-sub: #D6E4DD;
+    --surface: #E8EDEF;
+    --surface-2: #DEE6E8;
+    --hairline: #D2DBDE;
+    --line: #DCE3E5;
+    --scrim: rgba(44,58,60,0.34);
+    --sheet-bg: linear-gradient(180deg, #FFFFFF, #EAEFF1 72%);
+    --sheet-shadow: 0 -18px 48px rgba(54,74,80,0.20);
+    --cta-border: rgba(11,92,70,0.40);
+    --cta-glow: 0 12px 30px -14px rgba(40,78,72,0.42), 0 0 30px -10px rgba(14,124,90,0.30);
+    --dock-fade: rgba(246,248,249,0.88);
+    --statusbar: #18302A;
+    --spark: #0E7C5A;
+    --veil: radial-gradient(90% 60% at 50% 42%, rgba(249,251,252,0.97), rgba(228,234,236,0.99));
+    --app-bg:
+      radial-gradient(90% 55% at 50% 12%, rgba(14,124,90,0.08), transparent 56%),
+      radial-gradient(120% 60% at 50% 112%, rgba(120,140,150,0.10), transparent 58%),
+      linear-gradient(180deg, #FAFCFC 0%, #F2F5F7 55%, #ECF1F3 100%);
+    --vignette: radial-gradient(135% 100% at 50% 46%, transparent 64%, rgba(70,92,96,0.09) 100%);
+  }
+  .bov-vignette { position: absolute; inset: 0; pointer-events: none; z-index: 1;
+    background: var(--vignette); }
+
+  /* light-mode hero staging: cool halo + pedestal/reflection + clean cone */
+  .le-stage { display: none; }
+  .bov-root[data-theme="light"] .le-stage {
+    display: block; position: absolute; left: 50%; top: 47%; transform: translate(-50%,-50%);
+    width: 132%; height: 132%; pointer-events: none; z-index: 0;
+    background: radial-gradient(circle at 50% 44%, rgba(14,124,90,0.13), rgba(108,138,138,0.07) 40%, transparent 66%);
+  }
+  .bov-root[data-theme="light"] .le-stage::after {
+    content: ""; position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%);
+    width: 44%; height: 8%; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(26,52,46,0.22), transparent 76%); filter: blur(4px);
+  }
+  .bov-root[data-theme="light"] .le-stage::before {
+    content: ""; position: absolute; left: 50%; bottom: 4%; transform: translateX(-50%);
+    width: 30%; height: 11%; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(14,124,90,0.20), transparent 72%); filter: blur(7px); opacity: .6;
+  }
+  .bov-root[data-theme="light"] .le-beam {
+    background: linear-gradient(180deg, rgba(14,124,90,0.17), rgba(118,148,148,0.06) 46%, transparent 78%) !important;
+    filter: blur(15px) !important;
+  }
+
+  .scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; z-index: 2; }
+  .scroll::-webkit-scrollbar { width: 0; height: 0; }
+
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  .tap { -webkit-tap-highlight-color: transparent; transition: transform .12s cubic-bezier(.34,1.56,.64,1); }
+  .tap:active { transform: scale(0.94); }
+
+  /* ── continuous life ── */
+  @keyframes bovFloat   { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-11px); } }
+  @keyframes bovBreathe { 0%,100%{ transform: scale(1); } 50%{ transform: scale(1.035); } }
+  @keyframes bovSheen   { to { transform: rotate(360deg); } }
+  @keyframes bovHalo    { 0%,100%{ opacity: .55; transform: scale(1); } 50%{ opacity: .9; transform: scale(1.07); } }
+  @keyframes bovMist    { 0%{ opacity:.5; transform: translateY(4px) scale(1);} 100%{ opacity:.95; transform: translateY(-6px) scale(1.1);} }
+  @keyframes bovBeam    { 0%,100%{ opacity:.7; transform: translateX(-50%) scaleY(1);} 50%{ opacity:1; transform: translateX(-50%) scaleY(1.04);} }
+  @keyframes bovRise    { 0%{ opacity:0; transform: translate(0,0) scale(.5);} 14%{opacity:.95;} 100%{ opacity:0; transform: translate(var(--dx,0), -290px) scale(1);} }
+  @keyframes bovBlink   { 0%,92%,100%{ opacity:.0;} 96%{ opacity:.9;} }
+
+  /* ── ritual ── */
+  @keyframes bovDrop    { 0%{ opacity:0; transform: translate(-50%,-160px) scale(.7);} 12%{opacity:1;} 78%{opacity:1; transform: translate(-50%,-6px) scale(1);} 100%{opacity:0; transform: translate(-50%,4px) scale(1.2,.7);} }
+  @keyframes bovRipple  { 0%{ opacity:.9; transform: translate(-50%,-50%) scale(.2);} 100%{ opacity:0; transform: translate(-50%,-50%) scale(2.2);} }
+  @keyframes bovBounce  { 0%{transform:scale(1);} 28%{transform:scale(.9);} 60%{transform:scale(1.08);} 100%{transform:scale(1);} }
+  @keyframes bovBurst   { 0%{ opacity:0; transform: translate(-50%,-50%) translate(0,0) scale(.3);} 18%{opacity:1;} 100%{ opacity:0; transform: translate(-50%,-50%) translate(var(--bx,0),var(--by,0)) scale(1);} }
+  @keyframes bovSurge   { 0%{ opacity:0; transform: translate(-50%,-50%) scale(.5);} 30%{opacity:.8;} 100%{ opacity:0; transform: translate(-50%,-50%) scale(1.7);} }
+  @keyframes bovPop     { 0%{transform:scale(.6); opacity:0;} 60%{transform:scale(1.15);} 100%{transform:scale(1); opacity:1;} }
+  @keyframes fadeUp     { from{opacity:0; transform: translateY(14px);} to{opacity:1; transform:none;} }
+  @keyframes fadeIn     { from{opacity:0;} to{opacity:1;} }
+
+  /* ── eclosión ceremony ── */
+  @keyframes ecloRing   { 0%{ opacity:.8; transform: translate(-50%,-50%) scale(.1);} 100%{ opacity:0; transform: translate(-50%,-50%) scale(3.4);} }
+  @keyframes ecloAscend { 0%{ transform: translateY(46px) scale(.62);} 60%{ transform: translateY(-14px) scale(1.16);} 100%{ transform: translateY(-10px) scale(1.12);} }
+  @keyframes ecloGlow   { 0%,100%{ opacity:.6; transform: translate(-50%,-50%) scale(1);} 50%{ opacity:1; transform: translate(-50%,-50%) scale(1.12);} }
+  @keyframes ecloRain   { 0%{ opacity:0; transform: translateY(-30px) scale(.6);} 12%{opacity:1;} 100%{ opacity:0; transform: translateY(340px) scale(1);} }
+
+  .fade-up { animation: fadeUp .55s cubic-bezier(.2,.85,.3,1); }
+
+  @keyframes screenIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+  .screen-anim { position: absolute; inset: 0; animation: screenIn .34s cubic-bezier(.2,.8,.3,1); }
+  @keyframes siembraPulse { 0%,100%{ opacity:.5; transform: scale(1);} 50%{ opacity:1; transform: scale(1.25);} }
+
+  @media (prefers-reduced-motion: reduce) {
+    .anim-loop, .fade-up, .screen-anim { animation: none !important; }
+    .bov-root .reduced-hide { display: none !important; }
+  }
+</style>
+</head>
+<body>
+  <div id="stage"><div id="frame-wrap"></div></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="components/bov-living.jsx"></script>
+  <script type="text/babel" src="components/bov-ui.jsx"></script>
+  <script type="text/babel" src="components/bov-responsive.jsx"></script>
+  <script type="text/babel" src="components/bov-screens.jsx"></script>
+  <script type="text/babel" src="components/bov-garden-wide.jsx"></script>
+  <script type="text/babel" src="components/bov-producto.jsx"></script>
+  <script type="text/babel" src="components/bov-flow.jsx"></script>
+  <script type="text/babel" src="components/bov-main.jsx"></script>
+</body>
+</html>

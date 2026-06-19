@@ -9,6 +9,8 @@ interface UsePaginationProps {
   totalItems: number;
   itemsPerPage?: number;
   initialPage?: number;
+  /** Initial number of loaded "pages" (Load-More mode) — used to restore progress. */
+  initialLoadedPages?: number;
 }
 
 interface UsePaginationReturn {
@@ -16,6 +18,8 @@ interface UsePaginationReturn {
   itemsPerPage: number;
   totalPages: number;
   visibleCount: number;
+  /** How many "pages" have been loaded so far (Load-More mode). */
+  loadedPages: number;
   hasMore: boolean;
   goToPage: (page: number) => void;
   nextPage: () => void;
@@ -30,9 +34,14 @@ export function usePagination({
   totalItems,
   itemsPerPage = 24,
   initialPage = 1,
+  initialLoadedPages = 1,
 }: UsePaginationProps): UsePaginationReturn {
   const [currentPage, setCurrentPage] = useState(initialPage);
-  const [loadedPages, setLoadedPages] = useState(1); // For "Load More" mode
+  // For "Load More" mode. Initialised from a restored value so returning to a
+  // list re-renders the same number of items the user had loaded.
+  const [loadedPages, setLoadedPages] = useState(() =>
+    Math.max(1, Math.floor(initialLoadedPages))
+  );
 
   // Calculate total pages
   const totalPages = useMemo(
@@ -105,6 +114,7 @@ export function usePagination({
     itemsPerPage,
     totalPages,
     visibleCount,
+    loadedPages,
     hasMore,
     goToPage,
     nextPage,

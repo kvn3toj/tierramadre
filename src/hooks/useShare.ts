@@ -25,7 +25,7 @@ import { createLogger } from '../utils/logger';
 const log = createLogger('useShare');
 
 // Base URL for the Tierra Madre Studio app
-const STUDIO_BASE_URL = 'https://tierra-madre-studio.vercel.app';
+const STUDIO_BASE_URL = 'https://tierramadre.app';
 
 interface ShareData {
   title: string;

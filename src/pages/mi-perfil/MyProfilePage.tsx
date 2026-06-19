@@ -30,6 +30,7 @@ export default function MyProfilePage() {
   const { user: googleUser } = useGoogleAuth();
   const { asesor, isLoading: asesorLoading } = useCurrentAsesor();
   const { treasure } = useTreasure();
+  const emailReady = !!googleUser?.email;
   const { guestViews, topProducts, isLoading: activityLoading } = useGuestActivity(asesor?.name, 500);
   const { invitations, metrics, isLoading: invitationsLoading, mutatingCodes, updateMultiplier, expireInvitation } = useMyInvitations(googleUser?.email);
 
@@ -87,7 +88,7 @@ export default function MyProfilePage() {
         <InvitationSummary
           invitations={invitations}
           metrics={metrics}
-          isLoading={invitationsLoading}
+          isLoading={invitationsLoading || !emailReady}
           mutatingCodes={mutatingCodes}
           onUpdateMultiplier={updateMultiplier}
           onExpire={expireInvitation}

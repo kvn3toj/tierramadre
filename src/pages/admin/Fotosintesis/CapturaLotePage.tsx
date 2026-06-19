@@ -12,11 +12,13 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   AlertTriangle,
   Boxes,
+  Check,
   Diamond,
   Gem,
   Layers,
   Mountain,
   Pencil,
+  Plus,
   Tag,
   Wrench,
 } from "lucide-react";
@@ -48,8 +50,8 @@ import {
 import { EntityPicker } from "./components/EntityPicker";
 import { LotSwitcher } from "./components/LotSwitcher";
 import { EditableMetaValue } from "./components/EditableMetaValue";
-import { EditItemDrawer } from "./components/EditItemDrawer";
 import { EditLotDrawer } from "./components/EditLotDrawer";
+import { EditItemDrawer } from "./components/EditItemDrawer";
 import { useNotification } from "../../../contexts/NotificationContext";
 import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
 import ConfirmDialog from "../../../components/shared/ConfirmDialog";
@@ -1309,6 +1311,191 @@ function StickyFooter({
 }
 
 // -----------------------------------------------------------------------------
+// Lote complete panel — shown in the left column instead of the capture form
+// once every declared unit has been captured (itemsCount >= unidadesDeclaradas).
+// Replaces the old phantom "Ítem N+1 de N" form, which could never be saved.
+// -----------------------------------------------------------------------------
+
+interface LoteCompletePanelProps {
+  foto: ReturnType<typeof getFoto>;
+  unidadesDeclaradas: number;
+  prepSum: number;
+  prepRemaining: number;
+  prepOverflow: number;
+  canCloseLot: boolean;
+  hasProvider: boolean;
+  onAddUnit: () => void;
+  onCloseLot: () => void;
+}
+
+function LoteCompletePanel({
+  foto,
+  unidadesDeclaradas,
+  prepSum,
+  prepRemaining,
+  prepOverflow,
+  canCloseLot,
+  hasProvider,
+  onAddUnit,
+  onCloseLot,
+}: LoteCompletePanelProps) {
+  const balanced = Math.abs(prepSum - 100) <= 0.01;
+  const prepStatus = balanced
+    ? "preponderancia balanceada al 100%"
+    : prepRemaining > 0.01
+      ? `falta ${Math.round(prepRemaining * 10) / 10}% de preponderancia`
+      : `${Math.round(prepOverflow * 10) / 10}% de exceso de preponderancia`;
+  // If closing is blocked, say exactly why — never a dead disabled button.
+  const blockReason = !hasProvider
+    ? "Asigná un proveedor al lote antes de cerrarlo."
+    : !balanced
+      ? "Ajustá la preponderancia de los ítems hasta el 100% para poder cerrar el lote."
+      : null;
+
+  // This panel replaces the capture form (which unmounts) the instant the lote
+  // fills, so the focused field/button vanishes. Move focus to the heading and
+  // announce the new state so keyboard + screen-reader users aren't stranded.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
+
+  return (
+    <Box
+      role="status"
+      aria-live="polite"
+      sx={{
+        background: foto.surfaces.canvas,
+        border: `1px solid ${foto.surfaces.rule}`,
+        borderRadius: "14px",
+        padding: "32px 28px",
+        display: "grid",
+        gap: "18px",
+        justifyItems: "start",
+      }}
+    >
+      <Box
+        sx={{
+          width: 44,
+          height: 44,
+          borderRadius: "12px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: foto.accent.soft,
+          color: foto.accent.deep,
+        }}
+      >
+        <Check size={22} strokeWidth={2} />
+      </Box>
+
+      <Box sx={{ display: "grid", gap: "6px" }}>
+        <Box
+          component="h2"
+          ref={headingRef}
+          tabIndex={-1}
+          sx={{
+            fontSize: 19,
+            fontWeight: 600,
+            color: foto.ink.primary,
+            letterSpacing: "-0.02em",
+            margin: 0,
+            outline: "none",
+          }}
+        >
+          Lote completo
+        </Box>
+        <Box sx={{ fontSize: 13, color: foto.ink.secondary, lineHeight: 1.5 }}>
+          Capturaste los {unidadesDeclaradas} ítems declarados ·{" "}
+          <Box
+            component="span"
+            sx={{ color: balanced ? foto.accent.deep : foto.status.sold }}
+          >
+            {prepStatus}
+          </Box>
+          .
+        </Box>
+      </Box>
+
+      <Box
+        sx={{
+          fontSize: 12.5,
+          color: foto.ink.tertiary,
+          lineHeight: 1.5,
+          maxWidth: 520,
+        }}
+      >
+        Revisá los ítems en la bandeja de la derecha, agregá otra unidad si
+        encontraste una pieza extra en el lote, o cerrá el lote para publicarlo
+        en el catálogo.
+      </Box>
+
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "10px",
+          marginTop: "4px",
+        }}
+      >
+        <Box
+          component="button"
+          type="button"
+          onClick={onAddUnit}
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "7px",
+            border: `1px solid ${foto.surfaces.edgeStrong}`,
+            background: foto.surfaces.canvas,
+            color: foto.ink.primary,
+            borderRadius: "9px",
+            padding: "10px 16px",
+            fontSize: 12.5,
+            fontWeight: 600,
+            cursor: "pointer",
+            transition: "background 120ms ease",
+            "&:hover": { background: foto.surfaces.inset },
+          }}
+        >
+          <Plus size={15} strokeWidth={2} />
+          Agregar otra unidad
+        </Box>
+        <Box
+          component="button"
+          type="button"
+          onClick={onCloseLot}
+          disabled={!canCloseLot}
+          title={blockReason ?? undefined}
+          sx={{
+            border: "none",
+            background: canCloseLot ? foto.accent.primary : foto.surfaces.inset,
+            color: canCloseLot ? foto.ink.inverse : foto.ink.mute,
+            borderRadius: "9px",
+            padding: "10px 18px",
+            fontSize: 12.5,
+            fontWeight: 600,
+            cursor: canCloseLot ? "pointer" : "not-allowed",
+            transition: "background 120ms ease, transform 120ms ease",
+            "&:hover": canCloseLot
+              ? { background: foto.accent.deep, transform: "translateY(-1px)" }
+              : undefined,
+          }}
+        >
+          Cerrar lote
+        </Box>
+      </Box>
+
+      {blockReason ? (
+        <Box sx={{ fontSize: 11.5, color: foto.ink.tertiary }}>
+          {blockReason}
+        </Box>
+      ) : null}
+    </Box>
+  );
+}
+
+// -----------------------------------------------------------------------------
 // Lot meta card (right pane summary, slightly compact)
 // -----------------------------------------------------------------------------
 
@@ -1578,6 +1765,10 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
   const itemsCount = items?.length ?? 0;
   const isLastItem =
     unidadesDeclaradas > 0 && itemsCount === unidadesDeclaradas - 1;
+  // The lote has reached (or exceeded) its declared unit count. There is no
+  // valid "next item" to capture, so instead of a phantom "Ítem N+1 de N"
+  // form (canSave is false here) we surface a completion panel.
+  const lotIsFull = unidadesDeclaradas > 0 && itemsCount >= unidadesDeclaradas;
   // A lote that declares a single unit: the one item is the lote itself, so its
   // identity fields live on the header. We seed the draft from the lot below.
   const isSingleItemLot = unidadesDeclaradas === 1;
@@ -1867,6 +2058,23 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
     navigate(`/admin/fotosintesis/lots/${loteId}/close`);
   }, [canCloseLot, navigate, loteId]);
 
+  // From the completion panel: the operator found one more piece than declared.
+  // Bump unidadesDeclaradas by 1 — this re-opens the capture form for the next
+  // ítem (itemsCount < unidadesDeclaradas again) without leaving the screen.
+  const handleAddUnit = useCallback(async () => {
+    if (!lot) return;
+    try {
+      await updateLot({
+        id: lot._id as Id<"lots">,
+        patch: { unidadesDeclaradas: unidadesDeclaradas + 1 },
+      });
+      notify("Unidad agregada · capturá el ítem extra", "success");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      notify(`No pudimos agregar la unidad: ${msg}`, "error");
+    }
+  }, [lot, unidadesDeclaradas, updateLot, notify]);
+
   // Cancel ítem: opens a confirm. If the lot has only the current slot left
   // (unidadesDeclaradas <= 1), the user is effectively cancelling the lot —
   // we route the confirm to the cancelLot mutation. Otherwise we shrink
@@ -2097,6 +2305,8 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
           label: "Preponderancia",
         }}
         alert={!hasProvider}
+        onEdit={() => setEditLotOpen(true)}
+        editDisabled={lot.estado !== "abierto"}
       />
 
       {!hasProvider ? (
@@ -2175,333 +2385,365 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
             </Box>
           ) : null}
 
-          <Box
-            sx={{
-              background: foto.surfaces.canvas,
-              border: `1px solid ${foto.surfaces.rule}`,
-              borderRadius: "14px",
-              padding: "20px 22px",
-              display: "grid",
-              gap: "20px",
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-                gap: "12px",
-              }}
-            >
-              <Box
-                component="h2"
-                sx={{
-                  fontSize: 17,
-                  fontWeight: 600,
-                  color: foto.ink.primary,
-                  letterSpacing: "-0.02em",
-                  margin: 0,
-                }}
-              >
-                Ítem {itemsCount + 1} de {unidadesDeclaradas || "?"}
-              </Box>
+          {lotIsFull ? (
+            <LoteCompletePanel
+              foto={foto}
+              unidadesDeclaradas={unidadesDeclaradas}
+              prepSum={prepTotal.sum}
+              prepRemaining={prepTotal.remaining}
+              prepOverflow={prepTotal.overflow}
+              canCloseLot={canCloseLot}
+              hasProvider={hasProvider}
+              onAddUnit={() => void handleAddUnit()}
+              onCloseLot={handleCloseLot}
+            />
+          ) : (
+            <>
               <Box
                 sx={{
-                  fontFamily: fontFamilies.mono,
-                  fontVariantNumeric: "tabular-nums",
-                  fontSize: 11,
-                  color: foto.ink.tertiary,
-                }}
-              >
-                {loteId} · {String(itemsCount + 1).padStart(3, "0")}
-              </Box>
-            </Box>
-
-            <TypeSelector value={subtipo} onChange={setSubtipo} />
-
-            {/* Single-item lote — explain the prefill instead of the per-item
-                "repetir datos base" toggle, which has no "next item" to fill. */}
-            {isSingleItemLot && itemsCount === 0 ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "2px",
-                  padding: "10px 12px",
-                  background: foto.surfaces.inset,
-                  border: `1px solid ${foto.surfaces.edge}`,
-                  borderRadius: "10px",
+                  background: foto.surfaces.canvas,
+                  border: `1px solid ${foto.surfaces.rule}`,
+                  borderRadius: "14px",
+                  padding: "20px 22px",
+                  display: "grid",
+                  gap: "20px",
                 }}
               >
                 <Box
                   sx={{
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    color: foto.ink.primary,
-                    letterSpacing: "-0.01em",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                    gap: "12px",
                   }}
-                >
-                  Lote de un solo ítem
-                </Box>
-                <Box
-                  sx={{
-                    fontSize: 10.5,
-                    color: foto.ink.tertiary,
-                    lineHeight: 1.45,
-                  }}
-                >
-                  Copiamos el nombre, la procedencia, el peso y el 100% de
-                  preponderancia desde el encabezado del lote. Ajustá lo que
-                  haga falta antes de guardar.
-                </Box>
-              </Box>
-            ) : null}
-
-            {/* Repetir datos base — sticky base fields across the lote */}
-            {!isSingleItemLot ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "12px",
-                  padding: "10px 12px",
-                  background: reuseBaseData
-                    ? foto.accent.soft
-                    : foto.surfaces.inset,
-                  border: `1px solid ${
-                    reuseBaseData ? foto.accent.primary : foto.surfaces.edge
-                  }`,
-                  borderRadius: "10px",
-                  transition: "background 120ms ease, border-color 120ms ease",
-                }}
-              >
-                <Box
-                  sx={{ display: "flex", flexDirection: "column", gap: "2px" }}
                 >
                   <Box
-                    component="label"
-                    htmlFor="reuse-base-data"
+                    component="h2"
                     sx={{
-                      fontSize: 12.5,
+                      fontSize: 17,
                       fontWeight: 600,
                       color: foto.ink.primary,
-                      letterSpacing: "-0.01em",
+                      letterSpacing: "-0.02em",
+                      margin: 0,
                     }}
                   >
-                    Repetir datos base en cada ítem
+                    Ítem {itemsCount + 1} de {unidadesDeclaradas || "?"}
                   </Box>
                   <Box
                     sx={{
-                      fontSize: 10.5,
+                      fontFamily: fontFamilies.mono,
+                      fontVariantNumeric: "tabular-nums",
+                      fontSize: 11,
                       color: foto.ink.tertiary,
-                      lineHeight: 1.45,
                     }}
                   >
-                    Al guardar, conservá {BASE_FIELDS_LABEL[tipo]} para el
-                    siguiente ítem. Editás un campo base y se aplica a los
-                    próximos (no a los ya guardados).
+                    {loteId} · {String(itemsCount + 1).padStart(3, "0")}
                   </Box>
                 </Box>
-                <Switch
-                  id="reuse-base-data"
-                  checked={reuseBaseData}
-                  onChange={(e) => toggleReuseBaseData(e.target.checked)}
-                  inputProps={{
-                    "aria-checked": reuseBaseData,
-                    "aria-label": "Repetir datos base en cada ítem",
-                  }}
-                />
-              </Box>
-            ) : null}
 
-            {tipo === "insumo" ? (
-              <InsumoFields
-                value={insumo}
-                onChange={(patch) =>
-                  setInsumo((prev) => ({ ...prev, ...patch }))
-                }
-                lotCostoTotalCOP={costoTotalCOP}
-                preponderanciaHelper={prepHelper?.text}
-                preponderanciaHelperAlert={prepHelper?.alert}
-              />
-            ) : tipo === "bruto" ? (
-              <BrutoFields
-                value={bruto}
-                onChange={(patch) =>
-                  setBruto((prev) => ({ ...prev, ...patch }))
-                }
-                lotCostoTotalCOP={costoTotalCOP}
-                preponderanciaHelper={prepHelper?.text}
-                preponderanciaHelperAlert={prepHelper?.alert}
-              />
-            ) : tipo === "gema" ? (
-              <GemaFields
-                value={gema}
-                onChange={(patch) => setGema((prev) => ({ ...prev, ...patch }))}
-                lotCostoTotalCOP={costoTotalCOP}
-                preponderanciaHelper={prepHelper?.text}
-                preponderanciaHelperAlert={prepHelper?.alert}
-              />
-            ) : (
-              <JoyaFields
-                value={joya}
-                onChange={(patch) => setJoya((prev) => ({ ...prev, ...patch }))}
-                lotCostoTotalCOP={costoTotalCOP}
-                preponderanciaHelper={prepHelper?.text}
-                preponderanciaHelperAlert={prepHelper?.alert}
-              />
-            )}
+                <TypeSelector value={subtipo} onChange={setSubtipo} />
 
-            {/* Foto */}
-            <Box>
-              {tipo === "insumo" ? (
-                <FieldLabel>Foto (opcional)</FieldLabel>
-              ) : (
-                <FieldLabel optional="opcional">Foto del ítem</FieldLabel>
-              )}
-              <PhotoDropzone
-                photos={photos}
-                onAdd={addPhotos}
-                onRemove={removePhoto}
-                hint="JPG o PNG. Se sube a Drive al guardar."
-              />
-            </Box>
-
-            {/* Certificado */}
-            {tipo !== "insumo" && (
-              <Box>
-                <FieldLabel optional="opcional">Certificado</FieldLabel>
-                <Box
-                  component="input"
-                  id="cert-file"
-                  type="file"
-                  accept=".pdf,image/*"
-                  onChange={(e) => {
-                    const file = (e.target as HTMLInputElement).files?.[0];
-                    setCertificadoFile(file ?? null);
-                  }}
-                  sx={{ display: "none" }}
-                />
-                <Box
-                  component="label"
-                  htmlFor="cert-file"
-                  sx={{
-                    display: "block",
-                    background: foto.surfaces.inset,
-                    border: `1px solid ${foto.surfaces.rule}`,
-                    borderRadius: "9px",
-                    padding: "11px 14px",
-                    fontSize: 12.5,
-                    color: foto.ink.secondary,
-                    cursor: "pointer",
-                  }}
-                >
-                  {certificadoFile
-                    ? "Cambiar archivo…"
-                    : "Adjuntar PDF o imagen…"}
-                </Box>
-                {certificadoFile ? (
-                  <Box sx={{ fontSize: 11, color: foto.ink.tertiary, mt: 0.5 }}>
-                    {certificadoFile.name}
+                {/* Single-item lote — explain the prefill instead of the per-item
+                "repetir datos base" toggle, which has no "next item" to fill. */}
+                {isSingleItemLot && itemsCount === 0 ? (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "2px",
+                      padding: "10px 12px",
+                      background: foto.surfaces.inset,
+                      border: `1px solid ${foto.surfaces.edge}`,
+                      borderRadius: "10px",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        color: foto.ink.primary,
+                        letterSpacing: "-0.01em",
+                      }}
+                    >
+                      Lote de un solo ítem
+                    </Box>
+                    <Box
+                      sx={{
+                        fontSize: 10.5,
+                        color: foto.ink.tertiary,
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      Copiamos el nombre, la procedencia, el peso y el 100% de
+                      preponderancia desde el encabezado del lote. Ajustá lo que
+                      haga falta antes de guardar.
+                    </Box>
                   </Box>
                 ) : null}
-              </Box>
-            )}
 
-            {/* Observación */}
-            <Box>
-              <FieldLabel htmlFor="obs">Observación</FieldLabel>
-              <Box
-                component="textarea"
-                id="obs"
-                value={observacion}
-                placeholder="Cualquier detalle libre — talla del corte, particularidades, intenciones de venta…"
-                {...spanishText}
-                onChange={(e) =>
-                  setObservacion((e.target as HTMLTextAreaElement).value)
-                }
-                rows={3}
-                sx={{
-                  width: "100%",
-                  background: foto.surfaces.inset,
-                  border: `1px solid ${foto.surfaces.rule}`,
-                  borderRadius: "9px",
-                  padding: "11px 14px",
-                  fontSize: 13,
-                  color: foto.ink.primary,
-                  fontFamily: fontFamilies.system,
-                  outline: "none",
-                  resize: "vertical",
-                  lineHeight: 1.5,
-                  "&:focus": {
-                    borderColor: foto.accent.primary,
-                    boxShadow: `0 0 0 3px ${foto.accent.glow}`,
-                  },
-                  "::placeholder": { color: foto.ink.mute },
-                }}
-              />
-            </Box>
+                {/* Repetir datos base — sticky base fields across the lote */}
+                {!isSingleItemLot ? (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "12px",
+                      padding: "10px 12px",
+                      background: reuseBaseData
+                        ? foto.accent.soft
+                        : foto.surfaces.inset,
+                      border: `1px solid ${
+                        reuseBaseData ? foto.accent.primary : foto.surfaces.edge
+                      }`,
+                      borderRadius: "10px",
+                      transition:
+                        "background 120ms ease, border-color 120ms ease",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "2px",
+                      }}
+                    >
+                      <Box
+                        component="label"
+                        htmlFor="reuse-base-data"
+                        sx={{
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                          color: foto.ink.primary,
+                          letterSpacing: "-0.01em",
+                        }}
+                      >
+                        Repetir datos base en cada ítem
+                      </Box>
+                      <Box
+                        sx={{
+                          fontSize: 10.5,
+                          color: foto.ink.tertiary,
+                          lineHeight: 1.45,
+                        }}
+                      >
+                        Al guardar, conservá {BASE_FIELDS_LABEL[tipo]} para el
+                        siguiente ítem. Editás un campo base y se aplica a los
+                        próximos (no a los ya guardados).
+                      </Box>
+                    </Box>
+                    <Switch
+                      id="reuse-base-data"
+                      checked={reuseBaseData}
+                      onChange={(e) => toggleReuseBaseData(e.target.checked)}
+                      inputProps={{
+                        "aria-checked": reuseBaseData,
+                        "aria-label": "Repetir datos base en cada ítem",
+                      }}
+                    />
+                  </Box>
+                ) : null}
 
-            {/* Reserva oculta toggle */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "10px 12px",
-                background: foto.surfaces.inset,
-                border: `1px solid ${foto.surfaces.edge}`,
-                borderRadius: "10px",
-              }}
-            >
-              <Box
-                sx={{ display: "flex", flexDirection: "column", gap: "2px" }}
-              >
+                {tipo === "insumo" ? (
+                  <InsumoFields
+                    value={insumo}
+                    onChange={(patch) =>
+                      setInsumo((prev) => ({ ...prev, ...patch }))
+                    }
+                    lotCostoTotalCOP={costoTotalCOP}
+                    preponderanciaHelper={prepHelper?.text}
+                    preponderanciaHelperAlert={prepHelper?.alert}
+                  />
+                ) : tipo === "bruto" ? (
+                  <BrutoFields
+                    value={bruto}
+                    onChange={(patch) =>
+                      setBruto((prev) => ({ ...prev, ...patch }))
+                    }
+                    lotCostoTotalCOP={costoTotalCOP}
+                    preponderanciaHelper={prepHelper?.text}
+                    preponderanciaHelperAlert={prepHelper?.alert}
+                  />
+                ) : tipo === "gema" ? (
+                  <GemaFields
+                    value={gema}
+                    onChange={(patch) =>
+                      setGema((prev) => ({ ...prev, ...patch }))
+                    }
+                    lotCostoTotalCOP={costoTotalCOP}
+                    preponderanciaHelper={prepHelper?.text}
+                    preponderanciaHelperAlert={prepHelper?.alert}
+                  />
+                ) : (
+                  <JoyaFields
+                    value={joya}
+                    onChange={(patch) =>
+                      setJoya((prev) => ({ ...prev, ...patch }))
+                    }
+                    lotCostoTotalCOP={costoTotalCOP}
+                    preponderanciaHelper={prepHelper?.text}
+                    preponderanciaHelperAlert={prepHelper?.alert}
+                  />
+                )}
+
+                {/* Foto */}
+                <Box>
+                  {tipo === "insumo" ? (
+                    <FieldLabel>Foto (opcional)</FieldLabel>
+                  ) : (
+                    <FieldLabel optional="opcional">Foto del ítem</FieldLabel>
+                  )}
+                  <PhotoDropzone
+                    photos={photos}
+                    onAdd={addPhotos}
+                    onRemove={removePhoto}
+                    hint="JPG o PNG. Se sube a Drive al guardar."
+                  />
+                </Box>
+
+                {/* Certificado */}
+                {tipo !== "insumo" && (
+                  <Box>
+                    <FieldLabel optional="opcional">Certificado</FieldLabel>
+                    <Box
+                      component="input"
+                      id="cert-file"
+                      type="file"
+                      accept=".pdf,image/*"
+                      onChange={(e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        setCertificadoFile(file ?? null);
+                      }}
+                      sx={{ display: "none" }}
+                    />
+                    <Box
+                      component="label"
+                      htmlFor="cert-file"
+                      sx={{
+                        display: "block",
+                        background: foto.surfaces.inset,
+                        border: `1px solid ${foto.surfaces.rule}`,
+                        borderRadius: "9px",
+                        padding: "11px 14px",
+                        fontSize: 12.5,
+                        color: foto.ink.secondary,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {certificadoFile
+                        ? "Cambiar archivo…"
+                        : "Adjuntar PDF o imagen…"}
+                    </Box>
+                    {certificadoFile ? (
+                      <Box
+                        sx={{ fontSize: 11, color: foto.ink.tertiary, mt: 0.5 }}
+                      >
+                        {certificadoFile.name}
+                      </Box>
+                    ) : null}
+                  </Box>
+                )}
+
+                {/* Observación */}
+                <Box>
+                  <FieldLabel htmlFor="obs">Observación</FieldLabel>
+                  <Box
+                    component="textarea"
+                    id="obs"
+                    value={observacion}
+                    placeholder="Cualquier detalle libre — talla del corte, particularidades, intenciones de venta…"
+                    {...spanishText}
+                    onChange={(e) =>
+                      setObservacion((e.target as HTMLTextAreaElement).value)
+                    }
+                    rows={3}
+                    sx={{
+                      width: "100%",
+                      background: foto.surfaces.inset,
+                      border: `1px solid ${foto.surfaces.rule}`,
+                      borderRadius: "9px",
+                      padding: "11px 14px",
+                      fontSize: 13,
+                      color: foto.ink.primary,
+                      fontFamily: fontFamilies.system,
+                      outline: "none",
+                      resize: "vertical",
+                      lineHeight: 1.5,
+                      "&:focus": {
+                        borderColor: foto.accent.primary,
+                        boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+                      },
+                      "::placeholder": { color: foto.ink.mute },
+                    }}
+                  />
+                </Box>
+
+                {/* Reserva oculta toggle */}
                 <Box
-                  component="label"
-                  htmlFor="reserva-oculta"
                   sx={{
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    color: foto.ink.primary,
-                    letterSpacing: "-0.01em",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "10px 12px",
+                    background: foto.surfaces.inset,
+                    border: `1px solid ${foto.surfaces.edge}`,
+                    borderRadius: "10px",
                   }}
                 >
-                  Reserva oculta
-                </Box>
-                <Box
-                  id="reserva-oculta-help"
-                  sx={{
-                    fontSize: 10.5,
-                    color: foto.ink.tertiary,
-                  }}
-                >
-                  Cuando está activa, el ítem no aparece en el catálogo público
-                  hasta que decidas publicarlo desde el cierre del lote.
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "2px",
+                    }}
+                  >
+                    <Box
+                      component="label"
+                      htmlFor="reserva-oculta"
+                      sx={{
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        color: foto.ink.primary,
+                        letterSpacing: "-0.01em",
+                      }}
+                    >
+                      Reserva oculta
+                    </Box>
+                    <Box
+                      id="reserva-oculta-help"
+                      sx={{
+                        fontSize: 10.5,
+                        color: foto.ink.tertiary,
+                      }}
+                    >
+                      Cuando está activa, el ítem no aparece en el catálogo
+                      público hasta que decidas publicarlo desde el cierre del
+                      lote.
+                    </Box>
+                  </Box>
+                  <Switch
+                    id="reserva-oculta"
+                    checked={reservaOculta}
+                    onChange={(e) => setReservaOculta(e.target.checked)}
+                    inputProps={{
+                      "aria-checked": reservaOculta,
+                      "aria-label": "Reserva oculta",
+                      "aria-describedby": "reserva-oculta-help",
+                    }}
+                  />
                 </Box>
               </Box>
-              <Switch
-                id="reserva-oculta"
-                checked={reservaOculta}
-                onChange={(e) => setReservaOculta(e.target.checked)}
-                inputProps={{
-                  "aria-checked": reservaOculta,
-                  "aria-label": "Reserva oculta",
-                  "aria-describedby": "reserva-oculta-help",
-                }}
-              />
-            </Box>
-          </Box>
 
-          <StickyFooter
-            onCancel={handleCancelItemClick}
-            onSaveAndNext={handleSaveAndNext}
-            onCloseLot={handleCloseLot}
-            saveDisabled={!canSave}
-            closeDisabled={!canCloseLot}
-            saving={saving}
-          />
+              <StickyFooter
+                onCancel={handleCancelItemClick}
+                onSaveAndNext={handleSaveAndNext}
+                onCloseLot={handleCloseLot}
+                saveDisabled={!canSave}
+                closeDisabled={!canCloseLot}
+                saving={saving}
+              />
+            </>
+          )}
         </Box>
 
         {/* RIGHT — bandeja */}
@@ -2722,10 +2964,10 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
                     state="done"
                     onEdit={
                       itemEditable
-                        ? () => {
-                            setEditOverride(undefined);
-                            setEditingLotItemId(item._id as Id<"lotItems">);
-                          }
+                        ? () =>
+                            navigate(
+                              `/admin/fotosintesis/lots/${loteId}/items/${item._id}/edit`,
+                            )
                         : undefined
                     }
                   />
@@ -2903,7 +3145,9 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
         itemsCount={itemsCount}
       />
 
-      {/* Item edit drawer ----------------------------------------------------- */}
+      {/* AI batch-edit drawer — opened ONLY by the Fotosynthia edit queue
+          (openNextQueuedEdit). Manual per-item editing navigates to the dedicated
+          page (/admin/fotosintesis/lots/:loteId/items/:lotItemId/edit). */}
       {(() => {
         const editingItem = (items ?? []).find(
           (it) => it._id === editingLotItemId,

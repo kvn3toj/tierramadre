@@ -1,10 +1,23 @@
-import { useCallback, useId, useMemo, useState } from "react";
+import { useCallback, useId, useMemo, useRef, useState } from "react";
 import { Box } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useNavigate, useParams } from "react-router-dom";
-import { AlertCircle, Ban, ExternalLink, Link2Off, Upload } from "lucide-react";
+import {
+  AlertCircle,
+  Ban,
+  ExternalLink,
+  Link2Off,
+  Sparkles,
+  Upload,
+} from "lucide-react";
 import { getFoto, fontFamilies } from "../../../design-system";
-import { uploadVentaDocument } from "./utils/uploadItemMedia";
+import {
+  uploadVentaDocument,
+  ventasSubPath,
+  driveDocViewUrl,
+} from "./utils/uploadItemMedia";
+import { exportCarnet } from "./exportCarnet";
+import { slugifyBuyerName } from "../../../utils/slugify";
 import { cancelToast } from "./utils/cancelToast";
 import { FOTO_PREVIEW_FELT } from "./VentaPage";
 import { FOTO_TOPBAR_HEIGHT } from "./components/FotoTopbar";
@@ -17,8 +30,13 @@ import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
 import { useNotification } from "../../../contexts/NotificationContext";
 import { TicketHeader } from "./components/TicketHeader";
 import { KardexPreview } from "./components/KardexPreview";
+import type { KardexLineItem } from "./components/KardexPreview";
 import { CancelVentaDialog } from "./components/CancelVentaDialog";
 import { EditableMetaValue } from "./components/EditableMetaValue";
+import { pickTierPrice } from "./utils/saleItemSelection";
+import type { CompradorTier } from "./utils/saleItemSelection";
+import { resolveItemThumbnail } from "./utils/resolveThumbnail";
+import { useBatchThumbnails } from "../../../hooks/useBatchThumbnails";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 function formatCop(value: number | undefined | null): string {
@@ -82,8 +100,14 @@ export default function VentaDetailPage() {
   const { saleId: routeSaleId } = useParams();
   const { user } = useGoogleAuth();
   const { notify } = useNotification();
+  // Legacy catalog thumbnails (fallback for items without a Fotosíntesis fotoUrl).
+  const { thumbnails: batchThumbs } = useBatchThumbnails();
 
   const [showCancel, setShowCancel] = useState(false);
+  // Captures the right-pane Kardex comprobante so we can rasterize it → PDF and
+  // archive it to Drive on demand, without asking the operator for a file.
+  const kardexRef = useRef<HTMLDivElement>(null);
+  const [archivingKardex, setArchivingKardex] = useState(false);
 
   // The route param is the human "V-NNNN" id, but `sales.get` expects the
   // Convex `_id`. Look up by saleId via list+find — list is small and the
@@ -103,12 +127,17 @@ export default function VentaDetailPage() {
     convexApi.sales.setCertificadoUrl,
   );
 
-  // First item drives the Kardex preview; for multi-item sales the additional
-  // itemIds are listed under the comprobante.
+  // First item drives the lineage footer (lot → provider); the full set of
+  // priced line items drives the Kardex preview.
   const firstItemId = sale?.itemIds[0] ?? null;
   const item = useConvexQuery(
     convexApi.products.get,
     firstItemId ? { itemId: firstItemId } : "skip",
+  );
+  // All sale items in one batch — order-preserving, with tier prices.
+  const manyItems = useConvexQuery(
+    convexApi.products.getManyByItemIds,
+    sale ? { itemIds: sale.itemIds } : "skip",
   );
   const lot = useConvexQuery(
     convexApi.lots.getByLoteId,
@@ -122,6 +151,60 @@ export default function VentaDetailPage() {
     convexApi.clients.get,
     sale?.clientId ? { id: sale.clientId } : "skip",
   );
+
+  // The buyer's tier decides which price each line contributes (ambassador vs
+  // consumer). Free-text / "final" write-ins pay the consumer price.
+  const tier: CompradorTier =
+    buyer?.tipo === "embajador" ? "embajador" : "final";
+
+  // itemId → tier-resolved per-item price (COP), recomputed when the batch or
+  // the tier changes.
+  const priceByItemId = useMemo(() => {
+    const map = new Map<string, number | undefined>();
+    for (const row of manyItems ?? []) {
+      map.set(row.itemId, pickTierPrice(row, tier));
+    }
+    return map;
+  }, [manyItems, tier]);
+
+  // Ordered Kardex line items, photos resolved with the legacy-thumbnail
+  // fallback. Manual (non-inventory) lines stored on the sale render after.
+  const kardexItems = useMemo<KardexLineItem[]>(() => {
+    const inventory: KardexLineItem[] = (manyItems ?? []).map((row) => ({
+      itemId: row.itemId,
+      nombre: row.nombre,
+      color: row.color,
+      calidad: row.calidad,
+      peso: row.peso,
+      medidas: row.medidas,
+      thumbnailUrl: resolveItemThumbnail(row.fotoUrl, row.itemId, batchThumbs),
+      precioCop: priceByItemId.get(row.itemId),
+    }));
+    const manual: KardexLineItem[] = (sale?.manualItems ?? []).map((m) => ({
+      itemId: "",
+      nombre: m.nombre,
+      peso: m.peso,
+      descripcion: m.descripcion,
+      precioCop: m.precioCOP,
+      isManual: true,
+    }));
+    return [...inventory, ...manual];
+  }, [manyItems, priceByItemId, sale, batchThumbs]);
+
+  // Σ inventory tier prices + Σ manual items → Subtotal; Descuento prefers the
+  // value persisted on the sale, falling back to max(0, subtotal − total).
+  const subtotal = useMemo(() => {
+    let sum = 0;
+    for (const value of priceByItemId.values()) {
+      if (typeof value === "number" && !Number.isNaN(value)) sum += value;
+    }
+    for (const m of sale?.manualItems ?? []) {
+      if (typeof m.precioCOP === "number" && !Number.isNaN(m.precioCOP)) {
+        sum += m.precioCOP;
+      }
+    }
+    return sum;
+  }, [priceByItemId, sale]);
 
   const handleConfirmCancel = useCallback(
     async (reason: string) => {
@@ -156,6 +239,51 @@ export default function VentaDetailPage() {
     },
     [sale, user, cancelSale, notify],
   );
+
+  // Generate the Kardex PDF from the on-screen comprobante and archive it to
+  // Drive — the one-click recovery for sales whose carnet was never uploaded
+  // (e.g. created before auto-upload shipped, or a create-time capture that
+  // raced image loading). No file picker: the preview IS the source of truth.
+  // `captureNodeToPdf` now waits for thumbnails to decode, so the PDF is never
+  // blank. The archive lands in the month of the sale (not "now") so an old
+  // sale's carnet files under `ventas/<saleYear>/<saleMonth>`.
+  const handleGenerateKardex = useCallback(async () => {
+    if (!sale || archivingKardex) return;
+    if (sale.estado === "cancelada") {
+      notify("No se genera Kardex para una venta cancelada", "warning");
+      return;
+    }
+    if (!kardexRef.current) {
+      notify("La vista previa del Kardex aún no está lista", "warning");
+      return;
+    }
+    if (kardexItems.length === 0) {
+      notify("No hay ítems en la venta para generar el Kardex", "warning");
+      return;
+    }
+    setArchivingKardex(true);
+    try {
+      const slug = slugifyBuyerName(buyer?.nombre ?? "cliente");
+      const filename = `${sale.saleId}-${slug}.pdf`;
+      const blob = await exportCarnet(kardexRef.current, filename, {
+        download: false,
+      });
+      const file = new File([blob], filename, { type: "application/pdf" });
+      const docUrl = await uploadVentaDocument(file, {
+        subPath: ventasSubPath(new Date(sale.fechaVenta)),
+      });
+      await setCarnetUrl({
+        id: sale._id as Id<"sales">,
+        carnetUrl: docUrl,
+      });
+      notify("Kardex generado y archivado en Drive", "success");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      notify(`No pudimos generar el Kardex: ${msg}`, "error");
+    } finally {
+      setArchivingKardex(false);
+    }
+  }, [sale, archivingKardex, kardexItems, buyer, setCarnetUrl, notify]);
 
   // ─── Loading / not-found ─────────────────────────────────────────────
   if (sale === undefined) {
@@ -223,7 +351,6 @@ export default function VentaDetailPage() {
   const isCancelled = sale.estado === "cancelada";
   const buyerTipoLabel =
     buyer?.tipo === "embajador" ? "Embajador" : "Cliente final";
-  const extraItemIds = sale.itemIds.slice(1);
 
   return (
     <Box
@@ -402,6 +529,9 @@ export default function VentaDetailPage() {
                 uploadLabel="Subir Kardex"
                 disabled={isCancelled}
                 foto={foto}
+                onGenerate={handleGenerateKardex}
+                generating={archivingKardex}
+                generateLabel={sale.carnetUrl ? "Regenerar" : "Generar Kardex"}
                 onUpload={async (file) => {
                   try {
                     const docUrl = await uploadVentaDocument(file);
@@ -547,51 +677,47 @@ export default function VentaDetailPage() {
             Comprobante archivado
           </Box>
 
-          <KardexPreview
-            item={
-              item
-                ? {
-                    itemId: item.itemId,
-                    nombre: item.nombre ?? undefined,
-                    color: item.color ?? undefined,
-                    calidad: item.calidad ?? undefined,
-                    peso: item.peso ?? undefined,
-                    medidas: item.medidas ?? undefined,
-                  }
-                : null
-            }
-            lot={
-              lot
-                ? {
-                    loteId: lot.loteId,
-                    fechaRecepcion: lot.fechaRecepcion,
-                  }
-                : null
-            }
-            provider={
-              provider
-                ? { nombreORazonSocial: provider.nombreORazonSocial }
-                : null
-            }
-            buyer={
-              buyer
-                ? {
-                    nombre: buyer.nombre,
-                    nit: buyer.nit ?? undefined,
-                    cedula: buyer.cedula ?? undefined,
-                    email: buyer.email ?? undefined,
-                    tipo: buyer.tipo,
-                  }
-                : null
-            }
-            sale={{
-              id: sale.saleId,
-              precioCop: sale.precioAcordadoCOP,
-              formaPago: sale.formaPago,
-              metodoContado: sale.metodoContado,
-            }}
-            privacyOn={false}
-          />
+          <Box ref={kardexRef}>
+            <KardexPreview
+              items={kardexItems}
+              subtotalCop={subtotal}
+              descuentoCop={
+                sale.descuentoCOP ??
+                Math.max(0, subtotal - sale.precioAcordadoCOP)
+              }
+              lot={
+                lot
+                  ? {
+                      loteId: lot.loteId,
+                      fechaRecepcion: lot.fechaRecepcion,
+                    }
+                  : null
+              }
+              provider={
+                provider
+                  ? { nombreORazonSocial: provider.nombreORazonSocial }
+                  : null
+              }
+              buyer={
+                buyer
+                  ? {
+                      nombre: buyer.nombre,
+                      nit: buyer.nit ?? undefined,
+                      cedula: buyer.cedula ?? undefined,
+                      email: buyer.email ?? undefined,
+                      tipo: buyer.tipo,
+                    }
+                  : null
+              }
+              sale={{
+                id: sale.saleId,
+                precioCop: sale.precioAcordadoCOP,
+                formaPago: sale.formaPago,
+                metodoContado: sale.metodoContado,
+              }}
+              privacyOn={false}
+            />
+          </Box>
 
           <Box
             sx={{
@@ -604,43 +730,6 @@ export default function VentaDetailPage() {
           >
             Comprobante archivado para {sale.saleId}
           </Box>
-
-          {extraItemIds.length > 0 ? (
-            <Box
-              sx={{
-                marginTop: "16px",
-                paddingTop: "14px",
-                borderTop: "1px solid rgba(255,255,255,0.10)",
-              }}
-            >
-              <Box
-                sx={{
-                  fontSize: 9,
-                  fontWeight: 500,
-                  letterSpacing: "0.22em",
-                  textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.55)",
-                  marginBottom: "8px",
-                }}
-              >
-                Ítems adicionales en esta venta
-              </Box>
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                  gap: "6px 12px",
-                  fontFamily: fontFamilies.mono,
-                  fontSize: 12,
-                  color: "rgba(255,255,255,0.85)",
-                }}
-              >
-                {extraItemIds.map((id) => (
-                  <Box key={id}>{id}</Box>
-                ))}
-              </Box>
-            </Box>
-          ) : null}
         </Box>
       </Box>
 
@@ -744,13 +833,26 @@ interface DocumentRowProps {
   foto: ReturnType<typeof getFoto>;
   /** Upload the picked file + persist its URL. Owns its own error toast. */
   onUpload: (file: File) => Promise<void>;
+  /**
+   * Optional one-click generate+archive action (Kardex only). When present, a
+   * primary "Generar"/"Regenerar" button renders before the file picker so the
+   * operator never has to scan/upload a PDF by hand — the on-screen comprobante
+   * is captured and archived to Drive directly.
+   */
+  onGenerate?: () => Promise<void>;
+  /** True while `onGenerate` is in flight (drives the "Generando…" label). */
+  generating?: boolean;
+  /** Label for the generate button (e.g. "Generar Kardex" / "Regenerar"). */
+  generateLabel?: string;
 }
 
 /**
  * A sale document row (Kardex / Certificado). When a URL exists it links out;
  * either way (unless the sale is cancelled) it exposes a file picker to upload
  * or replace the document — converting the old read-only "Pendiente" dead-end
- * into a one-step recovery. (ISO-audit C6.)
+ * into a one-step recovery. (ISO-audit C6.) The Kardex row additionally gets a
+ * primary one-click "Generar" action that rasterizes the live preview → PDF →
+ * Drive, so "Pendiente" self-heals without a manual file upload.
  */
 function DocumentRow({
   label,
@@ -760,6 +862,9 @@ function DocumentRow({
   disabled = false,
   foto,
   onUpload,
+  onGenerate,
+  generating = false,
+  generateLabel = "Generar",
 }: DocumentRowProps) {
   const inputId = useId();
   const [uploading, setUploading] = useState(false);
@@ -802,7 +907,7 @@ function DocumentRow({
         {url ? (
           <Box
             component="a"
-            href={url}
+            href={driveDocViewUrl(url)}
             target="_blank"
             rel="noopener noreferrer"
             sx={{
@@ -837,6 +942,41 @@ function DocumentRow({
             Pendiente
           </Box>
         )}
+        {onGenerate && !disabled ? (
+          <Box
+            component="button"
+            type="button"
+            onClick={() => {
+              if (!generating && !uploading) void onGenerate();
+            }}
+            disabled={generating || uploading}
+            aria-busy={generating}
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 12px",
+              borderRadius: "7px",
+              border: `1px solid ${foto.accent.primary}`,
+              background: foto.accent.primary,
+              color: "#FFFFFF",
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: "-0.005em",
+              fontFamily: "inherit",
+              cursor: generating ? "wait" : "pointer",
+              transition: "background 120ms ease, transform 120ms ease",
+              "&:hover:not(:disabled)": {
+                background: foto.accent.deep,
+                transform: "translateY(-1px)",
+              },
+              "&:disabled": { opacity: 0.7, cursor: "wait" },
+            }}
+          >
+            <Sparkles size={13} strokeWidth={1.8} aria-hidden />
+            {generating ? "Generando…" : generateLabel}
+          </Box>
+        ) : null}
         {!disabled ? (
           <Box
             component="label"
@@ -863,7 +1003,13 @@ function DocumentRow({
             }}
           >
             <Upload size={13} strokeWidth={1.8} aria-hidden />
-            {uploading ? "Subiendo…" : url ? "Reemplazar" : uploadLabel}
+            {uploading
+              ? "Subiendo…"
+              : url
+                ? "Reemplazar"
+                : onGenerate
+                  ? "Subir archivo"
+                  : uploadLabel}
             <Box
               component="input"
               id={inputId}

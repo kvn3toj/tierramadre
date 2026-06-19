@@ -45,7 +45,7 @@ export default defineConfig({
     // This allows local dev to fetch real data from Vercel serverless functions
     proxy: {
       "/api/": {
-        target: "https://tierra-madre-studio.vercel.app",
+        target: "https://tierramadre.app",
         changeOrigin: true,
         secure: true,
         // Rewrite to ensure correct path

@@ -48,6 +48,32 @@ export async function uploadFotosintesisCertificado(
 }
 
 /**
+ * Drive folder a sale document is filed under: `ventas/YYYY/MM` for the given
+ * date. Deriving from the SALE's date (not "now") keeps a regenerated carnet for
+ * an old sale in the month it actually happened. Falls back to the current month
+ * for an invalid/missing date.
+ */
+export function ventasSubPath(date: Date = new Date()): string {
+  const d = Number.isNaN(date.getTime()) ? new Date() : date;
+  return `ventas/${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/**
+ * Normalize a Google Drive URL to the in-browser PDF **viewer** form. The upload
+ * endpoint historically returned `drive.google.com/uc?export=view&id=ID` for sale
+ * documents, which a browser can't render as a PDF (it downloads or shows a
+ * "can't preview" page → the broken "Abrir Kardex" link). Rewriting to
+ * `file/d/ID/view` fixes documents already persisted with the old shape, with no
+ * re-upload. Only use for PDFs: image embeds still need `uc?export=view`.
+ * Already-viewer URLs and non-Drive URLs pass through untouched.
+ */
+export function driveDocViewUrl(url: string | undefined): string | undefined {
+  if (!url || !/drive\.google\.com\/uc\?/.test(url)) return url;
+  const idMatch = url.match(/[?&]id=([\w-]+)/);
+  return idMatch ? `https://drive.google.com/file/d/${idMatch[1]}/view` : url;
+}
+
+/**
  * Upload a sale document (carnet/kardex or certificate) to Drive and return its
  * URL. Shares the same `/api/media-upload` contract as the item-media helpers so
  * the sale-detail re-upload affordance (ISO-audit C6) and sale creation use one
@@ -58,10 +84,7 @@ export async function uploadVentaDocument(
   file: File,
   opts?: { subPath?: string },
 ): Promise<string> {
-  const now = new Date();
-  const subPath =
-    opts?.subPath ??
-    `ventas/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const subPath = opts?.subPath ?? ventasSubPath();
 
   const fd = new FormData();
   fd.append("subPath", subPath);

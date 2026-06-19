@@ -102,7 +102,7 @@ function addCoverPage(
 
   setTextFromHex(pdf, BRAND.silver);
   pdf.setFontSize(14);
-  pdf.text('ESENCIA Y PODER', pageWidth / 2, pageHeight / 2, { align: 'center' });
+  pdf.text('ESMERALDAS CON ADN DE PAZ', pageWidth / 2, pageHeight / 2, { align: 'center' });
 
   if (title) {
     setTextFromHex(pdf, BRAND.white);

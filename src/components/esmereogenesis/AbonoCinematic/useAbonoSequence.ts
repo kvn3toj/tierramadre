@@ -22,8 +22,8 @@
  * an extended `eclosion` phase (4 s) that the parent renders distinctly.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AbonoPhase } from '../../../types/esmereogenesis';
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { AbonoPhase } from "../../../types/esmereogenesis";
 
 const PHASE_DURATIONS_FULL = {
   anticipate: 500,
@@ -61,6 +61,12 @@ export interface UseAbonoSequenceOptions {
   onComplete: () => void;
   /** Optional listener for each phase transition. */
   onPhaseChange?: (phase: AbonoPhase) => void;
+  /**
+   * When true AND isCompletion, the sequence holds on the `eclosion` phase
+   * instead of auto-advancing to release/onComplete — the ceremony waits for the
+   * user to claim or dismiss. `skip()` jumps straight to the held ceremony.
+   */
+  holdAtEclosion?: boolean;
 }
 
 export interface UseAbonoSequenceReturn {
@@ -75,17 +81,32 @@ export function useAbonoSequence({
   isCompletion,
   onComplete,
   onPhaseChange,
+  holdAtEclosion = false,
 }: UseAbonoSequenceOptions): UseAbonoSequenceReturn {
-  const [phase, setPhase] = useState<AbonoPhase>('idle');
+  const hold = holdAtEclosion && isCompletion;
+  const [phase, setPhase] = useState<AbonoPhase>("idle");
   const timersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
   const completedRef = useRef(false);
   const skippedRef = useRef(false);
-  const phaseRef = useRef<AbonoPhase>('idle');
+  const phaseRef = useRef<AbonoPhase>("idle");
+  // Tracks the phase we last handed to `onPhaseChange`. Consumers pass an inline
+  // arrow that changes identity every render, so without this guard the effect
+  // below re-fires `onPhaseChange(phase)` on EVERY parent re-render (not just on
+  // transitions). When a phase callback itself triggers re-renders — e.g. the
+  // 60 fps count-up ramp in AbonoCinematic — that re-entrancy spawns a fresh
+  // animation loop per frame. Gating on the actual transition makes each phase
+  // fire exactly once regardless of callback identity.
+  const lastNotifiedRef = useRef<AbonoPhase | null>(null);
 
-  // Notify on phase change
+  // Notify on phase change (once per transition, not once per render)
   useEffect(() => {
     phaseRef.current = phase;
-    if (phase !== 'idle') {
+    if (phase === "idle") {
+      lastNotifiedRef.current = null;
+      return;
+    }
+    if (lastNotifiedRef.current !== phase) {
+      lastNotifiedRef.current = phase;
       onPhaseChange?.(phase);
     }
   }, [phase, onPhaseChange]);
@@ -110,9 +131,14 @@ export function useAbonoSequence({
     if (skippedRef.current || !active) return;
     skippedRef.current = true;
     clearTimers();
-    setPhase('release');
+    if (hold) {
+      // A completion that holds — jump to the held ceremony, don't auto-finish.
+      setPhase("eclosion");
+      return;
+    }
+    setPhase("release");
     schedule(SKIP_RELEASE_MS, fireCompleteOnce);
-  }, [active, clearTimers, schedule, fireCompleteOnce]);
+  }, [active, hold, clearTimers, schedule, fireCompleteOnce]);
 
   useEffect(() => {
     clearTimers();
@@ -120,7 +146,7 @@ export function useAbonoSequence({
     skippedRef.current = false;
 
     if (!active) {
-      setPhase('idle');
+      setPhase("idle");
       return;
     }
 
@@ -128,45 +154,55 @@ export function useAbonoSequence({
 
     if (reducedMotion) {
       // Collapsed timeline: progress → confirm/eclosion → release
-      setPhase('progress');
+      setPhase("progress");
       let cursor = d.progress;
-      const climaxPhase: AbonoPhase = isCompletion ? 'eclosion' : 'confirm';
+      const climaxPhase: AbonoPhase = isCompletion ? "eclosion" : "confirm";
       const climaxDuration = isCompletion ? d.eclosion : d.confirm;
       schedule(cursor, () => setPhase(climaxPhase));
       cursor += climaxDuration;
-      schedule(cursor, () => setPhase('release'));
+      if (hold) return clearTimers; // hold on the eclosión ceremony — no auto-finish
+      schedule(cursor, () => setPhase("release"));
       cursor += d.release;
       schedule(cursor, fireCompleteOnce);
       return;
     }
 
-    setPhase('anticipate');
+    setPhase("anticipate");
     let cursor = d.anticipate;
-    schedule(cursor, () => setPhase('droplet'));
+    schedule(cursor, () => setPhase("droplet"));
     cursor += d.droplet;
-    schedule(cursor, () => setPhase('wash'));
+    schedule(cursor, () => setPhase("wash"));
     cursor += d.wash;
-    schedule(cursor, () => setPhase('reveal'));
+    schedule(cursor, () => setPhase("reveal"));
     cursor += d.reveal;
-    schedule(cursor, () => setPhase('bloom'));
+    schedule(cursor, () => setPhase("bloom"));
     cursor += d.bloom;
-    schedule(cursor, () => setPhase('progress'));
+    schedule(cursor, () => setPhase("progress"));
     cursor += d.progress;
 
     if (isCompletion) {
-      schedule(cursor, () => setPhase('eclosion'));
+      schedule(cursor, () => setPhase("eclosion"));
       cursor += d.eclosion;
     } else {
-      schedule(cursor, () => setPhase('confirm'));
+      schedule(cursor, () => setPhase("confirm"));
       cursor += d.confirm;
     }
 
-    schedule(cursor, () => setPhase('release'));
+    if (hold) return clearTimers; // hold on the eclosión ceremony — no auto-finish
+
+    schedule(cursor, () => setPhase("release"));
     cursor += d.release;
     schedule(cursor, fireCompleteOnce);
 
     return clearTimers;
-  }, [active, reducedMotion, isCompletion, clearTimers, schedule, fireCompleteOnce]);
+  }, [
+    active,
+    reducedMotion,
+    isCompletion,
+    clearTimers,
+    schedule,
+    fireCompleteOnce,
+  ]);
 
   // Cleanup on unmount
   useEffect(() => clearTimers, [clearTimers]);

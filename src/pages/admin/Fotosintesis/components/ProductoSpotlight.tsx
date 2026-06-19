@@ -10,12 +10,19 @@ import {
 import { Box, Dialog } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
-import { Search, X, Clock } from "lucide-react";
+import { Search, X, Clock, Check } from "lucide-react";
 import { getFoto, fontFamilies, emeraldCore } from "../../../../design-system";
 import { useConvexQuery, convexApi } from "../../../../lib/convex-safe";
 import type { SpotlightProduct } from "../FotosintesisLayoutContext";
 import { KbdKey } from "./KbdKey";
-import { convertToProxyUrl } from "../../../../utils/driveUrl";
+import { useBatchThumbnails } from "../../../../hooks/useBatchThumbnails";
+import { resolveItemThumbnail } from "../utils/resolveThumbnail";
+import {
+  toggleSelection,
+  removeSelection,
+  isSelected,
+  pickTierPrice,
+} from "../utils/saleItemSelection";
 
 interface ProductoSpotlightProps {
   open: boolean;
@@ -23,6 +30,16 @@ interface ProductoSpotlightProps {
   /** When set, shows a scope chip and constrains the result set semantically. */
   scope?: string;
   onSelect: (product: SpotlightProduct) => void;
+  /**
+   * Multi-select mode: clicking a row toggles it in/out of a running set
+   * instead of selecting-and-closing. The operator confirms the whole set via
+   * the footer "Listo" button or ⌘↵, which fires `onConfirm`.
+   */
+  multiSelect?: boolean;
+  /** Products to pre-check when opening in multi-select mode. */
+  selectedProducts?: SpotlightProduct[];
+  /** Fired with the confirmed set in multi-select mode. */
+  onConfirm?: (products: SpotlightProduct[]) => void;
 }
 
 // Filter group labels (disabled in Slice 1 — surfaced as "próximamente").
@@ -61,29 +78,73 @@ export function ProductoSpotlight({
   onClose,
   scope,
   onSelect,
+  multiSelect = false,
+  selectedProducts,
+  onConfirm,
 }: ProductoSpotlightProps) {
   const foto = getFoto("light");
   const navigate = useNavigate();
   const titleId = useId();
+  // Legacy catalog thumbnails (Drive `products/` folder scan, keyed by item
+  // number) — the fallback for inventory rows that have no Fotosíntesis
+  // `fotoUrl`, which is why most spotlight thumbnails rendered blank.
+  const { thumbnails: batchThumbs } = useBatchThumbnails();
 
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
   const [focusIndex, setFocusIndex] = useState(0);
+  // Running multi-select set — full product objects so chosen items stay
+  // visible and removable even when they fall outside the current search.
+  const [selected, setSelected] = useState<SpotlightProduct[]>([]);
+  // Assertive announcement for the most recent toggle, so screen-reader users
+  // get per-item feedback ("Añadido X" / "Quitado X") on ↵, not just the count.
+  const [toggleAnnounce, setToggleAnnounce] = useState("");
 
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Reset state when the modal opens
+  // Reset state when the modal opens. In multi-select mode we seed the running
+  // set from the caller's current selection so re-opening the picker edits
+  // (adds/removes) the existing bundle rather than starting from scratch.
   useEffect(() => {
     if (open) {
       setQuery("");
       setFocusIndex(0);
+      setSelected(multiSelect ? (selectedProducts ?? []) : []);
+      setToggleAnnounce("");
       // Autofocus is best-effort — MUI Dialog handles initial focus.
       requestAnimationFrame(() => {
         inputRef.current?.focus();
       });
     }
-  }, [open]);
+    // `selectedProducts` is intentionally read only at open — the running set is
+    // local from then on, so we don't want a parent re-render to clobber edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, multiSelect]);
+
+  const confirmSelection = useCallback(() => {
+    onConfirm?.(selected);
+    onClose();
+  }, [onConfirm, selected, onClose]);
+
+  const pickRow = useCallback(
+    (row: SpotlightProduct) => {
+      if (multiSelect) {
+        setSelected((prev) => {
+          const next = toggleSelection(prev, row);
+          const added = next.length > prev.length;
+          setToggleAnnounce(
+            `${added ? "Añadido" : "Quitado"} ${row.nombre || row.itemId}`,
+          );
+          return next;
+        });
+        return;
+      }
+      onSelect(row);
+      onClose();
+    },
+    [multiSelect, onSelect, onClose],
+  );
 
   // --- Data fetch ----------------------------------------------------------
   // `products.list` only accepts a single estado at a time. We fetch by
@@ -114,16 +175,25 @@ export function ProductoSpotlight({
       deduped.push({
         itemId: row.itemId,
         nombre: row.nombre ?? "Sin nombre",
-        // Drive URLs need the proxy to render as an <img> thumbnail.
-        thumbnailUrl: convertToProxyUrl(row.fotoUrl),
-        precioCop: row.precioCOP,
+        // Item's own Fotosíntesis photo (proxied) with a fallback to the legacy
+        // catalog thumbnail keyed by item number — so rows without a `fotoUrl`
+        // still show an image instead of bare text.
+        thumbnailUrl: resolveItemThumbnail(
+          row.fotoUrl,
+          row.itemId,
+          batchThumbs,
+        ),
+        // Legacy precioCOP col was retired (~82% empty). The picker doesn't yet
+        // know the buyer tier, so hint with the embajador order — reusing the
+        // same `pickTierPrice` fallback VentaPage applies so the two never drift.
+        precioCop: pickTierPrice(row, "embajador"),
         loteId: row.loteId,
         estado: row.estado as string | undefined,
       });
     }
     // Cap at 50 to match the design max-height list.
     return deduped.slice(0, 50);
-  }, [open, disponibles, asesor]);
+  }, [open, disponibles, asesor, batchThumbs]);
 
   const loading = open && (disponibles === undefined || asesor === undefined);
 
@@ -164,27 +234,40 @@ export function ProductoSpotlight({
         return;
       }
       if (e.key === "Enter") {
+        // ⌘↵ / Ctrl+↵ — confirm the whole multi-select set.
+        if (multiSelect && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
+          confirmSelection();
+          return;
+        }
         const picked = results[focusIndex];
         if (picked) {
           e.preventDefault();
-          onSelect(picked);
-          onClose();
+          // Multi-select: ↵ toggles the focused row (keep the modal open so the
+          // operator can keep building the bundle). Single-select: pick + close.
+          pickRow(picked);
         }
         return;
       }
       // Esc is handled by Dialog.onClose
     },
-    [results, focusIndex, navigate, onSelect, onClose],
+    [results, focusIndex, navigate, multiSelect, confirmSelection, pickRow],
   );
 
   // --- Render --------------------------------------------------------------
-  const liveMessage = loading
+  const baseLiveMessage = loading
     ? "Buscando…"
     : results.length === 0
       ? query
         ? "Sin resultados"
         : "Empezá tipeando"
       : `${focusIndex + 1} de ${results.length} resultados`;
+  const liveMessage =
+    multiSelect && selected.length > 0
+      ? `${baseLiveMessage} · ${selected.length} seleccionado${
+          selected.length === 1 ? "" : "s"
+        }`
+      : baseLiveMessage;
 
   return (
     <Dialog
@@ -392,6 +475,7 @@ export function ProductoSpotlight({
           ref={listRef}
           role="listbox"
           aria-label="Resultados de búsqueda"
+          aria-multiselectable={multiSelect ? "true" : undefined}
           sx={{ overflow: "auto", padding: "8px 0" }}
         >
           {/* Live region — anuncia conteo a SR */}
@@ -412,6 +496,87 @@ export function ProductoSpotlight({
           >
             {liveMessage}
           </Box>
+
+          {/* Assertive region — per-toggle feedback ("Añadido/Quitado X") for
+              keyboard SR users, separate from the polite count above. */}
+          <Box
+            role="status"
+            aria-live="assertive"
+            sx={{
+              position: "absolute",
+              width: 1,
+              height: 1,
+              padding: 0,
+              margin: -1,
+              overflow: "hidden",
+              clip: "rect(0 0 0 0)",
+              whiteSpace: "nowrap",
+              border: 0,
+            }}
+          >
+            {toggleAnnounce}
+          </Box>
+
+          {/* Multi-select: chosen items pinned at the top — they survive a new
+              search and can be removed here even when off-screen in results. */}
+          {multiSelect && selected.length > 0 ? (
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "6px",
+                padding: "4px 18px 12px",
+                marginBottom: "4px",
+                borderBottom: `1px solid ${foto.surfaces.edge}`,
+              }}
+            >
+              {selected.map((p) => (
+                <Box
+                  key={`chip-${p.itemId}`}
+                  component="button"
+                  type="button"
+                  onClick={() => {
+                    setSelected((prev) => removeSelection(prev, p.itemId));
+                    setToggleAnnounce(`Quitado ${p.nombre || p.itemId}`);
+                  }}
+                  aria-label={`Quitar ${p.nombre || p.itemId} (${p.itemId}) de la selección`}
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "4px 8px 4px 10px",
+                    borderRadius: "999px",
+                    border: `1px solid ${foto.accent.primary}`,
+                    background: foto.accent.soft,
+                    color: foto.accent.deep,
+                    fontSize: 11.5,
+                    fontWeight: 500,
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                    maxWidth: 220,
+                    transition: "background 120ms ease",
+                    "&:hover": { background: alpha(foto.accent.primary, 0.14) },
+                    "&:focus-visible": {
+                      outline: "none",
+                      boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+                    },
+                  }}
+                >
+                  <Box
+                    component="span"
+                    sx={{
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {p.nombre}
+                  </Box>
+                  <X size={12} strokeWidth={2} aria-hidden />
+                </Box>
+              ))}
+            </Box>
+          ) : null}
 
           {loading ? (
             <EmptyState
@@ -442,17 +607,15 @@ export function ProductoSpotlight({
           ) : (
             results.map((row, i) => {
               const isFocus = i === focusIndex;
+              const chosen = multiSelect && isSelected(selected, row.itemId);
               return (
                 <Box
                   key={row.itemId}
                   data-row-index={i}
                   role="option"
-                  aria-selected={isFocus}
+                  aria-selected={multiSelect ? chosen : isFocus}
                   onMouseEnter={() => setFocusIndex(i)}
-                  onClick={() => {
-                    onSelect(row);
-                    onClose();
-                  }}
+                  onClick={() => pickRow(row)}
                   sx={{
                     display: "grid",
                     gridTemplateColumns: {
@@ -463,7 +626,14 @@ export function ProductoSpotlight({
                     alignItems: "center",
                     padding: "10px 18px",
                     cursor: "pointer",
-                    background: isFocus ? foto.accent.soft : "transparent",
+                    borderLeft: `2px solid ${
+                      chosen ? foto.accent.primary : "transparent"
+                    }`,
+                    background: chosen
+                      ? alpha(foto.accent.primary, 0.12)
+                      : isFocus
+                        ? foto.accent.soft
+                        : "transparent",
                     transition: "background 120ms ease",
                   }}
                 >
@@ -484,6 +654,7 @@ export function ProductoSpotlight({
                       letterSpacing: "0.05em",
                       aspectRatio: "1 / 1",
                       overflow: "hidden",
+                      position: "relative",
                     }}
                     aria-hidden
                   >
@@ -501,6 +672,21 @@ export function ProductoSpotlight({
                     ) : (
                       row.itemId
                     )}
+                    {chosen ? (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          inset: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          background: alpha(emeraldCore.dark, 0.6),
+                          color: "#fff",
+                        }}
+                      >
+                        <Check size={22} strokeWidth={2.4} aria-hidden />
+                      </Box>
+                    ) : null}
                   </Box>
 
                   {/* Ct chip */}
@@ -638,23 +824,70 @@ export function ProductoSpotlight({
           }}
         >
           <FooterHint keys={["↑", "↓"]} label="navegar" />
-          <FooterHint keys={["↵"]} label="seleccionar" />
+          {multiSelect ? (
+            <>
+              <FooterHint keys={["↵"]} label="marcar" />
+              <FooterHint keys={["⌘", "↵"]} label="listo" />
+            </>
+          ) : (
+            <FooterHint keys={["↵"]} label="seleccionar" />
+          )}
           <FooterHint keys={["⌘", "N"]} label="crear nuevo" />
           <FooterHint keys={["Esc"]} label="cerrar" />
         </Box>
-        <Box
-          sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            fontSize: 10.5,
-            color: foto.ink.tertiary,
-            fontStyle: "italic",
-          }}
-        >
-          <Clock size={11} strokeWidth={1.5} aria-hidden />
-          Sólo ítems DISPONIBLE o ASESOR (BR-6)
-        </Box>
+        {multiSelect ? (
+          <Box
+            component="button"
+            type="button"
+            onClick={confirmSelection}
+            disabled={selected.length === 0}
+            aria-label={`Listo — agregar ${selected.length} ítem${
+              selected.length === 1 ? "" : "s"
+            } a la venta`}
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "8px 16px",
+              borderRadius: "9px",
+              border: "none",
+              background:
+                selected.length > 0
+                  ? `linear-gradient(180deg, ${foto.accent.primary} 0%, ${foto.accent.deep} 100%)`
+                  : foto.surfaces.inset,
+              color: selected.length > 0 ? foto.ink.inverse : foto.ink.mute,
+              fontSize: 12.5,
+              fontWeight: 600,
+              letterSpacing: "-0.005em",
+              cursor: selected.length > 0 ? "pointer" : "not-allowed",
+              fontFamily: "inherit",
+              whiteSpace: "nowrap",
+              transition: "background 120ms ease, transform 120ms ease",
+              "&:hover:not(:disabled)": { transform: "translateY(-1px)" },
+            }}
+          >
+            <Check size={14} strokeWidth={2} aria-hidden />
+            {selected.length > 0
+              ? `Listo · ${selected.length} ítem${
+                  selected.length === 1 ? "" : "s"
+                }`
+              : "Elegí ítems"}
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: 10.5,
+              color: foto.ink.tertiary,
+              fontStyle: "italic",
+            }}
+          >
+            <Clock size={11} strokeWidth={1.5} aria-hidden />
+            Sólo ítems DISPONIBLE o ASESOR (BR-6)
+          </Box>
+        )}
       </Box>
     </Dialog>
   );

@@ -81,7 +81,10 @@ async function uploadFileToDrive(drive, folderId, file, index) {
     : SUPPORTED_MIME_TYPES[file.mimetype] || "bin";
 
   const isVideo = VIDEO_MIME_TYPES.includes(file.mimetype);
-  const prefix = isVideo ? "video" : "image";
+  const isPdf =
+    file.mimetype === "application/pdf" ||
+    String(fileExtension).toLowerCase() === "pdf";
+  const prefix = isVideo ? "video" : isPdf ? "doc" : "image";
   const fileName = `${prefix}-${index + 1}-${Date.now()}.${fileExtension}`;
 
   console.log(`[Upload] Uploading ${isVideo ? "video" : "image"}: ${fileName}`);
@@ -139,6 +142,13 @@ async function uploadFileToDrive(drive, folderId, file, index) {
     result.url = `https://drive.google.com/file/d/${fileId}/preview`;
     result.videoUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
     result.thumbnailUrl = `/api/serve-drive-image?fileId=${fileId}&thumbnail=true`;
+  } else if (isPdf) {
+    // PDFs (carnet/kardex, certificado) don't render via `uc?export=view` —
+    // that endpoint streams raw bytes meant for an <img>, so a browser opening
+    // it for a PDF gets a download or a "can't preview" page (the broken
+    // "Abrir Kardex" link). The Drive viewer URL opens the PDF in-browser, and
+    // the file is already shared anyone-with-link reader above.
+    result.url = `https://drive.google.com/file/d/${fileId}/view`;
   } else {
     result.url = `https://drive.google.com/uc?export=view&id=${fileId}`;
   }
