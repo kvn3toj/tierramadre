@@ -1,5 +1,5 @@
 import { cronJobs } from "convex/server";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 const crons = cronJobs();
 
@@ -54,5 +54,26 @@ crons.interval(
 // If a dormant backstop is ever wanted, gate it on an env flag so it ships off:
 //   crons.interval("reconcile foto tabs", { minutes: 60 }, internal.fotoSync.runFull, {});
 //   // ...with `if (process.env.FOTO_RECONCILE_CRON !== "on") return;` in the action.
+
+// ─── GHL commerce · Áreas 2 & 4 scheduler ────────────────────────────────
+//
+// Replaces the spec's Cloudflare `scheduler` worker: Convex crons run natively,
+// so there is no extra platform to deploy. Times are UTC; Bogotá is UTC-5.
+
+// Recompute ambassador scores nightly. 05:00 UTC ≈ 00:00 America/Bogotá.
+crons.daily(
+  "ambassador scoring",
+  { hourUTC: 5, minuteUTC: 0 },
+  internal.ambassadors.calculateScore,
+  {},
+);
+
+// Flag online carts left unpaid > 4h. 23:00 UTC ≈ 18:00 America/Bogotá.
+crons.cron(
+  "abandoned cart nudge",
+  "0 23 * * *",
+  internal.ghl.nudgeAbandoned,
+  {},
+);
 
 export default crons;

@@ -128,6 +128,9 @@ vite.config.js.disabled-by-test
 # Live-data snapshots from one-off migration scripts (never commit)
 scripts/.backups/
 
+# Vite/Vitest config bundling temp files
+*.timestamp-*.mjs
+
 # Esmereogénesis cut-character source/experiment renders (93MB) — only the
 # production seed/ + grown/ PNGs are committed; _source stays local.
 src/assets/esmereogenesis/characters/_source/

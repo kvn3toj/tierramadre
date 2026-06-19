@@ -28,6 +28,12 @@ import { v } from "convex/values";
 // stays bounded regardless of table size.
 const INVITATION_SCAN_CAP = 2000;
 
+// Capped catalog read so Fotosynthia's guided mode can resolve an itemHint
+// ("la esmeralda de Chivor") to a real itemId + loteId for edits/batch-edits,
+// without an unbounded reactive read. Most-recent ITEM_SCAN_CAP items only;
+// guided edits beyond this fall back to editing from the lot page directly.
+const ITEM_SCAN_CAP = 300;
+
 export const workspaceSnapshot = query({
   args: {},
   handler: async (ctx) => {
@@ -48,13 +54,15 @@ export const workspaceSnapshot = query({
     // `topInviters` are computed over the most recent INVITATION_SCAN_CAP only.
     // Output SHAPE is identical; figures saturate at the cap (which is far above
     // any realistic invite volume) instead of growing the read without bound.
-    const [lots, sales, providers, clients, invitations] = await Promise.all([
-      ctx.db.query("lots").collect(),
-      ctx.db.query("sales").collect(),
-      ctx.db.query("providers").collect(),
-      ctx.db.query("clients").collect(),
-      ctx.db.query("invitations").order("desc").take(INVITATION_SCAN_CAP),
-    ]);
+    const [lots, sales, providers, clients, invitations, recentItems] =
+      await Promise.all([
+        ctx.db.query("lots").collect(),
+        ctx.db.query("sales").collect(),
+        ctx.db.query("providers").collect(),
+        ctx.db.query("clients").collect(),
+        ctx.db.query("invitations").order("desc").take(INVITATION_SCAN_CAP),
+        ctx.db.query("productInventory").order("desc").take(ITEM_SCAN_CAP),
+      ]);
 
     const lotsByState = lots.reduce<Record<string, number>>((acc, lot) => {
       acc[lot.estado] = (acc[lot.estado] ?? 0) + 1;
@@ -132,6 +140,15 @@ export const workspaceSnapshot = query({
       .sort((a, b) => b.active - a.active)
       .slice(0, 5);
 
+    // Lightweight item index for guided edit/batch itemHint→id resolution.
+    const candidateItems = recentItems
+      .filter((it) => !!it.loteId)
+      .map((it) => ({
+        itemId: it.itemId,
+        nombre: it.nombre ?? "",
+        loteId: it.loteId,
+      }));
+
     return {
       generatedAt: now,
       counts: {
@@ -153,6 +170,7 @@ export const workspaceSnapshot = query({
         ).length,
         topInviters,
       },
+      candidateItems,
     };
   },
 });

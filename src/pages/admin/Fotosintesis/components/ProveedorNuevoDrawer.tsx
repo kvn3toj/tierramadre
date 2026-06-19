@@ -52,6 +52,35 @@ interface ProveedorNuevoDrawerProps {
    * operator doesn't retype what they already typed in the picker.
    */
   initialName?: string;
+  /**
+   * Optional full pre-fill from Fotosynthia's guided "provider" flow. Seeds
+   * every field on open; the human reviews + Crear. `initialName` still wins
+   * for the name field when both are present.
+   */
+  initialData?: ProviderInitialData;
+}
+
+/** Guided-capture pre-fill for the provider drawer (Fotosynthia v2). */
+export interface ProviderInitialData {
+  nombreORazonSocial?: string;
+  tipo?: string;
+  tipoDocumento?: string;
+  documento?: string;
+  telefono?: string;
+  email?: string;
+  direccion?: string;
+  notas?: string;
+}
+
+/** Map a free-text doc type from the AI draft onto the drawer's enum. */
+function coerceTipoDocumento(raw: unknown): TipoDocumento {
+  if (typeof raw !== "string") return "NIT";
+  const s = raw.trim().toLowerCase();
+  if (s.includes("nit")) return "NIT";
+  if (s.includes("céd") || s.includes("ced")) return "Cédula";
+  if (s.includes("pas")) return "Pasaporte";
+  if (!s) return "NIT";
+  return "Otro";
 }
 
 // Loose shape — the canonical type lives in convex/_generated/dataModel but we
@@ -119,6 +148,7 @@ export function ProveedorNuevoDrawer({
   onSuccess,
   contextLabel,
   initialName,
+  initialData,
 }: ProveedorNuevoDrawerProps) {
   const foto = getFoto("light");
   const titleId = useId();
@@ -148,19 +178,22 @@ export function ProveedorNuevoDrawer({
   // off in the picker.
   useEffect(() => {
     if (open) {
-      setTipo("gemas");
-      setNombre(initialName ?? "");
-      setTipoDocumento("NIT");
-      setDocumento("");
-      setTelefono("");
-      setEmail("");
-      setDireccion("");
-      setNotas("");
+      const d = initialData ?? {};
+      setTipo(typeof d.tipo === "string" && d.tipo ? d.tipo : "gemas");
+      setNombre(initialName ?? d.nombreORazonSocial ?? "");
+      setTipoDocumento(coerceTipoDocumento(d.tipoDocumento));
+      setDocumento(typeof d.documento === "string" ? d.documento : "");
+      setTelefono(
+        typeof d.telefono === "string" ? formatColombianPhone(d.telefono) : "",
+      );
+      setEmail(typeof d.email === "string" ? d.email : "");
+      setDireccion(typeof d.direccion === "string" ? d.direccion : "");
+      setNotas(typeof d.notas === "string" ? d.notas : "");
       setSubmitting(false);
       setSubmitError(null);
       setDupDismissed(false);
     }
-  }, [open, initialName]);
+  }, [open, initialName, initialData]);
 
   // Focus the name input after MUI's Dialog finishes its enter transition.
   useEffect(() => {

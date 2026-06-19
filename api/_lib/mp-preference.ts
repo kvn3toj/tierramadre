@@ -1,0 +1,96 @@
+/**
+ * Mercado Pago Checkout Preferences + payment fetch.
+ *
+ * `create-order` builds a preference whose `external_reference` is our
+ * `saleId` and whose `notification_url` points at `api/mp-webhook`; the
+ * customer is redirected to the returned `init_point`. After payment, the
+ * webhook re-fetches the real payment from MP (never trusting the body) and
+ * treats only `status === "approved"` as paid.
+ *
+ * `buildPreference` is pure (unit-tested in tests/mpPreference.test.ts);
+ * `createPreference`/`fetchPayment` take an injectable `fetchImpl`.
+ */
+
+type FetchLike = (
+  input: string,
+  init?: { method?: string; headers?: Record<string, string>; body?: string },
+) => Promise<{ ok: boolean; status: number; json: () => Promise<any> }>;
+
+const MP_BASE = "https://api.mercadopago.com";
+
+export interface MpPreferenceItem {
+  title: string;
+  quantity: number;
+  unit_price: number;
+  currency_id?: string;
+}
+
+export interface BuildPreferenceInput {
+  items: MpPreferenceItem[];
+  payer?: { name?: string; email?: string; phone?: { number?: string } };
+  orderId: string;
+  notificationUrl: string;
+  backUrls?: { success?: string; pending?: string; failure?: string };
+}
+
+/** Build the MP `/checkout/preferences` request body (currency defaults to COP). */
+export function buildPreference(
+  input: BuildPreferenceInput,
+): Record<string, unknown> {
+  return {
+    items: input.items.map((i) => ({ currency_id: "COP", ...i })),
+    payer: input.payer,
+    external_reference: input.orderId,
+    notification_url: input.notificationUrl,
+    back_urls: input.backUrls,
+    auto_return: "approved",
+  };
+}
+
+export async function createPreference(
+  body: Record<string, unknown>,
+  accessToken: string,
+  fetchImpl: FetchLike = globalThis.fetch as unknown as FetchLike,
+): Promise<{ id: string; init_point: string }> {
+  const res = await fetchImpl(`${MP_BASE}/checkout/preferences`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`MP createPreference failed: ${res.status}`);
+  const data = await res.json();
+  return { id: data.id, init_point: data.init_point };
+}
+
+export interface MpPayment {
+  id: string;
+  status: string;
+  statusDetail?: string;
+  externalReference?: string;
+  transactionAmount?: number;
+  currencyId?: string;
+}
+
+export async function fetchPayment(
+  paymentId: string,
+  accessToken: string,
+  fetchImpl: FetchLike = globalThis.fetch as unknown as FetchLike,
+): Promise<MpPayment> {
+  const res = await fetchImpl(`${MP_BASE}/v1/payments/${paymentId}`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) throw new Error(`MP fetchPayment failed: ${res.status}`);
+  const p = await res.json();
+  return {
+    id: String(p.id),
+    status: p.status,
+    statusDetail: p.status_detail,
+    externalReference: p.external_reference,
+    transactionAmount: p.transaction_amount,
+    currencyId: p.currency_id,
+  };
+}
