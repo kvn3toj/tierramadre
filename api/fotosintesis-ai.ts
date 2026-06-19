@@ -29,7 +29,7 @@ import {
   type GuidedDraft,
   type GuidedEnvelope,
   type GuidedFlow,
-} from "../src/pages/admin/Fotosintesis/copilot/flowSchemas";
+} from "../src/pages/admin/Fotosintesis/copilot/flowSchemas.js";
 
 const DEFAULT_MODEL =
   process.env.GROQ_MODEL?.trim() || "llama-3.3-70b-versatile";

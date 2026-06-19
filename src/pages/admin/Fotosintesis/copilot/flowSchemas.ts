@@ -38,7 +38,7 @@ import {
   normalizeCalidad,
   normalizeColor,
   sanitizeSedeCode,
-} from "../../../../data/vocabularies";
+} from "../../../../data/vocabularies.js";
 
 // ─── Flow taxonomy ───────────────────────────────────────────────────
 
