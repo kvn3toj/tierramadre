@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react';
-import { AIAnalysisResult } from '../types';
-import nameData from '../data/existingNames.json';
+import { useState, useCallback } from "react";
+import { AIAnalysisResult } from "../types";
+import nameData from "../data/existingNames.json";
 import {
   NAMING_PROMPT,
   NAMING_PROMPT_TEXT,
@@ -12,11 +12,22 @@ import {
   FALLBACK_CHARACTERISTICS,
   SMART_DESCRIPTIONS,
   SMART_CHARACTERISTICS,
-} from './ai-prompts';
-import { STORAGE_KEYS } from '../constants/storage-keys';
+} from "./ai-prompts";
+import { STORAGE_KEYS } from "../constants/storage-keys";
 
 // LocalStorage key for used names
 const USED_NAMES_KEY = STORAGE_KEYS.AI_USED_NAMES;
+
+// Groq model IDs — overridable via env, defaulting to the current free-tier models.
+// Vision (analyze product photo → names): Llama 4 Scout (multimodal).
+// Text (captions, name suggestions): Llama 3.3 70B Versatile.
+// The previous IDs (llama-3.2-90b-vision-preview / llama-3.1-70b-versatile) were
+// decommissioned by Groq, which silently broke these calls.
+const GROQ_VISION_MODEL =
+  import.meta.env.VITE_GROQ_VISION_MODEL ||
+  "meta-llama/llama-4-scout-17b-16e-instruct";
+const GROQ_TEXT_MODEL =
+  import.meta.env.VITE_GROQ_TEXT_MODEL || "llama-3.3-70b-versatile";
 
 // Get used names from localStorage
 function getUsedNames(): Set<string> {
@@ -35,7 +46,7 @@ function saveUsedName(name: string): void {
     used.add(name);
     localStorage.setItem(USED_NAMES_KEY, JSON.stringify([...used]));
   } catch {
-    console.warn('Could not save used name to localStorage');
+    console.warn("Could not save used name to localStorage");
   }
 }
 
@@ -58,7 +69,10 @@ interface AIHookReturn {
   analyzing: boolean;
   error: string | null;
   analyzeEmerald: (imageBase64: string) => Promise<AIAnalysisResult | null>;
-  generateCaption: (emeraldName: string, description: string) => Promise<string | null>;
+  generateCaption: (
+    emeraldName: string,
+    description: string,
+  ) => Promise<string | null>;
   getRandomSuggestions: () => string[];
 }
 
@@ -66,94 +80,82 @@ export function useAI(): AIHookReturn {
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const analyzeEmerald = useCallback(async (imageBase64: string): Promise<AIAnalysisResult | null> => {
-    setAnalyzing(true);
-    setError(null);
+  const analyzeEmerald = useCallback(
+    async (imageBase64: string): Promise<AIAnalysisResult | null> => {
+      setAnalyzing(true);
+      setError(null);
 
-    const groqKey = import.meta.env.VITE_GROQ_API_KEY;
+      const groqKey = import.meta.env.VITE_GROQ_API_KEY;
 
-    if (!groqKey) {
-      // Fallback to smart local generator
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setAnalyzing(false);
-      return generateSmartSuggestions();
-    }
-
-    try {
-      const base64Data = imageBase64.includes('base64,')
-        ? imageBase64
-        : `data:image/jpeg;base64,${imageBase64}`;
-
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${groqKey}`,
-        },
-        body: JSON.stringify({
-          model: 'llama-3.2-90b-vision-preview',
-          messages: [
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'image_url',
-                  image_url: { url: base64Data },
-                },
-                {
-                  type: 'text',
-                  text: NAMING_PROMPT,
-                },
-              ],
-            },
-          ],
-          temperature: 0.9,
-          max_tokens: 1024,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Groq API Error:', errorData);
-        // Fallback to local generator
+      if (!groqKey) {
+        // Fallback to smart local generator
+        await new Promise((resolve) => setTimeout(resolve, 500));
         setAnalyzing(false);
         return generateSmartSuggestions();
       }
 
-      const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || '';
-
-      // Clean and parse response
-      const cleanedContent = content
-        .replace(/```json\n?/g, '')
-        .replace(/```\n?/g, '')
-        .trim();
-
       try {
-        const parsed = JSON.parse(cleanedContent) as AIAnalysisResult;
-        // Filter out already used names
-        const usedNames = getUsedNames();
-        const availableNames = parsed.names.filter(name => !usedNames.has(name));
+        const base64Data = imageBase64.includes("base64,")
+          ? imageBase64
+          : `data:image/jpeg;base64,${imageBase64}`;
 
-        // If AI returned used names, generate more
-        if (availableNames.length < 3) {
-          const extraNames = generateUniqueNames(3 - availableNames.length);
-          availableNames.push(...extraNames);
+        const response = await fetch(
+          "https://api.groq.com/openai/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${groqKey}`,
+            },
+            body: JSON.stringify({
+              model: GROQ_VISION_MODEL,
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "image_url",
+                      image_url: { url: base64Data },
+                    },
+                    {
+                      type: "text",
+                      text: NAMING_PROMPT,
+                    },
+                  ],
+                },
+              ],
+              temperature: 0.9,
+              max_tokens: 1024,
+            }),
+          },
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error("Groq API Error:", errorData);
+          // Fallback to local generator
+          setAnalyzing(false);
+          return generateSmartSuggestions();
         }
 
-        setAnalyzing(false);
-        return {
-          ...parsed,
-          names: availableNames.slice(0, 3),
-        };
-      } catch {
-        // Try to extract names manually
-        const namesMatch = cleanedContent.match(/"names"\s*:\s*\[(.*?)\]/s);
-        if (namesMatch) {
-          const names = namesMatch[1].match(/"([^"]+)"/g)?.map((s: string) => s.replace(/"/g, '')) || [];
-          const usedNames = getUsedNames();
-          const availableNames = names.filter((name: string) => !usedNames.has(name));
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content || "";
 
+        // Clean and parse response
+        const cleanedContent = content
+          .replace(/```json\n?/g, "")
+          .replace(/```\n?/g, "")
+          .trim();
+
+        try {
+          const parsed = JSON.parse(cleanedContent) as AIAnalysisResult;
+          // Filter out already used names
+          const usedNames = getUsedNames();
+          const availableNames = parsed.names.filter(
+            (name) => !usedNames.has(name),
+          );
+
+          // If AI returned used names, generate more
           if (availableNames.length < 3) {
             const extraNames = generateUniqueNames(3 - availableNames.length);
             availableNames.push(...extraNames);
@@ -161,57 +163,91 @@ export function useAI(): AIHookReturn {
 
           setAnalyzing(false);
           return {
+            ...parsed,
             names: availableNames.slice(0, 3),
-            description: FALLBACK_DESCRIPTION,
-            characteristics: FALLBACK_CHARACTERISTICS,
           };
-        }
+        } catch {
+          // Try to extract names manually
+          const namesMatch = cleanedContent.match(/"names"\s*:\s*\[(.*?)\]/s);
+          if (namesMatch) {
+            const names =
+              namesMatch[1]
+                .match(/"([^"]+)"/g)
+                ?.map((s: string) => s.replace(/"/g, "")) || [];
+            const usedNames = getUsedNames();
+            const availableNames = names.filter(
+              (name: string) => !usedNames.has(name),
+            );
 
+            if (availableNames.length < 3) {
+              const extraNames = generateUniqueNames(3 - availableNames.length);
+              availableNames.push(...extraNames);
+            }
+
+            setAnalyzing(false);
+            return {
+              names: availableNames.slice(0, 3),
+              description: FALLBACK_DESCRIPTION,
+              characteristics: FALLBACK_CHARACTERISTICS,
+            };
+          }
+
+          setAnalyzing(false);
+          return generateSmartSuggestions();
+        }
+      } catch (err) {
+        console.error("AI analysis error:", err);
+        setError("Usando generador local de nombres");
         setAnalyzing(false);
         return generateSmartSuggestions();
       }
-    } catch (err) {
-      console.error('AI analysis error:', err);
-      setError('Usando generador local de nombres');
-      setAnalyzing(false);
-      return generateSmartSuggestions();
-    }
-  }, []);
+    },
+    [],
+  );
 
-  const generateCaption = useCallback(async (emeraldName: string, description: string): Promise<string | null> => {
-    const groqKey = import.meta.env.VITE_GROQ_API_KEY;
+  const generateCaption = useCallback(
+    async (
+      emeraldName: string,
+      description: string,
+    ): Promise<string | null> => {
+      const groqKey = import.meta.env.VITE_GROQ_API_KEY;
 
-    if (!groqKey) {
-      return FALLBACK_CAPTION_TEMPLATE(emeraldName, description);
-    }
+      if (!groqKey) {
+        return FALLBACK_CAPTION_TEMPLATE(emeraldName, description);
+      }
 
-    try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${groqKey}`,
-        },
-        body: JSON.stringify({
-          model: 'llama-3.1-70b-versatile',
-          messages: [
-            {
-              role: 'user',
-              content: `Esmeralda: ${emeraldName}\nDescripción: ${description}\n\n${CAPTION_PROMPT}`,
+      try {
+        const response = await fetch(
+          "https://api.groq.com/openai/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${groqKey}`,
             },
-          ],
-          temperature: 0.8,
-          max_tokens: 500,
-        }),
-      });
+            body: JSON.stringify({
+              model: GROQ_TEXT_MODEL,
+              messages: [
+                {
+                  role: "user",
+                  content: `Esmeralda: ${emeraldName}\nDescripción: ${description}\n\n${CAPTION_PROMPT}`,
+                },
+              ],
+              temperature: 0.8,
+              max_tokens: 500,
+            }),
+          },
+        );
 
-      if (!response.ok) return null;
-      const data = await response.json();
-      return data.choices?.[0]?.message?.content || null;
-    } catch {
-      return null;
-    }
-  }, []);
+        if (!response.ok) return null;
+        const data = await response.json();
+        return data.choices?.[0]?.message?.content || null;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
 
   return {
     analyzing,
@@ -228,91 +264,123 @@ export function useAI(): AIHookReturn {
 
 // Parse a JSON response from Groq and extract a string array from a given key
 function parseGroqStringArray(content: string, key: string): string[] {
-  const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  const cleaned = content
+    .replace(/```json\n?/g, "")
+    .replace(/```\n?/g, "")
+    .trim();
   const parsed = JSON.parse(cleaned);
   return parsed[key] as string[];
 }
 
 // Generate names similar to a reference name
-export async function generateSimilarNames(referenceName: string, temperature: number): Promise<string[]> {
+export async function generateSimilarNames(
+  referenceName: string,
+  temperature: number,
+): Promise<string[]> {
   const groqKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!groqKey) return generateLocalNames(3, temperature);
 
-  const prompt = SIMILAR_NAMES_PROMPT.replace('{referenceName}', referenceName);
+  const prompt = SIMILAR_NAMES_PROMPT.replace("{referenceName}", referenceName);
   try {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
-      body: JSON.stringify({
-        model: 'llama-3.1-70b-versatile',
-        messages: [{ role: 'user', content: prompt }],
-        temperature,
-        max_tokens: 256,
-      }),
-    });
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${groqKey}`,
+        },
+        body: JSON.stringify({
+          model: GROQ_TEXT_MODEL,
+          messages: [{ role: "user", content: prompt }],
+          temperature,
+          max_tokens: 256,
+        }),
+      },
+    );
     if (!response.ok) return generateLocalNames(3, temperature);
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
-    const names = parseGroqStringArray(content, 'names');
+    const content = data.choices?.[0]?.message?.content || "";
+    const names = parseGroqStringArray(content, "names");
     const usedNames = getUsedNames();
-    return names.filter(n => !usedNames.has(n)).slice(0, 3);
+    return names.filter((n) => !usedNames.has(n)).slice(0, 3);
   } catch {
     return generateLocalNames(3, temperature);
   }
 }
 
 // Generate collection name suggestions
-export async function generateCollectionNames(temperature: number): Promise<string[]> {
+export async function generateCollectionNames(
+  temperature: number,
+): Promise<string[]> {
   const groqKey = import.meta.env.VITE_GROQ_API_KEY;
   const fallback = [
-    'Colección del Amazonas', 'Colección Mitológica', 'Colección Selva Madre',
-    'Colección Imperial', 'Colección del Cosmos',
+    "Colección del Amazonas",
+    "Colección Mitológica",
+    "Colección Selva Madre",
+    "Colección Imperial",
+    "Colección del Cosmos",
   ];
   if (!groqKey) return fallback;
 
   try {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
-      body: JSON.stringify({
-        model: 'llama-3.1-70b-versatile',
-        messages: [{ role: 'user', content: COLLECTION_NAMES_PROMPT }],
-        temperature,
-        max_tokens: 256,
-      }),
-    });
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${groqKey}`,
+        },
+        body: JSON.stringify({
+          model: GROQ_TEXT_MODEL,
+          messages: [{ role: "user", content: COLLECTION_NAMES_PROMPT }],
+          temperature,
+          max_tokens: 256,
+        }),
+      },
+    );
     if (!response.ok) return fallback;
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
-    return parseGroqStringArray(content, 'collections');
+    const content = data.choices?.[0]?.message?.content || "";
+    return parseGroqStringArray(content, "collections");
   } catch {
     return fallback;
   }
 }
 
 // Generate individual names thematically tied to a collection
-export async function generateNamesForCollection(collectionName: string, temperature: number): Promise<string[]> {
+export async function generateNamesForCollection(
+  collectionName: string,
+  temperature: number,
+): Promise<string[]> {
   const groqKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!groqKey) return generateLocalNames(3, temperature);
 
   const prompt = `Esta esmeralda pertenece a la "${collectionName}". Los nombres deben reflejar la temática de esta colección.\n\n${NAMING_PROMPT_TEXT}`;
   try {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
-      body: JSON.stringify({
-        model: 'llama-3.1-70b-versatile',
-        messages: [{ role: 'user', content: prompt }],
-        temperature,
-        max_tokens: 256,
-      }),
-    });
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${groqKey}`,
+        },
+        body: JSON.stringify({
+          model: GROQ_TEXT_MODEL,
+          messages: [{ role: "user", content: prompt }],
+          temperature,
+          max_tokens: 256,
+        }),
+      },
+    );
     if (!response.ok) return generateLocalNames(3, temperature);
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
-    const names = parseGroqStringArray(content, 'names');
+    const content = data.choices?.[0]?.message?.content || "";
+    const names = parseGroqStringArray(content, "names");
     const usedNames = getUsedNames();
-    return names.filter(n => !usedNames.has(n)).slice(0, 3);
+    return names.filter((n) => !usedNames.has(n)).slice(0, 3);
   } catch {
     return generateLocalNames(3, temperature);
   }
@@ -373,9 +441,20 @@ function generateSingleName(): string {
 // Strategy 1: Pick from a category
 function generateFromCategory(): string {
   const categories = [
-    'mythology', 'royalty', 'nature_flora', 'nature_fauna', 'nature_places',
-    'cosmic', 'emotional', 'elements', 'gems', 'legendary_places',
-    'time', 'abstract', 'colors_descriptive', 'poetic_combinations'
+    "mythology",
+    "royalty",
+    "nature_flora",
+    "nature_fauna",
+    "nature_places",
+    "cosmic",
+    "emotional",
+    "elements",
+    "gems",
+    "legendary_places",
+    "time",
+    "abstract",
+    "colors_descriptive",
+    "poetic_combinations",
   ] as const;
 
   const category = categories[Math.floor(Math.random() * categories.length)];
@@ -420,8 +499,18 @@ function generateWithSuffix(): string {
 // Strategy 4: Creative combination
 function generateCombination(): string {
   const adjectives = [
-    'Dorada', 'Sagrada', 'Mística', 'Eterna', 'Divina', 'Celestial',
-    'Ancestral', 'Imperial', 'Radiante', 'Sublime', 'Secreta', 'Encantada'
+    "Dorada",
+    "Sagrada",
+    "Mística",
+    "Eterna",
+    "Divina",
+    "Celestial",
+    "Ancestral",
+    "Imperial",
+    "Radiante",
+    "Sublime",
+    "Secreta",
+    "Encantada",
   ];
 
   const nouns = [
@@ -441,14 +530,36 @@ function generateCombination(): string {
 // Strategy 5: Poetic/compound name
 function generatePoetic(): string {
   const poeticParts1 = [
-    'Sueño', 'Suspiro', 'Eco', 'Reflejo', 'Danza', 'Canto', 'Vuelo',
-    'Abrazo', 'Beso', 'Caricia', 'Secreto', 'Misterio', 'Destello'
+    "Sueño",
+    "Suspiro",
+    "Eco",
+    "Reflejo",
+    "Danza",
+    "Canto",
+    "Vuelo",
+    "Abrazo",
+    "Beso",
+    "Caricia",
+    "Secreto",
+    "Misterio",
+    "Destello",
   ];
 
   const poeticParts2 = [
-    'del Alba', 'de Luna', 'del Sol', 'del Mar', 'del Bosque',
-    'de Estrellas', 'del Tiempo', 'de Jade', 'Esmeralda', 'Ancestral',
-    'del Río', 'de la Selva', 'del Páramo', 'de Muzo'
+    "del Alba",
+    "de Luna",
+    "del Sol",
+    "del Mar",
+    "del Bosque",
+    "de Estrellas",
+    "del Tiempo",
+    "de Jade",
+    "Esmeralda",
+    "Ancestral",
+    "del Río",
+    "de la Selva",
+    "del Páramo",
+    "de Muzo",
   ];
 
   const part1 = poeticParts1[Math.floor(Math.random() * poeticParts1.length)];
@@ -463,7 +574,11 @@ function generateSmartSuggestions(): AIAnalysisResult {
 
   return {
     names,
-    description: SMART_DESCRIPTIONS[Math.floor(Math.random() * SMART_DESCRIPTIONS.length)],
-    characteristics: SMART_CHARACTERISTICS[Math.floor(Math.random() * SMART_CHARACTERISTICS.length)],
+    description:
+      SMART_DESCRIPTIONS[Math.floor(Math.random() * SMART_DESCRIPTIONS.length)],
+    characteristics:
+      SMART_CHARACTERISTICS[
+        Math.floor(Math.random() * SMART_CHARACTERISTICS.length)
+      ],
   };
 }
