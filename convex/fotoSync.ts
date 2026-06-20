@@ -480,5 +480,30 @@ export const runFull = internalAction({
   },
 });
 
+/**
+ * Env-gated timer backstop for the otherwise event-driven SOT sync.
+ *
+ * The reverse direction (Sheet → Convex) is normally event-driven (Apps Script
+ * + the manual "🔄 Convex Sync" button → /sync/foto). That means an out-of-band
+ * edit to a SOT cell — e.g. an operator flipping Inventario `estado` straight in
+ * the sheet — only reconciles when someone presses the button. This backstop
+ * lets a deployment opt into a periodic full reconcile WITHOUT making it the
+ * default (the per-interval Vercel+Sheets+Convex bandwidth the team chose to
+ * avoid): it no-ops unless `FOTO_RECONCILE_CRON === "on"`.
+ *
+ * Kept SEPARATE from `runFull` so the manual button path (which calls runFull
+ * directly via /sync/foto) is never gated by the flag.
+ */
+export const reconcileBackstop = internalAction({
+  args: {},
+  handler: async (ctx): Promise<{ skipped: true } | { skipped: false }> => {
+    if (process.env.FOTO_RECONCILE_CRON !== "on") {
+      return { skipped: true };
+    }
+    await ctx.runAction(internal.fotoSync.runFull, {});
+    return { skipped: false };
+  },
+});
+
 // `coerceCell` is re-exported for the unit test's coercion assertions.
 export { coerceCell };

@@ -40,6 +40,7 @@ import { fontFamilies, getFoto } from "../../../../design-system";
 import { useGoogleAuth } from "../../../../contexts/GoogleAuthContext";
 import { useAppNavigator } from "../../../../contexts/AppNavigatorContext";
 import { api } from "../../../../../convex/_generated/api";
+import { ITEM_SCAN_CAP } from "../../../../../convex/_lib/aiCaps";
 import { useFotosynthiaChat } from "../hooks/useFotosynthiaChat";
 import { useFotosintesisLayoutSafe } from "../FotosintesisLayoutContext";
 import type {
@@ -160,10 +161,11 @@ interface CandidateItem {
   loteId?: string;
 }
 
-// Mirror of ITEM_SCAN_CAP in convex/fotosintesisAi.ts: when the live snapshot
-// holds fewer than this many lot-items it is the complete set, so an itemHint
-// miss is a true not-found rather than "older than the recent-items window".
-const CANDIDATE_ITEM_CAP = 300;
+// Shared with convex/fotosintesisAi.ts via convex/_lib/aiCaps (single source of
+// truth): when the live snapshot holds fewer than this many lot-items it is the
+// complete set, so an itemHint miss is a true not-found rather than "older than
+// the recent-items window".
+const CANDIDATE_ITEM_CAP = ITEM_SCAN_CAP;
 
 // Three-dot "typing" pulse shown while a guided turn is in flight (the guided
 // response is a single JSON payload, so the bubble has no streamed text yet).
@@ -572,10 +574,25 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
       return "Sin acceso a Convex — Fotosynthia responde sin datos vivos.";
     const s = snapshot as {
       counts?: { lots?: number; sales?: number; ambassadors?: number };
+      syncErrors?: {
+        lots?: number;
+        sales?: number;
+        providers?: number;
+        clients?: number;
+      };
     };
     const c = s.counts;
     if (!c) return "Snapshot listo";
-    return `Snapshot · ${c.lots ?? 0} lotes · ${c.sales ?? 0} ventas · ${c.ambassadors ?? 0} embajadores`;
+    const base = `Snapshot · ${c.lots ?? 0} lotes · ${c.sales ?? 0} ventas · ${c.ambassadors ?? 0} embajadores`;
+    // Surface sheet-sync health deterministically in the rail chrome instead of
+    // relying on the model honoring the system-prompt rule to mention it.
+    const e = s.syncErrors;
+    const totalErr = e
+      ? (e.lots ?? 0) + (e.sales ?? 0) + (e.providers ?? 0) + (e.clients ?? 0)
+      : 0;
+    return totalErr > 0
+      ? `${base} · ⚠ ${totalErr} ${totalErr === 1 ? "error" : "errores"} de sync`
+      : base;
   }, [snapshot]);
 
   return (

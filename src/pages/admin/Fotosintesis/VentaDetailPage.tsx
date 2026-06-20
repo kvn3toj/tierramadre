@@ -33,7 +33,7 @@ import { KardexPreview } from "./components/KardexPreview";
 import type { KardexLineItem } from "./components/KardexPreview";
 import { CancelVentaDialog } from "./components/CancelVentaDialog";
 import { EditableMetaValue } from "./components/EditableMetaValue";
-import { pickTierPrice } from "./utils/saleItemSelection";
+import { resolveKardexPrices } from "./utils/saleItemSelection";
 import type { CompradorTier } from "./utils/saleItemSelection";
 import { resolveItemThumbnail } from "./utils/resolveThumbnail";
 import { useBatchThumbnails } from "../../../hooks/useBatchThumbnails";
@@ -157,15 +157,13 @@ export default function VentaDetailPage() {
   const tier: CompradorTier =
     buyer?.tipo === "embajador" ? "embajador" : "final";
 
-  // itemId → tier-resolved per-item price (COP), recomputed when the batch or
-  // the tier changes.
-  const priceByItemId = useMemo(() => {
-    const map = new Map<string, number | undefined>();
-    for (const row of manyItems ?? []) {
-      map.set(row.itemId, pickTierPrice(row, tier));
-    }
-    return map;
-  }, [manyItems, tier]);
+  // itemId → per-item price (COP). Prefers the sale's frozen `lineItems`
+  // snapshot (faithful comprobante); falls back to a live tier recompute only
+  // for legacy sales captured before snapshots existed.
+  const priceByItemId = useMemo(
+    () => resolveKardexPrices(sale?.lineItems, manyItems, tier),
+    [sale, manyItems, tier],
+  );
 
   // Ordered Kardex line items, photos resolved with the legacy-thumbnail
   // fallback. Manual (non-inventory) lines stored on the sale render after.

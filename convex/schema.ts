@@ -483,6 +483,24 @@ export default defineSchema({
         }),
       ),
     ),
+    /**
+     * Per-line price snapshot — the tier-resolved price each inventory item was
+     * SOLD at, frozen at sale time. The Kardex comprobante reads these instead
+     * of recomputing from live inventory, so a legal/financial document stays a
+     * faithful record even if an item is later re-priced or the buyer's tier
+     * flips. App-only like `manualItems`: NOT in COLUMN_MAPS.sales (never
+     * pushed) nor in the sales pull allowlist (never clobbered). Optional:
+     * legacy sales predate it and fall back to a live recompute.
+     */
+    lineItems: v.optional(
+      v.array(
+        v.object({
+          itemId: v.string(),
+          precioCOP: v.number(),
+          tier: v.union(v.literal("embajador"), v.literal("final")),
+        }),
+      ),
+    ),
     // Canonical: contado | credito | esmereogenesis | canje | bajo_pedido |
     // consignacion. Free text so the venta UI can save an operator write-in
     // ("Otra…"); the credito/contado/esmereogenesis branches no-op for customs.

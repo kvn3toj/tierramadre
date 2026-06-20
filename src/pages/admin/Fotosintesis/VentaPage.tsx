@@ -53,6 +53,7 @@ import {
   dedupeSelection,
   sumSuggested,
   pickTierPrice,
+  buildSaleLineItems,
   type CompradorTier,
 } from "./utils/saleItemSelection";
 import {
@@ -659,11 +660,19 @@ export default function FotosintesisVentaPage() {
         clientId,
         fechaVenta: confirmedAt,
         precioAcordadoCOP: precioCop,
-        descuentoCOP: descuentoCop || undefined,
+        // Always persist a concrete number (incl. 0) so the Kardex never falls
+        // back to a recomputed value and col F is always a reconcilable cell.
+        descuentoCOP: descuentoCop,
         totalCOP: totalCop,
         comisionCOP: comisionCop || undefined,
         manualItems: manualItems.length
           ? toConvexManualItems(manualItems)
+          : undefined,
+        // Freeze the per-line price each item is sold at (from the same
+        // tier-resolved map the subtotal uses) so the comprobante is a faithful
+        // record, immune to later inventory re-pricing / buyer-tier flips.
+        lineItems: itemIds.length
+          ? buildSaleLineItems(itemIds, priceByItemId, tier)
           : undefined,
         formaPago,
         metodoContado: formaPago === "contado" ? metodoContado : undefined,
