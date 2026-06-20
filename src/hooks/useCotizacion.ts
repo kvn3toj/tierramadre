@@ -3,13 +3,31 @@
  * Composition hook that combines form state and data management for quotations.
  * Delegates to useCotizacionForm and useCotizacionData for better modularity.
  */
-import { useCallback, useMemo } from 'react';
-import { TreasureItem } from '../types';
-import { useCotizacionForm } from './useCotizacionForm';
-import { useCotizacionData } from './useCotizacionData';
-import { STORAGE_KEYS } from '../constants/storage-keys';
-import { useCurrency } from '../contexts/CurrencyContext';
-import { formatCarats } from '../utils/formatting';
+import { useCallback, useMemo } from "react";
+import { TreasureItem } from "../types";
+import { useCotizacionForm } from "./useCotizacionForm";
+import { useCotizacionData } from "./useCotizacionData";
+import { STORAGE_KEYS } from "../constants/storage-keys";
+import { useCurrency } from "../contexts/CurrencyContext";
+import { formatCarats } from "../utils/formatting";
+
+// AI-generated jewelry visualization scene keys
+export type AiJewelryScene =
+  | "ring-woman"
+  | "ring-man"
+  | "necklace"
+  | "earrings";
+export type AiJewelryMetal = "gold" | "silver";
+
+// A single AI-generated "imagine the gem set into jewelry" preview
+export interface AiJewelryPreview {
+  id: string;
+  scene: AiJewelryScene;
+  metal: AiJewelryMetal;
+  url: string; // serve-drive-image proxy URL (or data: URL fallback)
+  fileId?: string | null;
+  createdAt: number;
+}
 
 // Cotizacion product interface
 export interface CotizacionProduct {
@@ -24,9 +42,13 @@ export interface CotizacionProduct {
   imagen?: string;
   gifUrl?: string; // Animated GIF for PDF export (from video)
   videoUrl?: string; // Direct video URL for QR code linking
+  medidasValores?: string; // Measurement values (mm) — fed to AI preview prompts
   isJewelry: boolean;
   metalType?: string;
   isManual?: boolean; // Flag to identify manually added products
+  // ── AI jewelry visualizations ──
+  aiPreviews?: AiJewelryPreview[]; // all generated scenes for this product
+  selectedPreviewUrl?: string; // the one shown in the quotation & PDF
 }
 
 // Business settings interface
@@ -63,13 +85,13 @@ export interface ManualProductState {
   precioCOP: number;
   isJewelry: boolean;
   metalType: string;
-  pesoTotal: string;      // Total weight in carats
-  cantidadGemas: string;  // Number of gems
-  medida: string;         // Size/measurement (e.g., ring size, necklace length)
-  diseno: string;         // Design/style description
-  precioPorCt: string;    // Price per carat
-  calidadMetal: string;   // Metal quality (e.g., 18k, 14k, 925)
-  gramaje: string;        // Metal weight in grams
+  pesoTotal: string; // Total weight in carats
+  cantidadGemas: string; // Number of gems
+  medida: string; // Size/measurement (e.g., ring size, necklace length)
+  diseno: string; // Design/style description
+  precioPorCt: string; // Price per carat
+  calidadMetal: string; // Metal quality (e.g., 18k, 14k, 925)
+  gramaje: string; // Metal weight in grams
   imagen?: string;
   videoUrl?: string;
   gifUrl?: string; // Animated GIF for PDF export (generated from video)
@@ -77,20 +99,26 @@ export interface ManualProductState {
 
 // Default investments
 export const DEFAULT_COTIZACION_INVESTMENTS: CotizacionInvestment[] = [
-  { id: 'gold', label: 'Oro (Estructura)', value: 0, icon: 'gold' },
-  { id: 'silver', label: 'Plata (Estructura)', value: 0, icon: 'silver' },
-  { id: 'setting', label: 'Engaste', value: 0, icon: 'setting' },
-  { id: 'certification', label: 'Certificación', value: 0, icon: 'certification' },
-  { id: 'packaging', label: 'Empaque', value: 0, icon: 'packaging' },
+  { id: "gold", label: "Oro (Estructura)", value: 0, icon: "gold" },
+  { id: "silver", label: "Plata (Estructura)", value: 0, icon: "silver" },
+  { id: "setting", label: "Engaste", value: 0, icon: "setting" },
+  {
+    id: "certification",
+    label: "Certificación",
+    value: 0,
+    icon: "certification",
+  },
+  { id: "packaging", label: "Empaque", value: 0, icon: "packaging" },
 ];
 
 // Default business settings
 export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
-  contactPhone: '+57 311 305 2755',
-  contactEmail: 'direccion.tierramadre@gmail.com',
-  appUrl: 'tierramadre.app',
-  footerMessage: 'Gracias por su preferencia',
-  footerNote: 'Esta cotización es válida por el tiempo indicado. Los precios están sujetos a disponibilidad. Las esmeraldas Tierra Madre cuentan con certificado de origen y autenticidad.',
+  contactPhone: "+57 311 305 2755",
+  contactEmail: "direccion.tierramadre@gmail.com",
+  appUrl: "tierramadre.app",
+  footerMessage: "Gracias por su preferencia",
+  footerNote:
+    "Esta cotización es válida por el tiempo indicado. Los precios están sujetos a disponibilidad. Las esmeraldas Tierra Madre cuentan con certificado de origen y autenticidad.",
 };
 
 // Storage key for quotation counter
@@ -100,12 +128,15 @@ const COTIZACION_COUNTER_KEY = STORAGE_KEYS.COTIZACION_COUNTER;
 export const generateQuotationNumber = (): string => {
   const date = new Date();
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   const datePrefix = `${year}${month}${day}`;
 
   // Get counter from localStorage
-  let counterData: { date: string; count: number } = { date: datePrefix, count: 0 };
+  let counterData: { date: string; count: number } = {
+    date: datePrefix,
+    count: 0,
+  };
   try {
     const stored = localStorage.getItem(COTIZACION_COUNTER_KEY);
     if (stored) {
@@ -130,47 +161,54 @@ export const generateQuotationNumber = (): string => {
   }
 
   // Format: COT-YYYYMMDD-XXX (3-digit sequential number)
-  const sequence = String(counterData.count).padStart(3, '0');
+  const sequence = String(counterData.count).padStart(3, "0");
   return `COT-${datePrefix}-${sequence}`;
 };
 
 // Generate product URL slug
 export const generateProductSlug = (name: string): string => {
   return name
-    .replace(/^[A-Z]:[A-Z]\s*/i, '')
+    .replace(/^[A-Z]:[A-Z]\s*/i, "")
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\s-]/g, '')
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
     .trim()
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
 };
 
 // Format currency
-export const formatCotizacionCurrency = (amount: number, currency: 'COP' | 'USD' = 'COP'): string => {
-  if (currency === 'USD') {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+export const formatCotizacionCurrency = (
+  amount: number,
+  currency: "COP" | "USD" = "COP",
+): string => {
+  if (currency === "USD") {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
   }
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
 };
 
 // Get peso display string
-export const getPesoDisplay = (item: CotizacionProduct | TreasureItem): string => {
+export const getPesoDisplay = (
+  item: CotizacionProduct | TreasureItem,
+): string => {
   if (item.isJewelry) {
-    return item.metalType || 'Joya';
+    return item.metalType || "Joya";
   }
-  return typeof item.peso === 'number' ? `${formatCarats(item.peso)} ct` : String(item.peso);
+  return typeof item.peso === "number"
+    ? `${formatCarats(item.peso)} ct`
+    : String(item.peso);
 };
 
 /**
@@ -182,9 +220,10 @@ export function useCotizacionFormat() {
   const { currency, convertPrice } = useCurrency();
 
   const formatPrice = useMemo(
-    () => (amountCOP: number): string => {
-      return formatCotizacionCurrency(convertPrice(amountCOP), currency);
-    },
+    () =>
+      (amountCOP: number): string => {
+        return formatCotizacionCurrency(convertPrice(amountCOP), currency);
+      },
     [currency, convertPrice],
   );
 
@@ -225,10 +264,16 @@ export interface UseCotizacionReturn {
 
   // Products
   products: CotizacionProduct[];
-  addProductFromTreasure: (item: TreasureItem) => void;
+  addProductFromTreasure: (
+    item: TreasureItem,
+    overrides?: Partial<CotizacionProduct>,
+  ) => void;
   addManualProduct: (product: ManualProductState) => void;
   removeProduct: (productId: string) => void;
-  updateProduct: (productId: string, updates: Partial<CotizacionProduct>) => void;
+  updateProduct: (
+    productId: string,
+    updates: Partial<CotizacionProduct>,
+  ) => void;
 
   // Edit mode
   editingProductId: string | null;

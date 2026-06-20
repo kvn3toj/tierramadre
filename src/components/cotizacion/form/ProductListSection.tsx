@@ -4,13 +4,34 @@
  * Includes undo-based deletion (Gerhardt-Powals forgiveness pattern).
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Box, Typography, IconButton, alpha, Snackbar, Button } from '@mui/material';
-import { Layers, Trash2, Pencil, Gem, ShoppingBag, Undo2 } from 'lucide-react';
-import { brandColors } from '../constants';
-import { useCotizacionFormat, getPesoDisplay } from '../../../hooks/useCotizacion';
-import type { ProductListSectionProps, ProductThumbnailProps } from '../types';
-import { cssTransition } from '../../../design-system';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import {
+  Box,
+  Typography,
+  IconButton,
+  alpha,
+  Snackbar,
+  Button,
+  Tooltip,
+} from "@mui/material";
+import {
+  Layers,
+  Trash2,
+  Pencil,
+  Gem,
+  ShoppingBag,
+  Undo2,
+  Sparkles,
+} from "lucide-react";
+import { brandColors } from "../constants";
+import {
+  useCotizacionFormat,
+  getPesoDisplay,
+  type CotizacionProduct,
+} from "../../../hooks/useCotizacion";
+import type { ProductListSectionProps, ProductThumbnailProps } from "../types";
+import { cssTransition } from "../../../design-system";
+import { JewelryPreviewGenerator } from "./JewelryPreviewGenerator";
 
 /**
  * ProductThumbnail - Product image with loading states and fallback
@@ -40,14 +61,14 @@ export const ProductThumbnail: React.FC<ProductThumbnailProps> = ({
         bgcolor: isJewelry
           ? alpha(brandColors.gold, 0.1)
           : alpha(brandColors.emerald, 0.1),
-        border: '1px solid',
-        borderColor: 'divider',
+        border: "1px solid",
+        borderColor: "divider",
         flexShrink: 0,
-        overflow: 'hidden',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
+        overflow: "hidden",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
       }}
     >
       {hasValidSrc && (
@@ -58,9 +79,9 @@ export const ProductThumbnail: React.FC<ProductThumbnailProps> = ({
           onError={() => setImgError(true)}
           onLoad={() => setImgLoaded(true)}
           sx={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
             opacity: imgLoaded ? 1 : 0,
             transition: cssTransition.default,
           }}
@@ -70,10 +91,10 @@ export const ProductThumbnail: React.FC<ProductThumbnailProps> = ({
       {(!hasValidSrc || !imgLoaded) && (
         <Box
           sx={{
-            position: hasValidSrc ? 'absolute' : 'static',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            position: hasValidSrc ? "absolute" : "static",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           {isJewelry ? (
@@ -94,27 +115,39 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
   handleRemoveProduct,
   onEditProduct,
   editingProductId,
+  updateProduct,
+  quotationNumber,
 }) => {
   const { formatPrice: formatCurrency } = useCotizacionFormat();
   // Undo-based deletion state
-  const [pendingRemoval, setPendingRemoval] = useState<{ id: string; name: string } | null>(null);
+  const [pendingRemoval, setPendingRemoval] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  // AI jewelry visualizer state
+  const [previewProductId, setPreviewProductId] = useState<string | null>(null);
+  const previewProduct: CotizacionProduct | null =
+    products.find((p) => p.id === previewProductId) ?? null;
 
-  const handleDelete = useCallback((productId: string, productName: string) => {
-    // If there's a pending removal, commit it first
-    if (pendingRemoval) {
-      handleRemoveProduct(pendingRemoval.id);
-    }
+  const handleDelete = useCallback(
+    (productId: string, productName: string) => {
+      // If there's a pending removal, commit it first
+      if (pendingRemoval) {
+        handleRemoveProduct(pendingRemoval.id);
+      }
 
-    setPendingRemoval({ id: productId, name: productName });
+      setPendingRemoval({ id: productId, name: productName });
 
-    // Auto-commit after timeout
-    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-    undoTimerRef.current = setTimeout(() => {
-      handleRemoveProduct(productId);
-      setPendingRemoval(null);
-    }, UNDO_TIMEOUT_MS);
-  }, [handleRemoveProduct, pendingRemoval]);
+      // Auto-commit after timeout
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = setTimeout(() => {
+        handleRemoveProduct(productId);
+        setPendingRemoval(null);
+      }, UNDO_TIMEOUT_MS);
+    },
+    [handleRemoveProduct, pendingRemoval],
+  );
 
   const handleUndo = useCallback(() => {
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
@@ -138,12 +171,22 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
 
   if (products.length === 0) {
     return (
-      <Box sx={{ mb: 3, textAlign: 'center', py: 4 }}>
-        <ShoppingBag size={32} color={brandColors.emerald} style={{ opacity: 0.4 }} />
-        <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1, fontWeight: 500 }}>
+      <Box sx={{ mb: 3, textAlign: "center", py: 4 }}>
+        <ShoppingBag
+          size={32}
+          color={brandColors.emerald}
+          style={{ opacity: 0.4 }}
+        />
+        <Typography
+          variant="body2"
+          sx={{ color: "text.secondary", mt: 1, fontWeight: 500 }}
+        >
           Sin productos seleccionados
         </Typography>
-        <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block', mt: 0.5 }}>
+        <Typography
+          variant="caption"
+          sx={{ color: "text.disabled", display: "block", mt: 0.5 }}
+        >
           Busca productos en el catalogo y agregalos a tu cotizacion
         </Typography>
       </Box>
@@ -152,14 +195,14 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
 
   return (
     <Box sx={{ mb: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
         <Layers size={16} color={brandColors.emerald} />
         <Typography
           variant="subtitle2"
           sx={{
-            color: 'text.primary',
+            color: "text.primary",
             fontWeight: 700,
-            fontSize: '0.875rem',
+            fontSize: "0.875rem",
           }}
         >
           Productos Seleccionados ({products.length})
@@ -169,24 +212,25 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
         <Box
           key={product.id}
           sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
             py: 1.5,
             px: 1.5,
             mb: 1,
-            bgcolor: 'action.hover',
+            bgcolor: "action.hover",
             borderRadius: 1.5,
-            border: '1px solid',
-            borderColor: editingProductId === product.id ? brandColors.emerald : 'divider',
+            border: "1px solid",
+            borderColor:
+              editingProductId === product.id ? brandColors.emerald : "divider",
             // Fade out item pending removal
             opacity: pendingRemoval?.id === product.id ? 0.4 : 1,
             transition: cssTransition.default,
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <ProductThumbnail
-              src={product.imagen}
+              src={product.selectedPreviewUrl || product.imagen}
               isJewelry={product.isJewelry}
               size={48}
             />
@@ -199,13 +243,35 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
               </Typography>
             </Box>
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Typography
               variant="body2"
               sx={{ color: brandColors.emerald, fontWeight: 700 }}
             >
               {formatCurrency(product.precioCOP)}
             </Typography>
+            {/* Visualize with AI */}
+            {updateProduct && (
+              <Tooltip title="Visualizar con IA" arrow>
+                <IconButton
+                  size="small"
+                  onClick={() => setPreviewProductId(product.id)}
+                  aria-label={`Visualizar ${product.name} con IA`}
+                  disabled={pendingRemoval?.id === product.id}
+                  sx={{
+                    color: product.selectedPreviewUrl
+                      ? brandColors.gold
+                      : "text.disabled",
+                    "&:hover": {
+                      color: brandColors.gold,
+                      bgcolor: alpha(brandColors.gold, 0.12),
+                    },
+                  }}
+                >
+                  <Sparkles size={16} />
+                </IconButton>
+              </Tooltip>
+            )}
             {/* Edit button — only for manual products */}
             {product.isManual && onEditProduct && (
               <IconButton
@@ -214,8 +280,11 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
                 aria-label={`Editar ${product.name}`}
                 disabled={pendingRemoval?.id === product.id}
                 sx={{
-                  color: editingProductId === product.id ? brandColors.emerald : 'text.disabled',
-                  '&:hover': {
+                  color:
+                    editingProductId === product.id
+                      ? brandColors.emerald
+                      : "text.disabled",
+                  "&:hover": {
                     color: brandColors.emerald,
                     bgcolor: alpha(brandColors.emerald, 0.1),
                   },
@@ -230,8 +299,8 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
               aria-label={`Eliminar ${product.name}`}
               disabled={pendingRemoval?.id === product.id}
               sx={{
-                color: 'text.disabled',
-                '&:hover': {
+                color: "text.disabled",
+                "&:hover": {
                   color: brandColors.error,
                   bgcolor: alpha(brandColors.error, 0.1),
                 },
@@ -248,8 +317,8 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
         open={!!pendingRemoval}
         autoHideDuration={UNDO_TIMEOUT_MS}
         onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        message={`${pendingRemoval?.name || 'Producto'} eliminado`}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        message={`${pendingRemoval?.name || "Producto"} eliminado`}
         action={
           <Button
             size="small"
@@ -257,7 +326,7 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
             sx={{
               color: brandColors.emerald,
               fontWeight: 700,
-              textTransform: 'none',
+              textTransform: "none",
             }}
             startIcon={<Undo2 size={14} />}
           >
@@ -265,9 +334,23 @@ export const ProductListSection: React.FC<ProductListSectionProps> = ({
           </Button>
         }
         sx={{
-          mb: 'calc(env(safe-area-inset-bottom, 0px) + 72px)',
+          mb: "calc(env(safe-area-inset-bottom, 0px) + 72px)",
         }}
       />
+
+      {/* AI jewelry visualizer */}
+      {updateProduct && (
+        <JewelryPreviewGenerator
+          open={!!previewProduct}
+          onClose={() => setPreviewProductId(null)}
+          product={previewProduct}
+          quotationId={quotationNumber || "cotizacion"}
+          onUpdate={(updates) => {
+            if (previewProduct) updateProduct(previewProduct.id, updates);
+          }}
+          surface="cotizacion"
+        />
+      )}
     </Box>
   );
 };

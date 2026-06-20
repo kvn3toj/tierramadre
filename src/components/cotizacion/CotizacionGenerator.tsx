@@ -5,32 +5,26 @@
  * Refactored: Form components extracted to ./form folder for maintainability.
  */
 
-import { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import {
-  Box,
-  Paper,
-  Divider,
-  Snackbar,
-  Alert,
-  Button,
-} from '@mui/material';
-import { cssTransition, zIndex } from '../../design-system';
-import { documentShadows } from '../../design-system/tokens';
-import { useTreasure } from '../../hooks/useTreasure';
-import { useCotizacion } from '../../hooks/useCotizacion';
-import { TreasureItem } from '../../types';
-import { useAsesores } from '../../hooks/useAsesores';
-import { CotizacionHeader, QuotationPreview, brandColors } from './';
-import { createLogger } from '../../utils/logger';
-import { useTrackingDispatch } from '../../contexts/TrackingContext';
-import { useRecentClients } from '../../hooks/useRecentClients';
-import { useCotizacionHistory } from '../../hooks/useCotizacionHistory';
-import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
-import { useCreatorInvitations } from '../../hooks/useCreatorInvitations';
-import { useIsAdmin } from '../../hooks/usePermissions';
-import { useIsEmbajador } from '../../hooks/useAuth';
-import { useLanguage } from '../../contexts/LanguageContext';
+import { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { Box, Paper, Divider, Snackbar, Alert, Button } from "@mui/material";
+import { cssTransition, zIndex } from "../../design-system";
+import { documentShadows } from "../../design-system/tokens";
+import { useTreasure } from "../../hooks/useTreasure";
+import { useCotizacion } from "../../hooks/useCotizacion";
+import type { AiJewelryPreview } from "../../hooks/useCotizacion";
+import { TreasureItem } from "../../types";
+import { useAsesores } from "../../hooks/useAsesores";
+import { CotizacionHeader, QuotationPreview, brandColors } from "./";
+import { createLogger } from "../../utils/logger";
+import { useTrackingDispatch } from "../../contexts/TrackingContext";
+import { useRecentClients } from "../../hooks/useRecentClients";
+import { useCotizacionHistory } from "../../hooks/useCotizacionHistory";
+import { useGoogleAuth } from "../../contexts/GoogleAuthContext";
+import { useCreatorInvitations } from "../../hooks/useCreatorInvitations";
+import { useIsAdmin } from "../../hooks/usePermissions";
+import { useIsEmbajador } from "../../hooks/useAuth";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 // Form components
 import {
@@ -41,9 +35,9 @@ import {
   InvestmentFormSection,
   DiscountValiditySection,
   ActionButtons,
-} from './form';
+} from "./form";
 
-const log = createLogger('Cotizacion');
+const log = createLogger("Cotizacion");
 
 // =============================================================================
 // MAIN COMPONENT
@@ -75,16 +69,26 @@ export default function CotizacionGenerator() {
   // Use the cotizacion hook for state management
   const cotizacion = useCotizacion();
   const {
-    quotationNumber, setQuotationNumber, regenerateQuotationNumber,
-    clientName, setClientName,
-    clientPhone, setClientPhone,
-    clientEmail, setClientEmail,
-    clientDocument, setClientDocument,
-    asesorName, setAsesorName,
-    validDays, setValidDays,
+    quotationNumber,
+    setQuotationNumber,
+    regenerateQuotationNumber,
+    clientName,
+    setClientName,
+    clientPhone,
+    setClientPhone,
+    clientEmail,
+    setClientEmail,
+    clientDocument,
+    setClientDocument,
+    asesorName,
+    setAsesorName,
+    validDays,
+    setValidDays,
     expiryStr,
-    notes, setNotes,
-    discountPercent, setDiscountPercent,
+    notes,
+    setNotes,
+    discountPercent,
+    setDiscountPercent,
     products,
     addProductFromTreasure,
     addManualProduct,
@@ -93,10 +97,16 @@ export default function CotizacionGenerator() {
     editingProductId,
     startEditProduct,
     cancelEdit,
-    manualProduct, setManualProduct,
-    investments, updateInvestment, resetInvestments,
-    customCosts, addCustomCost, removeCustomCost,
-    businessSettings, setBusinessSettings,
+    manualProduct,
+    setManualProduct,
+    investments,
+    updateInvestment,
+    resetInvestments,
+    customCosts,
+    addCustomCost,
+    removeCustomCost,
+    businessSettings,
+    setBusinessSettings,
     totalInvestment,
     productSubtotal,
     subtotal,
@@ -112,7 +122,21 @@ export default function CotizacionGenerator() {
   // Handle duplication from profile page
   const location = useLocation();
   useEffect(() => {
-    const state = location.state as { duplicate?: { clientName?: string; clientPhone?: string; productsCount: number; total: number; products?: Array<{ itemNumber: number; name: string; precioCOP: number }> } } | null;
+    const state = location.state as {
+      duplicate?: {
+        clientName?: string;
+        clientPhone?: string;
+        productsCount: number;
+        total: number;
+        products?: Array<{
+          itemNumber: number;
+          name: string;
+          precioCOP: number;
+          aiPreviews?: AiJewelryPreview[];
+          selectedPreviewUrl?: string;
+        }>;
+      };
+    } | null;
     if (!state?.duplicate) return;
 
     const dup = state.duplicate;
@@ -123,11 +147,17 @@ export default function CotizacionGenerator() {
     if (dup.clientName) setClientName(dup.clientName);
     if (dup.clientPhone) setClientPhone(dup.clientPhone);
 
-    // Re-add products from treasure inventory
+    // Re-add products from treasure inventory, reattaching AI previews from the
+    // saved record (only present for a same-session duplicate).
     if (dup.products && treasure.length > 0) {
       for (const p of dup.products) {
         const match = treasure.find((t) => t.item === p.itemNumber);
-        if (match) addProductFromTreasure(match);
+        if (match) {
+          addProductFromTreasure(match, {
+            aiPreviews: p.aiPreviews,
+            selectedPreviewUrl: p.selectedPreviewUrl,
+          });
+        }
       }
     }
 
@@ -136,18 +166,22 @@ export default function CotizacionGenerator() {
   }, [location.state]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filter available treasure
-  const availableTreasure = treasure.filter(item => item.estado === 'DISPONIBLE');
+  const availableTreasure = treasure.filter(
+    (item) => item.estado === "DISPONIBLE",
+  );
 
   // UI-only state
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: 'success' | 'error';
-  }>({ open: false, message: '', severity: 'success' });
+    severity: "success" | "error";
+  }>({ open: false, message: "", severity: "success" });
 
   const [selectedItem, setSelectedItem] = useState<TreasureItem | null>(null);
-  const [productEntryMode, setProductEntryMode] = useState<'treasure' | 'manual'>('treasure');
-  const [newCustomLabel, setNewCustomLabel] = useState('');
+  const [productEntryMode, setProductEntryMode] = useState<
+    "treasure" | "manual"
+  >("treasure");
+  const [newCustomLabel, setNewCustomLabel] = useState("");
   const [newCustomValue, setNewCustomValue] = useState<number>(0);
 
   // Media upload state for manual product entry
@@ -165,8 +199,8 @@ export default function CotizacionGenerator() {
       e.preventDefault();
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isDirty, products.length]);
 
   // ==========================================================================
@@ -178,11 +212,11 @@ export default function CotizacionGenerator() {
     addProductFromTreasure(selectedItem);
 
     // Track product added from treasure
-    track('cotizacion_product_added', {
+    track("cotizacion_product_added", {
       product_id: selectedItem.item,
-      product_name: selectedItem.nombre || 'Sin nombre',
+      product_name: selectedItem.nombre || "Sin nombre",
       product_price: selectedItem.precioCOP || 0,
-      entry_mode: 'treasure',
+      entry_mode: "treasure",
       products_count: products.length + 1,
     });
 
@@ -199,11 +233,11 @@ export default function CotizacionGenerator() {
     addManualProduct(manualProduct);
 
     // Track manual product added
-    track('cotizacion_product_added', {
+    track("cotizacion_product_added", {
       product_id: null,
-      product_name: manualProduct.name || 'Producto manual',
+      product_name: manualProduct.name || "Producto manual",
       product_price: manualProduct.precioCOP || 0,
-      entry_mode: 'manual',
+      entry_mode: "manual",
       products_count: products.length + 1,
     });
 
@@ -218,10 +252,10 @@ export default function CotizacionGenerator() {
     if (!product) return;
 
     // Switch to manual entry mode
-    setProductEntryMode('manual');
+    setProductEntryMode("manual");
 
     // Convert CotizacionProduct → ManualProductState
-    setManualProduct(prev => ({
+    setManualProduct((prev) => ({
       ...prev,
       name: product.name,
       peso: String(product.peso),
@@ -230,7 +264,7 @@ export default function CotizacionGenerator() {
       talla: product.talla,
       precioCOP: product.precioCOP,
       isJewelry: product.isJewelry,
-      metalType: product.metalType || '',
+      metalType: product.metalType || "",
       imagen: product.imagen,
       videoUrl: product.videoUrl,
       gifUrl: product.gifUrl,
@@ -280,10 +314,10 @@ export default function CotizacionGenerator() {
   const handleManualProductMediaUpload = async (file: File) => {
     if (!file) return;
 
-    const isVideo = file.type.startsWith('video/');
-    const isGif = file.type === 'image/gif';
+    const isVideo = file.type.startsWith("video/");
+    const isGif = file.type === "image/gif";
     const maxSize = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
-    const maxSizeLabel = isVideo ? '100MB' : '10MB';
+    const maxSizeLabel = isVideo ? "100MB" : "10MB";
     const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
 
     // Validate file size
@@ -291,7 +325,7 @@ export default function CotizacionGenerator() {
       setSnackbar({
         open: true,
         message: `El archivo es muy grande. Maximo ${maxSizeLabel}.`,
-        severity: 'error',
+        severity: "error",
       });
       return;
     }
@@ -303,16 +337,18 @@ export default function CotizacionGenerator() {
     setIsUploadingImage(true);
 
     const uploadStartTime = Date.now();
-    log.info(`[Upload] Starting upload: ${file.name} (${fileSizeMB}MB, ${isVideo ? 'video' : 'image'})`);
+    log.info(
+      `[Upload] Starting upload: ${file.name} (${fileSizeMB}MB, ${isVideo ? "video" : "image"})`,
+    );
 
     try {
       const formData = new FormData();
-      formData.append('quotationId', `manual-${quotationNumber}`);
-      formData.append('file', file);
+      formData.append("quotationId", `manual-${quotationNumber}`);
+      formData.append("file", file);
 
       // Use fast-upload for speed
-      let response = await fetch('/api/fast-upload', {
-        method: 'POST',
+      let response = await fetch("/api/fast-upload", {
+        method: "POST",
         body: formData,
       });
 
@@ -320,29 +356,33 @@ export default function CotizacionGenerator() {
 
       // Fallback to Cloudinary if fast-upload fails
       if (!data.success) {
-        log.info('[Upload] Fast upload failed, trying Cloudinary fallback...');
+        log.info("[Upload] Fast upload failed, trying Cloudinary fallback...");
         const cloudinaryFormData = new FormData();
-        cloudinaryFormData.append('quotationId', `manual-${quotationNumber}`);
-        cloudinaryFormData.append('file', file);
+        cloudinaryFormData.append("quotationId", `manual-${quotationNumber}`);
+        cloudinaryFormData.append("file", file);
 
-        response = await fetch('/api/cloudinary-upload', {
-          method: 'POST',
+        response = await fetch("/api/cloudinary-upload", {
+          method: "POST",
           body: cloudinaryFormData,
         });
         data = await response.json();
       }
 
       const uploadTime = ((Date.now() - uploadStartTime) / 1000).toFixed(1);
-      log.info(`[Upload] Complete in ${uploadTime}s:`, { status: response.status, files: data.files?.length });
+      log.info(`[Upload] Complete in ${uploadTime}s:`, {
+        status: response.status,
+        files: data.files?.length,
+      });
 
       if (data.success && data.files && data.files.length > 0) {
         const uploadedFile = data.files[0];
-        const isVideoUpload = uploadedFile.isVideo || uploadedFile.isConvertedFromVideo;
+        const isVideoUpload =
+          uploadedFile.isVideo || uploadedFile.isConvertedFromVideo;
         const displayUrl = isVideoUpload
-          ? (uploadedFile.thumbnailUrl || uploadedFile.url)
+          ? uploadedFile.thumbnailUrl || uploadedFile.url
           : uploadedFile.url;
 
-        setManualProduct(prev => ({
+        setManualProduct((prev) => ({
           ...prev,
           imagen: displayUrl,
           ...(isVideoUpload && {
@@ -351,28 +391,37 @@ export default function CotizacionGenerator() {
           }),
         }));
 
-        const mediaType = isVideo ? 'Video' : isGif ? 'GIF' : 'Imagen';
+        const mediaType = isVideo ? "Video" : isGif ? "GIF" : "Imagen";
         setSnackbar({
           open: true,
           message: `${mediaType} subido en ${uploadTime}s`,
-          severity: 'success',
+          severity: "success",
         });
       } else {
-        throw new Error(data.error || 'Error al subir el archivo');
+        throw new Error(data.error || "Error al subir el archivo");
       }
     } catch (error) {
-      log.error('Media upload error:', error);
+      log.error("Media upload error:", error);
 
-      let errorMessage = 'Error al subir el archivo';
+      let errorMessage = "Error al subir el archivo";
       if (error instanceof Error && error.message) {
-        if (error.message.includes('storage quota') || error.message.includes('Service Accounts')) {
-          errorMessage = 'El archivo es muy grande. Por favor intenta con un archivo más pequeño.';
-        } else if (error.message.includes('Failed to create upload folder')) {
-          errorMessage = 'Error de configuración. Contacta al administrador.';
-        } else if (error.message.includes('maxFileSize')) {
-          errorMessage = 'El archivo excede el tamaño máximo permitido (100MB).';
-        } else if (error.message.includes('Cloudinary not configured') || error.message.includes('OAuth')) {
-          errorMessage = 'Servicio de subida no configurado. Contacta al administrador.';
+        if (
+          error.message.includes("storage quota") ||
+          error.message.includes("Service Accounts")
+        ) {
+          errorMessage =
+            "El archivo es muy grande. Por favor intenta con un archivo más pequeño.";
+        } else if (error.message.includes("Failed to create upload folder")) {
+          errorMessage = "Error de configuración. Contacta al administrador.";
+        } else if (error.message.includes("maxFileSize")) {
+          errorMessage =
+            "El archivo excede el tamaño máximo permitido (100MB).";
+        } else if (
+          error.message.includes("Cloudinary not configured") ||
+          error.message.includes("OAuth")
+        ) {
+          errorMessage =
+            "Servicio de subida no configurado. Contacta al administrador.";
         } else {
           errorMessage = error.message;
         }
@@ -381,12 +430,16 @@ export default function CotizacionGenerator() {
       setSnackbar({
         open: true,
         message: errorMessage,
-        severity: 'error',
+        severity: "error",
       });
 
       setImagePreview(null);
       setIsVideoPreview(false);
-      setManualProduct(prev => ({ ...prev, imagen: undefined, videoUrl: undefined }));
+      setManualProduct((prev) => ({
+        ...prev,
+        imagen: undefined,
+        videoUrl: undefined,
+      }));
     } finally {
       setIsUploadingImage(false);
     }
@@ -407,7 +460,7 @@ export default function CotizacionGenerator() {
   const handleAddCustomCost = () => {
     if (!newCustomLabel || newCustomValue <= 0) return;
     addCustomCost(newCustomLabel, newCustomValue);
-    setNewCustomLabel('');
+    setNewCustomLabel("");
     setNewCustomValue(0);
   };
 
@@ -416,8 +469,8 @@ export default function CotizacionGenerator() {
   };
 
   const handleNewQuotation = () => {
-    track('cotizacion_started', {
-      entry_source: 'accounts_hub',
+    track("cotizacion_started", {
+      entry_source: "accounts_hub",
     });
 
     startTimeRef.current = Date.now();
@@ -429,7 +482,7 @@ export default function CotizacionGenerator() {
   const [isSharing, setIsSharing] = useState(false);
   // Store the last exported PDF blob for sharing without re-generating
   const lastPdfBlobRef = useRef<Blob | null>(null);
-  const lastPdfFilenameRef = useRef<string>('');
+  const lastPdfFilenameRef = useRef<string>("");
 
   const handleExportPDF = async () => {
     if (!quotationRef.current || isExporting) return;
@@ -439,39 +492,47 @@ export default function CotizacionGenerator() {
 
     try {
       // Lazy-load html2canvas for thumbnail capture (history)
-      const { default: html2canvas } = await import('html2canvas');
-      const { exportQuotationToPdf } = await import('../../utils/pdf/pdfExport');
+      const { default: html2canvas } = await import("html2canvas");
+      const { exportQuotationToPdf } =
+        await import("../../utils/pdf/pdfExport");
 
       const contentElement = quotationRef.current;
 
       // 1. Capture a thumbnail for history before exporting
       const thumbCanvas = await html2canvas(contentElement, {
         scale: 1.5,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: "#FFFFFF",
         useCORS: true,
         allowTaint: true,
         logging: false,
         width: contentElement.offsetWidth,
         height: contentElement.offsetHeight,
       });
-      const imgData = thumbCanvas.toDataURL('image/jpeg', 0.8);
+      const imgData = thumbCanvas.toDataURL("image/jpeg", 0.8);
 
       // 2. Export PDF using consolidated utility (scale 3, margin 8mm)
-      const result = await exportQuotationToPdf(contentElement, quotationNumber);
+      const result = await exportQuotationToPdf(
+        contentElement,
+        quotationNumber,
+      );
 
       if (!result.success) {
-        throw new Error(result.error || 'PDF export failed');
+        throw new Error(result.error || "PDF export failed");
       }
 
       // Store blob for share functionality
       if (result.blob) {
         lastPdfBlobRef.current = result.blob;
-        lastPdfFilenameRef.current = result.filename || `Tierra Mädre - Cotización-(${String(new Date().getDate()).padStart(2, '0')}-${String(new Date().getMonth() + 1).padStart(2, '0')}).pdf`;
+        lastPdfFilenameRef.current =
+          result.filename ||
+          `Tierra Mädre - Cotización-(${String(new Date().getDate()).padStart(2, "0")}-${String(new Date().getMonth() + 1).padStart(2, "0")}).pdf`;
       }
 
       // 3. Track cotizacion exported
-      const timeToComplete = Math.floor((Date.now() - startTimeRef.current) / 1000);
-      track('cotizacion_exported', {
+      const timeToComplete = Math.floor(
+        (Date.now() - startTimeRef.current) / 1000,
+      );
+      track("cotizacion_exported", {
         quotation_number: quotationNumber,
         products_count: products.length,
         total_amount: total,
@@ -490,70 +551,96 @@ export default function CotizacionGenerator() {
       }
 
       // 5. Log mismatch report if client is not in invited guests
-      if (clientName && clientName.length >= 3 && !isInvitedGuest(clientName) && invitedGuests.length > 0) {
-        fetch('/api/cotizacion-reports', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+      if (
+        clientName &&
+        clientName.length >= 3 &&
+        !isInvitedGuest(clientName) &&
+        invitedGuests.length > 0
+      ) {
+        fetch("/api/cotizacion-reports", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            asesorEmail: googleUser?.email || '',
+            asesorEmail: googleUser?.email || "",
             asesorName,
             clientNameEntered: clientName,
             clientPhone: clientPhone || undefined,
             clientEmail: clientEmail || undefined,
             expectedGuests: invitedGuests
-              .filter(g => g.guestName)
-              .map(g => g.guestName),
+              .filter((g) => g.guestName)
+              .map((g) => g.guestName),
             quotationNumber,
           }),
-        }).catch(err => {
-          log.warn('Failed to log mismatch report:', err);
+        }).catch((err) => {
+          log.warn("Failed to log mismatch report:", err);
         });
       }
 
       checkAchievements();
 
       // 6. Save cotizacion to history
-      const effectiveAsesorName = asesorName || googleUser?.name || '';
+      const effectiveAsesorName = asesorName || googleUser?.name || "";
       if (googleUser?.email && effectiveAsesorName) {
         const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + validDays);
 
-        cotizacionHistory.saveCotizacion({
-          quotationNumber,
-          asesorEmail: googleUser.email,
-          asesorName: effectiveAsesorName,
-          clientName: clientName || undefined,
-          clientPhone: clientPhone || undefined,
-          productsCount: products.length,
-          total,
-          expiryDate: expiryDate.toISOString(),
-          imageBase64: imgData,
-          products: products.map(p => ({
-            itemNumber: p.itemNumber,
-            name: p.name,
-            precioCOP: p.precioCOP,
-          })),
-        }).then((saved) => {
-          if (saved) {
-            log.info(`Cotizacion ${quotationNumber} saved to history`);
-          }
-        }).catch((err) => {
-          log.warn('Failed to save cotizacion to history:', err);
-        });
+        cotizacionHistory
+          .saveCotizacion({
+            quotationNumber,
+            asesorEmail: googleUser.email,
+            asesorName: effectiveAsesorName,
+            clientName: clientName || undefined,
+            clientPhone: clientPhone || undefined,
+            productsCount: products.length,
+            total,
+            expiryDate: expiryDate.toISOString(),
+            imageBase64: imgData,
+            products: products.map((p) => {
+              // Persist only durable serve-drive-image URLs — never data: URLs
+              // (the Drive-upload-failed fallback), which would bloat the sheet.
+              const persistablePreviews = (p.aiPreviews ?? []).filter(
+                (a) => a.url && !a.url.startsWith("data:"),
+              );
+              const persistableSelected =
+                p.selectedPreviewUrl &&
+                !p.selectedPreviewUrl.startsWith("data:")
+                  ? p.selectedPreviewUrl
+                  : undefined;
+              return {
+                itemNumber: p.itemNumber,
+                name: p.name,
+                precioCOP: p.precioCOP,
+                ...(persistablePreviews.length > 0
+                  ? { aiPreviews: persistablePreviews }
+                  : {}),
+                ...(persistableSelected
+                  ? { selectedPreviewUrl: persistableSelected }
+                  : {}),
+              };
+            }),
+          })
+          .then((saved) => {
+            if (saved) {
+              log.info(`Cotizacion ${quotationNumber} saved to history`);
+            }
+          })
+          .catch((err) => {
+            log.warn("Failed to save cotizacion to history:", err);
+          });
       }
 
       setSnackbar({
         open: true,
         message: `${t.pages.cotizacion.title} ${quotationNumber} ${previewLabels.exportSuccess}`,
-        severity: 'success',
+        severity: "success",
       });
     } catch (error) {
       setSnackbar({
         open: true,
         message: previewLabels.exportError,
-        severity: 'error',
+        severity: "error",
       });
-      log.error('PDF export error:', error);
+      log.error("PDF export error:", error);
     } finally {
       setIsExporting(false);
     }
@@ -569,24 +656,30 @@ export default function CotizacionGenerator() {
 
       // If no cached blob, generate the PDF first (without triggering download)
       if (!blob) {
-        const { exportQuotationToPdf } = await import('../../utils/pdf/pdfExport');
+        const { exportQuotationToPdf } =
+          await import("../../utils/pdf/pdfExport");
         const contentElement = quotationRef.current;
-        const result = await exportQuotationToPdf(contentElement, quotationNumber);
+        const result = await exportQuotationToPdf(
+          contentElement,
+          quotationNumber,
+        );
 
         if (!result.success || !result.blob) {
-          throw new Error(result.error || 'PDF generation failed');
+          throw new Error(result.error || "PDF generation failed");
         }
         blob = result.blob;
-        filename = result.filename || `Tierra Mädre - Cotización-(${String(new Date().getDate()).padStart(2, '0')}-${String(new Date().getMonth() + 1).padStart(2, '0')}).pdf`;
+        filename =
+          result.filename ||
+          `Tierra Mädre - Cotización-(${String(new Date().getDate()).padStart(2, "0")}-${String(new Date().getMonth() + 1).padStart(2, "0")}).pdf`;
         lastPdfBlobRef.current = blob;
         lastPdfFilenameRef.current = filename;
       }
 
       if (!filename) {
-        filename = `Tierra Mädre - Cotización-(${String(new Date().getDate()).padStart(2, '0')}-${String(new Date().getMonth() + 1).padStart(2, '0')}).pdf`;
+        filename = `Tierra Mädre - Cotización-(${String(new Date().getDate()).padStart(2, "0")}-${String(new Date().getMonth() + 1).padStart(2, "0")}).pdf`;
       }
 
-      const pdfFile = new File([blob], filename, { type: 'application/pdf' });
+      const pdfFile = new File([blob], filename, { type: "application/pdf" });
 
       // Try native Web Share API with file support
       if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
@@ -598,20 +691,20 @@ export default function CotizacionGenerator() {
           files: [pdfFile],
         });
 
-        track('cotizacion_shared', {
+        track("cotizacion_shared", {
           quotation_number: quotationNumber,
-          method: 'native',
+          method: "native",
         });
 
         setSnackbar({
           open: true,
-          message: 'Cotización compartida',
-          severity: 'success',
+          message: "Cotización compartida",
+          severity: "success",
         });
       } else {
         // Fallback: create a downloadable link and copy info to clipboard
         const shareUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = shareUrl;
         a.download = filename;
         a.click();
@@ -626,32 +719,32 @@ export default function CotizacionGenerator() {
           await navigator.clipboard.writeText(shareText);
           setSnackbar({
             open: true,
-            message: 'PDF descargado y texto copiado al portapapeles',
-            severity: 'success',
+            message: "PDF descargado y texto copiado al portapapeles",
+            severity: "success",
           });
         } catch {
           setSnackbar({
             open: true,
-            message: 'PDF descargado para compartir',
-            severity: 'success',
+            message: "PDF descargado para compartir",
+            severity: "success",
           });
         }
 
-        track('cotizacion_shared', {
+        track("cotizacion_shared", {
           quotation_number: quotationNumber,
-          method: 'fallback',
+          method: "fallback",
         });
       }
     } catch (error) {
       // Don't show error if user cancelled the share dialog
-      if (error instanceof Error && error.name === 'AbortError') {
-        log.debug('Share cancelled by user');
+      if (error instanceof Error && error.name === "AbortError") {
+        log.debug("Share cancelled by user");
       } else {
-        log.error('Share PDF error:', error);
+        log.error("Share PDF error:", error);
         setSnackbar({
           open: true,
-          message: 'Error al compartir la cotización',
-          severity: 'error',
+          message: "Error al compartir la cotización",
+          severity: "error",
         });
       }
     } finally {
@@ -660,7 +753,7 @@ export default function CotizacionGenerator() {
   };
 
   const handlePrint = () => {
-    track('cotizacion_printed', {
+    track("cotizacion_printed", {
       quotation_number: quotationNumber,
     });
     window.print();
@@ -675,7 +768,7 @@ export default function CotizacionGenerator() {
   // ==========================================================================
 
   return (
-    <Box sx={{ maxWidth: 1400, mx: 'auto', px: { xs: 2, sm: 3, md: 0 } }}>
+    <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 0 } }}>
       {/* Header */}
       <CotizacionHeader productCount={products.length} total={total} />
 
@@ -686,16 +779,16 @@ export default function CotizacionGenerator() {
           variant="outlined"
           sx={{ mb: 2, borderRadius: 2 }}
           action={
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <Box sx={{ display: "flex", gap: 1 }}>
               <Button
                 size="small"
                 variant="contained"
                 onClick={restoreDraft}
                 sx={{
-                  textTransform: 'none',
+                  textTransform: "none",
                   fontWeight: 600,
                   bgcolor: brandColors.emerald,
-                  '&:hover': { bgcolor: brandColors.emeraldDark },
+                  "&:hover": { bgcolor: brandColors.emeraldDark },
                 }}
               >
                 Restaurar
@@ -703,7 +796,7 @@ export default function CotizacionGenerator() {
               <Button
                 size="small"
                 onClick={discardDraft}
-                sx={{ textTransform: 'none', fontWeight: 600 }}
+                sx={{ textTransform: "none", fontWeight: 600 }}
               >
                 Descartar
               </Button>
@@ -714,27 +807,34 @@ export default function CotizacionGenerator() {
         </Alert>
       )}
 
-      <Box sx={{ display: 'flex', gap: 2.5, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2.5,
+          flexWrap: "wrap",
+          alignItems: "flex-start",
+        }}
+      >
         {/* Form Section */}
         <Paper
           elevation={0}
           sx={{
-            flex: '1 1 450px',
+            flex: "1 1 450px",
             p: { xs: 1.5, sm: 2.5 },
             borderRadius: 2.5,
-            border: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+            border: "1px solid",
+            borderColor: "divider",
+            bgcolor: "background.paper",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
           }}
         >
           {/* Progress Indicator — compact */}
           <Box sx={{ mb: 2 }}>
-            <Box sx={{ display: 'flex', gap: 0.75, mb: 0.5 }}>
+            <Box sx={{ display: "flex", gap: 0.75, mb: 0.5 }}>
               {[
-                { label: 'Info', completed: clientName !== '' },
-                { label: 'Productos', completed: products.length > 0 },
-                { label: 'Total', completed: total > 0 },
+                { label: "Info", completed: clientName !== "" },
+                { label: "Productos", completed: products.length > 0 },
+                { label: "Total", completed: total > 0 },
               ].map((step, index) => (
                 <Box
                   key={index}
@@ -742,20 +842,20 @@ export default function CotizacionGenerator() {
                     flex: 1,
                     height: 3,
                     borderRadius: 1.5,
-                    bgcolor: step.completed ? brandColors.emerald : 'divider',
+                    bgcolor: step.completed ? brandColors.emerald : "divider",
                     transition: cssTransition.slow,
                   }}
                 />
               ))}
             </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              {['Información', 'Productos', 'Revisión'].map((label, index) => (
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              {["Información", "Productos", "Revisión"].map((label, index) => (
                 <Box
                   key={index}
                   component="span"
                   sx={{
-                    fontSize: '0.6rem',
-                    color: 'text.secondary',
+                    fontSize: "0.6rem",
+                    color: "text.secondary",
                     fontWeight: 500,
                   }}
                 >
@@ -799,9 +899,12 @@ export default function CotizacionGenerator() {
             invitedGuests={invitedGuests}
             isLoadingInvitations={isLoadingInvitations}
             onSelectInvitedGuest={(guest) => {
-              setClientName(guest.guestName || '');
+              setClientName(guest.guestName || "");
               if (guest.guestContact) {
-                if (guest.contactType === 'email' || guest.guestContact.includes('@')) {
+                if (
+                  guest.contactType === "email" ||
+                  guest.guestContact.includes("@")
+                ) {
                   setClientEmail(guest.guestContact);
                 } else {
                   setClientPhone(guest.guestContact);
@@ -842,12 +945,14 @@ export default function CotizacionGenerator() {
             handleRemoveProduct={handleRemoveProduct}
             onEditProduct={handleEditProduct}
             editingProductId={editingProductId}
+            updateProduct={updateProduct}
+            quotationNumber={quotationNumber}
           />
 
           <Divider sx={{ my: 2 }} />
 
           {/* Investment Section — only for treasure products */}
-          {productEntryMode === 'treasure' && (
+          {productEntryMode === "treasure" && (
             <>
               <InvestmentFormSection
                 investments={investments}
@@ -890,7 +995,7 @@ export default function CotizacionGenerator() {
         </Paper>
 
         {/* Quotation Preview */}
-        <Box sx={{ flex: '1 1 500px' }}>
+        <Box sx={{ flex: "1 1 500px" }}>
           <QuotationPreview
             ref={quotationRef}
             quotationNumber={quotationNumber}
@@ -917,17 +1022,22 @@ export default function CotizacionGenerator() {
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
         sx={{
           zIndex: zIndex.overlay,
-          mb: 'calc(env(safe-area-inset-bottom, 0px) + 72px)',
+          mb: "calc(env(safe-area-inset-bottom, 0px) + 72px)",
         }}
       >
         <Alert
           onClose={handleCloseSnackbar}
           severity={snackbar.severity}
           variant="filled"
-          sx={{ width: '100%', fontWeight: 600, borderRadius: 2, boxShadow: documentShadows.elevated }}
+          sx={{
+            width: "100%",
+            fontWeight: 600,
+            borderRadius: 2,
+            boxShadow: documentShadows.elevated,
+          }}
         >
           {snackbar.message}
         </Alert>

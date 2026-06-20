@@ -2,19 +2,29 @@
  * ProductsSection - Displays the list of products in the quotation.
  */
 
-import React from 'react';
-import { Box, Typography } from '@mui/material';
-import { Package, Gem, ShoppingBag, ExternalLink } from 'lucide-react';
-import { brandColors, quotationStyles, quotationTypography } from '../constants';
-import { getProductDisplayUrl } from '../utils';
+import React from "react";
+import { Box, Typography } from "@mui/material";
+import {
+  Package,
+  Gem,
+  ShoppingBag,
+  ExternalLink,
+  Sparkles,
+} from "lucide-react";
+import {
+  brandColors,
+  quotationStyles,
+  quotationTypography,
+} from "../constants";
+import { getProductDisplayUrl } from "../utils";
 import {
   CotizacionProduct,
   useCotizacionFormat,
   getPesoDisplay,
-} from '../../../hooks/useCotizacion';
-import { SectionHeader } from './shared';
-import { cssTransition } from '../../../design-system';
-import { useLanguage } from '../../../contexts/LanguageContext';
+} from "../../../hooks/useCotizacion";
+import { SectionHeader } from "./shared";
+import { cssTransition } from "../../../design-system";
+import { useLanguage } from "../../../contexts/LanguageContext";
 
 // =============================================================================
 // ProductImage
@@ -26,7 +36,11 @@ interface ProductImageProps {
   size?: number;
 }
 
-const ProductImage: React.FC<ProductImageProps> = ({ src, isJewelry, size = 56 }) => {
+const ProductImage: React.FC<ProductImageProps> = ({
+  src,
+  isJewelry,
+  size = 56,
+}) => {
   const [imgError, setImgError] = React.useState(false);
   const [imgLoaded, setImgLoaded] = React.useState(false);
 
@@ -43,14 +57,16 @@ const ProductImage: React.FC<ProductImageProps> = ({ src, isJewelry, size = 56 }
         width: size,
         height: size,
         borderRadius: 2,
-        bgcolor: isJewelry ? 'rgba(212,175,55,0.08)' : quotationStyles.accentTint,
+        bgcolor: isJewelry
+          ? "rgba(212,175,55,0.08)"
+          : quotationStyles.accentTint,
         border: `1px solid ${quotationStyles.borderLight}`,
         flexShrink: 0,
-        overflow: 'hidden',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
+        overflow: "hidden",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
       }}
     >
       {hasValidSrc && (
@@ -61,9 +77,9 @@ const ProductImage: React.FC<ProductImageProps> = ({ src, isJewelry, size = 56 }
           onError={() => setImgError(true)}
           onLoad={() => setImgLoaded(true)}
           sx={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
             opacity: imgLoaded ? 1 : 0,
             transition: cssTransition.default,
           }}
@@ -72,10 +88,10 @@ const ProductImage: React.FC<ProductImageProps> = ({ src, isJewelry, size = 56 }
       {(!hasValidSrc || !imgLoaded) && (
         <Box
           sx={{
-            position: hasValidSrc ? 'absolute' : 'static',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            position: hasValidSrc ? "absolute" : "static",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           {isJewelry ? (
@@ -108,61 +124,118 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, isEven, isLast }) => {
   return (
     <Box
       sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1.5,
-        py: 1.25,
-        px: 1.5,
-        bgcolor: isEven ? quotationStyles.surfaceMuted : quotationStyles.surface,
-        borderBottom: isLast ? 'none' : `1px solid ${quotationStyles.borderLight}`,
+        bgcolor: isEven
+          ? quotationStyles.surfaceMuted
+          : quotationStyles.surface,
+        borderBottom: isLast
+          ? "none"
+          : `1px solid ${quotationStyles.borderLight}`,
       }}
     >
-      <ProductImage
-        src={product.gifUrl || product.imagen}
-        isJewelry={product.isJewelry}
-        size={56}
-      />
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, color: brandColors.textPrimary, lineHeight: 1.3 }}>
-          {product.name}
-        </Typography>
-        <Typography sx={{ fontSize: '0.55rem', color: brandColors.gray, mt: 0.25 }}>
-          Ref. #{product.itemNumber} • {getPesoDisplay(product)} • {product.color}
-        </Typography>
-        <Box
-          component="a"
-          href={displayUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.5,
-            mt: 0.5,
-            textDecoration: 'none',
-            '&:hover': { textDecoration: 'underline' },
-          }}
-        >
-          <ExternalLink size={9} color={brandColors.emerald} />
-          <Typography sx={{
-            fontSize: '0.45rem',
-            color: brandColors.emerald,
-            fontWeight: 500,
-          }}>
-            {labels.expandView}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          py: 1.25,
+          px: 1.5,
+        }}
+      >
+        <ProductImage
+          src={product.gifUrl || product.imagen}
+          isJewelry={product.isJewelry}
+          size={56}
+        />
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            sx={{
+              fontSize: "0.7rem",
+              fontWeight: 600,
+              color: brandColors.textPrimary,
+              lineHeight: 1.3,
+            }}
+          >
+            {product.name}
+          </Typography>
+          <Typography
+            sx={{ fontSize: "0.55rem", color: brandColors.gray, mt: 0.25 }}
+          >
+            Ref. #{product.itemNumber} • {getPesoDisplay(product)} •{" "}
+            {product.color}
+          </Typography>
+          <Box
+            component="a"
+            href={displayUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+              mt: 0.5,
+              textDecoration: "none",
+              "&:hover": { textDecoration: "underline" },
+            }}
+          >
+            <ExternalLink size={9} color={brandColors.emerald} />
+            <Typography
+              sx={{
+                fontSize: "0.45rem",
+                color: brandColors.emerald,
+                fontWeight: 500,
+              }}
+            >
+              {labels.expandView}
+            </Typography>
+          </Box>
+        </Box>
+        <Box sx={{ textAlign: "right", flexShrink: 0 }}>
+          <Typography
+            sx={{
+              fontSize: "0.8rem",
+              fontWeight: 700,
+              color: brandColors.emerald,
+              ...quotationTypography.monospace,
+            }}
+          >
+            {formatCurrency(product.precioCOP)}
           </Typography>
         </Box>
       </Box>
-      <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
-        <Typography sx={{
-          fontSize: '0.8rem',
-          fontWeight: 700,
-          color: brandColors.emerald,
-          ...quotationTypography.monospace,
-        }}>
-          {formatCurrency(product.precioCOP)}
-        </Typography>
-      </Box>
+
+      {/* AI jewelry visualization (referencial) */}
+      {product.selectedPreviewUrl && (
+        <Box sx={{ px: 1.5, pb: 1.5 }}>
+          <Box
+            component="img"
+            src={product.selectedPreviewUrl}
+            alt={`Visualización referencial de ${product.name}`}
+            sx={{
+              width: "100%",
+              maxHeight: 260,
+              objectFit: "cover",
+              borderRadius: 2,
+              border: `1px solid ${quotationStyles.borderLight}`,
+              display: "block",
+            }}
+          />
+          <Box
+            sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}
+          >
+            <Sparkles size={9} color={brandColors.gold} />
+            <Typography
+              sx={{
+                fontSize: "0.45rem",
+                color: brandColors.gray,
+                fontStyle: "italic",
+              }}
+            >
+              Visualización referencial generada por IA · puede diferir de la
+              pieza final
+            </Typography>
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 };
@@ -175,22 +248,30 @@ export interface ProductsSectionProps {
   products: CotizacionProduct[];
 }
 
-export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) => {
+export const ProductsSection: React.FC<ProductsSectionProps> = ({
+  products,
+}) => {
   const { t } = useLanguage();
   const labels = t.pages.cotizacion.preview;
 
   if (products.length === 0) {
     return (
-      <Box sx={{
-        textAlign: 'center',
-        py: 4,
-        bgcolor: quotationStyles.surfaceTint,
-        borderRadius: 2,
-        border: `1px dashed ${quotationStyles.borderMedium}`,
-        mb: 3,
-      }}>
-        <Package size={28} color={brandColors.gray} style={{ marginBottom: 8, opacity: 0.5 }} />
-        <Typography sx={{ fontSize: '0.7rem', color: brandColors.gray }}>
+      <Box
+        sx={{
+          textAlign: "center",
+          py: 4,
+          bgcolor: quotationStyles.surfaceTint,
+          borderRadius: 2,
+          border: `1px dashed ${quotationStyles.borderMedium}`,
+          mb: 3,
+        }}
+      >
+        <Package
+          size={28}
+          color={brandColors.gray}
+          style={{ marginBottom: 8, opacity: 0.5 }}
+        />
+        <Typography sx={{ fontSize: "0.7rem", color: brandColors.gray }}>
           {labels.addProducts}
         </Typography>
       </Box>
@@ -204,11 +285,13 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
         title={labels.products}
         count={products.length}
       />
-      <Box sx={{
-        border: `1px solid ${quotationStyles.borderLight}`,
-        borderRadius: 2,
-        overflow: 'hidden',
-      }}>
+      <Box
+        sx={{
+          border: `1px solid ${quotationStyles.borderLight}`,
+          borderRadius: 2,
+          overflow: "hidden",
+        }}
+      >
         {products.map((product, index) => (
           <ProductRow
             key={product.id}

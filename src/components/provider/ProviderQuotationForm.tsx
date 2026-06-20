@@ -7,7 +7,7 @@
  * Designed by Aria - Capitana del Concilio de Creación
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -23,67 +23,108 @@ import {
   useTheme,
   Chip,
   Collapse,
-} from '@mui/material';
-import { Send, ArrowLeft, CheckCircle, Camera, ChevronDown, ChevronUp } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
-import { brand, iosSemanticColors, iosTypographyScale, legacyTypography as typography, radius, cssTransition } from '../../design-system';
+} from "@mui/material";
+import {
+  Send,
+  ArrowLeft,
+  CheckCircle,
+  Camera,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+} from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useGoogleAuth } from "../../contexts/GoogleAuthContext";
+import {
+  brand,
+  iosSemanticColors,
+  iosTypographyScale,
+  legacyTypography as typography,
+  radius,
+  cssTransition,
+} from "../../design-system";
 import {
   PRODUCT_TYPE_LABELS,
   type ProductType,
   type QuotationRequest,
   type ProviderQuotationFormData,
-} from '../../types/provider';
-import QuotationMediaUpload from './QuotationMediaUpload';
-import { formatPriceCOP, parsePriceCOP } from '../../utils/priceFormatters';
+} from "../../types/provider";
+import QuotationMediaUpload from "./QuotationMediaUpload";
+import { formatPriceCOP, parsePriceCOP } from "../../utils/priceFormatters";
+import { JewelryPreviewGenerator } from "../cotizacion/form/JewelryPreviewGenerator";
+import type {
+  CotizacionProduct,
+  AiJewelryScene,
+  AiJewelryMetal,
+} from "../../hooks/useCotizacion";
+
+// Default AI-visualizer scene per provider product type
+const SCENE_BY_PRODUCT_TYPE: Record<ProductType, AiJewelryScene> = {
+  piedra_suelta: "ring-woman",
+  anillo: "ring-woman",
+  collar: "necklace",
+  pendientes: "earrings",
+  pulsera: "ring-woman",
+};
+
+// Is a media URL a still image (usable as an AI reference photo)?
+const isImageUrl = (url: string): boolean => {
+  const u = url.toLowerCase();
+  return !(
+    u.includes(".mp4") ||
+    u.includes(".mov") ||
+    u.includes(".webm") ||
+    u.includes(".gif")
+  );
+};
 
 // Product type options for chips
 const PRODUCT_TYPE_OPTIONS: { value: ProductType; label: string }[] = [
-  { value: 'piedra_suelta', label: 'Gema' },
-  { value: 'anillo', label: 'Anillo' },
-  { value: 'collar', label: 'Collar' },
-  { value: 'pendientes', label: 'Aretes' },
-  { value: 'pulsera', label: 'Pulsera' },
+  { value: "piedra_suelta", label: "Gema" },
+  { value: "anillo", label: "Anillo" },
+  { value: "collar", label: "Collar" },
+  { value: "pendientes", label: "Aretes" },
+  { value: "pulsera", label: "Pulsera" },
 ];
 
 // Color options - simplified labels for chips
 const COLOR_OPTIONS = [
-  { value: 'Verde Vivido', label: 'Vivido' },
-  { value: 'Verde Muzo', label: 'Muzo' },
-  { value: 'Verde Limon', label: 'Limon' },
-  { value: 'Verde Menta', label: 'Menta' },
-  { value: 'Verde Natural', label: 'Natural' },
+  { value: "Verde Vivido", label: "Vivido" },
+  { value: "Verde Muzo", label: "Muzo" },
+  { value: "Verde Limon", label: "Limon" },
+  { value: "Verde Menta", label: "Menta" },
+  { value: "Verde Natural", label: "Natural" },
 ];
 
 // Quality options - simplified for chips
 const QUALITY_OPTIONS = [
-  { value: 'Fina', label: 'Fina' },
-  { value: 'Comercial SuperFina', label: 'SuperFina' },
-  { value: 'Comercial Superior', label: 'Superior' },
-  { value: 'Comercial Fina', label: 'Com. Fina' },
-  { value: 'Comercial', label: 'Comercial' },
-  { value: 'Estandar', label: 'Estandar' },
+  { value: "Fina", label: "Fina" },
+  { value: "Comercial SuperFina", label: "SuperFina" },
+  { value: "Comercial Superior", label: "Superior" },
+  { value: "Comercial Fina", label: "Com. Fina" },
+  { value: "Comercial", label: "Comercial" },
+  { value: "Estandar", label: "Estandar" },
 ];
 
 // Material options for jewelry
 const MATERIAL_OPTIONS = [
-  { value: 'Oro Amarillo', label: 'Oro Amarillo' },
-  { value: 'Oro Blanco', label: 'Oro Blanco' },
-  { value: 'Oro Rosa', label: 'Oro Rosa' },
-  { value: 'Plata', label: 'Plata' },
+  { value: "Oro Amarillo", label: "Oro Amarillo" },
+  { value: "Oro Blanco", label: "Oro Blanco" },
+  { value: "Oro Rosa", label: "Oro Rosa" },
+  { value: "Plata", label: "Plata" },
 ];
 
 const initialFormData: ProviderQuotationFormData = {
-  productType: 'piedra_suelta',
-  description: '',
+  productType: "piedra_suelta",
+  description: "",
   weightCarats: 0,
-  color: '',
-  quality: '',
+  color: "",
+  quality: "",
   priceCOP: 0,
   availability: 1,
   photoUrls: [],
   requestId: undefined,
-  notes: '',
+  notes: "",
 };
 
 // Generate a temporary quotation ID for media uploads before submission
@@ -100,10 +141,16 @@ interface ChipSelectorProps {
   disabled?: boolean;
 }
 
-function ChipSelector({ label, options, value, onChange, disabled }: ChipSelectorProps) {
+function ChipSelector({
+  label,
+  options,
+  value,
+  onChange,
+  disabled,
+}: ChipSelectorProps) {
   const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-  const mode = isDark ? 'dark' : 'light';
+  const isDark = theme.palette.mode === "dark";
+  const mode = isDark ? "dark" : "light";
   const secondaryLabelColor = iosSemanticColors.secondaryLabel[mode];
 
   return (
@@ -114,13 +161,13 @@ function ChipSelector({ label, options, value, onChange, disabled }: ChipSelecto
           fontWeight: typography.weight.semibold,
           color: secondaryLabelColor,
           mb: 1,
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
         }}
       >
         {label}
       </Typography>
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
         {options.map((option) => (
           <Chip
             key={option.value}
@@ -128,25 +175,31 @@ function ChipSelector({ label, options, value, onChange, disabled }: ChipSelecto
             onClick={() => !disabled && onChange(option.value)}
             disabled={disabled}
             sx={{
-              bgcolor: value === option.value
-                ? brand.emerald[500]
-                : alpha(brand.emerald[500], 0.08),
-              color: value === option.value
-                ? '#fff'
-                : isDark ? '#fff' : brand.emerald[700],
-              fontWeight: value === option.value
-                ? typography.weight.semibold
-                : typography.weight.medium,
+              bgcolor:
+                value === option.value
+                  ? brand.emerald[500]
+                  : alpha(brand.emerald[500], 0.08),
+              color:
+                value === option.value
+                  ? "#fff"
+                  : isDark
+                    ? "#fff"
+                    : brand.emerald[700],
+              fontWeight:
+                value === option.value
+                  ? typography.weight.semibold
+                  : typography.weight.medium,
               fontSize: iosTypographyScale.subhead,
               borderRadius: radius.lg,
-              border: 'none',
+              border: "none",
               transition: cssTransition.default,
-              '&:hover': {
-                bgcolor: value === option.value
-                  ? brand.emerald[600]
-                  : alpha(brand.emerald[500], 0.15),
+              "&:hover": {
+                bgcolor:
+                  value === option.value
+                    ? brand.emerald[600]
+                    : alpha(brand.emerald[500], 0.15),
               },
-              '& .MuiChip-label': {
+              "& .MuiChip-label": {
                 px: 1.5,
                 py: 0.5,
               },
@@ -163,26 +216,32 @@ export default function ProviderQuotationForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useGoogleAuth();
-  const [formData, setFormData] = useState<ProviderQuotationFormData>(initialFormData);
-  const [linkedRequest, setLinkedRequest] = useState<QuotationRequest | null>(null);
+  const [formData, setFormData] =
+    useState<ProviderQuotationFormData>(initialFormData);
+  const [linkedRequest, setLinkedRequest] = useState<QuotationRequest | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [tempQuotationId] = useState<string>(() => generateTempQuotationId());
-  const [priceDisplay, setPriceDisplay] = useState('');
+  const [priceDisplay, setPriceDisplay] = useState("");
   const [showMoreDetails, setShowMoreDetails] = useState(false);
   // Extended form data for material (jewelry)
-  const [material, setMaterial] = useState('');
+  const [material, setMaterial] = useState("");
+  // AI jewelry visualizer state (provider flow)
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
+  const [aiProduct, setAiProduct] = useState<CotizacionProduct | null>(null);
 
   // iOS HIG semantic colors
-  const isDark = theme.palette.mode === 'dark';
-  const mode = isDark ? 'dark' : 'light';
+  const isDark = theme.palette.mode === "dark";
+  const mode = isDark ? "dark" : "light";
   const labelColor = iosSemanticColors.label[mode];
   const secondaryLabelColor = iosSemanticColors.secondaryLabel[mode];
 
-  const requestId = searchParams.get('requestId');
-  const isJewelry = formData.productType !== 'piedra_suelta';
+  const requestId = searchParams.get("requestId");
+  const isJewelry = formData.productType !== "piedra_suelta";
 
   // Load linked request if responding to one
   useEffect(() => {
@@ -196,7 +255,7 @@ export default function ProviderQuotationForm() {
 
         if (data.success && data.request) {
           setLinkedRequest(data.request);
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
             requestId,
             productType: data.request.productType,
@@ -205,7 +264,7 @@ export default function ProviderQuotationForm() {
           }));
         }
       } catch (err) {
-        console.error('Error fetching request:', err);
+        console.error("Error fetching request:", err);
       } finally {
         setLoading(false);
       }
@@ -214,33 +273,82 @@ export default function ProviderQuotationForm() {
     fetchLinkedRequest();
   }, [requestId]);
 
-  const handleChange = (field: keyof ProviderQuotationFormData, value: unknown) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleChange = (
+    field: keyof ProviderQuotationFormData,
+    value: unknown,
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
     setError(null);
+  };
+
+  // ── AI jewelry visualizer ──────────────────────────────────────────────
+  const aiMetal: AiJewelryMetal = material.toLowerCase().includes("plata")
+    ? "silver"
+    : "gold";
+  const aiReferencePhoto = formData.photoUrls.find(isImageUrl);
+  const canVisualize = Boolean(aiReferencePhoto) || Boolean(formData.color);
+
+  const openAiVisualizer = () => {
+    setAiProduct({
+      id: "provider-temp",
+      itemNumber: 0,
+      name:
+        formData.description?.trim() ||
+        PRODUCT_TYPE_LABELS[formData.productType],
+      peso: formData.weightCarats || "",
+      color: formData.color || "",
+      calidad: formData.quality || "",
+      talla: "",
+      precioCOP: formData.priceCOP || 0,
+      imagen: aiReferencePhoto,
+      isJewelry,
+      metalType: material || undefined,
+      aiPreviews: aiProduct?.aiPreviews,
+      selectedPreviewUrl: aiProduct?.selectedPreviewUrl,
+    });
+    setAiDialogOpen(true);
+  };
+
+  // When the dialog adds a new preview, also attach it to the submitted media.
+  const handleAiUpdate = (updates: Partial<CotizacionProduct>) => {
+    const prevCount = aiProduct?.aiPreviews?.length ?? 0;
+    setAiProduct((prev) => (prev ? { ...prev, ...updates } : prev));
+    if (updates.aiPreviews && updates.aiPreviews.length > prevCount) {
+      const newest = updates.aiPreviews[updates.aiPreviews.length - 1];
+      // Only attach durable serve-drive-image URLs to the submitted media —
+      // never a data: fallback, which would bloat the comma-joined FotosUrls cell.
+      if (
+        newest &&
+        !newest.url.startsWith("data:") &&
+        !formData.photoUrls.includes(newest.url)
+      ) {
+        handleChange("photoUrls", [...formData.photoUrls, newest.url]);
+      }
+    }
   };
 
   const handlePriceChange = (inputValue: string) => {
     const numericValue = parsePriceCOP(inputValue);
-    setFormData(prev => ({ ...prev, priceCOP: numericValue }));
+    setFormData((prev) => ({ ...prev, priceCOP: numericValue }));
     setPriceDisplay(formatPriceCOP(numericValue));
     setError(null);
   };
 
   const validateForm = (): boolean => {
     if (formData.photoUrls.length === 0) {
-      setError('Agrega al menos una foto o video');
+      setError("Agrega al menos una foto o video");
       return false;
     }
     if (formData.priceCOP <= 0) {
-      setError('El precio es requerido');
+      setError("El precio es requerido");
       return false;
     }
     if (!formData.color) {
-      setError('Selecciona un color');
+      setError("Selecciona un color");
       return false;
     }
     if (!formData.quality) {
-      setError('Selecciona una calidad');
+      setError("Selecciona una calidad");
       return false;
     }
     return true;
@@ -253,17 +361,20 @@ export default function ProviderQuotationForm() {
     setError(null);
 
     // Include material in description for jewelry
-    const fullDescription = isJewelry && material
-      ? `${formData.description} | Material: ${material}`.trim()
-      : formData.description;
+    const fullDescription =
+      isJewelry && material
+        ? `${formData.description} | Material: ${material}`.trim()
+        : formData.description;
 
     try {
-      const response = await fetch('/api/provider-quotations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/provider-quotations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          description: fullDescription || `${PRODUCT_TYPE_LABELS[formData.productType]} - ${formData.color} - ${formData.quality}`,
+          description:
+            fullDescription ||
+            `${PRODUCT_TYPE_LABELS[formData.productType]} - ${formData.color} - ${formData.quality}`,
           providerEmail: user?.email,
           providerName: user?.name,
         }),
@@ -274,11 +385,11 @@ export default function ProviderQuotationForm() {
       if (data.success) {
         setSuccess(true);
       } else {
-        setError(data.error || 'Error al enviar la cotizacion');
+        setError(data.error || "Error al enviar la cotizacion");
       }
     } catch (err) {
-      console.error('Submit error:', err);
-      setError('Error de conexion. Intenta nuevamente.');
+      console.error("Submit error:", err);
+      setError("Error de conexion. Intenta nuevamente.");
     } finally {
       setSubmitting(false);
     }
@@ -286,8 +397,8 @@ export default function ProviderQuotationForm() {
 
   const handleSendAnother = () => {
     setFormData(initialFormData);
-    setPriceDisplay('');
-    setMaterial('');
+    setPriceDisplay("");
+    setMaterial("");
     setShowMoreDetails(false);
     setSuccess(false);
     setError(null);
@@ -295,8 +406,18 @@ export default function ProviderQuotationForm() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <CircularProgress aria-label="Cargando" sx={{ color: brand.emerald[500] }} />
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "50vh",
+        }}
+      >
+        <CircularProgress
+          aria-label="Cargando"
+          sx={{ color: brand.emerald[500] }}
+        />
       </Box>
     );
   }
@@ -304,16 +425,25 @@ export default function ProviderQuotationForm() {
   // Success screen with "Send Another" option
   if (success) {
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', p: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "60vh",
+          p: 3,
+        }}
+      >
         <Box
           sx={{
             width: 80,
             height: 80,
-            borderRadius: '50%',
+            borderRadius: "50%",
             bgcolor: alpha(brand.emerald[500], 0.1),
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             mb: 3,
           }}
         >
@@ -333,7 +463,7 @@ export default function ProviderQuotationForm() {
           sx={{
             fontSize: iosTypographyScale.subhead,
             color: secondaryLabelColor,
-            textAlign: 'center',
+            textAlign: "center",
             mb: 4,
           }}
         >
@@ -341,7 +471,7 @@ export default function ProviderQuotationForm() {
         </Typography>
 
         {/* Quick actions after success */}
-        <Stack spacing={2} sx={{ width: '100%', maxWidth: 300 }}>
+        <Stack spacing={2} sx={{ width: "100%", maxWidth: 300 }}>
           <Button
             variant="contained"
             size="large"
@@ -349,10 +479,10 @@ export default function ProviderQuotationForm() {
             onClick={handleSendAnother}
             sx={{
               bgcolor: brand.emerald[500],
-              '&:hover': { bgcolor: alpha(brand.emerald[500], 0.87) },
+              "&:hover": { bgcolor: alpha(brand.emerald[500], 0.87) },
               py: 1.5,
               borderRadius: radius.md,
-              textTransform: 'none',
+              textTransform: "none",
               fontSize: iosTypographyScale.body,
               fontWeight: typography.weight.semibold,
             }}
@@ -363,17 +493,17 @@ export default function ProviderQuotationForm() {
           <Button
             variant="outlined"
             size="large"
-            onClick={() => navigate('/provider')}
+            onClick={() => navigate("/provider")}
             sx={{
               borderColor: brand.emerald[500],
               color: brand.emerald[500],
-              '&:hover': {
+              "&:hover": {
                 borderColor: brand.emerald[500],
                 bgcolor: alpha(brand.emerald[500], 0.04),
               },
               py: 1.5,
               borderRadius: radius.md,
-              textTransform: 'none',
+              textTransform: "none",
               fontSize: iosTypographyScale.body,
               fontWeight: typography.weight.semibold,
             }}
@@ -389,10 +519,10 @@ export default function ProviderQuotationForm() {
   return (
     <Box sx={{ p: 2, pb: 10 }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
         <Button
           onClick={() => navigate(-1)}
-          sx={{ minWidth: 'auto', p: 1, borderRadius: radius.sm }}
+          sx={{ minWidth: "auto", p: 1, borderRadius: radius.sm }}
         >
           <ArrowLeft size={20} />
         </Button>
@@ -404,7 +534,7 @@ export default function ProviderQuotationForm() {
               color: labelColor,
             }}
           >
-            {linkedRequest ? 'Responder Solicitud' : 'Nueva Cotizacion'}
+            {linkedRequest ? "Responder Solicitud" : "Nueva Cotizacion"}
           </Typography>
           <Typography
             sx={{
@@ -412,7 +542,9 @@ export default function ProviderQuotationForm() {
               color: secondaryLabelColor,
             }}
           >
-            {linkedRequest ? `Solicitud #${linkedRequest.id}` : 'Como en Telegram, pero organizado'}
+            {linkedRequest
+              ? `Solicitud #${linkedRequest.id}`
+              : "Como en Telegram, pero organizado"}
           </Typography>
         </Box>
       </Box>
@@ -423,8 +555,8 @@ export default function ProviderQuotationForm() {
           sx={{
             mb: 3,
             bgcolor: alpha(brand.emerald[500], 0.04),
-            border: 'none',
-            boxShadow: 'none',
+            border: "none",
+            boxShadow: "none",
             borderRadius: radius.lg,
           }}
         >
@@ -445,11 +577,14 @@ export default function ProviderQuotationForm() {
                 color: secondaryLabelColor,
               }}
             >
-              <strong>Categoria:</strong> {PRODUCT_TYPE_LABELS[linkedRequest.productType]}
-              {' | '}
-              <strong>Peso:</strong> {linkedRequest.weightMin}-{linkedRequest.weightMax} ct
-              {' | '}
-              <strong>Presupuesto:</strong> ${linkedRequest.budgetMax.toLocaleString('es-CO')}
+              <strong>Categoria:</strong>{" "}
+              {PRODUCT_TYPE_LABELS[linkedRequest.productType]}
+              {" | "}
+              <strong>Peso:</strong> {linkedRequest.weightMin}-
+              {linkedRequest.weightMax} ct
+              {" | "}
+              <strong>Presupuesto:</strong> $
+              {linkedRequest.budgetMax.toLocaleString("es-CO")}
             </Typography>
             {linkedRequest.notes && (
               <Typography
@@ -472,22 +607,24 @@ export default function ProviderQuotationForm() {
           sx={{
             bgcolor: alpha(brand.emerald[500], 0.04),
             border: `2px dashed ${formData.photoUrls.length > 0 ? brand.emerald[500] : alpha(brand.emerald[500], 0.3)}`,
-            boxShadow: 'none',
+            boxShadow: "none",
             borderRadius: radius.lg,
-            overflow: 'hidden',
+            overflow: "hidden",
           }}
         >
           <CardContent sx={{ py: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}
+            >
               <Box
                 sx={{
                   width: 40,
                   height: 40,
-                  borderRadius: '50%',
+                  borderRadius: "50%",
                   bgcolor: brand.emerald[500],
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 <Camera size={20} color="#fff" />
@@ -515,19 +652,55 @@ export default function ProviderQuotationForm() {
             <QuotationMediaUpload
               quotationId={tempQuotationId}
               uploadedUrls={formData.photoUrls}
-              onUploadComplete={(urls) => handleChange('photoUrls', urls)}
+              onUploadComplete={(urls) => handleChange("photoUrls", urls)}
               maxFiles={5}
               disabled={submitting}
             />
           </CardContent>
         </Card>
 
+        {/* AI jewelry visualizer (optional) */}
+        <Button
+          fullWidth
+          variant="outlined"
+          onClick={openAiVisualizer}
+          disabled={submitting || !canVisualize}
+          startIcon={<Sparkles size={18} />}
+          sx={{
+            borderColor: brand.emerald[500],
+            color: brand.emerald[500],
+            fontWeight: typography.weight.bold,
+            textTransform: "none",
+            borderRadius: radius.lg,
+            py: 1.25,
+            "&:hover": {
+              borderColor: brand.emerald[500],
+              bgcolor: alpha(brand.emerald[500], 0.06),
+            },
+          }}
+        >
+          Visualizar con IA
+        </Button>
+        <Typography
+          sx={{
+            fontSize: iosTypographyScale.caption2,
+            color: secondaryLabelColor,
+            mt: -0.5,
+          }}
+        >
+          {canVisualize
+            ? "Genera una imagen de cómo se vería la pieza puesta. Se adjunta a la cotización."
+            : "Agrega una foto o elige un color para habilitar la visualización."}
+        </Typography>
+
         {/* STEP 2: Product Type - Chip Selector */}
         <ChipSelector
           label="Tipo de producto"
           options={PRODUCT_TYPE_OPTIONS}
           value={formData.productType}
-          onChange={(value) => handleChange('productType', value as ProductType)}
+          onChange={(value) =>
+            handleChange("productType", value as ProductType)
+          }
           disabled={!!linkedRequest}
         />
 
@@ -539,8 +712,8 @@ export default function ProviderQuotationForm() {
               fontWeight: typography.weight.semibold,
               color: secondaryLabelColor,
               mb: 1,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
             }}
           >
             Precio
@@ -551,17 +724,19 @@ export default function ProviderQuotationForm() {
             fullWidth
             placeholder="19.500.000"
             InputProps={{
-              startAdornment: <InputAdornment position="start">$</InputAdornment>,
+              startAdornment: (
+                <InputAdornment position="start">$</InputAdornment>
+              ),
               sx: {
                 fontSize: iosTypographyScale.title2,
                 fontWeight: typography.weight.bold,
               },
             }}
-            inputProps={{ inputMode: 'numeric' }}
+            inputProps={{ inputMode: "numeric" }}
             sx={{
-              '& .MuiOutlinedInput-root': {
+              "& .MuiOutlinedInput-root": {
                 borderRadius: radius.md,
-                bgcolor: isDark ? alpha('#fff', 0.05) : alpha('#000', 0.02),
+                bgcolor: isDark ? alpha("#fff", 0.05) : alpha("#000", 0.02),
               },
             }}
           />
@@ -572,7 +747,7 @@ export default function ProviderQuotationForm() {
           label="Color"
           options={COLOR_OPTIONS}
           value={formData.color}
-          onChange={(value) => handleChange('color', value)}
+          onChange={(value) => handleChange("color", value)}
         />
 
         {/* STEP 5: Quality - Chip Selector */}
@@ -580,7 +755,7 @@ export default function ProviderQuotationForm() {
           label="Calidad"
           options={QUALITY_OPTIONS}
           value={formData.quality}
-          onChange={(value) => handleChange('quality', value)}
+          onChange={(value) => handleChange("quality", value)}
         />
 
         {/* STEP 6: Material (only for jewelry) */}
@@ -598,15 +773,21 @@ export default function ProviderQuotationForm() {
           onClick={() => setShowMoreDetails(!showMoreDetails)}
           sx={{
             color: secondaryLabelColor,
-            textTransform: 'none',
+            textTransform: "none",
             fontSize: iosTypographyScale.subhead,
-            justifyContent: 'flex-start',
+            justifyContent: "flex-start",
             px: 0,
-            '&:hover': { bgcolor: 'transparent' },
+            "&:hover": { bgcolor: "transparent" },
           }}
-          endIcon={showMoreDetails ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          endIcon={
+            showMoreDetails ? (
+              <ChevronUp size={18} />
+            ) : (
+              <ChevronDown size={18} />
+            )
+          }
         >
-          {showMoreDetails ? 'Menos detalles' : 'Mas detalles (opcional)'}
+          {showMoreDetails ? "Menos detalles" : "Mas detalles (opcional)"}
         </Button>
 
         <Collapse in={showMoreDetails}>
@@ -615,15 +796,19 @@ export default function ProviderQuotationForm() {
             <TextField
               label="Peso (quilates)"
               type="number"
-              value={formData.weightCarats || ''}
-              onChange={(e) => handleChange('weightCarats', parseFloat(e.target.value) || 0)}
+              value={formData.weightCarats || ""}
+              onChange={(e) =>
+                handleChange("weightCarats", parseFloat(e.target.value) || 0)
+              }
               fullWidth
               InputProps={{
-                endAdornment: <InputAdornment position="end">ct</InputAdornment>,
+                endAdornment: (
+                  <InputAdornment position="end">ct</InputAdornment>
+                ),
               }}
               inputProps={{ step: 0.01, min: 0 }}
               sx={{
-                '& .MuiOutlinedInput-root': {
+                "& .MuiOutlinedInput-root": {
                   borderRadius: radius.md,
                 },
               }}
@@ -633,12 +818,14 @@ export default function ProviderQuotationForm() {
             <TextField
               label="Cantidad disponible"
               type="number"
-              value={formData.availability || ''}
-              onChange={(e) => handleChange('availability', parseInt(e.target.value) || 1)}
+              value={formData.availability || ""}
+              onChange={(e) =>
+                handleChange("availability", parseInt(e.target.value) || 1)
+              }
               fullWidth
               inputProps={{ min: 1 }}
               sx={{
-                '& .MuiOutlinedInput-root': {
+                "& .MuiOutlinedInput-root": {
                   borderRadius: radius.md,
                 },
               }}
@@ -648,13 +835,13 @@ export default function ProviderQuotationForm() {
             <TextField
               label="Descripcion adicional"
               value={formData.description}
-              onChange={(e) => handleChange('description', e.target.value)}
+              onChange={(e) => handleChange("description", e.target.value)}
               fullWidth
               multiline
               rows={2}
               placeholder="Ej: Manilla con 53 piedras de 3mm, mide 19 cms..."
               sx={{
-                '& .MuiOutlinedInput-root': {
+                "& .MuiOutlinedInput-root": {
                   borderRadius: radius.md,
                 },
               }}
@@ -664,13 +851,13 @@ export default function ProviderQuotationForm() {
             <TextField
               label="Notas adicionales"
               value={formData.notes}
-              onChange={(e) => handleChange('notes', e.target.value)}
+              onChange={(e) => handleChange("notes", e.target.value)}
               fullWidth
               multiline
               rows={2}
               placeholder="Unica oferta, condiciones especiales..."
               sx={{
-                '& .MuiOutlinedInput-root': {
+                "& .MuiOutlinedInput-root": {
                   borderRadius: radius.md,
                 },
               }}
@@ -696,26 +883,44 @@ export default function ProviderQuotationForm() {
         <Button
           variant="contained"
           size="large"
-          startIcon={submitting ? <CircularProgress size={20} color="inherit" /> : <Send size={20} />}
+          startIcon={
+            submitting ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              <Send size={20} />
+            )
+          }
           onClick={handleSubmit}
           disabled={submitting || formData.photoUrls.length === 0}
           sx={{
             bgcolor: brand.emerald[500],
-            '&:hover': { bgcolor: alpha(brand.emerald[500], 0.87) },
-            '&:disabled': {
+            "&:hover": { bgcolor: alpha(brand.emerald[500], 0.87) },
+            "&:disabled": {
               opacity: 0.45,
             },
             py: 1.75,
             borderRadius: radius.md,
-            textTransform: 'none',
+            textTransform: "none",
             fontSize: iosTypographyScale.body,
             fontWeight: typography.weight.semibold,
           }}
           fullWidth
         >
-          {submitting ? 'Enviando...' : 'Enviar Cotizacion'}
+          {submitting ? "Enviando..." : "Enviar Cotizacion"}
         </Button>
       </Stack>
+
+      {/* AI jewelry visualizer dialog */}
+      <JewelryPreviewGenerator
+        open={aiDialogOpen}
+        onClose={() => setAiDialogOpen(false)}
+        product={aiProduct}
+        quotationId={tempQuotationId}
+        onUpdate={handleAiUpdate}
+        initialScene={SCENE_BY_PRODUCT_TYPE[formData.productType]}
+        initialMetal={aiMetal}
+        surface="provider"
+      />
     </Box>
   );
 }

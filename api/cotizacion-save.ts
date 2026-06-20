@@ -43,10 +43,23 @@ interface CotizacionSheetRow {
   expiryDate: string;
 }
 
+interface AiJewelryPreviewLine {
+  id?: string;
+  scene?: string;
+  metal?: string;
+  url?: string;
+  fileId?: string | null;
+  createdAt?: number;
+}
+
 interface CotizacionProductLine {
   itemNumber?: number;
   name?: string;
   precioCOP?: number;
+  /** AI jewelry previews — only serve-drive-image URLs are persisted. */
+  aiPreviews?: AiJewelryPreviewLine[];
+  /** The AI preview chosen to show in the quotation & PDF. */
+  selectedPreviewUrl?: string;
 }
 
 interface CotizacionPostBody {
@@ -362,7 +375,7 @@ async function ensureProductsSheet(sheets: sheets_v4.Sheets): Promise<boolean> {
 
       await sheets.spreadsheets.values.update({
         spreadsheetId: APP_SPREADSHEET_ID,
-        range: `${PRODUCTS_SHEET}!A1:F1`,
+        range: `${PRODUCTS_SHEET}!A1:H1`,
         valueInputOption: "RAW",
         requestBody: {
           values: [
@@ -373,6 +386,8 @@ async function ensureProductsSheet(sheets: sheets_v4.Sheets): Promise<boolean> {
               "Price",
               "AsesorEmail",
               "CreatedAt",
+              "SelectedPreviewUrl",
+              "AiPreviewsJson",
             ],
           ],
         },
@@ -439,19 +454,34 @@ async function saveCotizacionProducts(
 
   await ensureProductsSheet(sheets);
 
+  // Persist only durable serve-drive-image URLs — never data: URLs (the
+  // Drive-upload-failed fallback), which would bloat or exceed the sheet cell.
+  const isPersistable = (url?: string | null): url is string =>
+    Boolean(url) && !url!.startsWith("data:");
+
   const createdAt = new Date().toISOString();
-  const rows = products.map((product) => [
-    cotizacionId,
-    product.itemNumber || 0,
-    product.name || "",
-    product.precioCOP || 0,
-    asesorEmail,
-    createdAt,
-  ]);
+  const rows = products.map((product) => {
+    const previews = (product.aiPreviews || []).filter((p) =>
+      isPersistable(p.url),
+    );
+    const selectedPreviewUrl = isPersistable(product.selectedPreviewUrl)
+      ? product.selectedPreviewUrl
+      : "";
+    return [
+      cotizacionId,
+      product.itemNumber || 0,
+      product.name || "",
+      product.precioCOP || 0,
+      asesorEmail,
+      createdAt,
+      selectedPreviewUrl,
+      previews.length > 0 ? JSON.stringify(previews) : "",
+    ];
+  });
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: APP_SPREADSHEET_ID,
-    range: `${PRODUCTS_SHEET}!A:F`,
+    range: `${PRODUCTS_SHEET}!A:H`,
     valueInputOption: "RAW",
     insertDataOption: "INSERT_ROWS",
     requestBody: {

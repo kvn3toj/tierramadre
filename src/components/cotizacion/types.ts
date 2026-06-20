@@ -109,6 +109,10 @@ export interface ProductListSectionProps {
   handleRemoveProduct: (id: string) => void;
   onEditProduct?: (productId: string) => void;
   editingProductId?: string | null;
+  /** Persist updates to a product (used by the AI jewelry visualizer). */
+  updateProduct?: (productId: string, updates: Partial<CotizacionProduct>) => void;
+  /** Quotation number — groups AI previews in Drive. */
+  quotationNumber?: string;
 }
 
 export interface ProductThumbnailProps {

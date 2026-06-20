@@ -6,11 +6,12 @@
  * Cotizaciones are linked to the asesor who created them.
  */
 
-import { useState, useCallback } from 'react';
-import { createLogger } from '../utils/logger';
-import { useGlobalLoading } from '../contexts/GlobalLoadingContext';
+import { useState, useCallback } from "react";
+import { createLogger } from "../utils/logger";
+import { useGlobalLoading } from "../contexts/GlobalLoadingContext";
+import type { AiJewelryPreview } from "./useCotizacion";
 
-const log = createLogger('CotizacionHistory');
+const log = createLogger("CotizacionHistory");
 
 export interface SavedCotizacion {
   id: string;
@@ -21,16 +22,26 @@ export interface SavedCotizacion {
   clientPhone?: string;
   productsCount: number;
   total: number;
-  imageUrl: string;        // Proxy URL for the image
-  driveFileId: string;     // Google Drive file ID
-  createdAt: string;       // ISO date string
-  expiryDate?: string;     // ISO date string
+  imageUrl: string; // Proxy URL for the image
+  driveFileId: string; // Google Drive file ID
+  createdAt: string; // ISO date string
+  expiryDate?: string; // ISO date string
+  /**
+   * Full product lines (incl. AI previews). Only populated for cotizaciones
+   * saved in the current session — the reload GET returns aggregate data only.
+   * Used so a same-session "duplicate" can carry AI previews along.
+   */
+  products?: CotizacionProductData[];
 }
 
 export interface CotizacionProductData {
   itemNumber: number;
   name: string;
   precioCOP: number;
+  /** AI jewelry previews (serve-drive-image URLs only — never data: URLs). */
+  aiPreviews?: AiJewelryPreview[];
+  /** The AI preview chosen to show in the quotation & PDF. */
+  selectedPreviewUrl?: string;
 }
 
 export interface SaveCotizacionParams {
@@ -42,8 +53,8 @@ export interface SaveCotizacionParams {
   productsCount: number;
   total: number;
   expiryDate?: string;
-  imageBase64: string;     // Base64 encoded PNG image
-  products?: CotizacionProductData[];  // Product details for analytics
+  imageBase64: string; // Base64 encoded PNG image
+  products?: CotizacionProductData[]; // Product details for analytics
 }
 
 export interface UseCotizacionHistoryReturn {
@@ -60,7 +71,9 @@ export interface UseCotizacionHistoryReturn {
   fetchCotizaciones: (email: string) => Promise<void>;
 
   /** Save a new cotización */
-  saveCotizacion: (params: SaveCotizacionParams) => Promise<SavedCotizacion | null>;
+  saveCotizacion: (
+    params: SaveCotizacionParams,
+  ) => Promise<SavedCotizacion | null>;
 
   /** Delete a cotización */
   deleteCotizacion: (id: string, email: string) => Promise<boolean>;
@@ -77,159 +90,180 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
   const { startLoading, stopLoading } = useGlobalLoading();
 
   // Fetch cotizaciones for an asesor
-  const fetchCotizaciones = useCallback(async (email: string): Promise<void> => {
-    if (!email) {
-      setCotizaciones([]);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`/api/cotizacion-save?email=${encodeURIComponent(email)}`);
-
-      // Check if response is ok before parsing JSON
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
+  const fetchCotizaciones = useCallback(
+    async (email: string): Promise<void> => {
+      if (!email) {
+        setCotizaciones([]);
+        return;
       }
 
-      const data = await response.json();
+      setIsLoading(true);
+      setError(null);
 
-      if (data.success) {
-        setCotizaciones(data.cotizaciones || []);
-        log.info(`Fetched ${data.count} cotizaciones for ${email}`);
-      } else {
-        throw new Error(data.error || 'Failed to fetch cotizaciones');
+      try {
+        const response = await fetch(
+          `/api/cotizacion-save?email=${encodeURIComponent(email)}`,
+        );
+
+        // Check if response is ok before parsing JSON
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+          setCotizaciones(data.cotizaciones || []);
+          log.info(`Fetched ${data.count} cotizaciones for ${email}`);
+        } else {
+          throw new Error(data.error || "Failed to fetch cotizaciones");
+        }
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Error fetching cotizaciones";
+        log.error("Fetch error:", err);
+        setError(message);
+        setCotizaciones([]);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error fetching cotizaciones';
-      log.error('Fetch error:', err);
-      setError(message);
-      setCotizaciones([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   // Save a new cotización
-  const saveCotizacion = useCallback(async (params: SaveCotizacionParams): Promise<SavedCotizacion | null> => {
-    setIsSaving(true);
-    setError(null);
-    startLoading();
+  const saveCotizacion = useCallback(
+    async (params: SaveCotizacionParams): Promise<SavedCotizacion | null> => {
+      setIsSaving(true);
+      setError(null);
+      startLoading();
 
-    try {
-      const response = await fetch('/api/cotizacion-save', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(params),
-      });
+      try {
+        const response = await fetch("/api/cotizacion-save", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(params),
+        });
 
-      // Check if response is ok before parsing JSON
-      if (!response.ok) {
-        // Try to get error message from response
-        try {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Server error: ${response.status}`);
-        } catch {
-          throw new Error(`Server error: ${response.status}`);
+        // Check if response is ok before parsing JSON
+        if (!response.ok) {
+          // Try to get error message from response
+          try {
+            const errorData = await response.json();
+            throw new Error(
+              errorData.error || `Server error: ${response.status}`,
+            );
+          } catch {
+            throw new Error(`Server error: ${response.status}`);
+          }
         }
+
+        const data = await response.json();
+
+        if (data.success) {
+          log.info(`Saved cotización ${data.quotationNumber}`);
+
+          // Create the saved cotización object
+          const savedCotizacion: SavedCotizacion = {
+            id: data.id,
+            quotationNumber: params.quotationNumber,
+            asesorEmail: params.asesorEmail,
+            asesorName: params.asesorName,
+            clientName: params.clientName || "",
+            clientPhone: params.clientPhone,
+            productsCount: params.productsCount,
+            total: params.total,
+            imageUrl: data.imageUrl,
+            driveFileId: data.driveFileId,
+            createdAt: new Date().toISOString(),
+            expiryDate: params.expiryDate,
+            // Keep full product lines in memory so a same-session duplicate can
+            // carry AI previews along (the reload GET returns aggregate data only).
+            products: params.products,
+          };
+
+          // Add to local state (prepend for most recent first)
+          setCotizaciones((prev) => [savedCotizacion, ...prev]);
+
+          return savedCotizacion;
+        } else {
+          throw new Error(data.error || "Failed to save cotización");
+        }
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Error saving cotización";
+        log.error("Save error:", err);
+        setError(message);
+        return null;
+      } finally {
+        setIsSaving(false);
+        stopLoading();
       }
-
-      const data = await response.json();
-
-      if (data.success) {
-        log.info(`Saved cotización ${data.quotationNumber}`);
-
-        // Create the saved cotización object
-        const savedCotizacion: SavedCotizacion = {
-          id: data.id,
-          quotationNumber: params.quotationNumber,
-          asesorEmail: params.asesorEmail,
-          asesorName: params.asesorName,
-          clientName: params.clientName || '',
-          clientPhone: params.clientPhone,
-          productsCount: params.productsCount,
-          total: params.total,
-          imageUrl: data.imageUrl,
-          driveFileId: data.driveFileId,
-          createdAt: new Date().toISOString(),
-          expiryDate: params.expiryDate,
-        };
-
-        // Add to local state (prepend for most recent first)
-        setCotizaciones(prev => [savedCotizacion, ...prev]);
-
-        return savedCotizacion;
-      } else {
-        throw new Error(data.error || 'Failed to save cotización');
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error saving cotización';
-      log.error('Save error:', err);
-      setError(message);
-      return null;
-    } finally {
-      setIsSaving(false);
-      stopLoading();
-    }
-  }, [startLoading, stopLoading]);
+    },
+    [startLoading, stopLoading],
+  );
 
   // Delete a cotización (optimistic — remove from UI immediately, rollback on failure)
-  const deleteCotizacion = useCallback(async (id: string, email: string): Promise<boolean> => {
-    setError(null);
+  const deleteCotizacion = useCallback(
+    async (id: string, email: string): Promise<boolean> => {
+      setError(null);
 
-    // Optimistic: remove from UI immediately
-    let removedItem: SavedCotizacion | undefined;
-    let removedIndex = -1;
-    setCotizaciones(prev => {
-      removedIndex = prev.findIndex(c => c.id === id);
-      if (removedIndex >= 0) removedItem = prev[removedIndex];
-      return prev.filter(c => c.id !== id);
-    });
+      // Optimistic: remove from UI immediately
+      let removedItem: SavedCotizacion | undefined;
+      let removedIndex = -1;
+      setCotizaciones((prev) => {
+        removedIndex = prev.findIndex((c) => c.id === id);
+        if (removedIndex >= 0) removedItem = prev[removedIndex];
+        return prev.filter((c) => c.id !== id);
+      });
 
-    try {
-      const response = await fetch(
-        `/api/cotizacion-save?id=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}`,
-        { method: 'DELETE' }
-      );
+      try {
+        const response = await fetch(
+          `/api/cotizacion-save?id=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}`,
+          { method: "DELETE" },
+        );
 
-      if (!response.ok) {
-        try {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Server error: ${response.status}`);
-        } catch {
-          throw new Error(`Server error: ${response.status}`);
+        if (!response.ok) {
+          try {
+            const errorData = await response.json();
+            throw new Error(
+              errorData.error || `Server error: ${response.status}`,
+            );
+          } catch {
+            throw new Error(`Server error: ${response.status}`);
+          }
         }
-      }
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (data.success) {
-        log.info(`Deleted cotización ${id}`);
-        return true;
-      } else {
-        throw new Error(data.error || 'Failed to delete cotización');
+        if (data.success) {
+          log.info(`Deleted cotización ${id}`);
+          return true;
+        } else {
+          throw new Error(data.error || "Failed to delete cotización");
+        }
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Error deleting cotización";
+        log.error("Delete error:", err);
+        setError(message);
+        // Rollback: restore the removed item at its original position
+        if (removedItem) {
+          const item = removedItem;
+          const idx = removedIndex;
+          setCotizaciones((prev) => {
+            const restored = [...prev];
+            restored.splice(Math.min(idx, restored.length), 0, item);
+            return restored;
+          });
+        }
+        return false;
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error deleting cotización';
-      log.error('Delete error:', err);
-      setError(message);
-      // Rollback: restore the removed item at its original position
-      if (removedItem) {
-        const item = removedItem;
-        const idx = removedIndex;
-        setCotizaciones(prev => {
-          const restored = [...prev];
-          restored.splice(Math.min(idx, restored.length), 0, item);
-          return restored;
-        });
-      }
-      return false;
-    }
-  }, []);
+    },
+    [],
+  );
 
   return {
     cotizaciones,
