@@ -384,9 +384,10 @@ async function generateImageCloudflare({ prompt }) {
     throw err;
   }
 
-  // flux-1-schnell returns JSON { result: { image: "<base64 jpeg>" } }.
+  // flux-1-schnell returns JSON { result: { image: "<base64 jpeg>" } }
+  // (REST wraps in `result`; tolerate an un-nested `image` too).
   const json = await resp.json();
-  const b64 = json?.result?.image;
+  const b64 = json?.result?.image || json?.image;
   if (!b64) {
     const err = new Error("Cloudflare returned no image.");
     err.code = "NO_IMAGE";
