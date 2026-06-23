@@ -14,16 +14,18 @@
  *   - Response image bytes live at
  *     candidates[0].content.parts[].inlineData.data (base64).
  *
- * Provider is env-driven (no code change to switch):
- *   IMAGE_GEN_PROVIDER=gateway  → Vercel AI Gateway (free $5/30-day credit,
- *                                 no card; routes to the same Nano Banana).
- *   (unset / anything else)     → direct Google Gemini key.
+ * Provider is env-driven via IMAGE_GEN_PROVIDER (no code change to switch):
+ *   pollinations → FREE text-to-image, NO key (specs-driven; ignores the photo).
+ *   cloudflare   → FREE FLUX-schnell text-to-image (specs-driven, commercial-clean).
+ *   gateway      → Vercel AI Gateway image-to-image (needs paid credits).
+ *   (unset)      → direct Google Gemini image-to-image (needs billing).
  *
- * Required env (server-side, NO VITE_ prefix):
- *   GEMINI_API_KEY        (falls back to VITE_GEMINI_API_KEY) — direct path.
+ * Env (server-side, NO VITE_ prefix):
+ *   GEMINI_API_KEY        (falls back to VITE_GEMINI_API_KEY) — direct Gemini path.
  *   AI_GATEWAY_API_KEY    (or the auto-injected VERCEL_OIDC_TOKEN) — gateway path.
- *   AI_GATEWAY_IMAGE_MODEL  optional override (default google/gemini-2.5-flash-image;
- *                           try bfl/flux-kontext-pro for stronger subject preservation).
+ *   AI_GATEWAY_IMAGE_MODEL  optional (default google/gemini-2.5-flash-image).
+ *   CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN — cloudflare path.
+ *   POLLINATIONS_MODEL / CLOUDFLARE_IMAGE_MODEL — optional model overrides.
  *
  * To add another provider (xAI Grok, fal, …): implement generateImageX() and
  * extend the PROVIDER switch. Nothing else in the codebase needs to change.
@@ -60,9 +62,30 @@ function getGatewayKey() {
   );
 }
 
-/** True when at least one provider is configured. */
+/** True when the SELECTED provider has what it needs to run. */
 export function isImageGenConfigured() {
-  return Boolean(getGeminiKey() || getGatewayKey());
+  switch (process.env.IMAGE_GEN_PROVIDER) {
+    case "pollinations":
+      return true; // keyless, free text-to-image
+    case "cloudflare":
+      return Boolean(
+        process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN,
+      );
+    case "gateway":
+      return Boolean(getGatewayKey());
+    default:
+      return Boolean(getGeminiKey());
+  }
+}
+
+/**
+ * Whether the active provider consumes a reference image (image-to-image).
+ * Free text-to-image providers ignore it, so the endpoint can skip the
+ * reference download and generate purely from the product-specs prompt.
+ */
+export function imageGenUsesReference() {
+  const p = process.env.IMAGE_GEN_PROVIDER;
+  return p !== "pollinations" && p !== "cloudflare";
 }
 
 /**
@@ -262,14 +285,143 @@ async function generateImageVercelGateway({
   return { base64: match[2], mimeType: match[1] || "image/png" };
 }
 
-/**
- * Public entry point. Provider is env-driven so it can flip without code
- * changes: set IMAGE_GEN_PROVIDER=gateway to route through the Vercel AI
- * Gateway (free $5/30-day credit), else the direct Gemini key is used.
- */
-const generateImage =
-  process.env.IMAGE_GEN_PROVIDER === "gateway"
-    ? generateImageVercelGateway
-    : generateImageGemini;
+// ── Free text-to-image providers ──
+// These IGNORE the reference photo and generate purely from the prompt (which
+// the endpoint builds from the real product specs: cut, carats, measures,
+// color, quality, scene, metal). Output is a clearly-labelled "AI referential"
+// visualization — it does not reproduce the exact stone.
 
-export { generateImage, generateImageGemini, generateImageVercelGateway };
+/**
+ * Pollinations.ai — fully free, NO API key. The URL-encoded prompt is the path
+ * and the response body IS the image. Zero setup; best-effort reliability.
+ *
+ * @param {Object} args
+ * @param {string} args.prompt
+ * @returns {Promise<{ base64: string, mimeType: string }>}
+ */
+async function generateImagePollinations({ prompt }) {
+  const model = process.env.POLLINATIONS_MODEL || "flux";
+  const seed = Math.floor(Math.random() * 1_000_000);
+  const url =
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
+    `?width=1024&height=1024&nologo=true&model=${encodeURIComponent(model)}&seed=${seed}`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 90_000);
+  let resp;
+  try {
+    resp = await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  if (!resp.ok) {
+    const detail = await resp.text().catch(() => "");
+    const err = new Error(
+      `Pollinations image request failed (${resp.status}): ${detail.slice(0, 300)}`,
+    );
+    err.code = resp.status === 429 ? "RATE_LIMIT" : "PROVIDER_ERROR";
+    throw err;
+  }
+
+  const mimeType = resp.headers.get("content-type") || "image/jpeg";
+  const buf = Buffer.from(await resp.arrayBuffer());
+  if (!mimeType.startsWith("image/") || buf.length < 1000) {
+    const err = new Error("Pollinations returned an empty/placeholder image.");
+    err.code = "NO_IMAGE";
+    throw err;
+  }
+  return { base64: buf.toString("base64"), mimeType };
+}
+
+/**
+ * Cloudflare Workers AI — FLUX-1-schnell text-to-image. Genuinely free
+ * (10k Neurons/day, no card ≈ hundreds of images/day) and commercial-clean
+ * (FLUX schnell is Apache-2.0). Needs CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN.
+ *
+ * @param {Object} args
+ * @param {string} args.prompt
+ * @returns {Promise<{ base64: string, mimeType: string }>}
+ */
+async function generateImageCloudflare({ prompt }) {
+  const account = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const token = process.env.CLOUDFLARE_API_TOKEN;
+  if (!account || !token) {
+    const err = new Error(
+      "Image generation not configured (missing CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN).",
+    );
+    err.code = "NOT_CONFIGURED";
+    throw err;
+  }
+  const model =
+    process.env.CLOUDFLARE_IMAGE_MODEL ||
+    "@cf/black-forest-labs/flux-1-schnell";
+  const endpoint = `https://api.cloudflare.com/client/v4/accounts/${account}/ai/run/${model}`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 90_000);
+  let resp;
+  try {
+    resp = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt, steps: 4 }),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  if (!resp.ok) {
+    const detail = await resp.text().catch(() => "");
+    const err = new Error(
+      `Cloudflare image request failed (${resp.status}): ${detail.slice(0, 300)}`,
+    );
+    err.code = resp.status === 429 ? "RATE_LIMIT" : "PROVIDER_ERROR";
+    throw err;
+  }
+
+  // flux-1-schnell returns JSON { result: { image: "<base64 jpeg>" } }
+  // (REST wraps in `result`; tolerate an un-nested `image` too).
+  const json = await resp.json();
+  const b64 = json?.result?.image || json?.image;
+  if (!b64) {
+    const err = new Error("Cloudflare returned no image.");
+    err.code = "NO_IMAGE";
+    throw err;
+  }
+  return { base64: b64, mimeType: "image/jpeg" };
+}
+
+/**
+ * Public entry point. Provider is env-driven (IMAGE_GEN_PROVIDER) so it flips
+ * without code changes:
+ *   pollinations → free text-to-image, no key (specs-driven)
+ *   cloudflare   → free FLUX-schnell text-to-image (specs-driven, commercial-clean)
+ *   gateway      → Vercel AI Gateway image-to-image (paid credits)
+ *   (default)    → direct Google Gemini image-to-image (paid)
+ */
+function pickProvider() {
+  switch (process.env.IMAGE_GEN_PROVIDER) {
+    case "pollinations":
+      return generateImagePollinations;
+    case "cloudflare":
+      return generateImageCloudflare;
+    case "gateway":
+      return generateImageVercelGateway;
+    default:
+      return generateImageGemini;
+  }
+}
+const generateImage = pickProvider();
+
+export {
+  generateImage,
+  generateImageGemini,
+  generateImageVercelGateway,
+  generateImagePollinations,
+  generateImageCloudflare,
+};
