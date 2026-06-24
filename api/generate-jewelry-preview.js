@@ -53,64 +53,142 @@ export const config = { api: { bodyParser: true } };
 
 const SCENES = {
   "ring-woman": {
-    subject: "an elegant woman's hand, manicured, wearing the ring",
     piece:
-      "a fine cocktail ring with the emerald as the single centerpiece stone, flanked by small accent diamonds",
+      "a refined cocktail ring with the emerald as the single hero centre stone, held in a secure four-prong setting on a slim, elegant band",
+    subject:
+      "worn on the ring finger of a graceful woman's hand, soft natural skin and a tasteful neutral manicure, fingers gently and naturally curved",
+    framing:
+      "intimate close-up of the hand at a flattering three-quarter angle",
+    anatomy:
+      "The hand is anatomically correct, with exactly five natural fingers and realistic, flawless skin",
   },
   "ring-man": {
-    subject: "a refined man's hand wearing the ring",
     piece:
-      "a substantial signet-style ring with the emerald as the bold centerpiece stone",
+      "a substantial men's signet-style ring with the emerald as the bold centre stone in a clean bezel setting on a solid polished band",
+    subject:
+      "worn on the hand of a refined, well-groomed man in a natural, confident pose",
+    framing: "close-up of the hand at a three-quarter angle",
+    anatomy:
+      "The hand is anatomically correct, with exactly five natural fingers and realistic skin",
   },
   necklace: {
-    subject:
-      "a woman's neckline and décolletage, the pendant resting just below the collarbone",
     piece:
-      "an elegant pendant necklace on a fine chain, the emerald as the hanging centerpiece stone",
+      "an elegant pendant on a fine, delicate chain, the emerald as the hanging hero stone framed by a subtle halo of tiny pavé diamonds",
+    subject:
+      "resting just below the collarbone on a woman's bare décolletage, smooth natural skin",
+    framing: "front-on beauty crop from the collarbone to the upper chest",
+    anatomy: "Skin is natural and realistic under flattering soft lighting",
   },
   earrings: {
-    subject: "a woman's ear and the side of her face, hair tucked back",
     piece:
-      "a pair of drop earrings, each featuring an emerald as the centerpiece stone",
+      "a perfectly matched symmetrical pair of drop earrings, each with an emerald as the hero stone above a small accent diamond",
+    subject:
+      "worn by an elegant woman, shown on her ear with hair tucked back to reveal the side of her face",
+    framing: "side-profile close-up of the ear and jawline",
+    anatomy: "The ear and skin are natural, realistic and flawless",
   },
 };
 
 const METALS = {
-  gold: "18k yellow gold",
-  silver: "polished sterling silver (925)",
+  gold: "warm 18k yellow gold",
+  silver: "bright polished sterling silver (925)",
 };
+
+// — Spanish (catalog) spec values → clean English gemological descriptors ——
+// The product specs arrive in Spanish (talla/color/calidad). Spliced raw they
+// produce broken prompts like "Verde intenso green tone" that confuse the
+// text-to-image model — so normalize them to proper English here.
+
+const CUT_MAP = [
+  [/esmeralda|emerald|octag/i, "an emerald-cut (rectangular step-cut) emerald"],
+  [/coj[ií]n|cushion/i, "a cushion-cut emerald"],
+  [/oval/i, "an oval-cut emerald"],
+  [/pera|pear|gota|teardrop/i, "a pear-cut (teardrop) emerald"],
+  [/redond|round|brillante/i, "a round brilliant-cut emerald"],
+  [/princes/i, "a princess-cut (square) emerald"],
+  [/marqu|navette/i, "a marquise-cut emerald"],
+  [/coraz[óo]n|heart/i, "a heart-cut emerald"],
+  [/asscher/i, "an Asscher-cut emerald"],
+  [/trill?[íi]?[óo]n|triangle|trillion/i, "a trillion-cut emerald"],
+];
+
+function describeCut(cut) {
+  if (cut) {
+    for (const [re, label] of CUT_MAP) if (re.test(cut)) return label;
+  }
+  return "an emerald-cut (rectangular step-cut) emerald";
+}
+
+function describeColor(color) {
+  const c = (color || "").toLowerCase();
+  if (/azul/.test(c)) return "a vivid, slightly bluish Colombian green";
+  if (/oscuro|intens|profund|deep|fuerte/.test(c))
+    return "a deep, richly saturated Colombian green";
+  if (/claro|light|p[áa]lid|suave/.test(c))
+    return "a bright, lively light Colombian green";
+  return "a vivid, saturated Colombian green";
+}
+
+function describeQuality(quality) {
+  const q = (quality || "").toLowerCase();
+  if (/aaa|fina|premium|excele|exception|gota|insignif/.test(q))
+    return "with exceptional eye-clean transparency and a luminous internal glow";
+  if (/\baa\b|alta|high/.test(q))
+    return "with high clarity and bright, glassy transparency";
+  if (/comercial|\ba\b|natural|baja|incl/.test(q))
+    return "with natural transparency and characteristic fine jardín inclusions";
+  return "with glassy transparency and natural depth";
+}
+
+/** Strip unit words / stray punctuation from a carat value. */
+function cleanCarats(carats) {
+  return String(carats)
+    .replace(/\s*(cts?|ct\.|quilates?|carats?|kt)\b/gi, "")
+    .replace(/[^\d.,]/g, "")
+    .replace(/[.,]$/, "")
+    .trim();
+}
 
 function buildPrompt({ scene, metal, mode, specs = {}, productName }) {
   const s = SCENES[scene] || SCENES["ring-woman"];
   const metalText = METALS[metal] || METALS.gold;
 
-  const specBits = [];
-  if (specs.cut) specBits.push(`${specs.cut} cut`);
-  if (specs.carats) specBits.push(`${specs.carats} carats`);
-  if (specs.measures) specBits.push(`approx. ${specs.measures} mm`);
-  if (specs.color) specBits.push(`${specs.color} green tone`);
-  if (specs.quality) specBits.push(`${specs.quality} clarity`);
-  const specText = specBits.length
-    ? ` The Colombian emerald is ${specBits.join(", ")}.`
-    : " The center stone is a vivid green Colombian emerald.";
+  // Describe the centre stone. In photo mode the reference image governs the
+  // real gem, so we keep the description light to avoid the model inventing a
+  // different stone; in specs mode we paint it fully from the catalog data.
+  let stone;
+  if (mode === "photo") {
+    stone =
+      "The centre stone is the exact Colombian emerald from the provided reference photograph — " +
+      "faithfully preserve its real colour, saturation, cut, proportions and natural inclusions; do not invent a different gem.";
+  } else {
+    const sizeBits = [];
+    if (specs.carats) {
+      const ct = cleanCarats(specs.carats);
+      if (ct) sizeBits.push(`approximately ${ct} carats`);
+    }
+    if (specs.measures) sizeBits.push(`measuring about ${specs.measures} mm`);
+    const size = sizeBits.length ? `, ${sizeBits.join(", ")}` : "";
+    stone =
+      `The centre stone is ${describeCut(specs.cut)}${size}, ` +
+      `${describeColor(specs.color)} ${describeQuality(specs.quality)}, ` +
+      "with crisp step facets and bright, realistic light reflections.";
+  }
 
-  const fidelity =
-    mode === "photo"
-      ? " Use the provided reference photograph as the exact center stone: faithfully preserve its real color, saturation, cut, proportions and inclusions. Do not invent a different gem."
-      : "";
+  const name = productName ? `Inspired by the "${productName}" emerald.` : "";
 
-  const name = productName ? ` Inspired by the "${productName}" emerald.` : "";
-
-  return (
-    `Photorealistic luxury jewelry product photography. Create ${s.piece}, ` +
-    `set in ${metalText}, worn by ${s.subject}.` +
-    specText +
-    fidelity +
-    name +
-    " Studio lighting, shallow depth of field, soft neutral background, " +
-    "elegant and aspirational, ultra-detailed, sharp focus on the emerald, " +
-    "high-end editorial catalog aesthetic. Square composition. No text, no watermark, no logos."
-  );
+  return [
+    "Professional luxury jewelry product photography, hyper-realistic, editorial catalog quality.",
+    `${s.framing}: ${s.piece}, set in ${metalText}, ${s.subject}.`,
+    stone,
+    "The piece is in natural, believable proportion to the body — refined and comfortably wearable, not oversized.",
+    name,
+    `${s.anatomy}.`,
+    "Shot on an 85mm macro lens at f/2.8, soft diffused studio softbox lighting, gentle highlights on the metal, shallow depth of field with the emerald in razor-sharp focus, clean softly-blurred neutral background.",
+    "Square 1:1 composition. No text, no watermark, no logos, no extra jewelry.",
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 // =============================================================================
