@@ -355,7 +355,10 @@ function snapshotToGuidedContext(
     Array.isArray(candidateItems) && candidateItems.length > 0
       ? `Ítems candidatos (para que el sistema resuelva itemHint→itemId; tú solo da el itemHint): ${JSON.stringify(candidateItems).slice(0, 1500)}`
       : "",
-    `Snapshot JSON: ${JSON.stringify(snapshot).slice(0, 3000)}`,
+    // `snapshot` is undefined when the client posts before the Convex workspace
+    // query resolves (or with Convex offline). JSON.stringify(undefined) is
+    // undefined, not a string — guard with `?? null` so `.slice` never throws.
+    `Snapshot JSON: ${JSON.stringify(snapshot ?? null).slice(0, 3000)}`,
   ]
     .filter(Boolean)
     .join("\n");
