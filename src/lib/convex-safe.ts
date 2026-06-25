@@ -7,7 +7,7 @@
  * throw a clear error so callers can surface it instead of crashing the tree.
  */
 
-import { useQuery, useMutation, useAction } from "convex/react";
+import { useQuery, useMutation, useAction, useConvex } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
 export const convexReady = !!import.meta.env.VITE_CONVEX_URL;
@@ -31,3 +31,10 @@ const noopAction = (() =>
 export const useConvexQuery = convexReady ? useQuery : noopQuery;
 export const useConvexMutation = convexReady ? useMutation : noopMutation;
 export const useConvexAction = convexReady ? useAction : noopAction;
+
+// Imperative client for one-shot queries/mutations at commit time (the
+// Fotosynthia execute layer resolves refs + dispatches mutations on demand
+// rather than holding always-on subscriptions). Returns null when Convex is
+// unconfigured so callers can degrade gracefully instead of throwing at mount.
+const noopConvexClient = (() => null) as unknown as typeof useConvex;
+export const useConvexClient = convexReady ? useConvex : noopConvexClient;

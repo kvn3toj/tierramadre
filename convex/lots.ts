@@ -8,6 +8,7 @@ import {
 } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import { pushTableRowToVercel } from "./_lib/sheetSync";
 import { COLUMN_MAPS } from "./_lib/columnMaps";
 import {
@@ -124,8 +125,27 @@ export const create = mutation({
     numeroFactura: v.optional(v.string()),
     urlFactura: v.optional(v.string()),
     notas: v.optional(v.string()),
+    clientToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Idempotency guard (money-critical): replay of the same clientToken
+    // returns the prior result instead of creating a second lot. The created
+    // row is existence-checked — a cancel that reclaimed the tail sequence
+    // deletes the lot, so a stale token must fall through and re-create (C7).
+    if (args.clientToken) {
+      const prior = await ctx.db
+        .query("commitTokens")
+        .withIndex("by_token", (q) => q.eq("token", args.clientToken!))
+        .unique();
+      if (prior) {
+        const stillThere = await ctx.db.get(prior.primaryId as Id<"lots">);
+        if (stillThere) {
+          return JSON.parse(prior.result) as { id: Id<"lots">; loteId: string };
+        }
+        await ctx.db.delete(prior._id);
+      }
+    }
+
     if (args.unidadesDeclaradas < 1)
       throw new Error("unidadesDeclaradas debe ser ≥ 1");
     if (args.costoTotalCOP <= 0) throw new Error("costoTotalCOP debe ser > 0");
@@ -144,9 +164,11 @@ export const create = mutation({
     const all = await ctx.db.query("lots").collect();
     const maxRow = all.reduce((m, l) => Math.max(m, l.rowIndex), 1);
 
+    // Strip `clientToken` — it's an idempotency control arg, not a `lots` column.
+    const { clientToken, ...lotFields } = args;
     const id = await ctx.db.insert("lots", {
       loteId,
-      ...args,
+      ...lotFields,
       estado: "abierto" as const,
       rowIndex: maxRow + 1,
       lastPulledAt: now,
@@ -157,7 +179,18 @@ export const create = mutation({
       id,
       mode: "append",
     });
-    return { id, loteId };
+
+    const result = { id, loteId };
+    if (clientToken) {
+      await ctx.db.insert("commitTokens", {
+        token: clientToken,
+        kind: "lot.create",
+        primaryId: id,
+        result: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+    }
+    return result;
   },
 });
 

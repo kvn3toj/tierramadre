@@ -251,6 +251,26 @@ export const ADMIN_NAV_MAP: readonly AdminRouteEntry[] = [
     dynamic: false,
   },
 
+  // ── Certificados ──────────────────────────────────────────────────────────
+  {
+    id: "fotosintesis.certificados",
+    path: "/admin/fotosintesis/certificados",
+    label: "Certificados",
+    group: "Inventario",
+    iconName: "FileText",
+    description: "Generar certificados de origen, embajador y carnet",
+    keywords: [
+      "certificado",
+      "certificados",
+      "carnet",
+      "origen",
+      "embajador",
+      "generador",
+    ],
+    roles: ADMIN,
+    dynamic: false,
+  },
+
   // ── Analítica ────────────────────────────────────────────────────────────
   {
     id: "admin.analytics",

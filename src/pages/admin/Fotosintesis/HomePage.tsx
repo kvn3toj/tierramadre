@@ -14,6 +14,7 @@ import {
   DollarSign,
   X,
   Boxes,
+  Award,
 } from "lucide-react";
 import { getFoto, fontFamilies, goldAccent } from "../../../design-system";
 import {
@@ -587,6 +588,28 @@ export default function FotosintesisHomePage() {
             kbdPill="⌘ D"
             icon={<Users size={20} strokeWidth={1.8} />}
             iconBackground={foto.ink.primary}
+            foto={foto}
+          />
+
+          <QuickCard
+            to="/admin/fotosintesis/certificados"
+            title="Generador de Certificados"
+            description="Certificación de Origen, Embajador y Carnet — autocompleta desde el catálogo y exporta PDF/PNG con el arte original."
+            footerLeft={
+              <Box component="strong" sx={{ fontWeight: 600 }}>
+                Origen · Embajador · Carnet
+              </Box>
+            }
+            footerRight={
+              <Box
+                component="span"
+                sx={{ ...monoSx, color: foto.accent.deep, fontWeight: 600 }}
+              >
+                generar →
+              </Box>
+            }
+            icon={<Award size={20} strokeWidth={1.8} />}
+            iconBackground={`linear-gradient(135deg, ${foto.accent.primary}, ${foto.accent.deep})`}
             foto={foto}
           />
         </Box>
@@ -1203,7 +1226,7 @@ interface QuickCardProps {
   description: string;
   footerLeft: React.ReactNode;
   footerRight: React.ReactNode;
-  kbdPill: string;
+  kbdPill?: string;
   icon: React.ReactNode;
   iconBackground: string;
   foto: FotoT;
@@ -1268,20 +1291,22 @@ function QuickCard({
         >
           {icon}
         </Box>
-        <Box
-          sx={{
-            fontFamily: fontFamilies.mono,
-            fontSize: "10px",
-            fontWeight: 500,
-            background: foto.surfaces.inset,
-            border: `1px solid ${foto.surfaces.edge}`,
-            padding: "4px 8px",
-            borderRadius: "6px",
-            color: foto.ink.secondary,
-          }}
-        >
-          {kbdPill}
-        </Box>
+        {kbdPill ? (
+          <Box
+            sx={{
+              fontFamily: fontFamilies.mono,
+              fontSize: "10px",
+              fontWeight: 500,
+              background: foto.surfaces.inset,
+              border: `1px solid ${foto.surfaces.edge}`,
+              padding: "4px 8px",
+              borderRadius: "6px",
+              color: foto.ink.secondary,
+            }}
+          >
+            {kbdPill}
+          </Box>
+        ) : null}
       </Box>
       <Box>
         <Box

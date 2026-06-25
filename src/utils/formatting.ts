@@ -7,8 +7,50 @@
  * Format carat weight with 2 decimal places (e.g. 0.50, 1.20, 3.00).
  */
 export const formatCarats = (peso: string | number): string => {
-  const n = typeof peso === 'number' ? peso : parseFloat(peso);
+  const n = typeof peso === "number" ? peso : parseFloat(peso);
   return isNaN(n) ? String(peso) : n.toFixed(2);
+};
+
+/**
+ * Parse a peso value into numeric carats, or null when it's not a real gem
+ * weight. Jewelry pesos are descriptive strings ("Plata", "Oro 18k") that must
+ * NOT be treated as a carat number. Matches `formatCarats`' comma→dot parsing.
+ * @param peso - The peso field (number for gems, string for jewelry/legacy)
+ * @returns Positive carat number, or null when non-numeric / not positive
+ */
+export const parseCarats = (peso: string | number): number | null => {
+  const n =
+    typeof peso === "number"
+      ? peso
+      : parseFloat(String(peso).replace(",", "."));
+  return Number.isFinite(n) && n > 0 ? n : null;
+};
+
+/**
+ * Price-per-carat in COP — the RAW (un-converted) base value.
+ *
+ * IMPORTANT: this works in COP only. Callers MUST pass the result through the
+ * currency `convertPrice` exactly ONCE before formatting, never an
+ * already-converted display value (convertPrice multiplies by the x2/x3/x4
+ * multiplier and is NOT idempotent).
+ *
+ * Returns null when a per-carat figure would be meaningless or undefined:
+ *   - peso is not a numeric carat weight (jewelry strings → null)
+ *   - carats <= 0 (avoids divide-by-zero / Infinity)
+ *   - precioCOP is missing / not finite / <= 0
+ *
+ * @param precioCOP - The base COP price of the piece
+ * @param peso - The peso field (number for gems, string for jewelry)
+ * @returns COP price per carat, or null when not applicable
+ */
+export const pricePerCaratCOP = (
+  precioCOP: number | undefined | null,
+  peso: string | number,
+): number | null => {
+  const carats = parseCarats(peso);
+  if (carats === null) return null;
+  if (!Number.isFinite(precioCOP) || (precioCOP as number) <= 0) return null;
+  return (precioCOP as number) / carats;
 };
 
 /**
@@ -18,18 +60,21 @@ export const formatCarats = (peso: string | number): string => {
  * @param currency - Currency mode (default: COP)
  * @returns Formatted string like "$1.5M", "$300K", "US$9.5K"
  */
-export const formatCurrency = (value: number, currency: 'COP' | 'USD' = 'COP'): string => {
-  if (currency === 'USD') {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+export const formatCurrency = (
+  value: number,
+  currency: "COP" | "USD" = "COP",
+): string => {
+  if (currency === "USD") {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
   }
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
@@ -41,18 +86,21 @@ export const formatCurrency = (value: number, currency: 'COP' | 'USD' = 'COP'): 
  * @param currency - Currency mode (default: COP)
  * @returns Formatted string like "$1,500,000" or "$9,524"
  */
-export const formatFullCurrency = (value: number, currency: 'COP' | 'USD' = 'COP'): string => {
-  if (currency === 'USD') {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+export const formatFullCurrency = (
+  value: number,
+  currency: "COP" | "USD" = "COP",
+): string => {
+  if (currency === "USD") {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
   }
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
@@ -71,11 +119,11 @@ export const formatPercent = (value: number): string => {
  * Emerald color name to hex color mapping.
  */
 const COLOR_MAP: Record<string, string> = {
-  'Verde Vivido': '#059669',
-  'Verde Muzo': '#065F46',
-  'Verde Limón': '#84CC16',
-  'Verde Menta': '#34D399',
-  'Verde Natural': '#22C55E',
+  "Verde Vivido": "#059669",
+  "Verde Muzo": "#065F46",
+  "Verde Limón": "#84CC16",
+  "Verde Menta": "#34D399",
+  "Verde Natural": "#22C55E",
 };
 
 /**
@@ -84,7 +132,7 @@ const COLOR_MAP: Record<string, string> = {
  * @returns Hex color string
  */
 export const getColorDot = (color: string): string => {
-  return COLOR_MAP[color] || '#6B7280';
+  return COLOR_MAP[color] || "#6B7280";
 };
 
 /**
@@ -112,8 +160,8 @@ export interface QualityBadgeStyle {
  */
 export const formatCollectionName = (name: string): string => {
   return name
-    .replace(/^COLECCION\s*/i, '')  // Remove "COLECCION " prefix
-    .replace(/^Colección\s*/i, '')   // Remove "Colección " prefix
+    .replace(/^COLECCION\s*/i, "") // Remove "COLECCION " prefix
+    .replace(/^Colección\s*/i, "") // Remove "Colección " prefix
     .trim();
 };
 
@@ -125,12 +173,14 @@ export const formatCollectionName = (name: string): string => {
  * @param name - The raw collection name from the data source
  * @returns Lowercased, accent- and prefix-stripped, whitespace-collapsed key
  */
-export const normalizeCollection = (name: string | null | undefined): string => {
-  return formatCollectionName(name || '')
+export const normalizeCollection = (
+  name: string | null | undefined,
+): string => {
+  return formatCollectionName(name || "")
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '') // strip diacritics
-    .replace(/\s+/g, ' ')
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "") // strip diacritics
+    .replace(/\s+/g, " ")
     .trim();
 };
 
@@ -163,10 +213,11 @@ export function deriveRating(productCount: number): number | null {
  * @returns Localized relative time string
  */
 export const formatTimeAgo = (timestamp: string | number): string => {
-  const date = typeof timestamp === 'string' ? new Date(timestamp) : new Date(timestamp);
+  const date =
+    typeof timestamp === "string" ? new Date(timestamp) : new Date(timestamp);
   const diff = Date.now() - date.getTime();
 
-  if (diff < 60000) return 'Ahora';
+  if (diff < 60000) return "Ahora";
   if (diff < 3600000) {
     const mins = Math.floor(diff / 60000);
     return `hace ${mins} min`;
@@ -180,7 +231,7 @@ export const formatTimeAgo = (timestamp: string | number): string => {
     return `hace ${days} d`;
   }
 
-  return date.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString("es-CO", { month: "short", day: "numeric" });
 };
 
 // =============================================================================
@@ -195,11 +246,11 @@ export const formatTimeAgo = (timestamp: string | number): string => {
  */
 export const getRoleLabel = (role: string): string => {
   const r = role.toLowerCase();
-  if (r === 'admin' || r.includes('admin')) return 'Admin';
-  if (r === 'embajador' || r === 'ambassador') return 'Embajador';
-  if (r === 'full' || r === 'asesor') return 'Asesor';
-  if (r === 'provider' || r === 'proveedor') return 'Proveedor';
-  return 'Usuario';
+  if (r === "admin" || r.includes("admin")) return "Admin";
+  if (r === "embajador" || r === "ambassador") return "Embajador";
+  if (r === "full" || r === "asesor") return "Asesor";
+  if (r === "provider" || r === "proveedor") return "Proveedor";
+  return "Usuario";
 };
 
 /**
@@ -209,11 +260,11 @@ export const getRoleLabel = (role: string): string => {
  */
 export const getRoleColor = (role: string): string => {
   const r = role.toLowerCase();
-  if (r === 'admin' || r.includes('admin')) return '#C69C6D'; // goldAccent.primary
-  if (r === 'embajador' || r === 'ambassador') return '#8B5CF6'; // Purple
-  if (r === 'full' || r === 'asesor') return '#00AE7A'; // emeraldCore.primary
-  if (r === 'provider' || r === 'proveedor') return '#3B82F6'; // Blue
-  return '#6B7280'; // Gray
+  if (r === "admin" || r.includes("admin")) return "#C69C6D"; // goldAccent.primary
+  if (r === "embajador" || r === "ambassador") return "#8B5CF6"; // Purple
+  if (r === "full" || r === "asesor") return "#00AE7A"; // emeraldCore.primary
+  if (r === "provider" || r === "proveedor") return "#3B82F6"; // Blue
+  return "#6B7280"; // Gray
 };
 
 // =============================================================================
@@ -221,35 +272,35 @@ export const getRoleColor = (role: string): string => {
 // =============================================================================
 
 export const getQualityBadge = (calidad: string): QualityBadgeStyle => {
-  if (calidad.includes('SuperFina') || calidad === 'Fina') {
+  if (calidad.includes("SuperFina") || calidad === "Fina") {
     return {
       label: calidad,
-      bg: '#FEF3C7',      // Amber 100
-      color: '#92400E',   // Amber 900
-      border: '#F59E0B',  // Amber 500
+      bg: "#FEF3C7", // Amber 100
+      color: "#92400E", // Amber 900
+      border: "#F59E0B", // Amber 500
     };
   }
-  if (calidad.includes('Superior')) {
+  if (calidad.includes("Superior")) {
     return {
       label: calidad,
-      bg: '#DBEAFE',      // Blue 100
-      color: '#1E3A8A',   // Blue 900
-      border: '#3B82F6',  // Blue 500
+      bg: "#DBEAFE", // Blue 100
+      color: "#1E3A8A", // Blue 900
+      border: "#3B82F6", // Blue 500
     };
   }
-  if (calidad.includes('Fina')) {
+  if (calidad.includes("Fina")) {
     return {
       label: calidad,
-      bg: '#F3E8FF',      // Purple 100
-      color: '#6B21A8',   // Purple 800
-      border: '#A855F7',  // Purple 500
+      bg: "#F3E8FF", // Purple 100
+      color: "#6B21A8", // Purple 800
+      border: "#A855F7", // Purple 500
     };
   }
   return {
-    label: calidad || 'Comercial',
-    bg: '#F3F4F6',        // Gray 100
-    color: '#374151',     // Gray 700
-    border: '#9CA3AF',    // Gray 400
+    label: calidad || "Comercial",
+    bg: "#F3F4F6", // Gray 100
+    color: "#374151", // Gray 700
+    border: "#9CA3AF", // Gray 400
   };
 };
 
@@ -258,26 +309,26 @@ export const getQualityBadge = (calidad: string): QualityBadgeStyle => {
  * Maps quality names to their full descriptions.
  */
 const QUALITY_DEFINITIONS: Record<string, string> = {
-  'SuperFina': 'Gema de color intenso, alta transparencia y minimas inclusiones',
-  'Fina': 'Gema de buen color y transparencia con pocas inclusiones',
-  'Superior Fina': 'Calidad intermedia-alta con buen brillo y color',
-  'Superior': 'Gema con color medio y transparencia aceptable',
-  'Comercial': 'Gema de calidad estandar para joyeria comercial',
-  'Muzo': 'Origen Muzo — reconocido por verde intenso y alto valor',
-  'Chivor': 'Origen Chivor — tono azul-verdoso caracteristico',
-  'Coscuez': 'Origen Coscuez — verde profundo con excelente saturacion',
+  SuperFina: "Gema de color intenso, alta transparencia y minimas inclusiones",
+  Fina: "Gema de buen color y transparencia con pocas inclusiones",
+  "Superior Fina": "Calidad intermedia-alta con buen brillo y color",
+  Superior: "Gema con color medio y transparencia aceptable",
+  Comercial: "Gema de calidad estandar para joyeria comercial",
+  Muzo: "Origen Muzo — reconocido por verde intenso y alto valor",
+  Chivor: "Origen Chivor — tono azul-verdoso caracteristico",
+  Coscuez: "Origen Coscuez — verde profundo con excelente saturacion",
 };
 
 /**
  * Get a tooltip description for a quality abbreviation.
  */
 export function getQualityTooltip(calidad: string): string {
-  if (!calidad) return '';
+  if (!calidad) return "";
   // Try exact match first
   if (QUALITY_DEFINITIONS[calidad]) return QUALITY_DEFINITIONS[calidad];
   // Try partial match
   for (const [key, value] of Object.entries(QUALITY_DEFINITIONS)) {
     if (calidad.includes(key)) return value;
   }
-  return '';
+  return "";
 }

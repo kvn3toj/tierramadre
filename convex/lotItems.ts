@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import { bumpInventoryTotal } from "./products";
 import { preponderanciaSum, balancesTo100 } from "./_lib/lotMath";
 
@@ -72,6 +73,7 @@ export const sumPreponderancia = query({
 async function nextItemId(ctx: {
   db: { query: (table: "productInventory") => any };
 }): Promise<string> {
+  // NOTE: itemId allocation relies on Convex OCC serializing this table scan. clientToken (above) closes the AI-retry replay path; a concurrency test should prove the distinct-create path before any allocator change.
   const all = await ctx.db.query("productInventory").collect();
   let max = 0;
   for (const p of all) {
@@ -131,8 +133,33 @@ export const create = mutation({
     // Bruto-only — informational fields about an unworked parcel.
     rendimientoEsperado: v.optional(v.number()),
     cantidadEstimada: v.optional(v.number()),
+    clientToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Idempotency guard (money-critical): replay of the same clientToken
+    // returns the prior result instead of allocating a second itemId / inserting
+    // a duplicate productInventory + lotItems row. The created lotItems row is
+    // existence-checked — if it was since removed (orphaned + deleted), the stale
+    // token is dropped and the create runs again (C7).
+    if (args.clientToken) {
+      const prior = await ctx.db
+        .query("commitTokens")
+        .withIndex("by_token", (q) => q.eq("token", args.clientToken!))
+        .unique();
+      if (prior) {
+        const stillThere = await ctx.db.get(prior.primaryId as Id<"lotItems">);
+        if (stillThere) {
+          return JSON.parse(prior.result) as {
+            lotItemId: Id<"lotItems">;
+            productId: Id<"productInventory">;
+            itemId: string;
+            costoBaseCOP: number;
+          };
+        }
+        await ctx.db.delete(prior._id);
+      }
+    }
+
     if (args.preponderancia <= 0 || args.preponderancia > 100) {
       throw new Error("preponderancia debe estar en (0, 100]");
     }
@@ -252,7 +279,17 @@ export const create = mutation({
       mode: "append",
     });
 
-    return { lotItemId, productId, itemId, costoBaseCOP };
+    const result = { lotItemId, productId, itemId, costoBaseCOP };
+    if (args.clientToken) {
+      await ctx.db.insert("commitTokens", {
+        token: args.clientToken,
+        kind: "item.create",
+        primaryId: lotItemId,
+        result: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+    }
+    return result;
   },
 });
 

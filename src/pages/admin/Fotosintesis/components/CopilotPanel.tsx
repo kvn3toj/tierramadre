@@ -15,6 +15,7 @@
 import {
   type FormEvent,
   type KeyboardEvent,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -51,6 +52,9 @@ import type {
 import { resolveItemHint, hintMissMessage } from "../copilot/resolveItemHint";
 import { buildPath, getRouteById } from "../../../../config/adminNavMap";
 import { CopilotEmptyState } from "../copilot-rail/CopilotEmptyState";
+import { CommitReviewCard } from "./CommitReviewCard";
+import { CommitLogRow } from "./CommitLogRow";
+import type { CommitEntity } from "../copilot/executeAction";
 import { spanishText } from "../utils/fieldLang";
 
 // Convex provider is only mounted when VITE_CONVEX_URL is set in main.tsx.
@@ -242,6 +246,39 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
   const [input, setInput] = useState("");
   const [snapshot, setSnapshot] = useState<unknown>(undefined);
 
+  // In-copilot approval log: each committed action, newest first, with its
+  // Sheets-sync state. Session-scoped (the durable record lives in Convex).
+  const [commitLog, setCommitLog] = useState<
+    Array<{
+      id: number;
+      summary: string;
+      syncsToSheet: boolean;
+      entity?: CommitEntity;
+    }>
+  >([]);
+  const commitSeq = useRef(0);
+  const handleCommitted = useCallback(
+    (entry: {
+      kind: string;
+      summary: string;
+      syncsToSheet: boolean;
+      entity?: CommitEntity;
+    }) => {
+      setCommitLog((prev) =>
+        [
+          {
+            id: (commitSeq.current += 1),
+            summary: entry.summary,
+            syncsToSheet: entry.syncsToSheet,
+            entity: entry.entity,
+          },
+          ...prev,
+        ].slice(0, 5),
+      );
+    },
+    [],
+  );
+
   const {
     messages,
     isStreaming,
@@ -358,6 +395,23 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
   // layout bus carries the draft and the form seeds itself on mount.
   const env = latestEnvelope;
   const showCard = !!env && env.flow !== "advisory";
+
+  // A server-hardened, ready-to-commit action → the AI executes it directly on
+  // one approval (the CommitReviewCard). `handoff`-mode actions (e.g. venta) and
+  // actionless envelopes fall through to the existing form hand-off card below.
+  const commitAction =
+    env?.action && env.action.mode === "direct" && env.action.ready
+      ? env.action
+      : null;
+  const commitCtx = useMemo(
+    () => ({
+      editorEmail: user?.email ?? "",
+      operatorName: user?.name,
+      activeLoteId: loteContext?.loteId,
+      candidateItems,
+    }),
+    [user?.email, user?.name, loteContext?.loteId, candidateItems],
+  );
 
   const handoff = useMemo(() => {
     if (!env || env.flow === "advisory") {
@@ -823,8 +877,41 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
         </Box>
       )}
 
+      {/* Direct-commit card — Fotosynthia executes the action on one approval. */}
+      {commitAction && (
+        <CommitReviewCard
+          action={commitAction}
+          ctx={commitCtx}
+          online={online}
+          onClose={clearEnvelope}
+          onCommitted={handleCommitted}
+        />
+      )}
+
+      {/* Approval log — what Fotosynthia committed this session + sync state */}
+      {commitLog.length > 0 && (
+        <Box
+          sx={{
+            margin: "0 18px 2px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px",
+          }}
+          aria-label="Acciones guardadas"
+        >
+          {commitLog.map((c) => (
+            <CommitLogRow
+              key={c.id}
+              summary={c.summary}
+              syncsToSheet={c.syncsToSheet}
+              entity={c.entity}
+            />
+          ))}
+        </Box>
+      )}
+
       {/* Review card — pinned above the composer when a draft is in progress */}
-      {showCard && env && (
+      {showCard && env && !commitAction && (
         <Box
           sx={{
             margin: "0 18px",

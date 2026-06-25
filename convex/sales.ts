@@ -7,6 +7,7 @@ import {
 } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import { pushTableRowToVercel } from "./_lib/sheetSync";
 import { COLUMN_MAPS } from "./_lib/columnMaps";
 import { allocateNext, formatSaleId, saleSequenceName } from "./sequences";
@@ -119,8 +120,31 @@ export const create = mutation({
         v.literal("cancelada"),
       ),
     ),
+    clientToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Idempotency guard (money-critical): replay of the same clientToken returns
+    // the prior result instead of recording a second sale (and re-flipping items
+    // to VENDIDA). The created sale row is existence-checked — a cancel only
+    // patches the sale (never deletes it), but a deleted row would mean the stale
+    // token must fall through and re-create (C7).
+    if (args.clientToken) {
+      const prior = await ctx.db
+        .query("commitTokens")
+        .withIndex("by_token", (q) => q.eq("token", args.clientToken!))
+        .unique();
+      if (prior) {
+        const stillThere = await ctx.db.get(prior.primaryId as Id<"sales">);
+        if (stillThere) {
+          return JSON.parse(prior.result) as {
+            id: Id<"sales">;
+            saleId: string;
+          };
+        }
+        await ctx.db.delete(prior._id);
+      }
+    }
+
     // A sale must carry at least one line — an inventory item OR a manual one.
     // (A manual-only sale is valid: e.g. an accessory not yet in inventory.)
     if (args.itemIds.length === 0 && (args.manualItems?.length ?? 0) === 0) {
@@ -163,9 +187,11 @@ export const create = mutation({
     const all = await ctx.db.query("sales").collect();
     const maxRow = all.reduce((m, s) => Math.max(m, s.rowIndex), 1);
 
+    // Strip `clientToken` — it's an idempotency control arg, not a `sales` column.
+    const { clientToken, ...saleFields } = args;
     const id = await ctx.db.insert("sales", {
       saleId,
-      ...args,
+      ...saleFields,
       estado: args.estado ?? "confirmada",
       rowIndex: maxRow + 1,
       lastPulledAt: now,
@@ -198,7 +224,18 @@ export const create = mutation({
       id,
       mode: "append",
     });
-    return { id, saleId };
+
+    const result = { id, saleId };
+    if (clientToken) {
+      await ctx.db.insert("commitTokens", {
+        token: clientToken,
+        kind: "sale.create",
+        primaryId: id,
+        result: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+    }
+    return result;
   },
 });
 

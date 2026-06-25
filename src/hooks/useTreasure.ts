@@ -144,6 +144,13 @@ export function useTreasure() {
       const prevItem = prevTreasure[index];
 
       // Only reuse previous object if item number matches AND key fields are identical
+      //
+      // The new Fotosíntesis catalog fields (certificate, provenance, sync
+      // status) MUST be part of this equality gate. They come in reactively from
+      // Convex, so an AI edit that changes ONLY a certificate / origin / sync
+      // status (and none of the legacy URL/price/estado fields below) would
+      // otherwise reuse the stale previous object and be silently discarded —
+      // never reaching the product detail page. Watch them explicitly.
       if (
         prevItem?.item === item.item &&
         prevItem.imagen === item.imagen &&
@@ -153,7 +160,11 @@ export function useTreasure() {
         prevItem.precioCOP === item.precioCOP &&
         prevItem.isJewelry === item.isJewelry &&
         prevItem.isLote === item.isLote &&
-        prevItem.estado === item.estado
+        prevItem.estado === item.estado &&
+        prevItem.certificateUrl === item.certificateUrl &&
+        prevItem.syncStatus === item.syncStatus &&
+        prevItem.procedencia === item.procedencia &&
+        prevItem.preponderancia === item.preponderancia
       ) {
         // URLs unchanged - reuse previous object reference
         // This prevents GridCard re-render due to memo comparison
