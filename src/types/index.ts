@@ -330,6 +330,24 @@ export interface TreasureItem {
   // Certificate
   certificateUrl?: string; // URL to certificate image/PDF
 
+  // ── Provenance / lot (Fotosíntesis) ──
+  // `procedencia` is the captured mine-origin string (Muzo, Chivor, Coscuez…).
+  // ADMIN-ONLY: it is a free-text field synced to the internal SOT Inventario
+  // tab with no marketing-vocabulary enforcement, so it is NOT projected into
+  // the public `publishedCatalog` query and is only read from the admin-only
+  // `products.get` doc on the detail page. `loteId` is the internal lot id.
+  procedencia?: string;
+  loteId?: string;
+  // `preponderancia` is the item's cost-weight share of its lot (internal
+  // pricing input) — admin-only, never public.
+  preponderancia?: number;
+
+  // ── Sync status (admin-only) ──
+  // Mirrors the Convex row's push-to-Sheets state. Sourced from the admin-only
+  // `products.get` doc; never present on public/anonymous catalog payloads.
+  syncStatus?: "synced" | "pending" | "error";
+  syncError?: string;
+
   // Description
   description?: string; // Short evocative text giving the emerald personality
 

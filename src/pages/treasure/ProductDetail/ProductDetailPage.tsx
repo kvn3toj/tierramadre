@@ -50,7 +50,11 @@ import {
   AdditionalInfo,
   ProductActions,
   LotePriceBreakdown,
+  CertificateSection,
+  ProvenanceSection,
+  PricePerCarat,
 } from "./components";
+import { useConvexQuery, convexApi } from "../../../lib/convex-safe";
 import { EsmereogenesisCTA } from "../../../components/esmereogenesis/EsmereogenesisCTA";
 import Breadcrumbs from "../../../components/shared/Breadcrumbs";
 import { scrollMainTo } from "../../../utils/mainScroll";
@@ -108,6 +112,49 @@ export default function ProductDetail() {
       .replace(/^L:/, "")
       .trim();
   }, [product]);
+
+  // ── Admin-only Convex doc (R5) ──
+  // syncStatus/syncError/preponderancia/procedencia/loteId are INTERNAL and must
+  // NOT be added to the public, anonymously-subscribed `publishedCatalog` query
+  // (that would leak them to every catalog visitor's WebSocket payload). Instead
+  // we fetch the full admin doc here and ONLY when the viewer is an admin —
+  // `"skip"` keeps the subscription (and its reactive payload) off for everyone
+  // else. Single items only: grouped lote/sublote cards (`groupId` route) have
+  // no single itemId, so we skip and provenance/sync simply don't surface there.
+  const adminItemId =
+    isAdmin && !groupId && product && !product.isLote
+      ? product.item.toString()
+      : undefined;
+  const adminDoc = useConvexQuery(
+    convexApi.products.get,
+    adminItemId ? { itemId: adminItemId } : "skip",
+  ) as
+    | {
+        procedencia?: string;
+        loteId?: string;
+        preponderancia?: number;
+        syncStatus?: "synced" | "pending" | "error";
+        syncError?: string;
+      }
+    | null
+    | undefined;
+
+  // Overlay the admin-only provenance/sync fields onto the product so the
+  // sections below can read them. Reactive: an AI edit to any of these fields
+  // updates `adminDoc` and re-renders live. Non-admins get `product` untouched
+  // (adminDoc is undefined because the query is skipped).
+  const adminProduct = useMemo(() => {
+    if (!product) return product;
+    if (!adminDoc) return product;
+    return {
+      ...product,
+      procedencia: adminDoc.procedencia,
+      loteId: adminDoc.loteId,
+      preponderancia: adminDoc.preponderancia,
+      syncStatus: adminDoc.syncStatus,
+      syncError: adminDoc.syncError,
+    };
+  }, [product, adminDoc]);
 
   // Grouped lote/sublote: build gallery media + an aligned price array in one
   // pass so indices stay in sync even when some items lack a photo. Index 0 =
@@ -736,10 +783,21 @@ export default function ProductDetail() {
                     activeItem={loteMedia?.itemKeys[galleryIndex] ?? null}
                   />
                 ) : (
-                  <PriceDisplay
-                    price={product.precioCOP}
-                    precioInternacional={product.precioInternacional}
-                  />
+                  <>
+                    <PriceDisplay
+                      price={product.precioCOP}
+                      precioInternacional={product.precioInternacional}
+                    />
+                    {/* Price-per-carat — secondary line under the headline
+                        price. Self-hides for jewelry / multi-piece / no-weight
+                        rows (R6); computed from base COP then converted once
+                        (R2). */}
+                    <PricePerCarat
+                      precioCOP={product.precioCOP}
+                      peso={product.peso}
+                      cantidad={product.cantidad}
+                    />
+                  </>
                 ))}
             </Box>
 
@@ -748,6 +806,23 @@ export default function ProductDetail() {
 
             {/* Specifications — follow the piece whose photo is in view */}
             <SpecificationsList product={info} />
+
+            {/* Certificate — self-hides when there's no certificateUrl and no
+                structured certifications (absent-safe). Shown to all roles: the
+                certificate is a marketing asset, the URL is already public via
+                the published catalog projection. */}
+            <CertificateSection product={product} />
+
+            {/* Provenance / lot info + sync status — ADMIN-ONLY (R5). Reads the
+                admin-overlaid product (procedencia/loteId/preponderancia/sync
+                from the admin-only products.get doc). Self-hides for non-admins,
+                lote bundle cards, and items with no provenance/sync to show.
+                NOTE: per-piece provenance for lote/sublote members is NOT
+                surfaced in this iteration — bundles show no provenance. */}
+            <ProvenanceSection
+              product={adminProduct ?? product}
+              isAdmin={isAdmin}
+            />
 
             {/* Separator */}
             <Box sx={{ height: "0.5px", bgcolor: separatorColor, my: 2 }} />

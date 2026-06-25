@@ -8,6 +8,7 @@ import {
 } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import { pushTableRowToVercel } from "./_lib/sheetSync";
 import { COLUMN_MAPS } from "./_lib/columnMaps";
 import {
@@ -139,8 +140,31 @@ export const create = mutation({
     nombre: v.string(),
     notas: v.optional(v.string()),
     itemIds: v.optional(v.array(v.string())),
+    clientToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Idempotency guard (money-critical): replay of the same clientToken returns
+    // the prior result instead of allocating a second sub-lote sequence +
+    // inserting a duplicate row. The created sub-lote row is existence-checked —
+    // if it was since deleted, the stale token is dropped and the create runs
+    // again (C7).
+    if (args.clientToken) {
+      const prior = await ctx.db
+        .query("commitTokens")
+        .withIndex("by_token", (q) => q.eq("token", args.clientToken!))
+        .unique();
+      if (prior) {
+        const stillThere = await ctx.db.get(prior.primaryId as Id<"subLotes">);
+        if (stillThere) {
+          return JSON.parse(prior.result) as {
+            id: Id<"subLotes">;
+            subLoteId: string;
+          };
+        }
+        await ctx.db.delete(prior._id);
+      }
+    }
+
     const nombre = args.nombre.trim();
     if (!nombre) throw new Error("El sub-lote necesita un nombre");
 
@@ -188,7 +212,18 @@ export const create = mutation({
       id,
       mode: "append",
     });
-    return { id, subLoteId };
+
+    const result = { id, subLoteId };
+    if (args.clientToken) {
+      await ctx.db.insert("commitTokens", {
+        token: args.clientToken,
+        kind: "sublote.create",
+        primaryId: id,
+        result: JSON.stringify(result),
+        createdAt: new Date().toISOString(),
+      });
+    }
+    return result;
   },
 });
 

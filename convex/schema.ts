@@ -248,6 +248,23 @@ export default defineSchema({
     nextValue: v.number(),
   }).index("by_name", ["name"]),
 
+  // ─── Idempotency · Commit tokens ─────────────────────────────────
+  //
+  // MONEY-CRITICAL: the four "create" mutations (lots/lotItems/sales/subLotes)
+  // accept an optional `clientToken`. The first create persists a row here; a
+  // replay (AI copilot retry / operator double-click sharing the same token)
+  // short-circuits to the stored `result` instead of inserting a second row.
+  // `primaryId` is the created row's _id — existence-checked on replay because a
+  // later cancel can delete the row (+ reclaim its sequence), in which case the
+  // stale token is dropped and the create runs again (C7).
+  commitTokens: defineTable({
+    token: v.string(),
+    kind: v.string(),
+    primaryId: v.string(), // the _id of the row created (existence-checked on replay)
+    result: v.string(), // JSON.stringify of the mutation's return value
+    createdAt: v.string(),
+  }).index("by_token", ["token"]),
+
   providers: defineTable({
     nombreORazonSocial: v.string(),
     nit: v.optional(v.string()),

@@ -168,6 +168,10 @@ const FotosintesisLotes = lazyWithRetry(
   () => import("./pages/admin/Fotosintesis/LotesPage"),
   "FotosintesisLotes",
 );
+const FotosintesisCertificados = lazyWithRetry(
+  () => import("./pages/admin/Fotosintesis/certificados/CertGeneratorPage"),
+  "FotosintesisCertificados",
+);
 
 const FeedbackDashboard = lazyWithRetry(
   () => import("./pages/admin/FeedbackDashboard"),
@@ -614,6 +618,10 @@ function AppContent() {
                 element={<FotosintesisVentaDetail />}
               />
               <Route path="directory" element={<FotosintesisDirectorio />} />
+              <Route
+                path="certificados"
+                element={<FotosintesisCertificados />}
+              />
             </Route>
 
             {/* Admin Feedback Dashboard */}

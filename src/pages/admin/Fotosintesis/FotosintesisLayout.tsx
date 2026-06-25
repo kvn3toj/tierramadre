@@ -149,6 +149,9 @@ export default function FotosintesisLayout() {
     if (path.startsWith("/admin/fotosintesis/directory")) {
       return [base, { label: "Directorio" }];
     }
+    if (path.startsWith("/admin/fotosintesis/certificados")) {
+      return [base, { label: "Generador de Certificados" }];
+    }
     return [base];
   }, [location.pathname]);
 

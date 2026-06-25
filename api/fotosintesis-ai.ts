@@ -21,10 +21,12 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
+  buildActionCatalogText,
   buildFlowSchemaText,
   buildNavCatalogText,
   coerceVocabulary,
   computeMissing,
+  hardenAction,
   isGuidedFlow,
   resolveNavigate,
   whitelistDraft,
@@ -67,6 +69,52 @@ function extractServerParams(loteContext: unknown): Record<string, string> {
 const DEFAULT_MODEL =
   process.env.GROQ_MODEL?.trim() || "llama-3.3-70b-versatile";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GATEWAY_URL = "https://ai-gateway.vercel.sh/v1/chat/completions";
+const DEFAULT_GATEWAY_MODEL = "google/gemini-2.5-flash";
+
+/**
+ * Pick the upstream for the GUIDED / commit path. The advisory streaming path
+ * stays on Groq (lowest latency for chat). For guided capture + executable
+ * actions we prefer the Vercel AI Gateway (Gemini via BYOK → near-free, strong
+ * structured output), falling back to Groq. All overridable by env:
+ *   FOTOSINTESIS_AI_PROVIDER = gateway | groq | auto (default auto → gateway if keyed)
+ *   FOTOSINTESIS_AI_MODEL    = explicit model id (e.g. google/gemini-2.5-flash)
+ *   AI_GATEWAY_API_KEY       = the gateway key (BYOK rides Google's free tier, zero markup)
+ * The gateway is OpenAI-compatible (/v1/chat/completions, Bearer auth,
+ * response_format json_object), so the existing fetch shape is unchanged.
+ */
+function resolveGuidedTarget(): {
+  url: string;
+  apiKey: string;
+  model: string;
+} | null {
+  const provider = (
+    process.env.FOTOSINTESIS_AI_PROVIDER || "auto"
+  ).toLowerCase();
+  const gatewayKey = process.env.AI_GATEWAY_API_KEY?.trim() || "";
+  const groqKey =
+    process.env.GROQ_API_KEY?.trim() ||
+    process.env.VITE_GROQ_API_KEY?.trim() ||
+    "";
+  const explicitModel = process.env.FOTOSINTESIS_AI_MODEL?.trim();
+  const wantGateway =
+    gatewayKey && (provider === "gateway" || provider === "auto");
+  if (wantGateway) {
+    return {
+      url: GATEWAY_URL,
+      apiKey: gatewayKey,
+      model: explicitModel || DEFAULT_GATEWAY_MODEL,
+    };
+  }
+  if (groqKey) {
+    return {
+      url: GROQ_URL,
+      apiKey: groqKey,
+      model: explicitModel || DEFAULT_MODEL,
+    };
+  }
+  return null;
+}
 
 // Very small in-memory rate limit. Resets when the Fluid Compute instance
 // is recycled, which is fine for an internal admin tool. Keyed by IP +
@@ -275,6 +323,8 @@ REGLAS:
 
 ${buildNavCatalogText(accessLevel)}
 
+${buildActionCatalogText(accessLevel)}
+
 Responde únicamente con JSON.`;
 }
 
@@ -327,6 +377,7 @@ async function buildGuidedEnvelope(args: {
   messages: Array<{ role: string; content: string }>;
   model: string;
   apiKey: string;
+  url: string;
   snapshot: unknown;
   route: string;
   flow: string | undefined;
@@ -357,7 +408,7 @@ async function buildGuidedEnvelope(args: {
   let parsed: Record<string, unknown> | null = null;
   let rawText = "";
   try {
-    const upstream = await fetch(GROQ_URL, {
+    const upstream = await fetch(args.url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -435,6 +486,11 @@ async function buildGuidedEnvelope(args: {
       extractServerParams(args.loteContext),
     ) ?? undefined;
 
+  // An executable action the model proposed this turn, hardened server-side
+  // (whitelisted keys, smuggled Ids stripped, missing/ready recomputed). The
+  // client renders a CommitReviewCard and commits on one operator approval.
+  const action = hardenAction(parsed?.action, args.accessLevel) ?? undefined;
+
   return {
     flow,
     say,
@@ -444,6 +500,7 @@ async function buildGuidedEnvelope(args: {
     ready,
     coercedKeys,
     navigate,
+    action,
     model: args.model,
   };
 }
@@ -466,17 +523,12 @@ export default async function handler(
     return;
   }
 
+  // Groq key — required by the streaming advisory path (checked there). The
+  // guided/commit path resolves its own target (gateway → Gemini, else Groq).
   const apiKey =
     process.env.GROQ_API_KEY?.trim() ||
     process.env.VITE_GROQ_API_KEY?.trim() ||
     "";
-  if (!apiKey) {
-    res.status(503).json({
-      error:
-        "GROQ_API_KEY no configurado en el servidor. Define la variable en Vercel.",
-    });
-    return;
-  }
 
   const body = (req.body ?? {}) as {
     messages?: Array<{ role: string; content: string }>;
@@ -524,10 +576,19 @@ export default async function handler(
   // round-trip returning the structured envelope. The advisory path below is
   // untouched.
   if (body.mode === "guided") {
+    const target = resolveGuidedTarget();
+    if (!target) {
+      res.status(503).json({
+        error:
+          "Sin proveedor de IA configurado. Define AI_GATEWAY_API_KEY o GROQ_API_KEY en Vercel.",
+      });
+      return;
+    }
     const envelope = await buildGuidedEnvelope({
       messages,
-      model,
-      apiKey,
+      model: body.model?.trim() || target.model,
+      apiKey: target.apiKey,
+      url: target.url,
       snapshot: body.snapshot,
       route,
       flow: body.flow,
@@ -546,6 +607,15 @@ export default async function handler(
       summary: buildSummary(messages, envelope.say),
       turnCount: messages.filter((m) => m.role === "user").length,
       model,
+    });
+    return;
+  }
+
+  // Streaming advisory path requires the Groq key.
+  if (!apiKey) {
+    res.status(503).json({
+      error:
+        "GROQ_API_KEY no configurado en el servidor. Define la variable en Vercel.",
     });
     return;
   }
