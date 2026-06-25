@@ -9,18 +9,52 @@ import {
   Compass,
   PackagePlus,
   Search,
+  ShoppingBag,
+  Sparkles,
   Tag,
   UserPlus,
   Users,
 } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../../design-system";
 
-/** First-run openers — guided capture is Fotosynthia's primary role. */
-export const SUGGESTED_PROMPTS = [
-  "Registrar una gema nueva en este lote",
-  "Crear un lote nuevo",
-  "Registrar una venta",
-  "Llévame a Analytics",
+/** Grouped action categories — the admin can pick what they need in one click. */
+const ACTION_GROUPS = [
+  {
+    label: "Inventario",
+    icon: <PackagePlus size={13} strokeWidth={1.8} />,
+    prompts: [
+      { text: "Crear un lote nuevo", short: "Nuevo lote" },
+      { text: "Registrar una gema nueva en este lote", short: "Nueva gema" },
+      { text: "Registrar una joya nueva en este lote", short: "Nueva joya" },
+      { text: "Registrar un insumo nuevo en este lote", short: "Nuevo insumo" },
+    ],
+  },
+  {
+    label: "Ventas",
+    icon: <ShoppingBag size={13} strokeWidth={1.8} />,
+    prompts: [
+      { text: "Registrar una venta", short: "Registrar venta" },
+      { text: "Crear un cliente final nuevo", short: "Nuevo cliente" },
+      { text: "Crear un embajador nuevo", short: "Nuevo embajador" },
+    ],
+  },
+  {
+    label: "Directorio",
+    icon: <Users size={13} strokeWidth={1.8} />,
+    prompts: [
+      { text: "Crear un proveedor nuevo", short: "Nuevo proveedor" },
+      { text: "Llévame al directorio de clientes", short: "Ver clientes" },
+    ],
+  },
+  {
+    label: "Navegar",
+    icon: <Search size={13} strokeWidth={1.8} />,
+    prompts: [
+      { text: "Llévame a Analytics", short: "Analytics" },
+      { text: "Llévame al catálogo de esmeraldas", short: "Catálogo" },
+      { text: "Ver los lotes abiertos", short: "Ver lotes" },
+    ],
+  },
 ];
 
 interface GuideStep {
@@ -93,9 +127,9 @@ interface CopilotEmptyStateProps {
 }
 
 /**
- * First-run surface inside the rail's message list: who Fotosynthia is, four
- * starter prompts, and the full atelier guide folded into a collapsible (it
- * replaces the old "Guía" tab). Shown only when the thread is empty.
+ * First-run surface inside the rail's message list.
+ * Shows grouped quick-action categories instead of a flat list — the admin
+ * picks a category and clicks one action to fire it directly (no typing).
  */
 export function CopilotEmptyState({
   onSuggested,
@@ -103,70 +137,180 @@ export function CopilotEmptyState({
 }: CopilotEmptyStateProps) {
   const foto = getFoto("light");
   const [guideOpen, setGuideOpen] = useState(false);
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
+
+  const chipBase = {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "4px 10px",
+    borderRadius: "7px",
+    border: `1px solid ${foto.surfaces.rule}`,
+    background: foto.surfaces.canvas,
+    color: foto.ink.secondary,
+    fontSize: "11.5px",
+    cursor: "pointer",
+    fontFamily: "inherit",
+    transition: "background 120ms ease, border-color 120ms ease, color 120ms ease",
+    "&:hover": {
+      background: foto.accent.soft,
+      borderColor: foto.accent.primary,
+      color: foto.accent.deep,
+    },
+    "&:disabled": {
+      cursor: "not-allowed",
+      opacity: 0.5,
+      "&:hover": { background: foto.surfaces.canvas, borderColor: foto.surfaces.rule, color: foto.ink.secondary },
+    },
+    "&:focus-visible": {
+      outline: "none",
+      boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+    },
+  } as const;
 
   return (
     <Box>
+      {/* Introduction */}
       <Box
         sx={{
           fontSize: "12.5px",
           color: foto.ink.secondary,
           lineHeight: 1.55,
-          marginBottom: "14px",
+          marginBottom: "16px",
         }}
       >
-        Soy <strong>Fotosynthia</strong>. Decime qué querés registrar o editar —
-        un lote, una gema, una joya, una venta, un proveedor — o pedime que te
-        lleve a una pantalla. Te voy preguntando solo lo que falte y, cuando
-        esté listo, te precargo el formulario para que revises y guardes.
+        Soy <strong>Fotosynthia</strong>. Elegí una categoría y hacé click en lo
+        que querés hacer — o escribí lo que necesitás en el campo de texto.
       </Box>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        {SUGGESTED_PROMPTS.map((prompt) => (
+      {/* Category tabs */}
+      <Box sx={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "10px" }}>
+        {ACTION_GROUPS.map((group) => (
           <Box
-            key={prompt}
+            key={group.label}
             component="button"
             type="button"
-            onClick={() => onSuggested(prompt)}
-            disabled={disabled}
+            onClick={() =>
+              setActiveGroup(activeGroup === group.label ? null : group.label)
+            }
             sx={{
-              textAlign: "left",
-              fontFamily: "inherit",
-              fontSize: "12px",
-              color: foto.ink.primary,
-              background: foto.surfaces.canvas,
-              border: `1px solid ${foto.surfaces.rule}`,
-              borderRadius: "10px",
-              padding: "10px 12px",
-              cursor: "pointer",
-              transition: "background 120ms ease, border-color 120ms ease",
-              "&:hover": {
-                background: foto.surfaces.inset,
-                borderColor: foto.surfaces.edgeStrong,
-              },
-              "&:disabled": {
-                cursor: "not-allowed",
-                color: foto.ink.mute,
-                background: foto.surfaces.panel,
-              },
-              "&:focus-visible": {
-                outline: "none",
-                boxShadow: `0 0 0 3px ${foto.accent.glow}`,
-              },
+              ...chipBase,
+              display: "inline-flex",
+              gap: "5px",
+              padding: "5px 11px",
+              borderRadius: "8px",
+              fontWeight: 500,
+              ...(activeGroup === group.label && {
+                background: foto.accent.soft,
+                borderColor: foto.accent.primary,
+                color: foto.accent.deep,
+              }),
             }}
           >
-            {prompt}
+            {group.icon}
+            {group.label}
           </Box>
         ))}
       </Box>
 
-      {/* Folded atelier guide — replaces the retired "Guía" tab. */}
+      {/* Expanded group prompts */}
+      {activeGroup && (() => {
+        const group = ACTION_GROUPS.find((g) => g.label === activeGroup);
+        if (!group) return null;
+        return (
+          <Box
+            sx={{
+              marginBottom: "12px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+            }}
+          >
+            {group.prompts.map((p) => (
+              <Box
+                key={p.text}
+                component="button"
+                type="button"
+                onClick={() => onSuggested(p.text)}
+                disabled={disabled}
+                sx={{
+                  textAlign: "left",
+                  fontFamily: "inherit",
+                  fontSize: "12px",
+                  color: foto.ink.primary,
+                  background: foto.surfaces.canvas,
+                  border: `1px solid ${foto.surfaces.rule}`,
+                  borderRadius: "10px",
+                  padding: "9px 12px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  transition: "background 120ms ease, border-color 120ms ease",
+                  "&:hover": {
+                    background: foto.accent.soft,
+                    borderColor: foto.accent.primary,
+                    color: foto.accent.deep,
+                  },
+                  "&:disabled": {
+                    cursor: "not-allowed",
+                    color: foto.ink.mute,
+                    background: foto.surfaces.panel,
+                  },
+                  "&:focus-visible": {
+                    outline: "none",
+                    boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+                  },
+                }}
+              >
+                <Sparkles
+                  size={11}
+                  strokeWidth={2}
+                  style={{ flexShrink: 0, opacity: 0.5 }}
+                />
+                {p.text}
+              </Box>
+            ))}
+          </Box>
+        );
+      })()}
+
+      {/* When no category is expanded: show the 4 most common quick chips inline */}
+      {!activeGroup && (
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "12px" }}>
+          {[
+            { text: "Crear un lote nuevo", short: "Nuevo lote" },
+            { text: "Registrar una venta", short: "Registrar venta" },
+            { text: "Registrar una gema nueva en este lote", short: "Nueva gema" },
+            { text: "Llévame a Analytics", short: "Analytics" },
+          ].map((p) => (
+            <Box
+              key={p.short}
+              component="button"
+              type="button"
+              onClick={() => onSuggested(p.text)}
+              disabled={disabled}
+              sx={{
+                ...chipBase,
+                padding: "6px 12px",
+                borderRadius: "10px",
+                fontSize: "12px",
+                color: foto.ink.primary,
+              }}
+            >
+              {p.short}
+            </Box>
+          ))}
+        </Box>
+      )}
+
+      {/* Folded atelier guide */}
       <Box
         component="button"
         type="button"
         onClick={() => setGuideOpen((v) => !v)}
         aria-expanded={guideOpen}
         sx={{
-          marginTop: "16px",
+          marginTop: "4px",
           width: "100%",
           display: "flex",
           alignItems: "center",

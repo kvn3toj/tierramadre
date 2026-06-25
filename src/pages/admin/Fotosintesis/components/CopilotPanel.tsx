@@ -27,18 +27,33 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
   ArrowRight,
+  BarChart2,
   Compass,
   Eraser,
+  PackagePlus,
   RefreshCcw,
   RotateCcw,
   Send,
+  ShoppingBag,
   Sparkles,
   StopCircle,
+  Users,
   WifiOff,
 } from "lucide-react";
 import { useQuery } from "convex/react";
 import { fontFamilies, getFoto } from "../../../../design-system";
 import { useGoogleAuth } from "../../../../contexts/GoogleAuthContext";
+import {
+  BOVEDAS,
+  CALIDADES,
+  CORTES,
+  FORMA_PAGO,
+  FORMA_PAGO_VENTA,
+  METODO_CONTADO,
+  METODO_RECEPCION,
+  TIPOS_ESMERALDA,
+  TIPOS_JOYA,
+} from "../../../../data/vocabularies";
 import { useAppNavigator } from "../../../../contexts/AppNavigatorContext";
 import { api } from "../../../../../convex/_generated/api";
 import { ITEM_SCAN_CAP } from "../../../../../convex/_lib/aiCaps";
@@ -76,6 +91,142 @@ interface CopilotPanelProps {
    * Used to skip expensive Convex queries when the tab is hidden.
    */
   active: boolean;
+}
+
+// ─── Vocabulary-chip helpers ──────────────────────────────────────────
+
+interface ChipOption {
+  label: string;
+  value: string;
+}
+interface ChipSet {
+  field: string;
+  headerLabel: string;
+  options: ChipOption[];
+}
+
+const FORMA_PAGO_DISPLAY: Record<string, string> = {
+  contado: "Contado",
+  credito: "Crédito",
+  esmereogenesis: "Esmereogénesis",
+  bajo_pedido: "Bajo pedido",
+  consignacion: "Consignación",
+  canje: "Canje / Trueque",
+};
+
+/**
+ * Returns a set of clickable chips for the first missing required field that
+ * has a fixed vocabulary. The chip value is the human-readable label — the AI
+ * and server-side coercion normalise it back to the canonical code.
+ */
+function getAnswerChips(
+  flow: GuidedFlow | undefined,
+  missing: string[],
+): ChipSet | null {
+  if (!flow || !missing.length) return null;
+  for (const field of missing) {
+    switch (field) {
+      case "sede":
+        return {
+          field,
+          headerLabel: "Bóveda",
+          options: BOVEDAS.map((b) => ({ label: b.label, value: b.label })),
+        };
+      case "formaPago":
+        return {
+          field,
+          headerLabel: "Forma de pago",
+          options: (flow === "venta" ? FORMA_PAGO_VENTA : FORMA_PAGO).map(
+            (f) => ({ label: FORMA_PAGO_DISPLAY[f] ?? f, value: FORMA_PAGO_DISPLAY[f] ?? f }),
+          ),
+        };
+      case "metodoContado":
+        return {
+          field,
+          headerLabel: "Método de pago",
+          options: (flow === "venta" ? METODO_RECEPCION : METODO_CONTADO).map(
+            (m) => ({
+              label: m.charAt(0).toUpperCase() + m.slice(1),
+              value: m.charAt(0).toUpperCase() + m.slice(1),
+            }),
+          ),
+        };
+      case "compradorTipo":
+        return {
+          field,
+          headerLabel: "Comprador",
+          options: [
+            { label: "Embajador", value: "Embajador" },
+            { label: "Cliente final", value: "Cliente final" },
+          ],
+        };
+      case "calidad":
+        return {
+          field,
+          headerLabel: "Calidad",
+          options: CALIDADES.slice(0, 10).map((c) => ({ label: c, value: c })),
+        };
+      case "tipoJoya":
+        return {
+          field,
+          headerLabel: "Tipo de joya",
+          options: TIPOS_JOYA.map((t) => ({ label: t, value: t })),
+        };
+      case "tipoEsmeralda":
+        return {
+          field,
+          headerLabel: "Tipo de esmeralda",
+          options: TIPOS_ESMERALDA.map((t) => ({ label: t, value: t })),
+        };
+      case "corte":
+        return {
+          field,
+          headerLabel: "Corte",
+          options: CORTES.slice(0, 10).map((c) => ({ label: c, value: c })),
+        };
+      default:
+        break;
+    }
+  }
+  return null;
+}
+
+interface QuickAction {
+  label: string;
+  prompt: string;
+  icon: React.ReactNode;
+}
+
+/** Returns the 3-4 most relevant one-click actions for the current route. */
+function getContextActions(route: string): QuickAction[] {
+  const isLotDetail = /^\/admin\/fotosintesis\/lots\/(?!new$)([^/]+)$/.test(route);
+  if (isLotDetail) {
+    return [
+      { label: "Nueva gema", prompt: "Registrar una gema nueva en este lote", icon: <Sparkles size={12} strokeWidth={2} /> },
+      { label: "Nueva joya", prompt: "Registrar una joya nueva en este lote", icon: <PackagePlus size={12} strokeWidth={2} /> },
+      { label: "Nuevo insumo", prompt: "Registrar un insumo nuevo en este lote", icon: <PackagePlus size={12} strokeWidth={2} /> },
+      { label: "Editar lote", prompt: "Quiero editar los datos de este lote", icon: <Compass size={12} strokeWidth={2} /> },
+    ];
+  }
+  if (route.includes("/sales/")) {
+    return [
+      { label: "Registrar venta", prompt: "Registrar una venta", icon: <ShoppingBag size={12} strokeWidth={2} /> },
+      { label: "Nuevo cliente", prompt: "Crear un cliente final nuevo", icon: <Users size={12} strokeWidth={2} /> },
+      { label: "Nueva gema", prompt: "Registrar una gema nueva", icon: <Sparkles size={12} strokeWidth={2} /> },
+    ];
+  }
+  if (route.includes("/lots/new")) {
+    return [
+      { label: "Nuevo lote", prompt: "Crear un lote nuevo", icon: <PackagePlus size={12} strokeWidth={2} /> },
+      { label: "Nuevo proveedor", prompt: "Crear un proveedor nuevo", icon: <Users size={12} strokeWidth={2} /> },
+    ];
+  }
+  return [
+    { label: "Nuevo lote", prompt: "Crear un lote nuevo", icon: <PackagePlus size={12} strokeWidth={2} /> },
+    { label: "Registrar venta", prompt: "Registrar una venta", icon: <ShoppingBag size={12} strokeWidth={2} /> },
+    { label: "Analytics", prompt: "Llévame a Analytics", icon: <BarChart2 size={12} strokeWidth={2} /> },
+    { label: "Directorio", prompt: "Llévame al directorio de clientes", icon: <Users size={12} strokeWidth={2} /> },
+  ];
 }
 
 const FLOW_LABELS: Record<GuidedFlow, string> = {
@@ -754,6 +905,62 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
         </Box>
       </Box>
 
+      {/* Quick context actions — one-click shortcuts when no flow is active */}
+      {messages.length === 0 && (
+        <Box
+          sx={{
+            padding: "8px 14px",
+            borderBottom: `1px solid ${foto.surfaces.rule}`,
+            display: "flex",
+            gap: "6px",
+            flexWrap: "wrap",
+            background: foto.surfaces.panel,
+          }}
+        >
+          {getContextActions(route).map((action) => (
+            <Box
+              key={action.prompt}
+              component="button"
+              type="button"
+              onClick={() => handleSuggested(action.prompt)}
+              disabled={isStreaming || !online}
+              title={action.prompt}
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                padding: "5px 10px",
+                borderRadius: "8px",
+                border: `1px solid ${foto.surfaces.rule}`,
+                background: foto.surfaces.canvas,
+                color: foto.ink.secondary,
+                fontSize: "11.5px",
+                fontWeight: 500,
+                cursor: "pointer",
+                transition: "background 120ms ease, border-color 120ms ease, color 120ms ease",
+                "&:hover": {
+                  background: foto.accent.soft,
+                  borderColor: foto.accent.primary,
+                  color: foto.accent.deep,
+                },
+                "&:disabled": {
+                  opacity: 0.5,
+                  cursor: "not-allowed",
+                  "&:hover": { background: foto.surfaces.canvas, borderColor: foto.surfaces.rule, color: foto.ink.secondary },
+                },
+                "&:focus-visible": {
+                  outline: "none",
+                  boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+                },
+              }}
+            >
+              {action.icon}
+              {action.label}
+            </Box>
+          ))}
+        </Box>
+      )}
+
       {/* Message list */}
       <Box
         ref={listRef}
@@ -1147,6 +1354,75 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
           </Box>
         </Box>
       )}
+
+      {/* Smart vocabulary chips — appear when AI is waiting for a field with known options */}
+      {!isStreaming && (() => {
+        const chips = getAnswerChips(env?.flow, env?.missing ?? []);
+        if (!chips || chips.options.length === 0) return null;
+        return (
+          <Box
+            sx={{
+              padding: "10px 18px 4px",
+              borderTop: `1px solid ${foto.surfaces.rule}`,
+              background: foto.surfaces.panel,
+            }}
+          >
+            <Box
+              sx={{
+                fontSize: "9.5px",
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: foto.ink.tertiary,
+                marginBottom: "7px",
+                fontWeight: 600,
+              }}
+            >
+              {chips.headerLabel}
+            </Box>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
+              {chips.options.map((opt) => (
+                <Box
+                  key={opt.value}
+                  component="button"
+                  type="button"
+                  onClick={() => {
+                    if (isStreaming || !online) return;
+                    dispatchGuided(opt.value);
+                  }}
+                  disabled={!online}
+                  sx={{
+                    padding: "4px 11px",
+                    borderRadius: "20px",
+                    border: `1px solid ${alpha(foto.accent.primary, 0.3)}`,
+                    background: foto.accent.soft,
+                    color: foto.accent.deep,
+                    fontSize: "11.5px",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    transition: "background 120ms ease, color 120ms ease, border-color 120ms ease",
+                    "&:hover": {
+                      background: foto.accent.primary,
+                      color: foto.ink.inverse,
+                      borderColor: "transparent",
+                    },
+                    "&:disabled": {
+                      opacity: 0.45,
+                      cursor: "not-allowed",
+                      "&:hover": { background: foto.accent.soft, color: foto.accent.deep, borderColor: alpha(foto.accent.primary, 0.3) },
+                    },
+                    "&:focus-visible": {
+                      outline: "none",
+                      boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+                    },
+                  }}
+                >
+                  {opt.label}
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        );
+      })()}
 
       {/* Composer */}
       <Box
