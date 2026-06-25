@@ -87,6 +87,13 @@ function resolveGuidedTarget(): {
   url: string;
   apiKey: string;
   model: string;
+  /**
+   * Whether to send OpenAI's `response_format: { type: "json_object" }`. Groq /
+   * Llama supports it (forces clean JSON); Gemini via the gateway (Vertex)
+   * REJECTS it with a 400 (`param: response_format`), so we omit it there and
+   * lean on the prompt's "return only JSON" + the defensive parse below.
+   */
+  jsonMode: boolean;
 } | null {
   const provider = (
     process.env.FOTOSINTESIS_AI_PROVIDER || "auto"
@@ -104,6 +111,7 @@ function resolveGuidedTarget(): {
       url: GATEWAY_URL,
       apiKey: gatewayKey,
       model: explicitModel || DEFAULT_GATEWAY_MODEL,
+      jsonMode: false,
     };
   }
   if (groqKey) {
@@ -111,9 +119,25 @@ function resolveGuidedTarget(): {
       url: GROQ_URL,
       apiKey: groqKey,
       model: explicitModel || DEFAULT_MODEL,
+      jsonMode: true,
     };
   }
   return null;
+}
+
+/**
+ * Pull a JSON object out of a model reply that may wrap it in ```json fences or
+ * surrounding prose (Gemini, without json_object mode, sometimes does). Falls
+ * back to the raw text so the existing try/catch can degrade to an advisory.
+ */
+function extractJsonObject(text: string): string {
+  let t = text.trim();
+  const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) t = fence[1].trim();
+  const first = t.indexOf("{");
+  const last = t.lastIndexOf("}");
+  if (first !== -1 && last > first) t = t.slice(first, last + 1);
+  return t;
 }
 
 // Very small in-memory rate limit. Resets when the Fluid Compute instance
@@ -355,7 +379,10 @@ function snapshotToGuidedContext(
     Array.isArray(candidateItems) && candidateItems.length > 0
       ? `Ítems candidatos (para que el sistema resuelva itemHint→itemId; tú solo da el itemHint): ${JSON.stringify(candidateItems).slice(0, 1500)}`
       : "",
-    `Snapshot JSON: ${JSON.stringify(snapshot).slice(0, 3000)}`,
+    // `snapshot` is undefined when the client posts before the Convex workspace
+    // query resolves (or with Convex offline). JSON.stringify(undefined) is
+    // undefined, not a string — guard with `?? null` so `.slice` never throws.
+    `Snapshot JSON: ${JSON.stringify(snapshot ?? null).slice(0, 3000)}`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -378,6 +405,7 @@ async function buildGuidedEnvelope(args: {
   model: string;
   apiKey: string;
   url: string;
+  jsonMode: boolean;
   snapshot: unknown;
   route: string;
   flow: string | undefined;
@@ -419,12 +447,19 @@ async function buildGuidedEnvelope(args: {
         messages: fullMessages,
         temperature: 0.2,
         max_tokens: 1200,
-        response_format: { type: "json_object" },
+        // Only on the Groq path — Gemini via the gateway 400s on json_object.
+        ...(args.jsonMode ? { response_format: { type: "json_object" } } : {}),
       }),
     });
     if (!upstream.ok) {
+      // Surface the real upstream reason in the logs (the friendly message
+      // below intentionally hides provider detail from the operator).
+      const errBody = await upstream.text().catch(() => "");
+      console.warn(
+        `[fotosintesis-ai] guided upstream ${upstream.status} (${args.model}): ${errBody.slice(0, 500)}`,
+      );
       return advisoryFallback(
-        `Groq respondió ${upstream.status}. Intentá de nuevo en un momento.`,
+        `El modelo respondió ${upstream.status}. Intentá de nuevo en un momento.`,
         args.model,
       );
     }
@@ -432,7 +467,7 @@ async function buildGuidedEnvelope(args: {
       choices?: Array<{ message?: { content?: string } }>;
     };
     rawText = data.choices?.[0]?.message?.content ?? "";
-    parsed = JSON.parse(rawText) as Record<string, unknown>;
+    parsed = JSON.parse(extractJsonObject(rawText)) as Record<string, unknown>;
   } catch {
     // A schema miss or upstream error degrades to a normal advisory bubble —
     // the chat never breaks on malformed JSON.
@@ -589,6 +624,7 @@ export default async function handler(
       model: body.model?.trim() || target.model,
       apiKey: target.apiKey,
       url: target.url,
+      jsonMode: target.jsonMode,
       snapshot: body.snapshot,
       route,
       flow: body.flow,
