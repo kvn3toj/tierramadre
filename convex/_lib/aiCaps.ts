@@ -9,4 +9,4 @@
  * not-found (or vice versa). Pure constant — safe to import from both the
  * Convex backend and the client bundle.
  */
-export const ITEM_SCAN_CAP = 300;
+export const ITEM_SCAN_CAP = 500;

@@ -35,6 +35,134 @@ import {
   type GuidedFlow,
 } from "../src/pages/admin/Fotosintesis/copilot/flowSchemas.js";
 import type { AccessLevel } from "../src/types/auth.js";
+import {
+  getSheetsClient,
+  FOTOSINTESIS_SPREADSHEET_ID,
+  SPREADSHEET_ID as TREASURE_SPREADSHEET_ID,
+  getSheetNames,
+  findSheetByPattern,
+} from "./_lib/index.js";
+
+// ─── Sheet-side item catalog (server-side cache) ──────────────────────────────
+// Reads the Fotosíntesis SOT Inventario tab and the legacy Treasure sheet once
+// per warm Vercel instance (TTL 5 min). Supplements the Convex candidateItems
+// cap so item references that fall outside the 500-row window still resolve.
+
+interface SheetItem {
+  itemId: string;
+  nombre: string;
+  loteId?: string;
+  estado?: string;
+}
+
+interface SheetCache {
+  fotoItems: SheetItem[];   // from FOTOSINTESIS_SPREADSHEET_ID Inventario
+  treasureItems: SheetItem[]; // from legacy SPREADSHEET_ID Inventario (available only)
+  at: number;
+}
+
+let _sheetCache: SheetCache | null = null;
+const SHEET_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function loadSheetCache(): Promise<SheetCache> {
+  const now = Date.now();
+  if (_sheetCache && now - _sheetCache.at < SHEET_CACHE_TTL) return _sheetCache;
+
+  const sheets = getSheetsClient();
+
+  async function readInventario(
+    spreadsheetId: string,
+    availableOnly: boolean,
+  ): Promise<SheetItem[]> {
+    try {
+      const names = await getSheetNames(sheets, spreadsheetId);
+      const tab = findSheetByPattern(names, ["inventario", "inventory"]);
+      if (!tab) return [];
+      // Read columns A (itemId), C (nombre), O or Q (estado), X (loteId).
+      // We use a broad A:X range and pick the columns we need.
+      const resp = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: `'${tab}'!A:X`,
+      });
+      const rows: unknown[][] = (resp.data.values ?? []) as unknown[][];
+      if (rows.length <= 1) return [];
+      // Detect column positions from header row
+      const header = (rows[0] ?? []).map((c) =>
+        String(c ?? "").toLowerCase().trim(),
+      );
+      const colItem = header.findIndex((h) => h === "item");
+      const colNombre = header.findIndex(
+        (h) => h === "nombre" || h === "name",
+      );
+      // estado may be "estado", "o" header, etc. — look broadly
+      const colEstado = header.findIndex(
+        (h) => h === "estado" || h === "estado asesor" || h === "o" || h === "q",
+      );
+      const colLote = header.findIndex(
+        (h) => h === "loteid" || h === "lote id" || h === "lote",
+      );
+      if (colItem === -1) return [];
+
+      const items: SheetItem[] = [];
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i] ?? [];
+        const itemId = String(row[colItem] ?? "").trim();
+        if (!itemId) continue;
+        const nombre = colNombre >= 0 ? String(row[colNombre] ?? "").trim() : "";
+        const estado = colEstado >= 0 ? String(row[colEstado] ?? "").trim() : "";
+        const loteId = colLote >= 0 ? String(row[colLote] ?? "").trim() : "";
+        if (availableOnly) {
+          const lower = estado.toLowerCase();
+          if (
+            lower &&
+            !lower.includes("disponible") &&
+            !lower.includes("available") &&
+            !lower.includes("en stock")
+          )
+            continue;
+        }
+        items.push({
+          itemId,
+          nombre,
+          ...(loteId ? { loteId } : {}),
+          ...(estado ? { estado } : {}),
+        });
+      }
+      return items;
+    } catch {
+      return [];
+    }
+  }
+
+  const [fotoItems, treasureItems] = await Promise.all([
+    readInventario(FOTOSINTESIS_SPREADSHEET_ID, false),
+    readInventario(TREASURE_SPREADSHEET_ID, true),
+  ]);
+
+  _sheetCache = { fotoItems, treasureItems, at: now };
+  return _sheetCache;
+}
+
+/**
+ * Merge Convex candidateItems with the full sheet catalog.
+ * Convex items take precedence (they may carry richer loteId data from the
+ * reactive sync). Sheet items only fill gaps beyond the Convex scan cap.
+ */
+async function enrichCandidateItems(
+  convexItems: unknown,
+): Promise<SheetItem[]> {
+  const base: SheetItem[] = Array.isArray(convexItems)
+    ? (convexItems as SheetItem[])
+    : [];
+  try {
+    const cache = await loadSheetCache();
+    const seen = new Set(base.map((i) => i.itemId));
+    const extras = cache.fotoItems.filter((i) => !seen.has(i.itemId));
+    return [...base, ...extras];
+  } catch {
+    return base;
+  }
+}
 
 const ACCESS_LEVELS = [
   "guest",
@@ -359,6 +487,7 @@ function snapshotToGuidedContext(
   priorDraft: unknown,
   loteContext: unknown,
   candidateItems: unknown,
+  treasureSummary?: string,
 ): string {
   const priorKeys =
     priorDraft && typeof priorDraft === "object"
@@ -377,8 +506,9 @@ function snapshotToGuidedContext(
       ? `Lote activo: ${JSON.stringify(loteContext)}`
       : "Sin lote activo en la ruta.",
     Array.isArray(candidateItems) && candidateItems.length > 0
-      ? `Ítems candidatos (para que el sistema resuelva itemHint→itemId; tú solo da el itemHint): ${JSON.stringify(candidateItems).slice(0, 1500)}`
+      ? `Ítems del inventario Fotosíntesis (para resolver referencias por número/nombre; da solo el itemHint y el sistema resuelve): ${JSON.stringify(candidateItems).slice(0, 4000)}`
       : "",
+    treasureSummary ? `Catálogo Treasure Browser (ítems disponibles para venta): ${treasureSummary}` : "",
     // `snapshot` is undefined when the client posts before the Convex workspace
     // query resolves (or with Convex offline). JSON.stringify(undefined) is
     // undefined, not a string — guard with `?? null` so `.slice` never throws.
@@ -414,6 +544,22 @@ async function buildGuidedEnvelope(args: {
   candidateItems: unknown;
   accessLevel: AccessLevel;
 }): Promise<GuidedEnvelope> {
+  // Enrich candidateItems with the full sheet catalog (fills gaps beyond the
+  // Convex ITEM_SCAN_CAP — old items, not-yet-synced rows, etc.).
+  // Also fetch treasure browser available items for sale context.
+  const [enrichedItems, sheetCache] = await Promise.all([
+    enrichCandidateItems(args.candidateItems),
+    loadSheetCache().catch(() => null),
+  ]);
+  const treasureSummary = sheetCache && sheetCache.treasureItems.length > 0
+    ? `${sheetCache.treasureItems.length} disponibles: ${JSON.stringify(
+        sheetCache.treasureItems.slice(0, 60).map((i) => ({
+          id: i.itemId,
+          nombre: i.nombre,
+        })),
+      ).slice(0, 1200)}`
+    : undefined;
+
   const fullMessages = [
     { role: "system", content: buildGuidedSystemPrompt(args.accessLevel) },
     {
@@ -424,7 +570,8 @@ async function buildGuidedEnvelope(args: {
         args.flow,
         args.priorDraft,
         args.loteContext,
-        args.candidateItems,
+        enrichedItems,
+        treasureSummary,
       ),
     },
     ...args.messages.map((m) => ({
