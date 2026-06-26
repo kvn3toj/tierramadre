@@ -200,18 +200,7 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GATEWAY_URL = "https://ai-gateway.vercel.sh/v1/chat/completions";
 const DEFAULT_GATEWAY_MODEL = "google/gemini-2.5-flash";
 
-/**
- * Pick the upstream for the GUIDED / commit path. The advisory streaming path
- * stays on Groq (lowest latency for chat). For guided capture + executable
- * actions we prefer the Vercel AI Gateway (Gemini via BYOK → near-free, strong
- * structured output), falling back to Groq. All overridable by env:
- *   FOTOSINTESIS_AI_PROVIDER = gateway | groq | auto (default auto → gateway if keyed)
- *   FOTOSINTESIS_AI_MODEL    = explicit model id (e.g. google/gemini-2.5-flash)
- *   AI_GATEWAY_API_KEY       = the gateway key (BYOK rides Google's free tier, zero markup)
- * The gateway is OpenAI-compatible (/v1/chat/completions, Bearer auth,
- * response_format json_object), so the existing fetch shape is unchanged.
- */
-function resolveGuidedTarget(): {
+interface GuidedTarget {
   url: string;
   apiKey: string;
   model: string;
@@ -222,7 +211,62 @@ function resolveGuidedTarget(): {
    * lean on the prompt's "return only JSON" + the defensive parse below.
    */
   jsonMode: boolean;
-} | null {
+  /** Provider label, for logs and the answered-model report. */
+  label: "gateway" | "groq";
+}
+
+// Upstream statuses worth retrying: rate limits (429) and transient gateway /
+// provider hiccups (5xx). Anything else (4xx auth/validation) fails fast.
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+
+/**
+ * POST with exponential backoff on 429/5xx. Gemini's free tier caps at ~10
+ * requests/min and 250/day; a burst over the per-minute limit returns 429 and
+ * usually clears within seconds, so a few backed-off retries turn a hard error
+ * into a brief wait. Honors the provider's `Retry-After` header when present.
+ * The returned Response body is left UNREAD so the caller can consume it.
+ */
+async function fetchUpstreamWithRetry(
+  url: string,
+  init: RequestInit,
+  opts: { attempts?: number; baseDelayMs?: number } = {},
+): Promise<Response> {
+  const attempts = opts.attempts ?? 3;
+  const baseDelayMs = opts.baseDelayMs ?? 500;
+  let lastRes: Response | null = null;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const res = await fetch(url, init);
+    if (res.ok || !RETRYABLE_STATUS.has(res.status)) return res;
+    lastRes = res;
+    // No sleep after the final attempt — return the last response as-is.
+    if (attempt === attempts - 1) break;
+    // Prefer the provider's Retry-After (seconds), else exponential backoff.
+    const retryAfter = res.headers.get("retry-after");
+    let delay = baseDelayMs * 2 ** attempt; // 500 → 1000 → 2000…
+    const secs = retryAfter ? Number(retryAfter) : NaN;
+    if (Number.isFinite(secs) && secs > 0) delay = Math.min(secs * 1000, 8000);
+    // Full jitter so concurrent callers don't retry in lockstep.
+    delay = Math.round(delay / 2 + Math.random() * (delay / 2));
+    // Drain the discarded body so the socket can be reused, then wait.
+    await res.text().catch(() => "");
+    await new Promise((r) => setTimeout(r, delay));
+  }
+  return lastRes as Response;
+}
+
+/**
+ * Resolve the ordered list of upstreams for the GUIDED / commit path. The
+ * advisory streaming path stays on Groq (lowest latency for chat). For guided
+ * capture + executable actions we prefer the Vercel AI Gateway (Gemini →
+ * near-free on the free tier, strong structured output) and fall back to Groq
+ * when Gemini is rate-limited/exhausted. All overridable by env:
+ *   FOTOSINTESIS_AI_PROVIDER = gateway | groq | auto (default auto → gateway, Groq fallback)
+ *   FOTOSINTESIS_AI_MODEL    = explicit model id (e.g. google/gemini-2.5-flash)
+ *   AI_GATEWAY_API_KEY       = the gateway key (rides Google's free tier, zero markup)
+ * The gateway is OpenAI-compatible (/v1/chat/completions, Bearer auth), so the
+ * fetch shape is identical across both targets.
+ */
+function resolveGuidedTargets(): GuidedTarget[] {
   const provider = (
     process.env.FOTOSINTESIS_AI_PROVIDER || "auto"
   ).toLowerCase();
@@ -232,25 +276,35 @@ function resolveGuidedTarget(): {
     process.env.VITE_GROQ_API_KEY?.trim() ||
     "";
   const explicitModel = process.env.FOTOSINTESIS_AI_MODEL?.trim();
-  const wantGateway =
-    gatewayKey && (provider === "gateway" || provider === "auto");
-  if (wantGateway) {
-    return {
-      url: GATEWAY_URL,
-      apiKey: gatewayKey,
-      model: explicitModel || DEFAULT_GATEWAY_MODEL,
-      jsonMode: false,
-    };
-  }
-  if (groqKey) {
-    return {
-      url: GROQ_URL,
-      apiKey: groqKey,
-      model: explicitModel || DEFAULT_MODEL,
-      jsonMode: true,
-    };
-  }
-  return null;
+
+  const gateway: GuidedTarget | null = gatewayKey
+    ? {
+        url: GATEWAY_URL,
+        apiKey: gatewayKey,
+        model: explicitModel || DEFAULT_GATEWAY_MODEL,
+        jsonMode: false,
+        label: "gateway",
+      }
+    : null;
+  const groq: GuidedTarget | null = groqKey
+    ? {
+        url: GROQ_URL,
+        apiKey: groqKey,
+        // A gateway-style id ("google/…") is invalid on Groq — only honor an
+        // explicit model here when it isn't provider-namespaced.
+        model:
+          explicitModel && !explicitModel.includes("/")
+            ? explicitModel
+            : DEFAULT_MODEL,
+        jsonMode: true,
+        label: "groq",
+      }
+    : null;
+
+  if (provider === "gateway") return gateway ? [gateway] : [];
+  if (provider === "groq") return groq ? [groq] : [];
+  // auto → gateway first (near-free Gemini), Groq as the rate-limit safety net.
+  return [gateway, groq].filter((t): t is GuidedTarget => t !== null);
 }
 
 /**
@@ -532,10 +586,7 @@ function advisoryFallback(say: string, model: string): GuidedEnvelope {
 
 async function buildGuidedEnvelope(args: {
   messages: Array<{ role: string; content: string }>;
-  model: string;
-  apiKey: string;
-  url: string;
-  jsonMode: boolean;
+  targets: GuidedTarget[];
   snapshot: unknown;
   route: string;
   flow: string | undefined;
@@ -582,47 +633,76 @@ async function buildGuidedEnvelope(args: {
 
   let parsed: Record<string, unknown> | null = null;
   let rawText = "";
-  try {
-    const upstream = await fetch(args.url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${args.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: args.model,
-        messages: fullMessages,
-        temperature: 0.2,
-        max_tokens: 1200,
-        // Only on the Groq path — Gemini via the gateway 400s on json_object.
-        ...(args.jsonMode ? { response_format: { type: "json_object" } } : {}),
-      }),
-    });
-    if (!upstream.ok) {
-      // Surface the real upstream reason in the logs (the friendly message
-      // below intentionally hides provider detail from the operator).
-      const errBody = await upstream.text().catch(() => "");
-      console.warn(
-        `[fotosintesis-ai] guided upstream ${upstream.status} (${args.model}): ${errBody.slice(0, 500)}`,
-      );
+  // The model that actually produced the answer — reported back so the UI and
+  // the saved summary reflect the real provider after any fallback.
+  let answeredModel = args.targets[0]?.model ?? DEFAULT_GATEWAY_MODEL;
+
+  // Try each target in order (under "auto": gateway → Groq). Each upstream call
+  // retries transient 429/5xx with exponential backoff; if a provider is still
+  // exhausted after retries, fall through to the next. Only when every provider
+  // is exhausted do we degrade to an advisory bubble.
+  for (let t = 0; t < args.targets.length; t++) {
+    const target = args.targets[t];
+    const isLast = t === args.targets.length - 1;
+    answeredModel = target.model;
+    try {
+      const upstream = await fetchUpstreamWithRetry(target.url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${target.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: target.model,
+          messages: fullMessages,
+          temperature: 0.2,
+          max_tokens: 1200,
+          // Only on the Groq path — Gemini via the gateway 400s on json_object.
+          ...(target.jsonMode
+            ? { response_format: { type: "json_object" } }
+            : {}),
+        }),
+      });
+      if (!upstream.ok) {
+        // Surface the real upstream reason in the logs (the friendly message
+        // below intentionally hides provider detail from the operator).
+        const errBody = await upstream.text().catch(() => "");
+        console.warn(
+          `[fotosintesis-ai] guided upstream ${upstream.status} via ${target.label} (${target.model}): ${errBody.slice(0, 500)}`,
+        );
+        // A rate-limited/unavailable provider falls through to the next one.
+        if (!isLast) continue;
+        return advisoryFallback(
+          upstream.status === 429
+            ? "El modelo está saturado ahora mismo (límite de uso del proveedor). Esperá un minuto y volvé a intentar."
+            : `El modelo respondió ${upstream.status}. Intentá de nuevo en un momento.`,
+          target.model,
+        );
+      }
+      const data = (await upstream.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+      };
+      rawText = data.choices?.[0]?.message?.content ?? "";
+      parsed = JSON.parse(extractJsonObject(rawText)) as Record<string, unknown>;
+      break; // got a usable answer
+    } catch {
+      // Network failure or a non-JSON reply. If the model answered with prose
+      // (rawText present), degrade to an advisory bubble. If it was a hard
+      // network error and another provider remains, try that one instead.
+      if (!rawText.trim() && !isLast) continue;
       return advisoryFallback(
-        `El modelo respondió ${upstream.status}. Intentá de nuevo en un momento.`,
-        args.model,
+        rawText.trim()
+          ? rawText.trim().slice(0, 400)
+          : "No te entendí bien, ¿me lo repetís?",
+        answeredModel,
       );
     }
-    const data = (await upstream.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-    };
-    rawText = data.choices?.[0]?.message?.content ?? "";
-    parsed = JSON.parse(extractJsonObject(rawText)) as Record<string, unknown>;
-  } catch {
-    // A schema miss or upstream error degrades to a normal advisory bubble —
-    // the chat never breaks on malformed JSON.
+  }
+
+  if (!parsed) {
     return advisoryFallback(
-      rawText.trim()
-        ? rawText.trim().slice(0, 400)
-        : "No te entendí bien, ¿me lo repetís?",
-      args.model,
+      "No te entendí bien, ¿me lo repetís?",
+      answeredModel,
     );
   }
 
@@ -683,7 +763,7 @@ async function buildGuidedEnvelope(args: {
     coercedKeys,
     navigate,
     action,
-    model: args.model,
+    model: answeredModel,
   };
 }
 
@@ -758,20 +838,23 @@ export default async function handler(
   // round-trip returning the structured envelope. The advisory path below is
   // untouched.
   if (body.mode === "guided") {
-    const target = resolveGuidedTarget();
-    if (!target) {
+    const targets = resolveGuidedTargets();
+    if (targets.length === 0) {
       res.status(503).json({
         error:
           "Sin proveedor de IA configurado. Define AI_GATEWAY_API_KEY o GROQ_API_KEY en Vercel.",
       });
       return;
     }
+    // A per-request model override applies to the primary (first) target only;
+    // the fallback provider keeps its own default model.
+    const overrideModel = body.model?.trim();
+    if (overrideModel && targets[0]) {
+      targets[0] = { ...targets[0], model: overrideModel };
+    }
     const envelope = await buildGuidedEnvelope({
       messages,
-      model: body.model?.trim() || target.model,
-      apiKey: target.apiKey,
-      url: target.url,
-      jsonMode: target.jsonMode,
+      targets,
       snapshot: body.snapshot,
       route,
       flow: body.flow,
@@ -789,7 +872,7 @@ export default async function handler(
       routeLatest: route,
       summary: buildSummary(messages, envelope.say),
       turnCount: messages.filter((m) => m.role === "user").length,
-      model,
+      model: envelope.model ?? model,
     });
     return;
   }
