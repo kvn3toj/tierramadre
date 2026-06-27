@@ -126,8 +126,8 @@ export default function FotosintesisLayout() {
     ],
   );
 
-  // Venta routes into the dedicated workbench when the flag is on (PR1 flagship);
-  // lote/directory stay on their standalone pages until their canvases land.
+  // Venta + lote route into the dedicated workbench when the flag is on;
+  // directory stays on its standalone page until its canvas lands.
   // While already inside a workbench (/copilot/*), the global ⌘N/⌘V/⌘D nav is
   // suppressed so a hotkey can't swap the active flow + draft mid-capture.
   const inWorkbench = location.pathname.includes(
@@ -136,7 +136,12 @@ export default function FotosintesisLayout() {
   useFotosintesisHotkeys({
     onSpotlight: () => openSpotlight(),
     onNewLot: () => {
-      if (!inWorkbench) navigate("/admin/fotosintesis/lots/new");
+      if (inWorkbench) return;
+      navigate(
+        WORKBENCH_ENABLED
+          ? "/admin/fotosintesis/copilot/lote"
+          : "/admin/fotosintesis/lots/new",
+      );
     },
     onNewSale: () => {
       if (inWorkbench) return;

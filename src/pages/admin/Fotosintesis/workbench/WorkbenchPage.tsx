@@ -6,10 +6,12 @@
  *         mode: no hand-off, no auto-route, no in-panel commit).
  *
  * Both panes share ONE chat thread (lifted here), so the conversation fills the
- * canvas live and the canvas can read the same accumulating draft. For PR1 the
- * venta canvas is the embedded `VentaPage`, live-seeded through the existing
- * draft bus (`seedDraftForm`) on each turn — VentaPage keeps its own real
- * Kardex + certificate confirm button.
+ * canvas live and the canvas can read the same accumulating draft. Canvases are
+ * embedded existing pages, live-seeded through the existing draft bus
+ * (`seedDraftForm`) on each turn, each keeping its own real commit button:
+ * `VentaPage` (Kardex + certificate) for venta, and `CapturaLotePage` (lot
+ * header + per-item loop) for the lote family. Provider/client use a net-new
+ * canvas with the shared `WorkbenchCommitBar`.
  */
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
@@ -24,12 +26,15 @@ import { useFotosynthiaChat } from "../hooks/useFotosynthiaChat";
 import { useFotosintesisLayout } from "../FotosintesisLayoutContext";
 import { CopilotPanelBody } from "../components/CopilotPanel";
 import FotosintesisVentaPage from "../VentaPage";
+import FotosintesisCapturaLotePage from "../CapturaLotePage";
 import { flowLabel } from "../utils/flowLabels";
 import { isWorkbenchFlow, type WorkbenchFlow } from "./workbenchSteps";
 import { WorkbenchStepper } from "./WorkbenchStepper";
 import { WorkbenchDraftProvider } from "./WorkbenchDraftContext";
 import { WorkbenchCommitBar } from "./WorkbenchCommitBar";
 import { ProviderClientCanvas } from "./canvas/ProviderClientCanvas";
+import { coerceGuidedItemDraft, isItemFlow } from "./canvas/itemAdapters";
+import type { GuidedDraft, GuidedFlow } from "../copilot/flowSchemas";
 
 export default function WorkbenchPage() {
   const { flow } = useParams<{ flow: string }>();
@@ -57,19 +62,45 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
     }, 900);
   }, [chat, navigate]);
 
-  // Live-seed the embedded form through the draft bus whenever the conversation
-  // accumulates a new slot. Guarded by a value signature so it fires only on a
-  // real change (not on every render). For PR1 only venta has an embedded form.
+  // Live-seed the embedded canvas through the draft bus whenever the
+  // conversation accumulates a new slot. Guarded by a value signature so it
+  // fires only on a real change (not on every render).
+  //   • venta         → the embedded VentaPage form
+  //   • lote / item-* → the embedded lote canvas: the lot header (lote) or the
+  //                     active item draft (item-*, coerced GuidedDraft → typed
+  //                     item Draft via itemAdapters).
   const seedSigRef = useRef<string>("");
   useEffect(() => {
-    if (flow !== "venta") return;
-    if (chat.flow && chat.flow !== "venta") return; // conversation drifted
+    const cf = chat.flow;
     const draft = chat.priorDraft;
     if (!draft || Object.keys(draft).length === 0) return;
-    const sig = JSON.stringify(draft);
+
+    let seedFlow: GuidedFlow | null = null;
+    let seedData: GuidedDraft = draft;
+
+    if (flow === "venta") {
+      if (cf && cf !== "venta") return; // conversation drifted
+      seedFlow = "venta";
+    } else if (flow === "lote" || flow === "item-gema") {
+      // The embedded lote canvas hosts both the header and the per-item loop, so
+      // route the conversation's locked flow to the matching seed target.
+      if (cf === "lote") {
+        seedFlow = "lote";
+      } else if (isItemFlow(cf)) {
+        seedFlow = cf;
+        seedData = coerceGuidedItemDraft(cf, draft);
+      } else {
+        return; // flow not locked yet / not a lote-family flow
+      }
+    } else {
+      return;
+    }
+
+    if (!seedFlow) return;
+    const sig = `${seedFlow}:${JSON.stringify(seedData)}`;
     if (sig === seedSigRef.current) return;
     seedSigRef.current = sig;
-    layout.seedDraftForm("venta", draft);
+    layout.seedDraftForm(seedFlow, seedData);
   }, [flow, chat.flow, chat.priorDraft, layout]);
 
   // The stepper reads the live draft only while the conversation is on this
@@ -184,6 +215,13 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
                   onCommitted={handleCommitted}
                 />
               </>
+            ) : flow === "lote" || flow === "item-gema" ? (
+              // The lote canvas owns its own proven commit buttons (lots.create
+              // + lotItems.create with photo/cert uploads), so — like venta —
+              // it renders no separate WorkbenchCommitBar.
+              <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+                <FotosintesisCapturaLotePage embedded />
+              </Box>
             ) : (
               <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
                 <PlaceholderCanvas label={flowLabel(flow)} />

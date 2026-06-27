@@ -485,7 +485,14 @@ type ProviderRow = {
   tipo?: "gemas" | "joyas" | "insumos" | "otros";
 };
 
-function NewLotIntro() {
+function NewLotIntro({
+  embedded = false,
+  onCreated,
+}: {
+  embedded?: boolean;
+  /** Workbench: hand the freshly-created loteId up instead of navigating. */
+  onCreated?: (loteId: string) => void;
+} = {}) {
   const foto = getFoto("light");
   const navigate = useNavigate();
   const { user } = useGoogleAuth();
@@ -665,9 +672,15 @@ function NewLotIntro() {
         createArgs.numeroCuotas = creditoCuotas;
       }
       const result = await createLot(createArgs);
-      navigate(`/admin/fotosintesis/lots/${result.loteId}`, {
-        replace: true,
-      });
+      if (embedded) {
+        // Workbench loop: hand the open loteId up to EmbeddedLoteCanvas, which
+        // swaps to the item-capture phase in place (no route navigation).
+        onCreated?.(result.loteId);
+      } else {
+        navigate(`/admin/fotosintesis/lots/${result.loteId}`, {
+          replace: true,
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "No pudimos crear el lote");
       setSubmitting(false);
@@ -677,9 +690,11 @@ function NewLotIntro() {
   return (
     <Box
       sx={{
-        maxWidth: { xs: "100%", md: 1080, xl: 1200 },
+        maxWidth: embedded ? "none" : { xs: "100%", md: 1080, xl: 1200 },
         margin: "0 auto",
-        padding: { xs: "28px 18px 80px", md: "36px 28px 80px" },
+        padding: embedded
+          ? { xs: "20px 16px 32px", md: "24px 24px 36px" }
+          : { xs: "28px 18px 80px", md: "36px 28px 80px" },
       }}
     >
       <Box
@@ -1603,9 +1618,11 @@ function LotMetaCard({ rows, action }: LotMetaCardProps) {
 
 interface ActiveLotPageProps {
   loteId: string;
+  /** Workbench canvas mode — drops the page chrome the cockpit already owns. */
+  embedded?: boolean;
 }
 
-function ActiveLotPage({ loteId }: ActiveLotPageProps) {
+function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
   const foto = getFoto("light");
   const navigate = useNavigate();
   const { notify } = useNotification();
@@ -2294,26 +2311,30 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
         Captura del lote {loteId}
       </Box>
 
-      <TicketHeader
-        kind="lot"
-        id={loteId}
-        idSlot={<LotSwitcher currentLoteId={loteId} />}
-        meta={ticketMeta}
-        progress={{
-          value: prepTotal.sum,
-          target: 100,
-          label: "Preponderancia",
-        }}
-        alert={!hasProvider}
-        onEdit={() => setEditLotOpen(true)}
-        editDisabled={lot.estado !== "abierto"}
-      />
+      {/* The workbench owns the header + the preponderance stepper; the lot
+          identity/edit affordances live in the right-pane meta card instead. */}
+      {!embedded && (
+        <TicketHeader
+          kind="lot"
+          id={loteId}
+          idSlot={<LotSwitcher currentLoteId={loteId} />}
+          meta={ticketMeta}
+          progress={{
+            value: prepTotal.sum,
+            target: 100,
+            label: "Preponderancia",
+          }}
+          alert={!hasProvider}
+          onEdit={() => setEditLotOpen(true)}
+          editDisabled={lot.estado !== "abierto"}
+        />
+      )}
 
       {!hasProvider ? (
         <Box
           role="alert"
           sx={{
-            maxWidth: 1320,
+            maxWidth: embedded ? "none" : 1320,
             margin: "12px auto 0",
             padding: "10px 14px",
             background: alpha(foto.status.sold, 0.06),
@@ -2352,9 +2373,9 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
 
       <Box
         sx={{
-          maxWidth: 1320,
+          maxWidth: embedded ? "none" : 1320,
           margin: "0 auto",
-          padding: "24px 28px 0",
+          padding: embedded ? "20px 20px 0" : "24px 28px 0",
           display: "grid",
           gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) 380px" },
           gap: { xs: "20px", lg: "28px" },
@@ -2750,9 +2771,14 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
         <Box
           sx={{
             position: { lg: "sticky" },
-            top: { lg: FOTO_TOPBAR_HEIGHT },
-            maxHeight: { lg: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)` },
-            overflow: { lg: "auto" },
+            // Embedded: the workbench's own scroll container is the offset parent
+            // and there's no FotoTopbar above the canvas — pin to the top of the
+            // pane and let the outer container handle overflow.
+            top: { lg: embedded ? 0 : FOTO_TOPBAR_HEIGHT },
+            maxHeight: {
+              lg: embedded ? "none" : `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
+            },
+            overflow: { lg: embedded ? "visible" : "auto" },
             paddingBottom: "20px",
             display: "flex",
             flexDirection: "column",
@@ -3235,12 +3261,48 @@ function ActiveLotPage({ loteId }: ActiveLotPageProps) {
 // Route entry — dispatches between "new" intro and the active editor
 // -----------------------------------------------------------------------------
 
-export default function FotosintesisCapturaLotePage() {
+export default function FotosintesisCapturaLotePage({
+  embedded = false,
+}: { embedded?: boolean } = {}) {
   const { loteId } = useParams<{ loteId: string }>();
+
+  // Workbench canvas: there is no `:loteId` route segment under /copilot/lote,
+  // so the open-lot id lives in component state (EmbeddedLoteCanvas) rather than
+  // the URL. The standalone route keeps its param-driven dispatch unchanged.
+  if (embedded) {
+    return <EmbeddedLoteCanvas />;
+  }
 
   if (!loteId || loteId === "new") {
     return <NewLotIntro />;
   }
 
   return <ActiveLotPage loteId={loteId} />;
+}
+
+/**
+ * The lote flow is a LOOP, not a single draft. EmbeddedLoteCanvas holds the
+ * explicit loop state for the workbench cockpit:
+ *
+ *   1. lot-header phase — `NewLotIntro` captures sede/proveedor/costo and, on
+ *      "Empezar captura", creates the lot (`lots.create`) then hands the new
+ *      loteId up here (no route navigation).
+ *   2. item-capture phase — `ActiveLotPage` appends child items against the open
+ *      loteId (`lotItems.create`), tracking the running preponderance aggregate
+ *      until the close gate (`LoteCompletePanel`) fires.
+ *
+ * Both phases keep their own proven commit buttons (the VentaPage-style
+ * own-button model, DOM-coupled to the photo/certificate uploads) — the
+ * workbench renders no separate commit bar for the lote family.
+ */
+function EmbeddedLoteCanvas() {
+  const [openLoteId, setOpenLoteId] = useState<string | null>(null);
+
+  if (!openLoteId) {
+    return (
+      <NewLotIntro embedded onCreated={(loteId) => setOpenLoteId(loteId)} />
+    );
+  }
+
+  return <ActiveLotPage loteId={openLoteId} embedded />;
 }

@@ -500,7 +500,11 @@ export default function FotosintesisHomePage() {
           }}
         >
           <QuickCard
-            to="/admin/fotosintesis/lots/new"
+            to={
+              WORKBENCH_ENABLED
+                ? "/admin/fotosintesis/copilot/lote"
+                : "/admin/fotosintesis/lots/new"
+            }
             title="Registrar compra"
             description="Llegó una caja, sobre o paquete. El lote se autonumera, capturas sus ítems y publicas al cerrar."
             footerLeft={
