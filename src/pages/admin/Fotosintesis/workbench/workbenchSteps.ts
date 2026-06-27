@@ -121,14 +121,24 @@ export function resolveSteps(
   flow: WorkbenchFlow,
   draft: GuidedDraft,
 ): { steps: StepStatus[]; currentIndex: number; total: number } {
-  const missing = new Set(computeMissing(flow, draft));
+  const rawMissing = computeMissing(flow, draft);
+  // `computeMissing` emits an OR-group as a single joined token, e.g.
+  // "clientId|clienteFinalData" (flowSchemas.ts), NOT its members individually.
+  // Expand it so a step that lists an individual OR member (e.g. the venta
+  // "Comprador" step's `clientId`/`clienteFinalData`) is correctly seen as
+  // still-missing until the group is satisfied — otherwise the joined token
+  // never matches the bare key and the step is falsely marked "done".
+  const missing = new Set<string>();
+  for (const token of rawMissing) {
+    for (const key of token.split("|")) missing.add(key);
+  }
   const steps = WORKBENCH_STEPS[flow];
   let currentIndex = -1;
 
   const resolved: StepStatus[] = steps.map((step) => {
     const done =
       step.keys.length === 0
-        ? missing.size === 0
+        ? rawMissing.length === 0
         : step.keys.every((k) => !missing.has(k));
     return { ...step, state: done ? "done" : "pending" };
   });
