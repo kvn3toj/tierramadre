@@ -290,6 +290,175 @@ function getContextActions(route: string): QuickAction[] {
   ];
 }
 
+/**
+ * Flow-specific starters for the workbench greeting (H4). The user is already
+ * ON a flow's canvas, so the conversation must help fill THAT flow — never offer
+ * Analytics/Directorio chips, which can't navigate from the workbench and dead-end.
+ */
+function getWorkbenchActions(flow: string | undefined): QuickAction[] {
+  switch (flow) {
+    case "venta":
+      return [
+        {
+          label: "Registrar venta",
+          prompt: "Quiero registrar una venta",
+          icon: <ShoppingBag size={12} strokeWidth={2} />,
+        },
+        {
+          label: "Elegir pieza",
+          prompt: "Ayudame a elegir la pieza para esta venta",
+          icon: <Sparkles size={12} strokeWidth={2} />,
+        },
+        {
+          label: "Comprador nuevo",
+          prompt: "El comprador es un cliente nuevo",
+          icon: <Users size={12} strokeWidth={2} />,
+        },
+      ];
+    case "lote":
+      return [
+        {
+          label: "Datos del lote",
+          prompt:
+            "Empecemos con los datos del lote: proveedor, costo y unidades",
+          icon: <PackagePlus size={12} strokeWidth={2} />,
+        },
+        {
+          label: "Agregar gema",
+          prompt: "Registrar una gema nueva en este lote",
+          icon: <Sparkles size={12} strokeWidth={2} />,
+        },
+        {
+          label: "Agregar joya",
+          prompt: "Registrar una joya nueva en este lote",
+          icon: <PackagePlus size={12} strokeWidth={2} />,
+        },
+      ];
+    case "provider":
+      return [
+        {
+          label: "Datos del proveedor",
+          prompt: "Te paso los datos del proveedor",
+          icon: <Users size={12} strokeWidth={2} />,
+        },
+      ];
+    case "client":
+      return [
+        {
+          label: "Datos del cliente",
+          prompt: "Te paso los datos del cliente",
+          icon: <Users size={12} strokeWidth={2} />,
+        },
+      ];
+    case "item-gema":
+      return [
+        {
+          label: "Nueva gema",
+          prompt: "Registrar una gema nueva en este lote",
+          icon: <Sparkles size={12} strokeWidth={2} />,
+        },
+      ];
+    case "item-joya":
+      return [
+        {
+          label: "Nueva joya",
+          prompt: "Registrar una joya nueva en este lote",
+          icon: <PackagePlus size={12} strokeWidth={2} />,
+        },
+      ];
+    case "item-insumo":
+      return [
+        {
+          label: "Nuevo insumo",
+          prompt: "Registrar un insumo nuevo en este lote",
+          icon: <PackagePlus size={12} strokeWidth={2} />,
+        },
+      ];
+    default:
+      return [];
+  }
+}
+
+/** Slim, on-task greeting for the workbench message list (H4). */
+function WorkbenchGreeting({
+  flow,
+  onSuggested,
+  disabled,
+}: {
+  flow: string | undefined;
+  onSuggested: (prompt: string) => void;
+  disabled: boolean;
+}) {
+  const foto = getFoto("light");
+  const actions = getWorkbenchActions(flow);
+  return (
+    <Box>
+      <Box
+        sx={{
+          fontSize: "12.5px",
+          color: foto.ink.secondary,
+          lineHeight: 1.55,
+          marginBottom: "14px",
+        }}
+      >
+        Soy <strong>Fotosynthia</strong>. Dictame los datos y los voy llenando
+        en el lienzo — o empezá con una de estas.
+      </Box>
+      {actions.length > 0 && (
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+          {actions.map((action) => (
+            <Box
+              key={action.prompt}
+              component="button"
+              type="button"
+              onClick={() => onSuggested(action.prompt)}
+              disabled={disabled}
+              title={action.prompt}
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                padding: "6px 12px",
+                borderRadius: "10px",
+                border: `1px solid ${foto.surfaces.rule}`,
+                background: foto.surfaces.canvas,
+                color: foto.ink.primary,
+                fontSize: "12px",
+                fontWeight: 500,
+                fontFamily: "inherit",
+                cursor: "pointer",
+                transition:
+                  "background 120ms ease, border-color 120ms ease, color 120ms ease",
+                "&:hover": {
+                  background: foto.accent.soft,
+                  borderColor: foto.accent.primary,
+                  color: foto.accent.deep,
+                },
+                "&:disabled": {
+                  opacity: 0.5,
+                  cursor: "not-allowed",
+                  "&:hover": {
+                    background: foto.surfaces.canvas,
+                    borderColor: foto.surfaces.rule,
+                    color: foto.ink.primary,
+                  },
+                },
+                "&:focus-visible": {
+                  outline: "none",
+                  boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+                },
+              }}
+            >
+              {action.icon}
+              {action.label}
+            </Box>
+          ))}
+        </Box>
+      )}
+    </Box>
+  );
+}
+
 const ITEM_FLOWS: ReadonlyArray<GuidedFlow> = [
   "item-gema",
   "item-joya",
@@ -408,6 +577,10 @@ export function CopilotPanelBody({
   const navigate = useNavigate();
   const route = location.pathname;
   const onFotoRoute = route.startsWith("/admin/fotosintesis");
+  // In the workbench the route's trailing segment IS the active flow; the
+  // greeting + quick actions key off it (H4).
+  const workbenchFlow =
+    mode === "workbench" ? route.split("/").filter(Boolean).pop() : undefined;
   const { user } = useGoogleAuth();
   const layout = useFotosintesisLayoutSafe();
   const { accessLevel, navigateTo } = useAppNavigator();
@@ -928,8 +1101,10 @@ export function CopilotPanelBody({
         </Box>
       </Box>
 
-      {/* Quick context actions — one-click shortcuts when no flow is active */}
-      {messages.length === 0 && (
+      {/* Quick context actions — one-click shortcuts when no flow is active.
+          Suppressed in the workbench: its greeting owns the flow-specific
+          starters (H4), so the generic Analytics/Directorio chips never show. */}
+      {messages.length === 0 && mode !== "workbench" && (
         <Box
           sx={{
             padding: "8px 14px",
@@ -1005,10 +1180,18 @@ export function CopilotPanelBody({
         aria-label="Conversación con Fotosynthia"
       >
         {messages.length === 0 ? (
-          <CopilotEmptyState
-            onSuggested={handleSuggested}
-            disabled={isStreaming || !online}
-          />
+          mode === "workbench" ? (
+            <WorkbenchGreeting
+              flow={workbenchFlow}
+              onSuggested={handleSuggested}
+              disabled={isStreaming || !online}
+            />
+          ) : (
+            <CopilotEmptyState
+              onSuggested={handleSuggested}
+              disabled={isStreaming || !online}
+            />
+          )
         ) : (
           messages.map((m, idx) => {
             const isLast = idx === messages.length - 1;
