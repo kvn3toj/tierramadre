@@ -455,33 +455,49 @@ export function useFotosynthiaChat(
 
         const envelope = (await response.json()) as GuidedEnvelope;
         setLatestEnvelope(envelope);
-        // Diff the new draft against the pre-turn draft (closure value) so the
-        // canvas can flash exactly the fields this turn filled or changed.
-        const prevDraft = (state.priorDraft ?? {}) as GuidedDraft;
-        const nextDraft = (envelope.draft ?? {}) as GuidedDraft;
+        // `sentDraft` is exactly what this turn was built on (the closure value
+        // posted to the server); `aiDraft` is the server's re-proposed draft.
+        const sentDraft = (state.priorDraft ?? {}) as GuidedDraft;
+        const aiDraft = (envelope.draft ?? {}) as GuidedDraft;
+        setState((prev) => {
+          // Human-wins merge (M1): any field the operator changed in the canvas
+          // AFTER this turn was sent — i.e. while it streamed — is re-applied on
+          // top of the AI draft, so a value typed mid-turn is never silently
+          // overwritten. `prev.priorDraft` is the latest (it already folded in
+          // those mid-flight patchDraft edits); `sentDraft` is the baseline.
+          const latest = (prev.priorDraft ?? {}) as GuidedDraft;
+          const merged: GuidedDraft = { ...aiDraft };
+          for (const key of Object.keys(latest)) {
+            if (
+              JSON.stringify(latest[key]) !== JSON.stringify(sentDraft[key])
+            ) {
+              merged[key] = latest[key];
+            }
+          }
+          return {
+            ...prev,
+            flow: envelope.flow,
+            // Persist the accumulated draft so the next turn continues from it.
+            priorDraft: merged,
+            messages: prev.messages.map((m) =>
+              m.id === assistantId
+                ? {
+                    ...m,
+                    streaming: false,
+                    error: undefined,
+                    content: envelope.say,
+                  }
+                : m,
+            ),
+          };
+        });
+        // Flash the keys the AI actually changed this turn (vs. what was sent)
+        // so the canvas highlights the freshly-filled slots.
         setRecentlyFilledKeys(
-          Object.keys(nextDraft).filter(
-            (k) =>
-              JSON.stringify(nextDraft[k]) !== JSON.stringify(prevDraft[k]),
+          Object.keys(aiDraft).filter(
+            (k) => JSON.stringify(aiDraft[k]) !== JSON.stringify(sentDraft[k]),
           ),
         );
-        setState((prev) => ({
-          ...prev,
-          flow: envelope.flow,
-          // Persist the accumulated draft so the next turn continues from it
-          // (batch-edit carries no merge — the model re-proposes the full list).
-          priorDraft: envelope.draft,
-          messages: prev.messages.map((m) =>
-            m.id === assistantId
-              ? {
-                  ...m,
-                  streaming: false,
-                  error: undefined,
-                  content: envelope.say,
-                }
-              : m,
-          ),
-        }));
       } catch (err) {
         if ((err as { name?: string }).name === "AbortError") {
           setState((prev) => ({
