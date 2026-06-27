@@ -29,6 +29,7 @@
     "@mui/icons-material": "^6.1.0",
     "@mui/material": "^6.1.0",
     "@react-oauth/google": "^0.12.2",
+    "@zumer/snapdom": "^2.12.9",
     "cloudinary": "^2.8.0",
     "convex": "^1.35.1",
     "date-fns": "^4.1.0",

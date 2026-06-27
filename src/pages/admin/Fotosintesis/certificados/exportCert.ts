@@ -3,17 +3,27 @@
  * high-resolution PNG.
  *
  * The certificate preview already IS the artwork at exact dimensions, so we
- * rasterize the node with html2canvas and either:
+ * rasterize the node and either:
  *  - embed it in a jsPDF page sized to the certificate's exact pixel
  *    dimensions (PDF, primary), or
  *  - download the canvas directly (PNG, secondary, social/preview).
  *
- * We wait for every <img> (background + photo) to decode first — html2canvas
- * snapshots synchronously, so an in-flight Drive image would rasterize blank.
- * Mirrors the proven pattern in captureNodeToPdf.ts.
+ * Rasterizer: snapDOM is the PRIMARY engine — it serializes the node into an
+ * SVG <foreignObject> and lets the browser's own layout/paint engine draw it, so
+ * object-fit:cover, CSS transforms, web fonts, word-wrap and the details auto-fit
+ * render EXACTLY as the on-screen preview (no reimplemented-CSS quirks like
+ * html2canvas). html2canvas remains as a runtime FALLBACK: if snapDOM throws or
+ * returns a blank canvas (a known iOS-WebKit <foreignObject> first-capture
+ * failure mode), we fall back to the proven html2canvas path so an export is
+ * never silently blank on any device.
+ *
+ * We wait for every <img> (background + photo) AND the web fonts to settle first
+ * — both rasterizers snapshot a moment in time, so an in-flight Drive image or
+ * unloaded font would render blank / mis-laid-out.
  */
 
 import { jsPDF } from "jspdf";
+import { snapdom } from "@zumer/snapdom";
 import html2canvas from "html2canvas";
 
 const IMAGE_LOAD_TIMEOUT_MS = 10000;
@@ -126,20 +136,48 @@ async function waitForFonts(): Promise<void> {
  */
 const MAX_CANVAS_AREA = 16_777_216 * 0.95;
 
+/**
+ * Cheap "did the rasterizer produce nothing?" probe. iOS WebKit can hand back a
+ * fully blank <foreignObject> capture (no throw). Downscale to 8×8 and check for
+ * ANY non-white, non-transparent pixel — a real certificate (green band, photo,
+ * text) always has some. A taint (getImageData throws) returns false: not blank,
+ * let the taint surface at toDataURL with a clear message.
+ */
+function isCanvasBlank(canvas: HTMLCanvasElement): boolean {
+  try {
+    if (!canvas.width || !canvas.height) return true;
+    const probe = document.createElement("canvas");
+    probe.width = 8;
+    probe.height = 8;
+    const ctx = probe.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return false;
+    ctx.drawImage(canvas, 0, 0, 8, 8);
+    const { data } = ctx.getImageData(0, 0, 8, 8);
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] === 0) continue; // transparent
+      if (data[i] < 245 || data[i + 1] < 245 || data[i + 2] < 245) return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function rasterize(
   node: HTMLElement,
   pixelRatio: number,
 ): Promise<HTMLCanvasElement> {
-  // Inline cross-origin images + wait for decode on the LIVE node first, so the
-  // clone below inherits same-origin data: URLs and never taints.
+  // Inline cross-origin images + wait for decode + fonts on the LIVE node first,
+  // so the clone below inherits same-origin data: URLs (never taints) and the
+  // text is laid out with the real fonts.
   await inlineCrossOriginImages(node);
   await waitForImages(node);
   await waitForFonts();
 
   // offsetWidth/Height are layout px, immune to the `transform: scale()` wrapper
   // CertPreview puts around this node. Capturing a clone OUTSIDE that wrapper
-  // also frees html2canvas from the scaled-ancestor geometry that otherwise
-  // makes it measure (and crop) the node at the on-screen scaled size.
+  // frees the rasterizer from the scaled-ancestor geometry that otherwise makes
+  // it measure (and crop) the node at the on-screen scaled size.
   const width = node.offsetWidth || 1;
   const height = node.offsetHeight || 1;
 
@@ -155,32 +193,59 @@ async function rasterize(
     `pointer-events:none;z-index:-1;`;
   const clone = node.cloneNode(true) as HTMLElement;
   clone.style.transform = "none";
+  // The card boxShadow is an on-screen affordance, not part of the print artwork;
+  // strip it so neither rasterizer bleeds a shadow into the captured box.
+  clone.style.boxShadow = "none";
   sandbox.appendChild(clone);
   document.body.appendChild(sandbox);
 
   try {
     await waitForImages(clone);
-    return await html2canvas(clone, {
-      scale,
-      useCORS: true,
-      backgroundColor: "#ffffff",
-      logging: false,
-      width,
-      height,
-      windowWidth: width,
-      windowHeight: height,
-      x: 0,
-      y: 0,
-      scrollX: 0,
-      scrollY: 0,
-    });
-  } catch (err) {
-    // html2canvas throws a SecurityError when the canvas was tainted by an
-    // image it could not read cross-origin. Surface a clear, actionable error.
-    if (err instanceof DOMException && err.name === "SecurityError") {
-      throw new CertExportTaintError();
+
+    // PRIMARY: snapDOM — browser-native rendering, so the export matches the
+    // preview exactly (object-fit, transforms, fonts, auto-fit). dpr:1 makes
+    // `scale` the sole resolution multiplier so the area clamp holds.
+    try {
+      const canvas = await snapdom.toCanvas(clone, {
+        scale,
+        dpr: 1,
+        backgroundColor: "#ffffff",
+        embedFonts: true,
+      });
+      if (!isCanvasBlank(canvas)) return canvas;
+      console.warn(
+        "[CertExport] snapDOM returned a blank canvas; falling back to html2canvas.",
+      );
+    } catch (e) {
+      console.warn(
+        "[CertExport] snapDOM failed; falling back to html2canvas.",
+        e,
+      );
     }
-    throw err;
+
+    // FALLBACK: html2canvas (proven path) — protects iOS where snapDOM's
+    // <foreignObject> capture can blank. Explicit window dims avoid viewport crop.
+    try {
+      return await html2canvas(clone, {
+        scale,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+        width,
+        height,
+        windowWidth: width,
+        windowHeight: height,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
+      });
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "SecurityError") {
+        throw new CertExportTaintError();
+      }
+      throw err;
+    }
   } finally {
     document.body.removeChild(sandbox);
   }
@@ -203,6 +268,26 @@ function triggerDownload(href: string, filename: string) {
 }
 
 /**
+ * Read the canvas out as a data URL, mapping the cross-origin taint failure to a
+ * clear, actionable error. snapDOM's `toCanvas` (drawImage of a data: SVG) does
+ * not throw on taint — the SecurityError only surfaces here, at `toDataURL`.
+ */
+function canvasToDataUrl(
+  canvas: HTMLCanvasElement,
+  type: string,
+  quality?: number,
+): string {
+  try {
+    return canvas.toDataURL(type, quality);
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "SecurityError") {
+      throw new CertExportTaintError();
+    }
+    throw err;
+  }
+}
+
+/**
  * Export the node as a single-page PDF sized exactly to the certificate.
  * Returns the PDF Blob (also downloaded when `download !== false`).
  */
@@ -221,7 +306,7 @@ export async function exportCertPdf(
     format: [size.w, size.h],
     hotfixes: ["px_scaling"],
   });
-  const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+  const dataUrl = canvasToDataUrl(canvas, "image/jpeg", 0.95);
   pdf.addImage(dataUrl, "JPEG", 0, 0, size.w, size.h, undefined, "FAST");
 
   if (opts?.download !== false) pdf.save(filename);
@@ -235,5 +320,5 @@ export async function exportCertPng(
   opts?: { pixelRatio?: number },
 ): Promise<void> {
   const canvas = await rasterize(node, opts?.pixelRatio ?? 3);
-  triggerDownload(canvas.toDataURL("image/png"), filename);
+  triggerDownload(canvasToDataUrl(canvas, "image/png"), filename);
 }

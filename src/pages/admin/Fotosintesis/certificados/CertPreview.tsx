@@ -174,15 +174,13 @@ function DetailsField({
  *
  * Rendered as a 100%×100% `object-fit: cover` <img> centered in the frame, then
  * panned (offset) and zoomed (scale) about its center via a PIXEL-only transform,
- * and clipped to the circle by the parent's overflow:hidden. This shape is the
- * one html2canvas 1.4.1 rasterizes faithfully (a simple inset:0 image + px
- * transform — the export stays centered and fills the ring).
+ * and clipped to the circle by the parent's overflow:hidden.
  *
- * NOTE: html2canvas 1.4.1 does not implement `object-fit`, so in the EXPORT a
- * non-square source is stretched to the square frame (the live preview honors
- * cover). Fixing that needs an off-screen square pre-crop (cross-origin-aware) —
- * deliberately deferred; the offset/oversized-image alternative renders wrong in
- * html2canvas (clipped to a wedge), which is worse than a mild stretch.
+ * The export uses snapDOM (browser-native rendering), so `object-fit: cover` and
+ * the transform are honored exactly as on screen — non-square photos are NOT
+ * stretched. (The rare html2canvas fallback, used only if snapDOM blanks on iOS,
+ * does not implement object-fit and would stretch a non-square source; that path
+ * is the last-resort safety net, not the normal export.)
  */
 function PhotoField({
   field,
