@@ -1,5 +1,5 @@
 /**
- * Fotosynthia · streaming Groq proxy
+ * Fotosynthia · streaming AI proxy (gateway → Groq fallback)
  *
  * POST /api/fotosintesis-ai
  *   body: {
@@ -14,9 +14,11 @@
  *     data: {"delta":"..."}
  *     data: {"done":true,"model":"...","finishReason":"stop"}
  *
- * Server-side `GROQ_API_KEY` (no VITE_ prefix) is the only required env.
- * Falls back to a friendly error stream if missing, so the UI keeps
- * working in dev without secrets configured.
+ * Both paths (advisory stream + guided JSON) resolve targets in this order:
+ *   1. Vercel AI Gateway  → google/gemini-2.5-flash-lite  (AI_GATEWAY_API_KEY)
+ *   2. Groq               → llama-3.1-8b-instant           (GROQ_API_KEY)
+ * Either key alone is enough; with both, a 429 on the first falls through to
+ * the second. All overridable via FOTOSINTESIS_AI_* / GROQ_MODEL env.
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
@@ -194,11 +196,15 @@ function extractServerParams(loteContext: unknown): Record<string, string> {
   return out;
 }
 
+// Small, fast, cheap models by default. The task is short Spanish chat +
+// structured JSON extraction — an 8B / Flash-Lite class model is plenty and
+// has far higher free-tier limits than the old 70B / full-Flash pair, which is
+// what was tripping the "modelo saturado" 429s. Override per-env if needed.
 const DEFAULT_MODEL =
-  process.env.GROQ_MODEL?.trim() || "llama-3.3-70b-versatile";
+  process.env.GROQ_MODEL?.trim() || "llama-3.1-8b-instant";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GATEWAY_URL = "https://ai-gateway.vercel.sh/v1/chat/completions";
-const DEFAULT_GATEWAY_MODEL = "google/gemini-2.5-flash";
+const DEFAULT_GATEWAY_MODEL = "google/gemini-2.5-flash-lite";
 
 interface GuidedTarget {
   url: string;
@@ -255,11 +261,12 @@ async function fetchUpstreamWithRetry(
 }
 
 /**
- * Resolve the ordered list of upstreams for the GUIDED / commit path. The
- * advisory streaming path stays on Groq (lowest latency for chat). For guided
- * capture + executable actions we prefer the Vercel AI Gateway (Gemini →
- * near-free on the free tier, strong structured output) and fall back to Groq
- * when Gemini is rate-limited/exhausted. All overridable by env:
+ * Resolve the ordered list of upstreams, shared by BOTH the advisory streaming
+ * path and the guided/commit path. We prefer the Vercel AI Gateway (Gemini
+ * Flash-Lite → near-free on the free tier, strong structured output) and fall
+ * back to Groq (llama-3.1-8b-instant) when Gemini is rate-limited/exhausted, so
+ * a 429 on one provider degrades to a brief wait instead of a hard failure.
+ * All overridable by env:
  *   FOTOSINTESIS_AI_PROVIDER = gateway | groq | auto (default auto → gateway, Groq fallback)
  *   FOTOSINTESIS_AI_MODEL    = explicit model id (e.g. google/gemini-2.5-flash)
  *   AI_GATEWAY_API_KEY       = the gateway key (rides Google's free tier, zero markup)
@@ -378,38 +385,16 @@ function sseWrite(res: VercelResponse, data: Record<string, unknown>): void {
   res.write(`data: ${JSON.stringify(data)}\n\n`);
 }
 
-async function streamGroq(
+/**
+ * Stream one upstream SSE response (already known to be OK) into the client
+ * SSE, accumulating the full text. Both Groq and the Vercel gateway speak the
+ * OpenAI streaming shape, so this is provider-agnostic.
+ */
+async function pipeStream(
   res: VercelResponse,
-  body: {
-    messages: Array<{ role: string; content: string }>;
-    model: string;
-    apiKey: string;
-  },
+  upstream: Response,
 ): Promise<{ fullText: string; finishReason: string }> {
-  const upstream = await fetch(GROQ_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${body.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: body.model,
-      messages: body.messages,
-      temperature: 0.4,
-      max_tokens: 768,
-      stream: true,
-    }),
-  });
-
-  if (!upstream.ok || !upstream.body) {
-    const text = await upstream.text().catch(() => "");
-    sseWrite(res, {
-      error: `Groq respondió ${upstream.status}: ${text.slice(0, 200)}`,
-    });
-    return { fullText: "", finishReason: "error" };
-  }
-
-  const reader = upstream.body.getReader();
+  const reader = upstream.body!.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
   let fullText = "";
@@ -451,6 +436,59 @@ async function streamGroq(
     }
   }
   return { fullText, finishReason };
+}
+
+/**
+ * Stream the advisory reply through the FIRST available target, falling back to
+ * the next on a rate-limit/unavailable status. We only switch BEFORE any bytes
+ * are written to the client, so the user never sees a half-answer swap. Returns
+ * the model that actually answered so the summary records the real provider.
+ */
+async function streamChat(
+  res: VercelResponse,
+  targets: GuidedTarget[],
+  messages: Array<{ role: string; content: string }>,
+): Promise<{ fullText: string; finishReason: string; model: string }> {
+  for (let t = 0; t < targets.length; t++) {
+    const target = targets[t];
+    const isLast = t === targets.length - 1;
+    const upstream = await fetch(target.url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${target.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: target.model,
+        messages,
+        temperature: 0.4,
+        max_tokens: 512,
+        stream: true,
+      }),
+    });
+
+    if (upstream.ok && upstream.body) {
+      const out = await pipeStream(res, upstream);
+      return { ...out, model: target.model };
+    }
+
+    const text = await upstream.text().catch(() => "");
+    console.warn(
+      `[fotosintesis-ai] advisory upstream ${upstream.status} via ${target.label} (${target.model}): ${text.slice(0, 300)}`,
+    );
+    // A rate-limited/unavailable provider falls through to the next target.
+    if (!isLast && RETRYABLE_STATUS.has(upstream.status)) continue;
+    if (isLast) {
+      sseWrite(res, {
+        error:
+          upstream.status === 429
+            ? "El modelo está saturado ahora mismo. Esperá unos segundos y volvé a intentar."
+            : `El proveedor respondió ${upstream.status}. Intentá de nuevo en un momento.`,
+      });
+      return { fullText: "", finishReason: "error", model: target.model };
+    }
+  }
+  return { fullText: "", finishReason: "error", model: DEFAULT_MODEL };
 }
 
 async function recordSummaryToConvex(args: {
@@ -560,13 +598,13 @@ function snapshotToGuidedContext(
       ? `Lote activo: ${JSON.stringify(loteContext)}`
       : "Sin lote activo en la ruta.",
     Array.isArray(candidateItems) && candidateItems.length > 0
-      ? `Ítems del inventario Fotosíntesis (para resolver referencias por número/nombre; da solo el itemHint y el sistema resuelve): ${JSON.stringify(candidateItems).slice(0, 4000)}`
+      ? `Ítems del inventario Fotosíntesis (para resolver referencias por número/nombre; da solo el itemHint y el sistema resuelve): ${JSON.stringify(candidateItems).slice(0, 3000)}`
       : "",
     treasureSummary ? `Catálogo Treasure Browser (ítems disponibles para venta): ${treasureSummary}` : "",
     // `snapshot` is undefined when the client posts before the Convex workspace
     // query resolves (or with Convex offline). JSON.stringify(undefined) is
     // undefined, not a string — guard with `?? null` so `.slice` never throws.
-    `Snapshot JSON: ${JSON.stringify(snapshot ?? null).slice(0, 3000)}`,
+    `Snapshot JSON: ${JSON.stringify(snapshot ?? null).slice(0, 2200)}`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -604,11 +642,11 @@ async function buildGuidedEnvelope(args: {
   ]);
   const treasureSummary = sheetCache && sheetCache.treasureItems.length > 0
     ? `${sheetCache.treasureItems.length} disponibles: ${JSON.stringify(
-        sheetCache.treasureItems.slice(0, 60).map((i) => ({
+        sheetCache.treasureItems.slice(0, 40).map((i) => ({
           id: i.itemId,
           nombre: i.nombre,
         })),
-      ).slice(0, 1200)}`
+      ).slice(0, 1000)}`
     : undefined;
 
   const fullMessages = [
@@ -656,7 +694,9 @@ async function buildGuidedEnvelope(args: {
           model: target.model,
           messages: fullMessages,
           temperature: 0.2,
-          max_tokens: 1200,
+          // The envelope is compact JSON (a few fields + a short "say"); 800 is
+          // ample and keeps latency/cost down on the small models.
+          max_tokens: 800,
           // Only on the Groq path — Gemini via the gateway 400s on json_object.
           ...(target.jsonMode
             ? { response_format: { type: "json_object" } }
@@ -785,13 +825,6 @@ export default async function handler(
     return;
   }
 
-  // Groq key — required by the streaming advisory path (checked there). The
-  // guided/commit path resolves its own target (gateway → Gemini, else Groq).
-  const apiKey =
-    process.env.GROQ_API_KEY?.trim() ||
-    process.env.VITE_GROQ_API_KEY?.trim() ||
-    "";
-
   const body = (req.body ?? {}) as {
     messages?: Array<{ role: string; content: string }>;
     snapshot?: unknown;
@@ -877,13 +910,21 @@ export default async function handler(
     return;
   }
 
-  // Streaming advisory path requires the Groq key.
-  if (!apiKey) {
+  // Streaming advisory path now shares the guided resolver: gateway (Gemini
+  // Flash-Lite) first, Groq (8B) as the rate-limit safety net. Works as long as
+  // EITHER provider key is configured — no longer Groq-only.
+  const advisoryTargets = resolveGuidedTargets();
+  if (advisoryTargets.length === 0) {
     res.status(503).json({
       error:
-        "GROQ_API_KEY no configurado en el servidor. Define la variable en Vercel.",
+        "Sin proveedor de IA configurado. Define AI_GATEWAY_API_KEY o GROQ_API_KEY en Vercel.",
     });
     return;
+  }
+  // A per-request model override applies to the primary target only.
+  const advisoryOverride = body.model?.trim();
+  if (advisoryOverride && advisoryTargets[0]) {
+    advisoryTargets[0] = { ...advisoryTargets[0], model: advisoryOverride };
   }
 
   // Compose the prompt: persona system + live context + history.
@@ -908,13 +949,13 @@ export default async function handler(
     (res as { flushHeaders: () => void }).flushHeaders();
   }
 
-  const { fullText, finishReason } = await streamGroq(res, {
-    messages: fullMessages,
-    model,
-    apiKey,
-  });
+  const { fullText, finishReason, model: answeredModel } = await streamChat(
+    res,
+    advisoryTargets,
+    fullMessages,
+  );
 
-  sseWrite(res, { done: true, model, finishReason });
+  sseWrite(res, { done: true, model: answeredModel, finishReason });
   res.end();
 
   // Fire-and-forget summary write. We intentionally don't await before
@@ -927,7 +968,7 @@ export default async function handler(
     routeLatest: route,
     summary: buildSummary(messages, fullText),
     turnCount: messages.filter((m) => m.role === "user").length,
-    model,
+    model: answeredModel,
   });
 }
 
