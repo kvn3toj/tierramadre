@@ -175,7 +175,12 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
         sx={{
           display: "flex",
           flexDirection: "column",
-          height: "calc(100dvh - 56px)",
+          // lg: a fixed-height two-pane cockpit (each pane scrolls internally).
+          // Below lg the two-pane model crushes the form, so the workbench
+          // becomes a natural-flow document that scrolls as one (M2); the
+          // FotosintesisLayout adds the bottom clearance for the iOS tab bar.
+          height: { lg: "calc(100dvh - 56px)" },
+          minHeight: { xs: "calc(100dvh - 56px)", lg: "auto" },
           background: foto.surfaces.canvas,
           color: foto.ink.primary,
         }}
@@ -225,36 +230,48 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
           <WorkbenchStepper flow={flow} draft={stepperDraft} />
         </Box>
 
-        {/* Body — canvas | conversation */}
+        {/* Body — canvas | conversation. lg: a 2-col grid that fills the fixed
+            height; below lg: a stacked, natural-flow column. */}
         <Box
           sx={{
-            flex: 1,
-            minHeight: 0,
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              lg: "minmax(0, 1fr) minmax(360px, 440px)",
-            },
+            flex: { lg: 1 },
+            minHeight: { lg: 0 },
+            display: { xs: "flex", lg: "grid" },
+            flexDirection: { xs: "column" },
+            gridTemplateColumns: { lg: "minmax(0, 1fr) minmax(360px, 440px)" },
           }}
         >
-          {/* Canvas (left) — each canvas owns its own scroll; direct flows pin
-              a commit bar at the bottom of the pane. */}
+          {/* Canvas (left) — at lg each canvas owns its own scroll and direct
+              flows pin a commit bar at the bottom of the pane; below lg it
+              renders at natural height inside the scrolling document. */}
           <Box
             sx={{
               minWidth: 0,
-              minHeight: 0,
+              minHeight: { lg: 0 },
               display: "flex",
               flexDirection: "column",
               borderRight: { lg: `1px solid ${foto.surfaces.rule}` },
             }}
           >
             {flow === "venta" ? (
-              <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+              <Box
+                sx={{
+                  flex: { lg: 1 },
+                  minHeight: { lg: 0 },
+                  overflowY: { lg: "auto" },
+                }}
+              >
                 <FotosintesisVentaPage embedded />
               </Box>
             ) : flow === "provider" || flow === "client" ? (
               <>
-                <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+                <Box
+                  sx={{
+                    flex: { lg: 1 },
+                    minHeight: { lg: 0 },
+                    overflowY: { lg: "auto" },
+                  }}
+                >
                   <ProviderClientCanvas />
                 </Box>
                 <WorkbenchCommitBar
@@ -268,22 +285,39 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
               // The lote canvas owns its own proven commit buttons (lots.create
               // + lotItems.create with photo/cert uploads), so — like venta —
               // it renders no separate WorkbenchCommitBar.
-              <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+              <Box
+                sx={{
+                  flex: { lg: 1 },
+                  minHeight: { lg: 0 },
+                  overflowY: { lg: "auto" },
+                }}
+              >
                 <FotosintesisCapturaLotePage embedded />
               </Box>
             ) : (
-              <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+              <Box
+                sx={{
+                  flex: { lg: 1 },
+                  minHeight: { lg: 0 },
+                  overflowY: { lg: "auto" },
+                }}
+              >
                 <PlaceholderCanvas label={flowLabel(flow)} />
               </Box>
             )}
           </Box>
 
-          {/* Conversation (right) */}
+          {/* Conversation (right). Below lg it's a fixed-height chat box so the
+              message list scrolls internally and the composer stays pinned
+              within the box (which sits in the scrolling document, clear of the
+              iOS tab bar); at lg it fills the grid column. */}
           <Box
             sx={{
               display: "flex",
-              minHeight: { xs: 480, lg: 0 },
               minWidth: 0,
+              flexShrink: { xs: 0 },
+              height: { xs: "clamp(380px, 58vh, 560px)" },
+              minHeight: { lg: 0 },
               background: foto.surfaces.canvas,
               borderTop: { xs: `1px solid ${foto.surfaces.rule}`, lg: "none" },
             }}
