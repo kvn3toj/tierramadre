@@ -52,6 +52,16 @@ export function findColumnIndex(headers: string[], names: string[]): number;
 
 export function formatDisplayName(name: string): string;
 
+/** From `google-clients.js` (re-exported via `export *`).
+ * The Sheets/Drive clients are untyped googleapis instances in this JS shim;
+ * `any` mirrors their use as `sheets.spreadsheets.values.get(...)` etc. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getSheetsClient(): any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getDriveClient(): any;
+export function isGoogleConfigured(): boolean;
+export function getSharedDriveId(): string | null;
+
 /** From `constants.js` */
 export const BATCH_SIZE: number;
 

@@ -701,3 +701,16 @@ export function useConvexAction(apiRef: unknown) {
     }
   };
 }
+
+/**
+ * Test-mode mirror of `convex-safe.ts`'s `useConvexClient` (real: `useConvex`).
+ * The in-memory store above backs the admin-panel hooks, not the Fotosíntesis
+ * copilot commit path (`executeAction.ts`), so this mirrors the real module's
+ * degraded branch (`noopConvexClient` returns `null` when Convex is unwired):
+ * it returns `null`, and `useExecuteAction`'s own guard surfaces the operator
+ * "Convex no está configurado" error. Exporting it resolves the
+ * `executeAction.ts` import so `VITE_TEST_MODE=1` builds every admin route.
+ */
+export function useConvexClient(): null {
+  return null;
+}
