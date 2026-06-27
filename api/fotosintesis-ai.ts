@@ -204,11 +204,21 @@ function formatSheetItems(
   return { body, shown, total: items.length };
 }
 
+// Payload guard: this catalog is re-sent on EVERY turn, so a large dump inflates
+// each request and (with the growing history) trips the AI gateway's 413
+// "payload too large" limit. Keep the inline catalog a small SAMPLE + the real
+// total count; the model resolves ANY other item on demand by its number/name
+// (the server resolves it against the full sheet cache). This preserves "knows
+// the whole catalog, can reach any item" without the oversized prompt.
+const CATALOG_SAMPLE_CHARS = 1500;
+const CATALOG_RESOLVE_NOTE =
+  "El catálogo completo es más grande que esta muestra; para cualquier ítem que no aparezca, usá su número o nombre y el sistema lo resuelve del inventario completo.";
+
 /**
- * Full two-inventory product context for the advisory/chat path: the
- * Fotosíntesis Inventario + the legacy Treasure catalog (items that exist
- * BEFORE they enter Fotosíntesis), every item with its estado. Returns "" when
- * the cache is unavailable so the chat degrades gracefully.
+ * Two-inventory product context for the advisory/chat path: a bounded sample of
+ * the Fotosíntesis Inventario + the legacy Treasure catalog (items that exist
+ * BEFORE they enter Fotosíntesis), each with its estado, plus real totals.
+ * Returns "" when the cache is unavailable so the chat degrades gracefully.
  */
 function buildCatalogContext(
   fotoItems: SheetItem[],
@@ -216,28 +226,27 @@ function buildCatalogContext(
 ): string {
   const parts: string[] = [];
   if (fotoItems.length > 0) {
-    const f = formatSheetItems(fotoItems, 8000);
-    const note =
-      f.shown < f.total ? ` (mostrando ${f.shown} de ${f.total})` : "";
+    const f = formatSheetItems(fotoItems, CATALOG_SAMPLE_CHARS);
+    const note = f.shown < f.total ? ` (muestra de ${f.shown}/${f.total})` : "";
     parts.push(`Inventario Fotosíntesis (${f.total} ítems${note}): ${f.body}`);
   }
   if (treasureItems.length > 0) {
-    const t = formatSheetItems(treasureItems, 12000);
-    const note =
-      t.shown < t.total ? ` (mostrando ${t.shown} de ${t.total})` : "";
+    const t = formatSheetItems(treasureItems, CATALOG_SAMPLE_CHARS);
+    const note = t.shown < t.total ? ` (muestra de ${t.shown}/${t.total})` : "";
     parts.push(
-      `Catálogo Treasure — inventario completo previo a Fotosíntesis (${t.total} ítems${note}, con estado): ${t.body}`,
+      `Catálogo Treasure — inventario previo a Fotosíntesis (${t.total} ítems${note}, con estado): ${t.body}`,
     );
   }
+  if (parts.length > 0) parts.push(CATALOG_RESOLVE_NOTE);
   return parts.join("\n");
 }
 
-/** Treasure-only summary for the guided/capture context (every item + estado). */
+/** Treasure-only summary for the guided/capture context (bounded sample + total). */
 function buildTreasureSummary(treasureItems: SheetItem[]): string {
   if (treasureItems.length === 0) return "";
-  const t = formatSheetItems(treasureItems, 12000);
-  const note = t.shown < t.total ? ` (mostrando ${t.shown} de ${t.total})` : "";
-  return `${t.total} ítems${note}: ${t.body}`;
+  const t = formatSheetItems(treasureItems, CATALOG_SAMPLE_CHARS);
+  const note = t.shown < t.total ? ` (muestra de ${t.shown}/${t.total})` : "";
+  return `${t.total} ítems${note}: ${t.body}. ${CATALOG_RESOLVE_NOTE}`;
 }
 
 const ACCESS_LEVELS = [
