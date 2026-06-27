@@ -100,7 +100,9 @@ export function WorkbenchCommitBar({
           action={action}
           ctx={ctx}
           online={online}
-          onClose={chat.clearEnvelope}
+          // Cancelar/Listo on the commit card returns to EDITING with the
+          // canvas draft intact — it must never wipe the captured values (H1).
+          onClose={chat.dismissEnvelope}
           onCommitted={onCommitted}
         />
       ) : (

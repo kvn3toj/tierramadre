@@ -73,6 +73,13 @@ export interface UseFotosynthiaChatResult {
   latestEnvelope: GuidedEnvelope | null;
   /** Clear the guided envelope + accumulation (call after a successful hand-off). */
   clearEnvelope: () => void;
+  /**
+   * Dismiss ONLY the last envelope (its commit card) and return to editing —
+   * the accumulated `flow` + `priorDraft` are preserved, so the canvas stays
+   * populated. Use for a draft-preserving "back to edit" / Cancelar on the
+   * pre-commit card; use {@link clearEnvelope} for a true discard-everything.
+   */
+  dismissEnvelope: () => void;
   reset: () => void;
   cancel: () => void;
   /**
@@ -228,6 +235,13 @@ export function useFotosynthiaChat(
   const clearEnvelope = useCallback(() => {
     setLatestEnvelope(null);
     setState((prev) => ({ ...prev, flow: undefined, priorDraft: undefined }));
+  }, []);
+
+  // Back-to-edit: drop the commit card (envelope) but KEEP flow + priorDraft so
+  // the canvas the operator was filling stays intact (H1 — Cancelar must not
+  // wipe the captured values).
+  const dismissEnvelope = useCallback(() => {
+    setLatestEnvelope(null);
   }, []);
 
   const cancel = useCallback(() => {
@@ -583,6 +597,7 @@ export function useFotosynthiaChat(
       retryLast,
       latestEnvelope,
       clearEnvelope,
+      dismissEnvelope,
       reset,
       cancel,
       priorDraft: state.priorDraft,
@@ -593,6 +608,7 @@ export function useFotosynthiaChat(
     [
       cancel,
       clearEnvelope,
+      dismissEnvelope,
       isStreaming,
       latestEnvelope,
       patchDraft,
