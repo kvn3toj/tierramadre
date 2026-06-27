@@ -24,6 +24,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  Slider,
   TextField,
   Typography,
 } from "@mui/material";
@@ -33,10 +34,14 @@ import {
   IdCard,
   Image as ImageIcon,
   Lock,
+  Move,
+  Plus,
   Printer,
+  RotateCcw,
   Ruler,
   Save,
   Sprout,
+  Trash2,
   Upload,
   ZoomIn,
   ZoomOut,
@@ -54,14 +59,20 @@ import CertPreview from "./CertPreview";
 import {
   CERT_TEMPLATES,
   CERT_TYPE_ORDER,
+  clampPhotoTransform,
+  DEFAULT_PHOTO_TRANSFORM,
   EMPTY_CARNET,
   EMPTY_EMBAJADOR,
   EMPTY_ORIGEN,
+  MAX_PHOTO_ZOOM,
+  MIN_PHOTO_ZOOM,
   slugify,
   type CarnetDraft,
   type CertTypeId,
+  type CustomDetail,
   type EmbajadorDraft,
   type OrigenDraft,
+  type PhotoTransform,
 } from "./certTemplates";
 import { exportCertPdf, exportCertPng } from "./exportCert";
 import { isCertificadoApproved, persistCertToProduct } from "./persistCert";
@@ -86,6 +97,8 @@ function treasureToOrigen(t: TreasureItem): OrigenDraft {
     joya: t.metalType ?? (t.isJewelry ? (t.categoria ?? "") : ""),
     tecnica: "",
     photo: t.imagen ?? "",
+    // Autofill never invents custom rows; the operator adds those by hand.
+    customDetails: [],
   };
 }
 
@@ -128,7 +141,50 @@ export default function CertGeneratorPage() {
   const [fitScale, setFitScale] = useState(0.4);
   const [zoom, setZoom] = useState(1); // multiplier on top of fit
   const [guides, setGuides] = useState(false); // coordinate QA overlay
+  // Photo adjust: a toggleable edit mode + a per-type image transform (zoom/pan
+  // BEHIND the fixed circular frame). Stored per type so adjusting the Origen gem
+  // doesn't affect the Embajador portrait. Applied to the <img> inside the
+  // captured node by CertPreview (so exports reflect it). The image is clipped to
+  // the circle and never spills outside it.
+  const [photoEdit, setPhotoEdit] = useState(false);
+  const [photoTransforms, setPhotoTransforms] = useState<
+    Partial<Record<CertTypeId, PhotoTransform>>
+  >({});
   const tabRefs = useRef<Array<HTMLDivElement | null>>([]);
+
+  // The active template's photo field, if any (carnet uses a CSS fallback with
+  // no overlay photo field → no adjust affordance there).
+  const photoField = useMemo(
+    () => CERT_TEMPLATES[type].fields.find((f) => f.kind === "photo"),
+    [type],
+  );
+  const templateHasPhoto = !!photoField;
+  const photoTransform = photoTransforms[type] ?? DEFAULT_PHOTO_TRANSFORM;
+  const photoAdjusted =
+    photoTransform.zoom !== DEFAULT_PHOTO_TRANSFORM.zoom ||
+    photoTransform.offsetX !== 0 ||
+    photoTransform.offsetY !== 0;
+  // Clamp against the active frame so the image always covers the circle.
+  const setPhotoTransform = useCallback(
+    (t: PhotoTransform) =>
+      setPhotoTransforms((prev) => ({
+        ...prev,
+        [type]: photoField
+          ? clampPhotoTransform(t, photoField.w ?? 0, photoField.h ?? 0)
+          : t,
+      })),
+    [type, photoField],
+  );
+  const resetPhotoTransform = useCallback(
+    () =>
+      setPhotoTransforms((prev) => {
+        if (!(type in prev)) return prev;
+        const next = { ...prev };
+        delete next[type];
+        return next;
+      }),
+    [type],
+  );
 
   // Only real, individual pieces (exclude grouped lote/sublote cards).
   const pieces = useMemo(
@@ -149,24 +205,21 @@ export default function CertGeneratorPage() {
   const isEmptyDraft = !activeDraft.name && !activeDraft.photo;
 
   // Roving keyboard navigation across the type tabs (a11y: tablist pattern).
-  const onTabKeyDown = useCallback(
-    (e: React.KeyboardEvent, index: number) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        setType(CERT_TYPE_ORDER[index]);
-        return;
-      }
-      let next = index;
-      if (e.key === "ArrowRight") next = (index + 1) % CERT_TYPE_ORDER.length;
-      else if (e.key === "ArrowLeft")
-        next = (index - 1 + CERT_TYPE_ORDER.length) % CERT_TYPE_ORDER.length;
-      else return;
+  const onTabKeyDown = useCallback((e: React.KeyboardEvent, index: number) => {
+    if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      setType(CERT_TYPE_ORDER[next]);
-      tabRefs.current[next]?.focus();
-    },
-    [],
-  );
+      setType(CERT_TYPE_ORDER[index]);
+      return;
+    }
+    let next = index;
+    if (e.key === "ArrowRight") next = (index + 1) % CERT_TYPE_ORDER.length;
+    else if (e.key === "ArrowLeft")
+      next = (index - 1 + CERT_TYPE_ORDER.length) % CERT_TYPE_ORDER.length;
+    else return;
+    e.preventDefault();
+    setType(CERT_TYPE_ORDER[next]);
+    tabRefs.current[next]?.focus();
+  }, []);
 
   // ── fit-to-viewport ──────────────────────────────────────────────────────
   const recomputeFit = useCallback(() => {
@@ -191,6 +244,7 @@ export default function CertGeneratorPage() {
 
   useEffect(() => {
     setZoom(1);
+    setPhotoEdit(false); // leave edit mode when switching certificates
   }, [type]);
 
   const scale = fitScale * zoom;
@@ -375,11 +429,13 @@ export default function CertGeneratorPage() {
                 background: active ? foto.surfaces.inset : "transparent",
                 border: `1px solid ${active ? foto.surfaces.edgeStrong : "transparent"}`,
                 transition: "background 120ms ease, color 120ms ease",
-                "@media (prefers-reduced-motion: reduce)": { transition: "none" },
+                "@media (prefers-reduced-motion: reduce)": {
+                  transition: "none",
+                },
                 "&:hover": { background: foto.surfaces.inset },
                 "&:focus-visible": {
-                  outline: "none",
-                  boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+                  outline: "2px solid transparent",
+                  boxShadow: `0 0 0 2px ${foto.surfaces.canvas}, 0 0 0 4px ${foto.accent.primary}`,
                 },
               }}
             >
@@ -424,6 +480,15 @@ export default function CertGeneratorPage() {
               pieces={pieces}
               onUploadPhoto={onUploadPhoto}
               onSelectPiece={setSelectedPiece}
+              photoAdjust={{
+                zoom: photoTransform.zoom,
+                min: MIN_PHOTO_ZOOM,
+                max: MAX_PHOTO_ZOOM,
+                adjusted: photoAdjusted,
+                onZoom: (z) =>
+                  setPhotoTransform({ ...photoTransform, zoom: z }),
+                onReset: resetPhotoTransform,
+              }}
             />
           )}
           {type === "embajador" && (
@@ -432,6 +497,15 @@ export default function CertGeneratorPage() {
               setDraft={setEmbajador}
               asesores={asesores}
               onUploadPhoto={onUploadPhoto}
+              photoAdjust={{
+                zoom: photoTransform.zoom,
+                min: MIN_PHOTO_ZOOM,
+                max: MAX_PHOTO_ZOOM,
+                adjusted: photoAdjusted,
+                onZoom: (z) =>
+                  setPhotoTransform({ ...photoTransform, zoom: z }),
+                onReset: resetPhotoTransform,
+              }}
             />
           )}
           {type === "carnet" && (
@@ -512,10 +586,33 @@ export default function CertGeneratorPage() {
             <IconBtn
               label="Mostrar guías de coordenadas"
               active={guides}
+              toggle
               onClick={() => setGuides((g) => !g)}
             >
               <Ruler size={15} />
             </IconBtn>
+            {templateHasPhoto && (
+              <IconBtn
+                label={
+                  photoEdit
+                    ? "Salir del ajuste de la foto"
+                    : "Ajustar la foto (zoom y posición dentro del círculo)"
+                }
+                active={photoEdit}
+                toggle
+                onClick={() => setPhotoEdit((v) => !v)}
+              >
+                <Move size={15} />
+              </IconBtn>
+            )}
+            {templateHasPhoto && photoAdjusted && (
+              <IconBtn
+                label="Restablecer el encuadre de la foto"
+                onClick={resetPhotoTransform}
+              >
+                <RotateCcw size={15} />
+              </IconBtn>
+            )}
             {type === "origen" && (
               <Button
                 onClick={handleSaveToProduct}
@@ -586,10 +683,16 @@ export default function CertGeneratorPage() {
               data={activeDraft}
               scale={scale}
               guides={guides}
+              customDetails={
+                type === "origen" ? origen.customDetails : undefined
+              }
+              photoTransform={photoTransform}
+              photoEdit={photoEdit}
+              onPhotoTransformChange={setPhotoTransform}
             />
             {isEmptyDraft && (
               <Box
-                aria-hidden
+                role="status"
                 sx={{
                   position: "absolute",
                   bottom: 16,
@@ -613,6 +716,35 @@ export default function CertGeneratorPage() {
                 <Award size={15} strokeWidth={2} style={{ flexShrink: 0 }} />
                 Elegí un registro en el panel izquierdo para autocompletar el
                 certificado, o escribí los campos a mano.
+              </Box>
+            )}
+            {photoEdit && !isEmptyDraft && (
+              <Box
+                role="status"
+                sx={{
+                  position: "absolute",
+                  bottom: 16,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  px: 1.75,
+                  py: 1,
+                  borderRadius: "10px",
+                  background: foto.surfaces.panel,
+                  border: `1px solid ${foto.accent.primary}`,
+                  boxShadow: "0 6px 20px rgba(0,0,0,.08)",
+                  fontSize: 12,
+                  color: foto.ink.secondary,
+                  pointerEvents: "none",
+                  maxWidth: "90%",
+                }}
+              >
+                <Move size={15} strokeWidth={2} style={{ flexShrink: 0 }} />
+                Arrastrá la foto para reposicionarla dentro del círculo; usá la
+                rueda o «Zoom de la foto» para acercarla. La imagen queda
+                recortada al círculo y el aro no aparece en la exportación.
               </Box>
             )}
           </Box>
@@ -669,12 +801,16 @@ function IconBtn({
   onClick,
   label,
   active = false,
+  toggle = false,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   /** accessible name for the icon-only button (a11y) + native tooltip */
   label: string;
   active?: boolean;
+  /** true only for genuine toggle buttons — momentary actions must NOT expose
+   *  aria-pressed (it would announce them as "toggle button, not pressed"). */
+  toggle?: boolean;
 }) {
   return (
     <Box
@@ -683,7 +819,7 @@ function IconBtn({
       onClick={onClick}
       title={label}
       aria-label={label}
-      aria-pressed={active}
+      {...(toggle ? { "aria-pressed": active } : {})}
       sx={{
         width: 30,
         height: 30,
@@ -701,8 +837,8 @@ function IconBtn({
           color: foto.ink.primary,
         },
         "&:focus-visible": {
-          outline: "none",
-          boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+          outline: "2px solid transparent",
+          boxShadow: `0 0 0 2px ${foto.surfaces.canvas}, 0 0 0 4px ${foto.accent.primary}`,
         },
       }}
     >
@@ -777,14 +913,28 @@ function Field({
   );
 }
 
+/** Zoom/reset controls for the photo's framing within the fixed circle. */
+interface PhotoAdjustControl {
+  zoom: number;
+  min: number;
+  max: number;
+  /** whether the framing differs from the default (drives the reset link) */
+  adjusted: boolean;
+  onZoom: (z: number) => void;
+  onReset: () => void;
+}
+
 function PhotoInput({
   value,
   onUrl,
   onUpload,
+  adjust,
 }: {
   value: string;
   onUrl: (v: string) => void;
   onUpload: (f: File | undefined) => void;
+  /** when present (origen/embajador), shows a zoom slider for the circle image */
+  adjust?: PhotoAdjustControl;
 }) {
   return (
     <Box sx={{ mb: 1.5 }}>
@@ -849,6 +999,70 @@ function PhotoInput({
           sx: { fontSize: 13, background: foto.surfaces.canvas },
         }}
       />
+      {adjust && value && (
+        <Box sx={{ mt: 1.5 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 0.25,
+            }}
+          >
+            <Typography
+              component="label"
+              htmlFor="cert-photo-zoom"
+              sx={{
+                fontSize: 11,
+                fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: ".6px",
+                color: foto.ink.tertiary,
+              }}
+            >
+              Zoom de la foto
+            </Typography>
+            {adjust.adjusted && (
+              <Box
+                component="button"
+                type="button"
+                onClick={adjust.onReset}
+                sx={{
+                  border: "none",
+                  background: "transparent",
+                  color: foto.accent.deep,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  px: 0.5,
+                  borderRadius: "6px",
+                  "&:hover": { textDecoration: "underline" },
+                  "&:focus-visible": {
+                    outline: "2px solid transparent",
+                    boxShadow: `0 0 0 2px ${foto.surfaces.canvas}, 0 0 0 4px ${foto.accent.primary}`,
+                  },
+                }}
+              >
+                Restablecer
+              </Box>
+            )}
+          </Box>
+          <Slider
+            id="cert-photo-zoom"
+            value={adjust.zoom}
+            min={adjust.min}
+            max={adjust.max}
+            step={0.05}
+            onChange={(_, v) => adjust.onZoom(Array.isArray(v) ? v[0] : v)}
+            aria-label="Zoom de la foto dentro del círculo"
+            sx={{ color: foto.accent.primary, mt: 0.5 }}
+          />
+          <Typography sx={{ fontSize: 11, color: foto.ink.tertiary }}>
+            La imagen se recorta al círculo. Arrastrala en la vista previa para
+            reposicionarla.
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 }
@@ -876,6 +1090,160 @@ function LockNote({ text }: { text: string }) {
   );
 }
 
+// Monotonic, collision-free id for operator-added detail rows — survives the
+// OrigenForm remounting on tab switches (a per-mount counter would not).
+let _customDetailSeq = 0;
+function newCustomDetailId(): string {
+  try {
+    if (typeof crypto !== "undefined" && "randomUUID" in crypto)
+      return crypto.randomUUID();
+  } catch {
+    /* fall through to the sequence */
+  }
+  _customDetailSeq += 1;
+  return `cd-${_customDetailSeq}`;
+}
+
+/**
+ * Editor for operator-added detail lines (label + content). Each row appends a
+ * "Nombre: Contenido" line to the certificate's detail block; the preview
+ * auto-fits so extra lines never overflow the artwork.
+ */
+function CustomDetailsEditor({
+  items,
+  onAdd,
+  onUpdate,
+  onRemove,
+}: {
+  items: CustomDetail[];
+  onAdd: () => void;
+  onUpdate: (id: string, patch: Partial<CustomDetail>) => void;
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <Box sx={{ mt: 2 }}>
+      <Typography
+        sx={{
+          fontSize: 11,
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: ".6px",
+          color: foto.ink.tertiary,
+          mb: 0.75,
+        }}
+      >
+        Detalles adicionales
+      </Typography>
+      {items.map((item, i) => (
+        <Box
+          key={item.id}
+          sx={{
+            border: `1px solid ${foto.surfaces.edge}`,
+            borderRadius: "9px",
+            p: 1.25,
+            mb: 1,
+            background: foto.surfaces.canvas,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 0.75,
+            }}
+          >
+            <Typography sx={{ fontSize: 11, color: foto.ink.tertiary }}>
+              Campo {i + 1}
+            </Typography>
+            <Box
+              component="button"
+              type="button"
+              onClick={() => onRemove(item.id)}
+              aria-label={`Eliminar el campo ${i + 1}`}
+              title="Eliminar campo"
+              sx={{
+                width: 28,
+                height: 28,
+                display: "grid",
+                placeItems: "center",
+                border: "none",
+                background: "transparent",
+                borderRadius: "6px",
+                cursor: "pointer",
+                color: foto.ink.tertiary,
+                "&:hover": {
+                  background: foto.surfaces.inset2,
+                  color: "#b3261e",
+                },
+                "&:focus-visible": {
+                  outline: "2px solid transparent",
+                  boxShadow: `0 0 0 2px ${foto.surfaces.canvas}, 0 0 0 4px ${foto.accent.primary}`,
+                },
+              }}
+            >
+              <Trash2 size={14} />
+            </Box>
+          </Box>
+          <TextField
+            value={item.label}
+            onChange={(e) => onUpdate(item.id, { label: e.target.value })}
+            placeholder="Nombre del campo (p. ej. Certificado N°)"
+            aria-label={`Nombre del campo ${i + 1}`}
+            size="small"
+            fullWidth
+            sx={{ mb: 0.75 }}
+            InputProps={{
+              sx: { fontSize: 13, background: foto.surfaces.canvas },
+            }}
+          />
+          <TextField
+            value={item.value}
+            onChange={(e) => onUpdate(item.id, { value: e.target.value })}
+            placeholder="Contenido (p. ej. TM-0042)"
+            aria-label={`Contenido del campo ${i + 1}`}
+            size="small"
+            fullWidth
+            InputProps={{
+              sx: { fontSize: 13, background: foto.surfaces.canvas },
+            }}
+          />
+        </Box>
+      ))}
+      <Box
+        component="button"
+        type="button"
+        onClick={onAdd}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 0.75,
+          width: "100%",
+          py: 1,
+          border: `1px dashed ${foto.surfaces.edgeStrong}`,
+          borderRadius: "9px",
+          background: "transparent",
+          color: foto.ink.secondary,
+          fontSize: 12,
+          fontWeight: 600,
+          cursor: "pointer",
+          "&:hover": {
+            borderColor: foto.accent.primary,
+            color: foto.ink.primary,
+          },
+          "&:focus-visible": {
+            outline: "2px solid transparent",
+            boxShadow: `0 0 0 2px ${foto.surfaces.canvas}, 0 0 0 4px ${foto.accent.primary}`,
+          },
+        }}
+      >
+        <Plus size={14} /> Agregar campo
+      </Box>
+    </Box>
+  );
+}
+
 // ── forms ────────────────────────────────────────────────────────────────
 
 function OrigenForm({
@@ -884,6 +1252,7 @@ function OrigenForm({
   pieces,
   onUploadPhoto,
   onSelectPiece,
+  photoAdjust,
 }: {
   draft: OrigenDraft;
   setDraft: React.Dispatch<React.SetStateAction<OrigenDraft>>;
@@ -891,6 +1260,7 @@ function OrigenForm({
   onUploadPhoto: (f: File | undefined) => void;
   /** Track which catalog piece the draft came from (or null on hand-edit). */
   onSelectPiece: (piece: TreasureItem | null) => void;
+  photoAdjust: PhotoAdjustControl;
 }) {
   // Editing any field by hand drops the linkage attribution: the form may no
   // longer describe the originally-picked piece, so we won't auto-link a cert
@@ -899,6 +1269,29 @@ function OrigenForm({
     onSelectPiece(null);
     setDraft((d) => ({ ...d, [k]: v }));
   };
+
+  // Custom detail rows are additive operator info, not piece identity, so they
+  // do NOT drop the product linkage the way editing a core field does.
+  const addCustom = () =>
+    setDraft((d) => ({
+      ...d,
+      customDetails: [
+        ...d.customDetails,
+        { id: newCustomDetailId(), label: "", value: "" },
+      ],
+    }));
+  const updateCustom = (id: string, patch: Partial<CustomDetail>) =>
+    setDraft((d) => ({
+      ...d,
+      customDetails: d.customDetails.map((c) =>
+        c.id === id ? { ...c, ...patch } : c,
+      ),
+    }));
+  const removeCustom = (id: string) =>
+    setDraft((d) => ({
+      ...d,
+      customDetails: d.customDetails.filter((c) => c.id !== id),
+    }));
 
   return (
     <>
@@ -945,10 +1338,17 @@ function OrigenForm({
         <Field label="Joya" value={draft.joya} onChange={set("joya")} />
       </Box>
       <Field label="Técnica" value={draft.tecnica} onChange={set("tecnica")} />
+      <CustomDetailsEditor
+        items={draft.customDetails}
+        onAdd={addCustom}
+        onUpdate={updateCustom}
+        onRemove={removeCustom}
+      />
       <PhotoInput
         value={draft.photo}
         onUrl={set("photo")}
         onUpload={onUploadPhoto}
+        adjust={photoAdjust}
       />
       <LockNote text="El mensaje, el sello, el logo y la marca de agua se conservan exactos de la plantilla del equipo de diseño." />
     </>
@@ -960,11 +1360,13 @@ function EmbajadorForm({
   setDraft,
   asesores,
   onUploadPhoto,
+  photoAdjust,
 }: {
   draft: EmbajadorDraft;
   setDraft: React.Dispatch<React.SetStateAction<EmbajadorDraft>>;
   asesores: Asesor[];
   onUploadPhoto: (f: File | undefined) => void;
+  photoAdjust: PhotoAdjustControl;
 }) {
   const set = (k: keyof EmbajadorDraft) => (v: string) =>
     setDraft((d) => ({ ...d, [k]: v }));
@@ -1002,6 +1404,7 @@ function EmbajadorForm({
         value={draft.photo}
         onUrl={set("photo")}
         onUpload={onUploadPhoto}
+        adjust={photoAdjust}
       />
       <LockNote text="Encabezado, mensaje, firma, sellos y decoración se conservan exactos de la plantilla." />
     </>

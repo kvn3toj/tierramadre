@@ -54,6 +54,63 @@ export interface DetailLine {
   label: string;
 }
 
+/**
+ * How the product image sits BEHIND the certificate's fixed circular frame.
+ *
+ * The frame (the printed decorative ring) never moves or resizes — the operator
+ * only adjusts the image inside it: `zoom` scales the image and `offsetX/offsetY`
+ * pan it (native px). The image is clipped to the circle, so it always stays
+ * "behind" the ring and never spills outside it. Stored per cert type.
+ */
+export interface PhotoTransform {
+  /** image scale within the fixed circle (≥ 1 keeps the circle fully covered) */
+  zoom: number;
+  /** pan of the image inside the frame, native px (0,0 = centered) */
+  offsetX: number;
+  offsetY: number;
+}
+
+export const MIN_PHOTO_ZOOM = 1;
+export const MAX_PHOTO_ZOOM = 4;
+export const DEFAULT_PHOTO_TRANSFORM: PhotoTransform = {
+  zoom: 1,
+  offsetX: 0,
+  offsetY: 0,
+};
+
+/**
+ * Clamp a transform so the image always covers the circle (no gap) and stays in
+ * the zoom range. At zoom 1 the image exactly fills the frame, so pan is pinned
+ * to 0; panning becomes available as you zoom in. `frameW/frameH` are the photo
+ * field's native dimensions.
+ */
+export function clampPhotoTransform(
+  t: PhotoTransform,
+  frameW: number,
+  frameH: number,
+): PhotoTransform {
+  const zoom = Math.min(Math.max(t.zoom, MIN_PHOTO_ZOOM), MAX_PHOTO_ZOOM);
+  const maxX = Math.max(0, ((zoom - 1) * frameW) / 2);
+  const maxY = Math.max(0, ((zoom - 1) * frameH) / 2);
+  return {
+    zoom,
+    offsetX: Math.min(Math.max(t.offsetX, -maxX), maxX),
+    offsetY: Math.min(Math.max(t.offsetY, -maxY), maxY),
+  };
+}
+
+/**
+ * An operator-added detail line on the Origen certificate ("create the name of
+ * field and the content of field"). Rendered after the template detailLines in
+ * the same details block, auto-fit so extra lines never overflow the artwork.
+ */
+export interface CustomDetail {
+  /** stable id for React keys + edits (never rendered) */
+  id: string;
+  label: string;
+  value: string;
+}
+
 export interface CertTemplate {
   id: CertTypeId;
   label: string;
@@ -96,13 +153,17 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
     detailLines: ORIGEN_DETAIL_LINES,
     fields: [
       {
+        // Measured against the printed emerald ring in bg_origen.jpg (row/col
+        // pixel scan): the ring is centered at ~(650, 626) with an outer Ø~445.
+        // The photo fills just inside the ring so the ring stays visible as a
+        // border and the image is clipped to that circle (never spilling out).
         key: "photo",
         kind: "photo",
         shape: "circle",
-        x: 648,
-        y: 600,
-        w: 368,
-        h: 368,
+        x: 650,
+        y: 626,
+        w: 424,
+        h: 424,
         center: true,
       },
       {
@@ -218,6 +279,8 @@ export interface OrigenDraft {
   joya: string;
   tecnica: string;
   photo: string;
+  /** operator-added detail lines, appended to the template detail block */
+  customDetails: CustomDetail[];
 }
 
 export interface EmbajadorDraft {
@@ -244,6 +307,7 @@ export const EMPTY_ORIGEN: OrigenDraft = {
   joya: "",
   tecnica: "",
   photo: "",
+  customDetails: [],
 };
 
 export const EMPTY_EMBAJADOR: EmbajadorDraft = { name: "", photo: "" };

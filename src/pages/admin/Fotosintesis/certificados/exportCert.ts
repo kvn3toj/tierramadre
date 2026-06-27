@@ -80,18 +80,99 @@ async function waitForImages(node: HTMLElement): Promise<void> {
   );
 }
 
+/**
+ * Wait for the certificate's web fonts before rasterizing. html2canvas snapshots
+ * synchronously and does NOT wait for `font-display: swap` fonts to load — if it
+ * runs first, text is laid out with fallback metrics and the real glyphs paint at
+ * the wrong baselines, collapsing the name/details lines into an overlapping,
+ * garbled block. Loading the exact families/weights and awaiting `fonts.ready`
+ * guarantees the rasterized text matches the on-screen preview.
+ */
+async function waitForFonts(): Promise<void> {
+  try {
+    if (typeof document === "undefined" || !("fonts" in document)) return;
+    const faces = [
+      "300 16px 'Cormorant Garamond'",
+      "400 16px 'Cormorant Garamond'",
+      "500 16px 'Cormorant Garamond'",
+      "600 16px 'Cormorant Garamond'",
+      "700 16px 'Cormorant Garamond'",
+      "italic 400 16px 'Cormorant Garamond'",
+      "italic 500 16px 'Cormorant Garamond'",
+      "italic 600 16px 'Cormorant Garamond'",
+      "600 16px 'Cinzel'",
+      "400 16px 'Montserrat'",
+      "700 16px 'Montserrat'",
+    ];
+    await Promise.race([
+      Promise.all([
+        ...faces.map((f) => document.fonts.load(f).catch(() => undefined)),
+        document.fonts.ready,
+      ]),
+      // Never block the export indefinitely on a font CDN hiccup.
+      new Promise((resolve) => setTimeout(resolve, IMAGE_LOAD_TIMEOUT_MS)),
+    ]);
+  } catch {
+    /* best-effort: a font failure must not block the export */
+  }
+}
+
+/**
+ * Largest canvas AREA Safari (desktop + iOS) will back: 16,777,216 px². Exceed
+ * it and Safari yields a SILENTLY blank canvas (no throw) — toDataURL then
+ * returns an empty image, so an over-scaled export "succeeds" while producing a
+ * blank file (and persistCert would upload that blank to Drive). A 0.95 margin
+ * covers device variance.
+ */
+const MAX_CANVAS_AREA = 16_777_216 * 0.95;
+
 async function rasterize(
   node: HTMLElement,
   pixelRatio: number,
 ): Promise<HTMLCanvasElement> {
+  // Inline cross-origin images + wait for decode on the LIVE node first, so the
+  // clone below inherits same-origin data: URLs and never taints.
   await inlineCrossOriginImages(node);
   await waitForImages(node);
+  await waitForFonts();
+
+  // offsetWidth/Height are layout px, immune to the `transform: scale()` wrapper
+  // CertPreview puts around this node. Capturing a clone OUTSIDE that wrapper
+  // also frees html2canvas from the scaled-ancestor geometry that otherwise
+  // makes it measure (and crop) the node at the on-screen scaled size.
+  const width = node.offsetWidth || 1;
+  const height = node.offsetHeight || 1;
+
+  // Clamp the DPI so the backing canvas stays under Safari's area cap.
+  const areaScale = Math.sqrt(MAX_CANVAS_AREA / (width * height));
+  const scale = Math.max(1, Math.min(pixelRatio, areaScale));
+
+  const sandbox = document.createElement("div");
+  sandbox.setAttribute("aria-hidden", "true");
+  sandbox.style.cssText =
+    `position:fixed;left:-100000px;top:0;width:${width}px;height:${height}px;` +
+    `margin:0;padding:0;overflow:hidden;background:#ffffff;` +
+    `pointer-events:none;z-index:-1;`;
+  const clone = node.cloneNode(true) as HTMLElement;
+  clone.style.transform = "none";
+  sandbox.appendChild(clone);
+  document.body.appendChild(sandbox);
+
   try {
-    return await html2canvas(node, {
-      scale: pixelRatio,
+    await waitForImages(clone);
+    return await html2canvas(clone, {
+      scale,
       useCORS: true,
       backgroundColor: "#ffffff",
       logging: false,
+      width,
+      height,
+      windowWidth: width,
+      windowHeight: height,
+      x: 0,
+      y: 0,
+      scrollX: 0,
+      scrollY: 0,
     });
   } catch (err) {
     // html2canvas throws a SecurityError when the canvas was tainted by an
@@ -100,6 +181,8 @@ async function rasterize(
       throw new CertExportTaintError();
     }
     throw err;
+  } finally {
+    document.body.removeChild(sandbox);
   }
 }
 
