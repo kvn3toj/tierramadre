@@ -14,6 +14,9 @@ import type {
   GuidedFlow,
 } from "./copilot/flowSchemas";
 import { ProductoSpotlight } from "./components/ProductoSpotlight";
+import { WORKBENCH_ENABLED } from "./workbench/featureFlag";
+import { isWorkbenchFlow } from "./workbench/workbenchSteps";
+import { flowLabel } from "./utils/flowLabels";
 
 /**
  * Shared shell for every /admin/fotosintesis route. Owns the sticky topbar,
@@ -66,6 +69,10 @@ export default function FotosintesisLayout() {
     },
     [navigate],
   );
+  const seedDraftForm = useCallback((flow: GuidedFlow, data: GuidedDraft) => {
+    draftBusRef.current = { flow, data };
+    setDraftNonce((n) => n + 1);
+  }, []);
   const consumeDraftForm = useCallback(
     (flow: GuidedFlow): GuidedDraft | null => {
       const pending = draftBusRef.current;
@@ -96,6 +103,7 @@ export default function FotosintesisLayout() {
       closeSpotlight,
       registerSpotlightDefault,
       openDraftForm,
+      seedDraftForm,
       consumeDraftForm,
       draftNonce,
       enqueueEdits,
@@ -108,6 +116,7 @@ export default function FotosintesisLayout() {
       closeSpotlight,
       registerSpotlightDefault,
       openDraftForm,
+      seedDraftForm,
       consumeDraftForm,
       draftNonce,
       enqueueEdits,
@@ -117,11 +126,29 @@ export default function FotosintesisLayout() {
     ],
   );
 
+  // Venta routes into the dedicated workbench when the flag is on (PR1 flagship);
+  // lote/directory stay on their standalone pages until their canvases land.
+  // While already inside a workbench (/copilot/*), the global ⌘N/⌘V/⌘D nav is
+  // suppressed so a hotkey can't swap the active flow + draft mid-capture.
+  const inWorkbench = location.pathname.includes(
+    "/admin/fotosintesis/copilot/",
+  );
   useFotosintesisHotkeys({
     onSpotlight: () => openSpotlight(),
-    onNewLot: () => navigate("/admin/fotosintesis/lots/new"),
-    onNewSale: () => navigate("/admin/fotosintesis/sales/new"),
-    onOpenDirectory: () => navigate("/admin/fotosintesis/directory"),
+    onNewLot: () => {
+      if (!inWorkbench) navigate("/admin/fotosintesis/lots/new");
+    },
+    onNewSale: () => {
+      if (inWorkbench) return;
+      navigate(
+        WORKBENCH_ENABLED
+          ? "/admin/fotosintesis/copilot/venta"
+          : "/admin/fotosintesis/sales/new",
+      );
+    },
+    onOpenDirectory: () => {
+      if (!inWorkbench) navigate("/admin/fotosintesis/directory");
+    },
   });
 
   const crumbs = useMemo<Crumb[]>(() => {
@@ -142,6 +169,13 @@ export default function FotosintesisLayout() {
       }
       const isClose = path.endsWith("/close");
       return [base, { label: isClose ? "Cerrar lote" : "Captura de lote" }];
+    }
+    if (path.startsWith("/admin/fotosintesis/copilot/")) {
+      const seg = path.split("/").pop() ?? "";
+      return [
+        base,
+        { label: isWorkbenchFlow(seg) ? flowLabel(seg) : "Captura guiada" },
+      ];
     }
     if (path.startsWith("/admin/fotosintesis/sales/")) {
       return [base, { label: "Venta" }];
@@ -185,8 +219,9 @@ export default function FotosintesisLayout() {
             // Reserve room at the bottom so the global iOS tab bar never sits on
             // top of page content when scrolled to the end (the copilot is now a
             // docked/overlay rail, not a floating FAB). QA flagged this at every
-            // viewport.
-            paddingBottom: { xs: "180px", md: "56px" },
+            // viewport. The workbench fills its own height (its commit bar owns
+            // the bottom), so it drops this reservation.
+            paddingBottom: inWorkbench ? 0 : { xs: "180px", md: "56px" },
           }}
         >
           <Outlet />

@@ -25,6 +25,7 @@ import {
 import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
 import { useNotification } from "../../../contexts/NotificationContext";
 import ConfirmDialog from "../../../components/shared/ConfirmDialog";
+import { WORKBENCH_ENABLED } from "./workbench/featureFlag";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 /**
@@ -528,7 +529,11 @@ export default function FotosintesisHomePage() {
           />
 
           <QuickCard
-            to="/admin/fotosintesis/sales/new"
+            to={
+              WORKBENCH_ENABLED
+                ? "/admin/fotosintesis/copilot/venta"
+                : "/admin/fotosintesis/sales/new"
+            }
             title="Cerrar una venta"
             description="Vender a embajador o cliente final. Genera Kardex + certificado de origen en un click."
             footerLeft={

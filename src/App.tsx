@@ -172,6 +172,10 @@ const FotosintesisCertificados = lazyWithRetry(
   () => import("./pages/admin/Fotosintesis/certificados/CertGeneratorPage"),
   "FotosintesisCertificados",
 );
+const FotosintesisWorkbench = lazyWithRetry(
+  () => import("./pages/admin/Fotosintesis/workbench/WorkbenchPage"),
+  "FotosintesisWorkbench",
+);
 
 const FeedbackDashboard = lazyWithRetry(
   () => import("./pages/admin/FeedbackDashboard"),
@@ -622,6 +626,7 @@ function AppContent() {
                 path="certificados"
                 element={<FotosintesisCertificados />}
               />
+              <Route path="copilot/:flow" element={<FotosintesisWorkbench />} />
             </Route>
 
             {/* Admin Feedback Dashboard */}

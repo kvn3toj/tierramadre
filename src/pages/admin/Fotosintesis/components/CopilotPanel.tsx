@@ -57,7 +57,11 @@ import {
 import { useAppNavigator } from "../../../../contexts/AppNavigatorContext";
 import { api } from "../../../../../convex/_generated/api";
 import { ITEM_SCAN_CAP } from "../../../../../convex/_lib/aiCaps";
-import { useFotosynthiaChat } from "../hooks/useFotosynthiaChat";
+import {
+  useFotosynthiaChat,
+  type UseFotosynthiaChatResult,
+} from "../hooks/useFotosynthiaChat";
+import { FLOW_LABELS, fieldLabel, formatDraftValue } from "../utils/flowLabels";
 import { useFotosintesisLayoutSafe } from "../FotosintesisLayoutContext";
 import type {
   BatchEditPatch,
@@ -137,7 +141,10 @@ function getAnswerChips(
           field,
           headerLabel: "Forma de pago",
           options: (flow === "venta" ? FORMA_PAGO_VENTA : FORMA_PAGO).map(
-            (f) => ({ label: FORMA_PAGO_DISPLAY[f] ?? f, value: FORMA_PAGO_DISPLAY[f] ?? f }),
+            (f) => ({
+              label: FORMA_PAGO_DISPLAY[f] ?? f,
+              value: FORMA_PAGO_DISPLAY[f] ?? f,
+            }),
           ),
         };
       case "metodoContado":
@@ -199,110 +206,95 @@ interface QuickAction {
 
 /** Returns the 3-4 most relevant one-click actions for the current route. */
 function getContextActions(route: string): QuickAction[] {
-  const isLotDetail = /^\/admin\/fotosintesis\/lots\/(?!new$)([^/]+)$/.test(route);
+  const isLotDetail = /^\/admin\/fotosintesis\/lots\/(?!new$)([^/]+)$/.test(
+    route,
+  );
   if (isLotDetail) {
     return [
-      { label: "Nueva gema", prompt: "Registrar una gema nueva en este lote", icon: <Sparkles size={12} strokeWidth={2} /> },
-      { label: "Nueva joya", prompt: "Registrar una joya nueva en este lote", icon: <PackagePlus size={12} strokeWidth={2} /> },
-      { label: "Nuevo insumo", prompt: "Registrar un insumo nuevo en este lote", icon: <PackagePlus size={12} strokeWidth={2} /> },
-      { label: "Editar lote", prompt: "Quiero editar los datos de este lote", icon: <Compass size={12} strokeWidth={2} /> },
+      {
+        label: "Nueva gema",
+        prompt: "Registrar una gema nueva en este lote",
+        icon: <Sparkles size={12} strokeWidth={2} />,
+      },
+      {
+        label: "Nueva joya",
+        prompt: "Registrar una joya nueva en este lote",
+        icon: <PackagePlus size={12} strokeWidth={2} />,
+      },
+      {
+        label: "Nuevo insumo",
+        prompt: "Registrar un insumo nuevo en este lote",
+        icon: <PackagePlus size={12} strokeWidth={2} />,
+      },
+      {
+        label: "Editar lote",
+        prompt: "Quiero editar los datos de este lote",
+        icon: <Compass size={12} strokeWidth={2} />,
+      },
     ];
   }
   if (route.includes("/sales/")) {
     return [
-      { label: "Registrar venta", prompt: "Registrar una venta", icon: <ShoppingBag size={12} strokeWidth={2} /> },
-      { label: "Nuevo cliente", prompt: "Crear un cliente final nuevo", icon: <Users size={12} strokeWidth={2} /> },
-      { label: "Nueva gema", prompt: "Registrar una gema nueva", icon: <Sparkles size={12} strokeWidth={2} /> },
+      {
+        label: "Registrar venta",
+        prompt: "Registrar una venta",
+        icon: <ShoppingBag size={12} strokeWidth={2} />,
+      },
+      {
+        label: "Nuevo cliente",
+        prompt: "Crear un cliente final nuevo",
+        icon: <Users size={12} strokeWidth={2} />,
+      },
+      {
+        label: "Nueva gema",
+        prompt: "Registrar una gema nueva",
+        icon: <Sparkles size={12} strokeWidth={2} />,
+      },
     ];
   }
   if (route.includes("/lots/new")) {
     return [
-      { label: "Nuevo lote", prompt: "Crear un lote nuevo", icon: <PackagePlus size={12} strokeWidth={2} /> },
-      { label: "Nuevo proveedor", prompt: "Crear un proveedor nuevo", icon: <Users size={12} strokeWidth={2} /> },
+      {
+        label: "Nuevo lote",
+        prompt: "Crear un lote nuevo",
+        icon: <PackagePlus size={12} strokeWidth={2} />,
+      },
+      {
+        label: "Nuevo proveedor",
+        prompt: "Crear un proveedor nuevo",
+        icon: <Users size={12} strokeWidth={2} />,
+      },
     ];
   }
   return [
-    { label: "Nuevo lote", prompt: "Crear un lote nuevo", icon: <PackagePlus size={12} strokeWidth={2} /> },
-    { label: "Registrar venta", prompt: "Registrar una venta", icon: <ShoppingBag size={12} strokeWidth={2} /> },
-    { label: "Analytics", prompt: "Llévame a Analytics", icon: <BarChart2 size={12} strokeWidth={2} /> },
-    { label: "Directorio", prompt: "Llévame al directorio de clientes", icon: <Users size={12} strokeWidth={2} /> },
+    {
+      label: "Nuevo lote",
+      prompt: "Crear un lote nuevo",
+      icon: <PackagePlus size={12} strokeWidth={2} />,
+    },
+    {
+      label: "Registrar venta",
+      prompt: "Registrar una venta",
+      icon: <ShoppingBag size={12} strokeWidth={2} />,
+    },
+    {
+      label: "Analytics",
+      prompt: "Llévame a Analytics",
+      icon: <BarChart2 size={12} strokeWidth={2} />,
+    },
+    {
+      label: "Directorio",
+      prompt: "Llévame al directorio de clientes",
+      icon: <Users size={12} strokeWidth={2} />,
+    },
   ];
 }
-
-const FLOW_LABELS: Record<GuidedFlow, string> = {
-  "item-gema": "Gema nueva",
-  "item-joya": "Joya nueva",
-  "item-insumo": "Insumo nuevo",
-  lote: "Lote nuevo",
-  venta: "Venta",
-  provider: "Proveedor nuevo",
-  client: "Cliente nuevo",
-  "edit-existing": "Editar ítem",
-  "batch-edit": "Edición múltiple",
-  advisory: "Consulta",
-};
-
-const FIELD_LABELS: Record<string, string> = {
-  nombre: "Nombre",
-  peso: "Peso",
-  color: "Color",
-  calidad: "Calidad",
-  procedencia: "Procedencia",
-  preponderancia: "Preponderancia",
-  precioPublicoCOP: "Precio público",
-  cantidad: "Cantidad",
-  tipoEsmeralda: "Tipo esmeralda",
-  corte: "Corte",
-  tipoJoya: "Tipo joya",
-  tecnica: "Técnica",
-  minerales: "Minerales",
-  complementos: "Complementos",
-  descripcion: "Descripción",
-  categoria: "Categoría",
-  sede: "Bóveda",
-  providerName: "Proveedor",
-  costoTotalCOP: "Costo total",
-  unidadesDeclaradas: "Unidades",
-  formaPago: "Forma de pago",
-  metodoContado: "Método",
-  renombreLote: "Renombre",
-  mina: "Mina",
-  pesoTotalQuilates: "Peso (ct)",
-  itemId: "Ítem",
-  compradorTipo: "Comprador",
-  precioAcordado: "Precio acordado",
-  nombreORazonSocial: "Razón social",
-  tipo: "Tipo",
-  documento: "Documento",
-  direccion: "Dirección",
-  telefono: "Teléfono",
-  email: "Email",
-};
 
 const ITEM_FLOWS: ReadonlyArray<GuidedFlow> = [
   "item-gema",
   "item-joya",
   "item-insumo",
 ];
-
-function fieldLabel(key: string): string {
-  return FIELD_LABELS[key] ?? key;
-}
-
-function formatDraftValue(v: unknown): string {
-  if (v === null || v === undefined || v === "") return "—";
-  if (Array.isArray(v)) return v.length ? v.join(", ") : "—";
-  if (typeof v === "object") {
-    return (
-      Object.entries(v as Record<string, unknown>)
-        .filter(([, val]) => val !== undefined && val !== "")
-        .map(([k, val]) => `${fieldLabel(k)}: ${String(val)}`)
-        .join(" · ") || "—"
-    );
-  }
-  if (typeof v === "number") return v.toLocaleString("es-CO");
-  return String(v);
-}
 
 interface LoteContext {
   loteId: string;
@@ -384,7 +376,33 @@ function SnapshotSource({
   return null;
 }
 
+/**
+ * Rail entry point: owns its own chat thread and renders the body in rail mode.
+ * The workbench renders {@link CopilotPanelBody} directly with a lifted chat
+ * instance so the canvas and the conversation share one draft.
+ */
 export function CopilotPanel({ active }: CopilotPanelProps) {
+  const route = useLocation().pathname;
+  const chat = useFotosynthiaChat(route);
+  return <CopilotPanelBody active={active} chat={chat} mode="rail" />;
+}
+
+export interface CopilotPanelBodyProps {
+  active: boolean;
+  /** Chat thread, owned by the parent so the workbench canvas can share it. */
+  chat: UseFotosynthiaChatResult;
+  /**
+   * "rail" (default) keeps the form hand-off + in-panel commit + auto-route.
+   * "workbench" suppresses those surfaces — the canvas + commit bar own them.
+   */
+  mode?: "rail" | "workbench";
+}
+
+export function CopilotPanelBody({
+  active,
+  chat,
+  mode = "rail",
+}: CopilotPanelBodyProps) {
   const foto = getFoto("light");
   const location = useLocation();
   const navigate = useNavigate();
@@ -440,7 +458,7 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
     reset,
     cancel,
     threadId,
-  } = useFotosynthiaChat(route);
+  } = chat;
 
   // Network awareness: block sending while offline (the request would only
   // fail and surface as an error) and tell Maritza why the composer is locked.
@@ -551,7 +569,10 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
   // one approval (the CommitReviewCard). `handoff`-mode actions (e.g. venta) and
   // actionless envelopes fall through to the existing form hand-off card below.
   const commitAction =
-    env?.action && env.action.mode === "direct" && env.action.ready
+    mode !== "workbench" &&
+    env?.action &&
+    env.action.mode === "direct" &&
+    env.action.ready
       ? env.action
       : null;
   const commitCtx = useMemo(
@@ -765,11 +786,13 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
   // Auto-route a clear single match, once per envelope.
   const handledNavRef = useRef<unknown>(null);
   useEffect(() => {
+    // In the workbench the conversation must not yank the user off the canvas.
+    if (mode === "workbench") return;
     if (!env?.navigate || navPlan?.kind !== "ready") return;
     if (handledNavRef.current === env) return;
     handledNavRef.current = env;
     navigateTo(navPlan.action);
-  }, [env, navPlan, navigateTo]);
+  }, [env, mode, navPlan, navigateTo]);
 
   const snapshotStatus = useMemo(() => {
     if (!HAS_CONVEX)
@@ -937,7 +960,8 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
                 fontSize: "11.5px",
                 fontWeight: 500,
                 cursor: "pointer",
-                transition: "background 120ms ease, border-color 120ms ease, color 120ms ease",
+                transition:
+                  "background 120ms ease, border-color 120ms ease, color 120ms ease",
                 "&:hover": {
                   background: foto.accent.soft,
                   borderColor: foto.accent.primary,
@@ -946,7 +970,11 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
                 "&:disabled": {
                   opacity: 0.5,
                   cursor: "not-allowed",
-                  "&:hover": { background: foto.surfaces.canvas, borderColor: foto.surfaces.rule, color: foto.ink.secondary },
+                  "&:hover": {
+                    background: foto.surfaces.canvas,
+                    borderColor: foto.surfaces.rule,
+                    color: foto.ink.secondary,
+                  },
                 },
                 "&:focus-visible": {
                   outline: "none",
@@ -1052,7 +1080,7 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
       </Box>
 
       {/* Navigation chip — confirms an auto-route or surfaces an unresolved hint */}
-      {navPlan && (
+      {navPlan && mode !== "workbench" && (
         <Box
           sx={{
             margin: "0 18px 2px",
@@ -1117,8 +1145,9 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
         </Box>
       )}
 
-      {/* Review card — pinned above the composer when a draft is in progress */}
-      {showCard && env && !commitAction && (
+      {/* Review card — pinned above the composer when a draft is in progress.
+          Suppressed in the workbench: the canvas + commit bar replace it. */}
+      {showCard && env && !commitAction && mode !== "workbench" && (
         <Box
           sx={{
             margin: "0 18px",
@@ -1356,73 +1385,79 @@ export function CopilotPanel({ active }: CopilotPanelProps) {
       )}
 
       {/* Smart vocabulary chips — appear when AI is waiting for a field with known options */}
-      {!isStreaming && (() => {
-        const chips = getAnswerChips(env?.flow, env?.missing ?? []);
-        if (!chips || chips.options.length === 0) return null;
-        return (
-          <Box
-            sx={{
-              padding: "10px 18px 4px",
-              borderTop: `1px solid ${foto.surfaces.rule}`,
-              background: foto.surfaces.panel,
-            }}
-          >
+      {!isStreaming &&
+        (() => {
+          const chips = getAnswerChips(env?.flow, env?.missing ?? []);
+          if (!chips || chips.options.length === 0) return null;
+          return (
             <Box
               sx={{
-                fontSize: "9.5px",
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: foto.ink.tertiary,
-                marginBottom: "7px",
-                fontWeight: 600,
+                padding: "10px 18px 4px",
+                borderTop: `1px solid ${foto.surfaces.rule}`,
+                background: foto.surfaces.panel,
               }}
             >
-              {chips.headerLabel}
+              <Box
+                sx={{
+                  fontSize: "9.5px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.12em",
+                  color: foto.ink.tertiary,
+                  marginBottom: "7px",
+                  fontWeight: 600,
+                }}
+              >
+                {chips.headerLabel}
+              </Box>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
+                {chips.options.map((opt) => (
+                  <Box
+                    key={opt.value}
+                    component="button"
+                    type="button"
+                    onClick={() => {
+                      if (isStreaming || !online) return;
+                      dispatchGuided(opt.value);
+                    }}
+                    disabled={!online}
+                    sx={{
+                      padding: "4px 11px",
+                      borderRadius: "20px",
+                      border: `1px solid ${alpha(foto.accent.primary, 0.3)}`,
+                      background: foto.accent.soft,
+                      color: foto.accent.deep,
+                      fontSize: "11.5px",
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      transition:
+                        "background 120ms ease, color 120ms ease, border-color 120ms ease",
+                      "&:hover": {
+                        background: foto.accent.primary,
+                        color: foto.ink.inverse,
+                        borderColor: "transparent",
+                      },
+                      "&:disabled": {
+                        opacity: 0.45,
+                        cursor: "not-allowed",
+                        "&:hover": {
+                          background: foto.accent.soft,
+                          color: foto.accent.deep,
+                          borderColor: alpha(foto.accent.primary, 0.3),
+                        },
+                      },
+                      "&:focus-visible": {
+                        outline: "none",
+                        boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+                      },
+                    }}
+                  >
+                    {opt.label}
+                  </Box>
+                ))}
+              </Box>
             </Box>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
-              {chips.options.map((opt) => (
-                <Box
-                  key={opt.value}
-                  component="button"
-                  type="button"
-                  onClick={() => {
-                    if (isStreaming || !online) return;
-                    dispatchGuided(opt.value);
-                  }}
-                  disabled={!online}
-                  sx={{
-                    padding: "4px 11px",
-                    borderRadius: "20px",
-                    border: `1px solid ${alpha(foto.accent.primary, 0.3)}`,
-                    background: foto.accent.soft,
-                    color: foto.accent.deep,
-                    fontSize: "11.5px",
-                    fontWeight: 500,
-                    cursor: "pointer",
-                    transition: "background 120ms ease, color 120ms ease, border-color 120ms ease",
-                    "&:hover": {
-                      background: foto.accent.primary,
-                      color: foto.ink.inverse,
-                      borderColor: "transparent",
-                    },
-                    "&:disabled": {
-                      opacity: 0.45,
-                      cursor: "not-allowed",
-                      "&:hover": { background: foto.accent.soft, color: foto.accent.deep, borderColor: alpha(foto.accent.primary, 0.3) },
-                    },
-                    "&:focus-visible": {
-                      outline: "none",
-                      boxShadow: `0 0 0 3px ${foto.accent.glow}`,
-                    },
-                  }}
-                >
-                  {opt.label}
-                </Box>
-              ))}
-            </Box>
-          </Box>
-        );
-      })()}
+          );
+        })()}
 
       {/* Composer */}
       <Box

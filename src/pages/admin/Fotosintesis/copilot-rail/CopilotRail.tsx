@@ -58,7 +58,12 @@ export function CopilotRail() {
   const isStaff = useIsStaff();
   const { open, mode, width, openRail, closeRail, setWidth } = useCopilotRail();
 
-  const visible = isStaff && onBackOffice(location.pathname);
+  // Hidden on workbench routes — there the conversation IS the right pane, so
+  // the ambient rail would be a second, conflicting Fotosynthia.
+  const visible =
+    isStaff &&
+    onBackOffice(location.pathname) &&
+    !location.pathname.includes("/admin/fotosintesis/copilot/");
   const docked = mode === "docked";
   const pushing = visible && docked && open;
 

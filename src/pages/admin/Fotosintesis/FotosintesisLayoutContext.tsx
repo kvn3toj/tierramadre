@@ -65,6 +65,13 @@ export interface FotosintesisLayoutContextValue {
     targetPath: string,
   ) => void;
   /**
+   * Like {@link openDraftForm} but does NOT navigate — seeds the bus and bumps
+   * `draftNonce` in place. The workbench uses it to live-push the conversation's
+   * accumulating draft into the already-mounted embedded form on each AI turn,
+   * without polluting history.
+   */
+  seedDraftForm: (flow: GuidedFlow, data: GuidedDraft) => void;
+  /**
    * One-shot read of a pending draft for `flow`. Returns null if none is
    * pending (or it targets another flow), and clears it so it seeds only once.
    */

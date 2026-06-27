@@ -121,7 +121,15 @@ function formatCop(value: number | undefined | null): string {
  *
  * Handoff §4.6. Visual source: docs/previews/fotosintesis-v2/venta-kardex.html
  */
-export default function FotosintesisVentaPage() {
+/**
+ * @param embedded When true, the page renders as the workbench canvas: it drops
+ *   its own TicketHeader + page width cap (the workbench owns the header/stepper)
+ *   and fills its container. All capture + the real Kardex/certificate commit
+ *   behaviour is unchanged — the workbench live-seeds it through the draft bus.
+ */
+export default function FotosintesisVentaPage({
+  embedded = false,
+}: { embedded?: boolean } = {}) {
   const foto = getFoto("light");
   const navigate = useNavigate();
   const { saleId } = useParams();
@@ -920,36 +928,38 @@ export default function FotosintesisVentaPage() {
       sx={{
         background: foto.surfaces.canvas,
         color: foto.ink.primary,
-        minHeight: "calc(100vh - 56px)",
+        minHeight: embedded ? "100%" : "calc(100vh - 56px)",
       }}
     >
-      <TicketHeader
-        id={isReadView ? saleId! : peekedSaleId}
-        kind="sale"
-        meta={[
-          {
-            label: "Fecha",
-            value: new Date().toLocaleDateString("es-CO", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            }),
-          },
-          {
-            label: "Operador",
-            value: user?.givenName || user?.name?.split(" ")[0] || "Operador",
-          },
-        ]}
-        rightSlot={
-          <StepPills
-            steps={[
-              { label: "Comprador", state: stepBuyer },
-              { label: "Producto", state: stepProduct },
-              { label: "Pago + Kardex", state: stepPay },
-            ]}
-          />
-        }
-      />
+      {!embedded && (
+        <TicketHeader
+          id={isReadView ? saleId! : peekedSaleId}
+          kind="sale"
+          meta={[
+            {
+              label: "Fecha",
+              value: new Date().toLocaleDateString("es-CO", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              }),
+            },
+            {
+              label: "Operador",
+              value: user?.givenName || user?.name?.split(" ")[0] || "Operador",
+            },
+          ]}
+          rightSlot={
+            <StepPills
+              steps={[
+                { label: "Comprador", state: stepBuyer },
+                { label: "Producto", state: stepProduct },
+                { label: "Pago + Kardex", state: stepPay },
+              ]}
+            />
+          }
+        />
+      )}
 
       <Box
         sx={{
@@ -959,9 +969,9 @@ export default function FotosintesisVentaPage() {
             lg: "minmax(0, 1fr) minmax(380px, 460px)",
           },
           gap: 0,
-          maxWidth: 1320,
+          maxWidth: embedded ? "none" : 1320,
           margin: "0 auto",
-          minHeight: "calc(100vh - 56px - 110px)",
+          minHeight: embedded ? 0 : "calc(100vh - 56px - 110px)",
         }}
       >
         {/* ───── LEFT pane (form) ───── */}

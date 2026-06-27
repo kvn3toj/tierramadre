@@ -57,7 +57,7 @@ interface GuidedSendArgs extends SendArgs {
   accessLevel?: string;
 }
 
-interface UseFotosynthiaChatResult {
+export interface UseFotosynthiaChatResult {
   threadId: string;
   messages: ChatMessage[];
   isStreaming: boolean;
@@ -75,6 +75,24 @@ interface UseFotosynthiaChatResult {
   clearEnvelope: () => void;
   reset: () => void;
   cancel: () => void;
+  /**
+   * The accumulated guided draft (slots), the single source of truth shared
+   * with the workbench canvas. Persisted across reloads.
+   */
+  priorDraft: GuidedDraft | undefined;
+  /** The locked-in flow so far. */
+  flow: GuidedFlow | undefined;
+  /**
+   * Merge a manual canvas edit into the accumulated draft. Auto-persists and
+   * rides the next `sendGuided` (the server re-hardens). `origin` is reserved
+   * for future provenance/merge policy and currently unused.
+   */
+  patchDraft: (patch: GuidedDraft, origin?: "human" | "copilot") => void;
+  /**
+   * Keys filled by the most recent guided turn — drives the workbench's
+   * field-fill highlight. Cleared ~1.2s after each turn.
+   */
+  recentlyFilledKeys: string[];
 }
 
 const MAX_HISTORY = 30;
@@ -103,7 +121,14 @@ function loadState(initialRoute: string): ThreadState {
     if (raw) {
       const parsed = JSON.parse(raw) as ThreadState;
       if (parsed.threadId && Array.isArray(parsed.messages)) {
-        return parsed;
+        // A persisted `streaming:true` bubble (tab closed mid-turn) would show
+        // perpetual typing dots on reload — clear it here.
+        return {
+          ...parsed,
+          messages: parsed.messages.map((m) =>
+            m.streaming ? { ...m, streaming: false } : m,
+          ),
+        };
       }
     }
   } catch {
@@ -151,6 +176,7 @@ export function useFotosynthiaChat(
   const [latestEnvelope, setLatestEnvelope] = useState<GuidedEnvelope | null>(
     null,
   );
+  const [recentlyFilledKeys, setRecentlyFilledKeys] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   /** Args of the last guided turn — replayed verbatim by `retryLast`. */
   const lastGuidedArgsRef = useRef<GuidedSendArgs | null>(null);
@@ -158,6 +184,34 @@ export function useFotosynthiaChat(
   useEffect(() => {
     persistState(state);
   }, [state]);
+
+  // Abort any in-flight request if the hook unmounts mid-turn (e.g. navigating
+  // away from the workbench) — otherwise the response races a dead component.
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+      abortRef.current = null;
+    };
+  }, []);
+
+  // The field-fill highlight is a one-shot pulse: clear the just-filled keys a
+  // beat after each guided turn so the canvas stops flashing.
+  useEffect(() => {
+    if (recentlyFilledKeys.length === 0) return;
+    const t = setTimeout(() => setRecentlyFilledKeys([]), 1200);
+    return () => clearTimeout(t);
+  }, [recentlyFilledKeys]);
+
+  const patchDraft = useCallback(
+    (patch: GuidedDraft, _origin?: "human" | "copilot") => {
+      void _origin; // reserved for future provenance/merge policy
+      setState((prev) => ({
+        ...prev,
+        priorDraft: { ...(prev.priorDraft ?? {}), ...patch },
+      }));
+    },
+    [],
+  );
 
   const reset = useCallback(() => {
     abortRef.current?.abort();
@@ -387,6 +441,16 @@ export function useFotosynthiaChat(
 
         const envelope = (await response.json()) as GuidedEnvelope;
         setLatestEnvelope(envelope);
+        // Diff the new draft against the pre-turn draft (closure value) so the
+        // canvas can flash exactly the fields this turn filled or changed.
+        const prevDraft = (state.priorDraft ?? {}) as GuidedDraft;
+        const nextDraft = (envelope.draft ?? {}) as GuidedDraft;
+        setRecentlyFilledKeys(
+          Object.keys(nextDraft).filter(
+            (k) =>
+              JSON.stringify(nextDraft[k]) !== JSON.stringify(prevDraft[k]),
+          ),
+        );
         setState((prev) => ({
           ...prev,
           flow: envelope.flow,
@@ -521,17 +585,25 @@ export function useFotosynthiaChat(
       clearEnvelope,
       reset,
       cancel,
+      priorDraft: state.priorDraft,
+      flow: state.flow,
+      patchDraft,
+      recentlyFilledKeys,
     }),
     [
       cancel,
       clearEnvelope,
       isStreaming,
       latestEnvelope,
+      patchDraft,
+      recentlyFilledKeys,
       reset,
       retryLast,
       send,
       sendGuided,
+      state.flow,
       state.messages,
+      state.priorDraft,
       state.threadId,
     ],
   );
