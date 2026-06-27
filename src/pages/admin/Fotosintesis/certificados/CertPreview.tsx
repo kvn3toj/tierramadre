@@ -194,30 +194,50 @@ function PhotoField({
   guides?: boolean;
 }) {
   const t = transform;
+  const isCircle = field.shape === "circle";
   return (
     <div
       style={{
         ...fieldBoxStyle(field, guides),
-        borderRadius: field.shape === "circle" ? "50%" : undefined,
+        borderRadius: isCircle ? "50%" : undefined,
         background: "transparent",
       }}
     >
       {src ? (
-        <img
-          src={src}
-          alt=""
-          crossOrigin="anonymous"
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            display: "block",
-            transform: `translate(${t.offsetX}px, ${t.offsetY}px) scale(${t.zoom})`,
-            transformOrigin: "center center",
-          }}
-        />
+        <>
+          <img
+            src={src}
+            alt=""
+            crossOrigin="anonymous"
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+              transform: `translate(${t.offsetX}px, ${t.offsetY}px) scale(${t.zoom})`,
+              transformOrigin: "center center",
+            }}
+          />
+          {/* Recessed inner shadow: makes the photo read as set INTO the printed
+             ring (the photo is drawn over the ring's inner edge, so without this
+             it looks pasted on top). Soft + neutral so it flatters a gem or a
+             portrait without tinting either. Captured in the export node. */}
+          {isCircle ? (
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: "50%",
+                pointerEvents: "none",
+                boxShadow:
+                  "inset 0 0 20px rgba(0,0,0,.20), inset 0 0 6px rgba(0,0,0,.16)",
+              }}
+            />
+          ) : null}
+        </>
       ) : null}
     </div>
   );

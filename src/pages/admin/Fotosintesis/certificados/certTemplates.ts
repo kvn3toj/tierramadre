@@ -153,17 +153,20 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
     detailLines: ORIGEN_DETAIL_LINES,
     fields: [
       {
-        // Measured against the printed emerald ring in bg_origen.jpg (row/col
-        // pixel scan): the ring is centered at ~(650, 626) with an outer Ø~445.
-        // The photo fills just inside the ring so the ring stays visible as a
-        // border and the image is clipped to that circle (never spilling out).
+        // Circle-fit against the printed emerald ring in bg_origen.jpg (2160×3840
+        // artwork → page coords ÷2). The ring is a near-perfect circle centered at
+        // (650.4, 636.2) with inner edge Ø433.7px and outer edge Ø445.2px (page).
+        // The photo is sized to Ø435 (radius 217.5) so it covers the cream hole
+        // with a ~0.6px margin — no gap crescent — while the ~5px green stroke
+        // stays visible as a frame. (Previously y:626/Ø424 sat 10px high and 11px
+        // narrow, leaving a cream crescent at the bottom of the ring.)
         key: "photo",
         kind: "photo",
         shape: "circle",
         x: 650,
-        y: 626,
-        w: 424,
-        h: 424,
+        y: 636,
+        w: 435,
+        h: 435,
         center: true,
       },
       {
