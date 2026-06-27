@@ -128,13 +128,18 @@ function loadState(initialRoute: string): ThreadState {
     if (raw) {
       const parsed = JSON.parse(raw) as ThreadState;
       if (parsed.threadId && Array.isArray(parsed.messages)) {
-        // A persisted `streaming:true` bubble (tab closed mid-turn) would show
-        // perpetual typing dots on reload — clear it here.
+        // A persisted `streaming:true` bubble (tab closed / navigated Back
+        // mid-turn) would otherwise show perpetual typing dots on reload —
+        // clear the flag here. An assistant turn that was aborted before any
+        // bytes arrived leaves a dead EMPTY bubble (no content, no error); drop
+        // it so re-entering the workbench never shows a stranded blank turn (M5).
         return {
           ...parsed,
-          messages: parsed.messages.map((m) =>
-            m.streaming ? { ...m, streaming: false } : m,
-          ),
+          messages: parsed.messages
+            .map((m) => (m.streaming ? { ...m, streaming: false } : m))
+            .filter(
+              (m) => !(m.role === "assistant" && !m.content.trim() && !m.error),
+            ),
         };
       }
     }
@@ -185,6 +190,8 @@ export function useFotosynthiaChat(
   );
   const [recentlyFilledKeys, setRecentlyFilledKeys] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
+  /** False once the hook unmounts — guards post-await setState (M5). */
+  const mountedRef = useRef(true);
   /** Args of the last guided turn — replayed verbatim by `retryLast`. */
   const lastGuidedArgsRef = useRef<GuidedSendArgs | null>(null);
 
@@ -194,8 +201,11 @@ export function useFotosynthiaChat(
 
   // Abort any in-flight request if the hook unmounts mid-turn (e.g. navigating
   // away from the workbench) — otherwise the response races a dead component.
+  // The mounted flag lets the abort handler skip its setState cleanly.
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
+      mountedRef.current = false;
       abortRef.current?.abort();
       abortRef.current = null;
     };
@@ -375,6 +385,10 @@ export function useFotosynthiaChat(
         }));
       } catch (err) {
         if ((err as { name?: string }).name === "AbortError") {
+          // Unmounted mid-turn (navigated away) → skip the write; the bubble is
+          // never persisted as a dead empty turn (M5). Still-mounted (Stop) →
+          // surface the cancellation in place.
+          if (!mountedRef.current) return;
           setState((prev) => ({
             ...prev,
             messages: prev.messages.map((m) =>
@@ -500,6 +514,10 @@ export function useFotosynthiaChat(
         );
       } catch (err) {
         if ((err as { name?: string }).name === "AbortError") {
+          // Unmounted mid-turn (navigated Back) → skip the write so the empty
+          // assistant bubble is never persisted; loadState drops it on re-entry
+          // (M5). Still-mounted (Stop) → mark the bubble as cancelled in place.
+          if (!mountedRef.current) return;
           setState((prev) => ({
             ...prev,
             messages: prev.messages.map((m) =>
