@@ -327,13 +327,20 @@ export default function FotosintesisDirectorioPage() {
           <Box
             component="button"
             type="button"
-            onClick={() =>
-              navigate(
-                tab === "proveedores"
-                  ? "/admin/fotosintesis/copilot/provider"
-                  : "/admin/fotosintesis/copilot/client",
-              )
-            }
+            onClick={() => {
+              if (tab === "proveedores") {
+                navigate("/admin/fotosintesis/copilot/provider");
+              } else {
+                // Both embajadores + clientes land on the client canvas; thread
+                // the chosen tipo so "Nuevo embajador" opens on the embajador
+                // segment instead of the "final" default (H3).
+                navigate("/admin/fotosintesis/copilot/client", {
+                  state: {
+                    presetTipo: tab === "embajadores" ? "embajador" : "final",
+                  },
+                });
+              }
+            }}
             sx={{
               marginLeft: "auto",
               alignSelf: "center",

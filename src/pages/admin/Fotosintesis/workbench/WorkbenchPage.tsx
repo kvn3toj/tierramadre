@@ -36,6 +36,25 @@ import { ProviderClientCanvas } from "./canvas/ProviderClientCanvas";
 import { coerceGuidedItemDraft, isItemFlow } from "./canvas/itemAdapters";
 import type { GuidedDraft, GuidedFlow } from "../copilot/flowSchemas";
 
+// The lote canvas hosts the lot header AND the per-item loop, so /copilot/lote
+// (and the item-* routes) own the whole lote family; every other route owns
+// just its own flow. A conversation locked onto a flow outside the route's
+// family is a divergence the workbench realigns away from (H5).
+const LOTE_FAMILY: ReadonlySet<GuidedFlow> = new Set<GuidedFlow>([
+  "lote",
+  "item-gema",
+  "item-joya",
+  "item-insumo",
+]);
+
+function flowMatchesRoute(
+  conversationFlow: GuidedFlow,
+  routeFlow: WorkbenchFlow,
+): boolean {
+  if (conversationFlow === routeFlow) return true;
+  return LOTE_FAMILY.has(routeFlow) && LOTE_FAMILY.has(conversationFlow);
+}
+
 export default function WorkbenchPage() {
   const { flow } = useParams<{ flow: string }>();
   if (!isWorkbenchFlow(flow)) {
@@ -48,7 +67,8 @@ export default function WorkbenchPage() {
 
 function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
   const foto = getFoto("light");
-  const route = useLocation().pathname;
+  const location = useLocation();
+  const route = location.pathname;
   const chat = useFotosynthiaChat(route);
   const layout = useFotosintesisLayout();
   const navigate = useNavigate();
@@ -61,6 +81,35 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
       navigate("/admin/fotosintesis/directory");
     }, 900);
   }, [chat, navigate]);
+
+  // Flow alignment + directory intent (runs once per keyed mount).
+  //   • H5 — a fresh workbench mount whose PERSISTED conversation belongs to a
+  //     different task (e.g. a provider draft carried onto /copilot/client)
+  //     realigns to this route's flow; otherwise the canvas reads a foreign
+  //     draft and the stepper freezes with no divergence signal.
+  //   • H3 — the directory's "Nuevo embajador/cliente/proveedor" threads a
+  //     preset tipo through navigation state so the canvas opens on the correct
+  //     segmented value instead of the "final" default.
+  const alignedRef = useRef(false);
+  useEffect(() => {
+    if (alignedRef.current) return;
+    alignedRef.current = true;
+
+    const conversationFlow = chat.flow;
+    const diverged =
+      conversationFlow != null && !flowMatchesRoute(conversationFlow, flow);
+    if (diverged) chat.reset();
+
+    const presetTipo = (location.state as { presetTipo?: string } | null)
+      ?.presetTipo;
+    if (presetTipo && (flow === "client" || flow === "provider")) {
+      // Applied after any divergence reset (batched): the fresh draft opens on
+      // the chosen tipo.
+      chat.patchDraft({ tipo: presetTipo });
+    }
+    // Mount-only realignment — intentionally not re-run on dependency changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Live-seed the embedded canvas through the draft bus whenever the
   // conversation accumulates a new slot. Guarded by a value signature so it
@@ -126,7 +175,12 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
         sx={{
           display: "flex",
           flexDirection: "column",
-          height: "calc(100dvh - 56px)",
+          // lg: a fixed-height two-pane cockpit (each pane scrolls internally).
+          // Below lg the two-pane model crushes the form, so the workbench
+          // becomes a natural-flow document that scrolls as one (M2); the
+          // FotosintesisLayout adds the bottom clearance for the iOS tab bar.
+          height: { lg: "calc(100dvh - 56px)" },
+          minHeight: { xs: "calc(100dvh - 56px)", lg: "auto" },
           background: foto.surfaces.canvas,
           color: foto.ink.primary,
         }}
@@ -176,36 +230,48 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
           <WorkbenchStepper flow={flow} draft={stepperDraft} />
         </Box>
 
-        {/* Body — canvas | conversation */}
+        {/* Body — canvas | conversation. lg: a 2-col grid that fills the fixed
+            height; below lg: a stacked, natural-flow column. */}
         <Box
           sx={{
-            flex: 1,
-            minHeight: 0,
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              lg: "minmax(0, 1fr) minmax(360px, 440px)",
-            },
+            flex: { lg: 1 },
+            minHeight: { lg: 0 },
+            display: { xs: "flex", lg: "grid" },
+            flexDirection: { xs: "column" },
+            gridTemplateColumns: { lg: "minmax(0, 1fr) minmax(360px, 440px)" },
           }}
         >
-          {/* Canvas (left) — each canvas owns its own scroll; direct flows pin
-              a commit bar at the bottom of the pane. */}
+          {/* Canvas (left) — at lg each canvas owns its own scroll and direct
+              flows pin a commit bar at the bottom of the pane; below lg it
+              renders at natural height inside the scrolling document. */}
           <Box
             sx={{
               minWidth: 0,
-              minHeight: 0,
+              minHeight: { lg: 0 },
               display: "flex",
               flexDirection: "column",
               borderRight: { lg: `1px solid ${foto.surfaces.rule}` },
             }}
           >
             {flow === "venta" ? (
-              <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+              <Box
+                sx={{
+                  flex: { lg: 1 },
+                  minHeight: { lg: 0 },
+                  overflowY: { lg: "auto" },
+                }}
+              >
                 <FotosintesisVentaPage embedded />
               </Box>
             ) : flow === "provider" || flow === "client" ? (
               <>
-                <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+                <Box
+                  sx={{
+                    flex: { lg: 1 },
+                    minHeight: { lg: 0 },
+                    overflowY: { lg: "auto" },
+                  }}
+                >
                   <ProviderClientCanvas />
                 </Box>
                 <WorkbenchCommitBar
@@ -219,22 +285,39 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
               // The lote canvas owns its own proven commit buttons (lots.create
               // + lotItems.create with photo/cert uploads), so — like venta —
               // it renders no separate WorkbenchCommitBar.
-              <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+              <Box
+                sx={{
+                  flex: { lg: 1 },
+                  minHeight: { lg: 0 },
+                  overflowY: { lg: "auto" },
+                }}
+              >
                 <FotosintesisCapturaLotePage embedded />
               </Box>
             ) : (
-              <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+              <Box
+                sx={{
+                  flex: { lg: 1 },
+                  minHeight: { lg: 0 },
+                  overflowY: { lg: "auto" },
+                }}
+              >
                 <PlaceholderCanvas label={flowLabel(flow)} />
               </Box>
             )}
           </Box>
 
-          {/* Conversation (right) */}
+          {/* Conversation (right). Below lg it's a fixed-height chat box so the
+              message list scrolls internally and the composer stays pinned
+              within the box (which sits in the scrolling document, clear of the
+              iOS tab bar); at lg it fills the grid column. */}
           <Box
             sx={{
               display: "flex",
-              minHeight: { xs: 480, lg: 0 },
               minWidth: 0,
+              flexShrink: { xs: 0 },
+              height: { xs: "clamp(380px, 58vh, 560px)" },
+              minHeight: { lg: 0 },
               background: foto.surfaces.canvas,
               borderTop: { xs: `1px solid ${foto.surfaces.rule}`, lg: "none" },
             }}

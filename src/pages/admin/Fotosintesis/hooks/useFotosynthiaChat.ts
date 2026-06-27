@@ -73,6 +73,13 @@ export interface UseFotosynthiaChatResult {
   latestEnvelope: GuidedEnvelope | null;
   /** Clear the guided envelope + accumulation (call after a successful hand-off). */
   clearEnvelope: () => void;
+  /**
+   * Dismiss ONLY the last envelope (its commit card) and return to editing —
+   * the accumulated `flow` + `priorDraft` are preserved, so the canvas stays
+   * populated. Use for a draft-preserving "back to edit" / Cancelar on the
+   * pre-commit card; use {@link clearEnvelope} for a true discard-everything.
+   */
+  dismissEnvelope: () => void;
   reset: () => void;
   cancel: () => void;
   /**
@@ -121,13 +128,18 @@ function loadState(initialRoute: string): ThreadState {
     if (raw) {
       const parsed = JSON.parse(raw) as ThreadState;
       if (parsed.threadId && Array.isArray(parsed.messages)) {
-        // A persisted `streaming:true` bubble (tab closed mid-turn) would show
-        // perpetual typing dots on reload — clear it here.
+        // A persisted `streaming:true` bubble (tab closed / navigated Back
+        // mid-turn) would otherwise show perpetual typing dots on reload —
+        // clear the flag here. An assistant turn that was aborted before any
+        // bytes arrived leaves a dead EMPTY bubble (no content, no error); drop
+        // it so re-entering the workbench never shows a stranded blank turn (M5).
         return {
           ...parsed,
-          messages: parsed.messages.map((m) =>
-            m.streaming ? { ...m, streaming: false } : m,
-          ),
+          messages: parsed.messages
+            .map((m) => (m.streaming ? { ...m, streaming: false } : m))
+            .filter(
+              (m) => !(m.role === "assistant" && !m.content.trim() && !m.error),
+            ),
         };
       }
     }
@@ -178,6 +190,8 @@ export function useFotosynthiaChat(
   );
   const [recentlyFilledKeys, setRecentlyFilledKeys] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
+  /** False once the hook unmounts — guards post-await setState (M5). */
+  const mountedRef = useRef(true);
   /** Args of the last guided turn — replayed verbatim by `retryLast`. */
   const lastGuidedArgsRef = useRef<GuidedSendArgs | null>(null);
 
@@ -187,8 +201,11 @@ export function useFotosynthiaChat(
 
   // Abort any in-flight request if the hook unmounts mid-turn (e.g. navigating
   // away from the workbench) — otherwise the response races a dead component.
+  // The mounted flag lets the abort handler skip its setState cleanly.
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
+      mountedRef.current = false;
       abortRef.current?.abort();
       abortRef.current = null;
     };
@@ -228,6 +245,13 @@ export function useFotosynthiaChat(
   const clearEnvelope = useCallback(() => {
     setLatestEnvelope(null);
     setState((prev) => ({ ...prev, flow: undefined, priorDraft: undefined }));
+  }, []);
+
+  // Back-to-edit: drop the commit card (envelope) but KEEP flow + priorDraft so
+  // the canvas the operator was filling stays intact (H1 — Cancelar must not
+  // wipe the captured values).
+  const dismissEnvelope = useCallback(() => {
+    setLatestEnvelope(null);
   }, []);
 
   const cancel = useCallback(() => {
@@ -361,6 +385,10 @@ export function useFotosynthiaChat(
         }));
       } catch (err) {
         if ((err as { name?: string }).name === "AbortError") {
+          // Unmounted mid-turn (navigated away) → skip the write; the bubble is
+          // never persisted as a dead empty turn (M5). Still-mounted (Stop) →
+          // surface the cancellation in place.
+          if (!mountedRef.current) return;
           setState((prev) => ({
             ...prev,
             messages: prev.messages.map((m) =>
@@ -441,35 +469,55 @@ export function useFotosynthiaChat(
 
         const envelope = (await response.json()) as GuidedEnvelope;
         setLatestEnvelope(envelope);
-        // Diff the new draft against the pre-turn draft (closure value) so the
-        // canvas can flash exactly the fields this turn filled or changed.
-        const prevDraft = (state.priorDraft ?? {}) as GuidedDraft;
-        const nextDraft = (envelope.draft ?? {}) as GuidedDraft;
+        // `sentDraft` is exactly what this turn was built on (the closure value
+        // posted to the server); `aiDraft` is the server's re-proposed draft.
+        const sentDraft = (state.priorDraft ?? {}) as GuidedDraft;
+        const aiDraft = (envelope.draft ?? {}) as GuidedDraft;
+        setState((prev) => {
+          // Human-wins merge (M1): any field the operator changed in the canvas
+          // AFTER this turn was sent — i.e. while it streamed — is re-applied on
+          // top of the AI draft, so a value typed mid-turn is never silently
+          // overwritten. `prev.priorDraft` is the latest (it already folded in
+          // those mid-flight patchDraft edits); `sentDraft` is the baseline.
+          const latest = (prev.priorDraft ?? {}) as GuidedDraft;
+          const merged: GuidedDraft = { ...aiDraft };
+          for (const key of Object.keys(latest)) {
+            if (
+              JSON.stringify(latest[key]) !== JSON.stringify(sentDraft[key])
+            ) {
+              merged[key] = latest[key];
+            }
+          }
+          return {
+            ...prev,
+            flow: envelope.flow,
+            // Persist the accumulated draft so the next turn continues from it.
+            priorDraft: merged,
+            messages: prev.messages.map((m) =>
+              m.id === assistantId
+                ? {
+                    ...m,
+                    streaming: false,
+                    error: undefined,
+                    content: envelope.say,
+                  }
+                : m,
+            ),
+          };
+        });
+        // Flash the keys the AI actually changed this turn (vs. what was sent)
+        // so the canvas highlights the freshly-filled slots.
         setRecentlyFilledKeys(
-          Object.keys(nextDraft).filter(
-            (k) =>
-              JSON.stringify(nextDraft[k]) !== JSON.stringify(prevDraft[k]),
+          Object.keys(aiDraft).filter(
+            (k) => JSON.stringify(aiDraft[k]) !== JSON.stringify(sentDraft[k]),
           ),
         );
-        setState((prev) => ({
-          ...prev,
-          flow: envelope.flow,
-          // Persist the accumulated draft so the next turn continues from it
-          // (batch-edit carries no merge — the model re-proposes the full list).
-          priorDraft: envelope.draft,
-          messages: prev.messages.map((m) =>
-            m.id === assistantId
-              ? {
-                  ...m,
-                  streaming: false,
-                  error: undefined,
-                  content: envelope.say,
-                }
-              : m,
-          ),
-        }));
       } catch (err) {
         if ((err as { name?: string }).name === "AbortError") {
+          // Unmounted mid-turn (navigated Back) → skip the write so the empty
+          // assistant bubble is never persisted; loadState drops it on re-entry
+          // (M5). Still-mounted (Stop) → mark the bubble as cancelled in place.
+          if (!mountedRef.current) return;
           setState((prev) => ({
             ...prev,
             messages: prev.messages.map((m) =>
@@ -583,6 +631,7 @@ export function useFotosynthiaChat(
       retryLast,
       latestEnvelope,
       clearEnvelope,
+      dismissEnvelope,
       reset,
       cancel,
       priorDraft: state.priorDraft,
@@ -593,6 +642,7 @@ export function useFotosynthiaChat(
     [
       cancel,
       clearEnvelope,
+      dismissEnvelope,
       isStreaming,
       latestEnvelope,
       patchDraft,

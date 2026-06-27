@@ -224,9 +224,13 @@ export default function FotosintesisLayout() {
             // Reserve room at the bottom so the global iOS tab bar never sits on
             // top of page content when scrolled to the end (the copilot is now a
             // docked/overlay rail, not a floating FAB). QA flagged this at every
-            // viewport. The workbench fills its own height (its commit bar owns
-            // the bottom), so it drops this reservation.
-            paddingBottom: inWorkbench ? 0 : { xs: "180px", md: "56px" },
+            // viewport. At lg the workbench fills its own fixed height (its commit
+            // bar owns the bottom) so it drops the reservation; below lg the
+            // workbench is a scrolling document and needs the tab-bar clearance so
+            // its composer stays reachable (M2).
+            paddingBottom: inWorkbench
+              ? { xs: "calc(96px + env(safe-area-inset-bottom, 0px))", lg: 0 }
+              : { xs: "180px", md: "56px" },
           }}
         >
           <Outlet />

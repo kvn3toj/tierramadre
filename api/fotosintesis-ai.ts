@@ -58,8 +58,13 @@ interface SheetItem {
 }
 
 interface SheetCache {
-  fotoItems: SheetItem[];   // from FOTOSINTESIS_SPREADSHEET_ID Inventario
-  treasureItems: SheetItem[]; // from legacy SPREADSHEET_ID Inventario (available only)
+  fotoItems: SheetItem[]; // from FOTOSINTESIS_SPREADSHEET_ID Inventario
+  treasureItems: SheetItem[]; // from legacy SPREADSHEET_ID Inventario (ALL items, with estado)
+  // Precomputed ONCE per cache cycle (not per request) so we never re-format
+  // the whole catalog on every chat turn — the sheet read is the only cost,
+  // and it is bounded to once per TTL per warm instance (NOT a Convex read).
+  catalogContext: string; // both inventories, for the advisory/chat path
+  treasureSummary: string; // treasure-only, for the guided/capture path
   at: number;
 }
 
@@ -90,15 +95,16 @@ async function loadSheetCache(): Promise<SheetCache> {
       if (rows.length <= 1) return [];
       // Detect column positions from header row
       const header = (rows[0] ?? []).map((c) =>
-        String(c ?? "").toLowerCase().trim(),
+        String(c ?? "")
+          .toLowerCase()
+          .trim(),
       );
       const colItem = header.findIndex((h) => h === "item");
-      const colNombre = header.findIndex(
-        (h) => h === "nombre" || h === "name",
-      );
+      const colNombre = header.findIndex((h) => h === "nombre" || h === "name");
       // estado may be "estado", "o" header, etc. — look broadly
       const colEstado = header.findIndex(
-        (h) => h === "estado" || h === "estado asesor" || h === "o" || h === "q",
+        (h) =>
+          h === "estado" || h === "estado asesor" || h === "o" || h === "q",
       );
       const colLote = header.findIndex(
         (h) => h === "loteid" || h === "lote id" || h === "lote",
@@ -110,8 +116,10 @@ async function loadSheetCache(): Promise<SheetCache> {
         const row = rows[i] ?? [];
         const itemId = String(row[colItem] ?? "").trim();
         if (!itemId) continue;
-        const nombre = colNombre >= 0 ? String(row[colNombre] ?? "").trim() : "";
-        const estado = colEstado >= 0 ? String(row[colEstado] ?? "").trim() : "";
+        const nombre =
+          colNombre >= 0 ? String(row[colNombre] ?? "").trim() : "";
+        const estado =
+          colEstado >= 0 ? String(row[colEstado] ?? "").trim() : "";
         const loteId = colLote >= 0 ? String(row[colLote] ?? "").trim() : "";
         if (availableOnly) {
           const lower = estado.toLowerCase();
@@ -138,10 +146,18 @@ async function loadSheetCache(): Promise<SheetCache> {
 
   const [fotoItems, treasureItems] = await Promise.all([
     readInventario(FOTOSINTESIS_SPREADSHEET_ID, false),
-    readInventario(TREASURE_SPREADSHEET_ID, true),
+    // ALL treasure items (not just available) so the assistant has the full
+    // product catalog — the legacy inventory that precedes Fotosíntesis.
+    readInventario(TREASURE_SPREADSHEET_ID, false),
   ]);
 
-  _sheetCache = { fotoItems, treasureItems, at: now };
+  _sheetCache = {
+    fotoItems,
+    treasureItems,
+    catalogContext: buildCatalogContext(fotoItems, treasureItems),
+    treasureSummary: buildTreasureSummary(treasureItems),
+    at: now,
+  };
   return _sheetCache;
 }
 
@@ -164,6 +180,64 @@ async function enrichCandidateItems(
   } catch {
     return base;
   }
+}
+
+/**
+ * Compact one-line-per-item rendering of a sheet inventory, bounded by a char
+ * cap (keeps whole items; the caller appends an honest "mostrando N de M" when
+ * truncated). Line shape: "<itemId> <nombre> [<estado>]" — enough for the model
+ * to reference any item by number/name and know its availability, cheaply.
+ */
+function formatSheetItems(
+  items: SheetItem[],
+  charCap: number,
+): { body: string; shown: number; total: number } {
+  let body = "";
+  let shown = 0;
+  for (const i of items) {
+    const line =
+      `${i.itemId} ${i.nombre}${i.estado ? ` [${i.estado}]` : ""}`.trim();
+    if (body.length + line.length + 3 > charCap) break;
+    body += (body ? " · " : "") + line;
+    shown++;
+  }
+  return { body, shown, total: items.length };
+}
+
+/**
+ * Full two-inventory product context for the advisory/chat path: the
+ * Fotosíntesis Inventario + the legacy Treasure catalog (items that exist
+ * BEFORE they enter Fotosíntesis), every item with its estado. Returns "" when
+ * the cache is unavailable so the chat degrades gracefully.
+ */
+function buildCatalogContext(
+  fotoItems: SheetItem[],
+  treasureItems: SheetItem[],
+): string {
+  const parts: string[] = [];
+  if (fotoItems.length > 0) {
+    const f = formatSheetItems(fotoItems, 8000);
+    const note =
+      f.shown < f.total ? ` (mostrando ${f.shown} de ${f.total})` : "";
+    parts.push(`Inventario Fotosíntesis (${f.total} ítems${note}): ${f.body}`);
+  }
+  if (treasureItems.length > 0) {
+    const t = formatSheetItems(treasureItems, 12000);
+    const note =
+      t.shown < t.total ? ` (mostrando ${t.shown} de ${t.total})` : "";
+    parts.push(
+      `Catálogo Treasure — inventario completo previo a Fotosíntesis (${t.total} ítems${note}, con estado): ${t.body}`,
+    );
+  }
+  return parts.join("\n");
+}
+
+/** Treasure-only summary for the guided/capture context (every item + estado). */
+function buildTreasureSummary(treasureItems: SheetItem[]): string {
+  if (treasureItems.length === 0) return "";
+  const t = formatSheetItems(treasureItems, 12000);
+  const note = t.shown < t.total ? ` (mostrando ${t.shown} de ${t.total})` : "";
+  return `${t.total} ítems${note}: ${t.body}`;
 }
 
 const ACCESS_LEVELS = [
@@ -200,8 +274,7 @@ function extractServerParams(loteContext: unknown): Record<string, string> {
 // structured JSON extraction — an 8B / Flash-Lite class model is plenty and
 // has far higher free-tier limits than the old 70B / full-Flash pair, which is
 // what was tripping the "modelo saturado" 429s. Override per-env if needed.
-const DEFAULT_MODEL =
-  process.env.GROQ_MODEL?.trim() || "llama-3.1-8b-instant";
+const DEFAULT_MODEL = process.env.GROQ_MODEL?.trim() || "llama-3.1-8b-instant";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GATEWAY_URL = "https://ai-gateway.vercel.sh/v1/chat/completions";
 const DEFAULT_GATEWAY_MODEL = "google/gemini-2.5-flash-lite";
@@ -373,12 +446,21 @@ Reglas:
 
 Estás dentro de un drawer flotante en /admin/fotosintesis/*; Maritza (administradora del taller) es tu interlocutora principal.`;
 
-function snapshotToContext(snapshot: unknown, route: string): string {
+function snapshotToContext(
+  snapshot: unknown,
+  route: string,
+  catalog?: string,
+): string {
   return [
     `Contexto vivo del atelier (generado ahora; usa cifras tal cual):`,
     `Ruta actual: ${route}`,
+    catalog
+      ? `Inventario completo (todos los productos e ítems; úsalo para responder sobre cualquier producto por número o nombre):\n${catalog}`
+      : "",
     `Snapshot JSON: ${JSON.stringify(snapshot)}`,
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function sseWrite(res: VercelResponse, data: Record<string, unknown>): void {
@@ -600,7 +682,9 @@ function snapshotToGuidedContext(
     Array.isArray(candidateItems) && candidateItems.length > 0
       ? `Ítems del inventario Fotosíntesis (para resolver referencias por número/nombre; da solo el itemHint y el sistema resuelve): ${JSON.stringify(candidateItems).slice(0, 3000)}`
       : "",
-    treasureSummary ? `Catálogo Treasure Browser (ítems disponibles para venta): ${treasureSummary}` : "",
+    treasureSummary
+      ? `Catálogo Treasure (inventario completo previo a Fotosíntesis — todos los ítems con su estado): ${treasureSummary}`
+      : "",
     // `snapshot` is undefined when the client posts before the Convex workspace
     // query resolves (or with Convex offline). JSON.stringify(undefined) is
     // undefined, not a string — guard with `?? null` so `.slice` never throws.
@@ -635,19 +719,13 @@ async function buildGuidedEnvelope(args: {
 }): Promise<GuidedEnvelope> {
   // Enrich candidateItems with the full sheet catalog (fills gaps beyond the
   // Convex ITEM_SCAN_CAP — old items, not-yet-synced rows, etc.).
-  // Also fetch treasure browser available items for sale context.
+  // The treasure summary (full pre-Fotosíntesis catalog) is precomputed in the
+  // 5-min sheet cache, so this is a cache hit on a warm instance, not a re-read.
   const [enrichedItems, sheetCache] = await Promise.all([
     enrichCandidateItems(args.candidateItems),
     loadSheetCache().catch(() => null),
   ]);
-  const treasureSummary = sheetCache && sheetCache.treasureItems.length > 0
-    ? `${sheetCache.treasureItems.length} disponibles: ${JSON.stringify(
-        sheetCache.treasureItems.slice(0, 40).map((i) => ({
-          id: i.itemId,
-          nombre: i.nombre,
-        })),
-      ).slice(0, 1000)}`
-    : undefined;
+  const treasureSummary = sheetCache?.treasureSummary || undefined;
 
   const fullMessages = [
     { role: "system", content: buildGuidedSystemPrompt(args.accessLevel) },
@@ -723,7 +801,10 @@ async function buildGuidedEnvelope(args: {
         choices?: Array<{ message?: { content?: string } }>;
       };
       rawText = data.choices?.[0]?.message?.content ?? "";
-      parsed = JSON.parse(extractJsonObject(rawText)) as Record<string, unknown>;
+      parsed = JSON.parse(extractJsonObject(rawText)) as Record<
+        string,
+        unknown
+      >;
       break; // got a usable answer
     } catch {
       // Network failure or a non-JSON reply. If the model answered with prose
@@ -927,10 +1008,19 @@ export default async function handler(
     advisoryTargets[0] = { ...advisoryTargets[0], model: advisoryOverride };
   }
 
+  // Full product context (both inventories) so advisory Q&A knows every item.
+  // Precomputed in the 5-min sheet cache → a cache hit on a warm instance, and
+  // sourced from Sheets (NOT Convex), so it spends zero Convex bandwidth.
+  const advisoryCatalog = (await loadSheetCache().catch(() => null))
+    ?.catalogContext;
+
   // Compose the prompt: persona system + live context + history.
   const fullMessages = [
     { role: "system", content: SYSTEM_PROMPT },
-    { role: "system", content: snapshotToContext(body.snapshot, route) },
+    {
+      role: "system",
+      content: snapshotToContext(body.snapshot, route, advisoryCatalog),
+    },
     ...messages.map((m) => ({
       role: m.role === "assistant" ? "assistant" : "user",
       content: String(m.content ?? "").slice(0, 4000),
@@ -949,11 +1039,11 @@ export default async function handler(
     (res as { flushHeaders: () => void }).flushHeaders();
   }
 
-  const { fullText, finishReason, model: answeredModel } = await streamChat(
-    res,
-    advisoryTargets,
-    fullMessages,
-  );
+  const {
+    fullText,
+    finishReason,
+    model: answeredModel,
+  } = await streamChat(res, advisoryTargets, fullMessages);
 
   sseWrite(res, { done: true, model: answeredModel, finishReason });
   res.end();
