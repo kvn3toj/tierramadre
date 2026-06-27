@@ -11,11 +11,19 @@
  * rendered PDF background and overlays only the variable fields (SPEC §1).
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Autocomplete,
   Box,
   Button,
+  CircularProgress,
   TextField,
   Typography,
 } from "@mui/material";
@@ -26,6 +34,7 @@ import {
   Image as ImageIcon,
   Lock,
   Printer,
+  Ruler,
   Save,
   Sprout,
   Upload,
@@ -118,6 +127,8 @@ export default function CertGeneratorPage() {
   const stageRef = useRef<HTMLDivElement>(null);
   const [fitScale, setFitScale] = useState(0.4);
   const [zoom, setZoom] = useState(1); // multiplier on top of fit
+  const [guides, setGuides] = useState(false); // coordinate QA overlay
+  const tabRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   // Only real, individual pieces (exclude grouped lote/sublote cards).
   const pieces = useMemo(
@@ -132,6 +143,30 @@ export default function CertGeneratorPage() {
       return embajador as unknown as Record<string, string>;
     return carnet as unknown as Record<string, string>;
   }, [type, origen, embajador, carnet]);
+
+  // Nothing entered yet → show a guidance hint over the artwork instead of an
+  // empty-looking certificate (UX: empty states).
+  const isEmptyDraft = !activeDraft.name && !activeDraft.photo;
+
+  // Roving keyboard navigation across the type tabs (a11y: tablist pattern).
+  const onTabKeyDown = useCallback(
+    (e: React.KeyboardEvent, index: number) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        setType(CERT_TYPE_ORDER[index]);
+        return;
+      }
+      let next = index;
+      if (e.key === "ArrowRight") next = (index + 1) % CERT_TYPE_ORDER.length;
+      else if (e.key === "ArrowLeft")
+        next = (index - 1 + CERT_TYPE_ORDER.length) % CERT_TYPE_ORDER.length;
+      else return;
+      e.preventDefault();
+      setType(CERT_TYPE_ORDER[next]);
+      tabRefs.current[next]?.focus();
+    },
+    [],
+  );
 
   // ── fit-to-viewport ──────────────────────────────────────────────────────
   const recomputeFit = useCallback(() => {
@@ -305,31 +340,47 @@ export default function CertGeneratorPage() {
       }}
     >
       {/* TABS */}
-      <Box sx={{ display: "flex", gap: "8px", px: 2, pt: 1.5, pb: 0.5 }}>
-        {CERT_TYPE_ORDER.map((id) => {
+      <Box
+        role="tablist"
+        aria-label="Tipo de certificado"
+        sx={{ display: "flex", gap: "8px", px: 2, pt: 1.5, pb: 0.5 }}
+      >
+        {CERT_TYPE_ORDER.map((id, index) => {
           const tpl = CERT_TEMPLATES[id];
           const active = id === type;
           return (
             <Box
               key={id}
+              ref={(el: HTMLDivElement | null) => {
+                tabRefs.current[index] = el;
+              }}
               role="tab"
               aria-selected={active}
+              tabIndex={active ? 0 : -1}
               onClick={() => setType(id)}
+              onKeyDown={(e) => onTabKeyDown(e, index)}
               sx={{
                 display: "flex",
                 alignItems: "center",
                 gap: 1,
                 px: 1.75,
                 py: 1,
+                minHeight: 40,
                 borderRadius: "10px",
                 cursor: "pointer",
+                userSelect: "none",
                 fontSize: 13,
                 fontWeight: 600,
                 color: active ? foto.ink.primary : foto.ink.tertiary,
                 background: active ? foto.surfaces.inset : "transparent",
                 border: `1px solid ${active ? foto.surfaces.edgeStrong : "transparent"}`,
-                transition: "background 120ms ease",
+                transition: "background 120ms ease, color 120ms ease",
+                "@media (prefers-reduced-motion: reduce)": { transition: "none" },
                 "&:hover": { background: foto.surfaces.inset },
+                "&:focus-visible": {
+                  outline: "none",
+                  boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+                },
               }}
             >
               <Box
@@ -431,10 +482,14 @@ export default function CertGeneratorPage() {
                 py: 0.25,
               }}
             >
-              <IconBtn onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))}>
+              <IconBtn
+                label="Alejar"
+                onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))}
+              >
                 <ZoomOut size={15} />
               </IconBtn>
               <Typography
+                aria-live="polite"
                 sx={{
                   fontSize: 11,
                   color: foto.ink.tertiary,
@@ -444,13 +499,23 @@ export default function CertGeneratorPage() {
               >
                 {Math.round(scale * 100)}%
               </Typography>
-              <IconBtn onClick={() => setZoom((z) => Math.min(3, z + 0.1))}>
+              <IconBtn
+                label="Acercar"
+                onClick={() => setZoom((z) => Math.min(3, z + 0.1))}
+              >
                 <ZoomIn size={15} />
               </IconBtn>
-              <IconBtn onClick={() => setZoom(1)} title="Ajustar">
+              <IconBtn label="Ajustar a la pantalla" onClick={() => setZoom(1)}>
                 <Maximize2 size={15} />
               </IconBtn>
             </Box>
+            <IconBtn
+              label="Mostrar guías de coordenadas"
+              active={guides}
+              onClick={() => setGuides((g) => !g)}
+            >
+              <Ruler size={15} />
+            </IconBtn>
             {type === "origen" && (
               <Button
                 onClick={handleSaveToProduct}
@@ -472,7 +537,13 @@ export default function CertGeneratorPage() {
             <Button
               onClick={handlePng}
               disabled={busy}
-              startIcon={<Download size={15} />}
+              startIcon={
+                busy ? (
+                  <CircularProgress size={14} sx={{ color: "inherit" }} />
+                ) : (
+                  <Download size={15} />
+                )
+              }
               aria-label="Descargar el certificado como PNG"
               sx={ghostBtnSx}
             >
@@ -481,11 +552,17 @@ export default function CertGeneratorPage() {
             <Button
               onClick={handlePdf}
               disabled={busy}
-              startIcon={<Printer size={15} />}
+              startIcon={
+                busy ? (
+                  <CircularProgress size={14} sx={{ color: "inherit" }} />
+                ) : (
+                  <Printer size={15} />
+                )
+              }
               aria-label="Imprimir o exportar el certificado como PDF"
               sx={primaryBtnSx}
             >
-              Imprimir / PDF
+              {busy ? "Generando…" : "Imprimir / PDF"}
             </Button>
           </Box>
 
@@ -493,6 +570,7 @@ export default function CertGeneratorPage() {
           <Box
             ref={stageRef}
             sx={{
+              position: "relative",
               flex: 1,
               overflow: "auto",
               display: "grid",
@@ -507,7 +585,36 @@ export default function CertGeneratorPage() {
               type={type}
               data={activeDraft}
               scale={scale}
+              guides={guides}
             />
+            {isEmptyDraft && (
+              <Box
+                aria-hidden
+                sx={{
+                  position: "absolute",
+                  bottom: 16,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  px: 1.75,
+                  py: 1,
+                  borderRadius: "10px",
+                  background: foto.surfaces.panel,
+                  border: `1px solid ${foto.surfaces.edge}`,
+                  boxShadow: "0 6px 20px rgba(0,0,0,.08)",
+                  fontSize: 12,
+                  color: foto.ink.secondary,
+                  pointerEvents: "none",
+                  maxWidth: "90%",
+                }}
+              >
+                <Award size={15} strokeWidth={2} style={{ flexShrink: 0 }} />
+                Elegí un registro en el panel izquierdo para autocompletar el
+                certificado, o escribí los campos a mano.
+              </Box>
+            )}
           </Box>
         </Box>
       </Box>
@@ -560,31 +667,42 @@ const saveBtnSx = {
 function IconBtn({
   children,
   onClick,
-  title,
+  label,
+  active = false,
 }: {
   children: React.ReactNode;
   onClick: () => void;
-  title?: string;
+  /** accessible name for the icon-only button (a11y) + native tooltip */
+  label: string;
+  active?: boolean;
 }) {
   return (
     <Box
       component="button"
       type="button"
       onClick={onClick}
-      title={title}
+      title={label}
+      aria-label={label}
+      aria-pressed={active}
       sx={{
-        width: 26,
-        height: 26,
+        width: 30,
+        height: 30,
         display: "grid",
         placeItems: "center",
         border: "none",
-        background: "transparent",
+        background: active ? foto.accent.soft : "transparent",
         borderRadius: "6px",
         cursor: "pointer",
-        color: foto.ink.tertiary,
+        color: active ? foto.accent.deep : foto.ink.tertiary,
+        transition: "background 120ms ease, color 120ms ease",
+        "@media (prefers-reduced-motion: reduce)": { transition: "none" },
         "&:hover": {
           background: foto.surfaces.inset2,
           color: foto.ink.primary,
+        },
+        "&:focus-visible": {
+          outline: "none",
+          boxShadow: `0 0 0 3px ${foto.accent.glow}`,
         },
       }}
     >
@@ -628,10 +746,14 @@ function Field({
   onChange: (v: string) => void;
   placeholder?: string;
 }) {
+  const inputId = useId();
   return (
     <Box sx={{ mb: 1.5 }}>
       <Typography
+        component="label"
+        htmlFor={inputId}
         sx={{
+          display: "block",
           fontSize: 11,
           fontWeight: 600,
           textTransform: "uppercase",
@@ -643,6 +765,7 @@ function Field({
         {label}
       </Typography>
       <TextField
+        id={inputId}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
@@ -715,6 +838,7 @@ function PhotoInput({
         value={value.startsWith("data:") ? "(imagen subida)" : value}
         onChange={(e) => onUrl(e.target.value)}
         placeholder="…o URL de imagen"
+        aria-label="URL de la imagen"
         size="small"
         fullWidth
         sx={{ mt: 1 }}
@@ -794,6 +918,10 @@ function OrigenForm({
             {...params}
             size="small"
             placeholder="⚡ Autocompletar desde catálogo"
+            inputProps={{
+              ...params.inputProps,
+              "aria-label": "Buscar pieza del catálogo",
+            }}
             InputProps={{ ...params.InputProps, sx: { fontSize: 13 } }}
           />
         )}
@@ -856,6 +984,10 @@ function EmbajadorForm({
             {...params}
             size="small"
             placeholder="⚡ Autocompletar desde usuarios"
+            inputProps={{
+              ...params.inputProps,
+              "aria-label": "Buscar usuario",
+            }}
             InputProps={{ ...params.InputProps, sx: { fontSize: 13 } }}
           />
         )}
@@ -905,6 +1037,10 @@ function CarnetForm({
             {...params}
             size="small"
             placeholder="⚡ Autocompletar desde usuarios"
+            inputProps={{
+              ...params.inputProps,
+              "aria-label": "Buscar usuario",
+            }}
             InputProps={{ ...params.InputProps, sx: { fontSize: 13 } }}
           />
         )}

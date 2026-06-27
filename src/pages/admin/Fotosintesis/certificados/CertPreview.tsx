@@ -28,7 +28,7 @@ export interface CertPreviewProps {
   guides?: boolean;
 }
 
-function fieldBoxStyle(f: TemplateField): React.CSSProperties {
+function fieldBoxStyle(f: TemplateField, guides = false): React.CSSProperties {
   const base: React.CSSProperties = {
     position: "absolute",
     left: f.x,
@@ -40,6 +40,10 @@ function fieldBoxStyle(f: TemplateField): React.CSSProperties {
   if (f.center) base.transform = "translate(-50%, -50%)";
   else if (f.centerX) base.transform = "translateX(-50%)";
   if (f.cover) base.background = f.cover;
+  if (guides) {
+    base.outline = "1.5px solid rgba(255,0,90,.9)";
+    base.outlineOffset = "-1px";
+  }
   if (f.font) {
     base.fontFamily = f.font.family;
     base.fontStyle = f.font.style ?? "normal";
@@ -57,17 +61,19 @@ function DetailsField({
   template,
   field,
   data,
+  guides,
 }: {
   template: CertTemplate;
   field: TemplateField;
   data: Record<string, string>;
+  guides?: boolean;
 }) {
   const lines = (template.detailLines ?? [])
     .map((dl) => ({ label: dl.label, value: (data[dl.key] ?? "").trim() }))
     .filter((l) => l.value.length > 0);
 
   return (
-    <div style={fieldBoxStyle(field)}>
+    <div style={fieldBoxStyle(field, guides)}>
       {lines.map((l) => (
         <div key={l.label}>
           <span style={{ color: field.labelColor, fontWeight: 700 }}>
@@ -84,17 +90,19 @@ function OverlayField({
   template,
   field,
   data,
+  guides,
 }: {
   template: CertTemplate;
   field: TemplateField;
   data: Record<string, string>;
+  guides?: boolean;
 }) {
   if (field.kind === "photo") {
     const src = data[field.key] || "";
     return (
       <div
         style={{
-          ...fieldBoxStyle(field),
+          ...fieldBoxStyle(field, guides),
           borderRadius: field.shape === "circle" ? "50%" : undefined,
           background: "transparent",
         }}
@@ -112,12 +120,19 @@ function OverlayField({
   }
 
   if (field.kind === "details") {
-    return <DetailsField template={template} field={field} data={data} />;
+    return (
+      <DetailsField
+        template={template}
+        field={field}
+        data={data}
+        guides={guides}
+      />
+    );
   }
 
   // text
   return (
-    <div style={fieldBoxStyle(field)}>
+    <div style={fieldBoxStyle(field, guides)}>
       <span>{data[field.key] || ""}</span>
     </div>
   );
@@ -284,16 +299,13 @@ const CertNode = forwardRef<HTMLDivElement, { type: CertTypeId; data: Record<str
           }}
         />
         {template.fields.map((f) => (
-          <div
+          <OverlayField
             key={f.key}
-            style={
-              guides
-                ? { outline: "1.5px solid rgba(255,0,90,.9)" }
-                : undefined
-            }
-          >
-            <OverlayField template={template} field={f} data={data} />
-          </div>
+            template={template}
+            field={f}
+            data={data}
+            guides={guides}
+          />
         ))}
       </div>
     );

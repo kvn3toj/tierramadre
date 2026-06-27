@@ -154,13 +154,18 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
     print: { w: 792, h: 612, orientation: "landscape" },
     fields: [
       {
+        // Photo slot re-measured against the rendered artwork: the gold-braid
+        // ring opening centers at ~(138, 275) in page space with Ø~178 — lower
+        // and larger than the spec's nominal (136,251)/Ø160. Using the measured
+        // values so a generated portrait fully covers the baked sample photo
+        // (no crescent peeking under the braid) while staying inside the ring.
         key: "photo",
         kind: "photo",
         shape: "circle",
-        x: 136,
-        y: 251,
-        w: 160,
-        h: 160,
+        x: 138,
+        y: 275,
+        w: 178,
+        h: 178,
         center: true,
       },
       {
