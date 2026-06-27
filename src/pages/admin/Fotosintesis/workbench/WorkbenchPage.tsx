@@ -36,6 +36,25 @@ import { ProviderClientCanvas } from "./canvas/ProviderClientCanvas";
 import { coerceGuidedItemDraft, isItemFlow } from "./canvas/itemAdapters";
 import type { GuidedDraft, GuidedFlow } from "../copilot/flowSchemas";
 
+// The lote canvas hosts the lot header AND the per-item loop, so /copilot/lote
+// (and the item-* routes) own the whole lote family; every other route owns
+// just its own flow. A conversation locked onto a flow outside the route's
+// family is a divergence the workbench realigns away from (H5).
+const LOTE_FAMILY: ReadonlySet<GuidedFlow> = new Set<GuidedFlow>([
+  "lote",
+  "item-gema",
+  "item-joya",
+  "item-insumo",
+]);
+
+function flowMatchesRoute(
+  conversationFlow: GuidedFlow,
+  routeFlow: WorkbenchFlow,
+): boolean {
+  if (conversationFlow === routeFlow) return true;
+  return LOTE_FAMILY.has(routeFlow) && LOTE_FAMILY.has(conversationFlow);
+}
+
 export default function WorkbenchPage() {
   const { flow } = useParams<{ flow: string }>();
   if (!isWorkbenchFlow(flow)) {
@@ -48,7 +67,8 @@ export default function WorkbenchPage() {
 
 function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
   const foto = getFoto("light");
-  const route = useLocation().pathname;
+  const location = useLocation();
+  const route = location.pathname;
   const chat = useFotosynthiaChat(route);
   const layout = useFotosintesisLayout();
   const navigate = useNavigate();
@@ -61,6 +81,35 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
       navigate("/admin/fotosintesis/directory");
     }, 900);
   }, [chat, navigate]);
+
+  // Flow alignment + directory intent (runs once per keyed mount).
+  //   • H5 — a fresh workbench mount whose PERSISTED conversation belongs to a
+  //     different task (e.g. a provider draft carried onto /copilot/client)
+  //     realigns to this route's flow; otherwise the canvas reads a foreign
+  //     draft and the stepper freezes with no divergence signal.
+  //   • H3 — the directory's "Nuevo embajador/cliente/proveedor" threads a
+  //     preset tipo through navigation state so the canvas opens on the correct
+  //     segmented value instead of the "final" default.
+  const alignedRef = useRef(false);
+  useEffect(() => {
+    if (alignedRef.current) return;
+    alignedRef.current = true;
+
+    const conversationFlow = chat.flow;
+    const diverged =
+      conversationFlow != null && !flowMatchesRoute(conversationFlow, flow);
+    if (diverged) chat.reset();
+
+    const presetTipo = (location.state as { presetTipo?: string } | null)
+      ?.presetTipo;
+    if (presetTipo && (flow === "client" || flow === "provider")) {
+      // Applied after any divergence reset (batched): the fresh draft opens on
+      // the chosen tipo.
+      chat.patchDraft({ tipo: presetTipo });
+    }
+    // Mount-only realignment — intentionally not re-run on dependency changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Live-seed the embedded canvas through the draft bus whenever the
   // conversation accumulates a new slot. Guarded by a value signature so it
