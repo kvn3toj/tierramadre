@@ -6,10 +6,12 @@ import {
   type ReactNode,
 } from "react";
 import { Box, Dialog, IconButton } from "@mui/material";
-import { Search, X, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Search, X, ChevronRight, Plus } from "lucide-react";
 import { getFoto, fontFamilies } from "../../../design-system";
 import { useConvexQuery, convexApi } from "../../../lib/convex-safe";
 import { FOTO_TOPBAR_HEIGHT } from "./components/FotoTopbar";
+import { WORKBENCH_ENABLED } from "./workbench/featureFlag";
 
 /**
  * Fotosíntesis Directory — Slice 1 (read-only).
@@ -35,6 +37,7 @@ interface ContactRow {
 
 export default function FotosintesisDirectorioPage() {
   const foto = getFoto("light");
+  const navigate = useNavigate();
 
   const [tab, setTab] = useState<TabKey>("proveedores");
   const [search, setSearch] = useState("");
@@ -320,6 +323,52 @@ export default function FotosintesisDirectorioPage() {
           count={finales.length}
           foto={foto}
         />
+        {WORKBENCH_ENABLED && (
+          <Box
+            component="button"
+            type="button"
+            onClick={() =>
+              navigate(
+                tab === "proveedores"
+                  ? "/admin/fotosintesis/copilot/provider"
+                  : "/admin/fotosintesis/copilot/client",
+              )
+            }
+            sx={{
+              marginLeft: "auto",
+              alignSelf: "center",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              border: "none",
+              borderRadius: "9px",
+              padding: "8px 13px",
+              background: foto.accent.primary,
+              color: foto.ink.inverse,
+              fontSize: "12px",
+              fontWeight: 600,
+              fontFamily: "inherit",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              transition: "background 120ms ease, transform 120ms ease",
+              "&:hover": {
+                background: foto.accent.deep,
+                transform: "translateY(-1px)",
+              },
+              "&:focus-visible": {
+                outline: "none",
+                boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+              },
+            }}
+          >
+            <Plus size={14} strokeWidth={2.2} />
+            {tab === "proveedores"
+              ? "Nuevo proveedor"
+              : tab === "embajadores"
+                ? "Nuevo embajador"
+                : "Nuevo cliente"}
+          </Box>
+        )}
       </Box>
 
       {/* MAIN GRID — list + drawer */}

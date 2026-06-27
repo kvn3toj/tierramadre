@@ -11,8 +11,13 @@
  * draft bus (`seedDraftForm`) on each turn — VentaPage keeps its own real
  * Kardex + certificate confirm button.
  */
-import { useEffect, useMemo, useRef } from "react";
-import { Navigate, useLocation, useParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import {
+  Navigate,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import { Box } from "@mui/material";
 import { fontFamilies, getFoto } from "../../../../design-system";
 import { useFotosynthiaChat } from "../hooks/useFotosynthiaChat";
@@ -23,6 +28,8 @@ import { flowLabel } from "../utils/flowLabels";
 import { isWorkbenchFlow, type WorkbenchFlow } from "./workbenchSteps";
 import { WorkbenchStepper } from "./WorkbenchStepper";
 import { WorkbenchDraftProvider } from "./WorkbenchDraftContext";
+import { WorkbenchCommitBar } from "./WorkbenchCommitBar";
+import { ProviderClientCanvas } from "./canvas/ProviderClientCanvas";
 
 export default function WorkbenchPage() {
   const { flow } = useParams<{ flow: string }>();
@@ -39,6 +46,16 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
   const route = useLocation().pathname;
   const chat = useFotosynthiaChat(route);
   const layout = useFotosintesisLayout();
+  const navigate = useNavigate();
+
+  // After a direct-flow commit, show "Guardado" briefly, then clear the thread
+  // + draft and land on the directory where the freshly-synced record appears.
+  const handleCommitted = useCallback(() => {
+    window.setTimeout(() => {
+      chat.reset();
+      navigate("/admin/fotosintesis/directory");
+    }, 900);
+  }, [chat, navigate]);
 
   // Live-seed the embedded form through the draft bus whenever the conversation
   // accumulates a new slot. Guarded by a value signature so it fires only on a
@@ -140,18 +157,37 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
             },
           }}
         >
-          {/* Canvas (left) */}
+          {/* Canvas (left) — each canvas owns its own scroll; direct flows pin
+              a commit bar at the bottom of the pane. */}
           <Box
             sx={{
               minWidth: 0,
-              overflowY: "auto",
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
               borderRight: { lg: `1px solid ${foto.surfaces.rule}` },
             }}
           >
             {flow === "venta" ? (
-              <FotosintesisVentaPage embedded />
+              <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+                <FotosintesisVentaPage embedded />
+              </Box>
+            ) : flow === "provider" || flow === "client" ? (
+              <>
+                <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+                  <ProviderClientCanvas />
+                </Box>
+                <WorkbenchCommitBar
+                  flow={flow}
+                  chat={chat}
+                  route={route}
+                  onCommitted={handleCommitted}
+                />
+              </>
             ) : (
-              <PlaceholderCanvas label={flowLabel(flow)} />
+              <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+                <PlaceholderCanvas label={flowLabel(flow)} />
+              </Box>
             )}
           </Box>
 
