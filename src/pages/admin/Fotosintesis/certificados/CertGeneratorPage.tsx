@@ -30,6 +30,7 @@ import {
 } from "@mui/material";
 import {
   Award,
+  Crop,
   Download,
   IdCard,
   Image as ImageIcon,
@@ -75,6 +76,7 @@ import {
   type PhotoTransform,
 } from "./certTemplates";
 import { exportCertPdf, exportCertPng } from "./exportCert";
+import { computePhotoAutoFit } from "./photoAutoFit";
 import { isCertificadoApproved, persistCertToProduct } from "./persistCert";
 
 const foto = getFoto("light");
@@ -185,6 +187,51 @@ export default function CertGeneratorPage() {
       }),
     [type],
   );
+
+  // Auto-frame: detect the gem against its flat catalog background and zoom/center
+  // it to fill the circle (kills the "tiny gem + blank space" look). We remember
+  // the last photo we framed per type so a manual pan/zoom is never clobbered —
+  // re-framing only happens when the photo itself changes.
+  const autoFramedRef = useRef<Partial<Record<CertTypeId, string>>>({});
+  const applyAutoFit = useCallback(
+    async (targetType: CertTypeId, photo: string) => {
+      const field = CERT_TEMPLATES[targetType].fields.find(
+        (f) => f.kind === "photo",
+      );
+      if (!field?.w) return false;
+      const t = await computePhotoAutoFit(photo, field.w);
+      if (!t) return false;
+      setPhotoTransforms((prev) => ({ ...prev, [targetType]: t }));
+      return true;
+    },
+    [],
+  );
+
+  // Origen only (gems on light backgrounds auto-frame reliably; portraits don't).
+  useEffect(() => {
+    const photo = origen.photo;
+    if (!photo || type !== "origen") return;
+    if (autoFramedRef.current.origen === photo) return; // already handled
+    autoFramedRef.current.origen = photo; // record up-front (don't retry on fail)
+    void applyAutoFit("origen", photo);
+  }, [origen.photo, type, applyAutoFit]);
+
+  // Manual "Encuadrar" — re-run detection on demand (e.g. after a hand tweak).
+  const handleAutoFit = useCallback(async () => {
+    const photo =
+      type === "origen"
+        ? origen.photo
+        : type === "embajador"
+          ? embajador.photo
+          : carnet.photo;
+    if (!photo) return;
+    const ok = await applyAutoFit(type, photo);
+    if (!ok)
+      notify(
+        "No pude detectar el sujeto para encuadrar automáticamente; ajustá con el zoom.",
+        "warning",
+      );
+  }, [type, origen.photo, embajador.photo, carnet.photo, applyAutoFit, notify]);
 
   // Only real, individual pieces (exclude grouped lote/sublote cards).
   const pieces = useMemo(
@@ -488,6 +535,7 @@ export default function CertGeneratorPage() {
                 onZoom: (z) =>
                   setPhotoTransform({ ...photoTransform, zoom: z }),
                 onReset: resetPhotoTransform,
+                onAutoFit: handleAutoFit,
               }}
             />
           )}
@@ -505,6 +553,7 @@ export default function CertGeneratorPage() {
                 onZoom: (z) =>
                   setPhotoTransform({ ...photoTransform, zoom: z }),
                 onReset: resetPhotoTransform,
+                onAutoFit: handleAutoFit,
               }}
             />
           )}
@@ -591,6 +640,14 @@ export default function CertGeneratorPage() {
             >
               <Ruler size={15} />
             </IconBtn>
+            {templateHasPhoto && activeDraft.photo && (
+              <IconBtn
+                label="Encuadrar la foto automáticamente (detecta y centra el sujeto)"
+                onClick={handleAutoFit}
+              >
+                <Crop size={15} />
+              </IconBtn>
+            )}
             {templateHasPhoto && (
               <IconBtn
                 label={
@@ -922,6 +979,8 @@ interface PhotoAdjustControl {
   adjusted: boolean;
   onZoom: (z: number) => void;
   onReset: () => void;
+  /** detect + center the subject to fill the circle */
+  onAutoFit: () => void;
 }
 
 function PhotoInput({
@@ -1022,17 +1081,20 @@ function PhotoInput({
             >
               Zoom de la foto
             </Typography>
-            {adjust.adjusted && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Box
                 component="button"
                 type="button"
-                onClick={adjust.onReset}
+                onClick={adjust.onAutoFit}
                 sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 0.4,
                   border: "none",
                   background: "transparent",
                   color: foto.accent.deep,
                   fontSize: 11,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   cursor: "pointer",
                   px: 0.5,
                   borderRadius: "6px",
@@ -1043,9 +1105,33 @@ function PhotoInput({
                   },
                 }}
               >
-                Restablecer
+                <Crop size={12} /> Encuadrar
               </Box>
-            )}
+              {adjust.adjusted && (
+                <Box
+                  component="button"
+                  type="button"
+                  onClick={adjust.onReset}
+                  sx={{
+                    border: "none",
+                    background: "transparent",
+                    color: foto.ink.tertiary,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    px: 0.5,
+                    borderRadius: "6px",
+                    "&:hover": { textDecoration: "underline" },
+                    "&:focus-visible": {
+                      outline: "2px solid transparent",
+                      boxShadow: `0 0 0 2px ${foto.surfaces.canvas}, 0 0 0 4px ${foto.accent.primary}`,
+                    },
+                  }}
+                >
+                  Restablecer
+                </Box>
+              )}
+            </Box>
           </Box>
           <Slider
             id="cert-photo-zoom"
