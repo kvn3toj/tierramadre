@@ -236,15 +236,42 @@ export const publishedCatalog = query({
       .withIndex("by_mostrarEnCatalogo", (q) => q.eq("mostrarEnCatalogo", true))
       .collect();
 
+    // Only items captured through a lot are catalog-eligible; legacy/orphan rows
+    // without a loteId are excluded.
+    const published = rows.filter((row) => row.loteId !== undefined);
+
+    // Denormalize lot-level provenance (mina + tratamiento) onto each item.
+    // These live on the `lots` table, not productInventory, so we resolve each
+    // distinct lote once and attach. The published set is tiny (a handful of
+    // items across a few lotes), so this adds only a few point reads per call.
+    const loteProvenance = new Map<
+      string,
+      { mina?: string; tratamiento?: string }
+    >();
+    for (const loteId of new Set(
+      published.map((r) => r.loteId).filter((id): id is string => !!id),
+    )) {
+      const lot = await ctx.db
+        .query("lots")
+        .withIndex("by_loteId", (q) => q.eq("loteId", loteId))
+        .first();
+      loteProvenance.set(loteId, {
+        mina: lot?.mina,
+        tratamiento: lot?.tratamiento,
+      });
+    }
+
     // Project ONLY the fields the customer catalog consumes (see
     // useFotosintesisCatalog.PublishedRow). The public catalog price is the
-    // ambassador tier (precioEmbajadorCOP, sheet column N) — explicit policy
-    // choice; precioCOP (L) and precioConscienteCOP (O) are intentionally NOT
-    // projected so the public can't see them. costoBaseCOP, precioPotencialCOP,
-    // sync metadata and rowIndex stay internal.
-    return rows
-      .filter((row) => row.loteId !== undefined)
-      .map((row) => ({
+    // ambassador tier (precioEmbajadorCOP, sheet column M) — explicit policy
+    // choice; costoBaseCOP (L) and precioConscienteCOP (N) are intentionally NOT
+    // projected so the public can't see cost or the consciente tier.
+    // precioPotencialCOP, sync metadata and rowIndex stay internal. The
+    // Fotosíntesis characteristics block below is surfaced publicly per product
+    // decision 2026-06-30 (gem grade, origin, treatment, jewelry detail).
+    return published.map((row) => {
+      const prov = row.loteId ? loteProvenance.get(row.loteId) : undefined;
+      return {
         itemId: row.itemId,
         nombre: row.nombre,
         peso: row.peso,
@@ -266,7 +293,21 @@ export const publishedCatalog = query({
         estadoAsesor: row.estadoAsesor,
         fotoUrl: row.fotoUrl,
         certificadoUrl: row.certificadoUrl,
-      }));
+        // ── Fotosíntesis characteristics (surfaced publicly 2026-06-30) ──
+        procedencia: row.procedencia,
+        nivelRareza: row.nivelRareza,
+        calificacion: row.calificacion,
+        tipoEsmeralda: row.tipoEsmeralda,
+        tipoJoya: row.tipoJoya,
+        tecnicaJoya: row.tecnicaJoya,
+        minerales: row.minerales,
+        complementos: row.complementos,
+        observacion: row.observacion,
+        // Lot-level provenance, denormalized from the `lots` table.
+        mina: prov?.mina,
+        tratamiento: prov?.tratamiento,
+      };
+    });
   },
 });
 
@@ -312,6 +353,17 @@ export const publishedGroups = query({
         categoria: p.categoria,
         talla: p.talla,
         medidas: p.medidas,
+        // Per-piece Fotosíntesis characteristics so a lote's per-image detail
+        // overlay reflects the exact gem, not just the bundle aggregate.
+        procedencia: p.procedencia,
+        nivelRareza: p.nivelRareza,
+        calificacion: p.calificacion,
+        tipoEsmeralda: p.tipoEsmeralda,
+        tipoJoya: p.tipoJoya,
+        tecnicaJoya: p.tecnicaJoya,
+        minerales: p.minerales,
+        complementos: p.complementos,
+        observacion: p.observacion,
         mostrarEnCatalogo: p.mostrarEnCatalogo === true,
       };
     };
@@ -361,11 +413,34 @@ export const publishedGroups = query({
     const resolved = new Map<string, ResolvedBundleItem | null>();
     for (const id of candidateIds) resolved.set(id, await resolve(id));
 
-    return assembleBundleGroups({
+    const groups = assembleBundleGroups({
       shownSublotes,
       shownLots,
       resolveItem: (id) => resolved.get(id) ?? null,
     });
+
+    // Denormalize lot-level provenance (mina + tratamiento) onto each bundle
+    // card via its parentLoteId — mirrors publishedCatalog's per-item join so a
+    // lote/sublote card can show the same origin + treatment as a single item.
+    const groupProvenance = new Map<
+      string,
+      { mina?: string; tratamiento?: string }
+    >();
+    for (const g of groups) {
+      if (groupProvenance.has(g.parentLoteId)) continue;
+      const lot = await ctx.db
+        .query("lots")
+        .withIndex("by_loteId", (q) => q.eq("loteId", g.parentLoteId))
+        .first();
+      groupProvenance.set(g.parentLoteId, {
+        mina: lot?.mina,
+        tratamiento: lot?.tratamiento,
+      });
+    }
+    return groups.map((g) => ({
+      ...g,
+      ...(groupProvenance.get(g.parentLoteId) ?? {}),
+    }));
   },
 });
 

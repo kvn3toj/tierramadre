@@ -332,15 +332,28 @@ export interface TreasureItem {
 
   // ── Provenance / lot (Fotosíntesis) ──
   // `procedencia` is the captured mine-origin string (Muzo, Chivor, Coscuez…).
-  // ADMIN-ONLY: it is a free-text field synced to the internal SOT Inventario
-  // tab with no marketing-vocabulary enforcement, so it is NOT projected into
-  // the public `publishedCatalog` query and is only read from the admin-only
-  // `products.get` doc on the detail page. `loteId` is the internal lot id.
+  // PUBLIC (2026-06-30): projected by `publishedCatalog` and shown in the
+  // product page's Características section. `loteId` remains the internal lot id.
   procedencia?: string;
   loteId?: string;
   // `preponderancia` is the item's cost-weight share of its lot (internal
   // pricing input) — admin-only, never public.
   preponderancia?: number;
+
+  // ── Fotosíntesis characteristics (PUBLIC, surfaced 2026-06-30) ──
+  // Captured in the Fotosíntesis admin (productInventory) and, for `mina` /
+  // `tratamiento`, on the parent lot (denormalized by `publishedCatalog`).
+  // All optional + absent-safe: legacy/Sheets catalog items leave them unset
+  // so the UI rows/sections self-hide.
+  tipoEsmeralda?: string; // e.g. "Esmeralda", "Trapiche"
+  nivelRareza?: number; // rarity score
+  calificacion?: number; // gem grade/score
+  tipoJoya?: string; // jewelry type (joyas only)
+  tecnicaJoya?: string; // jewelry technique (joyas only)
+  minerales?: string[]; // jewelry materials
+  complementos?: string[]; // accent stones / complements
+  mina?: string; // lot-level origin mine (Muzo, Chivor…)
+  tratamiento?: string; // lot-level treatment (none / oil / resin)
 
   // ── Sync status (admin-only) ──
   // Mirrors the Convex row's push-to-Sheets state. Sourced from the admin-only
@@ -376,5 +389,16 @@ export interface TreasureItem {
     medidas?: string;
     isJewelry?: boolean;
     metalType?: "Plata" | "Oro 18k";
+    // Per-piece Fotosíntesis characteristics so the per-image overlay reflects
+    // the exact gem (falls back to the bundle values when a field is missing).
+    procedencia?: string;
+    nivelRareza?: number;
+    calificacion?: number;
+    tipoEsmeralda?: string;
+    tipoJoya?: string;
+    tecnicaJoya?: string;
+    minerales?: string[];
+    complementos?: string[];
+    description?: string;
   }[];
 }

@@ -444,6 +444,8 @@ function GridCard({
             typeof item.peso === "number" &&
             ` · ${formatCarats(item.peso)} ct`}
           {item.isJewelry && item.metalType && ` · ${item.metalType}`}
+          {(item.procedencia || item.mina) &&
+            ` · ${(item.procedencia || item.mina)!.trim()}`}
         </Typography>
       </CardContent>
     </Card>
@@ -461,6 +463,9 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.item.estado === nextProps.item.estado &&
     prevProps.item.isLote === nextProps.item.isLote &&
     prevProps.item.cantidad === nextProps.item.cantidad &&
+    // Displayed on the specs line — include so updates aren't masked.
+    prevProps.item.procedencia === nextProps.item.procedencia &&
+    prevProps.item.mina === nextProps.item.mina &&
     prevProps.isFavorite === nextProps.isFavorite &&
     prevProps.isMobile === nextProps.isMobile &&
     prevProps.isLoadingThumbnails === nextProps.isLoadingThumbnails &&

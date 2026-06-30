@@ -9,5 +9,6 @@ export { AdditionalInfo } from "./AdditionalInfo";
 export { ProductActions } from "./ProductActions";
 export { LotePriceBreakdown } from "./LotePriceBreakdown";
 export { CertificateSection } from "./CertificateSection";
+export { CharacteristicsSection } from "./CharacteristicsSection";
 export { ProvenanceSection } from "./ProvenanceSection";
 export { PricePerCarat } from "./PricePerCarat";

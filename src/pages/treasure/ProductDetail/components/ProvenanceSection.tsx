@@ -1,29 +1,26 @@
 /**
  * ProvenanceSection Component
  *
- * Shows lot / origin provenance for a Fotosíntesis-captured item, plus the
- * admin-only sync status pill.
+ * Admin-only lot TRACEABILITY for a Fotosíntesis-captured item: `loteId`
+ * (internal lot id), `preponderancia` (the item's cost-weight share of its lot)
+ * and the sync-status pill.
  *
- * ADMIN-ONLY by design (R5): `procedencia` (mine origin), `loteId` (internal lot
- * id) and `preponderancia` (the item's cost-weight share of its lot) live in the
- * admin-only `products.get` document and are intentionally NOT projected into the
- * public, anonymously-subscribed `publishedCatalog` query — leaking them would
- * expose internal state to every catalog visitor's WebSocket payload. So this
- * whole section is gated behind `isAdmin`; the parent only mounts it for admins,
- * and we hard-guard here as a second line of defense.
+ * ADMIN-ONLY by design: `loteId` and `preponderancia` are internal pricing /
+ * traceability inputs, NOT projected into the public, anonymously-subscribed
+ * `publishedCatalog` query — leaking them would expose internal state to every
+ * catalog visitor's WebSocket payload. The whole section is gated behind
+ * `isAdmin`; the parent only mounts it for admins and we hard-guard here too.
  *
- * `procedencia` is a free-text field with no marketing-vocabulary enforcement
- * (it is synced to the internal SOT Inventario tab), so even the origin string is
- * treated as internal and kept admin-only rather than shown to all roles.
+ * NOTE: the customer-facing origin (`procedencia` / lot `mina`) is now PUBLIC
+ * and lives in CharacteristicsSection — it was moved out of here on 2026-06-30.
  *
- * Absent-safe: renders NOTHING (returns null) when there is no provenance and no
- * sync status to show — so lote bundle cards (which carry none of these fields)
- * and legacy items self-hide with no empty section or layout shift.
+ * Absent-safe: renders NOTHING (returns null) when there is no lot/sync data to
+ * show — so lote bundle cards and legacy items self-hide with no layout shift.
  */
 
 import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
-import { Mountain, Boxes, Scale } from "lucide-react";
+import { Boxes, Scale } from "lucide-react";
 import { TreasureItem } from "../../../../types";
 import { SpecRow } from "./SpecRow";
 import { SyncStatusBadge } from "../../../../components/shared/SyncStatusBadge";
@@ -48,14 +45,13 @@ export const ProvenanceSection: React.FC<ProvenanceSectionProps> = ({
   // parent forgets to gate.
   if (!isAdmin) return null;
 
-  const origin = product.procedencia?.trim();
   const loteId = product.loteId?.trim();
   const hasPreponderancia =
     typeof product.preponderancia === "number" &&
     Number.isFinite(product.preponderancia);
   const syncStatus = product.syncStatus;
 
-  const hasProvenance = Boolean(origin || loteId || hasPreponderancia);
+  const hasProvenance = Boolean(loteId || hasPreponderancia);
 
   // Absent-safe: nothing to show → no section (no empty box / layout shift).
   if (!hasProvenance && !syncStatus) return null;
@@ -80,16 +76,12 @@ export const ProvenanceSection: React.FC<ProvenanceSectionProps> = ({
             textTransform: "uppercase",
           }}
         >
-          Procedencia
+          Trazabilidad
         </Typography>
         {syncStatus && (
           <SyncStatusBadge status={syncStatus} error={product.syncError} />
         )}
       </Box>
-
-      {origin && (
-        <SpecRow icon={<Mountain size={18} />} label="Origen" value={origin} />
-      )}
 
       {loteId && (
         <SpecRow
