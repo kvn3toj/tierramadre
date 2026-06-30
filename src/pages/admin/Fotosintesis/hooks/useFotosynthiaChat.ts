@@ -17,6 +17,28 @@ import type {
 
 const STORAGE_PREFIX = "tierra-madre-fotosynthia";
 
+/**
+ * Best-effort auth headers for the AI endpoint. The Google ID token stored at
+ * sign-in (mirrors STORAGE_KEYS.GOOGLE_TOKEN) rides along as a Bearer so the
+ * server can verify the caller's identity. It may be expired (the SPA doesn't
+ * refresh it), so the server treats it as best-effort unless hard-auth is on.
+ */
+function aiRequestHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  try {
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("tierramadre-google-token")
+        : null;
+    if (token) headers.Authorization = `Bearer ${token}`;
+  } catch {
+    // localStorage unavailable — proceed without the token (best-effort).
+  }
+  return headers;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
@@ -303,7 +325,7 @@ export function useFotosynthiaChat(
       try {
         const response = await fetch("/api/fotosintesis-ai", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: aiRequestHeaders(),
           body: JSON.stringify({
             messages: wireMessages,
             snapshot,
@@ -440,7 +462,7 @@ export function useFotosynthiaChat(
       try {
         const response = await fetch("/api/fotosintesis-ai", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: aiRequestHeaders(),
           body: JSON.stringify({
             messages: wireMessages,
             snapshot: args.snapshot,

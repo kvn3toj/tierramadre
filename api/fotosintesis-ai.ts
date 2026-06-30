@@ -413,6 +413,18 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GATEWAY_URL = "https://ai-gateway.vercel.sh/v1/chat/completions";
 const DEFAULT_GATEWAY_MODEL = "google/gemini-2.5-flash-lite";
 
+// The catalog context + the FULL chat history are re-sent on every turn, so a
+// long thread inflates each request until it trips the gateway's body limit
+// (HTTP 413 "payload too large" — observed live as "El modelo respondió 413").
+// Two guards: (1) cap how many recent turns we forward upstream, and (2) on a
+// 413, retry once with a minimal payload (persona + résumé + last turn only).
+const MAX_UPSTREAM_TURNS = 12;
+
+/** Keep only the most recent `max` wire turns (the current user turn is last). */
+function capTurns<T>(messages: T[], max = MAX_UPSTREAM_TURNS): T[] {
+  return messages.length > max ? messages.slice(-max) : messages;
+}
+
 interface GuidedTarget {
   url: string;
   apiKey: string;
@@ -557,6 +569,99 @@ function isRateLimited(key: string): boolean {
   return false;
 }
 
+// ─── Request origin + identity guards ─────────────────────────────────────────
+// Defense-in-depth for a browser-called internal endpoint. Two layers:
+//   1. Same-origin lock — reject browser requests whose Origin isn't the app's
+//      (replaces the old `Access-Control-Allow-Origin: *`), so other sites can't
+//      drive the copilot or burn provider quota cross-origin.
+//   2. Optional Google ID-token verification — when the client sends a Bearer
+//      id_token we verify it and trust that email over the (spoofable) body one.
+//      Hard-requiring it is gated behind FOTOSINTESIS_AI_REQUIRE_AUTH (default
+//      off) because the SPA's stored token expires ~1h and isn't refreshed, so
+//      enforcing it unconditionally would lock out real admins.
+
+/** Origins allowed to call this endpoint from a browser. */
+function allowedOrigins(): string[] {
+  const out = new Set<string>(["https://tierramadre.app"]);
+  const app = process.env.APP_URL?.trim();
+  if (app) out.add(app.replace(/\/+$/, ""));
+  const vercelUrl = process.env.VERCEL_URL?.trim();
+  if (vercelUrl) out.add(`https://${vercelUrl}`);
+  // Extra hosts (comma-separated) the operator can allow without a code change.
+  const extra = process.env.FOTOSINTESIS_AI_ALLOWED_ORIGINS?.trim();
+  if (extra)
+    for (const o of extra.split(","))
+      if (o.trim()) out.add(o.trim().replace(/\/+$/, ""));
+  if (process.env.NODE_ENV !== "production") {
+    out.add("http://localhost:3000");
+    out.add("http://localhost:5173");
+  }
+  return [...out];
+}
+
+/**
+ * True when the request may proceed. A missing Origin (non-browser / same-origin
+ * without the header) is allowed — we can't distinguish it and the existing
+ * server-to-server callers don't send one. A present-but-unlisted Origin (a
+ * foreign site's fetch) is rejected.
+ */
+function isAllowedOrigin(origin: string | undefined): boolean {
+  if (!origin) return true;
+  return allowedOrigins().includes(origin.replace(/\/+$/, ""));
+}
+
+function bearerToken(header?: string | string[]): string | null {
+  const h = Array.isArray(header) ? header[0] : header;
+  if (!h) return null;
+  const m = /^Bearer\s+(.+)$/i.exec(h.trim());
+  return m ? m[1].trim() : null;
+}
+
+/**
+ * Best-effort Google ID-token verification. Returns the verified email when a
+ * valid token is present, else { verified:false }. Lazy-imports
+ * google-auth-library so the common (token-less) path pays zero cold-start cost.
+ */
+async function verifyIdentity(
+  req: VercelRequest,
+): Promise<{ email?: string; verified: boolean }> {
+  const token = bearerToken(req.headers["authorization"]);
+  if (!token) return { verified: false };
+  const audiences = [
+    process.env.GOOGLE_OAUTH_CLIENT_ID,
+    process.env.VITE_GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_ID,
+  ].filter((a): a is string => !!a && a.trim().length > 0);
+  if (audiences.length === 0) return { verified: false };
+  try {
+    const { OAuth2Client } = await import("google-auth-library");
+    const client = new OAuth2Client();
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: audiences,
+    });
+    const payload = ticket.getPayload();
+    const email =
+      payload?.email && payload.email_verified
+        ? payload.email.toLowerCase().trim()
+        : undefined;
+    return { email, verified: !!email };
+  } catch (err) {
+    console.warn(
+      "[fotosintesis-ai] id-token verification failed:",
+      (err as Error)?.message,
+    );
+    return { verified: false };
+  }
+}
+
+/** Hard-require a verified identity (operator opt-in; default off). */
+function authRequired(): boolean {
+  return /^(1|true|yes|on)$/i.test(
+    process.env.FOTOSINTESIS_AI_REQUIRE_AUTH?.trim() || "",
+  );
+}
+
 const SYSTEM_PROMPT = `Eres Fotosynthia, la copiloto del taller Fotosíntesis de Tierra Madre.
 Hablas en español de Colombia, con un tono cálido pero preciso — eres parte del atelier, no una herramienta externa.
 
@@ -571,7 +676,7 @@ Vocabulario obligatorio:
 - "preponderancia": % del costo total del lote que asigna cada ítem. Debe sumar 100%.
 
 Reglas:
-1. Si el usuario pregunta algo que se responde con los datos del snapshot, usa cifras concretas (no aproximes).
+1. Si el usuario pregunta algo que se responde con los datos del snapshot, usa cifras concretas (no aproximes). Los conteos del taller (cuántos lotes, ventas, embajadores, clientes finales o errores de sincronización) están SIEMPRE en el «Resumen del taller» del contexto: respondé con esos números directamente y JAMÁS digas que necesitás acceso a otros registros.
 2. Si no tienes la información en el snapshot, dilo claramente — sugiere dónde mirarla (ej. "abre el lote B-008 para ver sus ítems").
 3. Sé corta: 2-4 frases por respuesta salvo que se pida explicación larga.
 4. Nunca inventes IDs, totales, nombres NI PRECIOS. El precio y el estado (ej. "Vendido", "Disponible") de un producto SOLO pueden venir del inventario en el contexto (busca su "Ficha"). Si el precio no está en el contexto, di exactamente que no lo tienes a la mano y sugiere abrir la ficha del producto — NUNCA estimes ni aproximes una cifra de precio.
@@ -579,6 +684,61 @@ Reglas:
 6. Si detectas un error de sincronización (syncStatus: "error"), menciónalo proactivamente.
 
 Estás dentro de un drawer flotante en /admin/fotosintesis/*; Maritza (administradora del taller) es tu interlocutora principal.`;
+
+/**
+ * Deterministic, plain-language aggregate line derived from the Convex snapshot
+ * — the SAME exact figures the rail chrome shows (lots/sales/ambassadors/sync
+ * errors). The small models reliably miss these when they're buried inside the
+ * snapshot JSON and deflect ("necesitaría acceso a los registros…") on count
+ * questions. Surfacing them up top in labeled prose, with an explicit
+ * instruction to use them, fixes that. Returns "" when the snapshot is absent.
+ */
+function buildAtelierResumen(snapshot: unknown): string {
+  if (!snapshot || typeof snapshot !== "object") return "";
+  const s = snapshot as {
+    counts?: {
+      lots?: number;
+      sales?: number;
+      providers?: number;
+      ambassadors?: number;
+      finalClients?: number;
+      invitations?: number;
+    };
+    lotsByState?: Record<string, number>;
+    salesByState?: Record<string, number>;
+    syncErrors?: {
+      lots?: number;
+      sales?: number;
+      providers?: number;
+      clients?: number;
+    };
+    ambassadorActivity?: { active?: number };
+  };
+  const c = s.counts;
+  if (!c) return "";
+  const e = s.syncErrors ?? {};
+  const totalErr =
+    (e.lots ?? 0) + (e.sales ?? 0) + (e.providers ?? 0) + (e.clients ?? 0);
+  const fmtStates = (m?: Record<string, number>): string => {
+    if (!m) return "";
+    const parts = Object.entries(m)
+      .filter(([, n]) => n > 0)
+      .map(([k, n]) => `${k}: ${n}`);
+    return parts.length ? ` (${parts.join(", ")})` : "";
+  };
+  const fields = [
+    `lotes: ${c.lots ?? 0}${fmtStates(s.lotsByState)}`,
+    `ventas: ${c.sales ?? 0}${fmtStates(s.salesByState)}`,
+    `embajadores: ${c.ambassadors ?? 0}`,
+    `clientes finales: ${c.finalClients ?? 0}`,
+    `invitaciones activas: ${s.ambassadorActivity?.active ?? 0}`,
+    `errores de sincronización: ${totalErr}` +
+      (totalErr > 0
+        ? ` (lotes: ${e.lots ?? 0}, ventas: ${e.sales ?? 0}, proveedores: ${e.providers ?? 0}, clientes: ${e.clients ?? 0})`
+        : ""),
+  ];
+  return `Resumen del taller (cifras EXACTAS y actuales — si te preguntan "cuántos/cuántas" lotes, ventas, embajadores o errores de sincronización, respondé con estos números DIRECTAMENTE; NUNCA digas que necesitás acceso a otros registros): ${fields.join(" · ")}.`;
+}
 
 function snapshotToContext(
   snapshot: unknown,
@@ -589,6 +749,7 @@ function snapshotToContext(
   return [
     `Contexto vivo del atelier (generado ahora; usa cifras tal cual):`,
     `Ruta actual: ${route}`,
+    buildAtelierResumen(snapshot),
     catalog
       ? `Inventario completo (todos los productos e ítems; úsalo para responder sobre cualquier producto por número o nombre):\n${catalog}`
       : "",
@@ -662,48 +823,65 @@ async function pipeStream(
  * are written to the client, so the user never sees a half-answer swap. Returns
  * the model that actually answered so the summary records the real provider.
  */
+/** Operator-facing error copy for a failed advisory turn, by upstream status. */
+function advisoryErrorMessage(status: number): string {
+  if (status === 429)
+    return "El modelo está saturado ahora mismo. Esperá unos segundos y volvé a intentar.";
+  if (status === 413)
+    return "La conversación creció demasiado para el modelo. Reduje el contexto y reintenté; si sigue fallando, limpiá la conversación (🧹) y reformulá.";
+  return `El proveedor respondió ${status}. Intentá de nuevo en un momento.`;
+}
+
 async function streamChat(
   res: VercelResponse,
   targets: GuidedTarget[],
   messages: Array<{ role: string; content: string }>,
+  minimalMessages?: Array<{ role: string; content: string }>,
 ): Promise<{ fullText: string; finishReason: string; model: string }> {
   for (let t = 0; t < targets.length; t++) {
     const target = targets[t];
     const isLast = t === targets.length - 1;
-    const upstream = await fetch(target.url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${target.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: target.model,
-        messages,
-        temperature: 0.4,
-        max_tokens: 512,
-        stream: true,
-      }),
-    });
-
-    if (upstream.ok && upstream.body) {
-      const out = await pipeStream(res, upstream);
-      return { ...out, model: target.model };
-    }
-
-    const text = await upstream.text().catch(() => "");
-    console.warn(
-      `[fotosintesis-ai] advisory upstream ${upstream.status} via ${target.label} (${target.model}): ${text.slice(0, 300)}`,
-    );
-    // A rate-limited/unavailable provider falls through to the next target.
-    if (!isLast && RETRYABLE_STATUS.has(upstream.status)) continue;
-    if (isLast) {
-      sseWrite(res, {
-        error:
-          upstream.status === 429
-            ? "El modelo está saturado ahora mismo. Esperá unos segundos y volvé a intentar."
-            : `El proveedor respondió ${upstream.status}. Intentá de nuevo en un momento.`,
+    let attempt = messages;
+    let shrunk = false;
+    // Inner loop lets a 413 shrink the payload and retry the SAME target once
+    // before we give up on it and fall through to the next provider.
+    for (;;) {
+      const upstream = await fetch(target.url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${target.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: target.model,
+          messages: attempt,
+          temperature: 0.4,
+          max_tokens: 512,
+          stream: true,
+        }),
       });
-      return { fullText: "", finishReason: "error", model: target.model };
+
+      if (upstream.ok && upstream.body) {
+        const out = await pipeStream(res, upstream);
+        return { ...out, model: target.model };
+      }
+
+      const text = await upstream.text().catch(() => "");
+      console.warn(
+        `[fotosintesis-ai] advisory upstream ${upstream.status} via ${target.label} (${target.model}): ${text.slice(0, 300)}`,
+      );
+      // Payload too large: drop the catalog + history and retry this target once.
+      if (upstream.status === 413 && minimalMessages && !shrunk) {
+        shrunk = true;
+        attempt = minimalMessages;
+        continue;
+      }
+      if (isLast) {
+        sseWrite(res, { error: advisoryErrorMessage(upstream.status) });
+        return { fullText: "", finishReason: "error", model: target.model };
+      }
+      // Not the last target → fall through and try the next provider.
+      break;
     }
   }
   return { fullText: "", finishReason: "error", model: DEFAULT_MODEL };
@@ -777,7 +955,7 @@ REGLAS:
 5. NUNCA inventes IDs (de ítem, proveedor, cliente o lote). Para editar o referenciar un ítem usa "itemHint" con el nombre o descripción que Maritza YA mencionó (ej. "la esmeralda de Chivor" → itemHint: "Chivor"); NO se lo vuelvas a preguntar si ya lo describió. El sistema resuelve el itemHint al ítem real.
 6. NUNCA incluyas "preponderancia" ni fotos en edit-existing ni batch-edit. En captura de ítems, la preponderancia es el % del costo del lote (entre todos los ítems debe sumar 100%): pídela.
 7. Cuando tengas todos los obligatorios, pon ready=true y confirma brevemente en "say" qué vas a precargar; recuerda a Maritza que arrastre la foto antes de guardar si aplica.
-8. Si es una pregunta informativa (no captura), usa flow="advisory" y responde en "say" con datos concretos del snapshot. NUNCA inventes precios ni el estado de un producto: el precio y el estado ("Vendido"/"Disponible") solo pueden venir de la "Ficha" del ítem en el contexto. Si el precio no aparece, dilo y sugiere abrir la ficha; jamás estimes una cifra.
+8. Si es una pregunta informativa (no captura), usa flow="advisory" y responde en "say" con datos concretos del snapshot. Para conteos del taller (cuántos lotes, ventas, embajadores o errores de sincronización) usá el «Resumen del taller» del contexto y respondé con esas cifras EXACTAS — nunca digas que no tenés acceso. NUNCA inventes precios ni el estado de un producto: el precio y el estado ("Vendido"/"Disponible") solo pueden venir de la "Ficha" del ítem en el contexto. Si el precio no aparece, dilo y sugiere abrir la ficha; jamás estimes una cifra.
 9. loteId (solo en captura de ítems): inclúyelo SOLO si Maritza nombra el lote explícitamente (ej. "B-008"); si no, déjalo vacío y se usa el lote abierto actual.
 10. "sede"/"bóveda" es el ALMACÉN donde se guarda (B=Bogotá, C=Cali, S=Secreta, M=Marketing), NO la mina; si no la dicen, pregúntala. En cambio "mina" (lote) y "procedencia" (gema) son el ORIGEN de la esmeralda (Muzo, Coscuez, Chivor, Boyacá, Gachalá…): captúralos cuando digan "de <lugar>" y JAMÁS los confundas con la sede.
 11. "peso" es texto con unidad (ej. "3.2 ct", "5 gr", o "Plata"/"fragmento").
@@ -807,6 +985,7 @@ function snapshotToGuidedContext(
   return [
     "Contexto vivo del atelier (úsalo para inferir y NO volver a preguntar):",
     `Ruta actual: ${route}`,
+    buildAtelierResumen(snapshot),
     flow && isGuidedFlow(flow)
       ? `Flujo en curso (no lo cambies salvo que Maritza pida claramente otra cosa): ${flow}`
       : "Aún sin flujo definido: clasifícalo en este turno.",
@@ -894,26 +1073,51 @@ async function buildGuidedEnvelope(args: {
         guidedFichas,
       ),
     },
-    ...args.messages.map((m) => ({
+    ...capTurns(args.messages).map((m) => ({
       role: m.role === "assistant" ? "assistant" : "user",
       content: String(m.content ?? "").slice(0, 4000),
     })),
   ];
 
+  // 413 safety net: the flow-schema persona + a reduced context (route, flow,
+  // the tiny aggregate résumé) + just the last user turn — no candidate list,
+  // no treasure catalog, no history. Retried if the full payload 413s.
+  const guidedMinimal = [
+    { role: "system", content: buildGuidedSystemPrompt(args.accessLevel) },
+    {
+      role: "system",
+      content: [
+        "Contexto reducido (la conversación creció demasiado; respondé igual con lo que tengas):",
+        `Ruta actual: ${args.route}`,
+        isGuidedFlow(args.flow)
+          ? `Flujo en curso: ${args.flow}`
+          : "Clasificá el flujo en este turno.",
+        buildAtelierResumen(args.snapshot),
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    },
+    { role: "user", content: String(lastUserText).slice(0, 2000) },
+  ];
+
   let parsed: Record<string, unknown> | null = null;
-  let rawText = "";
   // The model that actually produced the answer — reported back so the UI and
   // the saved summary reflect the real provider after any fallback.
   let answeredModel = args.targets[0]?.model ?? DEFAULT_GATEWAY_MODEL;
 
-  // Try each target in order (under "auto": gateway → Groq). Each upstream call
-  // retries transient 429/5xx with exponential backoff; if a provider is still
-  // exhausted after retries, fall through to the next. Only when every provider
-  // is exhausted do we degrade to an advisory bubble.
-  for (let t = 0; t < args.targets.length; t++) {
-    const target = args.targets[t];
-    const isLast = t === args.targets.length - 1;
-    answeredModel = target.model;
+  // One upstream round-trip for a given payload. Distinguishes ok+JSON (parsed),
+  // ok+prose (rawText only), not-ok (status), and a hard network error.
+  type GuidedCall = {
+    ok: boolean;
+    status: number;
+    parsed: Record<string, unknown> | null;
+    rawText: string;
+    networkError: boolean;
+  };
+  const callGuided = async (
+    target: GuidedTarget,
+    payload: Array<{ role: string; content: string }>,
+  ): Promise<GuidedCall> => {
     try {
       const upstream = await fetchUpstreamWithRetry(target.url, {
         method: "POST",
@@ -923,7 +1127,7 @@ async function buildGuidedEnvelope(args: {
         },
         body: JSON.stringify({
           model: target.model,
-          messages: fullMessages,
+          messages: payload,
           temperature: 0.2,
           // The envelope is compact JSON (a few fields + a short "say"); 800 is
           // ample and keeps latency/cost down on the small models.
@@ -936,41 +1140,96 @@ async function buildGuidedEnvelope(args: {
       });
       if (!upstream.ok) {
         // Surface the real upstream reason in the logs (the friendly message
-        // below intentionally hides provider detail from the operator).
+        // shown to the operator intentionally hides provider detail).
         const errBody = await upstream.text().catch(() => "");
         console.warn(
           `[fotosintesis-ai] guided upstream ${upstream.status} via ${target.label} (${target.model}): ${errBody.slice(0, 500)}`,
         );
-        // A rate-limited/unavailable provider falls through to the next one.
-        if (!isLast) continue;
-        return advisoryFallback(
-          upstream.status === 429
-            ? "El modelo está saturado ahora mismo (límite de uso del proveedor). Esperá un minuto y volvé a intentar."
-            : `El modelo respondió ${upstream.status}. Intentá de nuevo en un momento.`,
-          target.model,
-        );
+        return {
+          ok: false,
+          status: upstream.status,
+          parsed: null,
+          rawText: "",
+          networkError: false,
+        };
       }
       const data = (await upstream.json()) as {
         choices?: Array<{ message?: { content?: string } }>;
       };
-      rawText = data.choices?.[0]?.message?.content ?? "";
-      parsed = JSON.parse(extractJsonObject(rawText)) as Record<
-        string,
-        unknown
-      >;
-      break; // got a usable answer
+      const text = data.choices?.[0]?.message?.content ?? "";
+      try {
+        return {
+          ok: true,
+          status: 200,
+          parsed: JSON.parse(extractJsonObject(text)) as Record<
+            string,
+            unknown
+          >,
+          rawText: text,
+          networkError: false,
+        };
+      } catch {
+        // Model answered with prose, not JSON — surface it as an advisory.
+        return {
+          ok: true,
+          status: 200,
+          parsed: null,
+          rawText: text,
+          networkError: false,
+        };
+      }
     } catch {
-      // Network failure or a non-JSON reply. If the model answered with prose
-      // (rawText present), degrade to an advisory bubble. If it was a hard
-      // network error and another provider remains, try that one instead.
-      if (!rawText.trim() && !isLast) continue;
+      return {
+        ok: false,
+        status: 0,
+        parsed: null,
+        rawText: "",
+        networkError: true,
+      };
+    }
+  };
+
+  // Try each target in order (under "auto": gateway → Groq). Each call retries
+  // transient 429/5xx with backoff; a 413 shrinks to the minimal payload and
+  // retries the same target once; a still-exhausted provider falls through to
+  // the next. Only when every provider fails do we degrade to an advisory.
+  for (let t = 0; t < args.targets.length; t++) {
+    const target = args.targets[t];
+    const isLast = t === args.targets.length - 1;
+    answeredModel = target.model;
+
+    let r = await callGuided(target, fullMessages);
+    if (!r.ok && r.status === 413) {
+      // Payload too large — retry this target once with the minimal payload.
+      r = await callGuided(target, guidedMinimal);
+    }
+
+    if (r.ok && r.parsed) {
+      parsed = r.parsed;
+      break; // got a usable answer
+    }
+    if (r.ok && !r.parsed) {
+      // Prose, not JSON → degrade to an advisory bubble immediately.
       return advisoryFallback(
-        rawText.trim()
-          ? rawText.trim().slice(0, 400)
+        r.rawText.trim()
+          ? r.rawText.trim().slice(0, 400)
           : "No te entendí bien, ¿me lo repetís?",
-        answeredModel,
+        target.model,
       );
     }
+    // Not ok (status error or network failure). Fall through to the next
+    // provider when one remains; otherwise degrade to a friendly advisory.
+    if (!isLast) continue;
+    return advisoryFallback(
+      r.status === 429
+        ? "El modelo está saturado ahora mismo (límite de uso del proveedor). Esperá un minuto y volvé a intentar."
+        : r.status === 413
+          ? "La conversación creció demasiado para el modelo. Limpiá la conversación (🧹) y reformulá tu pedido."
+          : r.networkError
+            ? "No te entendí bien, ¿me lo repetís?"
+            : `El modelo respondió ${r.status}. Intentá de nuevo en un momento.`,
+      target.model,
+    );
   }
 
   if (!parsed) {
@@ -1045,17 +1304,46 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse,
 ): Promise<void> {
-  // CORS — same pattern as the rest of /api.
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  // Same-origin lock + CORS. Reflect the caller's Origin only when it's on the
+  // allowlist (no more `*`); a present-but-foreign Origin is rejected outright.
+  const origin = req.headers.origin as string | undefined;
+  const originOk = isAllowedOrigin(origin);
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    origin && originOk
+      ? origin
+      : process.env.APP_URL?.trim() || "https://tierramadre.app",
+  );
+  res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   if (req.method === "OPTIONS") {
-    res.status(204).end();
+    res.status(originOk ? 204 : 403).end();
+    return;
+  }
+  if (!originOk) {
+    res.status(403).json({ error: "Origen no permitido." });
     return;
   }
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  // Identity: when hard-auth is enabled we verify the Google ID token and
+  // trust that email over the (spoofable) body one. In the default (off) mode
+  // the origin lock above is the control, so we skip per-request token
+  // verification entirely — the client's stored token is usually expired and
+  // verifying it on every turn would add latency for no enforcement benefit.
+  const enforceAuth = authRequired();
+  const identity: { email?: string; verified: boolean } = enforceAuth
+    ? await verifyIdentity(req)
+    : { verified: false };
+  if (enforceAuth && !identity.verified) {
+    res.status(401).json({
+      error: "Autenticación requerida. Iniciá sesión y volvé a intentar.",
+    });
     return;
   }
 
@@ -1086,7 +1374,9 @@ export default async function handler(
 
   const route = body.route ?? "/admin/fotosintesis";
   const threadId = body.threadId ?? `anon-${Date.now()}`;
-  const userEmail = body.userEmail?.toLowerCase().trim() ?? "anon@local";
+  // A verified id-token email (when present) wins over the untrusted body value.
+  const userEmail =
+    identity.email || body.userEmail?.toLowerCase().trim() || "anon@local";
   const ip =
     (req.headers["x-forwarded-for"] as string | undefined)
       ?.split(",")[0]
@@ -1183,7 +1473,7 @@ export default async function handler(
       )
     : "";
 
-  // Compose the prompt: persona system + live context + history.
+  // Compose the prompt: persona system + live context + (capped) history.
   const fullMessages = [
     { role: "system", content: SYSTEM_PROMPT },
     {
@@ -1195,10 +1485,22 @@ export default async function handler(
         advisoryFichas,
       ),
     },
-    ...messages.map((m) => ({
+    ...capTurns(messages).map((m) => ({
       role: m.role === "assistant" ? "assistant" : "user",
       content: String(m.content ?? "").slice(0, 4000),
     })),
+  ];
+
+  // 413 safety net: a stripped-down payload (persona + the tiny aggregate
+  // résumé + just the last user turn — no catalog, no history) that streamChat
+  // retries with if the full request is rejected as too large.
+  const advisoryResumen = buildAtelierResumen(body.snapshot);
+  const advisoryMinimal = [
+    { role: "system", content: SYSTEM_PROMPT },
+    ...(advisoryResumen
+      ? [{ role: "system", content: advisoryResumen }]
+      : []),
+    { role: "user", content: String(lastUserText).slice(0, 2000) },
   ];
 
   // Open the SSE stream.
@@ -1217,7 +1519,7 @@ export default async function handler(
     fullText,
     finishReason,
     model: answeredModel,
-  } = await streamChat(res, advisoryTargets, fullMessages);
+  } = await streamChat(res, advisoryTargets, fullMessages, advisoryMinimal);
 
   sseWrite(res, { done: true, model: answeredModel, finishReason });
   res.end();
