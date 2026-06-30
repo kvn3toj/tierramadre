@@ -200,7 +200,10 @@ function PhotoField({
       style={{
         ...fieldBoxStyle(field, guides),
         borderRadius: isCircle ? "50%" : undefined,
-        background: "transparent",
+        // Backdrop sits UNDER the photo: a non-covering / transparent / sub-pixel
+        // -gapped image then shows this clean fill instead of the cream artwork
+        // hole, so the circle never reads as having a gap or wedge.
+        background: field.backdrop ?? "transparent",
       }}
     >
       {src ? (
@@ -220,6 +223,23 @@ function PhotoField({
               transformOrigin: "center center",
             }}
           />
+          {/* Soft edge vignette: gently darkens the circle's rim so a flat,
+             evenly-lit product background reads as an intentional framed shot
+             (drawing the eye to the centered gem) instead of empty space. Center
+             stays fully transparent so the subject is never dimmed. */}
+          {isCircle && field.vignette ? (
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: "50%",
+                pointerEvents: "none",
+                background:
+                  "radial-gradient(circle at 50% 46%, rgba(0,0,0,0) 56%, rgba(0,0,0,.06) 78%, rgba(0,0,0,.16) 100%)",
+              }}
+            />
+          ) : null}
           {/* Recessed inner shadow: makes the photo read as set INTO the printed
              ring (the photo is drawn over the ring's inner edge, so without this
              it looks pasted on top). Soft + neutral so it flatters a gem or a

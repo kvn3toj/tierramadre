@@ -44,6 +44,12 @@ export interface TemplateField {
   cover?: string;
   /** photo only */
   shape?: "circle";
+  /** photo only — solid fill painted UNDER the image so a non-covering or
+   *  transparent photo never reveals the artwork hole (cream/gap). */
+  backdrop?: string;
+  /** photo only — soft edge vignette so a flat product background reads as an
+   *  intentional, framed shot rather than empty space. */
+  vignette?: boolean;
   /** details only — color of the "Tipo:" etc. labels */
   labelColor?: string;
 }
@@ -168,6 +174,11 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
         w: 435,
         h: 435,
         center: true,
+        // White backdrop = the artwork hole is cream; a clean white under the
+        // gem makes any sub-pixel gap or transparent PNG read as part of the
+        // photo, never a crescent. Vignette frames the flat catalog background.
+        backdrop: "#ffffff",
+        vignette: true,
       },
       {
         key: "name",
@@ -197,11 +208,15 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
         align: "left",
         cover: "#FCF7EC",
         labelColor: "#0F5C3A",
+        // Roomier line height + size so the typical 5-line block fills its
+        // reserved area instead of leaving a blank gap above the baked quote.
+        // The details field auto-fits, so the all-lines-filled case still never
+        // overflows.
         font: {
           family: CORMORANT,
           weight: 400,
-          size: 28,
-          lineHeight: 31.2,
+          size: 30,
+          lineHeight: 37,
           color: "#2c2c2c",
         },
       },
