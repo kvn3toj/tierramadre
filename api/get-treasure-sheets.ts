@@ -4,9 +4,9 @@
  * Response body mirrors frontend `TreasureItem` (see src/types/index.ts).
  */
 
-import type { sheets_v4 } from '@googleapis/sheets';
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import type { TreasureItem, TreasureStatus } from '../src/types/index.ts';
+import type { sheets_v4 } from "@googleapis/sheets";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { TreasureItem, TreasureStatus } from "../src/types/index.ts";
 import {
   withApiHandler,
   sendError,
@@ -18,10 +18,10 @@ import {
   normalizeHeader,
   parsePrice,
   parseDecimal,
-} from './_lib/index.js';
+} from "./_lib/index.js";
 
 type PesoParsed =
-  | { value: number | string; isJewelry: true; metalType: 'Plata' | 'Oro 18k' }
+  | { value: number | string; isJewelry: true; metalType: "Plata" | "Oro 18k" }
   | { value: number | string; isJewelry: false; metalType?: undefined };
 
 /**
@@ -31,14 +31,14 @@ function parsePeso(peso: string | number | null | undefined): PesoParsed {
   if (!peso) return { value: 0, isJewelry: false };
   const pesoStr = String(peso).trim().toLowerCase();
 
-  if (pesoStr.includes('plata')) {
-    return { value: 'Plata', isJewelry: true, metalType: 'Plata' };
+  if (pesoStr.includes("plata")) {
+    return { value: "Plata", isJewelry: true, metalType: "Plata" };
   }
-  if (pesoStr.includes('oro')) {
-    return { value: 'Oro 18k', isJewelry: true, metalType: 'Oro 18k' };
+  if (pesoStr.includes("oro")) {
+    return { value: "Oro 18k", isJewelry: true, metalType: "Oro 18k" };
   }
 
-  const numValue = parseFloat(String(peso).replace(',', '.'));
+  const numValue = parseFloat(String(peso).replace(",", "."));
   return { value: Number.isNaN(numValue) ? peso : numValue, isJewelry: false };
 }
 
@@ -69,30 +69,35 @@ function parsePeso(peso: string | number | null | undefined): PesoParsed {
  * U = ESTADO ASESOR (20) - state from current owner's perspective
  */
 const INVENTARIO_HEADERS = {
-  ITEM: 'item',
-  FECHA_INGRESO: 'fecha ingreso inventario',
-  NOMBRE: 'nombre',
-  PESO: 'peso (ct)',
-  COLOR: 'color',
-  CALIDAD: 'calidad',
-  CANTIDAD: 'cant.',
-  TALLA: 'talla',
-  MEDIDAS: 'medidas',
-  CATEGORIA: 'categoría',
-  PRECIO_COP: 'precio cop',
-  UBICACION: 'ubicación',
-  ASESOR: 'asesor',
-  ESTADO: 'estado',
-  QR: 'qr',
-  COLECCION: 'colección',
-  CAJA: 'caja',
-  ASESOR_ACTUAL: 'asesor actual',    // Column T (index 19)
-  ESTADO_ASESOR: 'estado asesor',    // Column U (index 20)
+  ITEM: "item",
+  FECHA_INGRESO: "fecha ingreso inventario",
+  NOMBRE: "nombre",
+  PESO: "peso (ct)",
+  COLOR: "color",
+  CALIDAD: "calidad",
+  CANTIDAD: "cant.",
+  TALLA: "talla",
+  MEDIDAS: "medidas",
+  CATEGORIA: "categoría",
+  PRECIO_COP: "precio cop",
+  UBICACION: "ubicación",
+  ASESOR: "asesor",
+  ESTADO: "estado",
+  QR: "qr",
+  COLECCION: "colección",
+  CAJA: "caja",
+  ASESOR_ACTUAL: "asesor actual", // Column T (index 19)
+  ESTADO_ASESOR: "estado asesor", // Column U (index 20)
 };
 
 // Jewelry subcategory values from Column K (synced with CATEGORY_SUBCATEGORIES.joyas in gallery-constants.ts)
 const JEWELRY_CATEGORIES = new Set([
-  'anillo en plata', 'aretes', 'topitos', 'pulsera', 'dije', 'anillo en oro'
+  "anillo en plata",
+  "aretes",
+  "topitos",
+  "pulsera",
+  "dije",
+  "anillo en oro",
 ]);
 
 /**
@@ -104,13 +109,13 @@ function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
   // Find column index by exact header match (case-insensitive)
   const getColumnIndex = (headerName: string) => {
     const search = headerName.toLowerCase().trim();
-    return normalizedHeaders.findIndex(h => h === search);
+    return normalizedHeaders.findIndex((h) => h === search);
   };
 
   // Get value by header name (exact match)
   const getValue = (headerName: string): string | null => {
     const index = getColumnIndex(headerName);
-    if (index >= 0 && row[index] !== undefined && row[index] !== '') {
+    if (index >= 0 && row[index] !== undefined && row[index] !== "") {
       return String(row[index]);
     }
     return null;
@@ -118,40 +123,71 @@ function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
 
   // Fallback to index if header not found
   const getByIndex = (index: number): string | null => {
-    return row[index] !== undefined && row[index] !== '' ? String(row[index]) : null;
+    return row[index] !== undefined && row[index] !== ""
+      ? String(row[index])
+      : null;
   };
 
   const peso = getValue(INVENTARIO_HEADERS.PESO) || getByIndex(3);
   const pesoData = parsePeso(peso);
 
   const item: TreasureItem = {
-    item: parseInt(String(getValue(INVENTARIO_HEADERS.ITEM) || getByIndex(0) || '0'), 10),
-    fechaIngreso: getValue(INVENTARIO_HEADERS.FECHA_INGRESO) || getByIndex(1) || '',
-    nombre: getValue(INVENTARIO_HEADERS.NOMBRE) || getByIndex(2) || '',
-    peso: typeof pesoData.value === 'number' ? pesoData.value : parseDecimal(peso ?? ''),
-    color: getValue(INVENTARIO_HEADERS.COLOR) || getByIndex(4) || '',
-    calidad: getValue(INVENTARIO_HEADERS.CALIDAD) || getByIndex(5) || '',
-    cantidad: parseInt(String(getValue(INVENTARIO_HEADERS.CANTIDAD) || getByIndex(6) || '1'), 10),
-    talla: getValue(INVENTARIO_HEADERS.TALLA) || getByIndex(7) || '',
-    medidas: getValue(INVENTARIO_HEADERS.MEDIDAS) || getByIndex(8) || '',
-    medidasValores: getByIndex(9) || '',
-    categoria: (getValue(INVENTARIO_HEADERS.CATEGORIA) || getByIndex(10) || '').trim(),
-    precioCOP: parsePrice(getValue(INVENTARIO_HEADERS.PRECIO_COP) || getByIndex(11)),
+    item: parseInt(
+      String(getValue(INVENTARIO_HEADERS.ITEM) || getByIndex(0) || "0"),
+      10,
+    ),
+    fechaIngreso:
+      getValue(INVENTARIO_HEADERS.FECHA_INGRESO) || getByIndex(1) || "",
+    nombre: getValue(INVENTARIO_HEADERS.NOMBRE) || getByIndex(2) || "",
+    peso:
+      typeof pesoData.value === "number"
+        ? pesoData.value
+        : parseDecimal(peso ?? ""),
+    color: getValue(INVENTARIO_HEADERS.COLOR) || getByIndex(4) || "",
+    calidad: getValue(INVENTARIO_HEADERS.CALIDAD) || getByIndex(5) || "",
+    cantidad: parseInt(
+      String(getValue(INVENTARIO_HEADERS.CANTIDAD) || getByIndex(6) || "1"),
+      10,
+    ),
+    talla: getValue(INVENTARIO_HEADERS.TALLA) || getByIndex(7) || "",
+    medidas: getValue(INVENTARIO_HEADERS.MEDIDAS) || getByIndex(8) || "",
+    medidasValores: getByIndex(9) || "",
+    categoria: (
+      getValue(INVENTARIO_HEADERS.CATEGORIA) ||
+      getByIndex(10) ||
+      ""
+    ).trim(),
+    precioCOP: parsePrice(
+      getValue(INVENTARIO_HEADERS.PRECIO_COP) || getByIndex(11),
+    ),
     precioInternacional: 0,
-    ubicacion: getValue(INVENTARIO_HEADERS.UBICACION) || getByIndex(12) || '',
-    asesor: getValue(INVENTARIO_HEADERS.ASESOR) || getByIndex(13) || '',
-    estado: (getValue(INVENTARIO_HEADERS.ESTADO) || getByIndex(14) || 'DISPONIBLE').toUpperCase() as TreasureStatus,
-    qr: getValue(INVENTARIO_HEADERS.QR) || getByIndex(15) || '',
-    coleccion: getValue(INVENTARIO_HEADERS.COLECCION) || getByIndex(16) || '',
-    caja: getValue(INVENTARIO_HEADERS.CAJA) || getByIndex(17) || '',
-    asesorActual: getValue(INVENTARIO_HEADERS.ASESOR_ACTUAL) || getByIndex(19) || '',
-    estadoAsesor: (getValue(INVENTARIO_HEADERS.ESTADO_ASESOR) || getByIndex(20) || '').toUpperCase() as TreasureStatus | '',
+    ubicacion: getValue(INVENTARIO_HEADERS.UBICACION) || getByIndex(12) || "",
+    asesor: getValue(INVENTARIO_HEADERS.ASESOR) || getByIndex(13) || "",
+    estado: (
+      getValue(INVENTARIO_HEADERS.ESTADO) ||
+      getByIndex(14) ||
+      "DISPONIBLE"
+    ).toUpperCase() as TreasureStatus,
+    qr: getValue(INVENTARIO_HEADERS.QR) || getByIndex(15) || "",
+    coleccion: getValue(INVENTARIO_HEADERS.COLECCION) || getByIndex(16) || "",
+    caja: getValue(INVENTARIO_HEADERS.CAJA) || getByIndex(17) || "",
+    asesorActual:
+      getValue(INVENTARIO_HEADERS.ASESOR_ACTUAL) || getByIndex(19) || "",
+    estadoAsesor: (
+      getValue(INVENTARIO_HEADERS.ESTADO_ASESOR) ||
+      getByIndex(20) ||
+      ""
+    ).toUpperCase() as TreasureStatus | "",
     isJewelry: pesoData.isJewelry,
     ...(pesoData.metalType ? { metalType: pesoData.metalType } : {}),
   };
 
   // Also flag as jewelry if categoria matches a known jewelry subcategory (e.g. items with numeric peso)
-  if (!item.isJewelry && item.categoria && JEWELRY_CATEGORIES.has(item.categoria.toLowerCase().trim())) {
+  if (
+    !item.isJewelry &&
+    item.categoria &&
+    JEWELRY_CATEGORIES.has(item.categoria.toLowerCase().trim())
+  ) {
     item.isJewelry = true;
   }
 
@@ -163,7 +199,9 @@ type PricingRow = { precioCOP: number; precioInternacional: number };
 /**
  * Fetch pricing data from CUALIFICACION-PRECIO sheet
  */
-async function fetchPricingData(sheets: sheets_v4.Sheets): Promise<Record<number, PricingRow>> {
+async function fetchPricingData(
+  sheets: sheets_v4.Sheets,
+): Promise<Record<number, PricingRow>> {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
@@ -193,67 +231,96 @@ async function fetchPricingData(sheets: sheets_v4.Sheets): Promise<Record<number
     return pricingMap;
   } catch (error: unknown) {
     console.warn(
-      'Could not fetch pricing data:',
-      error instanceof Error ? error.message : error
+      "Could not fetch pricing data:",
+      error instanceof Error ? error.message : error,
     );
     return {};
   }
 }
 
-export default withApiHandler(async (req: VercelRequest, res: VercelResponse, ctx: Record<string, unknown>) => {
-  const { sheets } = ctx as { sheets: sheets_v4.Sheets };
-  const sheetNames = await getSheetNames(sheets);
-  const targetSheet = findSheetByPattern(sheetNames, ['inventario', 'inventory']) || sheetNames[0];
+export default withApiHandler(
+  async (
+    req: VercelRequest,
+    res: VercelResponse,
+    ctx: Record<string, unknown>,
+  ) => {
+    const { sheets } = ctx as { sheets: sheets_v4.Sheets };
+    const sheetNames = await getSheetNames(sheets);
+    const targetSheet =
+      findSheetByPattern(sheetNames, ["inventario", "inventory"]) ||
+      sheetNames[0];
 
-  // Fetch treasure and pricing data in parallel
-  const [treasureResponse, pricingMap] = await Promise.all([
-    sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${targetSheet}!A:Z`,
-    }),
-    fetchPricingData(sheets),
-  ]);
+    // Fetch treasure and pricing data in parallel
+    const [treasureResponse, pricingMap] = await Promise.all([
+      sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${targetSheet}!A:Z`,
+      }),
+      fetchPricingData(sheets),
+    ]);
 
-  const rows = treasureResponse.data.values;
+    const rows = treasureResponse.data.values;
 
-  if (!rows || rows.length === 0) {
+    if (!rows || rows.length === 0) {
+      return sendSuccess(res, {
+        treasure: [],
+        message: "No data found in spreadsheet",
+      });
+    }
+
+    const headers = rows[0];
+    const dataRows = rows.slice(1);
+
+    const treasure = dataRows
+      .filter((row) => row.length > 0 && row.some((cell) => cell))
+      .map((row) => {
+        const item = mapRowToTreasureItem(
+          row.map((c) => (c == null ? "" : String(c))) as string[],
+          (headers as string[]).map((c) => String(c)),
+        );
+        // Only add precioInternacional from CUALIFICACION sheet (precioCOP comes from Inventario column L)
+        const pricing = pricingMap[item.item];
+        if (pricing) {
+          item.precioInternacional = pricing.precioInternacional;
+        }
+        return item;
+      })
+      .filter((item) => item.item > 0);
+
+    const sampleRow = dataRows[0] || [];
+    const pricingCount = Object.keys(pricingMap).length;
+
+    // The _debug block exposes the sheet's header labels + the first row's raw cell
+    // values to the client. Useful for column-mapping diagnostics, but it leaks the
+    // internal sheet layout to every catalog visitor, so gate it behind an explicit
+    // `?debug=1` AND a non-production environment.
+    const includeDebug =
+      Boolean(req.query.debug) && process.env.NODE_ENV !== "production";
+
     return sendSuccess(res, {
-      treasure: [],
-      message: 'No data found in spreadsheet',
+      treasure,
+      count: treasure.length,
+      sheetName: targetSheet,
+      lastUpdated: new Date().toISOString(),
+      ...(includeDebug
+        ? {
+            _debug: {
+              headers: headers.map(
+                (h, i) => `${String.fromCharCode(65 + i)}: ${h}`,
+              ),
+              sampleValues: sampleRow
+                .slice(0, 21)
+                .map((v, i) => `${String.fromCharCode(65 + i)}: ${v}`),
+              pricingItemsFound: pricingCount,
+            },
+          }
+        : {}),
     });
-  }
-
-  const headers = rows[0];
-  const dataRows = rows.slice(1);
-
-  const treasure = dataRows
-    .filter(row => row.length > 0 && row.some(cell => cell))
-    .map(row => {
-      const item = mapRowToTreasureItem(
-        row.map(c => (c == null ? '' : String(c))) as string[],
-        (headers as string[]).map(c => String(c))
-      );
-      // Only add precioInternacional from CUALIFICACION sheet (precioCOP comes from Inventario column L)
-      const pricing = pricingMap[item.item];
-      if (pricing) {
-        item.precioInternacional = pricing.precioInternacional;
-      }
-      return item;
-    })
-    .filter(item => item.item > 0);
-
-  const sampleRow = dataRows[0] || [];
-  const pricingCount = Object.keys(pricingMap).length;
-
-  return sendSuccess(res, {
-    treasure,
-    count: treasure.length,
-    sheetName: targetSheet,
-    lastUpdated: new Date().toISOString(),
-    _debug: {
-      headers: headers.map((h, i) => `${String.fromCharCode(65 + i)}: ${h}`),
-      sampleValues: sampleRow.slice(0, 21).map((v, i) => `${String.fromCharCode(65 + i)}: ${v}`),
-      pricingItemsFound: pricingCount,
-    },
-  });
-}, { methods: ['GET', 'OPTIONS'], cache: CACHE.NONE, provideSheets: true, errorPrefix: 'GetTreasureSheets' });
+  },
+  {
+    methods: ["GET", "OPTIONS"],
+    cache: CACHE.NONE,
+    provideSheets: true,
+    errorPrefix: "GetTreasureSheets",
+  },
+);

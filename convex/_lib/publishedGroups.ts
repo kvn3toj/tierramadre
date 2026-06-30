@@ -26,6 +26,17 @@ export interface ResolvedBundleItem {
   categoria?: string;
   talla?: string;
   medidas?: string;
+  // Per-piece Fotosíntesis characteristics (surfaced publicly 2026-06-30) so a
+  // lote's per-image detail overlay reflects the exact gem.
+  procedencia?: string;
+  nivelRareza?: number;
+  calificacion?: number;
+  tipoEsmeralda?: string;
+  tipoJoya?: string;
+  tecnicaJoya?: string;
+  minerales?: string[];
+  complementos?: string[];
+  observacion?: string;
   /** Convex-only publish flag. Only `true` members appear in a bundle. */
   mostrarEnCatalogo: boolean;
 }
@@ -41,6 +52,10 @@ export interface BundleGroup {
   fotoUrl?: string;
   totalPriceCOP: number;
   items: BundleItem[];
+  // Lot-level provenance, denormalized onto the card by the query handler after
+  // assembly (this pure module does not read the `lots` table).
+  mina?: string;
+  tratamiento?: string;
 }
 
 export interface ShownSublote {

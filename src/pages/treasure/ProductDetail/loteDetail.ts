@@ -68,5 +68,16 @@ export function resolveLoteDetail(
     medidasValores: "",
     isJewelry: piece.isJewelry ?? product.isJewelry,
     metalType: piece.metalType ?? product.metalType,
+    // Per-piece Fotosíntesis characteristics (mina/tratamiento are lot-level, so
+    // they stay on the bundle via the `...product` spread above).
+    procedencia: piece.procedencia ?? product.procedencia,
+    nivelRareza: piece.nivelRareza ?? product.nivelRareza,
+    calificacion: piece.calificacion ?? product.calificacion,
+    tipoEsmeralda: piece.tipoEsmeralda ?? product.tipoEsmeralda,
+    tipoJoya: piece.tipoJoya ?? product.tipoJoya,
+    tecnicaJoya: piece.tecnicaJoya ?? product.tecnicaJoya,
+    minerales: piece.minerales ?? product.minerales,
+    complementos: piece.complementos ?? product.complementos,
+    description: piece.description ?? product.description,
   };
 }

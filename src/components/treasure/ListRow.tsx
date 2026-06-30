@@ -3,7 +3,7 @@
  * Compact list view row for treasure items.
  * Optimized for scanning and quick comparison.
  */
-import React, { useCallback } from 'react';
+import React, { useCallback } from "react";
 import {
   Box,
   Typography,
@@ -12,15 +12,24 @@ import {
   IconButton,
   alpha,
   useTheme,
-} from '@mui/material';
-import { Heart, Scale } from 'lucide-react';
-import { useThemeMode } from '../../contexts/ThemeContext';
-import { usePriceShare } from '../../contexts/PriceShareContext';
-import { TreasureItem } from '../../types';
-import { getColorDot, getQualityBadge, formatCarats } from '../../utils/formatting';
-import { PriceDisplay } from '../price-simulator/PriceDisplay';
-import { emeraldCore, surfacesLight, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
-import { errorAlpha, cssTransition } from '../../design-system';
+} from "@mui/material";
+import { Heart, Scale } from "lucide-react";
+import { useThemeMode } from "../../contexts/ThemeContext";
+import { usePriceShare } from "../../contexts/PriceShareContext";
+import { TreasureItem } from "../../types";
+import {
+  getColorDot,
+  getQualityBadge,
+  formatCarats,
+} from "../../utils/formatting";
+import { PriceDisplay } from "../price-simulator/PriceDisplay";
+import {
+  emeraldCore,
+  surfacesLight,
+  surfacesDark,
+  semanticColors,
+} from "../../design-system/tokens/colors";
+import { errorAlpha, cssTransition } from "../../design-system";
 
 interface ListRowProps {
   item: TreasureItem;
@@ -45,27 +54,40 @@ function ListRow({
 }: ListRowProps) {
   const theme = useTheme();
   const { mode } = useThemeMode();
-  const isLight = mode === 'light';
+  const isLight = mode === "light";
   const { shouldShowPrices } = usePriceShare();
 
-  const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
+  const displayName = item.nombre
+    .replace(/^L:.*?\s/, "")
+    .replace(/^L:/, "")
+    .trim();
   const quality = getQualityBadge(item.calidad);
   const colorDot = getColorDot(item.color);
-  const weight = typeof item.peso === 'number' ? `${formatCarats(item.peso)} ct` : item.metalType;
+  const weight =
+    typeof item.peso === "number"
+      ? `${formatCarats(item.peso)} ct`
+      : item.metalType;
+  const origin = (item.procedencia || item.mina)?.trim();
 
   const handleItemClick = useCallback(() => {
     onItemClick(item);
   }, [onItemClick, item]);
 
-  const handleFavoriteClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    onToggleFavorite(item.item);
-  }, [onToggleFavorite, item.item]);
+  const handleFavoriteClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onToggleFavorite(item.item);
+    },
+    [onToggleFavorite, item.item],
+  );
 
-  const handleCompareClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    onToggleComparison?.(item);
-  }, [onToggleComparison, item]);
+  const handleCompareClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onToggleComparison?.(item);
+    },
+    [onToggleComparison, item],
+  );
 
   return (
     <Paper
@@ -73,25 +95,36 @@ function ListRow({
       sx={{
         p: 2,
         borderRadius: 2.5,
-        bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
-        border: '1px solid',
-        borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-        display: 'flex',
-        alignItems: 'center',
+        bgcolor: isLight
+          ? surfacesLight.background.primary
+          : surfacesDark.background.secondary,
+        border: "1px solid",
+        borderColor: isLight
+          ? surfacesLight.border.light
+          : surfacesDark.border.light,
+        display: "flex",
+        alignItems: "center",
         gap: 2,
-        cursor: 'pointer',
+        cursor: "pointer",
         transition: cssTransition.default,
-        '&:hover': {
+        "&:hover": {
           borderColor: emeraldCore.dark,
-          bgcolor: isLight ? emeraldCore.lightest : alpha(emeraldCore.dark, 0.08),
+          bgcolor: isLight
+            ? emeraldCore.lightest
+            : alpha(emeraldCore.dark, 0.08),
         },
-        '&:focus-visible': {
+        "&:focus-visible": {
           outline: `3px solid ${emeraldCore.primary}`,
           outlineOffset: 2,
         },
       }}
       onClick={handleItemClick}
-      onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleItemClick(); } }}
+      onKeyDown={(e: React.KeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleItemClick();
+        }
+      }}
       role="article"
       aria-label={`${item.nombre} - ${item.color}, ${weight}`}
       tabIndex={0}
@@ -114,15 +147,19 @@ function ListRow({
           sx={{
             fontWeight: 600,
             color: theme.palette.text.primary,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
           }}
         >
           {displayName}
         </Typography>
-        <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
+        <Typography
+          variant="caption"
+          sx={{ color: theme.palette.text.secondary }}
+        >
           {item.color} • {weight}
+          {origin && ` • ${origin}`}
         </Typography>
       </Box>
 
@@ -132,7 +169,7 @@ function ListRow({
         size="small"
         sx={{
           height: 22,
-          fontSize: '0.6875rem',
+          fontSize: "0.6875rem",
           fontWeight: 600,
           bgcolor: quality.bg,
           color: quality.color,
@@ -142,57 +179,75 @@ function ListRow({
 
       {/* Price (hidden when prices not shown) */}
       {shouldShowPrices && (
-        <Box sx={{ minWidth: 100, textAlign: 'right' }}>
-          <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
+        <Box sx={{ minWidth: 100, textAlign: "right" }}>
+          <PriceDisplay
+            price={item.precioCOP}
+            precioInternacional={item.precioInternacional}
+            compact
+          />
         </Box>
       )}
 
       {/* Action buttons (hidden when prices not shown - comparison requires prices) */}
       {shouldShowPrices && (
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
+        <Box sx={{ display: "flex", gap: 0.5 }}>
           {/* Comparison button */}
           {onToggleComparison && (
-          <IconButton
-            onClick={handleCompareClick}
-            aria-label={isSelectedForComparison ? 'Quitar de comparación' : 'Agregar a comparación'}
-            disabled={!isSelectedForComparison && !canAddToComparison}
-            size="small"
-            sx={{
-              minWidth: 44,
-              minHeight: 44,
-              color: isSelectedForComparison ? 'white' : theme.palette.text.secondary,
-              bgcolor: isSelectedForComparison ? emeraldCore.primary : 'transparent',
-              '&:hover': {
+            <IconButton
+              onClick={handleCompareClick}
+              aria-label={
+                isSelectedForComparison
+                  ? "Quitar de comparación"
+                  : "Agregar a comparación"
+              }
+              disabled={!isSelectedForComparison && !canAddToComparison}
+              size="small"
+              sx={{
+                minWidth: 44,
+                minHeight: 44,
+                color: isSelectedForComparison
+                  ? "white"
+                  : theme.palette.text.secondary,
                 bgcolor: isSelectedForComparison
-                  ? emeraldCore.dark
-                  : alpha(emeraldCore.primary, 0.1),
-              },
-              '&:disabled': {
-                color: theme.palette.text.disabled,
-              },
-            }}
-          >
-            <Scale size={18} />
-          </IconButton>
-        )}
+                  ? emeraldCore.primary
+                  : "transparent",
+                "&:hover": {
+                  bgcolor: isSelectedForComparison
+                    ? emeraldCore.dark
+                    : alpha(emeraldCore.primary, 0.1),
+                },
+                "&:disabled": {
+                  color: theme.palette.text.disabled,
+                },
+              }}
+            >
+              <Scale size={18} />
+            </IconButton>
+          )}
 
           {/* Favorite button */}
           <IconButton
             onClick={handleFavoriteClick}
-            aria-label={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+            aria-label={
+              isFavorite ? "Quitar de favoritos" : "Agregar a favoritos"
+            }
             size="small"
             sx={{
               minWidth: 44,
               minHeight: 44,
-              color: isFavorite ? semanticColors.error.main : theme.palette.text.secondary,
-              '&:hover': {
-                bgcolor: isFavorite ? errorAlpha(0.1) : alpha(emeraldCore.primary, 0.1),
+              color: isFavorite
+                ? semanticColors.error.main
+                : theme.palette.text.secondary,
+              "&:hover": {
+                bgcolor: isFavorite
+                  ? errorAlpha(0.1)
+                  : alpha(emeraldCore.primary, 0.1),
               },
             }}
           >
             <Heart
               size={18}
-              fill={isFavorite ? semanticColors.error.main : 'none'}
+              fill={isFavorite ? semanticColors.error.main : "none"}
             />
           </IconButton>
         </Box>
@@ -209,6 +264,9 @@ export default React.memo(ListRow, (prevProps, nextProps) => {
     prevProps.item.imagen === nextProps.item.imagen &&
     prevProps.item.precioCOP === nextProps.item.precioCOP &&
     prevProps.item.estado === nextProps.item.estado &&
+    // Displayed on the secondary line — include so updates aren't masked.
+    prevProps.item.procedencia === nextProps.item.procedencia &&
+    prevProps.item.mina === nextProps.item.mina &&
     prevProps.isFavorite === nextProps.isFavorite &&
     prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&
     prevProps.canAddToComparison === nextProps.canAddToComparison

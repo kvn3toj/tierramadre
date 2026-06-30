@@ -51,6 +51,7 @@ import {
   ProductActions,
   LotePriceBreakdown,
   CertificateSection,
+  CharacteristicsSection,
   ProvenanceSection,
   PricePerCarat,
 } from "./components";
@@ -806,6 +807,12 @@ export default function ProductDetail() {
 
             {/* Specifications — follow the piece whose photo is in view */}
             <SpecificationsList product={info} />
+
+            {/* Características — PUBLIC Fotosíntesis disclosures (origin, mine,
+                treatment, jewelry detail, evocative description). Reads `info`
+                so it follows the in-view piece for lote bundles. Absent-safe:
+                self-hides for legacy/sparse items. */}
+            <CharacteristicsSection product={info} />
 
             {/* Certificate — self-hides when there's no certificateUrl and no
                 structured certifications (absent-safe). Shown to all roles: the

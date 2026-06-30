@@ -54,6 +54,19 @@ interface PublishedRow {
   estadoAsesor?: string;
   fotoUrl?: string;
   certificadoUrl?: string;
+  // ── Fotosíntesis characteristics (surfaced publicly 2026-06-30) ──
+  procedencia?: string;
+  nivelRareza?: number;
+  calificacion?: number;
+  tipoEsmeralda?: string;
+  tipoJoya?: string;
+  tecnicaJoya?: string;
+  minerales?: string[];
+  complementos?: string[];
+  observacion?: string;
+  // Lot-level provenance, denormalized onto the row by publishedCatalog.
+  mina?: string;
+  tratamiento?: string;
 }
 
 /**
@@ -91,10 +104,10 @@ function mapRowToTreasureItem(row: PublishedRow): TreasureItem {
     row.peso,
     row.categoria,
   );
-  // Catalog price: the ambassador tier (Sheets column N). By policy the
-  // public catalog never shows the precioCOP (L) or precioConscienteCOP (O)
-  // tiers — those are scrubbed in publishedCatalog. Items without N render
-  // at 0; set precioEmbajadorCOP to give them a visible price.
+  // Catalog price: the ambassador tier (Sheets column M). By policy the public
+  // catalog never shows the costoBaseCOP (L) or precioConscienteCOP (N) tiers —
+  // those are scrubbed in publishedCatalog. Items without M render at 0; set
+  // precioEmbajadorCOP to give them a visible price.
   const precioCOP = row.precioEmbajadorCOP ?? 0;
 
   return {
@@ -124,6 +137,25 @@ function mapRowToTreasureItem(row: PublishedRow): TreasureItem {
     // Drive image captured in the wizard; useTreasure converts it to a proxy URL.
     imagen: row.fotoUrl || undefined,
     certificateUrl: row.certificadoUrl || undefined,
+    // ── Fotosíntesis characteristics (public) ──
+    procedencia: row.procedencia || undefined,
+    nivelRareza: row.nivelRareza,
+    calificacion: row.calificacion,
+    tipoEsmeralda: row.tipoEsmeralda || undefined,
+    tipoJoya: row.tipoJoya || undefined,
+    tecnicaJoya: row.tecnicaJoya || undefined,
+    minerales:
+      row.minerales && row.minerales.length ? row.minerales : undefined,
+    complementos:
+      row.complementos && row.complementos.length
+        ? row.complementos
+        : undefined,
+    mina: row.mina || undefined,
+    tratamiento: row.tratamiento || undefined,
+    // Evocative copy: the capture-time `observacion` doubles as the public
+    // product description (the field exists on TreasureItem but legacy/Sheets
+    // catalog rows never populate it).
+    description: row.observacion || undefined,
   };
 }
 
@@ -157,6 +189,16 @@ export interface GroupItem {
   categoria?: string;
   talla?: string;
   medidas?: string;
+  // Per-piece Fotosíntesis characteristics for the lote per-image overlay.
+  procedencia?: string;
+  nivelRareza?: number;
+  calificacion?: number;
+  tipoEsmeralda?: string;
+  tipoJoya?: string;
+  tecnicaJoya?: string;
+  minerales?: string[];
+  complementos?: string[];
+  observacion?: string;
 }
 
 export interface PublishedGroup {
@@ -167,6 +209,9 @@ export interface PublishedGroup {
   fotoUrl?: string;
   totalPriceCOP: number;
   items: GroupItem[];
+  // Lot-level provenance (same for the whole bundle), from the `lots` table.
+  mina?: string;
+  tratamiento?: string;
 }
 
 /**
@@ -236,6 +281,13 @@ export function mapGroupToTreasureItem(
     isJewelry,
     ...(metalType ? { metalType } : {}),
     imagen: group.fotoUrl || first?.fotoUrl || undefined,
+    // Bundle-level provenance (lot) + first-piece characteristics as the card
+    // default; the per-image overlay (loteDetail) refines these per piece.
+    mina: group.mina || undefined,
+    tratamiento: group.tratamiento || undefined,
+    procedencia: first?.procedencia || undefined,
+    tipoEsmeralda: first?.tipoEsmeralda || undefined,
+    description: first?.observacion || undefined,
     isLote: true,
     groupKind: group.groupKind,
     groupId: group.groupId,
@@ -259,6 +311,20 @@ export function mapGroupToTreasureItem(
         medidas: it.medidas ?? "",
         isJewelry: derived.isJewelry,
         ...(derived.metalType ? { metalType: derived.metalType } : {}),
+        // Per-piece Fotosíntesis characteristics for the per-image overlay.
+        procedencia: it.procedencia || undefined,
+        nivelRareza: it.nivelRareza,
+        calificacion: it.calificacion,
+        tipoEsmeralda: it.tipoEsmeralda || undefined,
+        tipoJoya: it.tipoJoya || undefined,
+        tecnicaJoya: it.tecnicaJoya || undefined,
+        minerales:
+          it.minerales && it.minerales.length ? it.minerales : undefined,
+        complementos:
+          it.complementos && it.complementos.length
+            ? it.complementos
+            : undefined,
+        description: it.observacion || undefined,
       };
     }),
   };

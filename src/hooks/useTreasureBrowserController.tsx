@@ -282,11 +282,19 @@ export function useTreasureBrowserController({
     [navigate, addToRecent, analyticsHook, track, hasFilters, viewMode, t],
   );
 
+  // ⚠️ NOT PERSISTED: the cert-upload dialog collects structured lab/number
+  // data, but there is no backend wired for it yet — no Convex mutation and no
+  // Sheets column store `certifications`, so this handler only closes the
+  // dialog. We log at WARN (not INFO) so the no-op is visible and the captured
+  // payload isn't silently dropped. The public certificate IMAGE/PDF link
+  // (`certificateUrl`) is a separate, working field surfaced via CertificateSection.
+  // TODO(cert-persistence): wire to a Convex mutation (productInventory) + Sheets
+  // column, then replace this with a real save (and surface success/failure).
   const handleSaveCertifications = useCallback(
     (certifications: TreasureItem["certifications"]) => {
       if (selectedItem) {
-        log.info(
-          "Saving certifications for item:",
+        log.warn(
+          "[certifications] NOT persisted (no backend wired) — item:",
           selectedItem.item,
           certifications,
         );
