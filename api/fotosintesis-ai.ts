@@ -55,6 +55,12 @@ interface SheetItem {
   nombre: string;
   loteId?: string;
   estado?: string;
+  /** Precio COP — raw cell text (e.g. "444112"). Authoritative; never guessed. */
+  precio?: string;
+  /** Peso en ct (or jewelry text). */
+  peso?: string;
+  color?: string;
+  calidad?: string;
 }
 
 interface SheetCache {
@@ -101,14 +107,30 @@ async function loadSheetCache(): Promise<SheetCache> {
       );
       const colItem = header.findIndex((h) => h === "item");
       const colNombre = header.findIndex((h) => h === "nombre" || h === "name");
-      // estado may be "estado", "o" header, etc. — look broadly
-      const colEstado = header.findIndex(
-        (h) =>
-          h === "estado" || h === "estado asesor" || h === "o" || h === "q",
-      );
+      // estado: prefer the exact "estado" column (Treasure col O / the value the
+      // product card shows, e.g. "Vendido"). Fall back to "estado asesor". The
+      // old "o"/"q" single-letter heuristic was a bug — it matched stray headers
+      // and never the real estado column.
+      const colEstado = (() => {
+        const exact = header.findIndex((h) => h === "estado");
+        if (exact !== -1) return exact;
+        return header.findIndex((h) => h === "estado asesor");
+      })();
       const colLote = header.findIndex(
         (h) => h === "loteid" || h === "lote id" || h === "lote",
       );
+      // Precio COP (Treasure col L). Authoritative price the assistant must use
+      // instead of guessing. Match the exact header, then anything with "precio".
+      const colPrecio = (() => {
+        const exact = header.findIndex((h) => h === "precio cop");
+        if (exact !== -1) return exact;
+        return header.findIndex((h) => h.includes("precio"));
+      })();
+      const colPeso = header.findIndex(
+        (h) => h === "peso (ct)" || h === "peso" || h.startsWith("peso"),
+      );
+      const colColor = header.findIndex((h) => h === "color");
+      const colCalidad = header.findIndex((h) => h === "calidad");
       if (colItem === -1) return [];
 
       const items: SheetItem[] = [];
@@ -121,6 +143,12 @@ async function loadSheetCache(): Promise<SheetCache> {
         const estado =
           colEstado >= 0 ? String(row[colEstado] ?? "").trim() : "";
         const loteId = colLote >= 0 ? String(row[colLote] ?? "").trim() : "";
+        const precio =
+          colPrecio >= 0 ? String(row[colPrecio] ?? "").trim() : "";
+        const peso = colPeso >= 0 ? String(row[colPeso] ?? "").trim() : "";
+        const color = colColor >= 0 ? String(row[colColor] ?? "").trim() : "";
+        const calidad =
+          colCalidad >= 0 ? String(row[colCalidad] ?? "").trim() : "";
         if (availableOnly) {
           const lower = estado.toLowerCase();
           if (
@@ -136,6 +164,10 @@ async function loadSheetCache(): Promise<SheetCache> {
           nombre,
           ...(loteId ? { loteId } : {}),
           ...(estado ? { estado } : {}),
+          ...(precio ? { precio } : {}),
+          ...(peso ? { peso } : {}),
+          ...(color ? { color } : {}),
+          ...(calidad ? { calidad } : {}),
         });
       }
       return items;
@@ -183,10 +215,25 @@ async function enrichCandidateItems(
 }
 
 /**
+ * Format a raw price cell as COP. Accepts "444112", "$444.112", "444,112" etc.;
+ * returns "$444.112" (Colombian thousands separator) or the trimmed original
+ * when it isn't numeric. NEVER fabricates — empty in, empty out.
+ */
+function formatCOP(raw?: string): string {
+  if (!raw) return "";
+  const digits = raw.replace(/[^\d]/g, "");
+  if (!digits) return raw.trim();
+  const n = Number(digits);
+  if (!Number.isFinite(n) || n === 0) return raw.trim();
+  return `$${n.toLocaleString("es-CO")}`;
+}
+
+/**
  * Compact one-line-per-item rendering of a sheet inventory, bounded by a char
  * cap (keeps whole items; the caller appends an honest "mostrando N de M" when
- * truncated). Line shape: "<itemId> <nombre> [<estado>]" — enough for the model
- * to reference any item by number/name and know its availability, cheaply.
+ * truncated). Line shape: "<itemId> <nombre> — <precio> [<estado>]" — enough for
+ * the model to reference any item by number/name and quote its real price and
+ * availability, cheaply.
  */
 function formatSheetItems(
   items: SheetItem[],
@@ -195,13 +242,91 @@ function formatSheetItems(
   let body = "";
   let shown = 0;
   for (const i of items) {
+    const precio = formatCOP(i.precio);
     const line =
-      `${i.itemId} ${i.nombre}${i.estado ? ` [${i.estado}]` : ""}`.trim();
+      `${i.itemId} ${i.nombre}${precio ? ` — ${precio}` : ""}${i.estado ? ` [${i.estado}]` : ""}`.trim();
     if (body.length + line.length + 3 > charCap) break;
     body += (body ? " · " : "") + line;
     shown++;
   }
   return { body, shown, total: items.length };
+}
+
+/**
+ * Strip accents + lowercase for forgiving name/number matching
+ * ("Hércules" ↔ "hercules").
+ */
+function normalizeText(s: string): string {
+  // ̀-ͯ = combining diacritical marks (the accents NFD splits off).
+  return s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+}
+
+/**
+ * On-demand item resolution for advisory questions. The inline catalog is only a
+ * SAMPLE (char-capped), so a question about a specific item (by number like "67"
+ * / "#67" or by name like "Hércules") may reference a row outside the window.
+ * This scans the FULL sheet cache for items the user named and returns their
+ * complete rows, so the model always has the authoritative price + estado +
+ * specs to ground on instead of guessing. Bounded to a few matches.
+ */
+function resolveMentionedItems(
+  query: string,
+  pools: SheetItem[][],
+  max = 6,
+): SheetItem[] {
+  const norm = normalizeText(query);
+  // Item numbers: "67", "#67", "item 67" — whole-number tokens, deduped.
+  const numbers = new Set(
+    (norm.match(/(?<![\d.])\d{1,5}(?![\d.])/g) ?? []).map((n) =>
+      String(Number(n)),
+    ),
+  );
+  // Candidate name tokens from the question (length ≥ 3 to avoid noise words).
+  const queryTokens = new Set(
+    norm.split(/[^a-z0-9]+/).filter((t) => t.length >= 3),
+  );
+
+  const seen = new Set<string>();
+  const out: SheetItem[] = [];
+  for (const pool of pools) {
+    for (const it of pool) {
+      if (out.length >= max) return out;
+      if (seen.has(it.itemId)) continue;
+      const idNorm = String(Number(it.itemId) || it.itemId);
+      const byNumber = numbers.has(idNorm);
+      const nombreNorm = normalizeText(it.nombre);
+      const byName =
+        !!nombreNorm &&
+        nombreNorm.length >= 3 &&
+        (queryTokens.has(nombreNorm) ||
+          norm.includes(nombreNorm) ||
+          nombreNorm.split(/\s+/).some((w) => w.length >= 4 && queryTokens.has(w)));
+      if (byNumber || byName) {
+        seen.add(it.itemId);
+        out.push(it);
+      }
+    }
+  }
+  return out;
+}
+
+/** Authoritative full-row block for the specific items a question mentioned. */
+function formatItemFichas(items: SheetItem[]): string {
+  if (items.length === 0) return "";
+  const lines = items.map((i) => {
+    const parts = [`#${i.itemId} ${i.nombre}`.trim()];
+    const precio = formatCOP(i.precio);
+    parts.push(`precio: ${precio || "no registrado"}`);
+    parts.push(`estado: ${i.estado || "no registrado"}`);
+    if (i.peso) parts.push(`peso: ${i.peso}`);
+    if (i.color) parts.push(`color: ${i.color}`);
+    if (i.calidad) parts.push(`calidad: ${i.calidad}`);
+    return "- " + parts.join(" · ");
+  });
+  return `Fichas de los ítems mencionados (datos autoritativos del inventario — usa estas cifras EXACTAS; si "precio: no registrado", dilo y NO inventes un valor):\n${lines.join("\n")}`;
 }
 
 // Payload guard: this catalog is re-sent on EVERY turn, so a large dump inflates
@@ -449,7 +574,7 @@ Reglas:
 1. Si el usuario pregunta algo que se responde con los datos del snapshot, usa cifras concretas (no aproximes).
 2. Si no tienes la información en el snapshot, dilo claramente — sugiere dónde mirarla (ej. "abre el lote B-008 para ver sus ítems").
 3. Sé corta: 2-4 frases por respuesta salvo que se pida explicación larga.
-4. Nunca inventes IDs, totales o nombres. Si dudas, pídelos.
+4. Nunca inventes IDs, totales, nombres NI PRECIOS. El precio y el estado (ej. "Vendido", "Disponible") de un producto SOLO pueden venir del inventario en el contexto (busca su "Ficha"). Si el precio no está en el contexto, di exactamente que no lo tienes a la mano y sugiere abrir la ficha del producto — NUNCA estimes ni aproximes una cifra de precio.
 5. Cuando expliques el flujo Fotosíntesis, sigue el orden canónico: inicio → compra → captura → cierre → spotlight → venta → directorio.
 6. Si detectas un error de sincronización (syncStatus: "error"), menciónalo proactivamente.
 
@@ -459,6 +584,7 @@ function snapshotToContext(
   snapshot: unknown,
   route: string,
   catalog?: string,
+  fichas?: string,
 ): string {
   return [
     `Contexto vivo del atelier (generado ahora; usa cifras tal cual):`,
@@ -466,6 +592,7 @@ function snapshotToContext(
     catalog
       ? `Inventario completo (todos los productos e ítems; úsalo para responder sobre cualquier producto por número o nombre):\n${catalog}`
       : "",
+    fichas || "",
     `Snapshot JSON: ${JSON.stringify(snapshot)}`,
   ]
     .filter(Boolean)
@@ -650,7 +777,7 @@ REGLAS:
 5. NUNCA inventes IDs (de ítem, proveedor, cliente o lote). Para editar o referenciar un ítem usa "itemHint" con el nombre o descripción que Maritza YA mencionó (ej. "la esmeralda de Chivor" → itemHint: "Chivor"); NO se lo vuelvas a preguntar si ya lo describió. El sistema resuelve el itemHint al ítem real.
 6. NUNCA incluyas "preponderancia" ni fotos en edit-existing ni batch-edit. En captura de ítems, la preponderancia es el % del costo del lote (entre todos los ítems debe sumar 100%): pídela.
 7. Cuando tengas todos los obligatorios, pon ready=true y confirma brevemente en "say" qué vas a precargar; recuerda a Maritza que arrastre la foto antes de guardar si aplica.
-8. Si es una pregunta informativa (no captura), usa flow="advisory" y responde en "say" con datos concretos del snapshot.
+8. Si es una pregunta informativa (no captura), usa flow="advisory" y responde en "say" con datos concretos del snapshot. NUNCA inventes precios ni el estado de un producto: el precio y el estado ("Vendido"/"Disponible") solo pueden venir de la "Ficha" del ítem en el contexto. Si el precio no aparece, dilo y sugiere abrir la ficha; jamás estimes una cifra.
 9. loteId (solo en captura de ítems): inclúyelo SOLO si Maritza nombra el lote explícitamente (ej. "B-008"); si no, déjalo vacío y se usa el lote abierto actual.
 10. "sede"/"bóveda" es el ALMACÉN donde se guarda (B=Bogotá, C=Cali, S=Secreta, M=Marketing), NO la mina; si no la dicen, pregúntala. En cambio "mina" (lote) y "procedencia" (gema) son el ORIGEN de la esmeralda (Muzo, Coscuez, Chivor, Boyacá, Gachalá…): captúralos cuando digan "de <lugar>" y JAMÁS los confundas con la sede.
 11. "peso" es texto con unidad (ej. "3.2 ct", "5 gr", o "Plata"/"fragmento").
@@ -671,6 +798,7 @@ function snapshotToGuidedContext(
   loteContext: unknown,
   candidateItems: unknown,
   treasureSummary?: string,
+  fichas?: string,
 ): string {
   const priorKeys =
     priorDraft && typeof priorDraft === "object"
@@ -694,6 +822,7 @@ function snapshotToGuidedContext(
     treasureSummary
       ? `Catálogo Treasure (inventario completo previo a Fotosíntesis — todos los ítems con su estado): ${treasureSummary}`
       : "",
+    fichas || "",
     // `snapshot` is undefined when the client posts before the Convex workspace
     // query resolves (or with Convex offline). JSON.stringify(undefined) is
     // undefined, not a string — guard with `?? null` so `.slice` never throws.
@@ -736,6 +865,20 @@ async function buildGuidedEnvelope(args: {
   ]);
   const treasureSummary = sheetCache?.treasureSummary || undefined;
 
+  // Authoritative full rows for any item the latest user turn names — so an
+  // advisory-flow answer ("¿cuánto cuesta X?") grounds on the real price/estado
+  // even when the item is outside the sample window. Resolves across the full
+  // sheet cache plus the enriched candidate list.
+  const lastUserText =
+    [...args.messages].reverse().find((m) => m.role === "user")?.content ?? "";
+  const guidedFichas = formatItemFichas(
+    resolveMentionedItems(lastUserText, [
+      sheetCache?.treasureItems ?? [],
+      sheetCache?.fotoItems ?? [],
+      enrichedItems,
+    ]),
+  );
+
   const fullMessages = [
     { role: "system", content: buildGuidedSystemPrompt(args.accessLevel) },
     {
@@ -748,6 +891,7 @@ async function buildGuidedEnvelope(args: {
         args.loteContext,
         enrichedItems,
         treasureSummary,
+        guidedFichas,
       ),
     },
     ...args.messages.map((m) => ({
@@ -1020,15 +1164,36 @@ export default async function handler(
   // Full product context (both inventories) so advisory Q&A knows every item.
   // Precomputed in the 5-min sheet cache → a cache hit on a warm instance, and
   // sourced from Sheets (NOT Convex), so it spends zero Convex bandwidth.
-  const advisoryCatalog = (await loadSheetCache().catch(() => null))
-    ?.catalogContext;
+  const advisorySheetCache = await loadSheetCache().catch(() => null);
+  const advisoryCatalog = advisorySheetCache?.catalogContext;
+
+  // On-demand resolution: the inline catalog is only a char-capped SAMPLE, so a
+  // question about a specific item (e.g. "¿cuánto cuesta Hércules?" / "#67") may
+  // reference a row outside that window. Pull the FULL rows for any item the
+  // latest user turn names so the model has the authoritative price + estado to
+  // ground on, instead of guessing.
+  const lastUserText =
+    [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+  const advisoryFichas = advisorySheetCache
+    ? formatItemFichas(
+        resolveMentionedItems(lastUserText, [
+          advisorySheetCache.treasureItems,
+          advisorySheetCache.fotoItems,
+        ]),
+      )
+    : "";
 
   // Compose the prompt: persona system + live context + history.
   const fullMessages = [
     { role: "system", content: SYSTEM_PROMPT },
     {
       role: "system",
-      content: snapshotToContext(body.snapshot, route, advisoryCatalog),
+      content: snapshotToContext(
+        body.snapshot,
+        route,
+        advisoryCatalog,
+        advisoryFichas,
+      ),
     },
     ...messages.map((m) => ({
       role: m.role === "assistant" ? "assistant" : "user",

@@ -143,12 +143,15 @@ export const workspaceSnapshot = query({
       .slice(0, 5);
 
     // Lightweight item index for guided edit/batch itemHint→id resolution.
+    // `estado` rides along so the assistant knows availability (e.g. "Vendido")
+    // without a second lookup; price stays out (sourced from Sheets server-side).
     const candidateItems = recentItems
       .filter((it) => !!it.loteId)
       .map((it) => ({
         itemId: it.itemId,
         nombre: it.nombre ?? "",
         loteId: it.loteId,
+        ...(it.estado ? { estado: it.estado } : {}),
       }));
 
     return {
