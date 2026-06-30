@@ -1,0 +1,1392 @@
+{
+  "version": "2.14",
+  "children": [
+    {
+      "type": "frame",
+      "id": "IHZW9",
+      "x": 0,
+      "y": 0,
+      "name": "Card 160 Fuerza del Condor",
+      "clip": true,
+      "width": 1000,
+      "fill": "#F7F7F5",
+      "cornerRadius": 16,
+      "layout": "vertical",
+      "gap": 18,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "bOm3t",
+          "name": "Specs",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "#160 · Fuerza del Cóndor · 4.22 ct · 12.5 × 6.9 × 6 mm · cabujón (morralla) · Verde Natural · Morralla Fina",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "T3oi0",
+          "name": "Compare",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "leJVz",
+              "name": "Foto real col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "nSCJR",
+                  "name": "Label A",
+                  "fill": "#6B6B6B",
+                  "content": "FOTO REAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "iSa1N",
+                  "name": "Hero 160",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "work/160/hero.jpg",
+                    "mode": "fill"
+                  },
+                  "width": 384,
+                  "height": 512
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "NxkMO",
+              "name": "Visualizacion IA col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "F8kiFZ",
+                  "name": "Label B",
+                  "fill": "#6B6B6B",
+                  "content": "VISUALIZACIÓN IA (REFERENCIAL)",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "AC8fn",
+                  "name": "Render 160",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "images/generated-1782572752602.png",
+                    "mode": "fill"
+                  },
+                  "width": 512,
+                  "height": 512
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "MtvNw",
+          "name": "Disclosure",
+          "fill": "#8A8A8A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Visualización referencial · IA — imagen generada a partir de las medidas reales y la foto de la gema; no es una fotografía de la pieza terminada.",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal",
+          "fontStyle": "italic"
+        },
+        {
+          "type": "text",
+          "id": "cQfLh",
+          "name": "Status 160",
+          "fill": "#B8860B",
+          "content": "PENDING",
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "700"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "eJ6H8",
+      "x": 1080,
+      "y": 0,
+      "name": "Card 159 Laguna Verde",
+      "clip": true,
+      "width": 1000,
+      "fill": "#F7F7F5",
+      "cornerRadius": 16,
+      "layout": "vertical",
+      "gap": 18,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "LFQzj",
+          "name": "Specs",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "#159 · Laguna Verde · 2.3 ct · 7.1 × 8.5 × 4.6 mm · cabujón (morralla) · Verde Natural · Morralla Fina",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "twS2i",
+          "name": "Compare",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "jYGOh",
+              "name": "Foto real col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "eqMba",
+                  "name": "Label A",
+                  "fill": "#6B6B6B",
+                  "content": "FOTO REAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "n73XQG",
+                  "name": "Hero 159",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "work/159/hero.jpg",
+                    "mode": "fill"
+                  },
+                  "width": 384,
+                  "height": 512
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "zf2Wk",
+              "name": "Visualizacion IA col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "XEEKX",
+                  "name": "Label B",
+                  "fill": "#6B6B6B",
+                  "content": "VISUALIZACIÓN IA (REFERENCIAL)",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "JcVxR",
+                  "name": "Render 159",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "images/generated-1782573024999.png",
+                    "mode": "fill"
+                  },
+                  "width": 512,
+                  "height": 512
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "Wrno1",
+          "name": "Disclosure",
+          "fill": "#8A8A8A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Visualización referencial · IA — imagen generada a partir de las medidas reales y la foto de la gema; no es una fotografía de la pieza terminada.",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal",
+          "fontStyle": "italic"
+        },
+        {
+          "type": "text",
+          "id": "AnGkm",
+          "name": "Status 159",
+          "fill": "#B8860B",
+          "content": "PENDING",
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "700"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "auqao",
+      "x": 2160,
+      "y": 0,
+      "name": "Card 132 Alma",
+      "clip": true,
+      "width": 1000,
+      "fill": "#F7F7F5",
+      "cornerRadius": 16,
+      "layout": "vertical",
+      "gap": 18,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "r3a83I",
+          "name": "Specs",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "#132 · Alma · 0.53 ct · 6 × 5.6 × 3.2 mm · corazón (heart) · Verde Natural · Extrafina",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "SXdRw",
+          "name": "Compare",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "VTmXR",
+              "name": "Foto real col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "iTKF7",
+                  "name": "Label A",
+                  "fill": "#6B6B6B",
+                  "content": "FOTO REAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "v7AvZ",
+                  "name": "Hero",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "work/132/hero.jpg",
+                    "mode": "fill"
+                  },
+                  "width": 384,
+                  "height": 512
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "j0LlY",
+              "name": "Visualizacion IA col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "uzCp1",
+                  "name": "Label B",
+                  "fill": "#6B6B6B",
+                  "content": "VISUALIZACIÓN IA (REFERENCIAL)",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "HwGvR",
+                  "name": "Render",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "images/generated-1782574114652.png",
+                    "mode": "fill"
+                  },
+                  "width": 512,
+                  "height": 512
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "HBCwa",
+          "name": "Disclosure",
+          "fill": "#8A8A8A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Visualización referencial · IA — imagen generada a partir de las medidas reales y la foto de la gema; no es una fotografía de la pieza terminada.",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal",
+          "fontStyle": "italic"
+        },
+        {
+          "type": "text",
+          "id": "Q09gWP",
+          "name": "Status",
+          "fill": "#B8860B",
+          "content": "PENDING",
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "700"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "JeFY2",
+      "x": 3240,
+      "y": 0,
+      "name": "Card 130 Via Lactea",
+      "clip": true,
+      "width": 1000,
+      "fill": "#F7F7F5",
+      "cornerRadius": 16,
+      "layout": "vertical",
+      "gap": 18,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "gMnIq",
+          "name": "Specs",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "#130 · Vía Láctea · 0.69 ct · 5.8 × 4.8 × 3.7 mm · esmeralda (emerald-cut) · Verde Muzo · Extrafina",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "TCmrk",
+          "name": "Compare",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "jZAtB",
+              "name": "Foto real col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "bCYFM",
+                  "name": "Label A",
+                  "fill": "#6B6B6B",
+                  "content": "FOTO REAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "z6Lksr",
+                  "name": "Hero",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "work/130/hero.jpg",
+                    "mode": "fill"
+                  },
+                  "width": 384,
+                  "height": 512
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Nj4o4",
+              "name": "Visualizacion IA col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "KuunR",
+                  "name": "Label B",
+                  "fill": "#6B6B6B",
+                  "content": "VISUALIZACIÓN IA (REFERENCIAL)",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "AAmnW",
+                  "name": "Render",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "images/generated-1782574115871.png",
+                    "mode": "fill"
+                  },
+                  "width": 512,
+                  "height": 512
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "v6EA1",
+          "name": "Disclosure",
+          "fill": "#8A8A8A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Visualización referencial · IA — imagen generada a partir de las medidas reales y la foto de la gema; no es una fotografía de la pieza terminada.",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal",
+          "fontStyle": "italic"
+        },
+        {
+          "type": "text",
+          "id": "ndkgb",
+          "name": "Status",
+          "fill": "#B8860B",
+          "content": "PENDING",
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "700"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "gSV80",
+      "x": 4320,
+      "y": 0,
+      "name": "Card 129 Origen Eterno",
+      "clip": true,
+      "width": 1000,
+      "fill": "#F7F7F5",
+      "cornerRadius": 16,
+      "layout": "vertical",
+      "gap": 18,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "LSp09",
+          "name": "Specs",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "#129 · Origen Eterno · 1.92 ct (par) · 6.4 × 4.9 × 4.3 mm · esmeralda (emerald-cut) · Verde Muzo · Extrafina · PAR",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "cqDIn",
+          "name": "Compare",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "UYbjc",
+              "name": "Foto real col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "b4Ohk",
+                  "name": "Label A",
+                  "fill": "#6B6B6B",
+                  "content": "FOTO REAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "KAkK8",
+                  "name": "Hero",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "work/129/hero.jpg",
+                    "mode": "fill"
+                  },
+                  "width": 384,
+                  "height": 512
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "fBc1t",
+              "name": "Visualizacion IA col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "UOFlN",
+                  "name": "Label B",
+                  "fill": "#6B6B6B",
+                  "content": "VISUALIZACIÓN IA (REFERENCIAL)",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "Pq8ft",
+                  "name": "Render",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "images/generated-1782574113030.png",
+                    "mode": "fill"
+                  },
+                  "width": 512,
+                  "height": 512
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "PA2GM",
+          "name": "Disclosure",
+          "fill": "#8A8A8A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Visualización referencial · IA — imagen generada a partir de las medidas reales y la foto de la gema; no es una fotografía de la pieza terminada.",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal",
+          "fontStyle": "italic"
+        },
+        {
+          "type": "text",
+          "id": "QYacq",
+          "name": "Status",
+          "fill": "#B8860B",
+          "content": "PENDING",
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "700"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "LgXNO",
+      "x": 5400,
+      "y": 0,
+      "name": "Card 128 Sagrado Corazon",
+      "clip": true,
+      "width": 1000,
+      "fill": "#F7F7F5",
+      "cornerRadius": 16,
+      "layout": "vertical",
+      "gap": 18,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "VK3Oe",
+          "name": "Specs",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "#128 · Sagrado Corazón · 5.85 ct · 12.7 × 12 × 5.1 mm · TRAPICHE (cabujón) · Verde Natural · Tierra Madre",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "WTl3a",
+          "name": "Compare",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "pqOAs",
+              "name": "Foto real col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "BlBXM",
+                  "name": "Label A",
+                  "fill": "#6B6B6B",
+                  "content": "FOTO REAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "jqtMe",
+                  "name": "Hero",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "work/128/hero.jpg",
+                    "mode": "fill"
+                  },
+                  "width": 384,
+                  "height": 512
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "hp1a2",
+              "name": "Visualizacion IA col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "r58RY5",
+                  "name": "Label B",
+                  "fill": "#6B6B6B",
+                  "content": "VISUALIZACIÓN IA (REFERENCIAL)",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "iFto9",
+                  "name": "Render 128 trapiche",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "images/generated-1782576178405.png",
+                    "mode": "fill"
+                  },
+                  "width": 512,
+                  "height": 512
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "AUC0r",
+          "name": "Disclosure",
+          "fill": "#8A8A8A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Visualización referencial · IA — imagen generada a partir de las medidas reales y la foto de la gema; no es una fotografía de la pieza terminada.",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal",
+          "fontStyle": "italic"
+        },
+        {
+          "type": "text",
+          "id": "m6Hug",
+          "name": "Status",
+          "fill": "#B8860B",
+          "content": "PENDING",
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "700"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Q2iwDt",
+      "x": 6480,
+      "y": 0,
+      "name": "Card 102 Rocio Celestial",
+      "clip": true,
+      "width": 1000,
+      "fill": "#F7F7F5",
+      "cornerRadius": 16,
+      "layout": "vertical",
+      "gap": 18,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "TQCau",
+          "name": "Specs",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "#102 · Rocío Celestial · 0.16 ct · 4.1 × 3.2 × 2.5 mm · lágrima (pear) · Verde Muzo · Extrafina",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "Y5x9B",
+          "name": "Compare",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "eCQeS",
+              "name": "Foto real col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Tp1X7",
+                  "name": "Label A",
+                  "fill": "#6B6B6B",
+                  "content": "FOTO REAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "RKSjr",
+                  "name": "Hero",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "work/102/hero.jpg",
+                    "mode": "fill"
+                  },
+                  "width": 384,
+                  "height": 512
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "utJUP",
+              "name": "Visualizacion IA col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "XyiAL",
+                  "name": "Label B",
+                  "fill": "#6B6B6B",
+                  "content": "VISUALIZACIÓN IA (REFERENCIAL)",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "v2fxZh",
+                  "name": "Render",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "images/generated-1782576178950.png",
+                    "mode": "fill"
+                  },
+                  "width": 512,
+                  "height": 512
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "bSuXQ",
+          "name": "Disclosure",
+          "fill": "#8A8A8A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Visualización referencial · IA — imagen generada a partir de las medidas reales y la foto de la gema; no es una fotografía de la pieza terminada.",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal",
+          "fontStyle": "italic"
+        },
+        {
+          "type": "text",
+          "id": "zaPqn",
+          "name": "Status",
+          "fill": "#B8860B",
+          "content": "PENDING",
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "700"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "f1Hqol",
+      "x": 7560,
+      "y": 0,
+      "name": "Card 101 Lluvia Sagrada",
+      "clip": true,
+      "width": 1000,
+      "fill": "#F7F7F5",
+      "cornerRadius": 16,
+      "layout": "vertical",
+      "gap": 18,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "gJx5q",
+          "name": "Specs",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "#101 · Lluvia Sagrada · 1.01 ct · 8.4 × 5.4 × 4.1 mm · lágrima (pear) · Verde Limón · Comercial Superfina",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "wzHpm",
+          "name": "Compare",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "OlEkY",
+              "name": "Foto real col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "NmkQa",
+                  "name": "Label A",
+                  "fill": "#6B6B6B",
+                  "content": "FOTO REAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "Ahh9f",
+                  "name": "Hero",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "work/101/hero.jpg",
+                    "mode": "fill"
+                  },
+                  "width": 384,
+                  "height": 512
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "jPOKH",
+              "name": "Visualizacion IA col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "CD0zV",
+                  "name": "Label B",
+                  "fill": "#6B6B6B",
+                  "content": "VISUALIZACIÓN IA (REFERENCIAL)",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "wBRa6",
+                  "name": "Render",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "images/generated-1782576178630.png",
+                    "mode": "fill"
+                  },
+                  "width": 512,
+                  "height": 512
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "yMSOL",
+          "name": "Disclosure",
+          "fill": "#8A8A8A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Visualización referencial · IA — imagen generada a partir de las medidas reales y la foto de la gema; no es una fotografía de la pieza terminada.",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal",
+          "fontStyle": "italic"
+        },
+        {
+          "type": "text",
+          "id": "iI6tU",
+          "name": "Status",
+          "fill": "#B8860B",
+          "content": "PENDING",
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "700"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "e8QRFW",
+      "x": 8640,
+      "y": 0,
+      "name": "Card 100 Eterna Gratitud",
+      "clip": true,
+      "width": 1000,
+      "fill": "#F7F7F5",
+      "cornerRadius": 16,
+      "layout": "vertical",
+      "gap": 18,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "FUEVP",
+          "name": "Specs",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "#100 · Eterna Gratitud · 0.6 ct · 7.4 × 3.4 × 3 mm · baguette · Verde Menta · Comercial Superfina",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "K4BAsa",
+          "name": "Compare",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "F0HM7",
+              "name": "Foto real col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "xhF9v",
+                  "name": "Label A",
+                  "fill": "#6B6B6B",
+                  "content": "FOTO REAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "tsp9v",
+                  "name": "Hero",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "work/100/hero.jpg",
+                    "mode": "fill"
+                  },
+                  "width": 384,
+                  "height": 512
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "B7ABrj",
+              "name": "Visualizacion IA col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "qM71E",
+                  "name": "Label B",
+                  "fill": "#6B6B6B",
+                  "content": "VISUALIZACIÓN IA (REFERENCIAL)",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "yOA2g",
+                  "name": "Render",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "images/generated-1782576178528.png",
+                    "mode": "fill"
+                  },
+                  "width": 512,
+                  "height": 512
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "SXM1c",
+          "name": "Disclosure",
+          "fill": "#8A8A8A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Visualización referencial · IA — imagen generada a partir de las medidas reales y la foto de la gema; no es una fotografía de la pieza terminada.",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal",
+          "fontStyle": "italic"
+        },
+        {
+          "type": "text",
+          "id": "dQ8Iw",
+          "name": "Status",
+          "fill": "#B8860B",
+          "content": "PENDING",
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "700"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "B13CPy",
+      "x": 9720,
+      "y": 0,
+      "name": "Card 99 Reflejo Divino",
+      "clip": true,
+      "width": 1000,
+      "fill": "#F7F7F5",
+      "cornerRadius": 16,
+      "layout": "vertical",
+      "gap": 18,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "MaNl4",
+          "name": "Specs",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "#99 · Reflejo Divino · 0.44 ct · 5.6 × 3.6 × 2.9 mm · esmeralda (emerald-cut) · Verde Vívido · Comercial Superfina",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "wunBQ",
+          "name": "Compare",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "XoRgT",
+              "name": "Foto real col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ZpmG7",
+                  "name": "Label A",
+                  "fill": "#6B6B6B",
+                  "content": "FOTO REAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "btMX6",
+                  "name": "Hero",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "work/99/hero.jpg",
+                    "mode": "fill"
+                  },
+                  "width": 384,
+                  "height": 512
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "BQnBM",
+              "name": "Visualizacion IA col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "NxEXW",
+                  "name": "Label B",
+                  "fill": "#6B6B6B",
+                  "content": "VISUALIZACIÓN IA (REFERENCIAL)",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "v6EO5z",
+                  "name": "Render",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "images/generated-1782576179072.png",
+                    "mode": "fill"
+                  },
+                  "width": 512,
+                  "height": 512
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "Q7nnn",
+          "name": "Disclosure",
+          "fill": "#8A8A8A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Visualización referencial · IA — imagen generada a partir de las medidas reales y la foto de la gema; no es una fotografía de la pieza terminada.",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal",
+          "fontStyle": "italic"
+        },
+        {
+          "type": "text",
+          "id": "odIkL",
+          "name": "Status",
+          "fill": "#B8860B",
+          "content": "PENDING",
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "700"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "YzdJi",
+      "x": 10800,
+      "y": 0,
+      "name": "Card 98 Campanita",
+      "clip": true,
+      "width": 1000,
+      "fill": "#F7F7F5",
+      "cornerRadius": 16,
+      "layout": "vertical",
+      "gap": 18,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "SRQIY",
+          "name": "Specs",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "#98 · Campanita · 0.18 ct · 2.7 × 3.8 × 2.3 mm · cuadrada (square step-cut) · Verde Vívido · Fina Esencial",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "qWUaq",
+          "name": "Compare",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "v8IkR",
+              "name": "Foto real col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "V2Y2SE",
+                  "name": "Label A",
+                  "fill": "#6B6B6B",
+                  "content": "FOTO REAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "Wadn1",
+                  "name": "Hero",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "work/98/hero.jpg",
+                    "mode": "fill"
+                  },
+                  "width": 384,
+                  "height": 512
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "spOFz",
+              "name": "Visualizacion IA col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Y6ax7L",
+                  "name": "Label B",
+                  "fill": "#6B6B6B",
+                  "content": "VISUALIZACIÓN IA (REFERENCIAL)",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "HwIV3",
+                  "name": "Render",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "images/generated-1782576179598.png",
+                    "mode": "fill"
+                  },
+                  "width": 512,
+                  "height": 512
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "wIhkr",
+          "name": "Disclosure",
+          "fill": "#8A8A8A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Visualización referencial · IA — imagen generada a partir de las medidas reales y la foto de la gema; no es una fotografía de la pieza terminada.",
+          "fontFamily": "Inter",
+          "fontSize": 12,
+          "fontWeight": "normal",
+          "fontStyle": "italic"
+        },
+        {
+          "type": "text",
+          "id": "aScDN",
+          "name": "Status",
+          "fill": "#B8860B",
+          "content": "PENDING",
+          "fontFamily": "Inter",
+          "fontSize": 14,
+          "fontWeight": "700"
+        }
+      ]
+    }
+  ],
+  "fileToken": "95895735-1dce-4666-a67f-61148ba9eefa"
+}

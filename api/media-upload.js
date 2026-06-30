@@ -73,7 +73,27 @@ const VIDEO_MIME_TYPES = [
 // HELPERS
 // =============================================================================
 
-async function uploadFileToDrive(drive, folderId, file, index) {
+/**
+ * Sanitize a caller-supplied filename to a safe Drive basename.
+ * Strips any path, restricts to [a-zA-Z0-9._-], and ensures an extension.
+ * Returns null when nothing usable remains (caller falls back to the
+ * auto-generated name).
+ */
+function sanitizeFileName(name, mimetype) {
+  let base = String(name || "")
+    .split(/[\\/]/)
+    .pop()
+    .replace(/[^a-zA-Z0-9._-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^[-.]+/, "");
+  if (!base) return null;
+  if (!/\.[a-z0-9]+$/i.test(base)) {
+    base += `.${SUPPORTED_MIME_TYPES[mimetype] || "bin"}`;
+  }
+  return base;
+}
+
+async function uploadFileToDrive(drive, folderId, file, index, overrideName) {
   const originalName = file.originalFilename || file.newFilename || "upload";
 
   const fileExtension = originalName.includes(".")
@@ -85,7 +105,11 @@ async function uploadFileToDrive(drive, folderId, file, index) {
     file.mimetype === "application/pdf" ||
     String(fileExtension).toLowerCase() === "pdf";
   const prefix = isVideo ? "video" : isPdf ? "doc" : "image";
-  const fileName = `${prefix}-${index + 1}-${Date.now()}.${fileExtension}`;
+  // Optional caller-supplied name (e.g. an order-controlling, labeled
+  // visualizer filename). Falls back to the auto-generated name.
+  const fileName =
+    (overrideName && sanitizeFileName(overrideName, file.mimetype)) ||
+    `${prefix}-${index + 1}-${Date.now()}.${fileExtension}`;
 
   console.log(`[Upload] Uploading ${isVideo ? "video" : "image"}: ${fileName}`);
   console.log(`[Upload] Target folder: ${folderId}`);
@@ -264,6 +288,12 @@ export default withApiHandler(
       ? fields.subPath[0]
       : fields.subPath;
 
+    // Optional explicit filename for the uploaded file (single-file uploads
+    // only). Lets callers control carousel order + labeling via the name.
+    const customFileName = Array.isArray(fields.fileName)
+      ? fields.fileName[0]
+      : fields.fileName;
+
     if (!quotationId && !customFolderId && !subPath) {
       return sendError(res, 400, "Missing quotationId, folderId, or subPath");
     }
@@ -385,7 +415,13 @@ export default withApiHandler(
       );
 
       try {
-        const result = await uploadFileToDrive(drive, targetFolderId, file, i);
+        const result = await uploadFileToDrive(
+          drive,
+          targetFolderId,
+          file,
+          i,
+          fileList.length === 1 ? customFileName : null,
+        );
         console.log(`[Upload] Upload successful: ${result.fileName}`);
         uploadedFiles.push(result);
       } catch (uploadError) {
