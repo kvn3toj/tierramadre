@@ -8,10 +8,14 @@
  * @module
  */
 
+import type * as _lib_aiCaps from "../_lib/aiCaps.js";
+import type * as _lib_applyPayment from "../_lib/applyPayment.js";
 import type * as _lib_asesorSync from "../_lib/asesorSync.js";
 import type * as _lib_columnMaps from "../_lib/columnMaps.js";
+import type * as _lib_commission from "../_lib/commission.js";
 import type * as _lib_fotosintesisVocab from "../_lib/fotosintesisVocab.js";
 import type * as _lib_lotMath from "../_lib/lotMath.js";
+import type * as _lib_productSearch from "../_lib/productSearch.js";
 import type * as _lib_publishedGroups from "../_lib/publishedGroups.js";
 import type * as _lib_sheetPullMaps from "../_lib/sheetPullMaps.js";
 import type * as _lib_sheetSync from "../_lib/sheetSync.js";
@@ -40,10 +44,14 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "_lib/aiCaps": typeof _lib_aiCaps;
+  "_lib/applyPayment": typeof _lib_applyPayment;
   "_lib/asesorSync": typeof _lib_asesorSync;
   "_lib/columnMaps": typeof _lib_columnMaps;
+  "_lib/commission": typeof _lib_commission;
   "_lib/fotosintesisVocab": typeof _lib_fotosintesisVocab;
   "_lib/lotMath": typeof _lib_lotMath;
+  "_lib/productSearch": typeof _lib_productSearch;
   "_lib/publishedGroups": typeof _lib_publishedGroups;
   "_lib/sheetPullMaps": typeof _lib_sheetPullMaps;
   "_lib/sheetSync": typeof _lib_sheetSync;
