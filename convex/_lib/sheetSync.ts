@@ -2,6 +2,47 @@ import type { ActionCtx } from "../_generated/server";
 import type { FotoTable } from "./columnMaps";
 
 /**
+ * POST that survives an apex↔alias / http→https domain redirect.
+ *
+ * Convex's `fetch` (like the WHATWG spec) DOWNGRADES POST→GET when it follows a
+ * 301/302/303. So if `APP_URL` points at a host that 3xx-redirects — e.g. a
+ * `*.vercel.app` alias that 301s to the custom domain — every Sheets *write*
+ * silently arrives at the endpoint as GET and is rejected `405 Method not
+ * allowed`, while GET *reads* keep working. The result is invisible: the
+ * Sheet→Convex direction syncs fine, but new rows never reach the sheet.
+ * (Observed 2026-06-30: lots + inventory pushes all failing with that exact
+ * 405 because APP_URL was the `.vercel.app` alias.)
+ *
+ * We follow redirects MANUALLY here, re-issuing the SAME method + body +
+ * headers at each hop, so a misconfigured or later-renamed domain can never
+ * again break the push. Falls back to returning the redirect response
+ * unchanged if a `Location` can't be read (no worse than before).
+ */
+export async function postToVercel(
+  url: string,
+  init: { headers: Record<string, string>; body: string },
+  maxHops = 4,
+): Promise<Response> {
+  let target = url;
+  for (let hop = 0; hop <= maxHops; hop++) {
+    const res = await fetch(target, {
+      method: "POST",
+      headers: init.headers,
+      body: init.body,
+      redirect: "manual",
+    });
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get("location");
+      if (!location) return res;
+      target = new URL(location, target).toString();
+      continue;
+    }
+    return res;
+  }
+  throw new Error(`Too many redirects POSTing to ${url}`);
+}
+
+/**
  * POST a marshaled row to the generic Vercel endpoint that writes it to
  * the matching Sheets tab. Mirror of the pattern in convex/products.ts
  * `pushToSheet` action, generalized over `table`.
@@ -39,8 +80,7 @@ export async function pushTableRowToVercel(args: {
   }
 
   try {
-    const res = await fetch(`${appUrl}/api/admin-table-update`, {
-      method: "POST",
+    const res = await postToVercel(`${appUrl}/api/admin-table-update`, {
       headers: {
         "content-type": "application/json",
         "x-admin-sync-token": syncToken,
