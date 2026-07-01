@@ -24,6 +24,7 @@ import {
   type ShownSublote,
   type ShownLot,
 } from "./_lib/publishedGroups";
+import { postToVercel } from "./_lib/sheetSync";
 
 // =============================================================================
 // QUERIES — read the mirror
@@ -753,8 +754,10 @@ export const pushToSheet = action({
 
     try {
       const sheetTarget = row.loteId ? "fotosintesis" : "legacy";
-      const res = await fetch(`${appUrl}/api/admin-product-update`, {
-        method: "POST",
+      // postToVercel follows redirects while preserving POST — a redirecting
+      // APP_URL (e.g. a *.vercel.app alias 301-ing to the custom domain) would
+      // otherwise downgrade this write to GET and get 405'd. See sheetSync.ts.
+      const res = await postToVercel(`${appUrl}/api/admin-product-update`, {
         headers: {
           "content-type": "application/json",
           "x-admin-sync-token": syncToken,
