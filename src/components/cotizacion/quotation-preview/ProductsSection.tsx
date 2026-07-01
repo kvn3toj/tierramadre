@@ -23,7 +23,7 @@ import {
   getPesoDisplay,
 } from "../../../hooks/useCotizacion";
 import { SectionHeader } from "./shared";
-import { cssTransition } from "../../../design-system";
+import { cssTransition, qeFont, qeTokens } from "../../../design-system";
 import { useLanguage } from "../../../contexts/LanguageContext";
 
 // =============================================================================
@@ -56,10 +56,8 @@ const ProductImage: React.FC<ProductImageProps> = ({
       sx={{
         width: size,
         height: size,
-        borderRadius: 2,
-        bgcolor: isJewelry
-          ? "rgba(212,175,55,0.08)"
-          : quotationStyles.accentTint,
+        borderRadius: "4px",
+        bgcolor: isJewelry ? "rgba(0,0,0,0.04)" : quotationStyles.accentTint,
         border: `1px solid ${quotationStyles.borderLight}`,
         flexShrink: 0,
         overflow: "hidden",
@@ -95,9 +93,9 @@ const ProductImage: React.FC<ProductImageProps> = ({
           }}
         >
           {isJewelry ? (
-            <ShoppingBag size={size * 0.4} color={brandColors.gold} />
+            <ShoppingBag size={size * 0.4} color={qeTokens.light.subtle} />
           ) : (
-            <Gem size={size * 0.4} color={brandColors.emerald} />
+            <Gem size={size * 0.4} color={qeTokens.light.accent} />
           )}
         </Box>
       )}
@@ -120,6 +118,15 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, isEven, isLast }) => {
   const { t } = useLanguage();
   const labels = t.pages.cotizacion.preview;
   const displayUrl = getProductDisplayUrl(product);
+
+  // Spec line: peso + the emerald's color/origin (the mockup's second segment),
+  // falling back to the cut. Skip placeholder dashes.
+  const clean = (v?: string) =>
+    v && v.trim() && v.trim() !== "-" ? v.trim() : "";
+  const specSegment = clean(product.color) || clean(product.talla);
+  const specLine = [getPesoDisplay(product), specSegment.toUpperCase()]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <Box
@@ -149,19 +156,25 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, isEven, isLast }) => {
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography
             sx={{
-              fontSize: "0.7rem",
-              fontWeight: 600,
-              color: brandColors.textPrimary,
-              lineHeight: 1.3,
+              fontFamily: qeFont.serif,
+              fontSize: "0.95rem",
+              fontWeight: 500,
+              color: qeTokens.light.text,
+              lineHeight: 1.1,
             }}
           >
             {product.name}
           </Typography>
           <Typography
-            sx={{ fontSize: "0.55rem", color: brandColors.gray, mt: 0.25 }}
+            sx={{
+              fontFamily: qeFont.mono,
+              fontSize: "0.5rem",
+              color: qeTokens.light.subtle,
+              letterSpacing: "0.04em",
+              mt: 0.35,
+            }}
           >
-            Ref. #{product.itemNumber} • {getPesoDisplay(product)} •{" "}
-            {product.color}
+            {specLine}
           </Typography>
           <Box
             component="a"
@@ -177,11 +190,11 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, isEven, isLast }) => {
               "&:hover": { textDecoration: "underline" },
             }}
           >
-            <ExternalLink size={9} color={brandColors.emerald} />
+            <ExternalLink size={9} color={qeTokens.light.accent} />
             <Typography
               sx={{
                 fontSize: "0.45rem",
-                color: brandColors.emerald,
+                color: qeTokens.light.accent,
                 fontWeight: 500,
               }}
             >
@@ -193,12 +206,17 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, isEven, isLast }) => {
           <Typography
             sx={{
               fontSize: "0.8rem",
-              fontWeight: 700,
-              color: brandColors.emerald,
+              fontWeight: 600,
+              color: qeTokens.light.text,
               ...quotationTypography.monospace,
             }}
           >
             {formatCurrency(product.precioCOP)}
+          </Typography>
+          <Typography
+            sx={{ fontSize: "0.5rem", color: qeTokens.light.subtle, mt: 0.25 }}
+          >
+            × 1
           </Typography>
         </Box>
       </Box>
@@ -222,7 +240,7 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, isEven, isLast }) => {
           <Box
             sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}
           >
-            <Sparkles size={9} color={brandColors.gold} />
+            <Sparkles size={9} color={qeTokens.light.subtle} />
             <Typography
               sx={{
                 fontSize: "0.45rem",
@@ -281,7 +299,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({
   return (
     <Box sx={{ mb: 3 }}>
       <SectionHeader
-        icon={<Package size={13} color={brandColors.emerald} />}
+        icon={<Package size={13} color={qeTokens.light.accent} />}
         title={labels.products}
         count={products.length}
       />

@@ -132,6 +132,26 @@ export {
 // Fotosíntesis admin tokens (cool-neutral surfaces + emerald accent)
 export { getFoto, type FotoMode, type FotoTokens } from "./tokens/foto";
 
+// Quiet Emerald — v2 redesign language ("Una joya en calma").
+// Grayscale + single emerald accent; Cormorant / Hanken Grotesk / DM Mono.
+export {
+  quietEmerald,
+  qeEmerald,
+  qeAccent,
+  qeGray,
+  qeDark,
+  qeLight,
+  qeTokens,
+  qeShadow,
+  qeFont,
+  qeType,
+  qeRadius,
+  qeMotion,
+  getQuietEmerald,
+  type QEMode,
+  type QESurfaces,
+} from "./tokens/quiet-emerald";
+
 // Vault Cinema (cinematic lockscreen tokens)
 export { vaultCinema, type VaultCinemaTokens } from "./tokens/vault-cinema";
 export {

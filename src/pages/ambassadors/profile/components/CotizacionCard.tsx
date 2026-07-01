@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import { User, Calendar, Trash2, Eye, Copy } from 'lucide-react';
 import { SavedCotizacion } from '../../../../hooks/useCotizacionHistory';
-import { brand, lightTokens, darkTokens, accentColors, cssTransition } from '../../../../design-system';
+import { brand, lightTokens, darkTokens, accentColors, cssTransition, qeFont } from '../../../../design-system';
 
 // Format currency helper
 function formatCurrency(value: number): string {
@@ -64,7 +64,7 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
         cursor: 'pointer',
         '&:hover': {
           transform: 'translateY(-2px)',
-          boxShadow: `0 8px 24px ${alpha(brand.emerald[500], 0.15)}`,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.10)',
         },
       }}
       onClick={onView}
@@ -134,10 +134,11 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
         <Typography
           variant="caption"
           sx={{
-            fontFamily: 'monospace',
-            color: brand.emerald[500],
-            fontWeight: 600,
+            fontFamily: qeFont.mono,
+            color: 'text.secondary',
+            fontWeight: 500,
             fontSize: '0.65rem',
+            letterSpacing: '0.05em',
           }}
         >
           {cotizacion.quotationNumber}
@@ -170,7 +171,7 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
           </Box>
           <Typography
             variant="caption"
-            sx={{ fontWeight: 700, color: brand.emerald[500], fontSize: '0.7rem' }}
+            sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.72rem', fontFamily: qeFont.mono }}
           >
             {formatCurrency(cotizacion.total)}
           </Typography>
@@ -184,8 +185,8 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
             mt: 1,
             height: 20,
             fontSize: '0.6rem',
-            bgcolor: alpha(brand.emerald[500], 0.1),
-            color: brand.emerald[600],
+            bgcolor: isLight ? alpha('#000000', 0.06) : alpha('#ffffff', 0.08),
+            color: 'text.secondary',
           }}
         />
 

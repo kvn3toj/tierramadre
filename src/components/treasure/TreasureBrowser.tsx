@@ -5,27 +5,30 @@
  * Logic lives in useTreasureBrowserController; desktop chrome is split into browser/* components.
  */
 
-import { useRef, useEffect, useState } from 'react';
-import { useLocation, useNavigationType } from 'react-router-dom';
-import { Box, useTheme } from '@mui/material';
-import { useLanguage } from '../../contexts/LanguageContext';
-import CertificationUpload from './CertificationUpload';
-import { ComparisonBar, ComparisonModal } from '../comparison';
-import { zIndex } from '../../design-system';
-import ListRow from './ListRow';
-import VirtualGrid from './VirtualGrid';
-import { ActiveFilterChips } from './ActiveFilterChips';
-import RecentlyViewedCarousel from './RecentlyViewedCarousel';
-import IOSFilterSheet from '../ios/IOSFilterSheet';
+import { useRef, useEffect, useState, useMemo, useCallback } from "react";
+import { useLocation, useNavigationType } from "react-router-dom";
+import { Box, useTheme } from "@mui/material";
+import { useLanguage } from "../../contexts/LanguageContext";
+import CertificationUpload from "./CertificationUpload";
+import { ComparisonBar, ComparisonModal } from "../comparison";
+import { zIndex } from "../../design-system";
+import { TreasureItem } from "../../types";
+import ListRow from "./ListRow";
+import VirtualGrid from "./VirtualGrid";
+import { ActiveFilterChips } from "./ActiveFilterChips";
+import RecentlyViewedCarousel from "./RecentlyViewedCarousel";
+import IOSFilterSheet from "../ios/IOSFilterSheet";
+import RedesignVariantToggle from "../redesign/RedesignVariantToggle";
 import {
   MobileSearchBar,
   TreasureEmptyState,
   TreasureDesktopFilterPanel,
   TreasureDesktopResultsSummary,
-} from './browser';
-import TreasureErrorState from './browser/TreasureErrorState';
-import ScrollToTop from '../shared/ScrollToTop';
-import { useTreasureBrowserController } from '../../hooks/useTreasureBrowserController';
+  CatalogHeader,
+} from "./browser";
+import TreasureErrorState from "./browser/TreasureErrorState";
+import ScrollToTop from "../shared/ScrollToTop";
+import { useTreasureBrowserController } from "../../hooks/useTreasureBrowserController";
 
 /** Sentinel div that triggers loadMore via IntersectionObserver when scrolled into view. */
 function ListLoadMoreSentinel({ onIntersect }: { onIntersect: () => void }) {
@@ -40,7 +43,7 @@ function ListLoadMoreSentinel({ onIntersect }: { onIntersect: () => void }) {
       ([entry]) => {
         if (entry.isIntersecting) onIntersectRef.current();
       },
-      { rootMargin: '200px' }
+      { rootMargin: "200px" },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -53,7 +56,7 @@ export interface TreasureBrowserProps {
   /** Provider mode - restricts features: hides prices, share, contact, cart, comparison */
   isProviderMode?: boolean;
   /** Default view mode (defaults to 'grid', provider mode defaults to 'list') */
-  defaultViewMode?: 'grid' | 'list';
+  defaultViewMode?: "grid" | "list";
 }
 
 export default function TreasureBrowser({
@@ -141,11 +144,77 @@ export default function TreasureBrowser({
   } = c;
 
   const { colors, shapes, qualities, categorias, colecciones } = filterOptions;
-  const { statusFilter, sortBy, typeFilter, categoriaFilter, coleccionFilter, colorFilter, shapeFilter, qualityFilter, priceRange } =
-    filters;
+  const {
+    statusFilter,
+    sortBy,
+    typeFilter,
+    categoriaFilter,
+    coleccionFilter,
+    colorFilter,
+    shapeFilter,
+    qualityFilter,
+    priceRange,
+  } = filters;
+
+  // Quiet Emerald origin tabs (Todas / Muzo / Chivor / Coscuez). A self-contained
+  // quick filter applied on top of the controller's filtered set, keyed off the
+  // captured mine string (item.procedencia / item.mina).
+  const CANONICAL_MINES = ["Muzo", "Chivor", "Coscuez"];
+  const [originTab, setOriginTab] = useState<string>("all");
+  const originOptions = useMemo(
+    () =>
+      CANONICAL_MINES.filter((mine) =>
+        allTreasure.some((it) =>
+          (it.procedencia || it.mina || "")
+            .toLowerCase()
+            .includes(mine.toLowerCase()),
+        ),
+      ),
+    [allTreasure],
+  );
+  const applyOrigin = useCallback(
+    (list: TreasureItem[]) => {
+      if (originTab === "all") return list;
+      const key = originTab.toLowerCase();
+      return list.filter((it) =>
+        (it.procedencia || it.mina || "").toLowerCase().includes(key),
+      );
+    },
+    [originTab],
+  );
+  // Full origin-filtered set drives the header count, list pagination and empty
+  // state so they stay consistent when an origin's matches fall past page 1.
+  const originFilteredFull = applyOrigin(filteredTreasure);
+  const gridItems = applyOrigin(
+    showFavoritesOnly ? visibleItems : deferredFilteredTreasure,
+  );
+  // List view paginates; when an origin tab is active we page the origin-filtered
+  // set locally (not the pre-filtered slice), else defer to the controller.
+  const listItems =
+    originTab === "all"
+      ? visibleItems
+      : originFilteredFull.slice(0, pagination.visibleCount);
+  const listHasMore =
+    originTab === "all"
+      ? pagination.hasMore
+      : pagination.visibleCount < originFilteredFull.length;
+  const headerCount = originFilteredFull.length;
+  const handleClearAll = () => {
+    setOriginTab("all");
+    urlSync.handleClearFilters();
+  };
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 1, sm: 2, md: 3, lg: 2 } }}>
+    <Box
+      sx={{ maxWidth: 1200, mx: "auto", px: { xs: 1, sm: 2, md: 3, lg: 2 } }}
+    >
+      <CatalogHeader
+        count={headerCount}
+        origins={originOptions}
+        activeOrigin={originTab}
+        onOriginChange={setOriginTab}
+      />
+
       {isMobile ? (
         <>
           <MobileSearchBar
@@ -248,18 +317,22 @@ export default function TreasureBrowser({
           <ActiveFilterChips
             filters={filters}
             priceMinMax={priceMinMax}
-            onClearSearch={() => setSearch('')}
-            onClearColor={() => setColorFilter('all')}
-            onClearQuality={() => setQualityFilter('all')}
-            onClearType={() => setTypeFilter('all')}
-            onClearStatus={() => setStatusFilter('available')}
-            onClearShape={() => setShapeFilter('all')}
-            onClearCantidad={() => setCantidadFilter('all')}
-            onClearCategoria={() => setCategoriaFilter('all')}
-            onClearColeccion={() => setColeccionFilter('all')}
-            onClearHeroCategory={() => setHeroCategoryFilter('all')}
-            onClearPrice={() => setPriceRange([priceMinMax.min, priceMinMax.max])}
-            onClearCarat={() => setCaratRange([caratMinMax.min, caratMinMax.max])}
+            onClearSearch={() => setSearch("")}
+            onClearColor={() => setColorFilter("all")}
+            onClearQuality={() => setQualityFilter("all")}
+            onClearType={() => setTypeFilter("all")}
+            onClearStatus={() => setStatusFilter("available")}
+            onClearShape={() => setShapeFilter("all")}
+            onClearCantidad={() => setCantidadFilter("all")}
+            onClearCategoria={() => setCategoriaFilter("all")}
+            onClearColeccion={() => setColeccionFilter("all")}
+            onClearHeroCategory={() => setHeroCategoryFilter("all")}
+            onClearPrice={() =>
+              setPriceRange([priceMinMax.min, priceMinMax.max])
+            }
+            onClearCarat={() =>
+              setCaratRange([caratMinMax.min, caratMinMax.max])
+            }
             caratMinMax={caratMinMax}
           />
         </Box>
@@ -287,7 +360,7 @@ export default function TreasureBrowser({
       {!isMobile && recentlyViewedItems.length > 0 && (
         <Box
           sx={{
-            position: 'sticky',
+            position: "sticky",
             top: 0,
             zIndex: zIndex.base,
           }}
@@ -300,9 +373,9 @@ export default function TreasureBrowser({
         </Box>
       )}
 
-      {viewMode === 'grid' ? (
+      {viewMode === "grid" ? (
         <VirtualGrid
-          items={showFavoritesOnly ? visibleItems : deferredFilteredTreasure}
+          items={gridItems}
           favorites={favoriteIds}
           comparisonIds={comparisonIds}
           canAddToComparison={canAddToComparison}
@@ -312,12 +385,12 @@ export default function TreasureBrowser({
           onScrollDirectionChange={handleScrollDirectionChange}
           renderCard={renderCard}
           scrollRestorationKey={scrollKey}
-          restoreScroll={navigationType === 'POP'}
+          restoreScroll={navigationType === "POP"}
           onScrollElement={setGridScrollEl}
         />
       ) : (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          {visibleItems.map((item) => (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {listItems.map((item) => (
             <ListRow
               key={item.item}
               item={item}
@@ -330,11 +403,14 @@ export default function TreasureBrowser({
         </Box>
       )}
 
-      {viewMode === 'list' && pagination.hasMore && !showFavoritesOnly && (
+      {viewMode === "list" && listHasMore && !showFavoritesOnly && (
         <ListLoadMoreSentinel
           onIntersect={() => {
             pagination.loadMore();
-            analyticsHook.trackLoadMore(pagination.visibleCount, filteredTreasure.length);
+            analyticsHook.trackLoadMore(
+              pagination.visibleCount,
+              originFilteredFull.length,
+            );
           }}
         />
       )}
@@ -348,18 +424,24 @@ export default function TreasureBrowser({
         />
       )}
 
-      {!sheetsError && (visibleItems.length === 0 || (showFavoritesOnly && favoritesCount === 0)) && (
-        <TreasureEmptyState
-          isLight={isLight}
-          hasFilters={hasFilters}
-          activeFilterCount={activeFilterCount}
-          onClearFilters={urlSync.handleClearFilters}
-          onSuggestionClick={(term) => {
-            urlSync.handleClearFilters();
-            setSearch(term);
-          }}
-        />
-      )}
+      {!sheetsError &&
+        ((viewMode === "grid"
+          ? gridItems.length === 0
+          : listItems.length === 0) ||
+          (showFavoritesOnly && favoritesCount === 0)) && (
+          <TreasureEmptyState
+            isLight={isLight}
+            hasFilters={hasFilters || originTab !== "all"}
+            activeFilterCount={
+              activeFilterCount + (originTab !== "all" ? 1 : 0)
+            }
+            onClearFilters={handleClearAll}
+            onSuggestionClick={(term) => {
+              handleClearAll();
+              setSearch(term);
+            }}
+          />
+        )}
 
       {selectedItem && (
         <CertificationUpload
@@ -390,7 +472,11 @@ export default function TreasureBrowser({
         />
       )}
 
-      <ScrollToTop scrollContainer={viewMode === 'grid' ? gridScrollEl : null} />
+      <ScrollToTop
+        scrollContainer={viewMode === "grid" ? gridScrollEl : null}
+      />
+
+      <RedesignVariantToggle />
     </Box>
   );
 }

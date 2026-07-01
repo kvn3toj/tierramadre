@@ -14,7 +14,7 @@ import {
   goldColors,
   primitiveColors,
 } from '../../design-system/tokens';
-import { brand, lightTokens, darkTokens, accentColors } from '../../design-system';
+import { brand, lightTokens, darkTokens, accentColors, qeFont } from '../../design-system';
 
 export const brandColors = {
   // Primary emerald colors
@@ -111,8 +111,9 @@ export const quotationTypography = {
   label: {
     fontSize: '0.55rem',
     color: brandColors.gray,
+    fontFamily: qeFont.mono,
     textTransform: 'uppercase' as const,
-    letterSpacing: '0.05em',
+    letterSpacing: '0.1em',
     mb: 0.25,
   },
   value: {
@@ -122,12 +123,13 @@ export const quotationTypography = {
   },
   sectionHeader: {
     fontSize: '0.65rem',
-    fontWeight: 600,
+    fontWeight: 500,
     color: brandColors.textPrimary,
-    letterSpacing: '0.08em',
+    fontFamily: qeFont.mono,
+    letterSpacing: '0.12em',
     textTransform: 'uppercase' as const,
   },
   monospace: {
-    fontFamily: 'monospace',
+    fontFamily: qeFont.mono,
   },
 };
