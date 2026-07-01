@@ -2,6 +2,32 @@ import type { ActionCtx } from "../_generated/server";
 import type { FotoTable } from "./columnMaps";
 
 /**
+ * EXACT hosts we will forward the admin sync token to across a redirect. The
+ * only legitimate hop this helper exists for is an APP_URL alias 301-ing to the
+ * canonical domain (`tierra-madre-studio.vercel.app` → `tierramadre.app`). In
+ * that flow the vercel alias is the *original host* (allowed separately) and
+ * the redirect *destination* is the canonical domain — so this set is the
+ * canonical domain plus the one named prod alias, as exact strings.
+ *
+ * Deliberately NOT a `.vercel.app` suffix match: `*.vercel.app` is a shared,
+ * third-party-controlled tenant space, so `endsWith(".vercel.app")` would let a
+ * redirect hand our token to any attacker-deployed `foo.vercel.app`. Update
+ * this list if the app's canonical domain or prod alias ever changes.
+ */
+const TRUSTED_SYNC_HOSTS = new Set([
+  "tierramadre.app",
+  "www.tierramadre.app",
+  "tierra-madre-studio.vercel.app",
+]);
+
+function isTrustedSyncHost(
+  hostname: string,
+  originalHostname: string,
+): boolean {
+  return hostname === originalHostname || TRUSTED_SYNC_HOSTS.has(hostname);
+}
+
+/**
  * POST that survives an apex↔alias / http→https domain redirect.
  *
  * Convex's `fetch` (like the WHATWG spec) DOWNGRADES POST→GET when it follows a
@@ -17,12 +43,21 @@ import type { FotoTable } from "./columnMaps";
  * headers at each hop, so a misconfigured or later-renamed domain can never
  * again break the push. Falls back to returning the redirect response
  * unchanged if a `Location` can't be read (no worse than before).
+ *
+ * SECURITY: these requests carry the `x-admin-sync-token` credential in their
+ * headers. Because a redirect `Location` is chosen by the server we POST to, we
+ * refuse to follow one to a host outside the trusted set (see
+ * `isTrustedSyncHost`) or over a plaintext http downgrade — otherwise a
+ * misconfigured or compromised `APP_URL` could bounce the write (and its token)
+ * to an attacker-controlled origin. A refused redirect throws (loud) rather
+ * than silently stripping auth (which would just 401 and hide the problem).
  */
 export async function postToVercel(
   url: string,
   init: { headers: Record<string, string>; body: string },
   maxHops = 4,
 ): Promise<Response> {
+  const originalHostname = new URL(url).hostname;
   let target = url;
   for (let hop = 0; hop <= maxHops; hop++) {
     const res = await fetch(target, {
@@ -34,7 +69,19 @@ export async function postToVercel(
     if (res.status >= 300 && res.status < 400) {
       const location = res.headers.get("location");
       if (!location) return res;
-      target = new URL(location, target).toString();
+      const next = new URL(location, target);
+      // Don't hand the token over cleartext when leaving the original host.
+      if (next.hostname !== originalHostname && next.protocol !== "https:") {
+        throw new Error(
+          `Refusing to forward sync credentials over non-HTTPS redirect to ${next.origin}`,
+        );
+      }
+      if (!isTrustedSyncHost(next.hostname, originalHostname)) {
+        throw new Error(
+          `Refusing to forward sync credentials across redirect to untrusted host ${next.hostname}`,
+        );
+      }
+      target = next.toString();
       continue;
     }
     return res;
