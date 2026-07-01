@@ -60,30 +60,62 @@ function relevance(p: SearchableProduct, criteria: SearchCriteria): number {
 }
 
 /**
- * Filter to published+available+in-budget products and return the top
- * `MAX_RESULTS`, most relevant first. Pure: takes plain objects, no Convex types.
+ * Published + DISPONIBLE + in-budget pieces. `enforceCategoria` gates the
+ * (hard) categoria filter: the strict pass demands a match, the fallback pass
+ * drops it while keeping every other guard (published / available / budget).
  */
-export function rankProducts(
+function eligibleProducts(
   items: SearchableProduct[],
   criteria: SearchCriteria,
+  enforceCategoria: boolean,
 ): SearchableProduct[] {
   const presupuestoMax = criteria.presupuesto
     ? criteria.presupuesto * BUDGET_MARGIN
     : Infinity;
 
-  const eligible = items.filter(
+  return items.filter(
     (p) =>
       p.mostrarEnCatalogo === true &&
       p.estado === "DISPONIBLE" &&
       typeof p.precioCOP === "number" &&
       (p.precioCOP as number) <= presupuestoMax &&
-      (!criteria.categoria ||
+      (!enforceCategoria ||
+        !criteria.categoria ||
         matchesCategoria(p.categoria, criteria.categoria)),
   );
+}
 
-  return eligible
+function topRanked(
+  pool: SearchableProduct[],
+  criteria: SearchCriteria,
+): SearchableProduct[] {
+  return pool
     .map((p) => ({ p, score: relevance(p, criteria) }))
     .sort((a, b) => b.score - a.score)
     .slice(0, MAX_RESULTS)
     .map((x) => x.p);
+}
+
+/**
+ * Filter to published+available+in-budget products and return the top
+ * `MAX_RESULTS`, most relevant first. Pure: takes plain objects, no Convex types.
+ *
+ * Graceful degradation: the strict pass keeps the categoria hard-filter so a
+ * genuine category match is never diluted by off-category pieces. But because
+ * the GHL bot passes `categoria = {{contact.tipo_interes}}` (a customer intent
+ * like "inversion"/"anillo") while the catalog's `categoria` field holds
+ * internal collection names ("Gema Facetada"/"Muralla"/"Gola"), a real
+ * tipo_interes strict-matches nothing. When that happens we fall back to
+ * in-budget options instead of answering with an empty list while pieces are in
+ * stock — categoria still boosts ranking, just no longer excludes. (A proper
+ * tipo_interes → collection taxonomy map is the follow-up that would make
+ * categoria meaningful again; see GHL/ESTADO-Y-PROXIMOS-PASOS.md.)
+ */
+export function rankProducts(
+  items: SearchableProduct[],
+  criteria: SearchCriteria,
+): SearchableProduct[] {
+  const strict = topRanked(eligibleProducts(items, criteria, true), criteria);
+  if (strict.length > 0) return strict;
+  return topRanked(eligibleProducts(items, criteria, false), criteria);
 }
