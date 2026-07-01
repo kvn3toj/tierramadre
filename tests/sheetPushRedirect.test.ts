@@ -94,4 +94,71 @@ describe("postToVercel", () => {
       postToVercel("https://loop.example/start", { headers: {}, body: "{}" }),
     ).rejects.toThrow(/Too many redirects/);
   });
+
+  // ── Security: never forward the admin sync token to an unexpected host ────
+  // These POSTs carry `x-admin-sync-token`. A redirect Location that points off
+  // the trusted set (original host, canonical domain, or *.vercel.app) must NOT
+  // receive that credential — the request is refused before the second fetch.
+
+  it("refuses to forward the sync token across a redirect to an untrusted host", async () => {
+    const calls = mockFetchSequence([
+      () => redirect("https://evil.example/steal", 307),
+      () => new Response("{}", { status: 200 }),
+    ]);
+
+    await expect(
+      postToVercel("https://tierramadre.app/api/admin-product-update", {
+        headers: { "x-admin-sync-token": "s3cr3t" },
+        body: "{}",
+      }),
+    ).rejects.toThrow(/untrusted host|evil\.example/);
+
+    // The evil host was NEVER contacted — only the original request happened.
+    expect(calls).toHaveLength(1);
+  });
+
+  it("refuses an https→http downgrade before sending the token in cleartext", async () => {
+    const calls = mockFetchSequence([
+      () => redirect("http://tierramadre.app/api/admin-product-update", 301),
+      () => new Response("{}", { status: 200 }),
+    ]);
+
+    await expect(
+      postToVercel(
+        "https://tierra-madre-studio.vercel.app/api/admin-product-update",
+        { headers: { "x-admin-sync-token": "s3cr3t" }, body: "{}" },
+      ),
+    ).rejects.toThrow(/non-HTTPS|HTTPS/);
+    expect(calls).toHaveLength(1);
+  });
+
+  it("refuses a redirect to an arbitrary *.vercel.app tenant host (shared, third-party space)", async () => {
+    const calls = mockFetchSequence([
+      () => redirect("https://attacker.vercel.app/steal", 302),
+      () => new Response("{}", { status: 200 }),
+    ]);
+
+    await expect(
+      postToVercel("https://tierramadre.app/api/admin-product-update", {
+        headers: { "x-admin-sync-token": "s3cr3t" },
+        body: "{}",
+      }),
+    ).rejects.toThrow(/untrusted host|attacker\.vercel\.app/);
+    expect(calls).toHaveLength(1);
+  });
+
+  it("still follows the legit vercel alias → canonical domain hop with the token", async () => {
+    const calls = mockFetchSequence([
+      () => redirect("https://tierramadre.app/api/admin-table-update", 301),
+      () => new Response(JSON.stringify({ ok: true }), { status: 200 }),
+    ]);
+
+    const res = await postToVercel(
+      "https://tierra-madre-studio.vercel.app/api/admin-table-update",
+      { headers: { "x-admin-sync-token": "s3cr3t" }, body: '{"a":1}' },
+    );
+
+    expect(res.status).toBe(200);
+    expect(calls[1].url).toBe("https://tierramadre.app/api/admin-table-update");
+  });
 });
