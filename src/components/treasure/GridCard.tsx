@@ -58,6 +58,19 @@ interface GridCardProps {
   viewCount?: number;
   /** Whether the current user is an admin (required to see view counts) */
   isAdmin?: boolean;
+  /**
+   * Force a redesign variant for this instance instead of reading the global
+   * store. Used by the public Vitrina to always render the clean `literal`
+   * card without mutating the authenticated app's catalog preference.
+   */
+  variantOverride?: "literal" | "faithful";
+  /**
+   * Explicit price label to render instead of the viewer-derived PriceDisplay.
+   * `string` → show it; `null` → show no price; `undefined` → default behavior
+   * (PriceDisplay gated by the viewer's `shouldShowPrices`). Used by the Vitrina
+   * to show the per-share price (precioCOP × chosen multiplier).
+   */
+  priceOverride?: string | null;
 }
 
 /** Builds the DM Mono spec line, mixed-case ct + uppercase mine ("4.20 ct · MUZO"). */
@@ -84,12 +97,17 @@ function GridCard({
   isSelectedForComparison = false,
   onToggleComparison,
   canAddToComparison = true,
+  variantOverride,
+  priceOverride,
 }: GridCardProps) {
   const { mode } = useThemeMode();
   const isLight = mode === "light";
   const { shouldShowPrices } = usePriceShare();
   const prefersReducedMotion = useReducedMotion();
-  const { isLiteral } = useRedesignVariant();
+  const { isLiteral: variantIsLiteral } = useRedesignVariant();
+  const isLiteral = variantOverride
+    ? variantOverride === "literal"
+    : variantIsLiteral;
 
   const qe = getQuietEmerald(mode);
 
@@ -296,14 +314,30 @@ function GridCard({
   // ---- Text block (shared) ----------------------------------------------
   // Phone (CatalogNew): image → name → spec → price, stacked.
   // Tablet/desktop (CatalogWide): name + price share a baseline row, spec below.
-  const priceEl = shouldShowPrices ? (
-    <PriceDisplay
-      price={item.precioCOP}
-      precioInternacional={item.precioInternacional}
-      compact
-      compactSize={isMobile ? 12.5 : 13}
-    />
-  ) : null;
+  const priceEl =
+    priceOverride !== undefined ? (
+      priceOverride ? (
+        <Typography
+          sx={{
+            fontFamily: qeFont.mono,
+            fontWeight: 600,
+            color: qe.accent,
+            fontSize: isMobile ? 12.5 : 13,
+            fontFeatureSettings: '"tnum"',
+            whiteSpace: "nowrap",
+          }}
+        >
+          {priceOverride}
+        </Typography>
+      ) : null
+    ) : shouldShowPrices ? (
+      <PriceDisplay
+        price={item.precioCOP}
+        precioInternacional={item.precioInternacional}
+        compact
+        compactSize={isMobile ? 12.5 : 13}
+      />
+    ) : null;
 
   const nameEl = (
     <Typography
@@ -525,6 +559,8 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.viewCount === nextProps.viewCount &&
     prevProps.isAdmin === nextProps.isAdmin &&
     prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&
-    prevProps.canAddToComparison === nextProps.canAddToComparison
+    prevProps.canAddToComparison === nextProps.canAddToComparison &&
+    prevProps.variantOverride === nextProps.variantOverride &&
+    prevProps.priceOverride === nextProps.priceOverride
   );
 });

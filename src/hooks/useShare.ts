@@ -13,19 +13,19 @@
  * - Respects system dark mode in share UI
  */
 
-import { useCallback, useMemo } from 'react';
-import { TreasureItem } from '../types';
-import { INVITATION_STORAGE_KEYS } from '../types/invitation';
-import { triggerHaptic } from './useHaptics';
-import { usePriceShare } from '../contexts/PriceShareContext';
-import { useCurrency } from '../contexts/CurrencyContext';
-import { formatCurrency, formatCarats } from '../utils/formatting';
-import { createLogger } from '../utils/logger';
+import { useCallback, useMemo } from "react";
+import { TreasureItem } from "../types";
+import { INVITATION_STORAGE_KEYS } from "../types/invitation";
+import { triggerHaptic } from "./useHaptics";
+import { usePriceShare } from "../contexts/PriceShareContext";
+import { useCurrency } from "../contexts/CurrencyContext";
+import { formatCurrency, formatCarats } from "../utils/formatting";
+import { createLogger } from "../utils/logger";
 
-const log = createLogger('useShare');
+const log = createLogger("useShare");
 
 // Base URL for the Tierra Madre Studio app
-const STUDIO_BASE_URL = 'https://tierramadre.app';
+const STUDIO_BASE_URL = "https://tierramadre.app";
 
 interface ShareData {
   title: string;
@@ -35,7 +35,7 @@ interface ShareData {
 
 interface ShareResult {
   success: boolean;
-  method: 'native' | 'clipboard' | 'failed';
+  method: "native" | "clipboard" | "failed";
   error?: Error;
 }
 
@@ -74,6 +74,17 @@ interface UseShareReturn {
   getProductUrl: (product: TreasureItem) => string;
 
   /**
+   * Generate a public, sandboxed "Vitrina" share URL for one or more products.
+   * One product → /v/{item}; several → /v/{a-b-c}. Recipients see only the
+   * product page(s), with no access to the rest of the app or a login wall.
+   * Pass the sender's asesor slug so the WhatsApp CTA reaches the right person.
+   */
+  getVitrinaUrl: (
+    products: Array<{ item: number }>,
+    senderSlug?: string,
+  ) => string;
+
+  /**
    * Generate formatted share text for a product
    */
   getProductShareText: (product: TreasureItem) => string;
@@ -83,16 +94,26 @@ interface UseShareReturn {
  * Check if Web Share API is supported
  */
 function checkShareSupport(): boolean {
-  return typeof navigator !== 'undefined' && 'share' in navigator;
+  return typeof navigator !== "undefined" && "share" in navigator;
 }
 
 /**
  * Format product details for sharing
  * Includes prices only when shouldShowPrices is true (user has share prices enabled)
  */
-function formatProductShareText(product: TreasureItem, productUrl: string, includePrice: boolean, convertPrice?: (v: number) => number, currency?: 'COP' | 'USD'): string {
-  const displayName = product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
-  const weight = typeof product.peso === 'number' ? `${formatCarats(product.peso)} ct` : '';
+function formatProductShareText(
+  product: TreasureItem,
+  productUrl: string,
+  includePrice: boolean,
+  convertPrice?: (v: number) => number,
+  currency?: "COP" | "USD",
+): string {
+  const displayName = product.nombre
+    .replace(/^L:.*?\s/, "")
+    .replace(/^L:/, "")
+    .trim();
+  const weight =
+    typeof product.peso === "number" ? `${formatCarats(product.peso)} ct` : "";
 
   // Build share text with emoji for visual appeal
   // Brand identity: green heart instead of diamond for the share preview header.
@@ -108,8 +129,10 @@ function formatProductShareText(product: TreasureItem, productUrl: string, inclu
 
   // Include price only when user has price sharing enabled
   if (includePrice && product.precioCOP) {
-    const price = convertPrice ? convertPrice(product.precioCOP) : product.precioCOP;
-    lines.push(`💰 ${formatCurrency(price, currency || 'COP')}`);
+    const price = convertPrice
+      ? convertPrice(product.precioCOP)
+      : product.precioCOP;
+    lines.push(`💰 ${formatCurrency(price, currency || "COP")}`);
   }
 
   lines.push(``);
@@ -117,7 +140,7 @@ function formatProductShareText(product: TreasureItem, productUrl: string, inclu
   lines.push(``);
   lines.push(`🔗 ${productUrl}`);
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
@@ -155,83 +178,120 @@ export function useShare(options: UseShareOptions = {}): UseShareReturn {
   }, []);
 
   /**
+   * Generate a public "Vitrina" share URL for one or more products.
+   * Stateless: item numbers live in the path (dash-separated). Optionally
+   * carries the sender's asesor slug (?a=) so the WhatsApp CTA is routed to them.
+   */
+  const getVitrinaUrl = useCallback(
+    (products: Array<{ item: number }>, senderSlug?: string): string => {
+      const ids = products
+        .map((p) => p.item)
+        .filter((n): n is number => typeof n === "number" && n > 0);
+      const base = `${STUDIO_BASE_URL}/v/${ids.join("-")}`;
+      return senderSlug ? `${base}?a=${encodeURIComponent(senderSlug)}` : base;
+    },
+    [],
+  );
+
+  /**
    * Generate formatted share text
    * Includes price when user has price sharing enabled
    */
-  const getProductShareText = useCallback((product: TreasureItem): string => {
-    const url = getProductUrl(product);
-    return formatProductShareText(product, url, shouldShowPrices, convertPrice, currency);
-  }, [getProductUrl, shouldShowPrices, convertPrice, currency]);
+  const getProductShareText = useCallback(
+    (product: TreasureItem): string => {
+      const url = getProductUrl(product);
+      return formatProductShareText(
+        product,
+        url,
+        shouldShowPrices,
+        convertPrice,
+        currency,
+      );
+    },
+    [getProductUrl, shouldShowPrices, convertPrice, currency],
+  );
 
   /**
    * Copy text to clipboard
    */
-  const copyToClipboard = useCallback(async (text: string): Promise<boolean> => {
-    try {
-      await navigator.clipboard.writeText(text);
-      if (hapticFeedback) {
-        triggerHaptic('success');
+  const copyToClipboard = useCallback(
+    async (text: string): Promise<boolean> => {
+      try {
+        await navigator.clipboard.writeText(text);
+        if (hapticFeedback) {
+          triggerHaptic("success");
+        }
+        return true;
+      } catch (err) {
+        log.debug("Clipboard write failed:", err);
+        return false;
       }
-      return true;
-    } catch (err) {
-      log.debug('Clipboard write failed:', err);
-      return false;
-    }
-  }, [hapticFeedback]);
+    },
+    [hapticFeedback],
+  );
 
   /**
    * Share custom content
    */
-  const share = useCallback(async (data: ShareData): Promise<ShareResult> => {
-    // Try native share first
-    if (isNativeShareSupported) {
-      try {
-        await navigator.share({
-          title: data.title,
-          text: data.text,
-          url: data.url,
-        });
+  const share = useCallback(
+    async (data: ShareData): Promise<ShareResult> => {
+      // Try native share first
+      if (isNativeShareSupported) {
+        try {
+          await navigator.share({
+            title: data.title,
+            text: data.text,
+            url: data.url,
+          });
 
-        if (hapticFeedback) {
-          triggerHaptic('success');
-        }
+          if (hapticFeedback) {
+            triggerHaptic("success");
+          }
 
-        return { success: true, method: 'native' };
-      } catch (err) {
-        // User cancelled or share failed
-        if (err instanceof Error && err.name === 'AbortError') {
-          log.debug('Share cancelled by user');
-          return { success: false, method: 'native', error: err };
+          return { success: true, method: "native" };
+        } catch (err) {
+          // User cancelled or share failed
+          if (err instanceof Error && err.name === "AbortError") {
+            log.debug("Share cancelled by user");
+            return { success: false, method: "native", error: err };
+          }
+          log.debug("Native share failed:", err);
         }
-        log.debug('Native share failed:', err);
       }
-    }
 
-    // Fallback to clipboard
-    const shareText = `${data.title}\n\n${data.text}\n\n${data.url}`;
-    const clipboardSuccess = await copyToClipboard(shareText);
+      // Fallback to clipboard
+      const shareText = `${data.title}\n\n${data.text}\n\n${data.url}`;
+      const clipboardSuccess = await copyToClipboard(shareText);
 
-    if (clipboardSuccess) {
-      return { success: true, method: 'clipboard' };
-    }
+      if (clipboardSuccess) {
+        return { success: true, method: "clipboard" };
+      }
 
-    return { success: false, method: 'failed' };
-  }, [isNativeShareSupported, hapticFeedback, copyToClipboard]);
+      return { success: false, method: "failed" };
+    },
+    [isNativeShareSupported, hapticFeedback, copyToClipboard],
+  );
 
   /**
    * Share a product
    */
-  const shareProduct = useCallback(async (product: TreasureItem): Promise<ShareResult> => {
-    const displayName = product.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
-    const url = getProductUrl(product);
-    const text = getProductShareText(product);
+  const shareProduct = useCallback(
+    async (product: TreasureItem): Promise<ShareResult> => {
+      const displayName = product.nombre
+        .replace(/^L:.*?\s/, "")
+        .replace(/^L:/, "")
+        .trim();
+      const url = getProductUrl(product);
+      const text = getProductShareText(product);
 
-    return share({
-      title: `${displayName} - Tierra Madre`,
-      text,
-      url,
-    });
-  }, [share, getProductUrl, getProductShareText]);
+      return share({
+        title: `${displayName} - Tierra Madre`,
+        text,
+        url,
+      });
+    },
+    [share, getProductUrl, getProductShareText],
+  );
 
   return {
     isNativeShareSupported,
@@ -239,6 +299,7 @@ export function useShare(options: UseShareOptions = {}): UseShareReturn {
     share,
     copyToClipboard,
     getProductUrl,
+    getVitrinaUrl,
     getProductShareText,
   };
 }

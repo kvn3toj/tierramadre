@@ -3,6 +3,84 @@
 > Corte: **30 jun 2026**. Tras conectar MercadoPago, sincronizar el secreto interno y
 > verificar canales. Sub-account: `t3tOZBrR05jUoLqnDn4I` · https://app.progresy.ai
 
+## ✅ UPDATE 2 jul 2026 (cierre) — deploy final HECHO; cron sin-respuesta-7d EN VIVO; **María (IA) = bloqueo del embudo** con vía de salida ya investigada
+
+> Cierre del hand-off anterior. Los dos commits locales de `feat/ghl-inactivity-scoring` ya están mergeados y
+> desplegados; el cron de inactividad corre en producción. De los tres checkpoints pendientes de la entrada de
+> abajo: **#1 y #3 CERRADOS, #2 sigue abierto** (publicar = WhatsApp real, requiere OK del equipo). El hilo
+> caliente pasa a ser la activación de María, que **no es solo UX: bloquea el embudo en producción** (abajo).
+
+**✅ Push + merge + deploy — HECHO.**
+
+- Aislados **solo** los commits de GHL sobre una rama limpia desde `origin/main` (la rama de trabajo traía
+  mezclado el rediseño "Quiet Emerald v2", ajeno a esto); 2 conflictos menores de cherry-pick resueltos;
+  **438/438 tests + lint limpios** antes de abrir PR.
+- **PR #47 mergeado a `main` (`59c5fb9`):** fix de regresión de rama + fix de forma-de-campo de
+  `sin-respuesta-7d` (el bug que habría hecho que el cron nunca etiquetara a nadie, ver entrada de abajo).
+- **`npx convex deploy` → `wonderful-tortoise-984` OK — el cron `sin-respuesta-7d` está EN VIVO** (07:00 UTC
+  diario; confirmado explícitamente — era el único supuesto sin verificar de la entrada anterior: si el
+  `dateAdded` del filtro de Conversations rastrea última-actividad o creación de la conversación).
+- **PR #48 mergeado (`4a5f568`):** sincroniza `_generated/api.d.ts` para que cuadre, por convención del repo.
+- **Vercel** auto-construyendo el deploy de producción final (rutina, sin acción pendiente).
+
+**Reconciliación de los 3 checkpoints de la entrada "continuación":** #1 ✅ **CERRADO** (push/PR → PR #47) ·
+#2 ⏳ **ABIERTO** (publicar WF-05 y WF-03, ambos probados y en Draft a propósito; publicar = EN VIVO = WhatsApp
+real → requiere OK explícito) · #3 ✅ **CERRADO** (supuesto `dateAdded` asumido y desplegado, cron vivo).
+
+**🚨 BLOQUEO DEL EMBUDO — María (Conversation AI) Disabled y no-Principal.** No es solo que Kevin no reciba
+respuesta: **ningún** mensaje orgánico (WhatsApp/SMS/IG) se ha auto-respondido nunca. Impacto en cadena:
+**WF-03 (Calificación IA) dispara con el tag `qualification_complete`, que SOLO lo agrega María** al terminar
+sus 4 preguntas. Con María apagada, WF-03 nunca dispara para un cliente real (solo con tags de prueba a mano)
+⇒ **el embudo calificación → catálogo → carrito funciona en pruebas, no en producción.**
+
+- **Causa raíz:** María está **Disabled** y no es el bot Principal; un placeholder sin configurar ocupa ese
+  slot y **también** está Disabled. Afecta a **las 111 conversaciones reales en espera**, no solo a Kevin.
+- **Validado en el sandbox test-chat de GHL** (riesgo cero, no toca conversaciones reales) que la config de
+  María responde bien. Dejado intacto ("solo sandbox").
+
+**✅ Investigación de activación (docs oficiales HighLevel) — desbloquea la decisión SIN esperar a soporte:**
+
+- **Auto-Pilot dispara sobre mensaje ENTRANTE, no sobre el estado "en espera".** Doc oficial: el bot "responde
+  a todos los mensajes **entrantes**" del canal; espera N seg tras un inbound, agrupa y responde. ⇒ **Encender
+  María NO hace un blast a las 111** que solo esperan; reacciona cuando **llega un mensaje nuevo** en una
+  conversación con el bot Active. Riesgo real pero acotado: el próximo inbound de cualquiera de esas 111
+  recibiría auto-respuesta.
+- **Estado por-contacto:** Active / Sleep / Inactive; **`Inactive` a nivel contacto overridea el ajuste
+  global.** El default por-contacto de un bot recién asignado no está documentado explícito — **pero las dos
+  vías de abajo lo vuelven irrelevante.**
+- **Vía A (recomendada, riesgo de envío CERO): Suggestive Mode.** María **redacta** la respuesta pero **no la
+  envía**; un humano revisa, edita y manda. La doc lo recomienda literal para "probar la salida de un bot nuevo
+  antes de automatizar del todo". Permite activar María sobre las 111 sin un solo envío no aprobado, y validar
+  su salida real en vivo. Luego se pasa a Auto-Pilot cuando haya confianza.
+- **Vía B (Auto-Pilot acotado): la acción de workflow "Update Conversation AI Bot and Status"** fija el estado
+  Active/Inactive por contacto, scopeable por tag. ⇒ **SÍ se puede scopear a solo Kevin/Juan Ma/Isa** (Active
+  a los 3, o Inactive a las 111) — corrige el "no hay forma de scopear Autopilot a los 3 de prueba" de la
+  sesión previa.
+- **Conclusión:** no hace falta esperar a soporte GHL/Progresy para ir en vivo. Suggestive Mode (todo pasa por
+  revisión humana) o el workflow de scope son suficientes para desbloquear el embudo hoy con riesgo controlado.
+- Fuentes: Auto-Pilot Mode · Suggestive Mode · Bot Status for Individual Contacts · Update Conversation AI Bot
+  and Status (help.gohighlevel.com).
+
+**📌 Próximos pasos (orden sugerido):**
+
+1. **María primero** (desbloquea todo el embudo): activarla como Principal en **Suggestive Mode** (seguro) o
+   Auto-Pilot scopeado a los 3 de prueba vía el workflow "Update Conversation AI Bot and Status".
+2. **Publicar WF-05** (5/5 pasos verificados end-to-end con orden real VO-0002, link MP real, WhatsApp, mover
+   oportunidad, tag) — solo flip Publicar cuando el equipo dé OK.
+3. **Publicar WF-03** — solo flip Publicar, pero **inútil hasta que María esté viva** (nadie agrega
+   `qualification_complete` orgánicamente si no). El "error" del 4º paso en la prueba fue un artefacto del
+   orden de test, no un bug.
+4. **Vigilar la 1ª corrida real del cron `sin-respuesta-7d`** (07:00 UTC) para confirmar que el supuesto de
+   `dateAdded` (última-actividad vs. creación de conversación) etiqueta con sentido.
+5. **WF-02 · Verificar embajador — NO existe;** WF-01 debe encadenar en él. Necesario para cerrar el flujo de
+   referido de embajador. (WF-07 regla-5-min y WF-12 auto-invite = menor prioridad; WF-12 necesita un endpoint
+   nuevo primero.)
+6. **Decisiones de negocio (equipo, no inventar):** mapa `tipo_interes`→`categoria` (hoy WF-04 rankea solo por
+   presupuesto, degradado), matriz completa de ruteo de WF-11 (Felipe/Kevin/Sebastián ↔ tiers), y chequear el
+   estado de la plantilla `escalacion_asesor` (última vez Pendiente aprobación de Meta).
+
+---
+
 ## ✅ UPDATE 2 jul 2026 (continuación) — WF-05 y WF-03 completados y probados, bug real encontrado y arreglado en sin-respuesta-7d
 
 > Sesión nueva retomando el hand-off de la actualización anterior. Cuatro hilos de trabajo: (1) reconciliar
@@ -219,6 +297,16 @@ enchufe si se aprueba después: `convex/_lib/productSearch.ts::rankProducts`.
 **WF-04 · pasos de envío — COMPLETADO (Borrador).** Se activó "Guardar la respuesta de este Webhook" en el
 paso Webhook (ghl-search-products) y se añadieron los pasos: WhatsApp con los 3 productos (nombre, precio_cop,
 foto_url, web_link), mover oportunidad → "Producto Recomendado", tag `productos-mostrados`.
+
+**🔗 `web_link` ahora apunta a la Vitrina pública (`/v/{itemId}`), no a `/product/{itemId}`.** Desde
+`convex/ghl.ts:searchProducts`, el `web_link` que devuelve el webhook es `https://tierramadre.app/v/{itemId}`
+— una página de producto **sandbox, sin login** (el cliente no choca con el muro de autenticación de
+`/product`). El nombre del campo `web_link` **no cambió**, así que los merge tags de WF-04
+(`{{custom_webhook.1.response.productos.0.web_link}}`, etc.) siguen igual — solo cambia el valor. Un número de
+ítem suelto (`/v/324`) se interpreta como lista de ids con precio por defecto **x1 COP = el mismo `precio_cop`**
+que va en el texto del WhatsApp, así que mensaje y página muestran la misma cifra. (Para un enlace único a una
+_grilla_ de las 3 piezas con precio elegido por el asesor, ver el flujo manual "Compartir con cliente" en la
+app → genera `/v/{token}` con multiplicador + moneda; requiere añadir un merge tag nuevo en Progresy.)
 
 **🐛 Bug real encontrado y arreglado — merge tag de array en WhatsApp free-form.** El tag
 `{{custom_webhook.1.response.productos}}` (array de objetos) se renderiza como texto literal
