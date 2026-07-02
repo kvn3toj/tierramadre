@@ -64,12 +64,16 @@ describe("stage derivation", () => {
       deriveTargetStageName(row({ products_shown: { value: true } })),
     ).toBe("Producto Recomendado");
   });
-  it("outcome pidio-humano → Negociación / Agente; fantasma → Perdido / Nurturing", () => {
+  it("outcome pidio-humano → Negociación / Agente", () => {
     expect(deriveTargetStageName(row({ outcome: "pidio-humano" }))).toBe(
       "Negociación / Agente",
     );
+  });
+  it("outcome fantasma is NOT auto-marked lost — falls through to its evidenced stage (a 'lost' mark is a human decision, and outcome is ungated)", () => {
+    // A bare ghosted row has no other graded signal → stays at Nuevo Lead,
+    // never auto-written to Perdido / Nurturing.
     expect(deriveTargetStageName(row({ outcome: "fantasma" }))).toBe(
-      "Perdido / Nurturing",
+      "Nuevo Lead",
     );
   });
   it("chooseStageWrite is forward-only (no regress, no no-op)", () => {

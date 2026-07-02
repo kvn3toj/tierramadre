@@ -51,7 +51,15 @@ const conf = (c: number) => c >= MIN_CONFIDENCE;
 
 export function deriveTargetStageName(row: ExtractionRow): string {
   const s = row.signals;
-  if (s.outcome === "fantasma") return "Perdido / Nurturing"; // order 5
+  // NOTE: outcome:"fantasma" deliberately does NOT auto-move to "Perdido /
+  // Nurturing". `outcome` carries no confidence in the extraction schema, so an
+  // ungated 8B label must never mark a live lead as LOST — that classification is
+  // left to a human. The report's funnel-state summary still surfaces every
+  // ghosted contact for review; a ghosted lead simply stays at its evidenced
+  // stage (usually Nuevo Lead) instead of being written off automatically.
+  // (pidio-humano -> Negociación / Agente is kept: it is a forward, human-visible
+  // "please pick this up" flag whose worst case is a wasted glance, not a
+  // written-off customer.)
   if (s.outcome === "pidio-humano") return "Negociación / Agente"; // order 4
   if (s.products_shown.value === true) return "Producto Recomendado"; // order 3
   const qualified =
