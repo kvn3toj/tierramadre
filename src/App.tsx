@@ -156,6 +156,10 @@ const FotosintesisVentaDetail = lazyWithRetry(
   () => import("./pages/admin/Fotosintesis/VentaDetailPage"),
   "FotosintesisVentaDetail",
 );
+const FotosintesisSales = lazyWithRetry(
+  () => import("./pages/admin/Fotosintesis/SalesPage"),
+  "FotosintesisSales",
+);
 const FotosintesisDirectorio = lazyWithRetry(
   () => import("./pages/admin/Fotosintesis/DirectorioPage"),
   "FotosintesisDirectorio",
@@ -616,6 +620,7 @@ function AppContent() {
                 path="lots/:loteId/items/:lotItemId/edit"
                 element={<FotosintesisEditItem />}
               />
+              <Route path="sales" element={<FotosintesisSales />} />
               <Route path="sales/new" element={<FotosintesisVenta />} />
               <Route
                 path="sales/:saleId"
