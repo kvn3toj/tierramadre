@@ -32,8 +32,7 @@ import { rankProducts, type SearchableProduct } from "./_lib/productSearch";
 import { isOverLimit, computeCommissionCOP } from "./_lib/commission";
 import { applyPaymentToSale } from "./_lib/applyPayment";
 import {
-  getLatestConversation,
-  isInactiveConversation,
+  isContactInactive,
   addContactTags,
   type GhlConvConfig,
 } from "./_lib/ghlConversations";
@@ -419,7 +418,7 @@ export const tagInactiveContacts = internalAction({
   ): Promise<{
     scanned: number;
     tagged: number;
-    skippedNoHistory: number;
+    notInactive: number;
     errored: number;
   }> => {
     const token = process.env.GHL_TOKEN;
@@ -428,29 +427,31 @@ export const tagInactiveContacts = internalAction({
       console.warn(
         "[sin-respuesta-7d] GHL_TOKEN / GHL_LOCATION_ID unset — skipping run",
       );
-      return { scanned: 0, tagged: 0, skippedNoHistory: 0, errored: 0 };
+      return { scanned: 0, tagged: 0, notInactive: 0, errored: 0 };
     }
     const cfg: GhlConvConfig = { token, locationId };
 
     const contacts = await ctx.runQuery(internal.ghl.listGhlLinkedContacts, {});
     const now = Date.now();
     let tagged = 0;
-    let skippedNoHistory = 0;
+    let notInactive = 0;
     let errored = 0;
 
     // Sequential to stay well under GHL rate limits; the linked-contact set is
     // small and this runs once daily off-peak.
     for (const { ghlContactId } of contacts) {
       try {
-        const convo = await getLatestConversation(cfg, ghlContactId);
-        if (!convo) {
-          // No conversation history → nothing to score, skip gracefully.
-          skippedNoHistory++;
-          continue;
-        }
-        if (isInactiveConversation(convo, now, INACTIVITY_THRESHOLD_DAYS)) {
+        const inactive = await isContactInactive(
+          cfg,
+          ghlContactId,
+          now,
+          INACTIVITY_THRESHOLD_DAYS,
+        );
+        if (inactive) {
           await addContactTags(cfg, ghlContactId, [INACTIVITY_TAG]);
           tagged++;
+        } else {
+          notInactive++;
         }
       } catch (err) {
         // One contact's failure must NOT abort the whole batch.
@@ -464,12 +465,12 @@ export const tagInactiveContacts = internalAction({
 
     console.log(
       `[sin-respuesta-7d] scanned=${contacts.length} tagged=${tagged} ` +
-        `noHistory=${skippedNoHistory} errored=${errored}`,
+        `notInactive=${notInactive} errored=${errored}`,
     );
     return {
       scanned: contacts.length,
       tagged,
-      skippedNoHistory,
+      notInactive,
       errored,
     };
   },

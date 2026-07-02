@@ -120,86 +120,52 @@ export async function updateContactFields(
 // ─── Conversations API (v2) ────────────────────────────────────────────────
 //
 // Used by the `sin-respuesta-7d` inactivity cron (see convex/ghl.ts +
-// convex/_lib/ghlConversations.ts). GHL's Manage Scoring has no native
-// "contact hasn't replied in N days" trigger, so a Convex cron scans each
-// contact's most-recent conversation here and tags the stale ones.
+// convex/_lib/ghlConversations.ts, the copy Convex's Node runtime actually
+// bundles — keep this mirror in sync if either changes). GHL's Manage
+// Scoring has no native "contact hasn't replied in N days" trigger, so a
+// Convex cron scans each GHL-linked contact and tags the stale ones.
 //
-// ⚠️ FIELD-NAME ASSUMPTIONS (not yet verified against live GHL data):
-// `GET /conversations/search?locationId=..&contactId=..` returns
-// `{ conversations: [{ id, lastMessageDate, lastMessageDirection, ... }] }`.
-// Per the documented v2 shape, `lastMessageDate` is an epoch-ms number (some
-// tenants return an ISO string) and `lastMessageDirection` is "inbound"
-// (from the contact) | "outbound" (from us). `parseLastMessageMs` and
-// `isInactiveConversation` below tolerate both date encodings. Verify these
-// names against a real response before publishing the cron.
-
-/** Raw conversation summary as returned by /conversations/search. */
-export interface GhlConversationSummary {
-  id?: string;
-  /** Epoch-ms number OR ISO-8601 string, depending on tenant. */
-  lastMessageDate?: number | string;
-  /** "inbound" = from the contact; "outbound" = from us. */
-  lastMessageDirection?: string;
-}
+// FIELD-SHAPE VERIFICATION (confirmed against GHL's public OpenAPI spec,
+// github.com/GoHighLevel/highlevel-api-docs, apps/conversations.json,
+// `ConversationSchema` + `/conversations/search` parameters — 2 jul 2026):
+// the response's `ConversationSchema` does NOT include a `lastMessageDate`
+// or `lastMessageDirection` field — the original design's assumption was
+// wrong. Both exist ONLY as *query filters*: `lastMessageDirection`
+// (enum: inbound|outbound) and a `startDate`/`endDate` pair (documented as
+// filtering the `dateAdded` field, Unix ms). `isContactInactive` below
+// pushes the whole decision server-side instead of parsing response fields.
+//
+// ⚠️ ONE ASSUMPTION STILL UNVERIFIED (no live GHL credentials available to
+// confirm): whether `dateAdded` for this filter's purposes tracks the
+// conversation's last-message activity (what we want) or its original
+// creation date. Confirm against one real conversation before deploy.
 
 /**
- * Fetch the most-recent conversation summary for a contact (or `null` when the
- * contact has no conversation history). Reuses the same Bearer + Version auth
- * as every other call in this file.
+ * TRUE iff `contactId` has a conversation whose last message is OUTBOUND
+ * (from us) and at/before `nowMs - thresholdDays`, per GHL's own server-side
+ * filters (see the section doc above for why this replaced a client-side
+ * parse-and-compare approach).
  */
-export async function getLatestConversation(
+export async function isContactInactive(
   cfg: GhlConfig,
   contactId: string,
-): Promise<GhlConversationSummary | null> {
+  nowMs: number,
+  thresholdDays: number,
+): Promise<boolean> {
+  const cutoffMs = nowMs - thresholdDays * 24 * 60 * 60 * 1000;
   const url =
     `${GHL_BASE}/conversations/search` +
     `?locationId=${encodeURIComponent(cfg.locationId)}` +
-    `&contactId=${encodeURIComponent(contactId)}`;
+    `&contactId=${encodeURIComponent(contactId)}` +
+    `&lastMessageDirection=outbound` +
+    `&endDate=${cutoffMs}` +
+    `&limit=1`;
   const res = await impl(cfg)(url, {
     method: "GET",
     headers: headers(cfg.token),
   });
-  if (!res.ok) throw new Error(`GHL getLatestConversation failed: ${res.status}`);
+  if (!res.ok) throw new Error(`GHL isContactInactive failed: ${res.status}`);
   const data = await res.json();
-  const list: GhlConversationSummary[] = Array.isArray(data?.conversations)
-    ? data.conversations
-    : [];
-  if (!list.length) return null;
-  // The search endpoint returns most-recent first; pick the freshest defensively.
-  return list.reduce((newest, c) =>
-    parseLastMessageMs(c) > parseLastMessageMs(newest) ? c : newest,
-  );
-}
-
-/** Normalise `lastMessageDate` (epoch-ms number OR ISO string) to epoch-ms. */
-export function parseLastMessageMs(c: GhlConversationSummary): number {
-  const d = c.lastMessageDate;
-  if (typeof d === "number") return Number.isFinite(d) ? d : 0;
-  if (typeof d === "string") {
-    const t = Date.parse(d);
-    return Number.isNaN(t) ? 0 : t;
-  }
-  return 0;
-}
-
-/**
- * Pure decision: should this conversation earn the `sin-respuesta-7d` tag?
- *
- * TRUE iff the last message was OUTBOUND (from us) AND older than
- * `thresholdDays`. An inbound last message means the contact already replied
- * (never tag); a `null` summary (no conversation) is caller-skipped, but is
- * treated as "not inactive" here for safety.
- */
-export function isInactiveConversation(
-  summary: GhlConversationSummary | null,
-  nowMs: number,
-  thresholdDays: number,
-): boolean {
-  if (!summary) return false;
-  const dir = (summary.lastMessageDirection ?? "").toLowerCase();
-  if (dir !== "outbound") return false;
-  const lastMs = parseLastMessageMs(summary);
-  if (!lastMs) return false; // unknown date → don't tag (avoid false positives)
-  const ageMs = nowMs - lastMs;
-  return ageMs > thresholdDays * 24 * 60 * 60 * 1000;
+  const list = Array.isArray(data?.conversations) ? data.conversations : [];
+  return list.length > 0;
 }
