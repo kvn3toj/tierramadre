@@ -350,8 +350,13 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         sx={{
           flex: 1,
           minHeight: 0, // Override flexbox implicit min-height: auto so overflowY works
-          // Tab bar: 12px top + 62px pill + 21px bottom + safe-area = 95px + safe-area
-          paddingBottom: `calc(95px + env(safe-area-inset-bottom))`,
+          // Tab bar: 12px top + 62px pill + 21px bottom + safe-area = 95px + safe-area.
+          // Fotosíntesis suppresses this global bar and mounts its own FotoTabBar
+          // (which reserves its own space in FotosintesisLayout), so don't
+          // double-book the reservation on /admin/fotosintesis routes.
+          paddingBottom: location.pathname.startsWith("/admin/fotosintesis")
+            ? 0
+            : `calc(95px + env(safe-area-inset-bottom))`,
           overflowY: "auto",
           WebkitOverflowScrolling: "touch",
           // iOS HIG: Improve scroll performance and touch handling

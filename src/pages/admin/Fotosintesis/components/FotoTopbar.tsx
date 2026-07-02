@@ -27,6 +27,14 @@ interface FotoTopbarProps {
    * so click/tap users (especially on touch) can actually open the spotlight.
    */
   onSearchClick?: () => void;
+  /**
+   * Fires when the operator taps the account/menu avatar. Opens the shared
+   * FotoRouteMenu (owned by FotosintesisLayout). When absent the avatar renders
+   * as a static badge (back-compat).
+   */
+  onMenuClick?: () => void;
+  /** Reflects the menu's open state for the avatar trigger's `aria-expanded`. */
+  menuOpen?: boolean;
 }
 
 /**
@@ -38,6 +46,8 @@ export function FotoTopbar({
   syncStatus = "synced",
   userInitial = "M",
   onSearchClick,
+  onMenuClick,
+  menuOpen = false,
 }: FotoTopbarProps) {
   const foto = getFoto("light");
 
@@ -232,11 +242,20 @@ export function FotoTopbar({
             </Box>
           </Box>
           <Box
-            aria-label="Cuenta de usuario"
+            component={onMenuClick ? "button" : "div"}
+            type={onMenuClick ? "button" : undefined}
+            onClick={onMenuClick}
+            aria-label={
+              onMenuClick ? "Abrir menú de navegación" : "Cuenta de usuario"
+            }
+            aria-haspopup={onMenuClick ? "menu" : undefined}
+            aria-expanded={onMenuClick ? menuOpen : undefined}
             sx={{
               width: 26,
               height: 26,
+              padding: 0,
               borderRadius: "50%",
+              border: "none",
               background: "#3a5b4a",
               color: "#FFFFFF",
               display: "flex",
@@ -244,6 +263,19 @@ export function FotoTopbar({
               justifyContent: "center",
               fontSize: 10.5,
               fontWeight: 600,
+              fontFamily: "inherit",
+              cursor: onMenuClick ? "pointer" : "default",
+              transition: "box-shadow 120ms ease, transform 120ms ease",
+              "&:hover": onMenuClick
+                ? { boxShadow: `0 0 0 3px ${foto.accent.glow}` }
+                : undefined,
+              "&:active": onMenuClick
+                ? { transform: "scale(0.94)" }
+                : undefined,
+              "&:focus-visible": {
+                outline: `2px solid ${foto.accent.primary}`,
+                outlineOffset: 2,
+              },
             }}
           >
             {userInitial}
