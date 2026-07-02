@@ -3,6 +3,79 @@
 > Corte: **30 jun 2026**. Tras conectar MercadoPago, sincronizar el secreto interno y
 > verificar canales. Sub-account: `t3tOZBrR05jUoLqnDn4I` · https://app.progresy.ai
 
+## ⚡ UPDATE 1 jul 2026 (tarde) — Validación cruzada + PR limpio #43
+
+> Se validó el trabajo del corte anterior **contra el repo real + una corrida de tests** (no a ciegas).
+> Todo verificado; correcciones de estado abajo para no cristalizar datos incorrectos.
+
+**Verificado (coincide con lo reportado):**
+
+- **Seguridad `postToVercel`** (2 hallazgos del review automático de commits) — allowlist de host **EXACTO**
+  (`TRUSTED_SYNC_HOSTS`, **sin** sufijo `.vercel.app`), redirect manual re-emitiendo POST, y `throw` ante host
+  no confiable o downgrade https→http. En `convex/_lib/sheetSync.ts`.
+- **Catálogo / WF-04** — `convex/_lib/productSearch.ts::rankProducts`: pasada estricta → si vacía, fallback por
+  presupuesto. Causa raíz real = `tipo_interes` (intención del cliente) vs nombres de colección internos en `categoria`.
+- **Tests** — suite redirect **8/8**; suite completa **429 pasan / 1 falla**. La 1 = `adminNavMap.routes.test.ts`
+  (drift de registro de rutas del copiloto admin), **pre-existente y ajena** a este trabajo. `convex/migrations.ts` inerte (run manual).
+
+**Correcciones de estado (importante):**
+
+- **Rama `feat/jewelry-visualizer` va ADELANTE 6 de origin**, no 3: además de los 3 commits GHL están
+  `20da2d6` (compresión de fotos fotosíntesis), `bbb37b3` (columnas numéricas SOT) y `99b1b06` (rediseño
+  **Quiet Emerald v2** — Catálogo/Detalle/Cotización), + árbol de trabajo sucio.
+- **Manage Scoring = ENCENDIDO pero PARCIAL**, no "terminado": faltan reponderar 3 reglas en +1 y añadir
+  link-clicked +10 / sin-respuesta-7d −10 / reglas por tag venta+carrito (ver update 30 jun noche).
+- **WF-01 · Nuevo contacto = Borrador** (sesión previa), no publicado.
+- **Deploy a prod (`wonderful-tortoise-984`)** — verificado EN VIVO consultando `searchProducts` (devuelve 3
+  para `inversion`), pero **NO** verificable desde el repo (el target vive en el dashboard/CLI de Convex, no en config commiteada).
+
+**PR limpio abierto → [#43](https://github.com/kvn3toj/tierramadre/pull/43)** (`fix/ghl-catalog-and-sheet-security`):
+rama fresca desde `origin/main` con **solo los 3 commits GHL** (`f27b1ce` catálogo · `4501726` POST+migrations ·
+`d8b7887` allowlist) — **sin** el rediseño ni WIP. GitGuardian ✅; claude-review + Vercel preview corriendo.
+**NO mergeado**: merge a `main` = auto-deploy a prod = decisión del equipo. El backend ya está vivo en Convex, así que no mergear no rompe nada.
+
+---
+
+## 🤝 Hand-off — Sesión Progresy (browser) · prompt para pegar a un agente nuevo
+
+> Para publicar workflows / construir pasos dentro del iframe de Progresy. **Requiere Chrome con la sesión de
+> Progresy ya logueada** (el agente NO puede loguearse — credenciales prohibidas). **⚠️ Publicar un workflow =
+> EN VIVO = WhatsApp real a clientes** → hacerlo SOLO con visto bueno explícito del equipo.
+
+```text
+Continúo el Área 3 (Progresy / GoHighLevel) de Tierra Madre. Lee GHL/ESTADO-Y-PROXIMOS-PASOS.md.
+Sub-account: t3tOZBrR05jUoLqnDn4I · base URL https://app.progresy.ai/v2/location/t3tOZBrR05jUoLqnDn4I/
+
+REGLAS DEL IFRAME (críticas, aprendidas en sesiones previas):
+- NO redimensionar la ventana ni usar el toggle expandir/contraer del panel (dispara auto-resize → los clics fallan).
+- Tras navegar, dejar cargar el iframe ~15 s. No doble-click. Mantener la ventana quieta.
+- Los dropdowns se recortan bajo el footer del panel: tras abrirlos, hacer scroll del cuerpo del panel 2-3 ticks.
+- Si un clic falla 2-3 veces seguidas, PARAR y reportar (no insistir). Grabar un GIF de los flujos importantes.
+
+TAREAS POR PRIORIDAD (todo queda en Borrador; PUBLICAR requiere OK explícito del equipo = manda WhatsApp real):
+1. WF-04 · enviar los 3 productos (desbloqueado por el fix de catálogo, ya en vivo):
+   - Abrir WF-04 → acción Webhook (ghl-search-products) → activar "Guardar la respuesta de este Webhook".
+   - Añadir pasos: enviar WhatsApp con los 3 productos (nombre, precio_cop, foto_url, web_link), mover
+     oportunidad → "Producto Recomendado", tag productos-mostrados.
+   - (No hay plantilla Meta de "3 productos" → free-form dentro de la ventana de 24 h, o registrar una plantilla.)
+2. Publicar WF-08 Post-venta (id 68e6c720-5232-4065-b1fb-d430928dbed2): publicar → copiar el ID a
+   WF_POSTVENTA_ID en Vercel (env Production) → redeploy. Opcional paso embajador EM-02.
+3. Publicar WF-06 Escalación (id 1e3a2a49-a8ae-4d01-9da7-bb5b52e15b4c): publicar → confirmar que María
+   etiqueta pide-humano al escalar.
+4. Publicar WF-01 Nuevo contacto (id c7e78b83-17c6-4fd6-b814-e968f77987a9): revisar branching por canal +
+   saludo; publicar.
+5. Manage Scoring (/settings/scoring): reponderar las 3 reglas en +1 (cita confirmada; resp+tag → SMS +15;
+   cita agendada → +25); añadir email link-clicked +10, sin-respuesta-7d −10, tag cliente-pago-confirmado +50,
+   tag carrito-enviado +30. GOTCHA: "Edit" DUPLICA la regla → agregar nueva + borrar la vieja (menú "…" → Delete).
+
+DECISIONES DE NEGOCIO PENDIENTES (no tomarlas solo/a — preguntar al equipo):
+- Mapa tipo_interes → colección/forma (para que WF-04 rankee por categoría con sentido; hoy degrada a presupuesto).
+- WF-05 carrito: falta custom field producto_seleccionado_sku (qué pieza quiere) antes del webhook ghl-create-order.
+- Mapeo agente→rol para la matriz completa de WF-11 (agente_inversion/senior/premium ↔ Felipe/Kevin/Sebastián).
+```
+
+---
+
 ## 📐 WF-01 / WF-03 / WF-05 — specs LISTAS para construir (siguiente sesión)
 
 > No se construyeron aún: el iframe de Progresy se puso inestable tras un reload (captura pegada
