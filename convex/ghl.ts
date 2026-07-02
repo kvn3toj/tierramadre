@@ -19,15 +19,23 @@
 import {
   query,
   mutation,
+  internalQuery,
   internalMutation,
+  internalAction,
   type MutationCtx,
 } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
+import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { allocateNext, formatSaleId } from "./sequences";
 import { rankProducts, type SearchableProduct } from "./_lib/productSearch";
 import { isOverLimit, computeCommissionCOP } from "./_lib/commission";
 import { applyPaymentToSale } from "./_lib/applyPayment";
+import {
+  isContactInactive,
+  addContactTags,
+  type GhlConvConfig,
+} from "./_lib/ghlConversations";
 
 /** Sequence + sede code for online (bot/web) orders → ids like `VO-0001`. */
 const ONLINE_SEDE = "O";
@@ -366,5 +374,104 @@ export const nudgeAbandoned = internalMutation({
       stale.map((s) => s.saleId),
     );
     return { candidates: stale.length };
+  },
+});
+
+// ─── sin-respuesta-7d inactivity cron ──────────────────────────────────────
+//
+// GHL Manage Scoring has no native "contact hasn't replied in N days" trigger
+// (all UI categories tested — see GHL/ESTADO-Y-PROXIMOS-PASOS.md). This cron
+// closes that gap: it scans each linked contact's most-recent GHL conversation
+// and, if the last message was OUTBOUND (from us) and older than 7 days, tags
+// the contact `sin-respuesta-7d`. A Manage Scoring rule (UI config, already in
+// place) scores that tag −10. The HTTP + decision logic lives in the
+// unit-tested `_lib/ghlConversations.ts` so this stays thin IO glue.
+
+/** Threshold (days) after which an unanswered outbound message is "stale". */
+const INACTIVITY_THRESHOLD_DAYS = 7;
+/** The tag Manage Scoring watches for (scored −10). */
+const INACTIVITY_TAG = "sin-respuesta-7d";
+
+/**
+ * Contacts eligible for the inactivity scan: clients we've linked to a GHL
+ * contact (only those have a `ghlContactId` to query conversations for).
+ */
+export const listGhlLinkedContacts = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const clients = await ctx.db.query("clients").collect();
+    return clients
+      .filter((c) => Boolean(c.ghlContactId))
+      .map((c) => ({ clientId: c._id, ghlContactId: c.ghlContactId! }));
+  },
+});
+
+/**
+ * Daily cron: tag GHL contacts whose last message was an unanswered outbound
+ * older than 7 days. Best-effort and resilient — one contact's API error is
+ * logged and skipped so the batch always completes.
+ */
+export const tagInactiveContacts = internalAction({
+  args: {},
+  handler: async (
+    ctx,
+  ): Promise<{
+    scanned: number;
+    tagged: number;
+    notInactive: number;
+    errored: number;
+  }> => {
+    const token = process.env.GHL_TOKEN;
+    const locationId = process.env.GHL_LOCATION_ID;
+    if (!token || !locationId) {
+      console.warn(
+        "[sin-respuesta-7d] GHL_TOKEN / GHL_LOCATION_ID unset — skipping run",
+      );
+      return { scanned: 0, tagged: 0, notInactive: 0, errored: 0 };
+    }
+    const cfg: GhlConvConfig = { token, locationId };
+
+    const contacts = await ctx.runQuery(internal.ghl.listGhlLinkedContacts, {});
+    const now = Date.now();
+    let tagged = 0;
+    let notInactive = 0;
+    let errored = 0;
+
+    // Sequential to stay well under GHL rate limits; the linked-contact set is
+    // small and this runs once daily off-peak.
+    for (const { ghlContactId } of contacts) {
+      try {
+        const inactive = await isContactInactive(
+          cfg,
+          ghlContactId,
+          now,
+          INACTIVITY_THRESHOLD_DAYS,
+        );
+        if (inactive) {
+          await addContactTags(cfg, ghlContactId, [INACTIVITY_TAG]);
+          tagged++;
+        } else {
+          notInactive++;
+        }
+      } catch (err) {
+        // One contact's failure must NOT abort the whole batch.
+        errored++;
+        console.error(
+          `[sin-respuesta-7d] contact ${ghlContactId} failed:`,
+          err instanceof Error ? err.message : err,
+        );
+      }
+    }
+
+    console.log(
+      `[sin-respuesta-7d] scanned=${contacts.length} tagged=${tagged} ` +
+        `notInactive=${notInactive} errored=${errored}`,
+    );
+    return {
+      scanned: contacts.length,
+      tagged,
+      notInactive,
+      errored,
+    };
   },
 });

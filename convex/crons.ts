@@ -81,4 +81,15 @@ crons.cron(
   {},
 );
 
+// Tag contacts with an unanswered outbound message older than 7 days
+// (`sin-respuesta-7d`, scored −10 by Manage Scoring — GHL has no native
+// trigger for this; see convex/ghl.ts::tagInactiveContacts). 07:00 UTC ≈
+// 02:00 America/Bogotá — off-peak, clear of the 05:00 and 23:00 crons.
+crons.cron(
+  "tag inactive contacts (sin-respuesta-7d)",
+  "0 7 * * *",
+  internal.ghl.tagInactiveContacts,
+  {},
+);
+
 export default crons;

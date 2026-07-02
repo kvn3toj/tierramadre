@@ -3,6 +3,346 @@
 > Corte: **30 jun 2026**. Tras conectar MercadoPago, sincronizar el secreto interno y
 > verificar canales. Sub-account: `t3tOZBrR05jUoLqnDn4I` · https://app.progresy.ai
 
+## ✅ UPDATE 2 jul 2026 (continuación) — WF-05 y WF-03 completados y probados, bug real encontrado y arreglado en sin-respuesta-7d
+
+> Sesión nueva retomando el hand-off de la actualización anterior. Cuatro hilos de trabajo: (1) reconciliar
+> el regresión de rama contra `origin/main`, (2) terminar WF-05, (3) construir WF-03, (4) verificar los
+> supuestos de la API de Conversations del cron `sin-respuesta-7d`. Los cuatro quedaron resueltos; nada se
+> publicó/mergeó/desplegó sin confirmación explícita del usuario (checkpoints abajo).
+
+**⚠️ Discrepancia real encontrada con la sesión concurrente.** Al abrir WF-05 esta vez, tanto la lista de
+flujos como el toggle del builder mostraban **"Published"**, no "Draft" como decía la actualización
+anterior — y el checkbox "Guardar la respuesta de este Webhook" (que había quedado roto) **ya estaba
+activado**. Al intentar el toggle Publicar→Borrador la primera vez, GHL devolvió **"Error al guardar el
+flujo de trabajo: Your version is outdated"** — señal directa de edición concurrente sobre el mismo
+workflow. Se confirmó con el usuario (no se asumió) y se volvió a poner en Borrador antes de tocar nada
+más; el segundo intento de toggle sí guardó limpio. Conclusión: **la sesión concurrente mencionada en la
+entrada anterior sigue activa** — cualquier sesión futura debe volver a verificar el estado real del
+workflow antes de asumir lo que dice este doc.
+
+**✅ Regresión de rama arreglada (commit local `d4d14cb`).** El working tree de
+`feat/ghl-inactivity-scoring` solo tenía la mitad del hardening de PR #46 (el mapeo a `ConvexError`, sin el
+`try/catch` de la preferencia de Mercado Pago) y `vercel.json` le faltaban los 4 `maxDuration`. Restaurado
+byte a byte contra `origin/main` (`git diff origin/main -- api/ghl-create-order.ts vercel.json` → vacío),
+`npm run lint` y tests verdes. **Commit local únicamente — NO pusheado**, por la misma razón de colisión de
+arriba.
+
+**✅ WF-05 · Carrito y checkout — TERMINADO Y PROBADO end-to-end, sigue en Draft.** Los 5 pasos:
+`#1 Crear orden (ghl-create-order)` (ya estaba) → `CK-01` (WhatsApp) → `Actualizar order_id` →
+`Mover a Carrito Enviado` → `Tag carrito-enviado`. Detalles:
+
+- **CK-01 usa mensaje libre ("None - Free form message"), no la plantilla `pieza_lista_pago_wa`.** La
+  plantilla aprobada por Meta usa `{{custom_values.mp_link_default}}` (un valor de ubicación compartido,
+  no por-contacto) — usarla habría mandado el mismo link genérico a todos los compradores en vez del link
+  de MercadoPago real de cada orden (`{{custom_webhook.1.response.mp_url}}`), con riesgo de condición de
+  carrera entre compras simultáneas. El mensaje libre sí permite el merge tag correcto y funciona porque el
+  contacto está en conversación activa (ventana de 24h) justo cuando se agrega la etiqueta `quiere-comprar`.
+- **Campo nuevo `Order ID` (`order_id`, Contacto, carpeta "Additional Info") creado con aprobación
+  explícita del usuario** — no existía, igual que pasó con `producto_seleccionado_sku` la sesión anterior.
+- **Prueba real contra Kevin Tres Toj**: orden `VO-0002` creada, `mp_url` real de MercadoPago generado,
+  WhatsApp recibido con el link correcto (verificado leyendo el hilo real, no solo el log de ejecución —
+  el log solo dice "Success", no el texto renderizado), oportunidad movida a "Carrito Enviado", tag
+  `carrito-enviado` aplicado, campo `Order ID = VO-0002` confirmado en el contacto. **Los 5 pasos
+  ejecutaron sin error.**
+- Sigue en **Draft** — no se publicó sin confirmación.
+
+**✅ WF-03 · Calificación IA — construido desde cero, sigue en Draft.** Trigger: etiqueta de contacto
+`qualification_complete` (no existía, creada inline). Pasos: `Update conversation AI bot and status`
+(Keep Same + Active, igual al spec) → `Mover a Calificado por IA` (secuencia Ventas Tierra Madre) →
+`Chain to WF-04` (Añadir al flujo de trabajo → WF-04 · Búsqueda en catálogo). Prueba contra Kevin Tres Toj:
+**3 de 4 pasos ejecutaron bien** (trigger, AI bot, chain a WF-04); el paso "Mover a Calificado por IA" dio
+**Error: "Moving a opportunity backward in the pipeline is not allowed"** — esperado y no es un bug de
+configuración: la oportunidad de Kevin ya estaba en "Carrito Enviado" por la prueba de WF-05 justo antes
+(etapa más adelantada que "Calificado por IA"), y GHL bloquea mover oportunidades hacia atrás. En producción
+WF-03 dispara antes que WF-05, así que el orden real nunca tendría este conflicto. Sigue en **Draft**.
+
+**🐛 BUG REAL ENCONTRADO Y ARREGLADO — el cron `sin-respuesta-7d` nunca habría etiquetado a nadie.**
+Verificado contra el spec OpenAPI público de GHL (`github.com/GoHighLevel/highlevel-api-docs`,
+`apps/conversations.json`, schema `ConversationSchema`): la respuesta de `GET /conversations/search`
+**NO tiene** `lastMessageDate` ni `lastMessageDirection` — el código asumía mal que sí. Esos dos nombres
+solo existen como **parámetros de filtro** de la búsqueda (`lastMessageDirection=inbound|outbound`,
+`endDate`/`startDate` sobre el campo `dateAdded`, Unix ms), no como campos de respuesta. Con el código
+original, `parseLastMessageMs`/`isInactiveConversation` siempre habrían recibido `undefined` y la función
+**siempre habría devuelto `false`** — un bug silencioso, sin crash, que nunca se habría notado hasta
+revisar por qué nadie recibía la etiqueta ni el −10 de Manage Scoring.
+
+- **Arreglo**: se reemplazó el patrón de dos pasos (`getLatestConversation` + `isInactiveConversation`,
+  parseando campos de respuesta) por una sola función `isContactInactive` que filtra del lado del servidor:
+  `lastMessageDirection=outbound&endDate=<cutoff>&limit=1` — una respuesta no vacía significa exactamente
+  "existe una conversación cuyo último mensaje es outbound y está en o antes del corte", sin parsear nada.
+- **⚠️ Un supuesto sigue sin verificar** (no hay credenciales GHL en vivo disponibles en este sandbox — el
+  intento de hacerlo fue bloqueado por el sistema de permisos como lectura de credenciales de producción no
+  autorizada explícitamente): si `dateAdded` para este filtro rastrea la actividad del último mensaje (lo
+  que queremos) o la fecha de creación original de la conversación (lo que sub-etiquetaría hilos largos).
+  Documentado en el código; confirmar con una conversación real antes de desplegar.
+- `api/_lib/ghl-client.ts`, `convex/_lib/ghlConversations.ts`, `convex/ghl.ts` (la `internalAction
+tagInactiveContacts` ahora usa `isContactInactive` y devuelve `notInactive` en vez de `skippedNoHistory`,
+  ya que el filtro único no distingue "sin historial" de "última conversación no es outbound-vieja") y
+  `tests/ghlConversations.test.ts` (reescrito, 8 casos) actualizados. **438/438 tests pasan, `tsc` limpio.**
+  Commit local `852bf61` en `feat/ghl-inactivity-scoring` — **NO pusheado, NO mergeado, NO desplegado.**
+
+**📋 Checkpoints pendientes de confirmación del usuario (nada de esto se hizo sin más):**
+
+1. `git push` / abrir PR para los dos commits locales de esta sesión en `feat/ghl-inactivity-scoring`
+   (regresión de `ghl-create-order` + fix de `sin-respuesta-7d`) — pendiente por la posible sesión
+   concurrente con push real a `origin`.
+2. Publicar WF-05 y WF-03 (ambos probados y listos, ambos en Draft a propósito).
+3. Confirmar el supuesto de `dateAdded` de `sin-respuesta-7d` contra una conversación real, luego mergear
+   y `npx convex deploy`.
+
+**Explícitamente fuera de alcance esta sesión** (son decisiones de negocio, no técnicas, marcadas así en
+el doc desde la sesión anterior): mapeo `tipo_interes → categoria`, matriz completa de ruteo por agente de
+WF-11. No se inventó nada — se dejaron pendientes como estaban.
+
+---
+
+## 🚨 UPDATE 2 jul 2026 — "Do all" del roadmap: publicado, WF-05 en construcción, **bug 500 en vivo encontrado**
+
+> El usuario pidió avanzar el roadmap completo ("recommend and implement best option to do all"). Antes de
+> ejecutar se confirmaron 4 decisiones explícitas (ver hilo): publicar WF-01/06/08 ya, construir
+> sin-respuesta-7d con la API real de Conversations de GHL, intentar derivar tipo_interes→categoría de
+> forma empírica, y dejar WF-11 en round-robin (flag abierto). **Nueva regla permanente: todo test de
+> workflow SOLO con los contactos Kevin Tres Toj / Juan Ma Escobar / Isa La Negra Vikinga** (memoria
+> `tm-ghl-test-contacts-only`).
+
+**✅ Publicados (EN VIVO):** WF-08 Post-venta, WF-06 Escalación, WF-01 Nuevo contacto — confirmados
+"Published" en la lista. WF-04 ya estaba publicado de antes.
+
+**✅ Custom field creado:** `producto_seleccionado_sku` (Una sola línea, Contacto, carpeta "Additional
+Info") — es el campo bloqueante que le faltaba a WF-05.
+
+**🏗️ WF-05 · Carrito y checkout — en construcción (Borrador), id `665ed7cd-4ce9-4a38-acd8-e50d8adf2c02`.**
+Trigger guardado: etiqueta `quiere-comprar` añadida. Primer paso "Crear orden (ghl-create-order)"
+(Webhook personalizado POST a `/api/ghl-create-order`, header `Authorization: Bearer
+{{custom_values.internal_api_secret}}`, body con `{{contact.producto_seleccionado_sku}}`) configurado
+pero **NO guardado** — bloqueado por el hallazgo de abajo.
+
+**🐛 BUG EN VIVO ENCONTRADO — `/api/ghl-create-order` responde 500 crudo, no el 400 esperado.** GHL exige
+correr una "solicitud de prueba" real contra un contacto antes de dejar activar "Guardar la respuesta de
+este Webhook". Se probó con **kevin tres toj** (contacto de prueba aprobado), sin `producto_seleccionado_sku`
+lleno — se esperaba el 400 documentado (`items must be a non-empty array` / SKU inválido). En cambio:
+
+- **Status 500, body literal `Internal Server Error`** (texto plano, NO el JSON `{"success":false,"error":...}`
+  que produce nuestro propio `sendError`/`with-api-handler.js`). Esto es la firma de un **crash de plataforma
+  Vercel** (la función nunca llegó al try/catch de `withApiHandler`), no un error de validación de negocio.
+- Diagnóstico hecho con cuidado de **no seguir arriesgando producción**:
+  - `curl` sin auth (2x, en momentos distintos) → **401 `{"success":false,"error":"Unauthorized"}`** correcto
+    y en JSON ⇒ el módulo SÍ carga, el deploy está sano (`/api/health` 200), y SÍ llega hasta el chequeo de
+    auth. El crash pasa **después** de la autenticación (que resolvió bien con el secreto real).
+  - **Reproducido 2 veces seguidas con el mismo contacto (kevin tres toj)** → descarta que fuera un cold-start
+    aislado; el 500 es consistente.
+  - **Hallazgo de código: `api/ghl-create-order.ts` no tenía `maxDuration` en `vercel.json`**, a diferencia de
+    **todos** los demás endpoints del proyecto (que declaran 15-60s explícito). Hace una mutación de Convex
+    **+** una llamada en vivo a Mercado Pago (`createPreference`) de forma secuencial, sin `try/catch` propio
+    en ese segundo tramo — cualquier fallo ahí antes solo lo atrapaba el catch genérico de `withApiHandler`.
+  - `api/_lib/with-api-handler.js` y `api/_lib/cors.js::sendError` **siempre** devuelven JSON
+    (`{"success":false,...}`) en cualquier error capturado por nuestro propio código — el cuerpo crudo
+    `"Internal Server Error"` (texto plano) que devolvió GHL **no puede venir de nuestro código app-level**,
+    solo de un crash de plataforma Vercel (proceso Node no controlado / promesa no atrapada fuera del
+    await principal). Sin acceso a logs de Vercel (sin `vercel` CLI logueado en este entorno) no se pudo
+    confirmar el stack trace exacto.
+- **✅ Fix de endurecimiento aplicado (código, NO deployado, NO pusheado — sin credenciales de push desde
+  este entorno).** Rama local **`fix/ghl-create-order-hardening`** (commit `6503dc5`, sobre `origin/main`
+  limpio vía `git worktree`, sin tocar el árbol de trabajo sucio): (1) `maxDuration` explícito para
+  `ghl-create-order` (30s), `ghl-search-products`/`ghl-sync-contact`/`mp-webhook` (15s cada uno); (2) el
+  tramo Mercado Pago (`createPreference` + `setMpPreference`) ahora tiene su propio `try/catch` — si MP
+  falla, la orden ya creada en Convex se devuelve igual (`mp_pending:true, mp_error:<msg>`) en vez de perderse
+  en un crash sin manejar. **Esto endurece los dos puntos de falla más probables, pero no confirma la causa
+  raíz exacta** — antes de mergear conviene revisar Logs de Vercel para el request real, o reproducir con
+  `vercel dev` + `MP_ACCESS_TOKEN`/`CONVEX_URL` reales.
+- **No se forzó el guardado ni se siguió probando en vivo más de lo necesario en el momento.** El paso quedó
+  sin guardar en ese punto (Borrador intacto, sin publicar).
+
+**✅ FIX CONFIRMADO EN PRODUCCIÓN (2 jul 2026, tarde).** El PR #46 (`fix/ghl-create-order-hardening`,
+commits `6503dc5` + `ae74680`) fue mergeado a `main` (merge commit `8ee4b21`) — aparentemente por otra sesión
+de Claude Code corriendo en la máquina del usuario con credenciales git reales (yo no tengo push a `origin`
+desde este sandbox). Deploy de producción `dpl_7nLYpdsaD5fBxkha2yXoQWnpSV5R` quedó Ready. Se repitió el
+**mismo test exacto** (webhook de prueba de GHL contra **kevin tres toj**, mismo body con
+`{{contact.producto_seleccionado_sku}}` sin resolver) y esta vez:
+
+- **Status 409 "Conflict"** (antes: 500 "Internal Server Error") — el `PRODUCT_NOT_FOUND` ahora sí llega
+  como `ConvexError.data` y se mapea correctamente a la respuesta 409 documentada.
+- **Verificado en Vercel Logs**: request `msq7j-1782979182666-f61f03112...`, deployment
+  `dpl_7nLYpdsaD5fBxkha2yXoQWnpSV5R` (production, branch main), 302ms, **sin entrada de error/log rojo**
+  (antes el 500 tenía un log `[GhlCreateOrder] Error: ... Server Error` con stack trace de
+  `ConvexHttpClient.mutationInner`) — confirma que ahora el camino es el `catch` interno normal, no el
+  crash-handler genérico.
+- **Causa raíz real, confirmada por logs de Vercel** (no era un "crash de plataforma" como se especuló
+  inicialmente): Convex sanea cualquier `Error` plano lanzado en una mutation a un mensaje genérico
+  `"Server Error"` para clientes HTTP en producción — solo el payload `.data` de un `ConvexError` sobrevive
+  el límite cliente/servidor. `convex/ghl.ts::createOrder` lanzaba `Error` plano para las 4 rutas de negocio
+  (`PRODUCT_NOT_FOUND`, `NOT_AVAILABLE`, `EMPTY_ITEMS`, `OVER_LIMIT_2M`), así que el `msg.includes(...)` de
+  `api/ghl-create-order.ts` nunca matcheaba y todo caía al 500 genérico — **incluyendo el gate de seguridad
+  ≤2M COP ("golden rule #3"), que estaba roto en producción, no solo el caso de SKU faltante.**
+- **WF-05 desbloqueado y primer paso GUARDADO.** El paso Webhook "Crear orden (ghl-create-order)" quedó
+  persistido en el builder (nodo `#1 Crear orden (ghl-create-order)` visible entre el trigger y FINAL,
+  header "Guardado"). **Nota:** el checkbox "Guardar la respuesta de este Webhook" quedó sin activar en
+  este guardado (dejó de responder al clic en el último intento) — actívalo antes de construir el paso
+  de WhatsApp CK-01, que necesita `{{custom_webhook.1.response.mp_url}}`. Falta el resto de WF-05:
+  WhatsApp CK-01, update `order_id`, mover a Carrito Enviado, tag `carrito-enviado`. Workflow sigue en
+  Draft (correcto, no publicar sin OK).
+
+**⏸️ Pausado por lo anterior:** resto de WF-05 (WhatsApp CK-01 con `mp_url`, update `order_id`, mover a
+Carrito Enviado, tag `carrito-enviado`) y WF-03 Calificación IA (Task #8) — no construidos aún esta sesión.
+
+**✅ sin-respuesta-7d — código construido, NO desplegado.** Rama `feat/ghl-inactivity-scoring`
+(commits `29ed2f7`, `eae66c0`), NO pusheada ni mergeada:
+
+- `api/_lib/ghl-client.ts` +87 líneas (`getLatestConversation`, `isInactiveConversation`, `parseLastMessageMs`).
+- `convex/_lib/ghlConversations.ts` (nuevo, espejo local para Convex) + `convex/ghl.ts`
+  (`internalAction tagInactiveContacts`, `internalQuery listGhlLinkedContacts`) + cron diario **07:00 UTC**
+  en `convex/crons.ts`.
+- `tests/ghlConversations.test.ts` (18 casos) — suite completa **34/34 pass**, `tsc` limpio.
+- **NO desplegado a propósito**: la forma de los campos de la API de Conversations de GHL usada en el código
+  es una suposición documentada, no verificada contra datos reales — necesita PR + revisión antes de
+  `npx convex deploy`.
+
+**❌ tipo_interes → categoría — NO se pudo derivar de forma confiable.** Se usó el snapshot cacheado
+`scripts/.backups/inventario-reorder-2026-05-27.json` (Convex en vivo no accesible desde el sandbox).
+Conclusión en `GHL/tipo-interes-mapping-analysis.md`: `tipo_interes` (tipo de pieza: anillo/topito/candonga/
+dije/gema_suelta/set) y `categoria` (colección: Gema Facetada/Muralla/Gola/Raíz) son **ejes ortogonales** —
+la mayoría de filas cacheadas son piedra suelta (`subtipoForm=Gema`), y las pocas piezas terminadas llevan
+el tipo en un campo distinto (`tipoJoya`) con `categoria` vacía. **No inventado, reportado honestamente.**
+Recomendación: o se añade un campo real de tipo-de-pieza, o el equipo autoriza el mapeo a mano. Punto de
+enchufe si se aprueba después: `convex/_lib/productSearch.ts::rankProducts`.
+
+**WF-11 — se deja en round-robin, flag abierto** (decisión explícita del usuario: no inventar nombres).
+
+---
+
+## ⚡ UPDATE 1 jul 2026 (noche) — WF-04 pasos de envío + Manage Scoring COMPLETO + hallazgos WhatsApp
+
+> Sesión de automatización en el iframe de Progresy (Chrome). Se completaron las tareas #1 (WF-04) y #3
+> (Manage Scoring) del hand-off. WF-01/06/08 se dejaron correctamente en Borrador — **no se publicó nada**
+> (no hubo OK explícito del equipo esta sesión).
+
+**WF-04 · pasos de envío — COMPLETADO (Borrador).** Se activó "Guardar la respuesta de este Webhook" en el
+paso Webhook (ghl-search-products) y se añadieron los pasos: WhatsApp con los 3 productos (nombre, precio_cop,
+foto_url, web_link), mover oportunidad → "Producto Recomendado", tag `productos-mostrados`.
+
+**🐛 Bug real encontrado y arreglado — merge tag de array en WhatsApp free-form.** El tag
+`{{custom_webhook.1.response.productos}}` (array de objetos) se renderiza como texto literal
+`[object Object],[object Object],[object Object]` en el WhatsApp real enviado — **el log de ejecución del
+workflow igual marca "Success"/"Ejecutado"**, así que este fallo NO se ve desde el log, solo revisando el hilo
+de conversación real. Fix: usar tags indexados por campo (sintaxis no expuesta en el selector de merge tags,
+pero funcional si se escribe a mano): `{{custom_webhook.1.response.productos.0.nombre}}`,
+`.0.precio_cop`, `.0.web_link` (y `.1.`/`.2.` para los otros dos productos). Verificado con un reenvío real:
+mensaje correcto, sin ícono de error. **Lección: "Success" en el log de GHL no garantiza que el contenido del
+mensaje sea válido — siempre revisar el hilo real de WhatsApp.**
+
+**Prueba real con WhatsApp del equipo (3104149166, con permiso explícito).** Se creó un contacto de prueba
+("Kevin Tres Toj") y se probó el envío real dos veces. Hallazgos:
+
+- El selector de bandera del teléfono resetea a Países Bajos (+31) en vez de Colombia (+57) — hay que
+  clic explícito en la bandera → buscar "Colombia" → reescribir el número.
+- **Trampa de UI:** los checkboxes "Canales" en el formulario "Añadir Contacto" en realidad **activan DND**
+  para ese canal (bloquear), no lo "habilitan" como parece indicar el texto. Marcar "WhatsApp" ahí bloqueó
+  el envío (log: "Cannot send message as DND is active for WhatsApp" / Skipped). Se corrige en la pestaña
+  "DND" del contacto.
+
+**`tipo_interes` — valores reales descubiertos (corrige suposición anterior).** El dropdown real del campo
+`tipo_interes` tiene: **topito, candonga, anillo, dije, gema_suelta, set, otro** — son **tipos de pieza**, NO
+categorías de intención del cliente (`inversion`/`anillo`/`esmeralda`/`regalo` que se venía asumiendo en el
+follow-up del mapa `tipo_interes`→colección de los updates anteriores). Esto cambia el enfoque del mapeo
+pendiente: probablemente sea tipo-de-pieza → colección, no intención → colección. **Decisión de negocio, no
+tomada esta sesión** — sigue pendiente confirmar con el equipo.
+
+**Manage Scoring — COMPLETADO (9/9 reglas).** Las 3 reponderaciones y las 4 reglas nuevas del spec quedaron así:
+
+- Reponderadas: cita Confirmado +25, respuesta+tag (SMS) +15, cita reservada +25.
+- Nuevas: email/link-clicked (`link-catalogo`) +10 (de sesión previa), tag `cliente-pago-confirmado` +50, tag
+  `carrito-enviado` +30 (ambas de esta sesión).
+- **`sin-respuesta-7d` −10: NO implementable de forma nativa** — se revisaron todas las categorías del selector
+  (Email Events, Contact Changed, Contact Tag, Payment Received, Contact Replied, Form Submitted, Order Form
+  Submission, Order Placed, Survey Submitted, Trigger Link Clicked, Contact Booked Appointment, Appointment) y
+  ninguna cubre "sin respuesta en N días". Habría que resolverlo fuera de Manage Scoring (p.ej. un cron de
+  Convex que reste puntos, o un workflow con espera + condición). **Pendiente de decisión.**
+- **Gotcha de UI confirmado como inconsistente:** para "cita Confirmado" el flujo "Edit" SÍ duplicó la regla
+  (hubo que agregar nueva + borrar la vieja). Para "respuesta+tag" y "cita reservada", "Edit" **editó en el
+  lugar** correctamente (sin duplicado). Verificar el conteo de filas después de cada edición, no asumir.
+
+**Estado final de workflows (sin cambios de publicación):** WF-01, WF-06, WF-08 siguen correctamente en
+**Borrador** — no se publicó nada esta sesión (requiere OK explícito del equipo, no se dio).
+
+---
+
+## ⚡ UPDATE 1 jul 2026 (tarde) — Validación cruzada + PR limpio #43
+
+> Se validó el trabajo del corte anterior **contra el repo real + una corrida de tests** (no a ciegas).
+> Todo verificado; correcciones de estado abajo para no cristalizar datos incorrectos.
+
+**Verificado (coincide con lo reportado):**
+
+- **Seguridad `postToVercel`** (2 hallazgos del review automático de commits) — allowlist de host **EXACTO**
+  (`TRUSTED_SYNC_HOSTS`, **sin** sufijo `.vercel.app`), redirect manual re-emitiendo POST, y `throw` ante host
+  no confiable o downgrade https→http. En `convex/_lib/sheetSync.ts`.
+- **Catálogo / WF-04** — `convex/_lib/productSearch.ts::rankProducts`: pasada estricta → si vacía, fallback por
+  presupuesto. Causa raíz real = `tipo_interes` (intención del cliente) vs nombres de colección internos en `categoria`.
+- **Tests** — suite redirect **8/8**; suite completa **429 pasan / 1 falla**. La 1 = `adminNavMap.routes.test.ts`
+  (drift de registro de rutas del copiloto admin), **pre-existente y ajena** a este trabajo. `convex/migrations.ts` inerte (run manual).
+
+**Correcciones de estado (importante):**
+
+- **Rama `feat/jewelry-visualizer` va ADELANTE 6 de origin**, no 3: además de los 3 commits GHL están
+  `20da2d6` (compresión de fotos fotosíntesis), `bbb37b3` (columnas numéricas SOT) y `99b1b06` (rediseño
+  **Quiet Emerald v2** — Catálogo/Detalle/Cotización), + árbol de trabajo sucio.
+- **Manage Scoring = ENCENDIDO pero PARCIAL**, no "terminado": faltan reponderar 3 reglas en +1 y añadir
+  link-clicked +10 / sin-respuesta-7d −10 / reglas por tag venta+carrito (ver update 30 jun noche).
+- **WF-01 · Nuevo contacto = Borrador** (sesión previa), no publicado.
+- **Deploy a prod (`wonderful-tortoise-984`)** — verificado EN VIVO consultando `searchProducts` (devuelve 3
+  para `inversion`), pero **NO** verificable desde el repo (el target vive en el dashboard/CLI de Convex, no en config commiteada).
+
+**PR limpio abierto → [#43](https://github.com/kvn3toj/tierramadre/pull/43)** (`fix/ghl-catalog-and-sheet-security`):
+rama fresca desde `origin/main` con **solo los 3 commits GHL** (`f27b1ce` catálogo · `4501726` POST+migrations ·
+`d8b7887` allowlist) — **sin** el rediseño ni WIP. GitGuardian ✅; claude-review + Vercel preview corriendo.
+**NO mergeado**: merge a `main` = auto-deploy a prod = decisión del equipo. El backend ya está vivo en Convex, así que no mergear no rompe nada.
+
+---
+
+## 🤝 Hand-off — Sesión Progresy (browser) · prompt para pegar a un agente nuevo
+
+> Para publicar workflows / construir pasos dentro del iframe de Progresy. **Requiere Chrome con la sesión de
+> Progresy ya logueada** (el agente NO puede loguearse — credenciales prohibidas). **⚠️ Publicar un workflow =
+> EN VIVO = WhatsApp real a clientes** → hacerlo SOLO con visto bueno explícito del equipo.
+
+```text
+Continúo el Área 3 (Progresy / GoHighLevel) de Tierra Madre. Lee GHL/ESTADO-Y-PROXIMOS-PASOS.md.
+Sub-account: t3tOZBrR05jUoLqnDn4I · base URL https://app.progresy.ai/v2/location/t3tOZBrR05jUoLqnDn4I/
+
+REGLAS DEL IFRAME (críticas, aprendidas en sesiones previas):
+- NO redimensionar la ventana ni usar el toggle expandir/contraer del panel (dispara auto-resize → los clics fallan).
+- Tras navegar, dejar cargar el iframe ~15 s. No doble-click. Mantener la ventana quieta.
+- Los dropdowns se recortan bajo el footer del panel: tras abrirlos, hacer scroll del cuerpo del panel 2-3 ticks.
+- Si un clic falla 2-3 veces seguidas, PARAR y reportar (no insistir). Grabar un GIF de los flujos importantes.
+
+TAREAS POR PRIORIDAD (todo queda en Borrador; PUBLICAR requiere OK explícito del equipo = manda WhatsApp real):
+1. ✅ HECHO (1 jul noche) — WF-04 · enviar los 3 productos: "Guardar la respuesta de este Webhook" activado +
+   pasos de WhatsApp/oportunidad/tag construidos. OJO: si tocas el mensaje de WhatsApp, usa tags indexados
+   ({{custom_webhook.1.response.productos.0.nombre}}, .0.precio_cop, .0.web_link, etc.) — el tag de array
+   completo renderiza como "[object Object]" y el log de ejecución NO lo detecta (revisar el hilo real).
+2. Publicar WF-08 Post-venta (id 68e6c720-5232-4065-b1fb-d430928dbed2): publicar → copiar el ID a
+   WF_POSTVENTA_ID en Vercel (env Production) → redeploy. Opcional paso embajador EM-02.
+3. Publicar WF-06 Escalación (id 1e3a2a49-a8ae-4d01-9da7-bb5b52e15b4c): publicar → confirmar que María
+   etiqueta pide-humano al escalar.
+4. Publicar WF-01 Nuevo contacto (id c7e78b83-17c6-4fd6-b814-e968f77987a9): revisar branching por canal +
+   saludo; publicar.
+5. ✅ HECHO (1 jul noche) — Manage Scoring (/settings/scoring): 9/9 reglas — 3 reponderadas (+25/+15/+25) +
+   4 nuevas (link-clicked +10, tag cliente-pago-confirmado +50, tag carrito-enviado +30, de sesiones previas
+   y esta). **Pendiente sin resolver:** sin-respuesta-7d −10 NO tiene categoría nativa en GHL — necesita
+   solución fuera de Manage Scoring (cron Convex o workflow con espera). GOTCHA: "Edit" a veces DUPLICA la
+   regla y a veces edita en el lugar (inconsistente) → siempre verificar el conteo de filas tras editar.
+
+DECISIONES DE NEGOCIO PENDIENTES (no tomarlas solo/a — preguntar al equipo):
+- Mapa tipo_interes → colección/forma (para que WF-04 rankee por categoría con sentido; hoy degrada a presupuesto).
+  **Corrección (1 jul noche):** los valores reales de tipo_interes son tipos de pieza (topito, candonga, anillo,
+  dije, gema_suelta, set, otro), no categorías de intención — el mapeo debe ser pieza→colección, no intención→colección.
+- WF-05 carrito: falta custom field producto_seleccionado_sku (qué pieza quiere) antes del webhook ghl-create-order.
+- Mapeo agente→rol para la matriz completa de WF-11 (agente_inversion/senior/premium ↔ Felipe/Kevin/Sebastián).
+- Cómo implementar sin-respuesta-7d −10 (sin categoría nativa en Manage Scoring).
+```
+
+---
+
 ## 📐 WF-01 / WF-03 / WF-05 — specs LISTAS para construir (siguiente sesión)
 
 > No se construyeron aún: el iframe de Progresy se puso inestable tras un reload (captura pegada
