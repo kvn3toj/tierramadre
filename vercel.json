@@ -78,6 +78,18 @@
     },
     "api/fotosintesis-ai.ts": {
       "maxDuration": 60
+    },
+    "api/ghl-create-order.ts": {
+      "maxDuration": 30
+    },
+    "api/ghl-search-products.ts": {
+      "maxDuration": 15
+    },
+    "api/ghl-sync-contact.ts": {
+      "maxDuration": 15
+    },
+    "api/mp-webhook.ts": {
+      "maxDuration": 15
     }
   },
   "headers": [

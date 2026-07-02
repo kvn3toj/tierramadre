@@ -123,17 +123,37 @@ export default withApiHandler(
       notificationUrl: `${appUrl}/api/mp-webhook`,
       backUrls: { success: `${appUrl}/pedido-confirmado/${order.saleId}` },
     });
-    const created = await createPreference(pref, accessToken);
-    await convexClient.mutation(api.ghl.setMpPreference, {
-      saleId: order.saleId,
-      mpPreferenceId: created.id,
-    });
+    // The order (sale) row already exists in Convex at this point — a failure
+    // here must NOT surface as an opaque crash. Return the order with
+    // mp_pending so the caller (GHL workflow) can react gracefully and the
+    // sale can be retried/linked to a preference later, instead of losing it.
+    try {
+      const created = await createPreference(pref, accessToken);
+      await convexClient.mutation(api.ghl.setMpPreference, {
+        saleId: order.saleId,
+        mpPreferenceId: created.id,
+      });
 
-    return sendSuccess(res, {
-      order_id: order.saleId,
-      total_cop: order.totalCOP,
-      mp_url: created.init_point,
-    });
+      return sendSuccess(res, {
+        order_id: order.saleId,
+        total_cop: order.totalCOP,
+        mp_url: created.init_point,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[GhlCreateOrder] Mercado Pago preference failed:", msg);
+      return sendSuccess(
+        res,
+        {
+          order_id: order.saleId,
+          total_cop: order.totalCOP,
+          mp_url: null,
+          mp_pending: true,
+          mp_error: msg,
+        },
+        201,
+      );
+    }
   },
   {
     methods: ["POST", "OPTIONS"],
