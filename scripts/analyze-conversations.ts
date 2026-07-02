@@ -18,7 +18,12 @@ import {
 } from "../api/_lib/ghl-read.js";
 import { renderTranscript } from "./lib/transcript.js";
 import { extractSignals } from "./lib/llm-extract.js";
-import type { ExtractionRow } from "./lib/types.js";
+import { coerceExtractionRow } from "./lib/normalize.js";
+import {
+  MIN_CONFIDENCE,
+  type ExtractionRow,
+  type Signal,
+} from "./lib/types.js";
 
 dotenv.config({ path: ".env.local" });
 
@@ -69,15 +74,17 @@ async function main() {
         groqKey: process.env.GROQ_API_KEY ?? process.env.VITE_GROQ_API_KEY,
         gatewayKey: process.env.AI_GATEWAY_API_KEY,
       });
-      rows.push({
-        contactId,
-        contactName: name,
-        conversationId: ids[ids.length - 1],
-        conversationIds: ids,
-        channel: signals.__channel ?? "unknown",
-        signals,
-        tipo_interes_evidence: signals.__tipo_evidence,
-      } as ExtractionRow);
+      // Validate/coerce the raw LLM `any` against live enums (spec step 6).
+      // The coercer owns channel + tipo_evidence handling and never throws on a
+      // malformed row.
+      rows.push(
+        coerceExtractionRow(signals, {
+          contactId,
+          contactName: name,
+          conversationId: ids[ids.length - 1],
+          conversationIds: ids,
+        }),
+      );
       processed++;
       if (processed % 10 === 0)
         console.log(`  …${processed} contacts extracted`);
@@ -116,53 +123,110 @@ async function main() {
 
 function buildReport(dataset: { rows: ExtractionRow[] }): string {
   const rows = dataset.rows;
+  // Every access below is defensive (?.) — a coerced row is always well-formed,
+  // but the report must never be the thing that crashes a completed, paid run.
   const dist = (pick: (r: ExtractionRow) => string | null | undefined) => {
     const m = new Map<string, number>();
     for (const r of rows) {
       const k = pick(r) ?? "—";
       m.set(k, (m.get(k) ?? 0) + 1);
     }
-    return [...m.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .map(([k, n]) => `- ${k}: ${n}`)
-      .join("\n");
+    return (
+      [...m.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([k, n]) => `- ${k}: ${n}`)
+        .join("\n") || "- (sin datos)"
+    );
   };
+
+  const conf = (c: number | null | undefined) => (c ?? 0) >= MIN_CONFIDENCE;
+
+  // Budget distribution, bucketed (COP).
+  const budgetBucket = (v: number | null | undefined): string => {
+    if (v == null) return "sin dato";
+    if (v < 2_000_000) return "<2M";
+    if (v < 5_000_000) return "2–5M";
+    if (v < 10_000_000) return "5–10M";
+    return ">10M";
+  };
+
+  // Funnel-state summary. `qualifiable` mirrors deriveTargetStageName's
+  // "Calificado por IA" predicate exactly.
+  const qualifiable = rows.filter((r) => {
+    const s = r.signals;
+    return (
+      s?.tipo_interes?.value != null &&
+      conf(s.tipo_interes.confidence) &&
+      ((s?.presupuesto_cop?.value != null &&
+        conf(s.presupuesto_cop.confidence)) ||
+        (s?.ocasion?.value != null && conf(s.ocasion.confidence)))
+    );
+  }).length;
+  const ghosted = rows.filter((r) => r.signals?.outcome === "fantasma").length;
+  const askedForHuman = rows.filter(
+    (r) => r.signals?.outcome === "pidio-humano",
+  ).length;
+
+  // Low-confidence review across ALL graded signals (was tipo_interes-only):
+  // any graded signal with a non-null value but confidence < MIN_CONFIDENCE.
+  const GRADED = [
+    "tipo_interes",
+    "presupuesto_cop",
+    "ocasion",
+    "ciudad",
+    "conocimiento",
+    "urgencia",
+    "sentiment",
+  ] as const;
+  const lowConf = rows.flatMap((r) =>
+    GRADED.flatMap((k) => {
+      const sig = (r.signals as Record<string, Signal<unknown> | undefined>)?.[
+        k
+      ];
+      return sig && sig.value != null && (sig.confidence ?? 0) < MIN_CONFIDENCE
+        ? [`- ${r.contactName ?? r.contactId}: ${k} conf ${sig.confidence}`]
+        : [];
+    }),
+  );
+
   return [
     `# Conversation Analysis Report`,
     ``,
     `Contacts: ${rows.length}`,
     ``,
+    `## Funnel state`,
+    `- Calificable por IA: ${qualifiable}`,
+    `- Fantasma (ghosted): ${ghosted}`,
+    `- Pidió humano (sin atender): ${askedForHuman}`,
+    ``,
     `## tipo_interes`,
-    dist((r) => r.signals.tipo_interes.value),
+    dist((r) => r.signals?.tipo_interes?.value),
     ``,
     `## ocasión`,
-    dist((r) => r.signals.ocasion.value),
+    dist((r) => r.signals?.ocasion?.value),
+    ``,
+    `## presupuesto (COP)`,
+    dist((r) => budgetBucket(r.signals?.presupuesto_cop?.value)),
+    ``,
+    `## sentiment`,
+    dist((r) => r.signals?.sentiment?.value),
     ``,
     `## canal`,
     dist((r) => r.channel),
     ``,
     `## outcome`,
-    dist((r) => r.signals.outcome),
+    dist((r) => r.signals?.outcome),
     ``,
     `## tipo_interes → categoría evidence`,
     ...rows
       .filter((r) => r.tipo_interes_evidence?.asked_for_plain)
       .map(
         (r) =>
-          `- **${r.contactName ?? r.contactId}** (${r.signals.tipo_interes.value ?? "?"}): "${r.tipo_interes_evidence!.asked_for_plain}"`,
+          `- **${r.contactName ?? r.contactId}** (${r.signals?.tipo_interes?.value ?? "?"}): "${r.tipo_interes_evidence!.asked_for_plain}"`,
       ),
     ``,
-    `## Low-confidence rows (review)`,
-    ...rows
-      .filter(
-        (r) =>
-          r.signals.tipo_interes.value &&
-          r.signals.tipo_interes.confidence < 0.6,
-      )
-      .map(
-        (r) =>
-          `- ${r.contactName ?? r.contactId}: tipo_interes conf ${r.signals.tipo_interes.confidence}`,
-      ),
+    `## Low-confidence signals (review)`,
+    ...lowConf,
   ].join("\n");
 }
 

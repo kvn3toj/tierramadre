@@ -47,7 +47,14 @@ const TEST_CONTACT_NAMES = [
 ];
 
 const args = process.argv.slice(2);
-const datasetPath = args.find((a) => !a.startsWith("--"));
+// The dataset path is the first POSITIONAL token. Exclude the value that
+// follows "--limit" so `--limit 10 dataset.json` doesn't resolve the path to
+// "10" (regardless of flag order).
+const limitFlagIdx = args.indexOf("--limit");
+const limitValueIdx = limitFlagIdx >= 0 ? limitFlagIdx + 1 : -1;
+const datasetPath = args.find(
+  (a, i) => !a.startsWith("--") && i !== limitValueIdx,
+);
 const APPLY = args.includes("--apply");
 const ALL = args.includes("--all-contacts");
 const NO_STAGE = args.includes("--no-stage");
@@ -86,10 +93,17 @@ async function main() {
   const dataset = JSON.parse(readFileSync(datasetPath!, "utf8")) as {
     rows: ExtractionRow[];
   };
-  const settable = buildSettableStageMap(
-    (await getPipelines(readCfg)).find((p) => p.id === PIPELINE_ID)?.stages ??
-      [],
-  );
+  // Only build (and validate) the settable stage map when stage writes are
+  // enabled. Under --no-stage the opportunity lookup is skipped (opp = null) and
+  // this map is never consulted, so a live stage-name/emoji mismatch must NOT be
+  // able to throw here and abort field + tag backfill. --no-stage is the
+  // documented escape hatch; keep it reachable.
+  const settable = NO_STAGE
+    ? new Map<string, { id: string; order: number }>()
+    : buildSettableStageMap(
+        (await getPipelines(readCfg)).find((p) => p.id === PIPELINE_ID)
+          ?.stages ?? [],
+      );
   const defs = await getCustomFieldDefs(readCfg);
   const idToKey = new Map(defs.map((d) => [d.id, d.fieldKey]));
 

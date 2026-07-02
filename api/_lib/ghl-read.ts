@@ -95,6 +95,17 @@ export async function getConversationMessages(
   return out.slice(0, max);
 }
 
+// Coerce a raw GHL date field to Unix-ms. Handles an epoch-ms number, a numeric
+// string, or an ISO date string; returns undefined when unusable.
+function toEpochMs(v: unknown): number | undefined {
+  if (v == null) return undefined;
+  if (typeof v === "number") return Number.isFinite(v) ? v : undefined;
+  const n = Number(v);
+  if (Number.isFinite(n)) return n;
+  const t = Date.parse(String(v));
+  return Number.isFinite(t) ? t : undefined;
+}
+
 export async function searchConversations(
   cfg: GhlReadConfig,
   params: {
@@ -104,16 +115,50 @@ export async function searchConversations(
     limit?: number;
   } = {},
 ): Promise<GhlConversationSummary[]> {
-  const q = new URLSearchParams({ locationId: cfg.locationId });
-  if (params.contactId) q.set("contactId", params.contactId);
-  if (params.startDate != null) q.set("startDate", String(params.startDate));
-  if (params.endDate != null) q.set("endDate", String(params.endDate));
-  if (params.limit != null) q.set("limit", String(params.limit));
-  const data = await getJson(
-    cfg,
-    `${GHL_BASE}/conversations/search?${q.toString()}`,
-  );
-  return Array.isArray(data?.conversations) ? data.conversations : [];
+  // GHL /conversations/search defaults to ~20 items/page. Default to its max
+  // page size (100) and PAGINATE via a startAfterDate (Unix-ms) cursor read from
+  // the raw last item, so we cover the whole backlog — not just page 1.
+  const limit = params.limit ?? 100;
+  const MAX_PAGES = 20; // hard cap — bound the loop no matter what.
+  const out: GhlConversationSummary[] = [];
+  let startAfterDate: number | undefined;
+  let prevCursor: number | undefined;
+
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const q = new URLSearchParams({ locationId: cfg.locationId });
+    if (params.contactId) q.set("contactId", params.contactId);
+    if (params.startDate != null) q.set("startDate", String(params.startDate));
+    if (params.endDate != null) q.set("endDate", String(params.endDate));
+    q.set("limit", String(limit));
+    if (startAfterDate != null) q.set("startAfterDate", String(startAfterDate));
+
+    const data = await getJson(
+      cfg,
+      `${GHL_BASE}/conversations/search?${q.toString()}`,
+    );
+    const raw: any[] = Array.isArray(data?.conversations)
+      ? data.conversations
+      : [];
+    for (const c of raw) {
+      out.push({ id: c.id, contactId: c.contactId, fullName: c.fullName });
+    }
+
+    // A short page means we've reached the end.
+    if (raw.length < limit) break;
+
+    // Advance the cursor from the RAW last item. Field name is verify-live —
+    // take the first present of lastMessageDate / dateUpdated / dateAdded.
+    const last = raw[raw.length - 1] ?? {};
+    const cursor =
+      toEpochMs(last.lastMessageDate) ??
+      toEpochMs(last.dateUpdated) ??
+      toEpochMs(last.dateAdded);
+    if (cursor == null) break; // no usable cursor → stop rather than loop.
+    if (prevCursor != null && cursor === prevCursor) break; // no progress → stop.
+    prevCursor = cursor;
+    startAfterDate = cursor;
+  }
+  return out;
 }
 
 export async function getContact(

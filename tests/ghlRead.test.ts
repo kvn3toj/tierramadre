@@ -65,6 +65,56 @@ describe("ghl-read", () => {
     expect(url).toContain("endDate=2000");
   });
 
+  it("paginates via startAfterDate until a short page, concatenating results", async () => {
+    // Page 1 is FULL (== limit) and carries a cursor date on its last item;
+    // page 2 is SHORT (< limit) → loop stops after two fetches.
+    const page1 = {
+      conversations: [
+        { id: "cv-1", contactId: "c-1", fullName: "A", lastMessageDate: 1000 },
+        { id: "cv-2", contactId: "c-2", fullName: "B", lastMessageDate: 2000 },
+      ],
+    };
+    const page2 = {
+      conversations: [
+        { id: "cv-3", contactId: "c-3", fullName: "C", lastMessageDate: 3000 },
+      ],
+    };
+    const responses = [page1, page2];
+    let call = 0;
+    const f = vi.fn(async (_url: string, _init?: any) => ({
+      ok: true,
+      status: 200,
+      json: async () => responses[call++],
+    }));
+    const out = await searchConversations(cfg(f), {
+      limit: 2,
+      startDate: 1,
+      endDate: 9,
+    });
+    expect(f).toHaveBeenCalledTimes(2);
+    expect(out.map((c) => c.id)).toEqual(["cv-1", "cv-2", "cv-3"]);
+    // 1st request must NOT carry a cursor; 2nd advances via the page-1 cursor.
+    expect(f.mock.calls[0][0]).not.toContain("startAfterDate");
+    expect(f.mock.calls[1][0]).toContain("startAfterDate=2000");
+  });
+
+  it("stops after exactly one fetch when the first page is short", async () => {
+    const f = fakeFetch({
+      conversations: [{ id: "cv-1", contactId: "c-1", fullName: "Solo" }],
+    });
+    const out = await searchConversations(cfg(f), { limit: 100 });
+    expect(f).toHaveBeenCalledTimes(1);
+    expect(out).toHaveLength(1);
+  });
+
+  it("defaults limit to 100 when the caller passes none", async () => {
+    const f = fakeFetch({
+      conversations: [{ id: "cv-1", contactId: "c-1", fullName: "Kevin" }],
+    });
+    await searchConversations(cfg(f), { startDate: 1000, endDate: 2000 });
+    expect(f.mock.calls[0][0]).toContain("limit=100");
+  });
+
   it("getContact returns id, customFields (read shape: id+value), and tags", async () => {
     const f = fakeFetch({
       contact: {
