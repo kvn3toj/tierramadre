@@ -22,7 +22,7 @@ import {
   internalMutation,
   type MutationCtx,
 } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { allocateNext, formatSaleId } from "./sequences";
 import { rankProducts, type SearchableProduct } from "./_lib/productSearch";
@@ -150,7 +150,7 @@ export const createOrder = mutation({
     canal_origen: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    if (!args.items.length) throw new Error("EMPTY_ITEMS");
+    if (!args.items.length) throw new ConvexError("EMPTY_ITEMS");
 
     // 1. Reload prices/stock from the DB — never trust client-supplied amounts.
     let totalCOP = 0;
@@ -160,16 +160,16 @@ export const createOrder = mutation({
         .query("productInventory")
         .withIndex("by_itemId", (q) => q.eq("itemId", line.sku))
         .first();
-      if (!product) throw new Error(`PRODUCT_NOT_FOUND:${line.sku}`);
+      if (!product) throw new ConvexError(`PRODUCT_NOT_FOUND:${line.sku}`);
       if (product.estado !== "DISPONIBLE")
-        throw new Error(`NOT_AVAILABLE:${line.sku}`);
+        throw new ConvexError(`NOT_AVAILABLE:${line.sku}`);
       const qty = Math.max(1, Math.floor(line.qty));
       totalCOP += (product.precioCOP ?? 0) * qty;
       for (let i = 0; i < qty; i++) itemIds.push(line.sku);
     }
 
     // 2. ≤2M COP server-side gate (golden rule #3). The handler maps this to 409.
-    if (isOverLimit(totalCOP)) throw new Error("OVER_LIMIT_2M");
+    if (isOverLimit(totalCOP)) throw new ConvexError("OVER_LIMIT_2M");
 
     // 3. Resolve the ambassador (first-touch) from the referral slug.
     let ambassadorId: Id<"ambassadors"> | undefined;
