@@ -3,6 +3,8 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Box } from "@mui/material";
 import { getFoto } from "../../../design-system";
 import { FotoTopbar, type Crumb } from "./components/FotoTopbar";
+import { FotoTabBar } from "./components/FotoTabBar";
+import { FotoRouteMenu } from "./components/FotoRouteMenu";
 import { useFotosintesisHotkeys } from "./hooks/useFotosintesisHotkeys";
 import {
   FotosintesisLayoutProvider,
@@ -27,6 +29,9 @@ export default function FotosintesisLayout() {
   const foto = getFoto("light");
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Shared by the topbar avatar trigger and the FotoTabBar "Menú" slot.
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const [spotlightOpen, setSpotlightOpen] = useState(false);
   const [spotlightOptions, setSpotlightOptions] =
@@ -218,24 +223,31 @@ export default function FotosintesisLayout() {
           syncStatus="synced"
           userInitial="M"
           onSearchClick={() => openSpotlight()}
+          onMenuClick={() => setMenuOpen(true)}
+          menuOpen={menuOpen}
         />
         <Box
           sx={{
-            // Reserve room at the bottom so the global iOS tab bar never sits on
-            // top of page content when scrolled to the end (the copilot is now a
-            // docked/overlay rail, not a floating FAB). QA flagged this at every
-            // viewport. At lg the workbench fills its own fixed height (its commit
-            // bar owns the bottom) so it drops the reservation; below lg the
-            // workbench is a scrolling document and needs the tab-bar clearance so
+            // Reserve room at the bottom so the Fotosíntesis-native FotoTabBar
+            // never sits on top of page content when scrolled to the end. The bar
+            // is ~82px tall (60px pill + 10px top + 12px bottom) plus the device
+            // safe-area inset. At lg the workbench fills its own fixed height (its
+            // commit bar owns the bottom) so it drops the reservation; below lg
+            // the workbench is a scrolling document and needs tab-bar clearance so
             // its composer stays reachable (M2).
             paddingBottom: inWorkbench
               ? { xs: "calc(96px + env(safe-area-inset-bottom, 0px))", lg: 0 }
-              : { xs: "180px", md: "56px" },
+              : "calc(92px + env(safe-area-inset-bottom, 0px))",
           }}
         >
           <Outlet />
         </Box>
       </Box>
+
+      {/* Fotosíntesis-native bottom bar + full route menu. The global iOS tab
+          bar suppresses itself inside this prefix so these own the chrome. */}
+      <FotoTabBar onMenuClick={() => setMenuOpen(true)} menuOpen={menuOpen} />
+      <FotoRouteMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <ProductoSpotlight
         open={spotlightOpen}
