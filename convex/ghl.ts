@@ -24,7 +24,7 @@ import {
   internalAction,
   type MutationCtx,
 } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { allocateNext, formatSaleId } from "./sequences";
@@ -32,8 +32,7 @@ import { rankProducts, type SearchableProduct } from "./_lib/productSearch";
 import { isOverLimit, computeCommissionCOP } from "./_lib/commission";
 import { applyPaymentToSale } from "./_lib/applyPayment";
 import {
-  getLatestConversation,
-  isInactiveConversation,
+  isContactInactive,
   addContactTags,
   type GhlConvConfig,
 } from "./_lib/ghlConversations";
@@ -159,7 +158,7 @@ export const createOrder = mutation({
     canal_origen: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    if (!args.items.length) throw new Error("EMPTY_ITEMS");
+    if (!args.items.length) throw new ConvexError("EMPTY_ITEMS");
 
     // 1. Reload prices/stock from the DB — never trust client-supplied amounts.
     let totalCOP = 0;
@@ -169,16 +168,16 @@ export const createOrder = mutation({
         .query("productInventory")
         .withIndex("by_itemId", (q) => q.eq("itemId", line.sku))
         .first();
-      if (!product) throw new Error(`PRODUCT_NOT_FOUND:${line.sku}`);
+      if (!product) throw new ConvexError(`PRODUCT_NOT_FOUND:${line.sku}`);
       if (product.estado !== "DISPONIBLE")
-        throw new Error(`NOT_AVAILABLE:${line.sku}`);
+        throw new ConvexError(`NOT_AVAILABLE:${line.sku}`);
       const qty = Math.max(1, Math.floor(line.qty));
       totalCOP += (product.precioCOP ?? 0) * qty;
       for (let i = 0; i < qty; i++) itemIds.push(line.sku);
     }
 
     // 2. ≤2M COP server-side gate (golden rule #3). The handler maps this to 409.
-    if (isOverLimit(totalCOP)) throw new Error("OVER_LIMIT_2M");
+    if (isOverLimit(totalCOP)) throw new ConvexError("OVER_LIMIT_2M");
 
     // 3. Resolve the ambassador (first-touch) from the referral slug.
     let ambassadorId: Id<"ambassadors"> | undefined;
@@ -419,7 +418,7 @@ export const tagInactiveContacts = internalAction({
   ): Promise<{
     scanned: number;
     tagged: number;
-    skippedNoHistory: number;
+    notInactive: number;
     errored: number;
   }> => {
     const token = process.env.GHL_TOKEN;
@@ -428,32 +427,31 @@ export const tagInactiveContacts = internalAction({
       console.warn(
         "[sin-respuesta-7d] GHL_TOKEN / GHL_LOCATION_ID unset — skipping run",
       );
-      return { scanned: 0, tagged: 0, skippedNoHistory: 0, errored: 0 };
+      return { scanned: 0, tagged: 0, notInactive: 0, errored: 0 };
     }
     const cfg: GhlConvConfig = { token, locationId };
 
-    const contacts = await ctx.runQuery(
-      internal.ghl.listGhlLinkedContacts,
-      {},
-    );
+    const contacts = await ctx.runQuery(internal.ghl.listGhlLinkedContacts, {});
     const now = Date.now();
     let tagged = 0;
-    let skippedNoHistory = 0;
+    let notInactive = 0;
     let errored = 0;
 
     // Sequential to stay well under GHL rate limits; the linked-contact set is
     // small and this runs once daily off-peak.
     for (const { ghlContactId } of contacts) {
       try {
-        const convo = await getLatestConversation(cfg, ghlContactId);
-        if (!convo) {
-          // No conversation history → nothing to score, skip gracefully.
-          skippedNoHistory++;
-          continue;
-        }
-        if (isInactiveConversation(convo, now, INACTIVITY_THRESHOLD_DAYS)) {
+        const inactive = await isContactInactive(
+          cfg,
+          ghlContactId,
+          now,
+          INACTIVITY_THRESHOLD_DAYS,
+        );
+        if (inactive) {
           await addContactTags(cfg, ghlContactId, [INACTIVITY_TAG]);
           tagged++;
+        } else {
+          notInactive++;
         }
       } catch (err) {
         // One contact's failure must NOT abort the whole batch.
@@ -467,12 +465,12 @@ export const tagInactiveContacts = internalAction({
 
     console.log(
       `[sin-respuesta-7d] scanned=${contacts.length} tagged=${tagged} ` +
-        `noHistory=${skippedNoHistory} errored=${errored}`,
+        `notInactive=${notInactive} errored=${errored}`,
     );
     return {
       scanned: contacts.length,
       tagged,
-      skippedNoHistory,
+      notInactive,
       errored,
     };
   },
