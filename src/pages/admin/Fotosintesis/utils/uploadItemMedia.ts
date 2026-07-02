@@ -1,3 +1,37 @@
+import { compressImage } from "../../../../utils/mediaCompressor";
+
+/**
+ * Downscale + re-encode an image to JPEG before upload so a full-resolution
+ * phone/gem photo (often 5–15 MB) stays comfortably under Vercel's ~4.5 MB
+ * serverless request-body limit — the platform rejects an over-limit body with
+ * a 413 *before* the function runs, which is why oversized item photos silently
+ * failed to attach. Non-images (e.g. a PDF certificado) pass through untouched.
+ * If the browser can't decode the source (e.g. HEIC on Chrome), we fall back to
+ * the original file rather than dropping the upload — no worse than before, and
+ * on Safari the HEIC→JPEG conversion also fixes photos that uploaded but
+ * wouldn't render via `uc?export=view`.
+ */
+async function toUploadable(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+  try {
+    const { file: compressed } = await compressImage(file, {
+      maxWidth: 2000,
+      maxHeight: 2000,
+      quality: 0.85,
+    });
+    // compressImage emits image/jpeg but keeps the source name — give it a .jpg
+    // name so Drive stores/serves it as JPEG (the endpoint derives the extension
+    // from the filename).
+    const base = file.name.replace(/\.[^./\\]+$/, "") || "foto";
+    return new File([compressed], `${base}.jpg`, {
+      type: "image/jpeg",
+      lastModified: compressed.lastModified,
+    });
+  } catch {
+    return file;
+  }
+}
+
 /**
  * Upload Fotosíntesis item media to Google Drive via `/api/media-upload`.
  * Returns the first image URL (hero) when multiple files are sent.
@@ -16,7 +50,7 @@ export async function uploadFotosintesisImages(
   const fd = new FormData();
   fd.append("subPath", subPath);
   for (const file of files) {
-    fd.append("file", file);
+    fd.append("file", await toUploadable(file));
   }
 
   const res = await fetch("/api/media-upload", { method: "POST", body: fd });
