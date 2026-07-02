@@ -13,6 +13,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { ConvexError } from "convex/values";
 import { withApiHandler, sendError, sendSuccess } from "./_lib/index.js";
 import { convexClient, isConvexEnabled } from "./_lib/convex-client.js";
 import { bearerMatches } from "./_lib/bearer.js";
@@ -74,7 +75,16 @@ export default withApiHandler(
         canal_origen: body.canal_origen ?? undefined,
       });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
+      // Convex sanitizes plain `Error` throws to a generic "Server Error" for
+      // production HTTP clients; only ConvexError's `.data` survives intact.
+      const msg =
+        err instanceof ConvexError
+          ? typeof err.data === "string"
+            ? err.data
+            : String(err.data)
+          : err instanceof Error
+            ? err.message
+            : String(err);
       if (msg.includes("OVER_LIMIT_2M")) {
         // ≤2M gate → hand off to a human asesor (golden rule #3).
         res.setHeader("Content-Type", "application/json; charset=utf-8");
