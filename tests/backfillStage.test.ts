@@ -90,13 +90,39 @@ describe("stage derivation", () => {
       chooseStageWrite(row({ products_shown: { value: true } }), "s1", m),
     ).toEqual({ stageId: "s3" });
   });
-  it("chooseStageWrite treats an out-of-set current stage as order 0, still only advancing into the settable set", () => {
+  it("chooseStageWrite NEVER touches an opportunity at a non-settable stage — forward-only cannot regress a cart or a won deal", () => {
     const m = buildSettableStageMap(FULL);
-    // current stage s4 = Carrito Enviado — dropped from the settable map (unknown/forbidden
-    // current stage). Must fall back to order 0 so evidence can still advance into the
-    // settable set, landing on Producto Recomendado (s3) rather than being blocked or throwing.
+    // current s4 = Carrito Enviado (dropped from the settable map). Moving it into
+    // the settable set would pull a further-along opportunity BACKWARD → must skip.
     expect(
       chooseStageWrite(row({ products_shown: { value: true } }), "s4", m),
-    ).toEqual({ stageId: "s3" });
+    ).toBeNull();
+    // current s6 = Venta Cerrada (closed-won). A thin transcript derives Nuevo Lead;
+    // resetting a won deal is exactly the corruption we must prevent → skip.
+    expect(chooseStageWrite(row(), "s6", m)).toBeNull();
+    // outcome=fantasma at a won deal must also be a no-op (never won → lost).
+    expect(chooseStageWrite(row({ outcome: "fantasma" }), "s6", m)).toBeNull();
+    // an entirely unknown stage id is likewise untouchable.
+    expect(
+      chooseStageWrite(
+        row({ products_shown: { value: true } }),
+        "s-unknown",
+        m,
+      ),
+    ).toBeNull();
+  });
+
+  it("buildSettableStageMap tolerates live labels with ordering + emoji prefixes/suffixes", () => {
+    const m = buildSettableStageMap([
+      { id: "s1", name: "1. 🆕 Nuevo Lead" },
+      { id: "s2", name: "2. 🤖 Calificado por IA" },
+      { id: "s3", name: "3. 🎯 Producto Recomendado" },
+      { id: "s4", name: "4. 🛒 Carrito Enviado" },
+      { id: "s5", name: "5. 🤝 Negociación / Agente" }, // internal " / " must survive
+      { id: "s6", name: "6. ✅ Venta Cerrada" },
+      { id: "s7", name: "7. Perdido / Nurturing ⚠️" }, // trailing glyph
+    ]);
+    expect([...m.keys()].sort()).toEqual([...SETTABLE_STAGE_NAMES].sort());
+    expect(m.get("Negociación / Agente")?.id).toBe("s5");
   });
 });

@@ -14,10 +14,18 @@ const ORDER: Record<string, number> = Object.fromEntries(
   SETTABLE_STAGE_NAMES.map((n, i) => [n, i + 1]),
 );
 
+// Live GHL stage labels carry ordering + emoji prefixes ("1.", "🤖", "🆕", "🤝", …).
+// Strip leading numbering and any leading/trailing non-letter noise (emoji, symbols,
+// spaces) up to the first / after the last letter — WITHOUT touching internal
+// punctuation such as the " / " in "Negociación / Agente". The settable-set
+// assertion in buildSettableStageMap is the backstop if a live label still
+// doesn't reduce to one of SETTABLE_STAGE_NAMES.
 const stripPrefix = (name: string) =>
   name
-    .replace(/^\s*\d+[.)]?\s*/, "")
-    .replace(/[✅❌]/g, "")
+    .normalize("NFC")
+    .replace(/^\s*\d+[.)]?\s*/, "") // leading "1." / "2)" ordering
+    .replace(/^[^\p{L}]+/u, "") // leading emoji / symbols / spaces up to the first letter
+    .replace(/[^\p{L}]+$/u, "") // trailing emoji / symbols / spaces after the last letter
     .trim();
 
 export function buildSettableStageMap(
@@ -63,7 +71,15 @@ export function chooseStageWrite(
   const target = settable.get(deriveTargetStageName(row));
   if (!target) return null;
   const current = [...settable.values()].find((v) => v.id === currentStageId);
-  const currentOrder = current?.order ?? 0; // unknown/forbidden current stage → treat as 0 so we still only advance into settable set
-  if (target.order <= currentOrder) return null; // forward-only, no no-op
+  // A current stage OUTSIDE the settable set — Carrito Enviado (cart sent),
+  // Venta Cerrada (closed-won), or any unknown stage — is UNTOUCHABLE: skip it.
+  // (Previously this fell back to order 0, so any evidenced target > 0 would
+  // pull such an opportunity BACKWARD into the settable set — resetting a won
+  // deal or an active cart to an earlier funnel stage. That silently violated
+  // the spec's forward-only/never-regress guarantee on the records that most
+  // need protecting; the excluded stages must be unreachable as a MOVE SOURCE,
+  // not just as a write target.)
+  if (!current) return null;
+  if (target.order <= current.order) return null; // forward-only, no no-op
   return { stageId: target.id };
 }
