@@ -206,6 +206,24 @@ export const ADMIN_NAV_MAP: readonly AdminRouteEntry[] = [
 
   // ── Ventas ──────────────────────────────────────────────────────────────────
   {
+    id: "fotosintesis.sales",
+    path: "/admin/fotosintesis/sales",
+    label: "Ventas",
+    group: "Ventas",
+    iconName: "BarChart3",
+    description: "Resumen de ventas: KPIs, ledger y detalle por venta",
+    keywords: [
+      "ventas",
+      "resumen ventas",
+      "dashboard ventas",
+      "reporte",
+      "ledger",
+      "comisiones",
+    ],
+    roles: ADMIN,
+    dynamic: false,
+  },
+  {
     id: "fotosintesis.sale.new",
     path: "/admin/fotosintesis/sales/new",
     label: "Nueva venta",
@@ -269,6 +287,25 @@ export const ADMIN_NAV_MAP: readonly AdminRouteEntry[] = [
     ],
     roles: ADMIN,
     dynamic: false,
+  },
+  {
+    // Guided AI capture workbench — entered via specific flow actions
+    // (venta, lote, provider, client, item-*), not a top-level destination,
+    // so it stays navigable by NL but hidden from the visual map.
+    id: "fotosintesis.workbench",
+    path: "/admin/fotosintesis/copilot/:flow",
+    label: "Copiloto (captura guiada)",
+    group: "Inventario",
+    iconName: "Sparkles",
+    description:
+      "Flujo de captura guiada por IA (venta, lote, proveedor, cliente, ítem)",
+    keywords: ["copiloto", "workbench", "captura guiada", "flujo", "asistente"],
+    roles: ADMIN,
+    params: [
+      { name: "flow", resolver: "none", label: "flujo", required: true },
+    ],
+    dynamic: true,
+    showInMap: false,
   },
 
   // ── Analítica ────────────────────────────────────────────────────────────

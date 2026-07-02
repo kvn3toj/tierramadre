@@ -130,24 +130,11 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
 
   const inactiveColor = isDark ? INACTIVE_DARK : INACTIVE_LIGHT;
 
-  // Auto-hide behavior: on desktop within Fotosíntesis admin routes, the tab
-  // bar slides out of view and only reveals when the pointer nears the bottom
-  // edge (or on keyboard focus). Phones (<md) and all other routes are unchanged.
-  // Direct matchMedia (not MUI useMediaQuery) — robust against portal/theme
-  // timing and emulated-viewport quirks where useMediaQuery reads stale.
-  const [isDesktop, setIsDesktop] = useState<boolean>(() =>
-    typeof window !== "undefined"
-      ? window.matchMedia("(min-width: 900px)").matches
-      : false,
-  );
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(min-width: 900px)");
-    const onChange = () => setIsDesktop(mq.matches);
-    onChange();
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
+  // Fotosíntesis now owns its native bottom bar (FotoTabBar) and this global bar
+  // early-returns null on /admin/fotosintesis, so its old desktop auto-hide (and
+  // the window mousemove listener it drove) is gone. Bóveda/esmereogénesis keeps
+  // its own auto-hide below. Direct matchMedia (not MUI useMediaQuery) — robust
+  // against portal/theme timing and emulated-viewport quirks.
   // Bóveda only hands the bottom bar to its slim left side-nav at the desktop
   // tier (≥1180px, matching ESMEREO_DESKTOP_MIN); iPad keeps the bottom bar.
   const [isEsmereoDesktop, setIsEsmereoDesktop] = useState<boolean>(() =>
@@ -164,8 +151,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
     return () => mq.removeEventListener("change", onChange);
   }, []);
   const autoHide =
-    (isDesktop && location.pathname.startsWith("/admin/fotosintesis")) ||
-    (isEsmereoDesktop && location.pathname.startsWith("/esmereogenesis"));
+    isEsmereoDesktop && location.pathname.startsWith("/esmereogenesis");
   const [revealed, setRevealed] = useState(false);
   const reduceMotion =
     typeof window !== "undefined" &&
@@ -538,6 +524,13 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
       </Box>
     </Box>
   );
+
+  // Fotosíntesis owns its own bottom chrome (FotoTabBar). Suppress the global
+  // bar for that prefix ONLY — every other route (/home, /treasure, …) is
+  // unaffected. Placed after all hooks so hook order stays stable.
+  if (location.pathname.startsWith("/admin/fotosintesis")) {
+    return null;
+  }
 
   // Render via portal to document.body to escape any parent scroll containers
   // This is critical for PWA standalone mode where body is position:fixed
