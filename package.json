@@ -19,7 +19,10 @@
     "migrate:convex:dry": "tsx scripts/migrate-sheets-to-convex.ts --dry-run --table all",
     "smoke:fotosintesis": "node scripts/smoke-fotosintesis-endpoints.mjs",
     "scan:fotosintesis": "node scripts/scan-fotosintesis-publish.mjs",
-    "scan:fotosintesis:prod": "node scripts/scan-fotosintesis-publish.mjs --prod"
+    "scan:fotosintesis:prod": "node scripts/scan-fotosintesis-publish.mjs --prod",
+    "analyze:conversations": "tsx scripts/analyze-conversations.ts",
+    "analyze:conversations:dry": "tsx scripts/analyze-conversations.ts --limit 10",
+    "apply:backfill": "tsx scripts/apply-backfill.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.13.0",
