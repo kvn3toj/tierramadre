@@ -30,6 +30,7 @@ import type * as http from "../http.js";
 import type * as invitations from "../invitations.js";
 import type * as lotItems from "../lotItems.js";
 import type * as lots from "../lots.js";
+import type * as migrations from "../migrations.js";
 import type * as productViews from "../productViews.js";
 import type * as products from "../products.js";
 import type * as providers from "../providers.js";
@@ -66,6 +67,7 @@ declare const fullApi: ApiFromModules<{
   invitations: typeof invitations;
   lotItems: typeof lotItems;
   lots: typeof lots;
+  migrations: typeof migrations;
   productViews: typeof productViews;
   products: typeof products;
   providers: typeof providers;
