@@ -736,3 +736,27 @@ construir** (los endpoints existen y responden). Orden sugerido:
   Tierra Madre cuando termine su verificación (ver `docs/mercadopago-setup-and-swap.md`).
 
 Hecho con verde esmeralda 💚
+
+---
+
+## Sesión 2026-07-03 (noche) — María conectada al funnel + Carrito "Colección + Asesor"
+
+**El bloqueo histórico quedó resuelto: María ya dispara workflows.** Cambios aplicados en vivo:
+
+1. **Prompt v2 aplicado** (Objetivos del bot): no promete enviar fotos/links ella misma (una línea de anuncio y el sistema entrega), 4 preguntas con short-circuit, regla de frustración (1 disculpa máx → escalar), sin referencias a internals, pagos SIEMPRE vía asesor. Naming cliente: **"colección"** (Vitrina queda como término interno). Fuente canónica: `GHL/output/bot-maria-prompt.md`.
+2. **Acciones del bot configuradas** ("Activar un flujo de trabajo", 3 triggers):
+   - *Enviar coleccion (calificacion completa)* → **WF-03** (actualiza bot/status → etapa Calificado por IA → encadena WF-04)
+   - *Compra con asesor (Vitrina)* → **WF-05B** (cliente eligió pieza en la colección / quiere comprar)
+   - *Escalación a humano* → **WF-06 + WF-11** (pide humano / queja / frustración / inversión >5M)
+3. **WF-04 actualizado**: mensaje ahora envía UNA colección combinada `{{custom_webhook.1.response.vitrina_link}}` (`/v/{id1}-{id2}-{id3}`) + 3 líneas nombre/precio; se agregaron los pasos que faltaban: tag `productos-mostrados` + mover etapa a Producto Recomendado.
+4. **WF-05B upgrade** (Published): al tag `quiere-comprar` → marca `quiere-comprar` (bookkeeping para enrolamiento directo del bot) → agrega `pide-humano` (encadena WF-06 pausa-María/etapa/ES-01 + WF-11 routing) → **notificación interna a todos los usuarios** ("🛒 Compra en Vitrina", redirect a la conversación).
+5. **WF-05 convertido a herramienta manual del asesor**: trigger de tag ELIMINADO (el tag quiere-comprar es ahora de WF-05B) y **publicado**. El asesor confirma con el cliente, fija `producto_seleccionado_sku` y enrola manualmente al contacto en WF-05 → orden MP → CK-01 con `mp_url` → etapa Carrito Enviado + tag `carrito-enviado`.
+6. **Deploy** (PR #51 → main → Vercel prod + Convex): vitrina pública `/v/` viva (verificado `/v/324` HTTP 200 sin login) y `searchProducts` devuelve `vitrina_link` combinado.
+
+**Flujo carrito nuevo (decidido por Kevin):** el cliente ELIGE en la colección pública (CTA "Consultar por WhatsApp" → vuelve al mismo hilo, número de la casa) y el PAGO lo gestiona el asesor humano. María nunca envía links de pago.
+
+**Pendiente:**
+- E2E WhatsApp con contactos de prueba (Kevin Tres Toj / Juan Ma Escobar): calificación → WF-03/04 (colección con links públicos) → selección → WF-05B (notificación + pausa María) → asesor dispara WF-05 → MP link. Verificar tags/etapas en cada paso y que María no hable tras el handoff.
+- Revisión profunda WF-01 / WF-08 / WF-11 (solo sanity de lista en esta sesión).
+- Renombrar strings internos "Vitrina" → "colección" en notificación WF-05B y nombres de acciones (cosmético, staff-only).
+- El webhook de WF-04 muestra un badge de aviso naranja en el editor — revisar en la primera ejecución real (probablemente solo warning de "guardar respuesta").
