@@ -39,6 +39,31 @@ const LIMIT = limitArg ? Number(limitArg) : Infinity;
 const WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 const RUNS_DIR = "scripts/.analysis-runs";
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// Groq and the AI Gateway both rate-limit per minute on free tiers, so a 429
+// out of extractSignals (which already failed over across BOTH providers)
+// means the minute's quota is spent — waiting out the window and retrying the
+// same contact recovers it, where an immediate retry would just burn attempts.
+const RETRY_WAITS_MS = [30_000, 60_000, 90_000];
+
+async function extractWithRetry(transcript: string): Promise<unknown> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await extractSignals(transcript, {
+        groqKey: process.env.GROQ_API_KEY ?? process.env.VITE_GROQ_API_KEY,
+        gatewayKey: process.env.AI_GATEWAY_API_KEY,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const wait = RETRY_WAITS_MS[attempt];
+      if (wait === undefined || !/HTTP (429|5\d\d)/.test(msg)) throw err;
+      console.log(`    rate-limited — waiting ${wait / 1000}s before retry`);
+      await sleep(wait);
+    }
+  }
+}
+
 async function main() {
   const now = Date.now();
   console.log(
@@ -70,10 +95,7 @@ async function main() {
         .sort((a, b) => (a.dateAdded < b.dateAdded ? -1 : 1));
       if (!msgs.length) continue;
       const transcript = renderTranscript(msgs);
-      const signals = await extractSignals(transcript, {
-        groqKey: process.env.GROQ_API_KEY ?? process.env.VITE_GROQ_API_KEY,
-        gatewayKey: process.env.AI_GATEWAY_API_KEY,
-      });
+      const signals = await extractWithRetry(transcript);
       // Validate/coerce the raw LLM `any` against live enums (spec step 6).
       // The coercer owns channel + tipo_evidence handling and never throws on a
       // malformed row.

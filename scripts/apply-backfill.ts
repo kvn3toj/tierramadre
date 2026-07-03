@@ -19,7 +19,7 @@ import {
   getCustomFieldDefs,
   getPipelines,
   findContactOpportunity,
-  searchConversations,
+  searchContactsByQuery,
   type GhlReadConfig,
 } from "../api/_lib/ghl-read.js";
 import {
@@ -40,10 +40,13 @@ if (!token || !locationId)
 const readCfg: GhlReadConfig = { token, locationId };
 const writeCfg: GhlConfig = { token, locationId };
 const PIPELINE_ID = "u4MPXH2HdEFmU3vVqNdd";
+// Exact GHL contactName values (matched case-insensitively). "Isa" is stored
+// under her full name — the location also holds a separate "la negra vikinga"
+// contact, which the exact match deliberately excludes.
 const TEST_CONTACT_NAMES = [
   "Kevin Tres Toj",
   "Juan Ma Escobar",
-  "Isa La Negra Vikinga",
+  "Isa La Negra Vikinga Warrior Portocarrero",
 ];
 
 const args = process.argv.slice(2);
@@ -75,11 +78,13 @@ async function confirm(q: string): Promise<boolean> {
 async function resolveTestContactIds(): Promise<Set<string>> {
   const ids = new Set<string>();
   for (const name of TEST_CONTACT_NAMES) {
-    // /conversations/search returns fullName; match exactly (case-insensitive).
-    const found = (await searchConversations(readCfg, {})).filter(
-      (c) => (c.fullName ?? "").toLowerCase() === name.toLowerCase(),
+    // Contacts search, not conversations: the write targets are contacts, and a
+    // test contact must resolve even with no conversation history. GHL `query`
+    // only narrows — the exact (case-insensitive) name match happens here.
+    const found = (await searchContactsByQuery(readCfg, name)).filter(
+      (c) => c.contactName.toLowerCase() === name.toLowerCase(),
     );
-    const unique = new Set(found.map((c) => c.contactId));
+    const unique = new Set(found.map((c) => c.id));
     if (unique.size !== 1)
       throw new Error(
         `test contact "${name}" resolved to ${unique.size} contacts — aborting`,

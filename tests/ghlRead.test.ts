@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import {
   getConversationMessages,
   searchConversations,
+  searchContactsByQuery,
   getContact,
   getCustomFieldDefs,
   getPipelines,
@@ -113,6 +114,30 @@ describe("ghl-read", () => {
     });
     await searchConversations(cfg(f), { startDate: 1000, endDate: 2000 });
     expect(f.mock.calls[0][0]).toContain("limit=100");
+  });
+
+  it("searchContactsByQuery passes locationId + encoded query and maps contactName (falling back to first+last)", async () => {
+    const f = fakeFetch({
+      contacts: [
+        { id: "c-1", contactName: "isa la negra vikinga warrior portocarrero" },
+        { id: "c-2", firstName: "Juan Ma", lastName: "Escobar" },
+      ],
+    });
+    const out = await searchContactsByQuery(cfg(f), "Isa La Negra");
+    expect(out).toEqual([
+      { id: "c-1", contactName: "isa la negra vikinga warrior portocarrero" },
+      { id: "c-2", contactName: "Juan Ma Escobar" },
+    ]);
+    const [url] = f.mock.calls[0];
+    expect(url).toContain("https://services.leadconnectorhq.com/contacts/?");
+    expect(url).toContain("locationId=t3tOZBrR05jUoLqnDn4I");
+    expect(url).toContain("query=Isa+La+Negra");
+    expect(url).toContain("limit=20");
+  });
+
+  it("searchContactsByQuery returns [] when the response has no contacts array", async () => {
+    const out = await searchContactsByQuery(cfg(fakeFetch({})), "nobody");
+    expect(out).toEqual([]);
   });
 
   it("getContact returns id, customFields (read shape: id+value), and tags", async () => {

@@ -36,6 +36,10 @@ export interface GhlContact {
   customFields: { id: string; value: unknown }[];
   tags: string[];
 }
+export interface GhlContactSummary {
+  id: string;
+  contactName: string;
+}
 export interface GhlCustomFieldDef {
   id: string;
   fieldKey: string;
@@ -159,6 +163,30 @@ export async function searchConversations(
     startAfterDate = cursor;
   }
   return out;
+}
+
+// GET /contacts/?query= — free-text contact lookup. GHL treats `query` as a
+// narrowing filter, not an exact match, so callers must post-filter (e.g. by
+// exact contactName). Single page: identity lookups want a handful of
+// candidates, never the whole book.
+export async function searchContactsByQuery(
+  cfg: GhlReadConfig,
+  query: string,
+  opts: { limit?: number } = {},
+): Promise<GhlContactSummary[]> {
+  const q = new URLSearchParams({
+    locationId: cfg.locationId,
+    query,
+    limit: String(opts.limit ?? 20),
+  });
+  const data = await getJson(cfg, `${GHL_BASE}/contacts/?${q.toString()}`);
+  const list: any[] = Array.isArray(data?.contacts) ? data.contacts : [];
+  return list.map((c) => ({
+    id: String(c?.id ?? ""),
+    contactName: String(
+      c?.contactName ?? `${c?.firstName ?? ""} ${c?.lastName ?? ""}`.trim(),
+    ),
+  }));
 }
 
 export async function getContact(
