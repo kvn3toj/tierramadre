@@ -81,6 +81,8 @@ sus 4 preguntas. Con María apagada, WF-03 nunca dispara para un cliente real (s
 
 ---
 
+
+
 ## ✅ UPDATE 2 jul 2026 (continuación) — WF-05 y WF-03 completados y probados, bug real encontrado y arreglado en sin-respuesta-7d
 
 > Sesión nueva retomando el hand-off de la actualización anterior. Cuatro hilos de trabajo: (1) reconciliar
@@ -307,6 +309,7 @@ foto_url, web_link), mover oportunidad → "Producto Recomendado", tag `producto
 que va en el texto del WhatsApp, así que mensaje y página muestran la misma cifra. (Para un enlace único a una
 _grilla_ de las 3 piezas con precio elegido por el asesor, ver el flujo manual "Compartir con cliente" en la
 app → genera `/v/{token}` con multiplicador + moneda; requiere añadir un merge tag nuevo en Progresy.)
+
 
 **🐛 Bug real encontrado y arreglado — merge tag de array en WhatsApp free-form.** El tag
 `{{custom_webhook.1.response.productos}}` (array de objetos) se renderiza como texto literal
