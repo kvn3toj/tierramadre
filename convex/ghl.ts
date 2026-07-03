@@ -88,7 +88,15 @@ export const searchProducts = query({
       web_link: `${base}/v/${p.itemId}`,
       certificado_url: p.certificadoUrl ?? null,
     }));
-    return { productos };
+    // Combined "carrito" gallery: one stateless id-list Vitrina link with every
+    // recommended piece. The client browses the sandbox and taps "Consultar por
+    // WhatsApp" on the piece they want — that reply lands back in the same GHL
+    // conversation, which is the selection signal for the asesor payment flow.
+    const vitrina_link =
+      productos.length > 0
+        ? `${base}/v/${productos.map((p) => p.sku).join("-")}`
+        : null;
+    return { productos, vitrina_link };
   },
 });
 
