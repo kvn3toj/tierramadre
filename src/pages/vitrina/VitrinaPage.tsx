@@ -16,7 +16,7 @@
  * token's senderSlug, the ?a=<slug>/?wa=<phone> query, or the house number.
  */
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import {
   useParams,
   useNavigate,
@@ -95,7 +95,9 @@ function VitrinaShell({ children }: { children: React.ReactNode }) {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
+        // dvh, not vh: on mobile Safari/Chrome the toolbar makes 100vh taller
+        // than the visible area, which is what produced the scroll "jump".
+        minHeight: "100dvh",
         bgcolor: isLight
           ? lightTokens.background.page
           : darkTokens.background.app,
@@ -111,9 +113,9 @@ function LoadingState() {
     <VitrinaShell>
       <Box
         sx={{
-          maxWidth: 1200,
+          maxWidth: 1120,
           mx: "auto",
-          px: { xs: 1.5, sm: 2, md: 3 },
+          px: { xs: 1.5, sm: 2.5, md: 3 },
           py: 3,
         }}
       >
@@ -121,12 +123,12 @@ function LoadingState() {
           sx={{
             display: "grid",
             gridTemplateColumns: {
-              xs: "repeat(2,1fr)",
-              md: "repeat(3,1fr)",
-              lg: "repeat(4,1fr)",
+              xs: "repeat(2, minmax(0, 1fr))",
+              sm: "repeat(auto-fit, minmax(190px, 232px))",
             },
-            columnGap: { xs: "12px", md: "24px" },
-            rowGap: { xs: "18px", md: "30px" },
+            justifyContent: "center",
+            columnGap: { xs: "12px", sm: "22px" },
+            rowGap: { xs: "20px", sm: "34px" },
           }}
         >
           {[0, 1, 2, 3].map((i) => (
@@ -154,7 +156,7 @@ function NotFoundState() {
     <VitrinaShell>
       <Box
         sx={{
-          minHeight: "100vh",
+          minHeight: "100dvh",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -226,6 +228,32 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
     [itemIds, treasure],
   );
 
+  // The app shell pins `body { overflow: hidden }` globally ("only <main>
+  // scrolls"). This public page renders OUTSIDE that shell and has no <main>,
+  // so without re-enabling document scroll its content is clipped at the fold
+  // and can't scroll in a normal browser tab — which is exactly how clients
+  // open the shared WhatsApp link. Restore native scrolling while mounted.
+  useEffect(() => {
+    const { style } = document.body;
+    const prevOverflowY = style.overflowY;
+    const prevOverflowX = style.overflowX;
+    style.overflowY = "auto";
+    style.overflowX = "hidden";
+    return () => {
+      style.overflowY = prevOverflowY;
+      style.overflowX = prevOverflowX;
+    };
+  }, []);
+
+  // Reset scroll on every grid <-> detail transition. Router keeps the scroll
+  // offset across in-place navigations, so without this a detail opened from a
+  // scrolled grid lands mid-page (and "back" wouldn't return to the top).
+  useEffect(() => {
+    // instant, not smooth: html sets scroll-behavior:smooth, and we want the
+    // new view to appear at the top, not animate up through it.
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [itemId]);
+
   // Token still resolving, or catalog still loading.
   if (!isIdList && tokenDoc === undefined) return <LoadingState />;
   if (!isIdList && tokenDoc === null) return <NotFoundState />;
@@ -286,28 +314,32 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
       </Box>
       <Box
         sx={{
-          maxWidth: 1200,
+          maxWidth: 1120,
           mx: "auto",
-          px: { xs: 1.5, sm: 2, md: 3 },
-          py: { xs: 2, sm: 3 },
+          px: { xs: 1.5, sm: 2.5, md: 3 },
+          py: { xs: 2, sm: 3.5 },
         }}
       >
         <Box
           sx={{
             display: "grid",
+            // Phones fill the row with 2 columns. From sm up, fixed-width tracks
+            // (auto-fit collapses the empty ones) so a small curated selection
+            // stays centered and intentional instead of clustering left — and
+            // iPad portrait naturally lands on 3 columns, not a sparse 2.
             gridTemplateColumns: {
-              xs: "repeat(2,1fr)",
-              md: "repeat(3,1fr)",
-              lg: "repeat(4,1fr)",
+              xs: "repeat(2, minmax(0, 1fr))",
+              sm: "repeat(auto-fit, minmax(190px, 232px))",
             },
-            columnGap: { xs: "12px", md: "24px" },
-            rowGap: { xs: "18px", md: "30px" },
+            justifyContent: "center",
+            columnGap: { xs: "12px", sm: "22px" },
+            rowGap: { xs: "20px", sm: "34px" },
           }}
         >
           {products.map((item) => (
             <Box
               key={item.item}
-              sx={{ aspectRatio: { xs: "1 / 1.44", md: "1 / 1.34" } }}
+              sx={{ aspectRatio: { xs: "1 / 1.44", sm: "1 / 1.4" } }}
             >
               <GridCard
                 item={item}

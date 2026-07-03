@@ -20,6 +20,8 @@ import {
   Paper,
   Stack,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import MediaGallery from "../../components/media/MediaGallery";
@@ -64,6 +66,17 @@ export function PublicProductView({
   const { mode } = useThemeMode();
   const qe = getQuietEmerald(mode);
   const { trmRate } = useTRM();
+  const theme = useTheme();
+  // md+ (≥900px): iPad landscape & desktop get the editorial two-column layout.
+  // Below that (phones, iPad portrait) keep the single column + fixed CTA.
+  const isWide = useMediaQuery(theme.breakpoints.up("md"));
+
+  // Any time we land on a different piece, start at the top — the gallery, not
+  // mid-spec-sheet. Fixes the "opened scrolled-down" jump when coming from a
+  // scrolled grid, and resets between pieces inside a multi-item vitrina.
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [product.item]);
 
   const displayName = useMemo(
     () => cleanName(product.nombre),
@@ -158,6 +171,186 @@ export function PublicProductView({
     );
   };
 
+  // ---- Shared fragments (composed differently per layout) -----------------
+
+  const backButton = onBack ? (
+    <Box sx={{ py: "10px" }}>
+      <IconButton
+        onClick={onBack}
+        aria-label="Volver"
+        sx={{ color: qe.muted, width: 36, height: 36, ml: "-6px" }}
+      >
+        <ArrowLeft size={18} />
+      </IconButton>
+    </Box>
+  ) : null;
+
+  const galleryBlock = (
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: "8px",
+        overflow: "hidden",
+        border: `1px solid ${qe.border}`,
+        bgcolor: qe.well,
+      }}
+    >
+      <MediaGallery media={media} productName={displayName} />
+    </Paper>
+  );
+
+  const titleBlock = (
+    <Box>
+      <Typography
+        sx={{
+          fontFamily: qeFont.serif,
+          fontSize: { xs: 30, md: 40 },
+          lineHeight: 0.98,
+          fontWeight: 500,
+          color: qe.text,
+        }}
+      >
+        {displayName}
+      </Typography>
+      {specLine && (
+        <Typography
+          sx={{
+            fontFamily: qeFont.mono,
+            fontSize: { xs: 10, md: 10.5 },
+            letterSpacing: "0.06em",
+            color: qe.subtle,
+            mt: "8px",
+          }}
+        >
+          {specLine}
+        </Typography>
+      )}
+    </Box>
+  );
+
+  const priceBlock = priceLabel ? (
+    <Box sx={{ mt: "18px" }}>
+      <Typography
+        sx={{
+          fontFamily: qeFont.mono,
+          fontSize: 9.5,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          color: qe.subtle,
+        }}
+      >
+        Precio
+      </Typography>
+      <Typography
+        sx={{
+          fontFamily: qeFont.mono,
+          fontSize: { xs: 26, md: 30 },
+          fontWeight: 600,
+          color: qe.accent,
+          fontFeatureSettings: '"tnum"',
+          mt: "2px",
+        }}
+      >
+        {priceLabel}
+      </Typography>
+    </Box>
+  ) : null;
+
+  const specSheet = (
+    <>
+      <FormulaPanel product={product} />
+      <SpecGroups product={product} />
+      <GemStats product={product} />
+      <GemPills product={product} />
+      <RelatoBlock product={product} />
+      <TrustCard product={product} />
+    </>
+  );
+
+  const consultButton = (
+    <Button
+      fullWidth
+      variant="contained"
+      startIcon={<MessageCircle size={20} />}
+      onClick={handleConsult}
+      sx={{
+        bgcolor: qe.accent,
+        color: qe.onAccent,
+        textTransform: "none",
+        py: 1.35,
+        fontWeight: 700,
+        fontSize: "1rem",
+        borderRadius: "10px",
+        // Emerald-tinted lift (the previous value fed a full shadow string in
+        // as a color and silently produced no shadow at all).
+        boxShadow: "0 6px 20px -6px rgba(0,175,132,0.45)",
+        "&:hover": {
+          bgcolor: qe.accentStrong,
+          boxShadow: "0 8px 24px -6px rgba(0,175,132,0.55)",
+        },
+      }}
+    >
+      Consultar por WhatsApp
+    </Button>
+  );
+
+  const consultTagline = (
+    <Typography
+      sx={{
+        mt: 0.75,
+        textAlign: "center",
+        fontSize: 11,
+        fontFamily: qeFont.ui,
+        color: qe.subtle,
+      }}
+    >
+      Tierra Mädre · Esmeraldas colombianas con ADN de paz
+    </Typography>
+  );
+
+  // ---- Wide layout (md+): editorial two-column, sticky gallery + inline CTA --
+  if (isWide) {
+    return (
+      <Box sx={{ bgcolor: qe.base, minHeight: "100%" }}>
+        <Box
+          sx={{
+            maxWidth: 1160,
+            mx: "auto",
+            px: { md: 4, lg: 6 },
+            pt: { md: 1.5 },
+            pb: { md: 8 },
+          }}
+        >
+          {backButton}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { md: "1fr 1fr", lg: "1.05fr 1fr" },
+              columnGap: { md: 5, lg: 7 },
+              alignItems: "start",
+              pt: onBack ? 0 : { md: 1.5 },
+            }}
+          >
+            {/* Left: gallery stays in view while the specs scroll past it */}
+            <Box sx={{ position: "sticky", top: 24 }}>{galleryBlock}</Box>
+
+            {/* Right: name → price → CTA above the fold, gem sheet below */}
+            <Box sx={{ minWidth: 0 }}>
+              {titleBlock}
+              {priceBlock}
+              <Box sx={{ mt: "22px" }}>
+                {consultButton}
+                {consultTagline}
+              </Box>
+              {specSheet}
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    );
+  }
+
+  // ---- Compact layout (phones + iPad portrait): single column + fixed CTA ----
   return (
     <Box sx={{ bgcolor: qe.base, minHeight: "100%" }}>
       <Box
@@ -168,97 +361,19 @@ export function PublicProductView({
           pb: "calc(104px + env(safe-area-inset-bottom))",
         }}
       >
-        {onBack && (
-          <Box sx={{ py: "10px" }}>
-            <IconButton
-              onClick={onBack}
-              aria-label="Volver"
-              sx={{ color: qe.muted, width: 36, height: 36, ml: "-6px" }}
-            >
-              <ArrowLeft size={18} />
-            </IconButton>
-          </Box>
-        )}
+        {backButton}
 
         {/* Hero — same faithful gallery well as the in-app product page */}
-        <Box sx={{ pt: onBack ? 0 : "12px" }}>
-          <Paper
-            elevation={0}
-            sx={{
-              borderRadius: "6px",
-              overflow: "hidden",
-              border: `1px solid ${qe.border}`,
-              bgcolor: qe.well,
-            }}
-          >
-            <MediaGallery media={media} productName={displayName} />
-          </Paper>
-        </Box>
+        <Box sx={{ pt: onBack ? 0 : "12px" }}>{galleryBlock}</Box>
 
         {/* Title + spec line */}
-        <Box sx={{ mt: "16px" }}>
-          <Typography
-            sx={{
-              fontFamily: qeFont.serif,
-              fontSize: 30,
-              lineHeight: 0.96,
-              fontWeight: 500,
-              color: qe.text,
-            }}
-          >
-            {displayName}
-          </Typography>
-          {specLine && (
-            <Typography
-              sx={{
-                fontFamily: qeFont.mono,
-                fontSize: 10,
-                letterSpacing: "0.06em",
-                color: qe.subtle,
-                mt: "7px",
-              }}
-            >
-              {specLine}
-            </Typography>
-          )}
-        </Box>
+        <Box sx={{ mt: "16px" }}>{titleBlock}</Box>
 
         {/* Shared gem-sheet body (identical to the in-app product page) */}
-        <FormulaPanel product={product} />
-        <SpecGroups product={product} />
-        <GemStats product={product} />
-        <GemPills product={product} />
-        <RelatoBlock product={product} />
-        <TrustCard product={product} />
+        {specSheet}
 
         {/* Per-share price */}
-        {priceLabel && (
-          <Box sx={{ mt: "18px" }}>
-            <Typography
-              sx={{
-                fontFamily: qeFont.mono,
-                fontSize: 9.5,
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                color: qe.subtle,
-              }}
-            >
-              Precio
-            </Typography>
-            <Typography
-              sx={{
-                fontFamily: qeFont.mono,
-                fontSize: 26,
-                fontWeight: 600,
-                color: qe.accent,
-                fontFeatureSettings: '"tnum"',
-                mt: "2px",
-              }}
-            >
-              {priceLabel}
-            </Typography>
-          </Box>
-        )}
+        {priceBlock}
       </Box>
 
       {/* Sticky WhatsApp CTA */}
@@ -277,35 +392,8 @@ export function PublicProductView({
         }}
       >
         <Stack sx={{ maxWidth: 560, mx: "auto" }}>
-          <Button
-            fullWidth
-            variant="contained"
-            startIcon={<MessageCircle size={20} />}
-            onClick={handleConsult}
-            sx={{
-              bgcolor: qe.accent,
-              color: qe.onAccent,
-              textTransform: "none",
-              py: 1.35,
-              fontWeight: 700,
-              fontSize: "1rem",
-              boxShadow: `0 4px 14px ${qe.shadow}`,
-              "&:hover": { bgcolor: qe.accentStrong },
-            }}
-          >
-            Consultar por WhatsApp
-          </Button>
-          <Typography
-            sx={{
-              mt: 0.75,
-              textAlign: "center",
-              fontSize: 11,
-              fontFamily: qeFont.ui,
-              color: qe.subtle,
-            }}
-          >
-            Tierra Mädre · Esmeraldas colombianas con ADN de paz
-          </Typography>
+          {consultButton}
+          {consultTagline}
         </Stack>
       </Box>
     </Box>
