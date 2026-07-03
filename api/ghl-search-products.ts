@@ -7,7 +7,8 @@
  * in-budget products with a deep `web_link` into the storefront.
  *
  * Body: { intent?: { categoria? }, presupuesto?, ocasion?, ciudad? }
- * 200:  { success: true, productos: [{ sku, nombre, descripcion_corta, precio_cop, foto_url, web_link, certificado_url }] }
+ * 200:  { success: true, productos: [{ sku, nombre, descripcion_corta, precio_cop, foto_url, web_link, certificado_url }],
+ *         vitrina_link }  // combined /v/{id1}-{id2}-{id3} gallery of all recommendations (null if none)
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
