@@ -9,9 +9,16 @@
  *
  * Pricing controls mirror InvitationGenerator; default multiplier is x1
  * (standard retail) per product decision.
+ *
+ * Google credential renewal: the GIS credential stored at sign-in lives ~1h,
+ * but the app session (validated user) outlives it by days — so a staff member
+ * who signed in this morning is "logged in" with a dead ID token, and the mint
+ * would 401 forever. We check `exp` client-side and, when stale, render an
+ * inline GoogleLogin that re-stores the credential (signIn) and retries.
  */
 
 import { useMemo, useState } from "react";
+import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import {
   Box,
   Button,
@@ -27,12 +34,32 @@ import {
   alpha,
 } from "@mui/material";
 import { Check, Copy, Link2, MessageCircle, X } from "lucide-react";
+import { useGoogleAuth } from "../../contexts/GoogleAuthContext";
 import { useTRM } from "../../hooks/useTRM";
 import { VitrinaCurrency, formatVitrinaPrice } from "../../utils/vitrinaPrice";
 import { brand, fontWeights } from "../../design-system";
 import { STORAGE_KEYS } from "../../constants/storage-keys";
 
 const STUDIO_BASE_URL = "https://tierramadre.app";
+
+/** The stored GIS credential iff it hasn't expired (30s safety margin).
+ *  JWTs are base64url — normalize before atob or valid tokens fail to parse. */
+function readFreshIdToken(): string | null {
+  try {
+    const token = localStorage.getItem(STORAGE_KEYS.GOOGLE_TOKEN);
+    if (!token) return null;
+    const b64 = (token.split(".")[1] ?? "")
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+    const payload = JSON.parse(atob(b64)) as { exp?: number };
+    return typeof payload.exp === "number" &&
+      payload.exp * 1000 > Date.now() + 30_000
+      ? token
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 interface ShareItem {
   item: number;
@@ -55,6 +82,7 @@ export default function VitrinaShareDialog({
   senderSlug,
 }: VitrinaShareDialogProps) {
   const { trmRate } = useTRM();
+  const { signIn } = useGoogleAuth();
 
   const [currency, setCurrency] = useState<VitrinaCurrency>("COP");
   const [multiplier, setMultiplier] = useState<number>(1);
@@ -62,6 +90,7 @@ export default function VitrinaShareDialog({
   const [link, setLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsRenew, setNeedsRenew] = useState(false);
 
   // Live preview off the first priced item, or a 2M sample like the invite UI.
   const previewBaseCOP = useMemo(() => {
@@ -80,6 +109,7 @@ export default function VitrinaShareDialog({
     setLink(null);
     setCopied(false);
     setError(null);
+    setNeedsRenew(false);
     setCurrency("COP");
     setMultiplier(1);
   };
@@ -99,18 +129,21 @@ export default function VitrinaShareDialog({
     try {
       // Mint via the authenticated proxy: it verifies the caller's Google ID
       // token server-side, then creates the tamper-proof token in Convex.
-      const idToken = (() => {
-        try {
-          return localStorage.getItem(STORAGE_KEYS.GOOGLE_TOKEN) || "";
-        } catch {
-          return "";
-        }
-      })();
+      // A stale credential guarantees a 401, so renew in place instead of
+      // firing a doomed request.
+      const idToken = readFreshIdToken();
+      if (!idToken) {
+        setNeedsRenew(true);
+        setError(
+          "Tu sesión de Google expiró — renuévala aquí para generar el enlace.",
+        );
+        return;
+      }
       const res = await fetch("/api/vitrina", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+          Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           itemIds: items.map((i) => i.item),
@@ -121,7 +154,10 @@ export default function VitrinaShareDialog({
       });
 
       if (res.status === 401) {
-        setError("Tu sesión expiró. Vuelve a iniciar sesión y reintenta.");
+        setNeedsRenew(true);
+        setError(
+          "Tu sesión de Google expiró — renuévala aquí para generar el enlace.",
+        );
         return;
       }
       const data = await res.json().catch(() => null);
@@ -153,6 +189,20 @@ export default function VitrinaShareDialog({
       );
     } finally {
       setGenerating(false);
+    }
+  };
+
+  // Fresh credential in hand: re-run the full sign-in (re-stores the token,
+  // re-validates the user) and immediately retry the mint.
+  const handleRenewed = async (response: CredentialResponse) => {
+    if (!response.credential) return;
+    try {
+      await signIn(response.credential);
+      setNeedsRenew(false);
+      setError(null);
+      await handleGenerate();
+    } catch {
+      setError("No se pudo renovar la sesión. Intenta de nuevo.");
     }
   };
 
@@ -323,29 +373,48 @@ export default function VitrinaShareDialog({
                 </Typography>
               )}
 
-              <Button
-                variant="contained"
-                fullWidth
-                size="large"
-                disabled={generating}
-                onClick={handleGenerate}
-                startIcon={
-                  generating ? (
-                    <CircularProgress size={18} color="inherit" />
-                  ) : (
-                    <Link2 size={18} />
-                  )
-                }
-                sx={{
-                  bgcolor: brand.emerald[600],
-                  py: 1.35,
-                  fontWeight: fontWeights.bold,
-                  textTransform: "none",
-                  "&:hover": { bgcolor: brand.emerald[700] },
-                }}
-              >
-                {generating ? "Generando…" : "Generar enlace"}
-              </Button>
+              {needsRenew ? (
+                <Box
+                  sx={{ display: "flex", justifyContent: "center", py: 0.5 }}
+                >
+                  <GoogleLogin
+                    onSuccess={handleRenewed}
+                    onError={() =>
+                      setError(
+                        "No se pudo renovar la sesión de Google. Intenta de nuevo.",
+                      )
+                    }
+                    theme="filled_black"
+                    shape="pill"
+                    text="continue_with"
+                    locale="es"
+                  />
+                </Box>
+              ) : (
+                <Button
+                  variant="contained"
+                  fullWidth
+                  size="large"
+                  disabled={generating}
+                  onClick={handleGenerate}
+                  startIcon={
+                    generating ? (
+                      <CircularProgress size={18} color="inherit" />
+                    ) : (
+                      <Link2 size={18} />
+                    )
+                  }
+                  sx={{
+                    bgcolor: brand.emerald[600],
+                    py: 1.35,
+                    fontWeight: fontWeights.bold,
+                    textTransform: "none",
+                    "&:hover": { bgcolor: brand.emerald[700] },
+                  }}
+                >
+                  {generating ? "Generando…" : "Generar enlace"}
+                </Button>
+              )}
             </>
           ) : (
             <>
