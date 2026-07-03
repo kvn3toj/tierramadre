@@ -38,6 +38,7 @@ import type * as providers from "../providers.js";
 import type * as sales from "../sales.js";
 import type * as sequences from "../sequences.js";
 import type * as subLotes from "../subLotes.js";
+import type * as vitrinas from "../vitrinas.js";
 
 import type {
   ApiFromModules,
@@ -76,6 +77,7 @@ declare const fullApi: ApiFromModules<{
   sales: typeof sales;
   sequences: typeof sequences;
   subLotes: typeof subLotes;
+  vitrinas: typeof vitrinas;
 }>;
 
 /**

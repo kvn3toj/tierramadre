@@ -3,11 +3,18 @@
  * Export PDF, share PDF, print, and new quotation action buttons.
  */
 
-import React from 'react';
-import { Box, Button, IconButton, Tooltip, alpha, CircularProgress } from '@mui/material';
-import { Download, Printer, Copy, Share2 } from 'lucide-react';
-import { brandColors } from '../constants';
-import type { ActionButtonsProps } from '../types';
+import React from "react";
+import {
+  Box,
+  Button,
+  IconButton,
+  Tooltip,
+  alpha,
+  CircularProgress,
+} from "@mui/material";
+import { Download, Printer, Copy, Share2 } from "lucide-react";
+import { qeTokens } from "../../../design-system";
+import type { ActionButtonsProps } from "../types";
 
 export const ActionButtons: React.FC<ActionButtonsProps> = ({
   handleExportPDF,
@@ -18,27 +25,36 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   isExporting = false,
   isSharing = false,
 }) => (
-  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+  <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
     <Button
       variant="contained"
-      startIcon={isExporting ? <CircularProgress size={18} color="inherit" /> : <Download size={18} />}
+      startIcon={
+        isExporting ? (
+          <CircularProgress size={18} color="inherit" />
+        ) : (
+          <Download size={18} />
+        )
+      }
       onClick={handleExportPDF}
       disabled={disabled || isExporting || isSharing}
       sx={{
-        bgcolor: brandColors.emerald,
+        // Quiet Emerald: flat accent-strong fill, no colored shadow.
+        bgcolor: qeTokens.light.accentStrong,
+        color: qeTokens.light.onAccent,
         flex: 1,
-        textTransform: 'none',
-        fontWeight: 700,
-        py: 1.25,
-        borderRadius: 2,
-        boxShadow: `0 4px 16px ${alpha(brandColors.emerald, 0.3)}`,
-        '&:hover': {
-          bgcolor: brandColors.emeraldDark,
-          boxShadow: `0 6px 20px ${alpha(brandColors.emerald, 0.4)}`,
+        minHeight: 46,
+        textTransform: "none",
+        fontWeight: 600,
+        fontSize: 13,
+        borderRadius: "8px",
+        boxShadow: "none",
+        "&:hover": {
+          bgcolor: qeTokens.light.accent,
+          boxShadow: "none",
         },
       }}
     >
-      {isExporting ? 'Exportando...' : 'Exportar PDF'}
+      {isExporting ? "Generando..." : "Generar PDF"}
     </Button>
     <Tooltip title="Compartir PDF">
       <span>
@@ -48,10 +64,10 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
           sx={{
             border: (theme) => `1px solid ${theme.palette.divider}`,
             borderRadius: 2,
-            color: 'text.secondary',
-            '&:hover': {
-              bgcolor: alpha(brandColors.emerald, 0.1),
-              color: brandColors.emerald,
+            color: "text.secondary",
+            "&:hover": {
+              bgcolor: alpha(qeTokens.light.accent, 0.1),
+              color: qeTokens.light.accent,
             },
           }}
         >
@@ -65,10 +81,10 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
         sx={{
           border: (theme) => `1px solid ${theme.palette.divider}`,
           borderRadius: 2,
-          color: 'text.secondary',
-          '&:hover': {
-            bgcolor: alpha(brandColors.emerald, 0.1),
-            color: brandColors.emerald,
+          color: "text.secondary",
+          "&:hover": {
+            bgcolor: alpha(qeTokens.light.accent, 0.1),
+            color: qeTokens.light.accent,
           },
         }}
       >
@@ -81,10 +97,10 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
         sx={{
           border: (theme) => `1px solid ${theme.palette.divider}`,
           borderRadius: 2,
-          color: 'text.secondary',
-          '&:hover': {
-            bgcolor: alpha(brandColors.emerald, 0.1),
-            color: brandColors.emerald,
+          color: "text.secondary",
+          "&:hover": {
+            bgcolor: alpha(qeTokens.light.accent, 0.1),
+            color: qeTokens.light.accent,
           },
         }}
       >

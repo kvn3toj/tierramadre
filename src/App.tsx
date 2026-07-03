@@ -261,6 +261,19 @@ const CollectionPage = lazyWithRetry(
 // Cart Page
 const CartPage = lazyWithRetry(() => import("./pages/CartPage"), "CartPage");
 
+// Public "Vitrina" — sandboxed client-facing product share (no app shell, no auth)
+const VitrinaPage = lazyWithRetry(
+  () => import("./pages/vitrina/VitrinaPage"),
+  "VitrinaPage",
+);
+const PublicProductPage = lazyWithRetry(
+  () =>
+    import("./pages/vitrina/VitrinaPage").then((m) => ({
+      default: m.PublicProductPage,
+    })),
+  "PublicProductPage",
+);
+
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = "home" | "treasure" | "ambassadors";
 
@@ -840,6 +853,16 @@ function InvitationRouter() {
           </Suspense>
         }
       />
+      {/* Public sandboxed product share ("Vitrina"): /v/AB3K9P (token) or
+          /v/324 · /v/324-323-370 (stateless id-list), optional /:itemId detail */}
+      <Route
+        path="/v/:code/:itemId?"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="product" />}>
+            <VitrinaPage />
+          </Suspense>
+        }
+      />
       <Route path="*" element={<AuthenticatedApp />} />
     </Routes>
   );
@@ -867,9 +890,25 @@ function AuthenticatedApp() {
     }
   }, [isAuthenticated, navigate]);
 
-  // Show welcome screen if not authenticated
+  // Not authenticated: serve the public sandboxed product view for shared
+  // /product/:itemId links (so clients can see the product without signing in);
+  // everything else falls through to the sign-in WelcomeScreen. This nested
+  // <Routes> matches the full URL because AuthenticatedApp renders under the
+  // InvitationRouter "*" splat (no path is consumed).
   if (!isAuthenticated) {
-    return <WelcomeScreen />;
+    return (
+      <Routes>
+        <Route
+          path="/product/:itemId"
+          element={
+            <Suspense fallback={<LocalizedLoading messageKey="product" />}>
+              <PublicProductPage />
+            </Suspense>
+          }
+        />
+        <Route path="*" element={<WelcomeScreen />} />
+      </Routes>
+    );
   }
 
   return (
@@ -896,6 +935,8 @@ function shouldShowSplash(): boolean {
   const path = window.location.pathname;
   if (
     path.startsWith("/c/") ||
+    path.startsWith("/v/") ||
+    path.startsWith("/product/") ||
     path.startsWith("/invite/") ||
     path.startsWith("/g/")
   ) {

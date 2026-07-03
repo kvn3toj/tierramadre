@@ -25,11 +25,14 @@ import {
 import { PriceDisplay } from "../price-simulator/PriceDisplay";
 import {
   emeraldCore,
-  surfacesLight,
-  surfacesDark,
   semanticColors,
 } from "../../design-system/tokens/colors";
-import { errorAlpha, cssTransition } from "../../design-system";
+import {
+  errorAlpha,
+  cssTransition,
+  qeFont,
+  getQuietEmerald,
+} from "../../design-system";
 
 interface ListRowProps {
   item: TreasureItem;
@@ -55,6 +58,7 @@ function ListRow({
   const theme = useTheme();
   const { mode } = useThemeMode();
   const isLight = mode === "light";
+  const qe = getQuietEmerald(mode);
   const { shouldShowPrices } = usePriceShare();
 
   const displayName = item.nombre
@@ -95,23 +99,17 @@ function ListRow({
       sx={{
         p: 2,
         borderRadius: 2.5,
-        bgcolor: isLight
-          ? surfacesLight.background.primary
-          : surfacesDark.background.secondary,
+        bgcolor: qe.surface,
         border: "1px solid",
-        borderColor: isLight
-          ? surfacesLight.border.light
-          : surfacesDark.border.light,
+        borderColor: qe.border,
         display: "flex",
         alignItems: "center",
         gap: 2,
         cursor: "pointer",
         transition: cssTransition.default,
         "&:hover": {
-          borderColor: emeraldCore.dark,
-          bgcolor: isLight
-            ? emeraldCore.lightest
-            : alpha(emeraldCore.dark, 0.08),
+          borderColor: isLight ? "rgba(0,0,0,0.16)" : "rgba(255,255,255,0.16)",
+          bgcolor: isLight ? qe.well : alpha("#ffffff", 0.03),
         },
         "&:focus-visible": {
           outline: `3px solid ${emeraldCore.primary}`,
@@ -143,10 +141,12 @@ function ListRow({
       {/* Main info */}
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography
-          variant="body1"
           sx={{
-            fontWeight: 600,
-            color: theme.palette.text.primary,
+            fontFamily: qeFont.serif,
+            fontWeight: 500,
+            fontSize: 20,
+            lineHeight: 1.15,
+            color: qe.text,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -155,11 +155,16 @@ function ListRow({
           {displayName}
         </Typography>
         <Typography
-          variant="caption"
-          sx={{ color: theme.palette.text.secondary }}
+          sx={{
+            fontFamily: qeFont.mono,
+            fontSize: 11,
+            letterSpacing: "0.07em",
+            textTransform: "uppercase",
+            color: qe.textMuted,
+          }}
         >
-          {item.color} • {weight}
-          {origin && ` • ${origin}`}
+          {item.color} · {weight}
+          {origin && ` · ${origin}`}
         </Typography>
       </Box>
 

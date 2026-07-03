@@ -1,12 +1,16 @@
 /**
- * GridCard Component
- * Grid view card for treasure items optimized for 2-column mobile layout.
+ * GridCard Component — Quiet Emerald catalog card.
  *
- * iOS HIG Compliant:
- * - 44pt minimum touch targets
- * - 8pt grid system spacing
- * - Compact typography for 2-column grid
- * - Spring animations for tactile feedback
+ * Renders one product tile in the 2/3/4-column grid. Two A/B variants
+ * (useRedesignVariant):
+ *   - "faithful" → a quiet hairline card that KEEPS the functional overlays
+ *     (quality, gallery, quantity/lote, view-count, compare), de-glassed and
+ *     re-toned to the single emerald.
+ *   - "literal"  → the frameless minimal mockup (CatalogNew): image well →
+ *     serif name → mono spec → price. No overlays, no border.
+ *
+ * Shared anatomy in both: near-square image well on --surface-2, Cormorant name,
+ * DM Mono spec line ("4.20 ct · MUZO"), compact price.
  */
 import React, { useCallback } from "react";
 import {
@@ -24,6 +28,7 @@ import { Images, Eye, Scale } from "lucide-react";
 import { useThemeMode } from "../../contexts/ThemeContext";
 import { usePriceShare } from "../../contexts/PriceShareContext";
 import { useReducedMotion } from "../../hooks/useReducedMotion";
+import { useRedesignVariant } from "../../hooks/useRedesignVariant";
 import { prefetchRoute } from "../../utils/routePrefetch";
 import { TreasureItem } from "../../types";
 import {
@@ -33,12 +38,7 @@ import {
 } from "../../utils/formatting";
 import { PriceDisplay } from "../price-simulator/PriceDisplay";
 import ProgressiveImage from "../shared/ProgressiveImage";
-import {
-  emeraldCore,
-  surfacesLight,
-  surfacesDark,
-} from "../../design-system/tokens/colors";
-import { animation, iosSemanticColors, blurValues } from "../../design-system";
+import { animation, qeFont, getQuietEmerald } from "../../design-system";
 
 interface GridCardProps {
   item: TreasureItem;
@@ -58,6 +58,32 @@ interface GridCardProps {
   viewCount?: number;
   /** Whether the current user is an admin (required to see view counts) */
   isAdmin?: boolean;
+  /**
+   * Force a redesign variant for this instance instead of reading the global
+   * store. Used by the public Vitrina to always render the clean `literal`
+   * card without mutating the authenticated app's catalog preference.
+   */
+  variantOverride?: "literal" | "faithful";
+  /**
+   * Explicit price label to render instead of the viewer-derived PriceDisplay.
+   * `string` → show it; `null` → show no price; `undefined` → default behavior
+   * (PriceDisplay gated by the viewer's `shouldShowPrices`). Used by the Vitrina
+   * to show the per-share price (precioCOP × chosen multiplier).
+   */
+  priceOverride?: string | null;
+}
+
+/** Builds the DM Mono spec line, mixed-case ct + uppercase mine ("4.20 ct · MUZO"). */
+function buildSpecLine(item: TreasureItem): string {
+  const parts: string[] = [];
+  const isLoose = !item.isJewelry;
+  if (isLoose && typeof item.peso === "number") {
+    parts.push(`${formatCarats(item.peso)} ct`);
+  }
+  if (item.isJewelry && item.metalType) parts.push(item.metalType);
+  const mine = (item.procedencia || item.mina || "").trim();
+  if (mine) parts.push(mine.toUpperCase());
+  return parts.length > 0 ? parts.join(" · ") : item.color;
 }
 
 function GridCard({
@@ -71,14 +97,19 @@ function GridCard({
   isSelectedForComparison = false,
   onToggleComparison,
   canAddToComparison = true,
+  variantOverride,
+  priceOverride,
 }: GridCardProps) {
   const { mode } = useThemeMode();
   const isLight = mode === "light";
   const { shouldShowPrices } = usePriceShare();
   const prefersReducedMotion = useReducedMotion();
+  const { isLiteral: variantIsLiteral } = useRedesignVariant();
+  const isLiteral = variantOverride
+    ? variantOverride === "literal"
+    : variantIsLiteral;
 
-  const labelColor = iosSemanticColors.label[mode];
-  const secondaryLabelColor = iosSemanticColors.secondaryLabel[mode];
+  const qe = getQuietEmerald(mode);
 
   const displayName = item.nombre
     .replace(/^L:.*?\s/, "")
@@ -86,7 +117,7 @@ function GridCard({
     .trim();
   const quality = getQualityBadge(item.calidad);
   const qualityTooltip = getQualityTooltip(item.calidad);
-  const isLoose = !item.isJewelry;
+  const specLine = buildSpecLine(item);
 
   const handleItemClick = useCallback(() => {
     onItemClick(item);
@@ -104,6 +135,324 @@ function GridCard({
     prefetchRoute("product");
   }, []);
 
+  // ---- Image well (shared) ----------------------------------------------
+  const imageWell = item.imagen ? (
+    <ProgressiveImage
+      src={item.imagen}
+      alt={`${item.nombre} - ${item.color}`}
+      height="100%"
+      layout="full"
+      quality="eco"
+      priority={priority}
+      tinyThumb={item.tinyThumb}
+    />
+  ) : isLoadingThumbnails ? (
+    <Box sx={{ aspectRatio: "1 / 1.06", width: "100%" }}>
+      <Skeleton
+        variant="rectangular"
+        animation="wave"
+        width="100%"
+        height="100%"
+      />
+    </Box>
+  ) : (
+    <ProgressiveImage
+      src={undefined}
+      alt={`${item.nombre} - placeholder`}
+      aspectRatio="1 / 1.06"
+    />
+  );
+
+  // ---- Functional overlays (faithful variant only) ----------------------
+  const overlays = item.imagen ? (
+    <>
+      {/* Gallery count badge — bottom right */}
+      {(item.galleryCount ?? 0) > 1 && !item.isLote && (
+        <Chip
+          icon={<Images size={10} />}
+          label={item.galleryCount}
+          size="small"
+          sx={{
+            position: "absolute",
+            bottom: item.cantidad > 1 ? 28 : 6,
+            right: 6,
+            bgcolor: "rgba(0,0,0,0.62)",
+            color: "white",
+            fontSize: 9,
+            fontWeight: 600,
+            height: 18,
+            "& .MuiChip-icon": { color: "rgba(255,255,255,0.8)", ml: 0.5 },
+            "& .MuiChip-label": { px: 0.5 },
+          }}
+        />
+      )}
+
+      {/* Quality badge — bottom left */}
+      <Tooltip title={qualityTooltip} arrow enterDelay={300} placement="top">
+        <Chip
+          label={quality.label}
+          size="small"
+          sx={{
+            position: "absolute",
+            bottom: 6,
+            left: 6,
+            maxWidth: item.isLote
+              ? "calc(100% - 110px)"
+              : item.cantidad > 1
+                ? "calc(100% - 52px)"
+                : "calc(100% - 12px)",
+            height: 18,
+            fontSize: 9,
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.03em",
+            bgcolor: quality.bg,
+            color: quality.color,
+            border: `1px solid ${quality.border}`,
+            "& .MuiChip-label": {
+              px: 0.75,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            },
+          }}
+        />
+      </Tooltip>
+
+      {/* Quantity / lote badge — bottom right */}
+      {(item.isLote || item.cantidad > 1) && (
+        <Chip
+          label={
+            item.isLote
+              ? `Lote · ${item.cantidad} ${item.cantidad === 1 ? "pieza" : "piezas"}`
+              : `×${item.cantidad}`
+          }
+          size="small"
+          sx={{
+            position: "absolute",
+            bottom: 6,
+            right: 6,
+            height: 18,
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: "0.02em",
+            bgcolor: item.isLote ? qe.accentStrong : "rgba(0,0,0,0.62)",
+            color: item.isLote ? qe.onAccent : "white",
+            "& .MuiChip-label": { px: 0.5 },
+          }}
+        />
+      )}
+
+      {/* View count badge — top left (Admin only) */}
+      {isAdmin && viewCount !== undefined && viewCount > 0 && (
+        <Chip
+          icon={<Eye size={10} />}
+          label={
+            viewCount > 999 ? `${(viewCount / 1000).toFixed(1)}k` : viewCount
+          }
+          size="small"
+          sx={{
+            position: "absolute",
+            top: 6,
+            left: 6,
+            height: 18,
+            fontSize: 9,
+            fontWeight: 500,
+            bgcolor: "rgba(0,0,0,0.52)",
+            color: "rgba(255,255,255,0.9)",
+            "& .MuiChip-icon": { color: "rgba(255,255,255,0.7)", ml: 0.5 },
+            "& .MuiChip-label": { px: 0.5 },
+          }}
+        />
+      )}
+
+      {/* Compare button — top right (hidden when prices not shown) */}
+      {onToggleComparison && shouldShowPrices && (
+        <IconButton
+          onClick={handleCompareClick}
+          aria-label={
+            isSelectedForComparison
+              ? "Quitar de comparación"
+              : "Agregar a comparación"
+          }
+          disabled={!isSelectedForComparison && !canAddToComparison}
+          size="small"
+          sx={{
+            position: "absolute",
+            top: 6,
+            right: 6,
+            width: 34,
+            height: 34,
+            bgcolor: isSelectedForComparison
+              ? qe.accentStrong
+              : alpha("#000000", 0.5),
+            color: isSelectedForComparison ? qe.onAccent : "white",
+            transition: prefersReducedMotion
+              ? "none"
+              : "background-color 0.2s ease, transform 0.2s cubic-bezier(0.34,1.56,0.64,1)",
+            "&:hover": {
+              bgcolor: isSelectedForComparison
+                ? qe.accent
+                : alpha("#000000", 0.68),
+              transform: prefersReducedMotion ? "none" : "scale(1.08)",
+            },
+            "&:active": {
+              transform: prefersReducedMotion ? "none" : "scale(0.92)",
+            },
+            "&:disabled": {
+              bgcolor: alpha("#000000", 0.28),
+              color: "rgba(255,255,255,0.5)",
+            },
+          }}
+        >
+          <Scale size={15} />
+        </IconButton>
+      )}
+    </>
+  ) : null;
+
+  // ---- Text block (shared) ----------------------------------------------
+  // Phone (CatalogNew): image → name → spec → price, stacked.
+  // Tablet/desktop (CatalogWide): name + price share a baseline row, spec below.
+  const priceEl =
+    priceOverride !== undefined ? (
+      priceOverride ? (
+        <Typography
+          sx={{
+            fontFamily: qeFont.mono,
+            fontWeight: 600,
+            color: qe.accent,
+            fontSize: isMobile ? 12.5 : 13,
+            fontFeatureSettings: '"tnum"',
+            whiteSpace: "nowrap",
+          }}
+        >
+          {priceOverride}
+        </Typography>
+      ) : null
+    ) : shouldShowPrices ? (
+      <PriceDisplay
+        price={item.precioCOP}
+        precioInternacional={item.precioInternacional}
+        compact
+        compactSize={isMobile ? 12.5 : 13}
+      />
+    ) : null;
+
+  const nameEl = (
+    <Typography
+      sx={{
+        fontFamily: qeFont.serif,
+        fontWeight: 500,
+        color: qe.text,
+        lineHeight: 1.08,
+        fontSize: isMobile ? 16 : 19,
+        letterSpacing: 0,
+        minWidth: 0,
+        flex: isMobile ? "unset" : 1,
+        display: "-webkit-box",
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: "vertical",
+        overflow: "hidden",
+      }}
+    >
+      {displayName}
+    </Typography>
+  );
+
+  const specEl = (
+    <Typography
+      sx={{
+        fontFamily: qeFont.mono,
+        color: qe.subtle,
+        fontSize: 9.5,
+        lineHeight: 1.3,
+        letterSpacing: "0.05em",
+        mt: isMobile ? "4px" : "6px",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {specLine}
+    </Typography>
+  );
+
+  const textBlock = isMobile ? (
+    <>
+      {nameEl}
+      {specEl}
+      {priceEl && <Box sx={{ mt: "5px" }}>{priceEl}</Box>}
+    </>
+  ) : (
+    <>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: 1,
+        }}
+      >
+        {nameEl}
+        {priceEl && <Box sx={{ flexShrink: 0 }}>{priceEl}</Box>}
+      </Box>
+      {specEl}
+    </>
+  );
+
+  // ---- LITERAL: frameless minimal mockup card ---------------------------
+  if (isLiteral) {
+    return (
+      <Box
+        onClick={handleItemClick}
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleItemClick();
+          }
+        }}
+        onMouseEnter={handlePrefetch}
+        onFocus={handlePrefetch}
+        role="article"
+        aria-label={`${item.nombre} - ${item.color}`}
+        tabIndex={0}
+        sx={{
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          cursor: "pointer",
+          outline: "none",
+          "& img": {
+            transition: prefersReducedMotion
+              ? "none"
+              : "transform 0.5s cubic-bezier(0.22,1,0.36,1)",
+          },
+          "&:focus-visible": {
+            outline: `2px solid ${qe.accentPure}`,
+            outlineOffset: 3,
+            borderRadius: "6px",
+          },
+        }}
+      >
+        <Box
+          sx={{
+            position: "relative",
+            flex: 1,
+            minHeight: 0,
+            overflow: "hidden",
+            bgcolor: qe.well,
+            borderRadius: "5px",
+          }}
+        >
+          {imageWell}
+        </Box>
+        <Box sx={{ flexShrink: 0, pt: "9px" }}>{textBlock}</Box>
+      </Box>
+    );
+  }
+
+  // ---- FAITHFUL: quiet hairline card with restyled functional overlays ---
   return (
     <Card
       elevation={0}
@@ -123,267 +472,54 @@ function GridCard({
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        borderRadius: isMobile ? "10px" : "12px",
+        borderRadius: "8px",
         border: "1px solid",
-        borderColor: isLight
-          ? surfacesLight.border.light
-          : surfacesDark.border.light,
-        bgcolor: isLight
-          ? surfacesLight.background.primary
-          : surfacesDark.background.secondary,
+        borderColor: qe.border,
+        bgcolor: qe.surface,
         overflow: "hidden",
         transition: prefersReducedMotion ? "none" : animation.transition.spring,
         cursor: "pointer",
         boxShadow: isLight
-          ? "0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)"
-          : "0 2px 6px rgba(0, 0, 0, 0.3), 0 0 1px rgba(255, 255, 255, 0.05) inset",
-        // Image zoom transition
+          ? "0 1px 2px rgba(0,0,0,0.04)"
+          : "0 1px 2px rgba(0,0,0,0.4)",
         "& img": {
           transition: prefersReducedMotion
             ? "none"
-            : "transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
+            : "transform 0.5s cubic-bezier(0.22,1,0.36,1)",
         },
         "&:hover": {
-          borderColor: emeraldCore.primary,
+          borderColor: isLight ? "rgba(0,0,0,0.16)" : "rgba(255,255,255,0.16)",
           transform:
-            prefersReducedMotion || isMobile ? "none" : "translateY(-3px)",
+            prefersReducedMotion || isMobile ? "none" : "translateY(-2px)",
           boxShadow: isLight
-            ? "0 12px 28px rgba(0, 0, 0, 0.10), 0 4px 8px rgba(0, 0, 0, 0.06)"
-            : `0 12px 28px rgba(0, 0, 0, 0.35), 0 0 1px ${alpha(emeraldCore.primary, 0.15)} inset`,
-          // Zoom product image on hover (desktop only)
+            ? "0 10px 30px rgba(0,0,0,0.08)"
+            : "0 10px 30px rgba(0,0,0,0.5)",
           ...(!prefersReducedMotion &&
-            !isMobile && {
-              "& img": { transform: "scale(1.06)" },
-            }),
+            !isMobile && { "& img": { transform: "scale(1.04)" } }),
         },
         "&:active": {
-          transform: prefersReducedMotion ? "none" : "scale(0.97)",
+          transform: prefersReducedMotion ? "none" : "scale(0.98)",
           transition: prefersReducedMotion ? "none" : "transform 0.1s ease-out",
         },
         "&:focus-visible": {
-          outline: `2px solid ${emeraldCore.primary}`,
+          outline: `2px solid ${qe.accentPure}`,
           outlineOffset: 2,
         },
       }}
     >
-      {/* Image Section — flex:1 absorbs extra row height when name is single-line */}
       <Box
-        sx={{ position: "relative", flex: 1, minHeight: 0, overflow: "hidden" }}
+        sx={{
+          position: "relative",
+          flex: 1,
+          minHeight: 0,
+          overflow: "hidden",
+          bgcolor: qe.well,
+        }}
       >
-        {item.imagen ? (
-          <>
-            <ProgressiveImage
-              src={item.imagen}
-              alt={`${item.nombre} - ${item.color}`}
-              height="100%"
-              layout="full"
-              quality="eco"
-              priority={priority}
-              tinyThumb={item.tinyThumb}
-            />
-
-            {/* Depth gradient overlay */}
-            <Box
-              sx={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: "45%",
-                background: isLight
-                  ? "linear-gradient(to top, rgba(0,0,0,0.06), transparent)"
-                  : "linear-gradient(to top, rgba(0,0,0,0.35), transparent)",
-                pointerEvents: "none",
-              }}
-            />
-
-            {/* Gallery count badge — bottom right, stacks above quantity when both exist.
-                Suppressed for lote cards (the Drive gallery count is meaningless for a bundle). */}
-            {(item.galleryCount ?? 0) > 1 && !item.isLote && (
-              <Chip
-                icon={<Images size={10} />}
-                label={item.galleryCount}
-                size="small"
-                sx={{
-                  position: "absolute",
-                  // Shift up when quantity badge occupies the bottom-right slot
-                  bottom: item.cantidad > 1 ? 28 : 6,
-                  right: 6,
-                  bgcolor: "rgba(0, 0, 0, 0.65)",
-                  color: "white",
-                  fontSize: 9,
-                  fontWeight: 600,
-                  height: 18,
-                  backdropFilter: `blur(${blurValues.xs})`,
-                  "& .MuiChip-icon": {
-                    color: "rgba(255, 255, 255, 0.8)",
-                    ml: 0.5,
-                  },
-                  "& .MuiChip-label": { px: 0.5 },
-                }}
-              />
-            )}
-
-            {/* Quality badge — bottom left */}
-            <Tooltip
-              title={qualityTooltip}
-              arrow
-              enterDelay={300}
-              placement="top"
-            >
-              <Chip
-                label={quality.label}
-                size="small"
-                sx={{
-                  position: "absolute",
-                  bottom: 6,
-                  left: 6,
-                  // Cap width so it doesn't crash into right-side badges
-                  maxWidth: item.isLote
-                    ? "calc(100% - 110px)"
-                    : item.cantidad > 1
-                      ? "calc(100% - 52px)"
-                      : "calc(100% - 12px)",
-                  height: 18,
-                  fontSize: 9,
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.03em",
-                  bgcolor: quality.bg,
-                  color: quality.color,
-                  border: `1px solid ${quality.border}`,
-                  backdropFilter: `blur(${blurValues.xs})`,
-                  "& .MuiChip-label": {
-                    px: 0.75,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  },
-                }}
-              />
-            </Tooltip>
-
-            {/* Quantity / lote badge — bottom right */}
-            {(item.isLote || item.cantidad > 1) && (
-              <Chip
-                label={
-                  item.isLote
-                    ? `Lote · ${item.cantidad} ${item.cantidad === 1 ? "pieza" : "piezas"}`
-                    : `×${item.cantidad}`
-                }
-                size="small"
-                sx={{
-                  position: "absolute",
-                  bottom: 6,
-                  right: 6,
-                  height: 18,
-                  fontSize: 9,
-                  fontWeight: 700,
-                  letterSpacing: "0.02em",
-                  bgcolor: item.isLote
-                    ? "rgba(0, 109, 76, 0.92)"
-                    : "rgba(0, 0, 0, 0.65)",
-                  color: "white",
-                  backdropFilter: `blur(${blurValues.xs})`,
-                  "& .MuiChip-label": { px: 0.5 },
-                }}
-              />
-            )}
-
-            {/* View count badge - top left (Admin only) */}
-            {isAdmin && viewCount !== undefined && viewCount > 0 && (
-              <Chip
-                icon={<Eye size={10} />}
-                label={
-                  viewCount > 999
-                    ? `${(viewCount / 1000).toFixed(1)}k`
-                    : viewCount
-                }
-                size="small"
-                sx={{
-                  position: "absolute",
-                  top: 6,
-                  left: 6,
-                  height: 18,
-                  fontSize: 9,
-                  fontWeight: 500,
-                  bgcolor: "rgba(0, 0, 0, 0.55)",
-                  color: "rgba(255, 255, 255, 0.9)",
-                  backdropFilter: `blur(${blurValues.xs})`,
-                  "& .MuiChip-icon": {
-                    color: "rgba(255, 255, 255, 0.7)",
-                    ml: 0.5,
-                  },
-                  "& .MuiChip-label": { px: 0.5 },
-                }}
-              />
-            )}
-
-            {/* Compare button - top right (hidden when prices not shown) */}
-            {onToggleComparison && shouldShowPrices && (
-              <IconButton
-                onClick={handleCompareClick}
-                aria-label={
-                  isSelectedForComparison
-                    ? "Quitar de comparación"
-                    : "Agregar a comparación"
-                }
-                disabled={!isSelectedForComparison && !canAddToComparison}
-                size="small"
-                sx={{
-                  position: "absolute",
-                  top: 6,
-                  right: 6,
-                  width: 40,
-                  height: 40,
-                  bgcolor: isSelectedForComparison
-                    ? emeraldCore.primary
-                    : alpha("#000000", 0.55),
-                  color: "white",
-                  backdropFilter: `blur(${blurValues.xs})`,
-                  transition: prefersReducedMotion
-                    ? "none"
-                    : "background-color 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                  "&:hover": {
-                    bgcolor: isSelectedForComparison
-                      ? emeraldCore.dark
-                      : alpha("#000000", 0.7),
-                    transform: prefersReducedMotion ? "none" : "scale(1.1)",
-                  },
-                  "&:active": {
-                    transform: prefersReducedMotion ? "none" : "scale(0.9)",
-                  },
-                  "&:disabled": {
-                    bgcolor: alpha("#000000", 0.3),
-                    color: "rgba(255, 255, 255, 0.5)",
-                  },
-                }}
-              >
-                <Scale size={16} />
-              </IconButton>
-            )}
-          </>
-        ) : isLoadingThumbnails ? (
-          /* Skeleton while thumbnails are loading from API */
-          <Box sx={{ aspectRatio: "4 / 5", width: "100%" }}>
-            <Skeleton
-              variant="rectangular"
-              animation="wave"
-              width="100%"
-              height="100%"
-            />
-          </Box>
-        ) : (
-          /* Watermark placeholder - thumbnails loaded but no image for this product */
-          <ProgressiveImage
-            src={undefined}
-            alt={`${item.nombre} - placeholder`}
-            aspectRatio="4 / 5"
-          />
-        )}
+        {imageWell}
+        {overlays}
       </Box>
 
-      {/* Content Section — vertical: Name → Price → specs */}
       <CardContent
         sx={{
           p: isMobile ? 1.25 : 1.5,
@@ -391,62 +527,12 @@ function GridCard({
           flexShrink: 0,
           display: "flex",
           flexDirection: "column",
-          gap: 0.25,
           minHeight: 0,
-          borderTop: `1px solid ${isLight ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.04)"}`,
-          bgcolor: isLight
-            ? surfacesLight.background.primary
-            : alpha(surfacesDark.background.tertiary, 0.5),
+          borderTop: `1px solid ${qe.hairline}`,
+          bgcolor: qe.surface,
         }}
       >
-        {/* Name — full width, up to 2 lines */}
-        <Typography
-          variant="body2"
-          sx={{
-            fontWeight: 600,
-            color: labelColor,
-            lineHeight: 1.25,
-            fontSize: isMobile ? 14 : 15,
-            letterSpacing: "-0.24px",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}
-        >
-          {displayName}
-        </Typography>
-
-        {/* Price — full width below name */}
-        {shouldShowPrices && (
-          <PriceDisplay
-            price={item.precioCOP}
-            precioInternacional={item.precioInternacional}
-            compact
-          />
-        )}
-
-        {/* Specs */}
-        <Typography
-          variant="caption"
-          sx={{
-            color: secondaryLabelColor,
-            fontSize: isMobile ? 11 : 12,
-            lineHeight: 1.2,
-            letterSpacing: "-0.1px",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {item.color}
-          {isLoose &&
-            typeof item.peso === "number" &&
-            ` · ${formatCarats(item.peso)} ct`}
-          {item.isJewelry && item.metalType && ` · ${item.metalType}`}
-          {(item.procedencia || item.mina) &&
-            ` · ${(item.procedencia || item.mina)!.trim()}`}
-        </Typography>
+        {textBlock}
       </CardContent>
     </Card>
   );
@@ -454,7 +540,8 @@ function GridCard({
 
 // Memo comparison skips callback props — they are stable parent refs or excluded
 // intentionally so that unstable wrappers don't defeat memoization.
-// Context-derived values (shouldShowPrices) trigger re-render via context anyway.
+// Context-derived values (shouldShowPrices, redesign variant) trigger re-render
+// via their own subscriptions anyway.
 export default React.memo(GridCard, (prevProps, nextProps) => {
   return (
     prevProps.item.item === nextProps.item.item &&
@@ -463,7 +550,6 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.item.estado === nextProps.item.estado &&
     prevProps.item.isLote === nextProps.item.isLote &&
     prevProps.item.cantidad === nextProps.item.cantidad &&
-    // Displayed on the specs line — include so updates aren't masked.
     prevProps.item.procedencia === nextProps.item.procedencia &&
     prevProps.item.mina === nextProps.item.mina &&
     prevProps.isFavorite === nextProps.isFavorite &&
@@ -473,6 +559,8 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.viewCount === nextProps.viewCount &&
     prevProps.isAdmin === nextProps.isAdmin &&
     prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&
-    prevProps.canAddToComparison === nextProps.canAddToComparison
+    prevProps.canAddToComparison === nextProps.canAddToComparison &&
+    prevProps.variantOverride === nextProps.variantOverride &&
+    prevProps.priceOverride === nextProps.priceOverride
   );
 });

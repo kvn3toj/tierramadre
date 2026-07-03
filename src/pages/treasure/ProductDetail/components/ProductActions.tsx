@@ -6,9 +6,6 @@
 import React from 'react';
 import { Box, Button, Badge, alpha, useTheme } from '@mui/material';
 import { ShoppingCart, Share2, MessageCircle } from 'lucide-react';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../../../design-system/tokens/colors';
-import { emeraldGradients, buttonGradients } from '../../../../design-system/tokens/gradients';
-import { emeraldShadows } from '../../../../design-system/tokens/shadows';
 
 interface ProductActionsProps {
   isAvailable: boolean;
@@ -38,7 +35,6 @@ export const ProductActions: React.FC<ProductActionsProps> = ({
   middleSlot,
 }) => {
   const theme = useTheme();
-  const isLight = theme.palette.mode === 'light';
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 1 }}>
@@ -55,19 +51,21 @@ export const ProductActions: React.FC<ProductActionsProps> = ({
         }
         sx={{
           background: isAvailable
-            ? (isInCart ? emeraldCore.dark : buttonGradients.primary)
+            ? isInCart
+              ? theme.palette.primary.dark
+              : theme.palette.primary.main
             : undefined,
           color: '#FFFFFF',
           py: 1.5,
           minHeight: 44,
-          fontWeight: 600,
+          fontWeight: 500,
           fontSize: '15px',
-          borderRadius: 2,
+          borderRadius: '10px',
           textTransform: 'none',
-          boxShadow: isAvailable ? emeraldShadows.primary : undefined,
+          boxShadow: 'none',
           '&:hover': {
-            background: isAvailable ? emeraldGradients.deep : undefined,
-            boxShadow: isAvailable ? emeraldShadows.lg : undefined,
+            background: isAvailable ? theme.palette.primary.dark : undefined,
+            boxShadow: 'none',
           },
           '&:active': {
             transform: 'scale(0.98)',
@@ -94,17 +92,17 @@ export const ProductActions: React.FC<ProductActionsProps> = ({
           startIcon={<Share2 size={18} />}
           sx={{
             flex: 1,
-            color: emeraldCore.dark,
-            borderColor: isLight ? surfacesLight.border.default : surfacesDark.border.default,
+            color: theme.palette.text.primary,
+            borderColor: theme.palette.divider,
             py: 1,
             minHeight: 44,
-            fontWeight: 600,
+            fontWeight: 500,
             fontSize: '15px',
-            borderRadius: 2,
+            borderRadius: '10px',
             textTransform: 'none',
             '&:hover': {
-              borderColor: emeraldCore.dark,
-              bgcolor: alpha(emeraldCore.dark, 0.04),
+              borderColor: theme.palette.text.primary,
+              bgcolor: alpha(theme.palette.text.primary, 0.04),
             },
             '&:active': {
               transform: 'scale(0.98)',
@@ -121,14 +119,14 @@ export const ProductActions: React.FC<ProductActionsProps> = ({
           startIcon={<MessageCircle size={18} />}
           sx={{
             flex: 1,
-            color: emeraldCore.dark,
+            color: theme.palette.text.secondary,
             py: 1,
             minHeight: 44,
-            fontWeight: 600,
+            fontWeight: 500,
             fontSize: '15px',
             textTransform: 'none',
             '&:hover': {
-              bgcolor: alpha(emeraldCore.dark, 0.04),
+              bgcolor: alpha(theme.palette.text.primary, 0.04),
             },
             '&:active': {
               opacity: 0.7,

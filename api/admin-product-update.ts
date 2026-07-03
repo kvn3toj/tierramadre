@@ -55,6 +55,8 @@ type FotoColumn = {
   key: string;
   id?: boolean;
   preserve?: boolean;
+  /** Numeric column: write as a real number, never a string. See merge below. */
+  numeric?: boolean;
 };
 const FOTO_COLUMNS = FOTO_INVENTARIO_COLUMNS as FotoColumn[];
 
@@ -182,7 +184,7 @@ export default withApiHandler(
       );
     }
 
-    let merged: string[];
+    let merged: (string | number)[];
     if (isFoto) {
       // SOT: drive the row entirely from the shared column map so the order
       // never drifts from create-fotosintesis-sot.mjs / the migration script.
@@ -197,7 +199,23 @@ export default withApiHandler(
         } else if (col.preserve) {
           continue; // e.g. fechaIngreso (B) — carry the existing value through
         } else if (col.key in fieldMap && fieldMap[col.key] !== undefined) {
-          merged[i] = s(fieldMap[col.key]);
+          const value = fieldMap[col.key];
+          // Numeric columns MUST be written as real numbers. With
+          // valueInputOption:"USER_ENTERED", a decimal string like "13.5"
+          // is parsed against the sheet's locale — in es-CO it becomes the
+          // date 13/May (serial 46155), silently corrupting preponderancia,
+          // prices, ratings, etc. Passing a JS number sidesteps locale
+          // parsing entirely. Blank/non-numeric values fall back to string.
+          if (
+            col.numeric &&
+            value !== "" &&
+            value !== null &&
+            Number.isFinite(Number(value))
+          ) {
+            merged[i] = Number(value);
+          } else {
+            merged[i] = s(value);
+          }
         }
       }
     } else {

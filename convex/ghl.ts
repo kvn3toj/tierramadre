@@ -81,7 +81,11 @@ export const searchProducts = query({
       descripcion_corta: p.nombre ?? "",
       precio_cop: p.precioCOP ?? 0,
       foto_url: p.fotoUrl ?? null,
-      web_link: `${base}/product/${p.itemId}`,
+      // Public "Vitrina" share link: a sandboxed product page the client opens
+      // with no login (no /product auth wall). A bare item number is treated as
+      // a stateless id-list → default x1 COP pricing = the `precio_cop` above,
+      // so the WhatsApp text and the linked page show the same figure.
+      web_link: `${base}/v/${p.itemId}`,
       certificado_url: p.certificadoUrl ?? null,
     }));
     return { productos };

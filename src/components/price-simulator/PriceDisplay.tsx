@@ -10,10 +10,10 @@
 import { Box, Stack, Typography, useTheme } from "@mui/material";
 // Design System Tokens
 import {
-  brand,
   iosSemanticColors,
   iosTypographyScale,
   legacyTypography as typography,
+  qeFont,
 } from "../../design-system";
 import { usePriceShare } from "../../contexts/PriceShareContext";
 import { useCurrency } from "../../contexts/CurrencyContext";
@@ -25,6 +25,9 @@ export interface PriceDisplayProps {
   precioInternacional?: number;
   /** Modo compacto para listas */
   compact?: boolean;
+  /** Override the compact font size (defaults to iOS body ~17px). Catalog cards
+   *  pass a smaller value to match the Quiet Emerald card spec (~13px). */
+  compactSize?: string | number;
 }
 
 /**
@@ -54,6 +57,7 @@ export const PriceDisplay = ({
   price,
   precioInternacional,
   compact = false,
+  compactSize,
 }: PriceDisplayProps) => {
   const theme = useTheme();
   const { shouldShowPrices } = usePriceShare();
@@ -74,11 +78,11 @@ export const PriceDisplay = ({
       <Typography
         variant="body2"
         sx={{
-          fontWeight: typography.weight.semibold,
-          color: brand.emerald[600],
-          fontFamily: typography.fontFamily.mono,
-          fontSize: iosTypographyScale.body,
-          letterSpacing: typography.letterSpacing.tight,
+          fontWeight: 500,
+          color: theme.palette.text.primary,
+          fontFamily: qeFont.mono,
+          fontSize: compactSize ?? iosTypographyScale.body,
+          letterSpacing: 0,
           fontFeatureSettings: '"tnum"',
         }}
       >
@@ -103,11 +107,13 @@ export const PriceDisplay = ({
         <Box>
           <Typography
             sx={{
-              fontSize: "13px",
-              fontWeight: typography.weight.normal,
+              fontSize: "11px",
+              fontWeight: 400,
               color: labelColor,
-              letterSpacing: typography.letterSpacing.tight,
-              mb: 0.25,
+              fontFamily: qeFont.mono,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              mb: 0.5,
             }}
           >
             Precio
@@ -115,9 +121,10 @@ export const PriceDisplay = ({
           <Typography
             sx={{
               fontSize: "26px",
-              fontWeight: typography.weight.bold,
+              fontWeight: 500,
               color: primaryTextColor,
-              letterSpacing: typography.letterSpacing.tighter,
+              fontFamily: qeFont.mono,
+              letterSpacing: 0,
               lineHeight: 1.1,
               fontFeatureSettings: '"tnum"',
             }}

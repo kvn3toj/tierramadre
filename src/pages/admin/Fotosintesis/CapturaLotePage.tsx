@@ -1994,6 +1994,10 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
         .filter((f): f is File => !!f);
       let fotoUrl: string | undefined;
       let certificadoUrl: string | undefined;
+      // Track a swallowed photo-upload failure so the final toast can say the
+      // item was saved *without* its image (loud + actionable) instead of a
+      // plain green "guardado" that hides the missing photo.
+      let photoUploadFailed = false;
 
       if (photoFiles.length > 0) {
         try {
@@ -2003,10 +2007,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
             result.itemId,
           );
         } catch {
-          notify(
-            "Ítem guardado, pero no pudimos subir la foto a Drive",
-            "warning",
-          );
+          photoUploadFailed = true;
         }
       }
 
@@ -2040,7 +2041,12 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
       } else {
         resetItemDraft();
       }
-      notify(`Ítem ${result.itemId} guardado`, "success");
+      notify(
+        photoUploadFailed
+          ? `Ítem ${result.itemId} guardado SIN foto — la imagen no se subió, reintentá desde edición`
+          : `Ítem ${result.itemId} guardado`,
+        photoUploadFailed ? "warning" : "success",
+      );
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "No pudimos guardar el ítem",

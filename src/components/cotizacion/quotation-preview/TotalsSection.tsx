@@ -2,18 +2,22 @@
  * TotalsSection - Displays subtotals, discounts, and final total with QR code.
  */
 
-import React from 'react';
-import { Box, Typography } from '@mui/material';
-import { QRCodeSVG } from 'qrcode.react';
-import { brandColors, quotationStyles, quotationTypography } from '../constants';
-import { getQrCodeUrl } from '../utils';
-import { accentColors } from '../../../design-system';
+import React from "react";
+import { Box, Typography } from "@mui/material";
+import { QRCodeSVG } from "qrcode.react";
+import {
+  brandColors,
+  quotationStyles,
+  quotationTypography,
+} from "../constants";
+import { getQrCodeUrl } from "../utils";
+import { qeTokens } from "../../../design-system";
 import {
   CotizacionProduct,
   useCotizacionFormat,
-} from '../../../hooks/useCotizacion';
-import { LineItem } from './shared';
-import { useLanguage } from '../../../contexts/LanguageContext';
+} from "../../../hooks/useCotizacion";
+import { LineItem } from "./shared";
+import { useLanguage } from "../../../contexts/LanguageContext";
 
 export interface TotalsSectionProps {
   products: CotizacionProduct[];
@@ -43,17 +47,25 @@ export const TotalsSection: React.FC<TotalsSectionProps> = ({
   return (
     <Box sx={{ mb: 3 }}>
       {/* Subtotals Card */}
-      <Box sx={{
-        bgcolor: quotationStyles.surfaceMuted,
-        borderRadius: 2,
-        border: `1px solid ${quotationStyles.borderLight}`,
-        overflow: 'hidden',
-        mb: 2,
-      }}>
+      <Box
+        sx={{
+          bgcolor: quotationStyles.surfaceMuted,
+          borderRadius: 2,
+          border: `1px solid ${quotationStyles.borderLight}`,
+          overflow: "hidden",
+          mb: 2,
+        }}
+      >
         {showBreakdown && (
           <>
-            <LineItem label={labels.productSubtotal} value={formatCurrency(productSubtotal)} />
-            <LineItem label={labels.investment} value={formatCurrency(totalInvestment)} />
+            <LineItem
+              label={labels.productSubtotal}
+              value={formatCurrency(productSubtotal)}
+            />
+            <LineItem
+              label={labels.investment}
+              value={formatCurrency(totalInvestment)}
+            />
           </>
         )}
         <LineItem
@@ -66,9 +78,8 @@ export const TotalsSection: React.FC<TotalsSectionProps> = ({
             label={`${labels.discount} (${discountPercent}%)`}
             value={`-${formatCurrency(discount)}`}
             isLast
-            labelColor={accentColors.error.light}
-            valueColor={accentColors.error.light}
-            bgColor="rgba(239,68,68,0.04)"
+            labelColor={qeTokens.light.accent}
+            valueColor={qeTokens.light.accent}
           />
         )}
       </Box>
@@ -76,45 +87,64 @@ export const TotalsSection: React.FC<TotalsSectionProps> = ({
       {/* Total Card - Subtle inline style with QR */}
       <Box
         sx={{
-          bgcolor: quotationStyles.accentTint,
-          border: `1px solid ${brandColors.emerald}`,
+          bgcolor: quotationStyles.surfaceMuted,
+          border: `1px solid ${quotationStyles.borderLight}`,
+          borderTop: `1px solid ${qeTokens.light.accentPure}`,
           borderRadius: 2,
           p: 1.5,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        {/* Price Content - Subtle, inline */}
-        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-          <Typography sx={{
-            fontSize: '0.55rem',
-            color: brandColors.gray,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            fontWeight: 500,
-          }}>
+        {/* Total — accent-pure dot + large near-black figure (Quiet Emerald) */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography
+            sx={{
+              fontSize: "0.6rem",
+              color: qeTokens.light.subtle,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              fontWeight: 600,
+            }}
+          >
             {labels.total}
           </Typography>
-          <Typography sx={{
-            fontSize: '1rem',
-            fontWeight: 700,
-            color: brandColors.emerald,
-            letterSpacing: '-0.01em',
-            lineHeight: 1,
-            ...quotationTypography.monospace,
-          }}>
-            {formatCurrency(total)}
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.75 }}>
+            <Box
+              sx={{
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                bgcolor: qeTokens.light.accentPure,
+                alignSelf: "center",
+                flexShrink: 0,
+              }}
+            />
+            <Typography
+              sx={{
+                fontSize: "1.4rem",
+                fontWeight: 600,
+                color: qeTokens.light.text,
+                letterSpacing: "-0.4px",
+                lineHeight: 1,
+                ...quotationTypography.monospace,
+              }}
+            >
+              {formatCurrency(total)}
+            </Typography>
+          </Box>
         </Box>
 
         {/* QR Code - Compact */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography sx={{
-            fontSize: '0.4rem',
-            color: brandColors.gray,
-            letterSpacing: '0.02em',
-          }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography
+            sx={{
+              fontSize: "0.4rem",
+              color: brandColors.gray,
+              letterSpacing: "0.02em",
+            }}
+          >
             {labels.scan}
           </Typography>
           <Box
@@ -133,29 +163,34 @@ export const TotalsSection: React.FC<TotalsSectionProps> = ({
                 value={qrUrl}
                 size={36}
                 level="L"
-                fgColor={brandColors.emerald}
+                fgColor={qeTokens.light.accent}
                 bgColor={quotationStyles.surface}
-                style={{ width: '100%', height: '100%', display: 'block' }}
+                style={{ width: "100%", height: "100%", display: "block" }}
               />
             ) : (
               <Box
                 sx={{
-                  width: '100%',
-                  height: '100%',
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(4, 1fr)',
-                  gap: '1px',
+                  width: "100%",
+                  height: "100%",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(4, 1fr)",
+                  gap: "1px",
                 }}
               >
-                {Array(16).fill(0).map((_, i) => (
-                  <Box
-                    key={i}
-                    sx={{
-                      bgcolor: (i + Math.floor(i / 4)) % 2 === 0 ? '#E5E7EB' : 'transparent',
-                      borderRadius: '0.5px',
-                    }}
-                  />
-                ))}
+                {Array(16)
+                  .fill(0)
+                  .map((_, i) => (
+                    <Box
+                      key={i}
+                      sx={{
+                        bgcolor:
+                          (i + Math.floor(i / 4)) % 2 === 0
+                            ? "#E5E7EB"
+                            : "transparent",
+                        borderRadius: "0.5px",
+                      }}
+                    />
+                  ))}
               </Box>
             )}
           </Box>

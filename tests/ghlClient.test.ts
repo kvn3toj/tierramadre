@@ -4,6 +4,7 @@ import {
   addTags,
   addToWorkflow,
   updateContactFields,
+  updateOpportunityStage,
   type GhlConfig,
 } from "../api/_lib/ghl-client";
 
@@ -82,6 +83,15 @@ describe("ghl-client", () => {
     expect(JSON.parse(init.body).customFields[0].field_value).toBe(
       "2026-05-28",
     );
+  });
+
+  it("updateOpportunityStage PUTs the stage id to /opportunities/{id}", async () => {
+    const f = fakeFetch({});
+    await updateOpportunityStage(baseCfg(f), "o-1", "stage-2");
+    const [url, init] = f.mock.calls[0];
+    expect(url).toBe("https://services.leadconnectorhq.com/opportunities/o-1");
+    expect(init.method).toBe("PUT");
+    expect(JSON.parse(init.body)).toEqual({ pipelineStageId: "stage-2" });
   });
 
   it("throws on a non-ok GHL response", async () => {

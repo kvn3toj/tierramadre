@@ -5,8 +5,8 @@
  * - Guests send to their inviter
  * - Staff select an admin to contact
  */
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -17,7 +17,7 @@ import {
   Divider,
   Alert,
   alpha,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ShoppingCart,
   Trash2,
@@ -25,34 +25,36 @@ import {
   MessageCircle,
   Package,
   X,
-} from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
-import { useCart } from '../hooks/useCart';
-import { useWhatsAppContact } from '../hooks/useWhatsAppContact';
-import { useIsGuest, useGuestCanSeePrices } from '../hooks/useAuth';
-import { useThemeMode } from '../contexts/ThemeContext';
-import AdminSelectDialog from '../components/cart/AdminSelectDialog';
-import { emeraldCore, surfacesLight, surfacesDark } from '../design-system/tokens/colors';
-import { buttonGradients } from '../design-system/tokens/gradients';
-import { useCurrencyFormat } from '../contexts/CurrencyContext';
-import { fontWeights } from '../design-system';
+  Link2,
+} from "lucide-react";
+import { useLanguage } from "../contexts/LanguageContext";
+import { useCart } from "../hooks/useCart";
+import { useWhatsAppContact } from "../hooks/useWhatsAppContact";
+import { useCurrentAsesor } from "../hooks/useCurrentAsesor";
+import VitrinaShareDialog from "../components/vitrina/VitrinaShareDialog";
+import { useIsGuest, useGuestCanSeePrices } from "../hooks/useAuth";
+import { useThemeMode } from "../contexts/ThemeContext";
+import AdminSelectDialog from "../components/cart/AdminSelectDialog";
+import {
+  emeraldCore,
+  surfacesLight,
+  surfacesDark,
+} from "../design-system/tokens/colors";
+import { buttonGradients } from "../design-system/tokens/gradients";
+import { useCurrencyFormat } from "../contexts/CurrencyContext";
+import { fontWeights } from "../design-system";
 
 export default function CartPage() {
   const { t } = useLanguage();
   const { formatCurrency } = useCurrencyFormat();
   const navigate = useNavigate();
   const { mode } = useThemeMode();
-  const isLight = mode === 'light';
+  const isLight = mode === "light";
   const isGuest = useIsGuest();
   const canSeePrices = useGuestCanSeePrices();
 
-  const {
-    cartItems,
-    removeFromCart,
-    clearCart,
-    cartCount,
-    getCartTotal,
-  } = useCart();
+  const { cartItems, removeFromCart, clearCart, cartCount, getCartTotal } =
+    useCart();
 
   const {
     openWhatsAppToInviter,
@@ -64,8 +66,11 @@ export default function CartPage() {
     hasInviter,
   } = useWhatsAppContact();
 
+  const { asesor } = useCurrentAsesor();
+
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const totals = getCartTotal();
 
@@ -73,14 +78,16 @@ export default function CartPage() {
     setSendError(null);
 
     if (cartItems.length === 0) {
-      setSendError('No hay productos en el carrito');
+      setSendError("No hay productos en el carrito");
       return;
     }
 
     if (isGuest) {
       // Guest flow - send to inviter
       if (!hasInviter) {
-        setSendError('No se encontro el contacto de tu invitador. Por favor contacta al soporte.');
+        setSendError(
+          "No se encontro el contacto de tu invitador. Por favor contacta al soporte.",
+        );
         return;
       }
       await openWhatsAppToInviter(cartItems);
@@ -97,29 +104,35 @@ export default function CartPage() {
     if (!success) {
       // Show error - the hook already set the error state
       // Keep the dialog closed but cart items remain
-      setSendError(`No se pudo enviar a ${adminName}. Verifica que tenga WhatsApp configurado.`);
+      setSendError(
+        `No se pudo enviar a ${adminName}. Verifica que tenga WhatsApp configurado.`,
+      );
     }
     // Don't clear cart - let user keep their selection
   };
 
   // iOS HIG colors
-  const separatorColor = isLight ? 'rgba(60, 60, 67, 0.12)' : 'rgba(235, 235, 245, 0.12)';
+  const separatorColor = isLight
+    ? "rgba(60, 60, 67, 0.12)"
+    : "rgba(235, 235, 245, 0.12)";
 
   return (
     <Box
       sx={{
         maxWidth: 600,
-        mx: 'auto',
+        mx: "auto",
         px: { xs: 2, sm: 3 },
         py: 3,
       }}
     >
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
         <IconButton
           onClick={() => navigate(-1)}
           sx={{
-            bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary,
+            bgcolor: isLight
+              ? surfacesLight.background.secondary
+              : surfacesDark.background.secondary,
           }}
         >
           <ChevronLeft size={24} />
@@ -129,7 +142,7 @@ export default function CartPage() {
             Mi Selección
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {cartCount} {cartCount === 1 ? 'producto' : 'productos'}
+            {cartCount} {cartCount === 1 ? "producto" : "productos"}
           </Typography>
         </Box>
         {cartCount > 0 && (
@@ -146,7 +159,11 @@ export default function CartPage() {
 
       {/* Error messages */}
       {(error || sendError) && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setSendError(null)}>
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          onClose={() => setSendError(null)}
+        >
           {error || sendError}
         </Alert>
       )}
@@ -157,18 +174,23 @@ export default function CartPage() {
           elevation={0}
           sx={{
             p: 4,
-            textAlign: 'center',
+            textAlign: "center",
             borderRadius: 3,
-            border: '1px solid',
+            border: "1px solid",
             borderColor: separatorColor,
           }}
         >
           <Package
             size={64}
-            color={isLight ? surfacesLight.text.tertiary : surfacesDark.text.tertiary}
+            color={
+              isLight ? surfacesLight.text.tertiary : surfacesDark.text.tertiary
+            }
             style={{ marginBottom: 16, opacity: 0.5 }}
           />
-          <Typography variant="h6" sx={{ fontWeight: fontWeights.semibold, mb: 1 }}>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: fontWeights.semibold, mb: 1 }}
+          >
             Tu selección está vacía
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
@@ -176,10 +198,10 @@ export default function CartPage() {
           </Typography>
           <Button
             variant="contained"
-            onClick={() => navigate('/treasure')}
+            onClick={() => navigate("/treasure")}
             sx={{
               background: buttonGradients.primary,
-              color: '#FFFFFF',
+              color: "#FFFFFF",
             }}
           >
             {t.cart.exploreCollection}
@@ -192,9 +214,9 @@ export default function CartPage() {
             elevation={0}
             sx={{
               borderRadius: 3,
-              border: '1px solid',
+              border: "1px solid",
               borderColor: separatorColor,
-              overflow: 'hidden',
+              overflow: "hidden",
               mb: 3,
             }}
           >
@@ -202,8 +224,8 @@ export default function CartPage() {
               <Box key={item.itemId}>
                 <Box
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
+                    display: "flex",
+                    alignItems: "center",
                     gap: 2,
                     p: 2,
                   }}
@@ -226,9 +248,9 @@ export default function CartPage() {
                       variant="subtitle2"
                       sx={{
                         fontWeight: 600,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {item.nombre}
@@ -239,7 +261,11 @@ export default function CartPage() {
                     {canSeePrices && (
                       <Typography
                         variant="body2"
-                        sx={{ fontWeight: 600, color: emeraldCore.dark, mt: 0.5 }}
+                        sx={{
+                          fontWeight: 600,
+                          color: emeraldCore.dark,
+                          mt: 0.5,
+                        }}
                       >
                         {formatCurrency(item.precioCOP)}
                       </Typography>
@@ -250,9 +276,9 @@ export default function CartPage() {
                     size="small"
                     onClick={() => removeFromCart(item.itemId)}
                     sx={{
-                      color: 'error.main',
-                      '&:hover': {
-                        bgcolor: alpha('#ef4444', 0.1),
+                      color: "error.main",
+                      "&:hover": {
+                        bgcolor: alpha("#ef4444", 0.1),
                       },
                     }}
                   >
@@ -260,9 +286,7 @@ export default function CartPage() {
                   </IconButton>
                 </Box>
 
-                {index < cartItems.length - 1 && (
-                  <Divider sx={{ mx: 2 }} />
-                )}
+                {index < cartItems.length - 1 && <Divider sx={{ mx: 2 }} />}
               </Box>
             ))}
           </Paper>
@@ -274,16 +298,16 @@ export default function CartPage() {
               sx={{
                 p: 2,
                 borderRadius: 3,
-                border: '1px solid',
+                border: "1px solid",
                 borderColor: separatorColor,
                 mb: 3,
               }}
             >
               <Box
                 sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                 }}
               >
                 <Typography variant="body2" color="text.secondary">
@@ -303,7 +327,8 @@ export default function CartPage() {
               sx={{ mb: 3 }}
               icon={<MessageCircle size={20} />}
             >
-              Tu consulta sera enviada a <strong>{inviterName}</strong> por WhatsApp
+              Tu consulta sera enviada a <strong>{inviterName}</strong> por
+              WhatsApp
             </Alert>
           )}
 
@@ -317,12 +342,12 @@ export default function CartPage() {
             startIcon={<MessageCircle size={20} />}
             sx={{
               background: buttonGradients.primary,
-              color: '#FFFFFF',
+              color: "#FFFFFF",
               py: 1.5,
               fontWeight: 600,
-              fontSize: '1rem',
+              fontSize: "1rem",
               borderRadius: 2,
-              '&:hover': {
+              "&:hover": {
                 background: emeraldCore.dark,
               },
             }}
@@ -333,10 +358,51 @@ export default function CartPage() {
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ display: 'block', textAlign: 'center', mt: 2 }}
+            sx={{ display: "block", textAlign: "center", mt: 2 }}
           >
             Se abrira WhatsApp con tu lista de productos
           </Typography>
+
+          {/* Staff only: generate a public client link (Vitrina) for this selection */}
+          {!isGuest && (
+            <>
+              <Divider sx={{ my: 3 }}>
+                <Typography variant="caption" color="text.secondary">
+                  o comparte con un cliente
+                </Typography>
+              </Divider>
+              <Button
+                variant="outlined"
+                fullWidth
+                size="large"
+                disabled={cartCount === 0}
+                onClick={() => setShareDialogOpen(true)}
+                startIcon={<Link2 size={20} />}
+                sx={{
+                  py: 1.5,
+                  fontWeight: 600,
+                  fontSize: "1rem",
+                  borderRadius: 2,
+                  borderColor: emeraldCore.primary,
+                  color: emeraldCore.primary,
+                  "&:hover": {
+                    borderColor: emeraldCore.dark,
+                    bgcolor: alpha(emeraldCore.primary, 0.06),
+                  },
+                }}
+              >
+                Compartir con cliente (sin app)
+              </Button>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", textAlign: "center", mt: 1 }}
+              >
+                El cliente verá solo estas piezas, sin necesidad de iniciar
+                sesión.
+              </Typography>
+            </>
+          )}
         </>
       )}
 
@@ -347,6 +413,14 @@ export default function CartPage() {
         onSelect={handleAdminSelected}
         admins={admins}
         isLoading={isLoading}
+      />
+
+      {/* Staff: pick pricing (multiplier + COP/USD) and mint a public client link */}
+      <VitrinaShareDialog
+        open={shareDialogOpen}
+        onClose={() => setShareDialogOpen(false)}
+        items={cartItems}
+        senderSlug={asesor?.slug}
       />
     </Box>
   );

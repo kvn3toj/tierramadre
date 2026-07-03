@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
-import { iosSeparators, iosLabels, fontSizes, fontWeights } from '../../../../design-system';
+import { iosSeparators, iosLabels, fontSizes, fontWeights, qeFont } from '../../../../design-system';
 
 interface SpecRowProps {
   icon: React.ReactNode;
@@ -48,6 +48,8 @@ export const SpecRow: React.FC<SpecRowProps> = ({
           fontSize: fontSizes.lg,
           fontWeight: fontWeights.medium,
           color: theme.palette.text.primary,
+          fontFamily: qeFont.mono,
+          letterSpacing: '0.01em',
           textAlign: 'right',
         }}
       >

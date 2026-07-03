@@ -169,3 +169,19 @@ export async function isContactInactive(
   const list = Array.isArray(data?.conversations) ? data.conversations : [];
   return list.length > 0;
 }
+
+/** Move an opportunity to a pipeline stage (by stage id). Forward-only policy
+ *  is enforced by the caller, not here. */
+export async function updateOpportunityStage(
+  cfg: GhlConfig,
+  opportunityId: string,
+  pipelineStageId: string,
+): Promise<void> {
+  const res = await impl(cfg)(`${GHL_BASE}/opportunities/${opportunityId}`, {
+    method: "PUT",
+    headers: headers(cfg.token),
+    body: JSON.stringify({ pipelineStageId }),
+  });
+  if (!res.ok)
+    throw new Error(`GHL updateOpportunityStage failed: ${res.status}`);
+}

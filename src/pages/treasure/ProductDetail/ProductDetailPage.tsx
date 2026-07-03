@@ -16,7 +16,7 @@ import {
   Skeleton,
   IconButton,
 } from "@mui/material";
-import { ChevronLeft, Package, Crown, Heart } from "lucide-react";
+import { ChevronLeft, Package, Heart, Share2 } from "lucide-react";
 
 import { useShare } from "../../../hooks/useShare";
 import { useHaptics } from "../../../hooks/useHaptics";
@@ -37,29 +37,35 @@ import type { MediaItem } from "../../../components/media/types";
 import { PriceDisplay } from "../../../components/price-simulator/PriceDisplay";
 import { createLogger } from "../../../utils/logger";
 import { convertToProxyUrl } from "../../../utils/driveUrl";
-import {
-  surfacesLight,
-  surfacesDark,
-  goldAccent,
-  emeraldCore,
-} from "../../../design-system/tokens/colors";
+import { surfacesLight } from "../../../design-system/tokens/colors";
 import { buttonGradients } from "../../../design-system/tokens/gradients";
-import { accentColors, lightTokens, zIndex } from "../../../design-system";
+import { lightTokens } from "../../../design-system";
 import {
-  SpecificationsList,
   AdditionalInfo,
   ProductActions,
   LotePriceBreakdown,
   CertificateSection,
-  CharacteristicsSection,
   ProvenanceSection,
   PricePerCarat,
 } from "./components";
 import { useConvexQuery, convexApi } from "../../../lib/convex-safe";
 import { EsmereogenesisCTA } from "../../../components/esmereogenesis/EsmereogenesisCTA";
-import Breadcrumbs from "../../../components/shared/Breadcrumbs";
 import { scrollMainTo } from "../../../utils/mainScroll";
 import { activeLotePiece, resolveLoteDetail } from "./loteDetail";
+import { getQuietEmerald, qeFont } from "../../../design-system";
+import { useRedesignVariant } from "../../../hooks/useRedesignVariant";
+import RedesignVariantToggle from "../../../components/redesign/RedesignVariantToggle";
+import { formatCarats } from "../../../utils/formatting";
+import {
+  FormulaPanel,
+  SpecGroups,
+  GemStats,
+  GemPills,
+  RelatoBlock,
+  TrustCard,
+  GemLiteralGallery,
+  GemBottomBar,
+} from "./gemSheet/GemSheetParts";
 
 const log = createLogger("ProductDetail");
 
@@ -71,11 +77,12 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const theme = useTheme();
   const { mode } = useThemeMode();
-  const isLight = mode === "light";
   const isAdmin = useIsAdmin();
   const isGuest = useIsGuest();
   const isProvider = useIsProvider();
   const { shouldShowPrices } = usePriceShare();
+  const { isLiteral, isFaithful } = useRedesignVariant();
+  const qe = getQuietEmerald(mode);
   const { isFavorite, toggleFavorite } = useFavorites();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -546,302 +553,201 @@ export default function ProductDetail() {
   // `detail` is only undefined when `product` is, which the guard above rules
   // out, so `info` is always a concrete item here.
   const info = detail ?? product;
-  const separatorColor = isLight
-    ? "rgba(60, 60, 67, 0.12)"
-    : "rgba(235, 235, 245, 0.12)";
-  const secondaryTextColor = isLight
-    ? "rgba(60, 60, 67, 0.6)"
-    : "rgba(235, 235, 245, 0.6)";
+
+  const isFav = isFavorite(product.item);
+  const fichaCode = `FICHA · TM-${String(product.item).padStart(4, "0")}`;
+  const specLine = [
+    typeof info.peso === "number" ? `${formatCarats(info.peso)} ct` : "",
+    info.talla,
+    info.procedencia || info.mina,
+  ]
+    .filter(Boolean)
+    .join(" · ")
+    .toUpperCase();
+  const ctaLabel = isLiteral
+    ? "Añadir a cotización"
+    : isInCart(product.item)
+      ? "En tu selección · Ver"
+      : "Agregar a selección";
 
   return (
     <Box
       sx={{
-        maxWidth: 1400,
+        maxWidth: 560,
         mx: "auto",
-        px: { xs: 0, sm: 3, md: 4 },
-        pb: { xs: "calc(12px + env(safe-area-inset-bottom))", sm: 3 },
+        px: { xs: 2, sm: 3 },
+        pb: "calc(28px + env(safe-area-inset-bottom))",
       }}
     >
-      <Grid container spacing={{ xs: 1.5, md: 3 }}>
-        {/* Left Column - Image & Gallery */}
-        <Grid item xs={12} md={6}>
-          <Paper
-            elevation={0}
-            sx={{
-              borderRadius: 3,
-              overflow: "hidden",
-              border: "1px solid",
-              borderColor: isLight
-                ? surfacesLight.border.light
-                : surfacesDark.border.light,
-              bgcolor: isLight
-                ? surfacesLight.background.primary
-                : surfacesDark.background.primary,
-              position: "relative",
-            }}
+      {/* FICHA header */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          py: "10px",
+        }}
+      >
+        <IconButton
+          onClick={() => navigate(-1)}
+          aria-label="Volver"
+          sx={{ color: qe.muted, width: 36, height: 36 }}
+        >
+          <ChevronLeft size={18} />
+        </IconButton>
+        <Typography
+          sx={{
+            fontFamily: qeFont.mono,
+            fontSize: 9.5,
+            letterSpacing: "0.12em",
+            color: qe.subtle,
+          }}
+        >
+          {fichaCode}
+        </Typography>
+        <Box sx={{ display: "flex", gap: "4px" }}>
+          <IconButton
+            onClick={handleShareProduct}
+            aria-label="Compartir"
+            sx={{ color: qe.muted, width: 36, height: 36 }}
           >
-            {/* Breadcrumb overlay on image */}
-            <Box
+            <Share2 size={17} />
+          </IconButton>
+          {!isProvider && (
+            <IconButton
+              onClick={() => {
+                toggleFavorite(product.item);
+                triggerHaptic("light");
+              }}
+              aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
               sx={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                zIndex: zIndex.base + 10,
-                background:
-                  "linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.15) 60%, transparent 100%)",
-                px: { xs: 1.5, sm: 2 },
-                pt: { xs: 0.75, sm: 1 },
-                pb: 4,
-                borderRadius: "12px 12px 0 0",
+                color: isFav ? qe.accent : qe.muted,
+                width: 36,
+                height: 36,
               }}
             >
-              <Breadcrumbs
-                items={[
-                  { label: "Tesoros", path: "/treasure" },
-                  { label: displayName || `Producto ${itemId}` },
-                ]}
-                overlayMode
+              <Heart
+                size={17}
+                fill={isFav ? qe.accent : "none"}
+                strokeWidth={isFav ? 0 : 1.6}
               />
-            </Box>
-            <MediaGallery
-              media={mediaItems}
-              productName={displayName}
-              onIndexChange={product.isLote ? setGalleryIndex : undefined}
-            />
-          </Paper>
-        </Grid>
+            </IconButton>
+          )}
+        </Box>
+      </Box>
 
-        {/* Right Column - Product Details */}
-        <Grid item xs={12} md={6}>
-          <Box sx={{ px: { xs: 2, sm: 0 } }}>
-            {/* Header - iOS Large Title Style */}
-            <Box sx={{ mb: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  justifyContent: "space-between",
-                  gap: 1,
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: "28px",
-                    fontWeight: 700,
-                    color: theme.palette.text.primary,
-                    letterSpacing: "-0.02em",
-                    lineHeight: 1.15,
-                    mb: 0.5,
-                    flex: 1,
-                  }}
-                >
-                  {detailName || displayName}
-                </Typography>
-                {/* Favorite button */}
-                {!isProvider && product && (
-                  <IconButton
-                    onClick={() => {
-                      toggleFavorite(product.item);
-                      triggerHaptic("light");
-                    }}
-                    aria-label={
-                      isFavorite(product.item)
-                        ? "Quitar de favoritos"
-                        : "Agregar a favoritos"
-                    }
-                    sx={{
-                      mt: 0.25,
-                      flexShrink: 0,
-                      width: 44,
-                      height: 44,
-                      borderRadius: "50%",
-                      transition: "all 0.2s ease",
-                      "&:hover": {
-                        bgcolor: isFavorite(product.item)
-                          ? `${emeraldCore.primary}15`
-                          : isLight
-                            ? "rgba(0,0,0,0.04)"
-                            : "rgba(255,255,255,0.08)",
-                      },
-                    }}
-                  >
-                    <Heart
-                      size={22}
-                      fill={
-                        isFavorite(product.item) ? emeraldCore.primary : "none"
-                      }
-                      color={
-                        isFavorite(product.item)
-                          ? emeraldCore.primary
-                          : theme.palette.text.secondary
-                      }
-                      strokeWidth={isFavorite(product.item) ? 0 : 1.5}
-                    />
-                  </IconButton>
-                )}
-              </Box>
+      {/* Hero */}
+      {isLiteral ? (
+        <GemLiteralGallery
+          media={mediaItems}
+          productName={displayName}
+          onIndexChange={product.isLote ? setGalleryIndex : undefined}
+        />
+      ) : (
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: "6px",
+            overflow: "hidden",
+            border: `1px solid ${qe.border}`,
+            bgcolor: qe.well,
+          }}
+        >
+          <MediaGallery
+            media={mediaItems}
+            productName={displayName}
+            onIndexChange={product.isLote ? setGalleryIndex : undefined}
+          />
+        </Paper>
+      )}
 
-              {/* Inline metadata */}
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.75,
-                  flexWrap: "wrap",
-                  mb: 1.5,
-                }}
-              >
-                <Typography
-                  component="span"
-                  sx={{
-                    fontSize: "13px",
-                    color: secondaryTextColor,
-                    fontWeight: 500,
-                  }}
-                >
-                  #{info.item}
-                </Typography>
-                <Typography
-                  component="span"
-                  sx={{
-                    color: secondaryTextColor,
-                    fontSize: "13px",
-                    opacity: 0.5,
-                  }}
-                >
-                  ·
-                </Typography>
-                {info.isJewelry && (
-                  <Crown size={14} color={goldAccent.primary} />
-                )}
-                <Typography
-                  component="span"
-                  sx={{
-                    fontSize: "13px",
-                    color: secondaryTextColor,
-                    fontWeight: 400,
-                  }}
-                >
-                  {info.categoria || (info.isJewelry ? "Joyeria" : "Gema")}
-                </Typography>
-                <Typography
-                  component="span"
-                  sx={{
-                    color: secondaryTextColor,
-                    fontSize: "13px",
-                    opacity: 0.5,
-                  }}
-                >
-                  ·
-                </Typography>
-                <Typography
-                  component="span"
-                  sx={{
-                    fontSize: "13px",
-                    color: isAvailable
-                      ? "rgb(52, 199, 89)"
-                      : secondaryTextColor,
-                    fontWeight: 500,
-                  }}
-                >
-                  {isAvailable ? "Disponible" : "Vendido"}
-                </Typography>
-                {info.cantidad > 1 && (
-                  <>
-                    <Typography
-                      component="span"
-                      sx={{
-                        color: secondaryTextColor,
-                        fontSize: "13px",
-                        opacity: 0.5,
-                      }}
-                    >
-                      ·
-                    </Typography>
-                    <Typography
-                      component="span"
-                      sx={{
-                        fontSize: "13px",
-                        color: accentColors.purple.light,
-                        fontWeight: 500,
-                      }}
-                    >
-                      Lote x{info.cantidad}
-                    </Typography>
-                  </>
-                )}
-              </Box>
+      {/* Title + spec line */}
+      <Box sx={{ mt: "16px" }}>
+        <Typography
+          sx={{
+            fontFamily: qeFont.serif,
+            fontSize: 30,
+            lineHeight: 0.96,
+            fontWeight: 500,
+            color: qe.text,
+          }}
+        >
+          {detailName || displayName}
+        </Typography>
+        {specLine && (
+          <Typography
+            sx={{
+              fontFamily: qeFont.mono,
+              fontSize: 10,
+              letterSpacing: "0.06em",
+              color: qe.subtle,
+              mt: "7px",
+            }}
+          >
+            {specLine}
+          </Typography>
+        )}
+        {!isAvailable && (
+          <Typography
+            sx={{
+              mt: "6px",
+              fontSize: 12,
+              fontWeight: 600,
+              color: qe.subtle,
+              fontFamily: qeFont.ui,
+            }}
+          >
+            No disponible
+          </Typography>
+        )}
+      </Box>
 
-              {/* Price display — a lote shows a stable total plus an itemized
-                  breakdown (price by item + total), with the row matching the
-                  gallery image highlighted. Single items show the plain price. */}
-              {shouldShowPrices &&
-                (product.isLote && product.loteItems ? (
-                  <LotePriceBreakdown
-                    items={product.loteItems}
-                    total={product.precioCOP}
-                    activeItem={loteMedia?.itemKeys[galleryIndex] ?? null}
-                  />
-                ) : (
-                  <>
-                    <PriceDisplay
-                      price={product.precioCOP}
-                      precioInternacional={product.precioInternacional}
-                    />
-                    {/* Price-per-carat — secondary line under the headline
-                        price. Self-hides for jewelry / multi-piece / no-weight
-                        rows (R6); computed from base COP then converted once
-                        (R2). */}
-                    <PricePerCarat
-                      precioCOP={product.precioCOP}
-                      peso={product.peso}
-                      cantidad={product.cantidad}
-                    />
-                  </>
-                ))}
-            </Box>
+      <FormulaPanel product={info} />
+      <SpecGroups product={info} />
+      <GemStats product={info} />
+      <GemPills product={info} />
+      <RelatoBlock product={info} />
+      <TrustCard product={product} />
 
-            {/* Separator */}
-            <Box sx={{ height: "0.5px", bgcolor: separatorColor, my: 2 }} />
-
-            {/* Specifications — follow the piece whose photo is in view */}
-            <SpecificationsList product={info} />
-
-            {/* Características — PUBLIC Fotosíntesis disclosures (origin, mine,
-                treatment, jewelry detail, evocative description). Reads `info`
-                so it follows the in-view piece for lote bundles. Absent-safe:
-                self-hides for legacy/sparse items. */}
-            <CharacteristicsSection product={info} />
-
-            {/* Certificate — self-hides when there's no certificateUrl and no
-                structured certifications (absent-safe). Shown to all roles: the
-                certificate is a marketing asset, the URL is already public via
-                the published catalog projection. */}
+      {isFaithful && (
+        <>
+          <Box sx={{ mt: "18px" }}>
             <CertificateSection product={product} />
-
-            {/* Provenance / lot info + sync status — ADMIN-ONLY (R5). Reads the
-                admin-overlaid product (procedencia/loteId/preponderancia/sync
-                from the admin-only products.get doc). Self-hides for non-admins,
-                lote bundle cards, and items with no provenance/sync to show.
-                NOTE: per-piece provenance for lote/sublote members is NOT
-                surfaced in this iteration — bundles show no provenance. */}
-            <ProvenanceSection
-              product={adminProduct ?? product}
-              isAdmin={isAdmin}
-            />
-
-            {/* Separator */}
-            <Box sx={{ height: "0.5px", bgcolor: separatorColor, my: 2 }} />
-
-            {/* Additional Info */}
+          </Box>
+          <ProvenanceSection
+            product={adminProduct ?? product}
+            isAdmin={isAdmin}
+          />
+          <Box sx={{ mt: "18px" }}>
             <AdditionalInfo product={product} isAdmin={isAdmin} />
+          </Box>
 
-            {/* CTA Buttons (hidden for providers) — Esmereogénesis CTA is
-                rendered via the middleSlot so it sits between the primary
-                "Agregar a Selección" and the secondary Compartir/Consultar
-                row, per spec §8.3. */}
-            {!isProvider && (
+          {shouldShowPrices && (
+            <Box sx={{ mt: "20px" }}>
+              {product.isLote && product.loteItems ? (
+                <LotePriceBreakdown
+                  items={product.loteItems}
+                  total={product.precioCOP}
+                  activeItem={loteMedia?.itemKeys[galleryIndex] ?? null}
+                />
+              ) : (
+                <>
+                  <PriceDisplay
+                    price={product.precioCOP}
+                    precioInternacional={product.precioInternacional}
+                  />
+                  <PricePerCarat
+                    precioCOP={product.precioCOP}
+                    peso={product.peso}
+                    cantidad={product.cantidad}
+                  />
+                </>
+              )}
+            </Box>
+          )}
+
+          {!isProvider && (
+            <Box sx={{ mt: "20px" }}>
               <ProductActions
                 isAvailable={isAvailable}
                 isInCart={product ? isInCart(product.item) : false}
@@ -859,20 +765,30 @@ export default function ProductDetail() {
                   ) : null
                 }
               />
-            )}
+            </Box>
+          )}
 
-            {/* Member Benefits Teaser - Only for Guest Users */}
-            {isGuest && (
-              <Box sx={{ mt: 3 }}>
-                <MemberBenefitsTeaser
-                  variant="compact"
-                  onUnlockClick={() => navigate("/")}
-                />
-              </Box>
-            )}
-          </Box>
-        </Grid>
-      </Grid>
+          {isGuest && (
+            <Box sx={{ mt: 3 }}>
+              <MemberBenefitsTeaser
+                variant="compact"
+                onUnlockClick={() => navigate("/")}
+              />
+            </Box>
+          )}
+        </>
+      )}
+
+      {isLiteral && !isProvider && (
+        <GemBottomBar
+          precioCOP={product.precioCOP}
+          precioInternacional={product.precioInternacional}
+          shouldShowPrices={shouldShowPrices}
+          ctaLabel={ctaLabel}
+          onCta={handleAddToCart}
+          disabled={!isAvailable}
+        />
+      )}
 
       {/* Admin Selection Dialog (for staff) */}
       <AdminSelectDialog
@@ -891,11 +807,13 @@ export default function ProductDetail() {
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
         sx={{
           "& .MuiSnackbarContent-root": {
-            bgcolor: emeraldCore.dark,
-            color: "#FFFFFF",
+            bgcolor: qe.accentStrong,
+            color: qe.onAccent,
           },
         }}
       />
+
+      <RedesignVariantToggle />
     </Box>
   );
 }

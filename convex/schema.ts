@@ -45,6 +45,27 @@ export default defineSchema({
     .index("by_shortCode", ["shortCode"])
     .index("by_status", ["status"]),
 
+  // ─── Public "Vitrina" share links ────────────────────────────────
+  //
+  // A staff-generated public share: one short `token` → a set of product
+  // item numbers plus the pricing the client should see (multiplier +
+  // currency, mirroring the invitation guestMultiplier/guestCurrencyMode
+  // model). Convex-only (no Sheets mirror); read with no auth by the public
+  // `/v/:token` route so a client views the products without signing in.
+  // The multiplier is stored HERE (not in the URL) so the chosen markup is
+  // never exposed to — or editable by — the recipient.
+  vitrinas: defineTable({
+    token: v.string(),
+    itemIds: v.array(v.float64()),
+    currency: v.union(v.literal("COP"), v.literal("USD")),
+    multiplier: v.float64(),
+    senderSlug: v.optional(v.string()),
+    createdAt: v.string(),
+    // Verified Google email of the staff member who minted the link (audit).
+    // Set by the /api/vitrina proxy after it verifies the caller's Google token.
+    createdByEmail: v.optional(v.string()),
+  }).index("by_token", ["token"]),
+
   productViews: defineTable({
     timestamp: v.string(),
     itemId: v.string(),
