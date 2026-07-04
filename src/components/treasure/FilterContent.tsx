@@ -21,9 +21,9 @@ import {
   alpha,
   Collapse,
   Button,
-  Slider,
   Tooltip,
 } from '@mui/material';
+import { LogRangeSlider } from '../shared/LogRangeSlider';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { Theme } from '@mui/material/styles';
 import {
@@ -43,9 +43,18 @@ import {
 import { useTreasureAnalytics } from '../../hooks/useTreasureAnalytics';
 import { usePriceShare } from '../../contexts/PriceShareContext';
 import { TreasureItem } from '../../types';
-import { formatCurrency, getColorDot, formatCollectionName } from '../../utils/formatting';
+import {
+  formatCurrency,
+  getColorDot,
+  formatCollectionName,
+} from '../../utils/formatting';
 import { useCurrency } from '../../contexts/CurrencyContext';
-import { emeraldCore, surfacesLight, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
+import {
+  emeraldCore,
+  surfacesLight,
+  surfacesDark,
+  semanticColors,
+} from '../../design-system/tokens/colors';
 import { cssTransition } from '../../design-system';
 
 // =============================================================================
@@ -223,7 +232,9 @@ export const FilterContent = memo(function FilterContent({
 
     const pillInactive = {
       bgcolor: isLight ? 'white' : surfacesDark.background.secondary,
-      borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
+      borderColor: isLight
+        ? surfacesLight.border.light
+        : surfacesDark.border.default,
       color: theme.palette.text.secondary,
       '&:hover': {
         borderColor: alpha(emeraldCore.primary, 0.5),
@@ -258,16 +269,33 @@ export const FilterContent = memo(function FilterContent({
         <Box
           sx={{
             display: 'flex',
-            bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.tertiary,
+            bgcolor: isLight
+              ? surfacesLight.background.secondary
+              : surfacesDark.background.tertiary,
             borderRadius: '24px',
             p: 0.4,
             gap: 0.25,
           }}
         >
           {[
-            { value: 'available' as StatusFilter, label: t.treasure.filter.available, dot: emeraldCore.primary, tooltip: t.treasure.filter.availableHint },
-            { value: 'sold' as StatusFilter, label: t.treasure.filter.sold, dot: semanticColors.error.main, tooltip: t.treasure.filter.soldHint },
-            { value: 'all' as StatusFilter, label: t.treasure.filter.all, dot: null, tooltip: t.treasure.filter.allHint },
+            {
+              value: 'available' as StatusFilter,
+              label: t.treasure.filter.available,
+              dot: emeraldCore.primary,
+              tooltip: t.treasure.filter.availableHint,
+            },
+            {
+              value: 'sold' as StatusFilter,
+              label: t.treasure.filter.sold,
+              dot: semanticColors.error.main,
+              tooltip: t.treasure.filter.soldHint,
+            },
+            {
+              value: 'all' as StatusFilter,
+              label: t.treasure.filter.all,
+              dot: null,
+              tooltip: t.treasure.filter.allHint,
+            },
           ].map((option) => (
             <Tooltip
               key={option.value}
@@ -294,18 +322,29 @@ export const FilterContent = memo(function FilterContent({
                   gap: 0.5,
                   ...(statusFilter === option.value
                     ? {
-                        bgcolor: isLight ? 'white' : surfacesDark.background.secondary,
+                        bgcolor: isLight
+                          ? 'white'
+                          : surfacesDark.background.secondary,
                         color: emeraldCore.dark,
                         boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
                       }
                     : {
                         color: theme.palette.text.secondary,
-                        '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.05) },
+                        '&:hover': {
+                          bgcolor: alpha(emeraldCore.primary, 0.05),
+                        },
                       }),
                 }}
               >
                 {option.dot && (
-                  <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: option.dot }} />
+                  <Box
+                    sx={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      bgcolor: option.dot,
+                    }}
+                  />
                 )}
                 {option.label}
               </Box>
@@ -318,8 +357,14 @@ export const FilterContent = memo(function FilterContent({
           {/* Type pills */}
           {[
             { value: 'all' as TypeFilter, label: t.treasure.filter.allTypes },
-            { value: 'loose' as TypeFilter, label: `💎 ${t.treasure.filter.looseStones}` },
-            { value: 'jewelry' as TypeFilter, label: `💍 ${t.treasure.filter.jewelry}` },
+            {
+              value: 'loose' as TypeFilter,
+              label: `💎 ${t.treasure.filter.looseStones}`,
+            },
+            {
+              value: 'jewelry' as TypeFilter,
+              label: `💍 ${t.treasure.filter.jewelry}`,
+            },
           ].map((option) => (
             <Box
               key={option.value}
@@ -343,13 +388,19 @@ export const FilterContent = memo(function FilterContent({
                 fontSize: '0.75rem',
                 '& .MuiSelect-select': { py: 0.6, px: 1.5 },
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
+                  borderColor: isLight
+                    ? surfacesLight.border.light
+                    : surfacesDark.border.default,
                 },
               }}
             >
               <MenuItem value="newest">{t.treasure.sort.newest}</MenuItem>
-              {!hidePriceFilter && <MenuItem value="price-desc">{`${t.treasure.filter.price} ↓`}</MenuItem>}
-              {!hidePriceFilter && <MenuItem value="price-asc">{`${t.treasure.filter.price} ↑`}</MenuItem>}
+              {!hidePriceFilter && (
+                <MenuItem value="price-desc">{`${t.treasure.filter.price} ↓`}</MenuItem>
+              )}
+              {!hidePriceFilter && (
+                <MenuItem value="price-asc">{`${t.treasure.filter.price} ↑`}</MenuItem>
+              )}
               <MenuItem value="name-asc">A-Z</MenuItem>
               <MenuItem value="quality-premium">Calidad</MenuItem>
             </Select>
@@ -359,7 +410,14 @@ export const FilterContent = memo(function FilterContent({
         {/* Row 2.5: Category pills (from Column K) */}
         {categorias.length > 0 && (
           <Box>
-            <Typography variant="caption" sx={{ color: theme.palette.text.secondary, mb: 0.5, display: 'block' }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: theme.palette.text.secondary,
+                mb: 0.5,
+                display: 'block',
+              }}
+            >
               {t.treasure.filter.category}
             </Typography>
             <Box
@@ -386,7 +444,9 @@ export const FilterContent = memo(function FilterContent({
               {categorias.map((cat) => (
                 <Box
                   key={cat}
-                  onClick={() => setCategoriaFilter(categoriaFilter === cat ? 'all' : cat)}
+                  onClick={() =>
+                    setCategoriaFilter(categoriaFilter === cat ? 'all' : cat)
+                  }
                   sx={{
                     ...pillBase,
                     ...(categoriaFilter === cat ? pillActive : pillInactive),
@@ -401,7 +461,14 @@ export const FilterContent = memo(function FilterContent({
 
         {/* Row 3: Color swatches (visual) */}
         <Box>
-          <Typography variant="caption" sx={{ color: theme.palette.text.secondary, mb: 0.5, display: 'block' }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: theme.palette.text.secondary,
+              mb: 0.5,
+              display: 'block',
+            }}
+          >
             {t.treasure.filter.color}
           </Typography>
           <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
@@ -441,7 +508,14 @@ export const FilterContent = memo(function FilterContent({
         {/* Row 4: Price tiers (smart chips) - Hidden for guests with no_prices mode */}
         {!hidePriceFilter && (
           <Box>
-            <Typography variant="caption" sx={{ color: theme.palette.text.secondary, mb: 0.5, display: 'block' }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: theme.palette.text.secondary,
+                mb: 0.5,
+                display: 'block',
+              }}
+            >
               {t.treasure.filter.price}
             </Typography>
             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
@@ -451,7 +525,9 @@ export const FilterContent = memo(function FilterContent({
                   onClick={() => setPriceRange([tier.min, tier.max])}
                   sx={{
                     ...pillBase,
-                    ...(currentPriceTier === tier.label ? pillActive : pillInactive),
+                    ...(currentPriceTier === tier.label
+                      ? pillActive
+                      : pillInactive),
                   }}
                 >
                   {tier.label}
@@ -464,12 +540,23 @@ export const FilterContent = memo(function FilterContent({
         {/* Row 4.5: Carat tiers */}
         {caratMinMax.max > 0 && (
           <Box>
-            <Typography variant="caption" sx={{ color: theme.palette.text.secondary, mb: 0.5, display: 'block' }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: theme.palette.text.secondary,
+                mb: 0.5,
+                display: 'block',
+              }}
+            >
               {t.treasure.filter.carat}
             </Typography>
             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
               {[
-                { label: t.treasure.filter.allCarats, min: caratMinMax.min, max: caratMinMax.max },
+                {
+                  label: t.treasure.filter.allCarats,
+                  min: caratMinMax.min,
+                  max: caratMinMax.max,
+                },
                 { label: '< 1 ct', min: caratMinMax.min, max: 1 },
                 { label: '1 - 3 ct', min: 1, max: 3 },
                 { label: '3 - 10 ct', min: 3, max: 10 },
@@ -511,7 +598,9 @@ export const FilterContent = memo(function FilterContent({
           {shapes.slice(0, 4).map((shape) => (
             <Box
               key={shape}
-              onClick={() => setShapeFilter(shapeFilter === shape ? 'all' : shape)}
+              onClick={() =>
+                setShapeFilter(shapeFilter === shape ? 'all' : shape)
+              }
               sx={{
                 ...pillBase,
                 ...(shapeFilter === shape ? pillActive : pillInactive),
@@ -525,7 +614,9 @@ export const FilterContent = memo(function FilterContent({
           {qualities.slice(0, 3).map((quality) => (
             <Box
               key={quality}
-              onClick={() => setQualityFilter(qualityFilter === quality ? 'all' : quality)}
+              onClick={() =>
+                setQualityFilter(qualityFilter === quality ? 'all' : quality)
+              }
               sx={{
                 ...pillBase,
                 ...(qualityFilter === quality ? pillActive : pillInactive),
@@ -537,7 +628,9 @@ export const FilterContent = memo(function FilterContent({
 
           {/* Cantidad */}
           <Box
-            onClick={() => setCantidadFilter(cantidadFilter === '2+' ? 'all' : '2+')}
+            onClick={() =>
+              setCantidadFilter(cantidadFilter === '2+' ? 'all' : '2+')
+            }
             sx={{
               ...pillBase,
               ...(cantidadFilter === '2+' ? pillActive : pillInactive),
@@ -574,7 +667,15 @@ export const FilterContent = memo(function FilterContent({
   // Desktop mode: Original layout with "Más filtros" toggle
   return (
     <>
-      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mb: showAdvancedFilters ? 2 : 0 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 2,
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          mb: showAdvancedFilters ? 2 : 0,
+        }}
+      >
         {/* Search */}
         <TextField
           placeholder={t.treasure.search.placeholder}
@@ -583,7 +684,7 @@ export const FilterContent = memo(function FilterContent({
           onBlur={() => {
             if (search.trim()) {
               analyticsHook.trackSearch(search, sortedTreasure.length);
-              const itemIds = sortedTreasure.map(item => item.item);
+              const itemIds = sortedTreasure.map((item) => item.item);
               analyticsHook.trackSearchHits(itemIds);
             }
           }}
@@ -595,7 +696,9 @@ export const FilterContent = memo(function FilterContent({
             flex: 1,
             '& .MuiOutlinedInput-root': {
               borderRadius: 2,
-              bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.secondary,
+              bgcolor: isLight
+                ? surfacesLight.background.secondary
+                : surfacesDark.background.secondary,
             },
           }}
           InputProps={{
@@ -608,7 +711,12 @@ export const FilterContent = memo(function FilterContent({
         />
 
         {/* Status filter with tooltip */}
-        <Tooltip title={t.treasure.filter.statusTooltip} arrow enterDelay={600} placement="top">
+        <Tooltip
+          title={t.treasure.filter.statusTooltip}
+          arrow
+          enterDelay={600}
+          placement="top"
+        >
           <FormControl size="small" sx={{ minWidth: 130 }}>
             <Select
               value={statusFilter}
@@ -619,19 +727,40 @@ export const FilterContent = memo(function FilterContent({
             >
               <MenuItem value="available">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: emeraldCore.primary }} />
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      bgcolor: emeraldCore.primary,
+                    }}
+                  />
                   {t.treasure.filter.available}
                 </Box>
               </MenuItem>
               <MenuItem value="sold">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: semanticColors.error.main }} />
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      bgcolor: semanticColors.error.main,
+                    }}
+                  />
                   {t.treasure.filter.sold}
                 </Box>
               </MenuItem>
               <MenuItem value="all">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: surfacesLight.text.secondary }} />
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      bgcolor: surfacesLight.text.secondary,
+                    }}
+                  />
                   {t.treasure.filter.all}
                 </Box>
               </MenuItem>
@@ -659,13 +788,25 @@ export const FilterContent = memo(function FilterContent({
             }}
           >
             <MenuItem value="newest">{t.treasure.sort.newest}</MenuItem>
-            {!hidePriceFilter && <MenuItem value="price-desc">{t.treasure.sort.priceDesc}</MenuItem>}
-            {!hidePriceFilter && <MenuItem value="price-asc">{t.treasure.sort.priceAsc}</MenuItem>}
+            {!hidePriceFilter && (
+              <MenuItem value="price-desc">
+                {t.treasure.sort.priceDesc}
+              </MenuItem>
+            )}
+            {!hidePriceFilter && (
+              <MenuItem value="price-asc">{t.treasure.sort.priceAsc}</MenuItem>
+            )}
             <MenuItem value="name-asc">{t.treasure.sort.nameAsc}</MenuItem>
             <MenuItem value="name-desc">{t.treasure.sort.nameDesc}</MenuItem>
-            <MenuItem value="quality-premium">{t.treasure.sort.bestQuality}</MenuItem>
-            <MenuItem value="item-number">{t.treasure.sort.itemNumber}</MenuItem>
-            <MenuItem value="most-searched">{t.treasure.sort.mostSearched}</MenuItem>
+            <MenuItem value="quality-premium">
+              {t.treasure.sort.bestQuality}
+            </MenuItem>
+            <MenuItem value="item-number">
+              {t.treasure.sort.itemNumber}
+            </MenuItem>
+            <MenuItem value="most-searched">
+              {t.treasure.sort.mostSearched}
+            </MenuItem>
           </Select>
         </FormControl>
 
@@ -678,7 +819,10 @@ export const FilterContent = memo(function FilterContent({
             aria-label="Filtrar por categoría"
             sx={{
               borderRadius: 2,
-              bgcolor: categoriaFilter !== 'all' ? alpha(emeraldCore.primary, 0.1) : 'transparent',
+              bgcolor:
+                categoriaFilter !== 'all'
+                  ? alpha(emeraldCore.primary, 0.1)
+                  : 'transparent',
             }}
           >
             <MenuItem value="all">{t.treasure.filter.category}</MenuItem>
@@ -731,7 +875,13 @@ export const FilterContent = memo(function FilterContent({
           onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           aria-expanded={showAdvancedFilters}
           startIcon={<SlidersHorizontal size={16} />}
-          endIcon={showAdvancedFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          endIcon={
+            showAdvancedFilters ? (
+              <ChevronUp size={14} />
+            ) : (
+              <ChevronDown size={14} />
+            )
+          }
           sx={{
             color: theme.palette.text.secondary,
             textTransform: 'none',
@@ -759,7 +909,20 @@ export const FilterContent = memo(function FilterContent({
 
       {/* Advanced Filters */}
       <Collapse in={showAdvancedFilters}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mt: 2, pt: 2, borderTop: '1px solid', borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 2,
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            mt: 2,
+            pt: 2,
+            borderTop: '1px solid',
+            borderColor: isLight
+              ? surfacesLight.border.light
+              : surfacesDark.border.default,
+          }}
+        >
           {/* Color filter */}
           <FormControl size="small" sx={{ minWidth: 140 }}>
             <Select
@@ -773,7 +936,14 @@ export const FilterContent = memo(function FilterContent({
               {colors.map((color) => (
                 <MenuItem key={color} value={color}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: getColorDot(color) }} />
+                    <Box
+                      sx={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        bgcolor: getColorDot(color),
+                      }}
+                    />
                     {color.replace('Verde ', '')}
                   </Box>
                 </MenuItem>
@@ -827,7 +997,10 @@ export const FilterContent = memo(function FilterContent({
                 aria-label="Filtrar por colección"
                 sx={{
                   borderRadius: 2,
-                  bgcolor: coleccionFilter !== 'all' ? alpha(emeraldCore.primary, 0.1) : 'transparent',
+                  bgcolor:
+                    coleccionFilter !== 'all'
+                      ? alpha(emeraldCore.primary, 0.1)
+                      : 'transparent',
                 }}
               >
                 <MenuItem value="all">{t.treasure.filter.collection}</MenuItem>
@@ -844,31 +1017,51 @@ export const FilterContent = memo(function FilterContent({
         {/* Price Range Slider - Hidden for guests with no_prices mode */}
         {!hidePriceFilter && (
           <Box sx={{ mt: 2, px: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 1,
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 600, color: theme.palette.text.primary }}
+              >
                 {t.treasure.filter.priceRange}
               </Typography>
-              <Typography variant="caption" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
-                {formatCurrency(convertPrice(priceRange[0]), currency)} - {formatCurrency(convertPrice(priceRange[1]), currency)}
+              <Typography
+                variant="caption"
+                sx={{ color: emeraldCore.dark, fontWeight: 600 }}
+              >
+                {formatCurrency(convertPrice(priceRange[0]), currency)} -{' '}
+                {formatCurrency(convertPrice(priceRange[1]), currency)}
               </Typography>
             </Box>
-            <Slider
+            <LogRangeSlider
               value={priceRange}
-              onChange={(_, value) => setPriceRange(value as [number, number])}
+              onChange={setPriceRange}
               min={priceMinMax.min}
               max={priceMinMax.max}
-              step={100000}
+              roundTo={1000}
               valueLabelDisplay="auto"
-              valueLabelFormat={(value) => formatCurrency(convertPrice(value), currency)}
+              valueLabelFormat={(value) =>
+                formatCurrency(convertPrice(value), currency)
+              }
               aria-label="Rango de precio"
-              getAriaValueText={(value) => formatCurrency(convertPrice(value), currency)}
+              getAriaValueText={(value) =>
+                formatCurrency(convertPrice(value), currency)
+              }
               sx={{
                 color: emeraldCore.dark,
                 '& .MuiSlider-thumb': { width: 20, height: 20 },
                 '& .MuiSlider-track': { height: 4 },
                 '& .MuiSlider-rail': {
                   height: 4,
-                  bgcolor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
+                  bgcolor: isLight
+                    ? surfacesLight.border.light
+                    : surfacesDark.border.default,
                 },
               }}
             />
@@ -878,20 +1071,33 @@ export const FilterContent = memo(function FilterContent({
         {/* Carat Range Slider */}
         {caratMinMax.max > 0 && (
           <Box sx={{ mt: 2, px: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 1,
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 600, color: theme.palette.text.primary }}
+              >
                 {t.treasure.filter.caratRange}
               </Typography>
-              <Typography variant="caption" sx={{ color: emeraldCore.dark, fontWeight: 600 }}>
+              <Typography
+                variant="caption"
+                sx={{ color: emeraldCore.dark, fontWeight: 600 }}
+              >
                 {caratRange[0].toFixed(1)} - {caratRange[1].toFixed(1)} ct
               </Typography>
             </Box>
-            <Slider
+            <LogRangeSlider
               value={caratRange}
-              onChange={(_, value) => setCaratRange(value as [number, number])}
+              onChange={setCaratRange}
               min={caratMinMax.min}
               max={caratMinMax.max}
-              step={0.1}
+              roundTo={0.1}
               valueLabelDisplay="auto"
               valueLabelFormat={(value) => `${value.toFixed(1)} ct`}
               aria-label={t.treasure.filter.caratRange}
@@ -902,7 +1108,9 @@ export const FilterContent = memo(function FilterContent({
                 '& .MuiSlider-track': { height: 4 },
                 '& .MuiSlider-rail': {
                   height: 4,
-                  bgcolor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
+                  bgcolor: isLight
+                    ? surfacesLight.border.light
+                    : surfacesDark.border.default,
                 },
               }}
             />

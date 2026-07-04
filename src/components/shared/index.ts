@@ -19,14 +19,33 @@ export { default as MediaPreview } from './MediaPreview';
 export { default as ProtectedContent } from './ProtectedContent';
 
 // Accessibility & Navigation
-export { default as ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog';
+export {
+  default as ConfirmDialog,
+  type ConfirmDialogProps,
+} from './ConfirmDialog';
 export { LiveRegionProvider, useLiveRegion } from './LiveRegion';
-export { default as Breadcrumbs, type BreadcrumbItem, type BreadcrumbsProps } from './Breadcrumbs';
+export {
+  default as Breadcrumbs,
+  type BreadcrumbItem,
+  type BreadcrumbsProps,
+} from './Breadcrumbs';
+
+// Filter controls
+export {
+  default as LogRangeSlider,
+  type LogRangeSliderProps,
+} from './LogRangeSlider';
 
 // Analytics & Dashboard Components
 export { default as TabPanel, type TabPanelProps } from './TabPanel';
 export { default as MetricCard, type MetricCardProps } from './MetricCard';
 export { default as StatBox, type StatBoxProps } from './StatBox';
 export { default as GlassCard, type GlassCardProps } from './GlassCard';
-export { default as SectionHeader, type SectionHeaderProps } from './SectionHeader';
-export { default as ActivityItem, type ActivityItemProps } from './ActivityItem';
+export {
+  default as SectionHeader,
+  type SectionHeaderProps,
+} from './SectionHeader';
+export {
+  default as ActivityItem,
+  type ActivityItemProps,
+} from './ActivityItem';

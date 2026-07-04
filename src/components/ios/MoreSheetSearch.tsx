@@ -17,7 +17,6 @@ import {
   Chip,
   Button,
   Collapse,
-  Slider,
   alpha,
 } from '@mui/material';
 import {
@@ -32,13 +31,25 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { useTreasure } from '../../hooks/useTreasure';
-import { useTreasureFiltering, TypeFilter } from '../../hooks/useTreasureFiltering';
+import {
+  useTreasureFiltering,
+  TypeFilter,
+} from '../../hooks/useTreasureFiltering';
+import { LogRangeSlider } from '../shared/LogRangeSlider';
 import { goldAccent } from '../../design-system/tokens/colors';
-import { cssTransition, primitiveColors, primitiveSpacing as spacing } from '../../design-system';
+import {
+  cssTransition,
+  primitiveColors,
+  primitiveSpacing as spacing,
+} from '../../design-system';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 
 // Helper to generate filter chip styles
-const getFilterChipSx = (isActive: boolean, color: string, hoverColor: string) => ({
+const getFilterChipSx = (
+  isActive: boolean,
+  color: string,
+  hoverColor: string,
+) => ({
   bgcolor: isActive ? color : 'transparent',
   color: isActive ? 'white' : 'var(--text-secondary)',
   border: '1px solid',
@@ -61,21 +72,28 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Read initial values from URL params for persistence
-  const urlParams = typeof window !== 'undefined'
-    ? new URLSearchParams(window.location.search)
-    : new URLSearchParams();
+  const urlParams =
+    typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search)
+      : new URLSearchParams();
 
   // Local filter state for preview - initialized from URL params
   const [localSearch, setLocalSearch] = useState(urlParams.get('search') || '');
   const [localTypeFilter, setLocalTypeFilter] = useState<TypeFilter>(
-    (urlParams.get('type') as TypeFilter) || 'all'
+    (urlParams.get('type') as TypeFilter) || 'all',
   );
-  const [localQualityFilter, setLocalQualityFilter] = useState(urlParams.get('quality') || 'all');
-  const [localCityFilter, setLocalCityFilter] = useState(urlParams.get('city') || 'all');
+  const [localQualityFilter, setLocalQualityFilter] = useState(
+    urlParams.get('quality') || 'all',
+  );
+  const [localCityFilter, setLocalCityFilter] = useState(
+    urlParams.get('city') || 'all',
+  );
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [localPriceRange, setLocalPriceRange] = useState<[number, number]>([
     urlParams.get('priceMin') ? parseInt(urlParams.get('priceMin')!, 10) : 0,
-    urlParams.get('priceMax') ? parseInt(urlParams.get('priceMax')!, 10) : Number.MAX_SAFE_INTEGER
+    urlParams.get('priceMax')
+      ? parseInt(urlParams.get('priceMax')!, 10)
+      : Number.MAX_SAFE_INTEGER,
   ]);
 
   // Sync from URL on mount only (not on every render to prevent loops)
@@ -96,21 +114,19 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
   }, []);
 
   // Use the filtering hook for preview results
-  const {
-    sortedTreasure,
-    filteredStats,
-    filterOptions,
-  } = useTreasureFiltering({
-    treasure,
-    initialFilters: {
-      search: localSearch,
-      typeFilter: localTypeFilter,
-      qualityFilter: localQualityFilter,
-      cityFilter: localCityFilter as any,
-      statusFilter: 'available',
-      priceRange: localPriceRange,
+  const { sortedTreasure, filteredStats, filterOptions } = useTreasureFiltering(
+    {
+      treasure,
+      initialFilters: {
+        search: localSearch,
+        typeFilter: localTypeFilter,
+        qualityFilter: localQualityFilter,
+        cityFilter: localCityFilter as any,
+        statusFilter: 'available',
+        priceRange: localPriceRange,
+      },
     },
-  });
+  );
 
   // Custom hasFilters check - exclude statusFilter since 'available' is our default
   const hasActiveFilters = useMemo(() => {
@@ -119,19 +135,28 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
       localTypeFilter !== 'all' ||
       localQualityFilter !== 'all' ||
       localCityFilter !== 'all' ||
-      (filterOptions.priceMinMax.max > 0 && (
-        localPriceRange[0] !== filterOptions.priceMinMax.min ||
-        localPriceRange[1] !== filterOptions.priceMinMax.max
-      ))
+      (filterOptions.priceMinMax.max > 0 &&
+        (localPriceRange[0] !== filterOptions.priceMinMax.min ||
+          localPriceRange[1] !== filterOptions.priceMinMax.max))
     );
-  }, [localSearch, localTypeFilter, localQualityFilter, localCityFilter, localPriceRange, filterOptions.priceMinMax]);
+  }, [
+    localSearch,
+    localTypeFilter,
+    localQualityFilter,
+    localCityFilter,
+    localPriceRange,
+    filterOptions.priceMinMax,
+  ]);
 
   // Sync price range when filter options load - only once to prevent loops
   const priceRangeInitRef = useRef(false);
   useEffect(() => {
     if (!priceRangeInitRef.current && filterOptions.priceMinMax.max > 0) {
       priceRangeInitRef.current = true;
-      setLocalPriceRange([filterOptions.priceMinMax.min, filterOptions.priceMinMax.max]);
+      setLocalPriceRange([
+        filterOptions.priceMinMax.min,
+        filterOptions.priceMinMax.max,
+      ]);
     }
   }, [filterOptions.priceMinMax.min, filterOptions.priceMinMax.max]);
 
@@ -179,7 +204,10 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
     setLocalTypeFilter('all');
     setLocalQualityFilter('all');
     setLocalCityFilter('all');
-    setLocalPriceRange([filterOptions.priceMinMax.min, filterOptions.priceMinMax.max]);
+    setLocalPriceRange([
+      filterOptions.priceMinMax.min,
+      filterOptions.priceMinMax.max,
+    ]);
   };
 
   return (
@@ -283,15 +311,29 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
             size="small"
             icon={<Gem size={14} />}
             label="Gemas"
-            onClick={() => setLocalTypeFilter(localTypeFilter === 'loose' ? 'all' : 'loose')}
-            sx={getFilterChipSx(localTypeFilter === 'loose', primitiveColors.emerald[500], primitiveColors.emerald[600])}
+            onClick={() =>
+              setLocalTypeFilter(localTypeFilter === 'loose' ? 'all' : 'loose')
+            }
+            sx={getFilterChipSx(
+              localTypeFilter === 'loose',
+              primitiveColors.emerald[500],
+              primitiveColors.emerald[600],
+            )}
           />
           <Chip
             size="small"
             icon={<Crown size={14} />}
             label="Joyería"
-            onClick={() => setLocalTypeFilter(localTypeFilter === 'jewelry' ? 'all' : 'jewelry')}
-            sx={getFilterChipSx(localTypeFilter === 'jewelry', goldAccent.primary, goldAccent.dark)}
+            onClick={() =>
+              setLocalTypeFilter(
+                localTypeFilter === 'jewelry' ? 'all' : 'jewelry',
+              )
+            }
+            sx={getFilterChipSx(
+              localTypeFilter === 'jewelry',
+              goldAccent.primary,
+              goldAccent.dark,
+            )}
           />
 
           {/* Quality chip */}
@@ -299,8 +341,16 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
             size="small"
             icon={<Sparkles size={14} />}
             label="Premium"
-            onClick={() => setLocalQualityFilter(localQualityFilter === 'PREMIUM' ? 'all' : 'PREMIUM')}
-            sx={getFilterChipSx(localQualityFilter === 'PREMIUM', goldAccent.primary, goldAccent.dark)}
+            onClick={() =>
+              setLocalQualityFilter(
+                localQualityFilter === 'PREMIUM' ? 'all' : 'PREMIUM',
+              )
+            }
+            sx={getFilterChipSx(
+              localQualityFilter === 'PREMIUM',
+              goldAccent.primary,
+              goldAccent.dark,
+            )}
           />
 
           {/* City chips */}
@@ -308,15 +358,29 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
             size="small"
             icon={<MapPin size={14} />}
             label="Cali"
-            onClick={() => setLocalCityFilter(localCityFilter === 'Cali' ? 'all' : 'Cali')}
-            sx={getFilterChipSx(localCityFilter === 'Cali', primitiveColors.emerald[500], primitiveColors.emerald[600])}
+            onClick={() =>
+              setLocalCityFilter(localCityFilter === 'Cali' ? 'all' : 'Cali')
+            }
+            sx={getFilterChipSx(
+              localCityFilter === 'Cali',
+              primitiveColors.emerald[500],
+              primitiveColors.emerald[600],
+            )}
           />
           <Chip
             size="small"
             icon={<MapPin size={14} />}
             label="Bogotá"
-            onClick={() => setLocalCityFilter(localCityFilter === 'Bogotá' ? 'all' : 'Bogotá')}
-            sx={getFilterChipSx(localCityFilter === 'Bogotá', '#2563eb', '#1d4ed8')}
+            onClick={() =>
+              setLocalCityFilter(
+                localCityFilter === 'Bogotá' ? 'all' : 'Bogotá',
+              )
+            }
+            sx={getFilterChipSx(
+              localCityFilter === 'Bogotá',
+              '#2563eb',
+              '#1d4ed8',
+            )}
           />
 
           {/* Clear filters */}
@@ -345,7 +409,9 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
         size="small"
         onClick={() => setShowAdvanced(!showAdvanced)}
         startIcon={<SlidersHorizontal size={16} />}
-        endIcon={showAdvanced ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        endIcon={
+          showAdvanced ? <ChevronUp size={14} /> : <ChevronDown size={14} />
+        }
         sx={{
           mt: 2,
           color: 'var(--text-secondary)',
@@ -363,23 +429,39 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
 
       {/* Advanced Filters */}
       <Collapse in={showAdvanced}>
-        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid var(--border-default)' }}>
+        <Box
+          sx={{ mt: 2, pt: 2, borderTop: '1px solid var(--border-default)' }}
+        >
           {/* Price Range Slider */}
           <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 1,
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 600, color: 'var(--text-primary)' }}
+              >
                 Rango de Precio
               </Typography>
-              <Typography variant="caption" sx={{ color: primitiveColors.emerald[600], fontWeight: 600 }}>
-                {formatCurrency(localPriceRange[0])} - {formatCurrency(localPriceRange[1])}
+              <Typography
+                variant="caption"
+                sx={{ color: primitiveColors.emerald[600], fontWeight: 600 }}
+              >
+                {formatCurrency(localPriceRange[0])} -{' '}
+                {formatCurrency(localPriceRange[1])}
               </Typography>
             </Box>
-            <Slider
+            <LogRangeSlider
               value={localPriceRange}
-              onChange={(_, value) => setLocalPriceRange(value as [number, number])}
+              onChange={setLocalPriceRange}
               min={filterOptions.priceMinMax.min}
               max={filterOptions.priceMinMax.max}
-              step={100000}
+              roundTo={1000}
               valueLabelDisplay="auto"
               valueLabelFormat={(value) => formatCurrency(value)}
               sx={{
@@ -396,7 +478,10 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
 
           {/* Quality options */}
           <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: 'var(--text-primary)', mb: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 600, color: 'var(--text-primary)', mb: 1 }}
+            >
               Calidad
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -405,17 +490,31 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
                   key={quality}
                   size="small"
                   label={quality}
-                  onClick={() => setLocalQualityFilter(localQualityFilter === quality ? 'all' : quality)}
+                  onClick={() =>
+                    setLocalQualityFilter(
+                      localQualityFilter === quality ? 'all' : quality,
+                    )
+                  }
                   sx={{
-                    bgcolor: localQualityFilter === quality ? primitiveColors.emerald[500] : 'transparent',
-                    color: localQualityFilter === quality ? 'white' : 'var(--text-secondary)',
+                    bgcolor:
+                      localQualityFilter === quality
+                        ? primitiveColors.emerald[500]
+                        : 'transparent',
+                    color:
+                      localQualityFilter === quality
+                        ? 'white'
+                        : 'var(--text-secondary)',
                     border: '1px solid',
-                    borderColor: localQualityFilter === quality ? primitiveColors.emerald[500] : 'var(--border-default)',
+                    borderColor:
+                      localQualityFilter === quality
+                        ? primitiveColors.emerald[500]
+                        : 'var(--border-default)',
                     fontWeight: 500,
                     '&:hover': {
-                      bgcolor: localQualityFilter === quality
-                        ? primitiveColors.emerald[600]
-                        : alpha(primitiveColors.emerald[500], 0.1),
+                      bgcolor:
+                        localQualityFilter === quality
+                          ? primitiveColors.emerald[600]
+                          : alpha(primitiveColors.emerald[500], 0.1),
                     },
                   }}
                 />
@@ -427,20 +526,40 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
 
       {/* Results Preview & Search Button */}
       <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid var(--border-default)' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            mb: 2,
+          }}
+        >
           <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
             {hasActiveFilters ? (
               <>
-                <strong style={{ color: 'var(--text-primary)' }}>{sortedTreasure.length}</strong> resultados encontrados
+                <strong style={{ color: 'var(--text-primary)' }}>
+                  {sortedTreasure.length}
+                </strong>{' '}
+                resultados encontrados
               </>
             ) : (
               <>
-                <strong style={{ color: 'var(--text-primary)' }}>{treasure.filter(i => i.estado?.toUpperCase() === 'DISPONIBLE').length}</strong> tesoros disponibles
+                <strong style={{ color: 'var(--text-primary)' }}>
+                  {
+                    treasure.filter(
+                      (i) => i.estado?.toUpperCase() === 'DISPONIBLE',
+                    ).length
+                  }
+                </strong>{' '}
+                tesoros disponibles
               </>
             )}
           </Typography>
           {hasActiveFilters && (
-            <Typography variant="caption" sx={{ color: primitiveColors.emerald[600], fontWeight: 600 }}>
+            <Typography
+              variant="caption"
+              sx={{ color: primitiveColors.emerald[600], fontWeight: 600 }}
+            >
               {formatCurrency(filteredStats.totalValue)}
             </Typography>
           )}
@@ -463,7 +582,9 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
             },
           }}
         >
-          {hasActiveFilters ? `Ver ${sortedTreasure.length} resultados` : 'Explorar Tesoros'}
+          {hasActiveFilters
+            ? `Ver ${sortedTreasure.length} resultados`
+            : 'Explorar Tesoros'}
         </Button>
       </Box>
     </Box>
