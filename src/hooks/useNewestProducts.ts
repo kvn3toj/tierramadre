@@ -12,6 +12,7 @@ import { TreasureItem } from '../types';
 import { createLogger } from '../utils/logger';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
+import { mergeNewestCandidates } from '../utils/newestProductsMerge';
 
 const log = createLogger('NewestProducts');
 
@@ -100,14 +101,18 @@ function saveCache(products: NewestProduct[]): void {
  */
 async function fetchNewestProducts(
   limit: number,
-  notifyOnFailure = false
+  notifyOnFailure = false,
 ): Promise<NewestProduct[]> {
   try {
-    const response = await fetchWithRetry(`/api/get-newest-products?limit=${limit}`, undefined, {
-      retries: 3,
-      notifyOnFailure,
-      failureMessage: 'No se pudieron cargar las novedades.',
-    });
+    const response = await fetchWithRetry(
+      `/api/get-newest-products?limit=${limit}`,
+      undefined,
+      {
+        retries: 3,
+        notifyOnFailure,
+        failureMessage: 'No se pudieron cargar las novedades.',
+      },
+    );
     if (!response.ok) {
       log.debug('Failed to fetch newest products');
       return [];
@@ -132,9 +137,11 @@ async function fetchNewestProducts(
  */
 export function useNewestProducts(
   treasure: TreasureItem[],
-  limit: number = 10
+  limit: number = 10,
 ): UseNewestProductsReturn {
-  const [newestProductsData, setNewestProductsData] = useState<NewestProduct[]>([]);
+  const [newestProductsData, setNewestProductsData] = useState<NewestProduct[]>(
+    [],
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [fetchTrigger, setFetchTrigger] = useState(0);
 
@@ -146,7 +153,9 @@ export function useNewestProducts(
 
       // If we have cached data, show it immediately (even if stale)
       if (cachedProducts && cachedProducts.length > 0) {
-        log.debug(`Using cached newest products (${cachedProducts.length} items, stale: ${isStale})`);
+        log.debug(
+          `Using cached newest products (${cachedProducts.length} items, stale: ${isStale})`,
+        );
         setNewestProductsData(cachedProducts);
         setIsLoading(false);
 
@@ -184,46 +193,21 @@ export function useNewestProducts(
     fetchData();
   }, [limit, fetchTrigger]);
 
-  // Merge with treasure data for full product info
-  const newestProducts: TreasureItem[] = newestProductsData.map((product) => {
-    // Find matching treasure item
-    const treasureItem = treasure.find((t) => t.item === product.itemNumber);
-
-    if (treasureItem) {
-      return {
-        ...treasureItem,
-        imagen: product.proxyUrl,
-        nombre: treasureItem.nombre || product.productName,
-      };
-    }
-
-    // Fallback if no treasure match (shouldn't happen, but safety first)
-    // Using type assertion since this is a minimal fallback for display purposes only
-    return {
-      item: product.itemNumber,
-      nombre: product.productName,
-      imagen: product.proxyUrl,
-      fechaIngreso: '',
-      peso: 0,
-      color: '',
-      calidad: '',
-      cantidad: 1,
-      talla: '',
-      medidas: '',
-      precioCOP: 0,
-      ubicacion: '',
-      asesor: '',
-      estado: 'DISPONIBLE',
-      isJewelry: false,
-      mediaType: 'image' as const,
-    } as TreasureItem;
-  });
+  // Merge Drive-scanned legacy candidates with published Fotosíntesis items
+  // (already present in `treasure` via useFotosintesisCatalog), newest first.
+  const newestProducts: TreasureItem[] = mergeNewestCandidates(
+    newestProductsData,
+    treasure,
+    limit,
+  );
 
   // Refresh function
   const refresh = useCallback(() => {
     try {
       localStorage.removeItem(NEWEST_PRODUCTS_CACHE_KEY);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setNewestProductsData([]);
     setFetchTrigger((t) => t + 1);
   }, []);
