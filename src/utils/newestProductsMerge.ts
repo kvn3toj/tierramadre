@@ -44,7 +44,9 @@ function legacyStub(product: DriveNewestCandidate): TreasureItem {
  * matched in `treasure` that already has `publishedAt` set is skipped from
  * the Drive side so an out-of-band manual Drive upload for an
  * already-published item can't render it twice. Lote/sublote bundle cards
- * (`isLote`) are excluded: they have no single natural "newest" moment.
+ * (`isLote`) are excluded: they have no single natural "newest" moment. A
+ * Fotosíntesis item published before its photo was uploaded (`imagen` unset)
+ * is excluded too — it would otherwise render a broken-image placeholder.
  */
 export function mergeNewestCandidates(
   driveCandidates: DriveNewestCandidate[],
@@ -70,7 +72,7 @@ export function mergeNewestCandidates(
   }
 
   const fotosintesisDated: DatedItem[] = treasure
-    .filter((t) => t.publishedAt != null && !t.isLote)
+    .filter((t) => t.publishedAt != null && !t.isLote && !!t.imagen)
     .map((item) => ({ item, sortDate: item.publishedAt as number }));
 
   return [...legacyDated, ...fotosintesisDated]

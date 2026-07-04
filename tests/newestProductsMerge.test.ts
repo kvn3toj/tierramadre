@@ -22,6 +22,7 @@ function treasureItem(
     asesor: '',
     estado: 'DISPONIBLE',
     isJewelry: false,
+    imagen: `/api/serve-drive-image?fileId=item-${overrides.item}`,
     ...overrides,
   } as TreasureItem;
 }
@@ -133,5 +134,18 @@ describe('mergeNewestCandidates', () => {
     const result = mergeNewestCandidates(drive, treasure, 10);
 
     expect(result.map((i) => i.item)).toEqual([1, 2]);
+  });
+
+  it('excludes a published Fotosíntesis item that has no photo yet', () => {
+    // Published before its photo was uploaded (or fotoUrl never set) would
+    // otherwise render a broken-image placeholder in the carousel.
+    const treasure = [
+      treasureItem({ item: 1, publishedAt: Date.now(), imagen: undefined }),
+      treasureItem({ item: 2, publishedAt: Date.now() - 1000 }),
+    ];
+
+    const result = mergeNewestCandidates([], treasure, 10);
+
+    expect(result.map((i) => i.item)).toEqual([2]);
   });
 });
