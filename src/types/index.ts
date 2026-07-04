@@ -339,6 +339,10 @@ export interface TreasureItem {
   // `preponderancia` is the item's cost-weight share of its lot (internal
   // pricing input) — admin-only, never public.
   preponderancia?: number;
+  // ms epoch, stamped once when a Fotosíntesis item is first published to the
+  // catalog (see convex/_lib/publishState.ts). Undefined for legacy/Sheets
+  // items and for isLote group cards — both are excluded from "newest" sorts.
+  publishedAt?: number;
 
   // ── Fotosíntesis characteristics (PUBLIC, surfaced 2026-06-30) ──
   // Captured in the Fotosíntesis admin (productInventory) and, for `mina` /

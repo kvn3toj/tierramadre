@@ -294,6 +294,7 @@ export const publishedCatalog = query({
         estadoAsesor: row.estadoAsesor,
         fotoUrl: row.fotoUrl,
         certificadoUrl: row.certificadoUrl,
+        publishedAt: row.publishedAt,
         // ── Fotosíntesis characteristics (surfaced publicly 2026-06-30) ──
         procedencia: row.procedencia,
         nivelRareza: row.nivelRareza,

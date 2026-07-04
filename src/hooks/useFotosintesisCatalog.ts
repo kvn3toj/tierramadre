@@ -54,6 +54,7 @@ interface PublishedRow {
   estadoAsesor?: string;
   fotoUrl?: string;
   certificadoUrl?: string;
+  publishedAt?: number;
   // ── Fotosíntesis characteristics (surfaced publicly 2026-06-30) ──
   procedencia?: string;
   nivelRareza?: number;
@@ -137,6 +138,7 @@ function mapRowToTreasureItem(row: PublishedRow): TreasureItem {
     // Drive image captured in the wizard; useTreasure converts it to a proxy URL.
     imagen: row.fotoUrl || undefined,
     certificateUrl: row.certificadoUrl || undefined,
+    publishedAt: row.publishedAt,
     // ── Fotosíntesis characteristics (public) ──
     procedencia: row.procedencia || undefined,
     nivelRareza: row.nivelRareza,
