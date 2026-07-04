@@ -6,6 +6,47 @@ import { internalMutation } from "./_generated/server";
 import { api } from "./_generated/api";
 
 /**
+ * Backfill `publishedAt` for Fotosíntesis items published BEFORE the Estrenos
+ * carousel integration shipped.
+ *
+ * `publishedAt` is stamped by `withPublishStamp()` only on a false→true
+ * transition of `mostrarEnCatalogo` (see convex/_lib/publishState.ts). Items
+ * already published before that helper existed never had a transition to
+ * catch, so they'd never surface in Estrenos otherwise. This is a one-time
+ * catch-up: every currently-published item without a stamp gets one, seeded
+ * from its own `_creationTime` (when it was captured in Convex) — the closest
+ * available proxy for "when it became new," since we don't know its actual
+ * historical publish date.
+ *
+ * Idempotent: rows that already have `publishedAt` are skipped, so re-running
+ * after a partial run or after new items are published normally is harmless.
+ *
+ *   npx convex run --prod migrations:backfillPublishedAt '{}'
+ */
+export const backfillPublishedAt = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db
+      .query("productInventory")
+      .withIndex("by_mostrarEnCatalogo", (q) => q.eq("mostrarEnCatalogo", true))
+      .collect();
+
+    const eligible = rows.filter(
+      (row) => row.loteId !== undefined && row.publishedAt === undefined,
+    );
+
+    for (const row of eligible) {
+      await ctx.db.patch(row._id, { publishedAt: row._creationTime });
+    }
+
+    return {
+      backfilled: eligible.length,
+      itemIds: eligible.map((row) => row.itemId),
+    };
+  },
+});
+
+/**
  * Merge the duplicated "Agua Marina" stone.
  *
  * The same 18.8 ct stone was catalogued twice:
