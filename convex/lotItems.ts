@@ -4,6 +4,7 @@ import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { bumpInventoryTotal } from "./products";
 import { preponderanciaSum, balancesTo100 } from "./_lib/lotMath";
+import { withPublishStamp } from "./_lib/publishState";
 
 const tipoItemValidator = v.union(
   v.literal("gema"),
@@ -223,7 +224,7 @@ export const create = mutation({
       loteId: args.loteId,
       preponderancia: args.preponderancia,
       costoBaseCOP,
-      mostrarEnCatalogo: args.mostrarEnCatalogo ?? false,
+      ...withPublishStamp(null, args.mostrarEnCatalogo ?? false),
       tipo: args.tipo,
       procedencia: args.procedencia,
       observacion: args.observacion,
@@ -625,7 +626,10 @@ export const updateGemaFields = mutation({
 
     if (patch.mostrarEnCatalogo !== undefined) {
       if (patch.mostrarEnCatalogo !== (product.mostrarEnCatalogo ?? false)) {
-        productPatch.mostrarEnCatalogo = patch.mostrarEnCatalogo;
+        Object.assign(
+          productPatch,
+          withPublishStamp(product, patch.mostrarEnCatalogo),
+        );
         changes.push({
           field: "mostrarEnCatalogo",
           before: product.mostrarEnCatalogo ? 1 : 0,
