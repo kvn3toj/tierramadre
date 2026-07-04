@@ -38,18 +38,23 @@ function legacyStub(product: DriveNewestCandidate): TreasureItem {
  * image upload date) with Fotosíntesis items already published to the
  * catalog (sorted by publishedAt), newest-first, sliced to `limit`.
  *
- * Item numbers can't collide between the two sources — legacy and
- * Fotosíntesis items share one sequential item-number counter — so no
- * dedup step is needed. Lote/sublote bundle cards (`isLote`) are excluded:
- * they have no single natural "newest" moment.
+ * The two candidate pools are normally disjoint by photo-storage location —
+ * Fotosíntesis photos go to `fotoUrl`, never into the `products/` Drive
+ * folder this scans — not because item numbers can't collide. An item
+ * matched in `treasure` that already has `publishedAt` set is skipped from
+ * the Drive side so an out-of-band manual Drive upload for an
+ * already-published item can't render it twice. Lote/sublote bundle cards
+ * (`isLote`) are excluded: they have no single natural "newest" moment.
  */
 export function mergeNewestCandidates(
   driveCandidates: DriveNewestCandidate[],
   treasure: TreasureItem[],
   limit: number,
 ): TreasureItem[] {
-  const legacyDated: DatedItem[] = driveCandidates.map((product) => {
+  const legacyDated: DatedItem[] = [];
+  for (const product of driveCandidates) {
     const treasureItem = treasure.find((t) => t.item === product.itemNumber);
+    if (treasureItem?.publishedAt != null) continue;
     const item: TreasureItem = treasureItem
       ? {
           ...treasureItem,
@@ -57,8 +62,12 @@ export function mergeNewestCandidates(
           nombre: treasureItem.nombre || product.productName,
         }
       : legacyStub(product);
-    return { item, sortDate: new Date(product.imageCreatedTime).getTime() };
-  });
+    const sortDate = new Date(product.imageCreatedTime).getTime();
+    legacyDated.push({
+      item,
+      sortDate: Number.isFinite(sortDate) ? sortDate : 0,
+    });
+  }
 
   const fotosintesisDated: DatedItem[] = treasure
     .filter((t) => t.publishedAt != null && !t.isLote)

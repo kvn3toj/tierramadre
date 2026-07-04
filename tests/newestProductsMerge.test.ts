@@ -106,4 +106,32 @@ describe('mergeNewestCandidates', () => {
   it('returns [] when there are no candidates from either source', () => {
     expect(mergeNewestCandidates([], [], 10)).toEqual([]);
   });
+
+  it('does not double-count an item that has both a Drive folder and a Fotosíntesis publishedAt', () => {
+    // Normally disjoint (Fotosíntesis photos never land in the products/
+    // Drive folder), but an out-of-band manual upload could create both —
+    // the Fotosíntesis-published copy must win, not both.
+    const treasure = [treasureItem({ item: 7, publishedAt: Date.now() })];
+    const drive = [
+      driveCandidate({
+        itemNumber: 7,
+        imageCreatedTime: '2026-06-01T00:00:00.000Z',
+      }),
+    ];
+
+    const result = mergeNewestCandidates(drive, treasure, 10);
+
+    expect(result.map((i) => i.item)).toEqual([7]);
+  });
+
+  it('treats a malformed Drive imageCreatedTime as oldest rather than corrupting sort order', () => {
+    const treasure = [treasureItem({ item: 1, publishedAt: Date.now() })];
+    const drive = [
+      driveCandidate({ itemNumber: 2, imageCreatedTime: 'not-a-date' }),
+    ];
+
+    const result = mergeNewestCandidates(drive, treasure, 10);
+
+    expect(result.map((i) => i.item)).toEqual([1, 2]);
+  });
 });

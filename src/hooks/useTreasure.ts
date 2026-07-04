@@ -151,6 +151,11 @@ export function useTreasure() {
       // status (and none of the legacy URL/price/estado fields below) would
       // otherwise reuse the stale previous object and be silently discarded —
       // never reaching the product detail page. Watch them explicitly.
+      //
+      // `publishedAt` is intentionally NOT watched here: it only changes at
+      // the moment an item first enters `publishedCatalog`, which changes
+      // `treasure.length` and short-circuits this gate above (line ~139)
+      // before this comparison ever runs.
       if (
         prevItem?.item === item.item &&
         prevItem.imagen === item.imagen &&
