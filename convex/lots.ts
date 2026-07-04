@@ -19,6 +19,7 @@ import {
   reclaimIfTail,
 } from "./sequences";
 import { canReopenLot, deriveCostoBaseCOP } from "./_lib/lotMath";
+import { withPublishStamp } from "./_lib/publishState";
 
 // Free text (canonical: B | C | S | M). The capture UI sanitizes a custom
 // write-in to an uppercase, dash-free token before it reaches here, so it stays
@@ -485,7 +486,7 @@ export const publish = mutation({
         .withIndex("by_itemId", (q) => q.eq("itemId", item.itemId))
         .first();
       if (product && product.mostrarEnCatalogo !== true) {
-        await ctx.db.patch(product._id, { mostrarEnCatalogo: true });
+        await ctx.db.patch(product._id, withPublishStamp(product, true));
         flipped++;
       }
     }
