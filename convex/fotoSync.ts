@@ -33,6 +33,7 @@ import {
   type FotoSyncTable,
 } from "./_lib/sheetPullMaps";
 import { setInventoryLastPull } from "./products";
+import { withPublishStamp } from "./_lib/publishState";
 
 // ─── per-table metadata ──────────────────────────────────────────────────────
 
@@ -232,8 +233,16 @@ export const upsertTable = internalMutation({
         continue;
       }
 
+      const patch: Record<string, unknown> = { ...plan.patch };
+      if (t === "inventory" && patch.mostrarEnCatalogo === true) {
+        const stamp = withPublishStamp(
+          existing as { mostrarEnCatalogo?: boolean; publishedAt?: number },
+          true,
+        );
+        if (stamp.publishedAt !== undefined) patch.publishedAt = stamp.publishedAt;
+      }
       await patchDoc(ctx, existing._id as Id<"productInventory">, {
-        ...plan.patch,
+        ...patch,
         rowIndex: row.rowIndex,
         lastPulledAt: now,
         syncStatus: "synced",
