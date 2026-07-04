@@ -786,7 +786,6 @@ export default function ProductDetail() {
           shouldShowPrices={shouldShowPrices}
           ctaLabel={ctaLabel}
           onCta={handleAddToCart}
-          disabled={!isAvailable}
         />
       )}
 

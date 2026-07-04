@@ -223,8 +223,16 @@ export function useTreasureFiltering({
     const coleccionKey = coleccionFilter === 'all' ? '' : normalizeCollection(coleccionFilter);
     return treasure.filter(item => {
       if (hiddenItems.has(item.item)) return false;
+
+      // Items explicitly referenced by number (QR/quotation link, e.g. a
+      // client's saved ?items= URL) always pass the status check, even if
+      // they've since sold. That link is the client's reference to their
+      // order — it shouldn't go blank just because statusFilter defaults to
+      // 'available'.
+      const isExplicitItem = itemsFilter.length > 0 && itemsFilter.includes(item.item);
       const itemEstado = item.estado?.toUpperCase() || '';
       const matchesStatus =
+        isExplicitItem ||
         statusFilter === 'all' ||
         (statusFilter === 'available' && itemEstado === 'DISPONIBLE') ||
         (statusFilter === 'sold' && itemEstado === 'VENDIDA');

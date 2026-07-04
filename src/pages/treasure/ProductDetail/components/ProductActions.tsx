@@ -38,11 +38,12 @@ export const ProductActions: React.FC<ProductActionsProps> = ({
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 1 }}>
-      {/* Primary CTA - Add to Selection */}
+      {/* Primary CTA - Add to Selection. Sold pieces are selectable too (not
+          just available ones) so staff can include them in a client's share
+          link as a reference to their order. */}
       <Button
         variant="contained"
         fullWidth
-        disabled={!isAvailable}
         onClick={onAddToCart}
         startIcon={
           <Badge badgeContent={cartCount} color="secondary" max={9}>
@@ -50,11 +51,9 @@ export const ProductActions: React.FC<ProductActionsProps> = ({
           </Badge>
         }
         sx={{
-          background: isAvailable
-            ? isInCart
-              ? theme.palette.primary.dark
-              : theme.palette.primary.main
-            : undefined,
+          background: isInCart
+            ? theme.palette.primary.dark
+            : theme.palette.primary.main,
           color: '#FFFFFF',
           py: 1.5,
           minHeight: 44,
@@ -64,7 +63,7 @@ export const ProductActions: React.FC<ProductActionsProps> = ({
           textTransform: 'none',
           boxShadow: 'none',
           '&:hover': {
-            background: isAvailable ? theme.palette.primary.dark : undefined,
+            background: theme.palette.primary.dark,
             boxShadow: 'none',
           },
           '&:active': {
@@ -72,10 +71,10 @@ export const ProductActions: React.FC<ProductActionsProps> = ({
           },
         }}
       >
-        {!isAvailable
-          ? 'Vendido'
-          : isInCart
-            ? 'Ver Seleccion'
+        {isInCart
+          ? 'Ver Seleccion'
+          : !isAvailable
+            ? 'Agregar Vendido a Seleccion'
             : 'Agregar a Seleccion'}
       </Button>
 
