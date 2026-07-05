@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fotosíntesis · Generador de Certificados — Tierra Mädre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Cinzel:wght@500;600&family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --emerald:#0f5c3a;--emerald-2:#2f8c5c;--maroon:#8a2230;--carnet-green:#54bd8e;--carnet-green-2:#3a9e72;
+  --cream-o:#fcf7ec;--cream-e:#f7f2e4;--gold:#b8923f;--ink:#2c2c2c;
+  --ui-bg:#0d1512;--ui-panel:#13201a;--ui-line:#24382e;--ui-text:#e8efe9;--ui-muted:#93a89b;--ui-accent:#2f8c5c;--ui-accent-2:#54bd8e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Montserrat',system-ui,sans-serif;background:var(--ui-bg);color:var(--ui-text);display:flex;flex-direction:column;height:100vh;overflow:hidden}
+/* top bar */
+.topbar{display:flex;align-items:center;gap:16px;padding:12px 20px;background:linear-gradient(90deg,#0a130f,#10201a);border-bottom:1px solid var(--ui-line);flex-shrink:0}
+.brand{display:flex;align-items:center;gap:11px}
+.brand .leaf{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:linear-gradient(135deg,var(--ui-accent),var(--carnet-green));box-shadow:0 4px 14px rgba(47,140,92,.35)}
+.brand .leaf svg{width:20px;height:20px;color:#fff}
+.brand b{font-weight:700;font-size:15px}.brand .sub{font-size:11px;color:var(--ui-muted);letter-spacing:1.5px;text-transform:uppercase}
+.topbar .divider{width:1px;height:26px;background:var(--ui-line)}
+.topbar .crumb{font-size:13px;color:var(--ui-muted)}.topbar .crumb b{color:var(--ui-text)}
+.topbar .spacer{flex:1}
+.admin-chip{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ui-muted);background:#0c1813;border:1px solid var(--ui-line);padding:6px 11px;border-radius:20px}
+.admin-chip .dot{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#7a5cff,#54bd8e);display:grid;place-items:center;color:#fff;font-weight:700;font-size:11px}
+/* tabs */
+.tabs{display:flex;gap:6px;padding:10px 20px 0;background:#0c1611;flex-shrink:0}
+.tab{display:flex;align-items:center;gap:9px;padding:11px 18px;border:1px solid transparent;border-bottom:none;border-radius:10px 10px 0 0;cursor:pointer;color:var(--ui-muted);font-size:13px;font-weight:600}
+.tab:hover{color:var(--ui-text);background:#10201a}
+.tab.active{background:var(--ui-panel);color:var(--ui-text);border-color:var(--ui-line)}
+.tab .sw{width:11px;height:11px;border-radius:3px}
+.sw-green{background:linear-gradient(135deg,var(--emerald),var(--emerald-2))}
+.sw-maroon{background:linear-gradient(135deg,var(--maroon),#a83d44)}
+.sw-carnet{background:linear-gradient(135deg,var(--carnet-green),var(--carnet-green-2))}
+/* workspace */
+.workspace{flex:1;display:flex;min-height:0;background:var(--ui-panel)}
+.panel{width:360px;flex-shrink:0;background:var(--ui-panel);border-right:1px solid var(--ui-line);overflow-y:auto;padding:20px}
+.panel::-webkit-scrollbar{width:9px}.panel::-webkit-scrollbar-thumb{background:#24382e;border-radius:9px}
+.panel h2{font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:var(--ui-accent-2);margin-bottom:4px}
+.panel .lead{font-size:12px;color:var(--ui-muted);margin-bottom:16px;line-height:1.5}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--ui-muted);margin-bottom:6px}
+.field input,.field textarea,.field select{width:100%;background:#0c1813;border:1px solid var(--ui-line);color:var(--ui-text);padding:10px 12px;border-radius:9px;font-size:13px;font-family:inherit}
+.field textarea{resize:vertical;min-height:64px;line-height:1.5}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--ui-accent);box-shadow:0 0 0 3px rgba(47,140,92,.18)}
+.autofill{background:linear-gradient(135deg,#10201a,#0e1b15);border:1px solid var(--ui-line);border-radius:12px;padding:14px;margin-bottom:18px}
+.autofill .af-title{font-size:12px;font-weight:700;color:var(--ui-accent-2);margin-bottom:4px}
+.autofill .af-sub{font-size:11px;color:var(--ui-muted);margin-bottom:10px;line-height:1.45}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-file{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:7px;background:#0c1813;border:1px dashed var(--ui-line);color:var(--ui-muted);padding:9px;border-radius:9px;font-size:12px;cursor:pointer;font-weight:600}
+.btn-file:hover{border-color:var(--ui-accent);color:var(--ui-text)}
+.btn-file input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.note{font-size:11px;color:var(--ui-muted);background:#0c1813;border-left:3px solid var(--gold);padding:9px 11px;border-radius:0 8px 8px 0;line-height:1.5;margin-top:14px}
+.lockrow{font-size:11px;color:#7e9488;display:flex;gap:7px;align-items:flex-start;background:#0c1813;border:1px solid var(--ui-line);border-radius:8px;padding:9px 11px;margin-bottom:13px;line-height:1.5}
+/* preview */
+.preview{flex:1;min-width:0;display:flex;flex-direction:column;background:radial-gradient(circle at 30% 20%,#1a2c23,#0d1512 70%)}
+.preview-toolbar{display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--ui-line);flex-shrink:0}
+.pt-label{font-size:12px;color:var(--ui-muted)}.pt-label b{color:var(--ui-text)}
+.preview-toolbar .spacer{flex:1}
+.zoom{display:flex;align-items:center;gap:4px;background:#0c1813;border:1px solid var(--ui-line);border-radius:8px;padding:3px}
+.zoom button{width:26px;height:26px;border:none;background:transparent;color:var(--ui-muted);border-radius:6px;cursor:pointer;font-size:15px}
+.zoom button:hover{background:#16271f;color:#fff}.zoom span{font-size:11px;color:var(--ui-muted);min-width:38px;text-align:center}
+.btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:9px;padding:9px 15px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn svg{width:15px;height:15px}
+.btn-ghost{background:#0c1813;border:1px solid var(--ui-line);color:var(--ui-text)}.btn-ghost:hover{background:#16271f}
+.btn-primary{background:linear-gradient(135deg,var(--ui-accent),var(--carnet-green));color:#fff;box-shadow:0 4px 14px rgba(47,140,92,.3)}
+.stage-wrap{flex:1;overflow:auto;display:grid;place-items:center;padding:34px}
+.stage-wrap::-webkit-scrollbar{width:10px;height:10px}.stage-wrap::-webkit-scrollbar-thumb{background:#24382e;border-radius:10px}
+.stage{transform-origin:center center}
+/* CERTS (native coordinate space, scaled by .stage) */
+.cert{position:relative;display:none;background:#fff;box-shadow:0 30px 70px rgba(0,0,0,.55);overflow:hidden}
+.cert.show{display:block}
+.cert .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block}
+.ov{position:absolute;overflow:hidden}
+body.guide .ov{outline:1.5px solid rgba(255,0,90,.9);background:rgba(255,0,90,.08)!important}
+/* ORIGEN 1080x1920 */
+#cert-origen{width:1080px;height:1920px}
+#o-photo{left:648px;top:600px;width:368px;height:368px;border-radius:50%;transform:translate(-50%,-50%);background:transparent}
+#o-photo img{width:100%;height:100%;object-fit:cover;display:block}
+#o-name{left:434px;top:940px;width:560px;height:142px;background:var(--cream-o);font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;font-size:50px;line-height:51px;color:var(--ink)}
+#o-details{left:434px;top:1082px;width:540px;height:210px;background:var(--cream-o);font-family:'Cormorant Garamond',serif;font-size:28px;line-height:31.2px;color:var(--ink)}
+#o-details .lab{color:var(--emerald);font-weight:700}
+/* EMBAJADOR 792x612 */
+#cert-embajador{width:792px;height:612px}
+#e-photo{left:136px;top:251px;width:160px;height:160px;border-radius:50%;transform:translate(-50%,-50%);background:transparent}
+#e-photo img{width:100%;height:100%;object-fit:cover;display:block}
+#e-name{left:529px;top:279px;width:380px;height:44px;transform:translateX(-50%);text-align:center;background:var(--cream-e);font-family:'Cormorant Garamond',serif;font-weight:600;font-size:37px;line-height:44px;color:var(--maroon)}
+/* CARNET (css fallback 380x600) */
+#cert-carnet{width:380px;height:600px;background:#fbf7ee;display:none;flex-direction:column}
+#cert-carnet.show{display:flex}
+.cn-head{background:linear-gradient(150deg,var(--carnet-green),var(--carnet-green-2));padding:24px 20px 16px;text-align:center;color:#fff}
+.cn-head .em{font-family:'Cinzel',serif;font-size:30px;line-height:1;margin-bottom:4px}
+.cn-head .wm{font-family:'Cinzel',serif;font-weight:600;letter-spacing:.12em;font-size:22px}
+.cn-head .tg{font-size:7px;letter-spacing:.3em;margin-top:2px;opacity:.92}
+.cn-photo{width:230px;height:234px;margin:20px auto 0;border-radius:13px;overflow:hidden;background:#e7e2d4;display:grid;place-items:center}
+.cn-photo img{width:100%;height:100%;object-fit:cover}
+.cn-info{padding:16px 18px 22px;text-align:center;display:flex;flex-direction:column;gap:8px}
+.cn-name{font-weight:800;font-size:24px;color:var(--carnet-green-2);text-transform:uppercase;line-height:1.08}
+.cn-role{font-weight:600;font-size:16px;color:var(--carnet-green-2);letter-spacing:.18em;text-transform:uppercase}
+.cn-id{font-weight:700;font-size:17px;color:#46483c}
+.cn-mail{font-size:12.5px;color:#5a5b50}
+.cn-badge{position:absolute;top:10px;right:10px;background:rgba(184,146,63,.92);color:#fff;font-size:9px;font-weight:700;padding:4px 8px;border-radius:20px;letter-spacing:.04em}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;background:#10201a;border:1px solid var(--ui-accent);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.4);transition:.25s;z-index:100;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media print{
+  body{display:block;height:auto;overflow:visible;background:#fff}
+  .topbar,.tabs,.panel,.preview-toolbar,.toast{display:none!important}
+  .workspace,.preview,.stage-wrap{display:block;padding:0;margin:0;background:#fff;overflow:visible}
+  .stage{transform:none!important}
+  .cert{box-shadow:none!important;display:none}
+  .cert.show{display:block}
+  #cert-carnet.show{display:flex}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand"><span class="leaf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg></span><div><b>Fotosíntesis</b><div class="sub">Admin · Tierra Mädre</div></div></div>
+  <div class="divider"></div>
+  <div class="crumb">Certificaciones &nbsp;›&nbsp; <b>Generador</b></div>
+  <div class="spacer"></div>
+  <div class="admin-chip"><span class="dot">A</span> Admin · sesión activa</div>
+</div>
+<div class="tabs">
+  <div class="tab active" data-type="origen" onclick="selectType('origen')"><span class="sw sw-green"></span> Certificación de Origen</div>
+  <div class="tab" data-type="embajador" onclick="selectType('embajador')"><span class="sw sw-maroon"></span> Certificado Embajador</div>
+  <div class="tab" data-type="carnet" onclick="selectType('carnet')"><span class="sw sw-carnet"></span> Carnet TM 2026</div>
+</div>
+<div class="workspace">
+  <aside class="panel">
+    <!-- ORIGEN -->
+    <div class="form-block" data-form="origen">
+      <h2>Certificación de Origen</h2>
+      <p class="lead">Certificado de origen de una esmeralda (treasure browser). Elige una pieza para autocompletar sobre la plantilla original.</p>
+      <div class="autofill"><div class="af-title">⚡ Autocompletar desde catálogo</div><div class="af-sub">Selecciona una pieza del inventario.</div>
+        <select id="o-picker" onchange="fillOrigen(this.value)"><option value="">— Selecciona una pieza —</option></select></div>
+      <div class="field"><label>Nombre de la pieza</label><input data-bind="o-name" oninput="setText('o-name-out',this.value)"></div>
+      <div class="row2"><div class="field"><label>Tipo</label><input data-bind="o-tipo" oninput="renderODet()"></div><div class="field"><label>Calidad</label><input data-bind="o-calidad" oninput="renderODet()"></div></div>
+      <div class="row2"><div class="field"><label>Color</label><input data-bind="o-color" oninput="renderODet()"></div><div class="field"><label>Peso</label><input data-bind="o-peso" oninput="renderODet()"></div></div>
+      <div class="row2"><div class="field"><label>Corte</label><input data-bind="o-corte" oninput="renderODet()"></div><div class="field"><label>Joya</label><input data-bind="o-joya" oninput="renderODet()"></div></div>
+      <div class="field"><label>Técnica</label><input data-bind="o-tecnica" oninput="renderODet()"></div>
+      <div class="field"><label>Foto de la pieza</label><label class="btn-file">📷 Subir imagen<input type="file" accept="image/*" onchange="up(event,'o')"></label>
+        <input data-bind="o-photo" placeholder="…o URL de imagen" style="margin-top:8px" oninput="setPhoto('o',this.value)"></div>
+      <div class="lockrow">🔒 <span>El mensaje, el sello, el logo y la marca de agua se conservan exactos de la plantilla del equipo de diseño.</span></div>
+    </div>
+    <!-- EMBAJADOR -->
+    <div class="form-block" data-form="embajador" style="display:none">
+      <h2>Certificado Embajador</h2>
+      <p class="lead">Reconocimiento "Embajador Semilla". Solo cambian el nombre y la foto; el resto es la plantilla original.</p>
+      <div class="autofill"><div class="af-title">⚡ Autocompletar desde usuarios</div><div class="af-sub">Selecciona un embajador.</div>
+        <select id="e-picker" onchange="fillEmb(this.value)"><option value="">— Selecciona un embajador —</option></select></div>
+      <div class="field"><label>Nombre del embajador</label><input data-bind="e-name" oninput="setText('e-name-out',this.value)"></div>
+      <div class="field"><label>Foto del embajador</label><label class="btn-file">📷 Subir imagen<input type="file" accept="image/*" onchange="up(event,'e')"></label>
+        <input data-bind="e-photo" placeholder="…o URL de imagen" style="margin-top:8px" oninput="setPhoto('e',this.value)"></div>
+      <div class="lockrow">🔒 <span>Encabezado, mensaje, firma, sellos y decoración se conservan exactos de la plantilla.</span></div>
+    </div>
+    <!-- CARNET -->
+    <div class="form-block" data-form="carnet" style="display:none">
+      <h2>Carnet TM 2026</h2>
+      <p class="lead">Carnet de miembro. <b style="color:#d6b25f">Versión aproximada</b> — sube el PDF del carnet a la carpeta para usar el arte exacto.</p>
+      <div class="autofill"><div class="af-title">⚡ Autocompletar desde usuarios</div><div class="af-sub">Selecciona un miembro.</div>
+        <select id="c-picker" onchange="fillCar(this.value)"><option value="">— Selecciona un miembro —</option></select></div>
+      <div class="field"><label>Nombre completo</label><input data-bind="c-name" oninput="setText('c-name-out',this.value)"></div>
+      <div class="field"><label>Rol</label><input data-bind="c-role" oninput="setText('c-role-out',this.value)"></div>
+      <div class="row2"><div class="field"><label>ID</label><input data-bind="c-id" oninput="setText('c-id-out',this.value)"></div><div class="field"><label>Año</label><input data-bind="c-year" value="2026"></div></div>
+      <div class="field"><label>E-mail</label><input data-bind="c-mail" oninput="setText('c-mail-out',this.value)"></div>
+      <div class="field"><label>Foto</label><label class="btn-file">📷 Subir imagen<input type="file" accept="image/*" onchange="up(event,'c')"></label>
+        <input data-bind="c-photo" placeholder="…o URL de imagen" style="margin-top:8px" oninput="setPhoto('c',this.value)"></div>
+    </div>
+    <div class="note">💡 Propuesta de export HTML. Origen y Embajador usan el arte original renderizado del PDF de diseño; solo los campos variables se rellenan encima. En producción, los selectores se conectan al inventario y a la base de usuarios de tierramadre.app.</div>
+  </aside>
+  <section class="preview">
+    <div class="preview-toolbar">
+      <div class="pt-label">Vista previa · <b id="pt-name">Certificación de Origen</b></div>
+      <div class="spacer"></div>
+      <div class="zoom"><button onclick="zoomStep(-1)">−</button><span id="zoom-val">100%</span><button onclick="zoomStep(1)">+</button><button onclick="zoomFit()" title="Ajustar">⤢</button></div>
+      <button class="btn btn-ghost" onclick="downloadPNG()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>PNG</button>
+      <button class="btn btn-primary" onclick="printCert()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimir / PDF</button>
+    </div>
+    <div class="stage-wrap" id="stage-wrap"><div class="stage" id="stage">
+      <!-- ORIGEN -->
+      <div class="cert show" id="cert-origen">
+        <img class="bg" src="assets/bg_origen.jpg" alt="">
+        <div class="ov" id="o-photo"><img data-photo="o" alt=""></div>
+        <div class="ov" id="o-name"><span id="o-name-out">Corazón de la noche</span></div>
+        <div class="ov" id="o-details"></div>
+      </div>
+      <!-- EMBAJADOR -->
+      <div class="cert" id="cert-embajador">
+        <img class="bg" src="assets/bg_embajador.jpg" alt="">
+        <div class="ov" id="e-photo"><img data-photo="e" alt=""></div>
+        <div class="ov" id="e-name"><span id="e-name-out">Luis Alfonso Ospina</span></div>
+      </div>
+      <!-- CARNET (fallback) -->
+      <div class="cert" id="cert-carnet">
+        <div class="cn-badge">arte aprox.</div>
+        <div class="cn-head"><div class="em">✣</div><div class="wm">TIERRA MÄDRE</div><div class="tg">ESMERALDAS CON ADN DE PAZ</div></div>
+        <div class="cn-photo"><img data-photo="c" alt=""></div>
+        <div class="cn-info"><div class="cn-name" id="c-name-out">Alvaro José Peláez Rojas</div><div class="cn-role" id="c-role-out">Embajador</div><div class="cn-id">ID: <span id="c-id-out">94.537.240</span></div><div class="cn-mail" id="c-mail-out">comercial.tierramadre@gmail.com</div></div>
+      </div>
+    </div></div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const origenData=[
+ {n:"Corazón de la noche",tipo:"Gema / Cristal Faceteado",calidad:"Comercial Fina",color:"Verde menta",peso:"1.31 Ct",corte:"Corazón"},
+ {n:"Gota Sagrada",tipo:"Murralla",color:"Verde menta",peso:"2 ct",joya:"Baño de Oro",tecnica:"Tejido artesanal / colonial"},
+ {n:"Soberanía Imperial",tipo:"Gola",calidad:"Fina Escencial",color:"Verde Natural",peso:"1.6 Ct",corte:"Lágrima",joya:"Plata Ley 925 y Circones Naturales"},
+ {n:"El Secreto de Tena",tipo:"Canutillo",calidad:"Fina Escencial",color:"Verde Natural",peso:"1.24 Ct",corte:"Natural"},
+ {n:"Diosa Maya",tipo:"Gema / Cristal Faceteado",calidad:"Fina Sublime",color:"Verde Limón",peso:"1.07 Ct",corte:"Trillion",joya:"2.60 Gr Oro 18k",tecnica:"Tejido Veneciano"},
+ {n:"Infinito Amor",tipo:"Gema / Cristal Faceteado",calidad:"Fina Sublime",color:"Verde Vivido",peso:"0.75 Ct",corte:"Redonda",joya:"Oro 18k"},
+ {n:"Resplandor Celestial",tipo:"Gema / Cristal Faceteado",calidad:"Fina Esencial",color:"Verde Vívido",peso:"1.0 Ct",corte:"Redondo",joya:"1.5 Gr Oro 18k",tecnica:"28 Diamantes Naturales"},
+ {n:"Intuición",tipo:"Gema / Cristal Faceteado",calidad:"Extrafina",color:"Verde natural",peso:"0.88 Ct",corte:"Marquise"}
+];
+const embData=[{n:"Luis Alfonso Ospina"},{n:"Alvaro José Peláez Rojas"},{n:"María Fernanda Torres"}];
+const GEMP=['assets/gem0.jpg','assets/gem1.jpg','assets/gem2.jpg','assets/gem3.jpg','assets/gem4.jpg','assets/gem5.jpg','assets/gem6.jpg','assets/gem7.jpg'];
+const carnetData=[{n:"Alvaro José Peláez Rojas",role:"Embajador",id:"94.537.240",mail:"comercial.tierramadre@gmail.com"},{n:"Isa La Negra Vikinga",role:"CEO",id:"66.660.945",mail:"isa.tierramadre@gmail.com"},{n:"Luis Alfonso Ospina",role:"Embajador",id:"71.245.880",mail:"luis.tierramadre@gmail.com"}];
+const $=id=>document.getElementById(id);
+const oP=$('o-picker'),eP=$('e-picker'),cP=$('c-picker');
+origenData.forEach((d,i)=>oP.appendChild(new Option(d.n,i)));
+embData.forEach((d,i)=>eP.appendChild(new Option(d.n,i)));
+carnetData.forEach((d,i)=>cP.appendChild(new Option(d.n,i)));
+function setText(id,v){const e=$(id);if(e)e.textContent=v;}
+function setBind(k,v){const e=document.querySelector('[data-bind="'+k+'"]');if(e)e.value=v||'';}
+const ODF=[['o-tipo','Tipo'],['o-calidad','Calidad'],['o-color','Color'],['o-peso','Peso'],['o-corte','Corte'],['o-joya','Joya'],['o-tecnica','Técnica']];
+function renderODet(){let h='';ODF.forEach(([k,lab])=>{const v=(document.querySelector('[data-bind="'+k+'"]').value||'').trim();if(v)h+='<div><span class="lab">'+lab+':</span> '+v+'</div>';});$('o-details').innerHTML=h;}
+function fillOrigen(i){if(i==='')return;const d=origenData[i];setBind('o-name',d.n);setText('o-name-out',d.n);
+ setBind('o-tipo',d.tipo);setBind('o-calidad',d.calidad);setBind('o-color',d.color);setBind('o-peso',d.peso);setBind('o-corte',d.corte);setBind('o-joya',d.joya);setBind('o-tecnica',d.tecnica);
+ renderODet(); if(typeof GEMP!=='undefined'&&GEMP[i])setPhoto('o',GEMP[i]); toast('Pieza cargada · '+d.n);}
+function fillEmb(i){if(i==='')return;const d=embData[i];setBind('e-name',d.n);setText('e-name-out',d.n);toast('Embajador cargado · '+d.n);}
+function fillCar(i){if(i==='')return;const d=carnetData[i];setBind('c-name',d.n);setText('c-name-out',d.n);setBind('c-role',d.role);setText('c-role-out',d.role);setBind('c-id',d.id);setText('c-id-out',d.id);setBind('c-mail',d.mail);setText('c-mail-out',d.mail);toast('Miembro cargado · '+d.n);}
+function setPhoto(t,url){const img=document.querySelector('[data-photo="'+t+'"]');if(img)img.src=url||'';}
+function up(ev,t){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{setPhoto(t,e.target.result);const b=document.querySelector('[data-bind="'+t+'-photo"]');if(b)b.value='(imagen subida)';};r.readAsDataURL(f);}
+const TYPE={origen:'Certificación de Origen',embajador:'Certificado Embajador',carnet:'Carnet TM 2026'};
+let current='origen';
+function selectType(t){current=t;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.type===t));
+ document.querySelectorAll('.form-block').forEach(x=>x.style.display=(x.dataset.form===t)?'block':'none');
+ document.querySelectorAll('.cert').forEach(x=>x.classList.remove('show'));$('cert-'+t).classList.add('show');
+ $('pt-name').textContent=TYPE[t];zoomFit();}
+let zoom=1;
+function applyZoom(){$('stage').style.transform='scale('+zoom+')';$('zoom-val').textContent=Math.round(zoom*100)+'%';}
+function zoomStep(d){zoom=Math.min(2,Math.max(.15,zoom+d*.1));applyZoom();}
+function zoomFit(){const c=$('cert-'+current),w=$('stage-wrap');const cw=c.offsetWidth,ch=c.offsetHeight;const aw=w.clientWidth-60,ah=w.clientHeight-60;zoom=Math.min(aw/cw,ah/ch,1.4);applyZoom();}
+window.addEventListener('resize',zoomFit);
+function printCert(){const c=$('cert-'+current);let st=$('pstyle');if(!st){st=document.createElement('style');st.id='pstyle';document.head.appendChild(st);}st.textContent='@page{size:'+c.offsetWidth+'px '+c.offsetHeight+'px;margin:0}';toast('Abriendo impresión…');setTimeout(()=>window.print(),250);}
+async function downloadPNG(){const c=$('cert-'+current);toast('Generando PNG…');try{const cv=await html2canvas(c,{scale:2,useCORS:true,backgroundColor:null,logging:false});const a=document.createElement('a');a.download='TierraMadre_'+current+'.png';a.href=cv.toDataURL('image/png');a.click();toast('PNG descargado ✓');}catch(e){toast('No se pudo generar PNG');}}
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2200);}
+renderODet();fillCar(0);fillOrigen(0);
+zoomFit();
+</script>
+</body>
+</html>
