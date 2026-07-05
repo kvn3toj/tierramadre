@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Esmereogénesis · Tu Jardín</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Hanken Grotesk", system-ui, sans-serif;
+        background: #030a05;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 56px 24px;
+        -webkit-font-smoothing: antialiased;
+        background-image:
+          radial-gradient(
+            80% 50% at 50% 8%,
+            rgba(14, 124, 90, 0.2),
+            transparent 55%
+          ),
+          radial-gradient(
+            100% 60% at 50% 100%,
+            rgba(11, 92, 70, 0.15),
+            transparent 50%
+          );
+      }
+      .serif {
+        font-family: "Playfair Display", Georgia, serif;
+      }
+
+      /* TAGLINE ABOVE DEVICE */
+      .tagline {
+        text-align: center;
+        margin-bottom: 48px;
+        color: #f2f7f4;
+        max-width: 460px;
+      }
+      .tag-eyebrow {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #2fae86;
+        margin-bottom: 14px;
+      }
+      .tag-title {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(28px, 5vw, 48px);
+        font-weight: 700;
+        line-height: 1.12;
+        letter-spacing: -0.02em;
+        margin-bottom: 10px;
+        color: #f2f7f4;
+      }
+      .tag-sub {
+        font-size: 16px;
+        color: rgba(228, 240, 234, 0.55);
+        font-weight: 400;
+        line-height: 1.5;
+      }
+
+      /* DEVICE */
+      .device {
+        width: 390px;
+        height: 844px;
+        border-radius: 54px;
+        position: relative;
+        background: #020605;
+        overflow: hidden;
+        box-shadow:
+          0 0 0 11px #0d1210,
+          0 0 0 13px #1c2420,
+          0 48px 96px -12px rgba(0, 0, 0, 0.9),
+          0 0 80px -24px rgba(47, 174, 134, 0.3);
+      }
+      .d-island {
+        position: absolute;
+        top: 13px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 34px;
+        border-radius: 18px;
+        background: #000;
+        z-index: 90;
+      }
+      .d-screen {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        color: #f2f7f4;
+      }
+
+      /* SCREEN ATMOSPHERE */
+      .scr-bg {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(
+            90% 55% at 50% 16%,
+            rgba(14, 124, 90, 0.28),
+            transparent 52%
+          ),
+          radial-gradient(
+            80% 40% at 50% 100%,
+            rgba(11, 92, 70, 0.2),
+            transparent 55%
+          ),
+          #020605;
+      }
+      .scr-body {
+        position: relative;
+        z-index: 2;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        font-family: "Hanken Grotesk", system-ui, sans-serif;
+      }
+
+      /* STATUS BAR */
+      .sbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(242, 247, 244, 0.85);
+        flex-shrink: 0;
+      }
+      .sbar-right {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 13px;
+      }
+
+      /* TOP BAR */
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 20px 10px;
+        flex-shrink: 0;
+      }
+      .topbar-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(242, 247, 244, 0.6);
+        font-size: 15px;
+      }
+      .topbar-center {
+        text-align: center;
+        flex: 1;
+      }
+      .topbar-kicker {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: #d9a94b;
+      }
+      .topbar-title {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 17px;
+        margin-top: 2px;
+        color: #f2f7f4;
+      }
+
+      /* STAGE CHIP */
+      .stage-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(47, 174, 134, 0.12);
+        border: 1px solid rgba(47, 174, 134, 0.35);
+        border-radius: 100px;
+        padding: 5px 14px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #2fae86;
+      }
+      .stage-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 4px currentColor;
+      }
+
+      /* GEM SPHERE */
+      .gem-zone {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0 16px;
+        position: relative;
+        min-height: 0;
+      }
+
+      .gem-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 10px 0;
+      }
+
+      .gem-ring-outer {
+        position: absolute;
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        border: 1px solid rgba(47, 174, 134, 0.2);
+        animation: ringpulse 3.5s ease-in-out infinite;
+      }
+      .gem-ring-mid {
+        position: absolute;
+        width: 210px;
+        height: 210px;
+        border-radius: 50%;
+        border: 1px solid rgba(47, 174, 134, 0.14);
+        animation: ringpulse 3.5s ease-in-out infinite 0.8s;
+      }
+      /* Gold dot on ring (progress indicator) */
+      .gem-ring-svg {
+        position: absolute;
+        width: 240px;
+        height: 240px;
+        transform: rotate(-90deg);
+      }
+
+      .gem-beam {
+        position: absolute;
+        top: -40px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 2px;
+        height: 80px;
+        background: linear-gradient(
+          to bottom,
+          rgba(47, 174, 134, 0.5),
+          transparent
+        );
+        filter: blur(2px);
+        border-radius: 2px;
+      }
+
+      .gem-sphere {
+        width: 178px;
+        height: 178px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 34% 28%,
+          rgba(190, 255, 220, 0.88) 0%,
+          rgba(55, 185, 115, 0.9) 16%,
+          rgba(20, 115, 65, 0.95) 38%,
+          rgba(10, 60, 35, 1) 65%,
+          rgba(4, 20, 12, 1) 100%
+        );
+        box-shadow:
+          0 0 60px -6px rgba(30, 170, 90, 0.65),
+          0 0 30px -4px rgba(30, 170, 90, 0.4),
+          inset 0 -12px 40px rgba(0, 0, 0, 0.45);
+        animation: gemfloat 4.5s ease-in-out infinite;
+        position: relative;
+        flex-shrink: 0;
+      }
+      /* Specular highlight */
+      .gem-sphere::after {
+        content: "";
+        position: absolute;
+        top: 18%;
+        left: 22%;
+        width: 28%;
+        height: 18%;
+        background: radial-gradient(
+          ellipse,
+          rgba(255, 255, 255, 0.55),
+          transparent
+        );
+        border-radius: 50%;
+        transform: rotate(-20deg);
+      }
+
+      @keyframes gemfloat {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-12px);
+        }
+      }
+      @keyframes ringpulse {
+        0%,
+        100% {
+          opacity: 0.7;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.04);
+        }
+      }
+
+      /* PRODUCT INFO */
+      .product-name {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 24px;
+        font-weight: 700;
+        text-align: center;
+        margin-top: 6px;
+      }
+      .product-origin {
+        font-size: 13px;
+        color: rgba(228, 240, 234, 0.5);
+        text-align: center;
+        margin-top: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+      }
+
+      /* METRICS */
+      .metrics {
+        padding: 0 24px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+      .metric-pct {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 88px;
+        line-height: 0.88;
+        font-weight: 700;
+        text-shadow: 0 8px 36px rgba(11, 92, 70, 0.7);
+      }
+      .metric-pct span {
+        font-size: 34px;
+        color: #f0ce86;
+        margin-left: 2px;
+      }
+      .metric-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: rgba(228, 240, 234, 0.45);
+        margin-top: 6px;
+      }
+      .metric-amounts {
+        font-size: 14px;
+        color: rgba(228, 240, 234, 0.55);
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+      .metric-amounts .serif {
+        font-size: 15px;
+        color: #f2f7f4;
+      }
+      .metric-dot {
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: rgba(228, 240, 234, 0.3);
+        display: inline-block;
+      }
+
+      /* STREAK */
+      .streak-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 100px;
+        padding: 6px 14px;
+        margin-top: 10px;
+        font-size: 12px;
+        color: rgba(228, 240, 234, 0.7);
+      }
+      .flame {
+        filter: drop-shadow(0 0 4px rgba(255, 140, 30, 0.8));
+        animation: fpulse 1.8s ease infinite;
+      }
+      @keyframes fpulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.15);
+        }
+      }
+
+      /* AMOUNT CHIPS */
+      .chips {
+        display: flex;
+        gap: 8px;
+        padding: 12px 20px 0;
+        flex-shrink: 0;
+      }
+      .chip {
+        flex: 1;
+        padding: 10px 4px;
+        border-radius: 12px;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+      }
+      .chip.selected {
+        background: linear-gradient(
+          180deg,
+          rgba(47, 174, 134, 0.16),
+          rgba(11, 92, 70, 0.1)
+        );
+        border-color: rgba(217, 169, 75, 0.5);
+      }
+      .chip-amount {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 13px;
+        color: #f2f7f4;
+      }
+      .chip.selected .chip-amount {
+        color: #f0ce86;
+      }
+      .chip-sub {
+        font-size: 8px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(228, 240, 234, 0.35);
+        margin-top: 2px;
+      }
+
+      /* CTA */
+      .cta-wrap {
+        padding: 10px 20px 0;
+        flex-shrink: 0;
+      }
+      .cta {
+        border-radius: 100px;
+        background: linear-gradient(135deg, #0d7856, #2fae86);
+        padding: 15px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow:
+          0 0 36px -8px rgba(47, 174, 134, 0.7),
+          0 6px 20px rgba(0, 0, 0, 0.25);
+      }
+      .cta-main {
+        font-size: 15px;
+        font-weight: 700;
+        color: #fff;
+      }
+      .cta-sub {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.7);
+        text-align: center;
+        margin-top: 4px;
+      }
+      .drop-icon {
+        font-size: 16px;
+        opacity: 0.8;
+      }
+
+      /* FOOTER INFO */
+      .footer-info {
+        padding: 8px 24px 0;
+        flex-shrink: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .footer-info-label {
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgba(228, 240, 234, 0.3);
+      }
+      .footer-info-val {
+        font-size: 12px;
+        color: rgba(228, 240, 234, 0.5);
+        font-weight: 500;
+      }
+
+      /* TAB BAR */
+      .tabbar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 78px;
+        padding: 0 8px 14px;
+        background: rgba(2, 6, 5, 0.92);
+        backdrop-filter: blur(16px);
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        flex-shrink: 0;
+      }
+      .tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-size: 10px;
+        color: rgba(242, 247, 244, 0.35);
+        padding: 0 12px;
+      }
+      .tab.active {
+        color: #2fae86;
+      }
+      .tab-icon {
+        font-size: 18px;
+        line-height: 1;
+      }
+
+      .caption {
+        text-align: center;
+        margin-top: 44px;
+        font-size: 12px;
+        color: rgba(228, 240, 234, 0.3);
+        letter-spacing: 0.04em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tagline">
+      <div class="tag-eyebrow">Esmereogénesis · Tierra Madre</div>
+      <h1 class="tag-title serif">Tu Jardín de Esmeraldas</h1>
+      <p class="tag-sub">Una esmeralda viva que crece con cada aporte</p>
+    </div>
+
+    <div class="device">
+      <div class="d-island"></div>
+      <div class="d-screen">
+        <div class="scr-bg"></div>
+        <div class="scr-body">
+          <!-- Status bar -->
+          <div class="sbar">
+            <span>9:41</span>
+            <div class="sbar-right">
+              <svg
+                width="17"
+                height="12"
+                viewBox="0 0 17 12"
+                fill="currentColor"
+                opacity="0.8"
+              >
+                <rect x="0" y="3" width="3" height="9" rx="1" />
+                <rect x="4.5" y="2" width="3" height="10" rx="1" />
+                <rect x="9" y="0" width="3" height="12" rx="1" />
+                <rect
+                  x="13.5"
+                  y="0"
+                  width="3"
+                  height="12"
+                  rx="1"
+                  opacity="0.35"
+                />
+              </svg>
+              <svg
+                width="15"
+                height="12"
+                viewBox="0 0 15 12"
+                fill="currentColor"
+                opacity="0.8"
+              >
+                <path
+                  d="M7.5 2C10.5 2 13.2 3.3 15 5.4l-1.4 1.4C12.2 5 10 4 7.5 4 5 4 2.8 5 1.4 6.8L0 5.4C1.8 3.3 4.5 2 7.5 2z"
+                />
+                <path
+                  d="M7.5 6C9.3 6 10.9 6.7 12 7.9l-1.4 1.4C9.8 8.5 8.7 8 7.5 8s-2.3.5-3.1 1.3L3 7.9C4.1 6.7 5.7 6 7.5 6z"
+                />
+                <circle cx="7.5" cy="11" r="1.5" />
+              </svg>
+              <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+                <rect
+                  x="0.5"
+                  y="0.5"
+                  width="21"
+                  height="11"
+                  rx="3.5"
+                  stroke="currentColor"
+                  stroke-opacity="0.35"
+                />
+                <rect
+                  x="2"
+                  y="2"
+                  width="17"
+                  height="8"
+                  rx="2"
+                  fill="currentColor"
+                />
+                <path
+                  d="M23 4v4a2 2 0 0 0 0-4z"
+                  fill="currentColor"
+                  opacity="0.4"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Top bar -->
+          <div class="topbar">
+            <div class="topbar-icon">‹</div>
+            <div class="topbar-center">
+              <div class="topbar-kicker">Esmereogénesis</div>
+              <div class="topbar-title">Tu jardín</div>
+            </div>
+            <div class="topbar-icon" style="font-size: 17px">☀</div>
+          </div>
+
+          <!-- Gem zone -->
+          <div class="gem-zone">
+            <div class="stage-chip">
+              <div class="stage-dot"></div>
+              Radiante
+            </div>
+
+            <div class="gem-wrap">
+              <div class="gem-ring-outer"></div>
+              <div class="gem-ring-mid"></div>
+
+              <!-- Progress arc SVG -->
+              <svg class="gem-ring-svg" viewBox="0 0 240 240" fill="none">
+                <circle
+                  cx="120"
+                  cy="120"
+                  r="108"
+                  stroke="rgba(255,255,255,0.06)"
+                  stroke-width="2"
+                />
+                <circle
+                  cx="120"
+                  cy="120"
+                  r="108"
+                  stroke="url(#arcGrad)"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-dasharray="679"
+                  stroke-dashoffset="224"
+                />
+                <!-- Gold dot at progress end -->
+                <circle
+                  cx="184"
+                  cy="185"
+                  r="4.5"
+                  fill="#D9A94B"
+                  filter="url(#dotGlow)"
+                />
+                <defs>
+                  <linearGradient
+                    id="arcGrad"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stop-color="#0E7C5A" />
+                    <stop offset="100%" stop-color="#2FAE86" />
+                  </linearGradient>
+                  <filter id="dotGlow">
+                    <feGaussianBlur stdDeviation="2" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+              </svg>
+
+              <div class="gem-beam"></div>
+              <div class="gem-sphere"></div>
+            </div>
+
+            <div class="product-name">Gota de Muzo</div>
+            <div class="product-origin">
+              <span>Muzo · Boyacá · 2.1 ct</span>
+              <span style="color: rgba(217, 169, 75, 0.8); font-size: 12px"
+                >›</span
+              >
+            </div>
+          </div>
+
+          <!-- Metrics -->
+          <div class="metrics">
+            <div class="metric-pct">67<span>%</span></div>
+            <div class="metric-label">Regada</div>
+            <div class="metric-amounts">
+              <span class="serif">$4.230.000</span>
+              <span class="metric-dot"></span>
+              <span>meta $6.3M</span>
+            </div>
+            <div>
+              <div class="streak-badge">
+                <span class="flame">🔥</span>
+                <span>18 semanas regando</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Amount chips -->
+          <div class="chips">
+            <div class="chip selected">
+              <div class="chip-amount">$210k</div>
+              <div class="chip-sub">Sugerido</div>
+            </div>
+            <div class="chip"><div class="chip-amount">$420k</div></div>
+            <div class="chip"><div class="chip-amount">$840k</div></div>
+            <div class="chip">
+              <div class="chip-amount" style="font-size: 11px">Completar</div>
+              <div class="chip-sub">$2.1M</div>
+            </div>
+          </div>
+
+          <!-- CTA -->
+          <div class="cta-wrap">
+            <div class="cta">
+              <span class="drop-icon">○</span>
+              <span class="cta-main">Regar mi esmeralda</span>
+            </div>
+            <div class="cta-sub">Aporte de $210.000 · monto editable</div>
+          </div>
+
+          <!-- Footer info -->
+          <div class="footer-info" style="margin-bottom: 80px">
+            <span class="footer-info-label">Ritmo sugerido</span>
+            <span class="footer-info-val">$210.000 / sem</span>
+          </div>
+
+          <!-- Tab bar -->
+          <div class="tabbar">
+            <div class="tab active">
+              <div class="tab-icon">⌂</div>
+              <span>Inicio</span>
+            </div>
+            <div class="tab">
+              <div class="tab-icon">◈</div>
+              <span>Tesoros</span>
+            </div>
+            <div class="tab">
+              <div class="tab-icon">👤</div>
+              <span>Asesores</span>
+            </div>
+            <div class="tab">
+              <div class="tab-icon">···</div>
+              <span>Más</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="caption">
+      01 · Tu Jardín · Esmereogénesis · Tierra Madre Studio
+    </div>
+  </body>
+</html>

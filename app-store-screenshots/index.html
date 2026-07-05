@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Esmereogénesis · Tierra Madre</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: "Hanken Grotesk", system-ui, sans-serif;
+        background: #fafaf8;
+        color: #18241e;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+      .serif {
+        font-family: "Playfair Display", Georgia, serif;
+      }
+
+      /* ── 1. OPENING ── */
+      .opening {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        position: relative;
+      }
+      @media (max-width: 900px) {
+        .opening {
+          grid-template-columns: 1fr;
+          min-height: auto;
+        }
+      }
+
+      .opening-text {
+        padding: 80px 64px 80px 80px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        z-index: 2;
+      }
+      @media (max-width: 900px) {
+        .opening-text {
+          padding: 60px 32px;
+        }
+      }
+
+      .brand-line {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #5a7a6a;
+      }
+
+      .opening-headline {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(52px, 7vw, 88px);
+        font-weight: 700;
+        line-height: 1.05;
+        letter-spacing: -0.025em;
+        color: #0d1c14;
+        margin: auto 0;
+      }
+
+      .opening-headline em {
+        font-style: italic;
+        color: #0b5c46;
+      }
+
+      .opening-foot {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .opening-foot-line {
+        font-size: 14px;
+        color: #6a8a78;
+        line-height: 1.6;
+      }
+
+      .opening-image {
+        background: #0a1712;
+        position: relative;
+        overflow: hidden;
+        min-height: 600px;
+      }
+      @media (max-width: 900px) {
+        .opening-image {
+          min-height: 70vw;
+        }
+      }
+
+      .opening-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center top;
+        opacity: 0.92;
+      }
+
+      .opening-image-caption {
+        position: absolute;
+        bottom: 32px;
+        left: 32px;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(228, 240, 234, 0.45);
+      }
+
+      /* ── 2. STATEMENT ── */
+      .statement {
+        padding: 120px 80px;
+        background: #0c1a12;
+        color: #eaf4ed;
+      }
+      @media (max-width: 900px) {
+        .statement {
+          padding: 80px 32px;
+        }
+      }
+
+      .statement-inner {
+        max-width: 760px;
+      }
+
+      .statement-text {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(28px, 4.5vw, 56px);
+        font-weight: 500;
+        line-height: 1.35;
+        letter-spacing: -0.01em;
+        color: #eaf4ed;
+        margin-bottom: 40px;
+      }
+
+      .statement-text em {
+        font-style: italic;
+        color: #2fae86;
+      }
+
+      .not-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: 48px;
+      }
+      .not-item {
+        display: flex;
+        align-items: baseline;
+        gap: 20px;
+        padding: 18px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        font-size: 16px;
+        color: rgba(228, 240, 234, 0.7);
+      }
+      .not-check {
+        color: #2fae86;
+        font-size: 14px;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      .not-text {
+        line-height: 1.4;
+      }
+
+      /* ── 3. HOW — split layout ── */
+      .how {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: 600px;
+      }
+      @media (max-width: 900px) {
+        .how {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .how-image {
+        background: #0e1f16;
+        overflow: hidden;
+        position: relative;
+      }
+      .how-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+      }
+      .how-content {
+        padding: 80px 72px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: #f4f6f2;
+      }
+      @media (max-width: 900px) {
+        .how-content {
+          padding: 60px 32px;
+        }
+      }
+
+      .step-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #6a8a78;
+        margin-bottom: 14px;
+      }
+      .step-title {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(28px, 3.5vw, 44px);
+        font-weight: 700;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+        color: #0d1c14;
+        margin-bottom: 24px;
+      }
+      .step-body {
+        font-size: 17px;
+        color: #4a6858;
+        line-height: 1.75;
+      }
+
+      /* ── 4. SCREENS ROW — horizontal scroll ── */
+      .screens-section {
+        background: #060e09;
+        padding: 100px 0;
+        overflow: hidden;
+      }
+      .screens-header {
+        padding: 0 80px 56px;
+      }
+      @media (max-width: 900px) {
+        .screens-header {
+          padding: 0 32px 40px;
+        }
+      }
+
+      .screens-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #2fae86;
+        margin-bottom: 14px;
+      }
+      .screens-title {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(26px, 3.5vw, 40px);
+        font-weight: 700;
+        color: #eaf4ed;
+        letter-spacing: -0.01em;
+      }
+
+      .screens-track {
+        display: flex;
+        gap: 24px;
+        overflow-x: auto;
+        padding: 16px 80px 48px;
+        scrollbar-width: none;
+        scroll-snap-type: x mandatory;
+      }
+      .screens-track::-webkit-scrollbar {
+        display: none;
+      }
+
+      .screen-card {
+        flex: 0 0 auto;
+        scroll-snap-align: start;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .screen-frame {
+        width: 240px;
+        border-radius: 34px;
+        overflow: hidden;
+        box-shadow:
+          0 0 0 8px #0d1610,
+          0 0 0 10px #1a2418,
+          0 32px 64px rgba(0, 0, 0, 0.7);
+        background: #020605;
+        position: relative;
+      }
+      .screen-frame img {
+        width: 100%;
+        display: block;
+      }
+
+      .screen-caption-num {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(228, 240, 234, 0.3);
+      }
+      .screen-caption-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: rgba(228, 240, 234, 0.7);
+        margin-top: 2px;
+      }
+
+      .screens-scroll-hint {
+        padding: 0 80px;
+        font-size: 12px;
+        color: rgba(228, 240, 234, 0.25);
+        letter-spacing: 0.04em;
+      }
+
+      /* ── 5. STAGES — typographic list ── */
+      .stages {
+        padding: 120px 80px;
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 80px;
+        align-items: start;
+        background: #fafaf8;
+      }
+      @media (max-width: 900px) {
+        .stages {
+          grid-template-columns: 1fr;
+          padding: 80px 32px;
+          gap: 48px;
+        }
+      }
+
+      .stages-left {
+      }
+      .stages-left-title {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(28px, 3.5vw, 44px);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #0d1c14;
+        line-height: 1.2;
+        margin-bottom: 20px;
+      }
+      .stages-left-body {
+        font-size: 16px;
+        color: #5a7a6a;
+        line-height: 1.7;
+      }
+
+      .stages-list {
+        display: flex;
+        flex-direction: column;
+      }
+      .stage-row {
+        display: flex;
+        align-items: baseline;
+        gap: 24px;
+        padding: 22px 0;
+        border-bottom: 1px solid #e4ede8;
+      }
+      .stage-row:first-child {
+        border-top: 1px solid #e4ede8;
+      }
+      .stage-num {
+        font-size: 11px;
+        color: #a0baa8;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        flex-shrink: 0;
+        width: 24px;
+      }
+      .stage-name {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 22px;
+        font-weight: 600;
+        color: #0d1c14;
+        flex: 1;
+      }
+      .stage-pct {
+        font-size: 13px;
+        color: #a0baa8;
+        letter-spacing: 0.04em;
+      }
+      .stage-name.gold {
+        color: #a07820;
+      }
+
+      /* ── 6. CLOSING ── */
+      .closing {
+        background: #0a1712;
+        padding: 120px 80px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+      }
+      @media (max-width: 900px) {
+        .closing {
+          grid-template-columns: 1fr;
+          padding: 80px 32px;
+          gap: 56px;
+        }
+      }
+
+      .closing-text {
+      }
+      .closing-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #2fae86;
+        margin-bottom: 20px;
+      }
+      .closing-headline {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(32px, 4vw, 52px);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #eaf4ed;
+        line-height: 1.15;
+        margin-bottom: 24px;
+      }
+      .closing-body {
+        font-size: 17px;
+        color: #6a8a78;
+        line-height: 1.75;
+        max-width: 420px;
+      }
+
+      .closing-image {
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      .closing-image img {
+        width: 100%;
+        display: block;
+        border-radius: 16px;
+      }
+
+      /* ── FOOTER ── */
+      footer {
+        padding: 60px 80px;
+        border-top: 1px solid #e4ede8;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+      @media (max-width: 900px) {
+        footer {
+          padding: 48px 32px;
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+
+      .footer-brand {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 17px;
+        color: #0d1c14;
+        font-weight: 600;
+      }
+      .footer-meta {
+        font-size: 13px;
+        color: #a0baa8;
+      }
+
+      /* ── UTILS ── */
+      .reveal {
+        opacity: 0;
+        transform: translateY(20px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s ease;
+      }
+      .reveal.in {
+        opacity: 1;
+        transform: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ── 1. OPENING ── -->
+    <section class="opening">
+      <div class="opening-text">
+        <div class="brand-line reveal">Tierra Madre Studio · Colombia</div>
+
+        <div class="opening-headline reveal serif">Esmereo<em>génesis</em></div>
+
+        <div class="opening-foot reveal">
+          <div class="opening-foot-line">
+            Una forma de hacer tuya una esmeralda.
+          </div>
+          <div class="opening-foot-line">
+            Sin deuda. Sin prisa. Con propósito.
+          </div>
+        </div>
+      </div>
+
+      <div class="opening-image">
+        <img
+          src="assets/screen-hub.png"
+          alt="Esmereogénesis · Tu Jardín — Gota de Muzo al 60%"
+          loading="eager"
+        />
+        <div class="opening-image-caption">
+          Tu Jardín · 60% regada · 18 semanas de racha
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 2. STATEMENT ── -->
+    <section class="statement">
+      <div class="statement-inner">
+        <p class="statement-text reveal">
+          No es un crédito.<br />
+          Es <em>ahorro con propósito.</em><br />
+          Riegas tu esmeralda semana a semana<br />hasta que florece — y es
+          tuya.
+        </p>
+
+        <div class="not-list reveal">
+          <div class="not-item">
+            <span class="not-check">✓</span>
+            <span class="not-text">Sin intereses ni cuotas fijas</span>
+          </div>
+          <div class="not-item">
+            <span class="not-check">✓</span>
+            <span class="not-text"
+              >Sin multas si una semana no puedes regar</span
+            >
+          </div>
+          <div class="not-item">
+            <span class="not-check">✓</span>
+            <span class="not-text"
+              >Tu progreso siempre es tuyo — la esmeralda no regresa</span
+            >
+          </div>
+          <div class="not-item">
+            <span class="not-check">✓</span>
+            <span class="not-text"
+              >La piedra se reserva a tu nombre desde el primer aporte</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 3. HOW IT WORKS — image left ── -->
+    <div class="how">
+      <div class="how-image">
+        <img
+          src="assets/screen-plan.png"
+          alt="Plan de Génesis · Gota de Muzo"
+        />
+      </div>
+      <div class="how-content">
+        <div class="step-label reveal">Cómo funciona</div>
+        <h2 class="step-title reveal serif">Tres pasos.<br />Un ritual.</h2>
+        <p class="step-body reveal">
+          Elige tu esmeralda del catálogo.<br />
+          Riégala a tu ritmo con aportes semanales.<br />
+          Reclámala cuando el jardín florezca al 100%.<br /><br />
+          Tu asesor de Tierra Madre coordina la entrega y la certificación CDTEC
+          incluida.
+        </p>
+      </div>
+    </div>
+
+    <!-- ── 4. SCREENS GALLERY ── -->
+    <div class="screens-section">
+      <div class="screens-header">
+        <div class="screens-label reveal">Las pantallas</div>
+        <h2 class="screens-title serif reveal">
+          Una experiencia diseñada para el ritual
+        </h2>
+      </div>
+
+      <div class="screens-track">
+        <div class="screen-card">
+          <div class="screen-frame">
+            <img src="assets/screen-hub.png" alt="Tu Jardín — Hub principal" />
+          </div>
+          <div class="screen-caption-num">01</div>
+          <div class="screen-caption-title">Tu Jardín</div>
+        </div>
+
+        <div class="screen-card">
+          <div class="screen-frame">
+            <img
+              src="assets/screen-hub2.png"
+              alt="Tu Jardín — Vista detallada"
+            />
+          </div>
+          <div class="screen-caption-num">02</div>
+          <div class="screen-caption-title">Progreso en vivo</div>
+        </div>
+
+        <div class="screen-card">
+          <div class="screen-frame">
+            <img src="assets/screen-plan.png" alt="Plan de Génesis" />
+          </div>
+          <div class="screen-caption-num">03</div>
+          <div class="screen-caption-title">Plan de Génesis</div>
+        </div>
+
+        <div class="screen-card">
+          <div class="screen-frame" style="background: #0a1712">
+            <img
+              src="assets/screen-eclosion.png"
+              alt="Eclosión — Tu esmeralda ha cobrado vida"
+              style="object-fit: cover; height: 480px"
+            />
+          </div>
+          <div class="screen-caption-num">04</div>
+          <div class="screen-caption-title">✦ Eclosión</div>
+        </div>
+      </div>
+
+      <div class="screens-scroll-hint">← Desliza →</div>
+    </div>
+
+    <!-- ── 5. STAGES ── -->
+    <section class="stages">
+      <div class="stages-left">
+        <h2 class="stages-left-title serif reveal">
+          Cinco etapas.<br />Una vida.
+        </h2>
+        <p class="stages-left-body reveal">
+          La esmeralda evoluciona visualmente con cada aporte. Luz, glow,
+          animación — todo cambia a medida que crece.
+        </p>
+      </div>
+
+      <div class="stages-list reveal">
+        <div class="stage-row">
+          <span class="stage-num">01</span>
+          <span class="stage-name serif">Semilla</span>
+          <span class="stage-pct">0 %</span>
+        </div>
+        <div class="stage-row">
+          <span class="stage-num">02</span>
+          <span class="stage-name serif">Brote</span>
+          <span class="stage-pct">1 – 24 %</span>
+        </div>
+        <div class="stage-row">
+          <span class="stage-num">03</span>
+          <span class="stage-name serif">Creciendo</span>
+          <span class="stage-pct">25 – 69 %</span>
+        </div>
+        <div class="stage-row">
+          <span class="stage-num">04</span>
+          <span class="stage-name serif">Radiante</span>
+          <span class="stage-pct">70 – 99 %</span>
+        </div>
+        <div class="stage-row">
+          <span class="stage-num">05</span>
+          <span class="stage-name serif gold">✦ Eclosión</span>
+          <span class="stage-pct" style="color: #a07820">100 %</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 6. CLOSING ── -->
+    <section class="closing">
+      <div class="closing-text">
+        <div class="closing-label reveal">Disponible en</div>
+        <h2 class="closing-headline serif reveal">Tierra Madre Studio</h2>
+        <p class="closing-body reveal">
+          La plataforma de esmeraldas colombianas certificadas. Exclusivo para
+          clientes y asesores Tierra Madre. Temas Bóveda y Showroom. Rachas,
+          rituales de riego, y la ceremonia de Eclosión cuando completas el
+          100%.
+        </p>
+      </div>
+      <div class="closing-image reveal">
+        <img
+          src="assets/screen-plan2.png"
+          alt="Plan detail"
+          style="border-radius: 16px; width: 100%; display: block"
+        />
+      </div>
+    </section>
+
+    <!-- ── FOOTER ── -->
+    <footer>
+      <div class="footer-brand serif">Tierra Madre Studio</div>
+      <div class="footer-meta">
+        Esmereogénesis · Esmeraldas colombianas certificadas · Bogotá, Colombia
+        · 2026
+      </div>
+    </footer>
+
+    <script>
+      const obs = new IntersectionObserver(
+        (entries) =>
+          entries.forEach((e) => {
+            if (e.isIntersecting) e.target.classList.add("in");
+          }),
+        { threshold: 0.1 },
+      );
+      document.querySelectorAll(".reveal").forEach((el) => obs.observe(el));
+    </script>
+  </body>
+</html>

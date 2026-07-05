@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Esmereogénesis · Plan de Génesis</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Hanken Grotesk", system-ui, sans-serif;
+        background: #030a05;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 56px 24px;
+        -webkit-font-smoothing: antialiased;
+        background-image: radial-gradient(
+          80% 50% at 50% 8%,
+          rgba(14, 124, 90, 0.2),
+          transparent 55%
+        );
+      }
+      .serif {
+        font-family: "Playfair Display", Georgia, serif;
+      }
+      .tagline {
+        text-align: center;
+        margin-bottom: 48px;
+        color: #f2f7f4;
+        max-width: 460px;
+      }
+      .tag-eyebrow {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #2fae86;
+        margin-bottom: 14px;
+      }
+      .tag-title {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(28px, 5vw, 48px);
+        font-weight: 700;
+        line-height: 1.12;
+        letter-spacing: -0.02em;
+        margin-bottom: 10px;
+        color: #f2f7f4;
+      }
+      .tag-sub {
+        font-size: 16px;
+        color: rgba(228, 240, 234, 0.55);
+        font-weight: 400;
+        line-height: 1.5;
+      }
+      .device {
+        width: 390px;
+        height: 844px;
+        border-radius: 54px;
+        position: relative;
+        background: #020605;
+        overflow: hidden;
+        box-shadow:
+          0 0 0 11px #0d1210,
+          0 0 0 13px #1c2420,
+          0 48px 96px -12px rgba(0, 0, 0, 0.9),
+          0 0 80px -24px rgba(47, 174, 134, 0.3);
+      }
+      .d-island {
+        position: absolute;
+        top: 13px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 34px;
+        border-radius: 18px;
+        background: #000;
+        z-index: 90;
+      }
+      .d-screen {
+        position: absolute;
+        inset: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        color: #f2f7f4;
+        scrollbar-width: none;
+      }
+      .d-screen::-webkit-scrollbar {
+        display: none;
+      }
+      .scr-bg {
+        position: absolute;
+        inset: 0;
+        min-height: 100%;
+        background:
+          radial-gradient(
+            90% 55% at 50% 14%,
+            rgba(14, 124, 90, 0.26),
+            transparent 50%
+          ),
+          radial-gradient(
+            80% 40% at 50% 100%,
+            rgba(11, 92, 70, 0.18),
+            transparent 55%
+          ),
+          #020605;
+      }
+      .scr-body {
+        position: relative;
+        z-index: 2;
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        font-family: "Hanken Grotesk", system-ui, sans-serif;
+        padding-bottom: 96px;
+      }
+      .sbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(242, 247, 244, 0.85);
+        flex-shrink: 0;
+      }
+      .sbar-right {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 13px;
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 20px 10px;
+        flex-shrink: 0;
+      }
+      .topbar-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(242, 247, 244, 0.6);
+        font-size: 15px;
+      }
+      .topbar-center {
+        text-align: center;
+        flex: 1;
+      }
+      .topbar-kicker {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: #d9a94b;
+      }
+      .topbar-title {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 17px;
+        margin-top: 2px;
+        color: #f2f7f4;
+      }
+      .stage-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(47, 174, 134, 0.12);
+        border: 1px solid rgba(47, 174, 134, 0.35);
+        border-radius: 100px;
+        padding: 5px 14px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #2fae86;
+      }
+      .stage-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 4px currentColor;
+      }
+      .gem-zone {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px 16px 0;
+        flex-shrink: 0;
+      }
+      .gem-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 220px;
+        height: 220px;
+      }
+      .gem-ring-svg {
+        position: absolute;
+        inset: 0;
+        transform: rotate(-90deg);
+      }
+      .gem-beam {
+        position: absolute;
+        top: -28px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 2px;
+        height: 60px;
+        background: linear-gradient(
+          to bottom,
+          rgba(47, 174, 134, 0.45),
+          transparent
+        );
+        filter: blur(2px);
+        border-radius: 2px;
+      }
+      .gem-sphere {
+        width: 156px;
+        height: 156px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 34% 28%,
+          rgba(190, 255, 220, 0.88) 0%,
+          rgba(55, 185, 115, 0.9) 16%,
+          rgba(20, 115, 65, 0.95) 38%,
+          rgba(10, 60, 35, 1) 65%,
+          rgba(4, 20, 12, 1) 100%
+        );
+        box-shadow:
+          0 0 50px -6px rgba(30, 170, 90, 0.6),
+          0 0 25px -4px rgba(30, 170, 90, 0.35),
+          inset 0 -10px 36px rgba(0, 0, 0, 0.4);
+        animation: gemfloat 4.5s ease-in-out infinite;
+        position: relative;
+        flex-shrink: 0;
+      }
+      .gem-sphere::after {
+        content: "";
+        position: absolute;
+        top: 18%;
+        left: 22%;
+        width: 28%;
+        height: 18%;
+        background: radial-gradient(
+          ellipse,
+          rgba(255, 255, 255, 0.5),
+          transparent
+        );
+        border-radius: 50%;
+        transform: rotate(-20deg);
+      }
+      @keyframes gemfloat {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+      .product-name {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 26px;
+        font-weight: 700;
+        text-align: center;
+        margin-top: 8px;
+      }
+      .product-desc {
+        font-size: 12px;
+        color: rgba(228, 240, 234, 0.45);
+        text-align: center;
+        margin-top: 4px;
+        padding: 0 32px;
+        line-height: 1.5;
+      }
+      /* Data card */
+      .data-card {
+        margin: 16px 20px 0;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 16px;
+        padding: 16px 18px;
+        flex-shrink: 0;
+      }
+      .data-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 4px;
+      }
+      .data-label {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: rgba(228, 240, 234, 0.35);
+      }
+      .data-label-r {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: rgba(228, 240, 234, 0.35);
+        text-align: right;
+      }
+      .data-value {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 26px;
+        font-weight: 700;
+        color: #f2f7f4;
+        letter-spacing: -0.01em;
+      }
+      .data-value-r {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 16px;
+        color: rgba(228, 240, 234, 0.5);
+        text-align: right;
+      }
+      .progress-bar-wrap {
+        height: 3px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 100px;
+        margin: 10px 0;
+        overflow: hidden;
+      }
+      .progress-bar {
+        height: 100%;
+        border-radius: 100px;
+        background: linear-gradient(90deg, #0e7c5a, #2fae86, #d9a94b);
+      }
+      .data-footer {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 8px;
+        margin-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+        padding-top: 12px;
+      }
+      .data-footer-col {
+        text-align: center;
+      }
+      .data-footer-val {
+        font-size: 15px;
+        font-weight: 700;
+        color: #f2f7f4;
+      }
+      .data-footer-val span {
+        font-size: 11px;
+        color: rgba(228, 240, 234, 0.55);
+      }
+      .data-footer-label {
+        font-size: 8px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgba(228, 240, 234, 0.3);
+        margin-top: 2px;
+      }
+      /* CTA */
+      .cta-wrap {
+        padding: 14px 20px 0;
+        flex-shrink: 0;
+      }
+      .cta {
+        border-radius: 100px;
+        background: linear-gradient(135deg, #0d7856, #2fae86);
+        padding: 15px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 0 36px -8px rgba(47, 174, 134, 0.7);
+      }
+      .cta-main {
+        font-size: 15px;
+        font-weight: 700;
+        color: #fff;
+      }
+      .cta-secondary {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.65);
+        margin-top: 1px;
+      }
+      /* Tab bar */
+      .tabbar {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 390px;
+        height: 78px;
+        padding: 0 8px 14px;
+        background: rgba(2, 6, 5, 0.92);
+        backdrop-filter: blur(16px);
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        z-index: 10;
+      }
+      .tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-size: 10px;
+        color: rgba(242, 247, 244, 0.35);
+        padding: 0 12px;
+      }
+      .tab.active {
+        color: #2fae86;
+      }
+      .tab-icon {
+        font-size: 18px;
+        line-height: 1;
+      }
+      .caption {
+        text-align: center;
+        margin-top: 44px;
+        font-size: 12px;
+        color: rgba(228, 240, 234, 0.3);
+        letter-spacing: 0.04em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tagline">
+      <div class="tag-eyebrow">Esmereogénesis · Tierra Madre</div>
+      <h1 class="tag-title serif">El Detalle de tu Génesis</h1>
+      <p class="tag-sub">
+        Progreso acumulado, ritmo y fecha estimada de reclamación
+      </p>
+    </div>
+    <div class="device">
+      <div class="d-island"></div>
+      <div class="d-screen">
+        <div class="scr-bg"></div>
+        <div class="scr-body">
+          <div class="sbar">
+            <span>9:41</span>
+            <div class="sbar-right">
+              <svg
+                width="17"
+                height="12"
+                viewBox="0 0 17 12"
+                fill="currentColor"
+                opacity="0.8"
+              >
+                <rect x="0" y="3" width="3" height="9" rx="1" />
+                <rect x="4.5" y="2" width="3" height="10" rx="1" />
+                <rect x="9" y="0" width="3" height="12" rx="1" />
+                <rect
+                  x="13.5"
+                  y="0"
+                  width="3"
+                  height="12"
+                  rx="1"
+                  opacity="0.35"
+                />
+              </svg>
+              <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+                <rect
+                  x="0.5"
+                  y="0.5"
+                  width="21"
+                  height="11"
+                  rx="3.5"
+                  stroke="currentColor"
+                  stroke-opacity="0.35"
+                />
+                <rect
+                  x="2"
+                  y="2"
+                  width="16"
+                  height="8"
+                  rx="2"
+                  fill="currentColor"
+                />
+                <path
+                  d="M23 4v4a2 2 0 0 0 0-4z"
+                  fill="currentColor"
+                  opacity="0.4"
+                />
+              </svg>
+            </div>
+          </div>
+          <div class="topbar">
+            <div class="topbar-icon">‹</div>
+            <div class="topbar-center">
+              <div class="topbar-kicker">Plan de Génesis</div>
+              <div class="topbar-title">Jardín</div>
+            </div>
+            <div class="topbar-icon" style="font-size: 17px">☀</div>
+          </div>
+          <div class="gem-zone">
+            <div class="gem-wrap">
+              <svg class="gem-ring-svg" viewBox="0 0 220 220" fill="none">
+                <circle
+                  cx="110"
+                  cy="110"
+                  r="100"
+                  stroke="rgba(255,255,255,0.06)"
+                  stroke-width="2"
+                />
+                <circle
+                  cx="110"
+                  cy="110"
+                  r="100"
+                  stroke="url(#ag2)"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-dasharray="628"
+                  stroke-dashoffset="220"
+                />
+                <circle cx="168" cy="198" r="4" fill="#D9A94B" opacity="0.9" />
+                <defs>
+                  <linearGradient id="ag2" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#0E7C5A" />
+                    <stop offset="100%" stop-color="#2FAE86" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div class="gem-beam"></div>
+              <div class="gem-sphere"></div>
+            </div>
+            <div class="product-name">Gota de Muzo</div>
+            <div class="product-desc">
+              El verde puro de las minas de Muzo, intenso y aterciopelado.
+            </div>
+          </div>
+          <!-- Data card -->
+          <div class="data-card">
+            <div class="data-row">
+              <div class="data-label">Acumulado</div>
+              <div class="data-label-r">Meta</div>
+            </div>
+            <div class="data-row" style="align-items: flex-end">
+              <div class="data-value">$3.780.000</div>
+              <div class="data-value-r">$6.300.000</div>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-top: 2px;
+              "
+            >
+              <div class="progress-bar-wrap" style="flex: 1">
+                <div class="progress-bar" style="width: 60%"></div>
+              </div>
+              <span
+                style="
+                  font-size: 12px;
+                  color: rgba(228, 240, 234, 0.5);
+                  white-space: nowrap;
+                "
+                >60%</span
+              >
+            </div>
+            <div class="data-footer">
+              <div class="data-footer-col">
+                <div class="data-footer-val">$210.000</div>
+                <div class="data-footer-label">Aporte semanal</div>
+              </div>
+              <div class="data-footer-col">
+                <div class="data-footer-val">12<span> sem</span></div>
+                <div class="data-footer-label">Faltan</div>
+              </div>
+              <div class="data-footer-col">
+                <div class="data-footer-val" style="font-size: 12px">
+                  26 ago 2026
+                </div>
+                <div class="data-footer-label">Reclamo aprox.</div>
+              </div>
+            </div>
+          </div>
+          <!-- CTA -->
+          <div class="cta-wrap">
+            <div class="cta">
+              <span style="font-size: 16px; opacity: 0.8">○</span>
+              <div>
+                <div class="cta-main">Adelantar una gota</div>
+                <div class="cta-secondary">+ $210.000</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab">
+            <div class="tab-icon">⌂</div>
+            <span>Inicio</span>
+          </div>
+          <div class="tab">
+            <div class="tab-icon">◈</div>
+            <span>Tesoros</span>
+          </div>
+          <div class="tab active" style="color: #2fae86">
+            <div
+              class="tab-icon"
+              style="
+                background: rgba(47, 174, 134, 0.15);
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+              "
+            >
+              ○
+            </div>
+            <span>Diario</span>
+          </div>
+          <div class="tab">
+            <div class="tab-icon">👤</div>
+            <span>Perfil</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">
+      02 · Plan de Génesis · Esmereogénesis · Tierra Madre Studio
+    </div>
+  </body>
+</html>

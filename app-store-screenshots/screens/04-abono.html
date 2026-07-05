@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Esmereogénesis · Ceremonia de Riego</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Hanken Grotesk", system-ui, sans-serif;
+        background: #010403;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 56px 24px;
+        -webkit-font-smoothing: antialiased;
+        background-image: radial-gradient(
+          80% 50% at 50% 8%,
+          rgba(14, 124, 90, 0.3),
+          transparent 55%
+        );
+      }
+      .serif {
+        font-family: "Playfair Display", Georgia, serif;
+      }
+      .tagline {
+        text-align: center;
+        margin-bottom: 48px;
+        color: #f2f7f4;
+        max-width: 460px;
+      }
+      .tag-eyebrow {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #2fae86;
+        margin-bottom: 14px;
+      }
+      .tag-title {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(28px, 5vw, 48px);
+        font-weight: 700;
+        line-height: 1.12;
+        letter-spacing: -0.02em;
+        margin-bottom: 10px;
+        color: #f2f7f4;
+      }
+      .tag-sub {
+        font-size: 16px;
+        color: rgba(228, 240, 234, 0.55);
+        font-weight: 400;
+        line-height: 1.5;
+      }
+      .device {
+        width: 390px;
+        height: 844px;
+        border-radius: 54px;
+        position: relative;
+        background: #010403;
+        overflow: hidden;
+        box-shadow:
+          0 0 0 11px #0c1210,
+          0 0 0 13px #1a2018,
+          0 48px 96px -12px rgba(0, 0, 0, 0.92),
+          0 0 90px -18px rgba(47, 174, 134, 0.4);
+      }
+      .d-island {
+        position: absolute;
+        top: 13px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 34px;
+        border-radius: 18px;
+        background: #000;
+        z-index: 90;
+      }
+      .d-screen {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        color: #f2f7f4;
+      }
+      /* Cinematic atmosphere */
+      .cin-bg {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(
+            circle at 50% 34%,
+            rgba(20, 150, 80, 0.55) 0%,
+            rgba(10, 90, 50, 0.3) 35%,
+            transparent 65%
+          ),
+          radial-gradient(
+            circle at 50% 100%,
+            rgba(11, 70, 40, 0.25),
+            transparent 50%
+          ),
+          #010403;
+      }
+      /* Expanding rings */
+      .ring {
+        position: absolute;
+        border-radius: 50%;
+        border: 1px solid rgba(47, 174, 134, 0.25);
+        top: 38%;
+        left: 50%;
+      }
+      .r1 {
+        width: 200px;
+        height: 200px;
+        margin-top: -100px;
+        margin-left: -100px;
+        animation: rexp 2.8s ease-out infinite;
+      }
+      .r2 {
+        width: 280px;
+        height: 280px;
+        margin-top: -140px;
+        margin-left: -140px;
+        animation: rexp 2.8s ease-out infinite 0.7s;
+      }
+      .r3 {
+        width: 370px;
+        height: 370px;
+        margin-top: -185px;
+        margin-left: -185px;
+        animation: rexp 2.8s ease-out infinite 1.4s;
+      }
+      @keyframes rexp {
+        0% {
+          opacity: 0.7;
+          transform: scale(0.6);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(1.1);
+        }
+      }
+      /* Droplet */
+      .droplet {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 16px;
+        height: 26px;
+        background: radial-gradient(
+          circle at 50% 28%,
+          rgba(180, 255, 220, 0.95),
+          rgba(40, 170, 100, 0.7)
+        );
+        border-radius: 50% 50% 42% 42%;
+        box-shadow: 0 0 18px rgba(47, 174, 134, 0.7);
+        animation: drop 2.4s ease-in-out infinite;
+      }
+      @keyframes drop {
+        0% {
+          top: 20%;
+          opacity: 0;
+          transform: translateX(-50%) scale(0.7);
+        }
+        10% {
+          opacity: 1;
+        }
+        75% {
+          top: 39%;
+          opacity: 1;
+        }
+        88% {
+          top: 41%;
+          opacity: 0.2;
+          transform: translateX(-50%) scale(1.5, 0.4);
+        }
+        100% {
+          top: 42%;
+          opacity: 0;
+        }
+      }
+      /* Splash */
+      .splash {
+        position: absolute;
+        left: 50%;
+        top: 41%;
+        transform: translate(-50%, -50%);
+        width: 56px;
+        height: 20px;
+        border: 1.5px solid rgba(47, 174, 134, 0.55);
+        border-radius: 50%;
+        animation: splsh 2.4s ease-out infinite;
+      }
+      @keyframes splsh {
+        0%,
+        72% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0.2);
+        }
+        76% {
+          opacity: 0.9;
+        }
+        100% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(2.6);
+        }
+      }
+      /* Gold particles */
+      .ptcl {
+        position: absolute;
+        border-radius: 50%;
+        animation: rise linear infinite;
+      }
+      @keyframes rise {
+        0% {
+          opacity: 0;
+          transform: translateY(0) scale(0.5);
+        }
+        12% {
+          opacity: 1;
+        }
+        88% {
+          opacity: 0.7;
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(-220px) scale(1.2);
+        }
+      }
+      .scr-body {
+        position: relative;
+        z-index: 5;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-family: "Hanken Grotesk", system-ui, sans-serif;
+      }
+      .sbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(242, 247, 244, 0.75);
+        width: 100%;
+      }
+      .stage-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(47, 174, 134, 0.12);
+        border: 1px solid rgba(47, 174, 134, 0.35);
+        border-radius: 100px;
+        padding: 5px 14px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #2fae86;
+        margin-top: 16px;
+      }
+      .stage-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 4px currentColor;
+      }
+      /* Main gem */
+      .gem-hero {
+        width: 184px;
+        height: 184px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 33% 27%,
+          rgba(210, 255, 230, 0.9) 0%,
+          rgba(60, 195, 120, 0.92) 15%,
+          rgba(22, 118, 68, 0.96) 38%,
+          rgba(10, 58, 32, 1) 65%,
+          rgba(4, 18, 10, 1) 100%
+        );
+        box-shadow:
+          0 0 80px -6px rgba(40, 180, 95, 0.75),
+          0 0 40px -4px rgba(40, 180, 95, 0.5),
+          inset 0 -12px 40px rgba(0, 0, 0, 0.45);
+        animation: breathe 3s ease-in-out infinite;
+        position: relative;
+        flex-shrink: 0;
+        margin-top: 24px;
+      }
+      .gem-hero::after {
+        content: "";
+        position: absolute;
+        top: 17%;
+        left: 21%;
+        width: 28%;
+        height: 18%;
+        background: radial-gradient(
+          ellipse,
+          rgba(255, 255, 255, 0.6),
+          transparent
+        );
+        border-radius: 50%;
+        transform: rotate(-20deg);
+      }
+      @keyframes breathe {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.06);
+        }
+      }
+      /* Confirmation badge */
+      .confirm-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: rgba(47, 174, 134, 0.14);
+        border: 1px solid rgba(47, 174, 134, 0.38);
+        border-radius: 100px;
+        padding: 7px 18px;
+        margin-top: 24px;
+      }
+      .confirm-star {
+        font-size: 14px;
+        color: #2fae86;
+      }
+      .confirm-text {
+        font-size: 13px;
+        font-weight: 700;
+        color: #2fae86;
+      }
+      /* Amount */
+      .amount-val {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 64px;
+        font-weight: 700;
+        color: #f2f7f4;
+        line-height: 1;
+        text-shadow: 0 6px 28px rgba(11, 92, 70, 0.85);
+        margin-top: 14px;
+        text-align: center;
+      }
+      .amount-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: rgba(228, 240, 234, 0.4);
+        margin-top: 8px;
+      }
+      .amount-sub {
+        font-size: 13px;
+        color: rgba(228, 240, 234, 0.45);
+        margin-top: 5px;
+      }
+      .streak-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 10px;
+        font-size: 13px;
+        color: rgba(228, 240, 234, 0.6);
+      }
+      .flame {
+        filter: drop-shadow(0 0 5px rgba(255, 140, 30, 0.9));
+        font-size: 18px;
+        animation: fpulse 1.8s ease infinite;
+      }
+      @keyframes fpulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.15);
+        }
+      }
+      /* Dismiss */
+      .dismiss {
+        margin: auto 0 32px;
+        padding: 0 32px;
+        width: 100%;
+      }
+      .dismiss-btn {
+        border-radius: 100px;
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 15px;
+        text-align: center;
+        font-size: 15px;
+        font-weight: 600;
+        color: rgba(228, 240, 234, 0.6);
+      }
+      .caption {
+        text-align: center;
+        margin-top: 44px;
+        font-size: 12px;
+        color: rgba(228, 240, 234, 0.3);
+        letter-spacing: 0.04em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tagline">
+      <div class="tag-eyebrow">Esmereogénesis · Tierra Madre</div>
+      <h1 class="tag-title serif">La Ceremonia de Riego</h1>
+      <p class="tag-sub">
+        10 fases cinematics + hápticos. Cada aporte es un ritual.
+      </p>
+    </div>
+    <div class="device">
+      <div class="d-island"></div>
+      <div class="d-screen">
+        <div class="cin-bg"></div>
+        <!-- Expanding rings around gem -->
+        <div class="ring r1"></div>
+        <div class="ring r2"></div>
+        <div class="ring r3"></div>
+        <!-- Falling droplet -->
+        <div class="droplet"></div>
+        <!-- Splash -->
+        <div class="splash"></div>
+        <!-- Particles -->
+        <div
+          class="ptcl"
+          style="
+            width: 4px;
+            height: 4px;
+            background: #f0ce86;
+            left: 36%;
+            top: 60%;
+            animation-duration: 3.2s;
+            animation-delay: 0s;
+          "
+        ></div>
+        <div
+          class="ptcl"
+          style="
+            width: 3px;
+            height: 3px;
+            background: #2fae86;
+            left: 60%;
+            top: 58%;
+            animation-duration: 2.8s;
+            animation-delay: 0.5s;
+          "
+        ></div>
+        <div
+          class="ptcl"
+          style="
+            width: 4px;
+            height: 4px;
+            background: #f0ce86;
+            left: 28%;
+            top: 62%;
+            animation-duration: 3.6s;
+            animation-delay: 1s;
+          "
+        ></div>
+        <div
+          class="ptcl"
+          style="
+            width: 3px;
+            height: 3px;
+            background: white;
+            left: 70%;
+            top: 60%;
+            animation-duration: 3s;
+            animation-delay: 0.3s;
+          "
+        ></div>
+        <div class="scr-body">
+          <div class="sbar">
+            <span>9:41</span>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 13px;
+              "
+            >
+              <svg
+                width="17"
+                height="12"
+                viewBox="0 0 17 12"
+                fill="currentColor"
+                opacity="0.8"
+              >
+                <rect x="0" y="3" width="3" height="9" rx="1" />
+                <rect x="4.5" y="2" width="3" height="10" rx="1" />
+                <rect x="9" y="0" width="3" height="12" rx="1" />
+              </svg>
+              <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+                <rect
+                  x="0.5"
+                  y="0.5"
+                  width="21"
+                  height="11"
+                  rx="3.5"
+                  stroke="currentColor"
+                  stroke-opacity="0.35"
+                />
+                <rect
+                  x="2"
+                  y="2"
+                  width="16"
+                  height="8"
+                  rx="2"
+                  fill="currentColor"
+                />
+                <path
+                  d="M23 4v4a2 2 0 0 0 0-4z"
+                  fill="currentColor"
+                  opacity="0.4"
+                />
+              </svg>
+            </div>
+          </div>
+          <div class="stage-chip">
+            <div class="stage-dot"></div>
+            Radiante
+          </div>
+          <div class="gem-hero"></div>
+          <div class="confirm-badge">
+            <span class="confirm-star">✦</span>
+            <span class="confirm-text">Regada</span>
+          </div>
+          <div class="amount-val">$4.440.000</div>
+          <div class="amount-label">Abonados en total</div>
+          <div class="amount-sub">+$210.000 este aporte</div>
+          <div class="streak-row">
+            <span class="flame">🔥</span>
+            <span>Racha: 19 semanas</span>
+          </div>
+          <div class="dismiss">
+            <div class="dismiss-btn">Cerrar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">
+      04 · Ceremonia de Riego · Esmereogénesis · Tierra Madre Studio
+    </div>
+  </body>
+</html>

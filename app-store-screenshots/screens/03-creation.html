@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Esmereogénesis · Sembrar</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Hanken Grotesk", system-ui, sans-serif;
+        background: #030a05;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 56px 24px;
+        -webkit-font-smoothing: antialiased;
+        background-image: radial-gradient(
+          80% 50% at 50% 8%,
+          rgba(14, 124, 90, 0.2),
+          transparent 55%
+        );
+      }
+      .serif {
+        font-family: "Playfair Display", Georgia, serif;
+      }
+      .tagline {
+        text-align: center;
+        margin-bottom: 48px;
+        color: #f2f7f4;
+        max-width: 460px;
+      }
+      .tag-eyebrow {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #2fae86;
+        margin-bottom: 14px;
+      }
+      .tag-title {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(28px, 5vw, 48px);
+        font-weight: 700;
+        line-height: 1.12;
+        letter-spacing: -0.02em;
+        margin-bottom: 10px;
+        color: #f2f7f4;
+      }
+      .tag-sub {
+        font-size: 16px;
+        color: rgba(228, 240, 234, 0.55);
+        font-weight: 400;
+        line-height: 1.5;
+      }
+      .device {
+        width: 390px;
+        height: 844px;
+        border-radius: 54px;
+        position: relative;
+        background: #020605;
+        overflow: hidden;
+        box-shadow:
+          0 0 0 11px #0d1210,
+          0 0 0 13px #1c2420,
+          0 48px 96px -12px rgba(0, 0, 0, 0.9),
+          0 0 80px -24px rgba(47, 174, 134, 0.3);
+      }
+      .d-island {
+        position: absolute;
+        top: 13px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 34px;
+        border-radius: 18px;
+        background: #000;
+        z-index: 90;
+      }
+      .d-screen {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        color: #f2f7f4;
+      }
+      /* Background — blurred product page behind sheet */
+      .bg-product {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(
+            90% 55% at 50% 14%,
+            rgba(14, 124, 90, 0.28),
+            transparent 52%
+          ),
+          #020605;
+      }
+      /* Tiny blurred gem in background */
+      .bg-gem {
+        position: absolute;
+        top: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 34% 28%,
+          rgba(160, 240, 200, 0.7) 0%,
+          rgba(40, 140, 85, 0.8) 20%,
+          rgba(10, 60, 35, 0.9) 55%,
+          rgba(3, 15, 8, 1) 100%
+        );
+        opacity: 0.3;
+        filter: blur(2px);
+      }
+      /* Sheet */
+      .sheet {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: 108px;
+        border-radius: 24px 24px 0 0;
+        overflow: hidden;
+      }
+      .sheet-bg {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, #0e1f16 0%, #08130d 75%);
+        border-top: 1px solid rgba(47, 174, 134, 0.18);
+      }
+      .sheet-body {
+        position: relative;
+        z-index: 1;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 0 22px 16px;
+      }
+      .sheet-handle {
+        width: 38px;
+        height: 4px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.15);
+        margin: 10px auto 16px;
+      }
+      /* Product header in sheet */
+      .sheet-product {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+      .sheet-gem {
+        width: 62px;
+        height: 62px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 34% 28%,
+          rgba(190, 255, 220, 0.85) 0%,
+          rgba(55, 185, 115, 0.9) 18%,
+          rgba(20, 115, 65, 0.95) 40%,
+          rgba(10, 60, 35, 1) 65%,
+          rgba(4, 20, 12, 1) 100%
+        );
+        box-shadow: 0 0 24px -4px rgba(30, 170, 90, 0.5);
+        flex-shrink: 0;
+        position: relative;
+      }
+      .sheet-gem::after {
+        content: "";
+        position: absolute;
+        top: 18%;
+        left: 22%;
+        width: 28%;
+        height: 18%;
+        background: radial-gradient(
+          ellipse,
+          rgba(255, 255, 255, 0.5),
+          transparent
+        );
+        border-radius: 50%;
+        transform: rotate(-20deg);
+      }
+      .sheet-kicker {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: #d9a94b;
+        margin-bottom: 4px;
+      }
+      .sheet-product-name {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 20px;
+        font-weight: 700;
+        color: #f2f7f4;
+        line-height: 1.15;
+      }
+      .sheet-product-sub {
+        font-size: 11px;
+        color: rgba(228, 240, 234, 0.45);
+        margin-top: 3px;
+      }
+      /* Info banner */
+      .info-banner {
+        background: rgba(47, 100, 174, 0.12);
+        border: 1px solid rgba(100, 150, 200, 0.2);
+        border-radius: 12px;
+        padding: 10px 12px;
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        margin-bottom: 16px;
+      }
+      .info-icon {
+        font-size: 14px;
+        color: rgba(150, 190, 230, 0.8);
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      .info-text {
+        font-size: 11px;
+        color: rgba(228, 240, 234, 0.55);
+        line-height: 1.5;
+      }
+      .info-text strong {
+        color: rgba(228, 240, 234, 0.8);
+        font-weight: 600;
+      }
+      /* Duration tabs */
+      .dur-label {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(228, 240, 234, 0.4);
+        margin-bottom: 8px;
+      }
+      .dur-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+      .dur-tab {
+        flex: 1;
+        padding: 12px 6px;
+        border-radius: 12px;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        cursor: pointer;
+      }
+      .dur-tab.sel {
+        background: linear-gradient(
+          180deg,
+          rgba(14, 124, 90, 0.3),
+          rgba(11, 92, 70, 0.18)
+        );
+        border-color: rgba(47, 174, 134, 0.45);
+      }
+      .dur-tab-val {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 18px;
+        font-weight: 700;
+        color: rgba(228, 240, 234, 0.6);
+      }
+      .dur-tab.sel .dur-tab-val {
+        color: #f2f7f4;
+      }
+      .dur-tab-unit {
+        font-size: 9px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(228, 240, 234, 0.3);
+        margin-top: 2px;
+      }
+      .dur-tab.sel .dur-tab-unit {
+        color: rgba(228, 240, 234, 0.5);
+      }
+      /* Rhythm card */
+      .rhythm-card {
+        background: rgba(217, 169, 75, 0.08);
+        border: 1px solid rgba(217, 169, 75, 0.25);
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin-bottom: 14px;
+      }
+      .rhythm-label {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(217, 169, 75, 0.6);
+        margin-bottom: 6px;
+      }
+      .rhythm-val {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 28px;
+        font-weight: 700;
+        color: #f0ce86;
+        line-height: 1;
+      }
+      .rhythm-desc {
+        font-size: 11px;
+        color: rgba(228, 240, 234, 0.5);
+        margin-top: 6px;
+        line-height: 1.5;
+      }
+      .rhythm-desc strong {
+        color: #f0ce86;
+      }
+      /* CTA */
+      .cta {
+        border-radius: 100px;
+        background: linear-gradient(135deg, #0d7856, #2fae86);
+        padding: 15px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 0 32px -8px rgba(47, 174, 134, 0.65);
+        margin-bottom: 10px;
+      }
+      .cta-main {
+        font-size: 15px;
+        font-weight: 700;
+        color: #fff;
+      }
+      .permanencia {
+        font-size: 11px;
+        color: rgba(228, 240, 234, 0.3);
+        text-align: center;
+      }
+      /* Status bar shown above sheet */
+      .sbar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(242, 247, 244, 0.7);
+        z-index: 10;
+      }
+      .caption {
+        text-align: center;
+        margin-top: 44px;
+        font-size: 12px;
+        color: rgba(228, 240, 234, 0.3);
+        letter-spacing: 0.04em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tagline">
+      <div class="tag-eyebrow">Esmereogénesis · Tierra Madre</div>
+      <h1 class="tag-title serif">Siembra tu Esmeralda</h1>
+      <p class="tag-sub">
+        Elige el plazo. El ritmo se calcula solo. Sin permanencia.
+      </p>
+    </div>
+    <div class="device">
+      <div class="d-island"></div>
+      <div class="d-screen">
+        <div class="bg-product"></div>
+        <div class="bg-gem"></div>
+        <div class="sbar">
+          <span>9:41</span>
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 5px;
+              font-size: 13px;
+            "
+          >
+            <svg
+              width="17"
+              height="12"
+              viewBox="0 0 17 12"
+              fill="currentColor"
+              opacity="0.8"
+            >
+              <rect x="0" y="3" width="3" height="9" rx="1" />
+              <rect x="4.5" y="2" width="3" height="10" rx="1" />
+              <rect x="9" y="0" width="3" height="12" rx="1" />
+            </svg>
+            <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+              <rect
+                x="0.5"
+                y="0.5"
+                width="21"
+                height="11"
+                rx="3.5"
+                stroke="currentColor"
+                stroke-opacity="0.35"
+              />
+              <rect
+                x="2"
+                y="2"
+                width="16"
+                height="8"
+                rx="2"
+                fill="currentColor"
+              />
+              <path
+                d="M23 4v4a2 2 0 0 0 0-4z"
+                fill="currentColor"
+                opacity="0.4"
+              />
+            </svg>
+          </div>
+        </div>
+        <!-- Creation Sheet -->
+        <div class="sheet">
+          <div class="sheet-bg"></div>
+          <div class="sheet-body">
+            <div class="sheet-handle"></div>
+            <!-- Product -->
+            <div class="sheet-product">
+              <div class="sheet-gem"></div>
+              <div>
+                <div class="sheet-kicker">Vas a sembrar</div>
+                <div class="sheet-product-name">Gota de Muzo</div>
+                <div class="sheet-product-sub">
+                  Meta $6.300.000 · Muzo · Boyacá
+                </div>
+              </div>
+            </div>
+            <!-- Info banner -->
+            <div class="info-banner">
+              <span class="info-icon">ⓘ</span>
+              <div class="info-text">
+                <strong>Aporte sugerido</strong> — Elige una duración y
+                calcularemos cuánto regar cada semana. Puedes cambiarlo cuando
+                quieras.
+              </div>
+            </div>
+            <!-- Duration -->
+            <div class="dur-label">Duración de tu génesis</div>
+            <div class="dur-tabs">
+              <div class="dur-tab">
+                <div class="dur-tab-val">3</div>
+                <div class="dur-tab-unit">Meses</div>
+              </div>
+              <div class="dur-tab sel">
+                <div class="dur-tab-val">6</div>
+                <div class="dur-tab-unit">Meses</div>
+              </div>
+              <div class="dur-tab">
+                <div class="dur-tab-val">9</div>
+                <div class="dur-tab-unit">Meses</div>
+              </div>
+              <div class="dur-tab">
+                <div class="dur-tab-val">12</div>
+                <div class="dur-tab-unit">Meses</div>
+              </div>
+            </div>
+            <!-- Rhythm -->
+            <div class="rhythm-card">
+              <div class="rhythm-label">Ritmo semanal</div>
+              <div class="rhythm-val">$263.000</div>
+              <div class="rhythm-desc">
+                Tu <strong>Gota de Muzo</strong> tomará vida en
+                <strong>6 meses</strong> con aportes de
+                <strong>$263.000</strong> por semana.
+              </div>
+            </div>
+            <!-- CTA -->
+            <div class="cta">
+              <span style="font-size: 16px; opacity: 0.8">○</span>
+              <span class="cta-main">Sembrar mi Esmereogénesis</span>
+            </div>
+            <div class="permanencia">
+              Sin permanencia · la piedra se reserva a tu nombre desde hoy.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">
+      03 · Sembrar · Esmereogénesis · Tierra Madre Studio
+    </div>
+  </body>
+</html>

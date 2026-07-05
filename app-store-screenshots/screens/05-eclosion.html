@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Esmereogénesis · Eclosión</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Hanken Grotesk", system-ui, sans-serif;
+        background: #030a05;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 56px 24px;
+        -webkit-font-smoothing: antialiased;
+        background-image:
+          radial-gradient(
+            80% 50% at 50% 8%,
+            rgba(14, 124, 90, 0.18),
+            transparent 55%
+          ),
+          radial-gradient(
+            60% 40% at 50% 5%,
+            rgba(200, 160, 50, 0.1),
+            transparent 45%
+          );
+      }
+      .serif {
+        font-family: "Playfair Display", Georgia, serif;
+      }
+      .tagline {
+        text-align: center;
+        margin-bottom: 48px;
+        color: #f2f7f4;
+        max-width: 460px;
+      }
+      .tag-eyebrow {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #d9a94b;
+        margin-bottom: 14px;
+      }
+      .tag-title {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(28px, 5vw, 48px);
+        font-weight: 700;
+        line-height: 1.12;
+        letter-spacing: -0.02em;
+        margin-bottom: 10px;
+        color: #f2f7f4;
+      }
+      .tag-sub {
+        font-size: 16px;
+        color: rgba(228, 240, 234, 0.55);
+        font-weight: 400;
+        line-height: 1.5;
+      }
+      .device {
+        width: 390px;
+        height: 844px;
+        border-radius: 54px;
+        position: relative;
+        background: #020705;
+        overflow: hidden;
+        box-shadow:
+          0 0 0 11px #0d1410,
+          0 0 0 13px #1c2218,
+          0 48px 96px -12px rgba(0, 0, 0, 0.9),
+          0 0 80px -20px rgba(40, 160, 80, 0.25),
+          0 0 60px -30px rgba(200, 160, 50, 0.15);
+      }
+      .d-island {
+        position: absolute;
+        top: 13px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 34px;
+        border-radius: 18px;
+        background: #000;
+        z-index: 90;
+      }
+      .d-screen {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        color: #f2f7f4;
+      }
+      .eclo-bg {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(
+            circle at 50% 30%,
+            rgba(25, 150, 80, 0.3) 0%,
+            rgba(40, 120, 60, 0.1) 30%,
+            transparent 56%
+          ),
+          radial-gradient(
+            circle at 50% 32%,
+            rgba(200, 155, 40, 0.12) 0%,
+            transparent 38%
+          ),
+          #020705;
+      }
+      .eclo-glow {
+        position: absolute;
+        top: 24%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(40, 190, 100, 0.18) 0%,
+          rgba(180, 140, 40, 0.08) 50%,
+          transparent 70%
+        );
+        animation: eglowpulse 2.8s ease-in-out infinite;
+      }
+      @keyframes eglowpulse {
+        0%,
+        100% {
+          opacity: 0.65;
+          transform: translate(-50%, -50%) scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1.12);
+        }
+      }
+      /* Rain particles */
+      .rain {
+        position: absolute;
+        border-radius: 50%;
+        animation: rainfall linear infinite;
+      }
+      @keyframes rainfall {
+        0% {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        12% {
+          opacity: 0.8;
+        }
+        88% {
+          opacity: 0.6;
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(860px);
+        }
+      }
+      /* Expanding ceremony rings */
+      .cring {
+        position: absolute;
+        border-radius: 50%;
+        border: 1px solid;
+        top: 28%;
+        left: 50%;
+      }
+      .cr1 {
+        width: 160px;
+        height: 160px;
+        margin-top: -80px;
+        margin-left: -80px;
+        border-color: rgba(47, 174, 134, 0.35);
+        animation: crexp 2.6s ease-out infinite;
+      }
+      .cr2 {
+        width: 230px;
+        height: 230px;
+        margin-top: -115px;
+        margin-left: -115px;
+        border-color: rgba(200, 160, 50, 0.2);
+        animation: crexp 2.6s ease-out infinite 0.8s;
+      }
+      @keyframes crexp {
+        0% {
+          opacity: 0.8;
+          transform: scale(0.5);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(1.4);
+        }
+      }
+      .scr-body {
+        position: relative;
+        z-index: 5;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        font-family: "Hanken Grotesk", system-ui, sans-serif;
+      }
+      .sbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(242, 247, 244, 0.7);
+        width: 100%;
+      }
+      /* Eclosed sphere — brighter, more golden light */
+      .gem-eclo {
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 30% 24%,
+          rgba(240, 255, 235, 0.95) 0%,
+          rgba(80, 220, 140, 0.93) 14%,
+          rgba(28, 140, 78, 0.96) 36%,
+          rgba(12, 65, 36, 1) 62%,
+          rgba(5, 22, 12, 1) 100%
+        );
+        box-shadow:
+          0 0 70px -4px rgba(50, 200, 100, 0.7),
+          0 0 40px -6px rgba(50, 200, 100, 0.5),
+          0 0 25px -4px rgba(200, 160, 50, 0.35),
+          inset 0 -10px 35px rgba(0, 0, 0, 0.4);
+        animation: efloat 4s ease-in-out infinite;
+        position: relative;
+        margin-top: 80px;
+        flex-shrink: 0;
+      }
+      .gem-eclo::after {
+        content: "";
+        position: absolute;
+        top: 16%;
+        left: 20%;
+        width: 30%;
+        height: 20%;
+        background: radial-gradient(
+          ellipse,
+          rgba(255, 255, 255, 0.65),
+          transparent
+        );
+        border-radius: 50%;
+        transform: rotate(-22deg);
+      }
+      @keyframes efloat {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-12px);
+        }
+      }
+      .eclo-kicker {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: #d9a94b;
+        margin-top: 28px;
+      }
+      .eclo-headline {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 36px;
+        font-weight: 700;
+        line-height: 1.15;
+        letter-spacing: -0.01em;
+        color: #f2f7f4;
+        margin-top: 10px;
+        padding: 0 32px;
+      }
+      .eclo-body {
+        font-size: 14px;
+        color: rgba(228, 240, 234, 0.5);
+        line-height: 1.65;
+        margin-top: 14px;
+        padding: 0 40px;
+        max-width: 340px;
+      }
+      /* Claim button */
+      .claim-btn {
+        margin: 32px 32px 0;
+        border-radius: 100px;
+        background: linear-gradient(135deg, #f0ce86, #d9a94b);
+        padding: 17px 32px;
+        font-size: 15px;
+        font-weight: 700;
+        color: #3a2c08;
+        text-align: center;
+        box-shadow:
+          0 0 40px -8px rgba(217, 169, 75, 0.65),
+          0 8px 24px rgba(0, 0, 0, 0.3);
+        width: calc(100% - 64px);
+      }
+      .secondary-link {
+        font-size: 13px;
+        color: rgba(228, 240, 234, 0.4);
+        margin-top: 14px;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+      .caption {
+        text-align: center;
+        margin-top: 44px;
+        font-size: 12px;
+        color: rgba(228, 240, 234, 0.3);
+        letter-spacing: 0.04em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tagline">
+      <div class="tag-eyebrow">✦ Eclosión</div>
+      <h1 class="tag-title serif">Tu esmeralda ha cobrado vida</h1>
+      <p class="tag-sub">100% completado. El momento culminante del ritual.</p>
+    </div>
+    <div class="device">
+      <div class="d-island"></div>
+      <div class="d-screen">
+        <div class="eclo-bg"></div>
+        <div class="eclo-glow"></div>
+        <!-- Ceremony rings -->
+        <div class="cring cr1"></div>
+        <div class="cring cr2"></div>
+        <!-- Rain particles -->
+        <div
+          class="rain"
+          style="
+            width: 3px;
+            height: 3px;
+            background: #2fae86;
+            left: 28%;
+            animation-duration: 4.2s;
+            animation-delay: 0.3s;
+            opacity: 0.7;
+          "
+        ></div>
+        <div
+          class="rain"
+          style="
+            width: 2px;
+            height: 2px;
+            background: #f0ce86;
+            left: 54%;
+            animation-duration: 3.8s;
+            animation-delay: 1.1s;
+            opacity: 0.6;
+          "
+        ></div>
+        <div
+          class="rain"
+          style="
+            width: 3px;
+            height: 3px;
+            background: #2fae86;
+            left: 70%;
+            animation-duration: 4.6s;
+            animation-delay: 0.7s;
+            opacity: 0.5;
+          "
+        ></div>
+        <div
+          class="rain"
+          style="
+            width: 2px;
+            height: 2px;
+            background: white;
+            left: 42%;
+            animation-duration: 3.4s;
+            animation-delay: 1.8s;
+            opacity: 0.5;
+          "
+        ></div>
+        <div
+          class="rain"
+          style="
+            width: 3px;
+            height: 3px;
+            background: #f0ce86;
+            left: 82%;
+            animation-duration: 5s;
+            animation-delay: 0s;
+            opacity: 0.4;
+          "
+        ></div>
+        <div
+          class="rain"
+          style="
+            width: 2px;
+            height: 2px;
+            background: #2fae86;
+            left: 18%;
+            animation-duration: 4s;
+            animation-delay: 2.2s;
+            opacity: 0.6;
+          "
+        ></div>
+        <div class="scr-body">
+          <div class="sbar">
+            <span>9:41</span>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 13px;
+              "
+            >
+              <svg
+                width="17"
+                height="12"
+                viewBox="0 0 17 12"
+                fill="currentColor"
+                opacity="0.8"
+              >
+                <rect x="0" y="3" width="3" height="9" rx="1" />
+                <rect x="4.5" y="2" width="3" height="10" rx="1" />
+                <rect x="9" y="0" width="3" height="12" rx="1" />
+              </svg>
+              <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+                <rect
+                  x="0.5"
+                  y="0.5"
+                  width="21"
+                  height="11"
+                  rx="3.5"
+                  stroke="currentColor"
+                  stroke-opacity="0.35"
+                />
+                <rect
+                  x="2"
+                  y="2"
+                  width="17"
+                  height="8"
+                  rx="2"
+                  fill="currentColor"
+                />
+                <path
+                  d="M23 4v4a2 2 0 0 0 0-4z"
+                  fill="currentColor"
+                  opacity="0.4"
+                />
+              </svg>
+            </div>
+          </div>
+          <div class="gem-eclo"></div>
+          <div class="eclo-kicker">Eclosión</div>
+          <h2 class="eclo-headline">Tu esmeralda<br />ha cobrado vida</h2>
+          <p class="eclo-body">
+            Gota de Muzo está completa. Ahora es tuya — física y certificada por
+            Tierra Madre.
+          </p>
+          <div class="claim-btn">Reclamar mi esmeralda</div>
+          <div class="secondary-link">Seguir admirándola</div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">
+      05 · Eclosión · Esmereogénesis · Tierra Madre Studio
+    </div>
+  </body>
+</html>
