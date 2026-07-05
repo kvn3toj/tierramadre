@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="flex:none; width:284px;">
+  <div style="{{ frameStyle }}">
+    <div style="position:absolute; top:0; left:0; right:0; height:46px; display:flex; align-items:center; justify-content:space-between; padding:0 26px 0 30px; z-index:5; color:var(--text); font-family:var(--ui); pointer-events:none;">
+      <div style="font-size:14px; font-weight:600; letter-spacing:.2px;">9:41</div>
+      <div style="position:absolute; left:50%; top:9px; transform:translateX(-50%); width:88px; height:26px; background:#000; border-radius:16px;"></div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="display:flex; align-items:flex-end; gap:1.5px; height:11px;">
+          <div style="width:3px; height:4px; background:var(--text); border-radius:1px;"></div>
+          <div style="width:3px; height:6px; background:var(--text); border-radius:1px;"></div>
+          <div style="width:3px; height:8px; background:var(--text); border-radius:1px;"></div>
+          <div style="width:3px; height:11px; background:var(--text); border-radius:1px;"></div>
+        </div>
+        <div style="width:15px; height:11px; opacity:.92;">{{ wifiGlyph }}</div>
+        <div style="display:flex; align-items:center; gap:1.5px;">
+          <div style="width:22px; height:11px; border:1px solid var(--text); border-radius:3px; opacity:.55; padding:1.5px; box-sizing:border-box;"><div style="width:75%; height:100%; background:var(--text); border-radius:1px;"></div></div>
+          <div style="width:1.5px; height:4px; background:var(--text); border-radius:1px; opacity:.55;"></div>
+        </div>
+      </div>
+    </div>
+    <div style="position:absolute; top:46px; left:0; right:0; bottom:0; overflow:hidden; display:flex; flex-direction:column;">
+      {{ children }}
+    </div>
+  </div>
+  <div style="text-align:center; margin-top:14px; font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:{{ labelColor }};">{{ label }}</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:320,&quot;height&quot;:680},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;cur-light&quot;,&quot;cur-dark&quot;,&quot;new-light&quot;,&quot;new-dark&quot;],&quot;default&quot;:&quot;new-light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;label&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;labelColor&quot;:{&quot;editor&quot;:null,&quot;default&quot;:&quot;#8A928F&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  themes() {
+    return {
+      "cur-light": {
+        bg:"#F2F2F7", surface:"#FFFFFF", surface2:"#F2F2F7", border:"#D6DCE2", hairline:"#E8ECEF",
+        text:"#0A0E13", muted:"#3A4654", subtle:"#6B7A8A",
+        accent:"#00AE7A", accentStrong:"#00AE7A", onAccent:"#FFFFFF", accentPure:"#00AE7A",
+        glass:"rgba(255,255,255,0.72)", glassBorder:"rgba(255,255,255,0.85)", glassBlur:"blur(9px)",
+        gold:"#B8941F", goldSoft:"rgba(212,175,55,0.14)",
+        shadow:"0 8px 30px -10px rgba(0,80,55,0.18)", device:"#1d1d1f",
+      },
+      "cur-dark": {
+        bg:"#000000", surface:"#1C1C1E", surface2:"#121821", border:"#2A323D", hairline:"#202734",
+        text:"#FFFFFF", muted:"#B4BFC9", subtle:"#7B8794",
+        accent:"#33FFBF", accentStrong:"#00C99A", onAccent:"#00140E", accentPure:"#33FFBF",
+        glass:"rgba(28,30,34,0.66)", glassBorder:"rgba(255,255,255,0.12)", glassBlur:"blur(9px)",
+        gold:"#E5C866", goldSoft:"rgba(229,200,102,0.12)",
+        shadow:"0 10px 34px -12px rgba(0,0,0,0.7)", device:"#0a0a0a",
+      },
+      "new-light": {
+        bg:"#F7F8F8", surface:"#FFFFFF", surface2:"#F1F2F2", border:"#E4E7E5", hairline:"#EBEDEC",
+        text:"#14181A", muted:"#5C6360", subtle:"#8C928F",
+        accent:"#00785C", accentStrong:"#006F52", onAccent:"#FFFFFF", accentPure:"#00AF84",
+        glass:"transparent", glassBorder:"transparent", glassBlur:"none",
+        gold:"transparent", goldSoft:"transparent",
+        shadow:"0 18px 40px -24px rgba(13,30,24,0.30)", device:"#1d1d1f",
+      },
+      "new-dark": {
+        bg:"#0E1110", surface:"#15191A", surface2:"#1B1F1F", border:"#272C2B", hairline:"#222726",
+        text:"#EAEDEB", muted:"#9AA09D", subtle:"#6B726F",
+        accent:"#34C99B", accentStrong:"#00AF84", onAccent:"#06140E", accentPure:"#34C99B",
+        glass:"transparent", glassBorder:"transparent", glassBlur:"none",
+        gold:"transparent", goldSoft:"transparent",
+        shadow:"0 20px 46px -26px rgba(0,0,0,0.8)", device:"#0a0a0a",
+      },
+    };
+  }
+  renderVals() {
+    const t = this.themes()[this.props.theme] || this.themes()["new-light"];
+    const vars = {
+      "--bg":t.bg, "--surface":t.surface, "--surface-2":t.surface2, "--border":t.border, "--hairline":t.hairline,
+      "--text":t.text, "--muted":t.muted, "--subtle":t.subtle,
+      "--accent":t.accent, "--accent-strong":t.accentStrong, "--on-accent":t.onAccent, "--accent-pure":t.accentPure,
+      "--glass":t.glass, "--glass-border":t.glassBorder, "--glass-blur":t.glassBlur,
+      "--gold":t.gold, "--gold-soft":t.goldSoft, "--shadow":t.shadow,
+    };
+    const frameStyle = {
+      position:"relative", width:"284px", height:"600px", background:t.bg, color:t.text,
+      borderRadius:"46px", border:"11px solid "+t.device, boxSizing:"border-box",
+      boxShadow:"0 1px 0 rgba(255,255,255,0.04) inset, 0 34px 70px -28px rgba(13,20,17,0.5), 0 6px 16px rgba(13,20,17,0.18)",
+      overflow:"hidden", fontFamily:"var(--ui)", ...vars,
+    };
+    const wifiGlyph = React.createElement("svg",{viewBox:"0 0 16 12",width:"15",height:"11",fill:t.text},
+      React.createElement("path",{d:"M8 11.2 9.6 9.1a2 2 0 0 0-3.2 0L8 11.2zM8 7.2c1.2 0 2.3.5 3.1 1.4l1.3-1.6A6.4 6.4 0 0 0 8 5.2a6.4 6.4 0 0 0-4.4 1.8l1.3 1.6A4.2 4.2 0 0 1 8 7.2zM8 3.2c2.1 0 4.1.8 5.6 2.2L15 3.7A9.9 9.9 0 0 0 8 1a9.9 9.9 0 0 0-7 2.7l1.4 1.7A8 8 0 0 1 8 3.2z"}));
+    return {
+      frameStyle, wifiGlyph, children: this.props.children,
+      label: this.props.label || "",
+      labelColor: this.props.labelColor || "#8A928F",
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Hanken+Grotesk:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
+</helmet>
+<div style="display:flex; flex-direction:column; height:100%; background:var(--bg); color:var(--text); font-family:var(--ui,'Hanken Grotesk',sans-serif);">
+  <div style="padding:14px 16px 10px;">
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <img src="assets/logo-symbol.png" alt="" style="width:17px; height:17px; object-fit:contain;">
+        <div style="font-size:11px; font-weight:600; letter-spacing:.26em; color:var(--text);">TIERRA&nbsp;MÄDRE</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px; color:var(--muted);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.2-3.2"></path></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 6h18M3 12h18M3 18h18"></path></svg>
+      </div>
+    </div>
+  </div>
+  <div style="padding:2px 16px 12px; display:flex; align-items:flex-end; justify-content:space-between;">
+    <div>
+      <div style="font-family:var(--serif,'Cormorant',serif); font-size:30px; line-height:1; font-weight:500; letter-spacing:.2px;">Catálogo</div>
+      <div style="font-family:var(--mono,monospace); font-size:10px; letter-spacing:.08em; color:var(--subtle); margin-top:6px;">48 PIEZAS · ESMERALDAS DE COLOMBIA</div>
+    </div>
+  </div>
+  <div style="display:flex; gap:18px; padding:0 16px 14px; font-size:12px;">
+    <div style="color:var(--accent); font-weight:600; padding-bottom:6px; border-bottom:1.5px solid var(--accent);">Todas</div>
+    <div style="color:var(--muted); padding-bottom:6px;">Muzo</div>
+    <div style="color:var(--muted); padding-bottom:6px;">Chivor</div>
+    <div style="color:var(--muted); padding-bottom:6px;">Coscuez</div>
+  </div>
+  <div style="flex:1; overflow:hidden; padding:0 16px;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px 12px;">
+      <sc-for list="{{ items }}" as="p" hint-placeholder-count="4">
+        <div>
+          <div style="position:relative; width:100%; aspect-ratio:1/1.06; background:var(--surface-2); border-radius:4px; overflow:hidden;">
+            <img src="{{ p.img }}" alt="{{ p.name }}" style="{{ p.imgStyle }}">
+          </div>
+          <div style="font-family:var(--serif,'Cormorant',serif); font-size:16px; line-height:1.05; font-weight:500; margin-top:9px;">{{ p.name }}</div>
+          <div style="font-family:var(--mono,monospace); font-size:9.5px; letter-spacing:.05em; color:var(--subtle); margin-top:4px;">{{ p.spec }}</div>
+          <div style="font-size:12.5px; font-weight:500; color:var(--text); margin-top:5px;">{{ p.price }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="display:flex; border-top:1px solid var(--hairline); padding:9px 8px calc(8px + env(safe-area-inset-bottom)); background:var(--bg);">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+        <div style="color:{{ t.color }};">{{ t.icon }}</div>
+        <div style="font-size:9px; letter-spacing:.04em; color:{{ t.color }}; font-weight:{{ t.weight }};">{{ t.label }}</div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:284,&quot;height&quot;:554}}">
+class Component extends DCLogic {
+  renderVals() {
+    const E = React.createElement;
+    const ic = (d, fill) => E("svg",{width:19,height:19,viewBox:"0 0 24 24",fill:fill?"currentColor":"none",stroke:"currentColor",strokeWidth:1.6,strokeLinecap:"round",strokeLinejoin:"round"}, ...d.map((p,i)=>E("path",{key:i,d:p})));
+    const raw = [
+      {name:"Tayrona", img:"assets/emeralds/tayrona.png", spec:"4.20 ct · MUZO", price:"$14,500", zoom:2.4, ox:"50%", oy:"40%"},
+      {name:"Reflejo de Muzo", img:"assets/emeralds/reflejo.png", spec:"3.05 ct · MUZO", price:"$9,800", zoom:1.9, ox:"50%", oy:"60%"},
+      {name:"Cronos", img:"assets/emeralds/cronos.png", spec:"2.14 ct · CHIVOR", price:"$5,600", zoom:3.0, ox:"50%", oy:"57%"},
+      {name:"Origen Eterno", img:"assets/emeralds/origen.png", spec:"2.68 ct · CHIVOR", price:"$7,300", zoom:2.3, ox:"52%", oy:"62%"},
+    ];
+    const items = raw.map(p => ({...p, imgStyle:{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",transform:"scale("+p.zoom+")",transformOrigin:p.ox+" "+p.oy}}));
+    const tabs = [
+      {label:"Catálogo", active:true, paths:["M3 9.5 12 3l9 6.5","M5 9v11h14V9"]},
+      {label:"Cotizar", active:false, paths:["M8 3h8l3 4v14H5V7z","M8 12h8M8 16h5"]},
+      {label:"Bóveda", active:false, paths:["M4 5h16v14H4z","M9 9h6v6H9z"]},
+      {label:"Perfil", active:false, paths:["M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z","M5 20a7 7 0 0 1 14 0"]},
+    ].map(t => ({label:t.label, color:t.active?"var(--accent)":"var(--subtle)", weight:t.active?600:400, icon: ic(t.paths,false)}));
+    return { items, tabs };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Hanken+Grotesk:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#E9EBEA;}
+</style>
+</helmet>
+<div style="--ui:'Hanken Grotesk',ui-sans-serif,system-ui,sans-serif; --serif:'Cormorant',Georgia,serif; --mono:'DM Mono',ui-monospace,monospace; background:#E9EBEA; color:#14181A; font-family:var(--ui); padding:64px 72px 120px; min-width:1640px;">
+
+  <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:40px; max-width:1500px; margin:0 auto 8px;">
+    <div style="max-width:760px;">
+      <div style="display:flex; align-items:center; gap:11px; margin-bottom:22px;">
+        <img src="assets/logo-symbol.png" alt="" style="width:30px; height:30px; object-fit:contain;">
+        <div style="font-size:13px; font-weight:600; letter-spacing:.30em;">TIERRA&nbsp;MÄDRE</div>
+      </div>
+      <div style="font-family:var(--serif); font-size:64px; line-height:.98; font-weight:500; letter-spacing:-.5px;">Evolución del sistema<br>de diseño</div>
+      <div style="font-size:16px; line-height:1.6; color:#5C6360; margin-top:22px; max-width:600px;">Del actual <span style="color:#14181A; font-weight:600;">Emerald iOS</span> —verde &amp; oro, glassmorfismo y profundidad— hacia <span style="color:#00785C; font-weight:600;">Quiet Emerald</span>: un solo verde de marca, escala de grises completa y lujo silencioso donde la única saturación es la esmeralda misma.</div>
+    </div>
+    <div style="flex:none; text-align:right; padding-top:6px;">
+      <div style="font-family:var(--mono); font-size:11px; letter-spacing:.12em; color:#8C928F; line-height:2;">ESMERALDAS CON ADN DE PAZ<br>ESMERALDAS DE COLOMBIA<br>REV. 2026 · 01 → 02</div>
+    </div>
+  </div>
+
+  <div style="height:1px; background:#CFD4D1; max-width:1500px; margin:36px auto 0;"></div>
+
+  <!-- ============ SCREEN 01 — CATALOG ============ -->
+  <div style="max-width:1500px; margin:54px auto 0;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom:30px;">
+      <div style="font-family:var(--mono); font-size:13px; color:#00785C; letter-spacing:.1em;">01</div>
+      <div style="font-family:var(--serif); font-size:34px; font-weight:500;">Catálogo</div>
+      <div style="font-size:13px; color:#8C928F;">Grid de productos</div>
+    </div>
+
+    <div style="display:flex; gap:54px; align-items:flex-start;">
+      <div style="flex:none;">
+        <div style="display:inline-flex; align-items:center; gap:8px; padding:5px 14px 5px 12px; border-radius:999px; background:#fff; border:1px solid #DCE0DE; margin-bottom:24px;">
+          <span style="width:7px; height:7px; border-radius:50%; background:#9AA09D;"></span>
+          <span style="font-size:11px; font-weight:600; letter-spacing:.14em; color:#5C6360;">ACTUAL · EMERALD iOS</span>
+        </div>
+        <div style="display:flex; gap:28px;">
+          <dc-import name="Phone" theme="cur-light" label="Claro" hint-size="284px,640px"><dc-import name="CatalogCurrent" hint-size="262px,532px"></dc-import></dc-import>
+          <dc-import name="Phone" theme="cur-dark" label="Oscuro" hint-size="284px,640px"><dc-import name="CatalogCurrent" hint-size="262px,532px"></dc-import></dc-import>
+        </div>
+      </div>
+
+      <div style="flex:none; align-self:stretch; display:flex; align-items:center; padding-top:60px;">
+        <svg width="40" height="20" viewBox="0 0 40 20" fill="none" stroke="#00785C" stroke-width="1.5"><path d="M2 10h34M30 4l7 6-7 6"></path></svg>
+      </div>
+
+      <div style="flex:none;">
+        <div style="display:inline-flex; align-items:center; gap:8px; padding:5px 14px 5px 12px; border-radius:999px; background:#06291E; margin-bottom:24px;">
+          <span style="width:7px; height:7px; border-radius:50%; background:#00AF84;"></span>
+          <span style="font-size:11px; font-weight:600; letter-spacing:.14em; color:#CFEDE2;">NUEVO · QUIET EMERALD</span>
+        </div>
+        <div style="display:flex; gap:28px;">
+          <dc-import name="Phone" theme="new-light" label="Claro" hint-size="284px,640px"><dc-import name="CatalogNew" hint-size="262px,532px"></dc-import></dc-import>
+          <dc-import name="Phone" theme="new-dark" label="Oscuro" hint-size="284px,640px"><dc-import name="CatalogNew" hint-size="262px,532px"></dc-import></dc-import>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN 02 — DETAIL ============ -->
+  <div style="max-width:1500px; margin:80px auto 0;">
+    <div style="height:1px; background:#CFD4D1; margin-bottom:54px;"></div>
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom:30px;">
+      <div style="font-family:var(--mono); font-size:13px; color:#00785C; letter-spacing:.1em;">02</div>
+      <div style="font-family:var(--serif); font-size:34px; font-weight:500;">Detalle de producto</div>
+      <div style="font-size:13px; color:#8C928F;">Galería &amp; ficha</div>
+    </div>
+    <div style="display:flex; gap:54px; align-items:flex-start;">
+      <div style="flex:none;">
+        <div style="display:inline-flex; align-items:center; gap:8px; padding:5px 14px 5px 12px; border-radius:999px; background:#fff; border:1px solid #DCE0DE; margin-bottom:24px;">
+          <span style="width:7px; height:7px; border-radius:50%; background:#9AA09D;"></span>
+          <span style="font-size:11px; font-weight:600; letter-spacing:.14em; color:#5C6360;">ACTUAL · EMERALD iOS</span>
+        </div>
+        <div style="display:flex; gap:28px;">
+          <dc-import name="Phone" theme="cur-light" label="Claro" hint-size="284px,640px"><dc-import name="DetailCurrent" hint-size="262px,532px"></dc-import></dc-import>
+          <dc-import name="Phone" theme="cur-dark" label="Oscuro" hint-size="284px,640px"><dc-import name="DetailCurrent" hint-size="262px,532px"></dc-import></dc-import>
+        </div>
+      </div>
+      <div style="flex:none; align-self:stretch; display:flex; align-items:center; padding-top:60px;">
+        <svg width="40" height="20" viewBox="0 0 40 20" fill="none" stroke="#00785C" stroke-width="1.5"><path d="M2 10h34M30 4l7 6-7 6"></path></svg>
+      </div>
+      <div style="flex:none;">
+        <div style="display:inline-flex; align-items:center; gap:8px; padding:5px 14px 5px 12px; border-radius:999px; background:#06291E; margin-bottom:24px;">
+          <span style="width:7px; height:7px; border-radius:50%; background:#00AF84;"></span>
+          <span style="font-size:11px; font-weight:600; letter-spacing:.14em; color:#CFEDE2;">NUEVO · QUIET EMERALD</span>
+        </div>
+        <div style="display:flex; gap:28px;">
+          <dc-import name="Phone" theme="new-light" label="Claro" hint-size="284px,640px"><dc-import name="DetailNew" hint-size="262px,532px"></dc-import></dc-import>
+          <dc-import name="Phone" theme="new-dark" label="Oscuro" hint-size="284px,640px"><dc-import name="DetailNew" hint-size="262px,532px"></dc-import></dc-import>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN 03 — COTIZACIÓN ============ -->
+  <div style="max-width:1500px; margin:80px auto 0;">
+    <div style="height:1px; background:#CFD4D1; margin-bottom:54px;"></div>
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom:30px;">
+      <div style="font-family:var(--mono); font-size:13px; color:#00785C; letter-spacing:.1em;">03</div>
+      <div style="font-family:var(--serif); font-size:34px; font-weight:500;">Cotización</div>
+      <div style="font-size:13px; color:#8C928F;">Resumen de venta</div>
+    </div>
+    <div style="display:flex; gap:54px; align-items:flex-start;">
+      <div style="flex:none;">
+        <div style="display:inline-flex; align-items:center; gap:8px; padding:5px 14px 5px 12px; border-radius:999px; background:#fff; border:1px solid #DCE0DE; margin-bottom:24px;">
+          <span style="width:7px; height:7px; border-radius:50%; background:#9AA09D;"></span>
+          <span style="font-size:11px; font-weight:600; letter-spacing:.14em; color:#5C6360;">ACTUAL · EMERALD iOS</span>
+        </div>
+        <div style="display:flex; gap:28px;">
+          <dc-import name="Phone" theme="cur-light" label="Claro" hint-size="284px,640px"><dc-import name="QuoteCurrent" hint-size="262px,532px"></dc-import></dc-import>
+          <dc-import name="Phone" theme="cur-dark" label="Oscuro" hint-size="284px,640px"><dc-import name="QuoteCurrent" hint-size="262px,532px"></dc-import></dc-import>
+        </div>
+      </div>
+      <div style="flex:none; align-self:stretch; display:flex; align-items:center; padding-top:60px;">
+        <svg width="40" height="20" viewBox="0 0 40 20" fill="none" stroke="#00785C" stroke-width="1.5"><path d="M2 10h34M30 4l7 6-7 6"></path></svg>
+      </div>
+      <div style="flex:none;">
+        <div style="display:inline-flex; align-items:center; gap:8px; padding:5px 14px 5px 12px; border-radius:999px; background:#06291E; margin-bottom:24px;">
+          <span style="width:7px; height:7px; border-radius:50%; background:#00AF84;"></span>
+          <span style="font-size:11px; font-weight:600; letter-spacing:.14em; color:#CFEDE2;">NUEVO · QUIET EMERALD</span>
+        </div>
+        <div style="display:flex; gap:28px;">
+          <dc-import name="Phone" theme="new-light" label="Claro" hint-size="284px,640px"><dc-import name="QuoteNew" hint-size="262px,532px"></dc-import></dc-import>
+          <dc-import name="Phone" theme="new-dark" label="Oscuro" hint-size="284px,640px"><dc-import name="QuoteNew" hint-size="262px,532px"></dc-import></dc-import>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ RESPONSIVE ============ -->
+  <div style="max-width:1500px; margin:88px auto 0;">
+    <div style="height:1px; background:#CFD4D1; margin-bottom:54px;"></div>
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom:8px;">
+      <div style="font-family:var(--mono); font-size:13px; color:#00785C; letter-spacing:.1em;">04</div>
+      <div style="font-family:var(--serif); font-size:34px; font-weight:500;">Una sola estructura, cada pantalla</div>
+    </div>
+    <div style="font-size:14px; color:#5C6360; margin-bottom:40px; max-width:620px;">El nuevo catálogo es mobile-first y escala a tablet y escritorio con la misma jerarquía: rejilla de hairlines, foto de la pieza como único color, y navegación que pasa de barra inferior a barra superior.</div>
+
+    <div style="display:flex; gap:48px; align-items:flex-start; flex-wrap:wrap;">
+      <div style="flex:none;">
+        <div style="font-family:var(--mono); font-size:10px; letter-spacing:.14em; color:#8C928F; margin-bottom:18px;">TABLET · 834PT</div>
+        <div style="position:relative; width:512px; height:700px; border-radius:34px; border:12px solid #1d1d1f; box-sizing:border-box; overflow:hidden; box-shadow:0 40px 80px -36px rgba(13,30,24,.45);">
+          <div style="position:absolute; inset:0; --bg:#F7F8F8; --surface:#FFFFFF; --surface-2:#F1F2F2; --border:#E4E7E5; --hairline:#EBEDEC; --text:#14181A; --muted:#5C6360; --subtle:#8C928F; --accent:#00785C; --accent-strong:#006F52; --on-accent:#FFFFFF; --accent-pure:#00AF84; --shadow:0 18px 40px -24px rgba(13,30,24,0.30);">
+            <dc-import name="CatalogWide" cols="3" max="6" hint-size="100%,100%"></dc-import>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:1; min-width:880px;">
+        <div style="font-family:var(--mono); font-size:10px; letter-spacing:.14em; color:#8C928F; margin-bottom:18px;">ESCRITORIO · 1440PX</div>
+        <div style="border-radius:14px; overflow:hidden; border:1px solid #D6DAD8; box-shadow:0 44px 90px -44px rgba(13,30,24,.45);">
+          <div style="height:40px; background:#EBEDEC; display:flex; align-items:center; gap:8px; padding:0 16px; border-bottom:1px solid #E0E3E1;">
+            <span style="width:11px; height:11px; border-radius:50%; background:#D0D4D2;"></span>
+            <span style="width:11px; height:11px; border-radius:50%; background:#D0D4D2;"></span>
+            <span style="width:11px; height:11px; border-radius:50%; background:#D0D4D2;"></span>
+            <div style="margin-left:14px; flex:1; max-width:340px; height:24px; border-radius:7px; background:#F4F6F5; border:1px solid #E2E5E3; display:flex; align-items:center; padding:0 12px; font-family:var(--mono); font-size:10px; color:#8C928F;">tierramadre.app/catalogo</div>
+          </div>
+          <div style="height:582px; --bg:#F7F8F8; --surface:#FFFFFF; --surface-2:#F1F2F2; --border:#E4E7E5; --hairline:#EBEDEC; --text:#14181A; --muted:#5C6360; --subtle:#8C928F; --accent:#00785C; --accent-strong:#006F52; --on-accent:#FFFFFF; --accent-pure:#00AF84; --shadow:0 18px 40px -24px rgba(13,30,24,0.30);">
+            <dc-import name="CatalogWide" cols="4" max="8" hint-size="100%,100%"></dc-import>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ STYLE TILE ============ -->
+  <div style="max-width:1500px; margin:88px auto 0;">
+    <div style="height:1px; background:#CFD4D1; margin-bottom:54px;"></div>
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom:8px;">
+      <div style="font-family:var(--mono); font-size:13px; color:#00785C; letter-spacing:.1em;">05</div>
+      <div style="font-family:var(--serif); font-size:34px; font-weight:500;">Style tile — Quiet Emerald</div>
+    </div>
+    <div style="font-size:14px; color:#5C6360; margin-bottom:40px; max-width:620px;">Paleta, escala tipográfica, botones y tarjeta de producto. Un verde de marca, gris en todo lo demás.</div>
+
+    <div style="display:flex; gap:32px; align-items:flex-start; flex-wrap:wrap;">
+      <div style="flex:1; min-width:700px; background:#EFF1F0; border-radius:18px; padding:22px;">
+        <div style="--bg:#F7F8F8; --surface:#FFFFFF; --surface-2:#F1F2F2; --border:#E4E7E5; --hairline:#EBEDEC; --text:#14181A; --muted:#5C6360; --subtle:#8C928F; --accent:#00785C; --accent-strong:#006F52; --on-accent:#FFFFFF; --accent-pure:#00AF84; --shadow:0 18px 40px -24px rgba(13,30,24,0.18);">
+          <dc-import name="StyleTile" modeLabel="MODO CLARO" hint-size="100%,440px"></dc-import>
+        </div>
+      </div>
+      <div style="flex:1; min-width:700px; background:#0A0D0C; border-radius:18px; padding:22px;">
+        <div style="--bg:#0E1110; --surface:#15191A; --surface-2:#1B1F1F; --border:#272C2B; --hairline:#222726; --text:#EAEDEB; --muted:#9AA09D; --subtle:#6B726F; --accent:#34C99B; --accent-strong:#00AF84; --on-accent:#06140E; --accent-pure:#34C99B; --shadow:0 20px 46px -26px rgba(0,0,0,0.6);">
+          <dc-import name="StyleTile" modeLabel="MODO OSCURO" hint-size="100%,440px"></dc-import>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:1500px; margin:64px auto 0; padding-top:30px; border-top:1px solid #CFD4D1; display:flex; align-items:center; justify-content:space-between;">
+    <div style="font-family:var(--serif); font-style:italic; font-size:20px; color:#3A403E;">Esmeraldas con ADN de Paz.</div>
+    <div style="font-family:var(--mono); font-size:10px; letter-spacing:.12em; color:#8C928F;">TIERRA MÄDRE · QUIET EMERALD · 2026</div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

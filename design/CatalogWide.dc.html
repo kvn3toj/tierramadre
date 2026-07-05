@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600&family=Hanken+Grotesk:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+</helmet>
+<div style="display:flex; flex-direction:column; height:100%; background:var(--bg); color:var(--text); font-family:var(--ui,'Hanken Grotesk',sans-serif);">
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:18px 28px; border-bottom:1px solid var(--hairline);">
+    <div style="display:flex; align-items:center; gap:34px;">
+      <div style="display:flex; align-items:center; gap:9px;">
+        <img src="assets/logo-symbol.png" alt="" style="width:20px; height:20px; object-fit:contain;">
+        <div style="font-size:12px; font-weight:600; letter-spacing:.26em;">TIERRA&nbsp;MÄDRE</div>
+      </div>
+      <div style="display:flex; gap:24px; font-size:12.5px;">
+        <span style="color:var(--text); font-weight:600;">Catálogo</span>
+        <span style="color:var(--muted);">Bóveda</span>
+        <span style="color:var(--muted);">Cotizaciones</span>
+        <span style="color:var(--muted);">Clientes</span>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:18px; color:var(--muted);">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.2-3.2"></path></svg>
+      <div style="width:30px; height:30px; border-radius:50%; background:var(--accent-strong); color:var(--on-accent); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600;">CV</div>
+    </div>
+  </div>
+
+  <div style="display:flex; align-items:flex-end; justify-content:space-between; padding:26px 28px 20px;">
+    <div>
+      <div style="font-family:var(--serif,'Cormorant',serif); font-size:40px; line-height:.95; font-weight:500;">Catálogo</div>
+      <div style="font-family:var(--mono,monospace); font-size:10px; letter-spacing:.08em; color:var(--subtle); margin-top:9px;">48 PIEZAS · ESMERALDAS DE COLOMBIA</div>
+    </div>
+    <div style="display:flex; gap:22px; font-size:12.5px; align-items:center;">
+      <span style="color:var(--accent); font-weight:600; padding-bottom:5px; border-bottom:1.5px solid var(--accent);">Todas</span>
+      <span style="color:var(--muted);">Muzo</span>
+      <span style="color:var(--muted);">Chivor</span>
+      <span style="color:var(--muted);">Coscuez</span>
+      <span style="color:var(--muted); margin-left:8px;">Ordenar ·  Quilataje ▾</span>
+    </div>
+  </div>
+
+  <div style="flex:1; overflow:hidden; padding:0 28px 24px;">
+    <div style="display:grid; grid-template-columns:{{ gridCols }}; gap:30px 24px;">
+      <sc-for list="{{ items }}" as="p" hint-placeholder-count="8">
+        <div>
+          <div style="position:relative; width:100%; aspect-ratio:1/1.04; background:var(--surface-2); border-radius:5px; overflow:hidden;">
+            <img src="{{ p.img }}" alt="{{ p.name }}" style="{{ p.style }}">
+          </div>
+          <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:12px; gap:8px;">
+            <div style="font-family:var(--serif,'Cormorant',serif); font-size:19px; font-weight:500; line-height:1;">{{ p.name }}</div>
+            <div style="font-size:13px; font-weight:500; flex:none;">{{ p.price }}</div>
+          </div>
+          <div style="font-family:var(--mono,monospace); font-size:9.5px; letter-spacing:.05em; color:var(--subtle); margin-top:6px;">{{ p.spec }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:900,&quot;height&quot;:560},&quot;cols&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:4,&quot;tsType&quot;:&quot;number&quot;},&quot;max&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:8,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const cols = parseInt(this.props.cols) || 4;
+    const max = parseInt(this.props.max) || 8;
+    const mk = (zoom,ox,oy)=>({position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",transform:"scale("+zoom+")",transformOrigin:ox+" "+oy});
+    const raw = [
+      {name:"Tayrona", img:"assets/emeralds/tayrona.png", spec:"4.20 ct · MUZO", price:"$14,500", z:2.4, ox:"50%", oy:"40%"},
+      {name:"Reflejo de Muzo", img:"assets/emeralds/reflejo.png", spec:"3.05 ct · MUZO", price:"$9,800", z:1.9, ox:"50%", oy:"60%"},
+      {name:"Cronos", img:"assets/emeralds/cronos.png", spec:"2.14 ct · CHIVOR", price:"$5,600", z:3.0, ox:"50%", oy:"57%"},
+      {name:"Origen Eterno", img:"assets/emeralds/origen.png", spec:"2.68 ct · CHIVOR", price:"$7,300", z:2.3, ox:"52%", oy:"62%"},
+      {name:"Aria", img:"assets/emeralds/aria.png", spec:"1.82 ct · MUZO", price:"$4,200", z:2.7, ox:"52%", oy:"58%"},
+      {name:"Gratitud Sagrada", img:"assets/emeralds/gratitud.png", spec:"1.40 ct · COSCUEZ", price:"$2,950", z:2.3, ox:"50%", oy:"62%"},
+      {name:"Latido Profundo", img:"assets/emeralds/latido.jpg", spec:"2.96 ct · MUZO", price:"$8,400", z:2.2, ox:"50%", oy:"55%"},
+      {name:"Aurora", img:"assets/emeralds/reflejo.png", spec:"1.65 ct · CHIVOR", price:"$3,700", z:2.6, ox:"30%", oy:"58%"},
+    ];
+    const items = raw.slice(0, max).map(p => ({...p, style: mk(p.z,p.ox,p.oy)}));
+    return { items, gridCols: "repeat("+cols+", 1fr)" };
+  }
+}
+</script>
+</body>
+</html>
