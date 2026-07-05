@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Manual Desarrollo · Tierra Madre</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--emerald-300:#6ee7b7;--emerald-400:#34d399;--emerald-500:#10b981;--emerald-700:#047857;--emerald-900:#064e3b;--gold-300:#fcd34d;--gold-400:#fbbf24;--gold-500:#f59e0b;--purple:#a855f7;--text:#e6f4ef;--text-soft:rgba(230,244,239,.75);--text-mute:rgba(230,244,239,.5);--border:rgba(52,211,153,.2)}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:radial-gradient(ellipse at top,#0f1714 0%,#050807 60%,#000 100%);color:var(--text);line-height:1.7;min-height:100vh;-webkit-font-smoothing:antialiased}
+.serif{font-family:'Playfair Display',Georgia,serif;letter-spacing:-.02em}
+.container{max-width:1000px;margin:0 auto;padding:0 24px}
+section{padding:64px 24px;position:relative}
+h1{font-size:clamp(2.2rem,5vw,3.5rem);font-weight:900;line-height:1.1}
+h2{font-size:clamp(1.5rem,3vw,2.25rem);font-weight:800;line-height:1.2;margin-bottom:16px}
+h3{font-size:1.3rem;font-weight:700;margin-bottom:12px;color:var(--emerald-300)}
+h4{font-size:1.05rem;font-weight:700;margin-bottom:8px}
+p{color:var(--text-soft);margin-bottom:8px}
+.section-label{font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:var(--emerald-400);font-weight:700;margin-bottom:14px}
+.lead{font-size:1.1rem;color:var(--text-soft)}
+.grad-text{background:linear-gradient(135deg,#34d399,#10b981 40%,#fcd34d);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block}
+.glass{background:linear-gradient(135deg,rgba(15,23,20,.6),rgba(22,35,32,.4));backdrop-filter:blur(14px);border:1px solid var(--border);border-radius:14px}
+.glass-strong{background:linear-gradient(135deg,rgba(15,23,20,.92),rgba(22,35,32,.75));backdrop-filter:blur(20px);border:1px solid rgba(52,211,153,.28);border-radius:18px}
+.card{background:linear-gradient(135deg,rgba(15,23,20,.7),rgba(22,35,32,.5));border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid rgba(52,211,153,.28);background:rgba(16,185,129,.1);color:var(--emerald-300)}
+.chip.gold{border-color:rgba(251,191,36,.32);background:rgba(251,191,36,.1);color:var(--gold-300)}
+.chip.purple{border-color:rgba(168,85,247,.32);background:rgba(168,85,247,.1);color:#c4b5fd}
+.grid{display:grid;gap:16px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+@media (max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.flex{display:flex}.items-center{align-items:center}.justify-center{justify-content:center}.wrap{flex-wrap:wrap}
+.gap-2{gap:8px}.gap-3{gap:12px}
+.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}.mb-8{margin-bottom:32px}.mb-12{margin-bottom:48px}
+.mt-4{margin-top:16px}.mt-6{margin-top:24px}.mt-8{margin-top:32px}
+.text-amber{color:var(--gold-300)}.text-emerald{color:var(--emerald-300)}.text-purple{color:#c4b5fd}
+.text-sm{font-size:.875rem}.text-xs{font-size:.78rem}
+.text-soft{color:var(--text-soft)}.text-mute{color:var(--text-mute)}
+pre{background:#0a0f0d;border:1px solid rgba(52,211,153,.25);border-radius:10px;padding:14px;overflow-x:auto;font-size:12px;color:#a7f3d0;line-height:1.6;font-family:'JetBrains Mono',monospace;margin:12px 0}
+code{font-family:'JetBrains Mono',monospace}
+code.inline{color:var(--gold-300);background:rgba(251,191,36,.08);padding:1px 6px;border-radius:4px;font-size:.85em}
+.ul-clean{list-style:none}
+.ul-dot li{padding:5px 0 5px 18px;position:relative;font-size:.9rem;color:var(--text-soft)}
+.ul-dot li::before{content:"•";color:var(--emerald-400);position:absolute;left:0;font-weight:bold}
+.step{display:flex;gap:16px;margin-bottom:18px;padding:16px;background:linear-gradient(135deg,rgba(15,23,20,.7),rgba(22,35,32,.4));border:1px solid var(--border);border-radius:12px;border-left:3px solid var(--purple)}
+.step-num{flex-shrink:0;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-weight:800;font-size:.95rem;display:flex;align-items:center;justify-content:center}
+.warn{background:linear-gradient(135deg,rgba(239,68,68,.1),rgba(127,29,29,.15));border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:14px;margin:12px 0;font-size:.88rem}
+.warn::before{content:"⚠️ ";font-size:1.1em}
+.tip{background:linear-gradient(135deg,rgba(251,191,36,.08),rgba(180,83,9,.15));border:1px solid rgba(251,191,36,.3);border-radius:10px;padding:14px;margin:12px 0;font-size:.88rem}
+.tip::before{content:"💡 ";font-size:1.1em}
+.success{background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(6,78,59,.15));border:1px solid rgba(16,185,129,.3);border-radius:10px;padding:14px;margin:12px 0;font-size:.88rem}
+.success::before{content:"✅ ";font-size:1.1em}
+.prompt-box{background:#0a0f0d;border:1px dashed rgba(251,191,36,.4);border-radius:10px;padding:16px;margin:12px 0;font-family:'JetBrains Mono',monospace;font-size:12px;color:#fcd34d;line-height:1.6;white-space:pre-wrap}
+.prompt-box::before{content:"💬 PROMPT PARA CLAUDE CODE";display:block;font-size:10px;letter-spacing:.2em;color:var(--gold-300);margin-bottom:8px;font-family:'Inter',sans-serif}
+.fm{opacity:0;transform:translateY(20px);transition:all .6s cubic-bezier(.22,1,.36,1)}
+.fm.in{opacity:1;transform:translateY(0)}
+.toc{position:sticky;top:0;background:rgba(5,8,7,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(168,85,247,.2);padding:14px 24px;z-index:50;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.toc-title{font-family:'Playfair Display',serif;font-size:1rem;color:#c4b5fd;font-weight:700}
+.toc a{font-size:.78rem;color:var(--text-soft);text-decoration:none;padding:4px 8px;border-radius:6px;transition:all .2s}
+.toc a:hover{background:rgba(168,85,247,.1);color:#c4b5fd}
+footer{border-top:1px solid rgba(52,211,153,.2);padding:32px 24px;text-align:center;color:var(--text-mute);font-size:.85rem}
+.hero{padding:80px 24px 60px;text-align:center}
+.gem-icon{width:64px;height:64px;background:linear-gradient(135deg,#a855f7,#7c3aed);clip-path:polygon(50% 0%,90% 30%,80% 90%,20% 90%,10% 30%);box-shadow:0 0 40px rgba(168,85,247,.5);margin:0 auto 16px;animation:gem 6s ease-in-out infinite}
+@keyframes gem{0%,100%{transform:rotate(-5deg) scale(1)}50%{transform:rotate(5deg) scale(1.05)}}
+.section-purple{background:linear-gradient(180deg,transparent,rgba(168,85,247,.08),transparent)}
+.section-tinted{background:linear-gradient(180deg,transparent,rgba(6,78,59,.08),transparent)}
+.center{text-align:center}
+.checklist li{display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:.9rem;color:var(--text-soft);list-style:none}
+.checklist li::before{content:"☐";color:var(--gold-300);font-size:1.1em;margin-top:-2px}
+.field-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(52,211,153,.1);font-size:.85rem;color:var(--text-soft)}
+.field-row:last-child{border-bottom:none}
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <span class="toc-title">Manual Dev · Tierra Madre</span>
+  <a href="#intro">Intro</a>
+  <a href="#stack">Stack</a>
+  <a href="#sprint-1">Sprint 1 · Cimientos</a>
+  <a href="#sprint-2">Sprint 2 · Backend</a>
+  <a href="#sprint-3">Sprint 3 · Frontend</a>
+  <a href="#sprint-4">Sprint 4 · Admin</a>
+  <a href="#sprint-5">Sprint 5 · Integraciones</a>
+  <a href="#sprint-6">Sprint 6 · QA + Deploy</a>
+  <a href="plan-de-delegacion.html">← Delegación</a>
+</nav>
+
+<section class="hero">
+  <div class="fm in"><div class="gem-icon"></div></div>
+  <p class="section-label fm in" style="transition-delay:.1s">Manual para el Desarrollador</p>
+  <h1 class="serif fm in mb-4" style="transition-delay:.2s">Desarrollo Web · <span class="grad-text">Tierra Madre</span></h1>
+  <p class="lead fm in" style="transition-delay:.3s;max-width:680px;margin:0 auto">
+    Stack moderno, prompts listos para Claude Code o Lovable, 6 sprints de 1-1.5 semanas cada uno.
+    Frontend + Backend + Middleware + Admin Panel completo.
+  </p>
+</section>
+
+<!-- INTRO -->
+<section id="intro">
+  <div class="container">
+    <h2 class="serif fm">Tu rol en el proyecto</h2>
+    <p class="fm">
+      Tú eres el dev del equipo. Construyes todo lo que NO se hace en GoHighLevel: la página web pública, las landing pages, el carrito, el checkout con Mercado Pago, el admin panel (centro de comando), el portal de embajadores y todos los Cloudflare Workers que conectan el sistema.
+    </p>
+
+    <div class="success fm">
+      <strong>Buenas noticias:</strong> 80% de tu trabajo lo puedes hacer con prompts bien armados a Claude Code o Lovable. Este manual te da los prompts exactos.
+    </div>
+
+    <h3 class="mt-6">Acceso y credenciales que necesitas</h3>
+    <p>Pide al CEO antes de empezar:</p>
+    <ul class="checklist mt-3">
+      <li>Acceso al repositorio de GitHub (privado)</li>
+      <li>Acceso a Supabase project (rol owner o dev)</li>
+      <li>Acceso a Cloudflare (workers + pages)</li>
+      <li>Acceso a Vercel (deploys)</li>
+      <li>Mercado Pago Developer credentials (Access Token + Public Key + Webhook Secret)</li>
+      <li>GHL Private Integration Token + Location ID (lo entrega la Persona GHL al final de su Fase 1)</li>
+      <li>Sistema de diseño en Figma (lo entrega el Diseñador en Sprint 1)</li>
+      <li>Cuenta de Claude Code o Lovable activa</li>
+    </ul>
+
+    <h3 class="mt-8">Duración del proyecto</h3>
+    <div class="grid grid-3 mt-4">
+      <div class="card"><div class="chip purple mb-2">Sprint 1-2</div><h4>Semanas 1-3</h4><p class="text-sm">Setup + Backend Supabase</p></div>
+      <div class="card"><div class="chip purple mb-2">Sprint 3-4</div><h4>Semanas 4-6</h4><p class="text-sm">Frontend + Admin Panel</p></div>
+      <div class="card"><div class="chip purple mb-2">Sprint 5-6</div><h4>Semanas 7-8</h4><p class="text-sm">Integraciones + Deploy</p></div>
+    </div>
+
+    <div class="tip mt-6">
+      <strong>Filosofía:</strong> commits granulares (1 feature = 1 commit), PR pequeños, revisión de código diaria con el CEO (15 min async).
+    </div>
+  </div>
+</section>
+
+<!-- STACK -->
+<section id="stack" class="section-purple">
+  <div class="container">
+    <p class="section-label fm">Tu Stack</p>
+    <h2 class="serif fm">Tecnologías que vas a usar</h2>
+
+    <div class="grid grid-3 mt-6">
+      <div class="card fm">
+        <h3>⚡ Frontend</h3>
+        <ul class="ul-clean ul-dot text-sm">
+          <li>Vite 5</li>
+          <li>React 19</li>
+          <li>TypeScript 5</li>
+          <li>Tailwind CSS 4</li>
+          <li>Framer Motion 12</li>
+          <li>React Router 7</li>
+          <li>TanStack Query 5</li>
+          <li>Zustand</li>
+          <li>React Hook Form + Zod</li>
+        </ul>
+      </div>
+      <div class="card fm">
+        <h3>🗄️ Backend</h3>
+        <ul class="ul-clean ul-dot text-sm">
+          <li>Supabase (Postgres + Auth + Storage)</li>
+          <li>Edge Functions (Deno)</li>
+          <li>Row Level Security</li>
+          <li>Realtime subscriptions</li>
+        </ul>
+      </div>
+      <div class="card fm">
+        <h3>🔌 Middleware</h3>
+        <ul class="ul-clean ul-dot text-sm">
+          <li>Cloudflare Workers (4 micros)</li>
+          <li>Wrangler CLI</li>
+          <li>Hono (router)</li>
+          <li>Mercado Pago SDK</li>
+          <li>GHL API v2 client</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 class="text-amber mt-8 mb-4">Documentos de referencia (léelos primero)</h3>
+    <div class="grid grid-2">
+      <a href="area-1-frontend.html" class="card" style="text-decoration:none;color:inherit;display:block"><h4>📘 area-1-frontend.html</h4><p class="text-sm">Estructura completa del frontend · componentes · rutas</p></a>
+      <a href="area-2-supabase.html" class="card" style="text-decoration:none;color:inherit;display:block"><h4>📘 area-2-supabase.html</h4><p class="text-sm">Schema SQL · RLS · Edge Functions · Storage</p></a>
+      <a href="area-4-integraciones.html" class="card" style="text-decoration:none;color:inherit;display:block"><h4>📘 area-4-integraciones.html</h4><p class="text-sm">Cloudflare Workers · Mercado Pago · webhooks</p></a>
+      <a href="plan-ejecucion-tierra-madre.html" class="card" style="text-decoration:none;color:inherit;display:block"><h4>📘 plan-ejecucion-tierra-madre.html</h4><p class="text-sm">Vista general del sistema · contexto completo</p></a>
+    </div>
+  </div>
+</section>
+
+<!-- SPRINT 1 · CIMIENTOS -->
+<section id="sprint-1">
+  <div class="container">
+    <p class="section-label fm">Sprint 1 · Semana 1</p>
+    <h2 class="serif fm">Cimientos del proyecto</h2>
+    <p class="lead fm mb-6">Setup del repo, Supabase, Vercel, Cloudflare. Base sobre la que construyes todo.</p>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div>
+        <h4>Crear repositorio GitHub (privado)</h4>
+        <p class="text-sm">Nombre: <code class="inline">tierramadre-system</code>. Estructura monorepo con apps/ y supabase/. README con instrucciones de setup local.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div>
+        <h4>Inicializar proyecto Vite + React + TS</h4>
+        <pre><code>cd apps
+npm create vite@latest web -- --template react-ts
+cd web
+npm install</code></pre>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">3</div>
+      <div>
+        <h4>Instalar dependencias del frontend</h4>
+        <pre><code>npm install react-router-dom @supabase/supabase-js \
+  @tanstack/react-query zustand framer-motion \
+  react-hook-form @hookform/resolvers zod \
+  lucide-react clsx tailwind-merge \
+  date-fns recharts @tanstack/react-table \
+  embla-carousel-react react-dropzone \
+  @mercadopago/sdk-react
+
+npm install -D tailwindcss@next @tailwindcss/vite \
+  @types/node vitest @playwright/test \
+  eslint prettier husky lint-staged</code></pre>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">4</div>
+      <div>
+        <h4>Configurar Tailwind 4 con tokens del diseñador</h4>
+        <p class="text-sm">Cuando el Diseñador entregue los tokens (paleta, tipografía), pégalos en <code class="inline">tailwind.config.ts</code>.</p>
+        <div class="prompt-box">Configura Tailwind CSS 4 con Vite en este proyecto.
+
+Crea tailwind.config.ts con un theme custom basado en estos tokens del Sistema de Diseño de Tierra Madre:
+
+PALETA:
+- emerald: 50-900 (basado en #10b981)
+- gold: 300-700 (basado en #fcd34d)
+- ink: 700-950 (oscuros para fondos)
+
+FUENTES:
+- sans: Inter (300, 400, 500, 600, 700, 800, 900)
+- serif: Playfair Display (400, 700, 900)
+
+CONFIGURACIÓN:
+- darkMode: 'class'
+- container: { center: true, padding: '2rem', screens: { '2xl': '1400px' } }
+- extend con animaciones personalizadas: fade-up, fade-in, scale-in
+
+Crea src/styles/globals.css con:
+- @tailwind directives
+- CSS variables para los colores (tema dark default)
+- Fonts importados desde Google Fonts
+- Reset minimal
+
+Actualiza index.html con meta tags SEO base.</div>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">5</div>
+      <div>
+        <h4>Crear proyecto Supabase + aplicar schema</h4>
+        <p class="text-sm">Crea proyecto en <code class="inline">supabase.com</code>. Anota URL + Anon Key + Service Role Key.</p>
+        <p class="text-sm">Instala Supabase CLI: <code class="inline">npm install -g supabase</code></p>
+        <p class="text-sm">Aplica el schema completo de <code class="inline">area-2-supabase.html</code> (sección "Schema SQL").</p>
+        <pre><code>supabase login
+supabase link --project-ref XXXXX
+supabase db push  # aplica la migration 001_initial</code></pre>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">6</div>
+      <div>
+        <h4>Configurar Storage buckets</h4>
+        <p class="text-sm">En Supabase Studio → Storage:</p>
+        <ul class="ul-clean ul-dot mt-2">
+          <li>Crear bucket <code class="inline">products</code> (público)</li>
+          <li>Crear bucket <code class="inline">certificates</code> (privado)</li>
+          <li>Crear bucket <code class="inline">ambassadors</code> (público)</li>
+        </ul>
+        <p class="text-sm mt-2">Aplica las policies según <code class="inline">area-2-supabase.html</code>.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">7</div>
+      <div>
+        <h4>Configurar variables de entorno</h4>
+        <p class="text-sm">Crea <code class="inline">.env.local</code> en apps/web:</p>
+        <pre><code>VITE_SUPABASE_URL=https://xxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ...
+VITE_GHL_API_BASE=https://services.leadconnectorhq.com
+VITE_GHL_LOCATION_ID=  # de Persona GHL
+VITE_MP_PUBLIC_KEY=APP_USR-xxx
+VITE_CF_WORKERS_BASE=https://wh.tierramadre.workers.dev</code></pre>
+        <p class="text-sm">Crea <code class="inline">.env.example</code> con las mismas keys pero valores vacíos. <strong>Nunca commits .env.local a git.</strong></p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">8</div>
+      <div>
+        <h4>Configurar Vercel + Cloudflare</h4>
+        <p class="text-sm">Conectar repo GitHub a Vercel (auto-deploy en push a main). Configurar env vars en Vercel dashboard.</p>
+        <p class="text-sm">Crear cuenta Cloudflare. Instalar Wrangler: <code class="inline">npm install -g wrangler</code> y hacer login.</p>
+      </div>
+    </div>
+
+    <div class="success fm">
+      <strong>Sprint 1 completo cuando:</strong> proyecto corre con <code class="inline">npm run dev</code>, Supabase tiene schema, deploy a Vercel funciona, env vars configuradas en todos lados.
+    </div>
+  </div>
+</section>
+
+<!-- SPRINT 2 · BACKEND -->
+<section id="sprint-2" class="section-purple">
+  <div class="container">
+    <p class="section-label fm">Sprint 2 · Semana 2-3</p>
+    <h2 class="serif fm">Backend completo · Supabase Edge Functions</h2>
+    <p class="lead fm mb-6">Las 10 Edge Functions que orquestan toda la lógica server-side.</p>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div>
+        <h4>Aplicar RLS policies + triggers DB</h4>
+        <div class="prompt-box">Sobre el proyecto Supabase de Tierra Madre, crea migration 002_rls_policies con:
+
+1. Habilitar RLS en todas las tablas (contacts, products, orders, ambassadors, agents, events, promotions, testimonials, message_templates, hot_leads)
+
+2. Crear policies por los 5 roles del sistema (super_admin, admin, marketing, agente, embajador) según lo documentado en area-2-supabase.html
+
+3. Crear migration 003_triggers con:
+- update_updated_at_column en todas las tablas
+- products_search_vector_update (full-text search)
+- orders_paid_trigger (suma a total_comprado, recalcula score)
+- ambassador_leads_match (busca contacto y asigna ambassador_id)
+- event_attended (incrementa eventos_presenciales/virtuales)
+- testimonials_auto_approve (rating >=4.5 → status approved)
+
+4. Aplicar con: supabase db push
+
+5. Tests SQL para verificar cada policy y trigger</div>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div>
+        <h4>Construir las 10 Edge Functions</h4>
+        <p class="text-sm">Una por una, con tests. Estructura:</p>
+        <pre><code>supabase/functions/
+├── search-products/index.ts
+├── create-order/index.ts
+├── mp-webhook/index.ts
+├── send-promo/index.ts
+├── calculate-ambassador-score/index.ts
+├── auto-event-invite/index.ts
+├── hot-lead-detector/index.ts
+├── ghl-sync/index.ts
+├── invite-ambassador/index.ts
+└── invite-agent/index.ts</code></pre>
+        <div class="prompt-box">Implementa las 10 Edge Functions de Supabase para Tierra Madre.
+
+Cada una en TypeScript + Deno con:
+- Manejo de CORS
+- Validación de input con zod
+- Cliente Supabase con SERVICE_ROLE_KEY
+- Try/catch con error handling
+- Logs estructurados
+
+Implementa siguiendo las especificaciones en area-2-supabase.html sección "Edge Functions" y claude-code-execution/02-custom-fields.md.
+
+Deploy cada una con: supabase functions deploy {nombre}
+
+Tests con Vitest en cada función:
+- Happy path
+- Validación de input
+- Manejo de errores</div>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">3</div>
+      <div>
+        <h4>Seeds de datos de prueba</h4>
+        <p class="text-sm">Crear <code class="inline">supabase/seed.sql</code> con datos para development:</p>
+        <ul class="ul-clean ul-dot mt-2">
+          <li>20 productos de muestra (mix de categorías)</li>
+          <li>5 embajadoras con diferentes niveles</li>
+          <li>3 eventos (1 presencial pasado, 1 virtual futuro, 1 presencial futuro)</li>
+          <li>10 contactos de prueba con distintos scores</li>
+          <li>5 órdenes pagadas históricas</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="success fm">
+      <strong>Sprint 2 completo cuando:</strong> las 10 functions deployadas y testeadas. Llamarlas via curl devuelve responses esperadas.
+    </div>
+  </div>
+</section>
+
+<!-- SPRINT 3 · FRONTEND PÚBLICO -->
+<section id="sprint-3">
+  <div class="container">
+    <p class="section-label fm">Sprint 3 · Semana 4-5</p>
+    <h2 class="serif fm">Frontend público</h2>
+    <p class="lead fm mb-6">Home + Catálogo + Producto + 6 Landings + Carrito + Checkout.</p>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div>
+        <h4>Setup layout, routing y componentes base</h4>
+        <div class="prompt-box">Construye en el proyecto Vite de Tierra Madre:
+
+1. src/lib/supabase.ts con cliente configurado
+2. src/lib/types.ts con TypeScript interfaces de todas las tablas
+3. src/lib/utils.ts con helpers (cn, formatCOP, slugify, etc.)
+4. src/App.tsx con React Router 7 + lazy loading de todas las rutas
+5. src/components/layout/Header.tsx (animado con framer-motion, carrito badge)
+6. src/components/layout/Footer.tsx
+7. src/components/layout/MobileMenu.tsx (drawer animado)
+8. src/components/animations/FadeIn.tsx, StaggerChildren.tsx, PageTransition.tsx
+9. src/store/cartStore.ts con Zustand + persist en localStorage
+10. src/hooks/useCart.ts, useAuth.ts, useProducts.ts
+
+Diseño: dark theme, sensación premium, animaciones suaves tipo Awwwards.
+
+Mobile-first responsive.</div>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div>
+        <h4>Home + Catálogo + Producto</h4>
+        <div class="prompt-box">Construye estas 3 páginas en el proyecto Tierra Madre:
+
+1. src/pages/Home.tsx con 6 secciones animadas:
+- Hero con video bg + headline + CTA "Ver Catálogo"
+- Productos destacados (query Supabase WHERE destacado=true)
+- Historia de la marca con parallax sutil
+- Galería eventos pasados (carrusel embla)
+- Testimonios (query testimonials WHERE status='published')
+- CTA final "Habla con un asesor"
+
+2. src/pages/Catalog.tsx (/catalogo):
+- Grid responsive con framer-motion stagger
+- Sidebar filtros: categoría (chips), rango precio (slider), ocasión (checkboxes)
+- Búsqueda full-text con debounce 300ms
+- Infinite scroll usando useInfiniteQuery
+- ProductCard con hover crossfade entre fotos
+
+3. src/pages/ProductPage.tsx (/producto/:slug):
+- ProductGallery360 (react-360-product-viewer con 24 fotos de Supabase Storage)
+- Info producto (nombre, precio, descripción, talla si aplica)
+- Botón "Agregar al carrito" anima vuelo al ícono (framer-motion layout)
+- Descarga de certificado (signed URL Supabase)
+- Productos relacionados al final (misma categoría)
+
+Todas con AnimatePresence para transiciones. Mobile responsive perfecto.</div>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">3</div>
+      <div>
+        <h4>Las 6 Landing Pages</h4>
+        <div class="prompt-box">Crea las 6 landing pages siguiendo este template:
+
+src/pages/landings/Topitos.tsx → /topitos
+src/pages/landings/AnillosCompromiso.tsx → /anillos-compromiso
+src/pages/landings/Dijes.tsx → /dijes
+src/pages/landings/GemasSueltas.tsx → /gemas-sueltas
+src/pages/landings/Sets.tsx → /sets
+src/pages/landings/Inversion.tsx → /inversion
+
+Cada landing tiene 7 secciones:
+1. Hero con imagen impactante + headline emocional + CTA primario
+2. Formulario pre-calificación (react-hook-form + zod):
+   - nombre, celular, presupuesto, ocasión
+   - Submit envía a Supabase contacts + dispara GHL workflow #01 via POST
+3. Galería top 6-9 productos de esa categoría (Supabase query)
+4. Storytelling de la categoría (textos del archivo área-6 contenido)
+5. Testimonios específicos de esa categoría
+6. FAQ (5-8 preguntas) con accordion animado
+7. CTA dual: "Hablar con asesor" (abre WhatsApp pre-llenado) y "Ver catálogo completo"
+
+Todas con framer-motion, mobile-first, lazy load de imágenes, meta tags SEO específicos.</div>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">4</div>
+      <div>
+        <h4>Carrito + Checkout + Mercado Pago</h4>
+        <div class="prompt-box">Implementa el flujo de compra:
+
+1. src/components/cart/CartDrawer.tsx
+- Slide animado desde la derecha
+- Lista items con thumbnail + nombre + cantidad + precio
+- Subtotal + envío + total
+- Botón "Ir al checkout"
+- Mobile: bottom sheet en lugar de drawer
+
+2. src/pages/Checkout.tsx (/checkout)
+- Formulario en 3 pasos (con progress visual):
+  Step 1: Datos cliente (nombre, email, celular, ciudad)
+  Step 2: Dirección de envío + indicaciones
+  Step 3: Selección método de pago (botones grandes: PSE, Nequi, Daviplata, Tarjeta)
+- Resumen de orden visible siempre (lateral en desktop, expandible en mobile)
+- Validación con zod
+- Al confirmar:
+  a) POST a Edge Function /create-order
+  b) Recibe { order_id, mp_checkout_url }
+  c) Redirect a mp_checkout_url (Mercado Pago Checkout Pro)
+
+3. src/pages/OrderConfirmation.tsx (/pedido-confirmado/:order_id)
+- Polling al estado de la orden hasta status=paid
+- Muestra confirmación + número orden + tracking estimado
+- Mensaje gracias + invitación a redes
+
+4. src/pages/OrderFailed.tsx + OrderPending.tsx para casos de MP
+
+Animaciones smooth entre pasos. Mobile responsive.</div>
+      </div>
+    </div>
+
+    <div class="success fm">
+      <strong>Sprint 3 completo cuando:</strong> puedes navegar todo el sitio público, agregar al carrito, completar checkout, recibir confirmación. Pago real con tarjeta de prueba MP funciona end-to-end.
+    </div>
+  </div>
+</section>
+
+<!-- SPRINT 4 · ADMIN PANEL -->
+<section id="sprint-4" class="section-tinted">
+  <div class="container">
+    <p class="section-label fm">Sprint 4 · Semana 5-6</p>
+    <h2 class="serif fm">Admin Panel · Centro de Comando</h2>
+    <p class="lead fm mb-6">El módulo más importante del proyecto. 13 sub-módulos.</p>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div>
+        <h4>Setup admin auth + layout</h4>
+        <div class="prompt-box">Construye el sistema de autenticación para /admin:
+
+1. src/pages/admin/AdminLogin.tsx
+- Magic link con Supabase Auth
+- Solo permite emails con dominio @tierramadre.co (o lista whitelist)
+- Después de login: lee role del JWT
+- Redirige según role
+
+2. src/components/admin/AdminLayout.tsx
+- Sidebar con los 13 módulos según role
+- Header con usuario + logout + notificaciones
+- Breadcrumbs
+- Mobile: hamburguesa animada
+
+3. src/hooks/useAuth.ts con:
+- Login, logout, getCurrentUser
+- isRole(role) helper
+- ProtectedRoute wrapper
+
+4. Routing protegido:
+- /admin → AdminDashboard (requiere super_admin o admin)
+- /admin/personas → requiere super_admin
+- /admin/productos → admin o marketing
+- /admin/promociones → admin o super_admin
+- /admin/comisiones → super_admin solo
+- etc.
+
+Diseño: dark elegante, mucho data density pero ordenado.</div>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div>
+        <h4>Dashboard BI (módulo principal)</h4>
+        <div class="prompt-box">Construye /admin (Dashboard BI) con:
+
+KPIs en cards (4 al inicio):
+- Ventas hoy / semana / mes (con % vs período anterior)
+- Pipeline activo: # leads + suma de valor potencial
+- Comisiones pendientes de pago
+- Carritos abandonados últimas 24h
+
+Gráficos con Recharts:
+- Ventas por día últimos 30 días (line chart)
+- Ventas por canal (pie chart: WA, IG, TT, Web)
+- Top 10 productos del mes (bar chart)
+- Conversión por etapa del pipeline (funnel)
+
+Tablas:
+- Top 10 embajadores del mes (con avatar, score, ventas, comisión)
+- Próximos 5 eventos con # asistentes esperados
+- Últimas 10 órdenes pagadas
+
+Realtime: usa Supabase Realtime para que los KPIs se actualicen sin recargar.
+
+Filtros temporales: hoy, semana, mes, año custom.
+
+Animaciones count-up al cargar.</div>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">3</div>
+      <div>
+        <h4>Módulo Productos</h4>
+        <div class="prompt-box">Construye /admin/productos:
+
+1. List view con TanStack Table:
+- Columnas: foto, nombre, SKU, categoría, precio, stock, destacado (toggle), activo (toggle), acciones
+- Filtros por categoría y status
+- Bulk edit: cambiar varios productos a la vez
+- Búsqueda en tiempo real
+
+2. Crear/Editar producto (/admin/productos/nuevo o /:id/editar):
+Form con react-hook-form + zod, todos los campos del schema:
+- Nombre, SKU, slug (auto), descripcion corta y larga
+- Categoría dropdown
+- Precio COP con format input
+- Keywords como tag input
+- Ocasiones multi-checkbox
+- Upload fotos con react-dropzone (drag & drop a Supabase Storage)
+  - Foto principal + galería + 24 fotos 360° opcional
+- Upload certificado PDF
+- Stock number
+- Destacado, activo toggles
+
+3. Al guardar:
+- INSERT/UPDATE en products
+- Fotos van a Supabase Storage products/{sku}/
+- Certificado a certificates/{sku}/
+- Trigger DB actualiza search_vector
+- Página live en /producto/{slug} inmediatamente
+
+Validaciones, error states, success toasts.</div>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">4</div>
+      <div>
+        <h4>Módulo Personas (Embajadores + Agentes)</h4>
+        <div class="prompt-box">Construye /admin/personas (crítico):
+
+Sub-rutas:
+- /admin/personas → hub con 2 cards: Embajadores y Agentes
+- /admin/personas/embajadores → list
+- /admin/personas/embajadores/nuevo → form
+- /admin/personas/embajadores/:id → perfil
+- /admin/personas/embajadores/:id/editar → edit
+- /admin/personas/embajadores/:id/leads → sus leads
+- /admin/personas/embajadores/:id/comisiones → sus comisiones
+- (mismo para /agentes)
+
+Form crear embajador:
+- nombre_completo, email, celular, ciudad, instagram_handle
+- nivel_inicial (dropdown: bronce default)
+- comision_percent (auto según nivel, editable)
+- referido_por (dropdown opcional con otros embajadores)
+- notas_internas (textarea, solo admin)
+
+Submit: POST a Edge Function /invite-ambassador
+→ envía email de bienvenida con magic link
+→ genera slug único
+→ sincroniza tag a GHL
+→ crea carpeta Storage
+
+List view: tabla con avatar, nivel badge, score (barra progreso), # leads, ventas, comisión, estado, última act., menú acciones.
+
+Perfil detallado: header con avatar + KPIs cards + barra al próximo nivel + tabs (leads/ventas/comisiones/actividad) + notas editables + link único copiable.
+
+Realtime updates via Supabase subscription.
+
+Lo mismo para Agentes pero con campos extra: pool (dropdown), horario, capacity, especialidades.</div>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">5</div>
+      <div>
+        <h4>Módulos restantes</h4>
+        <p class="text-sm">Construye los demás módulos siguiendo el mismo patrón:</p>
+        <ul class="ul-clean ul-dot text-sm mt-2">
+          <li><strong>/admin/promociones</strong> · crear promo con audiencia segmentada (Base 13)</li>
+          <li><strong>/admin/eventos</strong> · crear evento + filtros + dispara workflow #12</li>
+          <li><strong>/admin/ordenes</strong> · todas las órdenes con estados</li>
+          <li><strong>/admin/comisiones</strong> · pendientes, aprobar pagos en lote</li>
+          <li><strong>/admin/plantillas</strong> · ver/editar las 30+ plantillas</li>
+          <li><strong>/admin/testimonios</strong> · moderar reviews</li>
+          <li><strong>/admin/contenido</strong> · CMS lite de textos de landings</li>
+          <li><strong>/admin/config</strong> · settings globales (horarios, % comisiones, etc.)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">6</div>
+      <div>
+        <h4>Portal Embajador</h4>
+        <div class="prompt-box">Construye el portal para embajadoras en /embajador:
+
+- /embajador (dashboard personal):
+  - Su score + barra al próximo nivel
+  - Comisión acumulada del mes
+  - Leaderboard top 10 embajadoras del mes
+  - Tips de coaching según métricas débiles
+
+- /embajador/leads (sus leads):
+  - Tabla con estado, score, última actividad
+  - Filtros y búsqueda
+
+- /embajador/leads/nuevo (cargar lead):
+  - Form simple: nombre, celular, IG, ciudad, presupuesto, notas
+  - Dispara workflow #06 (precarga lead)
+
+- /embajador/comisiones:
+  - Pendientes vs pagadas
+  - Detalle por venta
+  - Historial mensual
+
+- /embajador/kit (kit de marketing):
+  - Galería de fotos para postear
+  - Plantillas de mensajes
+  - Videos cortos
+  - Descargables
+
+Diseño premium, animaciones suaves, sensación de "club exclusivo".
+
+Auth: magic link Supabase. Solo embajadoras con rol="embajador" en Auth pueden entrar.</div>
+      </div>
+    </div>
+
+    <div class="success fm">
+      <strong>Sprint 4 completo cuando:</strong> admin panel funcional, puedes crear productos, embajadores, promos, eventos. Dashboard muestra métricas reales.
+    </div>
+  </div>
+</section>
+
+<!-- SPRINT 5 · INTEGRACIONES -->
+<section id="sprint-5" class="section-purple">
+  <div class="container">
+    <p class="section-label fm">Sprint 5 · Semana 6-7</p>
+    <h2 class="serif fm">Cloudflare Workers + GHL Sync</h2>
+    <p class="lead fm mb-6">Los 4 Workers que conectan todo. Lo más técnico del proyecto.</p>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div>
+        <h4>Crear los 4 Workers</h4>
+        <pre><code>mkdir tierramadre-workers && cd tierramadre-workers
+npm install -g wrangler
+wrangler login
+
+# Para cada worker:
+wrangler init mp-webhook
+wrangler init ghl-bridge
+wrangler init order-orchestrator
+wrangler init scheduler</code></pre>
+        <div class="prompt-box">Implementa los 4 Cloudflare Workers para Tierra Madre según especificación en area-4-integraciones.html:
+
+1. mp-webhook (URL: wh.tierramadre.workers.dev/mp)
+- Recibe webhooks de Mercado Pago
+- Valida firma HMAC SHA-256
+- Si payment.approved: update Supabase + update GHL + dispara workflow #08
+
+2. ghl-bridge (URL: wh.tierramadre.workers.dev/ghl)
+- Recibe webhooks de GoHighLevel (ContactCreate, ContactUpdate, InboundMessage)
+- Sincroniza con Supabase (bidireccional)
+
+3. order-orchestrator (URL: api.tierramadre.workers.dev/order)
+- POST /order/create: crear orden + preferencia MP
+- GET /order/:id: estado
+- POST /order/:id/cancel
+
+4. scheduler (sin URL pública, cron triggers)
+- Cron */15 * * * *: llama hot-lead-detector
+- Cron 0 0 * * *: llama calculate-ambassador-score
+- Cron 0 9 * * *: recordatorios eventos del día
+- Cron 0 18 * * *: detección carrito abandonado
+
+Cada worker con TypeScript, Hono router, manejo de CORS, secrets configurados via wrangler secret put.
+
+Deploy: wrangler deploy en cada uno.</div>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div>
+        <h4>Configurar webhook de Mercado Pago</h4>
+        <p class="text-sm">En Mercado Pago Developer Panel:</p>
+        <ul class="ul-clean ul-dot mt-2">
+          <li>Settings → Webhooks → URL: <code class="inline">https://wh.tierramadre.workers.dev/mp</code></li>
+          <li>Eventos: <code class="inline">payment</code>, <code class="inline">merchant_order</code></li>
+          <li>Test con tarjeta de prueba MP antes de pasar a producción</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">3</div>
+      <div>
+        <h4>Configurar webhook de GHL hacia Cloudflare</h4>
+        <p class="text-sm">Cuando la Persona GHL haya terminado sus fases 1-4:</p>
+        <ul class="ul-clean ul-dot mt-2">
+          <li>En GHL → Settings → Integrations → Webhooks</li>
+          <li>URL: <code class="inline">https://wh.tierramadre.workers.dev/ghl</code></li>
+          <li>Eventos: ContactCreate, ContactUpdate, InboundMessage, OpportunityStageChanged</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">4</div>
+      <div>
+        <h4>Conectar admin con Edge Functions</h4>
+        <p class="text-sm">Cada acción del admin que requiera lógica server (crear embajador, enviar promo, etc.) debe llamar la Edge Function correspondiente, no manipular DB directo desde el frontend.</p>
+      </div>
+    </div>
+
+    <div class="success fm">
+      <strong>Sprint 5 completo cuando:</strong> pagos reales con MP → confirman en Supabase + GHL. Webhooks bidireccionales funcionando. Crons ejecutándose.
+    </div>
+  </div>
+</section>
+
+<!-- SPRINT 6 · QA + DEPLOY -->
+<section id="sprint-6">
+  <div class="container">
+    <p class="section-label fm">Sprint 6 · Semana 7-8</p>
+    <h2 class="serif fm">QA, Optimización y Deploy a producción</h2>
+    <p class="lead fm mb-6">Pulir, probar end-to-end con datos reales, lanzar.</p>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div>
+        <h4>Tests E2E con Playwright</h4>
+        <div class="prompt-box">Implementa tests E2E con Playwright en /apps/web/tests/e2e/:
+
+1. compra-completa.spec.ts:
+- Navegar al catálogo
+- Filtrar por categoría
+- Click en producto
+- Agregar al carrito
+- Ir a checkout
+- Llenar datos
+- Confirmar (usar tarjeta MP de prueba)
+- Verificar página de confirmación
+
+2. landing-pre-calificacion.spec.ts:
+- Llegar a /topitos
+- Llenar form
+- Verificar que se crea contacto en Supabase
+
+3. admin-crear-producto.spec.ts:
+- Login como admin
+- Ir a /admin/productos/nuevo
+- Llenar form + subir foto
+- Guardar
+- Verificar que aparece en /catalogo
+
+4. admin-crear-embajador.spec.ts:
+- Login como super_admin
+- Crear embajadora con email test
+- Verificar email enviado
+- Verificar registro en Supabase
+- Verificar tag en GHL (mock)
+
+5. embajador-portal.spec.ts:
+- Login como embajadora
+- Ver dashboard
+- Cargar lead nuevo
+- Ver comisiones
+
+Configurar GitHub Actions para correr tests en cada PR.</div>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div>
+        <h4>Optimización de performance</h4>
+        <ul class="ul-clean ul-dot text-sm">
+          <li>Lazy load de todas las rutas con React.lazy + Suspense</li>
+          <li>Imágenes con loading="lazy" + width/height específicos</li>
+          <li>Supabase devuelve URLs con resize: <code class="inline">?width=800&quality=80</code></li>
+          <li>Code splitting automático</li>
+          <li>Preload de fuentes Inter + Playfair Display</li>
+          <li>Service Worker para offline (opcional)</li>
+        </ul>
+        <p class="text-sm mt-2">Objetivo: Lighthouse Performance &gt;90, SEO 100, Accessibility &gt;90.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">3</div>
+      <div>
+        <h4>SEO técnico</h4>
+        <ul class="ul-clean ul-dot text-sm">
+          <li>Meta tags + Open Graph por página</li>
+          <li>JSON-LD para productos (schema.org Product)</li>
+          <li>Sitemap.xml dinámico (Vercel rewrite)</li>
+          <li>Robots.txt</li>
+          <li>Canonical URLs</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">4</div>
+      <div>
+        <h4>Deploy a producción</h4>
+        <ul class="ul-clean ul-dot text-sm">
+          <li>Conectar dominio personalizado en Vercel</li>
+          <li>SSL automático</li>
+          <li>Configurar env vars de producción (separadas de dev)</li>
+          <li>Cloudflare Workers a producción con secrets reales</li>
+          <li>Supabase: cambiar a plan Pro ($25/mes)</li>
+          <li>Mercado Pago: cambiar credenciales prueba → producción</li>
+          <li>Monitoreo: Sentry para errors, Vercel Analytics</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">5</div>
+      <div>
+        <h4>Documentación final</h4>
+        <p class="text-sm">README.md completo en el repo con:</p>
+        <ul class="ul-clean ul-dot text-sm mt-2">
+          <li>Setup local paso a paso</li>
+          <li>Variables de entorno necesarias</li>
+          <li>Cómo correr tests</li>
+          <li>Cómo desplegar</li>
+          <li>Arquitectura del sistema (link al plan maestro)</li>
+          <li>Troubleshooting común</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="success fm">
+      <strong>Sprint 6 completo cuando:</strong> sitio en producción accesible, tests pasan, Lighthouse scores cumplidos, monitoreo activo. Listo para soft launch.
+    </div>
+  </div>
+</section>
+
+<!-- ENTREGABLES FINALES -->
+<section class="section-tinted">
+  <div class="container">
+    <h2 class="serif fm center">Entregables finales</h2>
+    <p class="lead fm center mb-8">Al terminar los 6 sprints, entrega al CEO:</p>
+
+    <div class="glass-strong fm" style="padding:28px">
+      <ul class="checklist">
+        <li>Repositorio GitHub con todo el código</li>
+        <li>URL de producción del sitio (con dominio Tierra Madre)</li>
+        <li>URL del admin panel + credenciales super_admin para el CEO</li>
+        <li>URL del portal embajador (template para invitaciones)</li>
+        <li>Documentación técnica completa en README.md</li>
+        <li>Variables de entorno documentadas (sin valores en git)</li>
+        <li>Tests E2E pasando en CI/CD</li>
+        <li>Lighthouse score: Performance >90, SEO 100, A11y >90</li>
+        <li>4 Cloudflare Workers deployados y monitoreados</li>
+        <li>10 Edge Functions de Supabase deployadas</li>
+        <li>Webhooks MP → Supabase → GHL funcionando end-to-end</li>
+        <li>Sesión de handoff con el CEO mostrando cómo operar el admin</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p class="serif" style="font-size:1.1rem;color:#c4b5fd;margin-bottom:8px">Tierra Madre · Manual Desarrollo · v1.0</p>
+  <p>Para el Desarrollador · 6 sprints · ~8 semanas</p>
+  <p style="margin-top:12px"><a href="plan-de-delegacion.html" style="color:var(--gold-300);text-decoration:none">← Volver al plan de delegación</a></p>
+</footer>
+
+<script>
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+  document.querySelectorAll('.fm').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

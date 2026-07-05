@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Área 3 · GoHighLevel · Tierra Madre</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--emerald-300:#6ee7b7;--emerald-400:#34d399;--emerald-500:#10b981;--emerald-700:#047857;--emerald-900:#064e3b;--gold-300:#fcd34d;--gold-400:#fbbf24;--gold-500:#f59e0b;--text:#e6f4ef;--text-soft:rgba(230,244,239,.72);--text-mute:rgba(230,244,239,.5);--border:rgba(52,211,153,.2)}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:radial-gradient(ellipse at top,#0f1714 0%,#050807 60%,#000 100%);color:var(--text);line-height:1.65;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.serif{font-family:'Playfair Display',Georgia,serif;letter-spacing:-.02em}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+section{padding:80px 24px;position:relative}
+h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:900;line-height:1.05}
+h2{font-size:clamp(1.75rem,4vw,2.75rem);font-weight:800;line-height:1.15}
+h3{font-size:1.4rem;font-weight:700}
+h4{font-size:1rem;font-weight:700}
+p{color:var(--text-soft)}
+.section-label{font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:var(--emerald-400);font-weight:700;margin-bottom:14px}
+.lead{font-size:1.1rem;color:var(--text-soft);max-width:780px;margin:0 auto}
+.center{text-align:center}
+.grad-text{background:linear-gradient(135deg,#34d399 0%,#10b981 40%,#fcd34d 100%);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block}
+.glass{background:linear-gradient(135deg,rgba(15,23,20,.6),rgba(22,35,32,.4));backdrop-filter:blur(14px);border:1px solid var(--border);border-radius:18px}
+.glass-strong{background:linear-gradient(135deg,rgba(15,23,20,.92),rgba(22,35,32,.75));backdrop-filter:blur(20px);border:1px solid rgba(52,211,153,.28);border-radius:22px}
+.card{background:linear-gradient(135deg,rgba(15,23,20,.7),rgba(22,35,32,.5));border:1px solid var(--border);border-radius:18px;padding:24px;transition:all .4s}
+.card:hover{border-color:rgba(52,211,153,.45);transform:translateY(-3px)}
+.card-sm{padding:18px;border-radius:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid rgba(52,211,153,.28);background:rgba(16,185,129,.1);color:var(--emerald-300)}
+.chip.gold{border-color:rgba(251,191,36,.32);background:rgba(251,191,36,.1);color:var(--gold-300)}
+.grid{display:grid;gap:20px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+@media (max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.flex{display:flex}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.wrap{flex-wrap:wrap}
+.gap-2{gap:8px}.gap-3{gap:12px}
+.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}.mb-8{margin-bottom:32px}.mb-12{margin-bottom:48px}.mb-16{margin-bottom:64px}
+.mt-4{margin-top:16px}.mt-6{margin-top:24px}.mt-8{margin-top:32px}
+.text-amber{color:var(--gold-300)}.text-emerald{color:var(--emerald-300)}
+.text-sm{font-size:.875rem}.text-xs{font-size:.78rem}
+.text-soft{color:var(--text-soft)}.text-mute{color:var(--text-mute)}
+pre{background:#0a0f0d;border:1px solid rgba(52,211,153,.25);border-radius:12px;padding:16px;overflow-x:auto;font-size:12px;color:#a7f3d0;line-height:1.6;font-family:'JetBrains Mono',monospace}
+code{font-family:'JetBrains Mono',monospace}
+code.inline{color:var(--gold-300);background:rgba(251,191,36,.08);padding:1px 6px;border-radius:4px;font-size:.85em}
+.ul-clean{list-style:none}
+.ul-dot li{padding:5px 0 5px 18px;position:relative;font-size:.9rem;color:var(--text-soft)}
+.ul-dot li::before{content:"•";color:var(--emerald-400);position:absolute;left:0;font-weight:bold}
+.fm{opacity:0;transform:translateY(30px);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm.in{opacity:1;transform:translateY(0)}
+.fm-left{opacity:0;transform:translateX(-30px);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm-left.in{opacity:1;transform:translateX(0)}
+.fm-right{opacity:0;transform:translateX(30px);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm-right.in{opacity:1;transform:translateX(0)}
+.fm-scale{opacity:0;transform:scale(.93);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm-scale.in{opacity:1;transform:scale(1)}
+.stagger.in > .fm,.stagger.in > .fm-scale{opacity:1;transform:none}
+.stagger.in > *:nth-child(1){transition-delay:.05s}.stagger.in > *:nth-child(2){transition-delay:.13s}.stagger.in > *:nth-child(3){transition-delay:.21s}.stagger.in > *:nth-child(4){transition-delay:.29s}.stagger.in > *:nth-child(5){transition-delay:.37s}.stagger.in > *:nth-child(6){transition-delay:.45s}
+.mermaid{background:transparent !important;display:flex;justify-content:center;margin:0 auto;min-height:80px}
+.mermaid svg{max-width:100%;height:auto}
+.hero{min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;background:radial-gradient(ellipse at center,rgba(16,185,129,.25) 0%,transparent 60%)}
+.gem-icon{width:80px;height:80px;background:linear-gradient(135deg,#34d399,#10b981 50%,#047857);clip-path:polygon(50% 0%,90% 30%,80% 90%,20% 90%,10% 30%);box-shadow:0 0 60px rgba(52,211,153,.5);margin:0 auto 24px;animation:gem 6s ease-in-out infinite}
+@keyframes gem{0%,100%{transform:rotate(-5deg) scale(1)}50%{transform:rotate(5deg) scale(1.05)}}
+.section-tinted{background:linear-gradient(180deg,transparent,rgba(6,78,59,.1),transparent)}
+.section-gold{background:linear-gradient(180deg,transparent,rgba(180,83,9,.08),transparent)}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#fcd34d,#f59e0b);color:#0a0f0d;font-weight:800;font-size:.95rem;margin-right:10px;flex-shrink:0}
+.checklist li{display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:.9rem;color:var(--text-soft)}
+.checklist li::before{content:"☐";color:var(--gold-300);font-size:1.1em;margin-top:-2px}
+.prompt-box{background:#0a0f0d;border:1px dashed rgba(251,191,36,.4);border-radius:12px;padding:18px;margin:12px 0;font-family:'JetBrains Mono',monospace;font-size:12px;color:#fcd34d;line-height:1.6;white-space:pre-wrap}
+.prompt-box::before{content:"💬 INSTRUCCIONES PARA EJECUTAR";display:block;font-size:10px;letter-spacing:.2em;color:var(--gold-300);margin-bottom:8px;font-family:'Inter',sans-serif}
+footer{border-top:1px solid rgba(52,211,153,.2);padding:32px 24px;text-align:center;color:var(--text-mute);font-size:.85rem}
+.area-nav{position:sticky;top:0;z-index:40;background:rgba(5,8,7,.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(52,211,153,.15);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.area-nav-title{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:var(--emerald-300)}
+.area-nav-links{display:flex;gap:14px;flex-wrap:wrap}
+.area-nav-links a{font-size:.82rem;color:var(--text-soft);text-decoration:none}
+.area-nav-links a:hover{color:var(--emerald-300)}
+.field-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(52,211,153,.1);font-size:.85rem;color:var(--text-soft)}
+</style>
+</head>
+<body>
+
+<nav class="area-nav">
+  <span class="area-nav-title">Área 3 · GoHighLevel</span>
+  <div class="area-nav-links">
+    <a href="#objetivo">Objetivo</a>
+    <a href="#setup">Setup</a>
+    <a href="#campos">Custom Fields</a>
+    <a href="#pipeline">Pipeline</a>
+    <a href="#workflows">Workflows</a>
+    <a href="#ia">IA</a>
+    <a href="#canales">Canales</a>
+    <a href="#api">API</a>
+    <a href="plan-ejecucion-tierra-madre.html">← Maestro</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div>
+    <div class="fm in"><div class="gem-icon"></div></div>
+    <p class="section-label fm in" style="transition-delay:.15s">ÁREA 3 · GoHighLevel</p>
+    <h1 class="serif fm in mb-4" style="transition-delay:.25s">El <span class="grad-text">cerebro</span> CRM + IA</h1>
+    <p class="lead fm in" style="transition-delay:.4s">
+      Configurar GoHighLevel completo: contactos con 14 custom fields, pipeline de 7 etapas, 13 workflows automatizados, Conversation AI entrenada, WhatsApp + Instagram + TikTok conectados, y todo expuesto vía API v2 para que Supabase y el frontend hablen con él.
+    </p>
+    <div class="flex justify-center wrap gap-3 fm in mt-8" style="transition-delay:.55s">
+      <span class="chip gold">GHL Pro Plan</span>
+      <span class="chip">Conversation AI</span>
+      <span class="chip">WhatsApp Cloud API</span>
+      <span class="chip">Instagram + TikTok DM</span>
+      <span class="chip gold">API v2 + Private Token</span>
+    </div>
+  </div>
+</section>
+
+<section id="objetivo">
+  <div class="container">
+    <div class="grid grid-2 items-center">
+      <div class="fm-left">
+        <p class="section-label">Objetivo</p>
+        <h2 class="serif mb-6">Qué configura esta área</h2>
+        <p class="mb-4">Toda la configuración del CRM y multi-canal. Esta área entrega un GHL listo para que cualquier mensaje entrante por cualquier canal sea procesado automáticamente por la IA, califique al lead, busque productos, recomiende y escale a humano si hace falta.</p>
+        <ul class="ul-clean ul-dot">
+          <li>Sub-account de Tierra Madre creada</li>
+          <li>14 custom fields del contacto</li>
+          <li>Pipeline de ventas con 7 etapas</li>
+          <li>13 workflows automatizados</li>
+          <li>Conversation AI entrenada con tono de marca + knowledge base</li>
+          <li>WhatsApp Business API conectada</li>
+          <li>Instagram Business conectada</li>
+          <li>TikTok Business conectada</li>
+          <li>Private Integration Token para API v2</li>
+          <li>Pool de agentes especializados configurado</li>
+          <li>Plantillas de mensajes registradas y aprobadas por Meta</li>
+        </ul>
+      </div>
+      <div class="fm-right">
+        <div class="glass-strong" style="padding:24px">
+          <h3 class="grad-text mb-4">📦 Entregables</h3>
+          <ul class="ul-clean ul-dot text-sm">
+            <li>Cuenta GHL Pro Plan activa</li>
+            <li>Sub-account configurada</li>
+            <li>14 custom fields creados</li>
+            <li>Pipeline + 7 stages + tipos de oportunidad</li>
+            <li>13 workflows construidos y testeados</li>
+            <li>30+ plantillas de mensajes aprobadas Meta</li>
+            <li>WhatsApp con templates listos</li>
+            <li>Conversation AI con tono Tierra Madre + knowledge base</li>
+            <li>Private Token entregado a Áreas 1, 2 y 4</li>
+            <li>Documentación de cada workflow</li>
+            <li>Pool de agentes con round-robin</li>
+            <li>Reportes nativos GHL configurados</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SETUP -->
+<section id="setup" class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Setup paso a paso</p>
+      <h2 class="serif fm mb-6">Configuración inicial</h2>
+    </div>
+
+    <div class="glass mb-6 fm" style="padding:24px">
+      <h3 class="mb-3"><span class="step-num">1</span>Crear cuenta GHL Pro</h3>
+      <ul class="ul-clean ul-dot text-sm">
+        <li>Ir a <code class="inline">gohighlevel.com</code> y registrarse con Pro Plan ($297/mes)</li>
+        <li>Verificar email + completar perfil de la empresa</li>
+        <li>Crear sub-account "Tierra Madre" en el menú Agency</li>
+        <li>Configurar timezone: America/Bogota</li>
+        <li>Configurar moneda: COP</li>
+        <li>Subir logo + paleta de colores de la marca</li>
+      </ul>
+    </div>
+
+    <div class="glass mb-6 fm" style="padding:24px">
+      <h3 class="mb-3"><span class="step-num">2</span>Verificar WhatsApp Business API</h3>
+      <ul class="ul-clean ul-dot text-sm">
+        <li>Settings → Phone Numbers → Add WhatsApp</li>
+        <li>Conectar Meta Business Manager (Facebook account)</li>
+        <li>Verificar negocio en Meta: subir documentos legales</li>
+        <li>Comprar/asignar número LC Phone (~$2/mes) o usar Twilio</li>
+        <li>Solicitar verificación de WhatsApp (24-48h)</li>
+        <li>Una vez aprobado: registrar plantillas iniciales en Meta Business</li>
+      </ul>
+    </div>
+
+    <div class="glass mb-6 fm" style="padding:24px">
+      <h3 class="mb-3"><span class="step-num">3</span>Conectar Instagram Business + TikTok</h3>
+      <ul class="ul-clean ul-dot text-sm">
+        <li><strong>Instagram:</strong> Settings → Integrations → Facebook/Instagram → Login con Meta Business → autorizar cuenta IG Business de Tierra Madre</li>
+        <li><strong>TikTok:</strong> Settings → Integrations → TikTok → autorizar TikTok for Business</li>
+        <li>Verificar que DMs entran al inbox unificado de GHL</li>
+        <li>Configurar auto-respuesta inicial mientras la IA no está activa</li>
+      </ul>
+    </div>
+
+    <div class="glass mb-6 fm" style="padding:24px">
+      <h3 class="mb-3"><span class="step-num">4</span>Generar Private Integration Token</h3>
+      <ul class="ul-clean ul-dot text-sm">
+        <li>Settings → Integrations → Private Integrations</li>
+        <li>Click "Create Token"</li>
+        <li>Permisos a otorgar: contacts (read+write), conversations (read+write), workflows (trigger), opportunities (read+write), custom-fields (read), calendars (read+write)</li>
+        <li>Copiar token (solo se ve 1 vez) → guardar en password manager</li>
+        <li>Entregar token a Área 2 (Supabase) y Área 4 (Cloudflare Workers)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- CUSTOM FIELDS -->
+<section id="campos">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Datos del contacto</p>
+      <h2 class="serif fm mb-6">14 Custom Fields a crear</h2>
+      <p class="lead fm">Ir a Settings → Custom Fields → Add Field. Crear cada uno con el tipo exacto indicado.</p>
+    </div>
+
+    <div class="glass-strong fm" style="padding:28px">
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+          <thead>
+            <tr style="border-bottom:2px solid var(--emerald-400)">
+              <th style="padding:12px 8px;text-align:left;color:var(--emerald-300)">Field Name (key)</th>
+              <th style="padding:12px 8px;text-align:left;color:var(--emerald-300)">Display Label</th>
+              <th style="padding:12px 8px;text-align:left;color:var(--emerald-300)">Tipo</th>
+              <th style="padding:12px 8px;text-align:left;color:var(--emerald-300)">Notas</th>
+            </tr>
+          </thead>
+          <tbody style="color:var(--text-soft)">
+            <tr style="border-bottom:1px solid rgba(52,211,153,.1)"><td style="padding:10px 8px"><code class="inline">presupuesto_declarado</code></td><td style="padding:10px 8px">Presupuesto COP</td><td style="padding:10px 8px">Number</td><td style="padding:10px 8px">Capturado por IA</td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.1)"><td style="padding:10px 8px"><code class="inline">tipo_interes</code></td><td style="padding:10px 8px">Tipo de interés</td><td style="padding:10px 8px">Dropdown</td><td style="padding:10px 8px">topito, anillo, dije, gema, set, otro</td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.1)"><td style="padding:10px 8px"><code class="inline">conocimiento_esmeraldas</code></td><td style="padding:10px 8px">Conoce esmeraldas</td><td style="padding:10px 8px">Dropdown</td><td style="padding:10px 8px">novato, intermedio, experto</td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.1)"><td style="padding:10px 8px"><code class="inline">embajador_asignado</code></td><td style="padding:10px 8px">Embajador</td><td style="padding:10px 8px">Text</td><td style="padding:10px 8px">UUID del ambassador</td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.1)"><td style="padding:10px 8px"><code class="inline">eventos_presenciales</code></td><td style="padding:10px 8px">Eventos presenciales</td><td style="padding:10px 8px">Number</td><td style="padding:10px 8px">Contador</td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.1)"><td style="padding:10px 8px"><code class="inline">eventos_virtuales</code></td><td style="padding:10px 8px">Eventos virtuales</td><td style="padding:10px 8px">Number</td><td style="padding:10px 8px">Contador</td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.1)"><td style="padding:10px 8px"><code class="inline">total_comprado_cop</code></td><td style="padding:10px 8px">Total comprado</td><td style="padding:10px 8px">Number</td><td style="padding:10px 8px">Suma de ventas</td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.1)"><td style="padding:10px 8px"><code class="inline">ultima_compra_fecha</code></td><td style="padding:10px 8px">Última compra</td><td style="padding:10px 8px">Date</td><td style="padding:10px 8px">Auto-update</td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.1)"><td style="padding:10px 8px"><code class="inline">lead_score</code></td><td style="padding:10px 8px">Lead Score</td><td style="padding:10px 8px">Number</td><td style="padding:10px 8px">0-100</td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.1)"><td style="padding:10px 8px"><code class="inline">canal_origen</code></td><td style="padding:10px 8px">Canal origen</td><td style="padding:10px 8px">Dropdown</td><td style="padding:10px 8px">whatsapp, instagram, tiktok, web, evento</td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.1)"><td style="padding:10px 8px"><code class="inline">canal_preferido</code></td><td style="padding:10px 8px">Canal preferido</td><td style="padding:10px 8px">Dropdown</td><td style="padding:10px 8px">El más reciente con respuesta</td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.1)"><td style="padding:10px 8px"><code class="inline">ciudad</code></td><td style="padding:10px 8px">Ciudad</td><td style="padding:10px 8px">Text</td><td style="padding:10px 8px">Para segmentación eventos</td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.1)"><td style="padding:10px 8px"><code class="inline">supabase_contact_id</code></td><td style="padding:10px 8px">ID Supabase</td><td style="padding:10px 8px">Text</td><td style="padding:10px 8px">Sync bidireccional</td></tr>
+            <tr><td style="padding:10px 8px"><code class="inline">cumpleanios</code></td><td style="padding:10px 8px">Cumpleaños</td><td style="padding:10px 8px">Date</td><td style="padding:10px 8px">Para campaña B2 (Fase 2)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PIPELINE -->
+<section id="pipeline" class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Pipeline</p>
+      <h2 class="serif fm mb-6">7 Etapas del embudo de ventas</h2>
+      <p class="lead fm">Crear en Opportunities → Pipelines → Add Pipeline "Ventas Tierra Madre" con estas etapas en orden:</p>
+    </div>
+
+    <div class="glass-strong fm" style="padding:28px">
+      <div class="grid gap-3">
+        <div class="card card-sm flex items-center" style="gap:12px"><div style="width:14px;height:14px;border-radius:50%;background:#64748b"></div><div><strong>1. Nuevo Lead</strong> <span class="text-mute text-sm">— Entra por cualquier canal · primer mensaje</span></div></div>
+        <div class="card card-sm flex items-center" style="gap:12px"><div style="width:14px;height:14px;border-radius:50%;background:#3b82f6"></div><div><strong>2. Calificado por IA</strong> <span class="text-mute text-sm">— Presupuesto + interés capturados</span></div></div>
+        <div class="card card-sm flex items-center" style="gap:12px"><div style="width:14px;height:14px;border-radius:50%;background:#10b981"></div><div><strong>3. Producto Recomendado</strong> <span class="text-mute text-sm">— IA envió 1-3 opciones del catálogo</span></div></div>
+        <div class="card card-sm flex items-center" style="gap:12px"><div style="width:14px;height:14px;border-radius:50%;background:#fbbf24"></div><div><strong>4. Carrito Enviado</strong> <span class="text-mute text-sm">— Link de checkout entregado</span></div></div>
+        <div class="card card-sm flex items-center" style="gap:12px"><div style="width:14px;height:14px;border-radius:50%;background:#f97316"></div><div><strong>5. Negociación / Agente</strong> <span class="text-mute text-sm">— Requiere atención humana</span></div></div>
+        <div class="card card-sm flex items-center" style="gap:12px"><div style="width:14px;height:14px;border-radius:50%;background:#16a34a"></div><div><strong>6. ✅ Venta Cerrada</strong> <span class="text-mute text-sm">— Pago confirmado por Mercado Pago</span></div></div>
+        <div class="card card-sm flex items-center" style="gap:12px"><div style="width:14px;height:14px;border-radius:50%;background:#ef4444"></div><div><strong>7. ❌ Perdido / Nurturing</strong> <span class="text-mute text-sm">— No compró — entra a campaña re-engagement</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WORKFLOWS -->
+<section id="workflows">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Automatizaciones</p>
+      <h2 class="serif fm mb-6">Los 13 Workflows a construir</h2>
+      <p class="lead fm">En Automation → Workflows → Create Workflow. Cada uno con su trigger y acciones específicas.</p>
+    </div>
+
+    <div class="grid grid-2 stagger fm">
+      <div class="card fm-scale">
+        <div class="chip mb-2">WF-01</div>
+        <h4 class="mb-2">Nuevo contacto multi-canal</h4>
+        <p class="text-sm"><strong>Trigger:</strong> "Contact Created" OR "Inbound Message"</p>
+        <p class="text-sm mt-2"><strong>Acciones:</strong></p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>Verificar si contacto existe (por celular/IG/email)</li>
+          <li>Si NO: crear contacto, asignar tag <code class="inline">canal-{wa/ig/tt}</code></li>
+          <li>Trigger workflow WF-02 (verificar embajador)</li>
+          <li>Enviar plantilla WA-01/IG-01/TT-01 según canal</li>
+          <li>Mover a etapa "Nuevo Lead"</li>
+        </ul>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-2">WF-02</div>
+        <h4 class="mb-2">Verificar embajador</h4>
+        <p class="text-sm"><strong>Trigger:</strong> Llamado por WF-01</p>
+        <p class="text-sm mt-2"><strong>Acciones:</strong></p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>POST a Supabase Edge Function <code class="inline">/match-ambassador</code></li>
+          <li>Si match: update <code class="inline">embajador_asignado</code></li>
+          <li>Enviar EM-01 al embajador por WA</li>
+          <li>Pausar IA 5 minutos (sleep)</li>
+          <li>Si embajador no responde: continuar con WF-03</li>
+        </ul>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-2">WF-03</div>
+        <h4 class="mb-2">Calificación con IA</h4>
+        <p class="text-sm"><strong>Trigger:</strong> Llamado por WF-01 (sin embajador)</p>
+        <p class="text-sm mt-2"><strong>Acciones:</strong></p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>Activar Conversation AI con el "Sales Bot"</li>
+          <li>IA hace 4 preguntas: tipo, presupuesto, ocasión, conocimiento</li>
+          <li>Cada respuesta actualiza custom field correspondiente</li>
+          <li>Trigger WF-04 al completar calificación</li>
+          <li>Mover a etapa "Calificado por IA"</li>
+        </ul>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-2">WF-04</div>
+        <h4 class="mb-2">Búsqueda en catálogo</h4>
+        <p class="text-sm"><strong>Trigger:</strong> Custom event "qualification_complete"</p>
+        <p class="text-sm mt-2"><strong>Acciones:</strong></p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>POST a Supabase Edge Function <code class="inline">/search-products</code></li>
+          <li>Recibir 3 productos en JSON</li>
+          <li>IA arma mensaje con fotos + precios + links</li>
+          <li>Enviar por canal del contacto</li>
+          <li>Mover a etapa "Producto Recomendado"</li>
+        </ul>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-2">WF-05</div>
+        <h4 class="mb-2">Envío de carrito + checkout</h4>
+        <p class="text-sm"><strong>Trigger:</strong> Keyword "lo quiero" OR "cómo pago"</p>
+        <p class="text-sm mt-2"><strong>Acciones:</strong></p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>POST a <code class="inline">/create-order</code> en Supabase</li>
+          <li>Recibir URL de Mercado Pago</li>
+          <li>Enviar plantilla CK-01 con el link</li>
+          <li>Mover a etapa "Carrito Enviado"</li>
+        </ul>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-2">WF-06</div>
+        <h4 class="mb-2">Escalación a agente</h4>
+        <p class="text-sm"><strong>Trigger:</strong> Keyword "hablar con alguien" OR sentimiento negativo</p>
+        <p class="text-sm mt-2"><strong>Acciones:</strong></p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>Trigger WF-11 (smart routing)</li>
+          <li>Pausar IA en este contacto</li>
+          <li>Enviar plantilla ES-01</li>
+          <li>Notificar al agente asignado por SMS + email</li>
+          <li>Mover a etapa "Negociación / Agente"</li>
+        </ul>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-2">WF-07</div>
+        <h4 class="mb-2">Regla 5 min embajador</h4>
+        <p class="text-sm"><strong>Trigger:</strong> Sleep timer en WF-02</p>
+        <p class="text-sm mt-2"><strong>Acciones:</strong></p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>Verificar si embajador respondió</li>
+          <li>Si NO: activar IA, continuar conversación</li>
+          <li>Conservar <code class="inline">embajador_asignado</code> (comisión protegida)</li>
+          <li>Notificar al embajador "IA tomó tu lead, igual ganas comisión"</li>
+        </ul>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-2">WF-08</div>
+        <h4 class="mb-2">Post-venta</h4>
+        <p class="text-sm"><strong>Trigger:</strong> Webhook MP "payment.approved"</p>
+        <p class="text-sm mt-2"><strong>Acciones:</strong></p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>Update <code class="inline">total_comprado_cop</code> y <code class="inline">ultima_compra_fecha</code></li>
+          <li>Mover a "Venta Cerrada"</li>
+          <li>Enviar plantilla CK-03 (confirmación)</li>
+          <li>Agendar: D+1 PV-01, D+entrega PV-02, D+7 PV-03 (review)</li>
+          <li>Si tiene embajador: notificar EM-02 (comisión ganada)</li>
+        </ul>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-2">WF-09</div>
+        <h4 class="mb-2">Re-engagement / lead frío</h4>
+        <p class="text-sm"><strong>Trigger:</strong> Cron diario · contactos &gt;7d sin respuesta</p>
+        <p class="text-sm mt-2"><strong>Acciones:</strong></p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>Restar 10 pts al score</li>
+          <li>Si &gt;7d: enviar plantilla R-03</li>
+          <li>Si &gt;30d: enviar R-04 con descuento</li>
+          <li>Si &gt;60d sin respuesta: mover a "Perdido / Nurturing"</li>
+        </ul>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-2">WF-10</div>
+        <h4 class="mb-2">Asistencia a evento</h4>
+        <p class="text-sm"><strong>Trigger:</strong> Form submitted "Evento {nombre}"</p>
+        <p class="text-sm mt-2"><strong>Acciones:</strong></p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>Crear/actualizar contacto</li>
+          <li>Tag <code class="inline">evento-{slug}-rsvp</code></li>
+          <li>Generar QR único</li>
+          <li>Agendar recordatorios: 3d, 1d, 2h</li>
+          <li>Post-evento: secuencia agradecimiento + oferta</li>
+        </ul>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-2">WF-11</div>
+        <h4 class="mb-2">Smart Routing (agentes especializados)</h4>
+        <p class="text-sm"><strong>Trigger:</strong> Llamado por WF-06</p>
+        <p class="text-sm mt-2"><strong>Acciones:</strong></p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>Aplica matriz de decisión (Base 9):</li>
+          <li>Embajador → embajador</li>
+          <li>Inversión + monto &gt;5M → agente_inversion</li>
+          <li>Urgencia/queja → agente_senior</li>
+          <li>Score &gt;81 → agente_premium</li>
+          <li>Default → agente_regular</li>
+          <li>Round-robin dentro del pool</li>
+        </ul>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-2">WF-12</div>
+        <h4 class="mb-2">Auto-event-invite</h4>
+        <p class="text-sm"><strong>Trigger:</strong> Custom event "event_created" (desde admin)</p>
+        <p class="text-sm mt-2"><strong>Acciones:</strong></p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>POST a Supabase <code class="inline">/auto-event-invite</code></li>
+          <li>Filtra contactos por audience_filters</li>
+          <li>Para cada uno: envía EV-01 o EV-02 por canal_preferido</li>
+          <li>Tag <code class="inline">evento-{slug}-invitado</code></li>
+        </ul>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-2">WF-13</div>
+        <h4 class="mb-2">Ambassador Scoring (cron)</h4>
+        <p class="text-sm"><strong>Trigger:</strong> Cron diario 00:00</p>
+        <p class="text-sm mt-2"><strong>Acciones:</strong></p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>POST a Supabase <code class="inline">/calculate-ambassador-score</code></li>
+          <li>Para embajadores que cambiaron de nivel:</li>
+          <li>Si SUBE: plantilla EM-03 (celebración) + actualizar % comisión</li>
+          <li>Si BAJA: plantilla EM-04 (coaching)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- IA -->
+<section id="ia" class="section-gold">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">IA</p>
+      <h2 class="serif fm mb-6">Entrenamiento de Conversation AI</h2>
+    </div>
+
+    <div class="glass-strong mb-8 fm" style="padding:28px">
+      <h3 class="grad-text mb-4">📚 Knowledge Base a cargar en GHL</h3>
+      <p class="mb-4">Ir a Sales &amp; Marketing → Conversation AI → Knowledge Base. Crear los siguientes documentos:</p>
+      <div class="grid grid-2 gap-4">
+        <div class="card card-sm">
+          <h4 class="text-amber mb-2">1. Sobre Tierra Madre</h4>
+          <p class="text-sm">Historia, misión, valores. De dónde provienen las esmeraldas (Muzo, Coscuez, Chivor). Ubicación física. Cómo trabajamos.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-amber mb-2">2. Productos</h4>
+          <p class="text-sm">Categorías: topitos, candongas, anillos, dijes, gemas sueltas, sets. Materiales: oro 18k, plata 925. Garantías.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-amber mb-2">3. Esmeraldas 101</h4>
+          <p class="text-sm">4 C's de la esmeralda. Diferencia entre Muzo y Coscuez. Cómo se certifica. Por qué Colombia. Cómo cuidar la joya.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-amber mb-2">4. Logística</h4>
+          <p class="text-sm">Envíos: Bogotá/Medellín/Cali 24-48h, resto del país 3-5 días. Empaque premium. Seguro de envío incluido en compras &gt;3M.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-amber mb-2">5. Pagos</h4>
+          <p class="text-sm">Medios aceptados: PSE, Nequi, Daviplata, tarjetas. Cuotas hasta 12 sin interés en compras &gt;1M con TC.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-amber mb-2">6. Devoluciones y garantías</h4>
+          <p class="text-sm">15 días para devolución sin uso. Garantía de por vida en ensamble. Limpieza profesional gratis anual.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass fm" style="padding:28px">
+      <h3 class="text-amber mb-4">🤖 Configuración del Bot · Sales Bot Tierra Madre</h3>
+      <pre><code>// Settings del Conversation AI Agent
+
+NAME: María - Asesora Tierra Madre
+ROLE: Sales Agent specialized in emerald jewelry
+
+PERSONALITY:
+- Tono cálido pero profesional
+- Tutear al cliente (Colombia)
+- Experta sin ser técnica abusiva
+- Empática con dudas de novatos
+- Confiada con conocedores
+- Nunca presionar, siempre informar
+- Emojis con moderación (💚 ✨ 💎 son los aceptados)
+
+GOAL: Calificar lead → recomendar producto → cerrar venta o escalar a humano
+
+QUALIFICATION FLOW (4 preguntas obligatorias):
+1. "¿Qué tipo de joya estás buscando?"
+   → save to tipo_interes
+2. "¿Para qué ocasión es?"
+   → save to ocasion tag
+3. "¿Cuál es el presupuesto aproximado?"
+   → save to presupuesto_declarado
+4. "¿Ya conoces nuestras esmeraldas o es tu primera vez?"
+   → save to conocimiento_esmeraldas
+
+ESCALATION RULES (auto-handoff a humano si):
+- Cliente pide "hablar con alguien" o "humano" o "asesor"
+- Menciona "queja", "devolución", "problema"
+- Pregunta sobre inversión + monto >5M
+- Sentimiento negativo detectado en mensaje
+- Pregunta técnica fuera del knowledge base
+
+FORBIDDEN:
+- Nunca inventar precios (siempre consultar al catálogo)
+- Nunca prometer descuentos sin verificar promo activa
+- Nunca dar plazos de entrega específicos sin confirmar ciudad
+- Nunca hablar de competencia
+
+WHEN UNSURE:
+- "Déjame conectarte con un experto que puede darte más detalle"
+→ trigger WF-06</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- CANALES -->
+<section id="canales">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Multi-canal</p>
+      <h2 class="serif fm mb-6">Configuración WhatsApp, Instagram, TikTok</h2>
+    </div>
+
+    <div class="grid grid-3 stagger fm">
+      <div class="card fm-scale">
+        <h3 class="text-amber mb-3">📱 WhatsApp Business</h3>
+        <p class="text-xs mb-3">Setup completo paso a paso:</p>
+        <ol class="ul-clean ul-dot text-xs">
+          <li>Settings → Phone Numbers → WhatsApp</li>
+          <li>Conectar con Facebook Business Manager</li>
+          <li>Verificar negocio (24-48h)</li>
+          <li>Asignar/comprar número (LC Phone $2/mes)</li>
+          <li>Registrar 30 plantillas en Meta Business</li>
+          <li>Esperar aprobación de cada plantilla (24-48h)</li>
+          <li>Test: enviar plantilla desde GHL</li>
+        </ol>
+      </div>
+      <div class="card fm-scale">
+        <h3 class="text-amber mb-3">📷 Instagram DM</h3>
+        <p class="text-xs mb-3">Setup en 30 minutos:</p>
+        <ol class="ul-clean ul-dot text-xs">
+          <li>Convertir cuenta IG a Business (si no lo es)</li>
+          <li>Conectar página Facebook a la IG</li>
+          <li>Settings → Integrations → Facebook/Instagram</li>
+          <li>Login Meta + autorizar</li>
+          <li>Seleccionar cuenta Tierra Madre</li>
+          <li>Permitir lectura de DMs + comentarios</li>
+          <li>Test: enviar DM y ver en GHL inbox</li>
+        </ol>
+      </div>
+      <div class="card fm-scale">
+        <h3 class="text-amber mb-3">🎵 TikTok DM</h3>
+        <p class="text-xs mb-3">Setup en 30 minutos:</p>
+        <ol class="ul-clean ul-dot text-xs">
+          <li>Cuenta TikTok Business (no creator)</li>
+          <li>Settings → Integrations → TikTok</li>
+          <li>Login TikTok for Business</li>
+          <li>Autorizar lectura de DMs y comentarios</li>
+          <li>Configurar auto-DM por palabra clave</li>
+          <li>Test: enviar DM desde otra cuenta</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- API -->
+<section id="api" class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">API</p>
+      <h2 class="serif fm mb-6">Endpoints API v2 a usar</h2>
+    </div>
+
+    <div class="glass-strong fm" style="padding:28px">
+      <p class="mb-4">Base URL: <code class="inline">https://services.leadconnectorhq.com</code></p>
+      <p class="mb-4">Headers obligatorios: <code class="inline">Authorization: Bearer {PRIVATE_TOKEN}</code> y <code class="inline">Version: 2021-07-28</code></p>
+      <pre><code>// CONTACTS
+POST   /contacts                              → Crear contacto
+GET    /contacts/{contactId}                  → Leer contacto
+PUT    /contacts/{contactId}                  → Actualizar custom fields + tags
+DELETE /contacts/{contactId}                  → Eliminar
+POST   /contacts/{contactId}/tags             → Agregar tags
+GET    /contacts/search                       → Buscar por query
+
+// CONVERSATIONS
+POST   /conversations/messages                → Enviar mensaje (WA/IG/SMS/Email)
+GET    /conversations/search                  → Buscar conversaciones
+GET    /conversations/{conversationId}        → Leer conversación
+POST   /conversations/                        → Crear nueva
+
+// OPPORTUNITIES (pipeline)
+POST   /opportunities                         → Crear oportunidad
+PUT    /opportunities/{id}                    → Mover a otra stage
+GET    /opportunities/{id}                    → Leer
+POST   /opportunities/search                  → Filtrar
+
+// WORKFLOWS
+POST   /workflows/{workflowId}/subscriptions  → Disparar workflow
+
+// CUSTOM FIELDS
+GET    /custom-fields                         → Listar
+POST   /custom-fields                         → Crear
+
+// CALENDARS
+GET    /calendars                             → Listar calendarios
+POST   /calendars/events                      → Crear evento
+
+// FORMS
+GET    /forms                                 → Listar
+GET    /forms/{formId}/submissions            → Ver respuestas
+
+// WEBHOOKS (configuración inbound)
+Configurar URL de webhook en Integrations → Webhooks
+Tipos a suscribirse:
+- ContactCreate, ContactUpdate, ContactDelete
+- InboundMessage (WA/IG/SMS)
+- OpportunityCreate, OpportunityUpdate
+- AppointmentScheduled
+- FormSubmission</code></pre>
+    </div>
+  </div>
+</section>
+
+<section id="checklist">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Checklist final</p>
+      <h2 class="serif fm mb-6">Criterios de aceptación</h2>
+    </div>
+    <div class="glass-strong fm" style="padding:32px">
+      <ul class="checklist">
+        <li>Cuenta GHL Pro activa con sub-account Tierra Madre</li>
+        <li>14 custom fields creados con los keys exactos</li>
+        <li>Pipeline "Ventas Tierra Madre" con 7 etapas</li>
+        <li>Los 13 workflows construidos y probados con datos test</li>
+        <li>Conversation AI entrenada con knowledge base (6 docs)</li>
+        <li>WhatsApp Business API conectada y verificada</li>
+        <li>30+ plantillas WA registradas en Meta Business (esperar aprobación)</li>
+        <li>Instagram Business conectada y enviando/recibiendo DMs</li>
+        <li>TikTok Business conectada (si aplica)</li>
+        <li>Private Integration Token generado y entregado</li>
+        <li>Pool de agentes configurado con round-robin</li>
+        <li>Smart routing matrix funcionando (test cada caso)</li>
+        <li>Webhook URL configurada apuntando a Cloudflare Worker</li>
+        <li>Documentación de cada workflow en Notion/Drive del equipo</li>
+        <li>Tests end-to-end: mensaje WA entrante → IA califica → recomienda producto</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p class="serif" style="font-size:1.1rem;color:var(--emerald-300);margin-bottom:8px">Tierra Madre · Área 3 · GoHighLevel</p>
+  <p>Configurar en interfaz GHL + API · No requiere desarrollo de código</p>
+  <p style="margin-top:12px"><a href="plan-ejecucion-tierra-madre.html" style="color:var(--gold-300);text-decoration:none">← Volver al documento maestro</a></p>
+</footer>
+
+<script>
+  mermaid.initialize({startOnLoad:true,theme:'dark',themeVariables:{primaryColor:'#064e3b',primaryTextColor:'#fff',primaryBorderColor:'#34d399',lineColor:'#34d399',background:'transparent',mainBkg:'#0f1714',fontFamily:'Inter,sans-serif'},flowchart:{useMaxWidth:true,curve:'basis'}});
+  const io = new IntersectionObserver((entries) => {entries.forEach(e => {if (e.isIntersecting) {e.target.classList.add('in');if (e.target.classList.contains('stagger')) e.target.querySelectorAll('.fm, .fm-left, .fm-right, .fm-scale').forEach(c => c.classList.add('in'));}});}, {threshold:0.12,rootMargin:'0px 0px -50px 0px'});
+  document.querySelectorAll('.fm, .fm-left, .fm-right, .fm-scale, .stagger').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

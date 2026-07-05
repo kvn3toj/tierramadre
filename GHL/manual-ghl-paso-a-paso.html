@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Manual GHL · Configuración Paso a Paso · Tierra Madre</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--emerald-300:#6ee7b7;--emerald-400:#34d399;--emerald-500:#10b981;--emerald-700:#047857;--emerald-900:#064e3b;--gold-300:#fcd34d;--gold-400:#fbbf24;--gold-500:#f59e0b;--text:#e6f4ef;--text-soft:rgba(230,244,239,.75);--text-mute:rgba(230,244,239,.5);--border:rgba(52,211,153,.2)}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:radial-gradient(ellipse at top,#0f1714 0%,#050807 60%,#000 100%);color:var(--text);line-height:1.7;min-height:100vh;-webkit-font-smoothing:antialiased}
+.serif{font-family:'Playfair Display',Georgia,serif;letter-spacing:-.02em}
+.container{max-width:980px;margin:0 auto;padding:0 24px}
+section{padding:64px 24px;position:relative}
+h1{font-size:clamp(2.2rem,5vw,3.5rem);font-weight:900;line-height:1.1}
+h2{font-size:clamp(1.5rem,3vw,2.25rem);font-weight:800;line-height:1.2;margin-bottom:16px}
+h3{font-size:1.3rem;font-weight:700;line-height:1.3;margin-bottom:12px}
+h4{font-size:1.05rem;font-weight:700;margin-bottom:8px}
+p{color:var(--text-soft);margin-bottom:8px}
+.section-label{font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:var(--emerald-400);font-weight:700;margin-bottom:14px}
+.lead{font-size:1.1rem;color:var(--text-soft);line-height:1.65}
+.grad-text{background:linear-gradient(135deg,#34d399,#10b981 40%,#fcd34d);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block}
+.glass{background:linear-gradient(135deg,rgba(15,23,20,.6),rgba(22,35,32,.4));backdrop-filter:blur(14px);border:1px solid var(--border);border-radius:14px}
+.glass-strong{background:linear-gradient(135deg,rgba(15,23,20,.92),rgba(22,35,32,.75));backdrop-filter:blur(20px);border:1px solid rgba(52,211,153,.28);border-radius:18px}
+.card{background:linear-gradient(135deg,rgba(15,23,20,.7),rgba(22,35,32,.5));border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px}
+.card h3{margin-bottom:8px;color:var(--emerald-300)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid rgba(52,211,153,.28);background:rgba(16,185,129,.1);color:var(--emerald-300)}
+.chip.gold{border-color:rgba(251,191,36,.32);background:rgba(251,191,36,.1);color:var(--gold-300)}
+.chip.red{border-color:rgba(239,68,68,.32);background:rgba(239,68,68,.1);color:#fca5a5}
+.chip.info{border-color:rgba(59,130,246,.32);background:rgba(59,130,246,.1);color:#93c5fd}
+.grid{display:grid;gap:16px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+@media (max-width:900px){.grid-2{grid-template-columns:1fr}}
+.flex{display:flex}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.wrap{flex-wrap:wrap}
+.gap-2{gap:8px}.gap-3{gap:12px}
+.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}.mb-8{margin-bottom:32px}.mb-12{margin-bottom:48px}.mb-16{margin-bottom:64px}
+.mt-4{margin-top:16px}.mt-6{margin-top:24px}.mt-8{margin-top:32px}
+.text-amber{color:var(--gold-300)}.text-emerald{color:var(--emerald-300)}
+.text-sm{font-size:.875rem}.text-xs{font-size:.78rem}
+.text-soft{color:var(--text-soft)}.text-mute{color:var(--text-mute)}
+pre{background:#0a0f0d;border:1px solid rgba(52,211,153,.25);border-radius:10px;padding:14px;overflow-x:auto;font-size:12px;color:#a7f3d0;line-height:1.6;font-family:'JetBrains Mono',monospace;margin:12px 0}
+code{font-family:'JetBrains Mono',monospace}
+code.inline{color:var(--gold-300);background:rgba(251,191,36,.08);padding:1px 6px;border-radius:4px;font-size:.85em}
+.ul-clean{list-style:none}
+.ul-dot li{padding:5px 0 5px 18px;position:relative;font-size:.9rem;color:var(--text-soft)}
+.ul-dot li::before{content:"•";color:var(--emerald-400);position:absolute;left:0;font-weight:bold}
+.step{display:flex;gap:16px;margin-bottom:20px;padding:18px;background:linear-gradient(135deg,rgba(15,23,20,.7),rgba(22,35,32,.4));border:1px solid var(--border);border-radius:12px;border-left:3px solid var(--gold-400)}
+.step-num{flex-shrink:0;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#fcd34d,#f59e0b);color:#0a0f0d;font-weight:800;font-size:1rem;display:flex;align-items:center;justify-content:center}
+.step-content{flex:1}
+.step h4{margin-bottom:6px;color:var(--text)}
+.step p{color:var(--text-soft);font-size:.9rem;line-height:1.5}
+.warn{background:linear-gradient(135deg,rgba(239,68,68,.1),rgba(127,29,29,.15));border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:14px;margin:12px 0;font-size:.88rem}
+.warn::before{content:"⚠️ ";font-size:1.1em}
+.tip{background:linear-gradient(135deg,rgba(251,191,36,.08),rgba(180,83,9,.15));border:1px solid rgba(251,191,36,.3);border-radius:10px;padding:14px;margin:12px 0;font-size:.88rem}
+.tip::before{content:"💡 ";font-size:1.1em}
+.success{background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(6,78,59,.15));border:1px solid rgba(16,185,129,.3);border-radius:10px;padding:14px;margin:12px 0;font-size:.88rem}
+.success::before{content:"✅ ";font-size:1.1em}
+.field-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(52,211,153,.1);font-size:.85rem;color:var(--text-soft)}
+.field-row:last-child{border-bottom:none}
+.fm{opacity:0;transform:translateY(20px);transition:all .6s cubic-bezier(.22,1,.36,1)}
+.fm.in{opacity:1;transform:translateY(0)}
+.toc{position:sticky;top:0;background:rgba(5,8,7,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 24px;z-index:50;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.toc-title{font-family:'Playfair Display',serif;font-size:1rem;color:var(--emerald-300);font-weight:700}
+.toc a{font-size:.78rem;color:var(--text-soft);text-decoration:none;padding:4px 8px;border-radius:6px;transition:all .2s}
+.toc a:hover{background:rgba(52,211,153,.1);color:var(--emerald-300)}
+footer{border-top:1px solid rgba(52,211,153,.2);padding:32px 24px;text-align:center;color:var(--text-mute);font-size:.85rem}
+.hero{padding:100px 24px 60px}
+.gem-icon{width:64px;height:64px;background:linear-gradient(135deg,#34d399,#10b981 50%,#047857);clip-path:polygon(50% 0%,90% 30%,80% 90%,20% 90%,10% 30%);box-shadow:0 0 40px rgba(52,211,153,.5);margin:0 auto 16px;animation:gem 6s ease-in-out infinite}
+@keyframes gem{0%,100%{transform:rotate(-5deg) scale(1)}50%{transform:rotate(5deg) scale(1.05)}}
+.section-tinted{background:linear-gradient(180deg,transparent,rgba(6,78,59,.08),transparent)}
+.center{text-align:center}
+.path{display:inline-block;background:rgba(15,23,20,.6);border:1px solid rgba(52,211,153,.2);padding:4px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:.85em;color:var(--emerald-300)}
+.kbd{display:inline-block;background:#162320;border:1px solid var(--border);border-bottom-width:2px;padding:2px 8px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:.85em;color:var(--gold-300)}
+.checklist li{display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:.9rem;color:var(--text-soft);list-style:none}
+.checklist li::before{content:"☐";color:var(--gold-300);font-size:1.1em;margin-top:-2px}
+.note{font-size:.85rem;color:var(--text-mute);font-style:italic;padding-left:14px;border-left:2px solid var(--text-mute);margin-top:8px}
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <span class="toc-title">Manual GHL · Tierra Madre</span>
+  <a href="#intro">Intro</a>
+  <a href="#fase-1">Fase 1 · Setup</a>
+  <a href="#fase-2">Fase 2 · Custom Fields</a>
+  <a href="#fase-3">Fase 3 · Pipeline</a>
+  <a href="#fase-4">Fase 4 · Tags</a>
+  <a href="#fase-5">Fase 5 · Canales</a>
+  <a href="#fase-6">Fase 6 · Bot María</a>
+  <a href="#fase-7">Fase 7 · Workflows</a>
+  <a href="#fase-8">Fase 8 · Plantillas</a>
+  <a href="#fase-9">Fase 9 · Agentes</a>
+  <a href="#fase-10">Fase 10 · QA</a>
+  <a href="plan-de-delegacion.html">← Delegación</a>
+</nav>
+
+<section class="hero center">
+  <div class="fm in"><div class="gem-icon"></div></div>
+  <p class="section-label fm in" style="transition-delay:.1s">Manual para la Persona Configuradora</p>
+  <h1 class="serif fm in mb-4" style="transition-delay:.2s">GoHighLevel · <span class="grad-text">Paso a paso</span></h1>
+  <p class="lead fm in" style="transition-delay:.3s;max-width:680px;margin:0 auto">
+    Todo lo que tienes que hacer en GHL, click por click. Sin tecnicismos.
+    Imprime este documento o tenlo abierto en otra pantalla mientras configuras.
+  </p>
+</section>
+
+<!-- INTRO -->
+<section id="intro">
+  <div class="container">
+    <h2 class="serif fm">Bienvenido al equipo</h2>
+    <p class="fm">
+      Tu trabajo en las próximas 3 semanas es configurar GoHighLevel para que se vuelva el cerebro de Tierra Madre. No necesitas saber código — todo se hace dentro de la interfaz de GHL.
+    </p>
+
+    <div class="success fm">
+      <strong>Lo que vas a lograr al terminar:</strong>
+      <ul class="ul-clean ul-dot mt-2">
+        <li>GHL recibiendo mensajes de WhatsApp, Instagram, TikTok unificados</li>
+        <li>Bot María atendiendo automáticamente</li>
+        <li>13 workflows de automatización funcionando</li>
+        <li>30+ plantillas aprobadas por Meta</li>
+        <li>Pool de agentes con asignación automática</li>
+      </ul>
+    </div>
+
+    <h3 class="mt-6">Antes de empezar, asegúrate de tener:</h3>
+    <ul class="checklist mt-4">
+      <li>Acceso a la cuenta de GoHighLevel (CEO te lo dará)</li>
+      <li>Acceso a Meta Business Manager (cuenta de Tierra Madre)</li>
+      <li>Acceso a la cuenta de Instagram Business de Tierra Madre</li>
+      <li>Acceso a la cuenta de TikTok Business</li>
+      <li>El correo y celular del CEO (para validaciones)</li>
+      <li>Lista de agentes de venta iniciales (nombres y correos)</li>
+      <li>Tiempo dedicado: ~25-30 horas distribuidas en 3 semanas</li>
+    </ul>
+
+    <div class="tip fm">
+      <strong>Tip de oro:</strong> guarda cada credencial, ID y URL en un documento Notion o 1Password seguro. Vas a necesitar pasarlas al Dev del equipo más adelante.
+    </div>
+
+    <h3 class="mt-6">Cómo está organizado este manual</h3>
+    <p>
+      Está dividido en <strong>10 fases</strong>. Cada fase tiene pasos numerados con instrucciones exactas: dónde clickear, qué escribir, qué guardar. Hazlo en orden, no saltes fases.
+    </p>
+    <div class="grid grid-2 mt-4">
+      <div class="card">
+        <div class="chip mb-2">Fases 1-5</div>
+        <h4>Setup básico</h4>
+        <p class="text-sm">Cuenta, custom fields, pipeline, tags, conectar canales. ~8 horas.</p>
+      </div>
+      <div class="card">
+        <div class="chip gold mb-2">Fases 6-7</div>
+        <h4>Bot + Workflows</h4>
+        <p class="text-sm">Lo más crítico. Configurar IA, construir 13 workflows. ~12 horas.</p>
+      </div>
+      <div class="card">
+        <div class="chip mb-2">Fases 8-9</div>
+        <h4>Plantillas + Agentes</h4>
+        <p class="text-sm">Registrar 30 plantillas en Meta, configurar pool. ~6 horas.</p>
+      </div>
+      <div class="card">
+        <div class="chip info mb-2">Fase 10</div>
+        <h4>QA Testing</h4>
+        <p class="text-sm">Probar todos los escenarios end-to-end. ~3 horas.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FASE 1 -->
+<section id="fase-1" class="section-tinted">
+  <div class="container">
+    <p class="section-label fm">Fase 1 · Tiempo estimado: 2 horas</p>
+    <h2 class="serif fm">Setup inicial de cuenta</h2>
+    <p class="lead fm mb-6">Crear y configurar la sub-account de Tierra Madre dentro de GoHighLevel.</p>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Acceder a GoHighLevel</h4>
+        <p>Ve a <code class="inline">https://app.gohighlevel.com</code> e inicia sesión con las credenciales que te dio el CEO. Si es Agency mode, irás al dashboard de agencia. Si es cuenta single, irás directo a la sub-account.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>Crear sub-account (si no existe)</h4>
+        <p>En Agency Dashboard → <strong>Sub-Accounts</strong> → <strong>Add Sub-Account</strong>.</p>
+        <p>Llena:</p>
+        <div class="glass mt-3 mb-3" style="padding:14px">
+          <div class="field-row"><span>Business Name</span><span class="text-amber">Tierra Madre</span></div>
+          <div class="field-row"><span>Phone</span><span class="text-amber">El de la empresa</span></div>
+          <div class="field-row"><span>Email</span><span class="text-amber">hola@tierramadre.co (o similar)</span></div>
+          <div class="field-row"><span>Address</span><span class="text-amber">Dirección Bogotá/Medellín</span></div>
+          <div class="field-row"><span>City</span><span class="text-amber">{{ciudad_sede}}</span></div>
+          <div class="field-row"><span>State</span><span class="text-amber">Cundinamarca / Antioquia</span></div>
+          <div class="field-row"><span>Country</span><span class="text-amber">Colombia</span></div>
+          <div class="field-row"><span>Timezone</span><span class="text-amber">America/Bogota</span></div>
+        </div>
+        <p>Click <strong>Create Sub-Account</strong>.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Entrar a la sub-account de Tierra Madre</h4>
+        <p>En el listado de sub-accounts, click sobre "Tierra Madre". Vas a entrar al panel donde harás todo el resto del trabajo.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h4>Configurar Settings → Business Profile</h4>
+        <p>Click en el ícono de engranaje (Settings) en el menú izquierdo.</p>
+        <p>Verifica/Configura:</p>
+        <ul class="ul-clean ul-dot">
+          <li><strong>Timezone:</strong> America/Bogota</li>
+          <li><strong>Currency:</strong> COP (Colombian Peso)</li>
+          <li><strong>Date Format:</strong> DD/MM/YYYY</li>
+          <li><strong>Time Format:</strong> 12 hours (am/pm)</li>
+          <li><strong>Country:</strong> Colombia</li>
+        </ul>
+        <p>Sube el <strong>logo de Tierra Madre</strong> (el CEO te lo pasará).</p>
+        <p>Click <strong>Save</strong> al final.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <h4>Configurar Settings → Company Branding (paleta de colores)</h4>
+        <p>Mismo menú Settings → <strong>Company → Branding</strong>.</p>
+        <p>Establece los colores oficiales de Tierra Madre:</p>
+        <div class="glass mt-3 mb-3" style="padding:14px">
+          <div class="field-row"><span>Primary Color</span><span class="text-amber">#10b981 (emerald)</span></div>
+          <div class="field-row"><span>Secondary Color</span><span class="text-amber">#fcd34d (gold)</span></div>
+        </div>
+        <p>Save changes.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">6</div>
+      <div class="step-content">
+        <h4>Generar Private Integration Token</h4>
+        <p>Este token lo necesitará el Dev para conectar la web a GHL.</p>
+        <p>Settings → <strong>Integrations</strong> → <strong>Private Integrations</strong> → <strong>Create Token</strong>.</p>
+        <p>Nombre del token: <code class="inline">Tierra Madre Web Integration</code></p>
+        <p>Marca los siguientes permisos (scopes):</p>
+        <ul class="checklist mt-2">
+          <li>contacts.write</li>
+          <li>contacts.readonly</li>
+          <li>conversations.write</li>
+          <li>conversations.readonly</li>
+          <li>conversations/message.write</li>
+          <li>conversations/message.readonly</li>
+          <li>workflows.readonly</li>
+          <li>opportunities.write</li>
+          <li>opportunities.readonly</li>
+          <li>locations.readonly</li>
+          <li>locations/customFields.write</li>
+          <li>locations/customFields.readonly</li>
+          <li>locations/tags.write</li>
+          <li>locations/tags.readonly</li>
+          <li>calendars.write</li>
+          <li>calendars.readonly</li>
+          <li>forms.readonly</li>
+        </ul>
+        <p>Click <strong>Create</strong>. Te muestra el token UNA SOLA VEZ.</p>
+        <div class="warn">
+          <strong>CRÍTICO:</strong> copia el token y guárdalo en 1Password o Notion seguro inmediatamente. Si lo pierdes, hay que regenerar.
+        </div>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">7</div>
+      <div class="step-content">
+        <h4>Anotar el Location ID</h4>
+        <p>Settings → Company → encuentra "Location ID" (lo verás en la URL también: <code class="inline">app.gohighlevel.com/location/<strong>LOCATION_ID</strong>/dashboard</code>).</p>
+        <p>Anota este ID. También lo necesitará el Dev.</p>
+      </div>
+    </div>
+
+    <div class="success fm">
+      <strong>Al terminar Fase 1 debes tener:</strong>
+      <ul class="ul-clean ul-dot mt-2">
+        <li>Sub-account "Tierra Madre" creada y configurada</li>
+        <li>Timezone, moneda, branding aplicados</li>
+        <li>Private Integration Token generado y guardado</li>
+        <li>Location ID anotado</li>
+      </ul>
+    </div>
+
+    <div class="tip">
+      <strong>Entregable a CEO:</strong> envía un mensaje al CEO con el Location ID y confirma que el Token está guardado en lugar seguro. Esto es lo que va a desbloquear al Dev.
+    </div>
+  </div>
+</section>
+
+<!-- FASE 2 · CUSTOM FIELDS -->
+<section id="fase-2">
+  <div class="container">
+    <p class="section-label fm">Fase 2 · Tiempo estimado: 1.5 horas</p>
+    <h2 class="serif fm">Crear los 14 Custom Fields</h2>
+    <p class="lead fm mb-6">Cada contacto en GHL tendrá 14 campos personalizados que el bot usará para guardar información. Hay que crearlos uno por uno.</p>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Ir a Custom Fields</h4>
+        <p>Settings → <strong>Custom Fields</strong> → <strong>Add Custom Field</strong>.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>Crear cada campo según esta tabla (uno por uno)</h4>
+        <p>Para CADA campo, sigue este sub-proceso:</p>
+        <ol style="padding-left:20px;color:var(--text-soft)" class="text-sm">
+          <li>Click "Add Custom Field"</li>
+          <li>Selecciona Object: <strong>Contact</strong></li>
+          <li>Llena los campos según la tabla</li>
+          <li>Click "Create"</li>
+          <li>Repite con el siguiente</li>
+        </ol>
+      </div>
+    </div>
+
+    <h3 class="text-amber mt-8 mb-4">Los 14 campos a crear</h3>
+
+    <div class="card fm">
+      <h4>1. Presupuesto Declarado</h4>
+      <div class="field-row"><span>Field Name</span><span class="text-amber">Presupuesto Declarado COP</span></div>
+      <div class="field-row"><span>Type</span><span class="text-amber">Number</span></div>
+      <div class="field-row"><span>Placeholder</span><span class="text-amber">Ej: 800000</span></div>
+    </div>
+
+    <div class="card fm">
+      <h4>2. Tipo de Interés</h4>
+      <div class="field-row"><span>Field Name</span><span class="text-amber">Tipo de Interés</span></div>
+      <div class="field-row"><span>Type</span><span class="text-amber">Single Options (Dropdown)</span></div>
+      <div class="field-row"><span>Options</span><span class="text-amber">topito, candonga, anillo, dije, gema_suelta, set, otro</span></div>
+    </div>
+
+    <div class="card fm">
+      <h4>3. Conocimiento Esmeraldas</h4>
+      <div class="field-row"><span>Field Name</span><span class="text-amber">Conoce Esmeraldas</span></div>
+      <div class="field-row"><span>Type</span><span class="text-amber">Single Options</span></div>
+      <div class="field-row"><span>Options</span><span class="text-amber">novato, intermedio, experto, coleccionista</span></div>
+    </div>
+
+    <div class="card fm">
+      <h4>4. Embajador Asignado</h4>
+      <div class="field-row"><span>Field Name</span><span class="text-amber">Embajador Asignado</span></div>
+      <div class="field-row"><span>Type</span><span class="text-amber">Text</span></div>
+      <div class="field-row"><span>Placeholder</span><span class="text-amber">UUID o slug del embajador</span></div>
+    </div>
+
+    <div class="card fm">
+      <h4>5. Eventos Presenciales Asistidos</h4>
+      <div class="field-row"><span>Field Name</span><span class="text-amber">Eventos Presenciales</span></div>
+      <div class="field-row"><span>Type</span><span class="text-amber">Number</span></div>
+      <div class="field-row"><span>Default Value</span><span class="text-amber">0</span></div>
+    </div>
+
+    <div class="card fm">
+      <h4>6. Eventos Virtuales Asistidos</h4>
+      <div class="field-row"><span>Field Name</span><span class="text-amber">Eventos Virtuales</span></div>
+      <div class="field-row"><span>Type</span><span class="text-amber">Number</span></div>
+      <div class="field-row"><span>Default Value</span><span class="text-amber">0</span></div>
+    </div>
+
+    <div class="card fm">
+      <h4>7. Total Comprado COP</h4>
+      <div class="field-row"><span>Field Name</span><span class="text-amber">Total Comprado COP</span></div>
+      <div class="field-row"><span>Type</span><span class="text-amber">Number</span></div>
+      <div class="field-row"><span>Default Value</span><span class="text-amber">0</span></div>
+    </div>
+
+    <div class="card fm">
+      <h4>8. Última Compra Fecha</h4>
+      <div class="field-row"><span>Field Name</span><span class="text-amber">Última Compra</span></div>
+      <div class="field-row"><span>Type</span><span class="text-amber">Date</span></div>
+    </div>
+
+    <div class="card fm">
+      <h4>9. Lead Score</h4>
+      <div class="field-row"><span>Field Name</span><span class="text-amber">Lead Score</span></div>
+      <div class="field-row"><span>Type</span><span class="text-amber">Number</span></div>
+      <div class="field-row"><span>Default Value</span><span class="text-amber">0</span></div>
+      <div class="field-row"><span>Note</span><span class="text-amber">Rango 0-100</span></div>
+    </div>
+
+    <div class="card fm">
+      <h4>10. Canal de Origen</h4>
+      <div class="field-row"><span>Field Name</span><span class="text-amber">Canal de Origen</span></div>
+      <div class="field-row"><span>Type</span><span class="text-amber">Single Options</span></div>
+      <div class="field-row"><span>Options</span><span class="text-amber">whatsapp, instagram, tiktok, facebook, web, evento_presencial, evento_virtual, referido</span></div>
+    </div>
+
+    <div class="card fm">
+      <h4>11. Canal Preferido</h4>
+      <div class="field-row"><span>Field Name</span><span class="text-amber">Canal Preferido</span></div>
+      <div class="field-row"><span>Type</span><span class="text-amber">Single Options</span></div>
+      <div class="field-row"><span>Options</span><span class="text-amber">whatsapp, instagram, tiktok, facebook, email</span></div>
+    </div>
+
+    <div class="card fm">
+      <h4>12. Ciudad</h4>
+      <div class="field-row"><span>Field Name</span><span class="text-amber">Ciudad</span></div>
+      <div class="field-row"><span>Type</span><span class="text-amber">Text</span></div>
+    </div>
+
+    <div class="card fm">
+      <h4>13. ID Supabase</h4>
+      <div class="field-row"><span>Field Name</span><span class="text-amber">ID Supabase</span></div>
+      <div class="field-row"><span>Type</span><span class="text-amber">Text</span></div>
+      <div class="field-row"><span>Note</span><span class="text-amber">UUID del contacto en la DB</span></div>
+    </div>
+
+    <div class="card fm">
+      <h4>14. Cumpleaños</h4>
+      <div class="field-row"><span>Field Name</span><span class="text-amber">Cumpleaños</span></div>
+      <div class="field-row"><span>Type</span><span class="text-amber">Date</span></div>
+    </div>
+
+    <div class="success">
+      <strong>Verificar al terminar:</strong> en Custom Fields debes ver los 14 campos. Toma screenshot de la lista completa y envíasela al CEO.
+    </div>
+  </div>
+</section>
+
+<!-- FASE 3 · PIPELINE -->
+<section id="fase-3" class="section-tinted">
+  <div class="container">
+    <p class="section-label fm">Fase 3 · Tiempo estimado: 30 minutos</p>
+    <h2 class="serif fm">Crear el Pipeline de Ventas</h2>
+    <p class="lead fm mb-6">Las 7 etapas por las que pasa cada lead/cliente, desde que entra hasta que cierra venta.</p>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Ir a Opportunities → Pipelines</h4>
+        <p>Menú izquierdo: <strong>Opportunities</strong> → <strong>Pipelines</strong> → <strong>Add Pipeline</strong>.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>Nombrar el pipeline</h4>
+        <p>Nombre: <code class="inline">Ventas Tierra Madre</code></p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Crear las 7 etapas en orden</h4>
+        <p>Borra las etapas default (New, Negotiation, etc.). Crea estas 7 en orden:</p>
+      </div>
+    </div>
+
+    <div class="card fm">
+      <h4>Etapas exactas (crearlas en este orden)</h4>
+      <div class="field-row"><span>1. Nuevo Lead</span><span class="text-amber">Color: Gris (#64748b)</span></div>
+      <div class="field-row"><span>2. Calificado por IA</span><span class="text-amber">Color: Azul (#3b82f6)</span></div>
+      <div class="field-row"><span>3. Producto Recomendado</span><span class="text-amber">Color: Verde claro (#10b981)</span></div>
+      <div class="field-row"><span>4. Carrito Enviado</span><span class="text-amber">Color: Amarillo (#fbbf24)</span></div>
+      <div class="field-row"><span>5. Negociación / Agente</span><span class="text-amber">Color: Naranja (#f97316)</span></div>
+      <div class="field-row"><span>6. Venta Cerrada</span><span class="text-amber">Color: Verde fuerte (#16a34a)</span></div>
+      <div class="field-row"><span>7. Perdido / Nurturing</span><span class="text-amber">Color: Rojo (#ef4444)</span></div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h4>Guardar</h4>
+        <p>Click <strong>Save Pipeline</strong>. Verifica que las 7 etapas aparezcan en orden.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <h4>Anotar IDs del pipeline y etapas</h4>
+        <p>Click en cada etapa y anota su ID (lo verás en la URL al editarlas). El Dev los necesitará.</p>
+        <p>Formato sugerido para guardar:</p>
+        <pre><code>Pipeline ID: abc123...
+Stages:
+- Nuevo Lead: stage1...
+- Calificado por IA: stage2...
+- Producto Recomendado: stage3...
+- Carrito Enviado: stage4...
+- Negociación / Agente: stage5...
+- Venta Cerrada: stage6...
+- Perdido / Nurturing: stage7...</code></pre>
+      </div>
+    </div>
+
+    <div class="success">
+      <strong>Listo:</strong> el pipeline está creado. Verás un Kanban vacío con 7 columnas.
+    </div>
+  </div>
+</section>
+
+<!-- FASE 4 · TAGS -->
+<section id="fase-4">
+  <div class="container">
+    <p class="section-label fm">Fase 4 · Tiempo estimado: 1 hora</p>
+    <h2 class="serif fm">Crear los Tags del Sistema</h2>
+    <p class="lead fm mb-6">Los tags sirven para clasificar contactos automáticamente. Crear ~50 tags pre-definidos.</p>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Ir a Tags</h4>
+        <p>Menú izquierdo → <strong>Tags</strong> (suele estar en Settings o como sección propia).</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>Crear cada tag (Add Tag → escribir nombre → Save)</h4>
+        <p>Crea todos los tags listados abajo, agrupados por categoría. Toma ~1 hora porque son muchos.</p>
+      </div>
+    </div>
+
+    <div class="card fm">
+      <h4 class="text-amber">📱 Canales (6 tags)</h4>
+      <pre><code>canal-whatsapp
+canal-instagram
+canal-tiktok
+canal-facebook
+canal-web
+canal-evento</code></pre>
+    </div>
+
+    <div class="card fm">
+      <h4 class="text-amber">🌡️ Estados del lead (5 tags)</h4>
+      <pre><code>lead-nuevo
+lead-calificado
+lead-caliente
+lead-frio
+lead-perdido</code></pre>
+    </div>
+
+    <div class="card fm">
+      <h4 class="text-amber">🚦 Etapas especiales (5 tags)</h4>
+      <pre><code>productos-mostrados
+carrito-enviado
+carrito-abandonado
+cliente-pago-confirmado
+nurturing-mensual</code></pre>
+    </div>
+
+    <div class="card fm">
+      <h4 class="text-amber">⚡ Escalación (6 tags)</h4>
+      <pre><code>pide-humano
+lead-inversion
+lead-vip
+queja
+devolucion
+urgencia</code></pre>
+    </div>
+
+    <div class="card fm">
+      <h4 class="text-amber">👥 Pool de agentes (4 tags)</h4>
+      <pre><code>agente-premium
+agente-inversion
+agente-senior
+agente-regular</code></pre>
+    </div>
+
+    <div class="card fm">
+      <h4 class="text-amber">🌟 Embajadores (5 tags)</h4>
+      <pre><code>lead-precarga
+ambassador-bronce
+ambassador-plata
+ambassador-oro
+ambassador-diamante</code></pre>
+    </div>
+
+    <div class="card fm">
+      <h4 class="text-amber">🎁 Ocasiones (7 tags)</h4>
+      <pre><code>ocasion-regalo
+ocasion-cumpleanos
+ocasion-aniversario
+ocasion-matrimonio
+ocasion-diario
+ocasion-inversion
+ocasion-evento-especial</code></pre>
+    </div>
+
+    <div class="card fm">
+      <h4 class="text-amber">💎 Tipos de interés (6 tags)</h4>
+      <pre><code>interes-topito
+interes-anillo
+interes-dije
+interes-gema-suelta
+interes-set
+interes-cert</code></pre>
+    </div>
+
+    <div class="card fm">
+      <h4 class="text-amber">📌 Otros (4 tags)</h4>
+      <pre><code>unsubscribed
+bloqueado
+cliente-recurrente
+referido-cliente</code></pre>
+    </div>
+
+    <div class="success">
+      <strong>Total: ~48 tags creados.</strong> Verifica en el listado que estén todos.
+    </div>
+  </div>
+</section>
+
+<!-- FASE 5 · CANALES -->
+<section id="fase-5" class="section-tinted">
+  <div class="container">
+    <p class="section-label fm">Fase 5 · Tiempo estimado: 4 horas (+ 24-48h espera de Meta)</p>
+    <h2 class="serif fm">Conectar WhatsApp, Instagram, TikTok</h2>
+    <p class="lead fm mb-6">Para que GHL pueda recibir y enviar mensajes desde cada canal.</p>
+
+    <h3 class="text-amber mt-4 mb-4">5.1 · WhatsApp Business API</h3>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Verificar Meta Business Manager</h4>
+        <p>CEO ya hizo este paso, pero verifica acceso entrando a <code class="inline">business.facebook.com</code> con la cuenta de Tierra Madre.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>En GHL → Settings → Phone Numbers</h4>
+        <p>Click <strong>Add WhatsApp</strong>.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Conectar con Meta</h4>
+        <p>GHL abrirá popup de Meta. Inicia sesión con la cuenta de Tierra Madre y autoriza permisos.</p>
+        <p>Selecciona la Business Account de Tierra Madre.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h4>Asignar o comprar número de WhatsApp</h4>
+        <p>Tienes dos opciones:</p>
+        <p><strong>A) Usar LeadConnector Phone (recomendado):</strong> comprar desde GHL un número colombiano (~$2 USD/mes).</p>
+        <p><strong>B) Conectar un número existente:</strong> debe estar libre de WhatsApp app personal.</p>
+        <p>Sigue el wizard de GHL — te guía paso a paso. Verificación por SMS o llamada.</p>
+      </div>
+    </div>
+
+    <div class="warn">
+      Espera 24-48h para que Meta apruebe el setup completo. Mientras tanto, puedes seguir con Instagram y TikTok.
+    </div>
+
+    <h3 class="text-amber mt-8 mb-4">5.2 · Instagram Business</h3>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Asegurarse que IG está convertido a Business</h4>
+        <p>Abre Instagram app → Tierra Madre profile → Settings → Account → Switch to Business (si no lo está).</p>
+        <p>Conectar a una página de Facebook de Tierra Madre (requisito de Meta).</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>En GHL → Settings → Integrations → Facebook/Instagram</h4>
+        <p>Click <strong>Connect</strong>. Login con la cuenta de Meta y autoriza acceso a la página + IG.</p>
+        <p>Selecciona la cuenta de Instagram Tierra Madre.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Test rápido</h4>
+        <p>Pide al CEO o a un colaborador que envíe un DM a Instagram. Verifica que aparezca en GHL → Conversations.</p>
+      </div>
+    </div>
+
+    <h3 class="text-amber mt-8 mb-4">5.3 · TikTok Business</h3>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Verificar TikTok Business Account</h4>
+        <p>La cuenta de TikTok de Tierra Madre debe ser <strong>Business</strong>, no Creator.</p>
+        <p>App TikTok → Settings → Account → Switch to Business.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>En GHL → Settings → Integrations → TikTok</h4>
+        <p>Click <strong>Connect</strong> → login con TikTok for Business → autorizar.</p>
+        <p>Si no aparece la opción en tu plan, contactar soporte GHL — algunos sub-accounts requieren feature flag.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Habilitar Auto-DM por palabra clave en comentarios</h4>
+        <p>En la integración TikTok → Settings → Comment Automation → Add Rule.</p>
+        <p>Configura: cuando alguien comente "esmeralda" o "precio" → enviar DM automático.</p>
+      </div>
+    </div>
+
+    <div class="success">
+      <strong>Al terminar Fase 5:</strong> los 3 canales conectados y enviando mensajes a GHL inbox unificado. Verifica con un test desde cada canal.
+    </div>
+  </div>
+</section>
+
+<!-- FASE 6 · BOT MARIA -->
+<section id="fase-6">
+  <div class="container">
+    <p class="section-label fm">Fase 6 · Tiempo estimado: 5 horas (la más importante)</p>
+    <h2 class="serif fm">Configurar el Bot María</h2>
+    <p class="lead fm mb-6">
+      Esta es la fase más crítica. El bot María es el cerebro conversacional que atiende a todos los clientes 24/7. Hay que entrenarlo bien.
+    </p>
+
+    <div class="warn fm">
+      Pídele al CEO los textos exactos de María antes de empezar. Están en el archivo <code class="inline">claude-code-execution/01-bot-maria-spec.md</code>. Necesitas las 3 secciones: <strong>Personality</strong>, <strong>Flow Instructions</strong> y <strong>Escalation Rules</strong>.
+    </div>
+
+    <h3 class="text-amber mt-6 mb-4">6.1 · Crear Knowledge Base</h3>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Ir a Sales & Marketing → Conversation AI → Knowledge Base</h4>
+        <p>Click <strong>Add Document</strong>.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>Subir los 6 documentos uno por uno</h4>
+        <p>El CEO te dará 6 archivos .md o .docx (provienen del archivo <code class="inline">claude-code-execution/05-knowledge-base.md</code>):</p>
+        <ol style="padding-left:20px;color:var(--text-soft)" class="text-sm">
+          <li>01-sobre-tierra-madre</li>
+          <li>02-productos</li>
+          <li>03-esmeraldas-101</li>
+          <li>04-logistica</li>
+          <li>05-pagos</li>
+          <li>06-devoluciones</li>
+        </ol>
+        <p>Para cada documento: Add Document → escoger archivo → poner título descriptivo → Upload.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Esperar indexación (~2 min)</h4>
+        <p>GHL procesa los documentos y los convierte en knowledge base buscable. Aparecerá un check verde cuando estén listos.</p>
+      </div>
+    </div>
+
+    <h3 class="text-amber mt-8 mb-4">6.2 · Crear el Agent "María"</h3>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Conversation AI → Agents → Create Agent</h4>
+        <p>Configuración del Agent:</p>
+        <div class="glass mt-3 mb-3" style="padding:14px">
+          <div class="field-row"><span>Name</span><span class="text-amber">María</span></div>
+          <div class="field-row"><span>Role</span><span class="text-amber">Sales Assistant</span></div>
+          <div class="field-row"><span>Language</span><span class="text-amber">Spanish (Colombia)</span></div>
+          <div class="field-row"><span>Knowledge Base</span><span class="text-amber">Tierra Madre KB (los 6 docs)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>Pegar la Sección A · Personality / System Prompt</h4>
+        <p>En el campo "Personality / System Prompt", pega el contenido COMPLETO de la Sección A del archivo del CEO.</p>
+        <p>Reemplaza variables como <code class="inline">{{nombre_marca}}</code> con "Tierra Madre", <code class="inline">{{ciudad_sede}}</code> con la ciudad real, etc. El CEO te pasa todos los valores.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Pegar Sección B · Flow Instructions</h4>
+        <p>En "Flow Instructions" o "Conversation Flow", pega la Sección B completa.</p>
+        <p>Reemplaza también las variables que correspondan.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h4>Pegar Sección C · Escalation Rules</h4>
+        <p>En "Escalation Rules" o "Handoff Settings", pega la Sección C.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <h4>Configurar Settings adicionales del Agent</h4>
+        <ul class="ul-clean ul-dot mt-2">
+          <li><strong>Auto-respond to:</strong> WhatsApp, Instagram DM, TikTok DM, SMS, Email, Web Chat</li>
+          <li><strong>Response delay:</strong> 5-10 segundos (parece más natural)</li>
+          <li><strong>Working hours:</strong> 24/7 (el bot siempre activo)</li>
+          <li><strong>Escalation:</strong> según las reglas pegadas en Sección C</li>
+          <li><strong>Stop AI after handoff:</strong> ON (cuando un humano toma la conversación)</li>
+          <li><strong>Resume AI after:</strong> 30 minutos (si humano no responde)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">6</div>
+      <div class="step-content">
+        <h4>Activar el Agent</h4>
+        <p>Click <strong>Save</strong> → toggle <strong>Active</strong> → ON.</p>
+      </div>
+    </div>
+
+    <h3 class="text-amber mt-8 mb-4">6.3 · Probar el bot en sandbox</h3>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Ir a Conversation AI → Test Chat</h4>
+        <p>Simula 5 conversaciones para verificar comportamiento:</p>
+      </div>
+    </div>
+
+    <div class="card fm">
+      <h4>Test 1 · Cliente nuevo curioso</h4>
+      <p class="text-sm">Escribe: "Hola, vi sus joyas y me interesan"</p>
+      <p class="text-sm text-emerald">Esperado: María saluda, presenta opciones, empieza calificación</p>
+    </div>
+
+    <div class="card fm">
+      <h4>Test 2 · Cliente con interés específico</h4>
+      <p class="text-sm">Escribe: "Quiero topitos de esmeralda para mi mamá, presupuesto 700k"</p>
+      <p class="text-sm text-emerald">Esperado: María captura tipo_interes=topito, presupuesto=700000, ocasion=regalo</p>
+    </div>
+
+    <div class="card fm">
+      <h4>Test 3 · Caso de inversión (debe escalar)</h4>
+      <p class="text-sm">Escribe: "Busco una esmeralda como inversión, tengo 15 millones para esto"</p>
+      <p class="text-sm text-emerald">Esperado: María detecta inversion + monto >5M, escala a Agente Inversión</p>
+    </div>
+
+    <div class="card fm">
+      <h4>Test 4 · Cliente molesto (debe escalar)</h4>
+      <p class="text-sm">Escribe: "Estoy muy molesto, mi pedido no ha llegado"</p>
+      <p class="text-sm text-emerald">Esperado: María detecta sentimiento negativo, escala a Agente Senior</p>
+    </div>
+
+    <div class="card fm">
+      <h4>Test 5 · Pide humano directo</h4>
+      <p class="text-sm">Escribe: "No quiero hablar con un bot, quiero hablar con una persona"</p>
+      <p class="text-sm text-emerald">Esperado: María dice "Por supuesto" y escala a Agente Regular</p>
+    </div>
+
+    <div class="warn">
+      Si algún test falla, revisa los prompts y ajusta el sistema de María. No avances a Fase 7 hasta que los 5 tests pasen.
+    </div>
+  </div>
+</section>
+
+<!-- FASE 7 · WORKFLOWS -->
+<section id="fase-7" class="section-tinted">
+  <div class="container">
+    <p class="section-label fm">Fase 7 · Tiempo estimado: 8 horas (la más larga)</p>
+    <h2 class="serif fm">Construir los 13 Workflows</h2>
+    <p class="lead fm mb-6">
+      Los workflows automatizan acciones según eventos. Hay que construir 13 uno por uno en la UI de GHL.
+    </p>
+
+    <div class="tip fm">
+      El CEO te dará el archivo <code class="inline">claude-code-execution/04-workflows-detailed.md</code> con la especificación de cada workflow.
+    </div>
+
+    <h3 class="text-amber mt-6 mb-4">Cómo construir un workflow en GHL</h3>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Ir a Automation → Workflows</h4>
+        <p>Click <strong>Create Workflow</strong> → <strong>Start from scratch</strong>.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>Configurar el Trigger</h4>
+        <p>Click <strong>Add Trigger</strong>. Tipos comunes:</p>
+        <ul class="ul-clean ul-dot mt-2">
+          <li><strong>Inbound Message:</strong> cuando llega un mensaje (filtrable por canal)</li>
+          <li><strong>Contact Created:</strong> cuando se crea un contacto nuevo</li>
+          <li><strong>Form Submitted:</strong> cuando alguien llena un form</li>
+          <li><strong>Tag Added:</strong> cuando se le agrega un tag al contacto</li>
+          <li><strong>Custom Field Changed:</strong> cuando un custom field cambia de valor</li>
+          <li><strong>Opportunity Stage Changed:</strong> cuando una opp se mueve de etapa</li>
+          <li><strong>Webhook (Inbound):</strong> recibe POST de un sistema externo</li>
+          <li><strong>Scheduled (Cron):</strong> ejecutar a hora específica</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Agregar Acciones</h4>
+        <p>Click <strong>+ Add Action</strong>. Tipos comunes:</p>
+        <ul class="ul-clean ul-dot mt-2">
+          <li><strong>Send SMS / WhatsApp / Email:</strong> enviar mensaje</li>
+          <li><strong>Update Contact:</strong> cambiar custom fields</li>
+          <li><strong>Add/Remove Tag:</strong> agregar o quitar tag</li>
+          <li><strong>Add to Pipeline Stage:</strong> mover oportunidad</li>
+          <li><strong>Webhook (Outbound):</strong> POST a URL externa</li>
+          <li><strong>Wait:</strong> esperar X tiempo</li>
+          <li><strong>If/Else Condition:</strong> ramificar según condición</li>
+          <li><strong>Assign User:</strong> asignar a usuario específico</li>
+          <li><strong>Conversation AI:</strong> activar/desactivar IA</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h4>Save y Activar</h4>
+        <p>Click <strong>Save</strong> arriba a la derecha → toggle <strong>Active</strong> → ON.</p>
+      </div>
+    </div>
+
+    <h3 class="text-amber mt-8 mb-4">Orden de construcción de los 13 workflows</h3>
+
+    <p class="mb-4">Construye en este orden (algunos dependen de otros):</p>
+
+    <div class="card fm">
+      <div class="chip mb-2">Día 1 · Workflows básicos</div>
+      <ul class="ul-clean ul-dot text-sm">
+        <li><strong>WF-01</strong> · Nuevo contacto multi-canal (entrada del sistema)</li>
+        <li><strong>WF-03</strong> · Calificación con IA</li>
+      </ul>
+    </div>
+
+    <div class="card fm">
+      <div class="chip mb-2">Día 2 · Embajadores</div>
+      <ul class="ul-clean ul-dot text-sm">
+        <li><strong>WF-02</strong> · Verificar embajador (lo dispara WF-01)</li>
+        <li><strong>WF-07</strong> · Regla 5 min embajador (depende de WF-02)</li>
+      </ul>
+    </div>
+
+    <div class="card fm">
+      <div class="chip mb-2">Día 3 · Catálogo y carrito</div>
+      <ul class="ul-clean ul-dot text-sm">
+        <li><strong>WF-04</strong> · Búsqueda en catálogo (llama Supabase)</li>
+        <li><strong>WF-05</strong> · Envío de carrito + checkout</li>
+      </ul>
+    </div>
+
+    <div class="card fm">
+      <div class="chip mb-2">Día 4 · Escalación</div>
+      <ul class="ul-clean ul-dot text-sm">
+        <li><strong>WF-06</strong> · Escalación a agente</li>
+        <li><strong>WF-11</strong> · Smart Routing (matriz de decisión)</li>
+      </ul>
+    </div>
+
+    <div class="card fm">
+      <div class="chip mb-2">Día 5 · Post-venta</div>
+      <ul class="ul-clean ul-dot text-sm">
+        <li><strong>WF-08</strong> · Post-venta (dispara secuencia)</li>
+        <li><strong>WF-09</strong> · Re-engagement / lead frío</li>
+      </ul>
+    </div>
+
+    <div class="card fm">
+      <div class="chip mb-2">Día 6 · Eventos</div>
+      <ul class="ul-clean ul-dot text-sm">
+        <li><strong>WF-10</strong> · Asistencia a evento</li>
+        <li><strong>WF-12</strong> · Auto-event-invite</li>
+      </ul>
+    </div>
+
+    <div class="card fm">
+      <div class="chip mb-2">Día 7 · Cron</div>
+      <ul class="ul-clean ul-dot text-sm">
+        <li><strong>WF-13</strong> · Ambassador Scoring (cron diario)</li>
+      </ul>
+    </div>
+
+    <div class="warn">
+      Cada workflow toma 30-60 min de construcción. Total Fase 7: ~8 horas. Reparte en 2-3 días.
+    </div>
+
+    <h3 class="text-amber mt-8 mb-4">Probar cada workflow después de construirlo</h3>
+    <p>GHL tiene "Test" botón en cada workflow. Crea un contacto de prueba y dispara manualmente el trigger para ver que ejecute todas las acciones correctamente. Si falla algo, revisa logs en <strong>Workflow → Logs</strong>.</p>
+
+    <div class="success">
+      <strong>Cuando los 13 workflows estén activos y testeados:</strong> el sistema está al ~80% funcional. Solo falta plantillas y agentes.
+    </div>
+  </div>
+</section>
+
+<!-- FASE 8 · PLANTILLAS WHATSAPP -->
+<section id="fase-8">
+  <div class="container">
+    <p class="section-label fm">Fase 8 · Tiempo estimado: 4 horas (+ 24-48h aprobación de Meta por plantilla)</p>
+    <h2 class="serif fm">Registrar las 30+ plantillas en Meta</h2>
+    <p class="lead fm mb-6">
+      Para enviar mensajes de WhatsApp que <strong>inicien conversaciones</strong>, Meta exige plantillas pre-aprobadas. Hay que registrar 30+ una por una.
+    </p>
+
+    <div class="tip fm">
+      El CEO te pasará el archivo <code class="inline">claude-code-execution/06-whatsapp-templates.md</code> con los textos exactos de cada plantilla.
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Ir a Meta Business Manager</h4>
+        <p>Abre <code class="inline">business.facebook.com</code> → cuenta de Tierra Madre → <strong>WhatsApp Manager</strong> → <strong>Message Templates</strong>.</p>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>Click "Create Template"</h4>
+        <p>Para cada plantilla del archivo:</p>
+        <ol style="padding-left:20px;color:var(--text-soft)" class="text-sm">
+          <li>Click "Create Template"</li>
+          <li>Selecciona <strong>Category</strong>: MARKETING (para promos), UTILITY (para confirmaciones), AUTHENTICATION (para OTPs)</li>
+          <li><strong>Language</strong>: Español (Colombia) — <code class="inline">es_CO</code></li>
+          <li><strong>Name</strong>: el nombre exacto del archivo (ej: <code class="inline">saludo_inicial_wa</code>)</li>
+          <li><strong>Body</strong>: pega el texto exacto, con las variables <code class="inline">{{1}}</code>, <code class="inline">{{2}}</code> donde corresponda</li>
+          <li><strong>Sample Variables</strong>: para cada variable, pon un ejemplo real (Meta lo exige)</li>
+          <li>Si tiene <strong>Buttons</strong>: configúralos según el archivo (Quick Reply o URL)</li>
+          <li>Click <strong>Submit for Review</strong></li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Esperar aprobación de Meta</h4>
+        <p>Cada plantilla tarda 24-48h en aprobarse. Algunas pueden rechazarse — Meta dice por qué (suele ser por categoría incorrecta o contenido promocional disfrazado de utility).</p>
+        <p>Si una se rechaza, ajustar y reenviar.</p>
+      </div>
+    </div>
+
+    <h3 class="text-amber mt-6 mb-4">Orden de prioridad (registra primero las críticas)</h3>
+
+    <div class="card fm">
+      <div class="chip red mb-2">PRIORIDAD ALTA · semana 1</div>
+      <ul class="ul-clean ul-dot text-sm">
+        <li>WA-01 · saludo_inicial_wa</li>
+        <li>IG-01 · saludo_inicial_ig</li>
+        <li>TT-01 · saludo_inicial_tt</li>
+        <li>CK-01 · ck_link_pago</li>
+        <li>CK-03 · ck_confirmacion_pago</li>
+        <li>ES-01 · es_conectando_agente</li>
+        <li>PV-02 · pv_pedido_entregado</li>
+        <li>PV-03 · pv_pide_review_7d</li>
+      </ul>
+    </div>
+
+    <div class="card fm">
+      <div class="chip gold mb-2">PRIORIDAD MEDIA · semana 2</div>
+      <ul class="ul-clean ul-dot text-sm">
+        <li>Q-01 a Q-04 · preguntas de calificación</li>
+        <li>P-01 · recomendación de producto</li>
+        <li>EV-01, EV-02 · invitaciones a eventos</li>
+        <li>EM-01, EM-02 · notificaciones a embajadores</li>
+      </ul>
+    </div>
+
+    <div class="card fm">
+      <div class="chip mb-2">PRIORIDAD BAJA · después</div>
+      <ul class="ul-clean ul-dot text-sm">
+        <li>R-01 a R-04 · recuperación</li>
+        <li>PR-01 a PR-04 · promos</li>
+        <li>Resto</li>
+      </ul>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h4>Sincronizar plantillas aprobadas con GHL</h4>
+        <p>Una vez Meta aprueba una plantilla, en GHL → Conversations → Templates aparece automáticamente disponible.</p>
+        <p>Si no aparece, en GHL → Settings → WhatsApp → Sync Templates manualmente.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FASE 9 · AGENTES -->
+<section id="fase-9" class="section-tinted">
+  <div class="container">
+    <p class="section-label fm">Fase 9 · Tiempo estimado: 2 horas</p>
+    <h2 class="serif fm">Crear Pool de Agentes</h2>
+    <p class="lead fm mb-6">
+      Crear los usuarios de GHL para cada agente humano y configurar el round-robin de asignación automática.
+    </p>
+
+    <div class="warn fm">
+      El CEO te debe haber dado la lista de agentes iniciales (nombres, emails, pool al que pertenecen).
+    </div>
+
+    <h3 class="text-amber mt-6 mb-4">9.1 · Crear cada agente como usuario en GHL</h3>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Ir a Settings → My Staff → Add Employee</h4>
+        <p>Para cada agente:</p>
+        <div class="glass mt-3 mb-3" style="padding:14px">
+          <div class="field-row"><span>First Name + Last Name</span><span class="text-amber">Nombre del agente</span></div>
+          <div class="field-row"><span>Email</span><span class="text-amber">su email corporativo</span></div>
+          <div class="field-row"><span>Phone</span><span class="text-amber">su celular</span></div>
+          <div class="field-row"><span>User Type</span><span class="text-amber">User (no Admin)</span></div>
+          <div class="field-row"><span>Role</span><span class="text-amber">Agent / Sales</span></div>
+        </div>
+        <p>Marcar permisos: Conversations (Read+Write), Opportunities (Read+Write), Contacts (Read+Write).</p>
+        <p>Click <strong>Save</strong>. El agente recibe email para activar su cuenta.</p>
+      </div>
+    </div>
+
+    <h3 class="text-amber mt-6 mb-4">9.2 · Aplicar tag de pool a cada agente</h3>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Editar perfil del agente → Tags</h4>
+        <p>Aplica el tag correspondiente:</p>
+        <ul class="ul-clean ul-dot mt-2">
+          <li>Vendedor senior con experiencia lujo → <code class="inline">agente-premium</code></li>
+          <li>Gemólogo certificado → <code class="inline">agente-inversion</code></li>
+          <li>Experimentado en cierre rápido → <code class="inline">agente-senior</code></li>
+          <li>Conocedor del catálogo → <code class="inline">agente-regular</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 class="text-amber mt-6 mb-4">9.3 · Configurar Auto-Assignment Rules</h3>
+
+    <div class="step fm">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Settings → Conversations → Auto-Assignment</h4>
+        <p>Crea 4 reglas, una por pool:</p>
+      </div>
+    </div>
+
+    <div class="card fm">
+      <h4>Rule 1 · Routing Pool Premium</h4>
+      <div class="field-row"><span>Trigger</span><span class="text-amber">Conversation has tag "lead-vip"</span></div>
+      <div class="field-row"><span>Action</span><span class="text-amber">Round-robin among users with tag "agente-premium"</span></div>
+      <div class="field-row"><span>SLA</span><span class="text-amber">10 minutos</span></div>
+    </div>
+
+    <div class="card fm">
+      <h4>Rule 2 · Routing Pool Inversión</h4>
+      <div class="field-row"><span>Trigger</span><span class="text-amber">Conversation has tag "lead-inversion"</span></div>
+      <div class="field-row"><span>Action</span><span class="text-amber">Round-robin among users with tag "agente-inversion"</span></div>
+      <div class="field-row"><span>SLA</span><span class="text-amber">5 minutos</span></div>
+    </div>
+
+    <div class="card fm">
+      <h4>Rule 3 · Routing Pool Senior</h4>
+      <div class="field-row"><span>Trigger</span><span class="text-amber">Conversation has tag "queja" OR "urgencia" OR "devolucion"</span></div>
+      <div class="field-row"><span>Action</span><span class="text-amber">Round-robin among users with tag "agente-senior"</span></div>
+      <div class="field-row"><span>SLA</span><span class="text-amber">2 minutos</span></div>
+    </div>
+
+    <div class="card fm">
+      <h4>Rule 4 · Routing Pool Regular (default)</h4>
+      <div class="field-row"><span>Trigger</span><span class="text-amber">Conversation has tag "pide-humano" (sin matchear arriba)</span></div>
+      <div class="field-row"><span>Action</span><span class="text-amber">Round-robin among users with tag "agente-regular"</span></div>
+      <div class="field-row"><span>SLA</span><span class="text-amber">15 minutos</span></div>
+    </div>
+
+    <div class="step fm">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>Configurar SLA Escalation</h4>
+        <p>Settings → SLA Rules. Para cada pool, configurar:</p>
+        <p>Si agente no responde en <code class="inline">SLA × 2</code> → reasignar al siguiente del pool + notificar supervisor.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FASE 10 · QA -->
+<section id="fase-10">
+  <div class="container">
+    <p class="section-label fm">Fase 10 · Tiempo estimado: 3 horas</p>
+    <h2 class="serif fm">Testing End-to-End</h2>
+    <p class="lead fm mb-6">
+      Antes de marcar como completo, probar los 9 escenarios completos con conversaciones reales.
+    </p>
+
+    <p class="fm mb-4">Para cada escenario:</p>
+    <ol style="padding-left:20px;color:var(--text-soft)" class="text-sm fm">
+      <li>Pide a alguien que no haya tocado el sistema que actúe como cliente</li>
+      <li>Escribe desde un WhatsApp o Instagram diferente</li>
+      <li>Verifica que el flujo completo se ejecute correctamente</li>
+      <li>Anota cualquier comportamiento inesperado</li>
+      <li>Si pasa: marca como ✅. Si falla: revisa y corrige.</li>
+    </ol>
+
+    <h3 class="text-amber mt-6 mb-4">Los 9 escenarios a probar</h3>
+
+    <div class="card fm">
+      <h4>Escenario 1 · Cliente nuevo WhatsApp quiere topitos</h4>
+      <p class="text-sm">Mensaje: "Hola, quiero topitos de esmeralda, presupuesto 500k"</p>
+      <p class="text-sm text-emerald">Esperado: María califica → llama Supabase → muestra 3 productos → mover a etapa "Producto Recomendado"</p>
+    </div>
+
+    <div class="card fm">
+      <h4>Escenario 2 · Lead de embajador por Instagram</h4>
+      <p class="text-sm">Pre-condición: cargar lead en formulario del embajador antes</p>
+      <p class="text-sm text-emerald">Esperado: detecta embajador, notifica, espera 5 min, María toma si no responde</p>
+    </div>
+
+    <div class="card fm">
+      <h4>Escenario 3 · Cliente inversión 15M</h4>
+      <p class="text-sm">Mensaje: "Busco esmeralda como inversión, presupuesto 15 millones"</p>
+      <p class="text-sm text-emerald">Esperado: María detecta inversión + monto, escala a Agente Inversión</p>
+    </div>
+
+    <div class="card fm">
+      <h4>Escenario 4 · Compra directa por landing</h4>
+      <p class="text-sm">El usuario llena form en /topitos y compra (cuando el Dev tenga la web lista)</p>
+      <p class="text-sm text-emerald">Esperado: contacto creado en GHL, pago confirmado, WF-08 dispara post-venta</p>
+    </div>
+
+    <div class="card fm">
+      <h4>Escenario 5 · Asistencia a evento</h4>
+      <p class="text-sm">Llenar form de evento, asistir, no comprar esa noche</p>
+      <p class="text-sm text-emerald">Esperado: recordatorios, check-in, secuencia post-evento al día siguiente</p>
+    </div>
+
+    <div class="card fm">
+      <h4>Escenario 6 · Embajadora carga 20 leads</h4>
+      <p class="text-sm">Embajadora usa formulario para subir 20 leads (cuando Dev tenga form listo)</p>
+      <p class="text-sm text-emerald">Esperado: todos quedan con embajador_asignado, cuando contacten WF-02 los detecta</p>
+    </div>
+
+    <div class="card fm">
+      <h4>Escenario 7 · Carrito abandonado</h4>
+      <p class="text-sm">Cliente llega al checkout y abandona</p>
+      <p class="text-sm text-emerald">Esperado: 2h después recibe R-01, 24h después R-02 con descuento</p>
+    </div>
+
+    <div class="card fm">
+      <h4>Escenario 8 · Cliente molesto</h4>
+      <p class="text-sm">Mensaje: "Estoy muy molesto, esto no llegó"</p>
+      <p class="text-sm text-emerald">Esperado: sentimiento negativo detectado, escala a Agente Senior</p>
+    </div>
+
+    <div class="card fm">
+      <h4>Escenario 9 · Crear evento y auto-invitar</h4>
+      <p class="text-sm">Admin crea evento en Cali, filtra ciudad=Cali (cuando Dev tenga admin)</p>
+      <p class="text-sm text-emerald">Esperado: workflow #12 invita automáticamente por canal preferido</p>
+    </div>
+
+    <div class="success fm mt-8">
+      <strong>Cuando los 9 escenarios pasen:</strong> ¡GHL está 100% listo para producción! Notifica al CEO y al equipo.
+    </div>
+  </div>
+</section>
+
+<!-- ENTREGABLES FINALES -->
+<section class="section-tinted">
+  <div class="container">
+    <h2 class="serif fm center">Entregables Finales</h2>
+    <p class="lead fm center mb-8">Al terminar las 10 fases, comparte con el CEO:</p>
+
+    <div class="glass-strong fm" style="padding:28px">
+      <ul class="checklist">
+        <li>Screenshot del dashboard de GHL Tierra Madre</li>
+        <li>Listado de 14 custom fields creados (screenshot)</li>
+        <li>Listado de pipeline con 7 etapas (screenshot)</li>
+        <li>Listado de ~48 tags (screenshot)</li>
+        <li>Confirmación de canales conectados: WhatsApp ✓, IG ✓, TikTok ✓</li>
+        <li>Screenshot del Bot María activo</li>
+        <li>Listado de 13 workflows activos</li>
+        <li>Plantillas registradas en Meta (al menos las críticas aprobadas)</li>
+        <li>Lista de agentes creados con sus pools</li>
+        <li>4 reglas de auto-assignment activas</li>
+        <li>Reporte de los 9 escenarios probados (pass/fail)</li>
+        <li><strong>Credenciales:</strong> Private Token + Location ID entregados al Dev</li>
+        <li>Documentación en Notion de cualquier ajuste o desviación del plan</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p class="serif" style="font-size:1.1rem;color:var(--emerald-300);margin-bottom:8px">Tierra Madre · Manual GHL · v1.0</p>
+  <p>Para la Persona Configuradora de GoHighLevel · 10 fases · ~30 horas</p>
+  <p style="margin-top:12px"><a href="plan-de-delegacion.html" style="color:var(--gold-300);text-decoration:none">← Volver al plan de delegación</a></p>
+</footer>
+
+<script>
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) e.target.classList.add('in');
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+  document.querySelectorAll('.fm').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

@@ -1,0 +1,3333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tierra Madre · Plan de Ejecución</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+<style>
+/* ====== RESET & VARIABLES ====== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050807;
+  --bg-1:#0a0f0d;
+  --bg-2:#0f1714;
+  --bg-3:#162320;
+  --emerald-300:#6ee7b7;
+  --emerald-400:#34d399;
+  --emerald-500:#10b981;
+  --emerald-600:#059669;
+  --emerald-700:#047857;
+  --emerald-900:#064e3b;
+  --gold-300:#fcd34d;
+  --gold-400:#fbbf24;
+  --gold-500:#f59e0b;
+  --gold-700:#b45309;
+  --text:#e6f4ef;
+  --text-soft:rgba(230,244,239,.7);
+  --text-mute:rgba(230,244,239,.5);
+  --border:rgba(52,211,153,.2);
+  --danger:#fca5a5;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:radial-gradient(ellipse at top,#0f1714 0%,#050807 60%,#000 100%);
+  color:var(--text);
+  line-height:1.6;
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+.serif{font-family:'Playfair Display',Georgia,serif;letter-spacing:-.02em}
+.mono{font-family:'JetBrains Mono',monospace;font-size:.85em}
+
+/* ====== LAYOUT ====== */
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+section{padding:96px 24px;position:relative}
+@media (max-width:768px){section{padding:64px 16px}}
+
+/* ====== TYPOGRAPHY ====== */
+h1{font-size:clamp(2.5rem,7vw,5rem);font-weight:900;line-height:1.05}
+h2{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;line-height:1.1}
+h3{font-size:clamp(1.25rem,2.5vw,1.75rem);font-weight:700;line-height:1.2}
+h4{font-size:1.05rem;font-weight:700}
+p{color:var(--text-soft)}
+.section-label{
+  font-size:.75rem;letter-spacing:.32em;text-transform:uppercase;
+  color:var(--emerald-400);font-weight:700;margin-bottom:14px;
+}
+.lead{font-size:1.15rem;color:var(--text-soft);max-width:720px;margin:0 auto;line-height:1.6}
+.center{text-align:center}
+.grad-text{
+  background:linear-gradient(135deg,#34d399 0%,#10b981 40%,#fcd34d 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  display:inline-block;
+}
+
+/* ====== GRADIENTS & GLASS ====== */
+.grad-emerald{background:linear-gradient(135deg,#10b981 0%,#047857 50%,#064e3b 100%)}
+.grad-gold{background:linear-gradient(135deg,#fcd34d 0%,#f59e0b 60%,#b45309 100%)}
+.glass{
+  background:linear-gradient(135deg,rgba(15,23,20,.6),rgba(22,35,32,.4));
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--border);border-radius:18px;
+}
+.glass-strong{
+  background:linear-gradient(135deg,rgba(15,23,20,.92),rgba(22,35,32,.75));
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(52,211,153,.28);border-radius:24px;
+}
+.glow{box-shadow:0 0 40px rgba(52,211,153,.22),inset 0 0 30px rgba(52,211,153,.04)}
+.glow-gold{box-shadow:0 0 40px rgba(251,191,36,.22),inset 0 0 30px rgba(251,191,36,.04)}
+
+/* ====== CARDS ====== */
+.card{
+  background:linear-gradient(135deg,rgba(15,23,20,.7),rgba(22,35,32,.5));
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:28px;
+  position:relative;overflow:hidden;
+  transition:border-color .4s cubic-bezier(.22,1,.36,1),transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s cubic-bezier(.22,1,.36,1);
+}
+.card::before{
+  content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(52,211,153,.08),transparent);
+  transition:left .8s;pointer-events:none;
+}
+.card:hover::before{left:100%}
+.card:hover{border-color:rgba(52,211,153,.45);transform:translateY(-4px);box-shadow:0 20px 40px -10px rgba(0,0,0,.6),0 0 30px rgba(52,211,153,.12)}
+.card-sm{padding:18px;border-radius:14px}
+
+/* ====== CHIPS ====== */
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:99px;font-size:11px;font-weight:600;
+  border:1px solid rgba(52,211,153,.28);background:rgba(16,185,129,.1);
+  color:var(--emerald-300);letter-spacing:.02em;
+}
+.chip.gold{border-color:rgba(251,191,36,.32);background:rgba(251,191,36,.1);color:var(--gold-300)}
+.chip.danger{border-color:rgba(239,68,68,.32);background:rgba(239,68,68,.1);color:var(--danger)}
+
+/* ====== BUTTONS ====== */
+.btn{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:16px 32px;border-radius:99px;
+  font-weight:600;font-size:1rem;text-decoration:none;color:#fff;
+  background:linear-gradient(135deg,#10b981 0%,#047857 100%);
+  box-shadow:0 0 40px rgba(52,211,153,.3);
+  transition:transform .3s cubic-bezier(.22,1,.36,1);
+  border:none;cursor:pointer;
+}
+.btn:hover{transform:scale(1.05) translateY(-2px)}
+
+/* ====== GRIDS ====== */
+.grid{display:grid;gap:24px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+@media (max-width:900px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+@media (max-width:900px){.grid-4{grid-template-columns:repeat(2,1fr)}}
+.flex{display:flex}
+.items-center{align-items:center}
+.justify-between{justify-content:space-between}
+.justify-center{justify-content:center}
+.gap-2{gap:8px}.gap-3{gap:12px}.gap-4{gap:16px}.gap-6{gap:24px}
+.wrap{flex-wrap:wrap}
+.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}
+.mb-6{margin-bottom:24px}.mb-8{margin-bottom:32px}.mb-12{margin-bottom:48px}.mb-16{margin-bottom:64px}
+.mt-4{margin-top:16px}.mt-6{margin-top:24px}.mt-8{margin-top:32px}.mt-12{margin-top:48px}.mt-16{margin-top:64px}
+.text-amber{color:var(--gold-300)}
+.text-emerald{color:var(--emerald-300)}
+.text-sm{font-size:.875rem;line-height:1.5}
+.text-xs{font-size:.78rem;line-height:1.5}
+.text-lg{font-size:1.15rem;line-height:1.6}
+.text-xl{font-size:1.25rem}
+.text-2xl{font-size:1.5rem;font-weight:700}
+.text-3xl{font-size:2rem;font-weight:800}
+.text-soft{color:var(--text-soft)}
+.text-mute{color:var(--text-mute)}
+.font-bold{font-weight:700}
+.font-semibold{font-weight:600}
+
+/* ====== HERO ====== */
+.hero{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;text-align:center;
+  background:
+    radial-gradient(ellipse at 20% 30%,rgba(16,185,129,.25) 0%,transparent 50%),
+    radial-gradient(ellipse at 80% 70%,rgba(251,191,36,.18) 0%,transparent 50%),
+    radial-gradient(ellipse at 50% 100%,rgba(4,120,87,.3) 0%,transparent 60%);
+}
+.hero-inner{position:relative;z-index:10;max-width:900px;padding:0 24px}
+.gem{
+  position:absolute;width:8px;height:8px;border-radius:50%;
+  background:radial-gradient(circle,#34d399 0%,transparent 70%);
+  animation:float 8s ease-in-out infinite;pointer-events:none;
+}
+.gem.gold{background:radial-gradient(circle,#fcd34d 0%,transparent 70%)}
+@keyframes float{
+  0%,100%{transform:translateY(0) rotate(0);opacity:.4}
+  50%{transform:translateY(-30px) rotate(180deg);opacity:1}
+}
+.pulse-ring{
+  position:absolute;border-radius:50%;border:2px solid rgba(52,211,153,.3);
+  width:300px;height:300px;left:50%;top:50%;
+  transform:translate(-50%,-50%) scale(.5);
+  animation:pulse 3s ease-out infinite;
+}
+@keyframes pulse{
+  0%{transform:translate(-50%,-50%) scale(.5);opacity:1}
+  100%{transform:translate(-50%,-50%) scale(2);opacity:0}
+}
+.gem-emerald{
+  width:120px;height:120px;margin:0 auto 32px;
+  background:linear-gradient(135deg,#34d399 0%,#10b981 50%,#047857 100%);
+  clip-path:polygon(50% 0%,90% 30%,80% 90%,20% 90%,10% 30%);
+  box-shadow:0 0 60px rgba(52,211,153,.5),inset 0 0 40px rgba(255,255,255,.2);
+  animation:gemRotate 6s ease-in-out infinite;position:relative;
+}
+.gem-emerald::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(135deg,transparent 30%,rgba(255,255,255,.4) 50%,transparent 70%);
+  clip-path:polygon(50% 0%,90% 30%,80% 90%,20% 90%,10% 30%);
+}
+@keyframes gemRotate{
+  0%,100%{transform:rotate(-5deg) scale(1)}
+  50%{transform:rotate(5deg) scale(1.05)}
+}
+.scroll-cue{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);text-align:center}
+.scroll-cue-text{font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:rgba(110,231,183,.6);margin-bottom:10px}
+.scroll-cue-mouse{
+  width:24px;height:38px;border:2px solid rgba(52,211,153,.4);border-radius:14px;
+  margin:0 auto;display:flex;justify-content:center;padding-top:8px;
+}
+.scroll-cue-dot{width:4px;height:10px;background:var(--emerald-400);border-radius:2px;animation:bounce 1.4s infinite}
+@keyframes bounce{
+  0%,100%{transform:translateY(0);opacity:1}
+  50%{transform:translateY(8px);opacity:.4}
+}
+
+/* ====== SIDENAV ====== */
+.sidenav{
+  position:fixed;top:50%;right:20px;transform:translateY(-50%);
+  z-index:50;display:flex;flex-direction:column;gap:10px;
+}
+.sidenav a{
+  width:10px;height:10px;border-radius:50%;
+  background:rgba(52,211,153,.25);border:1px solid rgba(52,211,153,.4);
+  transition:all .3s;position:relative;display:block;
+}
+.sidenav a:hover{background:#34d399;transform:scale(1.4)}
+.sidenav a.active{background:#fcd34d;border-color:#fcd34d;transform:scale(1.4)}
+.sidenav a::after{
+  content:attr(data-label);position:absolute;right:22px;top:50%;transform:translateY(-50%);
+  background:rgba(0,0,0,.9);border:1px solid rgba(52,211,153,.4);
+  padding:5px 11px;border-radius:6px;font-size:11px;white-space:nowrap;
+  color:var(--text);opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.sidenav a:hover::after{opacity:1}
+@media (max-width:900px){.sidenav{display:none}}
+
+/* ====== MERMAID ====== */
+.mermaid{background:transparent !important;display:flex;justify-content:center;margin:0 auto;min-height:100px}
+.mermaid svg{max-width:100%;height:auto}
+
+/* ====== PHASE TIMELINE ====== */
+.timeline{position:relative;max-width:840px;margin:0 auto}
+.timeline-line{
+  position:absolute;left:32px;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,#34d399 0%,#fcd34d 100%);
+  border-radius:2px;
+}
+.timeline-item{position:relative;padding-left:80px;padding-bottom:48px}
+.timeline-item:last-child{padding-bottom:0}
+.timeline-dot{
+  position:absolute;left:24px;top:8px;
+  width:18px;height:18px;border-radius:50%;
+  background:radial-gradient(circle,#fcd34d 0%,#f59e0b 100%);
+  box-shadow:0 0 20px rgba(251,191,36,.6),0 0 0 4px rgba(251,191,36,.15);
+}
+
+/* ====== CODE BLOCKS ====== */
+pre{
+  background:#0a0f0d;border:1px solid rgba(52,211,153,.25);
+  border-radius:12px;padding:18px;overflow-x:auto;font-size:12.5px;
+  color:#a7f3d0;line-height:1.6;font-family:'JetBrains Mono',monospace;
+}
+code{font-family:'JetBrains Mono',monospace;font-size:.88em}
+code.inline{color:var(--gold-300);background:rgba(251,191,36,.08);padding:1px 6px;border-radius:4px}
+
+/* ====== SCORE BAR ====== */
+.score-bar{height:8px;background:rgba(52,211,153,.15);border-radius:99px;overflow:hidden;position:relative}
+.score-fill{height:100%;border-radius:99px;width:0;transition:width 1.4s cubic-bezier(.22,1,.36,1)}
+
+/* ====== LIST ITEMS ====== */
+.ul-clean{list-style:none;padding:0;margin:0}
+.ul-clean li{padding:6px 0;font-size:.9rem;color:var(--text-soft)}
+.ul-dot li{padding-left:18px;position:relative}
+.ul-dot li::before{content:"•";color:var(--emerald-400);position:absolute;left:0;font-weight:bold}
+
+/* Field rows */
+.field-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(52,211,153,.1);font-size:.875rem;color:var(--text-soft)}
+.field-row:last-child{border-bottom:none}
+
+/* Pipeline stage */
+.stage{display:flex;align-items:center;gap:14px;padding:8px 0}
+.stage-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+.stage-content{flex:1}
+.stage-title{font-weight:600;font-size:.95rem;color:var(--text)}
+.stage-sub{font-size:.78rem;color:var(--text-mute)}
+
+/* Scenario card */
+.scenario{margin-bottom:32px;padding:32px;border-radius:24px}
+.scenario-header{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:20px}
+
+/* KPI numbers */
+.kpi{text-align:center;padding:12px}
+.kpi-num{font-size:2rem;font-weight:800;line-height:1}
+.kpi-label{font-size:.7rem;color:var(--text-mute);margin-top:6px}
+
+/* Border accent for lists */
+.accent-list > div{padding:8px 0 8px 14px;border-left:2px solid var(--emerald-400);margin-bottom:8px}
+
+/* Animation states - framer-motion-like fallback */
+.fm{opacity:0;transform:translateY(40px);transition:opacity .9s cubic-bezier(.22,1,.36,1),transform .9s cubic-bezier(.22,1,.36,1)}
+.fm.in{opacity:1;transform:translateY(0)}
+.fm-left{opacity:0;transform:translateX(-40px);transition:opacity .9s cubic-bezier(.22,1,.36,1),transform .9s cubic-bezier(.22,1,.36,1)}
+.fm-left.in{opacity:1;transform:translateX(0)}
+.fm-right{opacity:0;transform:translateX(40px);transition:opacity .9s cubic-bezier(.22,1,.36,1),transform .9s cubic-bezier(.22,1,.36,1)}
+.fm-right.in{opacity:1;transform:translateX(0)}
+.fm-scale{opacity:0;transform:scale(.92);transition:opacity .8s cubic-bezier(.22,1,.36,1),transform .8s cubic-bezier(.22,1,.36,1)}
+.fm-scale.in{opacity:1;transform:scale(1)}
+.stagger.in > .fm,.stagger.in > .fm-scale{opacity:1;transform:none}
+.stagger.in > *:nth-child(1){transition-delay:.05s}
+.stagger.in > *:nth-child(2){transition-delay:.13s}
+.stagger.in > *:nth-child(3){transition-delay:.21s}
+.stagger.in > *:nth-child(4){transition-delay:.29s}
+.stagger.in > *:nth-child(5){transition-delay:.37s}
+.stagger.in > *:nth-child(6){transition-delay:.45s}
+
+/* Section dividers */
+.section-tinted{background:linear-gradient(180deg,transparent,rgba(6,78,59,.1),transparent)}
+.section-gold{background:linear-gradient(180deg,transparent,rgba(180,83,9,.08),transparent)}
+
+footer{
+  border-top:1px solid rgba(52,211,153,.2);padding:48px 24px;
+  text-align:center;color:var(--text-mute);font-size:.85rem;
+}
+footer .footer-title{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--emerald-300);margin-bottom:8px}
+
+/* SVG icons inline color */
+svg{flex-shrink:0}
+
+/* Print */
+@media print{
+  body{background:#fff;color:#111}
+  .sidenav,.gem,.pulse-ring,.scroll-cue{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ============= SIDE NAV ============= -->
+<nav class="sidenav" aria-label="Navegación">
+  <a href="#hero" data-label="Inicio" class="active"></a>
+  <a href="#vision" data-label="Visión"></a>
+  <a href="#decision" data-label="⭐ Decisión Arquitectónica"></a>
+  <a href="#arquitectura" data-label="Arquitectura Headless"></a>
+  <a href="#base-1" data-label="Base 1 · Página Madre"></a>
+  <a href="#base-2" data-label="Base 2 · CRM GHL"></a>
+  <a href="#base-3" data-label="Base 3 · IA Multi-canal"></a>
+  <a href="#base-4" data-label="Base 4 · Embajadores"></a>
+  <a href="#base-5" data-label="Base 5 · Landing Pages"></a>
+  <a href="#base-6" data-label="Base 6 · Eventos"></a>
+  <a href="#base-7" data-label="Base 7 · Lead Scoring"></a>
+  <a href="#base-8" data-label="Base 8 · Mercado Pago"></a>
+  <a href="#base-9" data-label="Base 9 · Pool Agentes"></a>
+  <a href="#base-10" data-label="Base 10 · Eventos Auto-segmentados"></a>
+  <a href="#base-11" data-label="Base 11 · Calificación Embajadores"></a>
+  <a href="#base-12" data-label="Base 12 · Features Premium"></a>
+  <a href="#base-13" data-label="Base 13 · Admin Promos"></a>
+  <a href="#base-14" data-label="Base 14 · Plantillas Mensajes"></a>
+  <a href="#base-15" data-label="Base 15 · Gestión de Personas"></a>
+  <a href="#propuestas" data-label="Propuestas Fase 2"></a>
+  <a href="#areas" data-label="⭐ 6 Áreas Delegables"></a>
+  <a href="#escenarios" data-label="Escenarios"></a>
+  <a href="#integraciones" data-label="Integraciones API"></a>
+  <a href="#roadmap" data-label="Roadmap"></a>
+  <a href="#costos" data-label="Costos & KPIs"></a>
+</nav>
+
+<!-- ============= HERO ============= -->
+<section id="hero" class="hero">
+  <div class="gem" style="top:15%;left:10%;animation-delay:0s"></div>
+  <div class="gem gold" style="top:25%;right:15%;animation-delay:1s"></div>
+  <div class="gem" style="bottom:20%;left:20%;animation-delay:2s"></div>
+  <div class="gem gold" style="bottom:30%;right:25%;animation-delay:3s"></div>
+  <div class="gem" style="top:50%;left:48%;animation-delay:4s"></div>
+
+  <div class="pulse-ring" style="animation-delay:0s"></div>
+  <div class="pulse-ring" style="animation-delay:1s"></div>
+  <div class="pulse-ring" style="animation-delay:2s"></div>
+
+  <div class="hero-inner">
+    <div class="fm in"><div class="gem-emerald"></div></div>
+    <p class="section-label fm in" style="transition-delay:.15s">Plan maestro de ejecución</p>
+    <h1 class="serif fm in mb-6" style="transition-delay:.25s">Tierra <span class="grad-text">Madre</span></h1>
+    <p class="lead fm in mb-8" style="transition-delay:.4s;font-size:1.25rem">
+      Ecosistema de ventas inteligente para joyas y esmeraldas — GoHighLevel + IA conversacional + Página madre + Embajadores
+    </p>
+    <div class="flex justify-center gap-3 wrap fm in mb-12" style="transition-delay:.55s">
+      <span class="chip">GoHighLevel CRM</span>
+      <span class="chip gold">Vite + Supabase · Mercado Pago</span>
+      <span class="chip">WhatsApp · Instagram · TikTok</span>
+      <span class="chip gold">IA Conversacional</span>
+      <span class="chip">Sistema Embajadores</span>
+      <span class="chip gold">Lead Scoring</span>
+    </div>
+    <div class="fm in" style="transition-delay:.7s">
+      <a href="#vision" class="btn">
+        Empezar el plan
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+
+  <div class="scroll-cue fm in" style="transition-delay:1s">
+    <div class="scroll-cue-text">Scroll</div>
+    <div class="scroll-cue-mouse"><div class="scroll-cue-dot"></div></div>
+  </div>
+</section>
+
+<!-- ============= VISIÓN ============= -->
+<section id="vision">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Visión general</p>
+      <h2 class="serif fm mb-6">El ecosistema de un vistazo</h2>
+      <p class="lead fm">
+        Un cliente entra por cualquier canal (WhatsApp, Instagram, TikTok, landing page, evento). La IA lo califica, lo conecta con el catálogo, le ofrece productos relevantes según presupuesto, cierra la venta automática o asigna agente humano cuando se requiere. Todo registrado en un CRM central con scoring.
+      </p>
+    </div>
+
+    <div class="grid grid-3 stagger fm">
+      <div class="card fm-scale">
+        <div class="text-emerald mb-3"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6m11-11h-6M7 12H1m16.5-7.5l-4.2 4.2m-6.6 6.6l-4.2 4.2m0-15l4.2 4.2m6.6 6.6l4.2 4.2"/></svg></div>
+        <h3 class="mb-3">Multi-canal nativo</h3>
+        <p class="text-sm">WhatsApp Business API (vía Meta Cloud + LC Phone), Instagram DM, TikTok DM, web chat. Todos los mensajes convergen en una sola bandeja en GHL, con un solo cliente identificado por celular + @ Instagram + correo.</p>
+      </div>
+      <div class="card fm-scale">
+        <div class="text-amber mb-3"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3 8-8M4 12l3 3"/><circle cx="12" cy="12" r="10"/></svg></div>
+        <h3 class="mb-3">Catálogo inteligente</h3>
+        <p class="text-sm">Página madre construida en Vite + React con catálogo en Supabase. Cada producto se crea desde un admin panel custom con palabras clave, ocasión y rango de precio. La IA consulta el catálogo vía Supabase Edge Function y recomienda topitos, anillos o esmeraldas según lo que el cliente describe.</p>
+      </div>
+      <div class="card fm-scale">
+        <div class="text-emerald mb-3"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></div>
+        <h3 class="mb-3">Lead scoring automático</h3>
+        <p class="text-sm">Cada interacción suma puntos: presupuesto declarado, evento asistido, embajador asignado, compra previa, sentimiento en mensaje. El CRM clasifica en Frío / Tibio / Caliente / VIP.</p>
+      </div>
+      <div class="card fm-scale">
+        <div class="text-amber mb-3"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2M16 3.13a4 4 0 010 7.75M22 21v-2a4 4 0 00-3-3.87"/></svg></div>
+        <h3 class="mb-3">Embajadores con comisión</h3>
+        <p class="text-sm">Cada embajadora carga su lista de leads vía formulario. Si un lead llega y está en la lista, se le asigna automáticamente. Regla de 5 minutos: si no responde, el bot continúa la venta.</p>
+      </div>
+      <div class="card fm-scale">
+        <div class="text-emerald mb-3"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20M7 4v16"/></svg></div>
+        <h3 class="mb-3">Eventos integrados</h3>
+        <p class="text-sm">Formularios para eventos virtuales y presenciales conectados al CRM. Cada asistencia suma al historial del cliente. Segmentación automática para invitar a próximos eventos según interés y presupuesto.</p>
+      </div>
+      <div class="card fm-scale">
+        <div class="text-amber mb-3"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 12V8H6a2 2 0 010-4h12v4M20 12v4M20 12H6a2 2 0 100 4h14v-4"/></svg></div>
+        <h3 class="mb-3">Checkout automático</h3>
+        <p class="text-sm">El bot envía link de carrito personalizado con producto + descuento si aplica. Mercado Pago procesa PSE, Nequi, Daviplata, tarjeta. Webhook confirma pago y dispara workflow de post-venta.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= DECISIÓN ARQUITECTÓNICA ============= -->
+<section id="decision" class="section-gold">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">⭐ Decisión arquitectónica clave</p>
+      <h2 class="serif fm mb-6">¿<span class="grad-text">Headless</span>, Shopify puro, o todo custom?</h2>
+      <p class="lead fm">
+        Esta es la decisión más importante del proyecto. Tu intuición es correcta: Shopify se ve básico, una página custom se ve espectacular pero construir todo desde cero es titánico. La respuesta ganadora es <strong>híbrido headless</strong>: lo mejor de los dos mundos.
+      </p>
+    </div>
+
+    <!-- Comparativa de las 4 opciones -->
+    <div class="grid grid-2 mb-12 stagger fm">
+      <div class="card fm-scale" style="opacity:.7">
+        <div class="chip danger mb-3">Opción 1 · Descartada</div>
+        <h3 class="mb-3">Shopify puro (con tema)</h3>
+        <p class="text-sm mb-4">Todo en Shopify: catálogo + landings + checkout + tema visual.</p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>✅ Lanzas rápido (4 semanas)</li>
+          <li>❌ <strong>Diseño se siente básico</strong></li>
+          <li>❌ Animaciones limitadas — no framer-motion real</li>
+          <li>❌ Liquid (lenguaje de Shopify) es rígido</li>
+          <li>❌ Difícil destacarse del montón</li>
+        </ul>
+        <div class="mt-4 text-xs text-mute">Veredicto: para marcas premium de joyería, se queda corto.</div>
+      </div>
+
+      <div class="card fm-scale" style="opacity:.7">
+        <div class="chip danger mb-3">Opción 2 · Descartada</div>
+        <h3 class="mb-3">Shopify headless híbrido</h3>
+        <p class="text-sm mb-4">Frontend custom con Storefront API + Shopify como backend invisible.</p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>✅ Diseño custom, framer-motion real</li>
+          <li>✅ Shopify maneja inventario y órdenes</li>
+          <li>❌ <strong>Aprender GraphQL de Shopify para cada query</strong></li>
+          <li>❌ Schema rígido — agregar campos custom requiere metafields</li>
+          <li>❌ Pagas $29/mes a Shopify por algo que no se ve</li>
+          <li>❌ Bot tiene que mapear nuestro lenguaje al de Shopify</li>
+        </ul>
+        <div class="mt-4 text-xs text-mute">Veredicto: agrega complejidad innecesaria para nuestro catálogo curado.</div>
+      </div>
+
+      <div class="card fm-scale" style="opacity:.7">
+        <div class="chip danger mb-3">Opción 3 · Descartada</div>
+        <h3 class="mb-3">Todo custom desde cero (sin BaaS)</h3>
+        <p class="text-sm mb-4">Backend propio, DB propia, auth propia, todo desde cero.</p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>✅ Control absoluto</li>
+          <li>❌ <strong>4-6 meses solo del backend</strong></li>
+          <li>❌ Auth, sesiones, seguridad, storage, todo manual</li>
+          <li>❌ ~$30-50k USD en desarrollo</li>
+          <li>❌ Mantener servidores, DB, backups, etc.</li>
+        </ul>
+        <div class="mt-4 text-xs text-mute">Veredicto: reinventa la rueda, no aporta valor.</div>
+      </div>
+
+      <div class="card fm-scale glow-gold" style="border-color:rgba(251,191,36,.6)">
+        <div class="chip gold mb-3">⭐ Opción 4 · GANADORA</div>
+        <h3 class="mb-3 text-amber">100% Custom con Vite + Supabase</h3>
+        <p class="text-sm mb-4">Frontend Vite/React/framer-motion + Supabase como backend (DB + storage + auth) + Mercado Pago directo. Sin Shopify.</p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>✅ <strong>Diseño 100% custom, framer-motion real</strong></li>
+          <li>✅ Schema de productos totalmente nuestro (cada campo es nuestro)</li>
+          <li>✅ Bot consulta directo nuestra DB con SQL simple (instantáneo)</li>
+          <li>✅ Vite = dev experience top, build &lt;5s, HMR instantáneo</li>
+          <li>✅ Supabase resuelve: DB + Auth + Storage + Realtime + Edge Functions</li>
+          <li>✅ Admin panel custom para crear productos en segundos</li>
+          <li>✅ Sin pagar $29/mes a Shopify</li>
+          <li>✅ Escalable, abierto, sin lock-in</li>
+        </ul>
+        <div class="mt-4 text-xs text-emerald">Veredicto: máxima flexibilidad sin reinventar la rueda. Tiempo: 10-12 semanas.</div>
+      </div>
+    </div>
+
+    <!-- Diagrama Vite + Supabase -->
+    <div class="glass-strong mb-16 fm" style="padding:32px">
+      <h3 class="grad-text mb-6 center">🏗️ Arquitectura 100% Custom · Vite + Supabase</h3>
+      <div class="mermaid">
+flowchart TB
+    subgraph FRONTEND["FRONTEND · Vite + React + framer-motion"]
+        HOME[Home animada]
+        LANDS[6 Landing Pages]
+        CAT[Catálogo madre<br/>filtros + búsqueda]
+        PROD[Página producto<br/>galería + cert]
+        CHECK[Checkout custom]
+        FORMS[Formularios<br/>eventos + embajadores]
+        ADMIN[Admin Panel<br/>crear productos]
+    end
+    subgraph SUPABASE["BACKEND · Supabase"]
+        DB[(PostgreSQL<br/>products / orders<br/>agents / ambassadors<br/>events)]
+        STORE[Storage<br/>fotos + certificados]
+        AUTH[Auth<br/>admin + embajadores]
+        EDGE[Edge Functions<br/>lógica server]
+        RT[Realtime<br/>actualizaciones live]
+    end
+    subgraph CEREBRO["CRM + IA · GoHighLevel"]
+        GHL_CRM[CRM + Workflows]
+        AI[Conversation AI]
+        MULTI[WA + IG + TT]
+    end
+    subgraph MP["Pasarela · Mercado Pago"]
+        CK[Checkout API]
+        WHM[Webhooks]
+    end
+    subgraph CF["Middleware · Cloudflare Workers"]
+        WH[Webhook handlers]
+    end
+    FRONTEND -->|SQL via Supabase JS| SUPABASE
+    FRONTEND -->|Chat embebido| CEREBRO
+    CEREBRO -->|API: buscar productos| SUPABASE
+    ADMIN -->|crear/editar producto| DB
+    CHECK -->|preferences API| MP
+    MP -->|webhook| CF
+    CF -->|update CRM| CEREBRO
+    CF -->|update orden| SUPABASE
+    SUPABASE -->|webhook orden creada| CF
+    CF -->|notifica| CEREBRO
+    style FRONTEND fill:#064e3b,stroke:#34d399,color:#fff
+    style SUPABASE fill:#1e293b,stroke:#fcd34d,color:#fff
+    style CEREBRO fill:#0f172a,stroke:#34d399,color:#fff
+    style MP fill:#451a03,stroke:#fbbf24,color:#fff
+    style CF fill:#1f2937,stroke:#a855f7,color:#fff
+      </div>
+    </div>
+
+    <!-- ¿Por qué GHL y no CRM propio? -->
+    <div class="glass-strong mb-12 fm" style="padding:32px">
+      <h3 class="grad-text mb-4">🤔 ¿Y por qué GoHighLevel y no construir el CRM nosotros también?</h3>
+      <p class="mb-6">Esta es la otra pregunta crítica. La respuesta corta: <strong>construir CRM propio es perder 6 meses y $40k USD reinventando algo que ya existe — y peor, no podrías conectar WhatsApp legalmente sin un BSP certificado.</strong></p>
+
+      <div class="grid grid-2 gap-6">
+        <div class="card">
+          <h4 class="text-amber mb-3">❌ CRM propio · lo que cuesta</h4>
+          <ul class="ul-clean ul-dot text-sm">
+            <li><strong>WhatsApp Business API:</strong> Meta solo aprueba a través de "BSPs" certificados. GHL ya está aprobado. Tú tendrías que aplicar y esperar meses (sin garantía).</li>
+            <li><strong>Instagram DM API:</strong> requiere app revisada por Meta — 6-12 semanas</li>
+            <li><strong>TikTok DM API:</strong> mismo proceso, aún más estricto</li>
+            <li><strong>Construir IA conversacional:</strong> OpenAI/Claude API + RAG + intent recognition + handoffs — 2 meses solo de esto</li>
+            <li><strong>Construir pipeline / scoring / workflows:</strong> 3 meses</li>
+            <li><strong>Mantener todo:</strong> bugs, updates, downtime, soporte</li>
+            <li><strong>Costo total dev:</strong> $30-50k USD inicial + $5-10k/mes mantenimiento</li>
+            <li><strong>Time to launch:</strong> 6 meses mínimo</li>
+          </ul>
+        </div>
+        <div class="card glow">
+          <h4 class="text-emerald mb-3">✅ GoHighLevel · lo que ahorras</h4>
+          <ul class="ul-clean ul-dot text-sm">
+            <li><strong>WhatsApp Business API listo:</strong> conectas tu número en 3 días (verificación Meta acelerada)</li>
+            <li><strong>Instagram + TikTok DMs:</strong> setup en 1 día por canal</li>
+            <li><strong>Conversation AI nativa:</strong> ya viene entrenada, tú le das knowledge base</li>
+            <li><strong>Pipelines + workflows + scoring:</strong> drag & drop, listo en horas</li>
+            <li><strong>Templates de mensajes pre-aprobados</strong> por Meta</li>
+            <li><strong>Costo:</strong> $297/mes (plan Pro) — sin desarrollo</li>
+            <li><strong>Time to launch:</strong> 10 semanas el sistema completo</li>
+            <li><strong>Soporte 24/7 + comunidad enorme</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card mt-8" style="border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.05)">
+        <h4 class="text-amber mb-2">💡 Lo que sí puedes hacer custom en GHL</h4>
+        <p class="text-sm">GHL acepta <strong>webhooks bidireccionales</strong> y tiene API v2 completa. Eso significa que puedes extenderlo desde tu propio backend: lógica de negocio compleja, integraciones especiales, dashboards custom. Lo mejor: usas GHL para lo que es bueno (multi-canal + workflows + IA) y construyes encima lo que tu marca necesita único. <em>No estás encerrado.</em></p>
+      </div>
+    </div>
+
+    <!-- Trade-offs honestos del headless -->
+    <div class="glass fm" style="padding:32px">
+      <h3 class="grad-text mb-4">⚖️ Trade-offs honestos del headless</h3>
+      <p class="mb-6">No todo es color de rosa. Aquí están las verdades que tienes que saber:</p>
+      <div class="grid grid-2 gap-4">
+        <div class="card card-sm">
+          <strong class="text-emerald">✅ Ventajas reales</strong>
+          <ul class="ul-clean ul-dot text-sm mt-2">
+            <li>Diseño imposible de replicar con templates</li>
+            <li>Velocidad de carga top-tier (Lighthouse 95+)</li>
+            <li>Vercel escala automáticamente</li>
+            <li>SEO técnico superior (SSR + ISR)</li>
+            <li>Cero limitaciones de UX/interacción</li>
+          </ul>
+        </div>
+        <div class="card card-sm">
+          <strong class="text-amber">⚠️ Desventajas reales</strong>
+          <ul class="ul-clean ul-dot text-sm mt-2">
+            <li>Necesitas developer para cambios mayores (no es drag-and-drop)</li>
+            <li>Necesitas mantener el código (developer asignado o contratado)</li>
+            <li>Construir admin panel para gestionar catálogo (lo hacemos parte del proyecto)</li>
+            <li>No tienes el ecosistema de apps de Shopify (pero tampoco lo necesitas)</li>
+            <li>Backups y migraciones manuales (Supabase tiene backups automáticos en Pro)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recomendación final destacada -->
+    <div class="glass-strong glow-gold mt-12 fm" style="padding:40px;text-align:center;border-color:rgba(251,191,36,.5)">
+      <div class="chip gold mb-4">Stack final · sin Shopify</div>
+      <h3 class="serif mb-4">Tecnologías ganadoras para Tierra Madre</h3>
+      <div class="flex justify-center wrap gap-3 mb-6">
+        <span class="chip gold">Vite + React 19</span>
+        <span class="chip">Framer Motion 12</span>
+        <span class="chip">Tailwind CSS 4</span>
+        <span class="chip gold">Supabase (PostgreSQL + Storage + Auth)</span>
+        <span class="chip">TanStack Query (data fetching)</span>
+        <span class="chip">React Router v7</span>
+        <span class="chip gold">GoHighLevel API v2 (CRM + IA + multi-canal)</span>
+        <span class="chip">Mercado Pago Checkout API</span>
+        <span class="chip">Cloudflare Workers (middleware)</span>
+        <span class="chip gold">Vercel o Cloudflare Pages (hosting)</span>
+      </div>
+      <p class="text-soft mb-4" style="max-width:680px;margin:0 auto">Stack moderno, abierto, sin lock-in. Frontend rápido como un rayo (Vite), backend gestionado pero flexible (Supabase), CRM/IA donde ya está resuelto (GHL). Cada herramienta hace lo que mejor sabe hacer.</p>
+      <p class="text-emerald text-sm" style="max-width:680px;margin:0 auto"><strong>¿Por qué este stack?</strong> Porque te da control total sobre el catálogo (cada producto que creas en el admin custom queda disponible al instante para el bot, sin pasar por APIs externas), pero te ahorra construir desde cero auth, storage, multi-canal y IA conversacional.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============= ARQUITECTURA ============= -->
+<section id="arquitectura" class="section-tinted">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Arquitectura técnica</p>
+      <h2 class="serif fm mb-6">Cómo conversan las piezas</h2>
+      <p class="lead fm">
+        Cuatro capas: <strong>canales</strong> (donde vive el cliente), <strong>cerebro</strong> (GHL + IA), <strong>comercio</strong> (Supabase + Mercado Pago) y <strong>equipo humano</strong> (agentes y embajadores). Todas conectadas por API y webhooks.
+      </p>
+    </div>
+
+    <div class="glass-strong fm" style="padding:32px">
+      <div class="mermaid">
+flowchart TB
+    subgraph CANALES["CAPA 1 · CANALES DE ENTRADA"]
+        direction LR
+        WA[WhatsApp Business API]
+        IG[Instagram DM]
+        TT[TikTok DM]
+        WEB[Web Chat / Landing]
+        EVT[Formularios Eventos]
+        EMB[Formulario Embajadores]
+    end
+    subgraph CEREBRO["CAPA 2 · CEREBRO INTELIGENTE GoHighLevel"]
+        direction LR
+        INBOX[Inbox unificado]
+        AI[Conversation AI]
+        CRM[(CRM central)]
+        SCORE[Lead Scoring]
+        WF[Workflows]
+        TAG[Tags + Custom Fields]
+    end
+    subgraph COMERCIO["CAPA 3 · COMERCIO Y CONTENIDO"]
+        direction LR
+        SHOP[Vite Web · Página Madre]
+        LANDING[Landing Pages por producto]
+        MP[Mercado Pago Checkout]
+        SHOP_API[Storefront API]
+    end
+    subgraph HUMANOS["CAPA 4 · EQUIPO HUMANO"]
+        AGENT[Agentes de venta]
+        AMB[Embajadores]
+    end
+    WA --> INBOX
+    IG --> INBOX
+    TT --> INBOX
+    WEB --> INBOX
+    EVT --> CRM
+    EMB --> CRM
+    INBOX --> AI
+    AI --> SHOP_API
+    SHOP_API --> SHOP
+    AI --> CRM
+    CRM --> SCORE
+    SCORE --> WF
+    WF --> TAG
+    WF -.escalación.-> AGENT
+    WF -.embajador asignado.-> AMB
+    AMB -.5 min sin responder.-> AI
+    AI -- envía link carrito --> MP
+    MP -- webhook pago --> WF
+    SHOP -- producto comprado --> CRM
+    LANDING --> CRM
+      </div>
+    </div>
+
+    <div class="grid grid-4 mt-12 stagger fm">
+      <div class="glass fm-scale" style="padding:20px"><div class="chip mb-3">Capa 1</div><h4 class="mb-2">Canales</h4><p class="text-xs">6 puntos de entrada unificados</p></div>
+      <div class="glass fm-scale" style="padding:20px"><div class="chip gold mb-3">Capa 2</div><h4 class="mb-2">Cerebro</h4><p class="text-xs">GHL coordina IA, CRM, scoring</p></div>
+      <div class="glass fm-scale" style="padding:20px"><div class="chip mb-3">Capa 3</div><h4 class="mb-2">Comercio</h4><p class="text-xs">Supabase + Mercado Pago + landings</p></div>
+      <div class="glass fm-scale" style="padding:20px"><div class="chip gold mb-3">Capa 4</div><h4 class="mb-2">Equipo</h4><p class="text-xs">Agentes y embajadores con handoff</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= BASE 1 — PÁGINA MADRE ============= -->
+<section id="base-1">
+  <div class="container">
+    <div class="grid grid-2 gap-6 items-center">
+      <div class="fm-left">
+        <p class="section-label">Base 01</p>
+        <h2 class="serif mb-6">La <span class="grad-text">Página Madre</span> (Vite + Supabase)</h2>
+        <p class="mb-6">
+          Catálogo construido sobre tu propio backend en Supabase. Cada producto que creas en el admin queda instantáneamente disponible para el bot y la web. Schema 100% nuestro: agregamos los campos que queramos sin pedir permiso a nadie.
+        </p>
+        <div class="card mb-4">
+          <h4 class="text-amber mb-3">📦 Schema de la tabla <code class="inline">products</code> en Supabase</h4>
+          <pre><code>create table products (
+  id uuid primary key default gen_random_uuid(),
+  sku text unique not null,
+  nombre text not null,
+  slug text unique not null,
+  descripcion text,
+  descripcion_corta text,
+  precio_cop numeric not null,
+  precio_anterior_cop numeric,
+  categoria text not null,
+  -- topito, anillo, dije, gema, set
+  tipo_gema text,
+  -- esmeralda-muzo, esmeralda-coscuez...
+  ocasion text[],
+  -- {regalo, inversion, matrimonio, diario}
+  keywords text[],
+  -- array para búsqueda full-text
+  rango_precio text,
+  -- 100k-500k, 500k-1M, 1M-3M, 3M+
+  fotos jsonb,
+  -- [{url, alt, order}]
+  video_url text,
+  certificado_url text,
+  stock int not null default 0,
+  destacado boolean default false,
+  activo boolean default true,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create index idx_products_keywords on products
+  using gin(keywords);
+create index idx_products_categoria on products(categoria);
+create index idx_products_precio on products(precio_cop);
+</code></pre>
+        </div>
+        <div class="card">
+          <h4 class="text-amber mb-3">🔍 Cómo busca el bot — SQL directo</h4>
+          <p class="text-sm mb-3">Edge Function de Supabase recibe la query del bot y hace un SELECT:</p>
+          <pre><code>// Supabase Edge Function: search-products
+const { intent, presupuesto, ocasion } = await req.json();
+
+const { data: products } = await supabase
+  .from('products')
+  .select('id, nombre, slug, precio_cop, fotos, descripcion_corta')
+  .eq('categoria', intent.categoria)
+  .lte('precio_cop', presupuesto * 1.2)
+  .contains('ocasion', [ocasion])
+  .eq('activo', true)
+  .gt('stock', 0)
+  .order('destacado', { ascending: false })
+  .limit(3);
+
+// El bot recibe estos productos y los presenta al cliente</code></pre>
+        </div>
+      </div>
+      <div class="fm-right">
+        <div class="glass-strong glow" style="padding:24px">
+          <div class="mermaid">
+flowchart TD
+    A[Cliente describe<br/>'busco topitos para regalo<br/>presupuesto 600k'] --> B[IA extrae<br/>intent + entidades]
+    B --> C[Llama Edge Function<br/>de Supabase]
+    C --> D[SELECT FROM products<br/>WHERE categoria='topito'<br/>AND precio &lt;=720k<br/>AND 'regalo' = ANY ocasion]
+    D --> E[3 productos<br/>matcheados]
+    E --> F[IA arma respuesta<br/>+ foto + precio + link]
+    F --> G[Envía al cliente<br/>por su canal]
+    G --> H[Cliente hace click<br/>en el link]
+    H --> I[Vite App muestra<br/>página producto<br/>con animaciones]
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin panel custom -->
+    <div class="glass-strong mt-12 fm" style="padding:32px">
+      <h3 class="grad-text mb-6">🎛️ Admin Panel custom · Crear productos en 30 segundos</h3>
+      <p class="mb-6">Construimos un admin interno en Vite (ruta <code class="inline">/admin</code> protegida con Supabase Auth). Cada vez que creas un producto, queda disponible al instante en la web Y en el bot.</p>
+      <div class="grid grid-2 gap-6">
+        <div class="card">
+          <h4 class="text-amber mb-3">📝 Form de creación de producto</h4>
+          <ul class="ul-clean ul-dot text-sm">
+            <li><strong>Nombre, SKU, slug</strong> (auto)</li>
+            <li><strong>Categoría</strong> (dropdown)</li>
+            <li><strong>Precio en COP</strong></li>
+            <li><strong>Subir fotos</strong> (drag &amp; drop a Supabase Storage)</li>
+            <li><strong>Subir certificado PDF</strong></li>
+            <li><strong>Tipo de gema</strong> (Muzo, Coscuez, Chivor...)</li>
+            <li><strong>Ocasiones</strong> (checkboxes múltiples)</li>
+            <li><strong>Palabras clave</strong> (tags input — IA usa esto)</li>
+            <li><strong>Descripción corta y larga</strong></li>
+            <li><strong>Stock</strong></li>
+            <li><strong>Destacado</strong> (toggle)</li>
+            <li><strong>Activo</strong> (toggle)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4 class="text-amber mb-3">⚡ Lo que pasa al guardar</h4>
+          <div class="accent-list">
+            <div><strong>1.</strong> Producto se inserta en <code class="inline">products</code></div>
+            <div><strong>2.</strong> Fotos se suben a Supabase Storage con CDN automático</div>
+            <div><strong>3.</strong> Certificado se sube a Storage protegido</div>
+            <div><strong>4.</strong> Trigger DB envía webhook a Cloudflare Worker</div>
+            <div><strong>5.</strong> Worker notifica a GHL: nuevo producto disponible</div>
+            <div><strong>6.</strong> Página web hace revalidate automático (ISR-like)</div>
+            <div><strong>7.</strong> Bot tiene acceso instantáneo al nuevo producto</div>
+          </div>
+          <p class="text-xs text-emerald mt-4">Tiempo total: &lt;30 segundos desde "Guardar" hasta producto vivo y vendiéndose.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass mt-12 fm" style="padding:32px">
+      <h3 class="grad-text mb-6">🏗️ Setup técnico de la página madre</h3>
+      <div class="grid grid-3 gap-4">
+        <div class="card card-sm">
+          <h4 class="mb-2">1. Supabase</h4>
+          <p class="text-sm">Crear proyecto (Free hasta 500MB DB + 1GB storage). Plan Pro $25/mes cuando crezcas. Crear tablas con SQL del schema.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="mb-2">2. Vite + React</h4>
+          <p class="text-sm"><code class="inline">npm create vite@latest</code>. Plantilla React-TS. Instalar: framer-motion, tailwindcss, @supabase/supabase-js, react-router-dom, @tanstack/react-query.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="mb-2">3. Storage</h4>
+          <p class="text-sm">Bucket público <code class="inline">products</code> para fotos. Bucket privado <code class="inline">certificates</code> para PDFs (signed URLs).</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="mb-2">4. Auth</h4>
+          <p class="text-sm">Supabase Auth para admin y embajadores. Magic link o email/password. Row Level Security para proteger datos.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="mb-2">5. Edge Functions</h4>
+          <p class="text-sm">Funciones serverless en Deno: <code class="inline">search-products</code>, <code class="inline">create-order</code>, <code class="inline">mp-webhook</code>, <code class="inline">notify-ghl</code>.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="mb-2">6. Deploy</h4>
+          <p class="text-sm">Vite build → Vercel o Cloudflare Pages. Deploy automático desde Git. SSL gratis. CDN global. ~$0-20/mes según tráfico.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= BASE 2 — GHL CRM ============= -->
+<section id="base-2" class="section-gold">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Base 02</p>
+      <h2 class="serif fm mb-6">GoHighLevel · El <span class="grad-text">cerebro</span></h2>
+      <p class="lead fm">
+        Aquí vive el CRM. Cada contacto es una persona única identificada por celular + Instagram + correo (los tres IDs cruzables). El sistema sabe en qué etapa está, cuánto ha comprado, a qué eventos fue, qué embajadora lo trajo, y qué score tiene.
+      </p>
+    </div>
+
+    <div class="grid grid-2 mb-12 stagger fm">
+      <div class="card fm-scale">
+        <h3 class="text-amber mb-4">🗂️ Custom Fields del contacto</h3>
+        <div class="field-row"><span>celular_principal</span><span class="chip">ID único</span></div>
+        <div class="field-row"><span>instagram_handle</span><span class="chip">ID secundario</span></div>
+        <div class="field-row"><span>correo</span><span class="chip">ID secundario</span></div>
+        <div class="field-row"><span>presupuesto_declarado</span><span class="chip gold">scoring</span></div>
+        <div class="field-row"><span>tipo_interes</span><span class="text-mute">topito/anillo/gema</span></div>
+        <div class="field-row"><span>conocimiento_esmeraldas</span><span class="text-mute">novato/exp.</span></div>
+        <div class="field-row"><span>embajador_asignado</span><span class="chip gold">comisión</span></div>
+        <div class="field-row"><span>eventos_presenciales</span><span class="text-mute">contador</span></div>
+        <div class="field-row"><span>eventos_virtuales</span><span class="text-mute">contador</span></div>
+        <div class="field-row"><span>total_comprado_cop</span><span class="text-mute">$</span></div>
+        <div class="field-row"><span>ultima_compra_fecha</span><span class="text-mute">date</span></div>
+        <div class="field-row"><span>lead_score</span><span class="chip">0-100</span></div>
+        <div class="field-row"><span>canal_origen</span><span class="text-mute">WA/IG/TT/Web</span></div>
+        <div class="field-row"><span>ciudad</span><span class="text-mute">texto</span></div>
+      </div>
+
+      <div class="card fm-scale">
+        <h3 class="text-amber mb-4">🚦 Pipeline de Ventas</h3>
+        <div class="stage"><div class="stage-dot" style="background:#64748b"></div><div class="stage-content"><div class="stage-title">1. Nuevo Lead</div><div class="stage-sub">Entra por cualquier canal · primer mensaje</div></div></div>
+        <div class="stage"><div class="stage-dot" style="background:#3b82f6"></div><div class="stage-content"><div class="stage-title">2. Calificado por IA</div><div class="stage-sub">Presupuesto + interés capturados</div></div></div>
+        <div class="stage"><div class="stage-dot" style="background:#10b981"></div><div class="stage-content"><div class="stage-title">3. Producto Recomendado</div><div class="stage-sub">IA envió 1-3 opciones del catálogo</div></div></div>
+        <div class="stage"><div class="stage-dot" style="background:#fbbf24"></div><div class="stage-content"><div class="stage-title">4. Carrito Enviado</div><div class="stage-sub">Link de checkout entregado</div></div></div>
+        <div class="stage"><div class="stage-dot" style="background:#f97316"></div><div class="stage-content"><div class="stage-title">5. Negociación / Agente</div><div class="stage-sub">Requiere atención humana</div></div></div>
+        <div class="stage"><div class="stage-dot" style="background:#16a34a"></div><div class="stage-content"><div class="stage-title">6. ✅ Venta Cerrada</div><div class="stage-sub">Pago confirmado por Mercado Pago</div></div></div>
+        <div class="stage"><div class="stage-dot" style="background:#ef4444"></div><div class="stage-content"><div class="stage-title">7. ❌ Perdido / Nurturing</div><div class="stage-sub">No compró — campaña re-engagement</div></div></div>
+      </div>
+    </div>
+
+    <div class="glass-strong fm" style="padding:32px">
+      <h3 class="grad-text mb-6">⚙️ Workflows críticos a montar en GHL</h3>
+      <div class="grid grid-2 gap-3">
+        <div class="card card-sm"><div class="chip mb-2">Workflow 01</div><h4 class="mb-1">Nuevo contacto multi-canal</h4><p class="text-sm">Trigger: mensaje entrante WA/IG/TT/Web. Verifica si existe; si no, crea, asigna tags, dispara saludo + calificación IA.</p></div>
+        <div class="card card-sm"><div class="chip mb-2">Workflow 02</div><h4 class="mb-1">Verificación de embajador</h4><p class="text-sm">Busca cel/IG/email en lista de embajadores. Si match: asigna <code class="inline">embajador_asignado</code> + notifica.</p></div>
+        <div class="card card-sm"><div class="chip mb-2">Workflow 03</div><h4 class="mb-1">Calificación con IA</h4><p class="text-sm">Conversation AI hace 4 preguntas: tipo de joya, presupuesto, ocasión, conocimiento. Guarda en custom fields.</p></div>
+        <div class="card card-sm"><div class="chip mb-2">Workflow 04</div><h4 class="mb-1">Búsqueda en catálogo</h4><p class="text-sm">Webhook a Supabase Edge Function que consulta la tabla <code class="inline">products</code> con SQL y devuelve top 3 productos a GHL.</p></div>
+        <div class="card card-sm"><div class="chip mb-2">Workflow 05</div><h4 class="mb-1">Envío de carrito + checkout</h4><p class="text-sm">Cuando el cliente confirma, GHL llama Edge Function que crea preferencia de Mercado Pago y devuelve URL de checkout.</p></div>
+        <div class="card card-sm"><div class="chip mb-2">Workflow 06</div><h4 class="mb-1">Escalación a agente</h4><p class="text-sm">Si detecta "quiero hablar con alguien" o sentimiento negativo: asigna agente, pausa IA, notifica.</p></div>
+        <div class="card card-sm"><div class="chip mb-2">Workflow 07</div><h4 class="mb-1">Regla 5 min embajador</h4><p class="text-sm">Si embajador asignado no responde en 5 min, IA retoma. Comisión va al embajador igual.</p></div>
+        <div class="card card-sm"><div class="chip mb-2">Workflow 08</div><h4 class="mb-1">Post-venta</h4><p class="text-sm">Webhook MP confirma pago → suma <code class="inline">total_comprado</code>, mensaje de gracias, instrucciones envío, review en 7 días.</p></div>
+        <div class="card card-sm"><div class="chip mb-2">Workflow 09</div><h4 class="mb-1">Re-engagement</h4><p class="text-sm">Lead enfriado 7 días sin respuesta: dispara secuencia con oferta personalizada.</p></div>
+        <div class="card card-sm"><div class="chip mb-2">Workflow 10</div><h4 class="mb-1">Asistencia a evento</h4><p class="text-sm">Formulario evento → crea/actualiza contacto, suma contador, confirma + recordatorios.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= BASE 3 — IA MULTI-CANAL ============= -->
+<section id="base-3">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Base 03</p>
+      <h2 class="serif fm mb-6">IA Conversacional <span class="grad-text">Multi-canal</span></h2>
+      <p class="lead fm">
+        GHL tiene Conversation AI nativa que cubre WhatsApp, Instagram DM, TikTok DM, SMS, email y web chat. Se entrena con el tono de Tierra Madre, las preguntas de calificación, y se conecta vía webhook al catálogo en Supabase.
+      </p>
+    </div>
+
+    <div class="glass-strong fm mb-12" style="padding:32px">
+      <div class="mermaid">
+sequenceDiagram
+    participant C as Cliente
+    participant CH as Canal (WA/IG/TT)
+    participant GHL as GHL Inbox
+    participant AI as Conversation AI
+    participant SH as Supabase DB
+    participant MP as Mercado Pago
+    participant CRM as CRM Custom Fields
+    C->>CH: "Hola, quiero topitos de esmeralda"
+    CH->>GHL: Mensaje entrante
+    GHL->>CRM: Existe contacto?
+    CRM-->>GHL: Nuevo / Existente
+    GHL->>AI: Procesa mensaje
+    AI->>C: "Hola! Cuéntame presupuesto + para quién"
+    C->>AI: "Para mí, max 800k"
+    AI->>CRM: Actualiza presupuesto + interés
+    AI->>SH: query products(topitos, ≤800k)
+    SH-->>AI: 3 productos
+    AI->>C: Foto + descripción + precio + link
+    C->>AI: "Me encanta el segundo, cómo pago?"
+    AI->>MP: Generar preferencia de pago
+    MP-->>AI: URL checkout
+    AI->>C: Link de pago
+    C->>MP: Paga
+    MP->>GHL: Webhook payment.created
+    GHL->>CRM: Suma total_comprado, mueve pipeline
+    GHL->>C: Confirmación + envío
+      </div>
+    </div>
+
+    <div class="grid grid-3 stagger fm">
+      <div class="card fm-scale">
+        <div class="text-3xl mb-3">📱</div>
+        <h3 class="mb-3">WhatsApp Business</h3>
+        <p class="text-sm mb-3">Vía Meta Cloud API + LC Phone. Mensajes entrantes gratis. Templates pre-aprobados para nuevas conversaciones.</p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>Setup: 3 días (verificación Meta)</li>
+          <li>Template "saludo inicial"</li>
+          <li>Template "recordatorio carrito"</li>
+          <li>Template "confirmación venta"</li>
+        </ul>
+      </div>
+      <div class="card fm-scale">
+        <div class="text-3xl mb-3">📷</div>
+        <h3 class="mb-3">Instagram DM</h3>
+        <p class="text-sm mb-3">Conexión directa GHL ↔ Instagram Business. IA responde DMs y también comentarios en posts (auto-DM).</p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>Cuenta Instagram Business</li>
+          <li>Auto-DM por palabra clave en comentarios</li>
+          <li>Captura el @ como ID en CRM</li>
+          <li>Historias y reels trackeados</li>
+        </ul>
+      </div>
+      <div class="card fm-scale">
+        <div class="text-3xl mb-3">🎵</div>
+        <h3 class="mb-3">TikTok DM</h3>
+        <p class="text-sm mb-3">GHL tiene integración nativa con TikTok DMs y comentarios desde 2025.</p>
+        <ul class="ul-clean ul-dot text-xs">
+          <li>Cuenta TikTok for Business</li>
+          <li>Comment automation por keyword</li>
+          <li>Mismo Conversation AI</li>
+          <li>Mismo CRM y pipeline</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="glass mt-12 fm" style="padding:32px">
+      <h3 class="text-amber mb-4">🎓 Entrenamiento de la IA</h3>
+      <p class="mb-6">La Conversation AI de GHL se entrena con tu base de conocimiento. Debes cargar:</p>
+      <div class="grid grid-2 gap-4">
+        <div class="card card-sm"><strong class="text-emerald">📚 Conocimiento del producto</strong><p class="text-sm mt-2">Tipos de esmeraldas colombianas (Muzo, Coscuez, Chivor), cortes, calidades, certificados, garantías.</p></div>
+        <div class="card card-sm"><strong class="text-emerald">🗣️ Tono de marca</strong><p class="text-sm mt-2">Cálido, experto, sin tecnicismos abusivos. Tutear. Emoji con moderación. Nunca presionar al cliente.</p></div>
+        <div class="card card-sm"><strong class="text-emerald">❓ Preguntas frecuentes</strong><p class="text-sm mt-2">Envíos a Bogotá/Medellín/Cali (24-48h), garantía, devoluciones, certificados, métodos de pago.</p></div>
+        <div class="card card-sm"><strong class="text-emerald">🎯 Flujo de calificación</strong><p class="text-sm mt-2">4 preguntas obligadas: ¿qué buscas? ¿presupuesto? ¿ocasión? ¿conoces de esmeraldas?</p></div>
+        <div class="card card-sm"><strong class="text-emerald">🛑 Reglas de escalación</strong><p class="text-sm mt-2">Si el cliente: pide "hablar con alguien", menciona "queja/devolución", pregunta inversiones &gt;5M, sentimiento negativo → handoff humano.</p></div>
+        <div class="card card-sm"><strong class="text-emerald">💎 Vocabulario clave</strong><p class="text-sm mt-2">Topitos, candongas, dijes, pulsera, anillo de compromiso, gema suelta, montura, ley 925, oro 18k.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= BASE 4 — EMBAJADORES ============= -->
+<section id="base-4" class="section-gold">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Base 04</p>
+      <h2 class="serif fm mb-6">Sistema de <span class="grad-text">Embajadores</span></h2>
+      <p class="lead fm">
+        Cada embajadora carga su lista de leads en un formulario conectado al CRM. Cuando un lead de esa lista entra por cualquier canal, el sistema lo detecta, lo asigna y notifica. Si la embajadora no contesta en 5 minutos, la IA retoma — pero la comisión se respeta.
+      </p>
+    </div>
+
+    <div class="grid grid-2 mb-12">
+      <div class="fm-left">
+        <h3 class="text-amber mb-4">📝 Formulario de carga de leads</h3>
+        <p class="mb-4">Cada embajadora tiene su propio formulario único (link personalizado) donde sube sus referidos. Campos:</p>
+        <div class="glass accent-list" style="padding:20px">
+          <div><strong>Embajadora:</strong> <span class="text-emerald">pre-llenado oculto</span></div>
+          <div><strong>Nombre del lead</strong></div>
+          <div><strong>Celular (código país)</strong></div>
+          <div><strong>@ Instagram</strong></div>
+          <div><strong>Correo</strong></div>
+          <div><strong>Ciudad</strong></div>
+          <div><strong>Tipo de interés inicial</strong> (topito/anillo/gema)</div>
+          <div><strong>Presupuesto estimado</strong></div>
+          <div><strong>Notas / contexto</strong></div>
+        </div>
+      </div>
+      <div class="fm-right">
+        <div class="glass-strong glow-gold" style="padding:24px">
+          <div class="mermaid">
+flowchart TD
+    A[Lead entra por<br/>WA/IG/TT/Web] --> B[GHL identifica<br/>cel + arroba + email]
+    B --> C{En lista de algún<br/>embajador?}
+    C -- Sí --> D[Asigna<br/>embajador_asignado]
+    C -- No --> E[Lead libre<br/>IA atiende directo]
+    D --> F[Notifica embajadora<br/>por WhatsApp]
+    F --> G{Responde en<br/>5 min?}
+    G -- Sí --> H[Embajadora atiende]
+    G -- No --> I[IA retoma<br/>conversación]
+    H --> J{Cierra venta?}
+    I --> J
+    J -- Sí --> K[💰 Comisión a<br/>embajadora]
+    J -- No --> L[Sigue en nurturing]
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-3 stagger fm">
+      <div class="card fm-scale">
+        <h4 class="text-emerald mb-2">🎯 Match por 3 IDs</h4>
+        <p class="text-sm">El sistema busca match por celular OR @ Instagram OR correo. Si cualquiera coincide con una lista de embajadora, el lead es de esa embajadora.</p>
+      </div>
+      <div class="card fm-scale">
+        <h4 class="text-emerald mb-2">⏱️ Regla 5 minutos</h4>
+        <p class="text-sm">Embajadora recibe push + WhatsApp. Si no toma la conversación en 5 min, la IA retoma. Workflow #07 controla este timer.</p>
+      </div>
+      <div class="card fm-scale">
+        <h4 class="text-emerald mb-2">💰 Comisión protegida</h4>
+        <p class="text-sm">El campo <code class="inline">embajador_asignado</code> nunca se sobreescribe automáticamente. Si la IA cierra venta, la comisión va igual a la embajadora original.</p>
+      </div>
+      <div class="card fm-scale">
+        <h4 class="text-emerald mb-2">📊 Dashboard embajador</h4>
+        <p class="text-sm">GHL ofrece "Client Portal" — cada embajadora ve sus leads, su pipeline, sus ventas cerradas y comisión acumulada del mes.</p>
+      </div>
+      <div class="card fm-scale">
+        <h4 class="text-emerald mb-2">💸 Pago de comisión</h4>
+        <p class="text-sm">Mensual. Reporte automático con ventas cerradas atribuidas. Sugerido: 8-15% sobre venta neta según nivel (Bronce/Plata/Oro).</p>
+      </div>
+      <div class="card fm-scale">
+        <h4 class="text-emerald mb-2">🏆 Niveles</h4>
+        <p class="text-sm">Bronce (0-3 ventas/mes, 8%), Plata (4-8 ventas, 10%), Oro (9+ ventas o 1 venta &gt;5M, 15%). Sube automático con tag.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= BASE 5 — LANDING PAGES ============= -->
+<section id="base-5">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Base 05</p>
+      <h2 class="serif fm mb-6">Landing Pages <span class="grad-text">por producto</span></h2>
+      <p class="lead fm">
+        Páginas específicas por tipo de producto (topitos, anillos de compromiso, dijes, gemas sueltas, sets). Cada landing tiene un mini-formulario de pre-calificación y se conecta a la página madre para el carrito final.
+      </p>
+    </div>
+
+    <div class="grid grid-2 items-center mb-16">
+      <div class="fm-left">
+        <h3 class="text-amber mb-4">Estructura de una landing</h3>
+        <div class="grid gap-2">
+          <div class="card card-sm"><strong>1. Hero:</strong> <span class="text-sm">Imagen impactante del producto + headline + CTA primario</span></div>
+          <div class="card card-sm"><strong>2. Pre-calificación:</strong> <span class="text-sm">Formulario corto — ¿qué buscas? ¿presupuesto? ¿celular? — captura el lead aunque no compre</span></div>
+          <div class="card card-sm"><strong>3. Galería de productos:</strong> <span class="text-sm">Top 6-9 productos de esa categoría con foto, precio y "ver más"</span></div>
+          <div class="card card-sm"><strong>4. Historia / Educación:</strong> <span class="text-sm">Por qué la esmeralda colombiana es única, certificaciones, garantía</span></div>
+          <div class="card card-sm"><strong>5. Reviews:</strong> <span class="text-sm">Clientes reales con foto, video corto si es posible</span></div>
+          <div class="card card-sm"><strong>6. FAQ:</strong> <span class="text-sm">5-8 preguntas frecuentes específicas de esa categoría</span></div>
+          <div class="card card-sm"><strong>7. CTA final:</strong> <span class="text-sm">"Hablar con asesor" (WhatsApp pre-llenado) + "Ver catálogo completo"</span></div>
+        </div>
+      </div>
+      <div class="fm-right">
+        <div class="glass-strong glow" style="padding:24px">
+          <div class="mermaid">
+flowchart TD
+    A[Usuario llega<br/>landing topitos] --> B[Llena formulario<br/>nombre+cel+presupuesto]
+    B --> C[Datos a GHL vía API]
+    C --> D[GHL crea contacto<br/>tag: landing-topitos]
+    C --> E[Dispara WhatsApp<br/>automático IA]
+    D --> F[Usuario sigue navegando]
+    F --> G{Hace clic en<br/>'comprar'?}
+    G -- Sí --> H[Lo lleva al producto<br/>en la web Vite]
+    H --> I[Checkout<br/>Mercado Pago]
+    G -- No --> J[GHL hace seguimiento 24h]
+    E --> K[Conversación IA<br/>arranca con contexto]
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass fm" style="padding:32px">
+      <h3 class="grad-text mb-6">Catálogo de landings a construir</h3>
+      <div class="grid grid-3 gap-4">
+        <div class="card card-sm"><div class="chip mb-2">Categoría</div><h4>/topitos</h4><p class="text-xs mt-2">Aretes pequeños diarios y de gala. Volumen alto, ticket medio.</p></div>
+        <div class="card card-sm"><div class="chip mb-2">Categoría</div><h4>/anillos-compromiso</h4><p class="text-xs mt-2">Ticket alto. Audiencia: parejas. Más educación + agente.</p></div>
+        <div class="card card-sm"><div class="chip mb-2">Categoría</div><h4>/dijes</h4><p class="text-xs mt-2">Regalo emocional. Comunica significado del color verde.</p></div>
+        <div class="card card-sm"><div class="chip mb-2">Categoría</div><h4>/gemas-sueltas</h4><p class="text-xs mt-2">Coleccionistas e inversión. Leads altamente cualificados.</p></div>
+        <div class="card card-sm"><div class="chip mb-2">Categoría</div><h4>/sets</h4><p class="text-xs mt-2">Conjuntos (aretes + collar). Bodas, aniversarios, gala.</p></div>
+        <div class="card card-sm"><div class="chip mb-2">Categoría</div><h4>/inversion</h4><p class="text-xs mt-2">Landing educativa sobre invertir en esmeraldas. Nurturing.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= BASE 6 — EVENTOS ============= -->
+<section id="base-6" class="section-tinted">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Base 06</p>
+      <h2 class="serif fm mb-6">Eventos & <span class="grad-text">Formularios</span></h2>
+      <p class="lead fm">
+        Cada evento (presencial o virtual) tiene su propio formulario. Asistentes quedan registrados en el CRM con el contador de eventos, y entran a campañas específicas según el evento al que fueron.
+      </p>
+    </div>
+
+    <div class="grid grid-2 mb-12">
+      <div class="card fm-left">
+        <h3 class="text-amber mb-4">🎤 Evento presencial</h3>
+        <div class="accent-list">
+          <div><strong>Formulario de registro</strong> en GHL Forms o landing dedicada</div>
+          <div><strong>Campos:</strong> nombre, celular, @IG, correo, ciudad, "¿cómo te enteraste?", "¿qué te interesa?"</div>
+          <div><strong>Recordatorios:</strong> 3 días antes, 1 día antes, día del evento, 2h antes</div>
+          <div><strong>Día del evento:</strong> check-in vía QR (GHL genera código único por asistente)</div>
+          <div><strong>Post-evento:</strong> agradecimiento, encuesta corta, oferta especial 48h</div>
+          <div><strong>Suma a:</strong> <code class="inline">eventos_presenciales++</code></div>
+        </div>
+      </div>
+      <div class="card fm-right">
+        <h3 class="text-amber mb-4">💻 Evento virtual</h3>
+        <div class="accent-list">
+          <div><strong>Formulario de registro</strong> integrado con Zoom o Google Meet (GHL nativo)</div>
+          <div><strong>Campos:</strong> nombre, celular, correo, "¿qué tema te interesa más?"</div>
+          <div><strong>Recordatorios:</strong> 24h antes, 1h antes, al iniciar</div>
+          <div><strong>Durante el evento:</strong> trackeo automático (Zoom webhook)</div>
+          <div><strong>Post-evento:</strong> grabación solo a asistentes, oferta para no-asistentes</div>
+          <div><strong>Suma a:</strong> <code class="inline">eventos_virtuales++</code></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass-strong fm" style="padding:32px">
+      <h3 class="grad-text mb-4">🎯 Segmentación post-evento</h3>
+      <p class="mb-6">Cada evento genera <strong>tags</strong> específicos en el contacto. Ejemplo: <code class="inline">evento-coleccionistas-mayo2026</code>. Esto permite hacer campañas hiper-segmentadas.</p>
+      <div class="grid grid-4 gap-4">
+        <div class="kpi card card-sm"><div class="kpi-num grad-text">3+</div><div class="kpi-label">Eventos asistidos = VIP</div></div>
+        <div class="kpi card card-sm"><div class="kpi-num grad-text">1-2</div><div class="kpi-label">Eventos = Caliente</div></div>
+        <div class="kpi card card-sm"><div class="kpi-num grad-text">+15</div><div class="kpi-label">Pts por evento presencial</div></div>
+        <div class="kpi card card-sm"><div class="kpi-num grad-text">+8</div><div class="kpi-label">Pts por evento virtual</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= BASE 7 — LEAD SCORING ============= -->
+<section id="base-7">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Base 07</p>
+      <h2 class="serif fm mb-6">Modelo de <span class="grad-text">Lead Scoring</span></h2>
+      <p class="lead fm">
+        Cada acción del cliente suma o resta puntos. El score determina prioridad de atención, qué campañas recibe, y cuándo asignar a un agente premium.
+      </p>
+    </div>
+
+    <div class="grid grid-2 mb-12">
+      <div class="fm-left">
+        <h3 class="text-amber mb-4">⬆️ Acciones que suman puntos</h3>
+        <div class="grid gap-2">
+          <div class="card card-sm flex justify-between items-center"><span>Declara presupuesto explícito</span><span class="chip">+10</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Presupuesto &gt; 2M COP</span><span class="chip gold">+20</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Presupuesto &gt; 5M COP</span><span class="chip gold">+35</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Pregunta por certificado</span><span class="chip">+15</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Pide ver más fotos / video</span><span class="chip">+8</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Asistió a evento virtual</span><span class="chip">+8</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Asistió a evento presencial</span><span class="chip gold">+15</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Compra previa cualquier monto</span><span class="chip gold">+25</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Compra previa &gt; 1M COP</span><span class="chip gold">+40</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Referido por embajador Oro</span><span class="chip">+12</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Menciona ocasión específica</span><span class="chip">+10</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Pregunta por métodos de pago</span><span class="chip gold">+18</span></div>
+        </div>
+      </div>
+      <div class="fm-right">
+        <h3 class="text-amber mb-4">⬇️ Acciones que restan puntos</h3>
+        <div class="grid gap-2 mb-8">
+          <div class="card card-sm flex justify-between items-center"><span>3+ días sin responder</span><span class="chip danger">-10</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>7+ días sin responder</span><span class="chip danger">-25</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Dice "muy caro" sin contraoferta</span><span class="chip danger">-15</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Sentimiento negativo en mensaje</span><span class="chip danger">-20</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Pide remoción / unsubscribe</span><span class="chip danger">-50</span></div>
+        </div>
+
+        <h3 class="text-amber mb-4">🌡️ Clasificación por score</h3>
+        <div class="grid gap-3">
+          <div>
+            <div class="flex justify-between text-sm mb-2"><span>❄️ Frío (0-20)</span><span class="text-emerald">Nurturing</span></div>
+            <div class="score-bar"><div class="score-fill" data-width="20" style="background:linear-gradient(90deg,#64748b,#475569)"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-2"><span>☀️ Tibio (21-50)</span><span class="text-emerald">IA atiende activo</span></div>
+            <div class="score-bar"><div class="score-fill" data-width="50" style="background:linear-gradient(90deg,#3b82f6,#06b6d4)"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-2"><span>🔥 Caliente (51-80)</span><span class="text-emerald">Prioridad alta · agente</span></div>
+            <div class="score-bar"><div class="score-fill" data-width="80" style="background:linear-gradient(90deg,#f59e0b,#ef4444)"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-2"><span>💎 VIP (81-100)</span><span class="text-emerald">Atención premium humana</span></div>
+            <div class="score-bar"><div class="score-fill" data-width="100" style="background:linear-gradient(90deg,#10b981,#fcd34d)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass-strong fm" style="padding:32px">
+      <h3 class="grad-text mb-4">🔁 Recálculo del score</h3>
+      <p>Workflow en GHL llamado <code class="inline">score_engine</code> se dispara con cada evento relevante (mensaje, formulario, compra, evento). Recalcula y actualiza <code class="inline">lead_score</code>. Si cambia de clasificación, aplica el tag correspondiente y dispara la campaña de esa categoría.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============= BASE 8 — MERCADO PAGO ============= -->
+<section id="base-8" class="section-tinted">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Base 08</p>
+      <h2 class="serif fm mb-6">Pasarela · <span class="grad-text">Mercado Pago Colombia</span></h2>
+      <p class="lead fm">
+        Integramos Mercado Pago Checkout API directamente en la web Vite. Soporta tarjeta, PSE, Nequi y Daviplata. Webhook a Cloudflare Worker confirma el pago al CRM y a la base de datos Supabase automáticamente.
+      </p>
+    </div>
+
+    <div class="glass-strong mb-12 fm" style="padding:32px">
+      <div class="mermaid">
+sequenceDiagram
+    participant C as Cliente
+    participant AI as IA en GHL
+    participant SH as Web Vite + Supabase
+    participant MP as Mercado Pago
+    participant WH as Cloudflare Worker
+    participant CRM as GHL CRM
+    C->>AI: "Sí, quiero pagar"
+    AI->>SH: Crea checkout draft order
+    SH-->>AI: URL checkout
+    AI->>C: Link de pago
+    C->>SH: Abre checkout
+    SH->>MP: Inicia pago Checkout Pro
+    C->>MP: Paga PSE/Nequi/Tarjeta
+    MP-->>SH: payment.approved
+    MP->>WH: Webhook payment.created
+    WH->>CRM: Actualiza contacto<br/>+ total_comprado<br/>+ ultima_compra<br/>+ pipeline Cerrada
+    CRM->>C: Mensaje confirmación + envío
+    CRM-->>CRM: Suma comisión<br/>al embajador si aplica
+      </div>
+    </div>
+
+    <div class="grid grid-3 stagger fm">
+      <div class="card fm-scale">
+        <h4 class="text-emerald mb-2">💳 Métodos soportados</h4>
+        <ul class="ul-clean ul-dot text-sm">
+          <li>Tarjeta crédito/débito (Visa, Master, Amex)</li>
+          <li>PSE (todos los bancos)</li>
+          <li>Nequi</li>
+          <li>Daviplata</li>
+          <li>Efectivo (Efecty, Baloto)</li>
+        </ul>
+      </div>
+      <div class="card fm-scale">
+        <h4 class="text-emerald mb-2">💰 Comisiones MP</h4>
+        <ul class="ul-clean ul-dot text-sm">
+          <li>Tarjeta crédito: ~3.99% + IVA</li>
+          <li>PSE: ~2.99% + IVA</li>
+          <li>Nequi/Daviplata: ~2.99% + IVA</li>
+          <li>Liquidación: 1-3 días hábiles</li>
+        </ul>
+      </div>
+      <div class="card fm-scale">
+        <h4 class="text-emerald mb-2">🔔 Webhooks críticos</h4>
+        <ul class="ul-clean ul-dot text-sm">
+          <li><code class="inline">payment.created</code></li>
+          <li><code class="inline">payment.updated</code></li>
+          <li><code class="inline">payment.approved</code></li>
+          <li><code class="inline">payment.rejected</code></li>
+          <li>Reintentos cada 15 min si no hay 200 OK</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="glass mt-12 fm" style="padding:32px">
+      <h3 class="grad-text mb-4">📦 Setup paso a paso</h3>
+      <ol style="padding-left:24px" class="text-sm">
+        <li style="padding:6px 0">Crear cuenta Mercado Pago Business Colombia</li>
+        <li style="padding:6px 0">Verificar identidad y cuenta bancaria de liquidación</li>
+        <li style="padding:6px 0">Integrar Mercado Pago Checkout API en la app Vite usando la SDK oficial</li>
+        <li style="padding:6px 0">Conectar credenciales (Access Token + Public Key) desde MP Developers</li>
+        <li style="padding:6px 0">Configurar URL de webhook apuntando a Cloudflare Worker (ej: <code class="inline">https://wh.tierramadre.workers.dev/mp</code>)</li>
+        <li style="padding:6px 0">Suscribir eventos: <code class="inline">payment</code>, <code class="inline">merchant_order</code></li>
+        <li style="padding:6px 0">El Worker valida firma HMAC de MP, hace request a GHL API v2 (PUT /contacts/{id}) y actualiza</li>
+        <li style="padding:6px 0">Test con tarjeta de prueba antes de modo producción</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ============= BASE 9 — POOL DE AGENTES ESPECIALIZADOS ============= -->
+<section id="base-9">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Base 09</p>
+      <h2 class="serif fm mb-6">Pool de <span class="grad-text">Agentes Especializados</span></h2>
+      <p class="lead fm">
+        No todos los clientes son iguales. Un comprador de topitos de 400k necesita una experiencia distinta a un inversionista de 15M en una gema suelta. El sistema asigna automáticamente el agente correcto según la consulta — sin que tú tengas que decidir manualmente.
+      </p>
+    </div>
+
+    <!-- Jerarquía de asignación -->
+    <div class="glass-strong mb-12 fm" style="padding:32px">
+      <h3 class="grad-text mb-6 center">🎯 Jerarquía de asignación (en orden)</h3>
+      <div class="mermaid">
+flowchart TD
+    A[Mensaje entrante] --> B{¿Lead tiene<br/>embajador_asignado?}
+    B -- Sí --> C[Va al EMBAJADOR<br/>regla 5 min activa]
+    B -- No --> D{¿IA detecta señal<br/>de inversión / monto alto?}
+    D -- Sí monto +5M<br/>menciona inversión --> E[AGENTE INVERSIÓN]
+    D -- No --> F{¿Detecta urgencia<br/>matrimonio inminente<br/>cliente molesto?}
+    F -- Sí --> G[AGENTE SENIOR<br/>cierre rápido]
+    F -- No --> H{¿Lead score VIP<br/>+81 pts?}
+    H -- Sí --> I[AGENTE PREMIUM<br/>atención humana directa]
+    H -- No --> J[IA atiende<br/>flujo normal]
+    C -.5 min sin respuesta.-> J
+    E -.5 min sin respuesta.-> G
+    G -.10 min sin respuesta.-> I
+    I -.15 min sin respuesta.-> J
+    style C fill:#451a03,stroke:#fcd34d,color:#fff
+    style E fill:#1e293b,stroke:#a855f7,color:#fff
+    style G fill:#1e293b,stroke:#ef4444,color:#fff
+    style I fill:#064e3b,stroke:#34d399,color:#fff
+      </div>
+    </div>
+
+    <!-- Tipos de agentes -->
+    <div class="grid grid-2 gap-6 mb-12 stagger fm">
+      <div class="card fm-scale">
+        <div class="chip gold mb-3">Tipo 1</div>
+        <h3 class="mb-3">🌟 Agente Premium / VIP</h3>
+        <p class="text-sm mb-3">Cliente con score &gt;81, historial de compra &gt;3M, o explícita "quiero hablar con alguien".</p>
+        <strong class="text-emerald text-sm">Perfil ideal:</strong>
+        <ul class="ul-clean ul-dot text-xs mt-2">
+          <li>Vendedor senior con experiencia en lujo</li>
+          <li>Conocimiento profundo de la marca</li>
+          <li>Disponibilidad para videollamada</li>
+          <li>Capacidad de hacer ofertas personalizadas</li>
+        </ul>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-3" style="background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.3);color:#c4b5fd">Tipo 2</div>
+        <h3 class="mb-3">💎 Agente Inversión</h3>
+        <p class="text-sm mb-3">Cliente buscando gemas sueltas como activo, monto &gt;5M, hace preguntas técnicas avanzadas.</p>
+        <strong class="text-emerald text-sm">Perfil ideal:</strong>
+        <ul class="ul-clean ul-dot text-xs mt-2">
+          <li>Gemólogo certificado o equivalente</li>
+          <li>Maneja temas de certificación, valoración, mercado</li>
+          <li>Capacidad de generar contratos de compra-venta</li>
+          <li>Conoce trámites de exportación si aplica</li>
+        </ul>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-3" style="background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:#fca5a5">Tipo 3</div>
+        <h3 class="mb-3">⚡ Agente Senior (cierre rápido)</h3>
+        <p class="text-sm mb-3">Cliente con urgencia (matrimonio en 1 semana, regalo último minuto) o muestra sentimiento negativo.</p>
+        <strong class="text-emerald text-sm">Perfil ideal:</strong>
+        <ul class="ul-clean ul-dot text-xs mt-2">
+          <li>Vendedor experimentado en cierre bajo presión</li>
+          <li>Buen manejo de objeciones</li>
+          <li>Autorizado para dar descuentos hasta X%</li>
+          <li>Responde en &lt;2 minutos en horario laboral</li>
+        </ul>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-3">Tipo 4</div>
+        <h3 class="mb-3">🛒 Agente Ventas Regular</h3>
+        <p class="text-sm mb-3">Default para todo lo que la IA no pudo cerrar pero no califica como caso especial. Cliente que insiste en hablar con humano sin ser VIP.</p>
+        <strong class="text-emerald text-sm">Perfil ideal:</strong>
+        <ul class="ul-clean ul-dot text-xs mt-2">
+          <li>Conocedor del catálogo completo</li>
+          <li>Buena escritura, tono cálido</li>
+          <li>Disponibilidad amplia (horario comercial)</li>
+          <li>Puede manejar 8-12 conversaciones simultáneas</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Detalle técnico -->
+    <div class="grid grid-2 gap-6 mb-12">
+      <div class="card fm-left">
+        <h3 class="text-amber mb-4">🧠 Cómo decide la IA a qué agente asignar</h3>
+        <p class="text-sm mb-4">Conversation AI de GHL detecta intent + entidades en el mensaje. Workflow #11 "<code class="inline">smart_routing</code>" evalúa en orden:</p>
+        <div class="accent-list">
+          <div><strong>1.</strong> ¿Tiene embajador_asignado? → embajador</div>
+          <div><strong>2.</strong> ¿Menciona "inversión", "activo", "patrimonio" + monto &gt;5M? → agente_inversion</div>
+          <div><strong>3.</strong> ¿Sentimiento &lt;-0.3 (negativo) OR menciona urgencia? → agente_senior</div>
+          <div><strong>4.</strong> ¿lead_score &gt;81 OR total_comprado &gt;3M? → agente_premium</div>
+          <div><strong>5.</strong> ¿Cliente pide explícitamente humano sin matchear arriba? → agente_regular</div>
+          <div><strong>6.</strong> Default → IA continúa</div>
+        </div>
+      </div>
+
+      <div class="card fm-right">
+        <h3 class="text-amber mb-4">⚙️ Round-robin dentro del pool</h3>
+        <p class="text-sm mb-3">Dentro de cada tipo de agente hay varias personas. GHL distribuye automáticamente con balanceo:</p>
+        <ul class="ul-clean ul-dot text-sm">
+          <li><strong>Round-robin</strong> entre agentes activos</li>
+          <li>Si agente no responde en X minutos → reasigna al siguiente</li>
+          <li>Si todos están ocupados → IA mantiene conversación + agenda llamada</li>
+          <li>Cada agente tiene <strong>capacidad máxima</strong> de chats simultáneos</li>
+          <li>Horario de disponibilidad configurable por agente</li>
+          <li>Vacaciones / fuera de oficina respetadas</li>
+        </ul>
+        <div class="mt-4 text-xs text-mute">Workflow GHL: "Round Robin" nativo en Settings → Users → Teams</div>
+      </div>
+    </div>
+
+    <!-- Tabla de routing -->
+    <div class="glass-strong fm" style="padding:32px">
+      <h3 class="grad-text mb-6">📋 Matriz de routing (referencia rápida)</h3>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+          <thead>
+            <tr style="border-bottom:2px solid var(--emerald-400)">
+              <th style="padding:12px 8px;text-align:left;color:var(--emerald-300)">Señal detectada</th>
+              <th style="padding:12px 8px;text-align:left;color:var(--emerald-300)">Asignar a</th>
+              <th style="padding:12px 8px;text-align:left;color:var(--emerald-300)">SLA respuesta</th>
+            </tr>
+          </thead>
+          <tbody style="color:var(--text-soft)">
+            <tr style="border-bottom:1px solid rgba(52,211,153,.15)"><td style="padding:10px 8px">Lead con embajador_asignado</td><td style="padding:10px 8px">Embajador específico</td><td style="padding:10px 8px"><span class="chip">5 min</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.15)"><td style="padding:10px 8px">"Invertir" / "activo" + monto &gt;5M</td><td style="padding:10px 8px">Agente Inversión</td><td style="padding:10px 8px"><span class="chip">5 min</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.15)"><td style="padding:10px 8px">Urgencia (boda &lt;15 días, regalo &lt;3 días)</td><td style="padding:10px 8px">Agente Senior</td><td style="padding:10px 8px"><span class="chip gold">2 min</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.15)"><td style="padding:10px 8px">Queja / sentimiento negativo</td><td style="padding:10px 8px">Agente Senior</td><td style="padding:10px 8px"><span class="chip gold">2 min</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.15)"><td style="padding:10px 8px">Lead score VIP (&gt;81)</td><td style="padding:10px 8px">Agente Premium</td><td style="padding:10px 8px"><span class="chip">10 min</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.15)"><td style="padding:10px 8px">Cliente recurrente (&gt;3M comprado)</td><td style="padding:10px 8px">Agente Premium</td><td style="padding:10px 8px"><span class="chip">10 min</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.15)"><td style="padding:10px 8px">"Quiero hablar con alguien" sin más</td><td style="padding:10px 8px">Agente Regular</td><td style="padding:10px 8px"><span class="chip">15 min</span></td></tr>
+            <tr><td style="padding:10px 8px">Resto</td><td style="padding:10px 8px">IA continúa</td><td style="padding:10px 8px"><span class="chip">&lt;1 min</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= BASE 10 — EVENTOS AUTO-SEGMENTADOS ============= -->
+<section id="base-10" class="section-tinted">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Base 10</p>
+      <h2 class="serif fm mb-6">Eventos con <span class="grad-text">Segmentación Automática</span></h2>
+      <p class="lead fm">
+        Tu idea es perfecta: creas un evento una sola vez, y el sistema busca en el CRM solo a la gente que cumple los criterios (ciudad, score, interés, historial), y le envía la invitación por su canal preferido. Sin tocar nada más.
+      </p>
+    </div>
+
+    <!-- Flujo completo -->
+    <div class="glass-strong mb-12 fm" style="padding:32px">
+      <h3 class="grad-text mb-6 center">🎟️ Flujo completo: del clic "crear evento" al check-in</h3>
+      <div class="mermaid">
+flowchart TD
+    A[Admin: 'Crear Evento Cali'] --> B[Formulario interno:<br/>nombre · ciudad · fecha<br/>capacidad · tipo · filtros]
+    B --> C[GHL crea:<br/>1. Form público de RSVP<br/>2. Tag evento-cali-jul2026<br/>3. Workflow campaña]
+    C --> D[Filtra contactos:<br/>ciudad=Cali<br/>score+30<br/>tipo_interes coincide]
+    D --> E[Encuentra 87 contactos]
+    E --> F[Para cada contacto:<br/>detecta canal_preferido]
+    F --> G1[WhatsApp · 52 personas]
+    F --> G2[Instagram DM · 24 personas]
+    F --> G3[Email · 11 personas]
+    G1 --> H[Mensaje personalizado<br/>con nombre + link RSVP]
+    G2 --> H
+    G3 --> H
+    H --> I{¿Acepta?}
+    I -- Sí --> J[Llena form de RSVP<br/>tag: rsvp-confirmado]
+    I -- No responde --> K[Recordatorio 48h después]
+    K --> I
+    J --> L[Recordatorios automáticos<br/>3d · 1d · 2h antes]
+    L --> M[Día evento: check-in QR]
+    M --> N[Post-evento:<br/>gracias + oferta + nurturing]
+    style A fill:#451a03,stroke:#fcd34d,color:#fff
+    style D fill:#064e3b,stroke:#34d399,color:#fff
+    style H fill:#064e3b,stroke:#34d399,color:#fff
+    style N fill:#451a03,stroke:#fcd34d,color:#fff
+      </div>
+    </div>
+
+    <!-- Panel de creación de evento -->
+    <div class="grid grid-2 mb-12 gap-6">
+      <div class="card fm-left">
+        <h3 class="text-amber mb-4">📝 Panel "Crear Evento" — campos</h3>
+        <div class="field-row"><span>nombre del evento</span><span class="text-mute">"Cata Cali Julio"</span></div>
+        <div class="field-row"><span>tipo</span><span class="text-mute">presencial / virtual</span></div>
+        <div class="field-row"><span>fecha + hora</span><span class="text-mute">date+time</span></div>
+        <div class="field-row"><span>ciudad / link Zoom</span><span class="text-mute">según tipo</span></div>
+        <div class="field-row"><span>capacidad máxima</span><span class="text-mute">number</span></div>
+        <div class="field-row"><span class="text-emerald">▼ FILTROS DE AUDIENCIA</span><span></span></div>
+        <div class="field-row"><span>ciudad(es) target</span><span class="chip">multi</span></div>
+        <div class="field-row"><span>lead_score mínimo</span><span class="chip">0-100</span></div>
+        <div class="field-row"><span>tipo_interes</span><span class="chip">multi</span></div>
+        <div class="field-row"><span>presupuesto mín / máx</span><span class="chip">rango</span></div>
+        <div class="field-row"><span>eventos previos asistidos</span><span class="chip">≥/=/≤</span></div>
+        <div class="field-row"><span>excluir tags</span><span class="text-mute">no-events, unsubscribed</span></div>
+        <div class="field-row"><span>compra previa</span><span class="text-mute">sí/no/cualquiera</span></div>
+        <div class="field-row"><span>solo embajadores</span><span class="text-mute">checkbox</span></div>
+        <div class="field-row"><span class="text-emerald">▼ MENSAJE</span><span></span></div>
+        <div class="field-row"><span>plantilla WA / IG / email</span><span class="text-mute">editable</span></div>
+        <div class="field-row"><span>fecha de envío inicial</span><span class="text-mute">ahora / programar</span></div>
+      </div>
+
+      <div class="fm-right">
+        <div class="card mb-4">
+          <h3 class="text-amber mb-3">🎯 Ejemplos de segmentaciones útiles</h3>
+          <div class="accent-list">
+            <div><strong>Evento Cali presencial:</strong> ciudad=Cali + score≥40 + no-asistió-eventos&lt;2 últimos meses</div>
+            <div><strong>Cata virtual coleccionistas:</strong> tipo_interes=gemas-sueltas + presupuesto≥3M</div>
+            <div><strong>Lanzamiento colección novias:</strong> tipo_interes=anillo-compromiso + score≥30</div>
+            <div><strong>Evento VIP cierre de año:</strong> total_comprado&gt;5M OR score≥81</div>
+            <div><strong>Charla "esmeraldas como inversión":</strong> tag=interes-inversion OR pregunta-cert</div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="text-amber mb-3">⚙️ Cómo está implementado en GHL</h3>
+          <ul class="ul-clean ul-dot text-sm">
+            <li><strong>Smart Lists</strong> nativas de GHL para filtrar contactos por múltiples criterios</li>
+            <li><strong>Workflows con triggers de evento</strong> para automatización</li>
+            <li><strong>Templates dinámicos</strong> con merge fields (nombre, ciudad, último producto visto)</li>
+            <li><strong>Calendar Events</strong> nativos con RSVPs y recordatorios automáticos</li>
+            <li><strong>QR check-in</strong> vía LeadConnector mobile app (gratis para el equipo)</li>
+            <li><strong>Reportes</strong> de tasa apertura, RSVP, asistencia, conversión post-evento</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workflow #12 detalle -->
+    <div class="glass-strong fm" style="padding:32px">
+      <h3 class="grad-text mb-4">🔄 Workflow #12 · "auto_event_invite" — detalle técnico</h3>
+      <p class="mb-4">Este es el corazón de la auto-segmentación. Se dispara al crear un evento:</p>
+      <pre><code>Trigger: Custom event "event_created"
+
+Step 1 — Build query
+  Filter contacts WHERE:
+    ciudad IN [ciudades_target]
+    AND lead_score >= score_min
+    AND tipo_interes IN [intereses_target]
+    AND eventos_total < threshold_burnout (no spamear)
+    AND NOT tags CONTAINS "unsubscribed"
+
+Step 2 — Loop per contact
+  Get canal_preferido (último canal con respuesta)
+  Compose message from template:
+    - {{first_name}}, te queremos invitar...
+    - Personalizado con {{ciudad}}, {{ultimo_producto_visto}}
+  Send via canal_preferido
+
+Step 3 — Add to event audience tag
+  Tag: evento-{slug}-invitado
+
+Step 4 — Schedule follow-ups
+  48h → recordatorio si no responde
+  Día evento → confirmación final
+  Post-evento → nurturing branch
+
+Step 5 — Track metrics
+  - % apertura
+  - % RSVP
+  - % asistencia real (vía QR)
+  - % conversión a venta en 30 días</code></pre>
+    </div>
+
+    <!-- Post-evento -->
+    <div class="glass mt-12 fm" style="padding:32px">
+      <h3 class="grad-text mb-4">📊 Inteligencia post-evento</h3>
+      <p class="mb-6">Cada evento alimenta el sistema con datos que mejoran el siguiente. El sistema aprende:</p>
+      <div class="grid grid-3 gap-4">
+        <div class="card card-sm">
+          <h4 class="mb-2">¿Quién asiste?</h4>
+          <p class="text-sm">Patrones de asistencia por ciudad, score, tipo de evento. Identifica "asistentes leales" — los más valiosos.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="mb-2">¿Quién compra después?</h4>
+          <p class="text-sm">Atribución de ventas a 7, 30, 90 días post-evento. Mide ROI real de cada evento.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="mb-2">¿Qué mensaje convierte?</h4>
+          <p class="text-sm">A/B test automático de templates de invitación. La IA aprende qué mensajes generan más RSVP por segmento.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= BASE 11 — CALIFICACIÓN DE EMBAJADORES ============= -->
+<section id="base-11" class="section-gold">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Base 11</p>
+      <h2 class="serif fm mb-6">Calificación de <span class="grad-text">Embajadores</span></h2>
+      <p class="lead fm">
+        No solo calificamos a los leads. También calificamos a los embajadores. Entre más leads tengan, más activos sean, más asistencia generen a eventos y más ventas cierren, mayor su nivel y mejores sus comisiones. El sistema premia el liderazgo real.
+      </p>
+    </div>
+
+    <!-- Métricas que suman -->
+    <div class="grid grid-2 mb-12">
+      <div class="fm-left">
+        <h3 class="text-amber mb-4">⬆️ Métricas que suman al embajador</h3>
+        <div class="grid gap-2">
+          <div class="card card-sm flex justify-between items-center"><span>Cada 5 leads cargados</span><span class="chip">+1 pt (máx 50)</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Lead activo (responde mensajes)</span><span class="chip">+2 pts c/u</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Lead asiste a evento presencial</span><span class="chip gold">+5 pts c/u</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Lead asiste a evento virtual</span><span class="chip">+3 pts c/u</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Venta cerrada &lt;1M COP</span><span class="chip">+10 pts</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Venta cerrada 1M-5M COP</span><span class="chip gold">+20 pts</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Venta cerrada &gt;5M COP</span><span class="chip gold">+40 pts</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Cumple regla 5 min mensual</span><span class="chip">+3 pts</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Rating clientes ≥4.5★</span><span class="chip">+5 pts</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Cliente compra repetida</span><span class="chip gold">+8 pts c/u</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Crecimiento &gt;10% mensual</span><span class="chip">+5 pts</span></div>
+        </div>
+      </div>
+      <div class="fm-right">
+        <h3 class="text-amber mb-4">⬇️ Métricas que restan</h3>
+        <div class="grid gap-2 mb-8">
+          <div class="card card-sm flex justify-between items-center"><span>Viola regla 5 min (no toma chat)</span><span class="chip danger">-5 pts c/u</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Lead pide ser removido</span><span class="chip danger">-10 pts</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Inactividad &gt;30 días</span><span class="chip danger">-15 pts</span></div>
+          <div class="card card-sm flex justify-between items-center"><span>Conducta inapropiada reportada</span><span class="chip danger">-50 pts</span></div>
+        </div>
+
+        <h3 class="text-amber mb-4">🏆 Niveles automáticos</h3>
+        <div class="grid gap-3">
+          <div class="card card-sm">
+            <div class="flex justify-between mb-2"><strong>🥉 Bronce</strong><span class="chip">0-50 pts</span></div>
+            <div class="text-xs text-soft">8% comisión · soporte estándar · acceso al kit básico</div>
+            <div class="score-bar mt-2"><div class="score-fill" data-width="20" style="background:linear-gradient(90deg,#92400e,#b45309)"></div></div>
+          </div>
+          <div class="card card-sm">
+            <div class="flex justify-between mb-2"><strong>🥈 Plata</strong><span class="chip">51-150 pts</span></div>
+            <div class="text-xs text-soft">10% comisión · kit marketing premium · prioridad media · capacitaciones mensuales</div>
+            <div class="score-bar mt-2"><div class="score-fill" data-width="40" style="background:linear-gradient(90deg,#94a3b8,#cbd5e1)"></div></div>
+          </div>
+          <div class="card card-sm">
+            <div class="flex justify-between mb-2"><strong>🥇 Oro</strong><span class="chip gold">151-300 pts</span></div>
+            <div class="text-xs text-soft">12% comisión · eventos exclusivos · prioridad alta · badge visible · acceso a colecciones limitadas</div>
+            <div class="score-bar mt-2"><div class="score-fill" data-width="70" style="background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div>
+          </div>
+          <div class="card card-sm">
+            <div class="flex justify-between mb-2"><strong>💎 Diamante</strong><span class="chip gold">301+ pts</span></div>
+            <div class="text-xs text-soft">15% comisión · viaje anual · masterclass exclusivas · primer acceso colecciones · 1-a-1 con Tierra Madre</div>
+            <div class="score-bar mt-2"><div class="score-fill" data-width="100" style="background:linear-gradient(90deg,#10b981,#34d399,#fcd34d)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workflow de recálculo -->
+    <div class="glass-strong fm mb-12" style="padding:32px">
+      <h3 class="grad-text mb-6 center">🔄 Workflow #13 · "ambassador_scoring" — recálculo automático</h3>
+      <div class="mermaid">
+flowchart TD
+    A[Triggers que disparan recálculo:<br/>nuevo lead · venta cerrada<br/>asistencia evento · review<br/>cron diario] --> B[Edge Function<br/>calculate-ambassador-score]
+    B --> C[Lee Supabase:<br/>ambassador_leads<br/>events_attended_by_lead<br/>orders attributed<br/>reviews]
+    C --> D[Aplica fórmula<br/>de scoring]
+    D --> E[Update embajador<br/>ambassador_score]
+    E --> F{¿Cambió de nivel?}
+    F -- Sí --> G[Notifica embajador<br/>+ actualiza tag GHL<br/>+ ajusta % comisión]
+    F -- No --> H[Solo actualiza score]
+    G --> I[Si sube: WhatsApp celebración<br/>+ desbloqueo beneficios]
+    G --> J[Si baja: WhatsApp coaching<br/>+ plan de recuperación]
+    style A fill:#451a03,stroke:#fcd34d,color:#fff
+    style E fill:#064e3b,stroke:#34d399,color:#fff
+    style I fill:#064e3b,stroke:#34d399,color:#fff
+    style J fill:#7f1d1d,stroke:#fca5a5,color:#fff
+      </div>
+    </div>
+
+    <!-- Dashboard del embajador -->
+    <div class="grid grid-2 gap-6 mb-12">
+      <div class="card fm-left">
+        <h3 class="text-amber mb-4">📊 Dashboard del embajador (lo que ven)</h3>
+        <ul class="ul-clean ul-dot text-sm">
+          <li><strong>Score actual</strong> con barra de progreso al próximo nivel</li>
+          <li><strong>Comisión acumulada del mes</strong></li>
+          <li><strong>Sus leads</strong> (con pipeline visual)</li>
+          <li><strong>Leads activos vs inactivos</strong></li>
+          <li><strong>Ventas cerradas</strong> con monto y comisión</li>
+          <li><strong>Próximos eventos</strong> + cuántos de sus leads asistirán</li>
+          <li><strong>Leaderboard mensual</strong> (top 10 embajadores)</li>
+          <li><strong>Coaching tips</strong> personalizados según métricas débiles</li>
+          <li><strong>Kit de marketing</strong> descargable (fotos, textos, plantillas)</li>
+        </ul>
+      </div>
+      <div class="card fm-right">
+        <h3 class="text-amber mb-4">🎁 Beneficios desbloqueables por nivel</h3>
+        <div class="accent-list">
+          <div><strong>Bronce →</strong> Kit básico (logo, paleta, 5 fotos)</div>
+          <div><strong>Plata →</strong> Kit premium + 1 capacitación mensual + bonificación si supera meta</div>
+          <div><strong>Oro →</strong> Cena anual con fundadores + acceso a colecciones limitadas + bonificación 5% extra en diciembre</div>
+          <div><strong>Diamante →</strong> Viaje anual (Muzo / Cartagena) + masterclass 1-a-1 + 5% extra todo el año + ser cara de campaña</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de comparación -->
+    <div class="glass-strong fm" style="padding:32px">
+      <h3 class="grad-text mb-6">📋 Tabla de niveles · referencia rápida</h3>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+          <thead>
+            <tr style="border-bottom:2px solid var(--emerald-400)">
+              <th style="padding:12px 8px;text-align:left;color:var(--emerald-300)">Nivel</th>
+              <th style="padding:12px 8px;text-align:left;color:var(--emerald-300)">Score</th>
+              <th style="padding:12px 8px;text-align:left;color:var(--emerald-300)">Comisión</th>
+              <th style="padding:12px 8px;text-align:left;color:var(--emerald-300)">SLA respuesta</th>
+              <th style="padding:12px 8px;text-align:left;color:var(--emerald-300)">Beneficios extra</th>
+            </tr>
+          </thead>
+          <tbody style="color:var(--text-soft)">
+            <tr style="border-bottom:1px solid rgba(52,211,153,.15)"><td style="padding:10px 8px">🥉 Bronce</td><td style="padding:10px 8px">0-50</td><td style="padding:10px 8px">8%</td><td style="padding:10px 8px">5 min</td><td style="padding:10px 8px">Kit básico</td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.15)"><td style="padding:10px 8px">🥈 Plata</td><td style="padding:10px 8px">51-150</td><td style="padding:10px 8px">10%</td><td style="padding:10px 8px">5 min</td><td style="padding:10px 8px">Kit premium + capacitación mensual</td></tr>
+            <tr style="border-bottom:1px solid rgba(52,211,153,.15)"><td style="padding:10px 8px">🥇 Oro</td><td style="padding:10px 8px">151-300</td><td style="padding:10px 8px">12%</td><td style="padding:10px 8px">5 min (prioritario)</td><td style="padding:10px 8px">Eventos exclusivos + cena fundadores</td></tr>
+            <tr><td style="padding:10px 8px">💎 Diamante</td><td style="padding:10px 8px">301+</td><td style="padding:10px 8px">15%</td><td style="padding:10px 8px">2 min (premium)</td><td style="padding:10px 8px">Viaje anual + cara de campaña</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= BASE 12 — FEATURES PREMIUM IMPLEMENTADOS ============= -->
+<section id="base-12">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Base 12</p>
+      <h2 class="serif fm mb-6">Features <span class="grad-text">Premium del MVP</span></h2>
+      <p class="lead fm">
+        Las 6 mejoras que se implementan desde el día 1 para diferenciar a Tierra Madre del resto del mercado.
+      </p>
+    </div>
+
+    <div class="grid grid-2 mb-12 stagger fm">
+      <!-- A3 Galería 360 -->
+      <div class="card fm-scale glow">
+        <div class="flex justify-between items-center mb-3">
+          <span class="chip gold">A3 · Diferenciador</span>
+          <span class="chip">Implementado</span>
+        </div>
+        <h3 class="mb-3">📸 Galería 360° + Zoom 4K</h3>
+        <p class="text-sm mb-3">Cada gema se ve desde todos los ángulos como en joyería de lujo. El cliente arrastra para rotar y hace zoom hasta el detalle de la talla.</p>
+        <div class="card card-sm">
+          <strong class="text-emerald text-sm">Cómo se implementa</strong>
+          <ul class="ul-clean ul-dot text-xs mt-2">
+            <li>Fotografía: 24 fotos por producto (cada 15°) sobre fondo blanco</li>
+            <li>Librería frontend: <code class="inline">react-360-product-viewer</code></li>
+            <li>Imágenes subidas a Supabase Storage en carpeta <code class="inline">products/{sku}/360/</code></li>
+            <li>Lazy load para no afectar performance</li>
+            <li>En móvil: control por gestos (swipe)</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- B3 Lead caliente -->
+      <div class="card fm-scale glow">
+        <div class="flex justify-between items-center mb-3">
+          <span class="chip">B3 · Conversión</span>
+          <span class="chip">Implementado</span>
+        </div>
+        <h3 class="mb-3">🔥 Lead Caliente Ahora</h3>
+        <p class="text-sm mb-3">Sistema que detecta a los leads que están a punto de comprar AHORA. Una Edge Function evalúa señales en tiempo real y avisa a un agente para que llame.</p>
+        <div class="card card-sm">
+          <strong class="text-emerald text-sm">Señales que detecta</strong>
+          <ul class="ul-clean ul-dot text-xs mt-2">
+            <li>Mensajes en últimas 48h (≥4)</li>
+            <li>Pidió ver fotos adicionales</li>
+            <li>Preguntó por métodos de pago</li>
+            <li>Score &gt;60 actual</li>
+            <li>Tiempo entre mensajes &lt;5 min (engagement alto)</li>
+            <li>Visitó la página del producto recientemente</li>
+          </ul>
+          <div class="mt-2 text-xs text-emerald">→ Si cumple ≥4 señales: alerta Agente Senior con notificación push</div>
+        </div>
+      </div>
+
+      <!-- C3 Testimonios -->
+      <div class="card fm-scale glow">
+        <div class="flex justify-between items-center mb-3">
+          <span class="chip">C3 · Fidelización</span>
+          <span class="chip">Implementado</span>
+        </div>
+        <h3 class="mb-3">⭐ Testimonios Automatizados</h3>
+        <p class="text-sm mb-3">7 días después de la entrega, el bot pide foto + reseña. Si rating ≥4.5★ y autoriza, se publica automático en la web y en Instagram Stories.</p>
+        <div class="card card-sm">
+          <strong class="text-emerald text-sm">Flujo</strong>
+          <ul class="ul-clean ul-dot text-xs mt-2">
+            <li>D+7 post entrega: WA pidiendo foto con la joya</li>
+            <li>Cliente envía foto + texto + rating estrellas</li>
+            <li>Si rating ≥4.5: pregunta autorización a publicar</li>
+            <li>Si autoriza: guarda en tabla <code class="inline">testimonials</code></li>
+            <li>Cron diario: selecciona uno random aprobado y lo postea a IG Stories</li>
+            <li>Si rating &lt;4.0: escala a Agente Senior para resolver</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- D1 Dashboard BI -->
+      <div class="card fm-scale glow">
+        <div class="flex justify-between items-center mb-3">
+          <span class="chip gold">D1 · Operación</span>
+          <span class="chip">Implementado</span>
+        </div>
+        <h3 class="mb-3">📊 Dashboard BI · Tierra Madre Live</h3>
+        <p class="text-sm mb-3">Panel en <code class="inline">/admin/dashboard</code> con métricas en tiempo real. Sin alterar los flujos principales — solo lectura sobre lo que ya pasa.</p>
+        <div class="card card-sm">
+          <strong class="text-emerald text-sm">Métricas visualizadas</strong>
+          <ul class="ul-clean ul-dot text-xs mt-2">
+            <li>Ventas hoy / semana / mes</li>
+            <li>Conversión por canal (WA / IG / TT / Web)</li>
+            <li>Top 5 productos del mes</li>
+            <li>Top 10 embajadores del mes (leaderboard)</li>
+            <li>Score promedio de leads por etapa del pipeline</li>
+            <li>Tiempo promedio de cierre</li>
+            <li>Comisiones pendientes de pago</li>
+            <li>Tasa de carrito abandonado</li>
+            <li>Próximos eventos + asistencia esperada</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- D3 Comisiones con info embajador -->
+      <div class="card fm-scale glow">
+        <div class="flex justify-between items-center mb-3">
+          <span class="chip">D3 · Operación</span>
+          <span class="chip">Implementado</span>
+        </div>
+        <h3 class="mb-3">💸 Comisiones Auto + Atribución Visible</h3>
+        <p class="text-sm mb-3">Cuando se cierra una venta, el sistema muestra inmediatamente: <em>"Este cliente vino del embajador Sofía P. (Plata, 10%). Comisión: $250.000 COP. Liquida el 30 de junio."</em></p>
+        <div class="card card-sm">
+          <strong class="text-emerald text-sm">Lo que hace</strong>
+          <ul class="ul-clean ul-dot text-xs mt-2">
+            <li>Detecta automáticamente <code class="inline">embajador_asignado</code> de la venta</li>
+            <li>Calcula comisión según nivel del embajador</li>
+            <li>Crea registro en tabla <code class="inline">commissions</code> con estado <code class="inline">pending</code></li>
+            <li>Notifica al embajador por WhatsApp ("¡Felicidades! Cerraste...")</li>
+            <li>Fin de mes: agrupa todas las pendientes y muestra al admin para aprobar</li>
+            <li>Admin aprueba → cambia a <code class="inline">paid</code> → notifica al embajador</li>
+            <li>Reporte exportable a Excel / CSV para contabilidad</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- E1 Pre-venta post-evento -->
+      <div class="card fm-scale glow">
+        <div class="flex justify-between items-center mb-3">
+          <span class="chip gold">E1 · Eventos</span>
+          <span class="chip">Implementado</span>
+        </div>
+        <h3 class="mb-3">🎫 Pre-venta Exclusiva Post-Evento</h3>
+        <p class="text-sm mb-3">Después de un evento donde se promociona un producto con descuento, ese producto + ese precio quedan disponibles SOLO para asistentes durante un tiempo limitado.</p>
+        <div class="card card-sm">
+          <strong class="text-emerald text-sm">Flujo</strong>
+          <ul class="ul-clean ul-dot text-xs mt-2">
+            <li>Admin crea promoción asociada al evento (panel Base 13)</li>
+            <li>Define: producto(s), descuento (% o monto), válido por X horas, audiencia (tag asistentes)</li>
+            <li>Inmediatamente al guardar, envía mensaje a los asistentes por su canal preferido</li>
+            <li>Mensaje incluye link único con código que solo funciona para ese contacto</li>
+            <li>Si el cliente accede sin estar en la audiencia: ve el producto a precio normal</li>
+            <li>Timer visible: "Esta oferta vence en 23h 14m"</li>
+            <li>Al expirar, el código se desactiva automático</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= BASE 13 — ADMIN DE PROMOCIONES ============= -->
+<section id="base-13" class="section-tinted">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Base 13</p>
+      <h2 class="serif fm mb-6">Admin de <span class="grad-text">Promociones</span> con envío automático</h2>
+      <p class="lead fm">
+        Un panel interno donde tú o un admin crean una promoción/descuento en 30 segundos, definen a quién va, por cuánto tiempo, y el sistema la envía automáticamente al canal preferido de cada persona del segmento. Sin tocar nada más.
+      </p>
+    </div>
+
+    <!-- Flujo principal -->
+    <div class="glass-strong mb-12 fm" style="padding:32px">
+      <h3 class="grad-text mb-6 center">🎟️ Cómo funciona</h3>
+      <div class="mermaid">
+flowchart TD
+    A[Admin entra a<br/>/admin/promociones] --> B[Click 'Crear promoción']
+    B --> C[Formulario:<br/>tipo · producto<br/>descuento · audiencia<br/>tiempo válido · canal]
+    C --> D[Preview del mensaje<br/>+ estimado de envíos<br/>+ costo WA templates]
+    D --> E[Click 'Lanzar']
+    E --> F[Edge Function<br/>send-promo]
+    F --> G[Filtra audiencia<br/>en Supabase]
+    G --> H[Genera código único<br/>por contacto]
+    H --> I[Envía mensaje<br/>por canal preferido]
+    I --> J[Cliente recibe<br/>link personal]
+    J --> K{¿Usa el código?}
+    K -- Sí --> L[Descuento aplicado<br/>en checkout]
+    K -- Tiempo expira --> M[Código desactivado<br/>auto]
+    L --> N[Marca código como<br/>'redeemed' en DB]
+    style E fill:#064e3b,stroke:#34d399,color:#fff
+    style L fill:#064e3b,stroke:#34d399,color:#fff
+    style M fill:#7f1d1d,stroke:#fca5a5,color:#fff
+      </div>
+    </div>
+
+    <!-- Form de creación -->
+    <div class="grid grid-2 gap-6 mb-12">
+      <div class="card fm-left">
+        <h3 class="text-amber mb-4">📝 Formulario · Crear promoción</h3>
+        <div class="field-row"><span>nombre de la promoción</span><span class="text-mute">"Promo Cata Cali"</span></div>
+        <div class="field-row"><span>tipo</span><span class="text-mute">descuento % / monto / 2x1 / regalo</span></div>
+        <div class="field-row"><span>producto(s) aplicables</span><span class="chip">multi-select</span></div>
+        <div class="field-row"><span>valor del descuento</span><span class="text-mute">15% / $50.000 COP</span></div>
+        <div class="field-row"><span class="text-emerald">▼ AUDIENCIA</span><span></span></div>
+        <div class="field-row"><span>filtro: asistentes a evento</span><span class="chip">dropdown</span></div>
+        <div class="field-row"><span>filtro: ciudad</span><span class="chip">multi</span></div>
+        <div class="field-row"><span>filtro: lead_score mín</span><span class="chip">0-100</span></div>
+        <div class="field-row"><span>filtro: por embajador</span><span class="chip">opcional</span></div>
+        <div class="field-row"><span>filtro: tags personalizados</span><span class="chip">multi</span></div>
+        <div class="field-row"><span>excluir tags</span><span class="text-mute">unsubscribed, ya-compró-este</span></div>
+        <div class="field-row"><span class="text-emerald">▼ VIGENCIA</span><span></span></div>
+        <div class="field-row"><span>válido por</span><span class="text-mute">24h / 48h / 7d / personalizado</span></div>
+        <div class="field-row"><span>uso máximo por persona</span><span class="text-mute">1 / ilimitado</span></div>
+        <div class="field-row"><span>stock máximo total</span><span class="text-mute">primero llegado primero servido</span></div>
+        <div class="field-row"><span class="text-emerald">▼ MENSAJE</span><span></span></div>
+        <div class="field-row"><span>plantilla</span><span class="text-mute">selector + editable</span></div>
+        <div class="field-row"><span>canal de envío</span><span class="text-mute">canal preferido / forzar WA</span></div>
+        <div class="field-row"><span>programar envío</span><span class="text-mute">ahora / fecha+hora</span></div>
+      </div>
+
+      <div class="fm-right">
+        <div class="card mb-4">
+          <h3 class="text-amber mb-3">🎯 Casos de uso típicos</h3>
+          <div class="accent-list">
+            <div><strong>Post-evento Cali:</strong> 15% descuento en colección expuesta, válido 48h, solo asistentes</div>
+            <div><strong>Cumpleaños del cliente:</strong> 10% descuento en cualquier joya, válido 7 días</div>
+            <div><strong>Recuperación carrito:</strong> 5% extra, válido 24h, contactos con tag carrito-abandonado</div>
+            <div><strong>Black Friday:</strong> 20% TODOS los productos, válido 72h, todos los contactos</div>
+            <div><strong>Lanzamiento colección Diamante:</strong> Acceso anticipado, solo embajadores Oro/Diamante</div>
+            <div><strong>Reactivación dormidos:</strong> 12% descuento, válido 7d, leads inactivos &gt;60d</div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="text-amber mb-3">🔐 Seguridad anti-abuso</h3>
+          <ul class="ul-clean ul-dot text-sm">
+            <li>Cada código es único por contacto (no se puede compartir)</li>
+            <li>Validación server-side en checkout (no se puede falsificar)</li>
+            <li>Stock máximo total para limitar exposición financiera</li>
+            <li>Limit por persona (1 uso) por defecto</li>
+            <li>Logs de cada uso para auditoría</li>
+            <li>Admin puede cancelar promoción en cualquier momento</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schema -->
+    <div class="glass-strong fm" style="padding:32px">
+      <h3 class="grad-text mb-4">🗄️ Schema de promociones en Supabase</h3>
+      <pre><code>create table promotions (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  type text not null, -- 'percent', 'amount', '2x1', 'gift'
+  value numeric, -- 15 (% o COP)
+  product_ids uuid[], -- productos aplicables (NULL = todos)
+  audience_filters jsonb,
+  -- {event_id, cities, min_score, ambassador_id, include_tags, exclude_tags}
+  starts_at timestamptz default now(),
+  expires_at timestamptz not null,
+  max_uses_per_person int default 1,
+  max_total_uses int, -- NULL = ilimitado
+  total_uses int default 0,
+  message_template text,
+  channel text default 'preferred', -- 'whatsapp', 'instagram', 'email'
+  status text default 'active', -- 'draft', 'active', 'paused', 'expired'
+  created_by uuid references auth.users(id),
+  created_at timestamptz default now()
+);
+
+create table promotion_codes (
+  id uuid primary key default gen_random_uuid(),
+  promotion_id uuid references promotions(id),
+  contact_id text not null, -- celular/email/IG
+  code text unique not null, -- TM-XKR9F2
+  used boolean default false,
+  used_at timestamptz,
+  order_id uuid -- referencia a la orden donde se redimió
+);</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============= BASE 14 — PLANTILLAS DE MENSAJES ============= -->
+<section id="base-14">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Base 14</p>
+      <h2 class="serif fm mb-6">Biblioteca de <span class="grad-text">Plantillas de Mensajes</span></h2>
+      <p class="lead fm">
+        Las 20+ plantillas de WhatsApp, Instagram y Facebook Messenger que necesitas pre-creadas y aprobadas por Meta para que el sistema funcione. Cada plantilla con su trigger, audiencia y variables dinámicas.
+      </p>
+    </div>
+
+    <!-- Aclaración técnica -->
+    <div class="card mb-12 fm" style="border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.05)">
+      <h3 class="text-amber mb-3">📌 Cómo funcionan las plantillas en cada canal</h3>
+      <div class="grid grid-3 gap-4 text-sm">
+        <div>
+          <strong class="text-emerald">WhatsApp Business</strong>
+          <p class="mt-2">Las plantillas para INICIAR conversación deben estar pre-aprobadas por Meta. Para responder dentro de 24h del último mensaje del cliente, puedes mandar lo que quieras. Aprobación: 24-48h.</p>
+        </div>
+        <div>
+          <strong class="text-emerald">Instagram DM</strong>
+          <p class="mt-2">No hay templates obligatorios. Solo se puede mensajear si el cliente te escribió en últimos 7 días (ventana). Para reactivar fuera de ventana: pago de mensaje.</p>
+        </div>
+        <div>
+          <strong class="text-emerald">Facebook Messenger</strong>
+          <p class="mt-2">Mismo modelo que Instagram (ambos son Meta). Ventana de 24h gratis. Fuera de ventana: tags específicos (post-purchase, account update).</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Categorías de plantillas -->
+    <div class="grid grid-2 gap-6 mb-8 stagger fm">
+
+      <!-- Categoría: Apertura -->
+      <div class="card fm-scale">
+        <div class="chip mb-3">Categoría 1 · Apertura</div>
+        <h3 class="mb-3">🤝 Primer contacto</h3>
+        <div class="accent-list text-sm">
+          <div><strong>WA-01 · saludo_inicial_wa</strong> · Cuando cliente nuevo escribe primera vez por WA</div>
+          <div><strong>WA-02 · saludo_referido_embajador</strong> · Cliente referido por embajador conocido</div>
+          <div><strong>IG-01 · saludo_inicial_ig</strong> · Primer DM de Instagram (más informal)</div>
+          <div><strong>TT-01 · saludo_inicial_tt</strong> · TikTok DM</div>
+        </div>
+      </div>
+
+      <!-- Categoría: Calificación -->
+      <div class="card fm-scale">
+        <div class="chip mb-3">Categoría 2 · Calificación</div>
+        <h3 class="mb-3">❓ Preguntas que la IA hace</h3>
+        <div class="accent-list text-sm">
+          <div><strong>Q-01 · q_tipo_interes</strong> · "¿Qué tipo de joya estás buscando?"</div>
+          <div><strong>Q-02 · q_presupuesto</strong> · "¿Cuál es tu presupuesto aproximado?"</div>
+          <div><strong>Q-03 · q_ocasion</strong> · "¿Para qué ocasión?"</div>
+          <div><strong>Q-04 · q_conocimiento_esmeraldas</strong> · "¿Ya conoces nuestras esmeraldas?"</div>
+        </div>
+      </div>
+
+      <!-- Categoría: Producto -->
+      <div class="card fm-scale">
+        <div class="chip mb-3">Categoría 3 · Producto</div>
+        <h3 class="mb-3">💎 Presentación de productos</h3>
+        <div class="accent-list text-sm">
+          <div><strong>P-01 · p_recomendacion_3opciones</strong> · Bot envía 3 productos con foto+precio</div>
+          <div><strong>P-02 · p_mas_fotos_producto</strong> · Cliente pidió más fotos del item X</div>
+          <div><strong>P-03 · p_video_producto</strong> · Cliente pidió video del item</div>
+          <div><strong>P-04 · p_certificado</strong> · Envío del PDF del certificado de la gema</div>
+        </div>
+      </div>
+
+      <!-- Categoría: Checkout -->
+      <div class="card fm-scale">
+        <div class="chip mb-3">Categoría 4 · Checkout</div>
+        <h3 class="mb-3">💳 Cierre de venta</h3>
+        <div class="accent-list text-sm">
+          <div><strong>CK-01 · ck_link_pago</strong> · "Aquí tienes el link de pago seguro: ..."</div>
+          <div><strong>CK-02 · ck_metodos_pago_info</strong> · Explica PSE, Nequi, Daviplata, tarjeta</div>
+          <div><strong>CK-03 · ck_confirmacion_pago</strong> · "¡Recibimos tu pago! Tu joya está siendo preparada"</div>
+          <div><strong>CK-04 · ck_tracking_envio</strong> · "Tu pedido va en camino, sigue aquí: ..."</div>
+        </div>
+      </div>
+
+      <!-- Categoría: Recuperación -->
+      <div class="card fm-scale">
+        <div class="chip mb-3">Categoría 5 · Recuperación</div>
+        <h3 class="mb-3">🔄 Reactivación / carrito abandonado</h3>
+        <div class="accent-list text-sm">
+          <div><strong>R-01 · r_carrito_abandonado_2h</strong> · "Te dejaste algo bonito 😉"</div>
+          <div><strong>R-02 · r_carrito_abandonado_24h_desc</strong> · "Aquí tienes 5% extra si vuelves"</div>
+          <div><strong>R-03 · r_lead_dormido_7d</strong> · "¿Sigues buscando lo perfecto?"</div>
+          <div><strong>R-04 · r_lead_dormido_30d_oferta</strong> · "Oferta especial para volver a vernos"</div>
+        </div>
+      </div>
+
+      <!-- Categoría: Eventos -->
+      <div class="card fm-scale">
+        <div class="chip mb-3">Categoría 6 · Eventos</div>
+        <h3 class="mb-3">🎤 Invitaciones y recordatorios</h3>
+        <div class="accent-list text-sm">
+          <div><strong>EV-01 · ev_invitacion_presencial</strong> · "Te queremos invitar a {evento} en {ciudad}"</div>
+          <div><strong>EV-02 · ev_invitacion_virtual</strong> · "Cata virtual el {fecha} - link de Zoom"</div>
+          <div><strong>EV-03 · ev_recordatorio_3d</strong> · "3 días para nuestro evento"</div>
+          <div><strong>EV-04 · ev_recordatorio_2h</strong> · "Te esperamos en 2h"</div>
+          <div><strong>EV-05 · ev_agradecimiento_post</strong> · "Gracias por venir, ¿qué pieza te gustó más?"</div>
+        </div>
+      </div>
+
+      <!-- Categoría: Promociones -->
+      <div class="card fm-scale">
+        <div class="chip mb-3">Categoría 7 · Promos</div>
+        <h3 class="mb-3">🎁 Descuentos y ofertas</h3>
+        <div class="accent-list text-sm">
+          <div><strong>PR-01 · pr_promo_post_evento</strong> · "Promo exclusiva para asistentes 48h"</div>
+          <div><strong>PR-02 · pr_cumpleanios</strong> · "Es tu cumpleaños 🎂 ten un descuento especial"</div>
+          <div><strong>PR-03 · pr_aniversario_compra</strong> · "Hace 1 año compraste con nosotros..."</div>
+          <div><strong>PR-04 · pr_lanzamiento_coleccion</strong> · "Nueva colección {nombre} ¡Tú primero!"</div>
+        </div>
+      </div>
+
+      <!-- Categoría: Post-venta -->
+      <div class="card fm-scale">
+        <div class="chip mb-3">Categoría 8 · Post-venta</div>
+        <h3 class="mb-3">📦 Después de la compra</h3>
+        <div class="accent-list text-sm">
+          <div><strong>PV-01 · pv_pedido_enviado</strong> · "Tu joya salió de nuestro taller"</div>
+          <div><strong>PV-02 · pv_pedido_entregado</strong> · "Tu joya llegó, esperamos que la disfrutes"</div>
+          <div><strong>PV-03 · pv_pide_review_7d</strong> · "¿Cómo te sentiste con tu compra?"</div>
+          <div><strong>PV-04 · pv_invitacion_referir</strong> · "Refiere a un amigo y gana descuento"</div>
+        </div>
+      </div>
+
+      <!-- Categoría: Embajadores -->
+      <div class="card fm-scale">
+        <div class="chip mb-3">Categoría 9 · Embajadores</div>
+        <h3 class="mb-3">🌟 Notificaciones a embajadores</h3>
+        <div class="accent-list text-sm">
+          <div><strong>EM-01 · em_lead_nuevo_asignado</strong> · "Tienes un lead nuevo: {nombre}"</div>
+          <div><strong>EM-02 · em_comision_ganada</strong> · "¡Cerraste venta! Comisión: {monto}"</div>
+          <div><strong>EM-03 · em_subio_nivel</strong> · "🎉 ¡Subiste a {nivel}! Nuevos beneficios..."</div>
+          <div><strong>EM-04 · em_coaching_mensual</strong> · "Resumen del mes + tips personalizados"</div>
+        </div>
+      </div>
+
+      <!-- Categoría: Escalación -->
+      <div class="card fm-scale">
+        <div class="chip mb-3">Categoría 10 · Escalación</div>
+        <h3 class="mb-3">⚡ Handoff a humano</h3>
+        <div class="accent-list text-sm">
+          <div><strong>ES-01 · es_conectando_agente</strong> · "Te conecto con un experto en este tema"</div>
+          <div><strong>ES-02 · es_agente_disponible</strong> · "Hola, soy {nombre_agente}, vi tu consulta..."</div>
+          <div><strong>ES-03 · es_agente_no_disponible</strong> · "Nuestro experto te contacta en {tiempo}"</div>
+          <div><strong>ES-04 · es_inversion_videocall</strong> · "Agendemos una videollamada para profundizar"</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ejemplo de plantilla -->
+    <div class="glass-strong fm" style="padding:32px">
+      <h3 class="grad-text mb-4">📝 Ejemplo · WA-01 saludo_inicial_wa (lista para registrar en Meta)</h3>
+      <pre><code>// METADATA PARA META BUSINESS MANAGER
+Categoría: MARKETING
+Idioma: es_CO
+Nombre: saludo_inicial_wa
+
+// CUERPO DEL MENSAJE (140 chars max recomendado)
+¡Hola {{1}}! 💚 Soy {{2}} de Tierra Madre.
+Vi que escribiste por nuestras esmeraldas colombianas.
+¿Te ayudo a encontrar la pieza perfecta?
+
+// VARIABLES
+{{1}} = nombre del cliente (de su perfil WA)
+{{2}} = nombre del asesor (rotación equipo)
+
+// BOTONES RÁPIDOS
+[1] Ver topitos
+[2] Ver anillos
+[3] Quiero asesoría
+
+// EJEMPLO RENDERIZADO
+¡Hola Andrea! 💚 Soy María de Tierra Madre.
+Vi que escribiste por nuestras esmeraldas colombianas.
+¿Te ayudo a encontrar la pieza perfecta?
+[Ver topitos] [Ver anillos] [Quiero asesoría]</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============= BASE 15 — GESTIÓN DE PERSONAS ============= -->
+<section id="base-15" class="section-tinted">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Base 15</p>
+      <h2 class="serif fm mb-6">Gestión de <span class="grad-text">Personas</span> desde el Admin</h2>
+      <p class="lead fm">
+        El admin crea embajadores y agentes desde el panel. Sistema de invitación por correo. Cada persona invitada hace onboarding, recibe su link único de formulario, y desde ese momento TODO lo que haga queda enlazado a ella. Si esa persona desaparece o se da de baja, sus leads, ventas y puntaje quedan archivados pero preservados.
+    </p>
+    </div>
+
+    <!-- Flujo completo de creación de embajador -->
+    <div class="glass-strong mb-12 fm" style="padding:32px">
+      <h3 class="grad-text mb-6 center">🎟️ Flujo · Crear un embajador nuevo</h3>
+      <div class="mermaid">
+flowchart TD
+    A[Admin entra a<br/>/admin/personas/embajadores] --> B[Click 'Crear embajador']
+    B --> C[Form simple:<br/>nombre · correo · celular<br/>ciudad · IG · nivel inicial]
+    C --> D[Click 'Invitar']
+    D --> E[Supabase Edge Function<br/>invite-ambassador]
+    E --> F[Crea registro ambassadors<br/>status: invited]
+    E --> G[Crea usuario Auth Supabase<br/>con rol embajador]
+    E --> H[Envía email magic link<br/>'Bienvenido a Tierra Madre']
+    E --> I[Genera link único<br/>de su formulario<br/>tierramadre.co/embajador/{slug}/leads]
+    H --> J[Embajador recibe email]
+    J --> K[Click 'Activar mi cuenta']
+    K --> L[Onboarding rápido:<br/>completa perfil + foto<br/>firma código de conducta]
+    L --> M[Status: active<br/>queda calificable]
+    M --> N[Acceso a:<br/>/embajador dashboard<br/>/embajador/leads form<br/>/embajador/kit marketing]
+    style A fill:#451a03,stroke:#fcd34d,color:#fff
+    style E fill:#064e3b,stroke:#34d399,color:#fff
+    style M fill:#064e3b,stroke:#34d399,color:#fff
+      </div>
+    </div>
+
+    <!-- Crear embajador · panel -->
+    <div class="grid grid-2 gap-6 mb-12">
+      <div class="card fm-left">
+        <h3 class="text-amber mb-4">📝 Form · Crear embajador</h3>
+        <div class="field-row"><span>Nombre completo</span><span class="text-mute">requerido</span></div>
+        <div class="field-row"><span>Correo electrónico</span><span class="chip">único</span></div>
+        <div class="field-row"><span>Celular (+57)</span><span class="text-mute">requerido</span></div>
+        <div class="field-row"><span>@ Instagram</span><span class="text-mute">opcional</span></div>
+        <div class="field-row"><span>Ciudad</span><span class="text-mute">requerido</span></div>
+        <div class="field-row"><span>Nivel inicial</span><span class="chip">Bronce por defecto</span></div>
+        <div class="field-row"><span>% comisión custom</span><span class="text-mute">según nivel</span></div>
+        <div class="field-row"><span>¿Quién la refirió?</span><span class="text-mute">opcional · interno</span></div>
+        <div class="field-row"><span>Notas internas</span><span class="text-mute">solo admin</span></div>
+        <div class="field-row"><span class="text-emerald">Acciones automáticas</span><span></span></div>
+        <div class="field-row"><span>✓ Crear cuenta Supabase Auth</span><span></span></div>
+        <div class="field-row"><span>✓ Crear registro en tabla ambassadors</span><span></span></div>
+        <div class="field-row"><span>✓ Sincronizar a GHL como tag</span><span></span></div>
+        <div class="field-row"><span>✓ Generar slug único para su form</span><span></span></div>
+        <div class="field-row"><span>✓ Enviar email de bienvenida</span><span></span></div>
+      </div>
+
+      <div class="card fm-right">
+        <h3 class="text-amber mb-4">📧 Email de bienvenida (plantilla)</h3>
+        <pre><code>Asunto: ¡Bienvenida al equipo de Tierra Madre, {{nombre}}!
+
+Hola {{nombre}} 💚
+
+¡Bienvenida oficialmente al equipo de embajadoras
+de Tierra Madre! Estamos emocionados de tenerte.
+
+Lo que tienes disponible desde hoy:
+
+✨ Tu dashboard personal
+   {{url_dashboard}}
+   Acceso con magic link al correo.
+
+📋 Tu formulario único para cargar leads
+   {{url_form}}
+   Compártelo solo con tus referidos.
+   Cada lead que se registre quedará enlazado a ti.
+
+🎁 Kit de marketing
+   {{url_kit}}
+   Fotos, plantillas, mensajes pre-armados.
+
+🏆 Tu nivel inicial es: BRONCE
+   Comisión: 8% sobre ventas atribuidas.
+   Sube de nivel con ventas, eventos
+   y crecimiento de tu red.
+
+🤝 Tu mentora será: {{nombre_mentora}}
+   Te contacta esta semana.
+
+¿Dudas? Responde este email o escríbenos
+por WhatsApp al {{wa_corporativo}}.
+
+Con cariño,
+El equipo de Tierra Madre.
+
+[ ACTIVAR MI CUENTA ]</code></pre>
+      </div>
+    </div>
+
+    <!-- Listado de embajadores -->
+    <div class="glass-strong mb-12 fm" style="padding:32px">
+      <h3 class="grad-text mb-4">📊 Vista · Listado de embajadores (/admin/personas/embajadores)</h3>
+      <p class="mb-4 text-sm">Tabla con filtros, búsqueda y acciones rápidas. Refleja en tiempo real lo que pasa con cada embajador.</p>
+      <pre><code>┌──────────────────────────────────────────────────────────────────────────────┐
+│ 🔍 Buscar...   [Activos ▾] [Nivel ▾] [Ciudad ▾]      [+ Crear embajador]    │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Nombre              Nivel    Score   Leads   Ventas   Comisión  Estado  ⋯  │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Sofía Pérez         🥇 Oro    245    47      8 $12.4M  $1.49M    Activa ⋯  │
+│ Camila Restrepo     🥈 Plata  132    28      5  $6.8M    $680k   Activa ⋯  │
+│ Ana Martínez        🥈 Plata   98    19      4  $4.2M    $420k   Activa ⋯  │
+│ Laura Rodríguez     🥉 Bronce  42    11      2  $1.6M    $128k   Activa ⋯  │
+│ Daniela Gómez       🥉 Bronce  18     5      0      —       —    Invitada⋯ │
+│ Carolina Vargas     🥉 Bronce   0     0      0      —       —    Pausada⋯  │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+Menú "⋯" por fila:
+- Ver perfil completo
+- Editar datos
+- Reenviar invitación (si invited)
+- Cambiar nivel manual
+- Ajustar % comisión
+- Ver sus leads
+- Ver sus ventas
+- Ver comisiones pendientes
+- Pausar cuenta (no se pierde data)
+- Suspender (caso disciplinario)
+- Archivar (baja voluntaria)</code></pre>
+    </div>
+
+    <!-- Mismo para agentes -->
+    <div class="glass-strong mb-12 fm" style="padding:32px">
+      <h3 class="grad-text mb-4">👥 Lo mismo aplica para AGENTES de venta</h3>
+      <p class="mb-6">El admin también crea agentes desde <code class="inline">/admin/personas/agentes</code> con el mismo flujo pero con diferencias:</p>
+      <div class="grid grid-2 gap-6">
+        <div class="card">
+          <h4 class="text-amber mb-3">🌟 Agente vs Embajador</h4>
+          <ul class="ul-clean ul-dot text-sm">
+            <li><strong>Embajador:</strong> trae sus propios leads, no recibe asignaciones automáticas. Gana comisión 8-15% según nivel.</li>
+            <li><strong>Agente:</strong> empleado/contratado. Recibe asignaciones automáticas según pool. Gana comisión menor 3-6% + salario fijo.</li>
+            <li><strong>Embajador</strong> no tiene horario, atiende cuando puede.</li>
+            <li><strong>Agente</strong> tiene horario, capacity máxima, está sujeto a SLAs.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4 class="text-amber mb-3">📝 Form · Crear agente (campos extra)</h4>
+          <ul class="ul-clean ul-dot text-sm">
+            <li>Pool al que pertenece: Premium / Inversión / Senior / Regular</li>
+            <li>Horario laboral (ej: L-V 9am-6pm)</li>
+            <li>Capacity máxima (chats simultáneos)</li>
+            <li>Especialidades (gemas sueltas, anillos compromiso, etc.)</li>
+            <li>% comisión fijo (no por nivel)</li>
+            <li>Salario base (opcional)</li>
+            <li>Fecha de ingreso al equipo</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estados y ciclo de vida -->
+    <div class="grid grid-2 gap-6 mb-12">
+      <div class="card fm-left">
+        <h3 class="text-amber mb-4">🔄 Estados del embajador/agente</h3>
+        <div class="accent-list">
+          <div><strong>invited</strong> · Admin creó cuenta, esperando activación del correo</div>
+          <div><strong>active</strong> · Activa y operando. Puede cargar leads y recibir asignaciones.</div>
+          <div><strong>paused</strong> · Temporalmente fuera (vacaciones, licencia). No recibe nuevas asignaciones pero conserva leads y datos.</div>
+          <div><strong>suspended</strong> · Caso disciplinario. No puede acceder. Comisiones pendientes congeladas.</div>
+          <div><strong>archived</strong> · Baja definitiva. Cuenta deshabilitada pero histórico preservado para reportes.</div>
+        </div>
+      </div>
+      <div class="card fm-right">
+        <h3 class="text-amber mb-4">🗃️ Qué pasa si una persona "desaparece"</h3>
+        <p class="text-sm mb-4">Tu pregunta clave: ¿qué pasa con sus leads, ventas y puntaje cuando alguien deja de operar?</p>
+        <ul class="ul-clean ul-dot text-sm">
+          <li><strong>Datos preservados</strong>: nada se borra, queda archivado con flag <code class="inline">archived</code></li>
+          <li><strong>Sus leads históricos</strong> siguen atribuidos a ella en reportes</li>
+          <li><strong>Comisiones devengadas</strong> se pagan según política (no se pierden)</li>
+          <li><strong>Sus contactos activos</strong> se reasignan a otro embajador o quedan "libres" según decida el admin</li>
+          <li><strong>Su nivel y score</strong> se congelan en su última posición</li>
+          <li><strong>Reactivar es 1 click</strong>: si vuelve, retoma desde donde quedó</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Conexiones automáticas -->
+    <div class="glass-strong fm" style="padding:32px">
+      <h3 class="grad-text mb-4">🔗 Qué queda conectado automáticamente al crear un embajador</h3>
+      <div class="grid grid-3 gap-4">
+        <div class="card card-sm">
+          <h4 class="text-emerald mb-2">1. Supabase Auth</h4>
+          <p class="text-sm">Crea user con email + rol "embajador". RLS aplica desde el primer login.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-emerald mb-2">2. Tabla ambassadors</h4>
+          <p class="text-sm">Registro con score=0, nivel=bronce, comision=8%, status=invited.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-emerald mb-2">3. Slug único</h4>
+          <p class="text-sm">Genera <code class="inline">sofia-perez-x4k</code> para su URL: <code class="inline">/embajador/sofia-perez-x4k/leads</code></p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-emerald mb-2">4. GHL sync</h4>
+          <p class="text-sm">Webhook crea tag <code class="inline">embajador-{slug}</code> en GHL para que el bot lo identifique.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-emerald mb-2">5. Carpeta Storage</h4>
+          <p class="text-sm">Bucket <code class="inline">ambassadors/{id}/</code> para que pueda subir foto perfil + material.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-emerald mb-2">6. Email de bienvenida</h4>
+          <p class="text-sm">Envío automático con magic link + URLs personales + plantilla de marca.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-emerald mb-2">7. Cron scoring incluido</h4>
+          <p class="text-sm">Workflow #13 ya empieza a calcular su score diario desde día 1.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-emerald mb-2">8. Plantilla cumpleaños</h4>
+          <p class="text-sm">Si pasó fecha cumpleaños, se agenda mensaje automático futuro.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-emerald mb-2">9. Aparece en leaderboard</h4>
+          <p class="text-sm">Inmediatamente aparece en /admin/dashboard listas de embajadores activos.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= PROPUESTAS FASE 2 ============= -->
+<section id="propuestas" class="section-gold">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Propuestas · Fase 2</p>
+      <h2 class="serif fm mb-6">Ideas <span class="grad-text">para crecer</span> después del MVP</h2>
+      <p class="lead fm">
+        Después de lanzar el sistema base y validar que vende, estos son los features que harían crecer Tierra Madre al siguiente nivel. Cada uno se documenta para implementarse cuando se decida.
+      </p>
+    </div>
+
+    <div class="grid grid-3 gap-4 stagger fm">
+      <div class="card card-sm fm-scale" style="opacity:.85">
+        <div class="chip mb-2">A1 · Premium</div>
+        <h4 class="mb-2">📱 Probador virtual AR</h4>
+        <p class="text-xs text-soft">Cliente apunta cámara al dedo/oreja y "se prueba" la joya. Diferenciador masivo. Requiere modelos 3D de cada producto.</p>
+      </div>
+      <div class="card card-sm fm-scale" style="opacity:.85">
+        <div class="chip mb-2">A2 · Premium</div>
+        <h4 class="mb-2">🎨 Configurador custom</h4>
+        <p class="text-xs text-soft">Cliente arma su joya: gema, tamaño, corte, montura, metal. Cotización instantánea con mock-up visual.</p>
+      </div>
+      <div class="card card-sm fm-scale" style="opacity:.85">
+        <div class="chip mb-2">A4 · Premium</div>
+        <h4 class="mb-2">🔐 Cert. QR verificable</h4>
+        <p class="text-xs text-soft">Cada gema lleva QR con cert digital + video del proceso + origen geográfico. Trazabilidad total.</p>
+      </div>
+      <div class="card card-sm fm-scale" style="opacity:.85">
+        <div class="chip mb-2">B1 · Conversión</div>
+        <h4 class="mb-2">🔁 Cross-sell automático</h4>
+        <p class="text-xs text-soft">Compró topitos → 7d después sugiere collar a juego. Combinaciones definidas en DB.</p>
+      </div>
+      <div class="card card-sm fm-scale" style="opacity:.85">
+        <div class="chip mb-2">B2 · Conversión</div>
+        <h4 class="mb-2">🎂 Fechas importantes</h4>
+        <p class="text-xs text-soft">Capturar cumpleaños/aniversarios y enviar WA con descuento 7 días antes.</p>
+      </div>
+      <div class="card card-sm fm-scale" style="opacity:.85">
+        <div class="chip mb-2">B4 · Conversión</div>
+        <h4 class="mb-2">🛒 Carrito cross-device</h4>
+        <p class="text-xs text-soft">Abandona en celular → retoma en laptop sin perder nada. Login opcional.</p>
+      </div>
+      <div class="card card-sm fm-scale" style="opacity:.85">
+        <div class="chip mb-2">C1 · Fidelización</div>
+        <h4 class="mb-2">📦 Tracking de envío</h4>
+        <p class="text-xs text-soft">Integración Servientrega/Coordinadora. Cliente ve dónde va su joya en tiempo real.</p>
+      </div>
+      <div class="card card-sm fm-scale" style="opacity:.85">
+        <div class="chip mb-2">C2 · Fidelización</div>
+        <h4 class="mb-2">💚 Programa "Tesoro Verde"</h4>
+        <p class="text-xs text-soft">1 pto por cada $10k comprados. Canje por descuentos, eventos exclusivos, joyas de regalo.</p>
+      </div>
+      <div class="card card-sm fm-scale" style="opacity:.85">
+        <div class="chip mb-2">C4 · Fidelización</div>
+        <h4 class="mb-2">👥 Referidos cliente-cliente</h4>
+        <p class="text-xs text-soft">Cualquier cliente refiere a otro, ambos ganan descuento. Sistema de tracking.</p>
+      </div>
+      <div class="card card-sm fm-scale" style="opacity:.85">
+        <div class="chip mb-2">D2 · Operación</div>
+        <h4 class="mb-2">📱 App móvil interna</h4>
+        <p class="text-xs text-soft">Agentes y embajadores responden chats desde el celular con push notifications.</p>
+      </div>
+      <div class="card card-sm fm-scale" style="opacity:.85">
+        <div class="chip mb-2">E2 · Eventos</div>
+        <h4 class="mb-2">📺 Live shopping</h4>
+        <p class="text-xs text-soft">Stream en vivo de Instagram con compra integrada. Clic en producto durante el live = checkout.</p>
+      </div>
+      <div class="card card-sm fm-scale" style="opacity:.85">
+        <div class="chip mb-2">E3 · Eventos</div>
+        <h4 class="mb-2">💬 Grupo WA post-evento</h4>
+        <p class="text-xs text-soft">Comunidad automática para asistentes después de cada evento. Engagement continuo.</p>
+      </div>
+      <div class="card card-sm fm-scale" style="opacity:.85">
+        <div class="chip mb-2">F1 · Internacional</div>
+        <h4 class="mb-2">🌎 Multi-moneda</h4>
+        <p class="text-xs text-soft">USD para EE.UU., MXN para México. La esmeralda colombiana tiene mercado internacional fuerte.</p>
+      </div>
+      <div class="card card-sm fm-scale" style="opacity:.85">
+        <div class="chip mb-2">F2 · Internacional</div>
+        <h4 class="mb-2">✈️ Shipping internacional</h4>
+        <p class="text-xs text-soft">Cálculo automático envío DHL/FedEx + aduana. Apertura a clientes fuera de Colombia.</p>
+      </div>
+      <div class="card card-sm fm-scale" style="opacity:.85" style="border-color:rgba(251,191,36,.3)">
+        <div class="chip gold mb-2">Bonus</div>
+        <h4 class="mb-2">✨ Lo que decidamos en camino</h4>
+        <p class="text-xs text-soft">El sistema está diseñado para crecer. Cualquier nueva idea se evalúa, prioriza y se agrega como sprint independiente.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= ESCENARIOS ============= -->
+<section id="escenarios">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Escenarios completos</p>
+      <h2 class="serif fm mb-6">Cada <span class="grad-text">flujo</span>, paso a paso</h2>
+      <p class="lead fm">Los 7 escenarios que el sistema debe manejar sin que se escape un solo lead.</p>
+    </div>
+
+    <div class="glass-strong scenario fm">
+      <div class="scenario-header"><span class="chip">Escenario 01</span><h3>Cliente entra por WhatsApp, no es referido, quiere topitos</h3></div>
+      <div class="mermaid">
+flowchart LR
+    A[Cliente: Hola] --> B[GHL: contacto nuevo<br/>tag: canal-wa]
+    B --> C[IA: Hola, soy de Tierra Madre.<br/>Qué te trae hoy?]
+    C --> D[Cliente: Quiero topitos]
+    D --> E[IA: Cuál es tu presupuesto<br/>y para qué ocasión?]
+    E --> F[Cliente: 500k, regalo]
+    F --> G[CRM: presupuesto=500k<br/>tipo=topito · score+10]
+    G --> H[IA → Supabase Edge Function<br/>buscar topitos ≤500k]
+    H --> I[3 productos]
+    I --> J[IA envía<br/>foto+precio+link]
+    J --> K{Cliente elige?}
+    K -- Sí --> L[IA: Excelente!<br/>Te envío link de pago]
+    L --> M[Genera checkout<br/>Mercado Pago]
+    M --> N[Cliente paga ✅]
+    N --> O[Webhook MP → CRM<br/>Venta Cerrada]
+    O --> P[Mensaje gracias<br/>+ tracking envío]
+    K -- 'Lo pienso' --> Q[GHL agenda<br/>seguimiento 24h]
+      </div>
+    </div>
+
+    <div class="glass-strong scenario fm">
+      <div class="scenario-header"><span class="chip gold">Escenario 02</span><h3>Lead llega por Instagram, es referido de embajadora Plata</h3></div>
+      <div class="mermaid">
+flowchart LR
+    A[DM Instagram] --> B[GHL inbox<br/>captura arroba]
+    B --> C{arroba en lista de<br/>algún embajador?}
+    C -- Match: Sofía P. --> D[Asigna<br/>embajador=Sofía P.<br/>nivel=Plata]
+    D --> E[Notifica Sofía<br/>por WA]
+    E --> F[IA pausada<br/>5 min timer]
+    F --> G{Sofía responde<br/>en 5 min?}
+    G -- Sí --> H[Sofía atiende]
+    G -- No --> I[IA retoma:<br/>Hola Andrea, te habla TM]
+    H --> J[Venta cerrada]
+    I --> J
+    J --> K[Comisión 10%<br/>a Sofía]
+      </div>
+    </div>
+
+    <div class="glass-strong scenario fm">
+      <div class="scenario-header"><span class="chip">Escenario 03</span><h3>Cliente con consulta compleja sobre inversión en gema suelta &gt;10M</h3></div>
+      <div class="mermaid">
+flowchart LR
+    A[Cliente WhatsApp:<br/>Quiero invertir 15M<br/>en una esmeralda] --> B[IA detecta:<br/>monto +5M + inversión]
+    B --> C[CRM: score+35<br/>tag: VIP-inversion]
+    C --> D[IA: Esto requiere<br/>asesoría especializada.<br/>Te conecto con experto]
+    D --> E[Workflow #06<br/>Escalación humana]
+    E --> F[Asigna agente<br/>especializado en gemas]
+    F --> G[Notifica agente:<br/>SMS + email + push]
+    G --> H[IA pausada hasta cierre]
+    H --> I[Agente toma<br/>conversación en 10 min]
+    I --> J[Agente agenda<br/>videollamada]
+    J --> K[Cierra venta o<br/>seguimiento]
+      </div>
+    </div>
+
+    <div class="glass-strong scenario fm">
+      <div class="scenario-header"><span class="chip">Escenario 04</span><h3>Cliente compra directo por landing sin pasar por chat</h3></div>
+      <div class="mermaid">
+flowchart LR
+    A[Click anuncio TikTok] --> B[Landing /topitos]
+    B --> C[Llena form<br/>pre-calificación]
+    C --> D[GHL crea contacto<br/>tag: landing-topitos]
+    D --> E[Cliente sigue en página<br/>elige producto y compra]
+    E --> F[Checkout custom Vite + MP]
+    F --> G[Mercado Pago<br/>paga ✅]
+    G --> H[Webhook MP<br/>payment.approved]
+    H --> I[CRM identifica contacto<br/>por celular del checkout]
+    I --> J[Suma a contacto existente:<br/>total_comprado<br/>pipeline=cerrada]
+    J --> K[IA envía WA:<br/>Gracias! Tu pedido va a...]
+    K --> L[Secuencia post-venta<br/>+ review en 7 días]
+      </div>
+    </div>
+
+    <div class="glass-strong scenario fm">
+      <div class="scenario-header"><span class="chip gold">Escenario 05</span><h3>Cliente asiste a evento presencial, no compra esa noche</h3></div>
+      <div class="mermaid">
+flowchart LR
+    A[Form evento Bogotá] --> B[CRM crea/actualiza<br/>contacto]
+    B --> C[+15 puntos<br/>tag: evento-bog-jul2026]
+    C --> D[Recordatorios<br/>3d/1d/2h antes]
+    D --> E[Día evento check-in QR]
+    E --> F[Cliente asiste<br/>pero no compra]
+    F --> G[Día siguiente:<br/>WA gracias + foto]
+    G --> H[24h: Qué pieza<br/>te gustó más?]
+    H --> I{Responde?}
+    I -- Sí, anillo X --> J[IA envía link directo<br/>+ código descuento 8%]
+    I -- No --> K[Día 7: nuevo recordatorio]
+    J --> L[Cierra venta]
+    K --> M[Mantenimiento<br/>+ próximo evento]
+      </div>
+    </div>
+
+    <div class="glass-strong scenario fm">
+      <div class="scenario-header"><span class="chip">Escenario 06</span><h3>Embajadora carga 20 leads en su formulario</h3></div>
+      <div class="mermaid">
+flowchart TD
+    A[Embajadora abre<br/>su link único de form] --> B[Carga 20 leads<br/>uno a uno o CSV]
+    B --> C[GHL recibe c/lead<br/>via webhook]
+    C --> D{Lead ya existe<br/>en CRM?}
+    D -- No --> E[Crea contacto nuevo<br/>+ embajador_asignado]
+    D -- Sí --> F{Tiene embajador<br/>asignado ya?}
+    F -- No --> G[Asigna esta embajadora]
+    F -- Sí otra --> H[NO sobreescribe<br/>+ flag revisión<br/>+ notifica admin]
+    E --> I[Tag: lead-precarga<br/>+ embajadora]
+    G --> I
+    I --> J[Espera que el lead<br/>contacte un canal]
+    J --> K[Cuando contacta:<br/>WF#02 verifica match]
+    K --> L[Match found<br/>enrutamiento embajadora]
+      </div>
+    </div>
+
+    <div class="glass-strong scenario fm">
+      <div class="scenario-header"><span class="chip" style="background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.3);color:#c4b5fd">Escenario 08</span><h3>Cliente quiere invertir 15M en gema, IA detecta y enruta a Agente Inversión</h3></div>
+      <div class="mermaid">
+flowchart LR
+    A[Cliente Instagram:<br/>'busco esmeralda de inversión<br/>presupuesto 15M'] --> B[IA procesa<br/>detecta: inversión + monto +5M]
+    B --> C[CRM: score+35<br/>tag: lead-inversion]
+    C --> D[Workflow 11 smart_routing<br/>regla 2 activada]
+    D --> E[Asigna agente_inversion<br/>round-robin pool]
+    E --> F[Notifica Carlos R<br/>gemólogo certificado]
+    F --> G[IA: 'Te conecto con<br/>nuestro experto en inversión']
+    G --> H[Carlos toma conversación<br/>en menos de 5 min]
+    H --> I[Pide info técnica<br/>quilates, color, claridad]
+    I --> J[Envía 2-3 gemas con<br/>certificación completa]
+    J --> K[Agenda videollamada<br/>+ inspección física]
+    K --> L[Cierre venta con<br/>contrato y entrega segura]
+    L --> M[CRM: tag VIP-comprador<br/>total_comprado +15M]
+      </div>
+    </div>
+
+    <div class="glass-strong scenario fm">
+      <div class="scenario-header"><span class="chip gold">Escenario 09</span><h3>Crear evento en Cali, sistema invita automático a contactos calificados</h3></div>
+      <div class="mermaid">
+flowchart LR
+    A[Admin: 'Crear Evento<br/>Cata Esmeraldas Cali'] --> B[Configura:<br/>fecha · capacidad 30<br/>filtros: ciudad=Cali score+30]
+    B --> C[Workflow 12<br/>auto_event_invite]
+    C --> D[Filtra CRM<br/>87 contactos elegibles]
+    D --> E[Por cada uno:<br/>detecta canal preferido]
+    E --> F[52 vía WhatsApp<br/>24 via Instagram<br/>11 via email]
+    F --> G[Mensaje personalizado<br/>nombre + último interés]
+    G --> H{Tasa RSVP esperada<br/>25-35%}
+    H --> I[26 personas confirman<br/>capacidad llena]
+    I --> J[GHL agenda recordatorios<br/>3d / 1d / 2h]
+    J --> K[Día del evento:<br/>check-in QR]
+    K --> L[23 asisten realmente<br/>tasa 88%]
+    L --> M[Post-evento:<br/>secuencia nurturing<br/>+15 score c/u]
+    M --> N[7 ventas en 30 días<br/>ROI 3x del evento]
+      </div>
+    </div>
+
+    <div class="glass-strong scenario fm">
+      <div class="scenario-header"><span class="chip danger">Escenario 07</span><h3>Cliente abandonó carrito en la web sin pagar</h3></div>
+      <div class="mermaid">
+flowchart LR
+    A[Cliente llega checkout<br/>en la web] --> B[Llena email + celular]
+    B --> C[NO termina pago]
+    C --> D[Web detecta abandono<br/>+ webhook a Supabase]
+    D --> E[CRM contacto actualizado<br/>tag: carrito-abandonado]
+    E --> F[Workflow recuperación]
+    F --> G[2h después WA:<br/>Te dejaste algo bonito]
+    G --> H{Vuelve?}
+    H -- Sí --> I[Compra ✅]
+    H -- No --> J[24h WA con<br/>código descuento 5%]
+    J --> K{Vuelve?}
+    K -- Sí --> I
+    K -- No --> L[72h último intento<br/>+ handoff agente]
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= INTEGRACIONES ============= -->
+<section id="integraciones" class="section-tinted">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Integraciones técnicas</p>
+      <h2 class="serif fm mb-6">APIs, MCPs y <span class="grad-text">conexiones</span></h2>
+      <p class="lead fm">Cómo se conectan técnicamente todas las piezas. Y la respuesta a tu pregunta: ¿puede Claude acceder a GHL?</p>
+    </div>
+
+    <div class="glass-strong mb-8 fm" style="padding:32px">
+      <h3 class="text-amber mb-4">🤖 ¿Puede Claude conectarse a GoHighLevel?</h3>
+      <p class="mb-6">
+        <strong>Respuesta corta:</strong> Sí, pero hoy <strong>no hay un MCP oficial</strong> de GoHighLevel en el directorio de Anthropic. Hay tres caminos válidos:
+      </p>
+      <div class="grid grid-3 gap-4">
+        <div class="card card-sm">
+          <div class="chip gold mb-2">Opción A · Recomendada</div>
+          <h4 class="mb-2">API v2 + Private Token</h4>
+          <p class="text-sm">Generas un Private Integration Token en GHL Settings → Integrations. Lo usas para hacer requests REST a la API v2 desde Claude o cualquier script. Cubre contactos, conversations, calendars, opportunities, workflows.</p>
+          <p class="text-xs text-emerald mt-2">Rate limit: 100 req / 10s burst</p>
+        </div>
+        <div class="card card-sm">
+          <div class="chip mb-2">Opción B</div>
+          <h4 class="mb-2">MCP Server comunitario</h4>
+          <p class="text-sm">Existen MCPs no-oficiales (ej: Auratechia en LobeHub). Los instalas como custom MCP en Claude Code o desktop. Dependen del mantenimiento del autor.</p>
+          <p class="text-xs text-emerald mt-2">Riesgo: cambios en API v2 pueden romper</p>
+        </div>
+        <div class="card card-sm">
+          <div class="chip mb-2">Opción C</div>
+          <h4 class="mb-2">Build tu propio MCP</h4>
+          <p class="text-sm">Con el Claude Agent SDK construyes tu servidor MCP que expone los endpoints de GHL como tools. Máximo control, ~2 semanas de desarrollo.</p>
+          <p class="text-xs text-emerald mt-2">Ideal a futuro · escala mejor</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass mb-8 fm" style="padding:32px">
+      <h3 class="grad-text mb-4">📡 Stack de integraciones completo (sin Shopify)</h3>
+      <pre><code>// ============ SUPABASE ============
+// Cliente JS desde el frontend
+import { createClient } from '@supabase/supabase-js';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Edge Functions (lógica server-side)
+POST  /functions/v1/search-products      → Bot busca productos
+POST  /functions/v1/create-order         → Crear orden desde checkout
+POST  /functions/v1/mp-webhook           → Recibir webhook Mercado Pago
+POST  /functions/v1/notify-ghl           → Notificar evento a GHL
+POST  /functions/v1/auto-event-invite    → Auto-segmentar y enviar invites
+POST  /functions/v1/ambassador-match     → Match de lead con embajador
+
+// ============ GHL API v2 ============
+POST   /contacts                          → Crear contacto
+GET    /contacts/{contactId}              → Leer contacto
+PUT    /contacts/{contactId}              → Actualizar custom fields
+POST   /contacts/{contactId}/tags         → Agregar tag
+POST   /conversations/messages            → Enviar mensaje (WA/IG/SMS)
+GET    /conversations/search              → Buscar conversaciones
+POST   /opportunities                     → Crear deal
+PUT    /opportunities/{id}                → Mover en pipeline
+POST   /workflows/{id}/subscriptions      → Disparar workflow
+GET    /custom-fields                     → Listar campos custom
+
+// ============ MERCADO PAGO ============
+POST   /checkout/preferences              → Crear preferencia de pago
+GET    /v1/payments/{id}                  → Consultar estado pago
+Webhook: payment.created / payment.updated / payment.approved
+
+// ============ FRONTEND (Vite) ============
+import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from './lib/supabase';
+
+const { data: productos } = useQuery({
+  queryKey: ['products', categoria],
+  queryFn: () => supabase.from('products')
+    .select('*')
+    .eq('categoria', categoria)
+    .eq('activo', true)
+});</code></pre>
+    </div>
+
+    <div class="glass fm" style="padding:32px">
+      <h3 class="grad-text mb-4">🧱 Middleware: Cloudflare Workers + Supabase Edge Functions</h3>
+      <p class="mb-4">Necesitas dos cosas para orquestar todo: Edge Functions de Supabase (donde vive la lógica server-side) + Cloudflare Workers (para webhooks externos como Mercado Pago). Ambos free tier generosos.</p>
+      <pre><code>// =========================================================
+// Supabase Edge Function: search-products
+// El bot llama aquí cuando un cliente describe lo que quiere
+// =========================================================
+import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+
+serve(async (req) => {
+  const { intent, presupuesto, ocasion, ciudad } = await req.json();
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_KEY')!
+  );
+
+  const { data: productos, error } = await supabase
+    .from('products')
+    .select('id, nombre, slug, precio_cop, descripcion_corta, fotos')
+    .eq('categoria', intent.categoria)
+    .lte('precio_cop', presupuesto * 1.2)
+    .contains('ocasion', [ocasion])
+    .eq('activo', true)
+    .gt('stock', 0)
+    .order('destacado', { ascending: false })
+    .limit(3);
+
+  if (error) return new Response(JSON.stringify({ error }), { status: 500 });
+
+  return new Response(JSON.stringify({ productos }), {
+    headers: { 'content-type': 'application/json' }
+  });
+});
+
+// =========================================================
+// Cloudflare Worker: mp-webhook
+// Recibe webhook de Mercado Pago cuando un pago se aprueba
+// Actualiza Supabase (orden) Y GHL (contacto + pipeline)
+// =========================================================
+export default {
+  async fetch(req, env) {
+    if (req.method !== 'POST') return new Response('only POST', { status: 405 });
+    const payload = await req.json();
+
+    if (!validateSignature(req, payload, env.MP_SECRET)) {
+      return new Response('invalid signature', { status: 401 });
+    }
+
+    if (payload.type === 'payment') {
+      const pago = await fetch(
+        `https://api.mercadopago.com/v1/payments/${payload.data.id}`,
+        { headers: { Authorization: `Bearer ${env.MP_TOKEN}` } }
+      ).then(r => r.json());
+
+      if (pago.status === 'approved') {
+        // 1. Actualizar orden en Supabase
+        await fetch(`${env.SUPABASE_URL}/rest/v1/orders?id=eq.${pago.external_reference}`, {
+          method: 'PATCH',
+          headers: {
+            apikey: env.SUPABASE_SERVICE_KEY,
+            Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            status: 'paid',
+            paid_at: new Date().toISOString(),
+            mp_payment_id: pago.id
+          })
+        });
+
+        // 2. Buscar contacto en GHL por celular
+        const contacto = await fetch(
+          `https://services.leadconnectorhq.com/contacts/search?query=${pago.payer.phone.number}`,
+          { headers: { Authorization: `Bearer ${env.GHL_TOKEN}`, Version: '2021-07-28' } }
+        ).then(r => r.json());
+
+        // 3. Actualizar contacto en GHL
+        await fetch(
+          `https://services.leadconnectorhq.com/contacts/${contacto.contacts[0].id}`,
+          {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${env.GHL_TOKEN}`, Version: '2021-07-28', 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customFields: [
+                { id: 'total_comprado_cop', value: contacto.total + pago.transaction_amount },
+                { id: 'ultima_compra_fecha', value: new Date().toISOString() }
+              ],
+              tags: ['cliente-pago-confirmado']
+            })
+          }
+        );
+
+        // 4. Disparar workflow de post-venta en GHL
+        await fetch(
+          `https://services.leadconnectorhq.com/workflows/${env.WF_POSTVENTA}/subscriptions`,
+          {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${env.GHL_TOKEN}`, Version: '2021-07-28', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contactId: contacto.contacts[0].id })
+          }
+        );
+      }
+    }
+    return new Response('OK', { status: 200 });
+  }
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============= ROADMAP ============= -->
+<section id="roadmap">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Roadmap de ejecución</p>
+      <h2 class="serif fm mb-6">Plan de <span class="grad-text">implementación</span></h2>
+      <p class="lead fm">5 fases en ~10 semanas para tener el sistema completo en producción.</p>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-line"></div>
+
+      <div class="timeline-item fm-left">
+        <div class="timeline-dot"></div>
+        <div class="glass" style="padding:24px">
+          <div class="flex wrap gap-3 mb-3"><span class="chip">Fase 01</span><span class="chip gold">Semanas 1-2</span></div>
+          <h3 class="mb-3">Cimientos · Setup técnico</h3>
+          <ul class="ul-clean ul-dot text-sm">
+            <li>Crear cuenta GoHighLevel + sub-account Tierra Madre</li>
+            <li>Comprar dominio + crear proyecto Supabase + repo Git</li>
+            <li>Cargar primeros 30-50 productos con metafields completos</li>
+            <li>Configurar Mercado Pago Business + credenciales API</li>
+            <li>Crear cuenta WhatsApp Business API vía Meta + conectar a GHL</li>
+            <li>Conectar Instagram Business + TikTok Business a GHL</li>
+            <li>Definir sistema de diseño (paleta, tipografías, componentes base)</li>
+            <li>Crear proyecto Next.js en Vercel + repo Git + variables de entorno</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="timeline-item fm-left">
+        <div class="timeline-dot"></div>
+        <div class="glass" style="padding:24px">
+          <div class="flex wrap gap-3 mb-3"><span class="chip">Fase 02</span><span class="chip gold">Semanas 3-4</span></div>
+          <h3 class="mb-3">Frontend custom · Página madre + landings</h3>
+          <ul class="ul-clean ul-dot text-sm">
+            <li>Construir página madre en Next.js con framer-motion (animaciones cinematográficas)</li>
+            <li>Implementar cliente Supabase JS (queries SQL, búsqueda, filtros, realtime)</li>
+            <li>Página de producto con galería, zoom, video, certificado descargable</li>
+            <li>Construir 6 landing pages por categoría con pre-calificación</li>
+            <li>Sistema de carrito custom (estado React + persistencia en Supabase)</li>
+            <li>Checkout custom integrado con Mercado Pago Checkout API</li>
+            <li>Optimización Lighthouse — objetivo Performance 95+</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="timeline-item fm-left">
+        <div class="timeline-dot"></div>
+        <div class="glass" style="padding:24px">
+          <div class="flex wrap gap-3 mb-3"><span class="chip">Fase 03</span><span class="chip gold">Semanas 5-6</span></div>
+          <h3 class="mb-3">CRM + IA · Cerebro funcional</h3>
+          <ul class="ul-clean ul-dot text-sm">
+            <li>Configurar 14 custom fields del contacto en GHL</li>
+            <li>Crear pipeline con 7 etapas + tipos de oportunidad</li>
+            <li>Construir Workflows #01 al #08</li>
+            <li>Entrenar Conversation AI con knowledge base de Tierra Madre</li>
+            <li>Diseñar prompts de calificación + reglas de escalación</li>
+            <li>Conectar bot con frontend custom (chat embebido en Next.js)</li>
+            <li>Test end-to-end: lead entra por WA → IA califica → recomienda producto del catálogo</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="timeline-item fm-left">
+        <div class="timeline-dot"></div>
+        <div class="glass" style="padding:24px">
+          <div class="flex wrap gap-3 mb-3"><span class="chip">Fase 04</span><span class="chip gold">Semanas 7-8</span></div>
+          <h3 class="mb-3">Middleware · Conexiones críticas</h3>
+          <ul class="ul-clean ul-dot text-sm">
+            <li>Desarrollar Cloudflare Workers para webhooks MP + Supabase + GHL</li>
+            <li>Implementar Workflows #04 (búsqueda Supabase desde bot) y #05 (checkout)</li>
+            <li>Configurar webhooks Mercado Pago → CRM (confirmación pago)</li>
+            <li>Configurar trigger Supabase "order created" + detección de abandono de carrito</li>
+            <li>Test de compra completa: bot/web → checkout → pago → confirmación CRM</li>
+            <li>Sistema de carrito abandonado con recuperación automática</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="timeline-item fm-left">
+        <div class="timeline-dot"></div>
+        <div class="glass" style="padding:24px">
+          <div class="flex wrap gap-3 mb-3"><span class="chip">Fase 05</span><span class="chip gold">Semanas 9-10</span></div>
+          <h3 class="mb-3">Embajadores + Agentes + Eventos + Scoring</h3>
+          <ul class="ul-clean ul-dot text-sm">
+            <li>Construir formulario único por embajadora + lógica de match por 3 IDs</li>
+            <li>Implementar regla de 5 minutos (Workflow #07)</li>
+            <li>Configurar niveles Bronce/Plata/Oro + automatización de comisión</li>
+            <li>Configurar pool de agentes especializados (Premium, Inversión, Senior, Regular)</li>
+            <li>Implementar Workflow #11 smart_routing con matriz de decisión</li>
+            <li>Implementar Workflow #12 auto_event_invite con auto-segmentación</li>
+            <li>Construir panel "Crear Evento" custom con filtros visuales</li>
+            <li>Lead scoring engine completo (Workflow score_engine)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="timeline-item fm-left">
+        <div class="timeline-dot"></div>
+        <div class="glass" style="padding:24px">
+          <div class="flex wrap gap-3 mb-3"><span class="chip">Fase 06</span><span class="chip gold">Semanas 11-12</span></div>
+          <h3 class="mb-3">QA · Soft launch · Ajustes</h3>
+          <ul class="ul-clean ul-dot text-sm">
+            <li>Pruebas de los 9 escenarios end-to-end con 5 personas reales</li>
+            <li>Ajustes de prompts según conversaciones reales (1 semana iterando)</li>
+            <li>Capacitación a embajadoras (manual PDF + sesión Zoom)</li>
+            <li>Capacitación a agentes especializados sobre el sistema de routing</li>
+            <li>Soft launch con audiencia pequeña (50-100 leads)</li>
+            <li>Monitorear KPIs: tiempo respuesta, tasa conversión, NPS</li>
+            <li>Iterar 1 semana antes del lanzamiento masivo</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= COSTOS & KPIs ============= -->
+<section id="costos" class="section-tinted">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">Costos estimados</p>
+      <h2 class="serif fm mb-6">Inversión <span class="grad-text">mensual</span></h2>
+      <p class="lead fm">Cifras en USD (excepto Mercado Pago que es % por transacción).</p>
+    </div>
+
+    <div class="grid grid-2 mb-8 stagger fm">
+      <div class="card fm-scale">
+        <h3 class="text-amber mb-3">💼 Software recurrente</h3>
+        <div class="field-row"><span>GoHighLevel (Pro plan)</span><span class="mono">$297/mes</span></div>
+        <div class="field-row"><span>Supabase (Pro)</span><span class="mono">$25/mes</span></div>
+        <div class="field-row"><span>Vercel (Pro · opcional)</span><span class="mono">$20/mes</span></div>
+        <div class="field-row"><span>Cloudflare Workers</span><span class="mono">$0 (free tier)</span></div>
+        <div class="field-row"><span>Dominio</span><span class="mono">~$15/año</span></div>
+        <div class="field-row"><span>WhatsApp templates (Meta)</span><span class="mono">~$30/mes</span></div>
+        <div class="field-row"><span>Claude / OpenAI API (refuerzo)</span><span class="mono">~$50-100/mes</span></div>
+        <div class="field-row" style="font-weight:bold;color:var(--emerald-300)"><span>Total software</span><span class="mono">~$425/mes</span></div>
+      </div>
+      <div class="card fm-scale">
+        <h3 class="text-amber mb-3">💸 Variables</h3>
+        <div class="field-row"><span>Mercado Pago tarjeta</span><span class="mono">3.99% + IVA</span></div>
+        <div class="field-row"><span>Mercado Pago PSE/Nequi</span><span class="mono">2.99% + IVA</span></div>
+        <div class="field-row"><span>SMS notificaciones (Twilio)</span><span class="mono">~$0.05/SMS</span></div>
+        <div class="field-row"><span>WhatsApp marketing templates</span><span class="mono">~$0.07/msj</span></div>
+        <div class="field-row"><span>Comisión embajadoras</span><span class="mono">8-15% venta</span></div>
+        <div class="field-row"><span>Comisión agentes ventas</span><span class="mono">3-6% venta</span></div>
+      </div>
+    </div>
+
+    <div class="glass-strong mb-12 fm" style="padding:32px">
+      <h3 class="grad-text mb-4">🛠️ Desarrollo inicial (one-time)</h3>
+      <p class="mb-4">Si lo construyes tú con ayuda de IA: tu tiempo + ~$50 en APIs. Si contratas dev externo:</p>
+      <div class="grid grid-4 gap-4">
+        <div class="card card-sm"><h4 class="mb-1">Setup GHL completo</h4><p class="text-sm">$1.500 - $3.000</p></div>
+        <div class="card card-sm"><h4 class="mb-1">Frontend Vite + Supabase</h4><p class="text-sm">$3.000 - $6.000</p></div>
+        <div class="card card-sm"><h4 class="mb-1">Cloudflare Workers</h4><p class="text-sm">$800 - $1.500</p></div>
+        <div class="card card-sm"><h4 class="mb-1">Diseño UI/UX</h4><p class="text-sm">$1.500 - $3.000</p></div>
+      </div>
+      <p class="text-sm mt-4 text-emerald"><strong>Total desarrollo si contratas:</strong> $6.800 - $13.500 USD one-time</p>
+    </div>
+
+    <div class="glass mt-12 fm" style="padding:32px">
+      <h3 class="grad-text mb-6">🎯 KPIs a monitorear desde día 1</h3>
+      <div class="grid grid-4 gap-4">
+        <div class="kpi card card-sm"><div class="kpi-num grad-text">&lt;2 min</div><div class="kpi-label">Tiempo 1ª respuesta IA</div></div>
+        <div class="kpi card card-sm"><div class="kpi-num grad-text">&gt;65%</div><div class="kpi-label">Lead → calificado</div></div>
+        <div class="kpi card card-sm"><div class="kpi-num grad-text">&gt;12%</div><div class="kpi-label">Calificado → venta</div></div>
+        <div class="kpi card card-sm"><div class="kpi-num grad-text">&lt;5%</div><div class="kpi-label">Carrito abandonado no recuperado</div></div>
+        <div class="kpi card card-sm"><div class="kpi-num grad-text">&gt;4.7★</div><div class="kpi-label">Rating post-venta</div></div>
+        <div class="kpi card card-sm"><div class="kpi-num grad-text">&gt;30%</div><div class="kpi-label">Ventas vía embajadores</div></div>
+        <div class="kpi card card-sm"><div class="kpi-num grad-text">&lt;8%</div><div class="kpi-label">Escalación a humano</div></div>
+        <div class="kpi card card-sm"><div class="kpi-num grad-text">&gt;3x</div><div class="kpi-label">ROI sobre stack mensual</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= ÁREAS DELEGABLES ============= -->
+<section id="areas" class="section-gold">
+  <div class="container">
+    <div class="center mb-16">
+      <p class="section-label fm">⭐ Equipo · Para delegar</p>
+      <h2 class="serif fm mb-6">Las <span class="grad-text">6 Áreas</span> de implementación</h2>
+      <p class="lead fm">
+        Cada área tiene su propio documento HTML autocontenido con prompts de Claude Code listos, código de ejemplo, checklists y criterios de aceptación. Tu equipo de 3 personas puede tomar 2 áreas cada una según expertise.
+      </p>
+    </div>
+
+    <div class="grid grid-2 stagger fm mb-12">
+      <a href="area-1-frontend.html" class="card fm-scale" style="text-decoration:none;color:inherit;display:block">
+        <div class="flex justify-between items-center mb-3"><span class="chip gold">Área 01</span><span class="text-mute text-xs">→</span></div>
+        <h3 class="mb-3">🎨 Frontend Web</h3>
+        <p class="text-sm mb-3">Vite + React + framer-motion + Tailwind. Construir página madre, 6 landings, página de producto, carrito, checkout, admin panel (centro de comando), portal embajador.</p>
+        <div class="flex wrap gap-2">
+          <span class="chip">Vite</span><span class="chip">React</span><span class="chip">framer-motion</span><span class="chip">Tailwind</span>
+        </div>
+      </a>
+
+      <a href="area-2-supabase.html" class="card fm-scale" style="text-decoration:none;color:inherit;display:block">
+        <div class="flex justify-between items-center mb-3"><span class="chip gold">Área 02</span><span class="text-mute text-xs">→</span></div>
+        <h3 class="mb-3">🗄️ Backend Supabase</h3>
+        <p class="text-sm mb-3">14 tablas PostgreSQL + RLS policies + Storage (productos y certificados) + Auth con roles + 8 Edge Functions serverless en Deno.</p>
+        <div class="flex wrap gap-2">
+          <span class="chip">PostgreSQL</span><span class="chip">Edge Functions</span><span class="chip">Storage</span><span class="chip">Auth</span>
+        </div>
+      </a>
+
+      <a href="area-3-gohighlevel.html" class="card fm-scale" style="text-decoration:none;color:inherit;display:block">
+        <div class="flex justify-between items-center mb-3"><span class="chip gold">Área 03</span><span class="text-mute text-xs">→</span></div>
+        <h3 class="mb-3">🧠 GoHighLevel CRM</h3>
+        <p class="text-sm mb-3">14 custom fields + pipeline 7 etapas + 13 workflows + Conversation AI entrenada + WhatsApp/Instagram/TikTok conectados + Private Token API.</p>
+        <div class="flex wrap gap-2">
+          <span class="chip">GHL</span><span class="chip">IA</span><span class="chip">WhatsApp</span><span class="chip">Workflows</span>
+        </div>
+      </a>
+
+      <a href="area-4-integraciones.html" class="card fm-scale" style="text-decoration:none;color:inherit;display:block">
+        <div class="flex justify-between items-center mb-3"><span class="chip gold">Área 04</span><span class="text-mute text-xs">→</span></div>
+        <h3 class="mb-3">🔌 Integraciones</h3>
+        <p class="text-sm mb-3">4 Cloudflare Workers (mp-webhook, ghl-bridge, order-orchestrator, scheduler) + setup completo de Mercado Pago + webhooks validados con HMAC.</p>
+        <div class="flex wrap gap-2">
+          <span class="chip">Cloudflare</span><span class="chip">Mercado Pago</span><span class="chip">Webhooks</span><span class="chip">HMAC</span>
+        </div>
+      </a>
+
+      <a href="area-5-diseno-ux.html" class="card fm-scale" style="text-decoration:none;color:inherit;display:block">
+        <div class="flex justify-between items-center mb-3"><span class="chip gold">Área 05</span><span class="text-mute text-xs">→</span></div>
+        <h3 class="mb-3">✨ Diseño & UX</h3>
+        <p class="text-sm mb-3">Sistema de diseño: paleta esmeralda/dorado/tinta, tipografía Inter+Playfair, 18 componentes UI en Figma, catálogo de animaciones framer-motion, accesibilidad WCAG AA.</p>
+        <div class="flex wrap gap-2">
+          <span class="chip">Figma</span><span class="chip">Sistema diseño</span><span class="chip">A11y</span>
+        </div>
+      </a>
+
+      <a href="area-6-contenido-catalogo.html" class="card fm-scale" style="text-decoration:none;color:inherit;display:block">
+        <div class="flex justify-between items-center mb-3"><span class="chip gold">Área 06</span><span class="text-mute text-xs">→</span></div>
+        <h3 class="mb-3">📸 Contenido & Catálogo</h3>
+        <p class="text-sm mb-3">Cargar 30-50 productos con fotografía profesional, descripciones (corta + larga), keywords semánticos en 6 dimensiones, certificados PDF, FAQ, voz de marca.</p>
+        <div class="flex wrap gap-2">
+          <span class="chip">Fotos</span><span class="chip">Copy</span><span class="chip">Keywords</span><span class="chip">SEO</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="glass-strong fm" style="padding:32px">
+      <h3 class="grad-text mb-4 center">🤝 Sugerencia de distribución entre 3 personas</h3>
+      <div class="grid grid-3 gap-4">
+        <div class="card card-sm">
+          <h4 class="text-amber mb-2">👤 Persona 1 · Dev Full-Stack</h4>
+          <p class="text-sm"><strong>Áreas 1 + 2 + 4</strong></p>
+          <p class="text-xs text-mute mt-2">Frontend Vite + Backend Supabase + Cloudflare Workers. Trabajo principal de código.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-amber mb-2">👤 Persona 2 · Especialista GHL</h4>
+          <p class="text-sm"><strong>Área 3</strong></p>
+          <p class="text-xs text-mute mt-2">Setup completo de GoHighLevel, workflows, IA, multi-canal. No requiere código, todo es UI de GHL.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-amber mb-2">👤 Persona 3 · Diseño + Contenido</h4>
+          <p class="text-sm"><strong>Áreas 5 + 6</strong></p>
+          <p class="text-xs text-mute mt-2">Sistema de diseño en Figma + fotografía + textos + cargar productos en el admin.</p>
+        </div>
+      </div>
+      <p class="text-sm text-emerald mt-6 center"><strong>Áreas trabajan en paralelo</strong>, sincronizan via Slack/Notion. Pueden empezar las 6 al mismo tiempo. El integration testing al final.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============= CIERRE ============= -->
+<section class="center">
+  <div class="container" style="max-width:800px">
+    <div class="fm">
+      <div class="gem-emerald" style="width:80px;height:80px;margin-bottom:32px"></div>
+      <h2 class="serif mb-6">El sistema, en una frase</h2>
+      <p class="serif" style="font-style:italic;font-size:1.4rem;line-height:1.5;color:var(--text-soft);margin-bottom:32px">
+        "Un cliente entra, la IA lo conoce en 60 segundos, le muestra exactamente lo que busca, le cobra sin fricción, y si algo se complica, una persona toma la conversación con todo el contexto del mundo. Mientras tanto, el CRM registra cada paso, cada peso, cada embajador."
+      </p>
+      <div class="flex justify-center gap-3 wrap">
+        <span class="chip">10 semanas a producción</span>
+        <span class="chip gold">~$410 USD/mes en software</span>
+        <span class="chip">7 escenarios cubiertos</span>
+        <span class="chip gold">10 workflows automatizados</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-title">Tierra Madre · Plan de Ejecución</div>
+  <div>Documento técnico v1.1 · Mayo 2026 · Compilado para fily</div>
+</footer>
+
+<script>
+  // ===== Mermaid init =====
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#064e3b',
+      primaryTextColor: '#fff',
+      primaryBorderColor: '#34d399',
+      lineColor: '#34d399',
+      secondaryColor: '#451a03',
+      tertiaryColor: '#1e293b',
+      background: 'transparent',
+      mainBkg: '#0f1714',
+      secondBkg: '#1e293b',
+      tertiaryBkg: '#451a03',
+      fontFamily: 'Inter, sans-serif',
+    },
+    flowchart: { useMaxWidth: true, curve: 'basis' },
+    sequence: { useMaxWidth: true, mirrorActors: false },
+  });
+
+  // ===== Framer-motion-like animations on scroll =====
+  const fmElements = document.querySelectorAll('.fm, .fm-left, .fm-right, .fm-scale, .stagger');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        if (e.target.classList.contains('stagger')) {
+          e.target.querySelectorAll('.fm, .fm-left, .fm-right, .fm-scale').forEach(c => c.classList.add('in'));
+        }
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -50px 0px' });
+  fmElements.forEach(el => io.observe(el));
+
+  // ===== Score bar animation =====
+  const scoreBars = document.querySelectorAll('.score-fill');
+  const scoreIO = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const w = e.target.dataset.width;
+        e.target.style.width = w + '%';
+      }
+    });
+  }, { threshold: 0.3 });
+  scoreBars.forEach(b => scoreIO.observe(b));
+
+  // ===== Sidenav active state =====
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.sidenav a');
+  const navIO = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        navLinks.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + id));
+      }
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => navIO.observe(s));
+
+  // ===== Smooth scroll =====
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', (ev) => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) {
+        ev.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+</script>
+</body>
+</html>

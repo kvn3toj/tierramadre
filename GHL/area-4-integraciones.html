@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Área 4 · Integraciones · Tierra Madre</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--emerald-300:#6ee7b7;--emerald-400:#34d399;--emerald-500:#10b981;--emerald-700:#047857;--emerald-900:#064e3b;--gold-300:#fcd34d;--gold-400:#fbbf24;--gold-500:#f59e0b;--text:#e6f4ef;--text-soft:rgba(230,244,239,.72);--text-mute:rgba(230,244,239,.5);--border:rgba(52,211,153,.2);--purple:#a855f7}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:radial-gradient(ellipse at top,#0f1714 0%,#050807 60%,#000 100%);color:var(--text);line-height:1.65;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.serif{font-family:'Playfair Display',Georgia,serif;letter-spacing:-.02em}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+section{padding:80px 24px;position:relative}
+h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:900;line-height:1.05}
+h2{font-size:clamp(1.75rem,4vw,2.75rem);font-weight:800;line-height:1.15}
+h3{font-size:1.4rem;font-weight:700}
+h4{font-size:1rem;font-weight:700}
+p{color:var(--text-soft)}
+.section-label{font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:var(--emerald-400);font-weight:700;margin-bottom:14px}
+.lead{font-size:1.1rem;color:var(--text-soft);max-width:780px;margin:0 auto}
+.center{text-align:center}
+.grad-text{background:linear-gradient(135deg,#34d399 0%,#10b981 40%,#fcd34d 100%);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block}
+.glass{background:linear-gradient(135deg,rgba(15,23,20,.6),rgba(22,35,32,.4));backdrop-filter:blur(14px);border:1px solid var(--border);border-radius:18px}
+.glass-strong{background:linear-gradient(135deg,rgba(15,23,20,.92),rgba(22,35,32,.75));backdrop-filter:blur(20px);border:1px solid rgba(52,211,153,.28);border-radius:22px}
+.card{background:linear-gradient(135deg,rgba(15,23,20,.7),rgba(22,35,32,.5));border:1px solid var(--border);border-radius:18px;padding:24px;transition:all .4s}
+.card:hover{border-color:rgba(52,211,153,.45);transform:translateY(-3px)}
+.card-sm{padding:18px;border-radius:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid rgba(52,211,153,.28);background:rgba(16,185,129,.1);color:var(--emerald-300)}
+.chip.gold{border-color:rgba(251,191,36,.32);background:rgba(251,191,36,.1);color:var(--gold-300)}
+.chip.purple{border-color:rgba(168,85,247,.32);background:rgba(168,85,247,.1);color:#c4b5fd}
+.grid{display:grid;gap:20px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+@media (max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.flex{display:flex}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.wrap{flex-wrap:wrap}
+.gap-2{gap:8px}.gap-3{gap:12px}
+.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}.mb-8{margin-bottom:32px}.mb-12{margin-bottom:48px}.mb-16{margin-bottom:64px}
+.mt-4{margin-top:16px}.mt-6{margin-top:24px}.mt-8{margin-top:32px}
+.text-amber{color:var(--gold-300)}.text-emerald{color:var(--emerald-300)}.text-purple{color:#c4b5fd}
+.text-sm{font-size:.875rem}.text-xs{font-size:.78rem}
+.text-soft{color:var(--text-soft)}.text-mute{color:var(--text-mute)}
+pre{background:#0a0f0d;border:1px solid rgba(52,211,153,.25);border-radius:12px;padding:16px;overflow-x:auto;font-size:12px;color:#a7f3d0;line-height:1.6;font-family:'JetBrains Mono',monospace}
+code{font-family:'JetBrains Mono',monospace}
+code.inline{color:var(--gold-300);background:rgba(251,191,36,.08);padding:1px 6px;border-radius:4px;font-size:.85em}
+.ul-clean{list-style:none}
+.ul-dot li{padding:5px 0 5px 18px;position:relative;font-size:.9rem;color:var(--text-soft)}
+.ul-dot li::before{content:"•";color:var(--emerald-400);position:absolute;left:0;font-weight:bold}
+.fm{opacity:0;transform:translateY(30px);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm.in{opacity:1;transform:translateY(0)}
+.fm-left{opacity:0;transform:translateX(-30px);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm-left.in{opacity:1;transform:translateX(0)}
+.fm-right{opacity:0;transform:translateX(30px);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm-right.in{opacity:1;transform:translateX(0)}
+.fm-scale{opacity:0;transform:scale(.93);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm-scale.in{opacity:1;transform:scale(1)}
+.stagger.in > .fm,.stagger.in > .fm-scale{opacity:1;transform:none}
+.stagger.in > *:nth-child(1){transition-delay:.05s}.stagger.in > *:nth-child(2){transition-delay:.13s}.stagger.in > *:nth-child(3){transition-delay:.21s}.stagger.in > *:nth-child(4){transition-delay:.29s}
+.mermaid{background:transparent !important;display:flex;justify-content:center;margin:0 auto;min-height:80px}
+.mermaid svg{max-width:100%;height:auto}
+.hero{min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;background:radial-gradient(ellipse at center,rgba(168,85,247,.2) 0%,transparent 60%)}
+.gem-icon{width:80px;height:80px;background:linear-gradient(135deg,#a855f7,#7c3aed 50%,#581c87);clip-path:polygon(50% 0%,90% 30%,80% 90%,20% 90%,10% 30%);box-shadow:0 0 60px rgba(168,85,247,.5);margin:0 auto 24px;animation:gem 6s ease-in-out infinite}
+@keyframes gem{0%,100%{transform:rotate(-5deg) scale(1)}50%{transform:rotate(5deg) scale(1.05)}}
+.section-tinted{background:linear-gradient(180deg,transparent,rgba(168,85,247,.08),transparent)}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#fcd34d,#f59e0b);color:#0a0f0d;font-weight:800;font-size:.95rem;margin-right:10px;flex-shrink:0}
+.checklist li{display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:.9rem;color:var(--text-soft)}
+.checklist li::before{content:"☐";color:var(--gold-300);font-size:1.1em;margin-top:-2px}
+.prompt-box{background:#0a0f0d;border:1px dashed rgba(251,191,36,.4);border-radius:12px;padding:18px;margin:12px 0;font-family:'JetBrains Mono',monospace;font-size:12px;color:#fcd34d;line-height:1.6;white-space:pre-wrap}
+.prompt-box::before{content:"💬 PROMPT PARA CLAUDE CODE";display:block;font-size:10px;letter-spacing:.2em;color:var(--gold-300);margin-bottom:8px;font-family:'Inter',sans-serif}
+footer{border-top:1px solid rgba(52,211,153,.2);padding:32px 24px;text-align:center;color:var(--text-mute);font-size:.85rem}
+.area-nav{position:sticky;top:0;z-index:40;background:rgba(5,8,7,.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(168,85,247,.2);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.area-nav-title{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:#c4b5fd}
+.area-nav-links{display:flex;gap:14px;flex-wrap:wrap}
+.area-nav-links a{font-size:.82rem;color:var(--text-soft);text-decoration:none}
+.area-nav-links a:hover{color:#c4b5fd}
+</style>
+</head>
+<body>
+
+<nav class="area-nav">
+  <span class="area-nav-title">Área 4 · Integraciones · Middleware</span>
+  <div class="area-nav-links">
+    <a href="#objetivo">Objetivo</a>
+    <a href="#workers">Cloudflare Workers</a>
+    <a href="#mp">Mercado Pago</a>
+    <a href="#webhooks">Webhooks</a>
+    <a href="#prompts">Prompts</a>
+    <a href="#checklist">Checklist</a>
+    <a href="plan-ejecucion-tierra-madre.html">← Maestro</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div>
+    <div class="fm in"><div class="gem-icon"></div></div>
+    <p class="section-label fm in" style="transition-delay:.15s">ÁREA 4 · MIDDLEWARE</p>
+    <h1 class="serif fm in mb-4" style="transition-delay:.25s">El <span class="grad-text">pegamento</span> entre sistemas</h1>
+    <p class="lead fm in" style="transition-delay:.4s">
+      Cloudflare Workers que reciben webhooks de Mercado Pago, GHL y Supabase, validan firmas, traducen datos entre formatos y orquestan flujos cross-sistema. Setup completo de Mercado Pago con métodos PSE, Nequi, Daviplata y tarjeta.
+    </p>
+    <div class="flex justify-center wrap gap-3 fm in mt-8" style="transition-delay:.55s">
+      <span class="chip purple">Cloudflare Workers</span>
+      <span class="chip">Mercado Pago Checkout API</span>
+      <span class="chip">HMAC validation</span>
+      <span class="chip purple">Wrangler CLI</span>
+      <span class="chip">KV Storage</span>
+    </div>
+  </div>
+</section>
+
+<section id="objetivo">
+  <div class="container">
+    <div class="grid grid-2 items-center">
+      <div class="fm-left">
+        <p class="section-label">Objetivo</p>
+        <h2 class="serif mb-6">Qué construye esta área</h2>
+        <p class="mb-4">El "tejido conectivo" del sistema. Cuando un cliente paga en Mercado Pago, alguien tiene que: actualizar la orden en Supabase, mover el contacto en el pipeline de GHL, calcular comisión, agendar el envío. Esa coreografía la hace Cloudflare Workers.</p>
+        <ul class="ul-clean ul-dot">
+          <li>4 Cloudflare Workers (microservicios stateless)</li>
+          <li>Setup de Mercado Pago Business + credenciales</li>
+          <li>Webhooks de MP validados con HMAC</li>
+          <li>Webhooks bidireccionales GHL ↔ Supabase</li>
+          <li>Worker para shipping (futuro)</li>
+          <li>Manejo de errores + reintentos automáticos</li>
+          <li>Logging y monitoreo</li>
+          <li>Cron triggers para tareas programadas</li>
+        </ul>
+      </div>
+      <div class="fm-right">
+        <div class="glass-strong" style="padding:24px">
+          <h3 class="grad-text mb-4">📦 Entregables</h3>
+          <ul class="ul-clean ul-dot text-sm">
+            <li>4 Workers deployados en Cloudflare</li>
+            <li>URLs de webhooks documentadas</li>
+            <li>Secrets configurados en CF dashboard</li>
+            <li>Cuenta Mercado Pago Business activa</li>
+            <li>Webhooks de MP configurados</li>
+            <li>Logs accesibles en Wrangler tail</li>
+            <li>Tests automáticos por Worker</li>
+            <li>Documentación con ejemplos de payload</li>
+            <li>KV Storage para cachear tokens y rate limit</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ARQUITECTURA -->
+<section class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Arquitectura</p>
+      <h2 class="serif fm mb-6">Cómo conversan los 4 Workers</h2>
+    </div>
+
+    <div class="glass-strong fm" style="padding:28px">
+      <div class="mermaid">
+flowchart TB
+    subgraph EXT["Sistemas externos"]
+        MP[Mercado Pago]
+        GHL[GoHighLevel]
+        SUP[Supabase DB]
+        WEB[Web Vite]
+    end
+    subgraph CF["Cloudflare Workers"]
+        W1[Worker 1<br/>mp-webhook]
+        W2[Worker 2<br/>ghl-bridge]
+        W3[Worker 3<br/>order-orchestrator]
+        W4[Worker 4<br/>scheduler]
+    end
+    MP -- POST webhook --> W1
+    W1 -- update orden --> SUP
+    W1 -- update contact + workflow --> GHL
+    GHL -- webhook inbound --> W2
+    W2 -- sync contact --> SUP
+    WEB -- crear orden --> W3
+    W3 -- insert order --> SUP
+    W3 -- create MP preference --> MP
+    W3 -- URL checkout --> WEB
+    W4 -- cron daily --> SUP
+    W4 -- trigger functions --> SUP
+    style W1 fill:#451a03,stroke:#a855f7,color:#fff
+    style W2 fill:#451a03,stroke:#a855f7,color:#fff
+    style W3 fill:#451a03,stroke:#a855f7,color:#fff
+    style W4 fill:#451a03,stroke:#a855f7,color:#fff
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WORKERS -->
+<section id="workers">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Los 4 Workers</p>
+      <h2 class="serif fm mb-6">Cada microservicio en detalle</h2>
+    </div>
+
+    <div class="grid grid-2 stagger fm mb-8">
+      <div class="card fm-scale">
+        <div class="chip purple mb-3">Worker 1</div>
+        <h3 class="mb-3">💳 mp-webhook</h3>
+        <p class="text-sm mb-3">Recibe webhooks de Mercado Pago cuando un pago cambia de estado.</p>
+        <p class="text-xs text-purple"><strong>URL:</strong> wh.tierramadre.workers.dev/mp</p>
+        <p class="text-xs text-purple"><strong>Eventos:</strong> payment.created, payment.updated, payment.approved</p>
+        <p class="text-xs text-purple"><strong>Acciones:</strong> validar HMAC → consultar pago → update Supabase → notificar GHL</p>
+      </div>
+      <div class="card fm-scale">
+        <div class="chip purple mb-3">Worker 2</div>
+        <h3 class="mb-3">🔄 ghl-bridge</h3>
+        <p class="text-sm mb-3">Sincroniza datos GHL ↔ Supabase bidireccionalmente.</p>
+        <p class="text-xs text-purple"><strong>URL:</strong> wh.tierramadre.workers.dev/ghl</p>
+        <p class="text-xs text-purple"><strong>Eventos:</strong> ContactCreate, ContactUpdate, InboundMessage</p>
+        <p class="text-xs text-purple"><strong>Acciones:</strong> mapear custom fields → upsert en Supabase</p>
+      </div>
+      <div class="card fm-scale">
+        <div class="chip purple mb-3">Worker 3</div>
+        <h3 class="mb-3">🛒 order-orchestrator</h3>
+        <p class="text-sm mb-3">Crea órdenes desde el frontend o desde el bot, genera preferencia de MP.</p>
+        <p class="text-xs text-purple"><strong>URL:</strong> wh.tierramadre.workers.dev/order</p>
+        <p class="text-xs text-purple"><strong>Métodos:</strong> POST /create, GET /status, POST /cancel</p>
+        <p class="text-xs text-purple"><strong>Acciones:</strong> validar carrito → insert Supabase → MP preference → URL</p>
+      </div>
+      <div class="card fm-scale">
+        <div class="chip purple mb-3">Worker 4</div>
+        <h3 class="mb-3">⏰ scheduler</h3>
+        <p class="text-sm mb-3">Cron triggers para tareas programadas (no en Supabase porque no tiene cron nativo en free tier).</p>
+        <p class="text-xs text-purple"><strong>Triggers:</strong> cada 15min (hot leads), diario 00:00 (scoring), diario 09:00 (recordatorios)</p>
+        <p class="text-xs text-purple"><strong>Acciones:</strong> llamar Edge Functions de Supabase</p>
+      </div>
+    </div>
+
+    <!-- Código completo Worker 1 -->
+    <div class="glass-strong mb-6 fm" style="padding:28px">
+      <h3 class="grad-text mb-4">📝 Código completo · Worker 1 · mp-webhook</h3>
+      <pre><code>// workers/mp-webhook/src/index.ts
+export interface Env {
+  MP_TOKEN: string;
+  MP_SECRET: string;
+  SUPABASE_URL: string;
+  SUPABASE_SERVICE_KEY: string;
+  GHL_TOKEN: string;
+  GHL_LOCATION_ID: string;
+  WF_POSTVENTA_ID: string;
+}
+
+async function validateMPSignature(req: Request, body: string, secret: string): Promise&lt;boolean&gt; {
+  const xSignature = req.headers.get('x-signature') || '';
+  const xRequestId = req.headers.get('x-request-id') || '';
+  const dataId = new URL(req.url).searchParams.get('data.id') || '';
+
+  // Parse x-signature: ts=...,v1=...
+  const parts = xSignature.split(',');
+  const ts = parts.find(p => p.startsWith('ts='))?.split('=')[1];
+  const v1 = parts.find(p => p.startsWith('v1='))?.split('=')[1];
+
+  if (!ts || !v1) return false;
+
+  const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(manifest));
+  const hex = Array.from(new Uint8Array(sig))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+
+  return hex === v1;
+}
+
+export default {
+  async fetch(req: Request, env: Env): Promise&lt;Response&gt; {
+    if (req.method !== 'POST') return new Response('only POST', { status: 405 });
+
+    const body = await req.text();
+    if (!await validateMPSignature(req, body, env.MP_SECRET)) {
+      return new Response('invalid signature', { status: 401 });
+    }
+
+    const payload = JSON.parse(body);
+    if (payload.type !== 'payment' || !payload.data?.id) {
+      return new Response('OK', { status: 200 });
+    }
+
+    // 1. Consultar pago en MP
+    const pago = await fetch(
+      `https://api.mercadopago.com/v1/payments/${payload.data.id}`,
+      { headers: { Authorization: `Bearer ${env.MP_TOKEN}` } }
+    ).then(r => r.json());
+
+    if (pago.status !== 'approved') {
+      return new Response('OK', { status: 200 });
+    }
+
+    const orderId = pago.external_reference;
+
+    // 2. Update orden en Supabase
+    await fetch(
+      `${env.SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          apikey: env.SUPABASE_SERVICE_KEY,
+          Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=representation'
+        },
+        body: JSON.stringify({
+          status: 'paid',
+          mp_payment_id: pago.id.toString(),
+          mp_status: pago.status,
+          paid_at: new Date().toISOString()
+        })
+      }
+    );
+
+    // 3. Obtener contact_id de la orden
+    const orderResp = await fetch(
+      `${env.SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}&select=contact_id,ambassador_id,total_cop`,
+      { headers: { apikey: env.SUPABASE_SERVICE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}` } }
+    ).then(r => r.json());
+
+    if (!orderResp[0]) return new Response('order not found', { status: 404 });
+    const { contact_id, ambassador_id, total_cop } = orderResp[0];
+
+    // 4. Buscar contact en GHL por contact_id custom field
+    const ghlContact = await fetch(
+      `https://services.leadconnectorhq.com/contacts/search?locationId=${env.GHL_LOCATION_ID}&query=${contact_id}`,
+      { headers: { Authorization: `Bearer ${env.GHL_TOKEN}`, Version: '2021-07-28' } }
+    ).then(r => r.json());
+
+    if (ghlContact.contacts?.[0]) {
+      const ghlId = ghlContact.contacts[0].id;
+
+      // 5. Update GHL contact: suma total_comprado, ultima_compra
+      await fetch(
+        `https://services.leadconnectorhq.com/contacts/${ghlId}`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${env.GHL_TOKEN}`,
+            Version: '2021-07-28',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            customFields: [
+              { key: 'total_comprado_cop', value: total_cop },
+              { key: 'ultima_compra_fecha', value: new Date().toISOString() }
+            ],
+            tags: ['cliente-pago-confirmado']
+          })
+        }
+      );
+
+      // 6. Disparar workflow #08 post-venta
+      await fetch(
+        `https://services.leadconnectorhq.com/workflows/${env.WF_POSTVENTA_ID}/subscriptions`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${env.GHL_TOKEN}`,
+            Version: '2021-07-28',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ contactId: ghlId })
+        }
+      );
+    }
+
+    return new Response('OK', { status: 200 });
+  }
+};</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- MERCADO PAGO SETUP -->
+<section id="mp" class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Mercado Pago</p>
+      <h2 class="serif fm mb-6">Setup completo</h2>
+    </div>
+
+    <div class="glass mb-6 fm" style="padding:24px">
+      <h3 class="mb-3"><span class="step-num">1</span>Crear cuenta Mercado Pago Business</h3>
+      <ul class="ul-clean ul-dot text-sm">
+        <li>Ir a <code class="inline">mercadopago.com.co</code> → Cuenta Business</li>
+        <li>Verificar identidad: cédula del representante legal, RUT</li>
+        <li>Verificar cuenta bancaria de liquidación</li>
+        <li>Esperar verificación (24-48h)</li>
+        <li>Activar métodos: PSE, Nequi, Daviplata, tarjetas Visa/MC/Amex</li>
+      </ul>
+    </div>
+
+    <div class="glass mb-6 fm" style="padding:24px">
+      <h3 class="mb-3"><span class="step-num">2</span>Obtener credenciales API</h3>
+      <ul class="ul-clean ul-dot text-sm">
+        <li>Ir a <code class="inline">mercadopago.com.co/developers/panel</code></li>
+        <li>Crear aplicación "Tierra Madre Web"</li>
+        <li>Copiar <code class="inline">PUBLIC_KEY</code> (para frontend)</li>
+        <li>Copiar <code class="inline">ACCESS_TOKEN</code> (server, secreto)</li>
+        <li>Copiar <code class="inline">WEBHOOK_SECRET</code> (para validar HMAC)</li>
+        <li>Tener modo PRUEBA y modo PRODUCCIÓN separados</li>
+      </ul>
+    </div>
+
+    <div class="glass mb-6 fm" style="padding:24px">
+      <h3 class="mb-3"><span class="step-num">3</span>Configurar Webhooks</h3>
+      <ul class="ul-clean ul-dot text-sm">
+        <li>En el panel de developers → Webhooks</li>
+        <li>URL: <code class="inline">https://wh.tierramadre.workers.dev/mp</code></li>
+        <li>Eventos a suscribir: <code class="inline">payment</code>, <code class="inline">merchant_order</code></li>
+        <li>Test webhook con tarjeta de prueba antes de pasar a producción</li>
+      </ul>
+    </div>
+
+    <div class="glass mb-6 fm" style="padding:24px">
+      <h3 class="mb-3"><span class="step-num">4</span>Crear preferencia (Worker 3)</h3>
+      <pre><code>// Ejemplo: crear preferencia de pago desde order-orchestrator
+const preference = {
+  items: orderItems.map(item => ({
+    title: item.nombre,
+    quantity: item.quantity,
+    unit_price: item.unit_price_cop,
+    currency_id: 'COP'
+  })),
+  payer: {
+    email: contact.email,
+    name: contact.full_name,
+    phone: { number: contact.celular }
+  },
+  back_urls: {
+    success: 'https://tierramadre.co/pedido-confirmado',
+    failure: 'https://tierramadre.co/pago-fallido',
+    pending: 'https://tierramadre.co/pago-pendiente'
+  },
+  auto_return: 'approved',
+  external_reference: order.id,
+  notification_url: 'https://wh.tierramadre.workers.dev/mp',
+  payment_methods: {
+    excluded_payment_methods: [],
+    excluded_payment_types: [],
+    installments: 12
+  }
+};
+
+const resp = await fetch('https://api.mercadopago.com/checkout/preferences', {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${env.MP_TOKEN}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify(preference)
+});
+const { id, init_point } = await resp.json();
+// init_point es la URL que enviamos al cliente</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- PROMPTS -->
+<section id="prompts">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Prompts</p>
+      <h2 class="serif fm mb-6">Para Claude Code</h2>
+    </div>
+
+    <div class="glass-strong mb-6 fm" style="padding:28px">
+      <h3 class="grad-text mb-3">🚀 Prompt 1 · Setup Cloudflare Workers</h3>
+      <div class="prompt-box">Crea el repositorio tierramadre-workers para los 4 Cloudflare Workers de Tierra Madre.
+
+Setup:
+1. mkdir tierramadre-workers && cd tierramadre-workers
+2. npm install -g wrangler
+3. wrangler login
+
+Estructura:
+tierramadre-workers/
+├── workers/
+│   ├── mp-webhook/
+│   │   ├── src/index.ts
+│   │   ├── wrangler.toml
+│   │   └── tests/
+│   ├── ghl-bridge/
+│   ├── order-orchestrator/
+│   └── scheduler/
+├── shared/
+│   ├── types.ts
+│   ├── ghl-client.ts
+│   ├── supabase-client.ts
+│   └── mp-client.ts
+└── package.json
+
+Para cada Worker:
+- wrangler init {name}
+- Configurar wrangler.toml con env vars: MP_TOKEN, MP_SECRET, SUPABASE_URL, SUPABASE_SERVICE_KEY, GHL_TOKEN, GHL_LOCATION_ID, WF_*
+- npm install hono (para routing dentro del Worker)
+- Implementar según código de área-4-integraciones.html
+- Deploy: wrangler deploy
+
+Configura las URLs:
+- mp-webhook: wh.tierramadre.workers.dev/mp
+- ghl-bridge: wh.tierramadre.workers.dev/ghl
+- order-orchestrator: api.tierramadre.workers.dev/order
+- scheduler: triggers cron internos (no URL pública)
+
+Configura secrets en Cloudflare:
+wrangler secret put MP_TOKEN
+wrangler secret put MP_SECRET
+... (todos los demás)</div>
+    </div>
+
+    <div class="glass-strong mb-6 fm" style="padding:28px">
+      <h3 class="grad-text mb-3">🚀 Prompt 2 · Worker mp-webhook completo</h3>
+      <div class="prompt-box">Implementa el Worker mp-webhook en workers/mp-webhook/src/index.ts según el código completo en área-4-integraciones.html.
+
+Pasos:
+1. Validar firma HMAC SHA-256 de Mercado Pago (parsing x-signature header)
+2. Si firma inválida → 401
+3. Solo procesar type=payment
+4. GET /v1/payments/{id} a MP API con MP_TOKEN
+5. Si status='approved':
+   - PATCH /rest/v1/orders en Supabase: status='paid', mp_payment_id, paid_at
+   - GET el contact_id de la orden
+   - Buscar contact en GHL via /contacts/search
+   - PUT GHL contact con customFields actualizados + tag 'cliente-pago-confirmado'
+   - POST /workflows/{WF_POSTVENTA_ID}/subscriptions con contactId
+
+Manejo de errores:
+- Si MP API falla: log + return 500 (MP reintentará)
+- Si Supabase falla: log + return 500
+- Si GHL falla pero Supabase OK: log + return 200 (no perder pago)
+
+Tests con Vitest:
+- Firma inválida → 401
+- Pago no approved → 200 sin acción
+- Pago approved → todas las actualizaciones se hacen
+
+Deploy: wrangler deploy</div>
+    </div>
+
+    <div class="glass-strong mb-6 fm" style="padding:28px">
+      <h3 class="grad-text mb-3">🚀 Prompt 3 · order-orchestrator Worker</h3>
+      <div class="prompt-box">Implementa workers/order-orchestrator/src/index.ts con Hono router:
+
+Endpoints:
+POST /order/create  → Crear orden + preferencia MP
+GET  /order/:id     → Obtener estado de orden
+POST /order/:id/cancel → Cancelar orden
+
+POST /order/create:
+Input JSON:
+{
+  "contact": { celular, email, full_name, ciudad, direccion },
+  "items": [{ product_id, quantity }],
+  "promotion_code": "TM-XKR9F2",  // opcional
+  "ambassador_id": "uuid"           // opcional
+}
+
+Lógica:
+1. Validar items contra Supabase (stock disponible + precio actual)
+2. Si promotion_code: validar en promotion_codes (existe, no usado, no expirado, aplica a estos productos)
+3. Calcular total con descuento
+4. INSERT order en Supabase (status='pending')
+5. INSERT order_items
+6. Llamar MP API para crear preferencia (ver código en área-4)
+7. UPDATE order con mp_preference_id
+8. Devolver: { order_id, mp_checkout_url, total }
+
+Si en cualquier paso falla: rollback Supabase + return 500.
+
+Deploy con wrangler. Test con curl.</div>
+    </div>
+
+    <div class="glass-strong fm" style="padding:28px">
+      <h3 class="grad-text mb-3">🚀 Prompt 4 · scheduler Worker con cron</h3>
+      <div class="prompt-box">Implementa workers/scheduler/src/index.ts:
+
+wrangler.toml:
+[triggers]
+crons = [
+  "*/15 * * * *",   # cada 15 min: hot lead detector
+  "0 0 * * *",      # diario 00:00: ambassador scoring
+  "0 9 * * *",      # diario 09:00: recordatorios eventos del día
+  "0 18 * * *"      # diario 18:00: recordatorios carrito abandonado
+]
+
+Implementación con scheduled handler:
+export default {
+  async scheduled(event, env, ctx) {
+    const cron = event.cron;
+    if (cron === '*/15 * * * *') {
+      // Llamar Edge Function hot-lead-detector
+      await fetch(`${env.SUPABASE_URL}/functions/v1/hot-lead-detector`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}` }
+      });
+    }
+    if (cron === '0 0 * * *') {
+      await fetch(`${env.SUPABASE_URL}/functions/v1/calculate-ambassador-score`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}` }
+      });
+    }
+    // ... etc
+  }
+}
+
+Logging con console.log + wrangler tail para monitoreo.</div>
+    </div>
+  </div>
+</section>
+
+<section id="checklist">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Checklist</p>
+      <h2 class="serif fm mb-6">Criterios de aceptación</h2>
+    </div>
+    <div class="glass-strong fm" style="padding:32px">
+      <ul class="checklist">
+        <li>Cuenta Cloudflare creada (gratis hasta 100k req/día)</li>
+        <li>4 Workers deployados y respondiendo 200 OK en health check</li>
+        <li>Secrets configurados en cada Worker</li>
+        <li>Cuenta Mercado Pago Business verificada</li>
+        <li>Credenciales MP modo PRUEBA y PRODUCCIÓN guardadas</li>
+        <li>Webhook URL configurada en MP apuntando a mp-webhook</li>
+        <li>Test con tarjeta de prueba: pago genera webhook, actualiza orden, mueve pipeline GHL</li>
+        <li>Validación HMAC funciona (test con firma inválida → 401)</li>
+        <li>Worker ghl-bridge recibe webhooks de GHL y sincroniza Supabase</li>
+        <li>Worker order-orchestrator crea órdenes desde el frontend</li>
+        <li>Worker scheduler ejecuta 4 crons sin errores</li>
+        <li>Logs accesibles con wrangler tail</li>
+        <li>Tests automáticos pasan (Vitest)</li>
+        <li>README con setup local + deploy + arquitectura</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p class="serif" style="font-size:1.1rem;color:#c4b5fd;margin-bottom:8px">Tierra Madre · Área 4 · Integraciones</p>
+  <p>Cloudflare Workers + Mercado Pago + Webhooks · Construir con Claude Code</p>
+  <p style="margin-top:12px"><a href="plan-ejecucion-tierra-madre.html" style="color:var(--gold-300);text-decoration:none">← Volver al documento maestro</a></p>
+</footer>
+
+<script>
+  mermaid.initialize({startOnLoad:true,theme:'dark',themeVariables:{primaryColor:'#451a03',primaryTextColor:'#fff',primaryBorderColor:'#a855f7',lineColor:'#a855f7',background:'transparent',mainBkg:'#0f1714',fontFamily:'Inter,sans-serif'},flowchart:{useMaxWidth:true,curve:'basis'}});
+  const io = new IntersectionObserver((entries) => {entries.forEach(e => {if (e.isIntersecting) {e.target.classList.add('in');if (e.target.classList.contains('stagger')) e.target.querySelectorAll('.fm, .fm-left, .fm-right, .fm-scale').forEach(c => c.classList.add('in'));}});}, {threshold:0.12,rootMargin:'0px 0px -50px 0px'});
+  document.querySelectorAll('.fm, .fm-left, .fm-right, .fm-scale, .stagger').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

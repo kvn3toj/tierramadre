@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Área 1 · Frontend Web · Tierra Madre</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050807;--bg-1:#0a0f0d;--bg-2:#0f1714;
+  --emerald-300:#6ee7b7;--emerald-400:#34d399;--emerald-500:#10b981;
+  --emerald-600:#059669;--emerald-700:#047857;--emerald-900:#064e3b;
+  --gold-300:#fcd34d;--gold-400:#fbbf24;--gold-500:#f59e0b;
+  --text:#e6f4ef;--text-soft:rgba(230,244,239,.72);--text-mute:rgba(230,244,239,.5);
+  --border:rgba(52,211,153,.2);--purple:#a855f7;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',sans-serif;
+  background:radial-gradient(ellipse at top,#0f1714 0%,#050807 60%,#000 100%);
+  color:var(--text);line-height:1.65;min-height:100vh;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+.serif{font-family:'Playfair Display',Georgia,serif;letter-spacing:-.02em}
+.mono{font-family:'JetBrains Mono',monospace}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+section{padding:80px 24px;position:relative}
+h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:900;line-height:1.05}
+h2{font-size:clamp(1.75rem,4vw,2.75rem);font-weight:800;line-height:1.15}
+h3{font-size:1.4rem;font-weight:700}
+h4{font-size:1rem;font-weight:700}
+p{color:var(--text-soft)}
+.section-label{font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:var(--emerald-400);font-weight:700;margin-bottom:14px}
+.lead{font-size:1.1rem;color:var(--text-soft);max-width:780px;margin:0 auto;line-height:1.65}
+.center{text-align:center}
+.grad-text{background:linear-gradient(135deg,#34d399 0%,#10b981 40%,#fcd34d 100%);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block}
+.glass{background:linear-gradient(135deg,rgba(15,23,20,.6),rgba(22,35,32,.4));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--border);border-radius:18px}
+.glass-strong{background:linear-gradient(135deg,rgba(15,23,20,.92),rgba(22,35,32,.75));backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(52,211,153,.28);border-radius:22px}
+.card{background:linear-gradient(135deg,rgba(15,23,20,.7),rgba(22,35,32,.5));border:1px solid var(--border);border-radius:18px;padding:24px;transition:border-color .4s,transform .4s;position:relative;overflow:hidden}
+.card:hover{border-color:rgba(52,211,153,.45);transform:translateY(-3px)}
+.card-sm{padding:18px;border-radius:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid rgba(52,211,153,.28);background:rgba(16,185,129,.1);color:var(--emerald-300)}
+.chip.gold{border-color:rgba(251,191,36,.32);background:rgba(251,191,36,.1);color:var(--gold-300)}
+.chip.purple{border-color:rgba(168,85,247,.32);background:rgba(168,85,247,.1);color:#c4b5fd}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 28px;border-radius:99px;font-weight:600;font-size:.95rem;text-decoration:none;color:#fff;background:linear-gradient(135deg,#10b981,#047857);box-shadow:0 0 30px rgba(52,211,153,.3);transition:transform .3s}
+.btn:hover{transform:scale(1.04)}
+.grid{display:grid;gap:20px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+@media (max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.flex{display:flex}.items-center{align-items:center}.justify-between{justify-content:space-between}.justify-center{justify-content:center}
+.gap-2{gap:8px}.gap-3{gap:12px}.gap-4{gap:16px}.wrap{flex-wrap:wrap}
+.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}.mb-8{margin-bottom:32px}.mb-12{margin-bottom:48px}.mb-16{margin-bottom:64px}
+.mt-4{margin-top:16px}.mt-6{margin-top:24px}.mt-8{margin-top:32px}
+.text-amber{color:var(--gold-300)}.text-emerald{color:var(--emerald-300)}.text-purple{color:#c4b5fd}
+.text-sm{font-size:.875rem}.text-xs{font-size:.78rem}.text-lg{font-size:1.1rem}.text-2xl{font-size:1.4rem;font-weight:700}
+.text-soft{color:var(--text-soft)}.text-mute{color:var(--text-mute)}
+.font-bold{font-weight:700}
+pre{background:#0a0f0d;border:1px solid rgba(52,211,153,.25);border-radius:12px;padding:16px;overflow-x:auto;font-size:12px;color:#a7f3d0;line-height:1.6;font-family:'JetBrains Mono',monospace}
+code{font-family:'JetBrains Mono',monospace}
+code.inline{color:var(--gold-300);background:rgba(251,191,36,.08);padding:1px 6px;border-radius:4px;font-size:.85em}
+.ul-clean{list-style:none}
+.ul-dot li{padding:5px 0 5px 18px;position:relative;font-size:.9rem;color:var(--text-soft)}
+.ul-dot li::before{content:"•";color:var(--emerald-400);position:absolute;left:0;font-weight:bold}
+.accent-list > div{padding:8px 0 8px 14px;border-left:2px solid var(--emerald-400);margin-bottom:8px;font-size:.9rem}
+.fm{opacity:0;transform:translateY(30px);transition:opacity .8s cubic-bezier(.22,1,.36,1),transform .8s cubic-bezier(.22,1,.36,1)}
+.fm.in{opacity:1;transform:translateY(0)}
+.fm-left{opacity:0;transform:translateX(-30px);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm-left.in{opacity:1;transform:translateX(0)}
+.fm-right{opacity:0;transform:translateX(30px);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm-right.in{opacity:1;transform:translateX(0)}
+.fm-scale{opacity:0;transform:scale(.93);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm-scale.in{opacity:1;transform:scale(1)}
+.stagger.in > .fm,.stagger.in > .fm-scale{opacity:1;transform:none}
+.stagger.in > *:nth-child(1){transition-delay:.05s}.stagger.in > *:nth-child(2){transition-delay:.13s}.stagger.in > *:nth-child(3){transition-delay:.21s}.stagger.in > *:nth-child(4){transition-delay:.29s}.stagger.in > *:nth-child(5){transition-delay:.37s}.stagger.in > *:nth-child(6){transition-delay:.45s}
+.mermaid{background:transparent !important;display:flex;justify-content:center;margin:0 auto;min-height:80px}
+.mermaid svg{max-width:100%;height:auto}
+.hero{min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;background:radial-gradient(ellipse at center,rgba(16,185,129,.25) 0%,transparent 60%)}
+.gem-icon{width:80px;height:80px;background:linear-gradient(135deg,#34d399,#10b981 50%,#047857);clip-path:polygon(50% 0%,90% 30%,80% 90%,20% 90%,10% 30%);box-shadow:0 0 60px rgba(52,211,153,.5);margin:0 auto 24px;animation:gem 6s ease-in-out infinite}
+@keyframes gem{0%,100%{transform:rotate(-5deg) scale(1)}50%{transform:rotate(5deg) scale(1.05)}}
+.section-tinted{background:linear-gradient(180deg,transparent,rgba(6,78,59,.1),transparent)}
+.section-gold{background:linear-gradient(180deg,transparent,rgba(180,83,9,.08),transparent)}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#fcd34d,#f59e0b);color:#0a0f0d;font-weight:800;font-size:.95rem;margin-right:10px;flex-shrink:0}
+.checklist li{display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:.9rem;color:var(--text-soft)}
+.checklist li::before{content:"☐";color:var(--gold-300);font-size:1.1em;margin-top:-2px}
+.prompt-box{background:#0a0f0d;border:1px dashed rgba(251,191,36,.4);border-radius:12px;padding:18px;margin:12px 0;font-family:'JetBrains Mono',monospace;font-size:12px;color:#fcd34d;line-height:1.6;white-space:pre-wrap}
+.prompt-box::before{content:"💬 PROMPT PARA CLAUDE CODE";display:block;font-size:10px;letter-spacing:.2em;color:var(--gold-300);margin-bottom:8px;font-family:'Inter',sans-serif}
+footer{border-top:1px solid rgba(52,211,153,.2);padding:32px 24px;text-align:center;color:var(--text-mute);font-size:.85rem}
+.area-nav{position:sticky;top:0;z-index:40;background:rgba(5,8,7,.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(52,211,153,.15);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.area-nav-title{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:var(--emerald-300)}
+.area-nav-links{display:flex;gap:14px;flex-wrap:wrap}
+.area-nav-links a{font-size:.82rem;color:var(--text-soft);text-decoration:none;transition:color .2s}
+.area-nav-links a:hover{color:var(--emerald-300)}
+</style>
+</head>
+<body>
+
+<nav class="area-nav">
+  <span class="area-nav-title">Área 1 · Frontend Web</span>
+  <div class="area-nav-links">
+    <a href="#objetivo">Objetivo</a>
+    <a href="#stack">Stack</a>
+    <a href="#estructura">Estructura</a>
+    <a href="#paso-a-paso">Paso a paso</a>
+    <a href="#prompts">Prompts</a>
+    <a href="#conexiones">Conexiones</a>
+    <a href="#checklist">Checklist</a>
+    <a href="plan-ejecucion-tierra-madre.html">← Volver al maestro</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div>
+    <div class="fm in"><div class="gem-icon"></div></div>
+    <p class="section-label fm in" style="transition-delay:.15s">ÁREA 1 · FRONTEND WEB</p>
+    <h1 class="serif fm in mb-4" style="transition-delay:.25s">Página, landings y <span class="grad-text">admin</span></h1>
+    <p class="lead fm in" style="transition-delay:.4s">
+      Construir la página madre, las 6 landing pages, las páginas de producto, el carrito, el checkout y el admin interno con Vite + React + framer-motion + Tailwind. Conectado a Supabase y GoHighLevel.
+    </p>
+    <div class="flex justify-center wrap gap-3 fm in mt-8" style="transition-delay:.55s">
+      <span class="chip">Vite 5</span>
+      <span class="chip">React 19</span>
+      <span class="chip gold">Framer Motion 12</span>
+      <span class="chip">Tailwind CSS 4</span>
+      <span class="chip">TanStack Query 5</span>
+      <span class="chip">React Router v7</span>
+      <span class="chip gold">Supabase JS</span>
+    </div>
+  </div>
+</section>
+
+<!-- OBJETIVO -->
+<section id="objetivo">
+  <div class="container">
+    <div class="grid grid-2 items-center">
+      <div class="fm-left">
+        <p class="section-label">Objetivo</p>
+        <h2 class="serif mb-6">Qué construye esta área</h2>
+        <p class="mb-4">
+          Toda la experiencia visible al usuario final. Un sitio web ultra rápido, con animaciones cinematográficas tipo framer-motion, que vende joyas de lujo y captura cada lead.
+        </p>
+        <ul class="ul-clean ul-dot">
+          <li><strong>Home animada</strong> con hero, sección de productos destacados, historia de la marca</li>
+          <li><strong>Catálogo madre</strong> en <code class="inline">/catalogo</code> con filtros (categoría, precio, ocasión)</li>
+          <li><strong>Página de producto</strong> con galería 360°, certificado descargable, productos relacionados</li>
+          <li><strong>6 landing pages</strong> por categoría con formulario de pre-calificación</li>
+          <li><strong>Carrito</strong> persistente (estado React + Supabase)</li>
+          <li><strong>Checkout custom</strong> integrado con Mercado Pago</li>
+          <li><strong>Formularios</strong> de embajadores y eventos</li>
+          <li><strong>Admin interno</strong> en <code class="inline">/admin</code>: gestión de productos, promociones, dashboard BI</li>
+          <li><strong>Portal embajador</strong> en <code class="inline">/embajador</code>: dashboard personal, leads, comisiones</li>
+        </ul>
+      </div>
+      <div class="fm-right">
+        <div class="glass-strong" style="padding:24px">
+          <h3 class="grad-text mb-4">📦 Entregables</h3>
+          <ul class="ul-clean ul-dot text-sm">
+            <li>Repositorio Git con código limpio y comentado</li>
+            <li>App Vite deployada en Vercel o Cloudflare Pages</li>
+            <li>Dominio configurado con SSL</li>
+            <li>Lighthouse score &gt;90 en Performance, SEO, A11y</li>
+            <li>Conectado a Supabase (lectura/escritura)</li>
+            <li>Conectado a GHL via webhook/API</li>
+            <li>Conectado a Mercado Pago checkout</li>
+            <li>Build &lt;5s, HMR instantáneo</li>
+            <li>Sistema de diseño documentado</li>
+            <li>Tests E2E básicos (carrito + checkout)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STACK -->
+<section id="stack" class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Stack técnico</p>
+      <h2 class="serif fm mb-6">Tecnologías y librerías</h2>
+    </div>
+
+    <div class="grid grid-3 stagger fm">
+      <div class="card fm-scale">
+        <h4 class="text-amber mb-3">⚡ Core</h4>
+        <ul class="ul-clean ul-dot text-sm">
+          <li><strong>Vite 5</strong> · build tool</li>
+          <li><strong>React 19</strong> · UI</li>
+          <li><strong>TypeScript 5</strong> · types</li>
+          <li><strong>React Router 7</strong> · rutas</li>
+        </ul>
+      </div>
+      <div class="card fm-scale">
+        <h4 class="text-amber mb-3">🎨 UI / Estilo</h4>
+        <ul class="ul-clean ul-dot text-sm">
+          <li><strong>Tailwind CSS 4</strong></li>
+          <li><strong>Framer Motion 12</strong> · animaciones</li>
+          <li><strong>shadcn/ui</strong> · componentes base</li>
+          <li><strong>Lucide React</strong> · iconos</li>
+        </ul>
+      </div>
+      <div class="card fm-scale">
+        <h4 class="text-amber mb-3">🔌 Datos</h4>
+        <ul class="ul-clean ul-dot text-sm">
+          <li><strong>@supabase/supabase-js</strong></li>
+          <li><strong>TanStack Query 5</strong> · cache</li>
+          <li><strong>Zustand</strong> · estado global</li>
+          <li><strong>React Hook Form + Zod</strong> · forms</li>
+        </ul>
+      </div>
+      <div class="card fm-scale">
+        <h4 class="text-amber mb-3">💳 Comercio</h4>
+        <ul class="ul-clean ul-dot text-sm">
+          <li><strong>Mercado Pago SDK</strong></li>
+          <li><strong>react-360-product-viewer</strong> · galería 360°</li>
+          <li><strong>embla-carousel-react</strong> · carruseles</li>
+        </ul>
+      </div>
+      <div class="card fm-scale">
+        <h4 class="text-amber mb-3">📊 Admin BI</h4>
+        <ul class="ul-clean ul-dot text-sm">
+          <li><strong>Recharts</strong> · gráficos</li>
+          <li><strong>TanStack Table</strong> · tablas</li>
+          <li><strong>date-fns</strong> · fechas</li>
+          <li><strong>react-dropzone</strong> · uploads</li>
+        </ul>
+      </div>
+      <div class="card fm-scale">
+        <h4 class="text-amber mb-3">🧪 Calidad</h4>
+        <ul class="ul-clean ul-dot text-sm">
+          <li><strong>Vitest</strong> · tests unit</li>
+          <li><strong>Playwright</strong> · E2E</li>
+          <li><strong>ESLint + Prettier</strong></li>
+          <li><strong>Husky</strong> · git hooks</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ESTRUCTURA DE ARCHIVOS -->
+<section id="estructura">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Estructura</p>
+      <h2 class="serif fm mb-6">Organización de carpetas</h2>
+    </div>
+
+    <div class="glass-strong fm" style="padding:28px">
+      <pre><code>tierramadre-web/
+├── public/
+│   └── favicon.svg
+├── src/
+│   ├── main.tsx
+│   ├── App.tsx
+│   ├── routes.tsx
+│   │
+│   ├── pages/
+│   │   ├── Home.tsx
+│   │   ├── Catalog.tsx                  # /catalogo
+│   │   ├── ProductPage.tsx              # /producto/:slug
+│   │   ├── Cart.tsx                     # /carrito
+│   │   ├── Checkout.tsx                 # /checkout
+│   │   ├── OrderConfirmation.tsx
+│   │   ├── landings/
+│   │   │   ├── Topitos.tsx              # /topitos
+│   │   │   ├── AnillosCompromiso.tsx    # /anillos-compromiso
+│   │   │   ├── Dijes.tsx
+│   │   │   ├── GemasSueltas.tsx
+│   │   │   ├── Sets.tsx
+│   │   │   └── Inversion.tsx
+│   │   ├── forms/
+│   │   │   ├── EventRSVP.tsx            # /evento/:slug
+│   │   │   └── AmbassadorLeads.tsx      # /embajador/:slug/leads
+│   │   ├── admin/
+│   │   │   ├── AdminLogin.tsx
+│   │   │   ├── Dashboard.tsx            # /admin (D1)
+│   │   │   ├── ProductsManager.tsx
+│   │   │   ├── ProductEditor.tsx
+│   │   │   ├── PromotionsManager.tsx    # Base 13
+│   │   │   ├── EventsManager.tsx
+│   │   │   ├── AmbassadorsManager.tsx
+│   │   │   └── CommissionsManager.tsx   # D3
+│   │   └── ambassador/
+│   │       ├── Dashboard.tsx            # /embajador
+│   │       ├── MyLeads.tsx
+│   │       └── MyCommissions.tsx
+│   │
+│   ├── components/
+│   │   ├── ui/                          # shadcn primitivos
+│   │   ├── layout/
+│   │   │   ├── Header.tsx
+│   │   │   ├── Footer.tsx
+│   │   │   └── MobileMenu.tsx
+│   │   ├── product/
+│   │   │   ├── ProductCard.tsx
+│   │   │   ├── ProductGallery360.tsx    # A3
+│   │   │   ├── ProductCertificate.tsx
+│   │   │   └── RelatedProducts.tsx
+│   │   ├── cart/
+│   │   │   ├── CartDrawer.tsx
+│   │   │   └── CartItem.tsx
+│   │   ├── chat/
+│   │   │   └── ChatWidget.tsx           # embebido GHL
+│   │   ├── animations/
+│   │   │   ├── FadeIn.tsx
+│   │   │   ├── StaggerChildren.tsx
+│   │   │   └── PageTransition.tsx
+│   │   └── admin/
+│   │       ├── StatCard.tsx
+│   │       └── DataTable.tsx
+│   │
+│   ├── lib/
+│   │   ├── supabase.ts                  # cliente Supabase
+│   │   ├── ghl.ts                       # cliente GHL API
+│   │   ├── mp.ts                        # cliente Mercado Pago
+│   │   ├── utils.ts
+│   │   └── types.ts
+│   │
+│   ├── hooks/
+│   │   ├── useProducts.ts
+│   │   ├── useCart.ts
+│   │   ├── useAuth.ts
+│   │   └── useAnalytics.ts
+│   │
+│   ├── store/
+│   │   ├── cartStore.ts                 # Zustand
+│   │   └── userStore.ts
+│   │
+│   └── styles/
+│       └── globals.css
+│
+├── .env.example
+├── tailwind.config.ts
+├── vite.config.ts
+├── tsconfig.json
+└── package.json</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- PASO A PASO -->
+<section id="paso-a-paso" class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Ejecución</p>
+      <h2 class="serif fm mb-6">Paso a paso para arrancar</h2>
+      <p class="lead fm">Sigue estos pasos en orden. Cada paso tiene su prompt de Claude Code listo para copiar.</p>
+    </div>
+
+    <!-- Paso 1 -->
+    <div class="glass mb-6 fm" style="padding:28px">
+      <h3 class="mb-3"><span class="step-num">1</span>Crear proyecto Vite + React + TS</h3>
+      <pre><code>npm create vite@latest tierramadre-web -- --template react-ts
+cd tierramadre-web
+npm install</code></pre>
+      <p class="text-sm mt-3">Verifica que <code class="inline">npm run dev</code> abre en <code class="inline">localhost:5173</code></p>
+    </div>
+
+    <!-- Paso 2 -->
+    <div class="glass mb-6 fm" style="padding:28px">
+      <h3 class="mb-3"><span class="step-num">2</span>Instalar dependencias</h3>
+      <pre><code>npm install react-router-dom @supabase/supabase-js \
+  @tanstack/react-query zustand framer-motion \
+  react-hook-form @hookform/resolvers zod \
+  lucide-react clsx tailwind-merge \
+  date-fns recharts @tanstack/react-table \
+  embla-carousel-react react-dropzone
+
+npm install -D tailwindcss@next @tailwindcss/vite \
+  @types/node vitest @playwright/test \
+  eslint prettier husky</code></pre>
+    </div>
+
+    <!-- Paso 3 -->
+    <div class="glass mb-6 fm" style="padding:28px">
+      <h3 class="mb-3"><span class="step-num">3</span>Configurar Tailwind 4 + theme de Tierra Madre</h3>
+      <div class="prompt-box">Configura Tailwind CSS 4 con Vite. Define un theme custom con:
+- Paleta esmeralda (50-900) basada en #10b981
+- Paleta dorada (300-700) basada en #fcd34d
+- Fuentes: Inter (sans) y Playfair Display (serif)
+- Dark mode por defecto
+- Animaciones personalizadas: fade-up, fade-in, scale-in
+Crea el archivo tailwind.config.ts y actualiza src/styles/globals.css</div>
+    </div>
+
+    <!-- Paso 4 -->
+    <div class="glass mb-6 fm" style="padding:28px">
+      <h3 class="mb-3"><span class="step-num">4</span>Conectar Supabase</h3>
+      <div class="prompt-box">Crea src/lib/supabase.ts que exporte el cliente de Supabase usando:
+- VITE_SUPABASE_URL (desde .env.local)
+- VITE_SUPABASE_ANON_KEY (desde .env.local)
+
+También crea src/lib/types.ts con los tipos TypeScript para:
+- Product (según schema de Base 1)
+- Order
+- Promotion
+- Ambassador
+- Event
+
+Crea .env.example con las variables necesarias documentadas.</div>
+    </div>
+
+    <!-- Paso 5 -->
+    <div class="glass mb-6 fm" style="padding:28px">
+      <h3 class="mb-3"><span class="step-num">5</span>Setup React Query + Zustand</h3>
+      <div class="prompt-box">Configura @tanstack/react-query en src/App.tsx con un QueryClient global.
+Crea src/store/cartStore.ts con Zustand que maneje:
+- items: CartItem[]
+- addItem, removeItem, updateQuantity, clearCart
+- subtotal computed
+- Persistencia en localStorage
+Crea hook useCart() para acceder fácil.</div>
+    </div>
+
+    <!-- Paso 6 -->
+    <div class="glass mb-6 fm" style="padding:28px">
+      <h3 class="mb-3"><span class="step-num">6</span>Construir layout base con framer-motion</h3>
+      <div class="prompt-box">Crea src/components/layout/Header.tsx con:
+- Logo de Tierra Madre (placeholder por ahora)
+- Menú: Catálogo, Topitos, Anillos, Eventos, Embajadores
+- Ícono de carrito con badge de cantidad (lee de cartStore)
+- Animaciones framer-motion: el header se desliza desde arriba al cargar
+- Mobile: menú hamburguesa con drawer animado
+
+Crea src/components/layout/Footer.tsx con info de contacto, redes y políticas.
+
+Crea src/components/animations/FadeIn.tsx (wrapper con variants para entrada con scroll trigger usando useInView de framer-motion).</div>
+    </div>
+
+    <!-- Paso 7 -->
+    <div class="glass mb-6 fm" style="padding:28px">
+      <h3 class="mb-3"><span class="step-num">7</span>Página Home con secciones animadas</h3>
+      <div class="prompt-box">Crea src/pages/Home.tsx con estas secciones (cada una con animación al entrar en viewport):
+1. Hero a pantalla completa con video de fondo + headline + CTA "Ver Catálogo"
+2. Productos destacados (4 cards en grid, query a Supabase WHERE destacado=true)
+3. Historia de la marca con paralax suave
+4. Galería de eventos pasados (carrusel con embla)
+5. Testimonios automáticos (Base C3 - query a tabla testimonials)
+6. CTA final "Habla con un asesor" que abre WhatsApp
+
+Usa framer-motion para todas las animaciones. Mobile-first responsive.</div>
+    </div>
+
+    <!-- Paso 8 -->
+    <div class="glass mb-6 fm" style="padding:28px">
+      <h3 class="mb-3"><span class="step-num">8</span>Catálogo con filtros</h3>
+      <div class="prompt-box">Crea src/pages/Catalog.tsx con:
+- Grid responsive de productos (cards animadas)
+- Sidebar con filtros: categoría (chips), rango de precio (slider), ocasión (checkboxes)
+- Búsqueda por texto (full-text en Supabase con tsvector)
+- Paginación o infinite scroll
+- Animaciones stagger al cargar productos
+- Usa useQuery para fetch + cache
+
+Crea src/components/product/ProductCard.tsx reutilizable con:
+- Foto principal (de fotos[0])
+- Hover muestra segunda foto con crossfade
+- Precio formateado en COP
+- Badge si está destacado
+- Tap → navega a /producto/:slug con transición</div>
+    </div>
+
+    <!-- Paso 9 -->
+    <div class="glass mb-6 fm" style="padding:28px">
+      <h3 class="mb-3"><span class="step-num">9</span>Página de producto con galería 360° (A3)</h3>
+      <div class="prompt-box">Crea src/pages/ProductPage.tsx que reciba :slug, fetch del producto.
+
+Layout:
+- Columna izquierda: ProductGallery360 (24 fotos giratorias)
+- Columna derecha: nombre, precio, descripción, selector de cantidad, botón "Agregar al carrito"
+- Sección bajo: certificado descargable (PDF de Supabase Storage)
+- Sección bajo: productos relacionados (misma categoría)
+
+Crea src/components/product/ProductGallery360.tsx usando react-360-product-viewer.
+Las 24 fotos están en Supabase Storage en /products/{sku}/360/01.jpg...24.jpg
+
+Botón "Agregar al carrito" anima: el producto vuela hacia el ícono del carrito (framer-motion layout animations).</div>
+    </div>
+
+    <!-- Paso 10 -->
+    <div class="glass mb-6 fm" style="padding:28px">
+      <h3 class="mb-3"><span class="step-num">10</span>Carrito + Checkout + Mercado Pago</h3>
+      <div class="prompt-box">Crea src/components/cart/CartDrawer.tsx (slide desde la derecha animado).
+
+Crea src/pages/Checkout.tsx con formulario en pasos:
+1. Datos cliente (nombre, email, celular, ciudad, dirección)
+2. Resumen de orden
+3. Selección método de pago (botones grandes: Tarjeta, PSE, Nequi, Daviplata)
+
+Al confirmar:
+1. POST a Supabase Edge Function /create-order que devuelve order_id
+2. POST a /functions/v1/mp-create-preference con order_id (devuelve URL de MP)
+3. Redirige al Checkout Pro de Mercado Pago
+
+Después del pago, MP redirige a /pedido-confirmado/:order_id que muestra estado y agradecimiento.</div>
+    </div>
+
+    <!-- Paso 11 -->
+    <div class="glass mb-6 fm" style="padding:28px">
+      <h3 class="mb-3"><span class="step-num">11</span>Landing pages × 6</h3>
+      <div class="prompt-box">Crea las 6 landing pages siguiendo el template:
+- src/pages/landings/Topitos.tsx
+- src/pages/landings/AnillosCompromiso.tsx
+- src/pages/landings/Dijes.tsx
+- src/pages/landings/GemasSueltas.tsx
+- src/pages/landings/Sets.tsx
+- src/pages/landings/Inversion.tsx
+
+Cada landing tiene:
+1. Hero con imagen de la categoría + headline emocional
+2. Formulario de pre-calificación (nombre, celular, presupuesto, ocasión) que envía a Supabase + dispara workflow GHL #01
+3. Galería 6-9 productos top de esa categoría
+4. Storytelling de la categoría
+5. Reviews específicos
+6. FAQ
+7. CTA dual: "Hablar con asesor" (abre WA) y "Ver catálogo completo"
+
+Todas con framer-motion. Mobile-first.</div>
+    </div>
+
+    <!-- Paso 12 -->
+    <div class="glass mb-6 fm" style="padding:28px">
+      <h3 class="mb-3"><span class="step-num">12</span>Admin Panel · gestión de productos y promos</h3>
+      <div class="prompt-box">Crea /admin con login (Supabase Auth, magic link).
+
+Rutas protegidas:
+- /admin → Dashboard (Base D1) con cards de métricas + gráficos Recharts
+- /admin/productos → tabla con TanStack Table, crear/editar/eliminar
+- /admin/productos/nuevo → form con: nombre, SKU, categoría, precio, keywords (tags), ocasiones (multi), upload fotos con react-dropzone, upload certificado PDF, stock, destacado/activo toggles
+- /admin/promociones → Base 13 completa
+- /admin/eventos → crear evento con filtros de audiencia + dispara workflow #12
+- /admin/embajadores → tabla con score, leads, comisiones acumuladas
+- /admin/comisiones → tabla mensual, aprobar pagos pendientes
+
+Todo con Row Level Security en Supabase para seguridad.</div>
+    </div>
+
+    <!-- Paso 13 -->
+    <div class="glass mb-6 fm" style="padding:28px">
+      <h3 class="mb-3"><span class="step-num">13</span>Portal Embajador</h3>
+      <div class="prompt-box">Crea /embajador con login para embajadoras.
+
+Rutas:
+- /embajador → Dashboard con su score, próximo nivel, leaderboard mensual
+- /embajador/leads → tabla de sus leads cargados, estado, pipeline
+- /embajador/leads/nuevo → form para cargar lead nuevo (dispara workflow #06)
+- /embajador/comisiones → comisiones acumuladas del mes, historial pagos
+- /embajador/kit → kit de marketing descargable (fotos, plantillas)
+
+Diseño con sensación premium, framer-motion animaciones suaves.</div>
+    </div>
+
+    <!-- Paso 14 -->
+    <div class="glass mb-6 fm" style="padding:28px">
+      <h3 class="mb-3"><span class="step-num">14</span>Chat embebido de GHL</h3>
+      <div class="prompt-box">Embebe el widget de chat de GoHighLevel en el sitio.
+GHL provee un snippet JS que se inserta en el body.
+Crea src/components/chat/ChatWidget.tsx que cargue el script solo en producción (no en /admin).
+
+El widget debe:
+- Aparecer como burbuja flotante abajo derecha
+- Estilo coherente con Tierra Madre (color esmeralda)
+- Mobile-friendly</div>
+    </div>
+
+    <!-- Paso 15 -->
+    <div class="glass mb-6 fm" style="padding:28px">
+      <h3 class="mb-3"><span class="step-num">15</span>Optimización + deploy</h3>
+      <div class="prompt-box">Optimiza:
+- Lazy load todas las rutas con React.lazy + Suspense
+- Image optimization: Supabase devuelve URLs con ?width=X&quality=Y
+- Code splitting por ruta
+- Preload de fuentes con Inter y Playfair
+- Implementa meta tags + Open Graph + JSON-LD por página (SEO)
+
+Deploy:
+- Crea repo en GitHub
+- Conecta a Vercel (o Cloudflare Pages)
+- Configura las env vars en el dashboard
+- Verifica Lighthouse: Performance >90, SEO 100, A11y >90
+- Conecta dominio personalizado con SSL</div>
+    </div>
+  </div>
+</section>
+
+<!-- ADMIN COMO CENTRO DE COMANDO -->
+<section id="admin-cc" class="section-gold">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">⭐ El Admin Panel</p>
+      <h2 class="serif fm mb-6">El <span class="grad-text">Centro de Comando</span> de Tierra Madre</h2>
+      <p class="lead fm">
+        Una sola plataforma desde donde el admin maneja TODO: productos, promociones, eventos, embajadores, agentes, plantillas de mensajes, dashboard, comisiones, testimonios, configuración global. Sin tener que entrar a 5 herramientas distintas.
+      </p>
+    </div>
+
+    <div class="glass-strong mb-12 fm" style="padding:32px">
+      <h3 class="grad-text mb-6 center">🎛️ 12 módulos del Admin Panel</h3>
+      <div class="grid grid-3 gap-4 stagger fm">
+
+        <div class="card card-sm fm-scale">
+          <div class="chip gold mb-2">/admin</div>
+          <h4 class="mb-2">📊 Dashboard BI</h4>
+          <p class="text-xs text-soft">Métricas en tiempo real: ventas, conversión, top productos, top embajadores, score promedio, próximos eventos. Gráficos Recharts.</p>
+        </div>
+
+        <div class="card card-sm fm-scale">
+          <div class="chip mb-2">/admin/productos</div>
+          <h4 class="mb-2">💎 Productos</h4>
+          <p class="text-xs text-soft">Crear/editar/eliminar joyas. Upload de fotos drag&amp;drop. Keywords como tags. Stock. Destacados. Cambios se reflejan al instante en web y bot.</p>
+        </div>
+
+        <div class="card card-sm fm-scale">
+          <div class="chip mb-2">/admin/promociones</div>
+          <h4 class="mb-2">🎁 Promociones</h4>
+          <p class="text-xs text-soft">Crear descuentos con audiencia segmentada (asistentes evento X, tag Y, ciudad Z). Envío automático multi-canal. Vigencia limitada.</p>
+        </div>
+
+        <div class="card card-sm fm-scale">
+          <div class="chip mb-2">/admin/eventos</div>
+          <h4 class="mb-2">🎤 Eventos</h4>
+          <p class="text-xs text-soft">Crear evento → auto-segmenta CRM por filtros → invita por canal preferido. Recordatorios + check-in QR + post-evento.</p>
+        </div>
+
+        <div class="card card-sm fm-scale">
+          <div class="chip mb-2">/admin/embajadores</div>
+          <h4 class="mb-2">🌟 Embajadores</h4>
+          <p class="text-xs text-soft">Lista con score, nivel, leads activos, ventas del mes. Editar perfil. Ajustar comisión manual. Subir/bajar nivel.</p>
+        </div>
+
+        <div class="card card-sm fm-scale">
+          <div class="chip mb-2">/admin/agentes</div>
+          <h4 class="mb-2">👥 Pool de Agentes</h4>
+          <p class="text-xs text-soft">Configurar pool por especialidad (Inversión, Senior, Regular, Premium). Asignar usuarios. Horarios. Capacidad máxima.</p>
+        </div>
+
+        <div class="card card-sm fm-scale">
+          <div class="chip mb-2">/admin/ordenes</div>
+          <h4 class="mb-2">📦 Órdenes</h4>
+          <p class="text-xs text-soft">Lista de todas las órdenes con estados. Marcar despachado. Procesar devoluciones. Refunds desde MP en 1 click.</p>
+        </div>
+
+        <div class="card card-sm fm-scale">
+          <div class="chip mb-2">/admin/comisiones</div>
+          <h4 class="mb-2">💸 Comisiones</h4>
+          <p class="text-xs text-soft">Pendientes de pago. Aprobar en lote. Exportar Excel. Historial completo. Notificación automática al embajador al pagar.</p>
+        </div>
+
+        <div class="card card-sm fm-scale">
+          <div class="chip mb-2">/admin/plantillas</div>
+          <h4 class="mb-2">💬 Plantillas Mensajes</h4>
+          <p class="text-xs text-soft">Las 30+ plantillas (Base 14). Editar texto. Estado de aprobación Meta. Variables disponibles. Preview antes de guardar.</p>
+        </div>
+
+        <div class="card card-sm fm-scale">
+          <div class="chip mb-2">/admin/testimonios</div>
+          <h4 class="mb-2">⭐ Testimonios</h4>
+          <p class="text-xs text-soft">Reviews que entran (C3). Aprobar/rechazar antes de publicarse. Foto + texto + rating. Auto-post a Instagram Stories.</p>
+        </div>
+
+        <div class="card card-sm fm-scale">
+          <div class="chip mb-2">/admin/contenido</div>
+          <h4 class="mb-2">📝 Contenido Landings</h4>
+          <p class="text-xs text-soft">Editar textos de cada landing sin tocar código. CMS lite: hero, historia, FAQ. Cambios live en segundos.</p>
+        </div>
+
+        <div class="card card-sm fm-scale">
+          <div class="chip gold mb-2">/admin/personas</div>
+          <h4 class="mb-2">👤 Personas (NUEVO · crítico)</h4>
+          <p class="text-xs text-soft">Crear/editar embajadores y agentes. Enviar invitación por correo con magic link. Onboarding automático. Todo lo que hagan queda enlazado a su perfil.</p>
+        </div>
+
+        <div class="card card-sm fm-scale">
+          <div class="chip gold mb-2">/admin/config</div>
+          <h4 class="mb-2">⚙️ Configuración Global</h4>
+          <p class="text-xs text-soft">Horarios de atención. Mensajes por defecto. % comisiones por nivel. Reglas de scoring. Integraciones (GHL, MP, etc.).</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Acceso por roles -->
+    <div class="glass fm" style="padding:28px">
+      <h3 class="grad-text mb-4">🔐 Permisos por rol</h3>
+      <p class="mb-4">No todos en el equipo necesitan acceso a todo. Sistema de roles con Supabase RLS:</p>
+      <div class="grid grid-2 gap-4">
+        <div class="card card-sm">
+          <h4 class="text-amber mb-2">👑 Super Admin (fundadores)</h4>
+          <p class="text-sm">Acceso completo a los 12 módulos. Único que puede aprobar comisiones, cambiar config global, eliminar productos.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-amber mb-2">📋 Admin Operativo</h4>
+          <p class="text-sm">Productos, promociones, eventos, testimonios, plantillas, dashboard. NO toca comisiones ni config crítica.</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-amber mb-2">🎨 Marketing / Contenido</h4>
+          <p class="text-sm">Solo: productos (crear/editar fotos+textos), contenido landings, testimonios (moderar), plantillas (editar).</p>
+        </div>
+        <div class="card card-sm">
+          <h4 class="text-amber mb-2">💼 Ventas / Agente</h4>
+          <p class="text-sm">Solo: dashboard (su parte), órdenes (las propias), chat (vía GHL embebido). No accede a config ni a otros agentes.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mockup conceptual -->
+    <div class="glass-strong mt-12 fm" style="padding:32px">
+      <h3 class="grad-text mb-4">🖼️ Cómo se ve (concepto)</h3>
+      <pre><code>┌─────────────────────────────────────────────────────────────────────┐
+│  💎 Tierra Madre Admin              🔔 3   👤 fily ▾   [ Salir ]   │
+├──────────────┬──────────────────────────────────────────────────────┤
+│              │                                                       │
+│  📊 Dashboard │   Bienvenido, fily 👋                                │
+│  💎 Productos │   Hoy es jueves 21 de mayo de 2026                   │
+│  🎁 Promos    │                                                       │
+│  🎤 Eventos   │   ┌───────────┐ ┌───────────┐ ┌───────────┐         │
+│  🌟 Embajad.  │   │ Ventas hoy│ │ Pipeline  │ │ Pendientes│         │
+│  👥 Agentes   │   │  $4.8M    │ │  127 leads│ │  3 refunds│         │
+│  📦 Órdenes   │   │  ↑ 18%    │ │  ↑ 12     │ │  2 promos │         │
+│  💸 Comisión  │   └───────────┘ └───────────┘ └───────────┘         │
+│  💬 Plantillas│                                                       │
+│  ⭐ Testimon. │   📈 Ventas últimos 30 días                          │
+│  📝 Contenido │   [────────── chart Recharts ──────────]            │
+│  ⚙️  Config   │                                                       │
+│              │   🏆 Top Embajadores del mes                          │
+│              │   1. Sofía P. (Oro) — 8 ventas — $12.4M              │
+│              │   2. Camila R. (Plata) — 5 ventas — $6.8M            │
+│              │   3. Ana M. (Plata) — 4 ventas — $4.2M               │
+│              │                                                       │
+│              │   ⚡ Acción rápida                                    │
+│              │   [ Crear producto ] [ Crear promo ] [ Crear evento ]│
+└──────────────┴──────────────────────────────────────────────────────┘</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- MÓDULO PERSONAS (DETALLE) -->
+<section id="personas" class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">⭐ Módulo crítico</p>
+      <h2 class="serif fm mb-6">/admin/personas · <span class="grad-text">Embajadores y Agentes</span></h2>
+      <p class="lead fm">
+        El módulo donde el admin crea embajadores y agentes desde cero. Cada persona invitada recibe email con magic link, hace onboarding, y desde ese momento todo lo que haga queda enlazado a ella en el sistema.
+      </p>
+    </div>
+
+    <div class="grid grid-2 gap-6 mb-8">
+      <div class="card fm-left">
+        <h3 class="text-amber mb-4">🏗️ Estructura de rutas</h3>
+        <pre><code>/admin/personas                          # Hub principal
+├── /embajadores                         # Listado embajadores
+│   ├── /nuevo                           # Form crear embajador
+│   ├── /:id                             # Perfil detallado
+│   ├── /:id/editar                      # Editar datos
+│   ├── /:id/leads                       # Ver sus leads
+│   ├── /:id/ventas                      # Ver sus ventas
+│   └── /:id/comisiones                  # Ver comisiones
+└── /agentes                             # Listado agentes
+    ├── /nuevo                           # Form crear agente
+    ├── /:id                             # Perfil detallado
+    ├── /:id/editar
+    ├── /:id/asignaciones                # Chats activos
+    └── /:id/performance                 # KPIs</code></pre>
+      </div>
+
+      <div class="card fm-right">
+        <h3 class="text-amber mb-4">🎬 Pantalla "Crear embajador"</h3>
+        <pre><code>┌─────────────────────────────────────────────┐
+│  ← Volver                                    │
+│                                              │
+│  Crear nuevo embajador                       │
+│  ─────────────────────                       │
+│                                              │
+│  Información personal                        │
+│  ┌─────────────────┐ ┌─────────────────┐    │
+│  │ Nombre completo │ │ Correo electrón.│    │
+│  └─────────────────┘ └─────────────────┘    │
+│  ┌─────────────────┐ ┌─────────────────┐    │
+│  │ Celular +57     │ │ @ Instagram     │    │
+│  └─────────────────┘ └─────────────────┘    │
+│  ┌─────────────────┐                        │
+│  │ Ciudad       ▾  │                        │
+│  └─────────────────┘                        │
+│                                              │
+│  Configuración inicial                       │
+│  ┌─────────────────┐ ┌─────────────────┐    │
+│  │ Nivel  Bronce ▾│ │ Comisión   8% ▾ │    │
+│  └─────────────────┘ └─────────────────┘    │
+│  ┌──────────────────────────────────────┐   │
+│  │ ¿Quién la refirió? (opcional)      ▾│   │
+│  └──────────────────────────────────────┘   │
+│                                              │
+│  Notas internas (solo admin)                 │
+│  ┌──────────────────────────────────────┐   │
+│  │                                      │   │
+│  └──────────────────────────────────────┘   │
+│                                              │
+│  ☑ Enviar email de bienvenida ahora         │
+│  ☑ Generar formulario único de leads        │
+│  ☑ Sincronizar con GHL                      │
+│                                              │
+│  [ Cancelar ]     [ Crear e invitar →  ]    │
+└─────────────────────────────────────────────┘</code></pre>
+      </div>
+    </div>
+
+    <div class="glass-strong mb-8 fm" style="padding:28px">
+      <h3 class="grad-text mb-4">⚙️ Qué pasa al hacer click en "Crear e invitar"</h3>
+      <div class="grid grid-2 gap-4">
+        <div>
+          <strong class="text-emerald">Frontend (Vite)</strong>
+          <ol class="ul-clean ul-dot text-sm mt-2">
+            <li>Valida form con zod schema</li>
+            <li>Muestra loading state</li>
+            <li>POST a Supabase Edge Function <code class="inline">/invite-ambassador</code></li>
+            <li>Recibe respuesta con status + slug + magic link URL</li>
+            <li>Muestra toast "Invitación enviada a {email}"</li>
+            <li>Redirige a /admin/personas/embajadores/{id}</li>
+            <li>Lista actualizada automáticamente (Realtime)</li>
+          </ol>
+        </div>
+        <div>
+          <strong class="text-emerald">Backend (Edge Function)</strong>
+          <ol class="ul-clean ul-dot text-sm mt-2">
+            <li>Verifica que email no exista ya</li>
+            <li>Genera slug único <code class="inline">{nombre-kebab}-{4chars}</code></li>
+            <li>INSERT en tabla <code class="inline">ambassadors</code> con status='invited'</li>
+            <li>Crea usuario en Supabase Auth con rol 'embajador'</li>
+            <li>Llama <code class="inline">supabase.auth.admin.inviteUserByEmail()</code></li>
+            <li>Crea carpeta Storage <code class="inline">ambassadors/{id}/</code></li>
+            <li>POST a GHL API: agrega tag <code class="inline">embajador-{slug}</code></li>
+            <li>Envía email custom con plantilla de bienvenida (Resend o GHL)</li>
+            <li>Return: <code class="inline">{id, slug, form_url, dashboard_url}</code></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass mb-8 fm" style="padding:24px">
+      <h3 class="text-amber mb-3">📋 Listado de embajadores · tabla con acciones</h3>
+      <p class="mb-3 text-sm">Implementar con TanStack Table. Columnas y filtros:</p>
+      <ul class="ul-clean ul-dot text-sm">
+        <li><strong>Columnas:</strong> Avatar+Nombre, Email, Nivel, Score, # Leads, Ventas $, Comisión $, Estado, Última actividad, Acciones</li>
+        <li><strong>Filtros:</strong> Estado (active/invited/paused/archived), Nivel, Ciudad, Búsqueda por nombre/email</li>
+        <li><strong>Ordenamiento:</strong> Por score, ventas, fecha de ingreso, última actividad</li>
+        <li><strong>Acciones por fila (menú):</strong> Ver perfil, Editar, Reenviar invitación, Cambiar nivel, Pausar, Suspender, Archivar</li>
+        <li><strong>Acción bulk:</strong> Seleccionar varios → pausar/reactivar/exportar CSV</li>
+        <li><strong>Realtime:</strong> usa Supabase Realtime para reflejar cambios sin recargar</li>
+      </ul>
+    </div>
+
+    <div class="glass-strong fm" style="padding:28px">
+      <h3 class="grad-text mb-4">📱 Pantalla "Perfil de embajador" (vista detallada)</h3>
+      <pre><code>┌────────────────────────────────────────────────────────────────────┐
+│ ← Volver al listado                          [ Editar ] [ Acciones▾]│
+├────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  👤 Sofía Pérez Mendoza             🥇 ORO  •  Score: 245          │
+│  sofia.perez@gmail.com  •  +57 311 234 5678  •  @sofiamendoza_      │
+│  Medellín  •  Activa desde feb 2026  •  Última actividad: hoy      │
+│                                                                     │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐  │
+│  │ Leads activos│ │ Ventas mes  │ │ Comisión $$ │ │ Convers. %  │  │
+│  │     47      │ │     8       │ │  $1.49M     │ │    17%      │  │
+│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘  │
+│                                                                     │
+│  📈 Score · Próximo nivel: DIAMANTE (faltan 56 pts)                │
+│  ████████████████░░░░░░  245 / 301                                 │
+│                                                                     │
+│  🔗 Su formulario único:                                            │
+│  tierramadre.co/embajador/sofia-perez-x4k/leads                    │
+│  [ Copiar link ] [ Generar QR ]                                    │
+│                                                                     │
+│  📊 Sus leads recientes  •  Ver todos →                            │
+│  • María R. · Bogotá · Pipeline: Calificado · Score 65              │
+│  • Andrea G. · Medellín · Pipeline: Producto Recom · Score 48      │
+│  • Carlos H. · Cali · Pipeline: Carrito · Score 72                  │
+│                                                                     │
+│  💰 Ventas del mes  •  Ver todas →                                  │
+│  • Anillo Eternidad · $4.2M · 18 may · Comisión: $504k             │
+│  • Topitos Esperanza · $880k · 14 may · Comisión: $106k            │
+│                                                                     │
+│  📝 Notas internas (solo admin)                                     │
+│  "Excelente desempeño. Mentora de 3 embajadoras nuevas."           │
+│                                                                     │
+└────────────────────────────────────────────────────────────────────┘</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- PROMPTS COMPILADOS -->
+<section id="prompts">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Prompts compilados</p>
+      <h2 class="serif fm mb-6">Para Claude Code o Lovable</h2>
+      <p class="lead fm">Estos son los prompts maestros que dan el "kickoff" a Claude Code o Lovable. Cópialos y pégalos.</p>
+    </div>
+
+    <div class="glass-strong mb-8 fm" style="padding:28px">
+      <h3 class="grad-text mb-4">🚀 Prompt 1 · Inicialización del proyecto</h3>
+      <div class="prompt-box">Necesito que crees un proyecto React + Vite + TypeScript para una marca de joyería de lujo llamada "Tierra Madre" que vende esmeraldas colombianas.
+
+Stack:
+- Vite 5 + React 19 + TypeScript
+- Tailwind CSS 4 + framer-motion 12
+- React Router 7
+- @supabase/supabase-js + TanStack Query 5
+- Zustand para estado global
+
+Arquitectura:
+- Frontend custom (sin Shopify)
+- Backend en Supabase (postgres + storage + auth)
+- CRM y multi-canal en GoHighLevel
+- Pagos con Mercado Pago Checkout API
+
+Crea la estructura de carpetas según área-1-frontend.html, inicializa el proyecto, instala deps, configura Tailwind con paleta esmeralda+dorada, fuentes Inter+Playfair, modo dark por defecto.
+
+Crea el archivo .env.example con todas las variables necesarias documentadas.
+
+Crea src/lib/supabase.ts con el cliente. Crea src/lib/types.ts con interfaces de Product, Order, Promotion, Ambassador, Event según el schema definido.
+
+Configura React Router con todas las rutas listadas en la estructura, con lazy loading.
+
+Crea componentes layout base: Header (con menú animado + carrito badge), Footer, MobileMenu.
+
+Crea componentes de animación reutilizables: FadeIn, StaggerChildren, PageTransition usando framer-motion.
+
+El sitio debe sentirse premium, oscuro elegante (negro con acentos esmeralda y dorados), animaciones suaves tipo Awwwards.</div>
+    </div>
+
+    <div class="glass-strong mb-8 fm" style="padding:28px">
+      <h3 class="grad-text mb-4">🚀 Prompt 2 · Home + Catálogo + Producto</h3>
+      <div class="prompt-box">Sobre el proyecto Tierra Madre ya inicializado, ahora construye:
+
+1. src/pages/Home.tsx con 6 secciones animadas (Hero con video, Destacados, Historia, Galería eventos, Testimonios, CTA final).
+
+2. src/pages/Catalog.tsx (/catalogo) con:
+- Grid de productos con framer-motion stagger
+- Sidebar de filtros: categoría, rango precio, ocasión
+- Búsqueda full-text
+- Infinite scroll
+- Usa useQuery para fetch con cache
+
+3. src/components/product/ProductCard.tsx con hover crossfade entre fotos.
+
+4. src/pages/ProductPage.tsx (/producto/:slug) con:
+- ProductGallery360 (componente que usa react-360-product-viewer con 24 fotos desde Supabase Storage)
+- Info del producto al lado derecho
+- Botón "Agregar al carrito" que anima volar al ícono
+- Sección de certificado descargable
+- Productos relacionados al final
+
+Todas las páginas con framer-motion AnimatePresence para transiciones de página. Mobile-first responsive perfecto.</div>
+    </div>
+
+    <div class="glass-strong mb-8 fm" style="padding:28px">
+      <h3 class="grad-text mb-4">🚀 Prompt 4 · Módulo /admin/personas (embajadores + agentes)</h3>
+      <div class="prompt-box">Construye el módulo /admin/personas en el proyecto Tierra Madre.
+
+ESTRUCTURA DE RUTAS:
+src/pages/admin/personas/
+├── PersonasHub.tsx              → /admin/personas (hub con dos cards: Embajadores y Agentes)
+├── embajadores/
+│   ├── List.tsx                  → /admin/personas/embajadores
+│   ├── Create.tsx                → /admin/personas/embajadores/nuevo
+│   ├── Detail.tsx                → /admin/personas/embajadores/:id
+│   ├── Edit.tsx                  → /admin/personas/embajadores/:id/editar
+│   ├── Leads.tsx                 → /admin/personas/embajadores/:id/leads
+│   └── Commissions.tsx           → /admin/personas/embajadores/:id/comisiones
+└── agentes/
+    ├── List.tsx, Create.tsx, Detail.tsx, Edit.tsx
+    └── Assignments.tsx, Performance.tsx
+
+FORM CREAR EMBAJADOR (/admin/personas/embajadores/nuevo):
+Usa react-hook-form + zod con campos:
+- nombre_completo (string, min 3)
+- email (email, unique check via Supabase)
+- celular (regex Colombia)
+- instagram_handle (opcional, sin @)
+- ciudad (dropdown con ciudades CO)
+- nivel_inicial (dropdown: bronce default, plata, oro, diamante)
+- comision_percent (auto según nivel pero editable)
+- referido_por (dropdown opcional con otros embajadores)
+- notas_internas (textarea, solo visible para admin)
+
+Submit:
+1. Validar duplicado de email
+2. POST a Supabase Edge Function /invite-ambassador
+3. Mostrar loading state durante 2-3s
+4. Toast success "Invitación enviada a {email}"
+5. Redirige a /admin/personas/embajadores/{id}
+6. La lista se actualiza vía Supabase Realtime
+
+LISTADO (/admin/personas/embajadores):
+Tabla con TanStack Table:
+- Columnas: avatar+nombre, email, nivel (badge color), score (barra), # leads, ventas $, comisión $, estado (chip), última act., menú
+- Filtros: estado (active/invited/paused/suspended/archived), nivel, ciudad
+- Búsqueda en tiempo real (debounced 300ms)
+- Sorting por todas las columnas numéricas
+- Paginación 20 por página
+- Acciones rápidas en menú "⋯":
+  - Ver perfil → /admin/personas/embajadores/{id}
+  - Editar
+  - Reenviar invitación (si status=invited) → llama función
+  - Cambiar nivel → modal con dropdown
+  - Pausar / Reactivar
+  - Suspender (requiere razón, modal)
+  - Archivar (modal de confirmación con doble check)
+- Bulk actions: seleccionar varios → exportar CSV / pausar lote
+- Realtime via Supabase subscription
+
+PERFIL DETALLADO (/admin/personas/embajadores/:id):
+Header con avatar + nombre + nivel badge + score + datos contacto.
+4 cards de KPIs: leads activos, ventas mes, comisión mes, conversion %.
+Barra de progreso al próximo nivel.
+Sección "Su formulario único" con link copiable + botón QR.
+Tabs:
+- Leads (tabla compacta últimos 20)
+- Ventas (últimos 20 con monto + comisión)
+- Comisiones (pendientes/pagadas)
+- Actividad (timeline de cambios)
+Notas internas editables (solo admin).
+Botón "Acciones" con menú igual al de la tabla.
+
+Animaciones framer-motion en cards de KPIs (count up al cargar).
+Mobile responsive: tablas se convierten en cards verticales.</div>
+    </div>
+
+    <div class="glass-strong fm" style="padding:28px">
+      <h3 class="grad-text mb-4">🚀 Prompt 3 · Admin Panel</h3>
+      <div class="prompt-box">Construye el admin panel en /admin con autenticación Supabase (magic link).
+
+Rutas protegidas:
+1. /admin → Dashboard BI (Base D1):
+- Cards: ventas hoy/semana/mes, conversión por canal, top productos
+- Gráfico Recharts: ventas por día últimos 30 días
+- Tabla top 10 embajadores
+- Score promedio de leads por etapa
+
+2. /admin/productos → CRUD productos con TanStack Table, edición inline, bulk actions.
+
+3. /admin/productos/nuevo → Form con react-hook-form + zod:
+- Nombre, SKU, slug (auto), categoría dropdown
+- Precio COP con format input
+- Keywords como tag input
+- Ocasiones multi-checkbox
+- Upload fotos con react-dropzone (sube a Supabase Storage)
+- Upload certificado PDF
+- Stock number
+- Destacado/Activo toggles
+
+4. /admin/promociones (Base 13):
+- Lista de promos activas/pausadas/expiradas
+- Crear promoción con formulario detallado de Base 13
+- Preview del mensaje antes de enviar
+- Botón "Lanzar" que llama Edge Function send-promo
+
+5. /admin/eventos:
+- Crear evento con filtros de audiencia visuales
+- Estimador de cuántas personas recibirán la invitación
+- Dispara workflow #12 al guardar
+
+6. /admin/embajadores:
+- Tabla con score, nivel, leads activos, ventas, comisión mes
+
+7. /admin/comisiones (Base D3):
+- Tabla mensual con detalle por venta
+- Mostrar embajador atribuido y comisión calculada
+- Botón "Aprobar pago" que cambia estado y notifica
+
+Todo con sensación profesional, animaciones suaves framer-motion, dark theme.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CONEXIONES -->
+<section id="conexiones" class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Conexiones</p>
+      <h2 class="serif fm mb-6">Cómo se conecta con otras áreas</h2>
+    </div>
+
+    <div class="glass-strong fm" style="padding:32px">
+      <div class="mermaid">
+flowchart LR
+    AREA1[ÁREA 1<br/>Frontend Web<br/>Vite + React]
+    AREA2[ÁREA 2<br/>Supabase<br/>DB + Storage + Auth]
+    AREA3[ÁREA 3<br/>GoHighLevel<br/>CRM + IA]
+    AREA4[ÁREA 4<br/>Cloudflare Workers<br/>Middleware]
+    AREA5[ÁREA 5<br/>Diseño UX<br/>Sistema visual]
+    AREA6[ÁREA 6<br/>Contenido<br/>Productos + fotos]
+    AREA1 -- Supabase JS --> AREA2
+    AREA2 -- datos productos --> AREA1
+    AREA1 -- chat widget embebido --> AREA3
+    AREA3 -- webhook lead nuevo --> AREA1
+    AREA1 -- checkout MP --> AREA4
+    AREA4 -- confirma orden --> AREA1
+    AREA5 -- componentes diseño --> AREA1
+    AREA6 -- carga productos --> AREA1
+    style AREA1 fill:#064e3b,stroke:#34d399,color:#fff
+    style AREA2 fill:#1e293b,stroke:#fcd34d,color:#fff
+    style AREA3 fill:#0f172a,stroke:#34d399,color:#fff
+    style AREA4 fill:#451a03,stroke:#a855f7,color:#fff
+    style AREA5 fill:#1f2937,stroke:#fcd34d,color:#fff
+    style AREA6 fill:#064e3b,stroke:#10b981,color:#fff
+      </div>
+    </div>
+
+    <div class="grid grid-2 mt-8 stagger fm">
+      <div class="card fm-scale">
+        <h4 class="text-amber mb-2">⬅️ Lo que NECESITAS de otras áreas</h4>
+        <ul class="ul-clean ul-dot text-sm">
+          <li><strong>Área 2:</strong> Supabase project creado con schema completo, RLS policies, buckets de Storage</li>
+          <li><strong>Área 3:</strong> GHL configurado, API token, ID del workflow del chat widget</li>
+          <li><strong>Área 4:</strong> URLs de los Cloudflare Workers (mp-create-preference, mp-webhook)</li>
+          <li><strong>Área 5:</strong> Sistema de diseño finalizado (paleta, componentes Figma, animaciones de referencia)</li>
+          <li><strong>Área 6:</strong> Productos cargados en Supabase (mínimo 20 para que la web no se vea vacía)</li>
+        </ul>
+      </div>
+      <div class="card fm-scale">
+        <h4 class="text-amber mb-2">➡️ Lo que ENTREGAS a otras áreas</h4>
+        <ul class="ul-clean ul-dot text-sm">
+          <li><strong>Para Área 3:</strong> URLs del sitio para configurar el dominio del chat widget</li>
+          <li><strong>Para Área 4:</strong> Endpoints del frontend que reciben webhooks (ej: /api/order-confirmed)</li>
+          <li><strong>Para Área 6:</strong> Acceso al admin panel para que carguen productos</li>
+          <li><strong>Para todos:</strong> URL de staging y producción para testing</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CHECKLIST -->
+<section id="checklist">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Checklist final</p>
+      <h2 class="serif fm mb-6">Criterios de aceptación</h2>
+    </div>
+
+    <div class="glass-strong fm" style="padding:32px">
+      <h3 class="text-amber mb-4">✅ Antes de marcar el área como completa</h3>
+      <ul class="checklist">
+        <li>Proyecto Vite corre sin errores en dev y en build</li>
+        <li>Todas las rutas funcionan (Home, Catálogo, Producto, 6 Landings, Carrito, Checkout, Admin, Embajador)</li>
+        <li>Filtros del catálogo funcionan + búsqueda full-text</li>
+        <li>Galería 360° funciona con 24 fotos por producto</li>
+        <li>Carrito persistente entre sesiones (localStorage)</li>
+        <li>Checkout completa una orden real con Mercado Pago (test mode)</li>
+        <li>Admin panel: crear producto desde 0 toma menos de 30 segundos</li>
+        <li>Admin panel: crear promoción dispara mensaje real (test)</li>
+        <li>Dashboard BI muestra métricas reales de Supabase</li>
+        <li>Portal embajador login + ver leads + ver comisiones</li>
+        <li>Chat widget de GHL embebido y funcional</li>
+        <li>Mobile responsive perfecto en iPhone SE, iPhone Pro, Android medio</li>
+        <li>Lighthouse Performance &gt;90</li>
+        <li>Lighthouse SEO 100</li>
+        <li>Lighthouse Accessibility &gt;90</li>
+        <li>Tests E2E del flujo de compra pasan (Playwright)</li>
+        <li>Deploy a producción con dominio + SSL</li>
+        <li>README.md con instrucciones de setup local</li>
+        <li>Documentación de variables de entorno</li>
+        <li>Animaciones framer-motion suaves en todas las páginas</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p class="serif" style="font-size:1.1rem;color:var(--emerald-300);margin-bottom:8px">Tierra Madre · Área 1 · Frontend Web</p>
+  <p>Para delegación al equipo · Construir con Claude Code o Lovable</p>
+  <p style="margin-top:12px"><a href="plan-ejecucion-tierra-madre.html" style="color:var(--gold-300);text-decoration:none">← Volver al documento maestro</a></p>
+</footer>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true, theme: 'dark',
+    themeVariables: {primaryColor:'#064e3b',primaryTextColor:'#fff',primaryBorderColor:'#34d399',lineColor:'#34d399',background:'transparent',mainBkg:'#0f1714',fontFamily:'Inter,sans-serif'},
+    flowchart: { useMaxWidth: true, curve: 'basis' }
+  });
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        if (e.target.classList.contains('stagger')) {
+          e.target.querySelectorAll('.fm, .fm-left, .fm-right, .fm-scale').forEach(c => c.classList.add('in'));
+        }
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -50px 0px' });
+  document.querySelectorAll('.fm, .fm-left, .fm-right, .fm-scale, .stagger').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

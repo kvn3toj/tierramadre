@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Área 5 · Diseño & UX · Tierra Madre</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--emerald-50:#ecfdf5;--emerald-100:#d1fae5;--emerald-200:#a7f3d0;--emerald-300:#6ee7b7;--emerald-400:#34d399;--emerald-500:#10b981;--emerald-600:#059669;--emerald-700:#047857;--emerald-800:#065f46;--emerald-900:#064e3b;--gold-200:#fde68a;--gold-300:#fcd34d;--gold-400:#fbbf24;--gold-500:#f59e0b;--gold-600:#d97706;--gold-700:#b45309;--ink-900:#0a0f0d;--ink-800:#0f1714;--ink-700:#162320;--text:#e6f4ef;--text-soft:rgba(230,244,239,.72);--text-mute:rgba(230,244,239,.5);--border:rgba(52,211,153,.2)}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:radial-gradient(ellipse at top,#0f1714 0%,#050807 60%,#000 100%);color:var(--text);line-height:1.65;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.serif{font-family:'Playfair Display',Georgia,serif;letter-spacing:-.02em}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+section{padding:80px 24px;position:relative}
+h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:900;line-height:1.05}
+h2{font-size:clamp(1.75rem,4vw,2.75rem);font-weight:800;line-height:1.15}
+h3{font-size:1.4rem;font-weight:700}
+h4{font-size:1rem;font-weight:700}
+p{color:var(--text-soft)}
+.section-label{font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:var(--emerald-400);font-weight:700;margin-bottom:14px}
+.lead{font-size:1.1rem;color:var(--text-soft);max-width:780px;margin:0 auto}
+.center{text-align:center}
+.grad-text{background:linear-gradient(135deg,#34d399 0%,#10b981 40%,#fcd34d 100%);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block}
+.glass{background:linear-gradient(135deg,rgba(15,23,20,.6),rgba(22,35,32,.4));backdrop-filter:blur(14px);border:1px solid var(--border);border-radius:18px}
+.glass-strong{background:linear-gradient(135deg,rgba(15,23,20,.92),rgba(22,35,32,.75));backdrop-filter:blur(20px);border:1px solid rgba(52,211,153,.28);border-radius:22px}
+.card{background:linear-gradient(135deg,rgba(15,23,20,.7),rgba(22,35,32,.5));border:1px solid var(--border);border-radius:18px;padding:24px;transition:all .4s}
+.card:hover{border-color:rgba(52,211,153,.45);transform:translateY(-3px)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid rgba(52,211,153,.28);background:rgba(16,185,129,.1);color:var(--emerald-300)}
+.chip.gold{border-color:rgba(251,191,36,.32);background:rgba(251,191,36,.1);color:var(--gold-300)}
+.grid{display:grid;gap:20px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+@media (max-width:900px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+.flex{display:flex}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.wrap{flex-wrap:wrap}
+.gap-2{gap:8px}.gap-3{gap:12px}.gap-4{gap:16px}
+.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}.mb-8{margin-bottom:32px}.mb-12{margin-bottom:48px}.mb-16{margin-bottom:64px}
+.mt-4{margin-top:16px}
+.text-amber{color:var(--gold-300)}.text-emerald{color:var(--emerald-300)}
+.text-sm{font-size:.875rem}.text-xs{font-size:.78rem}
+.text-soft{color:var(--text-soft)}.text-mute{color:var(--text-mute)}
+pre{background:#0a0f0d;border:1px solid rgba(52,211,153,.25);border-radius:12px;padding:16px;overflow-x:auto;font-size:12px;color:#a7f3d0;line-height:1.6;font-family:'JetBrains Mono',monospace}
+code{font-family:'JetBrains Mono',monospace}
+code.inline{color:var(--gold-300);background:rgba(251,191,36,.08);padding:1px 6px;border-radius:4px;font-size:.85em}
+.ul-clean{list-style:none}
+.ul-dot li{padding:5px 0 5px 18px;position:relative;font-size:.9rem;color:var(--text-soft)}
+.ul-dot li::before{content:"•";color:var(--emerald-400);position:absolute;left:0;font-weight:bold}
+.fm{opacity:0;transform:translateY(30px);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm.in{opacity:1;transform:translateY(0)}
+.fm-scale{opacity:0;transform:scale(.93);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm-scale.in{opacity:1;transform:scale(1)}
+.stagger.in > .fm,.stagger.in > .fm-scale{opacity:1;transform:none}
+.stagger.in > *:nth-child(1){transition-delay:.05s}.stagger.in > *:nth-child(2){transition-delay:.13s}.stagger.in > *:nth-child(3){transition-delay:.21s}.stagger.in > *:nth-child(4){transition-delay:.29s}.stagger.in > *:nth-child(5){transition-delay:.37s}.stagger.in > *:nth-child(6){transition-delay:.45s}
+.hero{min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;background:radial-gradient(ellipse at center,rgba(251,191,36,.2) 0%,transparent 60%)}
+.gem-icon{width:80px;height:80px;background:linear-gradient(135deg,#fcd34d,#f59e0b 50%,#b45309);clip-path:polygon(50% 0%,90% 30%,80% 90%,20% 90%,10% 30%);box-shadow:0 0 60px rgba(251,191,36,.5);margin:0 auto 24px;animation:gem 6s ease-in-out infinite}
+@keyframes gem{0%,100%{transform:rotate(-5deg) scale(1)}50%{transform:rotate(5deg) scale(1.05)}}
+.section-tinted{background:linear-gradient(180deg,transparent,rgba(251,191,36,.06),transparent)}
+.swatch{width:100%;aspect-ratio:1;border-radius:14px;display:flex;flex-direction:column;justify-content:flex-end;padding:12px;font-family:'JetBrains Mono',monospace;font-size:11px}
+.swatch-name{font-weight:bold}
+.swatch-hex{opacity:.8}
+.checklist li{display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:.9rem;color:var(--text-soft)}
+.checklist li::before{content:"☐";color:var(--gold-300);font-size:1.1em;margin-top:-2px}
+.prompt-box{background:#0a0f0d;border:1px dashed rgba(251,191,36,.4);border-radius:12px;padding:18px;margin:12px 0;font-family:'JetBrains Mono',monospace;font-size:12px;color:#fcd34d;line-height:1.6;white-space:pre-wrap}
+.prompt-box::before{content:"💬 PROMPT PARA CLAUDE CODE";display:block;font-size:10px;letter-spacing:.2em;color:var(--gold-300);margin-bottom:8px;font-family:'Inter',sans-serif}
+footer{border-top:1px solid rgba(52,211,153,.2);padding:32px 24px;text-align:center;color:var(--text-mute);font-size:.85rem}
+.area-nav{position:sticky;top:0;z-index:40;background:rgba(5,8,7,.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(251,191,36,.2);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.area-nav-title{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:var(--gold-300)}
+.area-nav-links{display:flex;gap:14px;flex-wrap:wrap}
+.area-nav-links a{font-size:.82rem;color:var(--text-soft);text-decoration:none}
+.area-nav-links a:hover{color:var(--gold-300)}
+</style>
+</head>
+<body>
+
+<nav class="area-nav">
+  <span class="area-nav-title">Área 5 · Diseño & UX</span>
+  <div class="area-nav-links">
+    <a href="#objetivo">Objetivo</a>
+    <a href="#paleta">Paleta</a>
+    <a href="#tipografia">Tipografía</a>
+    <a href="#componentes">Componentes</a>
+    <a href="#animaciones">Animaciones</a>
+    <a href="#mobile">Mobile</a>
+    <a href="plan-ejecucion-tierra-madre.html">← Maestro</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div>
+    <div class="fm in"><div class="gem-icon"></div></div>
+    <p class="section-label fm in" style="transition-delay:.15s">ÁREA 5 · DISEÑO + UX</p>
+    <h1 class="serif fm in mb-4" style="transition-delay:.25s">El <span class="grad-text">lenguaje visual</span> de Tierra Madre</h1>
+    <p class="lead fm in" style="transition-delay:.4s">
+      Sistema de diseño completo: paleta, tipografías, componentes, animaciones framer-motion, mobile-first responsivo, accesibilidad. La identidad visual que hace que Tierra Madre se sienta como una marca de lujo internacional.
+    </p>
+    <div class="flex justify-center wrap gap-3 fm in mt-8" style="transition-delay:.55s">
+      <span class="chip gold">Figma</span>
+      <span class="chip">Tailwind tokens</span>
+      <span class="chip gold">Framer Motion presets</span>
+      <span class="chip">WCAG AA</span>
+      <span class="chip gold">Mobile-first</span>
+    </div>
+  </div>
+</section>
+
+<section id="objetivo">
+  <div class="container">
+    <div class="grid grid-2 items-center">
+      <div>
+        <p class="section-label">Objetivo</p>
+        <h2 class="serif mb-6">Qué construye esta área</h2>
+        <p class="mb-4">El sistema de diseño completo que Área 1 (Frontend) usará para construir todo. Esto NO es código — son tokens, componentes en Figma, guías de animación, y especificaciones técnicas que el frontend traduce a Tailwind + framer-motion.</p>
+        <ul class="ul-clean ul-dot">
+          <li>Paleta de colores con tokens semánticos (50-900 por escala)</li>
+          <li>Tipografía: jerarquías y reglas de uso</li>
+          <li>Sistema de espaciado consistente</li>
+          <li>Componentes UI en Figma (botones, cards, inputs, modales, tabs, etc.)</li>
+          <li>Iconografía custom + uso de Lucide</li>
+          <li>Catálogo de animaciones framer-motion con código snippets</li>
+          <li>Guía mobile-first responsive</li>
+          <li>Accesibilidad WCAG AA</li>
+          <li>Tono visual: oscuro premium con acentos esmeralda y dorados</li>
+        </ul>
+      </div>
+      <div class="glass-strong" style="padding:24px">
+        <h3 class="grad-text mb-4">📦 Entregables</h3>
+        <ul class="ul-clean ul-dot text-sm">
+          <li>Archivo Figma "Tierra Madre Design System"</li>
+          <li>tailwind.config.ts con tokens custom</li>
+          <li>src/styles/globals.css con CSS variables</li>
+          <li>Documento de uso de framer-motion (variants estándar)</li>
+          <li>Guía de iconografía (Lucide + custom SVGs)</li>
+          <li>Mockups de las 6 landings + home + producto</li>
+          <li>Animaciones de referencia (video o Lottie)</li>
+          <li>Guía de fotografía de productos (estándares)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PALETA -->
+<section id="paleta" class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Paleta</p>
+      <h2 class="serif fm mb-6">Colores oficiales</h2>
+      <p class="lead fm">Sistema de 3 colores principales: verde esmeralda (alma de la marca), dorado (luz, lujo), y tinta (fondos oscuros para hacer brillar los productos).</p>
+    </div>
+
+    <h3 class="text-amber mb-4">💚 Esmeralda · color primario</h3>
+    <div class="grid grid-4 mb-8">
+      <div class="swatch" style="background:#ecfdf5;color:#064e3b"><div class="swatch-name">emerald-50</div><div class="swatch-hex">#ecfdf5</div></div>
+      <div class="swatch" style="background:#d1fae5;color:#064e3b"><div class="swatch-name">emerald-100</div><div class="swatch-hex">#d1fae5</div></div>
+      <div class="swatch" style="background:#a7f3d0;color:#064e3b"><div class="swatch-name">emerald-200</div><div class="swatch-hex">#a7f3d0</div></div>
+      <div class="swatch" style="background:#6ee7b7;color:#064e3b"><div class="swatch-name">emerald-300</div><div class="swatch-hex">#6ee7b7</div></div>
+      <div class="swatch" style="background:#34d399;color:#064e3b"><div class="swatch-name">emerald-400</div><div class="swatch-hex">#34d399</div></div>
+      <div class="swatch" style="background:#10b981;color:#fff"><div class="swatch-name">emerald-500</div><div class="swatch-hex">#10b981</div></div>
+      <div class="swatch" style="background:#059669;color:#fff"><div class="swatch-name">emerald-600</div><div class="swatch-hex">#059669</div></div>
+      <div class="swatch" style="background:#047857;color:#fff"><div class="swatch-name">emerald-700</div><div class="swatch-hex">#047857</div></div>
+      <div class="swatch" style="background:#065f46;color:#fff"><div class="swatch-name">emerald-800</div><div class="swatch-hex">#065f46</div></div>
+      <div class="swatch" style="background:#064e3b;color:#fff"><div class="swatch-name">emerald-900</div><div class="swatch-hex">#064e3b</div></div>
+    </div>
+
+    <h3 class="text-amber mb-4">✨ Oro · color de acento (lujo)</h3>
+    <div class="grid grid-4 mb-8">
+      <div class="swatch" style="background:#fef3c7;color:#78350f"><div class="swatch-name">gold-100</div><div class="swatch-hex">#fef3c7</div></div>
+      <div class="swatch" style="background:#fde68a;color:#78350f"><div class="swatch-name">gold-200</div><div class="swatch-hex">#fde68a</div></div>
+      <div class="swatch" style="background:#fcd34d;color:#78350f"><div class="swatch-name">gold-300</div><div class="swatch-hex">#fcd34d</div></div>
+      <div class="swatch" style="background:#fbbf24;color:#78350f"><div class="swatch-name">gold-400</div><div class="swatch-hex">#fbbf24</div></div>
+      <div class="swatch" style="background:#f59e0b;color:#fff"><div class="swatch-name">gold-500</div><div class="swatch-hex">#f59e0b</div></div>
+      <div class="swatch" style="background:#d97706;color:#fff"><div class="swatch-name">gold-600</div><div class="swatch-hex">#d97706</div></div>
+      <div class="swatch" style="background:#b45309;color:#fff"><div class="swatch-name">gold-700</div><div class="swatch-hex">#b45309</div></div>
+      <div class="swatch" style="background:#92400e;color:#fff"><div class="swatch-name">gold-800</div><div class="swatch-hex">#92400e</div></div>
+    </div>
+
+    <h3 class="text-amber mb-4">🌑 Tinta · fondos oscuros</h3>
+    <div class="grid grid-4">
+      <div class="swatch" style="background:#162320;color:#fff"><div class="swatch-name">ink-700</div><div class="swatch-hex">#162320</div></div>
+      <div class="swatch" style="background:#0f1714;color:#fff"><div class="swatch-name">ink-800</div><div class="swatch-hex">#0f1714</div></div>
+      <div class="swatch" style="background:#0a0f0d;color:#fff"><div class="swatch-name">ink-900</div><div class="swatch-hex">#0a0f0d</div></div>
+      <div class="swatch" style="background:#050807;color:#fff"><div class="swatch-name">ink-950</div><div class="swatch-hex">#050807</div></div>
+    </div>
+
+    <div class="glass mt-8 fm" style="padding:24px">
+      <h3 class="text-amber mb-3">🎨 Cómo usar los colores</h3>
+      <div class="grid grid-2 gap-4">
+        <div>
+          <strong>Esmeralda</strong>
+          <ul class="ul-clean ul-dot text-sm mt-2">
+            <li>500-600: CTA primarios, links importantes</li>
+            <li>300-400: highlights, hovers, success states</li>
+            <li>700-900: fondos sutiles tinted</li>
+          </ul>
+        </div>
+        <div>
+          <strong>Dorado</strong>
+          <ul class="ul-clean ul-dot text-sm mt-2">
+            <li>300-400: badges premium, destacados, VIP</li>
+            <li>500: acentos importantes, números KPI</li>
+            <li>NUNCA: como fondo amplio (cansa la vista)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TIPOGRAFÍA -->
+<section id="tipografia">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Tipografía</p>
+      <h2 class="serif fm mb-6">Inter + Playfair Display</h2>
+    </div>
+
+    <div class="grid grid-2 stagger fm">
+      <div class="card fm-scale">
+        <h3 class="serif mb-3" style="font-size:2rem">Playfair Display</h3>
+        <p class="text-sm mb-4">Serif para títulos y momentos emocionales. Carga elegancia y lujo.</p>
+        <div style="font-family:'Playfair Display',serif">
+          <div style="font-size:3rem;font-weight:900">Aa Bb Cc</div>
+          <div style="font-size:1.5rem;font-weight:700">Tierra Madre</div>
+          <div style="font-size:1rem;font-weight:400;font-style:italic">"Esmeraldas que cuentan historias"</div>
+        </div>
+        <div class="mt-4 text-xs text-mute">Usar en: H1, H2, citas, headlines emocionales</div>
+      </div>
+      <div class="card fm-scale">
+        <h3 class="mb-3" style="font-size:2rem;font-family:'Inter',sans-serif">Inter</h3>
+        <p class="text-sm mb-4">Sans-serif para texto de interfaz y largo. Legibilidad pura.</p>
+        <div>
+          <div style="font-size:1.4rem;font-weight:700">Aa Bb Cc 123</div>
+          <div style="font-size:1rem">Esmeralda Muzo certificada, talla esmeralda 1.2ct</div>
+          <div style="font-size:.875rem;color:var(--text-soft)">$2.450.000 COP · disponible · envío 24h</div>
+        </div>
+        <div class="mt-4 text-xs text-mute">Usar en: H3+, párrafos, UI, números, navegación</div>
+      </div>
+    </div>
+
+    <div class="glass mt-8 fm" style="padding:24px">
+      <h3 class="text-amber mb-3">📏 Escala tipográfica (fluida)</h3>
+      <pre><code>// Tailwind config - font sizes
+{
+  '2xs':  ['0.6875rem', { lineHeight: '1rem' }],      // 11px
+  'xs':   ['0.78rem',   { lineHeight: '1.5' }],        // 12.5px
+  'sm':   ['0.875rem',  { lineHeight: '1.5' }],        // 14px
+  'base': ['1rem',      { lineHeight: '1.65' }],       // 16px
+  'lg':   ['1.125rem',  { lineHeight: '1.6' }],        // 18px
+  'xl':   ['1.25rem',   { lineHeight: '1.5' }],        // 20px
+  '2xl':  ['1.5rem',    { lineHeight: '1.35' }],       // 24px
+  '3xl':  ['1.875rem',  { lineHeight: '1.25' }],       // 30px
+  '4xl':  ['2.25rem',   { lineHeight: '1.15' }],       // 36px
+  '5xl':  ['3rem',      { lineHeight: '1.1' }],        // 48px
+  '6xl':  ['3.75rem',   { lineHeight: '1' }],          // 60px
+  '7xl':  ['4.5rem',    { lineHeight: '1' }],          // 72px
+
+  // Hero responsivo (clamp para fluido)
+  'hero': ['clamp(2.5rem, 7vw, 5rem)', { lineHeight: '1.05' }],
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- COMPONENTES -->
+<section id="componentes" class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Componentes</p>
+      <h2 class="serif fm mb-6">Sistema de componentes</h2>
+    </div>
+
+    <div class="glass-strong fm" style="padding:28px">
+      <p class="mb-4">Catálogo de componentes a diseñar en Figma y construir en Área 1. Cada uno con sus variants y estados.</p>
+      <div class="grid grid-3 gap-4">
+        <div class="card card-sm"><strong>Button</strong><p class="text-xs mt-1">primary, secondary, ghost, danger · sm/md/lg · loading state</p></div>
+        <div class="card card-sm"><strong>Input</strong><p class="text-xs mt-1">text, number, search, password · con label, helper, error</p></div>
+        <div class="card card-sm"><strong>Select</strong><p class="text-xs mt-1">single, multi, searchable · dropdown animado</p></div>
+        <div class="card card-sm"><strong>Checkbox / Radio</strong><p class="text-xs mt-1">Con animación de check</p></div>
+        <div class="card card-sm"><strong>Toggle</strong><p class="text-xs mt-1">Switch on/off con transition</p></div>
+        <div class="card card-sm"><strong>Card</strong><p class="text-xs mt-1">default, glass, glass-strong · hover lift</p></div>
+        <div class="card card-sm"><strong>ProductCard</strong><p class="text-xs mt-1">Foto, nombre, precio, badge, hover crossfade</p></div>
+        <div class="card card-sm"><strong>Modal / Dialog</strong><p class="text-xs mt-1">Backdrop blur, scale-in, esc para cerrar</p></div>
+        <div class="card card-sm"><strong>Drawer (carrito)</strong><p class="text-xs mt-1">Slide desde derecha, mobile bottom sheet</p></div>
+        <div class="card card-sm"><strong>Toast / Notification</strong><p class="text-xs mt-1">success, info, warning, error · auto-dismiss</p></div>
+        <div class="card card-sm"><strong>Tabs</strong><p class="text-xs mt-1">Con underline animado al cambiar</p></div>
+        <div class="card card-sm"><strong>Accordion</strong><p class="text-xs mt-1">Para FAQ · expand suave</p></div>
+        <div class="card card-sm"><strong>Badge / Chip</strong><p class="text-xs mt-1">Variantes de color, removable</p></div>
+        <div class="card card-sm"><strong>Avatar</strong><p class="text-xs mt-1">User pic, fallback iniciales</p></div>
+        <div class="card card-sm"><strong>Skeleton loaders</strong><p class="text-xs mt-1">Shimmer effect durante fetch</p></div>
+        <div class="card card-sm"><strong>Progress bar</strong><p class="text-xs mt-1">Linear y circular · scoring del lead</p></div>
+        <div class="card card-sm"><strong>Tooltip</strong><p class="text-xs mt-1">Hover info pequeño</p></div>
+        <div class="card card-sm"><strong>DataTable</strong><p class="text-xs mt-1">Sortable, filterable, paginated (admin)</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ANIMACIONES -->
+<section id="animaciones">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Animaciones</p>
+      <h2 class="serif fm mb-6">Catálogo framer-motion</h2>
+      <p class="lead fm">Snippets pre-armados para que Área 1 los use directamente. Mismo timing, mismo easing, sensación coherente en todo el sitio.</p>
+    </div>
+
+    <div class="glass-strong mb-6 fm" style="padding:28px">
+      <h3 class="grad-text mb-4">⚙️ Easing y duraciones estándar</h3>
+      <pre><code>// src/lib/animations.ts
+export const easings = {
+  smooth: [0.22, 1, 0.36, 1],      // Default · cubic-bezier de framer-motion
+  bounce: [0.68, -0.55, 0.265, 1.55],
+  spring: { type: 'spring', stiffness: 200, damping: 25 },
+};
+
+export const durations = {
+  fast: 0.3,    // micro-interactions, hover
+  base: 0.6,    // page transitions, entrances
+  slow: 1.2,    // hero, dramatic moments
+};</code></pre>
+    </div>
+
+    <div class="grid grid-2 gap-6 stagger fm mb-8">
+      <div class="card fm-scale">
+        <h4 class="text-amber mb-3">Fade In Up</h4>
+        <pre><code>export const fadeInUp = {
+  initial: { opacity: 0, y: 40 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 },
+  transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
+};
+
+// Uso:
+&lt;motion.div {...fadeInUp}&gt;
+  Contenido
+&lt;/motion.div&gt;</code></pre>
+      </div>
+
+      <div class="card fm-scale">
+        <h4 class="text-amber mb-3">Stagger Children</h4>
+        <pre><code>export const stagger = {
+  animate: {
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+  }
+};
+
+// Uso:
+&lt;motion.div variants={stagger} initial="initial" animate="animate"&gt;
+  {items.map(item => (
+    &lt;motion.div key={item.id} variants={fadeInUp}&gt;
+      {item.name}
+    &lt;/motion.div&gt;
+  ))}
+&lt;/motion.div&gt;</code></pre>
+      </div>
+
+      <div class="card fm-scale">
+        <h4 class="text-amber mb-3">Page Transition</h4>
+        <pre><code>export const pageTransition = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 },
+  transition: { duration: 0.4, ease: 'easeInOut' }
+};
+
+// En App.tsx con AnimatePresence:
+&lt;AnimatePresence mode="wait"&gt;
+  &lt;motion.div key={location.pathname} {...pageTransition}&gt;
+    {children}
+  &lt;/motion.div&gt;
+&lt;/AnimatePresence&gt;</code></pre>
+      </div>
+
+      <div class="card fm-scale">
+        <h4 class="text-amber mb-3">Card Hover Lift</h4>
+        <pre><code>// CSS-based (más performante)
+.card {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.4s;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.6),
+              0 0 30px rgba(52,211,153,0.12);
+}</code></pre>
+      </div>
+
+      <div class="card fm-scale">
+        <h4 class="text-amber mb-3">Fly to Cart (compra)</h4>
+        <pre><code>// Layout animation de framer-motion
+&lt;motion.div
+  layoutId={`product-${id}`}
+  onClick={addToCart}
+  transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+&gt;
+  &lt;ProductImage /&gt;
+&lt;/motion.div&gt;
+
+// El layoutId hace que la imagen "vuele"
+// al ícono del carrito automáticamente</code></pre>
+      </div>
+
+      <div class="card fm-scale">
+        <h4 class="text-amber mb-3">Scroll Reveal (with viewport)</h4>
+        <pre><code>// Wrapper component
+function FadeOnView({ children, delay = 0 }) {
+  return (
+    &lt;motion.div
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-50px' }}
+      transition={{ duration: 0.7, delay, ease: [0.22,1,0.36,1] }}
+    &gt;
+      {children}
+    &lt;/motion.div&gt;
+  );
+}</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MOBILE FIRST -->
+<section id="mobile" class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Mobile-first</p>
+      <h2 class="serif fm mb-6">Responsive y accesibilidad</h2>
+    </div>
+
+    <div class="grid grid-2 gap-6 mb-8">
+      <div class="card">
+        <h3 class="text-amber mb-3">📱 Breakpoints (Tailwind)</h3>
+        <pre><code>screens: {
+  'sm': '640px',   // móvil grande
+  'md': '768px',   // tablet
+  'lg': '1024px',  // laptop
+  'xl': '1280px',  // desktop
+  '2xl': '1536px', // pantalla grande
+}
+
+// Filosofía mobile-first:
+&lt;div class="text-sm md:text-base lg:text-lg"&gt;
+  // 14px → 16px → 18px progresivo
+&lt;/div&gt;</code></pre>
+      </div>
+      <div class="card">
+        <h3 class="text-amber mb-3">♿ Accesibilidad WCAG AA</h3>
+        <ul class="ul-clean ul-dot text-sm">
+          <li>Contraste mínimo 4.5:1 para texto normal</li>
+          <li>Contraste 3:1 para texto grande y UI</li>
+          <li>Focus visible en todos los elementos interactivos</li>
+          <li>Alt text en todas las imágenes</li>
+          <li>aria-labels en iconos sin texto</li>
+          <li>Navegación 100% por teclado</li>
+          <li>Tap targets mínimo 44x44px en mobile</li>
+          <li>Respeta <code class="inline">prefers-reduced-motion</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="glass-strong fm" style="padding:28px">
+      <h3 class="grad-text mb-4">📏 Espaciado consistente (8pt grid)</h3>
+      <pre><code>// Todos los espaciados son múltiplos de 4 o 8
+// Tailwind ya viene así pero refuerza la consistencia
+
+spacing: {
+  '0':   '0px',
+  '1':   '0.25rem',  //  4px
+  '2':   '0.5rem',   //  8px
+  '3':   '0.75rem',  // 12px
+  '4':   '1rem',     // 16px
+  '6':   '1.5rem',   // 24px
+  '8':   '2rem',     // 32px
+  '12':  '3rem',     // 48px
+  '16':  '4rem',     // 64px
+  '24':  '6rem',     // 96px
+  '32':  '8rem',     // 128px
+}
+
+// REGLA: nunca usar espacios "raros" como 13px o 7rem.
+// Solo múltiplos del sistema.</code></pre>
+    </div>
+  </div>
+</section>
+
+<section id="checklist">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Checklist</p>
+      <h2 class="serif fm mb-6">Criterios de aceptación</h2>
+    </div>
+    <div class="glass-strong fm" style="padding:32px">
+      <ul class="checklist">
+        <li>Archivo Figma "Tierra Madre Design System" creado y compartido</li>
+        <li>Paleta de 3 colores con todas las escalas (50-900) en Figma styles</li>
+        <li>Tipografías Inter + Playfair Display cargadas y definidas</li>
+        <li>Escala tipográfica documentada</li>
+        <li>Sistema de espaciado 8pt grid documentado</li>
+        <li>15+ componentes UI diseñados en Figma con sus variants</li>
+        <li>tailwind.config.ts con todos los tokens custom (entregable a Área 1)</li>
+        <li>src/styles/globals.css con CSS variables (entregable a Área 1)</li>
+        <li>Catálogo de animaciones framer-motion documentado</li>
+        <li>Mockups responsive de Home, Catálogo, Producto, Checkout, Admin Dashboard</li>
+        <li>Guía de fotografía de productos (iluminación, fondo, ángulos)</li>
+        <li>Iconografía: Lucide React + custom SVGs para casos especiales</li>
+        <li>Contrastes WCAG AA verificados en cada par de colores</li>
+        <li>Versión móvil + tablet + desktop de cada página</li>
+        <li>Documento de "voz de marca" (cómo escribimos en la web)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p class="serif" style="font-size:1.1rem;color:var(--gold-300);margin-bottom:8px">Tierra Madre · Área 5 · Diseño & UX</p>
+  <p>Diseño en Figma + tokens para Área 1 · Sin código</p>
+  <p style="margin-top:12px"><a href="plan-ejecucion-tierra-madre.html" style="color:var(--gold-300);text-decoration:none">← Volver al documento maestro</a></p>
+</footer>
+
+<script>
+  const io = new IntersectionObserver((entries) => {entries.forEach(e => {if (e.isIntersecting) {e.target.classList.add('in');if (e.target.classList.contains('stagger')) e.target.querySelectorAll('.fm, .fm-scale').forEach(c => c.classList.add('in'));}});}, {threshold:0.12,rootMargin:'0px 0px -50px 0px'});
+  document.querySelectorAll('.fm, .fm-scale, .stagger').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

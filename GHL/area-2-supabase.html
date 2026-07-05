@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Área 2 · Backend Supabase · Tierra Madre</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#050807;--emerald-300:#6ee7b7;--emerald-400:#34d399;--emerald-500:#10b981;--emerald-700:#047857;--emerald-900:#064e3b;--gold-300:#fcd34d;--gold-400:#fbbf24;--gold-500:#f59e0b;--text:#e6f4ef;--text-soft:rgba(230,244,239,.72);--text-mute:rgba(230,244,239,.5);--border:rgba(52,211,153,.2)}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:radial-gradient(ellipse at top,#0f1714 0%,#050807 60%,#000 100%);color:var(--text);line-height:1.65;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.serif{font-family:'Playfair Display',Georgia,serif;letter-spacing:-.02em}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+section{padding:80px 24px;position:relative}
+h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:900;line-height:1.05}
+h2{font-size:clamp(1.75rem,4vw,2.75rem);font-weight:800;line-height:1.15}
+h3{font-size:1.4rem;font-weight:700}
+h4{font-size:1rem;font-weight:700}
+p{color:var(--text-soft)}
+.section-label{font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:var(--emerald-400);font-weight:700;margin-bottom:14px}
+.lead{font-size:1.1rem;color:var(--text-soft);max-width:780px;margin:0 auto}
+.center{text-align:center}
+.grad-text{background:linear-gradient(135deg,#34d399 0%,#10b981 40%,#fcd34d 100%);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block}
+.glass{background:linear-gradient(135deg,rgba(15,23,20,.6),rgba(22,35,32,.4));backdrop-filter:blur(14px);border:1px solid var(--border);border-radius:18px}
+.glass-strong{background:linear-gradient(135deg,rgba(15,23,20,.92),rgba(22,35,32,.75));backdrop-filter:blur(20px);border:1px solid rgba(52,211,153,.28);border-radius:22px}
+.card{background:linear-gradient(135deg,rgba(15,23,20,.7),rgba(22,35,32,.5));border:1px solid var(--border);border-radius:18px;padding:24px;transition:all .4s}
+.card:hover{border-color:rgba(52,211,153,.45);transform:translateY(-3px)}
+.card-sm{padding:18px;border-radius:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid rgba(52,211,153,.28);background:rgba(16,185,129,.1);color:var(--emerald-300)}
+.chip.gold{border-color:rgba(251,191,36,.32);background:rgba(251,191,36,.1);color:var(--gold-300)}
+.grid{display:grid;gap:20px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+@media (max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.flex{display:flex}.items-center{align-items:center}.justify-between{justify-content:space-between}.justify-center{justify-content:center}.wrap{flex-wrap:wrap}
+.gap-2{gap:8px}.gap-3{gap:12px}
+.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}.mb-8{margin-bottom:32px}.mb-12{margin-bottom:48px}.mb-16{margin-bottom:64px}
+.mt-4{margin-top:16px}.mt-6{margin-top:24px}.mt-8{margin-top:32px}
+.text-amber{color:var(--gold-300)}.text-emerald{color:var(--emerald-300)}
+.text-sm{font-size:.875rem}.text-xs{font-size:.78rem}
+.text-soft{color:var(--text-soft)}
+pre{background:#0a0f0d;border:1px solid rgba(52,211,153,.25);border-radius:12px;padding:16px;overflow-x:auto;font-size:12px;color:#a7f3d0;line-height:1.6;font-family:'JetBrains Mono',monospace}
+code{font-family:'JetBrains Mono',monospace}
+code.inline{color:var(--gold-300);background:rgba(251,191,36,.08);padding:1px 6px;border-radius:4px;font-size:.85em}
+.ul-clean{list-style:none}
+.ul-dot li{padding:5px 0 5px 18px;position:relative;font-size:.9rem;color:var(--text-soft)}
+.ul-dot li::before{content:"•";color:var(--emerald-400);position:absolute;left:0;font-weight:bold}
+.fm{opacity:0;transform:translateY(30px);transition:opacity .8s cubic-bezier(.22,1,.36,1),transform .8s cubic-bezier(.22,1,.36,1)}
+.fm.in{opacity:1;transform:translateY(0)}
+.fm-left{opacity:0;transform:translateX(-30px);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm-left.in{opacity:1;transform:translateX(0)}
+.fm-right{opacity:0;transform:translateX(30px);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm-right.in{opacity:1;transform:translateX(0)}
+.fm-scale{opacity:0;transform:scale(.93);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm-scale.in{opacity:1;transform:scale(1)}
+.stagger.in > .fm,.stagger.in > .fm-scale{opacity:1;transform:none}
+.stagger.in > *:nth-child(1){transition-delay:.05s}.stagger.in > *:nth-child(2){transition-delay:.13s}.stagger.in > *:nth-child(3){transition-delay:.21s}.stagger.in > *:nth-child(4){transition-delay:.29s}.stagger.in > *:nth-child(5){transition-delay:.37s}
+.mermaid{background:transparent !important;display:flex;justify-content:center;margin:0 auto;min-height:80px}
+.mermaid svg{max-width:100%;height:auto}
+.hero{min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;background:radial-gradient(ellipse at center,rgba(16,185,129,.25) 0%,transparent 60%)}
+.gem-icon{width:80px;height:80px;background:linear-gradient(135deg,#34d399,#10b981 50%,#047857);clip-path:polygon(50% 0%,90% 30%,80% 90%,20% 90%,10% 30%);box-shadow:0 0 60px rgba(52,211,153,.5);margin:0 auto 24px;animation:gem 6s ease-in-out infinite}
+@keyframes gem{0%,100%{transform:rotate(-5deg) scale(1)}50%{transform:rotate(5deg) scale(1.05)}}
+.section-tinted{background:linear-gradient(180deg,transparent,rgba(6,78,59,.1),transparent)}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#fcd34d,#f59e0b);color:#0a0f0d;font-weight:800;font-size:.95rem;margin-right:10px;flex-shrink:0}
+.checklist li{display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:.9rem;color:var(--text-soft)}
+.checklist li::before{content:"☐";color:var(--gold-300);font-size:1.1em;margin-top:-2px}
+.prompt-box{background:#0a0f0d;border:1px dashed rgba(251,191,36,.4);border-radius:12px;padding:18px;margin:12px 0;font-family:'JetBrains Mono',monospace;font-size:12px;color:#fcd34d;line-height:1.6;white-space:pre-wrap}
+.prompt-box::before{content:"💬 PROMPT PARA CLAUDE CODE";display:block;font-size:10px;letter-spacing:.2em;color:var(--gold-300);margin-bottom:8px;font-family:'Inter',sans-serif}
+footer{border-top:1px solid rgba(52,211,153,.2);padding:32px 24px;text-align:center;color:var(--text-mute);font-size:.85rem}
+.area-nav{position:sticky;top:0;z-index:40;background:rgba(5,8,7,.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(52,211,153,.15);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.area-nav-title{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:var(--emerald-300)}
+.area-nav-links{display:flex;gap:14px;flex-wrap:wrap}
+.area-nav-links a{font-size:.82rem;color:var(--text-soft);text-decoration:none}
+.area-nav-links a:hover{color:var(--emerald-300)}
+</style>
+</head>
+<body>
+
+<nav class="area-nav">
+  <span class="area-nav-title">Área 2 · Backend Supabase</span>
+  <div class="area-nav-links">
+    <a href="#objetivo">Objetivo</a>
+    <a href="#schema">Schema SQL</a>
+    <a href="#storage">Storage</a>
+    <a href="#auth">Auth + RLS</a>
+    <a href="#functions">Edge Functions</a>
+    <a href="#prompts">Prompts</a>
+    <a href="#checklist">Checklist</a>
+    <a href="plan-ejecucion-tierra-madre.html">← Maestro</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div>
+    <div class="fm in"><div class="gem-icon"></div></div>
+    <p class="section-label fm in" style="transition-delay:.15s">ÁREA 2 · BACKEND</p>
+    <h1 class="serif fm in mb-4" style="transition-delay:.25s">Supabase como <span class="grad-text">columna vertebral</span></h1>
+    <p class="lead fm in" style="transition-delay:.4s">
+      Base de datos PostgreSQL, Storage para fotos y certificados, Auth para admin y embajadores, Edge Functions para lógica server-side. Todo configurado para que la app Vite y GHL conversen sin fricción.
+    </p>
+    <div class="flex justify-center wrap gap-3 fm in mt-8" style="transition-delay:.55s">
+      <span class="chip">PostgreSQL 15</span>
+      <span class="chip gold">Row Level Security</span>
+      <span class="chip">Edge Functions (Deno)</span>
+      <span class="chip">Storage + CDN</span>
+      <span class="chip gold">Realtime subscriptions</span>
+    </div>
+  </div>
+</section>
+
+<section id="objetivo">
+  <div class="container">
+    <div class="grid grid-2 items-center">
+      <div class="fm-left">
+        <p class="section-label">Objetivo</p>
+        <h2 class="serif mb-6">Qué construye esta área</h2>
+        <p class="mb-4">El backend completo: base de datos relacional con 14 tablas, políticas de seguridad, almacenamiento de fotos y certificados, autenticación para admin y embajadores, y 8 funciones serverless (Edge Functions) que orquestan la lógica de negocio.</p>
+        <ul class="ul-clean ul-dot">
+          <li>Schema SQL con todas las tablas y relaciones</li>
+          <li>Índices optimizados para queries del bot y la web</li>
+          <li>RLS policies que protegen cada tabla por rol</li>
+          <li>Triggers DB para automatizaciones (auto-update score, etc.)</li>
+          <li>Storage buckets: products (público), certificates (privado)</li>
+          <li>Auth con magic link + roles (super_admin, admin, marketing, agente, embajador)</li>
+          <li>Edge Functions: search-products, create-order, mp-webhook, send-promo, calculate-ambassador-score, auto-event-invite, hot-lead-detector, ghl-sync</li>
+        </ul>
+      </div>
+      <div class="fm-right">
+        <div class="glass-strong" style="padding:24px">
+          <h3 class="grad-text mb-4">📦 Entregables</h3>
+          <ul class="ul-clean ul-dot text-sm">
+            <li>Proyecto Supabase creado y configurado</li>
+            <li>Migrations SQL versionadas en repo</li>
+            <li>14 tablas con sus RLS policies activas</li>
+            <li>2 buckets de Storage con políticas</li>
+            <li>8 Edge Functions deployadas y testeadas</li>
+            <li>Variables de entorno documentadas</li>
+            <li>Backup automático configurado</li>
+            <li>Service Role Key + Anon Key entregadas a Área 1 y 4</li>
+            <li>Documentación de cada tabla y función</li>
+            <li>Seeds: datos de prueba para 20 productos</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCHEMA SQL -->
+<section id="schema" class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Schema SQL completo</p>
+      <h2 class="serif fm mb-6">Las 14 tablas de Tierra Madre</h2>
+    </div>
+
+    <div class="glass-strong fm" style="padding:28px">
+      <h3 class="grad-text mb-4">📋 Diagrama de relaciones</h3>
+      <div class="mermaid">
+erDiagram
+    contacts ||--o{ orders : has
+    contacts ||--o{ event_attendees : attends
+    contacts ||--o{ ambassador_leads : referred_by
+    contacts ||--o{ testimonials : writes
+    contacts ||--o{ promotion_codes : redeems
+
+    products ||--o{ order_items : in
+    products ||--o{ product_images : has
+    products ||--o{ promotion_products : on_sale
+
+    orders ||--o{ order_items : contains
+    orders ||--o{ commissions : generates
+
+    ambassadors ||--o{ ambassador_leads : owns
+    ambassadors ||--o{ commissions : earns
+
+    events ||--o{ event_attendees : has
+    events ||--o{ promotions : triggers
+
+    promotions ||--o{ promotion_codes : generates
+    promotions ||--o{ promotion_products : applies_to
+
+    agents }o--o{ orders : closes
+      </div>
+    </div>
+
+    <div class="glass-strong mt-12 fm" style="padding:28px">
+      <h3 class="grad-text mb-4">📜 Migration 001 · Schema completo</h3>
+      <pre><code>-- =========================================================
+-- TIERRA MADRE · Schema completo
+-- Migration 001 - Initial
+-- =========================================================
+
+-- ====== CONTACTS (clientes/leads) ======
+create table contacts (
+  id uuid primary key default gen_random_uuid(),
+  celular text unique,
+  instagram_handle text,
+  email text,
+  full_name text,
+  ciudad text,
+  presupuesto_declarado_cop numeric,
+  tipo_interes text,
+  conocimiento_esmeraldas text,
+  canal_origen text,
+  ambassador_id uuid,
+  agent_assigned uuid,
+  lead_score int default 0,
+  total_comprado_cop numeric default 0,
+  ultima_compra_fecha timestamptz,
+  eventos_presenciales int default 0,
+  eventos_virtuales int default 0,
+  cumpleanios date,
+  aniversario_compra date,
+  ghl_contact_id text,
+  tags text[],
+  custom_fields jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+create index idx_contacts_celular on contacts(celular);
+create index idx_contacts_ig on contacts(instagram_handle);
+create index idx_contacts_score on contacts(lead_score);
+create index idx_contacts_ambassador on contacts(ambassador_id);
+
+-- ====== PRODUCTS ======
+create table products (
+  id uuid primary key default gen_random_uuid(),
+  sku text unique not null,
+  nombre text not null,
+  slug text unique not null,
+  descripcion text,
+  descripcion_corta text,
+  precio_cop numeric not null,
+  precio_anterior_cop numeric,
+  categoria text not null,
+  tipo_gema text,
+  ocasion text[],
+  keywords text[],
+  rango_precio text,
+  certificado_url text,
+  video_url text,
+  stock int default 0,
+  destacado boolean default false,
+  activo boolean default true,
+  search_vector tsvector,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+create index idx_products_categoria on products(categoria);
+create index idx_products_keywords on products using gin(keywords);
+create index idx_products_search on products using gin(search_vector);
+create index idx_products_precio on products(precio_cop);
+
+-- ====== PRODUCT_IMAGES ======
+create table product_images (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid references products(id) on delete cascade,
+  url text not null,
+  alt text,
+  is_primary boolean default false,
+  is_360 boolean default false,
+  position int default 0,
+  created_at timestamptz default now()
+);
+
+-- ====== ORDERS ======
+create table orders (
+  id uuid primary key default gen_random_uuid(),
+  contact_id uuid references contacts(id),
+  ambassador_id uuid,
+  agent_id uuid,
+  status text default 'pending',
+  -- pending, paid, shipped, delivered, cancelled, refunded
+  total_cop numeric not null,
+  discount_cop numeric default 0,
+  promotion_code text,
+  shipping_cop numeric default 0,
+  mp_preference_id text,
+  mp_payment_id text,
+  mp_status text,
+  paid_at timestamptz,
+  shipped_at timestamptz,
+  delivered_at timestamptz,
+  tracking_code text,
+  shipping_address jsonb,
+  notes text,
+  created_at timestamptz default now()
+);
+create index idx_orders_contact on orders(contact_id);
+create index idx_orders_status on orders(status);
+create index idx_orders_ambassador on orders(ambassador_id);
+
+-- ====== ORDER_ITEMS ======
+create table order_items (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid references orders(id) on delete cascade,
+  product_id uuid references products(id),
+  quantity int default 1,
+  unit_price_cop numeric not null,
+  subtotal_cop numeric not null
+);
+
+-- ====== AMBASSADORS ======
+create table ambassadors (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id),
+  full_name text not null,
+  celular text,
+  email text unique not null,
+  instagram_handle text,
+  ciudad text,
+  slug text unique not null,
+  -- para URL personalizada: /embajador/{slug}/leads
+  avatar_url text,
+  nivel text default 'bronce',
+  -- bronce, plata, oro, diamante
+  score int default 0,
+  comision_percent numeric default 8,
+  total_ventas_lifetime_cop numeric default 0,
+  ventas_mes_actual_cop numeric default 0,
+  status text default 'invited',
+  -- invited, active, paused, suspended, archived
+  referido_por uuid references ambassadors(id),
+  -- quién la trajo (si aplica)
+  fecha_ingreso date default current_date,
+  fecha_activacion timestamptz,
+  -- cuándo aceptó la invitación
+  notas text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+create index idx_ambassadors_slug on ambassadors(slug);
+create index idx_ambassadors_email on ambassadors(email);
+create index idx_ambassadors_status on ambassadors(status);
+
+-- ====== AMBASSADOR_LEADS ======
+create table ambassador_leads (
+  id uuid primary key default gen_random_uuid(),
+  ambassador_id uuid references ambassadors(id),
+  contact_id uuid references contacts(id),
+  celular text,
+  instagram_handle text,
+  email text,
+  full_name text,
+  ciudad text,
+  tipo_interes_inicial text,
+  presupuesto_estimado numeric,
+  notas text,
+  status text default 'pendiente',
+  -- pendiente, contactado, calificado, vendido, perdido
+  created_at timestamptz default now()
+);
+create index idx_amb_leads_celular on ambassador_leads(celular);
+create index idx_amb_leads_ig on ambassador_leads(instagram_handle);
+
+-- ====== EVENTS ======
+create table events (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  slug text unique not null,
+  tipo text not null,
+  -- presencial, virtual
+  ciudad text,
+  zoom_link text,
+  fecha timestamptz not null,
+  capacidad_maxima int,
+  audience_filters jsonb,
+  status text default 'draft',
+  -- draft, published, ongoing, finished
+  created_by uuid references auth.users(id),
+  created_at timestamptz default now()
+);
+
+-- ====== EVENT_ATTENDEES ======
+create table event_attendees (
+  id uuid primary key default gen_random_uuid(),
+  event_id uuid references events(id) on delete cascade,
+  contact_id uuid references contacts(id),
+  status text default 'invited',
+  -- invited, confirmed, attended, no-show
+  qr_code text unique,
+  check_in_at timestamptz,
+  created_at timestamptz default now()
+);
+
+-- ====== PROMOTIONS ======
+create table promotions (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  type text not null,
+  -- percent, amount, 2x1, gift
+  value numeric,
+  audience_filters jsonb,
+  starts_at timestamptz default now(),
+  expires_at timestamptz not null,
+  max_uses_per_person int default 1,
+  max_total_uses int,
+  total_uses int default 0,
+  message_template text,
+  channel text default 'preferred',
+  status text default 'active',
+  event_id uuid references events(id),
+  created_by uuid references auth.users(id),
+  created_at timestamptz default now()
+);
+
+-- ====== PROMOTION_PRODUCTS ======
+create table promotion_products (
+  promotion_id uuid references promotions(id) on delete cascade,
+  product_id uuid references products(id),
+  primary key (promotion_id, product_id)
+);
+
+-- ====== PROMOTION_CODES ======
+create table promotion_codes (
+  id uuid primary key default gen_random_uuid(),
+  promotion_id uuid references promotions(id),
+  contact_id uuid references contacts(id),
+  code text unique not null,
+  used boolean default false,
+  used_at timestamptz,
+  order_id uuid references orders(id)
+);
+create index idx_promo_codes_code on promotion_codes(code);
+
+-- ====== COMMISSIONS ======
+create table commissions (
+  id uuid primary key default gen_random_uuid(),
+  ambassador_id uuid references ambassadors(id),
+  order_id uuid references orders(id),
+  amount_cop numeric not null,
+  percent_applied numeric not null,
+  status text default 'pending',
+  -- pending, approved, paid
+  approved_at timestamptz,
+  paid_at timestamptz,
+  paid_by uuid references auth.users(id),
+  notes text,
+  created_at timestamptz default now()
+);
+
+-- ====== TESTIMONIALS ======
+create table testimonials (
+  id uuid primary key default gen_random_uuid(),
+  contact_id uuid references contacts(id),
+  order_id uuid references orders(id),
+  rating int not null check (rating >= 1 and rating <= 5),
+  texto text,
+  foto_url text,
+  authorized_publish boolean default false,
+  status text default 'pending',
+  -- pending, approved, rejected, published
+  published_at timestamptz,
+  created_at timestamptz default now()
+);
+
+-- ====== AGENTS ======
+create table agents (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id),
+  full_name text not null,
+  email text unique not null,
+  celular text,
+  avatar_url text,
+  pool text not null,
+  -- premium, inversion, senior, regular
+  especialidades text[],
+  -- ['gemas-sueltas', 'anillos-compromiso', ...]
+  comision_percent numeric default 3,
+  salario_base_cop numeric,
+  capacity_max int default 10,
+  schedule jsonb,
+  -- {monday: {start:'09:00', end:'18:00'}, ...}
+  status text default 'invited',
+  -- invited, active, paused, suspended, archived
+  fecha_ingreso date default current_date,
+  fecha_activacion timestamptz,
+  notas text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+create index idx_agents_email on agents(email);
+create index idx_agents_pool on agents(pool);
+create index idx_agents_status on agents(status);
+
+-- ====== MESSAGE_TEMPLATES ======
+create table message_templates (
+  id uuid primary key default gen_random_uuid(),
+  code text unique not null,
+  -- WA-01, IG-01, CK-01, etc.
+  category text not null,
+  channel text not null,
+  -- whatsapp, instagram, email, facebook
+  name text not null,
+  body text not null,
+  variables text[],
+  meta_approved boolean default false,
+  meta_template_id text,
+  created_at timestamptz default now()
+);
+
+-- ====== HOT_LEADS (B3) ======
+create table hot_leads (
+  id uuid primary key default gen_random_uuid(),
+  contact_id uuid references contacts(id) unique,
+  signals jsonb,
+  score int not null,
+  detected_at timestamptz default now(),
+  agent_notified_id uuid,
+  resolved boolean default false,
+  resolved_at timestamptz
+);</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- STORAGE -->
+<section id="storage">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Almacenamiento</p>
+      <h2 class="serif fm mb-6">Storage Buckets</h2>
+    </div>
+
+    <div class="grid grid-2 stagger fm">
+      <div class="card fm-scale">
+        <div class="chip mb-3">Público</div>
+        <h3 class="mb-3">📸 products</h3>
+        <p class="text-sm mb-4">Almacena las fotos de productos. Acceso público con CDN para máxima velocidad.</p>
+        <p class="text-xs text-emerald font-bold mb-2">Estructura</p>
+        <pre><code>products/
+├── {sku}/
+│   ├── primary.jpg          # foto principal
+│   ├── gallery-01.jpg       # galería
+│   ├── gallery-02.jpg
+│   ├── 360/                 # 24 fotos para A3
+│   │   ├── 01.jpg
+│   │   ├── 02.jpg
+│   │   └── ... 24.jpg
+│   └── video.mp4            # opcional</code></pre>
+      </div>
+      <div class="card fm-scale">
+        <div class="chip gold mb-3">Privado · Signed URLs</div>
+        <h3 class="mb-3">📜 certificates</h3>
+        <p class="text-sm mb-4">Certificados de las gemas. Solo descargables con URL firmada y temporal (1h de vigencia). Solo el comprador puede descargarlo.</p>
+        <p class="text-xs text-emerald font-bold mb-2">Estructura</p>
+        <pre><code>certificates/
+├── {sku}/
+│   └── certificate.pdf
+└── orders/
+    └── {order_id}/
+        └── invoice.pdf</code></pre>
+      </div>
+    </div>
+
+    <div class="glass mt-8 fm" style="padding:24px">
+      <h3 class="text-amber mb-3">🔐 Storage Policies</h3>
+      <pre><code>-- Bucket 'products': lectura pública, escritura solo admin/marketing
+create policy "Public products read"
+  on storage.objects for select
+  using (bucket_id = 'products');
+
+create policy "Admins write products"
+  on storage.objects for all
+  using (bucket_id = 'products' and (
+    auth.jwt() ->> 'role' in ('super_admin','admin','marketing')
+  ));
+
+-- Bucket 'certificates': solo signed URLs, escritura admin
+create policy "Admins write certificates"
+  on storage.objects for all
+  using (bucket_id = 'certificates' and (
+    auth.jwt() ->> 'role' in ('super_admin','admin')
+  ));</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- AUTH + RLS -->
+<section id="auth" class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Autenticación + RLS</p>
+      <h2 class="serif fm mb-6">Roles y políticas de seguridad</h2>
+    </div>
+
+    <div class="glass-strong mb-8 fm" style="padding:28px">
+      <h3 class="grad-text mb-4">👥 5 roles del sistema</h3>
+      <div class="grid grid-2 gap-4">
+        <div class="card card-sm"><strong class="text-amber">super_admin</strong><p class="text-sm mt-1">Acceso total. Fundadores.</p></div>
+        <div class="card card-sm"><strong class="text-amber">admin</strong><p class="text-sm mt-1">Operación diaria, excepto config crítica y comisiones.</p></div>
+        <div class="card card-sm"><strong class="text-amber">marketing</strong><p class="text-sm mt-1">Productos, contenido, testimonios, plantillas.</p></div>
+        <div class="card card-sm"><strong class="text-amber">agente</strong><p class="text-sm mt-1">Su dashboard, sus órdenes asignadas, chat.</p></div>
+        <div class="card card-sm"><strong class="text-amber">embajador</strong><p class="text-sm mt-1">Su portal: sus leads, sus comisiones, kit marketing.</p></div>
+      </div>
+    </div>
+
+    <div class="glass fm" style="padding:28px">
+      <h3 class="text-amber mb-3">🛡️ Ejemplo de RLS Policies</h3>
+      <pre><code>-- ====== PRODUCTS · todos pueden leer activos, admin escribe ======
+alter table products enable row level security;
+
+create policy "Public read active products"
+  on products for select
+  using (activo = true);
+
+create policy "Admins manage products"
+  on products for all
+  using (auth.jwt() ->> 'role' in ('super_admin','admin','marketing'));
+
+-- ====== ORDERS · contact ve solo las suyas, admin ve todas ======
+alter table orders enable row level security;
+
+create policy "Contact reads own orders"
+  on orders for select
+  using (contact_id::text = auth.jwt() ->> 'contact_id');
+
+create policy "Admins read all orders"
+  on orders for select
+  using (auth.jwt() ->> 'role' in ('super_admin','admin'));
+
+-- ====== AMBASSADOR_LEADS · embajador ve solo los suyos ======
+alter table ambassador_leads enable row level security;
+
+create policy "Ambassador reads own leads"
+  on ambassador_leads for select
+  using (ambassador_id::text = (
+    select id::text from ambassadors where user_id = auth.uid()
+  ));
+
+create policy "Ambassador creates own leads"
+  on ambassador_leads for insert
+  with check (ambassador_id::text = (
+    select id::text from ambassadors where user_id = auth.uid()
+  ));
+
+-- ====== COMMISSIONS · embajador ve las suyas, super_admin gestiona ======
+alter table commissions enable row level security;
+
+create policy "Ambassador reads own commissions"
+  on commissions for select
+  using (ambassador_id::text = (
+    select id::text from ambassadors where user_id = auth.uid()
+  ));
+
+create policy "Super admin manages commissions"
+  on commissions for all
+  using (auth.jwt() ->> 'role' = 'super_admin');</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- EDGE FUNCTIONS -->
+<section id="functions">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Edge Functions</p>
+      <h2 class="serif fm mb-6">Las 8 funciones serverless</h2>
+    </div>
+
+    <div class="grid grid-2 stagger fm">
+
+      <div class="card fm-scale">
+        <div class="chip mb-3">Función 01</div>
+        <h3 class="mb-3">🔍 search-products</h3>
+        <p class="text-sm mb-3">El bot llama aquí cuando un cliente describe lo que quiere. Devuelve top 3 productos según intent + presupuesto + ocasión.</p>
+        <p class="text-xs text-emerald">Input: <code class="inline">{intent, presupuesto, ocasion, ciudad}</code></p>
+        <p class="text-xs text-emerald">Output: <code class="inline">{productos: [...]}</code></p>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-3">Función 02</div>
+        <h3 class="mb-3">🛒 create-order</h3>
+        <p class="text-sm mb-3">Recibe carrito + datos cliente, crea orden en DB con status pending, genera preferencia en Mercado Pago, devuelve URL de checkout.</p>
+        <p class="text-xs text-emerald">Input: <code class="inline">{contact, items, shipping}</code></p>
+        <p class="text-xs text-emerald">Output: <code class="inline">{order_id, mp_url}</code></p>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-3">Función 03</div>
+        <h3 class="mb-3">💳 mp-webhook</h3>
+        <p class="text-sm mb-3">Recibe webhook de Mercado Pago. Valida firma. Actualiza orden a paid. Dispara workflow GHL #08 (post-venta).</p>
+        <p class="text-xs text-emerald">Input: <code class="inline">payload de MP</code></p>
+        <p class="text-xs text-emerald">Output: <code class="inline">200 OK</code></p>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-3">Función 04</div>
+        <h3 class="mb-3">🎁 send-promo</h3>
+        <p class="text-sm mb-3">Recibe promoción. Filtra audiencia por audience_filters. Para cada contacto: genera código único, envía mensaje por canal preferido (via GHL API).</p>
+        <p class="text-xs text-emerald">Input: <code class="inline">{promotion_id}</code></p>
+        <p class="text-xs text-emerald">Output: <code class="inline">{sent_count, errors}</code></p>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-3">Función 05</div>
+        <h3 class="mb-3">🏆 calculate-ambassador-score</h3>
+        <p class="text-sm mb-3">Cron diario + trigger en eventos. Calcula score de cada embajador según fórmula Base 11. Actualiza nivel si cambia. Notifica.</p>
+        <p class="text-xs text-emerald">Trigger: <code class="inline">cron diario 00:00</code></p>
+        <p class="text-xs text-emerald">Output: <code class="inline">{updated_count}</code></p>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-3">Función 06</div>
+        <h3 class="mb-3">🎤 auto-event-invite</h3>
+        <p class="text-sm mb-3">Al crear un evento, filtra contactos según audience_filters del evento y envía invitaciones automáticamente por canal preferido.</p>
+        <p class="text-xs text-emerald">Input: <code class="inline">{event_id}</code></p>
+        <p class="text-xs text-emerald">Output: <code class="inline">{invited_count}</code></p>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-3">Función 07</div>
+        <h3 class="mb-3">🔥 hot-lead-detector</h3>
+        <p class="text-sm mb-3">B3. Cron cada 15 min. Evalúa señales en contactos activos. Si ≥4 señales y score &gt;60, marca como hot_lead y notifica a Agente Senior.</p>
+        <p class="text-xs text-emerald">Trigger: <code class="inline">cron */15 * * * *</code></p>
+        <p class="text-xs text-emerald">Output: <code class="inline">{hot_leads_detected}</code></p>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip mb-3">Función 08</div>
+        <h3 class="mb-3">🔄 ghl-sync</h3>
+        <p class="text-sm mb-3">Bidireccional. Cuando cambia contact en Supabase → sync a GHL. Cuando llega webhook de GHL → sync a Supabase. Mantiene ambos sistemas alineados.</p>
+        <p class="text-xs text-emerald">Trigger: <code class="inline">DB trigger + webhook</code></p>
+        <p class="text-xs text-emerald">Output: <code class="inline">{synced: true}</code></p>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip gold mb-3">Función 09 · NUEVO</div>
+        <h3 class="mb-3">🎟️ invite-ambassador</h3>
+        <p class="text-sm mb-3">Admin crea un embajador. Esta función orquesta TODO: crea registro, crea usuario Auth, genera slug único, envía email de bienvenida, sincroniza tag a GHL.</p>
+        <p class="text-xs text-emerald">Input: <code class="inline">{nombre, email, celular, ciudad, nivel, ...}</code></p>
+        <p class="text-xs text-emerald">Output: <code class="inline">{id, slug, form_url, dashboard_url}</code></p>
+      </div>
+
+      <div class="card fm-scale">
+        <div class="chip gold mb-3">Función 10 · NUEVO</div>
+        <h3 class="mb-3">👥 invite-agent</h3>
+        <p class="text-sm mb-3">Mismo concepto que invite-ambassador pero para agentes de venta. Incluye pool, horario y capacity. Asigna rol agente en Auth.</p>
+        <p class="text-xs text-emerald">Input: <code class="inline">{nombre, email, pool, horario, capacity, ...}</code></p>
+        <p class="text-xs text-emerald">Output: <code class="inline">{id, dashboard_url}</code></p>
+      </div>
+
+    </div>
+
+    <div class="glass-strong mt-12 fm" style="padding:28px">
+      <h3 class="grad-text mb-4">📝 Implementación · invite-ambassador completa</h3>
+      <pre><code>// supabase/functions/invite-ambassador/index.ts
+import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { Resend } from 'npm:resend';
+
+interface InviteRequest {
+  nombre_completo: string;
+  email: string;
+  celular: string;
+  instagram_handle?: string;
+  ciudad: string;
+  nivel_inicial?: 'bronce' | 'plata' | 'oro' | 'diamante';
+  comision_percent?: number;
+  referido_por?: string;
+  notas_internas?: string;
+}
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function randomCode(length = 4): string {
+  return Math.random().toString(36).substring(2, 2 + length);
+}
+
+serve(async (req) => {
+  if (req.method !== 'POST') return new Response('only POST', { status: 405 });
+
+  try {
+    const data: InviteRequest = await req.json();
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    // 1. Verificar que email no exista
+    const { data: existing } = await supabase
+      .from('ambassadors')
+      .select('id')
+      .eq('email', data.email)
+      .single();
+
+    if (existing) {
+      return new Response(
+        JSON.stringify({ error: 'Ya existe un embajador con ese correo' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 2. Generar slug único
+    let slug = `${slugify(data.nombre_completo)}-${randomCode()}`;
+    let slugExists = true;
+    while (slugExists) {
+      const { data: check } = await supabase
+        .from('ambassadors')
+        .select('id')
+        .eq('slug', slug)
+        .single();
+      if (!check) slugExists = false;
+      else slug = `${slugify(data.nombre_completo)}-${randomCode()}`;
+    }
+
+    // 3. Crear usuario Auth con rol embajador
+    const { data: authUser, error: authErr } = await supabase.auth.admin.inviteUserByEmail(
+      data.email,
+      {
+        data: {
+          role: 'embajador',
+          nombre_completo: data.nombre_completo,
+          slug
+        },
+        redirectTo: `${Deno.env.get('FRONTEND_URL')}/embajador/onboarding`
+      }
+    );
+
+    if (authErr) throw authErr;
+
+    // 4. Determinar % comisión según nivel
+    const comisionPorNivel: Record&lt;string, number&gt; = {
+      bronce: 8, plata: 10, oro: 12, diamante: 15
+    };
+    const comision = data.comision_percent ?? comisionPorNivel[data.nivel_inicial ?? 'bronce'];
+
+    // 5. INSERT en tabla ambassadors
+    const { data: ambassador, error: insErr } = await supabase
+      .from('ambassadors')
+      .insert({
+        user_id: authUser.user!.id,
+        full_name: data.nombre_completo,
+        email: data.email,
+        celular: data.celular,
+        instagram_handle: data.instagram_handle,
+        ciudad: data.ciudad,
+        slug,
+        nivel: data.nivel_inicial ?? 'bronce',
+        comision_percent: comision,
+        status: 'invited',
+        referido_por: data.referido_por,
+        notas: data.notas_internas
+      })
+      .select()
+      .single();
+
+    if (insErr) throw insErr;
+
+    // 6. Crear carpeta Storage para la embajadora
+    await supabase.storage
+      .from('ambassadors')
+      .upload(`${ambassador.id}/.keep`, new Blob([''], { type: 'text/plain' }));
+
+    // 7. Sincronizar tag a GHL (vía Cloudflare Worker)
+    await fetch(`${Deno.env.get('CF_WORKER_URL')}/sync-ambassador-tag`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('INTERNAL_API_SECRET')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ambassador_id: ambassador.id,
+        slug,
+        action: 'create'
+      })
+    });
+
+    // 8. Enviar email custom de bienvenida con Resend
+    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+    const formUrl = `${Deno.env.get('FRONTEND_URL')}/embajador/${slug}/leads`;
+    const dashboardUrl = `${Deno.env.get('FRONTEND_URL')}/embajador`;
+
+    await resend.emails.send({
+      from: 'Tierra Madre &lt;hola@tierramadre.co&gt;',
+      to: data.email,
+      subject: `¡Bienvenida al equipo, ${data.nombre_completo.split(' ')[0]}!`,
+      html: getWelcomeTemplate({
+        nombre: data.nombre_completo.split(' ')[0],
+        formUrl,
+        dashboardUrl,
+        nivel: data.nivel_inicial ?? 'bronce',
+        comision
+      })
+    });
+
+    return new Response(JSON.stringify({
+      id: ambassador.id,
+      slug,
+      form_url: formUrl,
+      dashboard_url: dashboardUrl,
+      email_sent: true
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+});
+
+function getWelcomeTemplate(d: { nombre: string; formUrl: string; dashboardUrl: string; nivel: string; comision: number }): string {
+  return `&lt;!DOCTYPE html&gt;
+&lt;html&gt;&lt;body style="font-family:Inter,sans-serif;background:#0f1714;color:#e6f4ef;padding:40px"&gt;
+  &lt;div style="max-width:600px;margin:0 auto"&gt;
+    &lt;h1 style="font-family:Playfair Display,serif;color:#34d399"&gt;¡Bienvenida ${d.nombre}! 💚&lt;/h1&gt;
+    &lt;p&gt;Oficialmente eres parte del equipo de Tierra Madre.&lt;/p&gt;
+    &lt;h3&gt;Lo que tienes disponible:&lt;/h3&gt;
+    &lt;ul&gt;
+      &lt;li&gt;Tu dashboard: &lt;a href="${d.dashboardUrl}"&gt;${d.dashboardUrl}&lt;/a&gt;&lt;/li&gt;
+      &lt;li&gt;Tu formulario único: &lt;a href="${d.formUrl}"&gt;${d.formUrl}&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+    &lt;p&gt;Tu nivel inicial: &lt;strong&gt;${d.nivel.toUpperCase()}&lt;/strong&gt; — Comisión: &lt;strong&gt;${d.comision}%&lt;/strong&gt;&lt;/p&gt;
+    &lt;a href="${d.dashboardUrl}" style="display:inline-block;background:#10b981;color:#fff;padding:14px 28px;border-radius:99px;text-decoration:none;margin-top:20px"&gt;ACTIVAR MI CUENTA&lt;/a&gt;
+  &lt;/div&gt;
+&lt;/body&gt;&lt;/html&gt;`;
+}</code></pre>
+    </div>
+
+    <div class="glass-strong mt-12 fm" style="padding:28px">
+      <h3 class="grad-text mb-4">📝 Ejemplo · search-products implementación completa</h3>
+      <pre><code>// supabase/functions/search-products/index.ts
+import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+
+  try {
+    const { intent, presupuesto, ocasion, ciudad } = await req.json();
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    // Margen 20% sobre presupuesto para no perder ventas cercanas
+    const precio_max = presupuesto ? presupuesto * 1.2 : 99999999;
+
+    let query = supabase
+      .from('products')
+      .select(`
+        id, sku, nombre, slug, descripcion_corta,
+        precio_cop, certificado_url,
+        product_images!inner(url, is_primary)
+      `)
+      .eq('activo', true)
+      .gt('stock', 0)
+      .lte('precio_cop', precio_max);
+
+    if (intent?.categoria) query = query.eq('categoria', intent.categoria);
+    if (ocasion) query = query.contains('ocasion', [ocasion]);
+
+    const { data: productos, error } = await query
+      .order('destacado', { ascending: false })
+      .order('precio_cop', { ascending: false })
+      .limit(3);
+
+    if (error) throw error;
+
+    return new Response(JSON.stringify({ productos }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+});</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- PROMPTS -->
+<section id="prompts" class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Prompts</p>
+      <h2 class="serif fm mb-6">Para Claude Code</h2>
+    </div>
+
+    <div class="glass-strong mb-6 fm" style="padding:28px">
+      <h3 class="grad-text mb-3">🚀 Prompt 1 · Setup inicial Supabase</h3>
+      <div class="prompt-box">Necesito que configures un proyecto Supabase para Tierra Madre desde cero.
+
+1. Crear proyecto Supabase en supabase.com (paso manual, indica al user qué llenar)
+2. Una vez creado, configura el CLI local:
+   - Instalar: npm install -g supabase
+   - Login: supabase login
+   - Link: supabase link --project-ref XXXXX
+
+3. Crear migración 001_initial con el SQL completo de área-2-supabase.html (las 14 tablas, índices, constraints).
+
+4. Aplicar migración: supabase db push
+
+5. Crear 2 buckets de Storage:
+   - 'products' (público)
+   - 'certificates' (privado)
+
+6. Configurar Auth: enable magic link, email templates en español.
+
+7. Documentar todas las env vars en .env.example.
+
+Crea la estructura de carpetas:
+supabase/
+├── migrations/
+│   └── 001_initial.sql
+├── functions/
+│   ├── search-products/
+│   ├── create-order/
+│   ├── mp-webhook/
+│   ├── send-promo/
+│   ├── calculate-ambassador-score/
+│   ├── auto-event-invite/
+│   ├── hot-lead-detector/
+│   └── ghl-sync/
+└── seed.sql</div>
+    </div>
+
+    <div class="glass-strong mb-6 fm" style="padding:28px">
+      <h3 class="grad-text mb-3">🚀 Prompt 2 · RLS Policies completas</h3>
+      <div class="prompt-box">Sobre el proyecto Supabase de Tierra Madre, crea migración 002_rls_policies con:
+
+1. RLS habilitado en todas las tablas
+2. Policies según los 5 roles (super_admin, admin, marketing, agente, embajador)
+3. Lógica:
+   - products: lectura pública si activo=true, escritura admin/marketing
+   - orders: contact ve solo las suyas, agentes ven asignadas, admins ven todas
+   - ambassador_leads: embajador ve solo los suyos, admin ve todos
+   - commissions: embajador lee las suyas, solo super_admin aprueba/paga
+   - promotions: lectura admin, escritura admin/super_admin
+   - testimonials: lectura pública si status=published, escritura admin
+   - message_templates: lectura admin/marketing, escritura admin
+
+4. Storage policies según área-2-supabase.html
+
+5. Functions con permission admin/super_admin para llamadas privilegiadas
+
+Aplica migration con supabase db push y verifica con tests SQL.</div>
+    </div>
+
+    <div class="glass-strong mb-6 fm" style="padding:28px">
+      <h3 class="grad-text mb-3">🚀 Prompt 3 · Las 8 Edge Functions</h3>
+      <div class="prompt-box">Sobre el proyecto Supabase de Tierra Madre, crea las 8 Edge Functions en Deno + TypeScript.
+
+Para cada función:
+- supabase/functions/{nombre}/index.ts
+- Manejo de CORS
+- Validación de input con zod
+- Cliente Supabase con SERVICE_ROLE_KEY
+- Try/catch con error handling
+- Tests en /tests/
+
+Funciones:
+
+1. search-products: query products según intent + presupuesto + ocasión. Implementación en área-2-supabase.html.
+
+2. create-order: crea orden + items, llama Mercado Pago Checkout API para crear preferencia, devuelve URL.
+
+3. mp-webhook: recibe webhook de MP, valida firma HMAC, consulta pago, actualiza orden si approved, dispara GHL workflow #08.
+
+4. send-promo: lee promotion + audience_filters, filtra contactos, para cada uno genera código único en promotion_codes y envía mensaje vía GHL API.
+
+5. calculate-ambassador-score: cron diario. Para cada embajador activo: calcula score según fórmula Base 11 (suma de métricas - restas). Actualiza nivel si cambia. Si sube nivel: dispara plantilla EM-03. Si baja: dispara coaching.
+
+6. auto-event-invite: recibe event_id, lee filtros, filtra contacts, para cada uno envía invitación con plantilla EV-01/EV-02 vía canal preferido.
+
+7. hot-lead-detector: cron cada 15min. Para cada contact activo (mensaje en últimas 48h): cuenta señales (foto pedida, pago consultado, score>60, frecuencia mensajes). Si >=4: inserta en hot_leads + dispara push a Agente Senior.
+
+8. ghl-sync: triggered por DB trigger en contacts. Mappea custom_fields a GHL custom fields. POST/PUT a GHL API. También maneja webhook entrante de GHL para sincronizar.
+
+Deploy con: supabase functions deploy {name}
+Documenta cada función en README dentro de su carpeta.</div>
+    </div>
+
+    <div class="glass-strong fm" style="padding:28px">
+      <h3 class="grad-text mb-3">🚀 Prompt 4 · Triggers DB + Search Vector</h3>
+      <div class="prompt-box">Crea migration 003_triggers con:
+
+1. Trigger para actualizar updated_at automáticamente en cada UPDATE de cualquier tabla.
+
+2. Trigger en products que actualice search_vector con tsvector de nombre + descripcion + keywords.
+
+3. Trigger en orders.status: cuando cambia a 'paid':
+   - Suma total a contacts.total_comprado_cop
+   - Setea ultima_compra_fecha
+   - Si tiene ambassador_id, crea registro en commissions con percent_applied de ambassadors.comision_percent
+   - Recalcula lead_score
+
+4. Trigger en ambassador_leads: cuando se inserta nuevo lead, busca match en contacts por celular/IG/email. Si encuentra, asigna ambassador_id al contact (si no tiene ya uno).
+
+5. Trigger en event_attendees: cuando status cambia a 'attended', incrementa contacts.eventos_presenciales o eventos_virtuales según event.tipo.
+
+6. Trigger en testimonials: cuando rating &gt;=4.5 y authorized_publish=true, cambia status a 'approved' automático.
+
+Aplica migration y testea cada trigger con datos de prueba.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CHECKLIST -->
+<section id="checklist">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Checklist final</p>
+      <h2 class="serif fm mb-6">Criterios de aceptación</h2>
+    </div>
+
+    <div class="glass-strong fm" style="padding:32px">
+      <ul class="checklist">
+        <li>Proyecto Supabase creado y configurado</li>
+        <li>Las 14 tablas creadas con SQL migration en repo</li>
+        <li>Todos los índices creados (performance)</li>
+        <li>RLS habilitado en todas las tablas</li>
+        <li>Policies por rol funcionan (test con cada rol)</li>
+        <li>Storage buckets creados: products (public), certificates (private)</li>
+        <li>Storage policies aplicadas</li>
+        <li>Auth con magic link funciona en email</li>
+        <li>Las 8 Edge Functions deployadas y testeadas</li>
+        <li>Triggers DB funcionan: update_updated_at, search_vector, order_paid, ambassador_match, event_attended, testimonial_approve</li>
+        <li>Backup automático configurado (Pro plan)</li>
+        <li>SERVICE_ROLE_KEY entregada a Áreas 1 y 4 (secreta)</li>
+        <li>ANON_KEY documentada</li>
+        <li>SUPABASE_URL documentada</li>
+        <li>Seeds de prueba: 20 productos, 5 embajadores, 3 eventos</li>
+        <li>README con arquitectura, schema diagrama, deploy steps</li>
+        <li>Cron jobs habilitados para ambassador-score y hot-lead-detector</li>
+        <li>Logs habilitados y monitorables</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p class="serif" style="font-size:1.1rem;color:var(--emerald-300);margin-bottom:8px">Tierra Madre · Área 2 · Backend Supabase</p>
+  <p>Para delegación al equipo · Construir con Claude Code</p>
+  <p style="margin-top:12px"><a href="plan-ejecucion-tierra-madre.html" style="color:var(--gold-300);text-decoration:none">← Volver al documento maestro</a></p>
+</footer>
+
+<script>
+  mermaid.initialize({startOnLoad:true,theme:'dark',themeVariables:{primaryColor:'#064e3b',primaryTextColor:'#fff',primaryBorderColor:'#34d399',lineColor:'#34d399',background:'transparent',mainBkg:'#0f1714',fontFamily:'Inter,sans-serif'},flowchart:{useMaxWidth:true,curve:'basis'}});
+  const io = new IntersectionObserver((entries) => {entries.forEach(e => {if (e.isIntersecting) {e.target.classList.add('in');if (e.target.classList.contains('stagger')) e.target.querySelectorAll('.fm, .fm-left, .fm-right, .fm-scale').forEach(c => c.classList.add('in'));}});}, {threshold:0.12,rootMargin:'0px 0px -50px 0px'});
+  document.querySelectorAll('.fm, .fm-left, .fm-right, .fm-scale, .stagger').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

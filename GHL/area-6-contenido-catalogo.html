@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Área 6 · Contenido & Catálogo · Tierra Madre</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--emerald-300:#6ee7b7;--emerald-400:#34d399;--emerald-500:#10b981;--emerald-700:#047857;--emerald-900:#064e3b;--gold-300:#fcd34d;--gold-400:#fbbf24;--gold-500:#f59e0b;--text:#e6f4ef;--text-soft:rgba(230,244,239,.72);--text-mute:rgba(230,244,239,.5);--border:rgba(52,211,153,.2)}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:radial-gradient(ellipse at top,#0f1714 0%,#050807 60%,#000 100%);color:var(--text);line-height:1.65;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.serif{font-family:'Playfair Display',Georgia,serif;letter-spacing:-.02em}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+section{padding:80px 24px;position:relative}
+h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:900;line-height:1.05}
+h2{font-size:clamp(1.75rem,4vw,2.75rem);font-weight:800;line-height:1.15}
+h3{font-size:1.4rem;font-weight:700}
+h4{font-size:1rem;font-weight:700}
+p{color:var(--text-soft)}
+.section-label{font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:var(--emerald-400);font-weight:700;margin-bottom:14px}
+.lead{font-size:1.1rem;color:var(--text-soft);max-width:780px;margin:0 auto}
+.center{text-align:center}
+.grad-text{background:linear-gradient(135deg,#34d399 0%,#10b981 40%,#fcd34d 100%);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block}
+.glass{background:linear-gradient(135deg,rgba(15,23,20,.6),rgba(22,35,32,.4));backdrop-filter:blur(14px);border:1px solid var(--border);border-radius:18px}
+.glass-strong{background:linear-gradient(135deg,rgba(15,23,20,.92),rgba(22,35,32,.75));backdrop-filter:blur(20px);border:1px solid rgba(52,211,153,.28);border-radius:22px}
+.card{background:linear-gradient(135deg,rgba(15,23,20,.7),rgba(22,35,32,.5));border:1px solid var(--border);border-radius:18px;padding:24px;transition:all .4s}
+.card:hover{border-color:rgba(52,211,153,.45);transform:translateY(-3px)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid rgba(52,211,153,.28);background:rgba(16,185,129,.1);color:var(--emerald-300)}
+.chip.gold{border-color:rgba(251,191,36,.32);background:rgba(251,191,36,.1);color:var(--gold-300)}
+.grid{display:grid;gap:20px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+@media (max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.flex{display:flex}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.wrap{flex-wrap:wrap}
+.gap-2{gap:8px}.gap-3{gap:12px}
+.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}.mb-8{margin-bottom:32px}.mb-12{margin-bottom:48px}.mb-16{margin-bottom:64px}
+.mt-4{margin-top:16px}
+.text-amber{color:var(--gold-300)}.text-emerald{color:var(--emerald-300)}
+.text-sm{font-size:.875rem}.text-xs{font-size:.78rem}
+.text-soft{color:var(--text-soft)}.text-mute{color:var(--text-mute)}
+pre{background:#0a0f0d;border:1px solid rgba(52,211,153,.25);border-radius:12px;padding:16px;overflow-x:auto;font-size:12px;color:#a7f3d0;line-height:1.6;font-family:'JetBrains Mono',monospace}
+code{font-family:'JetBrains Mono',monospace}
+code.inline{color:var(--gold-300);background:rgba(251,191,36,.08);padding:1px 6px;border-radius:4px;font-size:.85em}
+.ul-clean{list-style:none}
+.ul-dot li{padding:5px 0 5px 18px;position:relative;font-size:.9rem;color:var(--text-soft)}
+.ul-dot li::before{content:"•";color:var(--emerald-400);position:absolute;left:0;font-weight:bold}
+.fm{opacity:0;transform:translateY(30px);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm.in{opacity:1;transform:translateY(0)}
+.fm-scale{opacity:0;transform:scale(.93);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.fm-scale.in{opacity:1;transform:scale(1)}
+.stagger.in > .fm,.stagger.in > .fm-scale{opacity:1;transform:none}
+.stagger.in > *:nth-child(1){transition-delay:.05s}.stagger.in > *:nth-child(2){transition-delay:.13s}.stagger.in > *:nth-child(3){transition-delay:.21s}.stagger.in > *:nth-child(4){transition-delay:.29s}
+.hero{min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;background:radial-gradient(ellipse at center,rgba(16,185,129,.25) 0%,transparent 60%)}
+.gem-icon{width:80px;height:80px;background:linear-gradient(135deg,#34d399,#10b981 50%,#047857);clip-path:polygon(50% 0%,90% 30%,80% 90%,20% 90%,10% 30%);box-shadow:0 0 60px rgba(52,211,153,.5);margin:0 auto 24px;animation:gem 6s ease-in-out infinite}
+@keyframes gem{0%,100%{transform:rotate(-5deg) scale(1)}50%{transform:rotate(5deg) scale(1.05)}}
+.section-tinted{background:linear-gradient(180deg,transparent,rgba(6,78,59,.1),transparent)}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#fcd34d,#f59e0b);color:#0a0f0d;font-weight:800;font-size:.95rem;margin-right:10px;flex-shrink:0}
+.checklist li{display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:.9rem;color:var(--text-soft)}
+.checklist li::before{content:"☐";color:var(--gold-300);font-size:1.1em;margin-top:-2px}
+.accent-list > div{padding:8px 0 8px 14px;border-left:2px solid var(--emerald-400);margin-bottom:8px;font-size:.9rem}
+footer{border-top:1px solid rgba(52,211,153,.2);padding:32px 24px;text-align:center;color:var(--text-mute);font-size:.85rem}
+.area-nav{position:sticky;top:0;z-index:40;background:rgba(5,8,7,.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(52,211,153,.15);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.area-nav-title{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:var(--emerald-300)}
+.area-nav-links{display:flex;gap:14px;flex-wrap:wrap}
+.area-nav-links a{font-size:.82rem;color:var(--text-soft);text-decoration:none}
+.area-nav-links a:hover{color:var(--emerald-300)}
+</style>
+</head>
+<body>
+
+<nav class="area-nav">
+  <span class="area-nav-title">Área 6 · Contenido & Catálogo</span>
+  <div class="area-nav-links">
+    <a href="#objetivo">Objetivo</a>
+    <a href="#protocolo">Protocolo de carga</a>
+    <a href="#fotos">Fotos</a>
+    <a href="#textos">Textos</a>
+    <a href="#keywords">Keywords</a>
+    <a href="#seo">SEO</a>
+    <a href="#checklist">Checklist</a>
+    <a href="plan-ejecucion-tierra-madre.html">← Maestro</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div>
+    <div class="fm in"><div class="gem-icon"></div></div>
+    <p class="section-label fm in" style="transition-delay:.15s">ÁREA 6 · CONTENIDO + CATÁLOGO</p>
+    <h1 class="serif fm in mb-4" style="transition-delay:.25s">El <span class="grad-text">alma</span> del catálogo</h1>
+    <p class="lead fm in" style="transition-delay:.4s">
+      Cargar productos, escribir descripciones que enamoren, tomar fotos profesionales, etiquetar con palabras clave para que la IA encuentre lo que el cliente busca. Esto NO es código — es trabajo de marketing y producto, esencial para que todo lo demás funcione.
+    </p>
+    <div class="flex justify-center wrap gap-3 fm in mt-8" style="transition-delay:.55s">
+      <span class="chip">Admin Panel</span>
+      <span class="chip gold">Fotografía premium</span>
+      <span class="chip">Copy emocional</span>
+      <span class="chip gold">Keywords semánticos</span>
+      <span class="chip">SEO local</span>
+    </div>
+  </div>
+</section>
+
+<section id="objetivo">
+  <div class="container">
+    <div class="grid grid-2 items-center">
+      <div>
+        <p class="section-label">Objetivo</p>
+        <h2 class="serif mb-6">Qué construye esta área</h2>
+        <p class="mb-4">Cargar el catálogo completo de Tierra Madre con la calidad de una marca de lujo internacional. Cada producto importa: foto perfecta, descripción que enamore, palabras clave que la IA pueda usar para encontrarlo cuando un cliente lo describa.</p>
+        <ul class="ul-clean ul-dot">
+          <li>Estandarizar la fotografía de productos</li>
+          <li>Escribir descripciones (corta + larga) emocionales y técnicas</li>
+          <li>Definir keywords semánticos (cómo el cliente describe la joya)</li>
+          <li>Subir certificados PDF de cada gema</li>
+          <li>Configurar 24 fotos para galería 360° por producto</li>
+          <li>Cargar el catálogo inicial en el Admin Panel</li>
+          <li>Escribir contenido de landings (storytelling)</li>
+          <li>SEO básico: meta tags, descripciones, Open Graph</li>
+          <li>Calendario editorial de productos nuevos</li>
+        </ul>
+      </div>
+      <div class="glass-strong" style="padding:24px">
+        <h3 class="grad-text mb-4">📦 Entregables</h3>
+        <ul class="ul-clean ul-dot text-sm">
+          <li>Mínimo 30-50 productos cargados con calidad final</li>
+          <li>Cada producto con 4+ fotos profesionales</li>
+          <li>10-15 productos con galería 360° (los destacados)</li>
+          <li>Descripciones corta (140 chars) + larga (800 chars)</li>
+          <li>Keywords completos por producto (mínimo 8 tags)</li>
+          <li>Certificados PDF subidos para gemas verificadas</li>
+          <li>Textos de cada landing escritos</li>
+          <li>FAQ corporativa (15 preguntas frecuentes)</li>
+          <li>Manual de marca con voz/tono documentado</li>
+          <li>Calendario editorial de 3 meses (lanzamientos)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROTOCOLO -->
+<section id="protocolo" class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Protocolo</p>
+      <h2 class="serif fm mb-6">Cómo cargar un producto</h2>
+      <p class="lead fm">Sigue este protocolo paso a paso. Cada producto debe tomar máximo 30 minutos desde "tengo la pieza física" hasta "está vendiéndose en la web".</p>
+    </div>
+
+    <div class="glass mb-6 fm" style="padding:24px">
+      <h3 class="mb-3"><span class="step-num">1</span>Fotografía del producto</h3>
+      <ul class="ul-clean ul-dot text-sm">
+        <li><strong>Mínimo 4 fotos:</strong> primary (3/4 view), detalle de la gema, contexto (en modelo o estilizado), packaging</li>
+        <li><strong>Para destacados:</strong> también 24 fotos para galería 360°</li>
+        <li><strong>Resolución mínima:</strong> 2000x2000px JPG calidad 90</li>
+        <li><strong>Fondo:</strong> blanco puro #ffffff o gris claro #f5f5f5</li>
+        <li><strong>Iluminación:</strong> luz natural difusa o softbox doble · evitar sombras duras</li>
+        <li><strong>Edición:</strong> ajuste de balance de blancos, eliminar polvo · NO sobre-saturar el verde</li>
+        <li><strong>Nombrar archivos:</strong> <code class="inline">{SKU}-primary.jpg, {SKU}-detail.jpg, {SKU}-context.jpg, {SKU}-packaging.jpg</code></li>
+      </ul>
+    </div>
+
+    <div class="glass mb-6 fm" style="padding:24px">
+      <h3 class="mb-3"><span class="step-num">2</span>Datos básicos</h3>
+      <ul class="ul-clean ul-dot text-sm">
+        <li><strong>Nombre comercial:</strong> "Topitos Esperanza · Esmeralda Muzo 0.5ct" (formato: tipo + nombre + gema + tamaño)</li>
+        <li><strong>SKU:</strong> formato <code class="inline">{CAT}-{NUM3}</code> ej: TOP-001, ANI-002, GEM-003</li>
+        <li><strong>Slug:</strong> auto-generado desde el nombre (kebab-case)</li>
+        <li><strong>Precio COP:</strong> entero, sin decimales, sin separadores</li>
+        <li><strong>Stock:</strong> cantidad disponible (mantener actualizado)</li>
+      </ul>
+    </div>
+
+    <div class="glass mb-6 fm" style="padding:24px">
+      <h3 class="mb-3"><span class="step-num">3</span>Categorización</h3>
+      <ul class="ul-clean ul-dot text-sm">
+        <li><strong>Categoría:</strong> topito | anillo | dije | gema | set | otro</li>
+        <li><strong>Tipo de gema:</strong> esmeralda-muzo | esmeralda-coscuez | esmeralda-chivor | otra</li>
+        <li><strong>Ocasión (multi):</strong> regalo, inversión, matrimonio, diario, evento-especial, aniversario</li>
+        <li><strong>Rango de precio (auto):</strong> 100k-500k | 500k-1M | 1M-3M | 3M+</li>
+        <li><strong>Destacado:</strong> ON solo para top 6-9 productos del momento</li>
+        <li><strong>Activo:</strong> ON cuando esté listo para vender</li>
+      </ul>
+    </div>
+
+    <div class="glass mb-6 fm" style="padding:24px">
+      <h3 class="mb-3"><span class="step-num">4</span>Textos (descripciones)</h3>
+      <p class="text-sm mb-3">Ver sección "Textos" más abajo para fórmula y ejemplos.</p>
+      <ul class="ul-clean ul-dot text-sm">
+        <li><strong>Descripción corta (140 chars):</strong> para cards y resultados de búsqueda</li>
+        <li><strong>Descripción larga (~800 chars):</strong> para página de producto, con storytelling + datos técnicos</li>
+      </ul>
+    </div>
+
+    <div class="glass mb-6 fm" style="padding:24px">
+      <h3 class="mb-3"><span class="step-num">5</span>Keywords (¡crítico!)</h3>
+      <p class="text-sm mb-3">Estas son las palabras que la IA usará para encontrar este producto cuando el cliente lo describa.</p>
+      <ul class="ul-clean ul-dot text-sm">
+        <li>Mínimo 8, máximo 20 keywords</li>
+        <li>Incluir variaciones: "topito" y "arete pequeño" y "aretes diarios"</li>
+        <li>Incluir ocasión: "regalo cumpleaños", "anillo de compromiso"</li>
+        <li>Incluir rango: "esmeralda asequible", "joya de lujo"</li>
+        <li>Incluir audiencia: "para mamá", "para novia", "para inversionista"</li>
+        <li>Incluir característica especial: "esmeralda colombiana", "talla esmeralda", "engaste invisible"</li>
+      </ul>
+    </div>
+
+    <div class="glass mb-6 fm" style="padding:24px">
+      <h3 class="mb-3"><span class="step-num">6</span>Certificado de la gema</h3>
+      <ul class="ul-clean ul-dot text-sm">
+        <li>PDF original del laboratorio (CDTEC, GIA, etc.)</li>
+        <li>Nombrarlo <code class="inline">{SKU}-cert.pdf</code></li>
+        <li>Subir a Supabase Storage bucket privado <code class="inline">certificates/{SKU}/</code></li>
+        <li>El cliente solo lo recibe POST-compra (signed URL temporal)</li>
+      </ul>
+    </div>
+
+    <div class="glass fm" style="padding:24px">
+      <h3 class="mb-3"><span class="step-num">7</span>Verificar y publicar</h3>
+      <ul class="ul-clean ul-dot text-sm">
+        <li>Preview en mobile y desktop</li>
+        <li>Verificar que aparece en /catalogo</li>
+        <li>Verificar que el bot lo encuentra (test con admin chat)</li>
+        <li>Marcar "activo" = ON</li>
+        <li>Si es destacado: marcar destacado = ON (aparece en home)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- FOTOS -->
+<section id="fotos">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Fotografía</p>
+      <h2 class="serif fm mb-6">Estándares de calidad</h2>
+    </div>
+
+    <div class="grid grid-2 stagger fm">
+      <div class="card fm-scale">
+        <h3 class="text-amber mb-3">📸 Setup mínimo</h3>
+        <ul class="ul-clean ul-dot text-sm">
+          <li>Cámara: smartphone moderno (iPhone 13+ o equivalente) OK; DSLR/mirrorless mejor</li>
+          <li>Lente: 50mm o equivalente (no gran angular)</li>
+          <li>Iluminación: 2 softboxes a 45° o ventana grande con luz indirecta</li>
+          <li>Fondo: cartulina blanca curvada (sin línea visible)</li>
+          <li>Soporte: trípode para evitar trepidación</li>
+          <li>Reflectores blancos para rellenar sombras</li>
+        </ul>
+      </div>
+      <div class="card fm-scale">
+        <h3 class="text-amber mb-3">🎯 Las 4 fotos esenciales</h3>
+        <ul class="ul-clean ul-dot text-sm">
+          <li><strong>Primary (3/4 view):</strong> ángulo que muestra la pieza completa, gema visible</li>
+          <li><strong>Detail macro:</strong> primer plano de la gema, brillos, talla</li>
+          <li><strong>Context:</strong> joya en modelo (mano, oreja, cuello) o estilizada con flores/seda</li>
+          <li><strong>Packaging:</strong> caja Tierra Madre cerrada o entreabierta · refuerza el unboxing</li>
+        </ul>
+      </div>
+      <div class="card fm-scale">
+        <h3 class="text-amber mb-3">📐 Galería 360° (para destacados)</h3>
+        <ul class="ul-clean ul-dot text-sm">
+          <li>24 fotos rotando la pieza 15° cada vez</li>
+          <li>Idealmente: turntable motorizado · alternativa: marca el plato con grados</li>
+          <li>Misma iluminación y encuadre en las 24</li>
+          <li>Resolución 1500x1500 cada una (suficiente para web)</li>
+          <li>Comprimir a JPG calidad 80 (~150KB cada una)</li>
+          <li>Subir a Supabase: <code class="inline">products/{SKU}/360/01.jpg ... 24.jpg</code></li>
+        </ul>
+      </div>
+      <div class="card fm-scale">
+        <h3 class="text-amber mb-3">✏️ Post-producción</h3>
+        <ul class="ul-clean ul-dot text-sm">
+          <li>Lightroom Mobile o Photoshop Express (gratis)</li>
+          <li>Ajustar balance de blancos (gema debe verse natural)</li>
+          <li>Eliminar polvo y rayas con clone stamp</li>
+          <li>NO usar filtros que sobre-saturan el verde</li>
+          <li>Exportar JPG calidad 90 sRGB</li>
+          <li>Tamaño: 2000x2000 para detalle, 2400x1800 para context</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEXTOS -->
+<section id="textos" class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Textos</p>
+      <h2 class="serif fm mb-6">Cómo escribir descripciones que vendan</h2>
+    </div>
+
+    <div class="glass-strong mb-8 fm" style="padding:28px">
+      <h3 class="grad-text mb-4">📝 Fórmula descripción corta (140 chars)</h3>
+      <p class="mb-4"><strong>[Emoción]</strong> + <strong>[Característica clave]</strong> + <strong>[Beneficio implícito]</strong></p>
+      <div class="accent-list">
+        <div><strong>Ejemplo 1:</strong> "Topitos en oro 18k con esmeralda Muzo · La elegancia diaria que se vuelve recuerdo eterno."</div>
+        <div><strong>Ejemplo 2:</strong> "Anillo de compromiso con esmeralda Coscuez 1.2ct · Para un sí que pesa en el alma."</div>
+        <div><strong>Ejemplo 3:</strong> "Dije corazón verde · Lleva un pedazo de Colombia cerca del tuyo."</div>
+      </div>
+    </div>
+
+    <div class="glass-strong mb-8 fm" style="padding:28px">
+      <h3 class="grad-text mb-4">📖 Fórmula descripción larga (~800 chars)</h3>
+      <p class="mb-4">Estructura en 3 párrafos:</p>
+      <div class="accent-list">
+        <div><strong>Párrafo 1 · Emoción (200 chars):</strong> Por qué esta pieza es especial. La historia. A quién está pensada para.</div>
+        <div><strong>Párrafo 2 · Detalle técnico (350 chars):</strong> Material, dimensiones, peso, talla, origen de la gema, certificación.</div>
+        <div><strong>Párrafo 3 · Promesa Tierra Madre (250 chars):</strong> Envío, garantía, certificado, empaque, contacto.</div>
+      </div>
+
+      <h4 class="text-amber mt-6 mb-3">Ejemplo completo</h4>
+      <pre><code>// TOP-001 · Topitos Esperanza · Esmeralda Muzo 0.5ct
+
+Hay piezas que se ponen y se vuelven extensión del alma. Estos topitos
+nacen en las montañas de Muzo y se convierten en el detalle perfecto
+para esa mujer que entiende que la elegancia se mide en lo que no se nota.
+
+Engaste invisible en oro amarillo 18 kilates, dos esmeraldas Muzo
+de 0.5ct cada una con talla brillante. Diámetro 6mm, cierre de presión
+seguro. Certificación del Centro de Desarrollo Tecnológico
+de la Esmeralda Colombiana (CDTEC) incluida.
+
+Envío con seguro a todo Colombia · 24h en Bogotá, Medellín y Cali.
+Empaque premium en caja madera + bolsa de seda. Garantía de por vida
+en ensamble. Limpieza profesional anual gratuita.</code></pre>
+    </div>
+
+    <div class="glass fm" style="padding:24px">
+      <h3 class="text-amber mb-3">🎙️ Voz de marca · cómo escribimos</h3>
+      <div class="grid grid-2 gap-4">
+        <div>
+          <strong class="text-emerald">SÍ usamos</strong>
+          <ul class="ul-clean ul-dot text-sm mt-2">
+            <li>Tono cálido y poético sin ser cursi</li>
+            <li>Frases cortas para crear ritmo</li>
+            <li>Metáforas relacionadas a Colombia, naturaleza, lo eterno</li>
+            <li>"Tú" (tutear) en mensajes directos</li>
+            <li>"Nuestra" cuando hablamos de la marca</li>
+            <li>Palabras: alma, raíz, esencia, eterno, único, herencia</li>
+          </ul>
+        </div>
+        <div>
+          <strong style="color:#fca5a5">NO usamos</strong>
+          <ul class="ul-clean ul-dot text-sm mt-2">
+            <li>Mayúsculas SOSTENIDAS (gritan)</li>
+            <li>Emojis excesivos (máximo 1 por mensaje)</li>
+            <li>Adjetivos vacíos: "increíble", "asombroso"</li>
+            <li>Tecnicismos sin contexto</li>
+            <li>"Usted" formal (suena distante)</li>
+            <li>Promesas no medibles ("el mejor del mundo")</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- KEYWORDS -->
+<section id="keywords">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Keywords</p>
+      <h2 class="serif fm mb-6">Cómo etiquetar para que la IA encuentre</h2>
+    </div>
+
+    <div class="glass-strong mb-8 fm" style="padding:28px">
+      <h3 class="grad-text mb-4">🔑 Las 5 dimensiones de los keywords</h3>
+      <p class="mb-4">Para cada producto agrega al menos 1 keyword de cada dimensión:</p>
+      <div class="grid grid-2 gap-4">
+        <div class="card card-sm">
+          <strong class="text-amber">1. Tipo de joya (variaciones)</strong>
+          <p class="text-sm mt-1">Ejemplo: "topito" · "arete pequeño" · "aretito" · "aretes diarios"</p>
+        </div>
+        <div class="card card-sm">
+          <strong class="text-amber">2. Material y gema</strong>
+          <p class="text-sm mt-1">Ejemplo: "oro 18k" · "esmeralda muzo" · "esmeralda colombiana"</p>
+        </div>
+        <div class="card card-sm">
+          <strong class="text-amber">3. Ocasión</strong>
+          <p class="text-sm mt-1">Ejemplo: "regalo" · "cumpleaños" · "aniversario" · "para mamá"</p>
+        </div>
+        <div class="card card-sm">
+          <strong class="text-amber">4. Audiencia</strong>
+          <p class="text-sm mt-1">Ejemplo: "para mujer joven" · "para novia" · "para inversionista"</p>
+        </div>
+        <div class="card card-sm">
+          <strong class="text-amber">5. Rango / nivel</strong>
+          <p class="text-sm mt-1">Ejemplo: "asequible" · "lujo accesible" · "premium" · "inversión"</p>
+        </div>
+        <div class="card card-sm">
+          <strong class="text-amber">6. Característica única (opcional)</strong>
+          <p class="text-sm mt-1">Ejemplo: "engaste invisible" · "edición limitada" · "hecho a mano"</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass fm" style="padding:24px">
+      <h3 class="text-amber mb-3">📋 Ejemplo completo de keywords</h3>
+      <pre><code>// Producto: TOP-001 · Topitos Esperanza · Esmeralda Muzo 0.5ct
+keywords: [
+  "topito",
+  "arete pequeño",
+  "topitos esmeralda",
+  "oro 18k",
+  "esmeralda muzo",
+  "esmeralda colombiana",
+  "regalo",
+  "cumpleaños",
+  "para mamá",
+  "uso diario",
+  "elegancia discreta",
+  "joya asequible",
+  "engaste invisible",
+  "primera esmeralda"
+]
+
+// Producto: ANI-007 · Anillo de Compromiso Eternidad · 1.5ct
+keywords: [
+  "anillo",
+  "anillo de compromiso",
+  "anillo de boda",
+  "matrimonio",
+  "propuesta",
+  "oro 18k",
+  "esmeralda coscuez",
+  "esmeralda colombiana",
+  "talla esmeralda",
+  "para novia",
+  "para ella",
+  "lujo accesible",
+  "inversión emocional",
+  "edición especial"
+]</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- SEO -->
+<section id="seo" class="section-tinted">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">SEO</p>
+      <h2 class="serif fm mb-6">Posicionarse en Google Colombia</h2>
+    </div>
+
+    <div class="glass-strong fm" style="padding:28px">
+      <h3 class="grad-text mb-4">🎯 Keywords objetivo (volumen real en Google CO)</h3>
+      <pre><code>// Top búsquedas que Tierra Madre debe capturar:
+
+ALTA INTENCIÓN DE COMPRA:
+- "esmeralda colombiana precio"
+- "anillo de compromiso esmeralda"
+- "topitos esmeralda"
+- "joyas esmeralda colombiana bogotá"
+- "comprar esmeralda colombia"
+- "gema esmeralda certificada"
+
+INFORMACIONAL (top of funnel):
+- "como saber si una esmeralda es real"
+- "diferencia esmeralda muzo coscuez"
+- "esmeralda colombiana como inversión"
+- "esmeralda muzo precio"
+- "certificación esmeralda colombia"
+
+LOCAL:
+- "joyería esmeralda bogotá"
+- "joyería esmeralda medellín"
+- "joyería esmeralda cali"
+- "tierra madre esmeraldas"</code></pre>
+    </div>
+
+    <div class="glass mt-8 fm" style="padding:24px">
+      <h3 class="text-amber mb-3">📝 Meta tags por página (lo que Área 1 debe implementar)</h3>
+      <pre><code>// Cada producto debe tener:
+&lt;title&gt;{nombre} | Tierra Madre Esmeraldas&lt;/title&gt;
+&lt;meta name="description" content="{descripcion_corta} · {precio} COP · Envío 24h"&gt;
+&lt;meta property="og:title" content="{nombre}"&gt;
+&lt;meta property="og:description" content="{descripcion_corta}"&gt;
+&lt;meta property="og:image" content="{foto_primary}"&gt;
+&lt;meta property="og:type" content="product"&gt;
+
+// JSON-LD para Google Rich Snippets:
+&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "{nombre}",
+  "image": "{foto}",
+  "description": "{descripcion_larga}",
+  "brand": "Tierra Madre",
+  "offers": {
+    "@type": "Offer",
+    "priceCurrency": "COP",
+    "price": "{precio_cop}",
+    "availability": "https://schema.org/InStock"
+  }
+}
+&lt;/script&gt;</code></pre>
+    </div>
+  </div>
+</section>
+
+<section id="checklist">
+  <div class="container">
+    <div class="center mb-12">
+      <p class="section-label fm">Checklist</p>
+      <h2 class="serif fm mb-6">Criterios de aceptación</h2>
+    </div>
+    <div class="glass-strong fm" style="padding:32px">
+      <ul class="checklist">
+        <li>30-50 productos cargados con datos completos</li>
+        <li>Cada producto con mínimo 4 fotos profesionales</li>
+        <li>10-15 productos destacados con galería 360° (24 fotos c/u)</li>
+        <li>Descripciones corta + larga escritas siguiendo la fórmula</li>
+        <li>Keywords (8-20 por producto) cubriendo las 6 dimensiones</li>
+        <li>Certificados PDF subidos para todas las gemas verificadas</li>
+        <li>Categorías y ocasiones correctamente asignadas</li>
+        <li>Rangos de precio correctos en cada producto</li>
+        <li>Producto destacado: máximo 9 a la vez (rotación mensual)</li>
+        <li>Textos de las 6 landings escritos (hero, historia, FAQ)</li>
+        <li>FAQ corporativa de 15 preguntas frecuentes redactada</li>
+        <li>Manual de voz de marca documentado y compartido</li>
+        <li>Calendario editorial 3 meses adelante (lanzamientos)</li>
+        <li>Pruebas: el bot encuentra correctamente los productos al describirlos</li>
+        <li>Pruebas: SEO funciona (productos aparecen en Google Search Console)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p class="serif" style="font-size:1.1rem;color:var(--emerald-300);margin-bottom:8px">Tierra Madre · Área 6 · Contenido & Catálogo</p>
+  <p>Marketing + fotografía + redacción · Sin código, vital para el negocio</p>
+  <p style="margin-top:12px"><a href="plan-ejecucion-tierra-madre.html" style="color:var(--gold-300);text-decoration:none">← Volver al documento maestro</a></p>
+</footer>
+
+<script>
+  const io = new IntersectionObserver((entries) => {entries.forEach(e => {if (e.isIntersecting) {e.target.classList.add('in');if (e.target.classList.contains('stagger')) e.target.querySelectorAll('.fm, .fm-scale').forEach(c => c.classList.add('in'));}});}, {threshold:0.12,rootMargin:'0px 0px -50px 0px'});
+  document.querySelectorAll('.fm, .fm-scale, .stagger').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
