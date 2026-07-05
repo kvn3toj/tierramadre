@@ -7,18 +7,18 @@
  * the redesigned screens (only one route mounts at a time, so no duplicates).
  */
 
-import React from "react";
-import { Box, ButtonBase } from "@mui/material";
-import { getQuietEmerald, qeFont } from "../../design-system";
-import { useThemeMode } from "../../contexts/ThemeContext";
+import React from 'react';
+import { Box, ButtonBase } from '@mui/material';
+import { getQuietEmerald, qeFont } from '../../design-system';
+import { useThemeMode } from '../../contexts/ThemeContext';
 import {
   useRedesignVariant,
   type RedesignVariant,
-} from "../../hooks/useRedesignVariant";
+} from '../../hooks/useRedesignVariant';
 
 const OPTIONS: { value: RedesignVariant; label: string; hint: string }[] = [
-  { value: "faithful", label: "A", hint: "Fiel" },
-  { value: "literal", label: "B", hint: "Mockup" },
+  { value: 'faithful', label: 'A', hint: 'Fiel' },
+  { value: 'literal', label: 'B', hint: 'Mockup' },
 ];
 
 export const RedesignVariantToggle: React.FC = () => {
@@ -26,37 +26,39 @@ export const RedesignVariantToggle: React.FC = () => {
   const qe = getQuietEmerald(mode);
   const { variant, setVariant } = useRedesignVariant();
 
+  if (!import.meta.env.DEV) return null;
+
   return (
     <Box
       role="group"
       aria-label="Variante de rediseño"
       sx={{
-        position: "fixed",
+        position: 'fixed',
         left: 16,
-        bottom: "calc(96px + env(safe-area-inset-bottom))",
+        bottom: 'calc(96px + env(safe-area-inset-bottom))',
         zIndex: 1400,
-        display: "flex",
-        alignItems: "center",
-        gap: "6px",
-        p: "4px",
-        borderRadius: "999px",
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        p: '4px',
+        borderRadius: '999px',
         bgcolor: qe.surface,
         border: `1px solid ${qe.border}`,
         boxShadow: qe.shadow,
-        backdropFilter: "none",
+        backdropFilter: 'none',
       }}
     >
       <Box
         aria-hidden
         sx={{
           fontFamily: qeFont.mono,
-          fontSize: "8.5px",
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
+          fontSize: '8.5px',
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
           color: qe.subtle,
-          pl: "8px",
-          pr: "2px",
-          userSelect: "none",
+          pl: '8px',
+          pr: '2px',
+          userSelect: 'none',
         }}
       >
         A/B
@@ -70,16 +72,16 @@ export const RedesignVariantToggle: React.FC = () => {
             aria-pressed={active}
             aria-label={`Variante ${opt.label} · ${opt.hint}`}
             sx={{
-              display: "flex",
-              alignItems: "baseline",
-              gap: "5px",
-              px: "11px",
-              py: "6px",
-              borderRadius: "999px",
-              transition: "background-color 160ms, color 160ms",
-              bgcolor: active ? qe.accentStrong : "transparent",
+              display: 'flex',
+              alignItems: 'baseline',
+              gap: '5px',
+              px: '11px',
+              py: '6px',
+              borderRadius: '999px',
+              transition: 'background-color 160ms, color 160ms',
+              bgcolor: active ? qe.accentStrong : 'transparent',
               color: active ? qe.onAccent : qe.muted,
-              "&:hover": {
+              '&:hover': {
                 bgcolor: active ? qe.accentStrong : qe.well,
               },
             }}
@@ -88,7 +90,7 @@ export const RedesignVariantToggle: React.FC = () => {
               component="span"
               sx={{
                 fontFamily: qeFont.mono,
-                fontSize: "11px",
+                fontSize: '11px',
                 fontWeight: 500,
               }}
             >
@@ -98,9 +100,9 @@ export const RedesignVariantToggle: React.FC = () => {
               component="span"
               sx={{
                 fontFamily: qeFont.ui,
-                fontSize: "10px",
+                fontSize: '10px',
                 fontWeight: 600,
-                letterSpacing: "0.02em",
+                letterSpacing: '0.02em',
               }}
             >
               {opt.hint}
