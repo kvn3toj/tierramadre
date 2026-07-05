@@ -48,7 +48,7 @@ export const FOTO_INVENTARIO_COLUMNS = [
   { header: "Peso (ct)", key: "peso" }, // D
   { header: "Color", key: "color" }, // E
   { header: "Calidad", key: "calidad" }, // F
-  { header: "Cant.", key: "cantidad" }, // G
+  { header: "Cant.", key: "cantidad", numeric: true }, // G
   { header: "Talla", key: "talla" }, // H
   { header: "Medidas", key: "medidas" }, // I
   { header: "Medidas (valores)", key: "medidasValores" }, // J
@@ -59,9 +59,9 @@ export const FOTO_INVENTARIO_COLUMNS = [
   // ambassador tier in `precioEmbajadorCOP`). The `precioCOP` field still exists
   // in Convex (productInventory) as an app-only value — it is no longer mirrored
   // to or pulled from this sheet. See scripts/delete-fotosintesis-column-l.mjs.
-  { header: "costoBaseCOP", key: "costoBaseCOP" }, // L — costoTotalCOP × preponderancia%
-  { header: "precioEmbajadorCOP", key: "precioEmbajadorCOP" }, // M — x1–x4 tier
-  { header: "precioConscienteCOP", key: "precioConscienteCOP" }, // N — x1–x4 tier
+  { header: "costoBaseCOP", key: "costoBaseCOP", numeric: true }, // L — costoTotalCOP × preponderancia%
+  { header: "precioEmbajadorCOP", key: "precioEmbajadorCOP", numeric: true }, // M — x1–x4 tier
+  { header: "precioConscienteCOP", key: "precioConscienteCOP", numeric: true }, // N — x1–x4 tier
   // ── Inventory / status descriptive fields (O–W) ──
   { header: "UBICACIÓN", key: "ubicacion" }, // O
   { header: "ASESOR", key: "asesor" }, // P
@@ -69,7 +69,7 @@ export const FOTO_INVENTARIO_COLUMNS = [
   { header: "QR", key: "qr" }, // R
   { header: "Colección", key: "coleccion" }, // S
   { header: "CAJA", key: "caja" }, // T
-  { header: "preponderancia", key: "preponderancia" }, // U — % of lot (Fotosíntesis)
+  { header: "preponderancia", key: "preponderancia", numeric: true }, // U — % of lot (Fotosíntesis)
   { header: "ASESOR ACTUAL", key: "asesorActual" }, // V
   { header: "ESTADO ASESOR", key: "estadoAsesor" }, // W
   // ── Fotosíntesis v2 extension (X onward) ──
@@ -77,10 +77,10 @@ export const FOTO_INVENTARIO_COLUMNS = [
   { header: "mostrarEnCatalogo", key: "mostrarEnCatalogo" }, // Y
   { header: "procedencia", key: "procedencia" }, // Z
   { header: "observacion", key: "observacion" }, // AA
-  { header: "rendimientoEsperado", key: "rendimientoEsperado" }, // AB — bruto
-  { header: "cantidadEstimada", key: "cantidadEstimada" }, // AC — bruto
-  { header: "nivelRareza", key: "nivelRareza" }, // AD
-  { header: "calificacion", key: "calificacion" }, // AE
+  { header: "rendimientoEsperado", key: "rendimientoEsperado", numeric: true }, // AB — bruto
+  { header: "cantidadEstimada", key: "cantidadEstimada", numeric: true }, // AC — bruto
+  { header: "nivelRareza", key: "nivelRareza", numeric: true }, // AD
+  { header: "calificacion", key: "calificacion", numeric: true }, // AE
   { header: "tipoEsmeralda", key: "tipoEsmeralda" }, // AF
   { header: "subtipoForm", key: "subtipoForm" }, // AG — 9-subtype selector
   { header: "tipoJoya", key: "tipoJoya" }, // AH
