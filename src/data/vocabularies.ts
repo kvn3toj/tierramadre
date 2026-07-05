@@ -21,48 +21,48 @@
 // `normalizeCalidad()` / `CALIDAD_LEGACY_ALIAS`.
 
 export const CALIDADES = [
-  "NO OIL",
-  "INSIGNIFICANT",
-  "MINOR",
-  "F1",
-  "MODERATE",
-  "F2",
-  "FINA SUBLIME",
-  "FINA ESENCIAL",
-  "FINA",
-  "FINA COMERCIAL",
-  "COMERCIAL SÚPER FINA",
-  "COMERCIAL FINA",
-  "COMERCIAL SUPERIOR",
-  "COMERCIAL ESTÁNDAR",
-  "COMERCIAL",
-  "Morralla Pulida",
-  "Morralla Superior",
-  "Morralla Fina",
-  "Morralla Comercial",
+  'NO OIL',
+  'INSIGNIFICANT',
+  'MINOR',
+  'F1',
+  'MODERATE',
+  'F2',
+  'FINA SUBLIME',
+  'FINA ESENCIAL',
+  'FINA',
+  'FINA COMERCIAL',
+  'COMERCIAL SÚPER FINA',
+  'COMERCIAL FINA',
+  'COMERCIAL SUPERIOR',
+  'COMERCIAL ESTÁNDAR',
+  'COMERCIAL',
+  'Morralla Pulida',
+  'Morralla Superior',
+  'Morralla Fina',
+  'Morralla Comercial',
 ] as const;
 
 export type GemaCalidad = (typeof CALIDADES)[number];
 
 /** Default for new drafts — anchored on the form's F1 tier. */
-export const DEFAULT_CALIDAD: GemaCalidad = "F1";
+export const DEFAULT_CALIDAD: GemaCalidad = 'F1';
 
 /** Map legacy Inventario / Extrafina labels → canonical form labels. */
 export const CALIDAD_LEGACY_ALIAS: Record<string, GemaCalidad> = {
-  "Extrafina No Oil": "NO OIL",
-  "Extrafina Insignificant": "INSIGNIFICANT",
-  "Extrafina Minor": "MINOR",
-  "Extrafina F1": "F1",
-  "Extrafina Moderate": "MODERATE",
-  "Extrafina F2": "F2",
-  Extrafina: "FINA",
-  "Fina Sublime": "FINA SUBLIME",
-  "Fina Esencial": "FINA ESENCIAL",
-  "Comercial Superfina": "COMERCIAL SÚPER FINA",
-  "Comercial Fina": "COMERCIAL FINA",
-  "Comercial Superior": "COMERCIAL SUPERIOR",
-  "Comercial Estándar": "COMERCIAL ESTÁNDAR",
-  "Comercial Standar": "COMERCIAL ESTÁNDAR",
+  'Extrafina No Oil': 'NO OIL',
+  'Extrafina Insignificant': 'INSIGNIFICANT',
+  'Extrafina Minor': 'MINOR',
+  'Extrafina F1': 'F1',
+  'Extrafina Moderate': 'MODERATE',
+  'Extrafina F2': 'F2',
+  Extrafina: 'FINA',
+  'Fina Sublime': 'FINA SUBLIME',
+  'Fina Esencial': 'FINA ESENCIAL',
+  'Comercial Superfina': 'COMERCIAL SÚPER FINA',
+  'Comercial Fina': 'COMERCIAL FINA',
+  'Comercial Superior': 'COMERCIAL SUPERIOR',
+  'Comercial Estándar': 'COMERCIAL ESTÁNDAR',
+  'Comercial Standar': 'COMERCIAL ESTÁNDAR',
 };
 
 /**
@@ -74,7 +74,7 @@ export const CALIDAD_LEGACY_ALIAS: Record<string, GemaCalidad> = {
  * in `convex/_lib/fotosintesisVocab.ts`, which already preserves unknowns.
  */
 export function normalizeCalidad(raw: string | undefined | null): GemaCalidad {
-  const s = (raw ?? "").trim();
+  const s = (raw ?? '').trim();
   if (!s) return DEFAULT_CALIDAD;
   if ((CALIDADES as readonly string[]).includes(s)) return s as GemaCalidad;
   const aliased = CALIDAD_LEGACY_ALIAS[s];
@@ -93,15 +93,15 @@ export function normalizeCalidad(raw: string | undefined | null): GemaCalidad {
 // existing rows pull cleanly into Convex without a migration pass.
 
 export const PRODUCT_ESTADOS = [
-  "DISPONIBLE",
-  "VENDIDA",
-  "ASESOR",
-  "Retornado",
-  "ESMEREOGENESIS",
-  "ESMERO",
-  "DISPONIBLE ADOPTADA",
-  "LOTE X CT",
-  "",
+  'DISPONIBLE',
+  'VENDIDA',
+  'ASESOR',
+  'Retornado',
+  'ESMEREOGENESIS',
+  'ESMERO',
+  'DISPONIBLE ADOPTADA',
+  'LOTE X CT',
+  '',
 ] as const;
 
 export type ProductEstado = (typeof PRODUCT_ESTADOS)[number];
@@ -125,25 +125,25 @@ export const TM_MARKUP_DEFAULT = 3.0; // TODO(Maritza): confirm canonical values
 
 /** Calidad → multiplier. Every value in CALIDADES must have an entry. */
 export const CALIDAD_FACTORS: Record<GemaCalidad, number> = {
-  "NO OIL": 1.15,
+  'NO OIL': 1.15,
   INSIGNIFICANT: 1.2,
   MINOR: 1.1,
   F1: 1.0,
   MODERATE: 0.9,
   F2: 0.85,
-  "FINA SUBLIME": 0.65,
-  "FINA ESENCIAL": 0.55,
+  'FINA SUBLIME': 0.65,
+  'FINA ESENCIAL': 0.55,
   FINA: 0.8,
-  "FINA COMERCIAL": 0.45,
-  "COMERCIAL SÚPER FINA": 0.4,
-  "COMERCIAL FINA": 0.3,
-  "COMERCIAL SUPERIOR": 0.22,
-  "COMERCIAL ESTÁNDAR": 0.15,
+  'FINA COMERCIAL': 0.45,
+  'COMERCIAL SÚPER FINA': 0.4,
+  'COMERCIAL FINA': 0.3,
+  'COMERCIAL SUPERIOR': 0.22,
+  'COMERCIAL ESTÁNDAR': 0.15,
   COMERCIAL: 0.12,
-  "Morralla Pulida": 0.1,
-  "Morralla Superior": 0.07,
-  "Morralla Fina": 0.05,
-  "Morralla Comercial": 0.03,
+  'Morralla Pulida': 0.1,
+  'Morralla Superior': 0.07,
+  'Morralla Fina': 0.05,
+  'Morralla Comercial': 0.03,
 };
 
 /** Suggested retail price (COP, rounded to nearest 1000) from costoBase + calidad. */
@@ -165,31 +165,31 @@ export function suggestedPrecioPublicoCOP(
 // coverage 🟡 gap #3).
 
 export const COLORS = [
-  "Verde Chivor",
-  "Verde Azul",
-  "Verde Azuloso",
-  "Verde Muzo",
-  "Verde Vívido",
-  "Verde Intenso",
-  "Verde Selva",
-  "Verde Natural",
-  "Verde Limón",
-  "Verde Viche",
-  "Verde Menta",
-  "Verde Diamantado",
-  "Verde Brillante",
+  'Verde Chivor',
+  'Verde Azul',
+  'Verde Azuloso',
+  'Verde Muzo',
+  'Verde Vívido',
+  'Verde Intenso',
+  'Verde Selva',
+  'Verde Natural',
+  'Verde Limón',
+  'Verde Viche',
+  'Verde Menta',
+  'Verde Diamantado',
+  'Verde Brillante',
 ] as const;
 
 export type GemaColor = (typeof COLORS)[number];
 
 /** Legacy color strings → canonical form labels. */
 export const COLOR_LEGACY_ALIAS: Record<string, GemaColor> = {
-  "Verde Azulado": "Verde Azul",
+  'Verde Azulado': 'Verde Azul',
 };
 
 export function normalizeColor(raw: string | undefined | null): string {
-  const s = (raw ?? "").trim();
-  if (!s) return "";
+  const s = (raw ?? '').trim();
+  if (!s) return '';
   if ((COLORS as readonly string[]).includes(s)) return s;
   return COLOR_LEGACY_ALIAS[s] ?? s;
 }
@@ -197,12 +197,12 @@ export function normalizeColor(raw: string | undefined | null): string {
 // ─── Tipo de esmeralda (form Sección 6) ──────────────────────────────
 
 export const TIPOS_ESMERALDA = [
-  "Muralla",
-  "Piedra Natural",
-  "Canutillo",
-  "Cola",
-  "Raíz",
-  "Gema Facetada",
+  'Muralla',
+  'Piedra Natural',
+  'Canutillo',
+  'Cola',
+  'Raíz',
+  'Gema Facetada',
 ] as const;
 
 export type TipoEsmeralda = (typeof TIPOS_ESMERALDA)[number];
@@ -210,23 +210,23 @@ export type TipoEsmeralda = (typeof TIPOS_ESMERALDA)[number];
 // ─── Corte (form Sección 6 · aligned subset) ─────────────────────────
 
 export const CORTES = [
-  "Redonda",
-  "Brillante",
-  "Cuadrada",
-  "Baguette",
-  "Lágrima",
-  "Ovalo",
-  "Superman",
-  "Trapecio",
-  "Rectangular",
-  "Marquise",
-  "Trillion",
-  "Cushion",
-  "Corazón",
-  "Antiguo",
-  "Ancestral",
-  "Pera",
-  "Princesa",
+  'Redonda',
+  'Brillante',
+  'Cuadrada',
+  'Baguette',
+  'Lágrima',
+  'Ovalo',
+  'Superman',
+  'Trapecio',
+  'Rectangular',
+  'Marquise',
+  'Trillion',
+  'Cushion',
+  'Corazón',
+  'Antiguo',
+  'Ancestral',
+  'Pera',
+  'Princesa',
 ] as const;
 
 export type Corte = (typeof CORTES)[number];
@@ -239,42 +239,42 @@ export type Corte = (typeof CORTES)[number];
 // finds them first when sizing a finished ring.
 
 export const TALLAS = [
-  "0",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "Baguette",
-  "Brillante",
-  "Cabuchon",
-  "Canutillo",
-  "Chispero",
-  "Chisperito",
-  "Corazón",
-  "Cuadrada",
-  "Cushion",
-  "En Bruto-Natural",
-  "Esmeralda",
-  "Gola",
-  "Iris",
-  "Lágrima",
-  "Marquis",
-  "Marquise",
-  "Morralla-Lapidada",
-  "Ovalo",
-  "Pera",
-  "Princesa",
-  "Rectangular",
-  "Redonda",
-  "Redonda calibrada",
-  "Superman",
-  "Trapecio",
-  "Trillion",
-  "Variado",
-  "Varias",
-  "Ancestral",
-  "Antiguo",
+  '0',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
+  'Baguette',
+  'Brillante',
+  'Cabuchon',
+  'Canutillo',
+  'Chispero',
+  'Chisperito',
+  'Corazón',
+  'Cuadrada',
+  'Cushion',
+  'En Bruto-Natural',
+  'Esmeralda',
+  'Gola',
+  'Iris',
+  'Lágrima',
+  'Marquis',
+  'Marquise',
+  'Morralla-Lapidada',
+  'Ovalo',
+  'Pera',
+  'Princesa',
+  'Rectangular',
+  'Redonda',
+  'Redonda calibrada',
+  'Superman',
+  'Trapecio',
+  'Trillion',
+  'Variado',
+  'Varias',
+  'Ancestral',
+  'Antiguo',
 ] as const;
 
 export type Talla = (typeof TALLAS)[number];
@@ -284,7 +284,7 @@ export type Talla = (typeof TALLAS)[number];
 // 2 values from `INVENTARIO Tierra.Madre!Medidas` — describes the shape
 // of the value in `medidasValores`, not the value itself.
 
-export const MEDIDAS_FORMATO = ["Largo x Ancho", "Diámetro"] as const;
+export const MEDIDAS_FORMATO = ['Largo x Ancho', 'Diámetro'] as const;
 export type MedidaFormato = (typeof MEDIDAS_FORMATO)[number];
 
 // ─── Categoría de producto ──────────────────────────────────────────
@@ -295,16 +295,16 @@ export type MedidaFormato = (typeof MEDIDAS_FORMATO)[number];
 // loose gems first, then finished joyas, then catch-alls.
 
 export const CATEGORIAS = [
-  "Gema",
-  "Anillo en Plata",
-  "Anillo en Oro",
-  "Aretes",
-  "Topitos",
-  "Pulsera",
-  "Dije",
-  "Lote de Gemas",
-  "Joyas",
-  "Piedras",
+  'Gema',
+  'Anillo en Plata',
+  'Anillo en Oro',
+  'Aretes',
+  'Topitos',
+  'Pulsera',
+  'Dije',
+  'Lote de Gemas',
+  'Joyas',
+  'Piedras',
 ] as const;
 
 export type Categoria = (typeof CATEGORIAS)[number];
@@ -318,15 +318,15 @@ export type Categoria = (typeof CATEGORIAS)[number];
 // constrains Maritza when she edits the sheet directly.
 
 export const UBICACIONES = [
-  "BOVEDA",
-  "OFI.BOGOTA",
-  "OFI.CALI",
-  "ASESOR",
-  "EMBAJADOR",
-  "CLIENTE",
-  "EN PRODUCCION",
-  "EN CERTIFICACION",
-  "RETORNADO",
+  'BOVEDA',
+  'OFI.BOGOTA',
+  'OFI.CALI',
+  'ASESOR',
+  'EMBAJADOR',
+  'CLIENTE',
+  'EN PRODUCCION',
+  'EN CERTIFICACION',
+  'RETORNADO',
 ] as const;
 
 export type Ubicacion = (typeof UBICACIONES)[number];
@@ -342,23 +342,23 @@ export type Ubicacion = (typeof UBICACIONES)[number];
 // sheet on 2026-05-21 and may include WIP / deprecated collections.
 
 export const COLECCIONES = [
-  "COLECCION #4000",
-  "11:11",
-  "Fenix",
-  "Secretos del Bosque",
-  "Princesas",
-  "Reinas",
-  "Génesis",
-  "Esencia",
-  "Origen",
-  "Raíces",
-  "Verde Eterno",
-  "Lluvia de Oportunidades",
-  "Encantada",
-  "Sagrada",
-  "Ancestral",
-  "Madre Selva",
-  "Tierra",
+  'COLECCION #4000',
+  '11:11',
+  'Fenix',
+  'Secretos del Bosque',
+  'Princesas',
+  'Reinas',
+  'Génesis',
+  'Esencia',
+  'Origen',
+  'Raíces',
+  'Verde Eterno',
+  'Lluvia de Oportunidades',
+  'Encantada',
+  'Sagrada',
+  'Ancestral',
+  'Madre Selva',
+  'Tierra',
 ] as const;
 
 export type Coleccion = (typeof COLECCIONES)[number];
@@ -371,20 +371,20 @@ export type Coleccion = (typeof COLECCIONES)[number];
 // the sheet directly.
 
 export const CAJAS = [
-  "Legalizada",
-  "Pte Legalizar",
-  "Pte Fecha x Legalizar",
-  "Esmereogenesis",
+  'Legalizada',
+  'Pte Legalizar',
+  'Pte Fecha x Legalizar',
+  'Esmereogenesis',
 ] as const;
 
 export type Caja = (typeof CAJAS)[number];
 
 // ─── Proveedor · Tipo ────────────────────────────────────────────────
-export const PROVIDER_TIPOS = ["gemas", "joyas", "insumos", "otros"] as const;
+export const PROVIDER_TIPOS = ['gemas', 'joyas', 'insumos', 'otros'] as const;
 export type ProviderTipo = (typeof PROVIDER_TIPOS)[number];
 
 // ─── Cliente · Tipo ──────────────────────────────────────────────────
-export const CLIENT_TIPOS = ["embajador", "final"] as const;
+export const CLIENT_TIPOS = ['embajador', 'final'] as const;
 export type ClientTipo = (typeof CLIENT_TIPOS)[number];
 
 // ─── Lote · Forma de pago ────────────────────────────────────────────
@@ -394,40 +394,40 @@ export type ClientTipo = (typeof CLIENT_TIPOS)[number];
 // terms aligned with the way the sale is finalized downstream.
 
 export const FORMA_PAGO = [
-  "contado",
-  "credito",
-  "esmereogenesis",
-  "bajo_pedido",
-  "consignacion",
+  'contado',
+  'credito',
+  'esmereogenesis',
+  'bajo_pedido',
+  'consignacion',
 ] as const;
 
 export type FormaPago = (typeof FORMA_PAGO)[number];
 
 // ─── Método de pago contado ──────────────────────────────────────────
-export const METODO_CONTADO = ["efectivo", "transferencia"] as const;
+export const METODO_CONTADO = ['efectivo', 'transferencia'] as const;
 export type MetodoContado = (typeof METODO_CONTADO)[number];
 
 // ─── Lote · Estado ───────────────────────────────────────────────────
-export const LOT_ESTADOS = ["abierto", "cerrado", "publicado"] as const;
+export const LOT_ESTADOS = ['abierto', 'cerrado', 'publicado'] as const;
 export type LotEstado = (typeof LOT_ESTADOS)[number];
 
 // ─── Venta · Estado ──────────────────────────────────────────────────
-export const SALE_ESTADOS = ["reservada", "confirmada", "cancelada"] as const;
+export const SALE_ESTADOS = ['reservada', 'confirmada', 'cancelada'] as const;
 export type SaleEstado = (typeof SALE_ESTADOS)[number];
 
 // ─── Bóveda / sede (form Sección 1) ──────────────────────────────────
 
 export const BOVEDAS = [
-  { code: "B" as const, label: "Bogotá", formLabel: "BOGOTÁ" },
-  { code: "C" as const, label: "Cali", formLabel: "CALI" },
-  { code: "S" as const, label: "Bóveda Secreta", formLabel: "SECRETA" },
-  { code: "M" as const, label: "Marketing", formLabel: "MARKETING" },
+  { code: 'B' as const, label: 'Bogotá', formLabel: 'BOGOTÁ' },
+  { code: 'C' as const, label: 'Cali', formLabel: 'CALI' },
+  { code: 'S' as const, label: 'Bóveda Secreta', formLabel: 'SECRETA' },
+  { code: 'M' as const, label: 'Marketing', formLabel: 'MARKETING' },
 ] as const;
 
 // Known sede codes (B/C/S/M) keep their autocomplete, but a custom write-in
 // bóveda code is allowed too (sanitized to an uppercase, dash-free token so it
 // stays valid as a loteId/saleId prefix). The `& {}` keeps the literal hints.
-export type Sede = (typeof BOVEDAS)[number]["code"] | (string & {});
+export type Sede = (typeof BOVEDAS)[number]['code'] | (string & {});
 
 /**
  * Sanitize an operator-written bóveda code into an ID-safe sede token: uppercase
@@ -436,93 +436,99 @@ export type Sede = (typeof BOVEDAS)[number]["code"] | (string & {});
  * prefixes well-formed, e.g. "Medellín" → "MEDE".
  */
 export function sanitizeSedeCode(raw: string): string {
-  return (raw ?? "")
+  return (raw ?? '')
     .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "")
+    .replace(/[^A-Z0-9]/g, '')
     .slice(0, 4);
 }
 
 // ─── Tipo ítem form (Sección 5) ──────────────────────────────────────
 
 export const TIPOS_ITEM_FORM = [
-  "PIEDRA",
-  "GEMA",
-  "LOTE",
-  "JOYA",
-  "LOTE DE JOYAS",
-  "GANGA",
-  "MACLA",
-  "CANUTILLO",
-  "Otros",
+  'PIEDRA',
+  'GEMA',
+  'LOTE',
+  'JOYA',
+  'LOTE DE JOYAS',
+  'GANGA',
+  'MACLA',
+  'CANUTILLO',
+  'Otros',
 ] as const;
 
 export type TipoItemForm = (typeof TIPOS_ITEM_FORM)[number];
 
-export type TipoItemConvex = "gema" | "bruto" | "joya" | "insumo" | "lote";
+export type TipoItemConvex = 'gema' | 'bruto' | 'joya' | 'insumo' | 'lote';
 
 /** Map form tipo → Convex lotItems.tipo */
 export function tipoConvexFromForm(formTipo: TipoItemForm): TipoItemConvex {
   switch (formTipo) {
-    case "GEMA":
-      return "gema";
-    case "JOYA":
-      return "joya";
-    case "LOTE":
-    case "LOTE DE JOYAS":
-      return "lote";
-    case "PIEDRA":
-    case "GANGA":
-    case "MACLA":
-    case "CANUTILLO":
-    case "Otros":
+    case 'GEMA':
+      return 'gema';
+    case 'JOYA':
+      return 'joya';
+    case 'LOTE':
+    case 'LOTE DE JOYAS':
+      return 'lote';
+    case 'PIEDRA':
+    case 'GANGA':
+    case 'MACLA':
+    case 'CANUTILLO':
+    case 'Otros':
     default:
-      return "bruto";
+      return 'bruto';
   }
 }
 
 // ─── Joyas (form Sección 7) ──────────────────────────────────────────
 
 export const TIPOS_JOYA = [
-  "Topitos Peq",
-  "Topitos Grandes",
-  "Topitos Hombre",
-  "Aretes",
-  "Pulsera",
-  "Dije",
-  "Cadena",
-  "Expansión",
-  "Anillo Mujer",
-  "Anillo Hombre",
+  'Topitos Peq',
+  'Topitos Grandes',
+  'Topitos Hombre',
+  'Aretes',
+  'Pulsera',
+  'Dije',
+  'Cadena',
+  'Expansión',
+  'Anillo Mujer',
+  'Anillo Hombre',
+  // Added 2026-07-04: GHL's tipo_interes dropdown has had "candonga" and
+  // "set" as customer-facing options with no capture-form counterpart, so
+  // the bot could never resolve a piece-type match for them (see
+  // GHL/tipo-interes-mapping-analysis.md and convex/_lib/productSearch.ts).
+  'Candonga',
+  'Set',
 ] as const;
 
 export type TipoJoya = (typeof TIPOS_JOYA)[number];
 
 export const MINERALES = [
-  "Platino",
-  "Oro",
-  "Oro Rosado",
-  "Oro Italiano",
-  "Oro Blanco",
-  "Oro Negro",
-  "Plata 925",
-  "Plata Rodinada",
-  "Plata China",
-  "Plata Baño de Oro",
-  "Bronce",
-  "Bronce Baño de Oro",
-  "Tela",
-  "Hilos",
+  'Platino',
+  'Oro',
+  'Oro Rosado',
+  'Oro Italiano',
+  'Oro Blanco',
+  'Oro Negro',
+  'Plata 925',
+  'Plata Rodinada',
+  'Plata China',
+  'Plata Baño de Oro',
+  'Bronce',
+  'Bronce Baño de Oro',
+  'Tela',
+  'Hilos',
 ] as const;
 
 export type Mineral = (typeof MINERALES)[number];
 
 export const COMPLEMENTOS = [
-  "Diamante",
-  "Rubí",
-  "Zafiro",
-  "Circones (Natural)",
-  "Circonia",
-  "Cuarzos",
+  'Diamante',
+  'Rubí',
+  'Zafiro',
+  'Circones (Natural)',
+  'Circonia',
+  'Cuarzos',
 ] as const;
 
 export type Complemento = (typeof COMPLEMENTOS)[number];
@@ -533,68 +539,68 @@ export type Complemento = (typeof COMPLEMENTOS)[number];
 
 /** Colombian emerald sources, for the Procedencia field (gema + bruto). */
 export const PROCEDENCIAS = [
-  "Boyacá",
-  "Muzo",
-  "Chivor",
-  "Coscuez",
-  "Gachalá",
-  "Peñas Blancas",
-  "La Pita",
-  "Quípama",
-  "Maripí",
-  "Otanche",
-  "Pauna",
-  "San Pablo de Borbur",
-  "Yacopí",
+  'Boyacá',
+  'Muzo',
+  'Chivor',
+  'Coscuez',
+  'Gachalá',
+  'Peñas Blancas',
+  'La Pita',
+  'Quípama',
+  'Maripí',
+  'Otanche',
+  'Pauna',
+  'San Pablo de Borbur',
+  'Yacopí',
 ] as const;
 export type Procedencia = (typeof PROCEDENCIAS)[number];
 
 /** Common goldsmithing techniques, for the Técnica field (joya). */
 export const TECNICAS_JOYA = [
-  "Engaste",
-  "Microengaste",
-  "Filigrana",
-  "Fundición",
-  "Cera perdida",
-  "Repujado",
-  "Calado",
-  "Martillado",
-  "Granulado",
-  "Soldadura",
-  "Electroformado",
+  'Engaste',
+  'Microengaste',
+  'Filigrana',
+  'Fundición',
+  'Cera perdida',
+  'Repujado',
+  'Calado',
+  'Martillado',
+  'Granulado',
+  'Soldadura',
+  'Electroformado',
 ] as const;
 export type TecnicaJoya = (typeof TECNICAS_JOYA)[number];
 
 // ─── Precio final (form Sección 9) ───────────────────────────────────
 
-export const FORMULAS_GEMA = ["X1", "X1,5", "X2", "X2,5", "X3"] as const;
+export const FORMULAS_GEMA = ['X1', 'X1,5', 'X2', 'X2,5', 'X3'] as const;
 export type FormulaGema = (typeof FORMULAS_GEMA)[number];
 
 export const FORMULAS_JOYA = [
-  "X1",
-  "X1,1",
-  "X1,2",
-  "X1,5",
-  "X2",
-  "X2,5",
-  "X3",
+  'X1',
+  'X1,1',
+  'X1,2',
+  'X1,5',
+  'X2',
+  'X2,5',
+  'X3',
 ] as const;
 export type FormulaJoya = (typeof FORMULAS_JOYA)[number];
 
 export const RANGOS_DESCUENTO = [
-  "10%",
-  "20%",
-  "30%",
-  "40%",
-  "50%",
-  "60%",
-  "70%",
+  '10%',
+  '20%',
+  '30%',
+  '40%',
+  '50%',
+  '60%',
+  '70%',
 ] as const;
 export type RangoDescuento = (typeof RANGOS_DESCUENTO)[number];
 
 /** Parse formula string like "X2,5" → numeric multiplier. */
 export function parseFormulaMultiplier(formula: string): number {
-  const m = formula.replace(/^X/i, "").replace(",", ".");
+  const m = formula.replace(/^X/i, '').replace(',', '.');
   const n = parseFloat(m);
   return Number.isFinite(n) && n > 0 ? n : 1;
 }
@@ -609,18 +615,18 @@ export interface MedidasAHC {
 
 export function serializeMedidas(m: MedidasAHC): string {
   const parts = [m.ancho, m.alto, m.cono].map((p) => p.trim()).filter(Boolean);
-  if (parts.length === 0) return "";
-  return `${parts.join("×")} mm`;
+  if (parts.length === 0) return '';
+  return `${parts.join('×')} mm`;
 }
 
 export function parseMedidas(raw: string | undefined | null): MedidasAHC {
-  const s = (raw ?? "").replace(/\s*mm\s*$/i, "").trim();
-  if (!s) return { ancho: "", alto: "", cono: "" };
+  const s = (raw ?? '').replace(/\s*mm\s*$/i, '').trim();
+  if (!s) return { ancho: '', alto: '', cono: '' };
   const parts = s.split(/×|x|X|\*/).map((p) => p.trim());
   return {
-    ancho: parts[0] ?? "",
-    alto: parts[1] ?? "",
-    cono: parts[2] ?? "",
+    ancho: parts[0] ?? '',
+    alto: parts[1] ?? '',
+    cono: parts[2] ?? '',
   };
 }
 
@@ -628,20 +634,20 @@ export function parseMedidas(raw: string | undefined | null): MedidasAHC {
 
 /** Sale-specific union — includes canje from the form. */
 export const FORMA_PAGO_VENTA = [
-  "contado",
-  "credito",
-  "esmereogenesis",
-  "canje",
-  "bajo_pedido",
-  "consignacion",
+  'contado',
+  'credito',
+  'esmereogenesis',
+  'canje',
+  'bajo_pedido',
+  'consignacion',
 ] as const;
 
 export type FormaPagoVenta = (typeof FORMA_PAGO_VENTA)[number];
 
 export const METODO_RECEPCION = [
-  "efectivo",
-  "transferencia",
-  "crypto",
+  'efectivo',
+  'transferencia',
+  'crypto',
 ] as const;
 
 export type MetodoRecepcion = (typeof METODO_RECEPCION)[number];

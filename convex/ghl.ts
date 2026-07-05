@@ -23,23 +23,23 @@ import {
   internalMutation,
   internalAction,
   type MutationCtx,
-} from "./_generated/server";
-import { v, ConvexError } from "convex/values";
-import { internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
-import { allocateNext, formatSaleId } from "./sequences";
-import { rankProducts, type SearchableProduct } from "./_lib/productSearch";
-import { isOverLimit, computeCommissionCOP } from "./_lib/commission";
-import { applyPaymentToSale } from "./_lib/applyPayment";
+} from './_generated/server';
+import { v, ConvexError } from 'convex/values';
+import { internal } from './_generated/api';
+import type { Id } from './_generated/dataModel';
+import { allocateNext, formatSaleId } from './sequences';
+import { rankProducts, type SearchableProduct } from './_lib/productSearch';
+import { isOverLimit, computeCommissionCOP } from './_lib/commission';
+import { applyPaymentToSale } from './_lib/applyPayment';
 import {
   isContactInactive,
   addContactTags,
   type GhlConvConfig,
-} from "./_lib/ghlConversations";
+} from './_lib/ghlConversations';
 
 /** Sequence + sede code for online (bot/web) orders → ids like `VO-0001`. */
-const ONLINE_SEDE = "O";
-const ONLINE_SALE_SEQUENCE = "sale:O";
+const ONLINE_SEDE = 'O';
+const ONLINE_SALE_SEQUENCE = 'sale:O';
 
 // ─── search-products (the GHL bot's product tool) ──────────────────────────
 
@@ -53,32 +53,59 @@ export const searchProducts = query({
     baseUrl: v.string(),
   },
   handler: async (ctx, { categoria, presupuesto, ocasion, baseUrl }) => {
-    // Scan ONLY published rows via the dedicated index (bandwidth-friendly).
-    const published = await ctx.db
-      .query("productInventory")
-      .withIndex("by_mostrarEnCatalogo", (q) => q.eq("mostrarEnCatalogo", true))
+    // Bot-eligible universe (2026-07-04 fix): Fotosíntesis-v2 items explicitly
+    // published (`mostrarEnCatalogo`) UNION legacy items (no `loteId` — that
+    // sync path never sets `mostrarEnCatalogo` at all, so it used to exclude
+    // the entire legacy catalog, ~82% of inventory) that are DISPONIBLE. Two
+    // indexed scans merged in code: "OR across two different fields" isn't a
+    // single Convex index range.
+    const publishedFoto = await ctx.db
+      .query('productInventory')
+      .withIndex('by_mostrarEnCatalogo', (q) => q.eq('mostrarEnCatalogo', true))
       .collect();
+    const disponible = await ctx.db
+      .query('productInventory')
+      .withIndex('by_estado', (q) => q.eq('estado', 'DISPONIBLE'))
+      .collect();
+    const legacyDisponible = disponible.filter((p) => p.loteId === undefined);
 
-    const items: SearchableProduct[] = published.map((p) => ({
+    const byItemId = new Map<string, (typeof publishedFoto)[number]>();
+    for (const p of [...publishedFoto, ...legacyDisponible])
+      byItemId.set(p.itemId, p);
+    const eligible = [...byItemId.values()];
+
+    const items: SearchableProduct[] = eligible.map((p) => ({
       itemId: p.itemId,
       nombre: p.nombre,
       categoria: p.categoria,
+      tipoJoya: p.tipoJoya,
+      tipo: p.tipo,
+      // `precioEmbajadorCOP` is the ambassador/wholesale tier — NEVER a valid
+      // stand-in for the retail price quoted to an end customer. If
+      // `precioCOP` is missing, the item is correctly excluded downstream
+      // (`eligibleProducts` requires a numeric `precioCOP`) rather than
+      // silently quoting the wrong tier.
       precioCOP: p.precioCOP,
       estado: p.estado,
-      mostrarEnCatalogo: p.mostrarEnCatalogo,
+      // Normalize the "allowed to appear" flag at this IO boundary so the
+      // pure ranking module doesn't need to know about loteId/legacy vs
+      // Fotosíntesis: legacy items have no publish concept, so DISPONIBLE
+      // alone qualifies them here even though their raw `mostrarEnCatalogo`
+      // is undefined.
+      mostrarEnCatalogo: p.mostrarEnCatalogo === true || p.loteId === undefined,
       fotoUrl: p.fotoUrl,
       certificadoUrl: p.certificadoUrl,
     }));
 
-    const base = baseUrl.replace(/\/$/, "");
+    const base = baseUrl.replace(/\/$/, '');
     const productos = rankProducts(items, {
       categoria,
       presupuesto,
       ocasion,
     }).map((p) => ({
       sku: p.itemId,
-      nombre: p.nombre ?? "",
-      descripcion_corta: p.nombre ?? "",
+      nombre: p.nombre ?? '',
+      descripcion_corta: p.nombre ?? '',
       precio_cop: p.precioCOP ?? 0,
       foto_url: p.fotoUrl ?? null,
       // Public "Vitrina" share link: a sandboxed product page the client opens
@@ -94,7 +121,7 @@ export const searchProducts = query({
     // conversation, which is the selection signal for the asesor payment flow.
     const vitrina_link =
       productos.length > 0
-        ? `${base}/v/${productos.map((p) => p.sku).join("-")}`
+        ? `${base}/v/${productos.map((p) => p.sku).join('-')}`
         : null;
     return { productos, vitrina_link };
   },
@@ -106,18 +133,18 @@ async function upsertClient(
   ctx: MutationCtx,
   contact: { celular: string; full_name?: string; email?: string },
   canalOrigen: string | undefined,
-  ambassadorId: Id<"ambassadors"> | undefined,
-): Promise<Id<"clients">> {
+  ambassadorId: Id<'ambassadors'> | undefined,
+): Promise<Id<'clients'>> {
   let existing = contact.celular
     ? await ctx.db
-        .query("clients")
-        .withIndex("by_telefono", (q) => q.eq("telefono", contact.celular))
+        .query('clients')
+        .withIndex('by_telefono', (q) => q.eq('telefono', contact.celular))
         .first()
     : null;
   if (!existing && contact.email) {
     existing = await ctx.db
-      .query("clients")
-      .withIndex("by_email", (q) => q.eq("email", contact.email))
+      .query('clients')
+      .withIndex('by_email', (q) => q.eq('email', contact.email))
       .first();
   }
 
@@ -133,20 +160,20 @@ async function upsertClient(
     return existing._id;
   }
 
-  const all = await ctx.db.query("clients").collect();
+  const all = await ctx.db.query('clients').collect();
   const rowIndex = all.reduce((m, c) => Math.max(m, c.rowIndex), 1) + 1;
-  return ctx.db.insert("clients", {
+  return ctx.db.insert('clients', {
     nombre: contact.full_name ?? contact.celular,
     telefono: contact.celular,
     email: contact.email,
-    tipo: "final",
+    tipo: 'final',
     canalOrigen,
     ambassadorId,
     totalCompradoCOP: 0,
     tags: [],
     rowIndex,
     lastPulledAt: now,
-    syncStatus: "pending" as const,
+    syncStatus: 'pending' as const,
   });
 }
 
@@ -170,18 +197,18 @@ export const createOrder = mutation({
     canal_origen: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    if (!args.items.length) throw new ConvexError("EMPTY_ITEMS");
+    if (!args.items.length) throw new ConvexError('EMPTY_ITEMS');
 
     // 1. Reload prices/stock from the DB — never trust client-supplied amounts.
     let totalCOP = 0;
     const itemIds: string[] = [];
     for (const line of args.items) {
       const product = await ctx.db
-        .query("productInventory")
-        .withIndex("by_itemId", (q) => q.eq("itemId", line.sku))
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', line.sku))
         .first();
       if (!product) throw new ConvexError(`PRODUCT_NOT_FOUND:${line.sku}`);
-      if (product.estado !== "DISPONIBLE")
+      if (product.estado !== 'DISPONIBLE')
         throw new ConvexError(`NOT_AVAILABLE:${line.sku}`);
       const qty = Math.max(1, Math.floor(line.qty));
       totalCOP += (product.precioCOP ?? 0) * qty;
@@ -189,14 +216,14 @@ export const createOrder = mutation({
     }
 
     // 2. ≤2M COP server-side gate (golden rule #3). The handler maps this to 409.
-    if (isOverLimit(totalCOP)) throw new ConvexError("OVER_LIMIT_2M");
+    if (isOverLimit(totalCOP)) throw new ConvexError('OVER_LIMIT_2M');
 
     // 3. Resolve the ambassador (first-touch) from the referral slug.
-    let ambassadorId: Id<"ambassadors"> | undefined;
+    let ambassadorId: Id<'ambassadors'> | undefined;
     if (args.ambassador_slug) {
       const amb = await ctx.db
-        .query("ambassadors")
-        .withIndex("by_slug", (q) => q.eq("slug", args.ambassador_slug!))
+        .query('ambassadors')
+        .withIndex('by_slug', (q) => q.eq('slug', args.ambassador_slug!))
         .first();
       if (amb) ambassadorId = amb._id;
     }
@@ -215,9 +242,9 @@ export const createOrder = mutation({
 
     // 6. Insert the pending sale.
     const now = new Date().toISOString();
-    const allSales = await ctx.db.query("sales").collect();
+    const allSales = await ctx.db.query('sales').collect();
     const rowIndex = allSales.reduce((m, s) => Math.max(m, s.rowIndex), 1) + 1;
-    await ctx.db.insert("sales", {
+    await ctx.db.insert('sales', {
       saleId,
       sede: ONLINE_SEDE,
       fechaVenta: now,
@@ -225,14 +252,14 @@ export const createOrder = mutation({
       clientId,
       precioAcordadoCOP: totalCOP,
       totalCOP,
-      formaPago: "mercadopago",
-      estado: "reservada" as const,
+      formaPago: 'mercadopago',
+      estado: 'reservada' as const,
       ambassadorId,
       promotionCode: args.promotion_code ?? undefined,
       shippingAddress: args.shipping_address,
       rowIndex,
       lastPulledAt: now,
-      syncStatus: "pending" as const,
+      syncStatus: 'pending' as const,
     });
 
     return { saleId, totalCOP };
@@ -244,8 +271,8 @@ export const setMpPreference = mutation({
   args: { saleId: v.string(), mpPreferenceId: v.string() },
   handler: async (ctx, { saleId, mpPreferenceId }) => {
     const sale = await ctx.db
-      .query("sales")
-      .withIndex("by_saleId", (q) => q.eq("saleId", saleId))
+      .query('sales')
+      .withIndex('by_saleId', (q) => q.eq('saleId', saleId))
       .first();
     if (sale) await ctx.db.patch(sale._id, { mpPreferenceId });
     return { ok: Boolean(sale) };
@@ -262,10 +289,10 @@ export const markOrderPaid = mutation({
   },
   handler: async (ctx, { saleId, mpPaymentId, mpStatus }) => {
     const sale = await ctx.db
-      .query("sales")
-      .withIndex("by_saleId", (q) => q.eq("saleId", saleId))
+      .query('sales')
+      .withIndex('by_saleId', (q) => q.eq('saleId', saleId))
       .first();
-    if (!sale) return { updated: false as const, reason: "sale-not-found" };
+    if (!sale) return { updated: false as const, reason: 'sale-not-found' };
 
     const decision = applyPaymentToSale(
       { estado: sale.estado },
@@ -299,18 +326,18 @@ export const markOrderPaid = mutation({
     // Commission — created exactly once per sale (by_saleId guard = idempotent).
     if (sale.ambassadorId) {
       const existing = await ctx.db
-        .query("commissions")
-        .withIndex("by_saleId", (q) => q.eq("saleId", saleId))
+        .query('commissions')
+        .withIndex('by_saleId', (q) => q.eq('saleId', saleId))
         .first();
       if (!existing) {
         const amb = await ctx.db.get(sale.ambassadorId);
         if (amb) {
-          await ctx.db.insert("commissions", {
+          await ctx.db.insert('commissions', {
             saleId,
             ambassadorId: sale.ambassadorId,
             amountCOP: computeCommissionCOP(sale.totalCOP, amb.comisionPercent),
             percentApplied: amb.comisionPercent,
-            status: "pending" as const,
+            status: 'pending' as const,
             createdAt: decision.patch.paidAt,
           });
         }
@@ -336,8 +363,8 @@ export const flagGhlSyncPending = mutation({
   args: { saleId: v.string(), pending: v.boolean() },
   handler: async (ctx, { saleId, pending }) => {
     const sale = await ctx.db
-      .query("sales")
-      .withIndex("by_saleId", (q) => q.eq("saleId", saleId))
+      .query('sales')
+      .withIndex('by_saleId', (q) => q.eq('saleId', saleId))
       .first();
     if (sale) await ctx.db.patch(sale._id, { pendingGhlSync: pending });
     return { ok: Boolean(sale) };
@@ -350,13 +377,13 @@ export const getClientByPhone = query({
   args: { celular: v.string() },
   handler: async (ctx, { celular }) =>
     ctx.db
-      .query("clients")
-      .withIndex("by_telefono", (q) => q.eq("telefono", celular))
+      .query('clients')
+      .withIndex('by_telefono', (q) => q.eq('telefono', celular))
       .first(),
 });
 
 export const linkGhlContact = mutation({
-  args: { clientId: v.id("clients"), ghlContactId: v.string() },
+  args: { clientId: v.id('clients'), ghlContactId: v.string() },
   handler: async (ctx, { clientId, ghlContactId }) => {
     await ctx.db.patch(clientId, { ghlContactId });
     return { ok: true };
@@ -375,8 +402,8 @@ export const nudgeAbandoned = internalMutation({
   handler: async (ctx) => {
     const cutoff = Date.now() - 4 * 60 * 60 * 1000;
     const reservadas = await ctx.db
-      .query("sales")
-      .withIndex("by_estado", (q) => q.eq("estado", "reservada"))
+      .query('sales')
+      .withIndex('by_estado', (q) => q.eq('estado', 'reservada'))
       .collect();
     const stale = reservadas.filter(
       (s) => new Date(s.fechaVenta).getTime() < cutoff,
@@ -402,7 +429,7 @@ export const nudgeAbandoned = internalMutation({
 /** Threshold (days) after which an unanswered outbound message is "stale". */
 const INACTIVITY_THRESHOLD_DAYS = 7;
 /** The tag Manage Scoring watches for (scored −10). */
-const INACTIVITY_TAG = "sin-respuesta-7d";
+const INACTIVITY_TAG = 'sin-respuesta-7d';
 
 /**
  * Contacts eligible for the inactivity scan: clients we've linked to a GHL
@@ -411,7 +438,7 @@ const INACTIVITY_TAG = "sin-respuesta-7d";
 export const listGhlLinkedContacts = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const clients = await ctx.db.query("clients").collect();
+    const clients = await ctx.db.query('clients').collect();
     return clients
       .filter((c) => Boolean(c.ghlContactId))
       .map((c) => ({ clientId: c._id, ghlContactId: c.ghlContactId! }));
@@ -437,7 +464,7 @@ export const tagInactiveContacts = internalAction({
     const locationId = process.env.GHL_LOCATION_ID;
     if (!token || !locationId) {
       console.warn(
-        "[sin-respuesta-7d] GHL_TOKEN / GHL_LOCATION_ID unset — skipping run",
+        '[sin-respuesta-7d] GHL_TOKEN / GHL_LOCATION_ID unset — skipping run',
       );
       return { scanned: 0, tagged: 0, notInactive: 0, errored: 0 };
     }
