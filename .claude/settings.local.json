@@ -107,7 +107,12 @@
       "Bash(git status:*)",
       "mcp__playwright__browser_navigate",
       "Read(//tmp/**)",
-      "Bash(git merge *)"
+      "Bash(git merge *)",
+      "Bash(set -e)",
+      "Bash(timeout 300 npm run lint)",
+      "Bash(npx vite *)",
+      "Bash(rm -f /tmp/cert_export_test*.png)",
+      "Bash(git --no-pager log --oneline -3 origin/main)"
     ],
     "deny": [],
     "ask": []
