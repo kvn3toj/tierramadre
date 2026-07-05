@@ -10,7 +10,7 @@ Project: Esmereogénesis — full redesign. Mobile-first: design at 390x844 now;
 
 ## User
 
-What it is: a feature of Tierra Mädre, a Colombian high-end emerald jeweler (tagline "Esencia y Poder"). Esmereogénesis is a savings-WITH-PURPOSE method — it is NOT credit or debt. You pick an emerald and "water" it with contributions over time; the gem visually comes to life and you finally claim it. Inspiration = Forest / Finch: a living entity that grows as you nurture it. Tone: calm, ceremonial, premium. Honor this Spanish vocabulary: regar (water), aporte/abono (contribution), florecer (bloom), eclosión (hatch), racha (streak), jardín (garden). Guiding principle: "no es deuda, es vivienda."
+What it is: a feature of Tierra Mädre, a Colombian high-end emerald jeweler (tagline "Esmeraldas con ADN de Paz"). Esmereogénesis is a savings-WITH-PURPOSE method — it is NOT credit or debt. You pick an emerald and "water" it with contributions over time; the gem visually comes to life and you finally claim it. Inspiration = Forest / Finch: a living entity that grows as you nurture it. Tone: calm, ceremonial, premium. Honor this Spanish vocabulary: regar (water), aporte/abono (contribution), florecer (bloom), eclosión (hatch), racha (streak), jardín (garden). Guiding principle: "no es deuda, es vivienda."
 
 ## User
 

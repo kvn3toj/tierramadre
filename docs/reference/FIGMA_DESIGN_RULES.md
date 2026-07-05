@@ -1,6 +1,6 @@
 # Figma MCP Design System Rules - Tierra Madre Studio
 
-> Colombian Emeralds Catalog & Sales Platform - "Esencia y Poder"
+> Colombian Emeralds Catalog & Sales Platform - "Esmeraldas con ADN de Paz"
 > Design Philosophy: **"Luxury Minimalism meets iOS HIG"**
 
 ---

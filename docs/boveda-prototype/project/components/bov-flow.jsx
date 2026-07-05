@@ -77,7 +77,7 @@ function MasScreen({ ctx }) {
 
         <div style={{ marginTop: 26, textAlign: 'center' }}>
           <div className="serif" style={{ fontSize: 15, letterSpacing: '0.02em' }}>Tierra Mädre</div>
-          <div style={{ fontSize: 9.5, letterSpacing: '0.34em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 5 }}>Esencia y Poder</div>
+          <div style={{ fontSize: 9.5, letterSpacing: '0.34em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 5 }}>Esmeraldas con ADN de Paz</div>
         </div>
       </div>
 

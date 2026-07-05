@@ -24,7 +24,7 @@ The Tierra Madre app has a solid accessibility foundation — it includes a skip
 | 5 | **Thumbnail images use generic alt** — `alt="Thumbnail 1"`, `alt="Thumbnail 2"` | 1.1.1 Non-text Content | 🟡 Major | Product Detail — thumbnail strip | Use "Soberana Imperial, view 2 of 5" pattern |
 | 6 | **Video elements lack `aria-label` and captions** — `<video>` in MediaPreview has no accessible name or `<track>` element | 1.2.2 Captions, 1.1.1 Non-text Content | 🟡 Major | MediaPreview component | Add `aria-label="Video de [product name]"` and consider adding subtitle tracks |
 | 7 | **Decorative icons (Lucide) missing `aria-hidden="true"`** — MapPin, Star, Eye, Play, User, ShoppingBag, etc. used alongside text but not hidden from screen readers | 1.1.1 Non-text Content | 🟢 Minor | TreasureCard, AmbassadorProfile, GalleryPreview, StatBox (30+ instances) | Add `aria-hidden="true"` to all decorative icons that appear next to visible text |
-| 8 | **"ESENCIA Y PODER" subtitle** — low contrast emerald green on dark gradient background | 1.4.3 Contrast (Minimum) | 🟢 Minor | Login page | Increase subtitle brightness |
+| 8 | **"ESMERALDAS CON ADN DE PAZ" subtitle** — low contrast emerald green on dark gradient background | 1.4.3 Contrast (Minimum) | 🟢 Minor | Login page | Increase subtitle brightness |
 
 ---
 

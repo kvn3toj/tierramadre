@@ -20,7 +20,7 @@ Tierra Mädre (con diéresis deliberada) es una **casa hermética de esmeraldas 
 
 La voz es **poética, ceremonial y vertical**. Habla desde la Tierra (mayúscula), desde los millones de años que cada esmeralda lleva adentro, y desde una comunidad que se autodescribe como "hermética", con "acceso directo" y "precios de Mina". El tono mezcla el susurro del oráculo con la claridad del gemólogo: cada pieza tiene datos técnicos precisos (color, corte, peso en ct, calidad) envueltos en narrativa mitológica.
 
-El eje semántico es **"Esencia y Poder"** y el firma-de-pie **"ADN de Paz. Alta frecuencia de origen."** — dos fórmulas que sintetizan la promesa de marca: lujo consciente con raíz ancestral colombiana, libre de los conflictos asociados a otras gemas del mundo.
+El eje semántico es **"Esmeraldas con ADN de Paz"** y el firma-de-pie **"ADN de Paz. Alta frecuencia de origen."** — dos fórmulas que sintetizan la promesa de marca: lujo consciente con raíz ancestral colombiana, libre de los conflictos asociados a otras gemas del mundo.
 
 Tierra Mädre habla en plural mayestático ("custodiamos", "compartimos", "trabajamos"), tutea al lector ("si sientes el llamado", "escríbenos"), y construye cada post como una liturgia breve con la misma estructura: **verso corto → revelación → dato técnico → invitación**.
 
@@ -158,7 +158,7 @@ Tierra Mädre habla en plural mayestático ("custodiamos", "compartimos", "traba
 | **Fuego verde / Pulso verde** | Metáforas de la gema | Repo + IG ("pulso verde de lo que permanece") |
 | **Jardín** | Inclusiones naturales (nunca "impurezas") | Repo |
 | **Tierra** (con mayúscula) | La Tierra como sujeto vivo | IG (recurrente) |
-| **Esencia y Poder** | Tagline principal | README, CLAUDE.md |
+| **Esmeraldas con ADN de Paz** | Tagline principal | README, CLAUDE.md |
 | **Raíz, origen, memoria** | Triada narrativa recurrente | IG ("Ella es raíz, es origen, es vida" · "Soy raíz, soy memoria") |
 | **Frecuencia / Vibrar / Energía** | Léxico espiritual | Repo oracle quotes + IG |
 | **Chakra del corazón** | Ancla espiritual central | Repo meditaciones |
@@ -440,7 +440,7 @@ El equipo confirma que existe contenido de voz adicional que **no fue procesado 
 3. **Lujo con conciencia de bien común** — ética, alta frecuencia, no extractivismo
 
 **Tagline complementarios** (validados en catálogos):
-- *"Esencia y Poder"* (firma corporativa)
+- *"Esmeraldas con ADN de Paz"* (firma corporativa)
 - *"Lo eterno trasciende el tiempo"* (campañas Gift / regalo)
 - *"Regala lujo, regala eternidad"* (Gift / corporativo)
 - *"La abundancia está en compartir entre amigos"* (cierre cálido B2B)

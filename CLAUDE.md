@@ -1,7 +1,7 @@
 # Tierra Madre Studio
 
 ## Project Overview
-Colombian Emeralds Catalog & Sales Platform - "Esencia y Poder"
+Colombian Emeralds Catalog & Sales Platform - "Esmeraldas con ADN de Paz"
 
 **Purpose**: Internal tool for Tierra Madre's Colombian emerald business - product catalog, quotations, analytics, and ambassador management.
 

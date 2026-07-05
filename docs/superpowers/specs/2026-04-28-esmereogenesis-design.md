@@ -9,7 +9,7 @@
 
 ## 1. Context — Por qué este feature existe
 
-Tierra Madre vende esmeraldas colombianas de alto valor. El precio puede ser un freno emocional: comprometerse con un objeto físico costoso requiere fricción mental fuerte. La industria estándar resuelve esto con **crédito** (deuda + cuotas + intereses), pero esa lógica contradice la filosofía de Tierra Madre ("Esencia y Poder", relación consciente con la gema).
+Tierra Madre vende esmeraldas colombianas de alto valor. El precio puede ser un freno emocional: comprometerse con un objeto físico costoso requiere fricción mental fuerte. La industria estándar resuelve esto con **crédito** (deuda + cuotas + intereses), pero esa lógica contradice la filosofía de Tierra Madre ("Esmeraldas con ADN de Paz", relación consciente con la gema).
 
 **Esmereogénesis** es la propuesta alternativa: un **método de ahorro con propósito**, no un crédito. El usuario no toma la esmeralda y debe pagar; el usuario riega su esmeralda con aportes hasta que cobra vida y la reclama.
 

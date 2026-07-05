@@ -2,7 +2,7 @@
 
 Internal Advertising Agency Tool for Colombian Emeralds.
 
-**"Esencia y Poder"** - The essence and power of Colombian emeralds.
+**"Esmeraldas con ADN de Paz"** - The essence and power of Colombian emeralds.
 
 ## Features
 
