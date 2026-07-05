@@ -141,8 +141,15 @@ function relevance(p: SearchableProduct, criteria: SearchCriteria): number {
   ) {
     score += 100_000;
   }
-  // Tiebreak: pricier-within-budget first (mirrors the spec's secondary "precio DESC").
-  score += p.precioCOP ?? 0;
+  // Tiebreak on price. WITH a declared budget the pool is bounded by the 1.2×
+  // ceiling, so "pricier-first" means "closest to what the client can spend"
+  // (the spec's secondary "precio DESC"). WITHOUT a budget there is NO ceiling
+  // (`presupuestoMax = Infinity`), so the same rule would rank the single most
+  // expensive stones in the vault to a client who never asked for them — the
+  // 2026-07-05 incident where a "3 millones" lead was shown 611M–930M COP
+  // pieces. When no budget is known, fall back to cheaper-first instead.
+  const price = p.precioCOP ?? 0;
+  score += criteria.presupuesto ? price : -price;
   return score;
 }
 

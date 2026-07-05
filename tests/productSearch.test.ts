@@ -144,10 +144,11 @@ describe('rankProducts', () => {
       ],
       { categoria: 'otro' },
     );
-    // "otro" never forces the strict filter, so both degrade to the fallback
-    // ranked by price alone — proving "dirty" isn't silently swept in as a
-    // match either (it would rank *above* "clean" on price if it were).
-    expect(out.map((p) => p.itemId)).toEqual(['dirty', 'clean']);
+    // "otro" never forces the strict filter, so both degrade to the fallback.
+    // With no declared budget the fallback ranks cheaper-first (the 2026-07-05
+    // safety net), so "clean" (800k) leads "dirty" (900k). The point stands:
+    // "dirty" is NOT boosted above "clean" as a false tipo match.
+    expect(out.map((p) => p.itemId)).toEqual(['clean', 'dirty']);
   });
 
   // ── Graceful degradation ────────────────────────────────────────────────
@@ -276,5 +277,35 @@ describe('rankProducts', () => {
     // No 4M-6M ring in stock → better to show the only real ring available
     // than an empty list.
     expect(out.map((p) => p.itemId)).toEqual(['onlyOption']);
+  });
+
+  // ── No-budget safety net (2026-07-05 incident) ──────────────────────────
+  // With NO declared budget there is no 1.2× ceiling, so the "pricier-first"
+  // tiebreak used to surface the single most expensive stones in the vault to
+  // a client who never asked — a "3 millones" lead was shown 611M–930M COP
+  // pieces. When no budget is known, ranking must fall back to cheaper-first
+  // so an over-budget outlier can never lead.
+  it('never leads with the most-expensive piece when no budget is declared', () => {
+    const out = rankProducts(
+      [
+        prod({ itemId: 'vault', precioCOP: 930_000_000 }),
+        prod({ itemId: 'mid', precioCOP: 3_000_000 }),
+        prod({ itemId: 'entry', precioCOP: 900_000 }),
+      ],
+      {}, // no presupuesto — the exact failure condition
+    );
+    expect(out.map((p) => p.itemId)).toEqual(['entry', 'mid', 'vault']);
+    expect(out[0].itemId).not.toBe('vault');
+  });
+
+  it('still prefers pricier-within-budget first when a budget IS declared', () => {
+    const out = rankProducts(
+      [
+        prod({ itemId: 'lower', precioCOP: 2_600_000 }),
+        prod({ itemId: 'upper', precioCOP: 3_400_000 }),
+      ],
+      { presupuesto: 3_000_000 }, // both inside the 2.4M–3.6M window
+    );
+    expect(out.map((p) => p.itemId)).toEqual(['upper', 'lower']);
   });
 });

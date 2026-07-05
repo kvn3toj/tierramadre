@@ -15,6 +15,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { withApiHandler, sendError, sendSuccess } from "./_lib/index.js";
 import { convexClient, isConvexEnabled } from "./_lib/convex-client.js";
 import { bearerMatches } from "./_lib/bearer.js";
+import { parsePresupuestoCOP } from "./_lib/parseBudget.js";
 import { api } from "../convex/_generated/api.js";
 
 const DEFAULT_APP_URL = "https://tierra-madre-studio.vercel.app";
@@ -35,7 +36,8 @@ export default withApiHandler(
 
     const body = (req.body ?? {}) as {
       intent?: { categoria?: string };
-      presupuesto?: number;
+      // GHL merge tags render as strings; accept both and coerce below.
+      presupuesto?: number | string;
       ocasion?: string;
       ciudad?: string;
     };
@@ -43,8 +45,7 @@ export default withApiHandler(
 
     const result = await convexClient.query(api.ghl.searchProducts, {
       categoria: body.intent?.categoria,
-      presupuesto:
-        typeof body.presupuesto === "number" ? body.presupuesto : undefined,
+      presupuesto: parsePresupuestoCOP(body.presupuesto),
       ocasion: body.ocasion,
       ciudad: body.ciudad,
       baseUrl,
