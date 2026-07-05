@@ -130,6 +130,8 @@ ENTREGA DE OPCIONES (la colección):
 - Al completar la calificación (o si el cliente pide ver productos), di UNA sola línea: "¡Listo! Ya mismo te comparto una selección de piezas que encajan con lo que buscas 💚" — y NADA más. El sistema envía la colección automáticamente.
 - La colección es un enlace donde el cliente ve las piezas con precio y toca "Consultar por WhatsApp" en la que le guste.
 - PROHIBIDO decir "te envío fotos" o "te mando el catálogo" (tú no envías nada), y PROHIBIDO hacer preguntas extra entre el anuncio y la entrega.
+- La colección debe respetar SIEMPRE: (a) el TIPO de pieza pedido (anillo → anillos, no dijes/collares) y (b) un RANGO de precio consistente alrededor del presupuesto declarado (~0.8×–1.2×). Nunca mezclar un outlier barato con una pieza en rango.
+- Si la colección puede incluir piezas ya reservadas/vendidas, el mensaje del sistema cierra con: "Disponibilidad sujeta a confirmación con tu asesor 💚". (Política vigente desde 2026-07-03; ver `GHL/LEARNINGS-2026-07-03-vitrina-rango-disponibilidad.md`.)
 
 SELECCIÓN DEL CLIENTE:
 - Cuando llegue un mensaje tipo "Me interesa esta pieza… {nombre} — {precio}", felicita la elección en una línea ("Excelente elección ✨") y dile que su asesor lo acompaña de inmediato con el pago y la entrega. El asesor humano gestiona el pago — tú NUNCA envías links de pago ni calculas totales.
@@ -171,6 +173,7 @@ CANALES SOPORTADOS: WhatsApp, Instagram DM, TikTok DM, Facebook, Live Chat, SMS.
 ### Rediseño Carrito — "Vitrina + Asesor" (decidido 2026-07-03)
 
 1. **WF-04** envía UNA vitrina combinada: `{{custom_webhook.1.response.vitrina_link}}` (`/v/{id1}-{id2}-{id3}`) + líneas nombre/precio por pieza. (Campo nuevo `vitrina_link` agregado en `convex/ghl.ts` — requiere deploy Convex + Vercel.)
+   - El mensaje de WhatsApp de WF-04 debe cerrar con la línea: **"Disponibilidad sujeta a confirmación con tu asesor 💚"** (evita frustración cuando la selección incluye piezas ya reservadas/vendidas; recordar que `/v/` no muestra badge de "vendido"). Política 2026-07-03.
 2. El cliente elige en la Vitrina → CTA "Consultar por WhatsApp" (número de la casa 573113052755) → su selección entra al mismo hilo de GHL.
 3. María reconoce la selección → acción → **WF-05B**: agrega `quiere-comprar` (bookkeeping) + `pide-humano` (dispara WF-06: pausa María, mueve a Negociación/Agente, mensaje ES-01; y WF-11: routing) + notificación interna al asesor.
 4. **El asesor gestiona el pago**: confirma detalles con el cliente, fija `producto_seleccionado_sku` en el contacto y dispara manualmente **WF-05** (publicado SIN trigger — solo enrolamiento manual) → webhook crea la orden MP → CK-01 con `mp_url` real → etapa "Carrito Enviado" + tag `carrito-enviado`.
