@@ -89,7 +89,11 @@ export const CUT_MAP = [
     "a trapiche emerald cabochon — a fixed six-rayed black carbon star radiating from a green hexagonal core, six green sectors split by dark carbon spokes, domed and unfaceted (never a plain green cabochon or a faceted stone)",
   ],
   [
-    /morralla|cabuj[óo]n|cabochon|pulid|tumbled/i,
+    /\biris\b/i,
+    "an Iris-cut emerald slice — a thin, flat polished cross-section of trapiche-pattern rough showing a fixed six-rayed black carbon star radiating from a green hexagonal core, six green sectors split by dark carbon spokes; flat and unfaceted, like a thin polished window pane (never a plain green cabochon, a domed trapiche cabochon, or a faceted stone)",
+  ],
+  [
+    /morralla|cabuj[óo]n|cabochon|pulid|tumbled|\bgola\b/i,
     "a polished cabochon (smooth-domed, unfaceted) emerald",
   ],
 ];
@@ -138,13 +142,17 @@ function cap(s) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
-/** True when the cut denotes a non-faceted, domed stone (bezel-friendly): morralla/cabochon/trapiche. */
+/** True when the cut denotes a non-faceted, domed/flat stone (bezel-friendly): morralla/cabochon/trapiche/iris/gola. */
 export function isCabochonCut(cut) {
-  return /morralla|cabuj[óo]n|cabochon|tumbled|pulid|trapich/i.test(cut || "");
+  return /morralla|cabuj[óo]n|cabochon|tumbled|pulid|trapich|\biris\b|\bgola\b/i.test(
+    cut || "",
+  );
 }
 
-/** Cut-appropriate setting: bezel hugs a cabochon; claws show off a faceted gem. */
+/** Cut-appropriate setting: bezel hugs a cabochon, flush-frames a flat iris slice; claws show off a faceted gem. */
 export function describeSetting(cut) {
+  if (/\biris\b/i.test(cut || ""))
+    return "in a smooth, flush bezel setting that frames the thin polished slice";
   return isCabochonCut(cut)
     ? "in a smooth, polished bezel setting that hugs the domed stone"
     : "held in a secure, fine four-prong claw setting that lifts and shows off the faceted stone";
@@ -410,7 +418,9 @@ export const VISUALIZER_SCENE_KEYS = Object.keys(VISUALIZER_SCENES);
  * @param {string} [args.productName] nombre
  * @param {string} [args.visualRead]  free text describing the real stone seen in its photo
  * @param {string} [args.realSizeCue] optional precomputed scale clause; derived from specs when omitted
- * @param {boolean}[args.pair]        true for a PAR lot → render two matched stones, never a solitaire
+ * @param {boolean}[args.pair]        true for a PAR lot (two matched loose stones) → ring/necklace/bracelet
+ *                                     combine both stones into one piece; earrings put one stone per ear
+ *                                     (same single-stone-per-shot convention as a solitaire)
  * @returns {string}
  */
 export function buildVisualizerPrompt({
@@ -444,10 +454,18 @@ export function buildVisualizerPrompt({
   const sizeText = sizeBits.length ? `${sizeBits.join(", ")}; ` : "";
 
   // The real stone — the authoritative visual read leads; fidelity is mandatory.
-  const lead = pair
+  // Earrings are already a natural two-piece pair (one stone per ear), so a PAR
+  // lot maps one loose stone per earring — same single-stone-per-shot convention
+  // as a solitaire. Combining both stones into one earring reads as incoherent
+  // (mismatched double-stone clutter on one ear), so only ring/necklace/bracelet
+  // scenes get the "combine both stones into one piece" instruction.
+  const combinePairInScene = pair && scene !== "earrings";
+  const lead = combinePairInScene
     ? "The hero is a MATCHED PAIR of two well-matched emeralds shown in the reference photograph"
-    : "The single hero centre stone is the REAL Colombian emerald shown in its reference photograph";
-  const pairTail = pair
+    : pair
+      ? "The reference photograph shows a closely matched pair of loose stones; this piece is set with one of that matched pair"
+      : "The single hero centre stone is the REAL Colombian emerald shown in its reference photograph";
+  const pairTail = combinePairInScene
     ? " Render BOTH stones as a symmetric matched pair — keep it a two-stone pair, never a single solitaire."
     : "";
   const stone =

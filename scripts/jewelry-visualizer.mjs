@@ -10,7 +10,10 @@
  * Working tree (paths chosen so Pencil image fills resolve relative to the
  * .pen file at docs/Visualizer/visualizer.pen):
  *   docs/Visualizer/work/manifest.json
- *   docs/Visualizer/work/<item>/hero.jpg     → Pencil fill "./work/<item>/hero.jpg"
+ *   docs/Visualizer/work/<item>/hero.jpg        → raw download; ground truth for visualRead, never altered
+ *   docs/Visualizer/work/<item>/hero-clean.jpg  → white-balanced/white-bg/sharpened (`prepare` auto-generates
+ *                                                  this via sharp, cosmetic-only); the Pencil card's "FOTO REAL"
+ *                                                  fill uses this one
  *   docs/Visualizer/exports/<item>.png        → approved card export (you create this)
  *
  * Commands:
@@ -25,11 +28,19 @@
  * No local Google credentials needed: downloads use the prod serve-drive-image
  * proxy and uploads go through the prod /api/media-upload endpoint (which holds
  * the working OAuth). Point at another deployment with --base.
+ *
+ * Per-item prompt documentation: each manifest item accumulates
+ * `promptsByScene: { "ring-woman": "...", necklace: "...", bracelet: "...",
+ * earrings: "..." }` as `prompt --scene <s>` is called for it — the exact
+ * text sent to Generate() for that scene, so every rendered image traces
+ * back to the prompt that produced it. `promptUsed` mirrors the most
+ * recently generated scene only (kept for backwards compatibility).
  */
 
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import sharp from "sharp";
 import {
   buildVisualizerPrompt,
   buildRealSizeCue,
@@ -107,6 +118,60 @@ async function fetchJson(url) {
 function ensureDirs() {
   fs.mkdirSync(WORK_DIR, { recursive: true });
   fs.mkdirSync(EXPORTS_DIR, { recursive: true });
+}
+
+/**
+ * Cosmetic-only cleanup of a raw hero photo: white-balances and brightens
+ * the background toward white, plus a mild sharpen. Deterministic (sharp,
+ * not generative AI) on purpose — the gem's true color/clarity/inclusions
+ * must stay exactly as photographed; only lighting/background are touched.
+ * The raw photo is the ground truth for visualRead and stays untouched;
+ * this only produces a nicer-looking reference image for the Pencil card.
+ */
+async function cleanHeroPhoto(inputAbsPath, outputAbsPath) {
+  const meta = await sharp(inputAbsPath).metadata();
+  const { width, height } = meta;
+  const cw = Math.max(8, Math.round(width * 0.06));
+  const ch = Math.max(8, Math.round(height * 0.06));
+  const corners = [
+    { left: 0, top: 0 },
+    { left: width - cw, top: 0 },
+    { left: 0, top: height - ch },
+    { left: width - cw, top: height - ch },
+  ];
+
+  let sumR = 0,
+    sumG = 0,
+    sumB = 0,
+    n = 0;
+  for (const c of corners) {
+    const { data, info } = await sharp(inputAbsPath)
+      .extract({ left: c.left, top: c.top, width: cw, height: ch })
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    for (let i = 0; i < data.length; i += info.channels) {
+      sumR += data[i];
+      sumG += data[i + 1];
+      sumB += data[i + 2];
+      n++;
+    }
+  }
+  const bgR = sumR / n;
+  const bgG = sumG / n;
+  const bgB = sumB / n;
+
+  // Per-channel gain that pushes the sampled background toward white,
+  // capped so a dark/shadowed corner can't blow out the gem itself.
+  const MAX_GAIN = 1.6;
+  const gainR = Math.min(MAX_GAIN, 255 / Math.max(bgR, 1));
+  const gainG = Math.min(MAX_GAIN, 255 / Math.max(bgG, 1));
+  const gainB = Math.min(MAX_GAIN, 255 / Math.max(bgB, 1));
+
+  await sharp(inputAbsPath)
+    .linear([gainR, gainG, gainB], [0, 0, 0])
+    .sharpen({ sigma: 0.8 })
+    .jpeg({ quality: 92 })
+    .toFile(outputAbsPath);
 }
 
 function loadManifest() {
@@ -294,6 +359,8 @@ async function cmdPrepare() {
 
     const heroLocalPath = `./work/${num}/hero.jpg`;
     const heroAbsPath = path.join(WORK_DIR, String(num), "hero.jpg");
+    const heroCleanLocalPath = `./work/${num}/hero-clean.jpg`;
+    const heroCleanAbsPath = path.join(WORK_DIR, String(num), "hero-clean.jpg");
 
     // Download the hero bytes via the prod image proxy (no local OAuth needed).
     if (!noPhoto && !dryRun) {
@@ -304,6 +371,9 @@ async function cmdPrepare() {
       if (!imgResp.ok)
         throw new Error(`download hero ${hero.id} → ${imgResp.status}`);
       fs.writeFileSync(heroAbsPath, Buffer.from(await imgResp.arrayBuffer()));
+      // Cosmetic-only cleanup (white balance + white background + mild sharpen)
+      // for the Pencil card reference image. visualRead still reads heroAbsPath.
+      await cleanHeroPhoto(heroAbsPath, heroCleanAbsPath);
     }
 
     const nombre = normalizeName(t.nombre);
@@ -359,6 +429,8 @@ async function cmdPrepare() {
       heroFileName: hero?.name || null,
       heroLocalPath,
       heroAbsPath,
+      heroCleanLocalPath: noPhoto ? "" : heroCleanLocalPath,
+      heroCleanAbsPath: noPhoto ? "" : heroCleanAbsPath,
       noPhoto,
       existingFiles,
       hasReferencialAlready,
@@ -458,6 +530,8 @@ async function cmdPrompt() {
   if (!has("dry-run")) {
     if (visualRead) it.visualRead = visualRead;
     it.promptUsed = prompt;
+    it.promptsByScene = it.promptsByScene || {};
+    it.promptsByScene[scene] = prompt;
     it.pair = pair;
     if (typeof flag("cut") === "string") it.cutOverride = flag("cut");
     if (flag("scene")) it.scenes = [scene];
