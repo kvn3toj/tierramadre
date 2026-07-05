@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fotosíntesis · Tablero · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/admin.css" />
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage-wide">
+      <div class="cap">
+        <b>Fase 4</b> · Fotosíntesis · Tablero de operaciones
+      </div>
+      <div class="wide">
+        <div class="desk">
+          <div class="topbar">
+            <div class="brandm">
+              <svg viewBox="0 0 100 100">
+                <polygon
+                  points="50,10 76,25 76,62 50,90 24,62 24,25"
+                  fill="var(--qe-color-accent-pure)"
+                /></svg
+              ><span class="wordmark">FOTOSÍNTESIS</span>
+            </div>
+            <div class="cmdk">
+              <svg class="ic" width="15" height="15" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3-3" /></svg
+              >Buscar piezas, lotes, ventas…<span class="kbd">⌘K</span>
+            </div>
+            <div class="av">KP</div>
+          </div>
+          <div class="desk-body">
+            <nav class="rail">
+              <div class="rl">Operación</div>
+              <a class="on"
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M4 5h7v7H4zM13 5h7v4h-7zM13 13h7v6h-7zM4 16h7v3H4z"
+                  /></svg
+                >Tablero</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M12 3l8 4-8 4-8-4zM4 12l8 4 8-4M4 17l8 4 8-4" /></svg
+                >Lotes</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M6 3h9l3 3v15H6z" />
+                  <path d="M9 12h6M9 16h4" /></svg
+                >Ventas</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <circle cx="9" cy="8" r="3" />
+                  <path d="M4 20a5 5 0 0 1 10 0" />
+                  <path d="M16 6a3 3 0 0 1 0 6" /></svg
+                >Directorio</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7z" />
+                  <path d="M9 12l2 2 4-4" /></svg
+                >Certificados</a
+              >
+              <div class="rl">Asistente</div>
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"
+                  /></svg
+                >Copilot</a
+              >
+              <div class="sig">Cada pieza,<br />su historia.</div>
+            </nav>
+            <div class="main">
+              <div class="phead2">
+                <div>
+                  <div class="h">Tablero</div>
+                  <div class="sub">MARTES · 1 JUL 2026 · OPERACIÓN DEL DÍA</div>
+                </div>
+                <button class="abtn abtn-ghost">
+                  <svg class="ic" width="15" height="15" viewBox="0 0 24 24">
+                    <path d="M12 5v14M5 12h14" /></svg
+                  >Registrar compra
+                </button>
+              </div>
+
+              <div class="kpirib">
+                <div class="astat">
+                  <div class="lbl">Disponibles</div>
+                  <div class="num">128</div>
+                  <div class="delta flat">— piezas en catálogo</div>
+                </div>
+                <div class="astat">
+                  <div class="lbl">Lotes abiertos</div>
+                  <div class="num">4</div>
+                  <div class="delta warn">▲ 1 sin capturar</div>
+                </div>
+                <div class="astat">
+                  <div class="lbl">Ventas · 30d</div>
+                  <div class="num">$ 128,4M</div>
+                  <div class="delta up">▲ +12,4%</div>
+                </div>
+                <div class="astat">
+                  <div class="lbl">Inventario valorado</div>
+                  <div class="num">$ 1.240M</div>
+                  <div class="delta flat">— 128 piezas</div>
+                </div>
+              </div>
+
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  gap: 16px;
+                  padding: 18px 20px;
+                  border: 1px solid var(--qe-color-border);
+                  border-radius: var(--qe-radius-md);
+                  background: var(--qe-color-accent-wash);
+                "
+              >
+                <div>
+                  <div class="qe-eyebrow" style="color: var(--qe-color-accent)">
+                    Continúa donde quedaste
+                  </div>
+                  <div
+                    style="
+                      font-family: var(--qe-font-serif);
+                      font-size: 22px;
+                      font-weight: 500;
+                      margin-top: 4px;
+                    "
+                  >
+                    Lote A-12 · 6 piezas sin capturar
+                  </div>
+                </div>
+                <button class="abtn abtn-primary" style="height: 44px">
+                  <svg
+                    class="ic"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    style="stroke: var(--qe-color-on-accent)"
+                  >
+                    <path d="M4 8l3-3h10l3 3v11H4z" />
+                    <circle cx="12" cy="13" r="3.5" /></svg
+                  >Retomar captura
+                </button>
+              </div>
+
+              <div class="asec">
+                <div class="asec-h">
+                  <div class="e">Pipeline</div>
+                  <div class="rule"></div>
+                  <div class="more">Ver todo →</div>
+                </div>
+                <div class="pipeline">
+                  <div class="pcol">
+                    <div class="ph">
+                      <span class="nm">Compra</span><span class="ct">3</span>
+                    </div>
+                    <div class="ppiece">
+                      <div class="pn">Lote A-14</div>
+                      <div class="pc">MUZO · 9 piezas</div>
+                      <div class="meter">
+                        <i class="now"></i><i></i><i></i><i></i><i></i>
+                      </div>
+                    </div>
+                    <div class="val">US$ 12.400</div>
+                  </div>
+                  <div class="pcol">
+                    <div class="ph">
+                      <span class="nm">Captura</span><span class="ct">1</span>
+                    </div>
+                    <div class="ppiece">
+                      <div class="pn">Lote A-12</div>
+                      <div class="pc">MUZO · 6 sin foto</div>
+                      <div class="meter">
+                        <i class="done"></i><i class="now"></i><i></i><i></i
+                        ><i></i>
+                      </div>
+                    </div>
+                    <div class="val">US$ 8.900</div>
+                  </div>
+                  <div class="pcol">
+                    <div class="ph">
+                      <span class="nm">Cierre</span><span class="ct">2</span>
+                    </div>
+                    <div class="ppiece">
+                      <div class="pn">Cronos</div>
+                      <div class="pc">CHIVOR · 2,14 ct</div>
+                      <div class="meter">
+                        <i class="done"></i><i class="done"></i
+                        ><i class="now"></i><i></i><i></i>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="pcol">
+                    <div class="ph">
+                      <span class="nm">Catálogo</span
+                      ><span class="ct">128</span>
+                    </div>
+                    <div class="ppiece">
+                      <div class="pn">Tayrona</div>
+                      <div class="pc">MUZO · 4,20 ct</div>
+                      <div class="meter">
+                        <i class="done"></i><i class="done"></i
+                        ><i class="done"></i><i class="now"></i><i></i>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="pcol">
+                    <div class="ph">
+                      <span class="nm">Venta</span><span class="ct">6</span>
+                    </div>
+                    <div class="ppiece">
+                      <div class="pn">Reflejo de Muzo</div>
+                      <div class="pc">MUZO · 3,05 ct</div>
+                      <div class="meter">
+                        <i class="done"></i><i class="done"></i
+                        ><i class="done"></i><i class="done"></i
+                        ><i class="now"></i>
+                      </div>
+                    </div>
+                    <div class="val">US$ 9.800</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="asec">
+                <div class="asec-h">
+                  <div class="e">Para hoy</div>
+                  <div class="rule"></div>
+                </div>
+                <div class="agenda">
+                  <div class="ar">
+                    <span class="tm">10:00</span
+                    ><span class="tx">Capturar 6 piezas · Lote A-12</span
+                    ><span class="qb qb-warn">Pendiente</span>
+                  </div>
+                  <div class="ar">
+                    <span class="tm">12:30</span
+                    ><span class="tx"
+                      >Cerrar venta · Cronos con Camila Vélez</span
+                    ><span class="qb qb-neutral">En proceso</span>
+                  </div>
+                  <div class="ar">
+                    <span class="tm">15:00</span
+                    ><span class="tx">Emitir certificado · Tayrona TM-0184</span
+                    ><span class="qb qb-live">Listo</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

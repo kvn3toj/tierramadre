@@ -1,0 +1,163 @@
+/* ============================================================================
+   QUIET EMERALD — token contract  ·  mockup/proposal only (mirrors the intended
+   src/design-system/tokens/quiet-emerald.ts; NOT the app source of truth).
+   Three tiers: 1 reference → 2 semantic (mode-aware) → 3 component.
+   Values are the authoritative handoff hexes (kept as hex for 1:1 parity with
+   the committed React tokens; OKLCH equivalents noted where it matters).
+   ============================================================================ */
+
+:root {
+  /* ── TIER 1 · REFERENCE — raw ramps, no role meaning ───────────────────── */
+  --qe-gray-0: #ffffff;
+  --qe-gray-50: #f7f8f8;
+  --qe-gray-100: #f1f2f2;
+  --qe-gray-150: #ebedec;
+  --qe-gray-200: #e4e7e5;
+  --qe-gray-250: #dadedc;
+  --qe-gray-300: #c9cecb;
+  --qe-gray-400: #9aa09d;
+  --qe-gray-500: #8c928f;
+  --qe-gray-550: #767c79;
+  --qe-gray-600: #5c6360;
+  --qe-gray-700: #3a403e;
+  --qe-gray-800: #272c2b;
+  --qe-gray-825: #222726;
+  --qe-gray-870: #15191a;
+  --qe-gray-880: #1b1f1f;
+  --qe-gray-900: #14181a;
+  --qe-gray-950: #0e1110;
+
+  /* emerald — the one saturated hue */
+  --qe-em-wash: #e8f5f0;
+  --qe-em-400: #34c99b;
+  --qe-em-500: #00af84;
+  --qe-em-600: #00875f;
+  --qe-em-700: #00785c;
+  --qe-em-800: #006f52;
+  --qe-em-950: #06140e;
+
+  /* the single functional non-gray, non-emerald signal — desaturated clay */
+  --qe-warn-700: #8a5a2b;
+  --qe-warn-300: #c79a63;
+
+  /* type families */
+  --qe-font-serif: "Cormorant", Georgia, "Times New Roman", serif;
+  --qe-font-ui: "Hanken Grotesk", system-ui, -apple-system, sans-serif;
+  --qe-font-mono: "DM Mono", "SF Mono", ui-monospace, monospace;
+
+  /* ── TIER 2 · SEMANTIC (light) — role → reference ──────────────────────── */
+  --qe-color-bg: var(--qe-gray-50);
+  --qe-color-surface: var(--qe-gray-0);
+  --qe-color-surface-2: var(--qe-gray-100);
+  --qe-color-border: var(--qe-gray-200);
+  --qe-color-border-strong: var(--qe-gray-250);
+  --qe-color-hairline: var(--qe-gray-150);
+  --qe-color-text: var(--qe-gray-900);
+  --qe-color-muted: var(--qe-gray-600);
+  --qe-color-subtle: var(--qe-gray-500);
+  --qe-color-disabled: var(--qe-gray-400);
+  --qe-color-accent: var(--qe-em-700); /* links, active, accent text */
+  --qe-color-accent-strong: var(--qe-em-800); /* primary button fill (AA)   */
+  --qe-color-accent-pure: var(--qe-em-500); /* trust dots / signal only   */
+  --qe-color-accent-wash: var(--qe-em-wash); /* selected / hover tint      */
+  --qe-color-on-accent: var(--qe-gray-0);
+  --qe-color-focus: var(--qe-em-500);
+  --qe-color-warn: var(--qe-warn-700); /* one functional signal      */
+
+  /* elevation — shadow ONLY on floating overlays */
+  --qe-elev-0: none;
+  --qe-elev-2:
+    0 1px 2px rgba(13, 30, 24, 0.04), 0 8px 24px -12px rgba(13, 30, 24, 0.16);
+  --qe-elev-3:
+    0 2px 4px rgba(13, 30, 24, 0.06), 0 24px 48px -24px rgba(13, 30, 24, 0.22);
+  --qe-scrim: rgba(14, 17, 16, 0.32);
+
+  /* motion — one family, sub-260ms, no overshoot */
+  --qe-dur-micro: 120ms;
+  --qe-dur-fast: 160ms;
+  --qe-dur-base: 220ms;
+  --qe-dur-large: 260ms;
+  --qe-ease-out: cubic-bezier(0.32, 0.72, 0, 1); /* entrances / moves */
+  --qe-ease-in: cubic-bezier(0.4, 0, 1, 1); /* exits (0.7x enter) */
+
+  /* radius */
+  --qe-radius-xs: 5px;
+  --qe-radius-sm: 8px;
+  --qe-radius-md: 12px;
+  --qe-radius-lg: 18px;
+  --qe-radius-pill: 999px;
+
+  /* space — linear 4px base */
+  --qe-space-1: 4px;
+  --qe-space-2: 8px;
+  --qe-space-3: 12px;
+  --qe-space-4: 16px;
+  --qe-space-5: 20px;
+  --qe-space-6: 24px;
+  --qe-space-8: 32px;
+  --qe-space-10: 40px;
+  --qe-space-12: 48px;
+  --qe-space-16: 64px;
+  --qe-space-24: 96px;
+
+  /* z-index ladder */
+  --qe-z-base: 0;
+  --qe-z-sticky: 100;
+  --qe-z-nav: 200;
+  --qe-z-dropdown: 400;
+  --qe-z-scrim: 500;
+  --qe-z-sheet: 600;
+  --qe-z-dialog: 700;
+  --qe-z-toast: 800;
+  --qe-z-max: 999;
+
+  /* ── TIER 3 · COMPONENT — the only tokens a component reads ─────────────── */
+  --qe-button-primary-bg: var(--qe-color-accent-strong);
+  --qe-button-primary-bg-hover: var(--qe-color-accent);
+  --qe-button-primary-fg: var(--qe-color-on-accent);
+  --qe-button-quiet-fg: var(--qe-color-accent);
+  --qe-button-focus-ring: var(--qe-color-focus);
+  --qe-card-bg: var(--qe-color-surface);
+  --qe-card-border: var(--qe-color-border);
+  --qe-card-well-bg: var(--qe-color-surface-2);
+  --qe-input-border: var(--qe-color-border);
+  --qe-input-border-focus: var(--qe-color-accent);
+  --qe-input-placeholder: var(--qe-color-subtle);
+  --qe-chip-active-bg: var(--qe-color-accent-wash);
+  --qe-chip-active-fg: var(--qe-color-accent);
+}
+
+/* ── TIER 2 · SEMANTIC (dark) — re-point ONLY; component tier inherits ────── */
+[data-theme="dark"] {
+  --qe-color-bg: var(--qe-gray-950);
+  --qe-color-surface: var(--qe-gray-870);
+  --qe-color-surface-2: var(--qe-gray-880);
+  --qe-color-border: var(--qe-gray-800);
+  --qe-color-border-strong: #313634;
+  --qe-color-hairline: var(--qe-gray-825);
+  --qe-color-text: #eaedeb;
+  --qe-color-muted: var(--qe-gray-400);
+  --qe-color-subtle: #6b726f;
+  --qe-color-disabled: var(--qe-gray-550);
+  --qe-color-accent: var(--qe-em-400);
+  --qe-color-accent-strong: var(--qe-em-500);
+  --qe-color-accent-pure: var(--qe-em-400);
+  --qe-color-accent-wash: rgba(52, 201, 155, 0.12);
+  --qe-color-on-accent: var(--qe-em-950);
+  --qe-color-focus: var(--qe-em-400);
+  --qe-color-warn: var(--qe-warn-300);
+  --qe-elev-2:
+    0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+  --qe-elev-3:
+    0 2px 6px rgba(0, 0, 0, 0.44), 0 32px 64px -28px rgba(0, 0, 0, 0.72);
+  --qe-scrim: rgba(0, 0, 0, 0.56);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --qe-dur-micro: 0.01ms;
+    --qe-dur-fast: 0.01ms;
+    --qe-dur-base: 0.01ms;
+    --qe-dur-large: 0.01ms;
+  }
+}

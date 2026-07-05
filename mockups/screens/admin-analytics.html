@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin · Analítica · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/admin.css" />
+    <style>
+      .chartcard {
+        border: 1px solid var(--qe-color-border);
+        border-radius: var(--qe-radius-md);
+        padding: 18px;
+        background: var(--qe-color-surface);
+      }
+      .chartcard .ch {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      .chartcard .ch .t {
+        font-family: var(--qe-font-serif);
+        font-size: 18px;
+        font-weight: 500;
+      }
+      .toprow {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        border-top: 1px solid var(--qe-color-hairline);
+      }
+      .toprow:first-child {
+        border-top: 0;
+      }
+      .toprow .rk {
+        font-family: var(--qe-font-mono);
+        font-size: 11px;
+        color: var(--qe-color-subtle);
+        width: 18px;
+      }
+      .toprow .bar {
+        flex: 1;
+        height: 6px;
+        border-radius: 3px;
+        background: var(--qe-color-surface-2);
+        overflow: hidden;
+      }
+      .toprow .bar i {
+        display: block;
+        height: 100%;
+        background: var(--qe-color-accent-strong);
+        border-radius: 3px;
+      }
+      .toprow .bar i.n {
+        background: var(--qe-color-border);
+      }
+      .toprow .vv {
+        font-family: var(--qe-font-mono);
+        font-size: 12px;
+        width: 64px;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+    </style>
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage-wide">
+      <div class="cap">
+        <b>Fase 5</b> · Admin · Analítica (dataviz de un solo color)
+      </div>
+      <div class="wide">
+        <div class="desk">
+          <div class="topbar">
+            <div class="brandm">
+              <svg viewBox="0 0 100 100">
+                <polygon
+                  points="50,10 76,25 76,62 50,90 24,62 24,25"
+                  fill="var(--qe-color-accent-pure)"
+                /></svg
+              ><span class="wordmark">ADMIN</span>
+            </div>
+            <div class="cmdk">
+              <svg class="ic" width="15" height="15" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3-3" /></svg
+              >Buscar…<span class="kbd">⌘K</span>
+            </div>
+            <div class="av">KP</div>
+          </div>
+          <div class="desk-body">
+            <nav class="rail">
+              <div class="rl">Admin</div>
+              <a class="on"
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M4 19V5M4 19h16M8 15l4-5 3 3 5-6" /></svg
+                >Analítica</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M4 5h16v14H4z" />
+                  <path d="M4 9h16" /></svg
+                >Productos</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M12 3l2 5 5 .5-4 3.5 1.5 5L12 14l-4.5 3 1.5-5-4-3.5 5-.5z"
+                  /></svg
+                >Valuación</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"
+                  /></svg
+                >Esmereogénesis</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                  /></svg
+                >Feedback</a
+              >
+              <div class="sig">Un color.<br />Toda la data.</div>
+            </nav>
+            <div class="main">
+              <div class="phead2">
+                <div>
+                  <div class="h">Analítica</div>
+                  <div class="sub">ÚLTIMOS 30 DÍAS</div>
+                </div>
+                <button class="abtn abtn-ghost">30 días ▾</button>
+              </div>
+              <div class="kpirib">
+                <div class="astat">
+                  <div class="lbl">Vistas</div>
+                  <div class="num">24.810</div>
+                  <div class="delta up">▲ +8,2%</div>
+                </div>
+                <div class="astat">
+                  <div class="lbl">Cotizaciones</div>
+                  <div class="num">312</div>
+                  <div class="delta up">▲ +12,4%</div>
+                </div>
+                <div class="astat">
+                  <div class="lbl">Ventas</div>
+                  <div class="num">$ 128,4M</div>
+                  <div class="delta up">▲ +6,1%</div>
+                </div>
+                <div class="astat">
+                  <div class="lbl">Conversión</div>
+                  <div class="num">4,7%</div>
+                  <div class="delta down">▼ −0,3%</div>
+                </div>
+              </div>
+              <div
+                style="
+                  display: grid;
+                  grid-template-columns: 1.4fr 1fr;
+                  gap: 16px;
+                  margin-top: 8px;
+                "
+              >
+                <div class="chartcard">
+                  <div class="ch">
+                    <div class="t">Ventas por mes</div>
+                    <span class="qe-eyebrow">USD · M</span>
+                  </div>
+                  <svg
+                    width="100%"
+                    height="180"
+                    viewBox="0 0 520 180"
+                    preserveAspectRatio="none"
+                  >
+                    <line
+                      x1="0"
+                      y1="45"
+                      x2="520"
+                      y2="45"
+                      stroke="var(--qe-color-hairline)"
+                    />
+                    <line
+                      x1="0"
+                      y1="90"
+                      x2="520"
+                      y2="90"
+                      stroke="var(--qe-color-hairline)"
+                    />
+                    <line
+                      x1="0"
+                      y1="135"
+                      x2="520"
+                      y2="135"
+                      stroke="var(--qe-color-hairline)"
+                    />
+                    <polyline
+                      fill="none"
+                      stroke="var(--qe-color-muted)"
+                      stroke-width="1.5"
+                      points="10,130 96,120 182,124 268,96 354,104 440,78 510,70"
+                    />
+                    <polyline
+                      fill="none"
+                      stroke="var(--qe-color-accent)"
+                      stroke-width="2.5"
+                      points="10,150 96,132 182,110 268,116 354,84 440,72 510,44"
+                    />
+                    <circle
+                      cx="510"
+                      cy="44"
+                      r="4"
+                      fill="var(--qe-color-surface)"
+                      stroke="var(--qe-color-accent)"
+                      stroke-width="2"
+                    />
+                  </svg>
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      font-family: var(--qe-font-mono);
+                      font-size: 9px;
+                      color: var(--qe-color-subtle);
+                      margin-top: 6px;
+                    "
+                  >
+                    <span>ENE</span><span>MAR</span><span>MAY</span
+                    ><span>JUL</span>
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      gap: 16px;
+                      margin-top: 10px;
+                      font-size: 11px;
+                    "
+                  >
+                    <span
+                      style="color: var(--qe-color-accent); font-weight: 600"
+                      >— Ventas</span
+                    ><span style="color: var(--qe-color-muted)"
+                      >— Cotizaciones</span
+                    >
+                  </div>
+                </div>
+                <div class="chartcard">
+                  <div class="ch"><div class="t">Ventas por mina</div></div>
+                  <svg
+                    width="100%"
+                    height="180"
+                    viewBox="0 0 240 180"
+                    preserveAspectRatio="none"
+                  >
+                    <line
+                      x1="0"
+                      y1="60"
+                      x2="240"
+                      y2="60"
+                      stroke="var(--qe-color-hairline)"
+                    />
+                    <line
+                      x1="0"
+                      y1="120"
+                      x2="240"
+                      y2="120"
+                      stroke="var(--qe-color-hairline)"
+                    />
+                    <rect
+                      x="26"
+                      y="40"
+                      width="44"
+                      height="130"
+                      fill="var(--qe-color-accent-strong)"
+                    />
+                    <rect
+                      x="98"
+                      y="86"
+                      width="44"
+                      height="84"
+                      fill="var(--qe-color-border)"
+                      stroke="var(--qe-color-gray-300, #C9CECB)"
+                    />
+                    <rect
+                      x="170"
+                      y="112"
+                      width="44"
+                      height="58"
+                      fill="var(--qe-color-border)"
+                      stroke="var(--qe-color-gray-300, #C9CECB)"
+                    />
+                  </svg>
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-around;
+                      font-family: var(--qe-font-mono);
+                      font-size: 9px;
+                      color: var(--qe-color-subtle);
+                      margin-top: 6px;
+                    "
+                  >
+                    <span>MUZO</span><span>CHIVOR</span><span>COSCUEZ</span>
+                  </div>
+                </div>
+              </div>
+              <div class="asec">
+                <div class="asec-h">
+                  <div class="e">Embajadores · por ventas</div>
+                  <div class="rule"></div>
+                </div>
+                <div class="chartcard">
+                  <div class="toprow">
+                    <span class="rk">1</span
+                    ><span style="width: 120px; font-weight: 500"
+                      >Camila Vélez</span
+                    ><span class="bar"><i style="width: 92%"></i></span
+                    ><span class="vv">$ 48,2M</span>
+                  </div>
+                  <div class="toprow">
+                    <span class="rk">2</span
+                    ><span style="width: 120px">Andrés Gómez</span
+                    ><span class="bar"
+                      ><i class="n" style="width: 64%"></i></span
+                    ><span class="vv">$ 33,6M</span>
+                  </div>
+                  <div class="toprow">
+                    <span class="rk">3</span
+                    ><span style="width: 120px">Lucía Ferrer</span
+                    ><span class="bar"
+                      ><i class="n" style="width: 41%"></i></span
+                    ><span class="vv">$ 21,5M</span>
+                  </div>
+                  <div class="toprow">
+                    <span class="rk">4</span
+                    ><span style="width: 120px">María Peña</span
+                    ><span class="bar"
+                      ><i class="n" style="width: 28%"></i></span
+                    ><span class="vv">$ 14,7M</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

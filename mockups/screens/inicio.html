@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Inicio · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/screens.css" />
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage">
+      <div class="cap"><b>Fase 1</b> · App del cliente · Inicio</div>
+      <div class="phone">
+        <div class="statusbar">
+          <span class="time">9:41</span>
+          <div class="notch"></div>
+          <div class="sig">
+            <span class="bat"><i></i></span>
+          </div>
+        </div>
+        <div class="app">
+          <div
+            class="appbar"
+            style="justify-content: center; position: relative"
+          >
+            <div class="brandm">
+              <svg viewBox="0 0 100 100" style="width: 18px; height: 18px">
+                <polygon
+                  points="50,10 76,25 76,62 50,90 24,62 24,25"
+                  fill="var(--qe-color-accent-pure)"
+                /></svg
+              ><span class="wordmark">TIERRA&nbsp;MÄDRE</span>
+            </div>
+            <svg
+              class="ic"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              style="
+                position: absolute;
+                right: 16px;
+                color: var(--qe-color-muted);
+              "
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3-3" />
+            </svg>
+          </div>
+          <div class="scroll">
+            <div style="padding: 2px 16px 0">
+              <div class="qe-eyebrow" style="color: var(--qe-color-accent)">
+                Pieza del día
+              </div>
+            </div>
+            <div class="hero" style="margin-top: 10px">
+              <div class="gem"></div>
+              <div class="cap">
+                <div class="k">Colección · Latido de la Tierra</div>
+                <div class="n" style="color: var(--qe-color-text)">Tayrona</div>
+              </div>
+            </div>
+            <div class="sec-h">
+              <div class="e">Colecciones</div>
+              <a class="more">Ver todas →</a>
+            </div>
+            <div class="hscroll">
+              <div class="collection">
+                <div class="well"><div class="gem tall"></div></div>
+                <div class="nm">Muzo</div>
+                <div class="ct">18 PIEZAS</div>
+              </div>
+              <div class="collection">
+                <div class="well"><div class="gem round"></div></div>
+                <div class="nm">Chivor</div>
+                <div class="ct">14 PIEZAS</div>
+              </div>
+              <div class="collection">
+                <div class="well"><div class="gem"></div></div>
+                <div class="nm">Coscuez</div>
+                <div class="ct">9 PIEZAS</div>
+              </div>
+            </div>
+            <div class="sec-h">
+              <div class="e">Recién llegadas</div>
+              <a class="more">Ver todas →</a>
+            </div>
+            <div class="grid" style="padding-top: 0">
+              <div class="pcard">
+                <div class="well"><div class="gem"></div></div>
+                <div class="name">Reflejo de Muzo</div>
+                <div class="spec">3,05 ct · MUZO</div>
+                <div class="price">US$ 9.800</div>
+              </div>
+              <div class="pcard">
+                <div class="well"><div class="gem round"></div></div>
+                <div class="name">Cronos</div>
+                <div class="spec">2,14 ct · CHIVOR</div>
+                <div class="price">US$ 5.600</div>
+              </div>
+            </div>
+            <div style="height: 10px"></div>
+          </div>
+          <div class="tabbar">
+            <div class="t on">
+              <svg class="ic" viewBox="0 0 24 24">
+                <path d="M3 11l9-7 9 7" />
+                <path d="M5 10v10h14V10" /></svg
+              ><span class="lb">Inicio</span>
+            </div>
+            <div class="t">
+              <svg class="ic" viewBox="0 0 24 24">
+                <path d="M4 5h16v14H4z" />
+                <path d="M9 9h6v6H9z" /></svg
+              ><span class="lb">Catálogo</span>
+            </div>
+            <div class="t">
+              <svg class="ic" viewBox="0 0 24 24">
+                <rect x="4" y="5" width="16" height="14" rx="1" />
+                <circle cx="12" cy="12" r="3" /></svg
+              ><span class="lb">Bóveda</span>
+            </div>
+            <div class="t">
+              <svg class="ic" viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M5 20a7 7 0 0 1 14 0" /></svg
+              ><span class="lb">Perfil</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pieza compartida · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/screens.css" />
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage">
+      <div class="cap"><b>Fase 3</b> · Embajadores · Pieza compartida</div>
+      <div class="phone">
+        <div class="statusbar">
+          <span class="time">9:41</span>
+          <div class="notch"></div>
+          <div class="sig">
+            <span class="bat"><i></i></span>
+          </div>
+        </div>
+        <div class="app">
+          <div class="appbar">
+            <svg
+              class="ic"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              style="color: var(--qe-color-muted)"
+            >
+              <path d="M15 19l-7-7 7-7" /></svg
+            ><span class="code">COMPARTIDA POR CAMILA</span
+            ><svg
+              class="ic"
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              style="color: var(--qe-color-muted)"
+            >
+              <path
+                d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"
+              />
+            </svg>
+          </div>
+          <div class="scroll">
+            <div
+              style="
+                position: relative;
+                margin: 0 16px;
+                height: 220px;
+                background: var(--qe-card-well-bg);
+                border-radius: var(--qe-radius-sm);
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <div class="gem" style="width: 34%; height: 48%"></div>
+              <div class="pips">
+                <span class="on"></span><span></span><span></span>
+              </div>
+            </div>
+            <div style="padding: 18px 16px 0">
+              <div
+                style="
+                  font-family: var(--qe-font-serif);
+                  font-size: 30px;
+                  line-height: 0.96;
+                  font-weight: 500;
+                "
+              >
+                Tayrona
+              </div>
+              <div
+                class="qe-data"
+                style="
+                  font-size: 10px;
+                  letter-spacing: 0.06em;
+                  color: var(--qe-color-subtle);
+                  margin-top: 7px;
+                "
+              >
+                4,20 CT · TALLA ESMERALDA · MUZO
+              </div>
+            </div>
+            <div style="padding: 14px 16px 0">
+              <div class="specrow" style="border-top: 0">
+                <span class="k">Color</span
+                ><span class="v">Verde Muzo intenso</span>
+              </div>
+              <div class="specrow">
+                <span class="k">Calidad</span
+                ><span class="v">VS · jardín leve</span>
+              </div>
+              <div class="specrow">
+                <span class="k">Origen</span><span class="v">Muzo, Boyacá</span>
+              </div>
+            </div>
+            <div class="trust" style="border-color: var(--qe-color-hairline)">
+              <div class="top">
+                <span
+                  class="dot"
+                  style="background: var(--qe-color-accent-pure)"
+                ></span
+                >Trazabilidad ADN de Paz · Verificado
+              </div>
+            </div>
+            <div
+              style="
+                margin: 0 16px;
+                padding: 14px;
+                border: 1px solid var(--qe-color-border);
+                border-radius: var(--qe-radius-md);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+              "
+            >
+              <div
+                class="avatar"
+                style="width: 44px; height: 44px; font-size: 18px"
+              >
+                CV
+              </div>
+              <div style="flex: 1">
+                <div
+                  style="
+                    font-family: var(--qe-font-serif);
+                    font-size: 18px;
+                    font-weight: 500;
+                  "
+                >
+                  Camila Vélez
+                </div>
+                <div class="qe-eyebrow" style="margin-top: 2px">
+                  Tu embajadora
+                </div>
+              </div>
+            </div>
+            <div style="height: 14px"></div>
+          </div>
+          <div class="bottombar">
+            <button class="cta">Cotizar con Camila</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

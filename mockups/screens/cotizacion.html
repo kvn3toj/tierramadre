@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cotización · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/screens.css" />
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage">
+      <div class="cap"><b>Fase 1</b> · App del cliente · Cotización</div>
+      <div class="phone">
+        <div class="statusbar">
+          <span class="time">9:41</span>
+          <div class="notch"></div>
+          <div class="sig">
+            <span class="bat"><i></i></span>
+          </div>
+        </div>
+        <div class="app">
+          <div class="appbar">
+            <div style="display: flex; align-items: center; gap: 12px">
+              <svg
+                class="ic"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                style="color: var(--qe-color-muted)"
+              >
+                <path d="M15 19l-7-7 7-7" /></svg
+              ><span class="ttl">Cotización</span>
+            </div>
+            <span class="code">TM-2451</span>
+          </div>
+          <div class="scroll">
+            <div class="gut">
+              <div class="metarow">
+                <span class="k">Cliente</span
+                ><span class="v">Sofía Restrepo</span>
+              </div>
+              <div class="metarow">
+                <span class="k">Asesor</span><span class="v">Camila Vélez</span>
+              </div>
+              <div class="metarow">
+                <span class="k">Fecha</span><span class="v">30 jun 2026</span>
+              </div>
+            </div>
+            <div
+              style="
+                font-family: var(--qe-font-mono);
+                font-size: 10px;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: var(--qe-color-subtle);
+                padding: 18px 16px 4px;
+              "
+            >
+              Piezas
+            </div>
+            <div class="gut">
+              <div class="qitem">
+                <div class="th"><div class="gem"></div></div>
+                <div style="flex: 1; min-width: 0">
+                  <div
+                    style="
+                      font-family: var(--qe-font-serif);
+                      font-size: 16px;
+                      font-weight: 500;
+                      line-height: 1;
+                    "
+                  >
+                    Tayrona
+                  </div>
+                  <div
+                    class="qe-data"
+                    style="
+                      font-size: 9px;
+                      color: var(--qe-color-subtle);
+                      margin-top: 3px;
+                    "
+                  >
+                    4,20 ct · MUZO
+                  </div>
+                </div>
+                <div style="text-align: right">
+                  <div
+                    class="qe-data"
+                    style="font-size: 12.5px; font-weight: 600"
+                  >
+                    US$ 14.500
+                  </div>
+                  <div
+                    style="
+                      font-size: 9px;
+                      color: var(--qe-color-subtle);
+                      margin-top: 2px;
+                    "
+                  >
+                    × 1
+                  </div>
+                </div>
+              </div>
+              <div class="qitem">
+                <div class="th"><div class="gem round"></div></div>
+                <div style="flex: 1; min-width: 0">
+                  <div
+                    style="
+                      font-family: var(--qe-font-serif);
+                      font-size: 16px;
+                      font-weight: 500;
+                      line-height: 1;
+                    "
+                  >
+                    Cronos
+                  </div>
+                  <div
+                    class="qe-data"
+                    style="
+                      font-size: 9px;
+                      color: var(--qe-color-subtle);
+                      margin-top: 3px;
+                    "
+                  >
+                    2,14 ct · CHIVOR
+                  </div>
+                </div>
+                <div style="text-align: right">
+                  <div
+                    class="qe-data"
+                    style="font-size: 12.5px; font-weight: 600"
+                  >
+                    US$ 5.600
+                  </div>
+                  <div
+                    style="
+                      font-size: 9px;
+                      color: var(--qe-color-subtle);
+                      margin-top: 2px;
+                    "
+                  >
+                    × 1
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="qtotals">
+              <div class="qline">
+                <span style="color: var(--qe-color-muted)">Subtotal</span
+                ><span class="qe-data" style="font-weight: 500"
+                  >US$ 20.100</span
+                >
+              </div>
+              <div class="qline">
+                <span style="color: var(--qe-color-muted)">Descuento</span
+                ><span
+                  class="qe-data"
+                  style="font-weight: 500; color: var(--qe-color-accent)"
+                  >− US$ 1.000</span
+                >
+              </div>
+              <div class="qtotal">
+                <span
+                  style="
+                    font-size: 11px;
+                    letter-spacing: 0.1em;
+                    text-transform: uppercase;
+                    color: var(--qe-color-subtle);
+                  "
+                  >Total</span
+                ><span style="display: flex; align-items: baseline; gap: 6px"
+                  ><span
+                    class="dot"
+                    style="
+                      width: 7px;
+                      height: 7px;
+                      background: var(--qe-color-accent-pure);
+                      align-self: center;
+                    "
+                  ></span
+                  ><span class="n">US$ 19.100</span></span
+                >
+              </div>
+              <div
+                class="qe-data"
+                style="
+                  font-size: 9px;
+                  color: var(--qe-color-subtle);
+                  text-align: right;
+                  margin-top: 4px;
+                "
+              >
+                VÁLIDA 15 DÍAS · COP 77.300.000
+              </div>
+            </div>
+            <div style="height: 12px"></div>
+          </div>
+          <div class="bottombar">
+            <button class="cta">Generar PDF</button>
+            <button class="cta ghost">WhatsApp</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

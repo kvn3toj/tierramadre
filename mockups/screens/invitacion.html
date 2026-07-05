@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Invitación · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/screens.css" />
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage">
+      <div class="cap">
+        <b>Fase 3</b> · Embajadores · Invitación de invitado
+      </div>
+      <div class="phone">
+        <div class="statusbar">
+          <span class="time">9:41</span>
+          <div class="notch"></div>
+          <div class="sig">
+            <span class="bat"><i></i></span>
+          </div>
+        </div>
+        <div class="app">
+          <div
+            class="access"
+            style="justify-content: flex-start; padding-top: 56px"
+          >
+            <div
+              class="avatar"
+              style="
+                width: 56px;
+                height: 56px;
+                font-size: 22px;
+                margin-bottom: 18px;
+              "
+            >
+              CV
+            </div>
+            <div
+              class="qe-eyebrow"
+              style="color: var(--qe-color-accent); margin-bottom: 14px"
+            >
+              Camila Vélez te invita
+            </div>
+            <h1 style="font-size: 34px">
+              Explora la bóveda<br />de Tierra Mädre
+            </h1>
+            <p>
+              Un catálogo privado de esmeraldas colombianas con ADN de Paz.
+              Camila te acompaña en cada pieza.
+            </p>
+            <div
+              style="
+                width: 100%;
+                max-width: 280px;
+                height: 160px;
+                border-radius: var(--qe-radius-md);
+                background: var(--qe-card-well-bg);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 26px;
+              "
+            >
+              <div class="gem" style="width: 32%; height: 44%"></div>
+            </div>
+            <button class="in">Explorar la bóveda</button>
+            <div
+              class="alt"
+              style="
+                font-family: var(--qe-font-mono);
+                font-size: 10px;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: var(--qe-color-subtle);
+                margin-top: 18px;
+              "
+            >
+              Invitación válida por 24 horas
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

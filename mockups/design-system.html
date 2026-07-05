@@ -1,0 +1,2015 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quiet Emerald · Sistema de diseño</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <style>
+      .controls {
+        position: fixed;
+        top: 18px;
+        right: 18px;
+        z-index: var(--qe-z-toast);
+        display: flex;
+        gap: 8px;
+      }
+      .tg {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 14px;
+        border-radius: var(--qe-radius-pill);
+        border: 1px solid var(--qe-color-border);
+        background: var(--qe-color-surface);
+        color: var(--qe-color-text);
+        font-family: var(--qe-font-mono);
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      .shell {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 60px);
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 190px 1fr;
+        gap: 56px;
+      }
+      @media (max-width: 940px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        .idx {
+          display: none;
+        }
+      }
+      .idx {
+        position: sticky;
+        top: 0;
+        align-self: start;
+        height: 100vh;
+        padding-top: 46px;
+        display: flex;
+        flex-direction: column;
+        overflow: auto;
+      }
+      .idx a {
+        font-family: var(--qe-font-mono);
+        font-size: 10.5px;
+        letter-spacing: 0.05em;
+        color: var(--qe-color-subtle);
+        text-decoration: none;
+        padding: 7px 0;
+        border-top: 1px solid var(--qe-color-hairline);
+        transition: color 0.2s;
+      }
+      .idx a:hover {
+        color: var(--qe-color-accent);
+      }
+      .idx a b {
+        color: var(--qe-color-muted);
+        font-weight: 500;
+        display: inline-block;
+        width: 26px;
+      }
+      .idx .sig {
+        margin-top: auto;
+        padding-bottom: 30px;
+        font-family: var(--qe-font-serif);
+        font-style: italic;
+        font-size: 14px;
+        color: var(--qe-color-subtle);
+      }
+      .rise {
+        opacity: 0;
+        transform: translateY(12px);
+        animation: rise 0.7s var(--qe-ease-out) forwards;
+      }
+      @keyframes rise {
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .rise {
+          opacity: 1;
+          transform: none;
+          animation: none;
+        }
+      }
+      .mast {
+        padding: 56px 0 0;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .wm {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.3em;
+      }
+      .kick {
+        font-family: var(--qe-font-mono);
+        font-size: 11px;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: var(--qe-color-accent);
+        margin-bottom: 16px;
+      }
+      .title {
+        font-family: var(--qe-font-serif);
+        font-weight: 500;
+        font-size: clamp(2.5rem, 9vw, 6rem);
+        line-height: 0.9;
+        letter-spacing: -0.02em;
+      }
+      .title em {
+        font-style: italic;
+        color: var(--qe-color-muted);
+      }
+      .sub {
+        font-size: 1.0625rem;
+        line-height: 1.6;
+        color: var(--qe-color-muted);
+        max-width: 60ch;
+        margin-top: 22px;
+      }
+      .meta {
+        display: flex;
+        gap: 30px;
+        margin-top: 30px;
+        flex-wrap: wrap;
+      }
+      .meta div {
+        font-family: var(--qe-font-mono);
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        color: var(--qe-color-subtle);
+        text-transform: uppercase;
+      }
+      .meta b {
+        display: block;
+        color: var(--qe-color-text);
+        font-size: 14px;
+        font-family: var(--qe-font-ui);
+        font-weight: 600;
+        margin-top: 5px;
+        text-transform: none;
+        letter-spacing: 0;
+      }
+      .sec {
+        padding: 56px 0;
+        border-top: 1px solid var(--qe-color-hairline);
+      }
+      .sh {
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+        margin-bottom: 32px;
+        flex-wrap: wrap;
+      }
+      .sn {
+        font-family: var(--qe-font-mono);
+        font-size: 12px;
+        color: var(--qe-color-accent);
+        letter-spacing: 0.08em;
+      }
+      .st {
+        font-family: var(--qe-font-serif);
+        font-size: 2.25rem;
+        font-weight: 500;
+        line-height: 1;
+      }
+      .sd {
+        font-size: 13px;
+        color: var(--qe-color-muted);
+        margin-left: auto;
+        max-width: 38ch;
+        text-align: right;
+      }
+      @media (max-width: 640px) {
+        .sd {
+          text-align: left;
+          margin-left: 0;
+        }
+      }
+      .cap {
+        font-family: var(--qe-font-mono);
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--qe-color-subtle);
+        margin: 24px 0 13px;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+      }
+      .grid3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      @media (max-width: 820px) {
+        .grid2,
+        .grid3 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--qe-card-bg);
+        border: 1px solid var(--qe-card-border);
+        border-radius: var(--qe-radius-md);
+        padding: 20px;
+      }
+      .lbl {
+        font-family: var(--qe-font-mono);
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--qe-color-subtle);
+        margin-bottom: 14px;
+      }
+      .note {
+        font-size: 12.5px;
+        color: var(--qe-color-muted);
+        line-height: 1.6;
+        margin-top: 12px;
+      }
+      .note code,
+      .mono {
+        font-family: var(--qe-font-mono);
+        font-size: 11.5px;
+        color: var(--qe-color-text);
+      }
+      .ledger {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+        border: 1px solid var(--qe-color-border);
+        border-radius: var(--qe-radius-md);
+        overflow: hidden;
+      }
+      @media (max-width: 700px) {
+        .ledger {
+          grid-template-columns: 1fr;
+        }
+      }
+      .ledger .col {
+        padding: 22px 24px;
+      }
+      .ledger .col + .col {
+        border-left: 1px solid var(--qe-color-hairline);
+      }
+      .ledger h4 {
+        font-family: var(--qe-font-mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin: 0 0 15px;
+      }
+      .ledger .ban h4 {
+        color: var(--qe-color-warn);
+      }
+      .ledger .req h4 {
+        color: var(--qe-color-accent);
+      }
+      .ledger ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .ledger li {
+        display: flex;
+        gap: 10px;
+        padding: 8px 0;
+        font-size: 13px;
+        color: var(--qe-color-muted);
+        line-height: 1.45;
+        border-top: 1px solid var(--qe-color-hairline);
+      }
+      .ledger li:first-child {
+        border-top: 0;
+      }
+      .ledger li::before {
+        content: "";
+        flex: none;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        margin-top: 6px;
+      }
+      .ledger .ban li::before {
+        background: var(--qe-color-warn);
+      }
+      .ledger .req li::before {
+        background: var(--qe-color-accent-pure);
+      }
+      .tiers {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+      @media (max-width: 820px) {
+        .tiers {
+          grid-template-columns: 1fr;
+        }
+      }
+      .tier {
+        border: 1px solid var(--qe-color-border);
+        border-radius: var(--qe-radius-md);
+        padding: 18px;
+      }
+      .tier .tn {
+        font-family: var(--qe-font-mono);
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--qe-color-accent);
+        margin-bottom: 4px;
+      }
+      .tier .th {
+        font-family: var(--qe-font-serif);
+        font-size: 19px;
+        font-weight: 500;
+        margin-bottom: 10px;
+      }
+      .tier code {
+        display: block;
+        font-family: var(--qe-font-mono);
+        font-size: 11px;
+        color: var(--qe-color-muted);
+        padding: 5px 0;
+        border-top: 1px dashed var(--qe-color-hairline);
+      }
+      .tier code b {
+        color: var(--qe-color-text);
+        font-weight: 500;
+      }
+      .flow {
+        font-family: var(--qe-font-mono);
+        font-size: 11px;
+        color: var(--qe-color-subtle);
+        text-align: center;
+        margin: 14px 0;
+      }
+      .flow b {
+        color: var(--qe-color-accent);
+      }
+      .ramp {
+        display: flex;
+        height: 48px;
+        border-radius: var(--qe-radius-sm);
+        overflow: hidden;
+        border: 1px solid var(--qe-color-hairline);
+      }
+      .ramp div {
+        flex: 1;
+        position: relative;
+      }
+      .ramp span {
+        position: absolute;
+        bottom: 3px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-family: var(--qe-font-mono);
+        font-size: 7px;
+        color: var(--qe-color-subtle);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12.5px;
+      }
+      th {
+        font-family: var(--qe-font-mono);
+        font-size: 9.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--qe-color-subtle);
+        text-align: left;
+        padding: 0 12px 10px;
+        font-weight: 500;
+      }
+      td {
+        padding: 9px 12px;
+        border-top: 1px solid var(--qe-color-hairline);
+        vertical-align: middle;
+      }
+      td code {
+        font-family: var(--qe-font-mono);
+        font-size: 11.5px;
+      }
+      .sw {
+        width: 28px;
+        height: 19px;
+        border-radius: 5px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        display: inline-block;
+        vertical-align: middle;
+      }
+      [data-theme="dark"] .sw {
+        border-color: rgba(255, 255, 255, 0.12);
+      }
+      .role {
+        color: var(--qe-color-muted);
+      }
+      .badge {
+        font-family: var(--qe-font-mono);
+        font-size: 9.5px;
+        padding: 3px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.04em;
+      }
+      .aaa {
+        background: var(--qe-color-accent-wash);
+        color: var(--qe-color-accent);
+      }
+      .aa {
+        background: var(--qe-color-surface-2);
+        color: var(--qe-color-muted);
+      }
+      .fail {
+        background: color-mix(in srgb, var(--qe-color-warn) 14%, transparent);
+        color: var(--qe-color-warn);
+      }
+      .trow {
+        display: flex;
+        align-items: baseline;
+        gap: 22px;
+        padding: 14px 0;
+        border-bottom: 1px solid var(--qe-color-hairline);
+      }
+      .trow .sp {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .trow .mt {
+        font-family: var(--qe-font-mono);
+        font-size: 9px;
+        color: var(--qe-color-subtle);
+        white-space: nowrap;
+        text-align: right;
+        width: 230px;
+        line-height: 1.5;
+      }
+      .btn {
+        height: 40px;
+        padding: 0 18px;
+        border-radius: var(--qe-radius-sm);
+        font: 600 13px var(--qe-font-ui);
+        border: 1px solid transparent;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition:
+          background var(--qe-dur-fast) var(--qe-ease-out),
+          border-color var(--qe-dur-fast),
+          color var(--qe-dur-fast);
+      }
+      .btn-primary {
+        background: var(--qe-button-primary-bg);
+        color: var(--qe-button-primary-fg);
+      }
+      .btn-primary:hover {
+        background: var(--qe-button-primary-bg-hover);
+      }
+      .btn-secondary {
+        background: var(--qe-color-surface);
+        border-color: var(--qe-color-border);
+        color: var(--qe-color-text);
+        font-weight: 500;
+      }
+      .btn-secondary:hover {
+        background: var(--qe-color-surface-2);
+      }
+      .btn-ghost {
+        background: transparent;
+        color: var(--qe-color-muted);
+        font-weight: 500;
+      }
+      .btn-ghost:hover {
+        background: var(--qe-color-surface-2);
+        color: var(--qe-color-text);
+      }
+      .btn-link {
+        background: none;
+        border: 0;
+        color: var(--qe-color-accent);
+        font-weight: 600;
+        padding: 0;
+        height: auto;
+        cursor: pointer;
+      }
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      .field {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        height: 44px;
+        padding: 0 14px;
+        border-radius: var(--qe-radius-sm);
+        background: var(--qe-color-surface);
+        border: 1px solid var(--qe-input-border);
+        color: var(--qe-color-subtle);
+        font-size: 14px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 11px;
+        border-radius: var(--qe-radius-pill);
+        border: 1px solid var(--qe-color-border);
+        font-size: 11px;
+        color: var(--qe-color-muted);
+        background: var(--qe-color-surface);
+      }
+      .chip.sel {
+        background: var(--qe-chip-active-bg);
+        border-color: color-mix(
+          in srgb,
+          var(--qe-color-accent) 28%,
+          transparent
+        );
+        color: var(--qe-chip-active-fg);
+        font-weight: 600;
+      }
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .tabs {
+        display: flex;
+        gap: 18px;
+        font-size: 13px;
+      }
+      .tabs span {
+        color: var(--qe-color-muted);
+        padding-bottom: 6px;
+      }
+      .tabs .on {
+        color: var(--qe-color-accent);
+        font-weight: 600;
+        border-bottom: 2px solid var(--qe-color-accent);
+      }
+      .well {
+        position: relative;
+        width: 100%;
+        background: var(--qe-card-well-bg);
+        border-radius: var(--qe-radius-xs);
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .gem {
+        width: 52%;
+        height: 44%;
+        border-radius: 6px;
+        transform: rotate(-8deg);
+        background: radial-gradient(
+          120% 120% at 30% 25%,
+          #7ff0cf,
+          #2bd39c 30%,
+          #009e77 62%,
+          #045d46 100%
+        );
+        box-shadow:
+          inset 0 2px 10px rgba(255, 255, 255, 0.5),
+          inset 0 -8px 18px rgba(0, 50, 35, 0.5);
+      }
+      .nm {
+        font-family: var(--qe-font-serif);
+        font-size: 18px;
+        font-weight: 500;
+        line-height: 1;
+      }
+      .kbd {
+        font-family: var(--qe-font-mono);
+        font-size: 10px;
+        color: var(--qe-color-muted);
+        border: 1px solid var(--qe-color-border);
+        border-radius: 4px;
+        padding: 2px 6px;
+        background: var(--qe-color-surface-2);
+      }
+      .dtable {
+        border: 1px solid var(--qe-color-border);
+        border-radius: var(--qe-radius-md);
+        overflow: hidden;
+      }
+      .dtable table {
+        font-size: 13px;
+      }
+      .dtable th {
+        background: var(--qe-color-surface);
+        border-bottom: 1px solid var(--qe-color-border);
+        padding: 11px 14px;
+      }
+      .dtable td {
+        border-top: 1px solid var(--qe-color-hairline);
+        padding: 0 14px;
+        height: 44px;
+        font-family: var(--qe-font-ui);
+      }
+      .dtable .num {
+        text-align: right;
+        font-family: var(--qe-font-mono);
+        font-variant-numeric: tabular-nums;
+      }
+      .dtable tr.selrow td {
+        background: var(--qe-color-accent-wash);
+        font-weight: 500;
+      }
+      .dtable tr:hover td {
+        background: var(--qe-color-surface-2);
+      }
+      .kpi .num {
+        font-family: var(--qe-font-mono);
+        font-size: 30px;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+      }
+      .kpi .delta {
+        font-family: var(--qe-font-mono);
+        font-size: 12px;
+        margin-top: 6px;
+      }
+      .up {
+        color: var(--qe-color-accent);
+      }
+      .down {
+        color: var(--qe-color-warn);
+      }
+      .flat {
+        color: var(--qe-color-subtle);
+      }
+      .qb {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 22px;
+        padding: 0 9px;
+        border-radius: 6px;
+        font-family: var(--qe-font-mono);
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .qb-live {
+        color: var(--qe-color-accent);
+        background: color-mix(in srgb, var(--qe-color-accent) 10%, transparent);
+      }
+      .qb-neutral {
+        color: var(--qe-color-muted);
+        background: var(--qe-color-surface-2);
+      }
+      .qb-inactive {
+        color: var(--qe-color-subtle);
+        border: 1px solid var(--qe-color-border);
+      }
+      .qb-warn {
+        color: var(--qe-color-warn);
+        background: color-mix(in srgb, var(--qe-color-warn) 12%, transparent);
+      }
+      .iconrow {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        align-items: center;
+        color: var(--qe-color-muted);
+      }
+      svg.ic {
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .story {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .frame {
+        flex: 1;
+        min-width: 120px;
+        border: 1px solid var(--qe-color-border);
+        border-radius: var(--qe-radius-md);
+        padding: 14px;
+        background: var(--qe-color-surface);
+        text-align: center;
+      }
+      .frame .cptn {
+        font-family: var(--qe-font-mono);
+        font-size: 8.5px;
+        color: var(--qe-color-subtle);
+        margin-top: 10px;
+        letter-spacing: 0.04em;
+      }
+      .arrow {
+        color: var(--qe-color-subtle);
+        font-family: var(--qe-font-mono);
+      }
+      .steal {
+        counter-reset: s;
+      }
+      .steal .it {
+        display: flex;
+        gap: 16px;
+        padding: 14px 0;
+        border-top: 1px solid var(--qe-color-hairline);
+      }
+      .steal .it::before {
+        counter-increment: s;
+        content: counter(s);
+        font-family: var(--qe-font-mono);
+        font-size: 12px;
+        color: var(--qe-color-accent);
+        flex: none;
+        width: 24px;
+      }
+      .steal .it b {
+        font-weight: 600;
+      }
+      .steal .it .src {
+        font-family: var(--qe-font-mono);
+        font-size: 10px;
+        color: var(--qe-color-subtle);
+      }
+      .foot {
+        border-top: 1px solid var(--qe-color-hairline);
+        padding: 30px 0 60px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 14px;
+      }
+      .foot .it {
+        font-family: var(--qe-font-serif);
+        font-style: italic;
+        font-size: 20px;
+        color: var(--qe-color-muted);
+      }
+      .foot .rt {
+        font-family: var(--qe-font-mono);
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        color: var(--qe-color-subtle);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+      <button class="tg" onclick="document.body.classList.toggle('reduce')">
+        ✳ Reduce
+      </button>
+    </div>
+    <div class="shell">
+      <div class="layout">
+        <nav class="idx">
+          <a href="#anti"><b>00</b>Anti-slop</a>
+          <a href="#pr"><b>01</b>Principios</a>
+          <a href="#tk"><b>02</b>Tokens</a>
+          <a href="#co"><b>03</b>Color</a>
+          <a href="#ty"><b>04</b>Tipografía</a>
+          <a href="#sp"><b>05</b>Espacio</a>
+          <a href="#el"><b>06</b>Motion</a>
+          <a href="#cm"><b>07</b>Componentes</a>
+          <a href="#da"><b>08</b>Datos</a>
+          <a href="#ic"><b>09</b>Icono·Imagen</a>
+          <a href="#vz"><b>10</b>Voz</a>
+          <a href="#en"><b>11</b>Ingeniería</a>
+          <a href="#stl"><b>12</b>Steal list</a>
+          <div class="sig">Un lenguaje.<br />Toda la app.</div>
+        </nav>
+        <main>
+          <header class="mast rise">
+            <div class="brand">
+              <svg width="34" height="34" viewBox="0 0 100 100">
+                <polygon
+                  points="50,10 76,25 76,62 50,90 24,62 24,25"
+                  fill="var(--qe-color-accent-pure)"
+                />
+                <path
+                  d="M24,34 H76 M24,62 H76 M50,10 V90"
+                  stroke="var(--qe-color-bg)"
+                  stroke-width="3"
+                  opacity=".5"
+                />
+              </svg>
+              <div class="wm">TIERRA&nbsp;MÄDRE</div>
+            </div>
+            <div class="kick">Sistema de diseño · Fase 0 · propuesta</div>
+            <h1 class="title">Quiet<br /><em>Emerald</em></h1>
+            <p class="sub">
+              Tres capas de tokens, dos modos, un solo verde. Sobre los
+              cimientos, las capas que hacen un sistema real: datos, movimiento,
+              voz, iconografía e ingeniería. Destilado de Linear, Vercel,
+              Stripe, Radix, Aesop, Vaul, Sonner, Carbon, Polaris y Spectrum.
+            </p>
+            <div class="meta">
+              <div>Cimientos<b>Tokens · color · tipo · espacio</b></div>
+              <div>Capas<b>Datos · motion · voz · icono · ing.</b></div>
+              <div>Un color<b>Esmeralda · gris 0–950</b></div>
+              <div>Cumple<b>WCAG 2.2 AA · es-CO</b></div>
+            </div>
+          </header>
+
+          <section class="sec rise" id="anti">
+            <div class="sh">
+              <span class="sn">§00</span>
+              <h2 class="st">Anti-slop ledger</h2>
+              <p class="sd">
+                Lo que el sistema prohíbe y lo que exige. El documento se
+                auto-vigila.
+              </p>
+            </div>
+            <div class="ledger">
+              <div class="col ban">
+                <h4>Prohibido</h4>
+                <ul>
+                  <li>Oro, metálicos, glass, blur, glow, halos.</li>
+                  <li>
+                    Segundo color de marca; tríada rojo/ámbar/verde; deltas de
+                    color.
+                  </li>
+                  <li>
+                    Gradientes de marca, texto con gradiente, sombras de color,
+                    side-stripe.
+                  </li>
+                  <li>
+                    Inter, Space Grotesk, Libre Baskerville; emoji como icono.
+                  </li>
+                  <li>Springs, bounce, overshoot; shimmer sweep; card lift.</li>
+                  <li>
+                    Tarjetas con sombra en reposo; todo con esquinas pill.
+                  </li>
+                  <li>
+                    Formato US ($12,500 · 2.40 ct); placeholder como etiqueta.
+                  </li>
+                </ul>
+              </div>
+              <div class="col req">
+                <h4>Requerido</h4>
+                <ul>
+                  <li>
+                    ≤10% esmeralda; un relleno por vista; accent como
+                    foreground.
+                  </li>
+                  <li>Hairline de 1px; sombra solo en overlays flotantes.</li>
+                  <li>
+                    Estado por color más forma, glifo o etiqueta (nunca color
+                    solo).
+                  </li>
+                  <li>
+                    Una familia de easing, sub-260ms; reduce-motion a solo
+                    opacidad.
+                  </li>
+                  <li>
+                    DM Mono tabular con cero-barra; «», tildes, «2,40 ct», «$
+                    12.500.000».
+                  </li>
+                  <li>
+                    Léxico: tesoro, embajador, bóveda, cotizar (no cliente ni
+                    comprar).
+                  </li>
+                  <li>
+                    Estados reales: vacío, cargando, error, con voz de marca
+                    es-CO.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section class="sec rise" id="pr">
+            <div class="sh">
+              <span class="sn">§01</span>
+              <h2 class="st">Principios</h2>
+              <p class="sd">Seis reglas que gobiernan cada decisión.</p>
+            </div>
+            <div class="grid3">
+              <div class="card">
+                <div class="lbl">Ⅰ</div>
+                <div class="nm" style="font-size: 22px">Una sola esmeralda</div>
+                <div class="note">
+                  Foreground primero. Acción primaria, activo, marca. Nunca
+                  rellena una tarjeta ni una foto.
+                </div>
+              </div>
+              <div class="card">
+                <div class="lbl">Ⅱ</div>
+                <div class="nm" style="font-size: 22px">
+                  Gris de borde a borde
+                </div>
+                <div class="note">
+                  Neutro frío con sesgo verde. Sin oro, sin azules, sin beige.
+                </div>
+              </div>
+              <div class="card">
+                <div class="lbl">Ⅲ</div>
+                <div class="nm" style="font-size: 22px">
+                  La foto es el color
+                </div>
+                <div class="note">
+                  La piedra aporta toda la saturación; el chrome sobre la imagen
+                  es gris.
+                </div>
+              </div>
+              <div class="card">
+                <div class="lbl">Ⅳ</div>
+                <div class="nm" style="font-size: 22px">Lujo silencioso</div>
+                <div class="note">
+                  Contraste por familia, tamaño y color, nunca por peso. Medium,
+                  no Bold.
+                </div>
+              </div>
+              <div class="card">
+                <div class="lbl">Ⅴ</div>
+                <div class="nm" style="font-size: 22px">Planos opacos</div>
+                <div class="note">
+                  Superficies planas, hairlines, sombra solo en overlays. Sin
+                  profundidad falsa.
+                </div>
+              </div>
+              <div class="card">
+                <div class="lbl">Ⅵ</div>
+                <div class="nm" style="font-size: 22px">
+                  Movimiento que confirma
+                </div>
+                <div class="note">
+                  Sub-260ms, una curva, sin rebote. El motion aclara la causa,
+                  no actúa.
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="sec rise" id="tk">
+            <div class="sh">
+              <span class="sn">§02</span>
+              <h2 class="st">Arquitectura de tokens</h2>
+              <p class="sd">
+                Tres capas, namespace <code>--qe-</code>, una fuente genera TS y
+                CSS.
+              </p>
+            </div>
+            <div class="tiers">
+              <div class="tier">
+                <div class="tn">Tier 1 · Referencia</div>
+                <div class="th">Materia prima</div>
+                <code><b>--qe-em-800</b>: #006F52</code
+                ><code><b>--qe-gray-900</b>: #14181A</code
+                ><code style="color: var(--qe-color-subtle)"
+                  >Sin rol. Un gris es un gris.</code
+                >
+              </div>
+              <div class="tier">
+                <div class="tn">Tier 2 · Semántica</div>
+                <div class="th">El rol</div>
+                <code><b>--qe-color-accent-strong</b>: var(--qe-em-800)</code
+                ><code><b>--qe-color-text</b>: var(--qe-gray-900)</code
+                ><code style="color: var(--qe-color-subtle)"
+                  >Aquí vive el flip claro/oscuro.</code
+                >
+              </div>
+              <div class="tier">
+                <div class="tn">Tier 3 · Componente</div>
+                <div class="th">El uso</div>
+                <code
+                  ><b>--qe-button-primary-bg</b>:
+                  var(--qe-color-accent-strong)</code
+                ><code style="color: var(--qe-color-subtle)"
+                  >Lo único que un componente lee.</code
+                >
+              </div>
+            </div>
+            <div class="flow">
+              <b>componente</b> → semántica → referencia · nunca al revés · MUI
+              v6 <code>cssVariables</code> emite tokens.css · CI: sin hex crudo,
+              sin <code>--qe-gray-*</code> en componentes
+            </div>
+          </section>
+
+          <section class="sec rise" id="co">
+            <div class="sh">
+              <span class="sn">§03</span>
+              <h2 class="st">Color</h2>
+              <p class="sd">
+                Gris 0–950, esmeralda de un tono, y un único
+                <code>--warn</code> arcilla en cuarentena.
+              </p>
+            </div>
+            <div class="cap">Gris · neutro frío</div>
+            <div class="ramp">
+              <div style="background: #ffffff"><span>0</span></div>
+              <div style="background: #f7f8f8"><span>50</span></div>
+              <div style="background: #f1f2f2"><span>100</span></div>
+              <div style="background: #ebedec"><span>150</span></div>
+              <div style="background: #e4e7e5"><span>200</span></div>
+              <div style="background: #dadedc"><span>250</span></div>
+              <div style="background: #c9cecb"><span>300</span></div>
+              <div style="background: #9aa09d"><span>400</span></div>
+              <div style="background: #8c928f"><span>500</span></div>
+              <div style="background: #767c79"><span>550</span></div>
+              <div style="background: #5c6360"><span>600</span></div>
+              <div style="background: #3a403e"><span>700</span></div>
+              <div style="background: #272c2b"><span>800</span></div>
+              <div style="background: #14181a"><span>900</span></div>
+              <div style="background: #0e1110"><span>950</span></div>
+            </div>
+            <div class="cap">Esmeralda · un tono</div>
+            <div class="ramp">
+              <div style="background: #e8f5f0"><span>wash</span></div>
+              <div style="background: #34c99b; color: #06140e">
+                <span style="color: inherit">400</span>
+              </div>
+              <div style="background: #00af84; color: #fff">
+                <span style="color: inherit">500·pure</span>
+              </div>
+              <div style="background: #00875f; color: #fff">
+                <span style="color: inherit">600</span>
+              </div>
+              <div style="background: #00785c; color: #fff">
+                <span style="color: inherit">700·accent</span>
+              </div>
+              <div style="background: #006f52; color: #fff">
+                <span style="color: inherit">800·strong</span>
+              </div>
+              <div style="background: #06140e; color: #fff">
+                <span style="color: inherit">950</span>
+              </div>
+            </div>
+            <div class="grid2" style="margin-top: 30px">
+              <div>
+                <div class="cap">Ledger de contraste (WCAG 2.2)</div>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Par</th>
+                      <th>Ratio</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>text / bg</td>
+                      <td class="mono">16.8:1</td>
+                      <td><span class="badge aaa">AAA</span></td>
+                    </tr>
+                    <tr>
+                      <td>muted / surface</td>
+                      <td class="mono">6.2:1</td>
+                      <td><span class="badge aa">AA</span></td>
+                    </tr>
+                    <tr>
+                      <td>accent / surface</td>
+                      <td class="mono">5.5:1</td>
+                      <td><span class="badge aa">AA</span></td>
+                    </tr>
+                    <tr>
+                      <td>blanco / accent-strong</td>
+                      <td class="mono">6.2:1</td>
+                      <td><span class="badge aa">AA</span></td>
+                    </tr>
+                    <tr>
+                      <td>subtle como texto</td>
+                      <td class="mono">3.2:1</td>
+                      <td><span class="badge fail">≥16px</span></td>
+                    </tr>
+                    <tr>
+                      <td>accent-pure como texto</td>
+                      <td class="mono">2.8:1</td>
+                      <td><span class="badge fail">Punto</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div>
+                <div class="cap">Estado · neutro más esmeralda más un warn</div>
+                <div
+                  style="
+                    display: flex;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                    align-items: center;
+                  "
+                >
+                  <span class="qb qb-live"
+                    ><span
+                      class="dot"
+                      style="background: var(--qe-color-accent)"
+                    ></span
+                    >Publicada</span
+                  >
+                  <span class="qb qb-neutral"
+                    ><span
+                      class="dot"
+                      style="background: var(--qe-color-muted)"
+                    ></span
+                    >Borrador</span
+                  >
+                  <span class="qb qb-inactive"
+                    ><span
+                      class="dot"
+                      style="
+                        background: transparent;
+                        border: 1.5px solid var(--qe-color-disabled);
+                      "
+                    ></span
+                    >Archivada</span
+                  >
+                  <span class="qb qb-warn"
+                    ><span
+                      class="dot"
+                      style="background: var(--qe-color-warn)"
+                    ></span
+                    >Vence</span
+                  >
+                </div>
+                <div class="note">
+                  Enum cerrado <code>QeStatusBadge</code>: una sola insignia
+                  esmeralda (activa) por fila. «Vendida» es desaturación, no
+                  rojo. <code>--warn</code> (#8A5A2B / #C79A63) es el único
+                  no-gris no-esmeralda: deltas negativos, error, destructivo.
+                  Nunca un rojo saturado.
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="sec rise" id="ty">
+            <div class="sh">
+              <span class="sn">§04</span>
+              <h2 class="st">Tipografía</h2>
+              <p class="sd">
+                Cormorant en nombres y títulos (≥20px). Hanken en idioma. DM
+                Mono en todo número, código y fecha.
+              </p>
+            </div>
+            <div>
+              <div class="trow">
+                <div class="sp qe-display" style="font-size: 52px">
+                  Una joya en calma
+                </div>
+                <div class="mt">
+                  display-2xl · Cormorant<br />clamp 40→72 · 500 · −.02em
+                </div>
+              </div>
+              <div class="trow">
+                <div class="sp qe-piece" style="font-size: 24px">
+                  Esmeralda Muzo · Reflejo
+                </div>
+                <div class="mt">title-piece · Cormorant · 24 · 500</div>
+              </div>
+              <div class="trow">
+                <div
+                  class="sp qe-body"
+                  style="font-size: 16px; color: var(--qe-color-muted)"
+                >
+                  Cuerpo y relato. ¿Origen? Boyacá. Verde jardín, claridad ante
+                  todo.
+                </div>
+                <div class="mt">body · Hanken · 16 · 400 · 1.6 · 66ch</div>
+              </div>
+              <div class="trow">
+                <div class="sp qe-eyebrow">Fórmula Tierra Madre · Origen</div>
+                <div class="mt">eyebrow · DM Mono · 11 · +.14em</div>
+              </div>
+              <div class="trow">
+                <div
+                  class="sp qe-data"
+                  style="font-size: 15px; font-weight: 500"
+                >
+                  2,40 ct · MUZO · $ 58.700.000 · N.º 0184
+                </div>
+                <div class="mt">data · DM Mono · tabular · slashed-0</div>
+              </div>
+            </div>
+            <div class="note">
+              <b>Recipe de fila de precio:</b> etiqueta Hanken en
+              <code>--muted</code> más valor DM Mono en <code>--text</code>,
+              alineados a la base, valor a la derecha; la unidad («ct», «USD»)
+              un paso de gris más bajo. Cormorant nunca en números ni por debajo
+              de 20px.
+            </div>
+          </section>
+
+          <section class="sec rise" id="sp">
+            <div class="sh">
+              <span class="sn">§05</span>
+              <h2 class="st">Espacio &amp; Retícula</h2>
+              <p class="sd">
+                Base lineal de 4px, radios disciplinados, objetivos ≥44px,
+                escalera z limpia.
+              </p>
+            </div>
+            <div class="grid3">
+              <div class="card">
+                <div class="lbl">Radios</div>
+                <div
+                  style="
+                    display: flex;
+                    gap: 12px;
+                    align-items: flex-end;
+                    flex-wrap: wrap;
+                  "
+                >
+                  <div style="text-align: center">
+                    <div
+                      style="
+                        width: 48px;
+                        height: 44px;
+                        background: var(--qe-color-surface-2);
+                        border: 1px solid var(--qe-color-border);
+                        border-radius: var(--qe-radius-xs);
+                      "
+                    ></div>
+                    <div
+                      class="mono"
+                      style="
+                        font-size: 9px;
+                        color: var(--qe-color-subtle);
+                        margin-top: 6px;
+                      "
+                    >
+                      xs 5
+                    </div>
+                  </div>
+                  <div style="text-align: center">
+                    <div
+                      style="
+                        width: 48px;
+                        height: 44px;
+                        background: var(--qe-color-surface-2);
+                        border: 1px solid var(--qe-color-border);
+                        border-radius: var(--qe-radius-sm);
+                      "
+                    ></div>
+                    <div
+                      class="mono"
+                      style="
+                        font-size: 9px;
+                        color: var(--qe-color-subtle);
+                        margin-top: 6px;
+                      "
+                    >
+                      sm 8
+                    </div>
+                  </div>
+                  <div style="text-align: center">
+                    <div
+                      style="
+                        width: 48px;
+                        height: 44px;
+                        background: var(--qe-color-surface-2);
+                        border: 1px solid var(--qe-color-border);
+                        border-radius: var(--qe-radius-md);
+                      "
+                    ></div>
+                    <div
+                      class="mono"
+                      style="
+                        font-size: 9px;
+                        color: var(--qe-color-subtle);
+                        margin-top: 6px;
+                      "
+                    >
+                      md 12
+                    </div>
+                  </div>
+                  <div style="text-align: center">
+                    <div
+                      style="
+                        width: 48px;
+                        height: 44px;
+                        background: var(--qe-color-surface-2);
+                        border: 1px solid var(--qe-color-border);
+                        border-radius: var(--qe-radius-pill);
+                      "
+                    ></div>
+                    <div
+                      class="mono"
+                      style="
+                        font-size: 9px;
+                        color: var(--qe-color-subtle);
+                        margin-top: 6px;
+                      "
+                    >
+                      pill
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="lbl">Alturas · táctil</div>
+                <table>
+                  <tbody>
+                    <tr>
+                      <td>sm</td>
+                      <td class="mono">32</td>
+                      <td class="role">hit 44</td>
+                    </tr>
+                    <tr>
+                      <td>md</td>
+                      <td class="mono">40</td>
+                      <td class="role">default</td>
+                    </tr>
+                    <tr>
+                      <td>lg</td>
+                      <td class="mono">48</td>
+                      <td class="role">CTA móvil</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="note">
+                  Objetivo ≥44×44 aunque la caja sea menor.
+                </div>
+              </div>
+              <div class="card">
+                <div class="lbl">z-index</div>
+                <div
+                  class="mono"
+                  style="
+                    font-size: 11px;
+                    color: var(--qe-color-muted);
+                    line-height: 2;
+                  "
+                >
+                  base 0 · sticky 100 · nav 200 · dropdown 400 · scrim 500 ·
+                  sheet 600 · dialog 700 · toast 800 · max 999
+                </div>
+              </div>
+            </div>
+            <div class="note">
+              Grilla 4/8/12 col, gutter 16/24/24, prosa 640/72ch. Densidad como
+              multiplicador que solo toca alturas y pad-y. Escala lineal de 4px,
+              sin razón áurea.
+            </div>
+          </section>
+
+          <section class="sec rise" id="el">
+            <div class="sh">
+              <span class="sn">§06</span>
+              <h2 class="st">Elevación &amp; Movimiento</h2>
+              <p class="sd">
+                Una familia de easing. Sombra solo en overlays. La coreografía
+                como shot-list.
+              </p>
+            </div>
+            <div class="grid3" style="margin-bottom: 24px">
+              <div class="card">
+                <div class="lbl">Una curva</div>
+                <div
+                  class="mono"
+                  style="
+                    font-size: 11px;
+                    color: var(--qe-color-muted);
+                    line-height: 1.9;
+                  "
+                >
+                  out .32,.72,0,1<br />in&nbsp;&nbsp;.4,0,1,1<br />linear
+                  (crossfade)
+                </div>
+                <div class="note">
+                  Micro 120 · fast 160 · base 220 · large 260. Exit = 0.7×
+                  enter. Ningún punto de control &lt;0 o &gt;1.
+                </div>
+              </div>
+              <div class="card">
+                <div class="lbl">Sombra · excepciones</div>
+                <div class="note">
+                  Plano en todo. Solo ganan sombra (rung 4): <b>Cmd+K</b>, Vaul
+                  sheet, Sonner toast, popovers y menús. Scrim sólido, nunca
+                  blur.
+                </div>
+              </div>
+              <div class="card">
+                <div class="lbl">Reduce-motion</div>
+                <div class="note">
+                  translate, scale y morph cortan; la opacidad se conserva
+                  acortada; breathe congela; stagger 0. Foco y feedback
+                  intactos.
+                </div>
+              </div>
+            </div>
+            <div class="cap">
+              Coreografía · «Añadir a cotización» (optimista)
+            </div>
+            <div class="story">
+              <div class="frame">
+                <button class="btn btn-primary" style="pointer-events: none">
+                  Añadir
+                </button>
+                <div class="cptn">press scale .97 · 100ms</div>
+              </div>
+              <span class="arrow">→</span>
+              <div class="frame">
+                <span class="qb qb-live" style="font-size: 11px"
+                  >Cotización · 3</span
+                >
+                <div class="cptn">badge tick 1→1.15→1 · 220ms</div>
+              </div>
+              <span class="arrow">→</span>
+              <div class="frame">
+                <span class="chip"
+                  ><span
+                    class="dot"
+                    style="background: var(--qe-color-accent-pure)"
+                  ></span
+                  >Añadido · Deshacer</span
+                >
+                <div class="cptn">snackbar · aria-live</div>
+              </div>
+              <span class="arrow">→</span>
+              <div class="frame">
+                <span
+                  class="mono"
+                  style="font-size: 11px; color: var(--qe-color-warn)"
+                  >rollback si falla</span
+                >
+                <div class="cptn">decrement y error, sin rojo</div>
+              </div>
+            </div>
+            <div class="note">
+              Otras coreografías especificadas: sheet Vaul (detents 0.45/0.92,
+              snap por velocidad), toast Sonner (stack 1/.94/.88 más swipe),
+              skeleton a contenido (crossfade tras <code>img.decode()</code>,
+              sin shimmer), lista FLIP (layoutId, stagger cap 8), ruta más
+              shared-element hero (container transform).
+            </div>
+          </section>
+
+          <section class="sec rise" id="cm">
+            <div class="sh">
+              <span class="sn">§07</span>
+              <h2 class="st">Componentes</h2>
+              <p class="sd">
+                variant × tone × size. Estados canónicos. Foco que nunca se
+                quita.
+              </p>
+            </div>
+            <div class="grid3">
+              <div class="card">
+                <div class="lbl">Button · solid/outline/ghost</div>
+                <div class="stack">
+                  <button class="btn btn-primary">
+                    Cotizar con un embajador</button
+                  ><button class="btn btn-secondary">
+                    Guardar en mi bóveda</button
+                  ><button class="btn btn-ghost">Compartir</button
+                  ><button class="btn-link">Ver la pieza →</button>
+                </div>
+              </div>
+              <div class="card">
+                <div class="lbl">Input · tabs · chips</div>
+                <div class="field">
+                  <svg class="ic" width="15" height="15" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="m20 20-3-3" /></svg
+                  >Buscar esmeraldas…
+                </div>
+                <div class="tabs" style="margin-top: 14px">
+                  <span class="on">Todas</span><span>Muzo</span
+                  ><span>Chivor</span>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 12px">
+                  <span class="chip sel">Muzo</span
+                  ><span class="chip">Talla esmeralda</span>
+                </div>
+              </div>
+              <div class="card">
+                <div class="lbl">Tarjeta · foco</div>
+                <div class="well" style="aspect-ratio: 1/1.04">
+                  <div class="gem"></div>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: baseline;
+                    margin-top: 10px;
+                  "
+                >
+                  <div class="nm">Tayrona</div>
+                  <div
+                    class="qe-data"
+                    style="font-size: 13px; font-weight: 500"
+                  >
+                    $ 14.500
+                  </div>
+                </div>
+                <div class="qe-spec" style="font-size: 9.5px; margin-top: 5px">
+                  4,20 ct · MUZO
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="sec rise" id="da">
+            <div class="sh">
+              <span class="sn">§08</span>
+              <h2 class="st">Datos &amp; Analítica</h2>
+              <p class="sd">
+                Tablas hairline, KPIs sin rojo/verde, gráficos de un solo color,
+                pipeline sin arcoíris.
+              </p>
+            </div>
+            <div class="cap">
+              Tabla · filas de altura fija, sin cebra, números DM Mono a la
+              derecha
+            </div>
+            <div class="dtable">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Pieza</th>
+                    <th>Origen</th>
+                    <th class="num">Quilates</th>
+                    <th class="num">Valor</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Tayrona</td>
+                    <td>Muzo</td>
+                    <td class="num">4,20</td>
+                    <td class="num">$ 58.700.000</td>
+                    <td><span class="qb qb-live">Publicada</span></td>
+                  </tr>
+                  <tr class="selrow">
+                    <td>Cronos</td>
+                    <td>Chivor</td>
+                    <td class="num">2,14</td>
+                    <td class="num">$ 22.400.000</td>
+                    <td><span class="qb qb-neutral">Borrador</span></td>
+                  </tr>
+                  <tr>
+                    <td>Reflejo de Muzo</td>
+                    <td>Muzo</td>
+                    <td class="num">3,05</td>
+                    <td class="num">$ 39.200.000</td>
+                    <td><span class="qb qb-warn">Vence</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="grid3" style="margin-top: 22px">
+              <div class="card kpi">
+                <div class="lbl">Ventas · 30d</div>
+                <div class="num">$ 128,4M</div>
+                <div class="delta up">
+                  ▲ +12,4%
+                  <span style="color: var(--qe-color-subtle)"
+                    >vs. 30d previos</span
+                  >
+                </div>
+              </div>
+              <div class="card kpi">
+                <div class="lbl">Inventario valorado</div>
+                <div class="num">$ 1.240M</div>
+                <div class="delta down">▼ −4,0%</div>
+              </div>
+              <div class="card">
+                <div class="lbl">Ventas por mina · un color</div>
+                <svg
+                  width="100%"
+                  height="90"
+                  viewBox="0 0 220 90"
+                  preserveAspectRatio="none"
+                >
+                  <line
+                    x1="0"
+                    y1="30"
+                    x2="220"
+                    y2="30"
+                    stroke="var(--qe-color-hairline)"
+                  />
+                  <line
+                    x1="0"
+                    y1="60"
+                    x2="220"
+                    y2="60"
+                    stroke="var(--qe-color-hairline)"
+                  />
+                  <rect
+                    x="14"
+                    y="44"
+                    width="34"
+                    height="42"
+                    fill="var(--qe-color-border)"
+                    stroke="var(--qe-gray-300)"
+                  />
+                  <rect
+                    x="64"
+                    y="20"
+                    width="34"
+                    height="66"
+                    fill="var(--qe-color-accent-strong)"
+                  />
+                  <rect
+                    x="114"
+                    y="52"
+                    width="34"
+                    height="34"
+                    fill="var(--qe-color-border)"
+                    stroke="var(--qe-gray-300)"
+                  />
+                  <rect
+                    x="164"
+                    y="38"
+                    width="34"
+                    height="48"
+                    fill="var(--qe-color-border)"
+                    stroke="var(--qe-gray-300)"
+                  />
+                </svg>
+                <div class="qe-spec" style="font-size: 9px; margin-top: 4px">
+                  Muzo focal · resto gris · borde 1px = 3:1
+                </div>
+              </div>
+            </div>
+            <div class="note">
+              <b>Contrato:</b> la esmeralda se gasta en una serie focal por
+              gráfico; el resto baja por la rampa neutra. La dirección se lee
+              por posición y longitud más glifo ▲▼, nunca por hue. Las barras
+              neutras llevan borde 1px <code>#C9CECB</code> (WCAG 1.4.11).
+              Pipeline <b>Compra → Captura → Cierre → Catálogo → Venta</b>:
+              columnas neutras más medidor de 5 segmentos (segmento actual
+              esmeralda), sin 5 colores.
+            </div>
+          </section>
+
+          <section class="sec rise" id="ic">
+            <div class="sh">
+              <span class="sn">§09</span>
+              <h2 class="st">Iconografía &amp; Imagen</h2>
+              <p class="sd">
+                Lucide (retirar MUI icons), stroke 1.6 absoluto, «la foto es el
+                único color».
+              </p>
+            </div>
+            <div class="card" style="margin-bottom: 20px">
+              <div class="lbl">Inventario · Lucide · currentColor gris</div>
+              <div class="iconrow">
+                <svg class="ic" width="22" height="22" viewBox="0 0 24 24">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3-3" />
+                </svg>
+                <svg class="ic" width="22" height="22" viewBox="0 0 24 24">
+                  <line x1="4" y1="7" x2="14" y2="7" />
+                  <line x1="4" y1="12" x2="20" y2="12" />
+                  <line x1="4" y1="17" x2="10" y2="17" />
+                  <circle cx="17" cy="7" r="2" />
+                  <circle cx="13" cy="17" r="2" />
+                </svg>
+                <svg class="ic" width="22" height="22" viewBox="0 0 24 24">
+                  <path d="M6 3h9l3 3v15H6z" />
+                  <path d="M9 12h6M9 16h4" />
+                </svg>
+                <svg class="ic" width="22" height="22" viewBox="0 0 24 24">
+                  <path
+                    d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"
+                  />
+                </svg>
+                <svg class="ic" width="22" height="22" viewBox="0 0 24 24">
+                  <path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7z" />
+                  <path d="M9 12l2 2 4-4" />
+                </svg>
+                <svg class="ic" width="22" height="22" viewBox="0 0 24 24">
+                  <path d="M4 8l3-3h10l3 3v11H4z" />
+                  <circle cx="12" cy="13" r="3.5" />
+                </svg>
+                <svg class="ic" width="22" height="22" viewBox="0 0 24 24">
+                  <path d="M6 3l6 4 6-4v6l-6 12L6 9z" />
+                </svg>
+                <span
+                  class="mono"
+                  style="
+                    margin-left: auto;
+                    font-size: 9.5px;
+                    color: var(--qe-color-subtle);
+                  "
+                  >SEARCH · SLIDERS · FILE-TEXT · HEART · SHIELD-CHECK · CAMERA
+                  · GEM · ~42 glifos</span
+                >
+              </div>
+              <div class="note">
+                Emerald en icono solo si es acción primaria, activo o
+                verificado. Cotización usa <b>FileText</b>, no un carrito (es
+                B2B). Sin emoji, sin filled más outline mezclados, sin gold.
+              </div>
+            </div>
+            <div class="grid2">
+              <div class="card">
+                <div class="lbl">Image well · «la foto es el único color»</div>
+                <div
+                  class="well"
+                  style="
+                    aspect-ratio: 1/1.06;
+                    box-shadow: inset 0 0 0 1px var(--qe-color-border);
+                  "
+                >
+                  <div class="gem"></div>
+                </div>
+                <div class="note">
+                  Fondo surface-2, borde inset 1px, sin sombra. Ratios: stone
+                  1/1 · specimen 1/1.06 · hero 4/3 · video 16/9. Metadata por
+                  piedra: focusX/Y, restScale. Fondo de foto desaturado a
+                  C*&lt;4, matando reflejos dorados.
+                </div>
+              </div>
+              <div class="card">
+                <div class="lbl">Anti-blink &amp; video</div>
+                <div class="note">
+                  Cache síncrono, caja aspect-ratio reservada, LQIP 20px,
+                  <code>img.decode()</code> y swap instantáneo (sin fade), 2
+                  reintentos [1s, 3s]. Video: <code>#t=0.001</code> más poster,
+                  Play Ø40 gris, autoplay solo la tarjeta en vista. Avatar: aro
+                  gris 1px; esmeralda solo si verificado.
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="sec rise" id="vz">
+            <div class="sh">
+              <span class="sn">§10</span>
+              <h2 class="st">Voz &amp; Contenido</h2>
+              <p class="sd">
+                Tres tiers de voz, léxico gemológico, formato es-CO. Sobria, no
+                seca. Tú, nunca usted.
+              </p>
+            </div>
+            <div class="ledger" style="margin-bottom: 22px">
+              <div class="col req">
+                <h4>En voz</h4>
+                <ul>
+                  <li>«Ningún tesoro coincide con estos filtros.»</li>
+                  <li>«Un embajador te responde en menos de 24 horas.»</li>
+                  <li>
+                    «Muzo · 2,40 ct · talla esmeralda» (gemológica, exacta).
+                  </li>
+                  <li>«Guarda tu selección» (imperativo cálido, tú).</li>
+                </ul>
+              </div>
+              <div class="col ban">
+                <h4>Fuera</h4>
+                <ul>
+                  <li>«No encontramos… nada… intenta de nuevo, viajero…».</li>
+                  <li>«¡Últimas piezas! Cotiza ya antes de que se agoten».</li>
+                  <li>«Guarde su selección exitosamente» (usted, robótico).</li>
+                  <li>«cliente, comprar, carrito, producto, wishlist».</li>
+                </ul>
+              </div>
+            </div>
+            <div class="grid2">
+              <div class="card">
+                <div class="lbl">Léxico · un término por concepto</div>
+                <table>
+                  <tbody>
+                    <tr>
+                      <td class="role">comprador</td>
+                      <td class="mono">invitado / miembro</td>
+                    </tr>
+                    <tr>
+                      <td class="role">vendedor</td>
+                      <td class="mono">embajador</td>
+                    </tr>
+                    <tr>
+                      <td class="role">producto</td>
+                      <td class="mono">tesoro / pieza / gema</td>
+                    </tr>
+                    <tr>
+                      <td class="role">comprar</td>
+                      <td class="mono">cotizar / solicitar</td>
+                    </tr>
+                    <tr>
+                      <td class="role">wishlist</td>
+                      <td class="mono">bóveda</td>
+                    </tr>
+                    <tr>
+                      <td class="role">inclusión</td>
+                      <td class="mono">jardín</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="card">
+                <div class="lbl">Formato colombiano (es-CO)</div>
+                <div class="qe-data" style="font-size: 14px; line-height: 2.1">
+                  $ 12.500.000 &nbsp;·&nbsp; 2.000 USD<br />2,40 ct
+                  &nbsp;·&nbsp; 15 % &nbsp;·&nbsp; N.º 14<br />30 jun 2026
+                  &nbsp;·&nbsp; «comillas»
+                </div>
+                <div class="note">
+                  Miles con «.», decimales con «,», carats siempre 2 decimales,
+                  espacio duro entre número y unidad. Cero exclamaciones en toda
+                  la app.
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="sec rise" id="en">
+            <div class="sh">
+              <span class="sn">§11</span>
+              <h2 class="st">Ingeniería &amp; Gobernanza</h2>
+              <p class="sd">
+                MUI v6 cssVariables, un generador de tokens, lint que hace
+                cumplir la estética, retiro de 4 sistemas legados.
+              </p>
+            </div>
+            <div class="grid2">
+              <div class="card">
+                <div class="lbl">Contrato token → código</div>
+                <div class="note">
+                  <code>quiet-emerald.ts</code> es la fuente y
+                  <code>createQuietTheme(mode)</code> con
+                  <code
+                    >cssVariables:{cssVarPrefix:'qe',
+                    colorSchemeSelector:'data-theme'}</code
+                  >
+                  emite <code>theme.vars.*</code>. <code>secondary</code> es
+                  gris neutro (MUI exige un segundo palette; jamás un segundo
+                  tono). <code>palette.error</code> es un rojo funcional
+                  desaturado, solo en confirms destructivos y validación.
+                </div>
+              </div>
+              <div class="card">
+                <div class="lbl">Regla de acceso (3 peldaños)</div>
+                <div class="note">
+                  <b>Sí:</b>
+                  <code
+                    >sx={{color:'text.secondary', borderColor:'divider'}}</code
+                  >, y <code>useQuiet()</code> para well, accent-pure y mono.<br /><b
+                    >No:</b
+                  >
+                  <code>color:'#5C6360'</code>, <code>qeGray[600]</code>,
+                  <code>backdrop-filter:blur()</code>. Las referencias solo
+                  dentro del theme factory.
+                </div>
+              </div>
+            </div>
+            <div class="cap">
+              Gobernanza · lint y migración (hoy el lint es solo tsc)
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Regla / paso</th>
+                  <th>Detalle</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="mono">no-restricted-imports</td>
+                  <td class="role">
+                    prohibir goldAccent, glass*, gradients, legacy brand
+                  </td>
+                </tr>
+                <tr>
+                  <td class="mono">no-raw-hex / no-blur</td>
+                  <td class="role">
+                    stylelint sobre componentes; baseline 94 hex más 81 blur,
+                    ratchet a error
+                  </td>
+                </tr>
+                <tr>
+                  <td class="mono">variant × tone × size</td>
+                  <td class="role">
+                    primary→{solid,accent} · secondary→{outline,neutral} ·
+                    danger→{solid,critical}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="mono">retiro getFoto (59 files)</td>
+                  <td class="role">
+                    bridge de valores foto→qe (sin editar call-sites) y luego
+                    codemod jscodeshift
+                  </td>
+                </tr>
+                <tr>
+                  <td class="mono">STATUS.md más semver</td>
+                  <td class="role">
+                    Draft→Experimental→Stable→Deprecated→Removed · Changesets ·
+                    CODEOWNERS
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="sec rise" id="stl">
+            <div class="sh">
+              <span class="sn">§12</span>
+              <h2 class="st">Steal list</h2>
+              <p class="sd">
+                Priorizado por apalancamiento: qué robar primero de los mejores.
+              </p>
+            </div>
+            <div class="steal">
+              <div class="it">
+                <div>
+                  <b>Command palette Cmd+K con pistas kbd</b>
+                  <span class="kbd">⌘K</span>, poder sin chrome; el mayor salto
+                  de «lujo silencioso».
+                  <span class="src">Linear · Raycast</span>
+                </div>
+              </div>
+              <div class="it">
+                <div>
+                  <b>Filas de altura fija con toggle Cómodo/Compacto</b>: el
+                  catálogo escanea como un libro mayor, no un feed.
+                  <span class="src">Linear · Height</span>
+                </div>
+              </div>
+              <div class="it">
+                <div>
+                  <b>Fila detalle clave-valor (SpecRow)</b>: las specs se leen
+                  como un certificado; valor copiable con toast «Copiado».
+                  <span class="src">Stripe</span>
+                </div>
+              </div>
+              <div class="it">
+                <div>
+                  <b>Un accent por región, accent como foreground</b>: enlaces,
+                  puntos y activos son texto esmeralda, no rellenos.
+                  <span class="src">Vercel · Geist</span>
+                </div>
+              </div>
+              <div class="it">
+                <div>
+                  <b>Vaul sheet más Sonner toast</b>: la única superficie con
+                  motion expresivo y sombra ganada; todo lo demás plano.
+                  <span class="src">Emil Kowalski</span>
+                </div>
+              </div>
+              <div class="it">
+                <div>
+                  <b>Estados vacíos con una frase cálida en es-CO</b>: «Tu
+                  bóveda está en silencio».
+                  <span class="src">Things · Arc</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="foot">
+            <div class="it">Un lenguaje. Toda la app.</div>
+            <div class="rt">
+              TIERRA MÄDRE · QUIET EMERALD · SISTEMA · FASE 0
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

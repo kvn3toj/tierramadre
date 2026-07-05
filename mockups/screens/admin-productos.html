@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin · Productos · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/admin.css" />
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage-wide">
+      <div class="cap"><b>Fase 5</b> · Admin · Gestión de productos</div>
+      <div class="wide">
+        <div class="desk">
+          <div class="topbar">
+            <div class="brandm">
+              <svg viewBox="0 0 100 100">
+                <polygon
+                  points="50,10 76,25 76,62 50,90 24,62 24,25"
+                  fill="var(--qe-color-accent-pure)"
+                /></svg
+              ><span class="wordmark">ADMIN</span>
+            </div>
+            <div class="cmdk">
+              <svg class="ic" width="15" height="15" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3-3" /></svg
+              >Buscar…<span class="kbd">⌘K</span>
+            </div>
+            <div class="av">KP</div>
+          </div>
+          <div class="desk-body">
+            <nav class="rail">
+              <div class="rl">Admin</div>
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M4 19V5M4 19h16M8 15l4-5 3 3 5-6" /></svg
+                >Analítica</a
+              >
+              <a class="on"
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M4 5h16v14H4z" />
+                  <path d="M4 9h16" /></svg
+                >Productos</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M12 3l2 5 5 .5-4 3.5 1.5 5L12 14l-4.5 3 1.5-5-4-3.5 5-.5z"
+                  /></svg
+                >Valuación</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"
+                  /></svg
+                >Esmereogénesis</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                  /></svg
+                >Feedback</a
+              >
+              <div class="sig">Un color.<br />Toda la data.</div>
+            </nav>
+            <div class="main">
+              <div class="phead2">
+                <div>
+                  <div class="h">Productos</div>
+                  <div class="sub">128 PIEZAS · 312 EN INVENTARIO</div>
+                </div>
+                <button class="abtn abtn-primary">
+                  <svg
+                    class="ic"
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    style="stroke: var(--qe-color-on-accent)"
+                  >
+                    <path d="M12 5v14M5 12h14" /></svg
+                  >Nueva pieza
+                </button>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  margin-bottom: 14px;
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    height: 32px;
+                    padding: 0 12px;
+                    border: 1px solid var(--qe-color-border);
+                    border-radius: var(--qe-radius-pill);
+                    color: var(--qe-color-subtle);
+                    font-size: 13px;
+                    width: 240px;
+                  "
+                >
+                  <svg class="ic" width="14" height="14" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="m20 20-3-3" /></svg
+                  >Buscar productos…
+                </div>
+                <span
+                  class="qb qb-neutral"
+                  style="height: 32px; padding: 0 12px"
+                  >Origen ▾</span
+                >
+                <span
+                  class="qb qb-neutral"
+                  style="height: 32px; padding: 0 12px"
+                  >Calidad ▾</span
+                >
+                <span
+                  class="qb qb-neutral"
+                  style="height: 32px; padding: 0 12px"
+                  >Estado ▾</span
+                >
+                <span
+                  class="qe-data"
+                  style="
+                    margin-left: auto;
+                    font-size: 12px;
+                    color: var(--qe-color-subtle);
+                  "
+                  >128 resultados</span
+                >
+              </div>
+              <div class="atable">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="width: 36px"></th>
+                      <th>Pieza</th>
+                      <th>Origen</th>
+                      <th class="num">ct</th>
+                      <th>Calidad</th>
+                      <th class="num">Precio</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><input type="checkbox" /></td>
+                      <td class="piecename">Tayrona</td>
+                      <td>Muzo</td>
+                      <td class="num">4,20</td>
+                      <td>VS</td>
+                      <td class="num">US$ 14.500</td>
+                      <td><span class="qb qb-live">Publicada</span></td>
+                    </tr>
+                    <tr>
+                      <td><input type="checkbox" /></td>
+                      <td class="piecename">Reflejo de Muzo</td>
+                      <td>Muzo</td>
+                      <td class="num">3,05</td>
+                      <td>VS</td>
+                      <td class="num">US$ 9.800</td>
+                      <td><span class="qb qb-live">Publicada</span></td>
+                    </tr>
+                    <tr>
+                      <td><input type="checkbox" /></td>
+                      <td class="piecename">Cronos</td>
+                      <td>Chivor</td>
+                      <td class="num">2,14</td>
+                      <td>SI</td>
+                      <td class="num">US$ 5.600</td>
+                      <td><span class="qb qb-neutral">Borrador</span></td>
+                    </tr>
+                    <tr>
+                      <td><input type="checkbox" /></td>
+                      <td class="piecename">Origen Eterno</td>
+                      <td>Chivor</td>
+                      <td class="num">2,68</td>
+                      <td>VS</td>
+                      <td class="num">US$ 7.300</td>
+                      <td><span class="qb qb-live">Publicada</span></td>
+                    </tr>
+                    <tr>
+                      <td><input type="checkbox" /></td>
+                      <td class="piecename">Aria</td>
+                      <td>Muzo</td>
+                      <td class="num">1,82</td>
+                      <td>VVS</td>
+                      <td class="num">US$ 4.200</td>
+                      <td><span class="qb qb-inactive">Vendida</span></td>
+                    </tr>
+                    <tr>
+                      <td><input type="checkbox" /></td>
+                      <td class="piecename">Gratitud Sagrada</td>
+                      <td>Coscuez</td>
+                      <td class="num">1,40</td>
+                      <td>SI</td>
+                      <td class="num">US$ 2.950</td>
+                      <td><span class="qb qb-warn">Vence</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  padding-top: 14px;
+                "
+              >
+                <span
+                  class="qe-data"
+                  style="font-size: 12px; color: var(--qe-color-subtle)"
+                  >Mostrando 1–6 de 128</span
+                ><button class="abtn abtn-ghost">Cargar 25 más</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

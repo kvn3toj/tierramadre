@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Acceso · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/screens.css" />
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage">
+      <div class="cap"><b>Fase 1</b> · App del cliente · Acceso</div>
+      <div class="phone">
+        <div class="statusbar">
+          <span class="time">9:41</span>
+          <div class="notch"></div>
+          <div class="sig">
+            <span class="bat"><i></i></span>
+          </div>
+        </div>
+        <div class="app">
+          <div class="access">
+            <svg class="mark" viewBox="0 0 100 100">
+              <polygon
+                points="50,10 76,25 76,62 50,90 24,62 24,25"
+                fill="var(--qe-color-accent-pure)"
+              />
+              <path
+                d="M24,34 H76 M24,62 H76 M50,10 V90"
+                stroke="var(--qe-color-bg)"
+                stroke-width="3"
+                opacity=".5"
+              />
+            </svg>
+            <div class="brand">TIERRA&nbsp;MÄDRE</div>
+            <h1>Esmeraldas con<br />ADN de Paz</h1>
+            <p>
+              Un catálogo privado de esmeraldas colombianas, acompañado por un
+              embajador.
+            </p>
+            <button class="in">Ingresar</button>
+            <div class="alt">¿Sin cuenta? <a href="#">Solicitar acceso</a></div>
+            <div
+              style="
+                margin-top: 28px;
+                padding-top: 22px;
+                border-top: 1px solid var(--qe-color-hairline);
+                width: 100%;
+                max-width: 280px;
+              "
+            >
+              <button
+                class="cta ghost"
+                style="width: 100%; justify-content: center; height: 46px"
+              >
+                Entrar como invitado
+              </button>
+            </div>
+          </div>
+          <div
+            style="
+              flex: none;
+              text-align: center;
+              padding: 0 0 calc(20px + env(safe-area-inset-bottom));
+            "
+          >
+            <div class="qe-eyebrow">Esmeraldas de Colombia · 2026</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

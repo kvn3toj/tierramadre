@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Embajador · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/screens.css" />
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage">
+      <div class="cap"><b>Fase 3</b> · Embajadores · Perfil público</div>
+      <div class="phone">
+        <div class="statusbar">
+          <span class="time">9:41</span>
+          <div class="notch"></div>
+          <div class="sig">
+            <span class="bat"><i></i></span>
+          </div>
+        </div>
+        <div class="app">
+          <div class="appbar">
+            <svg
+              class="ic"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              style="color: var(--qe-color-muted)"
+            >
+              <path d="M15 19l-7-7 7-7" />
+            </svg>
+            <div class="brandm">
+              <svg viewBox="0 0 100 100" style="width: 15px; height: 15px">
+                <polygon
+                  points="50,10 76,25 76,62 50,90 24,62 24,25"
+                  fill="var(--qe-color-accent-pure)"
+                /></svg
+              ><span class="wordmark">TIERRA&nbsp;MÄDRE</span>
+            </div>
+            <svg
+              class="ic"
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              style="color: var(--qe-color-muted)"
+            >
+              <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
+              <path d="M12 3v13M8 7l4-4 4 4" />
+            </svg>
+          </div>
+          <div class="scroll">
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                padding: 16px 24px 20px;
+              "
+            >
+              <div
+                class="avatar"
+                style="width: 72px; height: 72px; font-size: 28px"
+              >
+                CV
+              </div>
+              <div
+                style="
+                  font-family: var(--qe-font-serif);
+                  font-size: 28px;
+                  font-weight: 500;
+                  margin-top: 14px;
+                "
+              >
+                Camila Vélez
+              </div>
+              <div class="qe-eyebrow" style="margin-top: 6px">
+                Embajadora · Bogotá
+              </div>
+              <p
+                style="
+                  font-size: 14px;
+                  color: var(--qe-color-muted);
+                  max-width: 34ch;
+                  margin: 14px auto 0;
+                  line-height: 1.6;
+                "
+              >
+                Acompaño a coleccionistas a encontrar la esmeralda que resuena
+                con su historia. Cada pieza, con su certificado de origen.
+              </p>
+            </div>
+            <div class="sec-h"><div class="e">Piezas recomendadas</div></div>
+            <div class="grid" style="padding-top: 0">
+              <div class="pcard">
+                <div class="well"><div class="gem tall"></div></div>
+                <div class="name">Tayrona</div>
+                <div class="spec">4,20 ct · MUZO</div>
+              </div>
+              <div class="pcard">
+                <div class="well"><div class="gem round"></div></div>
+                <div class="name">Cronos</div>
+                <div class="spec">2,14 ct · CHIVOR</div>
+              </div>
+              <div class="pcard">
+                <div class="well"><div class="gem"></div></div>
+                <div class="name">Aria</div>
+                <div class="spec">1,82 ct · MUZO</div>
+              </div>
+              <div class="pcard">
+                <div class="well"><div class="gem"></div></div>
+                <div class="name">Gratitud Sagrada</div>
+                <div class="spec">1,40 ct · COSCUEZ</div>
+              </div>
+            </div>
+            <div style="height: 10px"></div>
+          </div>
+          <div class="bottombar">
+            <button class="cta">
+              <svg
+                class="ic"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                style="stroke: var(--qe-color-on-accent)"
+              >
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                /></svg
+              >Escribir a Camila
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

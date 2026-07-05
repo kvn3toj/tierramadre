@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Catálogo · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/screens.css" />
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage">
+      <div class="cap"><b>Fase 1</b> · App del cliente · Catálogo</div>
+      <div class="phone">
+        <div class="statusbar">
+          <span class="time">9:41</span>
+          <div class="notch"></div>
+          <div class="sig">
+            <span class="bat"><i></i></span>
+          </div>
+        </div>
+        <div class="app">
+          <div class="appbar">
+            <div class="brandm">
+              <svg viewBox="0 0 100 100">
+                <polygon
+                  points="50,10 76,25 76,62 50,90 24,62 24,25"
+                  fill="var(--qe-color-accent-pure)"
+                /></svg
+              ><span class="wordmark">TIERRA&nbsp;MÄDRE</span>
+            </div>
+            <div class="acts">
+              <svg class="ic" width="16" height="16" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3-3" /></svg
+              ><svg class="ic" width="16" height="16" viewBox="0 0 24 24">
+                <path d="M3 6h18M3 12h18M3 18h18" />
+              </svg>
+            </div>
+          </div>
+          <div class="phead">
+            <div>
+              <div class="h">Catálogo</div>
+              <div class="sub">48 PIEZAS · ESMERALDAS DE COLOMBIA</div>
+            </div>
+          </div>
+          <div class="otabs">
+            <span class="on">Todas</span><span>Muzo</span><span>Chivor</span
+            ><span>Coscuez</span>
+          </div>
+          <div class="scroll">
+            <div class="grid">
+              <div class="pcard">
+                <div class="well"><div class="gem tall"></div></div>
+                <div class="name">Tayrona</div>
+                <div class="spec">4,20 ct · MUZO</div>
+                <div class="price">US$ 14.500</div>
+              </div>
+              <div class="pcard">
+                <div class="well"><div class="gem"></div></div>
+                <div class="name">Reflejo de Muzo</div>
+                <div class="spec">3,05 ct · MUZO</div>
+                <div class="price">US$ 9.800</div>
+              </div>
+              <div class="pcard">
+                <div class="well"><div class="gem round"></div></div>
+                <div class="name">Cronos</div>
+                <div class="spec">2,14 ct · CHIVOR</div>
+                <div class="price">US$ 5.600</div>
+              </div>
+              <div class="pcard">
+                <div class="well"><div class="gem tall"></div></div>
+                <div class="name">Origen Eterno</div>
+                <div class="spec">2,68 ct · CHIVOR</div>
+                <div class="price">US$ 7.300</div>
+              </div>
+              <div class="pcard">
+                <div class="well"><div class="gem"></div></div>
+                <div class="name">Aria</div>
+                <div class="spec">1,82 ct · MUZO</div>
+                <div class="price">US$ 4.200</div>
+              </div>
+              <div class="pcard">
+                <div class="well"><div class="gem round"></div></div>
+                <div class="name">Gratitud Sagrada</div>
+                <div class="spec">1,40 ct · COSCUEZ</div>
+                <div class="price">US$ 2.950</div>
+              </div>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="t on">
+              <svg class="ic" viewBox="0 0 24 24">
+                <path d="M4 5h16v14H4z" />
+                <path d="M9 9h6v6H9z" /></svg
+              ><span class="lb">Catálogo</span>
+            </div>
+            <div class="t">
+              <svg class="ic" viewBox="0 0 24 24">
+                <path d="M6 3h9l3 3v15H6z" />
+                <path d="M9 12h6M9 16h4" /></svg
+              ><span class="lb">Cotizar</span>
+            </div>
+            <div class="t">
+              <svg class="ic" viewBox="0 0 24 24">
+                <rect x="4" y="5" width="16" height="14" rx="1" />
+                <circle cx="12" cy="12" r="3" /></svg
+              ><span class="lb">Bóveda</span>
+            </div>
+            <div class="t">
+              <svg class="ic" viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M5 20a7 7 0 0 1 14 0" /></svg
+              ><span class="lb">Perfil</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

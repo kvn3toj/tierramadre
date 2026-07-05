@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin · Valuación · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/admin.css" />
+    <style>
+      .val-grid {
+        display: grid;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: 16px;
+        align-items: start;
+      }
+      .vcard {
+        border: 1px solid var(--qe-color-border);
+        border-radius: var(--qe-radius-md);
+        background: var(--qe-color-surface);
+        padding: 18px;
+      }
+      .vcard .vh {
+        font-family: var(--qe-font-serif);
+        font-size: 18px;
+        font-weight: 500;
+        margin-bottom: 14px;
+      }
+      .piecehead {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--qe-color-hairline);
+        margin-bottom: 14px;
+      }
+      .piecehead .gem {
+        width: 44px;
+        height: 44px;
+        flex: none;
+      }
+      .piecehead .nm {
+        font-family: var(--qe-font-serif);
+        font-size: 22px;
+        font-weight: 500;
+        line-height: 1;
+      }
+      .piecehead .mt {
+        font-family: var(--qe-font-mono);
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        color: var(--qe-color-subtle);
+        margin-top: 5px;
+        text-transform: uppercase;
+      }
+      /* price band */
+      .band-wrap {
+        padding: 6px 4px 0;
+      }
+      .band {
+        position: relative;
+        height: 10px;
+        border-radius: 5px;
+        background: var(--qe-color-surface-2);
+        margin: 26px 0 8px;
+      }
+      .band .range {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 32%;
+        right: 26%;
+        border-radius: 5px;
+        background: var(--qe-color-accent-wash);
+        border: 1px solid var(--qe-color-accent);
+      }
+      .band .tick {
+        position: absolute;
+        top: -7px;
+        bottom: -7px;
+        left: 55%;
+        width: 3px;
+        border-radius: 2px;
+        background: var(--qe-color-accent-strong);
+      }
+      .band .tick::after {
+        content: "SUGERIDO";
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: var(--qe-font-mono);
+        font-size: 8.5px;
+        letter-spacing: 0.1em;
+        color: var(--qe-color-accent);
+        white-space: nowrap;
+      }
+      .band-ends {
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--qe-font-mono);
+        font-size: 10.5px;
+        color: var(--qe-color-subtle);
+      }
+      .bignum {
+        font-family: var(--qe-font-mono);
+        font-size: 34px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+        margin: 18px 0 4px;
+      }
+      .bignum small {
+        font-size: 13px;
+        font-weight: 400;
+        color: var(--qe-color-subtle);
+      }
+      /* factor bars */
+      .factor {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 9px 0;
+        border-top: 1px solid var(--qe-color-hairline);
+      }
+      .factor:first-of-type {
+        border-top: 0;
+      }
+      .factor .fn {
+        width: 96px;
+        font-size: 12.5px;
+        color: var(--qe-color-muted);
+        flex: none;
+      }
+      .factor .fb {
+        flex: 1;
+        height: 6px;
+        border-radius: 3px;
+        background: var(--qe-color-surface-2);
+        overflow: hidden;
+      }
+      .factor .fb i {
+        display: block;
+        height: 100%;
+        border-radius: 3px;
+        background: var(--qe-color-accent-strong);
+      }
+      .factor .fv {
+        font-family: var(--qe-font-mono);
+        font-size: 11px;
+        width: 44px;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        color: var(--qe-color-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage-wide">
+      <div class="cap"><b>Fase 5</b> · Admin · Valuación de piezas</div>
+      <div class="wide">
+        <div class="desk">
+          <div class="topbar">
+            <div class="brandm">
+              <svg viewBox="0 0 100 100">
+                <polygon
+                  points="50,10 76,25 76,62 50,90 24,62 24,25"
+                  fill="var(--qe-color-accent-pure)"
+                /></svg
+              ><span class="wordmark">ADMIN</span>
+            </div>
+            <div class="cmdk">
+              <svg class="ic" width="15" height="15" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3-3" /></svg
+              >Buscar…<span class="kbd">⌘K</span>
+            </div>
+            <div class="av">KP</div>
+          </div>
+          <div class="desk-body">
+            <nav class="rail">
+              <div class="rl">Admin</div>
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M4 19V5M4 19h16M8 15l4-5 3 3 5-6" /></svg
+                >Analítica</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M4 5h16v14H4z" />
+                  <path d="M4 9h16" /></svg
+                >Productos</a
+              >
+              <a class="on"
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M12 3l2 5 5 .5-4 3.5 1.5 5L12 14l-4.5 3 1.5-5-4-3.5 5-.5z"
+                  /></svg
+                >Valuación</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"
+                  /></svg
+                >Esmereogénesis</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                  /></svg
+                >Feedback</a
+              >
+              <div class="sig">Un color.<br />Toda la data.</div>
+            </nav>
+            <div class="main">
+              <div class="phead2">
+                <div>
+                  <div class="h">Valuación</div>
+                  <div class="sub">
+                    MOTOR DE PRECIO · 6 FACTORES · 214 COMPARABLES
+                  </div>
+                </div>
+                <button class="abtn abtn-ghost">Historial</button>
+              </div>
+              <div class="val-grid">
+                <div class="vcard">
+                  <div class="piecehead">
+                    <div class="gem"></div>
+                    <div>
+                      <div class="nm">Tayrona</div>
+                      <div class="mt">Nº 32 · Lote F-0611 · Muzo</div>
+                    </div>
+                  </div>
+                  <div class="afield">
+                    <label>Origen</label>
+                    <div class="fake">Muzo, Boyacá</div>
+                  </div>
+                  <div
+                    style="
+                      display: grid;
+                      grid-template-columns: 1fr 1fr;
+                      gap: 12px;
+                    "
+                  >
+                    <div class="afield">
+                      <label>Quilates</label>
+                      <div class="fake mono">4,20 ct</div>
+                    </div>
+                    <div class="afield">
+                      <label>Claridad</label>
+                      <div class="fake">VS</div>
+                    </div>
+                    <div class="afield">
+                      <label>Corte</label>
+                      <div class="fake">Esmeralda</div>
+                    </div>
+                    <div class="afield">
+                      <label>Tratamiento</label>
+                      <div class="fake">Aceite menor</div>
+                    </div>
+                  </div>
+                  <div class="afield" style="margin-bottom: 0">
+                    <label>Saturación de color</label>
+                    <div class="fake">Verde vivo · media-alta</div>
+                    <div class="help">
+                      Según carta Gübelin; verificada contra fotos del lote.
+                    </div>
+                  </div>
+                </div>
+                <div class="vcard">
+                  <div class="vh">Precio sugerido</div>
+                  <div class="bignum">
+                    US$ 14.500 <small>· US$ 3.452 / ct</small>
+                  </div>
+                  <div class="band-wrap">
+                    <div class="band">
+                      <span class="range"></span><span class="tick"></span>
+                    </div>
+                    <div class="band-ends">
+                      <span>US$ 11.200</span><span>US$ 17.800</span>
+                    </div>
+                  </div>
+                  <div style="margin-top: 18px">
+                    <div class="qe-eyebrow" style="margin-bottom: 8px">
+                      Peso de cada factor
+                    </div>
+                    <div class="factor">
+                      <span class="fn">Color</span
+                      ><span class="fb"><i style="width: 88%"></i></span
+                      ><span class="fv">×1,9</span>
+                    </div>
+                    <div class="factor">
+                      <span class="fn">Origen</span
+                      ><span class="fb"><i style="width: 72%"></i></span
+                      ><span class="fv">×1,6</span>
+                    </div>
+                    <div class="factor">
+                      <span class="fn">Claridad</span
+                      ><span class="fb"><i style="width: 58%"></i></span
+                      ><span class="fv">×1,3</span>
+                    </div>
+                    <div class="factor">
+                      <span class="fn">Quilates</span
+                      ><span class="fb"><i style="width: 52%"></i></span
+                      ><span class="fv">×1,2</span>
+                    </div>
+                    <div class="factor">
+                      <span class="fn">Corte</span
+                      ><span class="fb"><i style="width: 34%"></i></span
+                      ><span class="fv">×1,1</span>
+                    </div>
+                    <div class="factor">
+                      <span class="fn">Tratamiento</span
+                      ><span class="fb"><i style="width: 22%"></i></span
+                      ><span class="fv">×0,9</span>
+                    </div>
+                  </div>
+                  <div class="actionbar">
+                    <span class="auto">Recalculado hace 2 min</span>
+                    <button class="abtn abtn-ghost">Exportar PDF</button>
+                    <button class="abtn abtn-primary">Guardar valuación</button>
+                  </div>
+                </div>
+              </div>
+              <div class="asec">
+                <div class="asec-h">
+                  <div class="e">Comparables recientes</div>
+                  <div class="rule"></div>
+                  <span class="more">Ver los 214 →</span>
+                </div>
+                <div class="atable">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Pieza</th>
+                        <th>Origen</th>
+                        <th class="num">ct</th>
+                        <th>Claridad</th>
+                        <th class="num">US$ / ct</th>
+                        <th class="num">Venta</th>
+                        <th>Fecha</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="piecename">Reflejo de Muzo</td>
+                        <td>Muzo</td>
+                        <td class="num">3,05</td>
+                        <td>VS</td>
+                        <td class="num">3.213</td>
+                        <td class="num">US$ 9.800</td>
+                        <td>May 2026</td>
+                      </tr>
+                      <tr class="sel">
+                        <td class="piecename">Corazón Andino</td>
+                        <td>Muzo</td>
+                        <td class="num">4,48</td>
+                        <td>VS</td>
+                        <td class="num">3.504</td>
+                        <td class="num">US$ 15.700</td>
+                        <td>Abr 2026</td>
+                      </tr>
+                      <tr>
+                        <td class="piecename">Origen Eterno</td>
+                        <td>Chivor</td>
+                        <td class="num">2,68</td>
+                        <td>VS</td>
+                        <td class="num">2.724</td>
+                        <td class="num">US$ 7.300</td>
+                        <td>Abr 2026</td>
+                      </tr>
+                      <tr>
+                        <td class="piecename">Aria</td>
+                        <td>Muzo</td>
+                        <td class="num">1,82</td>
+                        <td>VVS</td>
+                        <td class="num">2.308</td>
+                        <td class="num">US$ 4.200</td>
+                        <td>Mar 2026</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

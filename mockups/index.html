@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tierra Mädre · Mockups · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <style>
+      .controls {
+        position: fixed;
+        top: 18px;
+        right: 18px;
+        z-index: var(--qe-z-toast);
+      }
+      .tg {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 14px;
+        border-radius: var(--qe-radius-pill);
+        border: 1px solid var(--qe-color-border);
+        background: var(--qe-color-surface);
+        color: var(--qe-color-text);
+        font-family: var(--qe-font-mono);
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      .wrap {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: clamp(48px, 9vh, 110px) clamp(20px, 6vw, 64px) 96px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 34px;
+      }
+      .wm {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.3em;
+      }
+      .kick {
+        font-family: var(--qe-font-mono);
+        font-size: 11px;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: var(--qe-color-accent);
+        margin-bottom: 18px;
+      }
+      h1 {
+        font-family: var(--qe-font-serif);
+        font-weight: 500;
+        font-size: clamp(3rem, 11vw, 7rem);
+        line-height: 0.88;
+        letter-spacing: -0.025em;
+        margin: 0;
+      }
+      h1 em {
+        font-style: italic;
+        color: var(--qe-color-muted);
+      }
+      .lede {
+        font-size: 1.125rem;
+        line-height: 1.6;
+        color: var(--qe-color-muted);
+        max-width: 56ch;
+        margin-top: 28px;
+      }
+      .rule {
+        height: 1px;
+        background: var(--qe-color-hairline);
+        margin: 56px 0 40px;
+      }
+      .eyebrow {
+        font-family: var(--qe-font-mono);
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--qe-color-subtle);
+        margin-bottom: 20px;
+      }
+      /* open card — the design system entry */
+      .open {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+        border: 1px solid var(--qe-color-border);
+        border-radius: var(--qe-radius-lg);
+        overflow: hidden;
+        transition:
+          border-color var(--qe-dur-base) var(--qe-ease-out),
+          background var(--qe-dur-base) var(--qe-ease-out);
+      }
+      .open:hover {
+        border-color: var(--qe-color-border-strong);
+        background: var(--qe-color-surface);
+      }
+      .open .body {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 24px;
+        padding: 26px 28px;
+      }
+      .open .swatches {
+        display: flex;
+        height: 8px;
+      }
+      .open .swatches i {
+        flex: 1;
+      }
+      .open h2 {
+        font-family: var(--qe-font-serif);
+        font-weight: 500;
+        font-size: 30px;
+        line-height: 1;
+        margin: 0 0 8px;
+      }
+      .open p {
+        margin: 0;
+        color: var(--qe-color-muted);
+        font-size: 13.5px;
+        max-width: 44ch;
+      }
+      .open .go {
+        font-family: var(--qe-font-mono);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        color: var(--qe-color-accent);
+        white-space: nowrap;
+      }
+      /* roadmap */
+      .phase {
+        display: flex;
+        gap: 18px;
+        padding: 16px 0;
+        border-top: 1px solid var(--qe-color-hairline);
+      }
+      .phase .n {
+        font-family: var(--qe-font-mono);
+        font-size: 12px;
+        color: var(--qe-color-accent);
+        flex: none;
+        width: 52px;
+      }
+      .phase .t {
+        font-family: var(--qe-font-serif);
+        font-size: 18px;
+        font-weight: 500;
+        flex: none;
+        width: 210px;
+      }
+      .phase .d {
+        font-size: 12.5px;
+        color: var(--qe-color-muted);
+        flex: 1;
+      }
+      .phase .s {
+        font-family: var(--qe-font-mono);
+        font-size: 9.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .s-now {
+        color: var(--qe-color-accent);
+      }
+      .s-next {
+        color: var(--qe-color-muted);
+      }
+      .s-queue {
+        color: var(--qe-color-subtle);
+      }
+      .foot {
+        margin-top: 60px;
+        padding-top: 24px;
+        border-top: 1px solid var(--qe-color-hairline);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .foot .it {
+        font-family: var(--qe-font-serif);
+        font-style: italic;
+        font-size: 18px;
+        color: var(--qe-color-muted);
+      }
+      .foot .rt {
+        font-family: var(--qe-font-mono);
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        color: var(--qe-color-subtle);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="wrap">
+      <div class="brand">
+        <svg width="34" height="34" viewBox="0 0 100 100">
+          <polygon
+            points="50,10 76,25 76,62 50,90 24,62 24,25"
+            fill="var(--qe-color-accent-pure)"
+          />
+          <path
+            d="M24,34 H76 M24,62 H76 M50,10 V90"
+            stroke="var(--qe-color-bg)"
+            stroke-width="3"
+            opacity=".5"
+          />
+        </svg>
+        <div class="wm">TIERRA&nbsp;MÄDRE</div>
+      </div>
+      <div class="kick">Mockups · propuesta · HTML/CSS</div>
+      <h1>Quiet<br /><em>Emerald</em></h1>
+      <p class="lede">
+        La recreación completa de la app en un solo lenguaje editorial.
+        Empezamos por el sistema; de él nacen las 56 pantallas. Estos son
+        mockups de propuesta en HTML, no el código de la app.
+      </p>
+
+      <div class="rule"></div>
+
+      <div class="eyebrow">Fase 0 · Fundamento</div>
+      <a class="open" href="design-system.html">
+        <div class="swatches">
+          <i style="background: var(--qe-color-bg)"></i
+          ><i style="background: var(--qe-color-surface-2)"></i
+          ><i style="background: var(--qe-color-border)"></i
+          ><i style="background: var(--qe-color-muted)"></i
+          ><i style="background: var(--qe-color-text)"></i
+          ><i style="background: var(--qe-color-accent)"></i
+          ><i style="background: var(--qe-color-accent-pure)"></i>
+        </div>
+        <div class="body">
+          <div>
+            <h2>Sistema de diseño</h2>
+            <p>
+              Tokens, color, tipografía, espacio, motion, componentes, datos,
+              iconografía, voz e ingeniería. Trece secciones, dos modos.
+            </p>
+          </div>
+          <span class="go">Abrir →</span>
+        </div>
+      </a>
+
+      <style>
+        .scr {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 10px;
+        }
+        @media (max-width: 600px) {
+          .scr {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+        .scr a {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          padding: 14px;
+          border: 1px solid var(--qe-color-border);
+          border-radius: var(--qe-radius-md);
+          text-decoration: none;
+          color: var(--qe-color-text);
+          font-family: var(--qe-font-serif);
+          font-size: 18px;
+          font-weight: 500;
+          transition:
+            border-color var(--qe-dur-base) var(--qe-ease-out),
+            background var(--qe-dur-base) var(--qe-ease-out);
+        }
+        .scr a:hover {
+          border-color: var(--qe-color-border-strong);
+          background: var(--qe-color-surface);
+        }
+        .scr a::after {
+          content: "→";
+          font-family: var(--qe-font-mono);
+          font-size: 12px;
+          color: var(--qe-color-accent);
+        }
+      </style>
+      <div class="eyebrow" style="margin-top: 48px">
+        Fase 1 · App del cliente
+      </div>
+      <div class="scr">
+        <a href="screens/inicio.html">Inicio</a>
+        <a href="screens/catalogo.html">Catálogo</a>
+        <a href="screens/busqueda.html">Búsqueda</a>
+        <a href="screens/ficha.html">Ficha</a>
+        <a href="screens/boveda.html">Bóveda</a>
+        <a href="screens/perfil.html">Perfil</a>
+        <a href="screens/cotizacion.html">Cotización</a>
+        <a href="screens/acceso.html">Acceso</a>
+      </div>
+
+      <div class="eyebrow" style="margin-top: 48px">
+        Fase 2 · Cotizaciones &amp; cuentas
+      </div>
+      <div class="scr">
+        <a href="screens/cotizar.html">Cotizar</a>
+        <a href="screens/recibos.html">Recibos</a>
+        <a href="screens/simulador.html">Simulador</a>
+        <a href="screens/solicitudes.html">Solicitudes</a>
+      </div>
+
+      <div class="eyebrow" style="margin-top: 48px">Fase 3 · Embajadores</div>
+      <div class="scr">
+        <a href="screens/embajador-perfil.html">Perfil</a>
+        <a href="screens/embajador-pieza.html">Pieza</a>
+        <a href="screens/invitacion.html">Invitación</a>
+      </div>
+
+      <div class="eyebrow" style="margin-top: 48px">
+        Fase 4 · Fotosíntesis (escritorio)
+      </div>
+      <div class="scr">
+        <a href="screens/fotosintesis-tablero.html">Tablero</a>
+        <a href="screens/fotosintesis-lotes.html">Lotes</a>
+        <a href="screens/fotosintesis-captura.html">Captura</a>
+        <a href="screens/fotosintesis-venta.html">Venta</a>
+        <a href="screens/fotosintesis-certificado.html">Certificado</a>
+      </div>
+
+      <div class="eyebrow" style="margin-top: 48px">
+        Fase 5 · Provider &amp; admin (escritorio)
+      </div>
+      <div class="scr">
+        <a href="screens/admin-analytics.html">Analítica</a>
+        <a href="screens/admin-productos.html">Productos</a>
+        <a href="screens/admin-valuacion.html">Valuación</a>
+        <a href="screens/admin-esmereogenesis.html">Esmereogénesis</a>
+        <a href="screens/admin-feedback.html">Feedback</a>
+        <a href="screens/proveedor.html">Proveedor</a>
+      </div>
+
+      <div class="eyebrow" style="margin-top: 48px">
+        Programa · mockups primero, luego migración
+      </div>
+      <div>
+        <div class="phase">
+          <span class="n">Fase 0</span><span class="t">Sistema de diseño</span
+          ><span class="d">El lenguaje unificado del que todo hereda.</span
+          ><span class="s s-now">En revisión</span>
+        </div>
+        <div class="phase">
+          <span class="n">Fase 1</span><span class="t">App del cliente</span
+          ><span class="d"
+            >Inicio · Catálogo · Búsqueda · Ficha · Bóveda · Perfil · Acceso ·
+            Cotización.</span
+          ><span class="s s-now">En revisión</span>
+        </div>
+        <div class="phase">
+          <span class="n">Fase 2</span
+          ><span class="t">Cotizaciones &amp; cuentas</span
+          ><span class="d"
+            >Cotización · proveedor · recibos · simulador · solicitudes.</span
+          ><span class="s s-now">En revisión</span>
+        </div>
+        <div class="phase">
+          <span class="n">Fase 3</span><span class="t">Embajadores</span
+          ><span class="d">Perfil, pieza, invitado.</span
+          ><span class="s s-now">En revisión</span>
+        </div>
+        <div class="phase">
+          <span class="n">Fase 4</span><span class="t">Fotosíntesis</span
+          ><span class="d"
+            >Tablero de operaciones, lotes, captura, cierre, ventas,
+            certificados.</span
+          ><span class="s s-now">En revisión</span>
+        </div>
+        <div class="phase">
+          <span class="n">Fase 5</span
+          ><span class="t">Provider &amp; admin</span
+          ><span class="d"
+            >Portal de proveedor, analítica, productos, valuación,
+            esmereogénesis, feedback.</span
+          ><span class="s s-now">En revisión</span>
+        </div>
+      </div>
+
+      <div class="foot">
+        <div class="it">Un lenguaje. Toda la app.</div>
+        <div class="rt">TIERRA MÄDRE · QUIET EMERALD · 2026</div>
+      </div>
+    </div>
+  </body>
+</html>

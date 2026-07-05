@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Simulador · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/screens.css" />
+    <style>
+      .seg2 {
+        display: flex;
+        border: 1px solid var(--qe-color-border);
+        border-radius: var(--qe-radius-sm);
+        overflow: hidden;
+        height: 44px;
+      }
+      .seg2 button {
+        flex: 1;
+        border: 0;
+        background: transparent;
+        color: var(--qe-color-muted);
+        font: 600 13px var(--qe-font-ui);
+        cursor: pointer;
+        border-right: 1px solid var(--qe-color-hairline);
+      }
+      .seg2 button:last-child {
+        border-right: 0;
+      }
+      .seg2 button.on {
+        background: var(--qe-chip-active-bg);
+        color: var(--qe-color-accent);
+      }
+    </style>
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage">
+      <div class="cap"><b>Fase 2</b> · Cuentas · Simulador de precio</div>
+      <div class="phone">
+        <div class="statusbar">
+          <span class="time">9:41</span>
+          <div class="notch"></div>
+          <div class="sig">
+            <span class="bat"><i></i></span>
+          </div>
+        </div>
+        <div class="app">
+          <div class="appbar">
+            <div style="display: flex; align-items: center; gap: 12px">
+              <svg
+                class="ic"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                style="color: var(--qe-color-muted)"
+              >
+                <path d="M15 19l-7-7 7-7" /></svg
+              ><span class="ttl">Simulador</span>
+            </div>
+          </div>
+          <div class="scroll gut" style="padding-top: 6px">
+            <div
+              style="
+                display: flex;
+                gap: 14px;
+                align-items: center;
+                padding: 8px 0 18px;
+              "
+            >
+              <div
+                style="
+                  width: 88px;
+                  height: 88px;
+                  flex: none;
+                  border-radius: var(--qe-radius-xs);
+                  background: var(--qe-card-well-bg);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  overflow: hidden;
+                "
+              >
+                <div class="gem" style="width: 56%; height: 52%"></div>
+              </div>
+              <div>
+                <div
+                  style="
+                    font-family: var(--qe-font-serif);
+                    font-size: 22px;
+                    font-weight: 500;
+                  "
+                >
+                  Tayrona
+                </div>
+                <div
+                  class="qe-data"
+                  style="
+                    font-size: 10px;
+                    color: var(--qe-color-subtle);
+                    margin-top: 4px;
+                  "
+                >
+                  4,20 ct · MUZO
+                </div>
+                <div
+                  class="qe-data"
+                  style="
+                    font-size: 12px;
+                    color: var(--qe-color-muted);
+                    margin-top: 6px;
+                  "
+                >
+                  Base · US$ 4.833
+                </div>
+              </div>
+            </div>
+            <div class="qe-eyebrow" style="margin-bottom: 10px">
+              Multiplicador
+            </div>
+            <div class="seg2">
+              <button>×2</button><button class="on">×3</button
+              ><button>×4</button>
+            </div>
+            <div style="text-align: center; padding: 34px 0 8px">
+              <div class="qe-eyebrow" style="margin-bottom: 10px">
+                Precio sugerido
+              </div>
+              <div
+                class="qe-data"
+                style="
+                  font-size: 44px;
+                  font-weight: 600;
+                  letter-spacing: -0.5px;
+                "
+              >
+                US$ 14.500
+              </div>
+              <div
+                class="qe-data"
+                style="
+                  font-size: 11px;
+                  color: var(--qe-color-subtle);
+                  margin-top: 8px;
+                "
+              >
+                COP 58.700.000 · TRM 4.050
+              </div>
+            </div>
+            <div style="margin-top: 18px">
+              <div class="specrow">
+                <span class="k">Base</span
+                ><span class="v qe-data">US$ 4.833</span>
+              </div>
+              <div class="specrow">
+                <span class="k">Multiplicador</span
+                ><span class="v qe-data">×3</span>
+              </div>
+              <div class="specrow">
+                <span class="k">Sugerido</span
+                ><span class="v qe-data">US$ 14.500</span>
+              </div>
+            </div>
+            <div
+              class="note"
+              style="
+                color: var(--qe-color-subtle);
+                font-size: 12px;
+                margin-top: 16px;
+              "
+            >
+              Precio privado, visible solo para embajadores.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

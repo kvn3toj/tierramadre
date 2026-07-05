@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin · Feedback · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/admin.css" />
+    <style>
+      .fb-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.1fr;
+        gap: 16px;
+        align-items: start;
+      }
+      .fitem {
+        border: 1px solid var(--qe-color-border);
+        border-radius: var(--qe-radius-md);
+        background: var(--qe-color-surface);
+        padding: 13px 16px;
+        margin-bottom: 10px;
+        cursor: pointer;
+      }
+      .fitem:hover {
+        border-color: var(--qe-color-border-strong);
+      }
+      .fitem.sel {
+        border-color: var(--qe-color-accent);
+        background: var(--qe-color-accent-wash);
+      }
+      .fitem .fh {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .fitem .ft {
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .fitem .fm {
+        font-family: var(--qe-font-mono);
+        font-size: 10px;
+        letter-spacing: 0.05em;
+        color: var(--qe-color-subtle);
+        margin-top: 5px;
+        text-transform: uppercase;
+      }
+      .detail {
+        border: 1px solid var(--qe-color-border);
+        border-radius: var(--qe-radius-md);
+        background: var(--qe-color-surface);
+        padding: 18px;
+      }
+      .detail .dh {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--qe-color-hairline);
+        margin-bottom: 14px;
+      }
+      .detail .dt {
+        font-family: var(--qe-font-serif);
+        font-size: 20px;
+        font-weight: 500;
+      }
+      .quote {
+        font-family: var(--qe-font-serif);
+        font-size: 17px;
+        font-style: italic;
+        line-height: 1.5;
+        color: var(--qe-color-text);
+        border-left: 2px solid var(--qe-color-accent);
+        padding-left: 14px;
+        margin: 0 0 16px;
+      }
+      .meta-row {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+      .meta-row .m .k {
+        font-family: var(--qe-font-mono);
+        font-size: 9px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--qe-color-subtle);
+      }
+      .meta-row .m .v {
+        font-size: 13px;
+        margin-top: 3px;
+      }
+      .note {
+        background: var(--qe-color-surface-2);
+        border-radius: var(--qe-radius-sm);
+        padding: 12px 14px;
+        font-size: 13px;
+        color: var(--qe-color-muted);
+      }
+      .note b {
+        color: var(--qe-color-text);
+      }
+    </style>
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage-wide">
+      <div class="cap"><b>Fase 5</b> · Admin · Feedback</div>
+      <div class="wide">
+        <div class="desk">
+          <div class="topbar">
+            <div class="brandm">
+              <svg viewBox="0 0 100 100">
+                <polygon
+                  points="50,10 76,25 76,62 50,90 24,62 24,25"
+                  fill="var(--qe-color-accent-pure)"
+                /></svg
+              ><span class="wordmark">ADMIN</span>
+            </div>
+            <div class="cmdk">
+              <svg class="ic" width="15" height="15" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3-3" /></svg
+              >Buscar…<span class="kbd">⌘K</span>
+            </div>
+            <div class="av">KP</div>
+          </div>
+          <div class="desk-body">
+            <nav class="rail">
+              <div class="rl">Admin</div>
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M4 19V5M4 19h16M8 15l4-5 3 3 5-6" /></svg
+                >Analítica</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M4 5h16v14H4z" />
+                  <path d="M4 9h16" /></svg
+                >Productos</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M12 3l2 5 5 .5-4 3.5 1.5 5L12 14l-4.5 3 1.5-5-4-3.5 5-.5z"
+                  /></svg
+                >Valuación</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"
+                  /></svg
+                >Esmereogénesis</a
+              >
+              <a class="on"
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                  /></svg
+                >Feedback</a
+              >
+              <div class="sig">Un color.<br />Toda la data.</div>
+            </nav>
+            <div class="main">
+              <div class="phead2">
+                <div>
+                  <div class="h">Feedback</div>
+                  <div class="sub">18 ENTRADAS · 4 SIN RESOLVER</div>
+                </div>
+                <button class="abtn abtn-ghost">Exportar CSV</button>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  margin-bottom: 14px;
+                "
+              >
+                <span class="qb qb-live" style="height: 32px; padding: 0 12px"
+                  >Todos</span
+                >
+                <span
+                  class="qb qb-neutral"
+                  style="height: 32px; padding: 0 12px"
+                  >Errores</span
+                >
+                <span
+                  class="qb qb-neutral"
+                  style="height: 32px; padding: 0 12px"
+                  >Ideas</span
+                >
+                <span
+                  class="qb qb-neutral"
+                  style="height: 32px; padding: 0 12px"
+                  >Elogios</span
+                >
+                <span
+                  class="qe-data"
+                  style="
+                    margin-left: auto;
+                    font-size: 12px;
+                    color: var(--qe-color-subtle);
+                  "
+                  >18 resultados</span
+                >
+              </div>
+              <div class="fb-grid">
+                <div>
+                  <div class="fitem sel">
+                    <div class="fh">
+                      <span class="ft">La bóveda tarda en abrir en iPhone</span>
+                      <span class="qb qb-warn">Sin resolver</span>
+                    </div>
+                    <div class="fm">Error · Camila V. · hace 2 h</div>
+                  </div>
+                  <div class="fitem">
+                    <div class="fh">
+                      <span class="ft">Quisiera comparar dos esmeraldas</span>
+                      <span class="qb qb-neutral">En curso</span>
+                    </div>
+                    <div class="fm">Idea · Santiago M. · ayer</div>
+                  </div>
+                  <div class="fitem">
+                    <div class="fh">
+                      <span class="ft">El certificado quedó hermoso</span>
+                      <span class="qb qb-live">Elogio</span>
+                    </div>
+                    <div class="fm">Elogio · Valentina R. · hace 3 días</div>
+                  </div>
+                  <div class="fitem">
+                    <div class="fh">
+                      <span class="ft">Filtro por precio no limpia</span>
+                      <span class="qb qb-inactive">Resuelto</span>
+                    </div>
+                    <div class="fm">Error · Andrés T. · la semana pasada</div>
+                  </div>
+                </div>
+                <div class="detail">
+                  <div class="dh">
+                    <span class="dt">La bóveda tarda en abrir en iPhone</span>
+                    <span class="qb qb-warn">Sin resolver</span>
+                  </div>
+                  <p class="quote">
+                    “Cuando abro mi bóveda desde el celular la animación se
+                    congela unos segundos antes de mostrar mis piezas. En el
+                    computador va perfecta.”
+                  </p>
+                  <div class="meta-row">
+                    <div class="m">
+                      <div class="k">Usuaria</div>
+                      <div class="v">Camila V. · embajadora</div>
+                    </div>
+                    <div class="m">
+                      <div class="k">Dispositivo</div>
+                      <div class="v">iPhone 14 · Safari</div>
+                    </div>
+                    <div class="m">
+                      <div class="k">Pantalla</div>
+                      <div class="v">Bóveda</div>
+                    </div>
+                    <div class="m">
+                      <div class="k">Recibido</div>
+                      <div class="v">Hoy · 09:14</div>
+                    </div>
+                  </div>
+                  <div class="note">
+                    <b>Nota interna:</b> reproducido en Safari iOS 19; parece el
+                    takeover cinematográfico sin
+                    <span class="qe-data">poster</span>. Asignado a ARIA.
+                  </div>
+                  <div class="actionbar">
+                    <span class="auto">ID FB-2026-0611</span>
+                    <button class="abtn abtn-ghost">Responder</button>
+                    <button class="abtn abtn-primary">Marcar resuelto</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

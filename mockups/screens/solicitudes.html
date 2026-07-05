@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Solicitudes · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/screens.css" />
+    <style>
+      .srow {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 15px 16px;
+        border-top: 1px solid var(--qe-color-hairline);
+      }
+      .srow .th {
+        width: 44px;
+        height: 44px;
+        flex: none;
+        border-radius: var(--qe-radius-xs);
+        background: var(--qe-card-well-bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .srow .th .gem {
+        width: 60%;
+        height: 52%;
+      }
+      .srow .nm {
+        font-family: var(--qe-font-serif);
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 1;
+      }
+      .srow .mt {
+        font-family: var(--qe-font-mono);
+        font-size: 9.5px;
+        color: var(--qe-color-subtle);
+        margin-top: 3px;
+      }
+      .qb {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        height: 20px;
+        padding: 0 8px;
+        border-radius: 6px;
+        font-family: var(--qe-font-mono);
+        font-size: 9.5px;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .qb-live {
+        color: var(--qe-color-accent);
+        background: color-mix(in srgb, var(--qe-color-accent) 10%, transparent);
+      }
+      .qb-neutral {
+        color: var(--qe-color-muted);
+        background: var(--qe-color-surface-2);
+      }
+      .qb-inactive {
+        color: var(--qe-color-subtle);
+        border: 1px solid var(--qe-color-border);
+      }
+    </style>
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage">
+      <div class="cap"><b>Fase 2</b> · Cuentas · Mis solicitudes</div>
+      <div class="phone">
+        <div class="statusbar">
+          <span class="time">9:41</span>
+          <div class="notch"></div>
+          <div class="sig">
+            <span class="bat"><i></i></span>
+          </div>
+        </div>
+        <div class="app">
+          <div class="appbar">
+            <span class="ttl">Solicitudes</span
+            ><span class="code">3 ACTIVAS</span>
+          </div>
+          <div class="scroll">
+            <div class="srow">
+              <div class="th"><div class="gem tall"></div></div>
+              <div style="flex: 1">
+                <div class="nm">Tayrona</div>
+                <div class="mt">SOLICITADA · 30 JUN</div>
+              </div>
+              <span class="qb qb-live">Respondida</span>
+            </div>
+            <div class="srow">
+              <div class="th"><div class="gem round"></div></div>
+              <div style="flex: 1">
+                <div class="nm">Esmeralda a medida</div>
+                <div class="mt">SOLICITADA · 28 JUN</div>
+              </div>
+              <span class="qb qb-neutral">En revisión</span>
+            </div>
+            <div class="srow">
+              <div class="th"><div class="gem"></div></div>
+              <div style="flex: 1">
+                <div class="nm">Cronos</div>
+                <div class="mt">SOLICITADA · 22 JUN</div>
+              </div>
+              <span class="qb qb-inactive">Cerrada</span>
+            </div>
+            <div class="empty" style="margin-top: 8px">
+              <div class="g">
+                <svg class="ic" width="30" height="30" viewBox="0 0 24 24">
+                  <path d="M6 3h9l3 3v15H6z" />
+                  <path d="M9 12h6M9 16h4" />
+                </svg>
+              </div>
+              <div class="sub" style="margin-top: 4px">
+                Cada solicitud la revisa un embajador y te responde en menos de
+                24 horas.
+              </div>
+            </div>
+          </div>
+          <div class="bottombar">
+            <button class="cta">
+              <svg
+                class="ic"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                style="stroke: var(--qe-color-on-accent)"
+              >
+                <path d="M12 5v14M5 12h14" /></svg
+              >Nueva solicitud
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

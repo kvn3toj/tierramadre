@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Búsqueda · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/screens.css" />
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage">
+      <div class="cap">
+        <b>Fase 1</b> · App del cliente · Búsqueda · hoja de filtros
+      </div>
+      <div class="phone">
+        <div class="statusbar">
+          <span class="time">9:41</span>
+          <div class="notch"></div>
+          <div class="sig">
+            <span class="bat"><i></i></span>
+          </div>
+        </div>
+        <div class="app">
+          <!-- catalog faintly behind -->
+          <div class="appbar">
+            <div class="brandm">
+              <svg viewBox="0 0 100 100" style="width: 17px; height: 17px">
+                <polygon
+                  points="50,10 76,25 76,62 50,90 24,62 24,25"
+                  fill="var(--qe-color-accent-pure)"
+                /></svg
+              ><span class="wordmark">TIERRA&nbsp;MÄDRE</span>
+            </div>
+          </div>
+          <div class="searchbar">
+            <svg class="ic" width="16" height="16" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3-3" /></svg
+            >Buscar esmeraldas…
+          </div>
+          <div class="grid" style="opacity: 0.5">
+            <div class="pcard">
+              <div class="well"><div class="gem tall"></div></div>
+            </div>
+            <div class="pcard">
+              <div class="well"><div class="gem"></div></div>
+            </div>
+          </div>
+
+          <!-- scrim + sheet -->
+          <div class="sheet-scrim"></div>
+          <div class="sheet">
+            <div class="grab"></div>
+            <div
+              style="
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+              "
+            >
+              <div
+                style="
+                  font-family: var(--qe-font-serif);
+                  font-size: 22px;
+                  font-weight: 500;
+                "
+              >
+                Filtrar
+              </div>
+              <span
+                style="
+                  font-size: 12px;
+                  color: var(--qe-color-accent);
+                  font-weight: 500;
+                "
+                >Limpiar</span
+              >
+            </div>
+            <div class="filt">
+              <div class="fh">Origen</div>
+              <div class="seg">
+                <span class="chip sel">Muzo</span
+                ><span class="chip">Chivor</span
+                ><span class="chip">Coscuez</span>
+              </div>
+            </div>
+            <div class="filt">
+              <div class="fh">Talla</div>
+              <div class="seg">
+                <span class="chip sel">Esmeralda</span
+                ><span class="chip">Óvalo</span><span class="chip">Pera</span
+                ><span class="chip">Cojín</span>
+              </div>
+            </div>
+            <div class="filt">
+              <div class="fh">Tono</div>
+              <div class="tone">
+                <i style="background: #0f6b4f"></i
+                ><i class="on" style="background: #1c8f68"></i
+                ><i style="background: #38b98c"></i
+                ><i style="background: #7fd8b8"></i
+                ><i style="background: #b9e8d5"></i>
+              </div>
+            </div>
+            <div class="filt">
+              <div class="fh">Quilates · 2,0 – 5,0 ct</div>
+              <div class="slider">
+                <div class="fill"></div>
+                <div class="knob" style="left: 12%"></div>
+                <div class="knob" style="left: 66%"></div>
+              </div>
+            </div>
+            <button class="cta" style="width: 100%; margin-top: 10px">
+              Ver 24 resultados
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

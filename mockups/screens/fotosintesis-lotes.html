@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fotosíntesis · Lotes · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/admin.css" />
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage-wide">
+      <div class="cap"><b>Fase 4</b> · Fotosíntesis · Lotes</div>
+      <div class="wide">
+        <div class="desk">
+          <div class="topbar">
+            <div class="brandm">
+              <svg viewBox="0 0 100 100">
+                <polygon
+                  points="50,10 76,25 76,62 50,90 24,62 24,25"
+                  fill="var(--qe-color-accent-pure)"
+                /></svg
+              ><span class="wordmark">FOTOSÍNTESIS</span>
+            </div>
+            <div class="cmdk">
+              <svg class="ic" width="15" height="15" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3-3" /></svg
+              >Buscar piezas, lotes, ventas…<span class="kbd">⌘K</span>
+            </div>
+            <div class="av">KP</div>
+          </div>
+          <div class="desk-body">
+            <nav class="rail">
+              <div class="rl">Operación</div>
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M4 5h7v7H4zM13 5h7v4h-7zM13 13h7v6h-7zM4 16h7v3H4z"
+                  /></svg
+                >Tablero</a
+              >
+              <a class="on"
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M12 3l8 4-8 4-8-4zM4 12l8 4 8-4M4 17l8 4 8-4" /></svg
+                >Lotes</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M6 3h9l3 3v15H6z" />
+                  <path d="M9 12h6M9 16h4" /></svg
+                >Ventas</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <circle cx="9" cy="8" r="3" />
+                  <path d="M4 20a5 5 0 0 1 10 0" />
+                  <path d="M16 6a3 3 0 0 1 0 6" /></svg
+                >Directorio</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7z" />
+                  <path d="M9 12l2 2 4-4" /></svg
+                >Certificados</a
+              >
+              <div class="sig">Cada pieza,<br />su historia.</div>
+            </nav>
+            <div class="main">
+              <div class="phead2">
+                <div>
+                  <div class="h">Lotes</div>
+                  <div class="sub">4 ABIERTOS · 22 CERRADOS</div>
+                </div>
+                <button class="abtn abtn-primary">
+                  <svg
+                    class="ic"
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    style="stroke: var(--qe-color-on-accent)"
+                  >
+                    <path d="M12 5v14M5 12h14" /></svg
+                  >Registrar compra
+                </button>
+              </div>
+              <div style="display: flex; gap: 8px; margin-bottom: 16px">
+                <span class="qb qb-live" style="height: 30px; padding: 0 12px"
+                  >Abiertos</span
+                ><span
+                  class="qb qb-neutral"
+                  style="height: 30px; padding: 0 12px"
+                  >Todos</span
+                ><span
+                  class="qb qb-neutral"
+                  style="height: 30px; padding: 0 12px"
+                  >Cerrados</span
+                >
+              </div>
+              <div class="atable">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Lote</th>
+                      <th>Mina</th>
+                      <th class="num">Piezas</th>
+                      <th class="num">Capturadas</th>
+                      <th class="num">Valor</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="sel">
+                      <td
+                        style="
+                          font-family: var(--qe-font-mono);
+                          font-weight: 500;
+                        "
+                      >
+                        A-12
+                      </td>
+                      <td>Muzo</td>
+                      <td class="num">6</td>
+                      <td class="num">0 / 6</td>
+                      <td class="num">US$ 8.900</td>
+                      <td><span class="qb qb-warn">Captura</span></td>
+                    </tr>
+                    <tr>
+                      <td
+                        style="
+                          font-family: var(--qe-font-mono);
+                          font-weight: 500;
+                        "
+                      >
+                        A-14
+                      </td>
+                      <td>Muzo</td>
+                      <td class="num">9</td>
+                      <td class="num">— / 9</td>
+                      <td class="num">US$ 12.400</td>
+                      <td><span class="qb qb-neutral">Compra</span></td>
+                    </tr>
+                    <tr>
+                      <td
+                        style="
+                          font-family: var(--qe-font-mono);
+                          font-weight: 500;
+                        "
+                      >
+                        A-09
+                      </td>
+                      <td>Chivor</td>
+                      <td class="num">4</td>
+                      <td class="num">4 / 4</td>
+                      <td class="num">US$ 5.600</td>
+                      <td><span class="qb qb-neutral">Cierre</span></td>
+                    </tr>
+                    <tr>
+                      <td
+                        style="
+                          font-family: var(--qe-font-mono);
+                          font-weight: 500;
+                        "
+                      >
+                        A-07
+                      </td>
+                      <td>Coscuez</td>
+                      <td class="num">12</td>
+                      <td class="num">12 / 12</td>
+                      <td class="num">US$ 6.300</td>
+                      <td><span class="qb qb-live">Publicado</span></td>
+                    </tr>
+                    <tr>
+                      <td
+                        style="
+                          font-family: var(--qe-font-mono);
+                          font-weight: 500;
+                        "
+                      >
+                        A-03
+                      </td>
+                      <td>Muzo</td>
+                      <td class="num">7</td>
+                      <td class="num">7 / 7</td>
+                      <td class="num">US$ 18.700</td>
+                      <td><span class="qb qb-inactive">Cerrado</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  padding-top: 14px;
+                "
+              >
+                <span
+                  class="qe-data"
+                  style="font-size: 12px; color: var(--qe-color-subtle)"
+                  >Mostrando 1–5 de 26</span
+                ><button class="abtn abtn-ghost">Cargar 25 más</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

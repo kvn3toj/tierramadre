@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin · Esmereogénesis · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/admin.css" />
+    <style>
+      .esm-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 16px;
+        align-items: start;
+      }
+      .esm-grid .atable td:first-child,
+      .esm-grid .atable .piecename {
+        white-space: nowrap;
+      }
+      .progress {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 150px;
+      }
+      .progress .pb {
+        flex: 1;
+        height: 6px;
+        border-radius: 3px;
+        background: var(--qe-color-surface-2);
+        overflow: hidden;
+      }
+      .progress .pb i {
+        display: block;
+        height: 100%;
+        border-radius: 3px;
+        background: var(--qe-color-accent-strong);
+      }
+      .progress .pv {
+        font-family: var(--qe-font-mono);
+        font-size: 11px;
+        width: 36px;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        color: var(--qe-color-muted);
+      }
+      .streak {
+        font-family: var(--qe-font-mono);
+        font-size: 11px;
+        color: var(--qe-color-accent);
+        white-space: nowrap;
+      }
+      .streak.off {
+        color: var(--qe-color-subtle);
+      }
+      /* eclosión agenda card */
+      .ecard {
+        border: 1px solid var(--qe-color-border);
+        border-radius: var(--qe-radius-md);
+        background: var(--qe-color-surface);
+        padding: 18px;
+      }
+      .ecard .eh {
+        font-family: var(--qe-font-serif);
+        font-size: 18px;
+        font-weight: 500;
+        margin-bottom: 4px;
+      }
+      .ecard .es {
+        font-size: 12.5px;
+        color: var(--qe-color-muted);
+        margin-bottom: 14px;
+      }
+      .erow {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 0;
+        border-top: 1px solid var(--qe-color-hairline);
+      }
+      .erow .gem {
+        width: 26px;
+        height: 26px;
+        flex: none;
+      }
+      .erow .nm {
+        font-family: var(--qe-font-serif);
+        font-size: 15.5px;
+        font-weight: 500;
+        line-height: 1.1;
+      }
+      .erow .who {
+        font-family: var(--qe-font-mono);
+        font-size: 10px;
+        color: var(--qe-color-subtle);
+        margin-top: 3px;
+      }
+      .erow .when {
+        margin-left: auto;
+        font-family: var(--qe-font-mono);
+        font-size: 10.5px;
+        color: var(--qe-color-accent);
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage-wide">
+      <div class="cap">
+        <b>Fase 5</b> · Admin · Esmereogénesis (ahorro con propósito)
+      </div>
+      <div class="wide">
+        <div class="desk">
+          <div class="topbar">
+            <div class="brandm">
+              <svg viewBox="0 0 100 100">
+                <polygon
+                  points="50,10 76,25 76,62 50,90 24,62 24,25"
+                  fill="var(--qe-color-accent-pure)"
+                /></svg
+              ><span class="wordmark">ADMIN</span>
+            </div>
+            <div class="cmdk">
+              <svg class="ic" width="15" height="15" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3-3" /></svg
+              >Buscar…<span class="kbd">⌘K</span>
+            </div>
+            <div class="av">KP</div>
+          </div>
+          <div class="desk-body">
+            <nav class="rail">
+              <div class="rl">Admin</div>
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M4 19V5M4 19h16M8 15l4-5 3 3 5-6" /></svg
+                >Analítica</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M4 5h16v14H4z" />
+                  <path d="M4 9h16" /></svg
+                >Productos</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M12 3l2 5 5 .5-4 3.5 1.5 5L12 14l-4.5 3 1.5-5-4-3.5 5-.5z"
+                  /></svg
+                >Valuación</a
+              >
+              <a class="on"
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"
+                  /></svg
+                >Esmereogénesis</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path
+                    d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                  /></svg
+                >Feedback</a
+              >
+              <div class="sig">Un color.<br />Toda la data.</div>
+            </nav>
+            <div class="main">
+              <div class="phead2">
+                <div>
+                  <div class="h">Esmereogénesis</div>
+                  <div class="sub">
+                    AHORRO CON PROPÓSITO · NO ES DEUDA, ES VIVERO
+                  </div>
+                </div>
+                <button class="abtn abtn-ghost">Últimos 90 días ▾</button>
+              </div>
+              <div class="kpirib">
+                <div class="astat">
+                  <div class="lbl">Planes activos</div>
+                  <div class="num">47</div>
+                  <div class="delta up">▲ +6 este mes</div>
+                </div>
+                <div class="astat">
+                  <div class="lbl">Ahorro total</div>
+                  <div class="num">US$ 86.400</div>
+                  <div class="delta up">▲ +11,2%</div>
+                </div>
+                <div class="astat">
+                  <div class="lbl">Racha promedio</div>
+                  <div class="num">5,3 sem</div>
+                  <div class="delta flat">— estable</div>
+                </div>
+                <div class="astat">
+                  <div class="lbl">Eclosiones</div>
+                  <div class="num">12</div>
+                  <div class="delta up">▲ 3 este mes</div>
+                </div>
+              </div>
+              <div class="esm-grid">
+                <div>
+                  <div class="atable">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Cliente</th>
+                          <th>Pieza</th>
+                          <th>Progreso</th>
+                          <th>Racha</th>
+                          <th>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>Valentina R.</td>
+                          <td class="piecename">Tayrona</td>
+                          <td>
+                            <div class="progress">
+                              <span class="pb"><i style="width: 92%"></i></span
+                              ><span class="pv">92%</span>
+                            </div>
+                          </td>
+                          <td><span class="streak">◆ 14 sem</span></td>
+                          <td>
+                            <span class="qb qb-live">Por eclosionar</span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Santiago M.</td>
+                          <td class="piecename">Cronos</td>
+                          <td>
+                            <div class="progress">
+                              <span class="pb"><i style="width: 61%"></i></span
+                              ><span class="pv">61%</span>
+                            </div>
+                          </td>
+                          <td><span class="streak">◆ 8 sem</span></td>
+                          <td><span class="qb qb-live">Floreciendo</span></td>
+                        </tr>
+                        <tr>
+                          <td>Laura C.</td>
+                          <td class="piecename">Origen Eterno</td>
+                          <td>
+                            <div class="progress">
+                              <span class="pb"><i style="width: 44%"></i></span
+                              ><span class="pv">44%</span>
+                            </div>
+                          </td>
+                          <td><span class="streak off">◇ 0 sem</span></td>
+                          <td>
+                            <span class="qb qb-warn">Sin riego 3 sem</span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Andrés T.</td>
+                          <td class="piecename">Gratitud Sagrada</td>
+                          <td>
+                            <div class="progress">
+                              <span class="pb"><i style="width: 27%"></i></span
+                              ><span class="pv">27%</span>
+                            </div>
+                          </td>
+                          <td><span class="streak">◆ 3 sem</span></td>
+                          <td><span class="qb qb-live">Floreciendo</span></td>
+                        </tr>
+                        <tr>
+                          <td>Camila V.</td>
+                          <td class="piecename">Aria</td>
+                          <td>
+                            <div class="progress">
+                              <span class="pb"><i style="width: 100%"></i></span
+                              ><span class="pv">100%</span>
+                            </div>
+                          </td>
+                          <td><span class="streak off">—</span></td>
+                          <td><span class="qb qb-inactive">Adquirida</span></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      justify-content: space-between;
+                      padding-top: 14px;
+                    "
+                  >
+                    <span
+                      class="qe-data"
+                      style="font-size: 12px; color: var(--qe-color-subtle)"
+                      >Mostrando 1–5 de 47</span
+                    ><button class="abtn abtn-ghost">Cargar 25 más</button>
+                  </div>
+                </div>
+                <div>
+                  <div class="ecard">
+                    <div class="eh">Próximas eclosiones</div>
+                    <div class="es">
+                      Planes al 90%+ · el asesor coordina la entrega.
+                    </div>
+                    <div class="erow" style="border-top: 0">
+                      <div class="gem"></div>
+                      <div>
+                        <div class="nm">Tayrona</div>
+                        <div class="who">VALENTINA R. · ASESORA CAMILA</div>
+                      </div>
+                      <span class="when">en 2 semanas</span>
+                    </div>
+                    <div class="erow">
+                      <div class="gem" style="transform: rotate(6deg)"></div>
+                      <div>
+                        <div class="nm">Reflejo de Muzo</div>
+                        <div class="who">DIEGO P. · ASESOR ANDRÉS</div>
+                      </div>
+                      <span class="when">en 5 semanas</span>
+                    </div>
+                    <div class="erow">
+                      <div class="gem" style="transform: rotate(-16deg)"></div>
+                      <div>
+                        <div class="nm">Corazón Andino</div>
+                        <div class="who">MARIANA L. · ASESORA LUCÍA</div>
+                      </div>
+                      <span class="when">en 6 semanas</span>
+                    </div>
+                  </div>
+                  <div class="ecard" style="margin-top: 14px">
+                    <div class="eh">Riegos esta semana</div>
+                    <div class="es">Aportes registrados, sin multas nunca.</div>
+                    <div class="agenda" style="border: 0">
+                      <div class="ar" style="padding: 9px 0">
+                        <span class="tm">LUN</span>
+                        <span class="tx"
+                          >Santiago M. regó <b>US$ 120</b> · Cronos</span
+                        >
+                      </div>
+                      <div class="ar" style="padding: 9px 0">
+                        <span class="tm">MAR</span>
+                        <span class="tx"
+                          >Valentina R. regó <b>US$ 300</b> · Tayrona</span
+                        >
+                      </div>
+                      <div class="ar" style="padding: 9px 0">
+                        <span class="tm">JUE</span>
+                        <span class="tx"
+                          >Andrés T. regó <b>US$ 80</b> · Gratitud Sagrada</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

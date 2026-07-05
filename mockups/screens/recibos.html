@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Recibos · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/screens.css" />
+    <style>
+      .rrow {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        border-top: 1px solid var(--qe-color-hairline);
+      }
+      .rrow .no {
+        font-family: var(--qe-font-mono);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .rrow .cl {
+        font-size: 12px;
+        color: var(--qe-color-muted);
+        margin-top: 2px;
+      }
+      .rrow .tot {
+        font-family: var(--qe-font-mono);
+        font-size: 13px;
+        font-weight: 600;
+        text-align: right;
+      }
+      .qb {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        height: 20px;
+        padding: 0 8px;
+        border-radius: 6px;
+        font-family: var(--qe-font-mono);
+        font-size: 9.5px;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-top: 4px;
+      }
+      .qb-live {
+        color: var(--qe-color-accent);
+        background: color-mix(in srgb, var(--qe-color-accent) 10%, transparent);
+      }
+      .qb-neutral {
+        color: var(--qe-color-muted);
+        background: var(--qe-color-surface-2);
+      }
+      .qb-warn {
+        color: var(--qe-color-warn);
+        background: color-mix(in srgb, var(--qe-color-warn) 12%, transparent);
+      }
+    </style>
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage">
+      <div class="cap"><b>Fase 2</b> · Cuentas · Recibos</div>
+      <div class="phone">
+        <div class="statusbar">
+          <span class="time">9:41</span>
+          <div class="notch"></div>
+          <div class="sig">
+            <span class="bat"><i></i></span>
+          </div>
+        </div>
+        <div class="app">
+          <div class="appbar">
+            <div style="display: flex; align-items: center; gap: 12px">
+              <svg
+                class="ic"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                style="color: var(--qe-color-muted)"
+              >
+                <path d="M15 19l-7-7 7-7" /></svg
+              ><span class="ttl">Recibos</span>
+            </div>
+            <span class="code">6 EN TOTAL</span>
+          </div>
+          <div class="scroll">
+            <div class="rrow">
+              <div style="flex: 1">
+                <div class="no">TM-2451</div>
+                <div class="cl">Sofía Restrepo · 30 jun 2026</div>
+              </div>
+              <div>
+                <div class="tot">US$ 19.100</div>
+                <div style="text-align: right">
+                  <span class="qb qb-live">Pagado</span>
+                </div>
+              </div>
+            </div>
+            <div class="rrow">
+              <div style="flex: 1">
+                <div class="no">TM-2448</div>
+                <div class="cl">Andrés Gómez · 24 jun 2026</div>
+              </div>
+              <div>
+                <div class="tot">US$ 7.300</div>
+                <div style="text-align: right">
+                  <span class="qb qb-neutral">Pendiente</span>
+                </div>
+              </div>
+            </div>
+            <div class="rrow">
+              <div style="flex: 1">
+                <div class="no">TM-2440</div>
+                <div class="cl">Lucía Ferrer · 18 jun 2026</div>
+              </div>
+              <div>
+                <div class="tot">US$ 12.900</div>
+                <div style="text-align: right">
+                  <span class="qb qb-live">Pagado</span>
+                </div>
+              </div>
+            </div>
+            <div class="rrow">
+              <div style="flex: 1">
+                <div class="no">TM-2436</div>
+                <div class="cl">María Peña · 12 jun 2026</div>
+              </div>
+              <div>
+                <div class="tot">US$ 4.200</div>
+                <div style="text-align: right">
+                  <span class="qb qb-warn">Vencido</span>
+                </div>
+              </div>
+            </div>
+            <div class="rrow">
+              <div style="flex: 1">
+                <div class="no">TM-2431</div>
+                <div class="cl">Sofía Restrepo · 05 jun 2026</div>
+              </div>
+              <div>
+                <div class="tot">US$ 22.400</div>
+                <div style="text-align: right">
+                  <span class="qb qb-live">Pagado</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="t">
+              <svg class="ic" viewBox="0 0 24 24">
+                <path d="M3 11l9-7 9 7" />
+                <path d="M5 10v10h14V10" /></svg
+              ><span class="lb">Inicio</span>
+            </div>
+            <div class="t">
+              <svg class="ic" viewBox="0 0 24 24">
+                <path d="M4 5h16v14H4z" />
+                <path d="M9 9h6v6H9z" /></svg
+              ><span class="lb">Catálogo</span>
+            </div>
+            <div class="t on">
+              <svg class="ic" viewBox="0 0 24 24">
+                <path d="M6 3h9l3 3v15H6z" />
+                <path d="M9 12h6M9 16h4" /></svg
+              ><span class="lb">Cotizar</span>
+            </div>
+            <div class="t">
+              <svg class="ic" viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M5 20a7 7 0 0 1 14 0" /></svg
+              ><span class="lb">Perfil</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

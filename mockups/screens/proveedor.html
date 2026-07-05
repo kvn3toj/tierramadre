@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Proveedor · Portal · Quiet Emerald</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/tokens.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/admin.css" />
+    <style>
+      .prov-grid {
+        display: grid;
+        grid-template-columns: 0.85fr 1.15fr;
+        gap: 16px;
+        align-items: start;
+      }
+      /* request cards */
+      .req {
+        border: 1px solid var(--qe-color-border);
+        border-radius: var(--qe-radius-md);
+        background: var(--qe-color-surface);
+        padding: 14px 16px;
+        margin-bottom: 10px;
+        cursor: pointer;
+      }
+      .req:hover {
+        border-color: var(--qe-color-border-strong);
+      }
+      .req.sel {
+        border-color: var(--qe-color-accent);
+        background: var(--qe-color-accent-wash);
+      }
+      .req .rh {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .req .rn {
+        font-family: var(--qe-font-serif);
+        font-size: 17px;
+        font-weight: 500;
+      }
+      .req .rs {
+        font-family: var(--qe-font-mono);
+        font-size: 10px;
+        letter-spacing: 0.06em;
+        color: var(--qe-color-subtle);
+        margin-top: 5px;
+        text-transform: uppercase;
+      }
+      .req .due {
+        font-family: var(--qe-font-mono);
+        font-size: 10px;
+        color: var(--qe-color-warn);
+        white-space: nowrap;
+      }
+      /* quote form card */
+      .qcard {
+        border: 1px solid var(--qe-color-border);
+        border-radius: var(--qe-radius-md);
+        background: var(--qe-color-surface);
+        padding: 18px;
+      }
+      .qcard .qh {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--qe-color-hairline);
+        margin-bottom: 16px;
+      }
+      .qcard .qh .t {
+        font-family: var(--qe-font-serif);
+        font-size: 20px;
+        font-weight: 500;
+      }
+      .drop {
+        border: 1px dashed var(--qe-color-border-strong);
+        border-radius: var(--qe-radius-md);
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        color: var(--qe-color-subtle);
+        font-size: 13px;
+        text-align: center;
+      }
+      .drop b {
+        color: var(--qe-color-accent);
+        font-weight: 600;
+      }
+      .thumbs {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .thumbs .th {
+        width: 64px;
+        height: 64px;
+        border-radius: var(--qe-radius-sm);
+        border: 1px solid var(--qe-color-border);
+        background: var(--qe-color-surface-2);
+        position: relative;
+        overflow: hidden;
+      }
+      .thumbs .th .gem {
+        position: absolute;
+        inset: 14px;
+      }
+      .thumbs .th .tag {
+        position: absolute;
+        bottom: 3px;
+        left: 4px;
+        font-family: var(--qe-font-mono);
+        font-size: 8px;
+        letter-spacing: 0.06em;
+        color: var(--qe-color-subtle);
+      }
+    </style>
+  </head>
+  <body>
+    <a class="home" href="../index.html">← Mockups</a>
+    <div class="controls">
+      <button
+        class="tg"
+        onclick="
+          var r = document.documentElement;
+          r.setAttribute(
+            'data-theme',
+            r.getAttribute('data-theme') === 'light' ? 'dark' : 'light',
+          );
+        "
+      >
+        ◐ Claro·Oscuro
+      </button>
+    </div>
+    <div class="stage-wide">
+      <div class="cap"><b>Fase 5</b> · Portal de proveedor · Solicitudes</div>
+      <div class="wide">
+        <div class="desk">
+          <div class="topbar">
+            <div class="brandm">
+              <svg viewBox="0 0 100 100">
+                <polygon
+                  points="50,10 76,25 76,62 50,90 24,62 24,25"
+                  fill="var(--qe-color-accent-pure)"
+                /></svg
+              ><span class="wordmark">PROVEEDOR</span>
+            </div>
+            <div class="cmdk">
+              <svg class="ic" width="15" height="15" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3-3" /></svg
+              >Buscar solicitudes…<span class="kbd">⌘K</span>
+            </div>
+            <div class="av">GE</div>
+          </div>
+          <div class="desk-body">
+            <nav class="rail">
+              <div class="rl">Gemas El Dorado</div>
+              <a class="on"
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M4 6h16M4 12h16M4 18h10" /></svg
+                >Solicitudes</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <path d="M6 3h9l5 5v13H6z" />
+                  <path d="M14 3v6h6" /></svg
+                >Mis cotizaciones</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="8" />
+                  <path d="M12 8v4l3 2" /></svg
+                >Historial</a
+              >
+              <a
+                ><svg class="ic" viewBox="0 0 24 24">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6" /></svg
+                >Perfil</a
+              >
+              <div class="sig">Cotiza con calma.<br />Vende con paz.</div>
+            </nav>
+            <div class="main">
+              <div class="phead2">
+                <div>
+                  <div class="h">Solicitudes</div>
+                  <div class="sub">3 ABIERTAS · 1 VENCE PRONTO</div>
+                </div>
+                <button class="abtn abtn-ghost">Abiertas ▾</button>
+              </div>
+              <div class="prov-grid">
+                <div>
+                  <div class="req sel">
+                    <div class="rh">
+                      <span class="rn">Esmeralda suelta · corte esmeralda</span>
+                      <span class="due">Vence en 2 días</span>
+                    </div>
+                    <div class="rs">3–5 ct · VS+ · Muzo pref. · Ref TM-118</div>
+                  </div>
+                  <div class="req">
+                    <div class="rh">
+                      <span class="rn">Par para aretes · gota</span>
+                      <span class="due" style="color: var(--qe-color-subtle)"
+                        >Vence en 9 días</span
+                      >
+                    </div>
+                    <div class="rs">1,2 ct c/u · calibradas · Ref TM-121</div>
+                  </div>
+                  <div class="req">
+                    <div class="rh">
+                      <span class="rn">Cabujón trapiche</span>
+                      <span class="due" style="color: var(--qe-color-subtle)"
+                        >Vence en 14 días</span
+                      >
+                    </div>
+                    <div class="rs">2 ct aprox · colección · Ref TM-124</div>
+                  </div>
+                  <div class="qe-eyebrow" style="margin: 18px 0 8px">
+                    Cerradas recientemente
+                  </div>
+                  <div class="req" style="opacity: 0.6">
+                    <div class="rh">
+                      <span class="rn">Esmeralda suelta · oval</span>
+                      <span class="qb qb-inactive">Adjudicada</span>
+                    </div>
+                    <div class="rs">2,4 ct · VS · Ref TM-109</div>
+                  </div>
+                </div>
+                <div class="qcard">
+                  <div class="qh">
+                    <span class="t">Tu cotización · Ref TM-118</span>
+                    <span class="qb qb-warn">Vence en 2 días</span>
+                  </div>
+                  <div
+                    style="
+                      display: grid;
+                      grid-template-columns: 1fr 1fr;
+                      gap: 12px;
+                    "
+                  >
+                    <div class="afield">
+                      <label>Quilates de la pieza</label>
+                      <div class="fake mono">4,20 ct</div>
+                    </div>
+                    <div class="afield">
+                      <label>Claridad</label>
+                      <div class="fake">VS</div>
+                    </div>
+                    <div class="afield">
+                      <label>Precio por quilate</label>
+                      <div class="fake mono">US$ 2.450</div>
+                    </div>
+                    <div class="afield">
+                      <label>Precio total</label>
+                      <div class="fake mono">US$ 10.290</div>
+                    </div>
+                  </div>
+                  <div class="afield">
+                    <label>Disponibilidad</label>
+                    <div class="fake">Inmediata · en bóveda Bogotá</div>
+                  </div>
+                  <div class="afield" style="margin-bottom: 0">
+                    <label>Fotos y video de la pieza</label>
+                    <div class="drop">
+                      <svg
+                        class="ic"
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 16V4M7 9l5-5 5 5" />
+                        <path d="M4 20h16" />
+                      </svg>
+                      Arrastra tus archivos aquí o <b>examina</b>
+                      <span
+                        style="
+                          font-family: var(--qe-font-mono);
+                          font-size: 10px;
+                        "
+                        >JPG · MP4 · máx 200 MB</span
+                      >
+                    </div>
+                    <div class="thumbs">
+                      <div class="th">
+                        <div class="gem"></div>
+                        <span class="tag">hero.jpg</span>
+                      </div>
+                      <div class="th">
+                        <div class="gem" style="transform: rotate(14deg)"></div>
+                        <span class="tag">luz.jpg</span>
+                      </div>
+                      <div class="th">
+                        <div
+                          style="
+                            position: absolute;
+                            inset: 0;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: var(--qe-color-subtle);
+                          "
+                        >
+                          ▶
+                        </div>
+                        <span class="tag">giro.mp4</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="actionbar">
+                    <span class="auto">Borrador guardado 18:42</span>
+                    <button class="abtn abtn-ghost">Guardar borrador</button>
+                    <button class="abtn abtn-primary">Enviar cotización</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
