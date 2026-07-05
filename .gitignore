@@ -141,3 +141,17 @@ src/assets/esmereogenesis/characters/_source/
 # (the visualizer.pen design file IS committed; downloaded photos + exports are not)
 /docs/Visualizer/work/
 /docs/Visualizer/exports/
+/docs/Visualizer/images/
+
+# Ad-hoc dev screenshots dropped at repo root during manual testing
+/[0-9][0-9]-*.png
+/localhost-*.png
+/preview-*.jpeg
+/preview-*.png
+
+# Scoped tsconfigs used for one-off typechecks (named *.tmp.json by convention)
+*.tmp.json
+
+# Bug-repro screenshot sequences and AI video-gen seed material
+/esmereo/
+/docs/higgsfield-seed/
