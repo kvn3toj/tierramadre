@@ -3,10 +3,18 @@
 > Corte: **2 jul 2026**. Proposal for human review — **inferred, NOT confirmed by the
 > business team.** Do NOT wire into `rankProducts` until the team validates it.
 
+> ⚠️ **Superseded (6 jul 2026):** the mapping this doc concluded was "not derivable" HAS been
+> implemented in code since, using a stronger signal this analysis didn't have access to (the
+> catalog's own controlled `tipoJoya`/legacy-`categoria` vocabulary, not inferred keywords
+> against product names). See **`GHL/product-catalog-audit-2026-07-06.md`** for the current
+> state, live coverage numbers (91-96%), and what's still pending. This document's root-cause
+> diagnosis (categoria ≠ piece-type axis) is still correct and worth reading — only its
+> "no mapping possible" conclusion is outdated.
+
 ## TL;DR (read this first)
 
 **An empirical `tipo_interes` (piece type) → `categoria` (collection) mapping CANNOT be
-reliably derived from the available data, because the two fields describe *orthogonal*
+reliably derived from the available data, because the two fields describe _orthogonal_
 things.** `tipo_interes` is a **jewelry-piece type** (topito, candonga, anillo, dije…),
 while `categoria` is a **loose-gem / cut taxonomy** (Gema Facetada, Muralla, Gola, Raíz,
 Piedra Natural). The catalog is ~93% loose emeralds, so almost no product name or
@@ -16,16 +24,17 @@ the "Recommendation" section for what to do instead.
 ## Data source (proxy — live Convex was not reachable)
 
 Live Convex export was **not possible in this environment**: no `CONVEX_DEPLOYMENT` /
-deploy key is present (`npx convex run` errors with *"No CONVEX_DEPLOYMENT set"*), so
+deploy key is present (`npx convex run` errors with _"No CONVEX_DEPLOYMENT set"_), so
 `productInventory` could not be queried directly.
 
 Proxy used instead: the most recent cached SOT-Inventario snapshot committed in the repo —
 `scripts/.backups/inventario-reorder-2026-05-27T21-45-50-038Z.json` (a raw Google Sheets
-`values` dump of the *Inventario* tab, the same sheet the `products.pullFromSheet` cron
+`values` dump of the _Inventario_ tab, the same sheet the `products.pullFromSheet` cron
 mirrors into `productInventory`). Cross-checked against
 `scripts/.backups/inventario-delete-col-l-2026-05-29T10-37-10-691Z.json` — consistent.
 
 **Caveats:**
+
 - Snapshot is from **27 May 2026**; the live table has grown since (GHL status doc notes
   ~386 total rows / 59 published as of 1 Jul). Of the 368 snapshot rows, only **45 have
   any name/categoria content** (the rest are empty sheet rows).
@@ -51,18 +60,18 @@ Each `tipo_interes` keyword was pattern-matched (accent-insensitive) against eve
 product's **`Nombre` + `tipoJoya` + `subtipoForm`** text (the widest name/description
 signal available in the sheet).
 
-| tipo_interes  | total matches | categoria breakdown of matches                          | confidence |
-| ------------- | ------------- | ------------------------------------------------------- | ---------- |
-| `topito`      | 1             | 1 (sin categoría)                                       | ⚠️ none    |
-| `candonga`    | 0             | —                                                       | ⚠️ none    |
-| `anillo`      | 1             | 1 (sin categoría)                                       | ⚠️ none    |
-| `dije`        | 1             | 1 Muralla                                               | ⚠️ none    |
-| `gema_suelta` | 25            | 14 Gema Facetada · 6 Gola · 4 Raíz · 1 Piedra Natural   | ⚠️ low†    |
-| `set`         | 0             | —                                                       | ⚠️ none    |
-| `otro`        | n/a           | (catch-all, not mapped)                                 | n/a        |
+| tipo_interes  | total matches | categoria breakdown of matches                        | confidence |
+| ------------- | ------------- | ----------------------------------------------------- | ---------- |
+| `topito`      | 1             | 1 (sin categoría)                                     | ⚠️ none    |
+| `candonga`    | 0             | —                                                     | ⚠️ none    |
+| `anillo`      | 1             | 1 (sin categoría)                                     | ⚠️ none    |
+| `dije`        | 1             | 1 Muralla                                             | ⚠️ none    |
+| `gema_suelta` | 25            | 14 Gema Facetada · 6 Gola · 4 Raíz · 1 Piedra Natural | ⚠️ low†    |
+| `set`         | 0             | —                                                     | ⚠️ none    |
+| `otro`        | n/a           | (catch-all, not mapped)                               | n/a        |
 
 † `gema_suelta` "matches" 25 rows only because its regex (`gema|piedra|facetad|suelt…`)
-overlaps the *loose-gem* taxonomy itself — it is matching the categoria vocabulary, not an
+overlaps the _loose-gem_ taxonomy itself — it is matching the categoria vocabulary, not an
 independent product-name signal. Every piece-type flagged for the business (`topito`,
 `candonga`, `anillo`, `dije`, `set`) matches **≤ 1 product** → **all are low-confidence
 by the "< 5 matches" rule; effectively unmappable.**
@@ -71,32 +80,32 @@ by the "< 5 matches" rule; effectively unmappable.**
 
 The `subtipoForm` column is the tell:
 
-| subtipoForm                | count | meaning                    |
-| -------------------------- | ----- | -------------------------- |
-| `Gema`                     | 25    | loose emerald (a stone)    |
-| (vacío)                    | 13    | unclassified               |
-| `Lote` / `LOTE DE JOYAS`   | 5     | a lot/batch                |
-| `Joya`                     | 2     | a finished jewelry piece   |
+| subtipoForm              | count | meaning                  |
+| ------------------------ | ----- | ------------------------ |
+| `Gema`                   | 25    | loose emerald (a stone)  |
+| (vacío)                  | 13    | unclassified             |
+| `Lote` / `LOTE DE JOYAS` | 5     | a lot/batch              |
+| `Joya`                   | 2     | a finished jewelry piece |
 
 Only **2 of 45** rows are finished jewelry (`Joya`); **25 are loose gems** (`Gema`). And
 the handful of rows that DO carry a real piece type live in the **`tipoJoya`** column —
 which is populated on just **5–6 rows**, and those rows have an **empty `categoria`**:
 
-| Nombre                          | categoria | tipoJoya       |
-| ------------------------------- | --------- | -------------- |
-| La grandeza de Dios             | Muralla   | Dije           |
-| Rocas Seleccionadas             | Muralla   | Murralla       |
-| Canutillos Asteroides Verdes III| Muralla   | Murralla       |
-| Monturas Topitos Plata Rodinada | *(empty)* | Topitos Peq    |
-| Ancestrales del Mar             | *(empty)* | Aretes         |
-| Belleza Del Caribe              | *(empty)* | Anillo Mujer   |
+| Nombre                           | categoria | tipoJoya     |
+| -------------------------------- | --------- | ------------ |
+| La grandeza de Dios              | Muralla   | Dije         |
+| Rocas Seleccionadas              | Muralla   | Murralla     |
+| Canutillos Asteroides Verdes III | Muralla   | Murralla     |
+| Monturas Topitos Plata Rodinada  | _(empty)_ | Topitos Peq  |
+| Ancestrales del Mar              | _(empty)_ | Aretes       |
+| Belleza Del Caribe               | _(empty)_ | Anillo Mujer |
 
 So the three actual finished-jewelry pieces (Topito, Aretes, Anillo) have **no
-categoria at all**, and product *names* are poetic ("Belleza Del Caribe", "La grandeza de
+categoria at all**, and product _names_ are poetic ("Belleza Del Caribe", "La grandeza de
 Dios") rather than descriptive — they carry zero piece-type signal.
 
-**Conclusion:** `categoria` ≠ a piece-type axis. It classifies the *emerald* (cut/origin
-collection), not the *jewelry form*. A `tipo_interes → categoria` lookup would be mapping
+**Conclusion:** `categoria` ≠ a piece-type axis. It classifies the _emerald_ (cut/origin
+collection), not the _jewelry form_. A `tipo_interes → categoria` lookup would be mapping
 between two unrelated dimensions, and the data confirms there's no empirical basis for it.
 
 ## Proposed mapping (LOW CONFIDENCE — do not ship without team sign-off)
@@ -108,12 +117,12 @@ collections**, with everything flagged low-confidence:
 | tipo_interes  | proposed categoria (best guess) | basis                                        | confidence |
 | ------------- | ------------------------------- | -------------------------------------------- | ---------- |
 | `gema_suelta` | `Gema Facetada`                 | modal categoria among loose-gem rows (14/25) | ⚠️ low     |
-| `anillo`      | *(no reliable mapping)*         | 1 match, uncategorized                        | ❌ none     |
-| `topito`      | *(no reliable mapping)*         | 1 match, uncategorized                        | ❌ none     |
-| `candonga`    | *(no reliable mapping)*         | 0 matches                                     | ❌ none     |
-| `dije`        | *(no reliable mapping)*         | 1 match (Muralla) — n=1, not significant      | ❌ none     |
-| `set`         | *(no reliable mapping)*         | 0 matches                                     | ❌ none     |
-| `otro`        | *(no mapping — leave open)*     | catch-all                                     | n/a        |
+| `anillo`      | _(no reliable mapping)_         | 1 match, uncategorized                       | ❌ none    |
+| `topito`      | _(no reliable mapping)_         | 1 match, uncategorized                       | ❌ none    |
+| `candonga`    | _(no reliable mapping)_         | 0 matches                                    | ❌ none    |
+| `dije`        | _(no reliable mapping)_         | 1 match (Muralla) — n=1, not significant     | ❌ none    |
+| `set`         | _(no reliable mapping)_         | 0 matches                                    | ❌ none    |
+| `otro`        | _(no mapping — leave open)_     | catch-all                                    | n/a        |
 
 Every row except `gema_suelta` has **< 5 matching products** → all flagged low/no
 confidence per the stated threshold. `gema_suelta` clears the count only by matching the
@@ -128,7 +137,7 @@ piece→collection lookup, the durable fix is one of:
 
 1. **Add a real piece-type field to the catalog.** Populate `tipoJoya` (or a new
    `formaJoya`) across inventory so `tipo_interes` can match a like-for-like axis. This is
-   the only path to a *correct* mapping. (Note: the catalog is ~93% loose gems today, so
+   the only path to a _correct_ mapping. (Note: the catalog is ~93% loose gems today, so
    most pieces would legitimately map to "gema suelta".)
 2. **Have the team hand-author the map** as a business decision (they know which collection
    they'd steer an "anillo" lead toward), rather than inferring it from thin data.
@@ -148,7 +157,7 @@ lookup, normalise the incoming value **before** the categoria comparison:
   ```ts
   // At the top of productSearch.ts (proposal — values TBD by the business team):
   const TIPO_INTERES_TO_CATEGORIA: Record<string, string> = {
-    gema_suelta: "Gema Facetada", // ⚠️ low confidence — see GHL/tipo-interes-mapping-analysis.md
+    gema_suelta: 'Gema Facetada', // ⚠️ low confidence — see GHL/tipo-interes-mapping-analysis.md
     // anillo / topito / candonga / dije / set: intentionally UNMAPPED (fall through to budget)
   };
 

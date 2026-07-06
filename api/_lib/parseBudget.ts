@@ -49,3 +49,46 @@ export function parsePresupuestoCOP(raw: unknown): number | undefined {
   const n = parseInt(digits, 10);
   return Number.isFinite(n) && n > 0 ? n : undefined;
 }
+
+/** Qualitative price bands — mirror of productSearch `PriceTier`. */
+export type PriceTier = "economico" | "moderado" | "alto";
+
+/**
+ * Detect a QUALITATIVE price signal when the client gives no number
+ * ("precio moderado", "algo económico", "lo más exclusivo"). Returns a tier
+ * or `undefined` (no signal). Used only when `parsePresupuestoCOP` yields no
+ * number — a numeric budget is the stronger signal. Checked high→low→mid so a
+ * compound phrase resolves to its strongest word; matching is substring-based
+ * on accent-stripped lowercase text so "económico"/"economico" both hit.
+ */
+export function parsePriceTier(raw: unknown): PriceTier | undefined {
+  if (typeof raw !== "string") return undefined;
+  // Strip accents so "económico" and "economico" match one pattern.
+  const s = raw
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+  if (!s) return undefined;
+
+  // High tier first: a "gama alta pero económica" phrase should read as the
+  // stronger premium signal, not be downgraded by a later keyword.
+  if (
+    /gama alta|alta gama|premium|exclusiv|lujo|lo mejor|costos|alta joyer|high[\s-]?end/.test(
+      s,
+    )
+  ) {
+    return "alto";
+  }
+  if (
+    /economic|barat|accesible|asequible|presupuesto bajo|\bbajo\b|sencill|basic|modest/.test(
+      s,
+    )
+  ) {
+    return "economico";
+  }
+  if (/moderad|\bmedi[oa]\b|intermedi|razonable|promedio|estandar/.test(s)) {
+    return "moderado";
+  }
+  return undefined;
+}

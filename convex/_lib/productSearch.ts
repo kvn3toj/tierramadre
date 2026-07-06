@@ -4,11 +4,23 @@
  * `ghl.searchProducts` query reads `productInventory` then delegates the
  * filter + rank here.
  *
- * Contract (GHL/02-SUPABASE §4 + 06-FLUJOS flow 1): return AT MOST 3 published,
- * available products within a 20% budget margin, ranked by piece-type match
- * then price. Reads the REAL catalog mirror — only rows the admin has flagged
- * `mostrarEnCatalogo` and that are `DISPONIBLE` are eligible (a piece already
- * VENDIDA / ASESOR must never be recommended).
+ * Contract (GHL/02-SUPABASE §4 + 06-FLUJOS flow 1): return AT MOST 3 published
+ * products within a 20% budget margin, ranked by piece-type match then price.
+ * Reads the REAL catalog mirror — only rows the admin has flagged
+ * `mostrarEnCatalogo` (or legacy rows) whose estado is SHAREABLE are eligible.
+ *
+ * Shareable estados (Kevin req 2026-07-06): `DISPONIBLE` AND `VENDIDA`. Thin
+ * live-stock categories (e.g. anillos de compromiso) would otherwise return an
+ * empty/short result, so sold pieces are surfaced as style references — the
+ * `ghl.searchProducts` caller marks them `disponible:false` so a client can be
+ * shown they're examples, not buyable. Any OTHER estado (ASESOR / APARTADA / …)
+ * is never shared.
+ *
+ * Qualitative price (Kevin req 2026-07-06): when the client gives no numeric
+ * budget but a tier hint ("precio moderado" → `priceTier:'moderado'`), results
+ * are drawn as an evenly-spread sample across the matching price band, so the
+ * client sees genuinely DIFFERENT prices instead of three near-identical
+ * cheapest pieces. See `PriceTier`, `tierBand`, `spreadAcross`, `selectByPrice`.
  *
  * Piece-type matching (2026-07-04 fix, see GHL/tipo-interes-mapping-analysis.md):
  * the GHL bot passes `criteria.categoria = {{contact.tipo_interes}}` — a
@@ -28,6 +40,14 @@
 export const BUDGET_MARGIN = 1.2;
 /** The bot shows three options per the spec. */
 export const MAX_RESULTS = 3;
+
+/** Estados whose pieces may be surfaced to a client (Kevin req 2026-07-06).
+ * `DISPONIBLE` is buyable; `VENDIDA` is shown as a style reference for thin
+ * categories. Every other estado is withheld. Compared case-insensitively. */
+export const SHAREABLE_ESTADOS = new Set(['DISPONIBLE', 'VENDIDA']);
+
+/** Qualitative price bands used when the client gives no numeric budget. */
+export type PriceTier = 'economico' | 'moderado' | 'alto';
 
 export interface SearchableProduct {
   itemId: string;
@@ -51,6 +71,10 @@ export interface SearchCriteria {
   categoria?: string;
   presupuesto?: number;
   ocasion?: string;
+  /** Qualitative price hint, used ONLY when `presupuesto` is absent
+   * ("precio moderado" → 'moderado'). A numeric budget is the stronger signal
+   * and takes precedence — see `rankProducts`. */
+  priceTier?: PriceTier;
 }
 
 /** Case-insensitive categoria match: exact OR substring (so "anillos" ⊇ "anillo"). */
@@ -96,7 +120,33 @@ const GEMA_CATEGORIAS = new Set([
   'gola',
   'raíz',
   'gema facetada',
+  'piedra cristal',
 ]);
+
+/**
+ * `categoria` values from the PRE-Fotosíntesis "Inventario" sheet (items
+ * 1-322, still cron-mirrored for base fields and bot-eligible via the
+ * legacy-DISPONIBLE union in `ghl.ts::searchProducts`) — a controlled
+ * piece-type vocabulary, matching `JEWELRY_CATEGORIES` in
+ * api/get-treasure-sheets.ts. A DIFFERENT axis than the Fotosíntesis-era
+ * `categoria` (gem-cut/collection names, see `GEMA_CATEGORIAS`) — this is
+ * the legacy sheet's OWN piece-type label, not an inferred/guessed mapping
+ * (see GHL/product-catalog-audit-2026-07-06.md). Only unambiguous labels are
+ * mapped; "Joyas" (generic finished-jewelry, n=3 live) resolves to "otro"
+ * rather than a fabricated "set" — same conservative rule as
+ * `TIPOJOYA_TO_TIPO_INTERES`.
+ */
+const LEGACY_CATEGORIA_TO_TIPO_INTERES: Record<string, string> = {
+  'anillo en plata': 'anillo',
+  'anillo en oro': 'anillo',
+  topitos: 'topito',
+  dije: 'dije',
+  gema: 'gema_suelta',
+  piedras: 'gema_suelta',
+  'lote de gemas': 'gema_suelta',
+  pulsera: 'otro',
+  joyas: 'otro',
+};
 
 /**
  * The `tipo_interes` bucket a product resolves to, or `undefined` when there
@@ -108,6 +158,8 @@ function resolvedTipoPieza(p: SearchableProduct): string | undefined {
   if (p.tipo === 'gema' || p.tipo === 'bruto') return 'gema_suelta';
   const cat = p.categoria?.trim().toLowerCase();
   if (cat && GEMA_CATEGORIAS.has(cat)) return 'gema_suelta'; // legacy rows with no `tipo`
+  if (cat && LEGACY_CATEGORIA_TO_TIPO_INTERES[cat])
+    return LEGACY_CATEGORIA_TO_TIPO_INTERES[cat]; // pre-Fotosíntesis piece-type categoria
   return undefined;
 }
 
@@ -120,11 +172,14 @@ function matchesTipoPieza(p: SearchableProduct, wanted?: string): boolean {
   return resolvedTipoPieza(p) === w;
 }
 
-/** Higher = better. A resolved piece-type match dominates; a literal
- * `categoria` substring match (meaningful today mainly as a `gema_suelta`
- * sub-preference, e.g. "facetada") is a secondary boost, never able to
- * outrank a real piece-type hit. Price is the in-budget tiebreak. */
-function relevance(p: SearchableProduct, criteria: SearchCriteria): number {
+/** Piece-type/occasion relevance, WITHOUT any price component. A resolved
+ * piece-type match dominates; a literal `categoria` substring match (meaningful
+ * today mainly as a `gema_suelta` sub-preference, e.g. "facetada") is a
+ * secondary boost, never able to outrank a real piece-type hit. */
+function pieceRelevance(
+  p: SearchableProduct,
+  criteria: SearchCriteria,
+): number {
   let score = 0;
   if (matchesTipoPieza(p, criteria.categoria)) {
     score += 1_000_000;
@@ -141,16 +196,70 @@ function relevance(p: SearchableProduct, criteria: SearchCriteria): number {
   ) {
     score += 100_000;
   }
-  // Tiebreak on price. WITH a declared budget the pool is bounded by the 1.2×
-  // ceiling, so "pricier-first" means "closest to what the client can spend"
-  // (the spec's secondary "precio DESC"). WITHOUT a budget there is NO ceiling
-  // (`presupuestoMax = Infinity`), so the same rule would rank the single most
-  // expensive stones in the vault to a client who never asked for them — the
-  // 2026-07-05 incident where a "3 millones" lead was shown 611M–930M COP
-  // pieces. When no budget is known, fall back to cheaper-first instead.
-  const price = p.precioCOP ?? 0;
-  score += criteria.presupuesto ? price : -price;
   return score;
+}
+
+/** Full ranking score for the DECLARED-BUDGET path. Price is the in-budget
+ * tiebreak: with a budget the pool is bounded by the 1.2× ceiling, so
+ * "pricier-first" means "closest to what the client can spend" (the spec's
+ * secondary "precio DESC"). The no-budget path does NOT use this — it spreads
+ * across the price band instead (see `selectByPrice`). */
+function relevance(p: SearchableProduct, criteria: SearchCriteria): number {
+  return pieceRelevance(p, criteria) + (p.precioCOP ?? 0);
+}
+
+/** The price band (a slice of the ascending-price-sorted pool) a qualitative
+ * tier maps to: económico = lowest third, moderado = middle third, alto = top
+ * third. Small pools (≤ MAX_RESULTS) or a degenerate middle slice fall back to
+ * the whole pool so a tier hint never yields an empty result. */
+function tierBand(
+  sortedAsc: SearchableProduct[],
+  tier: PriceTier,
+): SearchableProduct[] {
+  const n = sortedAsc.length;
+  if (n <= MAX_RESULTS) return sortedAsc;
+  const third = Math.ceil(n / 3);
+  if (tier === 'economico') return sortedAsc.slice(0, third);
+  if (tier === 'alto') return sortedAsc.slice(n - third);
+  const middle = sortedAsc.slice(third, n - third);
+  return middle.length > 0 ? middle : sortedAsc;
+}
+
+/** Evenly sample up to MAX_RESULTS items across a price-sorted band so the
+ * client sees genuinely DIFFERENT prices, not three near-identical ones. */
+function spreadAcross(sortedAsc: SearchableProduct[]): SearchableProduct[] {
+  const n = sortedAsc.length;
+  if (n <= MAX_RESULTS) return sortedAsc;
+  const picks: SearchableProduct[] = [];
+  for (let i = 0; i < MAX_RESULTS; i++) {
+    // Indices 0 … n-1 spaced evenly: first, middle, last.
+    picks.push(sortedAsc[Math.round((i * (n - 1)) / (MAX_RESULTS - 1))]);
+  }
+  return picks;
+}
+
+/** No-numeric-budget selection: return a price SPREAD across the eligible pool
+ * (biased to the tier band when given), replacing the old cheaper-first
+ * tiebreak so a "precio moderado"-style client sees a real range of prices.
+ *
+ * The pool is already piece-type-scoped by `rankProducts`' degradation: when a
+ * real tipo match exists, the strict step passes ONLY those pieces here, so no
+ * further group filtering is needed (and filtering here would wrongly drop the
+ * legitimate categoria-substring filler the 2026-07-04 fix restored). The
+ * 2026-07-05 extreme-outlier protection still holds — results are returned
+ * ascending, so the spread never LEADS with the most expensive piece. */
+function selectByPrice(
+  pool: SearchableProduct[],
+  criteria: SearchCriteria,
+): SearchableProduct[] {
+  if (pool.length === 0) return [];
+  const sortedAsc = pool
+    .slice()
+    .sort((a, b) => (a.precioCOP ?? 0) - (b.precioCOP ?? 0));
+  const band = criteria.priceTier
+    ? tierBand(sortedAsc, criteria.priceTier)
+    : sortedAsc;
+  return spreadAcross(band).slice(0, MAX_RESULTS);
 }
 
 /** Lower bound of the budget window (the spec's ~0.8× floor). Without this a
@@ -183,8 +292,24 @@ function eligibleProducts(
   return items.filter(
     (p) =>
       p.mostrarEnCatalogo === true &&
-      p.estado === 'DISPONIBLE' &&
+      // DISPONIBLE + VENDIDA are shareable (Kevin req 2026-07-06); every other
+      // estado (ASESOR/APARTADA/…) is withheld. See SHAREABLE_ESTADOS.
+      SHAREABLE_ESTADOS.has((p.estado ?? '').toUpperCase()) &&
+      // A blank sheet row (no Nombre) can still carry a stray positive
+      // precioCOP (real example, 2026-07-06 catalog audit: item 319, empty
+      // nombre/categoria, precioCOP 521) — the positive-price guard alone
+      // doesn't catch it, and the bot can't render a WhatsApp line or Vitrina
+      // page for a piece with no name.
+      Boolean(p.nombre?.trim()) &&
+      // Must be a POSITIVE price. A `0`/missing-but-captured-as-0 price is a
+      // number, so without this guard an unpriced incomplete row passes the
+      // filter, and — with no budget declared — the cheaper-first tiebreak
+      // (`relevance`: score += -price) sorts those $0 rows straight to the top
+      // three. That surfaced the "3 empty $0 pieces + empty Vitrina link"
+      // incident (2026-07-06): the bot recommended unpriced records that the
+      // public Sheets-backed catalog can't even render.
       typeof p.precioCOP === 'number' &&
+      (p.precioCOP as number) > 0 &&
       (p.precioCOP as number) <= presupuestoMax &&
       (p.precioCOP as number) >= presupuestoMin &&
       (!enforceTipoPieza ||
@@ -233,11 +358,33 @@ export function rankProducts(
   criteria: SearchCriteria,
 ): SearchableProduct[] {
   for (const { enforceTipoPieza, enforcePriceFloor } of DEGRADATION_STEPS) {
-    const pool = topRanked(
-      eligibleProducts(items, criteria, enforceTipoPieza, enforcePriceFloor),
+    const eligible = eligibleProducts(
+      items,
       criteria,
+      enforceTipoPieza,
+      enforcePriceFloor,
     );
-    if (pool.length > 0) return pool;
+    if (eligible.length === 0) continue;
+    // WITH a numeric budget: pricier-in-budget-first (bounded by the 1.2×
+    // ceiling). WITHOUT one: spread across the price band so the client sees
+    // different prices, biased to the qualitative tier when supplied.
+    return criteria.presupuesto
+      ? topRanked(eligible, criteria)
+      : selectByPrice(eligible, criteria);
   }
   return [];
+}
+
+/**
+ * Customer-facing availability disclosure for a piece's `estado`, ready to
+ * concatenate directly after its name/price in a WhatsApp message — GHL's
+ * merge tags do plain substitution, not conditionals, so a boolean
+ * `disponible` flag alone would render literally as "true"/"false". Empty
+ * string for a buyable (DISPONIBLE) piece so it adds nothing to the message.
+ */
+export function disponibilidadNota(estado: string | undefined): string {
+  if ((estado ?? '').toUpperCase() === 'VENDIDA') {
+    return ' (pieza vendida — ejemplo de estilo, pregúntame por una similar)';
+  }
+  return '';
 }

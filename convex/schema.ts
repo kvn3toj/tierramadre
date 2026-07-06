@@ -66,6 +66,21 @@ export default defineSchema({
     createdByEmail: v.optional(v.string()),
   }).index("by_token", ["token"]),
 
+  // ─── Vitrina → GHL selection audit trail ─────────────────────────
+  //
+  // Recorded by /api/vitrina-select the instant a client taps "Consultar por
+  // WhatsApp" on a product from a GHL-sourced Vitrina link (one carrying
+  // ?cid=<ghlContactId>). This is a deterministic signal written straight to
+  // GHL (producto_seleccionado_sku + tags) at click time — it does NOT depend
+  // on María correctly parsing the client's free-text WhatsApp reply. This
+  // table itself is just the audit trail / future-reminder-cron hook; the
+  // GHL contact record is the source of truth for automation.
+  vitrinaSelections: defineTable({
+    ghlContactId: v.string(),
+    sku: v.string(),
+    selectedAt: v.string(),
+  }).index("by_ghlContactId", ["ghlContactId"]),
+
   productViews: defineTable({
     timestamp: v.string(),
     itemId: v.string(),

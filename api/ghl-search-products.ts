@@ -6,16 +6,22 @@
  * Convex catalog (productInventory) and returns up to 3 published, available,
  * in-budget products with a deep `web_link` into the storefront.
  *
- * Body: { intent?: { categoria? }, presupuesto?, ocasion?, ciudad? }
+ * Body: { intent?: { categoria? }, presupuesto?, ocasion?, ciudad?, contactId? }
  * 200:  { success: true, productos: [{ sku, nombre, descripcion_corta, precio_cop, foto_url, web_link, certificado_url }],
  *         vitrina_link }  // combined /v/{id1}-{id2}-{id3} gallery of all recommendations (null if none)
+ *
+ * `contactId` (send `{{contact.id}}` in the workflow's webhook body) is
+ * embedded as `?cid=` on `web_link`/`vitrina_link` — see convex/ghl.ts
+ * `searchProducts` and /api/vitrina-select for why: it lets a client's
+ * in-page product pick write straight back to THIS contact in GHL, instead
+ * of relying on the bot to parse a free-text WhatsApp reply.
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { withApiHandler, sendError, sendSuccess } from "./_lib/index.js";
 import { convexClient, isConvexEnabled } from "./_lib/convex-client.js";
 import { bearerMatches } from "./_lib/bearer.js";
-import { parsePresupuestoCOP } from "./_lib/parseBudget.js";
+import { parsePresupuestoCOP, parsePriceTier } from "./_lib/parseBudget.js";
 import { api } from "../convex/_generated/api.js";
 
 const DEFAULT_APP_URL = "https://tierra-madre-studio.vercel.app";
@@ -40,15 +46,33 @@ export default withApiHandler(
       presupuesto?: number | string;
       ocasion?: string;
       ciudad?: string;
+      contactId?: string;
+      // Optional explicit qualitative price hint; otherwise inferred from a
+      // non-numeric `presupuesto` string ("precio moderado" → "moderado").
+      priceTier?: string;
     };
     const baseUrl = (process.env.APP_URL ?? DEFAULT_APP_URL).trim();
+    const contactId =
+      typeof body.contactId === "string" && body.contactId.trim()
+        ? body.contactId.trim()
+        : undefined;
+
+    const presupuesto = parsePresupuestoCOP(body.presupuesto);
+    // A numeric budget is the stronger signal — only look for a qualitative
+    // tier when none was parsed. Prefer an explicit `priceTier`, else read it
+    // out of the free-text `presupuesto` the client actually typed.
+    const priceTier = presupuesto
+      ? undefined
+      : (parsePriceTier(body.priceTier) ?? parsePriceTier(body.presupuesto));
 
     const result = await convexClient.query(api.ghl.searchProducts, {
       categoria: body.intent?.categoria,
-      presupuesto: parsePresupuestoCOP(body.presupuesto),
+      presupuesto,
       ocasion: body.ocasion,
       ciudad: body.ciudad,
       baseUrl,
+      contactId,
+      priceTier,
     });
     return sendSuccess(res, result);
   },

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parsePresupuestoCOP } from '../api/_lib/parseBudget';
+import { parsePresupuestoCOP, parsePriceTier } from '../api/_lib/parseBudget';
 
 describe('parsePresupuestoCOP', () => {
   it('passes a real positive number through', () => {
@@ -40,5 +40,44 @@ describe('parsePresupuestoCOP', () => {
     expect(parsePresupuestoCOP('no sé')).toBeUndefined();
     expect(parsePresupuestoCOP(0)).toBeUndefined();
     expect(parsePresupuestoCOP(-5)).toBeUndefined();
+  });
+});
+
+describe('parsePriceTier', () => {
+  it('detects "moderado" (the exact incident input) and its synonyms', () => {
+    expect(parsePriceTier('precio moderado')).toBe('moderado');
+    expect(parsePriceTier('opción precio moderado')).toBe('moderado');
+    expect(parsePriceTier('algo intermedio')).toBe('moderado');
+    expect(parsePriceTier('un precio razonable')).toBe('moderado');
+    expect(parsePriceTier('rango medio')).toBe('moderado');
+  });
+
+  it('detects "economico" (accent-insensitive) and its synonyms', () => {
+    expect(parsePriceTier('económico')).toBe('economico');
+    expect(parsePriceTier('economico')).toBe('economico');
+    expect(parsePriceTier('algo barato')).toBe('economico');
+    expect(parsePriceTier('presupuesto bajo')).toBe('economico');
+    expect(parsePriceTier('lo más accesible')).toBe('economico');
+  });
+
+  it('detects "alto" and premium phrasing', () => {
+    expect(parsePriceTier('gama alta')).toBe('alto');
+    expect(parsePriceTier('lo más exclusivo')).toBe('alto');
+    expect(parsePriceTier('premium')).toBe('alto');
+    expect(parsePriceTier('quiero lujo')).toBe('alto');
+  });
+
+  it('prefers the high tier when a phrase mixes signals', () => {
+    // "gama alta" is the strongest signal even if the sentence continues.
+    expect(parsePriceTier('gama alta pero no tan cara')).toBe('alto');
+  });
+
+  it('returns undefined when there is no qualitative signal', () => {
+    expect(parsePriceTier('')).toBeUndefined();
+    expect(parsePriceTier('   ')).toBeUndefined();
+    expect(parsePriceTier(undefined)).toBeUndefined();
+    expect(parsePriceTier(null)).toBeUndefined();
+    expect(parsePriceTier('3 millones')).toBeUndefined();
+    expect(parsePriceTier('un anillo de compromiso')).toBeUndefined();
   });
 });

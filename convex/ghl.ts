@@ -28,7 +28,11 @@ import { v, ConvexError } from 'convex/values';
 import { internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
 import { allocateNext, formatSaleId } from './sequences';
-import { rankProducts, type SearchableProduct } from './_lib/productSearch';
+import {
+  rankProducts,
+  disponibilidadNota,
+  type SearchableProduct,
+} from './_lib/productSearch';
 import { isOverLimit, computeCommissionCOP } from './_lib/commission';
 import { applyPaymentToSale } from './_lib/applyPayment';
 import {
@@ -51,8 +55,22 @@ export const searchProducts = query({
     ciudad: v.optional(v.string()),
     /** Public app origin (APP_URL), passed by the caller so web_link stays pure. */
     baseUrl: v.string(),
+    // The GHL contact id (WF-04's webhook body should send {{contact.id}}).
+    // Embedded as `?cid=` on the returned links so that when this SAME client
+    // taps "Consultar por WhatsApp" on a piece, the public page can tell GHL
+    // *which contact* picked *which SKU* directly — see /api/vitrina-select.
+    // Optional: links minted without it (e.g. staff's manual "Compartir con
+    // cliente") simply skip that deterministic write, unchanged from before.
+    contactId: v.optional(v.string()),
+    // Qualitative price hint ("economico" | "moderado" | "alto"), used only
+    // when no numeric `presupuesto` is given — see api/_lib/parseBudget
+    // parsePriceTier and productSearch `selectByPrice`.
+    priceTier: v.optional(v.string()),
   },
-  handler: async (ctx, { categoria, presupuesto, ocasion, baseUrl }) => {
+  handler: async (
+    ctx,
+    { categoria, presupuesto, ocasion, baseUrl, contactId, priceTier },
+  ) => {
     // Bot-eligible universe (2026-07-04 fix): Fotosíntesis-v2 items explicitly
     // published (`mostrarEnCatalogo`) UNION legacy items (no `loteId` — that
     // sync path never sets `mostrarEnCatalogo` at all, so it used to exclude
@@ -68,9 +86,18 @@ export const searchProducts = query({
       .withIndex('by_estado', (q) => q.eq('estado', 'DISPONIBLE'))
       .collect();
     const legacyDisponible = disponible.filter((p) => p.loteId === undefined);
+    // VENDIDA pieces are shareable too (Kevin req 2026-07-06) — surfaced as
+    // style references for thin categories. Legacy sold rows come in through
+    // the same no-loteId union; published-Fotosíntesis sold rows already
+    // arrive via `publishedFoto` (mostrarEnCatalogo is independent of estado).
+    const vendida = await ctx.db
+      .query('productInventory')
+      .withIndex('by_estado', (q) => q.eq('estado', 'VENDIDA'))
+      .collect();
+    const legacyVendida = vendida.filter((p) => p.loteId === undefined);
 
     const byItemId = new Map<string, (typeof publishedFoto)[number]>();
-    for (const p of [...publishedFoto, ...legacyDisponible])
+    for (const p of [...publishedFoto, ...legacyDisponible, ...legacyVendida])
       byItemId.set(p.itemId, p);
     const eligible = [...byItemId.values()];
 
@@ -98,21 +125,41 @@ export const searchProducts = query({
     }));
 
     const base = baseUrl.replace(/\/$/, '');
+    // Appended to every link so the public page can identify which GHL
+    // contact is browsing (see the `contactId` arg doc above).
+    const cidSuffix = contactId ? `?cid=${encodeURIComponent(contactId)}` : '';
+    // Only accept a recognized tier value; anything else is ignored (a numeric
+    // budget, when present, wins over the tier inside rankProducts anyway).
+    const tier =
+      priceTier === 'economico' ||
+      priceTier === 'moderado' ||
+      priceTier === 'alto'
+        ? priceTier
+        : undefined;
+
     const productos = rankProducts(items, {
       categoria,
       presupuesto,
       ocasion,
+      priceTier: tier,
     }).map((p) => ({
       sku: p.itemId,
       nombre: p.nombre ?? '',
       descripcion_corta: p.nombre ?? '',
       precio_cop: p.precioCOP ?? 0,
+      // VENDIDA pieces are included as style references; the caller can label
+      // them "vendida / ejemplo" so a client doesn't try to buy a sold piece.
+      disponible: (p.estado ?? '').toUpperCase() === 'DISPONIBLE',
+      // Ready-to-concatenate disclosure for WF-04's WhatsApp message (empty
+      // for a buyable piece) — see disponibilidadNota's docstring for why
+      // this exists instead of making the template render `disponible` raw.
+      nota_disponibilidad: disponibilidadNota(p.estado),
       foto_url: p.fotoUrl ?? null,
       // Public "Vitrina" share link: a sandboxed product page the client opens
       // with no login (no /product auth wall). A bare item number is treated as
       // a stateless id-list → default x1 COP pricing = the `precio_cop` above,
       // so the WhatsApp text and the linked page show the same figure.
-      web_link: `${base}/v/${p.itemId}`,
+      web_link: `${base}/v/${p.itemId}${cidSuffix}`,
       certificado_url: p.certificadoUrl ?? null,
     }));
     // Combined "carrito" gallery: one stateless id-list Vitrina link with every
@@ -121,9 +168,29 @@ export const searchProducts = query({
     // conversation, which is the selection signal for the asesor payment flow.
     const vitrina_link =
       productos.length > 0
-        ? `${base}/v/${productos.map((p) => p.sku).join('-')}`
+        ? `${base}/v/${productos.map((p) => p.sku).join('-')}${cidSuffix}`
         : null;
     return { productos, vitrina_link };
+  },
+});
+
+// ─── vitrina-select audit (deterministic pick signal) ──────────────────────
+
+/**
+ * Records that a GHL contact picked a specific SKU from a public Vitrina
+ * link. Called by /api/vitrina-select AFTER it has already written
+ * producto_seleccionado_sku + tags to the GHL contact directly — this table
+ * is purely an audit trail / future-reminder-cron hook, not itself the
+ * automation trigger (GHL's own tags/workflows are).
+ */
+export const recordVitrinaSelection = mutation({
+  args: { ghlContactId: v.string(), sku: v.string() },
+  handler: async (ctx, { ghlContactId, sku }) => {
+    await ctx.db.insert('vitrinaSelections', {
+      ghlContactId,
+      sku,
+      selectedAt: new Date().toISOString(),
+    });
   },
 });
 

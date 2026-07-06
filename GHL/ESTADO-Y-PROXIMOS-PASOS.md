@@ -3,6 +3,174 @@
 > Corte: **30 jun 2026**. Tras conectar MercadoPago, sincronizar el secreto interno y
 > verificar canales. Sub-account: `t3tOZBrR05jUoLqnDn4I` · https://app.progresy.ai
 
+## 📌 LEER PRIMERO — cómo usar este documento (banner añadido 6 jul 2026)
+
+**Este archivo es un changelog de sesiones, NO una especificación autocontenida.** Narra qué se
+construyó/rompió/arregló sesión a sesión y trae los IDs de workflow más recientes, pero el detalle
+canónico (specs completas de WF, tags, campos, prompts de María, contratos de API) vive en otros
+archivos de `GHL/`. Orden de lectura recomendado:
+
+1. **`AUDIT-2026-07-04-estado-vs-plan.md`** — estado vivo real (login directo a GHL: Pipeline /
+   Etiquetas / Campos / Workflows / María / Manage Scoring). Fuente de verdad de "¿qué existe HOY?".
+2. **Este documento** — cambios de la última semana + IDs de workflow + bugs encontrados/arreglados.
+3. **`SPEC-CONTINUACION.md` + `SETUP-SPEC-HTML.md`** — definiciones canónicas de WF-01..13
+   (triggers/pasos/bodies), los 48 tags, los 14 custom fields, los 18 snippets.
+4. **`output/bot-maria-prompt.md` + `output/whatsapp-templates.md`** — prompt/preguntas de María y
+   estado real de aprobación Meta de cada plantilla.
+5. **`BACKEND-ENDPOINTS-BLUEPRINT.md` + `SETUP-SPEC.md`** — contratos de `/api/ghl-*` y el gate
+   **≤2.000.000 COP** (server-side).
+6. **`LEARNINGS-2026-07-03-vitrina-rango-disponibilidad.md` + `tipo-interes-mapping-analysis.md`** —
+   reglas de vitrina/rango de precio y el mapeo `tipo_interes`→`categoria`.
+
+**Gap analysis completo (todas las contradicciones + tareas que este doc no captura):**
+`VALIDATION-estado-vs-folder-2026-07-06.md`. Archivos antiguos que describen **Supabase +
+Cloudflare Workers** (`00-INDICE-Y-MAPA.md`, `01-GHL.md`, `04-INTEGRACIONES.md`,
+`05-META-WHATSAPP.md`, `06-FLUJOS-CONEXION.md`, `SPEC-CONTINUACION.md`, `SETUP-SPEC.md`) son
+**históricos/superados** — el sistema vivo es **Convex (`wonderful-tortoise-984`) + Vercel**.
+
+### ✅ Estado real de los workflows (AUDIT en vivo, 4 jul 2026)
+
+| WF                       | Estado        | Inscritos |
+| ------------------------ | ------------- | --------- |
+| WF-01 Nuevo contacto     | **Published** | 13        |
+| WF-03 Calificación IA    | **Published** | 2         |
+| WF-04 Búsqueda catálogo  | **Published** | 8         |
+| WF-05 Carrito + checkout | **Published** | 1         |
+| WF-05B Vitrina → asesor  | **Published** | 0         |
+| WF-06 Escalación         | **Published** | 0 ⚠️      |
+| WF-08 Post-venta         | **Published** | 0 ⚠️      |
+
+⚠️ WF-06/WF-08 en 0 pese a estar Published — ver corrección #4 abajo.
+
+🚨 **Sesión concurrente conocida:** este mismo doc registra ediciones de terceros sobre estos
+workflows sin avisar ("Error al guardar el flujo de trabajo: Your version is outdated", ver más
+abajo). **Re-verificar el estado en vivo antes de asumir que la tabla de arriba sigue vigente.**
+
+### ⚠️ Correcciones conocidas vs. el resto del documento (6 jul 2026)
+
+1. **Plantillas WhatsApp "aprobadas"/"Activas" (líneas ~171, ~599-600, ~716-717, ~763):**
+   `output/whatsapp-templates.md` (4 jul, más nuevo) confirma que **TODAS las plantillas Tier-1
+   siguen `Pending` de Meta**: `saludo_inicial_wa`, `pieza_lista_pago_wa` (CK-01),
+   `confirmacion_pago_wa` (CK-03), `escalacion_asesor_wa` (ES-01), `postventa_entrega_wa` (PV-02),
+   `postventa_testimonio_wa` (PV-03), + la nueva `coleccion_disponible_wa` (CT-01). "Visible en el
+   selector de GHL" ≠ "aprobada por Meta" — esa distinción se confundió. Tratar todo como Pending
+   hasta re-verificar en Meta Business Manager.
+2. **Round-robin de WF-11 "Kevin/Sebastián/Comercializadora" (línea ~677):** el AUDIT en vivo
+   (`Configuración → Mi personal`) confirma que la cuenta GHL solo tiene **2 usuarios**:
+   `Comercializadora Tierra Madre` (ACCOUNT-ADMIN) y `Direccion Tierra Madre` (ACCOUNT-USER). No
+   existe login individual de "Sebastián"/"Sebastian Pion" — el round-robin de 3 vías es
+   **técnicamente imposible hoy**. La Fase 9 de `manual-ghl-paso-a-paso.html` (crear 4 empleados
+   reales, aplicar tags `agente-premium/inversion/senior/regular`, configurar 4 reglas de
+   Auto-Assignment con SLA Senior 2min / Inversión 5min / Premium 10min / Regular 15min) **nunca se
+   ejecutó**. Las 4 tags de pool existen (lote original de 48) pero no están aplicadas a ningún
+   agente real.
+3. **🚨 Riesgo sin verificar — orden de etapas del pipeline vs. lógica real del funnel.** El AUDIT
+   confirma el orden configurado de "Ventas Tierra Madre": `Nuevo Lead → Calificado por IA →
+Producto Recomendado → Carrito Enviado → Negociación / Agente → Venta Cerrada → Perdido /
+Nurturing` — **"Carrito Enviado" está posicionado ANTES que "Negociación / Agente"**. Pero el uso
+   real del funnel mueve la oportunidad a **Negociación/Agente vía WF-06** (escalación a humano, ver
+   ~línea 623) y DESPUÉS a **Carrito Enviado vía WF-05** (una vez el asesor arma el pedido, ver
+   ~línea 809) — en producción la oportunidad avanza a una etapa configurada MÁS ADELANTE y luego
+   "retrocede" a una MÁS ATRÁS en el orden configurado. Este mismo doc ya registró que GHL bloquea
+   exactamente este tipo de movimiento ("Moving a opportunity backward in the pipeline is not
+   allowed", ~línea 190 — en ese caso fue un artefacto de orden de pruebas, no aplica aquí).
+   **No verificado en producción real** — la única prueba de WF-05 documentada (línea ~178, orden
+   VO-0002) NO pasó primero por Negociación/Agente, así que la secuencia real (WF-06 → WF-05) nunca
+   se probó de punta a punta. Como hoy WF-05 es la ÚNICA vía de checkout (herramienta manual del
+   asesor, disparada siempre después de la escalación de WF-06), **este riesgo podría estar
+   bloqueando silenciosamente cada venta real intentada hasta ahora**. Prioridad de verificación:
+   máxima. Entra al pre-flight del test E2E (ver `E2E-TEST-SPEC-maria-funnel.md` §0-bis #5).
+4. **WF-06 / WF-08 con 0 inscripciones** pese a Published "en vivo" desde el 1–2 jul — puede ser
+   normal (aún no hay escalación/venta real) o el mismo bug de "acciones huérfanas" ya documentado
+   para María v1, o un síntoma del riesgo #3. Verificar con una escalación y una venta de prueba
+   reales antes de asumir que el trigger funciona.
+
+### 📋 Tareas abiertas que este changelog no trackea con claridad
+
+- [ ] **Verificar en vivo el riesgo #3** (orden de pipeline): correr WF-06 → WF-05 sobre una
+      oportunidad de prueba real y confirmar si "mover a Carrito Enviado" falla.
+- [ ] Construir **WF-02** (verificar embajador) + **WF-07** (regla 5 min) + **WF-12**
+      (auto-invitación eventos) — bloqueados en los endpoints de `BACKEND-ENDPOINTS-BLUEPRINT.md` y
+      en sign-off de negocio sobre Q-A1..A5 / Q-B1..B8.
+- [ ] Completar **WF-09** (ramas 30/60d de nurturing) y **WF-10** (evento RSVP: tag dinámico
+      `evento-{slug}-rsvp`, generación de QR, recordatorios 3d/1d/2h).
+- [ ] Construir el **pool de agentes humanos** (Fase 9 de `manual-ghl-paso-a-paso.html`): crear
+      cuentas reales de empleados, aplicar tags `agente-*`, configurar las 4 reglas de
+      Auto-Assignment con SLA.
+- [ ] Confirmar el estado real de aprobación Meta de las plantillas pendientes (corrección #1).
+- [x] ~~Resolver el mapeo `tipo_interes` → `categoria` con sign-off de negocio.~~ **Implementado
+      en código** (`convex/_lib/productSearch.ts::resolvedTipoPieza`, commits `8ddf549`…`b5f45f4` + fixes adicionales del 6 jul) — cobertura real 91-96% verificada contra ambos sheets en
+      vivo. **Sin comitear más allá de HEAD / sin desplegar todavía.** Falta: sign-off de negocio
+      solo sobre `Joyas→otro` (no `set`); ver `GHL/product-catalog-audit-2026-07-06.md`.
+- [ ] Investigar por qué **WF-06 / WF-08 muestran 0 inscripciones** (corrección #4).
+- [ ] **Cablear en Progresy (config, no código) las 2 features nuevas del 6 jul** —
+      VENDIDA-compartible + precio cualitativo (`convex/ghl.ts`/`productSearch.ts`, sin
+      desplegar): (a) crear campo Texto `precio_tier` + agregar
+      `"priceTier":"{{contact.precio_tier}}"` al webhook de WF-04 + enseñarle a María a
+      llenarlo cuando el cliente da una palabra en vez de un número (`presupuesto_declarado`
+      es tipo Number, no acepta texto de forma confiable); (b) agregar merge tag
+      `.0.disponible` (y `.1./.2.`) al WhatsApp de WF-04 con aviso de "pieza de referencia,
+      ya vendida" cuando `disponible=false` — sin esto un cliente puede recibir una pieza
+      vendida sin saber que no puede comprarla. Detalle: `product-catalog-audit-2026-07-06.md` §9.
+
+---
+
+## ✅ UPDATE 5 jul 2026 — Vitrina "Consultar por WhatsApp" ahora escribe la selección DIRECTO a GHL (código listo) — **falta 1 paso manual en Progresy**
+
+> Problema reportado: el botón "Consultar por WhatsApp" del catálogo público quedaba
+> **fuera del flujo del agente** — la única señal de que un cliente eligió una pieza
+> era un mensaje de WhatsApp en texto libre que María tenía que interpretar
+> correctamente (frágil, invisible cuando falla — el log de ejecución de GHL marca
+> "Success" aunque la acción del bot nunca dispare de verdad).
+
+**✅ Código desplegable, construido esta sesión:**
+
+- `convex/ghl.ts::searchProducts` ahora acepta `contactId` y lo embebe como `?cid=`
+  en `web_link`/`vitrina_link`.
+- `api/ghl-search-products.ts` acepta `contactId` en el body del webhook y lo pasa.
+- **`api/vitrina-select.ts` (nuevo, público)**: cuando el cliente toca "Consultar por
+  WhatsApp" en una pieza cuyo link trae `?cid=`, el navegador llama a este endpoint
+  ANTES de abrir WhatsApp (no bloqueante — `fetch` con `keepalive`, nunca depende de
+  que WhatsApp abra para completarse). Escribe directo al contacto de GHL:
+  - custom field `producto_seleccionado_sku` ← el SKU elegido
+  - tag `quiere-comprar` (bookkeeping / Manage Scoring)
+  - tag `pide-humano` → **dispara WF-06 (YA PUBLICADO/EN VIVO)**: pausa a María,
+    mueve la oportunidad a Negociación/Agente, y manda el WhatsApp real ES-01 de
+    hand-off al cliente. Decisión explícita del usuario (2026-07-05): SÍ debe
+    disparar este hand-off automático, no solo quedar registrado.
+  - Auditoría: `convex/ghl.ts::recordVitrinaSelection` inserta en la tabla nueva
+    `vitrinaSelections` (gancho para un futuro recordatorio "¿ya elegiste?" — NO
+    construido aún, ver abajo).
+- Requiere `GHL_TOKEN` + `GHL_LOCATION_ID` en Vercel (ya configurados — los usa
+  `api/ghl-sync-contact.ts` desde antes).
+
+**✅ HECHO EN VIVO (mismo día, vía Claude-in-Chrome):** se agregó `"contactId":"{{contact.id}}"`
+al body del Webhook personalizado de **WF-04** (id `b26e3f2d-8f60-4b2b-aa7c-a8c5ddb56a84`),
+junto a los campos existentes (`intent.categoria`, `presupuesto`, `ciudad`) — verificado
+reabriendo el paso tras guardar (el texto persistió), y el flujo de trabajo completo
+(botón "Guardar" superior) también se guardó ("¡Guardado! El flujo de trabajo ha sido
+guardado."). WF-04 sigue **Published**, así que este cambio ya está en vivo: el próximo
+lead que reciba una vitrina de WF-04 tendrá `?cid=` en su link.
+
+**Hallazgo de paso (actualiza el estado de la sesión anterior):** al abrir la lista de
+flujos se vio que **WF-03, WF-05 y WF-05B ya están Published** (WF-05B · "Compra con
+asesor" existe y está publicado — la nota anterior de `tm-ghl-progresy-state` que decía
+"WF-05B no construido" está desactualizada). No se tocó ninguno de estos — solo se editó
+el body del webhook de WF-04.
+
+Los links de "Compartir con cliente" (share manual de un asesor) nunca llevan `?cid=` —
+ese flujo no cambia.
+
+**⏸️ NO construido (siguiente paso natural, no se hizo sin definición de negocio):**
+un recordatorio automático si el cliente elige una pieza pero no completa el pago en
+N minutos ("ask after a few minutes"). La tabla `vitrinaSelections` ya registra
+timestamp+sku+contacto como base para esto — falta decidir: ¿cron de Convex que
+revisa `sales` y manda un WhatsApp de recordatorio vía `api/_lib/ghl-client.ts`, o un
+paso de Progresy (Esperar N min → condición → WhatsApp)? Cualquiera de las dos es
+viable con la infraestructura ya existente.
+
+---
+
 ## ✅ UPDATE 2 jul 2026 (cierre) — deploy final HECHO; cron sin-respuesta-7d EN VIVO; **María (IA) = bloqueo del embudo** con vía de salida ya investigada
 
 > Cierre del hand-off anterior. Los dos commits locales de `feat/ghl-inactivity-scoring` ya están mergeados y
@@ -80,8 +248,6 @@ sus 4 preguntas. Con María apagada, WF-03 nunca dispara para un cliente real (s
    estado de la plantilla `escalacion_asesor` (última vez Pendiente aprobación de Meta).
 
 ---
-
-
 
 ## ✅ UPDATE 2 jul 2026 (continuación) — WF-05 y WF-03 completados y probados, bug real encontrado y arreglado en sin-respuesta-7d
 
@@ -309,7 +475,6 @@ foto_url, web_link), mover oportunidad → "Producto Recomendado", tag `producto
 que va en el texto del WhatsApp, así que mensaje y página muestran la misma cifra. (Para un enlace único a una
 _grilla_ de las 3 piezas con precio elegido por el asesor, ver el flujo manual "Compartir con cliente" en la
 app → genera `/v/{token}` con multiplicador + moneda; requiere añadir un merge tag nuevo en Progresy.)
-
 
 **🐛 Bug real encontrado y arreglado — merge tag de array en WhatsApp free-form.** El tag
 `{{custom_webhook.1.response.productos}}` (array de objetos) se renderiza como texto literal
@@ -542,6 +707,9 @@ DECISIONES DE NEGOCIO PENDIENTES (no tomarlas solo/a — preguntar al equipo):
      _(El backend ya escribe `total_comprado_cop` + `ultima_compra_fecha` + tag, por eso WF-08 NO repite esos pasos.)_
 - **Plantillas WA aprobadas disponibles** (vistas en el selector): `saludo_inicial_wa`, `confirmacion_pago_wa` (UTILITY),
   `postventa_entrega_wa`, `postventa_testimonio_wa`, `pieza_lista_pago_wa`, `pieza_pendiente_wa`.
+  > ⚠️ **Corrección (6 jul 2026):** "vistas en el selector" ≠ "aprobadas por Meta". `output/whatsapp-templates.md`
+  > (más nuevo) confirma que `confirmacion_pago_wa`, `postventa_entrega_wa`, `postventa_testimonio_wa` y
+  > `pieza_lista_pago_wa` siguen **Pending** de Meta. Ver banner al inicio del doc.
 - **Pendiente de WF-08 (refinamientos):**
   - **Publicar** el workflow (queda Borrador a propósito: publicarlo lo pone EN VIVO → manda WhatsApp reales cuando
     aparece el tag; hacerlo cuando el equipo decida ir a producción). Al publicar, copiar el ID a `WF_POSTVENTA_ID` + redeploy.
@@ -621,6 +789,11 @@ DECISIONES DE NEGOCIO PENDIENTES (no tomarlas solo/a — preguntar al equipo):
   **Round-robin: Kevin (Dirección Tierra Madre) / Sebastián (Sebastian Pion) / Comercializadora Tierra Madre**
   (Split Traffic = Equally). Guardado, **queda en Borrador**. Nota: en la lista de usuarios asignables
   NO existe un usuario "Kevin" por nombre — Kevin = cuenta **Dirección Tierra Madre** (confirmado por el cliente).
+  > ⚠️ **Corrección (6 jul 2026):** el AUDIT en vivo (`Configuración → Mi personal`) confirma que la cuenta GHL
+  > solo tiene 2 usuarios: `Comercializadora Tierra Madre` (ACCOUNT-ADMIN) y `Direccion Tierra Madre`
+  > (ACCOUNT-USER). No existe login individual de "Sebastián"/"Sebastian Pion" — el round-robin de 3 vías
+  > descrito arriba es **técnicamente imposible hoy**. Falta ejecutar la Fase 9 de `manual-ghl-paso-a-paso.html`
+  > (crear empleados reales + tags `agente-*` + 4 reglas de Auto-Assignment con SLA). Ver banner al inicio del doc.
 - **Trigger Link creado:** `link-catalogo` → `https://tierramadre.app` (Link Key `{{trigger_link.ovuRRTi2O6uxySbbR...}}`
   para click-tracking en plantillas). `link-checkout` se **omite** (el checkout es `init_point` dinámico por orden, no un link estático);
   links de evento pendientes de URLs reales.
@@ -659,6 +832,11 @@ DECISIONES DE NEGOCIO PENDIENTES (no tomarlas solo/a — preguntar al equipo):
 
 - **WhatsApp Business**: número +57 311 305 2755 · cuenta **Approved** + Meta **Verified** +
   marketing **Enabled** · **15 plantillas** (14 Activas, 1 Pendiente Meta: `escalacion_asesor`).
+  > ⚠️ **Corrección (6 jul 2026):** el conteo "14 Activas, 1 Pendiente" está desactualizado.
+  > `output/whatsapp-templates.md` (4 jul, más nuevo) dice que TODAS las plantillas Tier-1
+  > (`saludo_inicial_wa`, `pieza_lista_pago_wa`, `confirmacion_pago_wa`, `escalacion_asesor_wa`,
+  > `postventa_entrega_wa`, `postventa_testimonio_wa`) + la nueva `coleccion_disponible_wa` siguen
+  > **Pending** Meta. Ver banner al inicio del doc.
 - **Facebook**: página "Tierra Mädre Gemas" conectada.
 - **Instagram**: conectado vía la misma página (DMs al inbox unificado).
 - **TikTok Messaging**: conectado. (Google Calendar también.)
@@ -705,6 +883,8 @@ DECISIONES DE NEGOCIO PENDIENTES (no tomarlas solo/a — preguntar al equipo):
 ### WhatsApp
 
 - Solo esperar la aprobación de Meta de la plantilla `escalacion_asesor` (única Pendiente).
+  > ⚠️ **Corrección (6 jul 2026):** no es la única Pendiente — TODAS las plantillas Tier-1 siguen Pending según
+  > `output/whatsapp-templates.md`. Ver banner al inicio del doc.
 
 ## 3 · Roadmap para completar el embudo (workflows)
 
@@ -745,17 +925,24 @@ Hecho con verde esmeralda 💚
 
 1. **Prompt v2 aplicado** (Objetivos del bot): no promete enviar fotos/links ella misma (una línea de anuncio y el sistema entrega), 4 preguntas con short-circuit, regla de frustración (1 disculpa máx → escalar), sin referencias a internals, pagos SIEMPRE vía asesor. Naming cliente: **"colección"** (Vitrina queda como término interno). Fuente canónica: `GHL/output/bot-maria-prompt.md`.
 2. **Acciones del bot configuradas** ("Activar un flujo de trabajo", 3 triggers):
-   - *Enviar coleccion (calificacion completa)* → **WF-03** (actualiza bot/status → etapa Calificado por IA → encadena WF-04)
-   - *Compra con asesor (Vitrina)* → **WF-05B** (cliente eligió pieza en la colección / quiere comprar)
-   - *Escalación a humano* → **WF-06 + WF-11** (pide humano / queja / frustración / inversión >5M)
+   - _Enviar coleccion (calificacion completa)_ → **WF-03** (actualiza bot/status → etapa Calificado por IA → encadena WF-04)
+   - _Compra con asesor (Vitrina)_ → **WF-05B** (cliente eligió pieza en la colección / quiere comprar)
+   - _Escalación a humano_ → **WF-06 + WF-11** (pide humano / queja / frustración / inversión >5M)
 3. **WF-04 actualizado**: mensaje ahora envía UNA colección combinada `{{custom_webhook.1.response.vitrina_link}}` (`/v/{id1}-{id2}-{id3}`) + 3 líneas nombre/precio; se agregaron los pasos que faltaban: tag `productos-mostrados` + mover etapa a Producto Recomendado.
 4. **WF-05B upgrade** (Published): al tag `quiere-comprar` → marca `quiere-comprar` (bookkeeping para enrolamiento directo del bot) → agrega `pide-humano` (encadena WF-06 pausa-María/etapa/ES-01 + WF-11 routing) → **notificación interna a todos los usuarios** ("🛒 Compra en Vitrina", redirect a la conversación).
 5. **WF-05 convertido a herramienta manual del asesor**: trigger de tag ELIMINADO (el tag quiere-comprar es ahora de WF-05B) y **publicado**. El asesor confirma con el cliente, fija `producto_seleccionado_sku` y enrola manualmente al contacto en WF-05 → orden MP → CK-01 con `mp_url` → etapa Carrito Enviado + tag `carrito-enviado`.
+   > 🚨 **Riesgo sin verificar (6 jul 2026):** el AUDIT confirma que en "Ventas Tierra Madre" la etapa
+   > "Carrito Enviado" está posicionada ANTES que "Negociación / Agente". En este flujo la oportunidad ya
+   > pasó por Negociación/Agente (vía WF-06, escalación) ANTES de que WF-05 intente moverla aquí — desde la
+   > posición del pipeline eso es un movimiento hacia ATRÁS, y este mismo doc documenta que GHL lo bloquea
+   > (ver línea ~190, "Moving a opportunity backward in the pipeline is not allowed"). No confirmado en
+   > producción real: falta correr WF-06 seguido de WF-05 sobre una oportunidad real. Ver banner al inicio del doc.
 6. **Deploy** (PR #51 → main → Vercel prod + Convex): vitrina pública `/v/` viva (verificado `/v/324` HTTP 200 sin login) y `searchProducts` devuelve `vitrina_link` combinado.
 
 **Flujo carrito nuevo (decidido por Kevin):** el cliente ELIGE en la colección pública (CTA "Consultar por WhatsApp" → vuelve al mismo hilo, número de la casa) y el PAGO lo gestiona el asesor humano. María nunca envía links de pago.
 
 **Pendiente:**
+
 - E2E WhatsApp con contactos de prueba (Kevin Tres Toj / Juan Ma Escobar): calificación → WF-03/04 (colección con links públicos) → selección → WF-05B (notificación + pausa María) → asesor dispara WF-05 → MP link. Verificar tags/etapas en cada paso y que María no hable tras el handoff.
 - Revisión profunda WF-01 / WF-08 / WF-11 (solo sanity de lista en esta sesión).
 - Renombrar strings internos "Vitrina" → "colección" en notificación WF-05B y nombres de acciones (cosmético, staff-only).
