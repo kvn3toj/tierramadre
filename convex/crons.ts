@@ -1,5 +1,5 @@
-import { cronJobs } from "convex/server";
-import { api, internal } from "./_generated/api";
+import { cronJobs } from 'convex/server';
+import { api, internal } from './_generated/api';
 
 const crons = cronJobs();
 
@@ -20,9 +20,9 @@ const crons = cronJobs();
  * pulls/day even when idle; 15 min cuts that ~3× with no customer impact.
  */
 crons.interval(
-  "pull inventory from sheet",
+  'pull inventory from sheet',
   { minutes: 15 },
-  api.products.pullFromSheet,
+  internal.products._pullFromSheet,
   {},
 );
 
@@ -37,7 +37,7 @@ crons.interval(
  * re-scan the sheet for nothing. New/changed rows propagate sheet → Convex → SOT.
  */
 crons.interval(
-  "pull asesores from sheet",
+  'pull asesores from sheet',
   { hours: 24 },
   api.clients.pullAsesoresFromSheet,
   {},
@@ -54,7 +54,7 @@ crons.interval(
 // gap where an out-of-band SOT cell edit (e.g. Inventario `estado`) would
 // otherwise wait for the manual "Sincronizar todo (completo)" button.
 crons.interval(
-  "reconcile foto tabs (backstop)",
+  'reconcile foto tabs (backstop)',
   { minutes: 60 },
   internal.fotoSync.reconcileBackstop,
   {},
@@ -67,7 +67,7 @@ crons.interval(
 
 // Recompute ambassador scores nightly. 05:00 UTC ≈ 00:00 America/Bogotá.
 crons.daily(
-  "ambassador scoring",
+  'ambassador scoring',
   { hourUTC: 5, minuteUTC: 0 },
   internal.ambassadors.calculateScore,
   {},
@@ -75,8 +75,8 @@ crons.daily(
 
 // Flag online carts left unpaid > 4h. 23:00 UTC ≈ 18:00 America/Bogotá.
 crons.cron(
-  "abandoned cart nudge",
-  "0 23 * * *",
+  'abandoned cart nudge',
+  '0 23 * * *',
   internal.ghl.nudgeAbandoned,
   {},
 );
@@ -86,8 +86,8 @@ crons.cron(
 // trigger for this; see convex/ghl.ts::tagInactiveContacts). 07:00 UTC ≈
 // 02:00 America/Bogotá — off-peak, clear of the 05:00 and 23:00 crons.
 crons.cron(
-  "tag inactive contacts (sin-respuesta-7d)",
-  "0 7 * * *",
+  'tag inactive contacts (sin-respuesta-7d)',
+  '0 7 * * *',
   internal.ghl.tagInactiveContacts,
   {},
 );

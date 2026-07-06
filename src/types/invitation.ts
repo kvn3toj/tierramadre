@@ -11,8 +11,8 @@ export type ContactType = 'email' | 'phone';
 export type GuestCurrencyMode = 'COP' | 'USD';
 export type GuestMultiplier = number; // 1.0–4.0 in 0.1 steps
 
-// Fixed 24-hour duration for all invitations
-export const INVITATION_DURATION_HOURS = 24;
+// Fixed 30-day duration for all invitations
+export const INVITATION_DURATION_HOURS = 24 * 30;
 
 /**
  * Options for generating a new invitation

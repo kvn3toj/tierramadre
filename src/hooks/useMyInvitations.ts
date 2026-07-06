@@ -7,6 +7,7 @@
 
 import { useState, useCallback, useMemo, useRef } from 'react';
 import { useConvexQuery, convexApi, convexReady } from '../lib/convex-safe';
+import { readFreshGoogleIdToken } from '../utils/googleIdToken';
 
 export interface Invitation {
   invitationId: string;
@@ -53,21 +54,28 @@ function toInvitation(doc: Record<string, unknown>): Invitation {
     expiresAt: (doc.expiresAt as string) ?? null,
     pricingMode: String(doc.pricingMode ?? 'with_prices'),
     guestCurrencyMode: (doc.guestCurrencyMode as string) ?? null,
-    guestMultiplier: doc.guestMultiplier != null ? Number(doc.guestMultiplier) : null,
+    guestMultiplier:
+      doc.guestMultiplier != null ? Number(doc.guestMultiplier) : null,
   };
 }
 
-export function useMyInvitations(creatorEmail: string | null | undefined): UseMyInvitationsReturn {
+export function useMyInvitations(
+  creatorEmail: string | null | undefined,
+): UseMyInvitationsReturn {
   const [mutatingCodes, setMutatingCodes] = useState<Set<string>>(new Set());
 
   // Always call useQuery unconditionally to respect Rules of Hooks.
   // When Convex is not ready (no generated API or no provider), useConvexQuery is null,
   // so we fall back to a no-op memoized empty array.
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const convexData = convexReady && useConvexQuery
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    ? useConvexQuery(convexApi.invitations.listByCreator, creatorEmail ? { creatorEmail } : 'skip')
-    : undefined;
+  const convexData =
+    convexReady && useConvexQuery
+      ? // eslint-disable-next-line react-hooks/rules-of-hooks
+        useConvexQuery(
+          convexApi.invitations.listByCreator,
+          creatorEmail ? { creatorEmail } : 'skip',
+        )
+      : undefined;
 
   const invitations: Invitation[] = useMemo(() => {
     if (!Array.isArray(convexData)) return [];
@@ -89,12 +97,18 @@ export function useMyInvitations(creatorEmail: string | null | undefined): UseMy
   const updateMultiplier = useCallback(
     async (shortCode: string, multiplier: number): Promise<boolean> => {
       if (!creatorEmail) return false;
+      const idToken = readFreshGoogleIdToken();
+      if (!idToken) return false;
       setMutatingCodes((prev) => new Set(prev).add(shortCode));
       try {
         const res = await fetch('/api/invitations?action=update', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ shortCode, creatorEmail, fields: { guestMultiplier: multiplier } }),
+          body: JSON.stringify({
+            shortCode,
+            idToken,
+            fields: { guestMultiplier: multiplier },
+          }),
         });
         const data = await res.json();
         return !!data.success;
@@ -108,18 +122,20 @@ export function useMyInvitations(creatorEmail: string | null | undefined): UseMy
         });
       }
     },
-    [creatorEmail]
+    [creatorEmail],
   );
 
   const expireInvitation = useCallback(
     async (shortCode: string): Promise<boolean> => {
       if (!creatorEmail) return false;
+      const idToken = readFreshGoogleIdToken();
+      if (!idToken) return false;
       setMutatingCodes((prev) => new Set(prev).add(shortCode));
       try {
         const res = await fetch('/api/invitations?action=expire', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ shortCode, creatorEmail }),
+          body: JSON.stringify({ shortCode, idToken }),
         });
         const data = await res.json();
         return !!data.success;
@@ -133,7 +149,7 @@ export function useMyInvitations(creatorEmail: string | null | undefined): UseMy
         });
       }
     },
-    [creatorEmail]
+    [creatorEmail],
   );
 
   const refresh = useCallback(() => {

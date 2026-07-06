@@ -16,11 +16,11 @@
  * so the spec can seed products before navigation.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-type Estado = "DISPONIBLE" | "VENDIDA" | "ASESOR" | "";
-type SyncStatus = "synced" | "pending" | "error";
-type AuditStatus = "saved" | "pending" | "failed";
+type Estado = 'DISPONIBLE' | 'VENDIDA' | 'ASESOR' | '';
+type SyncStatus = 'synced' | 'pending' | 'error';
+type AuditStatus = 'saved' | 'pending' | 'failed';
 
 interface Product {
   _id: string;
@@ -75,7 +75,7 @@ interface LockEntry {
   expiresAt: string;
 }
 
-type Scope = "products" | "audits" | "locks";
+type Scope = 'products' | 'audits' | 'locks';
 
 const store: {
   products: Product[];
@@ -100,15 +100,15 @@ function notify(...scopes: Scope[]) {
 }
 
 const apiRefToScope: Record<string, Scope> = {
-  "products.list": "products",
-  "products.get": "products",
-  "products.syncStats": "products",
-  "products.editHistory": "audits",
-  "products.lockStatus": "locks",
-  "products.listActiveLocks": "locks",
-  "products.patronesFor": "products",
-  "products.patronesGlobalTop": "products",
-  "products.recentEdits": "audits",
+  'products.list': 'products',
+  'products.get': 'products',
+  'products.syncStats': 'products',
+  'products.editHistory': 'audits',
+  'products.lockStatus': 'locks',
+  'products.listActiveLocks': 'locks',
+  'products.patronesFor': 'products',
+  'products.patronesGlobalTop': 'products',
+  'products.recentEdits': 'audits',
 };
 
 let nextId = 1;
@@ -120,70 +120,70 @@ function defaultSeed(): Product[] {
   const now = new Date().toISOString();
   return [
     {
-      _id: makeId("prod"),
+      _id: makeId('prod'),
       _creationTime: Date.now(),
-      itemId: "32",
+      itemId: '32',
       rowIndex: 33,
-      nombre: "Esmeralda Venus",
-      peso: "1.85",
-      color: "Verde Muzo",
-      calidad: "Premium",
+      nombre: 'Esmeralda Venus',
+      peso: '1.85',
+      color: 'Verde Muzo',
+      calidad: 'Premium',
       precioCOP: 12_500_000,
-      ubicacion: "Caja 7",
-      coleccion: "Heritage",
-      caja: "C-07",
-      estado: "DISPONIBLE",
+      ubicacion: 'Caja 7',
+      coleccion: 'Heritage',
+      caja: 'C-07',
+      estado: 'DISPONIBLE',
       lastPulledAt: now,
-      syncStatus: "synced",
+      syncStatus: 'synced',
       lastPushedAt: now,
     },
     {
-      _id: makeId("prod"),
+      _id: makeId('prod'),
       _creationTime: Date.now(),
-      itemId: "45",
+      itemId: '45',
       rowIndex: 46,
-      nombre: "Esmeralda Esperanza",
-      peso: "2.10",
-      color: "Verde Chivor",
-      calidad: "Premium",
+      nombre: 'Esmeralda Esperanza',
+      peso: '2.10',
+      color: 'Verde Chivor',
+      calidad: 'Premium',
       precioCOP: 18_750_000,
-      ubicacion: "Caja 3",
-      coleccion: "Atelier",
-      estado: "ASESOR",
+      ubicacion: 'Caja 3',
+      coleccion: 'Atelier',
+      estado: 'ASESOR',
       lastPulledAt: now,
-      syncStatus: "synced",
+      syncStatus: 'synced',
     },
     {
-      _id: makeId("prod"),
+      _id: makeId('prod'),
       _creationTime: Date.now(),
-      itemId: "58",
+      itemId: '58',
       rowIndex: 59,
-      nombre: "Esmeralda Penumbra",
-      peso: "1.20",
-      color: "Verde Coscuez",
-      calidad: "Comercial",
+      nombre: 'Esmeralda Penumbra',
+      peso: '1.20',
+      color: 'Verde Coscuez',
+      calidad: 'Comercial',
       precioCOP: 4_800_000,
-      coleccion: "Studio",
-      estado: "DISPONIBLE",
+      coleccion: 'Studio',
+      estado: 'DISPONIBLE',
       lastPulledAt: now,
-      syncStatus: "synced",
+      syncStatus: 'synced',
     },
   ];
 }
 
 store.products = defaultSeed();
 
-if (typeof window !== "undefined") {
+if (typeof window !== 'undefined') {
   (window as unknown as Record<string, unknown>).__TM_PLAYWRIGHT_FIXTURE__ = {
     seed(products: Product[]) {
       store.products = products.map((p) => ({
         ...p,
-        _id: p._id ?? makeId("prod"),
+        _id: p._id ?? makeId('prod'),
         _creationTime: p._creationTime ?? Date.now(),
       }));
       store.audits = [];
       store.locks = [];
-      notify("products", "audits", "locks");
+      notify('products', 'audits', 'locks');
     },
     snapshot() {
       return {
@@ -196,7 +196,7 @@ if (typeof window !== "undefined") {
       store.products = defaultSeed();
       store.audits = [];
       store.locks = [];
-      notify("products", "audits", "locks");
+      notify('products', 'audits', 'locks');
     },
   };
 }
@@ -243,9 +243,9 @@ function listProducts(estado?: Estado) {
 function syncStats() {
   const total = store.products.length;
   const pending = store.products.filter(
-    (p) => p.syncStatus === "pending",
+    (p) => p.syncStatus === 'pending',
   ).length;
-  const errored = store.products.filter((p) => p.syncStatus === "error").length;
+  const errored = store.products.filter((p) => p.syncStatus === 'error').length;
   const lastPull = store.products.reduce<string | null>(
     (acc, r) => (acc === null || r.lastPulledAt > acc ? r.lastPulledAt : acc),
     null,
@@ -266,20 +266,20 @@ function patronesFor(itemId: string) {
   return {
     combos: [
       {
-        key: "Cosquez·AA·3.00–3.50",
-        label: "Cosquez · AA · 3.0–3.5 ct",
+        key: 'Cosquez·AA·3.00–3.50',
+        label: 'Cosquez · AA · 3.0–3.5 ct',
         count: 5,
         medianPriceCOP: 4_800_000,
       },
       {
-        key: "Cosquez·AA·2.50–3.00",
-        label: "Cosquez · AA · 2.5–3.0 ct",
+        key: 'Cosquez·AA·2.50–3.00',
+        label: 'Cosquez · AA · 2.5–3.0 ct',
         count: 3,
         medianPriceCOP: 3_900_000,
       },
       {
-        key: "Muzo·AA·3.00–3.50",
-        label: "Muzo · AA · 3.0–3.5 ct",
+        key: 'Muzo·AA·3.00–3.50',
+        label: 'Muzo · AA · 3.0–3.5 ct',
         count: 2,
         medianPriceCOP: 5_200_000,
       },
@@ -292,20 +292,20 @@ function patronesGlobalTop() {
   return {
     combos: [
       {
-        key: "Muzo·AAA·2.00–3.00",
-        label: "Muzo · AAA · 2–3 ct",
+        key: 'Muzo·AAA·2.00–3.00',
+        label: 'Muzo · AAA · 2–3 ct',
         count: 12,
         medianPriceCOP: 5_500_000,
       },
       {
-        key: "Cosquez·AA·3.00–4.00",
-        label: "Cosquez · AA · 3–4 ct",
+        key: 'Cosquez·AA·3.00–4.00',
+        label: 'Cosquez · AA · 3–4 ct',
         count: 9,
         medianPriceCOP: 4_300_000,
       },
       {
-        key: "Muzo·AA·1.00–2.00",
-        label: "Muzo · AA · 1–2 ct",
+        key: 'Muzo·AA·1.00–2.00',
+        label: 'Muzo · AA · 1–2 ct',
         count: 7,
         medianPriceCOP: 1_900_000,
       },
@@ -342,34 +342,34 @@ export function useConvexQuery(apiRef: unknown, args: unknown): unknown {
   // Each query subscribes to its own scope so unrelated mutations
   // (e.g. claimLock bumping the locks counter) don't invalidate the
   // products.list memo and re-mount EditDrawer's draft.
-  const scope = apiRefToScope[ref] ?? "products";
+  const scope = apiRefToScope[ref] ?? 'products';
   const version = useScopeVersion(scope);
   // Serialize args so consumers passing fresh object literals each
   // render don't churn the memo. Real Convex memoizes by structural
   // equality; we approximate with JSON for the cases the panel uses.
   const argsKey = JSON.stringify(args ?? null);
   return useMemo(() => {
-    if (args === "skip") return undefined;
+    if (args === 'skip') return undefined;
     switch (ref) {
-      case "products.list":
+      case 'products.list':
         return listProducts((args as { estado?: Estado })?.estado);
-      case "products.get":
+      case 'products.get':
         return store.products.find(
           (p) => p.itemId === (args as { itemId: string }).itemId,
         );
-      case "products.syncStats":
+      case 'products.syncStats':
         return syncStats();
-      case "products.editHistory":
+      case 'products.editHistory':
         return editHistory((args as { itemId: string }).itemId);
-      case "products.lockStatus":
+      case 'products.lockStatus':
         return lockStatusFor((args as { itemId: string }).itemId);
-      case "products.listActiveLocks":
+      case 'products.listActiveLocks':
         return listActiveLocks();
-      case "products.patronesFor":
+      case 'products.patronesFor':
         return patronesFor((args as { itemId: string }).itemId);
-      case "products.patronesGlobalTop":
+      case 'products.patronesGlobalTop':
         return patronesGlobalTop();
-      case "products.recentEdits":
+      case 'products.recentEdits':
         return recentEdits((args as { limit?: number } | undefined)?.limit);
       default:
         return undefined;
@@ -378,17 +378,23 @@ export function useConvexQuery(apiRef: unknown, args: unknown): unknown {
   }, [ref, argsKey, version]);
 }
 
+// Real saveEdit/saveEditMany/createProduct are now Convex *actions* gated by
+// a verified Google ID token (see convex/_lib/authz.ts) — the client sends
+// `idToken`, not a plain editorEmail/editorName. The stub doesn't do real
+// token verification, so it just stands in a fixed "test admin" identity for
+// the audit trail.
+const STUB_EDITOR_EMAIL = 'test-admin@stub.tierramadre.app';
+const STUB_EDITOR_NAME = 'Test Admin';
+
 interface SaveEditArgs {
+  idToken: string;
   itemId: string;
-  editorEmail: string;
-  editorName?: string;
   patch: Record<string, unknown>;
 }
 
 interface SaveEditManyArgs {
+  idToken: string;
   itemIds: string[];
-  editorEmail: string;
-  editorName?: string;
   // Phase H — broadened to mirror saveEdit's patch shape (precioCOP,
   // coleccion, ubicacion, etc.) so the bulk action bar can apply more
   // than just an estado change.
@@ -409,54 +415,50 @@ interface ReleaseLockArgs {
 const LOCK_TTL_MS = 5 * 60 * 1000;
 
 interface CreateProductArgs {
+  idToken: string;
   itemId: string;
-  editorEmail: string;
-  editorName?: string;
   fields: Partial<
     Omit<
       Product,
-      | "_id"
-      | "_creationTime"
-      | "itemId"
-      | "rowIndex"
-      | "estado"
-      | "lastPulledAt"
-      | "syncStatus"
+      | '_id'
+      | '_creationTime'
+      | 'itemId'
+      | 'rowIndex'
+      | 'estado'
+      | 'lastPulledAt'
+      | 'syncStatus'
     >
   >;
 }
 
-function applyCreateProduct({
-  itemId,
-  editorEmail,
-  editorName,
-  fields,
-}: CreateProductArgs): {
+function applyCreateProduct({ itemId, fields }: CreateProductArgs): {
   itemId: string;
   productId: string;
   rowIndex: number;
 } {
+  const editorEmail = STUB_EDITOR_EMAIL;
+  const editorName = STUB_EDITOR_NAME;
   const itemIdTrim = itemId.trim();
-  if (!itemIdTrim) throw new Error("El número de la piedra es obligatorio");
+  if (!itemIdTrim) throw new Error('El número de la piedra es obligatorio');
   if (store.products.some((p) => p.itemId === itemIdTrim)) {
     throw new Error(`Ya existe una piedra con el número ${itemIdTrim}`);
   }
   const nextRow =
     store.products.reduce((m, p) => Math.max(m, p.rowIndex), 1) + 1;
   const now = new Date().toISOString();
-  const productId = makeId("prod");
+  const productId = makeId('prod');
   const product: Product = {
     _id: productId,
     _creationTime: Date.now(),
     itemId: itemIdTrim,
     rowIndex: nextRow,
     ...fields,
-    estado: "DISPONIBLE",
+    estado: 'DISPONIBLE',
     lastPulledAt: now,
-    syncStatus: "pending",
+    syncStatus: 'pending',
   };
   store.products.push(product);
-  const auditId = makeId("audit");
+  const auditId = makeId('audit');
   store.audits.push({
     _id: auditId,
     _creationTime: Date.now(),
@@ -471,56 +473,53 @@ function applyCreateProduct({
         before: null,
         after: (after as string | number | null) ?? null,
       })),
-    status: "pending",
+    status: 'pending',
   });
-  notify("products", "audits");
+  notify('products', 'audits');
   // Mirror the real pushToSheet ack — flip to synced/saved after a tick.
   setTimeout(() => {
     const target = store.products.find((p) => p.itemId === itemIdTrim);
     if (target) {
-      target.syncStatus = "synced";
+      target.syncStatus = 'synced';
       target.lastPushedAt = new Date().toISOString();
     }
     const audit = store.audits.find((a) => a._id === auditId);
-    if (audit) audit.status = "saved";
-    notify("products", "audits");
+    if (audit) audit.status = 'saved';
+    notify('products', 'audits');
   }, 50);
   return { itemId: itemIdTrim, productId, rowIndex: nextRow };
 }
 
-function applySaveEdit({
-  itemId,
-  editorEmail,
-  editorName,
-  patch,
-}: SaveEditArgs) {
+function applySaveEdit({ itemId, patch }: SaveEditArgs) {
+  const editorEmail = STUB_EDITOR_EMAIL;
+  const editorName = STUB_EDITOR_NAME;
   const idx = store.products.findIndex((p) => p.itemId === itemId);
   if (idx === -1) throw new Error(`Producto ${itemId} no está en el espejo`);
   const before = store.products[idx];
-  const changes: AuditEntry["changes"] = [];
+  const changes: AuditEntry['changes'] = [];
   for (const [field, after] of Object.entries(patch)) {
     if (after === undefined) continue;
     const beforeValue = (before as unknown as Record<string, unknown>)[field];
     if (beforeValue === after) continue;
     const beforeNorm =
-      typeof beforeValue === "string" || typeof beforeValue === "number"
+      typeof beforeValue === 'string' || typeof beforeValue === 'number'
         ? beforeValue
         : null;
     const afterNorm =
-      typeof after === "string" || typeof after === "number" ? after : null;
+      typeof after === 'string' || typeof after === 'number' ? after : null;
     changes.push({ field, before: beforeNorm, after: afterNorm });
   }
   if (changes.length === 0) {
-    return { itemId, changesCount: 0, message: "Sin cambios" };
+    return { itemId, changesCount: 0, message: 'Sin cambios' };
   }
   const now = new Date().toISOString();
   store.products[idx] = {
     ...before,
     ...(patch as Partial<Product>),
-    syncStatus: "pending",
+    syncStatus: 'pending',
     syncError: undefined,
   };
-  const auditId = makeId("audit");
+  const auditId = makeId('audit');
   store.audits.push({
     _id: auditId,
     _creationTime: Date.now(),
@@ -529,29 +528,26 @@ function applySaveEdit({
     editorName,
     editedAt: now,
     changes,
-    status: "pending",
+    status: 'pending',
   });
-  notify("products", "audits");
+  notify('products', 'audits');
   // Simulate async push completing — flip to saved after a short delay
   setTimeout(() => {
     const product = store.products.find((p) => p.itemId === itemId);
     if (product) {
-      product.syncStatus = "synced";
+      product.syncStatus = 'synced';
       product.lastPushedAt = new Date().toISOString();
     }
     const audit = store.audits.find((a) => a._id === auditId);
-    if (audit) audit.status = "saved";
-    notify("products", "audits");
+    if (audit) audit.status = 'saved';
+    notify('products', 'audits');
   }, 50);
   return { itemId, changesCount: changes.length, auditId };
 }
 
-function applySaveEditMany({
-  itemIds,
-  editorEmail,
-  editorName,
-  patch,
-}: SaveEditManyArgs) {
+function applySaveEditMany({ itemIds, patch }: SaveEditManyArgs) {
+  const editorEmail = STUB_EDITOR_EMAIL;
+  const editorName = STUB_EDITOR_NAME;
   let updatedCount = 0;
   let unchangedCount = 0;
   let missingCount = 0;
@@ -575,11 +571,11 @@ function applySaveEditMany({
       const beforeVal = (before as unknown as Record<string, unknown>)[field];
       if (beforeVal === after) continue;
       const beforeNorm =
-        typeof beforeVal === "string" || typeof beforeVal === "number"
+        typeof beforeVal === 'string' || typeof beforeVal === 'number'
           ? beforeVal
           : null;
       const afterNorm =
-        typeof after === "string" || typeof after === "number" ? after : null;
+        typeof after === 'string' || typeof after === 'number' ? after : null;
       changes.push({ field, before: beforeNorm, after: afterNorm });
     }
     if (changes.length === 0) {
@@ -589,22 +585,22 @@ function applySaveEditMany({
     store.products[idx] = {
       ...before,
       ...(patch as Partial<typeof before>),
-      syncStatus: "pending",
+      syncStatus: 'pending',
       syncError: undefined,
     };
     store.audits.push({
-      _id: makeId("audit"),
+      _id: makeId('audit'),
       _creationTime: Date.now(),
       itemId,
       editorEmail,
       editorName,
       editedAt,
       changes,
-      status: "pending",
+      status: 'pending',
     });
     updatedCount++;
   }
-  notify("products", "audits");
+  notify('products', 'audits');
   return { total: itemIds.length, updatedCount, unchangedCount, missingCount };
 }
 
@@ -615,7 +611,7 @@ function applyClaimLock({ itemId, holderEmail, holderName }: ClaimLockArgs) {
   const idx = store.locks.findIndex((l) => l.itemId === itemId);
   if (idx === -1) {
     store.locks.push({ itemId, holderEmail, holderName, claimedAt, expiresAt });
-    notify("locks");
+    notify('locks');
     return { ok: true as const };
   }
   const lock = store.locks[idx];
@@ -628,7 +624,7 @@ function applyClaimLock({ itemId, holderEmail, holderName }: ClaimLockArgs) {
       claimedAt,
       expiresAt,
     };
-    notify("locks");
+    notify('locks');
     return { ok: true as const };
   }
   return {
@@ -644,7 +640,7 @@ function applyReleaseLock({ itemId, holderEmail }: ReleaseLockArgs) {
   );
   if (idx === -1) return { released: false };
   store.locks.splice(idx, 1);
-  notify("locks");
+  notify('locks');
   return { released: true };
 }
 
@@ -660,15 +656,9 @@ export function useConvexMutation(apiRef: unknown) {
   return useCallback(
     async (args: unknown) => {
       switch (ref) {
-        case "products.saveEdit":
-          return applySaveEdit(args as SaveEditArgs);
-        case "products.saveEditMany":
-          return applySaveEditMany(args as SaveEditManyArgs);
-        case "products.createProduct":
-          return applyCreateProduct(args as CreateProductArgs);
-        case "products.claimLock":
+        case 'products.claimLock':
           return applyClaimLock(args as ClaimLockArgs);
-        case "products.releaseLock":
+        case 'products.releaseLock':
           return applyReleaseLock(args as ReleaseLockArgs);
         default:
           throw new Error(`Test stub: mutation '${ref}' not implemented`);
@@ -682,19 +672,25 @@ export function useConvexAction(apiRef: unknown) {
   const ref = apiRef as string;
   return async (args: unknown) => {
     switch (ref) {
-      case "products.pullFromSheet":
+      case 'products.saveEdit':
+        return applySaveEdit(args as SaveEditArgs);
+      case 'products.saveEditMany':
+        return applySaveEditMany(args as SaveEditManyArgs);
+      case 'products.createProduct':
+        return applyCreateProduct(args as CreateProductArgs);
+      case 'products.pullFromSheet':
         return { pulled: store.products.length, upserted: 0, rebased: 0 };
-      case "products.retryPush": {
+      case 'products.retryPush': {
         const itemId = (args as { itemId: string }).itemId;
         const product = store.products.find((p) => p.itemId === itemId);
         if (product) {
-          product.syncStatus = "synced";
+          product.syncStatus = 'synced';
           product.syncError = undefined;
           product.lastPushedAt = new Date().toISOString();
-          notify("products");
-          return { ok: true, message: "Reintento exitoso" };
+          notify('products');
+          return { ok: true, message: 'Reintento exitoso' };
         }
-        return { ok: false, message: "Producto no encontrado" };
+        return { ok: false, message: 'Producto no encontrado' };
       }
       default:
         throw new Error(`Test stub: action '${ref}' not implemented`);

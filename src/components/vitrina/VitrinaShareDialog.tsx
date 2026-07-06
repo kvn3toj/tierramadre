@@ -40,39 +40,35 @@ import {
   IconButton,
   Slider,
   Stack,
+  TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
   alpha,
 } from '@mui/material';
-import { Check, Copy, Link2, MessageCircle, X } from 'lucide-react';
+import { Check, Copy, Link2, MessageCircle, Pencil, X } from 'lucide-react';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { useTRM } from '../../hooks/useTRM';
 import { VitrinaCurrency, formatVitrinaPrice } from '../../utils/vitrinaPrice';
 import { brand, fontWeights } from '../../design-system';
-import { STORAGE_KEYS } from '../../constants/storage-keys';
+import { readFreshGoogleIdToken } from '../../utils/googleIdToken';
 
 const STUDIO_BASE_URL = 'https://tierramadre.app';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
-/** The stored GIS credential iff it hasn't expired (30s safety margin).
- *  JWTs are base64url — normalize before atob or valid tokens fail to parse. */
-function readFreshIdToken(): string | null {
-  try {
-    const token = localStorage.getItem(STORAGE_KEYS.GOOGLE_TOKEN);
-    if (!token) return null;
-    const b64 = (token.split('.')[1] ?? '')
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
-    const payload = JSON.parse(atob(b64)) as { exp?: number };
-    return typeof payload.exp === 'number' &&
-      payload.exp * 1000 > Date.now() + 30_000
-      ? token
-      : null;
-  } catch {
-    return null;
-  }
+// A bare item-number list (e.g. "193-192-194") — the stateless Vitrina form.
+// Those links have no Convex record, so they can never be edited in place;
+// only stateful tokens (e.g. "AB3K9P2Q4R7S") can be corrected via PATCH.
+const ID_LIST_RE = /^\d+([-,]\d+)*$/;
+
+/** Pull the token out of a pasted `/v/<code>` URL, or accept a bare code. */
+function extractToken(raw: string): string {
+  const trimmed = raw.trim();
+  const afterSlash = trimmed.split('/v/')[1] ?? trimmed;
+  return afterSlash.split(/[/?#]/)[0].trim().toUpperCase();
 }
+
+const readFreshIdToken = readFreshGoogleIdToken;
 
 /** One silent One Tap attempt: reports exactly once (credential or give-up),
  *  then the parent unmounts it. A timeout guards browsers that never fire
@@ -162,6 +158,13 @@ export default function VitrinaShareDialog({
   const [needsRenew, setNeedsRenew] = useState(false);
   const [silentRenewing, setSilentRenewing] = useState(false);
 
+  // Editing an already-shared link: staff paste the old token/URL and, on
+  // submit, the items currently in `items` (e.g. the corrected cart) replace
+  // its contents in place — same URL, fixed selection.
+  const [editingExisting, setEditingExisting] = useState(false);
+  const [editTokenInput, setEditTokenInput] = useState('');
+  const [wasUpdate, setWasUpdate] = useState(false);
+
   // Live preview off the first priced item, or a 2M sample like the invite UI.
   const previewBaseCOP = useMemo(() => {
     const priced = items.find(
@@ -183,6 +186,9 @@ export default function VitrinaShareDialog({
     setSilentRenewing(false);
     setCurrency('COP');
     setMultiplier(1);
+    setEditingExisting(false);
+    setEditTokenInput('');
+    setWasUpdate(false);
   };
 
   const handleClose = () => {
@@ -195,17 +201,33 @@ export default function VitrinaShareDialog({
       setError('No hay piezas para compartir.');
       return;
     }
-    // Mint via the authenticated proxy: it verifies the caller's Google ID
-    // token server-side, then creates the tamper-proof token in Convex. A
-    // stale credential guarantees a 401, so try a silent renewal first
-    // instead of firing a doomed request.
+    if (editingExisting) {
+      const token = extractToken(editTokenInput);
+      if (!token) {
+        setError('Pega el enlace o el código que enviaste al cliente.');
+        return;
+      }
+      if (ID_LIST_RE.test(token)) {
+        setError(
+          'Ese es un enlace de productos fijos (sin código) y no se puede editar. Genera un enlace nuevo con las piezas correctas.',
+        );
+        return;
+      }
+    }
+    // Mint/update via the authenticated proxy: it verifies the caller's
+    // Google ID token server-side, then writes to Convex. A stale credential
+    // guarantees a 401, so try a silent renewal first instead of firing a
+    // doomed request.
     const idToken = readFreshIdToken();
     if (!idToken) {
       attemptSilentRenew();
       return;
     }
-    await mintWithToken(idToken);
+    await submitWithToken(idToken);
   };
+
+  const submitWithToken = async (idToken: string) =>
+    editingExisting ? updateWithToken(idToken) : mintWithToken(idToken);
 
   const mintWithToken = async (idToken: string) => {
     setGenerating(true);
@@ -262,6 +284,58 @@ export default function VitrinaShareDialog({
     }
   };
 
+  /** Correct an already-shared token link in place — same URL, new items. */
+  const updateWithToken = async (idToken: string) => {
+    const token = extractToken(editTokenInput);
+    setGenerating(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/vitrina', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          token,
+          itemIds: items.map((i) => i.item),
+          currency,
+          multiplier,
+          senderSlug,
+        }),
+      });
+
+      if (res.status === 401) {
+        setGenerating(false);
+        attemptSilentRenew();
+        return;
+      }
+      if (res.status === 404) {
+        setError(
+          'No encontramos ese enlace. Revisa que el código sea correcto (los enlaces de productos fijos, sin código, no se pueden editar).',
+        );
+        return;
+      }
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.token) {
+        setError(
+          data?.error ||
+            'No se pudo actualizar el enlace. Verifica tu conexión e intenta de nuevo.',
+        );
+        return;
+      }
+
+      setWasUpdate(true);
+      setLink(`${STUDIO_BASE_URL}/v/${data.token}`);
+    } catch {
+      setError(
+        'No se pudo actualizar el enlace. Verifica tu conexión e intenta de nuevo.',
+      );
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   // Stale token: try a silent renewal (no click) before bothering the staff
   // member with a visible re-login prompt.
   const attemptSilentRenew = () => {
@@ -281,7 +355,7 @@ export default function VitrinaShareDialog({
     setSilentRenewing(false);
     try {
       await signIn(credential);
-      await mintWithToken(credential);
+      await submitWithToken(credential);
     } catch {
       setNeedsRenew(true);
       setError('No se pudo renovar la sesión. Intenta de nuevo.');
@@ -359,6 +433,54 @@ export default function VitrinaShareDialog({
 
           {!link ? (
             <>
+              {/* Toggle: mint a new link vs. correct one already sent */}
+              <Button
+                size="small"
+                onClick={() => {
+                  setEditingExisting((v) => !v);
+                  setError(null);
+                }}
+                startIcon={<Pencil size={14} />}
+                sx={{
+                  alignSelf: 'flex-start',
+                  textTransform: 'none',
+                  color: editingExisting
+                    ? brand.emerald[700]
+                    : 'text.secondary',
+                  fontWeight: editingExisting
+                    ? fontWeights.bold
+                    : fontWeights.medium,
+                  p: 0,
+                  minWidth: 0,
+                }}
+              >
+                {editingExisting
+                  ? 'Generar un enlace nuevo en su lugar'
+                  : '¿Corrigiendo un enlace ya enviado?'}
+              </Button>
+
+              {editingExisting && (
+                <Box>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Enlace o código enviado al cliente"
+                    placeholder="https://tierramadre.app/v/AB3K9P2Q4R7S"
+                    value={editTokenInput}
+                    onChange={(e) => setEditTokenInput(e.target.value)}
+                  />
+                  <Typography
+                    variant="caption"
+                    sx={{ color: 'text.secondary', mt: 0.5, display: 'block' }}
+                  >
+                    Se actualizará ese mismo enlace con las {items.length}{' '}
+                    {items.length === 1 ? 'pieza' : 'piezas'} de arriba. Solo
+                    funciona con enlaces con código (no con enlaces de productos
+                    fijos como /v/193-192-194).
+                  </Typography>
+                </Box>
+              )}
+
               {/* Currency */}
               <Box>
                 <Typography
@@ -540,13 +662,31 @@ export default function VitrinaShareDialog({
                     '&:hover': { bgcolor: brand.emerald[700] },
                   }}
                 >
-                  {generating ? 'Generando…' : 'Generar enlace'}
+                  {generating
+                    ? editingExisting
+                      ? 'Actualizando…'
+                      : 'Generando…'
+                    : editingExisting
+                      ? 'Actualizar enlace'
+                      : 'Generar enlace'}
                 </Button>
               )}
             </>
           ) : (
             <>
               {/* Success — the link */}
+              {wasUpdate && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: brand.emerald[700],
+                    fontWeight: fontWeights.medium,
+                  }}
+                >
+                  Enlace actualizado — el mismo link ahora muestra la selección
+                  corregida.
+                </Typography>
+              )}
               <Box
                 sx={{
                   p: 1.5,
@@ -607,7 +747,7 @@ export default function VitrinaShareDialog({
                 onClick={reset}
                 sx={{ textTransform: 'none', color: 'text.secondary' }}
               >
-                Generar otro enlace
+                {wasUpdate ? 'Editar otro enlace' : 'Generar otro enlace'}
               </Button>
             </>
           )}

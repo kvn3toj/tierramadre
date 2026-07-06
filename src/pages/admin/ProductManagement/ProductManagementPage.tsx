@@ -27,54 +27,55 @@
  *   Spacing — contentMaxWidth 1240, centered with 16px gutter on small.
  */
 
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
-import { Box, Typography, Skeleton } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import { useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { Box, Typography, Skeleton } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { useSearchParams } from 'react-router-dom';
 
-import { getAtelier, getFoto } from "../../../design-system";
+import { getAtelier, getFoto } from '../../../design-system';
 import {
   useConvexQuery,
   useConvexMutation,
   useConvexAction,
   convexApi,
   convexReady,
-} from "../../../lib/convex-safe";
-import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
-import { useNotification } from "../../../contexts/NotificationContext";
+} from '../../../lib/convex-safe';
+import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
+import { useNotification } from '../../../contexts/NotificationContext';
+import { readFreshGoogleIdToken } from '../../../utils/googleIdToken';
 
 import {
   AdminToolbar,
   type FilterKey,
   type AdvancedScopeFilters,
   type AdvancedFilterOptions,
-} from "./AdminToolbar";
-import { InventoryRow, type InventoryRowData } from "./InventoryRow";
-import { useBatchThumbnails } from "../../../hooks/useBatchThumbnails";
+} from './AdminToolbar';
+import { InventoryRow, type InventoryRowData } from './InventoryRow';
+import { useBatchThumbnails } from '../../../hooks/useBatchThumbnails';
 import {
   normalizeColor,
   normalizeQuality,
-} from "../../../constants/quality-and-colors";
+} from '../../../constants/quality-and-colors';
 import {
   EditDrawer,
   type EditDrawerProduct,
   type EditDrawerPatch,
-} from "./EditDrawer";
-import { FotoHero } from "./FotoHero";
-import { BulkActionBar, type BulkPriceMode } from "./BulkActionBar";
-import { Bandeja, type BandejaSelectedProduct } from "./Bandeja";
-import { StoneHero } from "./StoneHero";
-import { BloqueoCard } from "./BloqueoCard";
-import { HistorialCard } from "./HistorialCard";
-import { PatronCard } from "./PatronCard";
-import { useChromaSamples } from "../../../hooks/useChromaSamples";
-import { usePatrones, usePatronesGlobalTop } from "../../../hooks/usePatrones";
-import type { EstadoValue } from "./StatusPip";
+} from './EditDrawer';
+import { FotoHero } from './FotoHero';
+import { BulkActionBar, type BulkPriceMode } from './BulkActionBar';
+import { Bandeja, type BandejaSelectedProduct } from './Bandeja';
+import { StoneHero } from './StoneHero';
+import { BloqueoCard } from './BloqueoCard';
+import { HistorialCard } from './HistorialCard';
+import { PatronCard } from './PatronCard';
+import { useChromaSamples } from '../../../hooks/useChromaSamples';
+import { usePatrones, usePatronesGlobalTop } from '../../../hooks/usePatrones';
+import type { EstadoValue } from './StatusPip';
 // Phase G — create flow
 import {
   validateNewProduct,
   type NewProductInput,
-} from "../../../utils/createProduct-validate";
+} from '../../../utils/createProduct-validate';
 
 // =============================================================================
 // HELPERS — Convex doc → row / drawer-product
@@ -82,12 +83,12 @@ import {
 
 function filterToEstado(filter: FilterKey): EstadoValue | undefined {
   switch (filter) {
-    case "available":
-      return "DISPONIBLE";
-    case "sold":
-      return "VENDIDA";
-    case "consigned":
-      return "ASESOR";
+    case 'available':
+      return 'DISPONIBLE';
+    case 'sold':
+      return 'VENDIDA';
+    case 'consigned':
+      return 'ASESOR';
     default:
       return undefined;
   }
@@ -99,18 +100,18 @@ function filterToEstado(filter: FilterKey): EstadoValue | undefined {
  * matches a known jewelry subcategory.
  */
 const JEWELRY_CATEGORIES = new Set([
-  "anillo en plata",
-  "aretes",
-  "topitos",
-  "pulsera",
-  "dije",
-  "anillo en oro",
+  'anillo en plata',
+  'aretes',
+  'topitos',
+  'pulsera',
+  'dije',
+  'anillo en oro',
 ]);
 
 function isJewelryDoc(doc: { peso?: string; categoria?: string }): boolean {
-  const peso = (doc.peso ?? "").toLowerCase().trim();
-  if (peso === "plata" || peso.includes("oro")) return true;
-  const cat = (doc.categoria ?? "").toLowerCase().trim();
+  const peso = (doc.peso ?? '').toLowerCase().trim();
+  if (peso === 'plata' || peso.includes('oro')) return true;
+  const cat = (doc.categoria ?? '').toLowerCase().trim();
   return JEWELRY_CATEGORIES.has(cat);
 }
 
@@ -147,7 +148,7 @@ interface ConvexProductDoc {
    * field is the price.
    */
   loteId?: string;
-  syncStatus: "synced" | "pending" | "error";
+  syncStatus: 'synced' | 'pending' | 'error';
   syncError?: string;
   lastPushedAt?: string;
 }
@@ -198,22 +199,22 @@ function toDrawerProduct(doc: ConvexProductDoc): EditDrawerProduct {
 export default function ProductManagementPage() {
   const theme = useTheme();
   const atelier = getAtelier(theme.palette.mode);
-  const foto = getFoto(theme.palette.mode === "dark" ? "dark" : "light");
+  const foto = getFoto(theme.palette.mode === 'dark' ? 'dark' : 'light');
   const { user } = useGoogleAuth();
   const { notify } = useNotification();
 
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<FilterKey>("all");
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<FilterKey>('all');
   const [collection, setCollection] = useState<string | null>(null);
   const [onlyWithImages, setOnlyWithImages] = useState(false);
   const [onlyMissingPrice, setOnlyMissingPrice] = useState(false);
   const [advanced, setAdvanced] = useState<AdvancedScopeFilters>(() => ({
-    type: "all",
+    type: 'all',
     color: null,
     shape: null,
     quality: null,
     category: null,
-    cantidad: "all",
+    cantidad: 'all',
     priceRange: null,
     caratRange: null,
   }));
@@ -228,12 +229,12 @@ export default function ProductManagementPage() {
   );
   const resetAdvanced = useCallback(() => {
     setAdvanced({
-      type: "all",
+      type: 'all',
       color: null,
       shape: null,
       quality: null,
       category: null,
-      cantidad: "all",
+      cantidad: 'all',
       priceRange: null,
       caratRange: null,
     });
@@ -254,7 +255,7 @@ export default function ProductManagementPage() {
   // drawerMode dispatches the EditDrawer between "edit" and "create".
   // editingItemId === "__new__" is the sentinel used while the create
   // drawer is open (the drawer renders with product = null in this case).
-  const [drawerMode, setDrawerMode] = useState<"edit" | "create">("edit");
+  const [drawerMode, setDrawerMode] = useState<'edit' | 'create'>('edit');
 
   // Bulk selection — set of itemIds checked in the row checkboxes.
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -268,7 +269,7 @@ export default function ProductManagementPage() {
 
   const products = useConvexQuery(
     convexApi.products.list,
-    convexReady ? { estado: filterToEstado(filter) ?? undefined } : "skip",
+    convexReady ? { estado: filterToEstado(filter) ?? undefined } : 'skip',
   );
 
   // Deep-link: /admin/products?item=<itemId> opens the Bandeja inspector for
@@ -278,7 +279,7 @@ export default function ProductManagementPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const appliedItemParamRef = useRef<string | null>(null);
   useEffect(() => {
-    const itemParam = searchParams.get("item");
+    const itemParam = searchParams.get('item');
     if (!itemParam || !products) return;
     if (appliedItemParamRef.current === itemParam) return;
     if (!products.some((p) => p.itemId === itemParam)) return;
@@ -287,7 +288,7 @@ export default function ProductManagementPage() {
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
-        next.delete("item");
+        next.delete('item');
         return next;
       },
       { replace: true },
@@ -296,7 +297,7 @@ export default function ProductManagementPage() {
 
   const stats = useConvexQuery(
     convexApi.products.syncStats,
-    convexReady ? {} : "skip",
+    convexReady ? {} : 'skip',
   );
 
   // Phase I — active soft locks across the catalog. Drives the small
@@ -305,19 +306,21 @@ export default function ProductManagementPage() {
   // dot appears/vanishes the moment a peer opens or closes a drawer.
   const activeLocks = useConvexQuery(
     convexApi.products.listActiveLocks,
-    convexReady ? {} : "skip",
+    convexReady ? {} : 'skip',
   ) as Array<{ itemId: string; holderEmail: string }> | undefined;
 
-  const saveEdit = useConvexMutation(convexApi.products.saveEdit);
-  const saveEditMany = useConvexMutation(convexApi.products.saveEditMany);
-  // Phase G — create flow mutation
-  const createProduct = useConvexMutation(
+  // saveEdit/saveEditMany/createProduct are Convex actions (not mutations) —
+  // they verify the caller's Google ID token server-side before writing (see
+  // convex/_lib/authz.ts), so a guest can no longer call them directly.
+  const saveEdit = useConvexAction(convexApi.products.saveEdit);
+  const saveEditMany = useConvexAction(convexApi.products.saveEditMany);
+  // Phase G — create flow action
+  const createProduct = useConvexAction(
     convexApi.products.createProduct,
   ) as (args: {
+    idToken: string;
     itemId: string;
-    editorEmail: string;
-    editorName?: string;
-    fields: Omit<NewProductInput, "itemId">;
+    fields: Omit<NewProductInput, 'itemId'>;
   }) => Promise<{ itemId: string; productId: string; rowIndex: number }>;
   // Phase D — lock takeover from Bandeja's Bloqueo card
   const claimLock = useConvexMutation(convexApi.products.claimLock);
@@ -335,7 +338,7 @@ export default function ProductManagementPage() {
   const lockedByOtherSet = useMemo(() => {
     const out = new Set<string>();
     if (!activeLocks) return out;
-    const myEmail = user?.email ?? "";
+    const myEmail = user?.email ?? '';
     for (const lock of activeLocks) {
       if (lock.holderEmail !== myEmail) out.add(lock.itemId);
     }
@@ -356,10 +359,10 @@ export default function ProductManagementPage() {
     if (!products) return [];
     const seen = new Set<string>();
     for (const p of products) {
-      const c = (p.coleccion ?? "").trim();
+      const c = (p.coleccion ?? '').trim();
       if (c) seen.add(c);
     }
-    return [...seen].sort((a, b) => a.localeCompare(b, "es"));
+    return [...seen].sort((a, b) => a.localeCompare(b, 'es'));
   }, [products]);
 
   // Status distribution — used by the hero
@@ -367,9 +370,9 @@ export default function ProductManagementPage() {
     const counts = { available: 0, consigned: 0, sold: 0, blank: 0 };
     if (!products) return counts;
     for (const p of products) {
-      if (p.estado === "DISPONIBLE") counts.available++;
-      else if (p.estado === "ASESOR") counts.consigned++;
-      else if (p.estado === "VENDIDA") counts.sold++;
+      if (p.estado === 'DISPONIBLE') counts.available++;
+      else if (p.estado === 'ASESOR') counts.consigned++;
+      else if (p.estado === 'VENDIDA') counts.sold++;
       else counts.blank++;
     }
     return counts;
@@ -397,15 +400,15 @@ export default function ProductManagementPage() {
     let minCar = Infinity;
     let maxCar = -Infinity;
     for (const p of products) {
-      const c = normalizeColor(p.color ?? "");
+      const c = normalizeColor(p.color ?? '');
       if (c) colors.add(c);
-      const t = (p.talla ?? "").trim();
+      const t = (p.talla ?? '').trim();
       if (t) shapes.add(t);
-      const q = normalizeQuality(p.calidad ?? "");
+      const q = normalizeQuality(p.calidad ?? '');
       if (q) qualities.add(q);
-      const k = (p.categoria ?? "").trim();
+      const k = (p.categoria ?? '').trim();
       if (k) categories.add(k);
-      if (typeof p.precioCOP === "number" && p.precioCOP > 0) {
+      if (typeof p.precioCOP === 'number' && p.precioCOP > 0) {
         if (p.precioCOP < minPrice) minPrice = p.precioCOP;
         if (p.precioCOP > maxPrice) maxPrice = p.precioCOP;
       }
@@ -416,10 +419,10 @@ export default function ProductManagementPage() {
       }
     }
     return {
-      colors: [...colors].sort((a, b) => a.localeCompare(b, "es")),
-      shapes: [...shapes].sort((a, b) => a.localeCompare(b, "es")),
-      qualities: [...qualities].sort((a, b) => a.localeCompare(b, "es")),
-      categories: [...categories].sort((a, b) => a.localeCompare(b, "es")),
+      colors: [...colors].sort((a, b) => a.localeCompare(b, 'es')),
+      shapes: [...shapes].sort((a, b) => a.localeCompare(b, 'es')),
+      qualities: [...qualities].sort((a, b) => a.localeCompare(b, 'es')),
+      categories: [...categories].sort((a, b) => a.localeCompare(b, 'es')),
       priceMinMax: Number.isFinite(minPrice) ? [minPrice, maxPrice] : [0, 0],
       caratMinMax: Number.isFinite(minCar) ? [minCar, maxCar] : [0, 0],
     };
@@ -433,15 +436,15 @@ export default function ProductManagementPage() {
       if (q) {
         const hit =
           p.itemId.toLowerCase().includes(q) ||
-          (p.nombre ?? "").toLowerCase().includes(q) ||
-          (p.color ?? "").toLowerCase().includes(q) ||
-          (p.calidad ?? "").toLowerCase().includes(q) ||
-          (p.coleccion ?? "").toLowerCase().includes(q) ||
-          (p.ubicacion ?? "").toLowerCase().includes(q);
+          (p.nombre ?? '').toLowerCase().includes(q) ||
+          (p.color ?? '').toLowerCase().includes(q) ||
+          (p.calidad ?? '').toLowerCase().includes(q) ||
+          (p.coleccion ?? '').toLowerCase().includes(q) ||
+          (p.ubicacion ?? '').toLowerCase().includes(q);
         if (!hit) return false;
       }
       // Collection filter
-      if (collection && (p.coleccion ?? "").trim() !== collection) {
+      if (collection && (p.coleccion ?? '').trim() !== collection) {
         return false;
       }
       // Has-images toggle (uses the batched thumbnail map)
@@ -451,43 +454,43 @@ export default function ProductManagementPage() {
       }
       // Missing-price toggle (data quality)
       if (onlyMissingPrice) {
-        if (typeof p.precioCOP === "number" && Number.isFinite(p.precioCOP)) {
+        if (typeof p.precioCOP === 'number' && Number.isFinite(p.precioCOP)) {
           return false;
         }
       }
       // Advanced — type (loose vs jewelry)
-      if (advanced.type !== "all") {
+      if (advanced.type !== 'all') {
         const isJ = isJewelryDoc(p);
-        if (advanced.type === "jewelry" && !isJ) return false;
-        if (advanced.type === "loose" && isJ) return false;
+        if (advanced.type === 'jewelry' && !isJ) return false;
+        if (advanced.type === 'loose' && isJ) return false;
       }
       // Advanced — color
       if (advanced.color) {
-        if (normalizeColor(p.color ?? "") !== advanced.color) return false;
+        if (normalizeColor(p.color ?? '') !== advanced.color) return false;
       }
       // Advanced — shape (talla)
       if (advanced.shape) {
-        if ((p.talla ?? "").trim() !== advanced.shape) return false;
+        if ((p.talla ?? '').trim() !== advanced.shape) return false;
       }
       // Advanced — quality
       if (advanced.quality) {
-        if (normalizeQuality(p.calidad ?? "") !== advanced.quality)
+        if (normalizeQuality(p.calidad ?? '') !== advanced.quality)
           return false;
       }
       // Advanced — category
       if (advanced.category) {
-        if ((p.categoria ?? "").trim() !== advanced.category) return false;
+        if ((p.categoria ?? '').trim() !== advanced.category) return false;
       }
       // Advanced — cantidad (1 / 2+)
-      if (advanced.cantidad === "1") {
+      if (advanced.cantidad === '1') {
         if (p.cantidad !== 1) return false;
-      } else if (advanced.cantidad === "2+") {
-        if (typeof p.cantidad !== "number" || p.cantidad <= 1) return false;
+      } else if (advanced.cantidad === '2+') {
+        if (typeof p.cantidad !== 'number' || p.cantidad <= 1) return false;
       }
       // Advanced — price range (only filters items with a numeric price)
       if (advanced.priceRange) {
         const [lo, hi] = advanced.priceRange;
-        if (typeof p.precioCOP === "number" && Number.isFinite(p.precioCOP)) {
+        if (typeof p.precioCOP === 'number' && Number.isFinite(p.precioCOP)) {
           if (p.precioCOP < lo || p.precioCOP > hi) return false;
         }
         // Items without a price pass through; "Sin precio" is a separate filter
@@ -518,7 +521,7 @@ export default function ProductManagementPage() {
   // (Phase G) opens the drawer in create mode with no underlying doc.
   const editing = useMemo(
     () =>
-      editingItemId && editingItemId !== "__new__" && products
+      editingItemId && editingItemId !== '__new__' && products
         ? (products.find((p) => p.itemId === editingItemId) ?? null)
         : null,
     [editingItemId, products],
@@ -569,15 +572,15 @@ export default function ProductManagementPage() {
   useEffect(() => {
     if (!editingItemId) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !isSaving) {
+      if (e.key === 'Escape' && !isSaving) {
         // Phase G — also reset drawerMode so a follow-up open isn't
         // stuck in create mode.
         setEditingItemId(null);
-        setDrawerMode("edit");
+        setDrawerMode('edit');
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [editingItemId, isSaving]);
 
   // ─── Handlers ────────────────────────────────────────────────────────
@@ -586,8 +589,8 @@ export default function ProductManagementPage() {
   // Open the drawer in create mode by setting both the sentinel id and
   // drawerMode together so the EditDrawer renders empty in a single tick.
   const handleCreateNew = useCallback(() => {
-    setDrawerMode("create");
-    setEditingItemId("__new__");
+    setDrawerMode('create');
+    setEditingItemId('__new__');
   }, []);
 
   // Unified save handler — dispatches on mode. Edit path mirrors the
@@ -597,35 +600,42 @@ export default function ProductManagementPage() {
     async (
       itemId: string | undefined,
       payload: EditDrawerPatch | NewProductInput,
-      mode: "edit" | "create",
+      mode: 'edit' | 'create',
     ) => {
       if (!user?.email) {
-        notify("Tu sesión no tiene email. Vuelve a iniciar sesión.", "error");
+        notify('Tu sesión no tiene email. Vuelve a iniciar sesión.', 'error');
+        return;
+      }
+      const idToken = readFreshGoogleIdToken();
+      if (!idToken) {
+        notify(
+          'Tu sesión expiró. Vuelve a iniciar sesión con Google.',
+          'error',
+        );
         return;
       }
       setIsSaving(true);
       try {
-        if (mode === "create") {
+        if (mode === 'create') {
           const validated = validateNewProduct(
             payload as NewProductInput,
             existingItemIds,
           );
           if (!validated.ok) {
-            notify(validated.error, "error");
+            notify(validated.error, 'error');
             return;
           }
           const { itemId: createdId, ...fields } = validated.value;
           const result = await createProduct({
+            idToken,
             itemId: createdId,
-            editorEmail: user.email,
-            editorName: user.name,
             fields,
           });
           notify(
             `Creada · ${result.itemId} · sincronizando con la hoja`,
-            "success",
+            'success',
           );
-          setDrawerMode("edit");
+          setDrawerMode('edit');
           setEditingItemId(null);
           return;
         }
@@ -634,25 +644,24 @@ export default function ProductManagementPage() {
         const patch = payload as EditDrawerPatch;
         if (!itemId || Object.keys(patch).length === 0) return;
         const result = await saveEdit({
+          idToken,
           itemId,
-          editorEmail: user.email,
-          editorName: user.name,
           patch,
         });
         notify(
           `Guardado · ${result.changesCount} cambio${
-            result.changesCount === 1 ? "" : "s"
+            result.changesCount === 1 ? '' : 's'
           } en la hoja en breve`,
-          "success",
+          'success',
         );
         setEditingItemId(null);
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Error desconocido";
+        const msg = err instanceof Error ? err.message : 'Error desconocido';
         notify(
-          mode === "create"
+          mode === 'create'
             ? `No se pudo crear: ${msg}`
             : `No se pudo guardar: ${msg}`,
-          "error",
+          'error',
         );
       } finally {
         setIsSaving(false);
@@ -665,20 +674,25 @@ export default function ProductManagementPage() {
   // starts in edit mode unless explicitly entered via handleCreateNew.
   const handleCloseDrawer = useCallback(() => {
     setEditingItemId(null);
-    setDrawerMode("edit");
+    setDrawerMode('edit');
   }, []);
 
   const handleResync = useCallback(async () => {
+    const idToken = readFreshGoogleIdToken();
+    if (!idToken) {
+      notify('Tu sesión expiró. Vuelve a iniciar sesión con Google.', 'error');
+      return;
+    }
     setIsResyncing(true);
     try {
-      const result = await pullFromSheet({});
+      const result = await pullFromSheet({ idToken });
       notify(
         `Sincronizado · ${result.pulled} en la hoja, ${result.upserted} nuevos en el espejo`,
-        "success",
+        'success',
       );
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Error desconocido";
-      notify(`Error al sincronizar: ${msg}`, "error");
+      const msg = err instanceof Error ? err.message : 'Error desconocido';
+      notify(`Error al sincronizar: ${msg}`, 'error');
     } finally {
       setIsResyncing(false);
     }
@@ -691,7 +705,7 @@ export default function ProductManagementPage() {
   const handleClaimLock = useCallback(async () => {
     if (!selectedBandejaId) return;
     if (!user?.email) {
-      notify("Tu sesión no tiene email. Vuelve a iniciar sesión.", "error");
+      notify('Tu sesión no tiene email. Vuelve a iniciar sesión.', 'error');
       return;
     }
     try {
@@ -701,16 +715,16 @@ export default function ProductManagementPage() {
         holderName: user.name,
       });
       if (result?.ok) {
-        notify("Control reclamado", "success");
-      } else if (result && "holder" in result) {
+        notify('Control reclamado', 'success');
+      } else if (result && 'holder' in result) {
         const who = result.holder.name ?? result.holder.email;
-        notify(`No se pudo reclamar el bloqueo: ${who} aún edita`, "error");
+        notify(`No se pudo reclamar el bloqueo: ${who} aún edita`, 'error');
       } else {
-        notify("No se pudo reclamar el bloqueo", "error");
+        notify('No se pudo reclamar el bloqueo', 'error');
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "error";
-      notify(`No se pudo reclamar el bloqueo: ${msg}`, "error");
+      const msg = err instanceof Error ? err.message : 'error';
+      notify(`No se pudo reclamar el bloqueo: ${msg}`, 'error');
     }
   }, [claimLock, selectedBandejaId, user?.email, user?.name, notify]);
 
@@ -722,19 +736,26 @@ export default function ProductManagementPage() {
   const handleInlineEdit = useCallback(
     async (itemId: string, patch: Record<string, unknown>) => {
       if (!user?.email) {
-        notify("Tu sesión no tiene email. Vuelve a iniciar sesión.", "error");
+        notify('Tu sesión no tiene email. Vuelve a iniciar sesión.', 'error');
+        return;
+      }
+      const idToken = readFreshGoogleIdToken();
+      if (!idToken) {
+        notify(
+          'Tu sesión expiró. Vuelve a iniciar sesión con Google.',
+          'error',
+        );
         return;
       }
       try {
         await saveEdit({
+          idToken,
           itemId,
-          editorEmail: user.email,
-          editorName: user.name,
           patch,
         });
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Error desconocido";
-        notify(`No se pudo guardar: ${msg}`, "error");
+        const msg = err instanceof Error ? err.message : 'Error desconocido';
+        notify(`No se pudo guardar: ${msg}`, 'error');
       }
     },
     [saveEdit, user?.email, user?.name, notify],
@@ -745,13 +766,13 @@ export default function ProductManagementPage() {
       try {
         const result = await retryPush({ itemId });
         if (result.ok) {
-          notify(`Reintento exitoso · ${itemId}`, "success");
+          notify(`Reintento exitoso · ${itemId}`, 'success');
         } else {
-          notify(`Reintento falló · ${result.message}`, "error");
+          notify(`Reintento falló · ${result.message}`, 'error');
         }
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Error desconocido";
-        notify(`Reintento falló · ${msg}`, "error");
+        const msg = err instanceof Error ? err.message : 'Error desconocido';
+        notify(`Reintento falló · ${msg}`, 'error');
       }
     },
     [retryPush, notify],
@@ -771,31 +792,38 @@ export default function ProductManagementPage() {
   const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
 
   const handleBulkMark = useCallback(
-    async (estado: "DISPONIBLE" | "VENDIDA") => {
+    async (estado: 'DISPONIBLE' | 'VENDIDA') => {
       if (!user?.email) {
-        notify("Tu sesión no tiene email. Vuelve a iniciar sesión.", "error");
+        notify('Tu sesión no tiene email. Vuelve a iniciar sesión.', 'error');
         return;
       }
       if (selectedIds.size === 0) return;
+      const idToken = readFreshGoogleIdToken();
+      if (!idToken) {
+        notify(
+          'Tu sesión expiró. Vuelve a iniciar sesión con Google.',
+          'error',
+        );
+        return;
+      }
       setIsBulkSaving(true);
       try {
         const itemIds = Array.from(selectedIds);
         const result = await saveEditMany({
+          idToken,
           itemIds,
-          editorEmail: user.email,
-          editorName: user.name,
           patch: { estado },
         });
-        const verb = estado === "VENDIDA" ? "vendidas" : "disponibles";
+        const verb = estado === 'VENDIDA' ? 'vendidas' : 'disponibles';
         const parts = [
-          `${result.updatedCount} marcada${result.updatedCount === 1 ? "" : "s"} como ${verb}`,
+          `${result.updatedCount} marcada${result.updatedCount === 1 ? '' : 's'} como ${verb}`,
         ];
         if (result.unchangedCount > 0) {
           parts.push(`${result.unchangedCount} sin cambios`);
         }
         if (result.missingCount > 0) {
           parts.push(
-            `${result.missingCount} no encontrada${result.missingCount === 1 ? "" : "s"}`,
+            `${result.missingCount} no encontrada${result.missingCount === 1 ? '' : 's'}`,
           );
         }
         // C2 — sale-owned items can't be freed via a bulk estado flip; surface
@@ -806,13 +834,13 @@ export default function ProductManagementPage() {
           );
         }
         notify(
-          parts.join(" · "),
-          result.blockedCount > 0 ? "warning" : "success",
+          parts.join(' · '),
+          result.blockedCount > 0 ? 'warning' : 'success',
         );
         clearSelection();
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Error desconocido";
-        notify(`No se pudo marcar en lote: ${msg}`, "error");
+        const msg = err instanceof Error ? err.message : 'Error desconocido';
+        notify(`No se pudo marcar en lote: ${msg}`, 'error');
       } finally {
         setIsBulkSaving(false);
       }
@@ -834,27 +862,33 @@ export default function ProductManagementPage() {
   const handleBulkChangePrice = useCallback(
     async ({ mode, value }: { mode: BulkPriceMode; value: number }) => {
       if (!user?.email || selectedIds.size === 0) return;
+      const idToken = readFreshGoogleIdToken();
+      if (!idToken) {
+        notify(
+          'Tu sesión expiró. Vuelve a iniciar sesión con Google.',
+          'error',
+        );
+        return;
+      }
       setIsBulkSaving(true);
       try {
-        if (mode === "absolute") {
+        if (mode === 'absolute') {
           await saveEditMany({
+            idToken,
             itemIds: Array.from(selectedIds),
-            editorEmail: user.email,
-            editorName: user.name,
             patch: { precioCOP: value },
           });
         } else {
           const ops = Array.from(selectedIds).map(async (id) => {
             const p = products?.find((q) => q.itemId === id);
-            if (!p || typeof p.precioCOP !== "number") return;
+            if (!p || typeof p.precioCOP !== 'number') return;
             const next =
-              mode === "delta"
+              mode === 'delta'
                 ? p.precioCOP + value
                 : Math.round(p.precioCOP * (1 + value / 100));
             await saveEdit({
+              idToken,
               itemId: id,
-              editorEmail: user.email!,
-              editorName: user.name,
               patch: { precioCOP: next },
             });
           });
@@ -862,14 +896,14 @@ export default function ProductManagementPage() {
         }
         notify(
           `Precio actualizado en ${selectedIds.size} piedra${
-            selectedIds.size === 1 ? "" : "s"
+            selectedIds.size === 1 ? '' : 's'
           }`,
-          "success",
+          'success',
         );
         clearSelection();
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "error";
-        notify(`No se pudo actualizar precio: ${msg}`, "error");
+        const msg = err instanceof Error ? err.message : 'error';
+        notify(`No se pudo actualizar precio: ${msg}`, 'error');
       } finally {
         setIsBulkSaving(false);
       }
@@ -889,24 +923,31 @@ export default function ProductManagementPage() {
   const handleBulkChangeColeccion = useCallback(
     async (value: string) => {
       if (!user?.email || selectedIds.size === 0) return;
+      const idToken = readFreshGoogleIdToken();
+      if (!idToken) {
+        notify(
+          'Tu sesión expiró. Vuelve a iniciar sesión con Google.',
+          'error',
+        );
+        return;
+      }
       setIsBulkSaving(true);
       try {
         await saveEditMany({
+          idToken,
           itemIds: Array.from(selectedIds),
-          editorEmail: user.email,
-          editorName: user.name,
           patch: { coleccion: value },
         });
         notify(
           `Colección actualizada en ${selectedIds.size} piedra${
-            selectedIds.size === 1 ? "" : "s"
+            selectedIds.size === 1 ? '' : 's'
           }`,
-          "success",
+          'success',
         );
         clearSelection();
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "error";
-        notify(`No se pudo actualizar colección: ${msg}`, "error");
+        const msg = err instanceof Error ? err.message : 'error';
+        notify(`No se pudo actualizar colección: ${msg}`, 'error');
       } finally {
         setIsBulkSaving(false);
       }
@@ -924,24 +965,31 @@ export default function ProductManagementPage() {
   const handleBulkChangeUbicacion = useCallback(
     async (value: string) => {
       if (!user?.email || selectedIds.size === 0) return;
+      const idToken = readFreshGoogleIdToken();
+      if (!idToken) {
+        notify(
+          'Tu sesión expiró. Vuelve a iniciar sesión con Google.',
+          'error',
+        );
+        return;
+      }
       setIsBulkSaving(true);
       try {
         await saveEditMany({
+          idToken,
           itemIds: Array.from(selectedIds),
-          editorEmail: user.email,
-          editorName: user.name,
           patch: { ubicacion: value },
         });
         notify(
           `Ubicación actualizada en ${selectedIds.size} piedra${
-            selectedIds.size === 1 ? "" : "s"
+            selectedIds.size === 1 ? '' : 's'
           }`,
-          "success",
+          'success',
         );
         clearSelection();
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "error";
-        notify(`No se pudo actualizar ubicación: ${msg}`, "error");
+        const msg = err instanceof Error ? err.message : 'error';
+        notify(`No se pudo actualizar ubicación: ${msg}`, 'error');
       } finally {
         setIsBulkSaving(false);
       }
@@ -968,7 +1016,7 @@ export default function ProductManagementPage() {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
+        minHeight: '100vh',
         backgroundColor: foto.surfaces.canvas,
         color: atelier.ink.primary,
       }}
@@ -994,12 +1042,12 @@ export default function ProductManagementPage() {
       <Box
         sx={{
           maxWidth: 1440,
-          mx: "auto",
-          display: "grid",
+          mx: 'auto',
+          display: 'grid',
           gridTemplateColumns: {
-            xs: "1fr",
-            md: "minmax(0, 1.7fr) minmax(0, 1fr)",
-            lg: "minmax(0, 1.6fr) minmax(0, 1fr)",
+            xs: '1fr',
+            md: 'minmax(0, 1.7fr) minmax(0, 1fr)',
+            lg: 'minmax(0, 1.6fr) minmax(0, 1fr)',
           },
         }}
       >
@@ -1041,7 +1089,7 @@ export default function ProductManagementPage() {
               borderLeft: `1px solid ${foto.surfaces.edge}`,
               borderRight: `1px solid ${foto.surfaces.edge}`,
               borderBottom: `1px solid ${foto.surfaces.edge}`,
-              overflow: "hidden",
+              overflow: 'hidden',
             }}
           >
             {isLoading && (
@@ -1051,7 +1099,7 @@ export default function ProductManagementPage() {
               <EmptyState
                 atelier={atelier}
                 foto={foto}
-                hasFilter={!!search.trim() || filter !== "all"}
+                hasFilter={!!search.trim() || filter !== 'all'}
                 onResync={handleResync}
                 isResyncing={isResyncing}
               />
@@ -1094,10 +1142,10 @@ export default function ProductManagementPage() {
                 ...atelier.type.label,
                 color: atelier.ink.tertiary,
                 py: 3,
-                textAlign: "center",
+                textAlign: 'center',
               }}
             >
-              {filteredRows.length} de {stats?.total ?? products?.length ?? 0}{" "}
+              {filteredRows.length} de {stats?.total ?? products?.length ?? 0}{' '}
               en el espejo
             </Typography>
           )}
@@ -1163,8 +1211,8 @@ export default function ProductManagementPage() {
         isSaving={isBulkSaving}
         foto={foto}
         collections={collections}
-        onMarkAvailable={() => void handleBulkMark("DISPONIBLE")}
-        onMarkSold={() => void handleBulkMark("VENDIDA")}
+        onMarkAvailable={() => void handleBulkMark('DISPONIBLE')}
+        onMarkSold={() => void handleBulkMark('VENDIDA')}
         onChangePrice={(next) => void handleBulkChangePrice(next)}
         onChangeColeccion={(v) => void handleBulkChangeColeccion(v)}
         onChangeUbicacion={(v) => void handleBulkChangeUbicacion(v)}
@@ -1196,13 +1244,13 @@ function ListSkeletons({
             px: `${atelier.spacing.rowPaddingX}px`,
             py: `${atelier.spacing.rowPaddingY}px`,
             borderBottom: `1px solid ${foto.surfaces.edge}`,
-            display: "grid",
+            display: 'grid',
             gridTemplateColumns: {
-              xs: "16px 56px 12px 32px minmax(0, 1fr) 84px 116px 10px",
-              sm: "16px 64px 14px 32px minmax(0, 1fr) 92px 128px 12px",
-              md: "20px 72px 16px 36px minmax(0, 1fr) 96px 136px 12px",
+              xs: '16px 56px 12px 32px minmax(0, 1fr) 84px 116px 10px',
+              sm: '16px 64px 14px 32px minmax(0, 1fr) 92px 128px 12px',
+              md: '20px 72px 16px 36px minmax(0, 1fr) 96px 136px 12px',
             },
-            alignItems: "center",
+            alignItems: 'center',
             gap: { xs: 1.25, md: 1.75 },
           }}
         >
@@ -1210,19 +1258,19 @@ function ListSkeletons({
             variant="rectangular"
             width={16}
             height={16}
-            sx={{ borderRadius: "3px" }}
+            sx={{ borderRadius: '3px' }}
           />
-          <Skeleton variant="text" width={48} sx={{ ml: "auto" }} />
+          <Skeleton variant="text" width={48} sx={{ ml: 'auto' }} />
           <Skeleton variant="rectangular" width={6} height={26} />
           <Skeleton
             variant="rectangular"
             width={32}
             height={32}
-            sx={{ borderRadius: "3px" }}
+            sx={{ borderRadius: '3px' }}
           />
           <Skeleton variant="text" width="60%" />
-          <Skeleton variant="text" width={56} sx={{ ml: "auto" }} />
-          <Skeleton variant="text" width={88} sx={{ ml: "auto" }} />
+          <Skeleton variant="text" width={56} sx={{ ml: 'auto' }} />
+          <Skeleton variant="text" width={88} sx={{ ml: 'auto' }} />
           <Box />
         </Box>
       ))}
@@ -1248,7 +1296,7 @@ function EmptyState({
       sx={{
         py: 8,
         px: 3,
-        textAlign: "center",
+        textAlign: 'center',
       }}
     >
       <Typography
@@ -1258,20 +1306,20 @@ function EmptyState({
           mb: 1,
         }}
       >
-        {hasFilter ? "Sin coincidencias" : "Espejo vacío"}
+        {hasFilter ? 'Sin coincidencias' : 'Espejo vacío'}
       </Typography>
       <Typography
         sx={{
           ...atelier.type.meta,
           color: atelier.ink.secondary,
           maxWidth: 420,
-          mx: "auto",
+          mx: 'auto',
           mb: 3,
         }}
       >
         {hasFilter
-          ? "Ajusta la búsqueda o el filtro para ver más entradas del inventario."
-          : "No hay productos sincronizados todavía. Pulsa Resync para cargar la hoja Inventario en el espejo."}
+          ? 'Ajusta la búsqueda o el filtro para ver más entradas del inventario.'
+          : 'No hay productos sincronizados todavía. Pulsa Resync para cargar la hoja Inventario en el espejo.'}
       </Typography>
       {!hasFilter && (
         <Box
@@ -1284,19 +1332,19 @@ function EmptyState({
             backgroundColor: isResyncing
               ? atelier.ink.muted
               : atelier.focus.ring,
-            border: "none",
-            borderRadius: "4px",
-            px: "16px",
-            py: "10px",
-            cursor: isResyncing ? "default" : "pointer",
+            border: 'none',
+            borderRadius: '4px',
+            px: '16px',
+            py: '10px',
+            cursor: isResyncing ? 'default' : 'pointer',
             transition: atelier.motion.rowHover,
-            "&:focus-visible": {
+            '&:focus-visible': {
               outline: `2px solid ${atelier.focus.ring}`,
-              outlineOffset: "2px",
+              outlineOffset: '2px',
             },
           }}
         >
-          {isResyncing ? "Sincronizando…" : "Sincronizar desde la hoja"}
+          {isResyncing ? 'Sincronizando…' : 'Sincronizar desde la hoja'}
         </Box>
       )}
     </Box>
@@ -1313,16 +1361,16 @@ function ConvexUnavailable({
   return (
     <Box
       sx={{
-        minHeight: "100vh",
+        minHeight: '100vh',
         backgroundColor: foto.surfaces.canvas,
         color: atelier.ink.primary,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         px: 3,
       }}
     >
-      <Box sx={{ maxWidth: 480, textAlign: "center" }}>
+      <Box sx={{ maxWidth: 480, textAlign: 'center' }}>
         <Typography
           sx={{ ...atelier.type.section, color: atelier.ink.tertiary, mb: 1 }}
         >

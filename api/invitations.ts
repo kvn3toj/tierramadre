@@ -31,10 +31,24 @@ type ApiBody = Record<string, unknown>;
 
 const SHEET_NAME = SHEETS.INVITATIONS;
 const HEADERS = [
-  'invitationId', 'shortCode', 'creatorEmail', 'creatorName', 'creatorRole',
-  'guestName', 'guestContact', 'contactType', 'createdAt', 'activatedAt',
-  'expiresAt', 'pricingMode', 'durationHours', 'status', 'pin', 'boundToken',
-  'guestCurrencyMode', 'guestMultiplier'
+  'invitationId',
+  'shortCode',
+  'creatorEmail',
+  'creatorName',
+  'creatorRole',
+  'guestName',
+  'guestContact',
+  'contactType',
+  'createdAt',
+  'activatedAt',
+  'expiresAt',
+  'pricingMode',
+  'durationHours',
+  'status',
+  'pin',
+  'boundToken',
+  'guestCurrencyMode',
+  'guestMultiplier',
 ];
 
 /**
@@ -48,7 +62,12 @@ function generatePin() {
  * Generate a random device token
  */
 function generateDeviceToken() {
-  return 'tk_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 14);
+  return (
+    'tk_' +
+    Date.now().toString(36) +
+    '_' +
+    Math.random().toString(36).slice(2, 14)
+  );
 }
 
 /**
@@ -91,7 +110,11 @@ async function verifyPin(sheets: Sheets, _req: VercelRequest, body: ApiBody) {
   // If token already bound, enforce match
   if (data.boundToken) {
     if (!clientToken || clientToken !== data.boundToken) {
-      return { success: true, isIpBlocked: true, error: 'Acceso restringido a otro dispositivo' };
+      return {
+        success: true,
+        isIpBlocked: true,
+        error: 'Acceso restringido a otro dispositivo',
+      };
     }
   }
 
@@ -133,7 +156,9 @@ async function ensureHeaders(sheets: Sheets) {
       spreadsheetId: APP_SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!O1:R1`,
       valueInputOption: 'RAW',
-      requestBody: { values: [['pin', 'boundToken', 'guestCurrencyMode', 'guestMultiplier']] },
+      requestBody: {
+        values: [['pin', 'boundToken', 'guestCurrencyMode', 'guestMultiplier']],
+      },
     });
   }
   // If column Q (index 16) is missing, add currency columns
@@ -161,7 +186,10 @@ async function findInvitationByCode(sheets: Sheets, shortCode: string) {
 
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i] as (string | number | undefined)[];
-    if (row[1] != null && String(row[1]).toUpperCase() === shortCode.toUpperCase()) {
+    if (
+      row[1] != null &&
+      String(row[1]).toUpperCase() === shortCode.toUpperCase()
+    ) {
       return {
         rowIndex: i + 1,
         data: {
@@ -177,7 +205,8 @@ async function findInvitationByCode(sheets: Sheets, shortCode: string) {
           activatedAt: row[9] || null,
           expiresAt: row[10] || null,
           pricingMode: row[11] || 'with_prices',
-          durationHours: parseInt(String(row[12] ?? ''), 10) || INVITATION_DURATION_HOURS,
+          durationHours:
+            parseInt(String(row[12] ?? ''), 10) || INVITATION_DURATION_HOURS,
           status: row[13] || 'pending',
           pin: row[14] || null,
           boundToken: row[15] || null,
@@ -223,7 +252,7 @@ async function generateInvitation(sheets: Sheets, body: ApiBody) {
 
   let shortCode = generateShortCode();
   let attempts = 0;
-  while (await findInvitationByCode(sheets, shortCode) && attempts < 5) {
+  while ((await findInvitationByCode(sheets, shortCode)) && attempts < 5) {
     shortCode = generateShortCode();
     attempts++;
   }
@@ -234,11 +263,24 @@ async function generateInvitation(sheets: Sheets, body: ApiBody) {
   const safeMultiplier = sanitizeMultiplier(guestMultiplier);
 
   const row = [
-    invitationId, shortCode, creatorEmail, creatorName,
-    creatorRole || 'Asesor', guestName || '', guestContact || '',
-    contactType || '', createdAt, '', '',
-    pricingMode, INVITATION_DURATION_HOURS, 'pending', pin, '',
-    guestCurrencyMode || '', safeMultiplier != null ? String(safeMultiplier) : '',
+    invitationId,
+    shortCode,
+    creatorEmail,
+    creatorName,
+    creatorRole || 'Asesor',
+    guestName || '',
+    guestContact || '',
+    contactType || '',
+    createdAt,
+    '',
+    '',
+    pricingMode,
+    INVITATION_DURATION_HOURS,
+    'pending',
+    pin,
+    '',
+    guestCurrencyMode || '',
+    safeMultiplier != null ? String(safeMultiplier) : '',
   ];
 
   await sheets.spreadsheets.values.append({
@@ -264,7 +306,11 @@ async function generateInvitation(sheets: Sheets, body: ApiBody) {
       pricingMode,
       guestCurrencyMode: guestCurrencyMode || null,
       guestMultiplier: safeMultiplier,
-      createdBy: { email: creatorEmail, name: creatorName, role: creatorRole || 'Asesor' },
+      createdBy: {
+        email: creatorEmail,
+        name: creatorName,
+        role: creatorRole || 'Asesor',
+      },
     },
   };
 }
@@ -275,7 +321,9 @@ async function generateInvitation(sheets: Sheets, body: ApiBody) {
 async function validateInvitation(sheets: Sheets, shortCode: string) {
   if (!shortCode || shortCode.length !== 6) {
     return {
-      success: false, isValid: false, status: 'expired',
+      success: false,
+      isValid: false,
+      status: 'expired',
       error: 'Código de invitación inválido',
     };
   }
@@ -284,7 +332,9 @@ async function validateInvitation(sheets: Sheets, shortCode: string) {
 
   if (!invitation) {
     return {
-      success: false, isValid: false, status: 'expired',
+      success: false,
+      isValid: false,
+      status: 'expired',
       error: 'Invitación no encontrada',
     };
   }
@@ -293,36 +343,58 @@ async function validateInvitation(sheets: Sheets, shortCode: string) {
   const now = new Date();
 
   if (data.status === 'expired') {
-    return { success: true, isValid: false, status: 'expired', error: 'Esta invitación ha expirado' };
+    return {
+      success: true,
+      isValid: false,
+      status: 'expired',
+      error: 'Esta invitación ha expirado',
+    };
   }
 
   // If pending, activate it now
   if (data.status === 'pending') {
     const activatedAt = now.toISOString();
-    const expiresAt = new Date(now.getTime() + data.durationHours * 60 * 60 * 1000).toISOString();
+    const expiresAt = new Date(
+      now.getTime() + data.durationHours * 60 * 60 * 1000,
+    ).toISOString();
 
     await sheets.spreadsheets.values.update({
       spreadsheetId: APP_SPREADSHEET_ID,
       range: `'${SHEET_NAME}'!J${rowIndex}:N${rowIndex}`,
       valueInputOption: 'RAW',
       requestBody: {
-        values: [[activatedAt, expiresAt, data.pricingMode, data.durationHours, 'active']],
+        values: [
+          [
+            activatedAt,
+            expiresAt,
+            data.pricingMode,
+            data.durationHours,
+            'active',
+          ],
+        ],
       },
     });
 
     const timeRemaining = data.durationHours * 60 * 60 * 1000;
 
     return {
-      success: true, isValid: true, status: 'active',
-      invitationId: data.invitationId, activatedAt, expiresAt,
-      timeRemaining, timeRemainingMinutes: Math.floor(timeRemaining / 60000),
-      durationHours: data.durationHours, pricingMode: data.pricingMode,
-      createdBy: data.creatorName, creatorEmail: data.creatorEmail,
+      success: true,
+      isValid: true,
+      status: 'active',
+      invitationId: data.invitationId,
+      activatedAt,
+      expiresAt,
+      timeRemaining,
+      timeRemainingMinutes: Math.floor(timeRemaining / 60000),
+      durationHours: data.durationHours,
+      pricingMode: data.pricingMode,
+      createdBy: data.creatorName,
+      creatorEmail: data.creatorEmail,
       shortCode: data.shortCode,
       guestName: data.guestName || null,
       guestContact: data.guestContact || null,
       contactType: data.contactType || null,
-      isPinBound: !!(data.boundToken),
+      isPinBound: !!data.boundToken,
       guestCurrencyMode: data.guestCurrencyMode || null,
       guestMultiplier: data.guestMultiplier,
     };
@@ -331,23 +403,34 @@ async function validateInvitation(sheets: Sheets, shortCode: string) {
   // If active, return as valid (no time limit)
   if (data.status === 'active') {
     return {
-      success: true, isValid: true, status: 'active',
+      success: true,
+      isValid: true,
+      status: 'active',
       invitationId: data.invitationId,
-      activatedAt: data.activatedAt, expiresAt: data.expiresAt,
-      timeRemaining: null, timeRemainingMinutes: null,
-      durationHours: data.durationHours, pricingMode: data.pricingMode,
-      createdBy: data.creatorName, creatorEmail: data.creatorEmail,
+      activatedAt: data.activatedAt,
+      expiresAt: data.expiresAt,
+      timeRemaining: null,
+      timeRemainingMinutes: null,
+      durationHours: data.durationHours,
+      pricingMode: data.pricingMode,
+      createdBy: data.creatorName,
+      creatorEmail: data.creatorEmail,
       shortCode: data.shortCode,
       guestName: data.guestName || null,
       guestContact: data.guestContact || null,
       contactType: data.contactType || null,
-      isPinBound: !!(data.boundToken),
+      isPinBound: !!data.boundToken,
       guestCurrencyMode: data.guestCurrencyMode || null,
       guestMultiplier: data.guestMultiplier,
     };
   }
 
-  return { success: false, isValid: false, status: data.status || 'expired', error: 'Estado de invitación desconocido' };
+  return {
+    success: false,
+    isValid: false,
+    status: data.status || 'expired',
+    error: 'Estado de invitación desconocido',
+  };
 }
 
 /**
@@ -387,7 +470,9 @@ async function checkGuestHistory(sheets: Sheets, guestContact: string) {
     }
   }
 
-  const uniqueCreators = new Set(matchingInvitations.map(inv => inv.creatorEmail));
+  const uniqueCreators = new Set(
+    matchingInvitations.map((inv) => inv.creatorEmail),
+  );
 
   return {
     success: true,
@@ -426,7 +511,10 @@ async function listByCreator(sheets: Sheets, creatorEmail: string) {
     const status = row[13] || 'pending';
 
     // Only include invitations from this creator that are active or pending
-    if (rowCreatorEmail === normalizedEmail && (status === 'active' || status === 'pending')) {
+    if (
+      rowCreatorEmail === normalizedEmail &&
+      (status === 'active' || status === 'pending')
+    ) {
       invitations.push({
         invitationId: row[0],
         shortCode: row[1],
@@ -445,7 +533,9 @@ async function listByCreator(sheets: Sheets, creatorEmail: string) {
   }
 
   // Sort by createdAt descending (newest first)
-  invitations.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  invitations.sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
 
   return {
     success: true,
@@ -458,15 +548,19 @@ async function listByCreator(sheets: Sheets, creatorEmail: string) {
  * Register a guest with an invitation (POST)
  */
 async function registerGuest(sheets: Sheets, body: ApiBody) {
-  const { invitationId, guestName, guestContact, contactType } = body as ApiBody & {
-    invitationId?: string;
-    guestName?: string;
-    guestContact?: string;
-    contactType?: string;
-  };
+  const { invitationId, guestName, guestContact, contactType } =
+    body as ApiBody & {
+      invitationId?: string;
+      guestName?: string;
+      guestContact?: string;
+      contactType?: string;
+    };
 
   if (!invitationId || !guestName) {
-    return { success: false, error: 'Invitation ID and guest name are required' };
+    return {
+      success: false,
+      error: 'Invitation ID and guest name are required',
+    };
   }
 
   const response = await sheets.spreadsheets.values.get({
@@ -522,15 +616,25 @@ async function updateInvitation(sheets: Sheets, body: ApiBody) {
 
   // Ownership check (case-insensitive)
   if (
-    String(invitation.data.creatorEmail ?? '').toLowerCase().trim() !==
-    creatorEmail.toLowerCase().trim()
+    String(invitation.data.creatorEmail ?? '')
+      .toLowerCase()
+      .trim() !== creatorEmail.toLowerCase().trim()
   ) {
-    return { success: false, error: 'No tienes permiso para editar esta invitación' };
+    return {
+      success: false,
+      error: 'No tienes permiso para editar esta invitación',
+    };
   }
 
   // Only active/pending can be edited
-  if (invitation.data.status !== 'active' && invitation.data.status !== 'pending') {
-    return { success: false, error: 'Solo se pueden editar invitaciones activas o pendientes' };
+  if (
+    invitation.data.status !== 'active' &&
+    invitation.data.status !== 'pending'
+  ) {
+    return {
+      success: false,
+      error: 'Solo se pueden editar invitaciones activas o pendientes',
+    };
   }
 
   // Update multiplier if provided
@@ -576,10 +680,14 @@ async function expireInvitationAction(sheets: Sheets, body: ApiBody) {
 
   // Ownership check (case-insensitive)
   if (
-    String(invitation.data.creatorEmail ?? '').toLowerCase().trim() !==
-    creatorEmail.toLowerCase().trim()
+    String(invitation.data.creatorEmail ?? '')
+      .toLowerCase()
+      .trim() !== creatorEmail.toLowerCase().trim()
   ) {
-    return { success: false, error: 'No tienes permiso para expirar esta invitación' };
+    return {
+      success: false,
+      error: 'No tienes permiso para expirar esta invitación',
+    };
   }
 
   // Already expired is a no-op success
@@ -588,8 +696,14 @@ async function expireInvitationAction(sheets: Sheets, body: ApiBody) {
   }
 
   // Only active/pending can be expired
-  if (invitation.data.status !== 'active' && invitation.data.status !== 'pending') {
-    return { success: false, error: 'Solo se pueden expirar invitaciones activas o pendientes' };
+  if (
+    invitation.data.status !== 'active' &&
+    invitation.data.status !== 'pending'
+  ) {
+    return {
+      success: false,
+      error: 'Solo se pueden expirar invitaciones activas o pendientes',
+    };
   }
 
   // Update K:N atomically (expiresAt, pricingMode, durationHours, status)
@@ -598,248 +712,360 @@ async function expireInvitationAction(sheets: Sheets, body: ApiBody) {
     spreadsheetId: APP_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!K${invitation.rowIndex}:N${invitation.rowIndex}`,
     valueInputOption: 'RAW',
-    requestBody: { values: [[now, invitation.data.pricingMode, invitation.data.durationHours, 'expired']] },
+    requestBody: {
+      values: [
+        [
+          now,
+          invitation.data.pricingMode,
+          invitation.data.durationHours,
+          'expired',
+        ],
+      ],
+    },
   });
 
   return { success: true };
 }
 
-export default withApiHandler(async (req: VercelRequest, res: VercelResponse, context: Record<string, unknown>) => {
-  const sheets = context.sheets as Sheets;
-  const action = (req.query.action as string) || (req.body as ApiBody | undefined)?.action || 'validate';
+export default withApiHandler(
+  async (
+    req: VercelRequest,
+    res: VercelResponse,
+    context: Record<string, unknown>,
+  ) => {
+    const sheets = context.sheets as Sheets;
+    const action =
+      (req.query.action as string) ||
+      (req.body as ApiBody | undefined)?.action ||
+      'validate';
 
-  await ensureSheet(sheets, SHEET_NAME, HEADERS, APP_SPREADSHEET_ID);
+    await ensureSheet(sheets, SHEET_NAME, HEADERS, APP_SPREADSHEET_ID);
 
-  // Auto-migrate: add pin + boundToken headers if missing on existing sheet
-  await ensureHeaders(sheets);
+    // Auto-migrate: add pin + boundToken headers if missing on existing sheet
+    await ensureHeaders(sheets);
 
-  // POST - Generate invitation
-  if (req.method === 'POST' && action === 'generate') {
-    if (isConvexEnabled && convexClient) {
-      const body = (req.body as ApiBody) || {};
-      const { creatorEmail, creatorName, creatorRole, pricingMode, guestName, guestContact, contactType, guestCurrencyMode, guestMultiplier } = body as Record<string, unknown>;
-      if (!creatorEmail || !creatorName) return sendError(res, 400, 'Creator email and name are required');
-      const shortCode = generateShortCode();
-      const pin = generatePin();
-      const safeMultiplier = sanitizeMultiplier(guestMultiplier);
-      await convexClient.mutation(api.invitations.generate, {
-        creatorEmail: String(creatorEmail),
-        creatorName: String(creatorName),
-        creatorRole: creatorRole ? String(creatorRole) : undefined,
-        pricingMode: pricingMode ? String(pricingMode) : undefined,
-        guestName: guestName ? String(guestName) : undefined,
-        guestContact: guestContact ? String(guestContact) : undefined,
-        contactType: contactType ? String(contactType) : undefined,
-        guestCurrencyMode: guestCurrencyMode ? String(guestCurrencyMode) : undefined,
-        guestMultiplier: safeMultiplier ?? undefined,
-        pin,
-        shortCode,
-      });
-      const baseUrl = 'https://tierramadre.app';
-      return res.status(200).json({
-        success: true,
-        invitation: {
-          token: shortCode,
-          url: `${baseUrl}/invite/${shortCode}`,
-          shortCode,
-          shortUrl: null,
-          pin,
-          createdAt: new Date().toISOString(),
-          durationHours: INVITATION_DURATION_HOURS,
-          pricingMode: pricingMode || 'with_prices',
-          guestCurrencyMode: guestCurrencyMode || null,
-          guestMultiplier: safeMultiplier,
-          createdBy: { email: creatorEmail, name: creatorName, role: creatorRole || 'Asesor' },
-        },
-      });
-    }
-    const result = await generateInvitation(sheets, (req.body as ApiBody) || {});
-    return res.status(200).json(result);
-  }
-
-  // POST - Verify PIN + device token binding
-  if (req.method === 'POST' && action === 'verify-pin') {
-    if (isConvexEnabled && convexClient) {
-      const { shortCode, pin, deviceToken } = (req.body as ApiBody) || {};
-      if (!shortCode || !pin) return sendError(res, 400, 'shortCode and pin are required');
-      const result = await convexClient.mutation(api.invitations.verifyPin, {
-        shortCode: String(shortCode),
-        pin: String(pin),
-        deviceToken: deviceToken ? String(deviceToken) : undefined,
-      });
+    // POST - Generate invitation
+    if (req.method === 'POST' && action === 'generate') {
+      if (isConvexEnabled && convexClient) {
+        const body = (req.body as ApiBody) || {};
+        const {
+          idToken,
+          pricingMode,
+          guestName,
+          guestContact,
+          contactType,
+          guestCurrencyMode,
+          guestMultiplier,
+        } = body as Record<string, unknown>;
+        if (!idToken) return sendError(res, 401, 'idToken is required');
+        const shortCode = generateShortCode();
+        const pin = generatePin();
+        const safeMultiplier = sanitizeMultiplier(guestMultiplier);
+        // creatorEmail/creatorName/creatorRole are derived server-side from the
+        // VERIFIED Google identity inside the Convex action — never trusted
+        // from the request body (see convex/_lib/authz.ts).
+        let invitation;
+        try {
+          invitation = await convexClient.action(api.invitations.generate, {
+            idToken: String(idToken),
+            pricingMode: pricingMode ? String(pricingMode) : undefined,
+            guestName: guestName ? String(guestName) : undefined,
+            guestContact: guestContact ? String(guestContact) : undefined,
+            contactType: contactType ? String(contactType) : undefined,
+            guestCurrencyMode: guestCurrencyMode
+              ? String(guestCurrencyMode)
+              : undefined,
+            guestMultiplier: safeMultiplier ?? undefined,
+            pin,
+            shortCode,
+          });
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : 'Unknown error';
+          return sendError(res, 403, msg);
+        }
+        const baseUrl = 'https://tierramadre.app';
+        return res.status(200).json({
+          success: true,
+          invitation: {
+            token: shortCode,
+            url: `${baseUrl}/invite/${shortCode}`,
+            shortCode,
+            shortUrl: null,
+            pin,
+            createdAt: new Date().toISOString(),
+            durationHours: INVITATION_DURATION_HOURS,
+            pricingMode: invitation.pricingMode,
+            guestCurrencyMode: invitation.guestCurrencyMode,
+            guestMultiplier: invitation.guestMultiplier,
+            createdBy: {
+              email: invitation.creatorEmail,
+              name: invitation.creatorName,
+              role: invitation.creatorRole,
+            },
+          },
+        });
+      }
+      const result = await generateInvitation(
+        sheets,
+        (req.body as ApiBody) || {},
+      );
       return res.status(200).json(result);
     }
-    const result = await verifyPin(sheets, req, (req.body as ApiBody) || {});
-    return res.status(200).json(result);
-  }
 
-  // POST - Register guest
-  if (req.method === 'POST' && action === 'register') {
-    if (isConvexEnabled && convexClient) {
-      const { invitationId, guestName, guestContact, contactType } = (req.body as ApiBody) || {};
-      if (!invitationId || !guestName) return sendError(res, 400, 'Invitation ID and guest name are required');
-      try {
-        const result = await convexClient.mutation(api.invitations.registerGuest, {
-          invitationId: String(invitationId),
-          guestName: String(guestName),
-          guestContact: guestContact ? String(guestContact) : undefined,
-          contactType: contactType ? String(contactType) : undefined,
+    // POST - Verify PIN + device token binding
+    if (req.method === 'POST' && action === 'verify-pin') {
+      if (isConvexEnabled && convexClient) {
+        const { shortCode, pin, deviceToken } = (req.body as ApiBody) || {};
+        if (!shortCode || !pin)
+          return sendError(res, 400, 'shortCode and pin are required');
+        const result = await convexClient.mutation(api.invitations.verifyPin, {
+          shortCode: String(shortCode),
+          pin: String(pin),
+          deviceToken: deviceToken ? String(deviceToken) : undefined,
         });
         return res.status(200).json(result);
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Unknown error';
-        return res.status(200).json({ success: false, error: msg });
       }
+      const result = await verifyPin(sheets, req, (req.body as ApiBody) || {});
+      return res.status(200).json(result);
     }
-    const result = await registerGuest(sheets, (req.body as ApiBody) || {});
-    return res.status(200).json(result);
-  }
 
-  // POST - Update invitation (multiplier, etc.)
-  if (req.method === 'POST' && action === 'update') {
-    if (isConvexEnabled && convexClient) {
-      const body = (req.body as ApiBody) || {};
-      const shortCode = body.shortCode as string | undefined;
-      const creatorEmail = body.creatorEmail as string | undefined;
-      const fields = body.fields as { guestMultiplier?: unknown } | undefined;
-      if (!shortCode || !creatorEmail) return sendError(res, 400, 'shortCode and creatorEmail are required');
-      if (fields?.guestMultiplier !== undefined) {
+    // POST - Register guest
+    if (req.method === 'POST' && action === 'register') {
+      if (isConvexEnabled && convexClient) {
+        const { invitationId, guestName, guestContact, contactType } =
+          (req.body as ApiBody) || {};
+        if (!invitationId || !guestName)
+          return sendError(
+            res,
+            400,
+            'Invitation ID and guest name are required',
+          );
         try {
-          const result = await convexClient.mutation(api.invitations.updateMultiplier, {
-            shortCode: String(shortCode),
-            creatorEmail: String(creatorEmail),
-            guestMultiplier: Number(fields.guestMultiplier),
-          });
-          return res.status(200).json({ success: true, invitation: result });
+          const result = await convexClient.mutation(
+            api.invitations.registerGuest,
+            {
+              invitationId: String(invitationId),
+              guestName: String(guestName),
+              guestContact: guestContact ? String(guestContact) : undefined,
+              contactType: contactType ? String(contactType) : undefined,
+            },
+          );
+          return res.status(200).json(result);
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : 'Unknown error';
           return res.status(200).json({ success: false, error: msg });
         }
       }
-      return res.status(200).json({ success: false, error: 'No fields to update' });
+      const result = await registerGuest(sheets, (req.body as ApiBody) || {});
+      return res.status(200).json(result);
     }
-    const result = await updateInvitation(sheets, (req.body as ApiBody) || {});
-    return res.status(200).json(result);
-  }
 
-  // POST - Expire/revoke invitation
-  if (req.method === 'POST' && action === 'expire') {
-    if (isConvexEnabled && convexClient) {
-      const body = (req.body as ApiBody) || {};
-      const shortCode = body.shortCode as string | undefined;
-      const creatorEmail = body.creatorEmail as string | undefined;
-      if (!shortCode || !creatorEmail) return sendError(res, 400, 'shortCode and creatorEmail are required');
-      try {
-        const result = await convexClient.mutation(api.invitations.expire, {
-          shortCode: String(shortCode),
-          creatorEmail: String(creatorEmail),
-        });
-        return res.status(200).json(result);
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Unknown error';
-        return res.status(200).json({ success: false, error: msg });
+    // POST - Update invitation (multiplier, etc.)
+    if (req.method === 'POST' && action === 'update') {
+      if (isConvexEnabled && convexClient) {
+        const body = (req.body as ApiBody) || {};
+        const shortCode = body.shortCode as string | undefined;
+        const idToken = body.idToken as string | undefined;
+        const fields = body.fields as { guestMultiplier?: unknown } | undefined;
+        if (!shortCode || !idToken)
+          return sendError(res, 400, 'shortCode and idToken are required');
+        if (fields?.guestMultiplier !== undefined) {
+          try {
+            // Ownership is checked server-side inside the Convex action
+            // against the VERIFIED caller — never a client-supplied email.
+            const result = await convexClient.action(
+              api.invitations.updateMultiplier,
+              {
+                shortCode: String(shortCode),
+                idToken: String(idToken),
+                guestMultiplier: Number(fields.guestMultiplier),
+              },
+            );
+            return res.status(200).json({ success: true, invitation: result });
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Unknown error';
+            return res.status(200).json({ success: false, error: msg });
+          }
+        }
+        return res
+          .status(200)
+          .json({ success: false, error: 'No fields to update' });
       }
+      const result = await updateInvitation(
+        sheets,
+        (req.body as ApiBody) || {},
+      );
+      return res.status(200).json(result);
     }
-    const result = await expireInvitationAction(sheets, (req.body as ApiBody) || {});
-    return res.status(200).json(result);
-  }
 
-  // GET - Validate invitation
-  if (req.method === 'GET' && (action === 'validate' || req.query.code)) {
-    const rawCode = req.query.code ?? req.query.shortCode;
-    const code = Array.isArray(rawCode) ? rawCode[0] : rawCode;
-    if (!code || typeof code !== 'string') {
-      return sendError(res, 400, 'Code is required');
+    // POST - Expire/revoke invitation
+    if (req.method === 'POST' && action === 'expire') {
+      if (isConvexEnabled && convexClient) {
+        const body = (req.body as ApiBody) || {};
+        const shortCode = body.shortCode as string | undefined;
+        const idToken = body.idToken as string | undefined;
+        if (!shortCode || !idToken)
+          return sendError(res, 400, 'shortCode and idToken are required');
+        try {
+          const result = await convexClient.action(api.invitations.expire, {
+            shortCode: String(shortCode),
+            idToken: String(idToken),
+          });
+          return res.status(200).json(result);
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : 'Unknown error';
+          return res.status(200).json({ success: false, error: msg });
+        }
+      }
+      const result = await expireInvitationAction(
+        sheets,
+        (req.body as ApiBody) || {},
+      );
+      return res.status(200).json(result);
     }
-    if (isConvexEnabled && convexClient) {
-      const inv = await convexClient.query(api.invitations.getByShortCode, { shortCode: code });
-      if (!inv) return res.status(200).json({ success: false, isValid: false, status: 'expired', error: 'Invitacion no encontrada' });
-      if (inv.status === 'expired') return res.status(200).json({ success: true, isValid: false, status: 'expired', error: 'Esta invitacion ha expirado' });
-      if (inv.status === 'pending') {
-        const activated = await convexClient.mutation(api.invitations.activate, { shortCode: code });
-        if (!activated) return res.status(200).json({ success: false, isValid: false, status: 'expired' });
+
+    // GET - Validate invitation
+    if (req.method === 'GET' && (action === 'validate' || req.query.code)) {
+      const rawCode = req.query.code ?? req.query.shortCode;
+      const code = Array.isArray(rawCode) ? rawCode[0] : rawCode;
+      if (!code || typeof code !== 'string') {
+        return sendError(res, 400, 'Code is required');
+      }
+      if (isConvexEnabled && convexClient) {
+        const inv = await convexClient.query(api.invitations.getByShortCode, {
+          shortCode: code,
+        });
+        if (!inv)
+          return res.status(200).json({
+            success: false,
+            isValid: false,
+            status: 'expired',
+            error: 'Invitacion no encontrada',
+          });
+        if (inv.status === 'expired')
+          return res.status(200).json({
+            success: true,
+            isValid: false,
+            status: 'expired',
+            error: 'Esta invitacion ha expirado',
+          });
+        if (inv.status === 'pending') {
+          const activated = await convexClient.mutation(
+            api.invitations.activate,
+            { shortCode: code },
+          );
+          if (!activated)
+            return res
+              .status(200)
+              .json({ success: false, isValid: false, status: 'expired' });
+          return res.status(200).json({
+            success: true,
+            isValid: true,
+            status: 'active',
+            invitationId: activated.invitationId,
+            activatedAt: activated.activatedAt,
+            expiresAt: activated.expiresAt,
+            timeRemaining: null,
+            timeRemainingMinutes: null,
+            durationHours: activated.durationHours,
+            pricingMode: activated.pricingMode,
+            createdBy: activated.creatorName,
+            creatorEmail: activated.creatorEmail,
+            shortCode: activated.shortCode,
+            guestName: activated.guestName ?? null,
+            guestContact: activated.guestContact ?? null,
+            contactType: activated.contactType ?? null,
+            isPinBound: !!activated.boundToken,
+            guestCurrencyMode: activated.guestCurrencyMode ?? null,
+            guestMultiplier: activated.guestMultiplier ?? null,
+          });
+        }
         return res.status(200).json({
-          success: true, isValid: true, status: 'active',
-          invitationId: activated.invitationId, activatedAt: activated.activatedAt, expiresAt: activated.expiresAt,
-          timeRemaining: null, timeRemainingMinutes: null,
-          durationHours: activated.durationHours, pricingMode: activated.pricingMode,
-          createdBy: activated.creatorName, creatorEmail: activated.creatorEmail,
-          shortCode: activated.shortCode,
-          guestName: activated.guestName ?? null, guestContact: activated.guestContact ?? null,
-          contactType: activated.contactType ?? null,
-          isPinBound: !!activated.boundToken,
-          guestCurrencyMode: activated.guestCurrencyMode ?? null,
-          guestMultiplier: activated.guestMultiplier ?? null,
-        });
-      }
-      return res.status(200).json({
-        success: true, isValid: true, status: 'active',
-        invitationId: inv.invitationId, activatedAt: inv.activatedAt, expiresAt: inv.expiresAt,
-        timeRemaining: null, timeRemainingMinutes: null,
-        durationHours: inv.durationHours, pricingMode: inv.pricingMode,
-        createdBy: inv.creatorName, creatorEmail: inv.creatorEmail,
-        shortCode: inv.shortCode,
-        guestName: inv.guestName ?? null, guestContact: inv.guestContact ?? null,
-        contactType: inv.contactType ?? null,
-        isPinBound: !!inv.boundToken,
-        guestCurrencyMode: inv.guestCurrencyMode ?? null,
-        guestMultiplier: inv.guestMultiplier ?? null,
-      });
-    }
-    const result = await validateInvitation(sheets, code);
-    return res.status(200).json(result);
-  }
-
-  // GET - Check guest history
-  if (req.method === 'GET' && action === 'check-guest') {
-    const rawGuest = req.query.guestContact;
-    const guestContact = Array.isArray(rawGuest) ? rawGuest[0] : rawGuest;
-    if (!guestContact || typeof guestContact !== 'string') {
-      return sendError(res, 400, 'guestContact is required');
-    }
-    if (isConvexEnabled && convexClient) {
-      const result = await convexClient.query(api.invitations.checkGuestHistory, { guestContact });
-      return res.status(200).json({ success: true, ...result });
-    }
-    const result = await checkGuestHistory(sheets, guestContact);
-    return res.status(200).json(result);
-  }
-
-  // GET - List invitations by creator
-  if (req.method === 'GET' && action === 'list-by-creator') {
-    const rawCreator = req.query.creatorEmail;
-    const creatorEmail = Array.isArray(rawCreator) ? rawCreator[0] : rawCreator;
-    if (!creatorEmail || typeof creatorEmail !== 'string') {
-      return sendError(res, 400, 'creatorEmail is required');
-    }
-    if (isConvexEnabled && convexClient) {
-      const invitations = await convexClient.query(api.invitations.listByCreator, { creatorEmail });
-      return res.status(200).json({
-        success: true,
-        invitations: invitations.map((inv) => ({
+          success: true,
+          isValid: true,
+          status: 'active',
           invitationId: inv.invitationId,
+          activatedAt: inv.activatedAt,
+          expiresAt: inv.expiresAt,
+          timeRemaining: null,
+          timeRemainingMinutes: null,
+          durationHours: inv.durationHours,
+          pricingMode: inv.pricingMode,
+          createdBy: inv.creatorName,
+          creatorEmail: inv.creatorEmail,
           shortCode: inv.shortCode,
           guestName: inv.guestName ?? null,
           guestContact: inv.guestContact ?? null,
           contactType: inv.contactType ?? null,
-          status: inv.status,
-          createdAt: inv.createdAt,
-          activatedAt: inv.activatedAt ?? null,
-          expiresAt: inv.expiresAt ?? null,
-          pricingMode: inv.pricingMode,
+          isPinBound: !!inv.boundToken,
           guestCurrencyMode: inv.guestCurrencyMode ?? null,
           guestMultiplier: inv.guestMultiplier ?? null,
-        })),
-        total: invitations.length,
-      });
+        });
+      }
+      const result = await validateInvitation(sheets, code);
+      return res.status(200).json(result);
     }
-    const result = await listByCreator(sheets, creatorEmail);
-    return res.status(200).json(result);
-  }
 
-  return sendError(res, 405, 'Method not allowed');
-}, {
-  methods: ['GET', 'POST', 'OPTIONS'],
-  provideSheets: true,
-  errorPrefix: 'Invitations',
-});
+    // GET - Check guest history
+    if (req.method === 'GET' && action === 'check-guest') {
+      const rawGuest = req.query.guestContact;
+      const guestContact = Array.isArray(rawGuest) ? rawGuest[0] : rawGuest;
+      if (!guestContact || typeof guestContact !== 'string') {
+        return sendError(res, 400, 'guestContact is required');
+      }
+      if (isConvexEnabled && convexClient) {
+        const result = await convexClient.query(
+          api.invitations.checkGuestHistory,
+          { guestContact },
+        );
+        return res.status(200).json({ success: true, ...result });
+      }
+      const result = await checkGuestHistory(sheets, guestContact);
+      return res.status(200).json(result);
+    }
+
+    // GET - List invitations by creator
+    if (req.method === 'GET' && action === 'list-by-creator') {
+      const rawCreator = req.query.creatorEmail;
+      const creatorEmail = Array.isArray(rawCreator)
+        ? rawCreator[0]
+        : rawCreator;
+      if (!creatorEmail || typeof creatorEmail !== 'string') {
+        return sendError(res, 400, 'creatorEmail is required');
+      }
+      if (isConvexEnabled && convexClient) {
+        const invitations = await convexClient.query(
+          api.invitations.listByCreator,
+          { creatorEmail },
+        );
+        return res.status(200).json({
+          success: true,
+          invitations: invitations.map((inv) => ({
+            invitationId: inv.invitationId,
+            shortCode: inv.shortCode,
+            guestName: inv.guestName ?? null,
+            guestContact: inv.guestContact ?? null,
+            contactType: inv.contactType ?? null,
+            status: inv.status,
+            createdAt: inv.createdAt,
+            activatedAt: inv.activatedAt ?? null,
+            expiresAt: inv.expiresAt ?? null,
+            pricingMode: inv.pricingMode,
+            guestCurrencyMode: inv.guestCurrencyMode ?? null,
+            guestMultiplier: inv.guestMultiplier ?? null,
+          })),
+          total: invitations.length,
+        });
+      }
+      const result = await listByCreator(sheets, creatorEmail);
+      return res.status(200).json(result);
+    }
+
+    return sendError(res, 405, 'Method not allowed');
+  },
+  {
+    methods: ['GET', 'POST', 'OPTIONS'],
+    provideSheets: true,
+    errorPrefix: 'Invitations',
+  },
+);

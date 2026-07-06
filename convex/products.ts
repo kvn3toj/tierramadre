@@ -4,27 +4,29 @@ import {
   action,
   internalMutation,
   internalQuery,
+  internalAction,
   type MutationCtx,
-} from "./_generated/server";
-import { v } from "convex/values";
-import { api, internal } from "./_generated/api";
+} from './_generated/server';
+import { v } from 'convex/values';
+import { api, internal } from './_generated/api';
 import {
   qualityBucket,
   caratBucket,
   procedenciaBucket,
   comboKey,
-} from "../src/utils/patron-buckets";
+} from '../src/utils/patron-buckets';
 import {
   normalizeCalidadForSheet,
   normalizeColorForSheet,
-} from "./_lib/fotosintesisVocab";
+} from './_lib/fotosintesisVocab';
 import {
   assembleBundleGroups,
   type ResolvedBundleItem,
   type ShownSublote,
   type ShownLot,
-} from "./_lib/publishedGroups";
-import { postToVercel } from "./_lib/sheetSync";
+} from './_lib/publishedGroups';
+import { postToVercel } from './_lib/sheetSync';
+import { requireAccessLevel } from './_lib/authz';
 
 // =============================================================================
 // QUERIES — read the mirror
@@ -38,15 +40,15 @@ export const list = query({
   args: {
     estado: v.optional(
       v.union(
-        v.literal("DISPONIBLE"),
-        v.literal("VENDIDA"),
-        v.literal("ASESOR"),
-        v.literal("Retornado"),
-        v.literal("ESMEREOGENESIS"),
-        v.literal("ESMERO"),
-        v.literal("DISPONIBLE ADOPTADA"),
-        v.literal("LOTE X CT"),
-        v.literal(""),
+        v.literal('DISPONIBLE'),
+        v.literal('VENDIDA'),
+        v.literal('ASESOR'),
+        v.literal('Retornado'),
+        v.literal('ESMEREOGENESIS'),
+        v.literal('ESMERO'),
+        v.literal('DISPONIBLE ADOPTADA'),
+        v.literal('LOTE X CT'),
+        v.literal(''),
       ),
     ),
     search: v.optional(v.string()),
@@ -54,20 +56,20 @@ export const list = query({
   handler: async (ctx, { estado, search }) => {
     const rows = estado
       ? await ctx.db
-          .query("productInventory")
-          .withIndex("by_estado", (q) => q.eq("estado", estado))
+          .query('productInventory')
+          .withIndex('by_estado', (q) => q.eq('estado', estado))
           .collect()
-      : await ctx.db.query("productInventory").collect();
+      : await ctx.db.query('productInventory').collect();
 
     const filtered = search
       ? rows.filter((row) => {
           const s = search.toLowerCase();
           return (
             row.itemId.toLowerCase().includes(s) ||
-            (row.nombre ?? "").toLowerCase().includes(s) ||
-            (row.color ?? "").toLowerCase().includes(s) ||
-            (row.calidad ?? "").toLowerCase().includes(s) ||
-            (row.coleccion ?? "").toLowerCase().includes(s)
+            (row.nombre ?? '').toLowerCase().includes(s) ||
+            (row.color ?? '').toLowerCase().includes(s) ||
+            (row.calidad ?? '').toLowerCase().includes(s) ||
+            (row.coleccion ?? '').toLowerCase().includes(s)
           );
         })
       : rows;
@@ -139,8 +141,8 @@ export const get = query({
   args: { itemId: v.string() },
   handler: async (ctx, { itemId }) => {
     return await ctx.db
-      .query("productInventory")
-      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
   },
 });
@@ -175,8 +177,8 @@ export const getManyByItemIds = query({
     }> = [];
     for (const itemId of itemIds) {
       const row = await ctx.db
-        .query("productInventory")
-        .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
         .first();
       if (!row) continue;
       out.push({
@@ -203,10 +205,10 @@ export const listByLote = query({
   args: { loteId: v.string() },
   handler: async (ctx, { loteId }) => {
     const rows = await ctx.db
-      .query("productInventory")
-      .withIndex("by_loteId", (q) => q.eq("loteId", loteId))
+      .query('productInventory')
+      .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
       .collect();
-    return rows.sort((a, b) => a.itemId.localeCompare(b.itemId, "es"));
+    return rows.sort((a, b) => a.itemId.localeCompare(b.itemId, 'es'));
   },
 });
 
@@ -233,8 +235,8 @@ export const publishedCatalog = query({
     // fall outside this index range and no longer re-run the query for the
     // anonymous catalog visitors subscribed to it.
     const rows = await ctx.db
-      .query("productInventory")
-      .withIndex("by_mostrarEnCatalogo", (q) => q.eq("mostrarEnCatalogo", true))
+      .query('productInventory')
+      .withIndex('by_mostrarEnCatalogo', (q) => q.eq('mostrarEnCatalogo', true))
       .collect();
 
     // Only items captured through a lot are catalog-eligible; legacy/orphan rows
@@ -253,8 +255,8 @@ export const publishedCatalog = query({
       published.map((r) => r.loteId).filter((id): id is string => !!id),
     )) {
       const lot = await ctx.db
-        .query("lots")
-        .withIndex("by_loteId", (q) => q.eq("loteId", loteId))
+        .query('lots')
+        .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
         .first();
       loteProvenance.set(loteId, {
         mina: lot?.mina,
@@ -340,13 +342,13 @@ export const publishedGroups = query({
       itemId: string,
     ): Promise<ResolvedBundleItem | null> => {
       const p = await ctx.db
-        .query("productInventory")
-        .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
         .first();
       if (!p) return null;
       return {
         itemId: p.itemId,
-        nombre: p.nombre ?? "",
+        nombre: p.nombre ?? '',
         fotoUrl: p.fotoUrl,
         precioCOP: p.precioEmbajadorCOP ?? 0,
         color: p.color,
@@ -372,8 +374,8 @@ export const publishedGroups = query({
 
     // Shown sub-lotes: active + opted into bundle display.
     const activeSubs = await ctx.db
-      .query("subLotes")
-      .withIndex("by_estado", (q) => q.eq("estado", "activa"))
+      .query('subLotes')
+      .withIndex('by_estado', (q) => q.eq('estado', 'activa'))
       .collect();
     const shownSublotes: ShownSublote[] = activeSubs
       .filter((s) => s.mostrarComoLote === true)
@@ -387,15 +389,15 @@ export const publishedGroups = query({
 
     // Shown lotes: published + opted into bundle display, members in lot order.
     const publishedLots = await ctx.db
-      .query("lots")
-      .withIndex("by_estado", (q) => q.eq("estado", "publicado"))
+      .query('lots')
+      .withIndex('by_estado', (q) => q.eq('estado', 'publicado'))
       .collect();
     const shownLots: ShownLot[] = [];
     for (const lot of publishedLots) {
       if (lot.mostrarComoLote !== true) continue;
       const joins = await ctx.db
-        .query("lotItems")
-        .withIndex("by_loteId", (q) => q.eq("loteId", lot.loteId))
+        .query('lotItems')
+        .withIndex('by_loteId', (q) => q.eq('loteId', lot.loteId))
         .collect();
       joins.sort((a, b) => a.ordenEnLote - b.ordenEnLote);
       shownLots.push({
@@ -431,8 +433,8 @@ export const publishedGroups = query({
     for (const g of groups) {
       if (groupProvenance.has(g.parentLoteId)) continue;
       const lot = await ctx.db
-        .query("lots")
-        .withIndex("by_loteId", (q) => q.eq("loteId", g.parentLoteId))
+        .query('lots')
+        .withIndex('by_loteId', (q) => q.eq('loteId', g.parentLoteId))
         .first();
       groupProvenance.set(g.parentLoteId, {
         mina: lot?.mina,
@@ -453,9 +455,9 @@ export const editHistory = query({
   args: { itemId: v.string() },
   handler: async (ctx, { itemId }) => {
     const all = await ctx.db
-      .query("productEdits")
-      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
-      .order("desc")
+      .query('productEdits')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+      .order('desc')
       .take(20);
     return all;
   },
@@ -470,12 +472,12 @@ export const syncStats = query({
     // Instead of collecting all rows, we use the by_syncStatus index
     // to count pending and errored items efficiently.
     const pendingRows = await ctx.db
-      .query("productInventory")
-      .withIndex("by_syncStatus", (q) => q.eq("syncStatus", "pending"))
+      .query('productInventory')
+      .withIndex('by_syncStatus', (q) => q.eq('syncStatus', 'pending'))
       .collect();
     const erroredRows = await ctx.db
-      .query("productInventory")
-      .withIndex("by_syncStatus", (q) => q.eq("syncStatus", "error"))
+      .query('productInventory')
+      .withIndex('by_syncStatus', (q) => q.eq('syncStatus', 'error'))
       .collect();
 
     const pending = pendingRows.length;
@@ -493,7 +495,7 @@ export const syncStats = query({
     // first insert/pull), fall back to 0 / null — the frontend already
     // tolerates this via `stats?.total ?? products?.length` and
     // `stats?.lastPull ?? null`. The first insert or pull seeds it for real.
-    const statsRow = await ctx.db.query("inventoryStats").first();
+    const statsRow = await ctx.db.query('inventoryStats').first();
     const total = statsRow?.total ?? 0;
     const lastPull = statsRow?.lastPull ?? null;
 
@@ -519,10 +521,10 @@ export const syncStats = query({
  * `by_estado` scan of the two open states is cheap.
  */
 async function findOwningActiveSale(ctx: MutationCtx, itemId: string) {
-  for (const estado of ["confirmada", "reservada"] as const) {
+  for (const estado of ['confirmada', 'reservada'] as const) {
     const sales = await ctx.db
-      .query("sales")
-      .withIndex("by_estado", (q) => q.eq("estado", estado))
+      .query('sales')
+      .withIndex('by_estado', (q) => q.eq('estado', estado))
       .collect();
     const owning = sales.find((s) => s.itemIds.includes(itemId));
     if (owning) return owning;
@@ -530,43 +532,49 @@ async function findOwningActiveSale(ctx: MutationCtx, itemId: string) {
   return null;
 }
 
-export const saveEdit = mutation({
+const saveEditPatchArgs = v.object({
+  nombre: v.optional(v.string()),
+  peso: v.optional(v.string()),
+  color: v.optional(v.string()),
+  calidad: v.optional(v.string()),
+  cantidad: v.optional(v.number()),
+  talla: v.optional(v.string()),
+  medidas: v.optional(v.string()),
+  categoria: v.optional(v.string()),
+  precioCOP: v.optional(v.number()),
+  ubicacion: v.optional(v.string()),
+  coleccion: v.optional(v.string()),
+  caja: v.optional(v.string()),
+  estado: v.optional(
+    v.union(
+      v.literal('DISPONIBLE'),
+      v.literal('VENDIDA'),
+      v.literal('ASESOR'),
+      v.literal('Retornado'),
+      v.literal('ESMEREOGENESIS'),
+      v.literal('ESMERO'),
+      v.literal('DISPONIBLE ADOPTADA'),
+      v.literal('LOTE X CT'),
+      v.literal(''),
+    ),
+  ),
+});
+
+/**
+ * Internal: the actual write. Only reachable via the `saveEdit` action below,
+ * which verifies the caller's role server-side first — see convex/_lib/authz.ts.
+ */
+export const _saveEdit = internalMutation({
   args: {
     itemId: v.string(),
     editorEmail: v.string(),
     editorName: v.optional(v.string()),
-    patch: v.object({
-      nombre: v.optional(v.string()),
-      peso: v.optional(v.string()),
-      color: v.optional(v.string()),
-      calidad: v.optional(v.string()),
-      cantidad: v.optional(v.number()),
-      talla: v.optional(v.string()),
-      medidas: v.optional(v.string()),
-      categoria: v.optional(v.string()),
-      precioCOP: v.optional(v.number()),
-      ubicacion: v.optional(v.string()),
-      coleccion: v.optional(v.string()),
-      caja: v.optional(v.string()),
-      estado: v.optional(
-        v.union(
-          v.literal("DISPONIBLE"),
-          v.literal("VENDIDA"),
-          v.literal("ASESOR"),
-          v.literal("Retornado"),
-          v.literal("ESMEREOGENESIS"),
-          v.literal("ESMERO"),
-          v.literal("DISPONIBLE ADOPTADA"),
-          v.literal("LOTE X CT"),
-          v.literal(""),
-        ),
-      ),
-    }),
+    patch: saveEditPatchArgs,
   },
   handler: async (ctx, { itemId, editorEmail, editorName, patch }) => {
     const existing = await ctx.db
-      .query("productInventory")
-      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
     if (!existing) throw new Error(`Producto ${itemId} no está en el espejo`);
 
@@ -574,7 +582,7 @@ export const saveEdit = mutation({
     // live (non-cancelled) sale still owns it. The canonical reversal is
     // sales.cancel; a manual flip here would bypass BR-6 and leave a phantom
     // re-sellable item.
-    if (patch.estado !== undefined && patch.estado !== "VENDIDA") {
+    if (patch.estado !== undefined && patch.estado !== 'VENDIDA') {
       const owningSale = await findOwningActiveSale(ctx, itemId);
       if (owningSale) {
         throw new Error(
@@ -596,32 +604,32 @@ export const saveEdit = mutation({
       const before = (existing as Record<string, unknown>)[field];
       if (before === after) continue;
       const beforeNorm =
-        typeof before === "string" || typeof before === "number"
+        typeof before === 'string' || typeof before === 'number'
           ? before
           : null;
       const afterNorm =
-        typeof after === "string" || typeof after === "number" ? after : null;
+        typeof after === 'string' || typeof after === 'number' ? after : null;
       changes.push({ field, before: beforeNorm, after: afterNorm });
     }
     if (changes.length === 0) {
-      return { itemId, changesCount: 0, message: "Sin cambios" };
+      return { itemId, changesCount: 0, message: 'Sin cambios' };
     }
 
     // Patch the mirror — UI updates immediately
     await ctx.db.patch(existing._id, {
       ...patch,
-      syncStatus: "pending" as const,
+      syncStatus: 'pending' as const,
       syncError: undefined,
     });
 
     // Insert audit row (status: pending until the action confirms the push)
-    const auditId = await ctx.db.insert("productEdits", {
+    const auditId = await ctx.db.insert('productEdits', {
       itemId,
       editorEmail,
       editorName,
       editedAt: new Date().toISOString(),
       changes,
-      status: "pending" as const,
+      status: 'pending' as const,
     });
 
     // Schedule the Sheets push (non-blocking; fires immediately)
@@ -635,24 +643,56 @@ export const saveEdit = mutation({
 });
 
 /**
+ * Public entry point for saveEdit. Verifies the caller's Google ID token
+ * server-side and requires the `admin` role (ProductManagement is behind
+ * `AdminRoute` client-side, but that only hides the UI — this is the real
+ * gate) before delegating to the internal mutation. `editorEmail`/`editorName`
+ * in the audit trail always come from the verified token, never the client.
+ */
+export const saveEdit = action({
+  args: {
+    idToken: v.string(),
+    itemId: v.string(),
+    patch: saveEditPatchArgs,
+  },
+  handler: async (
+    ctx,
+    { idToken, itemId, patch },
+  ): Promise<{
+    itemId: string;
+    changesCount: number;
+    message?: string;
+    auditId?: string;
+  }> => {
+    const caller = await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.products._saveEdit, {
+      itemId,
+      editorEmail: caller.email,
+      editorName: caller.name,
+      patch,
+    });
+  },
+});
+
+/**
  * Internal: mark an audit row + mirror row as successfully pushed.
  * Called by the pushToSheet action on success.
  */
 export const _markPushed = internalMutation({
-  args: { itemId: v.string(), auditId: v.id("productEdits") },
+  args: { itemId: v.string(), auditId: v.id('productEdits') },
   handler: async (ctx, { itemId, auditId }) => {
     const row = await ctx.db
-      .query("productInventory")
-      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
     if (row) {
       await ctx.db.patch(row._id, {
-        syncStatus: "synced" as const,
+        syncStatus: 'synced' as const,
         lastPushedAt: new Date().toISOString(),
         syncError: undefined,
       });
     }
-    await ctx.db.patch(auditId, { status: "saved" as const });
+    await ctx.db.patch(auditId, { status: 'saved' as const });
   },
 });
 
@@ -662,22 +702,22 @@ export const _markPushed = internalMutation({
 export const _markPushFailed = internalMutation({
   args: {
     itemId: v.string(),
-    auditId: v.id("productEdits"),
+    auditId: v.id('productEdits'),
     error: v.string(),
   },
   handler: async (ctx, { itemId, auditId, error }) => {
     const row = await ctx.db
-      .query("productInventory")
-      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
     if (row) {
       await ctx.db.patch(row._id, {
-        syncStatus: "error" as const,
+        syncStatus: 'error' as const,
         syncError: error.slice(0, 500),
       });
     }
     await ctx.db.patch(auditId, {
-      status: "failed" as const,
+      status: 'failed' as const,
       error: error.slice(0, 500),
     });
   },
@@ -690,8 +730,8 @@ export const _getInternal = internalQuery({
   args: { itemId: v.string() },
   handler: async (ctx, { itemId }) => {
     return await ctx.db
-      .query("productInventory")
-      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
   },
 });
@@ -716,23 +756,23 @@ export const _getInternal = internalQuery({
 export const pushToSheet = action({
   args: {
     itemId: v.string(),
-    auditId: v.id("productEdits"),
+    auditId: v.id('productEdits'),
     // Phase G — create flow: "append" tells the Vercel endpoint that the
     // row is new (no existing column-A item to validate against and the
     // sheet must `values.append` rather than `values.update`). Defaults
     // to "patch" so all existing callers (saveEdit, saveEditMany,
     // retryPush) keep their semantics.
-    mode: v.optional(v.union(v.literal("patch"), v.literal("append"))),
+    mode: v.optional(v.union(v.literal('patch'), v.literal('append'))),
   },
   handler: async (
     ctx,
     { itemId, auditId, mode },
   ): Promise<{ ok: boolean; message: string }> => {
-    const pushMode: "patch" | "append" = mode ?? "patch";
+    const pushMode: 'patch' | 'append' = mode ?? 'patch';
     const appUrl: string | undefined = process.env.APP_URL;
     const syncToken: string | undefined = process.env.ADMIN_SYNC_TOKEN;
     if (!appUrl || !syncToken) {
-      const msg = "APP_URL or ADMIN_SYNC_TOKEN missing on Convex deployment";
+      const msg = 'APP_URL or ADMIN_SYNC_TOKEN missing on Convex deployment';
       await ctx.runMutation(internal.products._markPushFailed, {
         itemId,
         auditId,
@@ -754,14 +794,14 @@ export const pushToSheet = action({
     }
 
     try {
-      const sheetTarget = row.loteId ? "fotosintesis" : "legacy";
+      const sheetTarget = row.loteId ? 'fotosintesis' : 'legacy';
       // postToVercel follows redirects while preserving POST — a redirecting
       // APP_URL (e.g. a *.vercel.app alias 301-ing to the custom domain) would
       // otherwise downgrade this write to GET and get 405'd. See sheetSync.ts.
       const res = await postToVercel(`${appUrl}/api/admin-product-update`, {
         headers: {
-          "content-type": "application/json",
-          "x-admin-sync-token": syncToken,
+          'content-type': 'application/json',
+          'x-admin-sync-token': syncToken,
         },
         body: JSON.stringify({
           itemId,
@@ -770,51 +810,51 @@ export const pushToSheet = action({
           target: sheetTarget,
           loteId: row.loteId ?? undefined,
           fields: {
-            nombre: row.nombre ?? "",
-            peso: row.peso ?? "",
+            nombre: row.nombre ?? '',
+            peso: row.peso ?? '',
             color: normalizeColorForSheet(row.color),
             calidad: normalizeCalidadForSheet(row.calidad),
-            cantidad: row.cantidad ?? "",
-            talla: row.talla ?? "",
-            medidas: row.medidas ?? "",
-            medidasValores: row.medidasValores ?? "",
-            categoria: row.categoria ?? row.tipoEsmeralda ?? "",
+            cantidad: row.cantidad ?? '',
+            talla: row.talla ?? '',
+            medidas: row.medidas ?? '',
+            medidasValores: row.medidasValores ?? '',
+            categoria: row.categoria ?? row.tipoEsmeralda ?? '',
             // precioCOP (column L) retired from the SOT mirror 2026-05-29 — no
             // longer pushed; the Convex field stays app-only. See
             // api/_lib/fotosintesis-inventory-columns.js.
-            ubicacion: row.ubicacion ?? "",
-            asesor: row.asesor ?? "",
-            estado: row.estado ?? "DISPONIBLE",
-            qr: row.qr ?? "",
-            coleccion: row.coleccion ?? "",
-            caja: row.caja ?? "",
-            asesorActual: row.asesorActual ?? "",
-            estadoAsesor: row.estadoAsesor ?? "",
+            ubicacion: row.ubicacion ?? '',
+            asesor: row.asesor ?? '',
+            estado: row.estado ?? 'DISPONIBLE',
+            qr: row.qr ?? '',
+            coleccion: row.coleccion ?? '',
+            caja: row.caja ?? '',
+            asesorActual: row.asesorActual ?? '',
+            estadoAsesor: row.estadoAsesor ?? '',
             // ── Fotosíntesis v2 fields (written only on the SOT Inventario
             // tab; the legacy treasure sheet ignores them) ──
-            preponderancia: row.preponderancia ?? "",
-            loteId: row.loteId ?? "",
-            costoBaseCOP: row.costoBaseCOP ?? "",
-            mostrarEnCatalogo: row.mostrarEnCatalogo ? "TRUE" : "FALSE",
-            procedencia: row.procedencia ?? "",
-            observacion: row.observacion ?? "",
-            rendimientoEsperado: row.rendimientoEsperado ?? "",
-            cantidadEstimada: row.cantidadEstimada ?? "",
-            nivelRareza: row.nivelRareza ?? "",
-            calificacion: row.calificacion ?? "",
-            tipoEsmeralda: row.tipoEsmeralda ?? "",
-            subtipoForm: row.subtipoForm ?? "",
-            tipoJoya: row.tipoJoya ?? "",
-            tecnicaJoya: row.tecnicaJoya ?? "",
-            minerales: (row.minerales ?? []).join(", "),
-            complementos: (row.complementos ?? []).join(", "),
-            fotoUrl: row.fotoUrl ?? "",
-            certificadoUrl: row.certificadoUrl ?? "",
-            formulaGema: row.formulaGema ?? "",
-            formulaJoya: row.formulaJoya ?? "",
-            rangoDescuento: row.rangoDescuento ?? "",
-            precioEmbajadorCOP: row.precioEmbajadorCOP ?? "",
-            precioConscienteCOP: row.precioConscienteCOP ?? "",
+            preponderancia: row.preponderancia ?? '',
+            loteId: row.loteId ?? '',
+            costoBaseCOP: row.costoBaseCOP ?? '',
+            mostrarEnCatalogo: row.mostrarEnCatalogo ? 'TRUE' : 'FALSE',
+            procedencia: row.procedencia ?? '',
+            observacion: row.observacion ?? '',
+            rendimientoEsperado: row.rendimientoEsperado ?? '',
+            cantidadEstimada: row.cantidadEstimada ?? '',
+            nivelRareza: row.nivelRareza ?? '',
+            calificacion: row.calificacion ?? '',
+            tipoEsmeralda: row.tipoEsmeralda ?? '',
+            subtipoForm: row.subtipoForm ?? '',
+            tipoJoya: row.tipoJoya ?? '',
+            tecnicaJoya: row.tecnicaJoya ?? '',
+            minerales: (row.minerales ?? []).join(', '),
+            complementos: (row.complementos ?? []).join(', '),
+            fotoUrl: row.fotoUrl ?? '',
+            certificadoUrl: row.certificadoUrl ?? '',
+            formulaGema: row.formulaGema ?? '',
+            formulaJoya: row.formulaJoya ?? '',
+            rangoDescuento: row.rangoDescuento ?? '',
+            precioEmbajadorCOP: row.precioEmbajadorCOP ?? '',
+            precioConscienteCOP: row.precioConscienteCOP ?? '',
           },
         }),
       });
@@ -825,7 +865,7 @@ export const pushToSheet = action({
       }
 
       await ctx.runMutation(internal.products._markPushed, { itemId, auditId });
-      return { ok: true, message: "Pushed to Sheets" };
+      return { ok: true, message: 'Pushed to Sheets' };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       await ctx.runMutation(internal.products._markPushFailed, {
@@ -845,9 +885,9 @@ export const _latestAudit = internalQuery({
   args: { itemId: v.string() },
   handler: async (ctx, { itemId }) => {
     return await ctx.db
-      .query("productEdits")
-      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
-      .order("desc")
+      .query('productEdits')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+      .order('desc')
       .first();
   },
 });
@@ -858,20 +898,20 @@ export const _latestAudit = internalQuery({
  * row as "pending" again.
  */
 export const _resetForRetry = internalMutation({
-  args: { itemId: v.string(), auditId: v.id("productEdits") },
+  args: { itemId: v.string(), auditId: v.id('productEdits') },
   handler: async (ctx, { itemId, auditId }) => {
     const row = await ctx.db
-      .query("productInventory")
-      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
     if (row) {
       await ctx.db.patch(row._id, {
-        syncStatus: "pending" as const,
+        syncStatus: 'pending' as const,
         syncError: undefined,
       });
     }
     await ctx.db.patch(auditId, {
-      status: "pending" as const,
+      status: 'pending' as const,
       error: undefined,
     });
   },
@@ -895,7 +935,7 @@ export const retryPush = action({
     if (!audit) {
       return {
         ok: false,
-        message: "Sin historial de ediciones para reintentar",
+        message: 'Sin historial de ediciones para reintentar',
       };
     }
     await ctx.runMutation(internal.products._resetForRetry, {
@@ -924,7 +964,11 @@ export const retryPush = action({
  * from "applied". The mutation never throws on a missing row; it just
  * counts it as missing so the toolbar can report partial successes.
  */
-export const saveEditMany = mutation({
+/**
+ * Internal: the actual bulk write. Only reachable via the `saveEditMany`
+ * action below, which verifies the caller's role server-side first.
+ */
+export const _saveEditMany = internalMutation({
   args: {
     itemIds: v.array(v.string()),
     editorEmail: v.string(),
@@ -933,33 +977,7 @@ export const saveEditMany = mutation({
     // patch so the bulk action bar can also change precioCOP / coleccion
     // / ubicacion in a single mutation. Each row still gets a per-field
     // diff in its audit row (only fields whose value actually changes).
-    patch: v.object({
-      nombre: v.optional(v.string()),
-      peso: v.optional(v.string()),
-      color: v.optional(v.string()),
-      calidad: v.optional(v.string()),
-      cantidad: v.optional(v.number()),
-      talla: v.optional(v.string()),
-      medidas: v.optional(v.string()),
-      categoria: v.optional(v.string()),
-      precioCOP: v.optional(v.number()),
-      ubicacion: v.optional(v.string()),
-      coleccion: v.optional(v.string()),
-      caja: v.optional(v.string()),
-      estado: v.optional(
-        v.union(
-          v.literal("DISPONIBLE"),
-          v.literal("VENDIDA"),
-          v.literal("ASESOR"),
-          v.literal("Retornado"),
-          v.literal("ESMEREOGENESIS"),
-          v.literal("ESMERO"),
-          v.literal("DISPONIBLE ADOPTADA"),
-          v.literal("LOTE X CT"),
-          v.literal(""),
-        ),
-      ),
-    }),
+    patch: saveEditPatchArgs,
   },
   handler: async (ctx, { itemIds, editorEmail, editorName, patch }) => {
     let updatedCount = 0;
@@ -971,14 +989,14 @@ export const saveEditMany = mutation({
     // C2 — when this bulk patch moves estado out of VENDIDA, pre-compute the
     // set of itemIds still owned by a live sale so we can skip (not abort) them.
     const guardEstadoChange =
-      patch.estado !== undefined && patch.estado !== "VENDIDA";
+      patch.estado !== undefined && patch.estado !== 'VENDIDA';
     let saleOwnedItemIds: Set<string> | null = null;
     if (guardEstadoChange) {
       saleOwnedItemIds = new Set<string>();
-      for (const estado of ["confirmada", "reservada"] as const) {
+      for (const estado of ['confirmada', 'reservada'] as const) {
         const sales = await ctx.db
-          .query("sales")
-          .withIndex("by_estado", (q) => q.eq("estado", estado))
+          .query('sales')
+          .withIndex('by_estado', (q) => q.eq('estado', estado))
           .collect();
         for (const sale of sales) {
           for (const id of sale.itemIds) saleOwnedItemIds.add(id);
@@ -988,8 +1006,8 @@ export const saveEditMany = mutation({
 
     for (const itemId of itemIds) {
       const existing = await ctx.db
-        .query("productInventory")
-        .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
         .first();
       if (!existing) {
         missingCount++;
@@ -1014,11 +1032,11 @@ export const saveEditMany = mutation({
         const before = (existing as Record<string, unknown>)[field];
         if (before === after) continue;
         const beforeNorm =
-          typeof before === "string" || typeof before === "number"
+          typeof before === 'string' || typeof before === 'number'
             ? before
             : null;
         const afterNorm =
-          typeof after === "string" || typeof after === "number" ? after : null;
+          typeof after === 'string' || typeof after === 'number' ? after : null;
         changes.push({ field, before: beforeNorm, after: afterNorm });
       }
       if (changes.length === 0) {
@@ -1028,17 +1046,17 @@ export const saveEditMany = mutation({
 
       await ctx.db.patch(existing._id, {
         ...patch,
-        syncStatus: "pending" as const,
+        syncStatus: 'pending' as const,
         syncError: undefined,
       });
 
-      const auditId = await ctx.db.insert("productEdits", {
+      const auditId = await ctx.db.insert('productEdits', {
         itemId,
         editorEmail,
         editorName,
         editedAt,
         changes,
-        status: "pending" as const,
+        status: 'pending' as const,
       });
 
       await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
@@ -1056,6 +1074,35 @@ export const saveEditMany = mutation({
       missingCount,
       blockedCount,
     };
+  },
+});
+
+/**
+ * Public entry point for saveEditMany — same auth gate as `saveEdit`.
+ */
+export const saveEditMany = action({
+  args: {
+    idToken: v.string(),
+    itemIds: v.array(v.string()),
+    patch: saveEditPatchArgs,
+  },
+  handler: async (
+    ctx,
+    { idToken, itemIds, patch },
+  ): Promise<{
+    total: number;
+    updatedCount: number;
+    unchangedCount: number;
+    missingCount: number;
+    blockedCount: number;
+  }> => {
+    const caller = await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.products._saveEditMany, {
+      itemIds,
+      editorEmail: caller.email,
+      editorName: caller.name,
+      patch,
+    });
   },
 });
 
@@ -1090,12 +1137,12 @@ export const claimLock = mutation({
     const expiresAt = new Date(now + LOCK_TTL_MS).toISOString();
 
     const existing = await ctx.db
-      .query("productLocks")
-      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .query('productLocks')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
 
     if (!existing) {
-      await ctx.db.insert("productLocks", {
+      await ctx.db.insert('productLocks', {
         itemId,
         holderEmail,
         holderName,
@@ -1143,8 +1190,8 @@ export const releaseLock = mutation({
   },
   handler: async (ctx, { itemId, holderEmail }) => {
     const existing = await ctx.db
-      .query("productLocks")
-      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .query('productLocks')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
     if (!existing) return { released: false };
     if (existing.holderEmail !== holderEmail) return { released: false };
@@ -1163,8 +1210,8 @@ export const lockStatus = query({
   args: { itemId: v.string() },
   handler: async (ctx, { itemId }) => {
     const existing = await ctx.db
-      .query("productLocks")
-      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .query('productLocks')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
     if (!existing) return null;
     const expiresAtMs = Date.parse(existing.expiresAt);
@@ -1192,7 +1239,7 @@ export const lockStatus = query({
 export const listActiveLocks = query({
   args: {},
   handler: async (ctx) => {
-    const all = await ctx.db.query("productLocks").collect();
+    const all = await ctx.db.query('productLocks').collect();
     const now = new Date().toISOString();
     return all.filter((l) => l.expiresAt > now);
   },
@@ -1208,14 +1255,20 @@ export const listActiveLocks = query({
  * Run via Convex cron (see convex/crons.ts) or manually from the admin
  * panel toolbar (the "Resync from sheet" button).
  */
-export const pullFromSheet = action({
+/**
+ * Internal: the actual sheet pull. Reachable from the 15-min cron (trusted —
+ * Convex's own scheduler, not an external caller) and from the public
+ * `pullFromSheet` action below (which gates the manual "Resync" button behind
+ * an admin token check).
+ */
+export const _pullFromSheet = internalAction({
   args: {},
   handler: async (
     ctx,
   ): Promise<{ pulled: number; upserted: number; rebased: number }> => {
     const appUrl: string | undefined = process.env.APP_URL;
     if (!appUrl) {
-      throw new Error("APP_URL missing on Convex deployment");
+      throw new Error('APP_URL missing on Convex deployment');
     }
 
     const res = await fetch(`${appUrl}/api/get-treasure-sheets`);
@@ -1232,7 +1285,7 @@ export const pullFromSheet = action({
       {
         items: items
           .map((item, i) => ({
-            itemId: String(item.item ?? "").trim(),
+            itemId: String(item.item ?? '').trim(),
             rowIndex: i + 2,
             fields: {
               nombre: nullableStr(item.nombre),
@@ -1255,7 +1308,7 @@ export const pullFromSheet = action({
               estadoAsesor: nullableStr(item.estadoAsesor),
             },
           }))
-          .filter((item) => item.itemId !== ""),
+          .filter((item) => item.itemId !== ''),
       },
     );
 
@@ -1264,6 +1317,22 @@ export const pullFromSheet = action({
       upserted: result.upserted,
       rebased: result.rebased,
     };
+  },
+});
+
+/**
+ * Public entry point for a manual "Resync from sheet" button — verifies the
+ * caller is admin, then delegates to the internal action (also used by the
+ * unauthenticated cron).
+ */
+export const pullFromSheet = action({
+  args: { idToken: v.string() },
+  handler: async (
+    ctx,
+    { idToken },
+  ): Promise<{ pulled: number; upserted: number; rebased: number }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runAction(internal.products._pullFromSheet, {});
   },
 });
 
@@ -1287,15 +1356,15 @@ export const _upsertManyFromSheet = internalMutation({
           ubicacion: v.union(v.string(), v.null()),
           asesor: v.union(v.string(), v.null()),
           estado: v.union(
-            v.literal("DISPONIBLE"),
-            v.literal("VENDIDA"),
-            v.literal("ASESOR"),
-            v.literal("Retornado"),
-            v.literal("ESMEREOGENESIS"),
-            v.literal("ESMERO"),
-            v.literal("DISPONIBLE ADOPTADA"),
-            v.literal("LOTE X CT"),
-            v.literal(""),
+            v.literal('DISPONIBLE'),
+            v.literal('VENDIDA'),
+            v.literal('ASESOR'),
+            v.literal('Retornado'),
+            v.literal('ESMEREOGENESIS'),
+            v.literal('ESMERO'),
+            v.literal('DISPONIBLE ADOPTADA'),
+            v.literal('LOTE X CT'),
+            v.literal(''),
           ),
           qr: v.union(v.string(), v.null()),
           coleccion: v.union(v.string(), v.null()),
@@ -1312,7 +1381,7 @@ export const _upsertManyFromSheet = internalMutation({
     const now = new Date().toISOString();
 
     // Fetch all existing items to minimize individual queries
-    const existingItems = await ctx.db.query("productInventory").collect();
+    const existingItems = await ctx.db.query('productInventory').collect();
     const existingMap = new Map(
       existingItems.map((item) => [item.itemId, item]),
     );
@@ -1341,12 +1410,12 @@ export const _upsertManyFromSheet = internalMutation({
       };
 
       if (!existing) {
-        await ctx.db.insert("productInventory", {
+        await ctx.db.insert('productInventory', {
           itemId: item.itemId,
           rowIndex: item.rowIndex,
           ...cleanedFields,
           lastPulledAt: now,
-          syncStatus: "synced" as const,
+          syncStatus: 'synced' as const,
         });
         upserted++;
         continue;
@@ -1373,8 +1442,8 @@ export const _upsertManyFromSheet = internalMutation({
       };
 
       if (
-        existing.syncStatus === "pending" ||
-        existing.syncStatus === "error"
+        existing.syncStatus === 'pending' ||
+        existing.syncStatus === 'error'
       ) {
         await ctx.db.patch(existing._id, baseUpdate);
         if (rowIndexShifted) rebased++;
@@ -1384,7 +1453,7 @@ export const _upsertManyFromSheet = internalMutation({
       await ctx.db.patch(existing._id, {
         ...cleanedFields,
         ...baseUpdate,
-        syncStatus: "synced" as const,
+        syncStatus: 'synced' as const,
       });
       if (rowIndexShifted) rebased++;
     }
@@ -1424,15 +1493,15 @@ export const _upsertFromSheet = internalMutation({
       ubicacion: v.union(v.string(), v.null()),
       asesor: v.union(v.string(), v.null()),
       estado: v.union(
-        v.literal("DISPONIBLE"),
-        v.literal("VENDIDA"),
-        v.literal("ASESOR"),
-        v.literal("Retornado"),
-        v.literal("ESMEREOGENESIS"),
-        v.literal("ESMERO"),
-        v.literal("DISPONIBLE ADOPTADA"),
-        v.literal("LOTE X CT"),
-        v.literal(""),
+        v.literal('DISPONIBLE'),
+        v.literal('VENDIDA'),
+        v.literal('ASESOR'),
+        v.literal('Retornado'),
+        v.literal('ESMEREOGENESIS'),
+        v.literal('ESMERO'),
+        v.literal('DISPONIBLE ADOPTADA'),
+        v.literal('LOTE X CT'),
+        v.literal(''),
       ),
       qr: v.union(v.string(), v.null()),
       coleccion: v.union(v.string(), v.null()),
@@ -1443,8 +1512,8 @@ export const _upsertFromSheet = internalMutation({
   },
   handler: async (ctx, { itemId, rowIndex, fields }) => {
     const existing = await ctx.db
-      .query("productInventory")
-      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
     const now = new Date().toISOString();
 
@@ -1470,12 +1539,12 @@ export const _upsertFromSheet = internalMutation({
     };
 
     if (!existing) {
-      await ctx.db.insert("productInventory", {
+      await ctx.db.insert('productInventory', {
         itemId,
         rowIndex,
         ...cleanedFields,
         lastPulledAt: now,
-        syncStatus: "synced" as const,
+        syncStatus: 'synced' as const,
       });
       // BANDWIDTH: maintain the inventoryStats counter (+1) and stamp the
       // single-row pull timestamp so syncStats reads the singleton, not a scan.
@@ -1502,7 +1571,7 @@ export const _upsertFromSheet = internalMutation({
       lastPulledAt: now,
     };
 
-    if (existing.syncStatus === "pending" || existing.syncStatus === "error") {
+    if (existing.syncStatus === 'pending' || existing.syncStatus === 'error') {
       // Don't clobber a pending edit's content — only refresh row index + pull time
       await ctx.db.patch(existing._id, baseUpdate);
       return { upserted: false, rebased: rowIndexShifted };
@@ -1511,7 +1580,7 @@ export const _upsertFromSheet = internalMutation({
     await ctx.db.patch(existing._id, {
       ...cleanedFields,
       ...baseUpdate,
-      syncStatus: "synced" as const,
+      syncStatus: 'synced' as const,
     });
     return { upserted: false, rebased: rowIndexShifted };
   },
@@ -1538,18 +1607,18 @@ export const _upsertFromSheet = internalMutation({
  * missing — after that every caller just reads/patches the one row.
  */
 async function ensureInventoryStats(ctx: MutationCtx) {
-  const existing = await ctx.db.query("inventoryStats").first();
+  const existing = await ctx.db.query('inventoryStats').first();
   if (existing) return existing;
   // One-time seed: count the current table size so the counter starts
   // accurate. This is the ONLY scan this whole mechanism ever performs.
-  const all = await ctx.db.query("productInventory").collect();
+  const all = await ctx.db.query('productInventory').collect();
   const total = all.length;
   const lastPull = all.reduce<string | undefined>(
     (acc, r) =>
       acc === undefined || r.lastPulledAt > acc ? r.lastPulledAt : acc,
     undefined,
   );
-  const id = await ctx.db.insert("inventoryStats", { total, lastPull });
+  const id = await ctx.db.insert('inventoryStats', { total, lastPull });
   return (await ctx.db.get(id))!;
 }
 
@@ -1599,8 +1668,8 @@ function nullableStr(v: unknown): string | null {
 }
 
 function nullableNum(v: unknown): number | null {
-  if (v === null || v === undefined || v === "") return null;
-  const n = typeof v === "number" ? v : Number(v);
+  if (v === null || v === undefined || v === '') return null;
+  const n = typeof v === 'number' ? v : Number(v);
   return Number.isFinite(n) ? n : null;
 }
 
@@ -1613,27 +1682,27 @@ function nullableNum(v: unknown): number | null {
 function normalizeEstado(
   v: unknown,
 ):
-  | "DISPONIBLE"
-  | "VENDIDA"
-  | "ASESOR"
-  | "Retornado"
-  | "ESMEREOGENESIS"
-  | "ESMERO"
-  | "DISPONIBLE ADOPTADA"
-  | "LOTE X CT"
-  | "" {
-  const raw = String(v ?? "").trim();
+  | 'DISPONIBLE'
+  | 'VENDIDA'
+  | 'ASESOR'
+  | 'Retornado'
+  | 'ESMEREOGENESIS'
+  | 'ESMERO'
+  | 'DISPONIBLE ADOPTADA'
+  | 'LOTE X CT'
+  | '' {
+  const raw = String(v ?? '').trim();
   const upper = raw.toUpperCase();
-  if (upper === "DISPONIBLE" || upper === "VENDIDA" || upper === "ASESOR") {
+  if (upper === 'DISPONIBLE' || upper === 'VENDIDA' || upper === 'ASESOR') {
     return upper;
   }
-  if (upper === "RETORNADO") return "Retornado"; // preserve legacy casing
-  if (upper === "ESMEREOGENESIS") return "ESMEREOGENESIS";
-  if (upper === "ESMERO") return "ESMERO";
-  if (upper === "DISPONIBLE ADOPTADA") return "DISPONIBLE ADOPTADA";
-  if (upper === "LOTE X CT") return "LOTE X CT";
-  if (raw === "") return "DISPONIBLE"; // mirror the legacy default in get-treasure-sheets
-  return "";
+  if (upper === 'RETORNADO') return 'Retornado'; // preserve legacy casing
+  if (upper === 'ESMEREOGENESIS') return 'ESMEREOGENESIS';
+  if (upper === 'ESMERO') return 'ESMERO';
+  if (upper === 'DISPONIBLE ADOPTADA') return 'DISPONIBLE ADOPTADA';
+  if (upper === 'LOTE X CT') return 'LOTE X CT';
+  if (raw === '') return 'DISPONIBLE'; // mirror the legacy default in get-treasure-sheets
+  return '';
 }
 
 // =============================================================================
@@ -1652,8 +1721,8 @@ export const patronesFor = query({
     const days = lookbackDays ?? 90;
     const horizon = new Date(Date.now() - days * 86400000).toISOString();
     const target = await ctx.db
-      .query("productInventory")
-      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
     if (!target) return { combos: [], total: 0 };
 
@@ -1663,8 +1732,8 @@ export const patronesFor = query({
     const targetCarat = caratBucket(peso);
 
     const sold = await ctx.db
-      .query("productInventory")
-      .withIndex("by_estado", (q) => q.eq("estado", "VENDIDA"))
+      .query('productInventory')
+      .withIndex('by_estado', (q) => q.eq('estado', 'VENDIDA'))
       .collect();
 
     const buckets = new Map<
@@ -1698,7 +1767,7 @@ export const patronesFor = query({
         label: `${proc} · ${qual} · ${c[0].toFixed(1)}–${c[1].toFixed(1)} ct`,
       };
       entry.count += 1;
-      if (typeof p.precioCOP === "number" && p.precioCOP > 0)
+      if (typeof p.precioCOP === 'number' && p.precioCOP > 0)
         entry.prices.push(p.precioCOP);
       buckets.set(key, entry);
     }
@@ -1736,8 +1805,8 @@ export const patronesGlobalTop = query({
     const days = lookbackDays ?? 90;
     const horizon = new Date(Date.now() - days * 86400000).toISOString();
     const sold = await ctx.db
-      .query("productInventory")
-      .withIndex("by_estado", (q) => q.eq("estado", "VENDIDA"))
+      .query('productInventory')
+      .withIndex('by_estado', (q) => q.eq('estado', 'VENDIDA'))
       .collect();
     const buckets = new Map<
       string,
@@ -1762,7 +1831,7 @@ export const patronesGlobalTop = query({
         label: `${proc} · ${qual} · ${c[0].toFixed(1)}–${c[1].toFixed(1)} ct`,
       };
       entry.count += 1;
-      if (typeof p.precioCOP === "number" && p.precioCOP > 0)
+      if (typeof p.precioCOP === 'number' && p.precioCOP > 0)
         entry.prices.push(p.precioCOP);
       buckets.set(key, entry);
     }
@@ -1787,7 +1856,7 @@ export const recentEdits = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit }) => {
     const cap = Math.min(limit ?? 5, 50);
-    const edits = await ctx.db.query("productEdits").order("desc").take(cap);
+    const edits = await ctx.db.query('productEdits').order('desc').take(cap);
     return edits;
   },
 });
@@ -1813,48 +1882,54 @@ export const recentEdits = query({
  * Bandeja inspector to the new row immediately (Convex reactivity will
  * surface it in the list one tick later).
  */
-export const createProduct = mutation({
+const createProductFieldsArgs = v.object({
+  nombre: v.optional(v.string()),
+  peso: v.optional(v.string()),
+  color: v.optional(v.string()),
+  calidad: v.optional(v.string()),
+  cantidad: v.optional(v.number()),
+  talla: v.optional(v.string()),
+  medidas: v.optional(v.string()),
+  categoria: v.optional(v.string()),
+  precioCOP: v.optional(v.number()),
+  ubicacion: v.optional(v.string()),
+  coleccion: v.optional(v.string()),
+  caja: v.optional(v.string()),
+});
+
+/**
+ * Internal: the actual insert. Only reachable via the `createProduct` action
+ * below, which verifies the caller's role server-side first.
+ */
+export const _createProduct = internalMutation({
   args: {
     itemId: v.string(),
     editorEmail: v.string(),
     editorName: v.optional(v.string()),
-    fields: v.object({
-      nombre: v.optional(v.string()),
-      peso: v.optional(v.string()),
-      color: v.optional(v.string()),
-      calidad: v.optional(v.string()),
-      cantidad: v.optional(v.number()),
-      talla: v.optional(v.string()),
-      medidas: v.optional(v.string()),
-      categoria: v.optional(v.string()),
-      precioCOP: v.optional(v.number()),
-      ubicacion: v.optional(v.string()),
-      coleccion: v.optional(v.string()),
-      caja: v.optional(v.string()),
-    }),
+    fields: createProductFieldsArgs,
   },
   handler: async (ctx, { itemId, editorEmail, editorName, fields }) => {
     const itemIdTrim = itemId.trim();
-    if (!itemIdTrim) throw new Error("El número de la piedra es obligatorio");
+    if (!itemIdTrim) throw new Error('El número de la piedra es obligatorio');
     const dup = await ctx.db
-      .query("productInventory")
-      .withIndex("by_itemId", (q) => q.eq("itemId", itemIdTrim))
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemIdTrim))
       .first();
     if (dup)
       throw new Error(`Ya existe una piedra con el número ${itemIdTrim}`);
 
-    const all = await ctx.db.query("productInventory").collect();
+    const all = await ctx.db.query('productInventory').collect();
     const maxRow = all.reduce((m, p) => Math.max(m, p.rowIndex), 1);
     const nextRow = maxRow + 1;
     const now = new Date().toISOString();
 
-    const productId = await ctx.db.insert("productInventory", {
+    const productId = await ctx.db.insert('productInventory', {
       itemId: itemIdTrim,
       rowIndex: nextRow,
       ...fields,
-      estado: "DISPONIBLE" as const,
+      estado: 'DISPONIBLE' as const,
       lastPulledAt: now,
-      syncStatus: "pending" as const,
+      syncStatus: 'pending' as const,
     });
 
     // BANDWIDTH: keep the inventoryStats counter in sync so syncStats reads
@@ -1862,7 +1937,7 @@ export const createProduct = mutation({
     // adds to it. (Not a pull, so we do NOT touch lastPull here.)
     await bumpInventoryTotal(ctx, 1);
 
-    const auditId = await ctx.db.insert("productEdits", {
+    const auditId = await ctx.db.insert('productEdits', {
       itemId: itemIdTrim,
       editorEmail,
       editorName,
@@ -1874,15 +1949,38 @@ export const createProduct = mutation({
           before: null,
           after: (after as string | number | null) ?? null,
         })),
-      status: "pending" as const,
+      status: 'pending' as const,
     });
 
     await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
       itemId: itemIdTrim,
       auditId,
-      mode: "append" as const,
+      mode: 'append' as const,
     });
 
     return { itemId: itemIdTrim, productId, rowIndex: nextRow };
+  },
+});
+
+/**
+ * Public entry point for createProduct — same auth gate as `saveEdit`.
+ */
+export const createProduct = action({
+  args: {
+    idToken: v.string(),
+    itemId: v.string(),
+    fields: createProductFieldsArgs,
+  },
+  handler: async (
+    ctx,
+    { idToken, itemId, fields },
+  ): Promise<{ itemId: string; productId: string; rowIndex: number }> => {
+    const caller = await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.products._createProduct, {
+      itemId,
+      editorEmail: caller.email,
+      editorName: caller.name,
+      fields,
+    });
   },
 });

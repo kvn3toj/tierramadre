@@ -2,7 +2,7 @@
  * InvitationGenerator Component
  *
  * Modal for Embajadores/Admins to generate shareable guest access links.
- * Links are valid for 24 hours after the guest first opens them.
+ * Links are valid for 30 days after the guest first opens them.
  * Supports pricing mode toggle (with/without prices).
  */
 
@@ -43,16 +43,34 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import { useInvitation } from '../../hooks/useInvitation';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { brand, legacyTypography as typography, cssTransition, fontWeights } from '../../design-system';
-import type { PricingMode, GuestCurrencyMode, GuestMultiplier } from '../../types/invitation';
+import {
+  brand,
+  legacyTypography as typography,
+  cssTransition,
+  fontWeights,
+} from '../../design-system';
+import type {
+  PricingMode,
+  GuestCurrencyMode,
+  GuestMultiplier,
+} from '../../types/invitation';
 
 interface InvitationGeneratorProps {
   open: boolean;
   onClose: () => void;
 }
 
-export default function InvitationGenerator({ open, onClose }: InvitationGeneratorProps) {
-  const { generateInvitation, clearLastInvitation, isGenerating, error, lastInvitation } = useInvitation();
+export default function InvitationGenerator({
+  open,
+  onClose,
+}: InvitationGeneratorProps) {
+  const {
+    generateInvitation,
+    clearLastInvitation,
+    isGenerating,
+    error,
+    lastInvitation,
+  } = useInvitation();
   const { t } = useLanguage();
   const inv = t.tools.invitation;
   const [showQR, setShowQR] = useState(false);
@@ -70,7 +88,9 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
   const [guestMultiplier, setGuestMultiplier] = useState<GuestMultiplier>(4);
   const [formError, setFormError] = useState('');
 
-  const isFormValid = guestName.trim().length > 0 && (guestEmail.trim().length > 0 || guestPhone.trim().length > 0);
+  const isFormValid =
+    guestName.trim().length > 0 &&
+    (guestEmail.trim().length > 0 || guestPhone.trim().length > 0);
 
   const handleGenerate = async () => {
     if (!guestName.trim()) {
@@ -160,7 +180,9 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
     const shareUrl = lastInvitation?.url;
     if (shareUrl && 'share' in navigator) {
       const pin = lastInvitation?.pin;
-      const pinLine = pin ? `\n\n${inv.sharePinLine.replace('{pin}', pin)}` : '';
+      const pinLine = pin
+        ? `\n\n${inv.sharePinLine.replace('{pin}', pin)}`
+        : '';
       const shareBody = `${inv.shareText.replace('{name}', guestName)}\n\n${shareUrl}${pinLine}`;
       try {
         await navigator.share({
@@ -199,7 +221,14 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
         }}
       >
         {/* ─── Header ─── */}
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 0.5 }}>
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            pb: 0.5,
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Box
               sx={{
@@ -220,27 +249,64 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
               {inv.title}
             </Typography>
           </Box>
-          <IconButton onClick={handleClose} size="small" sx={{ color: 'text.secondary' }}>
+          <IconButton
+            onClick={handleClose}
+            size="small"
+            sx={{ color: 'text.secondary' }}
+          >
             <CloseIcon fontSize="small" />
           </IconButton>
         </DialogTitle>
 
         <DialogContent sx={{ pt: 1 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5, lineHeight: 1.5 }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 2.5, lineHeight: 1.5 }}
+          >
             {inv.description}
           </Typography>
 
           {/* Step indicator */}
-          <Box sx={{ display: 'flex', gap: 0.75, justifyContent: 'center', mb: 2.5 }}>
-            <Box sx={{ width: lastInvitation ? 8 : 24, height: 6, borderRadius: '3px', bgcolor: lastInvitation ? brand.emerald[300] : brand.emerald[500], transition: cssTransition.default }} />
-            <Box sx={{ width: lastInvitation ? 24 : 8, height: 6, borderRadius: '3px', bgcolor: lastInvitation ? brand.emerald[500] : 'divider', transition: cssTransition.default }} />
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 0.75,
+              justifyContent: 'center',
+              mb: 2.5,
+            }}
+          >
+            <Box
+              sx={{
+                width: lastInvitation ? 8 : 24,
+                height: 6,
+                borderRadius: '3px',
+                bgcolor: lastInvitation
+                  ? brand.emerald[300]
+                  : brand.emerald[500],
+                transition: cssTransition.default,
+              }}
+            />
+            <Box
+              sx={{
+                width: lastInvitation ? 24 : 8,
+                height: 6,
+                borderRadius: '3px',
+                bgcolor: lastInvitation ? brand.emerald[500] : 'divider',
+                transition: cssTransition.default,
+              }}
+            />
           </Box>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 2.5, borderRadius: '12px' }}>{error}</Alert>
+            <Alert severity="error" sx={{ mb: 2.5, borderRadius: '12px' }}>
+              {error}
+            </Alert>
           )}
           {formError && (
-            <Alert severity="warning" sx={{ mb: 2.5, borderRadius: '12px' }}>{formError}</Alert>
+            <Alert severity="warning" sx={{ mb: 2.5, borderRadius: '12px' }}>
+              {formError}
+            </Alert>
           )}
 
           {/* ─── PHASE 1: Form ─── */}
@@ -259,26 +325,47 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <PersonIcon fontSize="small" sx={{ color: guestName ? brand.emerald[600] : 'text.disabled' }} />
+                      <PersonIcon
+                        fontSize="small"
+                        sx={{
+                          color: guestName
+                            ? brand.emerald[600]
+                            : 'text.disabled',
+                        }}
+                      />
                     </InputAdornment>
                   ),
                 }}
-                sx={{ mb: 2.5, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                sx={{
+                  mb: 2.5,
+                  '& .MuiOutlinedInput-root': { borderRadius: '12px' },
+                }}
               />
 
               {/* Contact fields — grouped card */}
               <Box
                 sx={{
                   border: '1px solid',
-                  borderColor: (guestEmail || guestPhone) ? brand.emerald[200] : 'divider',
+                  borderColor:
+                    guestEmail || guestPhone ? brand.emerald[200] : 'divider',
                   borderRadius: '12px',
                   p: 1.5,
                   mb: 2.5,
                   transition: cssTransition.default,
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                    mb: 1,
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{ fontWeight: 600, color: 'text.secondary' }}
+                  >
                     {inv.contact}
                   </Typography>
                   <Box
@@ -294,7 +381,13 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                     {inv.contactAtLeastOne}
                   </Box>
                 </Box>
-                <Box sx={{ display: 'flex', gap: 1.5, flexDirection: { xs: 'column', sm: 'row' } }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 1.5,
+                    flexDirection: { xs: 'column', sm: 'row' },
+                  }}
+                >
                   <TextField
                     fullWidth
                     label="Email"
@@ -307,11 +400,20 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <EmailIcon fontSize="small" sx={{ color: guestEmail ? brand.emerald[600] : 'text.disabled' }} />
+                          <EmailIcon
+                            fontSize="small"
+                            sx={{
+                              color: guestEmail
+                                ? brand.emerald[600]
+                                : 'text.disabled',
+                            }}
+                          />
                         </InputAdornment>
                       ),
                     }}
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': { borderRadius: '12px' },
+                    }}
                   />
                   <TextField
                     fullWidth
@@ -325,17 +427,33 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <PhoneIcon fontSize="small" sx={{ color: guestPhone ? brand.emerald[600] : 'text.disabled' }} />
+                          <PhoneIcon
+                            fontSize="small"
+                            sx={{
+                              color: guestPhone
+                                ? brand.emerald[600]
+                                : 'text.disabled',
+                            }}
+                          />
                         </InputAdornment>
                       ),
                     }}
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': { borderRadius: '12px' },
+                    }}
                   />
                 </Box>
               </Box>
 
               {/* Divider before pricing section */}
-              <Box sx={{ height: '1px', bgcolor: 'divider', mb: 2.5, opacity: 0.6 }} />
+              <Box
+                sx={{
+                  height: '1px',
+                  bgcolor: 'divider',
+                  mb: 2.5,
+                  opacity: 0.6,
+                }}
+              />
 
               {/* Pricing toggle — compact row */}
               <Box
@@ -347,8 +465,17 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <PriceIcon fontSize="small" sx={{ color: showPrices ? brand.emerald[600] : 'text.disabled', transition: cssTransition.default }} />
-                  <Typography variant="body2" fontWeight={typography.weight.medium}>
+                  <PriceIcon
+                    fontSize="small"
+                    sx={{
+                      color: showPrices ? brand.emerald[600] : 'text.disabled',
+                      transition: cssTransition.default,
+                    }}
+                  />
+                  <Typography
+                    variant="body2"
+                    fontWeight={typography.weight.medium}
+                  >
                     {inv.showPrices}
                   </Typography>
                 </Box>
@@ -357,8 +484,12 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   onChange={(e) => setShowPrices(e.target.checked)}
                   inputProps={{ 'aria-label': inv.showPricesAria }}
                   sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': { color: brand.emerald[600] },
-                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: brand.emerald[400] },
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: brand.emerald[600],
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: brand.emerald[400],
+                    },
                   }}
                 />
               </Box>
@@ -376,14 +507,28 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   }}
                 >
                   {/* Currency selector row */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, minWidth: 52 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      mb: 1.5,
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontWeight: 500, minWidth: 52 }}
+                    >
                       {inv.currency}
                     </Typography>
                     <ToggleButtonGroup
                       value={guestCurrency}
                       exclusive
-                      onChange={(_e, val) => { if (val !== null) setGuestCurrency(val as GuestCurrencyMode); }}
+                      onChange={(_e, val) => {
+                        if (val !== null)
+                          setGuestCurrency(val as GuestCurrencyMode);
+                      }}
                       size="small"
                       aria-label={inv.currencyAria}
                       sx={{
@@ -410,8 +555,19 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   </Box>
 
                   {/* Multiplier label + value badge */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.25 }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mb: 0.25,
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontWeight: 500 }}
+                    >
                       {inv.priceMultiplier}
                     </Typography>
                     <Typography
@@ -430,8 +586,19 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   </Box>
 
                   {/* Slider with range labels */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 0.25 }}>
-                    <Typography sx={{ fontSize: '0.68rem', color: 'text.disabled' }}>x1</Typography>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      px: 0.25,
+                    }}
+                  >
+                    <Typography
+                      sx={{ fontSize: '0.68rem', color: 'text.disabled' }}
+                    >
+                      x1
+                    </Typography>
                     <Slider
                       value={guestMultiplier}
                       onChange={(_e, val) => setGuestMultiplier(val as number)}
@@ -448,7 +615,11 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                         '& .MuiSlider-valueLabel': { fontSize: '0.72rem' },
                       }}
                     />
-                    <Typography sx={{ fontSize: '0.68rem', color: 'text.disabled' }}>x4</Typography>
+                    <Typography
+                      sx={{ fontSize: '0.68rem', color: 'text.disabled' }}
+                    >
+                      x4
+                    </Typography>
                   </Box>
 
                   {/* Live price preview */}
@@ -466,14 +637,21 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                       justifyContent: 'space-between',
                     }}
                   >
-                    <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                    <Typography
+                      sx={{ fontSize: '0.7rem', color: 'text.secondary' }}
+                    >
                       {inv.priceExample} {guestCurrency} &rarr;
                     </Typography>
-                    <Typography sx={{ fontSize: '0.78rem', fontWeight: fontWeights.semibold, color: 'text.primary' }}>
+                    <Typography
+                      sx={{
+                        fontSize: '0.78rem',
+                        fontWeight: fontWeights.semibold,
+                        color: 'text.primary',
+                      }}
+                    >
                       {guestCurrency === 'COP'
                         ? `$${(2_000_000 * guestMultiplier).toLocaleString('es-CO')} COP`
-                        : `$${Math.round((2_000_000 / 4200) * guestMultiplier).toLocaleString('en-US')} USD`
-                      }
+                        : `$${Math.round((2_000_000 / 4200) * guestMultiplier).toLocaleString('en-US')} USD`}
                     </Typography>
                   </Box>
                 </Box>
@@ -486,10 +664,14 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                 fullWidth
                 onClick={handleGenerate}
                 disabled={isGenerating || !isFormValid}
-                startIcon={isGenerating ? <CircularProgress size={20} /> : <LinkIcon />}
+                startIcon={
+                  isGenerating ? <CircularProgress size={20} /> : <LinkIcon />
+                }
                 sx={{
                   background: `linear-gradient(135deg, ${brand.emerald[600]} 0%, ${brand.emerald[700]} 100%)`,
-                  '&:hover': { background: `linear-gradient(135deg, ${brand.emerald[500]} 0%, ${brand.emerald[600]} 100%)` },
+                  '&:hover': {
+                    background: `linear-gradient(135deg, ${brand.emerald[500]} 0%, ${brand.emerald[600]} 100%)`,
+                  },
                   '&:disabled': { opacity: 0.4 },
                   py: 1.5,
                   borderRadius: '14px',
@@ -498,13 +680,27 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   boxShadow: `0 4px 16px ${brand.emerald[600]}40`,
                 }}
               >
-                {isGenerating ? inv.generating : firstName ? `${inv.createLinkFor} ${firstName}` : inv.generateLink}
+                {isGenerating
+                  ? inv.generating
+                  : firstName
+                    ? `${inv.createLinkFor} ${firstName}`
+                    : inv.generateLink}
               </Button>
 
               {/* Expiry hint */}
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mt: 1 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 0.5,
+                  mt: 1,
+                }}
+              >
                 <InfoIcon sx={{ fontSize: 12, color: 'text.secondary' }} />
-                <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                <Typography
+                  sx={{ fontSize: '0.75rem', color: 'text.secondary' }}
+                >
                   {inv.expiryHint}
                 </Typography>
               </Box>
@@ -528,7 +724,11 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
               >
                 <CheckIcon sx={{ color: brand.emerald[600], fontSize: 24 }} />
                 <Box sx={{ minWidth: 0 }}>
-                  <Typography variant="body2" fontWeight={typography.weight.semibold} noWrap>
+                  <Typography
+                    variant="body2"
+                    fontWeight={typography.weight.semibold}
+                    noWrap
+                  >
                     {inv.linkGeneratedFor} {guestName}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
@@ -553,7 +753,9 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   endAdornment: (
                     <IconButton onClick={handleCopy} size="small">
                       {copied ? (
-                        <CheckIcon sx={{ color: brand.emerald[600], fontSize: 18 }} />
+                        <CheckIcon
+                          sx={{ color: brand.emerald[600], fontSize: 18 }}
+                        />
                       ) : (
                         <CopyIcon sx={{ fontSize: 18 }} />
                       )}
@@ -570,7 +772,9 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   onClick={handleCopyPin}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleCopyPin(); }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') handleCopyPin();
+                  }}
                   aria-label={`${inv.pinAccess}: ${lastInvitation.pin.split('').join(' ')}. ${inv.copy}`}
                   sx={{
                     display: 'flex',
@@ -636,7 +840,14 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                       ))}
                     </Box>
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: brand.emerald[600] }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      color: brand.emerald[600],
+                    }}
+                  >
                     {copiedPin ? (
                       <CheckIcon sx={{ fontSize: 16 }} />
                     ) : (
@@ -653,28 +864,59 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{ display: 'block', mb: 2.5, textAlign: 'center', fontSize: '0.75rem' }}
+                sx={{
+                  display: 'block',
+                  mb: 2.5,
+                  textAlign: 'center',
+                  fontSize: '0.75rem',
+                }}
               >
                 {inv.sharePinSeparately}
               </Typography>
 
               {/* Summary tags */}
-              <Box sx={{ display: 'flex', gap: 0.75, mb: 2.5, flexWrap: 'wrap' }}>
+              <Box
+                sx={{ display: 'flex', gap: 0.75, mb: 2.5, flexWrap: 'wrap' }}
+              >
                 {[
                   {
                     icon: <PriceIcon sx={{ fontSize: 14 }} />,
-                    label: lastInvitation.pricingMode === 'with_prices' ? inv.withPrices : inv.withoutPrices,
+                    label:
+                      lastInvitation.pricingMode === 'with_prices'
+                        ? inv.withPrices
+                        : inv.withoutPrices,
                     active: lastInvitation.pricingMode === 'with_prices',
                   },
-                  ...(lastInvitation.guestCurrencyMode ? [{
-                    icon: <CurrencyIcon sx={{ fontSize: 14 }} />,
-                    label: lastInvitation.guestCurrencyMode === 'USD'
-                      ? `USD x${lastInvitation.guestMultiplier || 4}`
-                      : `COP x${lastInvitation.guestMultiplier || 4}`,
-                    active: true,
-                  }] : []),
-                  ...(guestEmail ? [{ icon: <EmailIcon sx={{ fontSize: 14 }} />, label: guestEmail, active: false }] : []),
-                  ...(guestPhone ? [{ icon: <PhoneIcon sx={{ fontSize: 14 }} />, label: guestPhone, active: false }] : []),
+                  ...(lastInvitation.guestCurrencyMode
+                    ? [
+                        {
+                          icon: <CurrencyIcon sx={{ fontSize: 14 }} />,
+                          label:
+                            lastInvitation.guestCurrencyMode === 'USD'
+                              ? `USD x${lastInvitation.guestMultiplier || 4}`
+                              : `COP x${lastInvitation.guestMultiplier || 4}`,
+                          active: true,
+                        },
+                      ]
+                    : []),
+                  ...(guestEmail
+                    ? [
+                        {
+                          icon: <EmailIcon sx={{ fontSize: 14 }} />,
+                          label: guestEmail,
+                          active: false,
+                        },
+                      ]
+                    : []),
+                  ...(guestPhone
+                    ? [
+                        {
+                          icon: <PhoneIcon sx={{ fontSize: 14 }} />,
+                          label: guestPhone,
+                          active: false,
+                        },
+                      ]
+                    : []),
                 ].map((tag, i) => (
                   <Box
                     key={i}
@@ -685,14 +927,21 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                       px: 1.25,
                       py: 0.4,
                       borderRadius: '8px',
-                      bgcolor: tag.active ? `${brand.emerald[50]}` : 'action.hover',
+                      bgcolor: tag.active
+                        ? `${brand.emerald[50]}`
+                        : 'action.hover',
                       border: '1px solid',
                       borderColor: tag.active ? brand.emerald[200] : 'divider',
                       color: tag.active ? brand.emerald[700] : 'text.secondary',
                     }}
                   >
                     {tag.icon}
-                    <Typography variant="caption" fontWeight={tag.active ? 500 : 400} noWrap sx={{ maxWidth: 140 }}>
+                    <Typography
+                      variant="caption"
+                      fontWeight={tag.active ? 500 : 400}
+                      noWrap
+                      sx={{ maxWidth: 140 }}
+                    >
                       {tag.label}
                     </Typography>
                   </Box>
@@ -708,7 +957,9 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                   sx={{
                     flex: 1,
                     background: `linear-gradient(135deg, ${brand.emerald[600]} 0%, ${brand.emerald[700]} 100%)`,
-                    '&:hover': { background: `linear-gradient(135deg, ${brand.emerald[500]} 0%, ${brand.emerald[600]} 100%)` },
+                    '&:hover': {
+                      background: `linear-gradient(135deg, ${brand.emerald[500]} 0%, ${brand.emerald[600]} 100%)`,
+                    },
                     borderRadius: '12px',
                     textTransform: 'none',
                     fontWeight: 600,
@@ -720,7 +971,9 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
                 {'share' in navigator && (
                   <Button
                     variant="outlined"
-                    startIcon={<ShareIcon sx={{ fontSize: '18px !important' }} />}
+                    startIcon={
+                      <ShareIcon sx={{ fontSize: '18px !important' }} />
+                    }
                     onClick={handleShare}
                     sx={{
                       flex: 1,
@@ -782,12 +1035,20 @@ export default function InvitationGenerator({ open, onClose }: InvitationGenerat
               onClick={handleGenerateNew}
               disabled={isGenerating}
               startIcon={<LinkIcon sx={{ fontSize: '18px !important' }} />}
-              sx={{ color: brand.emerald[600], textTransform: 'none', fontWeight: 500 }}
+              sx={{
+                color: brand.emerald[600],
+                textTransform: 'none',
+                fontWeight: 500,
+              }}
             >
               {inv.newLink}
             </Button>
           )}
-          <Button onClick={handleClose} color="inherit" sx={{ textTransform: 'none', fontWeight: 500 }}>
+          <Button
+            onClick={handleClose}
+            color="inherit"
+            sx={{ textTransform: 'none', fontWeight: 500 }}
+          >
             {t.actions.close}
           </Button>
         </DialogActions>
