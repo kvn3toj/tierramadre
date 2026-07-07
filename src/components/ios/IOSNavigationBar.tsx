@@ -14,7 +14,7 @@ import { ArrowBack } from '@mui/icons-material';
 import { dynamicBlur, liquidSaturation, specularHighlights } from '../../design-system/tokens/liquid-glass';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsScrolled } from '../../hooks/useScrollShrink';
-import { iosTypographyScale, primitiveSpacing as spacing, easingCurves, durations, zIndex } from '../../design-system';
+import { iosTypographyScale, primitiveSpacing as spacing, easingCurves, durations, zIndex, qeFont } from '../../design-system';
 
 export type NavigationBarMode = 'compact' | 'large';
 
@@ -210,6 +210,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
                 variant="h6"
                 sx={{
                   fontSize: iosTypographyScale.headline,
+                  fontFamily: qeFont.ui,
                   fontWeight: 600,
                   color: 'var(--text-primary)',
                   textAlign: 'center',
@@ -250,11 +251,13 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
           <Typography
             variant="h1"
             sx={{
+              // Quiet Emerald: editorial serif for page titles ("Catálogo")
               fontSize: iosTypographyScale.largeTitle,
-              fontWeight: 700,
+              fontFamily: qeFont.serif,
+              fontWeight: 500,
               color: 'var(--text-primary)',
-              letterSpacing: '-0.5px',
-              lineHeight: 1.1,
+              letterSpacing: '-0.01em',
+              lineHeight: 1.05,
             }}
           >
             {title}
