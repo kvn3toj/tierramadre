@@ -34,14 +34,13 @@ import {
   emeraldCore,
   emeraldAlpha,
   whiteAlpha,
-  blackAlpha,
-  legacyTypography,
   cssTransition,
-  blurValues,
   primitiveColors,
   zIndex,
   fontWeights,
-  emeraldShadows,
+  qeDark,
+  qeAccent,
+  qeFont,
 } from '../design-system';
 
 // ═══════════════════════════════════════════════════════════════
@@ -49,22 +48,22 @@ import {
 // ═══════════════════════════════════════════════════════════════
 
 const vault = {
-  bg: '#070D0B',
-  card: 'rgba(14, 26, 22, 0.85)',
-  cardBorder: emeraldAlpha(0.12),
-  surface: emeraldAlpha(0.06),
-  text: '#E8F0ED',
-  textMuted: 'rgba(232, 240, 237, 0.55)',
-  textDim: 'rgba(232, 240, 237, 0.35)',
-  emerald: emeraldCore.primary,
-  emeraldGlow: `0 0 30px ${emeraldAlpha(0.2)}`,
+  bg: qeDark.base, // #0E1110 flat
+  card: qeDark.surface, // #15191A solid (no translucency)
+  cardBorder: qeDark.border, // #272C2B hairline
+  surface: qeDark.surfaceRaised, // #1B1F1F
+  text: qeDark.text, // #EAEDEB
+  textMuted: qeDark.textMuted, // #9AA09D
+  textDim: qeDark.subtle, // #6B726F
+  emerald: qeAccent.dark.accent, // #34C99B
+  emeraldGlow: 'none',
   error: primitiveColors.system.red.dark,
   errorDim: 'rgba(255, 69, 58, 0.12)',
   warning: primitiveColors.system.orange.dark,
   warningDim: 'rgba(255, 159, 10, 0.12)',
-  serif: legacyTypography.fontFamily.display,
-  mono: legacyTypography.fontFamily.mono,
-  system: legacyTypography.fontFamily.body,
+  serif: qeFont.serif,
+  mono: qeFont.mono,
+  system: qeFont.ui,
 } as const;
 
 // ═══════════════════════════════════════════════════════════════
@@ -88,14 +87,11 @@ const emeraldBtnSx = {
   fontWeight: fontWeights.semibold,
   fontFamily: vault.system,
   textTransform: 'none' as const,
-  background: `linear-gradient(135deg, ${vault.emerald} 0%, ${emeraldCore.dark} 100%)`,
-  color: '#fff',
+  background: qeAccent.dark.strong, // #00AF84 solid, no gradient
+  color: qeAccent.dark.on, // #06140E
   border: 'none',
-  boxShadow: emeraldShadows.md,
-  '&:hover': {
-    background: `linear-gradient(135deg, ${emeraldCore.light} 0%, ${vault.emerald} 100%)`,
-    boxShadow: emeraldShadows.lg,
-  },
+  boxShadow: 'none',
+  '&:hover': { background: qeAccent.dark.accent },
   '&:disabled': {
     background: emeraldAlpha(0.15),
     color: whiteAlpha(0.3),
@@ -153,22 +149,7 @@ function PageShell({ children }: { children: React.ReactNode }) {
           content: '""',
           position: 'absolute',
           inset: 0,
-          background: `
-            radial-gradient(ellipse at 20% 0%, ${emeraldAlpha(0.08)} 0%, transparent 50%),
-            radial-gradient(ellipse at 80% 100%, ${alpha(emeraldCore.darker, 0.06)} 0%, transparent 50%),
-            radial-gradient(ellipse at 50% 50%, ${emeraldAlpha(0.03)} 0%, transparent 70%)
-          `,
-          pointerEvents: 'none',
-        },
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: `
-            linear-gradient(${emeraldAlpha(0.025)} 1px, transparent 1px),
-            linear-gradient(90deg, ${emeraldAlpha(0.025)} 1px, transparent 1px)
-          `,
-          backgroundSize: '60px 60px',
+          background: `radial-gradient(ellipse at 50% 30%, ${emeraldAlpha(0.06)} 0%, transparent 60%)`,
           pointerEvents: 'none',
         },
       }}
@@ -192,13 +173,9 @@ function GlassCard({ children }: { children: React.ReactNode }) {
         bgcolor: vault.card,
         border: '1px solid',
         borderColor: vault.cardBorder,
-        backdropFilter: `blur(${blurValues.xl}) saturate(1.5)`,
-        WebkitBackdropFilter: `blur(${blurValues.xl}) saturate(1.5)`,
-        boxShadow: `
-          0 0 0 0.5px ${emeraldAlpha(0.06)},
-          0 8px 40px ${blackAlpha(0.4)},
-          ${vault.emeraldGlow}
-        `,
+        backdropFilter: 'none',
+        WebkitBackdropFilter: 'none',
+        boxShadow: '0 20px 46px -26px rgba(0,0,0,0.8)', // qeShadow.dark value (qeDark has no shadow key)
       }}
     >
       {children}
@@ -226,7 +203,14 @@ function PinInput({
   const digits = value.split('');
 
   return (
-    <Box sx={{ position: 'relative', mb: 3.5, mx: 'auto', maxWidth: { xs: 256, sm: 280 } }}>
+    <Box
+      sx={{
+        position: 'relative',
+        mb: 3.5,
+        mx: 'auto',
+        maxWidth: { xs: 256, sm: 280 },
+      }}
+    >
       {/* Hidden native input — always mounted, keyboard stays open */}
       <input
         ref={inputRef as React.LegacyRef<HTMLInputElement>}
@@ -274,24 +258,15 @@ function PinInput({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                bgcolor: filled ? emeraldAlpha(0.08) : whiteAlpha(0.02),
+                bgcolor: filled ? emeraldAlpha(0.1) : vault.surface,
                 border: '1.5px solid',
                 borderColor: filled
-                  ? emeraldAlpha(0.45)
+                  ? qeAccent.dark.strong
                   : active
-                  ? emeraldAlpha(0.25)
-                  : whiteAlpha(0.07),
-                boxShadow: filled
-                  ? `0 0 20px ${emeraldAlpha(0.12)}, inset 0 1px 0 ${emeraldAlpha(0.08)}`
-                  : 'none',
+                    ? vault.textDim
+                    : vault.cardBorder,
+                boxShadow: 'none',
                 transition: cssTransition.fast,
-                ...(active && !disabled && {
-                  animation: 'pinPulse 1.2s ease-in-out infinite',
-                  '@keyframes pinPulse': {
-                    '0%, 100%': { borderColor: emeraldAlpha(0.12) },
-                    '50%': { borderColor: emeraldAlpha(0.35) },
-                  },
-                }),
               }}
             >
               <motion.div
@@ -350,9 +325,19 @@ function LockGlyph() {
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
           <path
             d="M16.5 10.5V6.5C16.5 4.01 14.49 2 12 2S7.5 4.01 7.5 6.5V10.5"
-            stroke={vault.emerald} strokeWidth="1.5" strokeLinecap="round"
+            stroke={vault.emerald}
+            strokeWidth="1.5"
+            strokeLinecap="round"
           />
-          <rect x="5" y="10" width="14" height="12" rx="3" stroke={vault.emerald} strokeWidth="1.5" />
+          <rect
+            x="5"
+            y="10"
+            width="14"
+            height="12"
+            rx="3"
+            stroke={vault.emerald}
+            strokeWidth="1.5"
+          />
           <circle cx="12" cy="16" r="1.5" fill={vault.emerald} />
         </svg>
       </Box>
@@ -397,7 +382,8 @@ function SuccessGlyph() {
 function AlertGlyph({ variant }: { variant: 'error' | 'warning' }) {
   const color = variant === 'error' ? vault.error : vault.warning;
   const bg = variant === 'error' ? vault.errorDim : vault.warningDim;
-  const borderTint = variant === 'error' ? alpha(vault.error, 0.18) : alpha(vault.warning, 0.18);
+  const borderTint =
+    variant === 'error' ? alpha(vault.error, 0.18) : alpha(vault.warning, 0.18);
 
   return (
     <Box sx={{ position: 'relative', display: 'inline-flex', mb: 2.5 }}>
@@ -415,17 +401,28 @@ function AlertGlyph({ variant }: { variant: 'error' | 'warning' }) {
       >
         {variant === 'error' ? (
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-            <path d="M12 9v4" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+            <path
+              d="M12 9v4"
+              stroke={color}
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
             <circle cx="12" cy="16" r="1" fill={color} />
             <path
               d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-              stroke={color} strokeWidth="1.5"
+              stroke={color}
+              strokeWidth="1.5"
             />
           </svg>
         ) : (
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.5" />
-            <path d="M5.5 5.5L18.5 18.5" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+            <path
+              d="M5.5 5.5L18.5 18.5"
+              stroke={color}
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
           </svg>
         )}
       </Box>
@@ -437,7 +434,14 @@ function AlertGlyph({ variant }: { variant: 'error' | 'warning' }) {
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════
 
-type PageStatus = 'loading' | 'pin' | 'form' | 'valid' | 'expired' | 'error' | 'ip-blocked';
+type PageStatus =
+  | 'loading'
+  | 'pin'
+  | 'form'
+  | 'valid'
+  | 'expired'
+  | 'error'
+  | 'ip-blocked';
 
 const MAX_PIN_ATTEMPTS = 5;
 
@@ -446,7 +450,14 @@ export default function InvitationPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get('redirect');
-  const { validateInvitation, verifyPin, registerGuest, isValidating, isVerifyingPin, isRegistering } = useInvitation();
+  const {
+    validateInvitation,
+    verifyPin,
+    registerGuest,
+    isValidating,
+    isVerifyingPin,
+    isRegistering,
+  } = useInvitation();
   const { loginAsGuest } = useAuth();
 
   const [status, setStatus] = useState<PageStatus>('loading');
@@ -465,8 +476,10 @@ export default function InvitationPage() {
   const [pinValue, setPinValue] = useState('');
   const [pinAttempts, setPinAttempts] = useState(0);
   const [pinError, setPinError] = useState<string>('');
-  const [preRegisteredGuestName, setPreRegisteredGuestName] = useState<string>('');
-  const [preRegisteredGuestContact, setPreRegisteredGuestContact] = useState<string>('');
+  const [preRegisteredGuestName, setPreRegisteredGuestName] =
+    useState<string>('');
+  const [preRegisteredGuestContact, setPreRegisteredGuestContact] =
+    useState<string>('');
 
   // Guest form state
   const [guestName, setGuestName] = useState('');
@@ -477,46 +490,76 @@ export default function InvitationPage() {
   const pinInputRef = useRef<HTMLInputElement>(null);
 
   // ─── Grant access helper ───
-  const grantAccess = useCallback((overrides?: { guestName?: string; guestContact?: string }) => {
-    loginAsGuest();
+  const grantAccess = useCallback(
+    (overrides?: { guestName?: string; guestContact?: string }) => {
+      loginAsGuest();
 
-    const resolvedGuestName = overrides?.guestName || guestName.trim() || preRegisteredGuestName;
-    const resolvedGuestContact = overrides?.guestContact || guestContact.trim() || preRegisteredGuestContact;
+      const resolvedGuestName =
+        overrides?.guestName || guestName.trim() || preRegisteredGuestName;
+      const resolvedGuestContact =
+        overrides?.guestContact ||
+        guestContact.trim() ||
+        preRegisteredGuestContact;
 
-    const invitationData: Record<string, string> = {
-      [INVITATION_STORAGE_KEYS.EXPIRES]: expiresAt,
-      [INVITATION_STORAGE_KEYS.TOKEN]: currentShortCode,
-      [INVITATION_STORAGE_KEYS.PRICING_MODE]: pricingMode,
-      [INVITATION_STORAGE_KEYS.DURATION_HOURS]: '24',
-      [INVITATION_STORAGE_KEYS.INVITATION_ID]: invitationId,
-      [INVITATION_STORAGE_KEYS.INVITER_NAME]: createdBy,
-      [INVITATION_STORAGE_KEYS.INVITER_EMAIL]: creatorEmail,
-      [INVITATION_STORAGE_KEYS.GUEST_NAME]: resolvedGuestName,
-      [INVITATION_STORAGE_KEYS.GUEST_CONTACT]: resolvedGuestContact,
-      [INVITATION_STORAGE_KEYS.PIN_VERIFIED]: 'true',
-    };
-    if (guestCurrencyMode) {
-      invitationData[INVITATION_STORAGE_KEYS.GUEST_CURRENCY_MODE] = guestCurrencyMode;
-    }
-    if (guestMultiplier) {
-      invitationData[INVITATION_STORAGE_KEYS.GUEST_MULTIPLIER] = guestMultiplier;
-    }
-    const deviceToken = localStorage.getItem(INVITATION_STORAGE_KEYS.DEVICE_TOKEN);
-    if (deviceToken) {
-      invitationData[INVITATION_STORAGE_KEYS.DEVICE_TOKEN] = deviceToken;
-    }
-    if (inviterWhatsApp) {
-      invitationData[INVITATION_STORAGE_KEYS.INVITER_WHATSAPP] = inviterWhatsApp;
-    }
+      const invitationData: Record<string, string> = {
+        [INVITATION_STORAGE_KEYS.EXPIRES]: expiresAt,
+        [INVITATION_STORAGE_KEYS.TOKEN]: currentShortCode,
+        [INVITATION_STORAGE_KEYS.PRICING_MODE]: pricingMode,
+        [INVITATION_STORAGE_KEYS.DURATION_HOURS]: '24',
+        [INVITATION_STORAGE_KEYS.INVITATION_ID]: invitationId,
+        [INVITATION_STORAGE_KEYS.INVITER_NAME]: createdBy,
+        [INVITATION_STORAGE_KEYS.INVITER_EMAIL]: creatorEmail,
+        [INVITATION_STORAGE_KEYS.GUEST_NAME]: resolvedGuestName,
+        [INVITATION_STORAGE_KEYS.GUEST_CONTACT]: resolvedGuestContact,
+        [INVITATION_STORAGE_KEYS.PIN_VERIFIED]: 'true',
+      };
+      if (guestCurrencyMode) {
+        invitationData[INVITATION_STORAGE_KEYS.GUEST_CURRENCY_MODE] =
+          guestCurrencyMode;
+      }
+      if (guestMultiplier) {
+        invitationData[INVITATION_STORAGE_KEYS.GUEST_MULTIPLIER] =
+          guestMultiplier;
+      }
+      const deviceToken = localStorage.getItem(
+        INVITATION_STORAGE_KEYS.DEVICE_TOKEN,
+      );
+      if (deviceToken) {
+        invitationData[INVITATION_STORAGE_KEYS.DEVICE_TOKEN] = deviceToken;
+      }
+      if (inviterWhatsApp) {
+        invitationData[INVITATION_STORAGE_KEYS.INVITER_WHATSAPP] =
+          inviterWhatsApp;
+      }
 
-    for (const [key, value] of Object.entries(invitationData)) {
-      sessionStorage.setItem(key, value);
-    }
-    localStorage.setItem('tm_guest_invitation', JSON.stringify(invitationData));
-    sessionStorage.removeItem('treasure-filters');
+      for (const [key, value] of Object.entries(invitationData)) {
+        sessionStorage.setItem(key, value);
+      }
+      localStorage.setItem(
+        'tm_guest_invitation',
+        JSON.stringify(invitationData),
+      );
+      sessionStorage.removeItem('treasure-filters');
 
-    setStatus('valid');
-  }, [loginAsGuest, guestName, guestContact, preRegisteredGuestName, preRegisteredGuestContact, expiresAt, currentShortCode, pricingMode, invitationId, createdBy, creatorEmail, inviterWhatsApp, guestCurrencyMode, guestMultiplier]);
+      setStatus('valid');
+    },
+    [
+      loginAsGuest,
+      guestName,
+      guestContact,
+      preRegisteredGuestName,
+      preRegisteredGuestContact,
+      expiresAt,
+      currentShortCode,
+      pricingMode,
+      invitationId,
+      createdBy,
+      creatorEmail,
+      inviterWhatsApp,
+      guestCurrencyMode,
+      guestMultiplier,
+    ],
+  );
 
   // ─── Validate on mount ───
   useEffect(() => {
@@ -563,8 +606,12 @@ export default function InvitationPage() {
             if (asesoresData.success && asesoresData.asesores) {
               const inviter = asesoresData.asesores.find(
                 (a: { name: string; email?: string }) =>
-                  a.name.toLowerCase().includes((result.createdBy || '').toLowerCase()) ||
-                  (a.email && a.email.toLowerCase() === result.creatorEmail?.toLowerCase())
+                  a.name
+                    .toLowerCase()
+                    .includes((result.createdBy || '').toLowerCase()) ||
+                  (a.email &&
+                    a.email.toLowerCase() ===
+                      result.creatorEmail?.toLowerCase()),
               );
               if (inviter?.whatsapp) {
                 setInviterWhatsApp(inviter.whatsapp);
@@ -576,7 +623,10 @@ export default function InvitationPage() {
         }
 
         // Already verified on this device — skip PIN
-        if (result.isPinBound && sessionStorage.getItem(INVITATION_STORAGE_KEYS.PIN_VERIFIED)) {
+        if (
+          result.isPinBound &&
+          sessionStorage.getItem(INVITATION_STORAGE_KEYS.PIN_VERIFIED)
+        ) {
           loginAsGuest();
 
           const invitationData: Record<string, string> = {
@@ -592,16 +642,22 @@ export default function InvitationPage() {
             [INVITATION_STORAGE_KEYS.PIN_VERIFIED]: 'true',
           };
           if (result.guestCurrencyMode) {
-            invitationData[INVITATION_STORAGE_KEYS.GUEST_CURRENCY_MODE] = result.guestCurrencyMode;
+            invitationData[INVITATION_STORAGE_KEYS.GUEST_CURRENCY_MODE] =
+              result.guestCurrencyMode;
           }
           if (result.guestMultiplier) {
-            invitationData[INVITATION_STORAGE_KEYS.GUEST_MULTIPLIER] = String(result.guestMultiplier);
+            invitationData[INVITATION_STORAGE_KEYS.GUEST_MULTIPLIER] = String(
+              result.guestMultiplier,
+            );
           }
 
           for (const [key, value] of Object.entries(invitationData)) {
             sessionStorage.setItem(key, value);
           }
-          localStorage.setItem('tm_guest_invitation', JSON.stringify(invitationData));
+          localStorage.setItem(
+            'tm_guest_invitation',
+            JSON.stringify(invitationData),
+          );
           sessionStorage.removeItem('treasure-filters');
 
           setStatus('valid');
@@ -654,7 +710,9 @@ export default function InvitationPage() {
       if (newAttempts >= MAX_PIN_ATTEMPTS) {
         setPinError('Demasiados intentos. Solicita una nueva invitacion.');
       } else {
-        setPinError(`PIN incorrecto. ${MAX_PIN_ATTEMPTS - newAttempts} intentos restantes.`);
+        setPinError(
+          `PIN incorrecto. ${MAX_PIN_ATTEMPTS - newAttempts} intentos restantes.`,
+        );
       }
       pinInputRef.current?.focus();
     } else {
@@ -669,7 +727,9 @@ export default function InvitationPage() {
       return false;
     }
     if (!guestContact.trim()) {
-      setFormError(`Por favor ingresa tu ${contactType === 'email' ? 'email' : 'telefono'}`);
+      setFormError(
+        `Por favor ingresa tu ${contactType === 'email' ? 'email' : 'telefono'}`,
+      );
       return false;
     }
     if (contactType === 'email') {
@@ -766,32 +826,62 @@ export default function InvitationPage() {
   if (status === 'expired' || status === 'error') {
     return (
       <PageShell>
-        <motion.div {...fadeUp} transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}>
+        <motion.div
+          {...fadeUp}
+          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+        >
           <GlassCard>
             <Box sx={{ textAlign: 'center' }}>
               <AlertGlyph variant="error" />
               <Typography
-                sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: fontWeights.bold, color: vault.text, mb: 1 }}
+                sx={{
+                  fontFamily: vault.serif,
+                  fontSize: '1.5rem',
+                  fontWeight: fontWeights.bold,
+                  color: vault.text,
+                  mb: 1,
+                }}
               >
-                {status === 'expired' ? 'Invitacion Expirada' : 'Enlace Invalido'}
+                {status === 'expired'
+                  ? 'Invitacion Expirada'
+                  : 'Enlace Invalido'}
               </Typography>
-              <Typography sx={{ color: vault.textMuted, fontSize: '0.9rem', mb: 3, lineHeight: 1.6 }}>
+              <Typography
+                sx={{
+                  color: vault.textMuted,
+                  fontSize: '0.9rem',
+                  mb: 3,
+                  lineHeight: 1.6,
+                }}
+              >
                 {errorMessage}
               </Typography>
 
               <Box
                 sx={{
-                  p: 2, mb: 3, borderRadius: '12px',
+                  p: 2,
+                  mb: 3,
+                  borderRadius: '12px',
                   bgcolor: vault.surface,
                   border: `1px solid ${emeraldAlpha(0.08)}`,
                 }}
               >
-                <Typography sx={{ color: vault.textMuted, fontSize: '0.85rem', lineHeight: 1.5 }}>
+                <Typography
+                  sx={{
+                    color: vault.textMuted,
+                    fontSize: '0.85rem',
+                    lineHeight: 1.5,
+                  }}
+                >
                   Solicita un nuevo enlace al embajador que te invito.
                 </Typography>
               </Box>
 
-              <Button fullWidth onClick={() => navigate('/home')} sx={ghostBtnSx}>
+              <Button
+                fullWidth
+                onClick={() => navigate('/home')}
+                sx={ghostBtnSx}
+              >
                 Ir al Inicio
               </Button>
             </Box>
@@ -805,33 +895,62 @@ export default function InvitationPage() {
   if (status === 'ip-blocked') {
     return (
       <PageShell>
-        <motion.div {...fadeUp} transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}>
+        <motion.div
+          {...fadeUp}
+          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+        >
           <GlassCard>
             <Box sx={{ textAlign: 'center' }}>
               <AlertGlyph variant="warning" />
               <Typography
-                sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: fontWeights.bold, color: vault.text, mb: 1 }}
+                sx={{
+                  fontFamily: vault.serif,
+                  fontSize: '1.5rem',
+                  fontWeight: fontWeights.bold,
+                  color: vault.text,
+                  mb: 1,
+                }}
               >
                 Acceso Restringido
               </Typography>
-              <Typography sx={{ color: vault.textMuted, fontSize: '0.9rem', mb: 3, lineHeight: 1.6 }}>
-                Esta invitacion esta vinculada a otro dispositivo.
-                Solo puede usarse desde el dispositivo donde se verifico por primera vez.
+              <Typography
+                sx={{
+                  color: vault.textMuted,
+                  fontSize: '0.9rem',
+                  mb: 3,
+                  lineHeight: 1.6,
+                }}
+              >
+                Esta invitacion esta vinculada a otro dispositivo. Solo puede
+                usarse desde el dispositivo donde se verifico por primera vez.
               </Typography>
 
               <Box
                 sx={{
-                  p: 2, mb: 3, borderRadius: '12px',
+                  p: 2,
+                  mb: 3,
+                  borderRadius: '12px',
                   bgcolor: vault.warningDim,
                   border: `1px solid ${alpha(vault.warning, 0.12)}`,
                 }}
               >
-                <Typography sx={{ color: 'rgba(255, 200, 100, 0.8)', fontSize: '0.85rem', lineHeight: 1.5 }}>
-                  Si necesitas acceso, solicita una nueva invitacion a tu embajador.
+                <Typography
+                  sx={{
+                    color: 'rgba(255, 200, 100, 0.8)',
+                    fontSize: '0.85rem',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Si necesitas acceso, solicita una nueva invitacion a tu
+                  embajador.
                 </Typography>
               </Box>
 
-              <Button fullWidth onClick={() => navigate('/home')} sx={ghostBtnSx}>
+              <Button
+                fullWidth
+                onClick={() => navigate('/home')}
+                sx={ghostBtnSx}
+              >
                 Ir al Inicio
               </Button>
             </Box>
@@ -847,43 +966,80 @@ export default function InvitationPage() {
 
     return (
       <PageShell>
-        <motion.div {...fadeUp} transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}>
+        <motion.div
+          {...fadeUp}
+          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+        >
           <GlassCard>
             <Box sx={{ textAlign: 'center' }}>
               <LockGlyph />
 
               <Typography
-                sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: 700, color: vault.text, mb: 0.5 }}
+                sx={{
+                  fontFamily: vault.serif,
+                  fontSize: '1.5rem',
+                  fontWeight: 700,
+                  color: vault.text,
+                  mb: 0.5,
+                }}
               >
                 Ingresa tu PIN
               </Typography>
 
               {createdBy && (
                 <>
-                  <Typography sx={{ color: vault.textDim, fontSize: '0.8rem', mb: 0.5 }}>
+                  <Typography
+                    sx={{ color: vault.textDim, fontSize: '0.8rem', mb: 0.5 }}
+                  >
                     Invitado por
                   </Typography>
-                  <Typography sx={{ color: vault.emerald, fontSize: '0.9rem', fontWeight: fontWeights.medium, mb: 2 }}>
+                  <Typography
+                    sx={{
+                      color: vault.emerald,
+                      fontSize: '0.9rem',
+                      fontWeight: fontWeights.medium,
+                      mb: 2,
+                    }}
+                  >
                     {createdBy}
                   </Typography>
                 </>
               )}
 
-              <Typography sx={{ color: vault.textMuted, fontSize: '0.85rem', mb: 3, lineHeight: 1.5 }}>
+              <Typography
+                sx={{
+                  color: vault.textMuted,
+                  fontSize: '0.85rem',
+                  mb: 3,
+                  lineHeight: 1.5,
+                }}
+              >
                 Ingresa el PIN de 4 digitos que te compartio tu embajador.
               </Typography>
 
               {pinError && (
-                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                >
                   <Box
                     sx={{
-                      p: 1.5, mb: 2.5, borderRadius: '12px',
+                      p: 1.5,
+                      mb: 2.5,
+                      borderRadius: '12px',
                       bgcolor: isLockedOut ? vault.errorDim : vault.warningDim,
                       border: '1px solid',
-                      borderColor: isLockedOut ? alpha(vault.error, 0.15) : alpha(vault.warning, 0.15),
+                      borderColor: isLockedOut
+                        ? alpha(vault.error, 0.15)
+                        : alpha(vault.warning, 0.15),
                     }}
                   >
-                    <Typography sx={{ color: isLockedOut ? vault.error : vault.warning, fontSize: '0.85rem' }}>
+                    <Typography
+                      sx={{
+                        color: isLockedOut ? vault.error : vault.warning,
+                        fontSize: '0.85rem',
+                      }}
+                    >
                       {pinError}
                     </Typography>
                   </Box>
@@ -902,7 +1058,9 @@ export default function InvitationPage() {
                 variant="contained"
                 size="large"
                 fullWidth
-                disabled={pinValue.length !== 4 || isVerifyingPin || isLockedOut}
+                disabled={
+                  pinValue.length !== 4 || isVerifyingPin || isLockedOut
+                }
                 onClick={handlePinSubmit}
                 sx={emeraldBtnSx}
               >
@@ -928,30 +1086,51 @@ export default function InvitationPage() {
             <Box sx={{ textAlign: 'center', mb: 3 }}>
               <SuccessGlyph />
               <Typography
-                sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: 700, color: vault.text, mb: 0.5 }}
+                sx={{
+                  fontFamily: vault.serif,
+                  fontSize: '1.5rem',
+                  fontWeight: 700,
+                  color: vault.text,
+                  mb: 0.5,
+                }}
               >
                 Bienvenido a Tierra Madre
               </Typography>
               {createdBy && (
-                <Typography sx={{ color: vault.textMuted, fontSize: '0.85rem' }}>
+                <Typography
+                  sx={{ color: vault.textMuted, fontSize: '0.85rem' }}
+                >
                   Invitado por {createdBy}
                 </Typography>
               )}
             </Box>
 
-            <Typography sx={{ color: vault.textMuted, fontSize: '0.9rem', mb: 3, textAlign: 'center', lineHeight: 1.5 }}>
-              Para explorar nuestra colección, por favor déjanos tus datos de contacto.
+            <Typography
+              sx={{
+                color: vault.textMuted,
+                fontSize: '0.9rem',
+                mb: 3,
+                textAlign: 'center',
+                lineHeight: 1.5,
+              }}
+            >
+              Para explorar nuestra colección, por favor déjanos tus datos de
+              contacto.
             </Typography>
 
             {formError && (
               <Box
                 sx={{
-                  p: 1.5, mb: 2, borderRadius: '12px',
+                  p: 1.5,
+                  mb: 2,
+                  borderRadius: '12px',
                   bgcolor: vault.errorDim,
                   border: `1px solid ${alpha(vault.error, 0.15)}`,
                 }}
               >
-                <Typography sx={{ color: vault.error, fontSize: '0.85rem' }}>{formError}</Typography>
+                <Typography sx={{ color: vault.error, fontSize: '0.85rem' }}>
+                  {formError}
+                </Typography>
               </Box>
             )}
 
@@ -964,7 +1143,9 @@ export default function InvitationPage() {
               sx={{ ...inputSx, mb: 2 }}
             />
 
-            <Typography sx={{ color: vault.textDim, fontSize: '0.8rem', mb: 1 }}>
+            <Typography
+              sx={{ color: vault.textDim, fontSize: '0.8rem', mb: 1 }}
+            >
               Forma de contacto preferida
             </Typography>
 
@@ -1007,7 +1188,11 @@ export default function InvitationPage() {
               type={contactType === 'email' ? 'email' : 'tel'}
               value={guestContact}
               onChange={(e) => setGuestContact(e.target.value)}
-              placeholder={contactType === 'email' ? 'ejemplo@email.com' : '+57 300 123 4567'}
+              placeholder={
+                contactType === 'email'
+                  ? 'ejemplo@email.com'
+                  : '+57 300 123 4567'
+              }
               required
               sx={{ ...inputSx, mb: 3 }}
             />
@@ -1019,9 +1204,11 @@ export default function InvitationPage() {
               disabled={isRegistering}
               onClick={handleGuestSubmit}
               startIcon={
-                isRegistering
-                  ? <CircularProgress size={20} sx={{ color: whiteAlpha(0.7) }} />
-                  : <Explore />
+                isRegistering ? (
+                  <CircularProgress size={20} sx={{ color: whiteAlpha(0.7) }} />
+                ) : (
+                  <Explore />
+                )
               }
               sx={emeraldBtnSx}
             >
@@ -1037,23 +1224,42 @@ export default function InvitationPage() {
   if (status === 'valid') {
     return (
       <PageShell>
-        <motion.div {...fadeUp} transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}>
+        <motion.div
+          {...fadeUp}
+          transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+        >
           <GlassCard>
             <Box sx={{ textAlign: 'center' }}>
               <SuccessGlyph />
               <Typography
-                sx={{ fontFamily: vault.serif, fontSize: '1.5rem', fontWeight: 700, color: vault.text, mb: 0.5 }}
+                sx={{
+                  fontFamily: vault.serif,
+                  fontSize: '1.5rem',
+                  fontWeight: 700,
+                  color: vault.text,
+                  mb: 0.5,
+                }}
               >
                 Bienvenido a Tierra Madre
               </Typography>
               {createdBy && (
-                <Typography sx={{ color: vault.textMuted, fontSize: '0.85rem', mb: 2.5 }}>
+                <Typography
+                  sx={{ color: vault.textMuted, fontSize: '0.85rem', mb: 2.5 }}
+                >
                   Invitado por {createdBy}
                 </Typography>
               )}
 
-              <Typography sx={{ color: vault.textMuted, fontSize: '0.9rem', mb: 3.5, lineHeight: 1.6 }}>
-                Tienes acceso para explorar nuestra colección exclusiva de esmeraldas colombianas.
+              <Typography
+                sx={{
+                  color: vault.textMuted,
+                  fontSize: '0.9rem',
+                  mb: 3.5,
+                  lineHeight: 1.6,
+                }}
+              >
+                Tienes acceso para explorar nuestra colección exclusiva de
+                esmeraldas colombianas.
               </Typography>
 
               <Button
@@ -1085,7 +1291,11 @@ export default function InvitationPage() {
   return (
     <PageShell>
       <Box sx={{ textAlign: 'center' }}>
-        <CircularProgress size={32} aria-label="Cargando" sx={{ color: vault.emerald }} />
+        <CircularProgress
+          size={32}
+          aria-label="Cargando"
+          sx={{ color: vault.emerald }}
+        />
       </Box>
     </PageShell>
   );
