@@ -6,6 +6,10 @@ import {
   glassDark,
   glassEmerald,
   glassGold,
+  chartColors,
+  medalColors,
+  goldGradients,
+  goldShadows,
 } from '../src/design-system';
 
 const GOLD_HEXES = [
@@ -36,6 +40,16 @@ describe('Quiet Emerald shim', () => {
         expect(effect.backdropFilter).toBe('none');
         expect(effect.WebkitBackdropFilter).toBe('none');
       }
+    }
+  });
+
+  it('keeps gold out of the de-golded token exports', () => {
+    const GOLD = [...GOLD_HEXES, '212, 175, 55', '212,175,55'];
+    const blobs = [chartColors, medalColors, goldGradients, goldShadows].map(
+      (o) => JSON.stringify(o).toUpperCase(),
+    );
+    for (const blob of blobs) {
+      for (const g of GOLD) expect(blob).not.toContain(g.toUpperCase());
     }
   });
 });

@@ -108,7 +108,7 @@ export const glassEmerald: Record<string, GlassEffect> = {
     backdropFilter: 'none',
     WebkitBackdropFilter: 'none',
     border: '1px solid rgba(0,175,132,0.20)',
-    boxShadow: '0 4px 6px rgba(0, 174, 122, 0.1)',
+    boxShadow: '0 4px 6px rgba(0, 175, 132, 0.1)',
   },
   /** Dark emerald tint */
   dark: {
@@ -116,7 +116,7 @@ export const glassEmerald: Record<string, GlassEffect> = {
     backdropFilter: 'none',
     WebkitBackdropFilter: 'none',
     border: '1px solid rgba(0,175,132,0.30)',
-    boxShadow: '0 4px 6px rgba(0, 174, 122, 0.15)',
+    boxShadow: '0 4px 6px rgba(0, 175, 132, 0.15)',
   },
   /** Vibrant emerald */
   vibrant: {
@@ -124,7 +124,7 @@ export const glassEmerald: Record<string, GlassEffect> = {
     backdropFilter: 'none',
     WebkitBackdropFilter: 'none',
     border: '1px solid rgba(0,175,132,0.40)',
-    boxShadow: '0 8px 16px rgba(0, 174, 122, 0.2)',
+    boxShadow: '0 8px 16px rgba(0, 175, 132, 0.2)',
   },
 } as const;
 
