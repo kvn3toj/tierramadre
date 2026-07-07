@@ -11,7 +11,13 @@
 import { useRef, useState, useEffect } from 'react';
 import { Box, Typography, Chip, Avatar, alpha } from '@mui/material';
 import { Shield, Star, Award } from 'lucide-react';
-import { emeraldCore, goldAccent, iosTypographyScale, primitiveSpacing as spacing, radius, accentColors, zIndex } from '../../../design-system';
+import {
+  emeraldCore,
+  iosTypographyScale,
+  primitiveSpacing as spacing,
+  radius,
+  zIndex,
+} from '../../../design-system';
 import type { Asesor } from '../../../hooks/useAsesores';
 
 interface MyProfileHeaderProps {
@@ -19,13 +25,19 @@ interface MyProfileHeaderProps {
   googlePicture?: string;
 }
 
-const ROLE_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  Admin: { label: 'Admin', icon: Shield, color: accentColors.purple.light },
-  Embajador: { label: 'Embajador', icon: Star, color: goldAccent.primary },
+const ROLE_CONFIG: Record<
+  string,
+  { label: string; icon: React.ElementType; color: string }
+> = {
+  Admin: { label: 'Admin', icon: Shield, color: '#8C928F' },
+  Embajador: { label: 'Embajador', icon: Star, color: emeraldCore.dark },
   Asesor: { label: 'Asesor', icon: Award, color: emeraldCore.primary },
 };
 
-export function MyProfileHeader({ asesor, googlePicture }: MyProfileHeaderProps) {
+export function MyProfileHeader({
+  asesor,
+  googlePicture,
+}: MyProfileHeaderProps) {
   const role = asesor.role || 'Asesor';
   const config = ROLE_CONFIG[role] || ROLE_CONFIG.Asesor;
   const Icon = config.icon;
@@ -69,7 +81,7 @@ export function MyProfileHeader({ asesor, googlePicture }: MyProfileHeaderProps)
           opacity: showMiniBar ? 1 : 0,
           transition: `transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease`,
           pointerEvents: showMiniBar ? 'auto' : 'none',
-          mx: -spacing.md,         // bleed to page edge
+          mx: -spacing.md, // bleed to page edge
           px: spacing.md,
           py: spacing.xs,
           backdropFilter: 'blur(20px) saturate(1.6)',
@@ -175,7 +187,9 @@ export function MyProfileHeader({ asesor, googlePicture }: MyProfileHeaderProps)
         </Avatar>
 
         <Box sx={{ flex: 1, minWidth: 0, position: 'relative' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}
+          >
             <Typography
               variant="h6"
               sx={{

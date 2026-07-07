@@ -9,7 +9,7 @@ import { useMemo } from 'react';
 import { Box, alpha } from '@mui/material';
 import { Package, Gem, Crown, DollarSign } from 'lucide-react';
 import { StatItem } from '../../../components/ambassador/StatItem';
-import { emeraldCore, goldAccent, accentColors, radius } from '../../../design-system';
+import { emeraldCore, goldAccent, radius } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useCurrencyFormat } from '../../../contexts/CurrencyContext';
 import { SectionHeading } from './SectionHeading';
@@ -27,10 +27,15 @@ export function PortfolioStats({ asesorName, treasure }: PortfolioStatsProps) {
 
   const stats = useMemo(() => {
     const products = getAsesorProducts(treasure, asesorName);
-    const disponible = products.filter(p => p.effectiveEstado === 'DISPONIBLE');
-    const looseCount = products.filter(p => !p.isJewelry).length;
-    const jewelryCount = products.filter(p => p.isJewelry).length;
-    const totalValue = disponible.reduce((sum, p) => sum + (p.precioCOP || 0), 0);
+    const disponible = products.filter(
+      (p) => p.effectiveEstado === 'DISPONIBLE',
+    );
+    const looseCount = products.filter((p) => !p.isJewelry).length;
+    const jewelryCount = products.filter((p) => p.isJewelry).length;
+    const totalValue = disponible.reduce(
+      (sum, p) => sum + (p.precioCOP || 0),
+      0,
+    );
 
     return {
       total: products.length,
@@ -73,15 +78,15 @@ export function PortfolioStats({ asesorName, treasure }: PortfolioStatsProps) {
           sx={{
             p: 1.5,
             borderRadius: radius.md,
-            bgcolor: alpha(accentColors.info.light, 0.06),
-            border: `1px solid ${alpha(accentColors.info.light, 0.12)}`,
+            bgcolor: alpha(emeraldCore.primary, 0.06),
+            border: `1px solid ${alpha(emeraldCore.primary, 0.12)}`,
           }}
         >
           <StatItem
             icon={<Gem size={16} />}
             value={String(stats.looseCount)}
             label={t.profile.gems}
-            color={accentColors.info.light}
+            color={emeraldCore.primary}
             variant="stacked"
           />
         </Box>
@@ -107,15 +112,15 @@ export function PortfolioStats({ asesorName, treasure }: PortfolioStatsProps) {
           sx={{
             p: 1.5,
             borderRadius: radius.md,
-            bgcolor: alpha(accentColors.success.light, 0.06),
-            border: `1px solid ${alpha(accentColors.success.light, 0.12)}`,
+            bgcolor: alpha(emeraldCore.primary, 0.06),
+            border: `1px solid ${alpha(emeraldCore.primary, 0.12)}`,
           }}
         >
           <StatItem
             icon={<DollarSign size={16} />}
             value={formatCurrency(stats.totalValue)}
             label={t.profile.availableValue}
-            color={accentColors.success.light}
+            color={emeraldCore.primary}
             variant="stacked"
           />
         </Box>

@@ -39,6 +39,7 @@ import {
   primitiveColors,
   primitiveSpacing as spacing,
   zIndex,
+  getQuietEmerald,
 } from '../../design-system';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage, LANGUAGE_OPTIONS } from '../../contexts/LanguageContext';
@@ -174,6 +175,7 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({
   onClose,
 }) => {
   const { mode, toggleTheme } = useTheme();
+  const qe = getQuietEmerald(mode);
   const { language, t, setLanguage } = useLanguage();
   const { showPrices, togglePriceShare, canToggle } = usePriceShare();
   const {
@@ -295,28 +297,26 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({
                 <DarkMode
                   sx={{
                     fontSize: '24px',
-                    color: primitiveColors.system.yellow.light,
+                    color: qe.accent,
                   }}
                 />
               ) : (
                 <LightMode
                   sx={{
                     fontSize: '24px',
-                    color: primitiveColors.system.orange.light,
+                    color: qe.accent,
                   }}
                 />
               )
             }
             iconBgColor={
-              isDarkMode
-                ? alpha(primitiveColors.system.yellow.light, 0.08)
-                : alpha('#000000', 0.08)
+              isDarkMode ? alpha(qe.accent, 0.08) : alpha('#000000', 0.08)
             }
             title={isDarkMode ? t.settings.darkMode : t.settings.lightMode}
             subtitle={isDarkMode ? t.settings.lightMode : t.settings.darkMode}
             checked={isDarkMode}
             onChange={toggleTheme}
-            accentColor={primitiveColors.system.yellow.light}
+            accentColor={qe.accent}
           />
 
           {/* Language Selector */}
@@ -341,10 +341,7 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({
                   width: `${layoutConstants.minTouchTarget}px`,
                   height: `${layoutConstants.minTouchTarget}px`,
                   borderRadius: radius.md,
-                  backgroundColor: alpha(
-                    primitiveColors.system.blue.light,
-                    0.08,
-                  ),
+                  backgroundColor: alpha(qe.accent, 0.08),
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -354,7 +351,7 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({
                 <Language
                   sx={{
                     fontSize: '24px',
-                    color: primitiveColors.system.blue.light,
+                    color: qe.accent,
                   }}
                 />
               </Box>
@@ -404,17 +401,14 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({
                     transition: 'background-color 0.2s',
                     backgroundColor:
                       language === opt.code
-                        ? alpha(primitiveColors.system.blue.light, 0.12)
+                        ? alpha(qe.accent, 0.12)
                         : 'transparent',
                     border:
                       language === opt.code
-                        ? `1.5px solid ${primitiveColors.system.blue.light}`
+                        ? `1.5px solid ${qe.accent}`
                         : '1.5px solid transparent',
                     '&:active': {
-                      backgroundColor: alpha(
-                        primitiveColors.system.blue.light,
-                        0.08,
-                      ),
+                      backgroundColor: alpha(qe.accent, 0.08),
                     },
                   }}
                 >
@@ -427,7 +421,7 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({
                       fontWeight: language === opt.code ? 600 : 400,
                       color:
                         language === opt.code
-                          ? primitiveColors.system.blue.light
+                          ? qe.accent
                           : 'var(--text-secondary)',
                       textAlign: 'center',
                     }}
