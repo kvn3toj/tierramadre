@@ -1,20 +1,20 @@
-import { useEffect, useId, useMemo, useState } from "react";
-import { Box, Dialog, Switch } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import { X as XIcon } from "lucide-react";
+import { useEffect, useId, useMemo, useState } from 'react';
+import { Box, Dialog, Switch } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { X as XIcon } from 'lucide-react';
 
-import { getFoto, fontFamilies } from "../../../../design-system";
-import { useConvexMutation, convexApi } from "../../../../lib/convex-safe";
-import { useNotification } from "../../../../contexts/NotificationContext";
-import type { Doc } from "../../../../../convex/_generated/dataModel";
-import { PhotoDropzone, type DropzonePhoto } from "./PhotoDropzone";
-import { uploadFotosintesisImages } from "../utils/uploadItemMedia";
-import { convertToProxyUrl } from "../../../../utils/driveUrl";
+import { getFoto, fontFamilies } from '../../../../design-system';
+import { useAuthedConvexAction, convexApi } from '../../../../lib/convex-safe';
+import { useNotification } from '../../../../contexts/NotificationContext';
+import type { Doc } from '../../../../../convex/_generated/dataModel';
+import { PhotoDropzone, type DropzonePhoto } from './PhotoDropzone';
+import { uploadFotosintesisImages } from '../utils/uploadItemMedia';
+import { convertToProxyUrl } from '../../../../utils/driveUrl';
 
 const formatCOP = (n: number): string =>
-  new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
+  new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
     maximumFractionDigits: 0,
   }).format(n);
 
@@ -23,9 +23,9 @@ interface SubLoteDrawerProps {
   onClose: () => void;
   parentLoteId: string;
   /** Items belonging to the parent lote — the picker source. */
-  items: Doc<"productInventory">[];
+  items: Doc<'productInventory'>[];
   /** When provided, the drawer edits this sub-lote instead of creating one. */
-  subLote?: Doc<"subLotes"> | null;
+  subLote?: Doc<'subLotes'> | null;
 }
 
 /**
@@ -41,18 +41,18 @@ export function SubLoteDrawer({
   items,
   subLote,
 }: SubLoteDrawerProps) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const { notify } = useNotification();
   const titleId = useId();
 
-  const createSubLote = useConvexMutation(convexApi.subLotes.create);
-  const addItems = useConvexMutation(convexApi.subLotes.addItems);
-  const removeItems = useConvexMutation(convexApi.subLotes.removeItems);
-  const updateMeta = useConvexMutation(convexApi.subLotes.updateMeta);
-  const setDisplay = useConvexMutation(convexApi.subLotes.setDisplay);
+  const createSubLote = useAuthedConvexAction(convexApi.subLotes.create);
+  const addItems = useAuthedConvexAction(convexApi.subLotes.addItems);
+  const removeItems = useAuthedConvexAction(convexApi.subLotes.removeItems);
+  const updateMeta = useAuthedConvexAction(convexApi.subLotes.updateMeta);
+  const setDisplay = useAuthedConvexAction(convexApi.subLotes.setDisplay);
 
-  const [nombre, setNombre] = useState("");
-  const [notas, setNotas] = useState("");
+  const [nombre, setNombre] = useState('');
+  const [notas, setNotas] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,15 +62,15 @@ export function SubLoteDrawer({
 
   useEffect(() => {
     if (!open) return;
-    setNombre(subLote?.nombre ?? "");
-    setNotas(subLote?.notas ?? "");
+    setNombre(subLote?.nombre ?? '');
+    setNotas(subLote?.notas ?? '');
     setSelected(new Set(subLote?.itemIds ?? []));
     setMostrarComoLote(subLote?.mostrarComoLote ?? false);
     setHeroPhoto(
       subLote?.fotoUrl
         ? [
             {
-              id: "existing-hero",
+              id: 'existing-hero',
               // Drive URLs only render through the serve-drive-image proxy.
               url: convertToProxyUrl(subLote.fotoUrl) ?? subLote.fotoUrl,
             },
@@ -126,7 +126,7 @@ export function SubLoteDrawer({
         if (removed.length)
           await removeItems({ subLoteId: subLote.subLoteId, itemIds: removed });
         effectiveSubLoteId = subLote.subLoteId;
-        notify(`Sub-lote ${subLote.subLoteId} actualizado`, "success");
+        notify(`Sub-lote ${subLote.subLoteId} actualizado`, 'success');
       } else {
         const res = await createSubLote({
           parentLoteId,
@@ -137,9 +137,9 @@ export function SubLoteDrawer({
         effectiveSubLoteId = res.subLoteId;
         notify(
           `Sub-lote ${res.subLoteId} creado · ${selected.size} ${
-            selected.size === 1 ? "ítem" : "ítems"
+            selected.size === 1 ? 'ítem' : 'ítems'
           }`,
-          "success",
+          'success',
         );
       }
 
@@ -162,7 +162,7 @@ export function SubLoteDrawer({
       onClose();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "No pudimos guardar el sub-lote",
+        err instanceof Error ? err.message : 'No pudimos guardar el sub-lote',
       );
     } finally {
       setSubmitting(false);
@@ -170,16 +170,16 @@ export function SubLoteDrawer({
   };
 
   const inputSx = {
-    width: "100%",
+    width: '100%',
     fontFamily: fontFamilies.system,
     fontSize: 14,
     color: foto.ink.primary,
     background: foto.surfaces.inset,
     border: `1px solid ${foto.surfaces.rule}`,
-    borderRadius: "9px",
-    padding: "10px 12px",
-    outline: "none",
-    "&:focus": { borderColor: foto.accent.primary },
+    borderRadius: '9px',
+    padding: '10px 12px',
+    outline: 'none',
+    '&:focus': { borderColor: foto.accent.primary },
   } as const;
 
   return (
@@ -192,36 +192,36 @@ export function SubLoteDrawer({
       slotProps={{
         backdrop: {
           sx: {
-            background: "rgba(11,16,14,0.32)",
-            backdropFilter: "saturate(80%)",
+            background: 'rgba(11,16,14,0.32)',
+            backdropFilter: 'saturate(80%)',
           },
         },
       }}
       PaperProps={{
         sx: {
-          position: "fixed",
+          position: 'fixed',
           right: 0,
           top: 0,
           bottom: 0,
           margin: 0,
-          width: { xs: "100vw", sm: 560 },
-          maxWidth: "100vw",
-          height: "100vh",
-          maxHeight: "100vh",
+          width: { xs: '100vw', sm: 560 },
+          maxWidth: '100vw',
+          height: '100vh',
+          maxHeight: '100vh',
           borderRadius: 0,
           background: foto.surfaces.canvas,
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
         },
       }}
     >
       {/* Header */}
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "18px 22px",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '18px 22px',
           borderBottom: `1px solid ${foto.surfaces.rule}`,
         }}
       >
@@ -230,12 +230,12 @@ export function SubLoteDrawer({
             id={titleId}
             sx={{ fontSize: 17, fontWeight: 600, color: foto.ink.primary }}
           >
-            {subLote ? `Editar ${subLote.subLoteId}` : "Nuevo sub-lote"}
+            {subLote ? `Editar ${subLote.subLoteId}` : 'Nuevo sub-lote'}
           </Box>
           <Box
-            sx={{ fontSize: 12, color: foto.ink.tertiary, marginTop: "2px" }}
+            sx={{ fontSize: 12, color: foto.ink.tertiary, marginTop: '2px' }}
           >
-            agrupando ítems del lote{" "}
+            agrupando ítems del lote{' '}
             <Box component="span" sx={{ fontFamily: fontFamilies.mono }}>
               {parentLoteId}
             </Box>
@@ -251,15 +251,15 @@ export function SubLoteDrawer({
             height: 32,
             minWidth: 44,
             minHeight: 44,
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "transparent",
-            border: "none",
-            borderRadius: "8px",
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'transparent',
+            border: 'none',
+            borderRadius: '8px',
             color: foto.ink.tertiary,
-            cursor: "pointer",
-            "&:hover": { background: foto.surfaces.inset },
+            cursor: 'pointer',
+            '&:hover': { background: foto.surfaces.inset },
           }}
         >
           <XIcon size={18} />
@@ -270,22 +270,22 @@ export function SubLoteDrawer({
       <Box
         sx={{
           flex: 1,
-          overflowY: "auto",
-          padding: "20px 22px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "18px",
+          overflowY: 'auto',
+          padding: '20px 22px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '18px',
         }}
       >
         <Box>
           <Box
             component="label"
             sx={{
-              display: "block",
+              display: 'block',
               fontSize: 11,
               fontWeight: 600,
               color: foto.ink.tertiary,
-              marginBottom: "6px",
+              marginBottom: '6px',
             }}
           >
             Nombre del sub-lote
@@ -305,11 +305,11 @@ export function SubLoteDrawer({
           <Box
             component="label"
             sx={{
-              display: "block",
+              display: 'block',
               fontSize: 11,
               fontWeight: 600,
               color: foto.ink.tertiary,
-              marginBottom: "6px",
+              marginBottom: '6px',
             }}
           >
             Notas (opcional)
@@ -321,31 +321,31 @@ export function SubLoteDrawer({
               setNotas(e.target.value)
             }
             rows={2}
-            sx={{ ...inputSx, resize: "vertical", minHeight: 56 }}
+            sx={{ ...inputSx, resize: 'vertical', minHeight: 56 }}
           />
         </Box>
 
         {/* Catalog grouping — show this sublote as one bundled card */}
         <Box
           sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "12px",
-            padding: "14px 16px",
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+            padding: '14px 16px',
             border: `1px solid ${foto.surfaces.rule}`,
-            borderRadius: "12px",
+            borderRadius: '12px',
             background: foto.surfaces.inset,
           }}
         >
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "12px",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
             }}
           >
-            <Box sx={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
               <Box
                 sx={{ fontSize: 13, fontWeight: 600, color: foto.ink.primary }}
               >
@@ -359,7 +359,7 @@ export function SubLoteDrawer({
             <Switch
               checked={mostrarComoLote}
               onChange={(e) => setMostrarComoLote(e.target.checked)}
-              inputProps={{ "aria-label": "Mostrar como grupo en catálogo" }}
+              inputProps={{ 'aria-label': 'Mostrar como grupo en catálogo' }}
             />
           </Box>
           {mostrarComoLote ? (
@@ -369,7 +369,7 @@ export function SubLoteDrawer({
                 const f = files[0];
                 if (!f) return;
                 heroPhoto.forEach((p) => {
-                  if (p.url.startsWith("blob:")) URL.revokeObjectURL(p.url);
+                  if (p.url.startsWith('blob:')) URL.revokeObjectURL(p.url);
                 });
                 setHeroPhoto([
                   {
@@ -388,10 +388,10 @@ export function SubLoteDrawer({
         <Box>
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "baseline",
-              marginBottom: "8px",
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+              marginBottom: '8px',
             }}
           >
             <Box
@@ -400,7 +400,7 @@ export function SubLoteDrawer({
               Ítems del lote
             </Box>
             <Box sx={{ fontSize: 12, color: foto.ink.secondary }}>
-              {selected.size} sel. ·{" "}
+              {selected.size} sel. ·{' '}
               <Box component="span" sx={{ fontFamily: fontFamilies.mono }}>
                 {formatCOP(selectedTotal)}
               </Box>
@@ -412,10 +412,10 @@ export function SubLoteDrawer({
               sx={{
                 fontSize: 12.5,
                 color: foto.ink.tertiary,
-                padding: "16px",
-                textAlign: "center",
+                padding: '16px',
+                textAlign: 'center',
                 border: `1px dashed ${foto.surfaces.rule}`,
-                borderRadius: "10px",
+                borderRadius: '10px',
               }}
             >
               Este lote todavía no tiene ítems capturados.
@@ -425,12 +425,12 @@ export function SubLoteDrawer({
               component="ul"
               role="list"
               sx={{
-                listStyle: "none",
+                listStyle: 'none',
                 m: 0,
                 p: 0,
                 border: `1px solid ${foto.surfaces.rule}`,
-                borderRadius: "10px",
-                overflow: "hidden",
+                borderRadius: '10px',
+                overflow: 'hidden',
               }}
             >
               {items.map((it) => {
@@ -441,15 +441,15 @@ export function SubLoteDrawer({
                     key={it.itemId}
                     onClick={() => toggle(it.itemId)}
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      padding: "10px 12px",
-                      cursor: "pointer",
-                      background: on ? foto.accent.soft : "transparent",
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '10px 12px',
+                      cursor: 'pointer',
+                      background: on ? foto.accent.soft : 'transparent',
                       borderBottom: `1px solid ${foto.surfaces.edge}`,
-                      "&:last-of-type": { borderBottom: "none" },
-                      "&:hover": {
+                      '&:last-of-type': { borderBottom: 'none' },
+                      '&:hover': {
                         background: on ? foto.accent.soft : foto.surfaces.inset,
                       },
                     }}
@@ -460,21 +460,21 @@ export function SubLoteDrawer({
                         width: 18,
                         height: 18,
                         flexShrink: 0,
-                        borderRadius: "5px",
+                        borderRadius: '5px',
                         border: `1.5px solid ${
                           on ? foto.accent.primary : foto.surfaces.rule
                         }`,
-                        background: on ? foto.accent.primary : "transparent",
-                        color: "#fff",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        background: on ? foto.accent.primary : 'transparent',
+                        color: '#fff',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         fontSize: 12,
                         fontWeight: 700,
                         lineHeight: 1,
                       }}
                     >
-                      {on ? "✓" : ""}
+                      {on ? '✓' : ''}
                     </Box>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box
@@ -482,12 +482,12 @@ export function SubLoteDrawer({
                           fontSize: 13.5,
                           fontWeight: 600,
                           color: foto.ink.primary,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
                         }}
                       >
-                        {it.nombre || "—"}
+                        {it.nombre || '—'}
                       </Box>
                       <Box
                         sx={{
@@ -510,11 +510,11 @@ export function SubLoteDrawer({
       {/* Footer */}
       <Box
         sx={{
-          padding: "16px 22px",
+          padding: '16px 22px',
           borderTop: `1px solid ${foto.surfaces.rule}`,
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
         }}
       >
         {error ? (
@@ -525,8 +525,8 @@ export function SubLoteDrawer({
               color: foto.status.sold,
               background: alpha(foto.status.sold, 0.08),
               border: `1px solid ${foto.status.sold}`,
-              borderRadius: "8px",
-              padding: "8px 12px",
+              borderRadius: '8px',
+              padding: '8px 12px',
             }}
           >
             {error}
@@ -538,24 +538,24 @@ export function SubLoteDrawer({
           disabled={!canSubmit}
           onClick={() => void handleSubmit()}
           sx={{
-            width: "100%",
-            padding: "13px 18px",
-            borderRadius: "11px",
-            border: "none",
+            width: '100%',
+            padding: '13px 18px',
+            borderRadius: '11px',
+            border: 'none',
             background: foto.accent.primary,
-            color: "#fff",
+            color: '#fff',
             fontSize: 14,
             fontWeight: 600,
-            cursor: canSubmit ? "pointer" : "not-allowed",
+            cursor: canSubmit ? 'pointer' : 'not-allowed',
             opacity: canSubmit ? 1 : 0.55,
-            "&:hover:not(:disabled)": { filter: "brightness(1.05)" },
+            '&:hover:not(:disabled)': { filter: 'brightness(1.05)' },
           }}
         >
           {submitting
-            ? "Guardando…"
+            ? 'Guardando…'
             : subLote
-              ? "Guardar cambios"
-              : "Crear sub-lote"}
+              ? 'Guardar cambios'
+              : 'Crear sub-lote'}
         </Box>
       </Box>
     </Dialog>

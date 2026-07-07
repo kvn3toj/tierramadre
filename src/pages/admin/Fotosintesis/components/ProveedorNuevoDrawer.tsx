@@ -6,33 +6,33 @@ import {
   useMemo,
   useRef,
   useState,
-} from "react";
-import { Box, Dialog } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import { AlertTriangle, Check, X as XIcon } from "lucide-react";
-import { getFoto, fontFamilies } from "../../../../design-system";
+} from 'react';
+import { Box, Dialog } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { AlertTriangle, Check, X as XIcon } from 'lucide-react';
+import { getFoto, fontFamilies } from '../../../../design-system';
 import {
-  useConvexMutation,
+  useAuthedConvexAction,
   useConvexQuery,
   convexApi,
-} from "../../../../lib/convex-safe";
-import { FieldLabel } from "./FieldLabel";
-import { KbdKey } from "./KbdKey";
+} from '../../../../lib/convex-safe';
+import { FieldLabel } from './FieldLabel';
+import { KbdKey } from './KbdKey';
 import {
   spanishText,
   properName,
   streetAddress,
   noSpellCheck,
-} from "../utils/fieldLang";
-import { SegmentedControl } from "./SegmentedControl";
-import { verifyNit } from "../../../../utils/nitVerify";
+} from '../utils/fieldLang';
+import { SegmentedControl } from './SegmentedControl';
+import { verifyNit } from '../../../../utils/nitVerify';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type ProveedorTipo = "gemas" | "joyas" | "insumos" | "otros";
-type TipoDocumento = "NIT" | "Cédula" | "Pasaporte" | "Otro";
+type ProveedorTipo = 'gemas' | 'joyas' | 'insumos' | 'otros';
+type TipoDocumento = 'NIT' | 'Cédula' | 'Pasaporte' | 'Otro';
 
 interface ProveedorNuevoDrawerProps {
   open: boolean;
@@ -74,13 +74,13 @@ export interface ProviderInitialData {
 
 /** Map a free-text doc type from the AI draft onto the drawer's enum. */
 function coerceTipoDocumento(raw: unknown): TipoDocumento {
-  if (typeof raw !== "string") return "NIT";
+  if (typeof raw !== 'string') return 'NIT';
   const s = raw.trim().toLowerCase();
-  if (s.includes("nit")) return "NIT";
-  if (s.includes("céd") || s.includes("ced")) return "Cédula";
-  if (s.includes("pas")) return "Pasaporte";
-  if (!s) return "NIT";
-  return "Otro";
+  if (s.includes('nit')) return 'NIT';
+  if (s.includes('céd') || s.includes('ced')) return 'Cédula';
+  if (s.includes('pas')) return 'Pasaporte';
+  if (!s) return 'NIT';
+  return 'Otro';
 }
 
 // Loose shape — the canonical type lives in convex/_generated/dataModel but we
@@ -97,22 +97,22 @@ interface ProviderRow {
 // ---------------------------------------------------------------------------
 
 const TIPO_OPTIONS: { value: ProveedorTipo; label: string }[] = [
-  { value: "gemas", label: "Gemas" },
-  { value: "joyas", label: "Joyas" },
-  { value: "insumos", label: "Insumos" },
-  { value: "otros", label: "Otros" },
+  { value: 'gemas', label: 'Gemas' },
+  { value: 'joyas', label: 'Joyas' },
+  { value: 'insumos', label: 'Insumos' },
+  { value: 'otros', label: 'Otros' },
 ];
 
 const TIPO_DOC_OPTIONS: { value: TipoDocumento; label: string }[] = [
-  { value: "NIT", label: "NIT" },
-  { value: "Cédula", label: "Cédula" },
-  { value: "Pasaporte", label: "Pasaporte" },
-  { value: "Otro", label: "Otro" },
+  { value: 'NIT', label: 'NIT' },
+  { value: 'Cédula', label: 'Cédula' },
+  { value: 'Pasaporte', label: 'Pasaporte' },
+  { value: 'Otro', label: 'Otro' },
 ];
 
 /** Strip non-digits from a NIT-ish string for cross-comparison. */
 function normalizeDocDigits(s: string | undefined | null): string {
-  return (s ?? "").replace(/[^0-9]/g, "");
+  return (s ?? '').replace(/[^0-9]/g, '');
 }
 
 /**
@@ -121,21 +121,21 @@ function normalizeDocDigits(s: string | undefined | null): string {
  * Returns the formatted display string.
  */
 function formatColombianPhone(raw: string): string {
-  let digits = (raw ?? "").replace(/[^0-9]/g, "");
+  let digits = (raw ?? '').replace(/[^0-9]/g, '');
   // Drop a leading +57 country code if present so it isn't counted as part of
   // the national number. Colombian national numbers never start with "57"
   // (mobiles start with "3", landlines with "60"), so this is safe to strip
   // unconditionally — including during incremental typing, where the controlled
   // input re-feeds its own "+57 ..." formatted value back into this function.
-  if (digits.startsWith("57")) {
+  if (digits.startsWith('57')) {
     digits = digits.slice(2);
   }
-  if (digits.length === 0) return "";
-  const parts: string[] = ["+57"];
+  if (digits.length === 0) return '';
+  const parts: string[] = ['+57'];
   if (digits.length > 0) parts.push(digits.slice(0, 3));
   if (digits.length > 3) parts.push(digits.slice(3, 6));
   if (digits.length > 6) parts.push(digits.slice(6, 10));
-  return parts.join(" ");
+  return parts.join(' ');
 }
 
 // ---------------------------------------------------------------------------
@@ -150,7 +150,7 @@ export function ProveedorNuevoDrawer({
   initialName,
   initialData,
 }: ProveedorNuevoDrawerProps) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const titleId = useId();
 
   // Form state — kept local; nothing leaks until submit.
@@ -158,14 +158,14 @@ export function ProveedorNuevoDrawer({
   // isn't in TIPO_OPTIONS (selecting "Otros" reveals a free-text input). The
   // four known values stay the common path; persisted via providers.tipo,
   // whose Convex validator accepts free text.
-  const [tipo, setTipo] = useState<string>("gemas");
-  const [nombre, setNombre] = useState("");
-  const [tipoDocumento, setTipoDocumento] = useState<TipoDocumento>("NIT");
-  const [documento, setDocumento] = useState("");
-  const [telefono, setTelefono] = useState("");
-  const [email, setEmail] = useState("");
-  const [direccion, setDireccion] = useState("");
-  const [notas, setNotas] = useState("");
+  const [tipo, setTipo] = useState<string>('gemas');
+  const [nombre, setNombre] = useState('');
+  const [tipoDocumento, setTipoDocumento] = useState<TipoDocumento>('NIT');
+  const [documento, setDocumento] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [email, setEmail] = useState('');
+  const [direccion, setDireccion] = useState('');
+  const [notas, setNotas] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [dupDismissed, setDupDismissed] = useState(false);
@@ -179,16 +179,16 @@ export function ProveedorNuevoDrawer({
   useEffect(() => {
     if (open) {
       const d = initialData ?? {};
-      setTipo(typeof d.tipo === "string" && d.tipo ? d.tipo : "gemas");
-      setNombre(initialName ?? d.nombreORazonSocial ?? "");
+      setTipo(typeof d.tipo === 'string' && d.tipo ? d.tipo : 'gemas');
+      setNombre(initialName ?? d.nombreORazonSocial ?? '');
       setTipoDocumento(coerceTipoDocumento(d.tipoDocumento));
-      setDocumento(typeof d.documento === "string" ? d.documento : "");
+      setDocumento(typeof d.documento === 'string' ? d.documento : '');
       setTelefono(
-        typeof d.telefono === "string" ? formatColombianPhone(d.telefono) : "",
+        typeof d.telefono === 'string' ? formatColombianPhone(d.telefono) : '',
       );
-      setEmail(typeof d.email === "string" ? d.email : "");
-      setDireccion(typeof d.direccion === "string" ? d.direccion : "");
-      setNotas(typeof d.notas === "string" ? d.notas : "");
+      setEmail(typeof d.email === 'string' ? d.email : '');
+      setDireccion(typeof d.direccion === 'string' ? d.direccion : '');
+      setNotas(typeof d.notas === 'string' ? d.notas : '');
       setSubmitting(false);
       setSubmitError(null);
       setDupDismissed(false);
@@ -206,13 +206,13 @@ export function ProveedorNuevoDrawer({
 
   // ---- Convex wiring ----------------------------------------------------
   const allProviders = useConvexQuery(convexApi.providers.list, {
-    search: "",
+    search: '',
   }) as ProviderRow[] | undefined;
-  const createProvider = useConvexMutation(convexApi.providers.create);
+  const createProvider = useAuthedConvexAction(convexApi.providers.create);
 
   // ---- NIT validation ---------------------------------------------------
   const nitResult = useMemo(() => {
-    if (tipoDocumento !== "NIT") return null;
+    if (tipoDocumento !== 'NIT') return null;
     const digits = normalizeDocDigits(documento);
     if (digits.length < 9) return null;
     return verifyNit(documento);
@@ -250,7 +250,7 @@ export function ProveedorNuevoDrawer({
   const requestClose = useCallback(() => {
     if (submitting) return;
     if (isDirty) {
-      const ok = window.confirm("¿Descartar cambios?");
+      const ok = window.confirm('¿Descartar cambios?');
       if (!ok) return;
     }
     onClose();
@@ -259,8 +259,8 @@ export function ProveedorNuevoDrawer({
   // Esc key — Dialog already handles this via onClose, but we route through
   // the dirty-aware path. MUI's Dialog passes "escapeKeyDown" as the reason.
   const handleDialogClose = useCallback(
-    (_event: object, reason: "backdropClick" | "escapeKeyDown") => {
-      if (reason === "backdropClick" || reason === "escapeKeyDown") {
+    (_event: object, reason: 'backdropClick' | 'escapeKeyDown') => {
+      if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
         requestClose();
       }
     },
@@ -290,8 +290,8 @@ export function ProveedorNuevoDrawer({
       };
       const docTrimmed = documento.trim();
       if (docTrimmed.length > 0) {
-        if (tipoDocumento === "NIT") payload.nit = docTrimmed;
-        else if (tipoDocumento === "Cédula") payload.cedula = docTrimmed;
+        if (tipoDocumento === 'NIT') payload.nit = docTrimmed;
+        else if (tipoDocumento === 'Cédula') payload.cedula = docTrimmed;
         else payload.nit = docTrimmed; // Pasaporte / Otro → still goes in NIT slot
       }
       if (telefono.trim().length > 0) payload.telefono = telefono.trim();
@@ -304,12 +304,12 @@ export function ProveedorNuevoDrawer({
         payload as Parameters<typeof createProvider>[0],
       )) as { id: string } | string;
       const providerId =
-        typeof result === "string" ? result : (result?.id ?? "");
+        typeof result === 'string' ? result : (result?.id ?? '');
       onSuccess({ id: providerId, nombre: nombre.trim() });
       onClose();
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "No se pudo crear el proveedor.";
+        err instanceof Error ? err.message : 'No se pudo crear el proveedor.';
       setSubmitError(message);
       setSubmitting(false);
     }
@@ -331,7 +331,7 @@ export function ProveedorNuevoDrawer({
   // Keyboard: Cmd/Ctrl+Enter submits from any focus inside the drawer.
   const handleBodyKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         e.preventDefault();
         void handleSubmit();
       }
@@ -349,20 +349,20 @@ export function ProveedorNuevoDrawer({
   const inputBaseSx = useMemo(
     () => ({
       border: `1px solid ${foto.surfaces.rule}`,
-      borderRadius: "9px",
+      borderRadius: '9px',
       background: foto.surfaces.canvas,
-      padding: "11px 13px",
+      padding: '11px 13px',
       fontFamily: fontFamilies.system,
-      fontSize: "13.5px",
+      fontSize: '13.5px',
       color: foto.ink.primary,
-      width: "100%",
-      transition: "border-color 120ms ease, box-shadow 120ms ease",
-      outline: "none",
-      "&:focus": {
+      width: '100%',
+      transition: 'border-color 120ms ease, box-shadow 120ms ease',
+      outline: 'none',
+      '&:focus': {
         borderColor: foto.accent.primary,
         boxShadow: `0 0 0 3px ${foto.accent.glow}`,
       },
-      "&::placeholder": { color: foto.ink.mute },
+      '&::placeholder': { color: foto.ink.mute },
     }),
     [foto],
   );
@@ -380,39 +380,39 @@ export function ProveedorNuevoDrawer({
       slotProps={{
         backdrop: {
           sx: {
-            background: "rgba(11,16,14,0.32)",
-            backdropFilter: "saturate(80%)",
+            background: 'rgba(11,16,14,0.32)',
+            backdropFilter: 'saturate(80%)',
           },
         },
       }}
       PaperProps={{
         sx: {
-          position: "fixed",
+          position: 'fixed',
           right: 0,
           top: 0,
           bottom: 0,
           margin: 0,
-          width: { xs: "100vw", sm: 560 },
-          maxWidth: "100vw",
-          height: "100vh",
-          maxHeight: "100vh",
+          width: { xs: '100vw', sm: 560 },
+          maxWidth: '100vw',
+          height: '100vh',
+          maxHeight: '100vh',
           borderRadius: 0,
-          boxShadow: "-30px 0 80px rgba(11,16,14,0.18)",
+          boxShadow: '-30px 0 80px rgba(11,16,14,0.18)',
           background: foto.surfaces.canvas,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
         },
       }}
     >
       {/* HEADER ---------------------------------------------------------- */}
       <Box
         sx={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: "14px",
-          padding: "22px 26px 18px",
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: '14px',
+          padding: '22px 26px 18px',
           borderBottom: `1px solid ${foto.surfaces.rule}`,
         }}
       >
@@ -421,8 +421,8 @@ export function ProveedorNuevoDrawer({
             <Box
               sx={{
                 fontSize: 9,
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
                 color: foto.ink.tertiary,
                 fontWeight: 500,
               }}
@@ -434,10 +434,10 @@ export function ProveedorNuevoDrawer({
             id={titleId}
             component="h2"
             sx={{
-              fontSize: "22px",
+              fontSize: '22px',
               fontWeight: 600,
-              letterSpacing: "-0.02em",
-              marginTop: contextLabel ? "6px" : 0,
+              letterSpacing: '-0.02em',
+              marginTop: contextLabel ? '6px' : 0,
               color: foto.ink.primary,
               lineHeight: 1.2,
             }}
@@ -446,9 +446,9 @@ export function ProveedorNuevoDrawer({
           </Box>
           <Box
             sx={{
-              fontSize: "12.5px",
+              fontSize: '12.5px',
               color: foto.ink.secondary,
-              marginTop: "5px",
+              marginTop: '5px',
               lineHeight: 1.55,
             }}
           >
@@ -465,17 +465,17 @@ export function ProveedorNuevoDrawer({
             height: 32,
             minWidth: 44,
             minHeight: 44,
-            borderRadius: "8px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             color: foto.ink.tertiary,
-            cursor: "pointer",
+            cursor: 'pointer',
             border: `1px solid ${foto.surfaces.edge}`,
             background: foto.surfaces.canvas,
             flexShrink: 0,
-            transition: "background 120ms ease, color 120ms ease",
-            "&:hover": {
+            transition: 'background 120ms ease, color 120ms ease',
+            '&:hover': {
               background: foto.surfaces.inset,
               color: foto.ink.primary,
             },
@@ -490,26 +490,26 @@ export function ProveedorNuevoDrawer({
         onKeyDown={handleBodyKeyDown}
         sx={{
           flex: 1,
-          overflowY: "auto",
-          padding: "24px 26px",
+          overflowY: 'auto',
+          padding: '24px 26px',
         }}
       >
         {/* GROUP — Tipo */}
         <FormGroup label="Tipo de proveedor">
           <Box
             sx={{
-              display: "grid",
+              display: 'grid',
               gridTemplateColumns: {
-                xs: "repeat(2, 1fr)",
-                sm: "repeat(4, 1fr)",
+                xs: 'repeat(2, 1fr)',
+                sm: 'repeat(4, 1fr)',
               },
-              gap: "8px",
+              gap: '8px',
             }}
           >
             {TIPO_OPTIONS.map((opt) => {
               // "Otros" stays highlighted while a custom value is being typed.
               const active =
-                opt.value === tipo || (opt.value === "otros" && tipoIsCustom);
+                opt.value === tipo || (opt.value === 'otros' && tipoIsCustom);
               return (
                 <Box
                   key={opt.value}
@@ -518,20 +518,20 @@ export function ProveedorNuevoDrawer({
                   onClick={() => setTipo(opt.value)}
                   aria-pressed={active}
                   sx={{
-                    padding: "10px 12px",
-                    borderRadius: "9px",
+                    padding: '10px 12px',
+                    borderRadius: '9px',
                     border: `1px solid ${active ? foto.accent.primary : foto.surfaces.rule}`,
                     background: active
                       ? foto.accent.soft
                       : foto.surfaces.canvas,
                     color: active ? foto.accent.deep : foto.ink.secondary,
-                    fontSize: "12.5px",
+                    fontSize: '12.5px',
                     fontWeight: active ? 600 : 500,
-                    textAlign: "center",
-                    cursor: "pointer",
+                    textAlign: 'center',
+                    cursor: 'pointer',
                     transition:
-                      "border-color 120ms ease, background-color 120ms ease, color 120ms ease",
-                    "&:hover": {
+                      'border-color 120ms ease, background-color 120ms ease, color 120ms ease',
+                    '&:hover': {
                       borderColor: active
                         ? foto.accent.primary
                         : foto.surfaces.edgeStrong,
@@ -543,18 +543,18 @@ export function ProveedorNuevoDrawer({
               );
             })}
           </Box>
-          {tipo === "otros" || tipoIsCustom ? (
+          {tipo === 'otros' || tipoIsCustom ? (
             <Box
               component="input"
-              value={tipoIsCustom ? tipo : ""}
+              value={tipoIsCustom ? tipo : ''}
               {...spanishText}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 const next = e.target.value;
-                setTipo(next.trim().length > 0 ? next : "otros");
+                setTipo(next.trim().length > 0 ? next : 'otros');
               }}
               placeholder="Especificar otro tipo (opcional)…"
               aria-label="Especificar otro tipo de proveedor"
-              sx={{ ...inputBaseSx, marginTop: "8px" }}
+              sx={{ ...inputBaseSx, marginTop: '8px' }}
             />
           ) : null}
         </FormGroup>
@@ -563,12 +563,12 @@ export function ProveedorNuevoDrawer({
         <FormGroup label="Identidad">
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-              gap: "14px",
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+              gap: '14px',
             }}
           >
-            <Box sx={{ gridColumn: "1 / -1" }}>
+            <Box sx={{ gridColumn: '1 / -1' }}>
               <FieldLabel>Nombre o razón social ·</FieldLabel>
               <Box
                 ref={nombreInputRef}
@@ -583,9 +583,9 @@ export function ProveedorNuevoDrawer({
               />
               <Box
                 sx={{
-                  fontSize: "11.5px",
+                  fontSize: '11.5px',
                   color: foto.ink.tertiary,
-                  marginTop: "4px",
+                  marginTop: '4px',
                   lineHeight: 1.5,
                 }}
               >
@@ -593,7 +593,7 @@ export function ProveedorNuevoDrawer({
               </Box>
             </Box>
 
-            <Box sx={{ gridColumn: "1 / -1" }}>
+            <Box sx={{ gridColumn: '1 / -1' }}>
               <FieldLabel>Tipo de documento</FieldLabel>
               <SegmentedControl
                 ariaLabel="Tipo de documento"
@@ -604,20 +604,20 @@ export function ProveedorNuevoDrawer({
               />
             </Box>
 
-            <Box sx={{ gridColumn: "1 / -1" }}>
+            <Box sx={{ gridColumn: '1 / -1' }}>
               <FieldLabel>
-                Documento {tipoDocumento === "NIT" ? "·" : ""}
+                Documento {tipoDocumento === 'NIT' ? '·' : ''}
               </FieldLabel>
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "stretch",
+                  display: 'flex',
+                  alignItems: 'stretch',
                   border: `1px solid ${foto.surfaces.rule}`,
-                  borderRadius: "9px",
+                  borderRadius: '9px',
                   background: foto.surfaces.canvas,
-                  overflow: "hidden",
-                  transition: "border-color 120ms ease, box-shadow 120ms ease",
-                  "&:focus-within": {
+                  overflow: 'hidden',
+                  transition: 'border-color 120ms ease, box-shadow 120ms ease',
+                  '&:focus-within': {
                     borderColor: foto.accent.primary,
                     boxShadow: `0 0 0 3px ${foto.accent.glow}`,
                   },
@@ -631,34 +631,34 @@ export function ProveedorNuevoDrawer({
                     setDocumento(e.target.value)
                   }
                   placeholder={
-                    tipoDocumento === "NIT" ? "900.123.456-7" : "Documento"
+                    tipoDocumento === 'NIT' ? '900.123.456-7' : 'Documento'
                   }
                   sx={{
                     flex: 1,
                     minWidth: 0,
-                    border: "none",
-                    outline: "none",
-                    padding: "11px 13px",
+                    border: 'none',
+                    outline: 'none',
+                    padding: '11px 13px',
                     fontFamily: fontFamilies.mono,
-                    fontVariantNumeric: "tabular-nums",
-                    fontSize: "13.5px",
+                    fontVariantNumeric: 'tabular-nums',
+                    fontSize: '13.5px',
                     color: foto.ink.primary,
-                    background: "transparent",
+                    background: 'transparent',
                   }}
                 />
                 {nitResult?.valid ? (
                   <Box
                     sx={{
-                      padding: "11px 14px",
+                      padding: '11px 14px',
                       background: foto.accent.soft,
                       color: foto.accent.deep,
-                      fontSize: "11px",
+                      fontSize: '11px',
                       fontWeight: 600,
                       borderLeft: `1px solid ${foto.accent.glow}`,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      whiteSpace: "nowrap",
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     <Check size={12} strokeWidth={2.5} />
@@ -667,13 +667,13 @@ export function ProveedorNuevoDrawer({
                 ) : null}
               </Box>
               {/* Helper line */}
-              {tipoDocumento === "NIT" && nitResult ? (
+              {tipoDocumento === 'NIT' && nitResult ? (
                 nitResult.valid ? (
                   <Box
                     sx={{
-                      fontSize: "11.5px",
+                      fontSize: '11.5px',
                       color: foto.accent.deep,
-                      marginTop: "4px",
+                      marginTop: '4px',
                       lineHeight: 1.5,
                     }}
                   >
@@ -683,13 +683,13 @@ export function ProveedorNuevoDrawer({
                 ) : nitResult.suggested ? (
                   <Box
                     sx={{
-                      fontSize: "11.5px",
+                      fontSize: '11.5px',
                       color: foto.status.consigned,
-                      marginTop: "4px",
+                      marginTop: '4px',
                       lineHeight: 1.5,
                     }}
                   >
-                    DV no coincide · sugerencia{" "}
+                    DV no coincide · sugerencia{' '}
                     <Box
                       component="span"
                       sx={{
@@ -712,25 +712,25 @@ export function ProveedorNuevoDrawer({
               sx={{
                 background: alpha(foto.status.consigned, 0.1),
                 border: `1px solid ${alpha(foto.status.consigned, 0.25)}`,
-                borderRadius: "10px",
-                padding: "13px 14px",
-                marginTop: "10px",
-                display: "grid",
-                gridTemplateColumns: "auto 1fr",
-                gap: "11px",
-                alignItems: "start",
+                borderRadius: '10px',
+                padding: '13px 14px',
+                marginTop: '10px',
+                display: 'grid',
+                gridTemplateColumns: 'auto 1fr',
+                gap: '11px',
+                alignItems: 'start',
               }}
             >
               <Box
                 sx={{
                   width: 26,
                   height: 26,
-                  borderRadius: "50%",
+                  borderRadius: '50%',
                   background: foto.status.consigned,
-                  color: "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
@@ -738,22 +738,22 @@ export function ProveedorNuevoDrawer({
               </Box>
               <Box
                 sx={{
-                  fontSize: "11.5px",
-                  color: "#7a5a1a",
+                  fontSize: '11.5px',
+                  color: '#7a5a1a',
                   lineHeight: 1.5,
                 }}
               >
-                <Box component="strong" sx={{ color: "#5a4014" }}>
+                <Box component="strong" sx={{ color: '#5a4014' }}>
                   Atención · ya existe un proveedor parecido
                 </Box>
-                <Box sx={{ marginTop: "3px" }}>
-                  Encontramos{" "}
-                  <Box component="strong" sx={{ color: "#5a4014" }}>
+                <Box sx={{ marginTop: '3px' }}>
+                  Encontramos{' '}
+                  <Box component="strong" sx={{ color: '#5a4014' }}>
                     “{duplicate.nombreORazonSocial}”
-                  </Box>{" "}
+                  </Box>{' '}
                   en el directorio. ¿Es el mismo?
                 </Box>
-                <Box sx={{ display: "flex", gap: "6px", marginTop: "8px" }}>
+                <Box sx={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
                   <Box
                     component="button"
                     type="button"
@@ -780,9 +780,9 @@ export function ProveedorNuevoDrawer({
         <FormGroup label="Contacto" optional="opcional pero recomendado">
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-              gap: "14px",
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+              gap: '14px',
             }}
           >
             <Box>
@@ -800,14 +800,14 @@ export function ProveedorNuevoDrawer({
                 sx={{
                   ...inputBaseSx,
                   fontFamily: fontFamilies.mono,
-                  fontVariantNumeric: "tabular-nums",
+                  fontVariantNumeric: 'tabular-nums',
                 }}
               />
               <Box
                 sx={{
-                  fontSize: "11.5px",
+                  fontSize: '11.5px',
                   color: foto.ink.tertiary,
-                  marginTop: "4px",
+                  marginTop: '4px',
                   lineHeight: 1.5,
                 }}
               >
@@ -829,7 +829,7 @@ export function ProveedorNuevoDrawer({
                 sx={inputBaseSx}
               />
             </Box>
-            <Box sx={{ gridColumn: "1 / -1" }}>
+            <Box sx={{ gridColumn: '1 / -1' }}>
               <FieldLabel>Dirección</FieldLabel>
               <Box
                 component="textarea"
@@ -842,7 +842,7 @@ export function ProveedorNuevoDrawer({
                 placeholder="Calle 73 #11-22, of. 401 · Bogotá D.C."
                 sx={{
                   ...inputBaseSx,
-                  resize: "none",
+                  resize: 'none',
                   minHeight: 60,
                   lineHeight: 1.5,
                 }}
@@ -867,7 +867,7 @@ export function ProveedorNuevoDrawer({
             placeholder="Particularidades del proveedor, condiciones, contactos alternos…"
             sx={{
               ...inputBaseSx,
-              resize: "none",
+              resize: 'none',
               minHeight: 60,
               lineHeight: 1.5,
             }}
@@ -881,11 +881,11 @@ export function ProveedorNuevoDrawer({
             sx={{
               background: alpha(foto.status.sold, 0.07),
               border: `1px solid ${alpha(foto.status.sold, 0.3)}`,
-              borderRadius: "10px",
-              padding: "11px 13px",
-              fontSize: "12px",
+              borderRadius: '10px',
+              padding: '11px 13px',
+              fontSize: '12px',
               color: foto.status.sold,
-              marginTop: "12px",
+              marginTop: '12px',
               lineHeight: 1.5,
             }}
           >
@@ -897,35 +897,35 @@ export function ProveedorNuevoDrawer({
       {/* FOOTER ---------------------------------------------------------- */}
       <Box
         sx={{
-          padding: "18px 26px",
+          padding: '18px 26px',
           borderTop: `1px solid ${foto.surfaces.rule}`,
           background: foto.surfaces.panel,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "12px",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
         }}
       >
         <Box
           sx={{
-            fontSize: "11px",
+            fontSize: '11px',
             color: foto.ink.tertiary,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            flexWrap: "wrap",
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            flexWrap: 'wrap',
           }}
         >
           <KbdKey size="sm">Esc</KbdKey>
           <Box component="span">cierra</Box>
-          <Box component="span" sx={{ marginLeft: "4px" }}>
+          <Box component="span" sx={{ marginLeft: '4px' }}>
             ·
           </Box>
           <KbdKey size="sm">⌘</KbdKey>
           <KbdKey size="sm">↵</KbdKey>
           <Box component="span">guarda</Box>
         </Box>
-        <Box sx={{ display: "flex", gap: "8px" }}>
+        <Box sx={{ display: 'flex', gap: '8px' }}>
           <Box
             component="button"
             type="button"
@@ -933,16 +933,16 @@ export function ProveedorNuevoDrawer({
             disabled={submitting}
             sx={{
               fontFamily: fontFamilies.system,
-              fontSize: "12.5px",
+              fontSize: '12.5px',
               fontWeight: 600,
-              padding: "11px 18px",
-              borderRadius: "9px",
-              cursor: submitting ? "not-allowed" : "pointer",
-              background: "transparent",
+              padding: '11px 18px',
+              borderRadius: '9px',
+              cursor: submitting ? 'not-allowed' : 'pointer',
+              background: 'transparent',
               color: foto.ink.secondary,
               border: `1px solid ${foto.surfaces.edgeStrong}`,
-              transition: "background 120ms ease, color 120ms ease",
-              "&:hover": {
+              transition: 'background 120ms ease, color 120ms ease',
+              '&:hover': {
                 background: foto.surfaces.canvas,
                 color: foto.ink.primary,
               },
@@ -959,38 +959,38 @@ export function ProveedorNuevoDrawer({
             aria-busy={submitting}
             sx={{
               fontFamily: fontFamilies.system,
-              fontSize: "12.5px",
+              fontSize: '12.5px',
               fontWeight: 600,
-              padding: "11px 18px",
-              borderRadius: "9px",
-              cursor: canSubmit ? "pointer" : "not-allowed",
+              padding: '11px 18px',
+              borderRadius: '9px',
+              cursor: canSubmit ? 'pointer' : 'not-allowed',
               background: foto.accent.primary,
               color: foto.ink.inverse,
-              border: "1px solid transparent",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              transition: "background 120ms ease, transform 120ms ease",
-              "&:hover": canSubmit
+              border: '1px solid transparent',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'background 120ms ease, transform 120ms ease',
+              '&:hover': canSubmit
                 ? {
                     background: foto.accent.deep,
-                    transform: "translateY(-1px)",
+                    transform: 'translateY(-1px)',
                   }
                 : undefined,
               opacity: canSubmit ? 1 : 0.55,
             }}
           >
-            {submitting ? "Creando…" : "Crear proveedor"}
+            {submitting ? 'Creando…' : 'Crear proveedor'}
             <Box
               component="span"
               sx={{
                 fontFamily: fontFamilies.mono,
-                fontSize: "10px",
+                fontSize: '10px',
                 opacity: 0.75,
-                background: "rgba(255,255,255,0.15)",
-                padding: "1px 5px",
-                borderRadius: "3px",
-                marginLeft: "4px",
+                background: 'rgba(255,255,255,0.15)',
+                padding: '1px 5px',
+                borderRadius: '3px',
+                marginLeft: '4px',
               }}
             >
               ⌘↵
@@ -1018,20 +1018,20 @@ function FormGroup({
   optional?: string;
   children: React.ReactNode;
 }) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   return (
-    <Box sx={{ marginBottom: "24px" }}>
+    <Box sx={{ marginBottom: '24px' }}>
       <Box
         sx={{
           fontSize: 9,
-          letterSpacing: "0.2em",
-          textTransform: "uppercase",
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
           color: foto.ink.tertiary,
           fontWeight: 500,
-          marginBottom: "12px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
+          marginBottom: '12px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
         }}
       >
         <Box component="span">{label}</Box>
@@ -1040,9 +1040,9 @@ function FormGroup({
             component="span"
             sx={{
               fontFamily: fontFamilies.system,
-              fontSize: "10.5px",
+              fontSize: '10.5px',
               color: foto.ink.mute,
-              textTransform: "none",
+              textTransform: 'none',
               letterSpacing: 0,
               fontWeight: 500,
             }}
@@ -1058,16 +1058,16 @@ function FormGroup({
 
 function dupButtonSx(foto: ReturnType<typeof getFoto>, primary: boolean) {
   return {
-    fontSize: "10.5px",
-    padding: "5px 10px",
-    borderRadius: "6px",
+    fontSize: '10.5px',
+    padding: '5px 10px',
+    borderRadius: '6px',
     background: primary ? foto.status.consigned : foto.surfaces.canvas,
     border: `1px solid ${primary ? foto.status.consigned : alpha(foto.status.consigned, 0.3)}`,
-    color: primary ? "#fff" : "#7a5a1a",
-    cursor: "pointer",
+    color: primary ? '#fff' : '#7a5a1a',
+    cursor: 'pointer',
     fontWeight: 600,
-    transition: "background 120ms ease",
-    "&:hover": {
+    transition: 'background 120ms ease',
+    '&:hover': {
       background: primary
         ? alpha(foto.status.consigned, 0.85)
         : foto.surfaces.canvas,

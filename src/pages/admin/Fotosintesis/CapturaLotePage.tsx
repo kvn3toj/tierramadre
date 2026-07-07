@@ -6,9 +6,9 @@ import {
   useRef,
   useState,
   type FormEvent,
-} from "react";
-import { Box, Switch, alpha } from "@mui/material";
-import { useNavigate, useParams } from "react-router-dom";
+} from 'react';
+import { Box, Switch, alpha } from '@mui/material';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   AlertTriangle,
   Boxes,
@@ -21,90 +21,90 @@ import {
   Plus,
   Tag,
   Wrench,
-} from "lucide-react";
+} from 'lucide-react';
 
-import { getFoto, fontFamilies } from "../../../design-system";
+import { getFoto, fontFamilies } from '../../../design-system';
 import {
   useConvexQuery,
-  useConvexMutation,
+  useAuthedConvexAction,
   convexApi,
-} from "../../../lib/convex-safe";
-import { STORAGE_KEYS } from "../../../constants/storage-keys";
+} from '../../../lib/convex-safe';
+import { STORAGE_KEYS } from '../../../constants/storage-keys';
 
-import { TicketHeader, type TicketMeta } from "./components/TicketHeader";
-import { FOTO_TOPBAR_HEIGHT } from "./components/FotoTopbar";
-import { PreponderanceRing } from "./components/PreponderanceRing";
-import { ItemMiniCard } from "./components/ItemMiniCard";
-import { SegmentedControl } from "./components/SegmentedControl";
-import { FieldLabel } from "./components/FieldLabel";
-import { SuggestInput } from "./components/SuggestInput";
-import { NumberInputWithCalc } from "./components/NumberInputWithCalc";
-import { PricePerCaratHint } from "./components/PricePerCaratHint";
-import { spanishText, noSpellCheck } from "./utils/fieldLang";
-import { PhotoDropzone, type DropzonePhoto } from "./components/PhotoDropzone";
-import { ShortcutTable } from "./components/ShortcutTable";
+import { TicketHeader, type TicketMeta } from './components/TicketHeader';
+import { FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
+import { PreponderanceRing } from './components/PreponderanceRing';
+import { ItemMiniCard } from './components/ItemMiniCard';
+import { SegmentedControl } from './components/SegmentedControl';
+import { FieldLabel } from './components/FieldLabel';
+import { SuggestInput } from './components/SuggestInput';
+import { NumberInputWithCalc } from './components/NumberInputWithCalc';
+import { PricePerCaratHint } from './components/PricePerCaratHint';
+import { spanishText, noSpellCheck } from './utils/fieldLang';
+import { PhotoDropzone, type DropzonePhoto } from './components/PhotoDropzone';
+import { ShortcutTable } from './components/ShortcutTable';
 import {
   ProveedorNuevoDrawer,
   type ProviderInitialData,
-} from "./components/ProveedorNuevoDrawer";
-import { EntityPicker } from "./components/EntityPicker";
-import { LotSwitcher } from "./components/LotSwitcher";
-import { EditableMetaValue } from "./components/EditableMetaValue";
-import { EditLotDrawer } from "./components/EditLotDrawer";
-import { EditItemDrawer } from "./components/EditItemDrawer";
-import { useNotification } from "../../../contexts/NotificationContext";
-import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
-import ConfirmDialog from "../../../components/shared/ConfirmDialog";
-import type { Id } from "../../../../convex/_generated/dataModel";
+} from './components/ProveedorNuevoDrawer';
+import { EntityPicker } from './components/EntityPicker';
+import { LotSwitcher } from './components/LotSwitcher';
+import { EditableMetaValue } from './components/EditableMetaValue';
+import { EditLotDrawer } from './components/EditLotDrawer';
+import { EditItemDrawer } from './components/EditItemDrawer';
+import { useNotification } from '../../../contexts/NotificationContext';
+import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
+import ConfirmDialog from '../../../components/shared/ConfirmDialog';
+import type { Id } from '../../../../convex/_generated/dataModel';
 import {
   BOVEDAS,
   PROCEDENCIAS,
   sanitizeSedeCode,
   type Sede,
-} from "../../../data/vocabularies";
+} from '../../../data/vocabularies';
 import {
   GemaFields,
   EMPTY_GEMA_DRAFT,
   type GemaDraft,
-} from "./components/GemaFields";
+} from './components/GemaFields';
 import {
   BrutoFields,
   EMPTY_BRUTO_DRAFT,
   type BrutoDraft,
-} from "./components/BrutoFields";
+} from './components/BrutoFields';
 import {
   JoyaFields,
   EMPTY_JOYA_DRAFT,
   type JoyaDraft,
-} from "./components/JoyaFields";
+} from './components/JoyaFields';
 import {
   InsumoFields,
   EMPTY_INSUMO_DRAFT,
   type InsumoDraft,
-} from "./components/InsumoFields";
+} from './components/InsumoFields';
 import {
   buildBrutoPayload,
   buildGemaPayload,
   buildInsumoPayload,
   buildJoyaPayload,
   buildLotePayload,
-} from "./utils/buildLotItemPayload";
+} from './utils/buildLotItemPayload';
 import {
   uploadFotosintesisCertificado,
   uploadFotosintesisImages,
-} from "./utils/uploadItemMedia";
-import { CreditoFields } from "./components/CreditoFields";
-import { useNextLoteId } from "./hooks/useNextLoteId";
-import { usePreponderanciaTotal } from "./hooks/usePreponderanciaTotal";
-import { useFotosintesisLayout } from "./FotosintesisLayoutContext";
+} from './utils/uploadItemMedia';
+import { CreditoFields } from './components/CreditoFields';
+import { useNextLoteId } from './hooks/useNextLoteId';
+import { usePreponderanciaTotal } from './hooks/usePreponderanciaTotal';
+import { useFotosintesisLayout } from './FotosintesisLayoutContext';
 
 // -----------------------------------------------------------------------------
 // Helpers
 // -----------------------------------------------------------------------------
 
-const COP_FORMATTER = new Intl.NumberFormat("es-CO", {
-  style: "currency",
-  currency: "COP",
+const COP_FORMATTER = new Intl.NumberFormat('es-CO', {
+  style: 'currency',
+  currency: 'COP',
   maximumFractionDigits: 0,
 });
 const formatCOP = (n: number): string => COP_FORMATTER.format(n);
@@ -112,17 +112,17 @@ const formatCOP = (n: number): string => COP_FORMATTER.format(n);
 const todayIso = (): string => {
   const d = new Date();
   const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 };
 
 const fmtDateEs = (iso: string): string => {
   // YYYY-MM-DD → "21 may"
   if (!/^\d{4}-\d{2}-\d{2}/.test(iso)) return iso;
-  const [y, m, d] = iso.split("-").map(Number);
+  const [y, m, d] = iso.split('-').map(Number);
   const date = new Date(y, (m ?? 1) - 1, d ?? 1);
-  return date.toLocaleDateString("es-CO", { day: "2-digit", month: "short" });
+  return date.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' });
 };
 
 // "Datos base" — the fields that tend to repeat across every piece in a lote
@@ -167,7 +167,7 @@ interface LotSeedFields {
 const hasPeso = (
   lot: LotSeedFields,
 ): lot is LotSeedFields & { pesoTotalQuilates: number } =>
-  typeof lot.pesoTotalQuilates === "number" && lot.pesoTotalQuilates > 0;
+  typeof lot.pesoTotalQuilates === 'number' && lot.pesoTotalQuilates > 0;
 const seedGemaFromLot = (lot: LotSeedFields): Partial<GemaDraft> => ({
   preponderancia: 100,
   ...(lot.renombreLote?.trim() ? { nombre: lot.renombreLote.trim() } : {}),
@@ -184,7 +184,7 @@ const seedJoyaFromLot = (lot: LotSeedFields): Partial<JoyaDraft> => ({
   preponderancia: 100,
   ...(lot.renombreLote?.trim() ? { nombre: lot.renombreLote.trim() } : {}),
   ...(hasPeso(lot)
-    ? { pesoValor: lot.pesoTotalQuilates, pesoUnidad: "ct" as const }
+    ? { pesoValor: lot.pesoTotalQuilates, pesoUnidad: 'ct' as const }
     : {}),
 });
 const seedInsumoFromLot = (lot: LotSeedFields): Partial<InsumoDraft> => ({
@@ -194,11 +194,11 @@ const seedInsumoFromLot = (lot: LotSeedFields): Partial<InsumoDraft> => ({
 
 /** Human label for the base fields a given field kind carries, for helper copy. */
 const BASE_FIELDS_LABEL: Record<TipoItem, string> = {
-  gema: "color, calidad, procedencia, tipo y corte",
-  bruto: "procedencia y rendimiento",
-  joya: "tipo de joya, técnica, minerales y complementos",
-  lote: "tipo de joya, técnica, minerales y complementos",
-  insumo: "la categoría",
+  gema: 'color, calidad, procedencia, tipo y corte',
+  bruto: 'procedencia y rendimiento',
+  joya: 'tipo de joya, técnica, minerales y complementos',
+  lote: 'tipo de joya, técnica, minerales y complementos',
+  insumo: 'la categoría',
 };
 
 // -----------------------------------------------------------------------------
@@ -218,21 +218,21 @@ const BASE_FIELDS_LABEL: Record<TipoItem, string> = {
 // payload builder kept for potential legacy-data migration; rough stones are
 // captured AND edited as gemas (see EditableTipo / inferItemTipo). Safe to
 // excise in a dedicated bruto-retirement pass.
-type TipoItem = "gema" | "bruto" | "joya" | "insumo" | "lote";
+type TipoItem = 'gema' | 'bruto' | 'joya' | 'insumo' | 'lote';
 
 // Operator-facing item types, mirroring the FOTOSÍNTESIS form's "TIPO" list.
 // Labels are sentence case (first letter only) by design — not ALL CAPS.
 type ItemSubtipo =
-  | "piedra"
-  | "gema"
-  | "lote"
-  | "joya"
-  | "lote_de_joyas"
-  | "ganga"
-  | "macla"
-  | "canutillo"
-  | "insumo"
-  | "otros";
+  | 'piedra'
+  | 'gema'
+  | 'lote'
+  | 'joya'
+  | 'lote_de_joyas'
+  | 'ganga'
+  | 'macla'
+  | 'canutillo'
+  | 'insumo'
+  | 'otros';
 
 interface SubtipoOption {
   value: ItemSubtipo;
@@ -245,51 +245,51 @@ interface SubtipoOption {
 
 const SUBTIPO_OPTIONS: SubtipoOption[] = [
   {
-    value: "piedra",
-    label: "Piedra",
-    key: "1",
+    value: 'piedra',
+    label: 'Piedra',
+    key: '1',
     Icon: Mountain,
-    fieldKind: "gema",
+    fieldKind: 'gema',
   },
-  { value: "gema", label: "Gema", key: "2", Icon: Gem, fieldKind: "gema" },
-  { value: "lote", label: "Lote", key: "3", Icon: Layers, fieldKind: "lote" },
-  { value: "joya", label: "Joya", key: "4", Icon: Diamond, fieldKind: "joya" },
+  { value: 'gema', label: 'Gema', key: '2', Icon: Gem, fieldKind: 'gema' },
+  { value: 'lote', label: 'Lote', key: '3', Icon: Layers, fieldKind: 'lote' },
+  { value: 'joya', label: 'Joya', key: '4', Icon: Diamond, fieldKind: 'joya' },
   {
-    value: "lote_de_joyas",
-    label: "Lote de joyas",
-    key: "5",
+    value: 'lote_de_joyas',
+    label: 'Lote de joyas',
+    key: '5',
     Icon: Boxes,
-    fieldKind: "lote",
+    fieldKind: 'lote',
   },
   {
-    value: "ganga",
-    label: "Ganga",
-    key: "6",
+    value: 'ganga',
+    label: 'Ganga',
+    key: '6',
     Icon: Mountain,
-    fieldKind: "gema",
+    fieldKind: 'gema',
   },
   {
-    value: "macla",
-    label: "Macla",
-    key: "7",
+    value: 'macla',
+    label: 'Macla',
+    key: '7',
     Icon: Mountain,
-    fieldKind: "gema",
+    fieldKind: 'gema',
   },
   {
-    value: "canutillo",
-    label: "Canutillo",
-    key: "8",
+    value: 'canutillo',
+    label: 'Canutillo',
+    key: '8',
     Icon: Mountain,
-    fieldKind: "gema",
+    fieldKind: 'gema',
   },
   {
-    value: "insumo",
-    label: "Insumo",
-    key: "0",
+    value: 'insumo',
+    label: 'Insumo',
+    key: '0',
     Icon: Wrench,
-    fieldKind: "insumo",
+    fieldKind: 'insumo',
   },
-  { value: "otros", label: "Otros", key: "9", Icon: Tag, fieldKind: "lote" },
+  { value: 'otros', label: 'Otros', key: '9', Icon: Tag, fieldKind: 'lote' },
 ];
 
 const SUBTIPO_LABEL = Object.fromEntries(
@@ -306,17 +306,17 @@ interface TypeSelectorProps {
 }
 
 function TypeSelector({ value, onChange }: TypeSelectorProps) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const groupName = useId();
 
   return (
     <Box
       component="fieldset"
       sx={{
-        border: "none",
+        border: 'none',
         padding: 0,
         margin: 0,
-        display: "block",
+        display: 'block',
       }}
     >
       <Box
@@ -324,10 +324,10 @@ function TypeSelector({ value, onChange }: TypeSelectorProps) {
         sx={{
           fontSize: 9,
           fontWeight: 500,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
           color: foto.ink.tertiary,
-          marginBottom: "10px",
+          marginBottom: '10px',
           padding: 0,
         }}
       >
@@ -335,12 +335,12 @@ function TypeSelector({ value, onChange }: TypeSelectorProps) {
       </Box>
       <Box
         sx={{
-          display: "grid",
+          display: 'grid',
           gridTemplateColumns: {
-            xs: "repeat(2, minmax(0, 1fr))",
-            sm: "repeat(3, minmax(0, 1fr))",
+            xs: 'repeat(2, minmax(0, 1fr))',
+            sm: 'repeat(3, minmax(0, 1fr))',
           },
-          gap: "8px",
+          gap: '8px',
         }}
       >
         {SUBTIPO_OPTIONS.map((opt) => {
@@ -353,22 +353,22 @@ function TypeSelector({ value, onChange }: TypeSelectorProps) {
               component="label"
               htmlFor={inputId}
               sx={{
-                position: "relative",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "12px 14px",
-                borderRadius: "10px",
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 14px',
+                borderRadius: '10px',
                 border: `1px solid ${
                   isActive ? foto.accent.primary : foto.surfaces.rule
                 }`,
-                background: isActive ? foto.accent.soft : "transparent",
-                cursor: "pointer",
-                transition: "background 120ms ease, border-color 120ms ease",
-                "&:hover": {
+                background: isActive ? foto.accent.soft : 'transparent',
+                cursor: 'pointer',
+                transition: 'background 120ms ease, border-color 120ms ease',
+                '&:hover': {
                   background: isActive ? foto.accent.soft : foto.surfaces.inset,
                 },
-                "&:focus-within": {
+                '&:focus-within': {
                   outline: `2px solid ${foto.accent.primary}`,
                   outlineOffset: 2,
                 },
@@ -383,9 +383,9 @@ function TypeSelector({ value, onChange }: TypeSelectorProps) {
                 checked={isActive}
                 onChange={() => onChange(opt.value)}
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   opacity: 0,
-                  pointerEvents: "none",
+                  pointerEvents: 'none',
                   width: 0,
                   height: 0,
                 }}
@@ -395,29 +395,29 @@ function TypeSelector({ value, onChange }: TypeSelectorProps) {
                 sx={{
                   width: 28,
                   height: 28,
-                  borderRadius: "8px",
+                  borderRadius: '8px',
                   background: isActive
                     ? foto.accent.primary
                     : foto.surfaces.inset,
                   color: isActive ? foto.ink.inverse : foto.ink.secondary,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   flexShrink: 0,
-                  transition: "background 120ms ease, color 120ms ease",
+                  transition: 'background 120ms ease, color 120ms ease',
                 }}
               >
                 <Glyph size={15} />
               </Box>
               <Box
-                sx={{ display: "flex", flexDirection: "column", gap: "1px" }}
+                sx={{ display: 'flex', flexDirection: 'column', gap: '1px' }}
               >
                 <Box
                   sx={{
                     fontSize: 13,
                     fontWeight: isActive ? 600 : 500,
                     color: foto.ink.primary,
-                    letterSpacing: "-0.01em",
+                    letterSpacing: '-0.01em',
                   }}
                 >
                   {opt.label}
@@ -436,12 +436,12 @@ function TypeSelector({ value, onChange }: TypeSelectorProps) {
                 <Box
                   aria-hidden
                   sx={{
-                    position: "absolute",
+                    position: 'absolute',
                     top: -1,
                     right: -1,
                     width: 6,
                     height: 6,
-                    borderRadius: "50%",
+                    borderRadius: '50%',
                     background: foto.accent.primary,
                   }}
                 />
@@ -459,21 +459,21 @@ function TypeSelector({ value, onChange }: TypeSelectorProps) {
 // -----------------------------------------------------------------------------
 
 type FormaPago =
-  | "contado"
-  | "esmereogenesis"
-  | "credito"
-  | "bajo_pedido"
-  | "consignacion";
-type MetodoContado = "efectivo" | "transferencia";
+  | 'contado'
+  | 'esmereogenesis'
+  | 'credito'
+  | 'bajo_pedido'
+  | 'consignacion';
+type MetodoContado = 'efectivo' | 'transferencia';
 
 function formaPagoShort(formaPago: string, metodoContado?: string): string {
-  if (formaPago === "contado") {
-    return metodoContado ? `Contado · ${metodoContado}` : "Contado";
+  if (formaPago === 'contado') {
+    return metodoContado ? `Contado · ${metodoContado}` : 'Contado';
   }
-  if (formaPago === "esmereogenesis") return "Esmereo";
-  if (formaPago === "credito") return "Crédito";
-  if (formaPago === "bajo_pedido") return "Bajo pedido";
-  if (formaPago === "consignacion") return "Consignación";
+  if (formaPago === 'esmereogenesis') return 'Esmereo';
+  if (formaPago === 'credito') return 'Crédito';
+  if (formaPago === 'bajo_pedido') return 'Bajo pedido';
+  if (formaPago === 'consignacion') return 'Consignación';
   return formaPago;
 }
 
@@ -482,7 +482,7 @@ type ProviderRow = {
   nombreORazonSocial: string;
   nit?: string;
   cedula?: string;
-  tipo?: "gemas" | "joyas" | "insumos" | "otros";
+  tipo?: 'gemas' | 'joyas' | 'insumos' | 'otros';
 };
 
 function NewLotIntro({
@@ -493,7 +493,7 @@ function NewLotIntro({
   /** Workbench: hand the freshly-created loteId up instead of navigating. */
   onCreated?: (loteId: string) => void;
 } = {}) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const navigate = useNavigate();
   const { user } = useGoogleAuth();
   const { consumeDraftForm, draftNonce } = useFotosintesisLayout();
@@ -501,11 +501,11 @@ function NewLotIntro({
   const [sede, setSede] = useState<Sede | null>(null);
   const previewLoteId = useNextLoteId(sede);
 
-  const createLot = useConvexMutation(convexApi.lots.create);
+  const createLot = useAuthedConvexAction(convexApi.lots.create);
   // Provider directory — already loaded by the drawer below; surface it at
   // the parent so the EntityPicker can render the list as options instead of
   // forcing the operator to retype a name they've already registered.
-  const providers = useConvexQuery(convexApi.providers.list, { search: "" }) as
+  const providers = useConvexQuery(convexApi.providers.list, { search: '' }) as
     | ProviderRow[]
     | undefined;
 
@@ -513,30 +513,30 @@ function NewLotIntro({
   const [providerId, setProviderId] = useState<string | null>(null);
   const [providerName, setProviderName] = useState<string | null>(null);
   const [fechaRecepcion, setFechaRecepcion] = useState(todayIso());
-  const [costoTotalCOP, setCostoTotalCOP] = useState<number | "">("");
-  const [unidadesDeclaradas, setUnidadesDeclaradas] = useState<number | "">(3);
-  const [formaPago, setFormaPago] = useState<FormaPago>("contado");
+  const [costoTotalCOP, setCostoTotalCOP] = useState<number | ''>('');
+  const [unidadesDeclaradas, setUnidadesDeclaradas] = useState<number | ''>(3);
+  const [formaPago, setFormaPago] = useState<FormaPago>('contado');
   const [metodoContado, setMetodoContado] =
-    useState<MetodoContado>("transferencia");
+    useState<MetodoContado>('transferencia');
 
   // Crédito a proveedor — vencimiento + cuotas viajan a Convex (BR-7),
   // tasaInteres se queda UI-only hasta que el contador defina la columna.
-  const [creditoFechaVenc, setCreditoFechaVenc] = useState<string>("");
+  const [creditoFechaVenc, setCreditoFechaVenc] = useState<string>('');
   const [creditoCuotas, setCreditoCuotas] = useState<number>(3);
-  const [creditoTasa, setCreditoTasa] = useState<number | "">("");
+  const [creditoTasa, setCreditoTasa] = useState<number | ''>('');
 
-  const [renombreLote, setRenombreLote] = useState("");
-  const [tratamiento, setTratamiento] = useState("");
-  const [mina, setMina] = useState("");
-  const [pesoTotalQuilates, setPesoTotalQuilates] = useState<number | "">("");
-  const [notas, setNotas] = useState("");
+  const [renombreLote, setRenombreLote] = useState('');
+  const [tratamiento, setTratamiento] = useState('');
+  const [mina, setMina] = useState('');
+  const [pesoTotalQuilates, setPesoTotalQuilates] = useState<number | ''>('');
+  const [notas, setNotas] = useState('');
   // Silence the unused variable warning for notas until it's sent to the backend
   void setNotas;
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [drawerInitialName, setDrawerInitialName] = useState<string>("");
+  const [drawerInitialName, setDrawerInitialName] = useState<string>('');
   // Fotosynthia v2: full provider pre-fill when the "provider" flow hands off.
   const [providerInitialData, setProviderInitialData] = useState<
     ProviderInitialData | undefined
@@ -564,54 +564,54 @@ function NewLotIntro({
   // human reviews and clicks "Empezar captura".
   useEffect(() => {
     if (providers === undefined) return;
-    const draft = consumeDraftForm("lote");
+    const draft = consumeDraftForm('lote');
     if (!draft) {
       // Not a lote hand-off — maybe a "provider" one (same /lots/new target):
       // open the provider drawer pre-filled; the human reviews + Crear.
-      const provider = consumeDraftForm("provider");
+      const provider = consumeDraftForm('provider');
       if (provider) {
         const p = provider as Record<string, unknown>;
         setProviderInitialData({
           nombreORazonSocial:
-            typeof p.nombreORazonSocial === "string"
+            typeof p.nombreORazonSocial === 'string'
               ? p.nombreORazonSocial
               : undefined,
-          tipo: typeof p.tipo === "string" ? p.tipo : undefined,
+          tipo: typeof p.tipo === 'string' ? p.tipo : undefined,
           tipoDocumento:
-            typeof p.tipoDocumento === "string" ? p.tipoDocumento : undefined,
-          documento: typeof p.documento === "string" ? p.documento : undefined,
-          telefono: typeof p.telefono === "string" ? p.telefono : undefined,
-          email: typeof p.email === "string" ? p.email : undefined,
-          direccion: typeof p.direccion === "string" ? p.direccion : undefined,
-          notas: typeof p.notas === "string" ? p.notas : undefined,
+            typeof p.tipoDocumento === 'string' ? p.tipoDocumento : undefined,
+          documento: typeof p.documento === 'string' ? p.documento : undefined,
+          telefono: typeof p.telefono === 'string' ? p.telefono : undefined,
+          email: typeof p.email === 'string' ? p.email : undefined,
+          direccion: typeof p.direccion === 'string' ? p.direccion : undefined,
+          notas: typeof p.notas === 'string' ? p.notas : undefined,
         });
-        setDrawerInitialName("");
+        setDrawerInitialName('');
         setDrawerOpen(true);
       }
       return;
     }
     const d = draft as Record<string, unknown>;
-    if (typeof d.sede === "string") setSede(d.sede as Sede);
-    if (typeof d.fechaRecepcion === "string")
+    if (typeof d.sede === 'string') setSede(d.sede as Sede);
+    if (typeof d.fechaRecepcion === 'string')
       setFechaRecepcion(d.fechaRecepcion);
-    if (typeof d.costoTotalCOP === "number") setCostoTotalCOP(d.costoTotalCOP);
-    if (typeof d.unidadesDeclaradas === "number")
+    if (typeof d.costoTotalCOP === 'number') setCostoTotalCOP(d.costoTotalCOP);
+    if (typeof d.unidadesDeclaradas === 'number')
       setUnidadesDeclaradas(d.unidadesDeclaradas);
-    if (typeof d.formaPago === "string") setFormaPago(d.formaPago as FormaPago);
-    if (typeof d.metodoContado === "string")
+    if (typeof d.formaPago === 'string') setFormaPago(d.formaPago as FormaPago);
+    if (typeof d.metodoContado === 'string')
       setMetodoContado(d.metodoContado as MetodoContado);
-    if (typeof d.renombreLote === "string") setRenombreLote(d.renombreLote);
-    if (typeof d.tratamiento === "string") setTratamiento(d.tratamiento);
-    if (typeof d.mina === "string") setMina(d.mina);
-    if (typeof d.pesoTotalQuilates === "number")
+    if (typeof d.renombreLote === 'string') setRenombreLote(d.renombreLote);
+    if (typeof d.tratamiento === 'string') setTratamiento(d.tratamiento);
+    if (typeof d.mina === 'string') setMina(d.mina);
+    if (typeof d.pesoTotalQuilates === 'number')
       setPesoTotalQuilates(d.pesoTotalQuilates);
-    if (typeof d.notas === "string") setNotas(d.notas);
-    if (typeof d.creditoFechaVenc === "string")
+    if (typeof d.notas === 'string') setNotas(d.notas);
+    if (typeof d.creditoFechaVenc === 'string')
       setCreditoFechaVenc(d.creditoFechaVenc);
-    if (typeof d.creditoCuotas === "number") setCreditoCuotas(d.creditoCuotas);
-    if (typeof d.creditoTasa === "number") setCreditoTasa(d.creditoTasa);
+    if (typeof d.creditoCuotas === 'number') setCreditoCuotas(d.creditoCuotas);
+    if (typeof d.creditoTasa === 'number') setCreditoTasa(d.creditoTasa);
     const providerName =
-      typeof d.providerName === "string" ? d.providerName : undefined;
+      typeof d.providerName === 'string' ? d.providerName : undefined;
     if (providerName) {
       const match = providers.find(
         (p) =>
@@ -625,15 +625,15 @@ function NewLotIntro({
   }, [draftNonce, consumeDraftForm, providers]);
 
   const creditoComplete =
-    formaPago !== "credito" ||
+    formaPago !== 'credito' ||
     (creditoFechaVenc.length > 0 && creditoCuotas > 0);
 
   const canSubmit =
     !!sede &&
     !!providerId &&
-    typeof costoTotalCOP === "number" &&
+    typeof costoTotalCOP === 'number' &&
     costoTotalCOP > 0 &&
-    typeof unidadesDeclaradas === "number" &&
+    typeof unidadesDeclaradas === 'number' &&
     unidadesDeclaradas >= 1 &&
     creditoComplete &&
     !submitting;
@@ -641,8 +641,8 @@ function NewLotIntro({
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!canSubmit || !providerId || !sede) return;
-    if (formaPago === "credito" && !creditoFechaVenc) {
-      setError("Crédito requiere fecha de vencimiento.");
+    if (formaPago === 'credito' && !creditoFechaVenc) {
+      setError('Crédito requiere fecha de vencimiento.');
       return;
     }
     setSubmitting(true);
@@ -650,24 +650,24 @@ function NewLotIntro({
     try {
       const createArgs: Parameters<typeof createLot>[0] = {
         sede,
-        providerId: providerId as Id<"providers">,
+        providerId: providerId as Id<'providers'>,
         fechaRecepcion,
         costoTotalCOP: costoTotalCOP as number,
         unidadesDeclaradas: unidadesDeclaradas as number,
         formaPago,
-        metodoContado: formaPago === "contado" ? metodoContado : undefined,
+        metodoContado: formaPago === 'contado' ? metodoContado : undefined,
         renombreLote: renombreLote.trim() || undefined,
         tratamiento: tratamiento.trim() || undefined,
         mina: mina.trim() || undefined,
         pesoTotalQuilates:
-          typeof pesoTotalQuilates === "number" && pesoTotalQuilates > 0
+          typeof pesoTotalQuilates === 'number' && pesoTotalQuilates > 0
             ? pesoTotalQuilates
             : undefined,
         operadorNombre: user?.name ?? user?.email ?? undefined,
-        operadorRol: "captura",
+        operadorRol: 'captura',
         notas: notas.trim() || undefined,
       };
-      if (formaPago === "credito") {
+      if (formaPago === 'credito') {
         createArgs.fechaVencimiento = creditoFechaVenc;
         createArgs.numeroCuotas = creditoCuotas;
       }
@@ -682,7 +682,7 @@ function NewLotIntro({
         });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No pudimos crear el lote");
+      setError(err instanceof Error ? err.message : 'No pudimos crear el lote');
       setSubmitting(false);
     }
   };
@@ -690,27 +690,27 @@ function NewLotIntro({
   return (
     <Box
       sx={{
-        maxWidth: embedded ? "none" : { xs: "100%", md: 1080, xl: 1200 },
-        margin: "0 auto",
+        maxWidth: embedded ? 'none' : { xs: '100%', md: 1080, xl: 1200 },
+        margin: '0 auto',
         padding: embedded
-          ? { xs: "20px 16px 32px", md: "24px 24px 36px" }
-          : { xs: "28px 18px 80px", md: "36px 28px 80px" },
+          ? { xs: '20px 16px 32px', md: '24px 24px 36px' }
+          : { xs: '28px 18px 80px', md: '36px 28px 80px' },
       }}
     >
       <Box
         component="header"
         sx={{
-          marginBottom: "20px",
+          marginBottom: '20px',
         }}
       >
         <Box
           sx={{
             fontSize: 9,
             fontWeight: 500,
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
             color: foto.ink.tertiary,
-            marginBottom: "8px",
+            marginBottom: '8px',
           }}
         >
           Antes de empezar
@@ -720,28 +720,28 @@ function NewLotIntro({
           sx={{
             fontSize: 28,
             fontWeight: 600,
-            letterSpacing: "-0.025em",
+            letterSpacing: '-0.025em',
             color: foto.ink.primary,
             margin: 0,
             lineHeight: 1.1,
           }}
         >
-          Nuevo lote{" "}
+          Nuevo lote{' '}
           <Box
             component="span"
             sx={{
               fontFamily: fontFamilies.mono,
-              fontVariantNumeric: "tabular-nums",
+              fontVariantNumeric: 'tabular-nums',
               color: foto.accent.deep,
-              letterSpacing: "-0.04em",
+              letterSpacing: '-0.04em',
             }}
           >
-            {previewLoteId ?? (sede ? `${sede}-…` : "—")}
+            {previewLoteId ?? (sede ? `${sede}-…` : '—')}
           </Box>
         </Box>
         <Box
           sx={{
-            marginTop: "8px",
+            marginTop: '8px',
             fontSize: 13,
             color: foto.ink.secondary,
             lineHeight: 1.55,
@@ -756,13 +756,13 @@ function NewLotIntro({
         <Box
           role="alert"
           sx={{
-            marginBottom: "20px",
-            padding: "12px 14px",
+            marginBottom: '20px',
+            padding: '12px 14px',
             border: `1px solid ${foto.status.sold}`,
             background: alpha(foto.status.sold, 0.06),
             color: foto.status.sold,
             fontSize: 12.5,
-            borderRadius: "10px",
+            borderRadius: '10px',
           }}
         >
           {error}
@@ -773,25 +773,25 @@ function NewLotIntro({
         component="form"
         onSubmit={onSubmit}
         sx={{
-          display: "grid",
+          display: 'grid',
           gridTemplateColumns: {
-            xs: "1fr",
-            md: "minmax(0, 1.5fr) minmax(0, 1fr)",
+            xs: '1fr',
+            md: 'minmax(0, 1.5fr) minmax(0, 1fr)',
           },
-          gap: { xs: "18px", md: "28px" },
-          alignItems: "start",
-          padding: "22px",
+          gap: { xs: '18px', md: '28px' },
+          alignItems: 'start',
+          padding: '22px',
           background: foto.surfaces.canvas,
           border: `1px solid ${foto.surfaces.rule}`,
-          borderRadius: "14px",
+          borderRadius: '14px',
         }}
       >
         {/* LEFT column — Datos del lote */}
         <Box
           sx={{
-            display: "grid",
-            gap: "18px",
-            alignContent: "start",
+            display: 'grid',
+            gap: '18px',
+            alignContent: 'start',
             minWidth: 0,
           }}
         >
@@ -799,8 +799,8 @@ function NewLotIntro({
             sx={{
               fontSize: 9,
               fontWeight: 500,
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
               color: foto.ink.tertiary,
             }}
           >
@@ -819,7 +819,7 @@ function NewLotIntro({
                 value: b.code,
                 label: b.label,
               }))}
-              value={sede ?? ("" as Sede)}
+              value={sede ?? ('' as Sede)}
               onChange={(next) => setSede(next as Sede)}
             />
           </Box>
@@ -843,7 +843,7 @@ function NewLotIntro({
                 p.tipo,
               ]
                 .filter(Boolean)
-                .join(" · ") || null
+                .join(' · ') || null
             }
             getOptionAvatar={(p) =>
               p.nombreORazonSocial.slice(0, 1).toUpperCase()
@@ -858,12 +858,12 @@ function NewLotIntro({
           {/* Fecha + Costo total */}
           <Box
             sx={{
-              display: "grid",
+              display: 'grid',
               gridTemplateColumns: {
-                xs: "1fr",
-                sm: "minmax(0, 1fr) minmax(0, 1fr)",
+                xs: '1fr',
+                sm: 'minmax(0, 1fr) minmax(0, 1fr)',
               },
-              gap: "18px",
+              gap: '18px',
             }}
           >
             <Box>
@@ -877,16 +877,16 @@ function NewLotIntro({
                   setFechaRecepcion((e.target as HTMLInputElement).value)
                 }
                 sx={{
-                  width: "100%",
+                  width: '100%',
                   background: foto.surfaces.inset,
                   border: `1px solid ${foto.surfaces.rule}`,
-                  borderRadius: "9px",
-                  padding: "11px 14px",
+                  borderRadius: '9px',
+                  padding: '11px 14px',
                   fontSize: 13,
                   color: foto.ink.primary,
                   fontFamily: fontFamilies.mono,
-                  outline: "none",
-                  "&:focus": {
+                  outline: 'none',
+                  '&:focus': {
                     borderColor: foto.accent.primary,
                     boxShadow: `0 0 0 3px ${foto.accent.glow}`,
                   },
@@ -905,9 +905,9 @@ function NewLotIntro({
                 min={0}
                 ariaLabel="Costo total del lote en COP"
                 calcSuffix={
-                  typeof costoTotalCOP === "number" && costoTotalCOP > 0
+                  typeof costoTotalCOP === 'number' && costoTotalCOP > 0
                     ? formatCOP(costoTotalCOP)
-                    : "= —"
+                    : '= —'
                 }
                 calcVariant="neutral"
               />
@@ -916,12 +916,12 @@ function NewLotIntro({
 
           <Box
             sx={{
-              display: "grid",
+              display: 'grid',
               gridTemplateColumns: {
-                xs: "1fr",
-                sm: "minmax(0, 1fr) minmax(0, 1fr)",
+                xs: '1fr',
+                sm: 'minmax(0, 1fr) minmax(0, 1fr)',
               },
-              gap: "18px",
+              gap: '18px',
             }}
           >
             <Box>
@@ -938,11 +938,11 @@ function NewLotIntro({
                   setRenombreLote((e.target as HTMLInputElement).value)
                 }
                 sx={{
-                  width: "100%",
+                  width: '100%',
                   background: foto.surfaces.inset,
                   border: `1px solid ${foto.surfaces.rule}`,
-                  borderRadius: "9px",
-                  padding: "11px 14px",
+                  borderRadius: '9px',
+                  padding: '11px 14px',
                   fontSize: 13,
                   color: foto.ink.primary,
                 }}
@@ -973,12 +973,12 @@ function NewLotIntro({
 
           <Box
             sx={{
-              display: "grid",
+              display: 'grid',
               gridTemplateColumns: {
-                xs: "1fr",
-                sm: "minmax(0, 1fr) minmax(0, 1fr)",
+                xs: '1fr',
+                sm: 'minmax(0, 1fr) minmax(0, 1fr)',
               },
-              gap: "18px",
+              gap: '18px',
             }}
           >
             <Box>
@@ -992,11 +992,11 @@ function NewLotIntro({
                   setTratamiento((e.target as HTMLInputElement).value)
                 }
                 sx={{
-                  width: "100%",
+                  width: '100%',
                   background: foto.surfaces.inset,
                   border: `1px solid ${foto.surfaces.rule}`,
-                  borderRadius: "9px",
-                  padding: "11px 14px",
+                  borderRadius: '9px',
+                  padding: '11px 14px',
                   fontSize: 13,
                   color: foto.ink.primary,
                 }}
@@ -1010,11 +1010,11 @@ function NewLotIntro({
                 suggestions={PROCEDENCIAS}
                 fieldLang={noSpellCheck}
                 sx={{
-                  width: "100%",
+                  width: '100%',
                   background: foto.surfaces.inset,
                   border: `1px solid ${foto.surfaces.rule}`,
-                  borderRadius: "9px",
-                  padding: "11px 14px",
+                  borderRadius: '9px',
+                  padding: '11px 14px',
                   fontSize: 13,
                   color: foto.ink.primary,
                 }}
@@ -1027,9 +1027,9 @@ function NewLotIntro({
         {/* RIGHT column — Pago */}
         <Box
           sx={{
-            display: "grid",
-            gap: "18px",
-            alignContent: "start",
+            display: 'grid',
+            gap: '18px',
+            alignContent: 'start',
             minWidth: 0,
           }}
         >
@@ -1037,8 +1037,8 @@ function NewLotIntro({
             sx={{
               fontSize: 9,
               fontWeight: 500,
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
               color: foto.ink.tertiary,
             }}
           >
@@ -1048,9 +1048,9 @@ function NewLotIntro({
               side-by-side split floats Forma de pago far from its label. */}
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: "1fr",
-              gap: "18px",
+              display: 'grid',
+              gridTemplateColumns: '1fr',
+              gap: '18px',
             }}
           >
             <Box>
@@ -1078,11 +1078,11 @@ function NewLotIntro({
                 otherLabel="Otra…"
                 otherPlaceholder="Escribir forma de pago…"
                 options={[
-                  { value: "contado", label: "Contado" },
-                  { value: "credito", label: "Crédito" },
-                  { value: "esmereogenesis", label: "Esmereogénesis" },
-                  { value: "bajo_pedido", label: "Bajo pedido" },
-                  { value: "consignacion", label: "Consignación" },
+                  { value: 'contado', label: 'Contado' },
+                  { value: 'credito', label: 'Crédito' },
+                  { value: 'esmereogenesis', label: 'Esmereogénesis' },
+                  { value: 'bajo_pedido', label: 'Bajo pedido' },
+                  { value: 'consignacion', label: 'Consignación' },
                 ]}
                 value={formaPago}
                 onChange={(next) => setFormaPago(next as FormaPago)}
@@ -1090,7 +1090,7 @@ function NewLotIntro({
             </Box>
           </Box>
 
-          {formaPago === "contado" ? (
+          {formaPago === 'contado' ? (
             <Box>
               <FieldLabel>Método</FieldLabel>
               <SegmentedControl
@@ -1099,8 +1099,8 @@ function NewLotIntro({
                 otherLabel="Otro…"
                 otherPlaceholder="Escribir método de pago…"
                 options={[
-                  { value: "efectivo", label: "Efectivo" },
-                  { value: "transferencia", label: "Transferencia" },
+                  { value: 'efectivo', label: 'Efectivo' },
+                  { value: 'transferencia', label: 'Transferencia' },
                 ]}
                 value={metodoContado}
                 onChange={(next) => setMetodoContado(next as MetodoContado)}
@@ -1108,7 +1108,7 @@ function NewLotIntro({
             </Box>
           ) : null}
 
-          {formaPago === "credito" ? (
+          {formaPago === 'credito' ? (
             <CreditoFields
               fechaVencimiento={creditoFechaVenc}
               setFechaVencimiento={setCreditoFechaVenc}
@@ -1116,7 +1116,7 @@ function NewLotIntro({
               setNumeroCuotas={setCreditoCuotas}
               tasaInteres={creditoTasa}
               setTasaInteres={setCreditoTasa}
-              totalCop={typeof costoTotalCOP === "number" ? costoTotalCOP : 0}
+              totalCop={typeof costoTotalCOP === 'number' ? costoTotalCOP : 0}
             />
           ) : null}
 
@@ -1131,18 +1131,18 @@ function NewLotIntro({
               rows={3}
               placeholder="Notas de compra, contexto del proveedor, etc."
               sx={{
-                width: "100%",
-                marginTop: "6px",
-                borderRadius: "9px",
+                width: '100%',
+                marginTop: '6px',
+                borderRadius: '9px',
                 border: `1px solid ${foto.surfaces.rule}`,
                 background: foto.surfaces.inset,
                 color: foto.ink.primary,
                 fontSize: 13,
-                padding: "10px 12px",
-                resize: "vertical",
-                fontFamily: "inherit",
-                outline: "none",
-                "&:focus": {
+                padding: '10px 12px',
+                resize: 'vertical',
+                fontFamily: 'inherit',
+                outline: 'none',
+                '&:focus': {
                   borderColor: foto.accent.primary,
                 },
               }}
@@ -1151,10 +1151,10 @@ function NewLotIntro({
 
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: "10px",
-              marginTop: "4px",
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '10px',
+              marginTop: '4px',
             }}
           >
             <Box
@@ -1162,27 +1162,27 @@ function NewLotIntro({
               type="submit"
               disabled={!canSubmit}
               sx={{
-                border: "none",
-                borderRadius: "9px",
-                padding: "12px 22px",
+                border: 'none',
+                borderRadius: '9px',
+                padding: '12px 22px',
                 background: canSubmit
                   ? foto.accent.primary
                   : foto.surfaces.inset,
                 color: canSubmit ? foto.ink.inverse : foto.ink.mute,
                 fontSize: 13,
                 fontWeight: 600,
-                letterSpacing: "-0.005em",
-                cursor: canSubmit ? "pointer" : "not-allowed",
-                transition: "background 120ms ease, transform 120ms ease",
-                "&:hover": canSubmit
+                letterSpacing: '-0.005em',
+                cursor: canSubmit ? 'pointer' : 'not-allowed',
+                transition: 'background 120ms ease, transform 120ms ease',
+                '&:hover': canSubmit
                   ? {
                       background: foto.accent.deep,
-                      transform: "translateY(-1px)",
+                      transform: 'translateY(-1px)',
                     }
                   : undefined,
               }}
             >
-              {submitting ? "Creando…" : "Empezar captura"}
+              {submitting ? 'Creando…' : 'Empezar captura'}
             </Box>
           </Box>
         </Box>
@@ -1192,13 +1192,13 @@ function NewLotIntro({
         open={drawerOpen}
         onClose={() => {
           setDrawerOpen(false);
-          setDrawerInitialName("");
+          setDrawerInitialName('');
         }}
         onSuccess={({ id, nombre }) => {
           setProviderId(id);
           setProviderName(nombre);
           setDrawerOpen(false);
-          setDrawerInitialName("");
+          setDrawerInitialName('');
         }}
         contextLabel={
           previewLoteId
@@ -1233,20 +1233,20 @@ function StickyFooter({
   closeDisabled,
   saving,
 }: StickyFooterProps) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   return (
     <Box
       sx={{
-        position: "sticky",
+        position: 'sticky',
         bottom: 0,
-        marginTop: "24px",
-        padding: "14px 0 18px",
+        marginTop: '24px',
+        padding: '14px 0 18px',
         background: `linear-gradient(180deg, transparent 0%, ${foto.surfaces.canvas} 28%)`,
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "8px",
-        justifyContent: "flex-end",
-        alignItems: "center",
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '8px',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
         zIndex: 5,
       }}
     >
@@ -1258,13 +1258,13 @@ function StickyFooter({
           border: `1px solid ${foto.surfaces.rule}`,
           background: foto.surfaces.canvas,
           color: foto.ink.secondary,
-          borderRadius: "9px",
-          padding: "10px 16px",
+          borderRadius: '9px',
+          padding: '10px 16px',
           fontSize: 12.5,
           fontWeight: 500,
-          cursor: "pointer",
-          transition: "background 120ms ease, color 120ms ease",
-          "&:hover": {
+          cursor: 'pointer',
+          transition: 'background 120ms ease, color 120ms ease',
+          '&:hover': {
             background: foto.surfaces.inset,
             color: foto.ink.primary,
           },
@@ -1283,18 +1283,18 @@ function StickyFooter({
           }`,
           background: foto.surfaces.canvas,
           color: saveDisabled ? foto.ink.mute : foto.ink.primary,
-          borderRadius: "9px",
-          padding: "10px 16px",
+          borderRadius: '9px',
+          padding: '10px 16px',
           fontSize: 12.5,
           fontWeight: 600,
-          cursor: saveDisabled ? "not-allowed" : "pointer",
-          transition: "background 120ms ease",
-          "&:hover": saveDisabled
+          cursor: saveDisabled ? 'not-allowed' : 'pointer',
+          transition: 'background 120ms ease',
+          '&:hover': saveDisabled
             ? undefined
             : { background: foto.surfaces.inset },
         }}
       >
-        {saving ? "Guardando…" : "Guardar y siguiente"}
+        {saving ? 'Guardando…' : 'Guardar y siguiente'}
       </Box>
       <Box
         component="button"
@@ -1302,20 +1302,20 @@ function StickyFooter({
         onClick={onCloseLot}
         disabled={closeDisabled}
         sx={{
-          border: "none",
+          border: 'none',
           background: closeDisabled ? foto.surfaces.inset : foto.accent.primary,
           color: closeDisabled ? foto.ink.mute : foto.ink.inverse,
-          borderRadius: "9px",
-          padding: "10px 18px",
+          borderRadius: '9px',
+          padding: '10px 18px',
           fontSize: 12.5,
           fontWeight: 600,
-          cursor: closeDisabled ? "not-allowed" : "pointer",
-          transition: "background 120ms ease, transform 120ms ease",
-          "&:hover": closeDisabled
+          cursor: closeDisabled ? 'not-allowed' : 'pointer',
+          transition: 'background 120ms ease, transform 120ms ease',
+          '&:hover': closeDisabled
             ? undefined
             : {
                 background: foto.accent.deep,
-                transform: "translateY(-1px)",
+                transform: 'translateY(-1px)',
               },
         }}
       >
@@ -1356,15 +1356,15 @@ function LoteCompletePanel({
 }: LoteCompletePanelProps) {
   const balanced = Math.abs(prepSum - 100) <= 0.01;
   const prepStatus = balanced
-    ? "preponderancia balanceada al 100%"
+    ? 'preponderancia balanceada al 100%'
     : prepRemaining > 0.01
       ? `falta ${Math.round(prepRemaining * 10) / 10}% de preponderancia`
       : `${Math.round(prepOverflow * 10) / 10}% de exceso de preponderancia`;
   // If closing is blocked, say exactly why — never a dead disabled button.
   const blockReason = !hasProvider
-    ? "Asigná un proveedor al lote antes de cerrarlo."
+    ? 'Asigná un proveedor al lote antes de cerrarlo.'
     : !balanced
-      ? "Ajustá la preponderancia de los ítems hasta el 100% para poder cerrar el lote."
+      ? 'Ajustá la preponderancia de los ítems hasta el 100% para poder cerrar el lote.'
       : null;
 
   // This panel replaces the capture form (which unmounts) the instant the lote
@@ -1382,21 +1382,21 @@ function LoteCompletePanel({
       sx={{
         background: foto.surfaces.canvas,
         border: `1px solid ${foto.surfaces.rule}`,
-        borderRadius: "14px",
-        padding: "32px 28px",
-        display: "grid",
-        gap: "18px",
-        justifyItems: "start",
+        borderRadius: '14px',
+        padding: '32px 28px',
+        display: 'grid',
+        gap: '18px',
+        justifyItems: 'start',
       }}
     >
       <Box
         sx={{
           width: 44,
           height: 44,
-          borderRadius: "12px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          borderRadius: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           background: foto.accent.soft,
           color: foto.accent.deep,
         }}
@@ -1404,7 +1404,7 @@ function LoteCompletePanel({
         <Check size={22} strokeWidth={2} />
       </Box>
 
-      <Box sx={{ display: "grid", gap: "6px" }}>
+      <Box sx={{ display: 'grid', gap: '6px' }}>
         <Box
           component="h2"
           ref={headingRef}
@@ -1413,15 +1413,15 @@ function LoteCompletePanel({
             fontSize: 19,
             fontWeight: 600,
             color: foto.ink.primary,
-            letterSpacing: "-0.02em",
+            letterSpacing: '-0.02em',
             margin: 0,
-            outline: "none",
+            outline: 'none',
           }}
         >
           Lote completo
         </Box>
         <Box sx={{ fontSize: 13, color: foto.ink.secondary, lineHeight: 1.5 }}>
-          Capturaste los {unidadesDeclaradas} ítems declarados ·{" "}
+          Capturaste los {unidadesDeclaradas} ítems declarados ·{' '}
           <Box
             component="span"
             sx={{ color: balanced ? foto.accent.deep : foto.status.sold }}
@@ -1447,10 +1447,10 @@ function LoteCompletePanel({
 
       <Box
         sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "10px",
-          marginTop: "4px",
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '10px',
+          marginTop: '4px',
         }}
       >
         <Box
@@ -1458,19 +1458,19 @@ function LoteCompletePanel({
           type="button"
           onClick={onAddUnit}
           sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "7px",
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '7px',
             border: `1px solid ${foto.surfaces.edgeStrong}`,
             background: foto.surfaces.canvas,
             color: foto.ink.primary,
-            borderRadius: "9px",
-            padding: "10px 16px",
+            borderRadius: '9px',
+            padding: '10px 16px',
             fontSize: 12.5,
             fontWeight: 600,
-            cursor: "pointer",
-            transition: "background 120ms ease",
-            "&:hover": { background: foto.surfaces.inset },
+            cursor: 'pointer',
+            transition: 'background 120ms ease',
+            '&:hover': { background: foto.surfaces.inset },
           }}
         >
           <Plus size={15} strokeWidth={2} />
@@ -1483,17 +1483,17 @@ function LoteCompletePanel({
           disabled={!canCloseLot}
           title={blockReason ?? undefined}
           sx={{
-            border: "none",
+            border: 'none',
             background: canCloseLot ? foto.accent.primary : foto.surfaces.inset,
             color: canCloseLot ? foto.ink.inverse : foto.ink.mute,
-            borderRadius: "9px",
-            padding: "10px 18px",
+            borderRadius: '9px',
+            padding: '10px 18px',
             fontSize: 12.5,
             fontWeight: 600,
-            cursor: canCloseLot ? "pointer" : "not-allowed",
-            transition: "background 120ms ease, transform 120ms ease",
-            "&:hover": canCloseLot
-              ? { background: foto.accent.deep, transform: "translateY(-1px)" }
+            cursor: canCloseLot ? 'pointer' : 'not-allowed',
+            transition: 'background 120ms ease, transform 120ms ease',
+            '&:hover': canCloseLot
+              ? { background: foto.accent.deep, transform: 'translateY(-1px)' }
               : undefined,
           }}
         >
@@ -1521,19 +1521,19 @@ interface LotMetaCardProps {
 }
 
 function LotMetaCard({ rows, action }: LotMetaCardProps) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   return (
     <Box
       sx={{
-        padding: "14px 16px",
+        padding: '14px 16px',
         background: foto.surfaces.canvas,
         border: `1px solid ${foto.surfaces.rule}`,
-        borderRadius: "11px",
-        display: "grid",
-        gridTemplateColumns: "auto 1fr",
-        rowGap: "8px",
-        columnGap: "12px",
-        position: "relative",
+        borderRadius: '11px',
+        display: 'grid',
+        gridTemplateColumns: 'auto 1fr',
+        rowGap: '8px',
+        columnGap: '12px',
+        position: 'relative',
       }}
     >
       {action ? (
@@ -1544,33 +1544,33 @@ function LotMetaCard({ rows, action }: LotMetaCardProps) {
           disabled={action.disabled}
           aria-label={action.label}
           sx={{
-            position: "absolute",
+            position: 'absolute',
             top: 10,
             right: 10,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            padding: "5px 9px",
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '5px 9px',
             border: `1px solid ${foto.surfaces.edge}`,
             background: foto.surfaces.canvas,
-            borderRadius: "7px",
-            cursor: action.disabled ? "not-allowed" : "pointer",
+            borderRadius: '7px',
+            cursor: action.disabled ? 'not-allowed' : 'pointer',
             color: foto.ink.secondary,
             fontSize: 10.5,
             fontWeight: 500,
-            letterSpacing: "0.04em",
+            letterSpacing: '0.04em',
             transition:
-              "background 120ms ease, color 120ms ease, border-color 120ms ease",
+              'background 120ms ease, color 120ms ease, border-color 120ms ease',
             opacity: action.disabled ? 0.5 : 1,
-            "&:hover": action.disabled
+            '&:hover': action.disabled
               ? undefined
               : {
                   background: foto.accent.soft,
                   color: foto.accent.deep,
                   borderColor: foto.accent.primary,
                 },
-            "&:focus-visible": {
-              outline: "none",
+            '&:focus-visible': {
+              outline: 'none',
               boxShadow: `0 0 0 2px ${foto.accent.glow}`,
             },
           }}
@@ -1580,15 +1580,15 @@ function LotMetaCard({ rows, action }: LotMetaCardProps) {
         </Box>
       ) : null}
       {rows.map((row) => (
-        <Box key={row.label} sx={{ display: "contents" }}>
+        <Box key={row.label} sx={{ display: 'contents' }}>
           <Box
             sx={{
               fontSize: 9,
               fontWeight: 500,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
               color: foto.ink.tertiary,
-              alignSelf: "center",
+              alignSelf: 'center',
             }}
           >
             {row.label}
@@ -1598,10 +1598,10 @@ function LotMetaCard({ rows, action }: LotMetaCardProps) {
               fontSize: 12,
               fontWeight: 500,
               color: row.alert ? foto.status.sold : foto.ink.primary,
-              letterSpacing: "-0.005em",
-              textAlign: "right",
+              letterSpacing: '-0.005em',
+              textAlign: 'right',
               fontFamily: fontFamilies.mono,
-              fontVariantNumeric: "tabular-nums",
+              fontVariantNumeric: 'tabular-nums',
             }}
           >
             {row.value}
@@ -1623,10 +1623,9 @@ interface ActiveLotPageProps {
 }
 
 function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const navigate = useNavigate();
   const { notify } = useNotification();
-  const { user } = useGoogleAuth();
   // Fotosynthia v2 guided-capture hand-off: the Copilot panel pre-fills an
   // item draft here, the human reviews + Guardar. The edit queue drives the
   // per-item edit/batch-edit review loop through the EditItemDrawer.
@@ -1644,19 +1643,19 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
   const prepTotal = usePreponderanciaTotal(loteId);
   const provider = useConvexQuery(
     convexApi.providers.get,
-    lot?.providerId ? { id: lot.providerId } : "skip",
+    lot?.providerId ? { id: lot.providerId } : 'skip',
   );
 
   // Mutations ------------------------------------------------------------------
-  const createLotItem = useConvexMutation(convexApi.lotItems.create);
-  const updateGemaFields = useConvexMutation(
+  const createLotItem = useAuthedConvexAction(convexApi.lotItems.create);
+  const updateGemaFields = useAuthedConvexAction(
     convexApi.lotItems.updateGemaFields,
   );
-  const updateLot = useConvexMutation(convexApi.lots.update);
-  const updatePreponderancia = useConvexMutation(
+  const updateLot = useAuthedConvexAction(convexApi.lots.update);
+  const updatePreponderancia = useAuthedConvexAction(
     convexApi.lotItems.updatePreponderancia,
   );
-  const cancelLot = useConvexMutation(convexApi.lots.cancel);
+  const cancelLot = useAuthedConvexAction(convexApi.lots.cancel);
 
   // Form state -----------------------------------------------------------------
   // Tipo gates which draft is active; we hold both side-by-side so flipping
@@ -1664,13 +1663,13 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
   // Each draft is reset independently on save.
   // `subtipo` is the operator-facing choice (9 options); `tipo` is the derived
   // field kind that gates which draft/fields/payload builder runs below.
-  const [subtipo, setSubtipo] = useState<ItemSubtipo>("gema");
+  const [subtipo, setSubtipo] = useState<ItemSubtipo>('gema');
   const tipo: TipoItem = SUBTIPO_FIELDKIND[subtipo];
   const [gema, setGema] = useState<GemaDraft>(EMPTY_GEMA_DRAFT);
   const [bruto, setBruto] = useState<BrutoDraft>(EMPTY_BRUTO_DRAFT);
   const [joya, setJoya] = useState<JoyaDraft>(EMPTY_JOYA_DRAFT);
   const [insumo, setInsumo] = useState<InsumoDraft>(EMPTY_INSUMO_DRAFT);
-  const [observacion, setObservacion] = useState("");
+  const [observacion, setObservacion] = useState('');
   const [reservaOculta, setReservaOculta] = useState(true);
   const [photos, setPhotos] = useState<DropzonePhoto[]>([]);
   const [certificadoFile, setCertificadoFile] = useState<File | null>(null);
@@ -1680,9 +1679,9 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
   // Persisted per lote so reopening the capture remembers the choice.
   const reuseBaseStorageKey = `${STORAGE_KEYS.FOTO_REUSE_BASE_PREFIX}${loteId}`;
   const [reuseBaseData, setReuseBaseData] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
+    if (typeof window === 'undefined') return false;
     try {
-      return window.localStorage.getItem(reuseBaseStorageKey) === "1";
+      return window.localStorage.getItem(reuseBaseStorageKey) === '1';
     } catch {
       return false;
     }
@@ -1691,7 +1690,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
     (next: boolean) => {
       setReuseBaseData(next);
       try {
-        window.localStorage.setItem(reuseBaseStorageKey, next ? "1" : "0");
+        window.localStorage.setItem(reuseBaseStorageKey, next ? '1' : '0');
       } catch {
         /* private mode — keep the in-memory choice */
       }
@@ -1714,7 +1713,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
   // Edit drawers ---------------------------------------------------------------
   const [editLotOpen, setEditLotOpen] = useState(false);
   const [editingLotItemId, setEditingLotItemId] =
-    useState<Id<"lotItems"> | null>(null);
+    useState<Id<'lotItems'> | null>(null);
   // Fotosynthia v2 — the AI edit patch for the currently-open drawer (undefined
   // for a manual open). Drives the edit-existing / batch-edit review loop.
   const [editOverride, setEditOverride] = useState<
@@ -1735,18 +1734,18 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
         setEditOverride(undefined);
         return false;
       }
-      const hint = (next.itemHint ?? "").toLowerCase();
+      const hint = (next.itemHint ?? '').toLowerCase();
       const target =
         (next.targetItemId
           ? list.find((it) => it.itemId === next.targetItemId)
           : undefined) ??
         (hint
           ? (list.find((it) => it.itemId.toLowerCase() === hint) ??
-            list.find((it) => (it.nombre ?? "").toLowerCase().includes(hint)))
+            list.find((it) => (it.nombre ?? '').toLowerCase().includes(hint)))
           : undefined);
       if (target) {
         setEditOverride(next.patch);
-        setEditingLotItemId(target._id as Id<"lotItems">);
+        setEditingLotItemId(target._id as Id<'lotItems'>);
         return true;
       }
     }
@@ -1798,7 +1797,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
   const singleItemSeededRef = useRef<string | null>(null);
   useEffect(() => {
     if (!lot || items === undefined) return;
-    if (lot.estado !== "abierto") return;
+    if (lot.estado !== 'abierto') return;
     if (unidadesDeclaradas !== 1 || items.length !== 0) return;
     if (singleItemSeededRef.current === loteId) return;
     singleItemSeededRef.current = loteId;
@@ -1820,26 +1819,26 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
   // Guardar. We only attempt once per hand-off (draftNonce) on an open lot.
   const aiSeededNonceRef = useRef<number>(-1);
   useEffect(() => {
-    if (!lot || lot.estado !== "abierto") return;
+    if (!lot || lot.estado !== 'abierto') return;
     if (aiSeededNonceRef.current === draftNonce) return;
-    const gemaDraft = consumeDraftForm("item-gema");
+    const gemaDraft = consumeDraftForm('item-gema');
     if (gemaDraft) {
       aiSeededNonceRef.current = draftNonce;
-      setSubtipo("gema");
+      setSubtipo('gema');
       setGema((prev) => ({ ...prev, ...(gemaDraft as Partial<GemaDraft>) }));
       return;
     }
-    const joyaDraft = consumeDraftForm("item-joya");
+    const joyaDraft = consumeDraftForm('item-joya');
     if (joyaDraft) {
       aiSeededNonceRef.current = draftNonce;
-      setSubtipo("joya");
+      setSubtipo('joya');
       setJoya((prev) => ({ ...prev, ...(joyaDraft as Partial<JoyaDraft>) }));
       return;
     }
-    const insumoDraft = consumeDraftForm("item-insumo");
+    const insumoDraft = consumeDraftForm('item-insumo');
     if (insumoDraft) {
       aiSeededNonceRef.current = draftNonce;
-      setSubtipo("insumo");
+      setSubtipo('insumo');
       setInsumo((prev) => ({
         ...prev,
         ...(insumoDraft as Partial<InsumoDraft>),
@@ -1850,18 +1849,18 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
   // Active draft surface — the form fields below dispatch off `tipo`, but
   // preponderancia + nombre validations are uniform across types.
   const activeDraft =
-    tipo === "bruto"
+    tipo === 'bruto'
       ? bruto
-      : tipo === "gema"
+      : tipo === 'gema'
         ? gema
-        : tipo === "insumo"
+        : tipo === 'insumo'
           ? insumo
           : joya;
   const activePreponderancia = activeDraft.preponderancia;
   const activeNombre = activeDraft.nombre;
 
   const prepNumeric =
-    typeof activePreponderancia === "number" ? activePreponderancia : 0;
+    typeof activePreponderancia === 'number' ? activePreponderancia : 0;
   const projectedSum = prepTotal.sum + prepNumeric;
   const overflow = projectedSum - 100;
   const prepHelper = useMemo<{
@@ -1876,7 +1875,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
     }
     if (
       isLastItem &&
-      activePreponderancia === "" &&
+      activePreponderancia === '' &&
       prepTotal.remaining > 0.01
     ) {
       return {
@@ -1890,9 +1889,9 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
   // Save handlers --------------------------------------------------------------
   const canSave =
     !!lot &&
-    lot.estado === "abierto" &&
+    lot.estado === 'abierto' &&
     activeNombre.trim().length > 0 &&
-    typeof activePreponderancia === "number" &&
+    typeof activePreponderancia === 'number' &&
     activePreponderancia > 0 &&
     overflow <= 0.01 &&
     itemsCount < unidadesDeclaradas &&
@@ -1900,7 +1899,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
 
   const canCloseLot =
     !!lot &&
-    lot.estado === "abierto" &&
+    lot.estado === 'abierto' &&
     itemsCount > 0 &&
     itemsCount === unidadesDeclaradas &&
     Math.abs(prepTotal.sum - 100) <= 0.01;
@@ -1910,7 +1909,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
     setBruto(EMPTY_BRUTO_DRAFT);
     setJoya(EMPTY_JOYA_DRAFT);
     setInsumo(EMPTY_INSUMO_DRAFT);
-    setObservacion("");
+    setObservacion('');
     setPhotos([]);
     setCertificadoFile(null);
     setReservaOculta(true);
@@ -1924,7 +1923,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
     setBruto(carryBrutoBase);
     setJoya(carryJoyaBase);
     setInsumo(carryInsumoBase);
-    setObservacion("");
+    setObservacion('');
     setPhotos([]);
     setCertificadoFile(null);
     setReservaOculta(true);
@@ -1938,35 +1937,35 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
     try {
       type CreateLotItemArgs = Parameters<typeof createLotItem>[0];
       let payload: CreateLotItemArgs;
-      if (tipo === "bruto") {
+      if (tipo === 'bruto') {
         payload = buildBrutoPayload(
           loteId,
           bruto,
           observacion,
           mostrarEnCatalogo,
         ) as unknown as CreateLotItemArgs;
-      } else if (tipo === "gema") {
+      } else if (tipo === 'gema') {
         payload = buildGemaPayload(
           loteId,
           gema,
           observacion,
           mostrarEnCatalogo,
         ) as unknown as CreateLotItemArgs;
-      } else if (tipo === "joya") {
+      } else if (tipo === 'joya') {
         payload = buildJoyaPayload(
           loteId,
           joya,
           observacion,
           mostrarEnCatalogo,
         ) as unknown as CreateLotItemArgs;
-      } else if (tipo === "lote") {
+      } else if (tipo === 'lote') {
         payload = buildLotePayload(
           loteId,
           joya,
           observacion,
           mostrarEnCatalogo,
         ) as unknown as CreateLotItemArgs;
-      } else if (tipo === "insumo") {
+      } else if (tipo === 'insumo') {
         payload = buildInsumoPayload(
           loteId,
           insumo,
@@ -1974,7 +1973,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
           mostrarEnCatalogo,
         ) as unknown as CreateLotItemArgs;
       } else {
-        throw new Error("Tipo de ítem no soportado en captura");
+        throw new Error('Tipo de ítem no soportado en captura');
       }
 
       // Persist the operator-facing subtype (e.g. "Macla", "Canutillo") so the
@@ -1985,7 +1984,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
       } as unknown as CreateLotItemArgs;
 
       const result = (await createLotItem(payload)) as {
-        lotItemId: Id<"lotItems">;
+        lotItemId: Id<'lotItems'>;
         itemId: string;
       };
 
@@ -2020,8 +2019,8 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
           );
         } catch {
           notify(
-            "Ítem guardado, pero no pudimos subir el certificado",
-            "warning",
+            'Ítem guardado, pero no pudimos subir el certificado',
+            'warning',
           );
         }
       }
@@ -2045,11 +2044,11 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
         photoUploadFailed
           ? `Ítem ${result.itemId} guardado SIN foto — la imagen no se subió, reintentá desde edición`
           : `Ítem ${result.itemId} guardado`,
-        photoUploadFailed ? "warning" : "success",
+        photoUploadFailed ? 'warning' : 'success',
       );
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "No pudimos guardar el ítem",
+        err instanceof Error ? err.message : 'No pudimos guardar el ítem',
       );
     } finally {
       setSaving(false);
@@ -2088,13 +2087,13 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
     if (!lot) return;
     try {
       await updateLot({
-        id: lot._id as Id<"lots">,
+        id: lot._id as Id<'lots'>,
         patch: { unidadesDeclaradas: unidadesDeclaradas + 1 },
       });
-      notify("Unidad agregada · capturá el ítem extra", "success");
+      notify('Unidad agregada · capturá el ítem extra', 'success');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      notify(`No pudimos agregar la unidad: ${msg}`, "error");
+      notify(`No pudimos agregar la unidad: ${msg}`, 'error');
     }
   }, [lot, unidadesDeclaradas, updateLot, notify]);
 
@@ -2111,27 +2110,27 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
     setCancelling(true);
     try {
       if (unidadesDeclaradas <= 1) {
-        await cancelLot({ id: lot._id as Id<"lots"> });
-        notify("Lote cancelado", "info");
+        await cancelLot({ id: lot._id as Id<'lots'> });
+        notify('Lote cancelado', 'info');
         setCancelItemDialogOpen(false);
-        navigate("/admin/fotosintesis");
+        navigate('/admin/fotosintesis');
         return;
       }
       const nextDeclared = unidadesDeclaradas - 1;
       await updateLot({
-        id: lot._id as Id<"lots">,
+        id: lot._id as Id<'lots'>,
         patch: { unidadesDeclaradas: nextDeclared },
       });
       resetItemDraft();
       notify(
         `Slot descartado · el lote ahora declara ${nextDeclared} unidades`,
-        "success",
+        'success',
       );
       setCancelItemDialogOpen(false);
     } catch (err) {
       const msg =
-        err instanceof Error ? err.message : "No pudimos descartar el ítem";
-      notify(msg, "error");
+        err instanceof Error ? err.message : 'No pudimos descartar el ítem';
+      notify(msg, 'error');
     } finally {
       setCancelling(false);
     }
@@ -2155,25 +2154,25 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
     if (!lot) return;
     setCancelling(true);
     try {
-      await cancelLot({ id: lot._id as Id<"lots"> });
-      notify("Lote cancelado", "info");
+      await cancelLot({ id: lot._id as Id<'lots'> });
+      notify('Lote cancelado', 'info');
       setCancelLotDialogOpen(false);
-      navigate("/admin/fotosintesis");
+      navigate('/admin/fotosintesis');
     } catch (err) {
       const msg =
-        err instanceof Error ? err.message : "No pudimos cancelar el lote";
-      notify(msg, "error");
+        err instanceof Error ? err.message : 'No pudimos cancelar el lote';
+      notify(msg, 'error');
     } finally {
       setCancelling(false);
     }
   }, [lot, cancelLot, notify, navigate]);
 
   const handleDuplicate = useCallback(() => {
-    if (tipo === "bruto") {
+    if (tipo === 'bruto') {
       setBruto(carryBrutoBase);
-    } else if (tipo === "gema") {
+    } else if (tipo === 'gema') {
       setGema(carryGemaBase);
-    } else if (tipo === "insumo") {
+    } else if (tipo === 'insumo') {
       setInsumo(carryInsumoBase);
     } else {
       setJoya(carryJoyaBase);
@@ -2185,7 +2184,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
     const isTyping = (target: EventTarget | null): boolean => {
       if (!(target instanceof HTMLElement)) return false;
       const tag = target.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT")
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT')
         return true;
       return target.isContentEditable;
     };
@@ -2193,7 +2192,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
       // ⌘D — duplicate
       if (
         (e.metaKey || e.ctrlKey) &&
-        e.key.toLowerCase() === "d" &&
+        e.key.toLowerCase() === 'd' &&
         !e.shiftKey &&
         !e.altKey
       ) {
@@ -2206,7 +2205,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
         return;
       }
       // ⌘↵ — save and next, or close-and-navigate when last item is complete
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         e.preventDefault();
         if (canCloseLot) {
           handleCloseLot();
@@ -2224,8 +2223,8 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
         }
       }
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, [handleDuplicate, handleSaveAndNext, handleCloseLot, canCloseLot]);
 
   // Topbar / TicketHeader meta -------------------------------------------------
@@ -2233,22 +2232,22 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
     if (!lot) return [];
     return [
       {
-        label: "Proveedor",
+        label: 'Proveedor',
         value:
-          provider?.nombreORazonSocial ?? (hasProvider ? "—" : "Sin proveedor"),
+          provider?.nombreORazonSocial ?? (hasProvider ? '—' : 'Sin proveedor'),
         alert: !hasProvider,
       },
-      { label: "Recibido", value: fmtDateEs(lot.fechaRecepcion) },
-      { label: "Costo total", value: formatCOP(lot.costoTotalCOP) },
+      { label: 'Recibido', value: fmtDateEs(lot.fechaRecepcion) },
+      { label: 'Costo total', value: formatCOP(lot.costoTotalCOP) },
       {
-        label: "Peso",
+        label: 'Peso',
         value:
-          typeof lot.pesoTotalQuilates === "number"
+          typeof lot.pesoTotalQuilates === 'number'
             ? `${lot.pesoTotalQuilates} ct`
-            : "—",
+            : '—',
       },
       {
-        label: "Pago",
+        label: 'Pago',
         value: formaPagoShort(lot.formaPago, lot.metodoContado),
       },
     ];
@@ -2275,7 +2274,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
   useEffect(() => {
     return () => {
       for (const p of photos) {
-        if (p.url.startsWith("blob:")) URL.revokeObjectURL(p.url);
+        if (p.url.startsWith('blob:')) URL.revokeObjectURL(p.url);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2286,7 +2285,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
     return (
       <Box
         sx={{
-          padding: "36px 28px",
+          padding: '36px 28px',
           color: foto.ink.tertiary,
           fontSize: 13,
         }}
@@ -2303,14 +2302,14 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
       <Box
         component="h1"
         sx={{
-          position: "absolute",
+          position: 'absolute',
           width: 1,
           height: 1,
           padding: 0,
           margin: -1,
-          overflow: "hidden",
-          clip: "rect(0,0,0,0)",
-          whiteSpace: "nowrap",
+          overflow: 'hidden',
+          clip: 'rect(0,0,0,0)',
+          whiteSpace: 'nowrap',
           border: 0,
         }}
       >
@@ -2328,11 +2327,11 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
           progress={{
             value: prepTotal.sum,
             target: 100,
-            label: "Preponderancia",
+            label: 'Preponderancia',
           }}
           alert={!hasProvider}
           onEdit={() => setEditLotOpen(true)}
-          editDisabled={lot.estado !== "abierto"}
+          editDisabled={lot.estado !== 'abierto'}
         />
       )}
 
@@ -2340,20 +2339,20 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
         <Box
           role="alert"
           sx={{
-            maxWidth: embedded ? "none" : 1320,
-            margin: "12px auto 0",
-            padding: "10px 14px",
+            maxWidth: embedded ? 'none' : 1320,
+            margin: '12px auto 0',
+            padding: '10px 14px',
             background: alpha(foto.status.sold, 0.06),
             border: `1px solid ${foto.status.sold}`,
-            borderRadius: "10px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            borderRadius: '10px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             fontSize: 12,
             color: foto.status.sold,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <AlertTriangle size={14} />
             <span>Este lote no tiene proveedor. Asignalo antes de cerrar.</span>
           </Box>
@@ -2367,9 +2366,9 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
               color: foto.status.sold,
               fontSize: 11.5,
               fontWeight: 600,
-              padding: "5px 10px",
-              borderRadius: "7px",
-              cursor: "pointer",
+              padding: '5px 10px',
+              borderRadius: '7px',
+              cursor: 'pointer',
             }}
           >
             Crear proveedor
@@ -2379,19 +2378,19 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
 
       <Box
         sx={{
-          maxWidth: embedded ? "none" : 1320,
-          margin: "0 auto",
-          padding: embedded ? "20px 20px 0" : "24px 28px 0",
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) 380px" },
-          gap: { xs: "20px", lg: "28px" },
-          alignItems: "start",
+          maxWidth: embedded ? 'none' : 1320,
+          margin: '0 auto',
+          padding: embedded ? '20px 20px 0' : '24px 28px 0',
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 380px' },
+          gap: { xs: '20px', lg: '28px' },
+          alignItems: 'start',
         }}
       >
         {/* LEFT — active item editor */}
         <Box
           sx={{
-            paddingBottom: "16px",
+            paddingBottom: '16px',
             minWidth: 0,
           }}
         >
@@ -2399,13 +2398,13 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
             <Box
               role="alert"
               sx={{
-                marginBottom: "18px",
-                padding: "10px 14px",
+                marginBottom: '18px',
+                padding: '10px 14px',
                 border: `1px solid ${foto.status.sold}`,
                 background: alpha(foto.status.sold, 0.06),
                 color: foto.status.sold,
                 fontSize: 12.5,
-                borderRadius: "10px",
+                borderRadius: '10px',
               }}
             >
               {error}
@@ -2430,18 +2429,18 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                 sx={{
                   background: foto.surfaces.canvas,
                   border: `1px solid ${foto.surfaces.rule}`,
-                  borderRadius: "14px",
-                  padding: "20px 22px",
-                  display: "grid",
-                  gap: "20px",
+                  borderRadius: '14px',
+                  padding: '20px 22px',
+                  display: 'grid',
+                  gap: '20px',
                 }}
               >
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "baseline",
-                    gap: "12px",
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'baseline',
+                    gap: '12px',
                   }}
                 >
                   <Box
@@ -2450,21 +2449,21 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                       fontSize: 17,
                       fontWeight: 600,
                       color: foto.ink.primary,
-                      letterSpacing: "-0.02em",
+                      letterSpacing: '-0.02em',
                       margin: 0,
                     }}
                   >
-                    Ítem {itemsCount + 1} de {unidadesDeclaradas || "?"}
+                    Ítem {itemsCount + 1} de {unidadesDeclaradas || '?'}
                   </Box>
                   <Box
                     sx={{
                       fontFamily: fontFamilies.mono,
-                      fontVariantNumeric: "tabular-nums",
+                      fontVariantNumeric: 'tabular-nums',
                       fontSize: 11,
                       color: foto.ink.tertiary,
                     }}
                   >
-                    {loteId} · {String(itemsCount + 1).padStart(3, "0")}
+                    {loteId} · {String(itemsCount + 1).padStart(3, '0')}
                   </Box>
                 </Box>
 
@@ -2475,13 +2474,13 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                 {isSingleItemLot && itemsCount === 0 ? (
                   <Box
                     sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "2px",
-                      padding: "10px 12px",
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '2px',
+                      padding: '10px 12px',
                       background: foto.surfaces.inset,
                       border: `1px solid ${foto.surfaces.edge}`,
-                      borderRadius: "10px",
+                      borderRadius: '10px',
                     }}
                   >
                     <Box
@@ -2489,7 +2488,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                         fontSize: 12.5,
                         fontWeight: 600,
                         color: foto.ink.primary,
-                        letterSpacing: "-0.01em",
+                        letterSpacing: '-0.01em',
                       }}
                     >
                       Lote de un solo ítem
@@ -2512,27 +2511,27 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                 {!isSingleItemLot ? (
                   <Box
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: "12px",
-                      padding: "10px 12px",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '12px',
+                      padding: '10px 12px',
                       background: reuseBaseData
                         ? foto.accent.soft
                         : foto.surfaces.inset,
                       border: `1px solid ${
                         reuseBaseData ? foto.accent.primary : foto.surfaces.edge
                       }`,
-                      borderRadius: "10px",
+                      borderRadius: '10px',
                       transition:
-                        "background 120ms ease, border-color 120ms ease",
+                        'background 120ms ease, border-color 120ms ease',
                     }}
                   >
                     <Box
                       sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "2px",
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '2px',
                       }}
                     >
                       <Box
@@ -2542,7 +2541,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                           fontSize: 12.5,
                           fontWeight: 600,
                           color: foto.ink.primary,
-                          letterSpacing: "-0.01em",
+                          letterSpacing: '-0.01em',
                         }}
                       >
                         Repetir datos base en cada ítem
@@ -2564,14 +2563,14 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                       checked={reuseBaseData}
                       onChange={(e) => toggleReuseBaseData(e.target.checked)}
                       inputProps={{
-                        "aria-checked": reuseBaseData,
-                        "aria-label": "Repetir datos base en cada ítem",
+                        'aria-checked': reuseBaseData,
+                        'aria-label': 'Repetir datos base en cada ítem',
                       }}
                     />
                   </Box>
                 ) : null}
 
-                {tipo === "insumo" ? (
+                {tipo === 'insumo' ? (
                   <InsumoFields
                     value={insumo}
                     onChange={(patch) =>
@@ -2581,7 +2580,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                     preponderanciaHelper={prepHelper?.text}
                     preponderanciaHelperAlert={prepHelper?.alert}
                   />
-                ) : tipo === "bruto" ? (
+                ) : tipo === 'bruto' ? (
                   <BrutoFields
                     value={bruto}
                     onChange={(patch) =>
@@ -2591,7 +2590,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                     preponderanciaHelper={prepHelper?.text}
                     preponderanciaHelperAlert={prepHelper?.alert}
                   />
-                ) : tipo === "gema" ? (
+                ) : tipo === 'gema' ? (
                   <GemaFields
                     value={gema}
                     onChange={(patch) =>
@@ -2615,7 +2614,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
 
                 {/* Foto */}
                 <Box>
-                  {tipo === "insumo" ? (
+                  {tipo === 'insumo' ? (
                     <FieldLabel>Foto (opcional)</FieldLabel>
                   ) : (
                     <FieldLabel optional="opcional">Foto del ítem</FieldLabel>
@@ -2629,7 +2628,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                 </Box>
 
                 {/* Certificado */}
-                {tipo !== "insumo" && (
+                {tipo !== 'insumo' && (
                   <Box>
                     <FieldLabel optional="opcional">Certificado</FieldLabel>
                     <Box
@@ -2641,25 +2640,25 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                         const file = (e.target as HTMLInputElement).files?.[0];
                         setCertificadoFile(file ?? null);
                       }}
-                      sx={{ display: "none" }}
+                      sx={{ display: 'none' }}
                     />
                     <Box
                       component="label"
                       htmlFor="cert-file"
                       sx={{
-                        display: "block",
+                        display: 'block',
                         background: foto.surfaces.inset,
                         border: `1px solid ${foto.surfaces.rule}`,
-                        borderRadius: "9px",
-                        padding: "11px 14px",
+                        borderRadius: '9px',
+                        padding: '11px 14px',
                         fontSize: 12.5,
                         color: foto.ink.secondary,
-                        cursor: "pointer",
+                        cursor: 'pointer',
                       }}
                     >
                       {certificadoFile
-                        ? "Cambiar archivo…"
-                        : "Adjuntar PDF o imagen…"}
+                        ? 'Cambiar archivo…'
+                        : 'Adjuntar PDF o imagen…'}
                     </Box>
                     {certificadoFile ? (
                       <Box
@@ -2685,22 +2684,22 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                     }
                     rows={3}
                     sx={{
-                      width: "100%",
+                      width: '100%',
                       background: foto.surfaces.inset,
                       border: `1px solid ${foto.surfaces.rule}`,
-                      borderRadius: "9px",
-                      padding: "11px 14px",
+                      borderRadius: '9px',
+                      padding: '11px 14px',
                       fontSize: 13,
                       color: foto.ink.primary,
                       fontFamily: fontFamilies.system,
-                      outline: "none",
-                      resize: "vertical",
+                      outline: 'none',
+                      resize: 'vertical',
                       lineHeight: 1.5,
-                      "&:focus": {
+                      '&:focus': {
                         borderColor: foto.accent.primary,
                         boxShadow: `0 0 0 3px ${foto.accent.glow}`,
                       },
-                      "::placeholder": { color: foto.ink.mute },
+                      '::placeholder': { color: foto.ink.mute },
                     }}
                   />
                 </Box>
@@ -2708,20 +2707,20 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                 {/* Reserva oculta toggle */}
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "10px 12px",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 12px',
                     background: foto.surfaces.inset,
                     border: `1px solid ${foto.surfaces.edge}`,
-                    borderRadius: "10px",
+                    borderRadius: '10px',
                   }}
                 >
                   <Box
                     sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "2px",
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '2px',
                     }}
                   >
                     <Box
@@ -2731,7 +2730,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                         fontSize: 12.5,
                         fontWeight: 600,
                         color: foto.ink.primary,
-                        letterSpacing: "-0.01em",
+                        letterSpacing: '-0.01em',
                       }}
                     >
                       Reserva oculta
@@ -2753,9 +2752,9 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                     checked={reservaOculta}
                     onChange={(e) => setReservaOculta(e.target.checked)}
                     inputProps={{
-                      "aria-checked": reservaOculta,
-                      "aria-label": "Reserva oculta",
-                      "aria-describedby": "reserva-oculta-help",
+                      'aria-checked': reservaOculta,
+                      'aria-label': 'Reserva oculta',
+                      'aria-describedby': 'reserva-oculta-help',
                     }}
                   />
                 </Box>
@@ -2776,33 +2775,33 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
         {/* RIGHT — bandeja */}
         <Box
           sx={{
-            position: { lg: "sticky" },
+            position: { lg: 'sticky' },
             // Embedded: the workbench's own scroll container is the offset parent
             // and there's no FotoTopbar above the canvas — pin to the top of the
             // pane and let the outer container handle overflow.
             top: { lg: embedded ? 0 : FOTO_TOPBAR_HEIGHT },
             maxHeight: {
-              lg: embedded ? "none" : `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
+              lg: embedded ? 'none' : `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
             },
-            overflow: { lg: embedded ? "visible" : "auto" },
-            paddingBottom: "20px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "20px",
+            overflow: { lg: embedded ? 'visible' : 'auto' },
+            paddingBottom: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
             minWidth: 0,
           }}
         >
           {/* Ring */}
           <Box
             sx={{
-              padding: "22px 18px 18px",
+              padding: '22px 18px 18px',
               background: foto.surfaces.panel,
               border: `1px solid ${foto.surfaces.edge}`,
-              borderRadius: "14px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "12px",
+              borderRadius: '14px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '12px',
             }}
           >
             <PreponderanceRing value={prepTotal.sum} target={100} />
@@ -2811,33 +2810,32 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                 fontSize: 10.5,
                 color: foto.ink.tertiary,
                 fontFamily: fontFamilies.mono,
-                fontVariantNumeric: "tabular-nums",
-                textAlign: "center",
+                fontVariantNumeric: 'tabular-nums',
+                textAlign: 'center',
               }}
             >
-              {prepTotal.count}/{unidadesDeclaradas} ítems ·{" "}
+              {prepTotal.count}/{unidadesDeclaradas} ítems ·{' '}
               {prepTotal.remaining > 0
                 ? `${Math.round(prepTotal.remaining * 10) / 10}% restante`
                 : prepTotal.overflow > 0.01
                   ? `${Math.round(prepTotal.overflow * 10) / 10}% de exceso`
-                  : "lote balanceado"}
+                  : 'lote balanceado'}
             </Box>
           </Box>
 
           {/* Lot meta summary */}
           {(() => {
-            const editable = lot.estado === "abierto";
+            const editable = lot.estado === 'abierto';
             const handleCostoCommit = async (next: number) => {
               try {
                 await updateLot({
-                  id: lot._id as Id<"lots">,
+                  id: lot._id as Id<'lots'>,
                   patch: { costoTotalCOP: next },
-                  editorEmail: user?.email,
                 });
-                notify("Costo del lote actualizado", "success");
+                notify('Costo del lote actualizado', 'success');
               } catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);
-                notify(`No pudimos guardar el costo: ${msg}`, "error");
+                notify(`No pudimos guardar el costo: ${msg}`, 'error');
                 throw err;
               }
             };
@@ -2849,34 +2847,34 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
               }
               try {
                 await updateLot({
-                  id: lot._id as Id<"lots">,
+                  id: lot._id as Id<'lots'>,
                   patch: { unidadesDeclaradas: next },
                 });
-                notify("Unidades declaradas actualizadas", "success");
+                notify('Unidades declaradas actualizadas', 'success');
               } catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);
-                notify(`No pudimos guardar las unidades: ${msg}`, "error");
+                notify(`No pudimos guardar las unidades: ${msg}`, 'error');
                 throw err;
               }
             };
             return (
               <LotMetaCard
                 action={{
-                  label: "Editar",
+                  label: 'Editar',
                   onClick: () => setEditLotOpen(true),
                   disabled: !editable,
                 }}
                 rows={[
                   {
-                    label: "Lote",
+                    label: 'Lote',
                     value: loteId,
                   },
                   {
-                    label: "Recibido",
+                    label: 'Recibido',
                     value: fmtDateEs(lot.fechaRecepcion),
                   },
                   {
-                    label: "Costo",
+                    label: 'Costo',
                     value: (
                       <EditableMetaValue
                         value={lot.costoTotalCOP}
@@ -2889,21 +2887,21 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                         ariaLabel="costo total del lote"
                         helper={
                           editable
-                            ? "Cambia el costo total del lote (Enter para guardar, Esc para cancelar)."
+                            ? 'Cambia el costo total del lote (Enter para guardar, Esc para cancelar).'
                             : undefined
                         }
                       />
                     ),
                   },
                   {
-                    label: "Unidades",
+                    label: 'Unidades',
                     value: (
                       <Box
                         sx={{
-                          display: "inline-flex",
-                          alignItems: "baseline",
-                          gap: "4px",
-                          justifyContent: "flex-end",
+                          display: 'inline-flex',
+                          alignItems: 'baseline',
+                          gap: '4px',
+                          justifyContent: 'flex-end',
                         }}
                       >
                         <Box component="span">{itemsCount}/</Box>
@@ -2926,12 +2924,12 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                     ),
                   },
                   {
-                    label: "Pago",
+                    label: 'Pago',
                     value: formaPagoShort(lot.formaPago),
                   },
                   {
-                    label: "Factura",
-                    value: lot.numeroFactura ?? "por adjuntar",
+                    label: 'Factura',
+                    value: lot.numeroFactura ?? 'por adjuntar',
                     alert: !lot.numeroFactura,
                   },
                 ]}
@@ -2944,31 +2942,31 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
             component="ul"
             role="list"
             sx={{
-              listStyle: "none",
+              listStyle: 'none',
               padding: 0,
               margin: 0,
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
             }}
           >
             {(items ?? []).map((item, idx) => {
-              const itemEditable = lot.estado === "abierto";
+              const itemEditable = lot.estado === 'abierto';
               const handlePrepCommit = async (next: number) => {
                 try {
                   await updatePreponderancia({
-                    lotItemId: item._id as Id<"lotItems">,
+                    lotItemId: item._id as Id<'lotItems'>,
                     preponderancia: next,
                   });
                   notify(
                     `Preponderancia de #${item.itemId} actualizada`,
-                    "success",
+                    'success',
                   );
                 } catch (err) {
                   const msg = err instanceof Error ? err.message : String(err);
                   notify(
                     `No pudimos actualizar la preponderancia: ${msg}`,
-                    "error",
+                    'error',
                   );
                   throw err;
                 }
@@ -2976,7 +2974,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
               return (
                 <Box component="li" key={item._id} sx={{ margin: 0 }}>
                   <ItemMiniCard
-                    ticketId={`${loteId} · ${String(idx + 1).padStart(3, "0")}`}
+                    ticketId={`${loteId} · ${String(idx + 1).padStart(3, '0')}`}
                     name={item.nombre?.trim() || `Ítem ${item.itemId}`}
                     meta={`#${item.itemId}`}
                     preponderanciaSlot={
@@ -3013,35 +3011,35 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                     activeNombre.trim() ||
                     `${SUBTIPO_LABEL[subtipo]} en captura`;
                   const activePrep =
-                    typeof activePreponderancia === "number"
+                    typeof activePreponderancia === 'number'
                       ? activePreponderancia
                       : undefined;
                   const baseMeta =
-                    typeof activePrep === "number"
+                    typeof activePrep === 'number'
                       ? `${activePrep}% · ${formatCOP(
                           Math.round(costoTotalCOP * (activePrep / 100)),
                         )}`
-                      : "Esperando preponderancia…";
+                      : 'Esperando preponderancia…';
                   let activeMeta = baseMeta;
-                  if (tipo === "bruto") {
+                  if (tipo === 'bruto') {
                     const brutoBits: string[] = [];
                     if (bruto.pesoTotal.trim().length > 0)
                       brutoBits.push(bruto.pesoTotal.trim());
-                    if (typeof bruto.cantidadEstimada === "number")
+                    if (typeof bruto.cantidadEstimada === 'number')
                       brutoBits.push(`${bruto.cantidadEstimada} pzs est`);
-                    if (typeof bruto.rendimientoEsperado === "number")
+                    if (typeof bruto.rendimientoEsperado === 'number')
                       brutoBits.push(`${bruto.rendimientoEsperado}% rendim`);
                     if (brutoBits.length > 0) {
                       activeMeta =
-                        typeof activePrep === "number"
-                          ? `${brutoBits.join(" · ")} · ${baseMeta}`
-                          : brutoBits.join(" · ");
+                        typeof activePrep === 'number'
+                          ? `${brutoBits.join(' · ')} · ${baseMeta}`
+                          : brutoBits.join(' · ');
                     }
                   }
                   return (
                     <Box component="li" sx={{ margin: 0 }}>
                       <ItemMiniCard
-                        ticketId={`${loteId} · ${String(itemsCount + 1).padStart(3, "0")}`}
+                        ticketId={`${loteId} · ${String(itemsCount + 1).padStart(3, '0')}`}
                         name={activeName}
                         meta={activeMeta}
                         preponderancia={activePrep}
@@ -3061,7 +3059,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                 return (
                   <Box component="li" key={`pending-${seq}`} sx={{ margin: 0 }}>
                     <ItemMiniCard
-                      ticketId={`${loteId} · ${String(seq).padStart(3, "0")}`}
+                      ticketId={`${loteId} · ${String(seq).padStart(3, '0')}`}
                       name="Pendiente"
                       meta="—"
                       state="pending"
@@ -3075,30 +3073,30 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
           <ShortcutTable
             title="Atajos"
             shortcuts={[
-              { label: "Duplicar ítem", keys: ["⌘", "D"] },
-              { label: "Guardar y siguiente", keys: ["⌘", "↵"] },
-              { label: "Cambiar tipo de ítem", keys: ["1", "–", "9"] },
-              { label: "Abrir buscador global", keys: ["⌘", "K"] },
+              { label: 'Duplicar ítem', keys: ['⌘', 'D'] },
+              { label: 'Guardar y siguiente', keys: ['⌘', '↵'] },
+              { label: 'Cambiar tipo de ítem', keys: ['1', '–', '9'] },
+              { label: 'Abrir buscador global', keys: ['⌘', 'K'] },
             ]}
           />
 
-          {lot.estado === "abierto" ? (
+          {lot.estado === 'abierto' ? (
             <Box
               sx={{
-                padding: "14px 16px",
+                padding: '14px 16px',
                 background: foto.surfaces.panel,
                 border: `1px dashed ${foto.surfaces.rule}`,
-                borderRadius: "12px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
+                borderRadius: '12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
               }}
             >
               <Box
                 sx={{
                   fontSize: 10.5,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
                   color: foto.ink.tertiary,
                   fontWeight: 600,
                 }}
@@ -3121,17 +3119,17 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
                 type="button"
                 onClick={handleCancelLotClick}
                 sx={{
-                  alignSelf: "flex-start",
+                  alignSelf: 'flex-start',
                   border: `1px solid ${foto.status.sold}`,
-                  background: "transparent",
+                  background: 'transparent',
                   color: foto.status.sold,
-                  borderRadius: "8px",
-                  padding: "8px 14px",
+                  borderRadius: '8px',
+                  padding: '8px 14px',
                   fontSize: 12,
                   fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "background 120ms ease, color 120ms ease",
-                  "&:hover": {
+                  cursor: 'pointer',
+                  transition: 'background 120ms ease, color 120ms ease',
+                  '&:hover': {
                     background: foto.status.sold,
                     color: foto.ink.inverse,
                   },
@@ -3163,7 +3161,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
           void id;
           notify(
             `Proveedor creado, pero el enlace al lote ${loteId} requiere extender lots.update en el servidor (Slice 2). Por ahora abrí el lote de nuevo desde Inicio para volver a empezar con este proveedor.`,
-            "warning",
+            'warning',
           );
         }}
         contextLabel={`${loteId} · sin salir de la captura`}
@@ -3202,13 +3200,13 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
             }}
             itemId={editingItem.itemId}
             loteId={loteId}
-            lotItemId={editingItem._id as Id<"lotItems">}
+            lotItemId={editingItem._id as Id<'lotItems'>}
             currentPreponderancia={editingItem.preponderancia}
             lotCostoTotalCOP={costoTotalCOP}
             siblingPreponderanciaSum={siblingSum}
-            ticketLabel={`${loteId} · ${String(editingIndex + 1).padStart(3, "0")}`}
+            ticketLabel={`${loteId} · ${String(editingIndex + 1).padStart(3, '0')}`}
             lotEstado={lot.estado}
-            editable={lot.estado === "abierto"}
+            editable={lot.estado === 'abierto'}
             editDraftOverride={editOverride}
           />
         ) : null;
@@ -3219,21 +3217,21 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
         title={
           unidadesDeclaradas <= 1
             ? `Cancelar lote ${loteId}`
-            : "Descartar este ítem"
+            : 'Descartar este ítem'
         }
         message={
           unidadesDeclaradas <= 1
             ? itemsCount > 0
               ? `Este es el único slot del lote y ya capturaste ${itemsCount} ítem(s). Cancelar el lote orfana esos ítems del lote (quedan en inventario sin lote asociado) y lo marca como cancelado.`
-              : "Este lote no tiene ítems capturados. Lo marcamos como cancelado y volvés al inicio."
-            : `Reduciremos las unidades declaradas de ${unidadesDeclaradas} a ${unidadesDeclaradas - 1}. Los ítems ya capturados (${itemsCount}) no se tocan. Si el ${unidadesDeclaradas - 1 === itemsCount ? "lote queda balanceado, podés cerrarlo." : "lote sigue incompleto, podés seguir capturando."}`
+              : 'Este lote no tiene ítems capturados. Lo marcamos como cancelado y volvés al inicio.'
+            : `Reduciremos las unidades declaradas de ${unidadesDeclaradas} a ${unidadesDeclaradas - 1}. Los ítems ya capturados (${itemsCount}) no se tocan. Si el ${unidadesDeclaradas - 1 === itemsCount ? 'lote queda balanceado, podés cerrarlo.' : 'lote sigue incompleto, podés seguir capturando.'}`
         }
         confirmLabel={
           cancelling
-            ? "Procesando…"
+            ? 'Procesando…'
             : unidadesDeclaradas <= 1
-              ? "Cancelar lote"
-              : "Descartar ítem"
+              ? 'Cancelar lote'
+              : 'Descartar ítem'
         }
         cancelLabel="Volver"
         confirmColor="error"
@@ -3249,9 +3247,9 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
         message={
           itemsCount > 0
             ? `El lote tiene ${itemsCount} ítem(s) capturado(s). Al cancelarlo, esos ítems quedan en inventario pero se desligan del lote (sin costo asignado ni preponderancia). Esta acción no se puede deshacer.`
-            : "El lote no tiene ítems capturados. Lo marcamos como cancelado y volvés al inicio."
+            : 'El lote no tiene ítems capturados. Lo marcamos como cancelado y volvés al inicio.'
         }
-        confirmLabel={cancelling ? "Cancelando…" : "Cancelar lote"}
+        confirmLabel={cancelling ? 'Cancelando…' : 'Cancelar lote'}
         cancelLabel="Volver"
         confirmColor="error"
         onConfirm={() => void handleConfirmCancelLot()}
@@ -3279,7 +3277,7 @@ export default function FotosintesisCapturaLotePage({
     return <EmbeddedLoteCanvas />;
   }
 
-  if (!loteId || loteId === "new") {
+  if (!loteId || loteId === 'new') {
     return <NewLotIntro />;
   }
 

@@ -42,12 +42,18 @@ export const listByCreator = query({
 export const getByShortCode = query({
   args: { shortCode: v.string() },
   handler: async (ctx, { shortCode }) => {
-    return await ctx.db
+    const doc = await ctx.db
       .query('invitations')
       .withIndex('by_shortCode', (q) =>
         q.eq('shortCode', shortCode.toUpperCase()),
       )
       .first();
+    if (!doc) return null;
+    // Never return the raw PIN or device-binding token to callers — this
+    // query is public and reachable from any guest's browser. Callers that
+    // only need to know whether a PIN gate exists use `isPinBound`.
+    const { pin: _pin, boundToken, ...safe } = doc;
+    return { ...safe, isPinBound: !!boundToken };
   },
 });
 
@@ -322,11 +328,15 @@ export const activate = mutation({
       activatedAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
     });
+    // Same rationale as getByShortCode: this mutation is public, so strip
+    // the raw PIN/device-binding token before returning.
+    const { pin: _pin, boundToken, ...safe } = invitation;
     return {
-      ...invitation,
+      ...safe,
       status: 'active' as const,
       activatedAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
+      isPinBound: !!boundToken,
     };
   },
 });
@@ -411,8 +421,13 @@ export const verifyPin = mutation({
  * Rename all invitations matching an old creatorName to the canonical name.
  * Migration-only — fixes historical data where creatorName was stored as the
  * Google profile name instead of the canonical Asesor name.
+ *
+ * internalMutation: zero app callers (only scripts/normalize-inviter-names.ts,
+ * a one-off dev script). If it needs to run again, invoke it via
+ * `npx convex run invitations:_normalizeCreatorName '{...}'` with a deploy
+ * key — it is intentionally unreachable from any public client.
  */
-export const _normalizeCreatorName = mutation({
+export const _normalizeCreatorName = internalMutation({
   args: { oldName: v.string(), newName: v.string() },
   handler: async (ctx, { oldName, newName }) => {
     const all = await ctx.db.query('invitations').collect();
@@ -430,8 +445,15 @@ export const _normalizeCreatorName = mutation({
 /**
  * Insert an invitation with all original fields preserved (for migration).
  * NOT for production use — use generate() instead.
+ *
+ * internalMutation: zero app callers (only scripts/migrate-sheets-to-convex.ts,
+ * a one-off dev script). Previously a public `mutation` — the underscore
+ * prefix was cosmetic and it was directly callable by anyone with the
+ * deployment URL, letting an attacker mint an arbitrary 'active' invitation
+ * with no PIN. If the migration script needs to run again, invoke it via
+ * `npx convex run invitations:_migrateInsert '{...}'` with a deploy key.
  */
-export const _migrateInsert = mutation({
+export const _migrateInsert = internalMutation({
   args: {
     invitationId: v.string(),
     shortCode: v.string(),

@@ -18,19 +18,19 @@
  * tests/mpSignature.test.ts.
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { withApiHandler, sendError, sendSuccess } from "./_lib/index.js";
-import { convexClient, isConvexEnabled } from "./_lib/convex-client.js";
-import { validateMpSignature } from "./_lib/mp-signature.js";
-import { fetchPayment } from "./_lib/mp-preference.js";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { withApiHandler, sendError, sendSuccess } from './_lib/index.js';
+import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
+import { validateMpSignature } from './_lib/mp-signature.js';
+import { fetchPayment } from './_lib/mp-preference.js';
 import {
   upsertContact,
   addTags,
   addToWorkflow,
   updateContactFields,
   type GhlConfig,
-} from "./_lib/ghl-client.js";
-import { api } from "../convex/_generated/api.js";
+} from './_lib/ghl-client.js';
+import { api } from '../convex/_generated/api.js';
 
 export default withApiHandler(
   async (req: VercelRequest, res: VercelResponse) => {
@@ -54,32 +54,32 @@ export default withApiHandler(
         },
         secret,
       );
-    if (!valid) return sendError(res, 401, "Invalid signature");
+    if (!valid) return sendError(res, 401, 'Invalid signature');
 
     // 2. Only payment notifications are actionable.
     const dataId =
       bodyDataId != null
         ? String(bodyDataId)
-        : ((req.query["data.id"] as string | undefined) ?? null);
-    if (body.type !== "payment" || !dataId) {
-      return sendSuccess(res, { ignored: true, reason: "not-payment" });
+        : ((req.query['data.id'] as string | undefined) ?? null);
+    if (body.type !== 'payment' || !dataId) {
+      return sendSuccess(res, { ignored: true, reason: 'not-payment' });
     }
-    if (!mpToken) return sendError(res, 500, "MP_ACCESS_TOKEN not configured");
+    if (!mpToken) return sendError(res, 500, 'MP_ACCESS_TOKEN not configured');
 
     // 3. Re-fetch the real payment — never trust the webhook body.
     let payment: Awaited<ReturnType<typeof fetchPayment>>;
     try {
       payment = await fetchPayment(dataId, mpToken);
     } catch (err) {
-      console.error("[MpWebhook] fetchPayment failed:", err);
-      return sendError(res, 500, "payment fetch failed"); // MP retries
+      console.error('[MpWebhook] fetchPayment failed:', err);
+      return sendError(res, 500, 'payment fetch failed'); // MP retries
     }
 
     // 4. Only approved payments with our saleId proceed.
-    if (payment.status !== "approved") {
+    if (payment.status !== 'approved') {
       return sendSuccess(res, {
         ignored: true,
-        reason: "not-approved",
+        reason: 'not-approved',
         status: payment.status,
       });
     }
@@ -87,11 +87,11 @@ export default withApiHandler(
     if (!saleId) {
       return sendSuccess(res, {
         ignored: true,
-        reason: "no-external-reference",
+        reason: 'no-external-reference',
       });
     }
     if (!isConvexEnabled || !convexClient) {
-      return sendError(res, 503, "Convex backend not configured");
+      return sendError(res, 503, 'Convex backend not configured');
     }
 
     // 5. Idempotent mark-paid.
@@ -99,6 +99,7 @@ export default withApiHandler(
       saleId,
       mpPaymentId: payment.id,
       mpStatus: payment.status,
+      secret: process.env.ADMIN_SYNC_TOKEN ?? '',
     });
     if (!result.updated) {
       return sendSuccess(res, {
@@ -121,32 +122,34 @@ export default withApiHandler(
             phone: result.clientPhone ?? undefined,
             email: result.clientEmail ?? undefined,
             name: result.clientName ?? undefined,
-            source: "mp-webhook",
+            source: 'mp-webhook',
           });
           contactId = up.contactId;
           if (contactId) {
             await convexClient.mutation(api.ghl.linkGhlContact, {
               clientId: result.clientId,
               ghlContactId: contactId,
+              secret: process.env.ADMIN_SYNC_TOKEN ?? '',
             });
           }
         }
         if (contactId) {
           await updateContactFields(cfg, contactId, [
-            { key: "total_comprado_cop", field_value: result.totalCOP },
+            { key: 'total_comprado_cop', field_value: result.totalCOP },
             {
-              key: "ultima_compra_fecha",
+              key: 'ultima_compra_fecha',
               field_value: new Date().toISOString(),
             },
           ]);
-          await addTags(cfg, contactId, ["cliente-pago-confirmado"]);
+          await addTags(cfg, contactId, ['cliente-pago-confirmado']);
           if (workflowId) await addToWorkflow(cfg, contactId, workflowId);
         }
       } catch (err) {
-        console.error("[MpWebhook] GHL fan-out failed (will retry):", err);
+        console.error('[MpWebhook] GHL fan-out failed (will retry):', err);
         await convexClient.mutation(api.ghl.flagGhlSyncPending, {
           saleId,
           pending: true,
+          secret: process.env.ADMIN_SYNC_TOKEN ?? '',
         });
       }
     }
@@ -155,8 +158,8 @@ export default withApiHandler(
   },
   {
     // MP posts the webhook; no preflight/bearer. HMAC is the auth.
-    methods: ["POST"],
+    methods: ['POST'],
     requireGoogle: false,
-    errorPrefix: "MpWebhook",
+    errorPrefix: 'MpWebhook',
   },
 );

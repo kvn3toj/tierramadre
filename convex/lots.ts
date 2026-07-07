@@ -1,25 +1,25 @@
 import {
   query,
-  mutation,
   action,
   internalAction,
   internalMutation,
   internalQuery,
-} from "./_generated/server";
-import { v } from "convex/values";
-import { api, internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
-import { pushTableRowToVercel } from "./_lib/sheetSync";
-import { COLUMN_MAPS } from "./_lib/columnMaps";
+} from './_generated/server';
+import { v } from 'convex/values';
+import { api, internal } from './_generated/api';
+import type { Id } from './_generated/dataModel';
+import { pushTableRowToVercel } from './_lib/sheetSync';
+import { COLUMN_MAPS } from './_lib/columnMaps';
 import {
   allocateNext,
   formatLotId,
   lotSequenceName,
   parseLoteId,
   reclaimIfTail,
-} from "./sequences";
-import { canReopenLot, deriveCostoBaseCOP } from "./_lib/lotMath";
-import { withPublishStamp } from "./_lib/publishState";
+} from './sequences';
+import { canReopenLot, deriveCostoBaseCOP } from './_lib/lotMath';
+import { withPublishStamp } from './_lib/publishState';
+import { requireAccessLevel } from './_lib/authz';
 
 // Free text (canonical: B | C | S | M). The capture UI sanitizes a custom
 // write-in to an uppercase, dash-free token before it reaches here, so it stays
@@ -58,26 +58,26 @@ export const list = query({
   args: {
     estado: v.optional(
       v.union(
-        v.literal("abierto"),
-        v.literal("cerrado"),
-        v.literal("publicado"),
-        v.literal("cancelado"),
+        v.literal('abierto'),
+        v.literal('cerrado'),
+        v.literal('publicado'),
+        v.literal('cancelado'),
       ),
     ),
   },
   handler: async (ctx, { estado }) => {
     const rows = estado
       ? await ctx.db
-          .query("lots")
-          .withIndex("by_estado", (q) => q.eq("estado", estado))
+          .query('lots')
+          .withIndex('by_estado', (q) => q.eq('estado', estado))
           .collect()
-      : await ctx.db.query("lots").collect();
+      : await ctx.db.query('lots').collect();
     return rows.sort((a, b) => b._creationTime - a._creationTime);
   },
 });
 
 export const get = query({
-  args: { id: v.id("lots") },
+  args: { id: v.id('lots') },
   handler: async (ctx, { id }) => ctx.db.get(id),
 });
 
@@ -85,8 +85,8 @@ export const getByLoteId = query({
   args: { loteId: v.string() },
   handler: async (ctx, { loteId }) =>
     ctx.db
-      .query("lots")
-      .withIndex("by_loteId", (q) => q.eq("loteId", loteId))
+      .query('lots')
+      .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
       .first(),
 });
 
@@ -98,36 +98,38 @@ export const peekNextLoteId = query({
   args: { sede: sedeValidator },
   handler: async (ctx, { sede }) => {
     const seq = await ctx.db
-      .query("sequences")
-      .withIndex("by_name", (q) => q.eq("name", lotSequenceName(sede)))
+      .query('sequences')
+      .withIndex('by_name', (q) => q.eq('name', lotSequenceName(sede)))
       .first();
     const next = seq?.nextValue ?? 1;
     return { nextValue: next, preview: formatLotId(next, sede) };
   },
 });
 
-export const create = mutation({
-  args: {
-    sede: sedeValidator,
-    providerId: v.id("providers"),
-    fechaRecepcion: v.string(),
-    renombreLote: v.optional(v.string()),
-    tratamiento: v.optional(v.string()),
-    mina: v.optional(v.string()),
-    operadorNombre: v.optional(v.string()),
-    operadorRol: v.optional(v.string()),
-    pesoTotalQuilates: v.optional(v.number()),
-    costoTotalCOP: v.number(),
-    unidadesDeclaradas: v.number(),
-    formaPago: formaPagoValidator,
-    metodoContado: v.optional(metodoContadoValidator),
-    fechaVencimiento: v.optional(v.string()),
-    numeroCuotas: v.optional(v.number()),
-    numeroFactura: v.optional(v.string()),
-    urlFactura: v.optional(v.string()),
-    notas: v.optional(v.string()),
-    clientToken: v.optional(v.string()),
-  },
+const createArgs = {
+  sede: sedeValidator,
+  providerId: v.id('providers'),
+  fechaRecepcion: v.string(),
+  renombreLote: v.optional(v.string()),
+  tratamiento: v.optional(v.string()),
+  mina: v.optional(v.string()),
+  operadorNombre: v.optional(v.string()),
+  operadorRol: v.optional(v.string()),
+  pesoTotalQuilates: v.optional(v.number()),
+  costoTotalCOP: v.number(),
+  unidadesDeclaradas: v.number(),
+  formaPago: formaPagoValidator,
+  metodoContado: v.optional(metodoContadoValidator),
+  fechaVencimiento: v.optional(v.string()),
+  numeroCuotas: v.optional(v.number()),
+  numeroFactura: v.optional(v.string()),
+  urlFactura: v.optional(v.string()),
+  notas: v.optional(v.string()),
+  clientToken: v.optional(v.string()),
+};
+
+export const _create = internalMutation({
+  args: createArgs,
   handler: async (ctx, args) => {
     // Idempotency guard (money-critical): replay of the same clientToken
     // returns the prior result instead of creating a second lot. The created
@@ -135,57 +137,57 @@ export const create = mutation({
     // deletes the lot, so a stale token must fall through and re-create (C7).
     if (args.clientToken) {
       const prior = await ctx.db
-        .query("commitTokens")
-        .withIndex("by_token", (q) => q.eq("token", args.clientToken!))
+        .query('commitTokens')
+        .withIndex('by_token', (q) => q.eq('token', args.clientToken!))
         .unique();
       if (prior) {
-        const stillThere = await ctx.db.get(prior.primaryId as Id<"lots">);
+        const stillThere = await ctx.db.get(prior.primaryId as Id<'lots'>);
         if (stillThere) {
-          return JSON.parse(prior.result) as { id: Id<"lots">; loteId: string };
+          return JSON.parse(prior.result) as { id: Id<'lots'>; loteId: string };
         }
         await ctx.db.delete(prior._id);
       }
     }
 
     if (args.unidadesDeclaradas < 1)
-      throw new Error("unidadesDeclaradas debe ser ≥ 1");
-    if (args.costoTotalCOP <= 0) throw new Error("costoTotalCOP debe ser > 0");
-    if (args.formaPago === "credito" && !args.fechaVencimiento)
-      throw new Error("Crédito requiere fechaVencimiento");
-    if (args.formaPago === "contado" && !args.metodoContado)
-      throw new Error("Contado requiere metodoContado");
+      throw new Error('unidadesDeclaradas debe ser ≥ 1');
+    if (args.costoTotalCOP <= 0) throw new Error('costoTotalCOP debe ser > 0');
+    if (args.formaPago === 'credito' && !args.fechaVencimiento)
+      throw new Error('Crédito requiere fechaVencimiento');
+    if (args.formaPago === 'contado' && !args.metodoContado)
+      throw new Error('Contado requiere metodoContado');
 
     const provider = await ctx.db.get(args.providerId);
-    if (!provider) throw new Error("Proveedor no encontrado");
+    if (!provider) throw new Error('Proveedor no encontrado');
 
     const seqValue = await allocateNext(ctx, lotSequenceName(args.sede));
     const loteId = formatLotId(seqValue, args.sede);
 
     const now = new Date().toISOString();
-    const all = await ctx.db.query("lots").collect();
+    const all = await ctx.db.query('lots').collect();
     const maxRow = all.reduce((m, l) => Math.max(m, l.rowIndex), 1);
 
     // Strip `clientToken` — it's an idempotency control arg, not a `lots` column.
     const { clientToken, ...lotFields } = args;
-    const id = await ctx.db.insert("lots", {
+    const id = await ctx.db.insert('lots', {
       loteId,
       ...lotFields,
-      estado: "abierto" as const,
+      estado: 'abierto' as const,
       rowIndex: maxRow + 1,
       lastPulledAt: now,
-      syncStatus: "pending" as const,
+      syncStatus: 'pending' as const,
     });
 
     await ctx.scheduler.runAfter(0, api.lots._pushToSheet, {
       id,
-      mode: "append",
+      mode: 'append',
     });
 
     const result = { id, loteId };
     if (clientToken) {
-      await ctx.db.insert("commitTokens", {
+      await ctx.db.insert('commitTokens', {
         token: clientToken,
-        kind: "lot.create",
+        kind: 'lot.create',
         primaryId: id,
         result: JSON.stringify(result),
         createdAt: new Date().toISOString(),
@@ -195,25 +197,43 @@ export const create = mutation({
   },
 });
 
-export const update = mutation({
-  args: {
-    id: v.id("lots"),
-    patch: lotPatchValidator,
-    editorEmail: v.optional(v.string()),
+export const create = action({
+  args: { idToken: v.string(), ...createArgs },
+  handler: async (
+    ctx,
+    { idToken, ...args },
+  ): Promise<{ id: Id<'lots'>; loteId: string }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.lots._create, args);
   },
+});
+
+const updateArgs = {
+  id: v.id('lots'),
+  patch: lotPatchValidator,
+  editorEmail: v.optional(v.string()),
+};
+
+/**
+ * internalMutation: reachable via the `update` action below (staff, idToken
+ * verified) or directly via internal.lots._update from fotoSync.ts's
+ * out-of-band sheet-sync side effects (system sentinel editorEmail).
+ */
+export const _update = internalMutation({
+  args: updateArgs,
   handler: async (ctx, { id, patch, editorEmail }) => {
     const existing = await ctx.db.get(id);
     if (!existing) throw new Error(`Lot ${id} not found`);
-    if (existing.estado !== "abierto")
-      throw new Error("Sólo se pueden editar lotes abiertos");
+    if (existing.estado !== 'abierto')
+      throw new Error('Sólo se pueden editar lotes abiertos');
     await ctx.db.patch(id, {
       ...patch,
-      syncStatus: "pending" as const,
+      syncStatus: 'pending' as const,
       syncError: undefined,
     });
     await ctx.scheduler.runAfter(0, api.lots._pushToSheet, {
       id,
-      mode: "patch",
+      mode: 'patch',
     });
 
     // Re-fan costoBaseCOP when the lot cost changes. costoBaseCOP is a stone's
@@ -230,8 +250,8 @@ export const update = mutation({
     ) {
       const newTotal = patch.costoTotalCOP;
       const items = await ctx.db
-        .query("lotItems")
-        .withIndex("by_loteId", (q) => q.eq("loteId", existing.loteId))
+        .query('lotItems')
+        .withIndex('by_loteId', (q) => q.eq('loteId', existing.loteId))
         .collect();
       const now = new Date().toISOString();
       for (const li of items) {
@@ -239,38 +259,53 @@ export const update = mutation({
         if (nextCosto === li.costoBaseCOP) continue;
         await ctx.db.patch(li._id, { costoBaseCOP: nextCosto });
         const product = await ctx.db
-          .query("productInventory")
-          .withIndex("by_itemId", (q) => q.eq("itemId", li.itemId))
+          .query('productInventory')
+          .withIndex('by_itemId', (q) => q.eq('itemId', li.itemId))
           .first();
         if (!product) continue;
         await ctx.db.patch(product._id, {
           costoBaseCOP: nextCosto,
-          syncStatus: "pending" as const,
+          syncStatus: 'pending' as const,
           syncError: undefined,
         });
-        const auditId = await ctx.db.insert("productEdits", {
+        const auditId = await ctx.db.insert('productEdits', {
           itemId: product.itemId,
-          editorEmail: editorEmail ?? "fotosintesis-lote",
+          editorEmail: editorEmail ?? 'fotosintesis-lote',
           editedAt: now,
           changes: [
             {
-              field: "costoBaseCOP",
+              field: 'costoBaseCOP',
               before: li.costoBaseCOP ?? null,
               after: nextCosto,
             },
           ],
-          status: "pending" as const,
+          status: 'pending' as const,
         });
         await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
           itemId: product.itemId,
           auditId,
-          mode: "patch",
+          mode: 'patch',
         });
         refanned++;
       }
     }
 
     return { id, refanned };
+  },
+});
+
+export const update = action({
+  args: { idToken: v.string(), id: v.id('lots'), patch: lotPatchValidator },
+  handler: async (
+    ctx,
+    { idToken, id, patch },
+  ): Promise<{ id: Id<'lots'>; refanned: number }> => {
+    const caller = await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.lots._update, {
+      id,
+      patch,
+      editorEmail: caller.email,
+    });
   },
 });
 
@@ -281,23 +316,36 @@ export const update = mutation({
  *   - does NOT flip syncStatus or push to Sheets (the fields aren't synced).
  * Omitting a field leaves it unchanged; pass `fotoLoteUrl: ""` to clear it.
  */
-export const setLoteDisplay = mutation({
-  args: {
-    id: v.id("lots"),
-    fotoLoteUrl: v.optional(v.string()),
-    mostrarComoLote: v.optional(v.boolean()),
-  },
+const setLoteDisplayArgs = {
+  id: v.id('lots'),
+  fotoLoteUrl: v.optional(v.string()),
+  mostrarComoLote: v.optional(v.boolean()),
+};
+
+export const _setLoteDisplay = internalMutation({
+  args: setLoteDisplayArgs,
   handler: async (ctx, { id, fotoLoteUrl, mostrarComoLote }) => {
     const lot = await ctx.db.get(id);
     if (!lot) throw new Error(`Lot ${id} not found`);
-    if (lot.estado === "cancelado")
-      throw new Error("No se puede configurar un lote cancelado");
+    if (lot.estado === 'cancelado')
+      throw new Error('No se puede configurar un lote cancelado');
     const patch: Record<string, unknown> = {};
     if (fotoLoteUrl !== undefined) patch.fotoLoteUrl = fotoLoteUrl;
     if (mostrarComoLote !== undefined) patch.mostrarComoLote = mostrarComoLote;
     if (Object.keys(patch).length === 0) return { id, changed: false };
     await ctx.db.patch(id, patch);
     return { id, changed: true };
+  },
+});
+
+export const setLoteDisplay = action({
+  args: { idToken: v.string(), ...setLoteDisplayArgs },
+  handler: async (
+    ctx,
+    { idToken, ...args },
+  ): Promise<{ id: Id<'lots'>; changed: boolean }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.lots._setLoteDisplay, args);
   },
 });
 
@@ -308,17 +356,17 @@ export const setLoteDisplay = mutation({
  * Both validated here on the server — the UI mirrors but cannot be the
  * sole authority.
  */
-export const close = mutation({
-  args: { id: v.id("lots") },
+export const _close = internalMutation({
+  args: { id: v.id('lots') },
   handler: async (ctx, { id }) => {
     const lot = await ctx.db.get(id);
     if (!lot) throw new Error(`Lot ${id} not found`);
-    if (lot.estado !== "abierto")
-      throw new Error("El lote ya está cerrado o publicado");
+    if (lot.estado !== 'abierto')
+      throw new Error('El lote ya está cerrado o publicado');
 
     const items = await ctx.db
-      .query("lotItems")
-      .withIndex("by_loteId", (q) => q.eq("loteId", lot.loteId))
+      .query('lotItems')
+      .withIndex('by_loteId', (q) => q.eq('loteId', lot.loteId))
       .collect();
 
     if (items.length !== lot.unidadesDeclaradas) {
@@ -336,14 +384,25 @@ export const close = mutation({
     }
 
     await ctx.db.patch(id, {
-      estado: "cerrado" as const,
-      syncStatus: "pending" as const,
+      estado: 'cerrado' as const,
+      syncStatus: 'pending' as const,
     });
     await ctx.scheduler.runAfter(0, api.lots._pushToSheet, {
       id,
-      mode: "patch",
+      mode: 'patch',
     });
     return { id, loteId: lot.loteId };
+  },
+});
+
+export const close = action({
+  args: { idToken: v.string(), id: v.id('lots') },
+  handler: async (
+    ctx,
+    { idToken, id },
+  ): Promise<{ id: Id<'lots'>; loteId: string }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.lots._close, { id });
   },
 });
 
@@ -358,20 +417,22 @@ export const close = mutation({
  * undo flow is `reopen` (below), which returns it to `abierto` so the header
  * can be corrected, rather than voiding it outright.
  */
-export const cancel = mutation({
-  args: {
-    id: v.id("lots"),
-    reason: v.optional(v.string()),
-  },
+const cancelArgs = {
+  id: v.id('lots'),
+  reason: v.optional(v.string()),
+};
+
+export const _cancel = internalMutation({
+  args: cancelArgs,
   handler: async (ctx, { id, reason }) => {
     const lot = await ctx.db.get(id);
     if (!lot) throw new Error(`Lot ${id} not found`);
-    if (lot.estado !== "abierto")
-      throw new Error("Sólo se pueden cancelar lotes abiertos");
+    if (lot.estado !== 'abierto')
+      throw new Error('Sólo se pueden cancelar lotes abiertos');
 
     const lotItemRows = await ctx.db
-      .query("lotItems")
-      .withIndex("by_loteId", (q) => q.eq("loteId", lot.loteId))
+      .query('lotItems')
+      .withIndex('by_loteId', (q) => q.eq('loteId', lot.loteId))
       .collect();
 
     // True abort: a lot with NOTHING captured yet, holding the tail of its
@@ -399,8 +460,8 @@ export const cancel = mutation({
 
     for (const li of lotItemRows) {
       const product = await ctx.db
-        .query("productInventory")
-        .withIndex("by_itemId", (q) => q.eq("itemId", li.itemId))
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', li.itemId))
         .first();
       if (product) {
         await ctx.db.patch(product._id, {
@@ -415,19 +476,19 @@ export const cancel = mutation({
 
     const trimmedReason = reason?.trim();
     const notasNext = trimmedReason
-      ? `${lot.notas ? `${lot.notas} | ` : ""}Cancelado: ${trimmedReason}`
+      ? `${lot.notas ? `${lot.notas} | ` : ''}Cancelado: ${trimmedReason}`
       : lot.notas;
 
     await ctx.db.patch(id, {
-      estado: "cancelado" as const,
+      estado: 'cancelado' as const,
       notas: notasNext,
-      syncStatus: "pending" as const,
+      syncStatus: 'pending' as const,
       syncError: undefined,
     });
 
     await ctx.scheduler.runAfter(0, api.lots._pushToSheet, {
       id,
-      mode: "patch",
+      mode: 'patch',
     });
 
     return {
@@ -436,6 +497,22 @@ export const cancel = mutation({
       orphanedItems: lotItemRows.length,
       reclaimed: false,
     };
+  },
+});
+
+export const cancel = action({
+  args: { idToken: v.string(), ...cancelArgs },
+  handler: async (
+    ctx,
+    { idToken, ...args },
+  ): Promise<{
+    id: Id<'lots'>;
+    loteId: string;
+    orphanedItems: number;
+    reclaimed: boolean;
+  }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.lots._cancel, args);
   },
 });
 
@@ -452,12 +529,12 @@ export const _voidSheetRow = internalAction({
   handler: async (_ctx, { rowIndex, loteId }) => {
     const voidId = `${loteId}·anulado`;
     await pushTableRowToVercel({
-      table: "lots",
+      table: 'lots',
       rowIndex,
-      mode: "patch",
+      mode: 'patch',
       idValue: voidId,
       previousIdValue: loteId,
-      fields: { loteId: voidId, estado: "cancelado" },
+      fields: { loteId: voidId, estado: 'cancelado' },
     });
   },
 });
@@ -466,24 +543,24 @@ export const _voidSheetRow = internalAction({
  * Bulk-flip every productInventory row owned by this lot to
  * `mostrarEnCatalogo: true`, then mark the lot as published.
  */
-export const publish = mutation({
-  args: { id: v.id("lots") },
+export const _publish = internalMutation({
+  args: { id: v.id('lots') },
   handler: async (ctx, { id }) => {
     const lot = await ctx.db.get(id);
     if (!lot) throw new Error(`Lot ${id} not found`);
-    if (lot.estado !== "cerrado")
-      throw new Error("Sólo lotes cerrados pueden publicarse");
+    if (lot.estado !== 'cerrado')
+      throw new Error('Sólo lotes cerrados pueden publicarse');
 
     const items = await ctx.db
-      .query("lotItems")
-      .withIndex("by_loteId", (q) => q.eq("loteId", lot.loteId))
+      .query('lotItems')
+      .withIndex('by_loteId', (q) => q.eq('loteId', lot.loteId))
       .collect();
 
     let flipped = 0;
     for (const item of items) {
       const product = await ctx.db
-        .query("productInventory")
-        .withIndex("by_itemId", (q) => q.eq("itemId", item.itemId))
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', item.itemId))
         .first();
       if (product && product.mostrarEnCatalogo !== true) {
         await ctx.db.patch(product._id, withPublishStamp(product, true));
@@ -492,14 +569,25 @@ export const publish = mutation({
     }
 
     await ctx.db.patch(id, {
-      estado: "publicado" as const,
-      syncStatus: "pending" as const,
+      estado: 'publicado' as const,
+      syncStatus: 'pending' as const,
     });
     await ctx.scheduler.runAfter(0, api.lots._pushToSheet, {
       id,
-      mode: "patch",
+      mode: 'patch',
     });
     return { id, loteId: lot.loteId, flipped };
+  },
+});
+
+export const publish = action({
+  args: { idToken: v.string(), id: v.id('lots') },
+  handler: async (
+    ctx,
+    { idToken, id },
+  ): Promise<{ id: Id<'lots'>; loteId: string; flipped: number }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.lots._publish, { id });
   },
 });
 
@@ -516,25 +604,27 @@ export const publish = mutation({
  * them. The reason is appended to the lot's notas (same audit convention as
  * cancel) since productEdits has no lot-scoped row.
  */
-export const reopen = mutation({
-  args: {
-    id: v.id("lots"),
-    editorEmail: v.optional(v.string()),
-    reason: v.optional(v.string()),
-  },
+const reopenArgs = {
+  id: v.id('lots'),
+  editorEmail: v.optional(v.string()),
+  reason: v.optional(v.string()),
+};
+
+export const _reopen = internalMutation({
+  args: reopenArgs,
   handler: async (ctx, { id, editorEmail, reason }) => {
     const lot = await ctx.db.get(id);
     if (!lot) throw new Error(`Lot ${id} not found`);
 
     const items = await ctx.db
-      .query("lotItems")
-      .withIndex("by_loteId", (q) => q.eq("loteId", lot.loteId))
+      .query('lotItems')
+      .withIndex('by_loteId', (q) => q.eq('loteId', lot.loteId))
       .collect();
     const products = await Promise.all(
       items.map((li) =>
         ctx.db
-          .query("productInventory")
-          .withIndex("by_itemId", (q) => q.eq("itemId", li.itemId))
+          .query('productInventory')
+          .withIndex('by_itemId', (q) => q.eq('itemId', li.itemId))
           .first(),
       ),
     );
@@ -547,17 +637,17 @@ export const reopen = mutation({
       })),
     });
     if (!verdict.ok) {
-      if (verdict.reason === "not-closeable")
-        throw new Error("Sólo se pueden reabrir lotes cerrados o publicados");
+      if (verdict.reason === 'not-closeable')
+        throw new Error('Sólo se pueden reabrir lotes cerrados o publicados');
       throw new Error(
-        `No se puede reabrir: ítem(s) ${verdict.soldItemIds.join(", ")} ya ` +
+        `No se puede reabrir: ítem(s) ${verdict.soldItemIds.join(', ')} ya ` +
           `vendido(s). Cancelá esa venta primero.`,
       );
     }
 
     // Pull published members out of the public catalog while the lot is edited.
     let demotedFromCatalog = 0;
-    if (lot.estado === "publicado") {
+    if (lot.estado === 'publicado') {
       for (const product of products) {
         if (product && product.mostrarEnCatalogo === true) {
           await ctx.db.patch(product._id, { mostrarEnCatalogo: false });
@@ -567,20 +657,20 @@ export const reopen = mutation({
     }
 
     const trimmedReason = reason?.trim();
-    const reopenNote = `Reabierto${editorEmail ? ` por ${editorEmail}` : ""}${
-      trimmedReason ? `: ${trimmedReason}` : ""
+    const reopenNote = `Reabierto${editorEmail ? ` por ${editorEmail}` : ''}${
+      trimmedReason ? `: ${trimmedReason}` : ''
     }`;
-    const notasNext = `${lot.notas ? `${lot.notas} | ` : ""}${reopenNote}`;
+    const notasNext = `${lot.notas ? `${lot.notas} | ` : ''}${reopenNote}`;
 
     await ctx.db.patch(id, {
-      estado: "abierto" as const,
+      estado: 'abierto' as const,
       notas: notasNext,
-      syncStatus: "pending" as const,
+      syncStatus: 'pending' as const,
       syncError: undefined,
     });
     await ctx.scheduler.runAfter(0, api.lots._pushToSheet, {
       id,
-      mode: "patch",
+      mode: 'patch',
     });
 
     return {
@@ -592,16 +682,40 @@ export const reopen = mutation({
   },
 });
 
+export const reopen = action({
+  args: {
+    idToken: v.string(),
+    id: v.id('lots'),
+    reason: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    { idToken, id, reason },
+  ): Promise<{
+    id: Id<'lots'>;
+    loteId: string;
+    reopenedFrom: 'abierto' | 'cerrado' | 'publicado' | 'cancelado';
+    demotedFromCatalog: number;
+  }> => {
+    const caller = await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.lots._reopen, {
+      id,
+      reason,
+      editorEmail: caller.email,
+    });
+  },
+});
+
 export const _getInternal = internalQuery({
-  args: { id: v.id("lots") },
+  args: { id: v.id('lots') },
   handler: async (ctx, { id }) => ctx.db.get(id),
 });
 
 export const _markPushed = internalMutation({
-  args: { id: v.id("lots") },
+  args: { id: v.id('lots') },
   handler: async (ctx, { id }) => {
     await ctx.db.patch(id, {
-      syncStatus: "synced" as const,
+      syncStatus: 'synced' as const,
       lastPushedAt: new Date().toISOString(),
       syncError: undefined,
     });
@@ -609,10 +723,10 @@ export const _markPushed = internalMutation({
 });
 
 export const _markPushFailed = internalMutation({
-  args: { id: v.id("lots"), error: v.string() },
+  args: { id: v.id('lots'), error: v.string() },
   handler: async (ctx, { id, error }) => {
     await ctx.db.patch(id, {
-      syncStatus: "error" as const,
+      syncStatus: 'error' as const,
       syncError: error.slice(0, 500),
     });
   },
@@ -620,8 +734,8 @@ export const _markPushFailed = internalMutation({
 
 export const _pushToSheet = action({
   args: {
-    id: v.id("lots"),
-    mode: v.union(v.literal("patch"), v.literal("append")),
+    id: v.id('lots'),
+    mode: v.union(v.literal('patch'), v.literal('append')),
   },
   handler: async (
     ctx,
@@ -640,16 +754,16 @@ export const _pushToSheet = action({
 
     const fieldSource: Record<string, unknown> = {
       ...lot,
-      providerNombre: provider?.nombreORazonSocial ?? "",
+      providerNombre: provider?.nombreORazonSocial ?? '',
     };
     const fields: Record<string, string> = {};
     for (const col of COLUMN_MAPS.lots) {
       const val = fieldSource[col];
-      fields[col] = val === null || val === undefined ? "" : String(val);
+      fields[col] = val === null || val === undefined ? '' : String(val);
     }
 
     const result = await pushTableRowToVercel({
-      table: "lots",
+      table: 'lots',
       rowIndex: lot.rowIndex,
       mode,
       idValue: lot.loteId,
@@ -668,10 +782,10 @@ export const _pushToSheet = action({
 });
 
 export const retryPush = action({
-  args: { id: v.id("lots") },
+  args: { id: v.id('lots') },
   handler: async (ctx, { id }): Promise<{ ok: boolean; message: string }> => {
     const row = await ctx.runQuery(internal.lots._getInternal, { id });
-    if (!row) return { ok: false, message: "Lot not found" };
-    return await ctx.runAction(api.lots._pushToSheet, { id, mode: "patch" });
+    if (!row) return { ok: false, message: 'Lot not found' };
+    return await ctx.runAction(api.lots._pushToSheet, { id, mode: 'patch' });
   },
 });

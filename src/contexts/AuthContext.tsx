@@ -5,7 +5,15 @@
  * Provider Mode: Google OAuth with provider validation
  */
 
-import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  ReactNode,
+} from 'react';
 import type { AuthState, AuthContextType, AccessLevel } from '../types/auth';
 import { useGoogleAuth } from './GoogleAuthContext';
 import { SESSION_KEYS, STORAGE_KEYS } from '../constants/storage-keys';
@@ -43,7 +51,7 @@ const getStoredAuth = (): StoredAuthState | null => {
 
     const parsed = JSON.parse(stored) as StoredAuthState;
     // Handle legacy 'full' value - treat as asesor for backward compatibility
-    if (parsed.accessLevel === 'full' as AccessLevel) {
+    if (parsed.accessLevel === ('full' as AccessLevel)) {
       parsed.accessLevel = 'asesor';
     }
     return parsed;
@@ -61,8 +69,14 @@ const clearStoredAuth = () => {
 };
 
 /**
- * Check localStorage for a persisted guest invitation that hasn't expired.
- * If found, restore all invitation keys into sessionStorage and return true.
+ * Check localStorage for a persisted guest invitation. If found, restore all
+ * invitation keys into sessionStorage and return true.
+ *
+ * NOTE: this intentionally does NOT enforce `invitation-expires`. Active
+ * invitations are treated as "no time limit" (the server's validate path
+ * returns them valid with timeRemaining: null, and durationHours is 30 days),
+ * so restore mirrors that. If expiry ever needs enforcing, gate it here AND in
+ * the server validate path so client and server agree.
  */
 const GUEST_PERSIST_KEY = 'tm_guest_invitation';
 
@@ -84,7 +98,12 @@ function restoreGuestSession(): boolean {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const { user: googleUser, isSignedIn: isGoogleSignedIn, isAuthorized: isGoogleAuthorized, isLoading: isGoogleLoading } = useGoogleAuth();
+  const {
+    user: googleUser,
+    isSignedIn: isGoogleSignedIn,
+    isAuthorized: isGoogleAuthorized,
+    isLoading: isGoogleLoading,
+  } = useGoogleAuth();
 
   const [authState, setAuthState] = useState<AuthState>(() => {
     const stored = getStoredAuth();
@@ -103,7 +122,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           accessLevel: parsed.accessLevel || 'asesor',
         };
       }
-    } catch { /* ignore parse errors */ }
+    } catch {
+      /* ignore parse errors */
+    }
 
     // Check localStorage for a persisted guest invitation (survives new tabs)
     if (restoreGuestSession()) {
@@ -147,7 +168,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         clearStoredAuth();
       }
     }
-  }, [isGoogleSignedIn, isGoogleAuthorized, googleUser?.accessLevel, googleUser, isGoogleLoading]);
+  }, [
+    isGoogleSignedIn,
+    isGoogleAuthorized,
+    googleUser?.accessLevel,
+    googleUser,
+    isGoogleLoading,
+  ]);
 
   const loginAsGuest = useCallback(() => {
     const newState: AuthState = { isAuthenticated: true, accessLevel: 'guest' };
@@ -161,15 +188,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem(GUEST_PERSIST_KEY);
   }, []);
 
-  const value = useMemo<AuthContextType>(() => ({
-    ...authState,
-    loginAsGuest,
-    logout,
-  }), [authState, loginAsGuest, logout]);
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo<AuthContextType>(
+    () => ({
+      ...authState,
+      loginAsGuest,
+      logout,
+    }),
+    [authState, loginAsGuest, logout],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

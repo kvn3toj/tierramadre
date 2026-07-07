@@ -19,32 +19,32 @@
  * existing, defensive `sales.cancel` / `lots.update` mutations.
  */
 
-import { internalAction, internalMutation } from "./_generated/server";
-import type { ActionCtx, MutationCtx } from "./_generated/server";
-import type { Doc, Id } from "./_generated/dataModel";
-import { v } from "convex/values";
-import { api, internal } from "./_generated/api";
-import { requireAppUrl } from "./_lib/sheetSync";
+import { internalAction, internalMutation } from './_generated/server';
+import type { ActionCtx, MutationCtx } from './_generated/server';
+import type { Doc, Id } from './_generated/dataModel';
+import { v } from 'convex/values';
+import { internal } from './_generated/api';
+import { requireAppUrl } from './_lib/sheetSync';
 import {
   FOTO_SYNC_TABLES,
   WRITABLE,
   coerceCell,
   planRowPatch,
   type FotoSyncTable,
-} from "./_lib/sheetPullMaps";
-import { setInventoryLastPull } from "./products";
-import { withPublishStamp } from "./_lib/publishState";
+} from './_lib/sheetPullMaps';
+import { setInventoryLastPull } from './products';
+import { withPublishStamp } from './_lib/publishState';
 
 // ─── per-table metadata ──────────────────────────────────────────────────────
 
 /** The sheet column key whose value is the natural key / column A. */
 const KEY_COLUMN: Record<FotoSyncTable, string> = {
-  inventory: "item",
-  providers: "nombreORazonSocial",
-  lots: "loteId",
-  clients: "nombre",
-  sales: "saleId",
-  subLotes: "subLoteId",
+  inventory: 'item',
+  providers: 'nombreORazonSocial',
+  lots: 'loteId',
+  clients: 'nombre',
+  sales: 'saleId',
+  subLotes: 'subLoteId',
 };
 
 function isFotoSyncTable(x: string): x is FotoSyncTable {
@@ -57,35 +57,35 @@ function errMsg(err: unknown): string {
 
 async function findByKey(ctx: MutationCtx, table: FotoSyncTable, key: string) {
   switch (table) {
-    case "inventory":
+    case 'inventory':
       return ctx.db
-        .query("productInventory")
-        .withIndex("by_itemId", (q) => q.eq("itemId", key))
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', key))
         .first();
-    case "providers":
+    case 'providers':
       return ctx.db
-        .query("providers")
-        .withIndex("by_nombre", (q) => q.eq("nombreORazonSocial", key))
+        .query('providers')
+        .withIndex('by_nombre', (q) => q.eq('nombreORazonSocial', key))
         .first();
-    case "lots":
+    case 'lots':
       return ctx.db
-        .query("lots")
-        .withIndex("by_loteId", (q) => q.eq("loteId", key))
+        .query('lots')
+        .withIndex('by_loteId', (q) => q.eq('loteId', key))
         .first();
-    case "clients":
+    case 'clients':
       return ctx.db
-        .query("clients")
-        .withIndex("by_nombre", (q) => q.eq("nombre", key))
+        .query('clients')
+        .withIndex('by_nombre', (q) => q.eq('nombre', key))
         .first();
-    case "sales":
+    case 'sales':
       return ctx.db
-        .query("sales")
-        .withIndex("by_saleId", (q) => q.eq("saleId", key))
+        .query('sales')
+        .withIndex('by_saleId', (q) => q.eq('saleId', key))
         .first();
-    case "subLotes":
+    case 'subLotes':
       return ctx.db
-        .query("subLotes")
-        .withIndex("by_subLoteId", (q) => q.eq("subLoteId", key))
+        .query('subLotes')
+        .withIndex('by_subLoteId', (q) => q.eq('subLoteId', key))
         .first();
   }
 }
@@ -94,10 +94,10 @@ async function findByKey(ctx: MutationCtx, table: FotoSyncTable, key: string) {
  *  schema validates the payload, and planRowPatch only ever emits valid keys. */
 async function patchDoc(
   ctx: MutationCtx,
-  id: Id<"productInventory">,
+  id: Id<'productInventory'>,
   payload: Record<string, unknown>,
 ) {
-  await ctx.db.patch(id, payload as Partial<Doc<"productInventory">>);
+  await ctx.db.patch(id, payload as Partial<Doc<'productInventory'>>);
 }
 
 function pickStr(cells: Record<string, string>, k: string): string | undefined {
@@ -143,7 +143,7 @@ export const upsertTable = internalMutation({
     let flaggedCount = 0;
     let inserted = 0;
     const sideEffects: Array<{
-      type: "cancelSale" | "refanLot";
+      type: 'cancelSale' | 'refanLot';
       id: string;
       value?: number;
     }> = [];
@@ -153,34 +153,34 @@ export const upsertTable = internalMutation({
       const existing = await findByKey(ctx, t, row.key);
 
       if (!existing) {
-        if (allowInsert && (t === "providers" || t === "clients")) {
-          if (t === "providers") {
-            await ctx.db.insert("providers", {
+        if (allowInsert && (t === 'providers' || t === 'clients')) {
+          if (t === 'providers') {
+            await ctx.db.insert('providers', {
               nombreORazonSocial: row.key,
-              tipo: pickStr(row.cells, "tipo") ?? "otros",
-              nit: pickStr(row.cells, "nit"),
-              cedula: pickStr(row.cells, "cedula"),
-              direccion: pickStr(row.cells, "direccion"),
-              telefono: pickStr(row.cells, "telefono"),
-              email: pickStr(row.cells, "email"),
-              notas: pickStr(row.cells, "notas"),
+              tipo: pickStr(row.cells, 'tipo') ?? 'otros',
+              nit: pickStr(row.cells, 'nit'),
+              cedula: pickStr(row.cells, 'cedula'),
+              direccion: pickStr(row.cells, 'direccion'),
+              telefono: pickStr(row.cells, 'telefono'),
+              email: pickStr(row.cells, 'email'),
+              notas: pickStr(row.cells, 'notas'),
               rowIndex: row.rowIndex,
               lastPulledAt: now,
-              syncStatus: "synced",
+              syncStatus: 'synced',
             });
           } else {
-            await ctx.db.insert("clients", {
+            await ctx.db.insert('clients', {
               nombre: row.key,
-              tipo: pickStr(row.cells, "tipo") ?? "final",
-              nit: pickStr(row.cells, "nit"),
-              cedula: pickStr(row.cells, "cedula"),
-              direccion: pickStr(row.cells, "direccion"),
-              telefono: pickStr(row.cells, "telefono"),
-              email: pickStr(row.cells, "email"),
-              asesorId: pickStr(row.cells, "asesorId"),
+              tipo: pickStr(row.cells, 'tipo') ?? 'final',
+              nit: pickStr(row.cells, 'nit'),
+              cedula: pickStr(row.cells, 'cedula'),
+              direccion: pickStr(row.cells, 'direccion'),
+              telefono: pickStr(row.cells, 'telefono'),
+              email: pickStr(row.cells, 'email'),
+              asesorId: pickStr(row.cells, 'asesorId'),
               rowIndex: row.rowIndex,
               lastPulledAt: now,
-              syncStatus: "synced",
+              syncStatus: 'synced',
             });
           }
           inserted++;
@@ -189,7 +189,7 @@ export const upsertTable = internalMutation({
         skipped++;
         reviewFlags.push({
           key: row.key,
-          reason: "fila nueva en la hoja — créala desde la app",
+          reason: 'fila nueva en la hoja — créala desde la app',
         });
         continue;
       }
@@ -208,13 +208,13 @@ export const upsertTable = internalMutation({
       const plan = planRowPatch(
         t,
         existing as Record<string, unknown> & {
-          syncStatus: "synced" | "pending" | "error";
+          syncStatus: 'synced' | 'pending' | 'error';
         },
         row.cells,
       );
 
-      if (plan.action === "protected") {
-        await patchDoc(ctx, existing._id as Id<"productInventory">, {
+      if (plan.action === 'protected') {
+        await patchDoc(ctx, existing._id as Id<'productInventory'>, {
           rowIndex: row.rowIndex,
           lastPulledAt: now,
         });
@@ -222,9 +222,9 @@ export const upsertTable = internalMutation({
         continue;
       }
 
-      if (plan.action === "skip") {
+      if (plan.action === 'skip') {
         if (existing.rowIndex !== row.rowIndex) {
-          await patchDoc(ctx, existing._id as Id<"productInventory">, {
+          await patchDoc(ctx, existing._id as Id<'productInventory'>, {
             rowIndex: row.rowIndex,
             lastPulledAt: now,
           });
@@ -234,18 +234,19 @@ export const upsertTable = internalMutation({
       }
 
       const patch: Record<string, unknown> = { ...plan.patch };
-      if (t === "inventory" && patch.mostrarEnCatalogo === true) {
+      if (t === 'inventory' && patch.mostrarEnCatalogo === true) {
         const stamp = withPublishStamp(
           existing as { mostrarEnCatalogo?: boolean; publishedAt?: number },
           true,
         );
-        if (stamp.publishedAt !== undefined) patch.publishedAt = stamp.publishedAt;
+        if (stamp.publishedAt !== undefined)
+          patch.publishedAt = stamp.publishedAt;
       }
-      await patchDoc(ctx, existing._id as Id<"productInventory">, {
+      await patchDoc(ctx, existing._id as Id<'productInventory'>, {
         ...patch,
         rowIndex: row.rowIndex,
         lastPulledAt: now,
-        syncStatus: "synced",
+        syncStatus: 'synced',
       });
       patched++;
       for (const se of plan.sideEffects) {
@@ -258,7 +259,7 @@ export const upsertTable = internalMutation({
       }
     }
 
-    if (t === "inventory") await setInventoryLastPull(ctx, now);
+    if (t === 'inventory') await setInventoryLastPull(ctx, now);
 
     return {
       patched,
@@ -278,7 +279,7 @@ async function runSideEffects(
   ctx: ActionCtx,
   table: string,
   sideEffects: Array<{
-    type: "cancelSale" | "refanLot";
+    type: 'cancelSale' | 'refanLot';
     id: string;
     value?: number;
   }>,
@@ -286,17 +287,21 @@ async function runSideEffects(
 ) {
   for (const se of sideEffects) {
     try {
-      if (se.type === "cancelSale") {
-        await ctx.runMutation(api.sales.cancel, {
-          id: se.id as Id<"sales">,
-          operatorEmail: "fotosintesis-sheet",
-          reason: "Cancelada vía hoja de cálculo (sync)",
+      if (se.type === 'cancelSale') {
+        // internal.* — this is a server-initiated (out-of-band sheet edit)
+        // side effect, not a staff UI action, so it has no idToken to verify;
+        // it calls the internalMutation directly rather than the public
+        // idToken-gated `sales.cancel` action.
+        await ctx.runMutation(internal.sales._cancel, {
+          id: se.id as Id<'sales'>,
+          operatorEmail: 'fotosintesis-sheet',
+          reason: 'Cancelada vía hoja de cálculo (sync)',
         });
-      } else if (se.type === "refanLot") {
-        await ctx.runMutation(api.lots.update, {
-          id: se.id as Id<"lots">,
+      } else if (se.type === 'refanLot') {
+        await ctx.runMutation(internal.lots._update, {
+          id: se.id as Id<'lots'>,
           patch: { costoTotalCOP: se.value as number },
-          editorEmail: "fotosintesis-sheet",
+          editorEmail: 'fotosintesis-sheet',
         });
       }
     } catch (err) {
@@ -340,7 +345,7 @@ export const runDelta = internalAction({
     const appUrl = requireAppUrl();
     const token = process.env.ADMIN_SYNC_TOKEN;
     if (!token)
-      throw new Error("ADMIN_SYNC_TOKEN missing on Convex deployment");
+      throw new Error('ADMIN_SYNC_TOKEN missing on Convex deployment');
 
     const perTable: PerTable = {};
     const reviewFlags: Array<{ table: string; key: string; reason: string }> =
@@ -350,10 +355,10 @@ export const runDelta = internalAction({
       if (!isFotoSyncTable(table) || entries.length === 0) continue;
       try {
         const res = await fetch(`${appUrl}/api/get-table-rows`, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "content-type": "application/json",
-            "x-admin-sync-token": token,
+            'content-type': 'application/json',
+            'x-admin-sync-token': token,
           },
           body: JSON.stringify({
             table,
@@ -406,7 +411,7 @@ export const runDelta = internalAction({
       }
     }
 
-    return { mode: "delta" as const, perTable, reviewFlags };
+    return { mode: 'delta' as const, perTable, reviewFlags };
   },
 });
 
@@ -418,7 +423,7 @@ export const runFull = internalAction({
     const appUrl = requireAppUrl();
     const token = process.env.ADMIN_SYNC_TOKEN;
     if (!token)
-      throw new Error("ADMIN_SYNC_TOKEN missing on Convex deployment");
+      throw new Error('ADMIN_SYNC_TOKEN missing on Convex deployment');
 
     const targets = (
       tables && tables.length ? tables : FOTO_SYNC_TABLES
@@ -430,11 +435,11 @@ export const runFull = internalAction({
     for (const table of targets) {
       try {
         const url =
-          table === "inventory"
+          table === 'inventory'
             ? `${appUrl}/api/get-inventory-rows`
             : `${appUrl}/api/get-table?table=${table}`;
         const res = await fetch(url, {
-          headers: { "x-admin-sync-token": token },
+          headers: { 'x-admin-sync-token': token },
         });
         if (!res.ok) {
           perTable[table] = { error: `reader HTTP ${res.status}` };
@@ -447,7 +452,7 @@ export const runFull = internalAction({
         const writableKeys = Object.keys(WRITABLE[table]);
         const rows: SyncRow[] = (data.rows ?? [])
           .map((r) => {
-            const key = String(r[keyCol] ?? r.__colA ?? "").trim();
+            const key = String(r[keyCol] ?? r.__colA ?? '').trim();
             const cells: Record<string, string> = {};
             for (const k of writableKeys) {
               if (r[k] !== undefined) cells[k] = String(r[k]);
@@ -463,7 +468,7 @@ export const runFull = internalAction({
         const result = await ctx.runMutation(internal.fotoSync.upsertTable, {
           table,
           rows,
-          allowInsert: table === "providers" || table === "clients",
+          allowInsert: table === 'providers' || table === 'clients',
         });
         await runSideEffects(ctx, table, result.sideEffects, reviewFlags);
         reviewFlags.push(
@@ -485,7 +490,7 @@ export const runFull = internalAction({
       }
     }
 
-    return { mode: "full" as const, perTable, reviewFlags };
+    return { mode: 'full' as const, perTable, reviewFlags };
   },
 });
 
@@ -506,7 +511,7 @@ export const runFull = internalAction({
 export const reconcileBackstop = internalAction({
   args: {},
   handler: async (ctx): Promise<{ skipped: true } | { skipped: false }> => {
-    if (process.env.FOTO_RECONCILE_CRON !== "on") {
+    if (process.env.FOTO_RECONCILE_CRON !== 'on') {
       return { skipped: true };
     }
     await ctx.runAction(internal.fotoSync.runFull, {});

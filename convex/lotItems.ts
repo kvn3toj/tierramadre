@@ -1,25 +1,26 @@
-import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
-import { api } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
-import { bumpInventoryTotal } from "./products";
-import { preponderanciaSum, balancesTo100 } from "./_lib/lotMath";
-import { withPublishStamp } from "./_lib/publishState";
+import { query, internalMutation, action } from './_generated/server';
+import { v } from 'convex/values';
+import { api, internal } from './_generated/api';
+import type { Id } from './_generated/dataModel';
+import { bumpInventoryTotal } from './products';
+import { preponderanciaSum, balancesTo100 } from './_lib/lotMath';
+import { withPublishStamp } from './_lib/publishState';
+import { requireAccessLevel } from './_lib/authz';
 
 const tipoItemValidator = v.union(
-  v.literal("gema"),
-  v.literal("joya"),
-  v.literal("insumo"),
-  v.literal("lote"),
-  v.literal("bruto"),
+  v.literal('gema'),
+  v.literal('joya'),
+  v.literal('insumo'),
+  v.literal('lote'),
+  v.literal('bruto'),
 );
 
 export const listByLote = query({
   args: { loteId: v.string() },
   handler: async (ctx, { loteId }) => {
     const items = await ctx.db
-      .query("lotItems")
-      .withIndex("by_loteId", (q) => q.eq("loteId", loteId))
+      .query('lotItems')
+      .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
       .collect();
     const sorted = items.sort((a, b) => a.ordenEnLote - b.ordenEnLote);
     // Enrich each join row with the human-readable `nombre` (and `tipo`) from
@@ -29,8 +30,8 @@ export const listByLote = query({
     return await Promise.all(
       sorted.map(async (item) => {
         const product = await ctx.db
-          .query("productInventory")
-          .withIndex("by_itemId", (q) => q.eq("itemId", item.itemId))
+          .query('productInventory')
+          .withIndex('by_itemId', (q) => q.eq('itemId', item.itemId))
           .first();
         return {
           ...item,
@@ -51,8 +52,8 @@ export const sumPreponderancia = query({
   args: { loteId: v.string() },
   handler: async (ctx, { loteId }) => {
     const items = await ctx.db
-      .query("lotItems")
-      .withIndex("by_loteId", (q) => q.eq("loteId", loteId))
+      .query('lotItems')
+      .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
       .collect();
     const sum = items.reduce((s, it) => s + it.preponderancia, 0);
     return {
@@ -72,10 +73,10 @@ export const sumPreponderancia = query({
  * highest numeric itemId and return next + 1 as a string.
  */
 async function nextItemId(ctx: {
-  db: { query: (table: "productInventory") => any };
+  db: { query: (table: 'productInventory') => any };
 }): Promise<string> {
   // NOTE: itemId allocation relies on Convex OCC serializing this table scan. clientToken (above) closes the AI-retry replay path; a concurrency test should prove the distinct-create path before any allocator change.
-  const all = await ctx.db.query("productInventory").collect();
+  const all = await ctx.db.query('productInventory').collect();
   let max = 0;
   for (const p of all) {
     const n = Number(p.itemId);
@@ -95,47 +96,49 @@ async function nextItemId(ctx: {
  *
  * BR-5 (costoBaseCOP calculated, never user-editable) is enforced here.
  */
-export const create = mutation({
-  args: {
-    loteId: v.string(),
-    tipo: tipoItemValidator,
-    nombre: v.string(),
-    preponderancia: v.number(),
-    // Type-specific fields are passed flat; the wizard validates per-type.
-    color: v.optional(v.string()),
-    calidad: v.optional(v.string()),
-    peso: v.optional(v.string()),
-    medidas: v.optional(v.string()),
-    talla: v.optional(v.string()),
-    categoria: v.optional(v.string()),
-    coleccion: v.optional(v.string()),
-    caja: v.optional(v.string()),
-    cantidad: v.optional(v.number()),
-    ubicacion: v.optional(v.string()),
-    observacion: v.optional(v.string()),
-    procedencia: v.optional(v.string()),
-    precioPublicoCOP: v.optional(v.number()),
-    mostrarEnCatalogo: v.optional(v.boolean()),
-    nivelRareza: v.optional(v.number()),
-    calificacion: v.optional(v.number()),
-    tipoEsmeralda: v.optional(v.string()),
-    subtipoForm: v.optional(v.string()),
-    tipoJoya: v.optional(v.string()),
-    tecnicaJoya: v.optional(v.string()),
-    minerales: v.optional(v.array(v.string())),
-    complementos: v.optional(v.array(v.string())),
-    fotoUrl: v.optional(v.string()),
-    certificadoUrl: v.optional(v.string()),
-    formulaGema: v.optional(v.string()),
-    formulaJoya: v.optional(v.string()),
-    rangoDescuento: v.optional(v.string()),
-    precioEmbajadorCOP: v.optional(v.number()),
-    precioConscienteCOP: v.optional(v.number()),
-    // Bruto-only — informational fields about an unworked parcel.
-    rendimientoEsperado: v.optional(v.number()),
-    cantidadEstimada: v.optional(v.number()),
-    clientToken: v.optional(v.string()),
-  },
+const createArgs = {
+  loteId: v.string(),
+  tipo: tipoItemValidator,
+  nombre: v.string(),
+  preponderancia: v.number(),
+  // Type-specific fields are passed flat; the wizard validates per-type.
+  color: v.optional(v.string()),
+  calidad: v.optional(v.string()),
+  peso: v.optional(v.string()),
+  medidas: v.optional(v.string()),
+  talla: v.optional(v.string()),
+  categoria: v.optional(v.string()),
+  coleccion: v.optional(v.string()),
+  caja: v.optional(v.string()),
+  cantidad: v.optional(v.number()),
+  ubicacion: v.optional(v.string()),
+  observacion: v.optional(v.string()),
+  procedencia: v.optional(v.string()),
+  precioPublicoCOP: v.optional(v.number()),
+  mostrarEnCatalogo: v.optional(v.boolean()),
+  nivelRareza: v.optional(v.number()),
+  calificacion: v.optional(v.number()),
+  tipoEsmeralda: v.optional(v.string()),
+  subtipoForm: v.optional(v.string()),
+  tipoJoya: v.optional(v.string()),
+  tecnicaJoya: v.optional(v.string()),
+  minerales: v.optional(v.array(v.string())),
+  complementos: v.optional(v.array(v.string())),
+  fotoUrl: v.optional(v.string()),
+  certificadoUrl: v.optional(v.string()),
+  formulaGema: v.optional(v.string()),
+  formulaJoya: v.optional(v.string()),
+  rangoDescuento: v.optional(v.string()),
+  precioEmbajadorCOP: v.optional(v.number()),
+  precioConscienteCOP: v.optional(v.number()),
+  // Bruto-only — informational fields about an unworked parcel.
+  rendimientoEsperado: v.optional(v.number()),
+  cantidadEstimada: v.optional(v.number()),
+  clientToken: v.optional(v.string()),
+};
+
+export const _create = internalMutation({
+  args: createArgs,
   handler: async (ctx, args) => {
     // Idempotency guard (money-critical): replay of the same clientToken
     // returns the prior result instead of allocating a second itemId / inserting
@@ -144,15 +147,15 @@ export const create = mutation({
     // token is dropped and the create runs again (C7).
     if (args.clientToken) {
       const prior = await ctx.db
-        .query("commitTokens")
-        .withIndex("by_token", (q) => q.eq("token", args.clientToken!))
+        .query('commitTokens')
+        .withIndex('by_token', (q) => q.eq('token', args.clientToken!))
         .unique();
       if (prior) {
-        const stillThere = await ctx.db.get(prior.primaryId as Id<"lotItems">);
+        const stillThere = await ctx.db.get(prior.primaryId as Id<'lotItems'>);
         if (stillThere) {
           return JSON.parse(prior.result) as {
-            lotItemId: Id<"lotItems">;
-            productId: Id<"productInventory">;
+            lotItemId: Id<'lotItems'>;
+            productId: Id<'productInventory'>;
             itemId: string;
             costoBaseCOP: number;
           };
@@ -162,24 +165,24 @@ export const create = mutation({
     }
 
     if (args.preponderancia <= 0 || args.preponderancia > 100) {
-      throw new Error("preponderancia debe estar en (0, 100]");
+      throw new Error('preponderancia debe estar en (0, 100]');
     }
     if (args.nombre.trim().length === 0) {
-      throw new Error("Nombre es obligatorio");
+      throw new Error('Nombre es obligatorio');
     }
 
     const lot = await ctx.db
-      .query("lots")
-      .withIndex("by_loteId", (q) => q.eq("loteId", args.loteId))
+      .query('lots')
+      .withIndex('by_loteId', (q) => q.eq('loteId', args.loteId))
       .first();
     if (!lot) throw new Error(`Lote ${args.loteId} no encontrado`);
-    if (lot.estado !== "abierto") {
-      throw new Error("Sólo se pueden añadir ítems a un lote abierto");
+    if (lot.estado !== 'abierto') {
+      throw new Error('Sólo se pueden añadir ítems a un lote abierto');
     }
 
     const existing = await ctx.db
-      .query("lotItems")
-      .withIndex("by_loteId", (q) => q.eq("loteId", args.loteId))
+      .query('lotItems')
+      .withIndex('by_loteId', (q) => q.eq('loteId', args.loteId))
       .collect();
 
     if (existing.length >= lot.unidadesDeclaradas) {
@@ -203,9 +206,9 @@ export const create = mutation({
     const itemId = await nextItemId(ctx);
     const now = new Date().toISOString();
 
-    const allInv = await ctx.db.query("productInventory").collect();
+    const allInv = await ctx.db.query('productInventory').collect();
     const maxRow = allInv.reduce((m, p) => Math.max(m, p.rowIndex), 1);
-    const productId = await ctx.db.insert("productInventory", {
+    const productId = await ctx.db.insert('productInventory', {
       itemId,
       rowIndex: maxRow + 1,
       nombre: args.nombre,
@@ -220,7 +223,7 @@ export const create = mutation({
       coleccion: args.coleccion,
       caja: args.caja,
       precioCOP: args.precioPublicoCOP,
-      estado: "DISPONIBLE" as const,
+      estado: 'DISPONIBLE' as const,
       loteId: args.loteId,
       preponderancia: args.preponderancia,
       costoBaseCOP,
@@ -246,7 +249,7 @@ export const create = mutation({
       precioEmbajadorCOP: args.precioEmbajadorCOP,
       precioConscienteCOP: args.precioConscienteCOP,
       lastPulledAt: now,
-      syncStatus: "pending" as const,
+      syncStatus: 'pending' as const,
     });
 
     // BANDWIDTH: keep the inventoryStats counter in sync (+1) so
@@ -258,15 +261,15 @@ export const create = mutation({
     // Single audit row captures the wizard creation. The same auditId
     // feeds api.products.pushToSheet so the audit moves from "pending"
     // to "saved" once Sheets confirms the row.
-    const auditId = await ctx.db.insert("productEdits", {
+    const auditId = await ctx.db.insert('productEdits', {
       itemId,
-      editorEmail: "fotosintesis-wizard",
+      editorEmail: 'fotosintesis-wizard',
       editedAt: now,
-      changes: [{ field: "tipo", before: null, after: args.tipo }],
-      status: "pending" as const,
+      changes: [{ field: 'tipo', before: null, after: args.tipo }],
+      status: 'pending' as const,
     });
 
-    const lotItemId = await ctx.db.insert("lotItems", {
+    const lotItemId = await ctx.db.insert('lotItems', {
       loteId: args.loteId,
       itemId,
       preponderancia: args.preponderancia,
@@ -277,20 +280,36 @@ export const create = mutation({
     await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
       itemId,
       auditId,
-      mode: "append",
+      mode: 'append',
     });
 
     const result = { lotItemId, productId, itemId, costoBaseCOP };
     if (args.clientToken) {
-      await ctx.db.insert("commitTokens", {
+      await ctx.db.insert('commitTokens', {
         token: args.clientToken,
-        kind: "item.create",
+        kind: 'item.create',
         primaryId: lotItemId,
         result: JSON.stringify(result),
         createdAt: new Date().toISOString(),
       });
     }
     return result;
+  },
+});
+
+export const create = action({
+  args: { idToken: v.string(), ...createArgs },
+  handler: async (
+    ctx,
+    { idToken, ...args },
+  ): Promise<{
+    lotItemId: Id<'lotItems'>;
+    productId: Id<'productInventory'>;
+    itemId: string;
+    costoBaseCOP: number;
+  }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.lotItems._create, args);
   },
 });
 
@@ -304,22 +323,22 @@ export const create = mutation({
  * items in the lot so the operator can drop one ítem's share and
  * raise another without tripping the overflow guard.
  */
-export const updatePreponderancia = mutation({
+export const _updatePreponderancia = internalMutation({
   args: {
-    lotItemId: v.id("lotItems"),
+    lotItemId: v.id('lotItems'),
     preponderancia: v.number(),
     editorEmail: v.optional(v.string()),
   },
   handler: async (ctx, { lotItemId, preponderancia, editorEmail }) => {
     if (preponderancia <= 0 || preponderancia > 100) {
-      throw new Error("preponderancia debe estar en (0, 100]");
+      throw new Error('preponderancia debe estar en (0, 100]');
     }
     const existing = await ctx.db.get(lotItemId);
     if (!existing) throw new Error(`lotItem ${lotItemId} no encontrado`);
 
     const lot = await ctx.db
-      .query("lots")
-      .withIndex("by_loteId", (q) => q.eq("loteId", existing.loteId))
+      .query('lots')
+      .withIndex('by_loteId', (q) => q.eq('loteId', existing.loteId))
       .first();
     if (!lot) throw new Error(`Lote ${existing.loteId} no encontrado`);
     // Editing is allowed in any lot estado — the studio needs to fix
@@ -328,8 +347,8 @@ export const updatePreponderancia = mutation({
     // re-validated below.
 
     const siblings = await ctx.db
-      .query("lotItems")
-      .withIndex("by_loteId", (q) => q.eq("loteId", existing.loteId))
+      .query('lotItems')
+      .withIndex('by_loteId', (q) => q.eq('loteId', existing.loteId))
       .collect();
     const sumOthers = siblings
       .filter((s) => s._id !== lotItemId)
@@ -345,42 +364,65 @@ export const updatePreponderancia = mutation({
     await ctx.db.patch(lotItemId, { preponderancia, costoBaseCOP });
 
     const product = await ctx.db
-      .query("productInventory")
-      .withIndex("by_itemId", (q) => q.eq("itemId", existing.itemId))
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', existing.itemId))
       .first();
     if (product) {
       const now = new Date().toISOString();
       await ctx.db.patch(product._id, {
         preponderancia,
         costoBaseCOP,
-        syncStatus: "pending" as const,
+        syncStatus: 'pending' as const,
       });
-      const auditId = await ctx.db.insert("productEdits", {
+      const auditId = await ctx.db.insert('productEdits', {
         itemId: product.itemId,
-        editorEmail: editorEmail ?? "fotosintesis-edit",
+        editorEmail: editorEmail ?? 'fotosintesis-edit',
         editedAt: now,
         changes: [
           {
-            field: "preponderancia",
+            field: 'preponderancia',
             before: existing.preponderancia,
             after: preponderancia,
           },
           {
-            field: "costoBaseCOP",
+            field: 'costoBaseCOP',
             before: existing.costoBaseCOP,
             after: costoBaseCOP,
           },
         ],
-        status: "pending" as const,
+        status: 'pending' as const,
       });
       await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
         itemId: product.itemId,
         auditId,
-        mode: "patch",
+        mode: 'patch',
       });
     }
 
     return { lotItemId, preponderancia, costoBaseCOP };
+  },
+});
+
+export const updatePreponderancia = action({
+  args: {
+    idToken: v.string(),
+    lotItemId: v.id('lotItems'),
+    preponderancia: v.number(),
+  },
+  handler: async (
+    ctx,
+    { idToken, lotItemId, preponderancia },
+  ): Promise<{
+    lotItemId: Id<'lotItems'>;
+    preponderancia: number;
+    costoBaseCOP: number;
+  }> => {
+    const caller = await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.lotItems._updatePreponderancia, {
+      lotItemId,
+      preponderancia,
+      editorEmail: caller.email,
+    });
   },
 });
 
@@ -397,43 +439,45 @@ export const updatePreponderancia = mutation({
  * Only fields actually different from the existing values produce
  * patches/audit entries — a no-op call returns early.
  */
-export const updateGemaFields = mutation({
+const gemaPatchValidator = v.object({
+  nombre: v.optional(v.string()),
+  peso: v.optional(v.string()),
+  color: v.optional(v.string()),
+  calidad: v.optional(v.string()),
+  procedencia: v.optional(v.string()),
+  observacion: v.optional(v.string()),
+  talla: v.optional(v.string()),
+  medidas: v.optional(v.string()),
+  cantidad: v.optional(v.number()),
+  categoria: v.optional(v.string()),
+  nivelRareza: v.optional(v.number()),
+  calificacion: v.optional(v.number()),
+  tipoEsmeralda: v.optional(v.string()),
+  subtipoForm: v.optional(v.string()),
+  tipoJoya: v.optional(v.string()),
+  tecnicaJoya: v.optional(v.string()),
+  minerales: v.optional(v.array(v.string())),
+  complementos: v.optional(v.array(v.string())),
+  fotoUrl: v.optional(v.string()),
+  certificadoUrl: v.optional(v.string()),
+  formulaGema: v.optional(v.string()),
+  formulaJoya: v.optional(v.string()),
+  rangoDescuento: v.optional(v.string()),
+  precioEmbajadorCOP: v.optional(v.number()),
+  precioConscienteCOP: v.optional(v.number()),
+  precioPublicoCOP: v.optional(v.number()),
+  mostrarEnCatalogo: v.optional(v.boolean()),
+  preponderancia: v.optional(v.number()),
+  // Bruto-only informational fields — editable like any other captured
+  // value once the parcel is in the lot.
+  cantidadEstimada: v.optional(v.number()),
+  rendimientoEsperado: v.optional(v.number()),
+});
+
+export const _updateGemaFields = internalMutation({
   args: {
-    lotItemId: v.id("lotItems"),
-    patch: v.object({
-      nombre: v.optional(v.string()),
-      peso: v.optional(v.string()),
-      color: v.optional(v.string()),
-      calidad: v.optional(v.string()),
-      procedencia: v.optional(v.string()),
-      observacion: v.optional(v.string()),
-      talla: v.optional(v.string()),
-      medidas: v.optional(v.string()),
-      cantidad: v.optional(v.number()),
-      categoria: v.optional(v.string()),
-      nivelRareza: v.optional(v.number()),
-      calificacion: v.optional(v.number()),
-      tipoEsmeralda: v.optional(v.string()),
-      subtipoForm: v.optional(v.string()),
-      tipoJoya: v.optional(v.string()),
-      tecnicaJoya: v.optional(v.string()),
-      minerales: v.optional(v.array(v.string())),
-      complementos: v.optional(v.array(v.string())),
-      fotoUrl: v.optional(v.string()),
-      certificadoUrl: v.optional(v.string()),
-      formulaGema: v.optional(v.string()),
-      formulaJoya: v.optional(v.string()),
-      rangoDescuento: v.optional(v.string()),
-      precioEmbajadorCOP: v.optional(v.number()),
-      precioConscienteCOP: v.optional(v.number()),
-      precioPublicoCOP: v.optional(v.number()),
-      mostrarEnCatalogo: v.optional(v.boolean()),
-      preponderancia: v.optional(v.number()),
-      // Bruto-only informational fields — editable like any other captured
-      // value once the parcel is in the lot.
-      cantidadEstimada: v.optional(v.number()),
-      rendimientoEsperado: v.optional(v.number()),
-    }),
+    lotItemId: v.id('lotItems'),
+    patch: gemaPatchValidator,
     editorEmail: v.optional(v.string()),
   },
   handler: async (ctx, { lotItemId, patch, editorEmail }) => {
@@ -441,8 +485,8 @@ export const updateGemaFields = mutation({
     if (!lotItem) throw new Error(`lotItem ${lotItemId} no encontrado`);
 
     const lot = await ctx.db
-      .query("lots")
-      .withIndex("by_loteId", (q) => q.eq("loteId", lotItem.loteId))
+      .query('lots')
+      .withIndex('by_loteId', (q) => q.eq('loteId', lotItem.loteId))
       .first();
     if (!lot) throw new Error(`Lote ${lotItem.loteId} no encontrado`);
     // Editing is allowed in any lot estado. The studio needs to fix
@@ -451,8 +495,8 @@ export const updateGemaFields = mutation({
     // BR-2 invariant are still re-validated below before any writes.
 
     const product = await ctx.db
-      .query("productInventory")
-      .withIndex("by_itemId", (q) => q.eq("itemId", lotItem.itemId))
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', lotItem.itemId))
       .first();
     if (!product) {
       throw new Error(`productInventory para ${lotItem.itemId} no encontrado`);
@@ -460,7 +504,7 @@ export const updateGemaFields = mutation({
 
     // Validate nombre — productInventory mirror cannot have an empty name.
     if (patch.nombre !== undefined && patch.nombre.trim().length === 0) {
-      throw new Error("Nombre es obligatorio");
+      throw new Error('Nombre es obligatorio');
     }
 
     // Re-validate preponderancia against siblings (BR-2) before any writes.
@@ -469,11 +513,11 @@ export const updateGemaFields = mutation({
     if (patch.preponderancia !== undefined) {
       const p = patch.preponderancia;
       if (p <= 0 || p > 100) {
-        throw new Error("preponderancia debe estar en (0, 100]");
+        throw new Error('preponderancia debe estar en (0, 100]');
       }
       const siblings = await ctx.db
-        .query("lotItems")
-        .withIndex("by_loteId", (q) => q.eq("loteId", lotItem.loteId))
+        .query('lotItems')
+        .withIndex('by_loteId', (q) => q.eq('loteId', lotItem.loteId))
         .collect();
       const sumOthers = siblings
         .filter((s) => s._id !== lotItemId)
@@ -516,29 +560,29 @@ export const updateGemaFields = mutation({
       });
     };
 
-    compareString("nombre", patch.nombre, product.nombre);
-    compareString("peso", patch.peso, product.peso);
-    compareString("color", patch.color, product.color);
-    compareString("calidad", patch.calidad, product.calidad);
-    compareString("procedencia", patch.procedencia, product.procedencia);
-    compareString("observacion", patch.observacion, product.observacion);
-    compareString("talla", patch.talla, product.talla);
-    compareString("medidas", patch.medidas, product.medidas);
-    compareString("categoria", patch.categoria, product.categoria);
-    compareString("tipoEsmeralda", patch.tipoEsmeralda, product.tipoEsmeralda);
-    compareString("subtipoForm", patch.subtipoForm, product.subtipoForm);
-    compareString("tipoJoya", patch.tipoJoya, product.tipoJoya);
-    compareString("tecnicaJoya", patch.tecnicaJoya, product.tecnicaJoya);
-    compareString("formulaGema", patch.formulaGema, product.formulaGema);
-    compareString("formulaJoya", patch.formulaJoya, product.formulaJoya);
+    compareString('nombre', patch.nombre, product.nombre);
+    compareString('peso', patch.peso, product.peso);
+    compareString('color', patch.color, product.color);
+    compareString('calidad', patch.calidad, product.calidad);
+    compareString('procedencia', patch.procedencia, product.procedencia);
+    compareString('observacion', patch.observacion, product.observacion);
+    compareString('talla', patch.talla, product.talla);
+    compareString('medidas', patch.medidas, product.medidas);
+    compareString('categoria', patch.categoria, product.categoria);
+    compareString('tipoEsmeralda', patch.tipoEsmeralda, product.tipoEsmeralda);
+    compareString('subtipoForm', patch.subtipoForm, product.subtipoForm);
+    compareString('tipoJoya', patch.tipoJoya, product.tipoJoya);
+    compareString('tecnicaJoya', patch.tecnicaJoya, product.tecnicaJoya);
+    compareString('formulaGema', patch.formulaGema, product.formulaGema);
+    compareString('formulaJoya', patch.formulaJoya, product.formulaJoya);
     compareString(
-      "rangoDescuento",
+      'rangoDescuento',
       patch.rangoDescuento,
       product.rangoDescuento,
     );
-    compareString("fotoUrl", patch.fotoUrl, product.fotoUrl);
+    compareString('fotoUrl', patch.fotoUrl, product.fotoUrl);
     compareString(
-      "certificadoUrl",
+      'certificadoUrl',
       patch.certificadoUrl,
       product.certificadoUrl,
     );
@@ -554,26 +598,26 @@ export const updateGemaFields = mutation({
       changes.push({ field, before: current ?? null, after: next });
     };
 
-    compareNumber("cantidad", patch.cantidad, product.cantidad);
-    compareNumber("nivelRareza", patch.nivelRareza, product.nivelRareza);
-    compareNumber("calificacion", patch.calificacion, product.calificacion);
+    compareNumber('cantidad', patch.cantidad, product.cantidad);
+    compareNumber('nivelRareza', patch.nivelRareza, product.nivelRareza);
+    compareNumber('calificacion', patch.calificacion, product.calificacion);
     compareNumber(
-      "cantidadEstimada",
+      'cantidadEstimada',
       patch.cantidadEstimada,
       product.cantidadEstimada,
     );
     compareNumber(
-      "rendimientoEsperado",
+      'rendimientoEsperado',
       patch.rendimientoEsperado,
       product.rendimientoEsperado,
     );
     compareNumber(
-      "precioEmbajadorCOP",
+      'precioEmbajadorCOP',
       patch.precioEmbajadorCOP,
       product.precioEmbajadorCOP,
     );
     compareNumber(
-      "precioConscienteCOP",
+      'precioConscienteCOP',
       patch.precioConscienteCOP,
       product.precioConscienteCOP,
     );
@@ -586,9 +630,9 @@ export const updateGemaFields = mutation({
       if (!same) {
         productPatch.minerales = next;
         changes.push({
-          field: "minerales",
-          before: prev.join(", ") || null,
-          after: next.join(", ") || null,
+          field: 'minerales',
+          before: prev.join(', ') || null,
+          after: next.join(', ') || null,
         });
       }
     }
@@ -601,9 +645,9 @@ export const updateGemaFields = mutation({
       if (!same) {
         productPatch.complementos = next;
         changes.push({
-          field: "complementos",
-          before: prev.join(", ") || null,
-          after: next.join(", ") || null,
+          field: 'complementos',
+          before: prev.join(', ') || null,
+          after: next.join(', ') || null,
         });
       }
     }
@@ -617,7 +661,7 @@ export const updateGemaFields = mutation({
       if (next !== product.precioCOP) {
         productPatch.precioCOP = next;
         changes.push({
-          field: "precioCOP",
+          field: 'precioCOP',
           before: product.precioCOP ?? null,
           after: next ?? null,
         });
@@ -631,7 +675,7 @@ export const updateGemaFields = mutation({
           withPublishStamp(product, patch.mostrarEnCatalogo),
         );
         changes.push({
-          field: "mostrarEnCatalogo",
+          field: 'mostrarEnCatalogo',
           before: product.mostrarEnCatalogo ? 1 : 0,
           after: patch.mostrarEnCatalogo ? 1 : 0,
         });
@@ -647,12 +691,12 @@ export const updateGemaFields = mutation({
       productPatch.preponderancia = nextPreponderancia;
       productPatch.costoBaseCOP = nextCostoBaseCOP;
       changes.push({
-        field: "preponderancia",
+        field: 'preponderancia',
         before: lotItem.preponderancia,
         after: nextPreponderancia,
       });
       changes.push({
-        field: "costoBaseCOP",
+        field: 'costoBaseCOP',
         before: lotItem.costoBaseCOP,
         after: nextCostoBaseCOP,
       });
@@ -665,7 +709,7 @@ export const updateGemaFields = mutation({
     // 1. Mirror writes (productInventory + lotItems if preponderancia changed).
     await ctx.db.patch(product._id, {
       ...productPatch,
-      syncStatus: "pending" as const,
+      syncStatus: 'pending' as const,
       syncError: undefined,
     });
     if (nextPreponderancia !== undefined && nextCostoBaseCOP !== undefined) {
@@ -677,17 +721,17 @@ export const updateGemaFields = mutation({
 
     // 2. Audit + scheduled sheet push.
     const now = new Date().toISOString();
-    const auditId = await ctx.db.insert("productEdits", {
+    const auditId = await ctx.db.insert('productEdits', {
       itemId: product.itemId,
-      editorEmail: editorEmail ?? "fotosintesis-edit",
+      editorEmail: editorEmail ?? 'fotosintesis-edit',
       editedAt: now,
       changes,
-      status: "pending" as const,
+      status: 'pending' as const,
     });
     await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
       itemId: product.itemId,
       auditId,
-      mode: "patch",
+      mode: 'patch',
     });
 
     return {
@@ -696,6 +740,30 @@ export const updateGemaFields = mutation({
       changedFields: changes.map((c) => c.field),
       costoBaseCOP: nextCostoBaseCOP ?? lotItem.costoBaseCOP,
     };
+  },
+});
+
+export const updateGemaFields = action({
+  args: {
+    idToken: v.string(),
+    lotItemId: v.id('lotItems'),
+    patch: gemaPatchValidator,
+  },
+  handler: async (
+    ctx,
+    { idToken, lotItemId, patch },
+  ): Promise<{
+    lotItemId: Id<'lotItems'>;
+    changed: boolean;
+    changedFields?: string[];
+    costoBaseCOP?: number;
+  }> => {
+    const caller = await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.lotItems._updateGemaFields, {
+      lotItemId,
+      patch,
+      editorEmail: caller.email,
+    });
   },
 });
 
@@ -710,9 +778,9 @@ export const updateGemaFields = mutation({
  * Pass an empty string to clear a field. Only fields that actually change
  * produce an audit entry + Sheets push; a no-op returns early.
  */
-export const updateMedia = mutation({
+export const _updateMedia = internalMutation({
   args: {
-    lotItemId: v.id("lotItems"),
+    lotItemId: v.id('lotItems'),
     fotoUrl: v.optional(v.string()),
     certificadoUrl: v.optional(v.string()),
     editorEmail: v.optional(v.string()),
@@ -722,8 +790,8 @@ export const updateMedia = mutation({
     if (!lotItem) throw new Error(`lotItem ${lotItemId} no encontrado`);
 
     const product = await ctx.db
-      .query("productInventory")
-      .withIndex("by_itemId", (q) => q.eq("itemId", lotItem.itemId))
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', lotItem.itemId))
       .first();
     if (!product) {
       throw new Error(`productInventory para ${lotItem.itemId} no encontrado`);
@@ -738,7 +806,7 @@ export const updateMedia = mutation({
     const productPatch: Record<string, unknown> = {};
 
     const applyMedia = (
-      field: "fotoUrl" | "certificadoUrl",
+      field: 'fotoUrl' | 'certificadoUrl',
       next: string | undefined,
       current: string | undefined,
     ) => {
@@ -754,8 +822,8 @@ export const updateMedia = mutation({
       });
     };
 
-    applyMedia("fotoUrl", fotoUrl, product.fotoUrl);
-    applyMedia("certificadoUrl", certificadoUrl, product.certificadoUrl);
+    applyMedia('fotoUrl', fotoUrl, product.fotoUrl);
+    applyMedia('certificadoUrl', certificadoUrl, product.certificadoUrl);
 
     if (changes.length === 0) {
       return { lotItemId, changed: false };
@@ -763,22 +831,22 @@ export const updateMedia = mutation({
 
     await ctx.db.patch(product._id, {
       ...productPatch,
-      syncStatus: "pending" as const,
+      syncStatus: 'pending' as const,
       syncError: undefined,
     });
 
     const now = new Date().toISOString();
-    const auditId = await ctx.db.insert("productEdits", {
+    const auditId = await ctx.db.insert('productEdits', {
       itemId: product.itemId,
-      editorEmail: editorEmail ?? "fotosintesis-media",
+      editorEmail: editorEmail ?? 'fotosintesis-media',
       editedAt: now,
       changes,
-      status: "pending" as const,
+      status: 'pending' as const,
     });
     await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
       itemId: product.itemId,
       auditId,
-      mode: "patch",
+      mode: 'patch',
     });
 
     return {
@@ -789,8 +857,33 @@ export const updateMedia = mutation({
   },
 });
 
-export const remove = mutation({
-  args: { lotItemId: v.id("lotItems"), editorEmail: v.optional(v.string()) },
+export const updateMedia = action({
+  args: {
+    idToken: v.string(),
+    lotItemId: v.id('lotItems'),
+    fotoUrl: v.optional(v.string()),
+    certificadoUrl: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    { idToken, lotItemId, fotoUrl, certificadoUrl },
+  ): Promise<{
+    lotItemId: Id<'lotItems'>;
+    changed: boolean;
+    changedFields?: string[];
+  }> => {
+    const caller = await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.lotItems._updateMedia, {
+      lotItemId,
+      fotoUrl,
+      certificadoUrl,
+      editorEmail: caller.email,
+    });
+  },
+});
+
+export const _remove = internalMutation({
+  args: { lotItemId: v.id('lotItems'), editorEmail: v.optional(v.string()) },
   handler: async (ctx, { lotItemId, editorEmail }) => {
     const item = await ctx.db.get(lotItemId);
     if (!item) return { removed: false as const };
@@ -799,8 +892,8 @@ export const remove = mutation({
     // the productInventory row stay safe because we orphan that row
     // (see below) rather than deleting it.
     const lot = await ctx.db
-      .query("lots")
-      .withIndex("by_loteId", (q) => q.eq("loteId", item.loteId))
+      .query('lots')
+      .withIndex('by_loteId', (q) => q.eq('loteId', item.loteId))
       .first();
 
     // BR-2: after removing this item the remaining siblings must still sum to
@@ -808,8 +901,8 @@ export const remove = mutation({
     // delete so we can warn the operator — previously this invariant broke
     // silently with no signal. (ISO-audit C7.)
     const siblings = await ctx.db
-      .query("lotItems")
-      .withIndex("by_loteId", (q) => q.eq("loteId", item.loteId))
+      .query('lotItems')
+      .withIndex('by_loteId', (q) => q.eq('loteId', item.loteId))
       .collect();
     const sumAfter = preponderanciaSum(
       siblings.filter((s) => s._id !== lotItemId),
@@ -824,8 +917,8 @@ export const remove = mutation({
     // by loteId, which is now cleared → it would misroute to the legacy tab);
     // this matches lots.cancel's orphan path.
     const product = await ctx.db
-      .query("productInventory")
-      .withIndex("by_itemId", (q) => q.eq("itemId", item.itemId))
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', item.itemId))
       .first();
     if (product) {
       await ctx.db.patch(product._id, {
@@ -836,25 +929,25 @@ export const remove = mutation({
       // Audit row so the removal is traceable in the item's history — the old
       // remove left no record at all. (ISO-audit C7.) Stays "pending" because
       // the orphan intentionally isn't synced to Sheets (see above).
-      await ctx.db.insert("productEdits", {
+      await ctx.db.insert('productEdits', {
         itemId: product.itemId,
-        editorEmail: editorEmail ?? "fotosintesis-remove",
+        editorEmail: editorEmail ?? 'fotosintesis-remove',
         editedAt: new Date().toISOString(),
         changes: [
-          { field: "loteId", before: item.loteId, after: null },
-          { field: "preponderancia", before: item.preponderancia, after: null },
+          { field: 'loteId', before: item.loteId, after: null },
+          { field: 'preponderancia', before: item.preponderancia, after: null },
           {
-            field: "costoBaseCOP",
+            field: 'costoBaseCOP',
             before: product.costoBaseCOP ?? null,
             after: null,
           },
         ],
-        status: "pending" as const,
+        status: 'pending' as const,
       });
     }
 
     const warning =
-      lot && lot.estado !== "abierto" && !balances
+      lot && lot.estado !== 'abierto' && !balances
         ? `El lote ${lot.loteId} (${lot.estado}) ya no suma 100% ` +
           `(ahora ${sumAfter.toFixed(2)}%). Ajustá la preponderancia de los ` +
           `ítems restantes.`
@@ -867,5 +960,28 @@ export const remove = mutation({
       balances,
       warning,
     };
+  },
+});
+
+export const remove = action({
+  args: { idToken: v.string(), lotItemId: v.id('lotItems') },
+  handler: async (
+    ctx,
+    { idToken, lotItemId },
+  ): Promise<
+    | { removed: false }
+    | {
+        removed: true;
+        lotEstado: string | null;
+        sumAfter: number;
+        balances: boolean;
+        warning: string | null;
+      }
+  > => {
+    const caller = await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.lotItems._remove, {
+      lotItemId,
+      editorEmail: caller.email,
+    });
   },
 });

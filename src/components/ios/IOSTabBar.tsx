@@ -1,13 +1,18 @@
 /**
- * IOSTabBar Component
+ * IOSTabBar Component — Quiet Emerald
  *
- * Floating pill-shaped bottom navigation matching ds-tm.pen BottomNavBar spec.
- * - Outer wrapper with padding creates floating effect
- * - Inner pill: rounded container with solid bg, subtle border + shadow
- * - Active tab: solid emerald fill pill that slides between tabs (Framer Motion)
- * - Badge support with pulse animation
- * - Haptic feedback on tab change
- * - Safe area insets for modern iOS devices
+ * Bottom navigation, restyled to the v2 "Quiet Emerald" language and wired to
+ * the redesign A/B variant store (see useRedesignVariant):
+ *
+ *   A · faithful (default) — keeps the floating pill + sliding active indicator,
+ *       retoned to qe tokens: solid accent-strong fill (no gradient), qe
+ *       surface/border/subtle, Hanken Grotesk labels.
+ *   B · literal — the mockup bar exactly: flat edge-to-edge, 64px + safe area,
+ *       hairline top border, translucent surface + blur, active tab = emerald
+ *       icon + label (accent-pure), no pill.
+ *
+ * Both variants keep existing behavior: provider tabs, badges, haptics,
+ * Fotosíntesis suppression, Bóveda desktop auto-hide, portal rendering.
  */
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -21,15 +26,17 @@ import EmeraldCutIcon from "../icons/EmeraldCutIcon";
 import AmbassadorsGlobeIcon from "../icons/AmbassadorsGlobeIcon";
 import { useIsProvider } from "../../hooks/usePermissions";
 
-// Design tokens
+// Design tokens — Quiet Emerald
 import {
-  primitiveColors,
+  getQuietEmerald,
+  qeFont,
   easingCurves,
   durations,
   zIndex,
   fontWeights,
   microinteraction,
 } from "../../design-system";
+import { useRedesignVariant } from "../../hooks/useRedesignVariant";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useThemeMode } from "../../contexts/ThemeContext";
 import { useLiquidGlassSafe } from "../../contexts/LiquidGlassContext";
@@ -103,7 +110,7 @@ export interface IOSTabBarProps {
   onMoreClick?: () => void;
 }
 
-// Design spec constants from ds-tm.pen BottomNavBar
+// Pill geometry (A · faithful)
 const PILL_HEIGHT = 62;
 const PILL_RADIUS = 36;
 const PILL_PADDING = 4;
@@ -111,13 +118,16 @@ const TAB_RADIUS_ACTIVE = 36;
 const TAB_RADIUS_INACTIVE = 26;
 const ICON_SIZE = 20;
 const LABEL_SIZE = 10;
-const LABEL_SPACING = 0.5;
-// Logo green #00AF84 as gradient base, darker end derived from Button/Primary pattern
-const ACTIVE_GRADIENT = "linear-gradient(225deg, #00AF84 0%, #008C6A 100%)";
-const ACTIVE_SHADOW = "0 4px 14px rgba(0, 175, 132, 0.3)";
-const ACTIVE_SOLID = "#00AF84"; // badge ring color
-const INACTIVE_LIGHT = "#9CA3AF";
-const INACTIVE_DARK = "#78788A";
+// Flat bar geometry (B · literal — mockup spec)
+const FLAT_BAR_HEIGHT = 64;
+const FLAT_ICON_SIZE = 21;
+const FLAT_LABEL_SIZE = 9;
+
+/** Translucent surface for the literal bar (surface hex → rgba at .94). */
+const toRgba = (hex: string, alpha: number): string => {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+};
 
 const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
   const navigate = useNavigate();
@@ -127,8 +137,17 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
   const { mode } = useThemeMode();
   const isDark = mode === "dark";
   const isProvider = useIsProvider();
+  const { isLiteral } = useRedesignVariant();
 
-  const inactiveColor = isDark ? INACTIVE_DARK : INACTIVE_LIGHT;
+  const qe = useMemo(() => getQuietEmerald(mode), [mode]);
+  const inactiveColor = qe.subtle;
+  const activeColor = isLiteral ? qe.accentPure : qe.onAccent;
+  const activeShadow = isDark
+    ? "0 4px 14px rgba(0, 175, 132, 0.28)"
+    : "0 4px 14px rgba(0, 111, 82, 0.26)";
+  const pillShadow = isDark
+    ? "0 4px 16px rgba(0, 0, 0, 0.4)"
+    : "0 4px 16px rgba(13, 30, 24, 0.10)";
 
   // Fotosíntesis now owns its native bottom bar (FotoTabBar) and this global bar
   // early-returns null on /admin/fotosintesis, so its old desktop auto-hide (and
@@ -240,16 +259,18 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
       onFocus={() => autoHide && setRevealed(true)}
       onBlur={() => autoHide && setRevealed(false)}
       sx={{
-        // Outer wrapper — creates floating effect with padding
+        // Outer wrapper — floating (A) or edge-to-edge (B)
         position: "fixed",
         bottom: 0,
         left: 0,
         right: 0,
-        padding: `12px 21px calc(21px + env(safe-area-inset-bottom)) 21px`,
+        padding: isLiteral
+          ? 0
+          : `12px 21px calc(21px + env(safe-area-inset-bottom)) 21px`,
         zIndex: zIndex.float,
-        pointerEvents: "none", // Pass through clicks outside the pill
+        pointerEvents: "none", // Pass through clicks outside the bar
 
-        // GPU acceleration + desktop auto-hide slide (Fotosíntesis only)
+        // GPU acceleration + desktop auto-hide slide (Bóveda only)
         WebkitTransform:
           autoHide && !revealed
             ? "translate3d(0, calc(100% + 24px), 0)"
@@ -266,28 +287,34 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
         willChange: "transform",
       }}
     >
-      {/* Inner pill container */}
+      {/* Inner container — pill (A) or flat hairline bar (B) */}
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
-          height: PILL_HEIGHT,
-          borderRadius: `${PILL_RADIUS}px`,
-          padding: `${PILL_PADDING}px`,
-          pointerEvents: "auto", // Re-enable clicks on the pill
-          overflow: "hidden",
+          pointerEvents: "auto", // Re-enable clicks on the bar
           position: "relative",
 
-          // Background
-          backgroundColor: isDark ? "#161618" : "#FFFFFF",
-
-          // Border
-          border: `1px solid ${isDark ? "#2E2E33" : "#E5E7EB"}`,
-
-          // Shadow — blur 16, offset y:4, subtle
-          boxShadow: isDark
-            ? "0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(0, 174, 122, 0.06)"
-            : "0 4px 16px rgba(0, 0, 0, 0.1)",
+          ...(isLiteral
+            ? {
+                // B · literal — mockup: flat, hairline top, translucent + blur
+                height: `calc(${FLAT_BAR_HEIGHT}px + env(safe-area-inset-bottom))`,
+                padding: `10px 18px calc(6px + env(safe-area-inset-bottom))`,
+                backgroundColor: toRgba(qe.surface, 0.94),
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+                borderTop: `1px solid ${qe.hairline}`,
+              }
+            : {
+                // A · faithful — floating pill, retoned to qe tokens
+                height: PILL_HEIGHT,
+                borderRadius: `${PILL_RADIUS}px`,
+                padding: `${PILL_PADDING}px`,
+                overflow: "hidden",
+                backgroundColor: qe.surface,
+                border: `1px solid ${qe.border}`,
+                boxShadow: pillShadow,
+              }),
 
           // Transitions
           transition: effectiveConfig.animations
@@ -304,6 +331,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
           {PRIMARY_TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
+            const iconColor = isActive ? activeColor : inactiveColor;
             // Custom SVG icons that accept size/color/strokeWidth (Lucide-compatible interface)
             const lucideIconIds = [
               "treasure",
@@ -313,6 +341,7 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
               "provider-inventory",
             ];
             const isLucideIcon = lucideIconIds.includes(tab.id);
+            const iconSize = isLiteral ? FLAT_ICON_SIZE : ICON_SIZE;
 
             return (
               <Box
@@ -338,8 +367,10 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                   cursor: "pointer",
                   position: "relative",
                   isolation: "isolate",
-                  borderRadius: `${isActive ? TAB_RADIUS_ACTIVE : TAB_RADIUS_INACTIVE}px`,
-                  gap: "3px",
+                  borderRadius: isLiteral
+                    ? "10px"
+                    : `${isActive ? TAB_RADIUS_ACTIVE : TAB_RADIUS_INACTIVE}px`,
+                  gap: isLiteral ? "4px" : "3px",
                   userSelect: "none",
                   WebkitTapHighlightColor: "transparent",
 
@@ -366,13 +397,14 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                       : "none",
                   },
                   "&:focus-visible": {
-                    outline: `2px solid ${primitiveColors.emerald[500]}`,
+                    outline: `2px solid ${qe.accent}`,
                     outlineOffset: "2px",
                   },
                 }}
               >
-                {/* Animated sliding emerald pill background for active tab */}
+                {/* Animated sliding emerald pill background for active tab (A only) */}
                 {isActive &&
+                  !isLiteral &&
                   (effectiveConfig.animations ? (
                     <motion.div
                       layoutId="tab-indicator"
@@ -380,8 +412,8 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                       style={{
                         position: "absolute",
                         inset: 0,
-                        background: ACTIVE_GRADIENT,
-                        boxShadow: ACTIVE_SHADOW,
+                        background: qe.accentStrong,
+                        boxShadow: activeShadow,
                         borderRadius: `${TAB_RADIUS_ACTIVE}px`,
                         zIndex: 0,
                       }}
@@ -391,8 +423,8 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                       style={{
                         position: "absolute",
                         inset: 0,
-                        background: ACTIVE_GRADIENT,
-                        boxShadow: ACTIVE_SHADOW,
+                        background: qe.accentStrong,
+                        boxShadow: activeShadow,
                         borderRadius: `${TAB_RADIUS_ACTIVE}px`,
                         zIndex: 0,
                       }}
@@ -406,15 +438,15 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    height: ICON_SIZE,
-                    width: ICON_SIZE,
+                    height: iconSize,
+                    width: iconSize,
                     zIndex: 1,
                   }}
                 >
                   {isLucideIcon ? (
                     <Icon
-                      size={ICON_SIZE}
-                      color={isActive ? "#FFFFFF" : inactiveColor}
+                      size={iconSize}
+                      color={iconColor}
                       strokeWidth={isActive ? 2.2 : 1.8}
                       style={{
                         transition: effectiveConfig.animations
@@ -425,8 +457,8 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                   ) : (
                     <Icon
                       sx={{
-                        fontSize: `${ICON_SIZE}px`,
-                        color: isActive ? "#FFFFFF" : inactiveColor,
+                        fontSize: `${iconSize}px`,
+                        color: iconColor,
                         transition: effectiveConfig.animations
                           ? `color ${durations.liquidFast} ${easingCurves.liquidInOut}`
                           : "none",
@@ -452,9 +484,10 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                         alignItems: "center",
                         justifyContent: "center",
                         padding: "0 4px",
-                        boxShadow: isActive
-                          ? `0 0 0 2px ${ACTIVE_SOLID}`
-                          : `0 0 0 2px ${isDark ? "#161618" : "#FFFFFF"}`,
+                        boxShadow:
+                          isActive && !isLiteral
+                            ? `0 0 0 2px ${qe.accentStrong}`
+                            : `0 0 0 2px ${qe.surface}`,
                         // Badge entrance animation
                         animation: effectiveConfig.animations
                           ? `badgeIn 300ms ${easingCurves.liquidSpring} both`
@@ -496,12 +529,12 @@ const IOSTabBar: React.FC<IOSTabBarProps> = ({ onMoreClick }) => {
                 <Typography
                   variant="caption"
                   sx={{
-                    fontSize: `${LABEL_SIZE}px`,
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontSize: `${isLiteral ? FLAT_LABEL_SIZE : LABEL_SIZE}px`,
+                    fontFamily: qeFont.ui,
                     fontWeight: isActive ? 600 : 500,
-                    letterSpacing: `${LABEL_SPACING}px`,
-                    textTransform: "uppercase",
-                    color: isActive ? "#FFFFFF" : inactiveColor,
+                    letterSpacing: isLiteral ? 0 : "0.5px",
+                    textTransform: isLiteral ? "none" : "uppercase",
+                    color: isActive ? activeColor : inactiveColor,
                     textAlign: "center",
                     whiteSpace: "nowrap",
                     overflow: "hidden",

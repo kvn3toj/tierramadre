@@ -40,10 +40,28 @@ import {
   addContactTags,
   type GhlConvConfig,
 } from './_lib/ghlConversations';
+import { signContactId } from './_lib/cidSigning';
 
 /** Sequence + sede code for online (bot/web) orders → ids like `VO-0001`. */
 const ONLINE_SEDE = 'O';
 const ONLINE_SALE_SEQUENCE = 'sale:O';
+
+/**
+ * Every mutation below is called exclusively server-to-server from Vercel
+ * (api/ghl-*.ts, api/mp-webhook.ts) — never from the browser. But the Convex
+ * deployment URL is public (VITE_CONVEX_URL ships in the client bundle), so
+ * without this gate anyone could call e.g. `markOrderPaid` directly and fake
+ * a payment confirmation, or `createOrder` to spam sales. Reuses
+ * ADMIN_SYNC_TOKEN — already provisioned on both Vercel and Convex for the
+ * Sheets-sync hop — as a trusted-proxy secret for this direction too. Fail
+ * closed if unconfigured.
+ */
+function requireServerSecret(secret: string): void {
+  const expected = process.env.ADMIN_SYNC_TOKEN;
+  if (!expected || secret !== expected) {
+    throw new ConvexError('No autorizado.');
+  }
+}
 
 // ─── search-products (the GHL bot's product tool) ──────────────────────────
 
@@ -126,8 +144,13 @@ export const searchProducts = query({
 
     const base = baseUrl.replace(/\/$/, '');
     // Appended to every link so the public page can identify which GHL
-    // contact is browsing (see the `contactId` arg doc above).
-    const cidSuffix = contactId ? `?cid=${encodeURIComponent(contactId)}` : '';
+    // contact is browsing (see the `contactId` arg doc above). Signed
+    // (convex/_lib/cidSigning.ts) so api/vitrina-select.ts — which is
+    // intentionally public/no-auth — can verify this id was actually minted
+    // by us for THIS contact, not guessed or copied from another customer's
+    // link.
+    const signedCid = contactId ? await signContactId(contactId) : null;
+    const cidSuffix = signedCid ? `?cid=${encodeURIComponent(signedCid)}` : '';
     // Only accept a recognized tier value; anything else is ignored (a numeric
     // budget, when present, wins over the tier inside rankProducts anyway).
     const tier =
@@ -184,8 +207,9 @@ export const searchProducts = query({
  * automation trigger (GHL's own tags/workflows are).
  */
 export const recordVitrinaSelection = mutation({
-  args: { ghlContactId: v.string(), sku: v.string() },
-  handler: async (ctx, { ghlContactId, sku }) => {
+  args: { ghlContactId: v.string(), sku: v.string(), secret: v.string() },
+  handler: async (ctx, { ghlContactId, sku, secret }) => {
+    requireServerSecret(secret);
     await ctx.db.insert('vitrinaSelections', {
       ghlContactId,
       sku,
@@ -262,8 +286,10 @@ export const createOrder = mutation({
     ),
     ambassador_slug: v.optional(v.string()),
     canal_origen: v.optional(v.string()),
+    secret: v.string(),
   },
   handler: async (ctx, args) => {
+    requireServerSecret(args.secret);
     if (!args.items.length) throw new ConvexError('EMPTY_ITEMS');
 
     // 1. Reload prices/stock from the DB — never trust client-supplied amounts.
@@ -335,8 +361,9 @@ export const createOrder = mutation({
 
 /** Persist the Mercado Pago preference id on a sale (called by create-order). */
 export const setMpPreference = mutation({
-  args: { saleId: v.string(), mpPreferenceId: v.string() },
-  handler: async (ctx, { saleId, mpPreferenceId }) => {
+  args: { saleId: v.string(), mpPreferenceId: v.string(), secret: v.string() },
+  handler: async (ctx, { saleId, mpPreferenceId, secret }) => {
+    requireServerSecret(secret);
     const sale = await ctx.db
       .query('sales')
       .withIndex('by_saleId', (q) => q.eq('saleId', saleId))
@@ -353,8 +380,10 @@ export const markOrderPaid = mutation({
     saleId: v.string(),
     mpPaymentId: v.string(),
     mpStatus: v.string(),
+    secret: v.string(),
   },
-  handler: async (ctx, { saleId, mpPaymentId, mpStatus }) => {
+  handler: async (ctx, { saleId, mpPaymentId, mpStatus, secret }) => {
+    requireServerSecret(secret);
     const sale = await ctx.db
       .query('sales')
       .withIndex('by_saleId', (q) => q.eq('saleId', saleId))
@@ -427,8 +456,9 @@ export const markOrderPaid = mutation({
 
 /** Flag/unflag a sale whose post-paid GHL fan-out failed (webhook best-effort). */
 export const flagGhlSyncPending = mutation({
-  args: { saleId: v.string(), pending: v.boolean() },
-  handler: async (ctx, { saleId, pending }) => {
+  args: { saleId: v.string(), pending: v.boolean(), secret: v.string() },
+  handler: async (ctx, { saleId, pending, secret }) => {
+    requireServerSecret(secret);
     const sale = await ctx.db
       .query('sales')
       .withIndex('by_saleId', (q) => q.eq('saleId', saleId))
@@ -450,8 +480,13 @@ export const getClientByPhone = query({
 });
 
 export const linkGhlContact = mutation({
-  args: { clientId: v.id('clients'), ghlContactId: v.string() },
-  handler: async (ctx, { clientId, ghlContactId }) => {
+  args: {
+    clientId: v.id('clients'),
+    ghlContactId: v.string(),
+    secret: v.string(),
+  },
+  handler: async (ctx, { clientId, ghlContactId, secret }) => {
+    requireServerSecret(secret);
     await ctx.db.patch(clientId, { ghlContactId });
     return { ok: true };
   },

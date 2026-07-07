@@ -17,22 +17,37 @@
  * (or `?variant=literal`) in the URL; the choice is persisted to localStorage.
  */
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from 'react';
 
-export type RedesignVariant = "faithful" | "literal";
+export type RedesignVariant = 'faithful' | 'literal';
 
-const STORAGE_KEY = "tm.redesignVariant";
-const VALID: readonly RedesignVariant[] = ["faithful", "literal"] as const;
-const DEFAULT: RedesignVariant = "faithful";
+const STORAGE_KEY = 'tm.redesignVariant';
+const VALID: readonly RedesignVariant[] = ['faithful', 'literal'] as const;
+const DEFAULT: RedesignVariant = 'faithful';
 
 const isValid = (v: unknown): v is RedesignVariant =>
-  typeof v === "string" && (VALID as readonly string[]).includes(v);
+  typeof v === 'string' && (VALID as readonly string[]).includes(v);
 
 function readInitial(): RedesignVariant {
-  if (typeof window === "undefined") return DEFAULT;
+  if (typeof window === 'undefined') return DEFAULT;
+  // Prod ships only the "faithful" variant — the toggle UI is already
+  // DEV-only (RedesignVariantToggle.tsx), but before this fix the store
+  // itself still read ?redesign=literal / a stale localStorage value in
+  // production, so a shared link or a pre-fix visitor's prior toggle tap
+  // could silently strand them on the feature-stripped "literal" mockup
+  // variant. Ignore both overrides outside DEV, and clear the stale key so
+  // already-stranded visitors recover on their next load.
+  if (!import.meta.env.DEV) {
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+    return DEFAULT;
+  }
   try {
     const params = new URLSearchParams(window.location.search);
-    const q = params.get("redesign") ?? params.get("variant");
+    const q = params.get('redesign') ?? params.get('variant');
     if (isValid(q)) {
       window.localStorage.setItem(STORAGE_KEY, q);
       return q;
@@ -51,6 +66,10 @@ const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
 export function setRedesignVariant(next: RedesignVariant): void {
+  // Defense in depth: the toggle UI is DEV-only, so this should only ever be
+  // called with "literal" in DEV — but refuse outside DEV too, in case
+  // something else ever calls it directly.
+  if (!import.meta.env.DEV && next !== DEFAULT) return;
   if (!isValid(next) || next === current) return;
   current = next;
   try {
@@ -94,14 +113,14 @@ export function useRedesignVariant(): UseRedesignVariant {
     [],
   );
   const toggle = useCallback(
-    () => setRedesignVariant(current === "faithful" ? "literal" : "faithful"),
+    () => setRedesignVariant(current === 'faithful' ? 'literal' : 'faithful'),
     [],
   );
   return {
     variant,
     setVariant,
     toggle,
-    isLiteral: variant === "literal",
-    isFaithful: variant === "faithful",
+    isLiteral: variant === 'literal',
+    isFaithful: variant === 'faithful',
   };
 }

@@ -13,7 +13,7 @@ export interface BaseEvent {
   timestamp: number;
   sessionId: string;
   userId?: string;
-  accessLevel: 'guest' | 'asesor' | 'embajador' | 'admin' | 'provider';
+  accessLevel: 'guest' | 'invitado_especial' | 'asesor' | 'embajador' | 'admin' | 'provider';
 }
 
 // =============================================================================
@@ -331,7 +331,7 @@ export type AnalyticsEvent =
 export interface TrackingContext {
   sessionId: string;
   userId?: string;
-  accessLevel: 'guest' | 'asesor' | 'embajador' | 'admin' | 'provider';
+  accessLevel: 'guest' | 'invitado_especial' | 'asesor' | 'embajador' | 'admin' | 'provider';
   sessionStartTime: number;
 }
 

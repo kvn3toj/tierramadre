@@ -250,6 +250,7 @@ export const getRoleLabel = (role: string): string => {
   if (r === "embajador" || r === "ambassador") return "Embajador";
   if (r === "full" || r === "asesor") return "Asesor";
   if (r === "provider" || r === "proveedor") return "Proveedor";
+  if (r === "invitado_especial" || r.includes("invitado especial") || r.includes("special guest")) return "Invitado Especial";
   return "Usuario";
 };
 
@@ -264,6 +265,7 @@ export const getRoleColor = (role: string): string => {
   if (r === "embajador" || r === "ambassador") return "#8B5CF6"; // Purple
   if (r === "full" || r === "asesor") return "#00AE7A"; // emeraldCore.primary
   if (r === "provider" || r === "proveedor") return "#3B82F6"; // Blue
+  if (r === "invitado_especial" || r.includes("invitado especial") || r.includes("special guest")) return "#14B8A6"; // Teal
   return "#6B7280"; // Gray
 };
 

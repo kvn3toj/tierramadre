@@ -131,7 +131,9 @@ export const INVITATION_STORAGE_KEYS = {
   // Guest contact for duplicate invitation check
   GUEST_NAME: 'invitation-guest-name',
   GUEST_CONTACT: 'invitation-guest-contact',
-  // PIN verification flag (survives tab refresh)
+  // Stores the shortCode (uppercased) of the invite whose PIN was verified on
+  // this device — scoped per-invite, not a global flag, so verifying one bound
+  // invite can't skip the PIN gate on another. Survives tab refresh.
   PIN_VERIFIED: 'invitation-pin-verified',
   // Device-bound token for single-device enforcement
   DEVICE_TOKEN: 'invitation-device-token',

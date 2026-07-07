@@ -15,17 +15,24 @@ export const usePermissions = (): Permission => {
     const isProvider = accessLevel === 'provider';
     const isEmbajador = accessLevel === 'embajador';
     const isAsesor = accessLevel === 'asesor';
+    // "Special guest": can browse + share Vitrinas, but is NOT staff — treated
+    // like a guest for editing/upload/download so it gains no admin powers.
+    const isInvitadoEspecial = accessLevel === 'invitado_especial';
+    const isStaff = isAdmin || isEmbajador || isAsesor;
 
     return {
-      canEdit: !isGuest && !isProvider,
-      canUpload: !isGuest,
-      canDownload: !isGuest && !isProvider,
+      canEdit: !isGuest && !isProvider && !isInvitadoEspecial,
+      canUpload: !isGuest && !isInvitadoEspecial,
+      canDownload: !isGuest && !isProvider && !isInvitadoEspecial,
       isAdmin,
       isProvider,
       isEmbajador,
       isAsesor,
+      isInvitadoEspecial,
       canViewPrices: !isProvider,  // Providers cannot see prices
       canUseManualProduct: isAdmin || isEmbajador,  // Only admin and embajador can use manual products
+      // Sharing a client Vitrina is allowed for staff AND special guests.
+      canShareVitrina: isStaff || isInvitadoEspecial,
     };
   }, [accessLevel]);
 };
@@ -92,4 +99,21 @@ export const useIsEmbajador = (): boolean => {
 export const useIsAsesor = (): boolean => {
   const { isAsesor } = usePermissions();
   return isAsesor;
+};
+
+/**
+ * Hook for isInvitadoEspecial check ("special guest" from the Asesores sheet)
+ */
+export const useIsInvitadoEspecial = (): boolean => {
+  const { isInvitadoEspecial } = usePermissions();
+  return isInvitadoEspecial;
+};
+
+/**
+ * Whether the current user can create/share a client-facing "Vitrina" link.
+ * True for staff (admin, embajador, asesor) and for special guests.
+ */
+export const useCanShareVitrina = (): boolean => {
+  const { canShareVitrina } = usePermissions();
+  return canShareVitrina;
 };

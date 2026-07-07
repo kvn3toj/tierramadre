@@ -1,24 +1,24 @@
 import {
   query,
-  mutation,
   action,
   internalMutation,
   internalQuery,
   type MutationCtx,
-} from "./_generated/server";
-import { v } from "convex/values";
-import { api, internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
-import { pushTableRowToVercel } from "./_lib/sheetSync";
-import { COLUMN_MAPS } from "./_lib/columnMaps";
+} from './_generated/server';
+import { v } from 'convex/values';
+import { api, internal } from './_generated/api';
+import type { Id } from './_generated/dataModel';
+import { pushTableRowToVercel } from './_lib/sheetSync';
+import { COLUMN_MAPS } from './_lib/columnMaps';
 import {
   allocateNext,
   formatSubLoteId,
   subLoteSequenceName,
   parseLoteId,
-} from "./sequences";
+} from './sequences';
+import { requireAccessLevel } from './_lib/authz';
 
-const estadoValidator = v.union(v.literal("activa"), v.literal("archivada"));
+const estadoValidator = v.union(v.literal('activa'), v.literal('archivada'));
 
 /**
  * Parent-gating rule (BR-S4): sub-lotes group FINALIZED items, so the parent
@@ -27,12 +27,12 @@ const estadoValidator = v.union(v.literal("activa"), v.literal("archivada"));
  * items — neither is a stable base for a sale-bundle.
  */
 function assertParentGate(estado: string): void {
-  if (estado === "cancelado")
-    throw new Error("No se pueden agrupar sub-lotes de un lote cancelado");
-  if (estado === "abierto")
+  if (estado === 'cancelado')
+    throw new Error('No se pueden agrupar sub-lotes de un lote cancelado');
+  if (estado === 'abierto')
     throw new Error(
-      "Cierra o publica el lote antes de agrupar sub-lotes " +
-        "(debe estar cerrado o publicado)",
+      'Cierra o publica el lote antes de agrupar sub-lotes ' +
+        '(debe estar cerrado o publicado)',
     );
 }
 
@@ -64,8 +64,8 @@ async function computeDerived(
   let total = 0;
   for (const itemId of itemIds) {
     const product = await ctx.db
-      .query("productInventory")
-      .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
     if (!product) {
       if (opts.validate) throw new Error(`Ítem ${itemId} no existe`);
@@ -90,8 +90,8 @@ async function computeDerived(
 
 async function requireSubLote(ctx: MutationCtx, subLoteId: string) {
   const sub = await ctx.db
-    .query("subLotes")
-    .withIndex("by_subLoteId", (q) => q.eq("subLoteId", subLoteId))
+    .query('subLotes')
+    .withIndex('by_subLoteId', (q) => q.eq('subLoteId', subLoteId))
     .first();
   if (!sub) throw new Error(`Sub-lote ${subLoteId} no encontrado`);
   return sub;
@@ -104,8 +104,8 @@ export const listByParent = query({
   args: { parentLoteId: v.string() },
   handler: async (ctx, { parentLoteId }) => {
     const rows = await ctx.db
-      .query("subLotes")
-      .withIndex("by_parentLote", (q) => q.eq("parentLoteId", parentLoteId))
+      .query('subLotes')
+      .withIndex('by_parentLote', (q) => q.eq('parentLoteId', parentLoteId))
       .collect();
     return rows.sort((a, b) => b._creationTime - a._creationTime);
   },
@@ -115,8 +115,8 @@ export const get = query({
   args: { subLoteId: v.string() },
   handler: async (ctx, { subLoteId }) =>
     ctx.db
-      .query("subLotes")
-      .withIndex("by_subLoteId", (q) => q.eq("subLoteId", subLoteId))
+      .query('subLotes')
+      .withIndex('by_subLoteId', (q) => q.eq('subLoteId', subLoteId))
       .first(),
 });
 
@@ -125,23 +125,25 @@ export const countByParent = query({
   args: { parentLoteId: v.string() },
   handler: async (ctx, { parentLoteId }) => {
     const rows = await ctx.db
-      .query("subLotes")
-      .withIndex("by_parentLote", (q) => q.eq("parentLoteId", parentLoteId))
+      .query('subLotes')
+      .withIndex('by_parentLote', (q) => q.eq('parentLoteId', parentLoteId))
       .collect();
-    return rows.filter((r) => r.estado === "activa").length;
+    return rows.filter((r) => r.estado === 'activa').length;
   },
 });
 
 // ─── Mutations ───────────────────────────────────────────────────
 
-export const create = mutation({
-  args: {
-    parentLoteId: v.string(),
-    nombre: v.string(),
-    notas: v.optional(v.string()),
-    itemIds: v.optional(v.array(v.string())),
-    clientToken: v.optional(v.string()),
-  },
+const createArgs = {
+  parentLoteId: v.string(),
+  nombre: v.string(),
+  notas: v.optional(v.string()),
+  itemIds: v.optional(v.array(v.string())),
+  clientToken: v.optional(v.string()),
+};
+
+export const _create = internalMutation({
+  args: createArgs,
   handler: async (ctx, args) => {
     // Idempotency guard (money-critical): replay of the same clientToken returns
     // the prior result instead of allocating a second sub-lote sequence +
@@ -150,14 +152,14 @@ export const create = mutation({
     // again (C7).
     if (args.clientToken) {
       const prior = await ctx.db
-        .query("commitTokens")
-        .withIndex("by_token", (q) => q.eq("token", args.clientToken!))
+        .query('commitTokens')
+        .withIndex('by_token', (q) => q.eq('token', args.clientToken!))
         .unique();
       if (prior) {
-        const stillThere = await ctx.db.get(prior.primaryId as Id<"subLotes">);
+        const stillThere = await ctx.db.get(prior.primaryId as Id<'subLotes'>);
         if (stillThere) {
           return JSON.parse(prior.result) as {
-            id: Id<"subLotes">;
+            id: Id<'subLotes'>;
             subLoteId: string;
           };
         }
@@ -166,11 +168,11 @@ export const create = mutation({
     }
 
     const nombre = args.nombre.trim();
-    if (!nombre) throw new Error("El sub-lote necesita un nombre");
+    if (!nombre) throw new Error('El sub-lote necesita un nombre');
 
     const lot = await ctx.db
-      .query("lots")
-      .withIndex("by_loteId", (q) => q.eq("loteId", args.parentLoteId))
+      .query('lots')
+      .withIndex('by_loteId', (q) => q.eq('loteId', args.parentLoteId))
       .first();
     if (!lot) throw new Error(`Lote ${args.parentLoteId} no encontrado`);
     assertParentGate(lot.estado);
@@ -189,10 +191,10 @@ export const create = mutation({
     const subLoteId = formatSubLoteId(args.parentLoteId, seqValue);
 
     const now = new Date().toISOString();
-    const all = await ctx.db.query("subLotes").collect();
+    const all = await ctx.db.query('subLotes').collect();
     const maxRow = all.reduce((m, s) => Math.max(m, s.rowIndex), 1);
 
-    const id = await ctx.db.insert("subLotes", {
+    const id = await ctx.db.insert('subLotes', {
       subLoteId,
       parentLoteId: args.parentLoteId,
       sede: lot.sede ?? parseLoteId(args.parentLoteId).sede,
@@ -201,23 +203,23 @@ export const create = mutation({
       unidades: derived.unidades,
       totalCostoCOP: derived.totalCostoCOP,
       notas: args.notas?.trim() || undefined,
-      estado: "activa" as const,
+      estado: 'activa' as const,
       createdAt: now,
       rowIndex: maxRow + 1,
       lastPulledAt: now,
-      syncStatus: "pending" as const,
+      syncStatus: 'pending' as const,
     });
 
     await ctx.scheduler.runAfter(0, api.subLotes._pushToSheet, {
       id,
-      mode: "append",
+      mode: 'append',
     });
 
     const result = { id, subLoteId };
     if (args.clientToken) {
-      await ctx.db.insert("commitTokens", {
+      await ctx.db.insert('commitTokens', {
         token: args.clientToken,
-        kind: "sublote.create",
+        kind: 'sublote.create',
         primaryId: id,
         result: JSON.stringify(result),
         createdAt: new Date().toISOString(),
@@ -227,13 +229,26 @@ export const create = mutation({
   },
 });
 
-export const addItems = mutation({
-  args: { subLoteId: v.string(), itemIds: v.array(v.string()) },
+export const create = action({
+  args: { idToken: v.string(), ...createArgs },
+  handler: async (
+    ctx,
+    { idToken, ...args },
+  ): Promise<{ id: Id<'subLotes'>; subLoteId: string }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.subLotes._create, args);
+  },
+});
+
+const addItemsArgs = { subLoteId: v.string(), itemIds: v.array(v.string()) };
+
+export const _addItems = internalMutation({
+  args: addItemsArgs,
   handler: async (ctx, { subLoteId, itemIds }) => {
     const sub = await requireSubLote(ctx, subLoteId);
     const lot = await ctx.db
-      .query("lots")
-      .withIndex("by_loteId", (q) => q.eq("loteId", sub.parentLoteId))
+      .query('lots')
+      .withIndex('by_loteId', (q) => q.eq('loteId', sub.parentLoteId))
       .first();
     if (lot) assertParentGate(lot.estado);
 
@@ -247,19 +262,32 @@ export const addItems = mutation({
       itemIds: derived.itemIds,
       unidades: derived.unidades,
       totalCostoCOP: derived.totalCostoCOP,
-      syncStatus: "pending" as const,
+      syncStatus: 'pending' as const,
       syncError: undefined,
     });
     await ctx.scheduler.runAfter(0, api.subLotes._pushToSheet, {
       id: sub._id,
-      mode: "patch",
+      mode: 'patch',
     });
     return { subLoteId, unidades: derived.unidades };
   },
 });
 
-export const removeItems = mutation({
-  args: { subLoteId: v.string(), itemIds: v.array(v.string()) },
+export const addItems = action({
+  args: { idToken: v.string(), ...addItemsArgs },
+  handler: async (
+    ctx,
+    { idToken, ...args },
+  ): Promise<{ subLoteId: string; unidades: number }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.subLotes._addItems, args);
+  },
+});
+
+const removeItemsArgs = { subLoteId: v.string(), itemIds: v.array(v.string()) };
+
+export const _removeItems = internalMutation({
+  args: removeItemsArgs,
   handler: async (ctx, { subLoteId, itemIds }) => {
     const sub = await requireSubLote(ctx, subLoteId);
     const toRemove = new Set(itemIds);
@@ -271,61 +299,104 @@ export const removeItems = mutation({
       itemIds: derived.itemIds,
       unidades: derived.unidades,
       totalCostoCOP: derived.totalCostoCOP,
-      syncStatus: "pending" as const,
+      syncStatus: 'pending' as const,
       syncError: undefined,
     });
     await ctx.scheduler.runAfter(0, api.subLotes._pushToSheet, {
       id: sub._id,
-      mode: "patch",
+      mode: 'patch',
     });
     return { subLoteId, unidades: derived.unidades };
   },
 });
 
-export const updateMeta = mutation({
-  args: {
-    subLoteId: v.string(),
-    nombre: v.optional(v.string()),
-    notas: v.optional(v.string()),
+export const removeItems = action({
+  args: { idToken: v.string(), ...removeItemsArgs },
+  handler: async (
+    ctx,
+    { idToken, ...args },
+  ): Promise<{ subLoteId: string; unidades: number }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.subLotes._removeItems, args);
   },
+});
+
+const updateMetaArgs = {
+  subLoteId: v.string(),
+  nombre: v.optional(v.string()),
+  notas: v.optional(v.string()),
+};
+
+export const _updateMeta = internalMutation({
+  args: updateMetaArgs,
   handler: async (ctx, { subLoteId, nombre, notas }) => {
     const sub = await requireSubLote(ctx, subLoteId);
     let nombreNext: string | undefined;
     if (nombre !== undefined) {
       nombreNext = nombre.trim();
-      if (!nombreNext) throw new Error("El nombre no puede quedar vacío");
+      if (!nombreNext) throw new Error('El nombre no puede quedar vacío');
     }
     await ctx.db.patch(sub._id, {
       ...(nombreNext !== undefined ? { nombre: nombreNext } : {}),
       ...(notas !== undefined ? { notas: notas.trim() || undefined } : {}),
-      syncStatus: "pending" as const,
+      syncStatus: 'pending' as const,
       syncError: undefined,
     });
     await ctx.scheduler.runAfter(0, api.subLotes._pushToSheet, {
       id: sub._id,
-      mode: "patch",
+      mode: 'patch',
     });
     return { subLoteId };
   },
 });
 
+export const updateMeta = action({
+  args: { idToken: v.string(), ...updateMetaArgs },
+  handler: async (
+    ctx,
+    { idToken, ...args },
+  ): Promise<{ subLoteId: string }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.subLotes._updateMeta, args);
+  },
+});
+
+const setEstadoArgs = { subLoteId: v.string(), estado: estadoValidator };
+
 /** Archive or reactivate. Membership/cost untouched. */
-export const setEstado = mutation({
-  args: { subLoteId: v.string(), estado: estadoValidator },
+export const _setEstado = internalMutation({
+  args: setEstadoArgs,
   handler: async (ctx, { subLoteId, estado }) => {
     const sub = await requireSubLote(ctx, subLoteId);
     await ctx.db.patch(sub._id, {
       estado,
-      syncStatus: "pending" as const,
+      syncStatus: 'pending' as const,
       syncError: undefined,
     });
     await ctx.scheduler.runAfter(0, api.subLotes._pushToSheet, {
       id: sub._id,
-      mode: "patch",
+      mode: 'patch',
     });
     return { subLoteId, estado };
   },
 });
+
+export const setEstado = action({
+  args: { idToken: v.string(), ...setEstadoArgs },
+  handler: async (
+    ctx,
+    { idToken, ...args },
+  ): Promise<{ subLoteId: string; estado: 'activa' | 'archivada' }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.subLotes._setEstado, args);
+  },
+});
+
+const setDisplayArgs = {
+  subLoteId: v.string(),
+  fotoUrl: v.optional(v.string()),
+  mostrarComoLote: v.optional(v.boolean()),
+};
 
 /**
  * Set the catalog-grouping fields (`fotoUrl`, `mostrarComoLote`). These are
@@ -334,12 +405,8 @@ export const setEstado = mutation({
  * sublote is `activa`, the customer catalog shows it as one grouped card.
  * Omitting a field leaves it unchanged; pass `fotoUrl: ""` to clear it.
  */
-export const setDisplay = mutation({
-  args: {
-    subLoteId: v.string(),
-    fotoUrl: v.optional(v.string()),
-    mostrarComoLote: v.optional(v.boolean()),
-  },
+export const _setDisplay = internalMutation({
+  args: setDisplayArgs,
   handler: async (ctx, { subLoteId, fotoUrl, mostrarComoLote }) => {
     const sub = await requireSubLote(ctx, subLoteId);
     const patch: Record<string, unknown> = {};
@@ -351,18 +418,29 @@ export const setDisplay = mutation({
   },
 });
 
+export const setDisplay = action({
+  args: { idToken: v.string(), ...setDisplayArgs },
+  handler: async (
+    ctx,
+    { idToken, ...args },
+  ): Promise<{ subLoteId: string; changed: boolean }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.subLotes._setDisplay, args);
+  },
+});
+
 // ─── Sheets sync (push-only, mirrors lots/sales) ─────────────────
 
 export const _getInternal = internalQuery({
-  args: { id: v.id("subLotes") },
+  args: { id: v.id('subLotes') },
   handler: async (ctx, { id }) => ctx.db.get(id),
 });
 
 export const _markPushed = internalMutation({
-  args: { id: v.id("subLotes") },
+  args: { id: v.id('subLotes') },
   handler: async (ctx, { id }) => {
     await ctx.db.patch(id, {
-      syncStatus: "synced" as const,
+      syncStatus: 'synced' as const,
       lastPushedAt: new Date().toISOString(),
       syncError: undefined,
     });
@@ -370,10 +448,10 @@ export const _markPushed = internalMutation({
 });
 
 export const _markPushFailed = internalMutation({
-  args: { id: v.id("subLotes"), error: v.string() },
+  args: { id: v.id('subLotes'), error: v.string() },
   handler: async (ctx, { id, error }) => {
     await ctx.db.patch(id, {
-      syncStatus: "error" as const,
+      syncStatus: 'error' as const,
       syncError: error.slice(0, 500),
     });
   },
@@ -381,8 +459,8 @@ export const _markPushFailed = internalMutation({
 
 export const _pushToSheet = action({
   args: {
-    id: v.id("subLotes"),
-    mode: v.union(v.literal("patch"), v.literal("append")),
+    id: v.id('subLotes'),
+    mode: v.union(v.literal('patch'), v.literal('append')),
   },
   handler: async (
     ctx,
@@ -400,16 +478,16 @@ export const _pushToSheet = action({
 
     const fieldSource: Record<string, unknown> = {
       ...sub,
-      itemIdsJoined: sub.itemIds.join(", "),
+      itemIdsJoined: sub.itemIds.join(', '),
     };
     const fields: Record<string, string> = {};
     for (const col of COLUMN_MAPS.subLotes) {
       const val = fieldSource[col];
-      fields[col] = val === null || val === undefined ? "" : String(val);
+      fields[col] = val === null || val === undefined ? '' : String(val);
     }
 
     const result = await pushTableRowToVercel({
-      table: "subLotes",
+      table: 'subLotes',
       rowIndex: sub.rowIndex,
       mode,
       idValue: sub.subLoteId,
@@ -428,13 +506,13 @@ export const _pushToSheet = action({
 });
 
 export const retryPush = action({
-  args: { id: v.id("subLotes") },
+  args: { id: v.id('subLotes') },
   handler: async (ctx, { id }): Promise<{ ok: boolean; message: string }> => {
     const row = await ctx.runQuery(internal.subLotes._getInternal, { id });
-    if (!row) return { ok: false, message: "Sub-lote not found" };
+    if (!row) return { ok: false, message: 'Sub-lote not found' };
     return await ctx.runAction(api.subLotes._pushToSheet, {
       id,
-      mode: "patch",
+      mode: 'patch',
     });
   },
 });

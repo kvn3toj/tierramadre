@@ -188,6 +188,12 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { treasure, isLoadingSheets } = useTreasure();
   const { trmRate } = useTRM();
+  const [searchParams] = useSearchParams();
+  // Present only on links minted by WF-04 (convex/ghl.ts `searchProducts`
+  // embeds `?cid=`) — lets the product page tell GHL directly which contact
+  // picked which SKU (see PublicProductView + /api/vitrina-select). Absent on
+  // staff's manual "Compartir con cliente" links — those just skip that call.
+  const contactId = searchParams.get("cid") || undefined;
 
   const isIdList = ID_LIST_RE.test(code);
 
@@ -277,6 +283,7 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
           product={selected}
           pricing={pricing}
           senderPhone={senderPhone}
+          contactId={contactId}
           onBack={onBack}
         />
       </VitrinaShell>

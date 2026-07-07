@@ -88,6 +88,9 @@
     "api/ghl-sync-contact.ts": {
       "maxDuration": 15
     },
+    "api/vitrina-select.ts": {
+      "maxDuration": 15
+    },
     "api/mp-webhook.ts": {
       "maxDuration": 15
     }

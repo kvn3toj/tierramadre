@@ -1,5 +1,5 @@
-import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
+import { query, mutation, internalMutation } from './_generated/server';
+import { v } from 'convex/values';
 
 /**
  * Track a product view.
@@ -20,7 +20,7 @@ export const track = mutation({
     inviterName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await ctx.db.insert("productViews", {
+    await ctx.db.insert('productViews', {
       ...args,
       timestamp: new Date().toISOString(),
     });
@@ -31,8 +31,11 @@ export const track = mutation({
 /**
  * Insert a product view preserving its original timestamp (migration only).
  * NOT for production use — use track() instead.
+ *
+ * internalMutation: zero app callers (only scripts/migrate-sheets-to-convex.ts).
+ * Re-run via `npx convex run productViews:_migrateInsert '{...}'` if needed.
  */
-export const _migrateInsert = mutation({
+export const _migrateInsert = internalMutation({
   args: {
     timestamp: v.string(),
     itemId: v.string(),
@@ -48,7 +51,7 @@ export const _migrateInsert = mutation({
     inviterName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await ctx.db.insert("productViews", args);
+    await ctx.db.insert('productViews', args);
     return { success: true, itemId: args.itemId };
   },
 });
@@ -57,13 +60,16 @@ export const _migrateInsert = mutation({
  * Rename all productViews matching an old inviterName to the canonical name.
  * Migration-only — fixes historical data where creatorName was set from the
  * Google profile name instead of the canonical Asesor name.
+ *
+ * internalMutation: zero app callers (only scripts/normalize-inviter-names.ts).
+ * Re-run via `npx convex run productViews:_normalizeInviterName '{...}'` if needed.
  */
-export const _normalizeInviterName = mutation({
+export const _normalizeInviterName = internalMutation({
   args: { oldName: v.string(), newName: v.string() },
   handler: async (ctx, { oldName, newName }) => {
     const docs = await ctx.db
-      .query("productViews")
-      .withIndex("by_inviterName", (q) => q.eq("inviterName", oldName))
+      .query('productViews')
+      .withIndex('by_inviterName', (q) => q.eq('inviterName', oldName))
       .collect();
     for (const doc of docs) {
       await ctx.db.patch(doc._id, { inviterName: newName });
@@ -84,9 +90,9 @@ export const guestActivity = query({
   },
   handler: async (ctx, { inviterName, limit }) => {
     return await ctx.db
-      .query("productViews")
-      .withIndex("by_inviterName", (q) => q.eq("inviterName", inviterName))
-      .order("desc")
+      .query('productViews')
+      .withIndex('by_inviterName', (q) => q.eq('inviterName', inviterName))
+      .order('desc')
       .take(limit ?? 50);
   },
 });
@@ -103,10 +109,10 @@ export const byInviterAndGuest = query({
   },
   handler: async (ctx, { inviterName, guestName, limit }) => {
     return await ctx.db
-      .query("productViews")
-      .withIndex("by_inviterName", (q) => q.eq("inviterName", inviterName))
-      .filter((q) => q.eq(q.field("userName"), guestName))
-      .order("desc")
+      .query('productViews')
+      .withIndex('by_inviterName', (q) => q.eq('inviterName', inviterName))
+      .filter((q) => q.eq(q.field('userName'), guestName))
+      .order('desc')
       .take(limit ?? 500);
   },
 });

@@ -12,15 +12,15 @@
  * verifiable before live payment wiring.
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { ConvexError } from "convex/values";
-import { withApiHandler, sendError, sendSuccess } from "./_lib/index.js";
-import { convexClient, isConvexEnabled } from "./_lib/convex-client.js";
-import { bearerMatches } from "./_lib/bearer.js";
-import { buildPreference, createPreference } from "./_lib/mp-preference.js";
-import { api } from "../convex/_generated/api.js";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { ConvexError } from 'convex/values';
+import { withApiHandler, sendError, sendSuccess } from './_lib/index.js';
+import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
+import { bearerMatches } from './_lib/bearer.js';
+import { buildPreference, createPreference } from './_lib/mp-preference.js';
+import { api } from '../convex/_generated/api.js';
 
-const DEFAULT_APP_URL = "https://tierra-madre-studio.vercel.app";
+const DEFAULT_APP_URL = 'https://tierra-madre-studio.vercel.app';
 
 interface OrderBody {
   contact?: { celular?: string; full_name?: string; email?: string };
@@ -38,23 +38,23 @@ interface OrderBody {
 export default withApiHandler(
   async (req: VercelRequest, res: VercelResponse) => {
     if (!process.env.GHL_API_SECRET) {
-      return sendError(res, 500, "GHL_API_SECRET not configured on server");
+      return sendError(res, 500, 'GHL_API_SECRET not configured on server');
     }
     if (
-      !bearerMatches(req.headers["authorization"], process.env.GHL_API_SECRET)
+      !bearerMatches(req.headers['authorization'], process.env.GHL_API_SECRET)
     ) {
-      return sendError(res, 401, "Unauthorized");
+      return sendError(res, 401, 'Unauthorized');
     }
     if (!isConvexEnabled || !convexClient) {
-      return sendError(res, 503, "Convex backend not configured");
+      return sendError(res, 503, 'Convex backend not configured');
     }
 
     const body = (req.body ?? {}) as OrderBody;
     if (!body.contact?.celular) {
-      return sendError(res, 400, "Missing contact.celular");
+      return sendError(res, 400, 'Missing contact.celular');
     }
     if (!Array.isArray(body.items) || body.items.length === 0) {
-      return sendError(res, 400, "items must be a non-empty array");
+      return sendError(res, 400, 'items must be a non-empty array');
     }
 
     let order: { saleId: string; totalCOP: number };
@@ -66,44 +66,45 @@ export default withApiHandler(
           email: body.contact.email,
         },
         items: body.items.map((i) => ({
-          sku: String(i.sku ?? ""),
+          sku: String(i.sku ?? ''),
           qty: Number(i.qty ?? 1),
         })),
         promotion_code: body.promotion_code ?? undefined,
         shipping_address: body.shipping_address ?? undefined,
         ambassador_slug: body.ambassador_slug ?? undefined,
         canal_origen: body.canal_origen ?? undefined,
+        secret: process.env.ADMIN_SYNC_TOKEN ?? '',
       });
     } catch (err) {
       // Convex sanitizes plain `Error` throws to a generic "Server Error" for
       // production HTTP clients; only ConvexError's `.data` survives intact.
       const msg =
         err instanceof ConvexError
-          ? typeof err.data === "string"
+          ? typeof err.data === 'string'
             ? err.data
             : String(err.data)
           : err instanceof Error
             ? err.message
             : String(err);
-      if (msg.includes("OVER_LIMIT_2M")) {
+      if (msg.includes('OVER_LIMIT_2M')) {
         // ≤2M gate → hand off to a human asesor (golden rule #3).
-        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
         return res
           .status(409)
-          .json({ success: false, error: "OVER_LIMIT_2M", handoff: true });
+          .json({ success: false, error: 'OVER_LIMIT_2M', handoff: true });
       }
-      if (msg.includes("PRODUCT_NOT_FOUND") || msg.includes("NOT_AVAILABLE")) {
-        return sendError(res, 409, "PRODUCT_UNAVAILABLE", msg);
+      if (msg.includes('PRODUCT_NOT_FOUND') || msg.includes('NOT_AVAILABLE')) {
+        return sendError(res, 409, 'PRODUCT_UNAVAILABLE', msg);
       }
-      if (msg.includes("EMPTY_ITEMS")) {
-        return sendError(res, 400, "items must be a non-empty array");
+      if (msg.includes('EMPTY_ITEMS')) {
+        return sendError(res, 400, 'items must be a non-empty array');
       }
       throw err;
     }
 
     const appUrl = (process.env.APP_URL ?? DEFAULT_APP_URL)
       .trim()
-      .replace(/\/$/, "");
+      .replace(/\/$/, '');
     const accessToken = process.env.MP_ACCESS_TOKEN;
 
     // Build-and-mock scope: no live MP token yet → return the order, no link.
@@ -142,6 +143,7 @@ export default withApiHandler(
       await convexClient.mutation(api.ghl.setMpPreference, {
         saleId: order.saleId,
         mpPreferenceId: created.id,
+        secret: process.env.ADMIN_SYNC_TOKEN ?? '',
       });
 
       return sendSuccess(res, {
@@ -151,7 +153,7 @@ export default withApiHandler(
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error("[GhlCreateOrder] Mercado Pago preference failed:", msg);
+      console.error('[GhlCreateOrder] Mercado Pago preference failed:', msg);
       return sendSuccess(
         res,
         {
@@ -166,8 +168,8 @@ export default withApiHandler(
     }
   },
   {
-    methods: ["POST", "OPTIONS"],
+    methods: ['POST', 'OPTIONS'],
     requireGoogle: false,
-    errorPrefix: "GhlCreateOrder",
+    errorPrefix: 'GhlCreateOrder',
   },
 );

@@ -7,11 +7,7 @@
  * POST /api/drive-cleanup - Delete empty folders (with confirmation)
  */
 
-import {
-  withApiHandler,
-  sendError,
-  sendSuccess,
-} from './_lib/index.js';
+import { withApiHandler, sendError, sendSuccess } from './_lib/index.js';
 
 /**
  * List all folders and files in a folder
@@ -94,7 +90,9 @@ function findFoldersByPattern(items, pattern, path = '') {
         });
       }
       if (item.children) {
-        matches.push(...findFoldersByPattern(item.children, pattern, currentPath));
+        matches.push(
+          ...findFoldersByPattern(item.children, pattern, currentPath),
+        );
       }
     }
   }
@@ -102,105 +100,144 @@ function findFoldersByPattern(items, pattern, path = '') {
   return matches;
 }
 
-export default withApiHandler(async (req, res, { oauthDrive, sharedDriveId }) => {
-  const drive = oauthDrive;
-  const parentFolderId = sharedDriveId;
+export default withApiHandler(
+  async (req, res, { oauthDrive, sharedDriveId }) => {
+    const expectedToken = process.env.ADMIN_SYNC_TOKEN;
+    const providedToken = req.headers['x-admin-sync-token'];
+    if (!expectedToken) {
+      return sendError(res, 500, 'ADMIN_SYNC_TOKEN not configured on server');
+    }
+    if (!providedToken || providedToken !== expectedToken) {
+      return sendError(res, 401, 'Unauthorized');
+    }
 
-  if (req.method === 'GET') {
-    console.log('[DriveCleanup] Listing folder structure...');
-    const contents = await listFolderContents(drive, parentFolderId);
+    const drive = oauthDrive;
+    const parentFolderId = sharedDriveId;
 
-    // Find issues
-    const emptyFolders = findEmptyFolders(contents);
-    const cotizacionesFolders = findFoldersByPattern(contents, /^cotizaciones$/i);
-    const manualFolders = findFoldersByPattern(contents, /^manual-/);
+    if (req.method === 'GET') {
+      console.log('[DriveCleanup] Listing folder structure...');
+      const contents = await listFolderContents(drive, parentFolderId);
 
-    // Build tree representation
-    function buildTree(items, indent = '') {
-      let tree = '';
-      for (const item of items) {
-        const icon = item.isFolder ? '\u{1F4C1}' : '\u{1F4C4}';
-        const sizeStr = item.size > 0 ? ` (${(item.size / 1024).toFixed(1)}KB)` : '';
-        const emptyStr = item.isEmpty ? ' [EMPTY]' : '';
-        tree += `${indent}${icon} ${item.name}${sizeStr}${emptyStr}\n`;
-        if (item.children) {
-          tree += buildTree(item.children, indent + '  ');
+      // Find issues
+      const emptyFolders = findEmptyFolders(contents);
+      const cotizacionesFolders = findFoldersByPattern(
+        contents,
+        /^cotizaciones$/i,
+      );
+      const manualFolders = findFoldersByPattern(contents, /^manual-/);
+
+      // Build tree representation
+      function buildTree(items, indent = '') {
+        let tree = '';
+        for (const item of items) {
+          const icon = item.isFolder ? '\u{1F4C1}' : '\u{1F4C4}';
+          const sizeStr =
+            item.size > 0 ? ` (${(item.size / 1024).toFixed(1)}KB)` : '';
+          const emptyStr = item.isEmpty ? ' [EMPTY]' : '';
+          tree += `${indent}${icon} ${item.name}${sizeStr}${emptyStr}\n`;
+          if (item.children) {
+            tree += buildTree(item.children, indent + '  ');
+          }
+        }
+        return tree;
+      }
+
+      const treeView = buildTree(contents);
+
+      return sendSuccess(res, {
+        parentFolder: parentFolderId,
+        tree: treeView,
+        cotizacionesFolders,
+        manualFolders,
+        emptyFolders,
+        summary: {
+          totalCotizacionesFolders: cotizacionesFolders.length,
+          totalManualFolders: manualFolders.length,
+          totalEmptyFolders: emptyFolders.length,
+        },
+      });
+    }
+
+    if (req.method === 'POST') {
+      const {
+        action,
+        folderIds,
+        confirm,
+        parentFolderId: parentId,
+        folderName,
+      } = req.body || {};
+
+      // Action: create folder
+      if (action === 'create') {
+        if (!parentId || !folderName) {
+          return sendError(
+            res,
+            400,
+            'parentFolderId and folderName required for create action',
+          );
+        }
+
+        const folder = await drive.files.create({
+          requestBody: {
+            name: folderName,
+            mimeType: 'application/vnd.google-apps.folder',
+            parents: [parentId],
+          },
+          fields: 'id, name',
+        });
+
+        // Set public permissions
+        await drive.permissions.create({
+          fileId: folder.data.id,
+          requestBody: { role: 'reader', type: 'anyone' },
+        });
+
+        console.log(
+          `[DriveCleanup] Created folder "${folderName}": ${folder.data.id}`,
+        );
+        return sendSuccess(res, {
+          created: true,
+          folderId: folder.data.id,
+          folderName: folder.data.name,
+        });
+      }
+
+      // Action: delete folders
+      if (!confirm) {
+        return sendError(
+          res,
+          400,
+          'Please add "confirm": true to delete folders',
+        );
+      }
+
+      if (!folderIds || !Array.isArray(folderIds)) {
+        return sendError(res, 400, 'folderIds array required');
+      }
+
+      const results = [];
+      for (const folderId of folderIds) {
+        try {
+          await drive.files.delete({ fileId: folderId });
+          results.push({ id: folderId, status: 'deleted' });
+          console.log(`[DriveCleanup] Deleted folder: ${folderId}`);
+        } catch (error) {
+          results.push({ id: folderId, status: 'error', error: error.message });
+          console.error(
+            `[DriveCleanup] Failed to delete ${folderId}:`,
+            error.message,
+          );
         }
       }
-      return tree;
+
+      return sendSuccess(res, { results });
     }
 
-    const treeView = buildTree(contents);
-
-    return sendSuccess(res, {
-      parentFolder: parentFolderId,
-      tree: treeView,
-      cotizacionesFolders,
-      manualFolders,
-      emptyFolders,
-      summary: {
-        totalCotizacionesFolders: cotizacionesFolders.length,
-        totalManualFolders: manualFolders.length,
-        totalEmptyFolders: emptyFolders.length,
-      },
-    });
-  }
-
-  if (req.method === 'POST') {
-    const { action, folderIds, confirm, parentFolderId: parentId, folderName } = req.body || {};
-
-    // Action: create folder
-    if (action === 'create') {
-      if (!parentId || !folderName) {
-        return sendError(res, 400, 'parentFolderId and folderName required for create action');
-      }
-
-      const folder = await drive.files.create({
-        requestBody: {
-          name: folderName,
-          mimeType: 'application/vnd.google-apps.folder',
-          parents: [parentId],
-        },
-        fields: 'id, name',
-      });
-
-      // Set public permissions
-      await drive.permissions.create({
-        fileId: folder.data.id,
-        requestBody: { role: 'reader', type: 'anyone' },
-      });
-
-      console.log(`[DriveCleanup] Created folder "${folderName}": ${folder.data.id}`);
-      return sendSuccess(res, {
-        created: true,
-        folderId: folder.data.id,
-        folderName: folder.data.name
-      });
-    }
-
-    // Action: delete folders
-    if (!confirm) {
-      return sendError(res, 400, 'Please add "confirm": true to delete folders');
-    }
-
-    if (!folderIds || !Array.isArray(folderIds)) {
-      return sendError(res, 400, 'folderIds array required');
-    }
-
-    const results = [];
-    for (const folderId of folderIds) {
-      try {
-        await drive.files.delete({ fileId: folderId });
-        results.push({ id: folderId, status: 'deleted' });
-        console.log(`[DriveCleanup] Deleted folder: ${folderId}`);
-      } catch (error) {
-        results.push({ id: folderId, status: 'error', error: error.message });
-        console.error(`[DriveCleanup] Failed to delete ${folderId}:`, error.message);
-      }
-    }
-
-    return sendSuccess(res, { results });
-  }
-
-  return sendError(res, 405, 'Method not allowed');
-}, { methods: ['GET', 'POST', 'OPTIONS'], provideOAuthDrive: true, errorPrefix: 'DriveCleanup' });
+    return sendError(res, 405, 'Method not allowed');
+  },
+  {
+    methods: ['GET', 'POST', 'OPTIONS'],
+    provideOAuthDrive: true,
+    errorPrefix: 'DriveCleanup',
+  },
+);

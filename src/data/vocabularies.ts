@@ -499,6 +499,12 @@ export const TIPOS_JOYA = [
   // GHL/tipo-interes-mapping-analysis.md and convex/_lib/productSearch.ts).
   'Candonga',
   'Set',
+  // Added 2026-07-07: neck pieces (choker/collar) had no capture-form
+  // counterpart either — "Cadena" reads as a chain-only piece, not a
+  // close-fitting collar/choker. Requested during the Fotosíntesis
+  // batch-capture session for the Cali lote (26 chokers/aretes/anillos).
+  'Choker',
+  'Collar',
 ] as const;
 
 export type TipoJoya = (typeof TIPOS_JOYA)[number];

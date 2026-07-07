@@ -104,3 +104,46 @@ export const getByToken = query({
       .withIndex("by_token", (q) => q.eq("token", token.toUpperCase()))
       .first(),
 });
+
+/**
+ * update — correct an already-shared Vitrina link in place.
+ *
+ * Same token/URL, new contents: lets staff fix a wrong product selection,
+ * currency, or multiplier *after* the link was sent to a client, without
+ * making them resend a new URL. Only fields provided are patched — omit a
+ * field to leave it unchanged. Same proxy-only secret gate as `create`.
+ */
+export const update = mutation({
+  args: {
+    token: v.string(),
+    itemIds: v.optional(v.array(v.float64())),
+    currency: v.optional(v.union(v.literal("COP"), v.literal("USD"))),
+    multiplier: v.optional(v.float64()),
+    senderSlug: v.optional(v.string()),
+    secret: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const expected = process.env.VITRINA_SHARED_SECRET;
+    if (!expected || args.secret !== expected) {
+      throw new Error("No autorizado.");
+    }
+
+    const existing = await ctx.db
+      .query("vitrinas")
+      .withIndex("by_token", (q) => q.eq("token", args.token.toUpperCase()))
+      .first();
+    if (!existing) {
+      throw new Error("Enlace no encontrado.");
+    }
+
+    const patch: Record<string, unknown> = {};
+    if (args.itemIds !== undefined) patch.itemIds = args.itemIds;
+    if (args.currency !== undefined) patch.currency = args.currency;
+    if (args.multiplier !== undefined)
+      patch.multiplier = clampMultiplier(args.multiplier);
+    if (args.senderSlug !== undefined) patch.senderSlug = args.senderSlug;
+
+    await ctx.db.patch(existing._id, patch);
+    return { success: true, token: existing.token };
+  },
+});

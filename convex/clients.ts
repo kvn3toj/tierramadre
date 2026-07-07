@@ -1,15 +1,16 @@
 import {
   query,
-  mutation,
   action,
   internalMutation,
   internalQuery,
-} from "./_generated/server";
-import { v } from "convex/values";
-import { api, internal } from "./_generated/api";
-import { pushTableRowToVercel } from "./_lib/sheetSync";
-import { marshalRow } from "./_lib/columnMaps";
-import { planAsesorUpsert } from "./_lib/asesorSync";
+} from './_generated/server';
+import { v } from 'convex/values';
+import { api, internal } from './_generated/api';
+import { pushTableRowToVercel } from './_lib/sheetSync';
+import { marshalRow } from './_lib/columnMaps';
+import { planAsesorUpsert } from './_lib/asesorSync';
+import { requireAccessLevel } from './_lib/authz';
+import type { Id } from './_generated/dataModel';
 
 // Free text (canonical: embajador | final). The custom "Otro…" buyer type from
 // the venta comprador picker is captured through the cliente-final form.
@@ -29,15 +30,15 @@ const clientPatchValidator = v.object({
 export const list = query({
   args: { search: v.optional(v.string()) },
   handler: async (ctx, { search }) => {
-    const all = await ctx.db.query("clients").collect();
+    const all = await ctx.db.query('clients').collect();
     const filtered = search
       ? all.filter((row) => {
           const s = search.toLowerCase();
           return (
             row.nombre.toLowerCase().includes(s) ||
-            (row.nit ?? "").toLowerCase().includes(s) ||
-            (row.cedula ?? "").toLowerCase().includes(s) ||
-            (row.email ?? "").toLowerCase().includes(s)
+            (row.nit ?? '').toLowerCase().includes(s) ||
+            (row.cedula ?? '').toLowerCase().includes(s) ||
+            (row.email ?? '').toLowerCase().includes(s)
           );
         })
       : all;
@@ -46,41 +47,56 @@ export const list = query({
 });
 
 export const get = query({
-  args: { id: v.id("clients") },
+  args: { id: v.id('clients') },
   handler: async (ctx, { id }) => ctx.db.get(id),
 });
 
-export const create = mutation({
-  args: {
-    nombre: v.string(),
-    nit: v.optional(v.string()),
-    cedula: v.optional(v.string()),
-    direccion: v.optional(v.string()),
-    telefono: v.optional(v.string()),
-    email: v.optional(v.string()),
-    tipo: tipoValidator,
-    asesorId: v.optional(v.string()),
-  },
+const createArgs = {
+  nombre: v.string(),
+  nit: v.optional(v.string()),
+  cedula: v.optional(v.string()),
+  direccion: v.optional(v.string()),
+  telefono: v.optional(v.string()),
+  email: v.optional(v.string()),
+  tipo: tipoValidator,
+  asesorId: v.optional(v.string()),
+};
+
+export const _create = internalMutation({
+  args: createArgs,
   handler: async (ctx, args) => {
     const now = new Date().toISOString();
-    const all = await ctx.db.query("clients").collect();
+    const all = await ctx.db.query('clients').collect();
     const maxRow = all.reduce((m, c) => Math.max(m, c.rowIndex), 1);
-    const id = await ctx.db.insert("clients", {
+    const id = await ctx.db.insert('clients', {
       ...args,
       rowIndex: maxRow + 1,
       lastPulledAt: now,
-      syncStatus: "pending" as const,
+      syncStatus: 'pending' as const,
     });
     await ctx.scheduler.runAfter(0, api.clients._pushToSheet, {
       id,
-      mode: "append",
+      mode: 'append',
     });
     return { id };
   },
 });
 
-export const update = mutation({
-  args: { id: v.id("clients"), patch: clientPatchValidator },
+export const create = action({
+  args: { idToken: v.string(), ...createArgs },
+  handler: async (
+    ctx,
+    { idToken, ...args },
+  ): Promise<{ id: Id<'clients'> }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.clients._create, args);
+  },
+});
+
+const updateArgs = { id: v.id('clients'), patch: clientPatchValidator };
+
+export const _update = internalMutation({
+  args: updateArgs,
   handler: async (ctx, { id, patch }) => {
     const existing = await ctx.db.get(id);
     if (!existing) throw new Error(`Client ${id} not found`);
@@ -93,27 +109,38 @@ export const update = mutation({
     await ctx.db.patch(id, {
       ...patch,
       ...(renaming ? { pendingPreviousIdValue: existing.nombre } : {}),
-      syncStatus: "pending" as const,
+      syncStatus: 'pending' as const,
       syncError: undefined,
     });
     await ctx.scheduler.runAfter(0, api.clients._pushToSheet, {
       id,
-      mode: "patch",
+      mode: 'patch',
     });
     return { id };
   },
 });
 
+export const update = action({
+  args: { idToken: v.string(), ...updateArgs },
+  handler: async (
+    ctx,
+    { idToken, ...args },
+  ): Promise<{ id: Id<'clients'> }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.clients._update, args);
+  },
+});
+
 export const _getInternal = internalQuery({
-  args: { id: v.id("clients") },
+  args: { id: v.id('clients') },
   handler: async (ctx, { id }) => ctx.db.get(id),
 });
 
 export const _markPushed = internalMutation({
-  args: { id: v.id("clients") },
+  args: { id: v.id('clients') },
   handler: async (ctx, { id }) => {
     await ctx.db.patch(id, {
-      syncStatus: "synced" as const,
+      syncStatus: 'synced' as const,
       lastPushedAt: new Date().toISOString(),
       syncError: undefined,
       pendingPreviousIdValue: undefined,
@@ -122,10 +149,10 @@ export const _markPushed = internalMutation({
 });
 
 export const _markPushFailed = internalMutation({
-  args: { id: v.id("clients"), error: v.string() },
+  args: { id: v.id('clients'), error: v.string() },
   handler: async (ctx, { id, error }) => {
     await ctx.db.patch(id, {
-      syncStatus: "error" as const,
+      syncStatus: 'error' as const,
       syncError: error.slice(0, 500),
     });
   },
@@ -133,8 +160,8 @@ export const _markPushFailed = internalMutation({
 
 export const _pushToSheet = action({
   args: {
-    id: v.id("clients"),
-    mode: v.union(v.literal("patch"), v.literal("append")),
+    id: v.id('clients'),
+    mode: v.union(v.literal('patch'), v.literal('append')),
   },
   handler: async (
     ctx,
@@ -150,12 +177,12 @@ export const _pushToSheet = action({
       return { ok: false, message: msg };
     }
     const result = await pushTableRowToVercel({
-      table: "clients",
+      table: 'clients',
       rowIndex: row.rowIndex,
       mode,
       idValue: row.nombre,
       previousIdValue: row.pendingPreviousIdValue,
-      fields: marshalRow("clients", row),
+      fields: marshalRow('clients', row),
     });
     if (result.ok) {
       await ctx.runMutation(internal.clients._markPushed, { id });
@@ -170,13 +197,13 @@ export const _pushToSheet = action({
 });
 
 export const retryPush = action({
-  args: { id: v.id("clients") },
+  args: { id: v.id('clients') },
   handler: async (ctx, { id }): Promise<{ ok: boolean; message: string }> => {
     const row = await ctx.runQuery(internal.clients._getInternal, { id });
-    if (!row) return { ok: false, message: "Client not found" };
+    if (!row) return { ok: false, message: 'Client not found' };
     return await ctx.runAction(api.clients._pushToSheet, {
       id,
-      mode: "patch",
+      mode: 'patch',
     });
   },
 });
@@ -190,8 +217,11 @@ export const retryPush = action({
  * so the script can log what it did. Pushes each new row to the SOT via
  * the same scheduler path `create` uses; `pushToSot=false` skips that
  * step for cold imports where the SOT is already aligned.
+ *
+ * internalMutation: zero app callers (only that one-off dev script). Re-run
+ * via `npx convex run clients:bulkImportFromLegacy '{...}'` if needed.
  */
-export const bulkImportFromLegacy = mutation({
+export const bulkImportFromLegacy = internalMutation({
   args: {
     rows: v.array(
       v.object({
@@ -206,19 +236,19 @@ export const bulkImportFromLegacy = mutation({
   handler: async (ctx, { rows, pushToSot = true }) => {
     const normalize = (s: string) =>
       s
-        .normalize("NFD")
-        .replace(/[̀-ͯ]/g, "")
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "");
+        .replace(/[^a-z0-9]+/g, '');
 
-    const existing = await ctx.db.query("clients").collect();
+    const existing = await ctx.db.query('clients').collect();
     const existingNorm = new Set(existing.map((c) => normalize(c.nombre)));
     let nextRow = existing.reduce((m, c) => Math.max(m, c.rowIndex), 1);
 
     const now = new Date().toISOString();
     const results: Array<{
       nombre: string;
-      status: "created" | "skipped";
+      status: 'created' | 'skipped';
       reason?: string;
     }> = [];
 
@@ -227,44 +257,44 @@ export const bulkImportFromLegacy = mutation({
       if (!norm) {
         results.push({
           nombre: row.nombre,
-          status: "skipped",
-          reason: "empty after normalize",
+          status: 'skipped',
+          reason: 'empty after normalize',
         });
         continue;
       }
       if (existingNorm.has(norm)) {
         results.push({
           nombre: row.nombre,
-          status: "skipped",
-          reason: "duplicate",
+          status: 'skipped',
+          reason: 'duplicate',
         });
         continue;
       }
       existingNorm.add(norm);
       nextRow += 1;
-      const id = await ctx.db.insert("clients", {
+      const id = await ctx.db.insert('clients', {
         nombre: row.nombre,
         email: row.email,
         telefono: row.telefono,
-        tipo: "embajador" as const,
+        tipo: 'embajador' as const,
         asesorId: row.asesorId,
         rowIndex: nextRow,
         lastPulledAt: now,
-        syncStatus: "pending" as const,
+        syncStatus: 'pending' as const,
       });
       if (pushToSot) {
         await ctx.scheduler.runAfter(0, api.clients._pushToSheet, {
           id,
-          mode: "append",
+          mode: 'append',
         });
       }
-      results.push({ nombre: row.nombre, status: "created" });
+      results.push({ nombre: row.nombre, status: 'created' });
     }
 
     return {
       total: rows.length,
-      created: results.filter((r) => r.status === "created").length,
-      skipped: results.filter((r) => r.status === "skipped").length,
+      created: results.filter((r) => r.status === 'created').length,
+      skipped: results.filter((r) => r.status === 'skipped').length,
       details: results,
     };
   },
@@ -289,7 +319,7 @@ export const _upsertManyAsesores = internalMutation({
     ),
   },
   handler: async (ctx, { rows }) => {
-    const existing = await ctx.db.query("clients").collect();
+    const existing = await ctx.db.query('clients').collect();
     const plan = planAsesorUpsert(
       rows,
       existing.map((c) => ({
@@ -307,19 +337,19 @@ export const _upsertManyAsesores = internalMutation({
     // Insert new asesores at fresh row indices (append-safe in the SOT).
     for (const row of plan.toInsert) {
       nextRow += 1;
-      const id = await ctx.db.insert("clients", {
+      const id = await ctx.db.insert('clients', {
         nombre: row.nombre,
         email: row.email,
         telefono: row.telefono,
-        tipo: "embajador" as const,
+        tipo: 'embajador' as const,
         asesorId: row.asesorId,
         rowIndex: nextRow,
         lastPulledAt: now,
-        syncStatus: "pending" as const,
+        syncStatus: 'pending' as const,
       });
       await ctx.scheduler.runAfter(0, api.clients._pushToSheet, {
         id,
-        mode: "append",
+        mode: 'append',
       });
     }
 
@@ -329,11 +359,11 @@ export const _upsertManyAsesores = internalMutation({
       await ctx.db.patch(upd.id, {
         ...upd.patch,
         lastPulledAt: now,
-        syncStatus: "pending" as const,
+        syncStatus: 'pending' as const,
       });
       await ctx.scheduler.runAfter(0, api.clients._pushToSheet, {
         id: upd.id,
-        mode: "patch",
+        mode: 'patch',
       });
     }
 
@@ -365,7 +395,7 @@ export const pullAsesoresFromSheet = action({
   }> => {
     const appUrl: string | undefined = process.env.APP_URL;
     if (!appUrl) {
-      throw new Error("APP_URL missing on Convex deployment");
+      throw new Error('APP_URL missing on Convex deployment');
     }
     const res = await fetch(`${appUrl}/api/get-asesores`);
     if (!res.ok) {

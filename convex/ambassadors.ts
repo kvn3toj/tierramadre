@@ -5,35 +5,40 @@
  * the `ambassador-scoring` cron.
  */
 
-import { query, mutation, internalMutation } from "./_generated/server";
-import { v } from "convex/values";
+import { query, internalMutation } from './_generated/server';
+import { v } from 'convex/values';
 import {
   commissionPercentForNivel,
   type AmbassadorNivel,
-} from "./_lib/commission";
+} from './_lib/commission';
 
 const nivelValidator = v.union(
-  v.literal("bronce"),
-  v.literal("plata"),
-  v.literal("oro"),
-  v.literal("diamante"),
+  v.literal('bronce'),
+  v.literal('plata'),
+  v.literal('oro'),
+  v.literal('diamante'),
 );
 
 export const list = query({
   args: {},
-  handler: async (ctx) => ctx.db.query("ambassadors").collect(),
+  handler: async (ctx) => ctx.db.query('ambassadors').collect(),
 });
 
 export const getBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) =>
     ctx.db
-      .query("ambassadors")
-      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .query('ambassadors')
+      .withIndex('by_slug', (q) => q.eq('slug', slug))
       .first(),
 });
 
-export const create = mutation({
+// internalMutation: zero app callers today (no invite flow wires this up
+// yet). Was previously a public `mutation` reachable by anyone with the
+// deployment URL. When the invite flow ships, add a public `action` wrapper
+// here that verifies the caller via `requireAccessLevel` first, mirroring
+// products.saveEdit in convex/products.ts.
+export const create = internalMutation({
   args: {
     slug: v.string(),
     nombre: v.string(),
@@ -42,23 +47,23 @@ export const create = mutation({
     instagramHandle: v.optional(v.string()),
     nivel: v.optional(nivelValidator),
     comisionPercent: v.optional(v.number()),
-    referidoPor: v.optional(v.id("ambassadors")),
+    referidoPor: v.optional(v.id('ambassadors')),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
-      .query("ambassadors")
-      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .query('ambassadors')
+      .withIndex('by_email', (q) => q.eq('email', args.email))
       .first();
-    if (existing) throw new Error("EMAIL_EXISTS");
+    if (existing) throw new Error('EMAIL_EXISTS');
 
     const slugTaken = await ctx.db
-      .query("ambassadors")
-      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .query('ambassadors')
+      .withIndex('by_slug', (q) => q.eq('slug', args.slug))
       .first();
-    if (slugTaken) throw new Error("SLUG_TAKEN");
+    if (slugTaken) throw new Error('SLUG_TAKEN');
 
-    const nivel: AmbassadorNivel = args.nivel ?? "bronce";
-    const id = await ctx.db.insert("ambassadors", {
+    const nivel: AmbassadorNivel = args.nivel ?? 'bronce';
+    const id = await ctx.db.insert('ambassadors', {
       slug: args.slug,
       nombre: args.nombre,
       email: args.email,
@@ -67,7 +72,7 @@ export const create = mutation({
       nivel,
       comisionPercent: args.comisionPercent ?? commissionPercentForNivel(nivel),
       score: 0,
-      status: "invited" as const,
+      status: 'invited' as const,
       referidoPor: args.referidoPor,
       createdAt: new Date().toISOString(),
     });
@@ -84,15 +89,15 @@ export const calculateScore = internalMutation({
   args: {},
   handler: async (ctx) => {
     const active = await ctx.db
-      .query("ambassadors")
-      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .query('ambassadors')
+      .withIndex('by_status', (q) => q.eq('status', 'active'))
       .collect();
 
     let updated = 0;
     for (const amb of active) {
       const comms = await ctx.db
-        .query("commissions")
-        .withIndex("by_ambassador", (q) => q.eq("ambassadorId", amb._id))
+        .query('commissions')
+        .withIndex('by_ambassador', (q) => q.eq('ambassadorId', amb._id))
         .collect();
       const totalCommissionCOP = comms.reduce((s, c) => s + c.amountCOP, 0);
       // 1 point per 10k COP of lifetime commission — a simple monotonic signal.

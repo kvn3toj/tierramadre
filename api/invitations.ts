@@ -975,7 +975,7 @@ export default withApiHandler(
             guestName: activated.guestName ?? null,
             guestContact: activated.guestContact ?? null,
             contactType: activated.contactType ?? null,
-            isPinBound: !!activated.boundToken,
+            isPinBound: activated.isPinBound,
             guestCurrencyMode: activated.guestCurrencyMode ?? null,
             guestMultiplier: activated.guestMultiplier ?? null,
           });
@@ -997,7 +997,7 @@ export default withApiHandler(
           guestName: inv.guestName ?? null,
           guestContact: inv.guestContact ?? null,
           contactType: inv.contactType ?? null,
-          isPinBound: !!inv.boundToken,
+          isPinBound: inv.isPinBound,
           guestCurrencyMode: inv.guestCurrencyMode ?? null,
           guestMultiplier: inv.guestMultiplier ?? null,
         });

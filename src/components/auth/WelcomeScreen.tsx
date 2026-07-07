@@ -25,11 +25,8 @@ import {
   CheckCircleOutline,
 } from "@mui/icons-material";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
-import {
-  emeraldCore,
-  surfacesDark,
-  semanticColors,
-} from "../../design-system/tokens/colors";
+import { semanticColors } from "../../design-system/tokens/colors";
+import { qeDark, qeAccent, qeEmerald, qeFont } from "../../design-system";
 import { useGoogleAuth } from "../../contexts/GoogleAuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { getCachedBrowserInfo } from "../../utils/deviceTier";
@@ -45,6 +42,12 @@ const isGoogleConfigured = Boolean(
 // (typical on iOS Safari, Brave, Firefox-strict, in-app WebViews) and surface
 // a fallback CTA so they aren't stuck on a silent screen.
 const POPUP_TIMEOUT_MS = 8000;
+
+// Quiet Emerald — the brand entry stays dark regardless of theme mode.
+// Dark-mode three-step emerald: accent (links/labels) · strong (button fill)
+// · on (text on fill). Everything else is the cool near-black grayscale.
+const qe = qeDark;
+const acc = qeAccent.dark;
 
 export default function WelcomeScreen() {
   const { signIn, authError, clearError } = useGoogleAuth();
@@ -223,8 +226,9 @@ export default function WelcomeScreen() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        bgcolor: surfacesDark.background.primary,
-        background: `radial-gradient(ellipse at 50% 30%, #0d1a14 0%, ${surfacesDark.background.primary} 50%, #050505 100%)`,
+        // Quiet Emerald: flat near-black base — no ambient gradients;
+        // the emerald button is the only color on the screen.
+        bgcolor: qe.base,
         position: "relative",
         // overflowX hides the glow blobs spilling sideways; overflowY auto
         // lets users scroll when alerts + debug panel push past 100vh
@@ -238,32 +242,6 @@ export default function WelcomeScreen() {
         pb: { xs: 12, sm: 10 },
       }}
     >
-      {/* Subtle ambient glow - top */}
-      <Box
-        sx={{
-          position: "absolute",
-          width: 300,
-          height: 300,
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${alpha(emeraldCore.primary, 0.07)} 0%, transparent 70%)`,
-          top: "5%",
-          filter: "blur(50px)",
-        }}
-      />
-
-      {/* Subtle ambient glow - bottom */}
-      <Box
-        sx={{
-          position: "absolute",
-          width: 250,
-          height: 250,
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${alpha(emeraldCore.primary, 0.03)} 0%, transparent 70%)`,
-          bottom: "15%",
-          filter: "blur(40px)",
-        }}
-      />
-
       {/* Branded Logo - includes "TIERRA MADRE" and "Esmeraldas con ADN de Paz" */}
       <Fade in timeout={400}>
         <Box
@@ -290,10 +268,10 @@ export default function WelcomeScreen() {
             <Alert
               severity="info"
               sx={{
-                bgcolor: alpha(emeraldCore.primary, 0.12),
-                color: surfacesDark.text.primary,
-                border: `1px solid ${alpha(emeraldCore.primary, 0.3)}`,
-                "& .MuiAlert-icon": { color: emeraldCore.primary },
+                bgcolor: alpha(qeEmerald.primary, 0.1),
+                color: qe.text,
+                border: `1px solid ${alpha(qeEmerald.primary, 0.25)}`,
+                "& .MuiAlert-icon": { color: acc.accent },
                 mb: 1,
               }}
             >
@@ -302,7 +280,7 @@ export default function WelcomeScreen() {
               </Typography>
               <Typography
                 variant="caption"
-                sx={{ color: surfacesDark.text.secondary }}
+                sx={{ color: qe.textMuted }}
               >
                 Para ver este producto necesitas una invitación de un asesor o
                 embajador de Tierra Madre.
@@ -320,10 +298,10 @@ export default function WelcomeScreen() {
                 p: 1.5,
                 borderRadius: 2,
                 bgcolor: alpha("#000", 0.5),
-                border: `1px solid ${alpha(emeraldCore.primary, 0.3)}`,
+                border: `1px solid ${alpha(qeEmerald.primary, 0.25)}`,
                 fontFamily: "monospace",
                 fontSize: "0.7rem",
-                color: surfacesDark.text.secondary,
+                color: qe.textMuted,
                 wordBreak: "break-all",
                 lineHeight: 1.6,
                 maxHeight: 220,
@@ -333,7 +311,7 @@ export default function WelcomeScreen() {
               <Typography
                 variant="caption"
                 sx={{
-                  color: emeraldCore.light,
+                  color: acc.accent,
                   fontWeight: 600,
                   display: "block",
                   mb: 0.5,
@@ -378,14 +356,14 @@ export default function WelcomeScreen() {
                   sx={{
                     p: 2.5,
                     borderRadius: 3,
-                    bgcolor: alpha(emeraldCore.primary, 0.08),
-                    border: `1px solid ${alpha(emeraldCore.primary, 0.2)}`,
+                    bgcolor: alpha(qeEmerald.primary, 0.08),
+                    border: `1px solid ${alpha(qeEmerald.primary, 0.2)}`,
                   }}
                 >
                   <Typography
                     variant="subtitle2"
                     sx={{
-                      color: emeraldCore.light,
+                      color: acc.accent,
                       mb: 1,
                       textAlign: "center",
                       fontWeight: 500,
@@ -396,7 +374,7 @@ export default function WelcomeScreen() {
                   <Typography
                     variant="body2"
                     sx={{
-                      color: surfacesDark.text.secondary,
+                      color: qe.textMuted,
                       mb: 2.5,
                       textAlign: "center",
                       lineHeight: 1.5,
@@ -413,13 +391,15 @@ export default function WelcomeScreen() {
                       startIcon={<OpenInNew />}
                       onClick={handleOpenExternal}
                       sx={{
-                        bgcolor: emeraldCore.primary,
-                        color: "#000",
+                        bgcolor: acc.strong,
+                        color: acc.on,
                         textTransform: "none",
                         py: 1.2,
                         fontWeight: 500,
+                        boxShadow: "none",
                         "&:hover": {
-                          bgcolor: emeraldCore.light,
+                          boxShadow: "none",
+                          bgcolor: qeEmerald.light,
                         },
                       }}
                     >
@@ -433,12 +413,10 @@ export default function WelcomeScreen() {
                       }
                       onClick={handleCopyUrl}
                       sx={{
-                        color: urlCopied
-                          ? emeraldCore.primary
-                          : surfacesDark.text.tertiary,
+                        color: urlCopied ? acc.accent : qe.subtle,
                         textTransform: "none",
                         "&:hover": {
-                          color: surfacesDark.text.secondary,
+                          color: qe.textMuted,
                         },
                       }}
                     >
@@ -475,10 +453,10 @@ export default function WelcomeScreen() {
                     <Alert
                       severity="info"
                       sx={{
-                        bgcolor: alpha(emeraldCore.primary, 0.12),
-                        color: surfacesDark.text.primary,
-                        border: `1px solid ${alpha(emeraldCore.primary, 0.3)}`,
-                        "& .MuiAlert-icon": { color: emeraldCore.primary },
+                        bgcolor: alpha(qeEmerald.primary, 0.1),
+                        color: qe.text,
+                        border: `1px solid ${alpha(qeEmerald.primary, 0.25)}`,
+                        "& .MuiAlert-icon": { color: acc.accent },
                       }}
                     >
                       <Typography
@@ -490,7 +468,7 @@ export default function WelcomeScreen() {
                       <Typography
                         variant="caption"
                         sx={{
-                          color: surfacesDark.text.secondary,
+                          color: qe.textMuted,
                           display: "block",
                           mb: 1.5,
                         }}
@@ -504,10 +482,14 @@ export default function WelcomeScreen() {
                         startIcon={<OpenInNew />}
                         onClick={handleOpenExternal}
                         sx={{
-                          bgcolor: emeraldCore.primary,
-                          color: "#000",
+                          bgcolor: acc.strong,
+                          color: acc.on,
                           textTransform: "none",
-                          "&:hover": { bgcolor: emeraldCore.light },
+                          boxShadow: "none",
+                          "&:hover": {
+                            bgcolor: qeEmerald.light,
+                            boxShadow: "none",
+                          },
                         }}
                       >
                         Abrir en navegador
@@ -548,11 +530,11 @@ export default function WelcomeScreen() {
                   onClick={handleTryAnotherAccount}
                   sx={{
                     textTransform: "none",
-                    borderColor: alpha(emeraldCore.primary, 0.5),
-                    color: emeraldCore.light,
+                    borderColor: alpha(qeEmerald.primary, 0.5),
+                    color: acc.accent,
                     "&:hover": {
-                      borderColor: emeraldCore.primary,
-                      bgcolor: alpha(emeraldCore.primary, 0.1),
+                      borderColor: acc.accent,
+                      bgcolor: alpha(qeEmerald.primary, 0.08),
                     },
                   }}
                 >
@@ -565,16 +547,16 @@ export default function WelcomeScreen() {
                 sx={{ display: "flex", alignItems: "center", gap: 2, my: 1 }}
               >
                 <Divider
-                  sx={{ flex: 1, borderColor: alpha("#FFFFFF", 0.15) }}
+                  sx={{ flex: 1, borderColor: qe.hairline }}
                 />
                 <Typography
                   variant="caption"
-                  sx={{ color: surfacesDark.text.tertiary }}
+                  sx={{ color: qe.subtle }}
                 >
                   o
                 </Typography>
                 <Divider
-                  sx={{ flex: 1, borderColor: alpha("#FFFFFF", 0.15) }}
+                  sx={{ flex: 1, borderColor: qe.hairline }}
                 />
               </Box>
             </>
@@ -586,11 +568,11 @@ export default function WelcomeScreen() {
               severity="info"
               onClose={() => setShowInvitationMessage(false)}
               sx={{
-                bgcolor: alpha(emeraldCore.primary, 0.12),
-                color: surfacesDark.text.primary,
-                border: `1px solid ${alpha(emeraldCore.primary, 0.3)}`,
-                "& .MuiAlert-icon": { color: emeraldCore.primary },
-                "& .MuiAlert-action": { color: surfacesDark.text.secondary },
+                bgcolor: alpha(qeEmerald.primary, 0.1),
+                color: qe.text,
+                border: `1px solid ${alpha(qeEmerald.primary, 0.25)}`,
+                "& .MuiAlert-icon": { color: acc.accent },
+                "& .MuiAlert-action": { color: qe.textMuted },
               }}
             >
               {t.auth.invitationOnlyMessage}
@@ -608,9 +590,9 @@ export default function WelcomeScreen() {
               py: 1,
               fontSize: "0.85rem",
               textTransform: "none",
-              color: surfacesDark.text.tertiary,
+              color: qe.subtle,
               "&:hover": {
-                color: surfacesDark.text.secondary,
+                color: qe.textMuted,
                 bgcolor: alpha("#FFFFFF", 0.03),
               },
             }}
@@ -626,8 +608,12 @@ export default function WelcomeScreen() {
         sx={{
           position: "absolute",
           bottom: 32,
-          color: surfacesDark.text.tertiary,
-          letterSpacing: "0.1em",
+          color: qe.subtle,
+          // Quiet Emerald overline: mono, uppercase, wide tracking
+          fontFamily: qeFont.mono,
+          textTransform: "uppercase",
+          letterSpacing: "0.14em",
+          fontSize: "0.6875rem",
         }}
       >
         {t.auth.colombianEmeralds}

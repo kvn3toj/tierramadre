@@ -511,7 +511,10 @@ export default function InvitationPage() {
         [INVITATION_STORAGE_KEYS.INVITER_EMAIL]: creatorEmail,
         [INVITATION_STORAGE_KEYS.GUEST_NAME]: resolvedGuestName,
         [INVITATION_STORAGE_KEYS.GUEST_CONTACT]: resolvedGuestContact,
-        [INVITATION_STORAGE_KEYS.PIN_VERIFIED]: 'true',
+        // Scope the verified flag to THIS invite's shortCode (not a global
+        // 'true') so a device that verified one bound invite can't skip the
+        // PIN gate on a different bound invite. See the skip-PIN check below.
+        [INVITATION_STORAGE_KEYS.PIN_VERIFIED]: currentShortCode.toUpperCase(),
       };
       if (guestCurrencyMode) {
         invitationData[INVITATION_STORAGE_KEYS.GUEST_CURRENCY_MODE] =
@@ -622,10 +625,15 @@ export default function InvitationPage() {
           }
         }
 
-        // Already verified on this device — skip PIN
+        // Already verified THIS invite on this device — skip PIN. The stored
+        // flag holds the verified shortCode (not a global 'true'), so a device
+        // that verified a different bound invite still has to enter this one's
+        // PIN — closes the cross-invitation bypass.
         if (
           result.isPinBound &&
-          sessionStorage.getItem(INVITATION_STORAGE_KEYS.PIN_VERIFIED)
+          sessionStorage
+            .getItem(INVITATION_STORAGE_KEYS.PIN_VERIFIED)
+            ?.toUpperCase() === resolvedShortCode.toUpperCase()
         ) {
           loginAsGuest();
 
@@ -639,7 +647,8 @@ export default function InvitationPage() {
             [INVITATION_STORAGE_KEYS.INVITER_EMAIL]: resolvedCreatorEmail,
             [INVITATION_STORAGE_KEYS.GUEST_NAME]: result.guestName || '',
             [INVITATION_STORAGE_KEYS.GUEST_CONTACT]: result.guestContact || '',
-            [INVITATION_STORAGE_KEYS.PIN_VERIFIED]: 'true',
+            [INVITATION_STORAGE_KEYS.PIN_VERIFIED]:
+              resolvedShortCode.toUpperCase(),
           };
           if (result.guestCurrencyMode) {
             invitationData[INVITATION_STORAGE_KEYS.GUEST_CURRENCY_MODE] =

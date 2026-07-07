@@ -1,6 +1,6 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { Box, Dialog, Switch } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Box, Dialog, Switch } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   ChevronLeft,
   FileText,
@@ -8,32 +8,32 @@ import {
   Lock,
   Trash2,
   X as XIcon,
-} from "lucide-react";
+} from 'lucide-react';
 
-import { getFoto, fontFamilies } from "../../../../design-system";
+import { getFoto, fontFamilies } from '../../../../design-system';
 import {
-  useConvexMutation,
+  useAuthedConvexAction,
   useConvexQuery,
   convexApi,
-} from "../../../../lib/convex-safe";
-import { useNotification } from "../../../../contexts/NotificationContext";
-import { useProductLock } from "../../../../hooks/useProductLock";
-import { useDirtyGuard } from "../../../../hooks/useDirtyGuard";
-import ConfirmDialog from "../../../../components/shared/ConfirmDialog";
-import type { Id } from "../../../../../convex/_generated/dataModel";
+} from '../../../../lib/convex-safe';
+import { useNotification } from '../../../../contexts/NotificationContext';
+import { useProductLock } from '../../../../hooks/useProductLock';
+import { useDirtyGuard } from '../../../../hooks/useDirtyGuard';
+import ConfirmDialog from '../../../../components/shared/ConfirmDialog';
+import type { Id } from '../../../../../convex/_generated/dataModel';
 
-import { FieldLabel } from "./FieldLabel";
-import { GemaFields, EMPTY_GEMA_DRAFT, type GemaDraft } from "./GemaFields";
-import { JoyaFields, EMPTY_JOYA_DRAFT, type JoyaDraft } from "./JoyaFields";
+import { FieldLabel } from './FieldLabel';
+import { GemaFields, EMPTY_GEMA_DRAFT, type GemaDraft } from './GemaFields';
+import { JoyaFields, EMPTY_JOYA_DRAFT, type JoyaDraft } from './JoyaFields';
 import {
   InsumoFields,
   EMPTY_INSUMO_DRAFT,
   type InsumoDraft,
-} from "./InsumoFields";
-import { KbdKey } from "./KbdKey";
-import { PhotoDropzone, type DropzonePhoto } from "./PhotoDropzone";
-import { PriceMultiplierField } from "./PriceMultiplierField";
-import { spanishText } from "../utils/fieldLang";
+} from './InsumoFields';
+import { KbdKey } from './KbdKey';
+import { PhotoDropzone, type DropzonePhoto } from './PhotoDropzone';
+import { PriceMultiplierField } from './PriceMultiplierField';
+import { spanishText } from '../utils/fieldLang';
 import {
   inferItemTipo,
   gemaDraftFromProduct,
@@ -45,18 +45,18 @@ import {
   tierPricePatch,
   type EditableTipo,
   type ItemPricingDraft,
-} from "../utils/buildLotItemPayload";
+} from '../utils/buildLotItemPayload';
 import {
   uploadFotosintesisImages,
   uploadFotosintesisCertificado,
-} from "../utils/uploadItemMedia";
-import { convertToProxyUrl } from "../../../../utils/driveUrl";
-import { itemEstadoCopy, type LotEstado } from "../utils/itemEstadoCopy";
+} from '../utils/uploadItemMedia';
+import { convertToProxyUrl } from '../../../../utils/driveUrl';
+import { itemEstadoCopy, type LotEstado } from '../utils/itemEstadoCopy';
 
 const TIPO_LABEL: Record<EditableTipo, string> = {
-  gema: "Gema",
-  joya: "Joya",
-  insumo: "Insumo",
+  gema: 'Gema',
+  joya: 'Joya',
+  insumo: 'Insumo',
 };
 
 interface ProductInventoryRow {
@@ -109,7 +109,7 @@ interface EditItemDrawerProps {
   /** Lot id — drives the Drive upload path for replaced item photos. */
   loteId: string;
   /** Lot item record id — what updateGemaFields patches. */
-  lotItemId: Id<"lotItems">;
+  lotItemId: Id<'lotItems'>;
   /** Current preponderancia from the lotItems row (kept in sync via the parent). */
   currentPreponderancia: number;
   /** Lot's total cost — drives the live "= COP" suffix on the preponderancia field. */
@@ -134,7 +134,7 @@ interface EditItemDrawerProps {
    * "page" renders the same form inline as a full routed page (EditItemPage) —
    * no overlay/focus-trap, a "Volver" back link, and a sticky save footer.
    */
-  variant?: "drawer" | "page";
+  variant?: 'drawer' | 'page';
 }
 
 /**
@@ -166,10 +166,10 @@ export function EditItemDrawer({
   lotEstado,
   editable = true,
   editDraftOverride,
-  variant = "drawer",
+  variant = 'drawer',
 }: EditItemDrawerProps) {
-  const isPage = variant === "page";
-  const foto = getFoto("light");
+  const isPage = variant === 'page';
+  const foto = getFoto('light');
   const titleId = useId();
   const observacionId = useId();
   const certificadoId = useId();
@@ -179,11 +179,11 @@ export function EditItemDrawer({
     | ProductInventoryRow
     | null
     | undefined;
-  const updateGemaFields = useConvexMutation(
+  const updateGemaFields = useAuthedConvexAction(
     convexApi.lotItems.updateGemaFields,
   );
-  const updateMedia = useConvexMutation(convexApi.lotItems.updateMedia);
-  const removeLotItem = useConvexMutation(convexApi.lotItems.remove);
+  const updateMedia = useAuthedConvexAction(convexApi.lotItems.updateMedia);
+  const removeLotItem = useAuthedConvexAction(convexApi.lotItems.remove);
 
   // C3 — shared soft lock by itemId. If another admin (e.g. via the
   // ProductManagement EditDrawer) currently holds this row, Save + Delete are
@@ -201,7 +201,7 @@ export function EditItemDrawer({
   // populated type-specific fields). We keep one draft per kind and only the
   // matching one is hydrated + submitted.
   const tipo: EditableTipo = useMemo(
-    () => (product ? inferItemTipo(product) : "gema"),
+    () => (product ? inferItemTipo(product) : 'gema'),
     [product],
   );
 
@@ -226,15 +226,15 @@ export function EditItemDrawer({
         preponderancia: currentPreponderancia,
       }) as InsumoDraft,
   );
-  const [observacion, setObservacion] = useState("");
+  const [observacion, setObservacion] = useState('');
   const [mostrarEnCatalogo, setMostrarEnCatalogo] = useState(false);
   // Catalog tiers (Goal F2) — a SHARED value (sibling of observación /
   // mostrarEnCatalogo), not a sub-form draft. Seeded from the product in the
   // hydrate effect and folded into the dirty baseline so any tier edit arms the
   // discard guard. Insumos never render these, so they stay ""/"".
   const [pricing, setPricing] = useState<ItemPricingDraft>({
-    precioEmbajadorCOP: "",
-    precioConscienteCOP: "",
+    precioEmbajadorCOP: '',
+    precioConscienteCOP: '',
   });
   // Item photo (hero). Seeded from the saved Drive URL; a freshly dropped file
   // carries `file` so submit knows to upload it. Photos are editable in any lot
@@ -278,7 +278,7 @@ export function EditItemDrawer({
   // Revoke any object URLs we created for previews so we don't leak blobs.
   const revokeLocalPreviews = (list: DropzonePhoto[]) => {
     for (const p of list) {
-      if (p.url.startsWith("blob:")) URL.revokeObjectURL(p.url);
+      if (p.url.startsWith('blob:')) URL.revokeObjectURL(p.url);
     }
   };
 
@@ -306,14 +306,14 @@ export function EditItemDrawer({
     hydratedKeyRef.current = itemId;
     const t = inferItemTipo(product);
     let seededActive: GemaDraft | JoyaDraft | InsumoDraft;
-    if (t === "joya") {
+    if (t === 'joya') {
       const d = {
         ...joyaDraftFromProduct(product),
         preponderancia: currentPreponderancia,
       };
       setJoyaDraft(d);
       seededActive = d;
-    } else if (t === "insumo") {
+    } else if (t === 'insumo') {
       const d = {
         ...insumoDraftFromProduct(product),
         preponderancia: currentPreponderancia,
@@ -330,14 +330,14 @@ export function EditItemDrawer({
     }
     // For a joya the stored free text round-trips through JoyaFields'
     // `descripcion`, so the shared observación textarea is hidden + left empty.
-    let seededObservacion = t === "joya" ? "" : (product.observacion ?? "");
+    let seededObservacion = t === 'joya' ? '' : (product.observacion ?? '');
     let seededMostrar = product.mostrarEnCatalogo ?? false;
     // F2 — seed the catalog tiers from the persisted product. An unset tier
     // hydrates as "" (not 0) so the omit-on-blank submit rule never re-sends a
     // price the operator didn't touch.
     const seededPricing: ItemPricingDraft = {
-      precioEmbajadorCOP: product.precioEmbajadorCOP ?? "",
-      precioConscienteCOP: product.precioConscienteCOP ?? "",
+      precioEmbajadorCOP: product.precioEmbajadorCOP ?? '',
+      precioConscienteCOP: product.precioConscienteCOP ?? '',
     };
     // Fotosynthia v2 — merge an AI edit patch ON TOP of the hydrated values,
     // BEFORE the baseline is captured below so dirty detection stays correct.
@@ -345,31 +345,31 @@ export function EditItemDrawer({
     if (editDraftOverride) {
       const o: Record<string, unknown> = { ...editDraftOverride };
       delete o.preponderancia;
-      if (typeof o.observacion === "string") {
+      if (typeof o.observacion === 'string') {
         seededObservacion = o.observacion;
       }
       delete o.observacion;
-      if (typeof o.mostrarEnCatalogo === "boolean") {
+      if (typeof o.mostrarEnCatalogo === 'boolean') {
         seededMostrar = o.mostrarEnCatalogo;
       }
       delete o.mostrarEnCatalogo;
-      if (typeof o.precioEmbajadorCOP === "number") {
+      if (typeof o.precioEmbajadorCOP === 'number') {
         seededPricing.precioEmbajadorCOP = o.precioEmbajadorCOP;
       }
       delete o.precioEmbajadorCOP;
-      if (typeof o.precioConscienteCOP === "number") {
+      if (typeof o.precioConscienteCOP === 'number') {
         seededPricing.precioConscienteCOP = o.precioConscienteCOP;
       }
       delete o.precioConscienteCOP;
       // Remaining keys belong to the active sub-form draft. Re-set it so the
       // form reflects the merge (last setState wins over the seed above).
-      if (t === "joya") {
+      if (t === 'joya') {
         seededActive = {
           ...(seededActive as JoyaDraft),
           ...(o as Partial<JoyaDraft>),
         };
         setJoyaDraft(seededActive as JoyaDraft);
-      } else if (t === "insumo") {
+      } else if (t === 'insumo') {
         seededActive = {
           ...(seededActive as InsumoDraft),
           ...(o as Partial<InsumoDraft>),
@@ -399,7 +399,7 @@ export function EditItemDrawer({
       return product.fotoUrl
         ? [
             {
-              id: "existing-foto",
+              id: 'existing-foto',
               // Route the saved Drive URL through the proxy so it renders.
               url: convertToProxyUrl(product.fotoUrl) ?? product.fotoUrl,
             },
@@ -428,12 +428,12 @@ export function EditItemDrawer({
   // The active draft drives the shared preponderancia + name validation,
   // regardless of which sub-form is rendered.
   const activeDraft: GemaDraft | JoyaDraft | InsumoDraft =
-    tipo === "joya" ? joyaDraft : tipo === "insumo" ? insumoDraft : draft;
+    tipo === 'joya' ? joyaDraft : tipo === 'insumo' ? insumoDraft : draft;
   const activeNombre = activeDraft.nombre;
   const activePreponderancia = activeDraft.preponderancia;
 
   const prepNumeric =
-    typeof activePreponderancia === "number" ? activePreponderancia : 0;
+    typeof activePreponderancia === 'number' ? activePreponderancia : 0;
   // F2 — base cost the catalog-tier multipliers scale. Recomputed live from the
   // in-session preponderancia (so dragging prep updates the suggested tier) and
   // falls back to the persisted costoBaseCOP when prep is 0/empty.
@@ -495,7 +495,7 @@ export function EditItemDrawer({
     !lockedByOther &&
     (editable
       ? activeNombre.trim().length > 0 &&
-        typeof activePreponderancia === "number" &&
+        typeof activePreponderancia === 'number' &&
         activePreponderancia > 0 &&
         overflow <= 0.01
       : photoChanged || certificadoChanged);
@@ -514,7 +514,7 @@ export function EditItemDrawer({
           itemId,
         );
       } else if (photoRemoved) {
-        nextFotoUrl = ""; // empty string clears the field server-side
+        nextFotoUrl = ''; // empty string clears the field server-side
       }
 
       // 2. Resolve the next certificate URL: upload a freshly chosen file.
@@ -531,9 +531,9 @@ export function EditItemDrawer({
         // Open/editable lot — persist every field of the matching sub-form
         // (photo + certificate folded into the same patch).
         const patch: Record<string, unknown> =
-          tipo === "joya"
+          tipo === 'joya'
             ? joyaPatchFromDraft(joyaDraft, mostrarEnCatalogo)
-            : tipo === "insumo"
+            : tipo === 'insumo'
               ? insumoPatchFromDraft(
                   insumoDraft,
                   observacion,
@@ -544,7 +544,7 @@ export function EditItemDrawer({
         // precioConscienteCOP). tierPricePatch omits blank tiers so a no-op
         // never clears a stored price; insumos never expose the editors and
         // keep ""/"", so we also gate the merge as belt-and-suspenders.
-        if (tipo !== "insumo") {
+        if (tipo !== 'insumo') {
           Object.assign(
             patch,
             tierPricePatch(
@@ -558,18 +558,18 @@ export function EditItemDrawer({
           patch.certificadoUrl = nextCertificadoUrl;
         const result = await updateGemaFields({ lotItemId, patch });
         if (result.changed === false) {
-          notify("Sin cambios para guardar", "info");
+          notify('Sin cambios para guardar', 'info');
         } else {
           const count = result.changedFields?.length ?? 0;
           notify(
-            `Ítem #${product.itemId} actualizado · ${count} campo${count === 1 ? "" : "s"}`,
-            "success",
+            `Ítem #${product.itemId} actualizado · ${count} campo${count === 1 ? '' : 's'}`,
+            'success',
           );
         }
       } else {
         // Closed/published lot — only media (foto + certificado) can change.
         if (nextFotoUrl === undefined && nextCertificadoUrl === undefined) {
-          notify("Sin cambios para guardar", "info");
+          notify('Sin cambios para guardar', 'info');
           onClose();
           return;
         }
@@ -579,14 +579,14 @@ export function EditItemDrawer({
           certificadoUrl: nextCertificadoUrl,
         });
         if (result.changed === false) {
-          notify("Sin cambios para guardar", "info");
+          notify('Sin cambios para guardar', 'info');
         } else {
-          notify(`Media del ítem #${product.itemId} actualizada`, "success");
+          notify(`Media del ítem #${product.itemId} actualizada`, 'success');
         }
       }
       onClose();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "No pudimos guardar";
+      const msg = err instanceof Error ? err.message : 'No pudimos guardar';
       setError(msg);
     } finally {
       setSaving(false);
@@ -603,43 +603,43 @@ export function EditItemDrawer({
     setError(null);
     try {
       const res = await removeLotItem({ lotItemId });
-      notify(`Ítem #${itemId} eliminado del lote`, "success");
+      notify(`Ítem #${itemId} eliminado del lote`, 'success');
       // C7 — if removing this stone broke the lot's 100% preponderancia sum on
       // a closed/published lot, surface it instead of letting it pass silently.
-      if (res?.warning) notify(res.warning, "warning");
+      if (res.removed && res.warning) notify(res.warning, 'warning');
       onClose();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "No pudimos eliminar";
+      const msg = err instanceof Error ? err.message : 'No pudimos eliminar';
       setError(msg);
       setDeleting(false);
     }
   };
 
   const handleBodyKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
       void handleSubmit();
     }
   };
 
   const textInputSx = {
-    width: "100%",
+    width: '100%',
     background: foto.surfaces.inset,
     border: `1px solid ${foto.surfaces.rule}`,
-    borderRadius: "9px",
-    padding: "11px 14px",
+    borderRadius: '9px',
+    padding: '11px 14px',
     fontSize: 13.5,
     color: foto.ink.primary,
     fontFamily: fontFamilies.system,
-    outline: "none",
-    transition: "border-color 120ms ease, box-shadow 120ms ease",
-    "&:focus": {
+    outline: 'none',
+    transition: 'border-color 120ms ease, box-shadow 120ms ease',
+    '&:focus': {
       borderColor: foto.accent.primary,
       boxShadow: `0 0 0 3px ${foto.accent.glow}`,
     },
-    "::placeholder": { color: foto.ink.mute },
-    resize: "vertical" as const,
-    minHeight: "78px",
+    '::placeholder': { color: foto.ink.mute },
+    resize: 'vertical' as const,
+    minHeight: '78px',
   } as const;
 
   const inner = (
@@ -647,11 +647,11 @@ export function EditItemDrawer({
       {/* HEADER */}
       <Box
         sx={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: "14px",
-          padding: "22px 26px 18px",
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: '14px',
+          padding: '22px 26px 18px',
           borderBottom: `1px solid ${foto.surfaces.rule}`,
         }}
       >
@@ -659,8 +659,8 @@ export function EditItemDrawer({
           <Box
             sx={{
               fontSize: 9,
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
               color: foto.ink.tertiary,
               fontWeight: 500,
               fontFamily: fontFamilies.mono,
@@ -672,23 +672,23 @@ export function EditItemDrawer({
             id={titleId}
             component="h2"
             sx={{
-              fontSize: "22px",
+              fontSize: '22px',
               fontWeight: 600,
-              letterSpacing: "-0.02em",
-              marginTop: "6px",
+              letterSpacing: '-0.02em',
+              marginTop: '6px',
               color: foto.ink.primary,
               lineHeight: 1.2,
             }}
           >
             {product
               ? `Editar ${TIPO_LABEL[tipo].toLowerCase()}`
-              : "Editar ítem"}
+              : 'Editar ítem'}
           </Box>
           <Box
             sx={{
-              fontSize: "12.5px",
+              fontSize: '12.5px',
               color: foto.ink.secondary,
-              marginTop: "5px",
+              marginTop: '5px',
               lineHeight: 1.55,
             }}
           >
@@ -708,17 +708,17 @@ export function EditItemDrawer({
               height: 32,
               minWidth: 44,
               minHeight: 44,
-              borderRadius: "8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               color: foto.ink.tertiary,
-              cursor: "pointer",
+              cursor: 'pointer',
               border: `1px solid ${foto.surfaces.edge}`,
               background: foto.surfaces.canvas,
               flexShrink: 0,
-              transition: "background 120ms ease, color 120ms ease",
-              "&:hover": {
+              transition: 'background 120ms ease, color 120ms ease',
+              '&:hover': {
                 background: foto.surfaces.inset,
                 color: foto.ink.primary,
               },
@@ -734,11 +734,11 @@ export function EditItemDrawer({
         onKeyDown={handleBodyKeyDown}
         sx={{
           flex: 1,
-          overflowY: "auto",
-          padding: "24px 26px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "20px",
+          overflowY: 'auto',
+          padding: '24px 26px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px',
         }}
       >
         {lockedByOther ? (
@@ -746,14 +746,14 @@ export function EditItemDrawer({
             role="status"
             aria-live="polite"
             sx={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: "10px",
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '10px',
               background: foto.surfaces.inset,
               border: `1px solid ${foto.surfaces.rule}`,
               borderLeft: `3px solid ${foto.status.sold}`,
-              borderRadius: "10px",
-              padding: "11px 13px",
+              borderRadius: '10px',
+              padding: '11px 13px',
             }}
           >
             <Lock
@@ -769,11 +769,11 @@ export function EditItemDrawer({
                 sx={{ fontWeight: 600, color: foto.ink.primary }}
               >
                 {lockedByOther.holderName?.trim() || lockedByOther.holderEmail}
-              </Box>{" "}
+              </Box>{' '}
               está editando este ítem
               {lockMinutesLeft != null
                 ? ` (su sesión expira en ${lockMinutesLeft} min)`
-                : ""}
+                : ''}
               . Guardado deshabilitado para no sobrescribir sus cambios.
             </Box>
           </Box>
@@ -786,21 +786,21 @@ export function EditItemDrawer({
           const estadoCopy = itemEstadoCopy(lotEstado);
           if (!estadoCopy.banner) return null;
           const accent =
-            estadoCopy.tone === "emerald"
+            estadoCopy.tone === 'emerald'
               ? foto.accent.primary
               : foto.ink.tertiary;
           return (
             <Box
               role="note"
               sx={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "10px",
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px',
                 background: foto.surfaces.inset,
                 border: `1px solid ${foto.surfaces.rule}`,
                 borderLeft: `3px solid ${accent}`,
-                borderRadius: "10px",
-                padding: "11px 13px",
+                borderRadius: '10px',
+                padding: '11px 13px',
               }}
             >
               <Globe
@@ -825,8 +825,8 @@ export function EditItemDrawer({
             sx={{
               color: foto.ink.tertiary,
               fontSize: 13,
-              padding: "32px 0",
-              textAlign: "center",
+              padding: '32px 0',
+              textAlign: 'center',
             }}
           >
             Cargando ítem…
@@ -837,9 +837,9 @@ export function EditItemDrawer({
             sx={{
               background: alpha(foto.status.sold, 0.07),
               border: `1px solid ${alpha(foto.status.sold, 0.3)}`,
-              borderRadius: "10px",
-              padding: "11px 13px",
-              fontSize: "12px",
+              borderRadius: '10px',
+              padding: '11px 13px',
+              fontSize: '12px',
               color: foto.status.sold,
             }}
           >
@@ -847,7 +847,7 @@ export function EditItemDrawer({
           </Box>
         ) : (
           <>
-            {tipo === "joya" ? (
+            {tipo === 'joya' ? (
               <JoyaFields
                 value={joyaDraft}
                 onChange={(patch) =>
@@ -858,7 +858,7 @@ export function EditItemDrawer({
                 preponderanciaHelperAlert={prepHelper?.alert}
                 disabled={!editable}
               />
-            ) : tipo === "insumo" ? (
+            ) : tipo === 'insumo' ? (
               <InsumoFields
                 value={insumoDraft}
                 onChange={(patch) =>
@@ -888,19 +888,19 @@ export function EditItemDrawer({
                 above; these two tiers are the ones the customer actually sees.
                 Hidden in read-only media-only sessions so we never surface a
                 non-functional slider. */}
-            {editable && tipo !== "insumo" ? (
+            {editable && tipo !== 'insumo' ? (
               <Box>
                 <FieldLabel>Precios del catálogo</FieldLabel>
                 <Box
                   sx={{
                     fontSize: 11.5,
                     color: foto.ink.tertiary,
-                    marginTop: "-2px",
-                    marginBottom: "10px",
+                    marginTop: '-2px',
+                    marginBottom: '10px',
                     lineHeight: 1.45,
                   }}
                 >
-                  El cliente paga el{" "}
+                  El cliente paga el{' '}
                   <Box
                     component="span"
                     sx={{ fontWeight: 600, color: foto.ink.secondary }}
@@ -911,12 +911,12 @@ export function EditItemDrawer({
                 </Box>
                 <Box
                   sx={{
-                    display: "grid",
+                    display: 'grid',
                     gridTemplateColumns: {
-                      xs: "1fr",
-                      sm: "minmax(0, 1fr) minmax(0, 1fr)",
+                      xs: '1fr',
+                      sm: 'minmax(0, 1fr) minmax(0, 1fr)',
                     },
-                    gap: "16px",
+                    gap: '16px',
                   }}
                 >
                   <PriceMultiplierField
@@ -994,15 +994,15 @@ export function EditItemDrawer({
                   target="_blank"
                   rel="noopener noreferrer"
                   sx={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
                     fontSize: 12,
                     fontWeight: 600,
                     color: foto.accent.deep,
-                    textDecoration: "none",
-                    marginBottom: "8px",
-                    "&:hover": { textDecoration: "underline" },
+                    textDecoration: 'none',
+                    marginBottom: '8px',
+                    '&:hover': { textDecoration: 'underline' },
                   }}
                 >
                   <FileText size={13} strokeWidth={2} />
@@ -1019,7 +1019,7 @@ export function EditItemDrawer({
                   setCertificadoFile(f ?? null);
                 }}
                 sx={{
-                  width: "100%",
+                  width: '100%',
                   fontSize: 12,
                   color: foto.ink.secondary,
                 }}
@@ -1028,19 +1028,19 @@ export function EditItemDrawer({
                 sx={{
                   fontSize: 11,
                   color: foto.ink.tertiary,
-                  marginTop: "4px",
+                  marginTop: '4px',
                   lineHeight: 1.45,
                 }}
               >
                 {certificadoFile
                   ? `Listo para subir: ${certificadoFile.name}`
                   : initialCertificadoUrl
-                    ? "Elegí un archivo para reemplazar el certificado."
-                    : "Adjuntá el certificado gemológico. Se sube a Drive al guardar."}
+                    ? 'Elegí un archivo para reemplazar el certificado.'
+                    : 'Adjuntá el certificado gemológico. Se sube a Drive al guardar.'}
               </Box>
             </Box>
 
-            {tipo !== "joya" ? (
+            {tipo !== 'joya' ? (
               <Box>
                 <FieldLabel htmlFor={observacionId} optional="opcional">
                   Observación
@@ -1062,14 +1062,14 @@ export function EditItemDrawer({
 
             <Box
               sx={{
-                display: "flex",
-                alignItems: "flex-start",
-                justifyContent: "space-between",
-                gap: "16px",
-                padding: "14px 16px",
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                gap: '16px',
+                padding: '14px 16px',
                 background: foto.surfaces.inset,
                 border: `1px solid ${foto.surfaces.rule}`,
-                borderRadius: "11px",
+                borderRadius: '11px',
               }}
             >
               <Box sx={{ minWidth: 0 }}>
@@ -1086,7 +1086,7 @@ export function EditItemDrawer({
                   sx={{
                     fontSize: 11.5,
                     color: foto.ink.tertiary,
-                    marginTop: "2px",
+                    marginTop: '2px',
                     lineHeight: 1.45,
                   }}
                 >
@@ -1099,8 +1099,8 @@ export function EditItemDrawer({
                 disabled={!editable}
                 onChange={(e) => setMostrarEnCatalogo(e.target.checked)}
                 inputProps={{
-                  "aria-checked": mostrarEnCatalogo,
-                  "aria-label": "Visible en catálogo",
+                  'aria-checked': mostrarEnCatalogo,
+                  'aria-label': 'Visible en catálogo',
                 }}
               />
             </Box>
@@ -1111,9 +1111,9 @@ export function EditItemDrawer({
                 sx={{
                   background: alpha(foto.status.sold, 0.07),
                   border: `1px solid ${alpha(foto.status.sold, 0.3)}`,
-                  borderRadius: "10px",
-                  padding: "11px 13px",
-                  fontSize: "12px",
+                  borderRadius: '10px',
+                  padding: '11px 13px',
+                  fontSize: '12px',
                   color: foto.status.sold,
                   lineHeight: 1.5,
                 }}
@@ -1128,16 +1128,16 @@ export function EditItemDrawer({
       {/* FOOTER */}
       <Box
         sx={{
-          padding: "18px 26px",
+          padding: '18px 26px',
           borderTop: `1px solid ${foto.surfaces.rule}`,
           background: foto.surfaces.panel,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "12px",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
           // In page mode the whole document scrolls, so pin the save bar to
           // the viewport bottom (the drawer's flex column does this for free).
-          ...(isPage ? { position: "sticky", bottom: 0, zIndex: 2 } : {}),
+          ...(isPage ? { position: 'sticky', bottom: 0, zIndex: 2 } : {}),
         }}
       >
         <Box
@@ -1146,18 +1146,18 @@ export function EditItemDrawer({
           onClick={() => void handleDelete()}
           disabled={!editable || deleting || !product || !!lockedByOther}
           sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
             fontFamily: fontFamilies.system,
-            fontSize: "12.5px",
+            fontSize: '12.5px',
             fontWeight: 600,
-            padding: "11px 14px",
-            borderRadius: "9px",
+            padding: '11px 14px',
+            borderRadius: '9px',
             cursor:
               editable && !deleting && !lockedByOther
-                ? "pointer"
-                : "not-allowed",
+                ? 'pointer'
+                : 'not-allowed',
             background: confirmDelete
               ? foto.status.sold
               : alpha(foto.status.sold, 0.08),
@@ -1165,9 +1165,9 @@ export function EditItemDrawer({
             border: `1px solid ${
               confirmDelete ? foto.status.sold : alpha(foto.status.sold, 0.32)
             }`,
-            transition: "background 120ms ease, color 120ms ease",
+            transition: 'background 120ms ease, color 120ms ease',
             opacity: editable && !lockedByOther ? 1 : 0.4,
-            "&:hover":
+            '&:hover':
               editable && !lockedByOther
                 ? {
                     background: foto.status.sold,
@@ -1178,28 +1178,28 @@ export function EditItemDrawer({
         >
           <Trash2 size={13} strokeWidth={2} />
           {deleting
-            ? "Eliminando…"
+            ? 'Eliminando…'
             : confirmDelete
-              ? "Confirmar eliminación"
-              : "Eliminar ítem"}
+              ? 'Confirmar eliminación'
+              : 'Eliminar ítem'}
         </Box>
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            flexWrap: "wrap",
-            justifyContent: "flex-end",
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            flexWrap: 'wrap',
+            justifyContent: 'flex-end',
           }}
         >
           <Box
             sx={{
-              fontSize: "11px",
+              fontSize: '11px',
               color: foto.ink.tertiary,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              marginRight: "4px",
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              marginRight: '4px',
             }}
           >
             <KbdKey size="sm">Esc</KbdKey>
@@ -1216,16 +1216,16 @@ export function EditItemDrawer({
             disabled={saving || deleting}
             sx={{
               fontFamily: fontFamilies.system,
-              fontSize: "12.5px",
+              fontSize: '12.5px',
               fontWeight: 600,
-              padding: "11px 18px",
-              borderRadius: "9px",
-              cursor: saving || deleting ? "not-allowed" : "pointer",
-              background: "transparent",
+              padding: '11px 18px',
+              borderRadius: '9px',
+              cursor: saving || deleting ? 'not-allowed' : 'pointer',
+              background: 'transparent',
               color: foto.ink.secondary,
               border: `1px solid ${foto.surfaces.edgeStrong}`,
-              transition: "background 120ms ease, color 120ms ease",
-              "&:hover": {
+              transition: 'background 120ms ease, color 120ms ease',
+              '&:hover': {
                 background: foto.surfaces.canvas,
                 color: foto.ink.primary,
               },
@@ -1242,28 +1242,28 @@ export function EditItemDrawer({
             aria-busy={saving}
             sx={{
               fontFamily: fontFamilies.system,
-              fontSize: "12.5px",
+              fontSize: '12.5px',
               fontWeight: 600,
-              padding: "11px 18px",
-              borderRadius: "9px",
-              cursor: canSubmit ? "pointer" : "not-allowed",
+              padding: '11px 18px',
+              borderRadius: '9px',
+              cursor: canSubmit ? 'pointer' : 'not-allowed',
               background: foto.accent.primary,
               color: foto.ink.inverse,
-              border: "1px solid transparent",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              transition: "background 120ms ease, transform 120ms ease",
-              "&:hover": canSubmit
+              border: '1px solid transparent',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'background 120ms ease, transform 120ms ease',
+              '&:hover': canSubmit
                 ? {
                     background: foto.accent.deep,
-                    transform: "translateY(-1px)",
+                    transform: 'translateY(-1px)',
                   }
                 : undefined,
               opacity: canSubmit ? 1 : 0.55,
             }}
           >
-            {saving ? "Guardando…" : "Guardar cambios"}
+            {saving ? 'Guardando…' : 'Guardar cambios'}
           </Box>
         </Box>
       </Box>
@@ -1291,42 +1291,42 @@ export function EditItemDrawer({
         data-edit-item-page
         tabIndex={-1}
         onKeyDown={(e) => {
-          if (e.key === "Escape") {
+          if (e.key === 'Escape') {
             e.preventDefault();
             requestClose();
           }
         }}
         sx={{
           maxWidth: 820,
-          margin: "0 auto",
-          width: "100%",
+          margin: '0 auto',
+          width: '100%',
           background: foto.surfaces.canvas,
-          display: "flex",
-          flexDirection: "column",
-          outline: "none",
+          display: 'flex',
+          flexDirection: 'column',
+          outline: 'none',
         }}
       >
-        <Box sx={{ padding: "16px 26px 0" }}>
+        <Box sx={{ padding: '16px 26px 0' }}>
           <Box
             component="button"
             type="button"
             onClick={requestClose}
             sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              border: "none",
-              background: "transparent",
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              border: 'none',
+              background: 'transparent',
               color: foto.ink.secondary,
               fontFamily: fontFamilies.system,
               fontSize: 12.5,
               fontWeight: 600,
-              cursor: "pointer",
-              padding: "6px 8px",
-              marginLeft: "-8px",
-              borderRadius: "8px",
-              transition: "background 120ms ease, color 120ms ease",
-              "&:hover": {
+              cursor: 'pointer',
+              padding: '6px 8px',
+              marginLeft: '-8px',
+              borderRadius: '8px',
+              transition: 'background 120ms ease, color 120ms ease',
+              '&:hover': {
                 background: foto.surfaces.inset,
                 color: foto.ink.primary,
               },
@@ -1351,28 +1351,28 @@ export function EditItemDrawer({
       slotProps={{
         backdrop: {
           sx: {
-            background: "rgba(11,16,14,0.32)",
-            backdropFilter: "saturate(80%)",
+            background: 'rgba(11,16,14,0.32)',
+            backdropFilter: 'saturate(80%)',
           },
         },
       }}
       PaperProps={{
         sx: {
-          position: "fixed",
+          position: 'fixed',
           right: 0,
           top: 0,
           bottom: 0,
           margin: 0,
-          width: { xs: "100vw", sm: 560 },
-          maxWidth: "100vw",
-          height: "100vh",
-          maxHeight: "100vh",
+          width: { xs: '100vw', sm: 560 },
+          maxWidth: '100vw',
+          height: '100vh',
+          maxHeight: '100vh',
           borderRadius: 0,
-          boxShadow: "-30px 0 80px rgba(11,16,14,0.18)",
+          boxShadow: '-30px 0 80px rgba(11,16,14,0.18)',
           background: foto.surfaces.canvas,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
         },
       }}
     >

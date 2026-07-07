@@ -15,13 +15,12 @@ import {
   ThemeProvider as MuiThemeProvider,
   createTheme,
 } from "@mui/material/styles";
-import { brandColors, iosSpacing, iosBorderRadius } from "../theme";
+import { iosSpacing, iosBorderRadius } from "../theme";
 import { STORAGE_KEYS } from "../constants/storage-keys";
 import {
   surfacesLight,
   surfacesDark,
   cssTransition,
-  whiteAlpha,
   defaultShadows,
   iosLabels,
   qeEmerald,
@@ -102,41 +101,33 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const root = document.documentElement;
     root.setAttribute("data-theme", mode);
 
-    // Update CSS variables from design system tokens (single source of truth)
-    if (mode === "dark") {
-      root.style.setProperty("--surface-primary", brandColors.darkBg);
-      root.style.setProperty("--surface-primary-rgb", "0, 0, 0");
-      root.style.setProperty("--surface-secondary", brandColors.darkSurface);
-      root.style.setProperty("--surface-secondary-rgb", "28, 28, 30");
-      root.style.setProperty("--surface-tertiary", brandColors.darkElevated);
-      root.style.setProperty("--surface-tertiary-rgb", "10, 14, 19");
-      root.style.setProperty("--text-primary", iosLabels.primary.dark);
-      root.style.setProperty("--text-secondary", iosLabels.secondary.dark);
-      root.style.setProperty("--text-tertiary", iosLabels.tertiary.dark);
-      root.style.setProperty("--text-quaternary", iosLabels.quaternary.dark);
-      root.style.setProperty("--border-default", whiteAlpha(0.1));
-    } else {
-      root.style.setProperty(
-        "--surface-primary",
-        surfacesLight.background.secondary,
-      );
-      root.style.setProperty("--surface-primary-rgb", "250, 250, 250");
-      root.style.setProperty(
-        "--surface-secondary",
-        surfacesLight.background.primary,
-      );
-      root.style.setProperty("--surface-secondary-rgb", "255, 255, 255");
-      root.style.setProperty(
-        "--surface-tertiary",
-        surfacesLight.background.tertiary,
-      );
-      root.style.setProperty("--surface-tertiary-rgb", "242, 242, 247");
-      root.style.setProperty("--text-primary", iosLabels.primary.light);
-      root.style.setProperty("--text-secondary", iosLabels.secondary.light);
-      root.style.setProperty("--text-tertiary", iosLabels.tertiary.light);
-      root.style.setProperty("--text-quaternary", iosLabels.quaternary.light);
-      root.style.setProperty("--border-default", surfacesLight.border.light);
-    }
+    // Update CSS variables from Quiet Emerald tokens (single source of truth).
+    // These runtime values override the static css-variables.css defaults and
+    // MUST stay in sync with them (both are qe-token-valued).
+    const qe = getQuietEmerald(mode);
+    const hexToRgb = (hex: string) => {
+      const n = parseInt(hex.slice(1), 16);
+      return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
+    };
+    root.style.setProperty("--surface-primary", qe.base);
+    root.style.setProperty("--surface-primary-rgb", hexToRgb(qe.base));
+    root.style.setProperty("--surface-secondary", qe.surface);
+    root.style.setProperty("--surface-secondary-rgb", hexToRgb(qe.surface));
+    root.style.setProperty("--surface-tertiary", qe.well);
+    root.style.setProperty("--surface-tertiary-rgb", hexToRgb(qe.well));
+    root.style.setProperty("--text-primary", qe.text);
+    root.style.setProperty("--text-secondary", qe.muted);
+    root.style.setProperty("--text-tertiary", qe.subtle);
+    root.style.setProperty(
+      "--text-quaternary",
+      mode === "dark" ? qeGray[700] : qeGray[300],
+    );
+    root.style.setProperty("--border-default", qe.border);
+    root.style.setProperty("--border-subtle", qe.hairline);
+    root.style.setProperty("--brand-primary", qe.accent);
+    root.style.setProperty("--brand-primary-hover", qe.accentStrong);
+    root.style.setProperty("--brand-accent", qe.accentPure);
+    root.style.setProperty("--border-focus", qe.accent);
   }, [mode]);
 
   const toggleTheme = useCallback(() => {

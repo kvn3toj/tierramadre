@@ -699,6 +699,23 @@ export function useConvexAction(apiRef: unknown) {
 }
 
 /**
+ * Test-mode mirror of `convex-safe.ts`'s `useAuthedConvexAction`. Delegates to
+ * the same `useConvexAction` stub above — none of the sales/lots/lotItems/
+ * subLotes/providers/clients cases are implemented there yet (Playwright
+ * coverage today is products.* only), so calling one throws the same "Test
+ * stub: action '<ref>' not implemented" as it would via useConvexAction
+ * directly. Exists so `VITE_TEST_MODE=1` builds resolve the import.
+ */
+export function useAuthedConvexAction(apiRef: unknown) {
+  const run = useConvexAction(apiRef);
+  return (args: unknown) =>
+    run({
+      ...(args as Record<string, unknown>),
+      idToken: 'test-mode-id-token',
+    });
+}
+
+/**
  * Test-mode mirror of `convex-safe.ts`'s `useConvexClient` (real: `useConvex`).
  * The in-memory store above backs the admin-panel hooks, not the Fotosíntesis
  * copilot commit path (`executeAction.ts`), so this mirrors the real module's

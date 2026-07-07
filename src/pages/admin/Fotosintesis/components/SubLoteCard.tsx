@@ -1,25 +1,25 @@
-import { useState } from "react";
-import { Box } from "@mui/material";
-import { Link } from "react-router-dom";
-import { Pencil, Archive, RotateCcw, ArrowRight } from "lucide-react";
+import { useState } from 'react';
+import { Box } from '@mui/material';
+import { Link } from 'react-router-dom';
+import { Pencil, Archive, RotateCcw, ArrowRight } from 'lucide-react';
 
-import { getFoto, fontFamilies } from "../../../../design-system";
-import { useConvexMutation, convexApi } from "../../../../lib/convex-safe";
-import { useNotification } from "../../../../contexts/NotificationContext";
-import type { Doc } from "../../../../../convex/_generated/dataModel";
+import { getFoto, fontFamilies } from '../../../../design-system';
+import { useAuthedConvexAction, convexApi } from '../../../../lib/convex-safe';
+import { useNotification } from '../../../../contexts/NotificationContext';
+import type { Doc } from '../../../../../convex/_generated/dataModel';
 
 const formatCOP = (n: number): string =>
-  new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
+  new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
     maximumFractionDigits: 0,
   }).format(n);
 
 interface SubLoteCardProps {
-  subLote: Doc<"subLotes">;
+  subLote: Doc<'subLotes'>;
   /** itemId → product, to resolve member names without extra queries. */
-  productById: Map<string, Doc<"productInventory">>;
-  onEdit: (subLote: Doc<"subLotes">) => void;
+  productById: Map<string, Doc<'productInventory'>>;
+  onEdit: (subLote: Doc<'subLotes'>) => void;
 }
 
 export function SubLoteCard({
@@ -27,32 +27,32 @@ export function SubLoteCard({
   productById,
   onEdit,
 }: SubLoteCardProps) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const { notify } = useNotification();
-  const setEstado = useConvexMutation(convexApi.subLotes.setEstado);
+  const setEstado = useAuthedConvexAction(convexApi.subLotes.setEstado);
   const [busy, setBusy] = useState(false);
 
-  const archived = subLote.estado === "archivada";
+  const archived = subLote.estado === 'archivada';
 
   const toggleEstado = async () => {
     setBusy(true);
     try {
       await setEstado({
         subLoteId: subLote.subLoteId,
-        estado: archived ? "activa" : "archivada",
+        estado: archived ? 'activa' : 'archivada',
       });
       notify(
         archived
           ? `Sub-lote ${subLote.subLoteId} reactivado`
           : `Sub-lote ${subLote.subLoteId} archivado`,
-        "info",
+        'info',
       );
     } catch (err) {
       notify(
         err instanceof Error
           ? err.message
-          : "No pudimos actualizar el estado del sub-lote",
-        "error",
+          : 'No pudimos actualizar el estado del sub-lote',
+        'error',
       );
     } finally {
       setBusy(false);
@@ -60,19 +60,19 @@ export function SubLoteCard({
   };
 
   const actionBtnSx = {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "6px",
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
     fontFamily: fontFamilies.system,
     fontSize: 12,
     fontWeight: 600,
-    padding: "7px 12px",
-    borderRadius: "8px",
+    padding: '7px 12px',
+    borderRadius: '8px',
     border: `1px solid ${foto.surfaces.rule}`,
     background: foto.surfaces.inset,
     color: foto.ink.secondary,
-    cursor: busy ? "wait" : "pointer",
-    "&:hover": { borderColor: foto.accent.primary, color: foto.accent.deep },
+    cursor: busy ? 'wait' : 'pointer',
+    '&:hover': { borderColor: foto.accent.primary, color: foto.accent.deep },
   } as const;
 
   return (
@@ -80,21 +80,21 @@ export function SubLoteCard({
       sx={{
         background: foto.surfaces.panel,
         border: `1px solid ${foto.surfaces.rule}`,
-        borderRadius: "14px",
-        padding: "18px 20px",
+        borderRadius: '14px',
+        padding: '18px 20px',
         opacity: archived ? 0.62 : 1,
-        display: "flex",
-        flexDirection: "column",
-        gap: "14px",
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '14px',
       }}
     >
       {/* Header */}
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: "12px",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: '12px',
         }}
       >
         <Box sx={{ minWidth: 0 }}>
@@ -112,7 +112,7 @@ export function SubLoteCard({
               fontSize: 16,
               fontWeight: 600,
               color: foto.ink.primary,
-              letterSpacing: "-0.01em",
+              letterSpacing: '-0.01em',
             }}
           >
             {subLote.nombre}
@@ -120,9 +120,9 @@ export function SubLoteCard({
         </Box>
         <Box
           sx={{
-            display: "flex",
-            gap: "6px",
-            alignItems: "center",
+            display: 'flex',
+            gap: '6px',
+            alignItems: 'center',
             flexShrink: 0,
           }}
         >
@@ -131,10 +131,10 @@ export function SubLoteCard({
               sx={{
                 fontSize: 10,
                 fontWeight: 700,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                padding: "4px 9px",
-                borderRadius: "999px",
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                padding: '4px 9px',
+                borderRadius: '999px',
                 color: foto.ink.inverse,
                 background: foto.accent.primary,
               }}
@@ -146,21 +146,21 @@ export function SubLoteCard({
             sx={{
               fontSize: 10,
               fontWeight: 700,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              padding: "4px 9px",
-              borderRadius: "999px",
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              padding: '4px 9px',
+              borderRadius: '999px',
               color: archived ? foto.ink.tertiary : foto.accent.deep,
               background: archived ? foto.surfaces.inset : foto.accent.soft,
             }}
           >
-            {archived ? "Archivada" : "Activa"}
+            {archived ? 'Archivada' : 'Activa'}
           </Box>
         </Box>
       </Box>
 
       {/* Stats */}
-      <Box sx={{ display: "flex", gap: "20px", alignItems: "baseline" }}>
+      <Box sx={{ display: 'flex', gap: '20px', alignItems: 'baseline' }}>
         <Box>
           <Box
             sx={{
@@ -173,7 +173,7 @@ export function SubLoteCard({
             {subLote.unidades}
           </Box>
           <Box sx={{ fontSize: 11, color: foto.ink.tertiary }}>
-            {subLote.unidades === 1 ? "ítem" : "ítems"}
+            {subLote.unidades === 1 ? 'ítem' : 'ítems'}
           </Box>
         </Box>
         <Box>
@@ -197,7 +197,7 @@ export function SubLoteCard({
             fontSize: 12.5,
             color: foto.ink.secondary,
             lineHeight: 1.5,
-            fontStyle: "italic",
+            fontStyle: 'italic',
           }}
         >
           {subLote.notas}
@@ -206,7 +206,7 @@ export function SubLoteCard({
 
       {/* Member items */}
       {subLote.itemIds.length > 0 ? (
-        <Box component="ul" role="list" sx={{ listStyle: "none", m: 0, p: 0 }}>
+        <Box component="ul" role="list" sx={{ listStyle: 'none', m: 0, p: 0 }}>
           {subLote.itemIds.map((itemId) => {
             const product = productById.get(itemId);
             return (
@@ -214,13 +214,13 @@ export function SubLoteCard({
                 component="li"
                 key={itemId}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "10px",
-                  padding: "7px 0",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '10px',
+                  padding: '7px 0',
                   borderBottom: `1px solid ${foto.surfaces.edge}`,
-                  "&:last-of-type": { borderBottom: "none" },
+                  '&:last-of-type': { borderBottom: 'none' },
                 }}
               >
                 <Box sx={{ minWidth: 0 }}>
@@ -229,9 +229,9 @@ export function SubLoteCard({
                       fontSize: 13,
                       fontWeight: 500,
                       color: foto.ink.primary,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {product?.nombre ?? `Ítem ${itemId}`}
@@ -254,14 +254,14 @@ export function SubLoteCard({
                     )}`}
                     sx={{
                       flexShrink: 0,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
                       fontSize: 11,
                       fontWeight: 600,
                       color: foto.accent.deep,
-                      textDecoration: "none",
-                      "&:hover": { color: foto.accent.primary },
+                      textDecoration: 'none',
+                      '&:hover': { color: foto.accent.primary },
                     }}
                   >
                     Vender
@@ -279,7 +279,7 @@ export function SubLoteCard({
       )}
 
       {/* Actions */}
-      <Box sx={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+      <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <Box
           component="button"
           type="button"
@@ -296,7 +296,7 @@ export function SubLoteCard({
           sx={actionBtnSx}
         >
           {archived ? <RotateCcw size={13} /> : <Archive size={13} />}
-          {archived ? "Reactivar" : "Archivar"}
+          {archived ? 'Reactivar' : 'Archivar'}
         </Box>
       </Box>
     </Box>

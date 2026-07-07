@@ -1,26 +1,25 @@
-import { useEffect, useId, useRef, useState } from "react";
-import { Box, Dialog } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import { X as XIcon } from "lucide-react";
+import { useEffect, useId, useRef, useState } from 'react';
+import { Box, Dialog } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { X as XIcon } from 'lucide-react';
 
-import { getFoto, fontFamilies } from "../../../../design-system";
-import { useConvexMutation, convexApi } from "../../../../lib/convex-safe";
-import { useNotification } from "../../../../contexts/NotificationContext";
-import { useGoogleAuth } from "../../../../contexts/GoogleAuthContext";
-import { useDirtyGuard } from "../../../../hooks/useDirtyGuard";
-import ConfirmDialog from "../../../../components/shared/ConfirmDialog";
-import { recordsEqual, type DirtySnapshot } from "../utils/dirtySnapshot";
-import type { Id } from "../../../../../convex/_generated/dataModel";
+import { getFoto, fontFamilies } from '../../../../design-system';
+import { useAuthedConvexAction, convexApi } from '../../../../lib/convex-safe';
+import { useNotification } from '../../../../contexts/NotificationContext';
+import { useDirtyGuard } from '../../../../hooks/useDirtyGuard';
+import ConfirmDialog from '../../../../components/shared/ConfirmDialog';
+import { recordsEqual, type DirtySnapshot } from '../utils/dirtySnapshot';
+import type { Id } from '../../../../../convex/_generated/dataModel';
 
-import { FieldLabel } from "./FieldLabel";
-import { SuggestInput } from "./SuggestInput";
-import { NumberInputWithCalc } from "./NumberInputWithCalc";
-import { PricePerCaratHint } from "./PricePerCaratHint";
-import { SegmentedControl } from "./SegmentedControl";
-import { CreditoFields } from "./CreditoFields";
-import { spanishText, noSpellCheck } from "../utils/fieldLang";
-import { PROCEDENCIAS } from "../../../../data/vocabularies";
-import { KbdKey } from "./KbdKey";
+import { FieldLabel } from './FieldLabel';
+import { SuggestInput } from './SuggestInput';
+import { NumberInputWithCalc } from './NumberInputWithCalc';
+import { PricePerCaratHint } from './PricePerCaratHint';
+import { SegmentedControl } from './SegmentedControl';
+import { CreditoFields } from './CreditoFields';
+import { spanishText, noSpellCheck } from '../utils/fieldLang';
+import { PROCEDENCIAS } from '../../../../data/vocabularies';
+import { KbdKey } from './KbdKey';
 
 // Free text so an operator write-in round-trips when editing a lot.
 // Canonical: contado | credito | esmereogenesis | bajo_pedido | consignacion.
@@ -45,7 +44,7 @@ interface LotRow {
   numeroFactura?: string;
   urlFactura?: string;
   notas?: string;
-  estado: "abierto" | "cerrado" | "publicado" | "cancelado";
+  estado: 'abierto' | 'cerrado' | 'publicado' | 'cancelado';
 }
 
 interface EditLotDrawerProps {
@@ -56,9 +55,9 @@ interface EditLotDrawerProps {
   itemsCount: number;
 }
 
-const COP_FORMATTER = new Intl.NumberFormat("es-CO", {
-  style: "currency",
-  currency: "COP",
+const COP_FORMATTER = new Intl.NumberFormat('es-CO', {
+  style: 'currency',
+  currency: 'COP',
   maximumFractionDigits: 0,
 });
 const formatCOP = (n: number): string => COP_FORMATTER.format(n);
@@ -78,42 +77,41 @@ export function EditLotDrawer({
   lot,
   itemsCount,
 }: EditLotDrawerProps) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const titleId = useId();
   const facturaUrlId = useId();
   const facturaNumId = useId();
   const notasId = useId();
   const fechaId = useId();
   const { notify } = useNotification();
-  const { user } = useGoogleAuth();
 
-  const updateLot = useConvexMutation(convexApi.lots.update);
+  const updateLot = useAuthedConvexAction(convexApi.lots.update);
 
   const [fechaRecepcion, setFechaRecepcion] = useState(lot.fechaRecepcion);
-  const [renombreLote, setRenombreLote] = useState(lot.renombreLote ?? "");
-  const [tratamiento, setTratamiento] = useState(lot.tratamiento ?? "");
-  const [mina, setMina] = useState(lot.mina ?? "");
-  const [costoTotalCOP, setCostoTotalCOP] = useState<number | "">(
+  const [renombreLote, setRenombreLote] = useState(lot.renombreLote ?? '');
+  const [tratamiento, setTratamiento] = useState(lot.tratamiento ?? '');
+  const [mina, setMina] = useState(lot.mina ?? '');
+  const [costoTotalCOP, setCostoTotalCOP] = useState<number | ''>(
     lot.costoTotalCOP,
   );
-  const [unidadesDeclaradas, setUnidadesDeclaradas] = useState<number | "">(
+  const [unidadesDeclaradas, setUnidadesDeclaradas] = useState<number | ''>(
     lot.unidadesDeclaradas,
   );
-  const [pesoTotalQuilates, setPesoTotalQuilates] = useState<number | "">(
-    lot.pesoTotalQuilates ?? "",
+  const [pesoTotalQuilates, setPesoTotalQuilates] = useState<number | ''>(
+    lot.pesoTotalQuilates ?? '',
   );
   const [formaPago, setFormaPago] = useState<FormaPago>(lot.formaPago);
   const [metodoContado, setMetodoContado] = useState<MetodoContado>(
-    lot.metodoContado ?? "transferencia",
+    lot.metodoContado ?? 'transferencia',
   );
   const [creditoFechaVenc, setCreditoFechaVenc] = useState(
-    lot.fechaVencimiento ?? "",
+    lot.fechaVencimiento ?? '',
   );
   const [creditoCuotas, setCreditoCuotas] = useState(lot.numeroCuotas ?? 3);
-  const [creditoTasa, setCreditoTasa] = useState<number | "">("");
-  const [numeroFactura, setNumeroFactura] = useState(lot.numeroFactura ?? "");
-  const [urlFactura, setUrlFactura] = useState(lot.urlFactura ?? "");
-  const [notas, setNotas] = useState(lot.notas ?? "");
+  const [creditoTasa, setCreditoTasa] = useState<number | ''>('');
+  const [numeroFactura, setNumeroFactura] = useState(lot.numeroFactura ?? '');
+  const [urlFactura, setUrlFactura] = useState(lot.urlFactura ?? '');
+  const [notas, setNotas] = useState(lot.notas ?? '');
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -126,7 +124,7 @@ export function EditLotDrawer({
   // would clobber unsaved edits and silently clear the discard guard. (Review.)
   const hydratedKeyRef = useRef<string | null>(null);
 
-  const editable = lot.estado === "abierto";
+  const editable = lot.estado === 'abierto';
 
   // Re-seed from the live lot once per open session (per lot). We do NOT re-seed
   // on later `lot` re-emits so an open edit isn't clobbered; the next open
@@ -140,19 +138,19 @@ export function EditLotDrawer({
     hydratedKeyRef.current = lot._id;
     const seeded: DirtySnapshot = {
       fechaRecepcion: lot.fechaRecepcion,
-      renombreLote: lot.renombreLote ?? "",
-      tratamiento: lot.tratamiento ?? "",
-      mina: lot.mina ?? "",
+      renombreLote: lot.renombreLote ?? '',
+      tratamiento: lot.tratamiento ?? '',
+      mina: lot.mina ?? '',
       costoTotalCOP: lot.costoTotalCOP,
       unidadesDeclaradas: lot.unidadesDeclaradas,
-      pesoTotalQuilates: lot.pesoTotalQuilates ?? "",
+      pesoTotalQuilates: lot.pesoTotalQuilates ?? '',
       formaPago: lot.formaPago,
-      metodoContado: lot.metodoContado ?? "transferencia",
-      creditoFechaVenc: lot.fechaVencimiento ?? "",
+      metodoContado: lot.metodoContado ?? 'transferencia',
+      creditoFechaVenc: lot.fechaVencimiento ?? '',
       creditoCuotas: lot.numeroCuotas ?? 3,
-      numeroFactura: lot.numeroFactura ?? "",
-      urlFactura: lot.urlFactura ?? "",
-      notas: lot.notas ?? "",
+      numeroFactura: lot.numeroFactura ?? '',
+      urlFactura: lot.urlFactura ?? '',
+      notas: lot.notas ?? '',
     };
     setFechaRecepcion(seeded.fechaRecepcion as string);
     setRenombreLote(seeded.renombreLote as string);
@@ -160,7 +158,7 @@ export function EditLotDrawer({
     setMina(seeded.mina as string);
     setCostoTotalCOP(seeded.costoTotalCOP as number);
     setUnidadesDeclaradas(seeded.unidadesDeclaradas as number);
-    setPesoTotalQuilates(seeded.pesoTotalQuilates as number | "");
+    setPesoTotalQuilates(seeded.pesoTotalQuilates as number | '');
     setFormaPago(seeded.formaPago as FormaPago);
     setMetodoContado(seeded.metodoContado as MetodoContado);
     setCreditoFechaVenc(seeded.creditoFechaVenc as string);
@@ -173,7 +171,7 @@ export function EditLotDrawer({
   }, [open, lot]);
 
   const creditoComplete =
-    formaPago !== "credito" ||
+    formaPago !== 'credito' ||
     (creditoFechaVenc.length > 0 && creditoCuotas > 0);
 
   const minUnidades = Math.max(1, itemsCount);
@@ -181,9 +179,9 @@ export function EditLotDrawer({
   const canSubmit =
     editable &&
     !submitting &&
-    typeof costoTotalCOP === "number" &&
+    typeof costoTotalCOP === 'number' &&
     costoTotalCOP > 0 &&
-    typeof unidadesDeclaradas === "number" &&
+    typeof unidadesDeclaradas === 'number' &&
     unidadesDeclaradas >= minUnidades &&
     creditoComplete;
 
@@ -223,7 +221,7 @@ export function EditLotDrawer({
     setSubmitting(true);
     setError(null);
     try {
-      const patch: Parameters<typeof updateLot>[0]["patch"] = {
+      const patch: Parameters<typeof updateLot>[0]['patch'] = {
         fechaRecepcion,
         renombreLote: renombreLote.trim() || undefined,
         tratamiento: tratamiento.trim() || undefined,
@@ -237,15 +235,15 @@ export function EditLotDrawer({
         urlFactura:
           urlFactura.trim().length > 0 ? urlFactura.trim() : undefined,
         pesoTotalQuilates:
-          typeof pesoTotalQuilates === "number" && pesoTotalQuilates > 0
+          typeof pesoTotalQuilates === 'number' && pesoTotalQuilates > 0
             ? pesoTotalQuilates
             : undefined,
       };
-      if (formaPago === "contado") {
+      if (formaPago === 'contado') {
         patch.metodoContado = metodoContado;
         patch.fechaVencimiento = undefined;
         patch.numeroCuotas = undefined;
-      } else if (formaPago === "credito") {
+      } else if (formaPago === 'credito') {
         patch.fechaVencimiento = creditoFechaVenc;
         patch.numeroCuotas = creditoCuotas;
         patch.metodoContado = undefined;
@@ -255,15 +253,14 @@ export function EditLotDrawer({
         patch.numeroCuotas = undefined;
       }
       await updateLot({
-        id: lot._id as Id<"lots">,
+        id: lot._id as Id<'lots'>,
         patch,
-        editorEmail: user?.email,
       });
-      notify(`Lote ${lot.loteId} actualizado`, "success");
+      notify(`Lote ${lot.loteId} actualizado`, 'success');
       onClose();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "No pudimos guardar el lote",
+        err instanceof Error ? err.message : 'No pudimos guardar el lote',
       );
     } finally {
       setSubmitting(false);
@@ -271,28 +268,28 @@ export function EditLotDrawer({
   };
 
   const handleBodyKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
       void handleSubmit();
     }
   };
 
   const textInputSx = {
-    width: "100%",
+    width: '100%',
     background: foto.surfaces.inset,
     border: `1px solid ${foto.surfaces.rule}`,
-    borderRadius: "9px",
-    padding: "11px 14px",
+    borderRadius: '9px',
+    padding: '11px 14px',
     fontSize: 13.5,
     color: foto.ink.primary,
     fontFamily: fontFamilies.system,
-    outline: "none",
-    transition: "border-color 120ms ease, box-shadow 120ms ease",
-    "&:focus": {
+    outline: 'none',
+    transition: 'border-color 120ms ease, box-shadow 120ms ease',
+    '&:focus': {
       borderColor: foto.accent.primary,
       boxShadow: `0 0 0 3px ${foto.accent.glow}`,
     },
-    "::placeholder": { color: foto.ink.mute },
+    '::placeholder': { color: foto.ink.mute },
   } as const;
 
   return (
@@ -305,39 +302,39 @@ export function EditLotDrawer({
       slotProps={{
         backdrop: {
           sx: {
-            background: "rgba(11,16,14,0.32)",
-            backdropFilter: "saturate(80%)",
+            background: 'rgba(11,16,14,0.32)',
+            backdropFilter: 'saturate(80%)',
           },
         },
       }}
       PaperProps={{
         sx: {
-          position: "fixed",
+          position: 'fixed',
           right: 0,
           top: 0,
           bottom: 0,
           margin: 0,
-          width: { xs: "100vw", sm: 560 },
-          maxWidth: "100vw",
-          height: "100vh",
-          maxHeight: "100vh",
+          width: { xs: '100vw', sm: 560 },
+          maxWidth: '100vw',
+          height: '100vh',
+          maxHeight: '100vh',
           borderRadius: 0,
-          boxShadow: "-30px 0 80px rgba(11,16,14,0.18)",
+          boxShadow: '-30px 0 80px rgba(11,16,14,0.18)',
           background: foto.surfaces.canvas,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
         },
       }}
     >
       {/* HEADER */}
       <Box
         sx={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: "14px",
-          padding: "22px 26px 18px",
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: '14px',
+          padding: '22px 26px 18px',
           borderBottom: `1px solid ${foto.surfaces.rule}`,
         }}
       >
@@ -345,8 +342,8 @@ export function EditLotDrawer({
           <Box
             sx={{
               fontSize: 9,
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
               color: foto.ink.tertiary,
               fontWeight: 500,
               fontFamily: fontFamilies.mono,
@@ -358,10 +355,10 @@ export function EditLotDrawer({
             id={titleId}
             component="h2"
             sx={{
-              fontSize: "22px",
+              fontSize: '22px',
               fontWeight: 600,
-              letterSpacing: "-0.02em",
-              marginTop: "6px",
+              letterSpacing: '-0.02em',
+              marginTop: '6px',
               color: foto.ink.primary,
               lineHeight: 1.2,
             }}
@@ -370,15 +367,15 @@ export function EditLotDrawer({
           </Box>
           <Box
             sx={{
-              fontSize: "12.5px",
+              fontSize: '12.5px',
               color: foto.ink.secondary,
-              marginTop: "5px",
+              marginTop: '5px',
               lineHeight: 1.55,
             }}
           >
             {editable
-              ? "Datos contables del encabezado. Sincroniza a Sheets al guardar."
-              : "Lote cerrado: el encabezado contable está fijo. Para corregir el costo del lote, reabrílo desde la página del lote (vuelve a “abierto”); si algún ítem ya está vendido, cancelá esa venta primero."}
+              ? 'Datos contables del encabezado. Sincroniza a Sheets al guardar.'
+              : 'Lote cerrado: el encabezado contable está fijo. Para corregir el costo del lote, reabrílo desde la página del lote (vuelve a “abierto”); si algún ítem ya está vendido, cancelá esa venta primero.'}
           </Box>
         </Box>
         <Box
@@ -391,17 +388,17 @@ export function EditLotDrawer({
             height: 32,
             minWidth: 44,
             minHeight: 44,
-            borderRadius: "8px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             color: foto.ink.tertiary,
-            cursor: "pointer",
+            cursor: 'pointer',
             border: `1px solid ${foto.surfaces.edge}`,
             background: foto.surfaces.canvas,
             flexShrink: 0,
-            transition: "background 120ms ease, color 120ms ease",
-            "&:hover": {
+            transition: 'background 120ms ease, color 120ms ease',
+            '&:hover': {
               background: foto.surfaces.inset,
               color: foto.ink.primary,
             },
@@ -416,19 +413,19 @@ export function EditLotDrawer({
         onKeyDown={handleBodyKeyDown}
         sx={{
           flex: 1,
-          overflowY: "auto",
-          padding: "24px 26px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "20px",
+          overflowY: 'auto',
+          padding: '24px 26px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px',
         }}
       >
         {/* Fecha + Peso */}
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-            gap: "16px",
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+            gap: '16px',
           }}
         >
           <Box>
@@ -445,7 +442,7 @@ export function EditLotDrawer({
               sx={{
                 ...textInputSx,
                 fontFamily: fontFamilies.mono,
-                fontVariantNumeric: "tabular-nums",
+                fontVariantNumeric: 'tabular-nums',
               }}
             />
           </Box>
@@ -461,9 +458,9 @@ export function EditLotDrawer({
               min={0}
               ariaLabel="Peso total del lote en quilates"
               calcSuffix={
-                typeof pesoTotalQuilates === "number" && pesoTotalQuilates > 0
+                typeof pesoTotalQuilates === 'number' && pesoTotalQuilates > 0
                   ? `${pesoTotalQuilates} ct`
-                  : "= —"
+                  : '= —'
               }
               calcVariant="neutral"
               disabled={!editable}
@@ -488,9 +485,9 @@ export function EditLotDrawer({
 
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-            gap: "16px",
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+            gap: '16px',
           }}
         >
           <Box>
@@ -524,9 +521,9 @@ export function EditLotDrawer({
         {/* Costo + Unidades */}
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-            gap: "16px",
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+            gap: '16px',
           }}
         >
           <Box>
@@ -541,9 +538,9 @@ export function EditLotDrawer({
               min={1}
               ariaLabel="Costo total del lote en COP"
               calcSuffix={
-                typeof costoTotalCOP === "number" && costoTotalCOP > 0
+                typeof costoTotalCOP === 'number' && costoTotalCOP > 0
                   ? formatCOP(costoTotalCOP)
-                  : "= —"
+                  : '= —'
               }
               calcVariant="neutral"
               disabled={!editable}
@@ -563,7 +560,7 @@ export function EditLotDrawer({
               calcSuffix={
                 itemsCount > 0
                   ? `mín ${minUnidades} (${itemsCount} ya capturadas)`
-                  : "ítems"
+                  : 'ítems'
               }
               calcVariant="neutral"
               disabled={!editable}
@@ -586,26 +583,26 @@ export function EditLotDrawer({
             otherLabel="Otra…"
             otherPlaceholder="Escribir forma de pago…"
             options={[
-              { value: "contado", label: "Contado", disabled: !editable },
-              { value: "credito", label: "Crédito", disabled: !editable },
+              { value: 'contado', label: 'Contado', disabled: !editable },
+              { value: 'credito', label: 'Crédito', disabled: !editable },
               {
-                value: "esmereogenesis",
-                label: "Esmereo",
+                value: 'esmereogenesis',
+                label: 'Esmereo',
                 disabled: !editable,
               },
               {
-                value: "bajo_pedido",
-                label: "Bajo pedido",
+                value: 'bajo_pedido',
+                label: 'Bajo pedido',
                 disabled: !editable,
               },
-              { value: "consignacion", label: "Consign.", disabled: !editable },
+              { value: 'consignacion', label: 'Consign.', disabled: !editable },
             ]}
             value={formaPago}
             onChange={(next) => setFormaPago(next as FormaPago)}
           />
         </Box>
 
-        {formaPago === "contado" ? (
+        {formaPago === 'contado' ? (
           <Box>
             <FieldLabel>Método</FieldLabel>
             <SegmentedControl
@@ -614,10 +611,10 @@ export function EditLotDrawer({
               otherLabel="Otro…"
               otherPlaceholder="Escribir método de pago…"
               options={[
-                { value: "efectivo", label: "Efectivo", disabled: !editable },
+                { value: 'efectivo', label: 'Efectivo', disabled: !editable },
                 {
-                  value: "transferencia",
-                  label: "Transferencia",
+                  value: 'transferencia',
+                  label: 'Transferencia',
                   disabled: !editable,
                 },
               ]}
@@ -627,7 +624,7 @@ export function EditLotDrawer({
           </Box>
         ) : null}
 
-        {formaPago === "credito" ? (
+        {formaPago === 'credito' ? (
           <CreditoFields
             fechaVencimiento={creditoFechaVenc}
             setFechaVencimiento={setCreditoFechaVenc}
@@ -635,16 +632,16 @@ export function EditLotDrawer({
             setNumeroCuotas={setCreditoCuotas}
             tasaInteres={creditoTasa}
             setTasaInteres={setCreditoTasa}
-            totalCop={typeof costoTotalCOP === "number" ? costoTotalCOP : 0}
+            totalCop={typeof costoTotalCOP === 'number' ? costoTotalCOP : 0}
           />
         ) : null}
 
         {/* Factura */}
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr",
-            gap: "16px",
+            display: 'grid',
+            gridTemplateColumns: '1fr',
+            gap: '16px',
           }}
         >
           <Box>
@@ -702,8 +699,8 @@ export function EditLotDrawer({
             onChange={(e) => setNotas((e.target as HTMLTextAreaElement).value)}
             sx={{
               ...textInputSx,
-              minHeight: "84px",
-              resize: "vertical",
+              minHeight: '84px',
+              resize: 'vertical',
             }}
           />
         </Box>
@@ -714,9 +711,9 @@ export function EditLotDrawer({
             sx={{
               background: alpha(foto.status.sold, 0.07),
               border: `1px solid ${alpha(foto.status.sold, 0.3)}`,
-              borderRadius: "10px",
-              padding: "11px 13px",
-              fontSize: "12px",
+              borderRadius: '10px',
+              padding: '11px 13px',
+              fontSize: '12px',
               color: foto.status.sold,
               lineHeight: 1.5,
             }}
@@ -729,23 +726,23 @@ export function EditLotDrawer({
       {/* FOOTER */}
       <Box
         sx={{
-          padding: "18px 26px",
+          padding: '18px 26px',
           borderTop: `1px solid ${foto.surfaces.rule}`,
           background: foto.surfaces.panel,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "12px",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
         }}
       >
         <Box
           sx={{
-            fontSize: "11px",
+            fontSize: '11px',
             color: foto.ink.tertiary,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            flexWrap: "wrap",
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            flexWrap: 'wrap',
           }}
         >
           <KbdKey size="sm">Esc</KbdKey>
@@ -755,7 +752,7 @@ export function EditLotDrawer({
           <KbdKey size="sm">↵</KbdKey>
           <Box component="span">guarda</Box>
         </Box>
-        <Box sx={{ display: "flex", gap: "8px" }}>
+        <Box sx={{ display: 'flex', gap: '8px' }}>
           <Box
             component="button"
             type="button"
@@ -763,16 +760,16 @@ export function EditLotDrawer({
             disabled={submitting}
             sx={{
               fontFamily: fontFamilies.system,
-              fontSize: "12.5px",
+              fontSize: '12.5px',
               fontWeight: 600,
-              padding: "11px 18px",
-              borderRadius: "9px",
-              cursor: submitting ? "not-allowed" : "pointer",
-              background: "transparent",
+              padding: '11px 18px',
+              borderRadius: '9px',
+              cursor: submitting ? 'not-allowed' : 'pointer',
+              background: 'transparent',
               color: foto.ink.secondary,
               border: `1px solid ${foto.surfaces.edgeStrong}`,
-              transition: "background 120ms ease, color 120ms ease",
-              "&:hover": {
+              transition: 'background 120ms ease, color 120ms ease',
+              '&:hover': {
                 background: foto.surfaces.canvas,
                 color: foto.ink.primary,
               },
@@ -789,28 +786,28 @@ export function EditLotDrawer({
             aria-busy={submitting}
             sx={{
               fontFamily: fontFamilies.system,
-              fontSize: "12.5px",
+              fontSize: '12.5px',
               fontWeight: 600,
-              padding: "11px 18px",
-              borderRadius: "9px",
-              cursor: canSubmit ? "pointer" : "not-allowed",
+              padding: '11px 18px',
+              borderRadius: '9px',
+              cursor: canSubmit ? 'pointer' : 'not-allowed',
               background: foto.accent.primary,
               color: foto.ink.inverse,
-              border: "1px solid transparent",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              transition: "background 120ms ease, transform 120ms ease",
-              "&:hover": canSubmit
+              border: '1px solid transparent',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'background 120ms ease, transform 120ms ease',
+              '&:hover': canSubmit
                 ? {
                     background: foto.accent.deep,
-                    transform: "translateY(-1px)",
+                    transform: 'translateY(-1px)',
                   }
                 : undefined,
               opacity: canSubmit ? 1 : 0.55,
             }}
           >
-            {submitting ? "Guardando…" : "Guardar cambios"}
+            {submitting ? 'Guardando…' : 'Guardar cambios'}
           </Box>
         </Box>
       </Box>

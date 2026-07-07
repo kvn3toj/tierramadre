@@ -1,0 +1,270 @@
+{
+  "$schema": "https://tierramadre.app/schemas/aigen-asset.v1.json",
+  "meta": {
+    "asset_id": "tm-heart-emerald-ring-001",
+    "title": "Colombian Heart Emerald Vintage Cathedral Ring",
+    "collection": "Tierra Madre Studio — Esmeraldas con ADN de Paz",
+    "intent": "ai_image_and_video_generation",
+    "description": "Maximally detailed visual specification for recreating or animating this exact ring in text-to-image / image-to-video models. Every field is a generation descriptor, not a market spec.",
+    "language": "en",
+    "version": "1.0.0",
+    "created": "2026-06-09",
+    "reference_image_count": 4,
+    "confidence_note": "Carat weight, metal karat and stone origin are visual estimates inferred from proportion, hue and craftsmanship; treat as plausible defaults, not certified facts."
+  },
+
+  "subject": {
+    "object_type": "fine jewelry ring",
+    "one_line": "A vivid Colombian heart-cut emerald set in a hand-engraved yellow-gold cathedral ring with milgrain diamond shoulders and pierced filigree gallery.",
+    "hero_element": "heart-shaped green emerald center stone",
+    "overall_style_keywords": [
+      "vintage",
+      "antique-revival",
+      "Edwardian / Art-Nouveau influence",
+      "filigree",
+      "milgrain",
+      "hand-engraved",
+      "romantic",
+      "heirloom",
+      "ornate but elegant",
+      "warm luxury"
+    ],
+    "emotional_tone": ["love", "devotion", "timeless", "regal", "intimate"]
+  },
+
+  "center_stone": {
+    "gem_type": "emerald (beryl)",
+    "probable_origin": "Colombian",
+    "cut": "heart-shaped brilliant/mixed cut",
+    "orientation": "cleft (twin lobes) at top, point at bottom; symmetrical down the vertical axis",
+    "carat_estimate": "2.4–3.2 ct",
+    "proportions": {
+      "outline": "plump, rounded heart with a soft central cleft and gently tapering point",
+      "length_to_width_ratio": "approximately 1.0 : 1.05 (slightly wider than tall)",
+      "dome": "medium crown height, shallow-to-medium pavilion"
+    },
+    "faceting": {
+      "crown": "brilliant-style triangular and kite facets radiating from the lobes toward the point",
+      "table": "moderate open table with visible internal reflections",
+      "girdle": "thin, faceted",
+      "visible_pattern": "criss-cross flashes, soft step-like returns near the point"
+    },
+    "color": {
+      "primary_hue": "vivid green with a faint bluish-teal secondary",
+      "saturation": "high / vivid",
+      "tone": "medium to medium-dark",
+      "zoning": "slight — brighter, more teal toward the cleft, deeper green toward the point",
+      "highlight_color": "bright minty cyan-green where light enters the crown",
+      "shadow_color": "deep forest / pine green in the pavilion"
+    },
+    "internal_character": {
+      "clarity_look": "typical emerald 'jardín' — visible internal garden",
+      "inclusions": [
+        "fine silk and feathery fissures",
+        "wispy three-phase / two-phase inclusions",
+        "soft veil-like clouds catching light",
+        "a few crystalline pinpoints"
+      ],
+      "transparency": "translucent-to-transparent, gemmy with life, not glassy-clean",
+      "surface": "high polish, vitreous luster, bright facet edges"
+    },
+    "light_behavior": "glows from within; emerald-green internal fire; strong returns at the cleft, softer scintillation toward the point"
+  },
+
+  "metal": {
+    "type": "yellow gold",
+    "karat_estimate": "18k (warm) — possibly 14k",
+    "color_description": "rich warm buttery yellow gold, slightly rosy in shadowed recesses",
+    "finish": {
+      "primary": "high-polish bright",
+      "secondary": "matte/burnished inside engraved recesses for contrast",
+      "edges": "milgrain (rows of tiny beaded grains) along most borders"
+    },
+    "reflectivity": "mirror-bright on the shank, soft satin glow in carved areas, warm specular highlights"
+  },
+
+  "setting": {
+    "era_style": "antique / Edwardian cathedral filigree revival",
+    "architecture": "cathedral shoulders rising to an elevated center, open under-gallery",
+    "center_stone_mounting": {
+      "type": "prong (claw) setting, vintage hand-fabricated",
+      "prong_configuration": "split/double claw prongs cradling each top lobe, plus a single V-prong (chevron) gripping the bottom point",
+      "prong_count_visible": "approximately 5 working claws (two pairs at the lobes + one at the point)",
+      "prong_shape": "small rounded gold claws, slightly tapered, hand-finished",
+      "basket": "open pierced basket with milgrain trim, visible from profile and rear"
+    },
+    "shoulders": {
+      "form": "tapering knife-to-rounded shoulders flowing into the band",
+      "motif": "marquise/navette-shaped (leaf / pointed-oval) milgrain frames set into each shoulder, each holding a round diamond, followed by a small square 'box' milgrain station with another round diamond",
+      "depth": "stepped/cathedral, giving a layered antique look"
+    },
+    "gallery_and_undercarriage": {
+      "under_bridge": "open pierced filigree — symmetric C-scrolls / volutes forming a heart-like negative space beneath the emerald",
+      "milgrain": "beaded edges line the gallery openings",
+      "visibility": "fully ornamented even from the rear (see profile/back reference view)"
+    },
+    "band": {
+      "profile": "comfort half-round to slightly flattened",
+      "exterior_engraving": "hand-engraved repeating motif along the sides (scroll / wheat-leaf / geometric ladder pattern)",
+      "interior": "smooth high-polish, plain",
+      "taper": "narrows slightly at the base, widens toward the cathedral shoulders"
+    }
+  },
+
+  "accent_stones": {
+    "type": "round brilliant-cut diamonds",
+    "color_look": "near-colorless, bright white sparkle",
+    "approx_count_visible": "8–12 small accents distributed across both shoulders and gallery sides",
+    "layout": [
+      "one round diamond centered in each navette/leaf milgrain frame on the shoulders",
+      "one round diamond in each small square 'box' milgrain station outboard of the leaf frame",
+      "additional small accents flanking the basket, visible from the rear three-quarter view"
+    ],
+    "setting_of_accents": "bead / grain set within milgrain bezels, antique-style with raised beaded edges",
+    "sparkle_behavior": "crisp white pinpoint scintillation contrasting the green center"
+  },
+
+  "ornamentation": {
+    "milgrain": "pervasive — fine beaded gold borders on prongs, frames, gallery and shoulder edges",
+    "engraving": "hand-cut scrollwork and a repeating side pattern on the shank",
+    "filigree": "pierced open metalwork in the under-gallery forming scroll/heart negative space",
+    "overall_density": "ornate, jewel-encrusted antique feel without looking cluttered"
+  },
+
+  "color_palette": {
+    "emerald_green_deep": "#0B6E4F",
+    "emerald_green_core": "#13886B",
+    "emerald_green_vivid": "#1FA67A",
+    "emerald_highlight_mint": "#4FE3B0",
+    "emerald_teal_edge": "#0E9E92",
+    "emerald_shadow_pine": "#06402B",
+    "gold_warm": "#C9A227",
+    "gold_bright": "#E6C35C",
+    "gold_highlight": "#F6E6A8",
+    "gold_shadow_amber": "#9A7B1E",
+    "diamond_white": "#F7FAFC",
+    "diamond_sparkle": "#FFFFFF",
+    "background_cream": "#F3ECDD",
+    "background_ivory_shadow": "#E4D9C3"
+  },
+
+  "materials_and_finish_summary": [
+    "warm polished yellow gold with milgrain and matte-recess contrast",
+    "vivid translucent green emerald with internal garden",
+    "bright white round diamonds in beaded antique settings",
+    "soft warm specular highlights, no harsh chrome"
+  ],
+
+  "lighting": {
+    "style": "soft, diffused studio jewelry lighting",
+    "key_light": "large soft box, upper-front, warm-neutral",
+    "fill": "gentle ambient bounce to open shadows",
+    "accents": "small specular catch-lights to spark the diamonds and emerald facets",
+    "color_temperature": "warm (approx 4800–5200K) to flatter the gold",
+    "shadows": "soft, short, low-contrast",
+    "emerald_treatment": "slight backlight/transmission so the stone glows from within"
+  },
+
+  "composition_and_background": {
+    "background_options": [
+      "cream / ivory leatherette jewelry-box surface with a soft horizon seam",
+      "seamless warm off-white studio sweep",
+      "out-of-focus skin tone when worn on the hand"
+    ],
+    "surface": "matte cream leather or paper, faint texture",
+    "negative_space": "generous, minimalist, product-forward",
+    "depth_of_field": "shallow — sharp on the emerald and nearest diamonds, soft falloff",
+    "focus_point": "center emerald table and cleft"
+  },
+
+  "camera_and_shots": {
+    "global": {
+      "lens": "100mm macro equivalent",
+      "aperture": "f/5.6–f/8 for jewelry sharpness with soft background",
+      "iso": "low (100)",
+      "perspective": "true macro, minimal distortion",
+      "render_quality": "ultra sharp, photoreal, high micro-detail on metal grain and facets"
+    },
+    "views": [
+      {
+        "id": "front_top_down",
+        "description": "Straight-on top view of the ring lying on cream surface; heart upright with cleft toward viewer; full face of emerald and both shoulders visible.",
+        "matches_reference": "image 1 (top) and image 2",
+        "framing": "ring centered, generous negative space above"
+      },
+      {
+        "id": "three_quarter_shoulder",
+        "description": "Low three-quarter angle emphasizing the cathedral shoulder, navette diamond frame and side engraving; emerald catches a strong green highlight.",
+        "matches_reference": "image 1 (bottom-left) and image 3",
+        "framing": "ring fills frame, dramatic raking light"
+      },
+      {
+        "id": "rear_profile_gallery",
+        "description": "Rear/profile view showing the open pierced filigree under-gallery, basket, prong backs and band taper; emerald visible through the gallery.",
+        "matches_reference": "image 1 (bottom-right) and image 4",
+        "framing": "ring centered, symmetric, gallery in focus"
+      },
+      {
+        "id": "macro_on_hand",
+        "description": "Worn on a finger, extreme close-up, soft skin background out of focus, warm tone, intimate scale reference.",
+        "matches_reference": "image 2 and image 3",
+        "framing": "tight, shallow DOF, hero emerald sharp"
+      }
+    ]
+  },
+
+  "video_motion": {
+    "purpose": "for image-to-video animation; keep motion subtle and luxurious (no artificial 'growth' or morphing).",
+    "recommended_moves": [
+      "slow 10–20° orbital parallax around the vertical axis to reveal facet scintillation",
+      "gentle light sweep across the emerald and diamonds (traveling specular)",
+      "micro dolly-in toward the cleft, easing out",
+      "soft rack focus from gallery filigree to the emerald table"
+    ],
+    "avoid": [
+      "visible stone growth or shape change",
+      "fast spins, jitter, or warping of the metalwork",
+      "flicker on milgrain beads"
+    ],
+    "pace": "slow, elegant, 24–30 fps, ease-in-ease-out",
+    "loopable": true
+  },
+
+  "prompt_strings": {
+    "positive_master": "Ultra-detailed macro product photograph of an antique-style yellow-gold ring centered on a vivid Colombian heart-shaped emerald (~3ct, vivid bluish-green, visible internal jardin garden, translucent with inner glow), held by split double gold claw prongs at the lobes and a V-prong at the point; cathedral shoulders with marquise/leaf milgrain frames each holding a round brilliant diamond, plus small square milgrain diamond stations; pervasive milgrain beading, hand-engraved scrollwork on the band, pierced filigree under-gallery; warm 18k polished gold; soft diffused studio jewelry lighting, cream ivory leatherette background, shallow depth of field, 100mm macro, photoreal, crisp facet detail, warm luxurious heirloom mood",
+    "positive_compact": "vintage yellow-gold heart emerald ring, vivid green Colombian emerald with jardin, double claw prongs, milgrain diamond shoulders, filigree gallery, hand engraving, soft studio light, cream background, macro photoreal",
+    "negative": "blurry, low-detail, plastic, cartoon, oversaturated neon, color banding, extra prongs, melted metal, malformed heart, asymmetrical stone, fake CGI sheen, dust, scratches, fingerprints, text, watermark, logo, harsh blue lighting, cold white gold, oval or round center stone, two center stones, distorted band, jpeg artifacts",
+    "style_tags": ["photorealistic", "macro", "product photography", "fine jewelry", "antique", "warm", "high detail", "8k"]
+  },
+
+  "per_view_prompts": {
+    "front_top_down": "Top-down macro of a yellow-gold vintage ring with a vivid heart-shaped Colombian emerald held by double gold claw prongs, milgrain leaf-shaped diamond shoulders, on a cream leatherette surface, soft diffused light, shallow depth of field, photoreal",
+    "three_quarter_shoulder": "Dramatic low three-quarter macro of a heart emerald gold ring, raking warm light igniting green emerald fire and white diamond sparkle, hand-engraved cathedral shoulder and milgrain detail in focus, soft ivory background, photoreal",
+    "rear_profile_gallery": "Rear profile macro of an antique yellow-gold ring showing pierced filigree under-gallery and open basket beneath a green heart emerald, symmetric scrollwork, milgrain edges, cream background, sharp detail",
+    "macro_on_hand": "Intimate macro of a heart-shaped green emerald gold ring worn on a finger, warm soft light, out-of-focus skin background, vivid emerald with internal garden, tiny diamond accents sparkling, photoreal"
+  },
+
+  "render_parameters_hint": {
+    "image_models": {
+      "aspect_ratios": ["1:1 (front)", "4:5 (on hand)", "3:2 (profile)"],
+      "guidance_scale": "5–7",
+      "steps": "30–40",
+      "upscale": "2x with detail preservation"
+    },
+    "video_models": {
+      "duration_s": "4–6",
+      "fps": 24,
+      "motion_strength": "low",
+      "seed_policy": "lock seed across views for consistency"
+    }
+  },
+
+  "consistency_anchors": [
+    "center stone is ALWAYS a single heart-shaped emerald, cleft up, point down",
+    "metal is ALWAYS warm yellow gold (never white/rose)",
+    "prongs: double claws at lobes + V-prong at point",
+    "shoulders carry leaf/marquise milgrain diamond frames",
+    "under-gallery is open pierced filigree",
+    "diamonds are small round brilliant accents only — emerald is the sole colored stone"
+  ]
+}

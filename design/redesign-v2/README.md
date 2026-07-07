@@ -97,6 +97,27 @@ Coscuez` origin tabs (wired to a `procedencia` quick-filter, list-pagination-awa
       large near-black figure, Cormorant item names + mono spec + near-black price, gold fully
       removed, flat "Generar PDF" (accent-strong); emerald repointed across the document.
 
+**App shell (2026-07-06)**
+
+- [x] **CSS variable layer** — `css-variables.css` light+dark blocks (and the
+      `prefers-color-scheme` fallback) repointed to qe hexes: surfaces = bg/surface/
+      surface-2, text = text/muted/subtle, borders = border/hairline, brand =
+      accent/accent-strong/accent-pure, buttons/inputs/cards retoned, mint-green
+      hovers removed. `ThemeContext` runtime overrides now derive from
+      `getQuietEmerald(mode)` (kept in sync with the CSS defaults).
+- [x] **IOSTabBar (bottom nav)** — wired to `useRedesignVariant`: **A** keeps the
+      floating pill + sliding indicator retoned to qe (solid accent-strong fill, no
+      gradient, qe surface/border/subtle, Hanken labels); **B** = mockup flat bar
+      (64px, hairline top, translucent surface + blur, active = accent-pure icon+label,
+      no pill). Tabs/routes/provider logic/badges/auto-hide unchanged.
+- [x] **IOSNavigationBar (top nav)** — inherits qe via the CSS vars; large titles now
+      Cormorant 500 (editorial), compact titles Hanken.
+- [x] **WelcomeScreen (Acceso)** — stays dark (brand entry): qeDark surfaces, flat
+      base (ambient emerald glows removed), dark three-step accent (strong fill +
+      on-accent text on buttons, accent for links/icons), hairline dividers, mono
+      overline footer. All auth logic (GIS watchdog, in-app-browser fallbacks,
+      invitation flow) preserved.
+
 **Verified**
 
 - [x] `tsc --noEmit` (frontend + api) clean; `vite build` green.
@@ -105,10 +126,10 @@ Coscuez` origin tabs (wired to a `procedencia` quick-filter, list-pagination-awa
       bottom-bar currency-multiplier consistency, desktop card baseline row, quote spec-line
       origin segment).
 
-**Deferred / out of scope (this pass = the 3 core screens only)**
+**Deferred / out of scope**
 
-- [ ] App shell: bottom-nav restyle + tablet/desktop top-nav switch, Acceso/`WelcomeScreen`
-      conversion (still legacy — the earlier "Auth / Acceso done" claim was overstated).
+- [ ] Tablet/desktop top-nav switch (bottom bar still shows at all widths outside
+      Bóveda; the mockup's desktop top-nav is not built).
 - [ ] Operations panel (Fotosíntesis dashboard, direction A·Tablero) — separate track;
       already a mature `getFoto`-based subsystem, not a clean net-new build.
 - [ ] Quote refinements: dedicated **WhatsApp** action button (needs a handler threaded

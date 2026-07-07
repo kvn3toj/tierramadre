@@ -18,25 +18,25 @@ import {
   useMemo,
   useRef,
   useState,
-} from "react";
-import { Box } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import { AlertTriangle, Check, CheckCircle2 } from "lucide-react";
-import { getFoto, fontFamilies } from "../../../../design-system";
-import { useConvexMutation, convexApi } from "../../../../lib/convex-safe";
-import { verifyNit } from "../../../../utils/nitVerify";
-import { FieldLabel } from "./FieldLabel";
-import { SegmentedControl } from "./SegmentedControl";
-import { properName, streetAddress, noSpellCheck } from "../utils/fieldLang";
-import { EntityPicker } from "./EntityPicker";
-import type { Id } from "../../../../../convex/_generated/dataModel";
+} from 'react';
+import { Box } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { AlertTriangle, Check, CheckCircle2 } from 'lucide-react';
+import { getFoto, fontFamilies } from '../../../../design-system';
+import { useAuthedConvexAction, convexApi } from '../../../../lib/convex-safe';
+import { verifyNit } from '../../../../utils/nitVerify';
+import { FieldLabel } from './FieldLabel';
+import { SegmentedControl } from './SegmentedControl';
+import { properName, streetAddress, noSpellCheck } from '../utils/fieldLang';
+import { EntityPicker } from './EntityPicker';
+import type { Id } from '../../../../../convex/_generated/dataModel';
 
-type TipoDoc = "NIT" | "Cédula";
+type TipoDoc = 'NIT' | 'Cédula';
 
 /** Shape returned by `clients.list` — kept loose so we don't re-derive the
  *  full Convex Doc<"clients"> type for the few fields we need here. */
 export interface ClienteRow {
-  _id: Id<"clients">;
+  _id: Id<'clients'>;
   nombre: string;
   nit?: string;
   cedula?: string;
@@ -61,7 +61,7 @@ interface ClienteFinalFormProps {
    *  instead of the form once the operator has chosen one). */
   selectedClient: ClienteRow | null;
   /** Fired when a new client is created OR an existing dup is reused. */
-  onCreated: (clientId: Id<"clients">) => void;
+  onCreated: (clientId: Id<'clients'>) => void;
   /** Fired when the operator clicks "Cambiar cliente" on the summary card. */
   onChange: () => void;
   /**
@@ -83,49 +83,49 @@ export interface ClienteInitialData {
 }
 
 function normalizeDocDigits(s: string | undefined | null): string {
-  return (s ?? "").replace(/[^0-9]/g, "");
+  return (s ?? '').replace(/[^0-9]/g, '');
 }
 
 function formatColombianPhone(raw: string): string {
-  let digits = (raw ?? "").replace(/[^0-9]/g, "");
+  let digits = (raw ?? '').replace(/[^0-9]/g, '');
   // Drop a leading +57 country code if present so it isn't counted as part of
   // the national number. Colombian national numbers never start with "57"
   // (mobiles start with "3", landlines with "60"), so this is safe to strip
   // unconditionally — including during incremental typing, where the controlled
   // input re-feeds its own "+57 ..." formatted value back into this function.
-  if (digits.startsWith("57")) {
+  if (digits.startsWith('57')) {
     digits = digits.slice(2);
   }
-  if (digits.length === 0) return "";
-  const parts: string[] = ["+57"];
+  if (digits.length === 0) return '';
+  const parts: string[] = ['+57'];
   if (digits.length > 0) parts.push(digits.slice(0, 3));
   if (digits.length > 3) parts.push(digits.slice(3, 6));
   if (digits.length > 6) parts.push(digits.slice(6, 10));
-  return parts.join(" ");
+  return parts.join(' ');
 }
 
 export function ClienteFinalForm({
-  tipo = "final",
+  tipo = 'final',
   allClients,
   selectedClient,
   onCreated,
   onChange,
   initialData,
 }: ClienteFinalFormProps) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
 
   // ── State ────────────────────────────────────────────────────────────
   // Mode toggles the inline UI between the searchable picker (default) and
   // the full creation form. The form is only shown after the operator clicks
   // "+ Crear «typed»" inside the picker, or "Crear cliente nuevo" from the
   // empty-picker fallback button.
-  const [mode, setMode] = useState<"picker" | "creating">("picker");
-  const [nombre, setNombre] = useState("");
-  const [tipoDoc, setTipoDoc] = useState<TipoDoc>("Cédula");
-  const [documento, setDocumento] = useState("");
-  const [direccion, setDireccion] = useState("");
-  const [telefono, setTelefono] = useState("");
-  const [email, setEmail] = useState("");
+  const [mode, setMode] = useState<'picker' | 'creating'>('picker');
+  const [nombre, setNombre] = useState('');
+  const [tipoDoc, setTipoDoc] = useState<TipoDoc>('Cédula');
+  const [documento, setDocumento] = useState('');
+  const [direccion, setDireccion] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [email, setEmail] = useState('');
   const [dupDismissed, setDupDismissed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -133,7 +133,7 @@ export function ClienteFinalForm({
   const nombreRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    if (selectedClient || mode !== "creating") return;
+    if (selectedClient || mode !== 'creating') return;
     const t = window.setTimeout(() => nombreRef.current?.focus(), 40);
     return () => window.clearTimeout(t);
   }, [selectedClient, mode]);
@@ -143,12 +143,12 @@ export function ClienteFinalForm({
   // next session starts at the directory, not at a stale form.
   useEffect(() => {
     if (selectedClient) return;
-    setMode("picker");
-    setNombre("");
-    setDocumento("");
-    setDireccion("");
-    setTelefono("");
-    setEmail("");
+    setMode('picker');
+    setNombre('');
+    setDocumento('');
+    setDireccion('');
+    setTelefono('');
+    setEmail('');
     setDupDismissed(false);
     setSubmitError(null);
   }, [selectedClient]);
@@ -161,31 +161,31 @@ export function ClienteFinalForm({
   useEffect(() => {
     if (!initialData || seededInitialRef.current === initialData) return;
     seededInitialRef.current = initialData;
-    setMode("creating");
-    if (typeof initialData.nombre === "string") setNombre(initialData.nombre);
-    if (typeof initialData.tipoDocumento === "string") {
+    setMode('creating');
+    if (typeof initialData.nombre === 'string') setNombre(initialData.nombre);
+    if (typeof initialData.tipoDocumento === 'string') {
       setTipoDoc(
-        initialData.tipoDocumento.toLowerCase().includes("nit")
-          ? "NIT"
-          : "Cédula",
+        initialData.tipoDocumento.toLowerCase().includes('nit')
+          ? 'NIT'
+          : 'Cédula',
       );
     }
-    if (typeof initialData.documento === "string")
+    if (typeof initialData.documento === 'string')
       setDocumento(initialData.documento);
-    if (typeof initialData.direccion === "string")
+    if (typeof initialData.direccion === 'string')
       setDireccion(initialData.direccion);
-    if (typeof initialData.telefono === "string")
+    if (typeof initialData.telefono === 'string')
       setTelefono(formatColombianPhone(initialData.telefono));
-    if (typeof initialData.email === "string") setEmail(initialData.email);
+    if (typeof initialData.email === 'string') setEmail(initialData.email);
     setDupDismissed(false);
   }, [initialData]);
 
   // ── Convex wiring ────────────────────────────────────────────────────
-  const createClient = useConvexMutation(convexApi.clients.create);
+  const createClient = useAuthedConvexAction(convexApi.clients.create);
 
   // ── NIT inline validation ────────────────────────────────────────────
   const nitResult = useMemo(() => {
-    if (tipoDoc !== "NIT") return null;
+    if (tipoDoc !== 'NIT') return null;
     const digits = normalizeDocDigits(documento);
     if (digits.length < 9) return null;
     return verifyNit(documento);
@@ -218,9 +218,9 @@ export function ClienteFinalForm({
   // ── Submit ───────────────────────────────────────────────────────────
   const missingFields = useMemo(() => {
     const missing: string[] = [];
-    if (nombre.trim().length < 3) missing.push("nombre");
+    if (nombre.trim().length < 3) missing.push('nombre');
     if (documento.trim().length < 4) missing.push(tipoDoc.toLowerCase());
-    if (direccion.trim().length === 0) missing.push("dirección");
+    if (direccion.trim().length === 0) missing.push('dirección');
     return missing;
   }, [nombre, documento, direccion, tipoDoc]);
   const canSubmit = !submitting && missingFields.length === 0;
@@ -245,17 +245,17 @@ export function ClienteFinalForm({
       };
       const docTrim = documento.trim();
       if (docTrim.length > 0) {
-        if (tipoDoc === "NIT") payload.nit = docTrim;
+        if (tipoDoc === 'NIT') payload.nit = docTrim;
         else payload.cedula = docTrim;
       }
       if (telefono.trim().length > 0) payload.telefono = telefono.trim();
       if (email.trim().length > 0) payload.email = email.trim();
 
-      const result = (await createClient(payload)) as { id: Id<"clients"> };
+      const result = (await createClient(payload)) as { id: Id<'clients'> };
       onCreated(result.id);
     } catch (err) {
       const msg =
-        err instanceof Error ? err.message : "No se pudo crear el cliente.";
+        err instanceof Error ? err.message : 'No se pudo crear el cliente.';
       setSubmitError(msg);
       setSubmitting(false);
     }
@@ -282,12 +282,12 @@ export function ClienteFinalForm({
     return (
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: "14px",
-          padding: "14px 16px",
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
+          padding: '14px 16px',
           border: `1px solid ${foto.accent.glow}`,
-          borderRadius: "11px",
+          borderRadius: '11px',
           background: foto.accent.soft,
         }}
       >
@@ -296,12 +296,12 @@ export function ClienteFinalForm({
           sx={{
             width: 38,
             height: 38,
-            borderRadius: "50%",
+            borderRadius: '50%',
             background: foto.accent.primary,
-            color: "#fff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             fontFamily: fontFamilies.serif,
             fontSize: 16,
             fontWeight: 500,
@@ -316,7 +316,7 @@ export function ClienteFinalForm({
               fontSize: 14,
               fontWeight: 600,
               color: foto.ink.primary,
-              letterSpacing: "-0.012em",
+              letterSpacing: '-0.012em',
             }}
           >
             {selectedClient.nombre}
@@ -325,12 +325,12 @@ export function ClienteFinalForm({
             sx={{
               fontSize: 11.5,
               color: foto.ink.tertiary,
-              marginTop: "2px",
+              marginTop: '2px',
             }}
           >
             {[idLabel, selectedClient.email, selectedClient.telefono]
               .filter(Boolean)
-              .join(" · ") || "Cliente final"}
+              .join(' · ') || 'Cliente final'}
           </Box>
         </Box>
         <Box
@@ -341,12 +341,12 @@ export function ClienteFinalForm({
             fontSize: 11.5,
             fontWeight: 600,
             color: foto.accent.deep,
-            background: "transparent",
+            background: 'transparent',
             border: `1px solid ${foto.accent.glow}`,
-            borderRadius: "7px",
-            padding: "6px 12px",
-            cursor: "pointer",
-            fontFamily: "inherit",
+            borderRadius: '7px',
+            padding: '6px 12px',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
           }}
         >
           Cambiar
@@ -356,9 +356,9 @@ export function ClienteFinalForm({
   }
 
   // ── Picker (default when nothing is selected and we're not creating) ──
-  if (mode === "picker") {
+  if (mode === 'picker') {
     return (
-      <Box sx={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <EntityPicker<ClienteRow>
           label="Cliente final"
           placeholder="Buscar por nombre o documento…"
@@ -375,12 +375,12 @@ export function ClienteFinalForm({
               c.email ?? c.telefono ?? null,
             ]
               .filter(Boolean)
-              .join(" · ") || null
+              .join(' · ') || null
           }
           getOptionAvatar={(c) => c.nombre.slice(0, 1).toUpperCase()}
           onCreateRequest={(typed) => {
             setNombre(typed);
-            setMode("creating");
+            setMode('creating');
           }}
           createLabel={(t) => `Crear «${t}» como nuevo cliente`}
         />
@@ -390,24 +390,24 @@ export function ClienteFinalForm({
               fontSize: 11.5,
               color: foto.ink.tertiary,
               lineHeight: 1.5,
-              padding: "0 2px",
+              padding: '0 2px',
             }}
           >
-            Todavía no hay clientes finales registrados.{" "}
+            Todavía no hay clientes finales registrados.{' '}
             <Box
               component="button"
               type="button"
-              onClick={() => setMode("creating")}
+              onClick={() => setMode('creating')}
               sx={{
-                background: "transparent",
-                border: "none",
+                background: 'transparent',
+                border: 'none',
                 color: foto.accent.deep,
                 fontWeight: 600,
-                fontSize: "inherit",
-                cursor: "pointer",
-                textDecoration: "underline",
+                fontSize: 'inherit',
+                cursor: 'pointer',
+                textDecoration: 'underline',
                 padding: 0,
-                fontFamily: "inherit",
+                fontFamily: 'inherit',
               }}
             >
               Crear el primero
@@ -423,29 +423,29 @@ export function ClienteFinalForm({
   return (
     <Box
       sx={{
-        padding: "18px 18px 20px",
+        padding: '18px 18px 20px',
         border: `1px solid ${foto.surfaces.rule}`,
-        borderRadius: "11px",
+        borderRadius: '11px',
         background: foto.surfaces.panel,
-        display: "flex",
-        flexDirection: "column",
-        gap: "16px",
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px',
       }}
     >
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          gap: "12px",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          gap: '12px',
         }}
       >
         <Box
           sx={{
             fontSize: 9,
             fontWeight: 500,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
             color: foto.ink.tertiary,
           }}
         >
@@ -455,24 +455,24 @@ export function ClienteFinalForm({
           component="button"
           type="button"
           onClick={() => {
-            setMode("picker");
-            setNombre("");
-            setDocumento("");
-            setDireccion("");
-            setTelefono("");
-            setEmail("");
+            setMode('picker');
+            setNombre('');
+            setDocumento('');
+            setDireccion('');
+            setTelefono('');
+            setEmail('');
             setDupDismissed(false);
             setSubmitError(null);
           }}
           sx={{
-            background: "transparent",
-            border: "none",
+            background: 'transparent',
+            border: 'none',
             color: foto.accent.deep,
             fontSize: 11.5,
             fontWeight: 600,
-            cursor: "pointer",
+            cursor: 'pointer',
             padding: 0,
-            fontFamily: "inherit",
+            fontFamily: 'inherit',
           }}
         >
           ← Volver a buscar
@@ -480,12 +480,12 @@ export function ClienteFinalForm({
       </Box>
       <Box
         sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-          gap: "14px",
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+          gap: '14px',
         }}
       >
-        <Box sx={{ gridColumn: "1 / -1" }}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <FieldLabel>Nombre completo ·</FieldLabel>
           <Box
             ref={nombreRef}
@@ -500,31 +500,31 @@ export function ClienteFinalForm({
           />
         </Box>
 
-        <Box sx={{ gridColumn: "1 / -1" }}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <FieldLabel>Tipo de documento</FieldLabel>
           <SegmentedControl<TipoDoc>
             ariaLabel="Tipo de documento"
             block
             options={[
-              { value: "Cédula", label: "Cédula" },
-              { value: "NIT", label: "NIT" },
+              { value: 'Cédula', label: 'Cédula' },
+              { value: 'NIT', label: 'NIT' },
             ]}
             value={tipoDoc}
             onChange={setTipoDoc}
           />
         </Box>
 
-        <Box sx={{ gridColumn: "1 / -1" }}>
-          <FieldLabel>{tipoDoc === "NIT" ? "NIT ·" : "Cédula ·"}</FieldLabel>
+        <Box sx={{ gridColumn: '1 / -1' }}>
+          <FieldLabel>{tipoDoc === 'NIT' ? 'NIT ·' : 'Cédula ·'}</FieldLabel>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "stretch",
+              display: 'flex',
+              alignItems: 'stretch',
               border: `1px solid ${foto.surfaces.rule}`,
-              borderRadius: "9px",
+              borderRadius: '9px',
               background: foto.surfaces.canvas,
-              overflow: "hidden",
-              "&:focus-within": {
+              overflow: 'hidden',
+              '&:focus-within': {
                 borderColor: foto.accent.primary,
                 boxShadow: `0 0 0 3px ${foto.accent.glow}`,
               },
@@ -538,35 +538,35 @@ export function ClienteFinalForm({
                 setDocumento(e.target.value)
               }
               placeholder={
-                tipoDoc === "NIT" ? "900.123.456-7" : "1.020.345.678"
+                tipoDoc === 'NIT' ? '900.123.456-7' : '1.020.345.678'
               }
               inputMode="numeric"
               sx={{
                 flex: 1,
                 minWidth: 0,
-                border: "none",
-                outline: "none",
-                padding: "11px 13px",
+                border: 'none',
+                outline: 'none',
+                padding: '11px 13px',
                 fontFamily: fontFamilies.mono,
-                fontVariantNumeric: "tabular-nums",
-                fontSize: "13.5px",
+                fontVariantNumeric: 'tabular-nums',
+                fontSize: '13.5px',
                 color: foto.ink.primary,
-                background: "transparent",
+                background: 'transparent',
               }}
             />
             {nitResult?.valid ? (
               <Box
                 sx={{
-                  padding: "11px 14px",
+                  padding: '11px 14px',
                   background: foto.accent.soft,
                   color: foto.accent.deep,
-                  fontSize: "11px",
+                  fontSize: '11px',
                   fontWeight: 600,
                   borderLeft: `1px solid ${foto.accent.glow}`,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  whiteSpace: "nowrap",
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 <Check size={12} strokeWidth={2.5} />
@@ -574,19 +574,19 @@ export function ClienteFinalForm({
               </Box>
             ) : null}
           </Box>
-          {tipoDoc === "NIT" &&
+          {tipoDoc === 'NIT' &&
           nitResult &&
           !nitResult.valid &&
           nitResult.suggested ? (
             <Box
               sx={{
-                fontSize: "11.5px",
+                fontSize: '11.5px',
                 color: foto.status.consigned,
-                marginTop: "4px",
+                marginTop: '4px',
                 lineHeight: 1.5,
               }}
             >
-              DV no coincide · sugerencia{" "}
+              DV no coincide · sugerencia{' '}
               <Box
                 component="span"
                 sx={{ fontFamily: fontFamilies.mono, fontWeight: 600 }}
@@ -597,7 +597,7 @@ export function ClienteFinalForm({
           ) : null}
         </Box>
 
-        <Box sx={{ gridColumn: "1 / -1" }}>
+        <Box sx={{ gridColumn: '1 / -1' }}>
           <FieldLabel>Dirección ·</FieldLabel>
           <Box
             component="input"
@@ -626,7 +626,7 @@ export function ClienteFinalForm({
             sx={{
               ...inputBaseSx(foto),
               fontFamily: fontFamilies.mono,
-              fontVariantNumeric: "tabular-nums",
+              fontVariantNumeric: 'tabular-nums',
             }}
           />
         </Box>
@@ -653,41 +653,41 @@ export function ClienteFinalForm({
           sx={{
             background: alpha(foto.status.consigned, 0.1),
             border: `1px solid ${alpha(foto.status.consigned, 0.25)}`,
-            borderRadius: "10px",
-            padding: "13px 14px",
-            display: "grid",
-            gridTemplateColumns: "auto 1fr",
-            gap: "11px",
-            alignItems: "start",
+            borderRadius: '10px',
+            padding: '13px 14px',
+            display: 'grid',
+            gridTemplateColumns: 'auto 1fr',
+            gap: '11px',
+            alignItems: 'start',
           }}
         >
           <Box
             sx={{
               width: 26,
               height: 26,
-              borderRadius: "50%",
+              borderRadius: '50%',
               background: foto.status.consigned,
-              color: "#fff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               flexShrink: 0,
             }}
           >
             <AlertTriangle size={14} strokeWidth={2.2} />
           </Box>
-          <Box sx={{ fontSize: "11.5px", color: "#7a5a1a", lineHeight: 1.5 }}>
-            <Box component="strong" sx={{ color: "#5a4014" }}>
+          <Box sx={{ fontSize: '11.5px', color: '#7a5a1a', lineHeight: 1.5 }}>
+            <Box component="strong" sx={{ color: '#5a4014' }}>
               Atención · ya existe un cliente parecido
             </Box>
-            <Box sx={{ marginTop: "3px" }}>
-              Encontramos{" "}
-              <Box component="strong" sx={{ color: "#5a4014" }}>
+            <Box sx={{ marginTop: '3px' }}>
+              Encontramos{' '}
+              <Box component="strong" sx={{ color: '#5a4014' }}>
                 “{duplicate.nombre}”
-              </Box>{" "}
+              </Box>{' '}
               en tu directorio. ¿Es el mismo?
             </Box>
-            <Box sx={{ display: "flex", gap: "6px", marginTop: "8px" }}>
+            <Box sx={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
               <Box
                 component="button"
                 type="button"
@@ -715,9 +715,9 @@ export function ClienteFinalForm({
           sx={{
             background: alpha(foto.status.sold, 0.07),
             border: `1px solid ${alpha(foto.status.sold, 0.3)}`,
-            borderRadius: "10px",
-            padding: "11px 13px",
-            fontSize: "12px",
+            borderRadius: '10px',
+            padding: '11px 13px',
+            fontSize: '12px',
             color: foto.status.sold,
           }}
         >
@@ -727,10 +727,10 @@ export function ClienteFinalForm({
 
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          gap: "14px",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          gap: '14px',
         }}
       >
         {missingFields.length > 0 ? (
@@ -742,7 +742,7 @@ export function ClienteFinalForm({
               lineHeight: 1.4,
             }}
           >
-            Falta: {missingFields.join(", ")}.
+            Falta: {missingFields.join(', ')}.
           </Box>
         ) : null}
         <Box
@@ -752,27 +752,27 @@ export function ClienteFinalForm({
           disabled={!canSubmit}
           aria-busy={submitting}
           aria-describedby={
-            missingFields.length > 0 ? "cliente-final-missing" : undefined
+            missingFields.length > 0 ? 'cliente-final-missing' : undefined
           }
           sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "10px 16px",
-            borderRadius: "9px",
-            border: "none",
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            borderRadius: '9px',
+            border: 'none',
             background: canSubmit
               ? `linear-gradient(180deg, ${foto.accent.primary} 0%, ${foto.accent.deep} 100%)`
               : foto.surfaces.inset,
             color: canSubmit ? foto.ink.inverse : foto.ink.mute,
             fontSize: 13,
             fontWeight: 600,
-            cursor: canSubmit ? "pointer" : "not-allowed",
-            fontFamily: "inherit",
+            cursor: canSubmit ? 'pointer' : 'not-allowed',
+            fontFamily: 'inherit',
           }}
         >
           {submitting ? (
-            "Creando…"
+            'Creando…'
           ) : (
             <>
               <CheckCircle2 size={14} strokeWidth={1.8} aria-hidden />
@@ -790,35 +790,35 @@ export function ClienteFinalForm({
 function inputBaseSx(foto: ReturnType<typeof getFoto>) {
   return {
     border: `1px solid ${foto.surfaces.rule}`,
-    borderRadius: "9px",
+    borderRadius: '9px',
     background: foto.surfaces.canvas,
-    padding: "11px 13px",
+    padding: '11px 13px',
     fontFamily: fontFamilies.system,
-    fontSize: "13.5px",
+    fontSize: '13.5px',
     color: foto.ink.primary,
-    width: "100%",
-    transition: "border-color 120ms ease, box-shadow 120ms ease",
-    outline: "none",
-    "&:focus": {
+    width: '100%',
+    transition: 'border-color 120ms ease, box-shadow 120ms ease',
+    outline: 'none',
+    '&:focus': {
       borderColor: foto.accent.primary,
       boxShadow: `0 0 0 3px ${foto.accent.glow}`,
     },
-    "&::placeholder": { color: foto.ink.mute },
+    '&::placeholder': { color: foto.ink.mute },
   };
 }
 
 function dupButtonSx(foto: ReturnType<typeof getFoto>, primary: boolean) {
   return {
-    fontSize: "10.5px",
-    padding: "5px 10px",
-    borderRadius: "6px",
+    fontSize: '10.5px',
+    padding: '5px 10px',
+    borderRadius: '6px',
     background: primary ? foto.status.consigned : foto.surfaces.canvas,
     border: `1px solid ${primary ? foto.status.consigned : alpha(foto.status.consigned, 0.3)}`,
-    color: primary ? "#fff" : "#7a5a1a",
-    cursor: "pointer",
+    color: primary ? '#fff' : '#7a5a1a',
+    cursor: 'pointer',
     fontWeight: 600,
-    fontFamily: "inherit",
-    "&:hover": {
+    fontFamily: 'inherit',
+    '&:hover': {
       background: primary
         ? alpha(foto.status.consigned, 0.85)
         : foto.surfaces.canvas,

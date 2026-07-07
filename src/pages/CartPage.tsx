@@ -33,6 +33,7 @@ import { useWhatsAppContact } from "../hooks/useWhatsAppContact";
 import { useCurrentAsesor } from "../hooks/useCurrentAsesor";
 import VitrinaShareDialog from "../components/vitrina/VitrinaShareDialog";
 import { useIsGuest, useGuestCanSeePrices } from "../hooks/useAuth";
+import { useCanShareVitrina } from "../hooks/usePermissions";
 import { useThemeMode } from "../contexts/ThemeContext";
 import AdminSelectDialog from "../components/cart/AdminSelectDialog";
 import {
@@ -52,6 +53,7 @@ export default function CartPage() {
   const isLight = mode === "light";
   const isGuest = useIsGuest();
   const canSeePrices = useGuestCanSeePrices();
+  const canShareVitrina = useCanShareVitrina();
 
   const { cartItems, removeFromCart, clearCart, cartCount, getCartTotal } =
     useCart();
@@ -363,8 +365,8 @@ export default function CartPage() {
             Se abrira WhatsApp con tu lista de productos
           </Typography>
 
-          {/* Staff only: generate a public client link (Vitrina) for this selection */}
-          {!isGuest && (
+          {/* Staff + special guests: generate a public client link (Vitrina) */}
+          {canShareVitrina && (
             <>
               <Divider sx={{ my: 3 }}>
                 <Typography variant="caption" color="text.secondary">

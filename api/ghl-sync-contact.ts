@@ -10,40 +10,40 @@
  * Body: { celular: string, tags?: string[] }
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { withApiHandler, sendError, sendSuccess } from "./_lib/index.js";
-import { convexClient, isConvexEnabled } from "./_lib/convex-client.js";
-import { bearerMatches } from "./_lib/bearer.js";
-import { upsertContact, type GhlConfig } from "./_lib/ghl-client.js";
-import { api } from "../convex/_generated/api.js";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { withApiHandler, sendError, sendSuccess } from './_lib/index.js';
+import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
+import { bearerMatches } from './_lib/bearer.js';
+import { upsertContact, type GhlConfig } from './_lib/ghl-client.js';
+import { api } from '../convex/_generated/api.js';
 
 export default withApiHandler(
   async (req: VercelRequest, res: VercelResponse) => {
     if (!process.env.GHL_API_SECRET) {
-      return sendError(res, 500, "GHL_API_SECRET not configured on server");
+      return sendError(res, 500, 'GHL_API_SECRET not configured on server');
     }
     if (
-      !bearerMatches(req.headers["authorization"], process.env.GHL_API_SECRET)
+      !bearerMatches(req.headers['authorization'], process.env.GHL_API_SECRET)
     ) {
-      return sendError(res, 401, "Unauthorized");
+      return sendError(res, 401, 'Unauthorized');
     }
     if (!isConvexEnabled || !convexClient) {
-      return sendError(res, 503, "Convex backend not configured");
+      return sendError(res, 503, 'Convex backend not configured');
     }
 
     const ghlToken = process.env.GHL_TOKEN;
     const locationId = process.env.GHL_LOCATION_ID;
     if (!ghlToken || !locationId) {
-      return sendError(res, 503, "GHL credentials not configured");
+      return sendError(res, 503, 'GHL credentials not configured');
     }
 
     const body = (req.body ?? {}) as { celular?: string; tags?: string[] };
-    if (!body.celular) return sendError(res, 400, "Missing celular");
+    if (!body.celular) return sendError(res, 400, 'Missing celular');
 
     const client = await convexClient.query(api.ghl.getClientByPhone, {
       celular: body.celular,
     });
-    if (!client) return sendError(res, 404, "Client not found");
+    if (!client) return sendError(res, 404, 'Client not found');
 
     const cfg: GhlConfig = { token: ghlToken, locationId };
     const up = await upsertContact(cfg, {
@@ -53,25 +53,26 @@ export default withApiHandler(
       tags: body.tags,
       customFields: [
         {
-          key: "total_comprado_cop",
+          key: 'total_comprado_cop',
           field_value: client.totalCompradoCOP ?? 0,
         },
       ],
-      source: "ghl-sync-contact",
+      source: 'ghl-sync-contact',
     });
 
     if (up.contactId) {
       await convexClient.mutation(api.ghl.linkGhlContact, {
         clientId: client._id,
         ghlContactId: up.contactId,
+        secret: process.env.ADMIN_SYNC_TOKEN ?? '',
       });
     }
 
     return sendSuccess(res, { contactId: up.contactId, isNew: up.isNew });
   },
   {
-    methods: ["POST", "OPTIONS"],
+    methods: ['POST', 'OPTIONS'],
     requireGoogle: false,
-    errorPrefix: "GhlSyncContact",
+    errorPrefix: 'GhlSyncContact',
   },
 );

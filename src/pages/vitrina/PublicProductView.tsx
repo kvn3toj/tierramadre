@@ -6,7 +6,10 @@
  * components the in-app ProductDetail uses (gallery + gem sheet), so it looks
  * native — but mounts none of the escape-hatch surfaces (cart, favorites,
  * Esmereogénesis, admin data, share/back). The only outbound action is a
- * WhatsApp CTA to the person who shared the link.
+ * WhatsApp CTA to the person who shared the link. When the link carries a
+ * GHL `contactId` (from WF-04), that same tap also writes the pick straight
+ * to the GHL contact (see /api/vitrina-select) instead of relying on María
+ * to parse the WhatsApp reply text.
  *
  * Price is the per-share figure (precioCOP × chosen multiplier, in the chosen
  * currency), computed from the link's stored pricing — never a hidden state.
@@ -53,6 +56,13 @@ interface PublicProductViewProps {
   pricing: VitrinaPricing;
   /** Digits-only WhatsApp number the "Consultar" CTA opens. */
   senderPhone: string;
+  /**
+   * GHL contact id (from the link's `?cid=`), present only when this Vitrina
+   * came from WF-04. When set, tapping "Consultar" also writes the pick
+   * straight to that GHL contact (see /api/vitrina-select) — a deterministic
+   * signal that doesn't depend on María parsing the WhatsApp reply text.
+   */
+  contactId?: string;
   /** When provided, shows a back button (inside a multi-product vitrina). */
   onBack?: () => void;
 }
@@ -61,6 +71,7 @@ export function PublicProductView({
   product,
   pricing,
   senderPhone,
+  contactId,
   onBack,
 }: PublicProductViewProps) {
   const { mode } = useThemeMode();
@@ -162,6 +173,22 @@ export function PublicProductView({
   }, [product.item, displayName]);
 
   const handleConsult = () => {
+    // Deterministic signal to GHL — fired BEFORE window.open and never
+    // awaited, so it can't delay or block the WhatsApp CTA (which must open
+    // synchronously within this click handler or browsers treat it as an
+    // untrusted popup and block it). `keepalive` lets the request finish
+    // even though the tab may lose focus to WhatsApp immediately after.
+    if (contactId) {
+      fetch("/api/vitrina-select", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactId, sku: product.item }),
+        keepalive: true,
+      }).catch(() => {
+        /* best-effort — the WhatsApp CTA below must never depend on this */
+      });
+    }
+
     const shareUrl = typeof window !== "undefined" ? window.location.href : "";
     const priceLine = priceLabel ? ` — ${priceLabel}` : "";
     const text = `Hola 💚 Me interesa esta pieza de Tierra Mädre:\n\n${displayName}${priceLine}\n\n${shareUrl}`;

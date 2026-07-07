@@ -11,6 +11,8 @@
 import type * as _lib_aiCaps from "../_lib/aiCaps.js";
 import type * as _lib_applyPayment from "../_lib/applyPayment.js";
 import type * as _lib_asesorSync from "../_lib/asesorSync.js";
+import type * as _lib_authz from "../_lib/authz.js";
+import type * as _lib_cidSigning from "../_lib/cidSigning.js";
 import type * as _lib_columnMaps from "../_lib/columnMaps.js";
 import type * as _lib_commission from "../_lib/commission.js";
 import type * as _lib_fotosintesisVocab from "../_lib/fotosintesisVocab.js";
@@ -51,6 +53,8 @@ declare const fullApi: ApiFromModules<{
   "_lib/aiCaps": typeof _lib_aiCaps;
   "_lib/applyPayment": typeof _lib_applyPayment;
   "_lib/asesorSync": typeof _lib_asesorSync;
+  "_lib/authz": typeof _lib_authz;
+  "_lib/cidSigning": typeof _lib_cidSigning;
   "_lib/columnMaps": typeof _lib_columnMaps;
   "_lib/commission": typeof _lib_commission;
   "_lib/fotosintesisVocab": typeof _lib_fotosintesisVocab;

@@ -107,6 +107,16 @@ async function validateUser(
         roleLower.includes("ambassador")
       ) {
         accessLevel = "embajador";
+      } else if (
+        // "Special guest" — can browse + share Vitrinas like staff, but no
+        // editing/admin powers. Activation is enforced by the estado check
+        // above (rows marked inactivo are skipped, so they never reach here).
+        roleLower.includes("invitado especial") ||
+        roleLower.includes("invitado_especial") ||
+        roleLower.includes("special guest") ||
+        roleLower.includes("especial")
+      ) {
+        accessLevel = "invitado_especial";
       }
 
       return {

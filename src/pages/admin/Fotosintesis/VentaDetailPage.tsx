@@ -1,7 +1,7 @@
-import { useCallback, useId, useMemo, useRef, useState } from "react";
-import { Box } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import { useNavigate, useParams } from "react-router-dom";
+import { useCallback, useId, useMemo, useRef, useState } from 'react';
+import { Box } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   AlertCircle,
   Ban,
@@ -9,78 +9,78 @@ import {
   Link2Off,
   Sparkles,
   Upload,
-} from "lucide-react";
-import { getFoto, fontFamilies } from "../../../design-system";
+} from 'lucide-react';
+import { getFoto, fontFamilies } from '../../../design-system';
 import {
   uploadVentaDocument,
   ventasSubPath,
   driveDocViewUrl,
-} from "./utils/uploadItemMedia";
-import { exportCarnet } from "./exportCarnet";
-import { slugifyBuyerName } from "../../../utils/slugify";
-import { cancelToast } from "./utils/cancelToast";
-import { FOTO_PREVIEW_FELT } from "./VentaPage";
-import { FOTO_TOPBAR_HEIGHT } from "./components/FotoTopbar";
+} from './utils/uploadItemMedia';
+import { exportCarnet } from './exportCarnet';
+import { slugifyBuyerName } from '../../../utils/slugify';
+import { cancelToast } from './utils/cancelToast';
+import { FOTO_PREVIEW_FELT } from './VentaPage';
+import { FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
 import {
   useConvexQuery,
-  useConvexMutation,
+  useAuthedConvexAction,
   convexApi,
-} from "../../../lib/convex-safe";
-import { useGoogleAuth } from "../../../contexts/GoogleAuthContext";
-import { useNotification } from "../../../contexts/NotificationContext";
-import { TicketHeader } from "./components/TicketHeader";
-import { KardexPreview } from "./components/KardexPreview";
-import type { KardexLineItem } from "./components/KardexPreview";
-import { CancelVentaDialog } from "./components/CancelVentaDialog";
-import { EditableMetaValue } from "./components/EditableMetaValue";
-import { resolveKardexPrices } from "./utils/saleItemSelection";
-import type { CompradorTier } from "./utils/saleItemSelection";
-import { resolveItemThumbnail } from "./utils/resolveThumbnail";
-import { useBatchThumbnails } from "../../../hooks/useBatchThumbnails";
-import type { Id } from "../../../../convex/_generated/dataModel";
+} from '../../../lib/convex-safe';
+import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
+import { useNotification } from '../../../contexts/NotificationContext';
+import { TicketHeader } from './components/TicketHeader';
+import { KardexPreview } from './components/KardexPreview';
+import type { KardexLineItem } from './components/KardexPreview';
+import { CancelVentaDialog } from './components/CancelVentaDialog';
+import { EditableMetaValue } from './components/EditableMetaValue';
+import { resolveKardexPrices } from './utils/saleItemSelection';
+import type { CompradorTier } from './utils/saleItemSelection';
+import { resolveItemThumbnail } from './utils/resolveThumbnail';
+import { useBatchThumbnails } from '../../../hooks/useBatchThumbnails';
+import type { Id } from '../../../../convex/_generated/dataModel';
 
 function formatCop(value: number | undefined | null): string {
-  if (typeof value !== "number" || Number.isNaN(value)) return "—";
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
+  if (typeof value !== 'number' || Number.isNaN(value)) return '—';
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
     maximumFractionDigits: 0,
   }).format(value);
 }
 
 function formatDateLong(iso: string | undefined | null): string {
-  if (!iso) return "—";
+  if (!iso) return '—';
   try {
-    return new Date(iso).toLocaleDateString("es-CO", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
+    return new Date(iso).toLocaleDateString('es-CO', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
     });
   } catch {
-    return "—";
+    return '—';
   }
 }
 
 function formatDateTimeLong(iso: string | undefined | null): string {
-  if (!iso) return "—";
+  if (!iso) return '—';
   try {
-    return new Date(iso).toLocaleString("es-CO", {
-      dateStyle: "long",
-      timeStyle: "short",
+    return new Date(iso).toLocaleString('es-CO', {
+      dateStyle: 'long',
+      timeStyle: 'short',
     });
   } catch {
-    return "—";
+    return '—';
   }
 }
 
 function formaPagoLabel(formaPago: string, metodoContado?: string): string {
-  if (formaPago === "contado") {
-    return metodoContado ? `Contado · ${metodoContado}` : "Contado";
+  if (formaPago === 'contado') {
+    return metodoContado ? `Contado · ${metodoContado}` : 'Contado';
   }
-  if (formaPago === "esmereogenesis") return "Esmereogénesis";
-  if (formaPago === "credito") return "Crédito";
-  if (formaPago === "bajo_pedido") return "Bajo pedido";
-  if (formaPago === "consignacion") return "Consignación";
+  if (formaPago === 'esmereogenesis') return 'Esmereogénesis';
+  if (formaPago === 'credito') return 'Crédito';
+  if (formaPago === 'bajo_pedido') return 'Bajo pedido';
+  if (formaPago === 'consignacion') return 'Consignación';
   return formaPago;
 }
 
@@ -95,7 +95,7 @@ function formaPagoLabel(formaPago: string, metodoContado?: string): string {
  * refreshes the row.
  */
 export default function VentaDetailPage() {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const navigate = useNavigate();
   const { saleId: routeSaleId } = useParams();
   const { user } = useGoogleAuth();
@@ -120,10 +120,10 @@ export default function VentaDetailPage() {
   // `undefined` = still loading; `null` = loaded + not found.
   const sale = allSales === undefined ? undefined : saleMatch;
 
-  const cancelSale = useConvexMutation(convexApi.sales.cancel);
-  const updatePrice = useConvexMutation(convexApi.sales.updatePrice);
-  const setCarnetUrl = useConvexMutation(convexApi.sales.setCarnetUrl);
-  const setCertificadoUrl = useConvexMutation(
+  const cancelSale = useAuthedConvexAction(convexApi.sales.cancel);
+  const updatePrice = useAuthedConvexAction(convexApi.sales.updatePrice);
+  const setCarnetUrl = useAuthedConvexAction(convexApi.sales.setCarnetUrl);
+  const setCertificadoUrl = useAuthedConvexAction(
     convexApi.sales.setCertificadoUrl,
   );
 
@@ -132,30 +132,30 @@ export default function VentaDetailPage() {
   const firstItemId = sale?.itemIds[0] ?? null;
   const item = useConvexQuery(
     convexApi.products.get,
-    firstItemId ? { itemId: firstItemId } : "skip",
+    firstItemId ? { itemId: firstItemId } : 'skip',
   );
   // All sale items in one batch — order-preserving, with tier prices.
   const manyItems = useConvexQuery(
     convexApi.products.getManyByItemIds,
-    sale ? { itemIds: sale.itemIds } : "skip",
+    sale ? { itemIds: sale.itemIds } : 'skip',
   );
   const lot = useConvexQuery(
     convexApi.lots.getByLoteId,
-    item?.loteId ? { loteId: item.loteId } : "skip",
+    item?.loteId ? { loteId: item.loteId } : 'skip',
   );
   const provider = useConvexQuery(
     convexApi.providers.get,
-    lot?.providerId ? { id: lot.providerId } : "skip",
+    lot?.providerId ? { id: lot.providerId } : 'skip',
   );
   const buyer = useConvexQuery(
     convexApi.clients.get,
-    sale?.clientId ? { id: sale.clientId } : "skip",
+    sale?.clientId ? { id: sale.clientId } : 'skip',
   );
 
   // The buyer's tier decides which price each line contributes (ambassador vs
   // consumer). Free-text / "final" write-ins pay the consumer price.
   const tier: CompradorTier =
-    buyer?.tipo === "embajador" ? "embajador" : "final";
+    buyer?.tipo === 'embajador' ? 'embajador' : 'final';
 
   // itemId → per-item price (COP). Prefers the sale's frozen `lineItems`
   // snapshot (faithful comprobante); falls back to a live tier recompute only
@@ -179,7 +179,7 @@ export default function VentaDetailPage() {
       precioCop: priceByItemId.get(row.itemId),
     }));
     const manual: KardexLineItem[] = (sale?.manualItems ?? []).map((m) => ({
-      itemId: "",
+      itemId: '',
       nombre: m.nombre,
       peso: m.peso,
       descripcion: m.descripcion,
@@ -194,10 +194,10 @@ export default function VentaDetailPage() {
   const subtotal = useMemo(() => {
     let sum = 0;
     for (const value of priceByItemId.values()) {
-      if (typeof value === "number" && !Number.isNaN(value)) sum += value;
+      if (typeof value === 'number' && !Number.isNaN(value)) sum += value;
     }
     for (const m of sale?.manualItems ?? []) {
-      if (typeof m.precioCOP === "number" && !Number.isNaN(m.precioCOP)) {
+      if (typeof m.precioCOP === 'number' && !Number.isNaN(m.precioCOP)) {
         sum += m.precioCOP;
       }
     }
@@ -207,20 +207,16 @@ export default function VentaDetailPage() {
   const handleConfirmCancel = useCallback(
     async (reason: string) => {
       if (!sale) return;
-      const operatorEmail = user?.email ?? "unknown@tm";
-      const operatorName = user?.name;
       // C8 — own try/catch so the success path tells the truth (tailored to the
       // restored/skipped counts) and errors are surfaced AND re-thrown so
       // CancelVentaDialog keeps its inline error + re-enables submit.
       try {
         const res = await cancelSale({
-          id: sale._id as Id<"sales">,
-          operatorEmail,
-          operatorName,
+          id: sale._id as Id<'sales'>,
           reason,
         });
         if (res.alreadyCancelled) {
-          notify("La venta ya estaba cancelada", "info");
+          notify('La venta ya estaba cancelada', 'info');
         } else {
           const { message, severity } = cancelToast({
             restored: res.restored,
@@ -231,11 +227,11 @@ export default function VentaDetailPage() {
         setShowCancel(false);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        notify(`No pudimos cancelar la venta: ${msg}`, "error");
+        notify(`No pudimos cancelar la venta: ${msg}`, 'error');
         throw err;
       }
     },
-    [sale, user, cancelSale, notify],
+    [sale, cancelSale, notify],
   );
 
   // Generate the Kardex PDF from the on-screen comprobante and archive it to
@@ -247,37 +243,37 @@ export default function VentaDetailPage() {
   // sale's carnet files under `ventas/<saleYear>/<saleMonth>`.
   const handleGenerateKardex = useCallback(async () => {
     if (!sale || archivingKardex) return;
-    if (sale.estado === "cancelada") {
-      notify("No se genera Kardex para una venta cancelada", "warning");
+    if (sale.estado === 'cancelada') {
+      notify('No se genera Kardex para una venta cancelada', 'warning');
       return;
     }
     if (!kardexRef.current) {
-      notify("La vista previa del Kardex aún no está lista", "warning");
+      notify('La vista previa del Kardex aún no está lista', 'warning');
       return;
     }
     if (kardexItems.length === 0) {
-      notify("No hay ítems en la venta para generar el Kardex", "warning");
+      notify('No hay ítems en la venta para generar el Kardex', 'warning');
       return;
     }
     setArchivingKardex(true);
     try {
-      const slug = slugifyBuyerName(buyer?.nombre ?? "cliente");
+      const slug = slugifyBuyerName(buyer?.nombre ?? 'cliente');
       const filename = `${sale.saleId}-${slug}.pdf`;
       const blob = await exportCarnet(kardexRef.current, filename, {
         download: false,
       });
-      const file = new File([blob], filename, { type: "application/pdf" });
+      const file = new File([blob], filename, { type: 'application/pdf' });
       const docUrl = await uploadVentaDocument(file, {
         subPath: ventasSubPath(new Date(sale.fechaVenta)),
       });
       await setCarnetUrl({
-        id: sale._id as Id<"sales">,
+        id: sale._id as Id<'sales'>,
         carnetUrl: docUrl,
       });
-      notify("Kardex generado y archivado en Drive", "success");
+      notify('Kardex generado y archivado en Drive', 'success');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      notify(`No pudimos generar el Kardex: ${msg}`, "error");
+      notify(`No pudimos generar el Kardex: ${msg}`, 'error');
     } finally {
       setArchivingKardex(false);
     }
@@ -291,11 +287,11 @@ export default function VentaDetailPage() {
           background: foto.surfaces.canvas,
           color: foto.ink.tertiary,
           minHeight: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           fontSize: 13,
-          letterSpacing: "-0.005em",
+          letterSpacing: '-0.005em',
         }}
       >
         Cargando venta…
@@ -310,13 +306,13 @@ export default function VentaDetailPage() {
           background: foto.surfaces.canvas,
           color: foto.ink.primary,
           minHeight: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "14px",
-          padding: "40px 20px",
-          textAlign: "center",
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '14px',
+          padding: '40px 20px',
+          textAlign: 'center',
         }}
       >
         <Link2Off size={28} color={foto.ink.tertiary} aria-hidden />
@@ -326,18 +322,18 @@ export default function VentaDetailPage() {
         <Box
           component="button"
           type="button"
-          onClick={() => navigate("/admin/fotosintesis")}
+          onClick={() => navigate('/admin/fotosintesis')}
           sx={{
-            marginTop: "4px",
-            padding: "10px 18px",
-            borderRadius: "9px",
+            marginTop: '4px',
+            padding: '10px 18px',
+            borderRadius: '9px',
             border: `1px solid ${foto.surfaces.rule}`,
             background: foto.surfaces.canvas,
             color: foto.ink.secondary,
             fontSize: 13,
             fontWeight: 500,
-            cursor: "pointer",
-            fontFamily: "inherit",
+            cursor: 'pointer',
+            fontFamily: 'inherit',
           }}
         >
           Volver al inicio
@@ -346,9 +342,9 @@ export default function VentaDetailPage() {
     );
   }
 
-  const isCancelled = sale.estado === "cancelada";
+  const isCancelled = sale.estado === 'cancelada';
   const buyerTipoLabel =
-    buyer?.tipo === "embajador" ? "Embajador" : "Cliente final";
+    buyer?.tipo === 'embajador' ? 'Embajador' : 'Cliente final';
 
   return (
     <Box
@@ -362,44 +358,44 @@ export default function VentaDetailPage() {
         id={sale.saleId}
         kind="sale"
         meta={[
-          { label: "Fecha", value: formatDateLong(sale.fechaVenta) },
+          { label: 'Fecha', value: formatDateLong(sale.fechaVenta) },
           {
-            label: "Operador",
-            value: user?.givenName || user?.name?.split(" ")[0] || "Operador",
+            label: 'Operador',
+            value: user?.givenName || user?.name?.split(' ')[0] || 'Operador',
           },
         ]}
       />
 
       <Box
         sx={{
-          display: "grid",
+          display: 'grid',
           gridTemplateColumns: {
-            xs: "1fr",
-            lg: "minmax(0, 1fr) minmax(380px, 460px)",
+            xs: '1fr',
+            lg: 'minmax(0, 1fr) minmax(380px, 460px)',
           },
           gap: 0,
           maxWidth: 1320,
-          margin: "0 auto",
+          margin: '0 auto',
           minHeight: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px - 110px)`,
         }}
       >
         {/* ───── LEFT pane (form summary) ───── */}
         <Box
           sx={{
-            padding: { xs: "24px 16px 60px", md: "24px 28px 60px" },
-            display: "flex",
-            flexDirection: "column",
-            gap: "28px",
+            padding: { xs: '24px 16px 60px', md: '24px 28px 60px' },
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '28px',
           }}
         >
           <Section title="Detalle de la venta" foto={foto}>
             <Box
               sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-                padding: "16px 18px",
-                borderRadius: "11px",
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                padding: '16px 18px',
+                borderRadius: '11px',
                 border: `1px solid ${foto.surfaces.rule}`,
                 background: foto.surfaces.panel,
               }}
@@ -415,16 +411,16 @@ export default function VentaDetailPage() {
                         color: foto.ink.primary,
                       }}
                     >
-                      {buyer?.nombre ?? "—"}
+                      {buyer?.nombre ?? '—'}
                     </Box>
                     <Box
                       component="span"
                       sx={{
-                        marginLeft: "8px",
+                        marginLeft: '8px',
                         fontSize: 11.5,
                         color: foto.ink.tertiary,
-                        letterSpacing: "0.04em",
-                        textTransform: "uppercase",
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
                       }}
                     >
                       {buyerTipoLabel}
@@ -438,7 +434,7 @@ export default function VentaDetailPage() {
                 value={formaPagoLabel(sale.formaPago, sale.metodoContado)}
                 foto={foto}
               />
-              {sale.formaPago === "credito" ? (
+              {sale.formaPago === 'credito' ? (
                 <>
                   <DetailRow
                     label="Vence"
@@ -448,9 +444,9 @@ export default function VentaDetailPage() {
                   <DetailRow
                     label="N° de cuotas"
                     value={
-                      typeof sale.numeroCuotas === "number"
+                      typeof sale.numeroCuotas === 'number'
                         ? String(sale.numeroCuotas)
-                        : "—"
+                        : '—'
                     }
                     foto={foto}
                   />
@@ -460,7 +456,7 @@ export default function VentaDetailPage() {
                 sx={{
                   height: 1,
                   background: foto.surfaces.edge,
-                  margin: "4px 0",
+                  margin: '4px 0',
                 }}
               />
               <DetailRow
@@ -477,22 +473,22 @@ export default function VentaDetailPage() {
                     helper={
                       isCancelled
                         ? undefined
-                        : "Actualiza precio + total (Enter para guardar)."
+                        : 'Actualiza precio + total (Enter para guardar).'
                     }
                     onCommit={async (next) => {
                       try {
                         await updatePrice({
-                          id: sale._id as Id<"sales">,
+                          id: sale._id as Id<'sales'>,
                           precioAcordadoCOP: next,
                           totalCOP: next,
                         });
-                        notify("Precio de la venta actualizado", "success");
+                        notify('Precio de la venta actualizado', 'success');
                       } catch (err) {
                         const msg =
                           err instanceof Error ? err.message : String(err);
                         notify(
                           `No pudimos actualizar el precio: ${msg}`,
-                          "error",
+                          'error',
                         );
                         throw err;
                       }
@@ -515,9 +511,9 @@ export default function VentaDetailPage() {
           <Section title="Documentos" foto={foto}>
             <Box
               sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
               }}
             >
               <DocumentRow
@@ -529,19 +525,19 @@ export default function VentaDetailPage() {
                 foto={foto}
                 onGenerate={handleGenerateKardex}
                 generating={archivingKardex}
-                generateLabel={sale.carnetUrl ? "Regenerar" : "Generar Kardex"}
+                generateLabel={sale.carnetUrl ? 'Regenerar' : 'Generar Kardex'}
                 onUpload={async (file) => {
                   try {
                     const docUrl = await uploadVentaDocument(file);
                     await setCarnetUrl({
-                      id: sale._id as Id<"sales">,
+                      id: sale._id as Id<'sales'>,
                       carnetUrl: docUrl,
                     });
-                    notify("Kardex actualizado", "success");
+                    notify('Kardex actualizado', 'success');
                   } catch (err) {
                     const msg =
                       err instanceof Error ? err.message : String(err);
-                    notify(`No pudimos subir el Kardex: ${msg}`, "error");
+                    notify(`No pudimos subir el Kardex: ${msg}`, 'error');
                   }
                 }}
               />
@@ -556,14 +552,14 @@ export default function VentaDetailPage() {
                   try {
                     const docUrl = await uploadVentaDocument(file);
                     await setCertificadoUrl({
-                      id: sale._id as Id<"sales">,
+                      id: sale._id as Id<'sales'>,
                       certificadoUrl: docUrl,
                     });
-                    notify("Certificado actualizado", "success");
+                    notify('Certificado actualizado', 'success');
                   } catch (err) {
                     const msg =
                       err instanceof Error ? err.message : String(err);
-                    notify(`No pudimos subir el Certificado: ${msg}`, "error");
+                    notify(`No pudimos subir el Certificado: ${msg}`, 'error');
                   }
                 }}
               />
@@ -575,11 +571,11 @@ export default function VentaDetailPage() {
               <Box
                 role="status"
                 sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "8px",
-                  padding: "14px 16px",
-                  borderRadius: "11px",
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                  padding: '14px 16px',
+                  borderRadius: '11px',
                   border: `1px solid ${foto.status.sold}`,
                   background: alpha(foto.status.sold, 0.06),
                   color: foto.status.sold,
@@ -587,17 +583,17 @@ export default function VentaDetailPage() {
                   lineHeight: 1.55,
                 }}
               >
-                <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <AlertCircle size={16} strokeWidth={1.7} aria-hidden />
                   <Box sx={{ fontWeight: 600 }}>
                     Cancelada el {formatDateTimeLong(sale.cancelledAt)}
                   </Box>
                 </Box>
                 <Box sx={{ color: foto.ink.secondary, fontSize: 12 }}>
-                  por {sale.cancelledBy ?? "—"}
+                  por {sale.cancelledBy ?? '—'}
                 </Box>
                 <Box sx={{ color: foto.ink.secondary, fontSize: 12 }}>
-                  Motivo: {sale.cancellationReason ?? "—"}
+                  Motivo: {sale.cancellationReason ?? '—'}
                 </Box>
               </Box>
             </Section>
@@ -606,10 +602,10 @@ export default function VentaDetailPage() {
           {/* Footer actions */}
           <Box
             sx={{
-              display: "flex",
-              gap: "12px",
-              justifyContent: "flex-end",
-              paddingTop: "12px",
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'flex-end',
+              paddingTop: '12px',
               borderTop: `1px solid ${foto.surfaces.edge}`,
             }}
           >
@@ -620,11 +616,11 @@ export default function VentaDetailPage() {
               aria-disabled={isCancelled}
               onClick={() => setShowCancel(true)}
               sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "10px 18px",
-                borderRadius: "9px",
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 18px',
+                borderRadius: '9px',
                 border: `1px solid ${isCancelled ? foto.surfaces.rule : foto.status.sold}`,
                 background: isCancelled
                   ? foto.surfaces.inset
@@ -632,18 +628,18 @@ export default function VentaDetailPage() {
                 color: isCancelled ? foto.ink.mute : foto.status.sold,
                 fontSize: 13,
                 fontWeight: 600,
-                letterSpacing: "-0.005em",
-                cursor: isCancelled ? "not-allowed" : "pointer",
-                fontFamily: "inherit",
-                transition: "background 120ms ease, transform 120ms ease",
-                "&:hover:not(:disabled)": {
+                letterSpacing: '-0.005em',
+                cursor: isCancelled ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit',
+                transition: 'background 120ms ease, transform 120ms ease',
+                '&:hover:not(:disabled)': {
                   background: alpha(foto.status.sold, 0.1),
-                  transform: "translateY(-1px)",
+                  transform: 'translateY(-1px)',
                 },
               }}
             >
               <Ban size={15} strokeWidth={1.8} aria-hidden />
-              {isCancelled ? "Venta cancelada" : "Cancelar venta"}
+              {isCancelled ? 'Venta cancelada' : 'Cancelar venta'}
             </Box>
           </Box>
         </Box>
@@ -652,24 +648,24 @@ export default function VentaDetailPage() {
         <Box
           sx={{
             background: FOTO_PREVIEW_FELT,
-            padding: "28px 24px",
-            position: { xs: "static", lg: "sticky" },
+            padding: '28px 24px',
+            position: { xs: 'static', lg: 'sticky' },
             top: FOTO_TOPBAR_HEIGHT,
             maxHeight: {
-              xs: "none",
+              xs: 'none',
               lg: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
             },
-            overflowY: "auto",
+            overflowY: 'auto',
           }}
         >
           <Box
             sx={{
               fontSize: 9,
               fontWeight: 500,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: "rgba(255,255,255,0.55)",
-              marginBottom: "12px",
+              letterSpacing: '0.22em',
+              textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.55)',
+              marginBottom: '12px',
             }}
           >
             Comprobante archivado
@@ -719,10 +715,10 @@ export default function VentaDetailPage() {
 
           <Box
             sx={{
-              marginTop: "14px",
+              marginTop: '14px',
               fontSize: 11,
-              color: "rgba(255,255,255,0.55)",
-              letterSpacing: "0.01em",
+              color: 'rgba(255,255,255,0.55)',
+              letterSpacing: '0.01em',
               fontFamily: fontFamilies.system,
             }}
           >
@@ -756,10 +752,10 @@ function Section({ title, children, foto }: SectionProps) {
         sx={{
           fontSize: 10,
           fontWeight: 500,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
           color: foto.ink.tertiary,
-          marginBottom: "10px",
+          marginBottom: '10px',
         }}
       >
         {title}
@@ -787,10 +783,10 @@ function DetailRow({
   return (
     <Box
       sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "baseline",
-        gap: "16px",
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'baseline',
+        gap: '16px',
       }}
     >
       <Box
@@ -798,7 +794,7 @@ function DetailRow({
           fontSize: 12,
           fontWeight: 500,
           color: foto.ink.secondary,
-          letterSpacing: "-0.005em",
+          letterSpacing: '-0.005em',
         }}
       >
         {label}
@@ -806,12 +802,12 @@ function DetailRow({
       <Box
         sx={{
           fontFamily: mono ? fontFamilies.mono : fontFamilies.system,
-          fontVariantNumeric: mono ? "tabular-nums" : undefined,
+          fontVariantNumeric: mono ? 'tabular-nums' : undefined,
           fontSize: strong ? 17 : 13,
           fontWeight: strong ? 600 : 500,
           color: strong ? foto.accent.deep : foto.ink.primary,
-          letterSpacing: "-0.01em",
-          textAlign: "right",
+          letterSpacing: '-0.01em',
+          textAlign: 'right',
         }}
       >
         {value}
@@ -862,14 +858,14 @@ function DocumentRow({
   onUpload,
   onGenerate,
   generating = false,
-  generateLabel = "Generar",
+  generateLabel = 'Generar',
 }: DocumentRowProps) {
   const inputId = useId();
   const [uploading, setUploading] = useState(false);
 
   const handlePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    e.target.value = ""; // allow re-picking the same filename after a failure
+    e.target.value = ''; // allow re-picking the same filename after a failure
     if (!file) return;
     setUploading(true);
     try {
@@ -882,12 +878,12 @@ function DocumentRow({
   return (
     <Box
       sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: "12px",
-        padding: "12px 14px",
-        borderRadius: "10px",
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '12px',
+        padding: '12px 14px',
+        borderRadius: '10px',
         border: `1px solid ${foto.surfaces.rule}`,
         background: foto.surfaces.panel,
       }}
@@ -901,7 +897,7 @@ function DocumentRow({
       >
         {label}
       </Box>
-      <Box sx={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+      <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
         {url ? (
           <Box
             component="a"
@@ -909,20 +905,20 @@ function DocumentRow({
             target="_blank"
             rel="noopener noreferrer"
             sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "6px 12px",
-              borderRadius: "7px",
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: '7px',
               border: `1px solid ${foto.accent.primary}`,
               background: foto.accent.soft,
               color: foto.accent.deep,
               fontSize: 12,
               fontWeight: 600,
-              textDecoration: "none",
-              letterSpacing: "-0.005em",
-              transition: "background 120ms ease",
-              "&:hover": { background: alpha(foto.accent.primary, 0.12) },
+              textDecoration: 'none',
+              letterSpacing: '-0.005em',
+              transition: 'background 120ms ease',
+              '&:hover': { background: alpha(foto.accent.primary, 0.12) },
             }}
           >
             <ExternalLink size={13} strokeWidth={1.8} aria-hidden />
@@ -933,8 +929,8 @@ function DocumentRow({
             sx={{
               fontSize: 11.5,
               color: foto.ink.mute,
-              fontStyle: "italic",
-              letterSpacing: "0.01em",
+              fontStyle: 'italic',
+              letterSpacing: '0.01em',
             }}
           >
             Pendiente
@@ -950,29 +946,29 @@ function DocumentRow({
             disabled={generating || uploading}
             aria-busy={generating}
             sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "6px 12px",
-              borderRadius: "7px",
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: '7px',
               border: `1px solid ${foto.accent.primary}`,
               background: foto.accent.primary,
-              color: "#FFFFFF",
+              color: '#FFFFFF',
               fontSize: 12,
               fontWeight: 600,
-              letterSpacing: "-0.005em",
-              fontFamily: "inherit",
-              cursor: generating ? "wait" : "pointer",
-              transition: "background 120ms ease, transform 120ms ease",
-              "&:hover:not(:disabled)": {
+              letterSpacing: '-0.005em',
+              fontFamily: 'inherit',
+              cursor: generating ? 'wait' : 'pointer',
+              transition: 'background 120ms ease, transform 120ms ease',
+              '&:hover:not(:disabled)': {
                 background: foto.accent.deep,
-                transform: "translateY(-1px)",
+                transform: 'translateY(-1px)',
               },
-              "&:disabled": { opacity: 0.7, cursor: "wait" },
+              '&:disabled': { opacity: 0.7, cursor: 'wait' },
             }}
           >
             <Sparkles size={13} strokeWidth={1.8} aria-hidden />
-            {generating ? "Generando…" : generateLabel}
+            {generating ? 'Generando…' : generateLabel}
           </Box>
         ) : null}
         {!disabled ? (
@@ -981,20 +977,20 @@ function DocumentRow({
             htmlFor={inputId}
             aria-disabled={uploading}
             sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "6px 12px",
-              borderRadius: "7px",
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: '7px',
               border: `1px solid ${foto.surfaces.edgeStrong}`,
               background: foto.surfaces.inset,
               color: foto.ink.secondary,
               fontSize: 12,
               fontWeight: 600,
-              cursor: uploading ? "wait" : "pointer",
-              letterSpacing: "-0.005em",
-              transition: "background 120ms ease, color 120ms ease",
-              "&:hover": {
+              cursor: uploading ? 'wait' : 'pointer',
+              letterSpacing: '-0.005em',
+              transition: 'background 120ms ease, color 120ms ease',
+              '&:hover': {
                 background: foto.surfaces.canvas,
                 color: foto.ink.primary,
               },
@@ -1002,11 +998,11 @@ function DocumentRow({
           >
             <Upload size={13} strokeWidth={1.8} aria-hidden />
             {uploading
-              ? "Subiendo…"
+              ? 'Subiendo…'
               : url
-                ? "Reemplazar"
+                ? 'Reemplazar'
                 : onGenerate
-                  ? "Subir archivo"
+                  ? 'Subir archivo'
                   : uploadLabel}
             <Box
               component="input"
@@ -1015,7 +1011,7 @@ function DocumentRow({
               accept=".pdf,image/*"
               disabled={uploading}
               onChange={handlePick}
-              sx={{ display: "none" }}
+              sx={{ display: 'none' }}
             />
           </Box>
         ) : null}

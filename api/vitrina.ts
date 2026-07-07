@@ -1,17 +1,27 @@
 /**
- * /api/vitrina — mint a public "Vitrina" client-share link (staff only).
+ * /api/vitrina — mint or correct a public "Vitrina" client-share link (staff only).
  *
- * POST, authenticated by the caller's Google ID token
+ * POST and PATCH, authenticated by the caller's Google ID token
  * (`Authorization: Bearer <google-id-token>`). We verify it server-side with
  * google-auth-library (same pattern as api/fotosintesis-ai) to confirm a real,
- * signed-in Google user, then call the Convex `vitrinas.create` mutation with
- * the server-only `VITRINA_SHARED_SECRET`. Because the Convex deployment URL is
- * public (and the app has no Convex-native auth), that secret is what makes the
- * mutation reachable ONLY through this proxy — mirroring the trusted-proxy model
- * the invitation flow uses, plus the authorization gate invitations lack.
+ * signed-in Google user, then call the Convex `vitrinas.create`/`vitrinas.update`
+ * mutation with the server-only `VITRINA_SHARED_SECRET`. Because the Convex
+ * deployment URL is public (and the app has no Convex-native auth), that secret
+ * is what makes the mutation reachable ONLY through this proxy — mirroring the
+ * trusted-proxy model the invitation flow uses, plus the authorization gate
+ * invitations lack.
  *
- * Body: { itemIds:number[], currency:'COP'|'USD', multiplier:number, senderSlug?:string }
- * 200:  { success:true, token:string }
+ * POST  body: { itemIds:number[], currency:'COP'|'USD', multiplier:number, senderSlug?:string }
+ *       200:  { success:true, token:string }
+ *
+ * PATCH body: { token:string, itemIds?:number[], currency?:'COP'|'USD', multiplier?:number, senderSlug?:string }
+ *       Corrects an already-shared link IN PLACE — same token/URL, new
+ *       contents. Only for token-based links (`/v/AB3K9P...`); the stateless
+ *       dash-separated id-list links (`/v/193-192-194`) have no backing
+ *       record and can't be edited — those must be re-shared as a new link.
+ *       200:  { success:true, token:string }
+ *       404:  token not found
+ *
  * 401:  not signed in / invalid or expired Google token
  */
 
@@ -70,21 +80,75 @@ export default withApiHandler(
     }
 
     const body = (req.body ?? {}) as {
+      token?: unknown;
       itemIds?: unknown;
       currency?: unknown;
       multiplier?: unknown;
       senderSlug?: unknown;
     };
 
-    const itemIds = Array.isArray(body.itemIds)
-      ? Array.from(
-          new Set(
-            body.itemIds
-              .map((n) => Number(n))
-              .filter((n) => Number.isFinite(n) && n > 0),
-          ),
-        )
-      : [];
+    const parseItemIds = (): number[] | undefined =>
+      Array.isArray(body.itemIds)
+        ? Array.from(
+            new Set(
+              body.itemIds
+                .map((n) => Number(n))
+                .filter((n) => Number.isFinite(n) && n > 0),
+            ),
+          )
+        : undefined;
+
+    if (req.method === "PATCH") {
+      const token =
+        typeof body.token === "string" ? body.token.trim() : "";
+      if (!token) {
+        return sendError(res, 400, "token requerido");
+      }
+
+      const itemIds = parseItemIds();
+      if (itemIds !== undefined) {
+        if (itemIds.length === 0) {
+          return sendError(res, 400, "itemIds requerido");
+        }
+        if (itemIds.length > 50) {
+          return sendError(res, 400, "Demasiadas piezas (máximo 50).");
+        }
+      }
+
+      const currency =
+        body.currency === "USD" || body.currency === "COP"
+          ? body.currency
+          : undefined;
+      const mult = Number(body.multiplier);
+      const multiplier =
+        body.multiplier !== undefined && Number.isFinite(mult)
+          ? Math.min(4, Math.max(1, mult))
+          : undefined;
+      const senderSlug =
+        typeof body.senderSlug === "string" && body.senderSlug.trim()
+          ? body.senderSlug.trim()
+          : undefined;
+
+      try {
+        const result = await convexClient.mutation(api.vitrinas.update, {
+          token,
+          itemIds,
+          currency,
+          multiplier,
+          senderSlug,
+          secret,
+        });
+        return sendSuccess(res, result);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (message.includes("no encontrado")) {
+          return sendError(res, 404, "Enlace no encontrado.");
+        }
+        throw err;
+      }
+    }
+
+    const itemIds = parseItemIds() ?? [];
     if (itemIds.length === 0) {
       return sendError(res, 400, "itemIds requerido");
     }
@@ -114,7 +178,7 @@ export default withApiHandler(
     return sendSuccess(res, result);
   },
   {
-    methods: ["POST", "OPTIONS"],
+    methods: ["POST", "PATCH", "OPTIONS"],
     requireGoogle: false,
   },
 );
