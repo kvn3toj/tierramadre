@@ -59,8 +59,8 @@ import {
   easingCurves,
   durations,
   zIndex,
-  goldAccent,
   getQuietEmerald,
+  qeFont,
 } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
@@ -267,9 +267,9 @@ const getBottomTools = (
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  Admin: accentColors.purple.light,
-  Embajador: goldAccent.primary,
-  Asesor: emeraldCore.primary,
+  Admin: '#8C928F', // graphite
+  Embajador: emeraldCore.dark, // QE light-mode accent
+  Asesor: emeraldCore.primary, // QE emerald
 };
 
 export interface IOSMoreSheetProps {
@@ -419,59 +419,28 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
           alignItems: 'center',
           gap: spacing.sm,
           padding: spacing.md,
-          background: effectiveConfig.blur
-            ? `linear-gradient(135deg, ${tool.color}08 0%, ${tool.color}03 100%)`
-            : 'var(--surface-primary)',
-          borderRadius: radius.lg,
+          background: 'transparent',
           cursor: 'pointer',
-          border: '1px solid',
-          borderColor: `${tool.color}20`,
-          transition: effectiveConfig.animations
-            ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
-            : 'none',
-          position: 'relative',
-          overflow: 'hidden',
-
-          '&::before': effectiveConfig.specular
-            ? {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: '10%',
-                right: '10%',
-                height: '1px',
-                background: `linear-gradient(90deg, transparent, ${tool.color}30, transparent)`,
-              }
-            : {},
-
-          '&:hover': {
-            backgroundColor: `${tool.color}10`,
-            borderColor: `${tool.color}40`,
-            transform: effectiveConfig.animations ? 'scale(1.02)' : 'none',
-            boxShadow: `0 4px 16px ${tool.color}20`,
-          },
-          '&:active': {
-            transform: effectiveConfig.animations ? 'scale(0.98)' : 'none',
-          },
+          transition: `background-color ${durations.liquidFast} ${easingCurves.liquidInOut}`,
+          '&:hover': { backgroundColor: qe.well },
+          '&:active': { backgroundColor: qe.well },
         }}
       >
         {/* Icon Container */}
         <Box
           sx={{
-            width: '48px',
-            height: '48px',
-            borderRadius: radius.md,
-            background: `linear-gradient(135deg, ${tool.color}20 0%, ${tool.color}10 100%)`,
+            width: '36px',
+            height: '36px',
+            borderRadius: radius.sm,
+            backgroundColor: qe.well,
+            color: qe.accent,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
-            boxShadow: `0 2px 8px ${tool.color}15`,
           }}
         >
-          <Icon
-            sx={{ fontSize: iosTypographyScale.title1, color: tool.color }}
-          />
+          <Icon sx={{ fontSize: '20px', color: qe.accent }} />
         </Box>
 
         {/* Text Content */}
@@ -502,9 +471,9 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
                   height: 18,
                   fontSize: '0.65rem',
                   fontWeight: 700,
-                  backgroundColor: `${tool.color}20`,
-                  color: tool.color,
-                  border: `1px solid ${tool.color}40`,
+                  backgroundColor: qe.well,
+                  color: qe.accent,
+                  border: `1px solid ${qe.border}`,
                 }}
               />
             )}
@@ -521,7 +490,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
         </Box>
 
         {/* Chevron */}
-        <Box sx={{ color: tool.color, fontSize: '20px', opacity: 0.6 }}>
+        <Box sx={{ color: qe.subtle, fontSize: '20px' }}>
           <ChevronRight size={18} />
         </Box>
       </Box>
@@ -625,6 +594,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
             <Typography
               variant="h2"
               sx={{
+                fontFamily: qeFont.serif,
                 fontSize: iosTypographyScale.title2,
                 fontWeight: 700,
                 color: 'var(--text-primary)',
@@ -860,12 +830,13 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
             <Box key={section.id} sx={{ mb: spacing.md }}>
               {/* Section Header */}
               <Typography
-                variant="overline"
                 sx={{
-                  fontSize: iosTypographyScale.caption2,
-                  fontWeight: 600,
-                  color: 'var(--text-secondary)',
-                  letterSpacing: '0.08em',
+                  fontFamily: qeFont.mono,
+                  fontSize: '0.6rem',
+                  fontWeight: 500,
+                  letterSpacing: '0.16em',
+                  textTransform: 'uppercase',
+                  color: qe.subtle,
                   mb: 1,
                   display: 'block',
                   px: spacing.xs,
@@ -874,8 +845,18 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
                 {section.title}
               </Typography>
 
-              <Box sx={{ display: 'grid', gap: spacing.xs }}>
-                {section.tools.map(renderToolRow)}
+              <Box
+                sx={{
+                  backgroundColor: qe.surface,
+                  border: `1px solid ${qe.border}`,
+                  borderRadius: radius.md,
+                  overflow: 'hidden',
+                  '& > *:not(:first-of-type)': {
+                    borderTop: `1px solid ${qe.hairline}`,
+                  },
+                }}
+              >
+                {section.tools.map((tool) => renderToolRow(tool))}
               </Box>
             </Box>
           ))}
