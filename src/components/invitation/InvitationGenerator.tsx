@@ -3,6 +3,9 @@
  *
  * Modal for staff to generate shareable guest access links.
  * Supports pricing mode toggle (with/without prices).
+ *
+ * Design language: Quiet Emerald ("Una joya en calma") — grayscale surfaces,
+ * a single emerald accent, Cormorant serif title, DM Mono for data.
  */
 
 import { useState } from 'react';
@@ -25,6 +28,7 @@ import {
   ToggleButtonGroup,
   Slider,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Close as CloseIcon,
   ContentCopy as CopyIcon,
@@ -41,11 +45,14 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import { useInvitation } from '../../hooks/useInvitation';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import {
-  brand,
-  legacyTypography as typography,
-  cssTransition,
-  fontWeights,
+  getQuietEmerald,
+  qeType,
+  qeFont,
+  qeRadius,
+  qeMotion,
+  qeGray,
 } from '../../design-system';
 import type {
   PricingMode,
@@ -71,6 +78,11 @@ export default function InvitationGenerator({
   } = useInvitation();
   const { t } = useLanguage();
   const inv = t.tools.invitation;
+  const { mode } = useTheme();
+  const qe = getQuietEmerald(mode);
+  const isDark = mode === 'dark';
+  /** Emerald tint at a given alpha — the one accent color, applied quietly. */
+  const tint = (a: number) => alpha(qe.accent, a);
   const [showQR, setShowQR] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copiedPin, setCopiedPin] = useState(false);
@@ -203,6 +215,59 @@ export default function InvitationGenerator({
   const qrUrl = lastInvitation?.url || '';
   const firstName = guestName.trim().split(' ')[0];
 
+  const ease = `${qeMotion.base} ${qeMotion.ease}`;
+  const easeFast = `${qeMotion.fast} ${qeMotion.ease}`;
+
+  // Shared input styling — quiet neutral borders, emerald on focus.
+  const fieldSx = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: qeRadius.md,
+      transition: `border-color ${easeFast}`,
+      '& fieldset': { borderColor: qe.border },
+      '&:hover fieldset': { borderColor: tint(0.45) },
+      '&.Mui-focused fieldset': {
+        borderColor: qe.accent,
+        borderWidth: '1.5px',
+      },
+    },
+    '& .MuiInputLabel-root': { color: qe.subtle },
+    '& label.Mui-focused': { color: qe.accent },
+    '& .MuiInputBase-input': { color: qe.text },
+    '& .MuiInputBase-input::placeholder': { color: qe.subtle, opacity: 1 },
+  } as const;
+
+  // Primary action — solid accent-strong fill, no loud gradient/glow.
+  const primaryButtonSx = {
+    bgcolor: qe.accentStrong,
+    color: qe.onAccent,
+    borderRadius: qeRadius.lg,
+    textTransform: 'none' as const,
+    fontFamily: qeFont.ui,
+    fontWeight: 600,
+    letterSpacing: '0.01em',
+    boxShadow: `0 8px 22px -14px ${alpha(qe.accentStrong, 0.9)}`,
+    transition: `background-color ${easeFast}, box-shadow ${easeFast}`,
+    '&:hover': {
+      bgcolor: qe.accent,
+      boxShadow: `0 10px 26px -14px ${alpha(qe.accentStrong, 0.9)}`,
+    },
+    '&:disabled': {
+      bgcolor: qe.accentStrong,
+      color: qe.onAccent,
+      opacity: 0.35,
+    },
+  } as const;
+
+  const switchSx = {
+    '& .MuiSwitch-switchBase.Mui-checked': {
+      color: qe.accent,
+      '&:hover': { backgroundColor: tint(0.08) },
+    },
+    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+      backgroundColor: qe.accent,
+    },
+  } as const;
+
   return (
     <>
       <Dialog
@@ -212,9 +277,14 @@ export default function InvitationGenerator({
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: '20px',
+            borderRadius: qeRadius.xl,
             maxHeight: '90vh',
             overflow: 'hidden',
+            bgcolor: qe.surface,
+            color: qe.text,
+            backgroundImage: 'none',
+            border: `1px solid ${qe.border}`,
+            boxShadow: qe.shadow,
           },
         }}
       >
@@ -227,30 +297,32 @@ export default function InvitationGenerator({
             pb: 0.5,
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
             <Box
               sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '10px',
+                width: 34,
+                height: 34,
+                borderRadius: qeRadius.md,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                bgcolor: `${brand.emerald[50]}`,
-                border: '1px solid',
-                borderColor: brand.emerald[200],
+                bgcolor: tint(0.1),
+                border: `1px solid ${tint(0.22)}`,
               }}
             >
-              <LinkIcon sx={{ color: brand.emerald[600], fontSize: 18 }} />
+              <LinkIcon sx={{ color: qe.accent, fontSize: 19 }} />
             </Box>
-            <Typography variant="h6" fontWeight={typography.weight.semibold}>
+            <Typography
+              component="h2"
+              sx={{ ...qeType.title, fontSize: '1.35rem', color: qe.text }}
+            >
               {inv.title}
             </Typography>
           </Box>
           <IconButton
             onClick={handleClose}
             size="small"
-            sx={{ color: 'text.secondary' }}
+            sx={{ color: qe.subtle, '&:hover': { color: qe.text } }}
           >
             <CloseIcon fontSize="small" />
           </IconButton>
@@ -258,9 +330,12 @@ export default function InvitationGenerator({
 
         <DialogContent sx={{ pt: 1 }}>
           <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ mb: 2.5, lineHeight: 1.5 }}
+            sx={{
+              ...qeType.body,
+              fontSize: '0.9rem',
+              color: qe.muted,
+              mb: 2.5,
+            }}
           >
             {inv.description}
           </Typography>
@@ -278,31 +353,32 @@ export default function InvitationGenerator({
               sx={{
                 width: lastInvitation ? 8 : 24,
                 height: 6,
-                borderRadius: '3px',
-                bgcolor: lastInvitation
-                  ? brand.emerald[300]
-                  : brand.emerald[500],
-                transition: cssTransition.default,
+                borderRadius: qeRadius.pill,
+                bgcolor: lastInvitation ? tint(0.45) : qe.accent,
+                transition: `all ${ease}`,
               }}
             />
             <Box
               sx={{
                 width: lastInvitation ? 24 : 8,
                 height: 6,
-                borderRadius: '3px',
-                bgcolor: lastInvitation ? brand.emerald[500] : 'divider',
-                transition: cssTransition.default,
+                borderRadius: qeRadius.pill,
+                bgcolor: lastInvitation ? qe.accent : qe.border,
+                transition: `all ${ease}`,
               }}
             />
           </Box>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 2.5, borderRadius: '12px' }}>
+            <Alert severity="error" sx={{ mb: 2.5, borderRadius: qeRadius.md }}>
               {error}
             </Alert>
           )}
           {formError && (
-            <Alert severity="warning" sx={{ mb: 2.5, borderRadius: '12px' }}>
+            <Alert
+              severity="warning"
+              sx={{ mb: 2.5, borderRadius: qeRadius.md }}
+            >
               {formError}
             </Alert>
           )}
@@ -325,19 +401,12 @@ export default function InvitationGenerator({
                     <InputAdornment position="start">
                       <PersonIcon
                         fontSize="small"
-                        sx={{
-                          color: guestName
-                            ? brand.emerald[600]
-                            : 'text.disabled',
-                        }}
+                        sx={{ color: guestName ? qe.accent : qe.subtle }}
                       />
                     </InputAdornment>
                   ),
                 }}
-                sx={{
-                  mb: 2.5,
-                  '& .MuiOutlinedInput-root': { borderRadius: '12px' },
-                }}
+                sx={{ mb: 2.5, ...fieldSx }}
               />
 
               {/* Contact fields — grouped card */}
@@ -345,11 +414,11 @@ export default function InvitationGenerator({
                 sx={{
                   border: '1px solid',
                   borderColor:
-                    guestEmail || guestPhone ? brand.emerald[200] : 'divider',
-                  borderRadius: '12px',
+                    guestEmail || guestPhone ? tint(0.28) : qe.border,
+                  borderRadius: qeRadius.md,
                   p: 1.5,
                   mb: 2.5,
-                  transition: cssTransition.default,
+                  transition: `border-color ${ease}`,
                 }}
               >
                 <Box
@@ -357,23 +426,20 @@ export default function InvitationGenerator({
                     display: 'flex',
                     alignItems: 'center',
                     gap: 0.75,
-                    mb: 1,
+                    mb: 1.25,
                   }}
                 >
-                  <Typography
-                    variant="caption"
-                    sx={{ fontWeight: 600, color: 'text.secondary' }}
-                  >
+                  <Typography sx={{ ...qeType.overline, color: qe.muted }}>
                     {inv.contact}
                   </Typography>
                   <Box
                     sx={{
-                      fontSize: '0.65rem',
-                      color: 'text.disabled',
-                      bgcolor: 'action.hover',
+                      ...qeType.spec,
+                      color: qe.subtle,
+                      bgcolor: qe.well,
                       px: 0.75,
                       py: 0.15,
-                      borderRadius: '4px',
+                      borderRadius: qeRadius.xs,
                     }}
                   >
                     {inv.contactAtLeastOne}
@@ -400,18 +466,12 @@ export default function InvitationGenerator({
                         <InputAdornment position="start">
                           <EmailIcon
                             fontSize="small"
-                            sx={{
-                              color: guestEmail
-                                ? brand.emerald[600]
-                                : 'text.disabled',
-                            }}
+                            sx={{ color: guestEmail ? qe.accent : qe.subtle }}
                           />
                         </InputAdornment>
                       ),
                     }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': { borderRadius: '12px' },
-                    }}
+                    sx={fieldSx}
                   />
                   <TextField
                     fullWidth
@@ -427,31 +487,18 @@ export default function InvitationGenerator({
                         <InputAdornment position="start">
                           <PhoneIcon
                             fontSize="small"
-                            sx={{
-                              color: guestPhone
-                                ? brand.emerald[600]
-                                : 'text.disabled',
-                            }}
+                            sx={{ color: guestPhone ? qe.accent : qe.subtle }}
                           />
                         </InputAdornment>
                       ),
                     }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': { borderRadius: '12px' },
-                    }}
+                    sx={fieldSx}
                   />
                 </Box>
               </Box>
 
               {/* Divider before pricing section */}
-              <Box
-                sx={{
-                  height: '1px',
-                  bgcolor: 'divider',
-                  mb: 2.5,
-                  opacity: 0.6,
-                }}
-              />
+              <Box sx={{ height: '1px', bgcolor: qe.hairline, mb: 2.5 }} />
 
               {/* Pricing toggle — compact row */}
               <Box
@@ -466,13 +513,12 @@ export default function InvitationGenerator({
                   <PriceIcon
                     fontSize="small"
                     sx={{
-                      color: showPrices ? brand.emerald[600] : 'text.disabled',
-                      transition: cssTransition.default,
+                      color: showPrices ? qe.accent : qe.subtle,
+                      transition: `color ${ease}`,
                     }}
                   />
                   <Typography
-                    variant="body2"
-                    fontWeight={typography.weight.medium}
+                    sx={{ ...qeType.body, fontWeight: 500, color: qe.text }}
                   >
                     {inv.showPrices}
                   </Typography>
@@ -481,14 +527,7 @@ export default function InvitationGenerator({
                   checked={showPrices}
                   onChange={(e) => setShowPrices(e.target.checked)}
                   inputProps={{ 'aria-label': inv.showPricesAria }}
-                  sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: brand.emerald[600],
-                    },
-                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                      backgroundColor: brand.emerald[400],
-                    },
-                  }}
+                  sx={switchSx}
                 />
               </Box>
 
@@ -499,9 +538,8 @@ export default function InvitationGenerator({
                     pl: 2.5,
                     ml: 0.75,
                     mb: 2.5,
-                    borderLeft: '2px solid',
-                    borderColor: brand.emerald[200],
-                    transition: cssTransition.default,
+                    borderLeft: `2px solid ${tint(0.28)}`,
+                    transition: `border-color ${ease}`,
                   }}
                 >
                   {/* Currency selector row */}
@@ -509,14 +547,12 @@ export default function InvitationGenerator({
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 1,
-                      mb: 1.5,
+                      gap: 1.25,
+                      mb: 1.75,
                     }}
                   >
                     <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ fontWeight: 500, minWidth: 52 }}
+                      sx={{ ...qeType.overline, color: qe.muted, minWidth: 60 }}
                     >
                       {inv.currency}
                     </Typography>
@@ -533,16 +569,20 @@ export default function InvitationGenerator({
                         flex: 1,
                         maxWidth: 180,
                         '& .MuiToggleButton-root': {
+                          fontFamily: qeFont.mono,
                           textTransform: 'none',
-                          fontWeight: fontWeights.semibold,
+                          fontWeight: 500,
                           fontSize: '0.78rem',
+                          letterSpacing: '0.02em',
                           py: 0.5,
-                          borderColor: 'divider',
+                          color: qe.muted,
+                          borderColor: qe.border,
+                          transition: `all ${easeFast}`,
                           '&.Mui-selected': {
-                            backgroundColor: `${brand.emerald[50]}`,
-                            color: brand.emerald[700],
-                            borderColor: brand.emerald[300],
-                            '&:hover': { backgroundColor: brand.emerald[100] },
+                            backgroundColor: tint(0.1),
+                            color: qe.accent,
+                            borderColor: tint(0.35),
+                            '&:hover': { backgroundColor: tint(0.16) },
                           },
                         },
                       }}
@@ -558,25 +598,23 @@ export default function InvitationGenerator({
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      mb: 0.25,
+                      mb: 0.5,
                     }}
                   >
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ fontWeight: 500 }}
-                    >
+                    <Typography sx={{ ...qeType.overline, color: qe.muted }}>
                       {inv.priceMultiplier}
                     </Typography>
                     <Typography
                       sx={{
-                        fontSize: '0.8rem',
-                        fontWeight: fontWeights.bold,
-                        color: brand.emerald[700],
-                        bgcolor: `${brand.emerald[50]}`,
+                        ...qeType.data,
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        color: qe.accent,
+                        bgcolor: tint(0.1),
                         px: 1,
-                        py: 0.1,
-                        borderRadius: '6px',
+                        py: 0.15,
+                        borderRadius: qeRadius.sm,
+                        border: `1px solid ${tint(0.22)}`,
                       }}
                     >
                       x{guestMultiplier}
@@ -592,9 +630,7 @@ export default function InvitationGenerator({
                       px: 0.25,
                     }}
                   >
-                    <Typography
-                      sx={{ fontSize: '0.68rem', color: 'text.disabled' }}
-                    >
+                    <Typography sx={{ ...qeType.spec, color: qe.subtle }}>
                       x1
                     </Typography>
                     <Slider
@@ -608,14 +644,25 @@ export default function InvitationGenerator({
                       aria-label={inv.priceMultiplier}
                       aria-valuetext={`x${guestMultiplier}`}
                       sx={{
-                        color: brand.emerald[700],
-                        '& .MuiSlider-thumb': { width: 18, height: 18 },
-                        '& .MuiSlider-valueLabel': { fontSize: '0.72rem' },
+                        color: qe.accent,
+                        '& .MuiSlider-rail': { opacity: 1, bgcolor: qe.border },
+                        '& .MuiSlider-thumb': {
+                          width: 18,
+                          height: 18,
+                          boxShadow: `0 0 0 2px ${qe.surface}`,
+                          '&:hover, &.Mui-focusVisible': {
+                            boxShadow: `0 0 0 6px ${tint(0.16)}`,
+                          },
+                        },
+                        '& .MuiSlider-valueLabel': {
+                          fontFamily: qeFont.mono,
+                          fontSize: '0.72rem',
+                          bgcolor: qe.accentStrong,
+                          color: qe.onAccent,
+                        },
                       }}
                     />
-                    <Typography
-                      sx={{ fontSize: '0.68rem', color: 'text.disabled' }}
-                    >
+                    <Typography sx={{ ...qeType.spec, color: qe.subtle }}>
                       x4
                     </Typography>
                   </Box>
@@ -623,28 +670,26 @@ export default function InvitationGenerator({
                   {/* Live price preview */}
                   <Box
                     sx={{
-                      mt: 1,
+                      mt: 1.25,
                       px: 1.5,
-                      py: 0.75,
-                      borderRadius: '8px',
-                      bgcolor: 'action.hover',
-                      border: '1px dashed',
-                      borderColor: 'divider',
+                      py: 0.85,
+                      borderRadius: qeRadius.sm,
+                      bgcolor: qe.well,
+                      border: `1px dashed ${qe.border}`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
                     }}
                   >
-                    <Typography
-                      sx={{ fontSize: '0.7rem', color: 'text.secondary' }}
-                    >
+                    <Typography sx={{ ...qeType.spec, color: qe.muted }}>
                       {inv.priceExample} {guestCurrency} &rarr;
                     </Typography>
                     <Typography
                       sx={{
-                        fontSize: '0.78rem',
-                        fontWeight: fontWeights.semibold,
-                        color: 'text.primary',
+                        ...qeType.data,
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        color: qe.text,
                       }}
                     >
                       {guestCurrency === 'COP'
@@ -660,23 +705,17 @@ export default function InvitationGenerator({
                 variant="contained"
                 size="large"
                 fullWidth
+                disableElevation
                 onClick={handleGenerate}
                 disabled={isGenerating || !isFormValid}
                 startIcon={
-                  isGenerating ? <CircularProgress size={20} /> : <LinkIcon />
+                  isGenerating ? (
+                    <CircularProgress size={20} sx={{ color: qe.onAccent }} />
+                  ) : (
+                    <LinkIcon />
+                  )
                 }
-                sx={{
-                  background: `linear-gradient(135deg, ${brand.emerald[600]} 0%, ${brand.emerald[700]} 100%)`,
-                  '&:hover': {
-                    background: `linear-gradient(135deg, ${brand.emerald[500]} 0%, ${brand.emerald[600]} 100%)`,
-                  },
-                  '&:disabled': { opacity: 0.4 },
-                  py: 1.5,
-                  borderRadius: '14px',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  boxShadow: `0 4px 16px ${brand.emerald[600]}40`,
-                }}
+                sx={{ ...primaryButtonSx, py: 1.5 }}
               >
                 {isGenerating
                   ? inv.generating
@@ -696,18 +735,16 @@ export default function InvitationGenerator({
                   gap: 1.5,
                   p: 2,
                   mb: 2.5,
-                  borderRadius: '14px',
-                  bgcolor: `${brand.emerald[50]}`,
-                  border: '1px solid',
-                  borderColor: brand.emerald[200],
+                  borderRadius: qeRadius.lg,
+                  bgcolor: tint(0.08),
+                  border: `1px solid ${tint(0.22)}`,
                 }}
               >
-                <CheckIcon sx={{ color: brand.emerald[600], fontSize: 24 }} />
+                <CheckIcon sx={{ color: qe.accentPure, fontSize: 24 }} />
                 <Box sx={{ minWidth: 0 }}>
                   <Typography
-                    variant="body2"
-                    fontWeight={typography.weight.semibold}
                     noWrap
+                    sx={{ ...qeType.body, fontWeight: 600, color: qe.text }}
                   >
                     {inv.linkGeneratedFor} {guestName}
                   </Typography>
@@ -721,20 +758,19 @@ export default function InvitationGenerator({
                 InputProps={{
                   readOnly: true,
                   sx: {
-                    fontFamily: typography.fontFamily.mono,
+                    fontFamily: qeFont.mono,
                     fontSize: '0.8rem',
-                    fontWeight: 500,
-                    bgcolor: 'action.hover',
-                    borderRadius: '12px',
+                    color: qe.text,
+                    bgcolor: qe.well,
+                    borderRadius: qeRadius.md,
+                    '& fieldset': { borderColor: qe.border },
                   },
                   endAdornment: (
                     <IconButton onClick={handleCopy} size="small">
                       {copied ? (
-                        <CheckIcon
-                          sx={{ color: brand.emerald[600], fontSize: 18 }}
-                        />
+                        <CheckIcon sx={{ color: qe.accent, fontSize: 18 }} />
                       ) : (
-                        <CopyIcon sx={{ fontSize: 18 }} />
+                        <CopyIcon sx={{ fontSize: 18, color: qe.muted }} />
                       )}
                     </IconButton>
                   ),
@@ -760,28 +796,25 @@ export default function InvitationGenerator({
                     p: 1.5,
                     px: 2,
                     mb: 2,
-                    borderRadius: '12px',
-                    bgcolor: `${brand.emerald[50]}`,
-                    border: '1px solid',
-                    borderColor: brand.emerald[200],
+                    borderRadius: qeRadius.md,
+                    bgcolor: tint(0.08),
+                    border: `1px solid ${tint(0.22)}`,
                     cursor: 'pointer',
-                    transition: cssTransition.fast,
+                    transition: `all ${easeFast}`,
                     '&:hover': {
-                      borderColor: brand.emerald[400],
-                      boxShadow: `0 0 0 1px ${brand.emerald[200]}`,
+                      borderColor: tint(0.4),
+                      boxShadow: `0 0 0 1px ${tint(0.22)}`,
                     },
                     '&:active': { transform: 'scale(0.99)' },
                     '&:focus-visible': {
-                      outline: `2px solid ${brand.emerald[500]}`,
+                      outline: `2px solid ${qe.accent}`,
                       outlineOffset: 2,
                     },
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ fontWeight: 500, minWidth: 64 }}
+                      sx={{ ...qeType.overline, color: qe.muted, minWidth: 64 }}
                     >
                       {inv.pinAccess}
                     </Typography>
@@ -792,22 +825,21 @@ export default function InvitationGenerator({
                           sx={{
                             width: 32,
                             height: 36,
-                            borderRadius: '8px',
+                            borderRadius: qeRadius.sm,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            bgcolor: brand.emerald[100],
-                            border: '1px solid',
-                            borderColor: brand.emerald[300],
+                            bgcolor: tint(0.14),
+                            border: `1px solid ${tint(0.3)}`,
                           }}
                         >
                           <Typography
                             aria-hidden
                             sx={{
-                              fontFamily: 'monospace',
-                              fontWeight: 700,
+                              fontFamily: qeFont.mono,
+                              fontWeight: 500,
                               fontSize: '1.1rem',
-                              color: brand.emerald[800],
+                              color: isDark ? qe.accentPure : qe.accentStrong,
                               lineHeight: 1,
                             }}
                           >
@@ -822,7 +854,7 @@ export default function InvitationGenerator({
                       display: 'flex',
                       alignItems: 'center',
                       gap: 0.5,
-                      color: brand.emerald[600],
+                      color: qe.accent,
                     }}
                   >
                     {copiedPin ? (
@@ -830,7 +862,13 @@ export default function InvitationGenerator({
                     ) : (
                       <CopyIcon sx={{ fontSize: 16 }} />
                     )}
-                    <Typography variant="caption" fontWeight={500}>
+                    <Typography
+                      sx={{
+                        ...qeType.body,
+                        fontSize: '0.75rem',
+                        fontWeight: 500,
+                      }}
+                    >
                       {copiedPin ? inv.copied : inv.copy}
                     </Typography>
                   </Box>
@@ -839,13 +877,13 @@ export default function InvitationGenerator({
 
               {/* Hint — WCAG AA compliant contrast */}
               <Typography
-                variant="caption"
-                color="text.secondary"
                 sx={{
+                  ...qeType.body,
                   display: 'block',
                   mb: 2.5,
                   textAlign: 'center',
                   fontSize: '0.75rem',
+                  color: qe.subtle,
                 }}
               >
                 {inv.sharePinSeparately}
@@ -903,21 +941,22 @@ export default function InvitationGenerator({
                       gap: 0.5,
                       px: 1.25,
                       py: 0.4,
-                      borderRadius: '8px',
-                      bgcolor: tag.active
-                        ? `${brand.emerald[50]}`
-                        : 'action.hover',
+                      borderRadius: qeRadius.sm,
+                      bgcolor: tag.active ? tint(0.08) : qe.well,
                       border: '1px solid',
-                      borderColor: tag.active ? brand.emerald[200] : 'divider',
-                      color: tag.active ? brand.emerald[700] : 'text.secondary',
+                      borderColor: tag.active ? tint(0.22) : qe.border,
+                      color: tag.active ? qe.accent : qe.muted,
                     }}
                   >
                     {tag.icon}
                     <Typography
-                      variant="caption"
-                      fontWeight={tag.active ? 500 : 400}
                       noWrap
-                      sx={{ maxWidth: 140 }}
+                      sx={{
+                        ...qeType.body,
+                        fontSize: '0.75rem',
+                        fontWeight: tag.active ? 500 : 400,
+                        maxWidth: 140,
+                      }}
                     >
                       {tag.label}
                     </Typography>
@@ -929,19 +968,10 @@ export default function InvitationGenerator({
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button
                   variant="contained"
+                  disableElevation
                   startIcon={<CopyIcon sx={{ fontSize: '18px !important' }} />}
                   onClick={handleCopy}
-                  sx={{
-                    flex: 1,
-                    background: `linear-gradient(135deg, ${brand.emerald[600]} 0%, ${brand.emerald[700]} 100%)`,
-                    '&:hover': {
-                      background: `linear-gradient(135deg, ${brand.emerald[500]} 0%, ${brand.emerald[600]} 100%)`,
-                    },
-                    borderRadius: '12px',
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    py: 1,
-                  }}
+                  sx={{ ...primaryButtonSx, flex: 1, py: 1 }}
                 >
                   {copied ? inv.copiedBang : inv.copy}
                 </Button>
@@ -954,11 +984,17 @@ export default function InvitationGenerator({
                     onClick={handleShare}
                     sx={{
                       flex: 1,
-                      borderRadius: '12px',
+                      borderRadius: qeRadius.md,
                       textTransform: 'none',
+                      fontFamily: qeFont.ui,
                       fontWeight: 500,
                       py: 1,
-                      borderColor: 'divider',
+                      color: qe.text,
+                      borderColor: qe.border,
+                      '&:hover': {
+                        borderColor: tint(0.45),
+                        bgcolor: tint(0.06),
+                      },
                     }}
                   >
                     {inv.share}
@@ -969,11 +1005,13 @@ export default function InvitationGenerator({
                   aria-label="QR Code"
                   sx={{
                     border: '1px solid',
-                    borderColor: showQR ? brand.emerald[300] : 'divider',
-                    borderRadius: '12px',
-                    bgcolor: showQR ? `${brand.emerald[50]}` : 'transparent',
+                    borderColor: showQR ? tint(0.35) : qe.border,
+                    borderRadius: qeRadius.md,
+                    bgcolor: showQR ? tint(0.08) : 'transparent',
+                    color: showQR ? qe.accent : qe.muted,
                     width: 42,
                     height: 42,
+                    transition: `all ${easeFast}`,
                   }}
                 >
                   <QrCodeIcon sx={{ fontSize: 20 }} />
@@ -987,10 +1025,9 @@ export default function InvitationGenerator({
                     justifyContent: 'center',
                     p: 2.5,
                     mt: 1.5,
-                    bgcolor: 'white',
-                    borderRadius: '14px',
-                    border: '1px solid',
-                    borderColor: 'divider',
+                    bgcolor: qeGray[0],
+                    borderRadius: qeRadius.lg,
+                    border: `1px solid ${qe.border}`,
                   }}
                 >
                   <QRCodeSVG
@@ -998,7 +1035,7 @@ export default function InvitationGenerator({
                     size={160}
                     level="M"
                     includeMargin
-                    fgColor={brand.emerald[800]}
+                    fgColor={qeGray[900]}
                   />
                 </Box>
               )}
@@ -1013,9 +1050,11 @@ export default function InvitationGenerator({
               disabled={isGenerating}
               startIcon={<LinkIcon sx={{ fontSize: '18px !important' }} />}
               sx={{
-                color: brand.emerald[600],
+                color: qe.accent,
                 textTransform: 'none',
+                fontFamily: qeFont.ui,
                 fontWeight: 500,
+                '&:hover': { bgcolor: tint(0.06) },
               }}
             >
               {inv.newLink}
@@ -1023,8 +1062,13 @@ export default function InvitationGenerator({
           )}
           <Button
             onClick={handleClose}
-            color="inherit"
-            sx={{ textTransform: 'none', fontWeight: 500 }}
+            sx={{
+              color: qe.muted,
+              textTransform: 'none',
+              fontFamily: qeFont.ui,
+              fontWeight: 500,
+              '&:hover': { color: qe.text, bgcolor: qe.well },
+            }}
           >
             {t.actions.close}
           </Button>

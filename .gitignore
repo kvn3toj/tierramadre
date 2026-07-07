@@ -155,3 +155,19 @@ src/assets/esmereogenesis/characters/_source/
 # Bug-repro screenshot sequences and AI video-gen seed material
 /esmereo/
 /docs/higgsfield-seed/
+
+# Marketing AI-render scratch assets (hundreds of MB) — keep local, not in repo
+/marketing/
+
+# Loose scratch images + design experiments dropped at docs/ root
+# (subfolder assets like public/ and the committed docs/Visualizer/visualizer.pen
+# are unaffected — these globs only match files directly in docs/)
+/docs/*.png
+/docs/*.jpg
+/docs/*.jpeg
+/docs/images/
+/docs/11quest.pen
+/docs/Visualizer/visualizer-2.pen
+
+# GHL audit output dumps (generated data, may contain contact PII)
+/GHL/output/
