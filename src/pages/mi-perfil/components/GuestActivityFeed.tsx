@@ -9,7 +9,13 @@
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, alpha } from '@mui/material';
 import { Eye, UserPlus, Clock, ChevronRight } from 'lucide-react';
-import { emeraldCore, accentColors, iosTypographyScale, primitiveSpacing as spacing, radius, cssTransition } from '../../../design-system';
+import {
+  emeraldCore,
+  iosTypographyScale,
+  primitiveSpacing as spacing,
+  radius,
+  cssTransition,
+} from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { SectionHeading } from './SectionHeading';
 import type { GuestView } from '../../../hooks/useGuestActivity';
@@ -30,7 +36,11 @@ function formatTimeAgo(timestamp: string): string {
   return `${days}d`;
 }
 
-export function GuestActivityFeed({ guestViews, isLoading, onInvite }: GuestActivityFeedProps) {
+export function GuestActivityFeed({
+  guestViews,
+  isLoading,
+  onInvite,
+}: GuestActivityFeedProps) {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
@@ -42,15 +52,26 @@ export function GuestActivityFeed({ guestViews, isLoading, onInvite }: GuestActi
           sx={{
             p: spacing.lg,
             borderRadius: radius.lg,
-            bgcolor: alpha(accentColors.info.light, 0.04),
-            border: `1px dashed ${alpha(accentColors.info.light, 0.2)}`,
+            bgcolor: alpha(emeraldCore.primary, 0.04),
+            border: `1px dashed ${alpha(emeraldCore.primary, 0.2)}`,
             textAlign: 'center',
           }}
         >
-          <Eye size={32} style={{ color: accentColors.info.light, marginBottom: 8, opacity: 0.5 }} />
+          <Eye
+            size={32}
+            style={{
+              color: emeraldCore.primary,
+              marginBottom: 8,
+              opacity: 0.5,
+            }}
+          />
           <Typography
             variant="body2"
-            sx={{ color: 'var(--text-secondary)', mb: 1.5, fontSize: iosTypographyScale.footnote }}
+            sx={{
+              color: 'var(--text-secondary)',
+              mb: 1.5,
+              fontSize: iosTypographyScale.footnote,
+            }}
           >
             {t.profile.noGuestActivity}
           </Typography>
@@ -125,7 +146,8 @@ export function GuestActivityFeed({ guestViews, isLoading, onInvite }: GuestActi
               tabIndex={0}
               onClick={() => navigate(`/product/${view.itemId}`)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') navigate(`/product/${view.itemId}`);
+                if (e.key === 'Enter' || e.key === ' ')
+                  navigate(`/product/${view.itemId}`);
               }}
               sx={{
                 display: 'flex',
@@ -143,14 +165,14 @@ export function GuestActivityFeed({ guestViews, isLoading, onInvite }: GuestActi
                   width: 32,
                   height: 32,
                   borderRadius: radius.sm,
-                  bgcolor: alpha(accentColors.info.light, 0.1),
+                  bgcolor: alpha(emeraldCore.primary, 0.1),
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <Eye size={14} style={{ color: accentColors.info.light }} />
+                <Eye size={14} style={{ color: emeraldCore.primary }} />
               </Box>
 
               <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -171,32 +193,52 @@ export function GuestActivityFeed({ guestViews, isLoading, onInvite }: GuestActi
                     tabIndex={0}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (view.userName) navigate(`/mi-perfil/invitado/${encodeURIComponent(view.userName)}`);
+                      if (view.userName)
+                        navigate(
+                          `/mi-perfil/invitado/${encodeURIComponent(view.userName)}`,
+                        );
                     }}
                     onKeyDown={(e) => {
-                      if ((e.key === 'Enter' || e.key === ' ') && view.userName) {
+                      if (
+                        (e.key === 'Enter' || e.key === ' ') &&
+                        view.userName
+                      ) {
                         e.stopPropagation();
-                        navigate(`/mi-perfil/invitado/${encodeURIComponent(view.userName)}`);
+                        navigate(
+                          `/mi-perfil/invitado/${encodeURIComponent(view.userName)}`,
+                        );
                       }
                     }}
                     sx={{
                       color: view.userName ? emeraldCore.primary : 'inherit',
                       fontWeight: 600,
                       cursor: view.userName ? 'pointer' : 'default',
-                      '&:hover': view.userName ? { textDecoration: 'underline' } : {},
+                      '&:hover': view.userName
+                        ? { textDecoration: 'underline' }
+                        : {},
                     }}
                   >
                     {guestLabel}
-                  </Box>
-                  {' '}vio <strong>{view.productName}</strong>
+                  </Box>{' '}
+                  vio <strong>{view.productName}</strong>
                 </Typography>
               </Box>
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  flexShrink: 0,
+                }}
+              >
                 <Clock size={11} style={{ color: 'var(--text-tertiary)' }} />
                 <Typography
                   variant="caption"
-                  sx={{ fontSize: iosTypographyScale.caption2, color: 'var(--text-tertiary)' }}
+                  sx={{
+                    fontSize: iosTypographyScale.caption2,
+                    color: 'var(--text-tertiary)',
+                  }}
                 >
                   {formatTimeAgo(view.timestamp)}
                 </Typography>
@@ -205,7 +247,6 @@ export function GuestActivityFeed({ guestViews, isLoading, onInvite }: GuestActi
           );
         })}
       </Box>
-
     </Box>
   );
 }
