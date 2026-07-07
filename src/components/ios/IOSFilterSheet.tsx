@@ -28,15 +28,11 @@ import {
 import type { FilterPreset } from '../../hooks/useSavedFilters';
 import { getColorDot, formatCollectionName } from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
-import {
-  emeraldCore,
-  surfacesLight,
-  surfacesDark,
-  semanticColors,
-} from '../../design-system/tokens/colors';
+import { semanticColors } from '../../design-system/tokens/colors';
 import {
   radius,
   iosSemanticColors,
+  getQuietEmerald,
 } from '../../design-system';
 
 export interface IOSFilterSheetProps {
@@ -124,7 +120,7 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
 }) => {
   const { formatCurrency } = useCurrencyFormat();
   const { mode } = useThemeMode();
-  const isLight = mode === 'light';
+  const qe = getQuietEmerald(mode);
   const secondaryLabelColor = iosSemanticColors.secondaryLabel[mode];
   const { shouldShowPrices } = usePriceShare();
   const hidePriceFilter = !shouldShowPrices;
@@ -141,10 +137,10 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
     px: 1.5,
     cursor: 'pointer',
     borderBottom: '1px solid',
-    borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-    bgcolor: isActive ? alpha(emeraldCore.primary, 0.05) : 'transparent',
+    borderColor: qe.border,
+    bgcolor: isActive ? alpha(qe.accent, 0.05) : 'transparent',
     '&:hover': {
-      bgcolor: alpha(emeraldCore.primary, 0.05),
+      bgcolor: alpha(qe.accent, 0.05),
     },
   });
 
@@ -154,15 +150,11 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
     borderRadius: 22,
     fontSize: '0.75rem',
     fontWeight: isActive ? 600 : 500,
-    bgcolor: isActive
-      ? alpha(emeraldCore.primary, 0.15)
-      : isLight
-        ? surfacesLight.background.secondary
-        : surfacesDark.background.tertiary,
-    color: isActive ? emeraldCore.primary : secondaryLabelColor,
-    border: isActive ? `1px solid ${emeraldCore.primary}` : '1px solid transparent',
+    bgcolor: isActive ? alpha(qe.accent, 0.15) : qe.well,
+    color: isActive ? qe.accent : secondaryLabelColor,
+    border: isActive ? `1px solid ${qe.accent}` : '1px solid transparent',
     '&:hover': {
-      bgcolor: alpha(emeraldCore.primary, 0.1),
+      bgcolor: alpha(qe.accent, 0.1),
     },
   });
 
@@ -198,7 +190,7 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
       'price-asc': 'Menor precio',
       'name-asc': 'A-Z',
       'name-desc': 'Z-A',
-      'newest': 'Recientes',
+      newest: 'Recientes',
       'quality-premium': 'Mejor calidad',
       'item-number': '# Item',
       'most-searched': 'Popular',
@@ -251,13 +243,20 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           {dotColor && (
-            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: dotColor }} />
+            <Box
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                bgcolor: dotColor,
+              }}
+            />
           )}
           <Typography
             sx={{
               fontSize: '0.8rem',
               fontWeight: isActive ? 600 : 500,
-              color: isActive ? emeraldCore.primary : (isLight ? surfacesLight.text.primary : surfacesDark.text.primary),
+              color: isActive ? qe.accent : qe.text,
             }}
           >
             {value}
@@ -271,21 +270,27 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
     <Collapse in={open} timeout={200}>
       <Box
         sx={{
-          bgcolor: isLight
-            ? surfacesLight.background.primary
-            : surfacesDark.background.secondary,
+          bgcolor: qe.surface,
           borderRadius: radius.lg,
           border: '1px solid',
-          borderColor: isLight
-            ? surfacesLight.border.light
-            : surfacesDark.border.light,
+          borderColor: qe.border,
           mb: 1,
           overflow: 'hidden',
         }}
       >
         {/* Saved Presets */}
         {savedPresets && savedPresets.length > 0 && onApplyPreset && (
-          <Box sx={{ display: 'flex', gap: 0.5, overflowX: 'auto', px: 1.5, py: 1, borderBottom: '1px solid', borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 0.5,
+              overflowX: 'auto',
+              px: 1.5,
+              py: 1,
+              borderBottom: '1px solid',
+              borderColor: qe.border,
+            }}
+          >
             {savedPresets.map((preset) => (
               <Chip
                 key={preset.id}
@@ -296,10 +301,10 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
                   flexShrink: 0,
                   fontSize: '0.7rem',
                   fontWeight: 600,
-                  bgcolor: alpha(emeraldCore.primary, 0.08),
-                  color: emeraldCore.primary,
-                  border: `1px solid ${alpha(emeraldCore.primary, 0.2)}`,
-                  '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.15) },
+                  bgcolor: alpha(qe.accent, 0.08),
+                  color: qe.accent,
+                  border: `1px solid ${alpha(qe.accent, 0.2)}`,
+                  '&:hover': { bgcolor: alpha(qe.accent, 0.15) },
                 }}
               />
             ))}
@@ -314,15 +319,25 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
           isActive={sortBy !== 'newest'}
         />
         <Collapse in={expandedSection === 'sort'}>
-          <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
+          <Box
+            sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}
+          >
             {[
               { value: 'newest' as SortOption, label: 'Recientes' },
-              ...(!hidePriceFilter ? [
-                { value: 'price-desc' as SortOption, label: 'Mayor precio' },
-                { value: 'price-asc' as SortOption, label: 'Menor precio' },
-              ] : []),
+              ...(!hidePriceFilter
+                ? [
+                    {
+                      value: 'price-desc' as SortOption,
+                      label: 'Mayor precio',
+                    },
+                    { value: 'price-asc' as SortOption, label: 'Menor precio' },
+                  ]
+                : []),
               { value: 'name-asc' as SortOption, label: 'A-Z' },
-              { value: 'quality-premium' as SortOption, label: 'Mejor calidad' },
+              {
+                value: 'quality-premium' as SortOption,
+                label: 'Mejor calidad',
+              },
             ].map((option) => (
               <Chip
                 key={option.value}
@@ -345,7 +360,9 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
           isActive={categoriaFilter !== 'all'}
         />
         <Collapse in={expandedSection === 'categoria'}>
-          <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
+          <Box
+            sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}
+          >
             <Chip
               label="Todas"
               onClick={() => {
@@ -373,12 +390,24 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
           <>
             <FilterRow
               label="Colección"
-              value={coleccionFilter === 'all' ? 'Todas' : formatCollectionName(coleccionFilter)}
+              value={
+                coleccionFilter === 'all'
+                  ? 'Todas'
+                  : formatCollectionName(coleccionFilter)
+              }
               section="coleccion"
               isActive={coleccionFilter !== 'all'}
             />
             <Collapse in={expandedSection === 'coleccion'}>
-              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 0.75,
+                  flexWrap: 'wrap',
+                  p: 1.5,
+                  pt: 0,
+                }}
+              >
                 <Chip
                   label="Todas"
                   onClick={() => {
@@ -411,7 +440,9 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
           isActive={typeFilter !== 'all'}
         />
         <Collapse in={expandedSection === 'type'}>
-          <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
+          <Box
+            sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}
+          >
             {[
               { value: 'all' as TypeFilter, label: 'Todos' },
               { value: 'loose' as TypeFilter, label: 'Gemas' },
@@ -433,13 +464,19 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
         {/* Color filter */}
         <FilterRow
           label="Color"
-          value={colorFilter === 'all' ? 'Todos' : colorFilter.replace('Verde ', '')}
+          value={
+            colorFilter === 'all' ? 'Todos' : colorFilter.replace('Verde ', '')
+          }
           section="color"
           isActive={colorFilter !== 'all'}
-          dotColor={colorFilter !== 'all' ? getColorDot(colorFilter) : undefined}
+          dotColor={
+            colorFilter !== 'all' ? getColorDot(colorFilter) : undefined
+          }
         />
         <Collapse in={expandedSection === 'color'}>
-          <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
+          <Box
+            sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}
+          >
             <Chip
               label="Todos"
               onClick={() => {
@@ -453,7 +490,14 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
                 key={color}
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: getColorDot(color) }} />
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        bgcolor: getColorDot(color),
+                      }}
+                    />
                     {color.replace('Verde ', '')}
                   </Box>
                 }
@@ -475,7 +519,9 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
           isActive={qualityFilter !== 'all'}
         />
         <Collapse in={expandedSection === 'quality'}>
-          <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
+          <Box
+            sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}
+          >
             <Chip
               label="Todas"
               onClick={() => {
@@ -506,7 +552,9 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
           isActive={shapeFilter !== 'all'}
         />
         <Collapse in={expandedSection === 'shape'}>
-          <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
+          <Box
+            sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}
+          >
             <Chip
               label="Todas"
               onClick={() => {
@@ -536,10 +584,21 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
               label="Precio"
               value={getCurrentPriceTier()}
               section="price"
-              isActive={priceRange[0] !== priceMinMax.min || priceRange[1] !== priceMinMax.max}
+              isActive={
+                priceRange[0] !== priceMinMax.min ||
+                priceRange[1] !== priceMinMax.max
+              }
             />
             <Collapse in={expandedSection === 'price'}>
-              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 0.75,
+                  flexWrap: 'wrap',
+                  p: 1.5,
+                  pt: 0,
+                }}
+              >
                 {priceTiers.map((tier) => (
                   <Chip
                     key={tier.label}
@@ -562,17 +621,33 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
             <FilterRow
               label="Quilates"
               value={
-                caratRange[0] === caratMinMax.min && caratRange[1] === caratMinMax.max
+                caratRange[0] === caratMinMax.min &&
+                caratRange[1] === caratMinMax.max
                   ? 'Todos'
                   : `${caratRange[0].toFixed(1)} - ${caratRange[1].toFixed(1)} ct`
               }
               section="carat"
-              isActive={caratRange[0] !== caratMinMax.min || caratRange[1] !== caratMinMax.max}
+              isActive={
+                caratRange[0] !== caratMinMax.min ||
+                caratRange[1] !== caratMinMax.max
+              }
             />
             <Collapse in={expandedSection === 'carat'}>
-              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 0.75,
+                  flexWrap: 'wrap',
+                  p: 1.5,
+                  pt: 0,
+                }}
+              >
                 {[
-                  { label: 'Todos', min: caratMinMax.min, max: caratMinMax.max },
+                  {
+                    label: 'Todos',
+                    min: caratMinMax.min,
+                    max: caratMinMax.max,
+                  },
                   { label: '< 1 ct', min: caratMinMax.min, max: 1 },
                   { label: '1 - 3 ct', min: 1, max: 3 },
                   { label: '3 - 10 ct', min: 3, max: 10 },
@@ -586,7 +661,7 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
                       setExpandedSection(null);
                     }}
                     sx={getChipStyle(
-                      caratRange[0] === tier.min && caratRange[1] === tier.max
+                      caratRange[0] === tier.min && caratRange[1] === tier.max,
                     )}
                   />
                 ))}
@@ -601,20 +676,45 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
           value={getStatusLabel()}
           section="status"
           isActive={statusFilter !== 'all'}
-          dotColor={statusFilter === 'available' ? emeraldCore.primary : statusFilter === 'sold' ? semanticColors.error.main : undefined}
+          dotColor={
+            statusFilter === 'available'
+              ? qe.accent
+              : statusFilter === 'sold'
+                ? semanticColors.error.main
+                : undefined
+          }
         />
         <Collapse in={expandedSection === 'status'}>
-          <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}>
+          <Box
+            sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', p: 1.5, pt: 0 }}
+          >
             {[
               { value: 'all' as StatusFilter, label: 'Todas', dot: null },
-              { value: 'available' as StatusFilter, label: 'Disponibles', dot: emeraldCore.primary },
-              { value: 'sold' as StatusFilter, label: 'Vendidas', dot: semanticColors.error.main },
+              {
+                value: 'available' as StatusFilter,
+                label: 'Disponibles',
+                dot: qe.accent,
+              },
+              {
+                value: 'sold' as StatusFilter,
+                label: 'Vendidas',
+                dot: semanticColors.error.main,
+              },
             ].map((option) => (
               <Chip
                 key={option.value}
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    {option.dot && <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: option.dot }} />}
+                    {option.dot && (
+                      <Box
+                        sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          bgcolor: option.dot,
+                        }}
+                      />
+                    )}
                     {option.label}
                   </Box>
                 }
@@ -637,10 +737,8 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
             px: 1.5,
             py: 1,
             borderTop: '1px solid',
-            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-            bgcolor: isLight
-              ? alpha(surfacesLight.background.secondary, 0.3)
-              : alpha(surfacesDark.background.tertiary, 0.3),
+            borderColor: qe.border,
+            bgcolor: alpha(qe.well, 0.3),
           }}
         >
           {resultCount !== undefined && (
@@ -648,7 +746,7 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
               sx={{
                 fontSize: '0.75rem',
                 fontWeight: 600,
-                color: emeraldCore.primary,
+                color: qe.accent,
               }}
             >
               {resultCount} resultado{resultCount !== 1 ? 's' : ''}
@@ -670,7 +768,9 @@ const IOSFilterSheet: React.FC<IOSFilterSheetProps> = ({
               Limpiar filtros
             </Button>
           ) : (
-            <Typography sx={{ fontSize: '0.75rem', color: secondaryLabelColor }}>
+            <Typography
+              sx={{ fontSize: '0.75rem', color: secondaryLabelColor }}
+            >
               Toca para filtrar
             </Typography>
           )}
