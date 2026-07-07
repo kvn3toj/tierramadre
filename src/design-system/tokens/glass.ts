@@ -1,8 +1,10 @@
 /**
- * Tierra Madre Design System - Glassmorphism Tokens
+ * Tierra Madre Design System - Glassmorphism Tokens (flattened)
  *
- * iOS-style translucent materials with backdrop blur effects.
- * Creates depth and luxury feel for overlays and cards.
+ * Quiet Emerald is flat — no backdrop blur. These variant maps keep the
+ * legacy `GlassEffect` shape and names so consumers don't need to change
+ * imports, but every entry now resolves to a solid, opaque-appropriate
+ * surface with `backdropFilter: 'none'`.
  */
 
 // =============================================================================
@@ -22,37 +24,37 @@ export interface GlassEffect {
 // =============================================================================
 
 export const glassLight: Record<string, GlassEffect> = {
-  /** Standard light glass */
+  /** Standard light surface */
   default: {
-    background: 'rgba(255, 255, 255, 0.7)',
-    backdropFilter: 'blur(10px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(10px) saturate(180%)',
-    border: '1px solid rgba(255, 255, 255, 0.3)',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.07)',
+    background: '#FFFFFF',
+    backdropFilter: 'none',
+    WebkitBackdropFilter: 'none',
+    border: '1px solid #E4E7E5',
+    boxShadow: '0 18px 40px -24px rgba(13,30,24,0.30)',
   },
   /** Frosted - more opaque */
   frosted: {
-    background: 'rgba(255, 255, 255, 0.5)',
-    backdropFilter: 'blur(20px) saturate(150%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-    border: '1px solid rgba(255, 255, 255, 0.4)',
-    boxShadow: '0 10px 15px rgba(0, 0, 0, 0.08)',
+    background: '#FFFFFF',
+    backdropFilter: 'none',
+    WebkitBackdropFilter: 'none',
+    border: '1px solid #E4E7E5',
+    boxShadow: '0 18px 40px -24px rgba(13,30,24,0.30)',
   },
   /** Ultra thin - very transparent */
   ultraThin: {
-    background: 'rgba(255, 255, 255, 0.3)',
-    backdropFilter: 'blur(8px) saturate(120%)',
-    WebkitBackdropFilter: 'blur(8px) saturate(120%)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+    background: '#FFFFFF',
+    backdropFilter: 'none',
+    WebkitBackdropFilter: 'none',
+    border: '1px solid #E4E7E5',
+    boxShadow: '0 18px 40px -24px rgba(13,30,24,0.30)',
   },
   /** Regular material */
   regular: {
-    background: 'rgba(255, 255, 255, 0.35)',
-    backdropFilter: 'blur(16px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-    border: '1px solid rgba(255, 255, 255, 0.25)',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)',
+    background: '#FFFFFF',
+    backdropFilter: 'none',
+    WebkitBackdropFilter: 'none',
+    border: '1px solid #E4E7E5',
+    boxShadow: '0 18px 40px -24px rgba(13,30,24,0.30)',
   },
 } as const;
 
@@ -61,37 +63,37 @@ export const glassLight: Record<string, GlassEffect> = {
 // =============================================================================
 
 export const glassDark: Record<string, GlassEffect> = {
-  /** Standard dark glass — neutral gray (aligned with iOS/bottom nav) */
+  /** Standard dark surface — neutral gray (aligned with iOS/bottom nav) */
   default: {
-    background: 'rgba(28, 28, 30, 0.7)',
-    backdropFilter: 'blur(10px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(10px) saturate(180%)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.2)',
+    background: '#15191A',
+    backdropFilter: 'none',
+    WebkitBackdropFilter: 'none',
+    border: '1px solid #272C2B',
+    boxShadow: '0 20px 46px -26px rgba(0,0,0,0.8)',
   },
   /** Frosted dark — neutral gray */
   frosted: {
-    background: 'rgba(22, 22, 24, 0.85)',
-    backdropFilter: 'blur(20px) saturate(150%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
-    boxShadow: '0 10px 15px rgba(0, 0, 0, 0.3)',
+    background: '#15191A',
+    backdropFilter: 'none',
+    WebkitBackdropFilter: 'none',
+    border: '1px solid #272C2B',
+    boxShadow: '0 20px 46px -26px rgba(0,0,0,0.8)',
   },
   /** Ultra thin dark — neutral gray */
   ultraThin: {
-    background: 'rgba(28, 28, 30, 0.5)',
-    backdropFilter: 'blur(8px) saturate(120%)',
-    WebkitBackdropFilter: 'blur(8px) saturate(120%)',
-    border: '1px solid rgba(255, 255, 255, 0.05)',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.15)',
+    background: '#15191A',
+    backdropFilter: 'none',
+    WebkitBackdropFilter: 'none',
+    border: '1px solid #272C2B',
+    boxShadow: '0 20px 46px -26px rgba(0,0,0,0.8)',
   },
   /** Regular dark material — neutral gray */
   regular: {
-    background: 'rgba(28, 28, 30, 0.6)',
-    backdropFilter: 'blur(16px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-    border: '1px solid rgba(255, 255, 255, 0.07)',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
+    background: '#15191A',
+    backdropFilter: 'none',
+    WebkitBackdropFilter: 'none',
+    border: '1px solid #272C2B',
+    boxShadow: '0 20px 46px -26px rgba(0,0,0,0.8)',
   },
 } as const;
 
@@ -102,58 +104,58 @@ export const glassDark: Record<string, GlassEffect> = {
 export const glassEmerald: Record<string, GlassEffect> = {
   /** Light emerald tint */
   light: {
-    background: 'rgba(0, 174, 122, 0.08)',
-    backdropFilter: 'blur(12px) saturate(200%)',
-    WebkitBackdropFilter: 'blur(12px) saturate(200%)',
-    border: '1px solid rgba(0, 174, 122, 0.2)',
+    background: 'rgba(0,175,132,0.08)',
+    backdropFilter: 'none',
+    WebkitBackdropFilter: 'none',
+    border: '1px solid rgba(0,175,132,0.20)',
     boxShadow: '0 4px 6px rgba(0, 174, 122, 0.1)',
   },
   /** Dark emerald tint */
   dark: {
-    background: 'rgba(0, 174, 122, 0.12)',
-    backdropFilter: 'blur(12px) saturate(200%)',
-    WebkitBackdropFilter: 'blur(12px) saturate(200%)',
-    border: '1px solid rgba(0, 174, 122, 0.3)',
+    background: 'rgba(0,175,132,0.12)',
+    backdropFilter: 'none',
+    WebkitBackdropFilter: 'none',
+    border: '1px solid rgba(0,175,132,0.30)',
     boxShadow: '0 4px 6px rgba(0, 174, 122, 0.15)',
   },
   /** Vibrant emerald */
   vibrant: {
-    background: 'rgba(0, 174, 122, 0.15)',
-    backdropFilter: 'blur(16px) saturate(250%)',
-    WebkitBackdropFilter: 'blur(16px) saturate(250%)',
-    border: '1px solid rgba(0, 174, 122, 0.4)',
+    background: 'rgba(0,175,132,0.15)',
+    backdropFilter: 'none',
+    WebkitBackdropFilter: 'none',
+    border: '1px solid rgba(0,175,132,0.40)',
     boxShadow: '0 8px 16px rgba(0, 174, 122, 0.2)',
   },
 } as const;
 
 // =============================================================================
-// GOLD GLASS VARIANTS
+// GRAPHITE GLASS VARIANTS (formerly gold — Quiet Emerald drops gold accents)
 // =============================================================================
 
 export const glassGold: Record<string, GlassEffect> = {
-  /** Light gold tint */
+  /** Light graphite tint */
   light: {
-    background: 'rgba(212, 175, 55, 0.08)',
-    backdropFilter: 'blur(12px) saturate(200%)',
-    WebkitBackdropFilter: 'blur(12px) saturate(200%)',
-    border: '1px solid rgba(212, 175, 55, 0.2)',
-    boxShadow: '0 4px 6px rgba(212, 175, 55, 0.1)',
+    background: 'rgba(140,146,143,0.08)',
+    backdropFilter: 'none',
+    WebkitBackdropFilter: 'none',
+    border: '1px solid rgba(140,146,143,0.20)',
+    boxShadow: '0 4px 6px rgba(13,30,24,0.1)',
   },
-  /** Dark gold tint */
+  /** Dark graphite tint */
   dark: {
-    background: 'rgba(212, 175, 55, 0.12)',
-    backdropFilter: 'blur(12px) saturate(200%)',
-    WebkitBackdropFilter: 'blur(12px) saturate(200%)',
-    border: '1px solid rgba(212, 175, 55, 0.3)',
-    boxShadow: '0 4px 6px rgba(212, 175, 55, 0.15)',
+    background: 'rgba(140,146,143,0.12)',
+    backdropFilter: 'none',
+    WebkitBackdropFilter: 'none',
+    border: '1px solid rgba(140,146,143,0.30)',
+    boxShadow: '0 4px 6px rgba(13,30,24,0.15)',
   },
-  /** Premium gold */
+  /** Premium graphite */
   premium: {
-    background: 'rgba(212, 175, 55, 0.15)',
-    backdropFilter: 'blur(16px) saturate(250%)',
-    WebkitBackdropFilter: 'blur(16px) saturate(250%)',
-    border: '1px solid rgba(212, 175, 55, 0.4)',
-    boxShadow: '0 8px 16px rgba(212, 175, 55, 0.2)',
+    background: 'rgba(140,146,143,0.15)',
+    backdropFilter: 'none',
+    WebkitBackdropFilter: 'none',
+    border: '1px solid rgba(140,146,143,0.40)',
+    boxShadow: '0 8px 16px rgba(13,30,24,0.2)',
   },
 } as const;
 
