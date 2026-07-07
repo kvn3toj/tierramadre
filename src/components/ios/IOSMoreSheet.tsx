@@ -94,8 +94,10 @@ const buildMenuSections = (
 ): MenuSection[] => {
   const sections: MenuSection[] = [];
 
-  // HERRAMIENTAS DE VENTA (staff only)
-  if (flags.isStaff) {
+  // HERRAMIENTAS DE VENTA
+  // The invite tool is available to anyone in the Asesores sheet
+  // (canCreateInvitations); the remaining sales tools stay staff-only.
+  if (flags.isStaff || flags.canCreateInvitations) {
     const salesTools: MoreToolConfig[] = [];
 
     if (flags.canCreateInvitations) {
@@ -109,24 +111,26 @@ const buildMenuSections = (
       });
     }
 
-    salesTools.push(
-      {
-        id: 'solicitudes',
-        label: t.tools.requests.label,
-        subtitle: t.tools.requests.subtitle,
-        icon: ShoppingBag as any,
-        route: '/solicitudes',
-        color: accentColors.success.light,
-      },
-      {
-        id: 'accounts',
-        label: t.tools.accounts.label,
-        subtitle: t.tools.accounts.subtitle,
-        icon: AccountBalance,
-        route: '/cuentas',
-        color: brand.emerald[500],
-      },
-    );
+    if (flags.isStaff) {
+      salesTools.push(
+        {
+          id: 'solicitudes',
+          label: t.tools.requests.label,
+          subtitle: t.tools.requests.subtitle,
+          icon: ShoppingBag as any,
+          route: '/solicitudes',
+          color: accentColors.success.light,
+        },
+        {
+          id: 'accounts',
+          label: t.tools.accounts.label,
+          subtitle: t.tools.accounts.subtitle,
+          icon: AccountBalance,
+          route: '/cuentas',
+          color: brand.emerald[500],
+        },
+      );
+    }
 
     if (salesTools.length > 0) {
       sections.push({

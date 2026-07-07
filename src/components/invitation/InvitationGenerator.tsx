@@ -1,8 +1,7 @@
 /**
  * InvitationGenerator Component
  *
- * Modal for Embajadores/Admins to generate shareable guest access links.
- * Links are valid for 30 days after the guest first opens them.
+ * Modal for staff to generate shareable guest access links.
  * Supports pricing mode toggle (with/without prices).
  */
 
@@ -38,7 +37,6 @@ import {
   Person as PersonIcon,
   Email as EmailIcon,
   Phone as PhoneIcon,
-  InfoOutlined as InfoIcon,
 } from '@mui/icons-material';
 import { QRCodeSVG } from 'qrcode.react';
 import { useInvitation } from '../../hooks/useInvitation';
@@ -686,24 +684,6 @@ export default function InvitationGenerator({
                     ? `${inv.createLinkFor} ${firstName}`
                     : inv.generateLink}
               </Button>
-
-              {/* Expiry hint */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 0.5,
-                  mt: 1,
-                }}
-              >
-                <InfoIcon sx={{ fontSize: 12, color: 'text.secondary' }} />
-                <Typography
-                  sx={{ fontSize: '0.75rem', color: 'text.secondary' }}
-                >
-                  {inv.expiryHint}
-                </Typography>
-              </Box>
             </Box>
           ) : (
             /* ─── PHASE 2: Success ─── */
@@ -730,9 +710,6 @@ export default function InvitationGenerator({
                     noWrap
                   >
                     {inv.linkGeneratedFor} {guestName}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {inv.validFor24h}
                   </Typography>
                 </Box>
               </Box>

@@ -74,7 +74,7 @@ const clearStoredAuth = () => {
  *
  * NOTE: this intentionally does NOT enforce `invitation-expires`. Active
  * invitations are treated as "no time limit" (the server's validate path
- * returns them valid with timeRemaining: null, and durationHours is 30 days),
+ * returns them valid with timeRemaining: null, and durationHours is 12 months),
  * so restore mirrors that. If expiry ever needs enforcing, gate it here AND in
  * the server validate path so client and server agree.
  */

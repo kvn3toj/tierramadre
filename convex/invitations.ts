@@ -3,8 +3,19 @@ import { v } from 'convex/values';
 import { internal } from './_generated/api';
 import { requireAccessLevel } from './_lib/authz';
 
-/** Staff who are allowed to mint/manage guest invitations. */
-const STAFF_LEVELS = ['admin', 'embajador', 'asesor'] as const;
+/**
+ * Access levels allowed to mint/manage guest invitations. This is everyone in
+ * the Asesores sheet — every access level except `guest` (guests are the
+ * invitees, not sheet entries). Manage actions (updateMultiplier/expire) stay
+ * scoped to the invitation's creator, or an admin.
+ */
+const INVITE_LEVELS = [
+  'admin',
+  'embajador',
+  'asesor',
+  'provider',
+  'invitado_especial',
+] as const;
 
 // ─── Queries ────────────────────────────────────────────────────────
 
@@ -136,7 +147,7 @@ export const _generate = internalMutation({
       status: 'pending',
       createdAt: new Date().toISOString(),
       pricingMode: args.pricingMode ?? 'with_prices',
-      durationHours: 24 * 30, // 30 days
+      durationHours: 24 * 365, // 12 months
       guestCurrencyMode: args.guestCurrencyMode,
       guestMultiplier: safeMultiplier,
       pin: args.pin,
@@ -186,7 +197,7 @@ export const generate = action({
     guestCurrencyMode: string | null;
     guestMultiplier: number | null;
   }> => {
-    const caller = await requireAccessLevel(idToken, [...STAFF_LEVELS]);
+    const caller = await requireAccessLevel(idToken, [...INVITE_LEVELS]);
     return await ctx.runMutation(internal.invitations._generate, {
       ...args,
       creatorEmail: caller.email,
@@ -246,7 +257,7 @@ export const updateMultiplier = action({
     ctx,
     { idToken, shortCode, guestMultiplier },
   ): Promise<{ shortCode: string; guestMultiplier: number }> => {
-    const caller = await requireAccessLevel(idToken, [...STAFF_LEVELS]);
+    const caller = await requireAccessLevel(idToken, [...INVITE_LEVELS]);
     return await ctx.runMutation(internal.invitations._updateMultiplier, {
       shortCode,
       creatorEmail: caller.email,
@@ -298,7 +309,7 @@ export const expire = action({
     ctx,
     { idToken, shortCode },
   ): Promise<{ success: boolean }> => {
-    const caller = await requireAccessLevel(idToken, [...STAFF_LEVELS]);
+    const caller = await requireAccessLevel(idToken, [...INVITE_LEVELS]);
     return await ctx.runMutation(internal.invitations._expire, {
       shortCode,
       creatorEmail: caller.email,

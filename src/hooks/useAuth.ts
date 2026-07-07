@@ -58,11 +58,13 @@ export const useCanSeeComunidadPrice = () => {
 
 /**
  * Check if user can create invitation links
- * Admins, Embajadores, and Asesores can create invitations
+ * Everyone listed in the Asesores sheet can create invitations — i.e. every
+ * access level EXCEPT `guest` (guests are the invitees, not sheet entries).
+ * This covers admin, embajador, asesor, provider, and invitado_especial.
  */
 export const useCanCreateInvitations = () => {
   const { accessLevel } = useAuthContext();
-  return accessLevel === 'admin' || accessLevel === 'embajador' || accessLevel === 'asesor';
+  return accessLevel !== 'guest';
 };
 
 /**
