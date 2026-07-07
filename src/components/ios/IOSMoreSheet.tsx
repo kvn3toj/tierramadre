@@ -8,8 +8,8 @@
  * - Spring animation + Backdrop dismiss
  */
 
-import React, { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -20,7 +20,7 @@ import {
   Slider,
   Avatar,
   alpha,
-} from "@mui/material";
+} from '@mui/material';
 import {
   Close,
   AccountBalance,
@@ -31,7 +31,7 @@ import {
   AutoAwesome,
   Person,
   PersonAdd,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 
 import {
   Vault,
@@ -41,17 +41,11 @@ import {
   Package,
   Camera,
   Sprout,
-} from "lucide-react";
-import FeedbackWizard from "../feedback/FeedbackWizard";
-import { InvitationGenerator } from "../invitation";
-import { useTheme } from "../../contexts/ThemeContext";
+} from 'lucide-react';
+import FeedbackWizard from '../feedback/FeedbackWizard';
+import { InvitationGenerator } from '../invitation';
+import { useTheme } from '../../contexts/ThemeContext';
 
-import {
-  floatingLayers,
-  liquidSaturation,
-  specularHighlights,
-} from "../../design-system/tokens/liquid-glass";
-import { floatingLayerShadows } from "../../design-system/tokens/shadows";
 import {
   brand,
   radius,
@@ -65,16 +59,17 @@ import {
   easingCurves,
   durations,
   zIndex,
-  goldAccent,
-} from "../../design-system";
-import { useLanguage } from "../../contexts/LanguageContext";
-import { useLiquidGlassSafe } from "../../contexts/LiquidGlassContext";
-import { useCanCreateInvitations } from "../../hooks/useAuth";
-import { useIsAdmin, useIsStaff } from "../../hooks/usePermissions";
-import { usePriceShare } from "../../contexts/PriceShareContext";
-import { useCurrency } from "../../contexts/CurrencyContext";
-import { useCurrentAsesor } from "../../hooks/useCurrentAsesor";
-import { useGoogleAuth } from "../../contexts/GoogleAuthContext";
+  getQuietEmerald,
+  qeFont,
+} from '../../design-system';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
+import { useCanCreateInvitations } from '../../hooks/useAuth';
+import { useIsAdmin, useIsStaff } from '../../hooks/usePermissions';
+import { usePriceShare } from '../../contexts/PriceShareContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
+import { useCurrentAsesor } from '../../hooks/useCurrentAsesor';
+import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 
 export interface MoreToolConfig {
   id: string;
@@ -82,7 +77,7 @@ export interface MoreToolConfig {
   subtitle: string;
   icon: React.ElementType;
   route?: string;
-  action?: "feedback" | "invitation" | "settings"; // Special action types
+  action?: 'feedback' | 'invitation' | 'settings'; // Special action types
   color: string;
   badge?: string; // Optional badge text
 }
@@ -105,37 +100,37 @@ const buildMenuSections = (
 
     if (flags.canCreateInvitations) {
       salesTools.push({
-        id: "invitation",
+        id: 'invitation',
         label: t.tools.invitation.label,
         subtitle: t.tools.invitation.subtitle,
         icon: PersonAdd,
-        action: "invitation",
+        action: 'invitation',
         color: accentColors.info.light,
       });
     }
 
     salesTools.push(
       {
-        id: "solicitudes",
+        id: 'solicitudes',
         label: t.tools.requests.label,
         subtitle: t.tools.requests.subtitle,
         icon: ShoppingBag as any,
-        route: "/solicitudes",
+        route: '/solicitudes',
         color: accentColors.success.light,
       },
       {
-        id: "accounts",
+        id: 'accounts',
         label: t.tools.accounts.label,
         subtitle: t.tools.accounts.subtitle,
         icon: AccountBalance,
-        route: "/cuentas",
+        route: '/cuentas',
         color: brand.emerald[500],
       },
     );
 
     if (salesTools.length > 0) {
       sections.push({
-        id: "sales",
+        id: 'sales',
         title: t.menu.salesTools.toUpperCase(),
         tools: salesTools,
       });
@@ -145,41 +140,41 @@ const buildMenuSections = (
   // DESCUBRIR (all users)
   const discoverTools: MoreToolConfig[] = [
     {
-      id: "vault",
+      id: 'vault',
       label: t.tools.vault.label,
       subtitle: t.tools.vault.subtitle,
       icon: Vault as any,
-      route: "/boveda-secreta",
+      route: '/boveda-secreta',
       color: brand.gold[500],
     },
     {
       // Bóveda re-skin: the Esmereogénesis hub had no persistent nav entry.
       // (Copy promoted to the i18n bundle in Phase 9.)
-      id: "esmereogenesis",
-      label: "Esmereogénesis",
-      subtitle: "Ahorro con propósito · haz tuya una esmeralda",
+      id: 'esmereogenesis',
+      label: 'Esmereogénesis',
+      subtitle: 'Ahorro con propósito · haz tuya una esmeralda',
       icon: Sprout as any,
-      route: "/esmereogenesis",
+      route: '/esmereogenesis',
       color: emeraldCore.primary,
     },
   ];
 
   if (flags.isAdmin) {
     discoverTools.push({
-      id: "name-generator",
-      label: t.tools.nameGenerator?.label || "Generador de Nombres",
+      id: 'name-generator',
+      label: t.tools.nameGenerator?.label || 'Generador de Nombres',
       subtitle:
         t.tools.nameGenerator?.subtitle ||
-        "Genera nombres unicos para esmeraldas con IA",
+        'Genera nombres unicos para esmeraldas con IA',
       icon: AutoAwesome,
-      route: "/admin/name-generator",
+      route: '/admin/name-generator',
       color: emeraldCore.primary,
-      badge: "AI",
+      badge: 'AI',
     });
   }
 
   sections.push({
-    id: "discover",
+    id: 'discover',
     title: t.menu.discover.toUpperCase(),
     tools: discoverTools,
   });
@@ -187,33 +182,33 @@ const buildMenuSections = (
   // ADMINISTRACION (admin only)
   if (flags.isAdmin) {
     sections.push({
-      id: "admin",
+      id: 'admin',
       title: t.menu.admin.toUpperCase(),
       tools: [
         {
-          id: "fotosintesis",
-          label: "Fotosíntesis",
-          subtitle: "Captura: compra → inventario → venta → carnet",
+          id: 'fotosintesis',
+          label: 'Fotosíntesis',
+          subtitle: 'Captura: compra → inventario → venta → carnet',
           icon: Camera as any,
-          route: "/admin/fotosintesis",
+          route: '/admin/fotosintesis',
           color: emeraldCore.primary,
         },
         {
-          id: "atelier-products",
-          label: t.tools.atelierProducts?.label || "Atelier · Inventario",
+          id: 'atelier-products',
+          label: t.tools.atelierProducts?.label || 'Atelier · Inventario',
           subtitle:
             t.tools.atelierProducts?.subtitle ||
-            "Consulta y edición fina de la hoja maestra",
+            'Consulta y edición fina de la hoja maestra',
           icon: Package as any,
-          route: "/admin/products",
+          route: '/admin/products',
           color: emeraldCore.dark,
         },
         {
-          id: "analytics",
+          id: 'analytics',
           label: t.tools.analytics.label,
           subtitle: t.tools.analytics.subtitle,
           icon: BarChart3 as any,
-          route: "/admin/analytics",
+          route: '/admin/analytics',
           color: accentColors.purple.light,
         },
       ],
@@ -238,33 +233,33 @@ const getBottomTools = (
   // entry closes that gap for everyone who is signed in.
   if (isSignedIn) {
     tools.push({
-      id: "profile",
+      id: 'profile',
       label: t.tools.profile.label,
       subtitle: t.tools.profile.subtitle,
       icon: Person,
-      route: "/mi-perfil",
+      route: '/mi-perfil',
       color: emeraldCore.primary,
     });
   }
 
   tools.push({
-    id: "settings",
+    id: 'settings',
     label: t.tools.settings.label,
     subtitle: t.tools.settings.subtitle,
     icon: Settings,
-    action: "settings",
+    action: 'settings',
     color: primitiveColors.metallic.silver[500],
   });
 
   if (isStaff) {
     tools.push({
-      id: "feedback",
+      id: 'feedback',
       label: t.tools.feedback.label,
       subtitle: t.tools.feedback.subtitle,
       icon: BugReport,
-      action: "feedback",
+      action: 'feedback',
       color: accentColors.warning.light,
-      badge: "DEV",
+      badge: 'DEV',
     });
   }
 
@@ -272,9 +267,9 @@ const getBottomTools = (
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  Admin: accentColors.purple.light,
-  Embajador: goldAccent.primary,
-  Asesor: emeraldCore.primary,
+  Admin: '#8C928F', // graphite
+  Embajador: emeraldCore.dark, // QE light-mode accent
+  Asesor: emeraldCore.primary, // QE emerald
 };
 
 export interface IOSMoreSheetProps {
@@ -291,6 +286,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { mode, toggleTheme } = useTheme();
+  const qe = getQuietEmerald(mode);
   const isAdmin = useIsAdmin();
   const isStaff = useIsStaff();
   const canCreateInvitations = useCanCreateInvitations();
@@ -321,61 +317,38 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
     [t, isStaff, googleUser],
   );
 
-  // Liquid Glass styles for the sheet
-  const sheetStyles = useMemo(() => {
-    if (!effectiveConfig.blur) {
-      return {
-        backgroundColor: "var(--surface-secondary)",
-        backdropFilter: "none",
-        boxShadow: "var(--shadow-lg)",
-      };
-    }
+  // Flat Quiet Emerald surface for the sheet
+  const sheetStyles = useMemo(
+    () => ({
+      backgroundColor: qe.surface,
+      backdropFilter: 'none',
+      WebkitBackdropFilter: 'none',
+      borderTop: `1px solid ${qe.hairline}`,
+      boxShadow: qe.shadow,
+    }),
+    [qe.surface, qe.hairline, qe.shadow],
+  );
 
-    const layer = floatingLayers.overlay;
-
-    return {
-      backgroundColor: "rgba(var(--surface-secondary-rgb), 0.85)",
-      backdropFilter: `blur(${layer.blur}) saturate(${liquidSaturation.intense})`,
-      WebkitBackdropFilter: `blur(${layer.blur}) saturate(${liquidSaturation.intense})`,
-      boxShadow: floatingLayerShadows.overlay,
-    };
-  }, [effectiveConfig.blur]);
-
-  // Specular highlight for sheet header
-  const headerSpecularStyles = useMemo(() => {
-    if (!effectiveConfig.specular) return {};
-
-    return {
-      "&::before": {
-        content: '""',
-        position: "absolute",
-        top: 0,
-        left: "5%",
-        right: "5%",
-        height: "1px",
-        background: specularHighlights.gradients.subtle,
-        borderRadius: "1px",
-      },
-    };
-  }, [effectiveConfig.specular]);
+  // Specular highlight for sheet header (removed under Quiet Emerald)
+  const headerSpecularStyles = useMemo(() => ({}), []);
 
   const handleToolClick = (tool: MoreToolConfig) => {
-    if ("vibrate" in navigator) {
+    if ('vibrate' in navigator) {
       navigator.vibrate(10);
     }
 
     // Handle special actions
-    if (tool.action === "feedback") {
+    if (tool.action === 'feedback') {
       setFeedbackOpen(true);
       return;
     }
 
-    if (tool.action === "invitation") {
+    if (tool.action === 'invitation') {
       setInvitationOpen(true);
       return;
     }
 
-    if (tool.action === "settings") {
+    if (tool.action === 'settings') {
       onOpenSettings?.();
       onClose();
       return;
@@ -399,29 +372,29 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
   };
 
   const handleThemeToggle = () => {
-    if ("vibrate" in navigator) {
+    if ('vibrate' in navigator) {
       navigator.vibrate(10);
     }
     toggleTheme();
   };
 
   const handlePriceToggle = () => {
-    if ("vibrate" in navigator) {
+    if ('vibrate' in navigator) {
       navigator.vibrate(10);
     }
     togglePriceShare();
   };
 
   const handleCurrencyToggle = () => {
-    if ("vibrate" in navigator) {
+    if ('vibrate' in navigator) {
       navigator.vibrate(10);
     }
     toggleCurrency();
   };
 
   const handleProfileClick = () => {
-    if ("vibrate" in navigator) navigator.vibrate(10);
-    navigate("/mi-perfil");
+    if ('vibrate' in navigator) navigator.vibrate(10);
+    navigate('/mi-perfil');
     onClose();
   };
 
@@ -437,76 +410,45 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
         tabIndex={0}
         onClick={() => handleToolClick(tool)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
+          if (e.key === 'Enter' || e.key === ' ') {
             handleToolClick(tool);
           }
         }}
         sx={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: spacing.sm,
           padding: spacing.md,
-          background: effectiveConfig.blur
-            ? `linear-gradient(135deg, ${tool.color}08 0%, ${tool.color}03 100%)`
-            : "var(--surface-primary)",
-          borderRadius: radius.lg,
-          cursor: "pointer",
-          border: "1px solid",
-          borderColor: `${tool.color}20`,
-          transition: effectiveConfig.animations
-            ? `all ${durations.liquidFast} ${easingCurves.liquidInOut}`
-            : "none",
-          position: "relative",
-          overflow: "hidden",
-
-          "&::before": effectiveConfig.specular
-            ? {
-                content: '""',
-                position: "absolute",
-                top: 0,
-                left: "10%",
-                right: "10%",
-                height: "1px",
-                background: `linear-gradient(90deg, transparent, ${tool.color}30, transparent)`,
-              }
-            : {},
-
-          "&:hover": {
-            backgroundColor: `${tool.color}10`,
-            borderColor: `${tool.color}40`,
-            transform: effectiveConfig.animations ? "scale(1.02)" : "none",
-            boxShadow: `0 4px 16px ${tool.color}20`,
-          },
-          "&:active": {
-            transform: effectiveConfig.animations ? "scale(0.98)" : "none",
-          },
+          background: 'transparent',
+          cursor: 'pointer',
+          transition: `background-color ${durations.liquidFast} ${easingCurves.liquidInOut}`,
+          '&:hover': { backgroundColor: qe.well },
+          '&:active': { backgroundColor: qe.well },
         }}
       >
         {/* Icon Container */}
         <Box
           sx={{
-            width: "48px",
-            height: "48px",
-            borderRadius: radius.md,
-            background: `linear-gradient(135deg, ${tool.color}20 0%, ${tool.color}10 100%)`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            width: '36px',
+            height: '36px',
+            borderRadius: radius.sm,
+            backgroundColor: qe.well,
+            color: qe.accent,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             flexShrink: 0,
-            boxShadow: `0 2px 8px ${tool.color}15`,
           }}
         >
-          <Icon
-            sx={{ fontSize: iosTypographyScale.title1, color: tool.color }}
-          />
+          <Icon sx={{ fontSize: '20px', color: qe.accent }} />
         </Box>
 
         {/* Text Content */}
         <Box sx={{ flex: 1 }}>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
               marginBottom: spacing.xxs,
             }}
@@ -516,7 +458,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
               sx={{
                 fontSize: iosTypographyScale.body,
                 fontWeight: 600,
-                color: "var(--text-primary)",
+                color: 'var(--text-primary)',
               }}
             >
               {tool.label}
@@ -527,11 +469,11 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
                 size="small"
                 sx={{
                   height: 18,
-                  fontSize: "0.65rem",
+                  fontSize: '0.65rem',
                   fontWeight: 700,
-                  backgroundColor: `${tool.color}20`,
-                  color: tool.color,
-                  border: `1px solid ${tool.color}40`,
+                  backgroundColor: qe.well,
+                  color: qe.accent,
+                  border: `1px solid ${qe.border}`,
                 }}
               />
             )}
@@ -540,7 +482,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
             variant="body2"
             sx={{
               fontSize: iosTypographyScale.footnote,
-              color: "var(--text-secondary)",
+              color: 'var(--text-secondary)',
             }}
           >
             {tool.subtitle}
@@ -548,7 +490,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
         </Box>
 
         {/* Chevron */}
-        <Box sx={{ color: tool.color, fontSize: "20px", opacity: 0.6 }}>
+        <Box sx={{ color: qe.subtle, fontSize: '20px' }}>
           <ChevronRight size={18} />
         </Box>
       </Box>
@@ -567,16 +509,16 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
         onClick={onClose}
         sx={{
           zIndex: zIndex.sheet,
-          backgroundColor: "rgba(0, 0, 0, 0.3)",
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
           backdropFilter: effectiveConfig.blur
             ? `blur(${blurValues.lg})`
-            : "none",
+            : 'none',
           WebkitBackdropFilter: effectiveConfig.blur
             ? `blur(${blurValues.lg})`
-            : "none",
+            : 'none',
           transition: effectiveConfig.animations
             ? `opacity ${durations.liquidNormal} ${easingCurves.liquidInOut}`
-            : "none",
+            : 'none',
         }}
       />
 
@@ -585,7 +527,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
         aria-modal="true"
         aria-label={t.nav.more}
         sx={{
-          position: "fixed",
+          position: 'fixed',
           bottom: 0,
           left: 0,
           right: 0,
@@ -593,22 +535,22 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
           ...sheetStyles,
           borderTopLeftRadius: radius.xl,
           borderTopRightRadius: radius.xl,
-          maxHeight: "85vh",
-          overflowY: "auto",
-          transform: open ? "translateY(0)" : "translateY(100%)",
-          visibility: open ? "visible" : "hidden",
-          pointerEvents: open ? "auto" : "none",
+          maxHeight: '85vh',
+          overflowY: 'auto',
+          transform: open ? 'translateY(0)' : 'translateY(100%)',
+          visibility: open ? 'visible' : 'hidden',
+          pointerEvents: open ? 'auto' : 'none',
           transition: effectiveConfig.animations
             ? `transform ${durations.liquidNormal} ${easingCurves.liquidSpring}, visibility ${durations.liquidNormal}`
             : `${cssTransition.slow}, visibility 0.3s`,
-          paddingBottom: "env(safe-area-inset-bottom)",
-          willChange: "transform",
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          willChange: 'transform',
           ...headerSpecularStyles,
 
-          "@supports not (backdrop-filter: blur(10px))": {
-            backgroundColor: "var(--surface-secondary)",
+          '@supports not (backdrop-filter: blur(10px))': {
+            backgroundColor: 'var(--surface-secondary)',
           },
-          "@media (prefers-reduced-motion: reduce)": {
+          '@media (prefers-reduced-motion: reduce)': {
             transition: cssTransition.default,
           },
         }}
@@ -616,26 +558,26 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
         {/* Header */}
         <Box
           sx={{
-            position: "sticky",
+            position: 'sticky',
             top: 0,
             // Must be fully opaque so scrolling content doesn't bleed through
             // the translucent sheet behind the sticky header
-            backgroundColor: "rgb(var(--surface-secondary-rgb))",
+            backgroundColor: 'rgb(var(--surface-secondary-rgb))',
             zIndex: zIndex.sticky,
             paddingTop: spacing.sm,
             paddingX: spacing.md,
             paddingBottom: spacing.sm,
-            borderBottom: "0.5px solid var(--border-default)",
+            borderBottom: '0.5px solid var(--border-default)',
           }}
         >
           {/* Handle Bar */}
           <Box
             sx={{
-              width: "36px",
-              height: "5px",
-              backgroundColor: "var(--border-default)",
-              borderRadius: "2.5px",
-              margin: "0 auto",
+              width: '36px',
+              height: '5px',
+              backgroundColor: 'var(--border-default)',
+              borderRadius: '2.5px',
+              margin: '0 auto',
               marginBottom: spacing.sm,
             }}
           />
@@ -643,45 +585,46 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
           {/* Title and Actions */}
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               mb: isStaff && asesor ? 1.5 : 2,
             }}
           >
             <Typography
               variant="h2"
               sx={{
+                fontFamily: qeFont.serif,
                 fontSize: iosTypographyScale.title2,
                 fontWeight: 700,
-                color: "var(--text-primary)",
+                color: 'var(--text-primary)',
               }}
             >
               {t.nav.more}
             </Typography>
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {/* Theme Toggle */}
               <IconButton
                 onClick={handleThemeToggle}
                 aria-label={
-                  mode === "dark" ? t.settings.lightMode : t.settings.darkMode
+                  mode === 'dark' ? t.settings.lightMode : t.settings.darkMode
                 }
                 sx={{
                   color: brand.emerald[500],
                   backgroundColor: `${brand.emerald[500]}15`,
-                  "&:hover": { backgroundColor: `${brand.emerald[500]}25` },
+                  '&:hover': { backgroundColor: `${brand.emerald[500]}25` },
                 }}
               >
-                {mode === "dark" ? <LightMode /> : <DarkMode />}
+                {mode === 'dark' ? <LightMode /> : <DarkMode />}
               </IconButton>
 
               <IconButton
                 onClick={onClose}
                 aria-label={t.actions.close}
                 sx={{
-                  color: "var(--text-secondary)",
-                  "&:hover": { backgroundColor: "var(--surface-tertiary)" },
+                  color: 'var(--text-secondary)',
+                  '&:hover': { backgroundColor: 'var(--surface-tertiary)' },
                 }}
               >
                 <Close />
@@ -696,20 +639,20 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
               tabIndex={0}
               onClick={handleProfileClick}
               onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") handleProfileClick();
+                if (e.key === 'Enter' || e.key === ' ') handleProfileClick();
               }}
               sx={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: spacing.sm,
                 p: spacing.sm,
                 mb: spacing.xs,
                 borderRadius: radius.lg,
-                bgcolor: "var(--surface-primary)",
+                bgcolor: 'var(--surface-primary)',
                 border: `1px solid ${alpha(roleColor, 0.15)}`,
-                cursor: "pointer",
+                cursor: 'pointer',
                 transition: cssTransition.default,
-                "&:hover": { bgcolor: "var(--surface-tertiary)" },
+                '&:hover': { bgcolor: 'var(--surface-tertiary)' },
               }}
             >
               <Avatar
@@ -719,7 +662,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
                   width: 44,
                   height: 44,
                   border: `2px solid ${alpha(roleColor, 0.25)}`,
-                  fontSize: "1rem",
+                  fontSize: '1rem',
                   fontWeight: 700,
                   bgcolor: alpha(roleColor, 0.15),
                   color: roleColor,
@@ -728,25 +671,25 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
                 {asesor.name?.charAt(0).toUpperCase()}
               </Avatar>
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                   <Typography
                     sx={{
                       fontSize: iosTypographyScale.body,
                       fontWeight: 600,
-                      color: "var(--text-primary)",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
+                      color: 'var(--text-primary)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
                     }}
                   >
                     {asesor.name}
                   </Typography>
                   <Chip
-                    label={asesor.role || "Asesor"}
+                    label={asesor.role || 'Asesor'}
                     size="small"
                     sx={{
                       height: 18,
-                      fontSize: "0.6rem",
+                      fontSize: '0.6rem',
                       fontWeight: 700,
                       bgcolor: alpha(roleColor, 0.12),
                       color: roleColor,
@@ -758,7 +701,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
                 <Typography
                   sx={{
                     fontSize: iosTypographyScale.caption1,
-                    color: "var(--text-secondary)",
+                    color: 'var(--text-secondary)',
                   }}
                 >
                   {t.menu.profileSubtitle}
@@ -774,17 +717,17 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
 
         {/* Quick Settings (toggles + slider) - right after profile for easy access */}
         {(canToggle || canToggleCurrency) && (
-          <Box sx={{ borderBottom: "0.5px solid var(--border-default)" }}>
+          <Box sx={{ borderBottom: '0.5px solid var(--border-default)' }}>
             {/* Price Share Toggle Row - Only for staff */}
             {canToggle && (
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                   paddingX: spacing.md,
                   paddingY: spacing.sm,
-                  borderBottom: "0.5px solid var(--border-default)",
+                  borderBottom: '0.5px solid var(--border-default)',
                 }}
               >
                 <Box>
@@ -792,7 +735,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
                     sx={{
                       fontSize: iosTypographyScale.body,
                       fontWeight: 500,
-                      color: "var(--text-primary)",
+                      color: 'var(--text-primary)',
                     }}
                   >
                     {t.settings.viewPrices}
@@ -800,7 +743,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
                   <Typography
                     sx={{
                       fontSize: iosTypographyScale.caption1,
-                      color: "var(--text-secondary)",
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {showPrices
@@ -811,15 +754,15 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
                 <Switch
                   checked={showPrices}
                   onChange={handlePriceToggle}
-                  inputProps={{ "aria-label": t.settings.viewPrices }}
+                  inputProps={{ 'aria-label': t.settings.viewPrices }}
                   sx={{
-                    "& .MuiSwitch-switchBase.Mui-checked": {
+                    '& .MuiSwitch-switchBase.Mui-checked': {
                       color: primitiveColors.system.green.light,
-                      "&:hover": {
-                        backgroundColor: "rgba(52, 199, 89, 0.08)",
+                      '&:hover': {
+                        backgroundColor: 'rgba(52, 199, 89, 0.08)',
                       },
                     },
-                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
                       backgroundColor: primitiveColors.system.green.light,
                     },
                   }}
@@ -831,12 +774,12 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
             {canToggleCurrency && (
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                   paddingX: spacing.md,
                   paddingY: spacing.sm,
-                  borderBottom: "0.5px solid var(--border-default)",
+                  borderBottom: '0.5px solid var(--border-default)',
                 }}
               >
                 <Box>
@@ -844,7 +787,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
                     sx={{
                       fontSize: iosTypographyScale.body,
                       fontWeight: 500,
-                      color: "var(--text-primary)",
+                      color: 'var(--text-primary)',
                     }}
                   >
                     {t.settings.currencyMode}
@@ -852,26 +795,26 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
                   <Typography
                     sx={{
                       fontSize: iosTypographyScale.caption1,
-                      color: "var(--text-secondary)",
+                      color: 'var(--text-secondary)',
                     }}
                   >
-                    {currency === "USD"
+                    {currency === 'USD'
                       ? t.settings.currencyUSDActive
                       : t.settings.currencyCOPActive}
                   </Typography>
                 </Box>
                 <Switch
-                  checked={currency === "USD"}
+                  checked={currency === 'USD'}
                   onChange={handleCurrencyToggle}
-                  inputProps={{ "aria-label": t.settings.currencyMode }}
+                  inputProps={{ 'aria-label': t.settings.currencyMode }}
                   sx={{
-                    "& .MuiSwitch-switchBase.Mui-checked": {
+                    '& .MuiSwitch-switchBase.Mui-checked': {
                       color: emeraldCore.dark,
-                      "&:hover": {
-                        backgroundColor: "rgba(46, 125, 50, 0.08)",
+                      '&:hover': {
+                        backgroundColor: 'rgba(46, 125, 50, 0.08)',
                       },
                     },
-                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
                       backgroundColor: emeraldCore.dark,
                     },
                   }}
@@ -887,22 +830,33 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
             <Box key={section.id} sx={{ mb: spacing.md }}>
               {/* Section Header */}
               <Typography
-                variant="overline"
                 sx={{
-                  fontSize: iosTypographyScale.caption2,
-                  fontWeight: 600,
-                  color: "var(--text-secondary)",
-                  letterSpacing: "0.08em",
+                  fontFamily: qeFont.mono,
+                  fontSize: '0.6rem',
+                  fontWeight: 500,
+                  letterSpacing: '0.16em',
+                  textTransform: 'uppercase',
+                  color: qe.subtle,
                   mb: 1,
-                  display: "block",
+                  display: 'block',
                   px: spacing.xs,
                 }}
               >
                 {section.title}
               </Typography>
 
-              <Box sx={{ display: "grid", gap: spacing.xs }}>
-                {section.tools.map(renderToolRow)}
+              <Box
+                sx={{
+                  backgroundColor: qe.surface,
+                  border: `1px solid ${qe.border}`,
+                  borderRadius: radius.md,
+                  overflow: 'hidden',
+                  '& > *:not(:first-of-type)': {
+                    borderTop: `1px solid ${qe.hairline}`,
+                  },
+                }}
+              >
+                {section.tools.map((tool) => renderToolRow(tool))}
               </Box>
             </Box>
           ))}
@@ -910,14 +864,14 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
           {/* Divider */}
           <Box
             sx={{
-              height: "0.5px",
-              bgcolor: "var(--border-default)",
+              height: '0.5px',
+              bgcolor: 'var(--border-default)',
               my: spacing.sm,
             }}
           />
 
           {/* Bottom Items (Settings + Feedback) */}
-          <Box sx={{ display: "grid", gap: spacing.xs }}>
+          <Box sx={{ display: 'grid', gap: spacing.xs }}>
             {bottomTools.map(renderToolRow)}
           </Box>
 
@@ -926,16 +880,16 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
             <>
               <Box
                 sx={{
-                  height: "0.5px",
-                  bgcolor: "var(--border-default)",
+                  height: '0.5px',
+                  bgcolor: 'var(--border-default)',
                   my: spacing.sm,
                 }}
               />
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                   paddingY: spacing.sm,
                   paddingX: spacing.xs,
                 }}
@@ -945,7 +899,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
                     sx={{
                       fontSize: iosTypographyScale.body,
                       fontWeight: 500,
-                      color: "var(--text-primary)",
+                      color: 'var(--text-primary)',
                     }}
                   >
                     {t.settings.currencyMultiplier}
@@ -953,7 +907,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
                   <Typography
                     sx={{
                       fontSize: iosTypographyScale.caption1,
-                      color: "var(--text-secondary)",
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t.settings.currencyMultiplierHint}
@@ -961,8 +915,8 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
                 </Box>
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 1.5,
                     minWidth: 180,
                   }}
@@ -970,7 +924,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
                   <Slider
                     value={multiplier}
                     onChange={(_e, val) => {
-                      if ("vibrate" in navigator) navigator.vibrate(10);
+                      if ('vibrate' in navigator) navigator.vibrate(10);
                       setMultiplier(val as number);
                     }}
                     min={1}
@@ -981,8 +935,8 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
                     aria-label={t.settings.currencyMultiplier}
                     sx={{
                       color: emeraldCore.dark,
-                      "& .MuiSlider-thumb": { width: 20, height: 20 },
-                      "& .MuiSlider-valueLabel": {
+                      '& .MuiSlider-thumb': { width: 20, height: 20 },
+                      '& .MuiSlider-valueLabel': {
                         fontSize: iosTypographyScale.footnote,
                       },
                     }}
@@ -993,7 +947,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
                       fontWeight: 600,
                       color: emeraldCore.dark,
                       minWidth: 28,
-                      textAlign: "right",
+                      textAlign: 'right',
                     }}
                   >
                     x{multiplier}

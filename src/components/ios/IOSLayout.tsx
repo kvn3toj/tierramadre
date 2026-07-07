@@ -6,29 +6,29 @@
  * - Page config system for route-specific settings
  */
 
-import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { Box, IconButton } from "@mui/material";
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Box, IconButton } from '@mui/material';
 import {
   Search,
   FilterList,
   Fullscreen,
   FullscreenExit,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 
-import IOSTabBar from "./IOSTabBar";
+import IOSTabBar from './IOSTabBar';
 import IOSNavigationBar, {
   NavigationBarMode,
   NavigationAction,
-} from "./IOSNavigationBar";
-import IOSMoreSheet from "./IOSMoreSheet";
-import IOSSettingsSheet from "./IOSSettingsSheet";
-import ScrollRestoration from "../shared/ScrollRestoration";
-import { InvitationBanner } from "../invitation";
-import { CopilotRail } from "../../pages/admin/Fotosintesis/copilot-rail/CopilotRail";
-import { zIndex, defaultShadows } from "../../design-system";
-import { useLanguage } from "../../contexts/LanguageContext";
-import { useThemeMode } from "../../contexts/ThemeContext";
+} from './IOSNavigationBar';
+import IOSMoreSheet from './IOSMoreSheet';
+import IOSSettingsSheet from './IOSSettingsSheet';
+import ScrollRestoration from '../shared/ScrollRestoration';
+import { InvitationBanner } from '../invitation';
+import { CopilotRail } from '../../pages/admin/Fotosintesis/copilot-rail/CopilotRail';
+import { zIndex, defaultShadows } from '../../design-system';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { useThemeMode } from '../../contexts/ThemeContext';
 
 interface PageConfig {
   title: string;
@@ -44,23 +44,10 @@ interface PageConfig {
   forceLogoUrl?: string;
 }
 
-const DARK_HEADER_GRADIENT = [
-  "linear-gradient(to right, transparent 20%, rgba(0, 174, 122, 0.12) 50%, transparent 80%)",
-  "linear-gradient(to right, #050505 0%, #0d1a14 30%, #0d1a14 70%, #050505 100%)",
-].join(", ");
-
-const LIGHT_HEADER_GRADIENT = [
-  "linear-gradient(to right, rgba(0, 174, 122, 0.02) 10%, transparent 40%, transparent 60%, rgba(0, 174, 122, 0.02) 90%)",
-  "linear-gradient(to right, #fafdfb 0%, #ffffff 15%, #ffffff 85%, #fafdfb 100%)",
-].join(", ");
-
-const getPageConfigs = (
-  t: any,
-  isLight: boolean,
-): Record<string, PageConfig> => ({
-  "/gallery": {
+const getPageConfigs = (t: any): Record<string, PageConfig> => ({
+  '/gallery': {
     title: t.pages.gallery.title,
-    mode: "large",
+    mode: 'large',
     subtitle: t.pages.gallery.subtitle,
     trailingActions: [
       {
@@ -79,111 +66,109 @@ const getPageConfigs = (
       },
     ],
   },
-  "/upload": {
+  '/upload': {
     title: t.pages.upload.title,
-    mode: "large",
+    mode: 'large',
     subtitle: t.pages.upload.subtitle,
   },
-  "/treasure": {
+  '/treasure': {
     title: t.pages.treasure.title,
-    mode: "compact",
-    logoUrl: "/images/logo-horizontal-green.png",
-    backgroundColor: isLight ? LIGHT_HEADER_GRADIENT : DARK_HEADER_GRADIENT,
-    forceLogoUrl: "/images/logo-horizontal-green.png",
+    mode: 'compact',
+    logoUrl: '/images/logo-horizontal-green.png',
+    forceLogoUrl: '/images/logo-horizontal-green.png',
   },
-  "/ambassadors": {
+  '/ambassadors': {
     title: t.pages.ambassadors.title,
-    mode: "compact",
+    mode: 'compact',
   },
-  "/home": {
-    title: "Tierra Mädre",
-    mode: "compact",
-    logoUrl: "/images/logo-horizontal-green.png",
-    backgroundColor: isLight ? LIGHT_HEADER_GRADIENT : DARK_HEADER_GRADIENT,
-    forceLogoUrl: "/images/logo-horizontal-green.png",
+  '/home': {
+    title: 'Tierra Mädre',
+    mode: 'compact',
+    logoUrl: '/images/logo-horizontal-green.png',
+    forceLogoUrl: '/images/logo-horizontal-green.png',
   },
-  "/catalog": {
+  '/catalog': {
     title: t.pages.catalog.title,
-    mode: "compact",
+    mode: 'compact',
     showBackButton: true,
   },
-  "/calendar": {
+  '/calendar': {
     title: t.pages.calendar.title,
-    mode: "compact",
+    mode: 'compact',
     showBackButton: true,
   },
-  "/slides": {
+  '/slides': {
     title: t.pages.slides.title,
-    mode: "compact",
+    mode: 'compact',
     showBackButton: true,
   },
-  "/normalizer": {
+  '/normalizer': {
     title: t.pages.normalizer.title,
-    mode: "compact",
+    mode: 'compact',
     showBackButton: true,
   },
-  "/receipts": {
+  '/receipts': {
     title: t.pages.receipts.title,
-    mode: "compact",
+    mode: 'compact',
     showBackButton: true,
   },
-  "/biblioteca": {
+  '/biblioteca': {
     title: t.pages.library.title,
-    mode: "compact",
+    mode: 'compact',
     showBackButton: true,
   },
-  "/simulator": {
+  '/simulator': {
     title: t.pages.simulator.title,
-    mode: "compact",
+    mode: 'compact',
     showBackButton: true,
   },
-  "/product": {
+  '/product': {
     title: t.pages.gallery.title,
-    mode: "compact",
+    mode: 'compact',
     showBackButton: true,
   },
-  "/cuentas/cotizaciones": {
+  '/cuentas/cotizaciones': {
     title: t.pages.cotizacion.title,
-    mode: "compact",
+    mode: 'compact',
     showBackButton: true,
   },
-  "/cuentas": {
+  '/cuentas': {
     title: t.pages.accounts.title,
-    mode: "large",
+    mode: 'large',
     subtitle: t.pages.accounts.subtitle,
     showBackButton: true,
   },
-  "/boveda-secreta": {
+  '/boveda-secreta': {
     title: t.pages.vault.title,
-    mode: "large",
+    mode: 'large',
     subtitle: t.pages.vault.subtitle,
   },
-  "/cotizacion": {
+  '/cotizacion': {
     title: t.pages.cotizacion.title,
-    mode: "compact",
+    mode: 'compact',
     showBackButton: true,
   },
-  "/certificate": {
+  '/certificate': {
     title: t.pages.certificate.title,
-    mode: "compact",
+    mode: 'compact',
     showBackButton: true,
   },
-  "/admin/analytics": {
-    title: "Analytics Dashboard",
-    mode: "large",
-    subtitle: "Métricas y Business Health Score",
+  '/admin/analytics': {
+    title: 'Analytics Dashboard',
+    mode: 'large',
+    subtitle: 'Métricas y Business Health Score',
     showBackButton: true,
   },
-  "/admin/name-generator": {
-    title: "Generador de Nombres",
-    mode: "large",
-    subtitle: "Nombres únicos para esmeraldas con IA",
+  '/admin/name-generator': {
+    title: 'Generador de Nombres',
+    mode: 'large',
+    subtitle: 'Nombres únicos para esmeraldas con IA',
     showBackButton: true,
   },
-  "/mi-perfil": {
-    title: "Mi Perfil",
-    mode: "large",
-    subtitle: "Tu portafolio y actividad",
+  '/mi-perfil': {
+    title: 'Mi Perfil',
+    mode: 'large',
+    subtitle: 'Tu portafolio y actividad',
     showBackButton: true,
   },
 });
@@ -194,14 +179,14 @@ export interface IOSLayoutProps {
 
 // Detect if already in standalone/PWA mode
 const isStandalone = () =>
-  window.matchMedia("(display-mode: standalone)").matches ||
+  window.matchMedia('(display-mode: standalone)').matches ||
   (navigator as any).standalone === true;
 
 const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   const location = useLocation();
   const { t } = useLanguage();
   const { mode } = useThemeMode();
-  const isLight = mode === "light";
+  const isLight = mode === 'light';
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
   const [settingsSheetOpen, setSettingsSheetOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -209,12 +194,12 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   // Track fullscreen state changes
   useEffect(() => {
     const handler = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener("fullscreenchange", handler);
-    return () => document.removeEventListener("fullscreenchange", handler);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
   }, []);
 
   const supportsFullscreen =
-    typeof document.documentElement.requestFullscreen === "function" &&
+    typeof document.documentElement.requestFullscreen === 'function' &&
     !isStandalone();
 
   const toggleFullscreen = useCallback(() => {
@@ -226,7 +211,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   }, []);
 
   const pageConfig = useMemo((): PageConfig => {
-    const configs = getPageConfigs(t, isLight);
+    const configs = getPageConfigs(t);
 
     // Check for exact match first
     const exactMatch = configs[location.pathname];
@@ -234,35 +219,35 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
 
     // Check for partial match (e.g., /product/:id)
     const partialMatch = Object.keys(configs).find(
-      (key) => location.pathname.startsWith(key) && key !== "/",
+      (key) => location.pathname.startsWith(key) && key !== '/',
     );
     if (partialMatch) return configs[partialMatch];
 
     // Default config
     return {
-      title: "Tierra Mädre",
-      mode: "compact",
+      title: 'Tierra Mädre',
+      mode: 'compact',
     };
   }, [location.pathname, t, isLight]);
 
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100dvh",
-        overflow: "hidden",
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100dvh',
+        overflow: 'hidden',
         // Fallback for browsers without dvh support
-        "@supports not (height: 100dvh)": {
-          height: "100vh",
+        '@supports not (height: 100dvh)': {
+          height: '100vh',
         },
-        backgroundColor: "var(--surface-primary)",
+        backgroundColor: 'var(--surface-primary)',
         // Copilot rail push: the docked rail sets this var; nav bar + main shift
         // left so the fixed rail fills the gap. 0 when closed/overlay/off-route.
-        paddingRight: "var(--copilot-rail-width, 0px)",
-        transition: "padding-right 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-        "@media (prefers-reduced-motion: reduce)": {
-          transition: "none",
+        paddingRight: 'var(--copilot-rail-width, 0px)',
+        transition: 'padding-right 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+        '@media (prefers-reduced-motion: reduce)': {
+          transition: 'none',
         },
       }}
     >
@@ -271,23 +256,23 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         component="a"
         href="#main-content"
         sx={{
-          position: "absolute",
+          position: 'absolute',
           top: -9999,
           left: 0,
           zIndex: zIndex.modal,
-          bgcolor: "var(--surface-primary)",
-          color: "text.primary",
+          bgcolor: 'var(--surface-primary)',
+          color: 'text.primary',
           px: 3,
           py: 1.5,
           fontWeight: 600,
-          fontSize: "0.875rem",
-          textDecoration: "none",
-          borderRadius: "0 0 8px 0",
+          fontSize: '0.875rem',
+          textDecoration: 'none',
+          borderRadius: '0 0 8px 0',
           boxShadow: defaultShadows.sm,
-          "&:focus-visible": {
+          '&:focus-visible': {
             top: 0,
-            outline: "2px solid",
-            outlineColor: "primary.main",
+            outline: '2px solid',
+            outlineColor: 'primary.main',
             outlineOffset: -2,
           },
         }}
@@ -309,8 +294,8 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
           pageConfig.forceLogoUrl ||
           (pageConfig.logoUrl
             ? isLight
-              ? "/images/logo-horizontal-dark.png"
-              : "/images/logo-horizontal-white.png"
+              ? '/images/logo-horizontal-dark.png'
+              : '/images/logo-horizontal-white.png'
             : undefined)
         }
         showBackButton={pageConfig.showBackButton}
@@ -320,15 +305,15 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
           supportsFullscreen ? (
             <IconButton
               onClick={toggleFullscreen}
-              aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
               size="small"
               sx={{
-                color: "var(--brand-primary)",
-                padding: "6px",
+                color: 'var(--brand-primary)',
+                padding: '6px',
                 opacity: 0.7,
-                "&:hover": {
+                '&:hover': {
                   opacity: 1,
-                  backgroundColor: "var(--surface-tertiary)",
+                  backgroundColor: 'var(--surface-tertiary)',
                 },
               }}
             >
@@ -354,18 +339,18 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
           // Fotosíntesis suppresses this global bar and mounts its own FotoTabBar
           // (which reserves its own space in FotosintesisLayout), so don't
           // double-book the reservation on /admin/fotosintesis routes.
-          paddingBottom: location.pathname.startsWith("/admin/fotosintesis")
+          paddingBottom: location.pathname.startsWith('/admin/fotosintesis')
             ? 0
             : `calc(95px + env(safe-area-inset-bottom))`,
-          overflowY: "auto",
-          WebkitOverflowScrolling: "touch",
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
           // iOS HIG: Improve scroll performance and touch handling
-          position: "relative",
-          isolation: "isolate", // Create stacking context
+          position: 'relative',
+          isolation: 'isolate', // Create stacking context
           // iOS HIG: Ensure smooth scroll momentum
-          scrollBehavior: "smooth",
-          "@media (prefers-reduced-motion: reduce)": {
-            scrollBehavior: "auto",
+          scrollBehavior: 'smooth',
+          '@media (prefers-reduced-motion: reduce)': {
+            scrollBehavior: 'auto',
           },
         }}
       >

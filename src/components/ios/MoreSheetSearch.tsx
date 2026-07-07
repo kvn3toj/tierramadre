@@ -36,7 +36,6 @@ import {
   TypeFilter,
 } from '../../hooks/useTreasureFiltering';
 import { LogRangeSlider } from '../shared/LogRangeSlider';
-import { goldAccent } from '../../design-system/tokens/colors';
 import {
   cssTransition,
   primitiveColors,
@@ -331,8 +330,8 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
             }
             sx={getFilterChipSx(
               localTypeFilter === 'jewelry',
-              goldAccent.primary,
-              goldAccent.dark,
+              primitiveColors.emerald[500],
+              primitiveColors.emerald[600],
             )}
           />
 
@@ -348,8 +347,8 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
             }
             sx={getFilterChipSx(
               localQualityFilter === 'PREMIUM',
-              goldAccent.primary,
-              goldAccent.dark,
+              primitiveColors.emerald[500],
+              primitiveColors.emerald[600],
             )}
           />
 

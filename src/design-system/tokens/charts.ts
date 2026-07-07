@@ -127,13 +127,13 @@ export const chartColors = {
 
   /** Gold theme (for premium/growth indicators) */
   gold: {
-    line: '#D4AF37',
-    lineGradientStart: '#E5C866',
-    lineGradientEnd: '#8F7318',
-    area: `rgba(212, 175, 55, ${opacity.medium})`,
-    areaGradientEnd: `rgba(212, 175, 55, ${opacity.whisper})`,
-    point: '#D4AF37',
-    pointHover: '#B8941F',
+    line: '#8C928F',
+    lineGradientStart: '#9AA09D',
+    lineGradientEnd: '#5C6360',
+    area: `rgba(140, 146, 143, ${opacity.medium})`,
+    areaGradientEnd: `rgba(140, 146, 143, ${opacity.whisper})`,
+    point: '#8C928F',
+    pointHover: '#5C6360',
     grid: `rgba(255, 255, 255, ${opacity.guide})`,
     gridDark: `rgba(0, 0, 0, ${opacity.guide})`,
   },

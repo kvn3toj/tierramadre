@@ -22,7 +22,7 @@
 // Base color values for rgba
 const BLACK = '0, 0, 0';
 const EMERALD = '0, 174, 122';
-const GOLD = '212, 175, 55';
+const GOLD = '140, 146, 143';
 
 // =============================================================================
 // DEFAULT SHADOWS (Neutral)
@@ -155,7 +155,7 @@ export const specularShadows = {
   /** Emerald specular */
   emerald: `inset 0 1px 1px rgba(0, 174, 122, 0.15), 0 0 20px rgba(0, 174, 122, 0.1)`,
   /** Gold specular */
-  gold: `inset 0 1px 1px rgba(212, 175, 55, 0.2), 0 0 20px rgba(212, 175, 55, 0.1)`,
+  gold: `inset 0 1px 1px rgba(140, 146, 143, 0.2), 0 0 20px rgba(140, 146, 143, 0.1)`,
 } as const;
 
 // =============================================================================

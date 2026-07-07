@@ -11,10 +11,17 @@ import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, IconButton } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
-import { dynamicBlur, liquidSaturation, specularHighlights } from '../../design-system/tokens/liquid-glass';
+import { specularHighlights } from '../../design-system/tokens/liquid-glass';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useIsScrolled } from '../../hooks/useScrollShrink';
-import { iosTypographyScale, primitiveSpacing as spacing, easingCurves, durations, zIndex } from '../../design-system';
+import {
+  iosTypographyScale,
+  primitiveSpacing as spacing,
+  easingCurves,
+  durations,
+  zIndex,
+  qeFont,
+} from '../../design-system';
 
 export type NavigationBarMode = 'compact' | 'large';
 
@@ -76,23 +83,13 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
         WebkitBackdropFilter: 'none',
       };
     }
-
-    if (!effectiveConfig.blur) {
-      return {
-        backgroundColor: 'var(--surface-primary)',
-        backdropFilter: 'none',
-        WebkitBackdropFilter: 'none',
-      };
-    }
-
-    const blurValue = isScrolled ? dynamicBlur.hover : dynamicBlur.resting;
-
+    // Quiet Emerald: flat editorial header — solid surface, no blur.
     return {
-      backgroundColor: 'rgba(var(--surface-primary-rgb), 0.85)',
-      backdropFilter: `blur(${blurValue}) saturate(${liquidSaturation.vibrant})`,
-      WebkitBackdropFilter: `blur(${blurValue}) saturate(${liquidSaturation.vibrant})`,
+      backgroundColor: 'var(--surface-primary)',
+      backdropFilter: 'none',
+      WebkitBackdropFilter: 'none',
     };
-  }, [effectiveConfig.blur, isScrolled, backgroundColor]);
+  }, [backgroundColor]);
 
   // Specular highlight on bottom edge
   const specularStyles = useMemo(() => {
@@ -124,14 +121,18 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
         zIndex: zIndex.nav,
         ...liquidGlassStyles,
         borderBottom: backgroundColor
-          ? (backgroundColor.includes('gradient') ? '0.5px solid rgba(0, 174, 122, 0.15)' : 'none')
+          ? backgroundColor.includes('gradient')
+            ? '0.5px solid rgba(0, 174, 122, 0.15)'
+            : 'none'
           : '0.5px solid var(--border-default)',
         boxShadow: isScrolled ? 'var(--shadow-md)' : 'var(--shadow-sm)',
         transition: effectiveConfig.animations
           ? `all ${durations.liquidNormal} ${easingCurves.liquidInOut}`
           : 'none',
         transform: 'translateZ(0)',
-        willChange: effectiveConfig.animations ? 'backdrop-filter, box-shadow' : 'auto',
+        willChange: effectiveConfig.animations
+          ? 'backdrop-filter, box-shadow'
+          : 'auto',
         ...specularStyles,
 
         '@supports not (backdrop-filter: blur(10px))': {
@@ -157,7 +158,14 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
         }}
       >
         {/* Leading Section */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: spacing.xxs, flex: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: spacing.xxs,
+            flex: 1,
+          }}
+        >
           {showBackButton && (
             <IconButton
               onClick={handleBackClick}
@@ -193,7 +201,14 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
 
         {/* Title or Logo (Compact Mode) */}
         {!isLargeMode && (
-          <Box sx={{ flex: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <Box
+            sx={{
+              flex: 2,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
             {logoUrl ? (
               <Box
                 component="img"
@@ -210,6 +225,7 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
                 variant="h6"
                 sx={{
                   fontSize: iosTypographyScale.headline,
+                  fontFamily: qeFont.ui,
                   fontWeight: 600,
                   color: 'var(--text-primary)',
                   textAlign: 'center',
@@ -222,7 +238,15 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
         )}
 
         {/* Trailing Section */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: spacing.xxs, justifyContent: 'flex-end', flex: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: spacing.xxs,
+            justifyContent: 'flex-end',
+            flex: 1,
+          }}
+        >
           {trailingElement}
           {trailingActions.map((action, index) => {
             const Icon = action.icon;
@@ -246,15 +270,23 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
 
       {/* Large Title Section */}
       {isLargeMode && (
-        <Box sx={{ paddingX: spacing.md, paddingBottom: spacing.sm, paddingTop: spacing.xs }}>
+        <Box
+          sx={{
+            paddingX: spacing.md,
+            paddingBottom: spacing.sm,
+            paddingTop: spacing.xs,
+          }}
+        >
           <Typography
             variant="h1"
             sx={{
+              // Quiet Emerald: editorial serif for page titles ("Catálogo")
               fontSize: iosTypographyScale.largeTitle,
-              fontWeight: 700,
+              fontFamily: qeFont.serif,
+              fontWeight: 500,
               color: 'var(--text-primary)',
-              letterSpacing: '-0.5px',
-              lineHeight: 1.1,
+              letterSpacing: '-0.01em',
+              lineHeight: 1.05,
             }}
           >
             {title}
@@ -264,7 +296,10 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
             <Typography
               variant="body2"
               sx={{
-                fontSize: iosTypographyScale.subhead,
+                fontFamily: qeFont.mono,
+                fontSize: '0.6875rem',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
                 color: 'var(--text-secondary)',
                 marginTop: spacing.xxs,
               }}

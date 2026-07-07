@@ -7,7 +7,7 @@
  * Extracted from legacy design-system.ts for canonical usage.
  */
 
-import { emeraldCore, goldAccent } from './colors';
+import { emeraldCore } from './colors';
 
 // =============================================================================
 // ACCENT COLORS
@@ -61,7 +61,7 @@ export const accentColors = {
     minimum: { color: '#64748B', label: 'Minimo' },
     base: { color: '#3B82F6', label: 'Base' },
     ideal: { color: emeraldCore.primary, label: 'Ideal' },
-    premium: { color: goldAccent.primary, label: 'Premium' },
+    premium: { color: emeraldCore.dark, label: 'Premium' },
   },
 } as const;
 
@@ -70,9 +70,9 @@ export const accentColors = {
 // =============================================================================
 
 export const medalColors = {
-  gold: '#FFD700',
-  silver: '#C0C0C0',
-  bronze: '#CD7F32',
+  gold: '#8C928F', // graphite (was #FFD700)
+  silver: '#C9CECB', // light graphite
+  bronze: '#5C6360', // deep graphite
 } as const;
 
 // =============================================================================
@@ -81,7 +81,7 @@ export const medalColors = {
 
 export const getAccentColor = (
   colorKey: keyof Omit<typeof accentColors, 'priceTiers'>,
-  mode: 'light' | 'dark' = 'light'
+  mode: 'light' | 'dark' = 'light',
 ): string => {
   const color = accentColors[colorKey];
   if (typeof color === 'string') return color;

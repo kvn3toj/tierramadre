@@ -10,20 +10,16 @@
 // =============================================================================
 
 export const emeraldCore = {
-  primary: '#00AE7A',      // Logo green - Pure Colombian Emerald
-  light: '#33C194',        // Sunlit Emerald
-  lighter: '#66D4AE',      // Morning Dew
-  lightest: '#E6F7F1',     // Emerald Mist
-  dark: '#008C61',         // Deep Forest
-  darker: '#006A48',       // Earth's Heart
-  darkest: '#004830',      // Mineral Core
-
-  // Sacred ratios derived from primary (golden ratio)
-  vibrant: '#00D697',      // φ lighter
-  essence: '#007856',      // φ darker
-
-  // Accessible text variant — 4.72:1 on white (WCAG AA)
-  textAccessible: '#0B6E4F',
+  primary: '#00AF84', // QE accent-pure
+  light: '#34C99B', // QE dark-mode accent / light tint
+  lighter: '#6FDFBE', // derived lighter
+  lightest: '#E6F7F1', // unchanged mist (still reads fine on light)
+  dark: '#00785C', // QE light-mode accent
+  darker: '#006F52', // QE accent-strong
+  darkest: '#00583F', // derived deepest
+  vibrant: '#34C99B', // was φ-lighter → QE bright emerald
+  essence: '#006F52', // was φ-darker → QE strong
+  textAccessible: '#0B6E4F', // keep — already WCAG AA on white
 } as const;
 
 // =============================================================================
@@ -31,13 +27,13 @@ export const emeraldCore = {
 // =============================================================================
 
 export const goldAccent = {
-  primary: '#D4AF37',      // Pre-Columbian Gold
-  light: '#E5C866',        // Sunlight on Gold
-  lighter: '#F5E6A3',      // Gold Dust
-  lightest: '#FDF8E8',     // Golden Dawn
-  dark: '#B8941F',         // Ancient Gold
-  darker: '#8F7318',       // Earth Gold
-  darkest: '#665210',      // Deep Treasure
+  primary: '#8C928F', // qeGray 500 — refined graphite replaces gold
+  light: '#9AA09D', // qeGray 400
+  lighter: '#C9CECB', // qeGray 300
+  lightest: '#EBEDEC', // qeGray 150
+  dark: '#5C6360', // qeGray 600
+  darker: '#3A403E', // qeGray 700
+  darkest: '#272C2B', // qeGray 800
 } as const;
 
 // =============================================================================
@@ -76,7 +72,7 @@ export const qualityTiers = {
     primary: '#006A48',
     secondary: '#004830',
     gradient: 'linear-gradient(135deg, #006A48 0%, #004830 100%)',
-    accent: '#D4AF37',
+    accent: '#00AF84',
     glow: 'rgba(0, 106, 72, 0.6)',
     frequency: '852Hz',
     chakra: 'Third Eye',
@@ -236,7 +232,7 @@ export const priceTiers = {
     range: '> $5000',
     color: emeraldCore.darkest,
     badge: 'Collection Piece',
-    accent: goldAccent.primary,
+    accent: emeraldCore.dark,
   },
 } as const;
 
