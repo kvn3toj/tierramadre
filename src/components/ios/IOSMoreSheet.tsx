@@ -70,6 +70,7 @@ import { usePriceShare } from '../../contexts/PriceShareContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { useCurrentAsesor } from '../../hooks/useCurrentAsesor';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
+import { getFeatureFlag } from '../../utils/featureFlags';
 
 export interface MoreToolConfig {
   id: string;
@@ -151,16 +152,21 @@ const buildMenuSections = (
       route: '/boveda-secreta',
       color: brand.gold[500],
     },
-    {
-      // Bóveda re-skin: the Esmereogénesis hub had no persistent nav entry.
-      // (Copy promoted to the i18n bundle in Phase 9.)
-      id: 'esmereogenesis',
-      label: 'Esmereogénesis',
-      subtitle: 'Ahorro con propósito · haz tuya una esmeralda',
-      icon: Sprout as any,
-      route: '/esmereogenesis',
-      color: emeraldCore.primary,
-    },
+    // Bóveda re-skin: the Esmereogénesis hub had no persistent nav entry.
+    // (Copy promoted to the i18n bundle in Phase 9.)
+    // Dev-only feature — omitted in production via the ESMEREOGENESIS flag.
+    ...(getFeatureFlag('ESMEREOGENESIS')
+      ? [
+          {
+            id: 'esmereogenesis',
+            label: 'Esmereogénesis',
+            subtitle: 'Ahorro con propósito · haz tuya una esmeralda',
+            icon: Sprout as any,
+            route: '/esmereogenesis',
+            color: emeraldCore.primary,
+          },
+        ]
+      : []),
   ];
 
   if (flags.isAdmin) {

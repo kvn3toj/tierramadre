@@ -32,6 +32,14 @@ export interface FeatureFlags {
   /** iOS Ambassadors feature */
   IOS_AMBASSADORS: boolean;
 
+  /**
+   * Esmereogénesis (savings-with-purpose method). Dev-only: gated OFF in
+   * production so the consumer routes + UI entry points are hidden, while the
+   * feature stays fully usable locally (`npm run dev`) or via a localStorage
+   * override (`window.featureFlags.enable('ESMEREOGENESIS')`).
+   */
+  ESMEREOGENESIS: boolean;
+
   /** A/B Test: Grid Layout Variant */
   AB_GRID_VARIANT: ABGridVariant;
 }
@@ -43,12 +51,13 @@ export interface FeatureFlags {
  * Week 5+: Other features
  */
 export const FEATURES: FeatureFlags = {
-  IOS_UPLOAD: true,     // ✅ Week 2 - Ready for testing
-  IOS_GALLERY: false,   // ⏳ Week 3-4
-  IOS_CALENDAR: false,  // ⏳ Week 5-6
-  IOS_CATALOG: false,   // ⏳ Week 7-8
+  IOS_UPLOAD: true, // ✅ Week 2 - Ready for testing
+  IOS_GALLERY: false, // ⏳ Week 3-4
+  IOS_CALENDAR: false, // ⏳ Week 5-6
+  IOS_CATALOG: false, // ⏳ Week 7-8
   IOS_TREASURE: false, // ⏳ Week 7-8
   IOS_AMBASSADORS: false, // ⏳ Future
+  ESMEREOGENESIS: import.meta.env.DEV, // 🚧 Dev-only — hidden in production
   AB_GRID_VARIANT: 'ios-hig', // ✅ Default to iOS HIG strict compliance
 };
 
@@ -62,7 +71,9 @@ const FEATURE_OVERRIDE_KEY = STORAGE_KEYS.FEATURE_FLAGS;
  * Get Feature Flag Value
  * Checks localStorage override first, then default config
  */
-export function getFeatureFlag<K extends keyof FeatureFlags>(flagName: K): FeatureFlags[K] {
+export function getFeatureFlag<K extends keyof FeatureFlags>(
+  flagName: K,
+): FeatureFlags[K] {
   if (typeof window === 'undefined') return FEATURES[flagName];
 
   try {
@@ -88,7 +99,10 @@ export function getFeatureFlag<K extends keyof FeatureFlags>(flagName: K): Featu
  * setFeatureFlag('IOS_UPLOAD', true);
  * setFeatureFlag('AB_GRID_VARIANT', 'premium');
  */
-export function setFeatureFlag<K extends keyof FeatureFlags>(flagName: K, value: FeatureFlags[K]): void {
+export function setFeatureFlag<K extends keyof FeatureFlags>(
+  flagName: K,
+  value: FeatureFlags[K],
+): void {
   if (typeof window === 'undefined') return;
 
   try {
@@ -139,8 +153,12 @@ export function getAllFeatureFlags(): FeatureFlags {
       if ('IOS_CALENDAR' in parsed) flags.IOS_CALENDAR = parsed.IOS_CALENDAR;
       if ('IOS_CATALOG' in parsed) flags.IOS_CATALOG = parsed.IOS_CATALOG;
       if ('IOS_TREASURE' in parsed) flags.IOS_TREASURE = parsed.IOS_TREASURE;
-      if ('IOS_AMBASSADORS' in parsed) flags.IOS_AMBASSADORS = parsed.IOS_AMBASSADORS;
-      if ('AB_GRID_VARIANT' in parsed) flags.AB_GRID_VARIANT = parsed.AB_GRID_VARIANT;
+      if ('IOS_AMBASSADORS' in parsed)
+        flags.IOS_AMBASSADORS = parsed.IOS_AMBASSADORS;
+      if ('ESMEREOGENESIS' in parsed)
+        flags.ESMEREOGENESIS = parsed.ESMEREOGENESIS;
+      if ('AB_GRID_VARIANT' in parsed)
+        flags.AB_GRID_VARIANT = parsed.AB_GRID_VARIANT;
     }
   } catch (error) {
     console.warn('Failed to read feature flag overrides:', error);
@@ -193,10 +211,13 @@ export function useFeatureFlags() {
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
-  const setFlag = useCallback(<K extends keyof FeatureFlags>(flagName: K, value: FeatureFlags[K]) => {
-    setFeatureFlag(flagName, value);
-    setFlags(getAllFeatureFlags());
-  }, []);
+  const setFlag = useCallback(
+    <K extends keyof FeatureFlags>(flagName: K, value: FeatureFlags[K]) => {
+      setFeatureFlag(flagName, value);
+      setFlags(getAllFeatureFlags());
+    },
+    [],
+  );
 
   const resetFlags = useCallback(() => {
     clearFeatureFlags();

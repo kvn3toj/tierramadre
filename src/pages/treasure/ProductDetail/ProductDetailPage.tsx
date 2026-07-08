@@ -3,8 +3,8 @@
  * Detailed product view with gallery, specifications, and actions.
  */
 
-import { useParams, useNavigate } from "react-router-dom";
-import { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import { useParams, useNavigate } from 'react-router-dom';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -15,31 +15,31 @@ import {
   Snackbar,
   Skeleton,
   IconButton,
-} from "@mui/material";
-import { ChevronLeft, Package, Heart, Share2 } from "lucide-react";
+} from '@mui/material';
+import { ChevronLeft, Package, Heart, Share2 } from 'lucide-react';
 
-import { useShare } from "../../../hooks/useShare";
-import { useHaptics } from "../../../hooks/useHaptics";
-import { useProductView } from "../../../hooks/useProductView";
-import { useCart } from "../../../hooks/useCart";
-import { useWhatsAppContact } from "../../../hooks/useWhatsAppContact";
-import { useFavorites } from "../../../hooks/useFavorites";
-import { treasureToCartItem } from "../../../types/cart";
-import AdminSelectDialog from "../../../components/cart/AdminSelectDialog";
-import { useThemeMode } from "../../../contexts/ThemeContext";
-import { usePriceShare } from "../../../contexts/PriceShareContext";
-import { useIsAdmin, useIsProvider } from "../../../hooks/usePermissions";
-import { useIsGuest } from "../../../hooks/useAuth";
-import { useTreasure } from "../../../hooks/useTreasure";
-import { MemberBenefitsTeaser } from "../../../components/guest";
-import { MediaGallery } from "../../../components/media";
-import type { MediaItem } from "../../../components/media/types";
-import { PriceDisplay } from "../../../components/price-simulator/PriceDisplay";
-import { createLogger } from "../../../utils/logger";
-import { convertToProxyUrl } from "../../../utils/driveUrl";
-import { surfacesLight } from "../../../design-system/tokens/colors";
-import { buttonGradients } from "../../../design-system/tokens/gradients";
-import { lightTokens } from "../../../design-system";
+import { useShare } from '../../../hooks/useShare';
+import { useHaptics } from '../../../hooks/useHaptics';
+import { useProductView } from '../../../hooks/useProductView';
+import { useCart } from '../../../hooks/useCart';
+import { useWhatsAppContact } from '../../../hooks/useWhatsAppContact';
+import { useFavorites } from '../../../hooks/useFavorites';
+import { treasureToCartItem } from '../../../types/cart';
+import AdminSelectDialog from '../../../components/cart/AdminSelectDialog';
+import { useThemeMode } from '../../../contexts/ThemeContext';
+import { usePriceShare } from '../../../contexts/PriceShareContext';
+import { useIsAdmin, useIsProvider } from '../../../hooks/usePermissions';
+import { useIsGuest } from '../../../hooks/useAuth';
+import { useTreasure } from '../../../hooks/useTreasure';
+import { MemberBenefitsTeaser } from '../../../components/guest';
+import { MediaGallery } from '../../../components/media';
+import type { MediaItem } from '../../../components/media/types';
+import { PriceDisplay } from '../../../components/price-simulator/PriceDisplay';
+import { createLogger } from '../../../utils/logger';
+import { convertToProxyUrl } from '../../../utils/driveUrl';
+import { surfacesLight } from '../../../design-system/tokens/colors';
+import { buttonGradients } from '../../../design-system/tokens/gradients';
+import { lightTokens } from '../../../design-system';
 import {
   AdditionalInfo,
   ProductActions,
@@ -47,15 +47,16 @@ import {
   CertificateSection,
   ProvenanceSection,
   PricePerCarat,
-} from "./components";
-import { useConvexQuery, convexApi } from "../../../lib/convex-safe";
-import { EsmereogenesisCTA } from "../../../components/esmereogenesis/EsmereogenesisCTA";
-import { scrollMainTo } from "../../../utils/mainScroll";
-import { activeLotePiece, resolveLoteDetail } from "./loteDetail";
-import { getQuietEmerald, qeFont } from "../../../design-system";
-import { useRedesignVariant } from "../../../hooks/useRedesignVariant";
-import RedesignVariantToggle from "../../../components/redesign/RedesignVariantToggle";
-import { formatCarats } from "../../../utils/formatting";
+} from './components';
+import { useConvexQuery, convexApi } from '../../../lib/convex-safe';
+import { EsmereogenesisCTA } from '../../../components/esmereogenesis/EsmereogenesisCTA';
+import { getFeatureFlag } from '../../../utils/featureFlags';
+import { scrollMainTo } from '../../../utils/mainScroll';
+import { activeLotePiece, resolveLoteDetail } from './loteDetail';
+import { getQuietEmerald, qeFont } from '../../../design-system';
+import { useRedesignVariant } from '../../../hooks/useRedesignVariant';
+import RedesignVariantToggle from '../../../components/redesign/RedesignVariantToggle';
+import { formatCarats } from '../../../utils/formatting';
 import {
   FormulaPanel,
   SpecGroups,
@@ -65,9 +66,9 @@ import {
   TrustCard,
   GemLiteralGallery,
   GemBottomBar,
-} from "./gemSheet/GemSheetParts";
+} from './gemSheet/GemSheetParts';
 
-const log = createLogger("ProductDetail");
+const log = createLogger('ProductDetail');
 
 export default function ProductDetail() {
   const { itemId, groupId } = useParams<{
@@ -86,7 +87,7 @@ export default function ProductDetail() {
   const { isFavorite, toggleFavorite } = useFavorites();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarMessage, setSnackbarMessage] = useState('');
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
 
   const { treasure, updateMediaItems, getMediaItems, isLoadingSheets } =
@@ -114,10 +115,10 @@ export default function ProductDetail() {
 
   // Get display name early for use in effects
   const displayName = useMemo(() => {
-    if (!product) return "";
+    if (!product) return '';
     return product.nombre
-      .replace(/^L:.*?\s/, "")
-      .replace(/^L:/, "")
+      .replace(/^L:.*?\s/, '')
+      .replace(/^L:/, '')
       .trim();
   }, [product]);
 
@@ -135,13 +136,13 @@ export default function ProductDetail() {
       : undefined;
   const adminDoc = useConvexQuery(
     convexApi.products.get,
-    adminItemId ? { itemId: adminItemId } : "skip",
+    adminItemId ? { itemId: adminItemId } : 'skip',
   ) as
     | {
         procedencia?: string;
         loteId?: string;
         preponderancia?: number;
-        syncStatus?: "synced" | "pending" | "error";
+        syncStatus?: 'synced' | 'pending' | 'error';
         syncError?: string;
       }
     | null
@@ -179,8 +180,8 @@ export default function ProductDetail() {
       media.push({
         id: `lote-hero-${product.groupId}`,
         url: product.imagen, // already proxied in useTreasure
-        type: "image",
-        category: "hero",
+        type: 'image',
+        category: 'hero',
         alt: `${displayName} — lote completo`,
         order: 0,
       });
@@ -192,8 +193,8 @@ export default function ProductDetail() {
       media.push({
         id: `lote-item-${li.item}`,
         url: convertToProxyUrl(li.imagen) ?? li.imagen,
-        type: "image",
-        category: "detail",
+        type: 'image',
+        category: 'detail',
         alt: `${li.nombre} (#${li.item})`,
         order: i + 1,
       });
@@ -223,10 +224,10 @@ export default function ProductDetail() {
 
   // Cleaned title for the piece (or bundle) currently in view.
   const detailName = useMemo(() => {
-    if (!detail) return "";
+    if (!detail) return '';
     return detail.nombre
-      .replace(/^L:.*?\s/, "")
-      .replace(/^L:/, "")
+      .replace(/^L:.*?\s/, '')
+      .replace(/^L:/, '')
       .trim();
   }, [detail]);
 
@@ -273,9 +274,9 @@ export default function ProductDetail() {
             {
               id: `legacy-${product.item}`,
               url: product.imagen,
-              type: product.mediaType === "video" ? "video" : "image",
+              type: product.mediaType === 'video' ? 'video' : 'image',
               thumbnailUrl: product.thumbnailUrl,
-              category: "hero" as const,
+              category: 'hero' as const,
               alt: displayName || `Producto ${product.item}`,
               order: 0,
             },
@@ -297,22 +298,22 @@ export default function ProductDetail() {
                 name: string;
                 proxyUrl: string;
                 thumbnailUrl: string;
-                type: "image" | "video";
+                type: 'image' | 'video';
                 order: number;
               }) => ({
                 id: img.id,
                 url: img.proxyUrl,
                 type: img.type,
                 thumbnailUrl: img.thumbnailUrl,
-                category: "hero" as const,
+                category: 'hero' as const,
                 alt: img.name || `${displayName} - ${img.order + 1}`,
                 order: img.order,
               }),
             );
 
             const sortedItems = [...driveItems].sort((a, b) => {
-              if (a.type === "image" && b.type === "video") return -1;
-              if (a.type === "video" && b.type === "image") return 1;
+              if (a.type === 'image' && b.type === 'video') return -1;
+              if (a.type === 'video' && b.type === 'image') return 1;
               return a.order - b.order;
             });
 
@@ -337,9 +338,9 @@ export default function ProductDetail() {
                 {
                   id: `legacy-${product.item}`,
                   url: product.imagen,
-                  type: product.mediaType === "video" ? "video" : "image",
+                  type: product.mediaType === 'video' ? 'video' : 'image',
                   thumbnailUrl: product.thumbnailUrl,
-                  category: "hero",
+                  category: 'hero',
                   alt: displayName || `Producto ${product.item}`,
                   order: 0,
                 },
@@ -348,7 +349,7 @@ export default function ProductDetail() {
           }
         } catch (error) {
           if (!isCancelled) {
-            log.error("Error fetching Drive images:", error);
+            log.error('Error fetching Drive images:', error);
 
             // On error with no cache, fall back to legacy image
             if (localItems.length === 0 && product.imagen) {
@@ -356,9 +357,9 @@ export default function ProductDetail() {
                 {
                   id: `legacy-${product.item}`,
                   url: product.imagen,
-                  type: product.mediaType === "video" ? "video" : "image",
+                  type: product.mediaType === 'video' ? 'video' : 'image',
                   thumbnailUrl: product.thumbnailUrl,
-                  category: "hero",
+                  category: 'hero',
                   alt: displayName || `Producto ${product.item}`,
                   order: 0,
                 },
@@ -380,13 +381,13 @@ export default function ProductDetail() {
   const handleShareProduct = useCallback(async () => {
     if (!product) return;
 
-    triggerHaptic("light");
+    triggerHaptic('light');
     const result = await shareProduct(product);
 
     if (result.success) {
-      triggerHaptic("success");
-      if (result.method === "clipboard") {
-        log.debug("Product link copied to clipboard");
+      triggerHaptic('success');
+      if (result.method === 'clipboard') {
+        log.debug('Product link copied to clipboard');
       }
     }
   }, [product, shareProduct, triggerHaptic]);
@@ -396,13 +397,13 @@ export default function ProductDetail() {
     if (!product) return;
 
     if (isInCart(product.item)) {
-      navigate("/cart");
+      navigate('/cart');
       return;
     }
 
     addToCart(product);
-    triggerHaptic("success");
-    setSnackbarMessage("Producto agregado a tu seleccion");
+    triggerHaptic('success');
+    setSnackbarMessage('Producto agregado a tu seleccion');
     setSnackbarOpen(true);
   }, [product, isInCart, addToCart, triggerHaptic, navigate]);
 
@@ -410,11 +411,11 @@ export default function ProductDetail() {
   const handleContact = useCallback(async () => {
     if (!product) return;
 
-    triggerHaptic("light");
+    triggerHaptic('light');
 
     if (isGuest) {
       if (!hasInviter) {
-        setSnackbarMessage("No se encontro el contacto de tu invitador");
+        setSnackbarMessage('No se encontro el contacto de tu invitador');
         setSnackbarOpen(true);
         return;
       }
@@ -439,7 +440,7 @@ export default function ProductDetail() {
   if (isLoadingSheets && !product) {
     return (
       <Box
-        sx={{ maxWidth: 1400, mx: "auto", px: { xs: 0, sm: 3, md: 4 }, pb: 3 }}
+        sx={{ maxWidth: 1400, mx: 'auto', px: { xs: 0, sm: 3, md: 4 }, pb: 3 }}
       >
         <Box sx={{ px: { xs: 2, sm: 0 }, mb: 1 }}>
           <Skeleton width={160} height={20} sx={{ borderRadius: 1 }} />
@@ -450,13 +451,13 @@ export default function ProductDetail() {
             <Skeleton
               variant="rounded"
               sx={{
-                width: "100%",
-                aspectRatio: "1/1",
+                width: '100%',
+                aspectRatio: '1/1',
                 borderRadius: { xs: 0, sm: 3 },
               }}
             />
             {/* Thumbnail strip skeleton */}
-            <Box sx={{ display: "flex", gap: 1, mt: 1, px: { xs: 2, sm: 0 } }}>
+            <Box sx={{ display: 'flex', gap: 1, mt: 1, px: { xs: 2, sm: 0 } }}>
               {[0, 1, 2, 3].map((i) => (
                 <Skeleton
                   key={i}
@@ -478,8 +479,8 @@ export default function ProductDetail() {
                 <Box
                   key={i}
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     mb: 1.5,
                   }}
                 >
@@ -487,7 +488,7 @@ export default function ProductDetail() {
                   <Skeleton width="40%" height={20} />
                 </Box>
               ))}
-              <Box sx={{ display: "flex", gap: 1.5, mt: 3 }}>
+              <Box sx={{ display: 'flex', gap: 1.5, mt: 3 }}>
                 <Skeleton
                   variant="rounded"
                   width="50%"
@@ -513,10 +514,10 @@ export default function ProductDetail() {
       <Box
         sx={{
           maxWidth: 1200,
-          mx: "auto",
+          mx: 'auto',
           px: { xs: 2, sm: 3 },
           py: 8,
-          textAlign: "center",
+          textAlign: 'center',
         }}
       >
         <Package
@@ -536,7 +537,7 @@ export default function ProductDetail() {
         <Button
           variant="contained"
           startIcon={<ChevronLeft size={18} />}
-          onClick={() => navigate("/treasure")}
+          onClick={() => navigate('/treasure')}
           sx={{
             background: buttonGradients.primary,
             color: lightTokens.text.inverse,
@@ -548,44 +549,44 @@ export default function ProductDetail() {
     );
   }
 
-  const isAvailable = product.estado === "DISPONIBLE";
+  const isAvailable = product.estado === 'DISPONIBLE';
   // Descriptive sections (title, metadata, specs) follow the piece in view;
   // `detail` is only undefined when `product` is, which the guard above rules
   // out, so `info` is always a concrete item here.
   const info = detail ?? product;
 
   const isFav = isFavorite(product.item);
-  const fichaCode = `FICHA · TM-${String(product.item).padStart(4, "0")}`;
+  const fichaCode = `FICHA · TM-${String(product.item).padStart(4, '0')}`;
   const specLine = [
-    typeof info.peso === "number" ? `${formatCarats(info.peso)} ct` : "",
+    typeof info.peso === 'number' ? `${formatCarats(info.peso)} ct` : '',
     info.talla,
     info.procedencia || info.mina,
   ]
     .filter(Boolean)
-    .join(" · ")
+    .join(' · ')
     .toUpperCase();
   const ctaLabel = isLiteral
-    ? "Añadir a cotización"
+    ? 'Añadir a cotización'
     : isInCart(product.item)
-      ? "En tu selección · Ver"
-      : "Agregar a selección";
+      ? 'En tu selección · Ver'
+      : 'Agregar a selección';
 
   return (
     <Box
       sx={{
         maxWidth: 560,
-        mx: "auto",
+        mx: 'auto',
         px: { xs: 2, sm: 3 },
-        pb: "calc(28px + env(safe-area-inset-bottom))",
+        pb: 'calc(28px + env(safe-area-inset-bottom))',
       }}
     >
       {/* FICHA header */}
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          py: "10px",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          py: '10px',
         }}
       >
         <IconButton
@@ -599,13 +600,13 @@ export default function ProductDetail() {
           sx={{
             fontFamily: qeFont.mono,
             fontSize: 9.5,
-            letterSpacing: "0.12em",
+            letterSpacing: '0.12em',
             color: qe.subtle,
           }}
         >
           {fichaCode}
         </Typography>
-        <Box sx={{ display: "flex", gap: "4px" }}>
+        <Box sx={{ display: 'flex', gap: '4px' }}>
           <IconButton
             onClick={handleShareProduct}
             aria-label="Compartir"
@@ -617,9 +618,9 @@ export default function ProductDetail() {
             <IconButton
               onClick={() => {
                 toggleFavorite(product.item);
-                triggerHaptic("light");
+                triggerHaptic('light');
               }}
-              aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
+              aria-label={isFav ? 'Quitar de favoritos' : 'Agregar a favoritos'}
               sx={{
                 color: isFav ? qe.accent : qe.muted,
                 width: 36,
@@ -628,7 +629,7 @@ export default function ProductDetail() {
             >
               <Heart
                 size={17}
-                fill={isFav ? qe.accent : "none"}
+                fill={isFav ? qe.accent : 'none'}
                 strokeWidth={isFav ? 0 : 1.6}
               />
             </IconButton>
@@ -647,8 +648,8 @@ export default function ProductDetail() {
         <Paper
           elevation={0}
           sx={{
-            borderRadius: "6px",
-            overflow: "hidden",
+            borderRadius: '6px',
+            overflow: 'hidden',
             border: `1px solid ${qe.border}`,
             bgcolor: qe.well,
           }}
@@ -662,7 +663,7 @@ export default function ProductDetail() {
       )}
 
       {/* Title + spec line */}
-      <Box sx={{ mt: "16px" }}>
+      <Box sx={{ mt: '16px' }}>
         <Typography
           sx={{
             fontFamily: qeFont.serif,
@@ -679,9 +680,9 @@ export default function ProductDetail() {
             sx={{
               fontFamily: qeFont.mono,
               fontSize: 10,
-              letterSpacing: "0.06em",
+              letterSpacing: '0.06em',
               color: qe.subtle,
-              mt: "7px",
+              mt: '7px',
             }}
           >
             {specLine}
@@ -690,7 +691,7 @@ export default function ProductDetail() {
         {!isAvailable && (
           <Typography
             sx={{
-              mt: "6px",
+              mt: '6px',
               fontSize: 12,
               fontWeight: 600,
               color: qe.subtle,
@@ -711,19 +712,19 @@ export default function ProductDetail() {
 
       {isFaithful && (
         <>
-          <Box sx={{ mt: "18px" }}>
+          <Box sx={{ mt: '18px' }}>
             <CertificateSection product={product} />
           </Box>
           <ProvenanceSection
             product={adminProduct ?? product}
             isAdmin={isAdmin}
           />
-          <Box sx={{ mt: "18px" }}>
+          <Box sx={{ mt: '18px' }}>
             <AdditionalInfo product={product} isAdmin={isAdmin} />
           </Box>
 
           {shouldShowPrices && (
-            <Box sx={{ mt: "20px" }}>
+            <Box sx={{ mt: '20px' }}>
               {product.isLote && product.loteItems ? (
                 <LotePriceBreakdown
                   items={product.loteItems}
@@ -747,7 +748,7 @@ export default function ProductDetail() {
           )}
 
           {!isProvider && (
-            <Box sx={{ mt: "20px" }}>
+            <Box sx={{ mt: '20px' }}>
               <ProductActions
                 isAvailable={isAvailable}
                 isInCart={product ? isInCart(product.item) : false}
@@ -757,7 +758,7 @@ export default function ProductDetail() {
                 onShare={handleShareProduct}
                 onContact={handleContact}
                 middleSlot={
-                  product ? (
+                  product && getFeatureFlag('ESMEREOGENESIS') ? (
                     <EsmereogenesisCTA
                       product={product}
                       disabled={!isAvailable}
@@ -772,7 +773,7 @@ export default function ProductDetail() {
             <Box sx={{ mt: 3 }}>
               <MemberBenefitsTeaser
                 variant="compact"
-                onUnlockClick={() => navigate("/")}
+                onUnlockClick={() => navigate('/')}
               />
             </Box>
           )}
@@ -803,9 +804,9 @@ export default function ProductDetail() {
         autoHideDuration={3000}
         onClose={() => setSnackbarOpen(false)}
         message={snackbarMessage}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         sx={{
-          "& .MuiSnackbarContent-root": {
+          '& .MuiSnackbarContent-root': {
             bgcolor: qe.accentStrong,
             color: qe.onAccent,
           },

@@ -1,39 +1,40 @@
-import { useCallback, useEffect, useState, Suspense } from "react";
+import { useCallback, useEffect, useState, Suspense } from 'react';
 import {
   BrowserRouter,
   Routes,
   Route,
   Navigate,
   useNavigate,
-} from "react-router-dom";
-import { IOSLayout } from "./components/ios";
+} from 'react-router-dom';
+import { IOSLayout } from './components/ios';
 import {
   WelcomeScreen,
   AdminRoute,
   ProviderRoute,
   StaffRoute,
-} from "./components/auth";
-import { useAuth } from "./hooks/useAuth";
-import { useIsProvider } from "./hooks/usePermissions";
-import { Asesor } from "./hooks/useAsesores";
-import { initPWA } from "./utils/pwa";
+} from './components/auth';
+import { useAuth } from './hooks/useAuth';
+import { useIsProvider } from './hooks/usePermissions';
+import { Asesor } from './hooks/useAsesores';
+import { initPWA } from './utils/pwa';
 import {
   LoadingFallback,
   SplashScreen,
   ChunkErrorBoundary,
-} from "./components/shared";
-import { useLanguage } from "./contexts/LanguageContext";
+} from './components/shared';
+import { useLanguage } from './contexts/LanguageContext';
 // PWA update toast (version check on visibility change)
-import UpdateToast from "./components/pwa/UpdateToast";
-import { usePWAUpdate } from "./hooks/usePWAUpdate";
-import { AppShellProviders } from "./contexts/AppShellProviders";
-import { AppNavigatorProvider } from "./contexts/AppNavigatorContext";
-import { CopilotRailProvider } from "./pages/admin/Fotosintesis/copilot-rail/CopilotRailProvider";
-import { EsmereoThemeProvider } from "./contexts/EsmereoThemeContext";
-import { AchievementToast } from "./components/gamification";
-import { useViewportHeight } from "./hooks/useViewportHeight";
-import { lazyWithRetry } from "./utils/lazyWithRetry";
-import { STORAGE_KEYS } from "./constants/storage-keys";
+import UpdateToast from './components/pwa/UpdateToast';
+import { usePWAUpdate } from './hooks/usePWAUpdate';
+import { AppShellProviders } from './contexts/AppShellProviders';
+import { AppNavigatorProvider } from './contexts/AppNavigatorContext';
+import { CopilotRailProvider } from './pages/admin/Fotosintesis/copilot-rail/CopilotRailProvider';
+import { EsmereoThemeProvider } from './contexts/EsmereoThemeContext';
+import { AchievementToast } from './components/gamification';
+import { useViewportHeight } from './hooks/useViewportHeight';
+import { lazyWithRetry } from './utils/lazyWithRetry';
+import { STORAGE_KEYS } from './constants/storage-keys';
+import { getFeatureFlag } from './utils/featureFlags';
 
 /**
  * Localized Loading Component
@@ -43,248 +44,248 @@ import { STORAGE_KEYS } from "./constants/storage-keys";
 function LocalizedLoading({
   messageKey,
 }: {
-  messageKey: keyof typeof import("./locales/es").es.loading;
+  messageKey: keyof typeof import('./locales/es').es.loading;
 }) {
   const { t } = useLanguage();
   return <LoadingFallback message={t.loading[messageKey]} />;
 }
 
 // All routes lazy loaded with retry for optimal bundle splitting
-const Home = lazyWithRetry(() => import("./components/home"), "Home");
+const Home = lazyWithRetry(() => import('./components/home'), 'Home');
 const TreasureBrowser = lazyWithRetry(
-  () => import("./components/treasure/TreasureBrowser"),
-  "TreasureBrowser",
+  () => import('./components/treasure/TreasureBrowser'),
+  'TreasureBrowser',
 );
 const ProductDetail = lazyWithRetry(
-  () => import("./pages/treasure/ProductDetail/ProductDetailPage"),
-  "ProductDetail",
+  () => import('./pages/treasure/ProductDetail/ProductDetailPage'),
+  'ProductDetail',
 );
 const AmbassadorsPage = lazyWithRetry(
-  () => import("./pages/ambassadors/AmbassadorsPage"),
-  "AmbassadorsPage",
+  () => import('./pages/ambassadors/AmbassadorsPage'),
+  'AmbassadorsPage',
 );
 const AsesorProfilePage = lazyWithRetry(
-  () => import("./pages/ambassadors/profile/AsesorProfilePage"),
-  "AsesorProfilePage",
+  () => import('./pages/ambassadors/profile/AsesorProfilePage'),
+  'AsesorProfilePage',
 );
 const AccountsHub = lazyWithRetry(
-  () => import("./components/accounts/AccountsHub"),
-  "AccountsHub",
+  () => import('./components/accounts/AccountsHub'),
+  'AccountsHub',
 );
-const VaultPage = lazyWithRetry(() => import("./pages/VaultPage"), "VaultPage");
+const VaultPage = lazyWithRetry(() => import('./pages/VaultPage'), 'VaultPage');
 const EsmereogenesisHubPage = lazyWithRetry(
-  () => import("./pages/esmereogenesis/EsmereogenesisHubPage"),
-  "EsmereogenesisHubPage",
+  () => import('./pages/esmereogenesis/EsmereogenesisHubPage'),
+  'EsmereogenesisHubPage',
 );
 const EsmereogenesisGardenPage = lazyWithRetry(
-  () => import("./pages/esmereogenesis/EsmereogenesisGardenPage"),
-  "EsmereogenesisGardenPage",
+  () => import('./pages/esmereogenesis/EsmereogenesisGardenPage'),
+  'EsmereogenesisGardenPage',
 );
 
 // Cuentas sub-pages (accessed from AccountsHub)
 const PriceSimulator = lazyWithRetry(
-  () => import("./components/price-simulator/PriceSimulator"),
-  "PriceSimulator",
+  () => import('./components/price-simulator/PriceSimulator'),
+  'PriceSimulator',
 );
 const ReceiptGenerator = lazyWithRetry(
-  () => import("./pages/cuentas/recibos/ReceiptGenerator"),
-  "ReceiptGenerator",
+  () => import('./pages/cuentas/recibos/ReceiptGenerator'),
+  'ReceiptGenerator',
 );
 const CotizacionGenerator = lazyWithRetry(
-  () => import("./components/cotizacion/CotizacionGenerator"),
-  "CotizacionGenerator",
+  () => import('./components/cotizacion/CotizacionGenerator'),
+  'CotizacionGenerator',
 );
 const QuotationPreview = lazyWithRetry(
-  () => import("./pages/cuentas/cotizaciones/QuotationPreviewPage"),
-  "QuotationPreview",
+  () => import('./pages/cuentas/cotizaciones/QuotationPreviewPage'),
+  'QuotationPreview',
 );
 const AdminAnalyticsPage = lazyWithRetry(
-  () => import("./pages/admin/analytics/AdminAnalyticsPage"),
-  "AdminAnalyticsPage",
+  () => import('./pages/admin/analytics/AdminAnalyticsPage'),
+  'AdminAnalyticsPage',
 );
 const NameGeneratorPage = lazyWithRetry(
-  () => import("./pages/admin/name-generator/NameGeneratorPage"),
-  "NameGeneratorPage",
+  () => import('./pages/admin/name-generator/NameGeneratorPage'),
+  'NameGeneratorPage',
 );
 const ActivityPage = lazyWithRetry(
-  () => import("./pages/admin/ActivityPage"),
-  "ActivityPage",
+  () => import('./pages/admin/ActivityPage'),
+  'ActivityPage',
 );
 const ProductViewersPage = lazyWithRetry(
-  () => import("./pages/admin/ProductViewers"),
-  "ProductViewersPage",
+  () => import('./pages/admin/ProductViewers'),
+  'ProductViewersPage',
 );
 const UserViewsPage = lazyWithRetry(
-  () => import("./pages/admin/UserViewsPage"),
-  "UserViewsPage",
+  () => import('./pages/admin/UserViewsPage'),
+  'UserViewsPage',
 );
 const CotizacionProductsPage = lazyWithRetry(
-  () => import("./pages/admin/CotizacionProductsPage"),
-  "CotizacionProductsPage",
+  () => import('./pages/admin/CotizacionProductsPage'),
+  'CotizacionProductsPage',
 );
 const AdminProductManagementPage = lazyWithRetry(
-  () => import("./pages/admin/ProductManagement/ProductManagementPage"),
-  "AdminProductManagementPage",
+  () => import('./pages/admin/ProductManagement/ProductManagementPage'),
+  'AdminProductManagementPage',
 );
 
 // Fotosíntesis v2 — captura admin (Slice 1)
 const FotosintesisLayout = lazyWithRetry(
-  () => import("./pages/admin/Fotosintesis/FotosintesisLayout"),
-  "FotosintesisLayout",
+  () => import('./pages/admin/Fotosintesis/FotosintesisLayout'),
+  'FotosintesisLayout',
 );
 const FotosintesisHome = lazyWithRetry(
-  () => import("./pages/admin/Fotosintesis/HomePage"),
-  "FotosintesisHome",
+  () => import('./pages/admin/Fotosintesis/HomePage'),
+  'FotosintesisHome',
 );
 const FotosintesisCapturaLote = lazyWithRetry(
-  () => import("./pages/admin/Fotosintesis/CapturaLotePage"),
-  "FotosintesisCapturaLote",
+  () => import('./pages/admin/Fotosintesis/CapturaLotePage'),
+  'FotosintesisCapturaLote',
 );
 const FotosintesisLoteResumen = lazyWithRetry(
-  () => import("./pages/admin/Fotosintesis/LoteResumenPage"),
-  "FotosintesisLoteResumen",
+  () => import('./pages/admin/Fotosintesis/LoteResumenPage'),
+  'FotosintesisLoteResumen',
 );
 const FotosintesisEditItem = lazyWithRetry(
-  () => import("./pages/admin/Fotosintesis/EditItemPage"),
-  "FotosintesisEditItem",
+  () => import('./pages/admin/Fotosintesis/EditItemPage'),
+  'FotosintesisEditItem',
 );
 const FotosintesisVenta = lazyWithRetry(
-  () => import("./pages/admin/Fotosintesis/VentaPage"),
-  "FotosintesisVenta",
+  () => import('./pages/admin/Fotosintesis/VentaPage'),
+  'FotosintesisVenta',
 );
 const FotosintesisVentaDetail = lazyWithRetry(
-  () => import("./pages/admin/Fotosintesis/VentaDetailPage"),
-  "FotosintesisVentaDetail",
+  () => import('./pages/admin/Fotosintesis/VentaDetailPage'),
+  'FotosintesisVentaDetail',
 );
 const FotosintesisSales = lazyWithRetry(
-  () => import("./pages/admin/Fotosintesis/SalesPage"),
-  "FotosintesisSales",
+  () => import('./pages/admin/Fotosintesis/SalesPage'),
+  'FotosintesisSales',
 );
 const FotosintesisDirectorio = lazyWithRetry(
-  () => import("./pages/admin/Fotosintesis/DirectorioPage"),
-  "FotosintesisDirectorio",
+  () => import('./pages/admin/Fotosintesis/DirectorioPage'),
+  'FotosintesisDirectorio',
 );
 const FotosintesisSubLotes = lazyWithRetry(
-  () => import("./pages/admin/Fotosintesis/SubLotesPage"),
-  "FotosintesisSubLotes",
+  () => import('./pages/admin/Fotosintesis/SubLotesPage'),
+  'FotosintesisSubLotes',
 );
 const FotosintesisLotes = lazyWithRetry(
-  () => import("./pages/admin/Fotosintesis/LotesPage"),
-  "FotosintesisLotes",
+  () => import('./pages/admin/Fotosintesis/LotesPage'),
+  'FotosintesisLotes',
 );
 const FotosintesisCertificados = lazyWithRetry(
-  () => import("./pages/admin/Fotosintesis/certificados/CertGeneratorPage"),
-  "FotosintesisCertificados",
+  () => import('./pages/admin/Fotosintesis/certificados/CertGeneratorPage'),
+  'FotosintesisCertificados',
 );
 const FotosintesisWorkbench = lazyWithRetry(
-  () => import("./pages/admin/Fotosintesis/workbench/WorkbenchPage"),
-  "FotosintesisWorkbench",
+  () => import('./pages/admin/Fotosintesis/workbench/WorkbenchPage'),
+  'FotosintesisWorkbench',
 );
 
 const FeedbackDashboard = lazyWithRetry(
-  () => import("./pages/admin/FeedbackDashboard"),
-  "FeedbackDashboard",
+  () => import('./pages/admin/FeedbackDashboard'),
+  'FeedbackDashboard',
 );
 const ValuationPage = lazyWithRetry(
-  () => import("./pages/valuation/ValuationPage"),
-  "ValuationPage",
+  () => import('./pages/valuation/ValuationPage'),
+  'ValuationPage',
 );
 
 // Provider Portal pages
 const ProviderDashboard = lazyWithRetry(
-  () => import("./components/provider/ProviderDashboard"),
-  "ProviderDashboard",
+  () => import('./components/provider/ProviderDashboard'),
+  'ProviderDashboard',
 );
 const ProviderRequestList = lazyWithRetry(
-  () => import("./components/provider/ProviderRequestList"),
-  "ProviderRequestList",
+  () => import('./components/provider/ProviderRequestList'),
+  'ProviderRequestList',
 );
 const ProviderQuotationForm = lazyWithRetry(
-  () => import("./components/provider/ProviderQuotationForm"),
-  "ProviderQuotationForm",
+  () => import('./components/provider/ProviderQuotationForm'),
+  'ProviderQuotationForm',
 );
 const ProviderInventory = lazyWithRetry(
-  () => import("./components/provider/ProviderInventory"),
-  "ProviderInventory",
+  () => import('./components/provider/ProviderInventory'),
+  'ProviderInventory',
 );
 
 // Admin Quotation Management
 const QuotationRequestForm = lazyWithRetry(
-  () => import("./components/admin/QuotationRequestForm"),
-  "QuotationRequestForm",
+  () => import('./components/admin/QuotationRequestForm'),
+  'QuotationRequestForm',
 );
 const QuotationRequestList = lazyWithRetry(
-  () => import("./components/admin/QuotationRequestList"),
-  "QuotationRequestList",
+  () => import('./components/admin/QuotationRequestList'),
+  'QuotationRequestList',
 );
 const ProviderQuotationsList = lazyWithRetry(
-  () => import("./components/admin/ProviderQuotationsList"),
-  "ProviderQuotationsList",
+  () => import('./components/admin/ProviderQuotationsList'),
+  'ProviderQuotationsList',
 );
 
 // My Profile (Ambassador personal dashboard)
 const MyProfilePage = lazyWithRetry(
-  () => import("./pages/mi-perfil/MyProfilePage"),
-  "MyProfilePage",
+  () => import('./pages/mi-perfil/MyProfilePage'),
+  'MyProfilePage',
 );
 const AllActivityPage = lazyWithRetry(
-  () => import("./pages/mi-perfil/AllActivityPage"),
-  "AllActivityPage",
+  () => import('./pages/mi-perfil/AllActivityPage'),
+  'AllActivityPage',
 );
 const GuestDetailPage = lazyWithRetry(
-  () => import("./pages/mi-perfil/GuestDetailPage"),
-  "GuestDetailPage",
+  () => import('./pages/mi-perfil/GuestDetailPage'),
+  'GuestDetailPage',
 );
 
 // Product Requests (Asesor/Embajador -> Admin)
 const ProductRequestsHub = lazyWithRetry(
-  () => import("./pages/staff/requests/ProductRequestsHub"),
-  "ProductRequestsHub",
+  () => import('./pages/staff/requests/ProductRequestsHub'),
+  'ProductRequestsHub',
 );
 const AdminProductRequestList = lazyWithRetry(
-  () => import("./components/requests/AdminProductRequestList"),
-  "AdminProductRequestList",
+  () => import('./components/requests/AdminProductRequestList'),
+  'AdminProductRequestList',
 );
 
 // Invitation Page (public route - accessible without auth)
 const InvitationPage = lazyWithRetry(
-  () => import("./pages/InvitationPage"),
-  "InvitationPage",
+  () => import('./pages/InvitationPage'),
+  'InvitationPage',
 );
 
 // Public Collection Page (shareable without auth)
 const CollectionPage = lazyWithRetry(
-  () => import("./pages/collection/CollectionPage"),
-  "CollectionPage",
+  () => import('./pages/collection/CollectionPage'),
+  'CollectionPage',
 );
 
 // Cart Page
-const CartPage = lazyWithRetry(() => import("./pages/CartPage"), "CartPage");
+const CartPage = lazyWithRetry(() => import('./pages/CartPage'), 'CartPage');
 
 // Public "Vitrina" — sandboxed client-facing product share (no app shell, no auth)
 const VitrinaPage = lazyWithRetry(
-  () => import("./pages/vitrina/VitrinaPage"),
-  "VitrinaPage",
+  () => import('./pages/vitrina/VitrinaPage'),
+  'VitrinaPage',
 );
 const PublicProductPage = lazyWithRetry(
   () =>
-    import("./pages/vitrina/VitrinaPage").then((m) => ({
+    import('./pages/vitrina/VitrinaPage').then((m) => ({
       default: m.PublicProductPage,
     })),
-  "PublicProductPage",
+  'PublicProductPage',
 );
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
-export type TabValue = "home" | "treasure" | "ambassadors";
+export type TabValue = 'home' | 'treasure' | 'ambassadors';
 
 // Tab categories for navigation logic
-export const PRIMARY_TABS: TabValue[] = ["home", "treasure", "ambassadors"];
+export const PRIMARY_TABS: TabValue[] = ['home', 'treasure', 'ambassadors'];
 export const SECONDARY_TABS: TabValue[] = [];
 
 // Smart redirect based on user role
 function RoleBasedRedirect() {
   const isProvider = useIsProvider();
-  return <Navigate to={isProvider ? "/provider" : "/home"} replace />;
+  return <Navigate to={isProvider ? '/provider' : '/home'} replace />;
 }
 
 // Redirect providers away from regular home to provider dashboard
@@ -303,6 +304,9 @@ function HomeOrProviderRedirect() {
 // Inner component that uses routing hooks
 function AppContent() {
   const navigate = useNavigate();
+  // Esmereogénesis is dev-only: gated OFF in production so its routes are not
+  // reachable. Toggle locally via window.featureFlags.enable('ESMEREOGENESIS').
+  const esmereoEnabled = getFeatureFlag('ESMEREOGENESIS');
   // Navigate to asesor profile page
   const handleViewAsesorProducts = useCallback(
     (asesor: Asesor) => {
@@ -480,31 +484,43 @@ function AppContent() {
               }
             />
 
-            {/* Esmereogénesis - savings-with-purpose method (Bóveda) */}
-            <Route
-              path="/esmereogenesis"
-              element={
-                <EsmereoThemeProvider>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="general" />}
-                  >
-                    <EsmereogenesisHubPage />
-                  </Suspense>
-                </EsmereoThemeProvider>
-              }
-            />
-            <Route
-              path="/esmereogenesis/:planId"
-              element={
-                <EsmereoThemeProvider>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="general" />}
-                  >
-                    <EsmereogenesisGardenPage />
-                  </Suspense>
-                </EsmereoThemeProvider>
-              }
-            />
+            {/* Esmereogénesis - savings-with-purpose method (Bóveda).
+                Dev-only feature: routes are omitted in production so the URLs
+                fall through to the catch-all redirect. */}
+            {esmereoEnabled && (
+              <Route
+                path="/esmereogenesis"
+                element={
+                  <EsmereoThemeProvider>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="general" />}
+                    >
+                      <EsmereogenesisHubPage />
+                    </Suspense>
+                  </EsmereoThemeProvider>
+                }
+              />
+            )}
+            {esmereoEnabled && (
+              <Route
+                path="/esmereogenesis/:planId"
+                element={
+                  <EsmereoThemeProvider>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="general" />}
+                    >
+                      <EsmereogenesisGardenPage />
+                    </Suspense>
+                  </EsmereoThemeProvider>
+                }
+              />
+            )}
+            {!esmereoEnabled && (
+              <Route
+                path="/esmereogenesis/*"
+                element={<Navigate to="/" replace />}
+              />
+            )}
 
             {/* Admin Analytics Dashboard */}
             <Route
@@ -879,7 +895,7 @@ function AuthenticatedApp() {
   useEffect(() => {
     if (isAuthenticated) return;
     const params = new URLSearchParams(window.location.search);
-    const inviteCode = params.get("invite");
+    const inviteCode = params.get('invite');
     if (inviteCode) {
       // Preserve the intended destination (e.g. /product/32)
       const returnTo = window.location.pathname;
@@ -927,18 +943,18 @@ const INACTIVITY_THRESHOLD = 30 * 60 * 1000; // 30 minutes
 
 function shouldShowSplash(): boolean {
   // Video generation mode — always show splash so the animation can be recorded
-  if (new URLSearchParams(window.location.search).get("video") === "true") {
+  if (new URLSearchParams(window.location.search).get('video') === 'true') {
     return true;
   }
 
   // Public routes that have their own splash — skip the main app splash
   const path = window.location.pathname;
   if (
-    path.startsWith("/c/") ||
-    path.startsWith("/v/") ||
-    path.startsWith("/product/") ||
-    path.startsWith("/invite/") ||
-    path.startsWith("/g/")
+    path.startsWith('/c/') ||
+    path.startsWith('/v/') ||
+    path.startsWith('/product/') ||
+    path.startsWith('/invite/') ||
+    path.startsWith('/g/')
   ) {
     return false;
   }
@@ -980,7 +996,7 @@ function App() {
   // Mark session as active and track activity
   useEffect(() => {
     // Mark this session as active (survives refresh, clears on browser close)
-    sessionStorage.setItem(SPLASH_SESSION_KEY, "true");
+    sessionStorage.setItem(SPLASH_SESSION_KEY, 'true');
 
     // Update last activity timestamp
     const updateActivity = () => {
@@ -997,21 +1013,21 @@ function App() {
       activityTimeout = setTimeout(updateActivity, 5000); // Update at most every 5s
     };
 
-    window.addEventListener("click", throttledActivity);
-    window.addEventListener("keydown", throttledActivity);
-    window.addEventListener("touchstart", throttledActivity);
+    window.addEventListener('click', throttledActivity);
+    window.addEventListener('keydown', throttledActivity);
+    window.addEventListener('touchstart', throttledActivity);
 
     // Scroll activity: target main-content container (fixed viewport shell)
-    const mainEl = document.getElementById("main-content");
+    const mainEl = document.getElementById('main-content');
     const scrollTarget = mainEl || window;
-    scrollTarget.addEventListener("scroll", throttledActivity);
+    scrollTarget.addEventListener('scroll', throttledActivity);
 
     return () => {
       clearTimeout(activityTimeout);
-      window.removeEventListener("click", throttledActivity);
-      window.removeEventListener("keydown", throttledActivity);
-      window.removeEventListener("touchstart", throttledActivity);
-      scrollTarget.removeEventListener("scroll", throttledActivity);
+      window.removeEventListener('click', throttledActivity);
+      window.removeEventListener('keydown', throttledActivity);
+      window.removeEventListener('touchstart', throttledActivity);
+      scrollTarget.removeEventListener('scroll', throttledActivity);
     };
   }, []);
 
