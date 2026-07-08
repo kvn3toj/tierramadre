@@ -6,6 +6,7 @@ import { bumpInventoryTotal } from './products';
 import { preponderanciaSum, balancesTo100 } from './_lib/lotMath';
 import { withPublishStamp } from './_lib/publishState';
 import { requireAccessLevel } from './_lib/authz';
+import { requireBotSecret } from './_lib/botAuth';
 
 const tipoItemValidator = v.union(
   v.literal('gema'),
@@ -310,6 +311,59 @@ export const create = action({
   }> => {
     await requireAccessLevel(idToken, ['admin']);
     return await ctx.runMutation(internal.lotItems._create, args);
+  },
+});
+
+/**
+ * anima-bot bridge — create a lot item from the Telegram wizard. Same contract
+ * as `create`, but authenticated with the shared bot secret instead of a Google
+ * ID token (see `_lib/botAuth.ts`). Reuses `_create` unchanged, so all the
+ * money-critical guards (preponderancia ≤ 100, lote abierto, idempotency via
+ * `clientToken`) apply identically.
+ */
+export const createViaBot = action({
+  args: { botSecret: v.string(), ...createArgs },
+  handler: async (
+    ctx,
+    { botSecret, ...args },
+  ): Promise<{
+    lotItemId: Id<'lotItems'>;
+    productId: Id<'productInventory'>;
+    itemId: string;
+    costoBaseCOP: number;
+  }> => {
+    requireBotSecret(botSecret);
+    return await ctx.runMutation(internal.lotItems._create, args);
+  },
+});
+
+/**
+ * anima-bot bridge — patch fotoUrl/certificadoUrl after the bot has uploaded the
+ * media to Drive (the item must exist first so the upload folder is keyed by its
+ * itemId, mirroring the web capture flow). Reuses `_updateMedia`.
+ */
+export const updateMediaViaBot = action({
+  args: {
+    botSecret: v.string(),
+    lotItemId: v.id('lotItems'),
+    fotoUrl: v.optional(v.string()),
+    certificadoUrl: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    { botSecret, lotItemId, fotoUrl, certificadoUrl },
+  ): Promise<{
+    lotItemId: Id<'lotItems'>;
+    changed: boolean;
+    changedFields?: string[];
+  }> => {
+    requireBotSecret(botSecret);
+    return await ctx.runMutation(internal.lotItems._updateMedia, {
+      lotItemId,
+      fotoUrl,
+      certificadoUrl,
+      editorEmail: 'anima-bot',
+    });
   },
 });
 

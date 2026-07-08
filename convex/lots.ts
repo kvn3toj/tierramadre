@@ -20,6 +20,7 @@ import {
 import { canReopenLot, deriveCostoBaseCOP } from './_lib/lotMath';
 import { withPublishStamp } from './_lib/publishState';
 import { requireAccessLevel } from './_lib/authz';
+import { requireBotSecret } from './_lib/botAuth';
 
 // Free text (canonical: B | C | S | M). The capture UI sanitizes a custom
 // write-in to an uppercase, dash-free token before it reaches here, so it stays
@@ -204,6 +205,23 @@ export const create = action({
     { idToken, ...args },
   ): Promise<{ id: Id<'lots'>; loteId: string }> => {
     await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.lots._create, args);
+  },
+});
+
+/**
+ * anima-bot bridge — open a new lote from the Telegram wizard. Same contract as
+ * `create`, authenticated with the shared bot secret (see `_lib/botAuth.ts`)
+ * instead of a Google ID token. Reuses `_create`, so the cost/units/formaPago
+ * guards and `clientToken` idempotency apply identically.
+ */
+export const openViaBot = action({
+  args: { botSecret: v.string(), ...createArgs },
+  handler: async (
+    ctx,
+    { botSecret, ...args },
+  ): Promise<{ id: Id<'lots'>; loteId: string }> => {
+    requireBotSecret(botSecret);
     return await ctx.runMutation(internal.lots._create, args);
   },
 });
