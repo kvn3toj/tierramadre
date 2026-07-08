@@ -67,6 +67,28 @@ const vault = {
 } as const;
 
 // ═══════════════════════════════════════════════════════════════
+// SAFE REDIRECT
+// ═══════════════════════════════════════════════════════════════
+
+const DEFAULT_REDIRECT = '/treasure';
+
+// Guard against open-redirects: only accept internal app paths. A valid path
+// starts with a single '/' (not '//', which is protocol-relative) and has no
+// scheme ('://'). Anything else — absolute URLs, protocol-relative hosts,
+// missing/empty values — falls back to the default.
+export function safeInternalPath(raw: string | null): string {
+  if (
+    typeof raw === 'string' &&
+    raw.startsWith('/') &&
+    !raw.startsWith('//') &&
+    !raw.includes('://')
+  ) {
+    return raw;
+  }
+  return DEFAULT_REDIRECT;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // ANIMATION
 // ═══════════════════════════════════════════════════════════════
 
@@ -449,7 +471,7 @@ export default function InvitationPage() {
   const { shortCode } = useParams<{ shortCode: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get('redirect');
+  const redirectTo = safeInternalPath(searchParams.get('redirect'));
   const {
     validateInvitation,
     verifyPin,
@@ -779,14 +801,14 @@ export default function InvitationPage() {
   };
 
   const handleExplore = () => {
-    navigate(redirectTo || '/treasure', { replace: true });
+    navigate(redirectTo, { replace: true });
   };
 
   // ─── Auto-navigate after success ───
   useEffect(() => {
     if (status === 'valid') {
       const timer = setTimeout(() => {
-        navigate(redirectTo || '/treasure', { replace: true });
+        navigate(redirectTo, { replace: true });
       }, 2000);
       return () => clearTimeout(timer);
     }

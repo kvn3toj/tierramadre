@@ -163,7 +163,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Don't reset if there's an active guest invitation session
       // (restoreGuestSession already set auth from localStorage on mount)
       const hasGuestSession = localStorage.getItem(GUEST_PERSIST_KEY);
-      if (!hasGuestSession) {
+      // Don't reset if a durable Google identity exists either. Staff and
+      // invitado_especial persist auth in per-tab sessionStorage, so their only
+      // cross-tab/restart anchor is GOOGLE_USER in localStorage; a transient
+      // null googleUser (e.g. mid-revalidation) must NOT drop them.
+      const hasGoogleUser = localStorage.getItem(STORAGE_KEYS.GOOGLE_USER);
+      if (!hasGuestSession && !hasGoogleUser) {
         setAuthState({ isAuthenticated: false, accessLevel: 'guest' });
         clearStoredAuth();
       }
