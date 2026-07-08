@@ -45,14 +45,16 @@ async function validateUser(
   normalizedEmail: string,
   sheetNames: string[],
 ): Promise<ValidatedUser | null> {
-  // Pattern-based lookup first — robust against sheet reordering.
-  // Falls back to legacy positional index, then first sheet.
-  const asesoresSheet =
-    findSheetByPattern(sheetNames, ["asesor", "embajador"]) ||
-    sheetNames[2] ||
-    sheetNames[0];
+  // Pattern-based lookup only — robust against sheet reordering. A positional
+  // fallback (sheetNames[2]/[0]) can silently point at the WRONG sheet, which
+  // yields a false "unauthorized" and force-logs the user out. If the Asesores
+  // sheet can't be resolved by name, treat it as a transient failure (throw →
+  // HTTP 500) so the client retries instead of assuming the account is gone.
+  const asesoresSheet = findSheetByPattern(sheetNames, ["asesor", "embajador"]);
 
-  if (!asesoresSheet) return null;
+  if (!asesoresSheet) {
+    throw new Error("Asesores sheet not found by pattern");
+  }
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -60,7 +62,12 @@ async function validateUser(
   });
 
   const rows = response.data.values || [];
-  if (!rows || rows.length === 0) return null;
+  // Zero rows is an anomaly (throttle/quota/timeout/empty read), NOT proof the
+  // user is absent — a real sheet always has at least a header row. Throw so
+  // the client can retry rather than misreading this as "account removed".
+  if (rows.length === 0) {
+    throw new Error("Asesores sheet read returned no rows");
+  }
 
   const headers = rows[0] as string[];
   const nameColumnIndex = findColumnIndex(headers, [
@@ -69,7 +76,14 @@ async function validateUser(
     "asesor",
   ]);
   const roleIndex = findColumnIndex(headers, ["datos", "rol", "role", "tipo"]);
-  const emailIndex = findColumnIndex(headers, ["email", "correo", "instagram"]);
+  // An "instagram" column is NOT an email column — an IG handle never equals a
+  // login email, so treating it as one produces false negatives → logouts.
+  // Resolve a real email/correo column first; only fall back to instagram if no
+  // email/correo column exists at all.
+  let emailIndex = findColumnIndex(headers, ["email", "correo"]);
+  if (emailIndex === -1) {
+    emailIndex = findColumnIndex(headers, ["instagram"]);
+  }
   const estadoIndex = findColumnIndex(headers, ["estado", "status"]);
 
   const dataRows = rows.slice(1);
@@ -194,12 +208,18 @@ async function validateProvider(
   normalizedEmail: string,
   sheetNames: string[],
 ): Promise<ProviderRow | null> {
+  // Resolve by pattern only. If the Proveedores sheet can't be found by name we
+  // can't produce a definitive negative — throw (→ HTTP 500) so the client
+  // retries rather than logging a provider out. A genuine "provider not found"
+  // is only returned below, once the sheet WAS resolved and read.
   const proveedoresSheet = findSheetByPattern(sheetNames, [
     "proveedores",
     "proveedor",
   ]);
 
-  if (!proveedoresSheet) return null;
+  if (!proveedoresSheet) {
+    throw new Error("Proveedores sheet not found by pattern");
+  }
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -207,7 +227,12 @@ async function validateProvider(
   });
 
   const rows = response.data.values || [];
-  if (!rows || rows.length <= 1) return null;
+  // Zero rows is an anomaly (failed/throttled read), not a real absence — throw
+  // to allow retry. One row (header only, no data) IS a genuine empty list.
+  if (rows.length === 0) {
+    throw new Error("Proveedores sheet read returned no rows");
+  }
+  if (rows.length <= 1) return null;
 
   const headers = rows[0] as string[];
   const idIndex = findColumnIndex(headers, ["id"]);
@@ -326,9 +351,14 @@ export default withApiHandler(
       });
     }
 
+    // Genuine negative: both sheets were resolved + read successfully and the
+    // email matched no active row. `reason` lets the client distinguish this
+    // real "not in sheet" from a transient failure (which now returns 500) and
+    // stay conservative instead of force-logging the user out. Additive field.
     return sendSuccess(res, {
       isAuthorized: false,
       isProvider: false,
+      reason: "not_in_sheet",
       error: "Email not found in any authorized list",
     });
   },

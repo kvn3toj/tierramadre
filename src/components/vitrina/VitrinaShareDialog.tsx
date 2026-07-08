@@ -70,6 +70,16 @@ function extractToken(raw: string): string {
 
 const readFreshIdToken = readFreshGoogleIdToken;
 
+// Silent One Tap renewal (auto_select) is reliably blocked on iOS and in
+// Safari — after Google's One Tap cooldown it never displays, so the silent
+// attempt just burns its 4s timeout before dead-ending at the visible prompt.
+// On these browsers we skip the doomed silent step and show the visible
+// re-login button immediately. Detects iOS (any browser) and desktop Safari.
+const isIOSSafari =
+  typeof navigator !== 'undefined' &&
+  (/iP(hone|ad|od)/.test(navigator.userAgent) ||
+    /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent));
+
 /** One silent One Tap attempt: reports exactly once (credential or give-up),
  *  then the parent unmounts it. A timeout guards browsers that never fire
  *  `promptMomentNotification` (e.g. FedCM blocked) so we never hang. */
@@ -337,12 +347,14 @@ export default function VitrinaShareDialog({
   };
 
   // Stale token: try a silent renewal (no click) before bothering the staff
-  // member with a visible re-login prompt.
+  // member with a visible re-login prompt. On iOS/Safari silent One Tap is
+  // blocked, so skip it and go straight to the visible button — no 4s dead-end.
   const attemptSilentRenew = () => {
-    if (!GOOGLE_CLIENT_ID) {
+    if (!GOOGLE_CLIENT_ID || isIOSSafari) {
+      setSilentRenewing(false);
       setNeedsRenew(true);
       setError(
-        'Tu sesión de Google expiró — renuévala aquí para generar el enlace.',
+        'Tu inicio de sesión de Google necesita un toque para generar el enlace. Continúa con Google aquí abajo.',
       );
       return;
     }
@@ -366,7 +378,7 @@ export default function VitrinaShareDialog({
     setSilentRenewing(false);
     setNeedsRenew(true);
     setError(
-      'Tu sesión de Google expiró — renuévala aquí para generar el enlace.',
+      'Tu inicio de sesión de Google necesita un toque para generar el enlace. Continúa con Google aquí abajo.',
     );
   };
 
@@ -625,8 +637,21 @@ export default function VitrinaShareDialog({
                 </>
               ) : needsRenew ? (
                 <Box
-                  sx={{ display: 'flex', justifyContent: 'center', py: 0.5 }}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 1,
+                    py: 0.5,
+                  }}
                 >
+                  <Typography
+                    variant="body2"
+                    sx={{ color: 'text.secondary', textAlign: 'center' }}
+                  >
+                    Un toque para refrescar tu sesión y generamos el enlace al
+                    instante.
+                  </Typography>
                   <GoogleLogin
                     onSuccess={handleRenewed}
                     onError={() =>

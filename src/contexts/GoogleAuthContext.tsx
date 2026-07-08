@@ -9,6 +9,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { googleLogout } from '@react-oauth/google';
 import { createLogger } from '../utils/logger';
+import { readFreshGoogleIdToken } from '../utils/googleIdToken';
 import type { AccessLevel } from '../types/auth';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 
@@ -123,8 +124,18 @@ export function GoogleAuthProvider({ children, onSignedOut }: GoogleAuthProvider
               setIsAuthorized(true);
               localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(parsedUser));
               log.debug('Provider re-validated successfully:', parsedUser.email);
-            } else {
-              // User NO LONGER AUTHORIZED - force sign out silently
+            } else if (
+              validateResponse.ok &&
+              validateData.success === true &&
+              validateData.isAuthorized === false &&
+              validateData.isProvider === false &&
+              validateData.reason === 'not_in_sheet'
+            ) {
+              // EXPLICIT "account removed" signal — the ONLY path that
+              // hard-logs-out. The server (api/validate) only sets
+              // reason:'not_in_sheet' on a genuine, unambiguous negative.
+              // Everything else (HTTP errors, success:false, ambiguous
+              // negatives) is treated as transient below and keeps the session.
               log.warn('User no longer authorized - forcing sign out:', parsedUser.email);
               googleLogout();
               localStorage.removeItem(GOOGLE_USER_KEY);
@@ -135,6 +146,17 @@ export function GoogleAuthProvider({ children, onSignedOut }: GoogleAuthProvider
               setIsAuthorized(false);
               onSignedOut?.();
               // No error message - just redirect to login screen
+            } else {
+              // Non-2xx (e.g. transient 500 — fetch does NOT reject on HTTP
+              // errors), success:false, or any other ambiguous non-authorized
+              // response → treat as transient. Keep the session and NEVER wipe
+              // storage on a server hiccup, mirroring the catch branch below.
+              log.warn('Re-validation inconclusive, keeping session', {
+                email: parsedUser.email,
+                status: validateResponse.status,
+              });
+              setUser(parsedUser);
+              setIsAuthorized(!!parsedUser.role);
             }
           } catch (validationError) {
             // API error during re-validation - keep user logged in but mark as needing re-auth
@@ -154,6 +176,85 @@ export function GoogleAuthProvider({ children, onSignedOut }: GoogleAuthProvider
 
     loadStoredUser();
   }, []);
+
+  // Proactive, BEST-EFFORT silent refresh of the GSI ID token.
+  //
+  // The raw credential in GOOGLE_TOKEN_KEY expires ~1h after sign-in and is
+  // otherwise never renewed, so privileged actions (Vitrina share, invitations)
+  // hit "session expired" while ordinary browsing stays logged in. When the
+  // token has gone stale (readFreshGoogleIdToken() === null) we ask GSI for a
+  // silent renewal on mount, on window focus, and every 5 minutes.
+  //
+  // NOTE: this deliberately uses the native GSI global (window.google.accounts.id)
+  // rather than @react-oauth/google's useGoogleOneTapLogin hook. In the common
+  // authenticated-browsing path, main.tsx (GoogleWrapper, `!needsGSI` branch)
+  // mounts GoogleAuthProvider WITHOUT a surrounding GoogleOAuthProvider, so that
+  // hook would throw at render. The native global is exactly what the hook wraps;
+  // it safely no-ops when the GSI script isn't loaded, deferring to the visible
+  // re-auth fallback in the Vitrina dialog. Silent renewal is expected to fail on
+  // iOS Safari — we NEVER wipe the session when it does.
+  useEffect(() => {
+    if (!user) return;
+
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+    if (!clientId) return;
+
+    type GsiIdApi = {
+      initialize: (config: {
+        client_id: string;
+        callback: (response: { credential?: string }) => void;
+        auto_select?: boolean;
+        cancel_on_tap_outside?: boolean;
+      }) => void;
+      prompt: () => void;
+    };
+
+    let cancelled = false;
+
+    const attemptSilentRefresh = () => {
+      // Token still fresh — nothing to do.
+      if (readFreshGoogleIdToken()) return;
+
+      const gsi = (
+        window as unknown as {
+          google?: { accounts?: { id?: GsiIdApi } };
+        }
+      ).google?.accounts?.id;
+      // GSI script not loaded (e.g. the stored-user provider branch) — defer to
+      // the visible re-auth fallback (Vitrina dialog) rather than force anything.
+      if (!gsi) return;
+
+      try {
+        gsi.initialize({
+          client_id: clientId,
+          auto_select: true,
+          cancel_on_tap_outside: false,
+          callback: (response) => {
+            if (cancelled || !response?.credential) return;
+            // Re-store the fresh credential WITHOUT a full re-validation flash.
+            localStorage.setItem(GOOGLE_TOKEN_KEY, response.credential);
+            log.debug('Silently refreshed Google ID token');
+          },
+        });
+        gsi.prompt();
+      } catch {
+        // Best-effort only; never disturb the session when renewal fails.
+        log.debug('Silent token refresh unavailable, deferring to visible re-auth');
+      }
+    };
+
+    attemptSilentRefresh();
+
+    const onFocus = () => attemptSilentRefresh();
+    window.addEventListener('focus', onFocus);
+    const interval = window.setInterval(attemptSilentRefresh, 5 * 60 * 1000);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', onFocus);
+      window.clearInterval(interval);
+    };
+  }, [user]);
 
   // Decode JWT token to get user profile
   const decodeJwt = (token: string): GoogleUserProfile | null => {
