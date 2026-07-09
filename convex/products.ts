@@ -43,6 +43,7 @@ export const list = query({
         v.literal('DISPONIBLE'),
         v.literal('VENDIDA'),
         v.literal('ASESOR'),
+        v.literal('CONSIGNACION'),
         v.literal('Retornado'),
         v.literal('ESMEREOGENESIS'),
         v.literal('ESMERO'),
@@ -550,6 +551,7 @@ const saveEditPatchArgs = v.object({
       v.literal('DISPONIBLE'),
       v.literal('VENDIDA'),
       v.literal('ASESOR'),
+      v.literal('CONSIGNACION'),
       v.literal('Retornado'),
       v.literal('ESMEREOGENESIS'),
       v.literal('ESMERO'),
@@ -1359,6 +1361,7 @@ export const _upsertManyFromSheet = internalMutation({
             v.literal('DISPONIBLE'),
             v.literal('VENDIDA'),
             v.literal('ASESOR'),
+            v.literal('CONSIGNACION'),
             v.literal('Retornado'),
             v.literal('ESMEREOGENESIS'),
             v.literal('ESMERO'),
@@ -1496,6 +1499,7 @@ export const _upsertFromSheet = internalMutation({
         v.literal('DISPONIBLE'),
         v.literal('VENDIDA'),
         v.literal('ASESOR'),
+        v.literal('CONSIGNACION'),
         v.literal('Retornado'),
         v.literal('ESMEREOGENESIS'),
         v.literal('ESMERO'),
@@ -1673,18 +1677,25 @@ function nullableNum(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-// Normalize the raw sheet ESTADO into one of the 9 vocabularies stored in
+// Normalize the raw sheet ESTADO into one of the 10 vocabularies stored in
 // productInventory.estado (see schema.ts). Comparison is case-insensitive
 // on the uppercase variants and preserves the legacy mixed-case for
 // "Retornado". Empty cells default to DISPONIBLE to match the historical
 // behaviour of get-treasure-sheets. Genuinely unknown values fall back to
 // "" so an unexpected sheet edit doesn't break the pull.
+//
+// CONSIGNACION round-trips here too: it's only ever WRITTEN by
+// `asesorMovements._registerHandoff` (never typed into the sheet directly by
+// Maritza), but a pull must still recognize the value it pushed or a re-sync
+// would silently reset a consignment item's estado to "" and desync from the
+// real Convex state.
 function normalizeEstado(
   v: unknown,
 ):
   | 'DISPONIBLE'
   | 'VENDIDA'
   | 'ASESOR'
+  | 'CONSIGNACION'
   | 'Retornado'
   | 'ESMEREOGENESIS'
   | 'ESMERO'
@@ -1693,7 +1704,12 @@ function normalizeEstado(
   | '' {
   const raw = String(v ?? '').trim();
   const upper = raw.toUpperCase();
-  if (upper === 'DISPONIBLE' || upper === 'VENDIDA' || upper === 'ASESOR') {
+  if (
+    upper === 'DISPONIBLE' ||
+    upper === 'VENDIDA' ||
+    upper === 'ASESOR' ||
+    upper === 'CONSIGNACION'
+  ) {
     return upper;
   }
   if (upper === 'RETORNADO') return 'Retornado'; // preserve legacy casing

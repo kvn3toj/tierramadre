@@ -443,11 +443,17 @@ export default function VirtualGrid({
         boxSizing: "border-box",
         position: "relative",
         isolation: "isolate",
-        // Grid container styles
+        // Grid container styles. react-window's inner div is the element that
+        // actually scrolls in grid view, so scroll-containment belongs here:
+        // `contain` stops the grid's scroll from chaining into the <main>
+        // shell behind it, which is what produced the "two scrollbars
+        // fighting" feel when reaching the top or bottom of the catalog.
         "& > div": {
           overflowX: "hidden !important",
           width: "100% !important",
           boxSizing: "border-box",
+          overscrollBehavior: "contain",
+          WebkitOverflowScrolling: "touch",
         },
         // PWA standalone mode consistency
         "@media (display-mode: standalone)": {

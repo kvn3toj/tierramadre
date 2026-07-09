@@ -14,17 +14,17 @@
  * Spec: docs/superpowers/specs/2026-05-06-fotosintesis-admin-redesign-design.md
  */
 
-import { Box, ButtonBase, Typography } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { Box, ButtonBase, Typography } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import {
   fontFamilies,
   getAtelier,
   type FotoTokens,
-} from "../../../design-system";
-import { StatusPip, type EstadoValue } from "./StatusPip";
-import { ChromaBar } from "./ChromaBar";
+} from '../../../design-system';
+import { StatusPip, type EstadoValue } from './StatusPip';
+import { ChromaBar } from './ChromaBar';
 // === Phase H — inline edit ===
-import { InlineEditCell } from "./InlineEditCell";
+import { InlineEditCell } from './InlineEditCell';
 
 export interface InventoryRowData {
   itemId: string;
@@ -36,7 +36,7 @@ export interface InventoryRowData {
   ubicacion?: string;
   coleccion?: string;
   estado: EstadoValue;
-  syncStatus: "synced" | "pending" | "error";
+  syncStatus: 'synced' | 'pending' | 'error';
 }
 
 interface InventoryRowProps {
@@ -71,10 +71,10 @@ interface InventoryRowProps {
 }
 
 function formatPriceCOP(n?: number): string {
-  if (n === undefined || n === null || !Number.isFinite(n)) return "—";
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
+  if (n === undefined || n === null || !Number.isFinite(n)) return '—';
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
     maximumFractionDigits: 0,
   }).format(n);
 }
@@ -97,13 +97,13 @@ export function InventoryRow({
 
   // Status tint — barely-there wash (4-6% alpha over canvas)
   const tint =
-    row.estado === "DISPONIBLE"
+    row.estado === 'DISPONIBLE'
       ? atelier.status.available.rowTint
-      : row.estado === "VENDIDA"
+      : row.estado === 'VENDIDA'
         ? atelier.status.sold.rowTint
-        : row.estado === "ASESOR"
+        : row.estado === 'ASESOR' || row.estado === 'CONSIGNACION'
           ? atelier.status.consigned.rowTint
-          : "transparent";
+          : 'transparent';
 
   const baseBg = isActive ? foto.surfaces.rowActive : foto.surfaces.row;
   const showCheckbox = isSelected || isActive;
@@ -116,10 +116,10 @@ export function InventoryRow({
       focusRipple={false}
       disableRipple
       sx={{
-        display: "block",
-        width: "100%",
-        textAlign: "left",
-        cursor: "pointer",
+        display: 'block',
+        width: '100%',
+        textAlign: 'left',
+        cursor: 'pointer',
         backgroundColor: baseBg,
         backgroundImage: `linear-gradient(${tint}, ${tint})`,
         borderBottom: `1px solid ${foto.surfaces.edge}`,
@@ -127,27 +127,27 @@ export function InventoryRow({
         minHeight: `${atelier.spacing.rowMinHeight}px`,
         px: `${atelier.spacing.rowPaddingX}px`,
         py: `${atelier.spacing.rowPaddingY}px`,
-        "&:hover": {
+        '&:hover': {
           backgroundColor: foto.surfaces.rowHover,
         },
-        "&:hover .tm-row-bulk": {
+        '&:hover .tm-row-bulk': {
           opacity: 1,
         },
-        "&:focus-visible": {
+        '&:focus-visible': {
           outline: `2px solid ${atelier.focus.ring}`,
-          outlineOffset: "-2px",
+          outlineOffset: '-2px',
         },
       }}
     >
       <Box
         sx={{
-          display: "grid",
+          display: 'grid',
           // Column order: bulk | chroma | carat | thumb | name+meta | price | pip
           gridTemplateColumns: {
-            xs: "20px 5px 56px 40px minmax(0, 1fr) 80px 56px",
-            md: "20px 5px 64px 44px minmax(0, 1fr) 96px 60px",
+            xs: '20px 5px 56px 40px minmax(0, 1fr) 80px 56px',
+            md: '20px 5px 64px 44px minmax(0, 1fr) 96px 60px',
           },
-          alignItems: "center",
+          alignItems: 'center',
           gap: { xs: 1.25, md: 1.75 },
           minWidth: 0,
         }}
@@ -158,10 +158,10 @@ export function InventoryRow({
           className="tm-row-bulk"
           sx={{
             opacity: showCheckbox ? 1 : 0,
-            transition: "opacity 120ms ease",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            transition: 'opacity 120ms ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <SelectionCheckbox
@@ -181,10 +181,10 @@ export function InventoryRow({
             keeping the right-aligned carat as the dominant glyph. */}
         <Box
           sx={{
-            display: "flex",
-            alignItems: "baseline",
-            justifyContent: "flex-end",
-            gap: "4px",
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'flex-end',
+            gap: '4px',
             minWidth: 0,
           }}
         >
@@ -196,14 +196,14 @@ export function InventoryRow({
               title="Sin imagen"
               data-image-health="missing"
               sx={{
-                fontSize: "11px",
+                fontSize: '11px',
                 lineHeight: 1,
                 color: foto.ink.tertiary,
                 opacity: 0.7,
-                userSelect: "none",
+                userSelect: 'none',
               }}
             >
-              {"⊘"}
+              {'⊘'}
             </Box>
           )}
           <Typography
@@ -211,8 +211,8 @@ export function InventoryRow({
             sx={{
               ...atelier.type.data,
               color: foto.ink.primary,
-              textAlign: "right",
-              whiteSpace: "nowrap",
+              textAlign: 'right',
+              whiteSpace: 'nowrap',
             }}
           >
             {isCarat ? (
@@ -221,9 +221,9 @@ export function InventoryRow({
                 <Box
                   component="span"
                   sx={{
-                    ml: "3px",
-                    fontSize: "10px",
-                    letterSpacing: "0.08em",
+                    ml: '3px',
+                    fontSize: '10px',
+                    letterSpacing: '0.08em',
                     color: foto.ink.tertiary,
                   }}
                 >
@@ -231,7 +231,7 @@ export function InventoryRow({
                 </Box>
               </>
             ) : (
-              (row.peso ?? "—")
+              (row.peso ?? '—')
             )}
           </Typography>
         </Box>
@@ -239,12 +239,12 @@ export function InventoryRow({
         {/* Thumbnail — 44×44 parcel stamp */}
         <Box
           sx={{
-            width: "44px",
-            height: "44px",
-            borderRadius: "3px",
+            width: '44px',
+            height: '44px',
+            borderRadius: '3px',
             border: `1px solid ${foto.surfaces.edge}`,
             backgroundColor: foto.surfaces.inset,
-            overflow: "hidden",
+            overflow: 'hidden',
             flexShrink: 0,
           }}
           aria-hidden
@@ -256,10 +256,10 @@ export function InventoryRow({
               alt=""
               loading="lazy"
               sx={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                display: "block",
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: 'block',
               }}
             />
           ) : null}
@@ -274,9 +274,9 @@ export function InventoryRow({
               fontFamily: fontFamilies.system,
               fontWeight: 600,
               color: foto.ink.primary,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
             title={row.nombre || `Item ${row.itemId}`}
           >
@@ -292,33 +292,33 @@ export function InventoryRow({
             sx={{
               ...atelier.type.meta,
               fontFamily: fontFamilies.system,
-              fontSize: "12px",
+              fontSize: '12px',
               fontWeight: 400,
               color: foto.ink.tertiary,
-              mt: "2px",
-              display: "block",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              mt: '2px',
+              display: 'block',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
               minWidth: 0,
             }}
             title={[
-              row.itemId.padStart(4, "0"),
+              row.itemId.padStart(4, '0'),
               row.coleccion,
               row.calidad,
               row.ubicacion,
             ]
               .filter(Boolean)
-              .join(" · ")}
+              .join(' · ')}
           >
             {[
-              row.itemId.padStart(4, "0"),
+              row.itemId.padStart(4, '0'),
               row.coleccion,
               row.calidad,
               row.ubicacion,
             ]
               .filter(Boolean)
-              .join(" · ")}
+              .join(' · ')}
           </Box>
         </Box>
 
@@ -326,16 +326,16 @@ export function InventoryRow({
             Price — inline-edit cell. Display formats COP; raw is the
             numeric string. `parse` strips non-numeric chars and rejects
             non-positive values (returning `null` clears the field). */}
-        <Box sx={{ minWidth: 0, textAlign: "right" }}>
+        <Box sx={{ minWidth: 0, textAlign: 'right' }}>
           {onInlineEdit ? (
             <InlineEditCell
               foto={foto}
               display={formatPriceCOP(row.precioCOP)}
               rawValue={
-                typeof row.precioCOP === "number" ? String(row.precioCOP) : ""
+                typeof row.precioCOP === 'number' ? String(row.precioCOP) : ''
               }
               parse={(s) => {
-                const n = Number(String(s).replace(/[^0-9.]/g, ""));
+                const n = Number(String(s).replace(/[^0-9.]/g, ''));
                 return Number.isFinite(n) && n > 0 ? n : null;
               }}
               onSave={(next) =>
@@ -352,10 +352,10 @@ export function InventoryRow({
               sx={{
                 ...atelier.type.data,
                 color: foto.ink.primary,
-                textAlign: "right",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
+                textAlign: 'right',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
                 minWidth: 0,
               }}
             >
@@ -369,10 +369,10 @@ export function InventoryRow({
             editor currently holds the soft lock for this row. */}
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            gap: "8px",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: '8px',
           }}
         >
           <StatusPip estado={row.estado} foto={foto} />
@@ -383,9 +383,9 @@ export function InventoryRow({
               title="Bloqueada por otra persona editora"
               data-lock-state="held-by-other"
               sx={{
-                width: "4px",
-                height: "4px",
-                borderRadius: "50%",
+                width: '4px',
+                height: '4px',
+                borderRadius: '50%',
                 backgroundColor: atelier.brass.base,
                 flexShrink: 0,
               }}
@@ -417,24 +417,24 @@ function SyncMark({
   foto,
   onRetry,
 }: {
-  status: InventoryRowData["syncStatus"];
+  status: InventoryRowData['syncStatus'];
   foto: FotoTokens;
   onRetry?: () => void;
 }) {
   const theme = useTheme();
   const atelier = getAtelier(theme.palette.mode);
 
-  if (status === "synced") {
-    return <Box sx={{ width: "4px", height: "4px", opacity: 0 }} aria-hidden />;
+  if (status === 'synced') {
+    return <Box sx={{ width: '4px', height: '4px', opacity: 0 }} aria-hidden />;
   }
 
-  const isError = status === "error";
+  const isError = status === 'error';
   const color = isError ? foto.status.sold : foto.status.consigned;
   const label = isError
     ? onRetry
-      ? "Error de sincronización · click para reintentar"
-      : "Error de sincronización"
-    : "Pendiente de sincronizar";
+      ? 'Error de sincronización · click para reintentar'
+      : 'Error de sincronización'
+    : 'Pendiente de sincronizar';
 
   if (isError && onRetry) {
     return (
@@ -449,31 +449,31 @@ function SyncMark({
           onRetry();
         }}
         sx={{
-          width: "12px",
-          height: "12px",
-          borderRadius: "50%",
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
+          width: '12px',
+          height: '12px',
+          borderRadius: '50%',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           flexShrink: 0,
           transition: atelier.motion.rowHover,
-          "&:hover .atelier-sync-dot": {
-            transform: "scale(1.5)",
+          '&:hover .atelier-sync-dot': {
+            transform: 'scale(1.5)',
           },
-          "&:focus-visible": {
+          '&:focus-visible': {
             outline: `2px solid ${atelier.focus.ring}`,
-            outlineOffset: "1px",
+            outlineOffset: '1px',
           },
         }}
       >
         <Box
           className="atelier-sync-dot"
           sx={{
-            width: "5px",
-            height: "5px",
-            borderRadius: "50%",
+            width: '5px',
+            height: '5px',
+            borderRadius: '50%',
             backgroundColor: color,
-            transition: "transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+            transition: 'transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1)',
           }}
         />
       </ButtonBase>
@@ -486,20 +486,20 @@ function SyncMark({
       role="img"
       aria-label={label}
       sx={{
-        width: "4px",
-        height: "4px",
-        borderRadius: "50%",
+        width: '4px',
+        height: '4px',
+        borderRadius: '50%',
         backgroundColor: color,
         animation:
-          status === "pending"
-            ? "atelierSyncPulse 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite"
-            : "none",
-        "@media (prefers-reduced-motion: reduce)": {
-          animation: "none",
+          status === 'pending'
+            ? 'atelierSyncPulse 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+            : 'none',
+        '@media (prefers-reduced-motion: reduce)': {
+          animation: 'none',
         },
-        "@keyframes atelierSyncPulse": {
-          "0%, 100%": { opacity: 1 },
-          "50%": { opacity: 0.35 },
+        '@keyframes atelierSyncPulse': {
+          '0%, 100%': { opacity: 1 },
+          '50%': { opacity: 0.35 },
         },
       }}
     />
@@ -538,24 +538,24 @@ function SelectionCheckbox({
         onToggle(!checked);
       }}
       sx={{
-        width: "16px",
-        height: "16px",
-        borderRadius: "3px",
+        width: '16px',
+        height: '16px',
+        borderRadius: '3px',
         border: `1px solid ${
           checked ? atelier.focus.ring : foto.surfaces.edgeStrong
         }`,
-        backgroundColor: checked ? atelier.focus.ring : "transparent",
+        backgroundColor: checked ? atelier.focus.ring : 'transparent',
         transition: atelier.motion.rowHover,
         flexShrink: 0,
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        "&:hover": {
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        '&:hover': {
           borderColor: checked ? atelier.focus.ring : atelier.brass.base,
         },
-        "&:focus-visible": {
+        '&:focus-visible': {
           outline: `2px solid ${atelier.focus.ring}`,
-          outlineOffset: "2px",
+          outlineOffset: '2px',
         },
       }}
     >
@@ -563,7 +563,7 @@ function SelectionCheckbox({
         <Box
           component="svg"
           viewBox="0 0 12 12"
-          sx={{ width: "10px", height: "10px", color: atelier.ink.inverse }}
+          sx={{ width: '10px', height: '10px', color: atelier.ink.inverse }}
           aria-hidden
         >
           <path

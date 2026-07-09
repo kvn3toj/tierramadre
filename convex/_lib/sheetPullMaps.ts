@@ -24,38 +24,38 @@
  */
 
 export type FotoSyncTable =
-  | "inventory"
-  | "providers"
-  | "lots"
-  | "clients"
-  | "sales"
-  | "subLotes";
+  | 'inventory'
+  | 'providers'
+  | 'lots'
+  | 'clients'
+  | 'sales'
+  | 'subLotes';
 
 export const FOTO_SYNC_TABLES: FotoSyncTable[] = [
-  "inventory",
-  "providers",
-  "lots",
-  "clients",
-  "sales",
-  "subLotes",
+  'inventory',
+  'providers',
+  'lots',
+  'clients',
+  'sales',
+  'subLotes',
 ];
 
 type Coerce =
-  | "str"
-  | "num"
-  | "csv"
-  | "bool"
-  | "estadoInv"
-  | "estadoLot"
-  | "estadoSale"
-  | "estadoSub";
+  | 'str'
+  | 'num'
+  | 'csv'
+  | 'bool'
+  | 'estadoInv'
+  | 'estadoLot'
+  | 'estadoSale'
+  | 'estadoSub';
 
 export interface FieldSpec {
   /** Schema field key, when it differs from the sheet column key. */
   as?: string;
   coerce: Coerce;
   /** AUTO cross-table reconciliation, run by the action via a reused mutation. */
-  sideEffect?: "cancelSale" | "refanLot";
+  sideEffect?: 'cancelSale' | 'refanLot';
   /** FLAG fields: the document column is still patched; reconcile in the app. */
   flag?: string;
 }
@@ -64,123 +64,123 @@ export interface FieldSpec {
 type TableSpec = Record<string, FieldSpec>;
 
 const INVENTORY: TableSpec = {
-  nombre: { coerce: "str" },
-  peso: { coerce: "str" }, // string in schema ("Plata" / "Oro 18k" / carats)
-  color: { coerce: "str" },
-  calidad: { coerce: "str" },
-  cantidad: { coerce: "num" },
-  talla: { coerce: "str" },
-  medidas: { coerce: "str" },
-  medidasValores: { coerce: "str" },
-  categoria: { coerce: "str" },
+  nombre: { coerce: 'str' },
+  peso: { coerce: 'str' }, // string in schema ("Plata" / "Oro 18k" / carats)
+  color: { coerce: 'str' },
+  calidad: { coerce: 'str' },
+  cantidad: { coerce: 'num' },
+  talla: { coerce: 'str' },
+  medidas: { coerce: 'str' },
+  medidasValores: { coerce: 'str' },
+  categoria: { coerce: 'str' },
   // precioCOP (legacy "Precio COP" / column L) was retired from the SOT mirror
   // on 2026-05-29 — no sheet column means nothing to pull. The Convex field is
   // kept app-only; see api/_lib/fotosintesis-inventory-columns.js.
-  precioEmbajadorCOP: { coerce: "num" },
-  precioConscienteCOP: { coerce: "num" },
-  ubicacion: { coerce: "str" },
-  asesor: { coerce: "str" },
-  estado: { coerce: "estadoInv" },
-  qr: { coerce: "str" },
-  coleccion: { coerce: "str" },
-  caja: { coerce: "str" },
-  asesorActual: { coerce: "str" },
-  estadoAsesor: { coerce: "str" },
-  mostrarEnCatalogo: { coerce: "bool" },
-  procedencia: { coerce: "str" },
-  observacion: { coerce: "str" },
-  rendimientoEsperado: { coerce: "num" },
-  cantidadEstimada: { coerce: "num" },
-  nivelRareza: { coerce: "num" },
-  calificacion: { coerce: "num" },
-  tipoEsmeralda: { coerce: "str" },
-  subtipoForm: { coerce: "str" },
-  tipoJoya: { coerce: "str" },
-  tecnicaJoya: { coerce: "str" },
-  minerales: { coerce: "csv" },
-  complementos: { coerce: "csv" },
-  fotoUrl: { coerce: "str" },
-  certificadoUrl: { coerce: "str" },
-  formulaGema: { coerce: "str" },
-  formulaJoya: { coerce: "str" },
-  rangoDescuento: { coerce: "str" },
+  precioEmbajadorCOP: { coerce: 'num' },
+  precioConscienteCOP: { coerce: 'num' },
+  ubicacion: { coerce: 'str' },
+  asesor: { coerce: 'str' },
+  estado: { coerce: 'estadoInv' },
+  qr: { coerce: 'str' },
+  coleccion: { coerce: 'str' },
+  caja: { coerce: 'str' },
+  asesorActual: { coerce: 'str' },
+  estadoAsesor: { coerce: 'str' },
+  mostrarEnCatalogo: { coerce: 'bool' },
+  procedencia: { coerce: 'str' },
+  observacion: { coerce: 'str' },
+  rendimientoEsperado: { coerce: 'num' },
+  cantidadEstimada: { coerce: 'num' },
+  nivelRareza: { coerce: 'num' },
+  calificacion: { coerce: 'num' },
+  tipoEsmeralda: { coerce: 'str' },
+  subtipoForm: { coerce: 'str' },
+  tipoJoya: { coerce: 'str' },
+  tecnicaJoya: { coerce: 'str' },
+  minerales: { coerce: 'csv' },
+  complementos: { coerce: 'csv' },
+  fotoUrl: { coerce: 'str' },
+  certificadoUrl: { coerce: 'str' },
+  formulaGema: { coerce: 'str' },
+  formulaJoya: { coerce: 'str' },
+  rangoDescuento: { coerce: 'str' },
   // FLAG: lot membership lives in the Convex-only lotItems join. We mirror the
   // new loteId but reconciliation (move + cost re-fan) happens in the app.
   loteId: {
-    coerce: "str",
-    flag: "loteId — reasignar lote en la app (membresía + costo)",
+    coerce: 'str',
+    flag: 'loteId — reasignar lote en la app (membresía + costo)',
   },
   // EXCLUDED (derived): costoBaseCOP, preponderancia.
 };
 
 const PROVIDERS: TableSpec = {
-  nit: { coerce: "str" },
-  cedula: { coerce: "str" },
-  direccion: { coerce: "str" },
-  telefono: { coerce: "str" },
-  email: { coerce: "str" },
-  tipo: { coerce: "str" },
-  notas: { coerce: "str" },
+  nit: { coerce: 'str' },
+  cedula: { coerce: 'str' },
+  direccion: { coerce: 'str' },
+  telefono: { coerce: 'str' },
+  email: { coerce: 'str' },
+  tipo: { coerce: 'str' },
+  notas: { coerce: 'str' },
   // EXCLUDED: nombreORazonSocial (natural key — rename in the app).
 };
 
 const LOTS: TableSpec = {
-  fechaRecepcion: { coerce: "str" },
-  pesoTotalQuilates: { coerce: "num" },
+  fechaRecepcion: { coerce: 'str' },
+  pesoTotalQuilates: { coerce: 'num' },
   // AUTO: re-fan item costoBaseCOP via lots.update (never patched directly).
-  costoTotalCOP: { coerce: "num", sideEffect: "refanLot" },
+  costoTotalCOP: { coerce: 'num', sideEffect: 'refanLot' },
   // FLAG: capacity ceiling — no safe auto-fix.
   unidadesDeclaradas: {
-    coerce: "num",
-    flag: "unidadesDeclaradas — revisar capacidad del lote",
+    coerce: 'num',
+    flag: 'unidadesDeclaradas — revisar capacidad del lote',
   },
-  formaPago: { coerce: "str" },
-  metodoContado: { coerce: "str" },
-  fechaVencimiento: { coerce: "str" },
-  numeroCuotas: { coerce: "num" },
-  numeroFactura: { coerce: "str" },
-  urlFactura: { coerce: "str" },
-  notas: { coerce: "str" },
-  estado: { coerce: "estadoLot" },
-  renombreLote: { coerce: "str" },
-  tratamiento: { coerce: "str" },
-  mina: { coerce: "str" },
-  sede: { coerce: "str" },
-  operadorNombre: { coerce: "str" },
-  operadorRol: { coerce: "str" },
+  formaPago: { coerce: 'str' },
+  metodoContado: { coerce: 'str' },
+  fechaVencimiento: { coerce: 'str' },
+  numeroCuotas: { coerce: 'num' },
+  numeroFactura: { coerce: 'str' },
+  urlFactura: { coerce: 'str' },
+  notas: { coerce: 'str' },
+  estado: { coerce: 'estadoLot' },
+  renombreLote: { coerce: 'str' },
+  tratamiento: { coerce: 'str' },
+  mina: { coerce: 'str' },
+  sede: { coerce: 'str' },
+  operadorNombre: { coerce: 'str' },
+  operadorRol: { coerce: 'str' },
   // EXCLUDED: loteId (key), providerNombre (denormalized FK).
 };
 
 const CLIENTS: TableSpec = {
-  nit: { coerce: "str" },
-  cedula: { coerce: "str" },
-  direccion: { coerce: "str" },
-  telefono: { coerce: "str" },
-  email: { coerce: "str" },
-  tipo: { coerce: "str" },
-  asesorId: { coerce: "str" },
+  nit: { coerce: 'str' },
+  cedula: { coerce: 'str' },
+  direccion: { coerce: 'str' },
+  telefono: { coerce: 'str' },
+  email: { coerce: 'str' },
+  tipo: { coerce: 'str' },
+  asesorId: { coerce: 'str' },
   // EXCLUDED: nombre (natural key — rename in the app).
 };
 
 const SALES: TableSpec = {
-  fechaVenta: { coerce: "str" },
+  fechaVenta: { coerce: 'str' },
   // FLAG: changing the line items must flip product availability — reconcile in app.
   itemIdsJoined: {
-    as: "itemIds",
-    coerce: "csv",
-    flag: "itemIds — ajustar líneas de la venta en la app (BR-6)",
+    as: 'itemIds',
+    coerce: 'csv',
+    flag: 'itemIds — ajustar líneas de la venta en la app (BR-6)',
   },
-  precioAcordadoCOP: { coerce: "num" },
-  descuentoCOP: { coerce: "num" },
-  formaPago: { coerce: "str" },
-  metodoContado: { coerce: "str" },
-  fechaVencimiento: { coerce: "str" },
-  numeroCuotas: { coerce: "num" },
-  carnetUrl: { coerce: "str" },
-  certificadoUrl: { coerce: "str" },
+  precioAcordadoCOP: { coerce: 'num' },
+  descuentoCOP: { coerce: 'num' },
+  formaPago: { coerce: 'str' },
+  metodoContado: { coerce: 'str' },
+  fechaVencimiento: { coerce: 'str' },
+  numeroCuotas: { coerce: 'num' },
+  carnetUrl: { coerce: 'str' },
+  certificadoUrl: { coerce: 'str' },
   // AUTO when → "cancelada": action runs sales.cancel (reopen items + audit).
   // Other transitions (reservada↔confirmada) patch the mirror directly.
-  estado: { coerce: "estadoSale", sideEffect: "cancelSale" },
+  estado: { coerce: 'estadoSale', sideEffect: 'cancelSale' },
   // EXCLUDED: saleId (key), clientNombre (denormalized FK), and the DERIVED
   // money columns totalCOP / comisionCOP — these are push-only figures Convex
   // computes (per this file's policy header); a sheet edit must never overwrite
@@ -190,18 +190,18 @@ const SALES: TableSpec = {
 const SUBLOTES: TableSpec = {
   // FLAG: re-parenting / membership changes — reconcile in the app.
   parentLoteId: {
-    coerce: "str",
-    flag: "parentLoteId — re-vincular sublote en la app",
+    coerce: 'str',
+    flag: 'parentLoteId — re-vincular sublote en la app',
   },
-  sede: { coerce: "str" },
-  nombre: { coerce: "str" },
+  sede: { coerce: 'str' },
+  nombre: { coerce: 'str' },
   itemIdsJoined: {
-    as: "itemIds",
-    coerce: "csv",
-    flag: "itemIds — ajustar miembros del sublote en la app",
+    as: 'itemIds',
+    coerce: 'csv',
+    flag: 'itemIds — ajustar miembros del sublote en la app',
   },
-  estado: { coerce: "estadoSub" },
-  notas: { coerce: "str" },
+  estado: { coerce: 'estadoSub' },
+  notas: { coerce: 'str' },
   // EXCLUDED: subLoteId (key), unidades / totalCostoCOP (derived), createdAt.
 };
 
@@ -217,22 +217,23 @@ export const WRITABLE: Record<FotoSyncTable, TableSpec> = {
 // ─── estado normalizers ─────────────────────────────────────────────────────
 
 const INV_ESTADOS = [
-  "DISPONIBLE",
-  "VENDIDA",
-  "ASESOR",
-  "Retornado",
-  "ESMEREOGENESIS",
-  "ESMERO",
-  "DISPONIBLE ADOPTADA",
-  "LOTE X CT",
+  'DISPONIBLE',
+  'VENDIDA',
+  'ASESOR',
+  'CONSIGNACION',
+  'Retornado',
+  'ESMEREOGENESIS',
+  'ESMERO',
+  'DISPONIBLE ADOPTADA',
+  'LOTE X CT',
 ] as const;
 
 /** Mirror of products.ts#normalizeEstado (kept here to avoid cross-importing a non-exported helper). */
 export function normalizeInvEstado(v: unknown): string | null {
-  const raw = String(v ?? "").trim();
-  if (raw === "") return "DISPONIBLE"; // legacy default
+  const raw = String(v ?? '').trim();
+  if (raw === '') return 'DISPONIBLE'; // legacy default
   const upper = raw.toUpperCase();
-  if (upper === "RETORNADO") return "Retornado";
+  if (upper === 'RETORNADO') return 'Retornado';
   const hit = INV_ESTADOS.find((e) => e.toUpperCase() === upper);
   // Unknown ⇒ null so the field is skipped (an odd cell never breaks the row).
   return hit ?? null;
@@ -240,38 +241,38 @@ export function normalizeInvEstado(v: unknown): string | null {
 
 function normalizeFrom(allowed: readonly string[]) {
   return (v: unknown): string | null => {
-    const lower = String(v ?? "")
+    const lower = String(v ?? '')
       .trim()
       .toLowerCase();
     return allowed.find((a) => a === lower) ?? null;
   };
 }
 export const normalizeLotEstado = normalizeFrom([
-  "abierto",
-  "cerrado",
-  "publicado",
-  "cancelado",
+  'abierto',
+  'cerrado',
+  'publicado',
+  'cancelado',
 ]);
 export const normalizeSaleEstado = normalizeFrom([
-  "reservada",
-  "confirmada",
-  "cancelada",
+  'reservada',
+  'confirmada',
+  'cancelada',
 ]);
-export const normalizeSubLoteEstado = normalizeFrom(["activa", "archivada"]);
+export const normalizeSubLoteEstado = normalizeFrom(['activa', 'archivada']);
 
 // ─── coercion ───────────────────────────────────────────────────────────────
 
 const TRUE_WORDS = new Set([
-  "true",
-  "1",
-  "si",
-  "sí",
-  "x",
-  "yes",
-  "verdadero",
-  "✓",
+  'true',
+  '1',
+  'si',
+  'sí',
+  'x',
+  'yes',
+  'verdadero',
+  '✓',
 ]);
-const FALSE_WORDS = new Set(["false", "0", "no", "", "falso"]);
+const FALSE_WORDS = new Set(['false', '0', 'no', '', 'falso']);
 
 /**
  * Coerce a raw sheet string into the typed value for `schemaKey`.
@@ -285,41 +286,41 @@ export function coerceCell(
   | { skip: true }
   | { skip: false; value: string | number | boolean | string[] } {
   switch (coerce) {
-    case "str":
+    case 'str':
       return { skip: false, value: String(raw).trim() };
-    case "num": {
+    case 'num': {
       const t = String(raw).trim();
-      if (t === "") return { skip: true }; // never clear a number from a blanked cell
-      const n = Number(t.replace(/[$\s]/g, "").replace(/,/g, ""));
+      if (t === '') return { skip: true }; // never clear a number from a blanked cell
+      const n = Number(t.replace(/[$\s]/g, '').replace(/,/g, ''));
       return Number.isFinite(n) ? { skip: false, value: n } : { skip: true };
     }
-    case "bool": {
+    case 'bool': {
       const t = String(raw).trim().toLowerCase();
       if (TRUE_WORDS.has(t)) return { skip: false, value: true };
       if (FALSE_WORDS.has(t)) return { skip: false, value: false };
       return { skip: true };
     }
-    case "csv":
+    case 'csv':
       return {
         skip: false,
         value: String(raw)
-          .split(",")
+          .split(',')
           .map((s) => s.trim())
           .filter(Boolean),
       };
-    case "estadoInv": {
+    case 'estadoInv': {
       const e = normalizeInvEstado(raw);
       return e === null ? { skip: true } : { skip: false, value: e };
     }
-    case "estadoLot": {
+    case 'estadoLot': {
       const e = normalizeLotEstado(raw);
       return e === null ? { skip: true } : { skip: false, value: e };
     }
-    case "estadoSale": {
+    case 'estadoSale': {
       const e = normalizeSaleEstado(raw);
       return e === null ? { skip: true } : { skip: false, value: e };
     }
-    case "estadoSub": {
+    case 'estadoSub': {
       const e = normalizeSubLoteEstado(raw);
       return e === null ? { skip: true } : { skip: false, value: e };
     }
@@ -329,10 +330,10 @@ export function coerceCell(
 // ─── pure row-decision logic ─────────────────────────────────────────────────
 
 export interface RowPlan {
-  action: "protected" | "skip" | "patch";
+  action: 'protected' | 'skip' | 'patch';
   /** schema-key → coerced value to apply via ctx.db.patch */
   patch: Record<string, string | number | boolean | string[]>;
-  sideEffects: Array<{ type: "cancelSale" | "refanLot"; value?: number }>;
+  sideEffects: Array<{ type: 'cancelSale' | 'refanLot'; value?: number }>;
   /** human-readable reasons surfaced back to the sheet (FLAG fields) */
   flags: string[];
 }
@@ -355,18 +356,18 @@ function sameValue(a: unknown, b: unknown): boolean {
 export function planRowPatch(
   table: FotoSyncTable,
   existing: Record<string, unknown> & {
-    syncStatus: "synced" | "pending" | "error";
+    syncStatus: 'synced' | 'pending' | 'error';
   },
   cells: Record<string, string>,
 ): RowPlan {
   // Conflict policy: never clobber an in-flight admin edit.
-  if (existing.syncStatus === "pending" || existing.syncStatus === "error") {
-    return { action: "protected", patch: {}, sideEffects: [], flags: [] };
+  if (existing.syncStatus === 'pending' || existing.syncStatus === 'error') {
+    return { action: 'protected', patch: {}, sideEffects: [], flags: [] };
   }
 
   const spec = WRITABLE[table];
-  const patch: RowPlan["patch"] = {};
-  const sideEffects: RowPlan["sideEffects"] = [];
+  const patch: RowPlan['patch'] = {};
+  const sideEffects: RowPlan['sideEffects'] = [];
   const flags: string[] = [];
 
   for (const [colKey, raw] of Object.entries(cells)) {
@@ -377,24 +378,24 @@ export function planRowPatch(
     const schemaKey = fs.as ?? colKey;
     const value = coerced.value;
 
-    if (fs.sideEffect === "cancelSale") {
+    if (fs.sideEffect === 'cancelSale') {
       // Only the transition INTO cancelada is special; other estados patch.
-      if (value === "cancelada" && existing.estado !== "cancelada") {
-        sideEffects.push({ type: "cancelSale" });
+      if (value === 'cancelada' && existing.estado !== 'cancelada') {
+        sideEffects.push({ type: 'cancelSale' });
         continue;
       }
       if (!sameValue(value, existing[schemaKey])) patch[schemaKey] = value;
       continue;
     }
 
-    if (fs.sideEffect === "refanLot") {
+    if (fs.sideEffect === 'refanLot') {
       // costoTotalCOP is owned by lots.update (patch + re-fan); never patch here.
       // This is the sibling of the sales money policy: lots.costoTotalCOP stays
       // Convex-authoritative via this side-effect, while sales.totalCOP /
       // comisionCOP stay authoritative via allowlist EXCLUSION (see SALES spec).
       // Change either money-column policy → keep both governing paths in sync.
-      if (typeof value === "number" && !sameValue(value, existing[schemaKey])) {
-        sideEffects.push({ type: "refanLot", value });
+      if (typeof value === 'number' && !sameValue(value, existing[schemaKey])) {
+        sideEffects.push({ type: 'refanLot', value });
       }
       continue;
     }
@@ -405,6 +406,6 @@ export function planRowPatch(
   }
 
   const action =
-    Object.keys(patch).length > 0 || sideEffects.length > 0 ? "patch" : "skip";
+    Object.keys(patch).length > 0 || sideEffects.length > 0 ? 'patch' : 'skip';
   return { action, patch, sideEffects, flags };
 }

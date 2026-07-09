@@ -10,6 +10,7 @@ import type { Id } from './_generated/dataModel';
 import { pushTableRowToVercel } from './_lib/sheetSync';
 import { marshalRow } from './_lib/columnMaps';
 import { requireAccessLevel } from './_lib/authz';
+import { requireBotSecret } from './_lib/botAuth';
 
 const tipoValidator = v.union(
   v.literal('gemas'),
@@ -93,6 +94,22 @@ export const create = action({
     { idToken, ...args },
   ): Promise<{ id: Id<'providers'> }> => {
     await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.providers._create, args);
+  },
+});
+
+/**
+ * anima-bot bridge — create a provider from the Telegram wizard when opening a
+ * lote for a proveedor not yet in the roster. Bot-secret authenticated (see
+ * `_lib/botAuth.ts`); reuses `_create`.
+ */
+export const createViaBot = action({
+  args: { botSecret: v.string(), ...createArgs },
+  handler: async (
+    ctx,
+    { botSecret, ...args },
+  ): Promise<{ id: Id<'providers'> }> => {
+    requireBotSecret(botSecret);
     return await ctx.runMutation(internal.providers._create, args);
   },
 });

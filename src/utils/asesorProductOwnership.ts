@@ -1,10 +1,17 @@
 import { TreasureItem, TreasureStatus } from '../types';
 import { matchesAsesorName } from './asesorNameUtils';
 
-const VALID_STATUSES: readonly string[] = ['DISPONIBLE', 'VENDIDA', 'ASESOR'];
+const VALID_STATUSES: readonly string[] = [
+  'DISPONIBLE',
+  'VENDIDA',
+  'ASESOR',
+  'CONSIGNACION',
+];
 
 /** Validate that a string is a known TreasureStatus, return undefined otherwise */
-function toTreasureStatus(value: string | undefined): TreasureStatus | undefined {
+function toTreasureStatus(
+  value: string | undefined,
+): TreasureStatus | undefined {
   if (!value) return undefined;
   return VALID_STATUSES.includes(value) ? (value as TreasureStatus) : undefined;
 }
@@ -31,7 +38,10 @@ export function getEffectiveOwner(item: TreasureItem): string {
  *   (This also handles Column T = Column N, i.e. ownership re-confirmed)
  * - If Column T is someone else → product was transferred away, show as "VENDIDA"
  */
-export function getEffectiveEstado(item: TreasureItem, asesorName: string): TreasureStatus {
+export function getEffectiveEstado(
+  item: TreasureItem,
+  asesorName: string,
+): TreasureStatus {
   const currentOwner = item.asesorActual?.trim();
 
   // No transfer happened — original asesor still owns it
@@ -54,19 +64,25 @@ export function getEffectiveEstado(item: TreasureItem, asesorName: string): Trea
  * - The original asesor (Column N)
  * - The current owner (Column T)
  */
-export function getAsesorProducts(treasure: TreasureItem[], asesorName: string): AsesorProduct[] {
+export function getAsesorProducts(
+  treasure: TreasureItem[],
+  asesorName: string,
+): AsesorProduct[] {
   return treasure
-    .filter(item => {
-      const isOriginalAsesor = item.asesor && matchesAsesorName(item.asesor, asesorName);
-      const isCurrentOwner = item.asesorActual?.trim() &&
+    .filter((item) => {
+      const isOriginalAsesor =
+        item.asesor && matchesAsesorName(item.asesor, asesorName);
+      const isCurrentOwner =
+        item.asesorActual?.trim() &&
         matchesAsesorName(item.asesorActual.trim(), asesorName);
       return isOriginalAsesor || isCurrentOwner;
     })
-    .map(item => ({
+    .map((item) => ({
       ...item,
       effectiveEstado: getEffectiveEstado(item, asesorName),
       isTransferredAway: Boolean(
-        item.asesorActual?.trim() && !matchesAsesorName(item.asesorActual.trim(), asesorName)
+        item.asesorActual?.trim() &&
+        !matchesAsesorName(item.asesorActual.trim(), asesorName),
       ),
     }));
 }

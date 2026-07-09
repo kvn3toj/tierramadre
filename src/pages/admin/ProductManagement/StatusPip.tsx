@@ -15,9 +15,9 @@
  *   Spacing — 7×7, no padding.
  */
 
-import { Box } from "@mui/material";
-import type { FotoTokens } from "../../../design-system";
-import type { ProductEstado } from "../../../data/vocabularies";
+import { Box } from '@mui/material';
+import type { FotoTokens } from '../../../design-system';
+import type { ProductEstado } from '../../../data/vocabularies';
 
 // Re-export under the historical name so downstream callers don't churn.
 export type EstadoValue = ProductEstado;
@@ -31,38 +31,42 @@ interface StatusPipProps {
 }
 
 const LABELS: Record<EstadoValue, string> = {
-  DISPONIBLE: "Disponible",
-  ASESOR: "Con asesor",
-  VENDIDA: "Vendida",
-  Retornado: "Retornado",
-  ESMEREOGENESIS: "Esmereogénesis",
-  ESMERO: "Esmero",
-  "DISPONIBLE ADOPTADA": "Adoptada",
-  "LOTE X CT": "Lote x ct",
-  "": "Sin estado",
+  DISPONIBLE: 'Disponible',
+  ASESOR: 'Con asesor',
+  CONSIGNACION: 'En consignación',
+  VENDIDA: 'Vendida',
+  Retornado: 'Retornado',
+  ESMEREOGENESIS: 'Esmereogénesis',
+  ESMERO: 'Esmero',
+  'DISPONIBLE ADOPTADA': 'Adoptada',
+  'LOTE X CT': 'Lote x ct',
+  '': 'Sin estado',
 };
 
 function colorFor(estado: EstadoValue, foto: FotoTokens): string | null {
   switch (estado) {
-    case "DISPONIBLE":
+    case 'DISPONIBLE':
       return foto.status.available;
     // Adopted is still nominally disponible, just pre-claimed by an asesor —
-    // visually treat it like ASESOR (consigned/gold).
-    case "ASESOR":
-    case "DISPONIBLE ADOPTADA":
+    // visually treat it like ASESOR (consigned/gold). CONSIGNACION (external
+    // comercializador) gets the SAME color — the pip's job is "out of the
+    // vault"; the LABEL is what tells asesor vs consignación apart.
+    case 'ASESOR':
+    case 'CONSIGNACION':
+    case 'DISPONIBLE ADOPTADA':
       return foto.status.consigned;
-    case "VENDIDA":
+    case 'VENDIDA':
       return foto.status.sold;
     // Esmereogénesis (and its shorter alias ESMERO) belongs to the special
     // program — paint it the same accent as consigned for now.
-    case "ESMEREOGENESIS":
-    case "ESMERO":
+    case 'ESMEREOGENESIS':
+    case 'ESMERO':
       return foto.status.consigned;
     // Retornado came back from somewhere — no canonical color yet, leave
     // hollow to flag it for review.
-    case "Retornado":
-    case "LOTE X CT":
-    case "":
+    case 'Retornado':
+    case 'LOTE X CT':
+    case '':
     default:
       return null;
   }
@@ -70,7 +74,7 @@ function colorFor(estado: EstadoValue, foto: FotoTokens): string | null {
 
 export function StatusPip({ estado, foto, muted = false }: StatusPipProps) {
   const fill = colorFor(estado, foto);
-  const label = LABELS[estado] ?? "Sin estado";
+  const label = LABELS[estado] ?? 'Sin estado';
 
   return (
     <Box
@@ -78,13 +82,13 @@ export function StatusPip({ estado, foto, muted = false }: StatusPipProps) {
       aria-label={`Estado: ${label}`}
       title={label}
       sx={{
-        width: "7px",
-        height: "7px",
-        borderRadius: "50%",
-        backgroundColor: fill ?? "transparent",
-        border: fill ? "none" : `1px solid ${foto.surfaces.edgeStrong}`,
+        width: '7px',
+        height: '7px',
+        borderRadius: '50%',
+        backgroundColor: fill ?? 'transparent',
+        border: fill ? 'none' : `1px solid ${foto.surfaces.edgeStrong}`,
         opacity: muted ? 0.4 : 1,
-        transition: "background-color 120ms ease, opacity 120ms ease",
+        transition: 'background-color 120ms ease, opacity 120ms ease',
         flexShrink: 0,
       }}
     />
