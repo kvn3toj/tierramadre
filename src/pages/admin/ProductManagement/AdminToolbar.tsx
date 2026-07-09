@@ -23,22 +23,22 @@
  *   Spacing — atelier.spacing.toolbarHeight; atelier.spacing.rowPaddingX.
  */
 
-import { ChangeEvent, useEffect, useRef, useState } from "react";
-import { Box, ButtonBase, InputBase, Typography } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import { getAtelier, type FotoTokens } from "../../../design-system";
-import { type EstadoValue } from "./StatusPip";
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { Box, ButtonBase, InputBase, Typography } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { getAtelier, type FotoTokens } from '../../../design-system';
+import { type EstadoValue } from './StatusPip';
 
-type FilterKey = "all" | "available" | "consigned" | "sold";
+type FilterKey = 'all' | 'available' | 'consigned' | 'consignment' | 'sold';
 
 /** Advanced filter dimensions, mirrored from the customer Treasure Browser. */
 export interface AdvancedScopeFilters {
-  type: "all" | "loose" | "jewelry";
+  type: 'all' | 'loose' | 'jewelry';
   color: string | null;
   shape: string | null; // talla
   quality: string | null; // calidad
   category: string | null; // categoria
-  cantidad: "all" | "1" | "2+";
+  cantidad: 'all' | '1' | '2+';
   /** [min, max] inclusive in COP, or null = use entire range */
   priceRange: [number, number] | null;
   /** [min, max] inclusive in carats (numeric peso only), or null = use entire range */
@@ -92,10 +92,11 @@ const FILTERS: Array<{
   label: string;
   estado: EstadoValue | null;
 }> = [
-  { key: "all", label: "Todo", estado: null },
-  { key: "available", label: "Disponibles", estado: "DISPONIBLE" },
-  { key: "consigned", label: "Con asesor", estado: "ASESOR" },
-  { key: "sold", label: "Vendidas", estado: "VENDIDA" },
+  { key: 'all', label: 'Todo', estado: null },
+  { key: 'available', label: 'Disponibles', estado: 'DISPONIBLE' },
+  { key: 'consigned', label: 'Con asesor', estado: 'ASESOR' },
+  { key: 'consignment', label: 'En consignación', estado: 'CONSIGNACION' },
+  { key: 'sold', label: 'Vendidas', estado: 'VENDIDA' },
 ];
 
 export function AdminToolbar({
@@ -124,12 +125,12 @@ export function AdminToolbar({
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const advancedActiveCount =
-    (advanced.type !== "all" ? 1 : 0) +
+    (advanced.type !== 'all' ? 1 : 0) +
     (advanced.color ? 1 : 0) +
     (advanced.shape ? 1 : 0) +
     (advanced.quality ? 1 : 0) +
     (advanced.category ? 1 : 0) +
-    (advanced.cantidad !== "all" ? 1 : 0) +
+    (advanced.cantidad !== 'all' ? 1 : 0) +
     (advanced.priceRange ? 1 : 0) +
     (advanced.caratRange ? 1 : 0);
 
@@ -138,28 +139,28 @@ export function AdminToolbar({
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       const isTypingElsewhere =
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA' ||
         target?.isContentEditable;
 
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         searchInputRef.current?.focus();
         searchInputRef.current?.select();
         return;
       }
-      if (e.key === "/" && !isTypingElsewhere) {
+      if (e.key === '/' && !isTypingElsewhere) {
         e.preventDefault();
         searchInputRef.current?.focus();
         searchInputRef.current?.select();
       }
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, []);
 
   const isFilteredView =
-    filter !== "all" ||
+    filter !== 'all' ||
     !!collection ||
     onlyWithImages ||
     onlyMissingPrice ||
@@ -169,7 +170,7 @@ export function AdminToolbar({
   return (
     <Box
       sx={{
-        position: "sticky",
+        position: 'sticky',
         top: 0,
         zIndex: 2,
         backgroundColor: foto.surfaces.panel,
@@ -180,11 +181,11 @@ export function AdminToolbar({
       <Box
         sx={{
           px: `${atelier.spacing.rowPaddingX}px`,
-          py: "14px",
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "minmax(220px, 1fr) auto" },
+          py: '14px',
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'minmax(220px, 1fr) auto' },
           gap: { xs: 1.5, md: 2 },
-          alignItems: "center",
+          alignItems: 'center',
         }}
       >
         {/* Search */}
@@ -192,17 +193,17 @@ export function AdminToolbar({
           sx={{
             backgroundColor: foto.surfaces.inset,
             border: `1px solid ${foto.surfaces.edge}`,
-            borderRadius: "4px",
-            px: "10px",
-            py: "6px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            transition: "border-color 120ms linear",
-            "&:focus-within": {
+            borderRadius: '4px',
+            px: '10px',
+            py: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'border-color 120ms linear',
+            '&:focus-within': {
               borderColor: atelier.focus.ring,
               outline: `2px solid ${atelier.focus.ringSoft}`,
-              outlineOffset: "0",
+              outlineOffset: '0',
             },
           }}
         >
@@ -211,8 +212,8 @@ export function AdminToolbar({
             viewBox="0 0 24 24"
             aria-hidden
             sx={{
-              width: "14px",
-              height: "14px",
+              width: '14px',
+              height: '14px',
               color: foto.ink.tertiary,
               flexShrink: 0,
             }}
@@ -240,15 +241,15 @@ export function AdminToolbar({
             placeholder="Buscar por número, nombre, color, calidad, ubicación, colección…"
             fullWidth
             inputRef={searchInputRef}
-            inputProps={{ "aria-label": "Buscar producto en inventario" }}
+            inputProps={{ 'aria-label': 'Buscar producto en inventario' }}
             sx={{
               ...atelier.type.meta,
               color: foto.ink.primary,
-              "& input::placeholder": {
+              '& input::placeholder': {
                 color: atelier.ink.muted,
                 opacity: 1,
               },
-              "& input:focus": { outline: "none" },
+              '& input:focus': { outline: 'none' },
             }}
           />
           {showCount && (
@@ -256,46 +257,46 @@ export function AdminToolbar({
               component="span"
               sx={{
                 ...atelier.type.data,
-                fontSize: "11px",
+                fontSize: '11px',
                 color: foto.ink.tertiary,
-                whiteSpace: "nowrap",
+                whiteSpace: 'nowrap',
                 flexShrink: 0,
               }}
               aria-live="polite"
             >
-              {filteredCount.toLocaleString("es-CO")} /{" "}
-              {total.toLocaleString("es-CO")}
+              {filteredCount.toLocaleString('es-CO')} /{' '}
+              {total.toLocaleString('es-CO')}
             </Typography>
           )}
           {search && (
             <ButtonBase
               onClick={() => {
-                onSearchChange("");
+                onSearchChange('');
                 searchInputRef.current?.focus();
               }}
               disableRipple
               aria-label="Limpiar búsqueda"
               sx={{
-                width: "20px",
-                height: "20px",
-                borderRadius: "50%",
+                width: '20px',
+                height: '20px',
+                borderRadius: '50%',
                 color: foto.ink.tertiary,
                 flexShrink: 0,
                 transition: foto.motion.rowHover,
-                "&:hover": {
+                '&:hover': {
                   backgroundColor: foto.surfaces.rowHover,
                   color: foto.ink.primary,
                 },
-                "&:focus-visible": {
+                '&:focus-visible': {
                   outline: `2px solid ${atelier.focus.ring}`,
-                  outlineOffset: "2px",
+                  outlineOffset: '2px',
                 },
               }}
             >
               <Box
                 component="svg"
                 viewBox="0 0 24 24"
-                sx={{ width: "12px", height: "12px" }}
+                sx={{ width: '12px', height: '12px' }}
                 aria-hidden
               >
                 <path
@@ -313,14 +314,14 @@ export function AdminToolbar({
               aria-hidden
               sx={{
                 ...atelier.type.label,
-                fontSize: "10px",
+                fontSize: '10px',
                 color: atelier.ink.muted,
                 border: `1px solid ${foto.surfaces.edge}`,
-                borderRadius: "3px",
-                px: "5px",
-                py: "1px",
+                borderRadius: '3px',
+                px: '5px',
+                py: '1px',
                 lineHeight: 1.4,
-                whiteSpace: "nowrap",
+                whiteSpace: 'nowrap',
                 flexShrink: 0,
                 backgroundColor: foto.surfaces.panel,
               }}
@@ -335,11 +336,11 @@ export function AdminToolbar({
           role="radiogroup"
           aria-label="Filtrar por estado"
           sx={{
-            display: "inline-flex",
+            display: 'inline-flex',
             gap: 0,
             border: `1px solid ${foto.surfaces.edgeStrong}`,
-            borderRadius: "4px",
-            overflow: "hidden",
+            borderRadius: '4px',
+            overflow: 'hidden',
           }}
         >
           {FILTERS.map((f, i) => {
@@ -356,21 +357,21 @@ export function AdminToolbar({
                   color: isSelected ? foto.ink.primary : foto.ink.tertiary,
                   backgroundColor: isSelected
                     ? foto.surfaces.rowActive
-                    : "transparent",
-                  px: "12px",
-                  py: "8px",
+                    : 'transparent',
+                  px: '12px',
+                  py: '8px',
                   borderLeft:
-                    i === 0 ? "none" : `1px solid ${foto.surfaces.edgeStrong}`,
+                    i === 0 ? 'none' : `1px solid ${foto.surfaces.edgeStrong}`,
                   transition: foto.motion.rowHover,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  "&:hover": {
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  '&:hover': {
                     backgroundColor: foto.surfaces.rowHover,
                   },
-                  "&:focus-visible": {
+                  '&:focus-visible': {
                     outline: `2px solid ${atelier.focus.ring}`,
-                    outlineOffset: "-2px",
+                    outlineOffset: '-2px',
                   },
                 }}
               >
@@ -388,12 +389,12 @@ export function AdminToolbar({
       <Box
         sx={{
           px: `${atelier.spacing.rowPaddingX}px`,
-          py: "8px",
+          py: '8px',
           borderTop: `1px solid ${foto.surfaces.edge}`,
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-          flexWrap: "wrap",
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          flexWrap: 'wrap',
         }}
       >
         <Typography
@@ -401,7 +402,7 @@ export function AdminToolbar({
           sx={{
             ...atelier.type.label,
             color: foto.ink.tertiary,
-            mr: "4px",
+            mr: '4px',
           }}
         >
           Alcance
@@ -446,20 +447,20 @@ export function AdminToolbar({
                 ? foto.surfaces.rowActive
                 : foto.surfaces.inset,
             border: `1px solid ${advancedActiveCount > 0 ? atelier.brass.soft : foto.surfaces.edge}`,
-            borderRadius: "4px",
-            px: "10px",
-            py: "5px",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
+            borderRadius: '4px',
+            px: '10px',
+            py: '5px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
             transition: foto.motion.rowHover,
-            "&:hover": {
+            '&:hover': {
               backgroundColor: foto.surfaces.rowHover,
               borderColor: atelier.brass.soft,
             },
-            "&:focus-visible": {
+            '&:focus-visible': {
               outline: `2px solid ${atelier.focus.ring}`,
-              outlineOffset: "2px",
+              outlineOffset: '2px',
             },
           }}
         >
@@ -468,18 +469,18 @@ export function AdminToolbar({
             <Box
               component="span"
               aria-label={`${advancedActiveCount} filtro${
-                advancedActiveCount === 1 ? "" : "s"
-              } activo${advancedActiveCount === 1 ? "" : "s"}`}
+                advancedActiveCount === 1 ? '' : 's'
+              } activo${advancedActiveCount === 1 ? '' : 's'}`}
               sx={{
                 ...atelier.type.data,
-                fontSize: "10px",
+                fontSize: '10px',
                 lineHeight: 1.4,
                 color: foto.ink.inverse,
                 backgroundColor: atelier.focus.ring,
-                borderRadius: "2px",
-                px: "5px",
-                minWidth: "16px",
-                textAlign: "center",
+                borderRadius: '2px',
+                px: '5px',
+                minWidth: '16px',
+                textAlign: 'center',
               }}
             >
               {advancedActiveCount}
@@ -490,11 +491,11 @@ export function AdminToolbar({
             viewBox="0 0 24 24"
             aria-hidden
             sx={{
-              width: "10px",
-              height: "10px",
+              width: '10px',
+              height: '10px',
               color: foto.ink.tertiary,
-              transform: showAdvanced ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+              transform: showAdvanced ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1)',
             }}
           >
             <path
@@ -512,7 +513,7 @@ export function AdminToolbar({
         {(collection ||
           onlyWithImages ||
           onlyMissingPrice ||
-          filter !== "all" ||
+          filter !== 'all' ||
           search ||
           advancedActiveCount > 0) && (
           <ButtonBase
@@ -520,29 +521,29 @@ export function AdminToolbar({
               onCollectionChange(null);
               onOnlyWithImagesChange(false);
               onOnlyMissingPriceChange(false);
-              onFilterChange("all");
-              onSearchChange("");
+              onFilterChange('all');
+              onSearchChange('');
               onAdvancedReset();
             }}
             disableRipple
             sx={{
               ...atelier.type.label,
               color: foto.ink.tertiary,
-              ml: "auto",
-              px: "10px",
-              py: "6px",
-              borderRadius: "4px",
+              ml: 'auto',
+              px: '10px',
+              py: '6px',
+              borderRadius: '4px',
               transition: foto.motion.rowHover,
-              textDecoration: "underline",
-              textUnderlineOffset: "2px",
+              textDecoration: 'underline',
+              textUnderlineOffset: '2px',
               textDecorationColor: atelier.brass.soft,
-              "&:hover": {
+              '&:hover': {
                 color: foto.ink.primary,
                 textDecorationColor: atelier.ink.primary,
               },
-              "&:focus-visible": {
+              '&:focus-visible': {
                 outline: `2px solid ${atelier.focus.ring}`,
-                outlineOffset: "2px",
+                outlineOffset: '2px',
               },
             }}
           >
@@ -579,15 +580,15 @@ function FilterPip({ estado, muted }: { estado: EstadoValue; muted: boolean }) {
       sx={(theme) => {
         const atelier = getAtelier(theme.palette.mode);
         const color =
-          estado === "DISPONIBLE"
+          estado === 'DISPONIBLE'
             ? atelier.status.available.pip
-            : estado === "VENDIDA"
+            : estado === 'VENDIDA'
               ? atelier.status.sold.pip
               : atelier.status.consigned.pip;
         return {
-          width: "6px",
-          height: "6px",
-          borderRadius: "1px",
+          width: '6px',
+          height: '6px',
+          borderRadius: '1px',
           backgroundColor: color,
           opacity: muted ? 0.4 : 1,
           transition: atelier.motion.pip,
@@ -620,9 +621,9 @@ function CollectionSelect({
     <Box
       component="label"
       sx={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "6px",
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
       }}
     >
       <Typography
@@ -636,14 +637,14 @@ function CollectionSelect({
       </Typography>
       <Box
         sx={{
-          position: "relative",
-          display: "inline-flex",
-          alignItems: "center",
+          position: 'relative',
+          display: 'inline-flex',
+          alignItems: 'center',
         }}
       >
         <Box
           component="select"
-          value={collection ?? ""}
+          value={collection ?? ''}
           onChange={(e: ChangeEvent<HTMLSelectElement>) =>
             onChange(e.target.value ? e.target.value : null)
           }
@@ -655,19 +656,19 @@ function CollectionSelect({
               ? foto.surfaces.rowActive
               : foto.surfaces.inset,
             border: `1px solid ${collection ? atelier.brass.soft : foto.surfaces.edge}`,
-            borderRadius: "4px",
-            pl: "10px",
-            pr: "26px",
-            py: "5px",
-            cursor: "pointer",
-            appearance: "none",
-            transition: "border-color 120ms linear",
-            "&:hover": {
+            borderRadius: '4px',
+            pl: '10px',
+            pr: '26px',
+            py: '5px',
+            cursor: 'pointer',
+            appearance: 'none',
+            transition: 'border-color 120ms linear',
+            '&:hover': {
               borderColor: atelier.brass.soft,
             },
-            "&:focus": {
+            '&:focus': {
               outline: `2px solid ${atelier.focus.ring}`,
-              outlineOffset: "0",
+              outlineOffset: '0',
               borderColor: atelier.focus.ring,
             },
           }}
@@ -684,12 +685,12 @@ function CollectionSelect({
           viewBox="0 0 24 24"
           aria-hidden
           sx={{
-            position: "absolute",
-            right: "8px",
-            width: "10px",
-            height: "10px",
+            position: 'absolute',
+            right: '8px',
+            width: '10px',
+            height: '10px',
             color: atelier.ink.tertiary,
-            pointerEvents: "none",
+            pointerEvents: 'none',
           }}
         >
           <path
@@ -734,31 +735,31 @@ function ToggleChip({
         color: active ? atelier.ink.primary : atelier.ink.tertiary,
         backgroundColor: active ? foto.surfaces.rowActive : foto.surfaces.inset,
         border: `1px solid ${active ? atelier.brass.soft : foto.surfaces.edge}`,
-        borderRadius: "4px",
-        px: "10px",
-        py: "5px",
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "6px",
+        borderRadius: '4px',
+        px: '10px',
+        py: '5px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
         transition: atelier.motion.rowHover,
-        "&:hover": {
+        '&:hover': {
           backgroundColor: foto.surfaces.rowHover,
           borderColor: atelier.brass.soft,
         },
-        "&:focus-visible": {
+        '&:focus-visible': {
           outline: `2px solid ${atelier.focus.ring}`,
-          outlineOffset: "2px",
+          outlineOffset: '2px',
         },
       }}
     >
       <Box
         aria-hidden
         sx={{
-          width: "10px",
-          height: "10px",
-          borderRadius: "2px",
+          width: '10px',
+          height: '10px',
+          borderRadius: '2px',
           border: `1px solid ${active ? atelier.focus.ring : foto.surfaces.edgeStrong}`,
-          backgroundColor: active ? atelier.focus.ring : "transparent",
+          backgroundColor: active ? atelier.focus.ring : 'transparent',
           flexShrink: 0,
         }}
       />
@@ -799,13 +800,13 @@ function AdvancedFiltersPanel({
       aria-label="Filtros avanzados"
       sx={{
         px: `${atelier.spacing.rowPaddingX}px`,
-        py: "12px",
+        py: '12px',
         borderTop: `1px solid ${foto.surfaces.edge}`,
         backgroundColor: foto.surfaces.canvas,
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-        gap: "12px 16px",
-        alignItems: "end",
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '12px 16px',
+        alignItems: 'end',
       }}
     >
       {/* Tipo (loose / jewelry) */}
@@ -814,17 +815,17 @@ function AdvancedFiltersPanel({
           role="radiogroup"
           aria-label="Filtrar por tipo"
           sx={{
-            display: "inline-flex",
+            display: 'inline-flex',
             border: `1px solid ${foto.surfaces.edge}`,
-            borderRadius: "4px",
-            overflow: "hidden",
+            borderRadius: '4px',
+            overflow: 'hidden',
           }}
         >
           {(
             [
-              { key: "all", label: "Todo" },
-              { key: "loose", label: "Sueltas" },
-              { key: "jewelry", label: "Joyería" },
+              { key: 'all', label: 'Todo' },
+              { key: 'loose', label: 'Sueltas' },
+              { key: 'jewelry', label: 'Joyería' },
             ] as const
           ).map((opt, i) => {
             const isSelected = advanced.type === opt.key;
@@ -833,7 +834,7 @@ function AdvancedFiltersPanel({
                 key={opt.key}
                 role="radio"
                 aria-checked={isSelected}
-                onClick={() => onChange("type", opt.key)}
+                onClick={() => onChange('type', opt.key)}
                 disableRipple
                 sx={{
                   ...atelier.type.label,
@@ -842,16 +843,16 @@ function AdvancedFiltersPanel({
                     : atelier.ink.tertiary,
                   backgroundColor: isSelected
                     ? foto.surfaces.rowActive
-                    : "transparent",
-                  px: "10px",
-                  py: "6px",
+                    : 'transparent',
+                  px: '10px',
+                  py: '6px',
                   borderLeft:
-                    i === 0 ? "none" : `1px solid ${foto.surfaces.edge}`,
+                    i === 0 ? 'none' : `1px solid ${foto.surfaces.edge}`,
                   transition: atelier.motion.rowHover,
-                  "&:hover": { backgroundColor: foto.surfaces.rowHover },
-                  "&:focus-visible": {
+                  '&:hover': { backgroundColor: foto.surfaces.rowHover },
+                  '&:focus-visible': {
                     outline: `2px solid ${atelier.focus.ring}`,
-                    outlineOffset: "-2px",
+                    outlineOffset: '-2px',
                   },
                 }}
               >
@@ -865,8 +866,8 @@ function AdvancedFiltersPanel({
       {/* Color */}
       <FilterField label="Color" atelier={atelier}>
         <NativeSelect
-          value={advanced.color ?? ""}
-          onChange={(v) => onChange("color", v || null)}
+          value={advanced.color ?? ''}
+          onChange={(v) => onChange('color', v || null)}
           ariaLabel="Filtrar por color"
           atelier={atelier}
           foto={foto}
@@ -883,8 +884,8 @@ function AdvancedFiltersPanel({
       {/* Calidad */}
       <FilterField label="Calidad" atelier={atelier}>
         <NativeSelect
-          value={advanced.quality ?? ""}
-          onChange={(v) => onChange("quality", v || null)}
+          value={advanced.quality ?? ''}
+          onChange={(v) => onChange('quality', v || null)}
           ariaLabel="Filtrar por calidad"
           atelier={atelier}
           foto={foto}
@@ -901,8 +902,8 @@ function AdvancedFiltersPanel({
       {/* Talla */}
       <FilterField label="Talla" atelier={atelier}>
         <NativeSelect
-          value={advanced.shape ?? ""}
-          onChange={(v) => onChange("shape", v || null)}
+          value={advanced.shape ?? ''}
+          onChange={(v) => onChange('shape', v || null)}
           ariaLabel="Filtrar por talla"
           atelier={atelier}
           foto={foto}
@@ -919,8 +920,8 @@ function AdvancedFiltersPanel({
       {/* Categoría */}
       <FilterField label="Categoría" atelier={atelier}>
         <NativeSelect
-          value={advanced.category ?? ""}
-          onChange={(v) => onChange("category", v || null)}
+          value={advanced.category ?? ''}
+          onChange={(v) => onChange('category', v || null)}
           ariaLabel="Filtrar por categoría"
           atelier={atelier}
           foto={foto}
@@ -940,17 +941,17 @@ function AdvancedFiltersPanel({
           role="radiogroup"
           aria-label="Filtrar por cantidad"
           sx={{
-            display: "inline-flex",
+            display: 'inline-flex',
             border: `1px solid ${foto.surfaces.edge}`,
-            borderRadius: "4px",
-            overflow: "hidden",
+            borderRadius: '4px',
+            overflow: 'hidden',
           }}
         >
           {(
             [
-              { key: "all", label: "Todas" },
-              { key: "1", label: "1" },
-              { key: "2+", label: "2+" },
+              { key: 'all', label: 'Todas' },
+              { key: '1', label: '1' },
+              { key: '2+', label: '2+' },
             ] as const
           ).map((opt, i) => {
             const isSelected = advanced.cantidad === opt.key;
@@ -959,7 +960,7 @@ function AdvancedFiltersPanel({
                 key={opt.key}
                 role="radio"
                 aria-checked={isSelected}
-                onClick={() => onChange("cantidad", opt.key)}
+                onClick={() => onChange('cantidad', opt.key)}
                 disableRipple
                 sx={{
                   ...atelier.type.label,
@@ -968,16 +969,16 @@ function AdvancedFiltersPanel({
                     : atelier.ink.tertiary,
                   backgroundColor: isSelected
                     ? foto.surfaces.rowActive
-                    : "transparent",
-                  px: "10px",
-                  py: "6px",
+                    : 'transparent',
+                  px: '10px',
+                  py: '6px',
                   borderLeft:
-                    i === 0 ? "none" : `1px solid ${foto.surfaces.edge}`,
+                    i === 0 ? 'none' : `1px solid ${foto.surfaces.edge}`,
                   transition: atelier.motion.rowHover,
-                  "&:hover": { backgroundColor: foto.surfaces.rowHover },
-                  "&:focus-visible": {
+                  '&:hover': { backgroundColor: foto.surfaces.rowHover },
+                  '&:focus-visible': {
                     outline: `2px solid ${atelier.focus.ring}`,
-                    outlineOffset: "-2px",
+                    outlineOffset: '-2px',
                   },
                 }}
               >
@@ -994,14 +995,14 @@ function AdvancedFiltersPanel({
         atelier={atelier}
         hint={
           options.priceMinMax[1] > 0
-            ? `${options.priceMinMax[0].toLocaleString("es-CO")} – ${options.priceMinMax[1].toLocaleString("es-CO")}`
+            ? `${options.priceMinMax[0].toLocaleString('es-CO')} – ${options.priceMinMax[1].toLocaleString('es-CO')}`
             : undefined
         }
       >
         <RangeInputs
           range={advanced.priceRange}
           bounds={options.priceMinMax}
-          onChange={(r) => onChange("priceRange", r)}
+          onChange={(r) => onChange('priceRange', r)}
           ariaLabelMin="Precio mínimo"
           ariaLabelMax="Precio máximo"
           atelier={atelier}
@@ -1023,7 +1024,7 @@ function AdvancedFiltersPanel({
           range={advanced.caratRange}
           bounds={options.caratMinMax}
           step="0.01"
-          onChange={(r) => onChange("caratRange", r)}
+          onChange={(r) => onChange('caratRange', r)}
           ariaLabelMin="Peso mínimo (ct)"
           ariaLabelMax="Peso máximo (ct)"
           atelier={atelier}
@@ -1048,16 +1049,16 @@ function FilterField({
 }) {
   return (
     <Box
-      sx={{ display: "flex", flexDirection: "column", gap: "6px", minWidth: 0 }}
+      sx={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}
     >
       <Typography
         component="span"
         sx={{
           ...atelier.type.label,
           color: atelier.ink.tertiary,
-          display: "inline-flex",
-          alignItems: "baseline",
-          gap: "6px",
+          display: 'inline-flex',
+          alignItems: 'baseline',
+          gap: '6px',
         }}
       >
         {label}
@@ -1066,9 +1067,9 @@ function FilterField({
             component="span"
             sx={{
               ...atelier.type.meta,
-              fontSize: "10px",
+              fontSize: '10px',
               color: atelier.ink.muted,
-              textTransform: "none",
+              textTransform: 'none',
               letterSpacing: 0,
             }}
           >
@@ -1097,14 +1098,14 @@ function NativeSelect({
   atelier: ReturnType<typeof getAtelier>;
   foto: FotoTokens;
 }) {
-  const isActive = value !== "";
+  const isActive = value !== '';
   return (
     <Box
       sx={{
-        position: "relative",
-        display: "inline-flex",
-        alignItems: "center",
-        width: "100%",
+        position: 'relative',
+        display: 'inline-flex',
+        alignItems: 'center',
+        width: '100%',
       }}
     >
       <Box
@@ -1116,23 +1117,23 @@ function NativeSelect({
         aria-label={ariaLabel}
         sx={{
           ...atelier.type.meta,
-          width: "100%",
+          width: '100%',
           color: atelier.ink.primary,
           backgroundColor: isActive
             ? foto.surfaces.rowActive
             : foto.surfaces.inset,
           border: `1px solid ${isActive ? atelier.brass.soft : foto.surfaces.edge}`,
-          borderRadius: "4px",
-          pl: "10px",
-          pr: "26px",
-          py: "5px",
-          cursor: "pointer",
-          appearance: "none",
-          transition: "border-color 120ms linear",
-          "&:hover": { borderColor: atelier.brass.soft },
-          "&:focus": {
+          borderRadius: '4px',
+          pl: '10px',
+          pr: '26px',
+          py: '5px',
+          cursor: 'pointer',
+          appearance: 'none',
+          transition: 'border-color 120ms linear',
+          '&:hover': { borderColor: atelier.brass.soft },
+          '&:focus': {
             outline: `2px solid ${atelier.focus.ring}`,
-            outlineOffset: "0",
+            outlineOffset: '0',
             borderColor: atelier.focus.ring,
           },
         }}
@@ -1144,12 +1145,12 @@ function NativeSelect({
         viewBox="0 0 24 24"
         aria-hidden
         sx={{
-          position: "absolute",
-          right: "8px",
-          width: "10px",
-          height: "10px",
+          position: 'absolute',
+          right: '8px',
+          width: '10px',
+          height: '10px',
           color: atelier.ink.tertiary,
-          pointerEvents: "none",
+          pointerEvents: 'none',
         }}
       >
         <path
@@ -1169,7 +1170,7 @@ function NativeSelect({
 function RangeInputs({
   range,
   bounds,
-  step = "1",
+  step = '1',
   onChange,
   ariaLabelMin,
   ariaLabelMax,
@@ -1189,7 +1190,7 @@ function RangeInputs({
   const isActive = range !== null;
 
   const handleMin = (raw: string) => {
-    const next = raw === "" ? bounds[0] : Number(raw);
+    const next = raw === '' ? bounds[0] : Number(raw);
     if (!Number.isFinite(next)) return;
     if (next === bounds[0] && maxVal === bounds[1]) {
       onChange(null);
@@ -1198,7 +1199,7 @@ function RangeInputs({
     }
   };
   const handleMax = (raw: string) => {
-    const next = raw === "" ? bounds[1] : Number(raw);
+    const next = raw === '' ? bounds[1] : Number(raw);
     if (!Number.isFinite(next)) return;
     if (minVal === bounds[0] && next === bounds[1]) {
       onChange(null);
@@ -1209,19 +1210,19 @@ function RangeInputs({
 
   const fieldSx = {
     ...atelier.type.data,
-    fontSize: "12px",
+    fontSize: '12px',
     color: atelier.ink.primary,
     backgroundColor: isActive ? foto.surfaces.rowActive : foto.surfaces.inset,
     border: `1px solid ${isActive ? atelier.brass.soft : foto.surfaces.edge}`,
-    borderRadius: "4px",
-    px: "8px",
-    py: "5px",
-    width: "100%",
+    borderRadius: '4px',
+    px: '8px',
+    py: '5px',
+    width: '100%',
     minWidth: 0,
-    transition: "border-color 120ms linear",
-    "&:focus": {
+    transition: 'border-color 120ms linear',
+    '&:focus': {
       outline: `2px solid ${atelier.focus.ring}`,
-      outlineOffset: "0",
+      outlineOffset: '0',
       borderColor: atelier.focus.ring,
     },
   } as const;
@@ -1229,10 +1230,10 @@ function RangeInputs({
   return (
     <Box
       sx={{
-        display: "grid",
-        gridTemplateColumns: "1fr auto 1fr",
-        gap: "6px",
-        alignItems: "center",
+        display: 'grid',
+        gridTemplateColumns: '1fr auto 1fr',
+        gap: '6px',
+        alignItems: 'center',
       }}
     >
       <Box
@@ -1240,7 +1241,7 @@ function RangeInputs({
         type="number"
         inputMode="decimal"
         step={step}
-        value={isActive ? minVal : ""}
+        value={isActive ? minVal : ''}
         placeholder={bounds[0].toString()}
         aria-label={ariaLabelMin}
         onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -1260,7 +1261,7 @@ function RangeInputs({
         type="number"
         inputMode="decimal"
         step={step}
-        value={isActive ? maxVal : ""}
+        value={isActive ? maxVal : ''}
         placeholder={bounds[1].toString()}
         aria-label={ariaLabelMax}
         onChange={(e: ChangeEvent<HTMLInputElement>) =>

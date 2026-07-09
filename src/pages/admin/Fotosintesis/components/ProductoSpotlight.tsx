@@ -6,23 +6,23 @@ import {
   useMemo,
   useRef,
   useState,
-} from "react";
-import { Box, Dialog } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import { useNavigate } from "react-router-dom";
-import { Search, X, Clock, Check } from "lucide-react";
-import { getFoto, fontFamilies, emeraldCore } from "../../../../design-system";
-import { useConvexQuery, convexApi } from "../../../../lib/convex-safe";
-import type { SpotlightProduct } from "../FotosintesisLayoutContext";
-import { KbdKey } from "./KbdKey";
-import { useBatchThumbnails } from "../../../../hooks/useBatchThumbnails";
-import { resolveItemThumbnail } from "../utils/resolveThumbnail";
+} from 'react';
+import { Box, Dialog } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom';
+import { Search, X, Clock, Check } from 'lucide-react';
+import { getFoto, fontFamilies, emeraldCore } from '../../../../design-system';
+import { useConvexQuery, convexApi } from '../../../../lib/convex-safe';
+import type { SpotlightProduct } from '../FotosintesisLayoutContext';
+import { KbdKey } from './KbdKey';
+import { useBatchThumbnails } from '../../../../hooks/useBatchThumbnails';
+import { resolveItemThumbnail } from '../utils/resolveThumbnail';
 import {
   toggleSelection,
   removeSelection,
   isSelected,
   pickTierPrice,
-} from "../utils/saleItemSelection";
+} from '../utils/saleItemSelection';
 
 interface ProductoSpotlightProps {
   open: boolean;
@@ -44,21 +44,21 @@ interface ProductoSpotlightProps {
 
 // Filter group labels (disabled in Slice 1 — surfaced as "próximamente").
 const FILTER_GROUPS: { title: string; items: string[] }[] = [
-  { title: "Calidad", items: ["AAA", "AA", "A"] },
-  { title: "Procedencia", items: ["Muzo", "Chivor", "Coscuez"] },
-  { title: "Lote", items: ["B-008", "B-007", "B-006"] },
-  { title: "Rango precio", items: ["< 500k", "500k–2M", "> 2M"] },
+  { title: 'Calidad', items: ['AAA', 'AA', 'A'] },
+  { title: 'Procedencia', items: ['Muzo', 'Chivor', 'Coscuez'] },
+  { title: 'Lote', items: ['B-008', 'B-007', 'B-006'] },
+  { title: 'Rango precio', items: ['< 500k', '500k–2M', '> 2M'] },
 ];
 
 /** Vendible BR-6 states. We filter client-side because `products.list` only
  * accepts a single `estado` literal. */
-const VENDIBLE_ESTADOS = new Set(["DISPONIBLE", "ASESOR"]);
+const VENDIBLE_ESTADOS = new Set(['DISPONIBLE', 'ASESOR', 'CONSIGNACION']);
 
 function formatCop(value: number | undefined | null): string {
-  if (typeof value !== "number" || Number.isNaN(value)) return "—";
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
+  if (typeof value !== 'number' || Number.isNaN(value)) return '—';
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
     maximumFractionDigits: 0,
   }).format(value);
 }
@@ -68,7 +68,7 @@ function formatCop(value: number | undefined | null): string {
  * item back to the caller (e.g. VentaPage). Handoff §4.5.
  *
  * Slice 1 surface:
- *  - Live search via `products.list` (filtered client-side to DISPONIBLE/ASESOR)
+ *  - Live search via `products.list` (filtered client-side to DISPONIBLE/ASESOR/CONSIGNACION)
  *  - Keyboard navigation: ↑/↓, ↵, Esc, ⌘N
  *  - Live region announcing "X de Y resultados"
  *  - Filter groups rendered but disabled ("próximamente")
@@ -82,7 +82,7 @@ export function ProductoSpotlight({
   selectedProducts,
   onConfirm,
 }: ProductoSpotlightProps) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const navigate = useNavigate();
   const titleId = useId();
   // Legacy catalog thumbnails (Drive `products/` folder scan, keyed by item
@@ -90,7 +90,7 @@ export function ProductoSpotlight({
   // `fotoUrl`, which is why most spotlight thumbnails rendered blank.
   const { thumbnails: batchThumbs } = useBatchThumbnails();
 
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
   const [focusIndex, setFocusIndex] = useState(0);
   // Running multi-select set — full product objects so chosen items stay
@@ -98,7 +98,7 @@ export function ProductoSpotlight({
   const [selected, setSelected] = useState<SpotlightProduct[]>([]);
   // Assertive announcement for the most recent toggle, so screen-reader users
   // get per-item feedback ("Añadido X" / "Quitado X") on ↵, not just the count.
-  const [toggleAnnounce, setToggleAnnounce] = useState("");
+  const [toggleAnnounce, setToggleAnnounce] = useState('');
 
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -108,10 +108,10 @@ export function ProductoSpotlight({
   // (adds/removes) the existing bundle rather than starting from scratch.
   useEffect(() => {
     if (open) {
-      setQuery("");
+      setQuery('');
       setFocusIndex(0);
       setSelected(multiSelect ? (selectedProducts ?? []) : []);
-      setToggleAnnounce("");
+      setToggleAnnounce('');
       // Autofocus is best-effort — MUI Dialog handles initial focus.
       requestAnimationFrame(() => {
         inputRef.current?.focus();
@@ -134,7 +134,7 @@ export function ProductoSpotlight({
           const next = toggleSelection(prev, row);
           const added = next.length > prev.length;
           setToggleAnnounce(
-            `${added ? "Añadido" : "Quitado"} ${row.nombre || row.itemId}`,
+            `${added ? 'Añadido' : 'Quitado'} ${row.nombre || row.itemId}`,
           );
           return next;
         });
@@ -147,22 +147,33 @@ export function ProductoSpotlight({
   );
 
   // --- Data fetch ----------------------------------------------------------
-  // `products.list` only accepts a single estado at a time. We fetch by
-  // DISPONIBLE and ASESOR separately and merge client-side, then apply the
-  // search filter (the server already does the search, but a deferred query
-  // means we may briefly see stale data — re-filtering keeps it stable).
+  // `products.list` only accepts a single estado at a time. We fetch
+  // DISPONIBLE, ASESOR and CONSIGNACION separately and merge client-side,
+  // then apply the search filter (the server already does the search, but a
+  // deferred query means we may briefly see stale data — re-filtering keeps
+  // it stable). CONSIGNACION items are just as sellable as ASESOR ones — see
+  // BR-6 in `sales.create` — so a consignment "graduates" straight from
+  // here too, not only via AsesorMovementPanel's prefill shortcut.
   const disponibles = useConvexQuery(
     convexApi.products.list,
-    open ? { estado: "DISPONIBLE", search: deferredQuery } : "skip",
+    open ? { estado: 'DISPONIBLE', search: deferredQuery } : 'skip',
   );
   const asesor = useConvexQuery(
     convexApi.products.list,
-    open ? { estado: "ASESOR", search: deferredQuery } : "skip",
+    open ? { estado: 'ASESOR', search: deferredQuery } : 'skip',
+  );
+  const consignacion = useConvexQuery(
+    convexApi.products.list,
+    open ? { estado: 'CONSIGNACION', search: deferredQuery } : 'skip',
   );
 
   const results = useMemo<SpotlightProduct[]>(() => {
     if (!open) return [];
-    const merged = [...(disponibles ?? []), ...(asesor ?? [])];
+    const merged = [
+      ...(disponibles ?? []),
+      ...(asesor ?? []),
+      ...(consignacion ?? []),
+    ];
     const vendibles = merged.filter((p) =>
       VENDIBLE_ESTADOS.has(p.estado as string),
     );
@@ -174,7 +185,7 @@ export function ProductoSpotlight({
       seen.add(row.itemId);
       deduped.push({
         itemId: row.itemId,
-        nombre: row.nombre ?? "Sin nombre",
+        nombre: row.nombre ?? 'Sin nombre',
         // Item's own Fotosíntesis photo (proxied) with a fallback to the legacy
         // catalog thumbnail keyed by item number — so rows without a `fotoUrl`
         // still show an image instead of bare text.
@@ -186,7 +197,7 @@ export function ProductoSpotlight({
         // Legacy precioCOP col was retired (~82% empty). The picker doesn't yet
         // know the buyer tier, so hint with the embajador order — reusing the
         // same `pickTierPrice` fallback VentaPage applies so the two never drift.
-        precioCop: pickTierPrice(row, "embajador"),
+        precioCop: pickTierPrice(row, 'embajador'),
         loteId: row.loteId,
         estado: row.estado as string | undefined,
       });
@@ -210,30 +221,30 @@ export function ProductoSpotlight({
     const el = listRef.current.querySelector<HTMLElement>(
       `[data-row-index="${focusIndex}"]`,
     );
-    el?.scrollIntoView({ block: "nearest" });
+    el?.scrollIntoView({ block: 'nearest' });
   }, [focusIndex]);
 
   // --- Keyboard handling --------------------------------------------------
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       // ⌘N / Ctrl+N — create new
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "n") {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') {
         e.preventDefault();
         onClose();
-        navigate("/admin/fotosintesis/lots/new");
+        navigate('/admin/fotosintesis/lots/new');
         return;
       }
-      if (e.key === "ArrowDown") {
+      if (e.key === 'ArrowDown') {
         e.preventDefault();
         setFocusIndex((i) => Math.min(results.length - 1, i + 1));
         return;
       }
-      if (e.key === "ArrowUp") {
+      if (e.key === 'ArrowUp') {
         e.preventDefault();
         setFocusIndex((i) => Math.max(0, i - 1));
         return;
       }
-      if (e.key === "Enter") {
+      if (e.key === 'Enter') {
         // ⌘↵ / Ctrl+↵ — confirm the whole multi-select set.
         if (multiSelect && (e.metaKey || e.ctrlKey)) {
           e.preventDefault();
@@ -256,16 +267,16 @@ export function ProductoSpotlight({
 
   // --- Render --------------------------------------------------------------
   const baseLiveMessage = loading
-    ? "Buscando…"
+    ? 'Buscando…'
     : results.length === 0
       ? query
-        ? "Sin resultados"
-        : "Empezá tipeando"
+        ? 'Sin resultados'
+        : 'Empezá tipeando'
       : `${focusIndex + 1} de ${results.length} resultados`;
   const liveMessage =
     multiSelect && selected.length > 0
       ? `${baseLiveMessage} · ${selected.length} seleccionado${
-          selected.length === 1 ? "" : "s"
+          selected.length === 1 ? '' : 's'
         }`
       : baseLiveMessage;
 
@@ -282,19 +293,19 @@ export function ProductoSpotlight({
               radial-gradient(ellipse at 50% 30%, rgba(0, 140, 98, 0.15) 0%, transparent 60%),
               rgba(11, 16, 14, 0.55)
             `,
-            backdropFilter: "saturate(120%) blur(4px)",
+            backdropFilter: 'saturate(120%) blur(4px)',
           },
         },
       }}
       PaperProps={{
         sx: {
           width: 920,
-          maxWidth: "calc(100vw - 48px)",
+          maxWidth: 'calc(100vw - 48px)',
           margin: 0,
-          marginTop: "min(110px, 10vh)",
-          marginBottom: "auto",
-          alignSelf: "flex-start",
-          borderRadius: "18px",
+          marginTop: 'min(110px, 10vh)',
+          marginBottom: 'auto',
+          alignSelf: 'flex-start',
+          borderRadius: '18px',
           border: `1px solid ${foto.surfaces.rule}`,
           background: foto.surfaces.canvas,
           boxShadow: `
@@ -302,12 +313,12 @@ export function ProductoSpotlight({
             0 8px 24px rgba(0, 0, 0, 0.15),
             0 36px 80px rgba(0, 0, 0, 0.3)
           `,
-          overflow: "hidden",
+          overflow: 'hidden',
         },
       }}
       sx={{
-        "& .MuiDialog-container": {
-          alignItems: "flex-start",
+        '& .MuiDialog-container': {
+          alignItems: 'flex-start',
         },
       }}
       onKeyDown={handleKeyDown}
@@ -316,10 +327,10 @@ export function ProductoSpotlight({
       <Box
         id={titleId}
         sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: "14px",
-          padding: "18px 22px",
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
+          padding: '18px 22px',
           borderBottom: `1px solid ${foto.surfaces.edge}`,
         }}
       >
@@ -345,35 +356,35 @@ export function ProductoSpotlight({
           aria-autocomplete="list"
           sx={{
             flex: 1,
-            border: "none",
-            outline: "none",
-            background: "transparent",
+            border: 'none',
+            outline: 'none',
+            background: 'transparent',
             fontFamily: fontFamilies.system,
             fontSize: 19,
             fontWeight: 400,
-            letterSpacing: "-0.01em",
+            letterSpacing: '-0.01em',
             color: foto.ink.primary,
             minWidth: 0,
-            "::placeholder": { color: foto.ink.mute },
+            '::placeholder': { color: foto.ink.mute },
             // Hide the native search "clear" decoration in WebKit
-            "&::-webkit-search-cancel-button": { display: "none" },
+            '&::-webkit-search-cancel-button': { display: 'none' },
           }}
         />
         {scope ? (
           <Box
             sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "4px 10px",
-              borderRadius: "999px",
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px',
+              borderRadius: '999px',
               background: foto.accent.soft,
               border: `1px solid ${foto.accent.primary}`,
               color: foto.accent.deep,
               fontSize: 11,
               fontWeight: 500,
-              letterSpacing: "0.01em",
-              whiteSpace: "nowrap",
+              letterSpacing: '0.01em',
+              whiteSpace: 'nowrap',
             }}
           >
             {scope}
@@ -391,42 +402,42 @@ export function ProductoSpotlight({
       {/* Body grid */}
       <Box
         sx={{
-          display: "grid",
+          display: 'grid',
           // Stack the filter sidebar above the results on narrow viewports
           // so the result list fills the modal width. The sidebar is
           // disabled in Slice 1 anyway, so it collapses to a thin header.
-          gridTemplateColumns: { xs: "1fr", sm: "210px 1fr" },
+          gridTemplateColumns: { xs: '1fr', sm: '210px 1fr' },
           minHeight: { xs: 420, sm: 540 },
-          maxHeight: { xs: "70vh", sm: 540 },
+          maxHeight: { xs: '70vh', sm: 540 },
           borderBottom: `1px solid ${foto.surfaces.edge}`,
         }}
       >
         {/* Left: filters (disabled this slice) */}
         <Box
           sx={{
-            display: { xs: "none", sm: "flex" },
-            padding: "16px 18px",
+            display: { xs: 'none', sm: 'flex' },
+            padding: '16px 18px',
             borderRight: `1px solid ${foto.surfaces.edge}`,
             background: foto.surfaces.panel,
-            overflow: "auto",
-            flexDirection: "column",
-            gap: "18px",
+            overflow: 'auto',
+            flexDirection: 'column',
+            gap: '18px',
           }}
         >
           <Box
             sx={{
-              display: "inline-flex",
-              alignSelf: "flex-start",
-              alignItems: "center",
-              gap: "5px",
-              padding: "3px 8px",
-              borderRadius: "999px",
+              display: 'inline-flex',
+              alignSelf: 'flex-start',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '3px 8px',
+              borderRadius: '999px',
               background: foto.surfaces.inset2,
               border: `1px solid ${foto.surfaces.edge}`,
               fontSize: 9,
               fontWeight: 500,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
               color: foto.ink.tertiary,
             }}
           >
@@ -439,26 +450,26 @@ export function ProductoSpotlight({
                 sx={{
                   fontSize: 9,
                   fontWeight: 500,
-                  letterSpacing: "0.2em",
-                  textTransform: "uppercase",
+                  letterSpacing: '0.2em',
+                  textTransform: 'uppercase',
                   color: foto.ink.tertiary,
-                  marginBottom: "8px",
+                  marginBottom: '8px',
                 }}
               >
                 {g.title}
               </Box>
               <Box
-                sx={{ display: "flex", flexDirection: "column", gap: "4px" }}
+                sx={{ display: 'flex', flexDirection: 'column', gap: '4px' }}
               >
                 {g.items.map((it) => (
                   <Box
                     key={it}
                     sx={{
-                      padding: "5px 8px",
-                      borderRadius: "6px",
+                      padding: '5px 8px',
+                      borderRadius: '6px',
                       fontSize: 12,
                       color: foto.ink.secondary,
-                      cursor: "not-allowed",
+                      cursor: 'not-allowed',
                     }}
                   >
                     {it}
@@ -475,22 +486,22 @@ export function ProductoSpotlight({
           ref={listRef}
           role="listbox"
           aria-label="Resultados de búsqueda"
-          aria-multiselectable={multiSelect ? "true" : undefined}
-          sx={{ overflow: "auto", padding: "8px 0" }}
+          aria-multiselectable={multiSelect ? 'true' : undefined}
+          sx={{ overflow: 'auto', padding: '8px 0' }}
         >
           {/* Live region — anuncia conteo a SR */}
           <Box
             role="status"
             aria-live="polite"
             sx={{
-              position: "absolute",
+              position: 'absolute',
               width: 1,
               height: 1,
               padding: 0,
               margin: -1,
-              overflow: "hidden",
-              clip: "rect(0 0 0 0)",
-              whiteSpace: "nowrap",
+              overflow: 'hidden',
+              clip: 'rect(0 0 0 0)',
+              whiteSpace: 'nowrap',
               border: 0,
             }}
           >
@@ -503,14 +514,14 @@ export function ProductoSpotlight({
             role="status"
             aria-live="assertive"
             sx={{
-              position: "absolute",
+              position: 'absolute',
               width: 1,
               height: 1,
               padding: 0,
               margin: -1,
-              overflow: "hidden",
-              clip: "rect(0 0 0 0)",
-              whiteSpace: "nowrap",
+              overflow: 'hidden',
+              clip: 'rect(0 0 0 0)',
+              whiteSpace: 'nowrap',
               border: 0,
             }}
           >
@@ -522,11 +533,11 @@ export function ProductoSpotlight({
           {multiSelect && selected.length > 0 ? (
             <Box
               sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "6px",
-                padding: "4px 18px 12px",
-                marginBottom: "4px",
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '6px',
+                padding: '4px 18px 12px',
+                marginBottom: '4px',
                 borderBottom: `1px solid ${foto.surfaces.edge}`,
               }}
             >
@@ -541,23 +552,23 @@ export function ProductoSpotlight({
                   }}
                   aria-label={`Quitar ${p.nombre || p.itemId} (${p.itemId}) de la selección`}
                   sx={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "4px 8px 4px 10px",
-                    borderRadius: "999px",
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '4px 8px 4px 10px',
+                    borderRadius: '999px',
                     border: `1px solid ${foto.accent.primary}`,
                     background: foto.accent.soft,
                     color: foto.accent.deep,
                     fontSize: 11.5,
                     fontWeight: 500,
-                    fontFamily: "inherit",
-                    cursor: "pointer",
+                    fontFamily: 'inherit',
+                    cursor: 'pointer',
                     maxWidth: 220,
-                    transition: "background 120ms ease",
-                    "&:hover": { background: alpha(foto.accent.primary, 0.14) },
-                    "&:focus-visible": {
-                      outline: "none",
+                    transition: 'background 120ms ease',
+                    '&:hover': { background: alpha(foto.accent.primary, 0.14) },
+                    '&:focus-visible': {
+                      outline: 'none',
                       boxShadow: `0 0 0 3px ${foto.accent.glow}`,
                     },
                   }}
@@ -565,9 +576,9 @@ export function ProductoSpotlight({
                   <Box
                     component="span"
                     sx={{
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {p.nombre}
@@ -594,13 +605,13 @@ export function ProductoSpotlight({
               }
               title={
                 query
-                  ? "Sin resultados"
-                  : "Buscá por ID, nombre, color, lote o precio."
+                  ? 'Sin resultados'
+                  : 'Buscá por ID, nombre, color, lote o precio.'
               }
               hint={
                 query
-                  ? "Probá con menos palabras o relajá los filtros."
-                  : "Sólo aparecen ítems con estado DISPONIBLE o ASESOR."
+                  ? 'Probá con menos palabras o relajá los filtros.'
+                  : 'Sólo aparecen ítems DISPONIBLE, ASESOR o CONSIGNACION.'
               }
               fotoInk={foto.ink}
             />
@@ -617,24 +628,24 @@ export function ProductoSpotlight({
                   onMouseEnter={() => setFocusIndex(i)}
                   onClick={() => pickRow(row)}
                   sx={{
-                    display: "grid",
+                    display: 'grid',
                     gridTemplateColumns: {
-                      xs: "44px 1fr auto",
-                      sm: "52px auto 1fr auto auto",
+                      xs: '44px 1fr auto',
+                      sm: '52px auto 1fr auto auto',
                     },
-                    gap: "14px",
-                    alignItems: "center",
-                    padding: "10px 18px",
-                    cursor: "pointer",
+                    gap: '14px',
+                    alignItems: 'center',
+                    padding: '10px 18px',
+                    cursor: 'pointer',
                     borderLeft: `2px solid ${
-                      chosen ? foto.accent.primary : "transparent"
+                      chosen ? foto.accent.primary : 'transparent'
                     }`,
                     background: chosen
                       ? alpha(foto.accent.primary, 0.12)
                       : isFocus
                         ? foto.accent.soft
-                        : "transparent",
-                    transition: "background 120ms ease",
+                        : 'transparent',
+                    transition: 'background 120ms ease',
                   }}
                 >
                   {/* Thumb */}
@@ -642,19 +653,19 @@ export function ProductoSpotlight({
                     sx={{
                       width: 52,
                       height: 52,
-                      borderRadius: "7px",
+                      borderRadius: '7px',
                       background: foto.surfaces.inset,
                       border: `1px solid ${foto.surfaces.edge}`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       color: foto.ink.mute,
                       fontFamily: fontFamilies.mono,
                       fontSize: 11,
-                      letterSpacing: "0.05em",
-                      aspectRatio: "1 / 1",
-                      overflow: "hidden",
-                      position: "relative",
+                      letterSpacing: '0.05em',
+                      aspectRatio: '1 / 1',
+                      overflow: 'hidden',
+                      position: 'relative',
                     }}
                     aria-hidden
                   >
@@ -664,9 +675,9 @@ export function ProductoSpotlight({
                         src={row.thumbnailUrl}
                         alt=""
                         sx={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
                         }}
                       />
                     ) : (
@@ -675,13 +686,13 @@ export function ProductoSpotlight({
                     {chosen ? (
                       <Box
                         sx={{
-                          position: "absolute",
+                          position: 'absolute',
                           inset: 0,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           background: alpha(emeraldCore.dark, 0.6),
-                          color: "#fff",
+                          color: '#fff',
                         }}
                       >
                         <Check size={22} strokeWidth={2.4} aria-hidden />
@@ -692,17 +703,17 @@ export function ProductoSpotlight({
                   {/* Ct chip */}
                   <Box
                     sx={{
-                      display: { xs: "none", sm: "inline-flex" },
-                      alignItems: "center",
-                      padding: "3px 8px",
-                      borderRadius: "999px",
+                      display: { xs: 'none', sm: 'inline-flex' },
+                      alignItems: 'center',
+                      padding: '3px 8px',
+                      borderRadius: '999px',
                       background: foto.surfaces.inset,
                       border: `1px solid ${foto.surfaces.edge}`,
                       fontFamily: fontFamilies.mono,
                       fontSize: 10.5,
                       color: foto.ink.secondary,
-                      fontVariantNumeric: "tabular-nums",
-                      whiteSpace: "nowrap",
+                      fontVariantNumeric: 'tabular-nums',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {row.itemId}
@@ -714,11 +725,11 @@ export function ProductoSpotlight({
                       sx={{
                         fontSize: 13.5,
                         fontWeight: 600,
-                        letterSpacing: "-0.012em",
+                        letterSpacing: '-0.012em',
                         color: foto.ink.primary,
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
                       }}
                     >
                       {row.nombre}
@@ -729,8 +740,8 @@ export function ProductoSpotlight({
                           fontSize: 11,
                           color: foto.ink.tertiary,
                           fontFamily: fontFamilies.mono,
-                          marginTop: "2px",
-                          letterSpacing: "0.01em",
+                          marginTop: '2px',
+                          letterSpacing: '0.01em',
                         }}
                       >
                         Lote {row.loteId}
@@ -738,31 +749,33 @@ export function ProductoSpotlight({
                     ) : null}
                   </Box>
 
-                  {/* Estado badge */}
+                  {/* Estado badge — ASESOR and CONSIGNACION share the amber
+                      "out of the vault" styling; only the label tells them
+                      apart (internal asesor vs external comercializador). */}
                   <Box
                     sx={{
-                      display: { xs: "none", sm: "inline-flex" },
-                      alignItems: "center",
-                      gap: "5px",
-                      padding: "3px 9px",
-                      borderRadius: "999px",
+                      display: { xs: 'none', sm: 'inline-flex' },
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '3px 9px',
+                      borderRadius: '999px',
                       background:
-                        row.estado === "ASESOR"
+                        row.estado === 'ASESOR' || row.estado === 'CONSIGNACION'
                           ? alpha(foto.status.consigned, 0.1)
                           : foto.accent.soft,
                       border: `1px solid ${
-                        row.estado === "ASESOR"
+                        row.estado === 'ASESOR' || row.estado === 'CONSIGNACION'
                           ? foto.status.consigned
                           : foto.accent.primary
                       }`,
                       color:
-                        row.estado === "ASESOR"
+                        row.estado === 'ASESOR' || row.estado === 'CONSIGNACION'
                           ? foto.status.consigned
                           : foto.accent.deep,
                       fontSize: 10,
                       fontWeight: 500,
-                      letterSpacing: "0.04em",
-                      whiteSpace: "nowrap",
+                      letterSpacing: '0.04em',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     <Box
@@ -770,27 +783,32 @@ export function ProductoSpotlight({
                       sx={{
                         width: 5,
                         height: 5,
-                        borderRadius: "50%",
+                        borderRadius: '50%',
                         background:
-                          row.estado === "ASESOR"
+                          row.estado === 'ASESOR' ||
+                          row.estado === 'CONSIGNACION'
                             ? foto.status.consigned
                             : emeraldCore.dark,
                       }}
                     />
-                    {row.estado === "ASESOR" ? "Asesor" : "Disponible"}
+                    {row.estado === 'ASESOR'
+                      ? 'Asesor'
+                      : row.estado === 'CONSIGNACION'
+                        ? 'Consignación'
+                        : 'Disponible'}
                   </Box>
 
                   {/* Price */}
                   <Box
                     sx={{
                       fontFamily: fontFamilies.mono,
-                      fontVariantNumeric: "tabular-nums",
+                      fontVariantNumeric: 'tabular-nums',
                       fontSize: 13,
                       fontWeight: 500,
                       color: foto.ink.primary,
-                      textAlign: "right",
-                      letterSpacing: "-0.005em",
-                      whiteSpace: "nowrap",
+                      textAlign: 'right',
+                      letterSpacing: '-0.005em',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {formatCop(row.precioCop)}
@@ -805,35 +823,35 @@ export function ProductoSpotlight({
       {/* Footer */}
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "16px",
-          padding: "12px 22px",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '16px',
+          padding: '12px 22px',
           background: foto.surfaces.panel,
         }}
       >
         <Box
           sx={{
-            display: "flex",
-            gap: "16px",
-            alignItems: "center",
+            display: 'flex',
+            gap: '16px',
+            alignItems: 'center',
             fontSize: 11,
             color: foto.ink.tertiary,
-            flexWrap: "wrap",
+            flexWrap: 'wrap',
           }}
         >
-          <FooterHint keys={["↑", "↓"]} label="navegar" />
+          <FooterHint keys={['↑', '↓']} label="navegar" />
           {multiSelect ? (
             <>
-              <FooterHint keys={["↵"]} label="marcar" />
-              <FooterHint keys={["⌘", "↵"]} label="listo" />
+              <FooterHint keys={['↵']} label="marcar" />
+              <FooterHint keys={['⌘', '↵']} label="listo" />
             </>
           ) : (
-            <FooterHint keys={["↵"]} label="seleccionar" />
+            <FooterHint keys={['↵']} label="seleccionar" />
           )}
-          <FooterHint keys={["⌘", "N"]} label="crear nuevo" />
-          <FooterHint keys={["Esc"]} label="cerrar" />
+          <FooterHint keys={['⌘', 'N']} label="crear nuevo" />
+          <FooterHint keys={['Esc']} label="cerrar" />
         </Box>
         {multiSelect ? (
           <Box
@@ -842,15 +860,15 @@ export function ProductoSpotlight({
             onClick={confirmSelection}
             disabled={selected.length === 0}
             aria-label={`Listo — agregar ${selected.length} ítem${
-              selected.length === 1 ? "" : "s"
+              selected.length === 1 ? '' : 's'
             } a la venta`}
             sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "8px 16px",
-              borderRadius: "9px",
-              border: "none",
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              borderRadius: '9px',
+              border: 'none',
               background:
                 selected.length > 0
                   ? `linear-gradient(180deg, ${foto.accent.primary} 0%, ${foto.accent.deep} 100%)`
@@ -858,34 +876,34 @@ export function ProductoSpotlight({
               color: selected.length > 0 ? foto.ink.inverse : foto.ink.mute,
               fontSize: 12.5,
               fontWeight: 600,
-              letterSpacing: "-0.005em",
-              cursor: selected.length > 0 ? "pointer" : "not-allowed",
-              fontFamily: "inherit",
-              whiteSpace: "nowrap",
-              transition: "background 120ms ease, transform 120ms ease",
-              "&:hover:not(:disabled)": { transform: "translateY(-1px)" },
+              letterSpacing: '-0.005em',
+              cursor: selected.length > 0 ? 'pointer' : 'not-allowed',
+              fontFamily: 'inherit',
+              whiteSpace: 'nowrap',
+              transition: 'background 120ms ease, transform 120ms ease',
+              '&:hover:not(:disabled)': { transform: 'translateY(-1px)' },
             }}
           >
             <Check size={14} strokeWidth={2} aria-hidden />
             {selected.length > 0
               ? `Listo · ${selected.length} ítem${
-                  selected.length === 1 ? "" : "s"
+                  selected.length === 1 ? '' : 's'
                 }`
-              : "Elegí ítems"}
+              : 'Elegí ítems'}
           </Box>
         ) : (
           <Box
             sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
               fontSize: 10.5,
               color: foto.ink.tertiary,
-              fontStyle: "italic",
+              fontStyle: 'italic',
             }}
           >
             <Clock size={11} strokeWidth={1.5} aria-hidden />
-            Sólo ítems DISPONIBLE o ASESOR (BR-6)
+            Sólo ítems DISPONIBLE, ASESOR o CONSIGNACION (BR-6)
           </Box>
         )}
       </Box>
@@ -902,12 +920,12 @@ function FooterHint({ keys, label }: FooterHintProps) {
   return (
     <Box
       sx={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "5px",
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '5px',
       }}
     >
-      <Box sx={{ display: "inline-flex", gap: "2px" }}>
+      <Box sx={{ display: 'inline-flex', gap: '2px' }}>
         {keys.map((k, i) => (
           <KbdKey key={`${k}-${i}`} size="sm">
             {k}
@@ -930,13 +948,13 @@ function EmptyState({ icon, title, hint, fotoInk }: EmptyStateProps) {
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "12px",
-        padding: "60px 24px",
-        textAlign: "center",
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '12px',
+        padding: '60px 24px',
+        textAlign: 'center',
         minHeight: 360,
       }}
     >
@@ -946,7 +964,7 @@ function EmptyState({ icon, title, hint, fotoInk }: EmptyStateProps) {
           fontSize: 14,
           fontWeight: 500,
           color: fotoInk.secondary,
-          letterSpacing: "-0.005em",
+          letterSpacing: '-0.005em',
         }}
       >
         {title}

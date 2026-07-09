@@ -140,7 +140,8 @@ const strArr = (v: unknown): string[] =>
  * "32", "32-A", "TM-0145") rather than a fuzzy product name. Lets a precise
  * itemId commit even when the item is outside the recent-items snapshot cap —
  * BR-6 in `sales.create` is still the authoritative gate (it rejects an itemId
- * that isn't a DISPONIBLE/ASESOR inventory row), so an off-by typo can't sell.
+ * that's already VENDIDA — DISPONIBLE, ASESOR and CONSIGNACION all pass), so
+ * an off-by typo can't sell.
  */
 function looksLikeNaturalItemId(value: string): boolean {
   const s = value.trim();

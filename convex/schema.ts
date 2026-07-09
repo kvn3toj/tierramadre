@@ -144,15 +144,23 @@ export default defineSchema({
     precioConscienteCOP: v.optional(v.number()), // N
     ubicacion: v.optional(v.string()),
     asesor: v.optional(v.string()),
-    // 9 values: the 4 we always handled + 5 inherited from the legacy
+    // 10 values: the 4 we always handled + 5 inherited from the legacy
     // sheet's ESTADO dropdown (Retornado, ESMEREOGENESIS, ESMERO,
-    // DISPONIBLE ADOPTADA, LOTE X CT). Keeps existing rows in
-    // `1mghR6...!INVENTARIO Tierra.Madre` validating on pull without a
-    // migration pass. Mirror in `src/data/vocabularies.ts#PRODUCT_ESTADOS`.
+    // DISPONIBLE ADOPTADA, LOTE X CT) + 1 app-only addition (CONSIGNACION).
+    // Keeps existing rows in `1mghR6...!INVENTARIO Tierra.Madre` validating
+    // on pull without a migration pass. Mirror in
+    // `src/data/vocabularies.ts#PRODUCT_ESTADOS`.
+    //
+    // CONSIGNACION (2026-07-09): same "out of the vault, not sold yet" shape
+    // as ASESOR, but for an EXTERNAL comercializador with no system account —
+    // see `convex/asesorMovements.ts` for the destino heuristic that decides
+    // which of the two a handoff writes. Additive, never a rename: existing
+    // ASESOR rows/callers are untouched.
     estado: v.union(
       v.literal('DISPONIBLE'),
       v.literal('VENDIDA'),
       v.literal('ASESOR'),
+      v.literal('CONSIGNACION'),
       v.literal('Retornado'),
       v.literal('ESMEREOGENESIS'),
       v.literal('ESMERO'),
@@ -275,7 +283,8 @@ export default defineSchema({
   /**
    * Kardex de movimientos con asesores — historial de "entrega" /
    * "devolución" de una pieza de `productInventory` hacia/desde un asesor
-   * en consignación (`estado: "ASESOR"`).
+   * o comercializador externo en consignación (`estado: "ASESOR"` o
+   * `"CONSIGNACION"` — see the `destino` arg in `convex/asesorMovements.ts`).
    *
    * NOT the same thing as the sale "Kardex" comprobante (see `sales` +
    * VentaDetailPage) — that one is a completed sale and moves the item to

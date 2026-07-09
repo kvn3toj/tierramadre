@@ -2,10 +2,16 @@
  * Kardex de movimientos con asesores.
  *
  * Registers the "entrega" (handoff) and "devolución" (return) of a
- * `productInventory` item to/from an asesor who is carrying it on
- * consignment. This is intentionally NOT the sale flow (`convex/sales.ts` /
- * VentaDetailPage's "Kardex" comprobante) — a handoff never moves the item
- * to `VENDIDA`, it only flips it between `DISPONIBLE` and `ASESOR`.
+ * `productInventory` item to/from an asesor or external comercializador
+ * carrying it on consignment. This is intentionally NOT the sale flow
+ * (`convex/sales.ts` / VentaDetailPage's "Kardex" comprobante) — a handoff
+ * never moves the item to `VENDIDA`, it only flips it between `DISPONIBLE`
+ * and `ASESOR`/`CONSIGNACION` (2026-07-09: split so an internal asesor and
+ * an external dealer with no system account are distinguishable in the
+ * catalog — see the `destino` arg below). An item held by either can be
+ * sold directly — `sales.create`'s BR-6 already accepts both — so
+ * "graduating" a consignment to a real sale needs no new backend entrypoint,
+ * just a VentaPage prefill (see AsesorMovementPanel's "Vender esta pieza").
  *
  * Closes the gap found in the 2026-07-09 audit (see project memory
  * `tm-fotosintesis-asesor-consignment-gap`): `productInventory.estado` could
@@ -54,6 +60,20 @@ const registerArgs = {
   /** id from the asesores directory (get-asesores), when the recipient
    *  resolves to one. Left empty for external recipients. */
   asesorId: v.optional(v.string()),
+  /**
+   * Which `productInventory.estado` a handoff should land on: "asesor" →
+   * "ASESOR" (internal asesor), "consignacion" → "CONSIGNACION" (external
+   * comercializador with no system account). Optional — when the caller
+   * doesn't know/care, `_registerHandoff` infers it from `asesorId`:
+   * present (the UI resolved the typed name against the asesores
+   * directory) ⇒ "asesor"; absent (free-text name, no directory match) ⇒
+   * "consignacion". This heuristic CAN be wrong (a typo'd asesor name, or
+   * an asesor missing from the directory) — the UI should let the operator
+   * override it explicitly rather than relying on inference alone.
+   * `_registerReturn` ignores this arg entirely: a return always restores
+   * "DISPONIBLE" regardless of which of the two the item came from.
+   */
+  destino: v.optional(v.union(v.literal('asesor'), v.literal('consignacion'))),
   cantidad: v.optional(v.number()),
   /** Item price at movement time (COP) — feeds the comprobante total. */
   precio: v.optional(v.number()),
@@ -137,6 +157,7 @@ export const _registerHandoff = internalMutation({
       itemId,
       asesorNombre,
       asesorId,
+      destino,
       cantidad,
       precio,
       fecha,
@@ -163,6 +184,16 @@ export const _registerHandoff = internalMutation({
     const trimmedAsesor = asesorNombre.trim();
     if (!trimmedAsesor) throw new Error('El nombre del asesor es obligatorio');
 
+    // Destino heuristic (see registerArgs.destino doc): an explicit caller
+    // choice always wins; absent that, a resolved asesorId means the UI
+    // matched the typed name against the asesores directory (⇒ internal
+    // asesor), and no match means an external comercializador (⇒
+    // consignación).
+    const resolvedDestino: 'asesor' | 'consignacion' =
+      destino ?? (asesorId ? 'asesor' : 'consignacion');
+    const targetEstado: 'ASESOR' | 'CONSIGNACION' =
+      resolvedDestino === 'consignacion' ? 'CONSIGNACION' : 'ASESOR';
+
     const now = new Date().toISOString();
     const estadoAnterior = product.estado;
 
@@ -175,7 +206,7 @@ export const _registerHandoff = internalMutation({
       editorName,
       editedAt: now,
       changes: [
-        { field: 'estado', before: estadoAnterior, after: 'ASESOR' },
+        { field: 'estado', before: estadoAnterior, after: targetEstado },
         {
           field: 'asesorActual',
           before: product.asesorActual ?? null,
@@ -184,16 +215,16 @@ export const _registerHandoff = internalMutation({
         {
           field: 'estadoAsesor',
           before: product.estadoAsesor ?? null,
-          after: 'ASESOR',
+          after: targetEstado,
         },
       ],
       status: 'pending' as const,
     });
 
     await ctx.db.patch(product._id, {
-      estado: 'ASESOR' as const,
+      estado: targetEstado,
       asesorActual: trimmedAsesor,
-      estadoAsesor: 'ASESOR',
+      estadoAsesor: targetEstado,
       syncStatus: 'pending' as const,
       syncError: undefined,
     });
@@ -223,7 +254,7 @@ export const _registerHandoff = internalMutation({
       registradoPorEmail: editorEmail,
       registradoPorNombre: editorName,
       estadoAnterior,
-      estadoNuevo: 'ASESOR',
+      estadoNuevo: targetEstado,
       movimientoId,
       rowIndex: maxRow + 1,
       lastPulledAt: now,
@@ -267,10 +298,10 @@ export const _registerReturn = internalMutation({
       .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
     if (!product) throw new Error(`Producto ${itemId} no está en el espejo`);
-    if (product.estado !== 'ASESOR') {
+    if (product.estado !== 'ASESOR' && product.estado !== 'CONSIGNACION') {
       throw new Error(
-        `El ítem ${itemId} está "${product.estado}", no "ASESOR" — no hay ` +
-          `una consignación activa que devolver.`,
+        `El ítem ${itemId} está "${product.estado}", no "ASESOR" ni ` +
+          `"CONSIGNACION" — no hay una consignación activa que devolver.`,
       );
     }
 
@@ -393,6 +424,9 @@ const batchSharedArgs = {
   idToken: v.string(),
   asesorNombre: v.string(),
   asesorId: v.optional(v.string()),
+  /** See registerArgs.destino — shared across every item in the event, same
+   *  as asesorNombre/asesorId. Ignored by registerReturnBatch. */
+  destino: v.optional(v.union(v.literal('asesor'), v.literal('consignacion'))),
   fecha: v.optional(v.string()),
   condicion: v.optional(v.string()),
   entregadoPorNombre: v.optional(v.string()),

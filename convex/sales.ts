@@ -67,8 +67,13 @@ export const peekNextSaleId = query({
 /**
  * Create a sale.
  *
- * BR-6: every itemId in `itemIds` must be in productInventory with
- * estado in {DISPONIBLE, ASESOR}. A VENDIDA item cannot be re-sold.
+ * BR-6: every itemId in `itemIds` must be in productInventory with any
+ * estado OTHER than VENDIDA — in particular DISPONIBLE, ASESOR and
+ * CONSIGNACION all pass. A VENDIDA item cannot be re-sold. This is also how
+ * a consignment "graduates" to a sale (2026-07-09): no separate mutation —
+ * an ASESOR/CONSIGNACION item is already sellable here, so the UI just
+ * prefills VentaPage with the known item/price instead of duplicating this
+ * gate. See AsesorMovementPanel's "Vender esta pieza".
  *
  * Side effect: each item flips to estado "VENDIDA" and a push is
  * scheduled per item (so the Inventario sheet reflects the change).
@@ -315,7 +320,7 @@ export const _cancel = internalMutation({
       }
       // Only reopen items this sale still owns. If the item moved on after
       // this sale (re-sold by another sale, re-classified to ESMEREOGENESIS /
-      // ASESOR, or already DISPONIBLE), leave it untouched — clobbering it to
+      // ASESOR / CONSIGNACION, or already DISPONIBLE), leave it untouched — clobbering it to
       // DISPONIBLE would free stock another active sale owns and write a false
       // `before` into the audit trail.
       if (product.estado !== 'VENDIDA') {

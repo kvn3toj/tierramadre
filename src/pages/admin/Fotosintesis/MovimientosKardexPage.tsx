@@ -3,7 +3,9 @@
  * replacement.
  *
  * Registers ONE kardex event (one recipient, one date, one signature) that
- * moves N inventory items between `DISPONIBLE` and `ASESOR` in a single
+ * moves N inventory items between `DISPONIBLE` and `ASESOR`/`CONSIGNACION`
+ * (2026-07-09: which of the two depends on whether the typed recipient
+ * matches a known asesor — see the `destino` heuristic below) in a single
  * submit, via `asesorMovements.registerHandoffBatch` /
  * `registerReturnBatch` (convex/asesorMovements.ts). Mirrors the two
  * motivating paper records from the team's Anima notes: a 5-item delivery to
@@ -53,6 +55,7 @@ import {
 } from '../../../lib/convex-safe';
 import { FotoTopbar, FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
 import { useAsesores } from '../../../hooks/useAsesores';
+import { matchesAsesorName } from '../../../utils/asesorNameUtils';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { MovimientoKardexPreview } from './components/MovimientoKardexPreview';
 import { exportAndUploadMovimientoKardexPdf } from './exportMovimientoKardexPdf';
@@ -128,6 +131,13 @@ export default function MovimientosKardexPage() {
   const [fecha, setFecha] = useState(todayISODate());
   const [condicion, setCondicion] = useState('');
   const [entregadoPorNombre, setEntregadoPorNombre] = useState('');
+  // ASESOR vs CONSIGNACION heuristic (mirrors AsesorMovementPanel) — a match
+  // against the known asesores directory means "asesor" (internal); no match
+  // means "consignación" (external comercializador). `destinoOverride` lets
+  // the operator correct a wrong guess before submitting.
+  const [destinoOverride, setDestinoOverride] = useState<
+    'asesor' | 'consignacion' | null
+  >(null);
   const [rows, setRows] = useState<ItemRowState[]>([emptyRow()]);
   const [submitting, setSubmitting] = useState(false);
   const [outcome, setOutcome] = useState<BatchOutcome | null>(null);
@@ -139,6 +149,16 @@ export default function MovimientosKardexPage() {
     () => asesores.map((a) => a.name).filter(Boolean),
     [asesores],
   );
+
+  const matchedAsesor = useMemo(() => {
+    const trimmed = asesorNombre.trim();
+    if (!trimmed) return undefined;
+    return asesores.find((a) => matchesAsesorName(trimmed, a.name));
+  }, [asesorNombre, asesores]);
+  const detectedDestino: 'asesor' | 'consignacion' = matchedAsesor
+    ? 'asesor'
+    : 'consignacion';
+  const resolvedDestino = destinoOverride ?? detectedDestino;
 
   // ── Candidate item pools ────────────────────────────────────────────────
   // Entrega: any DISPONIBLE item, fetched once (client-filtered per row by
@@ -175,9 +195,24 @@ export default function MovimientosKardexPage() {
         _creationTime: number;
       }>
     | undefined;
+  // Two separate queries — `products.list` only accepts one `estado` at a
+  // time — merged below so a devolución candidate can come from either an
+  // internal asesor OR an external comercializador's consignment.
   const enAsesor = useConvexQuery(
     convexApi.products.list,
     convexReady && mode === 'devolucion' ? { estado: 'ASESOR' } : 'skip',
+  ) as
+    | Array<{
+        itemId: string;
+        nombre: string;
+        precioEmbajadorCOP?: number;
+        precioConscienteCOP?: number;
+        precioCOP?: number;
+      }>
+    | undefined;
+  const enConsignacion = useConvexQuery(
+    convexApi.products.list,
+    convexReady && mode === 'devolucion' ? { estado: 'CONSIGNACION' } : 'skip',
   ) as
     | Array<{
         itemId: string;
@@ -212,7 +247,7 @@ export default function MovimientosKardexPage() {
           p.precioEmbajadorCOP ?? p.precioConscienteCOP ?? p.precioCOP,
       }));
     }
-    return (enAsesor ?? [])
+    return [...(enAsesor ?? []), ...(enConsignacion ?? [])]
       .filter((p) => currentlyHeldItemIds.has(p.itemId))
       .map((p) => ({
         itemId: p.itemId,
@@ -220,7 +255,7 @@ export default function MovimientosKardexPage() {
         precioSugerido:
           p.precioEmbajadorCOP ?? p.precioConscienteCOP ?? p.precioCOP,
       }));
-  }, [mode, disponibles, enAsesor, currentlyHeldItemIds]);
+  }, [mode, disponibles, enAsesor, enConsignacion, currentlyHeldItemIds]);
 
   const kardexEventRows = useConvexQuery(
     convexApi.asesorMovements.listByKardexEventId,
@@ -307,6 +342,7 @@ export default function MovimientosKardexPage() {
     setMode(next);
     setRows([emptyRow()]);
     setOutcome(null);
+    setDestinoOverride(null);
   }
 
   const validRows = rows.filter((r) => r.itemId.trim());
@@ -327,6 +363,8 @@ export default function MovimientosKardexPage() {
     try {
       const shared = {
         asesorNombre: asesorTrimmed,
+        asesorId: matchedAsesor?.id,
+        destino: mode === 'entrega' ? resolvedDestino : undefined,
         fecha,
         condicion: condicion.trim() || undefined,
         entregadoPorNombre: entregadoPorNombre.trim() || undefined,
@@ -460,7 +498,10 @@ export default function MovimientosKardexPage() {
             freeSolo
             options={asesorOptions}
             value={asesorNombre}
-            onInputChange={(_, v) => setAsesorNombre(v)}
+            onInputChange={(_, v) => {
+              setAsesorNombre(v);
+              setDestinoOverride(null);
+            }}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -470,6 +511,40 @@ export default function MovimientosKardexPage() {
               />
             )}
           />
+          {mode === 'entrega' && asesorTrimmed && (
+            <Box
+              sx={{
+                gridColumn: { xs: '1', sm: '2' },
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '8px',
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: '11.5px',
+                  color: foto.ink.tertiary,
+                }}
+              >
+                {resolvedDestino === 'asesor'
+                  ? `Asesor interno${matchedAsesor ? ` (${matchedAsesor.name})` : ''}`
+                  : 'Comercializador externo (consignación)'}
+              </Typography>
+              <MuiLink
+                component="button"
+                type="button"
+                onClick={() =>
+                  setDestinoOverride(
+                    resolvedDestino === 'asesor' ? 'consignacion' : 'asesor',
+                  )
+                }
+                sx={{ fontSize: '11.5px', whiteSpace: 'nowrap' }}
+              >
+                Cambiar
+              </MuiLink>
+            </Box>
+          )}
           <TextField
             label="Fecha"
             type="date"

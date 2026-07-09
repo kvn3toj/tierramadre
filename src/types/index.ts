@@ -1,6 +1,6 @@
 // Core data types for Tierra Madre Studio
 
-export type MediaType = "image" | "video";
+export type MediaType = 'image' | 'video';
 
 export interface Emerald {
   id: string;
@@ -23,8 +23,8 @@ export interface Emerald {
   updatedAt: string;
 }
 
-export type EmeraldCategory = "loose" | "ring" | "pendant" | "earrings";
-export type EmeraldStatus = "available" | "sold" | "reserved";
+export type EmeraldCategory = 'loose' | 'ring' | 'pendant' | 'earrings';
+export type EmeraldStatus = 'available' | 'sold' | 'reserved';
 
 export interface InstagramPost {
   id: string;
@@ -36,15 +36,15 @@ export interface InstagramPost {
   gridPosition?: number; // 0-8 for 3x3 grid
 }
 
-export type PostStatus = "draft" | "scheduled" | "posted";
+export type PostStatus = 'draft' | 'scheduled' | 'posted';
 
 export type NamingCategory =
-  | "mythology" // Diosa, Venus, Gaia, Apolo
-  | "royalty" // La Reina Margot, Las Emperatrices
-  | "nature" // Amazonas, Pacífico, Bambú
-  | "cosmic" // Galaxia, Lunera, Firmamento
-  | "emotional" // Amor Eterno, Chispa Divina
-  | "disney"; // Rapunzel, Aurora, Bella
+  | 'mythology' // Diosa, Venus, Gaia, Apolo
+  | 'royalty' // La Reina Margot, Las Emperatrices
+  | 'nature' // Amazonas, Pacífico, Bambú
+  | 'cosmic' // Galaxia, Lunera, Firmamento
+  | 'emotional' // Amor Eterno, Chispa Divina
+  | 'disney'; // Rapunzel, Aurora, Bella
 
 export interface AIAnalysisResult {
   names: string[];
@@ -103,62 +103,66 @@ export interface ReceiptData {
   discountPercent?: number;
   tax?: number;
   total: number;
-  paymentMethod: "cash" | "card" | "transfer" | "crypto";
+  paymentMethod: 'cash' | 'card' | 'transfer' | 'crypto';
   notes?: string;
   createdAt: string;
 }
 
 // Treasure types for official stock
-export type TreasureStatus = "DISPONIBLE" | "VENDIDA" | "ASESOR";
+export type TreasureStatus =
+  | 'DISPONIBLE'
+  | 'VENDIDA'
+  | 'ASESOR'
+  | 'CONSIGNACION';
 export type EmeraldColor =
-  | "Verde Vivido"
-  | "Verde Muzo"
-  | "Verde Limón"
-  | "Verde Menta"
-  | "Verde Natural"
+  | 'Verde Vivido'
+  | 'Verde Muzo'
+  | 'Verde Limón'
+  | 'Verde Menta'
+  | 'Verde Natural'
   | string;
 export type EmeraldQuality =
-  | "Fina"
-  | "Comercial Fina"
-  | "Comercial SuperFina"
-  | "Comercial Superior"
-  | "Comercial Estándar"
-  | "Estándar"
+  | 'Fina'
+  | 'Comercial Fina'
+  | 'Comercial SuperFina'
+  | 'Comercial Superior'
+  | 'Comercial Estándar'
+  | 'Estándar'
   | string;
 export type EmeraldCut =
-  | "Cushion"
-  | "Corazón"
-  | "Esmeralda"
-  | "Óvalo"
-  | "Redonda"
-  | "Cuadrada"
-  | "Lágrima"
+  | 'Cushion'
+  | 'Corazón'
+  | 'Esmeralda'
+  | 'Óvalo'
+  | 'Redonda'
+  | 'Cuadrada'
+  | 'Lágrima'
   | string;
 
 // Colombian emerald regions
 export type ColombianRegion =
-  | "Muzo"
-  | "Chivor"
-  | "Coscuez"
-  | "Peñas Blancas"
-  | "La Pita"
-  | "Other";
+  | 'Muzo'
+  | 'Chivor'
+  | 'Coscuez'
+  | 'Peñas Blancas'
+  | 'La Pita'
+  | 'Other';
 
 // Chain of custody role types
-export type CustodyRole = "MINER" | "CUTTER" | "POLISHER" | "DEALER" | "SELLER";
+export type CustodyRole = 'MINER' | 'CUTTER' | 'POLISHER' | 'DEALER' | 'SELLER';
 
 // Gemological lab types
 export type GemologicalLab =
-  | "GIA"
-  | "IGI"
-  | "CDTEC"
-  | "AGL"
-  | "Gübelin"
-  | "SSEF"
-  | "Other";
+  | 'GIA'
+  | 'IGI'
+  | 'CDTEC'
+  | 'AGL'
+  | 'Gübelin'
+  | 'SSEF'
+  | 'Other';
 
 // Demand indicator for market scoring
-export type DemandIndicator = "HIGH" | "MEDIUM" | "LOW";
+export type DemandIndicator = 'HIGH' | 'MEDIUM' | 'LOW';
 
 // Chain of custody record for provenance tracking
 export interface CustodyRecord {
@@ -168,7 +172,7 @@ export interface CustodyRecord {
   to: string;
   role: CustodyRole;
   location: string;
-  verificationMethod: "SIGNATURE" | "PHOTO" | "DOCUMENT";
+  verificationMethod: 'SIGNATURE' | 'PHOTO' | 'DOCUMENT';
   notes?: string;
 }
 
@@ -177,12 +181,12 @@ export interface GemologicalCertification {
   lab: GemologicalLab;
   certificateNumber: string;
   reportDate: string;
-  authenticity: "VERIFIED" | "PENDING" | "EXPIRED";
+  authenticity: 'VERIFIED' | 'PENDING' | 'EXPIRED';
   certificateImage?: string; // Base64 or URL
-  clarity?: "FL" | "IF" | "VVS" | "VS" | "SI" | "I";
+  clarity?: 'FL' | 'IF' | 'VVS' | 'VS' | 'SI' | 'I';
   colorGrade?: string;
-  cutGrade?: "EXCELLENT" | "VERY_GOOD" | "GOOD" | "FAIR";
-  treatments?: "NONE" | "OILED" | "RESIN" | "OTHER";
+  cutGrade?: 'EXCELLENT' | 'VERY_GOOD' | 'GOOD' | 'FAIR';
+  treatments?: 'NONE' | 'OILED' | 'RESIN' | 'OTHER';
   treatmentDetails?: string;
 }
 
@@ -223,10 +227,10 @@ export interface AestheticRating {
 
 // Certification status summary
 export interface CertificationStatus {
-  gemological: "verified" | "pending" | "expired";
-  colombianOrigin: "verified" | "pending";
-  ethical: "verified" | "pending";
-  chainOfCustody: "verified" | "pending";
+  gemological: 'verified' | 'pending' | 'expired';
+  colombianOrigin: 'verified' | 'pending';
+  ethical: 'verified' | 'pending';
+  chainOfCustody: 'verified' | 'pending';
   completeness: number; // 0-100 percentage
   totalVerified: number;
   totalPossible: number;
@@ -234,10 +238,10 @@ export interface CertificationStatus {
 
 // Image verification and quality types
 export type ImageVerificationStatus =
-  | "pending"
-  | "verified"
-  | "rejected"
-  | "needs_review";
+  | 'pending'
+  | 'verified'
+  | 'rejected'
+  | 'needs_review';
 export type ImageQualityLevel = 1 | 2 | 3 | 4 | 5;
 
 export interface ImageQualityCheck {
@@ -304,13 +308,13 @@ export interface TreasureItem {
   asesor: string;
   estado: TreasureStatus;
   asesorActual?: string; // Column T: Current owner (overrides asesor if present)
-  estadoAsesor?: TreasureStatus | ""; // Column U: State from current owner's perspective
+  estadoAsesor?: TreasureStatus | ''; // Column U: State from current owner's perspective
   caja?: string;
   qr?: string; // QR code data (Column P)
   categoria?: string; // Product category from Column K (e.g., Anillo en Plata, Aretes)
   coleccion?: string; // Collection/Catalog label for grouping (Column Q)
   isJewelry: boolean; // Computed: true if peso is "Plata" or "Oro 18k"
-  metalType?: "Plata" | "Oro 18k";
+  metalType?: 'Plata' | 'Oro 18k';
 
   // Provenance fields
   certifications?: ItemCertifications;
@@ -324,7 +328,7 @@ export interface TreasureItem {
   lastImageVerification?: string; // ISO date of last verification
 
   // Location and exclusivity fields
-  city?: "Cali" | "Bogotá"; // City location for filtering
+  city?: 'Cali' | 'Bogotá'; // City location for filtering
   isVaultExclusive?: boolean; // True if item is part of Secret Vault collection
 
   // Certificate
@@ -362,7 +366,7 @@ export interface TreasureItem {
   // ── Sync status (admin-only) ──
   // Mirrors the Convex row's push-to-Sheets state. Sourced from the admin-only
   // `products.get` doc; never present on public/anonymous catalog payloads.
-  syncStatus?: "synced" | "pending" | "error";
+  syncStatus?: 'synced' | 'pending' | 'error';
   syncError?: string;
 
   // Description
@@ -374,7 +378,7 @@ export interface TreasureItem {
   // TOTAL, and `loteItems` carries each member for the per-image gallery/price.
   // `item` is a synthetic stable key; navigation routes by `groupId`.
   isLote?: boolean;
-  groupKind?: "lote" | "sublote";
+  groupKind?: 'lote' | 'sublote';
   groupId?: string;
   loteItems?: {
     item: number;
@@ -392,7 +396,7 @@ export interface TreasureItem {
     talla?: string;
     medidas?: string;
     isJewelry?: boolean;
-    metalType?: "Plata" | "Oro 18k";
+    metalType?: 'Plata' | 'Oro 18k';
     // Per-piece Fotosíntesis characteristics so the per-image overlay reflects
     // the exact gem (falls back to the bundle values when a field is missing).
     procedencia?: string;

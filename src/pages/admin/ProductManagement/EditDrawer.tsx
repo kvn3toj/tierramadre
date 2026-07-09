@@ -29,23 +29,23 @@
  *   Spacing — 480px width; 24/20 padding; 32px section gap; 16px field gap.
  */
 
-import { ChangeEvent, useEffect, useMemo, useState } from "react";
-import { Box, ButtonBase, Drawer, InputBase, Typography } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import { Link as RouterLink } from "react-router-dom";
-import { getAtelier, getFoto } from "../../../design-system";
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { Box, ButtonBase, Drawer, InputBase, Typography } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { Link as RouterLink } from 'react-router-dom';
+import { getAtelier, getFoto } from '../../../design-system';
 import {
   convexApi,
   convexReady,
   useConvexQuery,
-} from "../../../lib/convex-safe";
-import { useProductLock } from "../../../hooks/useProductLock";
-import { useDirtyGuard } from "../../../hooks/useDirtyGuard";
-import ConfirmDialog from "../../../components/shared/ConfirmDialog";
-import { StatusPip, type EstadoValue } from "./StatusPip";
-import { AsesorMovementPanel } from "./AsesorMovementPanel";
+} from '../../../lib/convex-safe';
+import { useProductLock } from '../../../hooks/useProductLock';
+import { useDirtyGuard } from '../../../hooks/useDirtyGuard';
+import ConfirmDialog from '../../../components/shared/ConfirmDialog';
+import { StatusPip, type EstadoValue } from './StatusPip';
+import { AsesorMovementPanel } from './AsesorMovementPanel';
 // Phase G — create mode: typed payload for the "+ Nueva piedra" flow.
-import type { NewProductInput } from "../../../utils/createProduct-validate";
+import type { NewProductInput } from '../../../utils/createProduct-validate';
 
 interface DriveMedia {
   id: string;
@@ -53,7 +53,7 @@ interface DriveMedia {
   url: string;
   thumbnailUrl: string;
   proxyUrl?: string;
-  type: "image" | "video";
+  type: 'image' | 'video';
 }
 
 interface DriveFolderState {
@@ -93,7 +93,7 @@ export interface EditDrawerProduct {
    * Drives the deep-link notice in the Precio section.
    */
   loteId?: string;
-  syncStatus: "synced" | "pending" | "error";
+  syncStatus: 'synced' | 'pending' | 'error';
   syncError?: string;
   lastPushedAt?: string;
 }
@@ -130,11 +130,11 @@ interface EditDrawerProps {
   onSave: (
     itemId: string | undefined,
     payloadOrPatch: EditDrawerPatch | NewProductInput,
-    mode: "edit" | "create",
+    mode: 'edit' | 'create',
   ) => Promise<void> | void;
   /** "edit" (default) opens the drawer on an existing product; "create"
    *  opens an empty drawer for the "+ Nueva piedra" flow. */
-  mode?: "edit" | "create";
+  mode?: 'edit' | 'create';
   /** Triggered by the in-drawer "Resync ahora" button when a 409
    *  conflict ("sheet was reordered") is detected on the open product. */
   onResync?: () => Promise<void> | void;
@@ -148,7 +148,7 @@ interface EditDrawerProps {
  * was re-ordered between cron pulls). Used to flip the drawer footer
  * into the conflict-recovery banner.
  */
-const CONFLICT_MARKER = "re-ordered";
+const CONFLICT_MARKER = 're-ordered';
 
 interface DraftState {
   /** Phase G — create mode: itemId lives in the draft so the user can
@@ -173,20 +173,20 @@ interface DraftState {
 
 function toDraft(p: EditDrawerProduct | null): DraftState {
   return {
-    itemId: p?.itemId ?? "",
-    nombre: p?.nombre ?? "",
-    peso: p?.peso ?? "",
-    color: p?.color ?? "",
-    calidad: p?.calidad ?? "",
-    cantidad: p?.cantidad != null ? String(p.cantidad) : "",
-    talla: p?.talla ?? "",
-    medidas: p?.medidas ?? "",
-    categoria: p?.categoria ?? "",
-    precioCOP: p?.precioCOP != null ? String(p.precioCOP) : "",
-    ubicacion: p?.ubicacion ?? "",
-    coleccion: p?.coleccion ?? "",
-    caja: p?.caja ?? "",
-    estado: p?.estado ?? "DISPONIBLE",
+    itemId: p?.itemId ?? '',
+    nombre: p?.nombre ?? '',
+    peso: p?.peso ?? '',
+    color: p?.color ?? '',
+    calidad: p?.calidad ?? '',
+    cantidad: p?.cantidad != null ? String(p.cantidad) : '',
+    talla: p?.talla ?? '',
+    medidas: p?.medidas ?? '',
+    categoria: p?.categoria ?? '',
+    precioCOP: p?.precioCOP != null ? String(p.precioCOP) : '',
+    ubicacion: p?.ubicacion ?? '',
+    coleccion: p?.coleccion ?? '',
+    caja: p?.caja ?? '',
+    estado: p?.estado ?? 'DISPONIBLE',
   };
 }
 
@@ -194,9 +194,9 @@ function toDraft(p: EditDrawerProduct | null): DraftState {
 // strings are passed through (validateNewProduct trims + drops them).
 function draftToNewProduct(draft: DraftState): NewProductInput {
   const cantidadNum =
-    draft.cantidad === "" ? undefined : Number(draft.cantidad);
+    draft.cantidad === '' ? undefined : Number(draft.cantidad);
   const precioNum =
-    draft.precioCOP === "" ? undefined : Number(draft.precioCOP);
+    draft.precioCOP === '' ? undefined : Number(draft.precioCOP);
   return {
     itemId: draft.itemId,
     nombre: draft.nombre,
@@ -236,28 +236,28 @@ function diffDraft(
     }
   };
 
-  ifChanged("nombre", draft.nombre, original.nombre ?? "");
-  ifChanged("peso", draft.peso, original.peso ?? "");
-  ifChanged("color", draft.color, original.color ?? "");
-  ifChanged("calidad", draft.calidad, original.calidad ?? "");
-  ifChanged("talla", draft.talla, original.talla ?? "");
-  ifChanged("medidas", draft.medidas, original.medidas ?? "");
-  ifChanged("categoria", draft.categoria, original.categoria ?? "");
-  ifChanged("ubicacion", draft.ubicacion, original.ubicacion ?? "");
-  ifChanged("coleccion", draft.coleccion, original.coleccion ?? "");
-  ifChanged("caja", draft.caja, original.caja ?? "");
-  ifChanged("estado", draft.estado, original.estado);
+  ifChanged('nombre', draft.nombre, original.nombre ?? '');
+  ifChanged('peso', draft.peso, original.peso ?? '');
+  ifChanged('color', draft.color, original.color ?? '');
+  ifChanged('calidad', draft.calidad, original.calidad ?? '');
+  ifChanged('talla', draft.talla, original.talla ?? '');
+  ifChanged('medidas', draft.medidas, original.medidas ?? '');
+  ifChanged('categoria', draft.categoria, original.categoria ?? '');
+  ifChanged('ubicacion', draft.ubicacion, original.ubicacion ?? '');
+  ifChanged('coleccion', draft.coleccion, original.coleccion ?? '');
+  ifChanged('caja', draft.caja, original.caja ?? '');
+  ifChanged('estado', draft.estado, original.estado);
 
   // Numeric fields — parse, only include if valid and changed
   const cantidadNum =
-    draft.cantidad === "" ? undefined : Number(draft.cantidad);
+    draft.cantidad === '' ? undefined : Number(draft.cantidad);
   if (cantidadNum !== undefined && Number.isFinite(cantidadNum)) {
     if (cantidadNum !== (original.cantidad ?? -1)) {
       patch.cantidad = cantidadNum;
     }
   }
   const precioNum =
-    draft.precioCOP === "" ? undefined : Number(draft.precioCOP);
+    draft.precioCOP === '' ? undefined : Number(draft.precioCOP);
   if (precioNum !== undefined && Number.isFinite(precioNum)) {
     if (precioNum !== (original.precioCOP ?? -1)) {
       patch.precioCOP = precioNum;
@@ -274,13 +274,13 @@ export function EditDrawer({
   onClose,
   onSave,
   // Phase G — create mode
-  mode = "edit",
+  mode = 'edit',
   onResync,
   isResyncing = false,
 }: EditDrawerProps) {
   const theme = useTheme();
   const atelier = getAtelier(theme.palette.mode);
-  const foto = getFoto(theme.palette.mode === "dark" ? "dark" : "light");
+  const foto = getFoto(theme.palette.mode === 'dark' ? 'dark' : 'light');
   const { lockedByOther } = useProductLock(product?.itemId, open);
   const [draft, setDraft] = useState<DraftState>(() => toDraft(product));
   const [driveState, setDriveState] =
@@ -316,7 +316,7 @@ export function EditDrawer({
               folderId: null,
               images: [],
               isLoading: false,
-              error: data.error ?? "Error",
+              error: data.error ?? 'Error',
             });
             return;
           }
@@ -331,7 +331,7 @@ export function EditDrawer({
       .catch((err: unknown) => {
         if (cancelled) return;
         const message =
-          err instanceof Error ? err.message : "No se pudo cargar la carpeta";
+          err instanceof Error ? err.message : 'No se pudo cargar la carpeta';
         setDriveState({
           folderId: null,
           images: [],
@@ -368,7 +368,7 @@ export function EditDrawer({
   // product (we synthesize headers/footer from the draft). The empty
   // fallback only applies when *neither* a product nor create mode is
   // active — i.e. the drawer is mounted but has nothing to do.
-  const isCreate = mode === "create";
+  const isCreate = mode === 'create';
   if (!product && !isCreate) {
     return (
       <Drawer
@@ -387,14 +387,14 @@ export function EditDrawer({
   }
 
   const headerTint = !product
-    ? "transparent"
-    : product.estado === "DISPONIBLE"
+    ? 'transparent'
+    : product.estado === 'DISPONIBLE'
       ? atelier.status.available.rowTint
-      : product.estado === "VENDIDA"
+      : product.estado === 'VENDIDA'
         ? atelier.status.sold.rowTint
-        : product.estado === "ASESOR"
+        : product.estado === 'ASESOR' || product.estado === 'CONSIGNACION'
           ? atelier.status.consigned.rowTint
-          : "transparent";
+          : 'transparent';
 
   return (
     <Drawer
@@ -404,18 +404,18 @@ export function EditDrawer({
       PaperProps={{
         sx: {
           width: `${atelier.spacing.drawerWidth}px`,
-          maxWidth: "100vw",
+          maxWidth: '100vw',
           backgroundColor: foto.surfaces.panel,
           borderLeft: `1px solid ${foto.surfaces.edgeStrong}`,
-          boxShadow: "none",
+          boxShadow: 'none',
         },
       }}
     >
       <Box
         sx={{
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         {/* HEADER */}
@@ -431,9 +431,9 @@ export function EditDrawer({
         >
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: isCreate ? "1fr auto" : "auto auto 1fr auto",
-              alignItems: "center",
+              display: 'grid',
+              gridTemplateColumns: isCreate ? '1fr auto' : 'auto auto 1fr auto',
+              alignItems: 'center',
               gap: 2,
             }}
           >
@@ -443,9 +443,9 @@ export function EditDrawer({
                 sx={{
                   ...atelier.type.headline,
                   color: atelier.ink.primary,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 Nueva piedra
@@ -457,10 +457,10 @@ export function EditDrawer({
                   sx={{
                     ...atelier.type.data,
                     color: atelier.ink.tertiary,
-                    fontSize: "14px",
+                    fontSize: '14px',
                   }}
                 >
-                  {product!.itemId.padStart(4, "0")}
+                  {product!.itemId.padStart(4, '0')}
                 </Typography>
                 <StatusPip estado={product!.estado} foto={foto} />
                 <Typography
@@ -468,9 +468,9 @@ export function EditDrawer({
                   sx={{
                     ...atelier.type.headline,
                     color: atelier.ink.primary,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   }}
                   title={product!.nombre || `Item ${product!.itemId}`}
                 >
@@ -492,9 +492,9 @@ export function EditDrawer({
             <Typography
               sx={{
                 ...atelier.type.meta,
-                fontSize: "11px",
+                fontSize: '11px',
                 color: atelier.ink.tertiary,
-                mt: "8px",
+                mt: '8px',
               }}
             >
               Asigna un número y rellena los datos esenciales. Se anexará a la
@@ -507,7 +507,7 @@ export function EditDrawer({
         <Box
           sx={{
             flex: 1,
-            overflowY: "auto",
+            overflowY: 'auto',
             px: `${atelier.spacing.drawerPaddingX}px`,
             py: `${atelier.spacing.drawerPaddingY}px`,
           }}
@@ -520,7 +520,7 @@ export function EditDrawer({
                 label="Número"
                 value={draft.itemId}
                 onChange={(v) =>
-                  setDraft({ ...draft, itemId: v.replace(/[^0-9]/g, "") })
+                  setDraft({ ...draft, itemId: v.replace(/[^0-9]/g, '') })
                 }
                 hint="Número único de la piedra en la hoja"
                 atelier={atelier}
@@ -580,7 +580,7 @@ export function EditDrawer({
                 label="Cantidad"
                 value={draft.cantidad}
                 onChange={(v) =>
-                  setDraft({ ...draft, cantidad: v.replace(/[^0-9]/g, "") })
+                  setDraft({ ...draft, cantidad: v.replace(/[^0-9]/g, '') })
                 }
                 atelier={atelier}
                 foto={foto}
@@ -640,7 +640,7 @@ export function EditDrawer({
               label="Precio COP"
               value={draft.precioCOP}
               onChange={(v) =>
-                setDraft({ ...draft, precioCOP: v.replace(/[^0-9]/g, "") })
+                setDraft({ ...draft, precioCOP: v.replace(/[^0-9]/g, '') })
               }
               hint="Solo número entero, sin separadores"
               atelier={atelier}
@@ -722,11 +722,11 @@ export function EditDrawer({
             push failed because the sheet was re-ordered. Edit mode only. */}
         {!isCreate &&
           product &&
-          product.syncStatus === "error" &&
-          (product.syncError ?? "").includes(CONFLICT_MARKER) &&
+          product.syncStatus === 'error' &&
+          (product.syncError ?? '').includes(CONFLICT_MARKER) &&
           onResync && (
             <ConflictBanner
-              message={product.syncError ?? ""}
+              message={product.syncError ?? ''}
               isResyncing={isResyncing}
               onResync={onResync}
               atelier={atelier}
@@ -740,10 +740,10 @@ export function EditDrawer({
             borderTop: `1px solid ${foto.surfaces.edgeStrong}`,
             backgroundColor: foto.surfaces.canvas,
             px: `${atelier.spacing.drawerPaddingX}px`,
-            py: "14px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            py: '14px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             gap: 2,
           }}
         >
@@ -757,12 +757,12 @@ export function EditDrawer({
             {isCreate
               ? draft.itemId.trim()
                 ? `Nueva piedra · ${draft.itemId.trim()}`
-                : "Asigna un número para crear"
+                : 'Asigna un número para crear'
               : hasChanges
-                ? `${Object.keys(patch).length} cambio${Object.keys(patch).length === 1 ? "" : "s"} sin guardar`
-                : "Sin cambios"}
+                ? `${Object.keys(patch).length} cambio${Object.keys(patch).length === 1 ? '' : 's'} sin guardar`
+                : 'Sin cambios'}
           </Typography>
-          <Box sx={{ display: "inline-flex", gap: 1 }}>
+          <Box sx={{ display: 'inline-flex', gap: 1 }}>
             <ButtonBase
               onClick={requestClose}
               disabled={isSaving}
@@ -770,15 +770,15 @@ export function EditDrawer({
               sx={{
                 ...atelier.type.label,
                 color: atelier.ink.secondary,
-                px: "14px",
-                py: "8px",
-                borderRadius: "4px",
+                px: '14px',
+                py: '8px',
+                borderRadius: '4px',
                 border: `1px solid ${foto.surfaces.edgeStrong}`,
                 transition: atelier.motion.rowHover,
-                "&:hover": { backgroundColor: foto.surfaces.rowHover },
-                "&:focus-visible": {
+                '&:hover': { backgroundColor: foto.surfaces.rowHover },
+                '&:focus-visible': {
                   outline: `2px solid ${atelier.focus.ring}`,
-                  outlineOffset: "2px",
+                  outlineOffset: '2px',
                 },
               }}
             >
@@ -787,9 +787,9 @@ export function EditDrawer({
             <ButtonBase
               onClick={() => {
                 if (isCreate) {
-                  void onSave(undefined, draftToNewProduct(draft), "create");
+                  void onSave(undefined, draftToNewProduct(draft), 'create');
                 } else if (product) {
-                  void onSave(product.itemId, patch, "edit");
+                  void onSave(product.itemId, patch, 'edit');
                 }
               }}
               disabled={
@@ -809,11 +809,11 @@ export function EditDrawer({
                     : !hasChanges || !!lockedByOther)
                     ? atelier.ink.muted
                     : atelier.focus.ring,
-                px: "14px",
-                py: "8px",
-                borderRadius: "4px",
+                px: '14px',
+                py: '8px',
+                borderRadius: '4px',
                 transition: atelier.motion.rowHover,
-                "&:hover": {
+                '&:hover': {
                   backgroundColor:
                     isSaving ||
                     (isCreate
@@ -822,19 +822,19 @@ export function EditDrawer({
                       ? atelier.ink.muted
                       : atelier.status.available.pip,
                 },
-                "&:focus-visible": {
+                '&:focus-visible': {
                   outline: `2px solid ${atelier.focus.ring}`,
-                  outlineOffset: "2px",
+                  outlineOffset: '2px',
                 },
               }}
             >
               {isSaving
                 ? isCreate
-                  ? "Creando…"
-                  : "Guardando…"
+                  ? 'Creando…'
+                  : 'Guardando…'
                 : isCreate
-                  ? "Crear y sincronizar"
-                  : "Guardar"}
+                  ? 'Crear y sincronizar'
+                  : 'Guardar'}
             </ButtonBase>
           </Box>
         </Box>
@@ -845,7 +845,7 @@ export function EditDrawer({
         open={confirmOpen}
         title="Descartar cambios"
         message={`Tenés ${Object.keys(patch).length} cambio${
-          Object.keys(patch).length === 1 ? "" : "s"
+          Object.keys(patch).length === 1 ? '' : 's'
         } sin guardar. ¿Querés descartarlos?`}
         confirmLabel="Descartar"
         cancelLabel="Seguir editando"
@@ -878,8 +878,8 @@ function Section({
         sx={{
           ...atelier.type.section,
           color: atelier.ink.tertiary,
-          mb: "12px",
-          pb: "6px",
+          mb: '12px',
+          pb: '6px',
           borderBottom: `1px solid ${foto.surfaces.edge}`,
         }}
       >
@@ -887,8 +887,8 @@ function Section({
       </Typography>
       <Box
         sx={{
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
           gap: `${atelier.spacing.fieldGap}px`,
         }}
       >
@@ -902,8 +902,8 @@ function FieldGrid({ children }: { children: React.ReactNode }) {
   return (
     <Box
       sx={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
         gap: 2,
       }}
     >
@@ -930,7 +930,7 @@ function Field({
   atelier: ReturnType<typeof getAtelier>;
   foto: ReturnType<typeof getFoto>;
   monospace?: boolean;
-  inputMode?: "numeric" | "decimal" | "text";
+  inputMode?: 'numeric' | 'decimal' | 'text';
   prefix?: string;
 }) {
   const inputStyle = monospace
@@ -951,8 +951,8 @@ function Field({
         sx={{
           ...atelier.type.label,
           color: atelier.ink.tertiary,
-          display: "block",
-          mb: "6px",
+          display: 'block',
+          mb: '6px',
         }}
       >
         {label}
@@ -961,14 +961,14 @@ function Field({
         sx={{
           backgroundColor: foto.surfaces.inset,
           border: `1px solid ${foto.surfaces.edge}`,
-          borderRadius: "4px",
-          px: "10px",
-          py: "8px",
-          display: "flex",
-          alignItems: "center",
-          gap: "4px",
-          transition: "border-color 120ms linear",
-          "&:focus-within": {
+          borderRadius: '4px',
+          px: '10px',
+          py: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          transition: 'border-color 120ms linear',
+          '&:focus-within': {
             borderColor: atelier.focus.ring,
           },
         }}
@@ -986,7 +986,7 @@ function Field({
           onChange={(e: ChangeEvent<HTMLInputElement>) =>
             onChange(e.target.value)
           }
-          inputProps={{ "aria-label": label, inputMode }}
+          inputProps={{ 'aria-label': label, inputMode }}
           sx={inputStyle}
           fullWidth
         />
@@ -995,9 +995,9 @@ function Field({
         <Typography
           sx={{
             ...atelier.type.meta,
-            fontSize: "11px",
+            fontSize: '11px',
             color: atelier.ink.muted,
-            mt: "4px",
+            mt: '4px',
           }}
         >
           {hint}
@@ -1024,26 +1024,31 @@ function EstadoRadio({
     description: string;
   }> = [
     {
-      key: "DISPONIBLE",
-      label: "Disponible",
-      description: "En el inventario, lista para mostrar",
+      key: 'DISPONIBLE',
+      label: 'Disponible',
+      description: 'En el inventario, lista para mostrar',
     },
     {
-      key: "ASESOR",
-      label: "Con asesor",
-      description: "En consignación con un asesor",
+      key: 'ASESOR',
+      label: 'Con asesor',
+      description: 'En consignación con un asesor interno',
     },
     {
-      key: "VENDIDA",
-      label: "Vendida",
-      description: "Salida definitiva del inventario",
+      key: 'CONSIGNACION',
+      label: 'En consignación',
+      description: 'Con un comercializador externo, sin cuenta en el sistema',
+    },
+    {
+      key: 'VENDIDA',
+      label: 'Vendida',
+      description: 'Salida definitiva del inventario',
     },
   ];
   return (
     <Box
       role="radiogroup"
       aria-label="Estado del producto"
-      sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+      sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
     >
       {options.map((opt) => {
         const isSelected = value === opt.key;
@@ -1055,26 +1060,26 @@ function EstadoRadio({
             onClick={() => onChange(opt.key)}
             disableRipple
             sx={{
-              display: "grid",
-              gridTemplateColumns: "auto 1fr",
+              display: 'grid',
+              gridTemplateColumns: 'auto 1fr',
               gap: 2,
-              alignItems: "center",
-              px: "12px",
-              py: "10px",
+              alignItems: 'center',
+              px: '12px',
+              py: '10px',
               backgroundColor: isSelected
                 ? foto.surfaces.rowActive
                 : foto.surfaces.inset,
               border: `1px solid ${isSelected ? atelier.focus.ring : foto.surfaces.edge}`,
-              borderRadius: "4px",
+              borderRadius: '4px',
               transition: atelier.motion.rowHover,
-              textAlign: "left",
-              cursor: "pointer",
-              "&:hover": {
+              textAlign: 'left',
+              cursor: 'pointer',
+              '&:hover': {
                 backgroundColor: foto.surfaces.rowHover,
               },
-              "&:focus-visible": {
+              '&:focus-visible': {
                 outline: `2px solid ${atelier.focus.ring}`,
-                outlineOffset: "2px",
+                outlineOffset: '2px',
               },
             }}
           >
@@ -1088,9 +1093,9 @@ function EstadoRadio({
               <Typography
                 sx={{
                   ...atelier.type.meta,
-                  fontSize: "11px",
+                  fontSize: '11px',
                   color: atelier.ink.tertiary,
-                  mt: "2px",
+                  mt: '2px',
                 }}
               >
                 {opt.description}
@@ -1121,25 +1126,25 @@ function CloseButton({
       disableRipple
       aria-label="Cerrar editor"
       sx={{
-        width: "32px",
-        height: "32px",
-        borderRadius: "4px",
+        width: '32px',
+        height: '32px',
+        borderRadius: '4px',
         color: atelier.ink.secondary,
         transition: atelier.motion.rowHover,
-        "&:hover": {
+        '&:hover': {
           backgroundColor: foto.surfaces.rowHover,
           color: atelier.ink.primary,
         },
-        "&:focus-visible": {
+        '&:focus-visible': {
           outline: `2px solid ${atelier.focus.ring}`,
-          outlineOffset: "2px",
+          outlineOffset: '2px',
         },
       }}
     >
       <Box
         component="svg"
         viewBox="0 0 24 24"
-        sx={{ width: "16px", height: "16px" }}
+        sx={{ width: '16px', height: '16px' }}
         aria-hidden
       >
         <path
@@ -1163,20 +1168,20 @@ function SyncMeta({
 }) {
   const status = product.syncStatus;
   const text =
-    status === "synced"
+    status === 'synced'
       ? product.lastPushedAt
-        ? `Última escritura · ${new Date(product.lastPushedAt).toLocaleString("es-CO")}`
-        : "Sincronizado con la hoja"
-      : status === "pending"
-        ? "Sincronización pendiente"
+        ? `Última escritura · ${new Date(product.lastPushedAt).toLocaleString('es-CO')}`
+        : 'Sincronizado con la hoja'
+      : status === 'pending'
+        ? 'Sincronización pendiente'
         : product.syncError
           ? `Error: ${product.syncError}`
-          : "Error de sincronización";
+          : 'Error de sincronización';
 
   const color =
-    status === "synced"
+    status === 'synced'
       ? atelier.ink.tertiary
-      : status === "pending"
+      : status === 'pending'
         ? atelier.status.consigned.pip
         : atelier.status.sold.pip;
 
@@ -1184,9 +1189,9 @@ function SyncMeta({
     <Typography
       sx={{
         ...atelier.type.meta,
-        fontSize: "11px",
+        fontSize: '11px',
         color,
-        mt: "8px",
+        mt: '8px',
       }}
     >
       {text}
@@ -1210,8 +1215,8 @@ function DriveFolderBlock({
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "column",
+        display: 'flex',
+        flexDirection: 'column',
         gap: `${atelier.spacing.fieldGap}px`,
       }}
     >
@@ -1227,29 +1232,29 @@ function DriveFolderBlock({
             color: atelier.ink.primary,
             backgroundColor: foto.surfaces.inset,
             border: `1px solid ${foto.surfaces.edge}`,
-            borderRadius: "4px",
-            px: "12px",
-            py: "10px",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            alignSelf: "flex-start",
-            textTransform: "none",
+            borderRadius: '4px',
+            px: '12px',
+            py: '10px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            alignSelf: 'flex-start',
+            textTransform: 'none',
             transition: atelier.motion.rowHover,
-            "&:hover": {
+            '&:hover': {
               backgroundColor: foto.surfaces.rowHover,
               borderColor: atelier.brass.soft,
             },
-            "&:focus-visible": {
+            '&:focus-visible': {
               outline: `2px solid ${atelier.focus.ring}`,
-              outlineOffset: "2px",
+              outlineOffset: '2px',
             },
           }}
         >
           <Box
             component="svg"
             viewBox="0 0 24 24"
-            sx={{ width: "14px", height: "14px", flexShrink: 0 }}
+            sx={{ width: '14px', height: '14px', flexShrink: 0 }}
             aria-hidden
           >
             <path
@@ -1263,7 +1268,7 @@ function DriveFolderBlock({
           </Box>
           <Typography
             component="span"
-            sx={{ ...atelier.type.label, color: "inherit" }}
+            sx={{ ...atelier.type.label, color: 'inherit' }}
           >
             Abrir carpeta en Drive
           </Typography>
@@ -1271,8 +1276,8 @@ function DriveFolderBlock({
             component="svg"
             viewBox="0 0 24 24"
             sx={{
-              width: "12px",
-              height: "12px",
+              width: '12px',
+              height: '12px',
               flexShrink: 0,
               color: atelier.ink.tertiary,
             }}
@@ -1311,9 +1316,9 @@ function DriveFolderBlock({
       ) : (
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))",
-            gap: "8px",
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))',
+            gap: '8px',
           }}
         >
           {state.images.map((media) => (
@@ -1327,18 +1332,18 @@ function DriveFolderBlock({
               aria-label={media.name}
               title={media.name}
               sx={{
-                position: "relative",
-                aspectRatio: "1 / 1",
-                overflow: "hidden",
+                position: 'relative',
+                aspectRatio: '1 / 1',
+                overflow: 'hidden',
                 border: `1px solid ${foto.surfaces.edge}`,
-                borderRadius: "4px",
+                borderRadius: '4px',
                 backgroundColor: foto.surfaces.inset,
-                display: "block",
+                display: 'block',
                 transition: atelier.motion.rowHover,
-                "&:hover": { borderColor: atelier.brass.soft },
-                "&:focus-visible": {
+                '&:hover': { borderColor: atelier.brass.soft },
+                '&:focus-visible': {
                   outline: `2px solid ${atelier.focus.ring}`,
-                  outlineOffset: "2px",
+                  outlineOffset: '2px',
                 },
               }}
             >
@@ -1348,34 +1353,34 @@ function DriveFolderBlock({
                 alt={media.name}
                 loading="lazy"
                 sx={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  display: "block",
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  display: 'block',
                 }}
               />
-              {media.type === "video" && (
+              {media.type === 'video' && (
                 <Box
                   sx={{
-                    position: "absolute",
-                    bottom: "4px",
-                    right: "4px",
-                    width: "20px",
-                    height: "20px",
-                    borderRadius: "2px",
+                    position: 'absolute',
+                    bottom: '4px',
+                    right: '4px',
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '2px',
                     border: `1px solid ${foto.surfaces.edgeStrong}`,
                     backgroundColor: foto.surfaces.panel,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    pointerEvents: "none",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    pointerEvents: 'none',
                     color: atelier.ink.primary,
                   }}
                 >
                   <Box
                     component="svg"
                     viewBox="0 0 24 24"
-                    sx={{ width: "10px", height: "10px" }}
+                    sx={{ width: '10px', height: '10px' }}
                     aria-hidden
                   >
                     <path d="M8 5L19 12L8 19Z" fill="currentColor" />
@@ -1411,7 +1416,7 @@ function HistorialBlock({
   const [showAll, setShowAll] = useState(false);
   const history = useConvexQuery(
     convexApi.products.editHistory,
-    convexReady ? { itemId } : "skip",
+    convexReady ? { itemId } : 'skip',
   ) as Array<HistoryEntry> | undefined;
 
   if (!convexReady) {
@@ -1442,13 +1447,13 @@ function HistorialBlock({
   const hiddenCount = history.length - visible.length;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       <Box
         sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-          position: "relative",
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          position: 'relative',
         }}
       >
         {visible.map((entry, idx) => (
@@ -1468,21 +1473,21 @@ function HistorialBlock({
           sx={{
             ...atelier.type.label,
             color: atelier.ink.tertiary,
-            alignSelf: "flex-start",
-            px: "8px",
-            py: "4px",
-            borderRadius: "4px",
+            alignSelf: 'flex-start',
+            px: '8px',
+            py: '4px',
+            borderRadius: '4px',
             transition: atelier.motion.rowHover,
-            textDecoration: "underline",
-            textUnderlineOffset: "2px",
+            textDecoration: 'underline',
+            textUnderlineOffset: '2px',
             textDecorationColor: atelier.brass.soft,
-            "&:hover": {
+            '&:hover': {
               color: atelier.ink.primary,
               textDecorationColor: atelier.ink.primary,
             },
-            "&:focus-visible": {
+            '&:focus-visible': {
               outline: `2px solid ${atelier.focus.ring}`,
-              outlineOffset: "2px",
+              outlineOffset: '2px',
             },
           }}
         >
@@ -1496,21 +1501,21 @@ function HistorialBlock({
           sx={{
             ...atelier.type.label,
             color: atelier.ink.tertiary,
-            alignSelf: "flex-start",
-            px: "8px",
-            py: "4px",
-            borderRadius: "4px",
+            alignSelf: 'flex-start',
+            px: '8px',
+            py: '4px',
+            borderRadius: '4px',
             transition: atelier.motion.rowHover,
-            textDecoration: "underline",
-            textUnderlineOffset: "2px",
+            textDecoration: 'underline',
+            textUnderlineOffset: '2px',
             textDecorationColor: atelier.brass.soft,
-            "&:hover": {
+            '&:hover': {
               color: atelier.ink.primary,
               textDecorationColor: atelier.ink.primary,
             },
-            "&:focus-visible": {
+            '&:focus-visible': {
               outline: `2px solid ${atelier.focus.ring}`,
-              outlineOffset: "2px",
+              outlineOffset: '2px',
             },
           }}
         >
@@ -1535,43 +1540,43 @@ interface HistoryEntry {
   editorName?: string;
   editedAt: string;
   changes: HistoryChange[];
-  status: "saved" | "pending" | "failed";
+  status: 'saved' | 'pending' | 'failed';
   error?: string;
 }
 
 const FIELD_LABELS: Record<string, string> = {
-  nombre: "Nombre",
-  peso: "Peso",
-  color: "Color",
-  calidad: "Calidad",
-  cantidad: "Cantidad",
-  talla: "Talla",
-  medidas: "Medidas",
-  categoria: "Categoría",
-  precioCOP: "Precio COP",
-  ubicacion: "Ubicación",
-  coleccion: "Colección",
-  caja: "Caja",
-  estado: "Estado",
+  nombre: 'Nombre',
+  peso: 'Peso',
+  color: 'Color',
+  calidad: 'Calidad',
+  cantidad: 'Cantidad',
+  talla: 'Talla',
+  medidas: 'Medidas',
+  categoria: 'Categoría',
+  precioCOP: 'Precio COP',
+  ubicacion: 'Ubicación',
+  coleccion: 'Colección',
+  caja: 'Caja',
+  estado: 'Estado',
 };
 
 function relativeFromNow(iso: string): string {
   const t = new Date(iso).getTime();
-  if (!Number.isFinite(t)) return "—";
+  if (!Number.isFinite(t)) return '—';
   const sec = Math.max(0, Math.round((Date.now() - t) / 1000));
-  if (sec < 60) return "hace segundos";
+  if (sec < 60) return 'hace segundos';
   const min = Math.round(sec / 60);
   if (min < 60) return `hace ${min} min`;
   const hr = Math.round(min / 60);
   if (hr < 24) return `hace ${hr} h`;
   const day = Math.round(hr / 24);
   if (day < 30) return `hace ${day} d`;
-  return new Date(iso).toLocaleDateString("es-CO");
+  return new Date(iso).toLocaleDateString('es-CO');
 }
 
 function formatHistoryValue(v: string | number | null): string {
-  if (v === null || v === undefined || v === "") return "—";
-  if (typeof v === "number") return v.toLocaleString("es-CO");
+  if (v === null || v === undefined || v === '') return '—';
+  if (typeof v === 'number') return v.toLocaleString('es-CO');
   return v;
 }
 
@@ -1587,9 +1592,9 @@ function HistorialEntry({
   foto: ReturnType<typeof getFoto>;
 }) {
   const statusColor =
-    entry.status === "saved"
+    entry.status === 'saved'
       ? atelier.status.available.pip
-      : entry.status === "pending"
+      : entry.status === 'pending'
         ? atelier.status.consigned.pip
         : atelier.status.sold.pip;
   const editorLabel = entry.editorName?.trim() || entry.editorEmail;
@@ -1598,30 +1603,30 @@ function HistorialEntry({
     <Box
       role="listitem"
       sx={{
-        display: "grid",
-        gridTemplateColumns: "auto 1fr",
-        columnGap: "10px",
+        display: 'grid',
+        gridTemplateColumns: 'auto 1fr',
+        columnGap: '10px',
       }}
     >
       {/* Timeline rail: marker + connecting line */}
       <Box
         aria-hidden
         sx={{
-          position: "relative",
-          width: "10px",
-          minHeight: "100%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
+          position: 'relative',
+          width: '10px',
+          minHeight: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
         }}
       >
         <Box
           sx={{
-            width: "8px",
-            height: "8px",
-            borderRadius: "50%",
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
             backgroundColor: statusColor,
-            mt: "5px",
+            mt: '5px',
             flexShrink: 0,
           }}
         />
@@ -1629,21 +1634,21 @@ function HistorialEntry({
           <Box
             sx={{
               flex: 1,
-              width: "1px",
+              width: '1px',
               backgroundColor: foto.surfaces.edge,
-              mt: "4px",
+              mt: '4px',
             }}
           />
         )}
       </Box>
 
       {/* Entry content */}
-      <Box sx={{ pb: "10px", minWidth: 0 }}>
+      <Box sx={{ pb: '10px', minWidth: 0 }}>
         <Box
           sx={{
-            display: "flex",
-            alignItems: "baseline",
-            justifyContent: "space-between",
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
             gap: 1,
           }}
         >
@@ -1652,12 +1657,12 @@ function HistorialEntry({
             sx={{
               ...atelier.type.label,
               color: atelier.ink.primary,
-              textTransform: "none",
+              textTransform: 'none',
               letterSpacing: 0,
               fontWeight: 600,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
             title={editorLabel}
           >
@@ -1667,23 +1672,23 @@ function HistorialEntry({
             component="span"
             sx={{
               ...atelier.type.meta,
-              fontSize: "11px",
+              fontSize: '11px',
               color: atelier.ink.tertiary,
               flexShrink: 0,
             }}
-            title={new Date(entry.editedAt).toLocaleString("es-CO")}
+            title={new Date(entry.editedAt).toLocaleString('es-CO')}
           >
             {relativeFromNow(entry.editedAt)}
           </Typography>
         </Box>
 
-        {entry.status === "failed" && entry.error && (
+        {entry.status === 'failed' && entry.error && (
           <Typography
             sx={{
               ...atelier.type.meta,
-              fontSize: "11px",
+              fontSize: '11px',
               color: atelier.status.sold.pip,
-              mt: "2px",
+              mt: '2px',
             }}
           >
             {entry.error}
@@ -1693,13 +1698,13 @@ function HistorialEntry({
         <Box
           component="ul"
           sx={{
-            listStyle: "none",
+            listStyle: 'none',
             p: 0,
             m: 0,
-            mt: "6px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "2px",
+            mt: '6px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '2px',
           }}
         >
           {entry.changes.map((c, i) => (
@@ -1707,10 +1712,10 @@ function HistorialEntry({
               component="li"
               key={`${entry._id}-${c.field}-${i}`}
               sx={{
-                display: "grid",
-                gridTemplateColumns: "minmax(72px, auto) 1fr",
-                columnGap: "8px",
-                alignItems: "baseline",
+                display: 'grid',
+                gridTemplateColumns: 'minmax(72px, auto) 1fr',
+                columnGap: '8px',
+                alignItems: 'baseline',
               }}
             >
               <Typography
@@ -1726,11 +1731,11 @@ function HistorialEntry({
                 component="span"
                 sx={{
                   ...atelier.type.data,
-                  fontSize: "11px",
+                  fontSize: '11px',
                   color: atelier.ink.secondary,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
                 }}
                 title={`${formatHistoryValue(c.before)} → ${formatHistoryValue(c.after)}`}
               >
@@ -1738,14 +1743,14 @@ function HistorialEntry({
                   component="span"
                   sx={{
                     color: atelier.ink.muted,
-                    textDecoration: "line-through",
+                    textDecoration: 'line-through',
                   }}
                 >
                   {formatHistoryValue(c.before)}
                 </Box>
                 <Box
                   component="span"
-                  sx={{ mx: "6px", color: atelier.ink.tertiary }}
+                  sx={{ mx: '6px', color: atelier.ink.tertiary }}
                 >
                   →
                 </Box>
@@ -1790,21 +1795,21 @@ function ConflictBanner({
         borderBottom: `1px solid ${foto.surfaces.edge}`,
         backgroundColor: atelier.status.sold.rowTint,
         px: `${atelier.spacing.drawerPaddingX}px`,
-        py: "12px",
-        display: "flex",
-        gap: "12px",
-        alignItems: "flex-start",
+        py: '12px',
+        display: 'flex',
+        gap: '12px',
+        alignItems: 'flex-start',
       }}
     >
       <Box
         aria-hidden
         sx={{
-          width: "8px",
-          height: "8px",
-          borderRadius: "1px",
+          width: '8px',
+          height: '8px',
+          borderRadius: '1px',
           backgroundColor: atelier.status.sold.pip,
           flexShrink: 0,
-          mt: "5px",
+          mt: '5px',
         }}
       />
       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -1813,7 +1818,7 @@ function ConflictBanner({
           sx={{
             ...atelier.type.label,
             color: atelier.ink.primary,
-            mb: "4px",
+            mb: '4px',
           }}
         >
           Resync necesario
@@ -1821,9 +1826,9 @@ function ConflictBanner({
         <Typography
           sx={{
             ...atelier.type.meta,
-            fontSize: "11px",
+            fontSize: '11px',
             color: atelier.ink.secondary,
-            mb: "8px",
+            mb: '8px',
           }}
         >
           La hoja se reordenó después de la última sincronización. Vuelve a
@@ -1832,9 +1837,9 @@ function ConflictBanner({
         <Typography
           sx={{
             ...atelier.type.data,
-            fontSize: "11px",
+            fontSize: '11px',
             color: atelier.ink.tertiary,
-            mb: "10px",
+            mb: '10px',
           }}
         >
           {message}
@@ -1849,22 +1854,22 @@ function ConflictBanner({
             backgroundColor: isResyncing
               ? atelier.ink.muted
               : atelier.focus.ring,
-            borderRadius: "4px",
-            px: "12px",
-            py: "6px",
+            borderRadius: '4px',
+            px: '12px',
+            py: '6px',
             transition: atelier.motion.rowHover,
-            "&:hover": {
+            '&:hover': {
               backgroundColor: isResyncing
                 ? atelier.ink.muted
                 : atelier.status.available.pip,
             },
-            "&:focus-visible": {
+            '&:focus-visible': {
               outline: `2px solid ${atelier.focus.ring}`,
-              outlineOffset: "2px",
+              outlineOffset: '2px',
             },
           }}
         >
-          {isResyncing ? "Sincronizando…" : "Resync ahora"}
+          {isResyncing ? 'Sincronizando…' : 'Resync ahora'}
         </ButtonBase>
       </Box>
     </Box>
@@ -1903,7 +1908,7 @@ function LockBanner({
   const expiryText =
     minutesLeft >= 1
       ? `expira en ${minutesLeft} min`
-      : "expira en menos de 1 min";
+      : 'expira en menos de 1 min';
 
   return (
     <Box
@@ -1914,23 +1919,23 @@ function LockBanner({
         border: `1px solid ${foto.surfaces.edgeStrong}`,
         borderLeft: `2px solid ${atelier.status.consigned.pip}`,
         backgroundColor: atelier.status.consigned.rowTint,
-        borderRadius: "4px",
-        px: "14px",
-        py: "10px",
-        display: "flex",
-        alignItems: "flex-start",
-        gap: "10px",
+        borderRadius: '4px',
+        px: '14px',
+        py: '10px',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '10px',
       }}
     >
       <Box
         aria-hidden
         sx={{
-          width: "8px",
-          height: "8px",
-          borderRadius: "1px",
+          width: '8px',
+          height: '8px',
+          borderRadius: '1px',
           backgroundColor: atelier.status.consigned.pip,
           flexShrink: 0,
-          mt: "5px",
+          mt: '5px',
         }}
       />
       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -1938,7 +1943,7 @@ function LockBanner({
           sx={{
             ...atelier.type.label,
             color: atelier.ink.tertiary,
-            mb: "2px",
+            mb: '2px',
           }}
         >
           En edición
@@ -1947,16 +1952,16 @@ function LockBanner({
           sx={{
             ...atelier.type.meta,
             color: atelier.ink.primary,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
           title={`${name} · ${expiryText}`}
         >
           <Box component="span" sx={{ fontWeight: 600 }}>
             {name}
-          </Box>{" "}
-          está editando ·{" "}
+          </Box>{' '}
+          está editando ·{' '}
           <Box component="span" sx={{ color: atelier.ink.tertiary }}>
             {expiryText}
           </Box>
@@ -1991,33 +1996,33 @@ function LotePriceNotice({
     <Box
       role="note"
       sx={{
-        mt: "10px",
+        mt: '10px',
         border: `1px solid ${foto.surfaces.edgeStrong}`,
         borderLeft: `2px solid ${foto.accent.primary}`,
         backgroundColor: foto.surfaces.inset,
-        borderRadius: "4px",
-        px: "14px",
-        py: "10px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "8px",
+        borderRadius: '4px',
+        px: '14px',
+        py: '10px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
       }}
     >
       <Typography sx={{ ...atelier.type.label, color: atelier.ink.tertiary }}>
         Esta pieza pertenece a un lote
       </Typography>
       <Typography sx={{ ...atelier.type.meta, color: atelier.ink.secondary }}>
-        El precio público del catálogo es el{" "}
+        El precio público del catálogo es el{' '}
         <Box
           component="span"
           sx={{ fontWeight: 600, color: atelier.ink.primary }}
         >
           precio embajador
         </Box>
-        , que se gestiona en Fotosíntesis. Este{" "}
+        , que se gestiona en Fotosíntesis. Este{' '}
         <Box component="span" sx={{ fontWeight: 600 }}>
           Precio COP
-        </Box>{" "}
+        </Box>{' '}
         es solo una referencia interna o de base y no cambia lo que ven los
         clientes.
       </Typography>
@@ -2026,16 +2031,16 @@ function LotePriceNotice({
         to={`/admin/fotosintesis/lots/${loteId}/close`}
         sx={{
           ...atelier.type.label,
-          alignSelf: "flex-start",
+          alignSelf: 'flex-start',
           color: foto.accent.primary,
-          textDecoration: "none",
+          textDecoration: 'none',
           fontWeight: 600,
-          mt: "2px",
-          "&:hover": { color: foto.accent.deep },
-          "&:focus-visible": {
+          mt: '2px',
+          '&:hover': { color: foto.accent.deep },
+          '&:focus-visible': {
             outline: `2px solid ${foto.accent.primary}`,
-            outlineOffset: "2px",
-            borderRadius: "2px",
+            outlineOffset: '2px',
+            borderRadius: '2px',
           },
         }}
       >

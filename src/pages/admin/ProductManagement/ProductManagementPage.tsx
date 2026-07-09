@@ -89,6 +89,8 @@ function filterToEstado(filter: FilterKey): EstadoValue | undefined {
       return 'VENDIDA';
     case 'consigned':
       return 'ASESOR';
+    case 'consignment':
+      return 'CONSIGNACION';
     default:
       return undefined;
   }
@@ -371,7 +373,12 @@ export default function ProductManagementPage() {
     if (!products) return counts;
     for (const p of products) {
       if (p.estado === 'DISPONIBLE') counts.available++;
-      else if (p.estado === 'ASESOR') counts.consigned++;
+      // The hero's "consigned" tile is intentionally an aggregate — internal
+      // asesor + external comercializador both mean "out of the vault, not
+      // sold". The AdminToolbar filter chips still separate them (ASESOR vs
+      // CONSIGNACION) for operators who need the distinction.
+      else if (p.estado === 'ASESOR' || p.estado === 'CONSIGNACION')
+        counts.consigned++;
       else if (p.estado === 'VENDIDA') counts.sold++;
       else counts.blank++;
     }

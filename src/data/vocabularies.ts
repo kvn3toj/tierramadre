@@ -87,15 +87,18 @@ export function normalizeCalidad(raw: string | undefined | null): GemaCalidad {
 
 // ─── Estado de productInventory ──────────────────────────────────────
 //
-// 9 values: the original 4 from the Convex schema + 5 inherited from
+// 10 values: the original 4 from the Convex schema + 5 inherited from
 // the legacy sheet's ESTADO dropdown (Retornado, ESMEREOGENESIS, ESMERO,
-// DISPONIBLE ADOPTADA, LOTE X CT). Preserves the legacy mixed-case so
+// DISPONIBLE ADOPTADA, LOTE X CT) + CONSIGNACION (2026-07-09, app-only —
+// an item on consignment with an EXTERNAL comercializador, distinct from
+// ASESOR which stays an internal asesor). Preserves the legacy mixed-case so
 // existing rows pull cleanly into Convex without a migration pass.
 
 export const PRODUCT_ESTADOS = [
   'DISPONIBLE',
   'VENDIDA',
   'ASESOR',
+  'CONSIGNACION',
   'Retornado',
   'ESMEREOGENESIS',
   'ESMERO',

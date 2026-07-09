@@ -370,6 +370,38 @@ export default function FotosintesisVentaPage({
     setClientId(null);
   }, [compradorTipo]);
 
+  // ─── Consignment graduation prefill (2026-07-09) ──────────────────────
+  // AsesorMovementPanel's "Vender esta pieza" deep-links here with
+  // `?itemId=&precio=&recipient=` (itemId is already handled by the
+  // `initialItemId` seed above). No new mutation backs this — `sales.create`
+  // already accepts ASESOR/CONSIGNACION items (BR-6) — this just saves the
+  // operator from re-typing the price and, when the recipient resolves to a
+  // known client, the buyer. Runs once (ref-guarded) once the client
+  // directory has loaded, same wait as the AI draft effect below.
+  const graduationSeededRef = useRef(false);
+  useEffect(() => {
+    if (graduationSeededRef.current) return;
+    if (allClients === undefined) return;
+    const precioParam = searchParams.get('precio');
+    const recipientParam = searchParams.get('recipient');
+    if (!precioParam && !recipientParam) return;
+    graduationSeededRef.current = true;
+    if (precioParam) {
+      const n = Number(precioParam);
+      if (Number.isFinite(n) && n > 0) setPrecioAcordado(n);
+    }
+    if (recipientParam) {
+      const hint = recipientParam.trim().toLowerCase();
+      const match = allClients.find(
+        (c) => c.nombre && c.nombre.trim().toLowerCase() === hint,
+      );
+      if (match) {
+        if (match.tipo !== 'embajador') setCompradorTipo('final');
+        setPendingClientId(match._id);
+      }
+    }
+  }, [allClients, searchParams]);
+
   // Fotosynthia v2 guided seeding — pre-fill the sale (or the cliente-final
   // creation form) from an AI draft. Waits for the directory so a named buyer
   // resolves to an id. compradorTipo is seeded here; the resolved buyer is
