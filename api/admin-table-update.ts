@@ -84,7 +84,7 @@ export default withApiHandler(
       return sendError(
         res,
         400,
-        `Invalid table "${table}". Expected: providers | lots | clients | sales | subLotes.`,
+        `Invalid table "${table}". Expected: providers | lots | clients | sales | subLotes | movimientosAsesor.`,
       );
     }
     if (!rowIndex || !Number.isInteger(rowIndex) || rowIndex < 2) {

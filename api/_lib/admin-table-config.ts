@@ -17,7 +17,13 @@
  * bumping this letter.
  */
 
-export type FotoTable = "providers" | "lots" | "clients" | "sales" | "subLotes";
+export type FotoTable =
+  | "providers"
+  | "lots"
+  | "clients"
+  | "sales"
+  | "subLotes"
+  | "movimientosAsesor";
 
 export interface TableConfig {
   sheetTabPatterns: string[];
@@ -124,6 +130,25 @@ export const TABLE_CONFIGS: Record<FotoTable, TableConfig> = {
     idColumn: "subLoteId",
     lastColumnLetter: "J",
   },
+  // Kardex de movimientos con asesores — append-only (see convex/asesorMovements.ts).
+  movimientosAsesor: {
+    sheetTabPatterns: ["movimientos asesor", "movimientos", "movimientosasesor"],
+    columns: [
+      "movimientoId",
+      "fecha",
+      "tipo",
+      "itemId",
+      "itemNombre",
+      "asesorNombre",
+      "cantidad",
+      "estadoAnterior",
+      "estadoNuevo",
+      "registradoPor",
+      "notas",
+    ],
+    idColumn: "movimientoId",
+    lastColumnLetter: "K",
+  },
 };
 
 export function isFotoTable(x: unknown): x is FotoTable {
@@ -132,6 +157,7 @@ export function isFotoTable(x: unknown): x is FotoTable {
     x === "lots" ||
     x === "clients" ||
     x === "sales" ||
-    x === "subLotes"
+    x === "subLotes" ||
+    x === "movimientosAsesor"
   );
 }

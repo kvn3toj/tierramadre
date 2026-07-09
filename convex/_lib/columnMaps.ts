@@ -15,7 +15,13 @@
  * the document being updated).
  */
 
-export type FotoTable = "providers" | "lots" | "clients" | "sales" | "subLotes";
+export type FotoTable =
+  | "providers"
+  | "lots"
+  | "clients"
+  | "sales"
+  | "subLotes"
+  | "movimientosAsesor";
 
 export const COLUMN_MAPS: Record<FotoTable, readonly string[]> = {
   providers: [
@@ -89,6 +95,22 @@ export const COLUMN_MAPS: Record<FotoTable, readonly string[]> = {
     "estado", // H
     "notas", // I
     "createdAt", // J
+  ],
+  // Kardex de movimientos con asesores — append-only, never patched (see
+  // convex/asesorMovements.ts). movimientoId is synthetic (itemId + ms epoch),
+  // so column A never needs the rename-safety patch path other tables use.
+  movimientosAsesor: [
+    "movimientoId", // A — natural key (synthetic, append-only)
+    "fecha", // B
+    "tipo", // C — "entrega" | "devolucion"
+    "itemId", // D
+    "itemNombre", // E — denormalized at push time
+    "asesorNombre", // F
+    "cantidad", // G
+    "estadoAnterior", // H
+    "estadoNuevo", // I
+    "registradoPor", // J — email
+    "notas", // K
   ],
 } as const;
 

@@ -43,6 +43,7 @@ import { useProductLock } from "../../../hooks/useProductLock";
 import { useDirtyGuard } from "../../../hooks/useDirtyGuard";
 import ConfirmDialog from "../../../components/shared/ConfirmDialog";
 import { StatusPip, type EstadoValue } from "./StatusPip";
+import { AsesorMovementPanel } from "./AsesorMovementPanel";
 // Phase G — create mode: typed payload for the "+ Nueva piedra" flow.
 import type { NewProductInput } from "../../../utils/createProduct-validate";
 
@@ -670,6 +671,16 @@ export function EditDrawer({
               <EstadoRadio
                 value={draft.estado}
                 onChange={(v) => setDraft({ ...draft, estado: v })}
+                atelier={atelier}
+                foto={foto}
+              />
+            </Section>
+          )}
+
+          {!isCreate && product && (
+            <Section title="Con asesor" atelier={atelier} foto={foto}>
+              <AsesorMovementPanel
+                itemId={product.itemId}
                 atelier={atelier}
                 foto={foto}
               />

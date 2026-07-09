@@ -272,6 +272,47 @@ export default defineSchema({
     expiresAt: v.string(),
   }).index("by_itemId", ["itemId"]),
 
+  /**
+   * Kardex de movimientos con asesores — historial de "entrega" /
+   * "devolución" de una pieza de `productInventory` hacia/desde un asesor
+   * en consignación (`estado: "ASESOR"`).
+   *
+   * NOT the same thing as the sale "Kardex" comprobante (see `sales` +
+   * VentaDetailPage) — that one is a completed sale and moves the item to
+   * `VENDIDA`. This table is the pre-sale consignment ledger: the item
+   * stays inventory, just physically with an asesor, and can come back.
+   *
+   * Append-only (each row is immutable once pushed) and mirrors ONE row in
+   * the "Movimientos Asesor" tab of the Fotosíntesis SOT spreadsheet — see
+   * convex/asesorMovements.ts + convex/_lib/columnMaps.ts.
+   */
+  asesorMovements: defineTable({
+    itemId: v.string(),
+    /** Snapshot of the product name at movement time (survives renames). */
+    itemNombre: v.optional(v.string()),
+    tipo: v.union(v.literal("entrega"), v.literal("devolucion")),
+    asesorNombre: v.string(),
+    /** id from the asesores directory (get-asesores), when resolvable. */
+    asesorId: v.optional(v.string()),
+    cantidad: v.optional(v.number()),
+    /** ISO date (yyyy-mm-dd) the movement applies to — operator-editable. */
+    fecha: v.string(),
+    notas: v.optional(v.string()),
+    registradoPorEmail: v.string(),
+    registradoPorNombre: v.optional(v.string()),
+    /** productInventory.estado snapshot before/after — lets the ledger read
+     *  standalone (Sheets tab) without joining back to Inventario. */
+    estadoAnterior: v.string(),
+    estadoNuevo: v.string(),
+    /** Synthetic natural key pushed as column A (never patched — append-only). */
+    movimientoId: v.string(),
+    ...syncFields,
+  })
+    .index("by_itemId", ["itemId"])
+    .index("by_asesorNombre", ["asesorNombre"])
+    .index("by_rowIndex", ["rowIndex"])
+    .index("by_syncStatus", ["syncStatus"]),
+
   // ─── Fotosíntesis v2 · Captura administrativa ────────────────────
   //
   // Five new tables backing the Proveedor → Compra → Inventario → Ventas
