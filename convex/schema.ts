@@ -1,5 +1,5 @@
-import { defineSchema, defineTable } from "convex/server";
-import { v } from "convex/values";
+import { defineSchema, defineTable } from 'convex/server';
+import { v } from 'convex/values';
 
 // Shared envelope for tables that mirror a Google Sheets tab.
 // Fotosíntesis v2: providers/lots/clients/sales reuse the same sync
@@ -9,9 +9,9 @@ const syncFields = {
   lastPulledAt: v.string(),
   lastPushedAt: v.optional(v.string()),
   syncStatus: v.union(
-    v.literal("synced"),
-    v.literal("pending"),
-    v.literal("error"),
+    v.literal('synced'),
+    v.literal('pending'),
+    v.literal('error'),
   ),
   syncError: v.optional(v.string()),
 } as const;
@@ -27,9 +27,9 @@ export default defineSchema({
     guestContact: v.optional(v.string()),
     contactType: v.optional(v.string()),
     status: v.union(
-      v.literal("active"),
-      v.literal("pending"),
-      v.literal("expired"),
+      v.literal('active'),
+      v.literal('pending'),
+      v.literal('expired'),
     ),
     createdAt: v.string(),
     activatedAt: v.optional(v.string()),
@@ -41,9 +41,9 @@ export default defineSchema({
     pin: v.optional(v.string()),
     boundToken: v.optional(v.string()),
   })
-    .index("by_creatorEmail", ["creatorEmail"])
-    .index("by_shortCode", ["shortCode"])
-    .index("by_status", ["status"]),
+    .index('by_creatorEmail', ['creatorEmail'])
+    .index('by_shortCode', ['shortCode'])
+    .index('by_status', ['status']),
 
   // ─── Public "Vitrina" share links ────────────────────────────────
   //
@@ -57,14 +57,14 @@ export default defineSchema({
   vitrinas: defineTable({
     token: v.string(),
     itemIds: v.array(v.float64()),
-    currency: v.union(v.literal("COP"), v.literal("USD")),
+    currency: v.union(v.literal('COP'), v.literal('USD')),
     multiplier: v.float64(),
     senderSlug: v.optional(v.string()),
     createdAt: v.string(),
     // Verified Google email of the staff member who minted the link (audit).
     // Set by the /api/vitrina proxy after it verifies the caller's Google token.
     createdByEmail: v.optional(v.string()),
-  }).index("by_token", ["token"]),
+  }).index('by_token', ['token']),
 
   // ─── Vitrina → GHL selection audit trail ─────────────────────────
   //
@@ -79,7 +79,7 @@ export default defineSchema({
     ghlContactId: v.string(),
     sku: v.string(),
     selectedAt: v.string(),
-  }).index("by_ghlContactId", ["ghlContactId"]),
+  }).index('by_ghlContactId', ['ghlContactId']),
 
   productViews: defineTable({
     timestamp: v.string(),
@@ -95,9 +95,9 @@ export default defineSchema({
     userRole: v.optional(v.string()),
     inviterName: v.optional(v.string()),
   })
-    .index("by_itemId", ["itemId"])
-    .index("by_inviterName", ["inviterName"])
-    .index("by_userEmail", ["userEmail"]),
+    .index('by_itemId', ['itemId'])
+    .index('by_inviterName', ['inviterName'])
+    .index('by_userEmail', ['userEmail']),
 
   // ─── Admin Product Management ────────────────────────────────────
   //
@@ -150,15 +150,15 @@ export default defineSchema({
     // `1mghR6...!INVENTARIO Tierra.Madre` validating on pull without a
     // migration pass. Mirror in `src/data/vocabularies.ts#PRODUCT_ESTADOS`.
     estado: v.union(
-      v.literal("DISPONIBLE"),
-      v.literal("VENDIDA"),
-      v.literal("ASESOR"),
-      v.literal("Retornado"),
-      v.literal("ESMEREOGENESIS"),
-      v.literal("ESMERO"),
-      v.literal("DISPONIBLE ADOPTADA"),
-      v.literal("LOTE X CT"),
-      v.literal(""),
+      v.literal('DISPONIBLE'),
+      v.literal('VENDIDA'),
+      v.literal('ASESOR'),
+      v.literal('Retornado'),
+      v.literal('ESMEREOGENESIS'),
+      v.literal('ESMERO'),
+      v.literal('DISPONIBLE ADOPTADA'),
+      v.literal('LOTE X CT'),
+      v.literal(''),
     ),
     qr: v.optional(v.string()),
     coleccion: v.optional(v.string()),
@@ -212,26 +212,26 @@ export default defineSchema({
     lastPushedAt: v.optional(v.string()),
     /** "synced" = mirror matches sheet | "pending" = local edit not yet written | "error" = push failed */
     syncStatus: v.union(
-      v.literal("synced"),
-      v.literal("pending"),
-      v.literal("error"),
+      v.literal('synced'),
+      v.literal('pending'),
+      v.literal('error'),
     ),
     /** Last sync error message (if syncStatus === "error") */
     syncError: v.optional(v.string()),
     /** Legacy hash from older sync writer — kept optional so existing docs validate. */
     fieldsHash: v.optional(v.string()),
   })
-    .index("by_itemId", ["itemId"])
-    .index("by_rowIndex", ["rowIndex"])
-    .index("by_estado", ["estado"])
-    .index("by_syncStatus", ["syncStatus"])
-    .index("by_loteId", ["loteId"])
+    .index('by_itemId', ['itemId'])
+    .index('by_rowIndex', ['rowIndex'])
+    .index('by_estado', ['estado'])
+    .index('by_syncStatus', ['syncStatus'])
+    .index('by_loteId', ['loteId'])
     // Powers the PUBLIC, always-on `products.publishedCatalog` query. Indexing
     // `mostrarEnCatalogo` lets that query scan ONLY published rows instead of
     // the whole table — which also means cron/admin writes to unpublished rows
     // (the overwhelming majority) no longer invalidate every catalog visitor's
     // reactive subscription. Both a bandwidth and an invalidation-frequency win.
-    .index("by_mostrarEnCatalogo", ["mostrarEnCatalogo"]),
+    .index('by_mostrarEnCatalogo', ['mostrarEnCatalogo']),
 
   productEdits: defineTable({
     /** Item being edited */
@@ -251,15 +251,15 @@ export default defineSchema({
     ),
     /** "saved" once Sheets push succeeded, "pending" before */
     status: v.union(
-      v.literal("saved"),
-      v.literal("pending"),
-      v.literal("failed"),
+      v.literal('saved'),
+      v.literal('pending'),
+      v.literal('failed'),
     ),
     /** Failure reason if status === "failed" */
     error: v.optional(v.string()),
   })
-    .index("by_itemId", ["itemId"])
-    .index("by_editor", ["editorEmail"]),
+    .index('by_itemId', ['itemId'])
+    .index('by_editor', ['editorEmail']),
 
   productLocks: defineTable({
     /** Item being held open in the drawer */
@@ -270,7 +270,7 @@ export default defineSchema({
     /** ISO timestamp; lock auto-expires after 5 minutes */
     claimedAt: v.string(),
     expiresAt: v.string(),
-  }).index("by_itemId", ["itemId"]),
+  }).index('by_itemId', ['itemId']),
 
   /**
    * Kardex de movimientos con asesores — historial de "entrega" /
@@ -290,14 +290,33 @@ export default defineSchema({
     itemId: v.string(),
     /** Snapshot of the product name at movement time (survives renames). */
     itemNombre: v.optional(v.string()),
-    tipo: v.union(v.literal("entrega"), v.literal("devolucion")),
+    tipo: v.union(v.literal('entrega'), v.literal('devolucion')),
     asesorNombre: v.string(),
-    /** id from the asesores directory (get-asesores), when resolvable. */
+    /** id from the asesores directory (get-asesores), when resolvable. Left
+     *  empty for an external recipient (a comercializador with no system
+     *  account, e.g. a consignment dealer) — `asesorNombre` is free text and
+     *  already covers that case without a schema change. */
     asesorId: v.optional(v.string()),
     cantidad: v.optional(v.number()),
+    /** Item price at the moment of the movement (COP) — populates the
+     *  per-item line + total on the printed/PDF comprobante. */
+    precio: v.optional(v.number()),
     /** ISO date (yyyy-mm-dd) the movement applies to — operator-editable. */
     fecha: v.string(),
     notas: v.optional(v.string()),
+    /** Free-text condition of the handoff, shared across every item in the
+     *  same `kardexEventId` (e.g. "Devolución obligatoria si no se vende"). */
+    condicion: v.optional(v.string()),
+    /** Groups every item movement created from ONE multi-item entrega/
+     *  devolución event (one form submission, one printed comprobante) —
+     *  same convention as a physical hoja manuscrita covering several
+     *  items in one signature. Absent on movements created before batching
+     *  existed (each was its own implicit one-item event). */
+    kardexEventId: v.optional(v.string()),
+    /** Person who physically handed over / received back the item(s) —
+     *  may differ from `registradoPor*` (whoever operates the digital
+     *  form). Optional: falls back to registradoPorNombre when absent. */
+    entregadoPorNombre: v.optional(v.string()),
     registradoPorEmail: v.string(),
     registradoPorNombre: v.optional(v.string()),
     /** productInventory.estado snapshot before/after — lets the ledger read
@@ -308,10 +327,11 @@ export default defineSchema({
     movimientoId: v.string(),
     ...syncFields,
   })
-    .index("by_itemId", ["itemId"])
-    .index("by_asesorNombre", ["asesorNombre"])
-    .index("by_rowIndex", ["rowIndex"])
-    .index("by_syncStatus", ["syncStatus"]),
+    .index('by_itemId', ['itemId'])
+    .index('by_asesorNombre', ['asesorNombre'])
+    .index('by_kardexEventId', ['kardexEventId'])
+    .index('by_rowIndex', ['rowIndex'])
+    .index('by_syncStatus', ['syncStatus']),
 
   // ─── Fotosíntesis v2 · Captura administrativa ────────────────────
   //
@@ -327,7 +347,7 @@ export default defineSchema({
   sequences: defineTable({
     name: v.string(),
     nextValue: v.number(),
-  }).index("by_name", ["name"]),
+  }).index('by_name', ['name']),
 
   // ─── Idempotency · Commit tokens ─────────────────────────────────
   //
@@ -344,7 +364,7 @@ export default defineSchema({
     primaryId: v.string(), // the _id of the row created (existence-checked on replay)
     result: v.string(), // JSON.stringify of the mutation's return value
     createdAt: v.string(),
-  }).index("by_token", ["token"]),
+  }).index('by_token', ['token']),
 
   providers: defineTable({
     nombreORazonSocial: v.string(),
@@ -367,10 +387,10 @@ export default defineSchema({
     pendingPreviousIdValue: v.optional(v.string()),
     ...syncFields,
   })
-    .index("by_nit", ["nit"])
-    .index("by_nombre", ["nombreORazonSocial"])
-    .index("by_rowIndex", ["rowIndex"])
-    .index("by_syncStatus", ["syncStatus"]),
+    .index('by_nit', ['nit'])
+    .index('by_nombre', ['nombreORazonSocial'])
+    .index('by_rowIndex', ['rowIndex'])
+    .index('by_syncStatus', ['syncStatus']),
 
   lots: defineTable({
     /**
@@ -386,7 +406,7 @@ export default defineSchema({
      * (the loteId prefix) can be saved via the capture UI's "Otra…" write-in.
      */
     sede: v.optional(v.string()),
-    providerId: v.id("providers"),
+    providerId: v.id('providers'),
     fechaRecepcion: v.string(),
     renombreLote: v.optional(v.string()),
     tratamiento: v.optional(v.string()),
@@ -408,10 +428,10 @@ export default defineSchema({
     urlFactura: v.optional(v.string()),
     notas: v.optional(v.string()),
     estado: v.union(
-      v.literal("abierto"),
-      v.literal("cerrado"),
-      v.literal("publicado"),
-      v.literal("cancelado"),
+      v.literal('abierto'),
+      v.literal('cerrado'),
+      v.literal('publicado'),
+      v.literal('cancelado'),
     ),
     // Catalog grouping (Convex-only, NOT synced to Sheets — see COLUMN_MAPS.lots).
     // When `mostrarComoLote` is true and the lot is `publicado`, the customer
@@ -421,11 +441,11 @@ export default defineSchema({
     mostrarComoLote: v.optional(v.boolean()),
     ...syncFields,
   })
-    .index("by_loteId", ["loteId"])
-    .index("by_provider", ["providerId"])
-    .index("by_estado", ["estado"])
-    .index("by_rowIndex", ["rowIndex"])
-    .index("by_syncStatus", ["syncStatus"]),
+    .index('by_loteId', ['loteId'])
+    .index('by_provider', ['providerId'])
+    .index('by_estado', ['estado'])
+    .index('by_rowIndex', ['rowIndex'])
+    .index('by_syncStatus', ['syncStatus']),
 
   /** Convex-only join between lots and productInventory. Not synced to Sheets. */
   lotItems: defineTable({
@@ -435,8 +455,8 @@ export default defineSchema({
     costoBaseCOP: v.number(),
     ordenEnLote: v.number(),
   })
-    .index("by_loteId", ["loteId"])
-    .index("by_itemId", ["itemId"]),
+    .index('by_loteId', ['loteId'])
+    .index('by_itemId', ['itemId']),
 
   clients: defineTable({
     nombre: v.string(),
@@ -461,7 +481,7 @@ export default defineSchema({
     // here — golden rule #6, one writer per field); `totalCompradoCOP` is
     // Convex-owned and incremented when a sale is confirmed/paid.
     ghlContactId: v.optional(v.string()),
-    ambassadorId: v.optional(v.id("ambassadors")),
+    ambassadorId: v.optional(v.id('ambassadors')),
     leadScore: v.optional(v.number()),
     totalCompradoCOP: v.optional(v.number()),
     ultimaCompraFecha: v.optional(v.string()),
@@ -473,15 +493,15 @@ export default defineSchema({
     tags: v.optional(v.array(v.string())),
     ...syncFields,
   })
-    .index("by_nit", ["nit"])
-    .index("by_email", ["email"])
-    .index("by_nombre", ["nombre"])
-    .index("by_rowIndex", ["rowIndex"])
-    .index("by_syncStatus", ["syncStatus"])
+    .index('by_nit', ['nit'])
+    .index('by_email', ['email'])
+    .index('by_nombre', ['nombre'])
+    .index('by_rowIndex', ['rowIndex'])
+    .index('by_syncStatus', ['syncStatus'])
     // GHL webhook fan-out resolves a contact by its GoHighLevel id; the bot
     // matches inbound leads by phone. Both are point lookups, so index them.
-    .index("by_ghlContactId", ["ghlContactId"])
-    .index("by_telefono", ["telefono"]),
+    .index('by_ghlContactId', ['ghlContactId'])
+    .index('by_telefono', ['telefono']),
 
   // ─── GHL commerce · Ambassadors (asesores / embajadores) ─────────
   //
@@ -497,27 +517,27 @@ export default defineSchema({
     celular: v.optional(v.string()),
     instagramHandle: v.optional(v.string()),
     nivel: v.union(
-      v.literal("bronce"),
-      v.literal("plata"),
-      v.literal("oro"),
-      v.literal("diamante"),
+      v.literal('bronce'),
+      v.literal('plata'),
+      v.literal('oro'),
+      v.literal('diamante'),
     ),
     comisionPercent: v.number(),
     score: v.number(),
     status: v.union(
-      v.literal("invited"),
-      v.literal("active"),
-      v.literal("paused"),
-      v.literal("suspended"),
-      v.literal("archived"),
+      v.literal('invited'),
+      v.literal('active'),
+      v.literal('paused'),
+      v.literal('suspended'),
+      v.literal('archived'),
     ),
-    referidoPor: v.optional(v.id("ambassadors")),
+    referidoPor: v.optional(v.id('ambassadors')),
     ghlContactId: v.optional(v.string()),
     createdAt: v.string(),
   })
-    .index("by_slug", ["slug"])
-    .index("by_email", ["email"])
-    .index("by_status", ["status"]),
+    .index('by_slug', ['slug'])
+    .index('by_email', ['email'])
+    .index('by_status', ['status']),
 
   // ─── GHL commerce · Commissions ledger ───────────────────────────
   //
@@ -529,19 +549,19 @@ export default defineSchema({
   commissions: defineTable({
     /** FK → sales.saleId (string natural key, mirrors sales.itemIds convention). */
     saleId: v.string(),
-    ambassadorId: v.id("ambassadors"),
+    ambassadorId: v.id('ambassadors'),
     amountCOP: v.number(),
     percentApplied: v.number(),
     status: v.union(
-      v.literal("pending"),
-      v.literal("approved"),
-      v.literal("paid"),
-      v.literal("cancelled"),
+      v.literal('pending'),
+      v.literal('approved'),
+      v.literal('paid'),
+      v.literal('cancelled'),
     ),
     createdAt: v.string(),
   })
-    .index("by_saleId", ["saleId"])
-    .index("by_ambassador", ["ambassadorId"]),
+    .index('by_saleId', ['saleId'])
+    .index('by_ambassador', ['ambassadorId']),
 
   sales: defineTable({
     /**
@@ -559,7 +579,7 @@ export default defineSchema({
     fechaVenta: v.string(),
     /** itemIds reference productInventory.itemId (string, not Convex id). */
     itemIds: v.array(v.string()),
-    clientId: v.id("clients"),
+    clientId: v.id('clients'),
     precioAcordadoCOP: v.number(),
     descuentoCOP: v.optional(v.number()),
     totalCOP: v.number(),
@@ -595,7 +615,7 @@ export default defineSchema({
         v.object({
           itemId: v.string(),
           precioCOP: v.number(),
-          tier: v.union(v.literal("embajador"), v.literal("final")),
+          tier: v.union(v.literal('embajador'), v.literal('final')),
         }),
       ),
     ),
@@ -611,9 +631,9 @@ export default defineSchema({
     carnetUrl: v.optional(v.string()),
     certificadoUrl: v.optional(v.string()),
     estado: v.union(
-      v.literal("reservada"),
-      v.literal("confirmada"),
-      v.literal("cancelada"),
+      v.literal('reservada'),
+      v.literal('confirmada'),
+      v.literal('cancelada'),
     ),
     // Slice 3 · Cancellation audit trail. Populated by `sales.cancel`. Kept
     // on Convex only — Sheets sync of these fields is a follow-up that needs
@@ -628,7 +648,7 @@ export default defineSchema({
     // to `confirmada` (= paid) by the mp-webhook → ghl.markOrderPaid path. The
     // `mp*` fields snapshot the Mercado Pago preference/payment; `external_reference`
     // on the MP preference is this row's `saleId`.
-    ambassadorId: v.optional(v.id("ambassadors")),
+    ambassadorId: v.optional(v.id('ambassadors')),
     mpPreferenceId: v.optional(v.string()),
     mpPaymentId: v.optional(v.string()),
     mpStatus: v.optional(v.string()),
@@ -645,11 +665,11 @@ export default defineSchema({
     pendingGhlSync: v.optional(v.boolean()),
     ...syncFields,
   })
-    .index("by_saleId", ["saleId"])
-    .index("by_client", ["clientId"])
-    .index("by_estado", ["estado"])
-    .index("by_rowIndex", ["rowIndex"])
-    .index("by_syncStatus", ["syncStatus"]),
+    .index('by_saleId', ['saleId'])
+    .index('by_client', ['clientId'])
+    .index('by_estado', ['estado'])
+    .index('by_rowIndex', ['rowIndex'])
+    .index('by_syncStatus', ['syncStatus']),
 
   // ─── Fotosíntesis · Sub-lotes (sale-bundles) ─────────────────────
   //
@@ -675,7 +695,7 @@ export default defineSchema({
     /** Derived: Σ member productInventory.costoBaseCOP. Never user-set (BR-S3). */
     totalCostoCOP: v.number(),
     notas: v.optional(v.string()),
-    estado: v.union(v.literal("activa"), v.literal("archivada")),
+    estado: v.union(v.literal('activa'), v.literal('archivada')),
     createdAt: v.string(),
     // Catalog grouping (Convex-only, NOT synced to Sheets — see COLUMN_MAPS.subLotes).
     // When `mostrarComoLote` is true and the sublote is `activa`, the customer
@@ -684,17 +704,17 @@ export default defineSchema({
     mostrarComoLote: v.optional(v.boolean()),
     ...syncFields,
   })
-    .index("by_subLoteId", ["subLoteId"])
-    .index("by_parentLote", ["parentLoteId"])
-    .index("by_estado", ["estado"])
-    .index("by_rowIndex", ["rowIndex"])
-    .index("by_syncStatus", ["syncStatus"]),
+    .index('by_subLoteId', ['subLoteId'])
+    .index('by_parentLote', ['parentLoteId'])
+    .index('by_estado', ['estado'])
+    .index('by_rowIndex', ['rowIndex'])
+    .index('by_syncStatus', ['syncStatus']),
 
   /** Materials catalog populated inline by the inventory wizard (joyas). */
   materials: defineTable({
     name: v.string(),
     type: v.optional(v.string()),
-  }).index("by_name", ["name"]),
+  }).index('by_name', ['name']),
 
   // ─── Inventory stats singleton ───────────────────────────────────
   //
@@ -742,6 +762,6 @@ export default defineSchema({
     createdAt: v.string(),
     updatedAt: v.string(),
   })
-    .index("by_threadId", ["threadId"])
-    .index("by_userEmail", ["userEmail"]),
+    .index('by_threadId', ['threadId'])
+    .index('by_userEmail', ['userEmail']),
 });

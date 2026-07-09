@@ -46,13 +46,34 @@ import { requireAccessLevel } from './_lib/authz';
 
 const registerArgs = {
   itemId: v.string(),
+  /** Recipient name — an internal asesor OR an external comercializador
+   *  (e.g. a consignment dealer with no system account). Free text by
+   *  design: this ledger doesn't require the recipient to exist in any
+   *  directory. */
   asesorNombre: v.string(),
+  /** id from the asesores directory (get-asesores), when the recipient
+   *  resolves to one. Left empty for external recipients. */
   asesorId: v.optional(v.string()),
   cantidad: v.optional(v.number()),
+  /** Item price at movement time (COP) — feeds the comprobante total. */
+  precio: v.optional(v.number()),
   /** ISO date (yyyy-mm-dd); defaults to "today" (server clock) when omitted. */
   fecha: v.optional(v.string()),
   notas: v.optional(v.string()),
+  /** Shared condition text for a multi-item event, e.g. "Devolución
+   *  obligatoria si no se vende". */
+  condicion: v.optional(v.string()),
+  /** Person who physically handed over / received the item(s), if
+   *  different from whoever operates the digital form. */
+  entregadoPorNombre: v.optional(v.string()),
 };
+
+/** One kardex event groups every item movement created from a single
+ *  multi-item form submission — mirrors a hoja manuscrita with one
+ *  signature covering several items. */
+function newKardexEventId(): string {
+  return `KDX-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
 function todayISODate(): string {
   return new Date().toISOString().slice(0, 10);
@@ -106,6 +127,7 @@ export const listRecent = query({
 export const _registerHandoff = internalMutation({
   args: {
     ...registerArgs,
+    kardexEventId: v.optional(v.string()),
     editorEmail: v.string(),
     editorName: v.optional(v.string()),
   },
@@ -116,8 +138,12 @@ export const _registerHandoff = internalMutation({
       asesorNombre,
       asesorId,
       cantidad,
+      precio,
       fecha,
       notas,
+      condicion,
+      entregadoPorNombre,
+      kardexEventId,
       editorEmail,
       editorName,
     },
@@ -188,8 +214,12 @@ export const _registerHandoff = internalMutation({
       asesorNombre: trimmedAsesor,
       asesorId,
       cantidad,
+      precio,
       fecha: fecha ?? todayISODate(),
       notas,
+      condicion,
+      entregadoPorNombre,
+      kardexEventId,
       registradoPorEmail: editorEmail,
       registradoPorNombre: editorName,
       estadoAnterior,
@@ -211,6 +241,7 @@ export const _registerHandoff = internalMutation({
 export const _registerReturn = internalMutation({
   args: {
     ...registerArgs,
+    kardexEventId: v.optional(v.string()),
     editorEmail: v.string(),
     editorName: v.optional(v.string()),
   },
@@ -221,8 +252,12 @@ export const _registerReturn = internalMutation({
       asesorNombre,
       asesorId,
       cantidad,
+      precio,
       fecha,
       notas,
+      condicion,
+      entregadoPorNombre,
+      kardexEventId,
       editorEmail,
       editorName,
     },
@@ -287,8 +322,12 @@ export const _registerReturn = internalMutation({
       asesorNombre: resolvedAsesor,
       asesorId,
       cantidad,
+      precio,
       fecha: fecha ?? todayISODate(),
       notas,
+      condicion,
+      entregadoPorNombre,
+      kardexEventId,
       registradoPorEmail: editorEmail,
       registradoPorNombre: editorName,
       estadoAnterior,
@@ -338,6 +377,120 @@ export const registerReturn = action({
       editorEmail: caller.email,
       editorName: caller.name,
     });
+  },
+});
+
+/** One item within a multi-item entrega/devolución — the shared recipient,
+ *  date, condición and entregadoPor live on the batch call, not per item. */
+const batchItemArgs = v.object({
+  itemId: v.string(),
+  cantidad: v.optional(v.number()),
+  precio: v.optional(v.number()),
+  notas: v.optional(v.string()),
+});
+
+const batchSharedArgs = {
+  idToken: v.string(),
+  asesorNombre: v.string(),
+  asesorId: v.optional(v.string()),
+  fecha: v.optional(v.string()),
+  condicion: v.optional(v.string()),
+  entregadoPorNombre: v.optional(v.string()),
+  items: v.array(batchItemArgs),
+};
+
+type BatchResult = {
+  kardexEventId: string;
+  ok: Array<{
+    itemId: string;
+    movementId: Id<'asesorMovements'>;
+    movimientoId: string;
+  }>;
+  failed: Array<{ itemId: string; error: string }>;
+};
+
+/**
+ * Register one multi-item entrega (one form, one recipient, one printed
+ * comprobante, N items) as N linked `asesorMovements` rows sharing a
+ * `kardexEventId`. Items are processed sequentially (not parallel) so each
+ * mutation's `maxRow` scan sees the previous insert — matches the existing
+ * single-item row-index convention. A per-item failure (e.g. an item that's
+ * already with another asesor) does NOT abort the batch — it's collected in
+ * `failed` so the operator can see exactly which items went through.
+ */
+export const registerHandoffBatch = action({
+  args: batchSharedArgs,
+  handler: async (ctx, { idToken, items, ...shared }): Promise<BatchResult> => {
+    const caller = await requireAccessLevel(idToken, ['admin']);
+    const kardexEventId = newKardexEventId();
+    const ok: BatchResult['ok'] = [];
+    const failed: BatchResult['failed'] = [];
+    for (const item of items) {
+      try {
+        const result = await ctx.runMutation(
+          internal.asesorMovements._registerHandoff,
+          {
+            ...shared,
+            ...item,
+            kardexEventId,
+            editorEmail: caller.email,
+            editorName: caller.name,
+          },
+        );
+        ok.push({ itemId: item.itemId, ...result });
+      } catch (e) {
+        failed.push({
+          itemId: item.itemId,
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+    }
+    return { kardexEventId, ok, failed };
+  },
+});
+
+/** Return counterpart of {@link registerHandoffBatch} — same semantics. */
+export const registerReturnBatch = action({
+  args: batchSharedArgs,
+  handler: async (ctx, { idToken, items, ...shared }): Promise<BatchResult> => {
+    const caller = await requireAccessLevel(idToken, ['admin']);
+    const kardexEventId = newKardexEventId();
+    const ok: BatchResult['ok'] = [];
+    const failed: BatchResult['failed'] = [];
+    for (const item of items) {
+      try {
+        const result = await ctx.runMutation(
+          internal.asesorMovements._registerReturn,
+          {
+            ...shared,
+            ...item,
+            kardexEventId,
+            editorEmail: caller.email,
+            editorName: caller.name,
+          },
+        );
+        ok.push({ itemId: item.itemId, ...result });
+      } catch (e) {
+        failed.push({
+          itemId: item.itemId,
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+    }
+    return { kardexEventId, ok, failed };
+  },
+});
+
+/** All movements from one multi-item event — powers the PDF comprobante. */
+export const listByKardexEventId = query({
+  args: { kardexEventId: v.string() },
+  handler: async (ctx, { kardexEventId }) => {
+    return await ctx.db
+      .query('asesorMovements')
+      .withIndex('by_kardexEventId', (q) =>
+        q.eq('kardexEventId', kardexEventId),
+      )
+      .collect();
   },
 });
 

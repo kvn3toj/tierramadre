@@ -18,12 +18,12 @@
  */
 
 export type FotoTable =
-  | "providers"
-  | "lots"
-  | "clients"
-  | "sales"
-  | "subLotes"
-  | "movimientosAsesor";
+  | 'providers'
+  | 'lots'
+  | 'clients'
+  | 'sales'
+  | 'subLotes'
+  | 'movimientosAsesor';
 
 export interface TableConfig {
   sheetTabPatterns: string[];
@@ -34,130 +34,138 @@ export interface TableConfig {
 
 export const TABLE_CONFIGS: Record<FotoTable, TableConfig> = {
   providers: {
-    sheetTabPatterns: ["proveedores", "providers"],
+    sheetTabPatterns: ['proveedores', 'providers'],
     columns: [
-      "nombreORazonSocial",
-      "nit",
-      "cedula",
-      "direccion",
-      "telefono",
-      "email",
-      "tipo",
-      "notas",
+      'nombreORazonSocial',
+      'nit',
+      'cedula',
+      'direccion',
+      'telefono',
+      'email',
+      'tipo',
+      'notas',
     ],
-    idColumn: "nombreORazonSocial",
-    lastColumnLetter: "H",
+    idColumn: 'nombreORazonSocial',
+    lastColumnLetter: 'H',
   },
   lots: {
-    sheetTabPatterns: ["lotes", "lots"],
+    sheetTabPatterns: ['lotes', 'lots'],
     columns: [
-      "loteId",
-      "providerNombre",
-      "fechaRecepcion",
-      "pesoTotalQuilates",
-      "costoTotalCOP",
-      "unidadesDeclaradas",
-      "formaPago",
-      "metodoContado",
-      "fechaVencimiento",
-      "numeroCuotas",
-      "numeroFactura",
-      "urlFactura",
-      "notas",
-      "estado", // N
+      'loteId',
+      'providerNombre',
+      'fechaRecepcion',
+      'pesoTotalQuilates',
+      'costoTotalCOP',
+      'unidadesDeclaradas',
+      'formaPago',
+      'metodoContado',
+      'fechaVencimiento',
+      'numeroCuotas',
+      'numeroFactura',
+      'urlFactura',
+      'notas',
+      'estado', // N
       // ── Fotosíntesis form fields (append-only, O onward) ──
-      "renombreLote", // O
-      "tratamiento", // P
-      "mina", // Q
-      "sede", // R
-      "operadorNombre", // S
-      "operadorRol", // T
+      'renombreLote', // O
+      'tratamiento', // P
+      'mina', // Q
+      'sede', // R
+      'operadorNombre', // S
+      'operadorRol', // T
     ],
-    idColumn: "loteId",
-    lastColumnLetter: "T",
+    idColumn: 'loteId',
+    lastColumnLetter: 'T',
   },
   clients: {
-    sheetTabPatterns: ["clientes", "clients"],
+    sheetTabPatterns: ['clientes', 'clients'],
     columns: [
-      "nombre",
-      "nit",
-      "cedula",
-      "direccion",
-      "telefono",
-      "email",
-      "tipo",
-      "asesorId",
+      'nombre',
+      'nit',
+      'cedula',
+      'direccion',
+      'telefono',
+      'email',
+      'tipo',
+      'asesorId',
     ],
-    idColumn: "nombre",
-    lastColumnLetter: "H",
+    idColumn: 'nombre',
+    lastColumnLetter: 'H',
   },
   sales: {
-    sheetTabPatterns: ["ventas", "sales"],
+    sheetTabPatterns: ['ventas', 'sales'],
     columns: [
-      "saleId",
-      "fechaVenta",
-      "itemIdsJoined",
-      "clientNombre",
-      "precioAcordadoCOP",
-      "descuentoCOP",
-      "totalCOP",
-      "comisionCOP",
-      "formaPago",
-      "metodoContado",
-      "fechaVencimiento",
-      "numeroCuotas",
-      "carnetUrl",
-      "certificadoUrl",
-      "estado",
+      'saleId',
+      'fechaVenta',
+      'itemIdsJoined',
+      'clientNombre',
+      'precioAcordadoCOP',
+      'descuentoCOP',
+      'totalCOP',
+      'comisionCOP',
+      'formaPago',
+      'metodoContado',
+      'fechaVencimiento',
+      'numeroCuotas',
+      'carnetUrl',
+      'certificadoUrl',
+      'estado',
     ],
-    idColumn: "saleId",
-    lastColumnLetter: "O",
+    idColumn: 'saleId',
+    lastColumnLetter: 'O',
   },
   subLotes: {
-    sheetTabPatterns: ["sublotes", "sub-lotes", "sublotes (sale-bundles)"],
+    sheetTabPatterns: ['sublotes', 'sub-lotes', 'sublotes (sale-bundles)'],
     columns: [
-      "subLoteId",
-      "parentLoteId",
-      "sede",
-      "nombre",
-      "itemIdsJoined",
-      "unidades",
-      "totalCostoCOP",
-      "estado",
-      "notas",
-      "createdAt",
+      'subLoteId',
+      'parentLoteId',
+      'sede',
+      'nombre',
+      'itemIdsJoined',
+      'unidades',
+      'totalCostoCOP',
+      'estado',
+      'notas',
+      'createdAt',
     ],
-    idColumn: "subLoteId",
-    lastColumnLetter: "J",
+    idColumn: 'subLoteId',
+    lastColumnLetter: 'J',
   },
   // Kardex de movimientos con asesores — append-only (see convex/asesorMovements.ts).
   movimientosAsesor: {
-    sheetTabPatterns: ["movimientos asesor", "movimientos", "movimientosasesor"],
-    columns: [
-      "movimientoId",
-      "fecha",
-      "tipo",
-      "itemId",
-      "itemNombre",
-      "asesorNombre",
-      "cantidad",
-      "estadoAnterior",
-      "estadoNuevo",
-      "registradoPor",
-      "notas",
+    sheetTabPatterns: [
+      'movimientos asesor',
+      'movimientos',
+      'movimientosasesor',
     ],
-    idColumn: "movimientoId",
-    lastColumnLetter: "K",
+    columns: [
+      'movimientoId',
+      'fecha',
+      'tipo',
+      'itemId',
+      'itemNombre',
+      'asesorNombre',
+      'cantidad',
+      'precio',
+      'estadoAnterior',
+      'estadoNuevo',
+      'registradoPor',
+      'entregadoPorNombre',
+      'condicion',
+      'kardexEventId',
+      'notas',
+    ],
+    idColumn: 'movimientoId',
+    lastColumnLetter: 'O',
   },
 };
 
 export function isFotoTable(x: unknown): x is FotoTable {
   return (
-    x === "providers" ||
-    x === "lots" ||
-    x === "clients" ||
-    x === "sales" ||
-    x === "subLotes" ||
-    x === "movimientosAsesor"
+    x === 'providers' ||
+    x === 'lots' ||
+    x === 'clients' ||
+    x === 'sales' ||
+    x === 'subLotes' ||
+    x === 'movimientosAsesor'
   );
 }
