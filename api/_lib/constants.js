@@ -4,6 +4,17 @@
  * Centralized configuration to avoid duplication across API files.
  */
 
+// Some Vercel env values were pasted with a literal `\n` (backslash-n) or a
+// real trailing newline baked in — strip both so IDs used in API URLs stay valid.
+function cleanEnvId(value) {
+  return (
+    value
+      ?.replace(/\\n/g, '')
+      .replace(/[\r\n]/g, '')
+      .trim() || ''
+  );
+}
+
 // Google Sheets Configuration
 //
 // Legacy/live catalog (productInventory + PRICING + treasure browser).
@@ -14,14 +25,18 @@ export const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
 // Created 2026-05-21 from GENESIS data; populated by Maritza's ingreso flow.
 // Override via env if you want to point at a different SOT (e.g. staging).
 export const FOTOSINTESIS_SPREADSHEET_ID =
-  process.env.FOTOSINTESIS_SPREADSHEET_ID?.trim() ||
+  cleanEnvId(process.env.FOTOSINTESIS_SPREADSHEET_ID) ||
   '18w0DcP_4CO-le9_vt_UPGCHXAVXkQ5sugLF4r_o2bVM';
 
 // Dedicated Feedback Spreadsheet (separate from inventory to avoid overload)
-export const FEEDBACK_SPREADSHEET_ID = process.env.FEEDBACK_SPREADSHEET_ID?.trim() || '1Nl2gxfZzWy4lUv_C-9xTt90MzFDIgHLvWtWtDRNzJaU';
+export const FEEDBACK_SPREADSHEET_ID =
+  cleanEnvId(process.env.FEEDBACK_SPREADSHEET_ID) ||
+  '1Nl2gxfZzWy4lUv_C-9xTt90MzFDIgHLvWtWtDRNzJaU';
 
 // Dedicated App Spreadsheet for all writable data (separate from read-only inventory)
-export const APP_SPREADSHEET_ID = process.env.APP_SPREADSHEET_ID?.trim() || '1DuOhuPcHFBhliGJG_imKWA_Yyx4dAmvmmKr4Dp2TXoM';
+export const APP_SPREADSHEET_ID =
+  cleanEnvId(process.env.APP_SPREADSHEET_ID) ||
+  '1DuOhuPcHFBhliGJG_imKWA_Yyx4dAmvmmKr4Dp2TXoM';
 
 // Sheet Names
 export const SHEETS = {
@@ -69,8 +84,7 @@ export const CACHE = {
   CATALOG: 's-maxage=3600, max-age=300, stale-while-revalidate=7200',
   // Images: 1h browser + 24h CDN; long SWR at edge so Vercel can serve stale while revalidating Drive
   // (Drive fileIds are immutable — new uploads get new IDs)
-  IMAGES:
-    'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400',
+  IMAGES: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400',
 };
 
 // Invitation Settings — no time limit on guest access
