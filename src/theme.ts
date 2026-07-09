@@ -272,9 +272,19 @@ export const theme = createTheme({
     MuiCssBaseline: {
       styleOverrides: {
         '*': {
-          // iOS-style smooth scrolling
-          scrollBehavior: 'smooth',
           WebkitTapHighlightColor: 'transparent',
+        },
+        // Smooth scrolling is scoped to the document root instead of every
+        // element. Applying `scroll-behavior: smooth` to `*` forced animated
+        // scrolling on every nested scroller (the catalog grid, the bottom
+        // sheets) and fought programmatic jumps such as scroll restoration,
+        // which had to explicitly bypass it. The app shell's <main> still opts
+        // in to smooth scrolling on its own.
+        html: {
+          scrollBehavior: 'smooth',
+          '@media (prefers-reduced-motion: reduce)': {
+            scrollBehavior: 'auto',
+          },
         },
         body: {
           // iOS overscroll behavior

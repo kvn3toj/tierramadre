@@ -545,8 +545,19 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
           ...sheetStyles,
           borderTopLeftRadius: radius.xl,
           borderTopRightRadius: radius.xl,
-          maxHeight: '85vh',
+          // Dynamic viewport height so the sheet never runs past the visible
+          // area on iOS Safari. With `85vh` the address bar was counted in the
+          // height, pushing the bottom rows (Settings / Feedback / price
+          // slider) below the fold where overflow scroll could not reach them.
+          maxHeight: '85dvh',
+          '@supports not (height: 100dvh)': {
+            maxHeight: '85vh',
+          },
           overflowY: 'auto',
+          // Keep scroll momentum inside the sheet and stop it chaining to the
+          // page behind it when it hits the top/bottom.
+          overscrollBehavior: 'contain',
+          WebkitOverflowScrolling: 'touch',
           transform: open ? 'translateY(0)' : 'translateY(100%)',
           visibility: open ? 'visible' : 'hidden',
           pointerEvents: open ? 'auto' : 'none',

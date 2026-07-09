@@ -217,9 +217,15 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({
           borderTopLeftRadius: radius.xl,
           borderTopRightRadius: radius.xl,
           boxShadow: 'var(--shadow-lg)',
-          maxHeight: '85vh',
+          // Dynamic viewport height: on iOS `85vh` counted the address bar and
+          // hid the lowest settings rows behind the tab bar / home indicator.
+          maxHeight: '85dvh',
+          '@supports not (height: 100dvh)': {
+            maxHeight: '85vh',
+          },
           overflowY: 'auto',
           overscrollBehavior: 'contain',
+          WebkitOverflowScrolling: 'touch',
           transform: open ? 'translateY(0)' : 'translateY(100%)',
           visibility: open ? 'visible' : 'hidden',
           pointerEvents: open ? 'auto' : 'none',
