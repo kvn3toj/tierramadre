@@ -40,11 +40,11 @@
 
   /* === TYPOGRAPHY === */
   --font-display:
-    -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+    -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
   --font-text:
-    -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, monospace;
-  --font-luxury: "Playfair Display", "Libre Baskerville", Georgia, serif;
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Monaco, monospace;
+  --font-luxury: 'Playfair Display', 'Libre Baskerville', Georgia, serif;
 
   /* === MOTION === */
   --duration-fast: 200ms;
@@ -60,7 +60,7 @@
 
 /* === LIGHT THEME (Default) — Quiet Emerald === */
 :root,
-[data-theme="light"] {
+[data-theme='light'] {
   color-scheme: light;
 
   /* Surfaces (qe: bg · surface · surface-2) */
@@ -137,7 +137,7 @@
 }
 
 /* === DARK THEME — Quiet Emerald === */
-[data-theme="dark"] {
+[data-theme='dark'] {
   color-scheme: dark;
 
   /* Surfaces (qe: bg · surface · surface-2) */
@@ -229,6 +229,16 @@ html {
   overscroll-behavior: none;
 }
 
+/* Eliminate the ~300ms tap delay on interactive elements */
+button,
+a,
+[role='button'],
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
 body {
   /* Safe area support (iPhone notch, home indicator) */
   padding-top: env(safe-area-inset-top);
@@ -277,7 +287,7 @@ body {
 
 /* === DARK MODE AUTO-DETECTION — Quiet Emerald === */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme='light']) {
     color-scheme: dark;
 
     --surface-primary: #0e1110;
@@ -392,7 +402,7 @@ body {
 
     /* CRITICAL: Bottom navigation must stay fixed in PWA mode */
     /* Override any inherited transforms that could break fixed positioning */
-    nav[aria-label="Primary navigation"] {
+    nav[aria-label='Primary navigation'] {
       position: fixed !important;
       bottom: 0 !important;
       left: 0 !important;
@@ -431,7 +441,7 @@ body {
 /* Base positioning for bottom tab bar. With the fixed viewport shell */
 /* (body overflow:hidden, only <main> scrolls), document-level scrolling */
 /* no longer occurs, so the nav stays stable without aggressive overrides. */
-nav[aria-label="Primary navigation"] {
+nav[aria-label='Primary navigation'] {
   position: fixed;
   bottom: 0;
   left: 0;

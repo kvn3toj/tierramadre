@@ -47,6 +47,7 @@ import { usePriceShare } from '../../contexts/PriceShareContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import MeditationReminderSetting from '../settings/MeditationReminderSetting';
 import { UserProfileCard } from '../auth';
+import { InstallButton } from '../pwa';
 
 // =============================================================================
 // TYPES
@@ -578,6 +579,11 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({
 
           {/* Meditation Reminder */}
           <MeditationReminderSetting />
+
+          {/* Install App */}
+          <Box sx={{ mt: 2 }}>
+            <InstallButton variant="card" />
+          </Box>
         </Box>
       </Box>
     </>

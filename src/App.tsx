@@ -1047,8 +1047,6 @@ function App() {
         <BrowserRouter>
           <InvitationRouter />
           {/* FeedbackFAB moved to IOSMoreSheet - access via "Más" tab */}
-          {/* PWA disabled - service worker not generating correctly */}
-          {/* <UpdatePrompt /> */}
         </BrowserRouter>
       </AppShellProviders>
     </ChunkErrorBoundary>

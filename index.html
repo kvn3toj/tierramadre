@@ -59,21 +59,7 @@
     <meta name="twitter:image" content="https://tierramadre.app/og-image.png" />
 
     <!-- iOS PWA Meta Tags -->
-    <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="/icon-inicio-gris-180.png"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="152x152"
-      href="/icon-inicio-gris-180.png"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="167x167"
-      href="/icon-inicio-gris-180.png"
-    />
+    <link rel="apple-touch-icon" href="/icon-inicio-gris-180.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
       name="apple-mobile-web-app-status-bar-style"
@@ -82,34 +68,18 @@
     <meta name="apple-mobile-web-app-title" content="TM Studio" />
     <meta name="mobile-web-app-capable" content="yes" />
 
-    <!-- iOS Splash Screens -->
-    <link rel="apple-touch-startup-image" href="/apple-touch-icon.png" />
-
     <!-- Prevent iOS from showing Safari UI -->
     <meta name="format-detection" content="telephone=no" />
-    <meta name="mobile-web-app-capable" content="yes" />
 
     <!-- Force all links to stay in PWA -->
     <meta name="apple-mobile-web-app-navigation" content="same-origin" />
 
-    <!-- Prevent browser chrome from hiding on scroll (Android Chrome) -->
-    <meta
-      name="theme-color"
-      media="(prefers-color-scheme: light)"
-      content="#00AE7A"
-    />
-    <meta
-      name="theme-color"
-      media="(prefers-color-scheme: dark)"
-      content="#00AE7A"
-    />
-
     <!-- CRITICAL: Blocking version check - MUST run before React loads -->
     <script>
       (function () {
-        var APP_VERSION = "2026.07.08.1112";
-        var VERSION_KEY = "tm_app_version";
-        var RELOAD_KEY = "tm_reload_pending";
+        var APP_VERSION = "2026.07.09.186";
+        var VERSION_KEY = 'tm_app_version';
+        var RELOAD_KEY = 'tm_reload_pending';
 
         // Expose for main.tsx to check
         window.__TM_VERSION__ = APP_VERSION;
@@ -135,13 +105,13 @@
 
         // Version mismatch - reload BEFORE React starts
         if (storedVersion && storedVersion !== APP_VERSION) {
-          sessionStorage.setItem(RELOAD_KEY, "1");
+          sessionStorage.setItem(RELOAD_KEY, '1');
           localStorage.setItem(VERSION_KEY, APP_VERSION);
           window.location.replace(
-            window.location.pathname + "?_v=" + APP_VERSION + "&_t=" + now,
+            window.location.pathname + '?_v=' + APP_VERSION + '&_t=' + now,
           );
           // Halt script execution
-          throw new Error("Reloading for new version");
+          throw new Error('Reloading for new version');
         }
 
         // First visit - store version
@@ -177,35 +147,17 @@
   <body>
     <div id="root"></div>
 
-    <!-- Service worker cleanup (non-blocking) -->
-    <script>
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function (r) {
-          r.forEach(function (reg) {
-            reg.unregister();
-          });
-        });
-      }
-      if ("caches" in window) {
-        caches.keys().then(function (n) {
-          n.forEach(function (k) {
-            caches.delete(k);
-          });
-        });
-      }
-    </script>
-
     <!-- Screenshot Deterrent: NoPrint.js with error handling -->
     <script>
       // Pre-define noCopy and noPrint to prevent ReferenceError from external script
-      if (typeof noCopy === "undefined") {
+      if (typeof noCopy === 'undefined') {
         window.noCopy = function (options) {
-          console.log("[NoPrint] Using fallback protection");
+          console.log('[NoPrint] Using fallback protection');
         };
       }
-      if (typeof noPrint === "undefined") {
+      if (typeof noPrint === 'undefined') {
         window.noPrint = function (options) {
-          console.log("[NoPrint] Using fallback protection");
+          console.log('[NoPrint] Using fallback protection');
         };
       }
     </script>
@@ -218,9 +170,9 @@
       try {
         // The library may expose noPrint OR noCopy - check both
         var protectionFn =
-          typeof noPrint === "function"
+          typeof noPrint === 'function'
             ? noPrint
-            : typeof noCopy === "function"
+            : typeof noCopy === 'function'
               ? noCopy
               : null;
         if (protectionFn) {
@@ -232,7 +184,7 @@
           });
         }
       } catch (e) {
-        console.warn("[NoPrint] Protection script unavailable:", e.message);
+        console.warn('[NoPrint] Protection script unavailable:', e.message);
       }
     </script>
 
@@ -246,16 +198,16 @@
           navigator.standalone === true;
 
         if (isSafari && window.__TM_VERSION_READY__) {
-          fetch("/version.json?_t=" + Date.now(), { cache: "no-store" })
+          fetch('/version.json?_t=' + Date.now(), { cache: 'no-store' })
             .then(function (r) {
               return r.json();
             })
             .then(function (data) {
               if (data.version && data.version !== APP_VERSION) {
-                sessionStorage.setItem("tm_reload_pending", "1");
-                localStorage.setItem("tm_app_version", data.version);
+                sessionStorage.setItem('tm_reload_pending', '1');
+                localStorage.setItem('tm_app_version', data.version);
                 window.location.replace(
-                  window.location.pathname + "?_v=" + data.version,
+                  window.location.pathname + '?_v=' + data.version,
                 );
               }
             })

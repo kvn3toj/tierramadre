@@ -1,8 +1,10 @@
 {
+  "id": "/",
   "name": "Tierra Madre Studio",
   "short_name": "TM Studio",
   "description": "Emeralds with DNA of Peace",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0A1A14",
   "theme_color": "#00AE7A",
@@ -12,13 +14,25 @@
       "src": "/icon-inicio-gris-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icon-inicio-gris-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-inicio-gris-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-inicio-gris-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
