@@ -26,6 +26,7 @@
  */
 
 import { useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Autocomplete,
   Box,
@@ -125,6 +126,12 @@ export default function MovimientosKardexPage() {
   const foto = getFoto('light');
   const { notify } = useNotification();
   const { asesores } = useAsesores();
+  // Reprint mode: /admin/fotosintesis/movimientos?kardexEventId=KDX-... looks
+  // up an ALREADY-registered event (e.g. one entered outside this form, or a
+  // past submit) and offers the same PDF comprobante generation — doesn't
+  // require re-running the batch submit.
+  const [searchParams] = useSearchParams();
+  const lookupKardexEventId = searchParams.get('kardexEventId')?.trim() || null;
 
   const [mode, setMode] = useState<Mode>('entrega');
   const [asesorNombre, setAsesorNombre] = useState('');
@@ -257,10 +264,17 @@ export default function MovimientosKardexPage() {
       }));
   }, [mode, disponibles, enAsesor, enConsignacion, currentlyHeldItemIds]);
 
+  // Resolves either from a just-completed submit (outcome) or a
+  // `?kardexEventId=` lookup (reprint mode) — whichever is present.
+  const activeKardexEventId =
+    outcome && outcome.ok.length > 0
+      ? outcome.kardexEventId
+      : lookupKardexEventId;
+
   const kardexEventRows = useConvexQuery(
     convexApi.asesorMovements.listByKardexEventId,
-    convexReady && outcome && outcome.ok.length > 0
-      ? { kardexEventId: outcome.kardexEventId }
+    convexReady && activeKardexEventId
+      ? { kardexEventId: activeKardexEventId }
       : 'skip',
   ) as
     | Array<{
@@ -281,12 +295,12 @@ export default function MovimientosKardexPage() {
     | undefined;
 
   async function handleGenerateComprobante() {
-    if (!outcome || !previewRef.current) return;
+    if (!activeKardexEventId || !previewRef.current) return;
     setGeneratingPdf(true);
     try {
       const url = await exportAndUploadMovimientoKardexPdf(
         previewRef.current,
-        `kardex-${outcome.kardexEventId}.pdf`,
+        `kardex-${activeKardexEventId}.pdf`,
       );
       setComprobanteUrl(url);
       notify('Comprobante generado', 'success');
@@ -805,9 +819,72 @@ export default function MovimientosKardexPage() {
           </Box>
         )}
 
+        {/* Reprint mode: ?kardexEventId=KDX-... looks up an event that was
+            registered elsewhere (e.g. directly against Convex) and offers
+            the same PDF comprobante generation, without a fresh submit. */}
+        {!outcome && lookupKardexEventId && (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              padding: '16px',
+              borderRadius: '10px',
+              border: `1px solid ${foto.surfaces.edge}`,
+              background: foto.surfaces.panel,
+            }}
+          >
+            <Typography sx={{ fontSize: '13px', fontWeight: 600 }}>
+              Kardex{' '}
+              <Box
+                component="span"
+                sx={{ fontFamily: fontFamilies.mono, color: foto.accent.deep }}
+              >
+                {lookupKardexEventId}
+              </Box>
+              {kardexEventRows && (
+                <Box
+                  component="span"
+                  sx={{
+                    ml: '8px',
+                    fontSize: '12px',
+                    fontWeight: 400,
+                    color: foto.ink.tertiary,
+                  }}
+                >
+                  ({kardexEventRows.length} ítem
+                  {kardexEventRows.length === 1 ? '' : 's'})
+                </Box>
+              )}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Button
+                size="small"
+                variant="outlined"
+                disabled={generatingPdf || !kardexEventRows?.length}
+                onClick={handleGenerateComprobante}
+                startIcon={<FileDown size={14} strokeWidth={1.8} />}
+                sx={{ textTransform: 'none', fontSize: '12.5px' }}
+              >
+                {generatingPdf ? 'Generando…' : 'Generar comprobante PDF'}
+              </Button>
+              {comprobanteUrl && (
+                <MuiLink
+                  href={comprobanteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ fontSize: '12.5px' }}
+                >
+                  Ver comprobante
+                </MuiLink>
+              )}
+            </Box>
+          </Box>
+        )}
+
         {/* Off-screen render target for the PDF capture — same pattern as
             VentaDetailPage's hidden kardexRef box. */}
-        {outcome && outcome.ok.length > 0 && (
+        {activeKardexEventId && (
           <Box
             sx={{ position: 'absolute', left: '-9999px', top: 0 }}
             aria-hidden
@@ -815,7 +892,7 @@ export default function MovimientosKardexPage() {
             <Box ref={previewRef}>
               <MovimientoKardexPreview
                 rows={kardexEventRows ?? []}
-                kardexEventId={outcome.kardexEventId}
+                kardexEventId={activeKardexEventId}
               />
             </Box>
           </Box>
