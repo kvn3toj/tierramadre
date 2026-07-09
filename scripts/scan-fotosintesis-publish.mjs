@@ -13,23 +13,23 @@
  *   node scripts/scan-fotosintesis-publish.mjs            # dev (.env.local)
  *   node scripts/scan-fotosintesis-publish.mjs --prod     # prod (.env.production)
  */
-import { readFileSync } from "node:fs";
-import { ConvexHttpClient } from "convex/browser";
-import { api } from "../convex/_generated/api.js";
+import { readFileSync } from 'node:fs';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '../convex/_generated/api.js';
 
-const useProd = process.argv.includes("--prod");
-const envFile = useProd ? ".env.production" : ".env.local";
+const useProd = process.argv.includes('--prod');
+const envFile = useProd ? '.env.production' : '.env.local';
 
 function readEnv(file, key) {
   try {
-    const txt = readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
-    const line = txt.split("\n").find((l) => l.startsWith(`${key}=`));
+    const txt = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+    const line = txt.split('\n').find((l) => l.startsWith(`${key}=`));
     if (!line) return undefined;
     // Strip surrounding quotes (.env values are often "https://…").
     return line
       .slice(key.length + 1)
       .trim()
-      .replace(/^["']|["']$/g, "");
+      .replace(/^["']|["']$/g, '');
   } catch {
     return undefined;
   }
@@ -37,8 +37,8 @@ function readEnv(file, key) {
 
 const url =
   process.env.VITE_CONVEX_URL ||
-  readEnv(envFile, "VITE_CONVEX_URL") ||
-  readEnv(".env.local", "VITE_CONVEX_URL");
+  readEnv(envFile, 'VITE_CONVEX_URL') ||
+  readEnv('.env.local', 'VITE_CONVEX_URL');
 
 if (!url) {
   console.error(`No VITE_CONVEX_URL found in ${envFile}.`);
@@ -46,11 +46,17 @@ if (!url) {
 }
 
 const c = new ConvexHttpClient(url);
-const bool = (v) => (v === true ? "TRUE " : v === false ? "false" : "unset");
+const bool = (v) => (v === true ? 'TRUE ' : v === false ? 'false' : 'unset');
 
 async function main() {
-  console.log(`\n🔎 Scanning ${useProd ? "PRODUCTION" : "dev"} — ${url}\n`);
+  console.log(`\n🔎 Scanning ${useProd ? 'PRODUCTION' : 'dev'} — ${url}\n`);
 
+  // NOTE: `products.list` projects its return to a bandwidth-optimized field
+  // subset (see the SAFE comment in convex/products.ts) that does NOT include
+  // `mostrarEnCatalogo` or `tipo` — reading those off `products.list` rows
+  // always yields `undefined`, regardless of the real stored value (see
+  // Anima 2026-07-09-mostrarEnCatalogo-desfase.md for the false-alarm this
+  // caused). Only used here for the total product count.
   const [products, lots, publishedCatalog, publishedGroups] = await Promise.all(
     [
       c.query(api.products.list, {}),
@@ -60,12 +66,23 @@ async function main() {
     ],
   );
 
-  const byItemId = new Map(products.map((p) => [p.itemId, p]));
-  const loteItems = products.filter((p) => p.loteId !== undefined);
+  // Full, unprojected lote items (includes mostrarEnCatalogo/tipo) — one
+  // listByLote call per lot, merged into a single lookup + flat array.
+  const byItemId = new Map();
+  const loteItems = [];
+  for (const lot of lots) {
+    const items = await c.query(api.products.listByLote, {
+      loteId: lot.loteId,
+    });
+    for (const p of items) {
+      byItemId.set(p.itemId, p);
+      loteItems.push(p);
+    }
+  }
   const shownTrue = loteItems.filter((p) => p.mostrarEnCatalogo === true);
   const hidden = loteItems.filter((p) => p.mostrarEnCatalogo !== true);
 
-  console.log("── Totals ────────────────────────────────────────────");
+  console.log('── Totals ────────────────────────────────────────────');
   console.log(`Productos totales:            ${products.length}`);
   console.log(`Ítems de lote (loteId set):   ${loteItems.length}`);
   console.log(`  · mostrarEnCatalogo TRUE:   ${shownTrue.length}`);
@@ -78,22 +95,22 @@ async function main() {
   );
 
   // ── Per-lote breakdown ──────────────────────────────────────────
-  console.log("\n── Lotes ─────────────────────────────────────────────");
+  console.log('\n── Lotes ─────────────────────────────────────────────');
   const lotByLoteId = new Map(lots.map((l) => [l.loteId, l]));
   for (const lot of lots) {
-    if (lot.estado === "cancelado") continue;
+    if (lot.estado === 'cancelado') continue;
     const items = loteItems.filter((p) => p.loteId === lot.loteId);
     if (items.length === 0) continue;
     const t = items.filter((p) => p.mostrarEnCatalogo === true).length;
-    const grp = lot.mostrarComoLote === true ? " · mostrarComoLote=TRUE" : "";
+    const grp = lot.mostrarComoLote === true ? ' · mostrarComoLote=TRUE' : '';
     console.log(
-      `${lot.loteId.padEnd(10)} [${(lot.estado ?? "").padEnd(9)}]` +
+      `${lot.loteId.padEnd(10)} [${(lot.estado ?? '').padEnd(9)}]` +
         ` ítems=${items.length} visibles=${t} ocultos=${items.length - t}${grp}`,
     );
   }
 
   // ── Sub-lotes (enumerate per parent) ────────────────────────────
-  console.log("\n── Sub-lotes ─────────────────────────────────────────");
+  console.log('\n── Sub-lotes ─────────────────────────────────────────');
   let anySub = false;
   for (const lot of lots) {
     const subs = await c.query(api.subLotes.listByParent, {
@@ -105,46 +122,46 @@ async function main() {
         (id) => byItemId.get(id)?.mostrarEnCatalogo === true,
       );
       const visible = memberStates.filter(Boolean).length;
-      const parentEstado = lotByLoteId.get(sub.parentLoteId)?.estado ?? "?";
+      const parentEstado = lotByLoteId.get(sub.parentLoteId)?.estado ?? '?';
       const shown =
-        sub.estado === "activa" && sub.mostrarComoLote === true
-          ? "  ◀ SHOWN as bundle"
-          : "";
+        sub.estado === 'activa' && sub.mostrarComoLote === true
+          ? '  ◀ SHOWN as bundle'
+          : '';
       console.log(
-        `${sub.subLoteId.padEnd(14)} [${(sub.estado ?? "").padEnd(9)}]` +
+        `${sub.subLoteId.padEnd(14)} [${(sub.estado ?? '').padEnd(9)}]` +
           ` parent=${sub.parentLoteId}(${parentEstado})` +
           ` mostrarComoLote=${bool(sub.mostrarComoLote)}` +
           ` miembros=${sub.itemIds.length} visibles=${visible}${shown}`,
       );
     }
   }
-  if (!anySub) console.log("(ninguno)");
+  if (!anySub) console.log('(ninguno)');
 
   // ── Every hidden lote item, and where (if anywhere) it still shows ──
-  console.log("\n── Ítems OCULTOS (mostrarEnCatalogo=false/unset) ─────");
+  console.log('\n── Ítems OCULTOS (mostrarEnCatalogo=false/unset) ─────');
   const inCatalog = new Set(publishedCatalog.map((r) => r.itemId));
   const inAnyGroup = new Set();
   for (const g of publishedGroups)
     for (const it of g.items) inAnyGroup.add(it.itemId);
   if (hidden.length === 0) {
-    console.log("(ninguno)");
+    console.log('(ninguno)');
   } else {
     for (const p of hidden) {
       const leaks = [];
-      if (inCatalog.has(p.itemId)) leaks.push("publishedCatalog(individual)");
-      if (inAnyGroup.has(p.itemId)) leaks.push("bundle");
+      if (inCatalog.has(p.itemId)) leaks.push('publishedCatalog(individual)');
+      if (inAnyGroup.has(p.itemId)) leaks.push('bundle');
       const where =
         leaks.length > 0
-          ? `⚠️  AÚN VISIBLE vía ${leaks.join(" + ")}`
-          : "✓ correctamente oculto";
+          ? `⚠️  AÚN VISIBLE vía ${leaks.join(' + ')}`
+          : '✓ correctamente oculto';
       console.log(
-        `  #${String(p.itemId).padEnd(5)} '${p.nombre ?? ""}' lote=${p.loteId} → ${where}`,
+        `  #${String(p.itemId).padEnd(5)} '${p.nombre ?? ''}' lote=${p.loteId} → ${where}`,
       );
     }
   }
 
   // ── THE BUG: hidden items still leaking via a bundle card ───────
-  console.log("\n── ⚠️  Ítems OCULTOS que igual aparecen en un bundle ──");
+  console.log('\n── ⚠️  Ítems OCULTOS que igual aparecen en un bundle ──');
   const leaks = [];
   for (const g of publishedGroups) {
     for (const it of g.items) {
@@ -160,7 +177,7 @@ async function main() {
   }
   if (leaks.length === 0) {
     console.log(
-      "Ninguno. (Si ocultaste un ítem y NO está aquí, el bundle ya lo respeta.)",
+      'Ninguno. (Si ocultaste un ítem y NO está aquí, el bundle ya lo respeta.)',
     );
   } else {
     for (const l of leaks) {
@@ -172,7 +189,7 @@ async function main() {
 
   // ── Bundles that would COLLAPSE if we strictly filter members ───
   console.log(
-    "\n── Bundles que quedarían vacíos si filtramos por visibilidad ──",
+    '\n── Bundles que quedarían vacíos si filtramos por visibilidad ──',
   );
   let anyCollapse = false;
   for (const g of publishedGroups) {
@@ -187,12 +204,12 @@ async function main() {
     }
   }
   if (!anyCollapse)
-    console.log("Ninguno. (El fix por visibilidad es 100% seguro.)");
+    console.log('Ninguno. (El fix por visibilidad es 100% seguro.)');
 
-  console.log("");
+  console.log('');
 }
 
 main().catch((e) => {
-  console.error("Scan failed:", e.message ?? e);
+  console.error('Scan failed:', e.message ?? e);
   process.exit(1);
 });
