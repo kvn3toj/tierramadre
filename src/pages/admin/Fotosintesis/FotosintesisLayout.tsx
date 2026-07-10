@@ -1,24 +1,25 @@
-import { useCallback, useMemo, useRef, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Box } from "@mui/material";
-import { getFoto } from "../../../design-system";
-import { FotoTopbar, type Crumb } from "./components/FotoTopbar";
-import { FotoTabBar } from "./components/FotoTabBar";
-import { FotoRouteMenu } from "./components/FotoRouteMenu";
-import { useFotosintesisHotkeys } from "./hooks/useFotosintesisHotkeys";
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Box } from '@mui/material';
+import { getFoto } from '../../../design-system';
+import { convexApi, useConvexClient } from '../../../lib/convex-safe';
+import { FotoTopbar, type Crumb } from './components/FotoTopbar';
+import { FotoTabBar } from './components/FotoTabBar';
+import { FotoRouteMenu } from './components/FotoRouteMenu';
+import { useFotosintesisHotkeys } from './hooks/useFotosintesisHotkeys';
 import {
   FotosintesisLayoutProvider,
   type SpotlightOpenOptions,
-} from "./FotosintesisLayoutContext";
+} from './FotosintesisLayoutContext';
 import type {
   BatchEditPatch,
   GuidedDraft,
   GuidedFlow,
-} from "./copilot/flowSchemas";
-import { ProductoSpotlight } from "./components/ProductoSpotlight";
-import { WORKBENCH_ENABLED } from "./workbench/featureFlag";
-import { isWorkbenchFlow } from "./workbench/workbenchSteps";
-import { flowLabel } from "./utils/flowLabels";
+} from './copilot/flowSchemas';
+import { ProductoSpotlight } from './components/ProductoSpotlight';
+import { WORKBENCH_ENABLED } from './workbench/featureFlag';
+import { isWorkbenchFlow } from './workbench/workbenchSteps';
+import { flowLabel } from './utils/flowLabels';
 
 /**
  * Shared shell for every /admin/fotosintesis route. Owns the sticky topbar,
@@ -26,9 +27,10 @@ import { flowLabel } from "./utils/flowLabels";
  * modal. Child routes consume `useFotosintesisLayout()` to open spotlight.
  */
 export default function FotosintesisLayout() {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const navigate = useNavigate();
   const location = useLocation();
+  const convexClient = useConvexClient();
 
   // Shared by the topbar avatar trigger and the FotoTabBar "Menú" slot.
   const [menuOpen, setMenuOpen] = useState(false);
@@ -53,6 +55,33 @@ export default function FotosintesisLayout() {
       defaultSpotlightRef.current = options;
     },
     [],
+  );
+
+  // Fallback used whenever a route hasn't registered its own spotlight
+  // onSelect (e.g. Home, Lotes, Directorio): jump straight to the item's edit
+  // view, mirroring what the QR scanner does for a resolved item. Falls back
+  // to the lote's capture page if the item has no lotItems join row yet.
+  const goToItemDetail = useCallback(
+    (product: { itemId: string; loteId?: string }) => {
+      if (!convexClient) return;
+      convexClient
+        .query(convexApi.lotItems.getByItemId, { itemId: product.itemId })
+        .then((lotItem) => {
+          if (lotItem) {
+            navigate(
+              `/admin/fotosintesis/lots/${lotItem.loteId}/items/${lotItem._id}/edit`,
+            );
+          } else if (product.loteId) {
+            navigate(`/admin/fotosintesis/lots/${product.loteId}`);
+          }
+        })
+        .catch(() => {
+          if (product.loteId) {
+            navigate(`/admin/fotosintesis/lots/${product.loteId}`);
+          }
+        });
+    },
+    [convexClient, navigate],
   );
 
   // ─── Fotosynthia v2 · guided-capture hand-off bus ──────────────────
@@ -136,7 +165,7 @@ export default function FotosintesisLayout() {
   // While already inside a workbench (/copilot/*), the global ⌘N/⌘V/⌘D nav is
   // suppressed so a hotkey can't swap the active flow + draft mid-capture.
   const inWorkbench = location.pathname.includes(
-    "/admin/fotosintesis/copilot/",
+    '/admin/fotosintesis/copilot/',
   );
   useFotosintesisHotkeys({
     onSpotlight: () => openSpotlight(),
@@ -144,57 +173,57 @@ export default function FotosintesisLayout() {
       if (inWorkbench) return;
       navigate(
         WORKBENCH_ENABLED
-          ? "/admin/fotosintesis/copilot/lote"
-          : "/admin/fotosintesis/lots/new",
+          ? '/admin/fotosintesis/copilot/lote'
+          : '/admin/fotosintesis/lots/new',
       );
     },
     onNewSale: () => {
       if (inWorkbench) return;
       navigate(
         WORKBENCH_ENABLED
-          ? "/admin/fotosintesis/copilot/venta"
-          : "/admin/fotosintesis/sales/new",
+          ? '/admin/fotosintesis/copilot/venta'
+          : '/admin/fotosintesis/sales/new',
       );
     },
     onOpenDirectory: () => {
-      if (!inWorkbench) navigate("/admin/fotosintesis/directory");
+      if (!inWorkbench) navigate('/admin/fotosintesis/directory');
     },
   });
 
   const crumbs = useMemo<Crumb[]>(() => {
     const path = location.pathname;
-    const base: Crumb = { label: "Fotosíntesis", to: "/admin/fotosintesis" };
-    if (path === "/admin/fotosintesis") {
-      return [{ label: "Inicio" }];
+    const base: Crumb = { label: 'Fotosíntesis', to: '/admin/fotosintesis' };
+    if (path === '/admin/fotosintesis') {
+      return [{ label: 'Inicio' }];
     }
-    if (path === "/admin/fotosintesis/lots") {
-      return [base, { label: "Lotes" }];
+    if (path === '/admin/fotosintesis/lots') {
+      return [base, { label: 'Lotes' }];
     }
-    if (path.startsWith("/admin/fotosintesis/lots/")) {
-      if (path.endsWith("/edit")) {
-        return [base, { label: "Editar ítem" }];
+    if (path.startsWith('/admin/fotosintesis/lots/')) {
+      if (path.endsWith('/edit')) {
+        return [base, { label: 'Editar ítem' }];
       }
-      if (path.endsWith("/sublotes")) {
-        return [base, { label: "Sublotes" }];
+      if (path.endsWith('/sublotes')) {
+        return [base, { label: 'Sublotes' }];
       }
-      const isClose = path.endsWith("/close");
-      return [base, { label: isClose ? "Cerrar lote" : "Captura de lote" }];
+      const isClose = path.endsWith('/close');
+      return [base, { label: isClose ? 'Cerrar lote' : 'Captura de lote' }];
     }
-    if (path.startsWith("/admin/fotosintesis/copilot/")) {
-      const seg = path.split("/").pop() ?? "";
+    if (path.startsWith('/admin/fotosintesis/copilot/')) {
+      const seg = path.split('/').pop() ?? '';
       return [
         base,
-        { label: isWorkbenchFlow(seg) ? flowLabel(seg) : "Captura guiada" },
+        { label: isWorkbenchFlow(seg) ? flowLabel(seg) : 'Captura guiada' },
       ];
     }
-    if (path.startsWith("/admin/fotosintesis/sales/")) {
-      return [base, { label: "Venta" }];
+    if (path.startsWith('/admin/fotosintesis/sales/')) {
+      return [base, { label: 'Venta' }];
     }
-    if (path.startsWith("/admin/fotosintesis/directory")) {
-      return [base, { label: "Directorio" }];
+    if (path.startsWith('/admin/fotosintesis/directory')) {
+      return [base, { label: 'Directorio' }];
     }
-    if (path.startsWith("/admin/fotosintesis/certificados")) {
-      return [base, { label: "Generador de Certificados" }];
+    if (path.startsWith('/admin/fotosintesis/certificados')) {
+      return [base, { label: 'Generador de Certificados' }];
     }
     return [base];
   }, [location.pathname]);
@@ -207,15 +236,15 @@ export default function FotosintesisLayout() {
         // overflowing their grid cells). Covers every in-layout form.
         data-foto-admin
         sx={{
-          minHeight: "100vh",
+          minHeight: '100vh',
           background: foto.surfaces.canvas,
           color: foto.ink.primary,
           fontFamily:
             '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif',
           fontSize: 13,
           lineHeight: 1.45,
-          WebkitFontSmoothing: "antialiased",
-          textRendering: "optimizeLegibility",
+          WebkitFontSmoothing: 'antialiased',
+          textRendering: 'optimizeLegibility',
         }}
       >
         <FotoTopbar
@@ -236,8 +265,8 @@ export default function FotosintesisLayout() {
             // the workbench is a scrolling document and needs tab-bar clearance so
             // its composer stays reachable (M2).
             paddingBottom: inWorkbench
-              ? { xs: "calc(96px + env(safe-area-inset-bottom, 0px))", lg: 0 }
-              : "calc(92px + env(safe-area-inset-bottom, 0px))",
+              ? { xs: 'calc(96px + env(safe-area-inset-bottom, 0px))', lg: 0 }
+              : 'calc(92px + env(safe-area-inset-bottom, 0px))',
           }}
         >
           <Outlet />
@@ -256,7 +285,11 @@ export default function FotosintesisLayout() {
         multiSelect={spotlightOptions.multiSelect}
         selectedProducts={spotlightOptions.selectedProducts}
         onSelect={(product) => {
-          spotlightOptions.onSelect?.(product);
+          if (spotlightOptions.onSelect) {
+            spotlightOptions.onSelect(product);
+          } else {
+            goToItemDetail(product);
+          }
           closeSpotlight();
         }}
         onConfirm={(products) => {
