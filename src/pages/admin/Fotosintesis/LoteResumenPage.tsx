@@ -27,6 +27,7 @@ import { buildItemPricingPatch } from './utils/buildLotItemPayload';
 import { convertToProxyUrl } from '../../../utils/driveUrl';
 import { LabelPreview } from './labels/LabelPreview';
 import { downloadLabelsZip, type LabelItem } from './labels/downloadLabelsZip';
+import { downloadLabelsSpreadsheet } from './labels/downloadLabelsSpreadsheet';
 import { renderLabelCanvas } from './labels/exportLabel';
 import { useNiimbotPrinter } from '../../../hooks/useNiimbotPrinter';
 
@@ -431,6 +432,30 @@ export default function FotosintesisLoteResumenPage() {
     } finally {
       setPrintingLabels(false);
       setLabelRenderItem(null);
+    }
+  }
+
+  async function handleExportLoteSpreadsheet() {
+    if (!products || products.length === 0) return;
+    setPrintingLabels(true);
+    try {
+      const items = products.map((p) => ({
+        itemId: p.itemId,
+        nombre: p.nombre,
+        peso: p.peso,
+      }));
+      await downloadLabelsSpreadsheet(items, `etiquetas-lote-${loteId}.xlsx`);
+      notify(
+        `Hoja de calculo de ${items.length} etiqueta(s) exportada`,
+        'success',
+      );
+    } catch (err) {
+      notify(
+        `No se pudo exportar la hoja de calculo: ${err instanceof Error ? err.message : String(err)}`,
+        'error',
+      );
+    } finally {
+      setPrintingLabels(false);
     }
   }
 
@@ -1128,6 +1153,32 @@ export default function FotosintesisLoteResumenPage() {
               {printingLabels
                 ? 'Exportando etiquetas…'
                 : 'Imprimir etiquetas del lote'}
+            </Box>
+            <Box
+              component="button"
+              type="button"
+              disabled={printingLabels || !products?.length}
+              onClick={() => void handleExportLoteSpreadsheet()}
+              title="Hoja de calculo para 'Importar desde Excel' en la app NIIMBOT"
+              sx={{
+                width: '100%',
+                padding: '12px 18px',
+                borderRadius: '11px',
+                background: 'transparent',
+                color: foto.ink.secondary,
+                border: `1px solid ${foto.surfaces.edgeStrong}`,
+                fontFamily: fontFamilies.system,
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: printingLabels ? 'wait' : 'pointer',
+                transition: 'background 120ms ease, color 120ms ease',
+                '&:hover:not(:disabled)': {
+                  background: foto.surfaces.canvas,
+                  color: foto.ink.primary,
+                },
+              }}
+            >
+              Exportar hoja de calculo (NIIMBOT)
             </Box>
             {niimbot.supported && (
               <Box
