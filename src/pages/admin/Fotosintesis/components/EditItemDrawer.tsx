@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 
 import { getFoto, fontFamilies } from '../../../../design-system';
+import { LabelPreview } from '../labels/LabelPreview';
+import { downloadLabelPng } from '../labels/exportLabel';
 import {
   useAuthedConvexAction,
   useConvexQuery,
@@ -174,6 +176,20 @@ export function EditItemDrawer({
   const observacionId = useId();
   const certificadoId = useId();
   const { notify } = useNotification();
+  const labelRef = useRef<HTMLDivElement>(null);
+
+  async function handlePrintLabelExport() {
+    if (!product || !labelRef.current) return;
+    try {
+      await downloadLabelPng(labelRef.current, `${product.itemId}.png`);
+      notify(`Etiqueta de #${product.itemId} exportada`, 'success');
+    } catch (err) {
+      notify(
+        `No se pudo exportar la etiqueta: ${err instanceof Error ? err.message : String(err)}`,
+        'error',
+      );
+    }
+  }
 
   const product = useConvexQuery(convexApi.products.get, { itemId }) as
     | ProductInventoryRow
@@ -694,6 +710,31 @@ export function EditItemDrawer({
           >
             {itemEstadoCopy(lotEstado).subtitle}
           </Box>
+          {product && (
+            <Box
+              component="button"
+              type="button"
+              onClick={() => void handlePrintLabelExport()}
+              sx={{
+                marginTop: '10px',
+                fontFamily: fontFamilies.system,
+                fontSize: '12px',
+                fontWeight: 600,
+                padding: '7px 12px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                background: 'transparent',
+                color: foto.ink.secondary,
+                border: `1px solid ${foto.surfaces.edgeStrong}`,
+                '&:hover': {
+                  background: foto.surfaces.canvas,
+                  color: foto.ink.primary,
+                },
+              }}
+            >
+              Imprimir etiqueta
+            </Box>
+          )}
         </Box>
         {/* Drawer mode: top-right close (X). Page mode uses the "Volver" back
             link rendered above the form instead, so we hide this. */}
@@ -726,6 +767,19 @@ export function EditItemDrawer({
           >
             <XIcon size={14} strokeWidth={2} />
           </Box>
+        )}
+      </Box>
+
+      {/* Off-screen label render target — always mounted so
+          html2canvas has a real node to capture on demand, never
+          visible to the operator. */}
+      <Box ref={labelRef} sx={{ position: 'fixed', left: '-9999px', top: 0 }}>
+        {product && (
+          <LabelPreview
+            itemId={product.itemId}
+            nombre={product.nombre}
+            peso={product.peso}
+          />
         )}
       </Box>
 
