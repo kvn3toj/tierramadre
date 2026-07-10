@@ -16,6 +16,20 @@ const tipoItemValidator = v.union(
   v.literal('bruto'),
 );
 
+/** Resolve a lotItems join row by its productInventory itemId — used by the
+ *  QR scanner to jump straight to an item's edit view without the operator
+ *  needing to know which lote it lives in. */
+export const getByItemId = query({
+  args: { itemId: v.string() },
+  handler: async (ctx, { itemId }) => {
+    const row = await ctx.db
+      .query('lotItems')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+      .first();
+    return row ?? null;
+  },
+});
+
 export const listByLote = query({
   args: { loteId: v.string() },
   handler: async (ctx, { loteId }) => {
