@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   Radio,
@@ -25,6 +25,8 @@ import ConfirmDialog from '../../../components/shared/ConfirmDialog';
 import { uploadFotosintesisImages } from './utils/uploadItemMedia';
 import { buildItemPricingPatch } from './utils/buildLotItemPayload';
 import { convertToProxyUrl } from '../../../utils/driveUrl';
+import { LabelPreview } from './labels/LabelPreview';
+import { downloadLabelsZip, type LabelItem } from './labels/downloadLabelsZip';
 
 type PublishMode = 'all' | 'selective' | 'reserve';
 
@@ -150,6 +152,14 @@ export default function FotosintesisLoteResumenPage() {
   const [editLotOpen, setEditLotOpen] = useState(false);
   const [reopenDialogOpen, setReopenDialogOpen] = useState(false);
   const [reopening, setReopening] = useState(false);
+
+  // Batch NIIMBOT label export — off-screen render target reused across
+  // items so we don't mount N LabelPreview instances at once.
+  const labelRenderRef = useRef<HTMLDivElement>(null);
+  const [labelRenderItem, setLabelRenderItem] = useState<LabelItem | null>(
+    null,
+  );
+  const [printingLabels, setPrintingLabels] = useState(false);
 
   useEffect(() => {
     if (!lotItems || !products) return;
@@ -379,6 +389,40 @@ export default function FotosintesisLoteResumenPage() {
     }
   };
 
+  async function handlePrintLoteLabelsExport() {
+    if (!products || products.length === 0) return;
+    setPrintingLabels(true);
+    try {
+      const items: LabelItem[] = products.map((p) => ({
+        itemId: p.itemId,
+        nombre: p.nombre,
+        peso: p.peso,
+      }));
+      await downloadLabelsZip(
+        items,
+        `etiquetas-lote-${loteId}.zip`,
+        (item) =>
+          new Promise<HTMLElement>((resolve) => {
+            setLabelRenderItem(item);
+            // Wait one frame so React has committed the new LabelPreview
+            // props to labelRenderRef before we hand the node to html2canvas.
+            requestAnimationFrame(() => {
+              if (labelRenderRef.current) resolve(labelRenderRef.current);
+            });
+          }),
+      );
+      notify(`${items.length} etiqueta(s) exportadas`, 'success');
+    } catch (err) {
+      notify(
+        `No se pudieron exportar las etiquetas: ${err instanceof Error ? err.message : String(err)}`,
+        'error',
+      );
+    } finally {
+      setPrintingLabels(false);
+      setLabelRenderItem(null);
+    }
+  }
+
   if (!lot || !lotItems || !products) {
     return (
       <Box
@@ -397,6 +441,18 @@ export default function FotosintesisLoteResumenPage() {
 
   return (
     <Box>
+      <Box
+        sx={{ position: 'fixed', left: '-9999px', top: 0 }}
+        ref={labelRenderRef}
+      >
+        {labelRenderItem && (
+          <LabelPreview
+            itemId={labelRenderItem.itemId}
+            nombre={labelRenderItem.nombre}
+            peso={labelRenderItem.peso}
+          />
+        )}
+      </Box>
       <TicketHeader
         id={lot.loteId}
         meta={[
@@ -1004,6 +1060,33 @@ export default function FotosintesisLoteResumenPage() {
                 Editar encabezado del lote
               </Box>
             ) : null}
+            <Box
+              component="button"
+              type="button"
+              disabled={printingLabels || !products?.length}
+              onClick={() => void handlePrintLoteLabelsExport()}
+              sx={{
+                width: '100%',
+                padding: '12px 18px',
+                borderRadius: '11px',
+                background: 'transparent',
+                color: foto.ink.secondary,
+                border: `1px solid ${foto.surfaces.edgeStrong}`,
+                fontFamily: fontFamilies.system,
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: printingLabels ? 'wait' : 'pointer',
+                transition: 'background 120ms ease, color 120ms ease',
+                '&:hover:not(:disabled)': {
+                  background: foto.surfaces.canvas,
+                  color: foto.ink.primary,
+                },
+              }}
+            >
+              {printingLabels
+                ? 'Exportando etiquetas…'
+                : 'Imprimir etiquetas del lote'}
+            </Box>
           </Box>
         </Box>
       </Box>
