@@ -19,6 +19,7 @@ import {
   convexApi,
 } from '../../../../lib/convex-safe';
 import { useNotification } from '../../../../contexts/NotificationContext';
+import { useNiimbotPrinter } from '../../../../hooks/useNiimbotPrinter';
 import { useProductLock } from '../../../../hooks/useProductLock';
 import { useDirtyGuard } from '../../../../hooks/useDirtyGuard';
 import ConfirmDialog from '../../../../components/shared/ConfirmDialog';
@@ -177,6 +178,7 @@ export function EditItemDrawer({
   const certificadoId = useId();
   const { notify } = useNotification();
   const labelRef = useRef<HTMLDivElement>(null);
+  const niimbot = useNiimbotPrinter();
 
   async function handlePrintLabelExport() {
     if (!product || !labelRef.current) return;
@@ -186,6 +188,26 @@ export function EditItemDrawer({
     } catch (err) {
       notify(
         `No se pudo exportar la etiqueta: ${err instanceof Error ? err.message : String(err)}`,
+        'error',
+      );
+    }
+  }
+
+  async function handlePrintLabelDirect() {
+    if (!product || !labelRef.current) return;
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(labelRef.current, {
+        backgroundColor: '#FFFFFF',
+        scale: 1,
+        useCORS: true,
+        logging: false,
+      });
+      await niimbot.printLabel(canvas);
+      notify(`Etiqueta de #${product.itemId} impresa`, 'success');
+    } catch (err) {
+      notify(
+        `No se pudo imprimir directo: ${err instanceof Error ? err.message : String(err)}. Usá "Imprimir etiqueta" para exportar la imagen.`,
         'error',
       );
     }
@@ -733,6 +755,38 @@ export function EditItemDrawer({
               }}
             >
               Imprimir etiqueta
+            </Box>
+          )}
+          {product && niimbot.supported && (
+            <Box
+              component="button"
+              type="button"
+              disabled={niimbot.connecting || niimbot.printing}
+              onClick={() => void handlePrintLabelDirect()}
+              sx={{
+                marginTop: '6px',
+                marginLeft: '8px',
+                fontFamily: fontFamilies.system,
+                fontSize: '12px',
+                fontWeight: 600,
+                padding: '7px 12px',
+                borderRadius: '8px',
+                cursor:
+                  niimbot.connecting || niimbot.printing ? 'wait' : 'pointer',
+                background: 'transparent',
+                color: foto.accent.deep,
+                border: `1px solid ${foto.accent.primary}`,
+                opacity: niimbot.connecting || niimbot.printing ? 0.6 : 1,
+                '&:hover:not(:disabled)': {
+                  background: foto.surfaces.canvas,
+                },
+              }}
+            >
+              {niimbot.connecting
+                ? 'Conectando…'
+                : niimbot.printing
+                  ? 'Imprimiendo…'
+                  : 'Imprimir directo'}
             </Box>
           )}
         </Box>
