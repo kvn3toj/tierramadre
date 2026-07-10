@@ -25,6 +25,7 @@
     "apply:backfill": "tsx scripts/apply-backfill.ts"
   },
   "dependencies": {
+    "@zxing/browser": "^0.1.5",
     "@emotion/react": "^11.13.0",
     "@emotion/styled": "^11.13.0",
     "@googleapis/drive": "^8.0.0",

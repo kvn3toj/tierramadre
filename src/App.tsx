@@ -165,6 +165,10 @@ const FotosintesisMovimientos = lazyWithRetry(
   () => import('./pages/admin/Fotosintesis/MovimientosKardexPage'),
   'FotosintesisMovimientos',
 );
+const FotosintesisEscanear = lazyWithRetry(
+  () => import('./pages/admin/Fotosintesis/EscanearPage'),
+  'FotosintesisEscanear',
+);
 const FotosintesisDirectorio = lazyWithRetry(
   () => import('./pages/admin/Fotosintesis/DirectorioPage'),
   'FotosintesisDirectorio',
@@ -660,6 +664,7 @@ function AppContent() {
                 element={<FotosintesisVentaDetail />}
               />
               <Route path="movimientos" element={<FotosintesisMovimientos />} />
+              <Route path="escanear" element={<FotosintesisEscanear />} />
               <Route path="directory" element={<FotosintesisDirectorio />} />
               <Route
                 path="certificados"

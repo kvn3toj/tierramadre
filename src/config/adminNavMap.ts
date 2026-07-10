@@ -105,6 +105,28 @@ export const ADMIN_NAV_MAP: readonly AdminRouteEntry[] = [
     dynamic: false,
   },
   {
+    id: 'fotosintesis.escanear',
+    path: '/admin/fotosintesis/escanear',
+    label: 'Escanear QR',
+    group: 'Inventario',
+    iconName: 'ScanLine',
+    description:
+      'Escanear el QR de un ítem con la cámara para ver su ficha y registrar movimientos',
+    keywords: [
+      'escanear',
+      'escaner',
+      'escáner',
+      'qr',
+      'camara',
+      'cámara',
+      'codigo',
+      'código',
+      'scan',
+    ],
+    roles: ADMIN,
+    dynamic: false,
+  },
+  {
     id: 'fotosintesis.lots',
     path: '/admin/fotosintesis/lots',
     label: 'Todos los lotes',

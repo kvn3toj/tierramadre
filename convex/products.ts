@@ -201,6 +201,23 @@ export const getManyByItemIds = query({
   },
 });
 
+/**
+ * Resolve ONE inventory item by its itemId — the shared resolver behind the QR
+ * scanner (PWA camera + anima-bot Telegram bridge both call this). Returns the
+ * full row for the admin ficha, or null when the code points at an unknown /
+ * not-yet-registered item.
+ */
+export const getByItem = query({
+  args: { itemId: v.string() },
+  handler: async (ctx, { itemId }) => {
+    const row = await ctx.db
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+      .first();
+    return row ?? null;
+  },
+});
+
 /** All productInventory rows for a Fotosíntesis lote (close/resumen UI). */
 export const listByLote = query({
   args: { loteId: v.string() },
