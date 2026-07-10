@@ -3,10 +3,12 @@ import { QRCodeSVG } from 'qrcode.react';
 import { fontFamilies } from '../../../../design-system';
 
 const STUDIO_BASE_URL = 'https://tierramadre.app';
+const LOGO_URL = '/logo-symbol.png';
 
 /** 12mm NIIMBOT tape at 203 DPI native resolution. */
 export const LABEL_HEIGHT_PX = 96;
 const QR_SIZE_PX = 80;
+const LOGO_SIZE_PX = 56;
 
 export interface LabelPreviewProps {
   itemId: string;
@@ -16,25 +18,32 @@ export interface LabelPreviewProps {
 
 /**
  * One printable item label: QR (links to the product detail page) + item
- * number + nombre + peso. Pure presentational — no Convex query inside this
- * component, callers pass data in (matches the KardexPreview/
- * MovimientoKardexPreview convention in this codebase).
+ * number + nombre + peso + the Tierra Mädre mark. Pure presentational — no
+ * Convex query inside this component, callers pass data in (matches the
+ * KardexPreview/MovimientoKardexPreview convention in this codebase).
  *
- * Sized to a fixed 96px height (12mm NIIMBOT tape at 203 DPI); width grows
- * with content rather than being fixed, since the tape is continuous and
- * doesn't need to fill a fixed length.
+ * Landscape strip, fixed 96px height (12mm NIIMBOT tape at 203 DPI), width
+ * shrinks to content — the tape is continuous, no fixed length to fill.
+ *
+ * Root uses `display: 'inline-flex'` rather than `width: 'max-content'` on a
+ * block flex container: html2canvas (which clones the DOM rather than
+ * screenshotting a live paint) has documented trouble resolving intrinsic
+ * sizing keywords like `max-content`/`fit-content` on nodes rendered
+ * off-screen (`position: fixed; left: -9999px`, as every caller here does),
+ * producing a malformed/wrongly-sized export. `inline-flex` shrinks to
+ * content by default without relying on that keyword, which html2canvas
+ * measures reliably.
  */
 export function LabelPreview({ itemId, nombre, peso }: LabelPreviewProps) {
   return (
     <Box
       sx={{
-        display: 'flex',
+        display: 'inline-flex',
         alignItems: 'center',
         gap: '8px',
         height: `${LABEL_HEIGHT_PX}px`,
         padding: '8px',
         background: '#FFFFFF',
-        width: 'max-content',
       }}
     >
       <QRCodeSVG
@@ -92,6 +101,18 @@ export function LabelPreview({ itemId, nombre, peso }: LabelPreviewProps) {
           </Box>
         )}
       </Box>
+      <Box
+        component="img"
+        src={LOGO_URL}
+        alt=""
+        crossOrigin="anonymous"
+        sx={{
+          height: `${LOGO_SIZE_PX}px`,
+          width: `${LOGO_SIZE_PX}px`,
+          objectFit: 'contain',
+          flexShrink: 0,
+        }}
+      />
     </Box>
   );
 }

@@ -1,20 +1,34 @@
 /**
- * exportLabel — rasterize a LabelPreview DOM node to a PNG, for either a
- * single-file download or (via renderLabelPngBlob) inclusion in a batch zip.
+ * exportLabel — rasterize a LabelPreview DOM node to a PNG or raw canvas.
  *
- * Simpler than certificados/exportCert.ts's dual-rasterizer setup: labels
- * have no photos/cross-origin images (just an inline QR SVG + plain text), so
- * there's no taint risk to guard against — a direct html2canvas capture is
- * sufficient, matching the plainer captureNodeToPdf.ts pattern used for the
- * Kardex/movimiento previews.
+ * Rasterizer: snapDOM is the PRIMARY engine (same choice as
+ * certificados/exportCert.ts, already proven in this codebase) — it
+ * serializes the node into an SVG <foreignObject> and lets the browser's own
+ * layout/paint engine draw it, avoiding html2canvas's documented
+ * reimplemented-CSS quirks. Those quirks are not hypothetical here: an
+ * earlier version of this file used html2canvas directly and produced a
+ * correctly-sized but completely BLANK canvas for LabelPreview's MUI/emotion
+ * content (verified via a manual Playwright repro — see the fix commit).
+ * html2canvas remains as a FALLBACK if snapDOM throws or returns a blank
+ * canvas, so an export is never silently blank on any device.
+ *
+ * Explicit pixel `width`/`height` (measured on the LIVE node via
+ * offsetWidth/offsetHeight, matching exportCert.ts's approach) are always
+ * passed to both rasterizers rather than relying on the cloned/off-screen
+ * node's own CSS layout to size itself — an off-screen wrapper's ambient
+ * width (e.g. a block element stretching to its container, or `max-content`
+ * mismeasured on a detached clone) is exactly what produced the malformed
+ * export this file now guards against.
  */
 
+import { snapdom } from '@zumer/snapdom';
 import html2canvas from 'html2canvas';
 
 // 203 DPI is the NIIMBOT D11's native print resolution — matching pixelRatio
 // here keeps the exported PNG crisp at the label's real physical size when
 // imported into NIIMBOT's own template editor.
 const DEFAULT_PIXEL_RATIO = 203 / 96; // native DPI ÷ CSS-px label height
+const IMAGE_LOAD_TIMEOUT_MS = 5000;
 
 function triggerDownload(href: string, filename: string) {
   const a = document.createElement('a');
@@ -25,17 +39,121 @@ function triggerDownload(href: string, filename: string) {
   a.remove();
 }
 
+/** Resolve once every `<img>` under `node` is decoded (or errored/timed
+ *  out) — the logo <img> in LabelPreview needs this guard against a blank
+ *  capture, matching captureNodeToPdf.ts's waitForImages. */
+async function waitForImages(node: HTMLElement): Promise<void> {
+  const images = Array.from(node.querySelectorAll('img'));
+  await Promise.all(
+    images.map((img) => {
+      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        const done = () => {
+          clearTimeout(timer);
+          resolve();
+        };
+        const timer = setTimeout(done, IMAGE_LOAD_TIMEOUT_MS);
+        img.addEventListener('load', done, { once: true });
+        img.addEventListener('error', done, { once: true });
+      });
+    }),
+  );
+}
+
+/** Cheap "did the rasterizer produce nothing?" probe — downscale to 8×8 and
+ *  check for any non-white, non-transparent pixel. Mirrors
+ *  certificados/exportCert.ts's isCanvasBlank. */
+function isCanvasBlank(canvas: HTMLCanvasElement): boolean {
+  try {
+    if (!canvas.width || !canvas.height) return true;
+    const probe = document.createElement('canvas');
+    probe.width = 8;
+    probe.height = 8;
+    const ctx = probe.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return false;
+    ctx.drawImage(canvas, 0, 0, 8, 8);
+    const { data } = ctx.getImageData(0, 0, 8, 8);
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] === 0) continue; // transparent
+      if (data[i] < 245 || data[i + 1] < 245 || data[i + 2] < 245) return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Rasterize `node` to a canvas at explicit pixel dimensions. `node` is
+ * measured live (offsetWidth/offsetHeight) before cloning into a sandbox
+ * with those exact dimensions set inline — the sandbox's own CSS layout is
+ * never trusted to self-size.
+ */
+async function rasterize(
+  node: HTMLElement,
+  scale: number,
+): Promise<HTMLCanvasElement> {
+  await waitForImages(node);
+
+  const width = node.offsetWidth || 1;
+  const height = node.offsetHeight || 1;
+
+  const sandbox = document.createElement('div');
+  sandbox.setAttribute('aria-hidden', 'true');
+  sandbox.style.cssText =
+    `position:fixed;left:-100000px;top:0;width:${width}px;height:${height}px;` +
+    `margin:0;padding:0;overflow:hidden;background:#ffffff;` +
+    `pointer-events:none;z-index:-1;`;
+  const clone = node.cloneNode(true) as HTMLElement;
+  sandbox.appendChild(clone);
+  document.body.appendChild(sandbox);
+
+  try {
+    await waitForImages(clone);
+
+    try {
+      const canvas = await snapdom.toCanvas(clone, {
+        scale,
+        dpr: 1,
+        backgroundColor: '#ffffff',
+        embedFonts: true,
+      });
+      if (!isCanvasBlank(canvas)) return canvas;
+      console.warn(
+        '[exportLabel] snapDOM returned a blank canvas; falling back to html2canvas.',
+      );
+    } catch (e) {
+      console.warn(
+        '[exportLabel] snapDOM failed; falling back to html2canvas.',
+        e,
+      );
+    }
+
+    return await html2canvas(clone, {
+      scale,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      width,
+      height,
+      windowWidth: width,
+      windowHeight: height,
+      x: 0,
+      y: 0,
+      scrollX: 0,
+      scrollY: 0,
+    });
+  } finally {
+    document.body.removeChild(sandbox);
+  }
+}
+
 /** Rasterize the node to a PNG Blob (not downloaded). */
 export async function renderLabelPngBlob(
   node: HTMLElement,
   opts?: { pixelRatio?: number },
 ): Promise<Blob> {
-  const canvas = await html2canvas(node, {
-    backgroundColor: '#FFFFFF',
-    scale: opts?.pixelRatio ?? DEFAULT_PIXEL_RATIO,
-    useCORS: true,
-    logging: false,
-  });
+  const canvas = await rasterize(node, opts?.pixelRatio ?? DEFAULT_PIXEL_RATIO);
   const dataUrl = canvas.toDataURL('image/png');
   const res = await fetch(dataUrl);
   return res.blob();
@@ -58,12 +176,7 @@ export async function renderLabelCanvas(
   node: HTMLElement,
   opts?: { scale?: number },
 ): Promise<HTMLCanvasElement> {
-  return html2canvas(node, {
-    backgroundColor: '#FFFFFF',
-    scale: opts?.scale ?? 1,
-    useCORS: true,
-    logging: false,
-  });
+  return rasterize(node, opts?.scale ?? 1);
 }
 
 /** Rasterize the node to a PNG and trigger a browser download. */
