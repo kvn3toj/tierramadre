@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -21,7 +27,11 @@ import {
 } from 'lucide-react';
 import { getFoto, fontFamilies } from '../../../design-system';
 import { FotoTopbar, FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
-import { convexApi, convexReady, useConvexQuery } from '../../../lib/convex-safe';
+import {
+  convexApi,
+  convexReady,
+  useConvexQuery,
+} from '../../../lib/convex-safe';
 import { parseTmQr } from '../../../lib/qr/parseTmQr';
 import { useQrScanner } from '../../../hooks/useQrScanner';
 
@@ -108,8 +118,19 @@ export default function EscanearPage() {
   const notFound = showResult && item === null;
 
   return (
-    <Box sx={{ minHeight: '100dvh', background: foto.surfaces.canvas, color: foto.ink.primary }}>
-      <FotoTopbar crumbs={[{ label: 'Fotosíntesis', to: '/admin/fotosintesis' }, { label: 'Escanear' }]} />
+    <Box
+      sx={{
+        minHeight: '100dvh',
+        background: foto.surfaces.canvas,
+        color: foto.ink.primary,
+      }}
+    >
+      <FotoTopbar
+        crumbs={[
+          { label: 'Fotosíntesis', to: '/admin/fotosintesis' },
+          { label: 'Escanear' },
+        ]}
+      />
 
       <Box
         sx={{
@@ -122,12 +143,15 @@ export default function EscanearPage() {
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 0.5 }}>
           <ScanLine size={22} color={foto.accent.primary} />
-          <Typography sx={{ fontSize: '20px', fontWeight: 600, color: foto.ink.primary }}>
+          <Typography
+            sx={{ fontSize: '20px', fontWeight: 600, color: foto.ink.primary }}
+          >
             Escanear QR
           </Typography>
         </Box>
         <Typography sx={{ fontSize: '13px', color: foto.ink.tertiary, mb: 2 }}>
-          Apunta la cámara al código del ítem para ver su ficha y registrar movimientos.
+          Apunta la cámara al código del ítem para ver su ficha y registrar
+          movimientos.
         </Typography>
 
         {!showResult && (
@@ -179,7 +203,14 @@ export default function EscanearPage() {
                   ) : (
                     <CircularProgress size={26} sx={{ color: '#fff' }} />
                   )}
-                  <Typography sx={{ fontSize: '12.5px', px: 3, textAlign: 'center', opacity: 0.9 }}>
+                  <Typography
+                    sx={{
+                      fontSize: '12.5px',
+                      px: 3,
+                      textAlign: 'center',
+                      opacity: 0.9,
+                    }}
+                  >
                     {state === 'error' ? error : 'Iniciando cámara…'}
                   </Typography>
                 </Box>
@@ -188,7 +219,12 @@ export default function EscanearPage() {
 
             {notice && (
               <Typography
-                sx={{ mt: 1.5, fontSize: '13px', color: foto.status.sold, textAlign: 'center' }}
+                sx={{
+                  mt: 1.5,
+                  fontSize: '13px',
+                  color: foto.status.sold,
+                  textAlign: 'center',
+                }}
               >
                 {notice}
               </Typography>
@@ -196,9 +232,13 @@ export default function EscanearPage() {
 
             {/* Manual fallback */}
             <Box sx={{ mt: 2.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <Box
+                sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}
+              >
                 <Keyboard size={16} color={foto.ink.tertiary} />
-                <Typography sx={{ fontSize: '12.5px', color: foto.ink.tertiary }}>
+                <Typography
+                  sx={{ fontSize: '12.5px', color: foto.ink.tertiary }}
+                >
                   ¿Código dañado? Escribe el número de ítem
                 </Typography>
               </Box>
@@ -212,7 +252,9 @@ export default function EscanearPage() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') submitManual();
                   }}
-                  InputProps={{ sx: { fontFamily: fontFamilies.mono, fontSize: '14px' } }}
+                  InputProps={{
+                    sx: { fontFamily: fontFamilies.mono, fontSize: '14px' },
+                  }}
                 />
                 <Button
                   variant="outlined"
@@ -249,7 +291,11 @@ export default function EscanearPage() {
               }}
             >
               <Typography
-                sx={{ fontFamily: fontFamilies.mono, fontSize: '14px', color: foto.accent.primary }}
+                sx={{
+                  fontFamily: fontFamilies.mono,
+                  fontSize: '14px',
+                  color: foto.accent.primary,
+                }}
               >
                 {scannedItemId}
               </Typography>
@@ -260,16 +306,23 @@ export default function EscanearPage() {
 
             {loading && (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
-                <CircularProgress size={26} sx={{ color: foto.accent.primary }} />
+                <CircularProgress
+                  size={26}
+                  sx={{ color: foto.accent.primary }}
+                />
               </Box>
             )}
 
             {notFound && (
               <Box sx={{ px: 2, py: 4, textAlign: 'center' }}>
-                <Typography sx={{ fontSize: '14px', color: foto.ink.secondary, mb: 0.5 }}>
+                <Typography
+                  sx={{ fontSize: '14px', color: foto.ink.secondary, mb: 0.5 }}
+                >
                   No hay ningún ítem registrado con ese código todavía.
                 </Typography>
-                <Typography sx={{ fontSize: '12.5px', color: foto.ink.tertiary }}>
+                <Typography
+                  sx={{ fontSize: '12.5px', color: foto.ink.tertiary }}
+                >
                   Es una etiqueta nueva sin registrar (eso llega en la Fase 3).
                 </Typography>
               </Box>
@@ -309,20 +362,58 @@ export default function EscanearPage() {
                     </Box>
                   )}
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography sx={{ fontSize: '15px', fontWeight: 600, color: foto.ink.primary }}>
+                    <Typography
+                      sx={{
+                        fontSize: '15px',
+                        fontWeight: 600,
+                        color: foto.ink.primary,
+                      }}
+                    >
                       {item.nombre || 'Ítem sin nombre'}
                     </Typography>
-                    <Typography sx={{ fontSize: '12.5px', color: foto.ink.tertiary, mt: '2px' }}>
-                      {[item.peso, item.color, item.calidad].filter(Boolean).join(' · ') || '—'}
+                    <Typography
+                      sx={{
+                        fontSize: '12.5px',
+                        color: foto.ink.tertiary,
+                        mt: '2px',
+                      }}
+                    >
+                      {[item.peso, item.color, item.calidad]
+                        .filter(Boolean)
+                        .join(' · ') || '—'}
                     </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, mt: 0.75, flexWrap: 'wrap' }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        gap: 1,
+                        mt: 0.75,
+                        flexWrap: 'wrap',
+                      }}
+                    >
                       {item.estado && (
-                        <Chip label={item.estado} color={foto.accent.primary} foto={foto} />
+                        <Chip
+                          label={item.estado}
+                          color={foto.accent.primary}
+                          foto={foto}
+                        />
                       )}
-                      {item.loteId && <Chip label={`Lote ${item.loteId}`} color={foto.ink.tertiary} foto={foto} />}
+                      {item.loteId && (
+                        <Chip
+                          label={`Lote ${item.loteId}`}
+                          color={foto.ink.tertiary}
+                          foto={foto}
+                        />
+                      )}
                     </Box>
                     {priceLabel && (
-                      <Typography sx={{ fontSize: '14px', fontWeight: 600, color: foto.accent.deep, mt: 0.75 }}>
+                      <Typography
+                        sx={{
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: foto.accent.deep,
+                          mt: 0.75,
+                        }}
+                      >
                         {priceLabel}
                       </Typography>
                     )}
@@ -330,7 +421,13 @@ export default function EscanearPage() {
                 </Box>
 
                 {item.medidas && (
-                  <Typography sx={{ fontSize: '12.5px', color: foto.ink.secondary, mt: 1.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: '12.5px',
+                      color: foto.ink.secondary,
+                      mt: 1.5,
+                    }}
+                  >
                     Medidas: {item.medidas}
                   </Typography>
                 )}
@@ -340,7 +437,11 @@ export default function EscanearPage() {
                   variant="text"
                   endIcon={<ExternalLink size={16} />}
                   onClick={() => navigate(`/product/${scannedItemId}`)}
-                  sx={{ mt: 1.5, justifyContent: 'center', color: foto.accent.deep }}
+                  sx={{
+                    mt: 1.5,
+                    justifyContent: 'center',
+                    color: foto.accent.deep,
+                  }}
                 >
                   Ver detalle completo
                 </Button>
@@ -349,15 +450,52 @@ export default function EscanearPage() {
 
             {/* Movement actions — wired in Fase 2 */}
             <Box sx={{ px: 2, pb: 2, pt: 0 }}>
-              <Typography sx={{ fontSize: '11.5px', color: foto.ink.tertiary, mb: 1, letterSpacing: '0.02em' }}>
+              <Typography
+                sx={{
+                  fontSize: '11.5px',
+                  color: foto.ink.tertiary,
+                  mb: 1,
+                  letterSpacing: '0.02em',
+                }}
+              >
                 REGISTRAR MOVIMIENTO
               </Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
-                <ActionButton icon={<PackagePlus size={18} />} label="Compra" foto={foto} />
-                <ActionButton icon={<Receipt size={18} />} label="Kardex" foto={foto} />
-                <ActionButton icon={<Tag size={18} />} label="Venta" foto={foto} />
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: 1,
+                }}
+              >
+                <ActionButton
+                  icon={<PackagePlus size={18} />}
+                  label="Compra"
+                  foto={foto}
+                />
+                <ActionButton
+                  icon={<Receipt size={18} />}
+                  label="Kardex"
+                  foto={foto}
+                />
+                <ActionButton
+                  icon={<Tag size={18} />}
+                  label="Venta"
+                  foto={foto}
+                  onClick={() =>
+                    navigate(
+                      `/admin/fotosintesis/sales/new?itemId=${scannedItemId}`,
+                    )
+                  }
+                />
               </Box>
-              <Typography sx={{ fontSize: '11px', color: foto.ink.tertiary, mt: 1, textAlign: 'center' }}>
+              <Typography
+                sx={{
+                  fontSize: '11px',
+                  color: foto.ink.tertiary,
+                  mt: 1,
+                  textAlign: 'center',
+                }}
+              >
                 Los movimientos se activan en la Fase 2.
               </Typography>
             </Box>
@@ -413,14 +551,17 @@ function ActionButton({
   icon,
   label,
   foto,
+  onClick,
 }: {
   icon: ReactNode;
   label: string;
   foto: ReturnType<typeof getFoto>;
+  onClick?: () => void;
 }) {
   return (
     <Button
-      disabled
+      disabled={!onClick}
+      onClick={onClick}
       variant="outlined"
       sx={{
         flexDirection: 'column',
