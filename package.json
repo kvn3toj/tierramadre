@@ -29,6 +29,7 @@
     "@emotion/styled": "^11.13.0",
     "@googleapis/drive": "^8.0.0",
     "@googleapis/sheets": "^9.0.0",
+    "@mmote/niimbluelib": "0.0.1-alpha.41",
     "@mui/icons-material": "^6.1.0",
     "@mui/material": "^6.1.0",
     "@react-oauth/google": "^0.12.2",
