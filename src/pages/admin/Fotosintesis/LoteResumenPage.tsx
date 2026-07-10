@@ -27,6 +27,7 @@ import { buildItemPricingPatch } from './utils/buildLotItemPayload';
 import { convertToProxyUrl } from '../../../utils/driveUrl';
 import { LabelPreview } from './labels/LabelPreview';
 import { downloadLabelsZip, type LabelItem } from './labels/downloadLabelsZip';
+import { useNiimbotPrinter } from '../../../hooks/useNiimbotPrinter';
 
 type PublishMode = 'all' | 'selective' | 'reserve';
 
@@ -160,6 +161,15 @@ export default function FotosintesisLoteResumenPage() {
     null,
   );
   const [printingLabels, setPrintingLabels] = useState(false);
+
+  // Batch NIIMBOT direct print — reuses labelRenderRef/labelRenderItem
+  // above, printing through a single connected client rather than
+  // reconnecting per label.
+  const niimbot = useNiimbotPrinter();
+  const [printProgress, setPrintProgress] = useState<{
+    done: number;
+    total: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!lotItems || !products) return;
@@ -419,6 +429,43 @@ export default function FotosintesisLoteResumenPage() {
       );
     } finally {
       setPrintingLabels(false);
+      setLabelRenderItem(null);
+    }
+  }
+
+  async function handlePrintLoteLabelsDirect() {
+    if (!products || products.length === 0) return;
+    const items: LabelItem[] = products.map((p) => ({
+      itemId: p.itemId,
+      nombre: p.nombre,
+      peso: p.peso,
+    }));
+    setPrintProgress({ done: 0, total: items.length });
+    try {
+      await niimbot.connect();
+      const html2canvas = (await import('html2canvas')).default;
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        setLabelRenderItem(item);
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        if (!labelRenderRef.current) continue;
+        const canvas = await html2canvas(labelRenderRef.current, {
+          backgroundColor: '#FFFFFF',
+          scale: 1,
+          useCORS: true,
+          logging: false,
+        });
+        await niimbot.printLabel(canvas);
+        setPrintProgress({ done: i + 1, total: items.length });
+      }
+      notify(`${items.length} etiqueta(s) impresas`, 'success');
+    } catch (err) {
+      notify(
+        `No se pudo imprimir directo: ${err instanceof Error ? err.message : String(err)}. Usá "Imprimir etiquetas del lote" para exportar el zip.`,
+        'error',
+      );
+    } finally {
+      setPrintProgress(null);
       setLabelRenderItem(null);
     }
   }
@@ -1087,6 +1134,43 @@ export default function FotosintesisLoteResumenPage() {
                 ? 'Exportando etiquetas…'
                 : 'Imprimir etiquetas del lote'}
             </Box>
+            {niimbot.supported && (
+              <Box
+                component="button"
+                type="button"
+                disabled={
+                  !products?.length ||
+                  niimbot.connecting ||
+                  printProgress !== null
+                }
+                onClick={() => void handlePrintLoteLabelsDirect()}
+                sx={{
+                  width: '100%',
+                  padding: '12px 18px',
+                  borderRadius: '11px',
+                  background: 'transparent',
+                  color: foto.accent.deep,
+                  border: `1px solid ${foto.accent.primary}`,
+                  fontFamily: fontFamilies.system,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor:
+                    niimbot.connecting || printProgress !== null
+                      ? 'wait'
+                      : 'pointer',
+                  transition: 'background 120ms ease, color 120ms ease',
+                  '&:hover:not(:disabled)': {
+                    background: foto.surfaces.canvas,
+                  },
+                }}
+              >
+                {printProgress
+                  ? `Imprimiendo ${printProgress.done}/${printProgress.total}…`
+                  : niimbot.connecting
+                    ? 'Conectando…'
+                    : 'Imprimir etiquetas del lote (directo)'}
+              </Box>
+            )}
           </Box>
         </Box>
       </Box>
