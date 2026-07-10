@@ -89,6 +89,11 @@ export default function EscanearPage() {
     scannedItemId ? { itemId: scannedItemId } : 'skip',
   );
 
+  const lotItem = useConvexQuery(
+    convexApi.lotItems.getByItemId,
+    scannedItemId ? { itemId: scannedItemId } : 'skip',
+  );
+
   const submitManual = useCallback(() => {
     const parsed = parseTmQr(manual);
     if (parsed.kind === 'item') {
@@ -471,6 +476,14 @@ export default function EscanearPage() {
                   icon={<PackagePlus size={18} />}
                   label="Compra"
                   foto={foto}
+                  onClick={
+                    lotItem
+                      ? () =>
+                          navigate(
+                            `/admin/fotosintesis/lots/${lotItem.loteId}/items/${lotItem._id}/edit`,
+                          )
+                      : undefined
+                  }
                 />
                 <ActionButton
                   icon={<Receipt size={18} />}
