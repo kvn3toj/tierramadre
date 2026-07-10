@@ -27,6 +27,7 @@ import { buildItemPricingPatch } from './utils/buildLotItemPayload';
 import { convertToProxyUrl } from '../../../utils/driveUrl';
 import { LabelPreview } from './labels/LabelPreview';
 import { downloadLabelsZip, type LabelItem } from './labels/downloadLabelsZip';
+import { renderLabelCanvas } from './labels/exportLabel';
 import { useNiimbotPrinter } from '../../../hooks/useNiimbotPrinter';
 
 type PublishMode = 'all' | 'selective' | 'reserve';
@@ -443,18 +444,12 @@ export default function FotosintesisLoteResumenPage() {
     setPrintProgress({ done: 0, total: items.length });
     try {
       await niimbot.connect();
-      const html2canvas = (await import('html2canvas')).default;
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         setLabelRenderItem(item);
         await new Promise((resolve) => requestAnimationFrame(resolve));
         if (!labelRenderRef.current) continue;
-        const canvas = await html2canvas(labelRenderRef.current, {
-          backgroundColor: '#FFFFFF',
-          scale: 1,
-          useCORS: true,
-          logging: false,
-        });
+        const canvas = await renderLabelCanvas(labelRenderRef.current);
         await niimbot.printLabel(canvas);
         setPrintProgress({ done: i + 1, total: items.length });
       }

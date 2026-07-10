@@ -41,6 +41,31 @@ export async function renderLabelPngBlob(
   return res.blob();
 }
 
+/**
+ * Rasterize the node to a raw canvas (not a Blob) — used by the direct-print
+ * path, which needs an HTMLCanvasElement to hand to niimbluelib's
+ * ImageEncoder.encodeCanvas, not a downloadable file.
+ *
+ * scale: 1 (not the 203/96 DPI-matching scale renderLabelPngBlob uses) is
+ * intentional here — the label is authored at 96 CSS px, which already
+ * equals the printer head's native ~96 dots for a 12mm label at 203 DPI, so
+ * scale:1 gives native print resolution directly. The PNG-export path scales
+ * UP instead, because that PNG needs to look crisp when re-imported into
+ * NIIMBOT's own template editor at arbitrary zoom levels — a concern that
+ * doesn't apply when printing straight to the print head.
+ */
+export async function renderLabelCanvas(
+  node: HTMLElement,
+  opts?: { scale?: number },
+): Promise<HTMLCanvasElement> {
+  return html2canvas(node, {
+    backgroundColor: '#FFFFFF',
+    scale: opts?.scale ?? 1,
+    useCORS: true,
+    logging: false,
+  });
+}
+
 /** Rasterize the node to a PNG and trigger a browser download. */
 export async function downloadLabelPng(
   node: HTMLElement,

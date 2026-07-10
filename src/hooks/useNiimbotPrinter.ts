@@ -18,6 +18,12 @@
  * task-5-report.md) — we resolve it via the library's own lookup table
  * rather than hardcoding the task name, so a library update that remaps
  * D11_H to a different task keeps working without a code change here.
+ *
+ * `@mmote/niimbluelib` MUST stay exact-pinned in package.json (no `^`/`~`)
+ * — it's Alpha-stage (`0.0.1-alpha.x`) and its own README warns the API can
+ * change between releases. Repo-root `.npmrc` sets `save-exact=true` so
+ * future `npm install`s default to exact versions, but don't "helpfully"
+ * widen this one by hand either.
  */
 
 import { useCallback, useRef, useState } from 'react';
@@ -56,6 +62,13 @@ export function useNiimbotPrinter(): UseNiimbotPrinterReturn {
       await client.connect();
       clientRef.current = client;
       setConnected(true);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'NotFoundError') {
+        // User cancelled the Bluetooth device picker — not a real error,
+        // don't surface it as one.
+        return;
+      }
+      throw err;
     } finally {
       setConnecting(false);
     }

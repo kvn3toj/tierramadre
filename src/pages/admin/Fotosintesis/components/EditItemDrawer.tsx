@@ -12,7 +12,7 @@ import {
 
 import { getFoto, fontFamilies } from '../../../../design-system';
 import { LabelPreview } from '../labels/LabelPreview';
-import { downloadLabelPng } from '../labels/exportLabel';
+import { downloadLabelPng, renderLabelCanvas } from '../labels/exportLabel';
 import {
   useAuthedConvexAction,
   useConvexQuery,
@@ -196,13 +196,7 @@ export function EditItemDrawer({
   async function handlePrintLabelDirect() {
     if (!product || !labelRef.current) return;
     try {
-      const html2canvas = (await import('html2canvas')).default;
-      const canvas = await html2canvas(labelRef.current, {
-        backgroundColor: '#FFFFFF',
-        scale: 1,
-        useCORS: true,
-        logging: false,
-      });
+      const canvas = await renderLabelCanvas(labelRef.current);
       await niimbot.printLabel(canvas);
       notify(`Etiqueta de #${product.itemId} impresa`, 'success');
     } catch (err) {
