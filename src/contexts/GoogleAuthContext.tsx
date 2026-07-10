@@ -6,7 +6,14 @@
  * Sets access level (admin/full/guest) based on user role.
  */
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from 'react';
 import { googleLogout } from '@react-oauth/google';
 import { createLogger } from '../utils/logger';
 import { readFreshGoogleIdToken } from '../utils/googleIdToken';
@@ -66,7 +73,9 @@ const GOOGLE_TOKEN_KEY = STORAGE_KEYS.GOOGLE_TOKEN;
 // CONTEXT
 // =============================================================================
 
-const GoogleAuthContext = createContext<GoogleAuthContextType | undefined>(undefined);
+const GoogleAuthContext = createContext<GoogleAuthContextType | undefined>(
+  undefined,
+);
 
 // =============================================================================
 // PROVIDER
@@ -78,7 +87,10 @@ interface GoogleAuthProviderProps {
   onSignedOut?: () => void;
 }
 
-export function GoogleAuthProvider({ children, onSignedOut }: GoogleAuthProviderProps) {
+export function GoogleAuthProvider({
+  children,
+  onSignedOut,
+}: GoogleAuthProviderProps) {
   const [user, setUser] = useState<GoogleUserProfile | null>(null);
   const [preferences, setPreferences] = useState<UserPreferences>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -105,25 +117,41 @@ export function GoogleAuthProvider({ children, onSignedOut }: GoogleAuthProvider
 
           try {
             // Validate against both Asesores and Proveedores in one call
-            const validateResponse = await fetch(`/api/validate?email=${encodeURIComponent(parsedUser.email)}&type=both`);
+            const validateResponse = await fetch(
+              `/api/validate?email=${encodeURIComponent(parsedUser.email)}&type=both`,
+            );
             const validateData = await validateResponse.json();
 
-            if (validateData.success && validateData.isAuthorized && validateData.user) {
+            if (
+              validateData.success &&
+              validateData.isAuthorized &&
+              validateData.user
+            ) {
               // User found in Asesores - update role/accessLevel in case it changed
               parsedUser.role = validateData.user.role;
               parsedUser.accessLevel = validateData.user.accessLevel;
               setUser(parsedUser);
               setIsAuthorized(true);
               localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(parsedUser));
-              log.debug('User re-validated successfully:', { email: parsedUser.email, role: parsedUser.role });
-            } else if (validateData.success && validateData.isProvider && validateData.provider) {
+              log.debug('User re-validated successfully:', {
+                email: parsedUser.email,
+                role: parsedUser.role,
+              });
+            } else if (
+              validateData.success &&
+              validateData.isProvider &&
+              validateData.provider
+            ) {
               // User found in Proveedores
               parsedUser.role = 'Proveedor';
               parsedUser.accessLevel = 'provider';
               setUser(parsedUser);
               setIsAuthorized(true);
               localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(parsedUser));
-              log.debug('Provider re-validated successfully:', parsedUser.email);
+              log.debug(
+                'Provider re-validated successfully:',
+                parsedUser.email,
+              );
             } else if (
               validateResponse.ok &&
               validateData.success === true &&
@@ -136,7 +164,10 @@ export function GoogleAuthProvider({ children, onSignedOut }: GoogleAuthProvider
               // reason:'not_in_sheet' on a genuine, unambiguous negative.
               // Everything else (HTTP errors, success:false, ambiguous
               // negatives) is treated as transient below and keeps the session.
-              log.warn('User no longer authorized - forcing sign out:', parsedUser.email);
+              log.warn(
+                'User no longer authorized - forcing sign out:',
+                parsedUser.email,
+              );
               googleLogout();
               localStorage.removeItem(GOOGLE_USER_KEY);
               localStorage.removeItem(GOOGLE_PREFS_KEY);
@@ -196,7 +227,9 @@ export function GoogleAuthProvider({ children, onSignedOut }: GoogleAuthProvider
   useEffect(() => {
     if (!user) return;
 
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as
+      | string
+      | undefined;
     if (!clientId) return;
 
     type GsiIdApi = {
@@ -210,6 +243,20 @@ export function GoogleAuthProvider({ children, onSignedOut }: GoogleAuthProvider
     };
 
     let cancelled = false;
+    // GSI's `initialize()` is documented as a call-ONCE-per-page-load API: it
+    // (re)registers the global client_id/callback pair and resets internal
+    // One Tap state (auto-select eligibility, exponential cooldown tracking).
+    // The previous version of this effect called `initialize()` on every
+    // silent-refresh attempt — on mount, on every window focus, AND every 5
+    // minutes for as long as the token stayed stale — which kept resetting
+    // that state and also stomped whatever callback @react-oauth/google's
+    // <GoogleLogin> had registered for the *visible* sign-in button. Net
+    // effect: silent refresh almost never actually renewed the token, so it
+    // died at its real ~1h mark, and a manual re-login could silently land on
+    // the wrong callback if this effect had re-initialized after it. Guard
+    // initialize() to run exactly once per mounted session; only `prompt()`
+    // (which is safe to call repeatedly) runs on each retry trigger.
+    let initialized = false;
 
     const attemptSilentRefresh = () => {
       // Token still fresh — nothing to do.
@@ -225,21 +272,26 @@ export function GoogleAuthProvider({ children, onSignedOut }: GoogleAuthProvider
       if (!gsi) return;
 
       try {
-        gsi.initialize({
-          client_id: clientId,
-          auto_select: true,
-          cancel_on_tap_outside: false,
-          callback: (response) => {
-            if (cancelled || !response?.credential) return;
-            // Re-store the fresh credential WITHOUT a full re-validation flash.
-            localStorage.setItem(GOOGLE_TOKEN_KEY, response.credential);
-            log.debug('Silently refreshed Google ID token');
-          },
-        });
+        if (!initialized) {
+          gsi.initialize({
+            client_id: clientId,
+            auto_select: true,
+            cancel_on_tap_outside: false,
+            callback: (response) => {
+              if (cancelled || !response?.credential) return;
+              // Re-store the fresh credential WITHOUT a full re-validation flash.
+              localStorage.setItem(GOOGLE_TOKEN_KEY, response.credential);
+              log.debug('Silently refreshed Google ID token');
+            },
+          });
+          initialized = true;
+        }
         gsi.prompt();
       } catch {
         // Best-effort only; never disturb the session when renewal fails.
-        log.debug('Silent token refresh unavailable, deferring to visible re-auth');
+        log.debug(
+          'Silent token refresh unavailable, deferring to visible re-auth',
+        );
       }
     };
 
@@ -247,7 +299,11 @@ export function GoogleAuthProvider({ children, onSignedOut }: GoogleAuthProvider
 
     const onFocus = () => attemptSilentRefresh();
     window.addEventListener('focus', onFocus);
-    const interval = window.setInterval(attemptSilentRefresh, 5 * 60 * 1000);
+    // Poll well before the ~1h GSI token actually expires (not only once it
+    // has already gone stale) so a long, continuously-focused admin session
+    // gets many silent-renewal attempts across the token's lifetime instead
+    // of a single last-ditch one right as it lapses.
+    const interval = window.setInterval(attemptSilentRefresh, 60 * 1000);
 
     return () => {
       cancelled = true;
@@ -265,7 +321,7 @@ export function GoogleAuthProvider({ children, onSignedOut }: GoogleAuthProvider
         atob(base64)
           .split('')
           .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
+          .join(''),
       );
       const payload = JSON.parse(jsonPayload);
 
@@ -274,7 +330,10 @@ export function GoogleAuthProvider({ children, onSignedOut }: GoogleAuthProvider
         email: payload.email,
         name: payload.name,
         givenName: payload.given_name || payload.name?.split(' ')[0] || '',
-        familyName: payload.family_name || payload.name?.split(' ').slice(1).join(' ') || '',
+        familyName:
+          payload.family_name ||
+          payload.name?.split(' ').slice(1).join(' ') ||
+          '',
         picture: payload.picture,
         locale: payload.locale,
       };
@@ -285,80 +344,108 @@ export function GoogleAuthProvider({ children, onSignedOut }: GoogleAuthProvider
   };
 
   // Sign in with Google credential
-  const signIn = useCallback(async (credential: string) => {
-    setIsLoading(true);
-    setAuthError(null);
-    try {
-      const profile = decodeJwt(credential);
-      if (!profile) {
-        throw new Error('Failed to decode credential');
-      }
-
-      // Validate user email against both Asesores and Proveedores sheets
+  const signIn = useCallback(
+    async (credential: string) => {
+      setIsLoading(true);
+      setAuthError(null);
       try {
-        const validateResponse = await fetch(`/api/validate?email=${encodeURIComponent(profile.email)}&type=both`);
-        const validateData = await validateResponse.json();
+        const profile = decodeJwt(credential);
+        if (!profile) {
+          throw new Error('Failed to decode credential');
+        }
 
-        if (validateData.success && validateData.isAuthorized && validateData.user) {
-          // User is authorized as asesor/admin
-          profile.role = validateData.user.role;
-          profile.accessLevel = validateData.user.accessLevel;
-          setIsAuthorized(true);
-          log.debug('User authorized:', { email: profile.email, role: profile.role, accessLevel: profile.accessLevel });
-        } else if (validateData.success && validateData.isProvider && validateData.provider) {
-          // User is authorized as provider
-          profile.role = 'Proveedor';
-          profile.accessLevel = 'provider';
-          setIsAuthorized(true);
-          log.debug('Provider authorized:', { email: profile.email, provider: validateData.provider?.name });
-        } else {
-          // User email not found in any authorized list - BLOCK ACCESS
+        // Validate user email against both Asesores and Proveedores sheets
+        try {
+          const validateResponse = await fetch(
+            `/api/validate?email=${encodeURIComponent(profile.email)}&type=both`,
+          );
+          const validateData = await validateResponse.json();
+
+          if (
+            validateData.success &&
+            validateData.isAuthorized &&
+            validateData.user
+          ) {
+            // User is authorized as asesor/admin
+            profile.role = validateData.user.role;
+            profile.accessLevel = validateData.user.accessLevel;
+            setIsAuthorized(true);
+            log.debug('User authorized:', {
+              email: profile.email,
+              role: profile.role,
+              accessLevel: profile.accessLevel,
+            });
+          } else if (
+            validateData.success &&
+            validateData.isProvider &&
+            validateData.provider
+          ) {
+            // User is authorized as provider
+            profile.role = 'Proveedor';
+            profile.accessLevel = 'provider';
+            setIsAuthorized(true);
+            log.debug('Provider authorized:', {
+              email: profile.email,
+              provider: validateData.provider?.name,
+            });
+          } else {
+            // User email not found in any authorized list - BLOCK ACCESS
+            setIsAuthorized(false);
+            setAuthError(
+              'Tu correo no está registrado en el sistema. Contacta al administrador.',
+            );
+            log.warn('User not authorized - access blocked:', profile.email);
+            setIsLoading(false);
+            return; // Don't store user or continue
+          }
+        } catch (validateError) {
+          log.error('Validation API error:', validateError);
+          // API error - BLOCK ACCESS (don't allow guest fallback)
           setIsAuthorized(false);
-          setAuthError('Tu correo no está registrado en el sistema. Contacta al administrador.');
-          log.warn('User not authorized - access blocked:', profile.email);
+          setAuthError('Error validando usuario. Intenta nuevamente.');
           setIsLoading(false);
           return; // Don't store user or continue
         }
-      } catch (validateError) {
-        log.error('Validation API error:', validateError);
-        // API error - BLOCK ACCESS (don't allow guest fallback)
-        setIsAuthorized(false);
-        setAuthError('Error validando usuario. Intenta nuevamente.');
-        setIsLoading(false);
-        return; // Don't store user or continue
-      }
 
-      // Only reach here if user is authorized - store user and token
-      setUser(profile);
-      localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(profile));
-      localStorage.setItem(GOOGLE_TOKEN_KEY, credential);
+        // Only reach here if user is authorized - store user and token
+        setUser(profile);
+        localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(profile));
+        localStorage.setItem(GOOGLE_TOKEN_KEY, credential);
 
-      // Try to load preferences from API
-      try {
-        const response = await fetch(`/api/user-prefs?userId=${profile.id}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.preferences) {
-            setPreferences(data.preferences);
-            localStorage.setItem(GOOGLE_PREFS_KEY, JSON.stringify(data.preferences));
+        // Try to load preferences from API
+        try {
+          const response = await fetch(`/api/user-prefs?userId=${profile.id}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.preferences) {
+              setPreferences(data.preferences);
+              localStorage.setItem(
+                GOOGLE_PREFS_KEY,
+                JSON.stringify(data.preferences),
+              );
+            }
           }
+        } catch {
+          log.debug('Using local preferences');
         }
-      } catch {
-        log.debug('Using local preferences');
-      }
 
-      // Update last visit
-      const newPrefs = { ...preferences, lastVisit: new Date().toISOString() };
-      setPreferences(newPrefs);
-      localStorage.setItem(GOOGLE_PREFS_KEY, JSON.stringify(newPrefs));
-    } catch (error) {
-      log.error('Sign in error:', error);
-      setAuthError('Error al iniciar sesión. Intenta nuevamente.');
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [preferences]);
+        // Update last visit
+        const newPrefs = {
+          ...preferences,
+          lastVisit: new Date().toISOString(),
+        };
+        setPreferences(newPrefs);
+        localStorage.setItem(GOOGLE_PREFS_KEY, JSON.stringify(newPrefs));
+      } catch (error) {
+        log.error('Sign in error:', error);
+        setAuthError('Error al iniciar sesión. Intenta nuevamente.');
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [preferences],
+  );
 
   // Sign out
   const signOut = useCallback(() => {
@@ -379,24 +466,27 @@ export function GoogleAuthProvider({ children, onSignedOut }: GoogleAuthProvider
   }, []);
 
   // Update preferences
-  const updatePreferences = useCallback(async (prefs: Partial<UserPreferences>) => {
-    const newPrefs = { ...preferences, ...prefs };
-    setPreferences(newPrefs);
-    localStorage.setItem(GOOGLE_PREFS_KEY, JSON.stringify(newPrefs));
+  const updatePreferences = useCallback(
+    async (prefs: Partial<UserPreferences>) => {
+      const newPrefs = { ...preferences, ...prefs };
+      setPreferences(newPrefs);
+      localStorage.setItem(GOOGLE_PREFS_KEY, JSON.stringify(newPrefs));
 
-    // Sync to API if user is signed in
-    if (user) {
-      try {
-        await fetch('/api/user-prefs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: user.id, preferences: newPrefs }),
-        });
-      } catch {
-        log.debug('Could not sync to server, saved locally');
+      // Sync to API if user is signed in
+      if (user) {
+        try {
+          await fetch('/api/user-prefs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user.id, preferences: newPrefs }),
+          });
+        } catch {
+          log.debug('Could not sync to server, saved locally');
+        }
       }
-    }
-  }, [user, preferences]);
+    },
+    [user, preferences],
+  );
 
   // Force sync with server
   const syncWithSheets = useCallback(async () => {
@@ -408,7 +498,10 @@ export function GoogleAuthProvider({ children, onSignedOut }: GoogleAuthProvider
         const data = await response.json();
         if (data.preferences) {
           setPreferences(data.preferences);
-          localStorage.setItem(GOOGLE_PREFS_KEY, JSON.stringify(data.preferences));
+          localStorage.setItem(
+            GOOGLE_PREFS_KEY,
+            JSON.stringify(data.preferences),
+          );
         }
       }
     } catch (error) {
@@ -430,7 +523,11 @@ export function GoogleAuthProvider({ children, onSignedOut }: GoogleAuthProvider
     syncWithSheets,
   };
 
-  return <GoogleAuthContext.Provider value={value}>{children}</GoogleAuthContext.Provider>;
+  return (
+    <GoogleAuthContext.Provider value={value}>
+      {children}
+    </GoogleAuthContext.Provider>
+  );
 }
 
 // =============================================================================

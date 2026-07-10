@@ -1,5 +1,5 @@
 import { query, internalMutation, action } from './_generated/server';
-import { v } from 'convex/values';
+import { v, ConvexError } from 'convex/values';
 import { api, internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
 import { bumpInventoryTotal } from './products';
@@ -464,17 +464,24 @@ export const _updatePreponderancia = internalMutation({
     editorEmail: v.optional(v.string()),
   },
   handler: async (ctx, { lotItemId, preponderancia, editorEmail }) => {
+    // NOTE: this internalMutation is only ever invoked via ctx.runMutation
+    // from the `updatePreponderancia` action below. Convex redacts plain
+    // `Error` messages thrown by functions reached that way in production
+    // deployments (the client only sees a generic "Server Error" — this is
+    // what operators were seeing instead of the real validation reason).
+    // ConvexError is the one error type Convex always forwards verbatim, so
+    // every guard here throws ConvexError instead of Error.
     if (preponderancia <= 0 || preponderancia > 100) {
-      throw new Error('preponderancia debe estar en (0, 100]');
+      throw new ConvexError('preponderancia debe estar en (0, 100]');
     }
     const existing = await ctx.db.get(lotItemId);
-    if (!existing) throw new Error(`lotItem ${lotItemId} no encontrado`);
+    if (!existing) throw new ConvexError(`lotItem ${lotItemId} no encontrado`);
 
     const lot = await ctx.db
       .query('lots')
       .withIndex('by_loteId', (q) => q.eq('loteId', existing.loteId))
       .first();
-    if (!lot) throw new Error(`Lote ${existing.loteId} no encontrado`);
+    if (!lot) throw new ConvexError(`Lote ${existing.loteId} no encontrado`);
     // Editing is allowed in any lot estado — the studio needs to fix
     // preponderancia after a lot has been closed/published when a
     // mis-keyed split is discovered. Preponderancia overflow is still
@@ -484,11 +491,19 @@ export const _updatePreponderancia = internalMutation({
       .query('lotItems')
       .withIndex('by_loteId', (q) => q.eq('loteId', existing.loteId))
       .collect();
-    const sumOthers = siblings
-      .filter((s) => s._id !== lotItemId)
-      .reduce((s, it) => s + it.preponderancia, 0);
-    if (sumOthers + preponderancia > 100.01) {
-      throw new Error(
+    // Round to 2 decimals before summing/comparing — siblings can carry
+    // long binary-float tails from prior divisions (equal-split creates,
+    // earlier edits), and comparing those raw tails against a 100.01
+    // tolerance risks a false "exceeds 100%" rejection on a legitimate
+    // nudge (e.g. 99.9% -> 100.0%).
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+    const sumOthers = round2(
+      siblings
+        .filter((s) => s._id !== lotItemId)
+        .reduce((s, it) => s + it.preponderancia, 0),
+    );
+    if (round2(sumOthers + preponderancia) > 100.01) {
+      throw new ConvexError(
         `La preponderancia ${preponderancia}% excede el 100% del lote ` +
           `(otros ítems suman ${sumOthers}%).`,
       );

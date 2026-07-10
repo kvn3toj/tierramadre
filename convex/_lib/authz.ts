@@ -19,6 +19,8 @@
  * invitations.ts for the internalMutation + action-wrapper pattern).
  */
 
+import { ConvexError } from 'convex/values';
+
 export type AccessLevel =
   | 'admin'
   | 'asesor'
@@ -51,7 +53,7 @@ async function verifyGoogleIdToken(
 ): Promise<{ email: string; name?: string }> {
   const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
   if (!clientId) {
-    throw new Error(
+    throw new ConvexError(
       'No autorizado: GOOGLE_OAUTH_CLIENT_ID no configurado en Convex.',
     );
   }
@@ -60,47 +62,45 @@ async function verifyGoogleIdToken(
     `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`,
   );
   if (!res.ok) {
-    throw new Error('No autorizado: token de Google inválido o expirado.');
+    throw new ConvexError('No autorizado: token de Google inválido o expirado.');
   }
   const payload = (await res.json()) as GoogleTokenInfo;
 
   if (payload.aud !== clientId) {
-    throw new Error('No autorizado: token no emitido para esta app.');
+    throw new ConvexError('No autorizado: token no emitido para esta app.');
   }
   if (
     payload.iss !== 'accounts.google.com' &&
     payload.iss !== 'https://accounts.google.com'
   ) {
-    throw new Error('No autorizado: emisor de token inválido.');
+    throw new ConvexError('No autorizado: emisor de token inválido.');
   }
   if (payload.email_verified !== 'true' || !payload.email) {
-    throw new Error('No autorizado: email de Google no verificado.');
+    throw new ConvexError('No autorizado: email de Google no verificado.');
   }
   const exp = Number(payload.exp);
   if (!exp || exp * 1000 < Date.now()) {
-    throw new Error('No autorizado: token de Google expirado.');
+    throw new ConvexError('No autorizado: token de Google expirado.');
   }
 
   return { email: payload.email.toLowerCase().trim(), name: payload.name };
 }
 
-async function fetchRosterEntry(
-  email: string,
-): Promise<{
+async function fetchRosterEntry(email: string): Promise<{
   accessLevel: AccessLevel;
   rosterName?: string;
   rosterRole?: string;
 }> {
   const appUrl = process.env.APP_URL;
   if (!appUrl) {
-    throw new Error('No autorizado: APP_URL no configurado en Convex.');
+    throw new ConvexError('No autorizado: APP_URL no configurado en Convex.');
   }
 
   const res = await fetch(
     `${appUrl}/api/validate?email=${encodeURIComponent(email)}&type=both`,
   );
   if (!res.ok) {
-    throw new Error('No se pudo validar el rol del usuario.');
+    throw new ConvexError('No se pudo validar el rol del usuario.');
   }
   const data = (await res.json()) as {
     success?: boolean;
@@ -132,7 +132,7 @@ export async function requireAccessLevel(
   const { email, name } = await verifyGoogleIdToken(idToken);
   const { accessLevel, rosterName, rosterRole } = await fetchRosterEntry(email);
   if (!allowed.includes(accessLevel)) {
-    throw new Error('No autorizado para esta acción.');
+    throw new ConvexError('No autorizado para esta acción.');
   }
   return { email, name, accessLevel, rosterName, rosterRole };
 }
