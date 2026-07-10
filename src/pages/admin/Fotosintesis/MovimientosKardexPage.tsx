@@ -25,7 +25,7 @@
  * effort uses to render a printable comprobante.
  */
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Autocomplete,
@@ -132,6 +132,10 @@ export default function MovimientosKardexPage() {
   // require re-running the batch submit.
   const [searchParams] = useSearchParams();
   const lookupKardexEventId = searchParams.get('kardexEventId')?.trim() || null;
+  // Deep-link seed from the QR scanner: /admin/fotosintesis/movimientos?itemId=B-001-G1
+  // pre-fills row 1 with this item once its candidate data resolves — same
+  // "enrich a deep-linked stub" pattern VentaPage.tsx uses for the same param.
+  const seedItemId = searchParams.get('itemId')?.trim() || null;
 
   const [mode, setMode] = useState<Mode>('entrega');
   const [asesorNombre, setAsesorNombre] = useState('');
@@ -263,6 +267,24 @@ export default function MovimientosKardexPage() {
           p.precioEmbajadorCOP ?? p.precioConscienteCOP ?? p.precioCOP,
       }));
   }, [mode, disponibles, enAsesor, enConsignacion, currentlyHeldItemIds]);
+
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (!seedItemId || seededRef.current || mode !== 'entrega') return;
+    const match = candidatePool.find((c) => c.itemId === seedItemId);
+    if (!match) return;
+    seededRef.current = true;
+    setRows([
+      {
+        key: newRowKey(),
+        itemId: match.itemId,
+        nombre: match.nombre,
+        cantidad: '',
+        precio: match.precioSugerido ? String(match.precioSugerido) : '',
+        notas: '',
+      },
+    ]);
+  }, [seedItemId, mode, candidatePool]);
 
   // Resolves either from a just-completed submit (outcome) or a
   // `?kardexEventId=` lookup (reprint mode) — whichever is present.
