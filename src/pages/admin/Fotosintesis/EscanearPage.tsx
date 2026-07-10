@@ -46,10 +46,10 @@ const COP = new Intl.NumberFormat('es-CO', {
  *
  * Point the camera at a product QR (`tierramadre.app/product/{item}`), the item
  * resolves against Convex (`products.getByItem`) and its ficha appears. The
- * movement actions (compra / kardex / venta) are stubbed here and wired in the
- * next slice — this slice proves the scan→resolve→ficha loop end to end. A
- * manual item-number field is always available as a fallback for damaged codes
- * or browsers without camera access.
+ * movement actions (compra / kardex / venta) are wired here, navigating the
+ * operator straight to the matching flow once the item resolves. A manual
+ * item-number field is always available as a fallback for damaged codes or
+ * browsers without camera access.
  */
 export default function EscanearPage() {
   const foto = getFoto('light');
@@ -453,60 +453,62 @@ export default function EscanearPage() {
               </Box>
             )}
 
-            {/* Movement actions — wired in Fase 2 */}
-            <Box sx={{ px: 2, pb: 2, pt: 0 }}>
-              <Typography
-                sx={{
-                  fontSize: '11.5px',
-                  color: foto.ink.tertiary,
-                  mb: 1,
-                  letterSpacing: '0.02em',
-                }}
-              >
-                REGISTRAR MOVIMIENTO
-              </Typography>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: 1,
-                }}
-              >
-                <ActionButton
-                  icon={<PackagePlus size={18} />}
-                  label="Compra"
-                  foto={foto}
-                  onClick={
-                    lotItem
-                      ? () =>
-                          navigate(
-                            `/admin/fotosintesis/lots/${lotItem.loteId}/items/${lotItem._id}/edit`,
-                          )
-                      : undefined
-                  }
-                />
-                <ActionButton
-                  icon={<Receipt size={18} />}
-                  label="Kardex"
-                  foto={foto}
-                  onClick={() =>
-                    navigate(
-                      `/admin/fotosintesis/movimientos?itemId=${scannedItemId}`,
-                    )
-                  }
-                />
-                <ActionButton
-                  icon={<Tag size={18} />}
-                  label="Venta"
-                  foto={foto}
-                  onClick={() =>
-                    navigate(
-                      `/admin/fotosintesis/sales/new?itemId=${scannedItemId}`,
-                    )
-                  }
-                />
+            {/* Movement actions — navigate to Compra/Kardex/Venta once the item has resolved */}
+            {item && (
+              <Box sx={{ px: 2, pb: 2, pt: 0 }}>
+                <Typography
+                  sx={{
+                    fontSize: '11.5px',
+                    color: foto.ink.tertiary,
+                    mb: 1,
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  REGISTRAR MOVIMIENTO
+                </Typography>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: 1,
+                  }}
+                >
+                  <ActionButton
+                    icon={<PackagePlus size={18} />}
+                    label="Compra"
+                    foto={foto}
+                    onClick={
+                      lotItem
+                        ? () =>
+                            navigate(
+                              `/admin/fotosintesis/lots/${lotItem.loteId}/items/${lotItem._id}/edit`,
+                            )
+                        : undefined
+                    }
+                  />
+                  <ActionButton
+                    icon={<Receipt size={18} />}
+                    label="Kardex"
+                    foto={foto}
+                    onClick={() =>
+                      navigate(
+                        `/admin/fotosintesis/movimientos?itemId=${scannedItemId}`,
+                      )
+                    }
+                  />
+                  <ActionButton
+                    icon={<Tag size={18} />}
+                    label="Venta"
+                    foto={foto}
+                    onClick={() =>
+                      navigate(
+                        `/admin/fotosintesis/sales/new?itemId=${scannedItemId}`,
+                      )
+                    }
+                  />
+                </Box>
               </Box>
-            </Box>
+            )}
 
             <Box sx={{ px: 2, pb: 2 }}>
               <Button
