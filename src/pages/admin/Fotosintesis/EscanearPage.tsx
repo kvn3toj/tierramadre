@@ -489,6 +489,11 @@ export default function EscanearPage() {
                   icon={<Receipt size={18} />}
                   label="Kardex"
                   foto={foto}
+                  onClick={() =>
+                    navigate(
+                      `/admin/fotosintesis/movimientos?itemId=${scannedItemId}`,
+                    )
+                  }
                 />
                 <ActionButton
                   icon={<Tag size={18} />}
@@ -501,16 +506,6 @@ export default function EscanearPage() {
                   }
                 />
               </Box>
-              <Typography
-                sx={{
-                  fontSize: '11px',
-                  color: foto.ink.tertiary,
-                  mt: 1,
-                  textAlign: 'center',
-                }}
-              >
-                Los movimientos se activan en la Fase 2.
-              </Typography>
             </Box>
 
             <Box sx={{ px: 2, pb: 2 }}>
