@@ -58,6 +58,72 @@ export const listByLote = query({
   },
 });
 
+/** Case-insensitive, comma-tolerant normalization for free-text `medidas`
+ *  matching — "3,5mm" and "3.5mm" (or with/without spaces) compare equal. */
+function normalizeMedidas(s: string): string {
+  return s.toLowerCase().replace(/,/g, '.').replace(/\s+/g, '');
+}
+
+/**
+ * Stock search for the anima-bot Telegram bridge (`searchItems` in
+ * anima-bot/src/fotosintesis/client.ts) — answers "¿hay gemas de 3,5mm
+ * disponibles?"-style questions.
+ *
+ * NOTE: despite living in this file, this reads `productInventory`, not the
+ * `lotItems` table. `lotItems` only carries {loteId, itemId, preponderancia,
+ * costoBaseCOP, ordenEnLote} — none of tipo/nombre/medidas/cantidad/color/
+ * calidad/ubicacion/mostrarEnCatalogo exist there; they're all on the linked
+ * productInventory row. `loteId !== undefined` is treated as "is a lot item"
+ * here, matching products.publishedCatalog's own convention (lotItems.create
+ * always sets both together; _remove clears loteId on the orphaned row).
+ *
+ * No auth gate — public read, same as lots.list / providers.list.
+ */
+export const search = query({
+  args: {
+    tipo: v.optional(v.string()),
+    medidas: v.optional(v.string()),
+    minCantidad: v.optional(v.number()),
+    loteId: v.optional(v.string()),
+  },
+  handler: async (ctx, { tipo, medidas, minCantidad, loteId }) => {
+    // by_loteId is the only relevant index available — tipo has none, so it
+    // (like medidas) is filtered in memory below regardless.
+    const rows = loteId
+      ? await ctx.db
+          .query('productInventory')
+          .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
+          .collect()
+      : await ctx.db.query('productInventory').collect();
+
+    const effectiveMin = minCantidad ?? 1;
+    const medidasQuery = medidas ? normalizeMedidas(medidas) : null;
+
+    const filtered = rows.filter((row) => {
+      if (row.loteId === undefined) return false;
+      if (tipo !== undefined && row.tipo !== tipo) return false;
+      if (effectiveMin > 0) {
+        if (row.cantidad === undefined || row.cantidad < effectiveMin) {
+          return false;
+        }
+      }
+      if (medidasQuery !== null) {
+        if (row.medidas === undefined) return false;
+        if (!normalizeMedidas(row.medidas).includes(medidasQuery)) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    return filtered.sort((a, b) => {
+      const cantDiff = (b.cantidad ?? 0) - (a.cantidad ?? 0);
+      if (cantDiff !== 0) return cantDiff;
+      return (a.nombre ?? '').localeCompare(b.nombre ?? '', 'es');
+    });
+  },
+});
+
 /**
  * Cumulative preponderancia for a given lot. Reactive — the wizard
  * subscribes to this so the PreponderanciaTracker updates as items are
