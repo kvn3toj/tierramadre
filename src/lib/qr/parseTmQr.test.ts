@@ -22,7 +22,9 @@ describe('parseTmQr', () => {
   });
 
   it('tolerates trailing slash, query and hash', () => {
-    expect(itemOf('https://tierramadre.app/product/368/?utm=x#top').itemId).toBe('368');
+    expect(
+      itemOf('https://tierramadre.app/product/368/?utm=x#top').itemId,
+    ).toBe('368');
   });
 
   it('accepts a no-scheme host form', () => {
@@ -30,7 +32,11 @@ describe('parseTmQr', () => {
   });
 
   it('accepts a bare item id (manual fallback)', () => {
-    expect(parseTmQr('B-001-G1')).toEqual({ kind: 'item', itemId: 'B-001-G1', raw: 'B-001-G1' });
+    expect(parseTmQr('B-001-G1')).toEqual({
+      kind: 'item',
+      itemId: 'B-001-G1',
+      raw: 'B-001-G1',
+    });
     expect(itemOf('  368  ').itemId).toBe('368');
   });
 
@@ -40,6 +46,17 @@ describe('parseTmQr', () => {
       token: 'AB3K9P',
       raw: 'https://tierramadre.app/v/AB3K9P',
     });
+  });
+
+  it('recognises a grupo (lote/sublote bundle) link as NOT an item', () => {
+    expect(parseTmQr('https://tierramadre.app/grupo/C-030')).toEqual({
+      kind: 'grupo',
+      groupId: 'C-030',
+      raw: 'https://tierramadre.app/grupo/C-030',
+    });
+    expect(parseTmQr('https://tierramadre.app/grupo/C-010-S1').kind).toBe(
+      'grupo',
+    );
   });
 
   it('returns other for arbitrary urls and junk', () => {

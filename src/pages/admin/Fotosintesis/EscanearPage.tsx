@@ -66,6 +66,12 @@ export default function EscanearPage() {
       setScannedItemId(parsed.itemId);
     } else if (parsed.kind === 'vitrina') {
       setNotice('Ese QR es un enlace de Vitrina, no un ítem.');
+    } else if (parsed.kind === 'grupo') {
+      // A lote/sublote bundle card's QR (grupoId) — not a single stock item,
+      // so there's nothing here to resolve movements against.
+      setNotice(
+        `Ese QR es un lote/sublote agrupado ("${parsed.groupId}"), no un ítem individual. Verlo en tierramadre.app/grupo/${parsed.groupId}.`,
+      );
     } else {
       setNotice('Ese código no corresponde a un ítem de Tierra Mädre.');
     }

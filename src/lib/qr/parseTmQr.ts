@@ -15,12 +15,16 @@
  *   - Bare id:  "B-001-G1" or "368"  (what the hand-typed fallback yields)
  *
  * Recognised-but-not-an-item → { kind: 'vitrina' } for `/v/<token>` share
- * links; everything else → { kind: 'other' }.
+ * links, { kind: 'grupo' } for `/grupo/<groupId>` lote/sublote bundle links
+ * (see AdditionalInfo.tsx — a bundle card's QR encodes its real groupId here,
+ * never the synthetic hash key `/product/<item>` would give it); everything
+ * else → { kind: 'other' }.
  */
 
 export type TmQrResult =
   | { kind: 'item'; itemId: string; raw: string }
   | { kind: 'vitrina'; token: string; raw: string }
+  | { kind: 'grupo'; groupId: string; raw: string }
   | { kind: 'other'; raw: string };
 
 /** Item ids are alphanumeric with internal dashes only (e.g. "B-001-G1", "368"). */
@@ -67,7 +71,16 @@ export function parseTmQr(input: string | null | undefined): TmQrResult {
     }
     const vitrinaIdx = segs.findIndex((s) => s.toLowerCase() === 'v');
     if (vitrinaIdx >= 0 && segs[vitrinaIdx + 1]) {
-      return { kind: 'vitrina', token: cleanSegment(segs[vitrinaIdx + 1]), raw };
+      return {
+        kind: 'vitrina',
+        token: cleanSegment(segs[vitrinaIdx + 1]),
+        raw,
+      };
+    }
+    const grupoIdx = segs.findIndex((s) => s.toLowerCase() === 'grupo');
+    if (grupoIdx >= 0 && segs[grupoIdx + 1]) {
+      const groupId = cleanSegment(segs[grupoIdx + 1]);
+      if (ITEM_ID_RE.test(groupId)) return { kind: 'grupo', groupId, raw };
     }
     return { kind: 'other', raw };
   }
