@@ -22,17 +22,17 @@ import React, {
   useState,
   useEffect,
   useRef,
-} from "react";
-import { Grid, type GridImperativeAPI } from "react-window";
-import { Box, useMediaQuery, useTheme } from "@mui/material";
-import { TreasureItem } from "../../types";
-import { vhCalc } from "../../hooks/useViewportHeight";
-import { usePriceShare } from "../../contexts/PriceShareContext";
+} from 'react';
+import { Grid, type GridImperativeAPI } from 'react-window';
+import { Box, useMediaQuery, useTheme } from '@mui/material';
+import { TreasureItem } from '../../types';
+import { vhCalc } from '../../hooks/useViewportHeight';
+import { usePriceShare } from '../../contexts/PriceShareContext';
 import {
   saveScrollPos,
   readScrollPos,
   restoreScrollWhenReady,
-} from "../../utils/scrollMemory";
+} from '../../utils/scrollMemory';
 
 interface VirtualGridProps {
   items: TreasureItem[];
@@ -61,7 +61,7 @@ interface VirtualGridProps {
   /** Minimum height for the grid container */
   minHeight?: number;
   /** Callback when scroll direction changes */
-  onScrollDirectionChange?: (direction: "up" | "down") => void;
+  onScrollDirectionChange?: (direction: 'up' | 'down') => void;
   /**
    * Stable key (route + active filters) under which the grid's internal scroll
    * offset is persisted, so returning from a product page restores position.
@@ -102,7 +102,7 @@ interface GridCellProps {
   onItemClick: (item: TreasureItem) => void;
   onCertClick: (item: TreasureItem) => void;
   onToggleFavorite: (itemId: number) => void;
-  renderCard: VirtualGridProps["renderCard"];
+  renderCard: VirtualGridProps['renderCard'];
   isMobile: boolean;
   colGap: number;
   rowGap: number;
@@ -111,8 +111,8 @@ interface GridCellProps {
 // Props received by the cell component from react-window 2.x
 interface CellRendererProps extends GridCellProps {
   ariaAttributes: {
-    "aria-colindex": number;
-    role: "gridcell";
+    'aria-colindex': number;
+    role: 'gridcell';
   };
   columnIndex: number;
   rowIndex: number;
@@ -161,7 +161,7 @@ function CellRenderer({
         paddingRight: columnIndex === columnCount - 1 ? 0 : colGap / 2,
         paddingBottom: rowGap,
         paddingLeft: columnIndex === 0 ? 0 : colGap / 2,
-        boxSizing: "border-box",
+        boxSizing: 'border-box',
       }}
     >
       {renderCard({
@@ -214,12 +214,12 @@ export default function VirtualGrid({
   // This avoids guessing scrollbar widths and parent padding from viewport width.
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(
-    typeof window !== "undefined" ? document.documentElement.clientWidth : 390,
+    typeof window !== 'undefined' ? document.documentElement.clientWidth : 390,
   );
 
   // Track scroll position for direction detection
   const lastScrollTop = React.useRef(0);
-  const lastDirection = React.useRef<"up" | "down" | null>(null);
+  const lastDirection = React.useRef<'up' | 'down' | null>(null);
   // Keep the latest onScrollElement callback in a ref for the notify effect.
   const onScrollElementRef = useRef(onScrollElement);
   onScrollElementRef.current = onScrollElement;
@@ -242,12 +242,18 @@ export default function VirtualGrid({
     const el = gridApi?.element;
     if (!el || !scrollRestorationKey) return;
 
-    // Restore once, on back/forward navigations.
+    // Restore once, on back/forward navigations. The restore poll can run for
+    // up to a few seconds waiting on slow data, so its cancel function must be
+    // called on teardown — otherwise a fast back-and-forth navigation could
+    // still be polling when `el` is detached and assign a stale scrollTop.
+    let cancelRestore: (() => void) | null = null;
     if (!didRestoreRef.current) {
       didRestoreRef.current = true;
       if (restoreScroll) {
         const target = readScrollPos(scrollRestorationKey);
-        if (target && target > 0) restoreScrollWhenReady(() => el, target);
+        if (target && target > 0) {
+          cancelRestore = restoreScrollWhenReady(() => el, target);
+        }
       }
     }
 
@@ -262,8 +268,9 @@ export default function VirtualGrid({
         ticking = false;
       });
     };
-    el.addEventListener("scroll", onScroll, { passive: true });
+    el.addEventListener('scroll', onScroll, { passive: true });
     return () => {
+      cancelRestore?.();
       // Only persist here on a genuine effect re-run (element still attached).
       // On unmount React detaches the subtree BEFORE running this cleanup, so
       // el.scrollTop would read 0 and clobber the value saved during scrolling.
@@ -271,7 +278,7 @@ export default function VirtualGrid({
       if (el.isConnected && el.scrollTop > 0) {
         saveScrollPos(scrollRestorationKey, el.scrollTop);
       }
-      el.removeEventListener("scroll", onScroll);
+      el.removeEventListener('scroll', onScroll);
     };
   }, [gridApi, scrollRestorationKey, restoreScroll]);
 
@@ -296,9 +303,9 @@ export default function VirtualGrid({
   }, []);
 
   // Responsive breakpoint detection
-  const isXs = useMediaQuery(theme.breakpoints.down("sm")); // < 600px
-  const isSm = useMediaQuery(theme.breakpoints.between("sm", "md")); // 600-900px
-  const isMd = useMediaQuery(theme.breakpoints.between("md", "lg")); // 900-1200px
+  const isXs = useMediaQuery(theme.breakpoints.down('sm')); // < 600px
+  const isSm = useMediaQuery(theme.breakpoints.between('sm', 'md')); // 600-900px
+  const isMd = useMediaQuery(theme.breakpoints.between('md', 'lg')); // 900-1200px
 
   // Calculate column count based on breakpoints
   // iOS HIG: 2 columns is optimal for scanning on mobile
@@ -403,7 +410,7 @@ export default function VirtualGrid({
       const scrollTop = event.currentTarget.scrollTop;
       const delta = scrollTop - lastScrollTop.current;
       if (Math.abs(delta) > 10) {
-        const direction = delta > 0 ? "down" : "up";
+        const direction = delta > 0 ? 'down' : 'up';
         if (direction !== lastDirection.current) {
           lastDirection.current = direction;
           onScrollDirectionChange(direction);
@@ -437,26 +444,26 @@ export default function VirtualGrid({
         // iOS Safari fix: Use --vh custom property instead of 100vh
         height: vhCalc(100, HEADER_OFFSET),
         minHeight,
-        width: "100%",
+        width: '100%',
         // Responsive horizontal padding
         px: { xs: 1, sm: 1, md: 2, lg: 0 },
-        boxSizing: "border-box",
-        position: "relative",
-        isolation: "isolate",
+        boxSizing: 'border-box',
+        position: 'relative',
+        isolation: 'isolate',
         // Grid container styles. react-window's inner div is the element that
         // actually scrolls in grid view, so scroll-containment belongs here:
         // `contain` stops the grid's scroll from chaining into the <main>
         // shell behind it, which is what produced the "two scrollbars
         // fighting" feel when reaching the top or bottom of the catalog.
-        "& > div": {
-          overflowX: "hidden !important",
-          width: "100% !important",
-          boxSizing: "border-box",
-          overscrollBehavior: "contain",
-          WebkitOverflowScrolling: "touch",
+        '& > div': {
+          overflowX: 'hidden !important',
+          width: '100% !important',
+          boxSizing: 'border-box',
+          overscrollBehavior: 'contain',
+          WebkitOverflowScrolling: 'touch',
         },
         // PWA standalone mode consistency
-        "@media (display-mode: standalone)": {
+        '@media (display-mode: standalone)': {
           px: 1,
         },
       }}
@@ -472,8 +479,8 @@ export default function VirtualGrid({
         overscanCount={3}
         onScroll={handleScroll}
         style={{
-          height: "100%",
-          width: "100%",
+          height: '100%',
+          width: '100%',
         }}
       />
     </Box>

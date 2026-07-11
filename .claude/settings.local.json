@@ -112,7 +112,8 @@
       "Bash(timeout 300 npm run lint)",
       "Bash(npx vite *)",
       "Bash(rm -f /tmp/cert_export_test*.png)",
-      "Bash(git --no-pager log --oneline -3 origin/main)"
+      "Bash(git --no-pager log --oneline -3 origin/main)",
+      "mcp__obsidian__get_vault_file"
     ],
     "deny": [],
     "ask": []

@@ -30,7 +30,7 @@ const TRACKED_FILTERS = [
   'cantidadFilter',
 ] as const;
 
-type TrackedFilterKey = typeof TRACKED_FILTERS[number];
+type TrackedFilterKey = (typeof TRACKED_FILTERS)[number];
 
 /**
  * Track filter changes and count active filters.
@@ -50,15 +50,21 @@ export function useFilterTracking({
     if (filters.colorFilter !== 'all') count++;
     if (filters.qualityFilter !== 'all') count++;
     if (filters.typeFilter !== 'all') count++;
-    if (filters.statusFilter !== 'available') count++;
+    if (filters.statusFilter !== 'all') count++;
     if (filters.shapeFilter !== 'all') count++;
     if (filters.cantidadFilter !== 'all') count++;
     if (filters.coleccionFilter !== 'all') count++;
     if (filters.heroCategoryFilter !== 'all') count++;
-    if (filters.priceRange[0] !== priceMinMax.min || filters.priceRange[1] !== priceMinMax.max) {
+    if (
+      filters.priceRange[0] !== priceMinMax.min ||
+      filters.priceRange[1] !== priceMinMax.max
+    ) {
       count++;
     }
-    if (filters.caratRange[0] !== caratMinMax.min || filters.caratRange[1] !== caratMinMax.max) {
+    if (
+      filters.caratRange[0] !== caratMinMax.min ||
+      filters.caratRange[1] !== caratMinMax.max
+    ) {
       count++;
     }
     return count;
@@ -116,7 +122,15 @@ export function useFilterTracking({
     checkAchievements();
 
     prevFiltersRef.current = filters;
-  }, [filters, track, activeFilterCount, resultsCount, checkAchievements, priceMinMax.min, caratMinMax.min]);
+  }, [
+    filters,
+    track,
+    activeFilterCount,
+    resultsCount,
+    checkAchievements,
+    priceMinMax.min,
+    caratMinMax.min,
+  ]);
 
   return {
     activeFilterCount,

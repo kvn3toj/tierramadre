@@ -5,24 +5,24 @@
  * Supports both compact (mobile) and full (desktop) layouts.
  * Extracted from TreasureBrowser to eliminate duplication.
  */
-import React from "react";
-import { Box, Chip, alpha } from "@mui/material";
-import { X } from "lucide-react";
-import { useLanguage } from "../../contexts/LanguageContext";
-import { TreasureFilters } from "../../hooks/useTreasureFiltering";
+import React from 'react';
+import { Box, Chip, alpha } from '@mui/material';
+import { X } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { TreasureFilters } from '../../hooks/useTreasureFiltering';
 import {
   formatCurrency,
   getColorDot,
   formatCollectionName,
-} from "../../utils/formatting";
-import { useCurrency } from "../../contexts/CurrencyContext";
-import { useThemeMode } from "../../contexts/ThemeContext";
-import { getQuietEmerald } from "../../design-system";
-import { semanticColors } from "../../design-system/tokens/colors";
+} from '../../utils/formatting';
+import { useCurrency } from '../../contexts/CurrencyContext';
+import { useThemeMode } from '../../contexts/ThemeContext';
+import { getQuietEmerald } from '../../design-system';
+import { semanticColors } from '../../design-system/tokens/colors';
 import {
   HERO_CATEGORY_LABELS,
   MainCategory,
-} from "../home/sections/gallery-constants";
+} from '../home/sections/gallery-constants';
 
 export interface ActiveFilterChipsProps {
   filters: TreasureFilters;
@@ -78,9 +78,9 @@ export function ActiveFilterChips({
   const { currency, convertPrice } = useCurrency();
   const { mode } = useThemeMode();
   const qe = getQuietEmerald(mode);
-  const chipSize = compact ? "small" : "small";
+  const chipSize = compact ? 'small' : 'small';
   const iconSize = compact ? 12 : 14;
-  const fontSize = compact ? "0.7rem" : undefined;
+  const fontSize = compact ? '0.7rem' : undefined;
 
   // Build list of active filter chips
   const chips: ChipConfig[] = [];
@@ -88,7 +88,7 @@ export function ActiveFilterChips({
   // Search
   if (filters.search) {
     chips.push({
-      key: "search",
+      key: 'search',
       label: compact
         ? `"${filters.search}"`
         : `${t.actions.search}: "${filters.search}"`,
@@ -102,12 +102,12 @@ export function ActiveFilterChips({
   }
 
   // Hero category (from home page tabs)
-  if (filters.heroCategoryFilter !== "all" && onClearHeroCategory) {
+  if (filters.heroCategoryFilter !== 'all' && onClearHeroCategory) {
     const label =
       HERO_CATEGORY_LABELS[filters.heroCategoryFilter as MainCategory] ||
       filters.heroCategoryFilter;
     chips.push({
-      key: "heroCategory",
+      key: 'heroCategory',
       label: compact ? label : `Categoría: ${label}`,
       onDelete: onClearHeroCategory,
       colors: {
@@ -124,7 +124,7 @@ export function ActiveFilterChips({
     filters.priceRange[1] < priceMinMax.max;
   if (hasPriceFilter) {
     chips.push({
-      key: "price",
+      key: 'price',
       label: `${formatCurrency(convertPrice(filters.priceRange[0]), currency)} - ${formatCurrency(convertPrice(filters.priceRange[1]), currency)}`,
       onDelete: onClearPrice,
       colors: {
@@ -143,7 +143,7 @@ export function ActiveFilterChips({
       filters.caratRange[1] < caratMinMax.max);
   if (hasCaratFilter) {
     chips.push({
-      key: "carat",
+      key: 'carat',
       label: `${filters.caratRange[0].toFixed(1)} - ${filters.caratRange[1].toFixed(1)} ct`,
       onDelete: onClearCarat!,
       colors: {
@@ -155,17 +155,17 @@ export function ActiveFilterChips({
   }
 
   // Color
-  if (filters.colorFilter !== "all") {
+  if (filters.colorFilter !== 'all') {
     chips.push({
-      key: "color",
-      label: filters.colorFilter.replace("Verde ", ""),
+      key: 'color',
+      label: filters.colorFilter.replace('Verde ', ''),
       onDelete: onClearColor,
       icon: (
         <Box
           sx={{
             width: compact ? 8 : 10,
             height: compact ? 8 : 10,
-            borderRadius: "50%",
+            borderRadius: '50%',
             bgcolor: getColorDot(filters.colorFilter),
             ml: compact ? 0.5 : 1,
           }}
@@ -180,9 +180,9 @@ export function ActiveFilterChips({
   }
 
   // Quality
-  if (filters.qualityFilter !== "all") {
+  if (filters.qualityFilter !== 'all') {
     chips.push({
-      key: "quality",
+      key: 'quality',
       label: compact
         ? filters.qualityFilter
         : `Calidad: ${filters.qualityFilter}`,
@@ -196,10 +196,10 @@ export function ActiveFilterChips({
   }
 
   // Type
-  if (filters.typeFilter !== "all") {
+  if (filters.typeFilter !== 'all') {
     chips.push({
-      key: "type",
-      label: filters.typeFilter === "loose" ? "Gemas" : "Joyería",
+      key: 'type',
+      label: filters.typeFilter === 'loose' ? 'Gemas' : 'Joyería',
       onDelete: onClearType,
       colors: {
         bg: alpha(qe.accentPure, 0.1),
@@ -209,14 +209,14 @@ export function ActiveFilterChips({
     });
   }
 
-  // Status (only show if not 'available' or 'all')
-  if (filters.statusFilter !== "available" && filters.statusFilter !== "all") {
+  // Status (only show if not the default 'all')
+  if (filters.statusFilter !== 'all') {
     chips.push({
-      key: "status",
+      key: 'status',
       label:
-        filters.statusFilter === "sold"
+        filters.statusFilter === 'sold'
           ? t.treasure.filter.sold
-          : t.treasure.filter.all,
+          : t.treasure.filter.available,
       onDelete: onClearStatus,
       colors: {
         bg: alpha(semanticColors.error.main, 0.1),
@@ -227,9 +227,9 @@ export function ActiveFilterChips({
   }
 
   // Shape
-  if (filters.shapeFilter !== "all") {
+  if (filters.shapeFilter !== 'all') {
     chips.push({
-      key: "shape",
+      key: 'shape',
       label: compact ? filters.shapeFilter : `Talla: ${filters.shapeFilter}`,
       onDelete: onClearShape,
       colors: {
@@ -241,14 +241,14 @@ export function ActiveFilterChips({
   }
 
   // Cantidad
-  if (filters.cantidadFilter !== "all") {
+  if (filters.cantidadFilter !== 'all') {
     chips.push({
-      key: "cantidad",
+      key: 'cantidad',
       label: compact
-        ? filters.cantidadFilter === "2+"
-          ? "Lotes"
+        ? filters.cantidadFilter === '2+'
+          ? 'Lotes'
           : filters.cantidadFilter
-        : `${t.treasure.filter.quantity}: ${filters.cantidadFilter === "2+" ? "Lotes" : filters.cantidadFilter}`,
+        : `${t.treasure.filter.quantity}: ${filters.cantidadFilter === '2+' ? 'Lotes' : filters.cantidadFilter}`,
       onDelete: onClearCantidad,
       colors: {
         bg: alpha(qe.accentPure, 0.1),
@@ -259,9 +259,9 @@ export function ActiveFilterChips({
   }
 
   // Categoria
-  if (filters.categoriaFilter !== "all" && onClearCategoria) {
+  if (filters.categoriaFilter !== 'all' && onClearCategoria) {
     chips.push({
-      key: "categoria",
+      key: 'categoria',
       label: compact
         ? filters.categoriaFilter
         : `Categoría: ${filters.categoriaFilter}`,
@@ -275,9 +275,9 @@ export function ActiveFilterChips({
   }
 
   // Coleccion
-  if (filters.coleccionFilter !== "all" && onClearColeccion) {
+  if (filters.coleccionFilter !== 'all' && onClearColeccion) {
     chips.push({
-      key: "coleccion",
+      key: 'coleccion',
       label: formatCollectionName(filters.coleccionFilter),
       onDelete: onClearColeccion,
       colors: {
@@ -295,9 +295,9 @@ export function ActiveFilterChips({
   return (
     <Box
       sx={{
-        display: "flex",
+        display: 'flex',
         gap: compact ? 0.75 : 1,
-        flexWrap: "wrap",
+        flexWrap: 'wrap',
         rowGap: compact ? 0.75 : undefined,
       }}
     >
@@ -313,8 +313,8 @@ export function ActiveFilterChips({
             bgcolor: chip.colors.bg,
             color: chip.colors.text,
             height: compact ? 32 : undefined,
-            "& .MuiChip-deleteIcon": { color: chip.colors.delete },
-            "& .MuiChip-label": {
+            '& .MuiChip-deleteIcon': { color: chip.colors.delete },
+            '& .MuiChip-label': {
               px: compact ? 1 : undefined,
               fontSize,
             },

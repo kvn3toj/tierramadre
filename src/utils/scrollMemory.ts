@@ -56,35 +56,60 @@ export function readLoadedPages(key: string): number | null {
 
 /**
  * Restore a scroll offset on an element that may still be growing (lazy data,
- * virtualization measuring widths, images reserving height). Retries across a
- * few animation frames until the element is tall enough to honor `target`,
- * then sets scrollTop. Returns a cleanup function to cancel pending frames.
+ * virtualization measuring widths, images reserving height). Retries on
+ * animation frames until the element is tall enough to honor `target`.
+ *
+ * Two exit conditions besides "reached target":
+ * - `maxWaitMs` elapses (catches slow network fetches — a fixed frame count
+ *   like "30 frames" silently gives up after ~0.5s, well under how long a
+ *   cold Sheets/Drive fetch can take, which is what left users scrolled to
+ *   the top after a back-navigation on a slow connection).
+ * - The height stops changing for several consecutive checks (`stableFrames`)
+ *   — the list has genuinely finished loading shorter than the saved offset
+ *   (e.g. filters now match fewer items), so waiting out the full timeout
+ *   would only delay landing at the best available position.
+ *
+ * Returns a cleanup function to cancel pending frames.
  */
 export function restoreScrollWhenReady(
   getElement: () => HTMLElement | null,
   target: number,
-  maxFrames = 30,
+  maxWaitMs = 4000,
+  stableFrames = 10,
 ): () => void {
   if (!Number.isFinite(target) || target <= 0) return () => {};
 
+  const now = () =>
+    typeof performance !== 'undefined' ? performance.now() : Date.now();
+  const startedAt = now();
   let frame = 0;
-  let tries = 0;
+  let cancelled = false;
+  let lastMaxScroll = -1;
+  let unchangedStreak = 0;
 
   const attempt = () => {
+    if (cancelled) return;
     const el = getElement();
     if (el) {
       const maxScroll = el.scrollHeight - el.clientHeight;
-      if (maxScroll >= target - 1 || tries >= maxFrames) {
+      const reachedTarget = maxScroll >= target - 1;
+      unchangedStreak = maxScroll === lastMaxScroll ? unchangedStreak + 1 : 0;
+      lastMaxScroll = maxScroll;
+
+      const timedOut = now() - startedAt >= maxWaitMs;
+      const settled = unchangedStreak >= stableFrames;
+
+      if (reachedTarget || timedOut || settled) {
         el.scrollTop = Math.min(target, Math.max(0, maxScroll));
         return;
       }
     }
-    tries += 1;
-    if (tries <= maxFrames) {
-      frame = requestAnimationFrame(attempt);
-    }
+    frame = requestAnimationFrame(attempt);
   };
 
   frame = requestAnimationFrame(attempt);
-  return () => cancelAnimationFrame(frame);
+  return () => {
+    cancelled = true;
+    cancelAnimationFrame(frame);
+  };
 }

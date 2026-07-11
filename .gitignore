@@ -171,3 +171,8 @@ src/assets/esmereogenesis/characters/_source/
 
 # GHL audit output dumps (generated data, may contain contact PII)
 /GHL/output/
+
+# Local NIIMBOT label workspace + raw photo drops (large binaries / venv — not source)
+etiquetas-niimbot/
+docs/JOY-ART/
+*.patch

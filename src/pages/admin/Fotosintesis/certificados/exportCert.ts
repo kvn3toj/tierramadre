@@ -313,6 +313,25 @@ export async function exportCertPdf(
   return pdf.output("blob");
 }
 
+/**
+ * Rasterize the node to a high-resolution PNG and return it as a Blob (NOT
+ * downloaded). Shared by the download button (`exportCertPng`) and the
+ * persist-to-product path, so the on-screen cert, the downloaded PNG, and the
+ * product-linked image are all the same pixels. The cross-origin taint failure
+ * is mapped to the same clear error as the other exporters via canvasToDataUrl.
+ */
+export async function renderCertPngBlob(
+  node: HTMLElement,
+  opts?: { pixelRatio?: number },
+): Promise<Blob> {
+  const canvas = await rasterize(node, opts?.pixelRatio ?? 3);
+  const dataUrl = canvasToDataUrl(canvas, "image/png");
+  // dataURL → Blob without a network round-trip (fetch on a data: URL is
+  // synchronous-ish and avoids manual base64 decoding).
+  const res = await fetch(dataUrl);
+  return res.blob();
+}
+
 /** Export the node as a high-resolution PNG (download). */
 export async function exportCertPng(
   node: HTMLElement,

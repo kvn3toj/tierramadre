@@ -148,22 +148,59 @@ export default function ProductDetail() {
     | null
     | undefined;
 
-  // Overlay the admin-only provenance/sync fields onto the product so the
-  // sections below can read them. Reactive: an AI edit to any of these fields
-  // updates `adminDoc` and re-renders live. Non-admins get `product` untouched
-  // (adminDoc is undefined because the query is skipped).
-  const adminProduct = useMemo(() => {
+  // Public, PROJECTED Convex doc for the SAME single item, fetched for ALL
+  // viewers (not admin-gated). This is what makes Fotosíntesis edits (medidas,
+  // nombre, corte/talla…) appear on the QR product page even when the legacy
+  // sheet the page reads lags behind — and it covers no-loteId items that
+  // `publishedCatalog` never surfaces. Uses the projected `getPublicByItem`
+  // (never the raw `get`), so no cost/consciente/sync fields reach anon clients.
+  const publicItemId =
+    itemId && !groupId && product && !product.isLote ? itemId : undefined;
+  const publicDoc = useConvexQuery(
+    convexApi.products.getPublicByItem,
+    publicItemId ? { itemId: publicItemId } : 'skip',
+  ) as
+    | {
+        nombre?: string;
+        medidas?: string;
+        medidasValores?: string;
+        talla?: string;
+        categoria?: string;
+      }
+    | null
+    | undefined;
+
+  // Enriched product = sheet-derived base + fresh public descriptive fields
+  // (Convex, all viewers) + admin-only provenance/sync fields (admins only).
+  // Reactive: an edit to any of these fields re-renders live. Descriptive
+  // fields overlay only when non-empty (a blank Convex value never wipes the
+  // sheet value); PRICE is intentionally NOT overlaid — legacy items price via
+  // the sheet's precioCOP/CUALIFICACION merge, which Convex does not carry.
+  const enrichedProduct = useMemo(() => {
     if (!product) return product;
-    if (!adminDoc) return product;
-    return {
-      ...product,
-      procedencia: adminDoc.procedencia,
-      loteId: adminDoc.loteId,
-      preponderancia: adminDoc.preponderancia,
-      syncStatus: adminDoc.syncStatus,
-      syncError: adminDoc.syncError,
-    };
-  }, [product, adminDoc]);
+    let p = product;
+    if (publicDoc) {
+      p = {
+        ...p,
+        nombre: publicDoc.nombre || p.nombre,
+        medidas: publicDoc.medidas || p.medidas,
+        medidasValores: publicDoc.medidasValores || p.medidasValores,
+        talla: publicDoc.talla || p.talla,
+        categoria: publicDoc.categoria || p.categoria,
+      };
+    }
+    if (adminDoc) {
+      p = {
+        ...p,
+        procedencia: adminDoc.procedencia,
+        loteId: adminDoc.loteId,
+        preponderancia: adminDoc.preponderancia,
+        syncStatus: adminDoc.syncStatus,
+        syncError: adminDoc.syncError,
+      };
+    }
+    return p;
+  }, [product, publicDoc, adminDoc]);
 
   // Grouped lote/sublote: build gallery media + an aligned price array in one
   // pass so indices stay in sync even when some items lack a photo. Index 0 =
@@ -230,6 +267,33 @@ export default function ProductDetail() {
       .replace(/^L:/, '')
       .trim();
   }, [detail]);
+
+  // Gallery media + an appended certificate slide.
+  // The product's certificate (`certificateUrl`) is surfaced as the LAST slide
+  // in the carousel (category "certificate" → labeled "Certificado", included in
+  // the lightbox), in addition to the "Ver certificado" link in
+  // CertificateSection. Certs are captured as images (PNG→JPEG on upload), so
+  // they render inline; a raw `.pdf` URL can't be an <img>, so we skip it there
+  // and let the link handle it. Drive URLs are routed through the same proxy the
+  // product photos use. Appended at the end so photo indices — and the
+  // lote-price index mapping (`loteMedia.itemKeys`) — are never shifted.
+  const galleryMedia = useMemo<MediaItem[]>(() => {
+    const certUrl = product?.certificateUrl?.trim();
+    if (!product || !certUrl) return mediaItems;
+    // Only an image can be a carousel slide; a PDF stays link-only.
+    if (/\.pdf(\?|#|$)/i.test(certUrl)) return mediaItems;
+    // Don't double-add if the media pipeline already provided a cert slide.
+    if (mediaItems.some((m) => m.category === 'certificate')) return mediaItems;
+    const certItem: MediaItem = {
+      id: `certificate-${product.item}`,
+      url: convertToProxyUrl(certUrl) ?? certUrl,
+      type: 'image',
+      category: 'certificate',
+      alt: `Certificado de ${displayName || `producto ${product.item}`}`,
+      order: 999,
+    };
+    return [...mediaItems, certItem];
+  }, [mediaItems, product, displayName]);
 
   // Track product view (once per session, fire-and-forget)
   useProductView({
@@ -553,7 +617,7 @@ export default function ProductDetail() {
   // Descriptive sections (title, metadata, specs) follow the piece in view;
   // `detail` is only undefined when `product` is, which the guard above rules
   // out, so `info` is always a concrete item here.
-  const info = detail ?? product;
+  const info = detail ?? enrichedProduct ?? product;
 
   const isFav = isFavorite(product.item);
   const fichaCode = `FICHA · TM-${String(product.item).padStart(4, '0')}`;
@@ -640,7 +704,7 @@ export default function ProductDetail() {
       {/* Hero */}
       {isLiteral ? (
         <GemLiteralGallery
-          media={mediaItems}
+          media={galleryMedia}
           productName={displayName}
           onIndexChange={product.isLote ? setGalleryIndex : undefined}
         />
@@ -655,7 +719,7 @@ export default function ProductDetail() {
           }}
         >
           <MediaGallery
-            media={mediaItems}
+            media={galleryMedia}
             productName={displayName}
             onIndexChange={product.isLote ? setGalleryIndex : undefined}
           />
@@ -716,7 +780,7 @@ export default function ProductDetail() {
             <CertificateSection product={product} />
           </Box>
           <ProvenanceSection
-            product={adminProduct ?? product}
+            product={enrichedProduct ?? product}
             isAdmin={isAdmin}
           />
           <Box sx={{ mt: '18px' }}>

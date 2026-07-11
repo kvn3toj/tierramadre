@@ -5,7 +5,14 @@
  * Extracted from TreasureBrowser for reusability and clarity.
  */
 import { useMemo, useEffect, useRef, useCallback } from 'react';
-import { TreasureFilters, TypeFilter, StatusFilter, SortOption, CityFilter, HeroCategoryFilter } from './useTreasureFiltering';
+import {
+  TreasureFilters,
+  TypeFilter,
+  StatusFilter,
+  SortOption,
+  CityFilter,
+  HeroCategoryFilter,
+} from './useTreasureFiltering';
 
 export interface UseUrlFilterSyncOptions {
   filters: TreasureFilters;
@@ -24,7 +31,9 @@ export interface UseUrlFilterSyncReturn {
  * Accepts an explicit search string (from React Router's location.search)
  * to avoid reading stale window.location during startTransition navigations.
  */
-export function parseUrlFilters(searchString?: string): Partial<TreasureFilters> {
+export function parseUrlFilters(
+  searchString?: string,
+): Partial<TreasureFilters> {
   if (typeof window === 'undefined') return {};
 
   const params = new URLSearchParams(searchString ?? window.location.search);
@@ -35,8 +44,16 @@ export function parseUrlFilters(searchString?: string): Partial<TreasureFilters>
 
   // Hero category filter (new canonical param from hero tabs)
   const heroCategory = params.get('heroCategory');
-  const validHeroCategories: HeroCategoryFilter[] = ['piedras', 'gemas', 'lotes', 'joyas'];
-  if (heroCategory && validHeroCategories.includes(heroCategory as HeroCategoryFilter)) {
+  const validHeroCategories: HeroCategoryFilter[] = [
+    'piedras',
+    'gemas',
+    'lotes',
+    'joyas',
+  ];
+  if (
+    heroCategory &&
+    validHeroCategories.includes(heroCategory as HeroCategoryFilter)
+  ) {
     filters.heroCategoryFilter = heroCategory as HeroCategoryFilter;
   }
 
@@ -54,14 +71,15 @@ export function parseUrlFilters(searchString?: string): Partial<TreasureFilters>
   if (quality) filters.qualityFilter = quality;
 
   const city = params.get('city');
-  if (city === 'Cali' || city === 'Bogotá') filters.cityFilter = city as CityFilter;
+  if (city === 'Cali' || city === 'Bogotá')
+    filters.cityFilter = city as CityFilter;
 
   const priceMin = params.get('priceMin');
   const priceMax = params.get('priceMax');
   if (priceMin || priceMax) {
     filters.priceRange = [
       priceMin ? parseInt(priceMin, 10) : 0,
-      priceMax ? parseInt(priceMax, 10) : Number.MAX_SAFE_INTEGER
+      priceMax ? parseInt(priceMax, 10) : Number.MAX_SAFE_INTEGER,
     ];
   }
 
@@ -102,16 +120,17 @@ export function parseUrlFilters(searchString?: string): Partial<TreasureFilters>
   if (caratMin || caratMax) {
     filters.caratRange = [
       caratMin ? parseFloat(caratMin) : 0,
-      caratMax ? parseFloat(caratMax) : Number.MAX_SAFE_INTEGER
+      caratMax ? parseFloat(caratMax) : Number.MAX_SAFE_INTEGER,
     ];
   }
 
   // Parse items filter (comma-separated item numbers for QR/quotation links)
   const items = params.get('items');
   if (items) {
-    const itemNumbers = items.split(',')
-      .map(s => parseInt(s.trim(), 10))
-      .filter(n => !isNaN(n) && n > 0);
+    const itemNumbers = items
+      .split(',')
+      .map((s) => parseInt(s.trim(), 10))
+      .filter((n) => !isNaN(n) && n > 0);
     if (itemNumbers.length > 0) {
       filters.itemsFilter = itemNumbers;
     }
@@ -150,9 +169,10 @@ export function useUrlFilterSync({
 
     // Only add non-default values to URL
     if (filters.search) params.set('search', filters.search);
-    if (filters.heroCategoryFilter !== 'all') params.set('heroCategory', filters.heroCategoryFilter);
+    if (filters.heroCategoryFilter !== 'all')
+      params.set('heroCategory', filters.heroCategoryFilter);
     if (filters.typeFilter !== 'all') params.set('type', filters.typeFilter);
-    if (filters.statusFilter !== 'available' && filters.statusFilter !== 'all') {
+    if (filters.statusFilter !== 'all') {
       params.set('status', filters.statusFilter);
     }
     if (filters.qualityFilter && filters.qualityFilter !== 'all') {
@@ -204,7 +224,13 @@ export function useUrlFilterSync({
         : window.location.pathname;
       window.history.replaceState(null, '', newUrl);
     }
-  }, [filters, priceMinMax.min, priceMinMax.max, caratMinMax.min, caratMinMax.max]);
+  }, [
+    filters,
+    priceMinMax.min,
+    priceMinMax.max,
+    caratMinMax.min,
+    caratMinMax.max,
+  ]);
 
   // Clear filters and URL params
   const handleClearFilters = useCallback(() => {

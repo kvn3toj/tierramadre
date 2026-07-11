@@ -382,16 +382,12 @@ export default function CertGeneratorPage() {
 
     setBusy(true);
     try {
-      const tpl = CERT_TEMPLATES.origen;
+      // Product-linked certs are captured as PNG (see persistCert) so they show
+      // as an inline slide in the product gallery, not only as a download link.
       const { url } = await persistCertToProduct({
         client: convexClient,
         node,
-        size: {
-          w: tpl.print.w,
-          h: tpl.print.h,
-          orientation: tpl.print.orientation,
-        },
-        filename: `TierraMadre_origen_${nameForFile}.pdf`,
+        filename: `TierraMadre_origen_${nameForFile}.png`,
         loteId: selectedPiece.loteId,
         itemId: String(selectedPiece.item),
         editorEmail: user?.email,

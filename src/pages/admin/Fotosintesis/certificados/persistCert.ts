@@ -5,10 +5,19 @@
  *
  * This is the persistence twin of `exportCert.ts`: where exportCert rasterizes
  * the same CertPreview node to a downloadable PDF/PNG, persistCert rasterizes it
- * to a PDF Blob, uploads it through the EXISTING Fotosíntesis cert-upload path
+ * and uploads it through the EXISTING Fotosíntesis cert-upload path
  * (`uploadFotosintesisCertificado` → `/api/media-upload`, the same endpoint
  * EditItemDrawer uses), and writes the hosted URL back via the Convex media
  * mutations. No new upload endpoint is invented.
+ *
+ * Product-linked certs are captured as a PNG (not PDF): the product-detail
+ * gallery is an image carousel, so an inline image lets the certificate show as
+ * a real, zoomable slide (`category: "certificate"`) instead of only a
+ * download link. The upload path re-encodes it to a ≤2000px JPEG, which stays
+ * under Vercel's body limit and renders everywhere. The admin's separate
+ * PDF/PNG *download* buttons are unchanged for print-fidelity needs. Sale-linked
+ * documents (carnet/certificado on a venta) stay PDF — those are print/legal
+ * artifacts, not carousel media.
  *
  * The legal gate (`VITE_CERT_LEGAL_APPROVED`, Q-6) is respected here exactly as
  * it gates `exportCertificado`: a legally-unapproved cert is never persisted.
@@ -16,7 +25,11 @@
 
 import { uploadFotosintesisCertificado } from "../utils/uploadItemMedia";
 import { isCertificadoApproved } from "../exportCertificado";
-import { exportCertPdf, type CertExportSize } from "./exportCert";
+import {
+  exportCertPdf,
+  renderCertPngBlob,
+  type CertExportSize,
+} from "./exportCert";
 import { convexApi } from "../../../../lib/convex-safe";
 import type { ConvexReactClient } from "convex/react";
 
@@ -58,23 +71,27 @@ function runMutation<T>(
 }
 
 /**
- * Rasterize the CertPreview node to a PDF Blob (NOT downloaded) and wrap it in a
- * named File so the upload endpoint preserves the `.pdf` extension. Reuses
- * exportCertPdf so the persisted artifact is byte-identical to the exported one.
+ * Rasterize the CertPreview node to a PNG Blob (NOT downloaded) and wrap it in a
+ * named `.png` File so the upload endpoint serves it as an inline image the
+ * product gallery can render as a slide. Reuses renderCertPngBlob so the
+ * persisted image is the same pixels as the on-screen preview and the PNG
+ * download. The `.png` extension is forced regardless of the caller's filename
+ * so the hosted URL is always an image.
  */
-async function captureCertFile(
-  node: HTMLElement,
-  size: CertExportSize,
-  filename: string,
-): Promise<File> {
-  const blob = await exportCertPdf(node, size, filename, { download: false });
-  return new File([blob], filename, { type: "application/pdf" });
+async function captureCertFile(node: HTMLElement, filename: string): Promise<File> {
+  const blob = await renderCertPngBlob(node, { pixelRatio: 3 });
+  const pngName = filename.replace(/\.[^./\\]+$/, "") + ".png";
+  return new File([blob], pngName, { type: "image/png" });
 }
 
 export interface PersistToProductArgs {
   client: Client;
   node: HTMLElement;
-  size: CertExportSize;
+  /**
+   * Retained for API compatibility; the product path now rasterizes to PNG
+   * (which reads size from the node itself), so this is no longer required.
+   */
+  size?: CertExportSize;
   filename: string;
   /** The selected product's lot id (TreasureItem.loteId). */
   loteId: string;
@@ -108,11 +125,11 @@ export async function persistCertToProduct(
 ): Promise<PersistResult> {
   if (!isCertificadoApproved()) throw new CertNotApprovedError();
 
-  const { client, node, size, filename, loteId, itemId, editorEmail } = args;
+  const { client, node, filename, loteId, itemId, editorEmail } = args;
 
   // Upload first so a Convex resolution failure doesn't leave us having
   // claimed success with no hosted file.
-  const file = await captureCertFile(node, size, filename);
+  const file = await captureCertFile(node, filename);
   const url = await uploadFotosintesisCertificado(file, loteId, itemId);
 
   // Resolve itemId → lotItemId via the lot's join rows.

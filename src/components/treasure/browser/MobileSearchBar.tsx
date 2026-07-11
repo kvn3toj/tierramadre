@@ -12,13 +12,27 @@ import {
   CardMedia,
 } from '@mui/material';
 import { Search, X, Heart, SlidersHorizontal, Clock } from 'lucide-react';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../../design-system/tokens/colors';
-import { accentColors, blurValues, zIndex, cssTransition } from '../../../design-system';
+import {
+  emeraldCore,
+  surfacesLight,
+  surfacesDark,
+} from '../../../design-system/tokens/colors';
+import {
+  accentColors,
+  blurValues,
+  zIndex,
+  cssTransition,
+} from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { ActiveFilterChips } from '../';
 import { useCurrencyFormat } from '../../../contexts/CurrencyContext';
 import { usePriceShare } from '../../../contexts/PriceShareContext';
-import type { TreasureFilters, StatusFilter, TypeFilter, HeroCategoryFilter } from '../../../hooks/useTreasureFiltering';
+import type {
+  TreasureFilters,
+  StatusFilter,
+  TypeFilter,
+  HeroCategoryFilter,
+} from '../../../hooks/useTreasureFiltering';
 import type { TreasureItem } from '../../../types';
 // Logo placeholder for products without images
 import logoPlaceholder from '../../../assets/logo-symbol.png';
@@ -101,7 +115,8 @@ export default function MobileSearchBar({
   const { shouldShowPrices } = usePriceShare();
 
   // Determine which items to show based on active tab
-  const quickAccessItems = activeTab === 'recent' ? recentlyViewedItems : favoriteItems;
+  const quickAccessItems =
+    activeTab === 'recent' ? recentlyViewedItems : favoriteItems;
   const hasRecentItems = recentlyViewedItems.length > 0;
   const hasFavoriteItems = favoriteItems.length > 0;
   const hasQuickAccessContent = hasRecentItems || hasFavoriteItems;
@@ -123,7 +138,7 @@ export default function MobileSearchBar({
   }, [quickAccessOpen, hasRecentItems, hasFavoriteItems]);
 
   const handleQuickAccessToggle = useCallback(() => {
-    setQuickAccessOpen(prev => !prev);
+    setQuickAccessOpen((prev) => !prev);
   }, []);
 
   return (
@@ -177,9 +192,13 @@ export default function MobileSearchBar({
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2.5,
                 height: 38,
-                bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
+                bgcolor: isLight
+                  ? surfacesLight.background.primary
+                  : surfacesDark.background.secondary,
                 '& fieldset': {
-                  borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+                  borderColor: isLight
+                    ? surfacesLight.border.light
+                    : surfacesDark.border.light,
                 },
                 '&.Mui-focused fieldset': {
                   borderColor: emeraldCore.primary,
@@ -192,7 +211,11 @@ export default function MobileSearchBar({
           {!isProviderMode && hasQuickAccessContent && (
             <IconButton
               onClick={handleQuickAccessToggle}
-              aria-label={quickAccessOpen ? t.treasure.quickAccess.close : t.treasure.quickAccess.open}
+              aria-label={
+                quickAccessOpen
+                  ? t.treasure.quickAccess.close
+                  : t.treasure.quickAccess.open
+              }
               aria-expanded={quickAccessOpen}
               sx={{
                 width: 38,
@@ -221,12 +244,22 @@ export default function MobileSearchBar({
                 <Heart
                   size={16}
                   fill={showFavoritesOnly ? accentColors.error.light : 'none'}
-                  color={showFavoritesOnly ? accentColors.error.light : quickAccessOpen ? emeraldCore.primary : theme.palette.text.secondary}
+                  color={
+                    showFavoritesOnly
+                      ? accentColors.error.light
+                      : quickAccessOpen
+                        ? emeraldCore.primary
+                        : theme.palette.text.secondary
+                  }
                 />
               ) : (
                 <Clock
                   size={16}
-                  color={quickAccessOpen ? emeraldCore.primary : theme.palette.text.secondary}
+                  color={
+                    quickAccessOpen
+                      ? emeraldCore.primary
+                      : theme.palette.text.secondary
+                  }
                 />
               )}
               {/* Badge showing count */}
@@ -239,7 +272,9 @@ export default function MobileSearchBar({
                     minWidth: 16,
                     height: 16,
                     borderRadius: '50%',
-                    bgcolor: showFavoritesOnly ? accentColors.error.light : emeraldCore.primary,
+                    bgcolor: showFavoritesOnly
+                      ? accentColors.error.light
+                      : emeraldCore.primary,
                     color: 'white',
                     fontSize: '0.6rem',
                     fontWeight: 700,
@@ -248,7 +283,9 @@ export default function MobileSearchBar({
                     justifyContent: 'center',
                   }}
                 >
-                  {activeTab === 'favorites' ? favoritesCount : recentlyViewedItems.length}
+                  {activeTab === 'favorites'
+                    ? favoritesCount
+                    : recentlyViewedItems.length}
                 </Box>
               )}
             </IconButton>
@@ -263,23 +300,29 @@ export default function MobileSearchBar({
               height: 38,
               borderRadius: 2.5,
               flexShrink: 0,
-              bgcolor: filterSheetOpen || hasFilters
-                ? alpha(emeraldCore.primary, 0.15)
-                : isLight
-                  ? surfacesLight.background.secondary
-                  : surfacesDark.background.tertiary,
+              bgcolor:
+                filterSheetOpen || hasFilters
+                  ? alpha(emeraldCore.primary, 0.15)
+                  : isLight
+                    ? surfacesLight.background.secondary
+                    : surfacesDark.background.tertiary,
               border: '1px solid',
-              borderColor: filterSheetOpen || hasFilters
-                ? emeraldCore.primary
-                : isLight
-                  ? surfacesLight.border.light
-                  : surfacesDark.border.light,
+              borderColor:
+                filterSheetOpen || hasFilters
+                  ? emeraldCore.primary
+                  : isLight
+                    ? surfacesLight.border.light
+                    : surfacesDark.border.light,
               position: 'relative',
             }}
           >
             <SlidersHorizontal
               size={16}
-              color={filterSheetOpen || hasFilters ? emeraldCore.primary : theme.palette.text.secondary}
+              color={
+                filterSheetOpen || hasFilters
+                  ? emeraldCore.primary
+                  : theme.palette.text.secondary
+              }
             />
             {activeFilterCount > 0 && (
               <Box
@@ -307,10 +350,20 @@ export default function MobileSearchBar({
 
         {/* Row 2: Compact info row - filter chips + count (only when not in filter sheet) */}
         {!filterSheetOpen && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5, minHeight: 24 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              mt: 0.5,
+              minHeight: 24,
+            }}
+          >
             {/* Active filter chips - compact mode */}
             {hasFilters && (
-              <Box sx={{ flex: 1, overflow: 'hidden', display: 'flex', gap: 0.5 }}>
+              <Box
+                sx={{ flex: 1, overflow: 'hidden', display: 'flex', gap: 0.5 }}
+              >
                 <ActiveFilterChips
                   filters={filters}
                   priceMinMax={priceMinMax}
@@ -318,13 +371,17 @@ export default function MobileSearchBar({
                   onClearColor={() => setColorFilter('all')}
                   onClearQuality={() => setQualityFilter('all')}
                   onClearType={() => setTypeFilter('all')}
-                  onClearStatus={() => setStatusFilter('available')}
+                  onClearStatus={() => setStatusFilter('all')}
                   onClearShape={() => setShapeFilter('all')}
                   onClearCantidad={() => setCantidadFilter('all')}
                   onClearCategoria={() => setCategoriaFilter('all')}
                   onClearHeroCategory={() => setHeroCategoryFilter('all')}
-                  onClearPrice={() => setPriceRange([priceMinMax.min, priceMinMax.max])}
-                  onClearCarat={() => setCaratRange([caratMinMax.min, caratMinMax.max])}
+                  onClearPrice={() =>
+                    setPriceRange([priceMinMax.min, priceMinMax.max])
+                  }
+                  onClearCarat={() =>
+                    setCaratRange([caratMinMax.min, caratMinMax.max])
+                  }
                   caratMinMax={caratMinMax}
                   compact
                 />
@@ -358,7 +415,9 @@ export default function MobileSearchBar({
               ? alpha(emeraldCore.lightest, 0.2)
               : alpha(surfacesDark.background.tertiary, 0.4),
             borderBottom: '1px solid',
-            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+            borderColor: isLight
+              ? surfacesLight.border.light
+              : surfacesDark.border.light,
           }}
         >
           {/* Tab selector */}
@@ -370,7 +429,10 @@ export default function MobileSearchBar({
                 aria-selected={activeTab === 'recent'}
                 onClick={() => setActiveTab('recent')}
                 onKeyDown={(e: React.KeyboardEvent) => {
-                  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('recent'); }
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setActiveTab('recent');
+                  }
                 }}
                 sx={{
                   display: 'flex',
@@ -380,17 +442,33 @@ export default function MobileSearchBar({
                   py: 0.75,
                   cursor: 'pointer',
                   borderBottom: '2px solid',
-                  borderColor: activeTab === 'recent' ? emeraldCore.primary : 'transparent',
+                  borderColor:
+                    activeTab === 'recent'
+                      ? emeraldCore.primary
+                      : 'transparent',
                   transition: cssTransition.fast,
-                  '&:focus-visible': { outline: `2px solid ${emeraldCore.primary}`, outlineOffset: -2 },
+                  '&:focus-visible': {
+                    outline: `2px solid ${emeraldCore.primary}`,
+                    outlineOffset: -2,
+                  },
                 }}
               >
-                <Clock size={12} color={activeTab === 'recent' ? emeraldCore.primary : theme.palette.text.secondary} />
+                <Clock
+                  size={12}
+                  color={
+                    activeTab === 'recent'
+                      ? emeraldCore.primary
+                      : theme.palette.text.secondary
+                  }
+                />
                 <Typography
                   sx={{
                     fontSize: '0.7rem',
                     fontWeight: activeTab === 'recent' ? 700 : 500,
-                    color: activeTab === 'recent' ? emeraldCore.primary : theme.palette.text.secondary,
+                    color:
+                      activeTab === 'recent'
+                        ? emeraldCore.primary
+                        : theme.palette.text.secondary,
                   }}
                 >
                   {t.treasure.recentlyViewed} ({recentlyViewedItems.length})
@@ -402,9 +480,14 @@ export default function MobileSearchBar({
                 role="tab"
                 tabIndex={0}
                 aria-selected={activeTab === 'favorites'}
-                onClick={() => { setActiveTab('favorites'); }}
+                onClick={() => {
+                  setActiveTab('favorites');
+                }}
                 onKeyDown={(e: React.KeyboardEvent) => {
-                  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('favorites'); }
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setActiveTab('favorites');
+                  }
                 }}
                 sx={{
                   display: 'flex',
@@ -414,21 +497,38 @@ export default function MobileSearchBar({
                   py: 0.75,
                   cursor: 'pointer',
                   borderBottom: '2px solid',
-                  borderColor: activeTab === 'favorites' ? accentColors.error.light : 'transparent',
+                  borderColor:
+                    activeTab === 'favorites'
+                      ? accentColors.error.light
+                      : 'transparent',
                   transition: cssTransition.fast,
-                  '&:focus-visible': { outline: `2px solid ${emeraldCore.primary}`, outlineOffset: -2 },
+                  '&:focus-visible': {
+                    outline: `2px solid ${emeraldCore.primary}`,
+                    outlineOffset: -2,
+                  },
                 }}
               >
                 <Heart
                   size={12}
-                  fill={activeTab === 'favorites' ? accentColors.error.light : 'none'}
-                  color={activeTab === 'favorites' ? accentColors.error.light : theme.palette.text.secondary}
+                  fill={
+                    activeTab === 'favorites'
+                      ? accentColors.error.light
+                      : 'none'
+                  }
+                  color={
+                    activeTab === 'favorites'
+                      ? accentColors.error.light
+                      : theme.palette.text.secondary
+                  }
                 />
                 <Typography
                   sx={{
                     fontSize: '0.7rem',
                     fontWeight: activeTab === 'favorites' ? 700 : 500,
-                    color: activeTab === 'favorites' ? accentColors.error.light : theme.palette.text.secondary,
+                    color:
+                      activeTab === 'favorites'
+                        ? accentColors.error.light
+                        : theme.palette.text.secondary,
                   }}
                 >
                   {t.treasure.favorites} ({favoritesCount})
@@ -437,34 +537,52 @@ export default function MobileSearchBar({
             )}
 
             {/* Actions: Clear (for recent) / Filter (for favorites) */}
-            <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              {activeTab === 'recent' && onClearRecent && recentlyViewedItems.length > 0 && (
-                <Typography
-                  role="button"
-                  tabIndex={0}
-                  onClick={onClearRecent}
-                  onKeyDown={(e: React.KeyboardEvent) => {
-                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClearRecent(); }
-                  }}
-                  sx={{
-                    fontSize: '0.65rem',
-                    color: theme.palette.text.secondary,
-                    cursor: 'pointer',
-                    px: 1,
-                    py: 0.5,
-                    borderRadius: 1,
-                    '&:hover': { color: accentColors.error.light },
-                    '&:focus-visible': { outline: `2px solid ${emeraldCore.primary}`, outlineOffset: 2 },
-                  }}
-                >
-                  {t.treasure.filter.clear}
-                </Typography>
-              )}
+            <Box
+              sx={{
+                ml: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+              }}
+            >
+              {activeTab === 'recent' &&
+                onClearRecent &&
+                recentlyViewedItems.length > 0 && (
+                  <Typography
+                    role="button"
+                    tabIndex={0}
+                    onClick={onClearRecent}
+                    onKeyDown={(e: React.KeyboardEvent) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onClearRecent();
+                      }
+                    }}
+                    sx={{
+                      fontSize: '0.65rem',
+                      color: theme.palette.text.secondary,
+                      cursor: 'pointer',
+                      px: 1,
+                      py: 0.5,
+                      borderRadius: 1,
+                      '&:hover': { color: accentColors.error.light },
+                      '&:focus-visible': {
+                        outline: `2px solid ${emeraldCore.primary}`,
+                        outlineOffset: 2,
+                      },
+                    }}
+                  >
+                    {t.treasure.filter.clear}
+                  </Typography>
+                )}
               {activeTab === 'favorites' && favoritesCount > 0 && (
                 <Typography
                   role="button"
                   tabIndex={0}
-                  onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setQuickAccessOpen(false); }}
+                  onClick={() => {
+                    setShowFavoritesOnly(!showFavoritesOnly);
+                    setQuickAccessOpen(false);
+                  }}
                   onKeyDown={(e: React.KeyboardEvent) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
@@ -474,17 +592,24 @@ export default function MobileSearchBar({
                   }}
                   sx={{
                     fontSize: '0.65rem',
-                    color: showFavoritesOnly ? accentColors.error.light : emeraldCore.primary,
+                    color: showFavoritesOnly
+                      ? accentColors.error.light
+                      : emeraldCore.primary,
                     cursor: 'pointer',
                     fontWeight: 600,
                     px: 1,
                     py: 0.5,
                     borderRadius: 1,
                     '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.08) },
-                    '&:focus-visible': { outline: `2px solid ${emeraldCore.primary}`, outlineOffset: 2 },
+                    '&:focus-visible': {
+                      outline: `2px solid ${emeraldCore.primary}`,
+                      outlineOffset: 2,
+                    },
                   }}
                 >
-                  {showFavoritesOnly ? t.actions.viewAll : t.actions.favoritesOnly}
+                  {showFavoritesOnly
+                    ? t.actions.viewAll
+                    : t.actions.favoritesOnly}
                 </Typography>
               )}
             </Box>
@@ -521,7 +646,9 @@ export default function MobileSearchBar({
             </Box>
           ) : (
             <Box sx={{ py: 2, textAlign: 'center' }}>
-              <Typography sx={{ fontSize: '0.7rem', color: theme.palette.text.secondary }}>
+              <Typography
+                sx={{ fontSize: '0.7rem', color: theme.palette.text.secondary }}
+              >
                 {activeTab === 'favorites'
                   ? t.treasure.quickAccess.noFavorites
                   : t.treasure.quickAccess.noRecent}
@@ -548,7 +675,10 @@ function QuickAccessCard({
   hidePrice?: boolean;
   formatCurrency: (v: number) => string;
 }) {
-  const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
+  const displayName = item.nombre
+    .replace(/^L:.*?\s/, '')
+    .replace(/^L:/, '')
+    .trim();
 
   return (
     <Card
@@ -560,8 +690,12 @@ function QuickAccessCard({
         scrollSnapAlign: 'start',
         borderRadius: 1.5,
         border: '1px solid',
-        borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-        bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
+        borderColor: isLight
+          ? surfacesLight.border.light
+          : surfacesDark.border.light,
+        bgcolor: isLight
+          ? surfacesLight.background.primary
+          : surfacesDark.background.secondary,
         cursor: 'pointer',
         overflow: 'hidden',
         transition: cssTransition.fast,
@@ -583,7 +717,9 @@ function QuickAccessCard({
           <Box
             sx={{
               height: 56,
-              bgcolor: isLight ? surfacesLight.background.tertiary : surfacesDark.background.tertiary,
+              bgcolor: isLight
+                ? surfacesLight.background.tertiary
+                : surfacesDark.background.tertiary,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -629,7 +765,9 @@ function QuickAccessCard({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            color: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
+            color: isLight
+              ? surfacesLight.text.primary
+              : surfacesDark.text.primary,
             lineHeight: 1.2,
           }}
         >
