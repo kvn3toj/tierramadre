@@ -4,9 +4,9 @@
  * Response body mirrors frontend `TreasureItem` (see src/types/index.ts).
  */
 
-import type { sheets_v4 } from "@googleapis/sheets";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import type { TreasureItem, TreasureStatus } from "../src/types/index.ts";
+import type { sheets_v4 } from '@googleapis/sheets';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { TreasureItem, TreasureStatus } from '../src/types/index.ts';
 import {
   withApiHandler,
   sendError,
@@ -18,10 +18,10 @@ import {
   normalizeHeader,
   parsePrice,
   parseDecimal,
-} from "./_lib/index.js";
+} from './_lib/index.js';
 
 type PesoParsed =
-  | { value: number | string; isJewelry: true; metalType: "Plata" | "Oro 18k" }
+  | { value: number | string; isJewelry: true; metalType: 'Plata' | 'Oro 18k' }
   | { value: number | string; isJewelry: false; metalType?: undefined };
 
 /**
@@ -31,14 +31,14 @@ function parsePeso(peso: string | number | null | undefined): PesoParsed {
   if (!peso) return { value: 0, isJewelry: false };
   const pesoStr = String(peso).trim().toLowerCase();
 
-  if (pesoStr.includes("plata")) {
-    return { value: "Plata", isJewelry: true, metalType: "Plata" };
+  if (pesoStr.includes('plata')) {
+    return { value: 'Plata', isJewelry: true, metalType: 'Plata' };
   }
-  if (pesoStr.includes("oro")) {
-    return { value: "Oro 18k", isJewelry: true, metalType: "Oro 18k" };
+  if (pesoStr.includes('oro')) {
+    return { value: 'Oro 18k', isJewelry: true, metalType: 'Oro 18k' };
   }
 
-  const numValue = parseFloat(String(peso).replace(",", "."));
+  const numValue = parseFloat(String(peso).replace(',', '.'));
   return { value: Number.isNaN(numValue) ? peso : numValue, isJewelry: false };
 }
 
@@ -69,35 +69,35 @@ function parsePeso(peso: string | number | null | undefined): PesoParsed {
  * U = ESTADO ASESOR (20) - state from current owner's perspective
  */
 const INVENTARIO_HEADERS = {
-  ITEM: "item",
-  FECHA_INGRESO: "fecha ingreso inventario",
-  NOMBRE: "nombre",
-  PESO: "peso (ct)",
-  COLOR: "color",
-  CALIDAD: "calidad",
-  CANTIDAD: "cant.",
-  TALLA: "talla",
-  MEDIDAS: "medidas",
-  CATEGORIA: "categoría",
-  PRECIO_COP: "precio cop",
-  UBICACION: "ubicación",
-  ASESOR: "asesor",
-  ESTADO: "estado",
-  QR: "qr",
-  COLECCION: "colección",
-  CAJA: "caja",
-  ASESOR_ACTUAL: "asesor actual", // Column T (index 19)
-  ESTADO_ASESOR: "estado asesor", // Column U (index 20)
+  ITEM: 'item',
+  FECHA_INGRESO: 'fecha ingreso inventario',
+  NOMBRE: 'nombre',
+  PESO: 'peso (ct)',
+  COLOR: 'color',
+  CALIDAD: 'calidad',
+  CANTIDAD: 'cant.',
+  TALLA: 'talla',
+  MEDIDAS: 'medidas',
+  CATEGORIA: 'categoría',
+  PRECIO_COP: 'precio cop',
+  UBICACION: 'ubicación',
+  ASESOR: 'asesor',
+  ESTADO: 'estado',
+  QR: 'qr',
+  COLECCION: 'colección',
+  CAJA: 'caja',
+  ASESOR_ACTUAL: 'asesor actual', // Column T (index 19)
+  ESTADO_ASESOR: 'estado asesor', // Column U (index 20)
 };
 
 // Jewelry subcategory values from Column K (synced with CATEGORY_SUBCATEGORIES.joyas in gallery-constants.ts)
 const JEWELRY_CATEGORIES = new Set([
-  "anillo en plata",
-  "aretes",
-  "topitos",
-  "pulsera",
-  "dije",
-  "anillo en oro",
+  'anillo en plata',
+  'aretes',
+  'topitos',
+  'pulsera',
+  'dije',
+  'anillo en oro',
 ]);
 
 /**
@@ -115,7 +115,7 @@ function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
   // Get value by header name (exact match)
   const getValue = (headerName: string): string | null => {
     const index = getColumnIndex(headerName);
-    if (index >= 0 && row[index] !== undefined && row[index] !== "") {
+    if (index >= 0 && row[index] !== undefined && row[index] !== '') {
       return String(row[index]);
     }
     return null;
@@ -123,7 +123,7 @@ function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
 
   // Fallback to index if header not found
   const getByIndex = (index: number): string | null => {
-    return row[index] !== undefined && row[index] !== ""
+    return row[index] !== undefined && row[index] !== ''
       ? String(row[index])
       : null;
   };
@@ -133,51 +133,51 @@ function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
 
   const item: TreasureItem = {
     item: parseInt(
-      String(getValue(INVENTARIO_HEADERS.ITEM) || getByIndex(0) || "0"),
+      String(getValue(INVENTARIO_HEADERS.ITEM) || getByIndex(0) || '0'),
       10,
     ),
     fechaIngreso:
-      getValue(INVENTARIO_HEADERS.FECHA_INGRESO) || getByIndex(1) || "",
-    nombre: getValue(INVENTARIO_HEADERS.NOMBRE) || getByIndex(2) || "",
+      getValue(INVENTARIO_HEADERS.FECHA_INGRESO) || getByIndex(1) || '',
+    nombre: getValue(INVENTARIO_HEADERS.NOMBRE) || getByIndex(2) || '',
     peso:
-      typeof pesoData.value === "number"
+      typeof pesoData.value === 'number'
         ? pesoData.value
-        : parseDecimal(peso ?? ""),
-    color: getValue(INVENTARIO_HEADERS.COLOR) || getByIndex(4) || "",
-    calidad: getValue(INVENTARIO_HEADERS.CALIDAD) || getByIndex(5) || "",
+        : parseDecimal(peso ?? ''),
+    color: getValue(INVENTARIO_HEADERS.COLOR) || getByIndex(4) || '',
+    calidad: getValue(INVENTARIO_HEADERS.CALIDAD) || getByIndex(5) || '',
     cantidad: parseInt(
-      String(getValue(INVENTARIO_HEADERS.CANTIDAD) || getByIndex(6) || "1"),
+      String(getValue(INVENTARIO_HEADERS.CANTIDAD) || getByIndex(6) || '1'),
       10,
     ),
-    talla: getValue(INVENTARIO_HEADERS.TALLA) || getByIndex(7) || "",
-    medidas: getValue(INVENTARIO_HEADERS.MEDIDAS) || getByIndex(8) || "",
-    medidasValores: getByIndex(9) || "",
+    talla: getValue(INVENTARIO_HEADERS.TALLA) || getByIndex(7) || '',
+    medidas: getValue(INVENTARIO_HEADERS.MEDIDAS) || getByIndex(8) || '',
+    medidasValores: getByIndex(9) || '',
     categoria: (
       getValue(INVENTARIO_HEADERS.CATEGORIA) ||
       getByIndex(10) ||
-      ""
+      ''
     ).trim(),
     precioCOP: parsePrice(
       getValue(INVENTARIO_HEADERS.PRECIO_COP) || getByIndex(11),
     ),
     precioInternacional: 0,
-    ubicacion: getValue(INVENTARIO_HEADERS.UBICACION) || getByIndex(12) || "",
-    asesor: getValue(INVENTARIO_HEADERS.ASESOR) || getByIndex(13) || "",
+    ubicacion: getValue(INVENTARIO_HEADERS.UBICACION) || getByIndex(12) || '',
+    asesor: getValue(INVENTARIO_HEADERS.ASESOR) || getByIndex(13) || '',
     estado: (
       getValue(INVENTARIO_HEADERS.ESTADO) ||
       getByIndex(14) ||
-      "DISPONIBLE"
+      'DISPONIBLE'
     ).toUpperCase() as TreasureStatus,
-    qr: getValue(INVENTARIO_HEADERS.QR) || getByIndex(15) || "",
-    coleccion: getValue(INVENTARIO_HEADERS.COLECCION) || getByIndex(16) || "",
-    caja: getValue(INVENTARIO_HEADERS.CAJA) || getByIndex(17) || "",
+    qr: getValue(INVENTARIO_HEADERS.QR) || getByIndex(15) || '',
+    coleccion: getValue(INVENTARIO_HEADERS.COLECCION) || getByIndex(16) || '',
+    caja: getValue(INVENTARIO_HEADERS.CAJA) || getByIndex(17) || '',
     asesorActual:
-      getValue(INVENTARIO_HEADERS.ASESOR_ACTUAL) || getByIndex(19) || "",
+      getValue(INVENTARIO_HEADERS.ASESOR_ACTUAL) || getByIndex(19) || '',
     estadoAsesor: (
       getValue(INVENTARIO_HEADERS.ESTADO_ASESOR) ||
       getByIndex(20) ||
-      ""
-    ).toUpperCase() as TreasureStatus | "",
+      ''
+    ).toUpperCase() as TreasureStatus | '',
     isJewelry: pesoData.isJewelry,
     ...(pesoData.metalType ? { metalType: pesoData.metalType } : {}),
   };
@@ -231,7 +231,7 @@ async function fetchPricingData(
     return pricingMap;
   } catch (error: unknown) {
     console.warn(
-      "Could not fetch pricing data:",
+      'Could not fetch pricing data:',
       error instanceof Error ? error.message : error,
     );
     return {};
@@ -247,7 +247,7 @@ export default withApiHandler(
     const { sheets } = ctx as { sheets: sheets_v4.Sheets };
     const sheetNames = await getSheetNames(sheets);
     const targetSheet =
-      findSheetByPattern(sheetNames, ["inventario", "inventory"]) ||
+      findSheetByPattern(sheetNames, ['inventario', 'inventory']) ||
       sheetNames[0];
 
     // Fetch treasure and pricing data in parallel
@@ -264,7 +264,7 @@ export default withApiHandler(
     if (!rows || rows.length === 0) {
       return sendSuccess(res, {
         treasure: [],
-        message: "No data found in spreadsheet",
+        message: 'No data found in spreadsheet',
       });
     }
 
@@ -272,12 +272,20 @@ export default withApiHandler(
     const dataRows = rows.slice(1);
 
     const treasure = dataRows
-      .filter((row) => row.length > 0 && row.some((cell) => cell))
-      .map((row) => {
+      // Capture each data row's TRUE 1-based physical sheet row BEFORE any
+      // compaction. rows[0] is the header (physical row 1), so dataRows[idx]
+      // is rows[idx + 1] → physical row idx + 2. Threading this through the
+      // filter/map below keeps the real row number even after blank/invalid
+      // rows are dropped, which is what the Convex sync bridge relies on.
+      .map((row, idx) => ({ row, sheetRow: idx + 2 }))
+      .filter(({ row }) => row.length > 0 && row.some((cell) => cell))
+      .map(({ row, sheetRow }) => {
         const item = mapRowToTreasureItem(
-          row.map((c) => (c == null ? "" : String(c))) as string[],
+          row.map((c) => (c == null ? '' : String(c))) as string[],
           (headers as string[]).map((c) => String(c)),
         );
+        // Preserve the original physical sheet row (never reordered/reindexed).
+        item.sheetRow = sheetRow;
         // Only add precioInternacional from CUALIFICACION sheet (precioCOP comes from Inventario column L)
         const pricing = pricingMap[item.item];
         if (pricing) {
@@ -295,7 +303,7 @@ export default withApiHandler(
     // internal sheet layout to every catalog visitor, so gate it behind an explicit
     // `?debug=1` AND a non-production environment.
     const includeDebug =
-      Boolean(req.query.debug) && process.env.NODE_ENV !== "production";
+      Boolean(req.query.debug) && process.env.NODE_ENV !== 'production';
 
     return sendSuccess(res, {
       treasure,
@@ -318,9 +326,9 @@ export default withApiHandler(
     });
   },
   {
-    methods: ["GET", "OPTIONS"],
+    methods: ['GET', 'OPTIONS'],
     cache: CACHE.NONE,
     provideSheets: true,
-    errorPrefix: "GetTreasureSheets",
+    errorPrefix: 'GetTreasureSheets',
   },
 );

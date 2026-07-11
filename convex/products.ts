@@ -218,6 +218,74 @@ export const getByItem = query({
   },
 });
 
+/**
+ * Public, PROJECTED single-item lookup for the product-detail page.
+ *
+ * Unlike `get`/`getByItem` (which return the RAW row and would leak
+ * costoBaseCOP / precioConscienteCOP / syncStatus / preponderancia over an
+ * anonymous WebSocket), this projects ONLY the same public-safe fields as
+ * `publishedCatalog`. It lets the QR product page overlay fresh Convex values
+ * (medidas, nombre, talla, characteristics…) onto the sheet-derived product for
+ * ALL viewers — covering both items the legacy sheet lags AND no-loteId items
+ * that `publishedCatalog` can never surface (it filters on loteId). No publish
+ * filter here: a scanned QR should resolve any real item. Price is limited to
+ * the public ambassador tier; cost/consciente/sync stay internal.
+ */
+export const getPublicByItem = query({
+  args: { itemId: v.string() },
+  handler: async (ctx, { itemId }) => {
+    const row = await ctx.db
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+      .first();
+    if (!row) return null;
+
+    // Denormalize lot-level provenance (same as publishedCatalog) when present.
+    let mina: string | undefined;
+    let tratamiento: string | undefined;
+    const loteId = row.loteId;
+    if (loteId) {
+      const lot = await ctx.db
+        .query('lots')
+        .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
+        .first();
+      mina = lot?.mina;
+      tratamiento = lot?.tratamiento;
+    }
+
+    return {
+      itemId: row.itemId,
+      nombre: row.nombre,
+      peso: row.peso,
+      color: row.color,
+      calidad: row.calidad,
+      cantidad: row.cantidad,
+      talla: row.talla,
+      medidas: row.medidas,
+      medidasValores: row.medidasValores,
+      categoria: row.categoria,
+      precioEmbajadorCOP: row.precioEmbajadorCOP,
+      estado: row.estado,
+      qr: row.qr,
+      coleccion: row.coleccion,
+      fotoUrl: row.fotoUrl,
+      certificadoUrl: row.certificadoUrl,
+      // Fotosíntesis characteristics (public per decision 2026-06-30).
+      procedencia: row.procedencia,
+      nivelRareza: row.nivelRareza,
+      calificacion: row.calificacion,
+      tipoEsmeralda: row.tipoEsmeralda,
+      tipoJoya: row.tipoJoya,
+      tecnicaJoya: row.tecnicaJoya,
+      minerales: row.minerales,
+      complementos: row.complementos,
+      observacion: row.observacion,
+      mina,
+      tratamiento,
+    };
+  },
+});
+
 /** All productInventory rows for a Fotosíntesis lote (close/resumen UI). */
 export const listByLote = query({
   args: { loteId: v.string() },
@@ -558,9 +626,11 @@ const saveEditPatchArgs = v.object({
   cantidad: v.optional(v.number()),
   talla: v.optional(v.string()),
   medidas: v.optional(v.string()),
+  medidasValores: v.optional(v.string()),
   categoria: v.optional(v.string()),
   precioCOP: v.optional(v.number()),
   ubicacion: v.optional(v.string()),
+  asesor: v.optional(v.string()),
   coleccion: v.optional(v.string()),
   caja: v.optional(v.string()),
   estado: v.optional(
@@ -1279,6 +1349,11 @@ export const listActiveLocks = query({
  * Convex's own scheduler, not an external caller) and from the public
  * `pullFromSheet` action below (which gates the manual "Resync" button behind
  * an admin token check).
+ *
+ * post-fix: pullFromSheet now reconciles rowIndex to true physical rows
+ * (sheetRow). Running the admin-gated `pullFromSheet` action (below) after the
+ * sheetRow fix re-pins every legacy rowIndex to its authoritative physical
+ * row — no separate reconcile action is needed.
  */
 export const _pullFromSheet = internalAction({
   args: {},
@@ -1305,7 +1380,13 @@ export const _pullFromSheet = internalAction({
         items: items
           .map((item, i) => ({
             itemId: String(item.item ?? '').trim(),
-            rowIndex: i + 2,
+            // ROOT-CAUSE FIX: `i + 2` was the position in the COMPACTED payload
+            // array (blank/non-numeric rows already dropped by
+            // /api/get-treasure-sheets), NOT the true physical sheet row — that
+            // mismatch drove the rowIndex drift. Consume the API's authoritative
+            // `sheetRow` (1-based physical row) when present; the `i + 2`
+            // fallback preserves old behaviour if the API build lacks the field.
+            rowIndex: item.sheetRow ?? i + 2,
             fields: {
               nombre: nullableStr(item.nombre),
               peso: nullableStr(item.peso),
@@ -1662,6 +1743,14 @@ export async function setInventoryLastPull(ctx: MutationCtx, lastPull: string) {
 
 type SheetRow = {
   item?: number | string;
+  /**
+   * True 1-based PHYSICAL row of this item in the sheet, supplied by
+   * /api/get-treasure-sheets. Distinct from the item's position in the
+   * compacted payload array — blank/non-numeric rows are dropped upstream, so
+   * the array index drifts from the real row. `_pullFromSheet` pins rowIndex
+   * to this when present. Optional for backward-compat with older API builds.
+   */
+  sheetRow?: number;
   nombre?: string;
   peso?: string | number;
   color?: string;
@@ -1923,9 +2012,11 @@ const createProductFieldsArgs = v.object({
   cantidad: v.optional(v.number()),
   talla: v.optional(v.string()),
   medidas: v.optional(v.string()),
+  medidasValores: v.optional(v.string()),
   categoria: v.optional(v.string()),
   precioCOP: v.optional(v.number()),
   ubicacion: v.optional(v.string()),
+  asesor: v.optional(v.string()),
   coleccion: v.optional(v.string()),
   caja: v.optional(v.string()),
 });

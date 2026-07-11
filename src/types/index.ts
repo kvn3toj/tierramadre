@@ -368,6 +368,12 @@ export interface TreasureItem {
   // `products.get` doc; never present on public/anonymous catalog payloads.
   syncStatus?: 'synced' | 'pending' | 'error';
   syncError?: string;
+  // True 1-based physical row of this item in the legacy Inventario sheet,
+  // captured by get-treasure-sheets BEFORE any blank/invalid-row compaction.
+  // Consumed by the Convex sync bridge (Option C) as the authoritative
+  // rowIndex hint so downstream writes don't drift when blank rows are
+  // filtered out. Absent for synthetic/grouped cards and non-Sheets items.
+  sheetRow?: number;
 
   // Description
   description?: string; // Short evocative text giving the emerald personality

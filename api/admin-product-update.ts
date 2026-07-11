@@ -29,13 +29,18 @@
  *    to widen a fresh sheet, or scripts/reorder-fotosintesis-price-columns.mjs
  *    to migrate an existing one after a column-order change.
  *
- * Strategy: read the current row first to preserve fields we don't edit
- * (notably `fechaIngreso` in column B). Then write the merged row back via
- * values.update over the layout's full range.
+ * Strategy: locate the target row by COLUMN A (=== itemId), the item's true
+ * identity key — NOT by the caller's `rowIndex`, which drifts when blank rows
+ * are added/removed or the sheet is re-sorted. If the itemId is found, read
+ * that row first to preserve fields we don't edit (notably `fechaIngreso` in
+ * column B), then values.update it in place (self-correcting even if the
+ * passed rowIndex is stale). If the itemId is NOT found, values.append a new
+ * row (INSERT_ROWS) after the last data row. The response returns the ACTUAL
+ * physical row written and the mode used ("updated" | "appended").
  */
 
-import type { sheets_v4 } from "@googleapis/sheets";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { sheets_v4 } from '@googleapis/sheets';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   withApiHandler,
   SPREADSHEET_ID,
@@ -44,11 +49,11 @@ import {
   sendSuccess,
   getSheetNames,
   findSheetByPattern,
-} from "./_lib/index.js";
+} from './_lib/index.js';
 import {
   FOTO_INVENTARIO_COLUMNS,
   FOTO_INVENTARIO_LAST_COL,
-} from "./_lib/fotosintesis-inventory-columns.js";
+} from './_lib/fotosintesis-inventory-columns.js';
 
 type FotoColumn = {
   header: string;
@@ -62,11 +67,15 @@ const FOTO_COLUMNS = FOTO_INVENTARIO_COLUMNS as FotoColumn[];
 
 interface UpdateBody {
   itemId?: string;
+  /** Optional stale hint only; the row is located by column-A === itemId. */
   rowIndex?: number;
-  /** patch = update existing row; append reserved for future use */
-  mode?: "patch" | "append";
+  /**
+   * Deprecated hint — the endpoint now auto-selects update vs append based on
+   * whether itemId already exists in column A. Echoed back as `requestedMode`.
+   */
+  mode?: 'patch' | 'append';
   /** legacy = treasure sheet; fotosintesis = SOT Inventario when loteId set */
-  target?: "legacy" | "fotosintesis";
+  target?: 'legacy' | 'fotosintesis';
   loteId?: string;
   fields?: {
     nombre?: string;
@@ -115,7 +124,7 @@ interface UpdateBody {
 }
 
 function s(v: unknown): string {
-  if (v === null || v === undefined) return "";
+  if (v === null || v === undefined) return '';
   return String(v);
 }
 
@@ -128,69 +137,116 @@ export default withApiHandler(
     // Shared-secret auth (Convex action ↔ Vercel)
     const expectedToken = process.env.ADMIN_SYNC_TOKEN;
     const providedToken =
-      (req.headers["x-admin-sync-token"] as string | undefined) ?? undefined;
+      (req.headers['x-admin-sync-token'] as string | undefined) ?? undefined;
     if (!expectedToken) {
       return sendError(
         res,
         500,
-        "ADMIN_SYNC_TOKEN not configured on the server",
+        'ADMIN_SYNC_TOKEN not configured on the server',
       );
     }
     if (!providedToken || providedToken !== expectedToken) {
-      return sendError(res, 401, "Unauthorized");
+      return sendError(res, 401, 'Unauthorized');
     }
 
     const body = (req.body ?? {}) as UpdateBody;
     const { itemId, rowIndex, fields, mode, target, loteId } = body;
-    if (!itemId || !rowIndex || !fields) {
-      return sendError(res, 400, "Missing itemId, rowIndex, or fields");
+    // rowIndex is NO LONGER required: the target row is located by column-A
+    // (=== itemId) below, and a brand-new item has no row yet (it gets
+    // appended). rowIndex is now only a caller hint we echo back for debugging.
+    if (!itemId || !fields) {
+      return sendError(res, 400, 'Missing itemId or fields');
     }
-    if (!Number.isInteger(rowIndex) || rowIndex < 2) {
-      return sendError(res, 400, "rowIndex must be an integer ≥ 2");
+    // If a rowIndex IS supplied, keep the old sanity floor so an obviously
+    // malformed hint (0, 1, negative, fractional) fails loud rather than
+    // silently being ignored.
+    if (
+      rowIndex !== undefined &&
+      (!Number.isInteger(rowIndex) || rowIndex < 2)
+    ) {
+      return sendError(
+        res,
+        400,
+        'rowIndex, when provided, must be an integer ≥ 2',
+      );
     }
 
     // Fotosíntesis items (loteId set) write to the SOT spreadsheet using the
     // full Inventario layout; everything else writes the legacy treasure
     // sheet, whose A:U layout is read by get-treasure-sheets and must NOT
     // change. `isFoto` picks the target + column strategy accordingly.
-    const isFoto = target === "fotosintesis" || Boolean(loteId);
+    const isFoto = target === 'fotosintesis' || Boolean(loteId);
     const spreadsheetId = isFoto ? FOTOSINTESIS_SPREADSHEET_ID : SPREADSHEET_ID;
 
     const { sheets } = ctx as { sheets: sheets_v4.Sheets };
     const sheetNames = await getSheetNames(sheets, spreadsheetId);
     const targetSheet =
-      findSheetByPattern(sheetNames, ["inventario", "inventory"]) ||
+      findSheetByPattern(sheetNames, ['inventario', 'inventory']) ||
       sheetNames[0];
 
     const fieldMap = fields as Record<string, unknown>;
-    // Range spans the full layout for the SOT (A:AQ today), the frozen A:U
-    // for the legacy sheet. The extra SOT columns are seeded by
+    // Range width spans the full layout for the SOT (A:AQ today), the frozen
+    // A:U for the legacy sheet. The extra SOT columns are seeded by
     // scripts/extend-fotosintesis-headers.mjs before this endpoint targets them.
-    const lastCol = isFoto ? FOTO_INVENTARIO_LAST_COL : "U";
-    const range = `${targetSheet}!A${rowIndex}:${lastCol}${rowIndex}`;
-    const existing = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range,
-    });
-    const existingRow = (existing.data.values?.[0] ?? []) as string[];
+    const lastCol = isFoto ? FOTO_INVENTARIO_LAST_COL : 'U';
 
-    // Sanity-check: column A of the sheet row must match the itemId we're updating
-    const sheetItemId = s(existingRow[0]).trim();
-    if (sheetItemId && sheetItemId !== String(itemId)) {
-      return sendError(
-        res,
-        409,
-        `Row ${rowIndex} is item "${sheetItemId}", not "${itemId}". The sheet may have been re-ordered. Resync from sheet before retrying.`,
-      );
+    // ── Locate the target row by COLUMN A (=== itemId) — authoritative key ──
+    // Column A === itemId is the item's true identity. Rather than trust the
+    // caller's `rowIndex` (which drifts whenever blank rows are added/removed
+    // or the sheet is re-sorted — the source of the 409 "sheet may have been
+    // re-ordered" failures), we read the whole A column and find the physical
+    // row whose value matches. This makes every patch self-correcting.
+    const colAResp = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${targetSheet}!A:A`,
+    });
+    const colA = (colAResp.data.values ?? []) as string[][];
+    let foundRow = 0; // 1-based physical row of the match; 0 = not found
+    for (let i = 0; i < colA.length; i++) {
+      // colA[i] is physical row i + 1 (row 1 is the header — it holds the
+      // literal "item" label, so it can never match a real itemId). We take
+      // the FIRST match; itemId is assumed unique in column A.
+      if (s(colA[i]?.[0]).trim() === String(itemId)) {
+        foundRow = i + 1;
+        break;
+      }
+    }
+
+    const willAppend = foundRow === 0;
+
+    // When updating, read the located row first so we PRESERVE every column we
+    // don't explicitly touch (notably fechaIngreso in column B). Appends start
+    // from an empty row — there is nothing to preserve for a brand-new item.
+    let existingRow: string[] = [];
+    if (!willAppend) {
+      const readRange = `${targetSheet}!A${foundRow}:${lastCol}${foundRow}`;
+      const existing = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: readRange,
+      });
+      existingRow = (existing.data.values?.[0] ?? []) as string[];
+
+      // Defense in depth: the row we located by column A must STILL read back
+      // as this itemId. It will by construction; this guards against a race
+      // between the A:A scan and this read. We must never overwrite a
+      // different item's row on a money-adjacent write path.
+      const sheetItemId = s(existingRow[0]).trim();
+      if (sheetItemId && sheetItemId !== String(itemId)) {
+        return sendError(
+          res,
+          409,
+          `Row ${foundRow} is item "${sheetItemId}", not "${itemId}". The sheet changed mid-write. Retry.`,
+        );
+      }
     }
 
     let merged: (string | number)[];
     if (isFoto) {
       // SOT: drive the row entirely from the shared column map so the order
       // never drifts from create-fotosintesis-sot.mjs / the migration script.
-      merged = new Array(FOTO_COLUMNS.length).fill("");
+      merged = new Array(FOTO_COLUMNS.length).fill('');
       for (let i = 0; i < FOTO_COLUMNS.length; i++) {
-        merged[i] = s(existingRow[i] ?? ""); // preserve untouched columns
+        merged[i] = s(existingRow[i] ?? ''); // preserve untouched columns
       }
       for (let i = 0; i < FOTO_COLUMNS.length; i++) {
         const col = FOTO_COLUMNS[i];
@@ -208,7 +264,7 @@ export default withApiHandler(
           // parsing entirely. Blank/non-numeric values fall back to string.
           if (
             col.numeric &&
-            value !== "" &&
+            value !== '' &&
             value !== null &&
             Number.isFinite(Number(value))
           ) {
@@ -220,9 +276,9 @@ export default withApiHandler(
       }
     } else {
       // Legacy treasure sheet — positional A:U (unchanged behavior).
-      merged = new Array(21).fill("");
+      merged = new Array(21).fill('');
       for (let i = 0; i < 21; i++) {
-        merged[i] = s(existingRow[i] ?? "");
+        merged[i] = s(existingRow[i] ?? '');
       }
       // Column A — itemId (preserve)
       merged[0] = String(itemId);
@@ -269,25 +325,52 @@ export default withApiHandler(
         merged[20] = s(fields.estadoAsesor);
     }
 
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range,
-      valueInputOption: "USER_ENTERED", // lets numbers/dates stay typed
-      requestBody: { values: [merged] },
-    });
+    let writtenRow: number;
+    if (willAppend) {
+      // REAL append — the itemId wasn't found in column A, so this is a NEW
+      // row. INSERT_ROWS makes Sheets add cells after the last data row rather
+      // than overwrite anything, and we never write at a guessed rowIndex.
+      const appendResp = await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: `${targetSheet}!A:${lastCol}`,
+        valueInputOption: 'USER_ENTERED', // lets numbers/dates stay typed
+        insertDataOption: 'INSERT_ROWS',
+        requestBody: { values: [merged] },
+      });
+      // updatedRange looks like "Inventario!A123:U123" — parse the row number
+      // back out so the caller can cache the ACTUAL physical row written.
+      const updatedRange = appendResp.data.updates?.updatedRange ?? '';
+      const rowMatch = updatedRange.match(/![A-Z]+(\d+)/);
+      writtenRow = rowMatch ? parseInt(rowMatch[1], 10) : 0;
+    } else {
+      // UPDATE the located row in place (regardless of the passed rowIndex).
+      const writeRange = `${targetSheet}!A${foundRow}:${lastCol}${foundRow}`;
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: writeRange,
+        valueInputOption: 'USER_ENTERED', // lets numbers/dates stay typed
+        requestBody: { values: [merged] },
+      });
+      writtenRow = foundRow;
+    }
 
     return sendSuccess(res, {
       itemId,
-      rowIndex,
+      // ACTUAL physical row written — callers should cache this as the fresh
+      // rowIndex hint. Differs from the requested rowIndex when the sheet drifted.
+      rowIndex: writtenRow,
+      requestedRowIndex: rowIndex ?? null, // echo the caller's stale hint
       sheetName: targetSheet,
       spreadsheetId,
-      mode: mode ?? "patch",
+      // The mode actually taken. `requestedMode` echoes the (now-ignored) body flag.
+      mode: willAppend ? 'appended' : 'updated',
+      requestedMode: mode ?? null,
       updatedAt: new Date().toISOString(),
     });
   },
   {
-    methods: ["POST", "OPTIONS"],
+    methods: ['POST', 'OPTIONS'],
     provideSheets: true,
-    errorPrefix: "AdminProductUpdate",
+    errorPrefix: 'AdminProductUpdate',
   },
 );
