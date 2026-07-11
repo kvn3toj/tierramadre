@@ -126,6 +126,12 @@ export const list = query({
       coleccion: row.coleccion,
       caja: row.caja,
       estado: row.estado,
+      // `tipo` (gema | joya | insumo | bruto | lote) rides along so the Atelier
+      // etiquetas gallery can split "productos" from "insumos" without a second
+      // query. One short optional string — negligible against the payload the
+      // list already ships. Undefined on legacy rows (they predate the field);
+      // consumers must treat "absent" as "producto".
+      tipo: row.tipo,
       loteId: row.loteId,
       fotoUrl: row.fotoUrl,
       syncStatus: row.syncStatus,

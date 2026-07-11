@@ -30,7 +30,7 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { Box, Typography, Skeleton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 import { getAtelier, getFoto } from '../../../design-system';
 import {
@@ -204,6 +204,7 @@ export default function ProductManagementPage() {
   const foto = getFoto(theme.palette.mode === 'dark' ? 'dark' : 'light');
   const { user } = useGoogleAuth();
   const { notify } = useNotification();
+  const navigate = useNavigate();
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
@@ -1041,6 +1042,7 @@ export default function ProductManagementPage() {
         onResync={handleResync}
         // Phase G — wired
         onCreateNew={handleCreateNew}
+        onEtiquetas={() => navigate('/admin/products/etiquetas')}
       />
 
       {/* Workbench split — ledger on the left, Bandeja inspector on

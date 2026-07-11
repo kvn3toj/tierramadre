@@ -127,6 +127,10 @@ const AdminProductManagementPage = lazyWithRetry(
   () => import('./pages/admin/ProductManagement/ProductManagementPage'),
   'AdminProductManagementPage',
 );
+const AdminEtiquetasPage = lazyWithRetry(
+  () => import('./pages/admin/ProductManagement/etiquetas/EtiquetasPage'),
+  'AdminEtiquetasPage',
+);
 
 // Fotosíntesis v2 — captura admin (Slice 1)
 const FotosintesisLayout = lazyWithRetry(
@@ -621,6 +625,20 @@ function AppContent() {
                     fallback={<LocalizedLoading messageKey="products" />}
                   >
                     <AdminProductManagementPage />
+                  </Suspense>
+                </AdminRoute>
+              }
+            />
+
+            {/* Atelier · Etiquetas — QR label gallery for products + insumos */}
+            <Route
+              path="/admin/products/etiquetas"
+              element={
+                <AdminRoute>
+                  <Suspense
+                    fallback={<LocalizedLoading messageKey="products" />}
+                  >
+                    <AdminEtiquetasPage />
                   </Suspense>
                 </AdminRoute>
               }

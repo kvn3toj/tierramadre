@@ -14,7 +14,23 @@ export interface LabelPreviewProps {
   itemId: string;
   nombre?: string;
   peso?: string;
+  /**
+   * When set (a `data:` URI, not a network URL — see
+   * ProductManagement/etiquetas/logoDataUri.ts), the Tierra Mädre mark is
+   * embedded in the CENTRE of the QR instead of sitting beside it, and the
+   * trailing side logo is dropped. Used by the Atelier etiquetas gallery.
+   *
+   * Embedding a centre image occludes ~5–6% of the symbol, so this path bumps
+   * the QR error-correction to level "H" (30% recoverable) to keep it
+   * scannable; the default (no centre logo) stays at level "M" as before.
+   */
+  qrLogoSrc?: string;
 }
+
+/** Centre logo covers ~22% of the QR width — comfortably inside level H's
+ *  30% error-correction budget, with `excavate` clearing the modules under it
+ *  so the scanner never reads logo pixels as data. */
+const QR_LOGO_RATIO = 0.22;
 
 /**
  * One printable item label: QR (links to the product detail page) + item
@@ -34,7 +50,13 @@ export interface LabelPreviewProps {
  * content by default without relying on that keyword, which html2canvas
  * measures reliably.
  */
-export function LabelPreview({ itemId, nombre, peso }: LabelPreviewProps) {
+export function LabelPreview({
+  itemId,
+  nombre,
+  peso,
+  qrLogoSrc,
+}: LabelPreviewProps) {
+  const qrLogoPx = Math.round(QR_SIZE_PX * QR_LOGO_RATIO);
   return (
     <Box
       sx={{
@@ -49,10 +71,20 @@ export function LabelPreview({ itemId, nombre, peso }: LabelPreviewProps) {
       <QRCodeSVG
         value={`${STUDIO_BASE_URL}/product/${itemId}`}
         size={QR_SIZE_PX}
-        level="M"
+        level={qrLogoSrc ? 'H' : 'M'}
         fgColor="#000000"
         bgColor="#FFFFFF"
         style={{ display: 'block', flexShrink: 0 }}
+        imageSettings={
+          qrLogoSrc
+            ? {
+                src: qrLogoSrc,
+                height: qrLogoPx,
+                width: qrLogoPx,
+                excavate: true,
+              }
+            : undefined
+        }
       />
       <Box
         sx={{
@@ -101,18 +133,20 @@ export function LabelPreview({ itemId, nombre, peso }: LabelPreviewProps) {
           </Box>
         )}
       </Box>
-      <Box
-        component="img"
-        src={LOGO_URL}
-        alt=""
-        crossOrigin="anonymous"
-        sx={{
-          height: `${LOGO_SIZE_PX}px`,
-          width: `${LOGO_SIZE_PX}px`,
-          objectFit: 'contain',
-          flexShrink: 0,
-        }}
-      />
+      {!qrLogoSrc && (
+        <Box
+          component="img"
+          src={LOGO_URL}
+          alt=""
+          crossOrigin="anonymous"
+          sx={{
+            height: `${LOGO_SIZE_PX}px`,
+            width: `${LOGO_SIZE_PX}px`,
+            objectFit: 'contain',
+            flexShrink: 0,
+          }}
+        />
+      )}
     </Box>
   );
 }
