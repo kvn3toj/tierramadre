@@ -11,6 +11,7 @@ import {
   Button,
   CircularProgress,
   IconButton,
+  Slider,
   TextField,
   Typography,
 } from '@mui/material';
@@ -24,6 +25,7 @@ import {
   ScanLine,
   Tag,
   X,
+  ZoomIn,
 } from 'lucide-react';
 import { getFoto, fontFamilies } from '../../../design-system';
 import { FotoTopbar, FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
@@ -77,9 +79,10 @@ export default function EscanearPage() {
     }
   }, []);
 
-  const { videoRef, state, error, start, stop } = useQrScanner({
-    onDecode: handleDecode,
-  });
+  const { videoRef, state, error, start, stop, zoom, zoomCaps, setZoom } =
+    useQrScanner({
+      onDecode: handleDecode,
+    });
 
   // Auto-start the camera while no result is showing; release it otherwise.
   useEffect(() => {
@@ -227,6 +230,43 @@ export default function EscanearPage() {
                 </Box>
               )}
             </Box>
+
+            {/* Optical zoom — magnify tiny printed QR labels the fixed focal
+                length can't resolve. Only shown when the camera supports it. */}
+            {zoomCaps && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  mt: 1.5,
+                  px: 0.5,
+                }}
+              >
+                <ZoomIn size={18} color={foto.ink.tertiary} />
+                <Slider
+                  size="small"
+                  min={zoomCaps.min}
+                  max={zoomCaps.max}
+                  step={zoomCaps.step}
+                  value={zoom}
+                  onChange={(_, v) => setZoom(Array.isArray(v) ? v[0] : v)}
+                  aria-label="Zoom de cámara"
+                  sx={{ color: foto.accent.primary }}
+                />
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    color: foto.ink.tertiary,
+                    minWidth: 34,
+                    textAlign: 'right',
+                    fontFamily: fontFamilies.mono,
+                  }}
+                >
+                  {zoom.toFixed(1)}×
+                </Typography>
+              </Box>
+            )}
 
             {notice && (
               <Typography

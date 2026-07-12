@@ -5,6 +5,7 @@
 import { internalMutation, internalAction } from './_generated/server';
 import { api, internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
+import { v } from 'convex/values';
 
 /**
  * Backfill `publishedAt` for Fotosíntesis items published BEFORE the Estrenos
@@ -656,5 +657,213 @@ export const seedInsumosMarketing = internalAction({
     }
 
     return created;
+  },
+});
+
+/**
+ * Subdivide the 4 "topos" insumos (postes de aretes) into one inventory item
+ * PER SIZE, so each size gets its own sequential itemId → its own scannable QR
+ * label in Atelier · Etiquetas.
+ *
+ * Decision (2026-07-11): the 4 parent insumos stay untouched — the whole cost
+ * lives there. These sized children are registered at `costo 0` so they are
+ * pure QR/label surfaces and DON'T double-count cost. They are hidden
+ * (`mostrarEnCatalogo:false`, tipo insumo) exactly like the parents.
+ *
+ * Per-size quantities reconcile with the seeded parent totals:
+ *   - Pares Topos #4 → 4.3mm ×14 (11 en stock)                         = 14
+ *   - Pares Topos #3 → 3.5mm ×11(9), 3.4mm ×7, 3.3mm ×1, 4mm ×1(usado) = 20
+ *   - Topos Redondos → 4mm ×6, 3mm ×6, 5mm ×1, 2mm plata ×1            = 14 pares
+ *   - Topos Planos   → 5mm ×1, 4×4.5mm ×7, 3.2mm ×6, 2mm plata ×1      = 15 pares
+ *
+ * `cantidad` = unidades disponibles hoy (en stock para Pares #3/#4; pares para
+ * Redondos/Planos, con los "sueltos" usados anotados en la observación).
+ *
+ * Silver pairs carry their gram weight so the label's third line is useful:
+ * Redondos 2mm = 0.47 g, Planos 2mm = 0.37 g.
+ *
+ * Mechanism: each child is a STANDALONE `products._createProduct` row (no lote,
+ * no cost) — the lote path rejects `costoTotalCOP <= 0`, and a lote-less row is
+ * exactly "cost stays in the parent". A standalone row has no `loteId` and no
+ * `mostrarEnCatalogo`, so it's doubly excluded from the public catalog (which
+ * requires both). We then stamp `tipo:'insumo'` via `_stampInsumoTipo` so it
+ * lands under the Etiquetas "Insumos" tab. Idempotent by `nombre` (unique per
+ * size) — a re-run skips sizes that already exist.
+ *
+ *   npx convex run --prod migrations:seedToposSubdivision '{}'
+ */
+export const seedToposSubdivision = internalAction({
+  args: {},
+  handler: async (
+    ctx,
+  ): Promise<Array<{ itemId: string; nombre: string; skipped: boolean }>> => {
+    const specs: Array<{
+      token: string;
+      nombre: string;
+      cantidad: number;
+      peso?: string;
+      obs: string;
+    }> = [
+      // ── Pares Topos #4 (padre: insumo-pares-topos-4) ──────────────────
+      {
+        token: 'insumo-pares-topos-4-4-3mm',
+        nombre: 'Pares Topos #4 · 4.3mm',
+        cantidad: 11,
+        obs: 'Subdivisión de "Pares Topos #4" (insumo-pares-topos-4). 4.3mm: 14 recibidos, 3 usados (Ojos del Universo #76, Hadas del Bosque #89, Destellos Gemelos), 11 en stock. Costo permanece en el padre.',
+      },
+      // ── Pares Topos #3 (padre: insumo-pares-topos-3) ──────────────────
+      {
+        token: 'insumo-pares-topos-3-3-5mm',
+        nombre: 'Pares Topos #3 · 3.5mm',
+        cantidad: 9,
+        obs: 'Subdivisión de "Pares Topos #3" (insumo-pares-topos-3). 3.5mm: 11 recibidos, 2 usados, 9 en stock. Costo permanece en el padre.',
+      },
+      {
+        token: 'insumo-pares-topos-3-3-4mm',
+        nombre: 'Pares Topos #3 · 3.4mm',
+        cantidad: 7,
+        obs: 'Subdivisión de "Pares Topos #3" (insumo-pares-topos-3). 3.4mm: 7 recibidos, 7 en stock. Costo permanece en el padre.',
+      },
+      {
+        token: 'insumo-pares-topos-3-3-3mm',
+        nombre: 'Pares Topos #3 · 3.3mm',
+        cantidad: 1,
+        obs: 'Subdivisión de "Pares Topos #3" (insumo-pares-topos-3). 3.3mm: 1 recibido, 1 en stock. Costo permanece en el padre.',
+      },
+      {
+        token: 'insumo-pares-topos-3-4mm',
+        nombre: 'Pares Topos #3 · 4mm',
+        cantidad: 0,
+        obs: 'Subdivisión de "Pares Topos #3" (insumo-pares-topos-3). 4mm: 1 recibido, ya usado, 0 en stock. Costo permanece en el padre.',
+      },
+      // ── Topos Redondos (padre: insumo-topos-redondos) ─────────────────
+      {
+        token: 'insumo-topos-redondos-4mm',
+        nombre: 'Topos Redondos 4mm (par)',
+        cantidad: 6,
+        obs: 'Subdivisión de "Topos Redondos" (insumo-topos-redondos). 4mm: 6 pares. Costo permanece en el padre.',
+      },
+      {
+        token: 'insumo-topos-redondos-3mm',
+        nombre: 'Topos Redondos 3mm (par)',
+        cantidad: 6,
+        obs: 'Subdivisión de "Topos Redondos" (insumo-topos-redondos). 3mm: 6 pares. 1 poste suelto 3mm usado en Perlita #260. Costo permanece en el padre.',
+      },
+      {
+        token: 'insumo-topos-redondos-5mm',
+        nombre: 'Topos Redondos 5mm (par)',
+        cantidad: 1,
+        obs: 'Subdivisión de "Topos Redondos" (insumo-topos-redondos). 5mm: 1 par. Costo permanece en el padre.',
+      },
+      {
+        token: 'insumo-topos-redondos-2mm-plata',
+        nombre: 'Topos Redondos 2mm plata (par)',
+        cantidad: 1,
+        peso: '0.47',
+        obs: 'Subdivisión de "Topos Redondos" (insumo-topos-redondos). 2mm en plata: 1 par, 0.47 g. Costo permanece en el padre.',
+      },
+      // ── Topos Planos (padre: insumo-topos-planos) ─────────────────────
+      {
+        token: 'insumo-topos-planos-5mm',
+        nombre: 'Topos Planos 5mm (par)',
+        cantidad: 1,
+        obs: 'Subdivisión de "Topos Planos" (insumo-topos-planos). 5mm: 1 par. Costo permanece en el padre.',
+      },
+      {
+        token: 'insumo-topos-planos-4x4-5mm',
+        nombre: 'Topos Planos 4×4.5mm (par)',
+        cantidad: 7,
+        obs: 'Subdivisión de "Topos Planos" (insumo-topos-planos). 4×4.5mm: 7 pares. Costo permanece en el padre.',
+      },
+      {
+        token: 'insumo-topos-planos-3-2mm',
+        nombre: 'Topos Planos 3.2mm (par)',
+        cantidad: 6,
+        obs: 'Subdivisión de "Topos Planos" (insumo-topos-planos). 3.2mm: 6 pares. 1 poste suelto 3.2mm usado en Luz del Firmamento #257. Costo permanece en el padre.',
+      },
+      {
+        token: 'insumo-topos-planos-2mm-plata',
+        nombre: 'Topos Planos 2mm plata (par)',
+        cantidad: 1,
+        peso: '0.37',
+        obs: 'Subdivisión de "Topos Planos" (insumo-topos-planos). 2mm en plata: 1 par, 0.37 g. Costo permanece en el padre.',
+      },
+    ];
+
+    const editorEmail = 'migration:seedToposSubdivision';
+    const editorName = 'Kevin Pineda (migration)';
+
+    // One scan of the full inventory: existing names (idempotency) + max itemId
+    // (allocator seed). We bump `nextId` locally per create so the batch never
+    // collides with itself within a single run.
+    const all = (await ctx.runQuery(api.products.list, {})) as Array<{
+      itemId: string;
+      nombre?: string;
+    }>;
+    const existingNombres = new Set(
+      all.map((p) => (p.nombre ?? '').trim()).filter(Boolean),
+    );
+    let nextId = all.reduce((m, p) => {
+      const n = Number(p.itemId);
+      return Number.isFinite(n) && n > m ? n : m;
+    }, 0);
+
+    const created: Array<{ itemId: string; nombre: string; skipped: boolean }> =
+      [];
+
+    for (const s of specs) {
+      if (existingNombres.has(s.nombre.trim())) {
+        const prior = all.find((p) => (p.nombre ?? '').trim() === s.nombre);
+        created.push({
+          itemId: prior?.itemId ?? '?',
+          nombre: s.nombre,
+          skipped: true,
+        });
+        continue;
+      }
+      nextId += 1;
+      const itemId = String(nextId);
+      await ctx.runMutation(internal.products._createProduct, {
+        itemId,
+        editorEmail,
+        editorName,
+        fields: {
+          nombre: s.nombre,
+          peso: s.peso,
+          cantidad: s.cantidad,
+          categoria: 'Insumo',
+        },
+      });
+      // Stamp tipo so it groups under Etiquetas' "Insumos" tab (the standalone
+      // create path has no `tipo` field of its own).
+      await ctx.runMutation(internal.migrations._stampInsumoTipo, {
+        itemId,
+        observacion: s.obs,
+      });
+      existingNombres.add(s.nombre.trim());
+      created.push({ itemId, nombre: s.nombre, skipped: false });
+    }
+
+    return created;
+  },
+});
+
+/**
+ * Stamp `tipo:'insumo'` (and an observación) onto a freshly-created standalone
+ * productInventory row. Used by `seedToposSubdivision` because the public
+ * `_createProduct` fields don't include `tipo`/`observacion`.
+ */
+export const _stampInsumoTipo = internalMutation({
+  args: { itemId: v.string(), observacion: v.optional(v.string()) },
+  handler: async (ctx, { itemId, observacion }) => {
+    const row = await ctx.db
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+      .first();
+    if (!row) throw new Error(`productInventory ${itemId} no encontrado`);
+    await ctx.db.patch(row._id, {
+      tipo: 'insumo' as const,
+      ...(observacion ? { observacion } : {}),
+    });
   },
 });

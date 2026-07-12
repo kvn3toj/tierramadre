@@ -49,6 +49,10 @@ import {
   PricePerCarat,
 } from './components';
 import { useConvexQuery, convexApi } from '../../../lib/convex-safe';
+import {
+  mapRowToTreasureItem,
+  type PublishedRow,
+} from '../../../hooks/useFotosintesisCatalog';
 import { EsmereogenesisCTA } from '../../../components/esmereogenesis/EsmereogenesisCTA';
 import { getFeatureFlag } from '../../../utils/featureFlags';
 import { scrollMainTo } from '../../../utils/mainScroll';
@@ -107,11 +111,30 @@ export default function ProductDetail() {
     setGalleryIndex(0);
   }, [itemId, groupId]);
 
+  // Public, PROJECTED Convex doc for this single item, fetched for ALL viewers
+  // (not admin-gated) keyed by the ROUTE itemId — so it's available even when
+  // the item isn't in the sheet-derived `treasure` yet. Uses the projected
+  // `getPublicByItem` (never the raw `get`), so no cost/consciente/sync fields
+  // reach anon clients.
+  const publicItemId = itemId && !groupId ? itemId : undefined;
+  const publicDoc = useConvexQuery(
+    convexApi.products.getPublicByItem,
+    publicItemId ? { itemId: publicItemId } : 'skip',
+  ) as PublishedRow | null | undefined;
+
   // Find the product — by groupId for grouped lote/sublote cards, else by item.
+  // FALLBACK: when the item isn't in the sheet-derived catalog (e.g. an
+  // unpublished Fotosíntesis lote item that reached neither the legacy sheet nor
+  // `publishedCatalog`), build it straight from the public Convex doc so a
+  // scanned QR still resolves to a real product page in the app — not a
+  // "no encontrado". Found items are untouched (zero blast radius).
   const product = useMemo(() => {
     if (groupId) return treasure.find((item) => item.groupId === groupId);
-    return treasure.find((item) => item.item.toString() === itemId);
-  }, [treasure, itemId, groupId]);
+    const found = treasure.find((item) => item.item.toString() === itemId);
+    if (found) return found;
+    if (publicDoc) return mapRowToTreasureItem(publicDoc);
+    return undefined;
+  }, [treasure, itemId, groupId, publicDoc]);
 
   // Get display name early for use in effects
   const displayName = useMemo(() => {
@@ -144,28 +167,6 @@ export default function ProductDetail() {
         preponderancia?: number;
         syncStatus?: 'synced' | 'pending' | 'error';
         syncError?: string;
-      }
-    | null
-    | undefined;
-
-  // Public, PROJECTED Convex doc for the SAME single item, fetched for ALL
-  // viewers (not admin-gated). This is what makes Fotosíntesis edits (medidas,
-  // nombre, corte/talla…) appear on the QR product page even when the legacy
-  // sheet the page reads lags behind — and it covers no-loteId items that
-  // `publishedCatalog` never surfaces. Uses the projected `getPublicByItem`
-  // (never the raw `get`), so no cost/consciente/sync fields reach anon clients.
-  const publicItemId =
-    itemId && !groupId && product && !product.isLote ? itemId : undefined;
-  const publicDoc = useConvexQuery(
-    convexApi.products.getPublicByItem,
-    publicItemId ? { itemId: publicItemId } : 'skip',
-  ) as
-    | {
-        nombre?: string;
-        medidas?: string;
-        medidasValores?: string;
-        talla?: string;
-        categoria?: string;
       }
     | null
     | undefined;

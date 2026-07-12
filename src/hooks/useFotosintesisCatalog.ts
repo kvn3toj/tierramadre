@@ -12,27 +12,27 @@
  * configured) ready to merge with the Google Sheets catalog in `useTreasure`.
  */
 
-import { useMemo } from "react";
-import { useConvexQuery, convexApi } from "../lib/convex-safe";
+import { useMemo } from 'react';
+import { useConvexQuery, convexApi } from '../lib/convex-safe';
 import type {
   TreasureItem,
   EmeraldColor,
   EmeraldQuality,
   TreasureStatus,
-} from "../types";
+} from '../types';
 
 /** Categorías that imply jewelry even when peso is a numeric carat value. */
 const JEWELRY_CATEGORIES = new Set([
-  "anillo en plata",
-  "aretes",
-  "topitos",
-  "pulsera",
-  "dije",
-  "anillo en oro",
+  'anillo en plata',
+  'aretes',
+  'topitos',
+  'pulsera',
+  'dije',
+  'anillo en oro',
 ]);
 
 /** Shape of a published productInventory row coming back from Convex. */
-interface PublishedRow {
+export interface PublishedRow {
   itemId: string;
   nombre?: string;
   peso?: string;
@@ -81,17 +81,17 @@ function derivePeso(
 ): {
   pesoValue: string | number;
   isJewelry: boolean;
-  metalType?: "Plata" | "Oro 18k";
+  metalType?: 'Plata' | 'Oro 18k';
 } {
-  const raw = (peso ?? "").trim();
+  const raw = (peso ?? '').trim();
   const lower = raw.toLowerCase();
-  if (lower.includes("plata")) {
-    return { pesoValue: raw, isJewelry: true, metalType: "Plata" };
+  if (lower.includes('plata')) {
+    return { pesoValue: raw, isJewelry: true, metalType: 'Plata' };
   }
-  if (lower.includes("oro")) {
-    return { pesoValue: raw, isJewelry: true, metalType: "Oro 18k" };
+  if (lower.includes('oro')) {
+    return { pesoValue: raw, isJewelry: true, metalType: 'Oro 18k' };
   }
-  const num = parseFloat(raw.replace(",", "."));
+  const num = parseFloat(raw.replace(',', '.'));
   const pesoValue: string | number = Number.isFinite(num) ? num : raw;
   const isJewelry = categoria
     ? JEWELRY_CATEGORIES.has(categoria.toLowerCase().trim())
@@ -100,7 +100,7 @@ function derivePeso(
 }
 
 /** Map one published Convex row into the catalog's TreasureItem shape. */
-function mapRowToTreasureItem(row: PublishedRow): TreasureItem {
+export function mapRowToTreasureItem(row: PublishedRow): TreasureItem {
   const { pesoValue, isJewelry, metalType } = derivePeso(
     row.peso,
     row.categoria,
@@ -113,26 +113,26 @@ function mapRowToTreasureItem(row: PublishedRow): TreasureItem {
 
   return {
     item: parseInt(row.itemId, 10),
-    fechaIngreso: "",
-    nombre: row.nombre ?? "",
+    fechaIngreso: '',
+    nombre: row.nombre ?? '',
     peso: pesoValue,
-    color: (row.color ?? "") as EmeraldColor,
-    calidad: (row.calidad ?? "") as EmeraldQuality,
-    cantidad: typeof row.cantidad === "number" ? row.cantidad : 1,
-    talla: row.talla ?? "",
-    medidas: row.medidas ?? "",
-    medidasValores: row.medidasValores ?? "",
-    categoria: (row.categoria ?? "").trim(),
+    color: (row.color ?? '') as EmeraldColor,
+    calidad: (row.calidad ?? '') as EmeraldQuality,
+    cantidad: typeof row.cantidad === 'number' ? row.cantidad : 1,
+    talla: row.talla ?? '',
+    medidas: row.medidas ?? '',
+    medidasValores: row.medidasValores ?? '',
+    categoria: (row.categoria ?? '').trim(),
     precioCOP,
     precioInternacional: 0,
-    ubicacion: row.ubicacion ?? "",
-    asesor: row.asesor ?? "",
-    estado: (row.estado || "DISPONIBLE").toUpperCase() as TreasureStatus,
-    qr: row.qr ?? "",
-    coleccion: row.coleccion ?? "",
-    caja: row.caja ?? "",
-    asesorActual: row.asesorActual ?? "",
-    estadoAsesor: (row.estadoAsesor ?? "").toUpperCase() as TreasureStatus | "",
+    ubicacion: row.ubicacion ?? '',
+    asesor: row.asesor ?? '',
+    estado: (row.estado || 'DISPONIBLE').toUpperCase() as TreasureStatus,
+    qr: row.qr ?? '',
+    coleccion: row.coleccion ?? '',
+    caja: row.caja ?? '',
+    asesorActual: row.asesorActual ?? '',
+    estadoAsesor: (row.estadoAsesor ?? '').toUpperCase() as TreasureStatus | '',
     isJewelry,
     ...(metalType ? { metalType } : {}),
     // Drive image captured in the wizard; useTreasure converts it to a proxy URL.
@@ -204,7 +204,7 @@ export interface GroupItem {
 }
 
 export interface PublishedGroup {
-  groupKind: "lote" | "sublote";
+  groupKind: 'lote' | 'sublote';
   groupId: string;
   parentLoteId: string;
   nombre: string;
@@ -237,7 +237,7 @@ export function mapGroupToTreasureItem(
 ): TreasureItem {
   const first = group.items[0];
   const { pesoValue, isJewelry, metalType } = derivePeso(
-    typeof first?.peso === "string" ? first.peso : "",
+    typeof first?.peso === 'string' ? first.peso : '',
     first?.categoria,
   );
 
@@ -249,10 +249,10 @@ export function mapGroupToTreasureItem(
   const numericPesos = group.items
     .map(
       (it) =>
-        derivePeso(typeof it.peso === "string" ? it.peso : "", it.categoria)
+        derivePeso(typeof it.peso === 'string' ? it.peso : '', it.categoria)
           .pesoValue,
     )
-    .filter((p): p is number => typeof p === "number");
+    .filter((p): p is number => typeof p === 'number');
   const totalPeso: string | number =
     numericPesos.length > 0
       ? numericPesos.reduce((sum, p) => sum + p, 0)
@@ -260,26 +260,26 @@ export function mapGroupToTreasureItem(
 
   return {
     item,
-    fechaIngreso: "",
+    fechaIngreso: '',
     nombre: group.nombre,
     peso: totalPeso,
-    color: (first?.color ?? "") as EmeraldColor,
-    calidad: (first?.calidad ?? "") as EmeraldQuality,
+    color: (first?.color ?? '') as EmeraldColor,
+    calidad: (first?.calidad ?? '') as EmeraldQuality,
     cantidad: group.items.length,
-    talla: first?.talla ?? "",
-    medidas: first?.medidas ?? "",
-    medidasValores: "",
-    categoria: (first?.categoria ?? "").trim(),
+    talla: first?.talla ?? '',
+    medidas: first?.medidas ?? '',
+    medidasValores: '',
+    categoria: (first?.categoria ?? '').trim(),
     precioCOP: group.totalPriceCOP,
     precioInternacional: 0,
-    ubicacion: "",
-    asesor: "",
-    estado: "DISPONIBLE" as TreasureStatus,
-    qr: "",
-    coleccion: "",
-    caja: "",
-    asesorActual: "",
-    estadoAsesor: "",
+    ubicacion: '',
+    asesor: '',
+    estado: 'DISPONIBLE' as TreasureStatus,
+    qr: '',
+    coleccion: '',
+    caja: '',
+    asesorActual: '',
+    estadoAsesor: '',
     isJewelry,
     ...(metalType ? { metalType } : {}),
     imagen: group.fotoUrl || first?.fotoUrl || undefined,
@@ -297,7 +297,7 @@ export function mapGroupToTreasureItem(
       // Derive the same jewelry/peso fields per piece so a single item's
       // detail view renders identically to a standalone catalog item.
       const derived = derivePeso(
-        typeof it.peso === "string" ? it.peso : "",
+        typeof it.peso === 'string' ? it.peso : '',
         it.categoria,
       );
       return {
@@ -305,12 +305,12 @@ export function mapGroupToTreasureItem(
         nombre: it.nombre,
         imagen: it.fotoUrl || undefined,
         precioCOP: it.precioCOP,
-        color: (it.color ?? "") as EmeraldColor,
-        calidad: (it.calidad ?? "") as EmeraldQuality,
+        color: (it.color ?? '') as EmeraldColor,
+        calidad: (it.calidad ?? '') as EmeraldQuality,
         peso: derived.pesoValue,
-        categoria: (it.categoria ?? "").trim(),
-        talla: it.talla ?? "",
-        medidas: it.medidas ?? "",
+        categoria: (it.categoria ?? '').trim(),
+        talla: it.talla ?? '',
+        medidas: it.medidas ?? '',
         isJewelry: derived.isJewelry,
         ...(derived.metalType ? { metalType: derived.metalType } : {}),
         // Per-piece Fotosíntesis characteristics for the per-image overlay.
