@@ -15,22 +15,15 @@ export interface LabelPreviewProps {
   nombre?: string;
   peso?: string;
   /**
-   * When set (a `data:` URI, not a network URL — see
-   * ProductManagement/etiquetas/logoDataUri.ts), the Tierra Mädre mark is
-   * embedded in the CENTRE of the QR instead of sitting beside it, and the
-   * trailing side logo is dropped. Used by the Atelier etiquetas gallery.
-   *
-   * Embedding a centre image occludes ~5–6% of the symbol, so this path bumps
-   * the QR error-correction to level "H" (30% recoverable) to keep it
-   * scannable; the default (no centre logo) stays at level "M" as before.
+   * Gallery mode (Atelier etiquetas). This used to embed the Tierra Mädre mark
+   * in the CENTRE of the QR, but that occluded the symbol and forced the dense
+   * level-"H" encoding, so printed modules were too small to scan off 12mm
+   * tape. The centre logo is now DROPPED — the QR is a plain level-"M" symbol
+   * with larger modules. This flag now only suppresses the trailing side logo
+   * so the gallery label stays compact (QR + text only).
    */
   qrLogoSrc?: string;
 }
-
-/** Centre logo covers ~22% of the QR width — comfortably inside level H's
- *  30% error-correction budget, with `excavate` clearing the modules under it
- *  so the scanner never reads logo pixels as data. */
-const QR_LOGO_RATIO = 0.22;
 
 /**
  * One printable item label: QR (links to the product detail page) + item
@@ -56,7 +49,6 @@ export function LabelPreview({
   peso,
   qrLogoSrc,
 }: LabelPreviewProps) {
-  const qrLogoPx = Math.round(QR_SIZE_PX * QR_LOGO_RATIO);
   return (
     <Box
       sx={{
@@ -71,20 +63,15 @@ export function LabelPreview({
       <QRCodeSVG
         value={`${STUDIO_BASE_URL}/product/${itemId}`}
         size={QR_SIZE_PX}
-        level={qrLogoSrc ? 'H' : 'M'}
+        // NO centre logo. An occluded centre forced level "H" (30% ECC), which
+        // pushed this 35-char URL to a version-5 (37×37) symbol whose modules
+        // were too small to scan off tiny NIIMBOT tape. Without the logo we use
+        // level "M": the SAME URL now fits a version-3 (29×29) symbol with
+        // noticeably larger squares — the QR value/target is unchanged.
+        level="M"
         fgColor="#000000"
         bgColor="#FFFFFF"
         style={{ display: 'block', flexShrink: 0 }}
-        imageSettings={
-          qrLogoSrc
-            ? {
-                src: qrLogoSrc,
-                height: qrLogoPx,
-                width: qrLogoPx,
-                excavate: true,
-              }
-            : undefined
-        }
       />
       <Box
         sx={{

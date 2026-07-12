@@ -24,6 +24,7 @@ import type * as _lib_publishState from "../_lib/publishState.js";
 import type * as _lib_publishedGroups from "../_lib/publishedGroups.js";
 import type * as _lib_sheetPullMaps from "../_lib/sheetPullMaps.js";
 import type * as _lib_sheetSync from "../_lib/sheetSync.js";
+import type * as adminOps from "../adminOps.js";
 import type * as ambassadors from "../ambassadors.js";
 import type * as asesorMovements from "../asesorMovements.js";
 import type * as clients from "../clients.js";
@@ -68,6 +69,7 @@ declare const fullApi: ApiFromModules<{
   "_lib/publishedGroups": typeof _lib_publishedGroups;
   "_lib/sheetPullMaps": typeof _lib_sheetPullMaps;
   "_lib/sheetSync": typeof _lib_sheetSync;
+  adminOps: typeof adminOps;
   ambassadors: typeof ambassadors;
   asesorMovements: typeof asesorMovements;
   clients: typeof clients;
