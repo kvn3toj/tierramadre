@@ -56,11 +56,15 @@ interface ProductListRow {
   estado?: string;
 }
 
-type KindFilter = 'todo' | 'producto' | 'insumo';
+type KindFilter = 'todo' | 'producto' | 'insumo' | 'proximo';
 
 interface GalleryItem extends LabelItem {
-  kind: 'producto' | 'insumo';
+  kind: 'producto' | 'insumo' | 'proximo';
 }
+
+/** How many upcoming (not-yet-created) item numbers to offer for pre-printing. */
+const PROXIMOS_DEFAULT = 50;
+const PROXIMOS_MAX = 300;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -87,6 +91,7 @@ const KIND_TABS: { key: KindFilter; label: string }[] = [
   { key: 'todo', label: 'Todo' },
   { key: 'producto', label: 'Productos' },
   { key: 'insumo', label: 'Insumos' },
+  { key: 'proximo', label: 'Próximos' },
 ];
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -106,6 +111,17 @@ export default function EtiquetasPage() {
 
   const [kind, setKind] = useState<KindFilter>('todo');
   const [search, setSearch] = useState('');
+  const [proximosCount, setProximosCount] = useState(PROXIMOS_DEFAULT);
+
+  // Highest numeric itemId in stock — the "Próximos" tab starts one above this.
+  const maxItemId = useMemo(() => {
+    let max = 0;
+    for (const r of products ?? []) {
+      const n = Number(r.itemId);
+      if (!Number.isNaN(n) && n > max) max = n;
+    }
+    return max;
+  }, [products]);
 
   // Off-screen render target — a single hidden LabelPreview re-rendered per
   // item (batch or single), matching LoteResumenPage's pattern so we never
@@ -121,10 +137,27 @@ export default function EtiquetasPage() {
     total: number;
   } | null>(null);
 
-  // Full inventory → gallery items, filtered by kind + search.
+  // Full inventory → gallery items, filtered by kind + search. The "Próximos"
+  // tab is synthetic: it offers the next `proximosCount` item numbers ABOVE the
+  // current max so the operator can pre-print QR labels for pieces not yet
+  // loaded into inventory (the QR already resolves once the item is created).
   const items = useMemo<GalleryItem[]>(() => {
     if (!products) return [];
     const q = search.trim().toLowerCase();
+
+    if (kind === 'proximo') {
+      const start = maxItemId + 1;
+      return Array.from({ length: proximosCount }, (_, i) => {
+        const itemId = String(start + i);
+        return {
+          itemId,
+          nombre: undefined,
+          peso: undefined,
+          kind: 'proximo',
+        } satisfies GalleryItem;
+      }).filter((it) => (q ? it.itemId.includes(q) : true));
+    }
+
     return products
       .map((row) => {
         const k = kindOf(row);
@@ -143,7 +176,7 @@ export default function EtiquetasPage() {
           (it.nombre ?? '').toLowerCase().includes(q)
         );
       });
-  }, [products, kind, search]);
+  }, [products, kind, search, maxItemId, proximosCount]);
 
   const counts = useMemo(() => {
     const all = products ?? [];
@@ -355,7 +388,9 @@ export default function EtiquetasPage() {
             >
               {loading
                 ? 'Cargando inventario…'
-                : `${counts.total} ítem(s) · ${counts.producto} producto(s) · ${counts.insumo} insumo(s)`}
+                : kind === 'proximo'
+                  ? `${items.length} próximo(s) · #${maxItemId + 1} a #${maxItemId + proximosCount} · sin registrar aún`
+                  : `${counts.total} ítem(s) · ${counts.producto} producto(s) · ${counts.insumo} insumo(s)`}
             </Box>
           </Box>
         </Box>
@@ -420,6 +455,49 @@ export default function EtiquetasPage() {
               color: foto.ink.primary,
             }}
           />
+
+          {kind === 'proximo' && (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.75,
+                fontFamily: fontFamilies.system,
+                fontSize: '12px',
+                color: foto.ink.secondary,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Cantidad
+              <InputBase
+                type="number"
+                value={proximosCount}
+                onChange={(e) => {
+                  const n = Math.round(Number(e.target.value));
+                  setProximosCount(
+                    Number.isNaN(n)
+                      ? 0
+                      : Math.min(PROXIMOS_MAX, Math.max(1, n)),
+                  );
+                }}
+                inputProps={{
+                  min: 1,
+                  max: PROXIMOS_MAX,
+                  'aria-label': 'Cantidad de próximos a generar',
+                }}
+                sx={{
+                  width: 72,
+                  px: '10px',
+                  py: '7px',
+                  borderRadius: '9px',
+                  border: `1px solid ${foto.surfaces.edgeStrong}`,
+                  fontFamily: fontFamilies.mono,
+                  fontSize: '13px',
+                  color: foto.ink.primary,
+                }}
+              />
+            </Box>
+          )}
         </Box>
 
         {/* Batch action bar */}
@@ -634,17 +712,20 @@ function LabelCard({
           >
             {item.itemId}
           </Box>
-          {item.kind === 'insumo' && (
+          {(item.kind === 'insumo' || item.kind === 'proximo') && (
             <Box
               sx={{
                 fontFamily: fontFamilies.system,
                 fontSize: '9px',
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                color: foto.ink.tertiary,
+                color:
+                  item.kind === 'proximo'
+                    ? foto.accent.primary
+                    : foto.ink.tertiary,
               }}
             >
-              Insumo
+              {item.kind === 'proximo' ? 'Próximo' : 'Insumo'}
             </Box>
           )}
         </Box>

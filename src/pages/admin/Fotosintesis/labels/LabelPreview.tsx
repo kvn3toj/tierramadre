@@ -2,7 +2,15 @@ import { Box } from '@mui/material';
 import { QRCodeSVG } from 'qrcode.react';
 import { fontFamilies } from '../../../../design-system';
 
-const STUDIO_BASE_URL = 'https://tierramadre.app';
+// QR target. `HTTPS://TIERRAMADRE.APP/P/<id>` (the short `/p/:itemId` alias, in
+// UPPERCASE): uppercase makes the QR encode in *alphanumeric* mode, so even with
+// the `HTTPS://` scheme the symbol stays a low-density version-2 (25×25) that
+// prints/scans off tiny 12mm tape. The scheme matters — a scheme-less payload
+// (`tierramadre.app/...`) makes some scanners run a Google search instead of
+// opening the link. Resolves the same item (React Router is case-insensitive;
+// parseTmQr lower-cases the `/p/` segment); itemIds are numeric/uppercase so no
+// case is lost.
+const QR_TARGET_BASE = 'HTTPS://TIERRAMADRE.APP/P/';
 const LOGO_URL = '/logo-symbol.png';
 
 /** 12mm NIIMBOT tape at 203 DPI native resolution. */
@@ -61,13 +69,11 @@ export function LabelPreview({
       }}
     >
       <QRCodeSVG
-        value={`${STUDIO_BASE_URL}/product/${itemId}`}
+        value={`${QR_TARGET_BASE}${itemId}`}
         size={QR_SIZE_PX}
-        // NO centre logo. An occluded centre forced level "H" (30% ECC), which
-        // pushed this 35-char URL to a version-5 (37×37) symbol whose modules
-        // were too small to scan off tiny NIIMBOT tape. Without the logo we use
-        // level "M": the SAME URL now fits a version-3 (29×29) symbol with
-        // noticeably larger squares — the QR value/target is unchanged.
+        // NO centre logo, level "M", and the short UPPERCASE target above: this
+        // encodes as a version-2 (25×25) alphanumeric symbol — larger modules
+        // than the old version-3 `/product/` URL, so it scans off tiny 12mm tape.
         level="M"
         fgColor="#000000"
         bgColor="#FFFFFF"
