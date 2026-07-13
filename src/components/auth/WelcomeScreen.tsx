@@ -5,8 +5,8 @@
  * Smooth fade-in transition from splash screen
  */
 
-import { useState, useMemo, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -16,23 +16,23 @@ import {
   alpha,
   Divider,
   Alert,
-} from "@mui/material";
-import { motion } from "framer-motion";
+} from '@mui/material';
+import { motion } from 'framer-motion';
 import {
   VisibilityOutlined,
   OpenInNew,
   ContentCopy,
   CheckCircleOutline,
-} from "@mui/icons-material";
-import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
-import { semanticColors } from "../../design-system/tokens/colors";
-import { qeDark, qeAccent, qeEmerald, qeFont } from "../../design-system";
-import { useGoogleAuth } from "../../contexts/GoogleAuthContext";
-import { useLanguage } from "../../contexts/LanguageContext";
-import { getCachedBrowserInfo } from "../../utils/deviceTier";
+} from '@mui/icons-material';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
+import { semanticColors } from '../../design-system/tokens/colors';
+import { qeDark, qeAccent, qeEmerald, qeFont } from '../../design-system';
+import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { getCachedBrowserInfo } from '../../utils/deviceTier';
 
 // Check if Google OAuth is configured
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 const isGoogleConfigured = Boolean(
   GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.length > 10,
 );
@@ -63,12 +63,15 @@ export default function WelcomeScreen() {
   // ?debug=auth — reveals visible diagnostics so a user reporting login
   // issues can screenshot what's happening in their browser.
   const debugAuth = useMemo(
-    () => new URLSearchParams(location.search).get("debug") === "auth",
+    () => new URLSearchParams(location.search).get('debug') === 'auth',
     [location.search],
   );
 
-  // Detect if user arrived at a product URL (shared link)
-  const isProductUrl = location.pathname.startsWith("/product/");
+  // Detect if user arrived at a product URL (shared link). `/p/` is the short
+  // alias used by printed QR labels; treat it the same as `/product/`.
+  const isProductUrl =
+    location.pathname.startsWith('/product/') ||
+    location.pathname.startsWith('/p/');
 
   // Detect in-app browsers (Telegram, Instagram, etc.) that have OAuth issues
   const browserInfo = useMemo(() => getCachedBrowserInfo(), []);
@@ -89,11 +92,11 @@ export default function WelcomeScreen() {
       setTimeout(() => setUrlCopied(false), 2000);
     } catch {
       // Fallback for browsers that don't support clipboard API
-      const textArea = document.createElement("textarea");
+      const textArea = document.createElement('textarea');
       textArea.value = window.location.href;
       document.body.appendChild(textArea);
       textArea.select();
-      document.execCommand("copy");
+      document.execCommand('copy');
       document.body.removeChild(textArea);
       setUrlCopied(true);
       setTimeout(() => setUrlCopied(false), 2000);
@@ -111,7 +114,7 @@ export default function WelcomeScreen() {
       // Android: Use intent URL to open in default browser
       // Format: intent://HOST/PATH#Intent;scheme=https;package=com.android.chrome;end
       try {
-        const intentUrl = `intent://${url.replace(/^https?:\/\//, "")}#Intent;scheme=https;action=android.intent.action.VIEW;end`;
+        const intentUrl = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;action=android.intent.action.VIEW;end`;
         window.location.href = intentUrl;
         return;
       } catch {
@@ -123,7 +126,7 @@ export default function WelcomeScreen() {
       // iOS: Try x-safari-https scheme (works on some versions)
       // Also works: googlechrome:// for Chrome
       try {
-        const safariUrl = url.replace(/^https:\/\//, "x-safari-https://");
+        const safariUrl = url.replace(/^https:\/\//, 'x-safari-https://');
         window.location.href = safariUrl;
         // Give it a moment to redirect, then fall back
         setTimeout(() => {
@@ -131,8 +134,8 @@ export default function WelcomeScreen() {
           if (navigator.share) {
             navigator
               .share({
-                title: "Tierra Madre",
-                text: "Abre en Safari para iniciar sesión con Google",
+                title: 'Tierra Madre',
+                text: 'Abre en Safari para iniciar sesión con Google',
                 url: url,
               })
               .catch(() => handleCopyUrl());
@@ -150,8 +153,8 @@ export default function WelcomeScreen() {
     if (navigator.share) {
       navigator
         .share({
-          title: "Tierra Madre",
-          text: "Abre este enlace en Chrome o Safari para iniciar sesión con Google",
+          title: 'Tierra Madre',
+          text: 'Abre este enlace en Chrome o Safari para iniciar sesión con Google',
           url: url,
         })
         .catch(() => {
@@ -185,14 +188,14 @@ export default function WelcomeScreen() {
         await signIn(response.credential);
         // Auth context will automatically update on successful sign-in
       } catch (err) {
-        setGoogleError("Error al iniciar sesión con Google");
+        setGoogleError('Error al iniciar sesión con Google');
       }
     }
   };
 
   const handleGoogleError = () => {
     clearPopupWatchdog();
-    setGoogleError("No se pudo completar el inicio de sesión con Google");
+    setGoogleError('No se pudo completar el inicio de sesión con Google');
   };
 
   // Start the watchdog when the GIS button receives a click. We can't hook
@@ -219,22 +222,22 @@ export default function WelcomeScreen() {
       component={motion.div}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
       sx={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
         // Quiet Emerald: flat near-black base — no ambient gradients;
         // the emerald button is the only color on the screen.
         bgcolor: qe.base,
-        position: "relative",
+        position: 'relative',
         // overflowX hides the glow blobs spilling sideways; overflowY auto
         // lets users scroll when alerts + debug panel push past 100vh
         // (otherwise centered flex would clip both ends).
-        overflowX: "hidden",
-        overflowY: "auto",
+        overflowX: 'hidden',
+        overflowY: 'auto',
         // Top breathing room so the logo doesn't kiss the status bar;
         // bottom padding clears the absolute footer (footer = 24px text +
         // 32px bottom offset, so ~80px keeps Stack content above it).
@@ -249,9 +252,9 @@ export default function WelcomeScreen() {
           src="/logo-brand.png"
           alt="Tierra Madre - Esmeraldas con ADN de Paz"
           sx={{
-            width: { xs: "70vw", sm: 360 },
+            width: { xs: '70vw', sm: 360 },
             maxWidth: 400,
-            height: "auto",
+            height: 'auto',
             mb: 1,
           }}
         />
@@ -261,7 +264,7 @@ export default function WelcomeScreen() {
       <Fade in timeout={800}>
         <Stack
           spacing={2}
-          sx={{ width: { xs: "80vw", sm: 340 }, maxWidth: 400, mt: 1.5 }}
+          sx={{ width: { xs: '80vw', sm: 340 }, maxWidth: 400, mt: 1.5 }}
         >
           {/* Product URL Access Alert - Show when arriving from shared link */}
           {isProductUrl && (
@@ -271,17 +274,14 @@ export default function WelcomeScreen() {
                 bgcolor: alpha(qeEmerald.primary, 0.1),
                 color: qe.text,
                 border: `1px solid ${alpha(qeEmerald.primary, 0.25)}`,
-                "& .MuiAlert-icon": { color: acc.accent },
+                '& .MuiAlert-icon': { color: acc.accent },
                 mb: 1,
               }}
             >
               <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
                 Acceso Exclusivo
               </Typography>
-              <Typography
-                variant="caption"
-                sx={{ color: qe.textMuted }}
-              >
+              <Typography variant="caption" sx={{ color: qe.textMuted }}>
                 Para ver este producto necesitas una invitación de un asesor o
                 embajador de Tierra Madre.
               </Typography>
@@ -297,15 +297,15 @@ export default function WelcomeScreen() {
               sx={{
                 p: 1.5,
                 borderRadius: 2,
-                bgcolor: alpha("#000", 0.5),
+                bgcolor: alpha('#000', 0.5),
                 border: `1px solid ${alpha(qeEmerald.primary, 0.25)}`,
-                fontFamily: "monospace",
-                fontSize: "0.7rem",
+                fontFamily: 'monospace',
+                fontSize: '0.7rem',
                 color: qe.textMuted,
-                wordBreak: "break-all",
+                wordBreak: 'break-all',
                 lineHeight: 1.6,
                 maxHeight: 220,
-                overflowY: "auto",
+                overflowY: 'auto',
               }}
             >
               <Typography
@@ -313,7 +313,7 @@ export default function WelcomeScreen() {
                 sx={{
                   color: acc.accent,
                   fontWeight: 600,
-                  display: "block",
+                  display: 'block',
                   mb: 0.5,
                 }}
               >
@@ -321,25 +321,25 @@ export default function WelcomeScreen() {
               </Typography>
               <div>googleConfigured: {String(isGoogleConfigured)}</div>
               <div>
-                clientId:{" "}
+                clientId:{' '}
                 {GOOGLE_CLIENT_ID
                   ? `${GOOGLE_CLIENT_ID.slice(0, 12)}…`
-                  : "(unset)"}
+                  : '(unset)'}
               </div>
-              <div>browser: {browserInfo.browserName || "standard"}</div>
+              <div>browser: {browserInfo.browserName || 'standard'}</div>
               <div>isInAppBrowser: {String(isInAppBrowser)}</div>
               <div>cookies: {String(navigator.cookieEnabled)}</div>
               <div>
-                fedcm:{" "}
+                fedcm:{' '}
                 {String(
-                  typeof window !== "undefined" &&
-                    "IdentityCredential" in window,
+                  typeof window !== 'undefined' &&
+                    'IdentityCredential' in window,
                 )}
               </div>
               <div>online: {String(navigator.onLine)}</div>
               <div>
-                authError: {authError || "—"} | googleError:{" "}
-                {googleError || "—"} | popupStuck: {String(popupStuck)}
+                authError: {authError || '—'} | googleError:{' '}
+                {googleError || '—'} | popupStuck: {String(popupStuck)}
               </div>
               <div style={{ marginTop: 4, opacity: 0.7 }}>
                 ua: {navigator.userAgent}
@@ -365,23 +365,23 @@ export default function WelcomeScreen() {
                     sx={{
                       color: acc.accent,
                       mb: 1,
-                      textAlign: "center",
+                      textAlign: 'center',
                       fontWeight: 500,
                     }}
                   >
-                    {t.auth.inAppBrowserTitle || "Para una mejor experiencia"}
+                    {t.auth.inAppBrowserTitle || 'Para una mejor experiencia'}
                   </Typography>
                   <Typography
                     variant="body2"
                     sx={{
                       color: qe.textMuted,
                       mb: 2.5,
-                      textAlign: "center",
+                      textAlign: 'center',
                       lineHeight: 1.5,
                     }}
                   >
                     {t.auth.inAppBrowserMessage ||
-                      "Abre en tu navegador favorito (Chrome, Safari, etc.) para iniciar sesión con Google."}
+                      'Abre en tu navegador favorito (Chrome, Safari, etc.) para iniciar sesión con Google.'}
                   </Typography>
 
                   <Stack spacing={1.5}>
@@ -393,17 +393,17 @@ export default function WelcomeScreen() {
                       sx={{
                         bgcolor: acc.strong,
                         color: acc.on,
-                        textTransform: "none",
+                        textTransform: 'none',
                         py: 1.2,
                         fontWeight: 500,
-                        boxShadow: "none",
-                        "&:hover": {
-                          boxShadow: "none",
+                        boxShadow: 'none',
+                        '&:hover': {
+                          boxShadow: 'none',
                           bgcolor: qeEmerald.light,
                         },
                       }}
                     >
-                      {t.auth.openInBrowser || "Abrir en navegador"}
+                      {t.auth.openInBrowser || 'Abrir en navegador'}
                     </Button>
                     <Button
                       variant="text"
@@ -414,15 +414,15 @@ export default function WelcomeScreen() {
                       onClick={handleCopyUrl}
                       sx={{
                         color: urlCopied ? acc.accent : qe.subtle,
-                        textTransform: "none",
-                        "&:hover": {
+                        textTransform: 'none',
+                        '&:hover': {
                           color: qe.textMuted,
                         },
                       }}
                     >
                       {urlCopied
-                        ? t.auth.urlCopied || "Copiado"
-                        : t.auth.copyUrl || "Copiar enlace"}
+                        ? t.auth.urlCopied || 'Copiado'
+                        : t.auth.copyUrl || 'Copiar enlace'}
                     </Button>
                   </Stack>
                 </Box>
@@ -437,7 +437,7 @@ export default function WelcomeScreen() {
                         bgcolor: alpha(semanticColors.warning.main, 0.15),
                         color: semanticColors.warning.main,
                         border: `1px solid ${alpha(semanticColors.warning.main, 0.3)}`,
-                        "& .MuiAlert-icon": {
+                        '& .MuiAlert-icon': {
                           color: semanticColors.warning.main,
                         },
                       }}
@@ -456,7 +456,7 @@ export default function WelcomeScreen() {
                         bgcolor: alpha(qeEmerald.primary, 0.1),
                         color: qe.text,
                         border: `1px solid ${alpha(qeEmerald.primary, 0.25)}`,
-                        "& .MuiAlert-icon": { color: acc.accent },
+                        '& .MuiAlert-icon': { color: acc.accent },
                       }}
                     >
                       <Typography
@@ -469,7 +469,7 @@ export default function WelcomeScreen() {
                         variant="caption"
                         sx={{
                           color: qe.textMuted,
-                          display: "block",
+                          display: 'block',
                           mb: 1.5,
                         }}
                       >
@@ -484,11 +484,11 @@ export default function WelcomeScreen() {
                         sx={{
                           bgcolor: acc.strong,
                           color: acc.on,
-                          textTransform: "none",
-                          boxShadow: "none",
-                          "&:hover": {
+                          textTransform: 'none',
+                          boxShadow: 'none',
+                          '&:hover': {
                             bgcolor: qeEmerald.light,
-                            boxShadow: "none",
+                            boxShadow: 'none',
                           },
                         }}
                       >
@@ -501,10 +501,10 @@ export default function WelcomeScreen() {
                   <Box
                     onPointerDown={handleButtonAreaPointerDown}
                     sx={{
-                      display: "flex",
-                      justifyContent: "center",
-                      "& > div": { width: "100%" },
-                      "& iframe": { colorScheme: "normal" },
+                      display: 'flex',
+                      justifyContent: 'center',
+                      '& > div': { width: '100%' },
+                      '& iframe': { colorScheme: 'normal' },
                     }}
                   >
                     <GoogleLogin
@@ -529,10 +529,10 @@ export default function WelcomeScreen() {
                   size="small"
                   onClick={handleTryAnotherAccount}
                   sx={{
-                    textTransform: "none",
+                    textTransform: 'none',
                     borderColor: alpha(qeEmerald.primary, 0.5),
                     color: acc.accent,
-                    "&:hover": {
+                    '&:hover': {
                       borderColor: acc.accent,
                       bgcolor: alpha(qeEmerald.primary, 0.08),
                     },
@@ -544,20 +544,13 @@ export default function WelcomeScreen() {
 
               {/* Divider */}
               <Box
-                sx={{ display: "flex", alignItems: "center", gap: 2, my: 1 }}
+                sx={{ display: 'flex', alignItems: 'center', gap: 2, my: 1 }}
               >
-                <Divider
-                  sx={{ flex: 1, borderColor: qe.hairline }}
-                />
-                <Typography
-                  variant="caption"
-                  sx={{ color: qe.subtle }}
-                >
+                <Divider sx={{ flex: 1, borderColor: qe.hairline }} />
+                <Typography variant="caption" sx={{ color: qe.subtle }}>
                   o
                 </Typography>
-                <Divider
-                  sx={{ flex: 1, borderColor: qe.hairline }}
-                />
+                <Divider sx={{ flex: 1, borderColor: qe.hairline }} />
               </Box>
             </>
           )}
@@ -571,8 +564,8 @@ export default function WelcomeScreen() {
                 bgcolor: alpha(qeEmerald.primary, 0.1),
                 color: qe.text,
                 border: `1px solid ${alpha(qeEmerald.primary, 0.25)}`,
-                "& .MuiAlert-icon": { color: acc.accent },
-                "& .MuiAlert-action": { color: qe.textMuted },
+                '& .MuiAlert-icon': { color: acc.accent },
+                '& .MuiAlert-action': { color: qe.textMuted },
               }}
             >
               {t.auth.invitationOnlyMessage}
@@ -588,12 +581,12 @@ export default function WelcomeScreen() {
             fullWidth
             sx={{
               py: 1,
-              fontSize: "0.85rem",
-              textTransform: "none",
+              fontSize: '0.85rem',
+              textTransform: 'none',
               color: qe.subtle,
-              "&:hover": {
+              '&:hover': {
                 color: qe.textMuted,
-                bgcolor: alpha("#FFFFFF", 0.03),
+                bgcolor: alpha('#FFFFFF', 0.03),
               },
             }}
           >
@@ -606,14 +599,14 @@ export default function WelcomeScreen() {
       <Typography
         variant="caption"
         sx={{
-          position: "absolute",
+          position: 'absolute',
           bottom: 32,
           color: qe.subtle,
           // Quiet Emerald overline: mono, uppercase, wide tracking
           fontFamily: qeFont.mono,
-          textTransform: "uppercase",
-          letterSpacing: "0.14em",
-          fontSize: "0.6875rem",
+          textTransform: 'uppercase',
+          letterSpacing: '0.14em',
+          fontSize: '0.6875rem',
         }}
       >
         {t.auth.colombianEmeralds}

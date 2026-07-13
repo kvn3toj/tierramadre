@@ -11,6 +11,9 @@
  * Accepted inputs:
  *   - Full URL:  https://tierramadre.app/product/B-001-G1  (any scheme/host,
  *     trailing slash, query string or hash are tolerated)
+ *   - Short URL:  tierramadre.app/p/368  (the `/p/:itemId` alias — a shorter
+ *     payload keeps the printed QR low-density so it still scans off tiny
+ *     12mm jewelry tape; it renders the same product page as /product/:itemId)
  *   - No-scheme host form:  tierramadre.app/product/368
  *   - Bare id:  "B-001-G1" or "368"  (what the hand-typed fallback yields)
  *
@@ -64,7 +67,12 @@ export function parseTmQr(input: string | null | undefined): TmQrResult {
 
   if (pathname) {
     const segs = pathname.split('/').filter(Boolean);
-    const productIdx = segs.findIndex((s) => s.toLowerCase() === 'product');
+    // Both `/product/<id>` (canonical) and `/p/<id>` (short alias) resolve to
+    // the same item — the short form exists so the QR payload stays small.
+    const productIdx = segs.findIndex((s) => {
+      const l = s.toLowerCase();
+      return l === 'product' || l === 'p';
+    });
     if (productIdx >= 0 && segs[productIdx + 1]) {
       const itemId = cleanSegment(segs[productIdx + 1]);
       if (ITEM_ID_RE.test(itemId)) return { kind: 'item', itemId, raw };

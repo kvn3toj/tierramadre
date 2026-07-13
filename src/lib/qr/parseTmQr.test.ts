@@ -31,6 +31,12 @@ describe('parseTmQr', () => {
     expect(itemOf('tierramadre.app/product/B-002-J3').itemId).toBe('B-002-J3');
   });
 
+  it('decodes the short /p/ alias (URL and no-scheme host)', () => {
+    expect(itemOf('https://tierramadre.app/p/473').itemId).toBe('473');
+    expect(itemOf('tierramadre.app/p/473').itemId).toBe('473');
+    expect(itemOf('tierramadre.app/p/B-001-G1').itemId).toBe('B-001-G1');
+  });
+
   it('accepts a bare item id (manual fallback)', () => {
     expect(parseTmQr('B-001-G1')).toEqual({
       kind: 'item',

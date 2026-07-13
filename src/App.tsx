@@ -351,9 +351,19 @@ function AppContent() {
               element={<Navigate to="/treasure" replace />}
             />
 
-            {/* Product detail */}
+            {/* Product detail. `/p/:itemId` is a short alias of
+                `/product/:itemId` — a shorter QR payload so printed labels stay
+                low-density and scan off tiny 12mm jewelry tape. Same page. */}
             <Route
               path="/product/:itemId"
+              element={
+                <Suspense fallback={<LocalizedLoading messageKey="product" />}>
+                  <ProductDetail />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/p/:itemId"
               element={
                 <Suspense fallback={<LocalizedLoading messageKey="product" />}>
                   <ProductDetail />
@@ -950,6 +960,15 @@ function AuthenticatedApp() {
             </Suspense>
           }
         />
+        {/* Short alias of /product/:itemId — see the authed route above. */}
+        <Route
+          path="/p/:itemId"
+          element={
+            <Suspense fallback={<LocalizedLoading messageKey="product" />}>
+              <PublicProductPage />
+            </Suspense>
+          }
+        />
         <Route path="*" element={<WelcomeScreen />} />
       </Routes>
     );
@@ -981,6 +1000,7 @@ function shouldShowSplash(): boolean {
     path.startsWith('/c/') ||
     path.startsWith('/v/') ||
     path.startsWith('/product/') ||
+    path.startsWith('/p/') ||
     path.startsWith('/invite/') ||
     path.startsWith('/g/')
   ) {
