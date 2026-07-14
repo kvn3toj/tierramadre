@@ -22,6 +22,7 @@
  * convex/_lib/sessionToken.ts (verify).
  */
 
+import { googleLogout } from '@react-oauth/google';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 import { readFreshGoogleIdToken } from './googleIdToken';
 import { createLogger } from './logger';
@@ -88,6 +89,59 @@ export function clearAppSession(): void {
   } catch {
     /* storage unavailable — nothing to clear */
   }
+}
+
+/**
+ * sessionStorage flag set by handleSessionExpired() and read by
+ * GoogleAuthContext after the forced reload, so the login screen can explain
+ * WHY the user landed there ("Tu sesión expiró…") via the existing authError
+ * Alert in WelcomeScreen.
+ */
+export const SESSION_EXPIRED_FLAG = 'tierramadre-session-expired';
+
+let redirectingToLogin = false;
+
+/**
+ * Terminal "session expired" handler: full sign-out + redirect to the login
+ * screen. Only for privileged flows with NO inline re-login UI — dialogs that
+ * embed their own GoogleLogin fallback (InvitationGenerator,
+ * VitrinaShareDialog) recover in place instead, which preserves form state.
+ *
+ * Clearing GOOGLE_USER before reloading is what makes the redirect work:
+ * main.tsx's GoogleWrapper sees no stored user, loads the GSI script, and
+ * App's auth gate falls through to the WelcomeScreen sign-in.
+ */
+export function handleSessionExpired(): void {
+  if (redirectingToLogin) return; // several callers can race on one click
+  redirectingToLogin = true;
+  log.warn('Session fully expired — signing out and redirecting to login');
+  try {
+    googleLogout(); // disable GSI auto-select; safe no-op when GSI absent
+  } catch {
+    /* best-effort */
+  }
+  try {
+    localStorage.removeItem(STORAGE_KEYS.GOOGLE_USER);
+    localStorage.removeItem(STORAGE_KEYS.GOOGLE_PREFS);
+    localStorage.removeItem(STORAGE_KEYS.GOOGLE_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.APP_SESSION_TOKEN);
+    sessionStorage.setItem(SESSION_EXPIRED_FLAG, '1');
+  } catch {
+    /* storage unavailable — reload still lands on the login gate */
+  }
+  window.location.assign('/');
+}
+
+/**
+ * readFreshAuthToken(), but a fully-expired session (no Google token AND no
+ * app session token — i.e. >30 days without opening the app) signs the user
+ * out and redirects to the login screen instead of leaving the feature stuck
+ * on an error banner. Returns null exactly when the redirect fired.
+ */
+export function requireAuthTokenOrLogout(): string | null {
+  const token = readFreshAuthToken();
+  if (!token) handleSessionExpired();
+  return token;
 }
 
 let inFlight: Promise<void> | null = null;

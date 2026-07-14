@@ -42,7 +42,7 @@ import {
 } from '../../../lib/convex-safe';
 import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
 import { useNotification } from '../../../contexts/NotificationContext';
-import { readFreshAuthToken } from '../../../utils/sessionToken';
+import { requireAuthTokenOrLogout } from '../../../utils/sessionToken';
 
 import {
   AdminToolbar,
@@ -614,7 +614,7 @@ export default function ProductManagementPage() {
         notify('Tu sesión no tiene email. Vuelve a iniciar sesión.', 'error');
         return;
       }
-      const idToken = readFreshAuthToken();
+      const idToken = requireAuthTokenOrLogout();
       if (!idToken) {
         notify(
           'Tu sesión expiró. Vuelve a iniciar sesión con Google.',
@@ -686,7 +686,7 @@ export default function ProductManagementPage() {
   }, []);
 
   const handleResync = useCallback(async () => {
-    const idToken = readFreshAuthToken();
+    const idToken = requireAuthTokenOrLogout();
     if (!idToken) {
       notify('Tu sesión expiró. Vuelve a iniciar sesión con Google.', 'error');
       return;
@@ -747,7 +747,7 @@ export default function ProductManagementPage() {
         notify('Tu sesión no tiene email. Vuelve a iniciar sesión.', 'error');
         return;
       }
-      const idToken = readFreshAuthToken();
+      const idToken = requireAuthTokenOrLogout();
       if (!idToken) {
         notify(
           'Tu sesión expiró. Vuelve a iniciar sesión con Google.',
@@ -806,7 +806,7 @@ export default function ProductManagementPage() {
         return;
       }
       if (selectedIds.size === 0) return;
-      const idToken = readFreshAuthToken();
+      const idToken = requireAuthTokenOrLogout();
       if (!idToken) {
         notify(
           'Tu sesión expiró. Vuelve a iniciar sesión con Google.',
@@ -870,7 +870,7 @@ export default function ProductManagementPage() {
   const handleBulkChangePrice = useCallback(
     async ({ mode, value }: { mode: BulkPriceMode; value: number }) => {
       if (!user?.email || selectedIds.size === 0) return;
-      const idToken = readFreshAuthToken();
+      const idToken = requireAuthTokenOrLogout();
       if (!idToken) {
         notify(
           'Tu sesión expiró. Vuelve a iniciar sesión con Google.',
@@ -931,7 +931,7 @@ export default function ProductManagementPage() {
   const handleBulkChangeColeccion = useCallback(
     async (value: string) => {
       if (!user?.email || selectedIds.size === 0) return;
-      const idToken = readFreshAuthToken();
+      const idToken = requireAuthTokenOrLogout();
       if (!idToken) {
         notify(
           'Tu sesión expiró. Vuelve a iniciar sesión con Google.',
@@ -973,7 +973,7 @@ export default function ProductManagementPage() {
   const handleBulkChangeUbicacion = useCallback(
     async (value: string) => {
       if (!user?.email || selectedIds.size === 0) return;
-      const idToken = readFreshAuthToken();
+      const idToken = requireAuthTokenOrLogout();
       if (!idToken) {
         notify(
           'Tu sesión expiró. Vuelve a iniciar sesión con Google.',

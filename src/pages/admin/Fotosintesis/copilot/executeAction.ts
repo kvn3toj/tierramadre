@@ -16,7 +16,7 @@
 import { useCallback } from 'react';
 import type { ConvexReactClient } from 'convex/react';
 import { useConvexClient, convexApi } from '../../../../lib/convex-safe';
-import { readFreshAuthToken } from '../../../../utils/sessionToken';
+import { requireAuthTokenOrLogout } from '../../../../utils/sessionToken';
 import { serializeMedidas } from '../../../../data/vocabularies';
 import {
   buildGemaPayload,
@@ -104,7 +104,7 @@ function runMutation<T>(
   ref: unknown,
   args: unknown,
 ): Promise<T> {
-  const idToken = readFreshAuthToken();
+  const idToken = requireAuthTokenOrLogout();
   if (!idToken) {
     return Promise.reject(
       new Error('No autenticado. Volvé a iniciar sesión e intentá de nuevo.'),

@@ -17,7 +17,11 @@ import {
 import { googleLogout } from '@react-oauth/google';
 import { createLogger } from '../utils/logger';
 import { readFreshGoogleIdToken } from '../utils/googleIdToken';
-import { ensureAppSession, clearAppSession } from '../utils/sessionToken';
+import {
+  ensureAppSession,
+  clearAppSession,
+  SESSION_EXPIRED_FLAG,
+} from '../utils/sessionToken';
 import type { AccessLevel } from '../types/auth';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 
@@ -97,6 +101,19 @@ export function GoogleAuthProvider({
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  // After handleSessionExpired() forced a sign-out + reload, tell the user on
+  // the login screen WHY they're here (WelcomeScreen renders authError).
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(SESSION_EXPIRED_FLAG)) {
+        sessionStorage.removeItem(SESSION_EXPIRED_FLAG);
+        setAuthError('Tu sesión expiró. Vuelve a iniciar sesión con Google.');
+      }
+    } catch {
+      /* storage unavailable — skip the notice */
+    }
+  }, []);
 
   // Load user from localStorage on mount and RE-VALIDATE against sheets
   useEffect(() => {
