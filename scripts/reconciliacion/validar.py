@@ -52,10 +52,17 @@ CLASS_LABEL = {
 
 
 def sort_key(row_or_item):
-    # numérico-aware: agrupa por longitud del literal de item y luego alfabético,
-    # así "93A" ordena cerca de "93" en vez de irse al final tras "9".
+    # orden natural: separa dígitos y texto para que "93A"/"93B" ordenen
+    # justo después de "93" (no tras todos los ítems de longitud 2).
     item = row_or_item['item'] if isinstance(row_or_item, dict) else row_or_item
-    return (len(item), item)
+    return [int(p) if p.isdigit() else p for p in re.split(r'(\d+)', str(item))]
+
+
+def class_sort_key(clase):
+    try:
+        return CLASS_ORDER.index(clase)
+    except ValueError:
+        return len(CLASS_ORDER)
 
 
 def is_dirty(modelo):
@@ -73,6 +80,15 @@ def fmt(v):
     return '' if v is None else v
 
 
+def fmt_costo(v):
+    """Costos: enteros sin '.0' final (512000.0 -> 512000); deja lo demás igual."""
+    if v is None:
+        return ''
+    if isinstance(v, float) and v.is_integer():
+        return int(v)
+    return v
+
+
 def build_row(x):
     m = x['modelo'] or {}
     c = x['convex'] or {}
@@ -83,10 +99,10 @@ def build_row(x):
         'clase': x['clase'],
         'modelo_nombre': fmt(m.get('nombre')),
         'modelo_lote': fmt(m.get('codigo')),
-        'modelo_costo': fmt(m.get('costo')),
+        'modelo_costo': fmt_costo(m.get('costo')),
         'convex_nombre': fmt(c.get('nombre')),
         'convex_lote': fmt(c.get('loteId')),
-        'convex_costo': fmt(c.get('costo')),
+        'convex_costo': fmt_costo(c.get('costo')),
         'similitud': fmt(similitud),
         'dato_sucio': dirty,
         'DECISION': '',
@@ -216,7 +232,7 @@ def main():
     review = [x for x in ident if x['clase'] != 'coincide']
     coincide = [x for x in ident if x['clase'] == 'coincide']
 
-    review_sorted = sorted(review, key=lambda x: (x['clase'], sort_key(x)))
+    review_sorted = sorted(review, key=lambda x: (class_sort_key(x['clase']), sort_key(x)))
     rows = [build_row(x) for x in review_sorted]
 
     write_csv(rows, f'{O}/validacion.csv')
