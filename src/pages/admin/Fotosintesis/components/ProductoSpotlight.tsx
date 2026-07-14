@@ -54,6 +54,11 @@ const FILTER_GROUPS: { title: string; items: string[] }[] = [
  * accepts a single `estado` literal. */
 const VENDIBLE_ESTADOS = new Set(['DISPONIBLE', 'ASESOR', 'CONSIGNACION']);
 
+/** Estados shown in the global search. Sold items surface here for
+ * lookup/history — but never in the venta picker: the VENDIDA query is gated on
+ * `!multiSelect`, so a sold piece is findable yet can't be added to a sale. */
+const SEARCH_ESTADOS = new Set([...VENDIBLE_ESTADOS, 'VENDIDA']);
+
 function formatCop(value: number | undefined | null): string {
   if (typeof value !== 'number' || Number.isNaN(value)) return '—';
   return new Intl.NumberFormat('es-CO', {
@@ -166,6 +171,14 @@ export function ProductoSpotlight({
     convexApi.products.list,
     open ? { estado: 'CONSIGNACION', search: deferredQuery } : 'skip',
   );
+  // Sold items — fetched ONLY for the global search, never the venta picker
+  // (`!multiSelect`). A sold piece can be looked up for history but not re-sold.
+  const vendida = useConvexQuery(
+    convexApi.products.list,
+    open && !multiSelect
+      ? { estado: 'VENDIDA', search: deferredQuery }
+      : 'skip',
+  );
 
   const results = useMemo<SpotlightProduct[]>(() => {
     if (!open) return [];
@@ -173,14 +186,13 @@ export function ProductoSpotlight({
       ...(disponibles ?? []),
       ...(asesor ?? []),
       ...(consignacion ?? []),
+      ...(vendida ?? []),
     ];
-    const vendibles = merged.filter((p) =>
-      VENDIBLE_ESTADOS.has(p.estado as string),
-    );
+    const shown = merged.filter((p) => SEARCH_ESTADOS.has(p.estado as string));
     // Dedupe by itemId (safety net — should already be partitioned)
     const seen = new Set<string>();
     const deduped: SpotlightProduct[] = [];
-    for (const row of vendibles) {
+    for (const row of shown) {
       if (seen.has(row.itemId)) continue;
       seen.add(row.itemId);
       deduped.push({
@@ -204,7 +216,7 @@ export function ProductoSpotlight({
     }
     // Cap at 50 to match the design max-height list.
     return deduped.slice(0, 50);
-  }, [open, disponibles, asesor, batchThumbs]);
+  }, [open, disponibles, asesor, consignacion, vendida, batchThumbs]);
 
   const loading = open && (disponibles === undefined || asesor === undefined);
 
@@ -611,7 +623,9 @@ export function ProductoSpotlight({
               hint={
                 query
                   ? 'Probá con menos palabras o relajá los filtros.'
-                  : 'Sólo aparecen ítems DISPONIBLE, ASESOR o CONSIGNACION.'
+                  : multiSelect
+                    ? 'Sólo aparecen ítems DISPONIBLE, ASESOR o CONSIGNACION.'
+                    : 'Incluye vendidos (solo lectura). Buscá por ID, nombre, color, lote o precio.'
               }
               fotoInk={foto.ink}
             />
@@ -750,8 +764,9 @@ export function ProductoSpotlight({
                   </Box>
 
                   {/* Estado badge — ASESOR and CONSIGNACION share the amber
-                      "out of the vault" styling; only the label tells them
-                      apart (internal asesor vs external comercializador). */}
+                      "out of the vault" styling; VENDIDA gets the red "sold"
+                      tone (search-only, for lookup); only the label tells the
+                      first two apart (internal asesor vs external). */}
                   <Box
                     sx={{
                       display: { xs: 'none', sm: 'inline-flex' },
@@ -760,18 +775,27 @@ export function ProductoSpotlight({
                       padding: '3px 9px',
                       borderRadius: '999px',
                       background:
-                        row.estado === 'ASESOR' || row.estado === 'CONSIGNACION'
-                          ? alpha(foto.status.consigned, 0.1)
-                          : foto.accent.soft,
+                        row.estado === 'VENDIDA'
+                          ? alpha(foto.status.sold, 0.1)
+                          : row.estado === 'ASESOR' ||
+                              row.estado === 'CONSIGNACION'
+                            ? alpha(foto.status.consigned, 0.1)
+                            : foto.accent.soft,
                       border: `1px solid ${
-                        row.estado === 'ASESOR' || row.estado === 'CONSIGNACION'
-                          ? foto.status.consigned
-                          : foto.accent.primary
+                        row.estado === 'VENDIDA'
+                          ? foto.status.sold
+                          : row.estado === 'ASESOR' ||
+                              row.estado === 'CONSIGNACION'
+                            ? foto.status.consigned
+                            : foto.accent.primary
                       }`,
                       color:
-                        row.estado === 'ASESOR' || row.estado === 'CONSIGNACION'
-                          ? foto.status.consigned
-                          : foto.accent.deep,
+                        row.estado === 'VENDIDA'
+                          ? foto.status.sold
+                          : row.estado === 'ASESOR' ||
+                              row.estado === 'CONSIGNACION'
+                            ? foto.status.consigned
+                            : foto.accent.deep,
                       fontSize: 10,
                       fontWeight: 500,
                       letterSpacing: '0.04em',
@@ -785,17 +809,21 @@ export function ProductoSpotlight({
                         height: 5,
                         borderRadius: '50%',
                         background:
-                          row.estado === 'ASESOR' ||
-                          row.estado === 'CONSIGNACION'
-                            ? foto.status.consigned
-                            : emeraldCore.dark,
+                          row.estado === 'VENDIDA'
+                            ? foto.status.sold
+                            : row.estado === 'ASESOR' ||
+                                row.estado === 'CONSIGNACION'
+                              ? foto.status.consigned
+                              : emeraldCore.dark,
                       }}
                     />
-                    {row.estado === 'ASESOR'
-                      ? 'Asesor'
-                      : row.estado === 'CONSIGNACION'
-                        ? 'Consignación'
-                        : 'Disponible'}
+                    {row.estado === 'VENDIDA'
+                      ? 'Vendido'
+                      : row.estado === 'ASESOR'
+                        ? 'Asesor'
+                        : row.estado === 'CONSIGNACION'
+                          ? 'Consignación'
+                          : 'Disponible'}
                   </Box>
 
                   {/* Price */}
@@ -903,7 +931,7 @@ export function ProductoSpotlight({
             }}
           >
             <Clock size={11} strokeWidth={1.5} aria-hidden />
-            Sólo ítems DISPONIBLE, ASESOR o CONSIGNACION (BR-6)
+            Incluye vendidos · DISPONIBLE · ASESOR · CONSIGNACION · VENDIDA
           </Box>
         )}
       </Box>
