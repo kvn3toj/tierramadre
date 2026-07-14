@@ -107,9 +107,10 @@ export default function ProgressiveImage({
     const srcSetWidths = quality === 'eco' ? [200, 300, 400] : [280, 400, 560, 800];
 
     // For Drive proxy URLs, the backend only exposes a fixed set of size presets.
-    // Thumbnails + grid cards use thumb/small/medium; detail views add 'large'.
+    // Grid cards need 'medium' (800px) even in eco mode — a ~300px card on a
+    // DPR 2-3 screen otherwise upscales the 400px 'small' and renders soft.
     const driveSizes =
-      quality === 'eco' || layout === 'thumbnail'
+      layout === 'thumbnail'
         ? (['thumb', 'small'] as const)
         : layout === 'full'
           ? (['small', 'medium', 'large'] as const)

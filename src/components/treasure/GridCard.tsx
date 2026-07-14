@@ -115,6 +115,12 @@ function GridCard({
     .replace(/^L:.*?\s/, "")
     .replace(/^L:/, "")
     .trim();
+  // Jewelry often has no `color`, which used to leave a dangling "Name - " in
+  // alt/aria text; compose from the parts that exist (metal describes jewelry).
+  const altText = [displayName, item.isJewelry ? item.metalType : item.color]
+    .map((s) => (s || "").trim())
+    .filter(Boolean)
+    .join(", ");
   const quality = getQualityBadge(item.calidad);
   const qualityTooltip = getQualityTooltip(item.calidad);
   const specLine = buildSpecLine(item);
@@ -139,12 +145,16 @@ function GridCard({
   const imageWell = item.imagen ? (
     <ProgressiveImage
       src={item.imagen}
-      alt={`${item.nombre} - ${item.color}`}
+      alt={altText}
       height="100%"
-      layout="full"
+      layout="grid"
       quality="eco"
       priority={priority}
       tinyThumb={item.tinyThumb}
+      // Tall jewelry compositions (necklace + pendant) get amputated by
+      // cover-cropping in the near-square well; letterbox them instead.
+      // Loose-stone photos are centered square shots that crop safely.
+      objectFit={item.isJewelry ? "contain" : "cover"}
     />
   ) : isLoadingThumbnails ? (
     <Box sx={{ aspectRatio: "1 / 1.06", width: "100%" }}>
@@ -158,7 +168,7 @@ function GridCard({
   ) : (
     <ProgressiveImage
       src={undefined}
-      alt={`${item.nombre} - placeholder`}
+      alt={altText}
       aspectRatio="1 / 1.06"
     />
   );
@@ -415,7 +425,7 @@ function GridCard({
         onMouseEnter={handlePrefetch}
         onFocus={handlePrefetch}
         role="article"
-        aria-label={`${item.nombre} - ${item.color}`}
+        aria-label={altText}
         tabIndex={0}
         sx={{
           height: "100%",
@@ -466,7 +476,7 @@ function GridCard({
       onMouseEnter={handlePrefetch}
       onFocus={handlePrefetch}
       role="article"
-      aria-label={`${item.nombre} - ${item.color}`}
+      aria-label={altText}
       tabIndex={0}
       sx={{
         height: "100%",

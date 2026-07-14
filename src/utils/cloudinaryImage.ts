@@ -161,8 +161,9 @@ export function getImageSizes(layout: 'grid' | 'full' | 'thumbnail' = 'grid'): s
       return '80px';
     case 'grid':
     default:
-      // Grid layout: 1 col xs (full width), 2 col sm, 3 col md, 4 col lg
-      // Updated for 1-column mobile luxury layout with proper sizing
-      return '(max-width: 600px) calc(100vw - 32px), (max-width: 900px) 50vw, (max-width: 1200px) 33vw, 25vw';
+      // Catalog grid (VirtualGrid): 2 cols below 900px, 3 cols 900-1200px,
+      // 4 cols above — the container caps at 1200px, so a card never
+      // exceeds ~300px regardless of viewport width.
+      return '(max-width: 900px) 50vw, (max-width: 1200px) 33vw, 300px';
   }
 }
