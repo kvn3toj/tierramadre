@@ -63,7 +63,7 @@ La métrica robusta recuperó **27 falsos diverge**. _(Decisión del dueño 2026
 
 Siguiendo la nota de recencia del plan (el Modelo trae los cambios de esta semana):
 
-- **RECIENTE (no es divergencia — son altas por importar):** los `falta-en-convex` recientes: **21 ítems #500–521** (bloque más nuevo) + **15 ítems con fecha en el nombre** (dato sucio de esta semana). Se resuelven **a favor del Modelo** (es más nuevo); es trabajo de importación en Fase 3, no una decisión de §4.
+- **RECIENTE (no es divergencia — son altas por importar):** los `falta-en-convex` recientes: **21 ítems #500–521** (bloque más nuevo), de los cuales **15 traen una fecha metida en el nombre** (dato sucio de esta semana; #485–492 y #511–519 — estos últimos 9 caen dentro del bloque #500–521, no se suman aparte). Se resuelven **a favor del Modelo** (es más nuevo); es trabajo de importación en Fase 3, no una decisión de §4.
 - **HISTÓRICA (esto decide §4):** los **34 `diverge-nombre`**, todos en el bloque de joyería **#374, #387–416, #446–449** — divergencia **pre-existente** (ya significaban cosas distintas en cada sistema antes de cualquier registro). Coincide exactamente con el bloque que el mapa preliminar ya había señalado como divergencia de joyería.
 
 **Confirmación del rollback:** ninguno de los ítems #476–503 (el registro que se deshizo) aparece como `diverge` ni `solo-Convex` — Convex quedó limpio.
