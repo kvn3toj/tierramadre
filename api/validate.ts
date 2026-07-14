@@ -5,8 +5,8 @@
  * Also provides list endpoints for providers.
  */
 
-import type { sheets_v4 } from "@googleapis/sheets";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { sheets_v4 } from '@googleapis/sheets';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   withApiHandler,
   sendError,
@@ -15,9 +15,43 @@ import {
   getSheetNames,
   findSheetByPattern,
   findColumnIndex,
-} from "./_lib/index.js";
+} from './_lib/index.js';
+import {
+  mintSessionToken,
+  verifySessionToken,
+  SESSION_TTL_SECONDS,
+} from './_lib/sessionToken.js';
 
 type Sheets = sheets_v4.Sheets;
+
+/**
+ * Verify a Google ID token → verified lowercase email, or null. Same
+ * google-auth-library pattern as api/vitrina.ts / api/fotosintesis-ai.ts
+ * (lazy import so the common validate path pays no cold-start cost).
+ */
+async function verifyGoogleIdTokenEmail(token: string): Promise<string | null> {
+  const audiences = [
+    process.env.GOOGLE_OAUTH_CLIENT_ID,
+    process.env.VITE_GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_ID,
+  ].filter((a): a is string => !!a && a.trim().length > 0);
+  if (audiences.length === 0) return null;
+  try {
+    const { OAuth2Client } = await import('google-auth-library');
+    const client = new OAuth2Client();
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: audiences,
+    });
+    const payload = ticket.getPayload();
+    return payload?.email && payload.email_verified
+      ? payload.email.toLowerCase().trim()
+      : null;
+  } catch {
+    // Invalid or expired token — treat as unauthenticated.
+    return null;
+  }
+}
 
 interface ValidatedUser {
   name: string;
@@ -50,10 +84,10 @@ async function validateUser(
   // yields a false "unauthorized" and force-logs the user out. If the Asesores
   // sheet can't be resolved by name, treat it as a transient failure (throw →
   // HTTP 500) so the client retries instead of assuming the account is gone.
-  const asesoresSheet = findSheetByPattern(sheetNames, ["asesor", "embajador"]);
+  const asesoresSheet = findSheetByPattern(sheetNames, ['asesor', 'embajador']);
 
   if (!asesoresSheet) {
-    throw new Error("Asesores sheet not found by pattern");
+    throw new Error('Asesores sheet not found by pattern');
   }
 
   const response = await sheets.spreadsheets.values.get({
@@ -66,75 +100,75 @@ async function validateUser(
   // user is absent — a real sheet always has at least a header row. Throw so
   // the client can retry rather than misreading this as "account removed".
   if (rows.length === 0) {
-    throw new Error("Asesores sheet read returned no rows");
+    throw new Error('Asesores sheet read returned no rows');
   }
 
   const headers = rows[0] as string[];
   const nameColumnIndex = findColumnIndex(headers, [
-    "nombre",
-    "name",
-    "asesor",
+    'nombre',
+    'name',
+    'asesor',
   ]);
-  const roleIndex = findColumnIndex(headers, ["datos", "rol", "role", "tipo"]);
+  const roleIndex = findColumnIndex(headers, ['datos', 'rol', 'role', 'tipo']);
   // An "instagram" column is NOT an email column — an IG handle never equals a
   // login email, so treating it as one produces false negatives → logouts.
   // Resolve a real email/correo column first; only fall back to instagram if no
   // email/correo column exists at all.
-  let emailIndex = findColumnIndex(headers, ["email", "correo"]);
+  let emailIndex = findColumnIndex(headers, ['email', 'correo']);
   if (emailIndex === -1) {
-    emailIndex = findColumnIndex(headers, ["instagram"]);
+    emailIndex = findColumnIndex(headers, ['instagram']);
   }
-  const estadoIndex = findColumnIndex(headers, ["estado", "status"]);
+  const estadoIndex = findColumnIndex(headers, ['estado', 'status']);
 
   const dataRows = rows.slice(1);
 
   for (const row of dataRows) {
     if (estadoIndex !== -1) {
-      const estado = String(row[estadoIndex] || "").toLowerCase();
-      if (estado === "inactivo" || estado === "inactive") continue;
+      const estado = String(row[estadoIndex] || '').toLowerCase();
+      if (estado === 'inactivo' || estado === 'inactive') continue;
     }
 
     const userEmail =
       emailIndex !== -1
-        ? String(row[emailIndex] || "")
+        ? String(row[emailIndex] || '')
             .toLowerCase()
             .trim()
-        : "";
+        : '';
 
     if (userEmail === normalizedEmail) {
-      const name = nameColumnIndex !== -1 ? row[nameColumnIndex] : "";
+      const name = nameColumnIndex !== -1 ? row[nameColumnIndex] : '';
       const role =
-        roleIndex !== -1 ? String(row[roleIndex] || "Asesor").trim() : "Asesor";
+        roleIndex !== -1 ? String(row[roleIndex] || 'Asesor').trim() : 'Asesor';
 
-      let accessLevel = "asesor";
+      let accessLevel = 'asesor';
       const roleLower = role.toLowerCase();
 
-      if (roleLower.includes("admin") || roleLower.includes("administrador")) {
-        accessLevel = "admin";
+      if (roleLower.includes('admin') || roleLower.includes('administrador')) {
+        accessLevel = 'admin';
       } else if (
-        roleLower.includes("proveedor") ||
-        roleLower.includes("provider")
+        roleLower.includes('proveedor') ||
+        roleLower.includes('provider')
       ) {
-        accessLevel = "provider";
+        accessLevel = 'provider';
       } else if (
-        roleLower.includes("embajador") ||
-        roleLower.includes("ambassador")
+        roleLower.includes('embajador') ||
+        roleLower.includes('ambassador')
       ) {
-        accessLevel = "embajador";
+        accessLevel = 'embajador';
       } else if (
         // "Special guest" — can browse + share Vitrinas like staff, but no
         // editing/admin powers. Activation is enforced by the estado check
         // above (rows marked inactivo are skipped, so they never reach here).
-        roleLower.includes("invitado especial") ||
-        roleLower.includes("invitado_especial") ||
-        roleLower.includes("special guest") ||
-        roleLower.includes("especial")
+        roleLower.includes('invitado especial') ||
+        roleLower.includes('invitado_especial') ||
+        roleLower.includes('special guest') ||
+        roleLower.includes('especial')
       ) {
-        accessLevel = "invitado_especial";
+        accessLevel = 'invitado_especial';
       }
 
       return {
-        name: String(name || normalizedEmail.split("@")[0]),
+        name: String(name || normalizedEmail.split('@')[0]),
         email: normalizedEmail,
         role,
         accessLevel,
@@ -153,8 +187,8 @@ async function listProviders(
   sheetNames: string[],
 ): Promise<ProviderRow[]> {
   const proveedoresSheet = findSheetByPattern(sheetNames, [
-    "proveedores",
-    "proveedor",
+    'proveedores',
+    'proveedor',
   ]);
 
   if (!proveedoresSheet) {
@@ -170,34 +204,34 @@ async function listProviders(
   if (rows.length <= 1) return [];
 
   const headers = rows[0] as string[];
-  const idIndex = findColumnIndex(headers, ["id"]);
-  const nombreIndex = findColumnIndex(headers, ["nombre", "name"]);
-  const emailIndex = findColumnIndex(headers, ["email", "correo"]);
-  const contactoIndex = findColumnIndex(headers, ["contacto", "contact"]);
-  const whatsappIndex = findColumnIndex(headers, ["whatsapp", "telefono"]);
+  const idIndex = findColumnIndex(headers, ['id']);
+  const nombreIndex = findColumnIndex(headers, ['nombre', 'name']);
+  const emailIndex = findColumnIndex(headers, ['email', 'correo']);
+  const contactoIndex = findColumnIndex(headers, ['contacto', 'contact']);
+  const whatsappIndex = findColumnIndex(headers, ['whatsapp', 'telefono']);
   const especialidadIndex = findColumnIndex(headers, [
-    "especialidad",
-    "specialty",
+    'especialidad',
+    'specialty',
   ]);
-  const estadoIndex = findColumnIndex(headers, ["estado", "status"]);
-  const fechaIndex = findColumnIndex(headers, ["fecha", "registeredat"]);
+  const estadoIndex = findColumnIndex(headers, ['estado', 'status']);
+  const fechaIndex = findColumnIndex(headers, ['fecha', 'registeredat']);
 
   return rows
     .slice(1)
     .map((row) => ({
-      id: idIndex !== -1 ? String(row[idIndex] ?? "") : "",
-      name: nombreIndex !== -1 ? String(row[nombreIndex] ?? "") : "",
-      email: emailIndex !== -1 ? String(row[emailIndex] ?? "") : "",
+      id: idIndex !== -1 ? String(row[idIndex] ?? '') : '',
+      name: nombreIndex !== -1 ? String(row[nombreIndex] ?? '') : '',
+      email: emailIndex !== -1 ? String(row[emailIndex] ?? '') : '',
       contactPerson:
-        contactoIndex !== -1 ? String(row[contactoIndex] ?? "") : "",
-      whatsapp: whatsappIndex !== -1 ? String(row[whatsappIndex] ?? "") : "",
+        contactoIndex !== -1 ? String(row[contactoIndex] ?? '') : '',
+      whatsapp: whatsappIndex !== -1 ? String(row[whatsappIndex] ?? '') : '',
       specialty:
-        especialidadIndex !== -1 ? String(row[especialidadIndex] ?? "") : "",
+        especialidadIndex !== -1 ? String(row[especialidadIndex] ?? '') : '',
       status:
-        estadoIndex !== -1 ? String(row[estadoIndex] ?? "ACTIVO") : "ACTIVO",
-      registeredAt: fechaIndex !== -1 ? String(row[fechaIndex] ?? "") : "",
+        estadoIndex !== -1 ? String(row[estadoIndex] ?? 'ACTIVO') : 'ACTIVO',
+      registeredAt: fechaIndex !== -1 ? String(row[fechaIndex] ?? '') : '',
     }))
-    .filter((p) => p.email && p.status?.toUpperCase() === "ACTIVO");
+    .filter((p) => p.email && p.status?.toUpperCase() === 'ACTIVO');
 }
 
 /**
@@ -213,12 +247,12 @@ async function validateProvider(
   // retries rather than logging a provider out. A genuine "provider not found"
   // is only returned below, once the sheet WAS resolved and read.
   const proveedoresSheet = findSheetByPattern(sheetNames, [
-    "proveedores",
-    "proveedor",
+    'proveedores',
+    'proveedor',
   ]);
 
   if (!proveedoresSheet) {
-    throw new Error("Proveedores sheet not found by pattern");
+    throw new Error('Proveedores sheet not found by pattern');
   }
 
   const response = await sheets.spreadsheets.values.get({
@@ -230,51 +264,51 @@ async function validateProvider(
   // Zero rows is an anomaly (failed/throttled read), not a real absence — throw
   // to allow retry. One row (header only, no data) IS a genuine empty list.
   if (rows.length === 0) {
-    throw new Error("Proveedores sheet read returned no rows");
+    throw new Error('Proveedores sheet read returned no rows');
   }
   if (rows.length <= 1) return null;
 
   const headers = rows[0] as string[];
-  const idIndex = findColumnIndex(headers, ["id"]);
-  const nombreIndex = findColumnIndex(headers, ["nombre", "name"]);
-  const emailIndex = findColumnIndex(headers, ["email", "correo"]);
-  const contactoIndex = findColumnIndex(headers, ["contacto", "contact"]);
-  const whatsappIndex = findColumnIndex(headers, ["whatsapp", "telefono"]);
+  const idIndex = findColumnIndex(headers, ['id']);
+  const nombreIndex = findColumnIndex(headers, ['nombre', 'name']);
+  const emailIndex = findColumnIndex(headers, ['email', 'correo']);
+  const contactoIndex = findColumnIndex(headers, ['contacto', 'contact']);
+  const whatsappIndex = findColumnIndex(headers, ['whatsapp', 'telefono']);
   const especialidadIndex = findColumnIndex(headers, [
-    "especialidad",
-    "specialty",
+    'especialidad',
+    'specialty',
   ]);
-  const estadoIndex = findColumnIndex(headers, ["estado", "status"]);
-  const fechaIndex = findColumnIndex(headers, ["fecha", "registeredat"]);
+  const estadoIndex = findColumnIndex(headers, ['estado', 'status']);
+  const fechaIndex = findColumnIndex(headers, ['fecha', 'registeredat']);
 
   const dataRows = rows.slice(1);
 
   for (const row of dataRows) {
     const providerEmail =
       emailIndex !== -1
-        ? String(row[emailIndex] || "")
+        ? String(row[emailIndex] || '')
             .toLowerCase()
             .trim()
-        : "";
+        : '';
 
     if (providerEmail === normalizedEmail) {
       if (estadoIndex !== -1) {
-        const estado = String(row[estadoIndex] || "").toUpperCase();
-        if (estado === "INACTIVO" || estado === "INACTIVE") return null;
+        const estado = String(row[estadoIndex] || '').toUpperCase();
+        if (estado === 'INACTIVO' || estado === 'INACTIVE') return null;
       }
 
       return {
-        id: idIndex !== -1 ? String(row[idIndex] ?? "") : "",
-        name: nombreIndex !== -1 ? String(row[nombreIndex] ?? "") : "",
+        id: idIndex !== -1 ? String(row[idIndex] ?? '') : '',
+        name: nombreIndex !== -1 ? String(row[nombreIndex] ?? '') : '',
         email: normalizedEmail,
         contactPerson:
-          contactoIndex !== -1 ? String(row[contactoIndex] ?? "") : "",
-        whatsapp: whatsappIndex !== -1 ? String(row[whatsappIndex] ?? "") : "",
+          contactoIndex !== -1 ? String(row[contactoIndex] ?? '') : '',
+        whatsapp: whatsappIndex !== -1 ? String(row[whatsappIndex] ?? '') : '',
         specialty:
-          especialidadIndex !== -1 ? String(row[especialidadIndex] ?? "") : "",
+          especialidadIndex !== -1 ? String(row[especialidadIndex] ?? '') : '',
         status:
-          estadoIndex !== -1 ? String(row[estadoIndex] ?? "ACTIVO") : "ACTIVO",
-        registeredAt: fechaIndex !== -1 ? String(row[fechaIndex] ?? "") : "",
+          estadoIndex !== -1 ? String(row[estadoIndex] ?? 'ACTIVO') : 'ACTIVO',
+        registeredAt: fechaIndex !== -1 ? String(row[fechaIndex] ?? '') : '',
       };
     }
   }
@@ -290,33 +324,82 @@ export default withApiHandler(
   ) => {
     const sheets = context.sheets as Sheets;
     const action =
-      (req.query.action as string) || req.body?.action || "validate";
-    const email = req.method === "GET" ? req.query.email : req.body?.email;
-    const type = (req.query.type as string) || req.body?.type || "both";
+      (req.query.action as string) || req.body?.action || 'validate';
+    const email = req.method === 'GET' ? req.query.email : req.body?.email;
+    const type = (req.query.type as string) || req.body?.type || 'both';
 
-    if (action === "list-providers") {
+    if (action === 'list-providers') {
       const sheetNames = await getSheetNames(sheets);
       const providers = await listProviders(sheets, sheetNames);
       return sendSuccess(res, { providers });
     }
 
-    if (!email || typeof email !== "string") {
-      return sendError(res, 400, "Email is required");
+    // Exchange a fresh Google ID token (or a still-valid app session token,
+    // for rolling refresh) for a 30-day app session token. This is what keeps
+    // invitation/vitrina/admin mutations working after the ~1h Google
+    // credential dies — see api/_lib/sessionToken.ts for the full rationale.
+    // Identity comes ONLY from a cryptographically verified token (never a
+    // client-supplied email), and only roster members (Asesores/Proveedores)
+    // get a token, so guests can't obtain one.
+    if (action === 'mint-session') {
+      if (req.method !== 'POST') {
+        return sendError(res, 405, 'POST required');
+      }
+      const body = (req.body ?? {}) as {
+        idToken?: unknown;
+        sessionToken?: unknown;
+      };
+
+      let verifiedEmail: string | null = null;
+      if (typeof body.idToken === 'string' && body.idToken) {
+        verifiedEmail = await verifyGoogleIdTokenEmail(body.idToken);
+      } else if (typeof body.sessionToken === 'string' && body.sessionToken) {
+        verifiedEmail = verifySessionToken(body.sessionToken)?.email ?? null;
+      }
+      if (!verifiedEmail) {
+        return sendError(res, 401, 'Token inválido o expirado');
+      }
+
+      const sheetNames = await getSheetNames(sheets);
+      const rosterUser = await validateUser(sheets, verifiedEmail, sheetNames);
+      if (!rosterUser) {
+        const provider = await validateProvider(
+          sheets,
+          verifiedEmail,
+          sheetNames,
+        );
+        if (!provider) {
+          return sendError(res, 403, 'No autorizado');
+        }
+      }
+
+      const sessionToken = mintSessionToken(verifiedEmail);
+      if (!sessionToken) {
+        return sendError(res, 500, 'Sesión no disponible en el servidor');
+      }
+      return sendSuccess(res, {
+        sessionToken,
+        expiresInSeconds: SESSION_TTL_SECONDS,
+      });
+    }
+
+    if (!email || typeof email !== 'string') {
+      return sendError(res, 400, 'Email is required');
     }
 
     const sheetNames = await getSheetNames(sheets);
     const normalizedEmail = email.toLowerCase().trim();
 
-    if (type === "user") {
+    if (type === 'user') {
       const user = await validateUser(sheets, normalizedEmail, sheetNames);
       return sendSuccess(res, {
         isAuthorized: !!user,
         user: user || undefined,
-        error: user ? undefined : "Email not found in authorized users list",
+        error: user ? undefined : 'Email not found in authorized users list',
       });
     }
 
-    if (type === "provider") {
+    if (type === 'provider') {
       const provider = await validateProvider(
         sheets,
         normalizedEmail,
@@ -325,7 +408,7 @@ export default withApiHandler(
       return sendSuccess(res, {
         isProvider: !!provider,
         provider: provider || undefined,
-        error: provider ? undefined : "Email not found in providers list",
+        error: provider ? undefined : 'Email not found in providers list',
       });
     }
 
@@ -334,7 +417,7 @@ export default withApiHandler(
       return sendSuccess(res, {
         isAuthorized: true,
         user,
-        accountType: "user",
+        accountType: 'user',
       });
     }
 
@@ -347,7 +430,7 @@ export default withApiHandler(
       return sendSuccess(res, {
         isProvider: true,
         provider,
-        accountType: "provider",
+        accountType: 'provider',
       });
     }
 
@@ -358,13 +441,13 @@ export default withApiHandler(
     return sendSuccess(res, {
       isAuthorized: false,
       isProvider: false,
-      reason: "not_in_sheet",
-      error: "Email not found in any authorized list",
+      reason: 'not_in_sheet',
+      error: 'Email not found in any authorized list',
     });
   },
   {
-    methods: ["GET", "POST", "OPTIONS"],
+    methods: ['GET', 'POST', 'OPTIONS'],
     provideSheets: true,
-    errorPrefix: "Validate",
+    errorPrefix: 'Validate',
   },
 );

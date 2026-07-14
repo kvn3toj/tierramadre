@@ -25,18 +25,28 @@
  * 401:  not signed in / invalid or expired Google token
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { withApiHandler, sendError, sendSuccess } from "./_lib/index.js";
-import { convexClient, isConvexEnabled } from "./_lib/convex-client.js";
-import { extractBearer } from "./_lib/bearer.js";
-import { api } from "../convex/_generated/api.js";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { withApiHandler, sendError, sendSuccess } from './_lib/index.js';
+import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
+import { extractBearer } from './_lib/bearer.js';
+import { isSessionToken, verifySessionToken } from './_lib/sessionToken.js';
+import { api } from '../convex/_generated/api.js';
 
-/** Verify the caller's Google ID token → returns the verified email, or null. */
+/**
+ * Verify the caller's bearer token → returns the verified email, or null.
+ * Accepts either a raw Google ID token (dies ~1h after sign-in) or an
+ * app-issued "tms1" session token (30 days, minted by
+ * /api/validate?action=mint-session — see api/_lib/sessionToken.ts), so a
+ * staff member who signed in days ago can still mint/correct share links.
+ */
 async function verifyGoogleEmail(
   authHeader?: string | string[],
 ): Promise<string | null> {
   const token = extractBearer(authHeader);
   if (!token) return null;
+  if (isSessionToken(token)) {
+    return verifySessionToken(token)?.email ?? null;
+  }
   const audiences = [
     process.env.GOOGLE_OAUTH_CLIENT_ID,
     process.env.VITE_GOOGLE_CLIENT_ID,
@@ -44,7 +54,7 @@ async function verifyGoogleEmail(
   ].filter((a): a is string => !!a && a.trim().length > 0);
   if (audiences.length === 0) return null;
   try {
-    const { OAuth2Client } = await import("google-auth-library");
+    const { OAuth2Client } = await import('google-auth-library');
     const client = new OAuth2Client();
     const ticket = await client.verifyIdToken({
       idToken: token,
@@ -67,16 +77,16 @@ export default withApiHandler(
       return sendError(
         res,
         500,
-        "VITRINA_SHARED_SECRET not configured on server",
+        'VITRINA_SHARED_SECRET not configured on server',
       );
     }
     if (!isConvexEnabled || !convexClient) {
-      return sendError(res, 503, "Convex backend not configured");
+      return sendError(res, 503, 'Convex backend not configured');
     }
 
-    const email = await verifyGoogleEmail(req.headers["authorization"]);
+    const email = await verifyGoogleEmail(req.headers['authorization']);
     if (!email) {
-      return sendError(res, 401, "Inicia sesión para generar un enlace.");
+      return sendError(res, 401, 'Inicia sesión para generar un enlace.');
     }
 
     const body = (req.body ?? {}) as {
@@ -98,25 +108,24 @@ export default withApiHandler(
           )
         : undefined;
 
-    if (req.method === "PATCH") {
-      const token =
-        typeof body.token === "string" ? body.token.trim() : "";
+    if (req.method === 'PATCH') {
+      const token = typeof body.token === 'string' ? body.token.trim() : '';
       if (!token) {
-        return sendError(res, 400, "token requerido");
+        return sendError(res, 400, 'token requerido');
       }
 
       const itemIds = parseItemIds();
       if (itemIds !== undefined) {
         if (itemIds.length === 0) {
-          return sendError(res, 400, "itemIds requerido");
+          return sendError(res, 400, 'itemIds requerido');
         }
         if (itemIds.length > 50) {
-          return sendError(res, 400, "Demasiadas piezas (máximo 50).");
+          return sendError(res, 400, 'Demasiadas piezas (máximo 50).');
         }
       }
 
       const currency =
-        body.currency === "USD" || body.currency === "COP"
+        body.currency === 'USD' || body.currency === 'COP'
           ? body.currency
           : undefined;
       const mult = Number(body.multiplier);
@@ -125,7 +134,7 @@ export default withApiHandler(
           ? Math.min(4, Math.max(1, mult))
           : undefined;
       const senderSlug =
-        typeof body.senderSlug === "string" && body.senderSlug.trim()
+        typeof body.senderSlug === 'string' && body.senderSlug.trim()
           ? body.senderSlug.trim()
           : undefined;
 
@@ -141,8 +150,8 @@ export default withApiHandler(
         return sendSuccess(res, result);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        if (message.includes("no encontrado")) {
-          return sendError(res, 404, "Enlace no encontrado.");
+        if (message.includes('no encontrado')) {
+          return sendError(res, 404, 'Enlace no encontrado.');
         }
         throw err;
       }
@@ -150,19 +159,19 @@ export default withApiHandler(
 
     const itemIds = parseItemIds() ?? [];
     if (itemIds.length === 0) {
-      return sendError(res, 400, "itemIds requerido");
+      return sendError(res, 400, 'itemIds requerido');
     }
     if (itemIds.length > 50) {
-      return sendError(res, 400, "Demasiadas piezas (máximo 50).");
+      return sendError(res, 400, 'Demasiadas piezas (máximo 50).');
     }
 
-    const currency = body.currency === "USD" ? "USD" : "COP";
+    const currency = body.currency === 'USD' ? 'USD' : 'COP';
     const mult = Number(body.multiplier);
     const multiplier = Number.isFinite(mult)
       ? Math.min(4, Math.max(1, mult))
       : 1;
     const senderSlug =
-      typeof body.senderSlug === "string" && body.senderSlug.trim()
+      typeof body.senderSlug === 'string' && body.senderSlug.trim()
         ? body.senderSlug.trim()
         : undefined;
 
@@ -178,7 +187,7 @@ export default withApiHandler(
     return sendSuccess(res, result);
   },
   {
-    methods: ["POST", "PATCH", "OPTIONS"],
+    methods: ['POST', 'PATCH', 'OPTIONS'],
     requireGoogle: false,
   },
 );

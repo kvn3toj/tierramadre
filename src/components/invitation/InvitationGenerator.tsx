@@ -43,9 +43,16 @@ import {
   Phone as PhoneIcon,
 } from '@mui/icons-material';
 import { QRCodeSVG } from 'qrcode.react';
+import {
+  GoogleLogin,
+  GoogleOAuthProvider,
+  CredentialResponse,
+} from '@react-oauth/google';
 import { useInvitation } from '../../hooks/useInvitation';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
+import { readFreshAuthToken, ensureAppSession } from '../../utils/sessionToken';
 import {
   getQuietEmerald,
   qeType,
@@ -59,6 +66,8 @@ import type {
   GuestCurrencyMode,
   GuestMultiplier,
 } from '../../types/invitation';
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 interface InvitationGeneratorProps {
   open: boolean;
@@ -82,10 +91,16 @@ export default function InvitationGenerator({
   const qe = getQuietEmerald(mode);
   /** Emerald tint at a given alpha — the one accent color, applied quietly. */
   const tint = (a: number) => alpha(qe.accent, a);
+  const { signIn } = useGoogleAuth();
   const [showQR, setShowQR] = useState(false);
   const [copied, setCopied] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  // No usable identity token (Google credential dead for >1h AND no 30-day
+  // app session token, i.e. the user hasn't signed in for over a month):
+  // instead of dead-ending with "session expired", offer an inline Google
+  // re-login and retry — mirrors VitrinaShareDialog's visible fallback.
+  const [needsRenew, setNeedsRenew] = useState(false);
 
   // Form state
   const [guestName, setGuestName] = useState('');
@@ -111,6 +126,15 @@ export default function InvitationGenerator({
     }
 
     setFormError('');
+
+    // A doomed request is guaranteed without an identity token — surface the
+    // inline re-login instead of firing it.
+    if (!readFreshAuthToken()) {
+      setNeedsRenew(true);
+      return;
+    }
+    setNeedsRenew(false);
+
     const pricingMode: PricingMode = showPrices ? 'with_prices' : 'no_prices';
     const contactInfo = guestEmail.trim() || guestPhone.trim();
     const contactType = guestEmail.trim() ? 'email' : 'phone';
@@ -123,6 +147,21 @@ export default function InvitationGenerator({
       ...(showPrices && { guestCurrencyMode: guestCurrency }),
       ...(showPrices && { guestMultiplier }),
     });
+  };
+
+  // Fresh credential in hand: re-run the full sign-in (re-stores the Google
+  // token, re-validates the user), mint the 30-day app session token, and
+  // retry the generation the user already asked for.
+  const handleRenewed = async (response: CredentialResponse) => {
+    if (!response.credential) return;
+    try {
+      await signIn(response.credential);
+      await ensureAppSession();
+      setNeedsRenew(false);
+      await handleGenerate();
+    } catch {
+      setFormError('No se pudo renovar la sesión. Intenta de nuevo.');
+    }
   };
 
   const handleGenerateNew = () => {
@@ -343,9 +382,31 @@ export default function InvitationGenerator({
             />
           </Box>
 
-          {error && (
+          {error && !needsRenew && (
             <Alert severity="error" sx={{ mb: 2.5, borderRadius: qeRadius.md }}>
               {error}
+            </Alert>
+          )}
+          {needsRenew && (
+            <Alert severity="info" sx={{ mb: 2.5, borderRadius: qeRadius.md }}>
+              <Typography variant="body2" sx={{ mb: 1.5 }}>
+                Tu inicio de sesión de Google necesita un toque para generar el
+                enlace. Continúa con Google aquí abajo.
+              </Typography>
+              {GOOGLE_CLIENT_ID && (
+                <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+                  <GoogleLogin
+                    onSuccess={handleRenewed}
+                    onError={() =>
+                      setFormError(
+                        'No se pudo renovar la sesión. Intenta de nuevo.',
+                      )
+                    }
+                    text="continue_with"
+                    shape="pill"
+                  />
+                </GoogleOAuthProvider>
+              )}
             </Alert>
           )}
           {formError && (

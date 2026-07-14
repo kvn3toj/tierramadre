@@ -51,7 +51,7 @@ import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { useTRM } from '../../hooks/useTRM';
 import { VitrinaCurrency, formatVitrinaPrice } from '../../utils/vitrinaPrice';
 import { brand, fontWeights } from '../../design-system';
-import { readFreshGoogleIdToken } from '../../utils/googleIdToken';
+import { readFreshAuthToken } from '../../utils/sessionToken';
 
 const STUDIO_BASE_URL = 'https://tierramadre.app';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
@@ -68,7 +68,10 @@ function extractToken(raw: string): string {
   return afterSlash.split(/[/?#]/)[0].trim().toUpperCase();
 }
 
-const readFreshIdToken = readFreshGoogleIdToken;
+// Google ID token when fresh, else the 30-day app session token (see
+// utils/sessionToken.ts) — /api/vitrina accepts both, so the renewal
+// fallbacks below only trigger when the user hasn't signed in for a month.
+const readFreshIdToken = readFreshAuthToken;
 
 // Silent One Tap renewal (auto_select) is reliably blocked on iOS and in
 // Safari — after Google's One Tap cooldown it never displays, so the silent

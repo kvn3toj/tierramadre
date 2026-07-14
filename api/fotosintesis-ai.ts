@@ -21,7 +21,7 @@
  * the second. All overridable via FOTOSINTESIS_AI_* / GROQ_MODEL env.
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   buildActionCatalogText,
   buildFlowSchemaText,
@@ -35,15 +35,16 @@ import {
   type GuidedDraft,
   type GuidedEnvelope,
   type GuidedFlow,
-} from "../src/pages/admin/Fotosintesis/copilot/flowSchemas.js";
-import type { AccessLevel } from "../src/types/auth.js";
+} from '../src/pages/admin/Fotosintesis/copilot/flowSchemas.js';
+import type { AccessLevel } from '../src/types/auth.js';
 import {
   getSheetsClient,
   FOTOSINTESIS_SPREADSHEET_ID,
   SPREADSHEET_ID as TREASURE_SPREADSHEET_ID,
   getSheetNames,
   findSheetByPattern,
-} from "./_lib/index.js";
+} from './_lib/index.js';
+import { isSessionToken, verifySessionToken } from './_lib/sessionToken.js';
 
 // ─── Sheet-side item catalog (server-side cache) ──────────────────────────────
 // Reads the Fotosíntesis SOT Inventario tab and the legacy Treasure sheet once
@@ -89,7 +90,7 @@ async function loadSheetCache(): Promise<SheetCache> {
   ): Promise<SheetItem[]> {
     try {
       const names = await getSheetNames(sheets, spreadsheetId);
-      const tab = findSheetByPattern(names, ["inventario", "inventory"]);
+      const tab = findSheetByPattern(names, ['inventario', 'inventory']);
       if (!tab) return [];
       // Read columns A (itemId), C (nombre), O or Q (estado), X (loteId).
       // We use a broad A:X range and pick the columns we need.
@@ -101,61 +102,61 @@ async function loadSheetCache(): Promise<SheetCache> {
       if (rows.length <= 1) return [];
       // Detect column positions from header row
       const header = (rows[0] ?? []).map((c) =>
-        String(c ?? "")
+        String(c ?? '')
           .toLowerCase()
           .trim(),
       );
-      const colItem = header.findIndex((h) => h === "item");
-      const colNombre = header.findIndex((h) => h === "nombre" || h === "name");
+      const colItem = header.findIndex((h) => h === 'item');
+      const colNombre = header.findIndex((h) => h === 'nombre' || h === 'name');
       // estado: prefer the exact "estado" column (Treasure col O / the value the
       // product card shows, e.g. "Vendido"). Fall back to "estado asesor". The
       // old "o"/"q" single-letter heuristic was a bug — it matched stray headers
       // and never the real estado column.
       const colEstado = (() => {
-        const exact = header.findIndex((h) => h === "estado");
+        const exact = header.findIndex((h) => h === 'estado');
         if (exact !== -1) return exact;
-        return header.findIndex((h) => h === "estado asesor");
+        return header.findIndex((h) => h === 'estado asesor');
       })();
       const colLote = header.findIndex(
-        (h) => h === "loteid" || h === "lote id" || h === "lote",
+        (h) => h === 'loteid' || h === 'lote id' || h === 'lote',
       );
       // Precio COP (Treasure col L). Authoritative price the assistant must use
       // instead of guessing. Match the exact header, then anything with "precio".
       const colPrecio = (() => {
-        const exact = header.findIndex((h) => h === "precio cop");
+        const exact = header.findIndex((h) => h === 'precio cop');
         if (exact !== -1) return exact;
-        return header.findIndex((h) => h.includes("precio"));
+        return header.findIndex((h) => h.includes('precio'));
       })();
       const colPeso = header.findIndex(
-        (h) => h === "peso (ct)" || h === "peso" || h.startsWith("peso"),
+        (h) => h === 'peso (ct)' || h === 'peso' || h.startsWith('peso'),
       );
-      const colColor = header.findIndex((h) => h === "color");
-      const colCalidad = header.findIndex((h) => h === "calidad");
+      const colColor = header.findIndex((h) => h === 'color');
+      const colCalidad = header.findIndex((h) => h === 'calidad');
       if (colItem === -1) return [];
 
       const items: SheetItem[] = [];
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i] ?? [];
-        const itemId = String(row[colItem] ?? "").trim();
+        const itemId = String(row[colItem] ?? '').trim();
         if (!itemId) continue;
         const nombre =
-          colNombre >= 0 ? String(row[colNombre] ?? "").trim() : "";
+          colNombre >= 0 ? String(row[colNombre] ?? '').trim() : '';
         const estado =
-          colEstado >= 0 ? String(row[colEstado] ?? "").trim() : "";
-        const loteId = colLote >= 0 ? String(row[colLote] ?? "").trim() : "";
+          colEstado >= 0 ? String(row[colEstado] ?? '').trim() : '';
+        const loteId = colLote >= 0 ? String(row[colLote] ?? '').trim() : '';
         const precio =
-          colPrecio >= 0 ? String(row[colPrecio] ?? "").trim() : "";
-        const peso = colPeso >= 0 ? String(row[colPeso] ?? "").trim() : "";
-        const color = colColor >= 0 ? String(row[colColor] ?? "").trim() : "";
+          colPrecio >= 0 ? String(row[colPrecio] ?? '').trim() : '';
+        const peso = colPeso >= 0 ? String(row[colPeso] ?? '').trim() : '';
+        const color = colColor >= 0 ? String(row[colColor] ?? '').trim() : '';
         const calidad =
-          colCalidad >= 0 ? String(row[colCalidad] ?? "").trim() : "";
+          colCalidad >= 0 ? String(row[colCalidad] ?? '').trim() : '';
         if (availableOnly) {
           const lower = estado.toLowerCase();
           if (
             lower &&
-            !lower.includes("disponible") &&
-            !lower.includes("available") &&
-            !lower.includes("en stock")
+            !lower.includes('disponible') &&
+            !lower.includes('available') &&
+            !lower.includes('en stock')
           )
             continue;
         }
@@ -220,12 +221,12 @@ async function enrichCandidateItems(
  * when it isn't numeric. NEVER fabricates — empty in, empty out.
  */
 function formatCOP(raw?: string): string {
-  if (!raw) return "";
-  const digits = raw.replace(/[^\d]/g, "");
+  if (!raw) return '';
+  const digits = raw.replace(/[^\d]/g, '');
   if (!digits) return raw.trim();
   const n = Number(digits);
   if (!Number.isFinite(n) || n === 0) return raw.trim();
-  return `$${n.toLocaleString("es-CO")}`;
+  return `$${n.toLocaleString('es-CO')}`;
 }
 
 /**
@@ -239,14 +240,14 @@ function formatSheetItems(
   items: SheetItem[],
   charCap: number,
 ): { body: string; shown: number; total: number } {
-  let body = "";
+  let body = '';
   let shown = 0;
   for (const i of items) {
     const precio = formatCOP(i.precio);
     const line =
-      `${i.itemId} ${i.nombre}${precio ? ` — ${precio}` : ""}${i.estado ? ` [${i.estado}]` : ""}`.trim();
+      `${i.itemId} ${i.nombre}${precio ? ` — ${precio}` : ''}${i.estado ? ` [${i.estado}]` : ''}`.trim();
     if (body.length + line.length + 3 > charCap) break;
-    body += (body ? " · " : "") + line;
+    body += (body ? ' · ' : '') + line;
     shown++;
   }
   return { body, shown, total: items.length };
@@ -258,10 +259,7 @@ function formatSheetItems(
  */
 function normalizeText(s: string): string {
   // ̀-ͯ = combining diacritical marks (the accents NFD splits off).
-  return s
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
 /**
@@ -303,7 +301,9 @@ function resolveMentionedItems(
         nombreNorm.length >= 3 &&
         (queryTokens.has(nombreNorm) ||
           norm.includes(nombreNorm) ||
-          nombreNorm.split(/\s+/).some((w) => w.length >= 4 && queryTokens.has(w)));
+          nombreNorm
+            .split(/\s+/)
+            .some((w) => w.length >= 4 && queryTokens.has(w)));
       if (byNumber || byName) {
         seen.add(it.itemId);
         out.push(it);
@@ -315,18 +315,18 @@ function resolveMentionedItems(
 
 /** Authoritative full-row block for the specific items a question mentioned. */
 function formatItemFichas(items: SheetItem[]): string {
-  if (items.length === 0) return "";
+  if (items.length === 0) return '';
   const lines = items.map((i) => {
     const parts = [`#${i.itemId} ${i.nombre}`.trim()];
     const precio = formatCOP(i.precio);
-    parts.push(`precio: ${precio || "no registrado"}`);
-    parts.push(`estado: ${i.estado || "no registrado"}`);
+    parts.push(`precio: ${precio || 'no registrado'}`);
+    parts.push(`estado: ${i.estado || 'no registrado'}`);
     if (i.peso) parts.push(`peso: ${i.peso}`);
     if (i.color) parts.push(`color: ${i.color}`);
     if (i.calidad) parts.push(`calidad: ${i.calidad}`);
-    return "- " + parts.join(" · ");
+    return '- ' + parts.join(' · ');
   });
-  return `Fichas de los ítems mencionados (datos autoritativos del inventario — usa estas cifras EXACTAS; si "precio: no registrado", dilo y NO inventes un valor):\n${lines.join("\n")}`;
+  return `Fichas de los ítems mencionados (datos autoritativos del inventario — usa estas cifras EXACTAS; si "precio: no registrado", dilo y NO inventes un valor):\n${lines.join('\n')}`;
 }
 
 // Payload guard: this catalog is re-sent on EVERY turn, so a large dump inflates
@@ -337,7 +337,7 @@ function formatItemFichas(items: SheetItem[]): string {
 // the whole catalog, can reach any item" without the oversized prompt.
 const CATALOG_SAMPLE_CHARS = 1500;
 const CATALOG_RESOLVE_NOTE =
-  "El catálogo completo es más grande que esta muestra; para cualquier ítem que no aparezca, usá su número o nombre y el sistema lo resuelve del inventario completo.";
+  'El catálogo completo es más grande que esta muestra; para cualquier ítem que no aparezca, usá su número o nombre y el sistema lo resuelve del inventario completo.';
 
 /**
  * Two-inventory product context for the advisory/chat path: a bounded sample of
@@ -352,34 +352,34 @@ function buildCatalogContext(
   const parts: string[] = [];
   if (fotoItems.length > 0) {
     const f = formatSheetItems(fotoItems, CATALOG_SAMPLE_CHARS);
-    const note = f.shown < f.total ? ` (muestra de ${f.shown}/${f.total})` : "";
+    const note = f.shown < f.total ? ` (muestra de ${f.shown}/${f.total})` : '';
     parts.push(`Inventario Fotosíntesis (${f.total} ítems${note}): ${f.body}`);
   }
   if (treasureItems.length > 0) {
     const t = formatSheetItems(treasureItems, CATALOG_SAMPLE_CHARS);
-    const note = t.shown < t.total ? ` (muestra de ${t.shown}/${t.total})` : "";
+    const note = t.shown < t.total ? ` (muestra de ${t.shown}/${t.total})` : '';
     parts.push(
       `Catálogo Treasure — inventario previo a Fotosíntesis (${t.total} ítems${note}, con estado): ${t.body}`,
     );
   }
   if (parts.length > 0) parts.push(CATALOG_RESOLVE_NOTE);
-  return parts.join("\n");
+  return parts.join('\n');
 }
 
 /** Treasure-only summary for the guided/capture context (bounded sample + total). */
 function buildTreasureSummary(treasureItems: SheetItem[]): string {
-  if (treasureItems.length === 0) return "";
+  if (treasureItems.length === 0) return '';
   const t = formatSheetItems(treasureItems, CATALOG_SAMPLE_CHARS);
-  const note = t.shown < t.total ? ` (muestra de ${t.shown}/${t.total})` : "";
+  const note = t.shown < t.total ? ` (muestra de ${t.shown}/${t.total})` : '';
   return `${t.total} ítems${note}: ${t.body}. ${CATALOG_RESOLVE_NOTE}`;
 }
 
 const ACCESS_LEVELS = [
-  "guest",
-  "asesor",
-  "embajador",
-  "admin",
-  "provider",
+  'guest',
+  'asesor',
+  'embajador',
+  'admin',
+  'provider',
 ] as const;
 
 /**
@@ -388,18 +388,18 @@ const ACCESS_LEVELS = [
  * guards. Defaults to "admin" (the only surface that reaches this endpoint today).
  */
 function asAccessLevel(value: unknown): AccessLevel {
-  return typeof value === "string" &&
+  return typeof value === 'string' &&
     (ACCESS_LEVELS as readonly string[]).includes(value)
     ? (value as AccessLevel)
-    : "admin";
+    : 'admin';
 }
 
 /** Authoritative params the server already knows, e.g. the lote in the active route. */
 function extractServerParams(loteContext: unknown): Record<string, string> {
   const out: Record<string, string> = {};
-  if (loteContext && typeof loteContext === "object") {
+  if (loteContext && typeof loteContext === 'object') {
     const id = (loteContext as Record<string, unknown>).loteId;
-    if (typeof id === "string" && id.trim()) out.loteId = id.trim();
+    if (typeof id === 'string' && id.trim()) out.loteId = id.trim();
   }
   return out;
 }
@@ -408,10 +408,10 @@ function extractServerParams(loteContext: unknown): Record<string, string> {
 // structured JSON extraction — an 8B / Flash-Lite class model is plenty and
 // has far higher free-tier limits than the old 70B / full-Flash pair, which is
 // what was tripping the "modelo saturado" 429s. Override per-env if needed.
-const DEFAULT_MODEL = process.env.GROQ_MODEL?.trim() || "llama-3.1-8b-instant";
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GATEWAY_URL = "https://ai-gateway.vercel.sh/v1/chat/completions";
-const DEFAULT_GATEWAY_MODEL = "google/gemini-2.5-flash-lite";
+const DEFAULT_MODEL = process.env.GROQ_MODEL?.trim() || 'llama-3.1-8b-instant';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GATEWAY_URL = 'https://ai-gateway.vercel.sh/v1/chat/completions';
+const DEFAULT_GATEWAY_MODEL = 'google/gemini-2.5-flash-lite';
 
 // The catalog context + the FULL chat history are re-sent on every turn, so a
 // long thread inflates each request until it trips the gateway's body limit
@@ -437,7 +437,7 @@ interface GuidedTarget {
    */
   jsonMode: boolean;
   /** Provider label, for logs and the answered-model report. */
-  label: "gateway" | "groq";
+  label: 'gateway' | 'groq';
 }
 
 // Upstream statuses worth retrying: rate limits (429) and transient gateway /
@@ -466,14 +466,14 @@ async function fetchUpstreamWithRetry(
     // No sleep after the final attempt — return the last response as-is.
     if (attempt === attempts - 1) break;
     // Prefer the provider's Retry-After (seconds), else exponential backoff.
-    const retryAfter = res.headers.get("retry-after");
+    const retryAfter = res.headers.get('retry-after');
     let delay = baseDelayMs * 2 ** attempt; // 500 → 1000 → 2000…
     const secs = retryAfter ? Number(retryAfter) : NaN;
     if (Number.isFinite(secs) && secs > 0) delay = Math.min(secs * 1000, 8000);
     // Full jitter so concurrent callers don't retry in lockstep.
     delay = Math.round(delay / 2 + Math.random() * (delay / 2));
     // Drain the discarded body so the socket can be reused, then wait.
-    await res.text().catch(() => "");
+    await res.text().catch(() => '');
     await new Promise((r) => setTimeout(r, delay));
   }
   return lastRes as Response;
@@ -494,13 +494,13 @@ async function fetchUpstreamWithRetry(
  */
 function resolveGuidedTargets(): GuidedTarget[] {
   const provider = (
-    process.env.FOTOSINTESIS_AI_PROVIDER || "auto"
+    process.env.FOTOSINTESIS_AI_PROVIDER || 'auto'
   ).toLowerCase();
-  const gatewayKey = process.env.AI_GATEWAY_API_KEY?.trim() || "";
+  const gatewayKey = process.env.AI_GATEWAY_API_KEY?.trim() || '';
   const groqKey =
     process.env.GROQ_API_KEY?.trim() ||
     process.env.VITE_GROQ_API_KEY?.trim() ||
-    "";
+    '';
   const explicitModel = process.env.FOTOSINTESIS_AI_MODEL?.trim();
 
   const gateway: GuidedTarget | null = gatewayKey
@@ -509,7 +509,7 @@ function resolveGuidedTargets(): GuidedTarget[] {
         apiKey: gatewayKey,
         model: explicitModel || DEFAULT_GATEWAY_MODEL,
         jsonMode: false,
-        label: "gateway",
+        label: 'gateway',
       }
     : null;
   const groq: GuidedTarget | null = groqKey
@@ -519,16 +519,16 @@ function resolveGuidedTargets(): GuidedTarget[] {
         // A gateway-style id ("google/…") is invalid on Groq — only honor an
         // explicit model here when it isn't provider-namespaced.
         model:
-          explicitModel && !explicitModel.includes("/")
+          explicitModel && !explicitModel.includes('/')
             ? explicitModel
             : DEFAULT_MODEL,
         jsonMode: true,
-        label: "groq",
+        label: 'groq',
       }
     : null;
 
-  if (provider === "gateway") return gateway ? [gateway] : [];
-  if (provider === "groq") return groq ? [groq] : [];
+  if (provider === 'gateway') return gateway ? [gateway] : [];
+  if (provider === 'groq') return groq ? [groq] : [];
   // auto → gateway first (near-free Gemini), Groq as the rate-limit safety net.
   return [gateway, groq].filter((t): t is GuidedTarget => t !== null);
 }
@@ -542,8 +542,8 @@ function extractJsonObject(text: string): string {
   let t = text.trim();
   const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (fence) t = fence[1].trim();
-  const first = t.indexOf("{");
-  const last = t.lastIndexOf("}");
+  const first = t.indexOf('{');
+  const last = t.lastIndexOf('}');
   if (first !== -1 && last > first) t = t.slice(first, last + 1);
   return t;
 }
@@ -582,19 +582,19 @@ function isRateLimited(key: string): boolean {
 
 /** Origins allowed to call this endpoint from a browser. */
 function allowedOrigins(): string[] {
-  const out = new Set<string>(["https://tierramadre.app"]);
+  const out = new Set<string>(['https://tierramadre.app']);
   const app = process.env.APP_URL?.trim();
-  if (app) out.add(app.replace(/\/+$/, ""));
+  if (app) out.add(app.replace(/\/+$/, ''));
   const vercelUrl = process.env.VERCEL_URL?.trim();
   if (vercelUrl) out.add(`https://${vercelUrl}`);
   // Extra hosts (comma-separated) the operator can allow without a code change.
   const extra = process.env.FOTOSINTESIS_AI_ALLOWED_ORIGINS?.trim();
   if (extra)
-    for (const o of extra.split(","))
-      if (o.trim()) out.add(o.trim().replace(/\/+$/, ""));
-  if (process.env.NODE_ENV !== "production") {
-    out.add("http://localhost:3000");
-    out.add("http://localhost:5173");
+    for (const o of extra.split(','))
+      if (o.trim()) out.add(o.trim().replace(/\/+$/, ''));
+  if (process.env.NODE_ENV !== 'production') {
+    out.add('http://localhost:3000');
+    out.add('http://localhost:5173');
   }
   return [...out];
 }
@@ -607,7 +607,7 @@ function allowedOrigins(): string[] {
  */
 function isAllowedOrigin(origin: string | undefined): boolean {
   if (!origin) return true;
-  return allowedOrigins().includes(origin.replace(/\/+$/, ""));
+  return allowedOrigins().includes(origin.replace(/\/+$/, ''));
 }
 
 function bearerToken(header?: string | string[]): string | null {
@@ -625,8 +625,17 @@ function bearerToken(header?: string | string[]): string | null {
 async function verifyIdentity(
   req: VercelRequest,
 ): Promise<{ email?: string; verified: boolean }> {
-  const token = bearerToken(req.headers["authorization"]);
+  const token = bearerToken(req.headers['authorization']);
   if (!token) return { verified: false };
+  // App-issued "tms1" session token (30 days, minted by
+  // /api/validate?action=mint-session) — accepted alongside raw Google ID
+  // tokens so the copilot keeps working after the ~1h Google credential dies.
+  if (isSessionToken(token)) {
+    const payload = verifySessionToken(token);
+    return payload
+      ? { email: payload.email, verified: true }
+      : { verified: false };
+  }
   const audiences = [
     process.env.GOOGLE_OAUTH_CLIENT_ID,
     process.env.VITE_GOOGLE_CLIENT_ID,
@@ -634,7 +643,7 @@ async function verifyIdentity(
   ].filter((a): a is string => !!a && a.trim().length > 0);
   if (audiences.length === 0) return { verified: false };
   try {
-    const { OAuth2Client } = await import("google-auth-library");
+    const { OAuth2Client } = await import('google-auth-library');
     const client = new OAuth2Client();
     const ticket = await client.verifyIdToken({
       idToken: token,
@@ -648,7 +657,7 @@ async function verifyIdentity(
     return { email, verified: !!email };
   } catch (err) {
     console.warn(
-      "[fotosintesis-ai] id-token verification failed:",
+      '[fotosintesis-ai] id-token verification failed:',
       (err as Error)?.message,
     );
     return { verified: false };
@@ -658,7 +667,7 @@ async function verifyIdentity(
 /** Hard-require a verified identity (operator opt-in; default off). */
 function authRequired(): boolean {
   return /^(1|true|yes|on)$/i.test(
-    process.env.FOTOSINTESIS_AI_REQUIRE_AUTH?.trim() || "",
+    process.env.FOTOSINTESIS_AI_REQUIRE_AUTH?.trim() || '',
   );
 }
 
@@ -694,7 +703,7 @@ Estás dentro de un drawer flotante en /admin/fotosintesis/*; Maritza (administr
  * instruction to use them, fixes that. Returns "" when the snapshot is absent.
  */
 function buildAtelierResumen(snapshot: unknown): string {
-  if (!snapshot || typeof snapshot !== "object") return "";
+  if (!snapshot || typeof snapshot !== 'object') return '';
   const s = snapshot as {
     counts?: {
       lots?: number;
@@ -715,16 +724,16 @@ function buildAtelierResumen(snapshot: unknown): string {
     ambassadorActivity?: { active?: number };
   };
   const c = s.counts;
-  if (!c) return "";
+  if (!c) return '';
   const e = s.syncErrors ?? {};
   const totalErr =
     (e.lots ?? 0) + (e.sales ?? 0) + (e.providers ?? 0) + (e.clients ?? 0);
   const fmtStates = (m?: Record<string, number>): string => {
-    if (!m) return "";
+    if (!m) return '';
     const parts = Object.entries(m)
       .filter(([, n]) => n > 0)
       .map(([k, n]) => `${k}: ${n}`);
-    return parts.length ? ` (${parts.join(", ")})` : "";
+    return parts.length ? ` (${parts.join(', ')})` : '';
   };
   const fields = [
     `lotes: ${c.lots ?? 0}${fmtStates(s.lotsByState)}`,
@@ -735,9 +744,9 @@ function buildAtelierResumen(snapshot: unknown): string {
     `errores de sincronización: ${totalErr}` +
       (totalErr > 0
         ? ` (lotes: ${e.lots ?? 0}, ventas: ${e.sales ?? 0}, proveedores: ${e.providers ?? 0}, clientes: ${e.clients ?? 0})`
-        : ""),
+        : ''),
   ];
-  return `Resumen del taller (cifras EXACTAS y actuales — si te preguntan "cuántos/cuántas" lotes, ventas, embajadores o errores de sincronización, respondé con estos números DIRECTAMENTE; NUNCA digas que necesitás acceso a otros registros): ${fields.join(" · ")}.`;
+  return `Resumen del taller (cifras EXACTAS y actuales — si te preguntan "cuántos/cuántas" lotes, ventas, embajadores o errores de sincronización, respondé con estos números DIRECTAMENTE; NUNCA digas que necesitás acceso a otros registros): ${fields.join(' · ')}.`;
 }
 
 function snapshotToContext(
@@ -752,12 +761,12 @@ function snapshotToContext(
     buildAtelierResumen(snapshot),
     catalog
       ? `Inventario completo (todos los productos e ítems; úsalo para responder sobre cualquier producto por número o nombre):\n${catalog}`
-      : "",
-    fichas || "",
+      : '',
+    fichas || '',
     `Snapshot JSON: ${JSON.stringify(snapshot)}`,
   ]
     .filter(Boolean)
-    .join("\n");
+    .join('\n');
 }
 
 function sseWrite(res: VercelResponse, data: Record<string, unknown>): void {
@@ -775,9 +784,9 @@ async function pipeStream(
 ): Promise<{ fullText: string; finishReason: string }> {
   const reader = upstream.body!.getReader();
   const decoder = new TextDecoder();
-  let buffer = "";
-  let fullText = "";
-  let finishReason = "stop";
+  let buffer = '';
+  let fullText = '';
+  let finishReason = 'stop';
 
   while (true) {
     const { value, done } = await reader.read();
@@ -785,14 +794,14 @@ async function pipeStream(
     buffer += decoder.decode(value, { stream: true });
 
     // SSE frames are separated by \n\n. Process whole frames; keep tail.
-    const frames = buffer.split("\n\n");
-    buffer = frames.pop() ?? "";
+    const frames = buffer.split('\n\n');
+    buffer = frames.pop() ?? '';
 
     for (const frame of frames) {
       const line = frame.trim();
-      if (!line.startsWith("data:")) continue;
+      if (!line.startsWith('data:')) continue;
       const payload = line.slice(5).trim();
-      if (payload === "[DONE]") {
+      if (payload === '[DONE]') {
         return { fullText, finishReason };
       }
       try {
@@ -802,7 +811,7 @@ async function pipeStream(
             finish_reason?: string | null;
           }>;
         };
-        const delta = parsed.choices?.[0]?.delta?.content ?? "";
+        const delta = parsed.choices?.[0]?.delta?.content ?? '';
         const fr = parsed.choices?.[0]?.finish_reason;
         if (delta) {
           fullText += delta;
@@ -826,9 +835,9 @@ async function pipeStream(
 /** Operator-facing error copy for a failed advisory turn, by upstream status. */
 function advisoryErrorMessage(status: number): string {
   if (status === 429)
-    return "El modelo está saturado ahora mismo. Esperá unos segundos y volvé a intentar.";
+    return 'El modelo está saturado ahora mismo. Esperá unos segundos y volvé a intentar.';
   if (status === 413)
-    return "La conversación creció demasiado para el modelo. Reduje el contexto y reintenté; si sigue fallando, limpiá la conversación (🧹) y reformulá.";
+    return 'La conversación creció demasiado para el modelo. Reduje el contexto y reintenté; si sigue fallando, limpiá la conversación (🧹) y reformulá.';
   return `El proveedor respondió ${status}. Intentá de nuevo en un momento.`;
 }
 
@@ -847,9 +856,9 @@ async function streamChat(
     // before we give up on it and fall through to the next provider.
     for (;;) {
       const upstream = await fetch(target.url, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${target.apiKey}`,
         },
         body: JSON.stringify({
@@ -866,7 +875,7 @@ async function streamChat(
         return { ...out, model: target.model };
       }
 
-      const text = await upstream.text().catch(() => "");
+      const text = await upstream.text().catch(() => '');
       console.warn(
         `[fotosintesis-ai] advisory upstream ${upstream.status} via ${target.label} (${target.model}): ${text.slice(0, 300)}`,
       );
@@ -878,13 +887,13 @@ async function streamChat(
       }
       if (isLast) {
         sseWrite(res, { error: advisoryErrorMessage(upstream.status) });
-        return { fullText: "", finishReason: "error", model: target.model };
+        return { fullText: '', finishReason: 'error', model: target.model };
       }
       // Not the last target → fall through and try the next provider.
       break;
     }
   }
-  return { fullText: "", finishReason: "error", model: DEFAULT_MODEL };
+  return { fullText: '', finishReason: 'error', model: DEFAULT_MODEL };
 }
 
 async function recordSummaryToConvex(args: {
@@ -900,8 +909,8 @@ async function recordSummaryToConvex(args: {
   const convexUrl = process.env.CONVEX_URL?.trim();
   if (!convexUrl) return;
   try {
-    const { ConvexHttpClient } = await import("convex/browser");
-    const { api } = await import("../convex/_generated/api.js");
+    const { ConvexHttpClient } = await import('convex/browser');
+    const { api } = await import('../convex/_generated/api.js');
     const client = new ConvexHttpClient(convexUrl);
     // Casting through unknown because the generated `api` doesn't yet
     // include fotosintesisAi until `convex dev` runs; treating defensively.
@@ -911,7 +920,7 @@ async function recordSummaryToConvex(args: {
     if (!ref) return;
     await client.mutation(ref as never, args as never);
   } catch (err) {
-    console.warn("[fotosintesis-ai] recordSummary failed:", err);
+    console.warn('[fotosintesis-ai] recordSummary failed:', err);
   }
 }
 
@@ -919,13 +928,13 @@ function buildSummary(
   history: Array<{ role: string; content: string }>,
   lastAssistant: string,
 ): string {
-  const lastUser = [...history].reverse().find((m) => m.role === "user");
+  const lastUser = [...history].reverse().find((m) => m.role === 'user');
   const userPart = lastUser?.content
-    ? lastUser.content.slice(0, 140).replace(/\s+/g, " ").trim()
-    : "(sin pregunta)";
+    ? lastUser.content.slice(0, 140).replace(/\s+/g, ' ').trim()
+    : '(sin pregunta)';
   const aiPart = lastAssistant
-    ? lastAssistant.slice(0, 160).replace(/\s+/g, " ").trim()
-    : "(sin respuesta)";
+    ? lastAssistant.slice(0, 160).replace(/\s+/g, ' ').trim()
+    : '(sin respuesta)';
   return `P: ${userPart} · R: ${aiPart}`;
 }
 
@@ -979,41 +988,41 @@ function snapshotToGuidedContext(
   fichas?: string,
 ): string {
   const priorKeys =
-    priorDraft && typeof priorDraft === "object"
+    priorDraft && typeof priorDraft === 'object'
       ? Object.keys(priorDraft as Record<string, unknown>).length
       : 0;
   return [
-    "Contexto vivo del atelier (úsalo para inferir y NO volver a preguntar):",
+    'Contexto vivo del atelier (úsalo para inferir y NO volver a preguntar):',
     `Ruta actual: ${route}`,
     buildAtelierResumen(snapshot),
     flow && isGuidedFlow(flow)
       ? `Flujo en curso (no lo cambies salvo que Maritza pida claramente otra cosa): ${flow}`
-      : "Aún sin flujo definido: clasifícalo en este turno.",
+      : 'Aún sin flujo definido: clasifícalo en este turno.',
     priorKeys > 0
       ? `Borrador acumulado (continúa desde aquí, no repreguntes lo que ya está): ${JSON.stringify(priorDraft).slice(0, 2000)}`
-      : "",
+      : '',
     loteContext
       ? `Lote activo: ${JSON.stringify(loteContext)}`
-      : "Sin lote activo en la ruta.",
+      : 'Sin lote activo en la ruta.',
     Array.isArray(candidateItems) && candidateItems.length > 0
       ? `Ítems del inventario Fotosíntesis (para resolver referencias por número/nombre; da solo el itemHint y el sistema resuelve): ${JSON.stringify(candidateItems).slice(0, 3000)}`
-      : "",
+      : '',
     treasureSummary
       ? `Catálogo Treasure (inventario completo previo a Fotosíntesis — todos los ítems con su estado): ${treasureSummary}`
-      : "",
-    fichas || "",
+      : '',
+    fichas || '',
     // `snapshot` is undefined when the client posts before the Convex workspace
     // query resolves (or with Convex offline). JSON.stringify(undefined) is
     // undefined, not a string — guard with `?? null` so `.slice` never throws.
     `Snapshot JSON: ${JSON.stringify(snapshot ?? null).slice(0, 2200)}`,
   ]
     .filter(Boolean)
-    .join("\n");
+    .join('\n');
 }
 
 function advisoryFallback(say: string, model: string): GuidedEnvelope {
   return {
-    flow: "advisory",
+    flow: 'advisory',
     say,
     draft: {},
     missing: [],
@@ -1049,7 +1058,7 @@ async function buildGuidedEnvelope(args: {
   // even when the item is outside the sample window. Resolves across the full
   // sheet cache plus the enriched candidate list.
   const lastUserText =
-    [...args.messages].reverse().find((m) => m.role === "user")?.content ?? "";
+    [...args.messages].reverse().find((m) => m.role === 'user')?.content ?? '';
   const guidedFichas = formatItemFichas(
     resolveMentionedItems(lastUserText, [
       sheetCache?.treasureItems ?? [],
@@ -1059,9 +1068,9 @@ async function buildGuidedEnvelope(args: {
   );
 
   const fullMessages = [
-    { role: "system", content: buildGuidedSystemPrompt(args.accessLevel) },
+    { role: 'system', content: buildGuidedSystemPrompt(args.accessLevel) },
     {
-      role: "system",
+      role: 'system',
       content: snapshotToGuidedContext(
         args.snapshot,
         args.route,
@@ -1074,8 +1083,8 @@ async function buildGuidedEnvelope(args: {
       ),
     },
     ...capTurns(args.messages).map((m) => ({
-      role: m.role === "assistant" ? "assistant" : "user",
-      content: String(m.content ?? "").slice(0, 4000),
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: String(m.content ?? '').slice(0, 4000),
     })),
   ];
 
@@ -1083,21 +1092,21 @@ async function buildGuidedEnvelope(args: {
   // the tiny aggregate résumé) + just the last user turn — no candidate list,
   // no treasure catalog, no history. Retried if the full payload 413s.
   const guidedMinimal = [
-    { role: "system", content: buildGuidedSystemPrompt(args.accessLevel) },
+    { role: 'system', content: buildGuidedSystemPrompt(args.accessLevel) },
     {
-      role: "system",
+      role: 'system',
       content: [
-        "Contexto reducido (la conversación creció demasiado; respondé igual con lo que tengas):",
+        'Contexto reducido (la conversación creció demasiado; respondé igual con lo que tengas):',
         `Ruta actual: ${args.route}`,
         isGuidedFlow(args.flow)
           ? `Flujo en curso: ${args.flow}`
-          : "Clasificá el flujo en este turno.",
+          : 'Clasificá el flujo en este turno.',
         buildAtelierResumen(args.snapshot),
       ]
         .filter(Boolean)
-        .join("\n"),
+        .join('\n'),
     },
-    { role: "user", content: String(lastUserText).slice(0, 2000) },
+    { role: 'user', content: String(lastUserText).slice(0, 2000) },
   ];
 
   let parsed: Record<string, unknown> | null = null;
@@ -1120,9 +1129,9 @@ async function buildGuidedEnvelope(args: {
   ): Promise<GuidedCall> => {
     try {
       const upstream = await fetchUpstreamWithRetry(target.url, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${target.apiKey}`,
         },
         body: JSON.stringify({
@@ -1134,14 +1143,14 @@ async function buildGuidedEnvelope(args: {
           max_tokens: 800,
           // Only on the Groq path — Gemini via the gateway 400s on json_object.
           ...(target.jsonMode
-            ? { response_format: { type: "json_object" } }
+            ? { response_format: { type: 'json_object' } }
             : {}),
         }),
       });
       if (!upstream.ok) {
         // Surface the real upstream reason in the logs (the friendly message
         // shown to the operator intentionally hides provider detail).
-        const errBody = await upstream.text().catch(() => "");
+        const errBody = await upstream.text().catch(() => '');
         console.warn(
           `[fotosintesis-ai] guided upstream ${upstream.status} via ${target.label} (${target.model}): ${errBody.slice(0, 500)}`,
         );
@@ -1149,14 +1158,14 @@ async function buildGuidedEnvelope(args: {
           ok: false,
           status: upstream.status,
           parsed: null,
-          rawText: "",
+          rawText: '',
           networkError: false,
         };
       }
       const data = (await upstream.json()) as {
         choices?: Array<{ message?: { content?: string } }>;
       };
-      const text = data.choices?.[0]?.message?.content ?? "";
+      const text = data.choices?.[0]?.message?.content ?? '';
       try {
         return {
           ok: true,
@@ -1183,7 +1192,7 @@ async function buildGuidedEnvelope(args: {
         ok: false,
         status: 0,
         parsed: null,
-        rawText: "",
+        rawText: '',
         networkError: true,
       };
     }
@@ -1213,7 +1222,7 @@ async function buildGuidedEnvelope(args: {
       return advisoryFallback(
         r.rawText.trim()
           ? r.rawText.trim().slice(0, 400)
-          : "No te entendí bien, ¿me lo repetís?",
+          : 'No te entendí bien, ¿me lo repetís?',
         target.model,
       );
     }
@@ -1222,11 +1231,11 @@ async function buildGuidedEnvelope(args: {
     if (!isLast) continue;
     return advisoryFallback(
       r.status === 429
-        ? "El modelo está saturado ahora mismo (límite de uso del proveedor). Esperá un minuto y volvé a intentar."
+        ? 'El modelo está saturado ahora mismo (límite de uso del proveedor). Esperá un minuto y volvé a intentar.'
         : r.status === 413
-          ? "La conversación creció demasiado para el modelo. Limpiá la conversación (🧹) y reformulá tu pedido."
+          ? 'La conversación creció demasiado para el modelo. Limpiá la conversación (🧹) y reformulá tu pedido.'
           : r.networkError
-            ? "No te entendí bien, ¿me lo repetís?"
+            ? 'No te entendí bien, ¿me lo repetís?'
             : `El modelo respondió ${r.status}. Intentá de nuevo en un momento.`,
       target.model,
     );
@@ -1234,34 +1243,34 @@ async function buildGuidedEnvelope(args: {
 
   if (!parsed) {
     return advisoryFallback(
-      "No te entendí bien, ¿me lo repetís?",
+      'No te entendí bien, ¿me lo repetís?',
       answeredModel,
     );
   }
 
   const modelFlow = isGuidedFlow(parsed?.flow) ? parsed.flow : null;
   const priorFlow = isGuidedFlow(args.flow) ? args.flow : null;
-  const flow: GuidedFlow = modelFlow ?? priorFlow ?? "advisory";
+  const flow: GuidedFlow = modelFlow ?? priorFlow ?? 'advisory';
 
   const say =
-    typeof parsed?.say === "string" && parsed.say.trim()
+    typeof parsed?.say === 'string' && parsed.say.trim()
       ? parsed.say.trim()
-      : flow === "advisory"
-        ? "¿En qué te ayudo?"
-        : "Seguimos.";
+      : flow === 'advisory'
+        ? '¿En qué te ayudo?'
+        : 'Seguimos.';
 
   const rawDraft =
-    parsed?.draft && typeof parsed.draft === "object"
+    parsed?.draft && typeof parsed.draft === 'object'
       ? (parsed.draft as GuidedDraft)
       : {};
 
   // Accumulate across turns: merge the new draft over the prior one when the
   // flow is unchanged (batch-edit takes the latest edit list, not a merge).
   const carryBase: GuidedDraft =
-    flow !== "batch-edit" &&
+    flow !== 'batch-edit' &&
     priorFlow === flow &&
     args.priorDraft &&
-    typeof args.priorDraft === "object"
+    typeof args.priorDraft === 'object'
       ? (args.priorDraft as GuidedDraft)
       : {};
   const mergedDraft: GuidedDraft = { ...carryBase, ...rawDraft };
@@ -1269,8 +1278,8 @@ async function buildGuidedEnvelope(args: {
   const whitelisted = whitelistDraft(flow, mergedDraft);
   const { draft: coerced, coercedKeys } = coerceVocabulary(flow, whitelisted);
   const missing = computeMissing(flow, coerced);
-  const ready = flow !== "advisory" && missing.length === 0;
-  const isBatch = flow === "batch-edit";
+  const ready = flow !== 'advisory' && missing.length === 0;
+  const isBatch = flow === 'batch-edit';
 
   // Validate + harden any model-proposed navigation. Role-gated server-side; the
   // client re-checks against the live session before actually routing.
@@ -1290,7 +1299,7 @@ async function buildGuidedEnvelope(args: {
     flow,
     say,
     draft: isBatch ? {} : coerced,
-    edits: isBatch ? (coerced.edits as GuidedEnvelope["edits"]) : undefined,
+    edits: isBatch ? (coerced.edits as GuidedEnvelope['edits']) : undefined,
     missing,
     ready,
     coercedKeys,
@@ -1309,25 +1318,25 @@ export default async function handler(
   const origin = req.headers.origin as string | undefined;
   const originOk = isAllowedOrigin(origin);
   res.setHeader(
-    "Access-Control-Allow-Origin",
+    'Access-Control-Allow-Origin',
     origin && originOk
       ? origin
-      : process.env.APP_URL?.trim() || "https://tierramadre.app",
+      : process.env.APP_URL?.trim() || 'https://tierramadre.app',
   );
-  res.setHeader("Vary", "Origin");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     res.status(originOk ? 204 : 403).end();
     return;
   }
   if (!originOk) {
-    res.status(403).json({ error: "Origen no permitido." });
+    res.status(403).json({ error: 'Origen no permitido.' });
     return;
   }
-  if (req.method !== "POST") {
-    res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Method not allowed' });
     return;
   }
 
@@ -1342,7 +1351,7 @@ export default async function handler(
     : { verified: false };
   if (enforceAuth && !identity.verified) {
     res.status(401).json({
-      error: "Autenticación requerida. Iniciá sesión y volvé a intentar.",
+      error: 'Autenticación requerida. Iniciá sesión y volvé a intentar.',
     });
     return;
   }
@@ -1368,23 +1377,23 @@ export default async function handler(
 
   const messages = Array.isArray(body.messages) ? body.messages : [];
   if (messages.length === 0) {
-    res.status(400).json({ error: "messages requerido" });
+    res.status(400).json({ error: 'messages requerido' });
     return;
   }
 
-  const route = body.route ?? "/admin/fotosintesis";
+  const route = body.route ?? '/admin/fotosintesis';
   const threadId = body.threadId ?? `anon-${Date.now()}`;
   // A verified id-token email (when present) wins over the untrusted body value.
   const userEmail =
-    identity.email || body.userEmail?.toLowerCase().trim() || "anon@local";
+    identity.email || body.userEmail?.toLowerCase().trim() || 'anon@local';
   const ip =
-    (req.headers["x-forwarded-for"] as string | undefined)
-      ?.split(",")[0]
-      ?.trim() ?? "unknown";
+    (req.headers['x-forwarded-for'] as string | undefined)
+      ?.split(',')[0]
+      ?.trim() ?? 'unknown';
   if (isRateLimited(`${ip}:${userEmail}`)) {
     res.status(429).json({
       error:
-        "Demasiadas consultas en poco tiempo. Espera unos segundos y vuelve a intentar.",
+        'Demasiadas consultas en poco tiempo. Espera unos segundos y vuelve a intentar.',
     });
     return;
   }
@@ -1394,12 +1403,12 @@ export default async function handler(
   // Guided data-entry mode (Fotosynthia v2): a single non-streaming JSON
   // round-trip returning the structured envelope. The advisory path below is
   // untouched.
-  if (body.mode === "guided") {
+  if (body.mode === 'guided') {
     const targets = resolveGuidedTargets();
     if (targets.length === 0) {
       res.status(503).json({
         error:
-          "Sin proveedor de IA configurado. Define AI_GATEWAY_API_KEY o GROQ_API_KEY en Vercel.",
+          'Sin proveedor de IA configurado. Define AI_GATEWAY_API_KEY o GROQ_API_KEY en Vercel.',
       });
       return;
     }
@@ -1428,7 +1437,7 @@ export default async function handler(
       routeAtStart: body.routeAtStart ?? route,
       routeLatest: route,
       summary: buildSummary(messages, envelope.say),
-      turnCount: messages.filter((m) => m.role === "user").length,
+      turnCount: messages.filter((m) => m.role === 'user').length,
       model: envelope.model ?? model,
     });
     return;
@@ -1441,7 +1450,7 @@ export default async function handler(
   if (advisoryTargets.length === 0) {
     res.status(503).json({
       error:
-        "Sin proveedor de IA configurado. Define AI_GATEWAY_API_KEY o GROQ_API_KEY en Vercel.",
+        'Sin proveedor de IA configurado. Define AI_GATEWAY_API_KEY o GROQ_API_KEY en Vercel.',
     });
     return;
   }
@@ -1463,7 +1472,7 @@ export default async function handler(
   // latest user turn names so the model has the authoritative price + estado to
   // ground on, instead of guessing.
   const lastUserText =
-    [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+    [...messages].reverse().find((m) => m.role === 'user')?.content ?? '';
   const advisoryFichas = advisorySheetCache
     ? formatItemFichas(
         resolveMentionedItems(lastUserText, [
@@ -1471,13 +1480,13 @@ export default async function handler(
           advisorySheetCache.fotoItems,
         ]),
       )
-    : "";
+    : '';
 
   // Compose the prompt: persona system + live context + (capped) history.
   const fullMessages = [
-    { role: "system", content: SYSTEM_PROMPT },
+    { role: 'system', content: SYSTEM_PROMPT },
     {
-      role: "system",
+      role: 'system',
       content: snapshotToContext(
         body.snapshot,
         route,
@@ -1486,8 +1495,8 @@ export default async function handler(
       ),
     },
     ...capTurns(messages).map((m) => ({
-      role: m.role === "assistant" ? "assistant" : "user",
-      content: String(m.content ?? "").slice(0, 4000),
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: String(m.content ?? '').slice(0, 4000),
     })),
   ];
 
@@ -1496,21 +1505,19 @@ export default async function handler(
   // retries with if the full request is rejected as too large.
   const advisoryResumen = buildAtelierResumen(body.snapshot);
   const advisoryMinimal = [
-    { role: "system", content: SYSTEM_PROMPT },
-    ...(advisoryResumen
-      ? [{ role: "system", content: advisoryResumen }]
-      : []),
-    { role: "user", content: String(lastUserText).slice(0, 2000) },
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...(advisoryResumen ? [{ role: 'system', content: advisoryResumen }] : []),
+    { role: 'user', content: String(lastUserText).slice(0, 2000) },
   ];
 
   // Open the SSE stream.
-  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
-  res.setHeader("Cache-Control", "no-cache, no-transform");
-  res.setHeader("Connection", "keep-alive");
-  res.setHeader("X-Accel-Buffering", "no");
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
   // Flush headers explicitly so the browser starts reading.
   if (
-    typeof (res as { flushHeaders?: () => void }).flushHeaders === "function"
+    typeof (res as { flushHeaders?: () => void }).flushHeaders === 'function'
   ) {
     (res as { flushHeaders: () => void }).flushHeaders();
   }
@@ -1533,7 +1540,7 @@ export default async function handler(
     routeAtStart: body.routeAtStart ?? route,
     routeLatest: route,
     summary: buildSummary(messages, fullText),
-    turnCount: messages.filter((m) => m.role === "user").length,
+    turnCount: messages.filter((m) => m.role === 'user').length,
     model: answeredModel,
   });
 }

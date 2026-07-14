@@ -9,7 +9,7 @@
 
 import { useState, useCallback } from 'react';
 import { useGoogleAuth } from '../contexts/GoogleAuthContext';
-import { readFreshGoogleIdToken } from '../utils/googleIdToken';
+import { readFreshAuthToken } from '../utils/sessionToken';
 import type {
   InvitationData,
   ValidationResult,
@@ -55,7 +55,11 @@ export const useInvitation = (): UseInvitationReturn => {
         return null;
       }
 
-      const idToken = readFreshGoogleIdToken();
+      // Google ID token when fresh, else the 30-day app session token — both
+      // are accepted server-side. Null only when the user hasn't signed in
+      // for over a month (the generator dialog then offers an inline
+      // re-login instead of a dead end).
+      const idToken = readFreshAuthToken();
       if (!idToken) {
         setError('Tu sesión expiró. Vuelve a iniciar sesión con Google.');
         return null;

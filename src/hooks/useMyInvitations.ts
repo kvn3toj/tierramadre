@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useMemo, useRef } from 'react';
 import { useConvexQuery, convexApi, convexReady } from '../lib/convex-safe';
-import { readFreshGoogleIdToken } from '../utils/googleIdToken';
+import { readFreshAuthToken } from '../utils/sessionToken';
 
 export interface Invitation {
   invitationId: string;
@@ -97,7 +97,7 @@ export function useMyInvitations(
   const updateMultiplier = useCallback(
     async (shortCode: string, multiplier: number): Promise<boolean> => {
       if (!creatorEmail) return false;
-      const idToken = readFreshGoogleIdToken();
+      const idToken = readFreshAuthToken();
       if (!idToken) return false;
       setMutatingCodes((prev) => new Set(prev).add(shortCode));
       try {
@@ -128,7 +128,7 @@ export function useMyInvitations(
   const expireInvitation = useCallback(
     async (shortCode: string): Promise<boolean> => {
       if (!creatorEmail) return false;
-      const idToken = readFreshGoogleIdToken();
+      const idToken = readFreshAuthToken();
       if (!idToken) return false;
       setMutatingCodes((prev) => new Set(prev).add(shortCode));
       try {

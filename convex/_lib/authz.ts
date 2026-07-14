@@ -20,6 +20,7 @@
  */
 
 import { ConvexError } from 'convex/values';
+import { isSessionToken, verifySessionToken } from './sessionToken';
 
 export type AccessLevel =
   | 'admin'
@@ -62,7 +63,9 @@ async function verifyGoogleIdToken(
     `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`,
   );
   if (!res.ok) {
-    throw new ConvexError('No autorizado: token de Google inválido o expirado.');
+    throw new ConvexError(
+      'No autorizado: token de Google inválido o expirado.',
+    );
   }
   const payload = (await res.json()) as GoogleTokenInfo;
 
@@ -121,15 +124,38 @@ async function fetchRosterEntry(email: string): Promise<{
 }
 
 /**
+ * Verifies the caller's identity token. Accepts either a raw Google ID token
+ * (fresh sign-in, dies ~1h after issue) or an app-issued "tms1" session token
+ * (30 days, minted by /api/validate?action=mint-session from a verified
+ * Google token — see _lib/sessionToken.ts). Both prove the caller controls
+ * that email; authorization always comes from the roster lookup afterwards.
+ */
+async function verifyCallerIdentity(
+  idToken: string,
+): Promise<{ email: string; name?: string }> {
+  if (isSessionToken(idToken)) {
+    const payload = await verifySessionToken(idToken);
+    if (!payload) {
+      throw new ConvexError(
+        'No autorizado: sesión inválida o expirada. Vuelve a iniciar sesión.',
+      );
+    }
+    return { email: payload.email };
+  }
+  return verifyGoogleIdToken(idToken);
+}
+
+/**
  * Verifies `idToken` server-side and requires the verified caller's role to
  * be one of `allowed`. Throws (fail closed) otherwise. Only call from an
- * `action` — needs network access.
+ * `action` — needs network access. `idToken` may be a Google ID token or an
+ * app session token (see verifyCallerIdentity above).
  */
 export async function requireAccessLevel(
   idToken: string,
   allowed: AccessLevel[],
 ): Promise<VerifiedCaller> {
-  const { email, name } = await verifyGoogleIdToken(idToken);
+  const { email, name } = await verifyCallerIdentity(idToken);
   const { accessLevel, rosterName, rosterRole } = await fetchRosterEntry(email);
   if (!allowed.includes(accessLevel)) {
     throw new ConvexError('No autorizado para esta acción.');

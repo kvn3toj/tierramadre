@@ -11,7 +11,7 @@ import { useCallback } from 'react';
 import { useQuery, useMutation, useAction, useConvex } from 'convex/react';
 import type { FunctionReference } from 'convex/server';
 import { api } from '../../convex/_generated/api';
-import { readFreshGoogleIdToken } from '../utils/googleIdToken';
+import { readFreshAuthToken } from '../utils/sessionToken';
 
 export const convexReady = !!import.meta.env.VITE_CONVEX_URL;
 export const convexApi = api;
@@ -57,7 +57,7 @@ export function useAuthedConvexAction<Args extends { idToken: string }, Result>(
   ) => Promise<Result>;
   return useCallback(
     (args: Omit<Args, 'idToken'>) => {
-      const idToken = readFreshGoogleIdToken();
+      const idToken = readFreshAuthToken();
       if (!idToken) {
         return Promise.reject(
           new Error(

@@ -17,6 +17,7 @@ import {
 import { googleLogout } from '@react-oauth/google';
 import { createLogger } from '../utils/logger';
 import { readFreshGoogleIdToken } from '../utils/googleIdToken';
+import { ensureAppSession, clearAppSession } from '../utils/sessionToken';
 import type { AccessLevel } from '../types/auth';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 
@@ -172,6 +173,7 @@ export function GoogleAuthProvider({
               localStorage.removeItem(GOOGLE_USER_KEY);
               localStorage.removeItem(GOOGLE_PREFS_KEY);
               localStorage.removeItem(GOOGLE_TOKEN_KEY);
+              clearAppSession();
               setUser(null);
               setPreferences({});
               setIsAuthorized(false);
@@ -208,13 +210,18 @@ export function GoogleAuthProvider({
     loadStoredUser();
   }, []);
 
-  // Proactive, BEST-EFFORT silent refresh of the GSI ID token.
+  // Proactive, BEST-EFFORT silent refresh of the GSI ID token — plus upkeep
+  // of the 30-day app session token (utils/sessionToken.ts).
   //
   // The raw credential in GOOGLE_TOKEN_KEY expires ~1h after sign-in and is
   // otherwise never renewed, so privileged actions (Vitrina share, invitations)
-  // hit "session expired" while ordinary browsing stays logged in. When the
-  // token has gone stale (readFreshGoogleIdToken() === null) we ask GSI for a
-  // silent renewal on mount, on window focus, and every 5 minutes.
+  // used to hit "session expired" while ordinary browsing stays logged in.
+  // Two layers now prevent that: (1) while a fresh Google credential exists we
+  // exchange it for an app session token that those actions can use for 30
+  // days (rolling-refreshed via ensureAppSession below, so it effectively
+  // never lapses for anyone who opens the app every few days); (2) when the
+  // token has gone stale (readFreshGoogleIdToken() === null) we still ask GSI
+  // for a silent renewal on mount, on window focus, and every few minutes.
   //
   // NOTE: this deliberately uses the native GSI global (window.google.accounts.id)
   // rather than @react-oauth/google's useGoogleOneTapLogin hook. In the common
@@ -259,7 +266,12 @@ export function GoogleAuthProvider({
     let initialized = false;
 
     const attemptSilentRefresh = () => {
-      // Token still fresh — nothing to do.
+      // Keep the 30-day app session token minted/refreshed. Self-throttling
+      // (no-ops unless the session is missing or in its refresh window), so
+      // calling it on every tick is cheap.
+      void ensureAppSession();
+
+      // Google token still fresh — nothing more to do.
       if (readFreshGoogleIdToken()) return;
 
       const gsi = (
@@ -282,6 +294,9 @@ export function GoogleAuthProvider({
               // Re-store the fresh credential WITHOUT a full re-validation flash.
               localStorage.setItem(GOOGLE_TOKEN_KEY, response.credential);
               log.debug('Silently refreshed Google ID token');
+              // Fresh Google credential in hand — the ideal moment to extend
+              // the 30-day app session token.
+              void ensureAppSession();
             },
           });
           initialized = true;
@@ -411,6 +426,10 @@ export function GoogleAuthProvider({
         setUser(profile);
         localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(profile));
         localStorage.setItem(GOOGLE_TOKEN_KEY, credential);
+        // Exchange the fresh (≤1h) Google credential for the 30-day app
+        // session token that keeps invitations/Vitrina working between
+        // sign-ins. Best-effort — never blocks or fails the sign-in.
+        void ensureAppSession();
 
         // Try to load preferences from API
         try {
@@ -457,6 +476,7 @@ export function GoogleAuthProvider({
     localStorage.removeItem(GOOGLE_USER_KEY);
     localStorage.removeItem(GOOGLE_PREFS_KEY);
     localStorage.removeItem(GOOGLE_TOKEN_KEY);
+    clearAppSession();
     onSignedOut?.();
   }, [onSignedOut]);
 
