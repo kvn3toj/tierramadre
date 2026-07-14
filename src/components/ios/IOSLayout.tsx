@@ -6,7 +6,13 @@
  * - Page config system for route-specific settings
  */
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box, IconButton } from '@mui/material';
 import {
@@ -26,7 +32,12 @@ import IOSSettingsSheet from './IOSSettingsSheet';
 import ScrollRestoration from '../shared/ScrollRestoration';
 import { InvitationBanner } from '../invitation';
 import { CopilotRail } from '../../pages/admin/Fotosintesis/copilot-rail/CopilotRail';
-import { zIndex, defaultShadows } from '../../design-system';
+import {
+  zIndex,
+  defaultShadows,
+  appShell,
+  bottomBarClearance,
+} from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 
@@ -190,6 +201,38 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
   const [settingsSheetOpen, setSettingsSheetOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const mainRef = useRef<HTMLElement | null>(null);
+
+  // Fotosíntesis mounts its own top/bottom chrome (FotoTopbar + FotoTabBar),
+  // so the shell suppresses the global nav bar there — one top chrome per view.
+  const isFotoRoute = location.pathname.startsWith('/admin/fotosintesis');
+
+  // Publish the measured height of <main> as --app-main-height so pages can
+  // size panes from the real scrollport instead of guessing calc(100vh - N).
+  // Imperative (no state) — same pattern as CopilotRail's --copilot-rail-width.
+  useEffect(() => {
+    const main = mainRef.current;
+    if (!main || typeof ResizeObserver === 'undefined') return;
+    let lastHeight = -1;
+    const publish = () => {
+      const height = main.clientHeight;
+      if (height !== lastHeight) {
+        lastHeight = height;
+        document.documentElement.style.setProperty(
+          appShell.mainHeightVar,
+          `${height}px`,
+        );
+      }
+    };
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(main);
+    return () => {
+      observer.disconnect();
+      // Re-engage the CSS fallback (100dvh) when the shell unmounts.
+      document.documentElement.style.removeProperty(appShell.mainHeightVar);
+    };
+  }, []);
 
   // Track fullscreen state changes
   useEffect(() => {
@@ -286,62 +329,68 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
       {/* Invitation countdown banner - shows for invited guests */}
       <InvitationBanner />
 
-      <IOSNavigationBar
-        mode={pageConfig.mode}
-        title={pageConfig.title}
-        subtitle={pageConfig.subtitle}
-        logoUrl={
-          pageConfig.forceLogoUrl ||
-          (pageConfig.logoUrl
-            ? isLight
-              ? '/images/logo-horizontal-dark.png'
-              : '/images/logo-horizontal-white.png'
-            : undefined)
-        }
-        showBackButton={pageConfig.showBackButton}
-        leadingActions={pageConfig.leadingActions}
-        trailingActions={pageConfig.trailingActions}
-        trailingElement={
-          supportsFullscreen ? (
-            <IconButton
-              onClick={toggleFullscreen}
-              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-              size="small"
-              sx={{
-                color: 'var(--brand-primary)',
-                padding: '6px',
-                opacity: 0.7,
-                '&:hover': {
-                  opacity: 1,
-                  backgroundColor: 'var(--surface-tertiary)',
-                },
-              }}
-            >
-              {isFullscreen ? (
-                <FullscreenExit fontSize="small" />
-              ) : (
-                <Fullscreen fontSize="small" />
-              )}
-            </IconButton>
-          ) : undefined
-        }
-        backgroundColor={pageConfig.backgroundColor}
-      />
+      {/* Suppressed on Fotosíntesis: FotoTopbar is the sole top chrome there. */}
+      {!isFotoRoute && (
+        <IOSNavigationBar
+          mode={pageConfig.mode}
+          title={pageConfig.title}
+          subtitle={pageConfig.subtitle}
+          logoUrl={
+            pageConfig.forceLogoUrl ||
+            (pageConfig.logoUrl
+              ? isLight
+                ? '/images/logo-horizontal-dark.png'
+                : '/images/logo-horizontal-white.png'
+              : undefined)
+          }
+          showBackButton={pageConfig.showBackButton}
+          leadingActions={pageConfig.leadingActions}
+          trailingActions={pageConfig.trailingActions}
+          trailingElement={
+            supportsFullscreen ? (
+              <IconButton
+                onClick={toggleFullscreen}
+                aria-label={
+                  isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'
+                }
+                size="small"
+                sx={{
+                  color: 'var(--brand-primary)',
+                  padding: '6px',
+                  opacity: 0.7,
+                  '&:hover': {
+                    opacity: 1,
+                    backgroundColor: 'var(--surface-tertiary)',
+                  },
+                }}
+              >
+                {isFullscreen ? (
+                  <FullscreenExit fontSize="small" />
+                ) : (
+                  <Fullscreen fontSize="small" />
+                )}
+              </IconButton>
+            ) : undefined
+          }
+          backgroundColor={pageConfig.backgroundColor}
+        />
+      )}
 
       <Box
         component="main"
         id="main-content"
         tabIndex={0}
+        ref={mainRef}
         sx={{
           flex: 1,
           minHeight: 0, // Override flexbox implicit min-height: auto so overflowY works
-          // Tab bar: 12px top + 62px pill + 21px bottom + safe-area = 95px + safe-area.
+          // Tab bar reservation (appShell.tabBarReserve + safe-area).
           // Fotosíntesis suppresses this global bar and mounts its own FotoTabBar
           // (which reserves its own space in FotosintesisLayout), so don't
           // double-book the reservation on /admin/fotosintesis routes.
-          paddingBottom: location.pathname.startsWith('/admin/fotosintesis')
+          paddingBottom: isFotoRoute
             ? 0
-            : `calc(95px + env(safe-area-inset-bottom))`,
+            : bottomBarClearance(appShell.tabBarReserve),
           overflowY: 'auto',
           WebkitOverflowScrolling: 'touch',
           // iOS HIG: Improve scroll performance and touch handling

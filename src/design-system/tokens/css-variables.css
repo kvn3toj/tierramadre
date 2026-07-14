@@ -10,6 +10,13 @@
   /* === VIEWPORT === */
   --vh: 1vh; /* Will be set by JavaScript for better iPad support */
 
+  /* === APP SHELL (see src/design-system/README.md § Navigation UX Rules) === */
+  /* Measured clientHeight of <main id="main-content">, published by IOSLayout's
+     ResizeObserver. This fallback covers first paint before the observer fires. */
+  --app-main-height: 100dvh;
+  /* Docked Copilot rail width, published by CopilotRail. 0 when closed/overlay. */
+  --copilot-rail-width: 0px;
+
   /* === EMERALD BRAND === */
   --emerald-500: #00ae7a;
   --emerald-400: #33ffbf;
@@ -56,6 +63,13 @@
 
   /* === BACKDROP BLUR === */
   --backdrop-blur-ios: blur(20px) saturate(180%);
+}
+
+/* dvh fallback for the app-shell viewport var (older Safari/Chrome) */
+@supports not (height: 100dvh) {
+  :root {
+    --app-main-height: 100vh;
+  }
 }
 
 /* === LIGHT THEME (Default) — Quiet Emerald === */
@@ -406,7 +420,8 @@ body {
       position: fixed !important;
       bottom: 0 !important;
       left: 0 !important;
-      right: 0 !important;
+      /* Consume the docked Copilot rail width so the bar shifts with content */
+      right: var(--copilot-rail-width, 0px) !important;
       /* NOTE: transform is intentionally NOT set here. The IOSTabBar component
          owns its own transform (translate3d + willChange) so it can slide
          out of view on desktop Fotosíntesis routes. A global transform here
@@ -445,7 +460,9 @@ nav[aria-label='Primary navigation'] {
   position: fixed;
   bottom: 0;
   left: 0;
-  right: 0;
+  /* Consume the docked Copilot rail width so the bar shifts with content
+     (this attribute selector outranks the component's emotion class). */
+  right: var(--copilot-rail-width, 0px);
   z-index: 1000;
   /* NOTE: transform is intentionally NOT set here — the IOSTabBar component
      owns its own transform (translate3d + willChange) for the GPU layer AND

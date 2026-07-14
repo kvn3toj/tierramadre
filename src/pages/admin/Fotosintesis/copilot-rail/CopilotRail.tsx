@@ -1,28 +1,28 @@
-import { useCallback, useEffect, useRef } from "react";
-import { Box, Drawer, Tooltip } from "@mui/material";
-import { useLocation } from "react-router-dom";
-import { Sparkles } from "lucide-react";
-import { getFoto } from "../../../../design-system";
-import { useIsStaff } from "../../../../hooks/usePermissions";
-import { CopilotPanel } from "../components/CopilotPanel";
-import { CopilotRailHeader } from "./CopilotRailHeader";
-import { CopilotNavMap } from "./CopilotNavMap";
+import { useCallback, useEffect, useRef } from 'react';
+import { Box, Drawer, Tooltip } from '@mui/material';
+import { useLocation } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
+import { getFoto } from '../../../../design-system';
+import { useIsStaff } from '../../../../hooks/usePermissions';
+import { CopilotPanel } from '../components/CopilotPanel';
+import { CopilotRailHeader } from './CopilotRailHeader';
+import { CopilotNavMap } from './CopilotNavMap';
 import {
   RAIL_MAX_WIDTH,
   RAIL_MIN_WIDTH,
   clampRailWidth,
   useCopilotRail,
-} from "./CopilotRailContext";
+} from './CopilotRailContext';
 
-const RAIL_VAR = "--copilot-rail-width";
+const RAIL_VAR = '--copilot-rail-width';
 
 /** Back-office surfaces where the companion appears (never the public storefront). */
 function onBackOffice(pathname: string): boolean {
   return (
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/cuentas") ||
-    pathname.startsWith("/solicitudes") ||
-    pathname.startsWith("/mi-perfil")
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/cuentas') ||
+    pathname.startsWith('/solicitudes') ||
+    pathname.startsWith('/mi-perfil')
   );
 }
 
@@ -31,15 +31,15 @@ function RailBody({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
         minHeight: 0,
       }}
     >
       <CopilotRailHeader onClose={onClose} />
       <CopilotNavMap />
-      <Box sx={{ flex: 1, minHeight: 0, display: "flex" }}>
+      <Box sx={{ flex: 1, minHeight: 0, display: 'flex' }}>
         <CopilotPanel active={open} />
       </Box>
     </Box>
@@ -53,7 +53,7 @@ function RailBody({ open, onClose }: { open: boolean; onClose: () => void }) {
  * for staff on back-office routes.
  */
 export function CopilotRail() {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const location = useLocation();
   const isStaff = useIsStaff();
   const { open, mode, width, openRail, closeRail, setWidth } = useCopilotRail();
@@ -63,17 +63,19 @@ export function CopilotRail() {
   const visible =
     isStaff &&
     onBackOffice(location.pathname) &&
-    !location.pathname.includes("/admin/fotosintesis/copilot/");
-  const docked = mode === "docked";
+    !location.pathname.includes('/admin/fotosintesis/copilot/');
+  const docked = mode === 'docked';
   const pushing = visible && docked && open;
 
-  // Drive the content push: nav bar, <main>, and the tab bar all consume this
-  // CSS var. Set imperatively during drag (no re-render storm), reset on unmount.
+  // Drive the content push: IOSLayout's root paddingRight plus the fixed
+  // bottom bars (IOSTabBar via css-variables.css, FotoTabBar, BulkActionBar)
+  // consume this CSS var — see "Navigation UX Rules" in design-system/README.md.
+  // Set imperatively during drag (no re-render storm), reset on unmount.
   useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty(RAIL_VAR, pushing ? `${width}px` : "0px");
+    root.style.setProperty(RAIL_VAR, pushing ? `${width}px` : '0px');
     return () => {
-      root.style.setProperty(RAIL_VAR, "0px");
+      root.style.setProperty(RAIL_VAR, '0px');
     };
   }, [pushing, width]);
 
@@ -83,7 +85,7 @@ export function CopilotRail() {
       e.preventDefault();
       draggingRef.current = true;
       const root = document.documentElement;
-      document.body.style.userSelect = "none";
+      document.body.style.userSelect = 'none';
       const onMove = (ev: PointerEvent) => {
         if (!draggingRef.current) return;
         const next = clampRailWidth(
@@ -97,28 +99,28 @@ export function CopilotRail() {
         setWidth(
           clampRailWidth(window.innerWidth - ev.clientX, window.innerWidth),
         );
-        window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("pointerup", onUp);
-        document.body.style.userSelect = "";
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        document.body.style.userSelect = '';
       };
-      window.addEventListener("pointermove", onMove);
-      window.addEventListener("pointerup", onUp);
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
     },
     [setWidth],
   );
 
   const onGutterKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === "ArrowLeft") {
+      if (e.key === 'ArrowLeft') {
         e.preventDefault();
         setWidth(width + 16);
-      } else if (e.key === "ArrowRight") {
+      } else if (e.key === 'ArrowRight') {
         e.preventDefault();
         setWidth(width - 16);
-      } else if (e.key === "Home") {
+      } else if (e.key === 'Home') {
         e.preventDefault();
         setWidth(RAIL_MAX_WIDTH);
-      } else if (e.key === "End") {
+      } else if (e.key === 'End') {
         e.preventDefault();
         setWidth(RAIL_MIN_WIDTH);
       }
@@ -139,28 +141,28 @@ export function CopilotRail() {
           aria-expanded={false}
           onClick={openRail}
           sx={{
-            position: "fixed",
+            position: 'fixed',
             right: 0,
-            top: "50%",
-            transform: "translateY(-50%)",
+            top: '50%',
+            transform: 'translateY(-50%)',
             zIndex: 1240,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             width: 34,
             height: 92,
             padding: 0,
             border: `1px solid ${foto.surfaces.edge}`,
-            borderRight: "none",
-            borderRadius: "12px 0 0 12px",
+            borderRight: 'none',
+            borderRadius: '12px 0 0 12px',
             background: foto.accent.primary,
             color: foto.ink.inverse,
-            cursor: "pointer",
+            cursor: 'pointer',
             boxShadow: `-6px 0 22px ${foto.accent.glow}`,
-            transition: "background 120ms ease, width 160ms ease",
-            "&:hover": { background: foto.accent.deep, width: 38 },
-            "&:focus-visible": {
-              outline: "none",
+            transition: 'background 120ms ease, width 160ms ease',
+            '&:hover': { background: foto.accent.deep, width: 38 },
+            '&:focus-visible': {
+              outline: 'none',
               boxShadow: `0 0 0 3px ${foto.accent.glow}`,
             },
           }}
@@ -180,14 +182,14 @@ export function CopilotRail() {
         onClose={closeRail}
         PaperProps={{
           sx: {
-            width: { xs: "100vw", sm: "min(400px, 92vw)" },
-            maxWidth: "100vw",
+            width: { xs: '100vw', sm: 'min(400px, 92vw)' },
+            maxWidth: '100vw',
             background: foto.surfaces.canvas,
             borderLeft: `1px solid ${foto.surfaces.edge}`,
             boxShadow: `-30px 0 80px ${foto.accent.glow}`,
           },
         }}
-        ModalProps={{ "aria-label": "Fotosynthia copiloto" }}
+        ModalProps={{ 'aria-label': 'Fotosynthia copiloto' }}
       >
         <RailBody open={open} onClose={closeRail} />
       </Drawer>
@@ -200,16 +202,16 @@ export function CopilotRail() {
       role="complementary"
       aria-label="Fotosynthia copiloto"
       sx={{
-        position: "fixed",
+        position: 'fixed',
         top: 0,
         right: 0,
-        height: "100dvh",
+        height: '100dvh',
         width: `var(${RAIL_VAR}, ${width}px)`,
         zIndex: 1250,
         background: foto.surfaces.canvas,
         borderLeft: `1px solid ${foto.surfaces.edge}`,
-        display: "flex",
-        flexDirection: "column",
+        display: 'flex',
+        flexDirection: 'column',
         minHeight: 0,
       }}
     >
@@ -225,27 +227,27 @@ export function CopilotRail() {
         onPointerDown={onGutterPointerDown}
         onKeyDown={onGutterKeyDown}
         sx={{
-          position: "absolute",
+          position: 'absolute',
           left: -3,
           top: 0,
           bottom: 0,
           width: 8,
-          cursor: "col-resize",
+          cursor: 'col-resize',
           zIndex: 1,
-          "&::after": {
+          '&::after': {
             content: '""',
-            position: "absolute",
+            position: 'absolute',
             left: 2,
             top: 0,
             bottom: 0,
             width: 1,
-            background: "transparent",
-            transition: "background 120ms ease",
+            background: 'transparent',
+            transition: 'background 120ms ease',
           },
-          "&:hover::after": { background: foto.accent.primary, opacity: 0.4 },
-          "&:focus-visible": {
-            outline: "none",
-            "&::after": {
+          '&:hover::after': { background: foto.accent.primary, opacity: 0.4 },
+          '&:focus-visible': {
+            outline: 'none',
+            '&::after': {
               background: foto.accent.primary,
               opacity: 0.7,
               width: 2,

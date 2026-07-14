@@ -1,9 +1,10 @@
-import { useMediaQuery } from "@mui/material";
+import { useMediaQuery } from '@mui/material';
+import { layoutBreakpoints } from '../../design-system';
 
-export type EsmereoBp = "mobile" | "ipad" | "desktop";
+export type EsmereoBp = 'mobile' | 'ipad' | 'desktop';
 
-/** Desktop side-nav / bottom-bar handoff threshold (kept in sync with IOSTabBar). */
-export const ESMEREO_DESKTOP_MIN = 1180;
+/** Desktop side-nav / bottom-bar handoff threshold (single source: layoutBreakpoints). */
+export const ESMEREO_DESKTOP_MIN = layoutBreakpoints.desktop;
 const ESMEREO_IPAD_MIN = 760;
 
 /**
@@ -15,5 +16,5 @@ const ESMEREO_IPAD_MIN = 760;
 export function useEsmereoBp(): EsmereoBp {
   const upIpad = useMediaQuery(`(min-width:${ESMEREO_IPAD_MIN}px)`);
   const upDesktop = useMediaQuery(`(min-width:${ESMEREO_DESKTOP_MIN}px)`);
-  return upDesktop ? "desktop" : upIpad ? "ipad" : "mobile";
+  return upDesktop ? 'desktop' : upIpad ? 'ipad' : 'mobile';
 }

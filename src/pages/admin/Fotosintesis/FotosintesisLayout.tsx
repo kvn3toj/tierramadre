@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Box } from '@mui/material';
-import { getFoto } from '../../../design-system';
+import { getFoto, appShell, bottomBarClearance } from '../../../design-system';
 import { convexApi, useConvexClient } from '../../../lib/convex-safe';
 import { FotoTopbar, type Crumb } from './components/FotoTopbar';
 import { FotoTabBar } from './components/FotoTabBar';
@@ -236,7 +236,9 @@ export default function FotosintesisLayout() {
         // overflowing their grid cells). Covers every in-layout form.
         data-foto-admin
         sx={{
-          minHeight: '100vh',
+          // Fill the real scrollport (<main>'s measured height), not a raw
+          // viewport guess — see Navigation UX rule 2.
+          minHeight: `var(${appShell.mainHeightVar}, 100dvh)`,
           background: foto.surfaces.canvas,
           color: foto.ink.primary,
           fontFamily:
@@ -265,8 +267,12 @@ export default function FotosintesisLayout() {
             // the workbench is a scrolling document and needs tab-bar clearance so
             // its composer stays reachable (M2).
             paddingBottom: inWorkbench
-              ? { xs: 'calc(96px + env(safe-area-inset-bottom, 0px))', lg: 0 }
-              : 'calc(92px + env(safe-area-inset-bottom, 0px))',
+              ? {
+                  // +4px breathing room above the composer (M2).
+                  xs: bottomBarClearance(appShell.fotoTabBarReserve + 4),
+                  lg: 0,
+                }
+              : bottomBarClearance(appShell.fotoTabBarReserve),
           }}
         >
           <Outlet />

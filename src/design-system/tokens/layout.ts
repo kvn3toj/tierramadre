@@ -32,8 +32,42 @@ export const layoutConstants = {
 } as const;
 
 // =============================================================================
-// BORDER RADIUS SCALE
+// APP SHELL (fixed-viewport single-scroller architecture)
 // =============================================================================
+
+/**
+ * The app is a fixed-viewport shell: body { overflow: hidden } and the ONLY
+ * page scroller is <main id="main-content"> inside IOSLayout. These tokens are
+ * the single source of truth for the shell's published CSS vars and the
+ * bottom-bar reservations. See "Navigation UX Rules" in src/design-system/README.md.
+ */
+export const appShell = {
+  /** CSS var: measured clientHeight of <main id="main-content">, published by
+   *  IOSLayout via ResizeObserver. Always read with a 100dvh fallback. */
+  mainHeightVar: '--app-main-height',
+  /** CSS var: docked Copilot rail width, published by CopilotRail. 0px when
+   *  closed/overlay. Fixed chrome pinned to the right edge must consume it. */
+  railWidthVar: '--copilot-rail-width',
+  /** Global IOSTabBar bottom reservation: 12 top + 62 pill + 21 bottom (px, + safe-area). */
+  tabBarReserve: 95,
+  /** FotoTabBar bottom reservation on /admin/fotosintesis routes (px, + safe-area). */
+  fotoTabBarReserve: 92,
+} as const;
+
+// =============================================================================
+// NAMED PX BREAKPOINTS (outside the MUI scale — use sparingly)
+// =============================================================================
+
+/**
+ * The only custom px breakpoints allowed in the app. Everything else uses MUI
+ * theme breakpoints (sm 600 / md 900 / lg 1200 / xl 1536) via sx objects.
+ */
+export const layoutBreakpoints = {
+  /** Below this the Copilot rail can't push content → temporary overlay. */
+  railDock: 1024,
+  /** Desktop tier: global tab bar hides, esmereo desktop layouts engage. */
+  desktop: 1180,
+} as const;
 
 // =============================================================================
 // Z-INDEX SCALE (Semantic Layering)
@@ -72,14 +106,14 @@ export const zIndex = {
 
 export const radius = {
   none: '0',
-  xs: '0.25rem',    // 4px
-  sm: '0.375rem',   // 6px
-  md: '0.5rem',     // 8px
+  xs: '0.25rem', // 4px
+  sm: '0.375rem', // 6px
+  md: '0.5rem', // 8px
   /** 10px - iOS standard (buttons, inputs) */
-  mlg: '0.625rem',  // 10px
-  lg: '0.75rem',    // 12px
-  xl: '1rem',       // 16px
+  mlg: '0.625rem', // 10px
+  lg: '0.75rem', // 12px
+  xl: '1rem', // 16px
   '2xl': '1.25rem', // 20px
-  '3xl': '1.5rem',  // 24px
+  '3xl': '1.5rem', // 24px
   full: '9999px',
 } as const;

@@ -21,6 +21,7 @@ import { slugifyBuyerName } from '../../../utils/slugify';
 import { cancelToast } from './utils/cancelToast';
 import { FOTO_PREVIEW_FELT } from './VentaPage';
 import { FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
+import { fotoPaneSx } from './components/paneStyles';
 import {
   useConvexQuery,
   useAuthedConvexAction,
@@ -649,13 +650,9 @@ export default function VentaDetailPage() {
           sx={{
             background: FOTO_PREVIEW_FELT,
             padding: '28px 24px',
-            position: { xs: 'static', lg: 'sticky' },
-            top: FOTO_TOPBAR_HEIGHT,
-            maxHeight: {
-              xs: 'none',
-              lg: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
-            },
-            overflowY: 'auto',
+            // Spread last: its lg paddingBottom (FotoTabBar clearance) must
+            // beat the padding shorthand above.
+            ...fotoPaneSx,
           }}
         >
           <Box

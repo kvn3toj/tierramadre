@@ -27,6 +27,7 @@ import { useNotification } from '../../../contexts/NotificationContext';
 import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
 import { TicketHeader } from './components/TicketHeader';
 import { FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
+import { fotoPaneSx, fotoPageMinHeight } from './components/paneStyles';
 import { StepPills } from './components/StepPills';
 import { spanishText } from './utils/fieldLang';
 import { SegmentedControl } from './components/SegmentedControl';
@@ -960,7 +961,7 @@ export default function FotosintesisVentaPage({
       sx={{
         background: foto.surfaces.canvas,
         color: foto.ink.primary,
-        minHeight: embedded ? '100%' : 'calc(100vh - 56px)',
+        minHeight: embedded ? '100%' : fotoPageMinHeight,
       }}
     >
       {!embedded && (
@@ -1003,7 +1004,10 @@ export default function FotosintesisVentaPage({
           gap: 0,
           maxWidth: embedded ? 'none' : 1320,
           margin: '0 auto',
-          minHeight: embedded ? 0 : 'calc(100vh - 56px - 110px)',
+          // Scrollport minus FotoTopbar (56) minus TicketHeader (~110).
+          minHeight: embedded
+            ? 0
+            : `calc(var(--app-main-height, 100dvh) - ${FOTO_TOPBAR_HEIGHT}px - 110px)`,
         }}
       >
         {/* ───── LEFT pane (form) ───── */}
@@ -1783,13 +1787,9 @@ export default function FotosintesisVentaPage({
           sx={{
             background: FOTO_PREVIEW_FELT,
             padding: '28px 24px',
-            position: { xs: 'static', lg: 'sticky' },
-            top: FOTO_TOPBAR_HEIGHT,
-            maxHeight: {
-              xs: 'none',
-              lg: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
-            },
-            overflowY: 'auto',
+            // Spread last: its lg paddingBottom (FotoTabBar clearance) must
+            // beat the padding shorthand above.
+            ...fotoPaneSx,
           }}
         >
           <Box
