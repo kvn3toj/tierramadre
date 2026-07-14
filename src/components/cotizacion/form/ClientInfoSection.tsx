@@ -12,14 +12,12 @@ import {
   Autocomplete,
   Avatar,
   Chip,
-  Tooltip,
   alpha,
 } from '@mui/material';
-import { User, AlertTriangle } from 'lucide-react';
+import { User } from 'lucide-react';
 import { brandColors } from '../constants';
-import { accentColors } from '../../../design-system';
 import type { ClientInfoSectionProps } from '../types';
-import type { ClientOption, GuestValidationStatus } from '../../../types/creatorInvitations';
+import type { ClientOption } from '../../../types/creatorInvitations';
 import type { RecentClient } from '../../../hooks/useRecentClients';
 
 export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
@@ -49,7 +47,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
     }
     const userEmailLower = googleUser.email.toLowerCase().trim();
     const match = asesores.find(
-      (a) => a.email?.toLowerCase().trim() === userEmailLower
+      (a) => a.email?.toLowerCase().trim() === userEmailLower,
     );
     return match;
   }, [googleUser?.email, asesores]);
@@ -91,7 +89,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
     // Add recent clients (excluding duplicates by name)
     recentClients?.forEach((client) => {
       const alreadyExists = options.some(
-        (o) => o.name.toLowerCase() === client.name.toLowerCase()
+        (o) => o.name.toLowerCase() === client.name.toLowerCase(),
       );
       if (!alreadyExists) {
         options.push({
@@ -103,22 +101,6 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
 
     return options;
   }, [invitedGuests, recentClients]);
-
-  // Check if current client name matches any invited guest
-  const validationStatus = React.useMemo((): GuestValidationStatus => {
-    if (!clientName || clientName.length < 3) return 'none';
-    if (!invitedGuests || invitedGuests.length === 0) return 'none';
-
-    const normalizedName = clientName.toLowerCase().trim();
-    const isMatch = invitedGuests.some(
-      (guest) => guest.guestName?.toLowerCase().trim() === normalizedName
-    );
-
-    return isMatch ? 'valid' : 'warning';
-  }, [clientName, invitedGuests]);
-
-  // Warning color
-  const warningColor = accentColors.warning.light;
 
   return (
     <>
@@ -156,7 +138,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
               } else if (value) {
                 if (value.source === 'invited' && onSelectInvitedGuest) {
                   const invitation = invitedGuests?.find(
-                    (g) => g.shortCode === value.shortCode
+                    (g) => g.shortCode === value.shortCode,
                   );
                   if (invitation) onSelectInvitedGuest(invitation);
                 } else if (value.source === 'recent' && onSelectClient) {
@@ -190,7 +172,11 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
             renderOption={(props, option) => (
               <li {...props}>
                 <Box
-                  sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    width: '100%',
+                  }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -238,50 +224,13 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
                 label="Nombre del Cliente"
                 placeholder="Ej: Juan Perez (o selecciona de la lista)"
                 helperText={
-                  validationStatus === 'warning'
-                    ? 'Este cliente no tiene una invitación activa'
-                    : clientName && clientName.length < 3
-                      ? 'El nombre debe tener al menos 3 caracteres'
-                      : combinedOptions.length > 0
-                        ? 'Invitaciones y clientes frecuentes disponibles'
-                        : ''
+                  clientName && clientName.length < 3
+                    ? 'El nombre debe tener al menos 3 caracteres'
+                    : combinedOptions.length > 0
+                      ? 'Sugerencias disponibles'
+                      : ''
                 }
                 error={clientName !== '' && clientName.length < 3}
-                FormHelperTextProps={{
-                  sx:
-                    validationStatus === 'warning'
-                      ? {
-                          color: warningColor,
-                          fontWeight: 500,
-                        }
-                      : {},
-                }}
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {validationStatus === 'warning' && (
-                        <Tooltip title="El cliente ingresado no tiene una invitación activa creada por ti. La cotización se generará pero quedará registrado el desajuste.">
-                          <AlertTriangle
-                            size={18}
-                            color={warningColor}
-                            style={{ marginRight: 8 }}
-                          />
-                        </Tooltip>
-                      )}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root':
-                    validationStatus === 'warning'
-                      ? {
-                          '& fieldset': { borderColor: warningColor },
-                          '&:hover fieldset': { borderColor: warningColor },
-                        }
-                      : {},
-                }}
               />
             )}
           />

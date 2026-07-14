@@ -7,34 +7,19 @@
  * Route: /invite/:shortCode (or /g/:shortCode via redirect)
  */
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  Box,
-  Typography,
-  Button,
-  TextField,
-  ToggleButtonGroup,
-  ToggleButton,
-  CircularProgress,
-} from '@mui/material';
+import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import { motion } from 'framer-motion';
-import {
-  CheckCircle,
-  Explore,
-  Email as EmailIcon,
-  Phone as PhoneIcon,
-} from '@mui/icons-material';
+import { CheckCircle, Explore } from '@mui/icons-material';
 import { useInvitation } from '../hooks/useInvitation';
 import { useAuth } from '../hooks/useAuth';
 import { INVITATION_STORAGE_KEYS } from '../types/invitation';
-import type { ContactType, PricingMode } from '../types/invitation';
 import { alpha } from '@mui/material/styles';
 import {
   emeraldCore,
   emeraldAlpha,
   whiteAlpha,
-  cssTransition,
   primitiveColors,
   zIndex,
   fontWeights,
@@ -137,19 +122,6 @@ const ghostBtnSx = {
   },
 };
 
-const inputSx = {
-  '& .MuiOutlinedInput-root': {
-    color: vault.text,
-    borderRadius: '12px',
-    bgcolor: whiteAlpha(0.03),
-    '& fieldset': { borderColor: whiteAlpha(0.1) },
-    '&:hover fieldset': { borderColor: whiteAlpha(0.2) },
-    '&.Mui-focused fieldset': { borderColor: vault.emerald },
-  },
-  '& .MuiInputLabel-root': { color: vault.textMuted },
-  '& .MuiInputLabel-root.Mui-focused': { color: vault.emerald },
-};
-
 // ═══════════════════════════════════════════════════════════════
 // MODULE-LEVEL LAYOUT (prevents remount → fixes mobile keyboard)
 // ═══════════════════════════════════════════════════════════════
@@ -206,166 +178,8 @@ function GlassCard({ children }: { children: React.ReactNode }) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// PIN DIGIT INPUT — Crystal facet boxes + hidden native input
-// ═══════════════════════════════════════════════════════════════
-
-function PinInput({
-  value,
-  onChange,
-  onSubmit,
-  disabled,
-  inputRef,
-}: {
-  value: string;
-  onChange: (val: string) => void;
-  onSubmit: () => void;
-  disabled?: boolean;
-  inputRef: React.RefObject<HTMLInputElement | null>;
-}) {
-  const digits = value.split('');
-
-  return (
-    <Box
-      sx={{
-        position: 'relative',
-        mb: 3.5,
-        mx: 'auto',
-        maxWidth: { xs: 256, sm: 280 },
-      }}
-    >
-      {/* Hidden native input — always mounted, keyboard stays open */}
-      <input
-        ref={inputRef as React.LegacyRef<HTMLInputElement>}
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        autoComplete="one-time-code"
-        maxLength={4}
-        value={value}
-        disabled={disabled}
-        onChange={(e) => {
-          const val = e.target.value.replace(/\D/g, '').slice(0, 4);
-          onChange(val);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && value.length === 4 && !disabled) {
-            onSubmit();
-          }
-        }}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          opacity: 0,
-          width: '100%',
-          height: '100%',
-          fontSize: '16px',
-          zIndex: zIndex.base,
-          cursor: 'pointer',
-        }}
-      />
-
-      {/* Visual digit boxes */}
-      <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center' }}>
-        {[0, 1, 2, 3].map((i) => {
-          const filled = i < digits.length;
-          const active = i === digits.length;
-
-          return (
-            <Box
-              key={i}
-              sx={{
-                width: { xs: 52, sm: 58 },
-                height: { xs: 62, sm: 68 },
-                borderRadius: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                bgcolor: filled ? emeraldAlpha(0.1) : vault.surface,
-                border: '1.5px solid',
-                borderColor: filled
-                  ? qeAccent.dark.strong
-                  : active
-                    ? vault.textDim
-                    : vault.cardBorder,
-                boxShadow: 'none',
-                transition: cssTransition.fast,
-              }}
-            >
-              <motion.div
-                key={`d-${i}-${digits[i] || ''}`}
-                initial={filled ? { scale: 1.25, opacity: 0 } : false}
-                animate={{ scale: 1, opacity: filled ? 1 : 0 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: '1.75rem',
-                    fontWeight: fontWeights.bold,
-                    fontFamily: vault.mono,
-                    color: vault.emerald,
-                    lineHeight: 1,
-                  }}
-                >
-                  {digits[i] || ''}
-                </Typography>
-              </motion.div>
-            </Box>
-          );
-        })}
-      </Box>
-    </Box>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════
 // STATUS ICONS
 // ═══════════════════════════════════════════════════════════════
-
-function LockGlyph() {
-  return (
-    <Box sx={{ position: 'relative', display: 'inline-flex', mb: 2.5 }}>
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: -12,
-          borderRadius: '50%',
-          background: `radial-gradient(circle, ${emeraldAlpha(0.15)} 0%, transparent 70%)`,
-        }}
-      />
-      <Box
-        sx={{
-          width: 64,
-          height: 64,
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: emeraldAlpha(0.08),
-          border: `1px solid ${emeraldAlpha(0.18)}`,
-        }}
-      >
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M16.5 10.5V6.5C16.5 4.01 14.49 2 12 2S7.5 4.01 7.5 6.5V10.5"
-            stroke={vault.emerald}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-          <rect
-            x="5"
-            y="10"
-            width="14"
-            height="12"
-            rx="3"
-            stroke={vault.emerald}
-            strokeWidth="1.5"
-          />
-          <circle cx="12" cy="16" r="1.5" fill={vault.emerald} />
-        </svg>
-      </Box>
-    </Box>
-  );
-}
 
 function SuccessGlyph() {
   return (
@@ -456,135 +270,19 @@ function AlertGlyph({ variant }: { variant: 'error' | 'warning' }) {
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════
 
-type PageStatus =
-  | 'loading'
-  | 'pin'
-  | 'form'
-  | 'valid'
-  | 'expired'
-  | 'error'
-  | 'ip-blocked';
-
-const MAX_PIN_ATTEMPTS = 5;
+type PageStatus = 'loading' | 'valid' | 'expired' | 'error';
 
 export default function InvitationPage() {
   const { shortCode } = useParams<{ shortCode: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectTo = safeInternalPath(searchParams.get('redirect'));
-  const {
-    validateInvitation,
-    verifyPin,
-    registerGuest,
-    isValidating,
-    isVerifyingPin,
-    isRegistering,
-  } = useInvitation();
+  const { validateInvitation, isValidating } = useInvitation();
   const { loginAsGuest } = useAuth();
 
   const [status, setStatus] = useState<PageStatus>('loading');
-  const [pricingMode, setPricingMode] = useState<PricingMode>('with_prices');
-  const [guestCurrencyMode, setGuestCurrencyMode] = useState<string>('');
-  const [guestMultiplier, setGuestMultiplier] = useState<string>('');
-  const [invitationId, setInvitationId] = useState<string>('');
   const [createdBy, setCreatedBy] = useState<string>('');
-  const [creatorEmail, setCreatorEmail] = useState<string>('');
-  const [inviterWhatsApp, setInviterWhatsApp] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [currentShortCode, setCurrentShortCode] = useState<string>('');
-  const [expiresAt, setExpiresAt] = useState<string>('');
-
-  // PIN state
-  const [pinValue, setPinValue] = useState('');
-  const [pinAttempts, setPinAttempts] = useState(0);
-  const [pinError, setPinError] = useState<string>('');
-  const [preRegisteredGuestName, setPreRegisteredGuestName] =
-    useState<string>('');
-  const [preRegisteredGuestContact, setPreRegisteredGuestContact] =
-    useState<string>('');
-
-  // Guest form state
-  const [guestName, setGuestName] = useState('');
-  const [guestContact, setGuestContact] = useState('');
-  const [contactType, setContactType] = useState<ContactType>('email');
-  const [formError, setFormError] = useState<string>('');
-
-  const pinInputRef = useRef<HTMLInputElement>(null);
-
-  // ─── Grant access helper ───
-  const grantAccess = useCallback(
-    (overrides?: { guestName?: string; guestContact?: string }) => {
-      loginAsGuest();
-
-      const resolvedGuestName =
-        overrides?.guestName || guestName.trim() || preRegisteredGuestName;
-      const resolvedGuestContact =
-        overrides?.guestContact ||
-        guestContact.trim() ||
-        preRegisteredGuestContact;
-
-      const invitationData: Record<string, string> = {
-        [INVITATION_STORAGE_KEYS.EXPIRES]: expiresAt,
-        [INVITATION_STORAGE_KEYS.TOKEN]: currentShortCode,
-        [INVITATION_STORAGE_KEYS.PRICING_MODE]: pricingMode,
-        [INVITATION_STORAGE_KEYS.DURATION_HOURS]: '24',
-        [INVITATION_STORAGE_KEYS.INVITATION_ID]: invitationId,
-        [INVITATION_STORAGE_KEYS.INVITER_NAME]: createdBy,
-        [INVITATION_STORAGE_KEYS.INVITER_EMAIL]: creatorEmail,
-        [INVITATION_STORAGE_KEYS.GUEST_NAME]: resolvedGuestName,
-        [INVITATION_STORAGE_KEYS.GUEST_CONTACT]: resolvedGuestContact,
-        // Scope the verified flag to THIS invite's shortCode (not a global
-        // 'true') so a device that verified one bound invite can't skip the
-        // PIN gate on a different bound invite. See the skip-PIN check below.
-        [INVITATION_STORAGE_KEYS.PIN_VERIFIED]: currentShortCode.toUpperCase(),
-      };
-      if (guestCurrencyMode) {
-        invitationData[INVITATION_STORAGE_KEYS.GUEST_CURRENCY_MODE] =
-          guestCurrencyMode;
-      }
-      if (guestMultiplier) {
-        invitationData[INVITATION_STORAGE_KEYS.GUEST_MULTIPLIER] =
-          guestMultiplier;
-      }
-      const deviceToken = localStorage.getItem(
-        INVITATION_STORAGE_KEYS.DEVICE_TOKEN,
-      );
-      if (deviceToken) {
-        invitationData[INVITATION_STORAGE_KEYS.DEVICE_TOKEN] = deviceToken;
-      }
-      if (inviterWhatsApp) {
-        invitationData[INVITATION_STORAGE_KEYS.INVITER_WHATSAPP] =
-          inviterWhatsApp;
-      }
-
-      for (const [key, value] of Object.entries(invitationData)) {
-        sessionStorage.setItem(key, value);
-      }
-      localStorage.setItem(
-        'tm_guest_invitation',
-        JSON.stringify(invitationData),
-      );
-      sessionStorage.removeItem('treasure-filters');
-
-      setStatus('valid');
-    },
-    [
-      loginAsGuest,
-      guestName,
-      guestContact,
-      preRegisteredGuestName,
-      preRegisteredGuestContact,
-      expiresAt,
-      currentShortCode,
-      pricingMode,
-      invitationId,
-      createdBy,
-      creatorEmail,
-      inviterWhatsApp,
-      guestCurrencyMode,
-      guestMultiplier,
-    ],
-  );
 
   // ─── Validate on mount ───
   useEffect(() => {
@@ -605,25 +303,12 @@ export default function InvitationPage() {
         const resolvedShortCode = result.shortCode || shortCode;
         const resolvedExpiresAt = result.expiresAt || '';
 
-        setPricingMode(resolvedPricingMode);
         setCreatedBy(resolvedCreatedBy);
-        setCreatorEmail(resolvedCreatorEmail);
-        setInvitationId(resolvedInvitationId);
-        setCurrentShortCode(resolvedShortCode);
-        setExpiresAt(resolvedExpiresAt);
 
-        if (result.guestCurrencyMode) {
-          setGuestCurrencyMode(result.guestCurrencyMode);
-        }
-        if (result.guestMultiplier) {
-          setGuestMultiplier(String(result.guestMultiplier));
-        }
-
-        if (result.guestName) {
-          setPreRegisteredGuestName(result.guestName);
-          setPreRegisteredGuestContact(result.guestContact || '');
-        }
-
+        // Resolve inviter WhatsApp so the guest keeps the "contact my asesor"
+        // button. Held as a local because state updates aren't visible within
+        // this same synchronous validation run.
+        let resolvedInviterWhatsApp = '';
         if (result.creatorEmail) {
           try {
             const asesoresResponse = await fetch('/api/get-asesores');
@@ -639,7 +324,7 @@ export default function InvitationPage() {
                       result.creatorEmail?.toLowerCase()),
               );
               if (inviter?.whatsapp) {
-                setInviterWhatsApp(inviter.whatsapp);
+                resolvedInviterWhatsApp = inviter.whatsapp;
               }
             }
           } catch (error) {
@@ -647,55 +332,53 @@ export default function InvitationPage() {
           }
         }
 
-        // Already verified THIS invite on this device — skip PIN. The stored
-        // flag holds the verified shortCode (not a global 'true'), so a device
-        // that verified a different bound invite still has to enter this one's
-        // PIN — closes the cross-invitation bypass.
-        if (
-          result.isPinBound &&
-          sessionStorage
-            .getItem(INVITATION_STORAGE_KEYS.PIN_VERIFIED)
-            ?.toUpperCase() === resolvedShortCode.toUpperCase()
-        ) {
-          loginAsGuest();
+        // No access code / PIN: opening a valid invitation link grants guest
+        // access immediately. The asesor's invitation generator is the only
+        // gate — whoever holds the link is treated as the invited guest.
+        loginAsGuest();
 
-          const invitationData: Record<string, string> = {
-            [INVITATION_STORAGE_KEYS.EXPIRES]: resolvedExpiresAt,
-            [INVITATION_STORAGE_KEYS.TOKEN]: resolvedShortCode,
-            [INVITATION_STORAGE_KEYS.PRICING_MODE]: resolvedPricingMode,
-            [INVITATION_STORAGE_KEYS.DURATION_HOURS]: '24',
-            [INVITATION_STORAGE_KEYS.INVITATION_ID]: resolvedInvitationId,
-            [INVITATION_STORAGE_KEYS.INVITER_NAME]: resolvedCreatedBy,
-            [INVITATION_STORAGE_KEYS.INVITER_EMAIL]: resolvedCreatorEmail,
-            [INVITATION_STORAGE_KEYS.GUEST_NAME]: result.guestName || '',
-            [INVITATION_STORAGE_KEYS.GUEST_CONTACT]: result.guestContact || '',
-            [INVITATION_STORAGE_KEYS.PIN_VERIFIED]:
-              resolvedShortCode.toUpperCase(),
-          };
-          if (result.guestCurrencyMode) {
-            invitationData[INVITATION_STORAGE_KEYS.GUEST_CURRENCY_MODE] =
-              result.guestCurrencyMode;
-          }
-          if (result.guestMultiplier) {
-            invitationData[INVITATION_STORAGE_KEYS.GUEST_MULTIPLIER] = String(
-              result.guestMultiplier,
-            );
-          }
-
-          for (const [key, value] of Object.entries(invitationData)) {
-            sessionStorage.setItem(key, value);
-          }
-          localStorage.setItem(
-            'tm_guest_invitation',
-            JSON.stringify(invitationData),
+        const invitationData: Record<string, string> = {
+          [INVITATION_STORAGE_KEYS.EXPIRES]: resolvedExpiresAt,
+          [INVITATION_STORAGE_KEYS.TOKEN]: resolvedShortCode,
+          [INVITATION_STORAGE_KEYS.PRICING_MODE]: resolvedPricingMode,
+          [INVITATION_STORAGE_KEYS.DURATION_HOURS]: '24',
+          [INVITATION_STORAGE_KEYS.INVITATION_ID]: resolvedInvitationId,
+          [INVITATION_STORAGE_KEYS.INVITER_NAME]: resolvedCreatedBy,
+          [INVITATION_STORAGE_KEYS.INVITER_EMAIL]: resolvedCreatorEmail,
+          [INVITATION_STORAGE_KEYS.GUEST_NAME]: result.guestName || '',
+          [INVITATION_STORAGE_KEYS.GUEST_CONTACT]: result.guestContact || '',
+        };
+        if (result.guestCurrencyMode) {
+          invitationData[INVITATION_STORAGE_KEYS.GUEST_CURRENCY_MODE] =
+            result.guestCurrencyMode;
+        }
+        if (result.guestMultiplier) {
+          invitationData[INVITATION_STORAGE_KEYS.GUEST_MULTIPLIER] = String(
+            result.guestMultiplier,
           );
-          sessionStorage.removeItem('treasure-filters');
-
-          setStatus('valid');
-          return;
+        }
+        const deviceToken = localStorage.getItem(
+          INVITATION_STORAGE_KEYS.DEVICE_TOKEN,
+        );
+        if (deviceToken) {
+          invitationData[INVITATION_STORAGE_KEYS.DEVICE_TOKEN] = deviceToken;
+        }
+        if (resolvedInviterWhatsApp) {
+          invitationData[INVITATION_STORAGE_KEYS.INVITER_WHATSAPP] =
+            resolvedInviterWhatsApp;
         }
 
-        setStatus('pin');
+        for (const [key, value] of Object.entries(invitationData)) {
+          sessionStorage.setItem(key, value);
+        }
+        localStorage.setItem(
+          'tm_guest_invitation',
+          JSON.stringify(invitationData),
+        );
+        sessionStorage.removeItem('treasure-filters');
+
+        setStatus('valid');
+        return;
       } else if (result.status === 'expired') {
         setStatus('expired');
         setErrorMessage('Esta invitacion ha expirado');
@@ -707,98 +390,6 @@ export default function InvitationPage() {
 
     validate();
   }, [shortCode, validateInvitation, loginAsGuest]);
-
-  // ─── PIN submit ───
-  const handlePinSubmit = async () => {
-    if (!shortCode || !pinValue || pinValue.length !== 4) {
-      setPinError('Ingresa un PIN de 4 digitos');
-      return;
-    }
-
-    if (pinAttempts >= MAX_PIN_ATTEMPTS) {
-      setPinError('Demasiados intentos. Solicita una nueva invitacion.');
-      return;
-    }
-
-    setPinError('');
-    const result = await verifyPin(shortCode, pinValue);
-
-    if (result.pinVerified) {
-      if (result.guestName || preRegisteredGuestName) {
-        grantAccess({
-          guestName: result.guestName || preRegisteredGuestName,
-          guestContact: result.guestContact || preRegisteredGuestContact,
-        });
-      } else {
-        setStatus('form');
-      }
-    } else if (result.isIpBlocked) {
-      setStatus('ip-blocked');
-    } else if (result.isPinWrong) {
-      const newAttempts = pinAttempts + 1;
-      setPinAttempts(newAttempts);
-      setPinValue('');
-      if (newAttempts >= MAX_PIN_ATTEMPTS) {
-        setPinError('Demasiados intentos. Solicita una nueva invitacion.');
-      } else {
-        setPinError(
-          `PIN incorrecto. ${MAX_PIN_ATTEMPTS - newAttempts} intentos restantes.`,
-        );
-      }
-      pinInputRef.current?.focus();
-    } else {
-      setPinError(result.error || 'Error al verificar PIN');
-    }
-  };
-
-  // ─── Form validation ───
-  const validateForm = (): boolean => {
-    if (!guestName.trim()) {
-      setFormError('Por favor ingresa tu nombre');
-      return false;
-    }
-    if (!guestContact.trim()) {
-      setFormError(
-        `Por favor ingresa tu ${contactType === 'email' ? 'email' : 'telefono'}`,
-      );
-      return false;
-    }
-    if (contactType === 'email') {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(guestContact)) {
-        setFormError('Por favor ingresa un email valido');
-        return false;
-      }
-    }
-    if (contactType === 'phone') {
-      const phoneRegex = /^[\d\s\-+()]{7,20}$/;
-      if (!phoneRegex.test(guestContact)) {
-        setFormError('Por favor ingresa un telefono valido');
-        return false;
-      }
-    }
-    setFormError('');
-    return true;
-  };
-
-  // ─── Guest submit ───
-  const handleGuestSubmit = async () => {
-    if (!validateForm()) return;
-
-    if (invitationId) {
-      const success = await registerGuest({
-        invitationId,
-        guestName: guestName.trim(),
-        guestContact: guestContact.trim(),
-        contactType,
-      });
-      if (!success) {
-        console.warn('Guest registration failed, continuing...');
-      }
-    }
-
-    grantAccess();
-  };
 
   const handleExplore = () => {
     navigate(redirectTo, { replace: true });
@@ -916,335 +507,6 @@ export default function InvitationPage() {
                 Ir al Inicio
               </Button>
             </Box>
-          </GlassCard>
-        </motion.div>
-      </PageShell>
-    );
-  }
-
-  // Device blocked
-  if (status === 'ip-blocked') {
-    return (
-      <PageShell>
-        <motion.div
-          {...fadeUp}
-          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-        >
-          <GlassCard>
-            <Box sx={{ textAlign: 'center' }}>
-              <AlertGlyph variant="warning" />
-              <Typography
-                sx={{
-                  fontFamily: vault.serif,
-                  fontSize: '1.5rem',
-                  fontWeight: fontWeights.bold,
-                  color: vault.text,
-                  mb: 1,
-                }}
-              >
-                Acceso Restringido
-              </Typography>
-              <Typography
-                sx={{
-                  color: vault.textMuted,
-                  fontSize: '0.9rem',
-                  mb: 3,
-                  lineHeight: 1.6,
-                }}
-              >
-                Esta invitacion esta vinculada a otro dispositivo. Solo puede
-                usarse desde el dispositivo donde se verifico por primera vez.
-              </Typography>
-
-              <Box
-                sx={{
-                  p: 2,
-                  mb: 3,
-                  borderRadius: '12px',
-                  bgcolor: vault.warningDim,
-                  border: `1px solid ${alpha(vault.warning, 0.12)}`,
-                }}
-              >
-                <Typography
-                  sx={{
-                    color: 'rgba(255, 200, 100, 0.8)',
-                    fontSize: '0.85rem',
-                    lineHeight: 1.5,
-                  }}
-                >
-                  Si necesitas acceso, solicita una nueva invitacion a tu
-                  embajador.
-                </Typography>
-              </Box>
-
-              <Button
-                fullWidth
-                onClick={() => navigate('/home')}
-                sx={ghostBtnSx}
-              >
-                Ir al Inicio
-              </Button>
-            </Box>
-          </GlassCard>
-        </motion.div>
-      </PageShell>
-    );
-  }
-
-  // PIN entry
-  if (status === 'pin') {
-    const isLockedOut = pinAttempts >= MAX_PIN_ATTEMPTS;
-
-    return (
-      <PageShell>
-        <motion.div
-          {...fadeUp}
-          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-        >
-          <GlassCard>
-            <Box sx={{ textAlign: 'center' }}>
-              <LockGlyph />
-
-              <Typography
-                sx={{
-                  fontFamily: vault.serif,
-                  fontSize: '1.5rem',
-                  fontWeight: 700,
-                  color: vault.text,
-                  mb: 0.5,
-                }}
-              >
-                Ingresa tu PIN
-              </Typography>
-
-              {createdBy && (
-                <>
-                  <Typography
-                    sx={{ color: vault.textDim, fontSize: '0.8rem', mb: 0.5 }}
-                  >
-                    Invitado por
-                  </Typography>
-                  <Typography
-                    sx={{
-                      color: vault.emerald,
-                      fontSize: '0.9rem',
-                      fontWeight: fontWeights.medium,
-                      mb: 2,
-                    }}
-                  >
-                    {createdBy}
-                  </Typography>
-                </>
-              )}
-
-              <Typography
-                sx={{
-                  color: vault.textMuted,
-                  fontSize: '0.85rem',
-                  mb: 3,
-                  lineHeight: 1.5,
-                }}
-              >
-                Ingresa el PIN de 4 digitos que te compartio tu embajador.
-              </Typography>
-
-              {pinError && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                >
-                  <Box
-                    sx={{
-                      p: 1.5,
-                      mb: 2.5,
-                      borderRadius: '12px',
-                      bgcolor: isLockedOut ? vault.errorDim : vault.warningDim,
-                      border: '1px solid',
-                      borderColor: isLockedOut
-                        ? alpha(vault.error, 0.15)
-                        : alpha(vault.warning, 0.15),
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        color: isLockedOut ? vault.error : vault.warning,
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      {pinError}
-                    </Typography>
-                  </Box>
-                </motion.div>
-              )}
-
-              <PinInput
-                value={pinValue}
-                onChange={setPinValue}
-                onSubmit={handlePinSubmit}
-                disabled={isLockedOut}
-                inputRef={pinInputRef}
-              />
-
-              <Button
-                variant="contained"
-                size="large"
-                fullWidth
-                disabled={
-                  pinValue.length !== 4 || isVerifyingPin || isLockedOut
-                }
-                onClick={handlePinSubmit}
-                sx={emeraldBtnSx}
-              >
-                {isVerifyingPin ? (
-                  <CircularProgress size={22} sx={{ color: whiteAlpha(0.7) }} />
-                ) : (
-                  'Confirmar PIN'
-                )}
-              </Button>
-            </Box>
-          </GlassCard>
-        </motion.div>
-      </PageShell>
-    );
-  }
-
-  // Guest registration form
-  if (status === 'form') {
-    return (
-      <PageShell>
-        <motion.div {...fadeUp} transition={{ duration: 0.5 }}>
-          <GlassCard>
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <SuccessGlyph />
-              <Typography
-                sx={{
-                  fontFamily: vault.serif,
-                  fontSize: '1.5rem',
-                  fontWeight: 700,
-                  color: vault.text,
-                  mb: 0.5,
-                }}
-              >
-                Bienvenido a Tierra Madre
-              </Typography>
-              {createdBy && (
-                <Typography
-                  sx={{ color: vault.textMuted, fontSize: '0.85rem' }}
-                >
-                  Invitado por {createdBy}
-                </Typography>
-              )}
-            </Box>
-
-            <Typography
-              sx={{
-                color: vault.textMuted,
-                fontSize: '0.9rem',
-                mb: 3,
-                textAlign: 'center',
-                lineHeight: 1.5,
-              }}
-            >
-              Para explorar nuestra colección, por favor déjanos tus datos de
-              contacto.
-            </Typography>
-
-            {formError && (
-              <Box
-                sx={{
-                  p: 1.5,
-                  mb: 2,
-                  borderRadius: '12px',
-                  bgcolor: vault.errorDim,
-                  border: `1px solid ${alpha(vault.error, 0.15)}`,
-                }}
-              >
-                <Typography sx={{ color: vault.error, fontSize: '0.85rem' }}>
-                  {formError}
-                </Typography>
-              </Box>
-            )}
-
-            <TextField
-              fullWidth
-              label="Tu nombre"
-              value={guestName}
-              onChange={(e) => setGuestName(e.target.value)}
-              required
-              sx={{ ...inputSx, mb: 2 }}
-            />
-
-            <Typography
-              sx={{ color: vault.textDim, fontSize: '0.8rem', mb: 1 }}
-            >
-              Forma de contacto preferida
-            </Typography>
-
-            <ToggleButtonGroup
-              exclusive
-              value={contactType}
-              onChange={(_, value) => value && setContactType(value)}
-              fullWidth
-              sx={{
-                mb: 2,
-                '& .MuiToggleButton-root': {
-                  color: vault.textMuted,
-                  borderColor: whiteAlpha(0.08),
-                  borderRadius: '12px !important',
-                  fontFamily: vault.system,
-                  textTransform: 'none',
-                  py: 1,
-                  '&.Mui-selected': {
-                    bgcolor: emeraldAlpha(0.1),
-                    color: vault.emerald,
-                    borderColor: emeraldAlpha(0.25),
-                    '&:hover': { bgcolor: emeraldAlpha(0.15) },
-                  },
-                },
-              }}
-            >
-              <ToggleButton value="email" sx={{ flex: 1 }}>
-                <EmailIcon sx={{ mr: 1 }} fontSize="small" />
-                Email
-              </ToggleButton>
-              <ToggleButton value="phone" sx={{ flex: 1 }}>
-                <PhoneIcon sx={{ mr: 1 }} fontSize="small" />
-                Telefono
-              </ToggleButton>
-            </ToggleButtonGroup>
-
-            <TextField
-              fullWidth
-              label={contactType === 'email' ? 'Tu email' : 'Tu telefono'}
-              type={contactType === 'email' ? 'email' : 'tel'}
-              value={guestContact}
-              onChange={(e) => setGuestContact(e.target.value)}
-              placeholder={
-                contactType === 'email'
-                  ? 'ejemplo@email.com'
-                  : '+57 300 123 4567'
-              }
-              required
-              sx={{ ...inputSx, mb: 3 }}
-            />
-
-            <Button
-              variant="contained"
-              size="large"
-              fullWidth
-              disabled={isRegistering}
-              onClick={handleGuestSubmit}
-              startIcon={
-                isRegistering ? (
-                  <CircularProgress size={20} sx={{ color: whiteAlpha(0.7) }} />
-                ) : (
-                  <Explore />
-                )
-              }
-              sx={emeraldBtnSx}
-            >
-              {isRegistering ? 'Registrando...' : 'Explorar Coleccion'}
-            </Button>
           </GlassCard>
         </motion.div>
       </PageShell>

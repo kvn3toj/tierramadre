@@ -80,12 +80,10 @@ export default function InvitationGenerator({
   const inv = t.tools.invitation;
   const { mode } = useTheme();
   const qe = getQuietEmerald(mode);
-  const isDark = mode === 'dark';
   /** Emerald tint at a given alpha — the one accent color, applied quietly. */
   const tint = (a: number) => alpha(qe.accent, a);
   const [showQR, setShowQR] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [copiedPin, setCopiedPin] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
@@ -137,7 +135,6 @@ export default function InvitationGenerator({
     setGuestMultiplier(4);
     setShowQR(false);
     setFormError('');
-    setCopiedPin(false);
   };
 
   const copyToClipboard = async (text: string) => {
@@ -167,33 +164,10 @@ export default function InvitationGenerator({
     }
   };
 
-  const handleCopyPin = async () => {
-    if (lastInvitation?.pin) {
-      try {
-        await navigator.clipboard.writeText(lastInvitation.pin);
-      } catch {
-        const textArea = document.createElement('textarea');
-        textArea.value = lastInvitation.pin;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-      }
-      setCopiedPin(true);
-      setTimeout(() => setCopiedPin(false), 2000);
-      setSnackbarMessage(inv.pinCopied);
-      setSnackbarOpen(true);
-    }
-  };
-
   const handleShare = async () => {
     const shareUrl = lastInvitation?.url;
     if (shareUrl && 'share' in navigator) {
-      const pin = lastInvitation?.pin;
-      const pinLine = pin
-        ? `\n\n${inv.sharePinLine.replace('{pin}', pin)}`
-        : '';
-      const shareBody = `${inv.shareText.replace('{name}', guestName)}\n\n${shareUrl}${pinLine}`;
+      const shareBody = `${inv.shareText.replace('{name}', guestName)}\n\n${shareUrl}`;
       try {
         await navigator.share({
           title: inv.shareTitle,
@@ -778,116 +752,6 @@ export default function InvitationGenerator({
                 size="small"
                 sx={{ mb: 1.5 }}
               />
-
-              {/* PIN — compact inline bar */}
-              {lastInvitation.pin && (
-                <Box
-                  onClick={handleCopyPin}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') handleCopyPin();
-                  }}
-                  aria-label={`${inv.pinAccess}: ${lastInvitation.pin.split('').join(' ')}. ${inv.copy}`}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    p: 1.5,
-                    px: 2,
-                    mb: 2,
-                    borderRadius: qeRadius.md,
-                    bgcolor: tint(0.08),
-                    border: `1px solid ${tint(0.22)}`,
-                    cursor: 'pointer',
-                    transition: `all ${easeFast}`,
-                    '&:hover': {
-                      borderColor: tint(0.4),
-                      boxShadow: `0 0 0 1px ${tint(0.22)}`,
-                    },
-                    '&:active': { transform: 'scale(0.99)' },
-                    '&:focus-visible': {
-                      outline: `2px solid ${qe.accent}`,
-                      outlineOffset: 2,
-                    },
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Typography
-                      sx={{ ...qeType.overline, color: qe.muted, minWidth: 64 }}
-                    >
-                      {inv.pinAccess}
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 0.75 }}>
-                      {lastInvitation.pin.split('').map((digit, i) => (
-                        <Box
-                          key={i}
-                          sx={{
-                            width: 32,
-                            height: 36,
-                            borderRadius: qeRadius.sm,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            bgcolor: tint(0.14),
-                            border: `1px solid ${tint(0.3)}`,
-                          }}
-                        >
-                          <Typography
-                            aria-hidden
-                            sx={{
-                              fontFamily: qeFont.mono,
-                              fontWeight: 500,
-                              fontSize: '1.1rem',
-                              color: isDark ? qe.accentPure : qe.accentStrong,
-                              lineHeight: 1,
-                            }}
-                          >
-                            {digit}
-                          </Typography>
-                        </Box>
-                      ))}
-                    </Box>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.5,
-                      color: qe.accent,
-                    }}
-                  >
-                    {copiedPin ? (
-                      <CheckIcon sx={{ fontSize: 16 }} />
-                    ) : (
-                      <CopyIcon sx={{ fontSize: 16 }} />
-                    )}
-                    <Typography
-                      sx={{
-                        ...qeType.body,
-                        fontSize: '0.75rem',
-                        fontWeight: 500,
-                      }}
-                    >
-                      {copiedPin ? inv.copied : inv.copy}
-                    </Typography>
-                  </Box>
-                </Box>
-              )}
-
-              {/* Hint — WCAG AA compliant contrast */}
-              <Typography
-                sx={{
-                  ...qeType.body,
-                  display: 'block',
-                  mb: 2.5,
-                  textAlign: 'center',
-                  fontSize: '0.75rem',
-                  color: qe.subtle,
-                }}
-              >
-                {inv.sharePinSeparately}
-              </Typography>
 
               {/* Summary tags */}
               <Box
