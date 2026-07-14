@@ -32,7 +32,7 @@ import { Box, Typography, Skeleton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
-import { getAtelier, getFoto } from '../../../design-system';
+import { getAtelier, getFoto, appShell } from '../../../design-system';
 import {
   useConvexQuery,
   useConvexMutation,
@@ -1024,7 +1024,7 @@ export default function ProductManagementPage() {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        minHeight: `var(${appShell.mainHeightVar}, 100dvh)`,
         backgroundColor: foto.surfaces.canvas,
         color: atelier.ink.primary,
       }}
@@ -1058,6 +1058,10 @@ export default function ProductManagementPage() {
             md: 'minmax(0, 1.7fr) minmax(0, 1fr)',
             lg: 'minmax(0, 1.6fr) minmax(0, 1fr)',
           },
+          // Required for the Bandeja inspector's sticky positioning to
+          // engage inside this grid (Navigation UX rule: sticky-in-grid
+          // silently no-ops without alignItems/alignSelf: start).
+          alignItems: 'start',
         }}
       >
         <Box

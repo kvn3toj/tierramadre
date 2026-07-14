@@ -172,6 +172,8 @@ export function AdminToolbar({
       sx={{
         position: 'sticky',
         top: 0,
+        // Local stacking inside this column only (not app-fixed chrome) —
+        // exempt from the zIndex token scale (Navigation UX rule 7).
         zIndex: 2,
         backgroundColor: foto.surfaces.panel,
         borderBottom: `1px solid ${foto.surfaces.edgeStrong}`,

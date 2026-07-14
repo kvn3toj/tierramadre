@@ -10,8 +10,13 @@
  * Spec: docs/superpowers/specs/2026-05-06-fotosintesis-admin-redesign-design.md
  */
 
-import { Box, Typography } from "@mui/material";
-import { fontFamilies, type FotoTokens } from "../../../design-system";
+import { Box, Typography } from '@mui/material';
+import {
+  fontFamilies,
+  appShell,
+  bottomBarClearance,
+  type FotoTokens,
+} from '../../../design-system';
 
 const SANS = fontFamilies.system;
 
@@ -42,28 +47,40 @@ export function Bandeja({ foto, selected, children }: BandejaProps) {
       aria-label="Bandeja"
       sx={{
         backgroundColor: foto.surfaces.panel,
-        borderLeft: { xs: "none", md: `1px solid ${foto.surfaces.edge}` },
+        borderLeft: { xs: 'none', md: `1px solid ${foto.surfaces.edge}` },
         p: 2.25,
-        display: "flex",
-        flexDirection: "column",
+        display: 'flex',
+        flexDirection: 'column',
         gap: 1.5,
         minHeight: { md: 560 },
+        // Sticky inspector with its own scroll budget (md+): scrolling the
+        // ledger keeps the Bandeja visible; a tall Bandeja scrolls itself
+        // without moving the page (requires the parent grid's
+        // alignItems: 'start').
+        position: { xs: 'static', md: 'sticky' },
+        top: { md: 0 },
+        alignSelf: { md: 'start' },
+        maxHeight: { md: `var(${appShell.mainHeightVar}, 100dvh)` },
+        overflowY: { md: 'auto' },
+        overscrollBehavior: 'contain',
+        WebkitOverflowScrolling: 'touch',
+        paddingBottom: { md: bottomBarClearance(appShell.tabBarReserve) },
       }}
     >
       <Typography
         component="div"
         sx={{
           fontFamily: SANS,
-          fontSize: "9px",
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
+          fontSize: '9px',
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
           color: foto.ink.tertiary,
           fontWeight: 500,
         }}
       >
         {selected
-          ? `Bandeja · ${selected.itemId}${selected.nombre ? ` ${selected.nombre}` : ""}`
-          : "Bandeja · resumen"}
+          ? `Bandeja · ${selected.itemId}${selected.nombre ? ` ${selected.nombre}` : ''}`
+          : 'Bandeja · resumen'}
       </Typography>
       {!selected && (
         <Typography
@@ -74,7 +91,7 @@ export function Bandeja({ foto, selected, children }: BandejaProps) {
             color: foto.ink.tertiary,
             mt: -0.5,
             mb: 0.5,
-            letterSpacing: "-0.005em",
+            letterSpacing: '-0.005em',
           }}
         >
           Selecciona una piedra de la lista para ver su detalle, patrones e

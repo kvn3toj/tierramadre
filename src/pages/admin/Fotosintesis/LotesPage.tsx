@@ -1,10 +1,15 @@
-import { useDeferredValue, useMemo, useState } from "react";
-import { Box, IconButton } from "@mui/material";
-import { Search, X, ChevronRight, Plus } from "lucide-react";
-import { Link } from "react-router-dom";
-import { getFoto, fontFamilies } from "../../../design-system";
-import { useConvexQuery, convexApi } from "../../../lib/convex-safe";
-import { FOTO_TOPBAR_HEIGHT } from "./components/FotoTopbar";
+import { useDeferredValue, useMemo, useState } from 'react';
+import { Box, IconButton } from '@mui/material';
+import { Search, X, ChevronRight, Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import {
+  getFoto,
+  fontFamilies,
+  paneHeight,
+  containedScrollX,
+} from '../../../design-system';
+import { useConvexQuery, convexApi } from '../../../lib/convex-safe';
+import { FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
 
 /**
  * Fotosíntesis · Lotes — the full lot ledger.
@@ -19,22 +24,22 @@ import { FOTO_TOPBAR_HEIGHT } from "./components/FotoTopbar";
  * Spec: docs/specs/2026-05-21-fotosintesis-v2-handoff.md §4.1
  */
 
-type EstadoKey = "abierto" | "cerrado" | "publicado" | "cancelado";
-type TabKey = "todos" | EstadoKey;
+type EstadoKey = 'abierto' | 'cerrado' | 'publicado' | 'cancelado';
+type TabKey = 'todos' | EstadoKey;
 
-const COP_FORMATTER = new Intl.NumberFormat("es-CO", {
-  style: "currency",
-  currency: "COP",
+const COP_FORMATTER = new Intl.NumberFormat('es-CO', {
+  style: 'currency',
+  currency: 'COP',
   maximumFractionDigits: 0,
 });
 const formatCOP = (n: number): string => COP_FORMATTER.format(n);
 
 function formaPagoLabel(formaPago: string): string {
-  if (formaPago === "contado") return "Contado";
-  if (formaPago === "credito") return "Crédito";
-  if (formaPago === "esmereogenesis") return "Esmereogénesis";
-  if (formaPago === "bajo_pedido") return "Bajo pedido";
-  if (formaPago === "consignacion") return "Consignación";
+  if (formaPago === 'contado') return 'Contado';
+  if (formaPago === 'credito') return 'Crédito';
+  if (formaPago === 'esmereogenesis') return 'Esmereogénesis';
+  if (formaPago === 'bajo_pedido') return 'Bajo pedido';
+  if (formaPago === 'consignacion') return 'Consignación';
   return formaPago;
 }
 
@@ -54,10 +59,10 @@ interface LoteRow {
 }
 
 export default function FotosintesisLotesPage() {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
 
-  const [tab, setTab] = useState<TabKey>("todos");
-  const [search, setSearch] = useState("");
+  const [tab, setTab] = useState<TabKey>('todos');
+  const [search, setSearch] = useState('');
   const deferredSearch = useDeferredValue(search);
 
   const lots = useConvexQuery(convexApi.lots.list, {});
@@ -80,7 +85,7 @@ export default function FotosintesisLotesPage() {
         formaPago: l.formaPago,
         costoTotalCOP: l.costoTotalCOP,
         pesoTotalQuilates: l.pesoTotalQuilates,
-        providerName: providerNameById.get(l.providerId) ?? "Proveedor —",
+        providerName: providerNameById.get(l.providerId) ?? 'Proveedor —',
         renombreLote: l.renombreLote,
         mina: l.mina,
         operadorNombre: l.operadorNombre,
@@ -101,7 +106,7 @@ export default function FotosintesisLotesPage() {
   }, [rows]);
 
   const byTab = useMemo(
-    () => (tab === "todos" ? rows : rows.filter((r) => r.estado === tab)),
+    () => (tab === 'todos' ? rows : rows.filter((r) => r.estado === tab)),
     [rows, tab],
   );
 
@@ -125,12 +130,12 @@ export default function FotosintesisLotesPage() {
   // --- Styles --------------------------------------------------------------
   const monoSx = {
     fontFamily: fontFamilies.mono,
-    fontVariantNumeric: "tabular-nums" as const,
-    letterSpacing: "-0.005em",
+    fontVariantNumeric: 'tabular-nums' as const,
+    letterSpacing: '-0.005em',
   } as const;
 
   const fmtN = (v: number | undefined): string =>
-    typeof v === "number" ? v.toString() : "—";
+    typeof v === 'number' ? v.toString() : '—';
 
   return (
     <Box
@@ -138,14 +143,14 @@ export default function FotosintesisLotesPage() {
       sx={{
         color: foto.ink.primary,
         background: foto.surfaces.canvas,
-        minHeight: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
+        minHeight: paneHeight(FOTO_TOPBAR_HEIGHT),
       }}
     >
       {/* HEADER BAND */}
       <Box
         component="section"
         sx={{
-          padding: "32px 28px 24px",
+          padding: '32px 28px 24px',
           borderBottom: `1px solid ${foto.surfaces.rule}`,
           background: `linear-gradient(180deg, ${foto.surfaces.canvas} 0%, ${foto.surfaces.panel} 100%)`,
         }}
@@ -153,19 +158,19 @@ export default function FotosintesisLotesPage() {
         <Box
           sx={{
             maxWidth: 1320,
-            margin: "0 auto",
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "1fr auto" },
-            gap: "28px",
-            alignItems: "end",
+            margin: '0 auto',
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr auto' },
+            gap: '28px',
+            alignItems: 'end',
           }}
         >
           <Box>
             <Box
               sx={{
-                fontSize: "9px",
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
+                fontSize: '9px',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
                 fontWeight: 500,
                 color: foto.ink.tertiary,
               }}
@@ -175,10 +180,10 @@ export default function FotosintesisLotesPage() {
             <Box
               component="h1"
               sx={{
-                marginTop: "8px",
-                fontSize: "32px",
+                marginTop: '8px',
+                fontSize: '32px',
                 fontWeight: 600,
-                letterSpacing: "-0.025em",
+                letterSpacing: '-0.025em',
                 lineHeight: 1.1,
                 color: foto.ink.primary,
               }}
@@ -188,8 +193,8 @@ export default function FotosintesisLotesPage() {
             <Box
               component="p"
               sx={{
-                marginTop: "10px",
-                fontSize: "13.5px",
+                marginTop: '10px',
+                fontSize: '13.5px',
                 color: foto.ink.secondary,
                 maxWidth: 560,
                 lineHeight: 1.5,
@@ -203,34 +208,34 @@ export default function FotosintesisLotesPage() {
 
           <Box
             sx={{
-              display: "flex",
-              alignItems: "flex-end",
-              gap: "20px",
-              flexWrap: { xs: "wrap", md: "nowrap" },
+              display: 'flex',
+              alignItems: 'flex-end',
+              gap: '20px',
+              flexWrap: { xs: 'wrap', md: 'nowrap' },
             }}
             role="group"
             aria-label="Resumen de lotes"
           >
             <HeaderStat
-              value={lots === undefined ? "—" : fmtN(counts.todos)}
+              value={lots === undefined ? '—' : fmtN(counts.todos)}
               label="Total"
               ariaLabel={`${counts.todos} lotes en total`}
               foto={foto}
             />
             <HeaderStat
-              value={lots === undefined ? "—" : fmtN(counts.abierto)}
+              value={lots === undefined ? '—' : fmtN(counts.abierto)}
               label="Abiertos"
               ariaLabel={`${counts.abierto} lotes abiertos`}
               foto={foto}
             />
             <HeaderStat
-              value={lots === undefined ? "—" : fmtN(counts.cerrado)}
+              value={lots === undefined ? '—' : fmtN(counts.cerrado)}
               label="Cerrados"
               ariaLabel={`${counts.cerrado} lotes cerrados`}
               foto={foto}
             />
             <HeaderStat
-              value={lots === undefined ? "—" : fmtN(counts.publicado)}
+              value={lots === undefined ? '—' : fmtN(counts.publicado)}
               label="Publicados"
               ariaLabel={`${counts.publicado} lotes publicados`}
               foto={foto}
@@ -246,48 +251,49 @@ export default function FotosintesisLotesPage() {
         aria-label="Filtrar lotes por estado"
         sx={{
           maxWidth: 1320,
-          margin: "0 auto",
-          padding: { xs: "0 16px", md: "0 28px" },
-          display: "flex",
-          gap: "4px",
+          margin: '0 auto',
+          padding: { xs: '0 16px', md: '0 28px' },
+          display: 'flex',
+          gap: '4px',
           borderBottom: `1px solid ${foto.surfaces.edge}`,
-          overflowX: { xs: "auto", md: "visible" },
-          scrollbarWidth: "none",
-          "&::-webkit-scrollbar": { display: "none" },
-          flexWrap: "nowrap",
+          ...containedScrollX,
+          overflowX: { xs: 'auto', md: 'visible' },
+          scrollbarWidth: 'none',
+          '&::-webkit-scrollbar': { display: 'none' },
+          flexWrap: 'nowrap',
         }}
       >
         <TabButton
-          active={tab === "todos"}
-          onClick={() => setTab("todos")}
+          active={tab === 'todos'}
+          onClick={() => setTab('todos')}
           label="Todos"
           count={lots === undefined ? undefined : counts.todos}
           foto={foto}
         />
         <TabButton
-          active={tab === "abierto"}
-          onClick={() => setTab("abierto")}
+          active={tab === 'abierto'}
+          onClick={() => setTab('abierto')}
           label="Abiertos"
           count={lots === undefined ? undefined : counts.abierto}
           foto={foto}
         />
         <TabButton
-          active={tab === "cerrado"}
-          onClick={() => setTab("cerrado")}
+          active={tab === 'cerrado'}
+          onClick={() => setTab('cerrado')}
           label="Cerrados"
           count={lots === undefined ? undefined : counts.cerrado}
           foto={foto}
         />
         <TabButton
-          active={tab === "publicado"}
-          onClick={() => setTab("publicado")}
+          active={tab === 'publicado'}
+          onClick={() => setTab('publicado')}
           label="Publicados"
           count={lots === undefined ? undefined : counts.publicado}
           foto={foto}
         />
         <TabButton
-          active={tab === "cancelado"}
-          onClick={() => setTab("cancelado")}
+          active={tab === 'cancelado'}
+          onClick={() => setTab('cancelado')}
           label="Cancelados"
           count={lots === undefined ? undefined : counts.cancelado}
           foto={foto}
@@ -298,26 +304,26 @@ export default function FotosintesisLotesPage() {
       <Box
         sx={{
           maxWidth: 1320,
-          margin: "0 auto",
-          padding: { xs: "20px 16px 40px", md: "24px 28px 60px" },
+          margin: '0 auto',
+          padding: { xs: '20px 16px 40px', md: '24px 28px 60px' },
         }}
       >
         <Box
           sx={{
             background: foto.surfaces.canvas,
             border: `1px solid ${foto.surfaces.rule}`,
-            borderRadius: "14px",
-            overflow: "hidden",
+            borderRadius: '14px',
+            overflow: 'hidden',
           }}
         >
           {/* Search */}
           <Box
             sx={{
-              padding: "14px 18px",
+              padding: '14px 18px',
               borderBottom: `1px solid ${foto.surfaces.edge}`,
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
               background: foto.surfaces.canvas,
             }}
           >
@@ -333,19 +339,19 @@ export default function FotosintesisLotesPage() {
               aria-label="Buscar lotes"
               sx={{
                 flex: 1,
-                border: "none",
-                outline: "none",
-                background: "transparent",
-                fontSize: "14px",
-                fontFamily: "inherit",
+                border: 'none',
+                outline: 'none',
+                background: 'transparent',
+                fontSize: '14px',
+                fontFamily: 'inherit',
                 color: foto.ink.primary,
-                "&::placeholder": { color: foto.ink.mute },
+                '&::placeholder': { color: foto.ink.mute },
               }}
             />
             {search ? (
               <IconButton
                 size="small"
-                onClick={() => setSearch("")}
+                onClick={() => setSearch('')}
                 aria-label="Limpiar búsqueda"
                 sx={{ color: foto.ink.tertiary }}
               >
@@ -357,17 +363,17 @@ export default function FotosintesisLotesPage() {
           {/* Column headers (desktop) */}
           <Box
             sx={{
-              display: { xs: "none", md: "grid" },
+              display: { xs: 'none', md: 'grid' },
               gridTemplateColumns:
-                "72px minmax(0, 1.5fr) 96px 70px 120px 130px",
-              gap: "12px",
-              alignItems: "center",
-              padding: "10px 18px",
-              boxSizing: "border-box",
+                '72px minmax(0, 1.5fr) 96px 70px 120px 130px',
+              gap: '12px',
+              alignItems: 'center',
+              padding: '10px 18px',
+              boxSizing: 'border-box',
               borderBottom: `1px solid ${foto.surfaces.edge}`,
-              fontSize: "9px",
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
+              fontSize: '9px',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
               color: foto.ink.tertiary,
               fontWeight: 500,
               background: foto.surfaces.panel,
@@ -376,9 +382,9 @@ export default function FotosintesisLotesPage() {
             <span>Lote</span>
             <span>Estado · proveedor</span>
             <span>Recibido</span>
-            <span style={{ textAlign: "right" }}>Uds.</span>
+            <span style={{ textAlign: 'right' }}>Uds.</span>
             <span>Forma de pago</span>
-            <span style={{ textAlign: "right" }}>Costo</span>
+            <span style={{ textAlign: 'right' }}>Costo</span>
           </Box>
 
           {/* Rows */}
@@ -392,7 +398,7 @@ export default function FotosintesisLotesPage() {
             <Box sx={emptyMessageSx(foto)}>
               {deferredSearch.trim() ? (
                 `Sin resultados para “${deferredSearch.trim()}”.`
-              ) : tab === "todos" && rows.length === 0 ? (
+              ) : tab === 'todos' && rows.length === 0 ? (
                 <>
                   Aún no hay lotes registrados.
                   <br />
@@ -400,21 +406,21 @@ export default function FotosintesisLotesPage() {
                     component={Link}
                     to="/admin/fotosintesis/lots/new"
                     sx={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      marginTop: "10px",
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      marginTop: '10px',
                       color: foto.accent.deep,
                       fontWeight: 600,
-                      textDecoration: "none",
-                      "&:hover": { color: foto.accent.primary },
+                      textDecoration: 'none',
+                      '&:hover': { color: foto.accent.primary },
                     }}
                   >
                     <Plus size={12} /> Registrar primera compra
                   </Box>
                 </>
               ) : (
-                "No hay lotes en este estado."
+                'No hay lotes en este estado.'
               )}
             </Box>
           ) : (
@@ -422,7 +428,7 @@ export default function FotosintesisLotesPage() {
               {filteredRows.map((row) => {
                 const meta = estadoMeta(row.estado, foto);
                 const target =
-                  row.estado === "abierto"
+                  row.estado === 'abierto'
                     ? `/admin/fotosintesis/lots/${row.loteId}`
                     : `/admin/fotosintesis/lots/${row.loteId}/close`;
                 return (
@@ -433,34 +439,34 @@ export default function FotosintesisLotesPage() {
                     role="listitem"
                     aria-label={`Lote ${row.loteId}, ${meta.label}, ${row.providerName}`}
                     sx={{
-                      width: "100%",
+                      width: '100%',
                       // content-box rows add their 18px padding ON TOP of 100%,
                       // overflowing the card and clipping the right (Costo) cell.
-                      boxSizing: "border-box",
-                      textDecoration: "none",
+                      boxSizing: 'border-box',
+                      textDecoration: 'none',
                       background: foto.surfaces.canvas,
                       borderBottom: `1px solid ${foto.surfaces.edge}`,
-                      padding: "14px 18px",
-                      display: "grid",
+                      padding: '14px 18px',
+                      display: 'grid',
                       gridTemplateColumns: {
-                        xs: "72px minmax(0, 1fr) auto",
-                        md: "72px minmax(0, 1.5fr) 96px 70px 120px 130px",
+                        xs: '72px minmax(0, 1fr) auto',
+                        md: '72px minmax(0, 1.5fr) 96px 70px 120px 130px',
                       },
-                      gap: "12px",
-                      alignItems: "center",
+                      gap: '12px',
+                      alignItems: 'center',
                       color: foto.ink.primary,
-                      fontFamily: "inherit",
-                      transition: "background 120ms ease",
-                      "& .lotId": {
-                        transition: "background 120ms ease, color 120ms ease",
+                      fontFamily: 'inherit',
+                      transition: 'background 120ms ease',
+                      '& .lotId': {
+                        transition: 'background 120ms ease, color 120ms ease',
                       },
-                      "&:hover": { background: foto.surfaces.panel },
-                      "&:hover .lotId": {
+                      '&:hover': { background: foto.surfaces.panel },
+                      '&:hover .lotId': {
                         background: foto.accent.primary,
                         color: foto.ink.inverse,
                       },
-                      "&:focus-visible": {
-                        outline: "none",
+                      '&:focus-visible': {
+                        outline: 'none',
                         boxShadow: `inset 0 0 0 2px ${foto.accent.glow}`,
                       },
                     }}
@@ -471,12 +477,12 @@ export default function FotosintesisLotesPage() {
                       sx={{
                         ...monoSx,
                         width: 64,
-                        padding: "6px 0",
-                        textAlign: "center",
+                        padding: '6px 0',
+                        textAlign: 'center',
                         background: foto.accent.soft,
                         color: foto.accent.deep,
-                        borderRadius: "7px",
-                        fontSize: "11.5px",
+                        borderRadius: '7px',
+                        fontSize: '11.5px',
                         fontWeight: 600,
                       }}
                     >
@@ -487,13 +493,13 @@ export default function FotosintesisLotesPage() {
                     <Box sx={{ minWidth: 0 }}>
                       <Box
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "7px",
-                          fontSize: "13.5px",
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '7px',
+                          fontSize: '13.5px',
                           fontWeight: 600,
                           color: foto.ink.primary,
-                          letterSpacing: "-0.01em",
+                          letterSpacing: '-0.01em',
                         }}
                       >
                         <Box
@@ -501,7 +507,7 @@ export default function FotosintesisLotesPage() {
                           sx={{
                             width: 7,
                             height: 7,
-                            borderRadius: "50%",
+                            borderRadius: '50%',
                             flexShrink: 0,
                             background: meta.color,
                           }}
@@ -509,9 +515,9 @@ export default function FotosintesisLotesPage() {
                         <Box
                           component="span"
                           sx={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
                           }}
                         >
                           {row.renombreLote || meta.descriptor}
@@ -519,25 +525,25 @@ export default function FotosintesisLotesPage() {
                       </Box>
                       <Box
                         sx={{
-                          fontSize: "11.5px",
+                          fontSize: '11.5px',
                           color: foto.ink.tertiary,
-                          marginTop: "2px",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
+                          marginTop: '2px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         {meta.label} · {row.providerName}
-                        {row.mina ? ` · ${row.mina}` : ""}
+                        {row.mina ? ` · ${row.mina}` : ''}
                       </Box>
                     </Box>
 
                     {/* Recibido (desktop) */}
                     <Box
                       sx={{
-                        display: { xs: "none", md: "block" },
+                        display: { xs: 'none', md: 'block' },
                         ...monoSx,
-                        fontSize: "12px",
+                        fontSize: '12px',
                         color: foto.ink.secondary,
                       }}
                     >
@@ -547,11 +553,11 @@ export default function FotosintesisLotesPage() {
                     {/* Unidades (desktop) */}
                     <Box
                       sx={{
-                        display: { xs: "none", md: "block" },
+                        display: { xs: 'none', md: 'block' },
                         ...monoSx,
-                        fontSize: "12.5px",
+                        fontSize: '12.5px',
                         color: foto.ink.secondary,
-                        textAlign: "right",
+                        textAlign: 'right',
                       }}
                     >
                       {row.unidadesDeclaradas}
@@ -560,12 +566,12 @@ export default function FotosintesisLotesPage() {
                     {/* Forma de pago (desktop) */}
                     <Box
                       sx={{
-                        display: { xs: "none", md: "block" },
-                        fontSize: "12px",
+                        display: { xs: 'none', md: 'block' },
+                        fontSize: '12px',
                         color: foto.ink.secondary,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {formaPagoLabel(row.formaPago)}
@@ -574,12 +580,12 @@ export default function FotosintesisLotesPage() {
                     {/* Costo (desktop) */}
                     <Box
                       sx={{
-                        display: { xs: "none", md: "block" },
+                        display: { xs: 'none', md: 'block' },
                         ...monoSx,
-                        fontSize: "12.5px",
+                        fontSize: '12.5px',
                         fontWeight: 600,
                         color: foto.ink.primary,
-                        textAlign: "right",
+                        textAlign: 'right',
                       }}
                     >
                       {formatCOP(row.costoTotalCOP)}
@@ -589,9 +595,9 @@ export default function FotosintesisLotesPage() {
                     <Box
                       aria-hidden="true"
                       sx={{
-                        display: { xs: "inline-flex", md: "none" },
-                        alignItems: "center",
-                        justifyContent: "center",
+                        display: { xs: 'inline-flex', md: 'none' },
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         color: foto.ink.mute,
                       }}
                     >
@@ -622,28 +628,28 @@ interface EstadoMeta {
 
 function estadoMeta(estado: EstadoKey, foto: FotoT): EstadoMeta {
   switch (estado) {
-    case "abierto":
+    case 'abierto':
       return {
-        label: "Abierto",
-        descriptor: "Captura en curso",
+        label: 'Abierto',
+        descriptor: 'Captura en curso',
         color: foto.accent.primary,
       };
-    case "cerrado":
+    case 'cerrado':
       return {
-        label: "Cerrado",
-        descriptor: "Listo para publicar",
+        label: 'Cerrado',
+        descriptor: 'Listo para publicar',
         color: foto.status.consigned,
       };
-    case "publicado":
+    case 'publicado':
       return {
-        label: "Publicado",
-        descriptor: "En catálogo",
+        label: 'Publicado',
+        descriptor: 'En catálogo',
         color: foto.ink.secondary,
       };
-    case "cancelado":
+    case 'cancelado':
       return {
-        label: "Cancelado",
-        descriptor: "Lote cancelado",
+        label: 'Cancelado',
+        descriptor: 'Lote cancelado',
         color: foto.status.sold,
       };
   }
@@ -651,10 +657,10 @@ function estadoMeta(estado: EstadoKey, foto: FotoT): EstadoMeta {
 
 function emptyMessageSx(foto: FotoT) {
   return {
-    padding: "36px 18px",
-    textAlign: "center" as const,
+    padding: '36px 18px',
+    textAlign: 'center' as const,
     color: foto.ink.tertiary,
-    fontSize: "12.5px",
+    fontSize: '12.5px',
     lineHeight: 1.55,
   };
 }
@@ -664,7 +670,7 @@ interface HeaderStatProps {
   label: string;
   ariaLabel: string;
   foto: FotoT;
-  tone?: "mute";
+  tone?: 'mute';
 }
 
 function HeaderStat({ value, label, ariaLabel, foto, tone }: HeaderStatProps) {
@@ -672,23 +678,23 @@ function HeaderStat({ value, label, ariaLabel, foto, tone }: HeaderStatProps) {
     <Box
       aria-label={ariaLabel}
       sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-end",
-        gap: "3px",
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-end',
+        gap: '3px',
         borderRight: `1px solid ${foto.surfaces.rule}`,
-        paddingRight: "20px",
-        "&:last-child": { borderRight: "none", paddingRight: 0 },
+        paddingRight: '20px',
+        '&:last-child': { borderRight: 'none', paddingRight: 0 },
       }}
     >
       <Box
         sx={{
           fontFamily: fontFamilies.mono,
-          fontSize: "26px",
+          fontSize: '26px',
           fontWeight: 300,
-          color: tone === "mute" ? foto.ink.tertiary : foto.ink.primary,
-          letterSpacing: "-0.035em",
-          fontVariantNumeric: "tabular-nums",
+          color: tone === 'mute' ? foto.ink.tertiary : foto.ink.primary,
+          letterSpacing: '-0.035em',
+          fontVariantNumeric: 'tabular-nums',
           lineHeight: 0.9,
         }}
       >
@@ -696,12 +702,12 @@ function HeaderStat({ value, label, ariaLabel, foto, tone }: HeaderStatProps) {
       </Box>
       <Box
         sx={{
-          fontSize: "9px",
-          letterSpacing: "0.2em",
-          textTransform: "uppercase",
+          fontSize: '9px',
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
           fontWeight: 500,
           color: foto.ink.tertiary,
-          marginTop: "4px",
+          marginTop: '4px',
         }}
       >
         {label}
@@ -727,27 +733,27 @@ function TabButton({ active, onClick, label, count, foto }: TabButtonProps) {
       aria-selected={active}
       onClick={onClick}
       sx={{
-        appearance: "none",
-        background: "transparent",
-        border: "none",
-        cursor: "pointer",
-        fontFamily: "inherit",
-        padding: "12px 14px",
-        fontSize: "12.5px",
+        appearance: 'none',
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        fontFamily: 'inherit',
+        padding: '12px 14px',
+        fontSize: '12.5px',
         fontWeight: 600,
-        whiteSpace: "nowrap",
+        whiteSpace: 'nowrap',
         color: active ? foto.ink.primary : foto.ink.tertiary,
-        borderBottom: `2px solid ${active ? foto.accent.primary : "transparent"}`,
-        marginBottom: "-1px",
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "8px",
-        transition: "color 120ms ease, border-color 120ms ease",
-        "&:hover": { color: foto.ink.primary },
-        "&:focus-visible": {
-          outline: "none",
+        borderBottom: `2px solid ${active ? foto.accent.primary : 'transparent'}`,
+        marginBottom: '-1px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '8px',
+        transition: 'color 120ms ease, border-color 120ms ease',
+        '&:hover': { color: foto.ink.primary },
+        '&:focus-visible': {
+          outline: 'none',
           boxShadow: `0 0 0 3px ${foto.accent.glow}`,
-          borderRadius: "4px",
+          borderRadius: '4px',
         },
       }}
     >
@@ -756,16 +762,16 @@ function TabButton({ active, onClick, label, count, foto }: TabButtonProps) {
         component="span"
         sx={{
           fontFamily: fontFamilies.mono,
-          fontVariantNumeric: "tabular-nums",
-          fontSize: "10.5px",
+          fontVariantNumeric: 'tabular-nums',
+          fontSize: '10.5px',
           fontWeight: 600,
-          padding: "2px 7px",
-          borderRadius: "999px",
+          padding: '2px 7px',
+          borderRadius: '999px',
           background: active ? foto.accent.soft : foto.surfaces.inset,
           color: active ? foto.accent.deep : foto.ink.secondary,
         }}
       >
-        {count ?? "—"}
+        {count ?? '—'}
       </Box>
     </Box>
   );

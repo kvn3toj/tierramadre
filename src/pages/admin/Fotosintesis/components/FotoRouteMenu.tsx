@@ -11,9 +11,9 @@
  * gives us focus-trap, Escape-to-close and aria-modal for free.
  */
 
-import { useMemo } from "react";
-import { useLocation, matchPath } from "react-router-dom";
-import { Box, Drawer, IconButton, Typography } from "@mui/material";
+import { useMemo } from 'react';
+import { useLocation, matchPath } from 'react-router-dom';
+import { Box, Drawer, IconButton, Typography } from '@mui/material';
 import {
   Activity,
   BarChart3,
@@ -44,15 +44,20 @@ import {
   UserSearch,
   Users,
   X,
-} from "lucide-react";
-import { getFoto, fontFamilies, zIndex } from "../../../../design-system";
+} from 'lucide-react';
+import {
+  getFoto,
+  fontFamilies,
+  zIndex,
+  containedScrollY,
+} from '../../../../design-system';
 import {
   GROUP_ORDER,
   navMapForLevel,
   type AdminRouteEntry,
   type NavGroup,
-} from "../../../../config/adminNavMap";
-import { useAppNavigator } from "../../../../contexts/AppNavigatorContext";
+} from '../../../../config/adminNavMap';
+import { useAppNavigator } from '../../../../contexts/AppNavigatorContext';
 
 const ICONS: Record<string, LucideIcon> = {
   Activity,
@@ -92,11 +97,11 @@ interface ShortcutRow {
 }
 
 const SHORTCUTS: readonly ShortcutRow[] = [
-  { keys: "⌘ K", label: "Buscar" },
-  { keys: "⌘ N", label: "Nuevo lote" },
-  { keys: "⌘ V", label: "Nueva venta" },
-  { keys: "⌘ D", label: "Directorio" },
-  { keys: "⌘ J", label: "Copiloto" },
+  { keys: '⌘ K', label: 'Buscar' },
+  { keys: '⌘ N', label: 'Nuevo lote' },
+  { keys: '⌘ V', label: 'Nueva venta' },
+  { keys: '⌘ D', label: 'Directorio' },
+  { keys: '⌘ J', label: 'Copiloto' },
 ];
 
 export interface FotoRouteMenuProps {
@@ -107,7 +112,7 @@ export interface FotoRouteMenuProps {
 }
 
 export function FotoRouteMenu({ open, onClose }: FotoRouteMenuProps) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const location = useLocation();
   const { accessLevel, navigateTo } = useAppNavigator();
 
@@ -129,18 +134,18 @@ export function FotoRouteMenu({ open, onClose }: FotoRouteMenuProps) {
     !!matchPath({ path, end: true }, location.pathname);
 
   const legend: { label: string; color: string }[] = [
-    { label: "Disponible", color: foto.status.available },
-    { label: "Consignado", color: foto.status.consigned },
-    { label: "Vendido", color: foto.status.sold },
+    { label: 'Disponible', color: foto.status.available },
+    { label: 'Consignado', color: foto.status.consigned },
+    { label: 'Vendido', color: foto.status.sold },
   ];
 
   const sectionLabelSx = {
-    fontSize: "9px",
-    letterSpacing: "0.16em",
-    textTransform: "uppercase" as const,
+    fontSize: '9px',
+    letterSpacing: '0.16em',
+    textTransform: 'uppercase' as const,
     color: foto.ink.tertiary,
     fontWeight: 600,
-    padding: "2px 4px 6px",
+    padding: '2px 4px 6px',
   };
 
   return (
@@ -150,14 +155,14 @@ export function FotoRouteMenu({ open, onClose }: FotoRouteMenuProps) {
       onClose={onClose}
       ModalProps={{ keepMounted: false }}
       PaperProps={{
-        role: "menu",
-        "aria-label": "Mapa de navegación de Fotosíntesis",
+        role: 'menu',
+        'aria-label': 'Mapa de navegación de Fotosíntesis',
         sx: {
-          width: { xs: "88vw", sm: 360 },
+          width: { xs: '88vw', sm: 360 },
           maxWidth: 400,
           background: foto.surfaces.canvas,
           borderLeft: `1px solid ${foto.surfaces.rule}`,
-          backgroundImage: "none",
+          backgroundImage: 'none',
         },
       }}
       sx={{ zIndex: zIndex.sheetContent }}
@@ -165,27 +170,27 @@ export function FotoRouteMenu({ open, onClose }: FotoRouteMenuProps) {
       {/* Header */}
       <Box
         sx={{
-          position: "sticky",
+          position: 'sticky',
           top: 0,
           zIndex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           gap: 1,
-          padding: "14px 16px",
+          padding: '14px 16px',
           borderBottom: `1px solid ${foto.surfaces.rule}`,
           background: foto.surfaces.panel,
         }}
       >
-        <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
           <Camera size={16} strokeWidth={1.8} color={foto.accent.deep} />
           <Typography
             component="span"
             sx={{
-              fontSize: "13px",
+              fontSize: '13px',
               fontWeight: 700,
               color: foto.ink.primary,
-              letterSpacing: "0.01em",
+              letterSpacing: '0.01em',
             }}
           >
             Fotosíntesis
@@ -197,7 +202,7 @@ export function FotoRouteMenu({ open, onClose }: FotoRouteMenuProps) {
           size="small"
           sx={{
             color: foto.ink.secondary,
-            "&:hover": { color: foto.ink.primary },
+            '&:hover': { color: foto.ink.primary },
           }}
         >
           <X size={18} strokeWidth={1.8} />
@@ -208,15 +213,14 @@ export function FotoRouteMenu({ open, onClose }: FotoRouteMenuProps) {
       <Box
         sx={{
           flex: 1,
-          overflowY: "auto",
-          padding: "6px 12px 20px",
-          WebkitOverflowScrolling: "touch",
+          ...containedScrollY,
+          padding: '6px 12px 20px',
         }}
       >
         {grouped.map(({ group, items }) => (
-          <Box key={group} sx={{ marginTop: "10px" }}>
+          <Box key={group} sx={{ marginTop: '10px' }}>
             <Box sx={sectionLabelSx}>{group}</Box>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
               {items.map((entry) => {
                 const Icon = iconFor(entry.iconName);
                 const active = isActive(entry.path);
@@ -227,7 +231,7 @@ export function FotoRouteMenu({ open, onClose }: FotoRouteMenuProps) {
                     type="button"
                     role="menuitem"
                     title={entry.description}
-                    aria-current={active ? "page" : undefined}
+                    aria-current={active ? 'page' : undefined}
                     onClick={() => {
                       const result = navigateTo({
                         routeId: entry.id,
@@ -237,16 +241,16 @@ export function FotoRouteMenu({ open, onClose }: FotoRouteMenuProps) {
                       if (result.ok) onClose();
                     }}
                     sx={{
-                      textAlign: "left",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      width: "100%",
+                      textAlign: 'left',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      width: '100%',
                       minHeight: 42,
-                      padding: "9px 11px",
-                      borderRadius: "9px",
+                      padding: '9px 11px',
+                      borderRadius: '9px',
                       border: `1px solid ${
-                        active ? "transparent" : foto.surfaces.edge
+                        active ? 'transparent' : foto.surfaces.edge
                       }`,
                       borderLeft: active
                         ? `2px solid ${foto.accent.primary}`
@@ -255,17 +259,17 @@ export function FotoRouteMenu({ open, onClose }: FotoRouteMenuProps) {
                         ? foto.surfaces.rowActive
                         : foto.surfaces.inset,
                       color: foto.ink.primary,
-                      fontFamily: "inherit",
-                      fontSize: "13px",
-                      cursor: "pointer",
+                      fontFamily: 'inherit',
+                      fontSize: '13px',
+                      cursor: 'pointer',
                       transition:
-                        "background 120ms ease, border-color 120ms ease",
-                      "&:hover": {
+                        'background 120ms ease, border-color 120ms ease',
+                      '&:hover': {
                         background: foto.surfaces.rowHover,
                         borderColor: foto.surfaces.edgeStrong,
                       },
-                      "&:focus-visible": {
-                        outline: "none",
+                      '&:focus-visible': {
+                        outline: 'none',
                         boxShadow: `0 0 0 3px ${foto.accent.glow}`,
                       },
                     }}
@@ -278,9 +282,9 @@ export function FotoRouteMenu({ open, onClose }: FotoRouteMenuProps) {
                     <Box
                       component="span"
                       sx={{
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
                         fontWeight: active ? 600 : 400,
                       }}
                     >
@@ -294,13 +298,13 @@ export function FotoRouteMenu({ open, onClose }: FotoRouteMenuProps) {
         ))}
 
         {/* Keyboard shortcuts */}
-        <Box sx={{ marginTop: "18px" }}>
+        <Box sx={{ marginTop: '18px' }}>
           <Box
             sx={{
               ...sectionLabelSx,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
             }}
           >
             <Keyboard size={12} strokeWidth={1.8} color={foto.ink.tertiary} />
@@ -308,26 +312,26 @@ export function FotoRouteMenu({ open, onClose }: FotoRouteMenuProps) {
           </Box>
           <Box
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "4px",
-              padding: "6px 4px 2px",
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              padding: '6px 4px 2px',
             }}
           >
             {SHORTCUTS.map((s) => (
               <Box
                 key={s.keys}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                   gap: 1,
-                  padding: "3px 2px",
+                  padding: '3px 2px',
                 }}
               >
                 <Typography
                   component="span"
-                  sx={{ fontSize: "12.5px", color: foto.ink.secondary }}
+                  sx={{ fontSize: '12.5px', color: foto.ink.secondary }}
                 >
                   {s.label}
                 </Typography>
@@ -335,13 +339,13 @@ export function FotoRouteMenu({ open, onClose }: FotoRouteMenuProps) {
                   component="kbd"
                   sx={{
                     fontFamily: fontFamilies.mono,
-                    fontSize: "10px",
+                    fontSize: '10px',
                     color: foto.ink.secondary,
                     background: foto.surfaces.inset,
                     border: `1px solid ${foto.surfaces.edge}`,
-                    padding: "2px 6px",
-                    borderRadius: "4px",
-                    whiteSpace: "nowrap",
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {s.keys}
@@ -351,9 +355,9 @@ export function FotoRouteMenu({ open, onClose }: FotoRouteMenuProps) {
             <Typography
               component="span"
               sx={{
-                fontSize: "10.5px",
+                fontSize: '10.5px',
                 color: foto.ink.tertiary,
-                paddingTop: "4px",
+                paddingTop: '4px',
               }}
             >
               Usá Ctrl en Windows.
@@ -362,23 +366,23 @@ export function FotoRouteMenu({ open, onClose }: FotoRouteMenuProps) {
         </Box>
 
         {/* Estado legend */}
-        <Box sx={{ marginTop: "16px" }}>
+        <Box sx={{ marginTop: '16px' }}>
           <Box sx={sectionLabelSx}>Estado</Box>
           <Box
             sx={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "12px",
-              padding: "6px 4px 2px",
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '12px',
+              padding: '6px 4px 2px',
             }}
           >
             {legend.map((l) => (
               <Box
                 key={l.label}
                 sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
                 }}
               >
                 <Box
@@ -386,14 +390,14 @@ export function FotoRouteMenu({ open, onClose }: FotoRouteMenuProps) {
                   sx={{
                     width: 9,
                     height: 9,
-                    borderRadius: "50%",
+                    borderRadius: '50%',
                     backgroundColor: l.color,
                     flexShrink: 0,
                   }}
                 />
                 <Typography
                   component="span"
-                  sx={{ fontSize: "11.5px", color: foto.ink.secondary }}
+                  sx={{ fontSize: '11.5px', color: foto.ink.secondary }}
                 >
                   {l.label}
                 </Typography>

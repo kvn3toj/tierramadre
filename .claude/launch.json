@@ -8,6 +8,15 @@
       "port": 3000
     },
     {
+      "name": "vite-test-mode",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": [
+        "-c",
+        "source ~/.nvm/nvm.sh && VITE_TEST_MODE=1 npx vite --port 3000 --strictPort"
+      ],
+      "port": 3000
+    },
+    {
       "name": "vercel-dev",
       "runtimeExecutable": "/bin/bash",
       "runtimeArgs": ["-c", "source ~/.nvm/nvm.sh && npm run dev:api"],

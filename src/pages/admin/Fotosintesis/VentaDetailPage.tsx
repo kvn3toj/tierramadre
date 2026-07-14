@@ -10,7 +10,7 @@ import {
   Sparkles,
   Upload,
 } from 'lucide-react';
-import { getFoto, fontFamilies } from '../../../design-system';
+import { getFoto, fontFamilies, paneHeight } from '../../../design-system';
 import {
   uploadVentaDocument,
   ventasSubPath,
@@ -287,7 +287,7 @@ export default function VentaDetailPage() {
         sx={{
           background: foto.surfaces.canvas,
           color: foto.ink.tertiary,
-          minHeight: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
+          minHeight: paneHeight(FOTO_TOPBAR_HEIGHT),
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -306,7 +306,7 @@ export default function VentaDetailPage() {
         sx={{
           background: foto.surfaces.canvas,
           color: foto.ink.primary,
-          minHeight: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
+          minHeight: paneHeight(FOTO_TOPBAR_HEIGHT),
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -352,7 +352,7 @@ export default function VentaDetailPage() {
       sx={{
         background: foto.surfaces.canvas,
         color: foto.ink.primary,
-        minHeight: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
+        minHeight: paneHeight(FOTO_TOPBAR_HEIGHT),
       }}
     >
       <TicketHeader
@@ -377,7 +377,7 @@ export default function VentaDetailPage() {
           gap: 0,
           maxWidth: 1320,
           margin: '0 auto',
-          minHeight: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px - 110px)`,
+          minHeight: paneHeight(FOTO_TOPBAR_HEIGHT + 110),
         }}
       >
         {/* ───── LEFT pane (form summary) ───── */}

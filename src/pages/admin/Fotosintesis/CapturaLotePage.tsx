@@ -23,7 +23,7 @@ import {
   Wrench,
 } from 'lucide-react';
 
-import { getFoto, fontFamilies } from '../../../design-system';
+import { getFoto, fontFamilies, paneHeight } from '../../../design-system';
 import {
   useConvexQuery,
   useAuthedConvexAction,
@@ -2781,9 +2781,11 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
             // pane and let the outer container handle overflow.
             top: { lg: embedded ? 0 : FOTO_TOPBAR_HEIGHT },
             maxHeight: {
-              lg: embedded ? 'none' : `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
+              lg: embedded ? 'none' : paneHeight(FOTO_TOPBAR_HEIGHT),
             },
             overflow: { lg: embedded ? 'visible' : 'auto' },
+            overscrollBehavior: 'contain',
+            WebkitOverflowScrolling: 'touch',
             paddingBottom: '20px',
             display: 'flex',
             flexDirection: 'column',

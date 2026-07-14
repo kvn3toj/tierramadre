@@ -17,13 +17,20 @@
  * Spec: docs/superpowers/specs/2026-05-06-fotosintesis-admin-redesign-design.md
  */
 
-import { useRef, useState } from "react";
-import { Box, ButtonBase, Popover, Typography } from "@mui/material";
-import { fontFamilies, type FotoTokens } from "../../../design-system";
+import { useRef, useState } from 'react';
+import { Box, ButtonBase, Popover, Typography } from '@mui/material';
+import {
+  fontFamilies,
+  appShell,
+  layoutBreakpoints,
+  bottomBarClearance,
+  zIndex,
+  type FotoTokens,
+} from '../../../design-system';
 
 const SANS = fontFamilies.system;
 
-export type BulkPriceMode = "delta" | "percent" | "absolute";
+export type BulkPriceMode = 'delta' | 'percent' | 'absolute';
 
 interface BulkActionBarProps {
   visible: boolean;
@@ -59,30 +66,38 @@ export function BulkActionBar({
       aria-label="Acciones en lote"
       aria-hidden={!visible}
       sx={{
-        position: "fixed",
+        position: 'fixed',
         left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 12,
+        // Consumes the docked Copilot rail width so the bar shifts with the
+        // content instead of underlapping the rail (Navigation UX rule 5).
+        right: 'var(--copilot-rail-width, 0px)',
+        // Below the desktop breakpoint the global iOS tab bar is visible and
+        // must be cleared; at/above it the tab bar hides so only the safe
+        // area applies (Navigation UX rule 6).
+        bottom: bottomBarClearance(appShell.tabBarReserve),
+        [`@media (min-width: ${layoutBreakpoints.desktop}px)`]: {
+          bottom: 'env(safe-area-inset-bottom, 0px)',
+        },
+        zIndex: zIndex.fixed,
         backgroundColor: foto.surfaces.panel,
         borderTop: `1px solid ${foto.surfaces.edgeStrong}`,
-        transform: visible ? "translateY(0)" : "translateY(100%)",
+        transform: visible ? 'translateY(0)' : 'translateY(100%)',
         transition:
-          "transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 200ms linear",
+          'transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 200ms linear, right 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
         opacity: visible ? 1 : 0,
-        pointerEvents: visible ? "auto" : "none",
+        pointerEvents: visible ? 'auto' : 'none',
       }}
     >
       <Box
         sx={{
           maxWidth: 1280,
-          mx: "auto",
+          mx: 'auto',
           px: { xs: 2, md: 3 },
-          py: "12px",
-          display: "flex",
-          alignItems: "center",
+          py: '12px',
+          display: 'flex',
+          alignItems: 'center',
           gap: 1.5,
-          flexWrap: "wrap",
+          flexWrap: 'wrap',
         }}
       >
         <Typography
@@ -90,17 +105,17 @@ export function BulkActionBar({
             fontFamily: SANS,
             fontSize: 12,
             color: foto.ink.tertiary,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
           }}
         >
           <Box
             aria-hidden
             sx={{
-              width: "8px",
-              height: "8px",
-              borderRadius: "1px",
+              width: '8px',
+              height: '8px',
+              borderRadius: '1px',
               backgroundColor: foto.accent.primary,
               flexShrink: 0,
             }}
@@ -109,9 +124,9 @@ export function BulkActionBar({
             component="span"
             sx={{ fontSize: 13, color: foto.ink.primary, fontWeight: 600 }}
           >
-            {count.toLocaleString("es-CO")}
+            {count.toLocaleString('es-CO')}
           </Box>
-          {count === 1 ? "seleccionada" : "seleccionadas"}
+          {count === 1 ? 'seleccionada' : 'seleccionadas'}
         </Typography>
 
         <Box sx={{ flex: 1 }} />
@@ -159,17 +174,17 @@ export function BulkActionBar({
             fontFamily: SANS,
             fontSize: 12,
             color: foto.ink.secondary,
-            px: "12px",
-            py: "8px",
-            borderRadius: "4px",
+            px: '12px',
+            py: '8px',
+            borderRadius: '4px',
             border: `1px solid ${foto.surfaces.edgeStrong}`,
             transition: foto.motion.rowHover,
-            "&:hover": { backgroundColor: foto.surfaces.inset },
-            "&:focus-visible": {
+            '&:hover': { backgroundColor: foto.surfaces.inset },
+            '&:focus-visible': {
               outline: `2px solid ${foto.accent.primary}`,
-              outlineOffset: "2px",
+              outlineOffset: '2px',
             },
-            "&:disabled": { opacity: 0.5, cursor: "default" },
+            '&:disabled': { opacity: 0.5, cursor: 'default' },
           }}
         >
           Limpiar
@@ -187,14 +202,14 @@ function BulkActionButton({
   disabled,
   pipColor,
   children,
-  "data-testid": dataTestId,
+  'data-testid': dataTestId,
 }: {
   foto: FotoTokens;
   onClick: () => void;
   disabled: boolean;
   pipColor?: string;
   children: React.ReactNode;
-  "data-testid"?: string;
+  'data-testid'?: string;
 }) {
   return (
     <ButtonBase
@@ -208,31 +223,31 @@ function BulkActionButton({
         color: foto.ink.primary,
         backgroundColor: foto.surfaces.canvas,
         border: `1px solid ${foto.surfaces.edgeStrong}`,
-        borderRadius: "4px",
-        px: "14px",
-        py: "8px",
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "8px",
+        borderRadius: '4px',
+        px: '14px',
+        py: '8px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '8px',
         transition: foto.motion.rowHover,
-        "&:hover": {
+        '&:hover': {
           backgroundColor: foto.surfaces.inset,
           borderColor: foto.accent.primary,
         },
-        "&:focus-visible": {
+        '&:focus-visible': {
           outline: `2px solid ${foto.accent.primary}`,
-          outlineOffset: "2px",
+          outlineOffset: '2px',
         },
-        "&:disabled": { opacity: 0.5, cursor: "default" },
+        '&:disabled': { opacity: 0.5, cursor: 'default' },
       }}
     >
       {pipColor && (
         <Box
           aria-hidden
           sx={{
-            width: "8px",
-            height: "8px",
-            borderRadius: "1px",
+            width: '8px',
+            height: '8px',
+            borderRadius: '1px',
             backgroundColor: pipColor,
             flexShrink: 0,
           }}
@@ -258,15 +273,15 @@ function BulkPricePopover({
 }) {
   const anchorRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<BulkPriceMode>("absolute");
-  const [raw, setRaw] = useState("");
+  const [mode, setMode] = useState<BulkPriceMode>('absolute');
+  const [raw, setRaw] = useState('');
 
   const close = () => setOpen(false);
   const apply = () => {
-    const n = Number(raw.replace(/[^0-9.\-]/g, ""));
+    const n = Number(raw.replace(/[^0-9.\-]/g, ''));
     if (!Number.isFinite(n)) return;
     onApply({ mode, value: n });
-    setRaw("");
+    setRaw('');
     close();
   };
 
@@ -284,19 +299,19 @@ function BulkPricePopover({
           color: foto.ink.primary,
           backgroundColor: foto.surfaces.canvas,
           border: `1px solid ${foto.surfaces.edgeStrong}`,
-          borderRadius: "4px",
-          px: "14px",
-          py: "8px",
+          borderRadius: '4px',
+          px: '14px',
+          py: '8px',
           transition: foto.motion.rowHover,
-          "&:hover": {
+          '&:hover': {
             backgroundColor: foto.surfaces.inset,
             borderColor: foto.accent.primary,
           },
-          "&:focus-visible": {
+          '&:focus-visible': {
             outline: `2px solid ${foto.accent.primary}`,
-            outlineOffset: "2px",
+            outlineOffset: '2px',
           },
-          "&:disabled": { opacity: 0.5, cursor: "default" },
+          '&:disabled': { opacity: 0.5, cursor: 'default' },
         }}
       >
         Cambiar precio
@@ -305,15 +320,15 @@ function BulkPricePopover({
         open={open}
         anchorEl={anchorRef.current}
         onClose={close}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        transformOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         slotProps={{
           paper: {
             sx: {
               backgroundColor: foto.surfaces.panel,
               border: `1px solid ${foto.surfaces.edgeStrong}`,
-              borderRadius: "6px",
-              boxShadow: "none",
+              borderRadius: '6px',
+              boxShadow: 'none',
               p: 2,
               minWidth: 240,
             },
@@ -325,8 +340,8 @@ function BulkPricePopover({
             fontFamily: SANS,
             fontSize: 11,
             color: foto.ink.tertiary,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
             mb: 1,
           }}
         >
@@ -335,13 +350,13 @@ function BulkPricePopover({
         <Box
           role="radiogroup"
           aria-label="Modo de cambio de precio"
-          sx={{ display: "flex", gap: "6px", mb: 1.5 }}
+          sx={{ display: 'flex', gap: '6px', mb: 1.5 }}
         >
           {(
             [
-              { v: "delta", label: "Delta" },
-              { v: "percent", label: "Porcentaje" },
-              { v: "absolute", label: "Absoluto" },
+              { v: 'delta', label: 'Delta' },
+              { v: 'percent', label: 'Porcentaje' },
+              { v: 'absolute', label: 'Absoluto' },
             ] as const
           ).map((opt) => {
             const active = mode === opt.v;
@@ -363,9 +378,9 @@ function BulkPricePopover({
                   border: `1px solid ${
                     active ? foto.accent.primary : foto.surfaces.edgeStrong
                   }`,
-                  borderRadius: "4px",
-                  px: "10px",
-                  py: "6px",
+                  borderRadius: '4px',
+                  px: '10px',
+                  py: '6px',
                   transition: foto.motion.rowHover,
                 }}
               >
@@ -379,17 +394,17 @@ function BulkPricePopover({
             fontFamily: SANS,
             fontSize: 11,
             color: foto.ink.tertiary,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
             mb: 0.5,
           }}
         >
           Valor
-          {mode === "delta"
-            ? " (COP +/-)"
-            : mode === "percent"
-              ? " (% +/-)"
-              : " (COP)"}
+          {mode === 'delta'
+            ? ' (COP +/-)'
+            : mode === 'percent'
+              ? ' (% +/-)'
+              : ' (COP)'}
         </Typography>
         <Box
           component="input"
@@ -397,8 +412,8 @@ function BulkPricePopover({
           value={raw}
           onChange={(e) => setRaw((e.target as HTMLInputElement).value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") apply();
-            if (e.key === "Escape") close();
+            if (e.key === 'Enter') apply();
+            if (e.key === 'Escape') close();
           }}
           aria-label="Valor"
           sx={{
@@ -407,14 +422,14 @@ function BulkPricePopover({
             color: foto.ink.primary,
             backgroundColor: foto.surfaces.inset,
             border: `1px solid ${foto.surfaces.edgeStrong}`,
-            borderRadius: "4px",
-            px: "8px",
-            py: "6px",
-            width: "100%",
+            borderRadius: '4px',
+            px: '8px',
+            py: '6px',
+            width: '100%',
             mb: 1.5,
           }}
         />
-        <Box sx={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
+        <Box sx={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
           <ButtonBase
             onClick={close}
             disableRipple
@@ -422,9 +437,9 @@ function BulkPricePopover({
               fontFamily: SANS,
               fontSize: 12,
               color: foto.ink.secondary,
-              px: "10px",
-              py: "6px",
-              borderRadius: "4px",
+              px: '10px',
+              py: '6px',
+              borderRadius: '4px',
             }}
           >
             Cancelar
@@ -438,9 +453,9 @@ function BulkPricePopover({
               fontSize: 12,
               color: foto.ink.inverse,
               backgroundColor: foto.accent.primary,
-              px: "12px",
-              py: "6px",
-              borderRadius: "4px",
+              px: '12px',
+              py: '6px',
+              borderRadius: '4px',
             }}
           >
             Aplicar
@@ -464,14 +479,14 @@ function BulkColeccionPopover({
 }) {
   const anchorRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState('');
 
   const close = () => setOpen(false);
   const apply = () => {
     const v = value.trim();
     if (!v) return;
     onApply(v);
-    setValue("");
+    setValue('');
     close();
   };
 
@@ -489,19 +504,19 @@ function BulkColeccionPopover({
           color: foto.ink.primary,
           backgroundColor: foto.surfaces.canvas,
           border: `1px solid ${foto.surfaces.edgeStrong}`,
-          borderRadius: "4px",
-          px: "14px",
-          py: "8px",
+          borderRadius: '4px',
+          px: '14px',
+          py: '8px',
           transition: foto.motion.rowHover,
-          "&:hover": {
+          '&:hover': {
             backgroundColor: foto.surfaces.inset,
             borderColor: foto.accent.primary,
           },
-          "&:focus-visible": {
+          '&:focus-visible': {
             outline: `2px solid ${foto.accent.primary}`,
-            outlineOffset: "2px",
+            outlineOffset: '2px',
           },
-          "&:disabled": { opacity: 0.5, cursor: "default" },
+          '&:disabled': { opacity: 0.5, cursor: 'default' },
         }}
       >
         Cambiar colección
@@ -510,15 +525,15 @@ function BulkColeccionPopover({
         open={open}
         anchorEl={anchorRef.current}
         onClose={close}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        transformOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         slotProps={{
           paper: {
             sx: {
               backgroundColor: foto.surfaces.panel,
               border: `1px solid ${foto.surfaces.edgeStrong}`,
-              borderRadius: "6px",
-              boxShadow: "none",
+              borderRadius: '6px',
+              boxShadow: 'none',
               p: 2,
               minWidth: 280,
             },
@@ -530,8 +545,8 @@ function BulkColeccionPopover({
             fontFamily: SANS,
             fontSize: 11,
             color: foto.ink.tertiary,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
             mb: 0.75,
           }}
         >
@@ -543,8 +558,8 @@ function BulkColeccionPopover({
           value={value}
           onChange={(e) => setValue((e.target as HTMLInputElement).value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") apply();
-            if (e.key === "Escape") close();
+            if (e.key === 'Enter') apply();
+            if (e.key === 'Escape') close();
           }}
           placeholder="p. ej. Muzo Bold"
           aria-label="Colección"
@@ -554,10 +569,10 @@ function BulkColeccionPopover({
             color: foto.ink.primary,
             backgroundColor: foto.surfaces.inset,
             border: `1px solid ${foto.surfaces.edgeStrong}`,
-            borderRadius: "4px",
-            px: "8px",
-            py: "6px",
-            width: "100%",
+            borderRadius: '4px',
+            px: '8px',
+            py: '6px',
+            width: '100%',
             mb: 1.5,
           }}
         />
@@ -566,7 +581,7 @@ function BulkColeccionPopover({
             <Box component="option" key={c} value={c} />
           ))}
         </Box>
-        <Box sx={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
+        <Box sx={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
           <ButtonBase
             onClick={close}
             disableRipple
@@ -574,9 +589,9 @@ function BulkColeccionPopover({
               fontFamily: SANS,
               fontSize: 12,
               color: foto.ink.secondary,
-              px: "10px",
-              py: "6px",
-              borderRadius: "4px",
+              px: '10px',
+              py: '6px',
+              borderRadius: '4px',
             }}
           >
             Cancelar
@@ -590,9 +605,9 @@ function BulkColeccionPopover({
               fontSize: 12,
               color: foto.ink.inverse,
               backgroundColor: foto.accent.primary,
-              px: "12px",
-              py: "6px",
-              borderRadius: "4px",
+              px: '12px',
+              py: '6px',
+              borderRadius: '4px',
             }}
           >
             Aplicar
@@ -614,14 +629,14 @@ function BulkUbicacionPopover({
 }) {
   const anchorRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState('');
 
   const close = () => setOpen(false);
   const apply = () => {
     const v = value.trim();
     if (!v) return;
     onApply(v);
-    setValue("");
+    setValue('');
     close();
   };
 
@@ -639,19 +654,19 @@ function BulkUbicacionPopover({
           color: foto.ink.primary,
           backgroundColor: foto.surfaces.canvas,
           border: `1px solid ${foto.surfaces.edgeStrong}`,
-          borderRadius: "4px",
-          px: "14px",
-          py: "8px",
+          borderRadius: '4px',
+          px: '14px',
+          py: '8px',
           transition: foto.motion.rowHover,
-          "&:hover": {
+          '&:hover': {
             backgroundColor: foto.surfaces.inset,
             borderColor: foto.accent.primary,
           },
-          "&:focus-visible": {
+          '&:focus-visible': {
             outline: `2px solid ${foto.accent.primary}`,
-            outlineOffset: "2px",
+            outlineOffset: '2px',
           },
-          "&:disabled": { opacity: 0.5, cursor: "default" },
+          '&:disabled': { opacity: 0.5, cursor: 'default' },
         }}
       >
         Cambiar ubicación
@@ -660,15 +675,15 @@ function BulkUbicacionPopover({
         open={open}
         anchorEl={anchorRef.current}
         onClose={close}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        transformOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         slotProps={{
           paper: {
             sx: {
               backgroundColor: foto.surfaces.panel,
               border: `1px solid ${foto.surfaces.edgeStrong}`,
-              borderRadius: "6px",
-              boxShadow: "none",
+              borderRadius: '6px',
+              boxShadow: 'none',
               p: 2,
               minWidth: 240,
             },
@@ -680,8 +695,8 @@ function BulkUbicacionPopover({
             fontFamily: SANS,
             fontSize: 11,
             color: foto.ink.tertiary,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
             mb: 0.75,
           }}
         >
@@ -692,8 +707,8 @@ function BulkUbicacionPopover({
           value={value}
           onChange={(e) => setValue((e.target as HTMLInputElement).value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") apply();
-            if (e.key === "Escape") close();
+            if (e.key === 'Enter') apply();
+            if (e.key === 'Escape') close();
           }}
           placeholder="p. ej. Caja 12 — anaquel A"
           aria-label="Ubicación"
@@ -703,14 +718,14 @@ function BulkUbicacionPopover({
             color: foto.ink.primary,
             backgroundColor: foto.surfaces.inset,
             border: `1px solid ${foto.surfaces.edgeStrong}`,
-            borderRadius: "4px",
-            px: "8px",
-            py: "6px",
-            width: "100%",
+            borderRadius: '4px',
+            px: '8px',
+            py: '6px',
+            width: '100%',
             mb: 1.5,
           }}
         />
-        <Box sx={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
+        <Box sx={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
           <ButtonBase
             onClick={close}
             disableRipple
@@ -718,9 +733,9 @@ function BulkUbicacionPopover({
               fontFamily: SANS,
               fontSize: 12,
               color: foto.ink.secondary,
-              px: "10px",
-              py: "6px",
-              borderRadius: "4px",
+              px: '10px',
+              py: '6px',
+              borderRadius: '4px',
             }}
           >
             Cancelar
@@ -734,9 +749,9 @@ function BulkUbicacionPopover({
               fontSize: 12,
               color: foto.ink.inverse,
               backgroundColor: foto.accent.primary,
-              px: "12px",
-              py: "6px",
-              borderRadius: "4px",
+              px: '12px',
+              py: '6px',
+              borderRadius: '4px',
             }}
           >
             Aplicar

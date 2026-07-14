@@ -33,7 +33,7 @@ import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { Box, ButtonBase, Drawer, InputBase, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { Link as RouterLink } from 'react-router-dom';
-import { getAtelier, getFoto } from '../../../design-system';
+import { getAtelier, getFoto, containedScrollY } from '../../../design-system';
 import {
   convexApi,
   convexReady,
@@ -507,7 +507,7 @@ export function EditDrawer({
         <Box
           sx={{
             flex: 1,
-            overflowY: 'auto',
+            ...containedScrollY,
             px: `${atelier.spacing.drawerPaddingX}px`,
             py: `${atelier.spacing.drawerPaddingY}px`,
           }}

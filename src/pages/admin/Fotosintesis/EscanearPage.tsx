@@ -27,7 +27,7 @@ import {
   X,
   ZoomIn,
 } from 'lucide-react';
-import { getFoto, fontFamilies } from '../../../design-system';
+import { getFoto, fontFamilies, paneHeight } from '../../../design-system';
 import { FotoTopbar, FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
 import {
   convexApi,
@@ -134,7 +134,7 @@ export default function EscanearPage() {
   return (
     <Box
       sx={{
-        minHeight: '100dvh',
+        minHeight: paneHeight(FOTO_TOPBAR_HEIGHT),
         background: foto.surfaces.canvas,
         color: foto.ink.primary,
       }}

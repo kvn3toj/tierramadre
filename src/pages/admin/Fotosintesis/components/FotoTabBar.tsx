@@ -10,11 +10,11 @@
  * FotoRouteMenu owned by FotosintesisLayout.
  */
 
-import { useMemo } from "react";
-import { createPortal } from "react-dom";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Box, Typography } from "@mui/material";
-import { motion, LayoutGroup } from "framer-motion";
+import { useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Box, Typography } from '@mui/material';
+import { motion, LayoutGroup } from 'framer-motion';
 import {
   BarChart3,
   Boxes,
@@ -22,8 +22,8 @@ import {
   Menu as MenuIcon,
   Users,
   type LucideIcon,
-} from "lucide-react";
-import { getFoto, zIndex } from "../../../../design-system";
+} from 'lucide-react';
+import { getFoto, zIndex } from '../../../../design-system';
 
 export interface FotoTabBarProps {
   /** Opens the shared route menu (owned by FotosintesisLayout). */
@@ -32,7 +32,7 @@ export interface FotoTabBarProps {
   menuOpen?: boolean;
 }
 
-type SlotMatch = "exact" | "prefix";
+type SlotMatch = 'exact' | 'prefix';
 
 interface TabSlot {
   id: string;
@@ -48,36 +48,36 @@ interface TabSlot {
 
 const SLOTS: readonly TabSlot[] = [
   {
-    id: "inicio",
-    label: "Inicio",
+    id: 'inicio',
+    label: 'Inicio',
     icon: Home,
-    route: "/admin/fotosintesis",
-    match: "exact",
+    route: '/admin/fotosintesis',
+    match: 'exact',
   },
   {
-    id: "lotes",
-    label: "Lotes",
+    id: 'lotes',
+    label: 'Lotes',
     icon: Boxes,
-    route: "/admin/fotosintesis/lots",
-    match: "prefix",
+    route: '/admin/fotosintesis/lots',
+    match: 'prefix',
   },
   {
-    id: "ventas",
-    label: "Ventas",
+    id: 'ventas',
+    label: 'Ventas',
     icon: BarChart3,
-    route: "/admin/fotosintesis/sales",
-    match: "prefix",
+    route: '/admin/fotosintesis/sales',
+    match: 'prefix',
   },
   {
-    id: "directorio",
-    label: "Directorio",
+    id: 'directorio',
+    label: 'Directorio',
     icon: Users,
-    route: "/admin/fotosintesis/directory",
-    match: "prefix",
+    route: '/admin/fotosintesis/directory',
+    match: 'prefix',
   },
   {
-    id: "menu",
-    label: "Menú",
+    id: 'menu',
+    label: 'Menú',
     icon: MenuIcon,
     action: true,
   },
@@ -91,7 +91,7 @@ const ICON_SIZE = 20;
 const LABEL_SIZE = 10;
 
 const NAV_PILL_SPRING = {
-  type: "spring" as const,
+  type: 'spring' as const,
   stiffness: 380,
   damping: 32,
 };
@@ -104,26 +104,26 @@ const NAV_PILL_SPRING = {
 function activeSlotFor(pathname: string): string {
   for (const slot of SLOTS) {
     if (!slot.route) continue;
-    if (slot.match === "exact") {
+    if (slot.match === 'exact') {
       if (pathname === slot.route) return slot.id;
     } else if (
       pathname === slot.route ||
-      pathname.startsWith(slot.route + "/")
+      pathname.startsWith(slot.route + '/')
     ) {
       return slot.id;
     }
   }
-  return "";
+  return '';
 }
 
 export function FotoTabBar({ onMenuClick, menuOpen = false }: FotoTabBarProps) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const navigate = useNavigate();
   const location = useLocation();
 
   const reduceMotion =
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const activeId = useMemo(
     () => activeSlotFor(location.pathname),
@@ -134,7 +134,7 @@ export function FotoTabBar({ onMenuClick, menuOpen = false }: FotoTabBarProps) {
   const activeShadow = `0 4px 14px ${foto.accent.glow}`;
 
   const handleSlot = (slot: TabSlot) => {
-    if ("vibrate" in navigator) navigator.vibrate(10);
+    if ('vibrate' in navigator) navigator.vibrate(10);
     if (slot.action) {
       onMenuClick();
       return;
@@ -147,29 +147,35 @@ export function FotoTabBar({ onMenuClick, menuOpen = false }: FotoTabBarProps) {
       component="nav"
       aria-label="Navegación de Fotosíntesis"
       sx={{
-        position: "fixed",
+        position: 'fixed',
         bottom: 0,
         left: 0,
-        right: 0,
+        // right consumes the docked Copilot rail width so the bar shifts
+        // with the content instead of underlapping the rail (Navigation UX
+        // rule 5); transition eases in sync with IOSLayout's padding-right.
+        right: 'var(--copilot-rail-width, 0px)',
         padding: `10px 16px calc(12px + env(safe-area-inset-bottom)) 16px`,
         zIndex: zIndex.float,
-        pointerEvents: "none",
+        pointerEvents: 'none',
+        transition: reduceMotion
+          ? 'none'
+          : 'right 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
       }}
     >
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           height: PILL_HEIGHT,
           maxWidth: 520,
-          marginX: "auto",
+          marginX: 'auto',
           borderRadius: `${PILL_RADIUS}px`,
           padding: `${PILL_PADDING}px`,
-          pointerEvents: "auto",
-          position: "relative",
+          pointerEvents: 'auto',
+          position: 'relative',
           backgroundColor: foto.surfaces.canvas,
           border: `1px solid ${foto.surfaces.edge}`,
-          boxShadow: "0 4px 16px rgba(11, 16, 14, 0.12)",
+          boxShadow: '0 4px 16px rgba(11, 16, 14, 0.12)',
         }}
       >
         <LayoutGroup>
@@ -182,35 +188,35 @@ export function FotoTabBar({ onMenuClick, menuOpen = false }: FotoTabBarProps) {
                 component="button"
                 type="button"
                 aria-label={slot.label}
-                aria-current={!slot.action && isActive ? "page" : undefined}
-                aria-haspopup={slot.action ? "menu" : undefined}
+                aria-current={!slot.action && isActive ? 'page' : undefined}
+                aria-haspopup={slot.action ? 'menu' : undefined}
                 aria-expanded={slot.action ? menuOpen : undefined}
                 onClick={() => handleSlot(slot)}
                 sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   flex: 1,
-                  height: "100%",
+                  height: '100%',
                   minWidth: 0,
-                  gap: "3px",
-                  border: "none",
-                  background: "transparent",
-                  fontFamily: "inherit",
-                  cursor: "pointer",
-                  position: "relative",
-                  isolation: "isolate",
+                  gap: '3px',
+                  border: 'none',
+                  background: 'transparent',
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  isolation: 'isolate',
                   borderRadius: `${TAB_RADIUS}px`,
-                  userSelect: "none",
-                  WebkitTapHighlightColor: "transparent",
-                  transition: "background 120ms ease",
-                  "&:hover": !isActive
+                  userSelect: 'none',
+                  WebkitTapHighlightColor: 'transparent',
+                  transition: 'background 120ms ease',
+                  '&:hover': !isActive
                     ? { background: foto.surfaces.rowHover }
                     : undefined,
-                  "&:active": { transform: "scale(0.95)" },
-                  "&:focus-visible": {
-                    outline: "none",
+                  '&:active': { transform: 'scale(0.95)' },
+                  '&:focus-visible': {
+                    outline: 'none',
                     boxShadow: `0 0 0 3px ${foto.accent.glow}`,
                   },
                 }}
@@ -219,7 +225,7 @@ export function FotoTabBar({ onMenuClick, menuOpen = false }: FotoTabBarProps) {
                   (reduceMotion ? (
                     <Box
                       sx={{
-                        position: "absolute",
+                        position: 'absolute',
                         inset: 0,
                         background: activeGradient,
                         boxShadow: activeShadow,
@@ -232,7 +238,7 @@ export function FotoTabBar({ onMenuClick, menuOpen = false }: FotoTabBarProps) {
                       layoutId="foto-tab-indicator"
                       transition={NAV_PILL_SPRING}
                       style={{
-                        position: "absolute",
+                        position: 'absolute',
                         inset: 0,
                         background: activeGradient,
                         boxShadow: activeShadow,
@@ -244,11 +250,11 @@ export function FotoTabBar({ onMenuClick, menuOpen = false }: FotoTabBarProps) {
 
                 <Box
                   sx={{
-                    position: "relative",
+                    position: 'relative',
                     zIndex: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     height: ICON_SIZE,
                     width: ICON_SIZE,
                   }}
@@ -263,18 +269,18 @@ export function FotoTabBar({ onMenuClick, menuOpen = false }: FotoTabBarProps) {
                 <Typography
                   component="span"
                   sx={{
-                    position: "relative",
+                    position: 'relative',
                     zIndex: 1,
                     fontSize: `${LABEL_SIZE}px`,
                     fontWeight: isActive ? 600 : 500,
-                    letterSpacing: "0.04em",
-                    textTransform: "uppercase",
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
                     color: isActive ? foto.ink.inverse : foto.ink.tertiary,
-                    textAlign: "center",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    maxWidth: "100%",
+                    textAlign: 'center',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '100%',
                     lineHeight: 1.2,
                   }}
                 >
@@ -288,7 +294,7 @@ export function FotoTabBar({ onMenuClick, menuOpen = false }: FotoTabBarProps) {
     </Box>
   );
 
-  if (typeof document === "undefined") return null;
+  if (typeof document === 'undefined') return null;
   return createPortal(content, document.body);
 }
 

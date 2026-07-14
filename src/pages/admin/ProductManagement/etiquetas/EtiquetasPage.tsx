@@ -23,7 +23,12 @@ import { Box, ButtonBase, CircularProgress, InputBase } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 
-import { getFoto, fontFamilies } from '../../../../design-system';
+import {
+  getFoto,
+  fontFamilies,
+  appShell,
+  containedScrollX,
+} from '../../../../design-system';
 import {
   useConvexQuery,
   convexApi,
@@ -312,7 +317,7 @@ export default function EtiquetasPage() {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        minHeight: `var(${appShell.mainHeightVar}, 100dvh)`,
         backgroundColor: foto.surfaces.canvas,
         color: foto.ink.primary,
       }}
@@ -680,7 +685,7 @@ function LabelCard({
           background: '#FFFFFF',
           borderRadius: '8px',
           p: 0.5,
-          overflowX: 'auto',
+          ...containedScrollX,
           display: 'flex',
           justifyContent: 'center',
         }}

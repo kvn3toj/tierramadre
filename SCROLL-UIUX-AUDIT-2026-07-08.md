@@ -10,8 +10,8 @@
 The app uses a **fixed-viewport shell**: only `<main id="main-content">` scrolls, everything else is pinned. That is a sound pattern, but three things around it were inconsistent and produced the scroll bugs you saw:
 
 1. **Bottom sheets ("More" / Settings) used `85vh`** — on iOS Safari `vh` includes the address bar, so the sheet was taller than the visible screen and its bottom rows (Settings, Feedback, the price-multiplier slider) sat below the fold where scrolling couldn't reach them. **Fixed → `85dvh`.**
-2. **The catalog grid scrolls *inside* the page that also scrolls** (a nested scroller), with no scroll-containment, so at the top/bottom of the grid the gesture "leaked" into the shell — the "two scrollbars fighting" feel. **Fixed → `overscroll-behavior: contain` on the real scroller.**
-3. **Global `* { scroll-behavior: smooth }`** forced animated scrolling on *every* nested scroller and fought programmatic jumps (scroll restoration literally had a comment about bypassing it). **Fixed → scoped to the document root, with reduced-motion respected.**
+2. **The catalog grid scrolls _inside_ the page that also scrolls** (a nested scroller), with no scroll-containment, so at the top/bottom of the grid the gesture "leaked" into the shell — the "two scrollbars fighting" feel. **Fixed → `overscroll-behavior: contain` on the real scroller.**
+3. **Global `* { scroll-behavior: smooth }`** forced animated scrolling on _every_ nested scroller and fought programmatic jumps (scroll restoration literally had a comment about bypassing it). **Fixed → scoped to the document root, with reduced-motion respected.**
 
 All four edited files pass `tsc --noEmit` cleanly.
 
@@ -19,12 +19,12 @@ All four edited files pass `tsc --noEmit` cleanly.
 
 ## What was changed (applied)
 
-| File | Change | Why |
-|---|---|---|
-| `src/components/ios/IOSMoreSheet.tsx` | `maxHeight: 85vh` → `85dvh` (+ `@supports` fallback), added `overscroll-behavior: contain` + touch momentum | Bottom menu options were unreachable on iOS; sheet drags leaked to the page |
-| `src/components/ios/IOSSettingsSheet.tsx` | Same `85dvh` swap + touch momentum (it already had `overscroll: contain`) | Same cutoff on the settings sheet |
-| `src/components/treasure/VirtualGrid.tsx` | Added `overscroll-behavior: contain` + touch momentum to react-window's scroll element (`& > div`) | Stops the catalog grid's scroll from chaining into the shell |
-| `src/theme.ts` | Moved `scroll-behavior: smooth` off the `*` selector onto `html`, added `prefers-reduced-motion` guard | Global smooth-scroll on every element caused jank and fought scroll restoration |
+| File                                      | Change                                                                                                      | Why                                                                             |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `src/components/ios/IOSMoreSheet.tsx`     | `maxHeight: 85vh` → `85dvh` (+ `@supports` fallback), added `overscroll-behavior: contain` + touch momentum | Bottom menu options were unreachable on iOS; sheet drags leaked to the page     |
+| `src/components/ios/IOSSettingsSheet.tsx` | Same `85dvh` swap + touch momentum (it already had `overscroll: contain`)                                   | Same cutoff on the settings sheet                                               |
+| `src/components/treasure/VirtualGrid.tsx` | Added `overscroll-behavior: contain` + touch momentum to react-window's scroll element (`& > div`)          | Stops the catalog grid's scroll from chaining into the shell                    |
+| `src/theme.ts`                            | Moved `scroll-behavior: smooth` off the `*` selector onto `html`, added `prefers-reduced-motion` guard      | Global smooth-scroll on every element caused jank and fought scroll restoration |
 
 These are all low-risk CSS-in-JS changes. No component logic or types changed.
 
@@ -43,14 +43,14 @@ minHeight: 600
 
 Two problems remain here that I did **not** blind-fix because they change layout and need your eyes on a device:
 
-- **`HEADER_OFFSET = 280` is a guess.** The real chrome above the grid (nav bar + origin tabs + search bar + optional recently-viewed carousel + safe areas) is not a constant 280px, so the grid's bottom rarely lands exactly above the tab bar — leaving either a dead gap or a row tucked behind the tab bar that forces the *outer* main to scroll too. That outer/inner mismatch is the second half of the double-scroll feel.
+- **`HEADER_OFFSET = 280` is a guess.** The real chrome above the grid (nav bar + origin tabs + search bar + optional recently-viewed carousel + safe areas) is not a constant 280px, so the grid's bottom rarely lands exactly above the tab bar — leaving either a dead gap or a row tucked behind the tab bar that forces the _outer_ main to scroll too. That outer/inner mismatch is the second half of the double-scroll feel.
 - **`minHeight: 600` over-clamps small phones.** On an iPhone SE (~667px tall) the computed height is ~370px but it's forced back up to 600px, guaranteeing overflow and a second scrollbar.
 
-**Recommended fix (needs device testing):** replace the magic offset + clamp with a *measured* height. `VirtualGrid` already measures its container width via `ResizeObserver`; extend that to read the container's `getBoundingClientRect().top` and set `height = visualViewport.height − top − tabBarReserve`, floored at ~280px rather than 600. That deletes the 280 constant, fixes the small-screen clamp, and makes the grid end exactly above the tab bar so the shell no longer needs to scroll on the catalog — collapsing it back to a single effective scroller. I scoped this out but held off applying it blind because the interacting reservations (`main` has its own `padding-bottom: 95px`, and the grid adds a spacer row) need to be reconciled visually to avoid a double gap.
+**Recommended fix (needs device testing):** replace the magic offset + clamp with a _measured_ height. `VirtualGrid` already measures its container width via `ResizeObserver`; extend that to read the container's `getBoundingClientRect().top` and set `height = visualViewport.height − top − tabBarReserve`, floored at ~280px rather than 600. That deletes the 280 constant, fixes the small-screen clamp, and makes the grid end exactly above the tab bar so the shell no longer needs to scroll on the catalog — collapsing it back to a single effective scroller. I scoped this out but held off applying it blind because the interacting reservations (`main` has its own `padding-bottom: 95px`, and the grid adds a spacer row) need to be reconciled visually to avoid a double gap.
 
 ### The menu sheets
 
-`position: fixed; bottom: 0; max-height: 85vh; overflow-y: auto` with a sticky header. The mechanics were right; the unit was wrong. `dvh` tracks the *visible* viewport, so the sheet now always fits and its internal scroll reaches the last row. The shell already used `100dvh`, so this also makes the sheets consistent with the shell.
+`position: fixed; bottom: 0; max-height: 85vh; overflow-y: auto` with a sticky header. The mechanics were right; the unit was wrong. `dvh` tracks the _visible_ viewport, so the sheet now always fits and its internal scroll reaches the last row. The shell already used `100dvh`, so this also makes the sheets consistent with the shell.
 
 ---
 
@@ -74,3 +74,13 @@ Two problems remain here that I did **not** blind-fix because they change layout
 3. Promote the tab-bar / nav-bar reservations to design-system layout tokens so the catalog and shell stop guessing at each other's heights.
 
 _Per your CLAUDE.md workflow, run `npm run build` before committing so the version files update._
+
+---
+
+**Update:** the foundations issues above (viewport-unit inconsistency, magic
+layout-reservation numbers, scroll containment) were codified into shell
+tokens/mixins and applied across Fotosíntesis and Atelier. See "Navigation
+UX Rules" in [`src/design-system/README.md`](src/design-system/README.md)
+for the resulting rules and the tokens/mixins that enforce them. The
+catalog `VirtualGrid` `HEADER_OFFSET = 280` issue above is the same bug
+class but remains open — out of scope for that pass.

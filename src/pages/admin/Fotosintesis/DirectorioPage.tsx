@@ -4,14 +4,15 @@ import {
   useMemo,
   useState,
   type ReactNode,
-} from "react";
-import { Box, Dialog, IconButton } from "@mui/material";
-import { useNavigate } from "react-router-dom";
-import { Search, X, ChevronRight, Plus } from "lucide-react";
-import { getFoto, fontFamilies } from "../../../design-system";
-import { useConvexQuery, convexApi } from "../../../lib/convex-safe";
-import { FOTO_TOPBAR_HEIGHT } from "./components/FotoTopbar";
-import { WORKBENCH_ENABLED } from "./workbench/featureFlag";
+} from 'react';
+import { Box, Dialog, IconButton } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { Search, X, ChevronRight, Plus } from 'lucide-react';
+import { getFoto, fontFamilies, paneHeight } from '../../../design-system';
+import { useConvexQuery, convexApi } from '../../../lib/convex-safe';
+import { FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
+import { fotoPaneSx } from './components/paneStyles';
+import { WORKBENCH_ENABLED } from './workbench/featureFlag';
 
 /**
  * Fotosíntesis Directory — Slice 1 (read-only).
@@ -22,7 +23,7 @@ import { WORKBENCH_ENABLED } from "./workbench/featureFlag";
  * Spec: docs/specs/2026-05-21-fotosintesis-v2-handoff.md §4.7
  */
 
-type TabKey = "proveedores" | "embajadores" | "clientes";
+type TabKey = 'proveedores' | 'embajadores' | 'clientes';
 
 interface ContactRow {
   id: string;
@@ -36,26 +37,26 @@ interface ContactRow {
 }
 
 export default function FotosintesisDirectorioPage() {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<TabKey>("proveedores");
-  const [search, setSearch] = useState("");
+  const [tab, setTab] = useState<TabKey>('proveedores');
+  const [search, setSearch] = useState('');
   const deferredSearch = useDeferredValue(search);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Synchronous init — avoids a "desktop-then-mobile" flash on first paint
   // for narrow viewports (CLAUDE.md anti-blinking guidance).
   const [isMobile, setIsMobile] = useState<boolean>(() =>
-    typeof window !== "undefined"
-      ? window.matchMedia("(max-width: 1199px)").matches
+    typeof window !== 'undefined'
+      ? window.matchMedia('(max-width: 1199px)').matches
       : false,
   );
 
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 1199px)");
+    const mq = window.matchMedia('(max-width: 1199px)');
     const onChange = () => setIsMobile(mq.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
   }, []);
 
   // Reset selection when switching tabs.
@@ -67,11 +68,11 @@ export default function FotosintesisDirectorioPage() {
   const clients = useConvexQuery(convexApi.clients.list, {});
 
   const embajadores = useMemo(
-    () => (clients ?? []).filter((c) => c.tipo === "embajador"),
+    () => (clients ?? []).filter((c) => c.tipo === 'embajador'),
     [clients],
   );
   const finales = useMemo(
-    () => (clients ?? []).filter((c) => c.tipo === "final"),
+    () => (clients ?? []).filter((c) => c.tipo === 'final'),
     [clients],
   );
 
@@ -85,17 +86,17 @@ export default function FotosintesisDirectorioPage() {
           ? `NIT ${p.nit}`
           : p.cedula
             ? `CC ${p.cedula}`
-            : "—",
+            : '—',
         contactSecondary: p.telefono ?? p.email ?? undefined,
         tipoLabel: tipoProveedorLabel(p.tipo),
-        metaLine: p.email ?? p.direccion ?? "Sin contacto",
+        metaLine: p.email ?? p.direccion ?? 'Sin contacto',
         meta: [
-          { label: "Tipo", value: tipoProveedorLabel(p.tipo) },
-          { label: "NIT / CC", value: p.nit ?? p.cedula ?? "—" },
-          { label: "Teléfono", value: p.telefono ?? "—" },
-          { label: "Email", value: p.email ?? "—" },
-          { label: "Dirección", value: p.direccion ?? "—" },
-          { label: "Notas", value: p.notas ?? "—" },
+          { label: 'Tipo', value: tipoProveedorLabel(p.tipo) },
+          { label: 'NIT / CC', value: p.nit ?? p.cedula ?? '—' },
+          { label: 'Teléfono', value: p.telefono ?? '—' },
+          { label: 'Email', value: p.email ?? '—' },
+          { label: 'Dirección', value: p.direccion ?? '—' },
+          { label: 'Notas', value: p.notas ?? '—' },
         ],
       })),
     [providers],
@@ -107,17 +108,17 @@ export default function FotosintesisDirectorioPage() {
         id: c._id,
         name: c.nombre,
         initials: initialsOf(c.nombre),
-        contactPrimary: c.email ?? c.telefono ?? "—",
+        contactPrimary: c.email ?? c.telefono ?? '—',
         contactSecondary: c.telefono && c.email ? c.telefono : undefined,
-        tipoLabel: "Embajador",
-        metaLine: c.email ?? "Sin email registrado",
+        tipoLabel: 'Embajador',
+        metaLine: c.email ?? 'Sin email registrado',
         meta: [
-          { label: "Tipo", value: "Embajador" },
-          { label: "Asesor ID", value: c.asesorId ?? "—" },
-          { label: "Teléfono", value: c.telefono ?? "—" },
-          { label: "Email", value: c.email ?? "—" },
-          { label: "NIT / CC", value: c.nit ?? c.cedula ?? "—" },
-          { label: "Dirección", value: c.direccion ?? "—" },
+          { label: 'Tipo', value: 'Embajador' },
+          { label: 'Asesor ID', value: c.asesorId ?? '—' },
+          { label: 'Teléfono', value: c.telefono ?? '—' },
+          { label: 'Email', value: c.email ?? '—' },
+          { label: 'NIT / CC', value: c.nit ?? c.cedula ?? '—' },
+          { label: 'Dirección', value: c.direccion ?? '—' },
         ],
       })),
     [embajadores],
@@ -129,24 +130,24 @@ export default function FotosintesisDirectorioPage() {
         id: c._id,
         name: c.nombre,
         initials: initialsOf(c.nombre),
-        contactPrimary: c.email ?? c.telefono ?? "—",
+        contactPrimary: c.email ?? c.telefono ?? '—',
         contactSecondary: c.telefono && c.email ? c.telefono : undefined,
-        tipoLabel: "Cliente final",
-        metaLine: c.email ?? "Sin email registrado",
+        tipoLabel: 'Cliente final',
+        metaLine: c.email ?? 'Sin email registrado',
         meta: [
-          { label: "Tipo", value: "Cliente final" },
-          { label: "Teléfono", value: c.telefono ?? "—" },
-          { label: "Email", value: c.email ?? "—" },
-          { label: "NIT / CC", value: c.nit ?? c.cedula ?? "—" },
-          { label: "Dirección", value: c.direccion ?? "—" },
+          { label: 'Tipo', value: 'Cliente final' },
+          { label: 'Teléfono', value: c.telefono ?? '—' },
+          { label: 'Email', value: c.email ?? '—' },
+          { label: 'NIT / CC', value: c.nit ?? c.cedula ?? '—' },
+          { label: 'Dirección', value: c.direccion ?? '—' },
         ],
       })),
     [finales],
   );
 
   const activeRows: ContactRow[] = useMemo(() => {
-    if (tab === "proveedores") return proveedoresRows;
-    if (tab === "embajadores") return embajadoresRows;
+    if (tab === 'proveedores') return proveedoresRows;
+    if (tab === 'embajadores') return embajadoresRows;
     return clientesRows;
   }, [tab, proveedoresRows, embajadoresRows, clientesRows]);
 
@@ -157,7 +158,7 @@ export default function FotosintesisDirectorioPage() {
       return (
         r.name.toLowerCase().includes(q) ||
         r.contactPrimary.toLowerCase().includes(q) ||
-        (r.contactSecondary ?? "").toLowerCase().includes(q) ||
+        (r.contactSecondary ?? '').toLowerCase().includes(q) ||
         r.tipoLabel.toLowerCase().includes(q)
       );
     });
@@ -168,13 +169,13 @@ export default function FotosintesisDirectorioPage() {
     [filteredRows, selectedId],
   );
 
-  const totalCompras = "—"; // No clean aggregate path in Slice 1.
+  const totalCompras = '—'; // No clean aggregate path in Slice 1.
 
   // --- Styles --------------------------------------------------------------
   const monoSx = {
     fontFamily: fontFamilies.mono,
-    fontVariantNumeric: "tabular-nums" as const,
-    letterSpacing: "-0.005em",
+    fontVariantNumeric: 'tabular-nums' as const,
+    letterSpacing: '-0.005em',
   } as const;
 
   return (
@@ -183,14 +184,14 @@ export default function FotosintesisDirectorioPage() {
       sx={{
         color: foto.ink.primary,
         background: foto.surfaces.canvas,
-        minHeight: `calc(100vh - ${FOTO_TOPBAR_HEIGHT}px)`,
+        minHeight: paneHeight(FOTO_TOPBAR_HEIGHT),
       }}
     >
       {/* HEADER BAND */}
       <Box
         component="section"
         sx={{
-          padding: "32px 28px 24px",
+          padding: '32px 28px 24px',
           borderBottom: `1px solid ${foto.surfaces.rule}`,
           background: `linear-gradient(180deg, ${foto.surfaces.canvas} 0%, ${foto.surfaces.panel} 100%)`,
         }}
@@ -198,19 +199,19 @@ export default function FotosintesisDirectorioPage() {
         <Box
           sx={{
             maxWidth: 1320,
-            margin: "0 auto",
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "1fr auto" },
-            gap: "28px",
-            alignItems: "end",
+            margin: '0 auto',
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr auto' },
+            gap: '28px',
+            alignItems: 'end',
           }}
         >
           <Box>
             <Box
               sx={{
-                fontSize: "9px",
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
+                fontSize: '9px',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
                 fontWeight: 500,
                 color: foto.ink.tertiary,
               }}
@@ -220,10 +221,10 @@ export default function FotosintesisDirectorioPage() {
             <Box
               component="h1"
               sx={{
-                marginTop: "8px",
-                fontSize: "32px",
+                marginTop: '8px',
+                fontSize: '32px',
                 fontWeight: 600,
-                letterSpacing: "-0.025em",
+                letterSpacing: '-0.025em',
                 lineHeight: 1.1,
                 color: foto.ink.primary,
               }}
@@ -233,8 +234,8 @@ export default function FotosintesisDirectorioPage() {
             <Box
               component="p"
               sx={{
-                marginTop: "10px",
-                fontSize: "13.5px",
+                marginTop: '10px',
+                fontSize: '13.5px',
                 color: foto.ink.secondary,
                 maxWidth: 560,
                 lineHeight: 1.5,
@@ -247,10 +248,10 @@ export default function FotosintesisDirectorioPage() {
 
           <Box
             sx={{
-              display: "flex",
-              alignItems: "flex-end",
-              gap: "20px",
-              flexWrap: { xs: "wrap", md: "nowrap" },
+              display: 'flex',
+              alignItems: 'flex-end',
+              gap: '20px',
+              flexWrap: { xs: 'wrap', md: 'nowrap' },
             }}
             role="group"
             aria-label="Resumen del directorio"
@@ -290,35 +291,35 @@ export default function FotosintesisDirectorioPage() {
         aria-label="Categorías del directorio"
         sx={{
           maxWidth: 1320,
-          margin: "0 auto",
-          padding: { xs: "0 16px", md: "0 28px" },
-          display: "flex",
-          gap: "4px",
+          margin: '0 auto',
+          padding: { xs: '0 16px', md: '0 28px' },
+          display: 'flex',
+          gap: '4px',
           borderBottom: `1px solid ${foto.surfaces.edge}`,
           // Horizontal scroll on phones so the 3rd tab is never clipped.
-          overflowX: { xs: "auto", md: "visible" },
-          scrollbarWidth: "none",
-          "&::-webkit-scrollbar": { display: "none" },
-          flexWrap: "nowrap",
+          overflowX: { xs: 'auto', md: 'visible' },
+          scrollbarWidth: 'none',
+          '&::-webkit-scrollbar': { display: 'none' },
+          flexWrap: 'nowrap',
         }}
       >
         <TabButton
-          active={tab === "proveedores"}
-          onClick={() => setTab("proveedores")}
+          active={tab === 'proveedores'}
+          onClick={() => setTab('proveedores')}
           label="Proveedores"
           count={providers?.length}
           foto={foto}
         />
         <TabButton
-          active={tab === "embajadores"}
-          onClick={() => setTab("embajadores")}
+          active={tab === 'embajadores'}
+          onClick={() => setTab('embajadores')}
           label="Embajadores"
           count={embajadores.length}
           foto={foto}
         />
         <TabButton
-          active={tab === "clientes"}
-          onClick={() => setTab("clientes")}
+          active={tab === 'clientes'}
+          onClick={() => setTab('clientes')}
           label="Clientes finales"
           count={finales.length}
           foto={foto}
@@ -328,52 +329,52 @@ export default function FotosintesisDirectorioPage() {
             component="button"
             type="button"
             onClick={() => {
-              if (tab === "proveedores") {
-                navigate("/admin/fotosintesis/copilot/provider");
+              if (tab === 'proveedores') {
+                navigate('/admin/fotosintesis/copilot/provider');
               } else {
                 // Both embajadores + clientes land on the client canvas; thread
                 // the chosen tipo so "Nuevo embajador" opens on the embajador
                 // segment instead of the "final" default (H3).
-                navigate("/admin/fotosintesis/copilot/client", {
+                navigate('/admin/fotosintesis/copilot/client', {
                   state: {
-                    presetTipo: tab === "embajadores" ? "embajador" : "final",
+                    presetTipo: tab === 'embajadores' ? 'embajador' : 'final',
                   },
                 });
               }
             }}
             sx={{
-              marginLeft: "auto",
-              alignSelf: "center",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              border: "none",
-              borderRadius: "9px",
-              padding: "8px 13px",
+              marginLeft: 'auto',
+              alignSelf: 'center',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              border: 'none',
+              borderRadius: '9px',
+              padding: '8px 13px',
               background: foto.accent.primary,
               color: foto.ink.inverse,
-              fontSize: "12px",
+              fontSize: '12px',
               fontWeight: 600,
-              fontFamily: "inherit",
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-              transition: "background 120ms ease, transform 120ms ease",
-              "&:hover": {
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              transition: 'background 120ms ease, transform 120ms ease',
+              '&:hover': {
                 background: foto.accent.deep,
-                transform: "translateY(-1px)",
+                transform: 'translateY(-1px)',
               },
-              "&:focus-visible": {
-                outline: "none",
+              '&:focus-visible': {
+                outline: 'none',
                 boxShadow: `0 0 0 3px ${foto.accent.glow}`,
               },
             }}
           >
             <Plus size={14} strokeWidth={2.2} />
-            {tab === "proveedores"
-              ? "Nuevo proveedor"
-              : tab === "embajadores"
-                ? "Nuevo embajador"
-                : "Nuevo cliente"}
+            {tab === 'proveedores'
+              ? 'Nuevo proveedor'
+              : tab === 'embajadores'
+                ? 'Nuevo embajador'
+                : 'Nuevo cliente'}
           </Box>
         )}
       </Box>
@@ -382,33 +383,35 @@ export default function FotosintesisDirectorioPage() {
       <Box
         sx={{
           maxWidth: 1320,
-          margin: "0 auto",
-          padding: { xs: "20px 16px 40px", md: "24px 28px 60px" },
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) 440px" },
-          gap: { xs: "16px", lg: "24px" },
-          alignItems: "start",
+          margin: '0 auto',
+          padding: { xs: '20px 16px 40px', md: '24px 28px 60px' },
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 440px' },
+          gap: { xs: '16px', lg: '24px' },
+          alignItems: 'start',
         }}
       >
-        {/* LIST PANE */}
+        {/* LIST PANE — sticky, self-scrolling column (kills the old
+            calc(100vh - 360px) guess; see paneStyles.ts). */}
         <Box
           role="tabpanel"
           aria-labelledby={`tab-${tab}`}
           sx={{
+            ...fotoPaneSx,
             background: foto.surfaces.canvas,
             border: `1px solid ${foto.surfaces.rule}`,
-            borderRadius: "14px",
-            overflow: "hidden",
+            borderRadius: '14px',
+            overflowX: 'hidden',
           }}
         >
           {/* Search */}
           <Box
             sx={{
-              padding: "14px 18px",
+              padding: '14px 18px',
               borderBottom: `1px solid ${foto.surfaces.edge}`,
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
               background: foto.surfaces.canvas,
             }}
           >
@@ -424,19 +427,19 @@ export default function FotosintesisDirectorioPage() {
               aria-label={searchPlaceholder(tab)}
               sx={{
                 flex: 1,
-                border: "none",
-                outline: "none",
-                background: "transparent",
-                fontSize: "14px",
-                fontFamily: "inherit",
+                border: 'none',
+                outline: 'none',
+                background: 'transparent',
+                fontSize: '14px',
+                fontFamily: 'inherit',
                 color: foto.ink.primary,
-                "&::placeholder": { color: foto.ink.mute },
+                '&::placeholder': { color: foto.ink.mute },
               }}
             />
             {search ? (
               <IconButton
                 size="small"
-                onClick={() => setSearch("")}
+                onClick={() => setSearch('')}
                 aria-label="Limpiar búsqueda"
                 sx={{ color: foto.ink.tertiary }}
               >
@@ -448,16 +451,16 @@ export default function FotosintesisDirectorioPage() {
           {/* Column headers */}
           <Box
             sx={{
-              display: { xs: "none", lg: "grid" },
+              display: { xs: 'none', lg: 'grid' },
               gridTemplateColumns:
-                "32px minmax(0, 1.4fr) minmax(0, 1fr) 110px 80px",
-              gap: "12px",
-              alignItems: "center",
-              padding: "10px 18px",
+                '32px minmax(0, 1.4fr) minmax(0, 1fr) 110px 80px',
+              gap: '12px',
+              alignItems: 'center',
+              padding: '10px 18px',
               borderBottom: `1px solid ${foto.surfaces.edge}`,
-              fontSize: "9px",
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
+              fontSize: '9px',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
               color: foto.ink.tertiary,
               fontWeight: 500,
               background: foto.surfaces.panel,
@@ -467,12 +470,12 @@ export default function FotosintesisDirectorioPage() {
             <span>Nombre</span>
             <span>Contacto</span>
             <span>Tipo</span>
-            <span style={{ textAlign: "right" }}>Compras</span>
+            <span style={{ textAlign: 'right' }}>Compras</span>
           </Box>
 
           {/* Rows */}
-          {(tab === "proveedores" && providers === undefined) ||
-          (tab !== "proveedores" && clients === undefined) ? (
+          {(tab === 'proveedores' && providers === undefined) ||
+          (tab !== 'proveedores' && clients === undefined) ? (
             <Box sx={emptyMessageSx(foto)}>
               <Box component="span" aria-label="Sin datos">
                 —
@@ -482,16 +485,10 @@ export default function FotosintesisDirectorioPage() {
             <Box sx={emptyMessageSx(foto)}>
               {deferredSearch.trim()
                 ? `Sin resultados para “${deferredSearch.trim()}”.`
-                : "Aún no hay contactos registrados en esta categoría."}
+                : 'Aún no hay contactos registrados en esta categoría.'}
             </Box>
           ) : (
-            <Box
-              role="list"
-              sx={{
-                maxHeight: { lg: "calc(100vh - 360px)" },
-                overflowY: { lg: "auto" },
-              }}
-            >
+            <Box role="list">
               {filteredRows.map((row) => {
                 const isSelected = row.id === selectedId;
                 return (
@@ -502,35 +499,35 @@ export default function FotosintesisDirectorioPage() {
                     aria-pressed={isSelected}
                     onClick={() => setSelectedId(row.id)}
                     sx={{
-                      width: "100%",
-                      textAlign: "left",
+                      width: '100%',
+                      textAlign: 'left',
                       background: isSelected
                         ? foto.accent.soft
                         : foto.surfaces.canvas,
                       boxShadow: isSelected
                         ? `inset 3px 0 0 ${foto.accent.primary}`
-                        : "none",
-                      border: "none",
+                        : 'none',
+                      border: 'none',
                       borderBottom: `1px solid ${foto.surfaces.edge}`,
-                      cursor: "pointer",
-                      padding: "14px 18px",
-                      display: "grid",
+                      cursor: 'pointer',
+                      padding: '14px 18px',
+                      display: 'grid',
                       gridTemplateColumns: {
-                        xs: "32px minmax(0, 1fr) auto",
-                        lg: "32px minmax(0, 1.4fr) minmax(0, 1fr) 110px 80px",
+                        xs: '32px minmax(0, 1fr) auto',
+                        lg: '32px minmax(0, 1.4fr) minmax(0, 1fr) 110px 80px',
                       },
-                      gap: "12px",
-                      alignItems: "center",
+                      gap: '12px',
+                      alignItems: 'center',
                       color: foto.ink.primary,
-                      fontFamily: "inherit",
-                      transition: "background 120ms ease",
-                      "&:hover": {
+                      fontFamily: 'inherit',
+                      transition: 'background 120ms ease',
+                      '&:hover': {
                         background: isSelected
                           ? foto.accent.soft
                           : foto.surfaces.panel,
                       },
-                      "&:focus-visible": {
-                        outline: "none",
+                      '&:focus-visible': {
+                        outline: 'none',
                         boxShadow: isSelected
                           ? `inset 3px 0 0 ${foto.accent.primary}, 0 0 0 3px ${foto.accent.glow}`
                           : `0 0 0 3px ${foto.accent.glow}`,
@@ -542,13 +539,13 @@ export default function FotosintesisDirectorioPage() {
                       sx={{
                         width: 32,
                         height: 32,
-                        borderRadius: "50%",
+                        borderRadius: '50%',
                         background: foto.surfaces.inset,
                         border: `1px solid ${foto.surfaces.edge}`,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "11.5px",
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '11.5px',
                         fontWeight: 600,
                         color: foto.ink.secondary,
                       }}
@@ -558,25 +555,25 @@ export default function FotosintesisDirectorioPage() {
                     <Box sx={{ minWidth: 0 }}>
                       <Box
                         sx={{
-                          fontSize: "13.5px",
+                          fontSize: '13.5px',
                           fontWeight: 600,
                           color: foto.ink.primary,
-                          letterSpacing: "-0.01em",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
+                          letterSpacing: '-0.01em',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         {row.name}
                       </Box>
                       <Box
                         sx={{
-                          fontSize: "11.5px",
+                          fontSize: '11.5px',
                           color: foto.ink.tertiary,
-                          marginTop: "2px",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
+                          marginTop: '2px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         {row.metaLine}
@@ -584,29 +581,29 @@ export default function FotosintesisDirectorioPage() {
                     </Box>
                     <Box
                       sx={{
-                        display: { xs: "none", lg: "block" },
+                        display: { xs: 'none', lg: 'block' },
                         minWidth: 0,
-                        fontSize: "12px",
+                        fontSize: '12px',
                         color: foto.ink.secondary,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
                         ...monoSx,
                       }}
                     >
                       {row.contactPrimary}
                     </Box>
-                    <Box sx={{ display: { xs: "none", lg: "block" } }}>
+                    <Box sx={{ display: { xs: 'none', lg: 'block' } }}>
                       <Box
                         component="span"
                         sx={{
-                          display: "inline-flex",
-                          padding: "3px 9px",
-                          borderRadius: "999px",
-                          fontSize: "9.5px",
+                          display: 'inline-flex',
+                          padding: '3px 9px',
+                          borderRadius: '999px',
+                          fontSize: '9.5px',
                           fontWeight: 600,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.08em",
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.08em',
                           background: foto.surfaces.inset,
                           color: foto.ink.secondary,
                           border: `1px solid ${foto.surfaces.edge}`,
@@ -617,25 +614,25 @@ export default function FotosintesisDirectorioPage() {
                     </Box>
                     <Box
                       sx={{
-                        display: { xs: "flex", lg: "block" },
-                        textAlign: { lg: "right" } as const,
-                        alignItems: "center",
-                        justifyContent: "flex-end",
+                        display: { xs: 'flex', lg: 'block' },
+                        textAlign: { lg: 'right' } as const,
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
                         ...monoSx,
-                        fontSize: "12px",
+                        fontSize: '12px',
                         color: foto.ink.tertiary,
                       }}
                     >
                       <Box
                         component="span"
-                        sx={{ display: { xs: "none", lg: "inline" } }}
+                        sx={{ display: { xs: 'none', lg: 'inline' } }}
                         aria-label="Sin datos"
                       >
                         —
                       </Box>
                       <Box
                         component="span"
-                        sx={{ display: { xs: "inline-flex", lg: "none" } }}
+                        sx={{ display: { xs: 'inline-flex', lg: 'none' } }}
                         aria-hidden="true"
                       >
                         <ChevronRight size={14} />
@@ -651,10 +648,10 @@ export default function FotosintesisDirectorioPage() {
         {/* DRAWER PANE — desktop */}
         <Box
           sx={{
-            display: { xs: "none", lg: "block" },
-            position: "sticky",
+            display: { xs: 'none', lg: 'block' },
+            position: 'sticky',
             top: FOTO_TOPBAR_HEIGHT,
-            alignSelf: "start",
+            alignSelf: 'start',
           }}
         >
           {selectedRow ? (
@@ -664,11 +661,11 @@ export default function FotosintesisDirectorioPage() {
               sx={{
                 background: foto.surfaces.canvas,
                 border: `1px dashed ${foto.surfaces.rule}`,
-                borderRadius: "14px",
-                padding: "32px 24px",
-                textAlign: "center",
+                borderRadius: '14px',
+                padding: '32px 24px',
+                textAlign: 'center',
                 color: foto.ink.tertiary,
-                fontSize: "12.5px",
+                fontSize: '12.5px',
                 lineHeight: 1.55,
               }}
             >
@@ -689,24 +686,24 @@ export default function FotosintesisDirectorioPage() {
           <Box
             sx={{
               background: foto.surfaces.canvas,
-              minHeight: "100vh",
+              minHeight: 'var(--app-main-height, 100dvh)',
               color: foto.ink.primary,
             }}
           >
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "14px 18px",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '14px 18px',
                 borderBottom: `1px solid ${foto.surfaces.edge}`,
               }}
             >
               <Box
                 sx={{
-                  fontSize: "9px",
-                  letterSpacing: "0.2em",
-                  textTransform: "uppercase",
+                  fontSize: '9px',
+                  letterSpacing: '0.2em',
+                  textTransform: 'uppercase',
                   color: foto.ink.tertiary,
                   fontWeight: 500,
                 }}
@@ -737,10 +734,10 @@ type FotoT = ReturnType<typeof getFoto>;
 
 function emptyMessageSx(foto: FotoT) {
   return {
-    padding: "36px 18px",
-    textAlign: "center" as const,
+    padding: '36px 18px',
+    textAlign: 'center' as const,
     color: foto.ink.tertiary,
-    fontSize: "12.5px",
+    fontSize: '12.5px',
     lineHeight: 1.55,
   };
 }
@@ -750,7 +747,7 @@ interface HeaderStatProps {
   label: string;
   ariaLabel: string;
   foto: FotoT;
-  tone?: "mute";
+  tone?: 'mute';
 }
 
 function HeaderStat({ value, label, ariaLabel, foto, tone }: HeaderStatProps) {
@@ -758,23 +755,23 @@ function HeaderStat({ value, label, ariaLabel, foto, tone }: HeaderStatProps) {
     <Box
       aria-label={ariaLabel}
       sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-end",
-        gap: "3px",
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-end',
+        gap: '3px',
         borderRight: `1px solid ${foto.surfaces.rule}`,
-        paddingRight: "20px",
-        "&:last-child": { borderRight: "none", paddingRight: 0 },
+        paddingRight: '20px',
+        '&:last-child': { borderRight: 'none', paddingRight: 0 },
       }}
     >
       <Box
         sx={{
           fontFamily: fontFamilies.mono,
-          fontSize: "26px",
+          fontSize: '26px',
           fontWeight: 300,
-          color: tone === "mute" ? foto.ink.tertiary : foto.ink.primary,
-          letterSpacing: "-0.035em",
-          fontVariantNumeric: "tabular-nums",
+          color: tone === 'mute' ? foto.ink.tertiary : foto.ink.primary,
+          letterSpacing: '-0.035em',
+          fontVariantNumeric: 'tabular-nums',
           lineHeight: 0.9,
         }}
       >
@@ -782,12 +779,12 @@ function HeaderStat({ value, label, ariaLabel, foto, tone }: HeaderStatProps) {
       </Box>
       <Box
         sx={{
-          fontSize: "9px",
-          letterSpacing: "0.2em",
-          textTransform: "uppercase",
+          fontSize: '9px',
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
           fontWeight: 500,
           color: foto.ink.tertiary,
-          marginTop: "4px",
+          marginTop: '4px',
         }}
       >
         {label}
@@ -813,28 +810,28 @@ function TabButton({ active, onClick, label, count, foto }: TabButtonProps) {
       aria-selected={active}
       onClick={onClick}
       sx={{
-        appearance: "none",
-        background: "transparent",
-        border: "none",
-        cursor: "pointer",
-        fontFamily: "inherit",
-        padding: "12px 14px",
-        fontSize: "12.5px",
+        appearance: 'none',
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        fontFamily: 'inherit',
+        padding: '12px 14px',
+        fontSize: '12.5px',
         fontWeight: 600,
         color: active ? foto.ink.primary : foto.ink.tertiary,
-        borderBottom: `2px solid ${active ? foto.accent.primary : "transparent"}`,
-        marginBottom: "-1px",
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "8px",
-        transition: "color 120ms ease, border-color 120ms ease",
-        "&:hover": {
+        borderBottom: `2px solid ${active ? foto.accent.primary : 'transparent'}`,
+        marginBottom: '-1px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '8px',
+        transition: 'color 120ms ease, border-color 120ms ease',
+        '&:hover': {
           color: foto.ink.primary,
         },
-        "&:focus-visible": {
-          outline: "none",
+        '&:focus-visible': {
+          outline: 'none',
           boxShadow: `0 0 0 3px ${foto.accent.glow}`,
-          borderRadius: "4px",
+          borderRadius: '4px',
         },
       }}
     >
@@ -843,16 +840,16 @@ function TabButton({ active, onClick, label, count, foto }: TabButtonProps) {
         component="span"
         sx={{
           fontFamily: fontFamilies.mono,
-          fontVariantNumeric: "tabular-nums",
-          fontSize: "10.5px",
+          fontVariantNumeric: 'tabular-nums',
+          fontSize: '10.5px',
           fontWeight: 600,
-          padding: "2px 7px",
-          borderRadius: "999px",
+          padding: '2px 7px',
+          borderRadius: '999px',
           background: active ? foto.accent.soft : foto.surfaces.inset,
           color: active ? foto.accent.deep : foto.ink.secondary,
         }}
       >
-        {count ?? "—"}
+        {count ?? '—'}
       </Box>
     </Box>
   );
@@ -869,28 +866,28 @@ function ContactFicha({ row, foto, embedded }: ContactFichaProps) {
     <Box
       sx={{
         background: foto.surfaces.canvas,
-        border: embedded ? "none" : `1px solid ${foto.surfaces.rule}`,
-        borderRadius: embedded ? 0 : "14px",
-        padding: { xs: "20px 18px", md: "24px 22px" },
-        display: "flex",
-        flexDirection: "column",
-        gap: "20px",
+        border: embedded ? 'none' : `1px solid ${foto.surfaces.rule}`,
+        borderRadius: embedded ? 0 : '14px',
+        padding: { xs: '20px 18px', md: '24px 22px' },
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
       }}
     >
       {/* Head */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: "14px" }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
         <Box
           aria-hidden="true"
           sx={{
             width: 56,
             height: 56,
-            borderRadius: "50%",
+            borderRadius: '50%',
             background: foto.surfaces.inset,
             border: `1px solid ${foto.surfaces.edge}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "18px",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '18px',
             fontWeight: 600,
             color: foto.ink.secondary,
           }}
@@ -902,10 +899,10 @@ function ContactFicha({ row, foto, embedded }: ContactFichaProps) {
             id="ficha-title"
             component="h2"
             sx={{
-              fontSize: "18px",
+              fontSize: '18px',
               fontWeight: 600,
               color: foto.ink.primary,
-              letterSpacing: "-0.018em",
+              letterSpacing: '-0.018em',
               margin: 0,
               lineHeight: 1.2,
             }}
@@ -914,8 +911,8 @@ function ContactFicha({ row, foto, embedded }: ContactFichaProps) {
           </Box>
           <Box
             sx={{
-              marginTop: "5px",
-              fontSize: "11.5px",
+              marginTop: '5px',
+              fontSize: '11.5px',
               color: foto.ink.tertiary,
             }}
           >
@@ -924,14 +921,14 @@ function ContactFicha({ row, foto, embedded }: ContactFichaProps) {
           <Box
             component="span"
             sx={{
-              display: "inline-flex",
-              marginTop: "8px",
-              padding: "3px 9px",
-              borderRadius: "999px",
-              fontSize: "9.5px",
+              display: 'inline-flex',
+              marginTop: '8px',
+              padding: '3px 9px',
+              borderRadius: '999px',
+              fontSize: '9.5px',
               fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
               background: foto.accent.soft,
               color: foto.accent.deep,
             }}
@@ -944,12 +941,12 @@ function ContactFicha({ row, foto, embedded }: ContactFichaProps) {
       {/* Meta grid */}
       <Box
         sx={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
-          gap: "12px 16px",
-          padding: "16px",
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+          gap: '12px 16px',
+          padding: '16px',
           background: foto.surfaces.panel,
-          borderRadius: "11px",
+          borderRadius: '11px',
           border: `1px solid ${foto.surfaces.edge}`,
         }}
       >
@@ -966,9 +963,9 @@ function ContactFicha({ row, foto, embedded }: ContactFichaProps) {
       {/* 3-col metrics — Slice 1 placeholders */}
       <Box
         sx={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-          gap: "12px",
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+          gap: '12px',
         }}
       >
         <MetricCell label="Compras" value="—" foto={foto} />
@@ -978,12 +975,12 @@ function ContactFicha({ row, foto, embedded }: ContactFichaProps) {
 
       <Box
         sx={{
-          fontSize: "11px",
+          fontSize: '11px',
           color: foto.ink.tertiary,
           lineHeight: 1.5,
-          padding: "10px 12px",
+          padding: '10px 12px',
           background: foto.surfaces.inset,
-          borderRadius: "9px",
+          borderRadius: '9px',
           border: `1px dashed ${foto.surfaces.edge}`,
         }}
       >
@@ -1006,9 +1003,9 @@ function FichaMeta({
     <Box sx={{ minWidth: 0 }}>
       <Box
         sx={{
-          fontSize: "9px",
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
+          fontSize: '9px',
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
           fontWeight: 500,
           color: foto.ink.tertiary,
         }}
@@ -1017,12 +1014,12 @@ function FichaMeta({
       </Box>
       <Box
         sx={{
-          marginTop: "3px",
-          fontSize: "12.5px",
+          marginTop: '3px',
+          fontSize: '12.5px',
           color: foto.ink.primary,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          overflowWrap: "anywhere",
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          overflowWrap: 'anywhere',
         }}
       >
         {value}
@@ -1045,17 +1042,17 @@ function MetricCell({
       sx={{
         background: foto.surfaces.canvas,
         border: `1px solid ${foto.surfaces.edge}`,
-        borderRadius: "10px",
-        padding: "12px 14px",
+        borderRadius: '10px',
+        padding: '12px 14px',
       }}
     >
       <Box
         sx={{
           fontFamily: fontFamilies.mono,
-          fontVariantNumeric: "tabular-nums",
-          fontSize: "20px",
+          fontVariantNumeric: 'tabular-nums',
+          fontSize: '20px',
           fontWeight: 300,
-          letterSpacing: "-0.03em",
+          letterSpacing: '-0.03em',
           color: foto.ink.primary,
           lineHeight: 1,
         }}
@@ -1064,10 +1061,10 @@ function MetricCell({
       </Box>
       <Box
         sx={{
-          marginTop: "6px",
-          fontSize: "9px",
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
+          marginTop: '6px',
+          fontSize: '9px',
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
           color: foto.ink.tertiary,
           fontWeight: 500,
         }}
@@ -1084,32 +1081,32 @@ function MetricCell({
 
 function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/).slice(0, 2);
-  if (parts.length === 0) return "—";
-  return parts.map((p) => p.charAt(0).toUpperCase()).join("");
+  if (parts.length === 0) return '—';
+  return parts.map((p) => p.charAt(0).toUpperCase()).join('');
 }
 
 function tipoProveedorLabel(tipo: string): string {
   switch (tipo) {
-    case "gemas":
-      return "Gemas";
-    case "joyas":
-      return "Joyas";
-    case "insumos":
-      return "Insumos";
-    case "otros":
-      return "Otros";
+    case 'gemas':
+      return 'Gemas';
+    case 'joyas':
+      return 'Joyas';
+    case 'insumos':
+      return 'Insumos';
+    case 'otros':
+      return 'Otros';
     default:
       return tipo;
   }
 }
 
 function searchPlaceholder(tab: TabKey): string {
-  if (tab === "proveedores") return "Buscar proveedor por nombre o NIT…";
-  if (tab === "embajadores") return "Buscar embajador por nombre o email…";
-  return "Buscar cliente por nombre o email…";
+  if (tab === 'proveedores') return 'Buscar proveedor por nombre o NIT…';
+  if (tab === 'embajadores') return 'Buscar embajador por nombre o email…';
+  return 'Buscar cliente por nombre o email…';
 }
 
 function fmtN(v: number | undefined | string): string {
-  if (typeof v === "string") return v;
-  return typeof v === "number" ? v.toString() : "—";
+  if (typeof v === 'string') return v;
+  return typeof v === 'number' ? v.toString() : '—';
 }

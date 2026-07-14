@@ -13,38 +13,43 @@
  * header + per-item loop) for the lote family. Provider/client use a net-new
  * canvas with the shared `WorkbenchCommitBar`.
  */
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Navigate,
   useLocation,
   useNavigate,
   useParams,
-} from "react-router-dom";
-import { Box } from "@mui/material";
-import { fontFamilies, getFoto } from "../../../../design-system";
-import { useFotosynthiaChat } from "../hooks/useFotosynthiaChat";
-import { useFotosintesisLayout } from "../FotosintesisLayoutContext";
-import { CopilotPanelBody } from "../components/CopilotPanel";
-import FotosintesisVentaPage from "../VentaPage";
-import FotosintesisCapturaLotePage from "../CapturaLotePage";
-import { flowLabel } from "../utils/flowLabels";
-import { isWorkbenchFlow, type WorkbenchFlow } from "./workbenchSteps";
-import { WorkbenchStepper } from "./WorkbenchStepper";
-import { WorkbenchDraftProvider } from "./WorkbenchDraftContext";
-import { WorkbenchCommitBar } from "./WorkbenchCommitBar";
-import { ProviderClientCanvas } from "./canvas/ProviderClientCanvas";
-import { coerceGuidedItemDraft, isItemFlow } from "./canvas/itemAdapters";
-import type { GuidedDraft, GuidedFlow } from "../copilot/flowSchemas";
+} from 'react-router-dom';
+import { Box } from '@mui/material';
+import {
+  fontFamilies,
+  getFoto,
+  paneHeight,
+  containedScrollY,
+} from '../../../../design-system';
+import { useFotosynthiaChat } from '../hooks/useFotosynthiaChat';
+import { useFotosintesisLayout } from '../FotosintesisLayoutContext';
+import { CopilotPanelBody } from '../components/CopilotPanel';
+import FotosintesisVentaPage from '../VentaPage';
+import FotosintesisCapturaLotePage from '../CapturaLotePage';
+import { flowLabel } from '../utils/flowLabels';
+import { isWorkbenchFlow, type WorkbenchFlow } from './workbenchSteps';
+import { WorkbenchStepper } from './WorkbenchStepper';
+import { WorkbenchDraftProvider } from './WorkbenchDraftContext';
+import { WorkbenchCommitBar } from './WorkbenchCommitBar';
+import { ProviderClientCanvas } from './canvas/ProviderClientCanvas';
+import { coerceGuidedItemDraft, isItemFlow } from './canvas/itemAdapters';
+import type { GuidedDraft, GuidedFlow } from '../copilot/flowSchemas';
 
 // The lote canvas hosts the lot header AND the per-item loop, so /copilot/lote
 // (and the item-* routes) own the whole lote family; every other route owns
 // just its own flow. A conversation locked onto a flow outside the route's
 // family is a divergence the workbench realigns away from (H5).
 const LOTE_FAMILY: ReadonlySet<GuidedFlow> = new Set<GuidedFlow>([
-  "lote",
-  "item-gema",
-  "item-joya",
-  "item-insumo",
+  'lote',
+  'item-gema',
+  'item-joya',
+  'item-insumo',
 ]);
 
 function flowMatchesRoute(
@@ -66,7 +71,7 @@ export default function WorkbenchPage() {
 }
 
 function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const location = useLocation();
   const route = location.pathname;
   const chat = useFotosynthiaChat(route);
@@ -78,7 +83,7 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
   const handleCommitted = useCallback(() => {
     window.setTimeout(() => {
       chat.reset();
-      navigate("/admin/fotosintesis/directory");
+      navigate('/admin/fotosintesis/directory');
     }, 900);
   }, [chat, navigate]);
 
@@ -102,7 +107,7 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
 
     const presetTipo = (location.state as { presetTipo?: string } | null)
       ?.presetTipo;
-    if (presetTipo && (flow === "client" || flow === "provider")) {
+    if (presetTipo && (flow === 'client' || flow === 'provider')) {
       // Applied after any divergence reset (batched): the fresh draft opens on
       // the chosen tipo.
       chat.patchDraft({ tipo: presetTipo });
@@ -118,7 +123,7 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
   //   • lote / item-* → the embedded lote canvas: the lot header (lote) or the
   //                     active item draft (item-*, coerced GuidedDraft → typed
   //                     item Draft via itemAdapters).
-  const seedSigRef = useRef<string>("");
+  const seedSigRef = useRef<string>('');
   useEffect(() => {
     const cf = chat.flow;
     const draft = chat.priorDraft;
@@ -127,14 +132,14 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
     let seedFlow: GuidedFlow | null = null;
     let seedData: GuidedDraft = draft;
 
-    if (flow === "venta") {
-      if (cf && cf !== "venta") return; // conversation drifted
-      seedFlow = "venta";
-    } else if (flow === "lote" || flow === "item-gema") {
+    if (flow === 'venta') {
+      if (cf && cf !== 'venta') return; // conversation drifted
+      seedFlow = 'venta';
+    } else if (flow === 'lote' || flow === 'item-gema') {
       // The embedded lote canvas hosts both the header and the per-item loop, so
       // route the conversation's locked flow to the matching seed target.
-      if (cf === "lote") {
-        seedFlow = "lote";
+      if (cf === 'lote') {
+        seedFlow = 'lote';
       } else if (isItemFlow(cf)) {
         seedFlow = cf;
         seedData = coerceGuidedItemDraft(cf, draft);
@@ -173,14 +178,14 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
     <WorkbenchDraftProvider value={draftValue}>
       <Box
         sx={{
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
           // lg: a fixed-height two-pane cockpit (each pane scrolls internally).
           // Below lg the two-pane model crushes the form, so the workbench
           // becomes a natural-flow document that scrolls as one (M2); the
           // FotosintesisLayout adds the bottom clearance for the iOS tab bar.
-          height: { lg: "calc(100dvh - 56px)" },
-          minHeight: { xs: "calc(100dvh - 56px)", lg: "auto" },
+          height: { lg: paneHeight(56) },
+          minHeight: { xs: paneHeight(56), lg: 'auto' },
           background: foto.surfaces.canvas,
           color: foto.ink.primary,
         }}
@@ -189,12 +194,12 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
         <Box
           sx={{
             flexShrink: 0,
-            display: "flex",
-            alignItems: { xs: "flex-start", sm: "center" },
-            justifyContent: "space-between",
-            gap: "16px",
-            flexWrap: "wrap",
-            padding: { xs: "14px 16px", md: "16px 28px" },
+            display: 'flex',
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            justifyContent: 'space-between',
+            gap: '16px',
+            flexWrap: 'wrap',
+            padding: { xs: '14px 16px', md: '16px 28px' },
             borderBottom: `1px solid ${foto.surfaces.rule}`,
             background: foto.surfaces.panel,
           }}
@@ -202,12 +207,12 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
           <Box sx={{ minWidth: 0 }}>
             <Box
               sx={{
-                fontSize: "9px",
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
+                fontSize: '9px',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
                 fontWeight: 500,
                 color: foto.ink.tertiary,
-                marginBottom: "3px",
+                marginBottom: '3px',
               }}
             >
               Atelier · Captura guiada
@@ -217,9 +222,9 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
               sx={{
                 margin: 0,
                 fontFamily: fontFamilies.brand,
-                fontSize: { xs: "22px", md: "26px" },
+                fontSize: { xs: '22px', md: '26px' },
                 fontWeight: 600,
-                letterSpacing: "-0.02em",
+                letterSpacing: '-0.02em',
                 lineHeight: 1.1,
                 color: foto.ink.primary,
               }}
@@ -236,9 +241,9 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
           sx={{
             flex: { lg: 1 },
             minHeight: { lg: 0 },
-            display: { xs: "flex", lg: "grid" },
-            flexDirection: { xs: "column" },
-            gridTemplateColumns: { lg: "minmax(0, 1fr) minmax(360px, 440px)" },
+            display: { xs: 'flex', lg: 'grid' },
+            flexDirection: { xs: 'column' },
+            gridTemplateColumns: { lg: 'minmax(0, 1fr) minmax(360px, 440px)' },
           }}
         >
           {/* Canvas (left) — at lg each canvas owns its own scroll and direct
@@ -248,28 +253,28 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
             sx={{
               minWidth: 0,
               minHeight: { lg: 0 },
-              display: "flex",
-              flexDirection: "column",
+              display: 'flex',
+              flexDirection: 'column',
               borderRight: { lg: `1px solid ${foto.surfaces.rule}` },
             }}
           >
-            {flow === "venta" ? (
+            {flow === 'venta' ? (
               <Box
                 sx={{
                   flex: { lg: 1 },
-                  minHeight: { lg: 0 },
-                  overflowY: { lg: "auto" },
+                  ...containedScrollY,
+                  overflowY: { lg: 'auto' },
                 }}
               >
                 <FotosintesisVentaPage embedded />
               </Box>
-            ) : flow === "provider" || flow === "client" ? (
+            ) : flow === 'provider' || flow === 'client' ? (
               <>
                 <Box
                   sx={{
                     flex: { lg: 1 },
-                    minHeight: { lg: 0 },
-                    overflowY: { lg: "auto" },
+                    ...containedScrollY,
+                    overflowY: { lg: 'auto' },
                   }}
                 >
                   <ProviderClientCanvas />
@@ -281,15 +286,15 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
                   onCommitted={handleCommitted}
                 />
               </>
-            ) : flow === "lote" || flow === "item-gema" ? (
+            ) : flow === 'lote' || flow === 'item-gema' ? (
               // The lote canvas owns its own proven commit buttons (lots.create
               // + lotItems.create with photo/cert uploads), so — like venta —
               // it renders no separate WorkbenchCommitBar.
               <Box
                 sx={{
                   flex: { lg: 1 },
-                  minHeight: { lg: 0 },
-                  overflowY: { lg: "auto" },
+                  ...containedScrollY,
+                  overflowY: { lg: 'auto' },
                 }}
               >
                 <FotosintesisCapturaLotePage embedded />
@@ -298,8 +303,8 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
               <Box
                 sx={{
                   flex: { lg: 1 },
-                  minHeight: { lg: 0 },
-                  overflowY: { lg: "auto" },
+                  ...containedScrollY,
+                  overflowY: { lg: 'auto' },
                 }}
               >
                 <PlaceholderCanvas label={flowLabel(flow)} />
@@ -313,13 +318,13 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
               iOS tab bar); at lg it fills the grid column. */}
           <Box
             sx={{
-              display: "flex",
+              display: 'flex',
               minWidth: 0,
               flexShrink: { xs: 0 },
-              height: { xs: "clamp(380px, 58vh, 560px)" },
+              height: { xs: 'clamp(380px, 58vh, 560px)' },
               minHeight: { lg: 0 },
               background: foto.surfaces.canvas,
-              borderTop: { xs: `1px solid ${foto.surfaces.rule}`, lg: "none" },
+              borderTop: { xs: `1px solid ${foto.surfaces.rule}`, lg: 'none' },
             }}
           >
             <CopilotPanelBody active chat={chat} mode="workbench" />
@@ -331,32 +336,32 @@ function WorkbenchInner({ flow }: { flow: WorkbenchFlow }) {
 }
 
 function PlaceholderCanvas({ label }: { label: string }) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   return (
     <Box
       sx={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "8px",
-        padding: "48px 24px",
-        textAlign: "center",
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        padding: '48px 24px',
+        textAlign: 'center',
         color: foto.ink.tertiary,
       }}
     >
       <Box
         sx={{
           fontFamily: fontFamilies.brand,
-          fontSize: "20px",
+          fontSize: '20px',
           fontWeight: 600,
           color: foto.ink.secondary,
         }}
       >
         {label}
       </Box>
-      <Box sx={{ fontSize: "13px", maxWidth: 320, lineHeight: 1.5 }}>
+      <Box sx={{ fontSize: '13px', maxWidth: 320, lineHeight: 1.5 }}>
         El lienzo de esta captura llega pronto. Mientras tanto, usá la
         conversación de Fotosynthia para capturar los datos.
       </Box>
