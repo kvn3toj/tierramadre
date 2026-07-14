@@ -22,6 +22,21 @@ informativas, no participan en `clase`):
     - diverge-nombre      : ambos presentes, similitud < 0.72
     - falta-en-convex     : solo Modelo
     - falta-en-modelo     : solo Convex
+
+Métrica de similitud ROBUSTA (aprobada por el owner tras investigación):
+`convex.nombre` en realidad guarda solo el `nombreLote` (nombre de la
+colección), no `corte + nombreLote`. Comparar contra `corte + ' ' + nombreLote`
+(la regla literal del plan) infla el denominador de SequenceMatcher y genera
+divergencias falsas (~31 de las 62 originales). Por eso la clasificación usa
+el MÁXIMO de dos candidatos:
+
+    s_lote     = sim(nombreLote, convex.nombre)
+    s_full     = sim((corte + ' ' + nombreLote).strip(), convex.nombre)  # regla literal del plan
+    s_robusta  = max(s_lote, s_full)
+
+`clase` se decide con `s_robusta`. Los tres valores se guardan en cada
+entrada de `identidad[]` para transparencia (`similitudNombre` = robusta,
+`similitudLote`, `similitudLiteral`).
 """
 import json
 import unicodedata
@@ -30,6 +45,7 @@ from difflib import SequenceMatcher
 
 O = 'scripts/reconciliacion/out'
 UMBRAL = 0.72
+PRELIMINAR_MAPA_DIVERGE = 56  # constante documentada: divergencia reportada por el mapa preliminar de Anima
 
 
 def L(n):
@@ -83,6 +99,7 @@ def main():
         c = ci.get(n)
         lg = legacy_by_item.get(n)
 
+        s_lote = s_full = None
         if n in numeros_colision:
             fuentes_dup = []
             if n in dup_en_modelo:
@@ -92,8 +109,10 @@ def main():
             clase = 'colision'
             s = None
         elif m and c:
-            nombre_modelo = f"{m['corte']} {m['nombreLote']}".strip()
-            s = sim(nombre_modelo, c.get('nombre', ''))
+            convex_nombre = c.get('nombre', '')
+            s_lote = sim(m['nombreLote'], convex_nombre)
+            s_full = sim(f"{m['corte']} {m['nombreLote']}".strip(), convex_nombre)
+            s = max(s_lote, s_full)
             clase = 'coincide' if s >= UMBRAL else 'diverge-nombre'
         elif m:
             clase, s = 'falta-en-convex', None
@@ -122,6 +141,8 @@ def main():
             'sot': None,
             'clase': clase,
             'similitudNombre': round(s, 2) if s is not None else None,
+            'similitudLote': round(s_lote, 2) if s_lote is not None else None,
+            'similitudLiteral': round(s_full, 2) if s_full is not None else None,
         }
         if n in numeros_colision:
             entry['colisionEn'] = fuentes_dup
@@ -131,12 +152,24 @@ def main():
     for k in ('coincide', 'diverge-nombre', 'falta-en-convex', 'falta-en-modelo', 'colision'):
         metricas.setdefault(k, 0)
 
+    # --- Comparativa: literal (regla del plan) vs robusta (max lote/corte+lote) ---
+    ambos_presentes = [x for x in identidad if x['clase'] in ('coincide', 'diverge-nombre')]
+    literal_corte_lote = sum(1 for x in ambos_presentes if x['similitudLiteral'] < UMBRAL)
+    robusta_diverge = metricas['diverge-nombre']
+    metricas['comparativa'] = {
+        'preliminar_mapa': PRELIMINAR_MAPA_DIVERGE,
+        'literal_corte_lote': literal_corte_lote,
+        'robusta_diverge': robusta_diverge,
+        'artefactos_recuperados': literal_corte_lote - robusta_diverge,
+    }
+
     json.dump(identidad, open(f'{O}/identidad.json', 'w'), ensure_ascii=False, indent=1)
     json.dump(metricas, open(f'{O}/metricas.json', 'w'), ensure_ascii=False, indent=1)
 
     # --- Verificación / cuadre de conteos ---
     union_n = len(universo)
-    suma_clases = sum(metricas.values())
+    clases_keys = ('coincide', 'diverge-nombre', 'falta-en-convex', 'falta-en-modelo', 'colision')
+    suma_clases = sum(metricas[k] for k in clases_keys)
     print('identidad:', len(identidad), '| union números modelo∪convex:', union_n)
     print('métricas:', metricas)
     print('suma clases == len(identidad)?', suma_clases == len(identidad), f'({suma_clases} vs {len(identidad)})')
