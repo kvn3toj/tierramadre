@@ -29,10 +29,13 @@ export const usePermissions = (): Permission => {
       isEmbajador,
       isAsesor,
       isInvitadoEspecial,
-      canViewPrices: !isProvider,  // Providers cannot see prices
-      canUseManualProduct: isAdmin || isEmbajador,  // Only admin and embajador can use manual products
+      canViewPrices: !isProvider, // Providers cannot see prices
+      canUseManualProduct: isAdmin || isEmbajador, // Only admin and embajador can use manual products
       // Sharing a client Vitrina is allowed for staff AND special guests.
       canShareVitrina: isStaff || isInvitadoEspecial,
+      // Creating client cotizaciones is allowed for staff AND special guests.
+      // (Manual-entry cotizaciones stay admin/embajador — see canUseManualProduct.)
+      canCreateCotizaciones: isStaff || isInvitadoEspecial,
     };
   }, [accessLevel]);
 };
@@ -74,7 +77,11 @@ export const useCanViewPrices = (): boolean => {
  */
 export const useIsStaff = (): boolean => {
   const { accessLevel } = useAuthContext();
-  return accessLevel === 'admin' || accessLevel === 'embajador' || accessLevel === 'asesor';
+  return (
+    accessLevel === 'admin' ||
+    accessLevel === 'embajador' ||
+    accessLevel === 'asesor'
+  );
 };
 
 /**
@@ -116,4 +123,13 @@ export const useIsInvitadoEspecial = (): boolean => {
 export const useCanShareVitrina = (): boolean => {
   const { canShareVitrina } = usePermissions();
   return canShareVitrina;
+};
+
+/**
+ * Whether the current user can open the Cuentas hub and create client
+ * cotizaciones. True for staff (admin, embajador, asesor) and special guests.
+ */
+export const useCanCreateCotizaciones = (): boolean => {
+  const { canCreateCotizaciones } = usePermissions();
+  return canCreateCotizaciones;
 };

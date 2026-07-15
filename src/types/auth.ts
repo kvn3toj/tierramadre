@@ -8,7 +8,13 @@
  *   Asesores sheet. Browses the catalog and can create/share client "Vitrina"
  *   links like staff, but has no editing/upload/admin powers.
  */
-export type AccessLevel = 'guest' | 'invitado_especial' | 'asesor' | 'embajador' | 'admin' | 'provider';
+export type AccessLevel =
+  | 'guest'
+  | 'invitado_especial'
+  | 'asesor'
+  | 'embajador'
+  | 'admin'
+  | 'provider';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -28,6 +34,8 @@ export interface Permission {
   canUseManualProduct: boolean;
   /** Can create/share client-facing "Vitrina" links (staff + invitado especial). */
   canShareVitrina: boolean;
+  /** Can open the Cuentas hub and create client cotizaciones (staff + invitado especial). */
+  canCreateCotizaciones: boolean;
 }
 
 export interface AuthContextType extends AuthState {

@@ -65,7 +65,11 @@ import {
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
 import { useCanCreateInvitations } from '../../hooks/useAuth';
-import { useIsAdmin, useIsStaff } from '../../hooks/usePermissions';
+import {
+  useIsAdmin,
+  useIsStaff,
+  useCanCreateCotizaciones,
+} from '../../hooks/usePermissions';
 import { usePriceShare } from '../../contexts/PriceShareContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { useCurrentAsesor } from '../../hooks/useCurrentAsesor';
@@ -91,14 +95,24 @@ interface MenuSection {
 
 const buildMenuSections = (
   t: any,
-  flags: { isAdmin: boolean; isStaff: boolean; canCreateInvitations: boolean },
+  flags: {
+    isAdmin: boolean;
+    isStaff: boolean;
+    canCreateInvitations: boolean;
+    canCreateCotizaciones: boolean;
+  },
 ): MenuSection[] => {
   const sections: MenuSection[] = [];
 
   // HERRAMIENTAS DE VENTA
-  // The invite tool is available to anyone in the Asesores sheet
-  // (canCreateInvitations); the remaining sales tools stay staff-only.
-  if (flags.isStaff || flags.canCreateInvitations) {
+  // Invite (canCreateInvitations) and Cuentas/cotizaciones
+  // (canCreateCotizaciones) are open to special guests too; product requests
+  // (solicitudes) stay staff-only.
+  if (
+    flags.isStaff ||
+    flags.canCreateInvitations ||
+    flags.canCreateCotizaciones
+  ) {
     const salesTools: MoreToolConfig[] = [];
 
     if (flags.canCreateInvitations) {
@@ -113,24 +127,25 @@ const buildMenuSections = (
     }
 
     if (flags.isStaff) {
-      salesTools.push(
-        {
-          id: 'solicitudes',
-          label: t.tools.requests.label,
-          subtitle: t.tools.requests.subtitle,
-          icon: ShoppingBag as any,
-          route: '/solicitudes',
-          color: accentColors.success.light,
-        },
-        {
-          id: 'accounts',
-          label: t.tools.accounts.label,
-          subtitle: t.tools.accounts.subtitle,
-          icon: AccountBalance,
-          route: '/cuentas',
-          color: brand.emerald[500],
-        },
-      );
+      salesTools.push({
+        id: 'solicitudes',
+        label: t.tools.requests.label,
+        subtitle: t.tools.requests.subtitle,
+        icon: ShoppingBag as any,
+        route: '/solicitudes',
+        color: accentColors.success.light,
+      });
+    }
+
+    if (flags.canCreateCotizaciones) {
+      salesTools.push({
+        id: 'accounts',
+        label: t.tools.accounts.label,
+        subtitle: t.tools.accounts.subtitle,
+        icon: AccountBalance,
+        route: '/cuentas',
+        color: brand.emerald[500],
+      });
     }
 
     if (salesTools.length > 0) {
@@ -300,6 +315,7 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
   const isAdmin = useIsAdmin();
   const isStaff = useIsStaff();
   const canCreateInvitations = useCanCreateInvitations();
+  const canCreateCotizaciones = useCanCreateCotizaciones();
   const { effectiveConfig } = useLiquidGlassSafe();
   const { showPrices, togglePriceShare, canToggle } = usePriceShare();
   const {
@@ -318,8 +334,14 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
 
   // Build grouped menu sections
   const menuSections = useMemo(
-    () => buildMenuSections(t, { isAdmin, isStaff, canCreateInvitations }),
-    [t, isAdmin, isStaff, canCreateInvitations],
+    () =>
+      buildMenuSections(t, {
+        isAdmin,
+        isStaff,
+        canCreateInvitations,
+        canCreateCotizaciones,
+      }),
+    [t, isAdmin, isStaff, canCreateInvitations, canCreateCotizaciones],
   );
 
   const bottomTools = useMemo(

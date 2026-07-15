@@ -12,6 +12,7 @@ import {
   AdminRoute,
   ProviderRoute,
   StaffRoute,
+  CotizacionRoute,
 } from './components/auth';
 import { useAuth } from './hooks/useAuth';
 import { useIsProvider } from './hooks/usePermissions';
@@ -433,17 +434,18 @@ function AppContent() {
               }
             />
 
-            {/* Cuentas Hub - Staff access (Admin, Embajador, Asesor) */}
+            {/* Cuentas Hub - Staff + Invitado Especial (cotizaciones).
+                Admin-only tools inside the hub stay gated by isAdmin. */}
             <Route
               path="/cuentas"
               element={
-                <StaffRoute>
+                <CotizacionRoute>
                   <Suspense
                     fallback={<LocalizedLoading messageKey="accounts" />}
                   >
                     <AccountsHub />
                   </Suspense>
-                </StaffRoute>
+                </CotizacionRoute>
               }
             />
             <Route
@@ -470,29 +472,29 @@ function AppContent() {
                 </AdminRoute>
               }
             />
-            {/* Cotizaciones - Staff access (Admin, Embajador, Asesor) */}
+            {/* Cotizaciones - Staff + Invitado Especial */}
             <Route
               path="/cuentas/cotizaciones"
               element={
-                <StaffRoute>
+                <CotizacionRoute>
                   <Suspense
                     fallback={<LocalizedLoading messageKey="quotations" />}
                   >
                     <CotizacionGenerator />
                   </Suspense>
-                </StaffRoute>
+                </CotizacionRoute>
               }
             />
             <Route
               path="/cuentas/cotizaciones/preview"
               element={
-                <StaffRoute>
+                <CotizacionRoute>
                   <Suspense
                     fallback={<LocalizedLoading messageKey="quotation" />}
                   >
                     <QuotationPreview />
                   </Suspense>
-                </StaffRoute>
+                </CotizacionRoute>
               }
             />
 

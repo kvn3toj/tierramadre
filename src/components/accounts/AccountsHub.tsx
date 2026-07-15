@@ -9,13 +9,41 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Card, CardContent, CardActionArea, Grid, alpha } from '@mui/material';
-import { Calculator, Receipt, FileText, TrendingUp, Send, Users } from 'lucide-react';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  CardActionArea,
+  Grid,
+  alpha,
+} from '@mui/material';
+import {
+  Calculator,
+  Receipt,
+  FileText,
+  TrendingUp,
+  Send,
+  Users,
+} from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { useIsAdmin, useIsStaff } from '../../hooks/usePermissions';
-import { emeraldCore, goldAccent, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { accentColors, iosTypographyScale, cssTransition, primitiveSpacing as spacing } from '../../design-system';
+import {
+  useIsAdmin,
+  useCanCreateCotizaciones,
+} from '../../hooks/usePermissions';
+import {
+  emeraldCore,
+  goldAccent,
+  surfacesLight,
+  surfacesDark,
+} from '../../design-system/tokens/colors';
+import {
+  accentColors,
+  iosTypographyScale,
+  cssTransition,
+  primitiveSpacing as spacing,
+} from '../../design-system';
 
 interface AccountTool {
   id: string;
@@ -32,69 +60,85 @@ const AccountsHub: React.FC = () => {
   const { t } = useLanguage();
   const { mode } = useThemeMode();
   const isAdmin = useIsAdmin();
-  const isStaff = useIsStaff();
+  const canCreateCotizaciones = useCanCreateCotizaciones();
   const isLight = mode === 'light';
 
   // Get theme-aware accent colors from design system
-  const indigoColor = isLight ? accentColors.indigo.light : accentColors.indigo.dark;
+  const indigoColor = isLight
+    ? accentColors.indigo.light
+    : accentColors.indigo.dark;
   const cyanColor = isLight ? accentColors.cyan.light : accentColors.cyan.dark;
-  const purpleColor = isLight ? accentColors.purple.light : accentColors.purple.dark;
-  const orangeColor = isLight ? accentColors.warning.light : accentColors.warning.dark;
+  const purpleColor = isLight
+    ? accentColors.purple.light
+    : accentColors.purple.dark;
+  const orangeColor = isLight
+    ? accentColors.warning.light
+    : accentColors.warning.dark;
 
   // Build tools list based on permissions
-  // - Cotizaciones: All staff (admin, embajador, asesor)
+  // - Cotizaciones: staff (admin, embajador, asesor) + invitado especial
   // - Simulator, Receipts, Provider tools: Admin only
   const tools: AccountTool[] = [
     // Admin-only tools
-    ...(isAdmin ? [
-      {
-        id: 'simulator',
-        title: t.tools.simulator.label,
-        description: t.tools.simulator.subtitle,
-        icon: Calculator,
-        route: '/cuentas/simulador',
-        color: indigoColor,
-        bgColor: alpha(indigoColor, 0.1),
-      },
-      {
-        id: 'receipts',
-        title: t.tools.receipts.label,
-        description: t.tools.receipts.subtitle,
-        icon: Receipt,
-        route: '/cuentas/recibos',
-        color: cyanColor,
-        bgColor: alpha(cyanColor, 0.1),
-      },
-    ] : []),
-    // Staff tools (admin, embajador, asesor)
-    ...(isStaff ? [{
-      id: 'quotation',
-      title: t.tools.cotizacion.label,
-      description: t.tools.cotizacion.subtitle,
-      icon: FileText,
-      route: '/cuentas/cotizaciones',
-      color: purpleColor,
-      bgColor: alpha(purpleColor, 0.1),
-    }] : []),
+    ...(isAdmin
+      ? [
+          {
+            id: 'simulator',
+            title: t.tools.simulator.label,
+            description: t.tools.simulator.subtitle,
+            icon: Calculator,
+            route: '/cuentas/simulador',
+            color: indigoColor,
+            bgColor: alpha(indigoColor, 0.1),
+          },
+          {
+            id: 'receipts',
+            title: t.tools.receipts.label,
+            description: t.tools.receipts.subtitle,
+            icon: Receipt,
+            route: '/cuentas/recibos',
+            color: cyanColor,
+            bgColor: alpha(cyanColor, 0.1),
+          },
+        ]
+      : []),
+    // Cotizaciones: staff (admin, embajador, asesor) + invitado especial
+    ...(canCreateCotizaciones
+      ? [
+          {
+            id: 'quotation',
+            title: t.tools.cotizacion.label,
+            description: t.tools.cotizacion.subtitle,
+            icon: FileText,
+            route: '/cuentas/cotizaciones',
+            color: purpleColor,
+            bgColor: alpha(purpleColor, 0.1),
+          },
+        ]
+      : []),
     // Admin-only: Provider quotation requests
-    ...(isAdmin ? [{
-      id: 'provider-requests',
-      title: 'Solicitudes a Proveedores',
-      description: 'Enviar solicitudes de cotizacion',
-      icon: Send,
-      route: '/cuentas/solicitudes',
-      color: orangeColor,
-      bgColor: alpha(orangeColor, 0.1),
-    },
-    {
-      id: 'asesor-requests',
-      title: 'Solicitudes de Asesores',
-      description: 'Ver solicitudes de asesores y embajadores',
-      icon: Users,
-      route: '/cuentas/solicitudes-asesores',
-      color: emeraldCore.primary,
-      bgColor: alpha(emeraldCore.primary, 0.1),
-    }] : []),
+    ...(isAdmin
+      ? [
+          {
+            id: 'provider-requests',
+            title: 'Solicitudes a Proveedores',
+            description: 'Enviar solicitudes de cotizacion',
+            icon: Send,
+            route: '/cuentas/solicitudes',
+            color: orangeColor,
+            bgColor: alpha(orangeColor, 0.1),
+          },
+          {
+            id: 'asesor-requests',
+            title: 'Solicitudes de Asesores',
+            description: 'Ver solicitudes de asesores y embajadores',
+            icon: Users,
+            route: '/cuentas/solicitudes-asesores',
+            color: emeraldCore.primary,
+            bgColor: alpha(emeraldCore.primary, 0.1),
+          },
+        ]
+      : []),
   ];
 
   const handleToolClick = (route: string) => {
@@ -129,9 +173,14 @@ const AccountsHub: React.FC = () => {
           <Typography
             variant="h1"
             sx={{
-              fontSize: { xs: iosTypographyScale.title1, md: iosTypographyScale.largeTitle },
+              fontSize: {
+                xs: iosTypographyScale.title1,
+                md: iosTypographyScale.largeTitle,
+              },
               fontWeight: 700,
-              color: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
+              color: isLight
+                ? surfacesLight.text.primary
+                : surfacesDark.text.primary,
             }}
           >
             {t.pages.accounts.title}
@@ -140,7 +189,9 @@ const AccountsHub: React.FC = () => {
         <Typography
           variant="body1"
           sx={{
-            color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
+            color: isLight
+              ? surfacesLight.text.secondary
+              : surfacesDark.text.secondary,
             fontSize: iosTypographyScale.callout,
           }}
         >
@@ -161,8 +212,12 @@ const AccountsHub: React.FC = () => {
                   height: '100%',
                   borderRadius: spacing.lg,
                   border: '1px solid',
-                  borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
-                  bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
+                  borderColor: isLight
+                    ? surfacesLight.border.light
+                    : surfacesDark.border.default,
+                  bgcolor: isLight
+                    ? surfacesLight.background.primary
+                    : surfacesDark.background.primary,
                   transition: cssTransition.slow,
                   '&:hover': {
                     borderColor: tool.color,
@@ -204,7 +259,9 @@ const AccountsHub: React.FC = () => {
                       sx={{
                         fontSize: iosTypographyScale.title3,
                         fontWeight: 600,
-                        color: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
+                        color: isLight
+                          ? surfacesLight.text.primary
+                          : surfacesDark.text.primary,
                         mb: 1,
                       }}
                     >
@@ -215,7 +272,9 @@ const AccountsHub: React.FC = () => {
                     <Typography
                       variant="body2"
                       sx={{
-                        color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
+                        color: isLight
+                          ? surfacesLight.text.secondary
+                          : surfacesDark.text.secondary,
                         fontSize: iosTypographyScale.subhead,
                         lineHeight: 1.6,
                       }}
@@ -255,12 +314,15 @@ const AccountsHub: React.FC = () => {
         <Typography
           variant="body2"
           sx={{
-            color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
+            color: isLight
+              ? surfacesLight.text.secondary
+              : surfacesDark.text.secondary,
             lineHeight: 1.7,
           }}
         >
-          Accede a herramientas profesionales para calcular valuaciones, generar recibos oficiales
-          y crear cotizaciones personalizadas directamente desde tu inventario.
+          Accede a herramientas profesionales para calcular valuaciones, generar
+          recibos oficiales y crear cotizaciones personalizadas directamente
+          desde tu inventario.
         </Typography>
       </Box>
     </Box>
