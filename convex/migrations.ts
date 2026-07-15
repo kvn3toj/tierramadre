@@ -867,3 +867,37 @@ export const _stampInsumoTipo = internalMutation({
     });
   },
 });
+
+/**
+ * One-off: attach the 7 topos/chatones insumos (created by seedToposSubdivision
+ * with no lote, so they cannot receive a foto — fotoUrl requires a lotItemId) to
+ * lote C-039 "Topos Planos (postes aretes)" via _attachExistingToLote. Joins at
+ * preponderancia 0 with each product's own cost preserved; item 449 stays at 100%
+ * and the lote's cost model is untouched. Idempotent.
+ *   npx convex run --prod migrations:attachToposToC039 '{}'
+ */
+export const attachToposToC039 = internalAction({
+  args: {},
+  handler: async (
+    ctx,
+  ): Promise<
+    Array<{ itemId: string; attached: boolean; lotItemId?: string }>
+  > => {
+    const ITEMS = ['454', '456', '458', '460', '464', '465', '466'];
+    const out: Array<{
+      itemId: string;
+      attached: boolean;
+      lotItemId?: string;
+    }> = [];
+    for (const itemId of ITEMS) {
+      const r = await ctx.runMutation(
+        internal.lotItems._attachExistingToLote,
+        { itemId, loteId: 'C-039', editorEmail: 'anima-bot' },
+      );
+      out.push(
+        r as { itemId: string; attached: boolean; lotItemId?: string },
+      );
+    }
+    return out;
+  },
+});

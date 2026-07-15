@@ -448,6 +448,90 @@ export const updateMediaViaBot = action({
 });
 
 /**
+ * Attach an EXISTING productInventory row to a lote by creating its lotItems row.
+ * Unlike `_create`, this does NOT allocate a new itemId and does NOT recompute
+ * costoBaseCOP from the lote: it reuses the product's own cost and joins it at
+ * `preponderancia: 0` (bears none of the lote's *declared* cost — for insumos
+ * that already carry their own cost, e.g. the seedToposSubdivision items). This
+ * lets a lote-less product become photo-eligible (fotoUrl requires a lotItemId)
+ * without touching the money model or the lote's other items. Idempotent: if the
+ * item already has a lotItems row, returns it unchanged.
+ */
+export const _attachExistingToLote = internalMutation({
+  args: {
+    itemId: v.string(),
+    loteId: v.string(),
+    editorEmail: v.optional(v.string()),
+  },
+  handler: async (ctx, { itemId, loteId, editorEmail }) => {
+    const product = await ctx.db
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+      .first();
+    if (!product) throw new Error(`productInventory ${itemId} no encontrado`);
+
+    const existing = await ctx.db
+      .query('lotItems')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+      .first();
+    if (existing) {
+      return {
+        itemId,
+        attached: false as const,
+        lotItemId: existing._id,
+        reason: 'ya tiene lotItems',
+      };
+    }
+
+    const lot = await ctx.db
+      .query('lots')
+      .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
+      .first();
+    if (!lot) throw new Error(`Lote ${loteId} no encontrado`);
+
+    const siblings = await ctx.db
+      .query('lotItems')
+      .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
+      .collect();
+    const ordenEnLote =
+      siblings.reduce((m, s) => Math.max(m, s.ordenEnLote), 0) + 1;
+
+    const lotItemId = await ctx.db.insert('lotItems', {
+      loteId,
+      itemId,
+      preponderancia: 0, // insumo: no comparte el costo declarado del lote
+      costoBaseCOP: product.costoBaseCOP ?? 0, // preserva su costo propio
+      ordenEnLote,
+    });
+
+    const now = new Date().toISOString();
+    const auditId = await ctx.db.insert('productEdits', {
+      itemId,
+      editorEmail: editorEmail ?? 'anima-bot',
+      editedAt: now,
+      changes: [
+        { field: 'loteId', before: product.loteId ?? null, after: loteId },
+      ],
+      status: 'pending' as const,
+    });
+
+    await ctx.db.patch(product._id, {
+      loteId,
+      syncStatus: 'pending' as const,
+      syncError: undefined,
+    });
+
+    await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
+      itemId,
+      auditId,
+      mode: 'patch',
+    });
+
+    return { itemId, attached: true as const, lotItemId };
+  },
+});
+
+/**
  * Patch the preponderancia of an existing lot item. The linked
  * productInventory row's `costoBaseCOP` is recomputed from the lot's
  * current `costoTotalCOP` so the Sheets row stays consistent, and a
