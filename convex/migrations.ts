@@ -1164,3 +1164,109 @@ export const registerCleanBatch1 = internalAction({
     return out;
   },
 });
+
+/**
+ * Move an existing item to a different lote (updates lotItems.loteId +
+ * productInventory.loteId, keeps preponderancia/cost, re-orders in the target,
+ * audits + patches the SOT). Idempotent-ish: moving to the same lote is a no-op patch.
+ */
+export const _moveItemToLote = internalMutation({
+  args: {
+    itemId: v.string(),
+    toLoteId: v.string(),
+    editorEmail: v.optional(v.string()),
+  },
+  handler: async (ctx, { itemId, toLoteId, editorEmail }) => {
+    const product = await ctx.db
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+      .first();
+    if (!product) throw new Error(`item ${itemId} no existe`);
+    const toLot = await ctx.db
+      .query('lots')
+      .withIndex('by_loteId', (q) => q.eq('loteId', toLoteId))
+      .first();
+    if (!toLot) throw new Error(`lote ${toLoteId} no existe`);
+    const fromLoteId = product.loteId ?? null;
+    const sib = await ctx.db
+      .query('lotItems')
+      .withIndex('by_loteId', (q) => q.eq('loteId', toLoteId))
+      .collect();
+    const li = await ctx.db
+      .query('lotItems')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+      .first();
+    if (li) {
+      await ctx.db.patch(li._id, {
+        loteId: toLoteId,
+        ordenEnLote: sib.length + 1,
+      });
+    } else {
+      await ctx.db.insert('lotItems', {
+        loteId: toLoteId,
+        itemId,
+        preponderancia: product.preponderancia ?? 0,
+        costoBaseCOP: product.costoBaseCOP ?? 0,
+        ordenEnLote: sib.length + 1,
+      });
+    }
+    const now = new Date().toISOString();
+    const auditId = await ctx.db.insert('productEdits', {
+      itemId,
+      editorEmail: editorEmail ?? 'anima-bot',
+      editedAt: now,
+      changes: [{ field: 'loteId', before: fromLoteId, after: toLoteId }],
+      status: 'pending' as const,
+    });
+    await ctx.db.patch(product._id, {
+      loteId: toLoteId,
+      syncStatus: 'pending' as const,
+      syncError: undefined,
+    });
+    await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
+      itemId,
+      auditId,
+      mode: 'patch',
+    });
+    return { itemId, from: fromLoteId, to: toLoteId };
+  },
+});
+
+/**
+ * One-off: consolidate the chatones/topos into lote C-065 (canonical per the
+ * Modelo/Fotosíntesis). Creates C-065, moves 449/454/456/458/460/463/464/465/466
+ * out of C-039 (which is left empty), and registers the 4 new chatones
+ * 477/481/520/521 with their Modelo names + costs. Names of the MOVED items are
+ * kept as-is (Convex) — rename separately if desired.
+ *   npx convex run --prod migrations:migrateChatonesToC065 '{}'
+ */
+export const migrateChatonesToC065 = internalAction({
+  args: {},
+  handler: async (ctx): Promise<Array<Record<string, unknown>>> => {
+    const PROVIDER = 'kd77twtmcf9syvg68fvc9acqrd8a8tgv' as Id<'providers'>;
+    await ctx.runMutation(internal.migrations._createLoteExplicit, {
+      loteId: 'C-065',
+      renombreLote: 'Chatones',
+      costoTotalCOP: 1450050,
+      unidadesDeclaradas: 13,
+      providerId: PROVIDER,
+    });
+    const out: Array<Record<string, unknown>> = [];
+    for (const it of ['449', '454', '456', '458', '460', '463', '464', '465', '466']) {
+      out.push(await ctx.runMutation(internal.migrations._moveItemToLote, { itemId: it, toLoteId: 'C-065' }));
+    }
+    const news: Array<{ itemId: string; nombre: string; costoBaseCOP: number }> = [
+      { itemId: '477', nombre: 'Chatones Redondos 5mm', costoBaseCOP: 22400 },
+      { itemId: '481', nombre: 'Chatones de Mariposa 4 mm', costoBaseCOP: 140000 },
+      { itemId: '520', nombre: 'Chatones de Mariposa 3,5mm', costoBaseCOP: 225000 },
+      { itemId: '521', nombre: 'Chatones Redondos 2mm', costoBaseCOP: 14800 },
+    ];
+    for (const n of news) {
+      out.push(await ctx.runMutation(internal.migrations._createItemExplicit, {
+        itemId: n.itemId, loteId: 'C-065', nombre: n.nombre,
+        tipo: 'insumo', categoria: 'Insumo', costoBaseCOP: n.costoBaseCOP,
+      }));
+    }
+    return out;
+  },
+});
