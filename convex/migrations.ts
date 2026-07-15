@@ -6,6 +6,8 @@ import { internalMutation, internalAction } from './_generated/server';
 import { api, internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
 import { v } from 'convex/values';
+import { bumpInventoryTotal } from './products';
+import { withPublishStamp } from './_lib/publishState';
 
 /**
  * Backfill `publishedAt` for Fotosíntesis items published BEFORE the Estrenos
@@ -890,12 +892,273 @@ export const attachToposToC039 = internalAction({
       lotItemId?: string;
     }> = [];
     for (const itemId of ITEMS) {
-      const r = await ctx.runMutation(
-        internal.lotItems._attachExistingToLote,
-        { itemId, loteId: 'C-039', editorEmail: 'anima-bot' },
-      );
+      const r = await ctx.runMutation(internal.lotItems._attachExistingToLote, {
+        itemId,
+        loteId: 'C-039',
+        editorEmail: 'anima-bot',
+      });
+      out.push(r as { itemId: string; attached: boolean; lotItemId?: string });
+    }
+    return out;
+  },
+});
+
+/**
+ * Explicit-id lote creation — adopts the Modelo/Fotosíntesis código as the Convex
+ * loteId (the app otherwise auto-numbers lotes). Idempotent by loteId.
+ */
+export const _createLoteExplicit = internalMutation({
+  args: {
+    loteId: v.string(),
+    renombreLote: v.string(),
+    costoTotalCOP: v.number(),
+    unidadesDeclaradas: v.number(),
+    providerId: v.id('providers'),
+  },
+  handler: async (ctx, a) => {
+    const ex = await ctx.db
+      .query('lots')
+      .withIndex('by_loteId', (q) => q.eq('loteId', a.loteId))
+      .first();
+    if (ex) return { loteId: a.loteId, created: false };
+    const allLots = await ctx.db.query('lots').collect();
+    const maxRow = allLots.reduce((m, l) => Math.max(m, l.rowIndex ?? 1), 1);
+    await ctx.db.insert('lots', {
+      loteId: a.loteId,
+      providerId: a.providerId,
+      fechaRecepcion: '2026-07-15',
+      costoTotalCOP: a.costoTotalCOP,
+      unidadesDeclaradas: a.unidadesDeclaradas,
+      formaPago: 'contado',
+      estado: 'abierto' as const,
+      renombreLote: a.renombreLote,
+      rowIndex: maxRow + 1,
+      lastPulledAt: new Date().toISOString(),
+      syncStatus: 'pending' as const,
+    });
+    return { loteId: a.loteId, created: true };
+  },
+});
+
+/**
+ * Explicit-id item creation — registers a productInventory + lotItems row with a
+ * SPECIFIED itemId (the app otherwise auto-numbers). Joins at preponderancia 0 with
+ * its own costoBaseCOP (money-neutral). Mirrors lotItems._create field-for-field.
+ * Idempotent by itemId. Schedules the SOT Inventario append.
+ */
+export const _createItemExplicit = internalMutation({
+  args: {
+    itemId: v.string(),
+    loteId: v.string(),
+    nombre: v.string(),
+    tipo: v.union(
+      v.literal('gema'),
+      v.literal('joya'),
+      v.literal('insumo'),
+      v.literal('lote'),
+      v.literal('bruto'),
+    ),
+    categoria: v.string(),
+    costoBaseCOP: v.number(),
+    peso: v.optional(v.string()),
+    calidad: v.optional(v.string()),
+    cantidad: v.optional(v.number()),
+  },
+  handler: async (ctx, a) => {
+    const exP = await ctx.db
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', a.itemId))
+      .first();
+    if (exP) return { itemId: a.itemId, created: false, reason: 'ya existe' };
+    const lot = await ctx.db
+      .query('lots')
+      .withIndex('by_loteId', (q) => q.eq('loteId', a.loteId))
+      .first();
+    if (!lot) throw new Error(`Lote ${a.loteId} no existe`);
+
+    const now = new Date().toISOString();
+    const allInv = await ctx.db.query('productInventory').collect();
+    const maxRow = allInv.reduce((m, p) => Math.max(m, p.rowIndex), 1);
+    await ctx.db.insert('productInventory', {
+      itemId: a.itemId,
+      rowIndex: maxRow + 1,
+      nombre: a.nombre,
+      peso: a.peso,
+      calidad: a.calidad,
+      cantidad: a.cantidad,
+      categoria: a.categoria,
+      estado: 'DISPONIBLE' as const,
+      loteId: a.loteId,
+      preponderancia: 0,
+      costoBaseCOP: a.costoBaseCOP,
+      ...withPublishStamp(null, false),
+      tipo: a.tipo,
+      lastPulledAt: now,
+      syncStatus: 'pending' as const,
+    });
+    await bumpInventoryTotal(ctx, 1);
+
+    const siblings = await ctx.db
+      .query('lotItems')
+      .withIndex('by_loteId', (q) => q.eq('loteId', a.loteId))
+      .collect();
+    const auditId = await ctx.db.insert('productEdits', {
+      itemId: a.itemId,
+      editorEmail: 'anima-bot',
+      editedAt: now,
+      changes: [{ field: 'tipo', before: null, after: a.tipo }],
+      status: 'pending' as const,
+    });
+    await ctx.db.insert('lotItems', {
+      loteId: a.loteId,
+      itemId: a.itemId,
+      preponderancia: 0,
+      costoBaseCOP: a.costoBaseCOP,
+      ordenEnLote: siblings.length + 1,
+    });
+    await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
+      itemId: a.itemId,
+      auditId,
+      mode: 'append',
+    });
+    return { itemId: a.itemId, created: true };
+  },
+});
+
+/**
+ * One-off: register the 8 clean-named Group B items (476,478,482,483,484,495,495A,495B)
+ * into their Modelo códigos as new Convex lotes. Placeholder provider (Joyería Legado)
+ * and gem costs = 0 (to refine later). C-065 chatones handled separately.
+ *   npx convex run --prod migrations:registerCleanBatch1 '{}'
+ */
+export const registerCleanBatch1 = internalAction({
+  args: {},
+  handler: async (ctx): Promise<Array<Record<string, unknown>>> => {
+    const PROVIDER = 'kd77twtmcf9syvg68fvc9acqrd8a8tgv' as Id<'providers'>;
+    const lotes = [
+      {
+        loteId: 'C-061',
+        renombreLote: 'Asteroides Verdes III',
+        costoTotalCOP: 500000,
+        unidadesDeclaradas: 40,
+      },
+      {
+        loteId: 'C-049',
+        renombreLote: 'Topito Solitario',
+        costoTotalCOP: 87400,
+        unidadesDeclaradas: 1,
+      },
+      {
+        loteId: 'C-069',
+        renombreLote: 'Origen del Origen',
+        costoTotalCOP: 0,
+        unidadesDeclaradas: 3,
+      },
+      {
+        loteId: 'C-054',
+        renombreLote: 'Anillos Joyero Cali',
+        costoTotalCOP: 1279000,
+        unidadesDeclaradas: 3,
+      },
+    ];
+    for (const l of lotes) {
+      await ctx.runMutation(internal.migrations._createLoteExplicit, {
+        ...l,
+        providerId: PROVIDER,
+      });
+    }
+    const items: Array<{
+      itemId: string;
+      loteId: string;
+      nombre: string;
+      tipo: 'gema' | 'joya' | 'insumo';
+      categoria: string;
+      costoBaseCOP: number;
+      peso?: string;
+      calidad?: string;
+      cantidad?: number;
+    }> = [
+      {
+        itemId: '476',
+        loteId: 'C-061',
+        nombre: 'Asteroides Verdes III',
+        tipo: 'insumo',
+        categoria: 'Insumo',
+        costoBaseCOP: 500000,
+        peso: '48.4',
+        calidad: 'C. Estándar',
+        cantidad: 40,
+      },
+      {
+        itemId: '478',
+        loteId: 'C-049',
+        nombre: 'Topito Plano Solitario 5mm',
+        tipo: 'insumo',
+        categoria: 'Insumo',
+        costoBaseCOP: 87400,
+        peso: '0.45',
+        calidad: 'Fina esencial',
+        cantidad: 1,
+      },
+      {
+        itemId: '482',
+        loteId: 'C-069',
+        nombre: 'Destino',
+        tipo: 'gema',
+        categoria: 'Gema',
+        costoBaseCOP: 0,
+        peso: '0.92',
+        calidad: 'No-oil',
+      },
+      {
+        itemId: '483',
+        loteId: 'C-069',
+        nombre: 'Gratitud',
+        tipo: 'gema',
+        categoria: 'Gema',
+        costoBaseCOP: 0,
+        peso: '0.89',
+        calidad: 'No-oil',
+      },
+      {
+        itemId: '484',
+        loteId: 'C-069',
+        nombre: 'Magia',
+        tipo: 'gema',
+        categoria: 'Gema',
+        costoBaseCOP: 0,
+        peso: '4.44',
+        calidad: 'F2',
+      },
+      {
+        itemId: '495',
+        loteId: 'C-054',
+        nombre: 'Anillos Joyero Cali 4 de plata y 1 de oro',
+        tipo: 'joya',
+        categoria: 'Joya',
+        costoBaseCOP: 0,
+      },
+      {
+        itemId: '495A',
+        loteId: 'C-054',
+        nombre: 'Anillos Producidos Joyero Cali (Juan)',
+        tipo: 'joya',
+        categoria: 'Joya',
+        costoBaseCOP: 0,
+      },
+      {
+        itemId: '495B',
+        loteId: 'C-054',
+        nombre: 'Anillo de Oro producido Cali',
+        tipo: 'joya',
+        categoria: 'Joya',
+        costoBaseCOP: 1279000,
+      },
+    ];
+    const out: Array<Record<string, unknown>> = [];
+    for (const it of items) {
       out.push(
-        r as { itemId: string; attached: boolean; lotItemId?: string },
+        await ctx.runMutation(internal.migrations._createItemExplicit, it),
       );
     }
     return out;
