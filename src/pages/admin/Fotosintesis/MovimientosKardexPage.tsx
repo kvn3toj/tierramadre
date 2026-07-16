@@ -60,6 +60,7 @@ import { matchesAsesorName } from '../../../utils/asesorNameUtils';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { MovimientoKardexPreview } from './components/MovimientoKardexPreview';
 import { exportAndUploadMovimientoKardexPdf } from './exportMovimientoKardexPdf';
+import { comprobanteFilename } from './comprobanteFilename';
 
 type Mode = 'entrega' | 'devolucion';
 
@@ -322,10 +323,17 @@ export default function MovimientosKardexPage() {
     try {
       const url = await exportAndUploadMovimientoKardexPdf(
         previewRef.current,
-        `kardex-${activeKardexEventId}.pdf`,
+        comprobanteFilename(activeKardexEventId),
       );
       setComprobanteUrl(url);
-      notify('Comprobante generado', 'success');
+      // Persist BEFORE notifying success: the URL used to live only here, in
+      // React state, and died with the tab. If this throws, the PDF is still
+      // in Drive — the operator just has to regenerate to re-stamp it.
+      await persistComprobanteUrl({
+        kardexEventId: activeKardexEventId,
+        comprobanteUrl: url,
+      });
+      notify('Comprobante generado y archivado', 'success');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       notify(`No se pudo generar el comprobante: ${msg}`, 'error');
@@ -339,6 +347,9 @@ export default function MovimientosKardexPage() {
   );
   const registerReturnBatch = useAuthedConvexAction(
     convexApi.asesorMovements.registerReturnBatch,
+  );
+  const persistComprobanteUrl = useAuthedConvexAction(
+    convexApi.asesorMovements.setComprobanteUrl,
   );
 
   const selectedItemIds = useMemo(
