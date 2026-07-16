@@ -27,6 +27,22 @@ FECHA = "16 de julio de 2026"
 UNIDADES_PLAN = "240"
 TOTAL_PLAN = "$650’778.130"
 
+# Copy de la carátula y del cierre del plan Soul. Una cotización de cliente no
+# lee estas constantes: trae las suyas propias (ver cotizacion_quote.Datos),
+# para que build-cotizacion-pptx.py nunca tenga que decidir con un `if` si está
+# armando el plan Soul o la cotización de un cliente — sólo lee `d.ALGO`.
+EYEBROW_PORTADA = "Subastas con Propósito"
+TITULO_PORTADA = "Cotización\nSoul"
+SUBTITULO_PORTADA = "Plan de producción · %s unidades" % UNIDADES_PLAN
+TITULO_RESUMEN = "Resumen\ndel Plan"
+NOTA_RESUMEN = ("%s unidades · una opción por línea. Las alternativas de cada "
+                "pieza no se suman." % UNIDADES_PLAN)
+# Verdadero sólo para el plan Soul: es el único que trae módulos por chakra.
+# Una cotización de cliente sin módulos no puede repetir esta frase — sería una
+# afirmación falsa sobre el alcance de lo cotizado.
+CIERRE_NOTA = ("Incluye la base y los módulos por chakra de la Línea 01. "
+               "Las alternativas de cada pieza son excluyentes: no se suman.")
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Rutas
 # ─────────────────────────────────────────────────────────────────────────────

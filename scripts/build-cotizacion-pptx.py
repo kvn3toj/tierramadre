@@ -40,6 +40,15 @@ OPT = os.path.join(SCRATCH, "opt")
 ROOT = bc.ROOT
 SALIDA = os.path.join(ROOT, "docs", "Cotizacion-Soul.pptx")
 
+# Composites de ESTE render (QR, foto de portada, foto de cada pieza). TM_SCRATCH
+# suele ser una carpeta compartida (el cotizador la fija a tests/fixtures por
+# defecto) y dos renders concurrentes escribían el mismo qr.png / comp-portada.jpg:
+# el QR del cliente A podía terminar en el deck del cliente B. main() la
+# reemplaza por una subcarpeta única antes de dibujar nada; se limpia al salir.
+# La caché de fotos (--fotos-cache) es la única excepción: esa sí es por-fileId
+# y debe seguir siendo compartida entre renders.
+COMPOSITES = SCRATCH
+
 # ── lienzo ──────────────────────────────────────────────────────────────────
 W, H = 1080, 1920                      # px
 PX = Emu(9525)                         # 1 px @96dpi
@@ -246,6 +255,21 @@ def alto_fila_resumen(n, banda):
     return min(alto, ALTO_FILA_MAX)
 
 
+def _unidades_texto(n):
+    """
+    «1 unidad», no «1 unidades».
+
+    Soul siempre trae 200/10/10/10/10 así que nunca se veía; una cotización de
+    cliente con una sola pieza sí cae en el singular, y en un documento que le
+    llega al cliente la concordancia importa.
+    """
+    try:
+        una = int(n) == 1
+    except (TypeError, ValueError):
+        una = False
+    return "1 unidad" if una else "%s unidades" % n
+
+
 def alto_titulo(nombre, ancho=None, tam=62):
     """estima cuántas líneas ocupa el titular para que la ficha baje con él"""
     ancho = ancho or (W - MARGEN * 2)
@@ -266,6 +290,30 @@ def alto_titulo(nombre, ancho=None, tam=62):
     # Cartier». El +16 es el aire bajo la última línea: sin él el hueco quedaba
     # en 6 px con dos líneas y en 14 px con una, y se notaba el salto.
     return lineas, int(tam * (1 + (lineas - 1) * LINEA_CORMORANT)) + 16
+
+
+ANCHO_NOMBRE_RESUMEN = 500      # ancho de la caja de nombre en lamina_resumen
+
+
+def _mide_nombre_resumen(nombre):
+    """
+    Alto de la caja de nombre en el resumen, y desplazamiento del subtítulo.
+
+    lamina_pieza ya mide su titular con alto_titulo (línea 373) y por eso
+    aguanta un nombre largo; lamina_resumen no lo hacía, tenía el alto de caja
+    (36) y el offset del subtítulo (+46) fijos a mano, calibrados sólo para los
+    nombres cortos de Soul. Con un nombre real y largo («#170 Gotas del Amazonas
+    Coleccion Privada») el nombre se salía de una línea y el subtítulo quedaba
+    atropellado, sin que cotizacion_layout.verifica pudiera detectarlo — mide
+    la caja del cuadro de texto, no el texto ya envuelto dentro.
+
+    A una sola línea (el caso de Soul, siempre) se devuelven los mismos números
+    de antes tal cual: la huella dorada no puede moverse un píxel.
+    """
+    lineas, alto = alto_titulo(nombre, ancho=ANCHO_NOMBRE_RESUMEN, tam=34)
+    if lineas == 1:
+        return 36, 46
+    return alto, alto + 4
 
 
 def ruta(k, ext="jpg"):
@@ -343,7 +391,7 @@ def pie(slide, qr):
 def foto_pieza(slide, p):
     if not p.get("foto"):
         # lámina de textura para la pieza sin fotografía
-        comp = os.path.join(SCRATCH, "comp-lamina.jpg")
+        comp = os.path.join(COMPOSITES, "comp-lamina.jpg")
         if not os.path.exists(comp):
             from PIL import Image
             _encaja(Image.open(ruta("pergamino")).convert("RGB"), int(W), int(FOTO_H),
@@ -354,7 +402,7 @@ def foto_pieza(slide, p):
               tam=15, color=TENUE, negrita=True, track=.24, mayus=True,
               alineado=PP_ALIGN.CENTER)
     else:
-        comp = os.path.join(SCRATCH, "comp-%s.jpg" % p["key"])
+        comp = os.path.join(COMPOSITES, "comp-%s.jpg" % p["key"])
         compone_foto(p, comp)
         img(slide, comp, 0, 0, W, FOTO_H)
     rect(slide, 0, FOTO_H - 2, W, 2, ORO)
@@ -366,7 +414,7 @@ def lamina_pieza(prs, p, qr):
     foto_pieza(s, p)
 
     y = FOTO_H + 48
-    texto(s, MARGEN, y, 700, 24, "Línea %s · %s unidades" % (p["linea"], p["unidades"]),
+    texto(s, MARGEN, y, 700, 24, "Línea %s · %s" % (p["linea"], _unidades_texto(p["unidades"])),
           tam=15, color=TENUE, negrita=True, track=.22, mayus=True)
     y += AIRE_EYEBROW
     nombre = p["nombre"].replace("\n", " ")
@@ -485,7 +533,7 @@ def velo(slide, x, y, w, h, color, alpha):
 def lamina_portada(prs, qr, d):
     s = prs.slides.add_slide(prs.slide_layouts[6])
     from PIL import Image
-    comp = os.path.join(SCRATCH, "comp-portada.jpg")
+    comp = os.path.join(COMPOSITES, "comp-portada.jpg")
     base = _encaja(Image.open(ruta("portada")).convert("RGB"), int(W), int(H), cubrir=True)
     # degradado quemado en la imagen: dos rectángulos con alfa dejaban bandas duras
     capa = Image.new("RGB", base.size, (0x14, 0x0B, 0x07))
@@ -502,11 +550,11 @@ def lamina_portada(prs, qr, d):
     img(s, comp, 0, 0, W, H)
 
     img(s, logo_claro(os.path.join(SCRATCH, "logo-claro.png")), MARGEN, 1120, 340)
-    texto(s, MARGEN, 1290, 700, 24, "Subastas con Propósito",
+    texto(s, MARGEN, 1290, 700, 24, d.EYEBROW_PORTADA,
           tam=15, color=RGBColor(0xDC, 0xB8, 0x72), negrita=True, track=.32, mayus=True)
-    texto(s, MARGEN, 1330, W - MARGEN * 2, 260, "Cotización\nSoul",
+    texto(s, MARGEN, 1330, W - MARGEN * 2, 260, d.TITULO_PORTADA,
           fuente=SERIF, tam=118, color=CREMA, negrita=True, interlinea=0.92)
-    texto(s, MARGEN, 1590, 700, 30, "Plan de producción · %s unidades" % d.UNIDADES_PLAN,
+    texto(s, MARGEN, 1590, 700, 30, d.SUBTITULO_PORTADA,
           tam=20, color=RGBColor(0xCF, 0xC3, 0xB2))
     rect(s, MARGEN, 1642, W - MARGEN * 2, 1, RGBColor(0x7A, 0x63, 0x40))
     texto(s, MARGEN, 1664, 500, 20, "Precio Total del Plan",
@@ -528,12 +576,11 @@ def lamina_resumen(prs, qr, d):
     texto(s, MARGEN, y, 700, 24, "Cierre", tam=15, color=TENUE,
           negrita=True, track=.22, mayus=True)
     y += 42
-    texto(s, MARGEN, y, W - MARGEN * 2, 250, "Resumen\ndel Plan",
+    texto(s, MARGEN, y, W - MARGEN * 2, 250, d.TITULO_RESUMEN,
           fuente=SERIF, tam=96, color=VINO, negrita=True, interlinea=0.94)
     y += 230
-    texto(s, MARGEN, y, W - MARGEN * 2, 60,
-          "%s unidades · una opción por línea. Las alternativas de cada pieza no se suman."
-          % d.UNIDADES_PLAN, tam=18, color=TENUE, interlinea=1.4)
+    texto(s, MARGEN, y, W - MARGEN * 2, 60, d.NOTA_RESUMEN,
+          tam=18, color=TENUE, interlinea=1.4)
     y += 86
     encabeza_columnas(s, y)
     y += 26
@@ -545,15 +592,20 @@ def lamina_resumen(prs, qr, d):
         raise SystemExit("El resumen no cabe: %d ítems no entran sobre el pie. "
                          "Divide la cotización." % len(d.RESUMEN))
     for n, sub, u, pu, ptot in d.RESUMEN:
-        texto(s, MARGEN + 22, y, 500, 36, n, fuente=SERIF, tam=34, color=VINO, negrita=True)
+        alto_caja, offset_sub = _mide_nombre_resumen(n)
+        texto(s, MARGEN + 22, y, ANCHO_NOMBRE_RESUMEN, alto_caja, n,
+              fuente=SERIF, tam=34, color=VINO, negrita=True)
         # +46: a +40 los descendentes del nombre se comían el subtítulo
-        texto(s, MARGEN + 22, y + 46, 520, 22, "%s · %s unidades" % (sub, u),
-              tam=13, color=VINO_SUAVE)
+        texto(s, MARGEN + 22, y + offset_sub, 520, 22,
+              "%s · %s" % (sub, _unidades_texto(u)), tam=13, color=VINO_SUAVE)
         texto(s, COL_U, y + 8, 200, 24, pu,
               tam=19, color=VINO_SUAVE, negrita=True, alineado=PP_ALIGN.RIGHT)
         texto(s, COL_T, y + 8, 210, 24, ptot,
               tam=19, color=VINO, negrita=True, alineado=PP_ALIGN.RIGHT)
-        y += alto_fila
+        # nombre a una línea: la fila mide lo mismo de siempre (huella dorada
+        # intacta). Nombre largo: la fila crece lo que haga falta para no
+        # encimarse con la siguiente, sin tocar ALTO_FILA_MIN/MAX.
+        y += alto_fila if alto_caja <= 36 else max(alto_fila, offset_sub + 40)
         rect(s, MARGEN, y - 18, W - MARGEN * 2, 1, FILETE_FINO)
     y += 26
     rect(s, MARGEN, y, W - MARGEN * 2, 2, VINO)
@@ -563,10 +615,12 @@ def lamina_resumen(prs, qr, d):
     texto(s, MARGEN + 22, y - 14, W - MARGEN * 2 - 22, 120, d.TOTAL_PLAN,
           tam=76, color=VINO, negrita=True, alineado=PP_ALIGN.RIGHT)
     y += 132
-    texto(s, MARGEN + 22, y, W - MARGEN * 2 - 22, 60,
-          "Incluye la base y los módulos por chakra de la Línea 01. "
-          "Las alternativas de cada pieza son excluyentes: no se suman.",
-          tam=15, color=VINO_SUAVE, interlinea=1.5)
+    # Sólo el plan Soul trae módulos y alternativas que aclarar. Una cotización
+    # de cliente sin ellos no repite la frase con datos ajenos: sin CIERRE_NOTA
+    # no hay caja, y el silencio no miente sobre el alcance de lo cotizado.
+    if d.CIERRE_NOTA:
+        texto(s, MARGEN + 22, y, W - MARGEN * 2 - 22, 60, d.CIERRE_NOTA,
+              tam=15, color=VINO_SUAVE, interlinea=1.5)
     pie(s, qr)
     return s
 
@@ -590,32 +644,46 @@ def main(argv=None):
             resuelve_foto(p)
     if not os.path.isdir(OPT):
         sys.exit("Faltan las fotos optimizadas en %s (define TM_SCRATCH)" % OPT)
-    qr = qr_png(d.QR_URL, os.path.join(SCRATCH, "qr.png"))
 
-    prs = Presentation()
-    prs.slide_width = px(W)
-    prs.slide_height = px(H)
+    # Subcarpeta única para el QR y las fotos compuestas de ESTE render: dos
+    # renders concurrentes sobre el mismo TM_SCRATCH ya no se pisan (ver
+    # COMPOSITES arriba). La caché de fotos (FOTOS_CACHE) es aparte y sigue
+    # compartida, por-fileId.
+    import shutil
+    import tempfile
+    render_dir = tempfile.mkdtemp(prefix="render-", dir=SCRATCH)
+    globals()["COMPOSITES"] = render_dir
+    try:
+        qr = qr_png(d.QR_URL, os.path.join(COMPOSITES, "qr.png"))
 
-    lamina_portada(prs, qr, d)
-    for p in d.PRODUCTOS:
-        lamina_pieza(prs, p, qr)
-        # la línea de módulos es del plan Soul; una cotización suelta no la tiene
-        if getattr(d, "MODULOS", None) and p["key"] == "brazalete":
-            lamina_modulos(prs, d.MODULOS, qr)
-    lamina_resumen(prs, qr, d)
+        prs = Presentation()
+        prs.slide_width = px(W)
+        prs.slide_height = px(H)
 
-    from cotizacion_layout import verifica
-    problemas = verifica(prs)
-    if problemas:
-        # antes de subir, no después: una lámina de cliente no sale con el texto
-        # metido bajo el pie
-        raise SystemExit("La lámina no cuadra:\n  " + "\n  ".join(problemas))
+        lamina_portada(prs, qr, d)
+        for p in d.PRODUCTOS:
+            lamina_pieza(prs, p, qr)
+            # la línea de módulos es del plan Soul; una cotización suelta no la tiene
+            if getattr(d, "MODULOS", None) and p["key"] == "brazalete":
+                lamina_modulos(prs, d.MODULOS, qr)
+        lamina_resumen(prs, qr, d)
 
-    os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
-    prs.save(args.out)
-    print("→ %s  (%.2f MB, %d láminas, %dx%d px)"
-          % (args.out, os.path.getsize(args.out) / 1024 / 1024,
-             len(prs.slides.__iter__.__self__._sldIdLst), W, H))
+        from cotizacion_layout import verifica
+        problemas = verifica(prs)
+        if problemas:
+            # antes de subir, no después: una lámina de cliente no sale con el texto
+            # metido bajo el pie
+            raise SystemExit("La lámina no cuadra:\n  " + "\n  ".join(problemas))
+
+        os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
+        prs.save(args.out)
+        print("→ %s  (%.2f MB, %d láminas, %dx%d px)"
+              % (args.out, os.path.getsize(args.out) / 1024 / 1024,
+                 len(prs.slides.__iter__.__self__._sldIdLst), W, H))
+    finally:
+        # los composites ya viven dentro del .pptx (add_picture copia los bytes):
+        # no hace falta conservarlos, y dejarlos crecería TM_SCRATCH sin límite.
+        shutil.rmtree(render_dir, ignore_errors=True)
 
 
 if __name__ == "__main__":

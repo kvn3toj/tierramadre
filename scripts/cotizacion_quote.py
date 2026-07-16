@@ -11,8 +11,18 @@ RESUMEN, TOTAL_PLAN…), así el constructor no distingue una fuente de la otra.
 import json
 
 
+def _unidades_texto(n):
+    """«1 unidad», no «1 unidades» — el mismo acuerdo en número que build-cotizacion-pptx.py"""
+    try:
+        una = int(n) == 1
+    except (TypeError, ValueError):
+        una = False
+    return "1 unidad" if una else "%s unidades" % n
+
+
 class Datos:
-    def __init__(self, productos, resumen, total, unidades, fecha, qr_url):
+    def __init__(self, productos, resumen, total, unidades, fecha, qr_url,
+                 cliente="", numero=""):
         self.PRODUCTOS = productos
         self.RESUMEN = resumen
         self.TOTAL_PLAN = total
@@ -21,6 +31,22 @@ class Datos:
         self.QR_URL = qr_url
         # sin línea de módulos: eso es del plan Soul, no de una cotización suelta
         self.MODULOS = None
+        self.CLIENTE = cliente
+        self.NUMERO = numero
+
+        # Copy de carátula y cierre para una cotización de cliente. No son las
+        # de Soul («Cotización Soul», «Plan de producción») ni repiten su
+        # aclaración de módulos/alternativas: aquí no existen, y afirmar que sí
+        # sería una promesa falsa sobre el alcance de lo cotizado.
+        unidades_txt = _unidades_texto(unidades)
+        self.EYEBROW_PORTADA = "Preparado para" if cliente else "Cotización"
+        self.TITULO_PORTADA = cliente or "Cotización"
+        numero_txt = ("Cotización N.° %s" % numero) if numero else "Cotización"
+        self.SUBTITULO_PORTADA = "%s · %s" % (numero_txt, unidades_txt)
+        self.TITULO_RESUMEN = "Resumen\nde la Cotización"
+        self.NOTA_RESUMEN = "%s · detalle de precios por línea." % unidades_txt
+        # sin módulos ni alternativas que aclarar: silencio, no una frase inventada
+        self.CIERRE_NOTA = None
 
 
 def carga_quote(ruta):
@@ -58,4 +84,6 @@ def carga_quote(ruta):
         unidades=sum(it.get("unidades", 1) for it in items),
         fecha=q["fecha"],
         qr_url=q.get("qrUrl", ""),
+        cliente=q.get("cliente", ""),
+        numero=q.get("quotationNumber", ""),
     )
