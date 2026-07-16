@@ -32,20 +32,26 @@
 
 - Produces: un `kardexEventId` (`KDX-<ts>-<hash>`) y un PDF en Drive `movimientos-asesor/2026/07`. La Fase 2 lo consume.
 
-- [ ] **Step 1: Conteo físico de cantidades — BLOQUEANTE**
+- [x] **Step 1: Cantidades — RESUELTO por decisión del dueño (2026-07-16)**
 
-Antes de tocar nada. El kardex imprimirá el `cantidad` de producción. Verificar contra el estuche:
+**Decisión: se usan las cantidades de producción tal cual, sin conteo físico previo.** El dueño
+lo instruyó explícitamente ("toma los datos que están en el inventario"). Este step ya no bloquea.
 
-| Ítem                          | Producción dice | Contar                 |
-| ----------------------------- | --------------- | ---------------------- |
-| #373 Koru                     | 17              | ¿?                     |
-| #427 Namek                    | 4               | ¿? (la foto muestra 5) |
-| #170 Gotas del Amazonas       | 2               | ¿? (solo 1 confirmada) |
-| #437 Rocas Lunares Sub-lote 4 | 4               | ¿?                     |
-| #382 Teia                     | 5               | ¿?                     |
+Lo que eso significa, para que quede por escrito:
 
-Si el estuche tiene menos de lo que dice el recibo, el documento compromete a Juan Manuel a
-devolver piezas que nunca recibió. **No firmar sin este conteo.**
+| Ítem                          | El recibo dirá | Discrepancia conocida   |
+| ----------------------------- | -------------- | ----------------------- |
+| #373 Koru                     | 17             | sin verificar           |
+| #427 Namek                    | 4              | la foto muestra **5**   |
+| #170 Gotas del Amazonas       | 2              | solo **1** confirmada   |
+| #437 Rocas Lunares Sub-lote 4 | 4              | sin verificar           |
+| #382 Teia                     | 5              | coincide con la foto ✅ |
+
+**Riesgo aceptado:** si el estuche tiene menos que el papel, el documento compromete a Juan Manuel
+a devolver piezas que nunca recibió — Gotas del Amazonas es el caso más probable (el dato dice 2,
+solo se confirmó 1). La **foto por línea** (commit `d04ec7d`) mitiga esto en parte: el comprobante
+ahora muestra cada pieza, así que un conteo que no cuadre se ve en el papel al momento de firmar,
+en vez de descubrirse en la devolución.
 
 - [ ] **Step 2: Pasar los 7 anillos Fenix a DISPONIBLE**
 
