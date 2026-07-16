@@ -76,20 +76,30 @@ export default function FotosintesisLotesPage() {
 
   const rows: LoteRow[] = useMemo(
     () =>
-      (lots ?? []).map((l) => ({
-        id: l._id,
-        loteId: l.loteId,
-        estado: l.estado,
-        fechaRecepcion: l.fechaRecepcion,
-        unidadesDeclaradas: l.unidadesDeclaradas,
-        formaPago: l.formaPago,
-        costoTotalCOP: l.costoTotalCOP,
-        pesoTotalQuilates: l.pesoTotalQuilates,
-        providerName: providerNameById.get(l.providerId) ?? 'Proveedor —',
-        renombreLote: l.renombreLote,
-        mina: l.mina,
-        operadorNombre: l.operadorNombre,
-      })),
+      (lots ?? [])
+        .map((l) => ({
+          id: l._id,
+          loteId: l.loteId,
+          estado: l.estado,
+          fechaRecepcion: l.fechaRecepcion,
+          unidadesDeclaradas: l.unidadesDeclaradas,
+          formaPago: l.formaPago,
+          costoTotalCOP: l.costoTotalCOP,
+          pesoTotalQuilates: l.pesoTotalQuilates,
+          providerName: providerNameById.get(l.providerId) ?? 'Proveedor —',
+          renombreLote: l.renombreLote,
+          mina: l.mina,
+          operadorNombre: l.operadorNombre,
+        }))
+        // Order by lote id (C-001 → C-076 → S-001), not by creation time.
+        // `lots.list` returns newest-first, which scrambles the C-000 sequence
+        // (C-042 → C-054 → C-069…) and makes existing lotes look missing. A
+        // numeric-aware sort presents the full ledger as a scannable run so
+        // every lote — and every gap — is obvious. `numeric` handles the
+        // zero-padded ids and any un-padded legacy ones alike.
+        .sort((a, b) =>
+          a.loteId.localeCompare(b.loteId, 'en', { numeric: true }),
+        ),
     [lots, providerNameById],
   );
 
