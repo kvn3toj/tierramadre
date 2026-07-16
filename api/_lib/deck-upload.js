@@ -16,6 +16,18 @@ export function nombreDeck(quotationNumber) {
   return `Cotizacion-${quotationNumber}`;
 }
 
+/**
+ * Escapa comillas simples antes de interpolar en un query `q` de Drive.
+ *
+ * Mismo patrón que `findCollectionFolder` en drive-helpers.js — un
+ * quotationNumber con comilla simple rompe la sintaxis del query si no se
+ * escapa. `nombreDeck` en sí no cambia (es el nombre real del archivo); esto
+ * solo se aplica al valor que va dentro del string `q`.
+ */
+export function escapaParaQuery(valor) {
+  return valor.replace(/'/g, "\\'");
+}
+
 export function construyeSubida(nombre, folderId, buffer) {
   return {
     requestBody: { name: nombre, mimeType: MIME_SLIDES, parents: [folderId] },

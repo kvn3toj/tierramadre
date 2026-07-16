@@ -7,6 +7,7 @@
  * A diferencia de /api/media-upload, este endpoint SÍ lleva puerta: lo llama el
  * bot, y crea archivos en el Shared Drive.
  */
+import type { drive_v3 } from '@googleapis/drive';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import formidable from 'formidable';
 import { readFile } from 'fs/promises';
@@ -16,6 +17,7 @@ import { getAsesorCotizacionesFolder } from './_lib/drive-helpers.js';
 import {
   construyeSubida,
   eligeOperacion,
+  escapaParaQuery,
   nombreDeck,
 } from './_lib/deck-upload.js';
 
@@ -25,12 +27,20 @@ export default withApiHandler(
   async (
     req: VercelRequest,
     res: VercelResponse,
-    { oauthDrive, sharedDriveId }: any,
+    ctx: Record<string, unknown>,
   ) => {
     if (
       !bearerMatches(req.headers['authorization'], process.env.ANIMA_BOT_SECRET)
     ) {
       return sendError(res, 401, 'No autorizado');
+    }
+
+    const { oauthDrive, sharedDriveId } = ctx as {
+      oauthDrive: drive_v3.Drive | null;
+      sharedDriveId: string;
+    };
+    if (!oauthDrive) {
+      return sendError(res, 500, 'OAuth Drive no está configurado');
     }
 
     const form = formidable({ maxFileSize: 25 * 1024 * 1024 });
@@ -52,7 +62,7 @@ export default withApiHandler(
 
     // idempotente: un segundo «Sí» actualiza, no llena la carpeta de duplicados
     const previo = await oauthDrive.files.list({
-      q: `name = '${nombre}' and '${folderId}' in parents and trashed = false`,
+      q: `name = '${escapaParaQuery(nombre)}' and '${folderId}' in parents and trashed = false`,
       fields: 'files(id)',
       supportsAllDrives: true,
       includeItemsFromAllDrives: true,

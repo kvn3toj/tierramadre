@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   construyeSubida,
   eligeOperacion,
+  escapaParaQuery,
   nombreDeck,
 } from '../api/_lib/deck-upload.js';
 
@@ -25,6 +26,27 @@ describe('construyeSubida', () => {
     );
     expect(req.requestBody.parents).toEqual(['folder123']);
     expect(req.supportsAllDrives).toBe(true);
+  });
+});
+
+describe('escapaParaQuery', () => {
+  it('escapa comillas simples para no romper la sintaxis del query q de Drive', () => {
+    const nombre = nombreDeck("TM-2026-004'; DROP");
+
+    // sin escapar, esta comilla cerraría el literal `name = '...'` antes de tiempo
+    expect(nombre).toContain("'");
+    expect(escapaParaQuery(nombre)).toBe("Cotizacion-TM-2026-004\\'; DROP");
+
+    const query = `name = '${escapaParaQuery(nombre)}' and 'folder123' in parents and trashed = false`;
+    expect(query).toBe(
+      "name = 'Cotizacion-TM-2026-004\\'; DROP' and 'folder123' in parents and trashed = false",
+    );
+  });
+
+  it('no toca strings sin comillas', () => {
+    expect(escapaParaQuery(nombreDeck('TM-2026-0043'))).toBe(
+      'Cotizacion-TM-2026-0043',
+    );
   });
 });
 
