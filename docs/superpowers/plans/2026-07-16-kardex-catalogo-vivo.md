@@ -165,8 +165,9 @@ describe('comprobanteFilename', () => {
   });
 
   it('strips path separators so the name can never escape its folder', () => {
+    // 7 underscores — `/ . . / . . /` is 7 chars, each replaced individually.
     expect(comprobanteFilename('KDX-1/../../etc')).toBe(
-      'kardex-KDX-1______etc.pdf',
+      'kardex-KDX-1_______etc.pdf',
     );
   });
 });
@@ -342,8 +343,13 @@ async function handleGenerateComprobante() {
 
 - [ ] **Step 8: Verificar typecheck y build**
 
-Run: `npx tsc --noEmit -p tsconfig.json 2>&1 | head -20`
-Expected: sin errores en `convex/asesorMovements.ts`, `convex/schema.ts`, `MovimientosKardexPage.tsx`
+Run: `npm run lint && npx tsc --noEmit -p convex/tsconfig.json`
+Expected: sin errores
+
+> ⚠️ El `tsconfig.json` raíz tiene `include: ["src"]` — **no compila `convex/` ni `api/`**.
+> `npm run lint` corre `tsc --noEmit && tsc --noEmit -p api/tsconfig.json`; `convex/` necesita
+> además su propio proyecto. Un `npx tsc --noEmit -p tsconfig.json` a secas pasa en verde sin
+> haber mirado nada de lo que toca este task.
 
 Run: `npm run build`
 Expected: build OK
@@ -528,8 +534,12 @@ export default withApiHandler(
 
 - [ ] **Step 6: Verificar typecheck**
 
-Run: `npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "serve-drive-doc|driveDoc" | head`
-Expected: sin salida (sin errores)
+Run: `npx tsc --noEmit -p api/tsconfig.json`
+Expected: sin errores
+
+> ⚠️ **`api/` tiene su propio tsconfig.** El raíz tiene `include: ["src"]` y no compila `api/`
+> en absoluto — verificar con él pasaría en verde sin mirar el endpoint. `api/tsconfig.json`
+> (`include: ["./**/*.ts"]`) es el que cuenta; `npm run lint` corre los dos.
 
 Run: `npx vitest run tests/driveDoc.test.ts`
 Expected: PASS (5 tests)
