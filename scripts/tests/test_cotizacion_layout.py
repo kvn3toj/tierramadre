@@ -48,3 +48,13 @@ def test_la_banda_centrada_a_todo_lo_ancho_es_intencional():
     prs = _prs()
     _lamina(prs, 0, 500, 1080, 30, "FOTOGRAFÍA EN PRODUCCIÓN")
     assert verifica(prs) == []
+
+
+def test_la_portada_no_lleva_pie_y_puede_bajar_hasta_el_borde():
+    # la portada no tiene franja de pie: sangra hasta el borde inferior a
+    # propósito, así que una caja que "cruzaría" el pie en cualquier otra
+    # lámina aquí debe ser ignorada por diseño, no reportada como falla
+    from cotizacion_layout import verifica
+    prs = _prs()
+    _lamina(prs, 88, 1700, 500, 60, "portada sangrada")   # 1700+60 = 1760 > 1737
+    assert verifica(prs) == []
