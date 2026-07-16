@@ -11,6 +11,13 @@
       content="Plan de producción Soul · 240 unidades"
     />
     <meta name="theme-color" content="#17110d" />
+
+    <!-- Los 8 embeds pegan al mismo origen. Abrir la conexión antes de que el
+         primero la pida le ahorra DNS+TLS a todos. -->
+    <link rel="preconnect" href="https://docs.google.com" crossorigin />
+    <link rel="dns-prefetch" href="https://docs.google.com" />
+    <link rel="preconnect" href="https://ssl.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://lh3.googleusercontent.com" crossorigin />
     <style>
       :root {
         --oro: #c9a05c;
@@ -21,7 +28,7 @@
           'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
           sans-serif;
         --serif: 'Cormorant', 'Iowan Old Style', Georgia, serif;
-        --ancho: min(92vw, 520px, calc((100dvh - 132px) * 0.5625));
+        --ancho: min(96vw, 560px);
       }
       * {
         box-sizing: border-box;
@@ -223,19 +230,13 @@
       /* ---- iPad ---- */
       @media (min-width: 640px) {
         :root {
-          --ancho: min(86vw, 460px, calc((100dvh - 150px) * 0.5625));
-        }
-      }
-      /* iPad apaisado / pantallas bajas: manda el alto */
-      @media (min-width: 640px) and (max-height: 820px) {
-        :root {
-          --ancho: min(86vw, 460px, calc((100dvh - 118px) * 0.5625));
+          --ancho: min(88vw, 600px);
         }
       }
       /* ---- escritorio ---- */
       @media (min-width: 1024px) {
         :root {
-          --ancho: min(520px, calc((100dvh - 160px) * 0.5625));
+          --ancho: 640px;
         }
       }
 
@@ -681,7 +682,9 @@
           // loading=lazy nativo: el navegador difiere las de abajo solo.
           // Se probó un IntersectionObserver a mano y no dispara si la pestaña
           // no está pintando -> quedaban 8 tarjetas en blanco. Esto no falla así.
-          f.setAttribute('loading', 'lazy');
+          // la primera se pide ya; el resto espera al scroll
+          f.setAttribute('loading', n === 1 ? 'eager' : 'lazy');
+          if (n === 1) f.setAttribute('fetchpriority', 'high');
           f.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
           f.src =
             'https://docs.google.com/presentation/d/' +
