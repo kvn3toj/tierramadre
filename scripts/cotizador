@@ -1,0 +1,5 @@
+#!/bin/zsh
+# El cotizador con su venv, para que el bot no tenga que conocer rutas de Python.
+# TM_SCRATCH trae opt/ (logo, pergamino) que el render necesita.
+DIR="${0:a:h}"
+exec "$DIR/venv/bin/python" "$DIR/build-cotizacion-pptx.py" "$@"
