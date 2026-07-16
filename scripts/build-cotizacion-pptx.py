@@ -78,6 +78,12 @@ LINEA_CORMORANT = 1.15
 # medía ~39 px y el de abajo 6; los 8 que se le quitan pagan el aire de la ficha
 AIRE_EYEBROW = 32
 
+# Filas del resumen. Soul tiene 5 y medían 100; el tope las deja intactas y el
+# piso es lo que impide publicar una lámina con las filas encimadas.
+ALTO_FILA_MIN = 72       # nombre 34 pt (~39 px a 1,15 em) + subtítulo 13 pt + aire
+ALTO_FILA_MAX = 100      # el valor de Soul: no estirar una cotización de 2 ítems
+ALTO_CIERRE_RESUMEN = 242   # filete + «Precio Total del Plan» + aclaración
+
 # Retícula única de precios: las dos columnas viven SIEMPRE en la misma x,
 # en todas las láminas, para que no salten al pasar de una a otra.
 COL_U = W - MARGEN - 430          # precio por unidad
@@ -222,6 +228,22 @@ def compone_foto(p, destino):
 
     lienzo.save(destino, "JPEG", quality=92, optimize=True, progressive=True)
     return destino
+
+
+def alto_fila_resumen(n, banda):
+    """
+    Alto de fila del resumen para n ítems, o None si no cabe.
+
+    El plan Soul trae 5 filas de 100. Con n variable la lámina se desbordaba por
+    el pie, así que el alto sale de la banda disponible — pero con tope en 100
+    para que Soul no se mueva, y con piso para no encimar el texto.
+    """
+    if n <= 0:
+        return None
+    alto = banda / float(n)
+    if alto < ALTO_FILA_MIN:
+        return None
+    return min(alto, ALTO_FILA_MAX)
 
 
 def alto_titulo(nombre, ancho=None, tam=62):
@@ -517,6 +539,11 @@ def lamina_resumen(prs, qr, d):
     y += 26
     rect(s, MARGEN, y, W - MARGEN * 2, 1, FILETE)
     y += 22
+    banda = PIE_Y - y - ALTO_CIERRE_RESUMEN
+    alto_fila = alto_fila_resumen(len(d.RESUMEN), banda)
+    if alto_fila is None:
+        raise SystemExit("El resumen no cabe: %d ítems no entran sobre el pie. "
+                         "Divide la cotización." % len(d.RESUMEN))
     for n, sub, u, pu, ptot in d.RESUMEN:
         texto(s, MARGEN + 22, y, 500, 36, n, fuente=SERIF, tam=34, color=VINO, negrita=True)
         # +46: a +40 los descendentes del nombre se comían el subtítulo
@@ -526,7 +553,7 @@ def lamina_resumen(prs, qr, d):
               tam=19, color=VINO_SUAVE, negrita=True, alineado=PP_ALIGN.RIGHT)
         texto(s, COL_T, y + 8, 210, 24, ptot,
               tam=19, color=VINO, negrita=True, alineado=PP_ALIGN.RIGHT)
-        y += 100
+        y += alto_fila
         rect(s, MARGEN, y - 18, W - MARGEN * 2, 1, FILETE_FINO)
     y += 26
     rect(s, MARGEN, y, W - MARGEN * 2, 2, VINO)
