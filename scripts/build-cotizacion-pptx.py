@@ -557,7 +557,7 @@ def lamina_portada(prs, qr, d):
     texto(s, MARGEN, 1590, 700, 30, d.SUBTITULO_PORTADA,
           tam=20, color=RGBColor(0xCF, 0xC3, 0xB2))
     rect(s, MARGEN, 1642, W - MARGEN * 2, 1, RGBColor(0x7A, 0x63, 0x40))
-    texto(s, MARGEN, 1664, 500, 20, "Precio Total del Plan",
+    texto(s, MARGEN, 1664, 500, 20, d.ETIQUETA_TOTAL,
           tam=13, color=RGBColor(0xDC, 0xB8, 0x72), negrita=True, track=.22, mayus=True)
     texto(s, MARGEN, 1692, 700, 90, d.TOTAL_PLAN, tam=64, color=CREMA, negrita=True)
     texto(s, MARGEN, 1800, 700, 24,
@@ -610,7 +610,7 @@ def lamina_resumen(prs, qr, d):
     y += 26
     rect(s, MARGEN, y, W - MARGEN * 2, 2, VINO)
     y += 22
-    texto(s, MARGEN + 22, y, 500, 20, "Precio Total del Plan", tam=14, color=TENUE,
+    texto(s, MARGEN + 22, y, 500, 20, d.ETIQUETA_TOTAL, tam=14, color=TENUE,
           negrita=True, track=.22, mayus=True)
     texto(s, MARGEN + 22, y - 14, W - MARGEN * 2 - 22, 120, d.TOTAL_PLAN,
           tam=76, color=VINO, negrita=True, alineado=PP_ALIGN.RIGHT)

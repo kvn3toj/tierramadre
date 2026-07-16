@@ -47,6 +47,9 @@ class Datos:
         self.NOTA_RESUMEN = "%s · detalle de precios por línea." % unidades_txt
         # sin módulos ni alternativas que aclarar: silencio, no una frase inventada
         self.CIERRE_NOTA = None
+        # una cotización de cliente no tiene "plan": el mismo registro que
+        # "Resumen de la Cotización", junto al número más grande del documento
+        self.ETIQUETA_TOTAL = "Precio Total de la Cotización"
 
 
 def carga_quote(ruta):

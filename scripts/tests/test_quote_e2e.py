@@ -78,6 +78,7 @@ def test_cotizacion_de_cliente_no_es_el_plan_soul(scratch, tmp_path):
     assert "Incluye la base y los módulos" not in texto_completo  # sin módulos, sin promesa falsa
     assert "1 unidades" not in texto_completo               # concordancia: singular
     assert "1 unidad" in texto_completo
+    assert "Plan" not in texto_completo                    # una cotización de cliente no tiene "plan"
 
     from cotizacion_layout import verifica
     assert verifica(prs) == []                              # nada cruza el pie ni el margen

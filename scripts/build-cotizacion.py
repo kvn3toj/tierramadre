@@ -37,6 +37,9 @@ SUBTITULO_PORTADA = "Plan de producción · %s unidades" % UNIDADES_PLAN
 TITULO_RESUMEN = "Resumen\ndel Plan"
 NOTA_RESUMEN = ("%s unidades · una opción por línea. Las alternativas de cada "
                 "pieza no se suman." % UNIDADES_PLAN)
+# Etiqueta junto al número más grande del documento (carátula y cierre): sólo
+# Soul tiene un "plan" de producción — una cotización de cliente no.
+ETIQUETA_TOTAL = "Precio Total del Plan"
 # Verdadero sólo para el plan Soul: es el único que trae módulos por chakra.
 # Una cotización de cliente sin módulos no puede repetir esta frase — sería una
 # afirmación falsa sobre el alcance de lo cotizado.
