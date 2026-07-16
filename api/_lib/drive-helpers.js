@@ -4,7 +4,13 @@
  * Shared utilities for interacting with Google Drive folders and files.
  */
 
-import { DRIVE_FOLDERS, IMAGE_MIME_TYPES, VIDEO_MIME_TYPES, ALL_MEDIA_TYPES, MAX_PAGE_SIZE } from './constants.js';
+import {
+  DRIVE_FOLDERS,
+  IMAGE_MIME_TYPES,
+  VIDEO_MIME_TYPES,
+  ALL_MEDIA_TYPES,
+  MAX_PAGE_SIZE,
+} from './constants.js';
 
 /**
  * Module-level TTL cache for folder lookups.
@@ -58,7 +64,11 @@ export async function getCollectionsFolderId(drive, sharedDriveId) {
  * @param {string} folderName - Collection folder name (e.g., 'ceo-coomunity')
  * @returns {Promise<string|null>} Collection folder ID or null
  */
-export async function findCollectionFolder(drive, collectionsFolderId, folderName) {
+export async function findCollectionFolder(
+  drive,
+  collectionsFolderId,
+  folderName,
+) {
   const escapedName = folderName.replace(/'/g, "\\'");
   const response = await drive.files.list({
     q: `name='${escapedName}' and mimeType='application/vnd.google-apps.folder' and '${collectionsFolderId}' in parents and trashed=false`,
@@ -100,7 +110,11 @@ export async function getProductsFolderId(drive, sharedDriveId) {
  * @param {string} orderBy - Sort order (default: 'name')
  * @returns {Promise<Array>} Array of folder objects {id, name, createdTime}
  */
-export async function listProductFolders(drive, productsFolderId, orderBy = 'name') {
+export async function listProductFolders(
+  drive,
+  productsFolderId,
+  orderBy = 'name',
+) {
   const cacheKey = `productFolders:${productsFolderId}:${orderBy}`;
   const cached = cacheGet(cacheKey);
   if (cached) return cached;
@@ -142,8 +156,8 @@ export async function getProductFolderById(drive, parentFolderId, itemNumber) {
     includeItemsFromAllDrives: true,
   });
 
-  const exactMatch = response.data.files?.find(f =>
-    f.name.startsWith(`${itemNumber} - `)
+  const exactMatch = response.data.files?.find((f) =>
+    f.name.startsWith(`${itemNumber} - `),
   );
 
   return exactMatch?.id || null;
@@ -175,7 +189,7 @@ export function extractProductName(folderName) {
  * @returns {string} Query string for mimeType filter
  */
 export function buildMimeTypeQuery(mimeTypes) {
-  return mimeTypes.map(t => `mimeType='${t}'`).join(' or ');
+  return mimeTypes.map((t) => `mimeType='${t}'`).join(' or ');
 }
 
 /**
@@ -195,7 +209,10 @@ export function buildMimeTypeQuery(mimeTypes) {
  */
 export async function getFirstImageOrVideoThumbnail(drive, folderId) {
   const imageMimes = IMAGE_MIME_TYPES.slice(0, 6); // Main browser-supported image types
-  const mediaMimeQuery = buildMimeTypeQuery([...imageMimes, ...VIDEO_MIME_TYPES]);
+  const mediaMimeQuery = buildMimeTypeQuery([
+    ...imageMimes,
+    ...VIDEO_MIME_TYPES,
+  ]);
 
   const response = await drive.files.list({
     q: `'${folderId}' in parents and (${mediaMimeQuery}) and trashed=false`,
@@ -210,10 +227,10 @@ export async function getFirstImageOrVideoThumbnail(drive, folderId) {
   if (files.length === 0) return null;
 
   const imageMimeSet = new Set(imageMimes);
-  const firstImage = files.find(f => imageMimeSet.has(f.mimeType));
+  const firstImage = files.find((f) => imageMimeSet.has(f.mimeType));
   if (firstImage) return { file: firstImage, isVideo: false };
 
-  const firstVideo = files.find(f => !imageMimeSet.has(f.mimeType));
+  const firstVideo = files.find((f) => !imageMimeSet.has(f.mimeType));
   return firstVideo ? { file: firstVideo, isVideo: true } : null;
 }
 
@@ -249,7 +266,8 @@ export async function listMediaFiles(drive, folderId) {
 
   const response = await drive.files.list({
     q: `'${folderId}' in parents and (${mimeTypeQuery}) and trashed=false`,
-    fields: 'files(id, name, mimeType, size, createdTime, thumbnailLink, webContentLink)',
+    fields:
+      'files(id, name, mimeType, size, createdTime, thumbnailLink, webContentLink)',
     orderBy: 'name',
     supportsAllDrives: true,
     includeItemsFromAllDrives: true,
@@ -286,6 +304,104 @@ export function getProxyUrl(fileId, isVideo = false, size = 'original') {
 }
 
 /**
+ * Devuelve el id de cotizaciones/asesores/{email}/ en el Shared Drive, creando
+ * lo que falte.
+ *
+ * DEUDA CONOCIDA: cotizacion-save.ts tiene su propia copia privada de esta
+ * lógica. No se extrajo porque ese archivo carga trabajo sin terminar del dueño
+ * (la ficha pública /c/:quotationNumber) y comprometerlo lo dejaría a un push de
+ * producción. Cuando ese trabajo aterrice, borrar la copia privada y dejar esta.
+ *
+ * @param {import('@googleapis/drive').drive_v3.Drive} drive
+ * @param {string} sharedDriveId
+ * @param {string} email
+ * @returns {Promise<string>} folderId
+ */
+export async function getAsesorCotizacionesFolder(drive, sharedDriveId, email) {
+  const sanitizedEmail = email
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9@._-]/g, '_');
+
+  // Find or create cotizaciones folder
+  let cotizacionesFolderId;
+  const cotizacionesQuery = await drive.files.list({
+    q: `name = 'cotizaciones' and '${sharedDriveId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+    fields: 'files(id, name)',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
+  });
+
+  const cotFiles = cotizacionesQuery.data.files ?? [];
+  if (cotFiles.length > 0 && cotFiles[0].id) {
+    cotizacionesFolderId = cotFiles[0].id;
+  } else {
+    const folder = await drive.files.create({
+      requestBody: {
+        name: 'cotizaciones',
+        mimeType: 'application/vnd.google-apps.folder',
+        parents: [sharedDriveId],
+      },
+      fields: 'id',
+      supportsAllDrives: true,
+    });
+    cotizacionesFolderId = folder.data.id;
+  }
+
+  // Find or create asesores subfolder
+  let asesoresFolderId;
+  const asesoresQuery = await drive.files.list({
+    q: `name = 'asesores' and '${cotizacionesFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+    fields: 'files(id, name)',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
+  });
+
+  const asesFiles = asesoresQuery.data.files ?? [];
+  if (asesFiles.length > 0 && asesFiles[0].id) {
+    asesoresFolderId = asesFiles[0].id;
+  } else {
+    const folder = await drive.files.create({
+      requestBody: {
+        name: 'asesores',
+        mimeType: 'application/vnd.google-apps.folder',
+        parents: [cotizacionesFolderId],
+      },
+      fields: 'id',
+      supportsAllDrives: true,
+    });
+    asesoresFolderId = folder.data.id;
+  }
+
+  // Find or create asesor's personal folder
+  let asesorFolderId;
+  const asesorQuery = await drive.files.list({
+    q: `name = '${sanitizedEmail}' and '${asesoresFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+    fields: 'files(id, name)',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
+  });
+
+  const asesorFiles = asesorQuery.data.files ?? [];
+  if (asesorFiles.length > 0 && asesorFiles[0].id) {
+    asesorFolderId = asesorFiles[0].id;
+  } else {
+    const folder = await drive.files.create({
+      requestBody: {
+        name: sanitizedEmail,
+        mimeType: 'application/vnd.google-apps.folder',
+        parents: [asesoresFolderId],
+      },
+      fields: 'id',
+      supportsAllDrives: true,
+    });
+    asesorFolderId = folder.data.id;
+  }
+
+  return asesorFolderId;
+}
+
+/**
  * Find or create a folder within a parent folder.
  *
  * For product folders (when itemNumber is provided), searches by item number
@@ -299,7 +415,13 @@ export function getProxyUrl(fileId, isVideo = false, size = 'original') {
  * @param {number} [itemNumber] - Optional item number for product folder prefix search
  * @returns {Promise<string>} Folder ID
  */
-export async function getOrCreateFolder(drive, parentFolderId, folderName, sharedDriveId = null, itemNumber = null) {
+export async function getOrCreateFolder(
+  drive,
+  parentFolderId,
+  folderName,
+  sharedDriveId = null,
+  itemNumber = null,
+) {
   try {
     let searchQuery;
 
@@ -326,8 +448,8 @@ export async function getOrCreateFolder(drive, parentFolderId, folderName, share
       // For product folders, find exact prefix match (e.g., "222 - " not "2222 - ")
       // The `contains` query can match substrings (e.g., "22 -" matches "122 - ..."),
       // so we filter client-side with startsWith for exact item number prefix.
-      const exactMatch = searchResponse.data.files.find(f =>
-        f.name.startsWith(`${itemNumber} - `)
+      const exactMatch = searchResponse.data.files.find((f) =>
+        f.name.startsWith(`${itemNumber} - `),
       );
       if (exactMatch) {
         return exactMatch.id;
@@ -336,7 +458,10 @@ export async function getOrCreateFolder(drive, parentFolderId, folderName, share
       return searchResponse.data.files[0].id;
     }
   } catch (searchError) {
-    console.error(`[Drive] Error searching for folder "${folderName}":`, searchError.message);
+    console.error(
+      `[Drive] Error searching for folder "${folderName}":`,
+      searchError.message,
+    );
     // Continue to try creating the folder
   }
 
@@ -366,9 +491,15 @@ export async function getOrCreateFolder(drive, parentFolderId, folderName, share
 
     return folder.data.id;
   } catch (createError) {
-    console.error(`[Drive] Error creating folder "${folderName}" in parent ${parentFolderId}:`, createError.message);
+    console.error(
+      `[Drive] Error creating folder "${folderName}" in parent ${parentFolderId}:`,
+      createError.message,
+    );
     if (createError.response?.data) {
-      console.error('[Drive] API error details:', JSON.stringify(createError.response.data, null, 2));
+      console.error(
+        '[Drive] API error details:',
+        JSON.stringify(createError.response.data, null, 2),
+      );
     }
     throw createError;
   }
