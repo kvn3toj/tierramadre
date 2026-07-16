@@ -604,6 +604,13 @@ def main(argv=None):
             lamina_modulos(prs, d.MODULOS, qr)
     lamina_resumen(prs, qr, d)
 
+    from cotizacion_layout import verifica
+    problemas = verifica(prs)
+    if problemas:
+        # antes de subir, no después: una lámina de cliente no sale con el texto
+        # metido bajo el pie
+        raise SystemExit("La lámina no cuadra:\n  " + "\n  ".join(problemas))
+
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     prs.save(args.out)
     print("→ %s  (%.2f MB, %d láminas, %dx%d px)"
