@@ -1,0 +1,2011 @@
+{
+ "w": 1080.0,
+ "h": 1920.0,
+ "laminas": [
+  [
+   {
+    "x": 0.0,
+    "y": 0.0,
+    "w": 1080.0,
+    "h": 1920.0,
+    "img": "4fe78c5a4cbc96bd"
+   },
+   {
+    "x": 88.0,
+    "y": 1120.0,
+    "w": 340.0,
+    "h": 88.4,
+    "img": "b86d5c4864274fa7"
+   },
+   {
+    "x": 88.0,
+    "y": 1290.0,
+    "w": 700.0,
+    "h": 24.0,
+    "texto": "SUBASTAS CON PROPÓSITO",
+    "fuente": "Montserrat",
+    "tam": 11.25
+   },
+   {
+    "x": 88.0,
+    "y": 1330.0,
+    "w": 904.0,
+    "h": 260.0,
+    "texto": "Cotización\nSoul",
+    "fuente": "Cormorant",
+    "tam": 88.5
+   },
+   {
+    "x": 88.0,
+    "y": 1590.0,
+    "w": 700.0,
+    "h": 30.0,
+    "texto": "Plan de producción · 240 unidades",
+    "fuente": "Montserrat",
+    "tam": 15.0
+   },
+   {
+    "x": 88.0,
+    "y": 1642.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 88.0,
+    "y": 1664.0,
+    "w": 500.0,
+    "h": 20.0,
+    "texto": "PRECIO TOTAL DEL PLAN",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 88.0,
+    "y": 1692.0,
+    "w": 700.0,
+    "h": 90.0,
+    "texto": "$650’778.130",
+    "fuente": "Montserrat",
+    "tam": 48.0
+   },
+   {
+    "x": 88.0,
+    "y": 1800.0,
+    "w": 700.0,
+    "h": 24.0,
+    "texto": "Valores en pesos colombianos (COP) · 16 de julio de 2026",
+    "fuente": "Montserrat",
+    "tam": 10.5
+   },
+   {
+    "x": 876.0,
+    "y": 1690.0,
+    "w": 116.0,
+    "h": 116.0,
+    "img": "f1a2cf95e3542871"
+   },
+   {
+    "x": 0.0,
+    "y": 1900.0,
+    "w": 669.6,
+    "h": 20.0
+   },
+   {
+    "x": 669.6,
+    "y": 1900.0,
+    "w": 410.4,
+    "h": 20.0
+   }
+  ],
+  [
+   {
+    "x": 0.0,
+    "y": 0.0,
+    "w": 1080.0,
+    "h": 1920.0
+   },
+   {
+    "x": 0.0,
+    "y": 0.0,
+    "w": 1080.0,
+    "h": 1060.0,
+    "img": "6d887b166a8a625c"
+   },
+   {
+    "x": 0.0,
+    "y": 1058.0,
+    "w": 1080.0,
+    "h": 2.0
+   },
+   {
+    "x": 88.0,
+    "y": 1108.0,
+    "w": 700.0,
+    "h": 24.0,
+    "texto": "LÍNEA 01 · 200 UNIDADES",
+    "fuente": "Montserrat",
+    "tam": 11.25
+   },
+   {
+    "x": 88.0,
+    "y": 1140.0,
+    "w": 904.0,
+    "h": 94.0,
+    "texto": "Brazalete Modular 5 Chakras",
+    "fuente": "Cormorant",
+    "tam": 46.5
+   },
+   {
+    "x": 88.0,
+    "y": 1244.0,
+    "w": 120.0,
+    "h": 20.0,
+    "texto": "GEMAS",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 218.0,
+    "y": 1241.0,
+    "w": 774.0,
+    "h": 46.0,
+    "texto": "Granate 2 mm · chakra Raíz, en contenedor con baño en oro",
+    "fuente": "Montserrat",
+    "tam": 12.75
+   },
+   {
+    "x": 88.0,
+    "y": 1298.0,
+    "w": 120.0,
+    "h": 20.0,
+    "texto": "JOYA",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 218.0,
+    "y": 1295.0,
+    "w": 774.0,
+    "h": 46.0,
+    "texto": "Broche en baño de oro con grabado SOUL · cuero natural café",
+    "fuente": "Montserrat",
+    "tam": 12.75
+   },
+   {
+    "x": 562.0,
+    "y": 1368.0,
+    "w": 200.0,
+    "h": 18.0,
+    "texto": "PRECIO POR UNIDAD",
+    "fuente": "Montserrat",
+    "tam": 8.25
+   },
+   {
+    "x": 782.0,
+    "y": 1368.0,
+    "w": 210.0,
+    "h": 18.0,
+    "texto": "PRECIO TOTAL",
+    "fuente": "Montserrat",
+    "tam": 8.25
+   },
+   {
+    "x": 88.0,
+    "y": 1394.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 88.0,
+    "y": 1406.0,
+    "w": 8.0,
+    "h": 78.0
+   },
+   {
+    "x": 110.0,
+    "y": 1408.0,
+    "w": 300.0,
+    "h": 18.0,
+    "texto": "RECOMENDADA",
+    "fuente": "Montserrat",
+    "tam": 9.0
+   },
+   {
+    "x": 110.0,
+    "y": 1434.0,
+    "w": 470.0,
+    "h": 40.0,
+    "texto": "Acabado Baño en Oro",
+    "fuente": "Cormorant",
+    "tam": 25.5
+   },
+   {
+    "x": 562.0,
+    "y": 1438.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$1’052.007",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 1438.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$210’401.480",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 1488.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 1518.0,
+    "w": 470.0,
+    "h": 40.0,
+    "texto": "Acabado + 3 Baños en Oro",
+    "fuente": "Cormorant",
+    "tam": 25.5
+   },
+   {
+    "x": 562.0,
+    "y": 1522.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$1’148.593",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 1522.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$229’718.554",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 1572.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 1602.0,
+    "w": 470.0,
+    "h": 40.0,
+    "texto": "Acabado Enchape en Oro",
+    "fuente": "Cormorant",
+    "tam": 25.5
+   },
+   {
+    "x": 562.0,
+    "y": 1606.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$1’245.178",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 1606.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$249’035.627",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 1656.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 1676.0,
+    "w": 882.0,
+    "h": 48.0,
+    "texto": "El baño de la base y el grabado SOUL ya van incluidos, sin sumar costo de capas.",
+    "fuente": "Montserrat",
+    "tam": 11.25
+   },
+   {
+    "x": 0.0,
+    "y": 1737.0,
+    "w": 1080.0,
+    "h": 1.0
+   },
+   {
+    "x": 88.0,
+    "y": 1782.0,
+    "w": 232.0,
+    "h": 60.32,
+    "img": "52015d66b0b11d41"
+   },
+   {
+    "x": 470.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 69.17,
+    "img": "5b2e753c0cfdeb7d"
+   },
+   {
+    "x": 546.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 74.28,
+    "img": "67c238dc3e9dc915"
+   },
+   {
+    "x": 622.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 70.09,
+    "img": "69860240567ae7b9"
+   },
+   {
+    "x": 888.0,
+    "y": 1764.0,
+    "w": 104.0,
+    "h": 104.0,
+    "img": "f1a2cf95e3542871"
+   },
+   {
+    "x": 0.0,
+    "y": 1900.0,
+    "w": 669.6,
+    "h": 20.0
+   },
+   {
+    "x": 669.6,
+    "y": 1900.0,
+    "w": 410.4,
+    "h": 20.0
+   }
+  ],
+  [
+   {
+    "x": 0.0,
+    "y": 0.0,
+    "w": 1080.0,
+    "h": 1920.0
+   },
+   {
+    "x": 0.0,
+    "y": 0.0,
+    "w": 1080.0,
+    "h": 1060.0,
+    "img": "7ca9eaab80bc5ff7"
+   },
+   {
+    "x": 0.0,
+    "y": 1058.0,
+    "w": 1080.0,
+    "h": 2.0
+   },
+   {
+    "x": 88.0,
+    "y": 1108.0,
+    "w": 700.0,
+    "h": 24.0,
+    "texto": "LÍNEA 02 · COMPOSICIÓN",
+    "fuente": "Montserrat",
+    "tam": 11.25
+   },
+   {
+    "x": 88.0,
+    "y": 1140.0,
+    "w": 904.0,
+    "h": 94.0,
+    "texto": "Módulos para Brazalete Chakra",
+    "fuente": "Cormorant",
+    "tam": 46.5
+   },
+   {
+    "x": 88.0,
+    "y": 1244.0,
+    "w": 904.0,
+    "h": 30.0,
+    "texto": "Cada módulo se suma a la base del brazalete.",
+    "fuente": "Montserrat",
+    "tam": 12.75
+   },
+   {
+    "x": 562.0,
+    "y": 1290.0,
+    "w": 200.0,
+    "h": 18.0,
+    "texto": "PRECIO POR UNIDAD",
+    "fuente": "Montserrat",
+    "tam": 8.25
+   },
+   {
+    "x": 782.0,
+    "y": 1290.0,
+    "w": 210.0,
+    "h": 18.0,
+    "texto": "PRECIO TOTAL",
+    "fuente": "Montserrat",
+    "tam": 8.25
+   },
+   {
+    "x": 88.0,
+    "y": 1316.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 1334.0,
+    "w": 420.0,
+    "h": 34.0,
+    "texto": "Esmeralda 2 mm  × 40",
+    "fuente": "Cormorant",
+    "tam": 24.0
+   },
+   {
+    "x": 110.0,
+    "y": 1374.0,
+    "w": 420.0,
+    "h": 20.0,
+    "texto": "Corazón · verde",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 562.0,
+    "y": 1342.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$365.854",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 1342.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$14’634.146",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 1392.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 1402.0,
+    "w": 420.0,
+    "h": 34.0,
+    "texto": "Cornalina 2 mm  × 120",
+    "fuente": "Cormorant",
+    "tam": 24.0
+   },
+   {
+    "x": 110.0,
+    "y": 1442.0,
+    "w": 420.0,
+    "h": 20.0,
+    "texto": "Sacro · naranja",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 562.0,
+    "y": 1410.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$92.683",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 1410.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$11’121.951",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 1460.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 1470.0,
+    "w": 420.0,
+    "h": 34.0,
+    "texto": "Citrino 2 mm  × 60",
+    "fuente": "Cormorant",
+    "tam": 24.0
+   },
+   {
+    "x": 110.0,
+    "y": 1510.0,
+    "w": 420.0,
+    "h": 20.0,
+    "texto": "Plexo · amarillo",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 562.0,
+    "y": 1478.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$226.829",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 1478.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$13’609.756",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 1528.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 1538.0,
+    "w": 420.0,
+    "h": 34.0,
+    "texto": "Zafiro 2 mm  × 20",
+    "fuente": "Cormorant",
+    "tam": 24.0
+   },
+   {
+    "x": 110.0,
+    "y": 1578.0,
+    "w": 420.0,
+    "h": 20.0,
+    "texto": "Garganta · azul",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 562.0,
+    "y": 1546.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$507.317",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 1546.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$10’146.341",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 1596.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 88.0,
+    "y": 1620.0,
+    "w": 904.0,
+    "h": 2.0
+   },
+   {
+    "x": 110.0,
+    "y": 1646.0,
+    "w": 460.0,
+    "h": 20.0,
+    "texto": "PRECIO TOTAL · MÓDULOS",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 562.0,
+    "y": 1638.0,
+    "w": 430.0,
+    "h": 56.0,
+    "texto": "$49’512.195",
+    "fuente": "Montserrat",
+    "tam": 30.0
+   },
+   {
+    "x": 110.0,
+    "y": 1700.0,
+    "w": 882.0,
+    "h": 24.0,
+    "texto": "Ya incluido en el precio de la Línea 01. No se suma aparte.",
+    "fuente": "Montserrat",
+    "tam": 11.25
+   },
+   {
+    "x": 0.0,
+    "y": 1737.0,
+    "w": 1080.0,
+    "h": 1.0
+   },
+   {
+    "x": 88.0,
+    "y": 1782.0,
+    "w": 232.0,
+    "h": 60.32,
+    "img": "52015d66b0b11d41"
+   },
+   {
+    "x": 470.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 69.17,
+    "img": "5b2e753c0cfdeb7d"
+   },
+   {
+    "x": 546.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 74.28,
+    "img": "67c238dc3e9dc915"
+   },
+   {
+    "x": 622.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 70.09,
+    "img": "69860240567ae7b9"
+   },
+   {
+    "x": 888.0,
+    "y": 1764.0,
+    "w": 104.0,
+    "h": 104.0,
+    "img": "f1a2cf95e3542871"
+   },
+   {
+    "x": 0.0,
+    "y": 1900.0,
+    "w": 669.6,
+    "h": 20.0
+   },
+   {
+    "x": 669.6,
+    "y": 1900.0,
+    "w": 410.4,
+    "h": 20.0
+   }
+  ],
+  [
+   {
+    "x": 0.0,
+    "y": 0.0,
+    "w": 1080.0,
+    "h": 1920.0
+   },
+   {
+    "x": 0.0,
+    "y": 0.0,
+    "w": 1080.0,
+    "h": 1060.0,
+    "img": "3571a36e5253a0ac"
+   },
+   {
+    "x": 0.0,
+    "y": 1058.0,
+    "w": 1080.0,
+    "h": 2.0
+   },
+   {
+    "x": 88.0,
+    "y": 1108.0,
+    "w": 700.0,
+    "h": 24.0,
+    "texto": "LÍNEA 03 · 10 UNIDADES",
+    "fuente": "Montserrat",
+    "tam": 11.25
+   },
+   {
+    "x": 88.0,
+    "y": 1140.0,
+    "w": 904.0,
+    "h": 94.0,
+    "texto": "Anillo Nexus",
+    "fuente": "Cormorant",
+    "tam": 46.5
+   },
+   {
+    "x": 88.0,
+    "y": 1244.0,
+    "w": 120.0,
+    "h": 20.0,
+    "texto": "GEMAS",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 218.0,
+    "y": 1241.0,
+    "w": 774.0,
+    "h": 46.0,
+    "texto": "Esmeralda F2 · Fina Sublime Verde Chivor · lote de 11 gemas / 14,57 Ct",
+    "fuente": "Montserrat",
+    "tam": 12.75
+   },
+   {
+    "x": 88.0,
+    "y": 1298.0,
+    "w": 120.0,
+    "h": 20.0,
+    "texto": "JOYA",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 218.0,
+    "y": 1295.0,
+    "w": 774.0,
+    "h": 46.0,
+    "texto": "Montura solitario en Oro 18 k · 3 g",
+    "fuente": "Montserrat",
+    "tam": 12.75
+   },
+   {
+    "x": 562.0,
+    "y": 1368.0,
+    "w": 200.0,
+    "h": 18.0,
+    "texto": "PRECIO POR UNIDAD",
+    "fuente": "Montserrat",
+    "tam": 8.25
+   },
+   {
+    "x": 782.0,
+    "y": 1368.0,
+    "w": 210.0,
+    "h": 18.0,
+    "texto": "PRECIO TOTAL",
+    "fuente": "Montserrat",
+    "tam": 8.25
+   },
+   {
+    "x": 88.0,
+    "y": 1394.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 88.0,
+    "y": 1406.0,
+    "w": 8.0,
+    "h": 78.0
+   },
+   {
+    "x": 110.0,
+    "y": 1408.0,
+    "w": 300.0,
+    "h": 18.0,
+    "texto": "RECOMENDADA",
+    "fuente": "Montserrat",
+    "tam": 9.0
+   },
+   {
+    "x": 110.0,
+    "y": 1434.0,
+    "w": 470.0,
+    "h": 40.0,
+    "texto": "Esmeralda F2 Verde Chivor",
+    "fuente": "Cormorant",
+    "tam": 25.5
+   },
+   {
+    "x": 562.0,
+    "y": 1438.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$7’907.465",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 1438.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$79’074.650",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 1488.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 1518.0,
+    "w": 470.0,
+    "h": 40.0,
+    "texto": "Esmeralda Premium 1 Ct",
+    "fuente": "Cormorant",
+    "tam": 25.5
+   },
+   {
+    "x": 562.0,
+    "y": 1522.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$12’620.636",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 1522.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$126’206.358",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 1572.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 1592.0,
+    "w": 882.0,
+    "h": 48.0,
+    "texto": "Es la opción del plan: aprovecha el lote Color Esperanza completo y mantiene la inversión de la línea en su punto más eficiente.",
+    "fuente": "Montserrat",
+    "tam": 11.25
+   },
+   {
+    "x": 0.0,
+    "y": 1737.0,
+    "w": 1080.0,
+    "h": 1.0
+   },
+   {
+    "x": 88.0,
+    "y": 1782.0,
+    "w": 232.0,
+    "h": 60.32,
+    "img": "52015d66b0b11d41"
+   },
+   {
+    "x": 470.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 69.17,
+    "img": "5b2e753c0cfdeb7d"
+   },
+   {
+    "x": 546.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 74.28,
+    "img": "67c238dc3e9dc915"
+   },
+   {
+    "x": 622.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 70.09,
+    "img": "69860240567ae7b9"
+   },
+   {
+    "x": 888.0,
+    "y": 1764.0,
+    "w": 104.0,
+    "h": 104.0,
+    "img": "f1a2cf95e3542871"
+   },
+   {
+    "x": 0.0,
+    "y": 1900.0,
+    "w": 669.6,
+    "h": 20.0
+   },
+   {
+    "x": 669.6,
+    "y": 1900.0,
+    "w": 410.4,
+    "h": 20.0
+   }
+  ],
+  [
+   {
+    "x": 0.0,
+    "y": 0.0,
+    "w": 1080.0,
+    "h": 1920.0
+   },
+   {
+    "x": 0.0,
+    "y": 0.0,
+    "w": 1080.0,
+    "h": 1060.0,
+    "img": "fb299b69d5ce148a"
+   },
+   {
+    "x": 0.0,
+    "y": 1058.0,
+    "w": 1080.0,
+    "h": 2.0
+   },
+   {
+    "x": 88.0,
+    "y": 1108.0,
+    "w": 700.0,
+    "h": 24.0,
+    "texto": "LÍNEA 04 · 10 UNIDADES",
+    "fuente": "Montserrat",
+    "tam": 11.25
+   },
+   {
+    "x": 88.0,
+    "y": 1140.0,
+    "w": 904.0,
+    "h": 165.0,
+    "texto": "Dije Canutillo Master más cadena tipo Cartier",
+    "fuente": "Cormorant",
+    "tam": 46.5
+   },
+   {
+    "x": 88.0,
+    "y": 1315.0,
+    "w": 120.0,
+    "h": 20.0,
+    "texto": "GEMAS",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 218.0,
+    "y": 1312.0,
+    "w": 774.0,
+    "h": 46.0,
+    "texto": "Canutillo Comercial Fino · 1,5 cm · 3 Ct",
+    "fuente": "Montserrat",
+    "tam": 12.75
+   },
+   {
+    "x": 88.0,
+    "y": 1369.0,
+    "w": 120.0,
+    "h": 20.0,
+    "texto": "JOYA",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 218.0,
+    "y": 1366.0,
+    "w": 774.0,
+    "h": 46.0,
+    "texto": "Dije en Oro 18 k · 3,4 g · con grabado · cadena tipo Cartier",
+    "fuente": "Montserrat",
+    "tam": 12.75
+   },
+   {
+    "x": 562.0,
+    "y": 1439.0,
+    "w": 200.0,
+    "h": 18.0,
+    "texto": "PRECIO POR UNIDAD",
+    "fuente": "Montserrat",
+    "tam": 8.25
+   },
+   {
+    "x": 782.0,
+    "y": 1439.0,
+    "w": 210.0,
+    "h": 18.0,
+    "texto": "PRECIO TOTAL",
+    "fuente": "Montserrat",
+    "tam": 8.25
+   },
+   {
+    "x": 88.0,
+    "y": 1465.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 88.0,
+    "y": 1477.0,
+    "w": 8.0,
+    "h": 78.0
+   },
+   {
+    "x": 110.0,
+    "y": 1479.0,
+    "w": 300.0,
+    "h": 18.0,
+    "texto": "RECOMENDADA",
+    "fuente": "Montserrat",
+    "tam": 9.0
+   },
+   {
+    "x": 110.0,
+    "y": 1505.0,
+    "w": 470.0,
+    "h": 40.0,
+    "texto": "Canutillo Comercial Fino",
+    "fuente": "Cormorant",
+    "tam": 25.5
+   },
+   {
+    "x": 562.0,
+    "y": 1509.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$8’376.733",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 1509.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$83’767.333",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 1559.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 1589.0,
+    "w": 470.0,
+    "h": 40.0,
+    "texto": "Canutillo mejor calidad",
+    "fuente": "Cormorant",
+    "tam": 25.5
+   },
+   {
+    "x": 562.0,
+    "y": 1593.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$12’035.270",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 1593.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$120’352.700",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 1643.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 1663.0,
+    "w": 882.0,
+    "h": 48.0,
+    "texto": "Es la opción del plan: mismo dije de oro y mismo peso de gema, con la inversión de la línea contenida.",
+    "fuente": "Montserrat",
+    "tam": 11.25
+   },
+   {
+    "x": 0.0,
+    "y": 1737.0,
+    "w": 1080.0,
+    "h": 1.0
+   },
+   {
+    "x": 88.0,
+    "y": 1782.0,
+    "w": 232.0,
+    "h": 60.32,
+    "img": "52015d66b0b11d41"
+   },
+   {
+    "x": 470.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 69.17,
+    "img": "5b2e753c0cfdeb7d"
+   },
+   {
+    "x": 546.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 74.28,
+    "img": "67c238dc3e9dc915"
+   },
+   {
+    "x": 622.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 70.09,
+    "img": "69860240567ae7b9"
+   },
+   {
+    "x": 888.0,
+    "y": 1764.0,
+    "w": 104.0,
+    "h": 104.0,
+    "img": "f1a2cf95e3542871"
+   },
+   {
+    "x": 0.0,
+    "y": 1900.0,
+    "w": 669.6,
+    "h": 20.0
+   },
+   {
+    "x": 669.6,
+    "y": 1900.0,
+    "w": 410.4,
+    "h": 20.0
+   }
+  ],
+  [
+   {
+    "x": 0.0,
+    "y": 0.0,
+    "w": 1080.0,
+    "h": 1920.0
+   },
+   {
+    "x": 0.0,
+    "y": 0.0,
+    "w": 1080.0,
+    "h": 1060.0,
+    "img": "a62737b40ecf3fe4"
+   },
+   {
+    "x": 0.0,
+    "y": 1058.0,
+    "w": 1080.0,
+    "h": 2.0
+   },
+   {
+    "x": 88.0,
+    "y": 1108.0,
+    "w": 700.0,
+    "h": 24.0,
+    "texto": "LÍNEA 05 · 10 UNIDADES",
+    "fuente": "Montserrat",
+    "tam": 11.25
+   },
+   {
+    "x": 88.0,
+    "y": 1140.0,
+    "w": 904.0,
+    "h": 94.0,
+    "texto": "Pulsera Infinito (Tennis)",
+    "fuente": "Cormorant",
+    "tam": 46.5
+   },
+   {
+    "x": 88.0,
+    "y": 1244.0,
+    "w": 120.0,
+    "h": 20.0,
+    "texto": "GEMAS",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 218.0,
+    "y": 1241.0,
+    "w": 774.0,
+    "h": 46.0,
+    "texto": "80 esmeraldas redondas · Comercial Fina · 1,5 mm",
+    "fuente": "Montserrat",
+    "tam": 12.75
+   },
+   {
+    "x": 88.0,
+    "y": 1298.0,
+    "w": 120.0,
+    "h": 20.0,
+    "texto": "JOYA",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 218.0,
+    "y": 1295.0,
+    "w": 774.0,
+    "h": 46.0,
+    "texto": "Joya en Oro 18 k · 3,4 g · grabado en el broche",
+    "fuente": "Montserrat",
+    "tam": 12.75
+   },
+   {
+    "x": 562.0,
+    "y": 1368.0,
+    "w": 200.0,
+    "h": 18.0,
+    "texto": "PRECIO POR UNIDAD",
+    "fuente": "Montserrat",
+    "tam": 8.25
+   },
+   {
+    "x": 782.0,
+    "y": 1368.0,
+    "w": 210.0,
+    "h": 18.0,
+    "texto": "PRECIO TOTAL",
+    "fuente": "Montserrat",
+    "tam": 8.25
+   },
+   {
+    "x": 88.0,
+    "y": 1394.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 88.0,
+    "y": 1406.0,
+    "w": 8.0,
+    "h": 78.0
+   },
+   {
+    "x": 110.0,
+    "y": 1408.0,
+    "w": 300.0,
+    "h": 18.0,
+    "texto": "RECOMENDADA",
+    "fuente": "Montserrat",
+    "tam": 9.0
+   },
+   {
+    "x": 110.0,
+    "y": 1434.0,
+    "w": 470.0,
+    "h": 40.0,
+    "texto": "Comercial Fina · 1,5 mm",
+    "fuente": "Cormorant",
+    "tam": 25.5
+   },
+   {
+    "x": 562.0,
+    "y": 1438.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$21’108.441",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 1438.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$211’084.407",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 1488.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 1518.0,
+    "w": 470.0,
+    "h": 40.0,
+    "texto": "Fina Esencial · 3 mm",
+    "fuente": "Cormorant",
+    "tam": 25.5
+   },
+   {
+    "x": 562.0,
+    "y": 1522.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$88’523.075",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 1522.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$885’230.749",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 1572.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 1602.0,
+    "w": 470.0,
+    "h": 40.0,
+    "texto": "Cuadradas · 3 mm",
+    "fuente": "Cormorant",
+    "tam": 25.5
+   },
+   {
+    "x": 562.0,
+    "y": 1606.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$123’962.099",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 1606.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$1.239’620.993",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 1656.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 1676.0,
+    "w": 882.0,
+    "h": 48.0,
+    "texto": "Es la opción del plan. Subir a 3 mm multiplica la gema por más de cuatro veces y lleva la línea por encima de los $885 millones.",
+    "fuente": "Montserrat",
+    "tam": 11.25
+   },
+   {
+    "x": 0.0,
+    "y": 1737.0,
+    "w": 1080.0,
+    "h": 1.0
+   },
+   {
+    "x": 88.0,
+    "y": 1782.0,
+    "w": 232.0,
+    "h": 60.32,
+    "img": "52015d66b0b11d41"
+   },
+   {
+    "x": 470.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 69.17,
+    "img": "5b2e753c0cfdeb7d"
+   },
+   {
+    "x": 546.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 74.28,
+    "img": "67c238dc3e9dc915"
+   },
+   {
+    "x": 622.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 70.09,
+    "img": "69860240567ae7b9"
+   },
+   {
+    "x": 888.0,
+    "y": 1764.0,
+    "w": 104.0,
+    "h": 104.0,
+    "img": "f1a2cf95e3542871"
+   },
+   {
+    "x": 0.0,
+    "y": 1900.0,
+    "w": 669.6,
+    "h": 20.0
+   },
+   {
+    "x": 669.6,
+    "y": 1900.0,
+    "w": 410.4,
+    "h": 20.0
+   }
+  ],
+  [
+   {
+    "x": 0.0,
+    "y": 0.0,
+    "w": 1080.0,
+    "h": 1920.0
+   },
+   {
+    "x": 0.0,
+    "y": 0.0,
+    "w": 1080.0,
+    "h": 1060.0,
+    "img": "7858face5683563d"
+   },
+   {
+    "x": 390.0,
+    "y": 470.0,
+    "w": 300.0,
+    "h": 78.0,
+    "img": "52015d66b0b11d41"
+   },
+   {
+    "x": 0.0,
+    "y": 574.0,
+    "w": 1080.0,
+    "h": 30.0,
+    "texto": "FOTOGRAFÍA EN PRODUCCIÓN",
+    "fuente": "Montserrat",
+    "tam": 11.25
+   },
+   {
+    "x": 0.0,
+    "y": 1058.0,
+    "w": 1080.0,
+    "h": 2.0
+   },
+   {
+    "x": 88.0,
+    "y": 1108.0,
+    "w": 700.0,
+    "h": 24.0,
+    "texto": "LÍNEA 06 · 10 UNIDADES",
+    "fuente": "Montserrat",
+    "tam": 11.25
+   },
+   {
+    "x": 88.0,
+    "y": 1140.0,
+    "w": 904.0,
+    "h": 94.0,
+    "texto": "Anillo Trinity",
+    "fuente": "Cormorant",
+    "tam": 46.5
+   },
+   {
+    "x": 88.0,
+    "y": 1244.0,
+    "w": 120.0,
+    "h": 20.0,
+    "texto": "GEMAS",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 218.0,
+    "y": 1241.0,
+    "w": 774.0,
+    "h": 46.0,
+    "texto": "Acento «Moléculas de Luz»",
+    "fuente": "Montserrat",
+    "tam": 12.75
+   },
+   {
+    "x": 88.0,
+    "y": 1298.0,
+    "w": 120.0,
+    "h": 20.0,
+    "texto": "JOYA",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 218.0,
+    "y": 1295.0,
+    "w": 774.0,
+    "h": 46.0,
+    "texto": "Montura solitario en Oro 18 k · 3,5 g",
+    "fuente": "Montserrat",
+    "tam": 12.75
+   },
+   {
+    "x": 562.0,
+    "y": 1368.0,
+    "w": 200.0,
+    "h": 18.0,
+    "texto": "PRECIO POR UNIDAD",
+    "fuente": "Montserrat",
+    "tam": 8.25
+   },
+   {
+    "x": 782.0,
+    "y": 1368.0,
+    "w": 210.0,
+    "h": 18.0,
+    "texto": "PRECIO TOTAL",
+    "fuente": "Montserrat",
+    "tam": 8.25
+   },
+   {
+    "x": 88.0,
+    "y": 1394.0,
+    "w": 904.0,
+    "h": 2.0
+   },
+   {
+    "x": 110.0,
+    "y": 1422.0,
+    "w": 470.0,
+    "h": 40.0,
+    "texto": "Precio de la pieza",
+    "fuente": "Cormorant",
+    "tam": 25.5
+   },
+   {
+    "x": 562.0,
+    "y": 1426.0,
+    "w": 200.0,
+    "h": 30.0,
+    "texto": "$6’645.026",
+    "fuente": "Montserrat",
+    "tam": 16.5
+   },
+   {
+    "x": 782.0,
+    "y": 1426.0,
+    "w": 210.0,
+    "h": 30.0,
+    "texto": "$66’450.260",
+    "fuente": "Montserrat",
+    "tam": 16.5
+   },
+   {
+    "x": 0.0,
+    "y": 1737.0,
+    "w": 1080.0,
+    "h": 1.0
+   },
+   {
+    "x": 88.0,
+    "y": 1782.0,
+    "w": 232.0,
+    "h": 60.32,
+    "img": "52015d66b0b11d41"
+   },
+   {
+    "x": 470.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 69.17,
+    "img": "5b2e753c0cfdeb7d"
+   },
+   {
+    "x": 546.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 74.28,
+    "img": "67c238dc3e9dc915"
+   },
+   {
+    "x": 622.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 70.09,
+    "img": "69860240567ae7b9"
+   },
+   {
+    "x": 888.0,
+    "y": 1764.0,
+    "w": 104.0,
+    "h": 104.0,
+    "img": "f1a2cf95e3542871"
+   },
+   {
+    "x": 0.0,
+    "y": 1900.0,
+    "w": 669.6,
+    "h": 20.0
+   },
+   {
+    "x": 669.6,
+    "y": 1900.0,
+    "w": 410.4,
+    "h": 20.0
+   }
+  ],
+  [
+   {
+    "x": 0.0,
+    "y": 0.0,
+    "w": 1080.0,
+    "h": 1920.0
+   },
+   {
+    "x": 88.0,
+    "y": 150.0,
+    "w": 700.0,
+    "h": 24.0,
+    "texto": "CIERRE",
+    "fuente": "Montserrat",
+    "tam": 11.25
+   },
+   {
+    "x": 88.0,
+    "y": 192.0,
+    "w": 904.0,
+    "h": 250.0,
+    "texto": "Resumen\ndel Plan",
+    "fuente": "Cormorant",
+    "tam": 72.0
+   },
+   {
+    "x": 88.0,
+    "y": 422.0,
+    "w": 904.0,
+    "h": 60.0,
+    "texto": "240 unidades · una opción por línea. Las alternativas de cada pieza no se suman.",
+    "fuente": "Montserrat",
+    "tam": 13.5
+   },
+   {
+    "x": 562.0,
+    "y": 508.0,
+    "w": 200.0,
+    "h": 18.0,
+    "texto": "PRECIO POR UNIDAD",
+    "fuente": "Montserrat",
+    "tam": 8.25
+   },
+   {
+    "x": 782.0,
+    "y": 508.0,
+    "w": 210.0,
+    "h": 18.0,
+    "texto": "PRECIO TOTAL",
+    "fuente": "Montserrat",
+    "tam": 8.25
+   },
+   {
+    "x": 88.0,
+    "y": 534.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 556.0,
+    "w": 500.0,
+    "h": 36.0,
+    "texto": "Brazalete Modular 5 Chakras",
+    "fuente": "Cormorant",
+    "tam": 25.5
+   },
+   {
+    "x": 110.0,
+    "y": 602.0,
+    "w": 520.0,
+    "h": 22.0,
+    "texto": "Acabado Baño en Oro · 200 unidades",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 562.0,
+    "y": 564.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$1’052.007",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 564.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$210’401.480",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 638.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 656.0,
+    "w": 500.0,
+    "h": 36.0,
+    "texto": "Anillo Nexus",
+    "fuente": "Cormorant",
+    "tam": 25.5
+   },
+   {
+    "x": 110.0,
+    "y": 702.0,
+    "w": 520.0,
+    "h": 22.0,
+    "texto": "Esmeralda F2 Verde Chivor · 10 unidades",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 562.0,
+    "y": 664.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$7’907.465",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 664.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$79’074.650",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 738.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 756.0,
+    "w": 500.0,
+    "h": 36.0,
+    "texto": "Dije Canutillo Master",
+    "fuente": "Cormorant",
+    "tam": 25.5
+   },
+   {
+    "x": 110.0,
+    "y": 802.0,
+    "w": 520.0,
+    "h": 22.0,
+    "texto": "Canutillo Comercial Fino · cadena tipo Cartier · 10 unidades",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 562.0,
+    "y": 764.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$8’376.733",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 764.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$83’767.333",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 838.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 856.0,
+    "w": 500.0,
+    "h": 36.0,
+    "texto": "Pulsera Infinito (Tennis)",
+    "fuente": "Cormorant",
+    "tam": 25.5
+   },
+   {
+    "x": 110.0,
+    "y": 902.0,
+    "w": 520.0,
+    "h": 22.0,
+    "texto": "Comercial Fina · 1,5 mm · 10 unidades",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 562.0,
+    "y": 864.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$21’108.441",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 864.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$211’084.407",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 938.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 110.0,
+    "y": 956.0,
+    "w": 500.0,
+    "h": 36.0,
+    "texto": "Anillo Trinity",
+    "fuente": "Cormorant",
+    "tam": 25.5
+   },
+   {
+    "x": 110.0,
+    "y": 1002.0,
+    "w": 520.0,
+    "h": 22.0,
+    "texto": "Moléculas de Luz · 10 unidades",
+    "fuente": "Montserrat",
+    "tam": 9.75
+   },
+   {
+    "x": 562.0,
+    "y": 964.0,
+    "w": 200.0,
+    "h": 24.0,
+    "texto": "$6’645.026",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 782.0,
+    "y": 964.0,
+    "w": 210.0,
+    "h": 24.0,
+    "texto": "$66’450.260",
+    "fuente": "Montserrat",
+    "tam": 14.25
+   },
+   {
+    "x": 88.0,
+    "y": 1038.0,
+    "w": 904.0,
+    "h": 1.0
+   },
+   {
+    "x": 88.0,
+    "y": 1082.0,
+    "w": 904.0,
+    "h": 2.0
+   },
+   {
+    "x": 110.0,
+    "y": 1104.0,
+    "w": 500.0,
+    "h": 20.0,
+    "texto": "PRECIO TOTAL DEL PLAN",
+    "fuente": "Montserrat",
+    "tam": 10.5
+   },
+   {
+    "x": 110.0,
+    "y": 1090.0,
+    "w": 882.0,
+    "h": 120.0,
+    "texto": "$650’778.130",
+    "fuente": "Montserrat",
+    "tam": 57.0
+   },
+   {
+    "x": 110.0,
+    "y": 1236.0,
+    "w": 882.0,
+    "h": 60.0,
+    "texto": "Incluye la base y los módulos por chakra de la Línea 01. Las alternativas de cada pieza son excluyentes: no se suman.",
+    "fuente": "Montserrat",
+    "tam": 11.25
+   },
+   {
+    "x": 0.0,
+    "y": 1737.0,
+    "w": 1080.0,
+    "h": 1.0
+   },
+   {
+    "x": 88.0,
+    "y": 1782.0,
+    "w": 232.0,
+    "h": 60.32,
+    "img": "52015d66b0b11d41"
+   },
+   {
+    "x": 470.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 69.17,
+    "img": "5b2e753c0cfdeb7d"
+   },
+   {
+    "x": 546.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 74.28,
+    "img": "67c238dc3e9dc915"
+   },
+   {
+    "x": 622.0,
+    "y": 1768.0,
+    "w": 64.0,
+    "h": 70.09,
+    "img": "69860240567ae7b9"
+   },
+   {
+    "x": 888.0,
+    "y": 1764.0,
+    "w": 104.0,
+    "h": 104.0,
+    "img": "f1a2cf95e3542871"
+   },
+   {
+    "x": 0.0,
+    "y": 1900.0,
+    "w": 669.6,
+    "h": 20.0
+   },
+   {
+    "x": 669.6,
+    "y": 1900.0,
+    "w": 410.4,
+    "h": 20.0
+   }
+  ]
+ ]
+}
