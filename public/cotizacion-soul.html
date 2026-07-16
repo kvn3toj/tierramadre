@@ -12,12 +12,10 @@
     />
     <meta name="theme-color" content="#17110d" />
 
-    <!-- Los 8 embeds pegan al mismo origen. Abrir la conexión antes de que el
-         primero la pida le ahorra DNS+TLS a todos. -->
-    <link rel="preconnect" href="https://docs.google.com" crossorigin />
-    <link rel="dns-prefetch" href="https://docs.google.com" />
-    <link rel="preconnect" href="https://ssl.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://lh3.googleusercontent.com" crossorigin />
+    <!-- Las láminas ahora salen de nuestro propio origen, así que no hay
+         handshake con Google que precalentar. La primera se pide antes de que
+         el parser llegue al script. -->
+    <link rel="preload" as="image" href="/api/cotizacion-lamina?n=1" />
     <style>
       :root {
         --oro: #c9a05c;
@@ -112,7 +110,7 @@
         overflow: hidden;
         box-shadow: 0 26px 60px -26px rgba(0, 0, 0, 0.55);
       }
-      /* mientras el iframe carga */
+      /* mientras la lámina carga */
       .tarjeta::before {
         content: '';
         position: absolute;
@@ -132,16 +130,23 @@
           background-position: -120% 0;
         }
       }
-      .tarjeta iframe {
+      .tarjeta img {
         position: relative;
         z-index: 1;
         display: block;
         width: 100%;
         height: 100%;
-        border: 0;
-        /* Sin esto el iframe se traga la rueda/el gesto y la página no baja.
-       La navegación es el scroll, así que el embed no necesita ser clicable. */
-        pointer-events: none;
+        object-fit: cover;
+        /* El iframe de Slides se tragaba la rueda y había que anularle los
+           eventos; una imagen no. */
+      }
+      .tarjeta img.lista {
+        animation: aparece 0.35s ease-out both;
+      }
+      @keyframes aparece {
+        from {
+          opacity: 0;
+        }
       }
       .num {
         position: absolute;
@@ -643,6 +648,9 @@
 
 
     <footer>
+      <button type="button" class="abrir" id="actualizar">
+        Actualizar láminas
+      </button>
       <a
         class="abrir"
         href="https://docs.google.com/presentation/d/1i4IqcwHdJUxlYOEv10rhtx2KPGvCtvrWB1l0IV_i-5o/view"
@@ -664,9 +672,16 @@
 
     <script>
       (function () {
-        var DECK = '1i4IqcwHdJUxlYOEv10rhtx2KPGvCtvrWB1l0IV_i-5o';
         var LAMINAS = 8; // portada + 6 líneas + resumen
+
+        function src(n, v) {
+          // La lámina la renderiza /api/cotizacion-lamina desde el deck vivo.
+          // `v` sólo cambia la clave de caché: es lo que usa «Actualizar».
+          return '/api/cotizacion-lamina?n=' + n + (v ? '&v=' + v : '');
+        }
+
         var pila = document.getElementById('pila');
+        var imgs = [];
 
         for (var n = 1; n <= LAMINAS; n++) {
           var t = document.createElement('div');
@@ -677,24 +692,52 @@
           num.textContent = n + ' / ' + LAMINAS;
           t.appendChild(num);
 
-          var f = document.createElement('iframe');
-          f.title = 'Cotización Soul — lámina ' + n + ' de ' + LAMINAS;
-          // loading=lazy nativo: el navegador difiere las de abajo solo.
-          // Se probó un IntersectionObserver a mano y no dispara si la pestaña
-          // no está pintando -> quedaban 8 tarjetas en blanco. Esto no falla así.
-          // la primera se pide ya; el resto espera al scroll
-          f.setAttribute('loading', n === 1 ? 'eager' : 'lazy');
-          if (n === 1) f.setAttribute('fetchpriority', 'high');
-          f.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
-          f.src =
-            'https://docs.google.com/presentation/d/' +
-            DECK +
-            '/embed?start=false&loop=false&rm=minimal&slide=id.p' +
-            n;
+          var f = document.createElement('img');
+          f.alt = 'Cotización Soul — lámina ' + n + ' de ' + LAMINAS;
+          // el tamaño real del diseño: reserva el hueco y evita el salto
+          f.width = 1080;
+          f.height = 1920;
+          f.decoding = 'async';
+          // la primera se pide ya (es lo que se ve al abrir); el resto al bajar
+          f.loading = n === 1 ? 'eager' : 'lazy';
+          if (n === 1) f.fetchPriority = 'high';
+          f.addEventListener('load', function () {
+            this.classList.add('lista');
+          });
+          f.src = src(n);
           t.appendChild(f);
 
           pila.appendChild(t);
+          imgs.push(f);
         }
+
+        // «Actualizar»: fuerza el render de nuevo saltándose el caché del edge.
+        // Escalonado a propósito — pedir las 8 de golpe con caché frío hace que
+        // Google devuelva 429 (comprobado: la 8.ª fallaba).
+        var boton = document.getElementById('actualizar');
+        boton.addEventListener('click', function () {
+          if (boton.disabled) return;
+          boton.disabled = true;
+          var previo = boton.textContent;
+          boton.textContent = 'Actualizando…';
+          var v = Date.now();
+          var quedan = imgs.length;
+          imgs.forEach(function (img, i) {
+            setTimeout(function () {
+              function fin() {
+                quedan--;
+                if (quedan === 0) {
+                  boton.disabled = false;
+                  boton.textContent = previo;
+                }
+              }
+              img.addEventListener('load', fin, { once: true });
+              img.addEventListener('error', fin, { once: true });
+              img.classList.remove('lista');
+              img.src = src(i + 1, v);
+            }, i * 450);
+          });
+        });
       })();
     </script>
 
