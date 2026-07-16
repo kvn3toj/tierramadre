@@ -16,8 +16,13 @@ import subprocess
 import sys
 
 from pptx import Presentation
+from pptx.util import Emu
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _px(v):
+    return Emu(int(v)).inches * 96
 
 
 def _quote(cliente="María Fernanda", items=None):
@@ -82,6 +87,45 @@ def test_cotizacion_de_cliente_no_es_el_plan_soul(scratch, tmp_path):
 
     from cotizacion_layout import verifica
     assert verifica(prs) == []                              # nada cruza el pie ni el margen
+
+
+def test_nombre_largo_de_cliente_no_se_monta_sobre_el_total(scratch, tmp_path):
+    """
+    build-cotizacion-pptx.py:555 renderiza d.TITULO_PORTADA — el nombre del
+    cliente, texto libre de una conversación de Telegram — a tam=118 en una
+    caja de 260 px. Con un nombre real y largo ("Maria Fernanda Gutierrez de
+    la Espriella", 3 líneas a 118 según alto_titulo) el nombre desbordaba la
+    caja y se montaba sobre "PRECIO TOTAL..." y el número más grande del
+    documento — sin cruzar ningún pie (la portada no tiene) y sin salirse del
+    margen (la caja sigue dentro de él), así que cotizacion_layout.verifica
+    no lo veía antes de que también aprendiera a mirar la portada.
+    """
+    cliente = "Maria Fernanda Gutierrez de la Espriella"
+    q = _quote(cliente=cliente)
+    salida = _construye(scratch, _escribe(tmp_path, q), str(tmp_path / "quote-nombre-largo.pptx"))
+    prs = Presentation(salida)
+
+    texto_completo = " ".join(_textos(prs))
+    assert cliente in texto_completo
+    assert "Soul" not in texto_completo
+
+    portada = prs.slides[0]
+    caja_titulo = next(sh for sh in portada.shapes
+                        if sh.has_text_frame and cliente in sh.text_frame.text)
+    caja_etiqueta_total = next(sh for sh in portada.shapes
+                                if sh.has_text_frame and "PRECIO TOTAL" in sh.text_frame.text.upper())
+
+    fin_titulo = _px(caja_titulo.top) + _px(caja_titulo.height)
+    inicio_etiqueta = _px(caja_etiqueta_total.top)
+    # geometría computada, no el render: verifica no ve el texto ya envuelto,
+    # así que la prueba real es que la caja del nombre termine antes de que
+    # empiece la caja del total (tocarse borde con borde está bien).
+    assert fin_titulo <= inicio_etiqueta + 1, (
+        "el nombre del cliente (termina en %.0f) se monta sobre "
+        "PRECIO TOTAL (empieza en %.0f)" % (fin_titulo, inicio_etiqueta))
+
+    from cotizacion_layout import verifica
+    assert verifica(prs) == []
 
 
 def test_dos_items_no_repite_el_nombre_del_cliente_erroneamente(scratch, tmp_path):

@@ -35,6 +35,11 @@ _spec = importlib.util.spec_from_file_location(
 bc = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(bc)
 
+# _unidades_texto vivía duplicada aquí y en cotizacion_quote.py: una sola
+# fuente, así la carátula (Datos.SUBTITULO_PORTADA/NOTA_RESUMEN) y las filas de
+# esta lámina nunca pueden discrepar en la concordancia de número.
+from cotizacion_quote import _unidades_texto
+
 SCRATCH = os.environ.get("TM_SCRATCH", "")
 OPT = os.path.join(SCRATCH, "opt")
 ROOT = bc.ROOT
@@ -255,21 +260,6 @@ def alto_fila_resumen(n, banda):
     return min(alto, ALTO_FILA_MAX)
 
 
-def _unidades_texto(n):
-    """
-    «1 unidad», no «1 unidades».
-
-    Soul siempre trae 200/10/10/10/10 así que nunca se veía; una cotización de
-    cliente con una sola pieza sí cae en el singular, y en un documento que le
-    llega al cliente la concordancia importa.
-    """
-    try:
-        una = int(n) == 1
-    except (TypeError, ValueError):
-        una = False
-    return "1 unidad" if una else "%s unidades" % n
-
-
 def alto_titulo(nombre, ancho=None, tam=62):
     """estima cuántas líneas ocupa el titular para que la ficha baje con él"""
     ancho = ancho or (W - MARGEN * 2)
@@ -290,6 +280,56 @@ def alto_titulo(nombre, ancho=None, tam=62):
     # Cartier». El +16 es el aire bajo la última línea: sin él el hueco quedaba
     # en 6 px con dos líneas y en 14 px con una, y se notaba el salto.
     return lineas, int(tam * (1 + (lineas - 1) * LINEA_CORMORANT)) + 16
+
+
+ALTO_CAJA_TITULO_PORTADA = 260   # el valor de siempre en lamina_portada; Soul nunca lo mueve
+# Escalera de tamaños para el titular de la carátula. 118 es el de Soul; los
+# siguientes son pasos hacia abajo para un nombre de cliente real y largo, no
+# valores libres — hay que poder leerlos como titular de carátula, no como
+# nota al pie.
+TAMS_TITULO_PORTADA = (118, 104, 92, 80, 70, 62)
+
+
+def _lineas_titulo_portada(nombre, ancho, tam):
+    """
+    Cuenta líneas de un titular de carátula respetando los saltos explícitos
+    ('\\n', como en "Cotización\\nSoul") además del ajuste por ancho.
+
+    alto_titulo por sí sola sólo envuelve por ancho: no ve un '\\n' como una
+    orden de salto, lo trata como cualquier otro espacio. Aquí se cuenta cada
+    segmento explícito por separado y se suman las líneas — así "Cotización"
+    + "Soul" da 2, igual que se ve renderizado, y un nombre de cliente sin
+    saltos (texto libre de Telegram) se mide igual que siempre, por ancho.
+    """
+    total = 0
+    for segmento in nombre.split("\n"):
+        lineas_seg, _ = alto_titulo(segmento, ancho=ancho, tam=tam)
+        total += lineas_seg
+    return total or 1
+
+
+def _ajusta_titulo_portada(nombre, ancho=None):
+    """
+    Elige tamaño de letra y alto de caja para el titular de la carátula.
+
+    Con el tamaño de Soul (118) casi cualquier texto de 1-2 líneas cabe en los
+    260 px de siempre — "Cotización\\nSoul" da exactamente 2, y ahí no se toca
+    nada: mismo tamaño, misma caja, mismo desplazamiento (cero) que antes de
+    este ajuste, byte a byte. Un nombre de cliente real y largo ("Maria
+    Fernanda Gutierrez de la Espriella") no entra en 2 líneas a 118: se baja
+    el tamaño por la escalera hasta que sí entre. Si ni el escalón más chico
+    alcanza (un nombre extremo), se acepta más de 2 líneas, se mide el alto
+    real con alto_titulo y lamina_portada corre el resto del bloque hacia
+    abajo en vez de dejar que el nombre se monte sobre el precio total.
+    """
+    ancho = ancho or (W - MARGEN * 2)
+    for tam in TAMS_TITULO_PORTADA:
+        if _lineas_titulo_portada(nombre, ancho, tam) <= 2:
+            return tam, ALTO_CAJA_TITULO_PORTADA
+    tam = TAMS_TITULO_PORTADA[-1]
+    lineas = _lineas_titulo_portada(nombre, ancho, tam)
+    alto = int(tam * (1 + (lineas - 1) * LINEA_CORMORANT)) + 16
+    return tam, max(ALTO_CAJA_TITULO_PORTADA, alto)
 
 
 ANCHO_NOMBRE_RESUMEN = 500      # ancho de la caja de nombre en lamina_resumen
@@ -549,21 +589,37 @@ def lamina_portada(prs, qr, d):
     base.save(comp, "JPEG", quality=88)
     img(s, comp, 0, 0, W, H)
 
-    img(s, logo_claro(os.path.join(SCRATCH, "logo-claro.png")), MARGEN, 1120, 340)
+    # el logo recoloreado es idéntico para cualquier render (no lleva dato de
+    # cliente) pero sigue siendo una escritura+lectura inmediata de un archivo:
+    # en COMPOSITES (por-render) para que dos renders concurrentes no la corran
+    # a la vez sobre el mismo path.
+    img(s, logo_claro(os.path.join(COMPOSITES, "logo-claro.png")), MARGEN, 1120, 340)
     texto(s, MARGEN, 1290, 700, 24, d.EYEBROW_PORTADA,
           tam=15, color=RGBColor(0xDC, 0xB8, 0x72), negrita=True, track=.32, mayus=True)
-    texto(s, MARGEN, 1330, W - MARGEN * 2, 260, d.TITULO_PORTADA,
-          fuente=SERIF, tam=118, color=CREMA, negrita=True, interlinea=0.92)
-    texto(s, MARGEN, 1590, 700, 30, d.SUBTITULO_PORTADA,
+
+    # El nombre del cliente es texto libre de una conversación de Telegram, no
+    # un literal fijo como "Cotización\nSoul": puede ser tan largo como
+    # "Maria Fernanda Gutierrez de la Espriella" o el nombre de una empresa.
+    # A 118 (el tamaño de Soul) eso desborda la caja de 260 y se monta sobre el
+    # precio total. _ajusta_titulo_portada baja el tamaño hasta que el nombre
+    # quepa en 1-2 líneas — el mismo caso de Soul, que siempre da 2 — y sólo si
+    # ni el piso de la escalera alcanza, calcula el alto real y corre el resto
+    # del bloque hacia abajo. Para Soul esto da tam=118 y desplazamiento=0
+    # exactos: byte a byte lo mismo que antes.
+    tam_titulo, alto_caja_titulo = _ajusta_titulo_portada(d.TITULO_PORTADA)
+    desplazamiento = alto_caja_titulo - ALTO_CAJA_TITULO_PORTADA
+    texto(s, MARGEN, 1330, W - MARGEN * 2, alto_caja_titulo, d.TITULO_PORTADA,
+          fuente=SERIF, tam=tam_titulo, color=CREMA, negrita=True, interlinea=0.92)
+    texto(s, MARGEN, 1590 + desplazamiento, 700, 30, d.SUBTITULO_PORTADA,
           tam=20, color=RGBColor(0xCF, 0xC3, 0xB2))
-    rect(s, MARGEN, 1642, W - MARGEN * 2, 1, RGBColor(0x7A, 0x63, 0x40))
-    texto(s, MARGEN, 1664, 500, 20, d.ETIQUETA_TOTAL,
+    rect(s, MARGEN, 1642 + desplazamiento, W - MARGEN * 2, 1, RGBColor(0x7A, 0x63, 0x40))
+    texto(s, MARGEN, 1664 + desplazamiento, 500, 20, d.ETIQUETA_TOTAL,
           tam=13, color=RGBColor(0xDC, 0xB8, 0x72), negrita=True, track=.22, mayus=True)
-    texto(s, MARGEN, 1692, 700, 90, d.TOTAL_PLAN, tam=64, color=CREMA, negrita=True)
-    texto(s, MARGEN, 1800, 700, 24,
+    texto(s, MARGEN, 1692 + desplazamiento, 700, 90, d.TOTAL_PLAN, tam=64, color=CREMA, negrita=True)
+    texto(s, MARGEN, 1800 + desplazamiento, 700, 24,
           "Valores en pesos colombianos (COP) · %s" % d.FECHA,
           tam=14, color=RGBColor(0x9A, 0x8C, 0x7C))
-    img(s, qr, W - MARGEN - 116, 1690, 116)
+    img(s, qr, W - MARGEN - 116, 1690 + desplazamiento, 116)
     rect(s, 0, H - BARRA_H, W * 0.62, BARRA_H, VERDE)
     rect(s, W * 0.62, H - BARRA_H, W * 0.38, BARRA_H, VERDE_HONDO)
     return s
