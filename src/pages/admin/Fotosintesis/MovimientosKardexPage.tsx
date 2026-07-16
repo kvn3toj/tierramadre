@@ -59,7 +59,9 @@ import { useAsesores } from '../../../hooks/useAsesores';
 import { matchesAsesorName } from '../../../utils/asesorNameUtils';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { MovimientoKardexPreview } from './components/MovimientoKardexPreview';
+import { resolveItemThumbnail } from './utils/resolveThumbnail';
 import { exportAndUploadMovimientoKardexPdf } from './exportMovimientoKardexPdf';
+import { comprobanteFilename } from './comprobanteFilename';
 
 type Mode = 'entrega' | 'devolucion';
 
@@ -316,19 +318,79 @@ export default function MovimientosKardexPage() {
       }>
     | undefined;
 
+  // ── Photos for the comprobante ───────────────────────────────────────────
+  // `asesorMovements` rows carry no photo — the ledger stores the movement,
+  // not the piece. Join productInventory for each item's `fotoUrl`, the same
+  // way the sale carnet resolves its thumbnails.
+  const kardexItemIds = useMemo(
+    () => [...new Set((kardexEventRows ?? []).map((r) => r.itemId))],
+    [kardexEventRows],
+  );
+
+  const kardexProducts = useConvexQuery(
+    convexApi.products.getManyByItemIds,
+    convexReady && kardexItemIds.length > 0
+      ? { itemIds: kardexItemIds }
+      : 'skip',
+  ) as Array<{ itemId: string; fotoUrl?: string }> | undefined;
+
+  const kardexRowsWithFotos = useMemo(() => {
+    const rows = kardexEventRows ?? [];
+    if (!kardexProducts?.length) return rows;
+    const fotoByItemId = new Map(
+      kardexProducts.map((p) => [p.itemId, p.fotoUrl]),
+    );
+    return rows.map((r) => ({
+      ...r,
+      // resolveItemThumbnail routes the Drive URL through our own
+      // /api/serve-drive-image proxy. That is load-bearing, not cosmetic: a
+      // raw drive.google.com src taints html2canvas's canvas and the PDF
+      // export fails outright. No batch fallback here — a consignment
+      // comprobante shows the piece's own photo or none.
+      fotoUrl: resolveItemThumbnail(
+        fotoByItemId.get(r.itemId),
+        r.itemId,
+        undefined,
+      ),
+    }));
+  }, [kardexEventRows, kardexProducts]);
+
   async function handleGenerateComprobante() {
     if (!activeKardexEventId || !previewRef.current) return;
     setGeneratingPdf(true);
+    let url: string;
     try {
-      const url = await exportAndUploadMovimientoKardexPdf(
+      url = await exportAndUploadMovimientoKardexPdf(
         previewRef.current,
-        `kardex-${activeKardexEventId}.pdf`,
+        comprobanteFilename(activeKardexEventId),
       );
-      setComprobanteUrl(url);
-      notify('Comprobante generado', 'success');
     } catch (err) {
+      // The PDF itself was never generated/uploaded — this is a real failure,
+      // there's nothing in Drive and nothing to show the operator.
       const msg = err instanceof Error ? err.message : String(err);
       notify(`No se pudo generar el comprobante: ${msg}`, 'error');
+      setGeneratingPdf(false);
+      return;
+    }
+    setComprobanteUrl(url);
+    try {
+      // Persist BEFORE notifying success: the URL used to live only here, in
+      // React state, and died with the tab. If this throws, the PDF is still
+      // in Drive and the link above already works — only the DB stamp failed.
+      await persistComprobanteUrl({
+        kardexEventId: activeKardexEventId,
+        comprobanteUrl: url,
+      });
+      notify('Comprobante generado y archivado', 'success');
+    } catch (err) {
+      // The PDF exists and the link works — only the archive step failed.
+      // Regenerating is a valid retry (it'll orphan this Drive file), not a
+      // required rescue: tell the operator the truth instead of "failed".
+      const msg = err instanceof Error ? err.message : String(err);
+      notify(
+        `Comprobante generado (el enlace ya funciona), pero no quedó archivado en el kardex: ${msg}. El bot de Telegram no lo va a encontrar así.`,
+        'warning',
+      );
     } finally {
       setGeneratingPdf(false);
     }
@@ -339,6 +401,9 @@ export default function MovimientosKardexPage() {
   );
   const registerReturnBatch = useAuthedConvexAction(
     convexApi.asesorMovements.registerReturnBatch,
+  );
+  const persistComprobanteUrl = useAuthedConvexAction(
+    convexApi.asesorMovements.setComprobanteUrl,
   );
 
   const selectedItemIds = useMemo(
@@ -913,7 +978,7 @@ export default function MovimientosKardexPage() {
           >
             <Box ref={previewRef}>
               <MovimientoKardexPreview
-                rows={kardexEventRows ?? []}
+                rows={kardexRowsWithFotos}
                 kardexEventId={activeKardexEventId}
               />
             </Box>

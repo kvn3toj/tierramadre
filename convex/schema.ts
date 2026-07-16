@@ -334,6 +334,19 @@ export default defineSchema({
     estadoNuevo: v.string(),
     /** Synthetic natural key pushed as column A (never patched — append-only). */
     movimientoId: v.string(),
+    /** Drive URL of the PDF comprobante for this kardex event. Written once,
+     *  after the browser rasterizes + uploads it (see
+     *  MovimientosKardexPage.handleGenerateComprobante). EVERY row sharing a
+     *  kardexEventId carries the same URL — the event has one comprobante, not
+     *  the item. Optional: rows exist before the PDF is generated, and it may
+     *  never be generated at all.
+     *
+     *  Denormalised onto every row on purpose: `by_kardexEventId` already
+     *  exists, so a lookup is one indexed scan with no join, and the anima-bot
+     *  can resolve a comprobante with the same plain query it uses elsewhere.
+     *  Before this field the URL lived ONLY in React state and died with the
+     *  browser tab. */
+    comprobanteUrl: v.optional(v.string()),
     ...syncFields,
   })
     .index('by_itemId', ['itemId'])

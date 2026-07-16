@@ -15,6 +15,12 @@ import {
 export interface MovimientoKardexRow {
   itemId: string;
   itemNombre?: string;
+  /** Already-proxied thumbnail URL for the piece (see `resolveItemThumbnail`).
+   *  MUST be same-origin (`/api/serve-drive-image?fileId=…`), never a raw
+   *  drive.google.com link: html2canvas taints the canvas on a cross-origin
+   *  image and `captureNodeToPdf` then fails to rasterize. Optional — a row
+   *  with no photo renders an empty paper well, not a broken image. */
+  fotoUrl?: string;
   /** "entrega" (handoff to the asesor/comercializador) or "devolucion". */
   tipo: 'entrega' | 'devolucion';
   asesorNombre: string;
@@ -52,6 +58,10 @@ const PAPER_INK_SOFT = '#5A4F45';
 const PAPER_INK_MUTE = '#8C7F72';
 const PAPER_RULE = 'rgba(26, 23, 20, 0.12)';
 const PAPER_RULE_SOFT = 'rgba(26, 23, 20, 0.06)';
+
+/** Item table columns: thumb · nombre · cant. · precio · subtotal. One const so
+ *  the header and the body rows can never drift out of alignment. */
+const ITEM_GRID = '34px 1fr 60px 110px 110px';
 
 function formatCop(value: number | undefined): string {
   if (typeof value !== 'number' || Number.isNaN(value)) return '—';
@@ -311,7 +321,7 @@ export function MovimientoKardexPreview({
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: '1fr 60px 110px 110px',
+              gridTemplateColumns: ITEM_GRID,
               gap: '12px',
               paddingBottom: '8px',
               borderBottom: `1px solid ${PAPER_RULE}`,
@@ -322,6 +332,7 @@ export function MovimientoKardexPreview({
               color: PAPER_INK_MUTE,
             }}
           >
+            <Box />
             <Box>Ítem</Box>
             <Box sx={{ textAlign: 'right' }}>Cant.</Box>
             <Box sx={{ textAlign: 'right' }}>Precio</Box>
@@ -333,13 +344,14 @@ export function MovimientoKardexPreview({
               key={`${row.movimientoId || row.itemId}-${idx}`}
               sx={{
                 display: 'grid',
-                gridTemplateColumns: '1fr 60px 110px 110px',
+                gridTemplateColumns: ITEM_GRID,
                 gap: '12px',
-                alignItems: 'baseline',
+                alignItems: 'center',
                 paddingY: '9px',
                 borderBottom: `1px solid ${PAPER_RULE_SOFT}`,
               }}
             >
+              <ItemThumb fotoUrl={row.fotoUrl} />
               <Box sx={{ minWidth: 0 }}>
                 <Box
                   sx={{
@@ -533,6 +545,48 @@ export function MovimientoKardexPreview({
           }}
         />
       </Box>
+    </Box>
+  );
+}
+
+/**
+ * Per-row photo well. Mirrors `KardexPreview`'s sale-carnet thumbnail: fixed
+ * square, `aspectRatio` reserved so the paper never reflows once the image
+ * decodes, and `crossOrigin="anonymous"` because html2canvas taints the canvas
+ * otherwise and `captureNodeToPdf` fails.
+ *
+ * No photo → an empty well, not a gap: the recipient signs a receipt whose
+ * every line looks deliberate, and a missing photo reads as "sin foto", not as
+ * a broken document.
+ */
+function ItemThumb({ fotoUrl }: { fotoUrl?: string }) {
+  return (
+    <Box
+      sx={{
+        width: 34,
+        height: 34,
+        aspectRatio: '1 / 1',
+        borderRadius: '3px',
+        background: '#EFEAE0',
+        border: `1px solid ${PAPER_RULE}`,
+        overflow: 'hidden',
+        flexShrink: 0,
+      }}
+    >
+      {fotoUrl ? (
+        <Box
+          component="img"
+          src={fotoUrl}
+          alt=""
+          crossOrigin="anonymous"
+          sx={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
+          }}
+        />
+      ) : null}
     </Box>
   );
 }

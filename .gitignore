@@ -76,6 +76,22 @@ docs/reference/*.xlsx
 *.tiff
 *.bmp
 
+# Las fotos del cotizador SÍ son fuente: son el fixture de la huella dorada que
+# protege la lámina Soul. Sin ellas la prueba se salta y protege nada. 740K.
+!scripts/tests/fixtures/opt/
+!scripts/tests/fixtures/opt/**
+
+# El renderer escribe composites/QR temporales directo en $TM_SCRATCH; al correr
+# los tests con TM_SCRATCH=fixtures esos bytes caen en la raíz del fixture. No
+# son el fixture (las 13 fotos en opt/ sí lo son) — son basura de build.
+scripts/tests/fixtures/comp-*.jpg
+scripts/tests/fixtures/qr.png
+scripts/tests/fixtures/logo-claro.png
+
+# Bytes de compilación de Python — nunca son fuente
+__pycache__/
+*.pyc
+
 # Slides and presentations
 public/slides/
 public/catalog-media/

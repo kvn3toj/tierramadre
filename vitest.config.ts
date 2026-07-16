@@ -15,6 +15,7 @@ export default defineConfig({
       ['tests/useChromaSamples.test.ts', 'jsdom'],
       ['tests/fotosintesis-phone.test.ts', 'jsdom'],
       ['tests/kardexPreview.test.ts', 'jsdom'],
+      ['tests/movimientoKardexPreview.test.ts', 'jsdom'],
     ],
   },
 });

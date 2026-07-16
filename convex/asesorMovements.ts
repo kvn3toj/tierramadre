@@ -553,6 +553,71 @@ export const _markPushFailed = internalMutation({
   },
 });
 
+/** Stamp the comprobante URL onto every row of one kardex event. Idempotent —
+ *  regenerating the PDF overwrites with the newer Drive URL. */
+export const _setComprobanteUrl = internalMutation({
+  args: { kardexEventId: v.string(), comprobanteUrl: v.string() },
+  handler: async (ctx, { kardexEventId, comprobanteUrl }) => {
+    const rows = await ctx.db
+      .query('asesorMovements')
+      .withIndex('by_kardexEventId', (q) =>
+        q.eq('kardexEventId', kardexEventId),
+      )
+      .collect();
+    if (rows.length === 0) {
+      throw new Error(`No hay movimientos para el evento ${kardexEventId}`);
+    }
+    for (const row of rows) {
+      await ctx.db.patch(row._id, { comprobanteUrl });
+    }
+    return { patched: rows.length };
+  },
+});
+
+export const setComprobanteUrl = action({
+  args: {
+    idToken: v.string(),
+    kardexEventId: v.string(),
+    comprobanteUrl: v.string(),
+  },
+  handler: async (
+    ctx,
+    { idToken, kardexEventId, comprobanteUrl },
+  ): Promise<{ patched: number }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.asesorMovements._setComprobanteUrl, {
+      kardexEventId,
+      comprobanteUrl,
+    });
+  },
+});
+
+/** Comprobante + event summary for one kardex event. Plain read, no auth gate —
+ *  mirrors `lots:list` / `lotItems:search`, the queries the anima-bot already
+ *  calls unauthenticated (see anima-bot/src/fotosintesis/client.ts). Returns
+ *  null when the event doesn't exist; `comprobanteUrl` is undefined when the
+ *  PDF was never generated. */
+export const getComprobante = query({
+  args: { kardexEventId: v.string() },
+  handler: async (ctx, { kardexEventId }) => {
+    const rows = await ctx.db
+      .query('asesorMovements')
+      .withIndex('by_kardexEventId', (q) =>
+        q.eq('kardexEventId', kardexEventId),
+      )
+      .collect();
+    if (rows.length === 0) return null;
+    return {
+      kardexEventId,
+      comprobanteUrl: rows[0].comprobanteUrl,
+      asesorNombre: rows[0].asesorNombre,
+      fecha: rows[0].fecha,
+      tipo: rows[0].tipo,
+      itemCount: rows.length,
+    };
+  },
+});
+
 export const _getInternal = internalQuery({
   args: { id: v.id('asesorMovements') },
   handler: async (ctx, { id }) => ctx.db.get(id),

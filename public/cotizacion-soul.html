@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Cotización Soul · Tierra Mädre</title>
+    <meta property="og:title" content="Cotización Soul · Tierra Mädre" />
+    <meta
+      property="og:description"
+      content="Plan de producción Soul · 240 unidades"
+    />
+    <meta name="theme-color" content="#17110d" />
+    <style>
+      :root {
+        --oro: #c9a05c;
+        --verde: #1f5130;
+        --verde-hondo: #123320;
+        --papel: #fdf8f0;
+        --sans:
+          'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          sans-serif;
+        --serif: 'Cormorant', 'Iowan Old Style', Georgia, serif;
+        --ancho: min(92vw, 520px, calc((100dvh - 132px) * 0.5625));
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        min-height: 100dvh;
+        background:
+          radial-gradient(
+            60vw 40vw at 82% 0%,
+            rgba(201, 160, 92, 0.1),
+            transparent 60%
+          ),
+          radial-gradient(
+            52vw 40vw at 4% 100%,
+            rgba(31, 81, 48, 0.14),
+            transparent 60%
+          ),
+          #17110d;
+        color: var(--papel);
+        font-family: var(--sans);
+        -webkit-font-smoothing: antialiased;
+        padding: 0 0 60px;
+        /* scroll continuo: sin scroll-snap, que troceaba la lectura en páginas */
+      }
+
+      header {
+        text-align: center;
+        padding: clamp(26px, 6vw, 44px) 20px clamp(18px, 3vw, 26px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: var(--oro);
+      }
+      h1 {
+        font-family: var(--serif);
+        font-weight: 600;
+        font-size: clamp(30px, 7vw, 42px);
+        line-height: 1.02;
+        letter-spacing: -0.01em;
+        color: #fdf8f0;
+      }
+      .sub {
+        font-size: 12.5px;
+        color: rgba(253, 248, 240, 0.6);
+        max-width: 38ch;
+      }
+      .pista {
+        margin-top: 10px;
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: rgba(253, 248, 240, 0.34);
+      }
+
+      /* ---- pila de láminas: se recorre con scroll, no con botones ---- */
+      .pila {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0; /* cinta continua: cada lámina cierra con su barra verde */
+      }
+
+      .tarjeta {
+        position: relative;
+        width: var(--ancho);
+        height: calc(var(--ancho) * 1.77778); /* 1080×1920 exacto */
+        flex: none;
+        background: #0e0b08;
+        overflow: hidden;
+        box-shadow: 0 26px 60px -26px rgba(0, 0, 0, 0.55);
+      }
+      /* mientras el iframe carga */
+      .tarjeta::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background: linear-gradient(
+          100deg,
+          #1a1410 30%,
+          #241c15 50%,
+          #1a1410 70%
+        );
+        background-size: 220% 100%;
+        animation: brillo 1.6s linear infinite;
+      }
+      @keyframes brillo {
+        to {
+          background-position: -120% 0;
+        }
+      }
+      .tarjeta iframe {
+        position: relative;
+        z-index: 1;
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        /* Sin esto el iframe se traga la rueda/el gesto y la página no baja.
+       La navegación es el scroll, así que el embed no necesita ser clicable. */
+        pointer-events: none;
+      }
+      .num {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        z-index: 2;
+        font-size: 9.5px;
+        letter-spacing: 0.16em;
+        font-weight: 700;
+        color: rgba(253, 248, 240, 0.5);
+        background: rgba(23, 17, 13, 0.5);
+        padding: 3px 7px;
+        border-radius: 2px;
+      }
+
+      footer {
+        margin-top: clamp(30px, 5vw, 48px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        padding: 0 20px;
+        text-align: center;
+      }
+      .abrir {
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: var(--oro);
+        text-decoration: none;
+        border: 1px solid rgba(201, 160, 92, 0.4);
+        padding: 11px 22px;
+        border-radius: 2px;
+        transition:
+          background-color 0.2s ease,
+          color 0.2s ease;
+      }
+      .abrir:hover,
+      .abrir:focus-visible {
+        background: rgba(201, 160, 92, 0.14);
+        color: #f0d9a8;
+      }
+      .abrir:focus-visible {
+        outline: 2px solid var(--oro);
+        outline-offset: 2px;
+      }
+      .marca {
+        font-family: var(--serif);
+        font-size: 15px;
+        letter-spacing: 0.14em;
+        color: rgba(253, 248, 240, 0.7);
+        margin-top: 6px;
+      }
+      .marca small {
+        display: block;
+        font-family: var(--sans);
+        font-size: 7.5px;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: rgba(253, 248, 240, 0.38);
+        margin-top: 3px;
+      }
+      .nota {
+        font-size: 10px;
+        color: rgba(253, 248, 240, 0.4);
+        line-height: 1.6;
+        max-width: 44ch;
+      }
+      .barra {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 5px;
+        z-index: 5;
+        background: linear-gradient(
+          90deg,
+          var(--verde) 0%,
+          var(--verde) 62%,
+          var(--verde-hondo) 62%
+        );
+      }
+      /* ---- móvil (base): la tarjeta llena el ancho; una por pantalla ---- */
+
+      /* ---- iPad ---- */
+      @media (min-width: 640px) {
+        :root {
+          --ancho: min(86vw, 460px, calc((100dvh - 150px) * 0.5625));
+        }
+      }
+      /* iPad apaisado / pantallas bajas: manda el alto */
+      @media (min-width: 640px) and (max-height: 820px) {
+        :root {
+          --ancho: min(86vw, 460px, calc((100dvh - 118px) * 0.5625));
+        }
+      }
+      /* ---- escritorio ---- */
+      @media (min-width: 1024px) {
+        :root {
+          --ancho: min(520px, calc((100dvh - 160px) * 0.5625));
+        }
+      }
+
+      /* ================= la última lámina: calculador =================
+         Clona los tokens de las láminas del deck (papel, vino, oro, barra verde)
+         y usa cqw para escalar igual que ellas: el diseño es de 1080 px de ancho,
+         así que 1cqw = 10,8 px del original. Así no se nota la costura entre las
+         láminas incrustadas y esta, que sí es DOM. */
+      .calc {
+        container-type: inline-size;
+        position: relative;
+        width: var(--ancho);
+        margin-inline: auto; /* la .pila centra a sus hijos; ésta es hermana */
+        min-height: calc(var(--ancho) * 1.77778);
+        flex: none;
+        background: #fbf8f2;
+        overflow: hidden;
+        box-shadow: 0 26px 60px -26px rgba(0, 0, 0, 0.8);
+        display: flex;
+        flex-direction: column;
+        color: #3d2018;
+      }
+      .calc-cuerpo {
+        flex: 1;
+        padding: 7.4cqw 8.15cqw 0;
+      }
+      .calc .eyebrow {
+        font-size: 1.39cqw;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #8a6a5c;
+      }
+      .calc h2 {
+        font-family: var(--serif);
+        font-weight: 600;
+        font-size: 5.74cqw;
+        line-height: 0.98;
+        letter-spacing: -0.012em;
+        color: #6e1d18;
+        margin: 1.1cqw 0 0;
+      }
+      .calc-sub {
+        font-size: 1.57cqw;
+        color: #8a6a5c;
+        margin-top: 1.3cqw;
+      }
+
+      .calc .cabecera {
+        display: flex;
+        justify-content: flex-end;
+        gap: 2cqw;
+        margin-top: 4.2cqw;
+        padding-bottom: 0.65cqw;
+      }
+      .calc .cabecera span {
+        font-size: 1.02cqw;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #8a6a5c;
+        text-align: right;
+      }
+      .calc .cabecera .cu {
+        width: 18.5cqw;
+      }
+      .calc .cabecera .ct {
+        width: 19.4cqw;
+      }
+
+      .linea {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0 2cqw;
+        align-items: start;
+        padding: 1.85cqw 0;
+        border-top: 1px solid #e6d9c6;
+      }
+      .linea:first-of-type {
+        border-top: 1px solid #d8c7b0;
+      }
+      .linea-n {
+        font-family: var(--serif);
+        font-size: 3.15cqw;
+        line-height: 1.1;
+        color: #6e1d18;
+      }
+      .linea-n em {
+        font-style: normal;
+        font-family: var(--sans);
+        font-size: 1.02cqw;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #8a6a5c;
+        margin-left: 0.7cqw;
+      }
+      .linea-cifra {
+        grid-column: 2;
+        grid-row: 1 / 3;
+        align-self: center;
+        text-align: right;
+        font-size: 1.76cqw;
+        font-weight: 700;
+        color: #6e1d18;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        letter-spacing: -0.01em;
+        width: 19.4cqw;
+      }
+      .linea-cifra small {
+        display: block;
+        font-size: 1.02cqw;
+        font-weight: 500;
+        color: #8a6a5c;
+        margin-top: 0.4cqw;
+        white-space: nowrap;
+      }
+      .linea select {
+        grid-column: 1;
+        font-family: var(--sans);
+        font-size: 1.3cqw;
+        color: #a8813f;
+        background: transparent;
+        border: 0;
+        border-bottom: 1px dotted rgba(168, 129, 63, 0.55);
+        padding: 0.3cqw 1.7cqw 0.3cqw 0;
+        margin-top: 0.55cqw;
+        max-width: 100%;
+        cursor: pointer;
+        appearance: none;
+        background-image: linear-gradient(45deg, transparent 50%, #a8813f 50%),
+          linear-gradient(135deg, #a8813f 50%, transparent 50%);
+        background-position: right 0.5cqw center, right 0.09cqw center;
+        background-size: 0.4cqw 0.4cqw, 0.4cqw 0.4cqw;
+        background-repeat: no-repeat;
+        border-radius: 0;
+      }
+      .linea select:hover,
+      .linea select:focus {
+        color: #6e1d18;
+        border-bottom-color: #a8813f;
+      }
+      .linea select:focus-visible {
+        outline: 2px solid #a8813f;
+        outline-offset: 2px;
+      }
+      .linea select:disabled {
+        color: #8a6a5c;
+        cursor: default;
+        background-image: none;
+        border-bottom-style: none;
+        padding-right: 0;
+      }
+      /* Por defecto TODO es el plan, así que marcar «recomendada» en las 6 líneas
+         no informaba de nada. Se marca lo contrario: lo que el cliente cambió. */
+      .linea {
+        border-left: 0.28cqw solid transparent;
+        padding-left: 1.6cqw;
+        margin-left: -1.88cqw;
+      }
+      .linea.cambiada {
+        border-left-color: #a8813f;
+        background: linear-gradient(
+          90deg,
+          rgba(168, 129, 63, 0.07),
+          rgba(168, 129, 63, 0) 60%
+        );
+      }
+      .linea.cambiada .linea-cifra,
+      .linea.cambiada .linea-n {
+        color: #a8813f;
+      }
+
+      .calc-total {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 2cqw;
+        margin-top: 2.4cqw;
+        padding-top: 1.7cqw;
+        border-top: 0.19cqw solid #6e1d18;
+      }
+      .calc-total .k {
+        font-size: 1.3cqw;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #8a6a5c;
+      }
+      .calc-total .k small {
+        display: block;
+        letter-spacing: 0;
+        text-transform: none;
+        font-weight: 400;
+        font-size: 1.2cqw;
+        color: #8a6a5c;
+        margin-top: 0.5cqw;
+      }
+      .calc-total .v {
+        font-size: 5.4cqw;
+        font-weight: 700;
+        color: #6e1d18;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        letter-spacing: -0.02em;
+        text-align: right;
+        line-height: 1;
+      }
+      .calc-total .v small {
+        display: block;
+        font-size: 1.2cqw;
+        font-weight: 500;
+        margin-top: 0.7cqw;
+        color: #a8813f;
+        letter-spacing: 0;
+      }
+      .reset {
+        font-family: var(--sans);
+        font-size: 1.02cqw;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #8a6a5c;
+        background: none;
+        border: 1px solid rgba(110, 29, 24, 0.22);
+        padding: 0.85cqw 1.5cqw;
+        margin-top: 1.9cqw;
+        cursor: pointer;
+        transition: color 0.2s ease, border-color 0.2s ease;
+      }
+      .reset:hover {
+        color: #6e1d18;
+        border-color: #a8813f;
+      }
+      .reset:focus-visible {
+        outline: 2px solid #a8813f;
+        outline-offset: 2px;
+      }
+      .calc-nota {
+        font-size: 1.11cqw;
+        color: #8a6a5c;
+        line-height: 1.5;
+        max-width: 46cqw;
+        margin-top: 1.5cqw;
+      }
+
+      /* pie idéntico al de las láminas: logo + sellos + barra verde */
+      .calc-pie {
+        display: flex;
+        /* la regla global `footer {}` de la página impone column: aquí va en fila */
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 0;
+        gap: 2cqw;
+        margin: 0 8.15cqw;
+        padding: 2.8cqw 0 3cqw;
+        border-top: 1px solid #e6dccc;
+      }
+      .calc-pie .logo-tm {
+        width: 21.5cqw;
+        aspect-ratio: 1347/350;
+        background-image: url('/logo-cotizacion.png');
+        background-position: center;
+        background-size: contain;
+        background-repeat: no-repeat;
+      }
+      .calc-pie .sellos {
+        display: flex;
+        gap: 1.1cqw;
+      }
+      .calc-pie .sellos i {
+        display: block;
+        width: 5.9cqw;
+        height: 5.9cqw;
+        background-position: center;
+        background-size: contain;
+        background-repeat: no-repeat;
+      }
+      .calc-pie .s1 {
+        background-image: url('/certification-logo-1.png');
+      }
+      .calc-pie .s2 {
+        background-image: url('/certification-logo-2.png');
+      }
+      .calc-pie .s3 {
+        background-image: url('/certification-logo-3.png');
+      }
+      .calc .barra-card {
+        height: 1.85cqw;
+        background: linear-gradient(
+          90deg,
+          #1f5130 0%,
+          #1f5130 62%,
+          #123320 62%
+        );
+      }
+
+      /* ---- entrada de cada lámina, guiada por el scroll ----
+         Va dentro de @supports: si el navegador no soporta animation-timeline
+         las tarjetas simplemente se ven, nunca quedan invisibles. Por eso no se
+         usa JS con opacity:0 de arranque. */
+      @keyframes entra {
+        from {
+          opacity: 0;
+          transform: translateY(42px) scale(0.965);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @keyframes sale {
+        to {
+          opacity: 0.45;
+          transform: translateY(-18px) scale(0.985);
+        }
+      }
+      @supports (animation-timeline: view()) {
+        @media (prefers-reduced-motion: no-preference) {
+          .tarjeta {
+            animation:
+              entra linear both,
+              sale linear both;
+            animation-timeline: view(), view();
+            animation-range:
+              entry 5% cover 22%,
+              exit 72% exit 100%;
+          }
+          header {
+            animation: entra 0.7s ease-out both;
+          }
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        .tarjeta::before {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <p class="eyebrow">Subastas con Propósito</p>
+      <h1>Cotización Soul</h1>
+      <p class="sub">
+        Plan de producción · 240 unidades · valores en pesos colombianos
+      </p>
+      <p class="pista">Desliza para ver el plan</p>
+    </header>
+
+    <!--
+    Cada lámina del deck VIVO de Slides va en su propio iframe, fijado con
+    `slide=id.pN`, y se recorren con scroll. Lo que se edite en la presentación
+    aparece aquí sin volver a desplegar la app.
+    No copiar precios a este HTML: el deck es la única fuente.
+
+      «ACTUAL de Cotización Soul — Cards 1080×1920»
+      id 1i4IqcwHdJUxlYOEv10rhtx2KPGvCtvrWB1l0IV_i-5o
+
+    REQUISITO: compartir el deck como «cualquiera con el enlace · LECTOR».
+    Hoy está en EDITOR: cualquiera con esta URL podría cambiar los precios.
+  -->
+    <div class="pila" id="pila"></div>
+
+    <!-- Última lámina: el calculador. Va dentro de .pila para que la cinta siga
+         siendo continua. Solo precio de venta: piso, costo y margen se quedan
+         fuera a propósito — esta página la ve el cliente. -->
+    <section class="calc" id="calc" aria-labelledby="calc-t">
+      <div class="calc-cuerpo">
+        <p class="eyebrow">Cierre · arma tu combinación</p>
+        <h2 id="calc-t">Calcula el plan</h2>
+        <p class="calc-sub">Cambia las opciones y mira cómo se mueve el total.</p>
+
+        <div class="cabecera" aria-hidden="true">
+          <span class="cu">Precio por unidad</span>
+          <span class="ct">Precio total</span>
+        </div>
+        <div id="lineas"></div>
+
+        <div class="calc-total">
+          <p class="k">Precio Total del Plan <small>240 unidades</small></p>
+          <p class="v" id="total">—</p>
+        </div>
+        <button type="button" class="reset" id="reset">Volver al plan</button>
+        <p class="calc-nota">
+          Las alternativas de cada pieza son excluyentes: no se suman. Precios
+          sujetos a confirmación.
+        </p>
+      </div>
+
+      <footer class="calc-pie">
+        <i class="logo-tm" role="img" aria-label="Tierra Mädre"></i>
+        <span class="sellos" role="img" aria-label="Certificados de origen: geográfico, consciente y social, y natural">
+          <i class="s1"></i><i class="s2"></i><i class="s3"></i>
+        </span>
+      </footer>
+      <div class="barra-card"></div>
+    </section>
+
+
+    <footer>
+      <a
+        class="abrir"
+        href="https://docs.google.com/presentation/d/1i4IqcwHdJUxlYOEv10rhtx2KPGvCtvrWB1l0IV_i-5o/view"
+        target="_blank"
+        rel="noopener"
+        >Abrir la presentación</a
+      >
+      <div class="marca">
+        TIERRA MÄDRE
+        <small>Esmeraldas con ADN de Paz</small>
+      </div>
+      <p class="nota">
+        Precios sujetos a confirmación. Las alternativas de cada pieza son
+        excluyentes: no se suman.
+      </p>
+    </footer>
+
+    <div class="barra"></div>
+
+    <script>
+      (function () {
+        var DECK = '1i4IqcwHdJUxlYOEv10rhtx2KPGvCtvrWB1l0IV_i-5o';
+        var LAMINAS = 8; // portada + 6 líneas + resumen
+        var pila = document.getElementById('pila');
+
+        for (var n = 1; n <= LAMINAS; n++) {
+          var t = document.createElement('div');
+          t.className = 'tarjeta';
+
+          var num = document.createElement('span');
+          num.className = 'num';
+          num.textContent = n + ' / ' + LAMINAS;
+          t.appendChild(num);
+
+          var f = document.createElement('iframe');
+          f.title = 'Cotización Soul — lámina ' + n + ' de ' + LAMINAS;
+          // loading=lazy nativo: el navegador difiere las de abajo solo.
+          // Se probó un IntersectionObserver a mano y no dispara si la pestaña
+          // no está pintando -> quedaban 8 tarjetas en blanco. Esto no falla así.
+          f.setAttribute('loading', 'lazy');
+          f.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+          f.src =
+            'https://docs.google.com/presentation/d/' +
+            DECK +
+            '/embed?start=false&loop=false&rm=minimal&slide=id.p' +
+            n;
+          t.appendChild(f);
+
+          pila.appendChild(t);
+        }
+      })();
+    </script>
+
+    <script>
+      (function () {
+        'use strict';
+        // ─────────────────────────────────────────────────────────────
+        // EDITABLE · precios tomados del deck «ACTUAL» (16-jul, 16:53).
+        // Solo precio de venta al cliente: aquí NO va piso, costo ni margen.
+        // Si se cambian los precios en la presentación, hay que cambiarlos
+        // también aquí — este bloque es la única copia.
+        // `tot` es el total tal como lo imprime el deck: sus totales salen del
+        // unitario SIN redondear, así que pu×un no los reproduce (difiere en
+        // decenas de pesos). Se suma `tot` para cuadrar con las láminas.
+        // Línea 01 va 100 Hombres + 100 Mujer (decisión de Kevin, 16-jul).
+        // ─────────────────────────────────────────────────────────────
+        var LINEAS = [
+          {
+            k: 'BH',
+            nombre: 'Brazalete Modular 5 Chakras',
+            quien: 'Hombres',
+            un: 100,
+            opts: [
+              {
+                id: 'acero',
+                et: 'Acabado Solo Acero',
+                pu: 1113264,
+                tot: 111326400,
+              },
+            ],
+          },
+          {
+            k: 'BM',
+            nombre: 'Brazalete Modular 5 Chakras',
+            quien: 'Mujer',
+            un: 100,
+            opts: [
+              {
+                id: 'banos',
+                et: 'Acabado + 3 Baños en Oro',
+                pu: 1209849,
+                tot: 120984939,
+              },
+              {
+                id: 'enchape',
+                et: 'Acabado Enchape en Oro',
+                pu: 1306435,
+                tot: 130643477,
+              },
+            ],
+          },
+          {
+            k: 'N',
+            nombre: 'Anillo Nexus',
+            un: 10,
+            opts: [
+              {
+                id: 'f2',
+                et: 'Esmeralda F2 Verde Chivor',
+                pu: 8000000,
+                tot: 80000000,
+              },
+              {
+                id: 'prem',
+                et: 'Esmeralda Premium 1 Ct',
+                pu: 12115183,
+                tot: 121151835,
+              },
+            ],
+          },
+          {
+            k: 'D',
+            nombre: 'Dije Canutillo Master',
+            un: 10,
+            opts: [
+              {
+                id: 'fino',
+                et: 'Canutillo Comercial Fino',
+                pu: 6000000,
+                tot: 60000000,
+              },
+              {
+                id: 'super',
+                et: 'Canutillo Comercial Super Fina',
+                pu: 8279195,
+                tot: 82791949,
+              },
+            ],
+          },
+          {
+            k: 'P',
+            nombre: 'Pulsera Infinito (Tennis)',
+            un: 10,
+            opts: [
+              {
+                id: 'cf',
+                et: 'Comercial Fina · 1,5 mm',
+                pu: 14400000,
+                tot: 144000000,
+              },
+              {
+                id: 'fe',
+                et: 'Fina Esencial · 3 mm',
+                pu: 56757646,
+                tot: 567576455,
+              },
+              {
+                id: 'cu',
+                et: 'Cuadradas · 3 mm',
+                pu: 79162327,
+                tot: 791623266,
+              },
+            ],
+          },
+          {
+            k: 'T',
+            nombre: 'Anillo Trinity',
+            un: 10,
+            opts: [
+              { id: 'ml', et: 'Moléculas de Luz', pu: 5500000, tot: 55000000 },
+            ],
+          },
+        ];
+        // el plan: la opción con la que se arma el precio de referencia
+        var PLAN = {
+          BH: 'acero',
+          BM: 'banos',
+          N: 'f2',
+          D: 'fino',
+          P: 'cf',
+          T: 'ml',
+        };
+
+        var sel = Object.assign({}, PLAN);
+
+        function cop(n) {
+          n = Math.round(n);
+          var s = String(Math.abs(n)),
+            o = '';
+          while (s.length > 3) {
+            o = '.' + s.slice(-3) + o;
+            s = s.slice(0, -3);
+          }
+          s = '$' + s + o;
+          // separador de millones a la manera de la marca: $571’311.339
+          return (
+            (n < 0 ? '−' : '') + s.replace(/\.(\d{3})\.(\d{3})$/, '’$1.$2')
+          );
+        }
+        function millones(n) {
+          return '$' + (n / 1000000).toFixed(1).replace('.', ',') + ' millones';
+        }
+        function opt(L, id) {
+          for (var i = 0; i < L.opts.length; i++)
+            if (L.opts[i].id === id) return L.opts[i];
+          return L.opts[0];
+        }
+        function totalDe(cual) {
+          var t = 0;
+          LINEAS.forEach(function (L) {
+            t += opt(L, cual[L.k]).tot;
+          });
+          return t;
+        }
+        var BASE = totalDe(PLAN);
+
+        var cont = document.getElementById('lineas');
+        LINEAS.forEach(function (L) {
+          var d = document.createElement('div');
+          d.className = 'linea';
+          d.dataset.k = L.k;
+
+          var n = document.createElement('p');
+          n.className = 'linea-n';
+          n.textContent = L.nombre;
+          if (L.quien) {
+            var em = document.createElement('em');
+            em.textContent = L.quien + ' · ' + L.un + ' u';
+            n.appendChild(em);
+          } else {
+            var em2 = document.createElement('em');
+            em2.textContent = L.un + ' u';
+            n.appendChild(em2);
+          }
+          d.appendChild(n);
+
+          var s = document.createElement('select');
+          s.setAttribute(
+            'aria-label',
+            'Opción de ' + L.nombre + (L.quien ? ' ' + L.quien : ''),
+          );
+          L.opts.forEach(function (o) {
+            var op = document.createElement('option');
+            op.value = o.id;
+            op.textContent = o.et;
+            s.appendChild(op);
+          });
+          if (L.opts.length === 1) s.disabled = true;
+          s.addEventListener('change', function () {
+            sel[L.k] = s.value;
+            pintar();
+          });
+          d.appendChild(s);
+
+          var c = document.createElement('p');
+          c.className = 'linea-cifra';
+          c.dataset.cifra = L.k;
+          d.appendChild(c);
+
+          cont.appendChild(d);
+        });
+
+        function pintar() {
+          LINEAS.forEach(function (L) {
+            var o = opt(L, sel[L.k]);
+            var fila = cont.querySelector('[data-k="' + L.k + '"]');
+            fila.querySelector('select').value = o.id;
+            fila.classList.toggle('cambiada', o.id !== PLAN[L.k]);
+            var c = fila.querySelector('[data-cifra="' + L.k + '"]');
+            c.textContent = '';
+            c.appendChild(document.createTextNode(cop(o.tot)));
+            var sm = document.createElement('small');
+            sm.textContent = cop(o.pu) + ' × ' + L.un;
+            c.appendChild(sm);
+          });
+
+          var t = totalDe(sel);
+          var d = t - BASE;
+          var tv = document.getElementById('total');
+          tv.textContent = '';
+          tv.appendChild(document.createTextNode(cop(t)));
+          var sm = document.createElement('small');
+          sm.textContent =
+            Math.abs(d) < 1
+              ? 'El plan tal como está propuesto.'
+              : (d > 0 ? '+' : '−') +
+                millones(Math.abs(d)).slice(1) +
+                ' frente al plan propuesto.';
+          tv.appendChild(sm);
+        }
+
+        document.getElementById('reset').addEventListener('click', function () {
+          sel = Object.assign({}, PLAN);
+          pintar();
+        });
+
+        pintar();
+      })();
+    </script>
+  </body>
+</html>

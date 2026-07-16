@@ -222,6 +222,10 @@
   ],
   "rewrites": [
     {
+      "source": "/cotizacion-soul",
+      "destination": "/cotizacion-soul.html"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/:path*"
     },
