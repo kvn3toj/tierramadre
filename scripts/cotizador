@@ -1,5 +1,15 @@
 #!/bin/zsh
 # El cotizador con su venv, para que el bot no tenga que conocer rutas de Python.
-# TM_SCRATCH trae opt/ (logo, pergamino) que el render necesita.
+#
+# TM_SCRATCH trae opt/ con los activos que el render necesita SIEMPRE, no sólo
+# para el plan Soul: el logo del pie y el pergamino de «Fotografía en producción».
+# Sin él el render aborta con «Faltan las fotos optimizadas» antes de dibujar
+# nada, así que aquí se le da un valor por defecto en vez de exigirle al bot que
+# lo sepa. Se puede sobreescribir exportando TM_SCRATCH.
+#
+# Apunta a tests/fixtures porque ahí viven esos activos versionados — son los
+# mismos archivos de marca, no copias de prueba. DEUDA: si algún día los activos
+# de producción divergen de los del fixture, sepáralos y cambia este defecto.
 DIR="${0:a:h}"
+export TM_SCRATCH="${TM_SCRATCH:-$DIR/tests/fixtures}"
 exec "$DIR/venv/bin/python" "$DIR/build-cotizacion-pptx.py" "$@"
