@@ -17,6 +17,7 @@ import { getAsesorCotizacionesFolder } from './_lib/drive-helpers.js';
 import {
   construyeSubida,
   eligeOperacion,
+  esNumeroValido,
   escapaParaQuery,
   nombreDeck,
 } from './_lib/deck-upload.js';
@@ -50,6 +51,13 @@ export default withApiHandler(
     const subido = files.deck?.[0];
     if (!quotationNumber || !asesorEmail || !subido) {
       return sendError(res, 400, 'Faltan quotationNumber, asesorEmail o deck');
+    }
+    if (!esNumeroValido(quotationNumber)) {
+      return sendError(
+        res,
+        400,
+        'quotationNumber inválido: solo letras, dígitos, "-" y "_"',
+      );
     }
 
     const buffer = await readFile(subido.filepath);

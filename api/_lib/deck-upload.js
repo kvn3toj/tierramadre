@@ -17,15 +17,38 @@ export function nombreDeck(quotationNumber) {
 }
 
 /**
- * Escapa comillas simples antes de interpolar en un query `q` de Drive.
+ * Escapa backslashes y comillas simples antes de interpolar en un query `q`
+ * de Drive.
  *
- * Mismo patrón que `findCollectionFolder` en drive-helpers.js — un
- * quotationNumber con comilla simple rompe la sintaxis del query si no se
- * escapa. `nombreDeck` en sí no cambia (es el nombre real del archivo); esto
- * solo se aplica al valor que va dentro del string `q`.
+ * El orden importa: hay que escapar `\` ANTES que `'`. Dentro de un string
+ * `'...'` de la sintaxis de Drive, `\'` es una comilla literal y `\\` es una
+ * barra literal. Si solo se escapara la comilla, un valor que termine en `\`
+ * (p. ej. `a\`) produciría `name = 'a\'` — ese `\'` final se interpretaría
+ * como comilla escapada y el string nunca cerraría, dejando el query
+ * malformado (y, con más input detrás, inyectable). Escapar la comilla sin
+ * escapar antes la barra es el bypass clásico.
+ *
+ * `nombreDeck` en sí no cambia (es el nombre real del archivo); esto solo se
+ * aplica al valor que va dentro del string `q`. Ver también la validación en
+ * `esNumeroValido` — capa primaria: rechazar en el borde en vez de confiar
+ * solo en el escapado.
  */
 export function escapaParaQuery(valor) {
-  return valor.replace(/'/g, "\\'");
+  return valor.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+/**
+ * Valida que un quotationNumber sea un identificador seguro (letras, dígitos,
+ * guion y guion bajo) antes de usarlo en nombres de archivo o queries de
+ * Drive.
+ *
+ * Capa primaria de defensa: rechazar en el borde es más fuerte que escapar
+ * río abajo, y evita que basura (o un intento de inyección) llegue a crear
+ * archivos con nombres raros en el Drive del dueño. El caller debe rechazar
+ * (400), nunca sanear/recortar en silencio.
+ */
+export function esNumeroValido(quotationNumber) {
+  return /^[A-Za-z0-9_-]+$/.test(quotationNumber);
 }
 
 export function construyeSubida(nombre, folderId, buffer) {
