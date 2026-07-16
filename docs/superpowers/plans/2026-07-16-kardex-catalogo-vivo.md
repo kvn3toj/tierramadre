@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Emitir el recibo de kardex de consignación de los catálogos vivos M-001/M-002 hacia Juan Manuel Escobar Ramírez, y poder reenviarlo desde el celular vía anima_TM_bot.
+**Goal:** Emitir el recibo de kardex de consignación de los catálogos vivos M-001/M-002 hacia Juan Manuel Escobar Ramirez, y poder reenviarlo desde el celular vía anima_TM_bot.
 
 **Architecture:** La Fase 1 es **operativa, cero código** — la página `/admin/fotosintesis/movimientos` ya registra el batch multi-ítem, renderiza el comprobante y sube el PDF a Drive. La Fase 2 agrega las 4 piezas que hoy faltan para que el bot pueda reenviar ese PDF después: persistir el `comprobanteUrl` (hoy vive solo en estado de React y se pierde al cerrar la pestaña), un proxy de Drive para PDFs (`serve-drive-image` es solo imágenes), envío de documentos en el bot (no existe), y el comando.
 
@@ -61,9 +61,28 @@ En `/admin/fotosintesis` → EditDrawer de cada ítem → cambiar `estado` de `R
 
 Cada cambio se audita solo vía `productEdits` y se sincroniza a la hoja con el `products.pushToSheet` existente. Sin esto, `registerHandoffBatch` rechaza estas 7 líneas.
 
+> `DISPONIBLE` **no es el destino, es un salto de un segundo.** `_registerHandoff` exige
+> `estado === 'DISPONIBLE'` para dejar entrar el ítem, y en la misma mutación lo mueve a `ASESOR`.
+> Los anillos terminan con Juan Manuel, no en la vitrina.
+
 - [ ] **Step 3: Registrar el batch**
 
-Ir a `/admin/fotosintesis/movimientos`. Tipo: **entrega**. Destinatario: `Juan Manuel Escobar Ramírez` (texto libre — no está en el directorio de asesores, así que `destino` se infiere como `consignacion`; si la UI permite forzarlo, marcarlo explícito).
+Ir a `/admin/fotosintesis/movimientos`. Tipo: **entrega**.
+
+**Destinatario: `Juan Manuel Escobar Ramirez`** — escribirlo **sin tilde en "Ramirez"**, tal como
+lo tiene el directorio. La UI debería resolverlo contra `get-asesores` y asignar
+`asesorId: asesor_11` (rol "Embajador - Admin"). Verificar que lo resuelva; si el autocompletar lo
+ofrece, elegirlo de la lista en vez de teclearlo.
+
+> ⚠️ **Corregido 2026-07-16.** La versión anterior de este runbook decía que Juan Manuel _no está
+> en el directorio_ y que fuera como `consignacion`. **Era falso.** Está: `asesor_11`, Embajador -
+> Admin. Es un **asesor interno**, así que el destino correcto es **`asesor`** → estado `ASESOR`,
+> no `CONSIGNACION`. Si la UI expone el selector de destino, marcarlo explícito: `destino`
+> explícito le gana a la heurística.
+>
+> **La tilde parte el historial.** `listByAsesor` busca por string exacto sobre el índice
+> `by_asesorNombre`. Si registras "Ramírez" y el resto del sistema dice "Ramirez", quedan dos
+> personas distintas que nunca se cruzan.
 
 Las **20 líneas**:
 
@@ -630,14 +649,14 @@ describe('comprobanteCaption', () => {
     expect(
       comprobanteCaption({
         kardexEventId: 'KDX-1784-abc',
-        asesorNombre: 'Juan Manuel Escobar Ramírez',
+        asesorNombre: 'Juan Manuel Escobar Ramirez',
         fecha: '2026-07-16',
         tipo: 'entrega',
         itemCount: 20,
         comprobanteUrl: 'https://drive.google.com/uc?export=view&id=1x',
       }),
     ).toBe(
-      '📄 Kardex KDX-1784-abc\nEntrega · 20 ítems\nJuan Manuel Escobar Ramírez · 2026-07-16',
+      '📄 Kardex KDX-1784-abc\nEntrega · 20 ítems\nJuan Manuel Escobar Ramirez · 2026-07-16',
     );
   });
 
@@ -929,7 +948,7 @@ Ahora sí debe persistir el `comprobanteUrl`.
 - [ ] **Step 2: Verificar que quedó guardado**
 
 Run: `npx convex run asesorMovements:getComprobante --prod '{"kardexEventId":"<el id real>"}'`
-Expected: JSON con `comprobanteUrl` no nulo, `asesorNombre: "Juan Manuel Escobar Ramírez"`, `itemCount: 20`
+Expected: JSON con `comprobanteUrl` no nulo, `asesorNombre: "Juan Manuel Escobar Ramirez"`, `itemCount: 20`
 
 - [ ] **Step 3: Verificar el proxy**
 
@@ -939,7 +958,7 @@ Expected: `HTTP/2 200` y `content-type: application/pdf`
 - [ ] **Step 4: Probar el comando en Telegram**
 
 Mandarle `/kardex <kardexEventId>` a @anima_TM_bot por DM.
-Expected: llega el PDF como documento, con caption `📄 Kardex KDX-… / Entrega · 20 ítems / Juan Manuel Escobar Ramírez · 2026-07-16`.
+Expected: llega el PDF como documento, con caption `📄 Kardex KDX-… / Entrega · 20 ítems / Juan Manuel Escobar Ramirez · 2026-07-16`.
 
 - [ ] **Step 5: Probar los caminos de error**
 

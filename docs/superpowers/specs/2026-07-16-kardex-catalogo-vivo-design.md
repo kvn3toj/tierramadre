@@ -2,7 +2,21 @@
 
 **Fecha:** 2026-07-16
 **Estado:** aprobado, pendiente de plan de implementación
-**Destinatario del primer kardex:** Juan Manuel Escobar Ramírez (comercializador externo, sin cuenta en el sistema)
+**Destinatario del primer kardex:** Juan Manuel Escobar Ramirez — **asesor interno** (`asesor_11`,
+rol "Embajador - Admin" en el directorio `get-asesores`).
+
+> ✏️ **Corregido el 2026-07-16.** La primera versión de esta spec lo trataba como
+> _"comercializador externo, sin cuenta en el sistema"_ y usaba `destino: 'consignacion'`. **Era
+> falso.** Producción lo desmiente por dos lados: en los kardex existentes
+> (`KDX-MAURICIO-ECHEVERRY-20260708`, `KDX-PABLO-LOAIZA-20260708`) figura como
+> `entregadoPorNombre: "Juan Manuel Escobar (Director Comercial)"` — o sea, quien _entrega_ — y el
+> directorio lo lista como `asesor_11`, Embajador - Admin, con cuenta. El dueño confirmó: sí
+> recibe estos dos catálogos, pero **como asesor interno**. Ver "Destino" abajo.
+
+> ⚠️ **La tilde importa.** El directorio lo escribe **"Juan Manuel Escobar Ramirez"** (sin tilde
+> en Ramirez). `asesorMovements.listByAsesor` busca por string exacto sobre el índice
+> `by_asesorNombre`, así que registrar "Ramírez" con tilde parte su historial en dos identidades
+> que nunca se encuentran. **Usar la grafía del directorio, literal.**
 
 ## Problema
 
@@ -21,7 +35,7 @@ construido y probado**:
 | Pieza                                | Ubicación                                                   | Qué hace                                                                                                |
 | ------------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `registerHandoffBatch`               | `convex/asesorMovements.ts:455`                             | "One form, one recipient, one printed comprobante, N items" → N filas con un `kardexEventId` compartido |
-| `destino: 'consignacion'`            | `convex/asesorMovements.ts` (registerArgs)                  | Estado `CONSIGNACION` para comercializador externo sin cuenta                                           |
+| `destino: 'asesor'`                  | `convex/asesorMovements.ts` (registerArgs)                  | Estado `ASESOR` para asesor interno del directorio (**este caso** — ver "Destino")                      |
 | `listByKardexEventId`                | `convex/asesorMovements.ts:519`                             | Alimenta el PDF del comprobante                                                                         |
 | `MovimientoKardexPreview`            | `src/pages/admin/Fotosintesis/components/`                  | Renderiza el comprobante                                                                                |
 | `exportAndUploadMovimientoKardexPdf` | `src/pages/admin/Fotosintesis/exportMovimientoKardexPdf.ts` | Captura → Drive `movimientos-asesor/YYYY/MM`                                                            |
@@ -77,6 +91,35 @@ Lunares `C-034`, Brújula Sagrada `C-007`, Amor de Verano `C-008`, Teia `C-019`.
 Decisión: `M-001` y `M-002` son etiquetas legibles que viajan en `notas` por línea y en el título
 del PDF. La identidad real del evento es el `kardexEventId` (`KDX-<ts>-<hash>`) que el sistema ya
 genera. Ningún `loteId` se toca.
+
+### 5. Destino: `asesor` (interno), NO `consignacion`
+
+**Corregido el 2026-07-16 — la primera versión de esta spec estaba equivocada.**
+
+Juan Manuel Escobar Ramirez es **`asesor_11`, "Embajador - Admin"** en el directorio
+`get-asesores`. No es un comercializador externo: tiene cuenta, y en los kardex existentes de
+producción aparece del _otro_ lado del mostrador, como `entregadoPorNombre: "Juan Manuel Escobar
+(Director Comercial)"` en las entregas a Mauricio Echeverry y Pablo Loaiza. El dueño confirmó que
+sí recibe estos dos catálogos, pero en calidad de asesor interno.
+
+Consecuencias concretas:
+
+|                                      | Antes (mal)                   | Ahora                                                     |
+| ------------------------------------ | ----------------------------- | --------------------------------------------------------- |
+| `destino`                            | `'consignacion'`              | **`'asesor'`**                                            |
+| `asesorId`                           | (vacío)                       | **`'asesor_11'`**                                         |
+| `productInventory.estado` resultante | `CONSIGNACION`                | **`ASESOR`**                                              |
+| `asesorNombre`                       | "Juan Manuel Escobar Ramírez" | **"Juan Manuel Escobar Ramirez"** (grafía del directorio) |
+
+`destino` explícito **siempre gana** sobre la heurística de `_registerHandoff` (`destino ??
+(asesorId ? 'asesor' : 'consignacion')`), así que pasarlo cierra el tema aunque el `asesorId` se
+perdiera. Se pasan los dos de todos modos.
+
+**Nota sobre el nombre del documento:** se sigue llamando "kardex de consignación de catálogo
+vivo" porque así lo nombra el dueño y así se entiende el negocio — pero mecánicamente es una
+entrega a asesor interno (`ASESOR`), no una consignación externa (`CONSIGNACION`). El nombre
+coloquial y el estado del sistema no coinciden, y está bien: no hay que forzar el dato para que
+encaje con el apodo.
 
 ## Contenido del recibo
 
@@ -186,10 +229,13 @@ destinatario a devolver piezas que nunca recibió. Requiere conteo físico antes
 
 ## Componentes a construir
 
-1. **Saneamiento de estado** — pasar 7 ítems `Retornado` → `DISPONIBLE` (auditado).
-2. **Emisión del kardex** — `registerHandoffBatch` con las 20 líneas, `destino: 'consignacion'`,
-   `condicion` con las 4 líneas de texto libre + la condición de devolución, `notas` por línea con
-   M-001/M-002.
+1. **Saneamiento de estado** — pasar 7 ítems `Retornado` → `DISPONIBLE` (auditado). `DISPONIBLE`
+   es un salto transitorio, no el destino: `_registerHandoff` exige ese estado para dejar entrar
+   el ítem y acto seguido lo mueve a `ASESOR`.
+2. **Emisión del kardex** — `registerHandoffBatch` con las 20 líneas, `destino: 'asesor'` +
+   `asesorId: 'asesor_11'`, `asesorNombre: "Juan Manuel Escobar Ramirez"` (sin tilde, grafía del
+   directorio), `condicion` con las 4 líneas de texto libre + la condición de devolución, `notas`
+   por línea con M-001/M-002.
 3. **Comando del bot** — dado un `kardexEventId`, resolver el enlace de Drive del comprobante y
    enviarlo al DM del owner. Único componente genuinamente nuevo.
 
