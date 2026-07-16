@@ -59,6 +59,7 @@ import { useAsesores } from '../../../hooks/useAsesores';
 import { matchesAsesorName } from '../../../utils/asesorNameUtils';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { MovimientoKardexPreview } from './components/MovimientoKardexPreview';
+import { resolveItemThumbnail } from './utils/resolveThumbnail';
 import { exportAndUploadMovimientoKardexPdf } from './exportMovimientoKardexPdf';
 import { comprobanteFilename } from './comprobanteFilename';
 
@@ -316,6 +317,43 @@ export default function MovimientosKardexPage() {
         movimientoId: string;
       }>
     | undefined;
+
+  // ── Photos for the comprobante ───────────────────────────────────────────
+  // `asesorMovements` rows carry no photo — the ledger stores the movement,
+  // not the piece. Join productInventory for each item's `fotoUrl`, the same
+  // way the sale carnet resolves its thumbnails.
+  const kardexItemIds = useMemo(
+    () => [...new Set((kardexEventRows ?? []).map((r) => r.itemId))],
+    [kardexEventRows],
+  );
+
+  const kardexProducts = useConvexQuery(
+    convexApi.products.getManyByItemIds,
+    convexReady && kardexItemIds.length > 0
+      ? { itemIds: kardexItemIds }
+      : 'skip',
+  ) as Array<{ itemId: string; fotoUrl?: string }> | undefined;
+
+  const kardexRowsWithFotos = useMemo(() => {
+    const rows = kardexEventRows ?? [];
+    if (!kardexProducts?.length) return rows;
+    const fotoByItemId = new Map(
+      kardexProducts.map((p) => [p.itemId, p.fotoUrl]),
+    );
+    return rows.map((r) => ({
+      ...r,
+      // resolveItemThumbnail routes the Drive URL through our own
+      // /api/serve-drive-image proxy. That is load-bearing, not cosmetic: a
+      // raw drive.google.com src taints html2canvas's canvas and the PDF
+      // export fails outright. No batch fallback here — a consignment
+      // comprobante shows the piece's own photo or none.
+      fotoUrl: resolveItemThumbnail(
+        fotoByItemId.get(r.itemId),
+        r.itemId,
+        undefined,
+      ),
+    }));
+  }, [kardexEventRows, kardexProducts]);
 
   async function handleGenerateComprobante() {
     if (!activeKardexEventId || !previewRef.current) return;
@@ -940,7 +978,7 @@ export default function MovimientosKardexPage() {
           >
             <Box ref={previewRef}>
               <MovimientoKardexPreview
-                rows={kardexEventRows ?? []}
+                rows={kardexRowsWithFotos}
                 kardexEventId={activeKardexEventId}
               />
             </Box>
