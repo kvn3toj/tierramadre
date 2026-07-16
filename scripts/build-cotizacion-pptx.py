@@ -429,7 +429,7 @@ def velo(slide, x, y, w, h, color, alpha):
     return s
 
 
-def lamina_portada(prs, qr):
+def lamina_portada(prs, qr, d):
     s = prs.slides.add_slide(prs.slide_layouts[6])
     from PIL import Image
     comp = os.path.join(SCRATCH, "comp-portada.jpg")
@@ -453,14 +453,14 @@ def lamina_portada(prs, qr):
           tam=15, color=RGBColor(0xDC, 0xB8, 0x72), negrita=True, track=.32, mayus=True)
     texto(s, MARGEN, 1330, W - MARGEN * 2, 260, "Cotización\nSoul",
           fuente=SERIF, tam=118, color=CREMA, negrita=True, interlinea=0.92)
-    texto(s, MARGEN, 1590, 700, 30, "Plan de producción · %s unidades" % bc.UNIDADES_PLAN,
+    texto(s, MARGEN, 1590, 700, 30, "Plan de producción · %s unidades" % d.UNIDADES_PLAN,
           tam=20, color=RGBColor(0xCF, 0xC3, 0xB2))
     rect(s, MARGEN, 1642, W - MARGEN * 2, 1, RGBColor(0x7A, 0x63, 0x40))
     texto(s, MARGEN, 1664, 500, 20, "Precio Total del Plan",
           tam=13, color=RGBColor(0xDC, 0xB8, 0x72), negrita=True, track=.22, mayus=True)
-    texto(s, MARGEN, 1692, 700, 90, bc.TOTAL_PLAN, tam=64, color=CREMA, negrita=True)
+    texto(s, MARGEN, 1692, 700, 90, d.TOTAL_PLAN, tam=64, color=CREMA, negrita=True)
     texto(s, MARGEN, 1800, 700, 24,
-          "Valores en pesos colombianos (COP) · %s" % bc.FECHA,
+          "Valores en pesos colombianos (COP) · %s" % d.FECHA,
           tam=14, color=RGBColor(0x9A, 0x8C, 0x7C))
     img(s, qr, W - MARGEN - 116, 1690, 116)
     rect(s, 0, H - BARRA_H, W * 0.62, BARRA_H, VERDE)
@@ -468,7 +468,7 @@ def lamina_portada(prs, qr):
     return s
 
 
-def lamina_resumen(prs, qr):
+def lamina_resumen(prs, qr, d):
     s = prs.slides.add_slide(prs.slide_layouts[6])
     rect(s, 0, 0, W, H, PAPEL)
     y = 150
@@ -480,13 +480,13 @@ def lamina_resumen(prs, qr):
     y += 230
     texto(s, MARGEN, y, W - MARGEN * 2, 60,
           "%s unidades · una opción por línea. Las alternativas de cada pieza no se suman."
-          % bc.UNIDADES_PLAN, tam=18, color=TENUE, interlinea=1.4)
+          % d.UNIDADES_PLAN, tam=18, color=TENUE, interlinea=1.4)
     y += 86
     encabeza_columnas(s, y)
     y += 26
     rect(s, MARGEN, y, W - MARGEN * 2, 1, FILETE)
     y += 22
-    for n, sub, u, pu, ptot in bc.RESUMEN:
+    for n, sub, u, pu, ptot in d.RESUMEN:
         texto(s, MARGEN + 22, y, 500, 36, n, fuente=SERIF, tam=34, color=VINO, negrita=True)
         # +46: a +40 los descendentes del nombre se comían el subtítulo
         texto(s, MARGEN + 22, y + 46, 520, 22, "%s · %s unidades" % (sub, u),
@@ -502,7 +502,7 @@ def lamina_resumen(prs, qr):
     y += 22
     texto(s, MARGEN + 22, y, 500, 20, "Precio Total del Plan", tam=14, color=TENUE,
           negrita=True, track=.22, mayus=True)
-    texto(s, MARGEN + 22, y - 14, W - MARGEN * 2 - 22, 120, bc.TOTAL_PLAN,
+    texto(s, MARGEN + 22, y - 14, W - MARGEN * 2 - 22, 120, d.TOTAL_PLAN,
           tam=76, color=VINO, negrita=True, alineado=PP_ALIGN.RIGHT)
     y += 132
     texto(s, MARGEN + 22, y, W - MARGEN * 2 - 22, 60,
@@ -517,21 +517,28 @@ def main(argv=None):
     import argparse
     ap = argparse.ArgumentParser(description="Cotización Soul → .pptx 1080×1920")
     ap.add_argument("--out", default=SALIDA, help="ruta del .pptx de salida")
+    ap.add_argument("--quote", help="quote.json; sin él se construye el plan Soul")
     args = ap.parse_args(argv)
+    if args.quote:
+        from cotizacion_quote import carga_quote
+        d = carga_quote(args.quote)
+    else:
+        d = bc
     if not os.path.isdir(OPT):
         sys.exit("Faltan las fotos optimizadas en %s (define TM_SCRATCH)" % OPT)
-    qr = qr_png(bc.QR_URL, os.path.join(SCRATCH, "qr.png"))
+    qr = qr_png(d.QR_URL, os.path.join(SCRATCH, "qr.png"))
 
     prs = Presentation()
     prs.slide_width = px(W)
     prs.slide_height = px(H)
 
-    lamina_portada(prs, qr)
-    for p in bc.PRODUCTOS:
+    lamina_portada(prs, qr, d)
+    for p in d.PRODUCTOS:
         lamina_pieza(prs, p, qr)
-        if p["key"] == "brazalete":
-            lamina_modulos(prs, bc.MODULOS, qr)
-    lamina_resumen(prs, qr)
+        # la línea de módulos es del plan Soul; una cotización suelta no la tiene
+        if getattr(d, "MODULOS", None) and p["key"] == "brazalete":
+            lamina_modulos(prs, d.MODULOS, qr)
+    lamina_resumen(prs, qr, d)
 
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     prs.save(args.out)
