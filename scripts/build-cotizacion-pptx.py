@@ -184,7 +184,7 @@ def compone_foto(p, destino):
     blancas donde dos fotos se tocan, y da control real del encuadre.
     """
     from PIL import Image
-    f = p.get("foto")
+    f = p.get("foto_ruta") or p.get("foto")
     W_, H_ = int(W), int(FOTO_H)
     lienzo = Image.new("RGB", (W_, H_), (255, 255, 255))
 
@@ -247,7 +247,38 @@ def alto_titulo(nombre, ancho=None, tam=62):
 
 
 def ruta(k, ext="jpg"):
+    # una foto de cotización ya vive en la caché con su ruta absoluta
+    if os.path.isabs(str(k)) and os.path.exists(str(k)):
+        return k
     return os.path.join(OPT, "%s.%s" % (k, ext))
+
+
+# Fotos de una cotización: llegan por fileId de Drive, no por clave de opt/.
+# El plan Soul sigue resolviendo contra opt/ y no pasa por aquí.
+FOTOS_CACHE = None
+API_BASE = os.environ.get("TM_API_BASE", "https://tierramadre.app")
+
+
+def resuelve_foto(p):
+    """
+    Deja p['foto'] como una ruta usable y decide el encuadre.
+
+    Soul trae claves de opt/ ('brazalete'); una cotización trae fileId. Si la foto
+    no baja, se vacía p['foto'] y la lámina cae al pergamino: una foto que falta
+    no tumba la cotización.
+    """
+    from cotizacion_fotos import elige_encuadre, trae_foto
+    from PIL import Image
+    f = p.get("foto")
+    if not f or FOTOS_CACHE is None:
+        return p                       # camino Soul: intacto
+    ruta_foto = trae_foto(f, FOTOS_CACHE, API_BASE)
+    if not ruta_foto:
+        p["foto"] = ""
+        return p
+    p["foto_ruta"] = ruta_foto
+    p["sangra"] = elige_encuadre(Image.open(ruta_foto)) == "sangrar"
+    return p
 
 
 def qr_png(url, destino):
@@ -518,12 +549,18 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="Cotización Soul → .pptx 1080×1920")
     ap.add_argument("--out", default=SALIDA, help="ruta del .pptx de salida")
     ap.add_argument("--quote", help="quote.json; sin él se construye el plan Soul")
+    ap.add_argument("--fotos-cache", default=os.path.join(SCRATCH, "fotos"),
+                    help="caché de fotos bajadas de Drive")
     args = ap.parse_args(argv)
     if args.quote:
         from cotizacion_quote import carga_quote
         d = carga_quote(args.quote)
     else:
         d = bc
+    if args.quote:
+        globals()["FOTOS_CACHE"] = args.fotos_cache
+        for p in d.PRODUCTOS:
+            resuelve_foto(p)
     if not os.path.isdir(OPT):
         sys.exit("Faltan las fotos optimizadas en %s (define TM_SCRATCH)" % OPT)
     qr = qr_png(d.QR_URL, os.path.join(SCRATCH, "qr.png"))
