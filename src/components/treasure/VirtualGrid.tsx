@@ -26,7 +26,6 @@ import React, {
 import { Grid, type GridImperativeAPI } from 'react-window';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import { TreasureItem } from '../../types';
-import { vhCalc } from '../../hooks/useViewportHeight';
 import { usePriceShare } from '../../contexts/PriceShareContext';
 import {
   saveScrollPos,
@@ -58,8 +57,6 @@ interface VirtualGridProps {
     /** Whether more items can be added to comparison */
     canAddToComparison?: boolean;
   }) => React.ReactNode;
-  /** Minimum height for the grid container */
-  minHeight?: number;
   /** Callback when scroll direction changes */
   onScrollDirectionChange?: (direction: 'up' | 'down') => void;
   /**
@@ -91,6 +88,10 @@ const MOBILE_COL_GAP = 12;
 const MOBILE_ROW_GAP = 18;
 const WIDE_COL_GAP = 24;
 const WIDE_ROW_GAP = 30;
+
+// Floor for the measured grid height — never collapse below this even on the
+// shortest viewports (replaces the old fixed minHeight: 600 that hid rows).
+const MIN_GRID_HEIGHT = 280;
 
 // Cell props passed via cellProps in react-window 2.x
 interface GridCellProps {
@@ -198,7 +199,6 @@ export default function VirtualGrid({
   onCertClick,
   onToggleFavorite,
   renderCard,
-  minHeight = 600,
   onScrollDirectionChange,
   scrollRestorationKey,
   restoreScroll = false,
@@ -215,6 +215,13 @@ export default function VirtualGrid({
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(
     typeof window !== 'undefined' ? document.documentElement.clientWidth : 390,
+  );
+  // Measured height so the grid ends exactly above the tab bar (single effective
+  // scroller). Seeded with a rough first-paint guess, corrected on mount.
+  const [containerHeight, setContainerHeight] = useState(() =>
+    typeof window !== 'undefined'
+      ? Math.max(MIN_GRID_HEIGHT, window.innerHeight - 280)
+      : 600,
   );
 
   // Track scroll position for direction detection
@@ -282,24 +289,50 @@ export default function VirtualGrid({
     };
   }, [gridApi, scrollRestorationKey, restoreScroll]);
 
-  // Observe actual container width via ResizeObserver
+  // Observe container width (for card math) AND derive the grid height from the
+  // measured shell (DS3 §5.4.3). Height = <main>'s bottom minus its reserved
+  // bottom padding (tab-bar clearance) minus the grid's own top, so the grid
+  // ends exactly above the tab bar → one effective scroller (kills the old
+  // "two scrollbars fighting" feel from HEADER_OFFSET=280 + minHeight:600).
+  // Measured on layout changes only (ResizeObserver + window resize), never on
+  // scroll, so the grid never resizes mid-scroll.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    const main = document.getElementById('main-content');
+
+    const measureHeight = () => {
+      const gridTop = el.getBoundingClientRect().top;
+      const bottom = main
+        ? main.getBoundingClientRect().bottom -
+          (parseFloat(getComputedStyle(main).paddingBottom) || 0)
+        : window.innerHeight;
+      setContainerHeight(
+        Math.max(MIN_GRID_HEIGHT, Math.round(bottom - gridTop)),
+      );
+    };
 
     // Initial measurement
     setContainerWidth(el.clientWidth);
+    measureHeight();
 
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
+        if (entry.target !== el) continue;
         // contentBoxSize gives us width without padding
         const width =
           entry.contentBoxSize?.[0]?.inlineSize ?? entry.contentRect.width;
         setContainerWidth(width);
       }
+      measureHeight();
     });
     ro.observe(el);
-    return () => ro.disconnect();
+    if (main) ro.observe(main);
+    window.addEventListener('resize', measureHeight);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', measureHeight);
+    };
   }, []);
 
   // Responsive breakpoint detection
@@ -426,24 +459,18 @@ export default function VirtualGrid({
   }
 
   // Calculate row count based on items and columns
-  // Add 1 extra empty row at the bottom as spacer so the last real row
-  // scrolls fully above the bottom tab bar (95px + safe-area)
-  const rowCount = Math.ceil(items.length / columnCount) + 1;
+  const rowCount = Math.ceil(items.length / columnCount);
 
   // Column width as percentage
   const columnWidth = `${100 / columnCount}%`;
-
-  // Header offset for grid height calculation
-  // Accounts for: Navigation bar + search/filters + safe areas
-  const HEADER_OFFSET = 280;
 
   return (
     <Box
       ref={containerRef}
       sx={{
-        // iOS Safari fix: Use --vh custom property instead of 100vh
-        height: vhCalc(100, HEADER_OFFSET),
-        minHeight,
+        // Measured height (see effect above): ends just above the tab bar so the
+        // grid is the single effective scroller — no HEADER_OFFSET guess, no vh.
+        height: containerHeight,
         width: '100%',
         // Responsive horizontal padding
         px: { xs: 1, sm: 1, md: 2, lg: 0 },

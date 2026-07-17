@@ -37,13 +37,16 @@
   --tm-shadow: 0 18px 40px -24px rgba(13, 30, 24, 0.3);
 
   /* ---- Type roles ------------------------------------------------------ */
-  --tm-font-serif: 'Cormorant', 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
-  --tm-font-ui: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --tm-font-serif:
+    'Cormorant', 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --tm-font-ui:
+    'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    sans-serif;
   --tm-font-mono: 'DM Mono', 'SF Mono', 'Fira Code', ui-monospace, monospace;
 
   /* ---- Radius ---------------------------------------------------------- */
-  --tm-radius-well: 5px;   /* image wells, thumbnails */
-  --tm-radius-control: 8px;  /* inputs, buttons */
+  --tm-radius-well: 5px; /* image wells, thumbnails */
+  --tm-radius-control: 8px; /* inputs, buttons */
   --tm-radius-card: 12px;
   --tm-radius-sheet: 18px;
   --tm-radius-pill: 999px;
@@ -57,6 +60,13 @@
 
   /* ---- Focus ------------------------------------------------------------ */
   --tm-focus-ring: 0 0 0 2px var(--tm-bg), 0 0 0 4px var(--tm-accent);
+
+  /* ---- Layout ----------------------------------------------------------- */
+  /* Intentional-desktop content width: the centered container that ends the
+     "stretched phone layout". Sits just under the 1180px tab-bar-hide
+     breakpoint. Applied by IOSLayout to storefront + provider routes; dense
+     admin (Fotosíntesis/Atelier) is exempt (see DS3-MIGRATION-PRD §5 Fase 1). */
+  --maxw: 1160px;
 }
 
 [data-theme='dark'] {
@@ -109,4 +119,20 @@
     --tm-base: 0.01ms;
     --tm-slow: 0.01ms;
   }
+
+  /* Smooth scroll lives on <html> only (DS3 §5.4.7); disable it under reduced
+     motion so anchor jumps and restoration are instant. */
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ---- Full-bleed breakout ------------------------------------------------ */
+/* Escape hatch for image heroes that must span edge-to-edge inside the
+   --maxw content container (the container centers everything else). Neutralizes
+   the container's gutter by pulling the element out to the viewport edges. */
+.tm-full-bleed {
+  width: 100vw;
+  max-width: 100vw;
+  margin-inline: calc(50% - 50vw);
 }

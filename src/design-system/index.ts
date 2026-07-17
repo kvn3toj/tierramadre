@@ -265,3 +265,19 @@ export {
   type StackJustify,
   type ContainerMaxWidth,
 } from './components/Layout';
+
+// TabBar — the ONE unified bottom navigation (DS v3). Storefront + Fotosíntesis
+// + provider all render this component; only slots + theme differ (see
+// src/components/navigation/tabBarConfig.ts).
+export { TabBar } from './components/TabBar/TabBar';
+export type {
+  TabBarProps,
+  TabSlot,
+  TabBarTheme,
+} from './components/TabBar/TabBar';
+
+// =============================================================================
+// DS v3 COMPOSITE — one object, the whole system (theme-as-data)
+// =============================================================================
+export { ds3, getDS3, ds3Motion, ds3Status, ds3States, ds3Shell } from './v3';
+export type { DS3, DS3Mode, DS3Surfaces } from './v3';

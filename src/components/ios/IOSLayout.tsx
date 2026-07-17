@@ -14,7 +14,7 @@ import React, {
   useRef,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Box, IconButton } from '@mui/material';
+import { Box, IconButton, useMediaQuery } from '@mui/material';
 import {
   Search,
   FilterList,
@@ -22,7 +22,6 @@ import {
   FullscreenExit,
 } from '@mui/icons-material';
 
-import IOSTabBar from './IOSTabBar';
 import IOSNavigationBar, {
   NavigationBarMode,
   NavigationAction,
@@ -37,7 +36,15 @@ import {
   defaultShadows,
   appShell,
   bottomBarClearance,
+  layoutBreakpoints,
+  TabBar,
 } from '../../design-system';
+import {
+  STOREFRONT_SLOTS,
+  PROVIDER_SLOTS,
+  storefrontTabTheme,
+} from '../navigation/tabBarConfig';
+import { useIsProvider } from '../../hooks/usePermissions';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 
@@ -206,6 +213,26 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   // Fotosíntesis mounts its own top/bottom chrome (FotoTopbar + FotoTabBar),
   // so the shell suppresses the global nav bar there — one top chrome per view.
   const isFotoRoute = location.pathname.startsWith('/admin/fotosintesis');
+
+  // Scopes that fill the viewport width by design opt out of the --maxw content
+  // container: dense back-office (Fotosíntesis + Atelier) and the cinematic
+  // vault/esmereogénesis (§5.2 "exempt"). Storefront + provider get the centered
+  // container (DS3-MIGRATION-PRD §5 Fase 1 decision).
+  const isAtelierRoute = location.pathname.startsWith('/admin/products');
+  const isCinematicRoute =
+    location.pathname.startsWith('/boveda-secreta') ||
+    location.pathname.startsWith('/esmereogenesis');
+  const isFullWidthScope = isFotoRoute || isAtelierRoute || isCinematicRoute;
+
+  // Providers get their own direct-place bar; everyone else gets the storefront
+  // bar. Selection is by permission (not path), same as the old IOSTabBar.
+  const isProvider = useIsProvider();
+
+  // Bóveda / Esmereogénesis is a cinematic desktop scope — the old bar hid
+  // itself there at ≥ desktop width so the chrome never breaks the immersion.
+  const isDesktop = useMediaQuery(`(min-width:${layoutBreakpoints.desktop}px)`);
+  const hideBarForVaultDesktop =
+    isDesktop && location.pathname.startsWith('/esmereogenesis');
 
   // Publish the measured height of <main> as --app-main-height so pages can
   // size panes from the real scrollport instead of guessing calc(100vh - N).
@@ -396,17 +423,41 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
           // iOS HIG: Improve scroll performance and touch handling
           position: 'relative',
           isolation: 'isolate', // Create stacking context
-          // iOS HIG: Ensure smooth scroll momentum
-          scrollBehavior: 'smooth',
-          '@media (prefers-reduced-motion: reduce)': {
-            scrollBehavior: 'auto',
-          },
+          // Smooth scroll lives on <html> ONLY (DS3 §5.4.7) — never on the
+          // scroller itself, where it fights imperative scroll restoration
+          // (ScrollRestoration writes main.scrollTop directly).
         }}
       >
-        {children}
+        {/* Intentional-desktop content container (--maxw), centered. Full-width
+            scopes (dense admin + cinematic) are exempt; full-bleed image heroes
+            inside a contained route opt out with the .tm-full-bleed class. */}
+        {isFullWidthScope ? (
+          children
+        ) : (
+          <Box
+            sx={{
+              maxWidth: 'var(--maxw)',
+              mx: 'auto',
+              width: '100%',
+              // DS3 §3.1 edge padding: 16 phone · 24 tablet · 32 desktop.
+              px: { xs: 2, sm: 3, md: 4 },
+            }}
+          >
+            {children}
+          </Box>
+        )}
       </Box>
 
-      <IOSTabBar onMoreClick={() => setMoreSheetOpen(true)} />
+      {/* One unified TabBar (DS v3). Fotosíntesis renders its own via
+          FotosintesisLayout, so the shell suppresses this bar on Foto routes. */}
+      {!isFotoRoute && !hideBarForVaultDesktop && (
+        <TabBar
+          slots={isProvider ? PROVIDER_SLOTS : STOREFRONT_SLOTS}
+          theme={storefrontTabTheme(mode)}
+          onAction={() => setMoreSheetOpen(true)}
+          actionOpen={moreSheetOpen}
+        />
+      )}
 
       <IOSMoreSheet
         open={moreSheetOpen}
