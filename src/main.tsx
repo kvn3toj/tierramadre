@@ -12,6 +12,10 @@ import { CurrencyProvider } from './contexts/CurrencyContext';
 import { checkAndInvalidateCaches } from './utils/cacheInvalidation';
 import { STORAGE_KEYS } from './constants/storage-keys';
 import './design-system/tokens/css-variables.css';
+// DS v3 runtime tokens (--tm-* + --maxw). Additive layer on top of the v1
+// css-variables.css above — it still owns --app-main-height, box-sizing resets
+// and the global reduced-motion collapse.
+import './design-system/tokens/css-variables-v3.css';
 
 // Initialize Convex client once at module load.
 // Must wrap everything that depends on useQuery (e.g. CurrencyProvider's live-sync).
@@ -38,7 +42,9 @@ declare global {
 
 // Google OAuth Client ID - set in Vercel environment variables
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-const isGoogleConfigured = Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.length > 10);
+const isGoogleConfigured = Boolean(
+  GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.length > 10,
+);
 
 // Check if user is already stored (skip GSI script load to avoid 403 on localhost)
 function hasStoredUser(): boolean {
@@ -106,16 +112,16 @@ waitForVersionReady().then(() => {
           <ThemeProvider>
             <GoogleWrapper>
               <AuthProvider>
-                  <PriceShareProvider>
-                    <CurrencyProvider>
-                      <App />
-                    </CurrencyProvider>
-                  </PriceShareProvider>
-                </AuthProvider>
+                <PriceShareProvider>
+                  <CurrencyProvider>
+                    <App />
+                  </CurrencyProvider>
+                </PriceShareProvider>
+              </AuthProvider>
             </GoogleWrapper>
           </ThemeProvider>
         </LanguageProvider>
       </ConvexWrapper>
-    </React.StrictMode>
+    </React.StrictMode>,
   );
 });

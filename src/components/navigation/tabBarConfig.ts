@@ -14,7 +14,10 @@ import { Home, Boxes, BarChart3, Users, Menu as MenuIcon } from 'lucide-react';
 import EmeraldCutIcon from '../icons/EmeraldCutIcon';
 import AmbassadorsGlobeIcon from '../icons/AmbassadorsGlobeIcon';
 import { getQuietEmerald, getFoto, type QEMode } from '../../design-system';
-import type { TabSlot, TabBarTheme } from '../../design-system/components/TabBar/TabBar';
+import type {
+  TabSlot,
+  TabBarTheme,
+} from '../../design-system/components/TabBar/TabBar';
 
 // =============================================================================
 // STOREFRONT (client) slots — 4 places + Menú (recommended default).
@@ -48,12 +51,38 @@ export const STOREFRONT_SLOTS: readonly TabSlot[] = [
   { id: 'more', label: 'Menú', icon: MenuIcon, action: true },
 ] as const;
 
-// Provider variant keeps its four direct places; no action slot.
+// Provider variant keeps its four direct places; no action slot. Mirrors the
+// provider tabs the old IOSTabBar shipped — Cotizar (/provider/submit) stays a
+// direct tab, so providers reach quoting in one tap (no Menú indirection).
 export const PROVIDER_SLOTS: readonly TabSlot[] = [
-  { id: 'provider-home', label: 'Inicio', icon: Home, route: '/provider', match: 'exact' },
-  { id: 'provider-requests', label: 'Solicitudes', icon: BarChart3, route: '/provider/requests', match: 'prefix' },
-  { id: 'provider-inventory', label: 'Inventario', icon: Boxes, route: '/provider/inventory', match: 'prefix' },
-  { id: 'provider-more', label: 'Menú', icon: MenuIcon, action: true },
+  {
+    id: 'provider-home',
+    label: 'Inicio',
+    icon: Home,
+    route: '/provider',
+    match: 'exact',
+  },
+  {
+    id: 'provider-requests',
+    label: 'Solicitudes',
+    icon: BarChart3,
+    route: '/provider/requests',
+    match: 'prefix',
+  },
+  {
+    id: 'provider-submit',
+    label: 'Cotizar',
+    icon: EmeraldCutIcon as TabSlot['icon'],
+    route: '/provider/submit',
+    match: 'prefix',
+  },
+  {
+    id: 'provider-inventory',
+    label: 'Inventario',
+    icon: Boxes,
+    route: '/provider/inventory',
+    match: 'prefix',
+  },
 ] as const;
 
 // =============================================================================
@@ -61,10 +90,34 @@ export const PROVIDER_SLOTS: readonly TabSlot[] = [
 // =============================================================================
 
 export const FOTO_SLOTS: readonly TabSlot[] = [
-  { id: 'inicio', label: 'Inicio', icon: Home, route: '/admin/fotosintesis', match: 'exact' },
-  { id: 'lotes', label: 'Lotes', icon: Boxes, route: '/admin/fotosintesis/lots', match: 'prefix' },
-  { id: 'ventas', label: 'Ventas', icon: BarChart3, route: '/admin/fotosintesis/sales', match: 'prefix' },
-  { id: 'directorio', label: 'Directorio', icon: Users, route: '/admin/fotosintesis/directory', match: 'prefix' },
+  {
+    id: 'inicio',
+    label: 'Inicio',
+    icon: Home,
+    route: '/admin/fotosintesis',
+    match: 'exact',
+  },
+  {
+    id: 'lotes',
+    label: 'Lotes',
+    icon: Boxes,
+    route: '/admin/fotosintesis/lots',
+    match: 'prefix',
+  },
+  {
+    id: 'ventas',
+    label: 'Ventas',
+    icon: BarChart3,
+    route: '/admin/fotosintesis/sales',
+    match: 'prefix',
+  },
+  {
+    id: 'directorio',
+    label: 'Directorio',
+    icon: Users,
+    route: '/admin/fotosintesis/directory',
+    match: 'prefix',
+  },
   { id: 'menu', label: 'Menú', icon: MenuIcon, action: true },
 ] as const;
 

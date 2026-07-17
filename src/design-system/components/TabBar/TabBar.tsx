@@ -98,6 +98,14 @@ export interface TabBarProps {
   beveled?: boolean;
   /** aria-label for the nav landmark. */
   ariaLabel?: string;
+  /**
+   * Slide the bar off-screen while staying mounted (auto-hide scopes such as
+   * the cinematic vault, where a side-nav owns navigation and the bar reveals
+   * on demand). Kept focusable so tabbing into it can drive a reveal — the
+   * owner flips `hidden` back to false. No aria-hidden: a focusable element
+   * must never be aria-hidden.
+   */
+  hidden?: boolean;
 }
 
 // =============================================================================
@@ -160,6 +168,7 @@ export const TabBar: React.FC<TabBarProps> = ({
   maxWidth = 520,
   beveled = true,
   ariaLabel = 'Navegación principal',
+  hidden = false,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -204,9 +213,12 @@ export const TabBar: React.FC<TabBarProps> = ({
         padding: `10px 16px calc(12px + env(safe-area-inset-bottom, 0px)) 16px`,
         zIndex: zIndex.float,
         pointerEvents: 'none', // pass-through outside the pill
+        // Auto-hide slide: push the whole bar below the viewport edge. Calm
+        // tween (DS3 §4, no spring); collapses under reduced motion.
+        transform: hidden ? 'translateY(calc(100% + 24px))' : 'none',
         transition: reduceMotion
           ? 'none'
-          : 'right 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          : 'right 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 240ms cubic-bezier(0.22, 1, 0.36, 1)',
       }}
     >
       {/* Inner pill — CONTAINED: caps at maxWidth and centers, so it never
