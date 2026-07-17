@@ -100,10 +100,10 @@ const QuotationPreview = lazyWithRetry(
   () => import('./pages/cuentas/cotizaciones/QuotationPreviewPage'),
   'QuotationPreview',
 );
-const CotizacionPublicPage = lazyWithRetry(
-  () => import('./pages/public/CotizacionPublicPage'),
-  'CotizacionPublicPage',
-);
+// La ficha pública de cotización (CotizacionPublicPage) y su ruta /cot/ quedan
+// DESACTIVADAS por seguridad (IDOR: exponía cliente + precios por número
+// enumerable). El import se retira para no arrastrar código muerto al bundle;
+// se restituye cuando la ficha exija un token ligado al registro y al QR.
 const AdminAnalyticsPage = lazyWithRetry(
   () => import('./pages/admin/analytics/AdminAnalyticsPage'),
   'AdminAnalyticsPage',
@@ -386,9 +386,11 @@ function AppContent() {
               }
             />
 
-            {/* Public online cotización view — QR target of the shareable
-                product cards. Unauthenticated (no PIN); resolved by number.
-                Uses `/cot/` because `/c/` is owned by public collections. */}
+            {/* Public online cotización view — DESACTIVADO por seguridad (IDOR).
+                Resolvía la cotización sólo por su número (enumerable), exponiendo
+                nombre/teléfono del cliente + precios a cualquiera. No se reactiva
+                hasta ligar un token de alta entropía al registro y al QR. La ruta
+                queda fuera para que la página no sea alcanzable en producción.
             <Route
               path="/cot/:quotationNumber"
               element={
@@ -397,6 +399,7 @@ function AppContent() {
                 </Suspense>
               }
             />
+            */}
 
             {/* Cart / Selection */}
             <Route
