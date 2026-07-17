@@ -100,6 +100,10 @@ const QuotationPreview = lazyWithRetry(
   () => import('./pages/cuentas/cotizaciones/QuotationPreviewPage'),
   'QuotationPreview',
 );
+const CotizacionPublicPage = lazyWithRetry(
+  () => import('./pages/public/CotizacionPublicPage'),
+  'CotizacionPublicPage',
+);
 const AdminAnalyticsPage = lazyWithRetry(
   () => import('./pages/admin/analytics/AdminAnalyticsPage'),
   'AdminAnalyticsPage',
@@ -378,6 +382,18 @@ function AppContent() {
               element={
                 <Suspense fallback={<LocalizedLoading messageKey="product" />}>
                   <ProductDetail />
+                </Suspense>
+              }
+            />
+
+            {/* Public online cotización view — QR target of the shareable
+                product cards. Unauthenticated (no PIN); resolved by number.
+                Uses `/cot/` because `/c/` is owned by public collections. */}
+            <Route
+              path="/cot/:quotationNumber"
+              element={
+                <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+                  <CotizacionPublicPage />
                 </Suspense>
               }
             />

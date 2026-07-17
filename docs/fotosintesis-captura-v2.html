@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fotosíntesis · Captura de lote — v2 (más simple)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@500;600&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Foto (admin) theme — cool neutral + single emerald, dense tier */
+:root{
+  --canvas:#FFFFFF;--panel:#FAFAFA;--inset:#F4F5F4;--inset2:#ECEDEA;
+  --row:#FFFFFF;--rowHover:#FAFAFA;--rowActive:rgba(0,92,66,.06);
+  --edge:rgba(11,16,14,.09);--rule:rgba(11,16,14,.13);--edgeStrong:rgba(11,16,14,.20);
+  --ink:#0B100E;--ink2:#4A5251;--ink3:#5F6764;--mute:#9AA09D;--inverse:#FFFFFF;
+  --accent:#008C61;--deep:#006B4A;--soft:rgba(0,92,66,.08);--glow:rgba(0,140,98,.16);
+  --warn:#8A5F1B;--danger:#B33A2F;
+  --serif:'Cormorant',Georgia,serif;--ui:'Hanken Grotesk',-apple-system,sans-serif;--mono:'DM Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.22,1,.36,1);--bevel:8px;
+}
+[data-theme="dark"]{
+  --canvas:#0B0D0C;--panel:#131614;--inset:#1B1F1D;--inset2:#232826;
+  --row:#0B0D0C;--rowHover:#131614;--rowActive:rgba(124,205,169,.08);
+  --edge:rgba(255,255,255,.08);--rule:rgba(255,255,255,.12);--edgeStrong:rgba(255,255,255,.2);
+  --ink:#EFF1EF;--ink2:#B0B6B3;--ink3:#7B807E;--mute:#555A58;--inverse:#0B0D0C;
+  --accent:#33C194;--deep:#5AD3A9;--soft:rgba(124,205,169,.1);--glow:rgba(124,205,169,.18);
+  --warn:#D9A94E;--danger:#D75348;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#D7DDDB;font-family:var(--ui);color:var(--ink);padding:28px 16px 60px;background-image:radial-gradient(circle at 50% 0,#E7ECEA,#C7D0CD)}
+[data-theme="dark"] body{background:#060807;background-image:radial-gradient(circle at 50% 0,#101312,#050605)}
+.head{max-width:1180px;margin:0 auto 20px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.head .ov{font-family:var(--mono);font-size:.625rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.head h1{font-family:var(--serif);font-weight:500;font-size:2rem;line-height:1.04;color:#14181A}
+[data-theme="dark"] .head h1{color:#EAEDEB}
+.head p{color:#5C6360;font-size:.85rem;max-width:56ch;margin-top:2px}
+[data-theme="dark"] .head p{color:#9AA09D}
+.ctrl{font-family:var(--ui);font-weight:600;font-size:.8125rem;border-radius:8px;padding:9px 14px;border:1px solid var(--edge);background:var(--canvas);color:var(--ink);cursor:pointer}
+.win{max-width:1180px;margin:0 auto;border-radius:14px;overflow:hidden;background:var(--canvas);border:1px solid rgba(0,0,0,.12);box-shadow:0 30px 60px -30px rgba(0,0,0,.4)}
+.chrome{height:36px;background:var(--inset);border-bottom:1px solid var(--edge);display:flex;align-items:center;gap:7px;padding:0 13px}
+.chrome i{width:10px;height:10px;border-radius:999px;background:var(--edgeStrong);opacity:.5}
+.chrome .url{margin-left:10px;font-family:var(--mono);font-size:.6875rem;color:var(--ink3);background:var(--canvas);border:1px solid var(--edge);border-radius:6px;padding:3px 11px}
+.app{position:relative;min-height:640px;padding-bottom:88px}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:11px 24px;border-bottom:1px solid var(--edge)}
+.topbar .bc{font-size:.85rem;color:var(--ink3)}.topbar .bc a{color:var(--accent);text-decoration:none}.topbar .bc b{color:var(--ink);font-weight:600}
+.topbar .r{display:flex;gap:8px;align-items:center}
+.sync{font-family:var(--mono);font-size:.5625rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--edge);border-radius:999px;padding:4px 10px;display:flex;align-items:center;gap:5px}
+.sync .d{width:6px;height:6px;border-radius:999px;background:var(--accent)}
+.search{font-family:var(--ui);font-size:.8rem;color:var(--ink3);border:1px solid var(--edge);border-radius:8px;padding:6px 12px;background:var(--canvas)}
+.cont{max-width:1120px;margin:0 auto;padding:16px 24px 0}
+/* header row */
+.lhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.lid{font-family:var(--serif);font-size:2.3rem;font-weight:600;line-height:1;letter-spacing:.01em}
+.chip-btn{font-family:var(--ui);font-weight:600;font-size:.8rem;border:1px solid var(--edge);background:var(--canvas);border-radius:8px;padding:7px 12px;cursor:pointer;color:var(--ink)}
+.meta{display:flex;gap:26px;flex-wrap:wrap;margin-left:6px}
+.meta .m .k{font-family:var(--mono);font-size:.5625rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+.meta .m .v{font-size:.9rem;font-weight:600;margin-top:2px}
+.meta .m .v.mono{font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums}
+.btn{font-family:var(--ui);font-weight:600;font-size:.85rem;border-radius:9px;padding:9px 16px;border:1px solid transparent;cursor:pointer}
+.btn.primary{background:var(--deep);color:var(--inverse)}
+.btn.ghost{background:var(--canvas);color:var(--ink);border-color:var(--edge)}
+.btn.primary.bevel{clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+/* ===== THE NEW DEVICE: live split bar ===== */
+.split{margin:18px 0 6px;border:1px solid var(--edge);border-radius:12px;padding:15px 16px;background:var(--panel)}
+.split .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px}
+.split .lbl{font-family:var(--mono);font-size:.625rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.split .total{font-family:var(--mono);font-weight:500;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.split .total.ok{color:var(--accent)}.split .total.under{color:var(--warn)}
+.splitbar{height:16px;border-radius:6px;background:var(--inset);overflow:hidden;display:flex;gap:2px;padding:0}
+.splitbar .seg{height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.5625rem;color:#fff;min-width:0;overflow:hidden;white-space:nowrap}
+.splitbar .seg:nth-child(1){background:var(--deep)}
+.splitbar .seg:nth-child(2){background:var(--accent)}
+.splitbar .seg:nth-child(3){background:#4FB58C}
+.split .acts{display:flex;gap:8px;margin-top:12px;align-items:center}
+.qbtn{font-family:var(--ui);font-weight:600;font-size:.75rem;border:1px solid var(--edge);background:var(--canvas);color:var(--accent);border-radius:7px;padding:6px 11px;cursor:pointer;display:flex;align-items:center;gap:5px}
+.qbtn.on{background:var(--soft);border-color:color-mix(in srgb,var(--accent) 40%,var(--edge))}
+.hint{font-size:.75rem;color:var(--ink3);margin-left:auto}
+/* main + rail */
+.grid{display:grid;grid-template-columns:1fr 296px;gap:22px;padding:16px 0 24px;align-items:start}
+.eyebrow{font-family:var(--mono);font-size:.625rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);display:block;margin:4px 0 10px}
+/* ===== items as the hero: editable rows ===== */
+.it{display:grid;grid-template-columns:26px 1fr 96px 128px 30px;align-items:center;gap:12px;padding:11px 14px;border:1px solid var(--edge);border-radius:10px;margin-bottom:8px;background:var(--row);transition:border-color 120ms,background 120ms}
+.it:hover{background:var(--rowHover)}
+.it.active{border-color:color-mix(in srgb,var(--accent) 45%,var(--edge));box-shadow:0 0 0 3px var(--glow)}
+.it .chk{width:24px;height:24px;border-radius:999px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff}
+.it .n .no{font-family:var(--mono);font-size:.5625rem;letter-spacing:.08em;color:var(--ink3)}
+.it .n b{display:block;font-weight:600;font-size:.92rem;margin-top:1px}
+/* editable field affordance */
+.field{display:flex;align-items:center;border:1px solid var(--edge);border-radius:8px;background:var(--inset);overflow:hidden;height:36px}
+.field:focus-within,.it.active .field{background:var(--canvas);border-color:color-mix(in srgb,var(--accent) 50%,var(--edge))}
+.field .stepper{width:26px;height:100%;border:0;background:transparent;color:var(--ink3);cursor:pointer;font-size:1rem}
+.field .stepper:hover{color:var(--accent)}
+.field input{width:100%;border:0;background:transparent;text-align:center;font-family:var(--mono);font-size:.85rem;color:var(--ink);font-variant-numeric:tabular-nums;outline:none;-moz-appearance:textfield}
+.field input::-webkit-outer-spin-button,.field input::-webkit-inner-spin-button{-webkit-appearance:none}
+.field.price{padding-left:10px}.field.price .cur{font-family:var(--mono);font-size:.8rem;color:var(--ink3)}
+.field.price input{text-align:left;padding-left:4px}
+.kebab{border:0;background:transparent;color:var(--ink3);cursor:pointer;font-size:1.1rem}
+.addrow{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px dashed var(--edgeStrong);border-radius:10px;color:var(--accent);font-weight:600;font-size:.88rem;cursor:pointer;background:transparent}
+.addrow:hover{background:var(--soft)}
+.addrow .plus{width:24px;height:24px;border-radius:999px;border:1px solid currentColor;display:flex;align-items:center;justify-content:center}
+/* rail */
+.rail{display:flex;flex-direction:column;gap:14px;position:sticky;top:16px}
+.card{background:var(--canvas);border:1px solid var(--edge);border-radius:12px;padding:16px}
+.ring{width:132px;height:132px;border-radius:999px;margin:2px auto 10px;position:relative;display:flex;align-items:center;justify-content:center;
+  background:conic-gradient(var(--accent) calc(var(--p,0)*1%),var(--inset) 0)}
+.ring::after{content:'';position:absolute;inset:11px;border-radius:999px;background:var(--canvas)}
+.ring .v{position:relative;z-index:1;font-family:var(--mono);font-weight:500;font-size:1.7rem;font-variant-numeric:tabular-nums}
+.ring-cap{text-align:center;font-family:var(--mono);font-size:.625rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);line-height:1.5}
+.closebtn{width:100%;margin-top:12px}
+.helper{font-size:.72rem;color:var(--ink3);text-align:center;margin-top:8px;line-height:1.4}
+.sc{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--rule);font-size:.8rem;color:var(--ink2)}
+.sc:last-child{border-bottom:0}
+.sc .keys{font-family:var(--mono);font-size:.7rem;color:var(--ink3)}
+kbd{font-family:var(--mono);background:var(--inset);border:1px solid var(--edge);border-radius:4px;padding:1px 5px;font-size:.7rem}
+/* tabbar contained */
+.tabwrap{position:absolute;left:0;right:0;bottom:0;padding:9px 16px 14px;pointer-events:none}
+.tabpill{display:flex;align-items:center;height:56px;max-width:520px;margin:0 auto;border-radius:28px;padding:4px;background:var(--canvas);border:1px solid var(--edge);box-shadow:0 6px 20px -6px rgba(11,16,14,.16);pointer-events:auto}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:100%;border-radius:24px;position:relative;isolation:isolate;border:0;background:0;cursor:pointer}
+.tab .ind{position:absolute;inset:0;background:var(--deep);z-index:0;clip-path:polygon(var(--bevel) 0,calc(100% - var(--bevel)) 0,100% var(--bevel),100% calc(100% - var(--bevel)),calc(100% - var(--bevel)) 100%,var(--bevel) 100%,0 calc(100% - var(--bevel)),0 var(--bevel))}
+.tab svg{width:18px;height:18px;position:relative;z-index:1;stroke:var(--ink3)}
+.tab.on svg{stroke:var(--inverse)}
+.tab .lbl{position:relative;z-index:1;font-size:8.5px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--ink3)}
+.tab.on .lbl{color:var(--inverse);font-weight:600}
+@media(max-width:840px){.grid{grid-template-columns:1fr}.rail{position:static}}
+</style>
+</head>
+<body>
+<div class="head">
+  <div><div class="ov">Fotosíntesis · Captura de lote — v2</div><h1>Editar y registrar, más simple</h1>
+  <p>Los ítems son el héroe. La preponderancia se reparte de un toque y se ve como una barra viva. Los campos se editan en línea. La barra inferior es la de Foto (contenida).</p></div>
+  <button class="ctrl" id="mode">Modo oscuro</button>
+</div>
+<div class="win"><div class="chrome"><i></i><i></i><i></i><span class="url">tierramadre.app/admin/fotosintesis/lots/C-054</span></div>
+<div class="app">
+  <div class="topbar"><div class="bc"><a>Fotosíntesis</a> › <b>Captura de lote</b></div>
+    <div class="r"><span class="sync"><span class="d"></span>Sincronizado</span><span class="search">Buscar ⌘K</span></div></div>
+  <div class="cont">
+    <div class="lhead">
+      <span class="lid">C-054</span>
+      <button class="chip-btn">Cambiar ▾</button>
+      <div class="meta">
+        <div class="m"><div class="k">Proveedor</div><div class="v">Joyería Legado</div></div>
+        <div class="m"><div class="k">Recibido</div><div class="v mono">15 jul</div></div>
+        <div class="m"><div class="k">Costo total</div><div class="v mono">$ 1,279,000</div></div>
+        <div class="m"><div class="k">Pago</div><div class="v">Contado</div></div>
+      </div>
+      <button class="btn ghost" style="margin-left:auto">Editar lote</button>
+    </div>
+
+    <!-- LIVE SPLIT BAR — turns "preponderancia" from an abstract number into a picture -->
+    <div class="split">
+      <div class="top"><span class="lbl">Preponderancia — cómo se reparte el 100%</span><span class="total ok" id="total">100 / 100 %</span></div>
+      <div class="splitbar">
+        <div class="seg" style="width:34%">34%</div>
+        <div class="seg" style="width:33%">33%</div>
+        <div class="seg" style="width:33%">33%</div>
+      </div>
+      <div class="acts">
+        <button class="qbtn on"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>Repartir equitativo</button>
+        <button class="qbtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12l3 6-9 12L3 9z"/></svg>Por costo</button>
+        <button class="qbtn">Limpiar</button>
+        <span class="hint">Toca un valor abajo para ajustarlo a mano · <kbd>⌘↵</kbd> guarda y sigue</span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <span class="eyebrow">Ítems del lote · 3</span>
+        <!-- editable item rows: % and $ are obvious fields with steppers -->
+        <div class="it active">
+          <div class="chk"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><path d="M5 12l4 4L19 7"/></svg></div>
+          <div class="n"><span class="no">C-054 · 001 · #495</span><b>Anillos Joyero Cali · 4 plata + 1 oro</b></div>
+          <div class="field"><button class="stepper">−</button><input value="34" aria-label="Preponderancia %"><button class="stepper">+</button></div>
+          <div class="field price"><span class="cur">$</span><input value="434,860" aria-label="Precio"></div>
+          <button class="kebab">⋯</button>
+        </div>
+        <div class="it">
+          <div class="chk"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><path d="M5 12l4 4L19 7"/></svg></div>
+          <div class="n"><span class="no">C-054 · 002 · #495A</span><b>Anillos Producidos Joyero Cali (Juan)</b></div>
+          <div class="field"><button class="stepper">−</button><input value="33" aria-label="Preponderancia %"><button class="stepper">+</button></div>
+          <div class="field price"><span class="cur">$</span><input value="422,070" aria-label="Precio"></div>
+          <button class="kebab">⋯</button>
+        </div>
+        <div class="it">
+          <div class="chk"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><path d="M5 12l4 4L19 7"/></svg></div>
+          <div class="n"><span class="no">C-054 · 003 · #495B</span><b>Anillo de Oro producido Cali</b></div>
+          <div class="field"><button class="stepper">−</button><input value="33" aria-label="Preponderancia %"><button class="stepper">+</button></div>
+          <div class="field price"><span class="cur">$</span><input value="422,070" aria-label="Precio"></div>
+          <button class="kebab">⋯</button>
+        </div>
+        <div class="addrow"><span class="plus">+</span>Agregar unidad <span style="font-weight:400;color:var(--ink3);margin-left:6px">— o pega desde la factura</span></div>
+      </div>
+
+      <div class="rail">
+        <div class="card" style="text-align:center">
+          <div class="ring" style="--p:100"><span class="v">100%</span></div>
+          <div class="ring-cap">Acumulado<br>3 / 3 ítems repartidos</div>
+          <button class="btn primary bevel closebtn">Cerrar lote y publicar</button>
+          <div class="helper">Listo — la preponderancia suma 100%. Al cerrar, las 3 piezas entran al catálogo.</div>
+        </div>
+        <div class="card">
+          <span class="eyebrow" style="margin-top:0">Atajos</span>
+          <div class="sc"><span>Guardar y siguiente</span><span class="keys"><kbd>⌘</kbd><kbd>↵</kbd></span></div>
+          <div class="sc"><span>Duplicar ítem</span><span class="keys"><kbd>⌘</kbd><kbd>D</kbd></span></div>
+          <div class="sc"><span>Repartir equitativo</span><span class="keys"><kbd>⌘</kbd><kbd>E</kbd></span></div>
+          <div class="sc"><span>Buscador global</span><span class="keys"><kbd>⌘</kbd><kbd>K</kbd></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabwrap"><div class="tabpill">
+    <button class="tab"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5"/></svg><span class="lbl">Inicio</span></button>
+    <button class="tab on"><span class="ind"></span><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M3 8l4-2 4 2-4 2zM13 8l4-2 4 2-4 2zM8 16l4-2 4 2-4 2z"/></svg><span class="lbl">Lotes</span></button>
+    <button class="tab"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-8"/></svg><span class="lbl">Ventas</span></button>
+    <button class="tab"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/></svg><span class="lbl">Directorio</span></button>
+    <button class="tab"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="lbl">Menú</span></button>
+  </div></div>
+</div></div>
+<script>
+document.getElementById('mode').addEventListener('click',function(){
+  var d=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',d?'light':'dark');this.textContent=d?'Modo oscuro':'Modo claro';
+});
+// activate row on focus
+document.querySelectorAll('.it').forEach(function(it){
+  it.addEventListener('focusin',function(){document.querySelectorAll('.it').forEach(function(x){x.classList.remove('active')});it.classList.add('active')});
+});
+</script>
+</body>
+</html>

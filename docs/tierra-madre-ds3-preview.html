@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tierra Madre · DS v3 — Preview interactivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --tm-bg:#F7F8F8; --tm-surface:#FFFFFF; --tm-well:#F1F2F2;
+  --tm-border:#E4E7E5; --tm-hairline:#EBEDEC;
+  --tm-text:#14181A; --tm-muted:#5C6360; --tm-subtle:#8C928F;
+  --tm-accent:#00785C; --tm-accent-strong:#006F52; --tm-accent-pure:#00AF84; --tm-on-accent:#FFFFFF;
+  --tm-danger:#B3403A; --tm-warning:#8A5F1B;
+  --tm-shadow:0 18px 40px -24px rgba(13,30,24,.30);
+  --pill-shadow:0 6px 20px -6px rgba(13,30,24,.16);
+  --serif:'Cormorant','Cormorant Garamond',Georgia,serif;
+  --ui:'Hanken Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --mono:'DM Mono','SF Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.22,1,.36,1); --fast:160ms; --base:240ms; --slow:420ms; --bevel:9px;
+}
+[data-theme="dark"]{
+  --tm-bg:#0E1110; --tm-surface:#15191A; --tm-well:#1B1F1F;
+  --tm-border:#272C2B; --tm-hairline:#222726;
+  --tm-text:#EAEDEB; --tm-muted:#9AA09D; --tm-subtle:#6B726F;
+  --tm-accent:#34C99B; --tm-accent-strong:#00AF84; --tm-accent-pure:#34C99B; --tm-on-accent:#06140E;
+  --tm-danger:#E5736C; --tm-warning:#D9A94E;
+  --tm-shadow:0 20px 46px -26px rgba(0,0,0,.8);
+  --pill-shadow:0 6px 20px -6px rgba(0,0,0,.5);
+}
+@media (prefers-reduced-motion:reduce){:root{--fast:.01ms;--base:.01ms;--slow:.01ms}}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:#DDE3E1;font-family:var(--ui);color:var(--tm-text);min-height:100vh;
+  background-image:radial-gradient(circle at 50% 0,#E9EDEB,#C9D2CF);padding:34px 16px 60px}
+[data-theme="dark"] body{background:#070908;background-image:radial-gradient(circle at 50% 0,#121614,#050706)}
+.top{max-width:900px;margin:0 auto 26px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.top .ov{font-family:var(--mono);font-size:.625rem;letter-spacing:.16em;text-transform:uppercase;color:var(--tm-accent)}
+.top h1{font-family:var(--serif);font-weight:500;font-size:1.9rem;line-height:1.05;color:var(--tm-text)}
+.top p{color:var(--tm-muted);font-size:.8125rem;max-width:44ch;margin-top:2px}
+.ctrls{display:flex;gap:8px}
+.ctrl{font-family:var(--ui);font-weight:600;font-size:.8125rem;border-radius:8px;padding:9px 14px;border:1px solid var(--tm-border);background:var(--tm-surface);color:var(--tm-text);cursor:pointer}
+.stage{max-width:900px;margin:0 auto;display:flex;gap:30px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+/* phone frame */
+.phone{width:390px;max-width:100%;height:820px;border-radius:46px;background:var(--tm-bg);position:relative;overflow:hidden;
+  box-shadow:0 40px 80px -30px rgba(0,0,0,.5),0 0 0 11px #0c0f0e,0 0 0 12px #232827;isolation:isolate}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:130px;height:26px;background:#0c0f0e;border-radius:0 0 16px 16px;z-index:60}
+/* status bar */
+.status{height:44px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 5px;font-size:.75rem;font-weight:600;position:relative;z-index:12}
+/* nav bar (top chrome) */
+.nav{padding:6px 18px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--tm-hairline);
+  background:color-mix(in srgb,var(--tm-bg) 86%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);position:relative;z-index:11}
+.nav.compact .wordmark{font-size:1.35rem}
+.wordmark{font-family:var(--serif);font-weight:500;font-size:1.5rem;line-height:1;letter-spacing:.01em}
+.nav .icons{display:flex;gap:4px}
+.iconbtn{width:40px;height:40px;border-radius:999px;border:0;background:transparent;color:var(--tm-muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.iconbtn:hover{background:var(--tm-well);color:var(--tm-text)}
+.back{display:flex;align-items:center;gap:8px;background:0;border:0;cursor:pointer;color:var(--tm-text);font-family:inherit}
+.back .t{font-family:var(--serif);font-size:1.25rem;font-weight:500}
+/* scroll body */
+.body{position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:104px;scrollbar-width:none}
+.body::-webkit-scrollbar{display:none}
+.screen{display:none}
+.screen.on{display:block;animation:fade var(--base) var(--ease)}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* segmented control */
+.hero{height:186px;margin:0;position:relative;display:flex;align-items:flex-end;justify-content:center;padding-bottom:16px;
+  background:linear-gradient(155deg,#1f6b52 0%,#0d3b2c 55%,#07281e 100%);overflow:hidden}
+.hero::after{content:'';position:absolute;inset:0;background:radial-gradient(120% 80% at 50% -20%,rgba(120,200,170,.25),transparent 60%)}
+.hero .dots{position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:2}
+.hero .dots i{width:7px;height:7px;border-radius:999px;background:rgba(255,255,255,.4)}
+.hero .dots i.on{width:20px;border-radius:999px;background:#fff}
+.seg{display:flex;gap:2px;padding:4px;border-radius:999px;background:rgba(9,20,15,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.14);position:relative;z-index:2}
+.seg button{position:relative;border:0;background:0;color:rgba(255,255,255,.72);font-family:var(--serif);font-size:1.15rem;font-weight:500;
+  padding:5px 16px;border-radius:999px;cursor:pointer;z-index:1;transition:color var(--fast) var(--ease)}
+.seg button.on{color:#0d3b2c}
+.seg .segind{position:absolute;top:4px;bottom:4px;background:#fff;border-radius:999px;z-index:0;
+  transition:transform var(--base) var(--ease),width var(--base) var(--ease)}
+/* section */
+.sec{padding:22px 18px 4px}
+.sechead{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px}
+.eyebrow{font-family:var(--mono);font-size:.625rem;letter-spacing:.16em;text-transform:uppercase;color:var(--tm-accent);display:block;margin-bottom:3px}
+.sechead h2{font-family:var(--serif);font-weight:500;font-size:1.7rem;line-height:1}
+.seelink{font-size:.8125rem;font-weight:600;color:var(--tm-accent);text-decoration:none;white-space:nowrap;display:flex;align-items:center;gap:4px}
+/* horizontal piece scroller */
+.hscroll{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-x:contain;padding:2px 18px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.hscroll::-webkit-scrollbar{display:none}
+.piece{flex:0 0 148px;background:var(--tm-surface);border:1px solid var(--tm-border);border-radius:12px;overflow:hidden;cursor:pointer;
+  transition:border-color var(--fast) var(--ease),transform var(--base) var(--ease)}
+.piece:active{transform:scale(.98)}
+.piece.grid{flex:none;width:auto}
+.pw{aspect-ratio:4/5;background:var(--tm-well);position:relative;display:flex;align-items:center;justify-content:center;
+  clip-path:polygon(0 0,calc(100% - 15px) 0,100% 15px,100% 100%,0 100%)}
+.pw .no{position:absolute;top:8px;left:9px;font-family:var(--mono);font-size:.5625rem;letter-spacing:.1em;color:var(--tm-subtle)}
+.pw .fav{position:absolute;top:7px;right:9px;color:rgba(255,255,255,.9);filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))}
+.gem{width:44px;height:56px;background:linear-gradient(158deg,#3BD9AB,#00785C 60%,#00543E);
+  clip-path:polygon(21% 0,79% 0,100% 21%,100% 79%,79% 100%,21% 100%,0 79%,0 21%);box-shadow:0 4px 12px rgba(0,80,60,.3)}
+.gem.sm{width:34px;height:44px}
+.pi{padding:10px 12px 12px}
+.nm{font-family:var(--serif);font-weight:500;font-size:1.15rem;line-height:1.1}
+.sp{font-family:var(--mono);font-size:.625rem;letter-spacing:.04em;color:var(--tm-subtle);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr{font-family:var(--mono);font-weight:500;font-size:.8125rem;margin-top:7px;font-variant-numeric:tabular-nums}
+.pr .ct{color:var(--tm-accent)}
+/* geology fact card */
+.fact{margin:20px 18px 6px;border:1px solid var(--tm-border);border-radius:12px;padding:16px;display:flex;gap:14px;align-items:flex-start;background:var(--tm-surface)}
+.fact .ico{flex:0 0 42px;height:42px;border-radius:999px;background:var(--tm-well);border:1px solid var(--tm-border);display:flex;align-items:center;justify-content:center;color:var(--tm-accent)}
+.fact p{font-family:var(--serif);font-size:1.2rem;line-height:1.3;color:var(--tm-text)}
+.fact .attr{font-family:var(--serif);font-style:italic;font-size:.9rem;color:var(--tm-muted);margin-top:6px}
+/* catalog */
+.catbar{padding:12px 18px 6px;position:sticky;top:0;background:var(--tm-bg);z-index:5}
+.search{display:flex;align-items:center;gap:9px;background:var(--tm-well);border:1px solid var(--tm-border);border-radius:10px;padding:11px 13px;color:var(--tm-subtle);font-size:.9rem}
+.chips{display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;padding:11px 18px 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;display:flex;align-items:center;gap:6px;height:36px;padding:0 13px;border-radius:999px;border:1px solid var(--tm-border);
+  background:var(--tm-surface);color:var(--tm-muted);font-size:.8125rem;font-weight:500;cursor:pointer;white-space:nowrap;transition:all var(--fast) var(--ease)}
+.chip.on{background:color-mix(in srgb,var(--tm-accent) 12%,var(--tm-surface));border-color:var(--tm-accent);color:var(--tm-accent)}
+.chip.lead{background:var(--tm-text);color:var(--tm-bg);border-color:var(--tm-text)}
+.chip .badge{background:var(--tm-accent-pure);color:#fff;font-family:var(--mono);font-size:.625rem;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.sortrow{display:flex;justify-content:space-between;align-items:center;padding:8px 18px 12px}
+.sortrow .count{font-family:var(--mono);font-size:.6875rem;color:var(--tm-subtle);letter-spacing:.05em}
+.miniseg{display:flex;border:1px solid var(--tm-border);border-radius:8px;overflow:hidden}
+.miniseg button{border:0;background:var(--tm-surface);color:var(--tm-muted);font-family:var(--ui);font-size:.75rem;font-weight:600;padding:6px 11px;cursor:pointer}
+.miniseg button.on{background:var(--tm-accent-strong);color:var(--tm-on-accent)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;column-gap:12px;row-gap:18px;padding:2px 18px 12px}
+/* filter sheet */
+.scrim{position:absolute;inset:0;background:rgba(20,24,26,.5);opacity:0;pointer-events:none;transition:opacity var(--base) var(--ease);z-index:40}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:86%;background:var(--tm-surface);border-radius:18px 18px 0 0;z-index:41;
+  transform:translateY(101%);transition:transform var(--slow) var(--ease);display:flex;flex-direction:column;box-shadow:var(--tm-shadow)}
+.sheet.on{transform:translateY(0)}
+.sheet .handle{width:38px;height:4px;border-radius:999px;background:var(--tm-border);margin:10px auto 4px}
+.sheet .sh-head{display:flex;align-items:center;justify-content:space-between;padding:6px 18px 12px;border-bottom:1px solid var(--tm-hairline)}
+.sheet .sh-head h3{font-family:var(--serif);font-weight:500;font-size:1.4rem}
+.sheet .sh-body{overflow-y:auto;overscroll-behavior:contain;padding:14px 18px 6px;flex:1}
+.fgroup{margin-bottom:20px}
+.fgroup .glabel{font-family:var(--mono);font-size:.625rem;letter-spacing:.14em;text-transform:uppercase;color:var(--tm-subtle);margin-bottom:9px;display:block}
+.fchips{display:flex;flex-wrap:wrap;gap:8px}
+.range{padding:2px 2px 0}
+.range .track{height:4px;border-radius:999px;background:var(--tm-well);position:relative;margin:16px 6px 8px}
+.range .fill{position:absolute;height:100%;left:18%;right:26%;background:var(--tm-accent);border-radius:999px}
+.range .knob{position:absolute;top:50%;width:20px;height:20px;border-radius:999px;background:var(--tm-surface);border:1px solid var(--tm-border);box-shadow:0 2px 6px rgba(0,0,0,.15);transform:translate(-50%,-50%)}
+.range .read{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.75rem;color:var(--tm-text);font-variant-numeric:tabular-nums;padding:0 4px}
+.sheet .sh-foot{display:flex;gap:10px;padding:12px 18px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--tm-hairline)}
+/* buttons */
+.btn{font-family:var(--ui);font-weight:600;font-size:.9375rem;border-radius:10px;padding:13px 18px;min-height:48px;border:1px solid transparent;cursor:pointer;flex:1;transition:opacity var(--fast) var(--ease),background var(--fast) var(--ease)}
+.btn:active{opacity:.85}
+.btn.primary{background:var(--tm-accent-strong);color:var(--tm-on-accent);clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)}
+.btn.tinted{background:var(--tm-well);color:var(--tm-accent);border-color:var(--tm-border)}
+.btn.plain{background:0;color:var(--tm-accent);border:0;min-height:44px}
+.btn.ghost{background:0;color:var(--tm-text);border-color:var(--tm-border)}
+/* product */
+.pdwell{margin:0;aspect-ratio:1/1;background:var(--tm-well);position:relative;display:flex;align-items:center;justify-content:center;
+  clip-path:polygon(0 0,calc(100% - 26px) 0,100% 26px,100% 100%,0 100%)}
+.pdwell .no{position:absolute;top:14px;left:16px;font-family:var(--mono);font-size:.6875rem;letter-spacing:.12em;color:var(--tm-subtle)}
+.pdwell .biggem{width:120px;height:150px;background:linear-gradient(158deg,#43E3B4,#00785C 58%,#00543E);
+  clip-path:polygon(21% 0,79% 0,100% 21%,100% 79%,79% 100%,21% 100%,0 79%,0 21%);box-shadow:0 18px 40px -14px rgba(0,90,66,.5)}
+.thumbs{display:flex;gap:8px;overflow-x:auto;padding:12px 18px;scrollbar-width:none}
+.thumbs::-webkit-scrollbar{display:none}
+.thumb{flex:0 0 56px;height:56px;border-radius:8px;background:var(--tm-well);border:1px solid var(--tm-border);display:flex;align-items:center;justify-content:center}
+.thumb.on{border-color:var(--tm-accent);border-width:1.5px}
+.pdhead{padding:6px 18px 0}
+.pdhead .nm{font-family:var(--serif);font-size:2.1rem;font-weight:500;line-height:1.05}
+.pdmeta{padding:16px 18px}
+.ledger{border:1px solid var(--tm-border);border-radius:12px;overflow:hidden}
+.ledger .lr{display:flex;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--tm-hairline);font-family:var(--mono);font-size:.8125rem}
+.ledger .lr:last-child{border-bottom:0}
+.ledger .k{color:var(--tm-subtle);text-transform:uppercase;letter-spacing:.05em;font-size:.6875rem}
+.ledger .v{font-variant-numeric:tabular-nums}
+.priceblock{display:flex;align-items:baseline;justify-content:space-between;padding:18px 18px 8px}
+.priceblock .big{font-family:var(--mono);font-weight:500;font-size:1.7rem;font-variant-numeric:tabular-nums}
+.priceblock .perct{font-family:var(--mono);font-size:.6875rem;color:var(--tm-subtle)}
+.cta{display:flex;flex-direction:column;gap:9px;padding:6px 18px 14px}
+.cta .row{display:flex;gap:9px}
+.trust{display:flex;gap:14px;justify-content:center;padding:6px 18px 20px;flex-wrap:wrap}
+.trust span{display:flex;align-items:center;gap:6px;font-size:.75rem;color:var(--tm-muted)}
+.trust .lz{width:16px;height:9px;background:var(--tm-accent-pure);clip-path:polygon(20% 0,80% 0,100% 50%,80% 100%,20% 100%,0 50%)}
+/* directory / accounts */
+.dirlist,.acctlist{padding:14px 18px 6px;display:flex;flex-direction:column;gap:10px}
+.dircard{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--tm-border);border-radius:12px;background:var(--tm-surface)}
+.avatar{width:46px;height:46px;border-radius:999px;background:linear-gradient(155deg,#2f6b52,#0d3b2c);display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--serif);font-size:1.2rem;flex:0 0 46px}
+.dircard .dn{font-family:var(--serif);font-size:1.2rem;font-weight:500;line-height:1.1}
+.dircard .dr{font-family:var(--mono);font-size:.625rem;letter-spacing:.06em;text-transform:uppercase;color:var(--tm-subtle);margin-top:2px}
+.dircard .stat{margin-left:auto;text-align:right}
+.dircard .stat b{font-family:var(--mono);font-weight:500;font-size:1rem;display:block;font-variant-numeric:tabular-nums}
+.dircard .stat span{font-size:.625rem;color:var(--tm-subtle)}
+.acctrow{display:flex;align-items:center;gap:12px;padding:13px 14px;border:1px solid var(--tm-border);border-radius:12px;background:var(--tm-surface)}
+.acctrow .em{width:36px;height:36px;border-radius:9px;background:var(--tm-well);display:flex;align-items:center;justify-content:center;color:var(--tm-accent)}
+.acctrow .al{flex:1}
+.acctrow .al b{font-weight:600;font-size:.95rem}
+.acctrow .al span{font-size:.75rem;color:var(--tm-subtle);display:block}
+.acctrow .amt{font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums}
+.statusbadge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:.5625rem;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--tm-border);color:var(--tm-muted)}
+.statusbadge.ok{color:var(--tm-accent);border-color:color-mix(in srgb,var(--tm-accent) 40%,var(--tm-border))}
+.statusbadge .d{width:5px;height:5px;border-radius:999px;background:currentColor}
+/* menu sheet */
+.menu .sh-body{padding-bottom:20px}
+.mgroup{margin-bottom:6px}
+.mgroup .glabel{font-family:var(--mono);font-size:.625rem;letter-spacing:.14em;text-transform:uppercase;color:var(--tm-subtle);padding:14px 2px 6px;display:block}
+.mrow{display:flex;align-items:center;gap:13px;padding:12px 4px;border-bottom:1px solid var(--tm-hairline);cursor:pointer}
+.mrow:last-child{border-bottom:0}
+.mrow .mi{width:38px;height:38px;border-radius:10px;background:var(--tm-well);display:flex;align-items:center;justify-content:center;color:var(--tm-accent);flex:0 0 38px}
+.mrow .ml{flex:1}
+.mrow .ml b{font-weight:600;font-size:.95rem;display:block}
+.mrow .ml span{font-size:.75rem;color:var(--tm-subtle)}
+.mrow .chev{color:var(--tm-subtle)}
+/* TabBar */
+.tabwrap{position:absolute;left:0;right:0;bottom:0;padding:10px 16px calc(14px + env(safe-area-inset-bottom));z-index:30;pointer-events:none}
+.tabpill{display:flex;align-items:center;height:60px;max-width:520px;margin:0 auto;border-radius:30px;padding:4px;background:var(--tm-surface);border:1px solid var(--tm-border);box-shadow:var(--pill-shadow);pointer-events:auto;position:relative}
+.tab{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:100%;border-radius:26px;position:relative;isolation:isolate;border:0;background:0;cursor:pointer;transition:background 120ms ease}
+.tab:hover:not(.on){background:color-mix(in srgb,var(--tm-text) 5%,transparent)}
+.tab:active{transform:scale(.96)}
+.tab .ind{position:absolute;inset:0;background:var(--tm-accent-strong);z-index:0;box-shadow:0 4px 14px color-mix(in srgb,var(--tm-accent-strong) 32%,transparent);
+  clip-path:polygon(var(--bevel) 0,calc(100% - var(--bevel)) 0,100% var(--bevel),100% calc(100% - var(--bevel)),calc(100% - var(--bevel)) 100%,var(--bevel) 100%,0 calc(100% - var(--bevel)),0 var(--bevel));
+  transition:none}
+.tab svg{width:20px;height:20px;position:relative;z-index:1;stroke:var(--tm-subtle);color:var(--tm-subtle)}
+.tab.on svg{stroke:var(--tm-on-accent);color:var(--tm-on-accent)}
+.tab .lbl{position:relative;z-index:1;font-size:9px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--tm-subtle);white-space:nowrap}
+.tab.on .lbl{color:var(--tm-on-accent);font-weight:600}
+.notecol{max-width:300px;font-size:.8125rem;color:var(--tm-muted);align-self:center}
+.notecol h3{font-family:var(--serif);font-size:1.3rem;color:var(--tm-text);font-weight:500;margin:18px 0 6px}
+.notecol .ov{font-family:var(--mono);font-size:.625rem;letter-spacing:.14em;text-transform:uppercase;color:var(--tm-accent)}
+.notecol ul{list-style:none;margin-top:8px}
+.notecol li{padding:7px 0 7px 16px;position:relative;border-bottom:1px solid var(--tm-hairline)}
+.notecol li::before{content:'';position:absolute;left:0;top:14px;width:7px;height:7px;background:var(--tm-accent-pure);clip-path:polygon(20% 0,80% 0,100% 50%,80% 100%,20% 100%,0 50%)}
+@media(max-width:900px){.notecol{max-width:390px}}
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <div class="ov">Design System v3 · Preview interactivo</div>
+    <h1>Cómo se vería</h1>
+    <p>Tus pantallas reales rediseñadas en DS3. Toca la barra inferior para navegar, abre los filtros, entra a una pieza. Compáralo con tus capturas.</p>
+  </div>
+  <div class="ctrls">
+    <button class="ctrl" id="mode">Modo oscuro</button>
+  </div>
+</div>
+
+<div class="stage">
+<div class="phone">
+  <div class="notch"></div>
+
+  <!-- ============ SCREENS ============ -->
+  <div class="body" id="body">
+
+    <!-- INICIO -->
+    <div class="screen on" data-screen="home">
+      <div class="status"><span>9:41</span><span>􀙇 􀛨 100%</span></div>
+      <div class="nav"><span class="wordmark">Tierra&nbsp;Mädre</span>
+        <div class="icons">
+          <button class="iconbtn" aria-label="Buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg></button>
+        </div>
+      </div>
+      <div class="hero">
+        <div class="dots"><i></i><i></i><i class="on"></i></div>
+        <div class="seg" id="seg">
+          <span class="segind"></span>
+          <button class="on">Piedras</button><button>Gemas</button><button>Lotes</button><button>Joyas</button>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sechead">
+          <div><span class="eyebrow">Recién llegadas</span><h2>Estrenos</h2></div>
+          <a class="seelink" href="#">Ver todo <span>→</span></a>
+        </div>
+      </div>
+      <div class="hscroll">
+        <div class="piece" onclick="go('product')"><div class="pw"><span class="no">Nº 447</span><div class="gem"></div></div><div class="pi"><div class="nm">Esferas del Dragón</div><div class="sp">3 PIEZAS · MUZO</div><div class="pr">$ 1,240</div></div></div>
+        <div class="piece" onclick="go('product')"><div class="pw"><span class="no">Nº 449</span><div class="gem" style="transform:scale(.85) rotate(-6deg)"></div></div><div class="pi"><div class="nm">Topos Planos</div><div class="sp">PAR · CHIVOR</div><div class="pr">$ 890</div></div></div>
+        <div class="piece" onclick="go('product')"><div class="pw"><span class="no">Nº 451</span><div class="gem" style="transform:scale(1.05) rotate(5deg)"></div></div><div class="pi"><div class="nm">Guardianas Gemelas</div><div class="sp">0.74 CT · MUZO</div><div class="pr">$ 2,310 <span class="ct">· 0.74ct</span></div></div></div>
+        <div class="piece" onclick="go('product')"><div class="pw"><span class="no">Nº 452</span><div class="gem" style="transform:scale(.9) rotate(-3deg)"></div></div><div class="pi"><div class="nm">Mellizas</div><div class="sp">0.74 CT · COSCUEZ</div><div class="pr">$ 2,180</div></div></div>
+      </div>
+      <div class="fact">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2v14"/><circle cx="12" cy="19" r="3"/><path d="M9 5h3"/></svg></div>
+        <div><p>Las esmeraldas se formaron a 200°C bajo tierra, en venas de cuarzo y calcita. Fuego verde del interior de la Tierra.</p><div class="attr">— Geología</div></div>
+      </div>
+      <div class="sec"><div class="sechead"><div><span class="eyebrow">Tu recorrido</span><h2>Sigue explorando</h2></div></div></div>
+      <div class="hscroll" style="padding-bottom:18px">
+        <div class="piece" onclick="go('product')"><div class="pw"><span class="no">Nº 312</span><div class="gem" style="transform:scale(.95)"></div></div><div class="pi"><div class="nm">Aurora</div><div class="sp">3.02 CT · COSCUEZ</div><div class="pr">$ 7,400</div></div></div>
+        <div class="piece" onclick="go('product')"><div class="pw"><span class="no">Nº 288</span><div class="gem" style="transform:scale(.8) rotate(8deg)"></div></div><div class="pi"><div class="nm">Serena</div><div class="sp">1.20 CT · MUZO</div><div class="pr">$ 3,050</div></div></div>
+      </div>
+    </div>
+
+    <!-- CATÁLOGO -->
+    <div class="screen" data-screen="treasure">
+      <div class="status"><span>9:41</span><span>􀙇 􀛨 100%</span></div>
+      <div class="nav compact"><span class="wordmark">Tesoros</span>
+        <div class="icons"><button class="iconbtn" aria-label="Buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg></button></div>
+      </div>
+      <div class="catbar"><div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg><span>Buscar por nombre, nº o corte…</span></div></div>
+      <div class="chips">
+        <button class="chip lead" onclick="openSheet()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filtros<span class="badge">2</span></button>
+        <button class="chip on">Muzo</button><button class="chip on">Vivid</button><button class="chip">1–3 ct</button><button class="chip">Disponible</button><button class="chip">&lt; $5,000</button>
+      </div>
+      <div class="sortrow"><span class="count">42 PIEZAS</span>
+        <div class="miniseg"><button class="on">Nuevos</button><button>Precio</button><button>Peso</button></div>
+      </div>
+      <div class="grid2">
+        <div class="piece grid" onclick="go('product')"><div class="pw"><span class="no">Nº 451</span><div class="gem"></div></div><div class="pi"><div class="nm">Guardianas Gemelas</div><div class="sp">0.74 CT · MUZO · VIVID</div><div class="pr">$ 2,310</div></div></div>
+        <div class="piece grid" onclick="go('product')"><div class="pw"><span class="no">Nº 312</span><div class="gem" style="transform:scale(1.05) rotate(4deg)"></div></div><div class="pi"><div class="nm">Aurora</div><div class="sp">3.02 CT · COSCUEZ</div><div class="pr">$ 7,400</div></div></div>
+        <div class="piece grid" onclick="go('product')"><div class="pw"><span class="no">Nº 288</span><div class="gem" style="transform:scale(.85) rotate(-6deg)"></div></div><div class="pi"><div class="nm">Serena</div><div class="sp">1.20 CT · MUZO</div><div class="pr">$ 3,050</div></div></div>
+        <div class="piece grid" onclick="go('product')"><div class="pw"><span class="no">Nº 205</span><div class="gem" style="transform:scale(.95) rotate(3deg)"></div></div><div class="pi"><div class="nm">Venus</div><div class="sp">2.34 CT · MUZO · VIVID</div><div class="pr">$ 4,820</div></div></div>
+        <div class="piece grid" onclick="go('product')"><div class="pw"><span class="no">Nº 176</span><div class="gem" style="transform:scale(.8) rotate(-4deg)"></div></div><div class="pi"><div class="nm">Esperanza</div><div class="sp">1.87 CT · CHIVOR</div><div class="pr">$ 3,150</div></div></div>
+        <div class="piece grid" onclick="go('product')"><div class="pw"><span class="no">Nº 158</span><div class="gem" style="transform:scale(1) rotate(6deg)"></div></div><div class="pi"><div class="nm">Lucía</div><div class="sp">0.92 CT · COSCUEZ</div><div class="pr">$ 1,760</div></div></div>
+      </div>
+    </div>
+
+    <!-- PRODUCTO -->
+    <div class="screen" data-screen="product">
+      <div class="status"><span>9:41</span><span>􀙇 􀛨 100%</span></div>
+      <div class="nav compact"><button class="back" onclick="go('treasure')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg><span class="t">Venus</span></button>
+        <div class="icons"><button class="iconbtn" aria-label="Favorito"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21s-7-4.6-9.3-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.3 6.5C19 16.4 12 21 12 21z"/></svg></button></div>
+      </div>
+      <div class="pdwell"><span class="no">Nº 205 · 1 / 4</span><div class="biggem"></div></div>
+      <div class="thumbs">
+        <div class="thumb on"><div class="gem sm"></div></div>
+        <div class="thumb"><div class="gem sm" style="transform:scale(.7) rotate(20deg)"></div></div>
+        <div class="thumb"><div class="gem sm" style="transform:scale(.7) rotate(-15deg)"></div></div>
+        <div class="thumb"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--tm-subtle)" stroke-width="1.6"><path d="M8 5v14l11-7z"/></svg></div>
+      </div>
+      <div class="pdhead"><span class="eyebrow">Muzo, Boyacá · Certificada</span><div class="nm">Venus</div></div>
+      <div class="pdmeta">
+        <div class="ledger">
+          <div class="lr"><span class="k">Peso</span><span class="v">2.34 ct</span></div>
+          <div class="lr"><span class="k">Corte</span><span class="v">Esmeralda</span></div>
+          <div class="lr"><span class="k">Color</span><span class="v">Vivid Green</span></div>
+          <div class="lr"><span class="k">Claridad</span><span class="v">VS · jardín leve</span></div>
+          <div class="lr"><span class="k">Tratamiento</span><span class="v">Aceite menor</span></div>
+        </div>
+      </div>
+      <div class="priceblock"><span class="big">$ 4,820</span><span class="perct">$ 2,060 / ct</span></div>
+      <div class="cta">
+        <div class="row"><button class="btn primary">Cotizar pieza</button><button class="btn tinted">Comparar</button></div>
+        <button class="btn plain">Ver certificado de origen →</button>
+      </div>
+      <div class="trust"><span><i class="lz"></i>Certificada</span><span><i class="lz"></i>Origen trazable</span><span><i class="lz"></i>ADN de paz</span></div>
+    </div>
+
+    <!-- EMBAJADORES -->
+    <div class="screen" data-screen="ambassadors">
+      <div class="status"><span>9:41</span><span>􀙇 􀛨 100%</span></div>
+      <div class="nav compact"><span class="wordmark">Embajadores</span></div>
+      <div class="sec" style="padding-bottom:0"><span class="eyebrow">Red de asesores</span></div>
+      <div class="dirlist">
+        <div class="dircard"><div class="avatar">M</div><div><div class="dn">María Restrepo</div><div class="dr">Bogotá · Vivid specialist</div></div><div class="stat"><b>128</b><span>piezas</span></div></div>
+        <div class="dircard"><div class="avatar">C</div><div><div class="dn">Camilo Ortiz</div><div class="dr">Medellín · Lotes</div></div><div class="stat"><b>86</b><span>piezas</span></div></div>
+        <div class="dircard"><div class="avatar">V</div><div><div class="dn">Valentina Cruz</div><div class="dr">Muzo · En mina</div></div><div class="stat"><b>203</b><span>piezas</span></div></div>
+        <div class="dircard"><div class="avatar">S</div><div><div class="dn">Santiago León</div><div class="dr">Miami · Exportación</div></div><div class="stat"><b>54</b><span>piezas</span></div></div>
+      </div>
+    </div>
+
+    <!-- CUENTAS -->
+    <div class="screen" data-screen="cuentas">
+      <div class="status"><span>9:41</span><span>􀙇 􀛨 100%</span></div>
+      <div class="nav compact"><span class="wordmark">Cuentas</span></div>
+      <div class="sec" style="padding-bottom:0"><span class="eyebrow">Cotizaciones recientes</span></div>
+      <div class="acctlist">
+        <div class="acctrow"><div class="em"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3h12l3 6-9 12L3 9z"/></svg></div><div class="al"><b>COT-2026-0418</b><span>María R. · 3 piezas</span></div><span class="statusbadge ok"><span class="d"></span>Enviada</span></div>
+        <div class="acctrow"><div class="em"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3h12l3 6-9 12L3 9z"/></svg></div><div class="al"><b>COT-2026-0417</b><span>Camilo O. · 1 pieza</span></div><span class="amt">$ 7,400</span></div>
+        <div class="acctrow"><div class="em"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3h12l3 6-9 12L3 9z"/></svg></div><div class="al"><b>COT-2026-0415</b><span>Valentina C. · 5 piezas</span></div><span class="statusbadge"><span class="d"></span>Borrador</span></div>
+      </div>
+      <div class="sec"><span class="eyebrow">Resumen del mes</span></div>
+      <div class="acctlist" style="padding-top:0">
+        <div class="acctrow"><div class="al"><b>Cotizado</b></div><span class="amt">$ 42,180</span></div>
+        <div class="acctrow"><div class="al"><b>Cerrado</b></div><span class="amt" style="color:var(--tm-accent)">$ 18,900</span></div>
+      </div>
+    </div>
+
+  </div><!-- /body -->
+
+  <!-- MENÚ SHEET -->
+  <div class="scrim" id="menuScrim" onclick="closeMenu()"></div>
+  <div class="sheet menu" id="menuSheet">
+    <div class="handle"></div>
+    <div class="sh-head"><h3>Menú</h3><button class="iconbtn" onclick="closeMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="sh-body">
+      <div class="mgroup"><span class="glabel">Herramientas</span>
+        <div class="mrow"><div class="mi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 4h16v12H5.2L4 17z"/></svg></div><div class="ml"><b>Invitaciones</b><span>Comparte acceso con clientes</span></div><span class="chev">›</span></div>
+        <div class="mrow"><div class="mi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 6h11M8 12h11M8 18h11M3 6h.01M3 12h.01M3 18h.01"/></svg></div><div class="ml"><b>Solicitudes</b><span>Pedidos de piezas</span></div><span class="chev">›</span></div>
+      </div>
+      <div class="mgroup"><span class="glabel">Ventas & propósito</span>
+        <div class="mrow"><div class="mi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3h12l3 6-9 12L3 9z"/></svg></div><div class="ml"><b>Bóveda secreta</b><span>Piezas de colección</span></div><span class="chev">›</span></div>
+        <div class="mrow"><div class="mi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v18M5 8l7-5 7 5"/></svg></div><div class="ml"><b>Esmereogénesis</b><span>Ahorro con propósito</span></div><span class="chev">›</span></div>
+      </div>
+      <div class="mgroup"><span class="glabel">Administración</span>
+        <div class="mrow"><div class="mi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></div><div class="ml"><b>Fotosíntesis</b><span>Compra → inventario → venta</span></div><span class="chev">›</span></div>
+        <div class="mrow"><div class="mi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></div><div class="ml"><b>Analytics</b><span>Métricas y Business Health</span></div><span class="chev">›</span></div>
+      </div>
+      <div class="mgroup"><span class="glabel">Cuenta</span>
+        <div class="mrow"><div class="mi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></div><div class="ml"><b>Mi perfil</b><span>Portafolio y actividad</span></div><span class="chev">›</span></div>
+        <div class="mrow"><div class="mi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3"/></svg></div><div class="ml"><b>Ajustes</b><span>Tema, idioma, moneda</span></div><span class="chev">›</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTER SHEET -->
+  <div class="scrim" id="filterScrim" onclick="closeSheet()"></div>
+  <div class="sheet" id="filterSheet">
+    <div class="handle"></div>
+    <div class="sh-head"><h3>Filtros</h3><button class="btn plain" style="flex:0;min-height:auto;padding:0" onclick="closeSheet()">Limpiar</button></div>
+    <div class="sh-body">
+      <div class="fgroup"><span class="glabel">Origen</span><div class="fchips">
+        <button class="chip on">Muzo</button><button class="chip">Chivor</button><button class="chip">Coscuez</button><button class="chip">Gachalá</button></div></div>
+      <div class="fgroup"><span class="glabel">Color</span><div class="fchips">
+        <button class="chip on">Vivid</button><button class="chip">Intense</button><button class="chip">Medium</button><button class="chip">Light</button></div></div>
+      <div class="fgroup"><span class="glabel">Peso (quilates)</span>
+        <div class="range"><div class="track"><div class="fill"></div><div class="knob" style="left:18%"></div><div class="knob" style="left:74%"></div></div><div class="read"><span>1.0 ct</span><span>3.0 ct</span></div></div></div>
+      <div class="fgroup"><span class="glabel">Precio (USD)</span>
+        <div class="range"><div class="track"><div class="fill" style="left:8%;right:38%"></div><div class="knob" style="left:8%"></div><div class="knob" style="left:62%"></div></div><div class="read"><span>$ 800</span><span>$ 5,000</span></div></div></div>
+      <div class="fgroup"><span class="glabel">Disponibilidad</span><div class="fchips">
+        <button class="chip on">Disponible</button><button class="chip">Consignada</button><button class="chip">En mina</button></div></div>
+    </div>
+    <div class="sh-foot"><button class="btn ghost" onclick="closeSheet()">Limpiar</button><button class="btn primary" onclick="closeSheet()">Ver 42 resultados</button></div>
+  </div>
+
+  <!-- TABBAR -->
+  <div class="tabwrap"><div class="tabpill" id="tabpill">
+    <button class="tab on" data-go="home"><span class="ind"></span><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span class="lbl">Inicio</span></button>
+    <button class="tab" data-go="treasure"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18"/></svg><span class="lbl">Tesoros</span></button>
+    <button class="tab" data-go="ambassadors"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg><span class="lbl">Embajadores</span></button>
+    <button class="tab" data-go="cuentas"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg><span class="lbl">Cuentas</span></button>
+    <button class="tab" data-act="menu"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="lbl">Menú</span></button>
+  </div></div>
+
+</div><!-- /phone -->
+
+<div class="notecol">
+  <div class="ov">Qué estás viendo</div>
+  <h3>Lo que cambia</h3>
+  <ul>
+    <li><b>Barra contenida</b> — flota, no se estira; indicador con bisel esmeralda.</li>
+    <li><b>Vitrina numerada</b> — cada pieza con <span style="font-family:var(--mono)">Nº</span>, pozo con esquina cortada, precio en mono tabular.</li>
+    <li><b>Filtros reales</b> — chips + sheet 86% con rangos y conteo de resultados.</li>
+    <li><b>Ledger gemológico</b> — la ficha se lee como papelería de laboratorio.</li>
+    <li><b>Menú por acción</b> — el 5.º slot abre un sheet agrupado, no navega.</li>
+    <li><b>Serif como voz</b> — títulos Cormorant, calma editorial, un solo verde.</li>
+  </ul>
+  <h3>Prueba</h3>
+  <ul>
+    <li>Toca <b>Tesoros</b> → <b>Filtros</b>.</li>
+    <li>Toca cualquier pieza → ficha con Ledger.</li>
+    <li>Toca <b>Menú</b> (5.º slot).</li>
+    <li>Cambia a <b>modo oscuro</b> arriba.</li>
+  </ul>
+</div>
+</div>
+
+<script>
+var body=document.getElementById('body');
+function go(name){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.toggle('on',s.dataset.screen===name)});
+  // sync tab active (product maps to treasure)
+  var tabName = name==='product' ? 'treasure' : name;
+  document.querySelectorAll('.tab[data-go]').forEach(function(t){
+    var on=t.dataset.go===tabName; t.classList.toggle('on',on);
+    var ex=t.querySelector('.ind'); if(on&&!ex){var i=document.createElement('span');i.className='ind';t.insertBefore(i,t.firstChild);} if(!on&&ex)ex.remove();
+  });
+  if('vibrate' in navigator)navigator.vibrate(8);
+  body.scrollTop=0;
+}
+document.querySelectorAll('.tab[data-go]').forEach(function(t){t.addEventListener('click',function(){go(t.dataset.go)})});
+document.querySelector('.tab[data-act="menu"]').addEventListener('click',openMenu);
+function openSheet(){document.getElementById('filterSheet').classList.add('on');document.getElementById('filterScrim').classList.add('on')}
+function closeSheet(){document.getElementById('filterSheet').classList.remove('on');document.getElementById('filterScrim').classList.remove('on')}
+function openMenu(){document.getElementById('menuSheet').classList.add('on');document.getElementById('menuScrim').classList.add('on')}
+function closeMenu(){document.getElementById('menuSheet').classList.remove('on');document.getElementById('menuScrim').classList.remove('on')}
+// chip toggles
+document.querySelectorAll('.chip:not(.lead)').forEach(function(c){c.addEventListener('click',function(e){e.stopPropagation();c.classList.toggle('on')})});
+// segmented control slider
+(function(){
+  var seg=document.getElementById('seg'),ind=seg.querySelector('.segind'),btns=seg.querySelectorAll('button');
+  function place(b){ind.style.width=b.offsetWidth+'px';ind.style.transform='translateX('+(b.offsetLeft-4)+'px)'}
+  btns.forEach(function(b){b.addEventListener('click',function(){btns.forEach(function(x){x.classList.remove('on')});b.classList.add('on');place(b)})});
+  setTimeout(function(){place(seg.querySelector('button.on'))},60);
+})();
+// mini segmented
+document.querySelectorAll('.miniseg').forEach(function(m){m.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){m.querySelectorAll('button').forEach(function(x){x.classList.remove('on')});b.classList.add('on')})})});
+// theme
+document.getElementById('mode').addEventListener('click',function(){
+  var d=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',d?'light':'dark');
+  this.textContent=d?'Modo oscuro':'Modo claro';
+});
+</script>
+</body>
+</html>

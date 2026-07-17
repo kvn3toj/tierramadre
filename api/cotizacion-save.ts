@@ -5,10 +5,10 @@
  * Each asesor has their own folder: TM-Studio/cotizaciones/asesores/{email}/
  */
 
-import type { sheets_v4 } from "@googleapis/sheets";
-import type { drive_v3 } from "@googleapis/drive";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { Readable } from "stream";
+import type { sheets_v4 } from '@googleapis/sheets';
+import type { drive_v3 } from '@googleapis/drive';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { Readable } from 'stream';
 import {
   withApiHandler,
   SPREADSHEET_ID,
@@ -19,11 +19,11 @@ import {
   findSheetByPattern,
   findColumnIndex,
   formatDisplayName,
-} from "./_lib/index.js";
+} from './_lib/index.js';
 
 // Sheet names for cotización data
-const COTIZACIONES_SHEET = "CotizacionesAsesores";
-const PRODUCTS_SHEET = "CotizacionProducts";
+const COTIZACIONES_SHEET = 'CotizacionesAsesores';
+const PRODUCTS_SHEET = 'CotizacionProducts';
 
 function firstQueryParam(v: string | string[] | undefined): string | undefined {
   if (v == null) return undefined;
@@ -60,6 +60,12 @@ interface CotizacionProductLine {
   aiPreviews?: AiJewelryPreviewLine[];
   /** The AI preview chosen to show in the quotation & PDF. */
   selectedPreviewUrl?: string;
+  // ── Fields needed to render the public online card (`/c/:quotationNumber`) ──
+  cantidad?: number;
+  descripcion?: string;
+  certificadoUrl?: string;
+  numeroCO?: string;
+  imagen?: string;
 }
 
 interface CotizacionPostBody {
@@ -87,7 +93,7 @@ async function getAsesorNamesByEmail(
 
     // Locate the asesores sheet by name first; fall back to legacy index 2.
     const asesoresSheet =
-      findSheetByPattern(sheetNames, ["asesor", "embajador"]) ||
+      findSheetByPattern(sheetNames, ['asesor', 'embajador']) ||
       sheetNames[2] ||
       sheetNames[0];
 
@@ -101,12 +107,12 @@ async function getAsesorNamesByEmail(
 
     const headers = rows[0] as string[];
     const nameIndex = findColumnIndex(headers, [
-      "nombre",
-      "name",
-      "asesor",
-      "vendedor",
+      'nombre',
+      'name',
+      'asesor',
+      'vendedor',
     ]);
-    const emailIndex = findColumnIndex(headers, ["instagram", "ig", "email"]);
+    const emailIndex = findColumnIndex(headers, ['instagram', 'ig', 'email']);
 
     if (nameIndex === -1 || emailIndex === -1) return {};
 
@@ -122,7 +128,7 @@ async function getAsesorNamesByEmail(
 
     return namesByEmail;
   } catch (error) {
-    console.error("[CotizacionSave] Error fetching asesor names:", error);
+    console.error('[CotizacionSave] Error fetching asesor names:', error);
     return {};
   }
 }
@@ -144,13 +150,13 @@ async function getAsesorCotizacionesFolder(
   const sanitizedEmail = asesorEmail
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9@._-]/g, "_");
+    .replace(/[^a-z0-9@._-]/g, '_');
 
   // Find or create cotizaciones folder
   let cotizacionesFolderId: string;
   const cotizacionesQuery = await drive.files.list({
     q: `name = 'cotizaciones' and '${sharedDriveId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-    fields: "files(id, name)",
+    fields: 'files(id, name)',
     supportsAllDrives: true,
     includeItemsFromAllDrives: true,
   });
@@ -161,11 +167,11 @@ async function getAsesorCotizacionesFolder(
   } else {
     const folder = await drive.files.create({
       requestBody: {
-        name: "cotizaciones",
-        mimeType: "application/vnd.google-apps.folder",
+        name: 'cotizaciones',
+        mimeType: 'application/vnd.google-apps.folder',
         parents: [sharedDriveId],
       },
-      fields: "id",
+      fields: 'id',
       supportsAllDrives: true,
     });
     cotizacionesFolderId = folder.data.id!;
@@ -175,7 +181,7 @@ async function getAsesorCotizacionesFolder(
   let asesoresFolderId: string;
   const asesoresQuery = await drive.files.list({
     q: `name = 'asesores' and '${cotizacionesFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-    fields: "files(id, name)",
+    fields: 'files(id, name)',
     supportsAllDrives: true,
     includeItemsFromAllDrives: true,
   });
@@ -186,11 +192,11 @@ async function getAsesorCotizacionesFolder(
   } else {
     const folder = await drive.files.create({
       requestBody: {
-        name: "asesores",
-        mimeType: "application/vnd.google-apps.folder",
+        name: 'asesores',
+        mimeType: 'application/vnd.google-apps.folder',
         parents: [cotizacionesFolderId],
       },
-      fields: "id",
+      fields: 'id',
       supportsAllDrives: true,
     });
     asesoresFolderId = folder.data.id!;
@@ -200,7 +206,7 @@ async function getAsesorCotizacionesFolder(
   let asesorFolderId: string;
   const asesorQuery = await drive.files.list({
     q: `name = '${sanitizedEmail}' and '${asesoresFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-    fields: "files(id, name)",
+    fields: 'files(id, name)',
     supportsAllDrives: true,
     includeItemsFromAllDrives: true,
   });
@@ -212,10 +218,10 @@ async function getAsesorCotizacionesFolder(
     const folder = await drive.files.create({
       requestBody: {
         name: sanitizedEmail,
-        mimeType: "application/vnd.google-apps.folder",
+        mimeType: 'application/vnd.google-apps.folder',
         parents: [asesoresFolderId],
       },
-      fields: "id",
+      fields: 'id',
       supportsAllDrives: true,
     });
     asesorFolderId = folder.data.id!;
@@ -234,8 +240,8 @@ async function uploadImageToDrive(
   quotationNumber: string,
 ) {
   // Remove data URL prefix if present
-  const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
-  const buffer = Buffer.from(base64Data, "base64");
+  const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+  const buffer = Buffer.from(base64Data, 'base64');
 
   const fileName = `${quotationNumber}.png`;
 
@@ -245,24 +251,24 @@ async function uploadImageToDrive(
       parents: [folderId],
     },
     media: {
-      mimeType: "image/png",
+      mimeType: 'image/png',
       body: Readable.from(buffer),
     },
-    fields: "id, name, webViewLink, webContentLink",
+    fields: 'id, name, webViewLink, webContentLink',
     supportsAllDrives: true,
   });
 
   const newFileId = uploadedFile.data.id;
   if (!newFileId) {
-    throw new Error("Drive upload did not return a file id");
+    throw new Error('Drive upload did not return a file id');
   }
 
   // Make file viewable
   await drive.permissions.create({
     fileId: newFileId,
     requestBody: {
-      role: "reader",
-      type: "anyone",
+      role: 'reader',
+      type: 'anyone',
     },
     supportsAllDrives: true,
   });
@@ -313,33 +319,33 @@ async function ensureCotizacionesSheet(
       await sheets.spreadsheets.values.update({
         spreadsheetId: APP_SPREADSHEET_ID,
         range: `${COTIZACIONES_SHEET}!A1:L1`,
-        valueInputOption: "RAW",
+        valueInputOption: 'RAW',
         requestBody: {
           values: [
             [
-              "ID",
-              "QuotationNumber",
-              "AsesorEmail",
-              "AsesorName",
-              "ClientName",
-              "ClientPhone",
-              "ProductsCount",
-              "Total",
-              "ImageUrl",
-              "DriveFileId",
-              "CreatedAt",
-              "ExpiryDate",
+              'ID',
+              'QuotationNumber',
+              'AsesorEmail',
+              'AsesorName',
+              'ClientName',
+              'ClientPhone',
+              'ProductsCount',
+              'Total',
+              'ImageUrl',
+              'DriveFileId',
+              'CreatedAt',
+              'ExpiryDate',
             ],
           ],
         },
       });
 
-      console.log("[CotizacionSave] Created CotizacionesAsesores sheet");
+      console.log('[CotizacionSave] Created CotizacionesAsesores sheet');
     }
 
     return true;
   } catch (error) {
-    console.error("[CotizacionSave] Error ensuring sheet:", error);
+    console.error('[CotizacionSave] Error ensuring sheet:', error);
     throw error;
   }
 }
@@ -375,30 +381,35 @@ async function ensureProductsSheet(sheets: sheets_v4.Sheets): Promise<boolean> {
 
       await sheets.spreadsheets.values.update({
         spreadsheetId: APP_SPREADSHEET_ID,
-        range: `${PRODUCTS_SHEET}!A1:H1`,
-        valueInputOption: "RAW",
+        range: `${PRODUCTS_SHEET}!A1:M1`,
+        valueInputOption: 'RAW',
         requestBody: {
           values: [
             [
-              "CotizacionId",
-              "ItemNumber",
-              "ProductName",
-              "Price",
-              "AsesorEmail",
-              "CreatedAt",
-              "SelectedPreviewUrl",
-              "AiPreviewsJson",
+              'CotizacionId',
+              'ItemNumber',
+              'ProductName',
+              'Price',
+              'AsesorEmail',
+              'CreatedAt',
+              'SelectedPreviewUrl',
+              'AiPreviewsJson',
+              'Cantidad',
+              'Descripcion',
+              'CertificadoUrl',
+              'NumeroCO',
+              'Imagen',
             ],
           ],
         },
       });
 
-      console.log("[CotizacionSave] Created CotizacionProducts sheet");
+      console.log('[CotizacionSave] Created CotizacionProducts sheet');
     }
 
     return true;
   } catch (error) {
-    console.error("[CotizacionSave] Error ensuring products sheet:", error);
+    console.error('[CotizacionSave] Error ensuring products sheet:', error);
     throw error;
   }
 }
@@ -419,20 +430,20 @@ async function saveCotizacionToSheet(
     data.asesorEmail,
     data.asesorName,
     data.clientName,
-    data.clientPhone || "",
+    data.clientPhone || '',
     data.productsCount,
     data.total,
     data.imageUrl,
     data.driveFileId,
     new Date().toISOString(),
-    data.expiryDate || "",
+    data.expiryDate || '',
   ];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: APP_SPREADSHEET_ID,
     range: `${COTIZACIONES_SHEET}!A:L`,
-    valueInputOption: "RAW",
-    insertDataOption: "INSERT_ROWS",
+    valueInputOption: 'RAW',
+    insertDataOption: 'INSERT_ROWS',
     requestBody: {
       values: [row],
     },
@@ -457,7 +468,7 @@ async function saveCotizacionProducts(
   // Persist only durable serve-drive-image URLs — never data: URLs (the
   // Drive-upload-failed fallback), which would bloat or exceed the sheet cell.
   const isPersistable = (url?: string | null): url is string =>
-    Boolean(url) && !url!.startsWith("data:");
+    Boolean(url) && !url!.startsWith('data:');
 
   const createdAt = new Date().toISOString();
   const rows = products.map((product) => {
@@ -466,24 +477,29 @@ async function saveCotizacionProducts(
     );
     const selectedPreviewUrl = isPersistable(product.selectedPreviewUrl)
       ? product.selectedPreviewUrl
-      : "";
+      : '';
     return [
       cotizacionId,
       product.itemNumber || 0,
-      product.name || "",
+      product.name || '',
       product.precioCOP || 0,
       asesorEmail,
       createdAt,
       selectedPreviewUrl,
-      previews.length > 0 ? JSON.stringify(previews) : "",
+      previews.length > 0 ? JSON.stringify(previews) : '',
+      product.cantidad ?? 1,
+      product.descripcion || '',
+      isPersistable(product.certificadoUrl) ? product.certificadoUrl : '',
+      product.numeroCO || '',
+      isPersistable(product.imagen) ? product.imagen : '',
     ];
   });
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: APP_SPREADSHEET_ID,
-    range: `${PRODUCTS_SHEET}!A:H`,
-    valueInputOption: "RAW",
-    insertDataOption: "INSERT_ROWS",
+    range: `${PRODUCTS_SHEET}!A:M`,
+    valueInputOption: 'RAW',
+    insertDataOption: 'INSERT_ROWS',
     requestBody: {
       values: rows,
     },
@@ -540,11 +556,78 @@ async function getCotizacionesByAsesor(
   } catch (error: unknown) {
     // Sheet might not exist yet
     const err = error as { code?: number; message?: string };
-    if (err.code === 400 || err.message?.includes("Unable to parse range")) {
+    if (err.code === 400 || err.message?.includes('Unable to parse range')) {
       return [];
     }
     throw error;
   }
+}
+
+/**
+ * Public read: fetch a single cotización + its products by quotation number.
+ * No auth/email required — used by the public online view (`/c/:quotationNumber`)
+ * that the card QR points to. Returns null when the number is not found.
+ */
+async function getCotizacionByQuotationNumber(
+  sheets: sheets_v4.Sheets,
+  quotationNumber: string,
+) {
+  const wanted = quotationNumber.trim().toLowerCase();
+
+  const metaResp = await sheets.spreadsheets.values.get({
+    spreadsheetId: APP_SPREADSHEET_ID,
+    range: `${COTIZACIONES_SHEET}!A:L`,
+  });
+  const metaRows = metaResp.data.values || [];
+  const row = metaRows.slice(1).find(
+    (r) =>
+      String(r[1] || '')
+        .trim()
+        .toLowerCase() === wanted,
+  );
+  if (!row) return null;
+
+  const cotizacionId = String(row[0] || '');
+
+  // Product rows for this cotización.
+  let products: Array<Record<string, unknown>> = [];
+  try {
+    const prodResp = await sheets.spreadsheets.values.get({
+      spreadsheetId: APP_SPREADSHEET_ID,
+      range: `${PRODUCTS_SHEET}!A:M`,
+    });
+    const prodRows = prodResp.data.values || [];
+    products = prodRows
+      .slice(1)
+      .filter((r) => String(r[0] || '') === cotizacionId)
+      .map((r) => ({
+        itemNumber: parseInt(String(r[1])) || 0,
+        name: r[2] || '',
+        precioCOP: parseFloat(String(r[3])) || 0,
+        selectedPreviewUrl: r[6] || '',
+        cantidad: parseInt(String(r[8])) || 1,
+        descripcion: r[9] || '',
+        certificadoUrl: r[10] || '',
+        numeroCO: r[11] || '',
+        imagen: r[12] || '',
+      }));
+  } catch {
+    products = [];
+  }
+
+  return {
+    id: cotizacionId,
+    quotationNumber: row[1] || '',
+    asesorName: row[3] || '',
+    clientName: row[4] || '',
+    productsCount: parseInt(String(row[6])) || products.length,
+    total: parseFloat(String(row[7])) || 0,
+    imageUrl: row[8] || '',
+    driveFileId: row[9] || '',
+    createdAt: row[10] || '',
+    expiryDate: row[11] || '',
+    products,
+  };
 }
 
 /**
@@ -579,9 +662,9 @@ async function getProductStats(sheets: sheets_v4.Sheets) {
 
     for (const row of dataRows) {
       const itemNumber = parseInt(row[1]) || 0;
-      const productName = row[2] || "";
+      const productName = row[2] || '';
       const price = parseFloat(row[3]) || 0;
-      const asesorEmail = row[4] || "";
+      const asesorEmail = row[4] || '';
 
       // Global product stats
       const productKey = `${itemNumber}-${productName}`;
@@ -638,7 +721,7 @@ async function getProductStats(sheets: sheets_v4.Sheets) {
   } catch (error: unknown) {
     // Sheet might not exist yet
     const err = error as { code?: number; message?: string };
-    if (err.code === 400 || err.message?.includes("Unable to parse range")) {
+    if (err.code === 400 || err.message?.includes('Unable to parse range')) {
       return { topProducts: [], productsByAsesor: [] };
     }
     throw error;
@@ -710,8 +793,8 @@ async function getProductCotizaciones(
     for (const row of dataRows) {
       const cotizacionId = row[0];
       const price = parseFloat(row[3]) || 0;
-      const asesorEmail = row[4] || "";
-      const createdAt = row[5] || "";
+      const asesorEmail = row[4] || '';
+      const createdAt = row[5] || '';
 
       // Add to all quotes for recent activity
       allQuotes.push({
@@ -726,7 +809,7 @@ async function getProductCotizaciones(
         if (!asesorStats[asesorEmail]) {
           asesorStats[asesorEmail] = {
             email: asesorEmail,
-            name: asesorEmail.split("@")[0],
+            name: asesorEmail.split('@')[0],
             count: 0,
             totalValue: 0,
             firstQuote: createdAt,
@@ -785,7 +868,7 @@ async function getProductCotizaciones(
   } catch (error: unknown) {
     // Sheet might not exist yet
     const err = error as { code?: number; message?: string };
-    if (err.code === 400 || err.message?.includes("Unable to parse range")) {
+    if (err.code === 400 || err.message?.includes('Unable to parse range')) {
       return {
         itemNumber: parseInt(String(itemNumber), 10),
         productName: null,
@@ -844,8 +927,8 @@ async function getCotizacionStats(sheets: sheets_v4.Sheets) {
     const clientSet = new Set<string>();
 
     for (const row of dataRows) {
-      const asesorEmail = row[2] || "";
-      const clientName = row[4] || "";
+      const asesorEmail = row[2] || '';
+      const clientName = row[4] || '';
       const total = parseFloat(row[7]) || 0;
       const createdAt = row[10] ? new Date(row[10]).getTime() : 0;
 
@@ -867,9 +950,9 @@ async function getCotizacionStats(sheets: sheets_v4.Sheets) {
     const getAsesorDisplayName = (
       email: string | number | boolean | undefined,
     ) => {
-      const e = String(email ?? "");
+      const e = String(email ?? '');
       const normalizedEmail = e.toLowerCase().trim();
-      return asesorNameLookup[normalizedEmail] || e.split("@")[0] || "Asesor";
+      return asesorNameLookup[normalizedEmail] || e.split('@')[0] || 'Asesor';
     };
 
     // Top asesores by count (use name from Asesores sheet)
@@ -919,7 +1002,7 @@ async function getCotizacionStats(sheets: sheets_v4.Sheets) {
   } catch (error: unknown) {
     // Sheet might not exist yet
     const err = error as { code?: number; message?: string };
-    if (err.code === 400 || err.message?.includes("Unable to parse range")) {
+    if (err.code === 400 || err.message?.includes('Unable to parse range')) {
       return {
         totalCotizaciones: 0,
         totalValue: 0,
@@ -971,7 +1054,7 @@ async function deleteCotizacion(
   }
 
   if (rowIndex === -1) {
-    throw new Error("Cotización not found or not owned by this asesor");
+    throw new Error('Cotización not found or not owned by this asesor');
   }
 
   // Delete from Drive
@@ -983,7 +1066,7 @@ async function deleteCotizacion(
       });
     } catch (error: unknown) {
       console.warn(
-        "[CotizacionSave] Could not delete Drive file:",
+        '[CotizacionSave] Could not delete Drive file:',
         error instanceof Error ? error.message : error,
       );
     }
@@ -1018,7 +1101,7 @@ export default withApiHandler(
     // ==========================================================================
     // GET - Fetch cotizaciones for an asesor or aggregate stats
     // ==========================================================================
-    if (req.method === "GET") {
+    if (req.method === 'GET') {
       const email = firstQueryParam(
         req.query?.email as string | string[] | undefined,
       );
@@ -1028,22 +1111,37 @@ export default withApiHandler(
       const itemId = firstQueryParam(
         req.query?.itemId as string | string[] | undefined,
       );
+      const quotationNumber = firstQueryParam(
+        req.query?.quotationNumber as string | string[] | undefined,
+      );
+
+      // Public view — fetch one cotización + products by number (no auth).
+      if (action === 'public' && quotationNumber) {
+        const data = await getCotizacionByQuotationNumber(
+          sheets,
+          quotationNumber,
+        );
+        if (!data) {
+          return sendError(res, 404, 'Cotización no encontrada');
+        }
+        return sendSuccess(res, data);
+      }
 
       // Stats endpoint for analytics dashboard
-      if (action === "stats") {
+      if (action === 'stats') {
         const stats = await getCotizacionStats(sheets);
         return sendSuccess(res, stats);
       }
 
       // Product cotizaciones endpoint - who quoted a specific product
-      if (action === "productCotizaciones" && itemId) {
+      if (action === 'productCotizaciones' && itemId) {
         const productData = await getProductCotizaciones(sheets, itemId);
         return sendSuccess(res, productData);
       }
 
       // Asesor-specific cotizaciones
       if (!email) {
-        return sendError(res, 400, "Email parameter required");
+        return sendError(res, 400, 'Email parameter required');
       }
 
       const cotizaciones = await getCotizacionesByAsesor(sheets, email);
@@ -1057,9 +1155,9 @@ export default withApiHandler(
     // ==========================================================================
     // POST - Save a new cotización
     // ==========================================================================
-    if (req.method === "POST") {
+    if (req.method === 'POST') {
       if (!drive || !sharedDriveId) {
-        return sendError(res, 500, "Google Drive not available");
+        return sendError(res, 500, 'Google Drive not available');
       }
 
       const {
@@ -1080,7 +1178,7 @@ export default withApiHandler(
         return sendError(
           res,
           400,
-          "Missing required fields: quotationNumber, asesorEmail, asesorName, imageBase64",
+          'Missing required fields: quotationNumber, asesorEmail, asesorName, imageBase64',
         );
       }
 
@@ -1104,11 +1202,11 @@ export default withApiHandler(
         quotationNumber,
         asesorEmail,
         asesorName,
-        clientName: clientName || "",
-        clientPhone: clientPhone || "",
+        clientName: clientName || '',
+        clientPhone: clientPhone || '',
         productsCount: productsCount || products?.length || 0,
         total: total || 0,
-        expiryDate: expiryDate || "",
+        expiryDate: expiryDate || '',
         imageUrl: uploadResult.proxyUrl,
         driveFileId: uploadResult.fileId,
       });
@@ -1138,9 +1236,9 @@ export default withApiHandler(
     // ==========================================================================
     // DELETE - Delete a cotización
     // ==========================================================================
-    if (req.method === "DELETE") {
+    if (req.method === 'DELETE') {
       if (!drive) {
-        return sendError(res, 500, "Google Drive not available");
+        return sendError(res, 500, 'Google Drive not available');
       }
 
       const id = firstQueryParam(
@@ -1151,7 +1249,7 @@ export default withApiHandler(
       );
 
       if (!id || !email) {
-        return sendError(res, 400, "ID and email parameters required");
+        return sendError(res, 400, 'ID and email parameters required');
       }
 
       await deleteCotizacion(drive, sheets, id, email);
@@ -1159,12 +1257,12 @@ export default withApiHandler(
       return sendSuccess(res, { deleted: true });
     }
 
-    return sendError(res, 405, "Method not allowed");
+    return sendError(res, 405, 'Method not allowed');
   },
   {
-    methods: ["GET", "POST", "DELETE", "OPTIONS"],
+    methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
     provideSheets: true,
     provideOAuthDrive: true,
-    errorPrefix: "CotizacionSave",
+    errorPrefix: 'CotizacionSave',
   },
 );

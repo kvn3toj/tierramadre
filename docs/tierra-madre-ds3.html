@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tierra Madre · DS v3 — Quiet Emerald</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --tm-bg:#F7F8F8; --tm-surface:#FFFFFF; --tm-well:#F1F2F2;
+  --tm-border:#E4E7E5; --tm-hairline:#EBEDEC;
+  --tm-text:#14181A; --tm-muted:#5C6360; --tm-subtle:#8C928F;
+  --tm-accent:#00785C; --tm-accent-strong:#006F52; --tm-accent-pure:#00AF84; --tm-on-accent:#FFFFFF;
+  --tm-danger:#B3403A; --tm-warning:#8A5F1B;
+  --tm-shadow:0 18px 40px -24px rgba(13,30,24,.30);
+  --serif:'Cormorant','Cormorant Garamond',Georgia,serif;
+  --ui:'Hanken Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --mono:'DM Mono','SF Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.22,1,.36,1); --fast:160ms; --base:240ms; --slow:420ms;
+}
+[data-theme="dark"]{
+  --tm-bg:#0E1110; --tm-surface:#15191A; --tm-well:#1B1F1F;
+  --tm-border:#272C2B; --tm-hairline:#222726;
+  --tm-text:#EAEDEB; --tm-muted:#9AA09D; --tm-subtle:#6B726F;
+  --tm-accent:#34C99B; --tm-accent-strong:#00AF84; --tm-accent-pure:#34C99B; --tm-on-accent:#06140E;
+  --tm-danger:#E5736C; --tm-warning:#D9A94E;
+  --tm-shadow:0 20px 46px -26px rgba(0,0,0,.8);
+}
+@media (prefers-reduced-motion:reduce){:root{--fast:.01ms;--base:.01ms;--slow:.01ms}}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--tm-bg);color:var(--tm-text);font-family:var(--ui);font-size:17px;line-height:1.55;transition:background var(--base) var(--ease),color var(--base) var(--ease)}
+.layout{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;overscroll-behavior:contain;border-right:1px solid var(--tm-hairline);padding:32px 0;background:var(--tm-bg)}
+.brand{padding:0 24px 24px;border-bottom:1px solid var(--tm-hairline);margin-bottom:16px}
+.brand .ov{margin-bottom:6px}
+.brand h1{font-family:var(--serif);font-weight:500;font-size:1.5rem;line-height:1.1}
+.brand .dot{display:inline-block;width:7px;height:7px;border-radius:999px;background:var(--tm-accent-pure);margin-left:6px}
+nav.side a{display:block;padding:9px 24px;color:var(--tm-muted);text-decoration:none;font-size:.9375rem;border-left:2px solid transparent;transition:color var(--fast) var(--ease),border-color var(--fast) var(--ease)}
+nav.side a:hover{color:var(--tm-text)}
+nav.side a.on{color:var(--tm-accent);border-left-color:var(--tm-accent);font-weight:600}
+main{padding:56px 64px 120px;max-width:1000px}
+section{margin-bottom:88px}
+.ov{font-family:var(--mono);font-size:.6875rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--tm-accent)}
+h2{font-family:var(--serif);font-weight:500;font-size:2.1rem;line-height:1.12;margin:8px 0 14px}
+h3{font-family:var(--ui);font-weight:600;font-size:1.0625rem;margin:34px 0 10px}
+p.lead{color:var(--tm-muted);max-width:64ch}
+p{max-width:70ch}
+.hairline{border:0;border-top:1px solid var(--tm-hairline);margin:20px 0}
+.muted{color:var(--tm-muted)} .subtle{color:var(--tm-subtle)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+code{font-family:var(--mono);font-size:.8125rem;background:var(--tm-well);border:1px solid var(--tm-hairline);border-radius:5px;padding:1px 6px}
+.card{background:var(--tm-surface);border:1px solid var(--tm-border);border-radius:12px;padding:20px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:900px){.layout{grid-template-columns:1fr}nav.side{display:none}main{padding:32px 20px}.g3,.g4{grid-template-columns:1fr 1fr}}
+/* swatches */
+.sw{border:1px solid var(--tm-border);border-radius:12px;overflow:hidden;background:var(--tm-surface)}
+.sw .chip{height:64px}
+.sw .meta{padding:10px 12px}
+.sw .meta b{display:block;font-size:.8125rem;font-weight:600}
+.sw .meta span{font-family:var(--mono);font-size:.6875rem;color:var(--tm-subtle)}
+/* buttons */
+.btn{font-family:var(--ui);font-weight:600;font-size:.9375rem;border-radius:8px;padding:12px 20px;min-height:44px;border:1px solid transparent;cursor:pointer;transition:opacity var(--fast) var(--ease),background var(--fast) var(--ease),border-color var(--fast) var(--ease)}
+.btn:focus-visible{outline:none;box-shadow:0 0 0 2px var(--tm-bg),0 0 0 4px var(--tm-accent)}
+.btn:active{opacity:.85}
+.btn.primary{background:var(--tm-accent-strong);color:var(--tm-on-accent)}
+.btn.tinted{background:var(--tm-well);color:var(--tm-accent);border-color:var(--tm-border)}
+.btn.plain{background:transparent;color:var(--tm-accent)}
+.btn.outlined{background:transparent;color:var(--tm-text);border-color:var(--tm-border)}
+.btn.danger{background:transparent;color:var(--tm-danger);border-color:var(--tm-danger)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+/* vitrine demo */
+.vitrine{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.piece{background:var(--tm-surface);border:1px solid var(--tm-border);border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color var(--fast) var(--ease)}
+.piece:hover{border-color:var(--tm-subtle)}
+.piece .well{aspect-ratio:4/5;background:var(--tm-well);display:flex;align-items:center;justify-content:center}
+.gem{width:52px;height:64px;background:linear-gradient(160deg,#2ECFA0,#00785C 65%,#00553F);clip-path:polygon(20% 0,80% 0,100% 20%,100% 80%,80% 100%,20% 100%,0 80%,0 20%)}
+.piece .info{padding:12px 14px 14px}
+.piece .name{font-family:var(--serif);font-weight:500;font-size:1.25rem;line-height:1.15}
+.piece .spec{font-family:var(--mono);font-size:.6875rem;letter-spacing:.05em;color:var(--tm-subtle);margin-top:3px}
+.piece .price{font-family:var(--mono);font-weight:500;font-size:.9375rem;margin-top:8px;font-variant-numeric:tabular-nums}
+/* type specimens */
+.spec-row{display:grid;grid-template-columns:150px 1fr;gap:18px;align-items:baseline;padding:13px 0;border-bottom:1px solid var(--tm-hairline)}
+.spec-row .tag{font-family:var(--mono);font-size:.6875rem;color:var(--tm-subtle)}
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:.875rem}
+th{text-align:left;font-family:var(--mono);font-size:.6875rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tm-subtle);font-weight:500;padding:8px 12px;border-bottom:1px solid var(--tm-border)}
+td{padding:9px 12px;border-bottom:1px solid var(--tm-hairline);vertical-align:top}
+/* shell diagram */
+.shell{border:1px solid var(--tm-border);border-radius:18px;overflow:hidden;max-width:360px;background:var(--tm-surface)}
+.shell .bar{padding:12px 16px;font-size:.8125rem;display:flex;justify-content:space-between;align-items:center;background:color-mix(in srgb,var(--tm-surface) 88%,transparent);backdrop-filter:blur(10px)}
+.shell .bar.top{border-bottom:1px solid var(--tm-hairline)}
+.shell .bar.bottom{border-top:1px solid var(--tm-hairline)}
+.shell .scroller{height:190px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:14px 16px;background:var(--tm-bg)}
+.shell .row{background:var(--tm-surface);border:1px solid var(--tm-border);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:.875rem}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.625rem;color:var(--tm-subtle)}
+.tab.on{color:var(--tm-accent);font-weight:600}
+.tab i{width:20px;height:20px;border-radius:6px;background:currentColor;opacity:.85;display:block}
+/* motion demo */
+.motionbox{display:flex;gap:14px;flex-wrap:wrap}
+.mcard{width:150px;padding:14px;background:var(--tm-surface);border:1px solid var(--tm-border);border-radius:12px;cursor:pointer;transition:border-color var(--fast) var(--ease),transform var(--base) var(--ease),box-shadow var(--base) var(--ease)}
+.mcard:hover{border-color:var(--tm-subtle)}
+.mcard.float:hover{transform:translateY(-3px);box-shadow:var(--tm-shadow)}
+/* states */
+.skel{background:linear-gradient(90deg,var(--tm-well) 25%,var(--tm-hairline) 50%,var(--tm-well) 75%);background-size:200% 100%;animation:sh 1.4s infinite;border-radius:5px}
+@keyframes sh{to{background-position:-200% 0}}
+.rule-list li{margin:10px 0 10px 18px;max-width:70ch}
+.check li{margin:8px 0 8px 18px}
+.toggle{position:fixed;top:18px;right:22px;z-index:10}
+.badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.6875rem;letter-spacing:.08em;text-transform:uppercase;color:var(--tm-accent);border:1px solid var(--tm-border);border-radius:999px;padding:4px 10px;background:var(--tm-surface)}
+.badge::before{content:'';width:6px;height:6px;border-radius:999px;background:var(--tm-accent-pure)}
+</style>
+</head>
+<body>
+<button class="btn outlined toggle" id="mode" aria-label="Cambiar tema">Modo oscuro</button>
+<div class="layout">
+<nav class="side" aria-label="Secciones">
+  <div class="brand">
+    <div class="ov">Design System v3</div>
+    <h1>Quiet Emerald<span class="dot"></span></h1>
+  </div>
+  <a href="#intent" class="on">Intención</a>
+  <a href="#color">Color</a>
+  <a href="#type">Tipografía</a>
+  <a href="#space">Espacio · Forma · Profundidad</a>
+  <a href="#motion">Movimiento</a>
+  <a href="#shell">Shell y Navegación</a>
+  <a href="#scroll">Leyes de Scroll</a>
+  <a href="#states">Estados</a>
+  <a href="#checklist">Checklist</a>
+</nav>
+<main>
+
+<section id="intent">
+  <span class="ov">Fundamento</span>
+  <h2>La vitrina</h2>
+  <p class="lead">Cada pantalla es una vitrina de museo: la esmeralda es lo único saturado a la vista, descansando en un pozo neutro y silencioso. El chrome susurra; la piedra habla. <em>Una joya en calma.</em></p>
+  <hr class="hairline">
+  <div class="vitrine" style="margin-top:20px">
+    <div class="piece" tabindex="0"><div class="well"><div class="gem"></div></div><div class="info"><div class="name">Venus</div><div class="spec">2.34 CT · MUZO · VIVID</div><div class="price">$ 4,820</div></div></div>
+    <div class="piece" tabindex="0"><div class="well"><div class="gem" style="transform:scale(.8) rotate(-6deg)"></div></div><div class="info"><div class="name">Esperanza</div><div class="spec">1.87 CT · CHIVOR · INTENSE</div><div class="price">$ 3,150</div></div></div>
+    <div class="piece" tabindex="0"><div class="well"><div class="gem" style="transform:scale(1.1) rotate(4deg)"></div></div><div class="info"><div class="name">Aurora</div><div class="spec">3.02 CT · COSCUEZ · VIVID</div><div class="price">$ 7,400</div></div></div>
+  </div>
+  <p class="subtle" style="margin-top:12px;font-size:.8125rem">La demo anterior usa exclusivamente tokens del sistema: serif Cormorant para el nombre, mono DM para gemología y precio, pozo neutro, borde 1px, sin sombra en reposo.</p>
+</section>
+
+<section id="color">
+  <span class="ov">Fundación 01</span>
+  <h2>Color</h2>
+  <p class="lead"><strong>Un solo color saturado en todo el producto: la esmeralda.</strong> Todo lo demás es una escala de grises fría con matiz verde. Un segundo tono saturado es un color semántico trabajando — o un bug.</p>
+  <h3>Superficies y texto</h3>
+  <div class="grid g4">
+    <div class="sw"><div class="chip" style="background:var(--tm-bg)"></div><div class="meta"><b>bg</b><span>fondo · galería</span></div></div>
+    <div class="sw"><div class="chip" style="background:var(--tm-surface)"></div><div class="meta"><b>surface</b><span>tarjeta</span></div></div>
+    <div class="sw"><div class="chip" style="background:var(--tm-well)"></div><div class="meta"><b>well</b><span>pozo de imagen</span></div></div>
+    <div class="sw"><div class="chip" style="background:var(--tm-border)"></div><div class="meta"><b>border / hairline</b><span>estructura 1px</span></div></div>
+    <div class="sw"><div class="chip" style="background:var(--tm-text)"></div><div class="meta"><b>text</b><span>15.9:1 AAA</span></div></div>
+    <div class="sw"><div class="chip" style="background:var(--tm-muted)"></div><div class="meta"><b>muted</b><span>6.5:1 AA+</span></div></div>
+    <div class="sw"><div class="chip" style="background:var(--tm-subtle)"></div><div class="meta"><b>subtle</b><span>solo captions</span></div></div>
+    <div class="sw"><div class="chip" style="background:var(--tm-danger)"></div><div class="meta"><b>danger / warning</b><span>desaturados</span></div></div>
+  </div>
+  <h3>La esmeralda — tres pasos</h3>
+  <div class="grid g3">
+    <div class="sw"><div class="chip" style="background:var(--tm-accent)"></div><div class="meta"><b>accent</b><span>links · labels · activo</span></div></div>
+    <div class="sw"><div class="chip" style="background:var(--tm-accent-strong)"></div><div class="meta"><b>accent-strong</b><span>botón primario (AA)</span></div></div>
+    <div class="sw"><div class="chip" style="background:var(--tm-accent-pure)"></div><div class="meta"><b>accent-pure</b><span>joyería: dots · trust — nunca pintura</span></div></div>
+  </div>
+  <h3>Heurísticas</h3>
+  <ul class="rule-list">
+    <li>La jerarquía de texto usa los <strong>cuatro niveles</strong> (text → muted → subtle → disabled). Dos niveles = jerarquía plana = rediseñar.</li>
+    <li>La esmeralda nunca es fondo de un área mayor que un chip. Grandes áreas verdes compiten con las piedras.</li>
+    <li><code>success</code> ES la esmeralda — no existe un segundo verde.</li>
+    <li>El color nunca es el único indicador: siempre icono o etiqueta acompañante.</li>
+    <li>Cero hex nuevos en código de features — todo traza a <code>--tm-*</code>.</li>
+  </ul>
+</section>
+
+<section id="type">
+  <span class="ov">Fundación 02</span>
+  <h2>Tipografía</h2>
+  <p class="lead">Tres familias, tres oficios. No hay una cuarta voz en la UI del producto.</p>
+  <div class="spec-row"><span class="tag">display · Cormorant 500</span><span style="font-family:var(--serif);font-weight:500;font-size:2.6rem;line-height:1.05;letter-spacing:-.01em">Esmeraldas con ADN de paz</span></div>
+  <div class="spec-row"><span class="tag">title-2 · Cormorant 500</span><span style="font-family:var(--serif);font-weight:500;font-size:1.375rem">Colección Muzo — piezas seleccionadas</span></div>
+  <div class="spec-row"><span class="tag">headline · Hanken 600</span><span style="font-weight:600">Cotización lista para enviar</span></div>
+  <div class="spec-row"><span class="tag">body · Hanken 400</span><span class="muted">El cuerpo nunca baja de 17px en móvil. Longitud de línea ≤ 70 caracteres, interlineado 1.55.</span></div>
+  <div class="spec-row"><span class="tag">overline · DM Mono</span><span class="ov" style="color:var(--tm-accent)">Origen certificado</span></div>
+  <div class="spec-row"><span class="tag">spec · DM Mono</span><span class="mono" style="font-size:.6875rem;letter-spacing:.05em;color:var(--tm-subtle)">2.34 CT · MUZO · VIVID GREEN · MINOR OIL</span></div>
+  <div class="spec-row" style="border-bottom:0"><span class="tag">data · DM Mono 500</span><span class="mono" style="font-weight:500">$ 4,820.00 &nbsp;·&nbsp; 12,450.75</span></div>
+  <ul class="rule-list" style="margin-top:16px">
+    <li>La serif es <strong>voz de display, nunca de párrafo</strong>: si pasa de 3 líneas, era <code>body</code>.</li>
+    <li>Precios y quilates siempre en mono con <code>tabular-nums</code> — las columnas jamás bailan.</li>
+  </ul>
+</section>
+
+<section id="space">
+  <span class="ov">Fundación 03</span>
+  <h2>Espacio · Forma · Profundidad</h2>
+  <h3>Espaciado — base 4px, ritmo 8pt</h3>
+  <p class="mono muted" style="font-size:.875rem">4 · 8 · 12 · <strong>16</strong> · 20 · 24 · 32 · 48 · 64 &nbsp;&nbsp;<span class="subtle">borde: 16 móvil · 24 tablet · 32 desktop</span></p>
+  <h3>Radio</h3>
+  <p class="mono muted" style="font-size:.875rem">5px pozos · 8px controles · 12px tarjetas · 18px sheets · 999px pills</p>
+  <h3>Profundidad: bordes primero</h3>
+  <div class="grid g3" style="margin-top:8px">
+    <div class="card"><div class="ov" style="color:var(--tm-subtle)">Tarjeta en reposo</div><p style="font-size:.875rem;margin-top:6px">Borde 1px, sin sombra. La estructura viene de pasos de superficie.</p></div>
+    <div class="card" style="box-shadow:var(--tm-shadow)"><div class="ov" style="color:var(--tm-subtle)">Capa flotante</div><p style="font-size:.875rem;margin-top:6px">La única sombra editorial — sheets, popovers, lightbox.</p></div>
+    <div class="card" style="background:var(--tm-well);border-color:var(--tm-border)"><div class="ov" style="color:var(--tm-subtle)">Input inset</div><div style="margin-top:8px;background:var(--tm-surface);border:1px solid var(--tm-border);border-radius:8px;padding:10px 12px;font-size:.9375rem;color:var(--tm-subtle)">Buscar esmeralda…</div></div>
+  </div>
+  <ul class="rule-list">
+    <li>Glass sólo en dos lugares: nav bar y tab bar, con opacidad ≥ 0.85 (AA garantizado). Las glass-cards como superficie de contenido están deprecadas.</li>
+    <li>Prueba de entrecerrar los ojos: la jerarquía se percibe, ninguna línea grita.</li>
+  </ul>
+</section>
+
+<section id="motion">
+  <span class="ov">Fundación 04</span>
+  <h2>Movimiento</h2>
+  <p class="lead">Silencioso y seguro. <code>cubic-bezier(.22, 1, .36, 1)</code> · 160 / 240 / 420ms. Sin resortes ni rebotes en la UI del producto.</p>
+  <div class="motionbox" style="margin-top:16px">
+    <div class="mcard"><b style="font-size:.875rem">Hover quieto</b><p class="subtle" style="font-size:.75rem;margin-top:4px">borde se enfatiza — 160ms, sin mover layout</p></div>
+    <div class="mcard float"><b style="font-size:.875rem">Capa que flota</b><p class="subtle" style="font-size:.75rem;margin-top:4px">transform + sombra — 240ms, solo GPU</p></div>
+    <button class="btn primary" id="loadbtn" style="align-self:center">Guardar cotización</button>
+  </div>
+  <ul class="rule-list">
+    <li>Solo se animan <code>transform</code> y <code>opacity</code> — nunca width/height/top/left.</li>
+    <li><code>prefers-reduced-motion</code> es una puerta dura: todo colapsa a instantáneo.</li>
+    <li><strong>Anti-parpadeo es ley:</strong> caché síncrono en <code>useState(() => …)</code>, espacio reservado con <code>aspect-ratio</code>, keys únicas por instancia, precarga de galerías, swap instantáneo sobre fade, <code>#t=0.001</code> para video iOS.</li>
+    <li>Todo skeleton replica la geometría final — el contenido nunca salta al llegar (CLS ≈ 0).</li>
+  </ul>
+</section>
+
+<section id="shell">
+  <span class="ov">Arquitectura 01</span>
+  <h2>Shell y Navegación</h2>
+  <p class="lead">La app es un shell de viewport fijo: <code>body</code> jamás hace scroll; el único scroller de página es <code>&lt;main id="main-content"&gt;</code>. Su altura medida se publica como <code>--app-main-height</code> — las alturas se derivan, nunca se adivinan.</p>
+  <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start;margin-top:18px">
+    <div class="shell">
+      <div class="bar top"><b style="font-family:var(--serif);font-size:1.05rem">Tesoro</b><span class="badge">nav bar</span></div>
+      <div class="scroller" tabindex="0" aria-label="Demo de scroller contenido">
+        <div class="row">‹main› es el único scroller de página</div>
+        <div class="row">overscroll-behavior: contain</div>
+        <div class="row">altura publicada: --app-main-height</div>
+        <div class="row">la última fila siempre libra el tab bar…</div>
+        <div class="row">bottomBarClearance(tabBarReserve)</div>
+        <div class="row">+ env(safe-area-inset-bottom)</div>
+        <div class="row">scroll restaurado al volver ✓</div>
+      </div>
+      <div class="bar bottom">
+        <span class="tab on"><i></i>Tesoro</span><span class="tab"><i></i>Asesores</span><span class="tab"><i></i>Cuentas</span><span class="tab"><i></i>Más</span>
+      </div>
+    </div>
+    <div style="flex:1;min-width:280px">
+      <h3 style="margin-top:0">Matriz de chrome — un solo top chrome por familia</h3>
+      <table>
+        <tr><th>Familia</th><th>Top</th><th>Bottom</th><th>Tema</th></tr>
+        <tr><td>Cliente <span class="subtle">/treasure /product /cuentas…</span></td><td>Shell NavBar</td><td>TabBar global</td><td>Quiet Emerald</td></tr>
+        <tr><td>Fotosíntesis</td><td>FotoTopbar</td><td>FotoTabBar</td><td>Foto (scoped)</td></tr>
+        <tr><td>Atelier</td><td>Module topbar</td><td>—</td><td>Atelier (scoped)</td></tr>
+        <tr><td>Provider</td><td>Shell NavBar</td><td>TabBar global</td><td>Quiet Emerald</td></tr>
+        <tr><td>Cinemático <span class="subtle">/boveda /esmereogénesis</span></td><td colspan="2">propio</td><td>exento</td></tr>
+      </table>
+    </div>
+  </div>
+  <h3>Wayfinding</h3>
+  <ul class="rule-list">
+    <li><strong>Toda pantalla se declara</strong> en el registro <code>PageConfig</code> — título, modo, back. El fallback anónimo es un error de lint, no una feature.</li>
+    <li><strong>Back es sagrado:</strong> siempre vuelve a donde el usuario estaba — con su scroll — o a la raíz de familia en deep links. Nunca cambia de familia sin anuncio.</li>
+    <li>Raíces de familia usan título <code>large</code> serif; descendientes, <code>compact</code>. El detalle titula con el <em>nombre de la pieza</em>.</li>
+    <li><strong>Tab bar = lugares; sheets = verbos.</strong> El tab bar nunca muta datos.</li>
+    <li>Desktop ≥1180px: misma arquitectura proyectada como top-nav + breadcrumbs. Una sola IA.</li>
+    <li>Todo deep link (<code>/p/:itemId</code>) aterriza con chrome, título y back correctos.</li>
+  </ul>
+</section>
+
+<section id="scroll">
+  <span class="ov">Arquitectura 02</span>
+  <h2>Las diez leyes del scroll</h2>
+  <ol class="rule-list">
+    <li><strong>Un scroller por vista.</strong> Nada más scrollea salvo nested-scrollers deliberados.</li>
+    <li><strong>Todo nested scroller va contenido</strong> — <code>containedScrollY/X</code>; un <code>overflow:auto</code> desnudo es error de lint. Los gestos de borde jamás encadenan hacia <code>&lt;main&gt;</code>.</li>
+    <li><strong>Las alturas se miden, no se adivinan.</strong> <code>paneHeight()</code> / <code>--app-main-height</code>. Esto mata el bug del catálogo: <code>HEADER_OFFSET = 280</code> y <code>minHeight: 600</code> se reemplazan por altura medida → la grilla termina exactamente sobre el tab bar y muere la sensación de "dos scrollbars peleando".</li>
+    <li><strong>La posición de scroll es memoria.</strong> Back/forward restaura el offset del elemento que realmente scrolleaba; navegación nueva resetea al tope. Quien vuelve de un producto aterriza en la fila que dejó.</li>
+    <li><strong>El chrome fijo nunca come contenido</strong> — reservas tokenizadas, últimas filas siempre alcanzables.</li>
+    <li><strong>Sheets en <code>dvh</code></strong> (85dvh + fallback), scroll interno contenido, última fila sobre el home indicator.</li>
+    <li><code>scroll-behavior: smooth</code> vive <strong>solo en <code>html</code></strong>, con reduced-motion. Nunca en <code>*</code>.</li>
+    <li><strong>Sin <code>touch-action</code> en scrollers.</strong> El global de controles es el único del app.</li>
+    <li><strong>Scrollers horizontales</strong>: <code>containedScrollX</code> (mata el back-swipe hijack) + affordance visible en ambos extremos.</li>
+    <li><strong>Performance:</strong> virtualizar listas &gt;50; solo listeners pasivos; shrink de headers via <code>transform</code>.</li>
+  </ol>
+</section>
+
+<section id="states">
+  <span class="ov">Interacción</span>
+  <h2>Estados</h2>
+  <h3>Botones — un solo primario por pantalla</h3>
+  <div style="display:flex;gap:12px;flex-wrap:wrap">
+    <button class="btn primary">Cotizar pieza</button>
+    <button class="btn tinted">Comparar</button>
+    <button class="btn outlined">Ver certificado</button>
+    <button class="btn plain">Cancelar</button>
+    <button class="btn danger">Eliminar</button>
+    <button class="btn primary" disabled>Deshabilitado</button>
+  </div>
+  <h3>Los cuatro estados de datos — toda vista async los diseña</h3>
+  <div class="grid g4">
+    <div class="card"><div class="ov" style="color:var(--tm-subtle)">loading</div><div class="skel" style="height:56px;margin-top:10px"></div><div class="skel" style="height:12px;width:70%;margin-top:8px"></div></div>
+    <div class="card"><div class="ov" style="color:var(--tm-subtle)">empty</div><p style="font-family:var(--serif);font-size:1.15rem;margin-top:8px">Aún no hay piezas aquí</p><a href="#" style="color:var(--tm-accent);font-size:.875rem;font-weight:600;text-decoration:none">Explorar el tesoro →</a></div>
+    <div class="card"><div class="ov" style="color:var(--tm-danger)">error</div><p style="font-size:.875rem;margin-top:8px" class="muted">No pudimos cargar el inventario.</p><a href="#" style="color:var(--tm-accent);font-size:.875rem;font-weight:600;text-decoration:none">Reintentar</a></div>
+    <div class="card"><div class="ov" style="color:var(--tm-subtle)">content</div><p style="font-family:var(--serif);font-size:1.15rem;margin-top:8px">Venus</p><p class="mono subtle" style="font-size:.6875rem">2.34 CT · MUZO</p></div>
+  </div>
+  <ul class="rule-list">
+    <li>Targets táctiles ≥ 44×44px con ≥ 8px entre vecinos; feedback en &lt; 100ms para toda escritura.</li>
+    <li>Focus visible: anillo 2px esmeralda con offset — jamás suprimido.</li>
+    <li>Toasts confirman, nunca preguntan; toda decisión vive en un dialog/sheet.</li>
+  </ul>
+</section>
+
+<section id="checklist">
+  <span class="ov">Gobernanza</span>
+  <h2>Checklist por pantalla</h2>
+  <ol class="check">
+    <li><strong>Vitrina</strong> — ¿la esmeralda es lo único saturado?</li>
+    <li><strong>Un scroller</strong> — ¿exactamente un elemento scrollea?</li>
+    <li><strong>Retorno</strong> — ¿volver conserva scroll, sin flash?</li>
+    <li><strong>Entrecerrar</strong> — ¿jerarquía sí, gritos no?</li>
+    <li><strong>Estados</strong> — ¿loading / empty / error / content diseñados?</li>
+    <li><strong>Pulgar</strong> — ¿nada destructivo abajo; targets ≥ 44px; última fila libre?</li>
+    <li><strong>Tokens</strong> — ¿cero hex/px/z literales en el diff?</li>
+    <li><strong>Reduced motion</strong> — ¿todo usable sin animación?</li>
+    <li><strong>375px</strong> — ¿sin scroll horizontal; body ≥ 17px; sobrevive iPhone SE?</li>
+    <li><strong>Chrome</strong> — ¿un top y un bottom chrome según la matriz?</li>
+  </ol>
+  <hr class="hairline">
+  <p class="subtle" style="font-size:.8125rem">DS v3 · 2026-07-17 · Especificación completa en <code>DESIGN-SYSTEM-V3.md</code> · Tokens en <code>src/design-system/tokens/quiet-emerald.ts</code> + <code>css-variables-v3.css</code> + <code>v3.ts</code></p>
+</section>
+
+</main>
+</div>
+<script>
+(function(){
+  var btn=document.getElementById('mode'),root=document.documentElement;
+  btn.addEventListener('click',function(){
+    var dark=root.getAttribute('data-theme')==='dark';
+    root.setAttribute('data-theme',dark?'light':'dark');
+    btn.textContent=dark?'Modo oscuro':'Modo claro';
+  });
+  var links=[].slice.call(document.querySelectorAll('nav.side a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))});
+  var onScroll=function(){
+    var y=window.scrollY+140,i=0;
+    secs.forEach(function(s,k){if(s&&s.offsetTop<=y)i=k});
+    links.forEach(function(a,k){a.classList.toggle('on',k===i)});
+  };
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+  var lb=document.getElementById('loadbtn');
+  lb.addEventListener('click',function(){
+    if(lb.disabled)return;var w=lb.offsetWidth;lb.style.width=w+'px';lb.disabled=true;lb.textContent='Guardando…';
+    setTimeout(function(){lb.textContent='Guardado ✓';setTimeout(function(){lb.disabled=false;lb.textContent='Guardar cotización';lb.style.width='';},1200)},1400);
+  });
+})();
+</script>
+</body>
+</html>

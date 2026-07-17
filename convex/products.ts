@@ -27,6 +27,7 @@ import {
 } from './_lib/publishedGroups';
 import { postToVercel } from './_lib/sheetSync';
 import { requireAccessLevel } from './_lib/authz';
+import { withPublishStamp } from './_lib/publishState';
 
 // =============================================================================
 // QUERIES — read the mirror
@@ -2112,5 +2113,80 @@ export const createProduct = action({
       editorName: caller.name,
       fields,
     });
+  },
+});
+
+// =============================================================================
+// BULK PUBLISH CERTIFICATES
+// =============================================================================
+
+/**
+ * Publish every product that already carries a certificate (`certificadoUrl`)
+ * so its Certificado de Origen shows in the product-page carousel, EXCLUDING
+ * `tipo === 'insumo'` (raw supplies are never certified/published).
+ *
+ * "Publish" here means flipping `mostrarEnCatalogo` on via `withPublishStamp`
+ * so the catalog/carousel becomes reachable — it does not generate or alter
+ * the certificate artwork itself. Idempotent: already-published rows are
+ * counted as `alreadyPublished` and left untouched (their `publishedAt`
+ * timestamp is preserved by the "first publish wins" guard).
+ */
+export const _bulkPublishCertificados = internalMutation({
+  args: {},
+  handler: async (
+    ctx,
+  ): Promise<{
+    published: number;
+    alreadyPublished: number;
+    skippedInsumo: number;
+    skippedNoCert: number;
+  }> => {
+    const all = await ctx.db.query('productInventory').collect();
+    let published = 0;
+    let alreadyPublished = 0;
+    let skippedInsumo = 0;
+    let skippedNoCert = 0;
+
+    for (const row of all) {
+      const hasCert = !!row.certificadoUrl && row.certificadoUrl.trim() !== '';
+      if (!hasCert) {
+        skippedNoCert++;
+        continue;
+      }
+      if (row.tipo === 'insumo') {
+        skippedInsumo++;
+        continue;
+      }
+      if (row.mostrarEnCatalogo === true) {
+        alreadyPublished++;
+        continue;
+      }
+      await ctx.db.patch(row._id, withPublishStamp(row, true));
+      published++;
+    }
+
+    return { published, alreadyPublished, skippedInsumo, skippedNoCert };
+  },
+});
+
+/**
+ * Public entry point for the bulk-publish certificates action. Admin-only.
+ */
+export const bulkPublishCertificados = action({
+  args: { idToken: v.string() },
+  handler: async (
+    ctx,
+    { idToken },
+  ): Promise<{
+    published: number;
+    alreadyPublished: number;
+    skippedInsumo: number;
+    skippedNoCert: number;
+  }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(
+      internal.products._bulkPublishCertificados,
+      {},
+    );
   },
 });

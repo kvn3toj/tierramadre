@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tierra Madre · DS v3 — Cortes de esmeralda (laboratorio)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --tm-bg:#F7F8F8;--tm-surface:#FFFFFF;--tm-well:#F1F2F2;--tm-border:#E4E7E5;--tm-hairline:#EBEDEC;
+  --tm-text:#14181A;--tm-muted:#5C6360;--tm-subtle:#8C928F;
+  --tm-accent:#00785C;--tm-accent-strong:#006F52;--tm-accent-pure:#00AF84;--tm-on-accent:#FFFFFF;
+  --tm-warn:#8A5F1B;--pill-shadow:0 6px 20px -6px rgba(13,30,24,.16);
+  --serif:'Cormorant','Cormorant Garamond',Georgia,serif;--ui:'Hanken Grotesk',-apple-system,sans-serif;--mono:'DM Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.22,1,.36,1);--fast:160ms;--base:240ms;
+}
+[data-theme="dark"]{
+  --tm-bg:#0E1110;--tm-surface:#15191A;--tm-well:#1B1F1F;--tm-border:#272C2B;--tm-hairline:#222726;
+  --tm-text:#EAEDEB;--tm-muted:#9AA09D;--tm-subtle:#6B726F;
+  --tm-accent:#34C99B;--tm-accent-strong:#00AF84;--tm-accent-pure:#34C99B;--tm-on-accent:#06140E;
+  --tm-warn:#D9A94E;--pill-shadow:0 6px 20px -6px rgba(0,0,0,.5);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--tm-bg);color:var(--tm-text);font-family:var(--ui);font-size:16px;line-height:1.55;transition:background var(--base) var(--ease),color var(--base) var(--ease)}
+.wrap{max-width:960px;margin:0 auto;padding:52px 24px 120px}
+header.hd{border-bottom:1px solid var(--tm-hairline);padding-bottom:22px;margin-bottom:40px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.ov{font-family:var(--mono);font-size:.6875rem;letter-spacing:.16em;text-transform:uppercase;color:var(--tm-accent)}
+h1{font-family:var(--serif);font-weight:500;font-size:2.5rem;line-height:1.02;margin-top:6px}
+header p{color:var(--tm-muted);max-width:56ch;font-size:.9rem;margin-top:4px}
+.toggle{font-family:var(--ui);font-weight:600;font-size:.85rem;border-radius:8px;padding:10px 16px;border:1px solid var(--tm-border);background:var(--tm-surface);color:var(--tm-text);cursor:pointer}
+section{margin-bottom:66px}
+h2{font-family:var(--serif);font-weight:500;font-size:1.9rem;margin:6px 0 6px}
+.lead{color:var(--tm-muted);max-width:64ch;margin-bottom:20px;font-size:.92rem}
+.eyebrow{font-family:var(--mono);font-size:.6875rem;letter-spacing:.16em;text-transform:uppercase;color:var(--tm-accent);display:block}
+/* collection grid */
+.cuts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.cut{background:var(--tm-surface);border:1px solid var(--tm-border);border-radius:14px;padding:18px 14px 14px;text-align:center;cursor:pointer;transition:border-color var(--fast) var(--ease),transform var(--base) var(--ease)}
+.cut:hover{border-color:var(--tm-subtle)}
+.cut.sel{border-color:var(--tm-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--tm-accent) 16%,transparent)}
+.cut .gemwrap{height:88px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.cut svg{filter:drop-shadow(0 6px 12px rgba(0,80,60,.28))}
+.cut .nm{font-family:var(--serif);font-size:1.3rem;font-weight:500;line-height:1}
+.cut .role{font-family:var(--mono);font-size:.5625rem;letter-spacing:.06em;text-transform:uppercase;color:var(--tm-subtle);margin-top:5px;display:block}
+/* play — navbar */
+.playrow{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+.playcol{flex:1;min-width:280px}
+.chipset{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.cchip{display:flex;align-items:center;gap:8px;border:1px solid var(--tm-border);background:var(--tm-surface);border-radius:999px;padding:6px 13px 6px 8px;cursor:pointer;font-size:.82rem;font-weight:500;color:var(--tm-muted);transition:all var(--fast) var(--ease)}
+.cchip.on{border-color:var(--tm-accent);color:var(--tm-accent);background:color-mix(in srgb,var(--tm-accent) 10%,var(--tm-surface))}
+.cchip svg{width:20px;height:24px}
+.stage{background:var(--tm-well);border:1px solid var(--tm-border);border-radius:14px;padding:24px 16px}
+.tabpill{display:flex;align-items:center;height:60px;max-width:100%;border-radius:30px;padding:4px;background:var(--tm-surface);border:1px solid var(--tm-border);box-shadow:var(--pill-shadow);position:relative}
+.tab{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:100%;position:relative;isolation:isolate;border:0;background:0;cursor:pointer;border-radius:26px}
+.tab .ind{position:absolute;inset:0;background:var(--tm-accent-strong);z-index:0;box-shadow:0 4px 14px color-mix(in srgb,var(--tm-accent-strong) 30%,transparent);transition:clip-path var(--base) var(--ease),border-radius var(--base) var(--ease)}
+.tab svg{width:20px;height:20px;position:relative;z-index:1;stroke:var(--tm-subtle)}
+.tab.on svg{stroke:var(--tm-on-accent)}
+.tab .lbl{position:relative;z-index:1;font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--tm-subtle)}
+.tab.on .lbl{color:var(--tm-on-accent);font-weight:600}
+/* live element previews */
+.livegrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+.livebox{background:var(--tm-surface);border:1px solid var(--tm-border);border-radius:12px;padding:16px;text-align:center}
+.livebox .cap{font-family:var(--mono);font-size:.5625rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tm-subtle);margin-top:10px;display:block}
+#liveBtn{font-family:var(--ui);font-weight:600;font-size:.9rem;color:var(--tm-on-accent);background:var(--tm-accent-strong);border:0;padding:12px 24px;cursor:pointer}
+#liveWell{width:96px;height:76px;background:var(--tm-well);border:1px solid var(--tm-border);margin:0 auto;display:flex;align-items:center;justify-content:center}
+#liveWell .g{width:30px;height:38px;background:linear-gradient(158deg,#3BD9AB,#00785C 60%,#00543E);clip-path:polygon(21% 0,79% 0,100% 21%,100% 79%,79% 100%,21% 100%,0 79%,0 21%)}
+/* jewel vocabulary */
+.vocab{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:720px){.vocab{grid-template-columns:1fr}.livegrid{grid-template-columns:1fr}}
+.vcard{background:var(--tm-surface);border:1px solid var(--tm-border);border-radius:12px;padding:18px}
+.vcard .eyebrow{margin-bottom:12px}
+.vlist{list-style:none}
+.vlist li{display:flex;align-items:center;gap:11px;padding:8px 0;border-bottom:1px solid var(--tm-hairline);font-size:.9rem}
+.vlist li:last-child{border-bottom:0}
+.vlist li .txt{flex:1}
+.vlist li .txt b{font-weight:600}.vlist li .txt span{color:var(--tm-subtle);font-size:.8rem}
+.trustrow{display:flex;gap:16px;flex-wrap:wrap;padding-top:4px}
+.trustrow span{display:flex;align-items:center;gap:7px;font-size:.82rem;color:var(--tm-muted)}
+.rating{display:flex;gap:5px;align-items:center}
+.secmark{display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px solid var(--tm-hairline)}
+.secmark .lbl{font-family:var(--mono);font-size:.625rem;letter-spacing:.14em;text-transform:uppercase;color:var(--tm-subtle)}
+.mini{width:16px;height:20px;flex:0 0 auto}
+.mini.sm{width:12px;height:15px}
+/* guidance table */
+table{width:100%;border-collapse:collapse;font-size:.86rem;margin-top:6px}
+th{text-align:left;font-family:var(--mono);font-size:.625rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tm-subtle);font-weight:500;padding:9px 12px;border-bottom:1px solid var(--tm-border)}
+td{padding:10px 12px;border-bottom:1px solid var(--tm-hairline);vertical-align:middle}
+td .gc{display:inline-flex;align-items:center;gap:9px}
+td .gc b{font-family:var(--serif);font-size:1.15rem;font-weight:500}
+.callout{border-left:2px solid var(--tm-accent);padding:4px 0 4px 16px;margin:18px 0 0;color:var(--tm-muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<!-- shared gem gradients -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="em" x1="0" y1="0" x2="0.4" y2="1">
+    <stop offset="0" stop-color="#5CE9C0"/><stop offset=".45" stop-color="#0C9068"/><stop offset="1" stop-color="#00503B"/>
+  </linearGradient>
+</defs></svg>
+
+<div class="wrap">
+<header class="hd">
+  <div><div class="ov">Design System v3 · Laboratorio</div><h1>Cortes de esmeralda</h1>
+  <p>La talla esmeralda es la firma estructural. Pero hay toda una joyería de cortes — juega con ellos y míralos vivos en la barra, los botones y el vocabulario de acentos.</p></div>
+  <button class="toggle" id="mode">Modo oscuro</button>
+</header>
+
+<section>
+  <span class="eyebrow">La colección</span>
+  <h2>Diez cortes, un solo verde</h2>
+  <p class="lead">Cada uno como gema tallada. Toca uno para volverlo el corte estructural (barra, botón, pozo) abajo. La <em>esmeralda</em> es el default.</p>
+  <div class="cuts" id="cuts"></div>
+</section>
+
+<section>
+  <span class="eyebrow">Juega · lo estructural</span>
+  <h2>El corte en la barra</h2>
+  <p class="lead">El indicador activo, el botón de marca y el pozo de imagen comparten el corte estructural. Elige cuál manda:</p>
+  <div class="chipset" id="structChips"></div>
+  <div class="playrow">
+    <div class="playcol">
+      <div class="stage">
+        <div class="tabpill" id="pill">
+          <button class="tab on" data-i="0"><span class="ind" id="ind"></span><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5"/></svg><span class="lbl">Inicio</span></button>
+          <button class="tab" data-i="1"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M6 3h12l3 6-9 12L3 9z"/></svg><span class="lbl">Tesoros</span></button>
+          <button class="tab" data-i="2"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></svg><span class="lbl">Embajadores</span></button>
+          <button class="tab" data-i="3"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="lbl">Menú</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="playcol" style="flex:0 0 210px">
+      <div class="livegrid" style="grid-template-columns:1fr">
+        <div class="livebox"><button id="liveBtn">Cotizar</button><span class="cap">Botón de marca</span></div>
+        <div class="livebox"><div id="liveWell"><div class="g"></div></div><span class="cap">Pozo de imagen</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="callout"><b>Regla:</b> el corte estructural es uno por producto — es la firma. Cámbialo aquí para probar, pero no mezcles dos cortes estructurales en la misma pantalla.</div>
+</section>
+
+<section>
+  <span class="eyebrow">Vocabulario de joya</span>
+  <h2>Los cortes pequeños, como acentos</h2>
+  <p class="lead">Aquí vive la variedad: cortes chicos como viñetas, dots de estado, ticks de confianza y marcadores de sección — pequeñas gemas, con restricción (máx. un corte “exótico” por pantalla).</p>
+  <div class="vocab">
+    <div class="vcard">
+      <span class="eyebrow">Viñetas · pera (dirección)</span>
+      <ul class="vlist" id="pearList"></ul>
+    </div>
+    <div class="vcard">
+      <span class="eyebrow">Dots de estado · redondo</span>
+      <ul class="vlist">
+        <li><span id="dotOk"></span><div class="txt"><b>Disponible</b> <span>· 246 piezas</span></div></li>
+        <li><span id="dotMid"></span><div class="txt"><b>Con asesor</b> <span>· 11 piezas</span></div></li>
+        <li><span id="dotNo"></span><div class="txt"><b>Vendida</b> <span>· 181 piezas</span></div></li>
+      </ul>
+    </div>
+    <div class="vcard">
+      <span class="eyebrow">Ticks de confianza · marquesa</span>
+      <div class="trustrow" id="trust"></div>
+      <div style="margin-top:16px" class="eyebrow">Valoración · redondo</div>
+      <div class="rating" id="rating" style="margin-top:8px"></div>
+    </div>
+    <div class="vcard">
+      <span class="eyebrow">Marcadores de sección · baguette / canutillo</span>
+      <div class="secmark" id="sec1"></div>
+      <div class="secmark" id="sec2"></div>
+      <div class="secmark" id="sec3"></div>
+      <div style="margin-top:14px" class="eyebrow">Momento especial · corazón</div>
+      <div style="display:flex;align-items:center;gap:9px;margin-top:8px;font-size:.85rem;color:var(--tm-muted)"><span id="fav"></span>Bóveda · favoritos</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Guía</span>
+  <h2>Dónde va cada corte</h2>
+  <table id="guide"></table>
+  <div class="callout"><b>El principio:</b> la <em>esmeralda</em> es estructura (siempre presente, silenciosa). Los demás son un vocabulario de acento — dan variedad sin ruido si se usan de a uno. Curvos (pera, marquesa, corazón) para gemas chicas; angulares (baguette, canutillo, cojín) también sirven de estructura alterna.</div>
+</section>
+</div>
+
+<script>
+// ---- gem silhouettes (viewBox 64x80) ----
+var G={
+  esmeralda:'<polygon points="18,3 46,3 61,18 61,62 46,77 18,77 3,62 3,18" fill="url(#em)"/><polygon points="25,13 39,13 51,25 51,55 39,67 25,67 13,55 13,25" fill="#fff" opacity=".15"/><polygon points="61,18 61,62 46,77 46,3" fill="#000" opacity=".12"/>',
+  redondo:'<circle cx="32" cy="40" r="29" fill="url(#em)"/><circle cx="32" cy="40" r="13" fill="#fff" opacity=".16"/><path d="M32 11A29 29 0 0 1 61 40L32 40Z" fill="#fff" opacity=".08"/><path d="M32 69A29 29 0 0 1 3 40L32 40Z" fill="#000" opacity=".12"/><g stroke="#04352a" stroke-width=".6" opacity=".3"><line x1="32" y1="40" x2="32" y2="11"/><line x1="32" y1="40" x2="53" y2="21"/><line x1="32" y1="40" x2="11" y2="21"/><line x1="32" y1="40" x2="53" y2="59"/><line x1="32" y1="40" x2="11" y2="59"/></g>',
+  pera:'<path d="M32 4C40 22 58 30 58 48C58 64 46 77 32 77C18 77 6 64 6 48C6 30 24 22 32 4Z" fill="url(#em)"/><path d="M32 17C38 31 50 37 50 49C50 60 42 69 32 69C22 69 14 60 14 49C14 37 26 31 32 17Z" fill="#fff" opacity=".13"/><path d="M32 4C40 22 58 30 58 48C58 64 46 77 32 77Z" fill="#000" opacity=".1"/>',
+  baguette:'<polygon points="24,3 40,3 49,12 49,68 40,77 24,77 15,68 15,12" fill="url(#em)"/><rect x="21" y="10" width="22" height="7" fill="#fff" opacity=".13"/><g fill="#000" opacity=".1"><rect x="15" y="26" width="34" height="2"/><rect x="15" y="40" width="34" height="2"/><rect x="15" y="54" width="34" height="2"/></g>',
+  canutillo:'<polygon points="32,2 55,15 55,65 32,78 9,65 9,15" fill="url(#em)"/><polygon points="32,2 32,78 9,65 9,15" fill="#fff" opacity=".1"/><polygon points="32,2 32,78 55,65 55,15" fill="#000" opacity=".13"/><line x1="9" y1="15" x2="55" y2="15" stroke="#fff" stroke-width="1.4" opacity=".18"/>',
+  marquesa:'<path d="M32 4C46 20 54 32 54 40C54 48 46 60 32 76C18 60 10 48 10 40C10 32 18 20 32 4Z" fill="url(#em)"/><line x1="32" y1="8" x2="32" y2="72" stroke="#fff" stroke-width="1.2" opacity=".2"/><path d="M32 4C46 20 54 32 54 40C54 48 46 60 32 76Z" fill="#000" opacity=".1"/>',
+  ovalo:'<ellipse cx="32" cy="40" rx="22" ry="35" fill="url(#em)"/><ellipse cx="32" cy="40" rx="11" ry="20" fill="#fff" opacity=".14"/><path d="M32 5A22 35 0 0 1 54 40L32 40Z" fill="#fff" opacity=".07"/><path d="M32 75A22 35 0 0 1 10 40L32 40Z" fill="#000" opacity=".11"/>',
+  cojin:'<rect x="7" y="15" width="50" height="50" rx="17" fill="url(#em)"/><rect x="17" y="25" width="30" height="30" rx="10" fill="#fff" opacity=".13"/><path d="M40 15h0" /><polygon points="57,15 57,65 40,55 40,25" fill="#000" opacity=".08"/>',
+  trillon:'<path d="M32 8L57 66Q59 71 53 71L11 71Q5 71 7 66Z" fill="url(#em)"/><path d="M32 22L46 64L18 64Z" fill="#fff" opacity=".13"/><path d="M32 8L57 66Q59 71 53 71L32 71Z" fill="#000" opacity=".1"/>',
+  corazon:'<path d="M32 75C7 55 6 32 20 25C28 21 32 27 32 31C32 27 36 21 44 25C58 32 57 55 32 75Z" fill="url(#em)"/><path d="M32 65C15 51 15 35 23 31C28 29 32 33 32 36C32 33 36 29 41 31C49 35 49 51 32 65Z" fill="#fff" opacity=".12"/>'
+};
+function gem(cut,w){w=w||64;return '<svg viewBox="0 0 64 80" width="'+w+'" height="'+(w*80/64)+'">'+G[cut]+'</svg>'}
+
+var CUTS=[
+  ['esmeralda','Esmeralda','estructura · firma'],
+  ['redondo','Redondo','dots · avatares'],
+  ['pera','Pera','viñetas · novedad'],
+  ['baguette','Baguette','chips · barras'],
+  ['canutillo','Canutillo','separadores · loaders'],
+  ['marquesa','Marquesa','ticks · viñetas'],
+  ['ovalo','Óvalo','thumbnails suaves'],
+  ['cojin','Cojín','tarjetas héroe'],
+  ['trillon','Trillón','momentos'],
+  ['corazon','Corazón','favoritos · Bóveda']
+];
+// collection grid
+var cutsEl=document.getElementById('cuts');
+cutsEl.innerHTML=CUTS.map(function(c,i){return '<div class="cut'+(c[0]==='esmeralda'?' sel':'')+'" data-cut="'+c[0]+'"><div class="gemwrap">'+gem(c[0],62)+'</div><div class="nm">'+c[1]+'</div><span class="role">'+c[2]+'</span></div>'}).join('');
+
+// structural clip-paths for the nav indicator + button + well
+function structFor(cut){
+  switch(cut){
+    case 'esmeralda': return {clip:'polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px)',radius:'0'};
+    case 'baguette':  return {clip:'polygon(4px 0,calc(100% - 4px) 0,100% 4px,100% calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,0 calc(100% - 4px),0 4px)',radius:'0'};
+    case 'canutillo': return {clip:'polygon(14px 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,14px 100%,0 50%)',radius:'0'};
+    case 'cojin':     return {clip:'none',radius:'16px'};
+    case 'redondo':   return {clip:'none',radius:'999px'};
+    default:          return {clip:'none',radius:'14px'}; // curvos: no aptos para slot ancho → cae a cojín suave
+  }
+}
+var STRUCT=['esmeralda','baguette','canutillo','cojin','redondo'];
+var STRUCT_LABEL={esmeralda:'Esmeralda',baguette:'Baguette',canutillo:'Canutillo',cojin:'Cojín',redondo:'Redondo'};
+var scEl=document.getElementById('structChips');
+scEl.innerHTML=STRUCT.map(function(c,i){return '<button class="cchip'+(i===0?' on':'')+'" data-cut="'+c+'">'+gem(c,18)+STRUCT_LABEL[c]+'</button>'}).join('');
+
+function applyStruct(cut){
+  var s=structFor(cut);
+  var ind=document.getElementById('ind');
+  ind.style.clipPath=s.clip;ind.style.webkitClipPath=s.clip;ind.style.borderRadius=s.radius;
+  var btn=document.getElementById('liveBtn');
+  btn.style.clipPath=s.clip;btn.style.webkitClipPath=s.clip;btn.style.borderRadius=s.radius==='0'?'0':s.radius;
+  var well=document.getElementById('liveWell');
+  // well uses a "cut corner" version — single chamfer for emerald, else the struct clip
+  if(cut==='esmeralda'){well.style.clipPath='polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%)';}
+  else{well.style.clipPath=s.clip==='none'?'none':s.clip;}
+  well.style.borderRadius=s.radius;
+}
+applyStruct('esmeralda');
+scEl.querySelectorAll('.cchip').forEach(function(ch){ch.addEventListener('click',function(){
+  scEl.querySelectorAll('.cchip').forEach(function(x){x.classList.remove('on')});ch.classList.add('on');
+  // sync collection selection
+  cutsEl.querySelectorAll('.cut').forEach(function(x){x.classList.toggle('sel',x.dataset.cut===ch.dataset.cut)});
+  applyStruct(ch.dataset.cut);
+})});
+// clicking a collection gem that is structural also drives it
+cutsEl.querySelectorAll('.cut').forEach(function(cd){cd.addEventListener('click',function(){
+  var cut=cd.dataset.cut;
+  cutsEl.querySelectorAll('.cut').forEach(function(x){x.classList.remove('sel')});cd.classList.add('sel');
+  if(STRUCT.indexOf(cut)>=0){scEl.querySelectorAll('.cchip').forEach(function(x){x.classList.toggle('on',x.dataset.cut===cut)});applyStruct(cut);}
+})});
+// tab click just moves active
+document.querySelectorAll('#pill .tab').forEach(function(t){t.addEventListener('click',function(){
+  document.querySelectorAll('#pill .tab').forEach(function(x){x.classList.remove('on');var e=x.querySelector('.ind');if(e)e.remove()});
+  t.classList.add('on');var i=document.createElement('span');i.className='ind';i.id='ind';t.insertBefore(i,t.firstChild);
+  applyStruct(document.querySelector('.cchip.on').dataset.cut);
+})});
+
+// jewel vocabulary
+function miniGem(cut,cls){return '<svg class="mini '+(cls||'')+'" viewBox="0 0 64 80">'+G[cut]+'</svg>'}
+document.getElementById('pearList').innerHTML=[
+  ['Estrenos','recién llegadas'],['Colección Muzo','piezas selectas'],['Vivid Green','el color más raro']
+].map(function(r){return '<li>'+miniGem('pera')+'<div class="txt"><b>'+r[0]+'</b> <span>· '+r[1]+'</span></div></li>'}).join('');
+// status dots (round)
+['dotOk','dotMid','dotNo'].forEach(function(id,i){var el=document.getElementById(id);el.innerHTML=miniGem('redondo','sm');el.querySelector('svg').style.filter='none';});
+document.getElementById('trust').innerHTML=['Certificada','Origen trazable','ADN de paz'].map(function(t){return '<span>'+miniGem('marquesa','sm')+t+'</span>'}).join('');
+document.getElementById('rating').innerHTML=Array.from({length:5}).map(function(_,i){return miniGem('redondo','sm')}).join('');
+document.getElementById('sec1').innerHTML=miniGem('baguette')+'<span class="lbl">Novedades</span>';
+document.getElementById('sec2').innerHTML=miniGem('canutillo')+'<span class="lbl">Gemología</span>';
+document.getElementById('sec3').innerHTML=miniGem('baguette')+'<span class="lbl">Origen certificado</span>';
+document.getElementById('fav').innerHTML=miniGem('corazon','sm');
+
+// guidance table
+var GUIDE=[
+  ['esmeralda','Esmeralda','Indicador de nav · botón de marca · marco de pozo','La firma estructural — siempre presente, base de todo'],
+  ['baguette','Baguette','Chips · badges · segmentos · marcadores','Rectángulo escalonado; ordena y alinea listas'],
+  ['redondo','Redondo','Dots de estado · avatares · valoración · spinners','Neutro; cuando la forma no debe hablar'],
+  ['pera','Pera','Viñetas de lista · marcador de “novedad”','Acento con dirección (la gota apunta)'],
+  ['marquesa','Marquesa','Ticks de confianza · viñetas finas','Hoja/ojo; pequeño y preciso'],
+  ['canutillo','Canutillo','Separadores · marcador de sección · loaders','El cristal en bruto; vertical, hexagonal'],
+  ['cojin','Cojín','Tarjetas héroe · thumbnails grandes · estructura alterna','Suave; para superficies amplias'],
+  ['ovalo','Óvalo','Thumbnails · avatares premium','Elegante, orgánico'],
+  ['trillon','Trillón','Momentos puntuales · sellos','Raro, con intención'],
+  ['corazon','Corazón','Favoritos · Bóveda · momentos especiales','Sólo cuando el corazón cabe (escaso)']
+];
+document.getElementById('guide').innerHTML='<tr><th>Corte</th><th>Mejor rol</th><th>Nota</th></tr>'+GUIDE.map(function(g){return '<tr><td><span class="gc">'+gem(g[0],26)+'<b>'+g[1]+'</b></span></td><td>'+g[2]+'</td><td style="color:var(--tm-muted)">'+g[3]+'</td></tr>'}).join('');
+
+document.getElementById('mode').addEventListener('click',function(){
+  var d=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',d?'light':'dark');this.textContent=d?'Modo oscuro':'Modo claro';
+});
+</script>
+</body>
+</html>

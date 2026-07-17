@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tierra Madre · DS v3 — Navegación & Componentes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --tm-bg:#F7F8F8; --tm-surface:#FFFFFF; --tm-well:#F1F2F2;
+  --tm-border:#E4E7E5; --tm-hairline:#EBEDEC;
+  --tm-text:#14181A; --tm-muted:#5C6360; --tm-subtle:#8C928F;
+  --tm-accent:#00785C; --tm-accent-strong:#006F52; --tm-accent-pure:#00AF84; --tm-on-accent:#FFFFFF;
+  --tm-danger:#B3403A; --tm-warning:#8A5F1B;
+  --tm-shadow:0 18px 40px -24px rgba(13,30,24,.30);
+  --pill-shadow:0 4px 16px rgba(13,30,24,.10);
+  --serif:'Cormorant','Cormorant Garamond',Georgia,serif;
+  --ui:'Hanken Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --mono:'DM Mono','SF Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.22,1,.36,1); --fast:160ms; --base:240ms; --slow:420ms;
+  --bevel:9px;
+}
+[data-theme="dark"]{
+  --tm-bg:#0E1110; --tm-surface:#15191A; --tm-well:#1B1F1F;
+  --tm-border:#272C2B; --tm-hairline:#222726;
+  --tm-text:#EAEDEB; --tm-muted:#9AA09D; --tm-subtle:#6B726F;
+  --tm-accent:#34C99B; --tm-accent-strong:#00AF84; --tm-accent-pure:#34C99B; --tm-on-accent:#06140E;
+  --tm-danger:#E5736C; --tm-warning:#D9A94E;
+  --tm-shadow:0 20px 46px -26px rgba(0,0,0,.8);
+  --pill-shadow:0 4px 16px rgba(0,0,0,.4);
+}
+@media (prefers-reduced-motion:reduce){:root{--fast:.01ms;--base:.01ms;--slow:.01ms}}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--tm-bg);color:var(--tm-text);font-family:var(--ui);font-size:17px;line-height:1.55;transition:background var(--base) var(--ease),color var(--base) var(--ease)}
+.wrap{max-width:920px;margin:0 auto;padding:56px 28px 140px}
+header.hd{border-bottom:1px solid var(--tm-hairline);padding-bottom:22px;margin-bottom:44px}
+.ov{font-family:var(--mono);font-size:.6875rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--tm-accent)}
+h1{font-family:var(--serif);font-weight:500;font-size:2.6rem;line-height:1.05;margin:8px 0 6px}
+h1 .dot{display:inline-block;width:9px;height:11px;margin-left:8px;background:var(--tm-accent-pure);clip-path:polygon(3px 0,calc(100% - 3px) 0,100% 3px,100% calc(100% - 3px),calc(100% - 3px) 100%,3px 100%,0 calc(100% - 3px),0 3px)}
+h2{font-family:var(--serif);font-weight:500;font-size:1.9rem;margin:8px 0 12px}
+h3{font-weight:600;font-size:1.0625rem;margin:30px 0 10px}
+section{margin-bottom:78px}
+p.lead{color:var(--tm-muted);max-width:66ch}
+p{max-width:70ch}
+.muted{color:var(--tm-muted)}.subtle{color:var(--tm-subtle)}
+code{font-family:var(--mono);font-size:.8125rem;background:var(--tm-well);border:1px solid var(--tm-hairline);border-radius:5px;padding:1px 6px}
+.hairline{border:0;border-top:1px solid var(--tm-hairline);margin:22px 0}
+.callout{border-left:2px solid var(--tm-accent);padding:2px 0 2px 16px;margin:16px 0;color:var(--tm-muted)}
+.toggle{position:fixed;top:18px;right:22px;z-index:20;font-family:var(--ui);font-weight:600;font-size:.9375rem;border-radius:8px;padding:11px 18px;min-height:44px;border:1px solid var(--tm-border);background:var(--tm-surface);color:var(--tm-text);cursor:pointer}
+/* ---- tab bar demo ---- */
+.stage{background:var(--tm-well);border:1px solid var(--tm-border);border-radius:12px;padding:26px 0 22px;margin:14px 0;position:relative;overflow:hidden}
+.stage .cap{font-family:var(--mono);font-size:.625rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tm-subtle);position:absolute;top:10px;left:14px}
+.bar-outer{padding:0 16px}
+.pill{display:flex;align-items:center;height:60px;border-radius:30px;padding:4px;background:var(--tm-surface);border:1px solid var(--tm-border);box-shadow:var(--pill-shadow);position:relative}
+.pill.contained{max-width:520px;margin:0 auto}
+.slot{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:100%;border-radius:26px;position:relative;isolation:isolate;cursor:pointer;background:transparent;border:0;font-family:inherit;transition:background 120ms ease}
+.slot:hover:not(.on){background:color-mix(in srgb,var(--tm-text) 5%,transparent)}
+.slot .ind{position:absolute;inset:0;background:var(--tm-accent-strong);box-shadow:0 4px 14px color-mix(in srgb,var(--tm-accent-strong) 30%,transparent);z-index:0}
+.slot .ind.bevel{clip-path:polygon(var(--bevel) 0,calc(100% - var(--bevel)) 0,100% var(--bevel),100% calc(100% - var(--bevel)),calc(100% - var(--bevel)) 100%,var(--bevel) 100%,0 calc(100% - var(--bevel)),0 var(--bevel))}
+.slot .ind.round{border-radius:26px}
+.slot svg{position:relative;z-index:1;width:20px;height:20px}
+.slot .lbl{position:relative;z-index:1;font-family:var(--ui);font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--tm-subtle);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.slot.on .lbl{color:var(--tm-on-accent);font-weight:600}
+.slot.on svg{color:var(--tm-on-accent);stroke:var(--tm-on-accent)}
+.slot:not(.on) svg{color:var(--tm-subtle);stroke:var(--tm-subtle)}
+/* foto theme override */
+.stage.foto .pill{background:#fff;border-color:rgba(11,16,14,.06);box-shadow:0 4px 16px rgba(11,16,14,.12)}
+.stage.foto .slot .ind{background:linear-gradient(225deg,#008C61,#006B4A);box-shadow:0 4px 14px rgba(0,140,98,.15)}
+.stage.bad .pill{max-width:none}
+.stage.bad .slot.on .ind{border-radius:26px;clip-path:none}
+.compare{display:grid;gap:14px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.625rem;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--tm-border)}
+.tag.bad{color:var(--tm-danger);border-color:var(--tm-danger)}
+.tag.good{color:var(--tm-accent);border-color:var(--tm-accent)}
+/* signature demo */
+.sig{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:8px}
+.sigcard{background:var(--tm-surface);border:1px solid var(--tm-border);border-radius:12px;padding:16px;text-align:center}
+.sigcard .demo{height:66px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.emcut{width:54px;height:66px;background:linear-gradient(160deg,#2ECFA0,#00785C 65%,#00553F);clip-path:polygon(22% 0,78% 0,100% 22%,100% 78%,78% 100%,22% 100%,0 78%,0 22%)}
+.well{width:88px;height:66px;background:var(--tm-well);border:1px solid var(--tm-border);clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%);display:flex;align-items:center;justify-content:center}
+.well .g{width:26px;height:34px;background:linear-gradient(160deg,#2ECFA0,#00785C);clip-path:polygon(20% 0,80% 0,100% 20%,100% 80%,80% 100%,20% 100%,0 80%,0 20%)}
+.lozenge{width:22px;height:12px;background:var(--tm-accent-pure);clip-path:polygon(20% 0,80% 0,100% 50%,80% 100%,20% 100%,0 50%)}
+.sigbtn{font-family:var(--ui);font-weight:600;font-size:.875rem;color:var(--tm-on-accent);background:var(--tm-accent-strong);border:0;padding:12px 22px;cursor:pointer;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px)}
+.sigcard small{font-family:var(--mono);font-size:.625rem;color:var(--tm-subtle);letter-spacing:.05em}
+/* piece card w/ nº */
+.piece{background:var(--tm-surface);border:1px solid var(--tm-border);border-radius:12px;overflow:hidden;max-width:220px}
+.piece .pw{aspect-ratio:4/5;background:var(--tm-well);position:relative;display:flex;align-items:center;justify-content:center;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%)}
+.piece .pw .no{position:absolute;top:8px;left:10px;font-family:var(--mono);font-size:.625rem;letter-spacing:.1em;color:var(--tm-subtle)}
+.piece .pw .g{width:46px;height:58px;background:linear-gradient(160deg,#2ECFA0,#00785C 65%,#00553F);clip-path:polygon(20% 0,80% 0,100% 20%,100% 80%,80% 100%,20% 100%,0 80%,0 20%)}
+.piece .pi{padding:12px 14px 14px}
+.piece .nm{font-family:var(--serif);font-weight:500;font-size:1.25rem;line-height:1.15}
+.piece .sp{font-family:var(--mono);font-size:.6875rem;letter-spacing:.05em;color:var(--tm-subtle);margin-top:3px}
+.piece .pr{font-family:var(--mono);font-weight:500;font-size:.9375rem;margin-top:8px;font-variant-numeric:tabular-nums}
+/* ledger */
+.ledger{border:1px solid var(--tm-border);border-radius:12px;overflow:hidden;max-width:420px}
+.ledger .lr{display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--tm-hairline);font-family:var(--mono);font-size:.8125rem}
+.ledger .lr:last-child{border-bottom:0}
+.ledger .lr .k{color:var(--tm-subtle);letter-spacing:.04em;text-transform:uppercase;font-size:.6875rem}
+.ledger .lr .v{font-variant-numeric:tabular-nums}
+/* inventory table */
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{text-align:left;font-family:var(--mono);font-size:.625rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tm-subtle);font-weight:500;padding:8px 10px;border-bottom:1px solid var(--tm-border)}
+td{padding:8px 10px;border-bottom:1px solid var(--tm-hairline);vertical-align:top}
+.st{font-family:var(--mono);font-size:.6875rem;white-space:nowrap}
+.st.ok{color:var(--tm-accent)}.st.mid{color:var(--tm-warning)}.st.no{color:var(--tm-danger)}
+ul.rl li{margin:9px 0 9px 18px;max-width:70ch}
+.legend{font-family:var(--mono);font-size:.6875rem;color:var(--tm-muted);margin-top:8px}
+</style>
+</head>
+<body>
+<button class="toggle" id="mode" aria-label="Cambiar tema">Modo oscuro</button>
+<div class="wrap">
+<header class="hd">
+  <div class="ov">Design System v3 · Adenda</div>
+  <h1>Navegación & Componentes<span class="dot"></span></h1>
+  <p class="lead">Un solo DS3. Una sola barra. Los mismos componentes en cada pantalla, herramienta y modal — sin huérfanos, sin valores hardcodeados. El tema (Quiet Emerald · Foto · Atelier) es data que entra al componente, nunca una copia del componente.</p>
+</header>
+
+<section id="fix">
+  <div class="ov">El arreglo</div>
+  <h2>La barra contenida</h2>
+  <p class="lead">La barra de Fotosíntesis se ve bien en desktop y la de usuarios se estira por <strong>una sola diferencia</strong>: <code>maxWidth: 520</code> + <code>marginX: auto</code> en la píldora interior. DS3 lo hace canónico.</p>
+
+  <h3>Antes — usuario, estirada <span class="tag bad">bug</span></h3>
+  <div class="stage bad">
+    <span class="cap">desktop · sin maxWidth → borde a borde, activo inflado</span>
+    <div class="bar-outer">
+      <div class="pill" id="bar-bad"></div>
+    </div>
+  </div>
+
+  <h3>Después — misma barra, contenida <span class="tag good">DS3 TabBar</span></h3>
+  <div class="stage">
+    <span class="cap">desktop · maxWidth 520 + centrada + bisel esmeralda</span>
+    <div class="bar-outer"><div class="pill contained" id="bar-user"></div></div>
+  </div>
+  <p class="subtle" style="font-size:.8125rem">Redimensiona la ventana: en móvil la píldora ocupa el ancho menos el padding; en desktop se topa en 520px y se centra — flota como píldora, nunca se estira.</p>
+</section>
+
+<section id="slots">
+  <div class="ov">Una barra, tres cableados</div>
+  <h2>Los mismos slots, distinto contexto</h2>
+  <p class="lead">Un solo componente <code>TabBar</code>; solo cambian el listado de slots y el adaptador de tema. <code>AppShell</code> elige el cableado por familia de ruta y renderiza <strong>una</strong> barra.</p>
+
+  <h3>Storefront (usuarios) — Quiet Emerald</h3>
+  <div class="stage">
+    <span class="cap">STOREFRONT_SLOTS · storefrontTabTheme</span>
+    <div class="bar-outer"><div class="pill contained" id="bar-store"></div></div>
+  </div>
+  <p class="subtle" style="font-size:.8125rem">Cuentas se promueve del sheet "Más" a lugar de primer nivel para igualar la cadencia de 4 lugares + Menú de Fotosíntesis. Es una línea en <code>tabBarConfig.ts</code> si prefieres otro 4.º lugar.</p>
+
+  <h3>Fotosíntesis (admin) — Foto <span class="tag good">sin cambios</span></h3>
+  <div class="stage foto">
+    <span class="cap">FOTO_SLOTS · fotoTabTheme — la barra que ya te gusta</span>
+    <div class="bar-outer"><div class="pill contained" id="bar-foto"></div></div>
+  </div>
+</section>
+
+<section id="signature">
+  <div class="ov">Anti-genérico · La firma</div>
+  <h2>«El bisel» — el corte esmeralda</h2>
+  <p class="lead">Las esmeraldas colombianas son de <em>talla escalón</em>: una mesa octagonal con esquinas biseladas. Esa mesa es lo más reconocible del producto — DS3 la convierte en una firma que puedes señalar en cinco lugares. Ninguna UI genérica de IA usa talla escalón.</p>
+  <div class="sig">
+    <div class="sigcard"><div class="demo"><div class="emcut"></div></div><small>indicador activo del TabBar</small></div>
+    <div class="sigcard"><div class="demo"><div class="well"><div class="g"></div></div></div><small>pozo de imagen · esquina cortada</small></div>
+    <div class="sigcard"><div class="demo"><div class="lozenge"></div></div><small>tick / dot de confianza</small></div>
+    <div class="sigcard"><div class="demo"><button class="sigbtn">Cotizar</button></div><small>CTA de marca · corte esmeralda completo</small></div>
+  </div>
+  <div class="callout">Disciplina: el bisel vive en elementos <strong>rellenos o enmascarados</strong> (el <code>clip-path</code> borra bordes). Las tarjetas con borde conservan radios suaves — la firma es invitada, no papel tapiz. Token: <code>--tm-bevel: 9px</code>.</div>
+
+  <h3>Los dispositivos editoriales — matar la uniformidad</h3>
+  <div style="display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start;margin-top:8px">
+    <div class="piece">
+      <div class="pw"><span class="no">Nº 001</span><div class="g"></div></div>
+      <div class="pi"><div class="nm">Venus</div><div class="sp">2.34 CT · MUZO · VIVID</div><div class="pr">$ 4,820</div></div>
+    </div>
+    <div class="ledger">
+      <div class="lr"><span class="k">Peso</span><span class="v">2.34 ct</span></div>
+      <div class="lr"><span class="k">Origen</span><span class="v">Muzo, Boyacá</span></div>
+      <div class="lr"><span class="k">Color</span><span class="v">Vivid Green</span></div>
+      <div class="lr"><span class="k">Tratamiento</span><span class="v">Minor oil</span></div>
+      <div class="lr"><span class="k">Precio / ct</span><span class="v">$ 2,060.00</span></div>
+    </div>
+  </div>
+  <ul class="rl" style="margin-top:16px">
+    <li><strong>La vitrina numerada</strong> — cada pieza lleva índice mono (<code>Nº 001</code>): catálogo de colección, no grilla de e-commerce.</li>
+    <li><strong>El Ledger</strong> — la gemología se lee como papelería de laboratorio: mono, tabular, con reglas hairline.</li>
+    <li><strong>Cejilla sobre la regla</strong> — las etiquetas de sección se apoyan <em>en</em> el hairline, no flotan sobre el título.</li>
+    <li><strong>Serif como única voz de display</strong> — los títulos son Cormorant; la UI nunca grita en sans negrita. La calma es lo anti-genérico.</li>
+  </ul>
+</section>
+
+<section id="inventory">
+  <div class="ov">Cobertura</div>
+  <h2>¿Están todos los componentes?</h2>
+  <p class="lead">Respuesta honesta: el problema no es que falten componentes, es que <em>sobran</em> — tres botones, cuatro tarjetas, dos barras, cinco sheets. DS3 converge a uno de cada. Aquí el catálogo canónico (extracto); el detalle completo está en la adenda.</p>
+  <p class="legend">✅ existe, canónico &nbsp;·&nbsp; 🟡 existe, consolidar (varias copias) &nbsp;·&nbsp; 🔴 falta, construir</p>
+  <table>
+    <tr><th>Componente</th><th>Estado</th><th>Absorbe / nota</th></tr>
+    <tr><td><b>TabBar</b></td><td class="st ok">✅ esta entrega</td><td>IOSTabBar + FotoTabBar → uno, contenido</td></tr>
+    <tr><td>Button</td><td class="st mid">🟡 consolidar</td><td>IOSButton + DS Button + botones atelier/foto</td></tr>
+    <tr><td>Card</td><td class="st mid">🟡 consolidar</td><td>IOSCard + GlassCard + DS Card + foto/atelier</td></tr>
+    <tr><td>Sheet</td><td class="st mid">🟡 consolidar</td><td>BottomSheetShell + 4 sheets iOS + esmereo</td></tr>
+    <tr><td>TextField / Field</td><td class="st mid">🟡 consolidar</td><td>IOSTextField + ~40 estilos inline</td></tr>
+    <tr><td>SegmentedControl</td><td class="st no">🔴 construir</td><td>Piedras/Gemas/Lotes/Joyas, Contado…, tabs origen</td></tr>
+    <tr><td>EmptyState / ErrorState</td><td class="st no">🔴 construir</td><td>las pantallas "Aún no hay…"</td></tr>
+    <tr><td>Ledger</td><td class="st no">🔴 construir</td><td>firma: bloque gemológico mono tabular</td></tr>
+    <tr><td>RouteMenu</td><td class="st mid">🟡 consolidar</td><td>IOSMoreSheet + FotoRouteMenu → un menú por registro</td></tr>
+    <tr><td>Badge / StatusBadge</td><td class="st mid">🟡 consolidar</td><td>tiers de calidad/precio/estado dispersos</td></tr>
+  </table>
+  <p class="subtle" style="font-size:.8125rem;margin-top:10px">~62 componentes canónicos: 18 ✅ · 30 🟡 · 14 🔴. El trabajo es sobre todo <strong>convergencia</strong>, no construir de cero.</p>
+</section>
+
+<section id="rules">
+  <div class="ov">Gobernanza</div>
+  <h2>Para que «uno» siga siendo uno</h2>
+  <ul class="rl">
+    <li><strong>Una superficie de import.</strong> Todo desde <code>@/design-system</code>. Lint bloquea importar internos o <code>legacy-compat</code> desde páginas/features.</li>
+    <li><strong>Cero hardcode.</strong> Ni hex, ni <code>rgba(</code>, ni px fuera de escala, ni <code>zIndex</code> entero, ni <code>boxShadow</code> inline, ni <code>100vh</code>, ni <code>overflow:auto</code> desnudo en código de features.</li>
+    <li><strong>Sin re-implementación.</strong> Un PR que agregue un botón/tarjeta/sheet/barra <code>styled</code> fuera de <code>src/design-system/</code> no pasa review — apúntalo al componente canónico.</li>
+    <li><strong>El tema es un prop, nunca un fork.</strong> ¿Nuevo scope? Agrega un preset de tokens (como <code>getFoto</code>), no una copia del componente.</li>
+    <li><strong>Un valor usado 3× es token; un patrón usado 2× es componente.</strong></li>
+  </ul>
+  <hr class="hairline">
+  <p class="subtle" style="font-size:.8125rem">DS v3 · Adenda de navegación y componentes · <code>DESIGN-SYSTEM-V3-ADDENDUM.md</code> · <code>TabBar.tsx</code> + <code>tabBarConfig.ts</code></p>
+</section>
+</div>
+<script>
+(function(){
+  var I={
+    home:'<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>',
+    gem:'<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18M9 3 6 9l6 12 6-12-3-6"/></svg>',
+    globe:'<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',
+    chart:'<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>',
+    boxes:'<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l4-2 4 2-4 2zM13 8l4-2 4 2-4 2zM8 16l4-2 4 2-4 2z"/></svg>',
+    users:'<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><path d="M16 6a3 3 0 010 6M21 20c0-2-1-4-3-4.5"/></svg>',
+    menu:'<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>'
+  };
+  function slot(icon,label,on,bevel){
+    var ind = on ? '<span class="ind '+(bevel?'bevel':'round')+'"></span>' : '';
+    return '<button class="slot'+(on?' on':'')+'">'+ind+I[icon]+'<span class="lbl">'+label+'</span></button>';
+  }
+  function build(id,slots,bevel){
+    var el=document.getElementById(id); if(!el)return;
+    el.innerHTML=slots.map(function(s){return slot(s[0],s[1],s[2],bevel)}).join('');
+  }
+  var user=[['home','Inicio',true],['gem','Tesoros',false],['globe','Embajadores',false],['chart','Cuentas',false],['menu','Menú',false]];
+  build('bar-bad',user,false);
+  build('bar-user',user,true);
+  build('bar-store',user,true);
+  build('bar-foto',[['home','Inicio',true],['boxes','Lotes',false],['chart','Ventas',false],['users','Directorio',false],['menu','Menú',false]],true);
+
+  // interactive: click to move active within each contained bar
+  ['bar-user','bar-store','bar-foto'].forEach(function(id){
+    var bar=document.getElementById(id); if(!bar)return;
+    bar.addEventListener('click',function(e){
+      var b=e.target.closest('.slot'); if(!b)return;
+      var bevel = true;
+      [].forEach.call(bar.children,function(c){
+        c.classList.remove('on');
+        var ind=c.querySelector('.ind'); if(ind)ind.remove();
+      });
+      b.classList.add('on');
+      var span=document.createElement('span'); span.className='ind '+(bevel?'bevel':'round');
+      b.insertBefore(span,b.firstChild);
+    });
+  });
+
+  var btn=document.getElementById('mode'),root=document.documentElement;
+  btn.addEventListener('click',function(){
+    var d=root.getAttribute('data-theme')==='dark';
+    root.setAttribute('data-theme',d?'light':'dark');
+    btn.textContent=d?'Modo oscuro':'Modo claro';
+  });
+})();
+</script>
+</body>
+</html>

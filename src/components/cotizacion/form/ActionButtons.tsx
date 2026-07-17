@@ -3,7 +3,7 @@
  * Export PDF, share PDF, print, and new quotation action buttons.
  */
 
-import React from "react";
+import React from 'react';
 import {
   Box,
   Button,
@@ -11,21 +11,23 @@ import {
   Tooltip,
   alpha,
   CircularProgress,
-} from "@mui/material";
-import { Download, Printer, Copy, Share2 } from "lucide-react";
-import { qeTokens } from "../../../design-system";
-import type { ActionButtonsProps } from "../types";
+} from '@mui/material';
+import { Download, Printer, Copy, Share2, ImageDown } from 'lucide-react';
+import { qeTokens } from '../../../design-system';
+import type { ActionButtonsProps } from '../types';
 
 export const ActionButtons: React.FC<ActionButtonsProps> = ({
   handleExportPDF,
   handleSharePDF,
   handlePrint,
   handleNewQuotation,
+  handleShareCards,
   disabled,
   isExporting = false,
   isSharing = false,
+  isSharingCards = false,
 }) => (
-  <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
+  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
     <Button
       variant="contained"
       startIcon={
@@ -43,18 +45,18 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
         color: qeTokens.light.onAccent,
         flex: 1,
         minHeight: 46,
-        textTransform: "none",
+        textTransform: 'none',
         fontWeight: 600,
         fontSize: 13,
-        borderRadius: "8px",
-        boxShadow: "none",
-        "&:hover": {
+        borderRadius: '8px',
+        boxShadow: 'none',
+        '&:hover': {
           bgcolor: qeTokens.light.accent,
-          boxShadow: "none",
+          boxShadow: 'none',
         },
       }}
     >
-      {isExporting ? "Generando..." : "Generar PDF"}
+      {isExporting ? 'Generando...' : 'Generar PDF'}
     </Button>
     <Tooltip title="Compartir PDF">
       <span>
@@ -64,8 +66,8 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
           sx={{
             border: (theme) => `1px solid ${theme.palette.divider}`,
             borderRadius: 2,
-            color: "text.secondary",
-            "&:hover": {
+            color: 'text.secondary',
+            '&:hover': {
               bgcolor: alpha(qeTokens.light.accent, 0.1),
               color: qeTokens.light.accent,
             },
@@ -75,14 +77,39 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
         </IconButton>
       </span>
     </Tooltip>
+    {handleShareCards && (
+      <Tooltip title="Compartir tarjeta (imagen 1080×1920)">
+        <span>
+          <IconButton
+            onClick={handleShareCards}
+            disabled={disabled || isExporting || isSharing || isSharingCards}
+            sx={{
+              border: (theme) => `1px solid ${theme.palette.divider}`,
+              borderRadius: 2,
+              color: 'text.secondary',
+              '&:hover': {
+                bgcolor: alpha(qeTokens.light.accent, 0.1),
+                color: qeTokens.light.accent,
+              },
+            }}
+          >
+            {isSharingCards ? (
+              <CircularProgress size={20} />
+            ) : (
+              <ImageDown size={20} />
+            )}
+          </IconButton>
+        </span>
+      </Tooltip>
+    )}
     <Tooltip title="Imprimir">
       <IconButton
         onClick={handlePrint}
         sx={{
           border: (theme) => `1px solid ${theme.palette.divider}`,
           borderRadius: 2,
-          color: "text.secondary",
-          "&:hover": {
+          color: 'text.secondary',
+          '&:hover': {
             bgcolor: alpha(qeTokens.light.accent, 0.1),
             color: qeTokens.light.accent,
           },
@@ -97,8 +124,8 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
         sx={{
           border: (theme) => `1px solid ${theme.palette.divider}`,
           borderRadius: 2,
-          color: "text.secondary",
-          "&:hover": {
+          color: 'text.secondary',
+          '&:hover': {
             bgcolor: alpha(qeTokens.light.accent, 0.1),
             color: qeTokens.light.accent,
           },

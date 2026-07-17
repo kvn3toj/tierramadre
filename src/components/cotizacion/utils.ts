@@ -58,7 +58,10 @@ export const generateProductSlug = (name: string): string => {
 export const getProductDisplayUrl = (product: CotizacionProduct): string => {
   // Manual product with media URL (GIF converted from video, or image) - return full Drive link
   // Use /preview instead of /view for better browser compatibility in PDFs
-  if (product.isManual && (product.videoUrl || product.gifUrl || product.imagen)) {
+  if (
+    product.isManual &&
+    (product.videoUrl || product.gifUrl || product.imagen)
+  ) {
     // PRIORITY 1: Use videoUrl/gifUrl if available
     const gifOrVideoUrl = product.videoUrl || product.gifUrl;
     if (gifOrVideoUrl) {
@@ -93,6 +96,17 @@ export const getProductDisplayUrl = (product: CotizacionProduct): string => {
 };
 
 /**
+ * Get the public online-cotización URL for a given quotation number.
+ * This is the QR target for the 1080×1920 product cards — it points to the
+ * public view (`/c/:quotationNumber`), NOT to a product page. The quotation
+ * number is deterministic and known before rendering, so the QR is valid even
+ * before the cotización is saved.
+ */
+export const getCotizacionUrl = (quotationNumber: string): string => {
+  return `https://${PRODUCTION_URL}/cot/${encodeURIComponent(quotationNumber)}`;
+};
+
+/**
  * Get the QR code URL based on product types
  * - For manual products with media (GIF/image): links to Drive file
  * - For single inventory product: links to product detail page
@@ -103,15 +117,18 @@ export const getQrCodeUrl = (products: CotizacionProduct[]): string => {
     return `https://${PRODUCTION_URL}/tesoro`;
   }
 
-  const manualProducts = products.filter(p => p.isManual);
-  const inventoryProducts = products.filter(p => !p.isManual);
+  const manualProducts = products.filter((p) => p.isManual);
+  const inventoryProducts = products.filter((p) => !p.isManual);
 
   // If only manual products with media, link to the first media file (GIF or image)
   if (manualProducts.length > 0 && inventoryProducts.length === 0) {
-    const productWithMedia = manualProducts.find(p => p.videoUrl || p.gifUrl || p.imagen);
+    const productWithMedia = manualProducts.find(
+      (p) => p.videoUrl || p.gifUrl || p.imagen,
+    );
     if (productWithMedia) {
       // PRIORITY 1: Use videoUrl/gifUrl if available (both point to GIF file now)
-      const gifOrVideoUrl = productWithMedia.videoUrl || productWithMedia.gifUrl;
+      const gifOrVideoUrl =
+        productWithMedia.videoUrl || productWithMedia.gifUrl;
       if (gifOrVideoUrl) {
         const fileId = extractDriveFileId(gifOrVideoUrl);
         if (fileId) {
@@ -145,7 +162,7 @@ export const getQrCodeUrl = (products: CotizacionProduct[]): string => {
   // Multiple inventory products (with or without manual products)
   // Only include inventory product item numbers (manual products have fake timestamp-based IDs)
   if (inventoryProducts.length > 0) {
-    const itemNumbers = inventoryProducts.map(p => p.itemNumber).join(',');
+    const itemNumbers = inventoryProducts.map((p) => p.itemNumber).join(',');
     return `https://${PRODUCTION_URL}/tesoro?items=${itemNumbers}&status=all`;
   }
 

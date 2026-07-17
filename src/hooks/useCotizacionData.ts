@@ -3,32 +3,32 @@
  * Manages quotation products, investments, custom costs, and calculated totals.
  * Extracted from useCotizacion for better modularity.
  */
-import { useState, useCallback, useMemo } from "react";
-import { TreasureItem } from "../types";
+import { useState, useCallback, useMemo } from 'react';
+import { TreasureItem } from '../types';
 import {
   CotizacionProduct,
   CotizacionInvestment,
   CustomCost,
   ManualProductState,
   DEFAULT_COTIZACION_INVESTMENTS,
-} from "./useCotizacion";
+} from './useCotizacion';
 
 const initialManualProduct: ManualProductState = {
-  name: "",
-  peso: "",
-  color: "",
-  calidad: "",
-  talla: "",
+  name: '',
+  peso: '',
+  color: '',
+  calidad: '',
+  talla: '',
   precioCOP: 0,
   isJewelry: false,
-  metalType: "",
-  pesoTotal: "",
-  cantidadGemas: "",
-  medida: "",
-  diseno: "",
-  precioPorCt: "",
-  calidadMetal: "",
-  gramaje: "",
+  metalType: '',
+  pesoTotal: '',
+  cantidadGemas: '',
+  medida: '',
+  diseno: '',
+  precioPorCt: '',
+  calidadMetal: '',
+  gramaje: '',
 };
 
 export interface UseCotizacionDataReturn {
@@ -118,6 +118,10 @@ export function useCotizacionData(): UseCotizacionDataReturn {
         medidasValores: item.medidasValores || item.medidas,
         isJewelry: item.isJewelry,
         metalType: item.metalType,
+        cantidad: 1,
+        certificadoUrl: item.certificateUrl,
+        // Deterministic C.O. number, only meaningful when a certificate exists.
+        numeroCO: item.certificateUrl ? `TM-CO-${item.item}` : undefined,
         ...overrides,
       };
       setProducts((prev) => [...prev, product]);
@@ -133,10 +137,10 @@ export function useCotizacionData(): UseCotizacionDataReturn {
       id: crypto.randomUUID(),
       itemNumber: Date.now() % 10000,
       name: product.name,
-      peso: product.peso || "-",
-      color: product.color || "-",
-      calidad: product.calidad || "-",
-      talla: product.talla || "-",
+      peso: product.peso || '-',
+      color: product.color || '-',
+      calidad: product.calidad || '-',
+      talla: product.talla || '-',
       precioCOP: product.precioCOP,
       isJewelry: product.isJewelry,
       metalType: product.metalType,
@@ -144,6 +148,8 @@ export function useCotizacionData(): UseCotizacionDataReturn {
       gifUrl: product.gifUrl,
       videoUrl: product.videoUrl,
       medidasValores: product.medida || undefined,
+      cantidad: 1,
+      descripcion: product.diseno || undefined,
       isManual: true,
     };
 
