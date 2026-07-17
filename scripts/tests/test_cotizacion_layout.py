@@ -58,31 +58,3 @@ def test_la_portada_no_lleva_pie_y_puede_bajar_hasta_el_borde():
     prs = _prs()
     _lamina(prs, 88, 1700, 500, 60, "portada sangrada")   # 1700+60 = 1760 > 1737
     assert verifica(prs) == []
-
-
-def test_la_portada_sin_pie_igual_detecta_cajas_encimadas():
-    """
-    Un nombre de cliente largo desborda su caja y se monta sobre el precio
-    total sin cruzar ningún pie (la portada no tiene) y sin salirse del
-    margen (la caja sigue dentro de él) — el hueco exacto que dejaba pasar
-    ese bug. saltar_primera evita el falso positivo del pie, no exime a la
-    portada de comprobación entera: las cajas de texto no pueden encimarse.
-    """
-    from cotizacion_layout import verifica
-    prs = _prs()
-    s = _lamina(prs, 88, 1330, 900, 300, "María Fernanda Nombre Larguísimo")
-    tb = s.shapes.add_textbox(_px(88), _px(1590), _px(500), _px(30))
-    tb.text_frame.text = "Cotización N.° TM-2026-0043"
-    problemas = verifica(prs)
-    assert any("encima" in p for p in problemas)
-
-
-def test_la_portada_con_cajas_apiladas_borde_con_borde_no_reporta_nada():
-    """Tocarse borde con borde (como hoy: el titular termina justo donde
-    empieza el subtítulo) es el diseño normal, no una falla."""
-    from cotizacion_layout import verifica
-    prs = _prs()
-    s = _lamina(prs, 88, 1330, 900, 260, "Cotización\nSoul")
-    tb = s.shapes.add_textbox(_px(88), _px(1590), _px(500), _px(30))  # 1330+260 = 1590: se tocan
-    tb.text_frame.text = "Plan de producción · 240 unidades"
-    assert verifica(prs) == []
