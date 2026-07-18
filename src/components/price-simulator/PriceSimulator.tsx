@@ -7,14 +7,14 @@
 
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Paper, Divider } from '@mui/material';
+import { Box, Divider } from '@mui/material';
 import { useNotification } from '../../contexts/NotificationContext';
 
 import { useEmeralds } from '../../hooks/useEmeralds';
 import { usePriceCalculation } from '../../hooks/usePriceCalculation';
 import { Emerald, TreasureItem } from '../../types';
 import { treasureData } from '../../data/treasure';
-import { studioCardStyles } from '../../design-system';
+import { Card } from '../../design-system';
 
 // Extracted components
 import {
@@ -60,7 +60,8 @@ export default function PriceSimulator() {
 
   // Selected product from gallery or treasure (UI state)
   const [selectedEmerald, setSelectedEmerald] = useState<Emerald | null>(null);
-  const [selectedTreasureItem, setSelectedTreasureItem] = useState<TreasureItem | null>(null);
+  const [selectedTreasureItem, setSelectedTreasureItem] =
+    useState<TreasureItem | null>(null);
   const [productSource, setProductSource] = useState<ProductSource>('gallery');
 
   // Multi-select mode for collections (enabled by default)
@@ -78,34 +79,47 @@ export default function PriceSimulator() {
   // Filter treasure by status
   const statusFilteredTreasure = useMemo(() => {
     if (statusFilter === 'todas') return treasureData;
-    if (statusFilter === 'disponibles') return treasureData.filter(item => item.estado === 'DISPONIBLE');
-    if (statusFilter === 'vendidas') return treasureData.filter(item => item.estado === 'VENDIDA');
+    if (statusFilter === 'disponibles')
+      return treasureData.filter((item) => item.estado === 'DISPONIBLE');
+    if (statusFilter === 'vendidas')
+      return treasureData.filter((item) => item.estado === 'VENDIDA');
     return treasureData;
   }, [statusFilter]);
 
   // Filter by product type
   const typeFilteredTreasure = useMemo(() => {
     if (productTypeFilter === 'todas') return statusFilteredTreasure;
-    if (productTypeFilter === 'gemas') return statusFilteredTreasure.filter(item => !item.isJewelry && item.cantidad === 1);
-    if (productTypeFilter === 'joyas') return statusFilteredTreasure.filter(item => item.isJewelry);
-    if (productTypeFilter === 'lotes') return statusFilteredTreasure.filter(item => !item.isJewelry && item.cantidad > 1);
+    if (productTypeFilter === 'gemas')
+      return statusFilteredTreasure.filter(
+        (item) => !item.isJewelry && item.cantidad === 1,
+      );
+    if (productTypeFilter === 'joyas')
+      return statusFilteredTreasure.filter((item) => item.isJewelry);
+    if (productTypeFilter === 'lotes')
+      return statusFilteredTreasure.filter(
+        (item) => !item.isJewelry && item.cantidad > 1,
+      );
     return statusFilteredTreasure;
   }, [statusFilteredTreasure, productTypeFilter]);
 
   // Get unique shapes from type-filtered treasure
   const uniqueShapes = useMemo(() => {
-    const shapes = new Set(typeFilteredTreasure.map(item => item.talla).filter(Boolean));
+    const shapes = new Set(
+      typeFilteredTreasure.map((item) => item.talla).filter(Boolean),
+    );
     return ['all', ...Array.from(shapes).sort()];
   }, [typeFilteredTreasure]);
 
   // Filter treasure by shape
   const filteredTreasure = useMemo(() => {
     if (shapeFilter === 'all') return typeFilteredTreasure;
-    return typeFilteredTreasure.filter(item => item.talla === shapeFilter);
+    return typeFilteredTreasure.filter((item) => item.talla === shapeFilter);
   }, [typeFilteredTreasure, shapeFilter]);
 
   // Total investment adjusted for multiSelectMode
-  const totalInvestment = multiSelectMode ? hookTotalInvestment : (hookTotalInvestment - totalProductsValue);
+  const totalInvestment = multiSelectMode
+    ? hookTotalInvestment
+    : hookTotalInvestment - totalProductsValue;
 
   // Reset handler that also clears local UI state
   const resetValues = () => {
@@ -148,8 +162,12 @@ export default function PriceSimulator() {
       setProductSource('inventory');
       if (item) {
         setProductName(item.nombre);
-        const price = typeof item.precioCOP === 'number' ? item.precioCOP :
-                     (item.precioCOP ? Number(item.precioCOP) : 0);
+        const price =
+          typeof item.precioCOP === 'number'
+            ? item.precioCOP
+            : item.precioCOP
+              ? Number(item.precioCOP)
+              : 0;
         if (price > 0) {
           updateInvestment('emerald', price);
         }
@@ -186,11 +204,14 @@ export default function PriceSimulator() {
   // Navigate to preview page with quotation data
   const handlePreview = () => {
     if (totalInvestment === 0) {
-      notify('Por favor ingresa al menos un valor de inversión antes de generar la cotización', 'warning');
+      notify(
+        'Por favor ingresa al menos un valor de inversión antes de generar la cotización',
+        'warning',
+      );
       return;
     }
 
-    const selectedProductsData = selectedProducts.map(p => {
+    const selectedProductsData = selectedProducts.map((p) => {
       const isInventory = 'item' in p;
       return {
         id: isInventory ? p.item : p.id,
@@ -203,7 +224,7 @@ export default function PriceSimulator() {
     const quotationData = {
       productName: productName || 'Esmeralda Natural Colombiana',
       caratWeight,
-      investments: investments.map(inv => ({
+      investments: investments.map((inv) => ({
         id: inv.id,
         label: inv.label,
         value: inv.value,
@@ -227,25 +248,29 @@ export default function PriceSimulator() {
   };
 
   return (
-    <Box sx={{
-      maxWidth: 960,
-      mx: 'auto',
-      px: { xs: 2, sm: 3, md: 0 },
-    }}>
+    <Box
+      sx={{
+        maxWidth: 960,
+        mx: 'auto',
+        px: { xs: 2, sm: 3, md: 0 },
+      }}
+    >
       {/* Header */}
       <PriceSimulatorHeader
         totalInvestment={totalInvestment}
         onPreview={handlePreview}
       />
 
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-        gap: { xs: 2, sm: 2.5, md: 3 }
-      }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+          gap: { xs: 2, sm: 2.5, md: 3 },
+        }}
+      >
         {/* Left Column - Investments */}
         <Box>
-          <Paper elevation={0} sx={{ ...studioCardStyles.card }}>
+          <Card variant="outlined">
             {/* Product Selection */}
             <ProductSelector
               productSource={productSource}
@@ -294,7 +319,7 @@ export default function PriceSimulator() {
               resetValues={resetValues}
               totalInvestment={totalInvestment}
             />
-          </Paper>
+          </Card>
         </Box>
 
         {/* Right Column - Pricing */}

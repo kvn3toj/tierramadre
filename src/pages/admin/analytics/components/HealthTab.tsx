@@ -19,17 +19,17 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useThemeMode } from '../../../../contexts/ThemeContext';
-import { emeraldCore, goldAccent, semanticColors } from '../../../../design-system/tokens/colors';
-import { accentColors, cssTransition, iosDimensions } from '../../../../design-system';
+import {
+  emeraldCore,
+  goldAccent,
+  semanticColors,
+} from '../../../../design-system/tokens/colors';
+import { Card, cssTransition, iosDimensions } from '../../../../design-system';
 import { HealthScoreHero } from '../../../../components/analytics/HealthScoreHero';
 import { HorizontalBarChart } from '../../../../components/analytics/HorizontalBarChart';
 import { ProgressBar } from '../../../../components/analytics/ProgressBar';
 import { InsightCard } from '../../../../components/analytics/InsightCard';
-import {
-  TabPanel,
-  SectionHeader,
-  GlassCard,
-} from '../../../../components/shared';
+import { TabPanel, SectionHeader } from '../../../../components/shared';
 import type { HealthScores, Insight } from '../../../../utils/insightGenerator';
 
 interface Achievement {
@@ -45,7 +45,12 @@ interface HealthTabProps {
   healthScores: HealthScores;
   healthColor: string;
   healthInsights: Insight[];
-  cotizacionTopProducts?: Array<{ itemNumber: number; name: string; count: number; totalValue: number }>;
+  cotizacionTopProducts?: Array<{
+    itemNumber: number;
+    name: string;
+    count: number;
+    totalValue: number;
+  }>;
   achievements: { totalXp: number };
   levelInfo: { level: number; name: string; nextLevelXp: number };
   unlockedAchievements: Array<{ id: string }>;
@@ -73,19 +78,21 @@ export const HealthTab: React.FC<HealthTabProps> = ({
   return (
     <TabPanel value={activeTab} index={3}>
       {/* Health Score Hero */}
-      <GlassCard>
-        <HealthScoreHero
-          score={healthScores.overall}
-          breakdown={healthScores}
-          animated={true}
-          size={180}
-        />
-      </GlassCard>
+      <Card variant="outlined">
+        <Card.Content>
+          <HealthScoreHero
+            score={healthScores.overall}
+            breakdown={healthScores}
+            animated={true}
+            size={180}
+          />
+        </Card.Content>
+      </Card>
 
       {/* Score Breakdown */}
       <Box sx={{ mt: 3 }}>
         <SectionHeader title="Desglose de Puntaje" icon={BarChart3} />
-        <GlassCard noPadding>
+        <Card variant="outlined">
           <ProgressBar
             value={healthScores.cotizacion}
             label="Cotizaciones"
@@ -108,7 +115,7 @@ export const HealthTab: React.FC<HealthTabProps> = ({
             value={healthScores.retention}
             label="Retención"
             sublabel="Racha y sesiones"
-            color={accentColors.purple.light}
+            color={emeraldCore.dark}
             icon={Zap}
             status={healthScores.retention >= 60 ? 'Activo' : 'Bajo'}
             animated
@@ -117,12 +124,12 @@ export const HealthTab: React.FC<HealthTabProps> = ({
             value={healthScores.conversion}
             label="Conversión"
             sublabel="Cotizaciones por vista"
-            color={accentColors.warning.light}
+            color={semanticColors.warning.main}
             icon={Target}
             status={healthScores.conversion >= 60 ? 'Activo' : 'Bajo'}
             animated
           />
-        </GlassCard>
+        </Card>
       </Box>
 
       {/* Health Recommendations */}
@@ -146,65 +153,80 @@ export const HealthTab: React.FC<HealthTabProps> = ({
       {/* Benchmarks */}
       <Box sx={{ mt: 3 }}>
         <SectionHeader title="Benchmarks" icon={Target} />
-        <GlassCard>
-          <Box sx={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: semanticColors.success.main }}>
-                80%
-              </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                Meta
-              </Typography>
+        <Card variant="outlined">
+          <Card.Content>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-around',
+                textAlign: 'center',
+              }}
+            >
+              <Box>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 700, color: semanticColors.success.main }}
+                >
+                  80%
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Meta
+                </Typography>
+              </Box>
+              <Box>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 700, color: healthColor }}
+                >
+                  {healthScores.overall}%
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Actual
+                </Typography>
+              </Box>
+              <Box>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    color:
+                      healthScores.overall >= 80
+                        ? semanticColors.success.main
+                        : semanticColors.warning.main,
+                  }}
+                >
+                  {Math.max(0, 80 - healthScores.overall)} pts
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Gap
+                </Typography>
+              </Box>
             </Box>
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: healthColor }}>
-                {healthScores.overall}%
-              </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                Actual
-              </Typography>
-            </Box>
-            <Box>
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 700,
-                  color: healthScores.overall >= 80
-                    ? semanticColors.success.main
-                    : semanticColors.warning.main,
-                }}
-              >
-                {Math.max(0, 80 - healthScores.overall)} pts
-              </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                Gap
-              </Typography>
-            </Box>
-          </Box>
-          <LinearProgress
-            variant="determinate"
-            value={Math.min(100, (healthScores.overall / 80) * 100)}
-            sx={{
-              mt: 2,
-              height: 8,
-              borderRadius: 4,
-              bgcolor: alpha(emeraldCore.primary, 0.1),
-              '& .MuiLinearProgress-bar': {
-                bgcolor: healthColor,
+            <LinearProgress
+              variant="determinate"
+              value={Math.min(100, (healthScores.overall / 80) * 100)}
+              sx={{
+                mt: 2,
+                height: 8,
                 borderRadius: 4,
-              },
-            }}
-          />
-        </GlassCard>
+                bgcolor: alpha(emeraldCore.primary, 0.1),
+                '& .MuiLinearProgress-bar': {
+                  bgcolor: healthColor,
+                  borderRadius: 4,
+                },
+              }}
+            />
+          </Card.Content>
+        </Card>
       </Box>
 
       {/* Top Products in Cotizaciones - Value Drivers */}
       {cotizacionTopProducts && cotizacionTopProducts.length > 0 && (
         <Box sx={{ mt: 3 }}>
           <SectionHeader title="Productos que Generan Valor" icon={Package} />
-          <GlassCard noPadding>
+          <Card variant="outlined">
             <HorizontalBarChart
-              data={cotizacionTopProducts.slice(0, 5).map(p => ({
+              data={cotizacionTopProducts.slice(0, 5).map((p) => ({
                 id: p.itemNumber,
                 label: p.name,
                 sublabel: `$${(p.totalValue / 1000000).toFixed(1)}M valor total`,
@@ -213,9 +235,11 @@ export const HealthTab: React.FC<HealthTabProps> = ({
               color={goldAccent.primary}
               showMedals={true}
               unit="cotizaciones"
-              onItemClick={(item) => navigate(`/admin/analytics/item/${item.id}`)}
+              onItemClick={(item) =>
+                navigate(`/admin/analytics/item/${item.id}`)
+              }
             />
-          </GlassCard>
+          </Card>
           {cotizacionTopProducts.length > 0 && (
             <InsightCard
               type="success"
@@ -233,7 +257,7 @@ export const HealthTab: React.FC<HealthTabProps> = ({
 
       {/* Achievements Progress - Expandable */}
       <Box sx={{ mt: 3 }}>
-        <GlassCard noPadding>
+        <Card variant="outlined">
           {/* Header - Clickable to expand */}
           <Box
             onClick={() => setAchievementsExpanded(!achievementsExpanded)}
@@ -244,7 +268,14 @@ export const HealthTab: React.FC<HealthTabProps> = ({
               transition: cssTransition.default,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 1.5,
+              }}
+            >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
@@ -263,23 +294,42 @@ export const HealthTab: React.FC<HealthTabProps> = ({
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     Logros
                   </Typography>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    {unlockedAchievements.length} de {ACHIEVEMENTS.length} desbloqueados
+                  <Typography
+                    variant="caption"
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    {unlockedAchievements.length} de {ACHIEVEMENTS.length}{' '}
+                    desbloqueados
                   </Typography>
                 </Box>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: goldAccent.primary, lineHeight: 1 }}>
-                    {Math.round((unlockedAchievements.length / ACHIEVEMENTS.length) * 100)}%
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 700,
+                      color: goldAccent.primary,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {Math.round(
+                      (unlockedAchievements.length / ACHIEVEMENTS.length) * 100,
+                    )}
+                    %
                   </Typography>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: 'text.secondary' }}
+                  >
                     {achievements.totalXp} XP
                   </Typography>
                 </Box>
                 <Box
                   sx={{
-                    transform: achievementsExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transform: achievementsExpanded
+                      ? 'rotate(180deg)'
+                      : 'rotate(0deg)',
                     transition: cssTransition.default,
                     color: 'text.secondary',
                   }}
@@ -331,14 +381,25 @@ export const HealthTab: React.FC<HealthTabProps> = ({
                 }}
               >
                 <Typography variant="h5" sx={{ fontSize: '1.5rem' }}>
-                  {levelInfo.level <= 2 ? '🌱' : levelInfo.level <= 4 ? '💎' : '👑'}
+                  {levelInfo.level <= 2
+                    ? '🌱'
+                    : levelInfo.level <= 4
+                      ? '💎'
+                      : '👑'}
                 </Typography>
                 <Box>
-                  <Typography variant="body2" sx={{ fontWeight: 700, color: emeraldCore.primary }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ fontWeight: 700, color: emeraldCore.primary }}
+                  >
                     Nivel {levelInfo.level}: {levelInfo.name}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    {achievements.totalXp} / {levelInfo.nextLevelXp} XP para siguiente nivel
+                  <Typography
+                    variant="caption"
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    {achievements.totalXp} / {levelInfo.nextLevelXp} XP para
+                    siguiente nivel
                   </Typography>
                 </Box>
               </Box>
@@ -346,7 +407,9 @@ export const HealthTab: React.FC<HealthTabProps> = ({
               {/* Achievements Grid */}
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {ACHIEVEMENTS.map((achievement) => {
-                  const isUnlocked = unlockedAchievements.some(a => a.id === achievement.id);
+                  const isUnlocked = unlockedAchievements.some(
+                    (a) => a.id === achievement.id,
+                  );
                   const progress = getAchievementProgress(achievement.id);
 
                   return (
@@ -361,9 +424,11 @@ export const HealthTab: React.FC<HealthTabProps> = ({
                         bgcolor: isUnlocked
                           ? alpha(semanticColors.success.main, 0.08)
                           : alpha(isLight ? '#000' : '#fff', 0.03),
-                        border: `1px solid ${isUnlocked
-                          ? alpha(semanticColors.success.main, 0.2)
-                          : alpha(isLight ? '#000' : '#fff', 0.06)}`,
+                        border: `1px solid ${
+                          isUnlocked
+                            ? alpha(semanticColors.success.main, 0.2)
+                            : alpha(isLight ? '#000' : '#fff', 0.06)
+                        }`,
                         opacity: isUnlocked ? 1 : 0.7,
                         transition: cssTransition.default,
                       }}
@@ -411,12 +476,16 @@ export const HealthTab: React.FC<HealthTabProps> = ({
 
                       {/* Info */}
                       <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                        >
                           <Typography
                             variant="body2"
                             sx={{
                               fontWeight: 600,
-                              color: isUnlocked ? 'text.primary' : 'text.secondary',
+                              color: isUnlocked
+                                ? 'text.primary'
+                                : 'text.secondary',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
                               whiteSpace: 'nowrap',
@@ -470,7 +539,11 @@ export const HealthTab: React.FC<HealthTabProps> = ({
                             />
                             <Typography
                               variant="caption"
-                              sx={{ color: emeraldCore.primary, fontSize: '0.6rem', fontWeight: 600 }}
+                              sx={{
+                                color: emeraldCore.primary,
+                                fontSize: '0.6rem',
+                                fontWeight: 600,
+                              }}
                             >
                               {Math.round(progress)}% completado
                             </Typography>
@@ -483,7 +556,7 @@ export const HealthTab: React.FC<HealthTabProps> = ({
               </Box>
             </Box>
           </Box>
-        </GlassCard>
+        </Card>
       </Box>
     </TabPanel>
   );

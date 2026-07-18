@@ -30,9 +30,21 @@ import {
   Award,
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { useCotizacionStats, TopProduct, AsesorProductStats } from '../../hooks/useCotizacionStats';
-import { emeraldCore, goldAccent, semanticColors } from '../../design-system/tokens/colors';
-import { cssTransition, primitiveSpacing as spacing, iosDimensions } from '../../design-system';
+import {
+  useCotizacionStats,
+  TopProduct,
+  AsesorProductStats,
+} from '../../hooks/useCotizacionStats';
+import {
+  emeraldCore,
+  goldAccent,
+  semanticColors,
+} from '../../design-system/tokens/colors';
+import {
+  cssTransition,
+  primitiveSpacing as spacing,
+  iosDimensions,
+} from '../../design-system';
 
 // =============================================================================
 // STAT CARD COMPONENT
@@ -45,7 +57,12 @@ interface StatCardProps {
   color: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ label, value, icon: Icon, color }) => {
+const StatCard: React.FC<StatCardProps> = ({
+  label,
+  value,
+  icon: Icon,
+  color,
+}) => {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
 
@@ -97,7 +114,12 @@ interface ProductRowProps {
   onNavigate: (itemNumber: number) => void;
 }
 
-const ProductRow: React.FC<ProductRowProps> = ({ product, rank, maxCount, onNavigate }) => {
+const ProductRow: React.FC<ProductRowProps> = ({
+  product,
+  rank,
+  maxCount,
+  onNavigate,
+}) => {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const percentage = maxCount > 0 ? (product.count / maxCount) * 100 : 0;
@@ -184,7 +206,10 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, rank, maxCount, onNavi
 
       {/* Stats */}
       <Box sx={{ textAlign: 'right' }}>
-        <Typography variant="h6" sx={{ fontWeight: 700, color: goldAccent.primary }}>
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 700, color: goldAccent.primary }}
+        >
           {product.count}
         </Typography>
         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -194,7 +219,10 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, rank, maxCount, onNavi
 
       {/* Value */}
       <Box sx={{ textAlign: 'right', minWidth: 80 }}>
-        <Typography variant="body2" sx={{ fontWeight: 600, color: emeraldCore.primary }}>
+        <Typography
+          variant="body2"
+          sx={{ fontWeight: 600, color: emeraldCore.primary }}
+        >
           ${(product.totalValue / 1000000).toFixed(1)}M
         </Typography>
         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -296,9 +324,16 @@ const CotizacionProductsPage: React.FC = () => {
     }
 
     const totalProducts = stats.topProducts.length;
-    const totalCotizaciones = stats.topProducts.reduce((sum, p) => sum + p.count, 0);
-    const totalValue = stats.topProducts.reduce((sum, p) => sum + p.totalValue, 0);
-    const avgValuePerProduct = totalProducts > 0 ? totalValue / totalProducts : 0;
+    const totalCotizaciones = stats.topProducts.reduce(
+      (sum, p) => sum + p.count,
+      0,
+    );
+    const totalValue = stats.topProducts.reduce(
+      (sum, p) => sum + p.totalValue,
+      0,
+    );
+    const avgValuePerProduct =
+      totalProducts > 0 ? totalValue / totalProducts : 0;
 
     return {
       totalProducts,
@@ -357,7 +392,14 @@ const CotizacionProductsPage: React.FC = () => {
       {/* Summary Stats */}
       {!isLoading && (
         <>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5, mb: 3 }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 1.5,
+              mb: 3,
+            }}
+          >
             <StatCard
               label="Productos Únicos"
               value={summaryStats.totalProducts}
@@ -380,7 +422,7 @@ const CotizacionProductsPage: React.FC = () => {
               label="Valor Promedio"
               value={`$${(summaryStats.avgValuePerProduct / 1000000).toFixed(1)}M`}
               icon={TrendingUp}
-              color="#8B5CF6"
+              color={semanticColors.info.main}
             />
           </Box>
 
@@ -422,8 +464,14 @@ const CotizacionProductsPage: React.FC = () => {
               ))
             ) : (
               <Box sx={{ p: 4, textAlign: 'center' }}>
-                <Package size={40} color={alpha(isLight ? '#000' : '#fff', 0.2)} />
-                <Typography variant="body2" sx={{ color: 'text.secondary', mt: 2 }}>
+                <Package
+                  size={40}
+                  color={alpha(isLight ? '#000' : '#fff', 0.2)}
+                />
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'text.secondary', mt: 2 }}
+                >
                   No hay datos de productos en cotizaciones.
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>

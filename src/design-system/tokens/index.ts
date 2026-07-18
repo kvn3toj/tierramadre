@@ -8,10 +8,39 @@
 
 // Primitives
 import { primitiveColors } from './primitives/colors';
-import { typography, fontFamilies, fontWeights, iosTextStyles, customTextStyles } from './primitives/typography';
-import { spacingSystem, spacing, iosDimensions, safeAreaInsets, containerWidths, gridSystems } from './primitives/spacing';
-import { motion, easingCurves, durations, springPresets, transitions, keyframes, staggerDelays } from './primitives/motion';
-import { shadows, lightShadows, darkShadows, coloredShadows, innerShadows, componentShadows, textShadows } from './primitives/shadows';
+import {
+  typography,
+  fontFamilies,
+  fontWeights,
+  iosTextStyles,
+  customTextStyles,
+} from './primitives/typography';
+import {
+  spacingSystem,
+  spacing,
+  iosDimensions,
+  safeAreaInsets,
+  containerWidths,
+  gridSystems,
+} from './primitives/spacing';
+import {
+  motion,
+  easingCurves,
+  durations,
+  springPresets,
+  transitions,
+  keyframes,
+  staggerDelays,
+} from './primitives/motion';
+import {
+  shadows,
+  lightShadows,
+  darkShadows,
+  coloredShadows,
+  innerShadows,
+  componentShadows,
+  textShadows,
+} from './primitives/shadows';
 import {
   geometry,
   PHI,
@@ -34,8 +63,24 @@ import {
 } from './primitives/geometry';
 
 // Migrated tokens (sacred brand & motion)
-import { brandTokens, colors as sacredColors, typography as sacredTypography, geometry as sacredGeometry } from './brand';
-import { motionTokens, cssTransition, duration as animDuration, easing as animEasing, spring as animSpring, cardVariants, fadeInUp, staggerContainer, staggerItem, scaleIn } from './motion';
+import {
+  brandTokens,
+  colors as sacredColors,
+  typography as sacredTypography,
+  geometry as sacredGeometry,
+} from './brand';
+import {
+  motionTokens,
+  cssTransition,
+  duration as animDuration,
+  easing as animEasing,
+  spring as animSpring,
+  cardVariants,
+  fadeInUp,
+  staggerContainer,
+  staggerItem,
+  scaleIn,
+} from './motion';
 
 // New canonical tokens (migrated from legacy design-system.ts)
 import { accentColors, medalColors, getAccentColor } from './accents';
@@ -46,26 +91,98 @@ import { layoutConstants, radius } from './layout';
 // Legacy palette tokens (migrated from monolithic design-system.ts)
 import {
   brand as brandPalette,
-  lightTokens, darkTokens,
+  lightTokens,
+  darkTokens,
   gradients as compatGradients,
   legacyTypography,
   getTokens,
-  studioColors, studioGradients, studioShadows, studioCardStyles,
-  animation, disabledButton,
+  studioColors,
+  studioGradients,
+  studioShadows,
+  animation,
+  disabledButton,
 } from './legacy-compat';
 
 // Semantics
-import { brand, brandColors, brandGradients, statusColors, treasureStatus } from './semantic/brand';
-import { surface, surfaceBackgrounds, elevatedSurfaces, glassSurfaces, borderColors, overlayBackgrounds, backdropFilters } from './semantic/surface';
-import { text, textColors, brandText, statusText, linkColors, placeholderText, inverseText } from './semantic/text';
-import { interactive, interactionStates, buttonStates, inputStates, cardStates, toggleStates, selectionStates, listItemStates } from './semantic/interactive';
-import { document, documentColors, goldColors, documentShadows, documentTypography, logoConfig } from './semantic/document';
+import {
+  brand,
+  brandColors,
+  brandGradients,
+  statusColors,
+  treasureStatus,
+} from './semantic/brand';
+import {
+  surface,
+  surfaceBackgrounds,
+  elevatedSurfaces,
+  glassSurfaces,
+  borderColors,
+  overlayBackgrounds,
+  backdropFilters,
+} from './semantic/surface';
+import {
+  text,
+  textColors,
+  brandText,
+  statusText,
+  linkColors,
+  placeholderText,
+  inverseText,
+} from './semantic/text';
+import {
+  interactive,
+  interactionStates,
+  buttonStates,
+  inputStates,
+  cardStates,
+  toggleStates,
+  selectionStates,
+  listItemStates,
+} from './semantic/interactive';
+import {
+  document,
+  documentColors,
+  goldColors,
+  documentShadows,
+  documentTypography,
+  logoConfig,
+} from './semantic/document';
 
 // Re-export everything
-export { primitiveColors, typography, fontFamilies, fontWeights, iosTextStyles, customTextStyles };
-export { spacingSystem, spacing, iosDimensions, safeAreaInsets, containerWidths, gridSystems };
-export { motion, easingCurves, durations, springPresets, transitions, keyframes, staggerDelays };
-export { shadows, lightShadows, darkShadows, coloredShadows, innerShadows, componentShadows, textShadows };
+export {
+  primitiveColors,
+  typography,
+  fontFamilies,
+  fontWeights,
+  iosTextStyles,
+  customTextStyles,
+};
+export {
+  spacingSystem,
+  spacing,
+  iosDimensions,
+  safeAreaInsets,
+  containerWidths,
+  gridSystems,
+};
+export {
+  motion,
+  easingCurves,
+  durations,
+  springPresets,
+  transitions,
+  keyframes,
+  staggerDelays,
+};
+export {
+  shadows,
+  lightShadows,
+  darkShadows,
+  coloredShadows,
+  innerShadows,
+  componentShadows,
+  textShadows,
+};
 export {
   geometry,
   PHI,
@@ -87,14 +204,57 @@ export {
   goldenSplit,
 };
 export { brandColors, brandGradients, statusColors, treasureStatus };
-export { surface, surfaceBackgrounds, elevatedSurfaces, glassSurfaces, borderColors, overlayBackgrounds, backdropFilters };
-export { text, textColors, brandText, statusText, linkColors, placeholderText, inverseText };
-export { interactive, interactionStates, buttonStates, inputStates, cardStates, toggleStates, selectionStates, listItemStates };
-export { document, documentColors, goldColors, documentShadows, documentTypography, logoConfig };
+export {
+  surface,
+  surfaceBackgrounds,
+  elevatedSurfaces,
+  glassSurfaces,
+  borderColors,
+  overlayBackgrounds,
+  backdropFilters,
+};
+export {
+  text,
+  textColors,
+  brandText,
+  statusText,
+  linkColors,
+  placeholderText,
+  inverseText,
+};
+export {
+  interactive,
+  interactionStates,
+  buttonStates,
+  inputStates,
+  cardStates,
+  toggleStates,
+  selectionStates,
+  listItemStates,
+};
+export {
+  document,
+  documentColors,
+  goldColors,
+  documentShadows,
+  documentTypography,
+  logoConfig,
+};
 
 // Migrated tokens exports
 export { brandTokens, sacredColors, sacredTypography, sacredGeometry };
-export { motionTokens, cssTransition, animDuration, animEasing, animSpring, cardVariants, fadeInUp, staggerContainer, staggerItem, scaleIn };
+export {
+  motionTokens,
+  cssTransition,
+  animDuration,
+  animEasing,
+  animSpring,
+  cardVariants,
+  fadeInUp,
+  staggerContainer,
+  staggerItem,
+  scaleIn,
+};
 
 // New canonical tokens exports
 export { accentColors, medalColors, getAccentColor };
@@ -105,7 +265,7 @@ export { layoutConstants, radius };
 // Legacy palette tokens (consumers should migrate to canonical tokens)
 export { brandPalette as brand, lightTokens, darkTokens };
 export { compatGradients as legacyGradients, legacyTypography, getTokens };
-export { studioColors, studioGradients, studioShadows, studioCardStyles };
+export { studioColors, studioGradients, studioShadows };
 export { animation, disabledButton };
 
 // Types

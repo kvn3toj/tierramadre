@@ -6,8 +6,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { Eye, Users, UserCheck, User } from 'lucide-react';
-import { emeraldCore, goldAccent } from '../../../../design-system/tokens/colors';
-import { StatBox } from '../../../../components/shared';
+import { MetricCard } from '../../../../design-system';
 
 interface ViewerStatsProps {
   totalViews: number;
@@ -31,30 +30,20 @@ export const ViewerStats: React.FC<ViewerStatsProps> = ({
         mb: 3,
       }}
     >
-      <StatBox
-        label="Total Vistas"
-        value={totalViews}
-        icon={Eye}
-        color="#3B82F6"
-      />
-      <StatBox
+      <MetricCard label="Total Vistas" value={totalViews} icon={Eye} compact />
+      <MetricCard
         label="Viewers Únicos"
         value={uniqueViewers}
         icon={Users}
-        color={emeraldCore.primary}
+        compact
       />
-      <StatBox
+      <MetricCard
         label="Registrados"
         value={loggedInViewers}
         icon={UserCheck}
-        color={goldAccent.primary}
+        compact
       />
-      <StatBox
-        label="Invitados"
-        value={guestViewers}
-        icon={User}
-        color="#6B7280"
-      />
+      <MetricCard label="Invitados" value={guestViewers} icon={User} compact />
     </Box>
   );
 };

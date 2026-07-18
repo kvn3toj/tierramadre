@@ -195,7 +195,6 @@ export {
   studioColors,
   studioGradients,
   studioShadows,
-  studioCardStyles,
   animation,
   disabledButton,
 } from './tokens/legacy-compat';
@@ -248,6 +247,12 @@ export {
   type CardContentProps,
   type CardFooterProps,
 } from './components/Card';
+
+// Badge — the ONE status/label chip (dot/icon + label, never color-only).
+export { Badge, type BadgeProps, type BadgeTone } from './components/Badge';
+
+// MetricCard — the ONE stat tile (Card + Badge composition).
+export { MetricCard, type MetricCardProps } from './components/MetricCard';
 
 // Layout
 export {

@@ -12,7 +12,7 @@
  * Shared anatomy in both: near-square image well on --surface-2, Cormorant name,
  * DM Mono spec line ("4.20 ct · MUZO"), compact price.
  */
-import React, { useCallback } from "react";
+import React, { useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -23,22 +23,22 @@ import {
   Skeleton,
   alpha,
   Tooltip,
-} from "@mui/material";
-import { Images, Eye, Scale } from "lucide-react";
-import { useThemeMode } from "../../contexts/ThemeContext";
-import { usePriceShare } from "../../contexts/PriceShareContext";
-import { useReducedMotion } from "../../hooks/useReducedMotion";
-import { useRedesignVariant } from "../../hooks/useRedesignVariant";
-import { prefetchRoute } from "../../utils/routePrefetch";
-import { TreasureItem } from "../../types";
+} from '@mui/material';
+import { Images, Eye, Scale } from 'lucide-react';
+import { useThemeMode } from '../../contexts/ThemeContext';
+import { usePriceShare } from '../../contexts/PriceShareContext';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { useRedesignVariant } from '../../hooks/useRedesignVariant';
+import { prefetchRoute } from '../../utils/routePrefetch';
+import { TreasureItem } from '../../types';
 import {
   getQualityBadge,
   getQualityTooltip,
   formatCarats,
-} from "../../utils/formatting";
-import { PriceDisplay } from "../price-simulator/PriceDisplay";
-import ProgressiveImage from "../shared/ProgressiveImage";
-import { animation, qeFont, getQuietEmerald } from "../../design-system";
+} from '../../utils/formatting';
+import { PriceDisplay } from '../price-simulator/PriceDisplay';
+import ProgressiveImage from '../shared/ProgressiveImage';
+import { animation, qeFont, getQuietEmerald, Badge } from '../../design-system';
 
 interface GridCardProps {
   item: TreasureItem;
@@ -63,7 +63,7 @@ interface GridCardProps {
    * store. Used by the public Vitrina to always render the clean `literal`
    * card without mutating the authenticated app's catalog preference.
    */
-  variantOverride?: "literal" | "faithful";
+  variantOverride?: 'literal' | 'faithful';
   /**
    * Explicit price label to render instead of the viewer-derived PriceDisplay.
    * `string` → show it; `null` → show no price; `undefined` → default behavior
@@ -77,13 +77,13 @@ interface GridCardProps {
 function buildSpecLine(item: TreasureItem): string {
   const parts: string[] = [];
   const isLoose = !item.isJewelry;
-  if (isLoose && typeof item.peso === "number") {
+  if (isLoose && typeof item.peso === 'number') {
     parts.push(`${formatCarats(item.peso)} ct`);
   }
   if (item.isJewelry && item.metalType) parts.push(item.metalType);
-  const mine = (item.procedencia || item.mina || "").trim();
+  const mine = (item.procedencia || item.mina || '').trim();
   if (mine) parts.push(mine.toUpperCase());
-  return parts.length > 0 ? parts.join(" · ") : item.color;
+  return parts.length > 0 ? parts.join(' · ') : item.color;
 }
 
 function GridCard({
@@ -101,26 +101,26 @@ function GridCard({
   priceOverride,
 }: GridCardProps) {
   const { mode } = useThemeMode();
-  const isLight = mode === "light";
+  const isLight = mode === 'light';
   const { shouldShowPrices } = usePriceShare();
   const prefersReducedMotion = useReducedMotion();
   const { isLiteral: variantIsLiteral } = useRedesignVariant();
   const isLiteral = variantOverride
-    ? variantOverride === "literal"
+    ? variantOverride === 'literal'
     : variantIsLiteral;
 
   const qe = getQuietEmerald(mode);
 
   const displayName = item.nombre
-    .replace(/^L:.*?\s/, "")
-    .replace(/^L:/, "")
+    .replace(/^L:.*?\s/, '')
+    .replace(/^L:/, '')
     .trim();
   // Jewelry often has no `color`, which used to leave a dangling "Name - " in
   // alt/aria text; compose from the parts that exist (metal describes jewelry).
   const altText = [displayName, item.isJewelry ? item.metalType : item.color]
-    .map((s) => (s || "").trim())
+    .map((s) => (s || '').trim())
     .filter(Boolean)
-    .join(", ");
+    .join(', ');
   const quality = getQualityBadge(item.calidad);
   const qualityTooltip = getQualityTooltip(item.calidad);
   const specLine = buildSpecLine(item);
@@ -138,7 +138,7 @@ function GridCard({
   );
 
   const handlePrefetch = useCallback(() => {
-    prefetchRoute("product");
+    prefetchRoute('product');
   }, []);
 
   // ---- Image well (shared) ----------------------------------------------
@@ -154,10 +154,10 @@ function GridCard({
       // Tall jewelry compositions (necklace + pendant) get amputated by
       // cover-cropping in the near-square well; letterbox them instead.
       // Loose-stone photos are centered square shots that crop safely.
-      objectFit={item.isJewelry ? "contain" : "cover"}
+      objectFit={item.isJewelry ? 'contain' : 'cover'}
     />
   ) : isLoadingThumbnails ? (
-    <Box sx={{ aspectRatio: "1 / 1.06", width: "100%" }}>
+    <Box sx={{ aspectRatio: '1 / 1.06', width: '100%' }}>
       <Skeleton
         variant="rectangular"
         animation="wave"
@@ -166,11 +166,7 @@ function GridCard({
       />
     </Box>
   ) : (
-    <ProgressiveImage
-      src={undefined}
-      alt={altText}
-      aspectRatio="1 / 1.06"
-    />
+    <ProgressiveImage src={undefined} alt={altText} aspectRatio="1 / 1.06" />
   );
 
   // ---- Functional overlays (faithful variant only) ----------------------
@@ -183,50 +179,37 @@ function GridCard({
           label={item.galleryCount}
           size="small"
           sx={{
-            position: "absolute",
+            position: 'absolute',
             bottom: item.cantidad > 1 ? 28 : 6,
             right: 6,
-            bgcolor: "rgba(0,0,0,0.62)",
-            color: "white",
+            bgcolor: 'rgba(0,0,0,0.62)',
+            color: 'white',
             fontSize: 9,
             fontWeight: 600,
             height: 18,
-            "& .MuiChip-icon": { color: "rgba(255,255,255,0.8)", ml: 0.5 },
-            "& .MuiChip-label": { px: 0.5 },
+            '& .MuiChip-icon': { color: 'rgba(255,255,255,0.8)', ml: 0.5 },
+            '& .MuiChip-label': { px: 0.5 },
           }}
         />
       )}
 
       {/* Quality badge — bottom left */}
       <Tooltip title={qualityTooltip} arrow enterDelay={300} placement="top">
-        <Chip
-          label={quality.label}
-          size="small"
+        <Box
           sx={{
-            position: "absolute",
+            position: 'absolute',
             bottom: 6,
             left: 6,
             maxWidth: item.isLote
-              ? "calc(100% - 110px)"
+              ? 'calc(100% - 110px)'
               : item.cantidad > 1
-                ? "calc(100% - 52px)"
-                : "calc(100% - 12px)",
-            height: 18,
-            fontSize: 9,
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.03em",
-            bgcolor: quality.bg,
-            color: quality.color,
-            border: `1px solid ${quality.border}`,
-            "& .MuiChip-label": {
-              px: 0.75,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            },
+                ? 'calc(100% - 52px)'
+                : 'calc(100% - 12px)',
+            overflow: 'hidden',
           }}
-        />
+        >
+          <Badge tone={quality.tone} label={quality.label} />
+        </Box>
       </Tooltip>
 
       {/* Quantity / lote badge — bottom right */}
@@ -234,21 +217,21 @@ function GridCard({
         <Chip
           label={
             item.isLote
-              ? `Lote · ${item.cantidad} ${item.cantidad === 1 ? "pieza" : "piezas"}`
+              ? `Lote · ${item.cantidad} ${item.cantidad === 1 ? 'pieza' : 'piezas'}`
               : `×${item.cantidad}`
           }
           size="small"
           sx={{
-            position: "absolute",
+            position: 'absolute',
             bottom: 6,
             right: 6,
             height: 18,
             fontSize: 9,
             fontWeight: 700,
-            letterSpacing: "0.02em",
-            bgcolor: item.isLote ? qe.accentStrong : "rgba(0,0,0,0.62)",
-            color: item.isLote ? qe.onAccent : "white",
-            "& .MuiChip-label": { px: 0.5 },
+            letterSpacing: '0.02em',
+            bgcolor: item.isLote ? qe.accentStrong : 'rgba(0,0,0,0.62)',
+            color: item.isLote ? qe.onAccent : 'white',
+            '& .MuiChip-label': { px: 0.5 },
           }}
         />
       )}
@@ -262,16 +245,16 @@ function GridCard({
           }
           size="small"
           sx={{
-            position: "absolute",
+            position: 'absolute',
             top: 6,
             left: 6,
             height: 18,
             fontSize: 9,
             fontWeight: 500,
-            bgcolor: "rgba(0,0,0,0.52)",
-            color: "rgba(255,255,255,0.9)",
-            "& .MuiChip-icon": { color: "rgba(255,255,255,0.7)", ml: 0.5 },
-            "& .MuiChip-label": { px: 0.5 },
+            bgcolor: 'rgba(0,0,0,0.52)',
+            color: 'rgba(255,255,255,0.9)',
+            '& .MuiChip-icon': { color: 'rgba(255,255,255,0.7)', ml: 0.5 },
+            '& .MuiChip-label': { px: 0.5 },
           }}
         />
       )}
@@ -282,36 +265,36 @@ function GridCard({
           onClick={handleCompareClick}
           aria-label={
             isSelectedForComparison
-              ? "Quitar de comparación"
-              : "Agregar a comparación"
+              ? 'Quitar de comparación'
+              : 'Agregar a comparación'
           }
           disabled={!isSelectedForComparison && !canAddToComparison}
           size="small"
           sx={{
-            position: "absolute",
+            position: 'absolute',
             top: 6,
             right: 6,
             width: 34,
             height: 34,
             bgcolor: isSelectedForComparison
               ? qe.accentStrong
-              : alpha("#000000", 0.5),
-            color: isSelectedForComparison ? qe.onAccent : "white",
+              : alpha('#000000', 0.5),
+            color: isSelectedForComparison ? qe.onAccent : 'white',
             transition: prefersReducedMotion
-              ? "none"
-              : "background-color 0.2s ease, transform 0.2s cubic-bezier(0.34,1.56,0.64,1)",
-            "&:hover": {
+              ? 'none'
+              : 'background-color 0.2s ease, transform 0.2s cubic-bezier(0.34,1.56,0.64,1)',
+            '&:hover': {
               bgcolor: isSelectedForComparison
                 ? qe.accent
-                : alpha("#000000", 0.68),
-              transform: prefersReducedMotion ? "none" : "scale(1.08)",
+                : alpha('#000000', 0.68),
+              transform: prefersReducedMotion ? 'none' : 'scale(1.08)',
             },
-            "&:active": {
-              transform: prefersReducedMotion ? "none" : "scale(0.92)",
+            '&:active': {
+              transform: prefersReducedMotion ? 'none' : 'scale(0.92)',
             },
-            "&:disabled": {
-              bgcolor: alpha("#000000", 0.28),
-              color: "rgba(255,255,255,0.5)",
+            '&:disabled': {
+              bgcolor: alpha('#000000', 0.28),
+              color: 'rgba(255,255,255,0.5)',
             },
           }}
         >
@@ -334,7 +317,7 @@ function GridCard({
             color: qe.accent,
             fontSize: isMobile ? 12.5 : 13,
             fontFeatureSettings: '"tnum"',
-            whiteSpace: "nowrap",
+            whiteSpace: 'nowrap',
           }}
         >
           {priceOverride}
@@ -359,11 +342,11 @@ function GridCard({
         fontSize: isMobile ? 16 : 19,
         letterSpacing: 0,
         minWidth: 0,
-        flex: isMobile ? "unset" : 1,
-        display: "-webkit-box",
+        flex: isMobile ? 'unset' : 1,
+        display: '-webkit-box',
         WebkitLineClamp: 2,
-        WebkitBoxOrient: "vertical",
-        overflow: "hidden",
+        WebkitBoxOrient: 'vertical',
+        overflow: 'hidden',
       }}
     >
       {displayName}
@@ -377,11 +360,11 @@ function GridCard({
         color: qe.subtle,
         fontSize: 9.5,
         lineHeight: 1.3,
-        letterSpacing: "0.05em",
-        mt: isMobile ? "4px" : "6px",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
+        letterSpacing: '0.05em',
+        mt: isMobile ? '4px' : '6px',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
       }}
     >
       {specLine}
@@ -392,15 +375,15 @@ function GridCard({
     <>
       {nameEl}
       {specEl}
-      {priceEl && <Box sx={{ mt: "5px" }}>{priceEl}</Box>}
+      {priceEl && <Box sx={{ mt: '5px' }}>{priceEl}</Box>}
     </>
   ) : (
     <>
       <Box
         sx={{
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "space-between",
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
           gap: 1,
         }}
       >
@@ -417,7 +400,7 @@ function GridCard({
       <Box
         onClick={handleItemClick}
         onKeyDown={(e: React.KeyboardEvent) => {
-          if (e.key === "Enter" || e.key === " ") {
+          if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             handleItemClick();
           }
@@ -428,36 +411,36 @@ function GridCard({
         aria-label={altText}
         tabIndex={0}
         sx={{
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          cursor: "pointer",
-          outline: "none",
-          "& img": {
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          cursor: 'pointer',
+          outline: 'none',
+          '& img': {
             transition: prefersReducedMotion
-              ? "none"
-              : "transform 0.5s cubic-bezier(0.22,1,0.36,1)",
+              ? 'none'
+              : 'transform 0.5s cubic-bezier(0.22,1,0.36,1)',
           },
-          "&:focus-visible": {
+          '&:focus-visible': {
             outline: `2px solid ${qe.accentPure}`,
             outlineOffset: 3,
-            borderRadius: "6px",
+            borderRadius: '6px',
           },
         }}
       >
         <Box
           sx={{
-            position: "relative",
+            position: 'relative',
             flex: 1,
             minHeight: 0,
-            overflow: "hidden",
+            overflow: 'hidden',
             bgcolor: qe.well,
-            borderRadius: "5px",
+            borderRadius: '5px',
           }}
         >
           {imageWell}
         </Box>
-        <Box sx={{ flexShrink: 0, pt: "9px" }}>{textBlock}</Box>
+        <Box sx={{ flexShrink: 0, pt: '9px' }}>{textBlock}</Box>
       </Box>
     );
   }
@@ -468,7 +451,7 @@ function GridCard({
       elevation={0}
       onClick={handleItemClick}
       onKeyDown={(e: React.KeyboardEvent) => {
-        if (e.key === "Enter" || e.key === " ") {
+        if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           handleItemClick();
         }
@@ -479,39 +462,39 @@ function GridCard({
       aria-label={altText}
       tabIndex={0}
       sx={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        borderRadius: "8px",
-        border: "1px solid",
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: '8px',
+        border: '1px solid',
         borderColor: qe.border,
         bgcolor: qe.surface,
-        overflow: "hidden",
-        transition: prefersReducedMotion ? "none" : animation.transition.spring,
-        cursor: "pointer",
+        overflow: 'hidden',
+        transition: prefersReducedMotion ? 'none' : animation.transition.spring,
+        cursor: 'pointer',
         boxShadow: isLight
-          ? "0 1px 2px rgba(0,0,0,0.04)"
-          : "0 1px 2px rgba(0,0,0,0.4)",
-        "& img": {
+          ? '0 1px 2px rgba(0,0,0,0.04)'
+          : '0 1px 2px rgba(0,0,0,0.4)',
+        '& img': {
           transition: prefersReducedMotion
-            ? "none"
-            : "transform 0.5s cubic-bezier(0.22,1,0.36,1)",
+            ? 'none'
+            : 'transform 0.5s cubic-bezier(0.22,1,0.36,1)',
         },
-        "&:hover": {
-          borderColor: isLight ? "rgba(0,0,0,0.16)" : "rgba(255,255,255,0.16)",
+        '&:hover': {
+          borderColor: isLight ? 'rgba(0,0,0,0.16)' : 'rgba(255,255,255,0.16)',
           transform:
-            prefersReducedMotion || isMobile ? "none" : "translateY(-2px)",
+            prefersReducedMotion || isMobile ? 'none' : 'translateY(-2px)',
           boxShadow: isLight
-            ? "0 10px 30px rgba(0,0,0,0.08)"
-            : "0 10px 30px rgba(0,0,0,0.5)",
+            ? '0 10px 30px rgba(0,0,0,0.08)'
+            : '0 10px 30px rgba(0,0,0,0.5)',
           ...(!prefersReducedMotion &&
-            !isMobile && { "& img": { transform: "scale(1.04)" } }),
+            !isMobile && { '& img': { transform: 'scale(1.04)' } }),
         },
-        "&:active": {
-          transform: prefersReducedMotion ? "none" : "scale(0.98)",
-          transition: prefersReducedMotion ? "none" : "transform 0.1s ease-out",
+        '&:active': {
+          transform: prefersReducedMotion ? 'none' : 'scale(0.98)',
+          transition: prefersReducedMotion ? 'none' : 'transform 0.1s ease-out',
         },
-        "&:focus-visible": {
+        '&:focus-visible': {
           outline: `2px solid ${qe.accentPure}`,
           outlineOffset: 2,
         },
@@ -519,10 +502,10 @@ function GridCard({
     >
       <Box
         sx={{
-          position: "relative",
+          position: 'relative',
           flex: 1,
           minHeight: 0,
-          overflow: "hidden",
+          overflow: 'hidden',
           bgcolor: qe.well,
         }}
       >
@@ -533,10 +516,10 @@ function GridCard({
       <CardContent
         sx={{
           p: isMobile ? 1.25 : 1.5,
-          "&:last-child": { pb: isMobile ? 1.25 : 1.5 },
+          '&:last-child': { pb: isMobile ? 1.25 : 1.5 },
           flexShrink: 0,
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
           minHeight: 0,
           borderTop: `1px solid ${qe.hairline}`,
           bgcolor: qe.surface,

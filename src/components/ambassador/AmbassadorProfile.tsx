@@ -37,10 +37,20 @@ import {
   Calendar,
   Award,
 } from 'lucide-react';
-import { AmbassadorProfile as AmbassadorProfileType, Testimonial, AmbassadorBadge } from '../../types/ambassador';
+import {
+  AmbassadorProfile as AmbassadorProfileType,
+  Testimonial,
+  AmbassadorBadge,
+} from '../../types/ambassador';
 import { loadTestimonials } from '../../data/ambassadors';
 import PriceSimulator from '../price-simulator/PriceSimulator';
-import { brand, lightTokens, darkTokens, accentColors } from '../../design-system';
+import {
+  brand,
+  lightTokens,
+  darkTokens,
+  accentColors,
+  MetricCard,
+} from '../../design-system';
 
 interface AmbassadorProfileProps {
   ambassador: AmbassadorProfileType;
@@ -75,7 +85,11 @@ export default function AmbassadorProfile({
           Perfil del Asesor
         </Typography>
         <IconButton onClick={() => setIsFavorite(!isFavorite)}>
-          <Heart size={20} fill={isFavorite ? accentColors.error.light : 'none'} color={isFavorite ? accentColors.error.light : undefined} />
+          <Heart
+            size={20}
+            fill={isFavorite ? accentColors.error.light : 'none'}
+            color={isFavorite ? accentColors.error.light : undefined}
+          />
         </IconButton>
         <IconButton>
           <Share2 size={20} />
@@ -89,7 +103,9 @@ export default function AmbassadorProfile({
           borderRadius: 4,
           overflow: 'hidden',
           border: '1px solid',
-          borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
+          borderColor: isLight
+            ? lightTokens.border.default
+            : darkTokens.border.default,
         }}
       >
         {/* Banner */}
@@ -114,7 +130,9 @@ export default function AmbassadorProfile({
                 height: 120,
                 bgcolor: brand.emerald[500],
                 border: '4px solid',
-                borderColor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
+                borderColor: isLight
+                  ? lightTokens.background.surface
+                  : darkTokens.background.surface,
                 fontSize: '3rem',
                 fontWeight: 700,
               }}
@@ -124,7 +142,15 @@ export default function AmbassadorProfile({
 
             {/* Info */}
             <Box sx={{ flex: 1, pt: 7 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 1 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  flexWrap: 'wrap',
+                  mb: 1,
+                }}
+              >
                 <Typography variant="h5" sx={{ fontWeight: 800 }}>
                   {ambassador.displayName}
                 </Typography>
@@ -139,27 +165,64 @@ export default function AmbassadorProfile({
                 )}
               </Box>
 
-              <Typography variant="body1" sx={{ color: 'text.secondary', mb: 1.5 }}>
+              <Typography
+                variant="body1"
+                sx={{ color: 'text.secondary', mb: 1.5 }}
+              >
                 {ambassador.tagline}
               </Typography>
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 3,
+                  flexWrap: 'wrap',
+                }}
+              >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <MapPin size={16} style={{ color: isLight ? lightTokens.text.secondary : darkTokens.text.secondary }} />
+                  <MapPin
+                    size={16}
+                    style={{
+                      color: isLight
+                        ? lightTokens.text.secondary
+                        : darkTokens.text.secondary,
+                    }}
+                  />
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     {ambassador.location.city}, {ambassador.location.country}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Calendar size={16} style={{ color: isLight ? lightTokens.text.secondary : darkTokens.text.secondary }} />
+                  <Calendar
+                    size={16}
+                    style={{
+                      color: isLight
+                        ? lightTokens.text.secondary
+                        : darkTokens.text.secondary,
+                    }}
+                  />
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Miembro desde {new Date(ambassador.joinedDate).toLocaleDateString('es-CO', { year: 'numeric', month: 'short' })}
+                    Miembro desde{' '}
+                    {new Date(ambassador.joinedDate).toLocaleDateString(
+                      'es-CO',
+                      { year: 'numeric', month: 'short' },
+                    )}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Globe size={16} style={{ color: isLight ? lightTokens.text.secondary : darkTokens.text.secondary }} />
+                  <Globe
+                    size={16}
+                    style={{
+                      color: isLight
+                        ? lightTokens.text.secondary
+                        : darkTokens.text.secondary,
+                    }}
+                  />
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    {ambassador.languages.map(l => l.toUpperCase()).join(', ')}
+                    {ambassador.languages
+                      .map((l) => l.toUpperCase())
+                      .join(', ')}
                   </Typography>
                 </Box>
               </Box>
@@ -190,34 +253,41 @@ export default function AmbassadorProfile({
           {ambassador.reputation && (
             <Box
               sx={{
-                display: 'flex',
-                justifyContent: 'space-around',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: 1,
                 mt: 3,
                 py: 2,
                 borderTop: '1px solid',
                 borderBottom: '1px solid',
-                borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
+                borderColor: isLight
+                  ? lightTokens.border.default
+                  : darkTokens.border.default,
               }}
             >
-              <StatBox
-                icon={<ShoppingBag size={20} />}
+              <MetricCard
+                icon={ShoppingBag}
                 value={ambassador.reputation.totalSales.toString()}
                 label="Ventas Totales"
+                compact
               />
-              <StatBox
-                icon={<Star size={20} fill={accentColors.warning.light} color={accentColors.warning.light} />}
+              <MetricCard
+                icon={Star}
                 value={ambassador.reputation.averageRating.toFixed(1)}
                 label={`${ambassador.reputation.totalReviews} Resenas`}
+                compact
               />
-              <StatBox
-                icon={<Clock size={20} />}
+              <MetricCard
+                icon={Clock}
                 value={`${ambassador.reputation.avgResponseTime}h`}
                 label="Tiempo Respuesta"
+                compact
               />
-              <StatBox
-                icon={<Heart size={20} />}
+              <MetricCard
+                icon={Heart}
                 value={`${Math.round(ambassador.reputation.repeatCustomerRate * 100)}%`}
                 label="Clientes Recurrentes"
+                compact
               />
             </Box>
           )}
@@ -225,7 +295,10 @@ export default function AmbassadorProfile({
           {/* Badges */}
           {ambassador.verificationStatus.badges.length > 0 && (
             <Box sx={{ mt: 2 }}>
-              <BadgeDisplay badges={ambassador.verificationStatus.badges} maxVisible={6} />
+              <BadgeDisplay
+                badges={ambassador.verificationStatus.badges}
+                maxVisible={6}
+              />
             </Box>
           )}
         </CardContent>
@@ -258,44 +331,27 @@ export default function AmbassadorProfile({
       </Box>
 
       {/* Tab Content */}
-      {activeTab === 'about' && (
-        <AboutTab ambassador={ambassador} />
-      )}
+      {activeTab === 'about' && <AboutTab ambassador={ambassador} />}
 
       {activeTab === 'reviews' && (
         <ReviewsTab ambassador={ambassador} testimonials={testimonials} />
       )}
 
-      {activeTab === 'portfolio' && (
-        <PortfolioTab ambassador={ambassador} />
-      )}
+      {activeTab === 'portfolio' && <PortfolioTab ambassador={ambassador} />}
 
-      {activeTab === 'simulator' && (
-        <SimulatorTab />
-      )}
-    </Box>
-  );
-}
-
-// Stat Box Component
-function StatBox({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
-  return (
-    <Box sx={{ textAlign: 'center' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 0.5 }}>
-        {icon}
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>
-          {value}
-        </Typography>
-      </Box>
-      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-        {label}
-      </Typography>
+      {activeTab === 'simulator' && <SimulatorTab />}
     </Box>
   );
 }
 
 // Badge Display Component
-function BadgeDisplay({ badges, maxVisible = 4 }: { badges: AmbassadorBadge[]; maxVisible?: number }) {
+function BadgeDisplay({
+  badges,
+  maxVisible = 4,
+}: {
+  badges: AmbassadorBadge[];
+  maxVisible?: number;
+}) {
   const visibleBadges = badges.slice(0, maxVisible);
   const remainingCount = badges.length - maxVisible;
 
@@ -346,20 +402,41 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
     <Grid container spacing={3}>
       {/* Bio */}
       <Grid item xs={12} md={8}>
-        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
+        <Card
+          sx={{
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: isLight
+              ? lightTokens.border.default
+              : darkTokens.border.default,
+          }}
+        >
           <CardContent>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
               Biografia
             </Typography>
-            <Typography variant="body1" sx={{ color: 'text.secondary', lineHeight: 1.8 }}>
-              {ambassador.bio || 'Este asesor aun no ha agregado una biografia.'}
+            <Typography
+              variant="body1"
+              sx={{ color: 'text.secondary', lineHeight: 1.8 }}
+            >
+              {ambassador.bio ||
+                'Este asesor aun no ha agregado una biografia.'}
             </Typography>
           </CardContent>
         </Card>
 
         {/* Specialties */}
         {ambassador.specialties.length > 0 && (
-          <Card sx={{ mt: 2, borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
+          <Card
+            sx={{
+              mt: 2,
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: isLight
+                ? lightTokens.border.default
+                : darkTokens.border.default,
+            }}
+          >
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                 Especialidades
@@ -367,7 +444,14 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {ambassador.specialties.map((specialty, idx) => (
                   <Box key={idx}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        mb: 0.5,
+                      }}
+                    >
                       <Award size={16} color={brand.emerald[500]} />
                       <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                         {specialty.name}
@@ -380,7 +464,10 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
                         />
                       )}
                     </Box>
-                    <Typography variant="body2" sx={{ color: 'text.secondary', pl: 3 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: 'text.secondary', pl: 3 }}
+                    >
                       {specialty.description}
                     </Typography>
                   </Box>
@@ -392,14 +479,26 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
 
         {/* Certifications */}
         {ambassador.certifications.length > 0 && (
-          <Card sx={{ mt: 2, borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
+          <Card
+            sx={{
+              mt: 2,
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: isLight
+                ? lightTokens.border.default
+                : darkTokens.border.default,
+            }}
+          >
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                 Certificaciones
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {ambassador.certifications.map((cert, idx) => (
-                  <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box
+                    key={idx}
+                    sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
+                  >
                     <Box
                       sx={{
                         width: 40,
@@ -418,12 +517,21 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
                       <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                         {cert.name}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                        {cert.issuingBody} • {new Date(cert.dateIssued).getFullYear()}
+                      <Typography
+                        variant="caption"
+                        sx={{ color: 'text.secondary' }}
+                      >
+                        {cert.issuingBody} •{' '}
+                        {new Date(cert.dateIssued).getFullYear()}
                       </Typography>
                     </Box>
                     {cert.verified && (
-                      <Chip label="Verificado" size="small" color="success" sx={{ ml: 'auto' }} />
+                      <Chip
+                        label="Verificado"
+                        size="small"
+                        color="success"
+                        sx={{ ml: 'auto' }}
+                      />
                     )}
                   </Box>
                 ))}
@@ -436,19 +544,32 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
       {/* Sidebar */}
       <Grid item xs={12} md={4}>
         {/* Contact Info */}
-        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
+        <Card
+          sx={{
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: isLight
+              ? lightTokens.border.default
+              : darkTokens.border.default,
+          }}
+        >
           <CardContent>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
               Contacto
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
               {ambassador.contactMethods.map((contact, idx) => (
-                <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box
+                  key={idx}
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}
+                >
                   {contact.type === 'whatsapp' && <Phone size={16} />}
                   {contact.type === 'email' && <Mail size={16} />}
                   {contact.type === 'instagram' && <Instagram size={16} />}
                   <Typography variant="body2">{contact.value}</Typography>
-                  {contact.verified && <CheckCircle size={12} color={brand.emerald[500]} />}
+                  {contact.verified && (
+                    <CheckCircle size={12} color={brand.emerald[500]} />
+                  )}
                 </Box>
               ))}
             </Box>
@@ -456,7 +577,10 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
             {ambassador.socialLinks.length > 0 && (
               <>
                 <Divider sx={{ my: 2 }} />
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ fontWeight: 600, mb: 1.5 }}
+                >
                   Redes Sociales
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1 }}>
@@ -467,11 +591,15 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
                       href={social.url}
                       target="_blank"
                       sx={{
-                        bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.surface,
+                        bgcolor: isLight
+                          ? lightTokens.background.muted
+                          : darkTokens.background.surface,
                         '&:hover': { bgcolor: alpha(brand.emerald[500], 0.1) },
                       }}
                     >
-                      {social.platform === 'instagram' && <Instagram size={18} />}
+                      {social.platform === 'instagram' && (
+                        <Instagram size={18} />
+                      )}
                       {social.platform === 'website' && <Globe size={18} />}
                     </IconButton>
                   ))}
@@ -480,14 +608,19 @@ function AboutTab({ ambassador }: { ambassador: AmbassadorProfileType }) {
             )}
           </CardContent>
         </Card>
-
       </Grid>
     </Grid>
   );
 }
 
 // Reviews Tab
-function ReviewsTab({ ambassador, testimonials }: { ambassador: AmbassadorProfileType; testimonials: Testimonial[] }) {
+function ReviewsTab({
+  ambassador,
+  testimonials,
+}: {
+  ambassador: AmbassadorProfileType;
+  testimonials: Testimonial[];
+}) {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
 
@@ -509,31 +642,62 @@ function ReviewsTab({ ambassador, testimonials }: { ambassador: AmbassadorProfil
     <Box>
       {/* Rating Summary */}
       {ambassador.reputation && (
-        <Card sx={{ mb: 3, borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
+        <Card
+          sx={{
+            mb: 3,
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: isLight
+              ? lightTokens.border.default
+              : darkTokens.border.default,
+          }}
+        >
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="h2" sx={{ fontWeight: 800 }}>
                   {ambassador.reputation.averageRating.toFixed(1)}
                 </Typography>
-                <Rating value={ambassador.reputation.averageRating} precision={0.1} readOnly />
-                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                <Rating
+                  value={ambassador.reputation.averageRating}
+                  precision={0.1}
+                  readOnly
+                />
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'text.secondary', display: 'block' }}
+                >
                   {ambassador.reputation.totalReviews} resenas
                 </Typography>
               </Box>
               <Divider orientation="vertical" flexItem />
               <Box sx={{ flex: 1 }}>
-                {[5, 4, 3, 2, 1].map(stars => {
-                  const count = ambassador.reputation?.ratingDistribution[stars as keyof typeof ambassador.reputation.ratingDistribution] || 0;
+                {[5, 4, 3, 2, 1].map((stars) => {
+                  const count =
+                    ambassador.reputation?.ratingDistribution[
+                      stars as keyof typeof ambassador.reputation.ratingDistribution
+                    ] || 0;
                   const percentage = ambassador.reputation?.totalReviews
                     ? (count / ambassador.reputation.totalReviews) * 100
                     : 0;
                   return (
-                    <Box key={stars} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                    <Box
+                      key={stars}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        mb: 0.5,
+                      }}
+                    >
                       <Typography variant="caption" sx={{ minWidth: 20 }}>
                         {stars}
                       </Typography>
-                      <Star size={12} fill={accentColors.warning.light} color={accentColors.warning.light} />
+                      <Star
+                        size={12}
+                        fill={accentColors.warning.light}
+                        color={accentColors.warning.light}
+                      />
                       <LinearProgress
                         variant="determinate"
                         value={percentage}
@@ -541,14 +705,19 @@ function ReviewsTab({ ambassador, testimonials }: { ambassador: AmbassadorProfil
                           flex: 1,
                           height: 8,
                           borderRadius: 4,
-                          bgcolor: isLight ? lightTokens.border.default : darkTokens.border.default,
+                          bgcolor: isLight
+                            ? lightTokens.border.default
+                            : darkTokens.border.default,
                           '& .MuiLinearProgress-bar': {
                             bgcolor: accentColors.warning.light,
                             borderRadius: 4,
                           },
                         }}
                       />
-                      <Typography variant="caption" sx={{ minWidth: 30, textAlign: 'right' }}>
+                      <Typography
+                        variant="caption"
+                        sx={{ minWidth: 30, textAlign: 'right' }}
+                      >
                         {count}
                       </Typography>
                     </Box>
@@ -562,19 +731,40 @@ function ReviewsTab({ ambassador, testimonials }: { ambassador: AmbassadorProfil
 
       {/* Reviews List */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {testimonials.map(review => (
-          <Card key={review.id} sx={{ borderRadius: 3, border: '1px solid', borderColor: isLight ? lightTokens.border.default : darkTokens.border.default }}>
+        {testimonials.map((review) => (
+          <Card
+            key={review.id}
+            sx={{
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: isLight
+                ? lightTokens.border.default
+                : darkTokens.border.default,
+            }}
+          >
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  mb: 1,
+                }}
+              >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Avatar sx={{ width: 40, height: 40, bgcolor: brand.emerald[500] }}>
+                  <Avatar
+                    sx={{ width: 40, height: 40, bgcolor: brand.emerald[500] }}
+                  >
                     {review.customerName.charAt(0)}
                   </Avatar>
                   <Box>
                     <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                       {review.customerName}
                     </Typography>
-                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: 'text.secondary' }}
+                    >
                       {new Date(review.createdAt).toLocaleDateString('es-CO')}
                     </Typography>
                   </Box>
@@ -606,15 +796,23 @@ function ReviewsTab({ ambassador, testimonials }: { ambassador: AmbassadorProfil
                   sx={{
                     mt: 2,
                     p: 2,
-                    bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.surface,
+                    bgcolor: isLight
+                      ? lightTokens.background.muted
+                      : darkTokens.background.surface,
                     borderRadius: 2,
                     borderLeft: `3px solid ${brand.emerald[500]}`,
                   }}
                 >
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: brand.emerald[500] }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ fontWeight: 600, color: brand.emerald[500] }}
+                  >
                     Respuesta de {ambassador.displayName}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: 'text.secondary', mt: 0.5 }}
+                  >
                     {review.response.text}
                   </Typography>
                 </Box>

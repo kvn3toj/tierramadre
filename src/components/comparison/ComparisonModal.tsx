@@ -29,9 +29,19 @@ import { X, Scale, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { TreasureItem } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { getColorDot, getQualityBadge, formatCarats } from '../../utils/formatting';
+import {
+  getColorDot,
+  getQualityBadge,
+  formatCarats,
+} from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
-import { emeraldCore, surfacesLight, surfacesDark, semanticColors } from '../../design-system/tokens/colors';
+import {
+  emeraldCore,
+  surfacesLight,
+  surfacesDark,
+  semanticColors,
+} from '../../design-system/tokens/colors';
+import { Badge } from '../../design-system';
 import { ComparisonMobileView } from './';
 
 interface ComparisonModalProps {
@@ -44,7 +54,7 @@ interface ComparisonModalProps {
 function getValueIndicator(
   value: number,
   allValues: number[],
-  higherIsBetter: boolean = true
+  higherIsBetter: boolean = true,
 ): 'best' | 'worst' | 'neutral' {
   const maxVal = Math.max(...allValues);
   const minVal = Math.min(...allValues);
@@ -99,10 +109,19 @@ function ComparisonCell({
         fontWeight: indicator !== 'neutral' ? 600 : 400,
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: isNumeric ? 'flex-end' : 'flex-start' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.5,
+          justifyContent: isNumeric ? 'flex-end' : 'flex-start',
+        }}
+      >
         {indicator === 'best' && <TrendingUp size={14} color={iconColor} />}
         {indicator === 'worst' && <TrendingDown size={14} color={iconColor} />}
-        {indicator === 'neutral' && isNumeric && <Minus size={14} color={iconColor} />}
+        {indicator === 'neutral' && isNumeric && (
+          <Minus size={14} color={iconColor} />
+        )}
         {value}
       </Box>
     </TableCell>
@@ -124,11 +143,11 @@ export default function ComparisonModal({
   if (items.length < 2) return null;
 
   // Extract numeric values for comparison
-  const prices = items.map(i => i.precioCOP);
-  const weights = items.map(i => (typeof i.peso === 'number' ? i.peso : 0));
+  const prices = items.map((i) => i.precioCOP);
+  const weights = items.map((i) => (typeof i.peso === 'number' ? i.peso : 0));
 
   // Price per carat for loose stones
-  const pricePerCarats = items.map(i => {
+  const pricePerCarats = items.map((i) => {
     if (!i.isJewelry && typeof i.peso === 'number' && i.peso > 0) {
       return i.precioCOP / i.peso;
     }
@@ -145,7 +164,9 @@ export default function ComparisonModal({
       PaperProps={{
         sx: {
           borderRadius: isMobile ? 0 : 3,
-          bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
+          bgcolor: isLight
+            ? surfacesLight.background.primary
+            : surfacesDark.background.primary,
           ...(isMobile && {
             m: 0,
             maxHeight: '100%',
@@ -159,14 +180,19 @@ export default function ComparisonModal({
           alignItems: 'center',
           justifyContent: 'space-between',
           borderBottom: '1px solid',
-          borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
+          borderColor: isLight
+            ? surfacesLight.border.light
+            : surfacesDark.border.default,
           pb: 2,
           px: isMobile ? 2 : 3,
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Scale size={24} color={emeraldCore.primary} />
-          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: isMobile ? '1rem' : '1.25rem' }}>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 700, fontSize: isMobile ? '1rem' : '1.25rem' }}
+          >
             Comparar
           </Typography>
           <Chip
@@ -185,7 +211,14 @@ export default function ComparisonModal({
       </DialogTitle>
 
       {isMobile ? (
-        <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <DialogContent
+          sx={{
+            p: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+          }}
+        >
           <ComparisonMobileView items={items} />
         </DialogContent>
       ) : (
@@ -194,20 +227,44 @@ export default function ComparisonModal({
             <Table sx={{ minWidth: 600 }} aria-label={t.comparison.table}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700, width: 150 }}>Atributo</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 150 }}>
+                    Atributo
+                  </TableCell>
                   {items.map((item) => {
-                    const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
+                    const displayName = item.nombre
+                      .replace(/^L:.*?\s/, '')
+                      .replace(/^L:/, '')
+                      .trim();
                     return (
-                      <TableCell key={item.item} align="center" sx={{ minWidth: 180 }}>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                      <TableCell
+                        key={item.item}
+                        align="center"
+                        sx={{ minWidth: 180 }}
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
+                        >
                           {item.imagen && (
                             <Avatar
                               src={item.thumbnailUrl || item.imagen}
                               alt={displayName}
-                              sx={{ width: 60, height: 60, border: '2px solid', borderColor: emeraldCore.primary }}
+                              sx={{
+                                width: 60,
+                                height: 60,
+                                border: '2px solid',
+                                borderColor: emeraldCore.primary,
+                              }}
                             />
                           )}
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, textAlign: 'center' }}>
+                          <Typography
+                            variant="subtitle2"
+                            sx={{ fontWeight: 600, textAlign: 'center' }}
+                          >
                             {displayName}
                           </Typography>
                         </Box>
@@ -234,12 +291,19 @@ export default function ComparisonModal({
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>Peso</TableCell>
                   {items.map((item, idx) => {
-                    const weight = typeof item.peso === 'number' ? `${formatCarats(item.peso)} ct` : item.metalType || '-';
+                    const weight =
+                      typeof item.peso === 'number'
+                        ? `${formatCarats(item.peso)} ct`
+                        : item.metalType || '-';
                     return (
                       <ComparisonCell
                         key={item.item}
                         value={weight}
-                        indicator={typeof item.peso === 'number' ? getValueIndicator(weights[idx], weights, true) : 'neutral'}
+                        indicator={
+                          typeof item.peso === 'number'
+                            ? getValueIndicator(weights[idx], weights, true)
+                            : 'neutral'
+                        }
                         isNumeric
                       />
                     );
@@ -247,13 +311,25 @@ export default function ComparisonModal({
                 </TableRow>
 
                 {/* Price per Carat (only for loose stones) */}
-                {items.some(i => !i.isJewelry && typeof i.peso === 'number') && (
+                {items.some(
+                  (i) => !i.isJewelry && typeof i.peso === 'number',
+                ) && (
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600 }}>{t.comparison.pricePerCarat}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {t.comparison.pricePerCarat}
+                    </TableCell>
                     {items.map((item, idx) => {
-                      if (item.isJewelry || typeof item.peso !== 'number' || item.peso === 0) {
+                      if (
+                        item.isJewelry ||
+                        typeof item.peso !== 'number' ||
+                        item.peso === 0
+                      ) {
                         return (
-                          <TableCell key={item.item} align="right" sx={{ color: 'text.secondary' }}>
+                          <TableCell
+                            key={item.item}
+                            align="right"
+                            sx={{ color: 'text.secondary' }}
+                          >
                             N/A
                           </TableCell>
                         );
@@ -262,7 +338,11 @@ export default function ComparisonModal({
                         <ComparisonCell
                           key={item.item}
                           value={formatFullCurrency(pricePerCarats[idx])}
-                          indicator={getValueIndicator(pricePerCarats[idx], pricePerCarats.filter(p => p > 0), false)}
+                          indicator={getValueIndicator(
+                            pricePerCarats[idx],
+                            pricePerCarats.filter((p) => p > 0),
+                            false,
+                          )}
                           isNumeric
                         />
                       );
@@ -275,7 +355,14 @@ export default function ComparisonModal({
                   <TableCell sx={{ fontWeight: 600 }}>Color</TableCell>
                   {items.map((item) => (
                     <TableCell key={item.item} align="center">
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          justifyContent: 'center',
+                        }}
+                      >
                         <Box
                           sx={{
                             width: 12,
@@ -297,16 +384,7 @@ export default function ComparisonModal({
                     const quality = getQualityBadge(item.calidad);
                     return (
                       <TableCell key={item.item} align="center">
-                        <Chip
-                          label={quality.label}
-                          size="small"
-                          sx={{
-                            bgcolor: quality.bg,
-                            color: quality.color,
-                            border: `1px solid ${quality.border}`,
-                            fontWeight: 600,
-                          }}
-                        />
+                        <Badge tone={quality.tone} label={quality.label} />
                       </TableCell>
                     );
                   })}
@@ -340,7 +418,9 @@ export default function ComparisonModal({
             sx={{
               p: 2,
               borderTop: '1px solid',
-              borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
+              borderColor: isLight
+                ? surfacesLight.border.light
+                : surfacesDark.border.default,
               display: 'flex',
               gap: 3,
               justifyContent: 'center',

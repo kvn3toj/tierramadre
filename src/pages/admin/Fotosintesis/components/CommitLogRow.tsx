@@ -24,19 +24,19 @@
  * is the same visual the commit started in, so the first paint is stable.
  */
 
-import { useState } from "react";
-import { Box } from "@mui/material";
-import { Check, RotateCcw } from "lucide-react";
-import { getFoto } from "../../../../design-system";
-import { SyncStatusBadge } from "../../../../components/shared/SyncStatusBadge";
+import { useState } from 'react';
+import { Box } from '@mui/material';
+import { Check, RotateCcw } from 'lucide-react';
+import { getFoto, Badge } from '../../../../design-system';
+import { getSyncStatusBadge } from '../../../../utils/syncStatus';
 import {
   useConvexQuery,
   useConvexAction,
   convexApi,
   convexReady,
-} from "../../../../lib/convex-safe";
-import type { CommitEntity } from "../copilot/executeAction";
-import type { Id } from "../../../../../convex/_generated/dataModel";
+} from '../../../../lib/convex-safe';
+import type { CommitEntity } from '../copilot/executeAction';
+import type { Id } from '../../../../../convex/_generated/dataModel';
 
 export interface CommitLogRowProps {
   summary: string;
@@ -47,17 +47,17 @@ export interface CommitLogRowProps {
 /** Shape of the live row each query returns (only the fields the badge reads). */
 interface SyncRow {
   _id?: string;
-  syncStatus?: "synced" | "pending" | "error";
+  syncStatus?: 'synced' | 'pending' | 'error';
   syncError?: string;
 }
 
 /** Map a mirror row's syncStatus → the badge value (loading ⇒ pending). */
 function badgeStatus(
   row: SyncRow | null | undefined,
-): "synced" | "pending" | "error" {
+): 'synced' | 'pending' | 'error' {
   // `undefined` = query still loading; `null` = row not found (treat as pending,
   // the push is presumably still in flight or the mirror hasn't caught up).
-  if (!row || !row.syncStatus) return "pending";
+  if (!row || !row.syncStatus) return 'pending';
   return row.syncStatus;
 }
 
@@ -69,7 +69,7 @@ function ItemSyncRow({
   summary: string;
   entity: CommitEntity;
 }) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const row = useConvexQuery(convexApi.products.get, {
     itemId: entity.key,
   }) as SyncRow | null | undefined;
@@ -93,7 +93,7 @@ function LotSyncRow({
   summary: string;
   entity: CommitEntity;
 }) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   // getByLoteId reads by the natural key; the row carries the Convex _id that
   // lots.retryPush needs (it takes `id`, not `loteId`).
   const row = useConvexQuery(convexApi.lots.getByLoteId, {
@@ -103,7 +103,7 @@ function LotSyncRow({
   // `entity.key` is the loteId (natural key); lots.retryPush needs the Convex
   // _id, which rides the live row. `_id` is a string at this layer — cast it to
   // the branded Id the generated action expects (same pattern as executeAction).
-  const docId = row?._id as Id<"lots"> | undefined;
+  const docId = row?._id as Id<'lots'> | undefined;
   return (
     <SyncRowShell
       foto={foto}
@@ -124,11 +124,11 @@ function SaleSyncRow({
   summary: string;
   entity: CommitEntity;
 }) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   // For sales the entity key IS the Convex _id (a string at this layer) — cast
   // it to the branded Id the generated query/action expect, used for both the
   // read and the retry.
-  const saleId = entity.key as Id<"sales">;
+  const saleId = entity.key as Id<'sales'>;
   const row = useConvexQuery(convexApi.sales.get, {
     id: saleId,
   }) as SyncRow | null | undefined;
@@ -154,7 +154,7 @@ function SyncRowShell({
 }: {
   foto: ReturnType<typeof getFoto>;
   summary: string;
-  status: "synced" | "pending" | "error" | "na";
+  status: 'synced' | 'pending' | 'error' | 'na';
   error?: string;
   /** When provided + status==="error", renders the Reintentar affordance. */
   onRetry?: () => Promise<unknown> | unknown;
@@ -179,14 +179,14 @@ function SyncRowShell({
   return (
     <Box
       sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        padding: "6px 10px",
-        borderRadius: "9px",
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '6px 10px',
+        borderRadius: '9px',
         border: `1px solid ${foto.surfaces.rule}`,
         background: foto.surfaces.panel,
-        fontSize: "11px",
+        fontSize: '11px',
         color: foto.ink.secondary,
       }}
     >
@@ -201,15 +201,15 @@ function SyncRowShell({
         sx={{
           flex: 1,
           minWidth: 0,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         }}
         title={summary}
       >
         {summary}
       </Box>
-      {status === "error" && onRetry && (
+      {status === 'error' && onRetry && (
         <Box
           component="button"
           type="button"
@@ -217,29 +217,29 @@ function SyncRowShell({
           disabled={retrying}
           aria-label="Reintentar sincronización con la planilla"
           sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "4px",
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
             flexShrink: 0,
             border: `1px solid ${foto.surfaces.rule}`,
-            borderRadius: "7px",
-            padding: "3px 7px",
-            background: "transparent",
+            borderRadius: '7px',
+            padding: '3px 7px',
+            background: 'transparent',
             color: foto.status.sold,
-            fontSize: "10.5px",
+            fontSize: '10.5px',
             fontWeight: 600,
-            cursor: retrying ? "not-allowed" : "pointer",
+            cursor: retrying ? 'not-allowed' : 'pointer',
             opacity: retrying ? 0.6 : 1,
-            transition: "background 120ms ease",
-            "&:hover": { background: foto.surfaces.inset },
-            "&:disabled": { cursor: "not-allowed" },
+            transition: 'background 120ms ease',
+            '&:hover': { background: foto.surfaces.inset },
+            '&:disabled': { cursor: 'not-allowed' },
           }}
         >
           <RotateCcw size={11} strokeWidth={2} aria-hidden />
-          {retrying ? "Reintentando…" : "Reintentar"}
+          {retrying ? 'Reintentando…' : 'Reintentar'}
         </Box>
       )}
-      <SyncStatusBadge status={status} error={error} compact />
+      <Badge {...getSyncStatusBadge(status, error)} compact />
     </Box>
   );
 }
@@ -258,7 +258,7 @@ export function CommitLogRow({
   syncsToSheet,
   entity,
 }: CommitLogRowProps) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
 
   // No live row to track, or no Convex: render the static badge in place.
   if (!entity || !convexReady) {
@@ -266,17 +266,17 @@ export function CommitLogRow({
       <SyncRowShell
         foto={foto}
         summary={summary}
-        status={syncsToSheet ? "pending" : "na"}
+        status={syncsToSheet ? 'pending' : 'na'}
       />
     );
   }
 
   switch (entity.kind) {
-    case "item":
+    case 'item':
       return <ItemSyncRow summary={summary} entity={entity} />;
-    case "lot":
+    case 'lot':
       return <LotSyncRow summary={summary} entity={entity} />;
-    case "sale":
+    case 'sale':
       return <SaleSyncRow summary={summary} entity={entity} />;
     default:
       // Exhaustive guard — an unknown kind degrades to the static badge.
@@ -284,7 +284,7 @@ export function CommitLogRow({
         <SyncRowShell
           foto={foto}
           summary={summary}
-          status={syncsToSheet ? "pending" : "na"}
+          status={syncsToSheet ? 'pending' : 'na'}
         />
       );
   }

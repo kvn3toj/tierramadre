@@ -10,22 +10,22 @@
  * Errors surface inline with a retry; success shows a sync badge.
  */
 
-import { useMemo, useRef, useState } from "react";
-import { Box } from "@mui/material";
-import { Check, RotateCcw, ShieldAlert, Sparkles } from "lucide-react";
-import { getFoto } from "../../../../design-system";
-import { SyncStatusBadge } from "../../../../components/shared/SyncStatusBadge";
+import { useMemo, useRef, useState } from 'react';
+import { Box } from '@mui/material';
+import { Check, RotateCcw, ShieldAlert, Sparkles } from 'lucide-react';
+import { getFoto, Badge } from '../../../../design-system';
+import { getSyncStatusBadge } from '../../../../utils/syncStatus';
 import {
   useExecuteAction,
   type CommitContext,
   type CommitOutcome,
   type CommitEntity,
-} from "../copilot/executeAction";
-import type { GuidedAction } from "../copilot/flowSchemas";
+} from '../copilot/executeAction';
+import type { GuidedAction } from '../copilot/flowSchemas';
 
 function genToken(): string {
   try {
-    if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
       return crypto.randomUUID();
     }
   } catch {
@@ -34,7 +34,7 @@ function genToken(): string {
   return `tok-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e9).toString(36)}`;
 }
 
-type Phase = "idle" | "arming" | "committing" | "done" | "error";
+type Phase = 'idle' | 'arming' | 'committing' | 'done' | 'error';
 
 export interface CommitReviewCardProps {
   action: GuidedAction;
@@ -45,7 +45,7 @@ export interface CommitReviewCardProps {
   onClose: () => void;
   /** Notified once on a successful commit so the panel can log it + track sync. */
   onCommitted?: (entry: {
-    kind: GuidedAction["kind"];
+    kind: GuidedAction['kind'];
     summary: string;
     syncsToSheet: boolean;
     /** The committed row, when derivable — lets the log subscribe to its sync. */
@@ -60,9 +60,9 @@ export function CommitReviewCard({
   onClose,
   onCommitted,
 }: CommitReviewCardProps) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const execute = useExecuteAction();
-  const [phase, setPhase] = useState<Phase>("idle");
+  const [phase, setPhase] = useState<Phase>('idle');
   const [error, setError] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<CommitOutcome | null>(null);
   const armTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -70,25 +70,25 @@ export function CommitReviewCard({
   // One token per logical action → a retry of the SAME proposal is idempotent.
   const clientToken = useMemo(() => genToken(), [action.kind, action.summary]);
 
-  const busy = phase === "committing";
+  const busy = phase === 'committing';
 
   const commit = async () => {
     if (busy) return;
-    if (action.twoStep && phase !== "arming") {
-      setPhase("arming");
+    if (action.twoStep && phase !== 'arming') {
+      setPhase('arming');
       if (armTimer.current) clearTimeout(armTimer.current);
       armTimer.current = setTimeout(() => {
-        setPhase((p) => (p === "arming" ? "idle" : p));
+        setPhase((p) => (p === 'arming' ? 'idle' : p));
       }, 4000);
       return;
     }
     if (armTimer.current) clearTimeout(armTimer.current);
-    setPhase("committing");
+    setPhase('committing');
     setError(null);
     try {
       const result = await execute(action, ctx, clientToken);
       setOutcome(result);
-      setPhase("done");
+      setPhase('done');
       onCommitted?.({
         kind: action.kind,
         summary: action.summary,
@@ -97,9 +97,9 @@ export function CommitReviewCard({
       });
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "No pude guardar. Intentá de nuevo.",
+        e instanceof Error ? e.message : 'No pude guardar. Intentá de nuevo.',
       );
-      setPhase("error");
+      setPhase('error');
     }
   };
 
@@ -108,25 +108,25 @@ export function CommitReviewCard({
   return (
     <Box
       sx={{
-        margin: "0 18px",
+        margin: '0 18px',
         border: `1px solid ${action.destructive ? foto.status.sold : foto.accent.primary}`,
         background: action.destructive ? foto.surfaces.panel : foto.accent.soft,
-        borderRadius: "12px",
-        padding: "12px 14px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "9px",
+        borderRadius: '12px',
+        padding: '12px 14px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '9px',
       }}
     >
       <Box
         sx={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          fontSize: "9px",
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          fontSize: '9px',
           fontWeight: 600,
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
           color: action.destructive ? foto.status.sold : foto.accent.deep,
         }}
       >
@@ -135,47 +135,47 @@ export function CommitReviewCard({
         ) : (
           <Sparkles size={11} strokeWidth={2} />
         )}
-        Acción · {action.destructive ? "irreversible" : "lista para guardar"}
+        Acción · {action.destructive ? 'irreversible' : 'lista para guardar'}
       </Box>
 
       {/* Server-authored summary of exactly what gets written */}
       <Box
-        sx={{ fontSize: "12.5px", lineHeight: 1.5, color: foto.ink.primary }}
+        sx={{ fontSize: '12.5px', lineHeight: 1.5, color: foto.ink.primary }}
       >
         {action.summary}
       </Box>
 
       {/* Names the client will resolve to real records on commit */}
-      {action.needsRefs.length > 0 && phase !== "done" && (
-        <Box sx={{ fontSize: "10.5px", color: foto.ink.tertiary }}>
-          Resuelvo:{" "}
-          {action.needsRefs.map((r) => `${r.refKind} “${r.hint}”`).join(" · ")}
+      {action.needsRefs.length > 0 && phase !== 'done' && (
+        <Box sx={{ fontSize: '10.5px', color: foto.ink.tertiary }}>
+          Resuelvo:{' '}
+          {action.needsRefs.map((r) => `${r.refKind} “${r.hint}”`).join(' · ')}
         </Box>
       )}
 
-      {phase === "done" ? (
+      {phase === 'done' ? (
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "8px",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px',
           }}
         >
           <Box
             sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              fontSize: "12px",
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '12px',
               fontWeight: 600,
               color: foto.accent.deep,
             }}
           >
             <Check size={14} strokeWidth={2.4} />
             Guardado
-            <SyncStatusBadge
-              status={outcome?.syncsToSheet ? "pending" : "na"}
+            <Badge
+              {...getSyncStatusBadge(outcome?.syncsToSheet ? 'pending' : 'na')}
               compact
             />
           </Box>
@@ -190,11 +190,11 @@ export function CommitReviewCard({
         </Box>
       ) : (
         <>
-          {phase === "error" && error && (
+          {phase === 'error' && error && (
             <Box
               role="alert"
               sx={{
-                fontSize: "11px",
+                fontSize: '11px',
                 color: foto.status.sold,
                 lineHeight: 1.4,
               }}
@@ -204,10 +204,10 @@ export function CommitReviewCard({
           )}
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              gap: "8px",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              gap: '8px',
             }}
           >
             <Box
@@ -228,20 +228,20 @@ export function CommitReviewCard({
               sx={{
                 ...pillButton(foto, true, accent),
                 opacity: busy || !online ? 0.6 : 1,
-                cursor: busy || !online ? "not-allowed" : "pointer",
+                cursor: busy || !online ? 'not-allowed' : 'pointer',
               }}
             >
               {busy ? (
-                <SyncStatusBadge status="pending" compact />
-              ) : phase === "error" ? (
+                <Badge {...getSyncStatusBadge('pending')} compact />
+              ) : phase === 'error' ? (
                 <RotateCcw size={13} strokeWidth={2} />
               ) : null}
               {busy
-                ? "Guardando…"
-                : phase === "arming"
-                  ? "Tocá de nuevo para confirmar"
-                  : phase === "error"
-                    ? "Reintentar"
+                ? 'Guardando…'
+                : phase === 'arming'
+                  ? 'Tocá de nuevo para confirmar'
+                  : phase === 'error'
+                    ? 'Reintentar'
                     : action.confirmLabel}
             </Box>
           </Box>
@@ -257,20 +257,20 @@ function pillButton(
   accent?: string,
 ) {
   return {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "6px",
-    border: primary ? "none" : `1px solid ${foto.surfaces.rule}`,
-    borderRadius: "9px",
-    padding: "8px 14px",
-    background: primary ? (accent ?? foto.accent.primary) : "transparent",
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    border: primary ? 'none' : `1px solid ${foto.surfaces.rule}`,
+    borderRadius: '9px',
+    padding: '8px 14px',
+    background: primary ? (accent ?? foto.accent.primary) : 'transparent',
     color: primary ? foto.ink.inverse : foto.ink.secondary,
-    fontSize: "12px",
+    fontSize: '12px',
     fontWeight: 600,
-    cursor: "pointer",
-    transition: "background 120ms ease, transform 120ms ease",
-    "&:hover": { transform: "translateY(-1px)" },
-    "&:disabled": { transform: "none" },
+    cursor: 'pointer',
+    transition: 'background 120ms ease, transform 120ms ease',
+    '&:hover': { transform: 'translateY(-1px)' },
+    '&:disabled': { transform: 'none' },
   } as const;
 }
 

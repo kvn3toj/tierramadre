@@ -21,9 +21,15 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { AmbassadorProfile } from '../../types/ambassador';
-import { StatItem } from './StatItem';
 import { getCardSx } from './styles';
-import { brand, lightTokens, darkTokens, accentColors, fontWeights } from '../../design-system';
+import {
+  brand,
+  lightTokens,
+  darkTokens,
+  accentColors,
+  fontWeights,
+  MetricCard,
+} from '../../design-system';
 
 interface AmbassadorCardProps {
   ambassador: AmbassadorProfile;
@@ -81,7 +87,9 @@ export default function AmbassadorCard({
           </Avatar>
 
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}
+            >
               <Typography
                 variant="h6"
                 sx={{
@@ -111,7 +119,14 @@ export default function AmbassadorCard({
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <MapPin size={12} style={{ color: isLight ? lightTokens.text.secondary : darkTokens.text.secondary }} />
+              <MapPin
+                size={12}
+                style={{
+                  color: isLight
+                    ? lightTokens.text.secondary
+                    : darkTokens.text.secondary,
+                }}
+              />
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 {ambassador.location.city}, {ambassador.location.country}
               </Typography>
@@ -123,29 +138,29 @@ export default function AmbassadorCard({
         {ambassador.reputation && (
           <Box
             sx={{
-              display: 'flex',
-              gap: 2,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 1,
               mb: 2,
-              py: 1.5,
-              px: 2,
-              bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.surface,
-              borderRadius: 2,
             }}
           >
-            <StatItem
-              icon={<Star size={14} fill={accentColors.warning.light} color={accentColors.warning.light} />}
+            <MetricCard
+              icon={Star}
               value={ambassador.reputation.averageRating.toFixed(1)}
               label={`(${ambassador.reputation.totalReviews})`}
+              compact
             />
-            <StatItem
-              icon={<ShoppingBag size={14} />}
+            <MetricCard
+              icon={ShoppingBag}
               value={ambassador.reputation.totalSales.toString()}
               label="ventas"
+              compact
             />
-            <StatItem
-              icon={<Clock size={14} />}
+            <MetricCard
+              icon={Clock}
               value={`${ambassador.reputation.avgResponseTime}h`}
               label="respuesta"
+              compact
             />
           </Box>
         )}
@@ -201,7 +216,9 @@ export default function AmbassadorCard({
             onClick={() => onViewProfile?.(ambassador)}
             sx={{
               flex: 1,
-              borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
+              borderColor: isLight
+                ? lightTokens.border.default
+                : darkTokens.border.default,
               color: 'text.primary',
               textTransform: 'none',
               fontWeight: 600,
@@ -235,7 +252,9 @@ function CompactCard({
         cursor: 'pointer',
         '&:hover': {
           borderColor: brand.emerald[500],
-          bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.surface,
+          bgcolor: isLight
+            ? lightTokens.background.muted
+            : darkTokens.background.surface,
         },
       }}
     >
@@ -268,7 +287,11 @@ function CompactCard({
 
           {ambassador.reputation && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Star size={12} fill={accentColors.warning.light} color={accentColors.warning.light} />
+              <Star
+                size={12}
+                fill={accentColors.warning.light}
+                color={accentColors.warning.light}
+              />
               <Typography variant="caption" sx={{ fontWeight: 600 }}>
                 {ambassador.reputation.averageRating.toFixed(1)}
               </Typography>
@@ -291,7 +314,9 @@ function FeaturedCard({
   return (
     <Card
       sx={{
-        bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
+        bgcolor: isLight
+          ? lightTokens.background.surface
+          : darkTokens.background.surface,
         borderRadius: 4,
         border: '2px solid',
         borderColor: brand.emerald[500],
@@ -319,7 +344,9 @@ function FeaturedCard({
             height: 80,
             bgcolor: brand.emerald[500],
             border: '4px solid',
-            borderColor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
+            borderColor: isLight
+              ? lightTokens.background.surface
+              : darkTokens.background.surface,
             fontSize: '2rem',
             fontWeight: 700,
           }}
@@ -365,11 +392,16 @@ function FeaturedCard({
               mb: 2,
               borderTop: '1px solid',
               borderBottom: '1px solid',
-              borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
+              borderColor: isLight
+                ? lightTokens.border.default
+                : darkTokens.border.default,
             }}
           >
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: brand.emerald[500] }}>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 700, color: brand.emerald[500] }}
+              >
                 {ambassador.reputation.totalSales}
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -377,11 +409,22 @@ function FeaturedCard({
               </Typography>
             </Box>
             <Box sx={{ textAlign: 'center' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 0.5,
+                }}
+              >
                 <Typography variant="h6" sx={{ fontWeight: 700 }}>
                   {ambassador.reputation.averageRating.toFixed(1)}
                 </Typography>
-                <Star size={16} fill={accentColors.warning.light} color={accentColors.warning.light} />
+                <Star
+                  size={16}
+                  fill={accentColors.warning.light}
+                  color={accentColors.warning.light}
+                />
               </Box>
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 ({ambassador.reputation.totalReviews} resenas)

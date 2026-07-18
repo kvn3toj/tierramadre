@@ -12,7 +12,6 @@
 import { alpha } from '@mui/material/styles';
 import { defaultShadows } from './shadows';
 import { cssTransition } from './motion';
-import { radius } from './layout';
 
 // =============================================================================
 // BRAND COLOR PALETTES (Immutable)
@@ -250,47 +249,6 @@ export const studioShadows = {
   emerald: `0 4px 14px ${alpha(brand.emerald[500], 0.25)}`,
   emeraldLg: `0 8px 24px ${alpha(brand.emerald[500], 0.3)}`,
   gold: `0 4px 14px ${alpha(brand.gold[500], 0.25)}`,
-};
-
-const cardStylesLight = {
-  base: {
-    backgroundColor: lightTokens.background.surface,
-    border: `1px solid ${lightTokens.border.card}`,
-    borderRadius: radius.xl,
-    boxShadow: defaultShadows.sm,
-    transition: cssTransition.default,
-    p: { xs: 2, sm: 2.5, md: 3 },
-  },
-  hover: {
-    boxShadow: defaultShadows.lg,
-    borderColor: alpha(brand.emerald[500], 0.3),
-  },
-};
-
-export const studioCardStyles = {
-  card: {
-    ...cardStylesLight.base,
-    '&:hover': cardStylesLight.hover,
-  },
-  sectionTitle: {
-    fontWeight: legacyTypography.weight.semibold,
-    color: lightTokens.text.primary,
-    fontSize: legacyTypography.size.md,
-    letterSpacing: legacyTypography.letterSpacing.tight,
-  },
-  label: {
-    fontWeight: legacyTypography.weight.medium,
-    color: lightTokens.text.secondary,
-    fontSize: legacyTypography.size.base,
-  },
-  value: {
-    fontWeight: legacyTypography.weight.semibold,
-    color: lightTokens.text.primary,
-  },
-  emeraldAccent: {
-    color: brand.emerald[500],
-    fontWeight: legacyTypography.weight.semibold,
-  },
 };
 
 // =============================================================================

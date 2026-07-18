@@ -3,36 +3,33 @@
  * Compact list view row for treasure items.
  * Optimized for scanning and quick comparison.
  */
-import React, { useCallback } from "react";
+import React, { useCallback } from 'react';
 import {
   Box,
   Typography,
   Paper,
-  Chip,
   IconButton,
   alpha,
   useTheme,
-} from "@mui/material";
-import { Heart, Scale } from "lucide-react";
-import { useThemeMode } from "../../contexts/ThemeContext";
-import { usePriceShare } from "../../contexts/PriceShareContext";
-import { TreasureItem } from "../../types";
+} from '@mui/material';
+import { Heart, Scale } from 'lucide-react';
+import { useThemeMode } from '../../contexts/ThemeContext';
+import { usePriceShare } from '../../contexts/PriceShareContext';
+import { TreasureItem } from '../../types';
 import {
   getColorDot,
   getQualityBadge,
   formatCarats,
-} from "../../utils/formatting";
-import { PriceDisplay } from "../price-simulator/PriceDisplay";
-import {
-  emeraldCore,
-  semanticColors,
-} from "../../design-system/tokens/colors";
+} from '../../utils/formatting';
+import { PriceDisplay } from '../price-simulator/PriceDisplay';
+import { emeraldCore, semanticColors } from '../../design-system/tokens/colors';
 import {
   errorAlpha,
   cssTransition,
   qeFont,
   getQuietEmerald,
-} from "../../design-system";
+  Badge,
+} from '../../design-system';
 
 interface ListRowProps {
   item: TreasureItem;
@@ -57,18 +54,18 @@ function ListRow({
 }: ListRowProps) {
   const theme = useTheme();
   const { mode } = useThemeMode();
-  const isLight = mode === "light";
+  const isLight = mode === 'light';
   const qe = getQuietEmerald(mode);
   const { shouldShowPrices } = usePriceShare();
 
   const displayName = item.nombre
-    .replace(/^L:.*?\s/, "")
-    .replace(/^L:/, "")
+    .replace(/^L:.*?\s/, '')
+    .replace(/^L:/, '')
     .trim();
   const quality = getQualityBadge(item.calidad);
   const colorDot = getColorDot(item.color);
   const weight =
-    typeof item.peso === "number"
+    typeof item.peso === 'number'
       ? `${formatCarats(item.peso)} ct`
       : item.metalType;
   const origin = (item.procedencia || item.mina)?.trim();
@@ -100,25 +97,25 @@ function ListRow({
         p: 2,
         borderRadius: 2.5,
         bgcolor: qe.surface,
-        border: "1px solid",
+        border: '1px solid',
         borderColor: qe.border,
-        display: "flex",
-        alignItems: "center",
+        display: 'flex',
+        alignItems: 'center',
         gap: 2,
-        cursor: "pointer",
+        cursor: 'pointer',
         transition: cssTransition.default,
-        "&:hover": {
-          borderColor: isLight ? "rgba(0,0,0,0.16)" : "rgba(255,255,255,0.16)",
-          bgcolor: isLight ? qe.well : alpha("#ffffff", 0.03),
+        '&:hover': {
+          borderColor: isLight ? 'rgba(0,0,0,0.16)' : 'rgba(255,255,255,0.16)',
+          bgcolor: isLight ? qe.well : alpha('#ffffff', 0.03),
         },
-        "&:focus-visible": {
+        '&:focus-visible': {
           outline: `3px solid ${emeraldCore.primary}`,
           outlineOffset: 2,
         },
       }}
       onClick={handleItemClick}
       onKeyDown={(e: React.KeyboardEvent) => {
-        if (e.key === "Enter" || e.key === " ") {
+        if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           handleItemClick();
         }
@@ -147,9 +144,9 @@ function ListRow({
             fontSize: 20,
             lineHeight: 1.15,
             color: qe.text,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
         >
           {displayName}
@@ -158,8 +155,8 @@ function ListRow({
           sx={{
             fontFamily: qeFont.mono,
             fontSize: 11,
-            letterSpacing: "0.07em",
-            textTransform: "uppercase",
+            letterSpacing: '0.07em',
+            textTransform: 'uppercase',
             color: qe.textMuted,
           }}
         >
@@ -169,22 +166,11 @@ function ListRow({
       </Box>
 
       {/* Quality badge */}
-      <Chip
-        label={quality.label}
-        size="small"
-        sx={{
-          height: 22,
-          fontSize: "0.6875rem",
-          fontWeight: 600,
-          bgcolor: quality.bg,
-          color: quality.color,
-          border: `1px solid ${quality.border}`,
-        }}
-      />
+      <Badge tone={quality.tone} label={quality.label} />
 
       {/* Price (hidden when prices not shown) */}
       {shouldShowPrices && (
-        <Box sx={{ minWidth: 100, textAlign: "right" }}>
+        <Box sx={{ minWidth: 100, textAlign: 'right' }}>
           <PriceDisplay
             price={item.precioCOP}
             precioInternacional={item.precioInternacional}
@@ -195,15 +181,15 @@ function ListRow({
 
       {/* Action buttons (hidden when prices not shown - comparison requires prices) */}
       {shouldShowPrices && (
-        <Box sx={{ display: "flex", gap: 0.5 }}>
+        <Box sx={{ display: 'flex', gap: 0.5 }}>
           {/* Comparison button */}
           {onToggleComparison && (
             <IconButton
               onClick={handleCompareClick}
               aria-label={
                 isSelectedForComparison
-                  ? "Quitar de comparación"
-                  : "Agregar a comparación"
+                  ? 'Quitar de comparación'
+                  : 'Agregar a comparación'
               }
               disabled={!isSelectedForComparison && !canAddToComparison}
               size="small"
@@ -211,17 +197,17 @@ function ListRow({
                 minWidth: 44,
                 minHeight: 44,
                 color: isSelectedForComparison
-                  ? "white"
+                  ? 'white'
                   : theme.palette.text.secondary,
                 bgcolor: isSelectedForComparison
                   ? emeraldCore.primary
-                  : "transparent",
-                "&:hover": {
+                  : 'transparent',
+                '&:hover': {
                   bgcolor: isSelectedForComparison
                     ? emeraldCore.dark
                     : alpha(emeraldCore.primary, 0.1),
                 },
-                "&:disabled": {
+                '&:disabled': {
                   color: theme.palette.text.disabled,
                 },
               }}
@@ -234,7 +220,7 @@ function ListRow({
           <IconButton
             onClick={handleFavoriteClick}
             aria-label={
-              isFavorite ? "Quitar de favoritos" : "Agregar a favoritos"
+              isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'
             }
             size="small"
             sx={{
@@ -243,7 +229,7 @@ function ListRow({
               color: isFavorite
                 ? semanticColors.error.main
                 : theme.palette.text.secondary,
-              "&:hover": {
+              '&:hover': {
                 bgcolor: isFavorite
                   ? errorAlpha(0.1)
                   : alpha(emeraldCore.primary, 0.1),
@@ -252,7 +238,7 @@ function ListRow({
           >
             <Heart
               size={18}
-              fill={isFavorite ? semanticColors.error.main : "none"}
+              fill={isFavorite ? semanticColors.error.main : 'none'}
             />
           </IconButton>
         </Box>

@@ -18,21 +18,24 @@ import {
   useTheme,
   Collapse,
 } from '@mui/material';
-import {
-  MapPin,
-  User,
-  Images,
-  Eye,
-} from 'lucide-react';
+import { MapPin, User, Images, Eye } from 'lucide-react';
 // Logo placeholder for products without images - use Vite asset import
 import logoPlaceholder from '../../assets/logo-symbol.png';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { TreasureItem } from '../../types';
-import { getColorDot, getQualityBadge, formatCarats } from '../../utils/formatting';
+import {
+  getColorDot,
+  getQualityBadge,
+  formatCarats,
+} from '../../utils/formatting';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
 // Design System Tokens
-import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { cssTransition, fontWeights } from '../../design-system';
+import {
+  emeraldCore,
+  surfacesLight,
+  surfacesDark,
+} from '../../design-system/tokens/colors';
+import { cssTransition, fontWeights, Badge } from '../../design-system';
 
 export interface TreasureCardProps {
   item: TreasureItem;
@@ -45,17 +48,30 @@ export interface TreasureCardProps {
   isAdmin?: boolean;
 }
 
-export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onClick, viewCount, isAdmin }: TreasureCardProps) {
+export function TreasureCard({
+  item,
+  isCompact,
+  onCertClick: _onCertClick,
+  onClick,
+  viewCount,
+  isAdmin,
+}: TreasureCardProps) {
   const theme = useTheme();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const [showDetails] = useState(false);
 
-  const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
+  const displayName = item.nombre
+    .replace(/^L:.*?\s/, '')
+    .replace(/^L:/, '')
+    .trim();
   const quality = getQualityBadge(item.calidad);
   const colorDot = getColorDot(item.color);
   const isLoose = !item.isJewelry;
-  const weight = typeof item.peso === 'number' ? `${formatCarats(item.peso)} ct` : item.metalType;
+  const weight =
+    typeof item.peso === 'number'
+      ? `${formatCarats(item.peso)} ct`
+      : item.metalType;
 
   // Compact list view
   if (isCompact) {
@@ -65,9 +81,13 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
         sx={{
           p: 2,
           borderRadius: 2.5,
-          bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
+          bgcolor: isLight
+            ? surfacesLight.background.primary
+            : surfacesDark.background.secondary,
           border: '1px solid',
-          borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+          borderColor: isLight
+            ? surfacesLight.border.light
+            : surfacesDark.border.light,
           display: 'flex',
           alignItems: 'center',
           gap: 2,
@@ -75,11 +95,18 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
           transition: cssTransition.default,
           '&:hover': {
             borderColor: emeraldCore.dark,
-            bgcolor: isLight ? emeraldCore.lightest : alpha(emeraldCore.dark, 0.08),
+            bgcolor: isLight
+              ? emeraldCore.lightest
+              : alpha(emeraldCore.dark, 0.08),
           },
         }}
         onClick={onClick}
-        onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick();
+          }
+        }}
         role="article"
         tabIndex={0}
         aria-label={`${item.nombre} - ${item.color}, ${weight}`}
@@ -109,28 +136,24 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
           >
             {displayName}
           </Typography>
-          <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
+          <Typography
+            variant="caption"
+            sx={{ color: theme.palette.text.secondary }}
+          >
             {item.color} • {weight}
           </Typography>
         </Box>
 
         {/* Quality badge */}
-        <Chip
-          label={quality.label}
-          size="small"
-          sx={{
-            height: 22,
-            fontSize: '0.6875rem',
-            fontWeight: fontWeights.semibold,
-            bgcolor: quality.bg,
-            color: quality.color,
-            border: `1px solid ${quality.border}`,
-          }}
-        />
+        <Badge tone={quality.tone} label={quality.label} />
 
         {/* Price - Dual display */}
         <Box sx={{ minWidth: 100, textAlign: 'right' }}>
-          <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
+          <PriceDisplay
+            price={item.precioCOP}
+            precioInternacional={item.precioInternacional}
+            compact
+          />
         </Box>
       </Paper>
     );
@@ -141,15 +164,24 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
     <Card
       elevation={0}
       onClick={onClick}
-      onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
+      onKeyDown={(e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       role="article"
       tabIndex={0}
       aria-label={`${item.nombre} - ${item.color}, ${weight}`}
       sx={{
         borderRadius: 3,
         border: '1px solid',
-        borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-        bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
+        borderColor: isLight
+          ? surfacesLight.border.light
+          : surfacesDark.border.light,
+        bgcolor: isLight
+          ? surfacesLight.background.primary
+          : surfacesDark.background.secondary,
         overflow: 'hidden',
         transition: cssTransition.default,
         cursor: 'pointer',
@@ -172,7 +204,9 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
             height: 160,
             position: 'relative',
             overflow: 'hidden',
-            bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.tertiary,
+            bgcolor: isLight
+              ? surfacesLight.background.secondary
+              : surfacesDark.background.tertiary,
           }}
         >
           {/* Always show thumbnail image in grid view */}
@@ -213,7 +247,11 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
           {isAdmin && viewCount !== undefined && viewCount > 0 && (
             <Chip
               icon={<Eye size={12} />}
-              label={viewCount > 999 ? `${(viewCount / 1000).toFixed(1)}k` : viewCount}
+              label={
+                viewCount > 999
+                  ? `${(viewCount / 1000).toFixed(1)}k`
+                  : viewCount
+              }
               size="small"
               sx={{
                 position: 'absolute',
@@ -240,7 +278,9 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
         <Box
           sx={{
             height: 160,
-            bgcolor: isLight ? surfacesLight.background.secondary : surfacesDark.background.tertiary,
+            bgcolor: isLight
+              ? surfacesLight.background.secondary
+              : surfacesDark.background.tertiary,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -283,20 +323,7 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
           >
             {item.color}
           </Typography>
-          <Chip
-            label={quality.label}
-            size="small"
-            sx={{
-              height: 16,
-              fontSize: '0.5rem',
-              fontWeight: fontWeights.bold,
-              textTransform: 'uppercase',
-              bgcolor: quality.bg,
-              color: quality.color,
-              border: `1px solid ${quality.border}`,
-              '& .MuiChip-label': { px: 0.5 },
-            }}
-          />
+          <Badge tone={quality.tone} label={quality.label} />
         </Box>
 
         {/* Name */}
@@ -328,13 +355,19 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
             mb: 0.75,
           }}
         >
-          {isLoose && typeof item.peso === 'number' && `${formatCarats(item.peso)} ct`}
+          {isLoose &&
+            typeof item.peso === 'number' &&
+            `${formatCarats(item.peso)} ct`}
           {item.isJewelry && item.metalType && item.metalType}
         </Typography>
 
         {/* Price */}
         <Box className="price-text">
-          <PriceDisplay price={item.precioCOP} precioInternacional={item.precioInternacional} compact />
+          <PriceDisplay
+            price={item.precioCOP}
+            precioInternacional={item.precioInternacional}
+            compact
+          />
         </Box>
 
         {/* Expandable details - Progressive disclosure */}
@@ -344,54 +377,90 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
               mt: 2,
               pt: 2,
               borderTop: '1px solid',
-              borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+              borderColor: isLight
+                ? surfacesLight.border.light
+                : surfacesDark.border.light,
               display: 'flex',
               flexDirection: 'column',
               gap: 1,
             }}
           >
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography
+                variant="caption"
+                sx={{ color: theme.palette.text.secondary }}
+              >
+                Calidad
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ color: theme.palette.text.primary, fontWeight: 500 }}
+              >
+                {item.calidad}
+              </Typography>
+            </Box>
+
+            {item.talla && item.talla !== '-' && (
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-                  Calidad
+                <Typography
+                  variant="caption"
+                  sx={{ color: theme.palette.text.secondary }}
+                >
+                  {item.isJewelry ? 'Talla' : 'Corte'}
                 </Typography>
-                <Typography variant="caption" sx={{ color: theme.palette.text.primary, fontWeight: 500 }}>
-                  {item.calidad}
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: theme.palette.text.primary,
+                    fontWeight: fontWeights.medium,
+                  }}
+                >
+                  {item.talla}
                 </Typography>
               </Box>
+            )}
 
-              {item.talla && item.talla !== '-' && (
+            {item.medidas &&
+              item.medidas !== '-' &&
+              item.medidas !== 'Anillo' && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-                    {item.isJewelry ? 'Talla' : 'Corte'}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: theme.palette.text.primary, fontWeight: fontWeights.medium }}>
-                    {item.talla}
-                  </Typography>
-                </Box>
-              )}
-
-              {item.medidas && item.medidas !== '-' && item.medidas !== 'Anillo' && (
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: theme.palette.text.secondary }}
+                  >
                     Medidas
                   </Typography>
-                  <Typography variant="caption" sx={{ color: theme.palette.text.primary, fontWeight: fontWeights.medium }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: theme.palette.text.primary,
+                      fontWeight: fontWeights.medium,
+                    }}
+                  >
                     {item.medidas}
                   </Typography>
                 </Box>
               )}
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
-                <MapPin size={12} color={surfacesLight.text.tertiary} />
-                <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-                  {item.ubicacion}
-                </Typography>
-                <Box sx={{ flex: 1 }} />
-                <User size={12} color={surfacesLight.text.tertiary} />
-                <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-                  {item.asesor}
-                </Typography>
-              </Box>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}
+            >
+              <MapPin size={12} color={surfacesLight.text.tertiary} />
+              <Typography
+                variant="caption"
+                sx={{ color: theme.palette.text.secondary }}
+              >
+                {item.ubicacion}
+              </Typography>
+              <Box sx={{ flex: 1 }} />
+              <User size={12} color={surfacesLight.text.tertiary} />
+              <Typography
+                variant="caption"
+                sx={{ color: theme.palette.text.secondary }}
+              >
+                {item.asesor}
+              </Typography>
+            </Box>
           </Box>
         </Collapse>
       </CardContent>
@@ -400,17 +469,20 @@ export function TreasureCard({ item, isCompact, onCertClick: _onCertClick, onCli
 }
 
 // Memoized version for performance - only re-renders when item data changes
-export const MemoizedTreasureCard = memo(TreasureCard, (prevProps, nextProps) => {
-  // Only re-render if these key properties change
-  return (
-    prevProps.item.item === nextProps.item.item &&
-    prevProps.item.imagen === nextProps.item.imagen &&
-    prevProps.item.precioCOP === nextProps.item.precioCOP &&
-    prevProps.item.estado === nextProps.item.estado &&
-    prevProps.isCompact === nextProps.isCompact &&
-    prevProps.viewCount === nextProps.viewCount &&
-    prevProps.isAdmin === nextProps.isAdmin
-  );
-});
+export const MemoizedTreasureCard = memo(
+  TreasureCard,
+  (prevProps, nextProps) => {
+    // Only re-render if these key properties change
+    return (
+      prevProps.item.item === nextProps.item.item &&
+      prevProps.item.imagen === nextProps.item.imagen &&
+      prevProps.item.precioCOP === nextProps.item.precioCOP &&
+      prevProps.item.estado === nextProps.item.estado &&
+      prevProps.isCompact === nextProps.isCompact &&
+      prevProps.viewCount === nextProps.viewCount &&
+      prevProps.isAdmin === nextProps.isAdmin
+    );
+  },
+);
 
 export default TreasureCard;

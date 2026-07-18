@@ -6,24 +6,15 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, alpha } from '@mui/material';
-import {
-  Eye,
-  Package,
-  BarChart3,
-  Clock,
-  UserCheck,
-  User,
-} from 'lucide-react';
+import { Eye, Package, BarChart3, Clock, UserCheck, User } from 'lucide-react';
 import { useThemeMode } from '../../../../contexts/ThemeContext';
 import { emeraldCore } from '../../../../design-system/tokens/colors';
-import { accentColors } from '../../../../design-system';
+import { Card, MetricCard } from '../../../../design-system';
 import { HorizontalBarChart } from '../../../../components/analytics/HorizontalBarChart';
 import { formatTimeAgo } from '../../../../utils/formatting';
 import {
   TabPanel,
-  MetricCard,
   SectionHeader,
-  GlassCard,
   ActivityItem,
 } from '../../../../components/shared';
 
@@ -62,12 +53,18 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
   return (
     <TabPanel value={activeTab} index={1}>
       {/* Product Stats Summary */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5, mb: 3 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: 1.5,
+          mb: 3,
+        }}
+      >
         <MetricCard
           label="Total Views"
           value={viewStats?.totalViews || 0}
           icon={Eye}
-          color={emeraldCore.primary}
           trend={{ data: generateTrendData(viewStats?.totalViews || 0) }}
           compact
         />
@@ -75,21 +72,17 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
           label="Productos"
           value={viewStats?.uniqueProducts || 0}
           icon={Package}
-          color={accentColors.purple.light}
           subtitle="Con al menos 1 vista"
           compact
         />
       </Box>
 
       {/* Top Products Bar Chart */}
-      <SectionHeader
-        title="Top 10 Productos"
-        icon={BarChart3}
-      />
-      <GlassCard noPadding>
+      <SectionHeader title="Top 10 Productos" icon={BarChart3} />
+      <Card variant="outlined">
         {topProducts.length > 0 ? (
           <HorizontalBarChart
-            data={topProducts.slice(0, 10).map(p => ({
+            data={topProducts.slice(0, 10).map((p) => ({
               id: p.itemId,
               label: p.productName,
               sublabel: `Item #${p.itemId}`,
@@ -108,13 +101,13 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
             </Typography>
           </Box>
         )}
-      </GlassCard>
+      </Card>
 
       {/* Recent Product Views */}
       {recentProductViews.length > 0 && (
         <Box sx={{ mt: 3 }}>
           <SectionHeader title="Vistas Recientes" icon={Clock} />
-          <GlassCard noPadding>
+          <Card variant="outlined">
             {recentProductViews.slice(0, 8).map((activity, idx) => (
               <ActivityItem
                 key={`${activity.timestamp}-${activity.itemId}`}
@@ -144,18 +137,26 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                     {activity.userName || 'Guest'} vió{' '}
                     <Typography
                       component="span"
-                      sx={{ color: emeraldCore.primary, fontWeight: 600, fontSize: 'inherit' }}
+                      sx={{
+                        color: emeraldCore.primary,
+                        fontWeight: 600,
+                        fontSize: 'inherit',
+                      }}
                     >
                       {activity.productName}
                     </Typography>
                   </>
                 }
-                secondary={activity.inviterName ? `inv. por ${activity.inviterName}` : undefined}
+                secondary={
+                  activity.inviterName
+                    ? `inv. por ${activity.inviterName}`
+                    : undefined
+                }
                 time={formatTimeAgo(activity.timestamp)}
                 isLast={idx === Math.min(recentProductViews.length, 8) - 1}
               />
             ))}
-          </GlassCard>
+          </Card>
         </Box>
       )}
     </TabPanel>

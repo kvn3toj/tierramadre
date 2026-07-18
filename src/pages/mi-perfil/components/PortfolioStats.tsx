@@ -1,15 +1,13 @@
 /**
  * PortfolioStats Component
  *
- * Shows 4 stat cards: Total Products, Gems, Jewelry, Available Value.
- * Reuses StatItem with "stacked" variant.
+ * Shows 4 stat tiles: Total Products, Gems, Jewelry, Available Value.
  */
 
 import { useMemo } from 'react';
-import { Box, alpha } from '@mui/material';
+import { Box } from '@mui/material';
 import { Package, Gem, Crown, DollarSign } from 'lucide-react';
-import { StatItem } from '../../../components/ambassador/StatItem';
-import { emeraldCore, goldAccent, radius } from '../../../design-system';
+import { MetricCard } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useCurrencyFormat } from '../../../contexts/CurrencyContext';
 import { SectionHeading } from './SectionHeading';
@@ -57,73 +55,30 @@ export function PortfolioStats({ asesorName, treasure }: PortfolioStatsProps) {
           gap: 1,
         }}
       >
-        <Box
-          sx={{
-            p: 1.5,
-            borderRadius: radius.md,
-            bgcolor: alpha(emeraldCore.primary, 0.06),
-            border: `1px solid ${alpha(emeraldCore.primary, 0.12)}`,
-          }}
-        >
-          <StatItem
-            icon={<Package size={16} />}
-            value={String(stats.total)}
-            label={t.profile.totalProducts}
-            color={emeraldCore.primary}
-            variant="stacked"
-          />
-        </Box>
-
-        <Box
-          sx={{
-            p: 1.5,
-            borderRadius: radius.md,
-            bgcolor: alpha(emeraldCore.primary, 0.06),
-            border: `1px solid ${alpha(emeraldCore.primary, 0.12)}`,
-          }}
-        >
-          <StatItem
-            icon={<Gem size={16} />}
-            value={String(stats.looseCount)}
-            label={t.profile.gems}
-            color={emeraldCore.primary}
-            variant="stacked"
-          />
-        </Box>
-
-        <Box
-          sx={{
-            p: 1.5,
-            borderRadius: radius.md,
-            bgcolor: alpha(goldAccent.primary, 0.06),
-            border: `1px solid ${alpha(goldAccent.primary, 0.12)}`,
-          }}
-        >
-          <StatItem
-            icon={<Crown size={16} />}
-            value={String(stats.jewelryCount)}
-            label={t.profile.jewelry}
-            color={goldAccent.primary}
-            variant="stacked"
-          />
-        </Box>
-
-        <Box
-          sx={{
-            p: 1.5,
-            borderRadius: radius.md,
-            bgcolor: alpha(emeraldCore.primary, 0.06),
-            border: `1px solid ${alpha(emeraldCore.primary, 0.12)}`,
-          }}
-        >
-          <StatItem
-            icon={<DollarSign size={16} />}
-            value={formatCurrency(stats.totalValue)}
-            label={t.profile.availableValue}
-            color={emeraldCore.primary}
-            variant="stacked"
-          />
-        </Box>
+        <MetricCard
+          icon={Package}
+          value={String(stats.total)}
+          label={t.profile.totalProducts}
+          compact
+        />
+        <MetricCard
+          icon={Gem}
+          value={String(stats.looseCount)}
+          label={t.profile.gems}
+          compact
+        />
+        <MetricCard
+          icon={Crown}
+          value={String(stats.jewelryCount)}
+          label={t.profile.jewelry}
+          compact
+        />
+        <MetricCard
+          icon={DollarSign}
+          value={formatCurrency(stats.totalValue)}
+          label={t.profile.availableValue}
+          compact
+        />
       </Box>
     </Box>
   );
