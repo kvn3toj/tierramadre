@@ -19,7 +19,7 @@ import {
   Select,
   MenuItem,
   alpha,
-  Collapse,
+  Popover,
   Tooltip,
 } from '@mui/material';
 import { Button } from '../../design-system/components/Button';
@@ -27,14 +27,7 @@ import { SegmentedControl } from '../../design-system/components/SegmentedContro
 import { LogRangeSlider } from '../shared/LogRangeSlider';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { Theme } from '@mui/material/styles';
-import {
-  Search,
-  ChevronDown,
-  ChevronUp,
-  SlidersHorizontal,
-  ArrowUpDown,
-  Layers,
-} from 'lucide-react';
+import { Search, SlidersHorizontal, ArrowUpDown, Layers } from 'lucide-react';
 import {
   type StatusFilter,
   type TypeFilter,
@@ -290,6 +283,23 @@ export const FilterContent = memo(function FilterContent({
   // though only the compact branch renders them.
   const categoryScroll = useScrollFade<HTMLDivElement>();
   const moreFiltersScroll = useScrollFade<HTMLDivElement>();
+
+  // Anchor for the desktop "Filtros" popover (Categoría/Tipo/Cantidad/Color/
+  // Talla/Calidad/Colección/Precio/Quilates) — open state stays driven by the
+  // existing showAdvancedFilters prop, this ref just positions the panel.
+  const filtersButtonRef = useRef<HTMLButtonElement>(null);
+  const advancedActiveCount = [
+    categoriaFilter !== 'all',
+    typeFilter !== 'all',
+    cantidadFilter !== 'all',
+    colorFilter !== 'all',
+    shapeFilter !== 'all',
+    qualityFilter !== 'all',
+    coleccionFilter !== 'all',
+    priceRange[0] !== priceMinMax.min || priceRange[1] !== priceMinMax.max,
+    caratMinMax.max > 0 &&
+      (caratRange[0] !== caratMinMax.min || caratRange[1] !== caratMinMax.max),
+  ].filter(Boolean).length;
 
   // Compact mode: Beautiful modern pill-based filters (mobile)
   if (compact) {
@@ -876,81 +886,19 @@ export const FilterContent = memo(function FilterContent({
           </Select>
         </FormControl>
 
-        {/* Category filter (Column K from inventory) */}
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <Select
-            value={categoriaFilter}
-            onChange={(e) => setCategoriaFilter(e.target.value)}
-            displayEmpty
-            aria-label="Filtrar por categoría"
-            sx={{
-              borderRadius: 2,
-              bgcolor:
-                categoriaFilter !== 'all'
-                  ? alpha(emeraldCore.primary, 0.1)
-                  : 'transparent',
-            }}
-          >
-            <MenuItem value="all">{t.treasure.filter.category}</MenuItem>
-            {categorias.map((cat) => (
-              <MenuItem key={cat} value={cat}>
-                {cat}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* Type filter */}
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <Select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
-            displayEmpty
-            aria-label="Filtrar por tipo"
-            sx={{ borderRadius: 2 }}
-          >
-            <MenuItem value="all">{t.treasure.filter.type}</MenuItem>
-            <MenuItem value="loose">{t.treasure.filter.looseStones}</MenuItem>
-            <MenuItem value="jewelry">{t.treasure.filter.jewelry}</MenuItem>
-          </Select>
-        </FormControl>
-
-        {/* Cantidad filter */}
-        <FormControl size="small" sx={{ minWidth: 130 }}>
-          <Select
-            value={cantidadFilter}
-            onChange={(e) => setCantidadFilter(e.target.value)}
-            displayEmpty
-            aria-label="Filtrar por cantidad"
-            startAdornment={
-              <InputAdornment position="start">
-                <Layers size={14} color={theme.palette.text.secondary} />
-              </InputAdornment>
-            }
-            sx={{ borderRadius: 2 }}
-          >
-            <MenuItem value="all">{t.treasure.filter.quantity}</MenuItem>
-            <MenuItem value="1">{t.treasure.filter.singleUnit}</MenuItem>
-            <MenuItem value="2+">{t.treasure.filter.lots}</MenuItem>
-          </Select>
-        </FormControl>
-
-        {/* Advanced Filters Toggle */}
+        {/* Filtros — opens a popover with Categoría/Tipo/Cantidad/Color/Talla/
+            Calidad/Colección/Precio/Quilates, keeping this row to one line
+            instead of wrapping across the viewport. */}
         <Button
-          variant="plain"
+          ref={filtersButtonRef}
+          variant={advancedActiveCount > 0 ? 'tinted' : 'plain'}
           size="sm"
           onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           aria-expanded={showAdvancedFilters}
           startIcon={<SlidersHorizontal size={16} />}
-          endIcon={
-            showAdvancedFilters ? (
-              <ChevronUp size={14} />
-            ) : (
-              <ChevronDown size={14} />
-            )
-          }
         >
           {t.treasure.filter.moreFilters}
+          {advancedActiveCount > 0 ? ` (${advancedActiveCount})` : ''}
         </Button>
 
         {/* Clear filters */}
@@ -969,22 +917,95 @@ export const FilterContent = memo(function FilterContent({
         )}
       </Box>
 
-      {/* Advanced Filters */}
-      <Collapse in={showAdvancedFilters}>
+      {/* Filtros popover — Categoría/Tipo/Cantidad/Color/Talla/Calidad/
+          Colección/Precio/Quilates. A popover rather than an inline Collapse
+          so opening it never shifts the grid below. */}
+      <Popover
+        open={showAdvancedFilters}
+        anchorEl={filtersButtonRef.current}
+        onClose={() => setShowAdvancedFilters(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 1,
+              p: 2,
+              maxWidth: 480,
+              borderRadius: 'var(--tm-radius-card)',
+              border: '1px solid var(--tm-border)',
+              boxShadow: 'var(--tm-shadow)',
+            },
+          },
+        }}
+      >
         <Box
           sx={{
             display: 'flex',
             gap: 2,
             flexWrap: 'wrap',
             alignItems: 'center',
-            mt: 2,
-            pt: 2,
-            borderTop: '1px solid',
-            borderColor: isLight
-              ? surfacesLight.border.light
-              : surfacesDark.border.default,
           }}
         >
+          {/* Category filter (Column K from inventory) */}
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <Select
+              value={categoriaFilter}
+              onChange={(e) => setCategoriaFilter(e.target.value)}
+              displayEmpty
+              aria-label="Filtrar por categoría"
+              sx={{
+                borderRadius: 2,
+                bgcolor:
+                  categoriaFilter !== 'all'
+                    ? alpha(emeraldCore.primary, 0.1)
+                    : 'transparent',
+              }}
+            >
+              <MenuItem value="all">{t.treasure.filter.category}</MenuItem>
+              {categorias.map((cat) => (
+                <MenuItem key={cat} value={cat}>
+                  {cat}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Type filter */}
+          <FormControl size="small" sx={{ minWidth: 120 }}>
+            <Select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
+              displayEmpty
+              aria-label="Filtrar por tipo"
+              sx={{ borderRadius: 2 }}
+            >
+              <MenuItem value="all">{t.treasure.filter.type}</MenuItem>
+              <MenuItem value="loose">{t.treasure.filter.looseStones}</MenuItem>
+              <MenuItem value="jewelry">{t.treasure.filter.jewelry}</MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* Cantidad filter */}
+          <FormControl size="small" sx={{ minWidth: 130 }}>
+            <Select
+              value={cantidadFilter}
+              onChange={(e) => setCantidadFilter(e.target.value)}
+              displayEmpty
+              aria-label="Filtrar por cantidad"
+              startAdornment={
+                <InputAdornment position="start">
+                  <Layers size={14} color={theme.palette.text.secondary} />
+                </InputAdornment>
+              }
+              sx={{ borderRadius: 2 }}
+            >
+              <MenuItem value="all">{t.treasure.filter.quantity}</MenuItem>
+              <MenuItem value="1">{t.treasure.filter.singleUnit}</MenuItem>
+              <MenuItem value="2+">{t.treasure.filter.lots}</MenuItem>
+            </Select>
+          </FormControl>
+
           {/* Color filter */}
           <FormControl size="small" sx={{ minWidth: 140 }}>
             <Select
@@ -1182,7 +1203,7 @@ export const FilterContent = memo(function FilterContent({
             />
           </Box>
         )}
-      </Collapse>
+      </Popover>
     </>
   );
 });

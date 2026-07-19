@@ -6,7 +6,11 @@ import { Box, Typography, Chip, alpha } from '@mui/material';
 import { Heart } from 'lucide-react';
 import type { Theme } from '@mui/material/styles';
 import { accentColors } from '../../../design-system';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../../design-system/tokens/colors';
+import {
+  emeraldCore,
+  surfacesLight,
+  surfacesDark,
+} from '../../../design-system/tokens/colors';
 import { fontWeights } from '../../../design-system';
 import type { Translations } from '../../../locales';
 
@@ -45,46 +49,77 @@ export default function TreasureDesktopResultsSummary({
   onToggleFavoritesOnly,
 }: TreasureDesktopResultsSummaryProps) {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, flexWrap: 'wrap', gap: 1 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flex: 1,
+        minWidth: 0,
+        flexWrap: 'wrap',
+        gap: 1,
+      }}
+    >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+        <Typography
+          variant="body2"
+          sx={{ color: theme.palette.text.secondary }}
+        >
           {filteredTreasureLength === allTreasureLength ? (
             <>
-              <strong style={{ color: theme.palette.text.primary }}>{allTreasureLength}</strong> {t.treasure.totalEmeralds}
+              <strong style={{ color: theme.palette.text.primary }}>
+                {allTreasureLength}
+              </strong>{' '}
+              {t.treasure.totalEmeralds}
             </>
           ) : viewMode === 'grid' ? (
             // Grid view renders every filtered item (virtualized), so the
             // paginated "visible" count would understate what's shown.
             <>
-              <strong style={{ color: theme.palette.text.primary }}>{filteredTreasureLength}</strong> {t.treasure.emeralds}
+              <strong style={{ color: theme.palette.text.primary }}>
+                {filteredTreasureLength}
+              </strong>{' '}
+              {t.treasure.emeralds}
             </>
           ) : (
             <>
               {t.treasure.showingOf}{' '}
-              <strong style={{ color: theme.palette.text.primary }}>{visibleItemsLength}</strong> de {filteredTreasureLength}{' '}
-              {t.treasure.emeralds}
+              <strong style={{ color: theme.palette.text.primary }}>
+                {visibleItemsLength}
+              </strong>{' '}
+              de {filteredTreasureLength} {t.treasure.emeralds}
             </>
           )}
         </Typography>
         {!isProviderMode && (
           <Chip
             icon={
-              <Heart size={14} fill={showFavoritesOnly ? accentColors.error.light : 'none'} color={showFavoritesOnly ? accentColors.error.light : '#6b7280'} />
+              <Heart
+                size={14}
+                fill={showFavoritesOnly ? accentColors.error.light : 'none'}
+                color={showFavoritesOnly ? accentColors.error.light : '#6b7280'}
+              />
             }
             label={`${t.treasure.favorites} (${favoritesCount})`}
             size="small"
             onClick={onToggleFavoritesOnly}
             sx={{
               cursor: 'pointer',
-              bgcolor: showFavoritesOnly ? alpha(accentColors.error.light, 0.1) : 'transparent',
-              color: showFavoritesOnly ? accentColors.error.light : theme.palette.text.secondary,
+              bgcolor: showFavoritesOnly
+                ? alpha(accentColors.error.light, 0.1)
+                : 'transparent',
+              color: showFavoritesOnly
+                ? accentColors.error.light
+                : theme.palette.text.secondary,
               border: '1px solid',
               borderColor: showFavoritesOnly
                 ? accentColors.error.light
                 : isLight
                   ? surfacesLight.border.light
                   : surfacesDark.border.default,
-              fontWeight: showFavoritesOnly ? fontWeights.semibold : fontWeights.normal,
+              fontWeight: showFavoritesOnly
+                ? fontWeights.semibold
+                : fontWeights.normal,
               '&:hover': {
                 bgcolor: alpha(accentColors.error.light, 0.1),
               },
@@ -93,7 +128,10 @@ export default function TreasureDesktopResultsSummary({
         )}
       </Box>
       {!isProviderMode && shouldShowPrices && (
-        <Typography variant="body2" sx={{ color: emeraldCore.dark, fontWeight: fontWeights.semibold }}>
+        <Typography
+          variant="body2"
+          sx={{ color: emeraldCore.dark, fontWeight: fontWeights.semibold }}
+        >
           {formatFullCurrency(filteredStatsTotalValue)} total
         </Typography>
       )}

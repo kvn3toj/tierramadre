@@ -2,7 +2,7 @@
  * Desktop catalog filter card: full FilterContent + toolbar (view mode, stats, saved filters).
  */
 
-import { Box, Paper } from '@mui/material';
+import { Paper } from '@mui/material';
 import { FilterContent, type FilterContentProps } from '../FilterContent';
 import DesktopFilterToolbar from './DesktopFilterToolbar';
 import TreasureDesktopResultsSummary, {
@@ -41,9 +41,9 @@ export interface TreasureDesktopFilterPanelProps {
   setCantidadFilter: (c: string) => void;
   trackViewModeChange: (mode: 'grid' | 'list') => void;
   /**
-   * Folded into this panel (as a hairline-separated row after the toolbar)
-   * instead of its own standalone block below the panel — removes one full
-   * block-margin gap from the desktop header stack squeezing the grid.
+   * Rendered inline in DesktopFilterToolbar's own row (in place of its flex
+   * spacer) rather than as a separate block — one less divided row squeezing
+   * the grid.
    */
   resultsSummary: TreasureDesktopResultsSummaryProps;
 }
@@ -106,19 +106,8 @@ export default function TreasureDesktopFilterPanel({
         setCantidadFilter={setCantidadFilter}
         trackViewModeChange={trackViewModeChange}
         isLight={isLight}
+        resultsSummary={<TreasureDesktopResultsSummary {...resultsSummary} />}
       />
-      <Box
-        sx={{
-          mt: 1,
-          pt: 1,
-          borderTop: '1px solid',
-          borderColor: isLight
-            ? surfacesLight.border.light
-            : surfacesDark.border.light,
-        }}
-      >
-        <TreasureDesktopResultsSummary {...resultsSummary} />
-      </Box>
     </Paper>
   );
 }

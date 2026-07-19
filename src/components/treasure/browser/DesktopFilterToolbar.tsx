@@ -4,17 +4,17 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   alpha,
-} from "@mui/material";
-import { LayoutGrid, List, Gem, Crown } from "lucide-react";
-import { emeraldCore } from "../../../design-system/tokens/colors";
-import SavedFiltersDropdown from "../SavedFiltersDropdown";
-import type { FilterPreset, FilterState } from "../../../hooks/useSavedFilters";
+} from '@mui/material';
+import { LayoutGrid, List, Gem, Crown } from 'lucide-react';
+import { emeraldCore } from '../../../design-system/tokens/colors';
+import SavedFiltersDropdown from '../SavedFiltersDropdown';
+import type { FilterPreset, FilterState } from '../../../hooks/useSavedFilters';
 import type {
   TreasureFilters,
   StatusFilter,
   SortOption,
   TypeFilter,
-} from "../../../hooks/useTreasureFiltering";
+} from '../../../hooks/useTreasureFiltering';
 
 interface UseSavedFiltersApi {
   presets: FilterPreset[];
@@ -25,8 +25,8 @@ interface UseSavedFiltersApi {
 interface DesktopFilterToolbarProps {
   shouldShowPrices: boolean;
   stats: { looseStones: number; jewelry: number };
-  viewMode: "grid" | "list";
-  onViewModeChange: (mode: "grid" | "list") => void;
+  viewMode: 'grid' | 'list';
+  onViewModeChange: (mode: 'grid' | 'list') => void;
   savedFilters: UseSavedFiltersApi;
   hasFilters: boolean;
   filters: TreasureFilters;
@@ -39,8 +39,11 @@ interface DesktopFilterToolbarProps {
   setPriceRange: (v: [number, number]) => void;
   setSortBy: (v: SortOption) => void;
   setCantidadFilter: (v: string) => void;
-  trackViewModeChange: (mode: "grid" | "list") => void;
+  trackViewModeChange: (mode: 'grid' | 'list') => void;
   isLight: boolean;
+  /** Rendered in place of the row's flex spacer — keeps the results count on
+   * the same row as saved-filters/view-toggle instead of a separate block. */
+  resultsSummary?: React.ReactNode;
 }
 
 export default function DesktopFilterToolbar({
@@ -62,21 +65,22 @@ export default function DesktopFilterToolbar({
   setCantidadFilter,
   trackViewModeChange,
   isLight,
+  resultsSummary,
 }: DesktopFilterToolbarProps) {
   return (
     <Box
       sx={{
-        display: "flex",
+        display: 'flex',
         gap: 2,
-        alignItems: "center",
+        alignItems: 'center',
         mt: 2,
         pt: 2,
-        borderTop: "1px solid",
-        borderColor: isLight ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.06)",
+        borderTop: '1px solid',
+        borderColor: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)',
       }}
     >
       {shouldShowPrices && (
-        <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+        <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
           <Chip
             size="small"
             icon={<Gem size={12} />}
@@ -85,9 +89,9 @@ export default function DesktopFilterToolbar({
               bgcolor: alpha(emeraldCore.primary, 0.1),
               color: emeraldCore.primary,
               fontWeight: 600,
-              fontSize: "0.7rem",
+              fontSize: '0.7rem',
               height: 24,
-              "& .MuiChip-icon": { color: emeraldCore.primary },
+              '& .MuiChip-icon': { color: emeraldCore.primary },
             }}
           />
           <Chip
@@ -97,12 +101,12 @@ export default function DesktopFilterToolbar({
             sx={{
               // Quiet Emerald: emerald is the only saturated color — jewelry
               // reads as neutral ink, not gold.
-              bgcolor: isLight ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.08)",
-              color: isLight ? "#5C6360" : "#9AA09D",
+              bgcolor: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)',
+              color: isLight ? '#5C6360' : '#9AA09D',
               fontWeight: 600,
-              fontSize: "0.7rem",
+              fontSize: '0.7rem',
               height: 24,
-              "& .MuiChip-icon": { color: isLight ? "#5C6360" : "#9AA09D" },
+              '& .MuiChip-icon': { color: isLight ? '#5C6360' : '#9AA09D' },
             }}
           />
         </Box>
@@ -138,7 +142,7 @@ export default function DesktopFilterToolbar({
         onDeletePreset={savedFilters.deletePreset}
         hasActiveFilters={hasFilters}
       />
-      <Box sx={{ flex: 1 }} />
+      {resultsSummary || <Box sx={{ flex: 1 }} />}
       <ToggleButtonGroup
         value={viewMode}
         exclusive
