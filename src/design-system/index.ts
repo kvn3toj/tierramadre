@@ -270,6 +270,9 @@ export {
   type SegmentedOption,
 } from './components/SegmentedControl';
 
+// Sheet — the ONE overlay (desktop modal / mobile bottom-sheet split).
+export { Sheet, type SheetProps } from './components/Sheet';
+
 // Layout
 export {
   Stack,

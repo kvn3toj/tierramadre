@@ -10,6 +10,7 @@
  */
 
 import React from 'react';
+import FocusTrap from '@mui/material/Unstable_TrapFocus';
 import {
   Box,
   Typography,
@@ -204,318 +205,167 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({
         }}
       />
 
-      <Box
-        role="dialog"
-        aria-modal="true"
-        aria-label={t.settings.theme}
-        sx={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: zIndex.sheetContent,
-          backgroundColor: 'var(--surface-secondary)',
-          borderTopLeftRadius: radius.xl,
-          borderTopRightRadius: radius.xl,
-          boxShadow: 'var(--shadow-lg)',
-          // Dynamic viewport height: on iOS `85vh` counted the address bar and
-          // hid the lowest settings rows behind the tab bar / home indicator.
-          maxHeight: '85dvh',
-          '@supports not (height: 100dvh)': {
-            maxHeight: '85vh',
-          },
-          overflowY: 'auto',
-          overscrollBehavior: 'contain',
-          WebkitOverflowScrolling: 'touch',
-          transform: open ? 'translateY(0)' : 'translateY(100%)',
-          visibility: open ? 'visible' : 'hidden',
-          pointerEvents: open ? 'auto' : 'none',
-          transition:
-            'transform 0.4s cubic-bezier(0.5, 1.25, 0.75, 1.25), visibility 0.4s',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-        }}
-      >
-        {/* Header */}
+      <FocusTrap open={open}>
         <Box
+          role="dialog"
+          aria-modal="true"
+          aria-label={t.settings.theme}
+          tabIndex={-1}
           sx={{
-            position: 'sticky',
-            top: 0,
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: zIndex.sheetContent,
             backgroundColor: 'var(--surface-secondary)',
-            zIndex: zIndex.base,
-            paddingTop: spacing.sm,
-            paddingX: spacing.md,
-            paddingBottom: spacing.xs,
-            borderBottom: '0.5px solid var(--border-default)',
+            borderTopLeftRadius: radius.xl,
+            borderTopRightRadius: radius.xl,
+            boxShadow: 'var(--shadow-lg)',
+            // Dynamic viewport height: on iOS `85vh` counted the address bar and
+            // hid the lowest settings rows behind the tab bar / home indicator.
+            maxHeight: '85dvh',
+            '@supports not (height: 100dvh)': {
+              maxHeight: '85vh',
+            },
+            overflowY: 'auto',
+            overscrollBehavior: 'contain',
+            WebkitOverflowScrolling: 'touch',
+            transform: open ? 'translateY(0)' : 'translateY(100%)',
+            visibility: open ? 'visible' : 'hidden',
+            pointerEvents: open ? 'auto' : 'none',
+            transition:
+              'transform 0.4s cubic-bezier(0.5, 1.25, 0.75, 1.25), visibility 0.4s',
+            paddingBottom: 'env(safe-area-inset-bottom)',
           }}
         >
-          {/* Handle Bar */}
+          {/* Header */}
           <Box
             sx={{
-              width: '36px',
-              height: '5px',
-              backgroundColor: 'var(--border-default)',
-              borderRadius: '2.5px',
-              margin: '0 auto',
-              marginBottom: spacing.sm,
-            }}
-          />
-
-          {/* Title and Close */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              position: 'sticky',
+              top: 0,
+              backgroundColor: 'var(--surface-secondary)',
+              zIndex: zIndex.base,
+              paddingTop: spacing.sm,
+              paddingX: spacing.md,
+              paddingBottom: spacing.xs,
+              borderBottom: '0.5px solid var(--border-default)',
             }}
           >
-            <Typography
-              variant="h2"
-              sx={{
-                fontSize: iosTypographyScale.title2,
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-              }}
-            >
-              {t.settings.theme}
-            </Typography>
-
-            <IconButton
-              onClick={onClose}
-              aria-label={t.actions.close}
-              sx={{
-                color: 'var(--text-secondary)',
-                '&:hover': { backgroundColor: 'var(--surface-tertiary)' },
-              }}
-            >
-              <Close />
-            </IconButton>
-          </Box>
-        </Box>
-
-        {/* Settings List */}
-        <Box sx={{ padding: spacing.md, display: 'grid', gap: spacing.md }}>
-          {/* User Profile / Google Sign In */}
-          <UserProfileCard />
-
-          {/* Theme Toggle */}
-          <SettingToggleItem
-            icon={
-              isDarkMode ? (
-                <DarkMode
-                  sx={{
-                    fontSize: '24px',
-                    color: qe.accent,
-                  }}
-                />
-              ) : (
-                <LightMode
-                  sx={{
-                    fontSize: '24px',
-                    color: qe.accent,
-                  }}
-                />
-              )
-            }
-            iconBgColor={
-              isDarkMode ? alpha(qe.accent, 0.08) : alpha('#000000', 0.08)
-            }
-            title={isDarkMode ? t.settings.darkMode : t.settings.lightMode}
-            subtitle={isDarkMode ? t.settings.lightMode : t.settings.darkMode}
-            checked={isDarkMode}
-            onChange={toggleTheme}
-            accentColor={qe.accent}
-          />
-
-          {/* Language Selector */}
-          <Box
-            sx={{
-              padding: spacing.sm,
-              backgroundColor: 'var(--surface-primary)',
-              borderRadius: spacing.md,
-            }}
-          >
-            {/* Language header row */}
+            {/* Handle Bar */}
             <Box
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: spacing.sm,
-                mb: spacing.sm,
+                width: '36px',
+                height: '5px',
+                backgroundColor: 'var(--border-default)',
+                borderRadius: '2.5px',
+                margin: '0 auto',
+                marginBottom: spacing.sm,
               }}
-            >
-              <Box
-                sx={{
-                  width: `${layoutConstants.minTouchTarget}px`,
-                  height: `${layoutConstants.minTouchTarget}px`,
-                  borderRadius: radius.md,
-                  backgroundColor: alpha(qe.accent, 0.08),
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Language
-                  sx={{
-                    fontSize: '24px',
-                    color: qe.accent,
-                  }}
-                />
-              </Box>
-              <Box>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    fontSize: iosTypographyScale.headline,
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  {t.settings.language}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontSize: iosTypographyScale.footnote,
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  {currentLangOption?.flag} {currentLangOption?.label}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Language options grid */}
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: spacing.xs,
-              }}
-            >
-              {LANGUAGE_OPTIONS.map((opt) => (
-                <Box
-                  key={opt.code}
-                  onClick={() => setLanguage(opt.code)}
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '2px',
-                    padding: spacing.xs,
-                    borderRadius: radius.md,
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s',
-                    backgroundColor:
-                      language === opt.code
-                        ? alpha(qe.accent, 0.12)
-                        : 'transparent',
-                    border:
-                      language === opt.code
-                        ? `1.5px solid ${qe.accent}`
-                        : '1.5px solid transparent',
-                    '&:active': {
-                      backgroundColor: alpha(qe.accent, 0.08),
-                    },
-                  }}
-                >
-                  <Typography sx={{ fontSize: '20px', lineHeight: 1 }}>
-                    {opt.flag}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: iosTypographyScale.caption2,
-                      fontWeight: language === opt.code ? 600 : 400,
-                      color:
-                        language === opt.code
-                          ? qe.accent
-                          : 'var(--text-secondary)',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {opt.label}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-          </Box>
-
-          {/* Price Share Toggle - Only for staff */}
-          {canToggle && (
-            <SettingToggleItem
-              icon={
-                showPrices ? (
-                  <Visibility
-                    sx={{
-                      fontSize: '24px',
-                      color: primitiveColors.system.green.light,
-                    }}
-                  />
-                ) : (
-                  <VisibilityOff
-                    sx={{
-                      fontSize: '24px',
-                      color: primitiveColors.system.gray.light,
-                    }}
-                  />
-                )
-              }
-              iconBgColor={
-                showPrices
-                  ? alpha(primitiveColors.system.green.light, 0.08)
-                  : alpha(primitiveColors.system.gray.light, 0.08)
-              }
-              title={t.settings.sharePrices}
-              subtitle={
-                showPrices ? t.settings.pricesShared : t.settings.pricesPrivate
-              }
-              checked={showPrices}
-              onChange={togglePriceShare}
-              accentColor={primitiveColors.system.green.light}
             />
-          )}
 
-          {/* Currency Toggle - Only for authorized user */}
-          {canToggleCurrency && (
-            <SettingToggleItem
-              icon={
-                isUSD ? (
-                  <AttachMoney sx={{ fontSize: '24px', color: '#2E7D32' }} />
-                ) : (
-                  <CurrencyExchange
-                    sx={{ fontSize: '24px', color: '#2E7D32' }}
-                  />
-                )
-              }
-              iconBgColor={alpha('#2E7D32', 0.08)}
-              title={t.settings.currencyMode}
-              subtitle={
-                isUSD
-                  ? t.settings.currencyUSDActive
-                  : t.settings.currencyCOPActive
-              }
-              checked={isUSD}
-              onChange={toggleCurrency}
-              accentColor="#2E7D32"
-            />
-          )}
-
-          {/* Price Multiplier - Only for currency-authorized */}
-          {canToggleCurrency && (
+            {/* Title and Close */}
             <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+              }}
+            >
+              <Typography
+                variant="h2"
+                sx={{
+                  fontSize: iosTypographyScale.title2,
+                  fontWeight: 700,
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {t.settings.theme}
+              </Typography>
+
+              <IconButton
+                onClick={onClose}
+                aria-label={t.actions.close}
+                sx={{
+                  color: 'var(--text-secondary)',
+                  '&:hover': { backgroundColor: 'var(--surface-tertiary)' },
+                }}
+              >
+                <Close />
+              </IconButton>
+            </Box>
+          </Box>
+
+          {/* Settings List */}
+          <Box sx={{ padding: spacing.md, display: 'grid', gap: spacing.md }}>
+            {/* User Profile / Google Sign In */}
+            <UserProfileCard />
+
+            {/* Theme Toggle */}
+            <SettingToggleItem
+              icon={
+                isDarkMode ? (
+                  <DarkMode
+                    sx={{
+                      fontSize: '24px',
+                      color: qe.accent,
+                    }}
+                  />
+                ) : (
+                  <LightMode
+                    sx={{
+                      fontSize: '24px',
+                      color: qe.accent,
+                    }}
+                  />
+                )
+              }
+              iconBgColor={
+                isDarkMode ? alpha(qe.accent, 0.08) : alpha('#000000', 0.08)
+              }
+              title={isDarkMode ? t.settings.darkMode : t.settings.lightMode}
+              subtitle={isDarkMode ? t.settings.lightMode : t.settings.darkMode}
+              checked={isDarkMode}
+              onChange={toggleTheme}
+              accentColor={qe.accent}
+            />
+
+            {/* Language Selector */}
+            <Box
+              sx={{
                 padding: spacing.sm,
                 backgroundColor: 'var(--surface-primary)',
                 borderRadius: spacing.md,
               }}
             >
+              {/* Language header row */}
               <Box
-                sx={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: spacing.sm,
+                  mb: spacing.sm,
+                }}
               >
-                <Box sx={{ ml: '28px' }}>
+                <Box
+                  sx={{
+                    width: `${layoutConstants.minTouchTarget}px`,
+                    height: `${layoutConstants.minTouchTarget}px`,
+                    borderRadius: radius.md,
+                    backgroundColor: alpha(qe.accent, 0.08),
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Language
+                    sx={{
+                      fontSize: '24px',
+                      color: qe.accent,
+                    }}
+                  />
+                </Box>
+                <Box>
                   <Typography
                     variant="body1"
                     sx={{
@@ -524,7 +374,7 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({
                       color: 'var(--text-primary)',
                     }}
                   >
-                    {t.settings.currencyMultiplier}
+                    {t.settings.language}
                   </Typography>
                   <Typography
                     variant="body2"
@@ -533,59 +383,219 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({
                       color: 'var(--text-secondary)',
                     }}
                   >
-                    {t.settings.currencyMultiplierHint}
+                    {currentLangOption?.flag} {currentLangOption?.label}
                   </Typography>
                 </Box>
               </Box>
+
+              {/* Language options grid */}
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: spacing.xs,
+                }}
+              >
+                {LANGUAGE_OPTIONS.map((opt) => (
+                  <Box
+                    key={opt.code}
+                    onClick={() => setLanguage(opt.code)}
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '2px',
+                      padding: spacing.xs,
+                      borderRadius: radius.md,
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s',
+                      backgroundColor:
+                        language === opt.code
+                          ? alpha(qe.accent, 0.12)
+                          : 'transparent',
+                      border:
+                        language === opt.code
+                          ? `1.5px solid ${qe.accent}`
+                          : '1.5px solid transparent',
+                      '&:active': {
+                        backgroundColor: alpha(qe.accent, 0.08),
+                      },
+                    }}
+                  >
+                    <Typography sx={{ fontSize: '20px', lineHeight: 1 }}>
+                      {opt.flag}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: iosTypographyScale.caption2,
+                        fontWeight: language === opt.code ? 600 : 400,
+                        color:
+                          language === opt.code
+                            ? qe.accent
+                            : 'var(--text-secondary)',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {opt.label}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+
+            {/* Price Share Toggle - Only for staff */}
+            {canToggle && (
+              <SettingToggleItem
+                icon={
+                  showPrices ? (
+                    <Visibility
+                      sx={{
+                        fontSize: '24px',
+                        color: primitiveColors.system.green.light,
+                      }}
+                    />
+                  ) : (
+                    <VisibilityOff
+                      sx={{
+                        fontSize: '24px',
+                        color: primitiveColors.system.gray.light,
+                      }}
+                    />
+                  )
+                }
+                iconBgColor={
+                  showPrices
+                    ? alpha(primitiveColors.system.green.light, 0.08)
+                    : alpha(primitiveColors.system.gray.light, 0.08)
+                }
+                title={t.settings.sharePrices}
+                subtitle={
+                  showPrices
+                    ? t.settings.pricesShared
+                    : t.settings.pricesPrivate
+                }
+                checked={showPrices}
+                onChange={togglePriceShare}
+                accentColor={primitiveColors.system.green.light}
+              />
+            )}
+
+            {/* Currency Toggle - Only for authorized user */}
+            {canToggleCurrency && (
+              <SettingToggleItem
+                icon={
+                  isUSD ? (
+                    <AttachMoney sx={{ fontSize: '24px', color: '#2E7D32' }} />
+                  ) : (
+                    <CurrencyExchange
+                      sx={{ fontSize: '24px', color: '#2E7D32' }}
+                    />
+                  )
+                }
+                iconBgColor={alpha('#2E7D32', 0.08)}
+                title={t.settings.currencyMode}
+                subtitle={
+                  isUSD
+                    ? t.settings.currencyUSDActive
+                    : t.settings.currencyCOPActive
+                }
+                checked={isUSD}
+                onChange={toggleCurrency}
+                accentColor="#2E7D32"
+              />
+            )}
+
+            {/* Price Multiplier - Only for currency-authorized */}
+            {canToggleCurrency && (
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 1.5,
-                  minWidth: 180,
+                  justifyContent: 'space-between',
+                  padding: spacing.sm,
+                  backgroundColor: 'var(--surface-primary)',
+                  borderRadius: spacing.md,
                 }}
               >
-                <Slider
-                  value={multiplier}
-                  onChange={(_e, val) => setMultiplier(val as number)}
-                  min={1}
-                  max={4}
-                  step={0.1}
-                  valueLabelDisplay="auto"
-                  valueLabelFormat={(v) => `x${v}`}
-                  aria-label={t.settings.currencyMultiplier}
+                <Box
                   sx={{
-                    color: '#2E7D32',
-                    '& .MuiSlider-thumb': { width: 20, height: 20 },
-                    '& .MuiSlider-valueLabel': {
-                      fontSize: iosTypographyScale.footnote,
-                    },
-                  }}
-                />
-                <Typography
-                  sx={{
-                    fontSize: iosTypographyScale.footnote,
-                    fontWeight: 600,
-                    color: '#2E7D32',
-                    minWidth: 28,
-                    textAlign: 'right',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing.sm,
                   }}
                 >
-                  x{multiplier}
-                </Typography>
+                  <Box sx={{ ml: '28px' }}>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontSize: iosTypographyScale.headline,
+                        fontWeight: 600,
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      {t.settings.currencyMultiplier}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontSize: iosTypographyScale.footnote,
+                        color: 'var(--text-secondary)',
+                      }}
+                    >
+                      {t.settings.currencyMultiplierHint}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    minWidth: 180,
+                  }}
+                >
+                  <Slider
+                    value={multiplier}
+                    onChange={(_e, val) => setMultiplier(val as number)}
+                    min={1}
+                    max={4}
+                    step={0.1}
+                    valueLabelDisplay="auto"
+                    valueLabelFormat={(v) => `x${v}`}
+                    aria-label={t.settings.currencyMultiplier}
+                    sx={{
+                      color: '#2E7D32',
+                      '& .MuiSlider-thumb': { width: 20, height: 20 },
+                      '& .MuiSlider-valueLabel': {
+                        fontSize: iosTypographyScale.footnote,
+                      },
+                    }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: iosTypographyScale.footnote,
+                      fontWeight: 600,
+                      color: '#2E7D32',
+                      minWidth: 28,
+                      textAlign: 'right',
+                    }}
+                  >
+                    x{multiplier}
+                  </Typography>
+                </Box>
               </Box>
+            )}
+
+            {/* Meditation Reminder */}
+            <MeditationReminderSetting />
+
+            {/* Install App */}
+            <Box sx={{ mt: 2 }}>
+              <InstallButton variant="card" />
             </Box>
-          )}
-
-          {/* Meditation Reminder */}
-          <MeditationReminderSetting />
-
-          {/* Install App */}
-          <Box sx={{ mt: 2 }}>
-            <InstallButton variant="card" />
           </Box>
         </Box>
-      </Box>
+      </FocusTrap>
     </>
   );
 };

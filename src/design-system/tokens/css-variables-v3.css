@@ -61,6 +61,9 @@
   /* ---- Focus ------------------------------------------------------------ */
   --tm-focus-ring: 0 0 0 2px var(--tm-bg), 0 0 0 4px var(--tm-accent);
 
+  /* ---- Scrim (§5.5 overlays & sheets) ------------------------------------ */
+  --tm-scrim: rgba(20, 24, 26, 0.5);
+
   /* ---- Bevel (§E1 "el bisel" — the emerald step-cut) -------------------- */
   /* Chamfer applied to the one brand-CTA primary button + other bisel sites. */
   --tm-bevel: 9px;
