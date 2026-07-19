@@ -15,7 +15,7 @@ import { FieldLabel } from './FieldLabel';
 import { SuggestInput } from './SuggestInput';
 import { NumberInputWithCalc } from './NumberInputWithCalc';
 import { PricePerCaratHint } from './PricePerCaratHint';
-import { SegmentedControl } from './SegmentedControl';
+import { SegmentedControl } from '../../../../design-system/components/SegmentedControl';
 import { CreditoFields } from './CreditoFields';
 import { spanishText, noSpellCheck } from '../utils/fieldLang';
 import { PROCEDENCIAS } from '../../../../data/vocabularies';

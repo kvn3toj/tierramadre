@@ -1,15 +1,30 @@
-import { useEffect, useId, useRef, useState } from "react";
-import { Box } from "@mui/material";
-import { getFoto, fontFamilies } from "../../../../design-system";
+/**
+ * Tierra Madre Design System v3 — SegmentedControl Component
+ *
+ * The ONE segmented control (DS3 addendum §B2/§C). Absorbs the
+ * `Fotosintesis/components/SegmentedControl` (promoted, now `--tm-*`-native
+ * instead of `getFoto("light")` — that hardcoded light mode; theming now
+ * follows the page's actual `[data-theme]`, per §0 "theme is data, not a
+ * fork"), the treasure status/type pills, the analytics tab bar, and
+ * `RedesignVariantToggle`.
+ *
+ * Built on a real `role="radiogroup"` fieldset (hidden radio inputs) — MUI's
+ * `ToggleButtonGroup` doesn't match the DS3 aesthetic.
+ */
+
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { Box, Tooltip } from '@mui/material';
 
 export interface SegmentedOption<TValue extends string = string> {
   value: TValue;
-  label: React.ReactNode;
+  label: ReactNode;
   /** When set, the option is rendered but cannot be selected. */
   disabled?: boolean;
+  /** Optional educational tooltip shown on hover/focus for this segment. */
+  tooltip?: ReactNode;
 }
 
-interface SegmentedControlProps<TValue extends string = string> {
+export interface SegmentedControlProps<TValue extends string = string> {
   options: SegmentedOption<TValue>[];
   value: TValue;
   onChange: (value: TValue) => void;
@@ -37,13 +52,8 @@ interface SegmentedControlProps<TValue extends string = string> {
 }
 
 /** Sentinel segment value for the "write your own answer" entry. */
-const OTHER_SENTINEL = "__otro__";
+const OTHER_SENTINEL = '__otro__';
 
-/**
- * iOS-style segmented control. Built on a real <RadioGroup>-style fieldset for
- * a11y; the visible thumb is just a styled <label>. MUI's `<ToggleButtonGroup>`
- * doesn't match this aesthetic (handoff §3.5).
- */
 export function SegmentedControl<TValue extends string = string>({
   options,
   value,
@@ -51,17 +61,16 @@ export function SegmentedControl<TValue extends string = string>({
   ariaLabel,
   block = false,
   allowOther = false,
-  otherLabel = "Otro",
-  otherPlaceholder = "Escribir respuesta…",
+  otherLabel = 'Otro',
+  otherPlaceholder = 'Escribir respuesta…',
   sanitizeOther,
 }: SegmentedControlProps<TValue>) {
-  const foto = getFoto("light");
   const groupName = useId();
   const otherInputRef = useRef<HTMLInputElement | null>(null);
   const justPickedOther = useRef(false);
 
   const isKnown = (v: string): boolean => options.some((o) => o.value === v);
-  const valueIsCustom = allowOther && value !== "" && !isKnown(value);
+  const valueIsCustom = allowOther && value !== '' && !isKnown(value);
   const [otherMode, setOtherMode] = useState(valueIsCustom);
 
   // Keep "other mode" in sync with the external value: a known option wins back
@@ -71,7 +80,7 @@ export function SegmentedControl<TValue extends string = string>({
     if (!allowOther) return;
     if (isKnown(value)) {
       setOtherMode(false);
-    } else if (value !== "") {
+    } else if (value !== '') {
       setOtherMode(true);
     } else if (justPickedOther.current) {
       justPickedOther.current = false;
@@ -91,7 +100,7 @@ export function SegmentedControl<TValue extends string = string>({
     if (picked === OTHER_SENTINEL) {
       justPickedOther.current = true;
       setOtherMode(true);
-      if (!valueIsCustom) onChange("" as TValue);
+      if (!valueIsCustom) onChange('' as TValue);
       window.setTimeout(() => otherInputRef.current?.focus(), 30);
       return;
     }
@@ -104,48 +113,54 @@ export function SegmentedControl<TValue extends string = string>({
       role="radiogroup"
       aria-label={ariaLabel}
       sx={{
-        display: "inline-flex",
+        display: 'inline-flex',
         // Wrap to a second row instead of forcing the parent grid cell wider
         // (grid items default to min-width:auto). Prevents horizontal overflow
         // when an allowOther control with many options lands in a 1fr column.
-        flexWrap: "wrap",
-        maxWidth: "100%",
-        width: block ? "100%" : "auto",
-        padding: "3px",
-        gap: "2px",
-        background: foto.surfaces.inset,
-        border: `1px solid ${foto.surfaces.edge}`,
-        borderRadius: "9px",
+        flexWrap: 'wrap',
+        maxWidth: '100%',
+        width: block ? '100%' : 'auto',
+        padding: '3px',
+        gap: '2px',
+        backgroundColor: 'var(--tm-well)',
+        border: '1px solid var(--tm-border)',
+        borderRadius: 'var(--tm-radius-pill)',
       }}
     >
       {renderOptions.map((opt) => {
         const isActive = activeSegment === opt.value;
         const inputId = `${groupName}-${opt.value}`;
-        return (
+        const segment = (
           <Box
             key={opt.value}
             component="label"
             htmlFor={inputId}
             sx={{
-              flex: block ? 1 : "0 0 auto",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "6px 14px",
-              borderRadius: "7px",
-              fontSize: 11.5,
+              flex: block ? 1 : '0 0 auto',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '6px 14px',
+              borderRadius: 'var(--tm-radius-pill)',
+              fontFamily: 'var(--tm-font-ui)',
+              fontSize: '0.71875rem',
               fontWeight: isActive ? 600 : 500,
               color: opt.disabled
-                ? foto.ink.mute
+                ? 'var(--tm-subtle)'
                 : isActive
-                  ? foto.ink.primary
-                  : foto.ink.secondary,
-              background: isActive ? foto.surfaces.canvas : "transparent",
-              boxShadow: isActive ? `0 1px 2px ${foto.surfaces.rule}` : "none",
-              cursor: opt.disabled ? "not-allowed" : "pointer",
-              transition: "background 120ms ease, color 120ms ease",
-              userSelect: "none",
+                  ? 'var(--tm-text)'
+                  : 'var(--tm-muted)',
+              backgroundColor: isActive ? 'var(--tm-surface)' : 'transparent',
+              cursor: opt.disabled ? 'not-allowed' : 'pointer',
+              // DS3 §4: transition color/background only.
+              transition:
+                'background-color var(--tm-fast) var(--tm-ease), color var(--tm-fast) var(--tm-ease)',
+              userSelect: 'none',
               opacity: opt.disabled ? 0.7 : 1,
+              '&:has(:focus-visible)': {
+                outline: 'none',
+                boxShadow: 'var(--tm-focus-ring)',
+              },
             }}
           >
             <Box
@@ -158,15 +173,29 @@ export function SegmentedControl<TValue extends string = string>({
               disabled={opt.disabled}
               onChange={() => handlePick(opt.value)}
               sx={{
-                position: "absolute",
+                position: 'absolute',
                 opacity: 0,
-                pointerEvents: "none",
+                pointerEvents: 'none',
                 width: 0,
                 height: 0,
               }}
             />
             {opt.label}
           </Box>
+        );
+
+        return opt.tooltip ? (
+          <Tooltip
+            key={opt.value}
+            title={opt.tooltip}
+            arrow
+            enterDelay={400}
+            placement="top"
+          >
+            {segment}
+          </Tooltip>
+        ) : (
+          segment
         );
       })}
     </Box>
@@ -175,7 +204,7 @@ export function SegmentedControl<TValue extends string = string>({
   if (!allowOther) return radioGroup;
 
   return (
-    <Box sx={{ display: "block", maxWidth: "100%" }}>
+    <Box sx={{ display: 'block', maxWidth: '100%' }}>
       {radioGroup}
       {otherMode ? (
         <Box
@@ -190,22 +219,23 @@ export function SegmentedControl<TValue extends string = string>({
             onChange((sanitizeOther ? sanitizeOther(raw) : raw) as TValue);
           }}
           sx={{
-            marginTop: "8px",
-            width: "100%",
-            background: foto.surfaces.inset,
-            border: `1px solid ${foto.surfaces.rule}`,
-            borderRadius: "9px",
-            padding: "10px 13px",
-            fontSize: 13,
-            color: foto.ink.primary,
-            fontFamily: fontFamilies.system,
-            outline: "none",
-            transition: "border-color 120ms ease, box-shadow 120ms ease",
-            "&:focus": {
-              borderColor: foto.accent.primary,
-              boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+            marginTop: '8px',
+            width: '100%',
+            backgroundColor: 'var(--tm-well)',
+            border: '1px solid var(--tm-border)',
+            borderRadius: 'var(--tm-radius-control)',
+            padding: '10px 13px',
+            fontFamily: 'var(--tm-font-ui)',
+            fontSize: '0.8125rem',
+            color: 'var(--tm-text)',
+            outline: 'none',
+            transition:
+              'border-color var(--tm-fast) var(--tm-ease), box-shadow var(--tm-fast) var(--tm-ease)',
+            '&:focus': {
+              borderColor: 'var(--tm-accent)',
+              boxShadow: 'var(--tm-focus-ring)',
             },
-            "::placeholder": { color: foto.ink.mute },
+            '::placeholder': { color: 'var(--tm-subtle)' },
           }}
         />
       ) : null}

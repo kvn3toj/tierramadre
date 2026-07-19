@@ -263,6 +263,13 @@ export {
 // Field — label[for] + help + error wrapper for non-self-labeled controls.
 export { Field, type FieldProps } from './components/Field';
 
+// SegmentedControl — the ONE bounded exclusive-choice switch.
+export {
+  SegmentedControl,
+  type SegmentedControlProps,
+  type SegmentedOption,
+} from './components/SegmentedControl';
+
 // Layout
 export {
   Stack,

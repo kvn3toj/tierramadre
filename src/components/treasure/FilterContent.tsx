@@ -23,6 +23,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { Button } from '../../design-system/components/Button';
+import { SegmentedControl } from '../../design-system/components/SegmentedControl';
 import { LogRangeSlider } from '../shared/LogRangeSlider';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { Theme } from '@mui/material/styles';
@@ -265,92 +266,54 @@ export const FilterContent = memo(function FilterContent({
 
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        {/* Row 1: Status segmented control (iOS-style) with educational tooltips */}
-        <Box
-          sx={{
-            display: 'flex',
-            bgcolor: isLight
-              ? surfacesLight.background.secondary
-              : surfacesDark.background.tertiary,
-            borderRadius: '24px',
-            p: 0.4,
-            gap: 0.25,
-          }}
-        >
-          {[
+        {/* Row 1: Status segmented control, with educational tooltips per segment */}
+        <SegmentedControl
+          ariaLabel="Filtrar por estado"
+          block
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={[
             {
               value: 'available' as StatusFilter,
-              label: t.treasure.filter.available,
-              dot: emeraldCore.primary,
               tooltip: t.treasure.filter.availableHint,
-            },
-            {
-              value: 'sold' as StatusFilter,
-              label: t.treasure.filter.sold,
-              dot: semanticColors.error.main,
-              tooltip: t.treasure.filter.soldHint,
-            },
-            {
-              value: 'all' as StatusFilter,
-              label: t.treasure.filter.all,
-              dot: null,
-              tooltip: t.treasure.filter.allHint,
-            },
-          ].map((option) => (
-            <Tooltip
-              key={option.value}
-              title={option.tooltip}
-              arrow
-              enterDelay={400}
-              placement="top"
-            >
-              <Box
-                onClick={() => setStatusFilter(option.value)}
-                sx={{
-                  flex: 1,
-                  textAlign: 'center',
-                  py: 0.75,
-                  px: 1,
-                  borderRadius: '20px',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: cssTransition.default,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 0.5,
-                  ...(statusFilter === option.value
-                    ? {
-                        bgcolor: isLight
-                          ? 'white'
-                          : surfacesDark.background.secondary,
-                        color: emeraldCore.dark,
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
-                      }
-                    : {
-                        color: theme.palette.text.secondary,
-                        '&:hover': {
-                          bgcolor: alpha(emeraldCore.primary, 0.05),
-                        },
-                      }),
-                }}
-              >
-                {option.dot && (
+              label: (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Box
                     sx={{
                       width: 6,
                       height: 6,
                       borderRadius: '50%',
-                      bgcolor: option.dot,
+                      bgcolor: 'var(--tm-accent-pure)',
                     }}
                   />
-                )}
-                {option.label}
-              </Box>
-            </Tooltip>
-          ))}
-        </Box>
+                  {t.treasure.filter.available}
+                </Box>
+              ),
+            },
+            {
+              value: 'sold' as StatusFilter,
+              tooltip: t.treasure.filter.soldHint,
+              label: (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Box
+                    sx={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      bgcolor: 'var(--tm-danger)',
+                    }}
+                  />
+                  {t.treasure.filter.sold}
+                </Box>
+              ),
+            },
+            {
+              value: 'all' as StatusFilter,
+              tooltip: t.treasure.filter.allHint,
+              label: t.treasure.filter.all,
+            },
+          ]}
+        />
 
         {/* Row 2: Type + Sort in pill format */}
         <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>

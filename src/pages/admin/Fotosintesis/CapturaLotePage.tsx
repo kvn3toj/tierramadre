@@ -35,7 +35,7 @@ import { TicketHeader, type TicketMeta } from './components/TicketHeader';
 import { FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
 import { PreponderanceRing } from './components/PreponderanceRing';
 import { ItemMiniCard } from './components/ItemMiniCard';
-import { SegmentedControl } from './components/SegmentedControl';
+import { SegmentedControl } from '../../../design-system/components/SegmentedControl';
 import { FieldLabel } from './components/FieldLabel';
 import { SuggestInput } from './components/SuggestInput';
 import { NumberInputWithCalc } from './components/NumberInputWithCalc';

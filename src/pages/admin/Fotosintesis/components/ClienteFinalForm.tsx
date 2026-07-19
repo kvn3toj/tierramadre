@@ -26,7 +26,7 @@ import { getFoto, fontFamilies } from '../../../../design-system';
 import { useAuthedConvexAction, convexApi } from '../../../../lib/convex-safe';
 import { verifyNit } from '../../../../utils/nitVerify';
 import { FieldLabel } from './FieldLabel';
-import { SegmentedControl } from './SegmentedControl';
+import { SegmentedControl } from '../../../../design-system/components/SegmentedControl';
 import { properName, streetAddress, noSpellCheck } from '../utils/fieldLang';
 import { EntityPicker } from './EntityPicker';
 import type { Id } from '../../../../../convex/_generated/dataModel';

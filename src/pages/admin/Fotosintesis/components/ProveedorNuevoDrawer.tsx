@@ -24,7 +24,7 @@ import {
   streetAddress,
   noSpellCheck,
 } from '../utils/fieldLang';
-import { SegmentedControl } from './SegmentedControl';
+import { SegmentedControl } from '../../../../design-system/components/SegmentedControl';
 import { verifyNit } from '../../../../utils/nitVerify';
 
 // ---------------------------------------------------------------------------
