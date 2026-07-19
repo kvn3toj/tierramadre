@@ -749,7 +749,6 @@ export const FilterContent = memo(function FilterContent({
           gap: 2,
           flexWrap: 'wrap',
           alignItems: 'center',
-          mb: showAdvancedFilters ? 2 : 0,
         }}
       >
         {/* Search */}

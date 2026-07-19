@@ -73,8 +73,8 @@ export default function DesktopFilterToolbar({
         display: 'flex',
         gap: 2,
         alignItems: 'center',
-        mt: 2,
-        pt: 2,
+        mt: 1,
+        pt: 1,
         borderTop: '1px solid',
         borderColor: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)',
       }}
