@@ -23,9 +23,10 @@ import RedesignVariantToggle from '../redesign/RedesignVariantToggle';
 import {
   MobileSearchBar,
   TreasureEmptyState,
-  TreasureDesktopFilterPanel,
   CatalogHeader,
   CatalogSkeletonGrid,
+  DesktopFilterToolbar,
+  TreasureDesktopResultsSummary,
 } from './browser';
 import TreasureErrorState from './browser/TreasureErrorState';
 import ScrollToTop from '../shared/ScrollToTop';
@@ -201,11 +202,63 @@ export default function TreasureBrowser({
         activeOrigin={originTab}
         onOriginChange={setOriginTab}
         trailingContent={
-          !isMobile ? <FilterContent {...filterContentProps} /> : undefined
+          !isMobile ? (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                flexWrap: 'wrap',
+                justifyContent: 'flex-end',
+              }}
+            >
+              <FilterContent {...filterContentProps} />
+              <DesktopFilterToolbar
+                dense
+                shouldShowPrices={shouldShowPrices}
+                stats={stats}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                savedFilters={savedFilters}
+                hasFilters={hasFilters}
+                filters={filters}
+                setSearch={setSearch}
+                setColorFilter={setColorFilter}
+                setQualityFilter={setQualityFilter}
+                setTypeFilter={setTypeFilter}
+                setStatusFilter={setStatusFilter}
+                setShapeFilter={setShapeFilter}
+                setPriceRange={setPriceRange}
+                setSortBy={setSortBy}
+                setCantidadFilter={setCantidadFilter}
+                trackViewModeChange={analyticsHook.trackViewModeChange}
+                isLight={isLight}
+                resultsSummary={
+                  <TreasureDesktopResultsSummary
+                    theme={theme}
+                    isLight={isLight}
+                    t={t}
+                    filteredTreasureLength={filteredTreasure.length}
+                    visibleItemsLength={visibleItems.length}
+                    viewMode={viewMode}
+                    isProviderMode={providerMode}
+                    shouldShowPrices={shouldShowPrices}
+                    formatFullCurrency={formatFullCurrency}
+                    filteredStatsTotalValue={filteredStats.totalValue}
+                    showFavoritesOnly={showFavoritesOnly}
+                    favoritesCount={favoritesCount}
+                    onToggleFavoritesOnly={() =>
+                      setShowFavoritesOnly(!showFavoritesOnly)
+                    }
+                  />
+                }
+              />
+            </Box>
+          ) : undefined
         }
       />
 
-      {isMobile ? (
+      {isMobile && (
         <>
           <MobileSearchBar
             search={filters.search}
@@ -282,44 +335,6 @@ export default function TreasureBrowser({
             <FilterContent {...filterContentProps} compact />
           </FilterSheet>
         </>
-      ) : (
-        <TreasureDesktopFilterPanel
-          isLight={isLight}
-          shouldShowPrices={shouldShowPrices}
-          stats={stats}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          savedFilters={savedFilters}
-          hasFilters={hasFilters}
-          filters={filters}
-          setSearch={setSearch}
-          setColorFilter={setColorFilter}
-          setQualityFilter={setQualityFilter}
-          setTypeFilter={setTypeFilter}
-          setStatusFilter={setStatusFilter}
-          setShapeFilter={setShapeFilter}
-          setPriceRange={setPriceRange}
-          setSortBy={setSortBy}
-          setCantidadFilter={setCantidadFilter}
-          trackViewModeChange={analyticsHook.trackViewModeChange}
-          resultsSummary={{
-            theme,
-            isLight,
-            t,
-            filteredTreasureLength: filteredTreasure.length,
-            allTreasureLength: allTreasure.length,
-            visibleItemsLength: visibleItems.length,
-            viewMode,
-            isProviderMode: providerMode,
-            shouldShowPrices,
-            formatFullCurrency,
-            filteredStatsTotalValue: filteredStats.totalValue,
-            showFavoritesOnly,
-            favoritesCount,
-            onToggleFavoritesOnly: () =>
-              setShowFavoritesOnly(!showFavoritesOnly),
-          }}
-        />
       )}
 
       {!isMobile && hasFilters && (

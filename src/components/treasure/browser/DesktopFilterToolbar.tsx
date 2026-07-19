@@ -44,6 +44,9 @@ interface DesktopFilterToolbarProps {
   /** Rendered in place of the row's flex spacer — keeps the results count on
    * the same row as saved-filters/view-toggle instead of a separate block. */
   resultsSummary?: React.ReactNode;
+  /** Drops the top border/margin — for when this renders inline beside the
+   * page title instead of as its own row below. */
+  dense?: boolean;
 }
 
 export default function DesktopFilterToolbar({
@@ -66,6 +69,7 @@ export default function DesktopFilterToolbar({
   trackViewModeChange,
   isLight,
   resultsSummary,
+  dense = false,
 }: DesktopFilterToolbarProps) {
   return (
     <Box
@@ -73,44 +77,20 @@ export default function DesktopFilterToolbar({
         display: 'flex',
         gap: 2,
         alignItems: 'center',
-        mt: 1,
-        pt: 1,
-        borderTop: '1px solid',
-        borderColor: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)',
+        ...(dense
+          ? {}
+          : {
+              mt: 1,
+              pt: 1,
+              borderTop: '1px solid',
+              borderColor: isLight
+                ? 'rgba(0,0,0,0.06)'
+                : 'rgba(255,255,255,0.06)',
+            }),
       }}
     >
-      {shouldShowPrices && (
-        <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-          <Chip
-            size="small"
-            icon={<Gem size={12} />}
-            label={stats.looseStones}
-            sx={{
-              bgcolor: alpha(emeraldCore.primary, 0.1),
-              color: emeraldCore.primary,
-              fontWeight: 600,
-              fontSize: '0.7rem',
-              height: 24,
-              '& .MuiChip-icon': { color: emeraldCore.primary },
-            }}
-          />
-          <Chip
-            size="small"
-            icon={<Crown size={12} />}
-            label={stats.jewelry}
-            sx={{
-              // Quiet Emerald: emerald is the only saturated color — jewelry
-              // reads as neutral ink, not gold.
-              bgcolor: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)',
-              color: isLight ? '#5C6360' : '#9AA09D',
-              fontWeight: 600,
-              fontSize: '0.7rem',
-              height: 24,
-              '& .MuiChip-icon': { color: isLight ? '#5C6360' : '#9AA09D' },
-            }}
-          />
-        </Box>
-      )}
+      {/* Find cluster: saved searches sits right after Search/Filtros (which
+          render just before this component) — all three narrow the catalog. */}
       <SavedFiltersDropdown
         presets={savedFilters.presets}
         onSavePreset={(name) =>
@@ -142,7 +122,49 @@ export default function DesktopFilterToolbar({
         onDeletePreset={savedFilters.deletePreset}
         hasActiveFilters={hasFilters}
       />
-      {resultsSummary || <Box sx={{ flex: 1 }} />}
+
+      {/* Personal/info cluster: Favoritos + stat chips + total value — a
+          distinct concept from "narrow the catalog", separated with a
+          little extra breathing room from the find cluster above. */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 1 }}>
+        {resultsSummary}
+        {shouldShowPrices && (
+          <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+            <Chip
+              size="small"
+              icon={<Gem size={12} />}
+              label={stats.looseStones}
+              sx={{
+                bgcolor: alpha(emeraldCore.primary, 0.1),
+                color: emeraldCore.primary,
+                fontWeight: 600,
+                fontSize: '0.7rem',
+                height: 24,
+                '& .MuiChip-icon': { color: emeraldCore.primary },
+              }}
+            />
+            <Chip
+              size="small"
+              icon={<Crown size={12} />}
+              label={stats.jewelry}
+              sx={{
+                // Quiet Emerald: emerald is the only saturated color —
+                // jewelry reads as neutral ink, not gold.
+                bgcolor: isLight
+                  ? 'rgba(0,0,0,0.06)'
+                  : 'rgba(255,255,255,0.08)',
+                color: isLight ? '#5C6360' : '#9AA09D',
+                fontWeight: 600,
+                fontSize: '0.7rem',
+                height: 24,
+                '& .MuiChip-icon': { color: isLight ? '#5C6360' : '#9AA09D' },
+              }}
+            />
+          </Box>
+        )}
+      </Box>
+
+      {!dense && <Box sx={{ flex: 1 }} />}
       <ToggleButtonGroup
         value={viewMode}
         exclusive

@@ -19,7 +19,6 @@ export interface TreasureDesktopResultsSummaryProps {
   isLight: boolean;
   t: Translations;
   filteredTreasureLength: number;
-  allTreasureLength: number;
   visibleItemsLength: number;
   /** Current view — grid renders all filtered items, list paginates. */
   viewMode: 'grid' | 'list';
@@ -37,7 +36,6 @@ export default function TreasureDesktopResultsSummary({
   isLight,
   t,
   filteredTreasureLength,
-  allTreasureLength,
   visibleItemsLength,
   viewMode,
   isProviderMode,
@@ -61,36 +59,23 @@ export default function TreasureDesktopResultsSummary({
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Typography
-          variant="body2"
-          sx={{ color: theme.palette.text.secondary }}
-        >
-          {filteredTreasureLength === allTreasureLength ? (
-            <>
-              <strong style={{ color: theme.palette.text.primary }}>
-                {allTreasureLength}
-              </strong>{' '}
-              {t.treasure.totalEmeralds}
-            </>
-          ) : viewMode === 'grid' ? (
-            // Grid view renders every filtered item (virtualized), so the
-            // paginated "visible" count would understate what's shown.
-            <>
-              <strong style={{ color: theme.palette.text.primary }}>
-                {filteredTreasureLength}
-              </strong>{' '}
-              {t.treasure.emeralds}
-            </>
-          ) : (
-            <>
-              {t.treasure.showingOf}{' '}
-              <strong style={{ color: theme.palette.text.primary }}>
-                {visibleItemsLength}
-              </strong>{' '}
-              de {filteredTreasureLength} {t.treasure.emeralds}
-            </>
-          )}
-        </Typography>
+        {/* Grid view renders every filtered item, and CatalogHeader's own
+            subtitle ("N PIEZAS · ...") already shows that same count live —
+            repeating it here would just be the same number twice. List view
+            paginates, so "Mostrando X de Y" is genuinely different info the
+            subtitle doesn't carry — that one stays. */}
+        {viewMode === 'list' && (
+          <Typography
+            variant="body2"
+            sx={{ color: theme.palette.text.secondary }}
+          >
+            {t.treasure.showingOf}{' '}
+            <strong style={{ color: theme.palette.text.primary }}>
+              {visibleItemsLength}
+            </strong>{' '}
+            de {filteredTreasureLength} {t.treasure.emeralds}
+          </Typography>
+        )}
         {!isProviderMode && (
           <Chip
             icon={
