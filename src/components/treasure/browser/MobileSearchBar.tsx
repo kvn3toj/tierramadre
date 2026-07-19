@@ -25,6 +25,7 @@ import {
 } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { ActiveFilterChips } from '../';
+import { useScrollFade, ScrollFadeEdges } from '../FilterContent';
 import { useCurrencyFormat } from '../../../contexts/CurrencyContext';
 import { usePriceShare } from '../../../contexts/PriceShareContext';
 import type {
@@ -110,7 +111,7 @@ export default function MobileSearchBar({
   const theme = useTheme();
   const [quickAccessOpen, setQuickAccessOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<QuickAccessTab>('recent');
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const quickAccessScroll = useScrollFade<HTMLDivElement>();
   const { formatCurrency } = useCurrencyFormat();
   const { shouldShowPrices } = usePriceShare();
 
@@ -617,32 +618,38 @@ export default function MobileSearchBar({
 
           {/* Horizontal scroll carousel */}
           {quickAccessItems.length > 0 ? (
-            <Box
-              ref={scrollRef}
-              sx={{
-                display: 'flex',
-                gap: '6px',
-                overflowX: 'auto',
-                scrollSnapType: 'x mandatory',
-                scrollbarWidth: 'none',
-                '&::-webkit-scrollbar': { display: 'none' },
-                WebkitOverflowScrolling: 'touch',
-                pb: 0.25,
-              }}
-            >
-              {quickAccessItems.slice(0, 10).map((item) => (
-                <QuickAccessCard
-                  key={item.item}
-                  item={item}
-                  onClick={() => {
-                    onRecentItemClick?.(item);
-                    setQuickAccessOpen(false);
-                  }}
-                  isLight={isLight}
-                  hidePrice={!shouldShowPrices}
-                  formatCurrency={formatCurrency}
-                />
-              ))}
+            <Box sx={{ position: 'relative' }}>
+              <ScrollFadeEdges
+                canScrollLeft={quickAccessScroll.canScrollLeft}
+                canScrollRight={quickAccessScroll.canScrollRight}
+              />
+              <Box
+                ref={quickAccessScroll.ref}
+                sx={{
+                  display: 'flex',
+                  gap: '6px',
+                  overflowX: 'auto',
+                  scrollSnapType: 'x mandatory',
+                  scrollbarWidth: 'none',
+                  '&::-webkit-scrollbar': { display: 'none' },
+                  WebkitOverflowScrolling: 'touch',
+                  pb: 0.25,
+                }}
+              >
+                {quickAccessItems.slice(0, 10).map((item) => (
+                  <QuickAccessCard
+                    key={item.item}
+                    item={item}
+                    onClick={() => {
+                      onRecentItemClick?.(item);
+                      setQuickAccessOpen(false);
+                    }}
+                    isLight={isLight}
+                    hidePrice={!shouldShowPrices}
+                    formatCurrency={formatCurrency}
+                  />
+                ))}
+              </Box>
             </Box>
           ) : (
             <Box sx={{ py: 2, textAlign: 'center' }}>

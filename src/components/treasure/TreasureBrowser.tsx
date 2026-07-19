@@ -7,17 +7,18 @@
 
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
-import { Box, useTheme } from '@mui/material';
+import { Box, Chip, alpha, useTheme } from '@mui/material';
 import { useLanguage } from '../../contexts/LanguageContext';
 import CertificationUpload from './CertificationUpload';
 import { ComparisonBar, ComparisonModal } from '../comparison';
-import { zIndex } from '../../design-system';
+import { zIndex, FilterSheet } from '../../design-system';
+import { emeraldCore } from '../../design-system/tokens/colors';
 import { TreasureItem } from '../../types';
 import ListRow from './ListRow';
 import VirtualGrid from './VirtualGrid';
 import { ActiveFilterChips } from './ActiveFilterChips';
 import RecentlyViewedCarousel from './RecentlyViewedCarousel';
-import IOSFilterSheet from '../ios/IOSFilterSheet';
+import { FilterContent } from './FilterContent';
 import RedesignVariantToggle from '../redesign/RedesignVariantToggle';
 import {
   MobileSearchBar,
@@ -93,7 +94,6 @@ export default function TreasureBrowser({
     visibleItems,
     hasFilters,
     activeFilterCount,
-    filterOptions,
     filterContentProps,
     urlSync,
     savedFilters,
@@ -142,19 +142,6 @@ export default function TreasureBrowser({
     canAddToComparison,
     applySavedPreset,
   } = c;
-
-  const { colors, shapes, qualities, categorias, colecciones } = filterOptions;
-  const {
-    statusFilter,
-    sortBy,
-    typeFilter,
-    categoriaFilter,
-    coleccionFilter,
-    colorFilter,
-    shapeFilter,
-    qualityFilter,
-    priceRange,
-  } = filters;
 
   // Quiet Emerald origin tabs (Todas / Muzo / Chivor / Coscuez). A self-contained
   // quick filter applied on top of the controller's filtered set, keyed off the
@@ -249,44 +236,48 @@ export default function TreasureBrowser({
             favoriteItems={favoriteMappedItems}
           />
 
-          <IOSFilterSheet
+          <FilterSheet
             open={filterSheetOpen}
             onClose={() => setFilterSheetOpen(false)}
-            statusFilter={statusFilter}
-            sortBy={sortBy}
-            typeFilter={typeFilter}
-            categoriaFilter={categoriaFilter}
-            coleccionFilter={coleccionFilter}
-            colorFilter={colorFilter}
-            shapeFilter={shapeFilter}
-            qualityFilter={qualityFilter}
-            priceRange={priceRange}
-            caratRange={filters.caratRange}
-            cantidadFilter={filters.cantidadFilter}
-            setStatusFilter={setStatusFilter}
-            setSortBy={setSortBy}
-            setTypeFilter={setTypeFilter}
-            setCategoriaFilter={setCategoriaFilter}
-            setColeccionFilter={setColeccionFilter}
-            setColorFilter={setColorFilter}
-            setShapeFilter={setShapeFilter}
-            setQualityFilter={setQualityFilter}
-            setPriceRange={setPriceRange}
-            setCaratRange={setCaratRange}
-            setCantidadFilter={setCantidadFilter}
-            colors={colors}
-            shapes={shapes}
-            qualities={qualities}
-            categorias={categorias}
-            colecciones={colecciones}
-            priceMinMax={priceMinMax}
-            caratMinMax={caratMinMax}
-            hasFilters={hasFilters}
-            onClearFilters={urlSync.handleClearFilters}
+            title="Filtros"
             resultCount={filteredTreasure.length}
-            savedPresets={savedFilters.presets}
-            onApplyPreset={applySavedPreset}
-          />
+            activeFilterCount={activeFilterCount}
+            onClear={urlSync.handleClearFilters}
+            onApply={() => setFilterSheetOpen(false)}
+          >
+            {savedFilters.presets.length > 0 && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 0.5,
+                  overflowX: 'auto',
+                  flexWrap: 'wrap',
+                  mb: 1.5,
+                  pb: 0.5,
+                }}
+              >
+                {savedFilters.presets.map((preset) => (
+                  <Chip
+                    key={preset.id}
+                    label={preset.name}
+                    size="small"
+                    onClick={() => applySavedPreset(preset)}
+                    sx={{
+                      flexShrink: 0,
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      minHeight: 32,
+                      bgcolor: alpha(emeraldCore.primary, 0.08),
+                      color: emeraldCore.primary,
+                      border: `1px solid ${alpha(emeraldCore.primary, 0.2)}`,
+                      '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.15) },
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
+            <FilterContent {...filterContentProps} compact />
+          </FilterSheet>
         </>
       ) : (
         <TreasureDesktopFilterPanel

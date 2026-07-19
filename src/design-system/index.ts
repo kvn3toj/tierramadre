@@ -282,6 +282,9 @@ export { ErrorState, type ErrorStateProps } from './components/ErrorState';
 // Skeleton — the ONE loading placeholder.
 export { Skeleton, type SkeletonProps } from './components/Skeleton';
 
+// FilterSheet — the ONE filter overlay.
+export { FilterSheet, type FilterSheetProps } from './components/FilterSheet';
+
 // Layout
 export {
   Stack,

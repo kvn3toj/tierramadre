@@ -8,7 +8,7 @@
  * REFACTORED: Props grouped into logical objects to reduce prop drilling.
  */
 
-import { memo } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Box,
   Typography,
@@ -157,6 +157,85 @@ export interface FilterContentProps {
   compact?: boolean;
 }
 
+// =============================================================================
+// SCROLL FADE — shared by every horizontal-scroll chip/pill row in this file
+// (and MobileSearchBar's quick-access carousel). Modeled on
+// RecentlyViewedCarousel, the one place this pattern was already correct.
+// =============================================================================
+
+export function useScrollFade<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const update = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    update();
+    el.addEventListener('scroll', update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener('scroll', update);
+      ro.disconnect();
+    };
+  }, [update]);
+
+  return { ref, canScrollLeft, canScrollRight };
+}
+
+export function ScrollFadeEdges({
+  canScrollLeft,
+  canScrollRight,
+}: {
+  canScrollLeft: boolean;
+  canScrollRight: boolean;
+}) {
+  return (
+    <>
+      {canScrollLeft && (
+        <Box
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            bottom: 0,
+            width: 24,
+            zIndex: 1,
+            pointerEvents: 'none',
+            background:
+              'linear-gradient(to right, var(--tm-surface), transparent)',
+          }}
+        />
+      )}
+      {canScrollRight && (
+        <Box
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: 24,
+            zIndex: 1,
+            pointerEvents: 'none',
+            background:
+              'linear-gradient(to left, var(--tm-surface), transparent)',
+          }}
+        />
+      )}
+    </>
+  );
+}
+
 export const FilterContent = memo(function FilterContent({
   search,
   setSearch,
@@ -206,9 +285,17 @@ export const FilterContent = memo(function FilterContent({
   const { t } = useLanguage();
   const hidePriceFilter = !shouldShowPrices;
 
+  // Scroll-fade state for the two horizontal-scroll pill rows below (category,
+  // shape/quality/cantidad). Called unconditionally — Rules of Hooks — even
+  // though only the compact branch renders them.
+  const categoryScroll = useScrollFade<HTMLDivElement>();
+  const moreFiltersScroll = useScrollFade<HTMLDivElement>();
+
   // Compact mode: Beautiful modern pill-based filters (mobile)
   if (compact) {
-    // Common pill styles
+    // Common pill styles — minHeight 44 is the WCAG touch-target floor; the
+    // visible chip stays compact (fontSize/gap unchanged), only the hit area
+    // grows, via alignItems:center centering the label inside the taller box.
     const pillBase = {
       borderRadius: '20px',
       fontSize: '0.75rem',
@@ -216,12 +303,16 @@ export const FilterContent = memo(function FilterContent({
       cursor: 'pointer',
       transition: cssTransition.default,
       border: '1px solid',
-      px: 1.5,
-      py: 0.5,
+      minHeight: 44,
+      px: 1.75,
       display: 'inline-flex',
       alignItems: 'center',
       gap: 0.5,
       whiteSpace: 'nowrap' as const,
+      '&:focus-visible': {
+        outline: 'none',
+        boxShadow: 'var(--tm-focus-ring)',
+      },
     };
 
     const pillActive = {
@@ -242,6 +333,35 @@ export const FilterContent = memo(function FilterContent({
         bgcolor: alpha(emeraldCore.primary, 0.05),
       },
     };
+
+    // Accessible pill — role="button" + keyboard activation + aria-pressed,
+    // matching the interaction contract IOSFilterSheet's FilterRow already
+    // had (this row-family didn't).
+    const Pill = ({
+      active,
+      onClick,
+      children,
+    }: {
+      active: boolean;
+      onClick: () => void;
+      children: React.ReactNode;
+    }) => (
+      <Box
+        role="button"
+        tabIndex={0}
+        aria-pressed={active}
+        onClick={onClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick();
+          }
+        }}
+        sx={{ ...pillBase, ...(active ? pillActive : pillInactive) }}
+      >
+        {children}
+      </Box>
+    );
 
     // Price tier options
     const priceTiers = [
@@ -329,16 +449,13 @@ export const FilterContent = memo(function FilterContent({
               label: `💍 ${t.treasure.filter.jewelry}`,
             },
           ].map((option) => (
-            <Box
+            <Pill
               key={option.value}
+              active={typeFilter === option.value}
               onClick={() => setTypeFilter(option.value)}
-              sx={{
-                ...pillBase,
-                ...(typeFilter === option.value ? pillActive : pillInactive),
-              }}
             >
               {option.label}
-            </Box>
+            </Pill>
           ))}
 
           {/* Sort pill */}
@@ -383,41 +500,42 @@ export const FilterContent = memo(function FilterContent({
             >
               {t.treasure.filter.category}
             </Typography>
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 0.5,
-                overflowX: 'auto',
-                pb: 0.5,
-                mx: -1,
-                px: 1,
-                '&::-webkit-scrollbar': { display: 'none' },
-                scrollbarWidth: 'none',
-              }}
-            >
+            <Box sx={{ position: 'relative' }}>
+              <ScrollFadeEdges
+                canScrollLeft={categoryScroll.canScrollLeft}
+                canScrollRight={categoryScroll.canScrollRight}
+              />
               <Box
-                onClick={() => setCategoriaFilter('all')}
+                ref={categoryScroll.ref}
                 sx={{
-                  ...pillBase,
-                  ...(categoriaFilter === 'all' ? pillActive : pillInactive),
+                  display: 'flex',
+                  gap: 0.5,
+                  overflowX: 'auto',
+                  pb: 0.5,
+                  mx: -1,
+                  px: 1,
+                  '&::-webkit-scrollbar': { display: 'none' },
+                  scrollbarWidth: 'none',
                 }}
               >
-                {t.treasure.filter.allCategories}
-              </Box>
-              {categorias.map((cat) => (
-                <Box
-                  key={cat}
-                  onClick={() =>
-                    setCategoriaFilter(categoriaFilter === cat ? 'all' : cat)
-                  }
-                  sx={{
-                    ...pillBase,
-                    ...(categoriaFilter === cat ? pillActive : pillInactive),
-                  }}
+                <Pill
+                  active={categoriaFilter === 'all'}
+                  onClick={() => setCategoriaFilter('all')}
                 >
-                  {cat}
-                </Box>
-              ))}
+                  {t.treasure.filter.allCategories}
+                </Pill>
+                {categorias.map((cat) => (
+                  <Pill
+                    key={cat}
+                    active={categoriaFilter === cat}
+                    onClick={() =>
+                      setCategoriaFilter(categoriaFilter === cat ? 'all' : cat)
+                    }
+                  >
+                    {cat}
+                  </Pill>
+                ))}
+              </Box>
             </Box>
           </Box>
         )}
@@ -435,25 +553,20 @@ export const FilterContent = memo(function FilterContent({
             {t.treasure.filter.color}
           </Typography>
           <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-            <Box
+            <Pill
+              active={colorFilter === 'all'}
               onClick={() => setColorFilter('all')}
-              sx={{
-                ...pillBase,
-                ...(colorFilter === 'all' ? pillActive : pillInactive),
-              }}
             >
               {t.treasure.filter.allColors}
-            </Box>
+            </Pill>
             {colors.slice(0, 6).map((color) => (
-              <Box
+              <Pill
                 key={color}
+                active={colorFilter === color}
                 onClick={() => setColorFilter(color)}
-                sx={{
-                  ...pillBase,
-                  ...(colorFilter === color ? pillActive : pillInactive),
-                }}
               >
                 <Box
+                  aria-hidden
                   sx={{
                     width: 10,
                     height: 10,
@@ -463,7 +576,7 @@ export const FilterContent = memo(function FilterContent({
                   }}
                 />
                 {color.replace('Verde ', '')}
-              </Box>
+              </Pill>
             ))}
           </Box>
         </Box>
@@ -483,18 +596,13 @@ export const FilterContent = memo(function FilterContent({
             </Typography>
             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
               {priceTiers.map((tier) => (
-                <Box
+                <Pill
                   key={tier.label}
+                  active={currentPriceTier === tier.label}
                   onClick={() => setPriceRange([tier.min, tier.max])}
-                  sx={{
-                    ...pillBase,
-                    ...(currentPriceTier === tier.label
-                      ? pillActive
-                      : pillInactive),
-                  }}
                 >
                   {tier.label}
-                </Box>
+                </Pill>
               ))}
             </Box>
           </Box>
@@ -528,16 +636,13 @@ export const FilterContent = memo(function FilterContent({
                 const isActive =
                   caratRange[0] === tier.min && caratRange[1] === tier.max;
                 return (
-                  <Box
+                  <Pill
                     key={tier.label}
+                    active={isActive}
                     onClick={() => setCaratRange([tier.min, tier.max])}
-                    sx={{
-                      ...pillBase,
-                      ...(isActive ? pillActive : pillInactive),
-                    }}
                   >
                     {tier.label}
-                  </Box>
+                  </Pill>
                 );
               })}
             </Box>
@@ -545,61 +650,59 @@ export const FilterContent = memo(function FilterContent({
         )}
 
         {/* Row 5: Additional filters (horizontal scroll) */}
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 0.75,
-            overflowX: 'auto',
-            pb: 0.5,
-            mx: -1,
-            px: 1,
-            '&::-webkit-scrollbar': { display: 'none' },
-            scrollbarWidth: 'none',
-          }}
-        >
-          {/* Shape pills */}
-          {shapes.slice(0, 4).map((shape) => (
-            <Box
-              key={shape}
-              onClick={() =>
-                setShapeFilter(shapeFilter === shape ? 'all' : shape)
-              }
-              sx={{
-                ...pillBase,
-                ...(shapeFilter === shape ? pillActive : pillInactive),
-              }}
-            >
-              {shape}
-            </Box>
-          ))}
-
-          {/* Quality pills */}
-          {qualities.slice(0, 3).map((quality) => (
-            <Box
-              key={quality}
-              onClick={() =>
-                setQualityFilter(qualityFilter === quality ? 'all' : quality)
-              }
-              sx={{
-                ...pillBase,
-                ...(qualityFilter === quality ? pillActive : pillInactive),
-              }}
-            >
-              {quality}
-            </Box>
-          ))}
-
-          {/* Cantidad */}
+        <Box sx={{ position: 'relative' }}>
+          <ScrollFadeEdges
+            canScrollLeft={moreFiltersScroll.canScrollLeft}
+            canScrollRight={moreFiltersScroll.canScrollRight}
+          />
           <Box
-            onClick={() =>
-              setCantidadFilter(cantidadFilter === '2+' ? 'all' : '2+')
-            }
+            ref={moreFiltersScroll.ref}
             sx={{
-              ...pillBase,
-              ...(cantidadFilter === '2+' ? pillActive : pillInactive),
+              display: 'flex',
+              gap: 0.75,
+              overflowX: 'auto',
+              pb: 0.5,
+              mx: -1,
+              px: 1,
+              '&::-webkit-scrollbar': { display: 'none' },
+              scrollbarWidth: 'none',
             }}
           >
-            {t.treasure.filter.lots}
+            {/* Shape pills */}
+            {shapes.slice(0, 4).map((shape) => (
+              <Pill
+                key={shape}
+                active={shapeFilter === shape}
+                onClick={() =>
+                  setShapeFilter(shapeFilter === shape ? 'all' : shape)
+                }
+              >
+                {shape}
+              </Pill>
+            ))}
+
+            {/* Quality pills */}
+            {qualities.slice(0, 3).map((quality) => (
+              <Pill
+                key={quality}
+                active={qualityFilter === quality}
+                onClick={() =>
+                  setQualityFilter(qualityFilter === quality ? 'all' : quality)
+                }
+              >
+                {quality}
+              </Pill>
+            ))}
+
+            {/* Cantidad */}
+            <Pill
+              active={cantidadFilter === '2+'}
+              onClick={() =>
+                setCantidadFilter(cantidadFilter === '2+' ? 'all' : '2+')
+              }
+            >
+              {t.treasure.filter.lots}
+            </Pill>
           </Box>
         </Box>
 
@@ -1008,7 +1111,9 @@ export const FilterContent = memo(function FilterContent({
               valueLabelFormat={(value) =>
                 formatCurrency(convertPrice(value), currency)
               }
-              aria-label="Rango de precio"
+              getAriaLabel={(index) =>
+                index === 0 ? 'Precio mínimo' : 'Precio máximo'
+              }
               getAriaValueText={(value) =>
                 formatCurrency(convertPrice(value), currency)
               }
@@ -1059,7 +1164,9 @@ export const FilterContent = memo(function FilterContent({
               roundTo={0.1}
               valueLabelDisplay="auto"
               valueLabelFormat={(value) => `${value.toFixed(1)} ct`}
-              aria-label={t.treasure.filter.caratRange}
+              getAriaLabel={(index) =>
+                index === 0 ? 'Quilates mínimo' : 'Quilates máximo'
+              }
               getAriaValueText={(value) => `${value.toFixed(1)} ct`}
               sx={{
                 color: emeraldCore.dark,
