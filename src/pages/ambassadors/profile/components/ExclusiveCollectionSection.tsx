@@ -260,8 +260,8 @@ export const ExclusiveCollectionSection: React.FC<
               borderColor: alpha(brand.emerald[500], 0.35),
             },
             '&:focus-visible': {
-              outline: `2px solid ${brand.emerald[500]}`,
-              outlineOffset: 2,
+              outline: 'none',
+              boxShadow: 'var(--tm-focus-ring)',
             },
           }}
         >

@@ -449,8 +449,8 @@ export default function MobileSearchBar({
                       : 'transparent',
                   transition: cssTransition.fast,
                   '&:focus-visible': {
-                    outline: `2px solid ${emeraldCore.primary}`,
-                    outlineOffset: -2,
+                    outline: 'none',
+                    boxShadow: 'var(--tm-focus-ring)',
                   },
                 }}
               >
@@ -504,8 +504,8 @@ export default function MobileSearchBar({
                       : 'transparent',
                   transition: cssTransition.fast,
                   '&:focus-visible': {
-                    outline: `2px solid ${emeraldCore.primary}`,
-                    outlineOffset: -2,
+                    outline: 'none',
+                    boxShadow: 'var(--tm-focus-ring)',
                   },
                 }}
               >
@@ -568,8 +568,8 @@ export default function MobileSearchBar({
                       borderRadius: 1,
                       '&:hover': { color: accentColors.error.light },
                       '&:focus-visible': {
-                        outline: `2px solid ${emeraldCore.primary}`,
-                        outlineOffset: 2,
+                        outline: 'none',
+                        boxShadow: 'var(--tm-focus-ring)',
                       },
                     }}
                   >
@@ -603,8 +603,8 @@ export default function MobileSearchBar({
                     borderRadius: 1,
                     '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.08) },
                     '&:focus-visible': {
-                      outline: `2px solid ${emeraldCore.primary}`,
-                      outlineOffset: 2,
+                      outline: 'none',
+                      boxShadow: 'var(--tm-focus-ring)',
                     },
                   }}
                 >
