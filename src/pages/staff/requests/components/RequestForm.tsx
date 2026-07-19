@@ -7,7 +7,6 @@ import React from 'react';
 import {
   Box,
   Typography,
-  TextField,
   Button,
   MenuItem,
   Stack,
@@ -19,6 +18,7 @@ import {
   CardContent,
   Divider,
 } from '@mui/material';
+import { TextField } from '../../../../design-system/components/TextField';
 import { Send, ImagePlus, User, Calendar } from 'lucide-react';
 import { emeraldCore } from '../../../../design-system/tokens/colors';
 import {
@@ -100,7 +100,9 @@ export const RequestForm: React.FC<RequestFormProps> = ({
           label="Cantidad"
           type="number"
           value={formData.quantity || 1}
-          onChange={(e) => onFieldChange('quantity', parseInt(e.target.value) || 1)}
+          onChange={(e) =>
+            onFieldChange('quantity', parseInt(e.target.value) || 1)
+          }
           fullWidth
           inputProps={{ min: 1 }}
           helperText="Numero de piezas que necesitas"
@@ -124,7 +126,9 @@ export const RequestForm: React.FC<RequestFormProps> = ({
             label="Peso Minimo (ct)"
             type="number"
             value={formData.weightMin || ''}
-            onChange={(e) => onFieldChange('weightMin', parseFloat(e.target.value) || 0)}
+            onChange={(e) =>
+              onFieldChange('weightMin', parseFloat(e.target.value) || 0)
+            }
             fullWidth
             InputProps={{
               endAdornment: <InputAdornment position="end">ct</InputAdornment>,
@@ -135,7 +139,9 @@ export const RequestForm: React.FC<RequestFormProps> = ({
             label="Peso Maximo (ct)"
             type="number"
             value={formData.weightMax || ''}
-            onChange={(e) => onFieldChange('weightMax', parseFloat(e.target.value) || 0)}
+            onChange={(e) =>
+              onFieldChange('weightMax', parseFloat(e.target.value) || 0)
+            }
             fullWidth
             InputProps={{
               endAdornment: <InputAdornment position="end">ct</InputAdornment>,
@@ -183,7 +189,9 @@ export const RequestForm: React.FC<RequestFormProps> = ({
             fullWidth
             placeholder="5.000.000"
             InputProps={{
-              startAdornment: <InputAdornment position="start">$</InputAdornment>,
+              startAdornment: (
+                <InputAdornment position="start">$</InputAdornment>
+              ),
             }}
             inputProps={{ inputMode: 'numeric' }}
           />
@@ -194,7 +202,9 @@ export const RequestForm: React.FC<RequestFormProps> = ({
             fullWidth
             placeholder="10.000.000"
             InputProps={{
-              startAdornment: <InputAdornment position="start">$</InputAdornment>,
+              startAdornment: (
+                <InputAdornment position="start">$</InputAdornment>
+              ),
             }}
             inputProps={{ inputMode: 'numeric' }}
             required
@@ -204,9 +214,17 @@ export const RequestForm: React.FC<RequestFormProps> = ({
         <Divider sx={{ my: 1 }} />
 
         {/* Client Info Section */}
-        <Card sx={{ bgcolor: alpha(emeraldCore.primary, 0.04), border: 'none', boxShadow: 'none' }}>
+        <Card
+          sx={{
+            bgcolor: alpha(emeraldCore.primary, 0.04),
+            border: 'none',
+            boxShadow: 'none',
+          }}
+        >
           <CardContent sx={{ py: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}
+            >
               <User size={18} color={emeraldCore.primary} />
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                 Informacion del Cliente (Opcional)
@@ -218,7 +236,7 @@ export const RequestForm: React.FC<RequestFormProps> = ({
                 value={formData.clientName || ''}
                 onChange={(e) => onFieldChange('clientName', e.target.value)}
                 fullWidth
-                size="small"
+                size="sm"
                 placeholder="Nombre o referencia del cliente"
               />
               <TextField
@@ -226,7 +244,7 @@ export const RequestForm: React.FC<RequestFormProps> = ({
                 value={formData.clientNotes || ''}
                 onChange={(e) => onFieldChange('clientNotes', e.target.value)}
                 fullWidth
-                size="small"
+                size="sm"
                 multiline
                 rows={2}
                 placeholder="Preferencias especiales, ocasion, etc..."
@@ -258,27 +276,45 @@ export const RequestForm: React.FC<RequestFormProps> = ({
             fullWidth
             InputLabelProps={{ shrink: true }}
             InputProps={{
-              startAdornment: <InputAdornment position="start"><Calendar size={16} /></InputAdornment>,
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Calendar size={16} />
+                </InputAdornment>
+              ),
             }}
           />
         </Stack>
 
         {/* Reference Media Upload */}
-        <Card sx={{ bgcolor: alpha(emeraldCore.primary, 0.04), border: 'none', boxShadow: 'none' }}>
+        <Card
+          sx={{
+            bgcolor: alpha(emeraldCore.primary, 0.04),
+            border: 'none',
+            boxShadow: 'none',
+          }}
+        >
           <CardContent sx={{ py: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}
+            >
               <ImagePlus size={18} color={emeraldCore.primary} />
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                 Fotos de Referencia (Opcional)
               </Typography>
             </Box>
-            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 2 }}>
-              Sube imagenes de referencia para ayudarnos a entender mejor lo que buscas
+            <Typography
+              variant="caption"
+              sx={{ color: 'text.secondary', display: 'block', mb: 2 }}
+            >
+              Sube imagenes de referencia para ayudarnos a entender mejor lo que
+              buscas
             </Typography>
             <QuotationMediaUpload
               quotationId={tempRequestId}
               uploadedUrls={formData.referencePhotoUrls || []}
-              onUploadComplete={(urls) => onFieldChange('referencePhotoUrls', urls)}
+              onUploadComplete={(urls) =>
+                onFieldChange('referencePhotoUrls', urls)
+              }
               maxFiles={5}
               disabled={submitting}
             />
@@ -307,7 +343,13 @@ export const RequestForm: React.FC<RequestFormProps> = ({
         <Button
           variant="contained"
           size="large"
-          startIcon={submitting ? <CircularProgress size={20} color="inherit" /> : <Send size={20} />}
+          startIcon={
+            submitting ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              <Send size={20} />
+            )
+          }
           onClick={onSubmit}
           disabled={submitting}
           sx={{

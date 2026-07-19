@@ -7,7 +7,6 @@ import React from 'react';
 import {
   Box,
   Typography,
-  TextField,
   IconButton,
   Grid,
   Accordion,
@@ -18,6 +17,7 @@ import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import { Settings, RefreshCw } from 'lucide-react';
 import { brandColors } from '../constants';
 import type { SettingsAccordionProps } from '../types';
+import { TextField } from '../../../design-system/components/TextField';
 
 export const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
   quotationNumber,
@@ -70,7 +70,7 @@ export const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
               label="No. Cotización"
               value={quotationNumber}
               onChange={(e) => setQuotationNumber(e.target.value)}
-              size="small"
+              size="sm"
             />
             <IconButton
               onClick={regenerateQuotationNumber}
@@ -86,9 +86,12 @@ export const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
             label="Teléfono de Contacto"
             value={businessSettings.contactPhone}
             onChange={(e) =>
-              setBusinessSettings({ ...businessSettings, contactPhone: e.target.value })
+              setBusinessSettings({
+                ...businessSettings,
+                contactPhone: e.target.value,
+              })
             }
-            size="small"
+            size="sm"
           />
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -97,9 +100,12 @@ export const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
             label="Email de Contacto"
             value={businessSettings.contactEmail}
             onChange={(e) =>
-              setBusinessSettings({ ...businessSettings, contactEmail: e.target.value })
+              setBusinessSettings({
+                ...businessSettings,
+                contactEmail: e.target.value,
+              })
             }
-            size="small"
+            size="sm"
           />
         </Grid>
       </Grid>

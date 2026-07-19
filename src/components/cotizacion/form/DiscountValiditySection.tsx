@@ -4,11 +4,14 @@
  */
 
 import React from 'react';
-import { Box, Typography, TextField, Slider, InputAdornment, Grid } from '@mui/material';
+import { Box, Typography, Slider, InputAdornment, Grid } from '@mui/material';
 import { brandColors } from '../constants';
 import type { DiscountValiditySectionProps } from '../types';
+import { TextField } from '../../../design-system/components/TextField';
 
-export const DiscountValiditySection: React.FC<DiscountValiditySectionProps> = ({
+export const DiscountValiditySection: React.FC<
+  DiscountValiditySectionProps
+> = ({
   discountPercent,
   setDiscountPercent,
   validDays,
@@ -24,7 +27,7 @@ export const DiscountValiditySection: React.FC<DiscountValiditySectionProps> = (
         type="number"
         value={discountPercent || ''}
         onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)}
-        size="small"
+        size="sm"
         InputProps={{
           endAdornment: <InputAdornment position="end">%</InputAdornment>,
         }}
@@ -53,7 +56,7 @@ export const DiscountValiditySection: React.FC<DiscountValiditySectionProps> = (
         rows={2}
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
-        size="small"
+        size="sm"
       />
     </Grid>
   </Grid>

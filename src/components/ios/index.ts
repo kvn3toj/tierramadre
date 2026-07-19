@@ -14,9 +14,6 @@ export type {
   IOSCardPadding,
 } from './core/IOSCard';
 
-export { default as IOSTextField } from './core/IOSTextField';
-export type { IOSTextFieldProps } from './core/IOSTextField';
-
 // Input Components
 export { default as IOSFilePicker } from './input/IOSFilePicker';
 export type {

@@ -253,6 +253,16 @@ export { Badge, type BadgeProps, type BadgeTone } from './components/Badge';
 // MetricCard — the ONE stat tile (Card + Badge composition).
 export { MetricCard, type MetricCardProps } from './components/MetricCard';
 
+// TextField — the ONE text input.
+export {
+  TextField,
+  type TextFieldProps,
+  type TextFieldSize,
+} from './components/TextField';
+
+// Field — label[for] + help + error wrapper for non-self-labeled controls.
+export { Field, type FieldProps } from './components/Field';
+
 // Layout
 export {
   Stack,
