@@ -2,10 +2,16 @@
  * Desktop catalog filter card: full FilterContent + toolbar (view mode, stats, saved filters).
  */
 
-import { Paper } from '@mui/material';
+import { Box, Paper } from '@mui/material';
 import { FilterContent, type FilterContentProps } from '../FilterContent';
 import DesktopFilterToolbar from './DesktopFilterToolbar';
-import { surfacesLight, surfacesDark } from '../../../design-system/tokens/colors';
+import TreasureDesktopResultsSummary, {
+  type TreasureDesktopResultsSummaryProps,
+} from './TreasureDesktopResultsSummary';
+import {
+  surfacesLight,
+  surfacesDark,
+} from '../../../design-system/tokens/colors';
 import type {
   TreasureFilters,
   TypeFilter,
@@ -34,6 +40,12 @@ export interface TreasureDesktopFilterPanelProps {
   setSortBy: (s: SortOption) => void;
   setCantidadFilter: (c: string) => void;
   trackViewModeChange: (mode: 'grid' | 'list') => void;
+  /**
+   * Folded into this panel (as a hairline-separated row after the toolbar)
+   * instead of its own standalone block below the panel — removes one full
+   * block-margin gap from the desktop header stack squeezing the grid.
+   */
+  resultsSummary: TreasureDesktopResultsSummaryProps;
 }
 
 export default function TreasureDesktopFilterPanel({
@@ -56,6 +68,7 @@ export default function TreasureDesktopFilterPanel({
   setSortBy,
   setCantidadFilter,
   trackViewModeChange,
+  resultsSummary,
 }: TreasureDesktopFilterPanelProps) {
   return (
     <Paper
@@ -64,9 +77,13 @@ export default function TreasureDesktopFilterPanel({
         p: 1.5,
         mb: 1.5,
         borderRadius: 2,
-        bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
+        bgcolor: isLight
+          ? surfacesLight.background.primary
+          : surfacesDark.background.primary,
         border: '1px solid',
-        borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+        borderColor: isLight
+          ? surfacesLight.border.light
+          : surfacesDark.border.light,
       }}
     >
       <FilterContent {...filterContentProps} />
@@ -90,6 +107,18 @@ export default function TreasureDesktopFilterPanel({
         trackViewModeChange={trackViewModeChange}
         isLight={isLight}
       />
+      <Box
+        sx={{
+          mt: 1,
+          pt: 1,
+          borderTop: '1px solid',
+          borderColor: isLight
+            ? surfacesLight.border.light
+            : surfacesDark.border.light,
+        }}
+      >
+        <TreasureDesktopResultsSummary {...resultsSummary} />
+      </Box>
     </Paper>
   );
 }

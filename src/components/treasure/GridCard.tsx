@@ -16,8 +16,6 @@ import React, { useCallback } from 'react';
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
   Chip,
   IconButton,
   Skeleton,
@@ -38,7 +36,7 @@ import {
 } from '../../utils/formatting';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
 import ProgressiveImage from '../shared/ProgressiveImage';
-import { animation, qeFont, getQuietEmerald, Badge } from '../../design-system';
+import { getQuietEmerald, Badge, PieceCard } from '../../design-system';
 
 interface GridCardProps {
   item: TreasureItem;
@@ -101,7 +99,6 @@ function GridCard({
   priceOverride,
 }: GridCardProps) {
   const { mode } = useThemeMode();
-  const isLight = mode === 'light';
   const { shouldShowPrices } = usePriceShare();
   const prefersReducedMotion = useReducedMotion();
   const { isLiteral: variantIsLiteral } = useRedesignVariant();
@@ -304,17 +301,15 @@ function GridCard({
     </>
   ) : null;
 
-  // ---- Text block (shared) ----------------------------------------------
-  // Phone (CatalogNew): image → name → spec → price, stacked.
-  // Tablet/desktop (CatalogWide): name + price share a baseline row, spec below.
+  // ---- Price (shared) -----------------------------------------------------
   const priceEl =
     priceOverride !== undefined ? (
       priceOverride ? (
         <Typography
           sx={{
-            fontFamily: qeFont.mono,
+            fontFamily: 'var(--tm-font-mono)',
             fontWeight: 600,
-            color: qe.accent,
+            color: 'var(--tm-accent)',
             fontSize: isMobile ? 12.5 : 13,
             fontFeatureSettings: '"tnum"',
             whiteSpace: 'nowrap',
@@ -332,202 +327,21 @@ function GridCard({
       />
     ) : null;
 
-  const nameEl = (
-    <Typography
-      sx={{
-        fontFamily: qeFont.serif,
-        fontWeight: 500,
-        color: qe.text,
-        lineHeight: 1.08,
-        fontSize: isMobile ? 16 : 19,
-        letterSpacing: 0,
-        minWidth: 0,
-        flex: isMobile ? 'unset' : 1,
-        display: '-webkit-box',
-        WebkitLineClamp: 2,
-        WebkitBoxOrient: 'vertical',
-        overflow: 'hidden',
-      }}
-    >
-      {displayName}
-    </Typography>
-  );
-
-  const specEl = (
-    <Typography
-      sx={{
-        fontFamily: qeFont.mono,
-        color: qe.subtle,
-        fontSize: 9.5,
-        lineHeight: 1.3,
-        letterSpacing: '0.05em',
-        mt: isMobile ? '4px' : '6px',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-      }}
-    >
-      {specLine}
-    </Typography>
-  );
-
-  const textBlock = isMobile ? (
-    <>
-      {nameEl}
-      {specEl}
-      {priceEl && <Box sx={{ mt: '5px' }}>{priceEl}</Box>}
-    </>
-  ) : (
-    <>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          gap: 1,
-        }}
-      >
-        {nameEl}
-        {priceEl && <Box sx={{ flexShrink: 0 }}>{priceEl}</Box>}
-      </Box>
-      {specEl}
-    </>
-  );
-
-  // ---- LITERAL: frameless minimal mockup card ---------------------------
-  if (isLiteral) {
-    return (
-      <Box
-        onClick={handleItemClick}
-        onKeyDown={(e: React.KeyboardEvent) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            handleItemClick();
-          }
-        }}
-        onMouseEnter={handlePrefetch}
-        onFocus={handlePrefetch}
-        role="article"
-        aria-label={altText}
-        tabIndex={0}
-        sx={{
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          cursor: 'pointer',
-          outline: 'none',
-          '& img': {
-            transition: prefersReducedMotion
-              ? 'none'
-              : 'transform 0.5s cubic-bezier(0.22,1,0.36,1)',
-          },
-          '&:focus-visible': {
-            outline: `2px solid ${qe.accentPure}`,
-            outlineOffset: 3,
-            borderRadius: '6px',
-          },
-        }}
-      >
-        <Box
-          sx={{
-            position: 'relative',
-            flex: 1,
-            minHeight: 0,
-            overflow: 'hidden',
-            bgcolor: qe.well,
-            borderRadius: '5px',
-          }}
-        >
-          {imageWell}
-        </Box>
-        <Box sx={{ flexShrink: 0, pt: '9px' }}>{textBlock}</Box>
-      </Box>
-    );
-  }
-
-  // ---- FAITHFUL: quiet hairline card with restyled functional overlays ---
   return (
-    <Card
-      elevation={0}
+    <PieceCard
+      variant={isLiteral ? 'frameless' : 'well'}
+      media={imageWell}
+      overlays={isLiteral ? undefined : overlays}
+      name={displayName}
+      specLine={specLine}
+      price={priceEl}
+      itemNumber={item.item}
       onClick={handleItemClick}
-      onKeyDown={(e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          handleItemClick();
-        }
-      }}
       onMouseEnter={handlePrefetch}
       onFocus={handlePrefetch}
-      role="article"
-      aria-label={altText}
-      tabIndex={0}
-      sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        borderRadius: '8px',
-        border: '1px solid',
-        borderColor: qe.border,
-        bgcolor: qe.surface,
-        overflow: 'hidden',
-        transition: prefersReducedMotion ? 'none' : animation.transition.spring,
-        cursor: 'pointer',
-        boxShadow: isLight
-          ? '0 1px 2px rgba(0,0,0,0.04)'
-          : '0 1px 2px rgba(0,0,0,0.4)',
-        '& img': {
-          transition: prefersReducedMotion
-            ? 'none'
-            : 'transform 0.5s cubic-bezier(0.22,1,0.36,1)',
-        },
-        '&:hover': {
-          borderColor: isLight ? 'rgba(0,0,0,0.16)' : 'rgba(255,255,255,0.16)',
-          transform:
-            prefersReducedMotion || isMobile ? 'none' : 'translateY(-2px)',
-          boxShadow: isLight
-            ? '0 10px 30px rgba(0,0,0,0.08)'
-            : '0 10px 30px rgba(0,0,0,0.5)',
-          ...(!prefersReducedMotion &&
-            !isMobile && { '& img': { transform: 'scale(1.04)' } }),
-        },
-        '&:active': {
-          transform: prefersReducedMotion ? 'none' : 'scale(0.98)',
-          transition: prefersReducedMotion ? 'none' : 'transform 0.1s ease-out',
-        },
-        '&:focus-visible': {
-          outline: `2px solid ${qe.accentPure}`,
-          outlineOffset: 2,
-        },
-      }}
-    >
-      <Box
-        sx={{
-          position: 'relative',
-          flex: 1,
-          minHeight: 0,
-          overflow: 'hidden',
-          bgcolor: qe.well,
-        }}
-      >
-        {imageWell}
-        {overlays}
-      </Box>
-
-      <CardContent
-        sx={{
-          p: isMobile ? 1.25 : 1.5,
-          '&:last-child': { pb: isMobile ? 1.25 : 1.5 },
-          flexShrink: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-          borderTop: `1px solid ${qe.hairline}`,
-          bgcolor: qe.surface,
-        }}
-      >
-        {textBlock}
-      </CardContent>
-    </Card>
+      ariaLabel={altText}
+      compact={isMobile}
+    />
   );
 }
 

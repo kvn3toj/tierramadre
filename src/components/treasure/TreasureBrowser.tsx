@@ -24,7 +24,6 @@ import {
   MobileSearchBar,
   TreasureEmptyState,
   TreasureDesktopFilterPanel,
-  TreasureDesktopResultsSummary,
   CatalogHeader,
 } from './browser';
 import TreasureErrorState from './browser/TreasureErrorState';
@@ -300,6 +299,23 @@ export default function TreasureBrowser({
           setSortBy={setSortBy}
           setCantidadFilter={setCantidadFilter}
           trackViewModeChange={analyticsHook.trackViewModeChange}
+          resultsSummary={{
+            theme,
+            isLight,
+            t,
+            filteredTreasureLength: filteredTreasure.length,
+            allTreasureLength: allTreasure.length,
+            visibleItemsLength: visibleItems.length,
+            viewMode,
+            isProviderMode: providerMode,
+            shouldShowPrices,
+            formatFullCurrency,
+            filteredStatsTotalValue: filteredStats.totalValue,
+            showFavoritesOnly,
+            favoritesCount,
+            onToggleFavoritesOnly: () =>
+              setShowFavoritesOnly(!showFavoritesOnly),
+          }}
         />
       )}
 
@@ -327,25 +343,6 @@ export default function TreasureBrowser({
             caratMinMax={caratMinMax}
           />
         </Box>
-      )}
-
-      {!isMobile && (
-        <TreasureDesktopResultsSummary
-          theme={theme}
-          isLight={isLight}
-          t={t}
-          filteredTreasureLength={filteredTreasure.length}
-          allTreasureLength={allTreasure.length}
-          visibleItemsLength={visibleItems.length}
-          viewMode={viewMode}
-          isProviderMode={providerMode}
-          shouldShowPrices={shouldShowPrices}
-          formatFullCurrency={formatFullCurrency}
-          filteredStatsTotalValue={filteredStats.totalValue}
-          showFavoritesOnly={showFavoritesOnly}
-          favoritesCount={favoritesCount}
-          onToggleFavoritesOnly={() => setShowFavoritesOnly(!showFavoritesOnly)}
-        />
       )}
 
       {!isMobile && recentlyViewedItems.length > 0 && (

@@ -4,14 +4,7 @@
  * Optimized for scanning and quick comparison.
  */
 import React, { useCallback } from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  IconButton,
-  alpha,
-  useTheme,
-} from '@mui/material';
+import { Box, Typography, IconButton, alpha, useTheme } from '@mui/material';
 import { Heart, Scale } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
@@ -25,10 +18,10 @@ import { PriceDisplay } from '../price-simulator/PriceDisplay';
 import { emeraldCore, semanticColors } from '../../design-system/tokens/colors';
 import {
   errorAlpha,
-  cssTransition,
   qeFont,
   getQuietEmerald,
   Badge,
+  Card,
 } from '../../design-system';
 
 interface ListRowProps {
@@ -54,7 +47,6 @@ function ListRow({
 }: ListRowProps) {
   const theme = useTheme();
   const { mode } = useThemeMode();
-  const isLight = mode === 'light';
   const qe = getQuietEmerald(mode);
   const { shouldShowPrices } = usePriceShare();
 
@@ -91,38 +83,17 @@ function ListRow({
   );
 
   return (
-    <Paper
-      elevation={0}
+    <Card
+      variant="outlined"
+      interactive
+      onClick={handleItemClick}
+      aria-label={`${item.nombre} - ${item.color}, ${weight}`}
       sx={{
         p: 2,
-        borderRadius: 2.5,
-        bgcolor: qe.surface,
-        border: '1px solid',
-        borderColor: qe.border,
         display: 'flex',
         alignItems: 'center',
         gap: 2,
-        cursor: 'pointer',
-        transition: cssTransition.default,
-        '&:hover': {
-          borderColor: isLight ? 'rgba(0,0,0,0.16)' : 'rgba(255,255,255,0.16)',
-          bgcolor: isLight ? qe.well : alpha('#ffffff', 0.03),
-        },
-        '&:focus-visible': {
-          outline: `3px solid ${emeraldCore.primary}`,
-          outlineOffset: 2,
-        },
       }}
-      onClick={handleItemClick}
-      onKeyDown={(e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          handleItemClick();
-        }
-      }}
-      role="article"
-      aria-label={`${item.nombre} - ${item.color}, ${weight}`}
-      tabIndex={0}
     >
       {/* Color indicator */}
       <Box
@@ -162,6 +133,10 @@ function ListRow({
         >
           {item.color} · {weight}
           {origin && ` · ${origin}`}
+          {' · '}
+          <Box component="span" sx={{ color: 'var(--tm-subtle)' }}>
+            Nº {item.item}
+          </Box>
         </Typography>
       </Box>
 
@@ -243,7 +218,7 @@ function ListRow({
           </IconButton>
         </Box>
       )}
-    </Paper>
+    </Card>
   );
 }
 

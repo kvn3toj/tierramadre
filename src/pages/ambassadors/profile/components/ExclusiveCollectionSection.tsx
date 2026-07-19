@@ -16,11 +16,27 @@ import {
   alpha,
   useTheme,
 } from '@mui/material';
-import { Gem, Share2, ExternalLink } from 'lucide-react';
+import { Gem, Share2, ExternalLink, Images } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TreasureItem } from '../../../../types';
-import { TreasureCard } from '../../../../components/treasure/TreasureCard';
-import { brand, lightTokens, darkTokens, cssTransition } from '../../../../design-system';
+import { getQualityBadge, formatCarats } from '../../../../utils/formatting';
+import { PriceDisplay } from '../../../../components/price-simulator/PriceDisplay';
+import {
+  brand,
+  lightTokens,
+  darkTokens,
+  cssTransition,
+  Badge,
+  PieceCard,
+} from '../../../../design-system';
+
+function buildSpecLine(item: TreasureItem): string {
+  if (!item.isJewelry && typeof item.peso === 'number') {
+    return `${formatCarats(item.peso)} ct`;
+  }
+  if (item.isJewelry && item.metalType) return item.metalType;
+  return item.color;
+}
 
 interface ExclusiveCollectionSectionProps {
   products: TreasureItem[];
@@ -32,7 +48,9 @@ interface ExclusiveCollectionSectionProps {
   onShare?: () => void;
 }
 
-export const ExclusiveCollectionSection: React.FC<ExclusiveCollectionSectionProps> = ({
+export const ExclusiveCollectionSection: React.FC<
+  ExclusiveCollectionSectionProps
+> = ({
   products,
   collectionName,
   collectionDescription,
@@ -55,7 +73,9 @@ export const ExclusiveCollectionSection: React.FC<ExclusiveCollectionSectionProp
         p: 3,
         mb: 3,
         borderRadius: 3,
-        bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
+        bgcolor: isLight
+          ? lightTokens.background.surface
+          : darkTokens.background.surface,
         border: '1px solid',
         borderColor: isLight
           ? alpha(brand.emerald[500], 0.2)
@@ -63,7 +83,14 @@ export const ExclusiveCollectionSection: React.FC<ExclusiveCollectionSectionProp
       }}
     >
       {/* Section Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: 2,
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Gem size={20} style={{ color: brand.emerald[500] }} />
           <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
@@ -123,16 +150,82 @@ export const ExclusiveCollectionSection: React.FC<ExclusiveCollectionSectionProp
       {/* Products Grid */}
       {!isLoading && products.length > 0 && (
         <Grid container spacing={2}>
-          {products.map((item) => (
-            <Grid item xs={12} sm={6} md={4} key={item.item}>
-              <TreasureCard
-                item={item}
-                isCompact={false}
-                onCertClick={() => {}}
-                onClick={() => onProductClick(item)}
-              />
-            </Grid>
-          ))}
+          {products.map((item) => {
+            const quality = getQualityBadge(item.calidad);
+            const displayName = item.nombre
+              .replace(/^L:.*?\s/, '')
+              .replace(/^L:/, '')
+              .trim();
+            return (
+              <Grid item xs={12} sm={6} md={4} key={item.item}>
+                <PieceCard
+                  variant="well"
+                  media={
+                    item.imagen ? (
+                      <Box
+                        component="img"
+                        src={item.imagen}
+                        alt={`${item.nombre} - ${item.color}`}
+                        loading="lazy"
+                        sx={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        role="img"
+                        aria-label={`${item.nombre} - ${item.color}`}
+                        sx={{ width: '100%', height: '100%' }}
+                      />
+                    )
+                  }
+                  overlays={
+                    <>
+                      <Box sx={{ position: 'absolute', bottom: 8, left: 8 }}>
+                        <Badge
+                          tone={quality.tone}
+                          label={quality.label}
+                          compact
+                        />
+                      </Box>
+                      {(item.galleryCount ?? 0) > 1 && (
+                        <Chip
+                          icon={<Images size={12} />}
+                          label={item.galleryCount}
+                          size="small"
+                          sx={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            bgcolor: 'rgba(0,0,0,0.7)',
+                            color: 'white',
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                            height: 24,
+                            '& .MuiChip-icon': { color: 'white' },
+                          }}
+                        />
+                      )}
+                    </>
+                  }
+                  name={displayName}
+                  specLine={buildSpecLine(item)}
+                  price={
+                    <PriceDisplay
+                      price={item.precioCOP}
+                      precioInternacional={item.precioInternacional}
+                      compact
+                    />
+                  }
+                  itemNumber={item.item}
+                  onClick={() => onProductClick(item)}
+                  ariaLabel={`${item.nombre} - ${item.color}`}
+                />
+              </Grid>
+            );
+          })}
         </Grid>
       )}
 

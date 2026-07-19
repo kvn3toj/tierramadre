@@ -26,8 +26,8 @@ import React, {
 import { Grid, type GridImperativeAPI } from 'react-window';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import { TreasureItem } from '../../types';
-import { vhCalc } from '../../hooks/useViewportHeight';
 import { usePriceShare } from '../../contexts/PriceShareContext';
+import { layoutConstants } from '../../design-system';
 import {
   saveScrollPos,
   readScrollPos,
@@ -58,8 +58,6 @@ interface VirtualGridProps {
     /** Whether more items can be added to comparison */
     canAddToComparison?: boolean;
   }) => React.ReactNode;
-  /** Minimum height for the grid container */
-  minHeight?: number;
   /** Callback when scroll direction changes */
   onScrollDirectionChange?: (direction: 'up' | 'down') => void;
   /**
@@ -198,7 +196,6 @@ export default function VirtualGrid({
   onCertClick,
   onToggleFavorite,
   renderCard,
-  minHeight = 600,
   onScrollDirectionChange,
   scrollRestorationKey,
   restoreScroll = false,
@@ -300,6 +297,35 @@ export default function VirtualGrid({
     });
     ro.observe(el);
     return () => ro.disconnect();
+  }, []);
+
+  // Measure the actual available height (viewport minus everything above the
+  // grid minus the fixed bottom tab bar), instead of the fixed HEADER_OFFSET
+  // magic number this used to subtract from 100vh — that guess didn't track
+  // the real desktop header stack (filters/summary/recently-viewed) and left
+  // dead space or clipped the last row depending on how tall that stack was.
+  const [availableHeight, setAvailableHeight] = useState<number | null>(null);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => {
+      const top = el.getBoundingClientRect().top;
+      const viewportHeight =
+        window.visualViewport?.height ?? window.innerHeight;
+      setAvailableHeight(
+        Math.max(300, viewportHeight - top - layoutConstants.tabBarClearance),
+      );
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    // Re-measure when anything above the grid (filters, summary, carousel)
+    // changes height, not just on window resize.
+    const ro = new ResizeObserver(measure);
+    ro.observe(document.body);
+    return () => {
+      window.removeEventListener('resize', measure);
+      ro.disconnect();
+    };
   }, []);
 
   // Responsive breakpoint detection
@@ -433,17 +459,13 @@ export default function VirtualGrid({
   // Column width as percentage
   const columnWidth = `${100 / columnCount}%`;
 
-  // Header offset for grid height calculation
-  // Accounts for: Navigation bar + search/filters + safe areas
-  const HEADER_OFFSET = 280;
-
   return (
     <Box
       ref={containerRef}
       sx={{
-        // iOS Safari fix: Use --vh custom property instead of 100vh
-        height: vhCalc(100, HEADER_OFFSET),
-        minHeight,
+        // Measured (see the availableHeight effect above) — falls back to a
+        // sane floor until the first measurement lands, avoiding a 0-height flash.
+        height: availableHeight ?? 480,
         width: '100%',
         // Responsive horizontal padding
         px: { xs: 1, sm: 1, md: 2, lg: 0 },

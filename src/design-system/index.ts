@@ -285,6 +285,13 @@ export { Skeleton, type SkeletonProps } from './components/Skeleton';
 // FilterSheet — the ONE filter overlay.
 export { FilterSheet, type FilterSheetProps } from './components/FilterSheet';
 
+// PieceCard — the ONE catalog piece card (well + serif name + mono spec/price + Nº).
+export {
+  PieceCard,
+  type PieceCardProps,
+  type PieceCardVariant,
+} from './components/PieceCard';
+
 // Layout
 export {
   Stack,
