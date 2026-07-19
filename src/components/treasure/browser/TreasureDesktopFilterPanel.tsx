@@ -1,9 +1,10 @@
 /**
- * Desktop catalog filter card: full FilterContent + toolbar (view mode, stats, saved filters).
+ * Desktop catalog toolbar card: saved filters, stats chips, results summary,
+ * view mode. The search/estado/ordenar/filtros controls (FilterContent) now
+ * render on the CatalogHeader row instead of here — see TreasureBrowser.
  */
 
 import { Paper } from '@mui/material';
-import { FilterContent, type FilterContentProps } from '../FilterContent';
 import DesktopFilterToolbar from './DesktopFilterToolbar';
 import TreasureDesktopResultsSummary, {
   type TreasureDesktopResultsSummaryProps,
@@ -22,7 +23,6 @@ import { useSavedFilters } from '../../../hooks/useSavedFilters';
 
 export interface TreasureDesktopFilterPanelProps {
   isLight: boolean;
-  filterContentProps: FilterContentProps;
   shouldShowPrices: boolean;
   stats: { looseStones: number; jewelry: number };
   viewMode: 'grid' | 'list';
@@ -50,7 +50,6 @@ export interface TreasureDesktopFilterPanelProps {
 
 export default function TreasureDesktopFilterPanel({
   isLight,
-  filterContentProps,
   shouldShowPrices,
   stats,
   viewMode,
@@ -86,7 +85,6 @@ export default function TreasureDesktopFilterPanel({
           : surfacesDark.border.light,
       }}
     >
-      <FilterContent {...filterContentProps} />
       <DesktopFilterToolbar
         shouldShowPrices={shouldShowPrices}
         stats={stats}

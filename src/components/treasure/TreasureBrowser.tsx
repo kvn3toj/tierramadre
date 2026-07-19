@@ -200,6 +200,9 @@ export default function TreasureBrowser({
         origins={originOptions}
         activeOrigin={originTab}
         onOriginChange={setOriginTab}
+        trailingContent={
+          !isMobile ? <FilterContent {...filterContentProps} /> : undefined
+        }
       />
 
       {isMobile ? (
@@ -282,7 +285,6 @@ export default function TreasureBrowser({
       ) : (
         <TreasureDesktopFilterPanel
           isLight={isLight}
-          filterContentProps={filterContentProps}
           shouldShowPrices={shouldShowPrices}
           stats={stats}
           viewMode={viewMode}

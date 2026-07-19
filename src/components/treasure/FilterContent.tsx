@@ -289,6 +289,7 @@ export const FilterContent = memo(function FilterContent({
   // existing showAdvancedFilters prop, this ref just positions the panel.
   const filtersButtonRef = useRef<HTMLButtonElement>(null);
   const advancedActiveCount = [
+    statusFilter !== 'all',
     categoriaFilter !== 'all',
     typeFilter !== 'all',
     cantidadFilter !== 'all',
@@ -785,109 +786,9 @@ export const FilterContent = memo(function FilterContent({
           }}
         />
 
-        {/* Status filter with tooltip */}
-        <Tooltip
-          title={t.treasure.filter.statusTooltip}
-          arrow
-          enterDelay={600}
-          placement="top"
-        >
-          <FormControl size="small" sx={{ minWidth: 130 }}>
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-              displayEmpty
-              aria-label="Filtrar por estado"
-              sx={{ borderRadius: 2 }}
-            >
-              <MenuItem value="available">
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: emeraldCore.primary,
-                    }}
-                  />
-                  {t.treasure.filter.available}
-                </Box>
-              </MenuItem>
-              <MenuItem value="sold">
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: semanticColors.error.main,
-                    }}
-                  />
-                  {t.treasure.filter.sold}
-                </Box>
-              </MenuItem>
-              <MenuItem value="all">
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: surfacesLight.text.secondary,
-                    }}
-                  />
-                  {t.treasure.filter.all}
-                </Box>
-              </MenuItem>
-            </Select>
-          </FormControl>
-        </Tooltip>
-
-        {/* Sort dropdown */}
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <Select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortOption)}
-            displayEmpty
-            aria-label="Ordenar productos"
-            startAdornment={
-              <InputAdornment position="start">
-                <ArrowUpDown size={16} color={emeraldCore.primary} />
-              </InputAdornment>
-            }
-            sx={{
-              borderRadius: 2,
-              bgcolor: alpha(emeraldCore.primary, 0.05),
-              '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.1) },
-              '& .MuiSelect-select': { fontWeight: 500 },
-            }}
-          >
-            <MenuItem value="newest">{t.treasure.sort.newest}</MenuItem>
-            {!hidePriceFilter && (
-              <MenuItem value="price-desc">
-                {t.treasure.sort.priceDesc}
-              </MenuItem>
-            )}
-            {!hidePriceFilter && (
-              <MenuItem value="price-asc">{t.treasure.sort.priceAsc}</MenuItem>
-            )}
-            <MenuItem value="name-asc">{t.treasure.sort.nameAsc}</MenuItem>
-            <MenuItem value="name-desc">{t.treasure.sort.nameDesc}</MenuItem>
-            <MenuItem value="quality-premium">
-              {t.treasure.sort.bestQuality}
-            </MenuItem>
-            <MenuItem value="item-number">
-              {t.treasure.sort.itemNumber}
-            </MenuItem>
-            <MenuItem value="most-searched">
-              {t.treasure.sort.mostSearched}
-            </MenuItem>
-          </Select>
-        </FormControl>
-
-        {/* Filtros — opens a popover with Categoría/Tipo/Cantidad/Color/Talla/
-            Calidad/Colección/Precio/Quilates, keeping this row to one line
-            instead of wrapping across the viewport. */}
+        {/* Filtros — opens a popover with Estado/Ordenar/Categoría/Tipo/
+            Cantidad/Color/Talla/Calidad/Colección/Precio/Quilates, keeping
+            this row to one line beside the page title instead of wrapping. */}
         <Button
           ref={filtersButtonRef}
           variant={advancedActiveCount > 0 ? 'tinted' : 'plain'}
@@ -946,6 +847,110 @@ export const FilterContent = memo(function FilterContent({
             alignItems: 'center',
           }}
         >
+          {/* Status filter with tooltip */}
+          <Tooltip
+            title={t.treasure.filter.statusTooltip}
+            arrow
+            enterDelay={600}
+            placement="top"
+          >
+            <FormControl size="small" sx={{ minWidth: 130 }}>
+              <Select
+                value={statusFilter}
+                onChange={(e) =>
+                  setStatusFilter(e.target.value as StatusFilter)
+                }
+                displayEmpty
+                aria-label="Filtrar por estado"
+                sx={{ borderRadius: 2 }}
+              >
+                <MenuItem value="available">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        bgcolor: emeraldCore.primary,
+                      }}
+                    />
+                    {t.treasure.filter.available}
+                  </Box>
+                </MenuItem>
+                <MenuItem value="sold">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        bgcolor: semanticColors.error.main,
+                      }}
+                    />
+                    {t.treasure.filter.sold}
+                  </Box>
+                </MenuItem>
+                <MenuItem value="all">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        bgcolor: surfacesLight.text.secondary,
+                      }}
+                    />
+                    {t.treasure.filter.all}
+                  </Box>
+                </MenuItem>
+              </Select>
+            </FormControl>
+          </Tooltip>
+
+          {/* Sort dropdown */}
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <Select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              displayEmpty
+              aria-label="Ordenar productos"
+              startAdornment={
+                <InputAdornment position="start">
+                  <ArrowUpDown size={16} color={emeraldCore.primary} />
+                </InputAdornment>
+              }
+              sx={{
+                borderRadius: 2,
+                bgcolor: alpha(emeraldCore.primary, 0.05),
+                '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.1) },
+                '& .MuiSelect-select': { fontWeight: 500 },
+              }}
+            >
+              <MenuItem value="newest">{t.treasure.sort.newest}</MenuItem>
+              {!hidePriceFilter && (
+                <MenuItem value="price-desc">
+                  {t.treasure.sort.priceDesc}
+                </MenuItem>
+              )}
+              {!hidePriceFilter && (
+                <MenuItem value="price-asc">
+                  {t.treasure.sort.priceAsc}
+                </MenuItem>
+              )}
+              <MenuItem value="name-asc">{t.treasure.sort.nameAsc}</MenuItem>
+              <MenuItem value="name-desc">{t.treasure.sort.nameDesc}</MenuItem>
+              <MenuItem value="quality-premium">
+                {t.treasure.sort.bestQuality}
+              </MenuItem>
+              <MenuItem value="item-number">
+                {t.treasure.sort.itemNumber}
+              </MenuItem>
+              <MenuItem value="most-searched">
+                {t.treasure.sort.mostSearched}
+              </MenuItem>
+            </Select>
+          </FormControl>
+
           {/* Category filter (Column K from inventory) */}
           <FormControl size="small" sx={{ minWidth: 160 }}>
             <Select
