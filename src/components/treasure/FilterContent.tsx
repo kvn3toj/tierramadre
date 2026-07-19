@@ -297,7 +297,7 @@ export const FilterContent = memo(function FilterContent({
     // visible chip stays compact (fontSize/gap unchanged), only the hit area
     // grows, via alignItems:center centering the label inside the taller box.
     const pillBase = {
-      borderRadius: '20px',
+      borderRadius: 'var(--tm-radius-pill)',
       fontSize: '0.75rem',
       fontWeight: 500,
       cursor: 'pointer',
@@ -464,7 +464,7 @@ export const FilterContent = memo(function FilterContent({
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
               sx={{
-                borderRadius: '20px',
+                borderRadius: 'var(--tm-radius-pill)',
                 fontSize: '0.75rem',
                 '& .MuiSelect-select': { py: 0.6, px: 1.5 },
                 '& .MuiOutlinedInput-notchedOutline': {
@@ -714,7 +714,7 @@ export const FilterContent = memo(function FilterContent({
             onClick={handleClearFilters}
             sx={{
               alignSelf: 'flex-start',
-              borderRadius: '16px',
+              borderRadius: 'var(--tm-radius-pill)',
               bgcolor: alpha(semanticColors.error.main, 0.08),
               color: semanticColors.error.dark,
               fontWeight: 600,
