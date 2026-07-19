@@ -25,6 +25,7 @@ import {
   TreasureEmptyState,
   TreasureDesktopFilterPanel,
   CatalogHeader,
+  CatalogSkeletonGrid,
 } from './browser';
 import TreasureErrorState from './browser/TreasureErrorState';
 import ScrollToTop from '../shared/ScrollToTop';
@@ -361,7 +362,9 @@ export default function TreasureBrowser({
         </Box>
       )}
 
-      {viewMode === 'grid' ? (
+      {isLoadingSheets && allTreasure.length === 0 ? (
+        <CatalogSkeletonGrid />
+      ) : viewMode === 'grid' ? (
         <VirtualGrid
           items={gridItems}
           favorites={favoriteIds}
@@ -413,6 +416,7 @@ export default function TreasureBrowser({
       )}
 
       {!sheetsError &&
+        !(isLoadingSheets && allTreasure.length === 0) &&
         ((viewMode === 'grid'
           ? gridItems.length === 0
           : listItems.length === 0) ||

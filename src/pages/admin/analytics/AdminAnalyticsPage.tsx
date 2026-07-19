@@ -25,6 +25,7 @@ import {
   primitiveSpacing as spacing,
 } from '../../../design-system';
 import { SegmentedControl } from '../../../design-system/components/SegmentedControl';
+import { Card, Skeleton } from '../../../design-system';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 
 // Tab components
@@ -35,6 +36,10 @@ import Breadcrumbs from '../../../components/shared/Breadcrumbs';
 const AdminAnalyticsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [relativeTime, setRelativeTime] = useState('ahora');
+  // Tracks first load only — isLoading also flips true on manual refresh,
+  // and we don't want an already-populated dashboard flashing back to a
+  // skeleton every time the user hits the refresh button.
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   // Get all analytics data from the hook
   const {
@@ -64,6 +69,10 @@ const AdminAnalyticsPage: React.FC = () => {
     isLoading,
     lastRefreshedAt,
   } = useAnalyticsData();
+
+  useEffect(() => {
+    if (!isLoading) setHasLoadedOnce(true);
+  }, [isLoading]);
 
   // Auto-update relative time display
   useEffect(() => {
@@ -187,47 +196,70 @@ const AdminAnalyticsPage: React.FC = () => {
       </Box>
 
       {/* Tab Panels */}
-      <OverviewTab
-        activeTab={activeTab}
-        viewStats={viewStats}
-        totalCotizaciones={totalCotizaciones}
-        weekCotizaciones={weekCotizaciones}
-        healthScores={healthScores}
-        weeklyTrendData={weeklyTrendData}
-        insights={insights}
-        combinedActivity={combinedActivity}
-        cotizacionTopProducts={cotizacionStats?.topProducts}
-        metrics={metrics}
-        generateTrendData={generateTrendData}
-      />
+      {isLoading && !hasLoadedOnce ? (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 1.5,
+          }}
+        >
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} variant="outlined">
+              <Card.Content>
+                <Skeleton variant="text" width="50%" height={14} />
+                <Box sx={{ mt: 1 }}>
+                  <Skeleton variant="text" width="70%" height={28} />
+                </Box>
+              </Card.Content>
+            </Card>
+          ))}
+        </Box>
+      ) : (
+        <>
+          <OverviewTab
+            activeTab={activeTab}
+            viewStats={viewStats}
+            totalCotizaciones={totalCotizaciones}
+            weekCotizaciones={weekCotizaciones}
+            healthScores={healthScores}
+            weeklyTrendData={weeklyTrendData}
+            insights={insights}
+            combinedActivity={combinedActivity}
+            cotizacionTopProducts={cotizacionStats?.topProducts}
+            metrics={metrics}
+            generateTrendData={generateTrendData}
+          />
 
-      <ProductsTab
-        activeTab={activeTab}
-        viewStats={viewStats}
-        topProducts={topProducts}
-        recentProductViews={recentProductViews}
-        generateTrendData={generateTrendData}
-      />
+          <ProductsTab
+            activeTab={activeTab}
+            viewStats={viewStats}
+            topProducts={topProducts}
+            recentProductViews={recentProductViews}
+            generateTrendData={generateTrendData}
+          />
 
-      <UsersTab
-        activeTab={activeTab}
-        viewStats={viewStats}
-        userBreakdown={userBreakdown}
-        topViewers={topViewers}
-      />
+          <UsersTab
+            activeTab={activeTab}
+            viewStats={viewStats}
+            userBreakdown={userBreakdown}
+            topViewers={topViewers}
+          />
 
-      <HealthTab
-        activeTab={activeTab}
-        healthScores={healthScores}
-        healthColor={healthColor}
-        healthInsights={healthInsights}
-        cotizacionTopProducts={cotizacionStats?.topProducts}
-        achievements={achievements}
-        levelInfo={levelInfo}
-        unlockedAchievements={unlockedAchievements}
-        ACHIEVEMENTS={ACHIEVEMENTS}
-        getAchievementProgress={getAchievementProgress}
-      />
+          <HealthTab
+            activeTab={activeTab}
+            healthScores={healthScores}
+            healthColor={healthColor}
+            healthInsights={healthInsights}
+            cotizacionTopProducts={cotizacionStats?.topProducts}
+            achievements={achievements}
+            levelInfo={levelInfo}
+            unlockedAchievements={unlockedAchievements}
+            ACHIEVEMENTS={ACHIEVEMENTS}
+            getAchievementProgress={getAchievementProgress}
+          />
+        </>
+      )}
 
       {/* Footer */}
       <Typography
