@@ -507,7 +507,7 @@ const DesignSystemPage: React.FC = () => {
         ================================================================= */}
         <Section
           title="Buttons"
-          description="4 variants (primary, secondary, tertiary, danger) x 3 sizes"
+          description="5 variants (primary, tinted, plain, outlined, danger) x 3 sizes"
         >
           {/* Variants */}
           <Typography variant="subtitle2" sx={{ mb: 2 }}>
@@ -515,9 +515,20 @@ const DesignSystemPage: React.FC = () => {
           </Typography>
           <HStack spacing={2} wrap sx={{ mb: 4 }}>
             <Button variant="primary">Primary</Button>
-            <Button variant="secondary">Secondary</Button>
-            <Button variant="tertiary">Tertiary</Button>
+            <Button variant="tinted">Tinted</Button>
+            <Button variant="plain">Plain</Button>
+            <Button variant="outlined">Outlined</Button>
             <Button variant="danger">Danger</Button>
+          </HStack>
+
+          {/* Bevel — the emerald-cut brand CTA (DS3 addendum §E1) */}
+          <Typography variant="subtitle2" sx={{ mb: 2 }}>
+            Bevel — one brand CTA per view
+          </Typography>
+          <HStack spacing={2} wrap sx={{ mb: 4 }}>
+            <Button variant="primary" bevel>
+              Cotizar
+            </Button>
           </HStack>
 
           {/* Sizes */}
@@ -536,7 +547,7 @@ const DesignSystemPage: React.FC = () => {
           </Typography>
           <HStack spacing={2} wrap sx={{ mb: 4 }}>
             <Button startIcon={<AddIcon />}>Add Item</Button>
-            <Button variant="secondary" endIcon={<SendIcon />}>
+            <Button variant="outlined" endIcon={<SendIcon />}>
               Send
             </Button>
             <Button variant="danger" startIcon={<DeleteIcon />}>
@@ -583,7 +594,7 @@ const DesignSystemPage: React.FC = () => {
                 </Typography>
               </CardContent>
               <CardFooter>
-                <Button size="sm" variant="tertiary">
+                <Button size="sm" variant="plain">
                   Action
                 </Button>
               </CardFooter>
@@ -599,7 +610,7 @@ const DesignSystemPage: React.FC = () => {
                 </Typography>
               </CardContent>
               <CardFooter>
-                <Button size="sm" variant="tertiary">
+                <Button size="sm" variant="plain">
                   Action
                 </Button>
               </CardFooter>
@@ -614,7 +625,7 @@ const DesignSystemPage: React.FC = () => {
                 </Typography>
               </CardContent>
               <CardFooter>
-                <Button size="sm" variant="tertiary">
+                <Button size="sm" variant="plain">
                   Action
                 </Button>
               </CardFooter>

@@ -20,9 +20,9 @@ import {
   MenuItem,
   alpha,
   Collapse,
-  Button,
   Tooltip,
 } from '@mui/material';
+import { Button } from '../../design-system/components/Button';
 import { LogRangeSlider } from '../shared/LogRangeSlider';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { Theme } from '@mui/material/styles';
@@ -871,7 +871,8 @@ export const FilterContent = memo(function FilterContent({
 
         {/* Advanced Filters Toggle */}
         <Button
-          size="small"
+          variant="plain"
+          size="sm"
           onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           aria-expanded={showAdvancedFilters}
           startIcon={<SlidersHorizontal size={16} />}
@@ -882,11 +883,6 @@ export const FilterContent = memo(function FilterContent({
               <ChevronDown size={14} />
             )
           }
-          sx={{
-            color: theme.palette.text.secondary,
-            textTransform: 'none',
-            fontWeight: 500,
-          }}
         >
           {t.treasure.filter.moreFilters}
         </Button>

@@ -5,12 +5,13 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Box, Typography, Button, Stack } from '@mui/material';
+import { Box, Typography, Stack } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { alpha } from '@mui/material/styles';
+import { Button } from '../../../design-system/components/Button';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 import type { HighlightBox } from '../../../types/feedback';
 
@@ -34,7 +35,9 @@ export default function AnnotateStep({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
-  const [currentBox, setCurrentBox] = useState<HighlightBox | null>(highlightBox);
+  const [currentBox, setCurrentBox] = useState<HighlightBox | null>(
+    highlightBox,
+  );
 
   // Update parent when box changes
   useEffect(() => {
@@ -55,7 +58,7 @@ export default function AnnotateStep({
         y: ((clientY - rect.top) / rect.height) * 100,
       };
     },
-    []
+    [],
   );
 
   // Mouse/touch handlers
@@ -66,7 +69,7 @@ export default function AnnotateStep({
       setIsDrawing(true);
       setCurrentBox(null);
     },
-    [getRelativePos]
+    [getRelativePos],
   );
 
   const handleMove = useCallback(
@@ -81,7 +84,7 @@ export default function AnnotateStep({
         height: Math.abs(pos.y - startPos.y),
       });
     },
-    [isDrawing, startPos, getRelativePos]
+    [isDrawing, startPos, getRelativePos],
   );
 
   const handleEnd = useCallback(() => {
@@ -169,39 +172,27 @@ export default function AnnotateStep({
 
       {/* Action buttons */}
       <Stack direction="row" spacing={1} justifyContent="space-between">
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={onBack}
-          sx={{ color: alpha('#fff', 0.7) }}
-        >
+        <Button variant="plain" startIcon={<ArrowBackIcon />} onClick={onBack}>
           Atrás
         </Button>
 
         <Stack direction="row" spacing={1}>
           {currentBox && (
             <Button
+              variant="plain"
               startIcon={<RestartAltIcon />}
               onClick={handleReset}
-              sx={{ color: alpha('#fff', 0.5) }}
             >
               Reiniciar
             </Button>
           )}
-          <Button
-            startIcon={<SkipNextIcon />}
-            onClick={onSkip}
-            sx={{ color: alpha('#fff', 0.5) }}
-          >
+          <Button variant="plain" startIcon={<SkipNextIcon />} onClick={onSkip}>
             Omitir
           </Button>
           <Button
-            variant="contained"
+            variant="primary"
             endIcon={<ArrowForwardIcon />}
             onClick={onNext}
-            sx={{
-              bgcolor: emeraldCore.primary,
-              '&:hover': { bgcolor: emeraldCore.dark },
-            }}
           >
             Siguiente
           </Button>

@@ -61,6 +61,20 @@
   /* ---- Focus ------------------------------------------------------------ */
   --tm-focus-ring: 0 0 0 2px var(--tm-bg), 0 0 0 4px var(--tm-accent);
 
+  /* ---- Bevel (§E1 "el bisel" — the emerald step-cut) -------------------- */
+  /* Chamfer applied to the one brand-CTA primary button + other bisel sites. */
+  --tm-bevel: 9px;
+
+  /* ---- Tinted wash (Button `tinted` variant) ---------------------------- */
+  /* Derived from --tm-accent/--tm-surface so it self-adjusts per theme —
+     no separate dark-mode literal needed. */
+  --tm-accent-wash: color-mix(in srgb, var(--tm-accent) 12%, var(--tm-surface));
+  --tm-accent-wash-strong: color-mix(
+    in srgb,
+    var(--tm-accent) 20%,
+    var(--tm-surface)
+  );
+
   /* ---- Layout ----------------------------------------------------------- */
   /* Intentional-desktop content width: the centered container that ends the
      "stretched phone layout". Sits just under the 1180px tab-bar-hide

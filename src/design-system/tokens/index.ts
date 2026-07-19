@@ -100,7 +100,6 @@ import {
   studioGradients,
   studioShadows,
   animation,
-  disabledButton,
 } from './legacy-compat';
 
 // Semantics
@@ -266,7 +265,7 @@ export { layoutConstants, radius };
 export { brandPalette as brand, lightTokens, darkTokens };
 export { compatGradients as legacyGradients, legacyTypography, getTokens };
 export { studioColors, studioGradients, studioShadows };
-export { animation, disabledButton };
+export { animation };
 
 // Types
 export type { PrimitiveColors } from './primitives/colors';

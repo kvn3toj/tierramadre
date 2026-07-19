@@ -14,13 +14,6 @@ export type {
   IOSCardPadding,
 } from './core/IOSCard';
 
-export { default as IOSButton } from './core/IOSButton';
-export type {
-  IOSButtonProps,
-  IOSButtonVariant,
-  IOSButtonSize,
-} from './core/IOSButton';
-
 export { default as IOSTextField } from './core/IOSTextField';
 export type { IOSTextFieldProps } from './core/IOSTextField';
 

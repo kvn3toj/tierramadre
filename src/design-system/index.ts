@@ -196,7 +196,6 @@ export {
   studioGradients,
   studioShadows,
   animation,
-  disabledButton,
 } from './tokens/legacy-compat';
 
 // =============================================================================

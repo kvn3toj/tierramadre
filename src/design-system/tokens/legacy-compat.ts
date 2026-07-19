@@ -280,18 +280,3 @@ export const animation = {
     colors: cssTransition.colors,
   },
 } as const;
-
-// =============================================================================
-// LEGACY DISABLED BUTTON STYLES
-// =============================================================================
-
-export const disabledButton = {
-  contained: {
-    opacity: 0.45,
-    pointerEvents: 'none' as const,
-  },
-  outlined: {
-    opacity: 0.4,
-    pointerEvents: 'none' as const,
-  },
-} as const;

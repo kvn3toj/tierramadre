@@ -4,10 +4,18 @@
  * Select issue category and priority.
  */
 
-import { Box, Typography, Button, Stack, Chip, ToggleButtonGroup, ToggleButton } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Stack,
+  Chip,
+  ToggleButtonGroup,
+  ToggleButton,
+} from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { alpha } from '@mui/material/styles';
+import { Button } from '../../../design-system/components/Button';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 import {
   type FeedbackCategory,
@@ -58,14 +66,17 @@ export default function CategorizeStep({
           <Chip
             key={opt.value}
             label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}>
+              <Box
+                sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}
+              >
                 <span style={{ fontSize: '1.2rem' }}>{opt.icon}</span>
                 <Box>
                   <Typography
                     sx={{
                       fontWeight: 600,
                       fontSize: '0.95rem',
-                      color: category === opt.value ? emeraldCore.darkest : 'white',
+                      color:
+                        category === opt.value ? emeraldCore.darkest : 'white',
                     }}
                   >
                     {opt.label}
@@ -73,7 +84,10 @@ export default function CategorizeStep({
                   <Typography
                     sx={{
                       fontSize: '0.75rem',
-                      color: category === opt.value ? alpha(emeraldCore.darkest, 0.7) : alpha('#fff', 0.6),
+                      color:
+                        category === opt.value
+                          ? alpha(emeraldCore.darkest, 0.7)
+                          : alpha('#fff', 0.6),
                     }}
                   >
                     {opt.description}
@@ -154,27 +168,20 @@ export default function CategorizeStep({
       </Box>
 
       {/* Action buttons */}
-      <Stack direction="row" spacing={1} justifyContent="space-between" sx={{ mt: 'auto' }}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={onBack}
-          sx={{ color: alpha('#fff', 0.7) }}
-        >
+      <Stack
+        direction="row"
+        spacing={1}
+        justifyContent="space-between"
+        sx={{ mt: 'auto' }}
+      >
+        <Button variant="plain" startIcon={<ArrowBackIcon />} onClick={onBack}>
           Atrás
         </Button>
         <Button
-          variant="contained"
+          variant="primary"
           endIcon={<ArrowForwardIcon />}
           onClick={onNext}
           disabled={!canProceed}
-          sx={{
-            bgcolor: emeraldCore.primary,
-            '&:hover': { bgcolor: emeraldCore.dark },
-            '&:disabled': {
-              bgcolor: alpha(emeraldCore.primary, 0.3),
-              color: alpha('#fff', 0.5),
-            },
-          }}
         >
           Siguiente
         </Button>

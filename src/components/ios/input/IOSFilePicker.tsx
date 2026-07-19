@@ -1,5 +1,11 @@
-import React, { CSSProperties, useRef, useState, DragEvent, ChangeEvent } from 'react';
-import { IOSButton } from '../core/IOSButton';
+import React, {
+  CSSProperties,
+  useRef,
+  useState,
+  DragEvent,
+  ChangeEvent,
+} from 'react';
+import { Button } from '../../../design-system/components/Button';
 import { IOSProgress } from '../feedback/IOSProgress';
 import { createLogger } from '../../../utils/logger';
 
@@ -87,7 +93,9 @@ function isImageFile(file: File): boolean {
   if (file.type.startsWith('image/')) return true;
   // Check by extension for HEIC/HEIF (some browsers don't set correct MIME type)
   const ext = file.name.toLowerCase().split('.').pop();
-  return ['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '');
+  return ['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'gif'].includes(
+    ext || '',
+  );
 }
 
 /**
@@ -178,7 +186,9 @@ export const IOSFilePicker: React.FC<IOSFilePickerProps> = ({
       }
 
       // Validate file sizes
-      const invalidFiles = files.filter((file) => !validateFileSize(file, maxSizeMB));
+      const invalidFiles = files.filter(
+        (file) => !validateFileSize(file, maxSizeMB),
+      );
       if (invalidFiles.length > 0) {
         onError?.(`Files must be smaller than ${maxSizeMB}MB`);
         return;
@@ -190,7 +200,7 @@ export const IOSFilePicker: React.FC<IOSFilePickerProps> = ({
           file,
           preview: await createPreviewURL(file),
           id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        }))
+        })),
       );
 
       setSelectedFiles(filesWithPreviews);
@@ -264,7 +274,9 @@ export const IOSFilePicker: React.FC<IOSFilePickerProps> = ({
     minHeight: '200px',
     border: `2px dashed ${isDragging ? 'var(--brand-primary)' : 'var(--border-default)'}`,
     borderRadius: 'var(--border-radius-md)',
-    backgroundColor: isDragging ? 'var(--button-secondary-bg)' : 'var(--surface-secondary)',
+    backgroundColor: isDragging
+      ? 'var(--button-secondary-bg)'
+      : 'var(--surface-secondary)',
     padding: 'var(--spacing-xl)',
     textAlign: 'center',
     cursor: disabled || loading ? 'not-allowed' : 'pointer',
@@ -374,33 +386,48 @@ export const IOSFilePicker: React.FC<IOSFilePickerProps> = ({
 
           {/* Buttons */}
           <div
-            style={{ display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-xs)' }}
+            style={{
+              display: 'flex',
+              gap: 'var(--spacing-sm)',
+              marginTop: 'var(--spacing-xs)',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {enableCamera && (
-              <IOSButton
-                variant="filled"
-                size="medium"
+              <Button
+                variant="primary"
+                size="md"
                 onClick={triggerCameraInput}
                 disabled={disabled || loading}
               >
                 📷 Camera
-              </IOSButton>
+              </Button>
             )}
-            <IOSButton
+            <Button
               variant="tinted"
-              size="medium"
+              size="md"
               onClick={triggerFileInput}
               disabled={disabled || loading}
             >
               📁 Browse
-            </IOSButton>
+            </Button>
           </div>
 
           {/* Upload progress */}
           {loading && uploadProgress !== undefined && (
-            <div style={{ width: '100%', maxWidth: '300px', marginTop: 'var(--spacing-md)' }}>
-              <IOSProgress variant="linear" value={uploadProgress} showLabel color="emerald" />
+            <div
+              style={{
+                width: '100%',
+                maxWidth: '300px',
+                marginTop: 'var(--spacing-md)',
+              }}
+            >
+              <IOSProgress
+                variant="linear"
+                value={uploadProgress}
+                showLabel
+                color="emerald"
+              />
             </div>
           )}
         </div>
