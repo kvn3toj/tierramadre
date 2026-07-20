@@ -6,7 +6,7 @@ import {
   alpha,
 } from '@mui/material';
 import { LayoutGrid, List, Gem, Crown } from 'lucide-react';
-import { emeraldCore } from '../../../design-system/tokens/colors';
+import { getQuietEmerald } from '../../../design-system';
 import SavedFiltersDropdown from '../SavedFiltersDropdown';
 import type { FilterPreset, FilterState } from '../../../hooks/useSavedFilters';
 import type {
@@ -71,21 +71,27 @@ export default function DesktopFilterToolbar({
   resultsSummary,
   dense = false,
 }: DesktopFilterToolbarProps) {
+  // Theme is data: resolve the Quiet Emerald token set from the mode instead of
+  // hand-rolling hex/rgba here.
+  const qe = getQuietEmerald(isLight ? 'light' : 'dark');
   return (
     <Box
       sx={{
         display: 'flex',
         gap: 2,
         alignItems: 'center',
+        flexWrap: 'wrap',
+        // Span the trailing area so the flexible gap below can push the
+        // personal/view cluster to the right edge of the header row.
+        flex: 1,
+        minWidth: 0,
         ...(dense
           ? {}
           : {
               mt: 1,
               pt: 1,
               borderTop: '1px solid',
-              borderColor: isLight
-                ? 'rgba(0,0,0,0.06)'
-                : 'rgba(255,255,255,0.06)',
+              borderColor: qe.hairline,
             }),
       }}
     >
@@ -123,10 +129,14 @@ export default function DesktopFilterToolbar({
         hasActiveFilters={hasFilters}
       />
 
+      {/* Flexible gap — the honest break between the "narrow the catalog" find
+          cluster (search · filtros · búsquedas) and the personal/view cluster.
+          minWidth keeps a real gap even when the row is tight. */}
+      <Box sx={{ flex: 1, minWidth: 24 }} />
+
       {/* Personal/info cluster: Favoritos + stat chips + total value — a
-          distinct concept from "narrow the catalog", separated with a
-          little extra breathing room from the find cluster above. */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 1 }}>
+          distinct concept from "narrow the catalog", right-aligned. */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         {resultsSummary}
         {shouldShowPrices && (
           <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
@@ -135,12 +145,12 @@ export default function DesktopFilterToolbar({
               icon={<Gem size={12} />}
               label={stats.looseStones}
               sx={{
-                bgcolor: alpha(emeraldCore.primary, 0.1),
-                color: emeraldCore.primary,
+                bgcolor: alpha(qe.accent, 0.1),
+                color: qe.accent,
                 fontWeight: 600,
                 fontSize: '0.7rem',
                 height: 24,
-                '& .MuiChip-icon': { color: emeraldCore.primary },
+                '& .MuiChip-icon': { color: qe.accent },
               }}
             />
             <Chip
@@ -150,21 +160,18 @@ export default function DesktopFilterToolbar({
               sx={{
                 // Quiet Emerald: emerald is the only saturated color —
                 // jewelry reads as neutral ink, not gold.
-                bgcolor: isLight
-                  ? 'rgba(0,0,0,0.06)'
-                  : 'rgba(255,255,255,0.08)',
-                color: isLight ? '#5C6360' : '#9AA09D',
+                bgcolor: alpha(qe.muted, 0.12),
+                color: qe.muted,
                 fontWeight: 600,
                 fontSize: '0.7rem',
                 height: 24,
-                '& .MuiChip-icon': { color: isLight ? '#5C6360' : '#9AA09D' },
+                '& .MuiChip-icon': { color: qe.muted },
               }}
             />
           </Box>
         )}
       </Box>
 
-      {!dense && <Box sx={{ flex: 1 }} />}
       <ToggleButtonGroup
         value={viewMode}
         exclusive

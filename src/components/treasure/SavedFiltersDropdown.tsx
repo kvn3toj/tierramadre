@@ -34,7 +34,11 @@ import {
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { FilterPreset } from '../../hooks/useSavedFilters';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import {
+  emeraldCore,
+  surfacesLight,
+  surfacesDark,
+} from '../../design-system/tokens/colors';
 
 interface SavedFiltersDropdownProps {
   /** List of saved filter presets */
@@ -143,8 +147,12 @@ export default function SavedFiltersDropdown({
         startIcon={<Bookmark size={16} />}
         endIcon={<ChevronDown size={14} />}
         sx={{
-          borderColor: isLight ? surfacesLight.border.default : surfacesDark.border.default,
-          color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
+          borderColor: isLight
+            ? surfacesLight.border.default
+            : surfacesDark.border.default,
+          color: isLight
+            ? surfacesLight.text.secondary
+            : surfacesDark.text.secondary,
           textTransform: 'none',
           fontWeight: 500,
           minWidth: compact ? 'auto' : 160,
@@ -154,7 +162,9 @@ export default function SavedFiltersDropdown({
           },
         }}
       >
-        {compact ? '' : `Búsquedas (${presets.length})`}
+        {compact
+          ? ''
+          : `Búsquedas${presets.length > 0 ? ` (${presets.length})` : ''}`}
       </Button>
 
       {/* Dropdown Menu */}
@@ -166,9 +176,13 @@ export default function SavedFiltersDropdown({
           sx: {
             minWidth: 280,
             maxHeight: 400,
-            bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
+            bgcolor: isLight
+              ? surfacesLight.background.primary
+              : surfacesDark.background.primary,
             border: '1px solid',
-            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
+            borderColor: isLight
+              ? surfacesLight.border.light
+              : surfacesDark.border.default,
             boxShadow: isLight
               ? '0 4px 20px rgba(0, 0, 0, 0.1)'
               : '0 4px 20px rgba(0, 0, 0, 0.4)',
@@ -176,7 +190,14 @@ export default function SavedFiltersDropdown({
         }}
       >
         {/* Header */}
-        <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Box
+          sx={{
+            px: 2,
+            py: 1.5,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
           <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
             Mis Búsquedas Guardadas
           </Typography>
@@ -206,7 +227,9 @@ export default function SavedFiltersDropdown({
           </ListItemIcon>
           <ListItemText
             primary={t.treasure.savedFilters.saveSearch}
-            secondary={hasActiveFilters ? 'Crear nuevo preset' : 'Sin filtros activos'}
+            secondary={
+              hasActiveFilters ? 'Crear nuevo preset' : 'Sin filtros activos'
+            }
             primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
             secondaryTypographyProps={{ variant: 'caption' }}
           />
@@ -215,11 +238,15 @@ export default function SavedFiltersDropdown({
         {/* Presets List */}
         {presets.length === 0 ? (
           <Box sx={{ py: 4, textAlign: 'center' }}>
-            <Filter size={32} color={isLight ? surfacesLight.text.disabled : surfacesDark.text.disabled} />
-            <Typography
-              variant="body2"
-              sx={{ mt: 1, color: 'text.secondary' }}
-            >
+            <Filter
+              size={32}
+              color={
+                isLight
+                  ? surfacesLight.text.disabled
+                  : surfacesDark.text.disabled
+              }
+            />
+            <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
               No tienes búsquedas guardadas
             </Typography>
           </Box>
@@ -331,7 +358,8 @@ export default function SavedFiltersDropdown({
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-            Dale un nombre a esta combinación de filtros para encontrarla fácilmente.
+            Dale un nombre a esta combinación de filtros para encontrarla
+            fácilmente.
           </Typography>
           <TextField
             autoFocus

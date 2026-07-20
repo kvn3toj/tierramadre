@@ -384,7 +384,7 @@ export const pt = {
       carat: 'Quilates',
       caratRange: 'Faixa de Quilates',
       allCarats: 'Todos',
-      moreFilters: 'Mais filtros',
+      moreFilters: 'Filtros',
       clear: 'Limpar',
       clearFilters: 'Limpar filtros',
       statusTooltip: 'Filtrar por estado de venda',

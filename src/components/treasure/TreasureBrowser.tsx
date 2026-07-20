@@ -11,8 +11,7 @@ import { Box, Chip, alpha, useTheme } from '@mui/material';
 import { useLanguage } from '../../contexts/LanguageContext';
 import CertificationUpload from './CertificationUpload';
 import { ComparisonBar, ComparisonModal } from '../comparison';
-import { zIndex, FilterSheet } from '../../design-system';
-import { emeraldCore } from '../../design-system/tokens/colors';
+import { zIndex, FilterSheet, getQuietEmerald } from '../../design-system';
 import { TreasureItem } from '../../types';
 import ListRow from './ListRow';
 import VirtualGrid from './VirtualGrid';
@@ -77,6 +76,9 @@ export default function TreasureBrowser({
   const [gridScrollEl, setGridScrollEl] = useState<HTMLElement | null>(null);
 
   const c = useTreasureBrowserController({ isProviderMode, defaultViewMode });
+
+  // Quiet Emerald tokens (theme is data, not hardcoded hex).
+  const qe = getQuietEmerald(c.isLight ? 'light' : 'dark');
 
   const {
     formatFullCurrency,
@@ -194,7 +196,11 @@ export default function TreasureBrowser({
 
   return (
     <Box
-      sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 1, sm: 2, md: 3, lg: 2 } }}
+      sx={{
+        maxWidth: 1536,
+        mx: 'auto',
+        px: { xs: 1, sm: 2, md: 3, lg: 3, xl: 4 },
+      }}
     >
       <CatalogHeader
         count={headerCount}
@@ -209,7 +215,10 @@ export default function TreasureBrowser({
                 alignItems: 'center',
                 gap: 2,
                 flexWrap: 'wrap',
-                justifyContent: 'flex-end',
+                // Find cluster (search + filtros) hugs the left; the toolbar's
+                // own flexible spacer pushes the personal/view cluster right.
+                justifyContent: 'flex-start',
+                width: '100%',
               }}
             >
               <FilterContent {...filterContentProps} />
@@ -323,10 +332,10 @@ export default function TreasureBrowser({
                       fontSize: '0.7rem',
                       fontWeight: 600,
                       minHeight: 32,
-                      bgcolor: alpha(emeraldCore.primary, 0.08),
-                      color: emeraldCore.primary,
-                      border: `1px solid ${alpha(emeraldCore.primary, 0.2)}`,
-                      '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.15) },
+                      bgcolor: alpha(qe.accent, 0.08),
+                      color: qe.accent,
+                      border: `1px solid ${alpha(qe.accent, 0.2)}`,
+                      '&:hover': { bgcolor: alpha(qe.accent, 0.15) },
                     }}
                   />
                 ))}

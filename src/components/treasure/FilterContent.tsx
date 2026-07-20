@@ -748,7 +748,11 @@ export const FilterContent = memo(function FilterContent({
         sx={{
           display: 'flex',
           gap: 2,
-          flexWrap: 'wrap',
+          // Search + Filtros are one unit: keep them on the same line and don't
+          // let the row shrink the box (which would wrap Filtros under search).
+          // The whole unit still wraps as a block via the parent's flexWrap.
+          flexWrap: 'nowrap',
+          flexShrink: 0,
           alignItems: 'center',
         }}
       >
@@ -768,8 +772,10 @@ export const FilterContent = memo(function FilterContent({
           inputRef={searchInputRef}
           inputProps={{ 'aria-label': t.treasure.search.ariaLabel }}
           sx={{
-            minWidth: 200,
-            flex: 1,
+            // Search is the core-loop anchor: give it a real, fixed presence
+            // (~320px) instead of shrinking to a token pill. The whole
+            // search+Filtros unit wraps as a block on narrow desktops.
+            flex: '0 0 320px',
             '& .MuiOutlinedInput-root': {
               borderRadius: 2,
               bgcolor: isLight

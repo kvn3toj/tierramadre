@@ -185,7 +185,9 @@ function CellRenderer({
  * - xs (< 600px): 2 columns - iPhone
  * - sm (600-900px): 2 columns - iPhone landscape / small tablets
  * - md (900-1200px): 3 columns - iPad
- * - lg (> 1200px): 4 columns - Desktop / large tablets
+ * - lg (1200-1536px): 4 columns - Desktop
+ * - xl (> 1536px): 5 columns - large monitors (keeps cards ~300px, adds a column
+ *   instead of fattening cards, so the back-office team sees more stones per row)
  */
 export default function VirtualGrid({
   items,
@@ -332,6 +334,7 @@ export default function VirtualGrid({
   const isXs = useMediaQuery(theme.breakpoints.down('sm')); // < 600px
   const isSm = useMediaQuery(theme.breakpoints.between('sm', 'md')); // 600-900px
   const isMd = useMediaQuery(theme.breakpoints.between('md', 'lg')); // 900-1200px
+  const isXl = useMediaQuery(theme.breakpoints.up('xl')); // >= 1536px
 
   // Calculate column count based on breakpoints
   // iOS HIG: 2 columns is optimal for scanning on mobile
@@ -339,8 +342,9 @@ export default function VirtualGrid({
     if (isXs) return 2; // iPhone - 2 columns
     if (isSm) return 2; // iPhone landscape / small tablet - 2 columns
     if (isMd) return 3; // iPad - 3 columns
-    return 4; // Desktop / large screens - 4 columns
-  }, [isXs, isSm, isMd]);
+    if (isXl) return 5; // large monitor - 5 columns (keeps cards ~300px)
+    return 4; // Desktop - 4 columns
+  }, [isXs, isSm, isMd, isXl]);
 
   const columnCount = getColumnCount();
 

@@ -516,7 +516,7 @@ export const fr = {
       carat: 'Carats',
       caratRange: 'Plage de Carats',
       allCarats: 'Tous',
-      moreFilters: 'Plus de filtres',
+      moreFilters: 'Filtres',
       clear: 'Effacer',
       clearFilters: 'Effacer les filtres',
       statusTooltip: 'Filtrer par état de vente',

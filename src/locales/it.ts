@@ -513,7 +513,7 @@ export const it = {
       carat: 'Carati',
       caratRange: 'Intervallo di Carati',
       allCarats: 'Tutti',
-      moreFilters: 'Più filtri',
+      moreFilters: 'Filtri',
       clear: 'Cancella',
       clearFilters: 'Cancella filtri',
       statusTooltip: 'Filtra per stato di vendita',

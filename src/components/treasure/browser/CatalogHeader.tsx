@@ -53,13 +53,16 @@ export function CatalogHeader({
       <Box
         sx={{
           display: 'flex',
-          alignItems: 'flex-end',
+          // Center the control cluster against the whole title block so the
+          // controls read as one clean band instead of floating in the
+          // whitespace beside the title (was flex-end, which left an L-gap).
+          alignItems: 'center',
           justifyContent: 'space-between',
           gap: 2,
           flexWrap: 'wrap',
         }}
       >
-        <Box>
+        <Box sx={{ flexShrink: 0 }}>
           <Typography
             component="h1"
             sx={{
@@ -123,7 +126,9 @@ export function CatalogHeader({
           </Box>
         )}
 
-        {trailingContent && <Box sx={{ flexShrink: 0 }}>{trailingContent}</Box>}
+        {trailingContent && (
+          <Box sx={{ flex: 1, minWidth: 0 }}>{trailingContent}</Box>
+        )}
       </Box>
     </Box>
   );

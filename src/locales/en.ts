@@ -383,7 +383,7 @@ export const en = {
       carat: 'Carats',
       caratRange: 'Carat Range',
       allCarats: 'All',
-      moreFilters: 'More filters',
+      moreFilters: 'Filters',
       clear: 'Clear',
       clearFilters: 'Clear filters',
       statusTooltip: 'Filter by sale status',

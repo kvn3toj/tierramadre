@@ -51,11 +51,10 @@ export default function TreasureDesktopResultsSummary({
       sx={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        flex: 1,
-        minWidth: 0,
+        // Content-sized personal cluster (favoritos + total) — the toolbar's
+        // flexible spacer, not this box, is what pushes it to the right.
         flexWrap: 'wrap',
-        gap: 1,
+        gap: 2,
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -85,7 +84,11 @@ export default function TreasureDesktopResultsSummary({
                 color={showFavoritesOnly ? accentColors.error.light : '#6b7280'}
               />
             }
-            label={`${t.treasure.favorites} (${favoritesCount})`}
+            label={
+              favoritesCount > 0
+                ? `${t.treasure.favorites} (${favoritesCount})`
+                : t.treasure.favorites
+            }
             size="small"
             onClick={onToggleFavoritesOnly}
             sx={{
