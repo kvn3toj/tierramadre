@@ -13,6 +13,10 @@ export default tseslint.config(
   },
   {
     files: ['src/**/*.{ts,tsx}', 'eslint-fixtures/**/*.{ts,tsx}'],
+    // design-system/** is the token source of truth — it legitimately defines
+    // hex/rgba color values, so it is exempt from the color-literal guardrails
+    // (DS3 constraint: "Design-system source is exempt from the hex ban").
+    ignores: ['src/design-system/**'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: { ecmaFeatures: { jsx: true } },
@@ -38,7 +42,7 @@ export default tseslint.config(
       'no-restricted-syntax': [
         'warn',
         {
-          selector: 'Literal[value=/#[0-9a-fA-F]{6}\\b/]',
+          selector: 'Literal[value=/#[0-9a-fA-F]{3,8}\\b/]',
           message:
             'DS3: no hex color literals in feature code. Use getQuietEmerald(mode) tokens or var(--tm-*).',
         },
@@ -53,7 +57,7 @@ export default tseslint.config(
             'DS3: no 100vh/100dvh magic offsets. Use a measured height (ResizeObserver / the shell layout tokens) — heights are measured, never guessed.',
         },
         {
-          selector: 'TemplateElement[value.raw=/100vh|calc\\(100vh/]',
+          selector: 'TemplateElement[value.raw=/100d?vh/]',
           message:
             'DS3: no calc(100vh ...) in template strings. Measure the height instead.',
         },
@@ -101,7 +105,7 @@ export default tseslint.config(
       'no-restricted-syntax': [
         'error',
         {
-          selector: 'Literal[value=/#[0-9a-fA-F]{6}\\b/]',
+          selector: 'Literal[value=/#[0-9a-fA-F]{3,8}\\b/]',
           message:
             'DS3: no hex color literals. Use getQuietEmerald(mode) tokens.',
         },
@@ -114,7 +118,7 @@ export default tseslint.config(
           message: 'DS3: no 100vh/100dvh offsets. Measure the height.',
         },
         {
-          selector: 'TemplateElement[value.raw=/100vh|calc\\(100vh/]',
+          selector: 'TemplateElement[value.raw=/100d?vh/]',
           message: 'DS3: no calc(100vh ...) in template strings.',
         },
         {
