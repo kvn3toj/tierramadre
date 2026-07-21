@@ -460,7 +460,7 @@ export default function ComparisonMobileView({
                   '&:hover': {
                     bgcolor:
                       visualMode === 'radar'
-                        ? qe.accent
+                        ? qe.accentStrong
                         : alpha(qe.accent, 0.08),
                   },
                 }}
@@ -481,7 +481,7 @@ export default function ComparisonMobileView({
                   '&:hover': {
                     bgcolor:
                       visualMode === 'matrix'
-                        ? qe.accent
+                        ? qe.accentStrong
                         : alpha(qe.accent, 0.08),
                   },
                 }}

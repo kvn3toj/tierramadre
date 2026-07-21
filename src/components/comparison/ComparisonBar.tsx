@@ -176,7 +176,9 @@ export default function ComparisonBar({
               minWidth: 'auto',
               borderRadius: 2,
               fontSize: '0.875rem',
-              '&:hover': { bgcolor: qe.accent },
+              // JnP-shifted fills darken to the stronger emerald step on hover
+              // (base qe.accent → qe.accentStrong) so hover feedback survives.
+              '&:hover': { bgcolor: qe.accentStrong },
               '&:disabled': {
                 opacity: 0.45,
               },
