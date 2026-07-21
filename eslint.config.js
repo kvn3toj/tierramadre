@@ -63,6 +63,26 @@ export default tseslint.config(
             'DS3: no raw zIndex integers. Use the zIndex scale from @/design-system (zIndex.base/modal/...).',
         },
       ],
+      'no-restricted-imports': [
+        'warn',
+        {
+          patterns: [
+            {
+              group: [
+                '**/design-system/tokens/legacy-compat',
+                '**/tokens/legacy-compat',
+              ],
+              message:
+                'DS3: legacy-compat is retired. Import DS3 tokens from @/design-system.',
+            },
+            {
+              group: ['**/design-system/tokens/colors'],
+              message:
+                'DS3: emeraldCore/goldAccent are legacy named exports. Use getQuietEmerald(mode) from @/design-system (see the Fase-2 migration plan).',
+            },
+          ],
+        },
+      ],
     },
   },
 );
