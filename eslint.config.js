@@ -57,6 +57,11 @@ export default tseslint.config(
           message:
             'DS3: no calc(100vh ...) in template strings. Measure the height instead.',
         },
+        {
+          selector: "Property[key.name='zIndex'] > Literal[raw=/^-?[0-9]+$/]",
+          message:
+            'DS3: no raw zIndex integers. Use the zIndex scale from @/design-system (zIndex.base/modal/...).',
+        },
       ],
     },
   },
