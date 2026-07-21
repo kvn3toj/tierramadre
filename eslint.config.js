@@ -85,4 +85,43 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Directories already migrated to DS3: the same guardrails, but as ERRORS.
+    // Add a directory here the moment it reaches zero DS3 debt (see Fase-2 plan).
+    files: [
+      'src/components/treasure/browser/**/*.{ts,tsx}',
+      'eslint-fixtures/migrated/**/*.{ts,tsx}',
+    ],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: { ecmaFeatures: { jsx: true } },
+      globals: { ...globals.browser },
+    },
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'Literal[value=/#[0-9a-fA-F]{6}\\b/]',
+          message:
+            'DS3: no hex color literals. Use getQuietEmerald(mode) tokens.',
+        },
+        {
+          selector: 'Literal[value=/rgba?\\(/]',
+          message: 'DS3: no rgba()/rgb() literals. Use alpha(qe.token, n).',
+        },
+        {
+          selector: 'Literal[value=/100vh|100dvh/]',
+          message: 'DS3: no 100vh/100dvh offsets. Measure the height.',
+        },
+        {
+          selector: 'TemplateElement[value.raw=/100vh|calc\\(100vh/]',
+          message: 'DS3: no calc(100vh ...) in template strings.',
+        },
+        {
+          selector: "Property[key.name='zIndex'] > Literal[raw=/^-?[0-9]+$/]",
+          message: 'DS3: no raw zIndex integers. Use the zIndex scale.',
+        },
+      ],
+    },
+  },
 );
