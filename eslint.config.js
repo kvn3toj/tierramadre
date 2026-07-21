@@ -94,6 +94,7 @@ export default tseslint.config(
     // Add a directory here the moment it reaches zero DS3 debt (see Fase-2 plan).
     files: [
       'src/components/treasure/browser/**/*.{ts,tsx}',
+      'src/components/comparison/**/*.{ts,tsx}',
       'eslint-fixtures/migrated/**/*.{ts,tsx}',
     ],
     languageOptions: {

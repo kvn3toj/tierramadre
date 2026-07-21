@@ -36,12 +36,11 @@ import {
 } from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import {
-  emeraldCore,
   surfacesLight,
   surfacesDark,
   semanticColors,
 } from '../../design-system/tokens/colors';
-import { Badge } from '../../design-system';
+import { Badge, getQuietEmerald } from '../../design-system';
 import { ComparisonMobileView } from './';
 
 interface ComparisonModalProps {
@@ -83,17 +82,18 @@ function ComparisonCell({
 }) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const qe = getQuietEmerald(mode);
 
   const bgColor =
     indicator === 'best'
-      ? alpha(emeraldCore.primary, 0.15)
+      ? alpha(qe.accentPure, 0.15)
       : indicator === 'worst'
         ? alpha(semanticColors.error.main, 0.1)
         : 'transparent';
 
   const iconColor =
     indicator === 'best'
-      ? emeraldCore.primary
+      ? qe.accentPure
       : indicator === 'worst'
         ? semanticColors.error.main
         : isLight
@@ -137,6 +137,7 @@ export default function ComparisonModal({
   const { formatFullCurrency } = useCurrencyFormat();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const qe = getQuietEmerald(mode);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -188,7 +189,7 @@ export default function ComparisonModal({
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Scale size={24} color={emeraldCore.primary} />
+          <Scale size={24} color={qe.accentPure} />
           <Typography
             variant="h6"
             sx={{ fontWeight: 700, fontSize: isMobile ? '1rem' : '1.25rem' }}
@@ -199,8 +200,8 @@ export default function ComparisonModal({
             label={`${items.length} items`}
             size="small"
             sx={{
-              bgcolor: alpha(emeraldCore.primary, 0.1),
-              color: emeraldCore.dark,
+              bgcolor: alpha(qe.accentPure, 0.1),
+              color: qe.accent,
               fontWeight: 600,
             }}
           />
@@ -257,7 +258,7 @@ export default function ComparisonModal({
                                 width: 60,
                                 height: 60,
                                 border: '2px solid',
-                                borderColor: emeraldCore.primary,
+                                borderColor: qe.accentPure,
                               }}
                             />
                           )}
@@ -427,7 +428,7 @@ export default function ComparisonModal({
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <TrendingUp size={14} color={emeraldCore.primary} />
+              <TrendingUp size={14} color={qe.accentPure} />
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Mejor valor
               </Typography>

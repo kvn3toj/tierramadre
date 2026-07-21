@@ -24,12 +24,15 @@ import {
   formatCarats,
 } from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
+import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 import {
-  surfacesLight,
-  surfacesDark,
-  emeraldCore,
-} from '../../design-system/tokens/colors';
-import { accentColors, cssTransition, Badge } from '../../design-system';
+  accentColors,
+  cssTransition,
+  Badge,
+  getQuietEmerald,
+  qeAccent,
+  whiteAlpha,
+} from '../../design-system';
 import ProductHeader from './ProductHeader';
 import AttributeCard from './AttributeCard';
 import RadarChart from './RadarChart';
@@ -68,7 +71,8 @@ const priorityConfig: Record<
     icon: Gem,
     criteria: 'best_value',
     description: 'Alta calidad a precio razonable • Compra inteligente HOY',
-    gradient: `linear-gradient(135deg, ${emeraldCore.primary} 0%, ${emeraldCore.dark} 100%)`,
+    // static context: no theme mode available (module-level config, outside React render)
+    gradient: `linear-gradient(135deg, ${qeAccent.light.pure} 0%, ${qeAccent.light.accent} 100%)`,
   },
   best_investment: {
     label: 'Inversión',
@@ -100,6 +104,7 @@ export default function ComparisonMobileView({
   const { formatCurrency } = useCurrencyFormat();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const qe = getQuietEmerald(mode);
   const [visualMode, setVisualMode] = useState<VisualMode>('radar');
   const [priority, setPriority] = useState<ComparisonPriority>('best_value');
   const [attributesExpanded, setAttributesExpanded] = useState(false);
@@ -303,7 +308,7 @@ export default function ComparisonMobileView({
               </Typography>
               <Info
                 size={14}
-                color={emeraldCore.primary}
+                color={qe.accent} // Jewelry-Not-Paint: icon carries its own onClick (interactive control)
                 style={{ cursor: 'pointer' }}
                 onClick={() => setShowPriorityHelp(!showPriorityHelp)}
               />
@@ -316,14 +321,14 @@ export default function ComparisonMobileView({
                   mb: 1,
                   p: 1,
                   borderRadius: 1.5,
-                  bgcolor: alpha(emeraldCore.primary, 0.08),
-                  border: `1px solid ${alpha(emeraldCore.primary, 0.2)}`,
+                  bgcolor: alpha(qe.accentPure, 0.08),
+                  border: `1px solid ${alpha(qe.accentPure, 0.2)}`,
                 }}
               >
                 <Typography
                   sx={{
                     fontSize: '0.6rem',
-                    color: emeraldCore.dark,
+                    color: qe.accent,
                     lineHeight: 1.4,
                     mb: 0.5,
                     fontWeight: 600,
@@ -375,10 +380,10 @@ export default function ComparisonMobileView({
                           background: isActive
                             ? config.gradient
                             : 'transparent',
-                          color: isActive ? '#fff' : 'text.primary',
+                          color: isActive ? whiteAlpha(1) : 'text.primary',
                           border: isActive
                             ? 'none'
-                            : `1px solid ${alpha(emeraldCore.primary, 0.3)}`,
+                            : `1px solid ${alpha(qe.accent, 0.3)}`, // Jewelry-Not-Paint: border on a clickable chip
                           fontWeight: 600,
                           fontSize: '0.65rem',
                           height: 28,
@@ -386,7 +391,7 @@ export default function ComparisonMobileView({
                           transition: cssTransition.default,
                           '&:hover': {
                             transform: 'translateY(-1px)',
-                            boxShadow: `0 2px 8px ${alpha(emeraldCore.primary, 0.2)}`,
+                            boxShadow: `0 2px 8px ${alpha(qe.accent, 0.2)}`, // Jewelry-Not-Paint: hover shadow on a clickable chip
                           },
                         }}
                       />
@@ -445,20 +450,18 @@ export default function ComparisonMobileView({
                 onClick={() => setVisualMode('radar')}
                 sx={{
                   flex: 1,
-                  bgcolor:
-                    visualMode === 'radar'
-                      ? emeraldCore.primary
-                      : 'transparent',
-                  color: visualMode === 'radar' ? '#fff' : emeraldCore.primary,
-                  border: `1px solid ${emeraldCore.primary}`,
+                  // Jewelry-Not-Paint: bgcolor/color/border on a clickable chip
+                  bgcolor: visualMode === 'radar' ? qe.accent : 'transparent',
+                  color: visualMode === 'radar' ? whiteAlpha(1) : qe.accent,
+                  border: `1px solid ${qe.accent}`,
                   fontWeight: 600,
                   fontSize: '0.65rem',
                   cursor: 'pointer',
                   '&:hover': {
                     bgcolor:
                       visualMode === 'radar'
-                        ? emeraldCore.dark
-                        : alpha(emeraldCore.primary, 0.08),
+                        ? qe.accent
+                        : alpha(qe.accent, 0.08),
                   },
                 }}
               />
@@ -468,20 +471,18 @@ export default function ComparisonMobileView({
                 onClick={() => setVisualMode('matrix')}
                 sx={{
                   flex: 1,
-                  bgcolor:
-                    visualMode === 'matrix'
-                      ? emeraldCore.primary
-                      : 'transparent',
-                  color: visualMode === 'matrix' ? '#fff' : emeraldCore.primary,
-                  border: `1px solid ${emeraldCore.primary}`,
+                  // Jewelry-Not-Paint: bgcolor/color/border on a clickable chip
+                  bgcolor: visualMode === 'matrix' ? qe.accent : 'transparent',
+                  color: visualMode === 'matrix' ? whiteAlpha(1) : qe.accent,
+                  border: `1px solid ${qe.accent}`,
                   fontWeight: 600,
                   fontSize: '0.65rem',
                   cursor: 'pointer',
                   '&:hover': {
                     bgcolor:
                       visualMode === 'matrix'
-                        ? emeraldCore.dark
-                        : alpha(emeraldCore.primary, 0.08),
+                        ? qe.accent
+                        : alpha(qe.accent, 0.08),
                   },
                 }}
               />
@@ -516,7 +517,7 @@ export default function ComparisonMobileView({
                   ? surfacesLight.background.primary
                   : surfacesDark.background.secondary,
                 '&:hover': {
-                  bgcolor: alpha(emeraldCore.primary, 0.04),
+                  bgcolor: alpha(qe.accent, 0.04), // Jewelry-Not-Paint: hover fill on a clickable row
                 },
               }}
             >
@@ -532,9 +533,9 @@ export default function ComparisonMobileView({
                 Todos los Atributos ({allAttributes.length})
               </Typography>
               {attributesExpanded ? (
-                <ChevronUp size={16} color={emeraldCore.primary} />
+                <ChevronUp size={16} color={qe.accentPure} />
               ) : (
-                <ChevronDown size={16} color={emeraldCore.primary} />
+                <ChevronDown size={16} color={qe.accentPure} />
               )}
             </Box>
 

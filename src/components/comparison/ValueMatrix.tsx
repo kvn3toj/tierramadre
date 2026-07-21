@@ -7,21 +7,23 @@ import { Box, Typography, alpha } from '@mui/material';
 import { TrendingUp } from 'lucide-react';
 import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { accentColors } from '../../design-system';
+import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { accentColors, qeAccent, whiteAlpha } from '../../design-system';
 
 // Emerald green for value leaders
-const emeraldGreen = emeraldCore.primary;
+// static context: no theme mode available (module-level constant, outside React render)
+const emeraldGreen = qeAccent.light.pure;
 
 interface ValueMatrixProps {
   items: TreasureItem[];
 }
 
 // High-contrast color palette for better differentiation
+// static context: no theme mode available (module-level array, outside React render)
 const itemColors = [
-  emeraldCore.primary,  // Emerald green
-  accentColors.error.light,  // Coral red
-  accentColors.cyan.light,  // Turquoise
+  qeAccent.light.pure, // Emerald green
+  accentColors.error.light, // Coral red
+  accentColors.cyan.light, // Turquoise
 ];
 
 /**
@@ -29,12 +31,12 @@ const itemColors = [
  */
 function qualityToScore(quality: string): number {
   const qualityMap: Record<string, number> = {
-    'Fina': 100,
+    Fina: 100,
     'Comercial SuperFina': 90,
     'Comercial Fina': 85,
     'Comercial Superior': 75,
     'Comercial Estándar': 65,
-    'Estándar': 50,
+    Estándar: 50,
   };
   return qualityMap[quality] || 60;
 }
@@ -47,7 +49,8 @@ function identifyValueLeaders(items: TreasureItem[]): Set<number> {
 
   // Calculate average quality and price
   const avgQuality =
-    items.reduce((sum, item) => sum + qualityToScore(item.calidad), 0) / items.length;
+    items.reduce((sum, item) => sum + qualityToScore(item.calidad), 0) /
+    items.length;
   const avgPrice =
     items.reduce((sum, item) => sum + item.precioCOP, 0) / items.length;
 
@@ -67,8 +70,8 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
   const isLight = mode === 'light';
 
   // Calculate bounds
-  const qualities = items.map(item => qualityToScore(item.calidad));
-  const prices = items.map(item => item.precioCOP);
+  const qualities = items.map((item) => qualityToScore(item.calidad));
+  const prices = items.map((item) => item.precioCOP);
 
   const minQuality = Math.min(...qualities) - 5;
   const maxQuality = Math.max(...qualities) + 5;
@@ -85,7 +88,12 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
   const plotHeight = height - padding * 2;
 
   // Normalize coordinates
-  const normalize = (value: number, min: number, max: number, range: number) => {
+  const normalize = (
+    value: number,
+    min: number,
+    max: number,
+    range: number,
+  ) => {
     return ((value - min) / (max - min)) * range;
   };
 
@@ -95,7 +103,9 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
         px: 1.5,
         py: 2,
         borderBottom: '1px solid',
-        borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+        borderColor: isLight
+          ? surfacesLight.border.light
+          : surfacesDark.border.light,
         bgcolor: isLight
           ? alpha(emeraldGreen, 0.02)
           : alpha(emeraldGreen, 0.04),
@@ -138,7 +148,11 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
             y1={padding}
             x2={padding + plotWidth / 2}
             y2={padding + plotHeight}
-            stroke={isLight ? surfacesLight.border.default : surfacesDark.border.default}
+            stroke={
+              isLight
+                ? surfacesLight.border.default
+                : surfacesDark.border.default
+            }
             strokeWidth={1}
             strokeDasharray="4,4"
             opacity={0.4}
@@ -149,7 +163,11 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
             y1={padding + plotHeight / 2}
             x2={padding + plotWidth}
             y2={padding + plotHeight / 2}
-            stroke={isLight ? surfacesLight.border.default : surfacesDark.border.default}
+            stroke={
+              isLight
+                ? surfacesLight.border.default
+                : surfacesDark.border.default
+            }
             strokeWidth={1}
             strokeDasharray="4,4"
             opacity={0.4}
@@ -162,7 +180,9 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
             y1={padding + plotHeight}
             x2={padding + plotWidth}
             y2={padding + plotHeight}
-            stroke={isLight ? surfacesLight.text.tertiary : surfacesDark.text.tertiary}
+            stroke={
+              isLight ? surfacesLight.text.tertiary : surfacesDark.text.tertiary
+            }
             strokeWidth={2}
           />
           {/* Y-axis (Quality) */}
@@ -171,7 +191,9 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
             y1={padding}
             x2={padding}
             y2={padding + plotHeight}
-            stroke={isLight ? surfacesLight.text.tertiary : surfacesDark.text.tertiary}
+            stroke={
+              isLight ? surfacesLight.text.tertiary : surfacesDark.text.tertiary
+            }
             strokeWidth={2}
           />
 
@@ -180,7 +202,11 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
             x={padding + plotWidth / 2}
             y={height - 10}
             textAnchor="middle"
-            fill={isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary}
+            fill={
+              isLight
+                ? surfacesLight.text.secondary
+                : surfacesDark.text.secondary
+            }
             fontSize={10}
             fontWeight={600}
           >
@@ -190,7 +216,11 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
             x={15}
             y={padding + plotHeight / 2}
             textAnchor="middle"
-            fill={isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary}
+            fill={
+              isLight
+                ? surfacesLight.text.secondary
+                : surfacesDark.text.secondary
+            }
             fontSize={10}
             fontWeight={600}
             transform={`rotate(-90, 15, ${padding + plotHeight / 2})`}
@@ -204,11 +234,17 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
             const price = item.precioCOP;
 
             const x = padding + normalize(price, minPrice, maxPrice, plotWidth);
-            const y = padding + plotHeight - normalize(quality, minQuality, maxQuality, plotHeight);
+            const y =
+              padding +
+              plotHeight -
+              normalize(quality, minQuality, maxQuality, plotHeight);
 
             const isLeader = valueLeaders.has(idx);
             const color = itemColors[idx % itemColors.length];
-            const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
+            const displayName = item.nombre
+              .replace(/^L:.*?\s/, '')
+              .replace(/^L:/, '')
+              .trim();
             const initial = displayName.charAt(0).toUpperCase();
 
             return (
@@ -239,7 +275,9 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
                   cy={y}
                   r={10}
                   fill={color}
-                  stroke={isLight ? '#fff' : surfacesDark.background.primary}
+                  stroke={
+                    isLight ? whiteAlpha(1) : surfacesDark.background.primary
+                  }
                   strokeWidth={2.5}
                 />
                 {/* Initial letter label */}
@@ -248,7 +286,9 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
                   y={y}
                   textAnchor="middle"
                   dominantBaseline="central"
-                  fill={isLight ? '#fff' : surfacesDark.background.primary}
+                  fill={
+                    isLight ? whiteAlpha(1) : surfacesDark.background.primary
+                  }
                   fontSize={10}
                   fontWeight={700}
                 >
@@ -273,13 +313,28 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
       </Box>
 
       {/* Legend */}
-      <Box sx={{ mt: 1.5, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', justifyContent: 'center' }}>
+      <Box
+        sx={{ mt: 1.5, display: 'flex', flexDirection: 'column', gap: 0.75 }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1.5,
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+          }}
+        >
           {items.map((item, idx) => {
-            const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
+            const displayName = item.nombre
+              .replace(/^L:.*?\s/, '')
+              .replace(/^L:/, '')
+              .trim();
             const isLeader = valueLeaders.has(idx);
             return (
-              <Box key={item.item} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Box
+                key={item.item}
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+              >
                 <Box
                   sx={{
                     width: 10,
@@ -292,7 +347,9 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
                 <Typography
                   sx={{
                     fontSize: '0.6rem',
-                    color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
+                    color: isLight
+                      ? surfacesLight.text.secondary
+                      : surfacesDark.text.secondary,
                     maxWidth: 70,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -303,7 +360,11 @@ export default function ValueMatrix({ items }: ValueMatrixProps) {
                   {displayName}
                 </Typography>
                 {isLeader && (
-                  <TrendingUp size={10} color={emeraldGreen} strokeWidth={2.5} />
+                  <TrendingUp
+                    size={10}
+                    color={emeraldGreen}
+                    strokeWidth={2.5}
+                  />
                 )}
               </Box>
             );
