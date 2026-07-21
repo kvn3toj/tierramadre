@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "lint": "tsc --noEmit && tsc --noEmit -p api/tsconfig.json",
     "lint:ds3": "eslint \"src/**/*.{ts,tsx}\" \"eslint-fixtures/**/*.{ts,tsx}\"",
+    "lint:all": "npm run lint && npm run lint:ds3",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
