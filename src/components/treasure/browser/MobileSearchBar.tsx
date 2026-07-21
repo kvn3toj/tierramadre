@@ -22,6 +22,8 @@ import {
   blurValues,
   zIndex,
   cssTransition,
+  blackAlpha,
+  whiteAlpha,
 } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { ActiveFilterChips } from '../';
@@ -746,7 +748,7 @@ function QuickAccessCard({
               position: 'absolute',
               bottom: 2,
               right: 2,
-              bgcolor: 'rgba(0, 0, 0, 0.5)',
+              bgcolor: blackAlpha(0.5),
               borderRadius: '3px',
               px: 0.3,
               py: 0.1,
@@ -755,7 +757,7 @@ function QuickAccessCard({
             <Typography
               sx={{
                 fontSize: '0.5rem',
-                color: 'rgba(255, 255, 255, 0.85)',
+                color: whiteAlpha(0.85),
                 fontWeight: 500,
               }}
             >

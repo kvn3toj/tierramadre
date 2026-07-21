@@ -5,7 +5,7 @@
 import { Box, Typography, Chip, alpha } from '@mui/material';
 import { Heart } from 'lucide-react';
 import type { Theme } from '@mui/material/styles';
-import { accentColors } from '../../../design-system';
+import { accentColors, getQuietEmerald } from '../../../design-system';
 import {
   emeraldCore,
   surfacesLight,
@@ -46,6 +46,7 @@ export default function TreasureDesktopResultsSummary({
   favoritesCount,
   onToggleFavoritesOnly,
 }: TreasureDesktopResultsSummaryProps) {
+  const qe = getQuietEmerald(isLight ? 'light' : 'dark');
   return (
     <Box
       sx={{
@@ -81,7 +82,7 @@ export default function TreasureDesktopResultsSummary({
               <Heart
                 size={14}
                 fill={showFavoritesOnly ? accentColors.error.light : 'none'}
-                color={showFavoritesOnly ? accentColors.error.light : '#6b7280'}
+                color={showFavoritesOnly ? accentColors.error.light : qe.subtle}
               />
             }
             label={
