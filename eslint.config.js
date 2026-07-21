@@ -47,6 +47,16 @@ export default tseslint.config(
           message:
             'DS3: no rgba()/rgb() literals. Use alpha(qe.token, n) from @mui/material/styles with a DS3 token.',
         },
+        {
+          selector: 'Literal[value=/100vh|100dvh/]',
+          message:
+            'DS3: no 100vh/100dvh magic offsets. Use a measured height (ResizeObserver / the shell layout tokens) — heights are measured, never guessed.',
+        },
+        {
+          selector: 'TemplateElement[value.raw=/100vh|calc\\(100vh/]',
+          message:
+            'DS3: no calc(100vh ...) in template strings. Measure the height instead.',
+        },
       ],
     },
   },
