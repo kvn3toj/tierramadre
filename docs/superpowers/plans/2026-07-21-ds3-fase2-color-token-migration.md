@@ -54,6 +54,14 @@
 3. **Replace each usage** per the mapping table.
 4. **Verify** the file typechecks and renders unchanged.
 
+### Refinements learned from the pilot (Task 1 — components/comparison)
+
+- **JnP hover rule.** When you JnP-shift an interactive fill from accent-pure to `qe.accent`, set its hover to `qe.accentStrong` (the darker "primary-button fill" step). Otherwise base==hover and the control stops darkening on hover. Any `&:hover` that previously used `emeraldCore.dark`/`.primary` on a JnP-shifted control becomes `qe.accentStrong`, not `qe.accent`.
+- **Flat-gray caution.** A flat, mode-agnostic gray (`#666`, `#999`) mapped to `qe.muted` SHIFTS in light mode (`#999` -> `#5C6360`). Only map a flat gray to `qe.muted`/`qe.subtle` when the original already approximates the goldAccent step for that role; otherwise keep a fixed neutral (`qeGray[...]`) or flag it. Do not call such a swap "value-preserving."
+- **Escalation = full de-hardcode.** Escalating a directory to ERROR requires ALL hex/rgba gone, not just emeraldCore/goldAccent. Expect to also convert `#fff`/`#000`/shadows -> `whiteAlpha`/`blackAlpha`, and semantic literals (`#ef4444`) -> the matching `*Alpha`/semantic token. Verify each such swap is byte-exact against the token definition (e.g. `semanticColors.error.main` IS `#EF4444`).
+- **tokens/colors imports remain until Task 6.** Files may still import `surfacesLight`/`surfacesDark`/`semanticColors` from `tokens/colors` after this pass (warn-level). Step-3 acceptance is only "no `emeraldCore`/`goldAccent`"; full `tokens/colors` retirement is Task 6.
+- **Do the live visual check** (Recipe step 4) at least once per directory pass. Code-only verification proved insufficient for confidence on the larger dirs.
+
 ## Worked Example (the pattern for every file)
 
 `src/components/home/sections/GallerySection.tsx` — before:
