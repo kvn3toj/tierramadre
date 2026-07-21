@@ -34,6 +34,20 @@ export default tseslint.config(
     // DS3 guardrails only — added in later tasks. Intentionally NOT extending
     // recommended: this config exists to enforce Quiet Emerald, not to lint
     // the whole codebase.
-    rules: {},
+    rules: {
+      'no-restricted-syntax': [
+        'warn',
+        {
+          selector: 'Literal[value=/#[0-9a-fA-F]{6}\\b/]',
+          message:
+            'DS3: no hex color literals in feature code. Use getQuietEmerald(mode) tokens or var(--tm-*).',
+        },
+        {
+          selector: 'Literal[value=/rgba?\\(/]',
+          message:
+            'DS3: no rgba()/rgb() literals. Use alpha(qe.token, n) from @mui/material/styles with a DS3 token.',
+        },
+      ],
+    },
   },
 );
