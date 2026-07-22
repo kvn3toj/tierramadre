@@ -93,6 +93,11 @@ export const PieceCard: React.FC<PieceCardProps> = ({
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
+            // Always reserve two lines of name height (line-height 1.15 × 2)
+            // so a 1-line and a 2-line name leave the text block the SAME
+            // height — the image well above is then identical on every card
+            // and the grid rows line up. Short names just leave line 2 blank.
+            minHeight: '2.3em',
           }}
         >
           {name}

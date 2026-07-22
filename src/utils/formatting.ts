@@ -279,6 +279,16 @@ export const getQualityBadge = (calidad: string): QualityBadgeStyle => {
 };
 
 /**
+ * Compact quality label: "Comercial" is always abbreviated to "C." so the tier
+ * reads short ("C. Fina", "C. Estándar") and never spells out "Comercial".
+ */
+export const abbreviateQuality = (calidad?: string): string =>
+  (calidad || '')
+    .replace(/\bComercial\b/gi, 'C.')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/**
  * Quality abbreviation definitions for tooltips.
  * Maps quality names to their full descriptions.
  */

@@ -20,7 +20,6 @@ import {
   IconButton,
   Skeleton,
   alpha,
-  Tooltip,
 } from '@mui/material';
 import { Images, Eye, Scale } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
@@ -29,11 +28,8 @@ import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { useRedesignVariant } from '../../hooks/useRedesignVariant';
 import { prefetchRoute } from '../../utils/routePrefetch';
 import { TreasureItem } from '../../types';
-import {
-  getQualityBadge,
-  getQualityTooltip,
-  formatCarats,
-} from '../../utils/formatting';
+import { abbreviateQuality, formatCarats } from '../../utils/formatting';
+import { EmeraldCutIcon } from './EmeraldCutIcon';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
 import ProgressiveImage from '../shared/ProgressiveImage';
 import { getQuietEmerald, Badge, PieceCard } from '../../design-system';
@@ -71,9 +67,13 @@ interface GridCardProps {
   priceOverride?: string | null;
 }
 
-/** Builds the DM Mono spec line, mixed-case ct + uppercase mine ("4.20 ct · MUZO"). */
+/** Builds the DM Mono spec line: abbreviated quality + weight/metal + mine
+ *  ("C. Fina · 4.20 ct · MUZO"). Quality leads so the tier reads first now that
+ *  the image badge shows the cut, not the quality. */
 function buildSpecLine(item: TreasureItem): string {
   const parts: string[] = [];
+  const quality = abbreviateQuality(item.calidad);
+  if (quality) parts.push(quality);
   const isLoose = !item.isJewelry;
   if (isLoose && typeof item.peso === 'number') {
     parts.push(`${formatCarats(item.peso)} ct`);
@@ -118,9 +118,12 @@ function GridCard({
     .map((s) => (s || '').trim())
     .filter(Boolean)
     .join(', ');
-  const quality = getQualityBadge(item.calidad);
-  const qualityTooltip = getQualityTooltip(item.calidad);
   const specLine = buildSpecLine(item);
+  // Image badge shows the cut (talla) now, not the quality — quality moved into
+  // the footer spec line ("C. Fina · ..."). Fall back to the abbreviated quality
+  // for the rare item with no recorded cut.
+  const cutLabel =
+    item.talla?.trim() || abbreviateQuality(item.calidad) || 'Gema';
 
   const handleItemClick = useCallback(() => {
     onItemClick(item);
@@ -190,24 +193,26 @@ function GridCard({
         />
       )}
 
-      {/* Quality badge — bottom left */}
-      <Tooltip title={qualityTooltip} arrow enterDelay={300} placement="top">
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: 6,
-            left: 6,
-            maxWidth: item.isLote
-              ? 'calc(100% - 110px)'
-              : item.cantidad > 1
-                ? 'calc(100% - 52px)'
-                : 'calc(100% - 12px)',
-            overflow: 'hidden',
-          }}
-        >
-          <Badge tone={quality.tone} label={quality.label} />
-        </Box>
-      </Tooltip>
+      {/* Cut badge — bottom left (the talla + its emerald-cut glyph) */}
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 6,
+          left: 6,
+          maxWidth: item.isLote
+            ? 'calc(100% - 110px)'
+            : item.cantidad > 1
+              ? 'calc(100% - 52px)'
+              : 'calc(100% - 12px)',
+          overflow: 'hidden',
+        }}
+      >
+        <Badge
+          tone="neutral"
+          icon={<EmeraldCutIcon cut={item.talla} size={12} />}
+          label={cutLabel}
+        />
+      </Box>
 
       {/* Quantity / lote badge — bottom right */}
       {(item.isLote || item.cantidad > 1) && (
@@ -335,7 +340,6 @@ function GridCard({
       name={displayName}
       specLine={specLine}
       price={priceEl}
-      itemNumber={item.item}
       onClick={handleItemClick}
       onMouseEnter={handlePrefetch}
       onFocus={handlePrefetch}
