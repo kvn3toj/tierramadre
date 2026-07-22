@@ -10,11 +10,10 @@ import {
   Chip,
   IconButton,
   CircularProgress,
-  alpha,
 } from '@mui/material';
 import { User, Calendar, Trash2, Eye, Copy } from 'lucide-react';
 import { SavedCotizacion } from '../../../../hooks/useCotizacionHistory';
-import { brand, lightTokens, darkTokens, accentColors, cssTransition, qeFont } from '../../../../design-system';
+import { qeFont } from '../../../../design-system';
 
 // Format currency helper
 function formatCurrency(value: number): string {
@@ -31,7 +30,6 @@ interface CotizacionCardProps {
   onView: () => void;
   onDelete: () => void;
   onDuplicate?: () => void;
-  isLight: boolean;
 }
 
 export const CotizacionCard = React.memo<CotizacionCardProps>(({
@@ -39,7 +37,6 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
   onView,
   onDelete,
   onDuplicate,
-  isLight,
 }) => {
   const [imgLoaded, setImgLoaded] = useState(false);
 
@@ -55,16 +52,15 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
       sx={{
         width: 200,
         flexShrink: 0,
-        borderRadius: 2,
+        borderRadius: 'var(--tm-radius-card)',
         overflow: 'hidden',
-        bgcolor: isLight ? '#fff' : darkTokens.background.elevated,
+        bgcolor: 'var(--tm-surface)',
         border: '1px solid',
-        borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
-        transition: cssTransition.default,
+        borderColor: 'var(--tm-border)',
+        transition: 'border-color var(--tm-base) var(--tm-ease)',
         cursor: 'pointer',
         '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.10)',
+          borderColor: 'var(--tm-accent)',
         },
       }}
       onClick={onView}
@@ -75,7 +71,7 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
           position: 'relative',
           width: '100%',
           height: 160,
-          bgcolor: isLight ? lightTokens.background.muted : darkTokens.background.surface,
+          bgcolor: 'var(--tm-well)',
           overflow: 'hidden',
         }}
       >
@@ -89,7 +85,7 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
               justifyContent: 'center',
             }}
           >
-            <CircularProgress size={24} aria-label="Cargando" sx={{ color: brand.emerald[500] }} />
+            <CircularProgress size={24} aria-label="Cargando" sx={{ color: 'var(--tm-accent)' }} />
           </Box>
         )}
         <Box
@@ -103,7 +99,7 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
             objectFit: 'cover',
             objectPosition: 'top',
             opacity: imgLoaded ? 1 : 0,
-            transition: cssTransition.slow,
+            transition: 'opacity var(--tm-slow) var(--tm-ease)',
           }}
         />
 
@@ -117,9 +113,9 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
             alignItems: 'center',
             justifyContent: 'center',
             opacity: 0,
-            transition: cssTransition.default,
+            transition: 'opacity var(--tm-base) var(--tm-ease)',
             '&:hover': {
-              bgcolor: 'rgba(0,0,0,0.4)',
+              bgcolor: 'var(--tm-scrim)',
               opacity: 1,
             },
           }}
@@ -146,7 +142,7 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
 
         {/* Client Name */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-          <User size={12} color={lightTokens.text.muted} />
+          <User size={12} style={{ color: 'var(--tm-muted)' }} />
           <Typography
             variant="body2"
             sx={{
@@ -164,7 +160,7 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
         {/* Date and Total */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Calendar size={11} color={lightTokens.text.muted} />
+            <Calendar size={11} style={{ color: 'var(--tm-muted)' }} />
             <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
               {formattedDate}
             </Typography>
@@ -185,8 +181,8 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
             mt: 1,
             height: 20,
             fontSize: '0.6rem',
-            bgcolor: isLight ? alpha('#000000', 0.06) : alpha('#ffffff', 0.08),
-            color: 'text.secondary',
+            bgcolor: 'var(--tm-well)',
+            color: 'var(--tm-muted)',
           }}
         />
 
@@ -201,8 +197,11 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
               }}
               aria-label="Duplicar cotizacion"
               sx={{
-                color: lightTokens.text.muted,
-                '&:hover': { color: brand.emerald[500], bgcolor: alpha(brand.emerald[500], 0.1) },
+                color: 'var(--tm-muted)',
+                '&:hover': {
+                  color: 'var(--tm-accent)',
+                  bgcolor: 'var(--tm-accent-wash)',
+                },
               }}
             >
               <Copy size={14} />
@@ -215,8 +214,8 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
               onDelete();
             }}
             sx={{
-              color: lightTokens.text.muted,
-              '&:hover': { color: accentColors.error.light, bgcolor: alpha(accentColors.error.light, 0.1) },
+              color: 'var(--tm-muted)',
+              '&:hover': { color: 'var(--tm-danger)', bgcolor: 'var(--tm-well)' },
             }}
           >
             <Trash2 size={14} />

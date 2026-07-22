@@ -4,16 +4,11 @@
  */
 
 import React from 'react';
-import { Box, Typography, Paper, Chip, alpha, useTheme } from '@mui/material';
+import { Box, Typography, Paper, Chip } from '@mui/material';
 import { FileText } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { SavedCotizacion } from '../../../../hooks/useCotizacionHistory';
-import {
-  emeraldCore,
-  surfacesLight,
-  surfacesDark,
-  Skeleton,
-} from '../../../../design-system';
+import { Skeleton } from '../../../../design-system';
 import { CotizacionCard } from './CotizacionCard';
 
 interface CotizacionesSectionProps {
@@ -32,9 +27,7 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
     onDeleteCotizacion,
     onDuplicateCotizacion,
   }) => {
-    const theme = useTheme();
     const { t } = useLanguage();
-    const isLight = theme.palette.mode === 'light';
 
     return (
       <Paper
@@ -42,14 +35,10 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
         sx={{
           p: 3,
           mb: 3,
-          borderRadius: 3,
-          bgcolor: isLight
-            ? surfacesLight.surface.default
-            : surfacesDark.background.secondary,
+          borderRadius: 'var(--tm-radius-card)',
+          bgcolor: 'var(--tm-surface)',
           border: '1px solid',
-          borderColor: isLight
-            ? surfacesLight.border.light
-            : surfacesDark.border.light,
+          borderColor: 'var(--tm-border)',
         }}
       >
         <Box
@@ -65,14 +54,14 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
               sx={{
                 width: 36,
                 height: 36,
-                borderRadius: 2,
-                bgcolor: alpha(emeraldCore.primary, 0.1),
+                borderRadius: 'var(--tm-radius-control)',
+                bgcolor: 'var(--tm-accent-wash)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <FileText size={20} color={emeraldCore.primary} />
+              <FileText size={20} style={{ color: 'var(--tm-accent)' }} />
             </Box>
             <Box>
               <Typography
@@ -92,8 +81,8 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
               size="small"
               label={`${cotizaciones.length} cotizaciones`}
               sx={{
-                bgcolor: alpha(emeraldCore.primary, 0.1),
-                color: emeraldCore.primary,
+                bgcolor: 'var(--tm-accent-wash)',
+                color: 'var(--tm-accent)',
                 fontWeight: 600,
               }}
             />
@@ -117,15 +106,14 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
             sx={{
               textAlign: 'center',
               py: 4,
-              bgcolor: alpha(emeraldCore.primary, 0.02),
-              borderRadius: 2,
-              border: `1px dashed ${alpha(emeraldCore.primary, 0.3)}`,
+              bgcolor: 'var(--tm-well)',
+              borderRadius: 'var(--tm-radius-control)',
+              border: '1px dashed var(--tm-border)',
             }}
           >
             <FileText
               size={40}
-              color={theme.palette.text.secondary}
-              style={{ marginBottom: 12 }}
+              style={{ marginBottom: 12, color: 'var(--tm-muted)' }}
             />
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
               {t.ambassador.museum?.noSavedQuotations ??
@@ -150,8 +138,8 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
               px: 1,
               '&::-webkit-scrollbar': { height: 6 },
               '&::-webkit-scrollbar-thumb': {
-                bgcolor: alpha(emeraldCore.primary, 0.3),
-                borderRadius: 3,
+                bgcolor: 'var(--tm-border)',
+                borderRadius: 'var(--tm-radius-pill)',
               },
             }}
           >
@@ -166,7 +154,6 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
                     ? () => onDuplicateCotizacion(cot)
                     : undefined
                 }
-                isLight={isLight}
               />
             ))}
           </Box>
