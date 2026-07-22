@@ -25,7 +25,13 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { Badge, qeGray, qeType, zIndex } from "../../../../design-system";
+import {
+  Badge,
+  ErrorState,
+  qeGray,
+  qeType,
+  zIndex,
+} from "../../../../design-system";
 import { formatFullCurrency, formatCarats } from "../../../../utils/formatting";
 import { useLanguage } from "../../../../contexts/LanguageContext";
 import { useReducedMotion } from "../../../../hooks/useReducedMotion";
@@ -53,6 +59,9 @@ export function AmbassadorProductDetail({
   const [gallerySlides, setGallerySlides] = useState<MediaSlide[]>([]);
   const [activeSlide, setActiveSlide] = useState(0);
   const [galleryLoading, setGalleryLoading] = useState(false);
+  const [galleryError, setGalleryError] = useState(false);
+  // Bumped by the retry button to re-run the gallery fetch.
+  const [galleryReloadKey, setGalleryReloadKey] = useState(0);
 
   const weightDisplay =
     typeof item.peso === "number"
@@ -63,6 +72,7 @@ export function AmbassadorProductDetail({
   useEffect(() => {
     const controller = new AbortController();
     setActiveSlide(0);
+    setGalleryError(false);
 
     // Fallback: use existing thumbnail/image
     const fallback: MediaSlide = {
@@ -105,14 +115,16 @@ export function AmbassadorProductDetail({
           }
         })
         .catch((err) => {
-          if (err.name !== "AbortError")
+          if (err.name !== "AbortError") {
             console.warn("Failed to fetch gallery:", err);
+            setGalleryError(true);
+          }
         })
         .finally(() => setGalleryLoading(false));
     }
 
     return () => controller.abort();
-  }, [item.item]);
+  }, [item.item, galleryReloadKey]);
 
   // Swipe handling
   const touchStartX = useRef(0);
@@ -362,6 +374,23 @@ export function AmbassadorProductDetail({
               </Box>
             )}
           </>
+        ) : galleryError ? (
+          <Box
+            sx={{
+              aspectRatio: "4/3",
+              bgcolor: "var(--tm-well)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <ErrorState
+              compact
+              message="No pudimos cargar las imágenes de esta pieza."
+              onRetry={() => setGalleryReloadKey((k) => k + 1)}
+              retrying={galleryLoading}
+            />
+          </Box>
         ) : (
           <Box
             sx={{

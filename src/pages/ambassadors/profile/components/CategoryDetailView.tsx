@@ -5,10 +5,10 @@
 
 import { useState, useMemo } from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Gem } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../../../contexts/LanguageContext';
-import { SegmentedControl } from '../../../../design-system';
+import { EmptyState, SegmentedControl } from '../../../../design-system';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import { getQualityTiers } from '../../../../utils/productCategories';
 import { ProductListCard } from './ProductListCard';
@@ -110,11 +110,15 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
       </Box>
 
       {filteredItems.length === 0 && (
-        <Box sx={{ textAlign: 'center', py: 6 }}>
-          <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
-            {t.common.noResults}
-          </Typography>
-        </Box>
+        <EmptyState
+          icon={Gem}
+          title={t.common.noResults}
+          action={
+            activeFilter !== 'all'
+              ? { label: t.common.all, onClick: () => setActiveFilter('all') }
+              : undefined
+          }
+        />
       )}
     </motion.div>
   );

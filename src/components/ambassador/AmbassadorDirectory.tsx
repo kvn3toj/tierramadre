@@ -10,8 +10,6 @@ import {
   Typography,
   InputAdornment,
   CircularProgress,
-  Alert,
-  Button,
 } from '@mui/material';
 import { Search, Gem } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -20,7 +18,12 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useAsesores, Asesor } from '../../hooks/useAsesores';
 import { useTreasure } from '../../hooks/useTreasure';
 import AsesorCard from './AsesorCard';
-import { TextField, qeFont } from '../../design-system/index';
+import {
+  EmptyState,
+  ErrorState,
+  TextField,
+  qeFont,
+} from '../../design-system/index';
 import {
   staggerContainer,
   staggerItem,
@@ -109,11 +112,7 @@ export default function AmbassadorDirectory({
   }
 
   if (error) {
-    return (
-      <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
-        {t.ambassador.loadError}
-      </Alert>
-    );
+    return <ErrorState message={t.ambassador.loadError} />;
   }
 
   return (
@@ -203,77 +202,23 @@ export default function AmbassadorDirectory({
 
       {/* Grid */}
       {filteredAsesores.length === 0 ? (
-        <Box
-          sx={{
-            textAlign: 'center',
-            py: 8,
-            px: 4,
-            borderRadius: 'var(--tm-radius-card)',
-            border: '1px solid',
-            borderColor: 'var(--tm-border)',
-          }}
-        >
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              borderRadius: '50%',
-              border: '1px solid',
-              borderColor: 'var(--tm-border)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mx: 'auto',
-              mb: 2,
-            }}
-          >
-            <Gem size={20} strokeWidth={1} style={{ color: 'var(--tm-subtle)' }} />
-          </Box>
-          <Typography
-            sx={{
-              color: 'text.secondary',
-              fontWeight: 500,
-              fontSize: '0.9rem',
-              mb: 0.5,
-            }}
-          >
-            {t.ambassador.noResults}
-          </Typography>
-          <Typography
-            sx={{
-              color: 'text.secondary',
-              fontSize: '0.75rem',
-              opacity: 0.6,
-              mb: 2.5,
-            }}
-          >
-            {hasActiveFilters
+        <EmptyState
+          icon={Gem}
+          title={t.ambassador.noResults}
+          subtitle={
+            hasActiveFilters
               ? t.ambassador.tryOtherCriteria
-              : t.ambassador.noAmbassadors}
-          </Typography>
-          {hasActiveFilters && (
-            <Button
-              variant="outlined"
-              onClick={() => setSearchQuery('')}
-              sx={{
-                textTransform: 'none',
-                borderColor: 'var(--tm-border)',
-                color: 'var(--tm-accent)',
-                fontSize: '0.75rem',
-                fontWeight: 500,
-                px: 2.5,
-                py: 0.5,
-                borderRadius: 'var(--tm-radius-control)',
-                '&:hover': {
-                  borderColor: 'var(--tm-accent)',
-                  bgcolor: 'var(--tm-accent-wash)',
-                },
-              }}
-            >
-              {t.ambassador.clearFilters}
-            </Button>
-          )}
-        </Box>
+              : t.ambassador.noAmbassadors
+          }
+          action={
+            hasActiveFilters
+              ? {
+                  label: t.ambassador.clearFilters,
+                  onClick: () => setSearchQuery(''),
+                }
+              : undefined
+          }
+        />
       ) : (
         <motion.div
           variants={staggerContainer}

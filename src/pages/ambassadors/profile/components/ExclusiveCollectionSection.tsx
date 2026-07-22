@@ -9,8 +9,6 @@ import {
   Box,
   Typography,
   Paper,
-  Grid,
-  Skeleton,
   Chip,
   IconButton,
 } from '@mui/material';
@@ -19,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { TreasureItem } from '../../../../types';
 import { getQualityBadge, formatCarats } from '../../../../utils/formatting';
 import { PriceDisplay } from '../../../../components/price-simulator/PriceDisplay';
-import { Badge, PieceCard, qeGray } from '../../../../design-system';
+import { Badge, PieceCard, Skeleton, qeGray } from '../../../../design-system';
 
 function buildSpecLine(item: TreasureItem): string {
   if (!item.isJewelry && typeof item.peso === 'number') {
@@ -106,29 +104,48 @@ export const ExclusiveCollectionSection: React.FC<
 
       {/* Loading State */}
       {isLoading && (
-        <Grid container spacing={2}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              md: 'repeat(3, 1fr)',
+            },
+            gap: 2,
+          }}
+        >
           {[0, 1, 2].map((i) => (
-            <Grid item xs={12} sm={6} md={4} key={i}>
-              <Skeleton
-                variant="rounded"
-                sx={{
-                  width: '100%',
-                  aspectRatio: '1/1',
-                  borderRadius: 'var(--tm-radius-card)',
-                }}
-              />
-              <Box sx={{ px: 1, mt: 1 }}>
-                <Skeleton width="70%" height={20} />
-                <Skeleton width="40%" height={16} sx={{ mt: 0.5 }} />
+            <Box key={i}>
+              {/* Geometry matches the PieceCard it replaces: square well,
+                  then the name and spec lines — so nothing shifts on load. */}
+              <Box sx={{ width: '100%', aspectRatio: '1/1' }}>
+                <Skeleton variant="rect" width="100%" height="100%" />
               </Box>
-            </Grid>
+              <Box sx={{ px: 1, mt: 1 }}>
+                <Skeleton variant="text" width="70%" height={20} />
+                <Box sx={{ mt: 0.5 }}>
+                  <Skeleton variant="text" width="40%" height={16} />
+                </Box>
+              </Box>
+            </Box>
           ))}
-        </Grid>
+        </Box>
       )}
 
       {/* Products Grid */}
       {!isLoading && products.length > 0 && (
-        <Grid container spacing={2}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              md: 'repeat(3, 1fr)',
+            },
+            gap: 2,
+          }}
+        >
           {products.map((item) => {
             const quality = getQualityBadge(item.calidad);
             const displayName = item.nombre
@@ -136,7 +153,7 @@ export const ExclusiveCollectionSection: React.FC<
               .replace(/^L:/, '')
               .trim();
             return (
-              <Grid item xs={12} sm={6} md={4} key={item.item}>
+              <Box key={item.item}>
                 <PieceCard
                   variant="well"
                   media={
@@ -204,10 +221,10 @@ export const ExclusiveCollectionSection: React.FC<
                   onClick={() => onProductClick(item)}
                   ariaLabel={`${item.nombre} - ${item.color}`}
                 />
-              </Grid>
+              </Box>
             );
           })}
-        </Grid>
+        </Box>
       )}
 
       {/* View Full Collection CTA */}

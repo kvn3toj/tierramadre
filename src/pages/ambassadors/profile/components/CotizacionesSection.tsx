@@ -8,7 +8,7 @@ import { Box, Typography, Paper } from '@mui/material';
 import { FileText } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { SavedCotizacion } from '../../../../hooks/useCotizacionHistory';
-import { Badge, Skeleton } from '../../../../design-system';
+import { Badge, EmptyState, Skeleton } from '../../../../design-system';
 import { CotizacionCard } from './CotizacionCard';
 
 interface CotizacionesSectionProps {
@@ -97,28 +97,17 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
 
         {/* Cotizaciones Empty State */}
         {!isLoading && cotizaciones.length === 0 && (
-          <Box
-            sx={{
-              textAlign: 'center',
-              py: 4,
-              bgcolor: 'var(--tm-well)',
-              borderRadius: 'var(--tm-radius-control)',
-              border: '1px dashed var(--tm-border)',
-            }}
-          >
-            <FileText
-              size={40}
-              style={{ marginBottom: 12, color: 'var(--tm-muted)' }}
-            />
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-              {t.ambassador.museum?.noSavedQuotations ??
-                'Aún no tienes cotizaciones guardadas'}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              {t.ambassador.museum?.quotationsWillAppear ??
-                'Las cotizaciones que exportes aparecerán aquí'}
-            </Typography>
-          </Box>
+          <EmptyState
+            icon={FileText}
+            title={
+              t.ambassador.museum?.noSavedQuotations ??
+              'Aún no tienes cotizaciones guardadas'
+            }
+            subtitle={
+              t.ambassador.museum?.quotationsWillAppear ??
+              'Las cotizaciones que exportes aparecerán aquí'
+            }
+          />
         )}
 
         {/* Cotizaciones Gallery */}
