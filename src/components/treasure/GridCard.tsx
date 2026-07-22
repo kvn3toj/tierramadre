@@ -132,10 +132,13 @@ function GridCard({
         alignItems: 'center',
         gap: '6px',
         minWidth: 0,
-        color: 'var(--tm-muted)',
+        // The cut mark is silver-grey line art, never green: the only saturated
+        // thing beside the card must stay the actual stone in the photograph.
+        // Its depth comes from tone (opacity steps inside the glyph), not hue.
+        color: 'var(--tm-subtle)',
       }}
     >
-      <EmeraldCutIcon cut={item.talla} size={13} />
+      <EmeraldCutIcon cut={item.talla} size={14} />
       <Typography
         sx={{
           fontFamily: 'var(--tm-font-mono)',
