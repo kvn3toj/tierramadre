@@ -95,7 +95,7 @@ export default function AmbassadorDirectory({
             sx={{
               color: 'var(--tm-muted)',
               fontFamily: qeFont.ui,
-              fontSize: '0.65rem',
+              fontSize: '0.6875rem',
               fontWeight: 600,
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
@@ -170,7 +170,7 @@ export default function AmbassadorDirectory({
           <Typography
             sx={{
               mt: 1.25,
-              fontSize: '0.62rem',
+              fontSize: '0.6875rem',
               fontWeight: 600,
               color: 'text.secondary',
               letterSpacing: '0.08em',

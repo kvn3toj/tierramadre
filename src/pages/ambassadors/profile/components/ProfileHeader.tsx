@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { Share2, Camera, Edit3, Star, Gem, DollarSign } from "lucide-react";
 import { Asesor } from "../../../../hooks/useAsesores";
-import { qeFont, zIndex } from "../../../../design-system";
+import { qeFont, qeType, zIndex } from "../../../../design-system";
 import { deriveRating, formatCurrency } from "../../../../utils/formatting";
 
 export interface ProfileStats {
@@ -64,7 +64,7 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
       height: 24,
       px: 1.15,
       borderRadius: "999px",
-      fontSize: "0.6rem",
+      fontSize: "0.6875rem",
       fontWeight: 600,
       letterSpacing: "0.14em",
       textTransform: "uppercase" as const,
@@ -324,12 +324,9 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
               {stat.icon}
               <Typography
                 sx={{
-                  fontFamily: qeFont.serif,
-                  fontWeight: 600,
+                  ...qeType.data,
                   fontSize: { xs: "1.15rem", sm: "1.3rem" },
                   lineHeight: 1.05,
-                  letterSpacing: "0.01em",
-                  fontVariantNumeric: "lining-nums tabular-nums",
                   whiteSpace: "nowrap",
                 }}
               >
@@ -337,7 +334,7 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
               </Typography>
               <Typography
                 sx={{
-                  fontSize: "0.55rem",
+                  fontSize: "0.6875rem",
                   fontWeight: 600,
                   color: "var(--tm-muted)",
                   textTransform: "uppercase",

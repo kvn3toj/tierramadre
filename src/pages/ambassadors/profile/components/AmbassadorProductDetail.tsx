@@ -26,7 +26,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { qeFont, qeGray, zIndex } from "../../../../design-system";
+import { qeGray, qeType, zIndex } from "../../../../design-system";
 import { formatFullCurrency, formatCarats } from "../../../../utils/formatting";
 import { useLanguage } from "../../../../contexts/LanguageContext";
 import { useReducedMotion } from "../../../../hooks/useReducedMotion";
@@ -377,22 +377,18 @@ export function AmbassadorProductDetail({
       <Typography
         variant="h5"
         sx={{
-          fontWeight: 700,
+          ...qeType.title,
           mb: 0.5,
-          letterSpacing: "-0.02em",
-          fontSize: "1.3rem",
+          fontSize: "1.75rem",
         }}
       >
         {item.nombre}
       </Typography>
       <Typography
         sx={{
-          fontFamily: qeFont.serif,
-          fontWeight: 600,
-          fontSize: "1.5rem",
-          letterSpacing: "0.01em",
+          ...qeType.data,
+          fontSize: "1.35rem",
           color: "var(--tm-accent)",
-          fontVariantNumeric: "lining-nums tabular-nums",
           mb: 2,
         }}
       >
@@ -409,7 +405,7 @@ export function AmbassadorProductDetail({
               bgcolor: "var(--tm-well)",
               color: "var(--tm-muted)",
               fontWeight: 700,
-              fontSize: "0.58rem",
+              fontSize: "0.6875rem",
               letterSpacing: "0.04em",
               borderRadius: "var(--tm-radius-well)",
             }}
@@ -423,7 +419,7 @@ export function AmbassadorProductDetail({
               bgcolor: "var(--tm-accent-wash)",
               color: "var(--tm-accent)",
               fontWeight: 700,
-              fontSize: "0.58rem",
+              fontSize: "0.6875rem",
               letterSpacing: "0.04em",
               borderRadius: "var(--tm-radius-well)",
             }}
@@ -437,7 +433,7 @@ export function AmbassadorProductDetail({
               bgcolor: "var(--tm-well)",
               color: "var(--tm-danger)",
               fontWeight: 700,
-              fontSize: "0.58rem",
+              fontSize: "0.6875rem",
               letterSpacing: "0.04em",
               borderRadius: "var(--tm-radius-well)",
             }}
@@ -546,7 +542,7 @@ function SpecCell({
     <Box sx={{ textAlign: "center" }}>
       <Box
         sx={{
-          color: "text.secondary",
+          color: "var(--tm-subtle)",
           mb: 0.5,
           display: "flex",
           justifyContent: "center",
@@ -556,17 +552,14 @@ function SpecCell({
       </Box>
       <Typography
         sx={{
-          fontSize: "0.58rem",
-          color: "text.secondary",
+          ...qeType.overline,
+          color: "var(--tm-muted)",
           mb: 0.25,
-          fontWeight: 500,
-          textTransform: "uppercase",
-          letterSpacing: "0.04em",
         }}
       >
         {label}
       </Typography>
-      <Typography sx={{ fontWeight: 650, fontSize: "0.75rem" }}>
+      <Typography sx={{ ...qeType.data, fontSize: "0.9375rem" }}>
         {value}
       </Typography>
     </Box>

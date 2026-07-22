@@ -30,7 +30,7 @@ export function SectionHeading({ children, action, inset = true }: SectionHeadin
       <Typography
         variant="overline"
         sx={{
-          fontSize: '0.65rem',
+          fontSize: '0.6875rem',
           fontWeight: 600,
           lineHeight: 1,
           color: 'var(--text-tertiary)',

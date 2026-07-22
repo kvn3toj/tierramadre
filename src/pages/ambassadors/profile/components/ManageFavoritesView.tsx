@@ -221,7 +221,7 @@ export function ManageFavoritesView({
                     )}
                     <Typography
                       sx={{
-                        fontSize: '0.52rem',
+                        fontSize: '0.6875rem',
                         textAlign: 'center',
                         mt: 0.25,
                         overflow: 'hidden',
@@ -310,7 +310,7 @@ export function ManageFavoritesView({
               <Typography sx={{ fontSize: '0.78rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {item.nombre}
               </Typography>
-              <Typography sx={{ fontSize: '0.65rem', color: 'text.secondary' }}>
+              <Typography sx={{ fontSize: '0.6875rem', color: 'text.secondary' }}>
                 #{item.item}
               </Typography>
             </Box>

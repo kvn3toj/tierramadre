@@ -134,7 +134,7 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
             fontFamily: qeFont.mono,
             color: 'text.secondary',
             fontWeight: 500,
-            fontSize: '0.65rem',
+            fontSize: '0.6875rem',
             letterSpacing: '0.05em',
           }}
         >
@@ -162,7 +162,7 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Calendar size={11} style={{ color: 'var(--tm-muted)' }} />
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.6875rem' }}>
               {formattedDate}
             </Typography>
           </Box>
@@ -181,7 +181,7 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
           sx={{
             mt: 1,
             height: 20,
-            fontSize: '0.6rem',
+            fontSize: '0.6875rem',
             bgcolor: 'var(--tm-well)',
             color: 'var(--tm-muted)',
           }}

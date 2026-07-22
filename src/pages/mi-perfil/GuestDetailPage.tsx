@@ -223,7 +223,7 @@ export default function GuestDetailPage() {
                   size="small"
                   sx={{
                     height: 20,
-                    fontSize: '0.6rem',
+                    fontSize: '0.6875rem',
                     fontWeight: 600,
                     bgcolor: alpha(statusConf.color, 0.12),
                     color: statusConf.color,
@@ -287,7 +287,7 @@ export default function GuestDetailPage() {
               <Box>
                 <Typography
                   sx={{
-                    fontSize: '0.6rem',
+                    fontSize: '0.6875rem',
                     color: 'var(--text-tertiary)',
                     letterSpacing: '0.1em',
                     textTransform: 'uppercase',
@@ -313,7 +313,7 @@ export default function GuestDetailPage() {
               <Box>
                 <Typography
                   sx={{
-                    fontSize: '0.6rem',
+                    fontSize: '0.6875rem',
                     color: 'var(--text-tertiary)',
                     letterSpacing: '0.1em',
                     textTransform: 'uppercase',
@@ -480,7 +480,7 @@ export default function GuestDetailPage() {
                     <Icon size={12} style={{ color, opacity: 0.75 }} />
                     <Typography
                       sx={{
-                        fontSize: '0.6rem',
+                        fontSize: '0.6875rem',
                         color: 'var(--text-tertiary)',
                         letterSpacing: '0.1em',
                         textTransform: 'uppercase',

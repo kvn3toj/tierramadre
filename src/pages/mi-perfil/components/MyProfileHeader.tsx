@@ -128,7 +128,7 @@ export function MyProfileHeader({
             size="small"
             sx={{
               height: 20,
-              fontSize: '0.6rem',
+              fontSize: '0.6875rem',
               fontWeight: 600,
               bgcolor: alpha(config.color, 0.12),
               color: config.color,
@@ -198,7 +198,7 @@ export function MyProfileHeader({
               size="small"
               sx={{
                 height: 20,
-                fontSize: '0.65rem',
+                fontSize: '0.6875rem',
                 fontWeight: 600,
                 bgcolor: alpha(config.color, 0.14),
                 color: config.color,

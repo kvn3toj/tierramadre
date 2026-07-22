@@ -13,7 +13,7 @@ import {
 import { ArrowLeft, MessageCircle, Scale, MapPin, Award } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "../../../../contexts/LanguageContext";
-import { qeFont } from "../../../../design-system";
+import { qeType } from "../../../../design-system";
 import { formatFullCurrency, formatCarats } from "../../../../utils/formatting";
 import { useReducedMotion } from "../../../../hooks/useReducedMotion";
 import ProgressiveImage from "../../../../components/shared/ProgressiveImage";
@@ -105,22 +105,18 @@ export function FavoriteDetailView({
       <Typography
         variant="h5"
         sx={{
-          fontWeight: 700,
+          ...qeType.title,
           mb: 0.5,
-          letterSpacing: "-0.02em",
-          fontSize: "1.3rem",
+          fontSize: "1.75rem",
         }}
       >
         {item.nombre}
       </Typography>
       <Typography
         sx={{
-          fontFamily: qeFont.serif,
-          fontWeight: 600,
-          fontSize: "1.5rem",
-          letterSpacing: "0.01em",
+          ...qeType.data,
+          fontSize: "1.35rem",
           color: "var(--tm-accent)",
-          fontVariantNumeric: "lining-nums tabular-nums",
           mb: 2,
         }}
       >
@@ -137,7 +133,7 @@ export function FavoriteDetailView({
               bgcolor: "var(--tm-well)",
               color: "var(--tm-muted)",
               fontWeight: 700,
-              fontSize: "0.58rem",
+              fontSize: "0.6875rem",
               letterSpacing: "0.04em",
               borderRadius: "var(--tm-radius-well)",
             }}
@@ -151,7 +147,7 @@ export function FavoriteDetailView({
               bgcolor: "var(--tm-accent-wash)",
               color: "var(--tm-accent)",
               fontWeight: 700,
-              fontSize: "0.58rem",
+              fontSize: "0.6875rem",
               letterSpacing: "0.04em",
               borderRadius: "var(--tm-radius-well)",
             }}
@@ -165,7 +161,7 @@ export function FavoriteDetailView({
               bgcolor: "var(--tm-well)",
               color: "var(--tm-muted)",
               fontWeight: 500,
-              fontSize: "0.6rem",
+              fontSize: "0.6875rem",
               borderRadius: "var(--tm-radius-well)",
             }}
           />
@@ -254,7 +250,7 @@ function SpecItem({
     <Box sx={{ textAlign: "center" }}>
       <Box
         sx={{
-          color: "text.secondary",
+          color: "var(--tm-subtle)",
           mb: 0.5,
           display: "flex",
           justifyContent: "center",
@@ -264,17 +260,14 @@ function SpecItem({
       </Box>
       <Typography
         sx={{
-          fontSize: "0.58rem",
-          color: "text.secondary",
+          ...qeType.overline,
+          color: "var(--tm-muted)",
           mb: 0.25,
-          fontWeight: 500,
-          textTransform: "uppercase",
-          letterSpacing: "0.04em",
         }}
       >
         {label}
       </Typography>
-      <Typography sx={{ fontWeight: 650, fontSize: "0.78rem" }}>
+      <Typography sx={{ ...qeType.data, fontSize: "0.9375rem" }}>
         {value}
       </Typography>
     </Box>

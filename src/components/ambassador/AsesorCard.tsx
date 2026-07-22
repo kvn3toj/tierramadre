@@ -11,7 +11,7 @@ import { Box, Typography, Avatar } from "@mui/material";
 import { Star, Gem, ArrowUpRight } from "lucide-react";
 import type { TreasureItem } from "../../types";
 import { Asesor } from "../../hooks/useAsesores";
-import { qeFont, qeGray, zIndex } from "../../design-system/index";
+import { qeFont, qeGray, qeType, zIndex } from "../../design-system/index";
 import { deriveRating } from "../../utils/formatting";
 import { useReducedMotion } from "../../hooks/useReducedMotion";
 
@@ -246,7 +246,7 @@ export default function AsesorCard({
                 gap: 0.45,
                 height: 20,
                 px: 0.85,
-                fontSize: "0.56rem",
+                fontSize: "0.6875rem",
                 fontWeight: 600,
                 bgcolor: badge.bgcolor,
                 color: badge.color,
@@ -283,12 +283,10 @@ export default function AsesorCard({
                     <Star size={11} style={{ color: "var(--tm-muted)" }} />
                     <Typography
                       sx={{
-                        fontFamily: qeFont.serif,
+                        ...qeType.data,
                         fontSize: "0.86rem",
-                        fontWeight: 600,
                         lineHeight: 1,
                         color: "var(--tm-muted)",
-                        fontVariantNumeric: "lining-nums",
                       }}
                     >
                       {rating}
@@ -299,12 +297,10 @@ export default function AsesorCard({
                   <Gem size={10} style={{ opacity: 0.45 }} />
                   <Typography
                     sx={{
-                      fontFamily: qeFont.serif,
+                      ...qeType.data,
                       fontSize: "0.86rem",
                       lineHeight: 1,
                       color: "var(--tm-muted)",
-                      fontWeight: 600,
-                      fontVariantNumeric: "lining-nums",
                     }}
                   >
                     {productCount}
@@ -388,13 +384,10 @@ export default function AsesorCard({
                   >
                     <Typography
                       sx={{
-                        fontFamily: qeFont.serif,
+                        ...qeType.data,
                         color: qeGray[0],
-                        fontWeight: 600,
                         fontSize: "1rem",
                         lineHeight: 1,
-                        letterSpacing: "0.01em",
-                        fontVariantNumeric: "lining-nums",
                       }}
                     >
                       +{extraCount}

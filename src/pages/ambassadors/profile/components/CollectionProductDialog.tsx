@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { X, ShieldCheck, ChevronLeft, ChevronRight, Share2, Clock } from 'lucide-react';
 import { TreasureItem } from '../../../../types';
-import { qeFont, qeGray, zIndex } from '../../../../design-system';
+import { qeFont, qeGray, qeType, zIndex } from '../../../../design-system';
 import { PriceDisplay } from '../../../../components/price-simulator/PriceDisplay';
 import { accentuate } from '../../../../pages/collection/CollectionPage';
 import { formatCarats } from '../../../../utils/formatting';
@@ -533,10 +533,8 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography
                     sx={{
-                      fontSize: { xs: '1.35rem', sm: '1.5rem' },
-                      fontWeight: 700,
-                      letterSpacing: '-0.02em',
-                      lineHeight: 1.2,
+                      ...qeType.title,
+                      fontSize: { xs: '1.6rem', sm: '1.8rem' },
                     }}
                   >
                     {accentuate(product.nombre)}

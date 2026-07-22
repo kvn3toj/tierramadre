@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
-import { qeFont } from '../../../../design-system';
+import { qeType } from '../../../../design-system';
 import { formatCurrency, formatCarats } from '../../../../utils/formatting';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import ProgressiveImage from '../../../../components/shared/ProgressiveImage';
@@ -89,26 +89,24 @@ export const ProductListCard = React.memo(function ProductListCard({
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography
           sx={{
-            fontWeight: 650,
-            fontSize: '0.82rem',
-            lineHeight: 1.3,
+            ...qeType.title,
+            fontSize: '1.0625rem',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
             mb: 0.25,
-            letterSpacing: '-0.01em',
           }}
         >
           {item.nombre}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
           {item.ubicacion && (
-            <Typography sx={{ fontSize: '0.68rem', color: 'text.secondary' }}>
+            <Typography sx={{ fontSize: '0.6875rem', color: 'text.secondary' }}>
               {item.ubicacion}
             </Typography>
           )}
           {weightDisplay && (
-            <Typography sx={{ fontSize: '0.68rem', color: 'text.secondary' }}>
+            <Typography sx={{ fontSize: '0.6875rem', color: 'text.secondary' }}>
               {weightDisplay}
             </Typography>
           )}
@@ -120,7 +118,7 @@ export const ProductListCard = React.memo(function ProductListCard({
             sx={{
               height: 18,
               mt: 0.5,
-              fontSize: '0.55rem',
+              fontSize: '0.6875rem',
               fontWeight: 600,
               bgcolor: 'var(--tm-accent-wash)',
               color: 'var(--tm-accent)',
@@ -133,10 +131,8 @@ export const ProductListCard = React.memo(function ProductListCard({
       {/* Price */}
       <Typography
         sx={{
-          fontFamily: qeFont.serif,
-          fontWeight: 600,
-          fontSize: '1.05rem',
-          letterSpacing: '0.01em',
+          ...qeType.data,
+          fontSize: '1rem',
           color: 'var(--tm-accent)',
           flexShrink: 0,
           fontVariantNumeric: 'lining-nums tabular-nums',

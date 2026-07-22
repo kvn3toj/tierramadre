@@ -167,7 +167,7 @@ export const FavoritesRow = React.memo(function FavoritesRow({
             </Box>
             <Typography
               sx={{
-                fontSize: '0.6rem',
+                fontSize: '0.6875rem',
                 fontWeight: 500,
                 color: 'text.secondary',
                 maxWidth: thumbSize,

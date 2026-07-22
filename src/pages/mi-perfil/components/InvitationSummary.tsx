@@ -309,7 +309,7 @@ export function InvitationSummary({
                 size="small"
                 onClick={isEditable ? (e) => handleEditOpen(e, inv) : undefined}
                 sx={{
-                  height: 20, fontSize: '0.6rem', fontWeight: 700,
+                  height: 20, fontSize: '0.6875rem', fontWeight: 700,
                   bgcolor: isEditable ? 'var(--tm-accent-wash)' : 'var(--tm-well)',
                   color: isEditable ? 'var(--tm-accent)' : 'var(--text-tertiary)',
                   border: '1px solid var(--tm-border)',
@@ -322,7 +322,7 @@ export function InvitationSummary({
                 label={statusConf.label}
                 size="small"
                 sx={{
-                  height: 20, fontSize: '0.6rem', fontWeight: 600,
+                  height: 20, fontSize: '0.6875rem', fontWeight: 600,
                   bgcolor: alpha(statusConf.color, 0.1),
                   color: statusConf.color,
                   border: `1px solid ${alpha(statusConf.color, 0.2)}`,
