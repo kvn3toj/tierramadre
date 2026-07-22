@@ -233,7 +233,6 @@ export function FavoriteDetailView({
           fontSize: "0.9rem",
           py: 1.5,
           borderRadius: "var(--tm-radius-control)",
-          boxShadow: "none",
         }}
       >
         {t.ambassador.museum?.contactAmbassador ?? "Contactar Embajador"}

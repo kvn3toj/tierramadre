@@ -196,7 +196,7 @@ export function AmbassadorProductDetail({
             <Box
               sx={{
                 display: "flex",
-                transition: "transform 0.3s ease",
+                transition: "transform var(--tm-base) var(--tm-ease)",
                 transform: `translateX(-${activeSlide * 100}%)`,
               }}
             >

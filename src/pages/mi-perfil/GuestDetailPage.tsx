@@ -51,7 +51,6 @@ import {
   iosTypographyScale,
   primitiveSpacing as spacing,
   radius,
-  cssTransition,
   qeFont,
 } from '../../design-system';
 
@@ -182,17 +181,7 @@ export default function GuestDetailPage() {
           overflow: 'hidden',
           borderRadius: radius.lg,
           border: '1px solid var(--tm-border)',
-          background: `linear-gradient(135deg, ${'var(--tm-accent-wash)'} 0%, transparent 65%)`,
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            width: 100,
-            height: 100,
-            background: `radial-gradient(circle at top right, ${'var(--tm-accent-wash)'} 0%, transparent 70%)`,
-            pointerEvents: 'none',
-          },
+          bgcolor: 'var(--tm-surface)',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.75, px: 1.75, py: 1.75 }}>
@@ -206,7 +195,6 @@ export default function GuestDetailPage() {
               fontSize: '1.3rem',
               fontWeight: 700,
               flexShrink: 0,
-              boxShadow: `0 6px 18px ${'var(--tm-accent-wash)'}`,
             }}
           >
             {guestName?.charAt(0).toUpperCase() || 'I'}
@@ -576,7 +564,8 @@ export default function GuestDetailPage() {
                         borderRadius: radius.md,
                         bgcolor: 'var(--surface-primary)',
                         cursor: 'pointer',
-                        transition: cssTransition.default,
+                        transition:
+                          'background-color var(--tm-base) var(--tm-ease), border-color var(--tm-base) var(--tm-ease)',
                         '&:hover': { bgcolor: 'var(--surface-secondary)' },
                       }}
                     >
@@ -653,7 +642,8 @@ export default function GuestDetailPage() {
                       py: 0.85,
                       borderRadius: radius.md,
                       cursor: 'pointer',
-                      transition: cssTransition.default,
+                      transition:
+                        'background-color var(--tm-base) var(--tm-ease), border-color var(--tm-base) var(--tm-ease)',
                       '&:hover': { bgcolor: 'var(--surface-secondary)' },
                     }}
                   >

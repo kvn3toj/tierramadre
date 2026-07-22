@@ -78,7 +78,8 @@ export function MyProfileHeader({
           zIndex: zIndex.sticky,
           transform: showMiniBar ? 'translateY(0)' : 'translateY(-100%)',
           opacity: showMiniBar ? 1 : 0,
-          transition: `transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease`,
+          transition:
+            'transform var(--tm-base) var(--tm-ease), opacity var(--tm-fast) var(--tm-ease)',
           pointerEvents: showMiniBar ? 'auto' : 'none',
           mx: -spacing.md, // bleed to page edge
           px: spacing.md,
@@ -149,21 +150,10 @@ export function MyProfileHeader({
           px: 1.75,
           py: 1.75,
           borderRadius: radius.lg,
-          background: `linear-gradient(135deg, ${alpha(config.color, 0.08)} 0%, transparent 65%)`,
-          border: `1px solid ${alpha(config.color, 0.14)}`,
+          bgcolor: 'var(--tm-surface)',
+          border: '1px solid var(--tm-border)',
           position: 'relative',
           overflow: 'hidden',
-          // Decorative corner accent
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            width: 80,
-            height: 80,
-            background: `radial-gradient(circle at top right, ${alpha(config.color, 0.22)} 0%, transparent 70%)`,
-            pointerEvents: 'none',
-          },
         }}
       >
         <Avatar
@@ -172,13 +162,12 @@ export function MyProfileHeader({
           sx={{
             width: 56,
             height: 56,
-            border: `2px solid ${alpha(config.color, 0.35)}`,
+            border: '2px solid var(--tm-border)',
             fontSize: '1.3rem',
             fontWeight: 700,
-            bgcolor: alpha(config.color, 0.15),
+            bgcolor: 'var(--tm-well)',
             color: config.color,
             flexShrink: 0,
-            boxShadow: `0 6px 18px ${alpha(config.color, 0.18)}`,
           }}
         >
           {asesor.name?.charAt(0).toUpperCase()}

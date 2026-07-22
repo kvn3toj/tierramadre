@@ -18,7 +18,6 @@ import {
   iosTypographyScale,
   primitiveSpacing as spacing,
   radius,
-  cssTransition,
   qeFont,
 } from '../../design-system';
 
@@ -137,7 +136,7 @@ export default function AllActivityPage() {
                         p: spacing.sm,
                         borderRadius: radius.md,
                         cursor: 'pointer',
-                        transition: cssTransition.default,
+                        transition: 'background-color var(--tm-base) var(--tm-ease)',
                         '&:hover': { bgcolor: 'var(--surface-secondary)' },
                       }}
                       onClick={() => navigate(`/product/${view.itemId}`)}

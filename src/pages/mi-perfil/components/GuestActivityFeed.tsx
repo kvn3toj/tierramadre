@@ -13,7 +13,6 @@ import {
   iosTypographyScale,
   primitiveSpacing as spacing,
   radius,
-  cssTransition,
 } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { SectionHeading } from './SectionHeading';
@@ -91,7 +90,7 @@ export function GuestActivityFeed({
                 fontSize: iosTypographyScale.footnote,
                 fontWeight: 600,
                 cursor: 'pointer',
-                transition: cssTransition.default,
+                transition: 'background-color var(--tm-base) var(--tm-ease)',
                 '&:hover': { bgcolor: 'var(--tm-accent-wash)' },
               }}
             >
@@ -122,7 +121,7 @@ export function GuestActivityFeed({
                 fontSize: '0.7rem',
                 fontWeight: 600,
                 letterSpacing: '0.02em',
-                transition: cssTransition.default,
+                transition: 'color var(--tm-base) var(--tm-ease)',
                 '&:hover': { color: 'var(--tm-accent)' },
               }}
             >
@@ -155,7 +154,7 @@ export function GuestActivityFeed({
                 p: spacing.sm,
                 borderRadius: radius.md,
                 cursor: 'pointer',
-                transition: cssTransition.default,
+                transition: 'background-color var(--tm-base) var(--tm-ease)',
                 '&:hover': { bgcolor: 'var(--surface-secondary)' },
               }}
             >

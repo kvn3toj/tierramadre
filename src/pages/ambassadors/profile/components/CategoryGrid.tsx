@@ -80,13 +80,10 @@ export const CategoryGrid = React.memo(function CategoryGrid({
               overflow: 'hidden',
               height: { xs: 130, sm: 160, md: 180 },
               cursor: 'pointer',
-              transition: 'all var(--tm-base) var(--tm-ease)',
-              boxShadow: 'var(--tm-shadow)',
+              border: '1px solid var(--tm-border)',
+              transition: 'border-color var(--tm-base) var(--tm-ease)',
               '&:hover': {
-                transform: prefersReducedMotion ? 'none' : 'scale(1.02)',
-              },
-              '&:active': {
-                transform: prefersReducedMotion ? 'none' : 'scale(0.97)',
+                borderColor: 'var(--tm-accent)',
               },
               '&:focus-visible': {
                 outline: 'none',

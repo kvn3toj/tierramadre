@@ -8,7 +8,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { TrendingUp } from 'lucide-react';
-import { iosTypographyScale, primitiveSpacing as spacing, radius, cssTransition, qeFont } from '../../../design-system';
+import { iosTypographyScale, primitiveSpacing as spacing, radius, qeFont } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { SectionHeading } from './SectionHeading';
 
@@ -54,7 +54,7 @@ export function TopGuestProducts({ topProducts }: TopGuestProductsProps) {
                 p: spacing.sm,
                 borderRadius: radius.md,
                 cursor: 'pointer',
-                transition: cssTransition.default,
+                transition: 'background-color var(--tm-base) var(--tm-ease)',
                 '&:hover': { bgcolor: 'var(--surface-secondary)' },
               }}
             >
@@ -101,7 +101,7 @@ export function TopGuestProducts({ topProducts }: TopGuestProductsProps) {
                       height: '100%',
                       borderRadius: 2,
                       bgcolor: 'var(--tm-accent)',
-                      transition: cssTransition.slow,
+                      transition: 'width var(--tm-slow) var(--tm-ease)',
                     }}
                   />
                 </Box>

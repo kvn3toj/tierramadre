@@ -223,7 +223,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
               <Box
                 sx={{
                   display: 'flex',
-                  transition: 'transform 0.3s ease',
+                  transition: 'transform var(--tm-base) var(--tm-ease)',
                   transform: `translateX(-${activeSlide * 100}%)`,
                 }}
               >
@@ -372,7 +372,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                             objectFit: 'contain',
                             display: 'block',
                             opacity: certLoading ? 0 : 1,
-                            transition: 'opacity 0.2s ease',
+                            transition: 'opacity var(--tm-fast) var(--tm-ease)',
                           }}
                         />
                       </>
