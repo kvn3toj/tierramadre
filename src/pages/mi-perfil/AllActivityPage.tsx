@@ -7,7 +7,7 @@
 
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Skeleton, alpha } from '@mui/material';
+import { Box, Typography, Skeleton } from '@mui/material';
 import { Eye, Clock } from 'lucide-react';
 import { useCurrentAsesor } from '../../hooks/useCurrentAsesor';
 import { useGuestActivity } from '../../hooks/useGuestActivity';
@@ -15,13 +15,11 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import Breadcrumbs from '../../components/shared/Breadcrumbs';
 import { SectionHeading } from './components/SectionHeading';
 import {
-  emeraldCore,
-  accentColors,
   iosTypographyScale,
   primitiveSpacing as spacing,
   radius,
   cssTransition,
-  fontFamilies,
+  qeFont,
 } from '../../design-system';
 
 function formatDateTime(iso: string): string {
@@ -95,7 +93,7 @@ export default function AllActivityPage() {
         <Typography
           sx={{
             fontSize: '0.7rem',
-            fontFamily: fontFamilies.mono,
+            fontFamily: qeFont.mono,
             color: 'var(--text-tertiary)',
             letterSpacing: '0.04em',
           }}
@@ -110,11 +108,11 @@ export default function AllActivityPage() {
             p: spacing.lg,
             borderRadius: radius.lg,
             textAlign: 'center',
-            bgcolor: alpha(accentColors.info.light, 0.04),
-            border: `1px dashed ${alpha(accentColors.info.light, 0.2)}`,
+            bgcolor: 'var(--tm-accent-wash)',
+            border: '1px dashed var(--tm-border)',
           }}
         >
-          <Eye size={32} style={{ color: accentColors.info.light, opacity: 0.5, marginBottom: 8 }} />
+          <Eye size={32} style={{ color: 'var(--tm-accent)', opacity: 0.5, marginBottom: 8 }} />
           <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
             {t.profile.noGuestActivity}
           </Typography>
@@ -149,14 +147,14 @@ export default function AllActivityPage() {
                           width: 32,
                           height: 32,
                           borderRadius: radius.sm,
-                          bgcolor: alpha(accentColors.info.light, 0.1),
+                          bgcolor: 'var(--tm-accent-wash)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
                         }}
                       >
-                        <Eye size={14} style={{ color: accentColors.info.light }} />
+                        <Eye size={14} style={{ color: 'var(--tm-accent)' }} />
                       </Box>
 
                       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -181,7 +179,7 @@ export default function AllActivityPage() {
                               }
                             }}
                             sx={{
-                              color: view.userName ? emeraldCore.primary : 'inherit',
+                              color: view.userName ? 'var(--tm-accent)' : 'inherit',
                               fontWeight: 600,
                               cursor: view.userName ? 'pointer' : 'default',
                               '&:hover': view.userName ? { textDecoration: 'underline' } : {},

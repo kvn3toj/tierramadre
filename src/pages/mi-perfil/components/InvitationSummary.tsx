@@ -13,7 +13,7 @@ import {
   TextField, InputAdornment, ToggleButton, ToggleButtonGroup,
 } from '@mui/material';
 import { Link2, CheckCircle, Clock, XCircle, Send, Ban, Archive, Search, ArrowUpDown } from 'lucide-react';
-import { emeraldCore, accentColors, iosTypographyScale, primitiveSpacing as spacing, radius, fontFamilies } from '../../../design-system';
+import { iosTypographyScale, primitiveSpacing as spacing, radius, qeFont } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { SectionHeading } from './SectionHeading';
@@ -34,9 +34,9 @@ function formatDate(iso: string): string {
 }
 
 const STATUS_CONFIG = {
-  active: { label: 'Activa', color: accentColors.success.light, icon: CheckCircle },
-  pending: { label: 'Pendiente', color: accentColors.warning.light, icon: Clock },
-  expired: { label: 'Expirada', color: accentColors.error?.light || '#f44336', icon: XCircle },
+  active: { label: 'Activa', color: 'var(--tm-accent)', icon: CheckCircle },
+  pending: { label: 'Pendiente', color: 'var(--tm-warning)', icon: Clock },
+  expired: { label: 'Expirada', color: 'var(--tm-danger)', icon: XCircle },
 };
 
 export function InvitationSummary({
@@ -108,12 +108,12 @@ export function InvitationSummary({
           sx={{
             p: spacing.lg,
             borderRadius: radius.lg,
-            bgcolor: alpha(emeraldCore.primary, 0.04),
-            border: `1px dashed ${alpha(emeraldCore.primary, 0.2)}`,
+            bgcolor: 'var(--tm-accent-wash)',
+            border: '1px dashed var(--tm-border)',
             textAlign: 'center',
           }}
         >
-          <Archive size={32} style={{ color: emeraldCore.primary, marginBottom: 8, opacity: 0.4 }} />
+          <Archive size={32} style={{ color: 'var(--tm-accent)', marginBottom: 8, opacity: 0.4 }} />
           <Typography variant="body2" sx={{ color: 'var(--text-secondary)', fontSize: iosTypographyScale.footnote }}>
             {t.profile.noInvitations ?? 'No hay invitaciones aún'}
           </Typography>
@@ -123,10 +123,10 @@ export function InvitationSummary({
   }
 
   const metricCards = [
-    { label: t.profile.total, value: metrics.total, icon: Link2, color: emeraldCore.primary },
-    { label: t.profile.active, value: metrics.active, icon: CheckCircle, color: accentColors.success.light },
-    { label: t.profile.pending, value: metrics.pending, icon: Clock, color: accentColors.warning.light },
-    ...(metrics.expired > 0 ? [{ label: t.profile.expired ?? 'Expiradas', value: metrics.expired, icon: XCircle, color: accentColors.error?.light || '#f44336' }] : []),
+    { label: t.profile.total, value: metrics.total, icon: Link2, color: 'var(--tm-accent)' },
+    { label: t.profile.active, value: metrics.active, icon: CheckCircle, color: 'var(--tm-accent)' },
+    { label: t.profile.pending, value: metrics.pending, icon: Clock, color: 'var(--tm-warning)' },
+    ...(metrics.expired > 0 ? [{ label: t.profile.expired ?? 'Expiradas', value: metrics.expired, icon: XCircle, color: 'var(--tm-danger)' }] : []),
   ];
 
   return (
@@ -150,7 +150,7 @@ export function InvitationSummary({
             <Typography
               variant="h6"
               sx={{
-                fontFamily: fontFamilies.mono,
+                fontFamily: qeFont.mono,
                 fontWeight: 700,
                 fontSize: '1.1rem',
                 color,
@@ -191,7 +191,7 @@ export function InvitationSummary({
                 height: 32,
                 bgcolor: 'var(--surface-primary)',
               },
-              '& .MuiOutlinedInput-notchedOutline': { borderColor: alpha(emeraldCore.primary, 0.15) },
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--tm-accent-wash)' },
             }}
           />
           <ToggleButtonGroup
@@ -205,10 +205,10 @@ export function InvitationSummary({
                 px: 1, py: 0,
                 fontSize: iosTypographyScale.caption2,
                 fontWeight: 600,
-                border: `1px solid ${alpha(emeraldCore.primary, 0.15)}`,
+                border: '1px solid var(--tm-border)',
                 color: 'var(--text-secondary)',
                 textTransform: 'none',
-                '&.Mui-selected': { bgcolor: alpha(emeraldCore.primary, 0.1), color: emeraldCore.primary },
+                '&.Mui-selected': { bgcolor: 'var(--tm-accent-wash)', color: 'var(--tm-accent)' },
               },
             }}
           >
@@ -281,7 +281,7 @@ export function InvitationSummary({
                       display: 'block',
                       fontSize: iosTypographyScale.footnote,
                       fontWeight: 600,
-                      color: emeraldCore.primary,
+                      color: 'var(--tm-accent)',
                       cursor: 'pointer',
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                       '&:hover': { textDecoration: 'underline' },
@@ -310,11 +310,11 @@ export function InvitationSummary({
                 onClick={isEditable ? (e) => handleEditOpen(e, inv) : undefined}
                 sx={{
                   height: 20, fontSize: '0.6rem', fontWeight: 700,
-                  bgcolor: alpha(emeraldCore.primary, isEditable ? 0.1 : 0.05),
-                  color: isEditable ? emeraldCore.primary : 'var(--text-tertiary)',
-                  border: `1px solid ${alpha(emeraldCore.primary, isEditable ? 0.2 : 0.08)}`,
+                  bgcolor: isEditable ? 'var(--tm-accent-wash)' : 'var(--tm-well)',
+                  color: isEditable ? 'var(--tm-accent)' : 'var(--text-tertiary)',
+                  border: '1px solid var(--tm-border)',
                   cursor: isEditable ? 'pointer' : 'default',
-                  '&:hover': isEditable ? { bgcolor: alpha(emeraldCore.primary, 0.15) } : {},
+                  '&:hover': isEditable ? { bgcolor: 'var(--tm-accent-wash)' } : {},
                 }}
               />
 
@@ -337,7 +337,7 @@ export function InvitationSummary({
                   sx={{
                     width: 24, height: 24, p: 0,
                     color: 'var(--text-tertiary)',
-                    '&:hover': { color: accentColors.error?.light || '#f44336' },
+                    '&:hover': { color: 'var(--tm-danger)' },
                   }}
                 >
                   <Ban size={13} />
@@ -373,7 +373,7 @@ export function InvitationSummary({
           min={1} max={4} step={0.1}
           valueLabelDisplay="auto"
           valueLabelFormat={(v) => `x${v}`}
-          sx={{ color: emeraldCore.primary, '& .MuiSlider-thumb': { width: 16, height: 16 } }}
+          sx={{ color: 'var(--tm-accent)', '& .MuiSlider-thumb': { width: 16, height: 16 } }}
         />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 1 }}>
           <Button size="small" onClick={() => setEditAnchor(null)} sx={{ textTransform: 'none', fontSize: '0.75rem' }}>
@@ -385,7 +385,7 @@ export function InvitationSummary({
             onClick={handleEditSave}
             sx={{
               textTransform: 'none', fontSize: '0.75rem',
-              bgcolor: emeraldCore.primary, '&:hover': { bgcolor: emeraldCore.dark },
+              bgcolor: 'var(--tm-accent)', '&:hover': { bgcolor: 'var(--tm-accent-strong)' },
             }}
           >
             {t.profile.save}

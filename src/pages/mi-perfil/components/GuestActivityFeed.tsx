@@ -7,10 +7,9 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, alpha } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { Eye, UserPlus, Clock, ChevronRight } from 'lucide-react';
 import {
-  emeraldCore,
   iosTypographyScale,
   primitiveSpacing as spacing,
   radius,
@@ -52,15 +51,15 @@ export function GuestActivityFeed({
           sx={{
             p: spacing.lg,
             borderRadius: radius.lg,
-            bgcolor: alpha(emeraldCore.primary, 0.04),
-            border: `1px dashed ${alpha(emeraldCore.primary, 0.2)}`,
+            bgcolor: 'var(--tm-accent-wash)',
+            border: '1px dashed var(--tm-border)',
             textAlign: 'center',
           }}
         >
           <Eye
             size={32}
             style={{
-              color: emeraldCore.primary,
+              color: 'var(--tm-accent)',
               marginBottom: 8,
               opacity: 0.5,
             }}
@@ -86,14 +85,14 @@ export function GuestActivityFeed({
                 px: 2,
                 py: 0.75,
                 borderRadius: radius.md,
-                border: `1px solid ${alpha(emeraldCore.primary, 0.3)}`,
-                bgcolor: alpha(emeraldCore.primary, 0.08),
-                color: emeraldCore.primary,
+                border: '1px solid var(--tm-border)',
+                bgcolor: 'var(--tm-accent-wash)',
+                color: 'var(--tm-accent)',
                 fontSize: iosTypographyScale.footnote,
                 fontWeight: 600,
                 cursor: 'pointer',
                 transition: cssTransition.default,
-                '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.15) },
+                '&:hover': { bgcolor: 'var(--tm-accent-wash)' },
               }}
             >
               <UserPlus size={14} />
@@ -119,12 +118,12 @@ export function GuestActivityFeed({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 0.25,
-                color: emeraldCore.primary,
+                color: 'var(--tm-accent)',
                 fontSize: '0.7rem',
                 fontWeight: 600,
                 letterSpacing: '0.02em',
                 transition: cssTransition.default,
-                '&:hover': { color: emeraldCore.light },
+                '&:hover': { color: 'var(--tm-accent)' },
               }}
             >
               Ver todas ({guestViews.length})
@@ -165,14 +164,14 @@ export function GuestActivityFeed({
                   width: 32,
                   height: 32,
                   borderRadius: radius.sm,
-                  bgcolor: alpha(emeraldCore.primary, 0.1),
+                  bgcolor: 'var(--tm-accent-wash)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <Eye size={14} style={{ color: emeraldCore.primary }} />
+                <Eye size={14} style={{ color: 'var(--tm-accent)' }} />
               </Box>
 
               <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -210,7 +209,7 @@ export function GuestActivityFeed({
                       }
                     }}
                     sx={{
-                      color: view.userName ? emeraldCore.primary : 'inherit',
+                      color: view.userName ? 'var(--tm-accent)' : 'inherit',
                       fontWeight: 600,
                       cursor: view.userName ? 'pointer' : 'default',
                       '&:hover': view.userName

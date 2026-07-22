@@ -48,19 +48,17 @@ import { useNotification } from '../../contexts/NotificationContext';
 import Breadcrumbs from '../../components/shared/Breadcrumbs';
 import { SectionHeading } from './components/SectionHeading';
 import {
-  emeraldCore,
-  accentColors,
   iosTypographyScale,
   primitiveSpacing as spacing,
   radius,
   cssTransition,
-  fontFamilies,
+  qeFont,
 } from '../../design-system';
 
 const STATUS_META = {
-  active: { label: 'Activa', color: '#34c759', icon: CheckCircle },
-  pending: { label: 'Pendiente', color: '#ff9500', icon: CircleDashed },
-  expired: { label: 'Expirada', color: '#ff3b30', icon: XCircle },
+  active: { label: 'Activa', color: 'var(--tm-accent)', icon: CheckCircle },
+  pending: { label: 'Pendiente', color: 'var(--tm-warning)', icon: CircleDashed },
+  expired: { label: 'Expirada', color: 'var(--tm-danger)', icon: XCircle },
 } as const;
 
 function formatDate(iso: string | null): string {
@@ -160,9 +158,9 @@ export default function GuestDetailPage() {
   const isMutating = primaryInvitation ? mutatingCodes.has(primaryInvitation.shortCode) : false;
 
   const statTiles = [
-    { label: 'Visitas', value: metrics.totalViews, icon: Eye, color: accentColors.info.light },
-    { label: 'Productos', value: metrics.uniqueProducts, icon: Package, color: emeraldCore.primary },
-    { label: 'Sesiones', value: metrics.sessionCount, icon: Users, color: accentColors.warning.light },
+    { label: 'Visitas', value: metrics.totalViews, icon: Eye, color: 'var(--tm-accent)' },
+    { label: 'Productos', value: metrics.uniqueProducts, icon: Package, color: 'var(--tm-accent)' },
+    { label: 'Sesiones', value: metrics.sessionCount, icon: Users, color: 'var(--tm-warning)' },
   ];
 
   return (
@@ -183,8 +181,8 @@ export default function GuestDetailPage() {
           position: 'relative',
           overflow: 'hidden',
           borderRadius: radius.lg,
-          border: `1px solid ${alpha(emeraldCore.primary, 0.14)}`,
-          background: `linear-gradient(135deg, ${alpha(emeraldCore.primary, 0.08)} 0%, transparent 65%)`,
+          border: '1px solid var(--tm-border)',
+          background: `linear-gradient(135deg, ${'var(--tm-accent-wash)'} 0%, transparent 65%)`,
           '&::before': {
             content: '""',
             position: 'absolute',
@@ -192,7 +190,7 @@ export default function GuestDetailPage() {
             right: 0,
             width: 100,
             height: 100,
-            background: `radial-gradient(circle at top right, ${alpha(emeraldCore.primary, 0.2)} 0%, transparent 70%)`,
+            background: `radial-gradient(circle at top right, ${'var(--tm-accent-wash)'} 0%, transparent 70%)`,
             pointerEvents: 'none',
           },
         }}
@@ -202,13 +200,13 @@ export default function GuestDetailPage() {
             sx={{
               width: 56,
               height: 56,
-              bgcolor: alpha(emeraldCore.primary, 0.15),
-              color: emeraldCore.primary,
-              border: `2px solid ${alpha(emeraldCore.primary, 0.3)}`,
+              bgcolor: 'var(--tm-accent-wash)',
+              color: 'var(--tm-accent)',
+              border: '2px solid var(--tm-border)',
               fontSize: '1.3rem',
               fontWeight: 700,
               flexShrink: 0,
-              boxShadow: `0 6px 18px ${alpha(emeraldCore.primary, 0.18)}`,
+              boxShadow: `0 6px 18px ${'var(--tm-accent-wash)'}`,
             }}
           >
             {guestName?.charAt(0).toUpperCase() || 'I'}
@@ -293,8 +291,8 @@ export default function GuestDetailPage() {
               gap: 1.5,
               px: 1.75,
               py: 1.25,
-              borderTop: `1px solid ${alpha(emeraldCore.primary, 0.1)}`,
-              bgcolor: alpha('#000', 0.02),
+              borderTop: '1px solid var(--tm-border)',
+              bgcolor: 'var(--tm-well)',
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2, minWidth: 0 }}>
@@ -312,10 +310,10 @@ export default function GuestDetailPage() {
                 </Typography>
                 <Typography
                   sx={{
-                    fontFamily: fontFamilies.mono,
+                    fontFamily: qeFont.mono,
                     fontWeight: 700,
                     fontSize: '1.35rem',
-                    color: emeraldCore.primary,
+                    color: 'var(--tm-accent)',
                     lineHeight: 1.1,
                     letterSpacing: '-0.02em',
                   }}
@@ -367,16 +365,16 @@ export default function GuestDetailPage() {
                 sx={{
                   textTransform: 'none',
                   borderRadius: radius.md,
-                  border: `1px solid ${alpha(emeraldCore.primary, 0.25)}`,
-                  color: emeraldCore.primary,
-                  bgcolor: alpha(emeraldCore.primary, 0.06),
+                  border: '1px solid var(--tm-border)',
+                  color: 'var(--tm-accent)',
+                  bgcolor: 'var(--tm-accent-wash)',
                   fontSize: '0.75rem',
                   fontWeight: 600,
                   px: 1.25,
                   py: 0.25,
                   minHeight: 0,
                   flexShrink: 0,
-                  '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.12) },
+                  '&:hover': { bgcolor: 'var(--tm-accent-wash)' },
                 }}
               >
                 Editar
@@ -420,7 +418,7 @@ export default function GuestDetailPage() {
           step={0.1}
           valueLabelDisplay="auto"
           valueLabelFormat={(v) => `x${v}`}
-          sx={{ color: emeraldCore.primary, '& .MuiSlider-thumb': { width: 16, height: 16 } }}
+          sx={{ color: 'var(--tm-accent)', '& .MuiSlider-thumb': { width: 16, height: 16 } }}
         />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 1 }}>
           <Button
@@ -438,8 +436,8 @@ export default function GuestDetailPage() {
             sx={{
               textTransform: 'none',
               fontSize: '0.75rem',
-              bgcolor: emeraldCore.primary,
-              '&:hover': { bgcolor: emeraldCore.dark },
+              bgcolor: 'var(--tm-accent)',
+              '&:hover': { bgcolor: 'var(--tm-accent-strong)' },
             }}
           >
             Guardar
@@ -455,11 +453,11 @@ export default function GuestDetailPage() {
               p: spacing.lg,
               borderRadius: radius.lg,
               textAlign: 'center',
-              bgcolor: alpha(accentColors.info.light, 0.04),
-              border: `1px dashed ${alpha(accentColors.info.light, 0.2)}`,
+              bgcolor: 'var(--tm-accent-wash)',
+              border: '1px dashed var(--tm-border)',
             }}
           >
-            <Eye size={28} style={{ color: accentColors.info.light, opacity: 0.5, marginBottom: 8 }} />
+            <Eye size={28} style={{ color: 'var(--tm-accent)', opacity: 0.5, marginBottom: 8 }} />
             <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
               {t.profile.noGuestActivity}
             </Typography>
@@ -506,7 +504,7 @@ export default function GuestDetailPage() {
                   </Box>
                   <Typography
                     sx={{
-                      fontFamily: fontFamilies.mono,
+                      fontFamily: qeFont.mono,
                       fontWeight: 700,
                       fontSize: '1.35rem',
                       color,
@@ -530,7 +528,7 @@ export default function GuestDetailPage() {
                   px: 1,
                   py: 0.5,
                   borderRadius: radius.sm,
-                  bgcolor: alpha('#000', 0.03),
+                  bgcolor: 'var(--tm-well)',
                   fontSize: '0.7rem',
                   color: 'var(--text-secondary)',
                 }}
@@ -546,7 +544,7 @@ export default function GuestDetailPage() {
                   px: 1,
                   py: 0.5,
                   borderRadius: radius.sm,
-                  bgcolor: alpha('#000', 0.03),
+                  bgcolor: 'var(--tm-well)',
                   fontSize: '0.7rem',
                   color: 'var(--text-secondary)',
                 }}
@@ -587,14 +585,14 @@ export default function GuestDetailPage() {
                           width: 28,
                           height: 28,
                           borderRadius: radius.sm,
-                          bgcolor: alpha(emeraldCore.primary, 0.1),
+                          bgcolor: 'var(--tm-accent-wash)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
                         }}
                       >
-                        <Package size={13} style={{ color: emeraldCore.primary }} />
+                        <Package size={13} style={{ color: 'var(--tm-accent)' }} />
                       </Box>
                       <Typography
                         sx={{
@@ -614,11 +612,11 @@ export default function GuestDetailPage() {
                           px: 0.85,
                           py: 0.1,
                           borderRadius: radius.sm,
-                          bgcolor: alpha(emeraldCore.primary, 0.12),
-                          color: emeraldCore.primary,
+                          bgcolor: 'var(--tm-accent-wash)',
+                          color: 'var(--tm-accent)',
                           fontSize: '0.7rem',
                           fontWeight: 700,
-                          fontFamily: fontFamilies.mono,
+                          fontFamily: qeFont.mono,
                           flexShrink: 0,
                         }}
                       >
@@ -664,7 +662,7 @@ export default function GuestDetailPage() {
                         width: 6,
                         height: 6,
                         borderRadius: '50%',
-                        bgcolor: accentColors.info.light,
+                        bgcolor: 'var(--tm-accent)',
                         flexShrink: 0,
                         opacity: 0.6,
                       }}
@@ -686,7 +684,7 @@ export default function GuestDetailPage() {
                         fontSize: '0.7rem',
                         color: 'var(--text-tertiary)',
                         flexShrink: 0,
-                        fontFamily: fontFamilies.mono,
+                        fontFamily: qeFont.mono,
                       }}
                     >
                       {formatDateTime(v.timestamp)}

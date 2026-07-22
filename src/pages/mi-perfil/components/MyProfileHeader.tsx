@@ -12,7 +12,6 @@ import { useRef, useState, useEffect } from 'react';
 import { Box, Typography, Chip, Avatar, alpha } from '@mui/material';
 import { Shield, Star, Award } from 'lucide-react';
 import {
-  emeraldCore,
   iosTypographyScale,
   primitiveSpacing as spacing,
   radius,
@@ -29,9 +28,9 @@ const ROLE_CONFIG: Record<
   string,
   { label: string; icon: React.ElementType; color: string }
 > = {
-  Admin: { label: 'Admin', icon: Shield, color: '#8C928F' },
-  Embajador: { label: 'Embajador', icon: Star, color: emeraldCore.dark },
-  Asesor: { label: 'Asesor', icon: Award, color: emeraldCore.primary },
+  Admin: { label: 'Admin', icon: Shield, color: 'var(--tm-subtle)' },
+  Embajador: { label: 'Embajador', icon: Star, color: 'var(--tm-accent-strong)' },
+  Asesor: { label: 'Asesor', icon: Award, color: 'var(--tm-accent)' },
 };
 
 export function MyProfileHeader({
@@ -84,11 +83,10 @@ export function MyProfileHeader({
           mx: -spacing.md, // bleed to page edge
           px: spacing.md,
           py: spacing.xs,
-          backdropFilter: 'blur(20px) saturate(1.6)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
-          bgcolor: 'rgba(var(--surface-primary-rgb), 0.82)',
-          borderBottom: '0.5px solid var(--border-default)',
-          boxShadow: showMiniBar ? 'var(--shadow-sm)' : 'none',
+          // In-page sticky bar, not the app top nav — DS3 keeps glass to the
+          // top nav and tab bar, so this is a solid surface with a hairline.
+          bgcolor: 'var(--tm-surface)',
+          borderBottom: '1px solid var(--tm-hairline)',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
