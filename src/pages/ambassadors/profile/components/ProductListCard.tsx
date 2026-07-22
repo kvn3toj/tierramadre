@@ -6,9 +6,8 @@
 
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { Badge, qeType } from '../../../../design-system';
+import { Badge, Card, qeType } from '../../../../design-system';
 import { formatCurrency, formatCarats } from '../../../../utils/formatting';
-import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import ProgressiveImage from '../../../../components/shared/ProgressiveImage';
 import type { TreasureItem } from '../../../../types';
 
@@ -21,45 +20,21 @@ export const ProductListCard = React.memo(function ProductListCard({
   item,
   onClick,
 }: ProductListCardProps) {
-  const prefersReducedMotion = useReducedMotion();
-
   const weightDisplay =
     typeof item.peso === 'number'
       ? `${formatCarats(item.peso)} ct`
       : item.peso || '';
 
   return (
-    <Box
-      role="button"
-      tabIndex={0}
+    <Card
+      interactive
       onClick={() => onClick(item)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick(item);
-        }
-      }}
       aria-label={`${item.nombre} - ${formatCurrency(item.precioCOP)}`}
       sx={{
         display: 'flex',
         alignItems: 'center',
         gap: 1.5,
         p: 1.25,
-        borderRadius: 'var(--tm-radius-card)',
-        bgcolor: 'var(--tm-surface)',
-        border: '1px solid',
-        borderColor: 'var(--tm-border)',
-        cursor: 'pointer',
-        transition: prefersReducedMotion
-          ? 'none'
-          : 'border-color var(--tm-base) var(--tm-ease), background-color var(--tm-base) var(--tm-ease)',
-        '&:hover': {
-          borderColor: 'var(--tm-accent)',
-        },
-        '&:focus-visible': {
-          outline: 'none',
-          boxShadow: 'var(--tm-focus-ring)',
-        },
       }}
     >
       {/* Thumbnail */}
@@ -130,7 +105,7 @@ export const ProductListCard = React.memo(function ProductListCard({
       >
         {formatCurrency(item.precioCOP)}
       </Typography>
-    </Box>
+    </Card>
   );
 });
 

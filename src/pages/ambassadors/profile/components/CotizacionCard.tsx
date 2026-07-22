@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { User, Calendar, Trash2, Eye, Copy } from 'lucide-react';
 import { SavedCotizacion } from '../../../../hooks/useCotizacionHistory';
-import { Badge, qeFont, qeGray } from '../../../../design-system';
+import { Badge, Card, qeFont, qeGray } from '../../../../design-system';
 
 // Format currency helper
 function formatCurrency(value: number): string {
@@ -47,22 +47,11 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
   });
 
   return (
-    <Box
-      sx={{
-        width: 200,
-        flexShrink: 0,
-        borderRadius: 'var(--tm-radius-card)',
-        overflow: 'hidden',
-        bgcolor: 'var(--tm-surface)',
-        border: '1px solid',
-        borderColor: 'var(--tm-border)',
-        transition: 'border-color var(--tm-base) var(--tm-ease)',
-        cursor: 'pointer',
-        '&:hover': {
-          borderColor: 'var(--tm-accent)',
-        },
-      }}
+    <Card
+      interactive
       onClick={onView}
+      aria-label={`Cotización ${cotizacion.quotationNumber}`}
+      sx={{ width: 200, flexShrink: 0 }}
     >
       {/* Image Preview */}
       <Box
@@ -217,7 +206,7 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
           </IconButton>
         </Box>
       </Box>
-    </Box>
+    </Card>
   );
 });
 
