@@ -458,6 +458,39 @@ function AppContent() {
                   </Suspense>
                 }
               />
+              {/* Profile sub-views. Each renders AsesorProfilePage, which
+                  derives which view to show from the URL, so browser-back
+                  pops one view at a time instead of leaving the profile. */}
+              <Route
+                path="/ambassadors/:slug/c/:categoryKey"
+                element={
+                  <Suspense
+                    fallback={<LocalizedLoading messageKey="profile" />}
+                  >
+                    <AsesorProfilePage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/ambassadors/:slug/editar"
+                element={
+                  <Suspense
+                    fallback={<LocalizedLoading messageKey="profile" />}
+                  >
+                    <AsesorProfilePage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/ambassadors/:slug/favoritas"
+                element={
+                  <Suspense
+                    fallback={<LocalizedLoading messageKey="profile" />}
+                  >
+                    <AsesorProfilePage />
+                  </Suspense>
+                }
+              />
 
               {/* Valuation Page - Emerald investment information */}
               <Route

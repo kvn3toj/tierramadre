@@ -4,7 +4,12 @@
  */
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate, useMatch } from "react-router-dom";
+import {
+  useParams,
+  useNavigate,
+  useMatch,
+  useLocation,
+} from "react-router-dom";
 import { Box, Typography, Button, Skeleton } from "@mui/material";
 import { ArrowLeft, ChevronLeft, Square, Gem } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -75,19 +80,27 @@ export default function AsesorProfilePage() {
   const { t } = useLanguage();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const prefersReducedMotion = useReducedMotion();
-  // URL-based product detail: /ambassadors/:slug/product/:itemId
+  // Each view has a real route, so the view is derived from the URL rather
+  // than held in state. Browser-back therefore pops one view at a time, and
+  // every sub-view is deep-linkable.
   const productMatch = useMatch("/ambassadors/:slug/product/:itemId");
+  const categoryMatch = useMatch("/ambassadors/:slug/c/:categoryKey");
+  const editMatch = useMatch("/ambassadors/:slug/editar");
+  const manageFavoritesMatch = useMatch("/ambassadors/:slug/favoritas");
   const urlItemId = productMatch?.params?.itemId;
-  // View state
-  const [activeView, setActiveView] = useState<ProfileView>(() =>
-    urlItemId ? "productDetail" : "museum",
-  );
-  const [selectedCategory, setSelectedCategory] =
-    useState<ProductCategory | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<TreasureItem | null>(
-    null,
-  );
+  const urlCategoryKey = categoryMatch?.params?.categoryKey;
+
+  const activeView: ProfileView = urlItemId
+    ? "productDetail"
+    : urlCategoryKey
+      ? "category"
+      : editMatch
+        ? "edit"
+        : manageFavoritesMatch
+          ? "manageFavorites"
+          : "museum";
 
   // Cotizaciones state
   const [selectedCotizacion, setSelectedCotizacion] =
@@ -220,32 +233,39 @@ export default function AsesorProfilePage() {
     };
   }, [allProducts]);
 
-  // Sync URL → state: when urlItemId changes, resolve product and set view
+  // Resolve the URL's item / category against loaded data. Both are derived,
+  // so there is no URL-to-state sync effect to fall out of step.
+  const selectedProduct = useMemo<TreasureItem | null>(() => {
+    if (!urlItemId) return null;
+    const id = parseInt(urlItemId, 10);
+    return (
+      allProducts.find((p) => p.item === id) ??
+      collectionProducts.find((p) => p.item === id) ??
+      null
+    );
+  }, [urlItemId, allProducts, collectionProducts]);
+
+  const selectedCategory = useMemo<ProductCategory | null>(
+    () => categories.find((c) => c.key === urlCategoryKey) ?? null,
+    [categories, urlCategoryKey],
+  );
+
+  // The owner-only views are not reachable by URL for anyone else.
   useEffect(() => {
-    if (urlItemId) {
-      const id = parseInt(urlItemId, 10);
-      const found =
-        allProducts.find((p) => p.item === id) ||
-        collectionProducts.find((p) => p.item === id);
-      if (found) {
-        setSelectedProduct(found);
-        setActiveView("productDetail");
-      }
-    } else if (activeView === "productDetail") {
-      // URL no longer has itemId (back navigation) — return to museum
-      setActiveView("museum");
-      setSelectedProduct(null);
-      setSelectedCategory(null);
+    if (!isProfileOwner && (editMatch || manageFavoritesMatch)) {
+      navigate(`/ambassadors/${slug}`, { replace: true });
     }
-  }, [urlItemId, allProducts, collectionProducts]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isProfileOwner, editMatch, manageFavoritesMatch, navigate, slug]);
 
   // Handlers — wrapped in useCallback to stabilize references for React.memo children
   const handleBack = useCallback(() => navigate("/ambassadors"), [navigate]);
 
-  const handleCategorySelect = useCallback((category: ProductCategory) => {
-    setSelectedCategory(category);
-    setActiveView("category");
-  }, []);
+  const handleCategorySelect = useCallback(
+    (category: ProductCategory) => {
+      navigate(`/ambassadors/${slug}/c/${category.key}`);
+    },
+    [navigate, slug],
+  );
 
   const handleProductClick = useCallback(
     (item: TreasureItem) => {
@@ -308,17 +328,27 @@ export default function AsesorProfilePage() {
     });
   }, [activeView, prefersReducedMotion]);
 
-  const handleBackToMuseum = useCallback(() => {
-    setActiveView("museum");
-    setSelectedCategory(null);
-    setSelectedProduct(null);
-  }, []);
+  // In-app back: pop history when we got here by navigating, so
+  // category -> product -> back lands on the category again. On a cold deep
+  // link there is nothing to pop, so fall back to the profile root.
+  const goBackOrProfile = useCallback(() => {
+    if (location.key === "default") {
+      navigate(`/ambassadors/${slug}`);
+    } else {
+      navigate(-1);
+    }
+  }, [location.key, navigate, slug]);
 
-  const handleEditProfile = useCallback(() => setActiveView("edit"), []);
+  const handleBackToMuseum = goBackOrProfile;
+
+  const handleEditProfile = useCallback(
+    () => navigate(`/ambassadors/${slug}/editar`),
+    [navigate, slug],
+  );
 
   const handleManageFavorites = useCallback(
-    () => setActiveView("manageFavorites"),
-    [],
+    () => navigate(`/ambassadors/${slug}/favoritas`),
+    [navigate, slug],
   );
 
   const handleDuplicateCotizacion = useCallback(
@@ -345,14 +375,7 @@ export default function AsesorProfilePage() {
     [],
   );
 
-  // Keep selectedCategory ref for back navigation from product detail
-  const selectedCategoryRef = useRef(selectedCategory);
-  selectedCategoryRef.current = selectedCategory;
-
-  const handleProductDetailBack = useCallback(() => {
-    // Navigate back to ambassador profile (URL change triggers state reset via useEffect)
-    navigate(`/ambassadors/${slug}`);
-  }, [navigate, slug]);
+  const handleProductDetailBack = goBackOrProfile;
 
   const handleEditSave = useCallback(
     async (data: { especialidad?: string; whatsapp?: string }) => {
