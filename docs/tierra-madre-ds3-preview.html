@@ -224,9 +224,15 @@ body{background:#DDE3E1;font-family:var(--ui);color:var(--tm-text);min-height:10
 .notecol li{padding:7px 0 7px 16px;position:relative;border-bottom:1px solid var(--tm-hairline)}
 .notecol li::before{content:'';position:absolute;left:0;top:14px;width:7px;height:7px;background:var(--tm-accent-pure);clip-path:polygon(20% 0,80% 0,100% 50%,80% 100%,20% 100%,0 50%)}
 @media(max-width:900px){.notecol{max-width:390px}}
+/* cut-icon correspondence */
+.cutchip{position:absolute;display:inline-flex;align-items:center;gap:5px;bottom:7px;right:7px;background:color-mix(in srgb,var(--tm-surface) 86%,transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid var(--tm-border);border-radius:999px;padding:3px 8px 3px 5px;font-family:var(--mono);font-size:.5rem;letter-spacing:.07em;text-transform:uppercase;color:var(--tm-muted);z-index:2;line-height:1}
+.cutchip.lg{font-size:.62rem;padding:5px 11px 5px 7px;bottom:14px;right:14px}
+.cutchip svg{flex:0 0 auto;display:block}
+.ledger .v svg{vertical-align:-2px;margin-right:4px}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="em" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#5CE9C0"/><stop offset=".45" stop-color="#0C9068"/><stop offset="1" stop-color="#00503B"/></linearGradient></defs></svg>
 <div class="top">
   <div>
     <div class="ov">Design System v3 · Preview interactivo</div>
@@ -483,6 +489,36 @@ document.getElementById('mode').addEventListener('click',function(){
   document.documentElement.setAttribute('data-theme',d?'light':'dark');
   this.textContent=d?'Modo oscuro':'Modo claro';
 });
+// ---- cut-icon correspondence: each piece shows its cut as a gem icon ----
+(function(){
+  var G={
+    esmeralda:'<polygon points="18,3 46,3 61,18 61,62 46,77 18,77 3,62 3,18" fill="url(#em)"/><polygon points="25,13 39,13 51,25 51,55 39,67 25,67 13,55 13,25" fill="#fff" opacity=".15"/>',
+    redondo:'<circle cx="32" cy="40" r="29" fill="url(#em)"/><circle cx="32" cy="40" r="13" fill="#fff" opacity=".16"/>',
+    pera:'<path d="M32 4C40 22 58 30 58 48C58 64 46 77 32 77C18 77 6 64 6 48C6 30 24 22 32 4Z" fill="url(#em)"/><path d="M32 17C38 31 50 37 50 49C50 60 42 69 32 69C22 69 14 60 14 49C14 37 26 31 32 17Z" fill="#fff" opacity=".13"/>',
+    ovalo:'<ellipse cx="32" cy="40" rx="22" ry="35" fill="url(#em)"/><ellipse cx="32" cy="40" rx="11" ry="20" fill="#fff" opacity=".14"/>',
+    cojin:'<rect x="7" y="15" width="50" height="50" rx="17" fill="url(#em)"/><rect x="17" y="25" width="30" height="30" rx="10" fill="#fff" opacity=".13"/>',
+    marquesa:'<path d="M32 4C46 20 54 32 54 40C54 48 46 60 32 76C18 60 10 48 10 40C10 32 18 20 32 4Z" fill="url(#em)"/><line x1="32" y1="8" x2="32" y2="72" stroke="#fff" stroke-width="1.2" opacity=".2"/>'
+  };
+  function gem(c,w){w=w||13;return '<svg viewBox="0 0 64 80" width="'+w+'" height="'+(w*80/64).toFixed(1)+'">'+(G[c]||G.esmeralda)+'</svg>'}
+  var BY={'Esferas del Dragón':'redondo','Topos Planos':'cojin','Guardianas Gemelas':'esmeralda','Mellizas':'pera','Aurora':'ovalo','Serena':'marquesa','Venus':'esmeralda','Esperanza':'pera','Lucía':'redondo'};
+  var ES={esmeralda:'Esmeralda',redondo:'Redondo',pera:'Pera',ovalo:'Óvalo',cojin:'Cojín',marquesa:'Marquesa'};
+  document.querySelectorAll('.piece').forEach(function(p){
+    var nmEl=p.querySelector('.nm'); if(!nmEl)return;
+    var cut=BY[nmEl.textContent.trim()]; if(!cut)return;
+    var pw=p.querySelector('.pw'); if(!pw)return;
+    var c=document.createElement('div'); c.className='cutchip'; c.innerHTML=gem(cut,12)+ES[cut];
+    pw.appendChild(c);
+  });
+  var pd=document.querySelector('[data-screen="product"]');
+  if(pd){
+    var well=pd.querySelector('.pdwell');
+    if(well){var cc=document.createElement('div');cc.className='cutchip lg';cc.innerHTML=gem('esmeralda',15)+'Corte esmeralda';well.appendChild(cc);}
+    pd.querySelectorAll('.ledger .lr').forEach(function(lr){
+      var k=lr.querySelector('.k'),v=lr.querySelector('.v');
+      if(k&&v&&k.textContent.trim()==='Corte'){v.innerHTML=gem('esmeralda',12)+v.textContent.trim();}
+    });
+  }
+})();
 </script>
 </body>
 </html>
