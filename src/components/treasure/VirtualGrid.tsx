@@ -281,16 +281,19 @@ export default function VirtualGrid({
     };
   }, [gridApi, scrollRestorationKey, restoreScroll]);
 
-  // Observe actual container width via ResizeObserver
+  // Observe container width for the card math. Height is measured separately
+  // by the availableHeight effect below — that one supersedes the earlier
+  // shell-derived measurement (Phase 1) because it also tracks changes in the
+  // header stack above the grid, not just the shell's own bounds.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    // Initial measurement
     setContainerWidth(el.clientWidth);
 
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
+        if (entry.target !== el) continue;
         // contentBoxSize gives us width without padding
         const width =
           entry.contentBoxSize?.[0]?.inlineSize ?? entry.contentRect.width;
@@ -461,9 +464,7 @@ export default function VirtualGrid({
   }
 
   // Calculate row count based on items and columns
-  // Add 1 extra empty row at the bottom as spacer so the last real row
-  // scrolls fully above the bottom tab bar (95px + safe-area)
-  const rowCount = Math.ceil(items.length / columnCount) + 1;
+  const rowCount = Math.ceil(items.length / columnCount);
 
   // Column width as percentage
   const columnWidth = `${100 / columnCount}%`;
