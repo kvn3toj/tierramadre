@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { User, Calendar, Trash2, Eye, Copy } from 'lucide-react';
 import { SavedCotizacion } from '../../../../hooks/useCotizacionHistory';
-import { qeFont } from '../../../../design-system';
+import { qeFont, qeGray } from '../../../../design-system';
 
 // Format currency helper
 function formatCurrency(value: number): string {
@@ -108,7 +108,7 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
           sx={{
             position: 'absolute',
             inset: 0,
-            bgcolor: 'rgba(0,0,0,0)',
+            bgcolor: 'transparent',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -120,7 +120,8 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
             },
           }}
         >
-          <Eye size={28} color="#fff" />
+          {/* Always light: the scrim below is dark in both themes. */}
+          <Eye size={28} color={qeGray[0]} />
         </Box>
       </Box>
 
