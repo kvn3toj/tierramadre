@@ -190,6 +190,10 @@ const FotosintesisLotes = lazyWithRetry(
   () => import('./pages/admin/Fotosintesis/LotesPage'),
   'FotosintesisLotes',
 );
+const FotosintesisItems = lazyWithRetry(
+  () => import('./pages/admin/Fotosintesis/ItemsPage'),
+  'FotosintesisItems',
+);
 const FotosintesisCertificados = lazyWithRetry(
   () => import('./pages/admin/Fotosintesis/certificados/CertGeneratorPage'),
   'FotosintesisCertificados',
@@ -686,6 +690,7 @@ function AppContent() {
               }
             >
               <Route index element={<FotosintesisHome />} />
+              <Route path="items" element={<FotosintesisItems />} />
               <Route path="lots" element={<FotosintesisLotes />} />
               <Route
                 path="lots/:loteId"

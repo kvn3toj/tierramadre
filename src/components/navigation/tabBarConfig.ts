@@ -10,7 +10,14 @@
  * pure design-system layer and feeds config into the DS-layer <TabBar>.)
  */
 
-import { Home, Boxes, BarChart3, Users, Menu as MenuIcon } from 'lucide-react';
+import {
+  Home,
+  Boxes,
+  BarChart3,
+  Users,
+  Gem,
+  Menu as MenuIcon,
+} from 'lucide-react';
 import EmeraldCutIcon from '../icons/EmeraldCutIcon';
 import AmbassadorsGlobeIcon from '../icons/AmbassadorsGlobeIcon';
 import { getQuietEmerald, getFoto, type QEMode } from '../../design-system';
@@ -102,6 +109,16 @@ export const FOTO_SLOTS: readonly TabSlot[] = [
     label: 'Lotes',
     icon: Boxes,
     route: '/admin/fotosintesis/lots',
+    match: 'prefix',
+  },
+  // Items sits right after Lotes: the two inventory destinations read as a
+  // pair (a lote is a purchase, an item is a piece), and both precede the
+  // money/people tabs. Prefix match so the `?item=` deep-link keeps the tab lit.
+  {
+    id: 'items',
+    label: 'Items',
+    icon: Gem,
+    route: '/admin/fotosintesis/items',
     match: 'prefix',
   },
   {
