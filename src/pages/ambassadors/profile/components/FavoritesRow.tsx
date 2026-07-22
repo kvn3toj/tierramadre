@@ -5,16 +5,9 @@
  */
 
 import React from 'react';
-import { Box, Typography, alpha, useTheme, useMediaQuery, type Theme } from '@mui/material';
+import { Box, Typography, useMediaQuery, type Theme } from '@mui/material';
 import { ChevronRight, Gem } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
-import {
-  emeraldCore,
-  goldAccent,
-  cssTransition,
-  surfacesLight,
-  surfacesDark,
-} from '../../../../design-system';
 import ProgressiveImage from '../../../../components/shared/ProgressiveImage';
 import type { TreasureItem } from '../../../../types';
 
@@ -24,10 +17,12 @@ interface FavoritesRowProps {
   onViewAll?: () => void;
 }
 
-export const FavoritesRow = React.memo(function FavoritesRow({ items, onItemClick, onViewAll }: FavoritesRowProps) {
-  const theme = useTheme();
+export const FavoritesRow = React.memo(function FavoritesRow({
+  items,
+  onItemClick,
+  onViewAll,
+}: FavoritesRowProps) {
   const { t } = useLanguage();
-  const isLight = theme.palette.mode === 'light';
   const isTablet = useMediaQuery((t: Theme) => t.breakpoints.up('sm'));
   const isDesktop = useMediaQuery((t: Theme) => t.breakpoints.up('md'));
 
@@ -40,11 +35,9 @@ export const FavoritesRow = React.memo(function FavoritesRow({ items, onItemClic
   return (
     <Box
       sx={{
-        bgcolor: isLight ? surfacesLight.surface.default : surfacesDark.background.secondary,
-        borderRadius: '18px 18px 0 0',
-        boxShadow: isLight
-          ? '0 -4px 16px rgba(0,0,0,0.08)'
-          : '0 -4px 16px rgba(0,0,0,0.2)',
+        bgcolor: 'var(--tm-surface)',
+        borderRadius: 'var(--tm-radius-sheet) var(--tm-radius-sheet) 0 0',
+        borderTop: '1px solid var(--tm-border)',
         pt: { xs: 2, sm: 2.5 },
         px: { xs: 2, sm: 3 },
         pb: { xs: 1.5, sm: 2 },
@@ -61,7 +54,7 @@ export const FavoritesRow = React.memo(function FavoritesRow({ items, onItemClic
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-          <Gem size={15} color={emeraldCore.primary} />
+          <Gem size={15} style={{ color: 'var(--tm-accent)' }} />
           <Typography
             sx={{
               fontWeight: 700,
@@ -88,16 +81,16 @@ export const FavoritesRow = React.memo(function FavoritesRow({ items, onItemClic
               display: 'flex',
               alignItems: 'center',
               gap: 0.25,
-              color: emeraldCore.primary,
+              color: 'var(--tm-accent)',
               fontSize: '0.72rem',
               fontWeight: 600,
               cursor: 'pointer',
-              transition: cssTransition.default,
-              borderRadius: 1,
+              transition: 'background-color var(--tm-base) var(--tm-ease)',
+              borderRadius: 'var(--tm-radius-control)',
               px: 0.75,
               py: 0.25,
               '&:hover': {
-                bgcolor: alpha(emeraldCore.primary, 0.06),
+                bgcolor: 'var(--tm-accent-wash)',
               },
             }}
           >
@@ -112,7 +105,8 @@ export const FavoritesRow = React.memo(function FavoritesRow({ items, onItemClic
         sx={{
           display: 'flex',
           gap: isDesktop ? '24px' : isTablet ? '20px' : '16px',
-          justifyContent: (isTablet || displayItems.length < 4) ? 'center' : 'flex-start',
+          justifyContent:
+            isTablet || displayItems.length < 4 ? 'center' : 'flex-start',
           overflowX: 'auto',
           pb: 0.5,
           scrollbarWidth: 'none',
@@ -139,12 +133,10 @@ export const FavoritesRow = React.memo(function FavoritesRow({ items, onItemClic
               gap: 0.5,
               flexShrink: 0,
               cursor: 'pointer',
-              transition: cssTransition.default,
+              transition: 'transform var(--tm-base) var(--tm-ease)',
               '&:hover': {
                 '& .fav-thumb': {
-                  borderColor: goldAccent.primary,
-                  transform: 'scale(1.06)',
-                  boxShadow: `0 4px 12px ${alpha(emeraldCore.primary, 0.2)}`,
+                  borderColor: 'var(--tm-accent)',
                 },
               },
             }}
@@ -156,10 +148,10 @@ export const FavoritesRow = React.memo(function FavoritesRow({ items, onItemClic
                 height: thumbSize,
                 borderRadius: '50%',
                 overflow: 'hidden',
-                border: '2.5px solid',
-                borderColor: emeraldCore.primary,
-                transition: cssTransition.default,
-                boxShadow: `0 2px 8px ${alpha('#000', 0.1)}`,
+                bgcolor: 'var(--tm-well)',
+                border: '1px solid',
+                borderColor: 'var(--tm-border)',
+                transition: 'border-color var(--tm-base) var(--tm-ease)',
               }}
             >
               <ProgressiveImage

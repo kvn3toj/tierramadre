@@ -4,15 +4,10 @@
  */
 
 import { useState, useMemo } from 'react';
-import { Box, Typography, Chip, IconButton, alpha, useTheme } from '@mui/material';
+import { Box, Typography, Chip, IconButton } from '@mui/material';
 import { ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../../../contexts/LanguageContext';
-import {
-  emeraldCore,
-  cssTransition,
-  blurValues,
-} from '../../../../design-system';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import { getQualityTiers } from '../../../../utils/productCategories';
 import { ProductListCard } from './ProductListCard';
@@ -26,9 +21,7 @@ interface CategoryDetailViewProps {
 }
 
 export function CategoryDetailView({ category, onBack, onProductClick }: CategoryDetailViewProps) {
-  const theme = useTheme();
   const { t } = useLanguage();
-  const isLight = theme.palette.mode === 'light';
   const prefersReducedMotion = useReducedMotion();
   const [activeFilter, setActiveFilter] = useState<string>('all');
 
@@ -59,16 +52,14 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
           onClick={onBack}
           aria-label={t.actions.back}
           sx={{
-            bgcolor: isLight
-              ? alpha('#000', 0.04)
-              : alpha('#fff', 0.06),
-            backdropFilter: `blur(${blurValues.md})`,
+            bgcolor: 'var(--tm-well)',
+            border: '1px solid var(--tm-border)',
+            color: 'var(--tm-text)',
             width: 36,
             height: 36,
             '&:hover': {
-              bgcolor: isLight
-                ? alpha('#000', 0.08)
-                : alpha('#fff', 0.1),
+              bgcolor: 'var(--tm-well)',
+              borderColor: 'var(--tm-accent)',
             },
           }}
         >
@@ -102,18 +93,16 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
             sx={{
               fontWeight: 600,
               fontSize: '0.72rem',
-              transition: cssTransition.default,
+              transition: 'background-color var(--tm-base) var(--tm-ease)',
               ...(activeFilter === 'all'
                 ? {
-                    bgcolor: emeraldCore.primary,
-                    color: '#fff',
-                    '&:hover': { bgcolor: emeraldCore.dark },
+                    bgcolor: 'var(--tm-accent-strong)',
+                    color: 'var(--tm-on-accent)',
+                    '&:hover': { bgcolor: 'var(--tm-accent)' },
                   }
                 : {
-                    bgcolor: isLight
-                      ? alpha(emeraldCore.primary, 0.08)
-                      : alpha(emeraldCore.primary, 0.12),
-                    color: emeraldCore.primary,
+                    bgcolor: 'var(--tm-accent-wash)',
+                    color: 'var(--tm-accent)',
                   }),
             }}
           />
@@ -127,18 +116,16 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
                 fontWeight: 600,
                 fontSize: '0.72rem',
                 flexShrink: 0,
-                transition: cssTransition.default,
+                transition: 'background-color var(--tm-base) var(--tm-ease)',
                 ...(activeFilter === tier
                   ? {
-                      bgcolor: emeraldCore.primary,
-                      color: '#fff',
-                      '&:hover': { bgcolor: emeraldCore.dark },
+                      bgcolor: 'var(--tm-accent-strong)',
+                      color: 'var(--tm-on-accent)',
+                      '&:hover': { bgcolor: 'var(--tm-accent)' },
                     }
                   : {
-                      bgcolor: isLight
-                        ? alpha('#000', 0.04)
-                        : alpha('#fff', 0.06),
-                      color: 'text.secondary',
+                      bgcolor: 'var(--tm-well)',
+                      color: 'var(--tm-muted)',
                     }),
               }}
             />
