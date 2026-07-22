@@ -12,8 +12,6 @@ import {
   InputAdornment,
   CircularProgress,
   Alert,
-  alpha,
-  useTheme,
   Button,
 } from '@mui/material';
 import { Search, Gem } from 'lucide-react';
@@ -23,14 +21,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useAsesores, Asesor } from '../../hooks/useAsesores';
 import { useTreasure } from '../../hooks/useTreasure';
 import AsesorCard from './AsesorCard';
-import {
-  emeraldCore,
-  goldAccent,
-  fontFamilies,
-  cssTransition,
-  surfacesLight,
-  surfacesDark,
-} from '../../design-system/index';
+import { qeFont } from '../../design-system/index';
 import {
   staggerContainer,
   staggerItem,
@@ -50,8 +41,6 @@ export default function AmbassadorDirectory({
   maxVisible,
 }: AmbassadorDirectoryProps) {
   const { t } = useLanguage();
-  const theme = useTheme();
-  const isLight = theme.palette.mode === 'light';
   const prefersReducedMotion = useReducedMotion();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -100,12 +89,12 @@ export default function AmbassadorDirectory({
           <CircularProgress
             size={14}
             aria-label={t.loading.general}
-            sx={{ color: emeraldCore.primary }}
+            sx={{ color: 'var(--tm-accent)' }}
           />
           <Typography
             sx={{
-              color: 'text.secondary',
-              fontFamily: fontFamilies.system,
+              color: 'var(--tm-muted)',
+              fontFamily: qeFont.ui,
               fontSize: '0.65rem',
               fontWeight: 600,
               letterSpacing: '0.1em',
@@ -115,7 +104,7 @@ export default function AmbassadorDirectory({
             {t.loading.ambassadors}
           </Typography>
         </Box>
-        <AmbassadorDirectorySkeleton isLight={isLight} />
+        <AmbassadorDirectorySkeleton />
       </Box>
     );
   }
@@ -134,7 +123,7 @@ export default function AmbassadorDirectory({
       <Box sx={{ textAlign: 'center', mb: { xs: 2, sm: 2.5 }, mt: 0.5 }}>
         <Typography
           sx={{
-            fontFamily: fontFamilies.display,
+            fontFamily: qeFont.serif,
             fontStyle: 'italic',
             fontSize: { xs: '1.15rem', sm: '1.28rem' },
             lineHeight: 1.35,
@@ -161,15 +150,17 @@ export default function AmbassadorDirectory({
             sx={{
               height: '1px',
               width: 32,
-              background: `linear-gradient(90deg, transparent, ${alpha(goldAccent.primary, 0.45)})`,
+              background:
+                'linear-gradient(90deg, transparent, var(--tm-border))',
             }}
           />
-          <Gem size={11} style={{ color: goldAccent.primary, opacity: 0.75 }} />
+          <Gem size={11} style={{ color: 'var(--tm-subtle)' }} />
           <Box
             sx={{
               height: '1px',
               width: 32,
-              background: `linear-gradient(90deg, ${alpha(goldAccent.primary, 0.45)}, transparent)`,
+              background:
+                'linear-gradient(90deg, var(--tm-border), transparent)',
             }}
           />
         </Box>
@@ -211,20 +202,18 @@ export default function AmbassadorDirectory({
           sx={{
             mb: 2,
             '& .MuiOutlinedInput-root': {
-              borderRadius: '12px',
-              bgcolor: isLight ? alpha('#000', 0.02) : alpha('#fff', 0.03),
+              borderRadius: 'var(--tm-radius-control)',
+              bgcolor: 'var(--tm-well)',
               fontSize: '0.8rem',
               '& fieldset': {
-                borderColor: isLight
-                  ? alpha('#000', 0.05)
-                  : alpha('#fff', 0.05),
-                transition: cssTransition.default,
+                borderColor: 'var(--tm-border)',
+                transition: 'border-color var(--tm-base) var(--tm-ease)',
               },
               '&:hover fieldset': {
-                borderColor: isLight ? alpha('#000', 0.1) : alpha('#fff', 0.1),
+                borderColor: 'var(--tm-muted)',
               },
               '&.Mui-focused fieldset': {
-                borderColor: alpha(emeraldCore.primary, 0.35),
+                borderColor: 'var(--tm-accent)',
                 borderWidth: '1px !important',
               },
             },
@@ -239,9 +228,9 @@ export default function AmbassadorDirectory({
             textAlign: 'center',
             py: 8,
             px: 4,
-            borderRadius: '16px',
+            borderRadius: 'var(--tm-radius-card)',
             border: '1px solid',
-            borderColor: isLight ? alpha('#000', 0.04) : alpha('#fff', 0.04),
+            borderColor: 'var(--tm-border)',
           }}
         >
           <Box
@@ -250,7 +239,7 @@ export default function AmbassadorDirectory({
               height: 48,
               borderRadius: '50%',
               border: '1px solid',
-              borderColor: alpha(goldAccent.primary, 0.15),
+              borderColor: 'var(--tm-border)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -258,11 +247,7 @@ export default function AmbassadorDirectory({
               mb: 2,
             }}
           >
-            <Gem
-              size={20}
-              strokeWidth={1}
-              style={{ color: alpha(goldAccent.primary, 0.4) }}
-            />
+            <Gem size={20} strokeWidth={1} style={{ color: 'var(--tm-subtle)' }} />
           </Box>
           <Typography
             sx={{
@@ -292,16 +277,16 @@ export default function AmbassadorDirectory({
               onClick={() => setSearchQuery('')}
               sx={{
                 textTransform: 'none',
-                borderColor: alpha(goldAccent.primary, 0.2),
-                color: isLight ? goldAccent.dark : goldAccent.light,
+                borderColor: 'var(--tm-border)',
+                color: 'var(--tm-accent)',
                 fontSize: '0.75rem',
                 fontWeight: 500,
                 px: 2.5,
                 py: 0.5,
-                borderRadius: '10px',
+                borderRadius: 'var(--tm-radius-control)',
                 '&:hover': {
-                  borderColor: goldAccent.primary,
-                  bgcolor: alpha(goldAccent.primary, 0.04),
+                  borderColor: 'var(--tm-accent)',
+                  bgcolor: 'var(--tm-accent-wash)',
                 },
               }}
             >
@@ -339,11 +324,7 @@ export default function AmbassadorDirectory({
 }
 
 /** Skeleton */
-export function AmbassadorDirectorySkeleton({
-  isLight = false,
-}: {
-  isLight?: boolean;
-}) {
+export function AmbassadorDirectorySkeleton() {
   return (
     <Box
       sx={{
@@ -356,14 +337,10 @@ export function AmbassadorDirectorySkeleton({
         <Box
           key={i}
           sx={{
-            borderRadius: '18px',
-            bgcolor: isLight
-              ? surfacesLight.surface.default
-              : surfacesDark.background.secondary,
+            borderRadius: 'var(--tm-radius-card)',
+            bgcolor: 'var(--tm-surface)',
             border: '1px solid',
-            borderColor: isLight
-              ? surfacesLight.border.light
-              : surfacesDark.border.light,
+            borderColor: 'var(--tm-border)',
             overflow: 'hidden',
           }}
         >
