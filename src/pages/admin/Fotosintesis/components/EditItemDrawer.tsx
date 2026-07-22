@@ -50,7 +50,7 @@ import {
   type ItemPricingDraft,
 } from '../utils/buildLotItemPayload';
 import {
-  uploadFotosintesisImages,
+  uploadItemImages,
   uploadFotosintesisCertificado,
 } from '../utils/uploadItemMedia';
 import { convertToProxyUrl } from '../../../../utils/driveUrl';
@@ -540,10 +540,11 @@ export function EditItemDrawer({
       // 1. Resolve the next photo URL: upload a dropped file, or clear it.
       let nextFotoUrl: string | undefined;
       if (pendingPhotoFile) {
-        nextFotoUrl = await uploadFotosintesisImages(
+        // Unified location: products/{item} - {nombre}/ (the catalog gallery).
+        nextFotoUrl = await uploadItemImages(
           [pendingPhotoFile],
-          loteId,
           itemId,
+          activeNombre,
         );
       } else if (photoRemoved) {
         nextFotoUrl = ''; // empty string clears the field server-side

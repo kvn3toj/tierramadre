@@ -148,6 +148,8 @@ const LOTS: TableSpec = {
   sede: { coerce: 'str' },
   operadorNombre: { coerce: 'str' },
   operadorRol: { coerce: 'str' },
+  // Catalog grouping: sell the whole lote as one card. Editable from the sheet.
+  mostrarComoLote: { coerce: 'bool' },
   // EXCLUDED: loteId (key), providerNombre (denormalized FK).
 };
 
@@ -202,6 +204,8 @@ const SUBLOTES: TableSpec = {
   },
   estado: { coerce: 'estadoSub' },
   notas: { coerce: 'str' },
+  // Catalog grouping: show the sublote as one card. Editable from the sheet.
+  mostrarComoLote: { coerce: 'bool' },
   // EXCLUDED: subLoteId (key), unidades / totalCostoCOP (derived), createdAt.
 };
 

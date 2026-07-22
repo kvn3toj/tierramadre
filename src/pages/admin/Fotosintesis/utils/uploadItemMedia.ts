@@ -1,4 +1,4 @@
-import { compressImage } from "../../../../utils/mediaCompressor";
+import { compressImage } from '../../../../utils/mediaCompressor';
 
 /**
  * Downscale + re-encode an image to JPEG before upload so a full-resolution
@@ -12,7 +12,7 @@ import { compressImage } from "../../../../utils/mediaCompressor";
  * wouldn't render via `uc?export=view`.
  */
 async function toUploadable(file: File): Promise<File> {
-  if (!file.type.startsWith("image/")) return file;
+  if (!file.type.startsWith('image/')) return file;
   try {
     const { file: compressed } = await compressImage(file, {
       maxWidth: 2000,
@@ -22,9 +22,9 @@ async function toUploadable(file: File): Promise<File> {
     // compressImage emits image/jpeg but keeps the source name — give it a .jpg
     // name so Drive stores/serves it as JPEG (the endpoint derives the extension
     // from the filename).
-    const base = file.name.replace(/\.[^./\\]+$/, "") || "foto";
+    const base = file.name.replace(/\.[^./\\]+$/, '') || 'foto';
     return new File([compressed], `${base}.jpg`, {
-      type: "image/jpeg",
+      type: 'image/jpeg',
       lastModified: compressed.lastModified,
     });
   } catch {
@@ -48,12 +48,12 @@ export async function uploadFotosintesisImages(
     : `fotosintesis/${loteId}/draft`;
 
   const fd = new FormData();
-  fd.append("subPath", subPath);
+  fd.append('subPath', subPath);
   for (const file of files) {
-    fd.append("file", await toUploadable(file));
+    fd.append('file', await toUploadable(file));
   }
 
-  const res = await fetch("/api/media-upload", { method: "POST", body: fd });
+  const res = await fetch('/api/media-upload', { method: 'POST', body: fd });
   if (!res.ok) {
     throw new Error(`Drive upload HTTP ${res.status}`);
   }
@@ -65,7 +65,60 @@ export async function uploadFotosintesisImages(
   };
 
   if (!data.success || !data.urls?.[0]) {
-    throw new Error(data.error ?? "Drive devolvió respuesta sin URL");
+    throw new Error(data.error ?? 'Drive devolvió respuesta sin URL');
+  }
+
+  return data.urls[0];
+}
+
+/**
+ * Folder-name cleaner — MUST stay byte-for-byte aligned with
+ * `api/create-product-folders.js#cleanName` + `buildFolderName` so a photo
+ * uploaded here lands in the SAME `{item} - {nombre}` folder the auto-sync cron
+ * creates (no duplicate folders).
+ */
+function cleanFolderName(nombre?: string): string {
+  const c = (nombre ?? '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+  return c || 'Sin Nombre';
+}
+
+/**
+ * Upload item photos to the CANONICAL per-item folder the catalog gallery serves
+ * from: `products/{item} - {nombre}/` (the `products` folder is the Drive root at
+ * runtime, so the bare `{item} - {nombre}` subPath resolves there). This unifies
+ * capture with the folder-scan gallery (`get-drive-images` / `get-batch-thumbnails`)
+ * — hero, gallery, and the folder link in the SOT all point at ONE place.
+ * Older photos under `fotosintesis/{lote}/{item}/` keep working via their stored
+ * `fotoUrl`; only new uploads land in the unified location.
+ */
+export async function uploadItemImages(
+  files: File[],
+  itemId: string,
+  nombre?: string,
+): Promise<string | undefined> {
+  if (files.length === 0) return undefined;
+
+  const subPath = `${itemId} - ${cleanFolderName(nombre)}`;
+
+  const fd = new FormData();
+  fd.append('subPath', subPath);
+  for (const file of files) {
+    fd.append('file', await toUploadable(file));
+  }
+
+  const res = await fetch('/api/media-upload', { method: 'POST', body: fd });
+  if (!res.ok) {
+    throw new Error(`Drive upload HTTP ${res.status}`);
+  }
+
+  const data = (await res.json()) as {
+    success?: boolean;
+    urls?: string[];
+    error?: string;
+  };
+
+  if (!data.success || !data.urls?.[0]) {
+    throw new Error(data.error ?? 'Drive devolvió respuesta sin URL');
   }
 
   return data.urls[0];
@@ -77,7 +130,7 @@ export async function uploadFotosintesisCertificado(
   itemId: string,
 ): Promise<string> {
   const url = await uploadFotosintesisImages([file], loteId, `${itemId}-cert`);
-  if (!url) throw new Error("No se pudo subir el certificado");
+  if (!url) throw new Error('No se pudo subir el certificado');
   return url;
 }
 
@@ -89,7 +142,7 @@ export async function uploadFotosintesisCertificado(
  */
 export function ventasSubPath(date: Date = new Date()): string {
   const d = Number.isNaN(date.getTime()) ? new Date() : date;
-  return `ventas/${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+  return `ventas/${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 /**
@@ -121,10 +174,10 @@ export async function uploadVentaDocument(
   const subPath = opts?.subPath ?? ventasSubPath();
 
   const fd = new FormData();
-  fd.append("subPath", subPath);
-  fd.append("file", file);
+  fd.append('subPath', subPath);
+  fd.append('file', file);
 
-  const res = await fetch("/api/media-upload", { method: "POST", body: fd });
+  const res = await fetch('/api/media-upload', { method: 'POST', body: fd });
   if (!res.ok) {
     throw new Error(`Drive upload HTTP ${res.status}`);
   }
@@ -136,7 +189,7 @@ export async function uploadVentaDocument(
   };
 
   if (!data.success || !data.urls?.[0]) {
-    throw new Error(data.error ?? "Drive devolvió respuesta sin URL");
+    throw new Error(data.error ?? 'Drive devolvió respuesta sin URL');
   }
 
   return data.urls[0];

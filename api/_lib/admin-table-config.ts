@@ -72,9 +72,10 @@ export const TABLE_CONFIGS: Record<FotoTable, TableConfig> = {
       'sede', // R
       'operadorNombre', // S
       'operadorRol', // T
+      'mostrarComoLote', // U — vender el lote entero como 1 card (bool)
     ],
     idColumn: 'loteId',
-    lastColumnLetter: 'T',
+    lastColumnLetter: 'U',
   },
   clients: {
     sheetTabPatterns: ['clientes', 'clients'],
@@ -126,9 +127,10 @@ export const TABLE_CONFIGS: Record<FotoTable, TableConfig> = {
       'estado',
       'notas',
       'createdAt',
+      'mostrarComoLote', // K — mostrar el sublote como 1 card (bool)
     ],
     idColumn: 'subLoteId',
-    lastColumnLetter: 'J',
+    lastColumnLetter: 'K',
   },
   // Kardex de movimientos con asesores — append-only (see convex/asesorMovements.ts).
   movimientosAsesor: {

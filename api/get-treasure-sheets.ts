@@ -80,6 +80,7 @@ const INVENTARIO_HEADERS = {
   MEDIDAS: 'medidas',
   CATEGORIA: 'categoría',
   PRECIO_COP: 'precio cop',
+  PRECIO_EMBAJADOR: 'precioembajadorcop', // SOT v3: precio público = tarifa embajador
   UBICACION: 'ubicación',
   ASESOR: 'asesor',
   ESTADO: 'estado',
@@ -157,8 +158,14 @@ function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
       getByIndex(10) ||
       ''
     ).trim(),
+    // Adaptador SOT v3 (2026-07-21): la legacy tenía "Precio COP"; el SOT v3 lo
+    // retiró — el precio público es la tarifa embajador (`precioEmbajadorCOP`).
+    // Orden: precio cop (legacy) → precioEmbajadorCOP (SOT) → posicional (solo
+    // legacy; en el SOT el índice 11 es costoBaseCOP, por eso va de último).
     precioCOP: parsePrice(
-      getValue(INVENTARIO_HEADERS.PRECIO_COP) || getByIndex(11),
+      getValue(INVENTARIO_HEADERS.PRECIO_COP) ||
+        getValue(INVENTARIO_HEADERS.PRECIO_EMBAJADOR) ||
+        getByIndex(11),
     ),
     precioInternacional: 0,
     ubicacion: getValue(INVENTARIO_HEADERS.UBICACION) || getByIndex(12) || '',
@@ -197,7 +204,8 @@ function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
 type PricingRow = { precioCOP: number; precioInternacional: number };
 
 /**
- * Fetch pricing data from CUALIFICACION-PRECIO sheet
+ * Fetch pricing data from the Modelo-Precios sheet (ex "CUALIFICACION -PRECIO",
+ * renombrada al centralizar en SOT v3 el 2026-07-21).
  */
 async function fetchPricingData(
   sheets: sheets_v4.Sheets,
@@ -205,7 +213,7 @@ async function fetchPricingData(
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: "'CUALIFICACION -PRECIO'!A:J",
+      range: "'Modelo-Precios'!A:J",
     });
 
     const rows = response.data.values;

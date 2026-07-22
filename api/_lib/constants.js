@@ -17,23 +17,30 @@ function cleanEnvId(value) {
 
 // Google Sheets Configuration
 //
-// Legacy/live catalog (productInventory + PRICING + treasure browser).
-// Hundreds of items, untouched by the Fotosíntesis ingreso refactor.
-export const SPREADSHEET_ID = '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU';
+// Centralización 2026-07-21: pasamos de 3 libros (legacy #3 + APP + FEEDBACK) a 2:
+//   • SOT v3 (1oRw…) — inventario + Asesores + Modelo-Precios  → FOTOSINTESIS_SPREADSHEET_ID
+//   • TM-App-Data (1_TE…) — logs (ProductViews, Feedback, Invitations, Cotizaciones,
+//     Solicitudes, UserPreferences)                            → APP_SPREADSHEET_ID / FEEDBACK
+// TODOS los IDs son ahora configurables por env; los fallbacks quedan como red de
+// seguridad hasta que Vercel tenga las envs. Para completar el corte:
+//   SPREADSHEET_ID=<SOT v3>   APP_SPREADSHEET_ID=<companion>   FEEDBACK_SPREADSHEET_ID=<companion>
+//   FOTOSINTESIS_SPREADSHEET_ID=<SOT v3>
 
-// Fotosíntesis SOT v2 (Proveedores / Lotes / Clientes / Ventas + new Inventario)
-// Created 2026-05-21 from GENESIS data; populated by Maritza's ingreso flow.
-// Override via env if you want to point at a different SOT (e.g. staging).
+// Catálogo + Asesores + Modelo-Precios. Antes: legacy #3 hardcodeado. Ahora env-first.
+export const SPREADSHEET_ID =
+  cleanEnvId(process.env.SPREADSHEET_ID) ||
+  '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU'; // fallback legacy #3 (retirar)
+
+// SOT del inventario Fotosíntesis. Apuntar a SOT v3 (1oRw…) vía env.
 export const FOTOSINTESIS_SPREADSHEET_ID =
   cleanEnvId(process.env.FOTOSINTESIS_SPREADSHEET_ID) ||
-  '18w0DcP_4CO-le9_vt_UPGCHXAVXkQ5sugLF4r_o2bVM';
+  '18w0DcP_4CO-le9_vt_UPGCHXAVXkQ5sugLF4r_o2bVM'; // fallback SOT v2 (retirar)
 
-// Dedicated Feedback Spreadsheet (separate from inventory to avoid overload)
+// Logs de app (companion TM-App-Data). Feedback + writable data ahora en el mismo libro.
 export const FEEDBACK_SPREADSHEET_ID =
   cleanEnvId(process.env.FEEDBACK_SPREADSHEET_ID) ||
   '1Nl2gxfZzWy4lUv_C-9xTt90MzFDIgHLvWtWtDRNzJaU';
 
-// Dedicated App Spreadsheet for all writable data (separate from read-only inventory)
 export const APP_SPREADSHEET_ID =
   cleanEnvId(process.env.APP_SPREADSHEET_ID) ||
   '1DuOhuPcHFBhliGJG_imKWA_Yyx4dAmvmmKr4Dp2TXoM';
@@ -41,7 +48,7 @@ export const APP_SPREADSHEET_ID =
 // Sheet Names
 export const SHEETS = {
   INVENTORY: 'Inventario',
-  PRICING: 'CUALIFICACION -PRECIO',
+  PRICING: 'Modelo-Precios', // ex 'CUALIFICACION -PRECIO' (centralizado en SOT v3)
   ASESORES: null, // Uses index 2 or dynamic lookup
   INVITATIONS: 'Invitations',
   PRODUCT_VIEWS: 'ProductViews',

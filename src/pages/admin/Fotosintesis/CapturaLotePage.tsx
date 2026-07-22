@@ -91,7 +91,7 @@ import {
 } from './utils/buildLotItemPayload';
 import {
   uploadFotosintesisCertificado,
-  uploadFotosintesisImages,
+  uploadItemImages,
 } from './utils/uploadItemMedia';
 import { CreditoFields } from './components/CreditoFields';
 import { useNextLoteId } from './hooks/useNextLoteId';
@@ -2000,10 +2000,11 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
 
       if (photoFiles.length > 0) {
         try {
-          fotoUrl = await uploadFotosintesisImages(
+          // Unified location: products/{item} - {nombre}/ (the catalog gallery).
+          fotoUrl = await uploadItemImages(
             photoFiles,
-            loteId,
             result.itemId,
+            (payload as { nombre?: string }).nombre,
           );
         } catch {
           photoUploadFailed = true;

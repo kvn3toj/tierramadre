@@ -1443,6 +1443,28 @@ export const pullFromSheet = action({
   },
 });
 
+/**
+ * Cron-only gated wrapper (free-tier policy, 2026-07-21). The daily inventory
+ * pull is the biggest recurring Convex-bandwidth cost, so it no-ops unless
+ * `INVENTORY_PULL_CRON === "on"` — mirroring `fotoSync.reconcileBackstop`. The
+ * SPREADSHEET is the source of truth; the manual "Resync from sheet" button
+ * (`pullFromSheet`) and the event-driven `/sync/foto` delta endpoint remain the
+ * on-demand path and are NOT gated. Flip the env flag to re-enable the daily auto-pull.
+ */
+export const _pullFromSheetCron = internalAction({
+  args: {},
+  handler: async (
+    ctx,
+  ): Promise<
+    { skipped: true } | { pulled: number; upserted: number; rebased: number }
+  > => {
+    if (process.env.INVENTORY_PULL_CRON !== 'on') {
+      return { skipped: true };
+    }
+    return await ctx.runAction(internal.products._pullFromSheet, {});
+  },
+});
+
 export const _upsertManyFromSheet = internalMutation({
   args: {
     items: v.array(
