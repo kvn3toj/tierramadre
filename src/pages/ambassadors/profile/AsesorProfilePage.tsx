@@ -5,7 +5,7 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, useMatch } from "react-router-dom";
-import { Box, Typography, Button, Skeleton, alpha } from "@mui/material";
+import { Box, Typography, Button, Skeleton } from "@mui/material";
 import { ArrowLeft, ChevronLeft, Square, Gem } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useReducedMotion } from "../../../hooks/useReducedMotion";
@@ -27,12 +27,7 @@ import {
 import { TreasureItem } from "../../../types";
 import ScrollToTop from "../../../components/shared/ScrollToTop";
 import ImageCropper from "../../../components/media/ImageCropper";
-import {
-  emeraldCore,
-  goldAccent,
-  cssTransition,
-  fontFamilies,
-} from "../../../design-system";
+import { qeFont, zIndex } from "../../../design-system";
 import { useAsesorCollection } from "../../../hooks/useAsesorCollection";
 import { useAmbassadorPhoto } from "../../../hooks/useAmbassadorPhoto";
 import { useAmbassadorOverrides } from "../../../hooks/useAmbassadorOverrides";
@@ -517,15 +512,20 @@ export default function AsesorProfilePage() {
             width: 40,
             height: 40,
             borderRadius: "50%",
-            bgcolor: "background.paper",
+            bgcolor: "var(--tm-surface)",
+            border: "1px solid var(--tm-border)",
+            color: "var(--tm-text)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
-            zIndex: 2,
-            transition: cssTransition.default,
-            "&:hover": { bgcolor: emeraldCore.primary, color: "#fff" },
+            zIndex: zIndex.base + 1,
+            transition:
+              "background-color var(--tm-base) var(--tm-ease), color var(--tm-base) var(--tm-ease)",
+            "&:hover": {
+              bgcolor: "var(--tm-accent-strong)",
+              color: "var(--tm-on-accent)",
+            },
           }}
         >
           <ChevronLeft size={20} />
@@ -632,19 +632,18 @@ export default function AsesorProfilePage() {
                   height: "1px",
                   flex: 1,
                   maxWidth: 90,
-                  background: `linear-gradient(90deg, transparent, ${alpha(goldAccent.primary, 0.4)})`,
+                  background:
+                    "linear-gradient(90deg, transparent, var(--tm-border))",
                 }}
               />
-              <Gem
-                size={11}
-                style={{ color: goldAccent.primary, opacity: 0.7 }}
-              />
+              <Gem size={11} style={{ color: "var(--tm-subtle)" }} />
               <Box
                 sx={{
                   height: "1px",
                   flex: 1,
                   maxWidth: 90,
-                  background: `linear-gradient(90deg, ${alpha(goldAccent.primary, 0.4)}, transparent)`,
+                  background:
+                    "linear-gradient(90deg, var(--tm-border), transparent)",
                 }}
               />
             </Box>
@@ -662,7 +661,7 @@ export default function AsesorProfilePage() {
               {categories.length > 0 && (
                 <Typography
                   sx={{
-                    fontFamily: fontFamilies.display,
+                    fontFamily: qeFont.serif,
                     fontWeight: 600,
                     fontSize: "1.4rem",
                     letterSpacing: "0.005em",

@@ -9,7 +9,7 @@ import { Box, Typography } from '@mui/material';
 import { Gem } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../../../contexts/LanguageContext';
-import { qeFont } from '../../../../design-system';
+import { qeFont, qeGray } from '../../../../design-system';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import type { ProductCategory } from '../../../../utils/productCategories';
 
@@ -126,15 +126,16 @@ export const CategoryGrid = React.memo(function CategoryGrid({
               </Box>
             )}
 
-            {/* Scrim — guarantees label contrast even over washed-out/overexposed
-                product photos, while a faint vignette tames blown-out highlights */}
+            {/* Scrim — guarantees label contrast even over washed-out or
+                overexposed product photos. On-photo chrome, so the multi-stop
+                gradient stays a raw rgba ramp (same exemption as GridCard's
+                badges); no single DS3 token expresses a four-stop fade. */}
             <Box
               sx={{
                 position: 'absolute',
                 inset: 0,
                 background:
                   'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.55) 34%, rgba(0,0,0,0.12) 64%, rgba(0,0,0,0.04) 100%)',
-                boxShadow: 'inset 0 0 70px rgba(0,0,0,0.25)',
               }}
             />
 
@@ -154,23 +155,21 @@ export const CategoryGrid = React.memo(function CategoryGrid({
               <Typography
                 sx={{
                   fontFamily: qeFont.serif,
-                  color: '#fff',
+                  color: qeGray[0],
                   fontWeight: 600,
                   fontSize: { xs: '1.35rem', sm: '1.5rem' },
                   lineHeight: 1.12,
                   letterSpacing: '0.01em',
-                  textShadow: '0 1px 6px rgba(0,0,0,0.6)',
                 }}
               >
                 {categoryLabels[category.key] || category.label}
               </Typography>
               <Typography
                 sx={{
-                  color: 'rgba(255,255,255,0.92)',
+                  color: qeGray[200],
                   fontSize: { xs: '0.72rem', sm: '0.78rem' },
                   fontWeight: 500,
                   letterSpacing: '0.02em',
-                  textShadow: '0 1px 4px rgba(0,0,0,0.55)',
                 }}
               >
                 {category.count}{' '}
