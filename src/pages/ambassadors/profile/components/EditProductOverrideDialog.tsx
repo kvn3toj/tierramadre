@@ -33,7 +33,6 @@ import {
   OVERRIDE_LIMITS,
 } from '../../../../types/ambassadorOverride';
 import { validateOverride } from '../../../../hooks/useAmbassadorOverrides';
-import { emeraldCore } from '../../../../design-system';
 
 interface EditProductOverrideDialogProps {
   open: boolean;
@@ -174,8 +173,9 @@ export const EditProductOverrideDialog: React.FC<EditProductOverrideDialogProps>
           disabled={!canSave}
           sx={{
             textTransform: 'none',
-            bgcolor: emeraldCore.primary,
-            '&:hover': { bgcolor: emeraldCore.dark ?? emeraldCore.primary },
+            bgcolor: 'var(--tm-accent-strong)',
+            color: 'var(--tm-on-accent)',
+            '&:hover': { bgcolor: 'var(--tm-accent)' },
           }}
         >
           Guardar

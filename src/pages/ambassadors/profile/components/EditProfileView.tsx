@@ -12,18 +12,11 @@ import {
   Avatar,
   IconButton,
   CircularProgress,
-  alpha,
-  useTheme,
 } from '@mui/material';
 import { ArrowLeft, Camera, Save } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useNotification } from '../../../../contexts/NotificationContext';
 import {
-  emeraldCore,
-  blurValues,
-  surfacesLight,
-  surfacesDark,
-  cssTransition,
 } from '../../../../design-system';
 import type { Asesor } from '../../../../hooks/useAsesores';
 
@@ -44,10 +37,8 @@ export function EditProfileView({
   onBack,
   onSave,
 }: EditProfileViewProps) {
-  const theme = useTheme();
   const { t } = useLanguage();
   const { notify } = useNotification();
-  const isLight = theme.palette.mode === 'light';
 
   const [especialidad, setEspecialidad] = useState(asesor.especialidad || '');
   const [whatsapp, setWhatsapp] = useState(asesor.whatsapp || '');
@@ -74,8 +65,9 @@ export function EditProfileView({
           onClick={onBack}
           aria-label={t.actions.back}
           sx={{
-            bgcolor: isLight ? alpha('#000', 0.04) : alpha('#fff', 0.06),
-            backdropFilter: `blur(${blurValues.md})`,
+            bgcolor: 'var(--tm-well)',
+            border: '1px solid var(--tm-border)',
+            color: 'var(--tm-text)',
             width: 36,
             height: 36,
           }}
@@ -95,11 +87,12 @@ export function EditProfileView({
             sx={{
               width: 96,
               height: 96,
-              bgcolor: emeraldCore.primary,
+              bgcolor: 'var(--tm-accent-strong)',
+              color: 'var(--tm-on-accent)',
               fontSize: '2.5rem',
               fontWeight: 700,
               opacity: isUploadingPhoto ? 0.6 : 1,
-              transition: cssTransition.default,
+              transition: 'opacity var(--tm-base) var(--tm-ease)',
             }}
           >
             {asesor.name.charAt(0).toUpperCase()}
@@ -113,7 +106,7 @@ export function EditProfileView({
                 left: '50%',
                 mt: '-14px',
                 ml: '-14px',
-                color: emeraldCore.primary,
+                color: 'var(--tm-accent)',
               }}
             />
           )}
@@ -128,11 +121,11 @@ export function EditProfileView({
               right: 0,
               width: 32,
               height: 32,
-              bgcolor: emeraldCore.primary,
-              color: '#fff',
+              bgcolor: 'var(--tm-accent-strong)',
+              color: 'var(--tm-on-accent)',
               border: '2px solid',
-              borderColor: isLight ? surfacesLight.surface.default : surfacesDark.background.secondary,
-              '&:hover': { bgcolor: emeraldCore.dark },
+              borderColor: 'var(--tm-surface)',
+              '&:hover': { bgcolor: 'var(--tm-accent)' },
             }}
           >
             <Camera size={16} />
@@ -148,7 +141,7 @@ export function EditProfileView({
           disabled
           fullWidth
           size="small"
-          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 'var(--tm-radius-control)' } }}
         />
 
         <TextField
@@ -160,7 +153,7 @@ export function EditProfileView({
           multiline
           minRows={2}
           placeholder="Esmeraldas colombianas de alta calidad..."
-          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 'var(--tm-radius-control)' } }}
         />
 
         <TextField
@@ -170,7 +163,7 @@ export function EditProfileView({
           fullWidth
           size="small"
           placeholder="+57 300 123 4567"
-          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 'var(--tm-radius-control)' } }}
         />
 
         <TextField
@@ -179,7 +172,7 @@ export function EditProfileView({
           disabled
           fullWidth
           size="small"
-          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 'var(--tm-radius-control)' } }}
         />
 
         <Button
@@ -189,12 +182,13 @@ export function EditProfileView({
           onClick={handleSave}
           disabled={isSaving}
           sx={{
-            bgcolor: emeraldCore.primary,
-            '&:hover': { bgcolor: emeraldCore.dark },
+            bgcolor: 'var(--tm-accent-strong)',
+            color: 'var(--tm-on-accent)',
+            '&:hover': { bgcolor: 'var(--tm-accent)' },
             textTransform: 'none',
             fontWeight: 600,
             py: 1.25,
-            borderRadius: 2.5,
+            borderRadius: 'var(--tm-radius-control)',
             mt: 1,
           }}
         >

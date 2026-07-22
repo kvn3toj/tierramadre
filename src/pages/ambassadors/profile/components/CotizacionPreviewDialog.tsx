@@ -9,11 +9,10 @@ import {
   Dialog,
   DialogContent,
   IconButton,
-  useTheme,
 } from '@mui/material';
 import { X } from 'lucide-react';
 import { SavedCotizacion } from '../../../../hooks/useCotizacionHistory';
-import { lightTokens, darkTokens, zIndex } from '../../../../design-system';
+import { qeGray, zIndex } from '../../../../design-system';
 
 interface CotizacionPreviewDialogProps {
   cotizacion: SavedCotizacion | null;
@@ -24,9 +23,6 @@ export const CotizacionPreviewDialog: React.FC<CotizacionPreviewDialogProps> = (
   cotizacion,
   onClose,
 }) => {
-  const theme = useTheme();
-  const isLight = theme.palette.mode === 'light';
-
   return (
     <Dialog
       open={!!cotizacion}
@@ -35,8 +31,8 @@ export const CotizacionPreviewDialog: React.FC<CotizacionPreviewDialogProps> = (
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: 3,
-          bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
+          borderRadius: 'var(--tm-radius-sheet)',
+          bgcolor: 'var(--tm-surface)',
         },
       }}
     >
@@ -48,9 +44,11 @@ export const CotizacionPreviewDialog: React.FC<CotizacionPreviewDialogProps> = (
             top: 8,
             right: 8,
             zIndex: zIndex.base,
-            bgcolor: 'rgba(0,0,0,0.5)',
-            color: '#fff',
-            '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+            // On-photo chrome: sits over the cotizacion image, so it takes the
+            // scrim + a fixed light foreground rather than surface tokens.
+            bgcolor: 'var(--tm-scrim)',
+            color: qeGray[0],
+            '&:hover': { bgcolor: 'var(--tm-scrim)' },
           }}
         >
           <X size={20} />
