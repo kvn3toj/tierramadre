@@ -22,7 +22,7 @@ import { Box, Typography } from '@mui/material';
 import { Gem } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { emeraldCore, goldAccent, cssTransition } from '../../../../design-system';
+import { zIndex } from '../../../../design-system';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 
 interface ViewAllTreasuresFABProps {
@@ -88,7 +88,7 @@ export const ViewAllTreasuresFAB: React.FC<ViewAllTreasuresFABProps> = ({
         position: 'fixed',
         right: 16,
         bottom: 'calc(env(safe-area-inset-bottom, 0px) + 88px)',
-        zIndex: 1300,
+        zIndex: zIndex.float,
         pointerEvents: visible ? 'auto' : 'none',
       }}
     >
@@ -111,14 +111,17 @@ export const ViewAllTreasuresFAB: React.FC<ViewAllTreasuresFABProps> = ({
           px: 2.25,
           borderRadius: 999,
           cursor: 'pointer',
-          background: `linear-gradient(135deg, ${emeraldCore.primary} 0%, ${emeraldCore.dark ?? emeraldCore.primary} 100%)`,
-          color: '#fff',
-          boxShadow: `0 8px 24px ${goldAccent?.primary ? `${goldAccent.primary}33` : 'rgba(0,0,0,0.25)'}, 0 2px 8px rgba(0,0,0,0.18)`,
-          border: `1px solid ${goldAccent?.primary ?? '#C9A86A'}`,
-          transition: cssTransition.default,
+          backgroundColor: 'var(--tm-accent-strong)',
+          color: 'var(--tm-on-accent)',
+          boxShadow: 'var(--tm-shadow)',
+          border: '1px solid var(--tm-accent-strong)',
+          transition: 'background-color var(--tm-base) var(--tm-ease)',
           userSelect: 'none',
-          '&:hover': { transform: 'translateY(-2px)' },
-          '&:active': { transform: 'translateY(0)' },
+          '&:hover': { backgroundColor: 'var(--tm-accent)' },
+          '&:focus-visible': {
+            outline: 'none',
+            boxShadow: 'var(--tm-focus-ring)',
+          },
         }}
       >
         <Gem size={20} />
