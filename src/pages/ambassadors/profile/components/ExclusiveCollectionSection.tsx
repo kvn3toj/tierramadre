@@ -13,22 +13,13 @@ import {
   Skeleton,
   Chip,
   IconButton,
-  alpha,
-  useTheme,
 } from '@mui/material';
 import { Gem, Share2, ExternalLink, Images } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TreasureItem } from '../../../../types';
 import { getQualityBadge, formatCarats } from '../../../../utils/formatting';
 import { PriceDisplay } from '../../../../components/price-simulator/PriceDisplay';
-import {
-  brand,
-  lightTokens,
-  darkTokens,
-  cssTransition,
-  Badge,
-  PieceCard,
-} from '../../../../design-system';
+import { Badge, PieceCard, qeGray } from '../../../../design-system';
 
 function buildSpecLine(item: TreasureItem): string {
   if (!item.isJewelry && typeof item.peso === 'number') {
@@ -59,8 +50,6 @@ export const ExclusiveCollectionSection: React.FC<
   onProductClick,
   onShare,
 }) => {
-  const theme = useTheme();
-  const isLight = theme.palette.mode === 'light';
   const navigate = useNavigate();
 
   // Don't render anything if no products and not loading
@@ -72,14 +61,10 @@ export const ExclusiveCollectionSection: React.FC<
       sx={{
         p: 3,
         mb: 3,
-        borderRadius: 3,
-        bgcolor: isLight
-          ? lightTokens.background.surface
-          : darkTokens.background.surface,
+        borderRadius: 'var(--tm-radius-card)',
+        bgcolor: 'var(--tm-surface)',
         border: '1px solid',
-        borderColor: isLight
-          ? alpha(brand.emerald[500], 0.2)
-          : alpha(brand.emerald[400], 0.15),
+        borderColor: 'var(--tm-border)',
       }}
     >
       {/* Section Header */}
@@ -92,7 +77,7 @@ export const ExclusiveCollectionSection: React.FC<
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Gem size={20} style={{ color: brand.emerald[500] }} />
+          <Gem size={20} style={{ color: 'var(--tm-accent)' }} />
           <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
             {collectionName}
           </Typography>
@@ -102,8 +87,8 @@ export const ExclusiveCollectionSection: React.FC<
             sx={{
               height: 22,
               fontSize: '0.75rem',
-              bgcolor: alpha(brand.emerald[500], 0.12),
-              color: brand.emerald[600],
+              bgcolor: 'var(--tm-accent-wash)',
+              color: 'var(--tm-accent)',
               fontWeight: 600,
             }}
           />
@@ -113,8 +98,8 @@ export const ExclusiveCollectionSection: React.FC<
             onClick={onShare}
             size="small"
             sx={{
-              color: brand.emerald[500],
-              '&:hover': { bgcolor: alpha(brand.emerald[500], 0.08) },
+              color: 'var(--tm-accent)',
+              '&:hover': { bgcolor: 'var(--tm-accent-wash)' },
             }}
             aria-label="Compartir coleccion"
           >
@@ -136,7 +121,11 @@ export const ExclusiveCollectionSection: React.FC<
             <Grid item xs={12} sm={6} md={4} key={i}>
               <Skeleton
                 variant="rounded"
-                sx={{ width: '100%', aspectRatio: '1/1', borderRadius: 3 }}
+                sx={{
+                  width: '100%',
+                  aspectRatio: '1/1',
+                  borderRadius: 'var(--tm-radius-card)',
+                }}
               />
               <Box sx={{ px: 1, mt: 1 }}>
                 <Skeleton width="70%" height={20} />
@@ -199,12 +188,14 @@ export const ExclusiveCollectionSection: React.FC<
                             position: 'absolute',
                             top: 8,
                             right: 8,
-                            bgcolor: 'rgba(0,0,0,0.7)',
-                            color: 'white',
+                            // On-photo chrome (same exemption as GridCard's
+                            // badges): scrim + fixed light foreground.
+                            bgcolor: 'var(--tm-scrim)',
+                            color: qeGray[0],
                             fontSize: '0.7rem',
                             fontWeight: 600,
                             height: 24,
-                            '& .MuiChip-icon': { color: 'white' },
+                            '& .MuiChip-icon': { color: qeGray[0] },
                           }}
                         />
                       )}
@@ -249,15 +240,16 @@ export const ExclusiveCollectionSection: React.FC<
             alignItems: 'center',
             justifyContent: 'center',
             gap: 1,
-            borderRadius: 2.5,
+            borderRadius: 'var(--tm-radius-control)',
             cursor: 'pointer',
-            bgcolor: alpha(brand.emerald[500], 0.08),
+            bgcolor: 'var(--tm-accent-wash)',
             border: '1px solid',
-            borderColor: alpha(brand.emerald[500], 0.2),
-            transition: cssTransition.default,
+            borderColor: 'var(--tm-border)',
+            transition:
+              'background-color var(--tm-base) var(--tm-ease), border-color var(--tm-base) var(--tm-ease)',
             '&:hover': {
-              bgcolor: alpha(brand.emerald[500], 0.14),
-              borderColor: alpha(brand.emerald[500], 0.35),
+              bgcolor: 'var(--tm-accent-wash-strong)',
+              borderColor: 'var(--tm-accent)',
             },
             '&:focus-visible': {
               outline: 'none',
@@ -265,12 +257,12 @@ export const ExclusiveCollectionSection: React.FC<
             },
           }}
         >
-          <ExternalLink size={16} style={{ color: brand.emerald[600] }} />
+          <ExternalLink size={16} style={{ color: 'var(--tm-accent)' }} />
           <Typography
             sx={{
               fontWeight: 600,
               fontSize: '0.82rem',
-              color: brand.emerald[600],
+              color: 'var(--tm-accent)',
               letterSpacing: '-0.01em',
             }}
           >

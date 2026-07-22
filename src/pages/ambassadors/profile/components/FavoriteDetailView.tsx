@@ -9,20 +9,11 @@ import {
   Chip,
   Button,
   IconButton,
-  alpha,
-  useTheme,
 } from "@mui/material";
 import { ArrowLeft, MessageCircle, Scale, MapPin, Award } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "../../../../contexts/LanguageContext";
-import {
-  emeraldCore,
-  goldAccent,
-  blurValues,
-  surfacesLight,
-  surfacesDark,
-  fontFamilies,
-} from "../../../../design-system";
+import { qeFont } from "../../../../design-system";
 import { formatFullCurrency, formatCarats } from "../../../../utils/formatting";
 import { useReducedMotion } from "../../../../hooks/useReducedMotion";
 import ProgressiveImage from "../../../../components/shared/ProgressiveImage";
@@ -40,9 +31,7 @@ export function FavoriteDetailView({
   asesor,
   onBack,
 }: FavoriteDetailViewProps) {
-  const theme = useTheme();
   const { t } = useLanguage();
-  const isLight = theme.palette.mode === "light";
   const prefersReducedMotion = useReducedMotion();
 
   const weightDisplay =
@@ -75,12 +64,14 @@ export function FavoriteDetailView({
           onClick={onBack}
           aria-label={t.actions.back}
           sx={{
-            bgcolor: isLight ? alpha("#000", 0.04) : alpha("#fff", 0.06),
-            backdropFilter: `blur(${blurValues.md})`,
+            bgcolor: "var(--tm-well)",
+            border: "1px solid var(--tm-border)",
+            color: "var(--tm-text)",
             width: 38,
             height: 38,
             "&:hover": {
-              bgcolor: isLight ? alpha("#000", 0.08) : alpha("#fff", 0.1),
+              bgcolor: "var(--tm-well)",
+              borderColor: "var(--tm-accent)",
             },
           }}
         >
@@ -91,13 +82,12 @@ export function FavoriteDetailView({
       {/* Hero Image */}
       <Box
         sx={{
-          borderRadius: "18px",
+          borderRadius: "var(--tm-radius-card)",
           overflow: "hidden",
           mb: 2.5,
           aspectRatio: "4/3",
-          boxShadow: isLight
-            ? "0 4px 20px rgba(0,0,0,0.1)"
-            : "0 4px 20px rgba(0,0,0,0.3)",
+          bgcolor: "var(--tm-well)",
+          border: "1px solid var(--tm-border)",
         }}
       >
         <ProgressiveImage
@@ -125,11 +115,11 @@ export function FavoriteDetailView({
       </Typography>
       <Typography
         sx={{
-          fontFamily: fontFamilies.display,
+          fontFamily: qeFont.serif,
           fontWeight: 600,
           fontSize: "1.5rem",
           letterSpacing: "0.01em",
-          color: emeraldCore.primary,
+          color: "var(--tm-accent)",
           fontVariantNumeric: "lining-nums tabular-nums",
           mb: 2,
         }}
@@ -144,12 +134,12 @@ export function FavoriteDetailView({
             label="JOYA"
             size="small"
             sx={{
-              bgcolor: alpha(goldAccent.primary, 0.1),
-              color: isLight ? goldAccent.dark : goldAccent.light,
+              bgcolor: "var(--tm-well)",
+              color: "var(--tm-muted)",
               fontWeight: 700,
               fontSize: "0.58rem",
               letterSpacing: "0.04em",
-              borderRadius: "6px",
+              borderRadius: "var(--tm-radius-well)",
             }}
           />
         )}
@@ -158,12 +148,12 @@ export function FavoriteDetailView({
             label={item.ubicacion.toUpperCase()}
             size="small"
             sx={{
-              bgcolor: alpha(emeraldCore.primary, 0.08),
-              color: emeraldCore.primary,
+              bgcolor: "var(--tm-accent-wash)",
+              color: "var(--tm-accent)",
               fontWeight: 700,
               fontSize: "0.58rem",
               letterSpacing: "0.04em",
-              borderRadius: "6px",
+              borderRadius: "var(--tm-radius-well)",
             }}
           />
         )}
@@ -172,10 +162,11 @@ export function FavoriteDetailView({
             label={item.color}
             size="small"
             sx={{
-              bgcolor: isLight ? alpha("#000", 0.04) : alpha("#fff", 0.06),
+              bgcolor: "var(--tm-well)",
+              color: "var(--tm-muted)",
               fontWeight: 500,
               fontSize: "0.6rem",
-              borderRadius: "6px",
+              borderRadius: "var(--tm-radius-well)",
             }}
           />
         )}
@@ -189,14 +180,10 @@ export function FavoriteDetailView({
           gap: 1.5,
           mb: 2.5,
           p: 2,
-          borderRadius: "14px",
-          bgcolor: isLight
-            ? surfacesLight.surface.default
-            : surfacesDark.background.secondary,
+          borderRadius: "var(--tm-radius-card)",
+          bgcolor: "var(--tm-surface)",
           border: "1px solid",
-          borderColor: isLight
-            ? surfacesLight.border.light
-            : surfacesDark.border.light,
+          borderColor: "var(--tm-border)",
         }}
       >
         <SpecItem
@@ -238,14 +225,15 @@ export function FavoriteDetailView({
         onClick={handleContact}
         disabled={!asesor.whatsapp}
         sx={{
-          bgcolor: emeraldCore.primary,
-          "&:hover": { bgcolor: emeraldCore.dark },
+          bgcolor: "var(--tm-accent-strong)",
+          color: "var(--tm-on-accent)",
+          "&:hover": { bgcolor: "var(--tm-accent)" },
           textTransform: "none",
           fontWeight: 700,
           fontSize: "0.9rem",
           py: 1.5,
-          borderRadius: "14px",
-          boxShadow: `0 4px 16px ${alpha(emeraldCore.primary, 0.3)}`,
+          borderRadius: "var(--tm-radius-control)",
+          boxShadow: "none",
         }}
       >
         {t.ambassador.museum?.contactAmbassador ?? "Contactar Embajador"}
