@@ -92,23 +92,24 @@ export const PieceCard: React.FC<PieceCardProps> = ({
         }}
       >
         <Typography
+          title={name}
           sx={{
             fontFamily: 'var(--tm-font-serif)',
             fontWeight: 500,
-            fontSize: compact ? '1rem' : '1.1875rem',
-            lineHeight: 1.15,
+            fontSize: compact ? '1.0625rem' : '1.25rem',
+            lineHeight: 1.2,
             color: 'var(--tm-text)',
             minWidth: 0,
             flex: 1,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
+            // ONE line, ellipsised. The old two-line reserve kept every image
+            // well the same height, but it left a blank second line under every
+            // short name — dead space on most cards. A single line keeps the
+            // wells just as uniform (every name is exactly one line now), drops
+            // the gap, and buys the piece name a larger, more editorial size.
+            // The full name stays reachable via `title` and the card's aria-label.
+            whiteSpace: 'nowrap',
             overflow: 'hidden',
-            // Always reserve two lines of name height (line-height 1.15 × 2)
-            // so a 1-line and a 2-line name leave the text block the SAME
-            // height — the image well above is then identical on every card
-            // and the grid rows line up. Short names just leave line 2 blank.
-            minHeight: '2.3em',
+            textOverflow: 'ellipsis',
           }}
         >
           {name}

@@ -160,9 +160,11 @@ function GridCard({
     <Typography
       sx={{
         fontFamily: 'var(--tm-font-mono)',
-        fontSize: '0.59rem',
+        // Tight enough that the longest real grades ("Fina Esencial",
+        // "C. Superior") still sit beside an 8-digit price without ellipsising.
+        fontSize: '0.575rem',
         fontWeight: 500,
-        letterSpacing: '0.07em',
+        letterSpacing: '0.045em',
         textTransform: 'uppercase',
         color: 'var(--tm-muted)',
         whiteSpace: 'nowrap',

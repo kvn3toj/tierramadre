@@ -379,13 +379,18 @@ export default function VirtualGrid({
     const imageAspect = isMobile ? 1.06 : 1.04;
     const imageHeight = Math.round(cardInnerWidth * imageAspect);
 
-    // Content area breakdown (vertical layout):
-    // - Padding: ~12px top + 12px bottom
-    // - Name (up to 2 lines @ 16/19px × 1.12 lineHeight): ~36-43px
-    // - Spec line (mono, single line): ~13px
-    // - Price (single line): ~17px
-    // Total: ~66px mobile, ~74px desktop (measured); generous to avoid clipping.
-    const contentHeight = isMobile ? 68 : 76;
+    // Footer height budget (PieceCard text block), vertical breakdown:
+    //   padding      10+10 mobile / 12+12 desktop      = 20 / 24
+    //   name         ONE line @ 17/20px × 1.2          = 20 / 24
+    //   stone line   mt 3/5 + 16px glyph row           = 19 / 21
+    //   value row    mt 4/6 + ~16/18px                 = 20 / 24
+    //                                             total ≈ 79 / 93
+    // The name is a single line now, so this is a real measurement rather than
+    // the old 2-line guess (68/76) — that number under-counted the footer, and
+    // since the footer is flex-shrink:0 and the well is flex:1, every card was
+    // silently paying for it by squeezing the image well below its 1/1.04
+    // target. Budgeting the true height gives the stone its full near-square well.
+    const contentHeight = isMobile ? 79 : 93;
 
     // Card border adds 2px (top + bottom) to the total card height
     return imageHeight + contentHeight + 2;
