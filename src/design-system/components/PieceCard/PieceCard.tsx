@@ -30,6 +30,9 @@ export interface PieceCardProps {
   /** Caller-rendered price node (e.g. PriceDisplay) — positioned, not restyled;
    * price formatting/typography stays the caller's own opinionated concern. */
   price?: React.ReactNode;
+  /** Caller-rendered cut indicator (gem glyph + cut name) shown in the footer,
+   * under the name — keeps the image well clean (no on-photo badge). */
+  cut?: React.ReactNode;
   itemNumber?: string | number;
   onClick?: () => void;
   ariaLabel?: string;
@@ -50,6 +53,7 @@ export const PieceCard: React.FC<PieceCardProps> = ({
   name,
   specLine,
   price,
+  cut,
   itemNumber,
   onClick,
   ariaLabel,
@@ -115,6 +119,8 @@ export const PieceCard: React.FC<PieceCardProps> = ({
           </Typography>
         )}
       </Box>
+      {/* Cut row: the gem glyph + cut name, in the footer (not on the photo). */}
+      {cut && <Box sx={{ mt: compact ? '3px' : '5px' }}>{cut}</Box>}
       {/* Detail row: spec + price. Price is nowrap on the right; the spec keeps
           the full left column, so a short spec ("Plata", "Oro 18k") is never
           truncated by the price. */}

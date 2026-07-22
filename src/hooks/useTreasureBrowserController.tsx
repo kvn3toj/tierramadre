@@ -10,44 +10,44 @@ import {
   useRef,
   useEffect,
   useDeferredValue,
-} from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useTheme, useMediaQuery } from "@mui/material";
-import { useThemeMode } from "../contexts/ThemeContext";
-import { useAuthContext } from "../contexts/AuthContext";
-import { usePriceShare } from "../contexts/PriceShareContext";
-import { useLanguage } from "../contexts/LanguageContext";
-import { useTreasure } from "./useTreasure";
+} from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useTheme, useMediaQuery } from '@mui/material';
+import { useThemeMode } from '../contexts/ThemeContext';
+import { useAuthContext } from '../contexts/AuthContext';
+import { usePriceShare } from '../contexts/PriceShareContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import { useTreasure } from './useTreasure';
 import {
   useTreasureFiltering,
   type TypeFilter,
   type StatusFilter,
   type SortOption,
-} from "./useTreasureFiltering";
-import { useUrlFilterSync, parseUrlFilters } from "./useUrlFilterSync";
-import { useFilterTracking } from "./useFilterTracking";
-import { useFavorites } from "./useFavorites";
-import { usePagination } from "./usePagination";
-import { useRecentlyViewed } from "./useRecentlyViewed";
-import { useSavedFilters } from "./useSavedFilters";
-import { useTreasureAnalytics } from "./useTreasureAnalytics";
-import { useTrackingDispatch } from "../contexts/TrackingContext";
-import { useProductViews } from "./useProductViews";
-import { useComparison } from "./useComparison";
-import type { FilterPreset } from "./useSavedFilters";
-import type { TreasureItem } from "../types";
-import { useCurrencyFormat } from "../contexts/CurrencyContext";
-import { createLogger } from "../utils/logger";
-import { readLoadedPages, saveLoadedPages } from "../utils/scrollMemory";
-import { useLiveRegion } from "../components/shared/LiveRegion";
-import type { FilterContentProps } from "../components/treasure/FilterContent";
-import GridCard from "../components/treasure/GridCard";
+} from './useTreasureFiltering';
+import { useUrlFilterSync, parseUrlFilters } from './useUrlFilterSync';
+import { useFilterTracking } from './useFilterTracking';
+import { useFavorites } from './useFavorites';
+import { usePagination } from './usePagination';
+import { useRecentlyViewed } from './useRecentlyViewed';
+import { useSavedFilters } from './useSavedFilters';
+import { useTreasureAnalytics } from './useTreasureAnalytics';
+import { useTrackingDispatch } from '../contexts/TrackingContext';
+import { useProductViews } from './useProductViews';
+import { useComparisonContext } from '../contexts/ComparisonContext';
+import type { FilterPreset } from './useSavedFilters';
+import type { TreasureItem } from '../types';
+import { useCurrencyFormat } from '../contexts/CurrencyContext';
+import { createLogger } from '../utils/logger';
+import { readLoadedPages, saveLoadedPages } from '../utils/scrollMemory';
+import { useLiveRegion } from '../components/shared/LiveRegion';
+import type { FilterContentProps } from '../components/treasure/FilterContent';
+import GridCard from '../components/treasure/GridCard';
 
-const log = createLogger("Treasure");
+const log = createLogger('Treasure');
 
 export interface TreasureBrowserControllerOptions {
   isProviderMode?: boolean;
-  defaultViewMode?: "grid" | "list";
+  defaultViewMode?: 'grid' | 'list';
 }
 
 export function useTreasureBrowserController({
@@ -60,8 +60,8 @@ export function useTreasureBrowserController({
   const { mode } = useThemeMode();
   const { accessLevel } = useAuthContext();
   const { shouldShowPrices } = usePriceShare();
-  const isAdmin = accessLevel === "admin";
-  const isLight = mode === "light";
+  const isAdmin = accessLevel === 'admin';
+  const isLight = mode === 'light';
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -147,7 +147,7 @@ export function useTreasureBrowserController({
   const getViewCountRef = useRef(getViewCount);
   getViewCountRef.current = getViewCount;
 
-  const comparison = useComparison();
+  const comparison = useComparisonContext();
 
   const comparisonIds = useMemo(
     () => comparison.selectedItems.map((i) => i.item),
@@ -170,19 +170,19 @@ export function useTreasureBrowserController({
     prevFilteredCount.current = filteredTreasure.length;
   }, [filteredTreasure.length, hasFilters, announce, t]);
 
-  const [viewMode, setViewMode] = useState<"grid" | "list">(
-    defaultViewMode ?? (isProviderMode ? "list" : "grid"),
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(
+    defaultViewMode ?? (isProviderMode ? 'list' : 'grid'),
   );
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const handleScrollDirectionChange = useCallback(
-    (_direction: "up" | "down") => {},
+    (_direction: 'up' | 'down') => {},
     [],
   );
 
   useEffect(() => {
-    track("treasure_view", {
+    track('treasure_view', {
       total_items: allTreasure.length,
       view_mode: viewMode,
     });
@@ -195,7 +195,7 @@ export function useTreasureBrowserController({
     [pagination, filteredTreasure],
   );
 
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const visibleItems = useMemo(() => {
     if (!showFavoritesOnly) return paginatedItems;
@@ -224,7 +224,7 @@ export function useTreasureBrowserController({
 
   const stats = useMemo(() => {
     const available = allTreasure.filter(
-      (i) => i.estado?.toUpperCase() === "DISPONIBLE",
+      (i) => i.estado?.toUpperCase() === 'DISPONIBLE',
     );
     return {
       totalItems: available.length,
@@ -266,7 +266,7 @@ export function useTreasureBrowserController({
     (item: TreasureItem, positionInList: number = 0) => {
       addToRecent(item.item);
       analyticsHook.trackItemView(item.item, item.nombre);
-      track("product_clicked", {
+      track('product_clicked', {
         item_id: item.item,
         item_name: item.nombre || t.treasure.noName,
         position_in_list: positionInList,
@@ -291,10 +291,10 @@ export function useTreasureBrowserController({
   // TODO(cert-persistence): wire to a Convex mutation (productInventory) + Sheets
   // column, then replace this with a real save (and surface success/failure).
   const handleSaveCertifications = useCallback(
-    (certifications: TreasureItem["certifications"]) => {
+    (certifications: TreasureItem['certifications']) => {
       if (selectedItem) {
         log.warn(
-          "[certifications] NOT persisted (no backend wired) — item:",
+          '[certifications] NOT persisted (no backend wired) — item:',
           selectedItem.item,
           certifications,
         );

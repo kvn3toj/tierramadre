@@ -5,7 +5,7 @@
  */
 import React, { useCallback } from 'react';
 import { Box, Typography, IconButton, alpha, useTheme } from '@mui/material';
-import { Heart, Scale } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
 import { TreasureItem } from '../../types';
@@ -41,9 +41,6 @@ function ListRow({
   isFavorite,
   onItemClick,
   onToggleFavorite,
-  isSelectedForComparison = false,
-  onToggleComparison,
-  canAddToComparison = true,
 }: ListRowProps) {
   const theme = useTheme();
   const { mode } = useThemeMode();
@@ -72,14 +69,6 @@ function ListRow({
       onToggleFavorite(item.item);
     },
     [onToggleFavorite, item.item],
-  );
-
-  const handleCompareClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      onToggleComparison?.(item);
-    },
-    [onToggleComparison, item],
   );
 
   return (
@@ -154,43 +143,9 @@ function ListRow({
         </Box>
       )}
 
-      {/* Action buttons (hidden when prices not shown - comparison requires prices) */}
+      {/* Action buttons */}
       {shouldShowPrices && (
         <Box sx={{ display: 'flex', gap: 0.5 }}>
-          {/* Comparison button */}
-          {onToggleComparison && (
-            <IconButton
-              onClick={handleCompareClick}
-              aria-label={
-                isSelectedForComparison
-                  ? 'Quitar de comparación'
-                  : 'Agregar a comparación'
-              }
-              disabled={!isSelectedForComparison && !canAddToComparison}
-              size="small"
-              sx={{
-                minWidth: 44,
-                minHeight: 44,
-                color: isSelectedForComparison
-                  ? 'white'
-                  : theme.palette.text.secondary,
-                bgcolor: isSelectedForComparison
-                  ? emeraldCore.primary
-                  : 'transparent',
-                '&:hover': {
-                  bgcolor: isSelectedForComparison
-                    ? emeraldCore.dark
-                    : alpha(emeraldCore.primary, 0.1),
-                },
-                '&:disabled': {
-                  color: theme.palette.text.disabled,
-                },
-              }}
-            >
-              <Scale size={18} />
-            </IconButton>
-          )}
-
           {/* Favorite button */}
           <IconButton
             onClick={handleFavoriteClick}
@@ -233,8 +188,6 @@ export default React.memo(ListRow, (prevProps, nextProps) => {
     // Displayed on the secondary line — include so updates aren't masked.
     prevProps.item.procedencia === nextProps.item.procedencia &&
     prevProps.item.mina === nextProps.item.mina &&
-    prevProps.isFavorite === nextProps.isFavorite &&
-    prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&
-    prevProps.canAddToComparison === nextProps.canAddToComparison
+    prevProps.isFavorite === nextProps.isFavorite
   );
 });

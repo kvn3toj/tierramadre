@@ -28,6 +28,7 @@ import { useLanguage } from './contexts/LanguageContext';
 import UpdateToast from './components/pwa/UpdateToast';
 import { usePWAUpdate } from './hooks/usePWAUpdate';
 import { AppShellProviders } from './contexts/AppShellProviders';
+import { ComparisonProvider } from './contexts/ComparisonContext';
 import { AppNavigatorProvider } from './contexts/AppNavigatorContext';
 import { CopilotRailProvider } from './pages/admin/Fotosintesis/copilot-rail/CopilotRailProvider';
 import { EsmereoThemeProvider } from './contexts/EsmereoThemeContext';
@@ -100,10 +101,10 @@ const QuotationPreview = lazyWithRetry(
   () => import('./pages/cuentas/cotizaciones/QuotationPreviewPage'),
   'QuotationPreview',
 );
-const CotizacionPublicPage = lazyWithRetry(
-  () => import('./pages/public/CotizacionPublicPage'),
-  'CotizacionPublicPage',
-);
+// La ficha pública de cotización (CotizacionPublicPage) y su ruta /cot/ quedan
+// DESACTIVADAS por seguridad (IDOR: exponía cliente + precios por número
+// enumerable). El import se retira para no arrastrar código muerto al bundle;
+// se restituye cuando la ficha exija un token ligado al registro y al QR.
 const AdminAnalyticsPage = lazyWithRetry(
   () => import('./pages/admin/analytics/AdminAnalyticsPage'),
   'AdminAnalyticsPage',
@@ -336,59 +337,68 @@ function AppContent() {
     <AppNavigatorProvider>
       <CopilotRailProvider>
         <IOSLayout>
-          <Routes>
-            {/* Primary routes - smart redirect based on role */}
-            <Route path="/" element={<RoleBasedRedirect />} />
-            <Route path="/home" element={<HomeOrProviderRedirect />} />
-            <Route
-              path="/treasure"
-              element={
-                <Suspense
-                  fallback={<LocalizedLoading messageKey="treasures" />}
-                >
-                  <TreasureBrowser />
-                </Suspense>
-              }
-            />
-            {/* Redirect from old /inventory route for backward compatibility */}
-            <Route
-              path="/inventory"
-              element={<Navigate to="/treasure" replace />}
-            />
+          <ComparisonProvider>
+            <Routes>
+              {/* Primary routes - smart redirect based on role */}
+              <Route path="/" element={<RoleBasedRedirect />} />
+              <Route path="/home" element={<HomeOrProviderRedirect />} />
+              <Route
+                path="/treasure"
+                element={
+                  <Suspense
+                    fallback={<LocalizedLoading messageKey="treasures" />}
+                  >
+                    <TreasureBrowser />
+                  </Suspense>
+                }
+              />
+              {/* Redirect from old /inventory route for backward compatibility */}
+              <Route
+                path="/inventory"
+                element={<Navigate to="/treasure" replace />}
+              />
 
-            {/* Product detail. `/p/:itemId` is a short alias of
+              {/* Product detail. `/p/:itemId` is a short alias of
                 `/product/:itemId` — a shorter QR payload so printed labels stay
                 low-density and scan off tiny 12mm jewelry tape. Same page. */}
-            <Route
-              path="/product/:itemId"
-              element={
-                <Suspense fallback={<LocalizedLoading messageKey="product" />}>
-                  <ProductDetail />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/p/:itemId"
-              element={
-                <Suspense fallback={<LocalizedLoading messageKey="product" />}>
-                  <ProductDetail />
-                </Suspense>
-              }
-            />
+              <Route
+                path="/product/:itemId"
+                element={
+                  <Suspense
+                    fallback={<LocalizedLoading messageKey="product" />}
+                  >
+                    <ProductDetail />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/p/:itemId"
+                element={
+                  <Suspense
+                    fallback={<LocalizedLoading messageKey="product" />}
+                  >
+                    <ProductDetail />
+                  </Suspense>
+                }
+              />
 
-            {/* Grouped lote/sublote bundle detail (same page, resolved by groupId) */}
-            <Route
-              path="/grupo/:groupId"
-              element={
-                <Suspense fallback={<LocalizedLoading messageKey="product" />}>
-                  <ProductDetail />
-                </Suspense>
-              }
-            />
+              {/* Grouped lote/sublote bundle detail (same page, resolved by groupId) */}
+              <Route
+                path="/grupo/:groupId"
+                element={
+                  <Suspense
+                    fallback={<LocalizedLoading messageKey="product" />}
+                  >
+                    <ProductDetail />
+                  </Suspense>
+                }
+              />
 
-            {/* Public online cotización view — QR target of the shareable
-                product cards. Unauthenticated (no PIN); resolved by number.
-                Uses `/cot/` because `/c/` is owned by public collections. */}
+              {/* Public online cotización view — DESACTIVADO por seguridad (IDOR).
+                Resolvía la cotización sólo por su número (enumerable), exponiendo
+                nombre/teléfono del cliente + precios a cualquiera. No se reactiva
+                hasta ligar un token de alta entropía al registro y al QR. La ruta
+                queda fuera para que la página no sea alcanzable en producción.
             <Route
               path="/cot/:quotationNumber"
               element={
@@ -397,497 +407,515 @@ function AppContent() {
                 </Suspense>
               }
             />
+            */}
 
-            {/* Cart / Selection */}
-            <Route
-              path="/cart"
-              element={
-                <Suspense
-                  fallback={<LocalizedLoading messageKey="selection" />}
-                >
-                  <CartPage />
-                </Suspense>
-              }
-            />
+              {/* Cart / Selection */}
+              <Route
+                path="/cart"
+                element={
+                  <Suspense
+                    fallback={<LocalizedLoading messageKey="selection" />}
+                  >
+                    <CartPage />
+                  </Suspense>
+                }
+              />
 
-            {/* Ambassadors (Embajadores) */}
-            <Route
-              path="/ambassadors"
-              element={
-                <Suspense
-                  fallback={<LocalizedLoading messageKey="ambassadors" />}
-                >
-                  <AmbassadorsPage onViewProducts={handleViewAsesorProducts} />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/ambassadors/:slug"
-              element={
-                <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
-                  <AsesorProfilePage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/ambassadors/:slug/product/:itemId"
-              element={
-                <Suspense fallback={<LocalizedLoading messageKey="profile" />}>
-                  <AsesorProfilePage />
-                </Suspense>
-              }
-            />
+              {/* Ambassadors (Embajadores) */}
+              <Route
+                path="/ambassadors"
+                element={
+                  <Suspense
+                    fallback={<LocalizedLoading messageKey="ambassadors" />}
+                  >
+                    <AmbassadorsPage
+                      onViewProducts={handleViewAsesorProducts}
+                    />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/ambassadors/:slug"
+                element={
+                  <Suspense
+                    fallback={<LocalizedLoading messageKey="profile" />}
+                  >
+                    <AsesorProfilePage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/ambassadors/:slug/product/:itemId"
+                element={
+                  <Suspense
+                    fallback={<LocalizedLoading messageKey="profile" />}
+                  >
+                    <AsesorProfilePage />
+                  </Suspense>
+                }
+              />
 
-            {/* Valuation Page - Emerald investment information */}
-            <Route
-              path="/valuation"
-              element={
-                <Suspense
-                  fallback={<LocalizedLoading messageKey="information" />}
-                >
-                  <ValuationPage />
-                </Suspense>
-              }
-            />
+              {/* Valuation Page - Emerald investment information */}
+              <Route
+                path="/valuation"
+                element={
+                  <Suspense
+                    fallback={<LocalizedLoading messageKey="information" />}
+                  >
+                    <ValuationPage />
+                  </Suspense>
+                }
+              />
 
-            {/* Cuentas Hub - Staff + Invitado Especial (cotizaciones).
+              {/* Cuentas Hub - Staff + Invitado Especial (cotizaciones).
                 Admin-only tools inside the hub stay gated by isAdmin. */}
-            <Route
-              path="/cuentas"
-              element={
-                <CotizacionRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="accounts" />}
-                  >
-                    <AccountsHub />
-                  </Suspense>
-                </CotizacionRoute>
-              }
-            />
-            <Route
-              path="/cuentas/simulador"
-              element={
-                <AdminRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="simulator" />}
-                  >
-                    <PriceSimulator />
-                  </Suspense>
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/cuentas/recibos"
-              element={
-                <AdminRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="receipts" />}
-                  >
-                    <ReceiptGenerator />
-                  </Suspense>
-                </AdminRoute>
-              }
-            />
-            {/* Cotizaciones - Staff + Invitado Especial */}
-            <Route
-              path="/cuentas/cotizaciones"
-              element={
-                <CotizacionRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="quotations" />}
-                  >
-                    <CotizacionGenerator />
-                  </Suspense>
-                </CotizacionRoute>
-              }
-            />
-            <Route
-              path="/cuentas/cotizaciones/preview"
-              element={
-                <CotizacionRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="quotation" />}
-                  >
-                    <QuotationPreview />
-                  </Suspense>
-                </CotizacionRoute>
-              }
-            />
+              <Route
+                path="/cuentas"
+                element={
+                  <CotizacionRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="accounts" />}
+                    >
+                      <AccountsHub />
+                    </Suspense>
+                  </CotizacionRoute>
+                }
+              />
+              <Route
+                path="/cuentas/simulador"
+                element={
+                  <AdminRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="simulator" />}
+                    >
+                      <PriceSimulator />
+                    </Suspense>
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/cuentas/recibos"
+                element={
+                  <AdminRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="receipts" />}
+                    >
+                      <ReceiptGenerator />
+                    </Suspense>
+                  </AdminRoute>
+                }
+              />
+              {/* Cotizaciones - Staff + Invitado Especial */}
+              <Route
+                path="/cuentas/cotizaciones"
+                element={
+                  <CotizacionRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="quotations" />}
+                    >
+                      <CotizacionGenerator />
+                    </Suspense>
+                  </CotizacionRoute>
+                }
+              />
+              <Route
+                path="/cuentas/cotizaciones/preview"
+                element={
+                  <CotizacionRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="quotation" />}
+                    >
+                      <QuotationPreview />
+                    </Suspense>
+                  </CotizacionRoute>
+                }
+              />
 
-            {/* Bóveda Secreta */}
-            <Route
-              path="/boveda-secreta"
-              element={
-                <Suspense fallback={<LocalizedLoading messageKey="vault" />}>
-                  <VaultPage />
-                </Suspense>
-              }
-            />
+              {/* Bóveda Secreta */}
+              <Route
+                path="/boveda-secreta"
+                element={
+                  <Suspense fallback={<LocalizedLoading messageKey="vault" />}>
+                    <VaultPage />
+                  </Suspense>
+                }
+              />
 
-            {/* Esmereogénesis - savings-with-purpose method (Bóveda).
+              {/* Esmereogénesis - savings-with-purpose method (Bóveda).
                 Dev-only feature: routes are omitted in production so the URLs
                 fall through to the catch-all redirect. */}
-            {esmereoEnabled && (
+              {esmereoEnabled && (
+                <Route
+                  path="/esmereogenesis"
+                  element={
+                    <EsmereoThemeProvider>
+                      <Suspense
+                        fallback={<LocalizedLoading messageKey="general" />}
+                      >
+                        <EsmereogenesisHubPage />
+                      </Suspense>
+                    </EsmereoThemeProvider>
+                  }
+                />
+              )}
+              {esmereoEnabled && (
+                <Route
+                  path="/esmereogenesis/:planId"
+                  element={
+                    <EsmereoThemeProvider>
+                      <Suspense
+                        fallback={<LocalizedLoading messageKey="general" />}
+                      >
+                        <EsmereogenesisGardenPage />
+                      </Suspense>
+                    </EsmereoThemeProvider>
+                  }
+                />
+              )}
+              {!esmereoEnabled && (
+                <Route
+                  path="/esmereogenesis/*"
+                  element={<Navigate to="/" replace />}
+                />
+              )}
+
+              {/* Admin Analytics Dashboard */}
               <Route
-                path="/esmereogenesis"
+                path="/admin/analytics"
                 element={
-                  <EsmereoThemeProvider>
+                  <AdminRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="analytics" />}
+                    >
+                      <AdminAnalyticsPage />
+                    </Suspense>
+                  </AdminRoute>
+                }
+              />
+
+              {/* Admin Name Generator */}
+              <Route
+                path="/admin/name-generator"
+                element={
+                  <AdminRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="generator" />}
+                    >
+                      <NameGeneratorPage />
+                    </Suspense>
+                  </AdminRoute>
+                }
+              />
+
+              {/* Product Viewers Analytics */}
+              <Route
+                path="/admin/analytics/item/:itemId"
+                element={
+                  <AdminRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="views" />}
+                    >
+                      <ProductViewersPage />
+                    </Suspense>
+                  </AdminRoute>
+                }
+              />
+
+              {/* User Views Analytics */}
+              <Route
+                path="/admin/analytics/user"
+                element={
+                  <AdminRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="history" />}
+                    >
+                      <UserViewsPage />
+                    </Suspense>
+                  </AdminRoute>
+                }
+              />
+
+              {/* All Users Activity Feed */}
+              <Route
+                path="/admin/analytics/activity"
+                element={
+                  <AdminRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="activity" />}
+                    >
+                      <ActivityPage />
+                    </Suspense>
+                  </AdminRoute>
+                }
+              />
+
+              {/* Cotización Products Analytics */}
+              <Route
+                path="/admin/cotizacion-products"
+                element={
+                  <AdminRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="products" />}
+                    >
+                      <CotizacionProductsPage />
+                    </Suspense>
+                  </AdminRoute>
+                }
+              />
+
+              {/* Admin Product Management — atelier */}
+              <Route
+                path="/admin/products"
+                element={
+                  <AdminRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="products" />}
+                    >
+                      <AdminProductManagementPage />
+                    </Suspense>
+                  </AdminRoute>
+                }
+              />
+
+              {/* Atelier · Etiquetas — QR label gallery for products + insumos */}
+              <Route
+                path="/admin/products/etiquetas"
+                element={
+                  <AdminRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="products" />}
+                    >
+                      <AdminEtiquetasPage />
+                    </Suspense>
+                  </AdminRoute>
+                }
+              />
+
+              {/* Fotosíntesis v2 — captura admin (handoff §6) */}
+              <Route
+                path="/admin/fotosintesis"
+                element={
+                  <AdminRoute>
                     <Suspense
                       fallback={<LocalizedLoading messageKey="general" />}
                     >
-                      <EsmereogenesisHubPage />
+                      <FotosintesisLayout />
                     </Suspense>
-                  </EsmereoThemeProvider>
+                  </AdminRoute>
                 }
-              />
-            )}
-            {esmereoEnabled && (
+              >
+                <Route index element={<FotosintesisHome />} />
+                <Route path="lots" element={<FotosintesisLotes />} />
+                <Route
+                  path="lots/:loteId"
+                  element={<FotosintesisCapturaLote />}
+                />
+                <Route
+                  path="lots/:loteId/close"
+                  element={<FotosintesisLoteResumen />}
+                />
+                <Route
+                  path="lots/:loteId/sublotes"
+                  element={<FotosintesisSubLotes />}
+                />
+                <Route
+                  path="lots/:loteId/items/:lotItemId/edit"
+                  element={<FotosintesisEditItem />}
+                />
+                <Route path="sales" element={<FotosintesisSales />} />
+                <Route path="sales/new" element={<FotosintesisVenta />} />
+                <Route
+                  path="sales/:saleId"
+                  element={<FotosintesisVentaDetail />}
+                />
+                <Route
+                  path="movimientos"
+                  element={<FotosintesisMovimientos />}
+                />
+                <Route path="escanear" element={<FotosintesisEscanear />} />
+                <Route path="directory" element={<FotosintesisDirectorio />} />
+                <Route
+                  path="certificados"
+                  element={<FotosintesisCertificados />}
+                />
+                <Route
+                  path="copilot/:flow"
+                  element={<FotosintesisWorkbench />}
+                />
+              </Route>
+
+              {/* Admin Feedback Dashboard */}
               <Route
-                path="/esmereogenesis/:planId"
+                path="/admin/feedback"
                 element={
-                  <EsmereoThemeProvider>
+                  <AdminRoute>
                     <Suspense
-                      fallback={<LocalizedLoading messageKey="general" />}
+                      fallback={<LocalizedLoading messageKey="feedback" />}
                     >
-                      <EsmereogenesisGardenPage />
+                      <FeedbackDashboard />
                     </Suspense>
-                  </EsmereoThemeProvider>
+                  </AdminRoute>
                 }
               />
-            )}
-            {!esmereoEnabled && (
+
+              {/* Admin Quotation Management */}
               <Route
-                path="/esmereogenesis/*"
-                element={<Navigate to="/" replace />}
-              />
-            )}
-
-            {/* Admin Analytics Dashboard */}
-            <Route
-              path="/admin/analytics"
-              element={
-                <AdminRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="analytics" />}
-                  >
-                    <AdminAnalyticsPage />
-                  </Suspense>
-                </AdminRoute>
-              }
-            />
-
-            {/* Admin Name Generator */}
-            <Route
-              path="/admin/name-generator"
-              element={
-                <AdminRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="generator" />}
-                  >
-                    <NameGeneratorPage />
-                  </Suspense>
-                </AdminRoute>
-              }
-            />
-
-            {/* Product Viewers Analytics */}
-            <Route
-              path="/admin/analytics/item/:itemId"
-              element={
-                <AdminRoute>
-                  <Suspense fallback={<LocalizedLoading messageKey="views" />}>
-                    <ProductViewersPage />
-                  </Suspense>
-                </AdminRoute>
-              }
-            />
-
-            {/* User Views Analytics */}
-            <Route
-              path="/admin/analytics/user"
-              element={
-                <AdminRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="history" />}
-                  >
-                    <UserViewsPage />
-                  </Suspense>
-                </AdminRoute>
-              }
-            />
-
-            {/* All Users Activity Feed */}
-            <Route
-              path="/admin/analytics/activity"
-              element={
-                <AdminRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="activity" />}
-                  >
-                    <ActivityPage />
-                  </Suspense>
-                </AdminRoute>
-              }
-            />
-
-            {/* Cotización Products Analytics */}
-            <Route
-              path="/admin/cotizacion-products"
-              element={
-                <AdminRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="products" />}
-                  >
-                    <CotizacionProductsPage />
-                  </Suspense>
-                </AdminRoute>
-              }
-            />
-
-            {/* Admin Product Management — atelier */}
-            <Route
-              path="/admin/products"
-              element={
-                <AdminRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="products" />}
-                  >
-                    <AdminProductManagementPage />
-                  </Suspense>
-                </AdminRoute>
-              }
-            />
-
-            {/* Atelier · Etiquetas — QR label gallery for products + insumos */}
-            <Route
-              path="/admin/products/etiquetas"
-              element={
-                <AdminRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="products" />}
-                  >
-                    <AdminEtiquetasPage />
-                  </Suspense>
-                </AdminRoute>
-              }
-            />
-
-            {/* Fotosíntesis v2 — captura admin (handoff §6) */}
-            <Route
-              path="/admin/fotosintesis"
-              element={
-                <AdminRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="general" />}
-                  >
-                    <FotosintesisLayout />
-                  </Suspense>
-                </AdminRoute>
-              }
-            >
-              <Route index element={<FotosintesisHome />} />
-              <Route path="lots" element={<FotosintesisLotes />} />
-              <Route
-                path="lots/:loteId"
-                element={<FotosintesisCapturaLote />}
+                path="/cuentas/solicitudes"
+                element={
+                  <AdminRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="requests" />}
+                    >
+                      <QuotationRequestList />
+                    </Suspense>
+                  </AdminRoute>
+                }
               />
               <Route
-                path="lots/:loteId/close"
-                element={<FotosintesisLoteResumen />}
+                path="/cuentas/solicitudes/nueva"
+                element={
+                  <AdminRoute>
+                    <Suspense fallback={<LocalizedLoading messageKey="form" />}>
+                      <QuotationRequestForm />
+                    </Suspense>
+                  </AdminRoute>
+                }
               />
               <Route
-                path="lots/:loteId/sublotes"
-                element={<FotosintesisSubLotes />}
+                path="/cuentas/cotizaciones-proveedor"
+                element={
+                  <AdminRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="quotations" />}
+                    >
+                      <ProviderQuotationsList />
+                    </Suspense>
+                  </AdminRoute>
+                }
+              />
+
+              {/* My Profile - Staff only */}
+              <Route
+                path="/mi-perfil"
+                element={
+                  <StaffRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="profile" />}
+                    >
+                      <MyProfilePage />
+                    </Suspense>
+                  </StaffRoute>
+                }
               />
               <Route
-                path="lots/:loteId/items/:lotItemId/edit"
-                element={<FotosintesisEditItem />}
+                path="/mi-perfil/actividad"
+                element={
+                  <StaffRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="profile" />}
+                    >
+                      <AllActivityPage />
+                    </Suspense>
+                  </StaffRoute>
+                }
               />
-              <Route path="sales" element={<FotosintesisSales />} />
-              <Route path="sales/new" element={<FotosintesisVenta />} />
               <Route
-                path="sales/:saleId"
-                element={<FotosintesisVentaDetail />}
+                path="/mi-perfil/invitado/:guestName"
+                element={
+                  <StaffRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="profile" />}
+                    >
+                      <GuestDetailPage />
+                    </Suspense>
+                  </StaffRoute>
+                }
               />
-              <Route path="movimientos" element={<FotosintesisMovimientos />} />
-              <Route path="escanear" element={<FotosintesisEscanear />} />
-              <Route path="directory" element={<FotosintesisDirectorio />} />
+
+              {/* Product Requests (Asesor/Embajador -> Admin) - Staff only */}
               <Route
-                path="certificados"
-                element={<FotosintesisCertificados />}
+                path="/solicitudes"
+                element={
+                  <StaffRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="requests" />}
+                    >
+                      <ProductRequestsHub />
+                    </Suspense>
+                  </StaffRoute>
+                }
               />
-              <Route path="copilot/:flow" element={<FotosintesisWorkbench />} />
-            </Route>
+              {/* Legacy routes - redirect to unified view */}
+              <Route
+                path="/solicitar-producto"
+                element={<Navigate to="/solicitudes?tab=nueva" replace />}
+              />
+              <Route
+                path="/mis-solicitudes"
+                element={<Navigate to="/solicitudes" replace />}
+              />
+              <Route
+                path="/cuentas/solicitudes-asesores"
+                element={
+                  <AdminRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="requests" />}
+                    >
+                      <AdminProductRequestList />
+                    </Suspense>
+                  </AdminRoute>
+                }
+              />
 
-            {/* Admin Feedback Dashboard */}
-            <Route
-              path="/admin/feedback"
-              element={
-                <AdminRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="feedback" />}
-                  >
-                    <FeedbackDashboard />
-                  </Suspense>
-                </AdminRoute>
-              }
-            />
-
-            {/* Admin Quotation Management */}
-            <Route
-              path="/cuentas/solicitudes"
-              element={
-                <AdminRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="requests" />}
-                  >
-                    <QuotationRequestList />
-                  </Suspense>
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/cuentas/solicitudes/nueva"
-              element={
-                <AdminRoute>
-                  <Suspense fallback={<LocalizedLoading messageKey="form" />}>
-                    <QuotationRequestForm />
-                  </Suspense>
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/cuentas/cotizaciones-proveedor"
-              element={
-                <AdminRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="quotations" />}
-                  >
-                    <ProviderQuotationsList />
-                  </Suspense>
-                </AdminRoute>
-              }
-            />
-
-            {/* My Profile - Staff only */}
-            <Route
-              path="/mi-perfil"
-              element={
-                <StaffRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="profile" />}
-                  >
-                    <MyProfilePage />
-                  </Suspense>
-                </StaffRoute>
-              }
-            />
-            <Route
-              path="/mi-perfil/actividad"
-              element={
-                <StaffRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="profile" />}
-                  >
-                    <AllActivityPage />
-                  </Suspense>
-                </StaffRoute>
-              }
-            />
-            <Route
-              path="/mi-perfil/invitado/:guestName"
-              element={
-                <StaffRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="profile" />}
-                  >
-                    <GuestDetailPage />
-                  </Suspense>
-                </StaffRoute>
-              }
-            />
-
-            {/* Product Requests (Asesor/Embajador -> Admin) - Staff only */}
-            <Route
-              path="/solicitudes"
-              element={
-                <StaffRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="requests" />}
-                  >
-                    <ProductRequestsHub />
-                  </Suspense>
-                </StaffRoute>
-              }
-            />
-            {/* Legacy routes - redirect to unified view */}
-            <Route
-              path="/solicitar-producto"
-              element={<Navigate to="/solicitudes?tab=nueva" replace />}
-            />
-            <Route
-              path="/mis-solicitudes"
-              element={<Navigate to="/solicitudes" replace />}
-            />
-            <Route
-              path="/cuentas/solicitudes-asesores"
-              element={
-                <AdminRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="requests" />}
-                  >
-                    <AdminProductRequestList />
-                  </Suspense>
-                </AdminRoute>
-              }
-            />
-
-            {/* Provider Portal Routes */}
-            <Route
-              path="/provider"
-              element={
-                <ProviderRoute>
-                  <Suspense fallback={<LocalizedLoading messageKey="portal" />}>
-                    <ProviderDashboard />
-                  </Suspense>
-                </ProviderRoute>
-              }
-            />
-            <Route
-              path="/provider/requests"
-              element={
-                <ProviderRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="requests" />}
-                  >
-                    <ProviderRequestList />
-                  </Suspense>
-                </ProviderRoute>
-              }
-            />
-            <Route
-              path="/provider/submit"
-              element={
-                <ProviderRoute>
-                  <Suspense fallback={<LocalizedLoading messageKey="form" />}>
-                    <ProviderQuotationForm />
-                  </Suspense>
-                </ProviderRoute>
-              }
-            />
-            <Route
-              path="/provider/inventory"
-              element={
-                <ProviderRoute>
-                  <Suspense
-                    fallback={<LocalizedLoading messageKey="inventory" />}
-                  >
-                    <ProviderInventory />
-                  </Suspense>
-                </ProviderRoute>
-              }
-            />
-          </Routes>
+              {/* Provider Portal Routes */}
+              <Route
+                path="/provider"
+                element={
+                  <ProviderRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="portal" />}
+                    >
+                      <ProviderDashboard />
+                    </Suspense>
+                  </ProviderRoute>
+                }
+              />
+              <Route
+                path="/provider/requests"
+                element={
+                  <ProviderRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="requests" />}
+                    >
+                      <ProviderRequestList />
+                    </Suspense>
+                  </ProviderRoute>
+                }
+              />
+              <Route
+                path="/provider/submit"
+                element={
+                  <ProviderRoute>
+                    <Suspense fallback={<LocalizedLoading messageKey="form" />}>
+                      <ProviderQuotationForm />
+                    </Suspense>
+                  </ProviderRoute>
+                }
+              />
+              <Route
+                path="/provider/inventory"
+                element={
+                  <ProviderRoute>
+                    <Suspense
+                      fallback={<LocalizedLoading messageKey="inventory" />}
+                    >
+                      <ProviderInventory />
+                    </Suspense>
+                  </ProviderRoute>
+                }
+              />
+            </Routes>
+          </ComparisonProvider>
         </IOSLayout>
       </CopilotRailProvider>
     </AppNavigatorProvider>

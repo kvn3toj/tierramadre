@@ -13,18 +13,10 @@
  * DM Mono spec line ("4.20 ct · MUZO"), compact price.
  */
 import React, { useCallback } from 'react';
-import {
-  Box,
-  Typography,
-  Chip,
-  IconButton,
-  Skeleton,
-  alpha,
-} from '@mui/material';
-import { Images, Eye, Scale } from 'lucide-react';
+import { Box, Typography, Chip, Skeleton } from '@mui/material';
+import { Images, Eye } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { useRedesignVariant } from '../../hooks/useRedesignVariant';
 import { prefetchRoute } from '../../utils/routePrefetch';
 import { TreasureItem } from '../../types';
@@ -32,7 +24,7 @@ import { abbreviateQuality, formatCarats } from '../../utils/formatting';
 import { EmeraldCutIcon } from './EmeraldCutIcon';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
 import ProgressiveImage from '../shared/ProgressiveImage';
-import { getQuietEmerald, Badge, PieceCard } from '../../design-system';
+import { getQuietEmerald, PieceCard } from '../../design-system';
 
 interface GridCardProps {
   item: TreasureItem;
@@ -92,15 +84,11 @@ function GridCard({
   priority = false,
   viewCount,
   isAdmin,
-  isSelectedForComparison = false,
-  onToggleComparison,
-  canAddToComparison = true,
   variantOverride,
   priceOverride,
 }: GridCardProps) {
   const { mode } = useThemeMode();
   const { shouldShowPrices } = usePriceShare();
-  const prefersReducedMotion = useReducedMotion();
   const { isLiteral: variantIsLiteral } = useRedesignVariant();
   const isLiteral = variantOverride
     ? variantOverride === 'literal'
@@ -119,23 +107,42 @@ function GridCard({
     .filter(Boolean)
     .join(', ');
   const specLine = buildSpecLine(item);
-  // Image badge shows the cut (talla) now, not the quality — quality moved into
-  // the footer spec line ("C. Fina · ..."). Fall back to the abbreviated quality
-  // for the rare item with no recorded cut.
-  const cutLabel =
-    item.talla?.trim() || abbreviateQuality(item.calidad) || 'Gema';
+  // Cut (talla) shown in the footer description — gem glyph + name, quiet mono —
+  // so the image well stays clean. Falls back to the abbreviated quality for the
+  // rare item with no recorded cut.
+  // No quality fallback here — quality already lives in the spec line below, so
+  // falling back to it would print the tier twice. Unknown cut → generic "Gema".
+  const cutLabel = item.talla?.trim() || 'Gema';
+  const cutNode = (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px',
+        minWidth: 0,
+        color: 'var(--tm-muted)',
+      }}
+    >
+      <EmeraldCutIcon cut={item.talla} size={13} />
+      <Typography
+        sx={{
+          fontFamily: 'var(--tm-font-mono)',
+          fontSize: '0.62rem',
+          letterSpacing: '0.04em',
+          color: 'var(--tm-muted)',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        {cutLabel}
+      </Typography>
+    </Box>
+  );
 
   const handleItemClick = useCallback(() => {
     onItemClick(item);
   }, [onItemClick, item]);
-
-  const handleCompareClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      onToggleComparison?.(item);
-    },
-    [onToggleComparison, item],
-  );
 
   const handlePrefetch = useCallback(() => {
     prefetchRoute('product');
@@ -193,27 +200,6 @@ function GridCard({
         />
       )}
 
-      {/* Cut badge — bottom left (the talla + its emerald-cut glyph) */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: 6,
-          left: 6,
-          maxWidth: item.isLote
-            ? 'calc(100% - 110px)'
-            : item.cantidad > 1
-              ? 'calc(100% - 52px)'
-              : 'calc(100% - 12px)',
-          overflow: 'hidden',
-        }}
-      >
-        <Badge
-          tone="neutral"
-          icon={<EmeraldCutIcon cut={item.talla} size={12} />}
-          label={cutLabel}
-        />
-      </Box>
-
       {/* Quantity / lote badge — bottom right */}
       {(item.isLote || item.cantidad > 1) && (
         <Chip
@@ -260,49 +246,6 @@ function GridCard({
           }}
         />
       )}
-
-      {/* Compare button — top right (hidden when prices not shown) */}
-      {onToggleComparison && shouldShowPrices && (
-        <IconButton
-          onClick={handleCompareClick}
-          aria-label={
-            isSelectedForComparison
-              ? 'Quitar de comparación'
-              : 'Agregar a comparación'
-          }
-          disabled={!isSelectedForComparison && !canAddToComparison}
-          size="small"
-          sx={{
-            position: 'absolute',
-            top: 6,
-            right: 6,
-            width: 34,
-            height: 34,
-            bgcolor: isSelectedForComparison
-              ? qe.accentStrong
-              : alpha('#000000', 0.5),
-            color: isSelectedForComparison ? qe.onAccent : 'white',
-            transition: prefersReducedMotion
-              ? 'none'
-              : 'background-color 0.2s ease, transform 0.2s cubic-bezier(0.34,1.56,0.64,1)',
-            '&:hover': {
-              bgcolor: isSelectedForComparison
-                ? qe.accent
-                : alpha('#000000', 0.68),
-              transform: prefersReducedMotion ? 'none' : 'scale(1.08)',
-            },
-            '&:active': {
-              transform: prefersReducedMotion ? 'none' : 'scale(0.92)',
-            },
-            '&:disabled': {
-              bgcolor: alpha('#000000', 0.28),
-              color: 'rgba(255,255,255,0.5)',
-            },
-          }}
-        >
-          <Scale size={15} />
-        </IconButton>
-      )}
     </>
   ) : null;
 
@@ -340,6 +283,7 @@ function GridCard({
       name={displayName}
       specLine={specLine}
       price={priceEl}
+      cut={isLiteral ? undefined : cutNode}
       onClick={handleItemClick}
       onMouseEnter={handlePrefetch}
       onFocus={handlePrefetch}
@@ -369,8 +313,6 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.priority === nextProps.priority &&
     prevProps.viewCount === nextProps.viewCount &&
     prevProps.isAdmin === nextProps.isAdmin &&
-    prevProps.isSelectedForComparison === nextProps.isSelectedForComparison &&
-    prevProps.canAddToComparison === nextProps.canAddToComparison &&
     prevProps.variantOverride === nextProps.variantOverride &&
     prevProps.priceOverride === nextProps.priceOverride
   );
