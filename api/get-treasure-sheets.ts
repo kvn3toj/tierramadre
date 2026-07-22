@@ -90,6 +90,7 @@ const INVENTARIO_HEADERS = {
   CAJA: 'caja',
   ASESOR_ACTUAL: 'asesor actual', // Column T (index 19)
   ESTADO_ASESOR: 'estado asesor', // Column U (index 20)
+  FOTO_URL: 'fotourl', // SOT v3 col AL — Fotosíntesis-captured photo (Drive file)
 };
 
 // Jewelry subcategory values from Column K (synced with CATEGORY_SUBCATEGORIES.joyas in gallery-constants.ts)
@@ -191,6 +192,18 @@ function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
     ...(pesoData.metalType ? { metalType: pesoData.metalType } : {}),
   };
 
+  // Fotosíntesis-captured photo (SOT col AL "fotoUrl"): an individual Drive file
+  // stored OUTSIDE the `products/{item}/` folder that get-batch-thumbnails scans.
+  // Surface it as imagen + thumbnailUrl so the catalog's thumbnail fallback
+  // (useTreasure.ts) renders it when there is no folder-scan thumbnail. Without
+  // this, joyas captured via Fotosíntesis (whose products/ folder is empty) show
+  // a placeholder even though they have a photo. (2026-07-22 cutover fix.)
+  const fotoUrl = getValue(INVENTARIO_HEADERS.FOTO_URL);
+  if (fotoUrl) {
+    item.imagen = fotoUrl;
+    item.thumbnailUrl = fotoUrl;
+  }
+
   // Also flag as jewelry if categoria matches a known jewelry subcategory (e.g. items with numeric peso)
   if (
     !item.isJewelry &&
@@ -263,8 +276,11 @@ export default withApiHandler(
     // Fetch treasure and pricing data in parallel
     const [treasureResponse, pricingMap] = await Promise.all([
       sheets.spreadsheets.values.get({
+        // A:AP covers the full SOT v3 Inventario layout — notably col AL
+        // `fotoUrl` (was cut off by the old A:Z, so Fotosíntesis-captured photos
+        // never reached the catalog). See FOTO_INVENTARIO_COLUMNS.
         spreadsheetId: SPREADSHEET_ID,
-        range: `${targetSheet}!A:Z`,
+        range: `${targetSheet}!A:AP`,
       }),
       fetchPricingData(sheets),
     ]);
