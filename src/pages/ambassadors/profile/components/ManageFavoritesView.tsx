@@ -3,7 +3,7 @@
  * Allows ambassador to curate favorites: add/remove/reorder.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -11,10 +11,18 @@ import {
   IconButton,
   InputAdornment,
 } from '@mui/material';
-import { ArrowLeft, Search, X, Plus, Pencil } from 'lucide-react';
+import {
+  ArrowLeft,
+  Search,
+  X,
+  Plus,
+  Pencil,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { Reorder } from 'framer-motion';
 import { useLanguage } from '../../../../contexts/LanguageContext';
-import { TextField } from '../../../../design-system';
+import { TextField, containedScrollX } from '../../../../design-system';
 import ProgressiveImage from '../../../../components/shared/ProgressiveImage';
 import type { TreasureItem } from '../../../../types';
 import { useAmbassadorOverrides } from '../../../../hooks/useAmbassadorOverrides';
@@ -44,8 +52,11 @@ export function ManageFavoritesView({
   const [searchQuery, setSearchQuery] = useState('');
 
   // T4: per-ambassador overrides (custom name / price)
-  const { getOverride, setOverride, clearOverride } = useAmbassadorOverrides(asesorSlug);
-  const [editingProduct, setEditingProduct] = useState<TreasureItem | null>(null);
+  const { getOverride, setOverride, clearOverride } =
+    useAmbassadorOverrides(asesorSlug);
+  const [editingProduct, setEditingProduct] = useState<TreasureItem | null>(
+    null,
+  );
 
   // O(1) lookup map instead of O(n) find() per item
   const productMap = useMemo(() => {
@@ -58,19 +69,38 @@ export function ManageFavoritesView({
 
   const favoriteItems = useMemo(() => {
     return favoriteIds
-      .map(id => productMap.get(id))
+      .map((id) => productMap.get(id))
       .filter(Boolean) as TreasureItem[];
   }, [favoriteIds, productMap]);
 
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
 
+  /**
+   * Keyboard/AT-reachable reordering. Reorder.Group only exposes drag, which
+   * is pointer-only, so the same operation is offered as move-one-step
+   * buttons that feed the identical onReorderFavorites contract.
+   */
+  const moveFavorite = useCallback(
+    (id: string, direction: -1 | 1) => {
+      const index = favoriteIds.indexOf(id);
+      const target = index + direction;
+      if (index < 0 || target < 0 || target >= favoriteIds.length) return;
+      const next = [...favoriteIds];
+      next[index] = next[target];
+      next[target] = id;
+      onReorderFavorites(next);
+    },
+    [favoriteIds, onReorderFavorites],
+  );
+
   const availableItems = useMemo(() => {
-    let items = allProducts.filter(p => !favoriteIdSet.has(String(p.item)));
+    let items = allProducts.filter((p) => !favoriteIdSet.has(String(p.item)));
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      items = items.filter(p =>
-        p.nombre.toLowerCase().includes(query) ||
-        String(p.item).includes(query)
+      items = items.filter(
+        (p) =>
+          p.nombre.toLowerCase().includes(query) ||
+          String(p.item).includes(query),
       );
     }
     return items.slice(0, 20);
@@ -93,7 +123,10 @@ export function ManageFavoritesView({
         >
           <ArrowLeft size={18} />
         </IconButton>
-        <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem', flex: 1 }}>
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 700, fontSize: '1.1rem', flex: 1 }}
+        >
           {t.ambassador.museum?.manageFavorites ?? 'Administrar Favoritas'}
         </Typography>
         <Button
@@ -116,17 +149,37 @@ export function ManageFavoritesView({
 
       {/* Selected Favorites */}
       <Typography
-        sx={{ fontSize: '0.72rem', fontWeight: 600, color: 'text.secondary', mb: 1, textTransform: 'uppercase', letterSpacing: '0.05em' }}
+        sx={{
+          fontSize: '0.72rem',
+          fontWeight: 600,
+          color: 'text.secondary',
+          mb: 1,
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+        }}
       >
-        {t.ambassador.museum?.selected ?? 'Seleccionadas'} ({favoriteIds.length})
+        {t.ambassador.museum?.selected ?? 'Seleccionadas'} ({favoriteIds.length}
+        )
       </Typography>
+
+      {favoriteItems.length > 1 && (
+        <Typography
+          sx={{
+            fontSize: '0.72rem',
+            color: 'var(--tm-muted)',
+            mb: 1,
+          }}
+        >
+          Arrastra para reordenar, o usa las flechas de cada pieza.
+        </Typography>
+      )}
 
       {favoriteItems.length > 0 ? (
         <Box
           sx={{
             display: 'flex',
             gap: 1,
-            overflowX: 'auto',
+            ...containedScrollX,
             pb: 1,
             mb: 2.5,
             scrollbarWidth: 'none',
@@ -137,11 +190,18 @@ export function ManageFavoritesView({
             axis="x"
             values={favoriteIds}
             onReorder={onReorderFavorites}
-            style={{ display: 'flex', gap: 8, listStyle: 'none', margin: 0, padding: 0 }}
+            style={{
+              display: 'flex',
+              gap: 8,
+              listStyle: 'none',
+              margin: 0,
+              padding: 0,
+            }}
           >
-            {favoriteIds.map((id) => {
+            {favoriteIds.map((id, index) => {
               const item = productMap.get(id);
               if (!item) return null;
+              const position = `${index + 1} de ${favoriteIds.length}`;
               return (
                 <Reorder.Item key={id} value={id} style={{ flexShrink: 0 }}>
                   <Box
@@ -191,6 +251,63 @@ export function ManageFavoritesView({
                     >
                       {item.nombre}
                     </Typography>
+                    {/* Keyboard/AT reorder path. Dragging (Reorder.Item) is
+                        pointer-only, so the same reorder is offered as two
+                        44x44 step controls, 8px apart — exactly the 96px
+                        card width. Disabled at the ends of the row. */}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: 1,
+                        mt: 0.5,
+                      }}
+                    >
+                      <IconButton
+                        onClick={() => moveFavorite(id, -1)}
+                        disabled={index === 0}
+                        aria-label={`Mover ${item.nombre} hacia la izquierda (actualmente ${position})`}
+                        sx={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 'var(--tm-radius-control)',
+                          border: '1px solid var(--tm-border)',
+                          color: 'var(--tm-muted)',
+                          '&:hover': {
+                            color: 'var(--tm-accent)',
+                            borderColor: 'var(--tm-accent)',
+                          },
+                          '&.Mui-disabled': {
+                            color: 'var(--tm-subtle)',
+                            borderColor: 'var(--tm-border)',
+                          },
+                        }}
+                      >
+                        <ChevronLeft size={16} />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => moveFavorite(id, 1)}
+                        disabled={index === favoriteIds.length - 1}
+                        aria-label={`Mover ${item.nombre} hacia la derecha (actualmente ${position})`}
+                        sx={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 'var(--tm-radius-control)',
+                          border: '1px solid var(--tm-border)',
+                          color: 'var(--tm-muted)',
+                          '&:hover': {
+                            color: 'var(--tm-accent)',
+                            borderColor: 'var(--tm-accent)',
+                          },
+                          '&.Mui-disabled': {
+                            color: 'var(--tm-subtle)',
+                            borderColor: 'var(--tm-border)',
+                          },
+                        }}
+                      >
+                        <ChevronRight size={16} />
+                      </IconButton>
+                    </Box>
                     {/* Actions sit below the piece, at full target size and
                         8px apart, so the destructive one is no longer a 20px
                         neighbour of the edit control. */}
@@ -240,7 +357,7 @@ export function ManageFavoritesView({
                       </IconButton>
                     </Box>
                   </Box>
-                                </Reorder.Item>
+                </Reorder.Item>
               );
             })}
           </Reorder.Group>
@@ -248,7 +365,8 @@ export function ManageFavoritesView({
       ) : (
         <Box sx={{ py: 3, textAlign: 'center', mb: 2.5 }}>
           <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>
-            {t.ambassador.museum?.addToFavorites ?? 'Agrega esmeraldas a tus favoritas'}
+            {t.ambassador.museum?.addToFavorites ??
+              'Agrega esmeraldas a tus favoritas'}
           </Typography>
         </Box>
       )}
@@ -306,10 +424,20 @@ export function ManageFavoritesView({
               />
             </Box>
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography sx={{ fontSize: '0.78rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <Typography
+                sx={{
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {item.nombre}
               </Typography>
-              <Typography sx={{ fontSize: '0.6875rem', color: 'text.secondary' }}>
+              <Typography
+                sx={{ fontSize: '0.6875rem', color: 'text.secondary' }}
+              >
                 #{item.item}
               </Typography>
             </Box>
@@ -335,11 +463,17 @@ export function ManageFavoritesView({
       <EditProductOverrideDialog
         open={editingProduct !== null}
         product={editingProduct}
-        currentOverride={editingProduct ? getOverride(editingProduct.item) : undefined}
+        currentOverride={
+          editingProduct ? getOverride(editingProduct.item) : undefined
+        }
         onClose={() => setEditingProduct(null)}
         onSave={(patch) => {
           if (!editingProduct) return;
-          const result = setOverride(editingProduct.item, patch, editingProduct);
+          const result = setOverride(
+            editingProduct.item,
+            patch,
+            editingProduct,
+          );
           if (result.ok) {
             setEditingProduct(null);
           }

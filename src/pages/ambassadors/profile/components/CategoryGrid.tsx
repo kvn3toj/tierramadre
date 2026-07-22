@@ -132,6 +132,7 @@ export const CategoryGrid = React.memo(function CategoryGrid({
                 position: 'absolute',
                 inset: 0,
                 background:
+                  // eslint-disable-next-line no-restricted-syntax -- DS3: deliberate on-photo scrim exemption, see comment above
                   'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.55) 34%, rgba(0,0,0,0.12) 64%, rgba(0,0,0,0.04) 100%)',
               }}
             />

@@ -8,7 +8,12 @@ import { Box, Typography, Paper } from '@mui/material';
 import { FileText } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { SavedCotizacion } from '../../../../hooks/useCotizacionHistory';
-import { Badge, EmptyState, Skeleton } from '../../../../design-system';
+import {
+  Badge,
+  EmptyState,
+  Skeleton,
+  containedScrollX,
+} from '../../../../design-system';
 import { CotizacionCard } from './CotizacionCard';
 
 interface CotizacionesSectionProps {
@@ -86,7 +91,7 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
 
         {/* Cotizaciones Loading */}
         {isLoading && (
-          <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 1 }}>
+          <Box sx={{ display: 'flex', gap: 2, ...containedScrollX, pb: 1 }}>
             {[1, 2, 3].map((i) => (
               <Box key={i} sx={{ flexShrink: 0 }}>
                 <Skeleton variant="rect" width={200} height={280} />
@@ -116,7 +121,7 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
             sx={{
               display: 'flex',
               gap: 2,
-              overflowX: 'auto',
+              ...containedScrollX,
               pb: 1,
               mx: -1,
               px: 1,

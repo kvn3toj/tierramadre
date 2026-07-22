@@ -9,6 +9,7 @@ import { Box, Typography, useMediaQuery, type Theme } from '@mui/material';
 import { ChevronRight, Gem } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import ProgressiveImage from '../../../../components/shared/ProgressiveImage';
+import { containedScrollX } from '../../../../design-system';
 import type { TreasureItem } from '../../../../types';
 
 interface FavoritesRowProps {
@@ -107,7 +108,7 @@ export const FavoritesRow = React.memo(function FavoritesRow({
           gap: isDesktop ? '24px' : isTablet ? '20px' : '16px',
           justifyContent:
             isTablet || displayItems.length < 4 ? 'center' : 'flex-start',
-          overflowX: 'auto',
+          ...containedScrollX,
           pb: 0.5,
           scrollbarWidth: 'none',
           '&::-webkit-scrollbar': { display: 'none' },

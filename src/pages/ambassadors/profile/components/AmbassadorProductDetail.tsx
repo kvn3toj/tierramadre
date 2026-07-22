@@ -5,14 +5,14 @@
  * Hero carousel, name + price, specs grid, description.
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   Typography,
   IconButton,
   CircularProgress,
   Button,
-} from "@mui/material";
+} from '@mui/material';
 import {
   ArrowLeft,
   Scale,
@@ -23,38 +23,62 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageCircle,
-} from "lucide-react";
-import { motion } from "framer-motion";
+} from 'lucide-react';
+import { motion } from 'framer-motion';
 import {
   Badge,
   ErrorState,
   qeGray,
   qeType,
   zIndex,
-} from "../../../../design-system";
-import { formatFullCurrency, formatCarats } from "../../../../utils/formatting";
-import { useLanguage } from "../../../../contexts/LanguageContext";
-import { useReducedMotion } from "../../../../hooks/useReducedMotion";
-import type { TreasureItem } from "../../../../types";
+} from '../../../../design-system';
+import { formatFullCurrency, formatCarats } from '../../../../utils/formatting';
+import { useLanguage } from '../../../../contexts/LanguageContext';
+import { useReducedMotion } from '../../../../hooks/useReducedMotion';
+import type { Asesor } from '../../../../hooks/useAsesores';
+import type { TreasureItem } from '../../../../types';
 
 interface MediaSlide {
   id: string;
   url: string;
-  type: "image" | "video";
+  type: 'image' | 'video';
   alt: string;
 }
 
 interface AmbassadorProductDetailProps {
   item: TreasureItem;
   onBack: () => void;
+  /**
+   * Ambassador whose profile we are inside. Optional so the component still
+   * renders standalone — the contact CTA is disabled when it (or the
+   * WhatsApp number) is missing, rather than rendering an inert button.
+   */
+  asesor?: Pick<Asesor, 'name' | 'whatsapp'>;
 }
 
 export function AmbassadorProductDetail({
   item,
   onBack,
+  asesor,
 }: AmbassadorProductDetailProps) {
   const { t } = useLanguage();
   const prefersReducedMotion = useReducedMotion();
+
+  // Same WhatsApp deep link the (removed) FavoriteDetailView used.
+  const whatsapp = asesor?.whatsapp?.trim() || '';
+  const canContact = whatsapp.length > 0;
+
+  const handleContact = useCallback(() => {
+    if (!canContact) return;
+    const digits = whatsapp.replace(/\D/g, '');
+    const fullNumber = digits.startsWith('57') ? digits : `57${digits}`;
+    const text = `Hola ${asesor?.name ?? ''}, me interesa la esmeralda "${item.nombre}" (Item #${item.item})`;
+    window.open(
+      `https://wa.me/${fullNumber}?text=${encodeURIComponent(text)}`,
+      '_blank',
+      'noopener,noreferrer',
+    );
+  }, [canContact, whatsapp, asesor?.name, item.nombre, item.item]);
 
   const [gallerySlides, setGallerySlides] = useState<MediaSlide[]>([]);
   const [activeSlide, setActiveSlide] = useState(0);
@@ -64,9 +88,9 @@ export function AmbassadorProductDetail({
   const [galleryReloadKey, setGalleryReloadKey] = useState(0);
 
   const weightDisplay =
-    typeof item.peso === "number"
+    typeof item.peso === 'number'
       ? `${formatCarats(item.peso)} ct`
-      : item.peso || "-";
+      : item.peso || '-';
 
   // Fetch gallery from Drive API
   useEffect(() => {
@@ -77,8 +101,8 @@ export function AmbassadorProductDetail({
     // Fallback: use existing thumbnail/image
     const fallback: MediaSlide = {
       id: `fallback-${item.item}`,
-      url: item.thumbnailUrl || item.imagen || "",
-      type: item.mediaType === "video" ? "video" : "image",
+      url: item.thumbnailUrl || item.imagen || '',
+      type: item.mediaType === 'video' ? 'video' : 'image',
       alt: item.nombre,
     };
     if (fallback.url) {
@@ -95,28 +119,28 @@ export function AmbassadorProductDetail({
           if (data.success && data.images?.length > 0) {
             const driveSlides: MediaSlide[] = data.images
               .sort((a: any, b: any) => {
-                if (a.type === "image" && b.type === "video") return -1;
-                if (a.type === "video" && b.type === "image") return 1;
+                if (a.type === 'image' && b.type === 'video') return -1;
+                if (a.type === 'video' && b.type === 'image') return 1;
                 return (a.order ?? 0) - (b.order ?? 0);
               })
               .map((img: any) => ({
                 id: img.id,
                 url:
-                  img.type === "video"
+                  img.type === 'video'
                     ? `/api/serve-drive-image?fileId=${img.id}`
                     : img.proxyUrl ||
                       img.fullUrl ||
                       img.previewUrl ||
                       img.thumbnailUrl,
-                type: img.type as "image" | "video",
+                type: img.type as 'image' | 'video',
                 alt: img.name || `${item.nombre} - ${(img.order ?? 0) + 1}`,
               }));
             setGallerySlides(driveSlides);
           }
         })
         .catch((err) => {
-          if (err.name !== "AbortError") {
-            console.warn("Failed to fetch gallery:", err);
+          if (err.name !== 'AbortError') {
+            console.warn('Failed to fetch gallery:', err);
             setGalleryError(true);
           }
         })
@@ -151,13 +175,13 @@ export function AmbassadorProductDetail({
   // Keyboard navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft" && activeSlide > 0)
+      if (e.key === 'ArrowLeft' && activeSlide > 0)
         setActiveSlide((s) => s - 1);
-      if (e.key === "ArrowRight" && activeSlide < gallerySlides.length - 1)
+      if (e.key === 'ArrowRight' && activeSlide < gallerySlides.length - 1)
         setActiveSlide((s) => s + 1);
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, [activeSlide, gallerySlides.length]);
 
   const slideCount = gallerySlides.length;
@@ -175,14 +199,14 @@ export function AmbassadorProductDetail({
           onClick={onBack}
           aria-label={t.actions.back}
           sx={{
-            bgcolor: "var(--tm-well)",
-            border: "1px solid var(--tm-border)",
-            color: "var(--tm-text)",
+            bgcolor: 'var(--tm-well)',
+            border: '1px solid var(--tm-border)',
+            color: 'var(--tm-text)',
             width: 44,
             height: 44,
-            "&:hover": {
-              bgcolor: "var(--tm-well)",
-              borderColor: "var(--tm-accent)",
+            '&:hover': {
+              bgcolor: 'var(--tm-well)',
+              borderColor: 'var(--tm-accent)',
             },
           }}
         >
@@ -193,11 +217,11 @@ export function AmbassadorProductDetail({
       {/* Hero Gallery Carousel */}
       <Box
         sx={{
-          borderRadius: "var(--tm-radius-card)",
-          overflow: "hidden",
+          borderRadius: 'var(--tm-radius-card)',
+          overflow: 'hidden',
           mb: 2.5,
-          position: "relative",
-          border: "1px solid var(--tm-border)",
+          position: 'relative',
+          border: '1px solid var(--tm-border)',
         }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -206,8 +230,8 @@ export function AmbassadorProductDetail({
           <>
             <Box
               sx={{
-                display: "flex",
-                transition: "transform var(--tm-base) var(--tm-ease)",
+                display: 'flex',
+                transition: 'transform var(--tm-base) var(--tm-ease)',
                 transform: `translateX(-${activeSlide * 100}%)`,
               }}
             >
@@ -215,13 +239,13 @@ export function AmbassadorProductDetail({
                 <Box
                   key={slide.id}
                   sx={{
-                    minWidth: "100%",
-                    aspectRatio: "4/3",
-                    position: "relative",
-                    bgcolor: "var(--tm-well)",
+                    minWidth: '100%',
+                    aspectRatio: '4/3',
+                    position: 'relative',
+                    bgcolor: 'var(--tm-well)',
                   }}
                 >
-                  {slide.type === "video" ? (
+                  {slide.type === 'video' ? (
                     <video
                       key={slide.id}
                       src={`${slide.url}#t=0.001`}
@@ -229,12 +253,12 @@ export function AmbassadorProductDetail({
                       muted
                       loop
                       playsInline
-                      preload={idx === activeSlide ? "auto" : "none"}
+                      preload={idx === activeSlide ? 'auto' : 'none'}
                       style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        display: "block",
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block',
                       }}
                     />
                   ) : (
@@ -242,12 +266,12 @@ export function AmbassadorProductDetail({
                       component="img"
                       src={slide.url}
                       alt={slide.alt}
-                      loading={idx <= 1 ? "eager" : "lazy"}
+                      loading={idx <= 1 ? 'eager' : 'lazy'}
                       sx={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        display: "block",
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block',
                       }}
                     />
                   )}
@@ -259,19 +283,19 @@ export function AmbassadorProductDetail({
             {slideCount > 1 && (
               <Box
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   top: 12,
                   right: 12,
                   // On-photo chrome: rides over the gallery image.
-                  bgcolor: "var(--tm-scrim)",
-                  borderRadius: "var(--tm-radius-well)",
+                  bgcolor: 'var(--tm-scrim)',
+                  borderRadius: 'var(--tm-radius-well)',
                   px: 1,
                   py: 0.3,
                   zIndex: zIndex.base,
                 }}
               >
                 <Typography
-                  sx={{ color: qeGray[0], fontSize: "0.7rem", fontWeight: 600 }}
+                  sx={{ color: qeGray[0], fontSize: '0.7rem', fontWeight: 600 }}
                 >
                   {activeSlide + 1} / {slideCount}
                 </Typography>
@@ -282,22 +306,22 @@ export function AmbassadorProductDetail({
             {galleryLoading && slideCount <= 1 && (
               <Box
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   bottom: 12,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  bgcolor: "var(--tm-scrim)",
-                  borderRadius: "var(--tm-radius-control)",
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  bgcolor: 'var(--tm-scrim)',
+                  borderRadius: 'var(--tm-radius-control)',
                   px: 1.5,
                   py: 0.5,
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 1,
                   zIndex: zIndex.base,
                 }}
               >
                 <CircularProgress size={14} sx={{ color: qeGray[0] }} />
-                <Typography sx={{ color: qeGray[0], fontSize: "0.7rem" }}>
+                <Typography sx={{ color: qeGray[0], fontSize: '0.7rem' }}>
                   Loading gallery...
                 </Typography>
               </Box>
@@ -310,13 +334,13 @@ export function AmbassadorProductDetail({
                   <IconButton
                     onClick={() => setActiveSlide((s) => s - 1)}
                     sx={{
-                      position: "absolute",
+                      position: 'absolute',
                       left: 8,
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      bgcolor: "var(--tm-scrim)",
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      bgcolor: 'var(--tm-scrim)',
                       color: qeGray[0],
-                      "&:hover": { bgcolor: "var(--tm-scrim)" },
+                      '&:hover': { bgcolor: 'var(--tm-scrim)' },
                       zIndex: zIndex.base,
                     }}
                   >
@@ -327,13 +351,13 @@ export function AmbassadorProductDetail({
                   <IconButton
                     onClick={() => setActiveSlide((s) => s + 1)}
                     sx={{
-                      position: "absolute",
+                      position: 'absolute',
                       right: 8,
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      bgcolor: "var(--tm-scrim)",
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      bgcolor: 'var(--tm-scrim)',
                       color: qeGray[0],
-                      "&:hover": { bgcolor: "var(--tm-scrim)" },
+                      '&:hover': { bgcolor: 'var(--tm-scrim)' },
                       zIndex: zIndex.base,
                     }}
                   >
@@ -347,11 +371,11 @@ export function AmbassadorProductDetail({
             {slideCount > 1 && (
               <Box
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   bottom: 12,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  display: "flex",
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  display: 'flex',
                   gap: 0.8,
                   zIndex: zIndex.base,
                 }}
@@ -365,9 +389,12 @@ export function AmbassadorProductDetail({
                       height: 8,
                       borderRadius: 4,
                       // On-photo chrome: the dots sit over the gallery image.
-                      bgcolor: activeSlide === i ? "var(--tm-accent-pure)" : qeGray[300],
-                      cursor: "pointer",
-                      transition: "width var(--tm-fast) var(--tm-ease)",
+                      bgcolor:
+                        activeSlide === i
+                          ? 'var(--tm-accent-pure)'
+                          : qeGray[300],
+                      cursor: 'pointer',
+                      transition: 'width var(--tm-fast) var(--tm-ease)',
                     }}
                   />
                 ))}
@@ -377,11 +404,11 @@ export function AmbassadorProductDetail({
         ) : galleryError ? (
           <Box
             sx={{
-              aspectRatio: "4/3",
-              bgcolor: "var(--tm-well)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              aspectRatio: '4/3',
+              bgcolor: 'var(--tm-well)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             <ErrorState
@@ -394,8 +421,8 @@ export function AmbassadorProductDetail({
         ) : (
           <Box
             sx={{
-              aspectRatio: "4/3",
-              bgcolor: "var(--tm-well)",
+              aspectRatio: '4/3',
+              bgcolor: 'var(--tm-well)',
             }}
           />
         )}
@@ -407,7 +434,7 @@ export function AmbassadorProductDetail({
         sx={{
           ...qeType.title,
           mb: 0.5,
-          fontSize: "1.75rem",
+          fontSize: '1.75rem',
         }}
       >
         {item.nombre}
@@ -415,8 +442,8 @@ export function AmbassadorProductDetail({
       <Typography
         sx={{
           ...qeType.data,
-          fontSize: "1.35rem",
-          color: "var(--tm-accent)",
+          fontSize: '1.35rem',
+          color: 'var(--tm-accent)',
           mb: 2,
         }}
       >
@@ -424,26 +451,24 @@ export function AmbassadorProductDetail({
       </Typography>
 
       {/* Tags */}
-      <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mb: 2 }}>
+      <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mb: 2 }}>
         {item.isJewelry && <Badge tone="neutral" label="Joya" />}
         {item.categoria && <Badge tone="accent" label={item.categoria} />}
-        {item.estado === "VENDIDA" && (
-          <Badge tone="danger" label="Vendida" />
-        )}
+        {item.estado === 'VENDIDA' && <Badge tone="danger" label="Vendida" />}
       </Box>
 
       {/* Specs Grid */}
       <Box
         sx={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
           gap: 1.5,
           mb: 2.5,
           p: 2,
-          borderRadius: "var(--tm-radius-card)",
-          bgcolor: "var(--tm-surface)",
-          border: "1px solid",
-          borderColor: "var(--tm-border)",
+          borderRadius: 'var(--tm-radius-card)',
+          bgcolor: 'var(--tm-surface)',
+          border: '1px solid',
+          borderColor: 'var(--tm-border)',
         }}
       >
         <SpecCell
@@ -454,12 +479,12 @@ export function AmbassadorProductDetail({
         <SpecCell
           icon={<MapPin size={16} />}
           label="Origen"
-          value={item.ubicacion || "-"}
+          value={item.ubicacion || '-'}
         />
         <SpecCell
           icon={<Award size={16} />}
           label="Calidad"
-          value={item.calidad || "-"}
+          value={item.calidad || '-'}
         />
         {item.talla && (
           <SpecCell
@@ -489,26 +514,44 @@ export function AmbassadorProductDetail({
         fullWidth
         variant="contained"
         startIcon={<MessageCircle size={18} />}
+        onClick={handleContact}
+        disabled={!canContact}
+        aria-label={
+          canContact
+            ? `${t.ambassador.museum?.contactAmbassador ?? 'Contactar Embajador'} por WhatsApp sobre ${item.nombre}`
+            : undefined
+        }
+        title={
+          canContact
+            ? undefined
+            : 'Este embajador aún no tiene un WhatsApp registrado'
+        }
         sx={{
-          bgcolor: "var(--tm-accent-strong)",
-          color: "var(--tm-on-accent)",
-          borderRadius: "var(--tm-radius-control)",
+          bgcolor: 'var(--tm-accent-strong)',
+          color: 'var(--tm-on-accent)',
+          borderRadius: 'var(--tm-radius-control)',
           py: 1.5,
+          minHeight: 44,
           fontWeight: 600,
-          textTransform: "none",
-          fontSize: "0.95rem",
-          "&:hover": { bgcolor: "var(--tm-accent)" },
+          textTransform: 'none',
+          fontSize: '0.95rem',
+          '&:hover': { bgcolor: 'var(--tm-accent)' },
+          '&.Mui-disabled': {
+            bgcolor: 'var(--tm-well)',
+            color: 'var(--tm-subtle)',
+            border: '1px solid var(--tm-border)',
+          },
         }}
       >
-        Contactar Embajador
+        {t.ambassador.museum?.contactAmbassador ?? 'Contactar Embajador'}
       </Button>
 
       {/* Description */}
       {item.description && (
         <Typography
           sx={{
-            color: "text.secondary",
-            fontSize: "0.85rem",
+            color: 'text.secondary',
+            fontSize: '0.85rem',
             lineHeight: 1.6,
             mt: 2,
           }}
@@ -530,13 +573,13 @@ function SpecCell({
   value: string;
 }) {
   return (
-    <Box sx={{ textAlign: "center" }}>
+    <Box sx={{ textAlign: 'center' }}>
       <Box
         sx={{
-          color: "var(--tm-subtle)",
+          color: 'var(--tm-subtle)',
           mb: 0.5,
-          display: "flex",
-          justifyContent: "center",
+          display: 'flex',
+          justifyContent: 'center',
         }}
       >
         {icon}
@@ -544,13 +587,13 @@ function SpecCell({
       <Typography
         sx={{
           ...qeType.overline,
-          color: "var(--tm-muted)",
+          color: 'var(--tm-muted)',
           mb: 0.25,
         }}
       >
         {label}
       </Typography>
-      <Typography sx={{ ...qeType.data, fontSize: "0.9375rem" }}>
+      <Typography sx={{ ...qeType.data, fontSize: '0.9375rem' }}>
         {value}
       </Typography>
     </Box>

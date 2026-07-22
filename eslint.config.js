@@ -95,6 +95,8 @@ export default tseslint.config(
     files: [
       'src/components/treasure/browser/**/*.{ts,tsx}',
       'src/components/comparison/**/*.{ts,tsx}',
+      'src/pages/ambassadors/**/*.{ts,tsx}',
+      'src/components/ambassador/**/*.{ts,tsx}',
       'eslint-fixtures/migrated/**/*.{ts,tsx}',
     ],
     languageOptions: {
