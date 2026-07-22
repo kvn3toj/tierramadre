@@ -7,18 +7,11 @@
  */
 
 import { useMemo } from "react";
-import { Box, Typography, Avatar, alpha, useTheme } from "@mui/material";
+import { Box, Typography, Avatar } from "@mui/material";
 import { Star, Gem, ArrowUpRight } from "lucide-react";
 import type { TreasureItem } from "../../types";
 import { Asesor } from "../../hooks/useAsesores";
-import {
-  emeraldCore,
-  goldAccent,
-  surfacesDark,
-  surfacesLight,
-  cssTransition,
-  fontFamilies,
-} from "../../design-system/index";
+import { qeFont, qeGray, zIndex } from "../../design-system/index";
 import { deriveRating } from "../../utils/formatting";
 import { useReducedMotion } from "../../hooks/useReducedMotion";
 
@@ -59,21 +52,25 @@ interface AsesorCardProps {
   isTopRanked?: boolean;
 }
 
-function getRoleBadge(role: string | undefined, isLight: boolean) {
-  const r = (role || "").toLowerCase();
-  const isAdmin = r.includes("admin");
+/**
+ * Elite reads neutral and Embajador reads emerald. DS3 has a single
+ * saturated colour, so the two roles cannot be told apart by hue alone —
+ * the label carries the distinction (WCAG 1.4.1).
+ */
+function getRoleBadge(role: string | undefined) {
+  const isAdmin = (role || "").toLowerCase().includes("admin");
 
   if (isAdmin) {
     return {
       label: "Elite",
-      bgcolor: alpha(goldAccent.primary, 0.14),
-      color: isLight ? goldAccent.dark : goldAccent.light,
+      bgcolor: "var(--tm-well)",
+      color: "var(--tm-muted)",
     };
   }
   return {
     label: "Embajador",
-    bgcolor: alpha(emeraldCore.primary, 0.1),
-    color: emeraldCore.primary,
+    bgcolor: "var(--tm-accent-wash)",
+    color: "var(--tm-accent)",
   };
 }
 
@@ -82,21 +79,12 @@ export default function AsesorCard({
   onViewProducts,
   isTopRanked,
 }: AsesorCardProps) {
-  const theme = useTheme();
-  const isLight = theme.palette.mode === "light";
   const prefersReducedMotion = useReducedMotion();
 
   const rating = deriveRating(asesor.productCount || 0);
-  const badge = getRoleBadge(asesor.role, isLight);
+  const badge = getRoleBadge(asesor.role);
   const productCount = asesor.productCount || 0;
   const hasProducts = productCount > 0;
-  const isAdmin = (asesor.role || "").toLowerCase().includes("admin");
-
-  // Accent: emerald for the destacado (#1) card, gold for Elite (admin)
-  const accent = isTopRanked ? emeraldCore.primary : goldAccent.primary;
-  const showAccentLine = isAdmin || isTopRanked;
-  // Avatar wears gold when Elite, emerald otherwise
-  const avatarAccent = isAdmin ? goldAccent.primary : emeraldCore.primary;
 
   const previewItems = useMemo(
     () => resolvePreviewItems(asesor.slug, asesor.products, 3),
@@ -120,66 +108,29 @@ export default function AsesorCard({
       sx={{
         display: "flex",
         flexDirection: "column",
-        borderRadius: "20px",
-        bgcolor: isLight
-          ? surfacesLight.surface.default
-          : surfacesDark.background.secondary,
+        borderRadius: "var(--tm-radius-card)",
+        bgcolor: "var(--tm-surface)",
         border: "1px solid",
-        borderColor: isTopRanked
-          ? alpha(emeraldCore.primary, 0.35)
-          : isLight
-            ? isAdmin
-              ? alpha(goldAccent.primary, 0.18)
-              : surfacesLight.border.light
-            : isAdmin
-              ? alpha(goldAccent.primary, 0.14)
-              : surfacesDark.border.light,
-        // Always-on soft elevation gives the card a premium, lifted feel
-        boxShadow: isLight
-          ? "0 1px 2px rgba(0,0,0,0.04), 0 6px 18px rgba(0,0,0,0.045)"
-          : "0 1px 2px rgba(0,0,0,0.3), 0 6px 18px rgba(0,0,0,0.22)",
+        // The top-ranked card earns a heavier border; every other card —
+        // Elite included — takes the plain hairline. Depth is borders-first.
+        borderColor: isTopRanked ? "var(--tm-accent)" : "var(--tm-border)",
         cursor: "pointer",
         transition: prefersReducedMotion
           ? "none"
-          : `all ${cssTransition.default}`,
+          : "border-color var(--tm-base) var(--tm-ease)",
         position: "relative",
         overflow: "hidden",
-        // Top accent hairline for Elite / Destacado cards
-        ...(showAccentLine && {
-          "&::before": {
-            content: '""',
-            position: "absolute",
-            top: 0,
-            left: "12%",
-            right: "12%",
-            height: "2px",
-            background: `linear-gradient(90deg, transparent, ${accent}, transparent)`,
-            opacity: 0.7,
-            borderRadius: "0 0 2px 2px",
-          },
-        }),
         "&:hover": {
-          transform: prefersReducedMotion ? "none" : "translateY(-3px)",
-          zIndex: 2,
-          boxShadow: isLight
-            ? `0 6px 14px ${alpha("#000", 0.06)}, 0 16px 36px ${alpha("#000", 0.08)}`
-            : `0 8px 22px ${alpha("#000", 0.4)}, 0 16px 40px ${alpha("#000", 0.32)}`,
-          borderColor: alpha(
-            isTopRanked ? emeraldCore.primary : avatarAccent,
-            0.4,
-          ),
+          zIndex: zIndex.base + 1,
+          borderColor: "var(--tm-accent)",
           "& .asesor-card-arrow": {
-            bgcolor: alpha(emeraldCore.primary, isLight ? 0.1 : 0.18),
-            color: emeraldCore.primary,
-            transform: prefersReducedMotion ? "none" : "translate(1px, -1px)",
+            bgcolor: "var(--tm-accent-wash)",
+            color: "var(--tm-accent)",
           },
-        },
-        "&:active": {
-          transform: prefersReducedMotion ? "none" : "translateY(-1px)",
         },
         "&:focus-visible": {
-          outline: `2px solid ${emeraldCore.primary}`,
-          outlineOffset: 2,
+          outline: "none",
+          boxShadow: "var(--tm-focus-ring)",
         },
       }}
     >
@@ -205,16 +156,6 @@ export default function AsesorCard({
             justifyContent: "center",
           }}
         >
-          {/* Ambient glow */}
-          <Box
-            sx={{
-              position: "absolute",
-              inset: -8,
-              borderRadius: "50%",
-              background: `radial-gradient(circle, ${alpha(avatarAccent, 0.1)} 0%, transparent 68%)`,
-              pointerEvents: "none",
-            }}
-          />
           {/* Thin outer ring */}
           <Box
             sx={{
@@ -222,7 +163,7 @@ export default function AsesorCard({
               inset: -2,
               borderRadius: "50%",
               border: "1px solid",
-              borderColor: alpha(avatarAccent, isAdmin ? 0.32 : 0.16),
+              borderColor: "var(--tm-border)",
             }}
           />
           <Avatar
@@ -233,13 +174,10 @@ export default function AsesorCard({
               height: 50,
               fontSize: "1.2rem",
               fontWeight: 700,
-              bgcolor: isAdmin
-                ? alpha(goldAccent.primary, 0.12)
-                : alpha(emeraldCore.primary, 0.12),
-              color: avatarAccent,
+              bgcolor: "var(--tm-accent-wash)",
+              color: "var(--tm-accent)",
               border: "2px solid",
-              borderColor: isLight ? "#fff" : surfacesDark.background.secondary,
-              boxShadow: `0 0 0 1.5px ${alpha(avatarAccent, 0.6)}`,
+              borderColor: "var(--tm-surface)",
             }}
           >
             {asesor.name.charAt(0).toUpperCase()}
@@ -258,7 +196,7 @@ export default function AsesorCard({
         >
           <Typography
             sx={{
-              fontFamily: fontFamilies.display,
+              fontFamily: qeFont.serif,
               fontWeight: 600,
               fontSize: "1.08rem",
               lineHeight: 1.15,
@@ -276,10 +214,10 @@ export default function AsesorCard({
           {asesor.especialidad && (
             <Typography
               sx={{
-                fontFamily: fontFamilies.display,
+                fontFamily: qeFont.serif,
                 fontStyle: "italic",
                 fontSize: "0.82rem",
-                color: "text.secondary",
+                color: "var(--tm-muted)",
                 opacity: 0.9,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -313,7 +251,7 @@ export default function AsesorCard({
                 bgcolor: badge.bgcolor,
                 color: badge.color,
                 border: "1px solid",
-                borderColor: alpha(badge.color, 0.22),
+                borderColor: "var(--tm-border)",
                 borderRadius: "999px",
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
@@ -335,25 +273,21 @@ export default function AsesorCard({
                   sx={{
                     width: "1px",
                     height: 11,
-                    bgcolor: alpha(isLight ? "#000" : "#fff", 0.12),
+                    bgcolor: "var(--tm-hairline)",
                   }}
                 />
                 {rating && (
                   <Box
                     sx={{ display: "flex", alignItems: "center", gap: 0.35 }}
                   >
-                    <Star
-                      size={11}
-                      fill={goldAccent.primary}
-                      color={goldAccent.primary}
-                    />
+                    <Star size={11} style={{ color: "var(--tm-muted)" }} />
                     <Typography
                       sx={{
-                        fontFamily: fontFamilies.display,
+                        fontFamily: qeFont.serif,
                         fontSize: "0.86rem",
                         fontWeight: 600,
                         lineHeight: 1,
-                        color: goldAccent.primary,
+                        color: "var(--tm-muted)",
                         fontVariantNumeric: "lining-nums",
                       }}
                     >
@@ -365,10 +299,10 @@ export default function AsesorCard({
                   <Gem size={10} style={{ opacity: 0.45 }} />
                   <Typography
                     sx={{
-                      fontFamily: fontFamilies.display,
+                      fontFamily: qeFont.serif,
                       fontSize: "0.86rem",
                       lineHeight: 1,
-                      color: "text.secondary",
+                      color: "var(--tm-muted)",
                       fontWeight: 600,
                       fontVariantNumeric: "lining-nums",
                     }}
@@ -392,11 +326,11 @@ export default function AsesorCard({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            bgcolor: isLight ? alpha("#000", 0.03) : alpha("#fff", 0.05),
-            color: "text.secondary",
+            bgcolor: "var(--tm-well)",
+            color: "var(--tm-muted)",
             transition: prefersReducedMotion
               ? "none"
-              : `all ${cssTransition.default}`,
+              : "background-color var(--tm-base) var(--tm-ease), color var(--tm-base) var(--tm-ease)",
           }}
         >
           <ArrowUpRight size={16} strokeWidth={2} />
@@ -423,11 +357,10 @@ export default function AsesorCard({
                   position: "relative",
                   flex: 1,
                   aspectRatio: "4/3",
-                  borderRadius: "11px",
+                  borderRadius: "var(--tm-radius-well)",
                   overflow: "hidden",
-                  bgcolor: isLight ? alpha("#000", 0.04) : alpha("#fff", 0.04),
-                  // Subtle inset ring lifts the thumbnails off the card
-                  boxShadow: `inset 0 0 0 1px ${alpha(isLight ? "#000" : "#fff", 0.06)}`,
+                  bgcolor: "var(--tm-well)",
+                  boxShadow: "inset 0 0 0 1px var(--tm-border)",
                 }}
               >
                 <img
@@ -449,20 +382,19 @@ export default function AsesorCard({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      background: `linear-gradient(to top, ${alpha("#000", 0.55)}, ${alpha("#000", 0.3)})`,
-                      backdropFilter: "blur(1px)",
+                      // On-photo chrome: the "+N" tile scrim.
+                      bgcolor: "var(--tm-scrim)",
                     }}
                   >
                     <Typography
                       sx={{
-                        fontFamily: fontFamilies.display,
-                        color: "#fff",
+                        fontFamily: qeFont.serif,
+                        color: qeGray[0],
                         fontWeight: 600,
                         fontSize: "1rem",
                         lineHeight: 1,
                         letterSpacing: "0.01em",
                         fontVariantNumeric: "lining-nums",
-                        textShadow: "0 1px 3px rgba(0,0,0,0.5)",
                       }}
                     >
                       +{extraCount}
