@@ -18,8 +18,7 @@ import {
 } from '@mui/material';
 import { X, ShieldCheck, ChevronLeft, ChevronRight, Share2, Clock } from 'lucide-react';
 import { TreasureItem } from '../../../../types';
-import { brand, lightTokens, darkTokens, legacyTypography as typography, zIndex, cssTransition } from '../../../../design-system';
-import { emeraldCore, goldAccent } from '../../../../design-system/tokens/colors';
+import { qeFont, qeGray, zIndex } from '../../../../design-system';
 import { PriceDisplay } from '../../../../components/price-simulator/PriceDisplay';
 import { accentuate } from '../../../../pages/collection/CollectionPage';
 import { formatCarats } from '../../../../utils/formatting';
@@ -64,7 +63,6 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
   onShare,
 }) => {
   const theme = useTheme();
-  const isLight = theme.palette.mode === 'light';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoLoading, setVideoLoading] = useState(true);
@@ -193,8 +191,8 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
       fullScreen={isMobile}
       PaperProps={{
         sx: {
-          borderRadius: isMobile ? 0 : 3,
-          bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
+          borderRadius: isMobile ? 0 : 'var(--tm-radius-sheet)',
+          bgcolor: 'var(--tm-surface)',
         },
       }}
     >
@@ -210,9 +208,9 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
             top: isMobile ? 'max(env(safe-area-inset-top, 8px), 8px)' : 8,
             right: 8,
             zIndex: zIndex.base,
-            bgcolor: 'rgba(0,0,0,0.5)',
-            color: '#fff',
-            '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+            bgcolor: 'var(--tm-scrim)',
+            color: qeGray[0],
+            '&:hover': { bgcolor: 'var(--tm-scrim)' },
           }}
         >
           <X size={20} />
@@ -233,7 +231,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                 {gallerySlides.map((slide) => (
                   <Box key={slide.id} sx={{ minWidth: '100%', aspectRatio: '1/1', position: 'relative' }}>
                     {slide.type === 'video' ? (
-                      <Box sx={{ width: '100%', height: '100%', bgcolor: '#000', position: 'relative' }}>
+                      <Box sx={{ width: '100%', height: '100%', bgcolor: qeGray[900], position: 'relative' }}>
                         {videoLoading && activeSlide === gallerySlides.indexOf(slide) && (
                           <Box
                             sx={{
@@ -247,8 +245,8 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                               gap: 1.5,
                             }}
                           >
-                            <CircularProgress size={40} aria-label="Cargando" sx={{ color: brand.emerald[400] }} />
-                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                            <CircularProgress size={40} aria-label="Cargando" sx={{ color: 'var(--tm-accent)' }} />
+                            <Typography variant="caption" sx={{ color: qeGray[300] }}>
                               Loading video...
                             </Typography>
                           </Box>
@@ -297,7 +295,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     sx={{
                       minWidth: '100%',
                       aspectRatio: '1/1',
-                      bgcolor: isLight ? '#f5f5f5' : '#1a1a1a',
+                      bgcolor: 'var(--tm-well)',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
@@ -320,7 +318,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                           p: 4,
                         }}
                       >
-                        <ShieldCheck size={56} color={brand.emerald[500]} />
+                        <ShieldCheck size={56} style={{ color: 'var(--tm-accent)' }} />
                         <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary', textAlign: 'center' }}>
                           Authenticity Certificate
                         </Typography>
@@ -332,9 +330,9 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                             mt: 1,
                             px: 3,
                             py: 1,
-                            borderRadius: 2,
-                            bgcolor: brand.emerald[500],
-                            color: '#fff',
+                            borderRadius: 'var(--tm-radius-control)',
+                            bgcolor: 'var(--tm-accent-strong)',
+                            color: 'var(--tm-on-accent)',
                             fontWeight: 600,
                             fontSize: '0.875rem',
                           }}
@@ -357,7 +355,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                               gap: 1.5,
                             }}
                           >
-                            <CircularProgress size={40} aria-label="Cargando" sx={{ color: brand.emerald[400] }} />
+                            <CircularProgress size={40} aria-label="Cargando" sx={{ color: 'var(--tm-accent)' }} />
                             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                               Loading certificate...
                             </Typography>
@@ -390,15 +388,14 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     position: 'absolute',
                     top: 12,
                     left: 12,
-                    bgcolor: 'rgba(0,0,0,0.5)',
-                    backdropFilter: 'blur(4px)',
-                    borderRadius: 1.5,
+                    bgcolor: 'var(--tm-scrim)',
+                    borderRadius: 'var(--tm-radius-well)',
                     px: 1,
                     py: 0.3,
                     zIndex: zIndex.base,
                   }}
                 >
-                  <Typography sx={{ color: '#fff', fontSize: '0.7rem', fontWeight: 600 }}>
+                  <Typography sx={{ color: qeGray[0], fontSize: '0.7rem', fontWeight: 600 }}>
                     {activeSlide + 1} / {slideCount}
                   </Typography>
                 </Box>
@@ -412,9 +409,8 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     bottom: 40,
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    bgcolor: 'rgba(0,0,0,0.5)',
-                    backdropFilter: 'blur(4px)',
-                    borderRadius: 2,
+                    bgcolor: 'var(--tm-scrim)',
+                    borderRadius: 'var(--tm-radius-control)',
                     px: 1.5,
                     py: 0.5,
                     display: 'flex',
@@ -423,8 +419,8 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     zIndex: zIndex.base,
                   }}
                 >
-                  <CircularProgress size={14} sx={{ color: '#fff' }} />
-                  <Typography sx={{ color: '#fff', fontSize: '0.7rem' }}>
+                  <CircularProgress size={14} sx={{ color: qeGray[0] }} />
+                  <Typography sx={{ color: qeGray[0], fontSize: '0.7rem' }}>
                     Loading gallery...
                   </Typography>
                 </Box>
@@ -441,9 +437,9 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                         left: 8,
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        bgcolor: 'rgba(0,0,0,0.5)',
-                        color: '#fff',
-                        '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                        bgcolor: 'var(--tm-scrim)',
+                        color: qeGray[0],
+                        '&:hover': { bgcolor: 'var(--tm-scrim)' },
                         zIndex: zIndex.base,
                       }}
                     >
@@ -458,9 +454,9 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                         right: 8,
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        bgcolor: 'rgba(0,0,0,0.5)',
-                        color: '#fff',
-                        '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                        bgcolor: 'var(--tm-scrim)',
+                        color: qeGray[0],
+                        '&:hover': { bgcolor: 'var(--tm-scrim)' },
                         zIndex: zIndex.base,
                       }}
                     >
@@ -491,11 +487,12 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                         width: activeSlide === i ? 18 : 8,
                         height: 8,
                         borderRadius: 4,
-                        bgcolor: activeSlide === i
-                          ? (i === certSlideIndex ? goldAccent.primary : brand.emerald[400])
-                          : 'rgba(255,255,255,0.5)',
+                        // On-photo chrome. The certificate slide no longer gets
+                        // its own gold dot — one saturated colour (§4).
+                        bgcolor:
+                          activeSlide === i ? 'var(--tm-accent-pure)' : qeGray[300],
                         cursor: 'pointer',
-                        transition: cssTransition.fast,
+                        transition: 'width var(--tm-fast) var(--tm-ease)',
                       }}
                     />
                   ))}
@@ -513,17 +510,16 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     display: 'flex',
                     alignItems: 'center',
                     gap: 0.5,
-                    bgcolor: 'rgba(0,0,0,0.6)',
-                    backdropFilter: 'blur(4px)',
-                    borderRadius: 1.5,
+                    bgcolor: 'var(--tm-scrim)',
+                    borderRadius: 'var(--tm-radius-well)',
                     px: 1,
                     py: 0.5,
                     cursor: 'pointer',
-                    zIndex: 1,
+                    zIndex: zIndex.base + 1,
                   }}
                 >
-                  <ShieldCheck size={14} color={brand.emerald[400]} />
-                  <Typography sx={{ color: '#fff', fontSize: '0.7rem', fontWeight: 600 }}>
+                  <ShieldCheck size={14} style={{ color: 'var(--tm-accent-pure)' }} />
+                  <Typography sx={{ color: qeGray[0], fontSize: '0.7rem', fontWeight: 600 }}>
                     Certificate
                   </Typography>
                 </Box>
@@ -548,15 +544,15 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, mt: 0.5 }}>
                     {product.certificateUrl ? (
                       <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.3 }}>
-                        <ShieldCheck size={11} color={emeraldCore.primary} />
-                        <Typography sx={{ fontSize: '12px', fontWeight: 600, color: emeraldCore.primary }}>
+                        <ShieldCheck size={11} style={{ color: 'var(--tm-accent)' }} />
+                        <Typography sx={{ fontSize: '12px', fontWeight: 600, color: 'var(--tm-accent)' }}>
                           Certified
                         </Typography>
                       </Box>
                     ) : (
                       <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.3 }}>
-                        <Clock size={11} color={goldAccent.dark} />
-                        <Typography sx={{ fontSize: '12px', fontWeight: 500, color: goldAccent.dark }}>
+                        <Clock size={11} style={{ color: 'var(--tm-muted)' }} />
+                        <Typography sx={{ fontSize: '12px', fontWeight: 500, color: 'var(--tm-muted)' }}>
                           Being issued
                         </Typography>
                       </Box>
@@ -569,8 +565,8 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     size="small"
                     sx={{
                       mt: 0.25,
-                      color: isLight ? 'rgba(60,60,67,0.4)' : 'rgba(235,235,245,0.4)',
-                      '&:hover': { color: emeraldCore.primary },
+                      color: 'var(--tm-subtle)',
+                      '&:hover': { color: 'var(--tm-accent)' },
                     }}
                   >
                     <Share2 size={18} />
@@ -595,8 +591,8 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                       sx={{
                         fontSize: { xs: '1.25rem', sm: '1.35rem' },
                         fontWeight: 700,
-                        color: emeraldCore.primary,
-                        fontFamily: typography.fontFamily.mono,
+                        color: 'var(--tm-accent)',
+                        fontFamily: qeFont.mono,
                         fontFeatureSettings: '"tnum"',
                         lineHeight: 1.2,
                       }}
@@ -614,7 +610,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                       sx={{
                         fontSize: { xs: '1.25rem', sm: '1.35rem' },
                         fontWeight: 700,
-                        fontFamily: typography.fontFamily.mono,
+                        fontFamily: qeFont.mono,
                         fontFeatureSettings: '"tnum"',
                         lineHeight: 1.2,
                       }}
