@@ -106,19 +106,31 @@ function GridCard({
     .map((s) => (s || '').trim())
     .filter(Boolean)
     .join(', ');
+  // Full "grade · carat · mine" line — used only by the frameless `literal`
+  // (Vitrina) variant, which has no separate value row.
   const specLine = buildSpecLine(item);
-  // Cut (talla) shown in the footer description — gem glyph + name, quiet mono —
-  // so the image well stays clean. Falls back to the abbreviated quality for the
-  // rare item with no recorded cut.
-  // No quality fallback here — quality already lives in the spec line below, so
-  // falling back to it would print the tier twice. Unknown cut → generic "Gema".
+
+  // Faithful footer, two quiet meta rows under the serif name:
+  //   1. Stone-identity line — gem glyph + "cut · weight · origin" (the physical
+  //      description). It owns the full width and never competes with the price.
+  //   2. Value row — the grade stamp (below) on the left, price on the right.
   const cutLabel = item.talla?.trim() || 'Gema';
+  const caratOrMetal =
+    !item.isJewelry && typeof item.peso === 'number'
+      ? `${formatCarats(item.peso)} ct`
+      : item.isJewelry && item.metalType
+        ? item.metalType
+        : '';
+  const mineLabel = (item.procedencia || item.mina || '').trim();
+  const stoneLine = [cutLabel, caratOrMetal, mineLabel]
+    .filter(Boolean)
+    .join(' · ');
   const cutNode = (
     <Box
       sx={{
         display: 'flex',
         alignItems: 'center',
-        gap: '5px',
+        gap: '6px',
         minWidth: 0,
         color: 'var(--tm-muted)',
       }}
@@ -128,17 +140,40 @@ function GridCard({
         sx={{
           fontFamily: 'var(--tm-font-mono)',
           fontSize: '0.62rem',
-          letterSpacing: '0.04em',
+          letterSpacing: '0.03em',
           color: 'var(--tm-muted)',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
         }}
       >
-        {cutLabel}
+        {stoneLine}
       </Typography>
     </Box>
   );
+
+  // Grade stamp: the quality tier as a quiet uppercase mono label, left of the
+  // price. Grades are short (already uppercase in the source, e.g. "C. SUPERIOR",
+  // "F2"), so the price keeps its own baseline and never truncates.
+  const gradeLabel = abbreviateQuality(item.calidad);
+  const gradeNode = gradeLabel ? (
+    <Typography
+      sx={{
+        fontFamily: 'var(--tm-font-mono)',
+        fontSize: '0.59rem',
+        fontWeight: 500,
+        letterSpacing: '0.07em',
+        textTransform: 'uppercase',
+        color: 'var(--tm-muted)',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        minWidth: 0,
+      }}
+    >
+      {gradeLabel}
+    </Typography>
+  ) : undefined;
 
   const handleItemClick = useCallback(() => {
     onItemClick(item);
@@ -281,7 +316,8 @@ function GridCard({
       media={imageWell}
       overlays={isLiteral ? undefined : overlays}
       name={displayName}
-      specLine={specLine}
+      specLine={isLiteral ? specLine : ''}
+      grade={isLiteral ? undefined : gradeNode}
       price={priceEl}
       cut={isLiteral ? undefined : cutNode}
       onClick={handleItemClick}

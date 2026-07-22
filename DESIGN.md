@@ -2,15 +2,15 @@
 name: Tierra Madre — Quiet Emerald (DS3)
 description: The one design system for Tierra Madre's Colombian emerald catalog and sales platform — theme is data, never a fork.
 colors:
-  bg-gallery-wall: '#F7F8F8'
+  bg-gallery-wall: '#E6EAE8'
   bg-gallery-wall-dark: '#0E1110'
-  surface-raised: '#FFFFFF'
+  surface-raised: '#FAFDFC'
   surface-raised-dark: '#15191A'
-  well-vitrine-floor: '#F1F2F2'
+  well-vitrine-floor: '#E0E7E4'
   well-vitrine-floor-dark: '#1B1F1F'
-  border-hairline: '#E4E7E5'
+  border-hairline: '#D2DBD7'
   border-hairline-dark: '#272C2B'
-  divider: '#EBEDEC'
+  divider: '#DEE4E1'
   divider-dark: '#222726'
   text-primary: '#14181A'
   text-primary-dark: '#EAEDEB'
@@ -145,11 +145,11 @@ A cool, green-tinted neutral scale carrying almost the entire surface, with the 
 
 ### Neutral
 
-- **Gallery Wall** (`#F7F8F8` light / `#0E1110` dark): app background.
-- **Surface** (`#FFFFFF` light / `#15191A` dark): cards and raised chrome.
-- **Vitrine Floor** (`#F1F2F2` light / `#1B1F1F` dark): the image well behind a piece — the one surface a stone photograph sits on.
-- **Hairline Border** (`#E4E7E5` light / `#272C2B` dark): 1px component borders.
-- **Divider** (`#EBEDEC` light / `#222726` dark): 1px row/section rules, one step quieter than a border.
+- **Gallery Wall** (`#E6EAE8` light / `#0E1110` dark): app background. In light it sits a real lightness step below the card so a piece reads as a lit object resting on it, not ink on a white sheet (all light neutrals carry a faint emerald tint, OKLCH H166 chroma ~0.006 — no clinical `#fff`).
+- **Surface** (`#FAFDFC` light / `#15191A` dark): cards and raised chrome — the brightest surface, the lit pedestal.
+- **Vitrine Floor** (`#E0E7E4` light / `#1B1F1F` dark): the image well behind a piece — the one surface a stone photograph sits on; the deepest of the three light surfaces so the well reads as an inset.
+- **Hairline Border** (`#D2DBD7` light / `#272C2B` dark): 1px component borders.
+- **Divider** (`#DEE4E1` light / `#222726` dark): 1px row/section rules, one step quieter than a border.
 - **Text Primary / Muted / Subtle** (`#14181A` / `#5C6360` / `#8C928F` light; `#EAEDEB` / `#9AA09D` / `#6B726F` dark): the four-level text hierarchy (a fourth, disabled, sits at 45% opacity of primary). A screen using only two levels has flat hierarchy.
 
 ### Semantic
