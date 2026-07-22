@@ -80,7 +80,8 @@ const INVENTARIO_HEADERS = {
   MEDIDAS: 'medidas',
   CATEGORIA: 'categoría',
   PRECIO_COP: 'precio cop',
-  PRECIO_EMBAJADOR: 'precioembajadorcop', // SOT v3: precio público = tarifa embajador
+  PRECIO_FINAL: 'preciofinalcop', // SOT v3: precio final = costoBase × 2.6
+  PRECIO_EMBAJADOR: 'precioembajadorcop', // compat SOT v2 (deprecado)
   UBICACION: 'ubicación',
   ASESOR: 'asesor',
   ESTADO: 'estado',
@@ -158,12 +159,13 @@ function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
       getByIndex(10) ||
       ''
     ).trim(),
-    // Adaptador SOT v3 (2026-07-21): la legacy tenía "Precio COP"; el SOT v3 lo
-    // retiró — el precio público es la tarifa embajador (`precioEmbajadorCOP`).
-    // Orden: precio cop (legacy) → precioEmbajadorCOP (SOT) → posicional (solo
-    // legacy; en el SOT el índice 11 es costoBaseCOP, por eso va de último).
+    // Adaptador SOT v3 (2026-07-21): la legacy tenía "Precio COP"; el SOT v3 usa
+    // `precioFinalCOP` (= costoBase × 2.6). Orden: precio cop (legacy) →
+    // precioFinalCOP (SOT v3) → precioEmbajadorCOP (SOT v2, deprecado) →
+    // posicional (solo legacy; en el SOT el índice 11 es costoBaseCOP).
     precioCOP: parsePrice(
       getValue(INVENTARIO_HEADERS.PRECIO_COP) ||
+        getValue(INVENTARIO_HEADERS.PRECIO_FINAL) ||
         getValue(INVENTARIO_HEADERS.PRECIO_EMBAJADOR) ||
         getByIndex(11),
     ),
