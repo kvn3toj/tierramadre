@@ -38,9 +38,6 @@ export {
 
 // Analytics & Dashboard Components
 export { default as TabPanel, type TabPanelProps } from './TabPanel';
-export { default as MetricCard, type MetricCardProps } from './MetricCard';
-export { default as StatBox, type StatBoxProps } from './StatBox';
-export { default as GlassCard, type GlassCardProps } from './GlassCard';
 export {
   default as SectionHeader,
   type SectionHeaderProps,

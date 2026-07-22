@@ -13,8 +13,13 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { accentColors } from '../../design-system';
+import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import {
+  accentColors,
+  getQuietEmerald,
+  qeAccent,
+  whiteAlpha,
+} from '../../design-system';
 import { formatCarats } from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import {
@@ -37,7 +42,8 @@ const criteriaConfig: Record<
   best_value: {
     label: 'Mejor Relación Calidad-Precio',
     icon: DollarSign,
-    gradient: `linear-gradient(135deg, ${emeraldCore.primary} 0%, ${emeraldCore.dark} 100%)`, // Emerald green
+    // static context: no theme mode available (module-level config, outside React render)
+    gradient: `linear-gradient(135deg, ${qeAccent.light.pure} 0%, ${qeAccent.light.accent} 100%)`, // Emerald green
   },
   best_investment: {
     label: 'Mejor Inversión',
@@ -57,7 +63,8 @@ const criteriaConfig: Record<
   best_color: {
     label: 'Mejor Color',
     icon: Sparkles,
-    gradient: `linear-gradient(135deg, ${accentColors.success.light} 0%, ${emeraldCore.dark} 100%)`, // Green for color
+    // static context: no theme mode available (module-level config, outside React render)
+    gradient: `linear-gradient(135deg, ${accentColors.success.light} 0%, ${qeAccent.light.accent} 100%)`, // Green for color
   },
   rare_find: {
     label: 'Hallazgo Único',
@@ -72,6 +79,7 @@ export default function RecommendationCard({
   const { formatCurrency } = useCurrencyFormat();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const qe = getQuietEmerald(mode);
 
   const { winner, score, analysis, criteria } = recommendation;
   const config = criteriaConfig[criteria];
@@ -90,11 +98,11 @@ export default function RecommendationCard({
         borderRadius: 3,
         overflow: 'hidden',
         border: '1px solid',
-        borderColor: alpha(emeraldCore.primary, 0.3),
+        borderColor: alpha(qe.accentPure, 0.3),
         bgcolor: isLight
           ? surfacesLight.background.primary
           : surfacesDark.background.primary,
-        boxShadow: `0 4px 12px ${alpha(emeraldCore.primary, 0.1)}`,
+        boxShadow: `0 4px 12px ${alpha(qe.accentPure, 0.1)}`,
       }}
     >
       {/* Header with gradient */}
@@ -107,10 +115,10 @@ export default function RecommendationCard({
           gap: 1,
         }}
       >
-        <Icon size={18} color="#fff" strokeWidth={2.5} />
+        <Icon size={18} color={whiteAlpha(1)} strokeWidth={2.5} />
         <Typography
           sx={{
-            color: '#fff',
+            color: whiteAlpha(1),
             fontSize: '0.75rem',
             fontWeight: 700,
             textTransform: 'uppercase',
@@ -131,7 +139,7 @@ export default function RecommendationCard({
               sx={{
                 width: 50,
                 height: 50,
-                border: `2px solid ${emeraldCore.primary}`,
+                border: `2px solid ${qe.accentPure}`,
               }}
             />
           )}
@@ -140,7 +148,7 @@ export default function RecommendationCard({
               sx={{
                 fontSize: '0.85rem',
                 fontWeight: 700,
-                color: emeraldCore.primary,
+                color: qe.accentPure,
                 mb: 0.25,
               }}
             >
@@ -162,8 +170,8 @@ export default function RecommendationCard({
             label={`${score.score}/100`}
             size="small"
             sx={{
-              bgcolor: alpha(emeraldCore.primary, 0.15),
-              color: emeraldCore.dark,
+              bgcolor: alpha(qe.accentPure, 0.15),
+              color: qe.accent,
               fontWeight: 700,
               fontSize: '0.7rem',
             }}
@@ -180,8 +188,8 @@ export default function RecommendationCard({
             p: 1,
             borderRadius: 1.5,
             bgcolor: isLight
-              ? alpha(emeraldCore.primary, 0.04)
-              : alpha(emeraldCore.primary, 0.08),
+              ? alpha(qe.accentPure, 0.04)
+              : alpha(qe.accentPure, 0.08),
           }}
         >
           {analysis}
@@ -199,7 +207,7 @@ export default function RecommendationCard({
           <MetricPill
             label="Calidad"
             value={score.valueMetrics.qualityScore}
-            color={emeraldCore.primary}
+            color={qe.accentPure}
           />
           <MetricPill
             label="Color"
@@ -221,15 +229,17 @@ export default function RecommendationCard({
         {/* Strengths */}
         {score.strengths.length > 0 && (
           <Box sx={{ mb: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-              <CheckCircle2 size={12} color={emeraldCore.primary} />
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}
+            >
+              <CheckCircle2 size={12} color={qe.accentPure} />
               <Typography
                 sx={{
                   fontSize: '0.6rem',
                   fontWeight: 700,
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
-                  color: emeraldCore.primary,
+                  color: qe.accentPure,
                 }}
               >
                 Fortalezas
@@ -246,7 +256,7 @@ export default function RecommendationCard({
                       width: 4,
                       height: 4,
                       borderRadius: '50%',
-                      bgcolor: emeraldCore.primary,
+                      bgcolor: qe.accentPure,
                       flexShrink: 0,
                     }}
                   />
@@ -269,7 +279,14 @@ export default function RecommendationCard({
         {score.considerations.length > 0 &&
           score.considerations[0] !== 'Sin consideraciones especiales' && (
             <Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  mb: 0.5,
+                }}
+              >
                 <AlertCircle size={12} color={accentColors.warning.light} />
                 <Typography
                   sx={{

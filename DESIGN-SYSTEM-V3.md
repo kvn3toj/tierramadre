@@ -318,6 +318,8 @@ src/design-system/
 
 ESLint (or a lint script) blocks in `src/**` feature code: hex colors & `rgba()` literals · px spacing outside the scale · `zIndex:` integer literals · bare `overflow: 'auto'` · `100vh` / `calc(100vh` · `scroll-behavior` outside theme.ts · imports from `tokens/legacy-compat`. CI runs the §8 checklist as PR template. New tokens require a documented role in this file — a value used twice is a candidate, three times is a token.
 
+**Status (2026-07-21):** enforcement is live via `eslint.config.js` (`npm run lint:ds3`). Rules run as warnings across `src/**` and as errors for migrated directories (currently `src/components/treasure/browser`). Add a directory to the error-escalation block the moment it reaches zero DS3 debt -- see `docs/superpowers/plans/2026-07-21-ds3-fase2-color-token-migration.md`.
+
 ---
 
 *DS v3 — designed against the live audit of 2026-07-17 (`DESIGN-SYSTEM-AUDIT.md`, `SCROLL-UIUX-AUDIT-2026-07-08.md`). Rules 5.1–5.4 codify and extend the shell architecture already proven in Fotosíntesis/Atelier to the whole product.*

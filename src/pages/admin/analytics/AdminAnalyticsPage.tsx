@@ -11,16 +11,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  alpha,
-  IconButton,
-  Tooltip,
-  Tabs,
-  Tab,
-} from '@mui/material';
+import { Box, Typography, IconButton, Tooltip } from '@mui/material';
 import {
   Download,
   RefreshCw,
@@ -29,8 +20,12 @@ import {
   BarChart3,
   Heart,
 } from 'lucide-react';
-import { useThemeMode } from '../../../contexts/ThemeContext';
-import { iosTypographyScale, cssTransition, primitiveSpacing as spacing, iosDimensions } from '../../../design-system';
+import {
+  iosTypographyScale,
+  primitiveSpacing as spacing,
+} from '../../../design-system';
+import { SegmentedControl } from '../../../design-system/components/SegmentedControl';
+import { Card, Skeleton } from '../../../design-system';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 
 // Tab components
@@ -39,10 +34,12 @@ import { useAnalyticsData } from './hooks';
 import Breadcrumbs from '../../../components/shared/Breadcrumbs';
 
 const AdminAnalyticsPage: React.FC = () => {
-  const { mode } = useThemeMode();
   const [activeTab, setActiveTab] = useState(0);
   const [relativeTime, setRelativeTime] = useState('ahora');
-  const isLight = mode === 'light';
+  // Tracks first load only — isLoading also flips true on manual refresh,
+  // and we don't want an already-populated dashboard flashing back to a
+  // skeleton every time the user hits the refresh button.
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   // Get all analytics data from the hook
   const {
@@ -73,6 +70,10 @@ const AdminAnalyticsPage: React.FC = () => {
     lastRefreshedAt,
   } = useAnalyticsData();
 
+  useEffect(() => {
+    if (!isLoading) setHasLoadedOnce(true);
+  }, [isLoading]);
+
   // Auto-update relative time display
   useEffect(() => {
     const updateRelativeTime = () => {
@@ -87,27 +88,40 @@ const AdminAnalyticsPage: React.FC = () => {
     return () => clearInterval(interval);
   }, [lastRefreshedAt]);
 
-  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
+  const handleTabChange = (newValue: string) => {
+    setActiveTab(Number(newValue));
   };
 
   return (
     <Box sx={{ p: spacing.md, pb: 12, maxWidth: 600, mx: 'auto' }}>
       {/* Breadcrumb navigation */}
       <Breadcrumbs
-        items={[
-          { label: 'Cuentas', path: '/cuentas' },
-          { label: 'Analytics' },
-        ]}
+        items={[{ label: 'Cuentas', path: '/cuentas' }, { label: 'Analytics' }]}
       />
 
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: 2,
+        }}
+      >
         <Box>
-          <Typography variant="h5" sx={{ fontSize: iosTypographyScale.title2, fontWeight: 700 }}>
+          <Typography
+            variant="h5"
+            sx={{ fontSize: iosTypographyScale.title2, fontWeight: 700 }}
+          >
             Analytics
           </Typography>
-          <Typography variant="caption" sx={{ fontSize: iosTypographyScale.caption1, color: 'text.secondary' }}>
+          <Typography
+            variant="caption"
+            sx={{
+              fontSize: iosTypographyScale.caption1,
+              color: 'text.secondary',
+            }}
+          >
             Dashboard de negocio · Actualizado {relativeTime}
           </Typography>
         </Box>
@@ -119,102 +133,133 @@ const AdminAnalyticsPage: React.FC = () => {
               disabled={isLoading}
               sx={{ color: emeraldCore.primary }}
             >
-              <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
+              <RefreshCw
+                size={18}
+                className={isLoading ? 'animate-spin' : ''}
+              />
             </IconButton>
           </Tooltip>
           <Tooltip title="Exportar">
-            <IconButton onClick={handleExport} size="small" sx={{ color: emeraldCore.primary }}>
+            <IconButton
+              onClick={handleExport}
+              size="small"
+              sx={{ color: emeraldCore.primary }}
+            >
               <Download size={18} />
             </IconButton>
           </Tooltip>
         </Box>
       </Box>
 
-      {/* iOS-style Segmented Control Tabs */}
-      <Paper
-        elevation={0}
-        sx={{
-          borderRadius: iosDimensions.borderRadiusStandard,
-          bgcolor: isLight ? alpha('#000', 0.05) : alpha('#fff', 0.08),
-          p: 0.5,
-          mb: 3,
-        }}
-      >
-        <Tabs
-          value={activeTab}
+      {/* Segmented control tabs */}
+      <Box sx={{ mb: 3 }}>
+        <SegmentedControl
+          ariaLabel="Sección de analytics"
+          block
+          value={String(activeTab)}
           onChange={handleTabChange}
-          variant="fullWidth"
-          TabIndicatorProps={{ sx: { display: 'none' } }}
-          sx={{
-            minHeight: 36,
-            '& .MuiTab-root': {
-              minHeight: 32,
-              borderRadius: iosDimensions.borderRadiusStandard,
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '0.75rem',
-              color: 'text.secondary',
-              transition: cssTransition.default,
-              py: 0.5,
-              px: 1,
-              minWidth: 0,
-              '&.Mui-selected': {
-                color: 'text.primary',
-                bgcolor: isLight ? 'background.paper' : alpha('#fff', 0.12),
-                boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-              },
+          options={[
+            {
+              value: '0',
+              label: (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <BarChart3 size={14} /> Overview
+                </Box>
+              ),
             },
-          }}
-        >
-          <Tab icon={<BarChart3 size={14} />} iconPosition="start" label="Overview" />
-          <Tab icon={<Package size={14} />} iconPosition="start" label="Products" />
-          <Tab icon={<Users size={14} />} iconPosition="start" label="Users" />
-          <Tab icon={<Heart size={14} />} iconPosition="start" label="Health" />
-        </Tabs>
-      </Paper>
+            {
+              value: '1',
+              label: (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Package size={14} /> Products
+                </Box>
+              ),
+            },
+            {
+              value: '2',
+              label: (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Users size={14} /> Users
+                </Box>
+              ),
+            },
+            {
+              value: '3',
+              label: (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Heart size={14} /> Health
+                </Box>
+              ),
+            },
+          ]}
+        />
+      </Box>
 
       {/* Tab Panels */}
-      <OverviewTab
-        activeTab={activeTab}
-        viewStats={viewStats}
-        totalCotizaciones={totalCotizaciones}
-        weekCotizaciones={weekCotizaciones}
-        healthScores={healthScores}
-        weeklyTrendData={weeklyTrendData}
-        insights={insights}
-        combinedActivity={combinedActivity}
-        cotizacionTopProducts={cotizacionStats?.topProducts}
-        metrics={metrics}
-        generateTrendData={generateTrendData}
-      />
+      {isLoading && !hasLoadedOnce ? (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 1.5,
+          }}
+        >
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} variant="outlined">
+              <Card.Content>
+                <Skeleton variant="text" width="50%" height={14} />
+                <Box sx={{ mt: 1 }}>
+                  <Skeleton variant="text" width="70%" height={28} />
+                </Box>
+              </Card.Content>
+            </Card>
+          ))}
+        </Box>
+      ) : (
+        <>
+          <OverviewTab
+            activeTab={activeTab}
+            viewStats={viewStats}
+            totalCotizaciones={totalCotizaciones}
+            weekCotizaciones={weekCotizaciones}
+            healthScores={healthScores}
+            weeklyTrendData={weeklyTrendData}
+            insights={insights}
+            combinedActivity={combinedActivity}
+            cotizacionTopProducts={cotizacionStats?.topProducts}
+            metrics={metrics}
+            generateTrendData={generateTrendData}
+          />
 
-      <ProductsTab
-        activeTab={activeTab}
-        viewStats={viewStats}
-        topProducts={topProducts}
-        recentProductViews={recentProductViews}
-        generateTrendData={generateTrendData}
-      />
+          <ProductsTab
+            activeTab={activeTab}
+            viewStats={viewStats}
+            topProducts={topProducts}
+            recentProductViews={recentProductViews}
+            generateTrendData={generateTrendData}
+          />
 
-      <UsersTab
-        activeTab={activeTab}
-        viewStats={viewStats}
-        userBreakdown={userBreakdown}
-        topViewers={topViewers}
-      />
+          <UsersTab
+            activeTab={activeTab}
+            viewStats={viewStats}
+            userBreakdown={userBreakdown}
+            topViewers={topViewers}
+          />
 
-      <HealthTab
-        activeTab={activeTab}
-        healthScores={healthScores}
-        healthColor={healthColor}
-        healthInsights={healthInsights}
-        cotizacionTopProducts={cotizacionStats?.topProducts}
-        achievements={achievements}
-        levelInfo={levelInfo}
-        unlockedAchievements={unlockedAchievements}
-        ACHIEVEMENTS={ACHIEVEMENTS}
-        getAchievementProgress={getAchievementProgress}
-      />
+          <HealthTab
+            activeTab={activeTab}
+            healthScores={healthScores}
+            healthColor={healthColor}
+            healthInsights={healthInsights}
+            cotizacionTopProducts={cotizacionStats?.topProducts}
+            achievements={achievements}
+            levelInfo={levelInfo}
+            unlockedAchievements={unlockedAchievements}
+            ACHIEVEMENTS={ACHIEVEMENTS}
+            getAchievementProgress={getAchievementProgress}
+          />
+        </>
+      )}
 
       {/* Footer */}
       <Typography

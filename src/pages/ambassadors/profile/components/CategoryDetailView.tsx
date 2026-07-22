@@ -4,15 +4,11 @@
  */
 
 import { useState, useMemo } from 'react';
-import { Box, Typography, Chip, IconButton, alpha, useTheme } from '@mui/material';
-import { ArrowLeft } from 'lucide-react';
+import { Box, Typography, IconButton } from '@mui/material';
+import { ArrowLeft, Gem } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../../../contexts/LanguageContext';
-import {
-  emeraldCore,
-  cssTransition,
-  blurValues,
-} from '../../../../design-system';
+import { EmptyState, SegmentedControl } from '../../../../design-system';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import { getQualityTiers } from '../../../../utils/productCategories';
 import { ProductListCard } from './ProductListCard';
@@ -26,9 +22,7 @@ interface CategoryDetailViewProps {
 }
 
 export function CategoryDetailView({ category, onBack, onProductClick }: CategoryDetailViewProps) {
-  const theme = useTheme();
   const { t } = useLanguage();
-  const isLight = theme.palette.mode === 'light';
   const prefersReducedMotion = useReducedMotion();
   const [activeFilter, setActiveFilter] = useState<string>('all');
 
@@ -59,16 +53,14 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
           onClick={onBack}
           aria-label={t.actions.back}
           sx={{
-            bgcolor: isLight
-              ? alpha('#000', 0.04)
-              : alpha('#fff', 0.06),
-            backdropFilter: `blur(${blurValues.md})`,
-            width: 36,
-            height: 36,
+            bgcolor: 'var(--tm-well)',
+            border: '1px solid var(--tm-border)',
+            color: 'var(--tm-text)',
+            width: 44,
+            height: 44,
             '&:hover': {
-              bgcolor: isLight
-                ? alpha('#000', 0.08)
-                : alpha('#fff', 0.1),
+              bgcolor: 'var(--tm-well)',
+              borderColor: 'var(--tm-accent)',
             },
           }}
         >
@@ -82,67 +74,18 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
         </Typography>
       </Box>
 
-      {/* Filter Chips */}
+      {/* Quality filter — one control, one selected state (DS3 §canonical) */}
       {qualityTiers.length > 1 && (
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 0.75,
-            mb: 2,
-            overflowX: 'auto',
-            pb: 0.5,
-            scrollbarWidth: 'none',
-            '&::-webkit-scrollbar': { display: 'none' },
-          }}
-        >
-          <Chip
-            label={t.common.all}
-            size="small"
-            onClick={() => setActiveFilter('all')}
-            sx={{
-              fontWeight: 600,
-              fontSize: '0.72rem',
-              transition: cssTransition.default,
-              ...(activeFilter === 'all'
-                ? {
-                    bgcolor: emeraldCore.primary,
-                    color: '#fff',
-                    '&:hover': { bgcolor: emeraldCore.dark },
-                  }
-                : {
-                    bgcolor: isLight
-                      ? alpha(emeraldCore.primary, 0.08)
-                      : alpha(emeraldCore.primary, 0.12),
-                    color: emeraldCore.primary,
-                  }),
-            }}
+        <Box sx={{ mb: 2 }}>
+          <SegmentedControl
+            ariaLabel='Calidad'
+            value={activeFilter}
+            onChange={setActiveFilter}
+            options={[
+              { value: 'all', label: t.common.all },
+              ...qualityTiers.map((tier) => ({ value: tier, label: tier })),
+            ]}
           />
-          {qualityTiers.map((tier) => (
-            <Chip
-              key={tier}
-              label={tier}
-              size="small"
-              onClick={() => setActiveFilter(tier)}
-              sx={{
-                fontWeight: 600,
-                fontSize: '0.72rem',
-                flexShrink: 0,
-                transition: cssTransition.default,
-                ...(activeFilter === tier
-                  ? {
-                      bgcolor: emeraldCore.primary,
-                      color: '#fff',
-                      '&:hover': { bgcolor: emeraldCore.dark },
-                    }
-                  : {
-                      bgcolor: isLight
-                        ? alpha('#000', 0.04)
-                        : alpha('#fff', 0.06),
-                      color: 'text.secondary',
-                    }),
-              }}
-            />
-          ))}
         </Box>
       )}
 
@@ -167,11 +110,15 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
       </Box>
 
       {filteredItems.length === 0 && (
-        <Box sx={{ textAlign: 'center', py: 6 }}>
-          <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
-            {t.common.noResults}
-          </Typography>
-        </Box>
+        <EmptyState
+          icon={Gem}
+          title={t.common.noResults}
+          action={
+            activeFilter !== 'all'
+              ? { label: t.common.all, onClick: () => setActiveFilter('all') }
+              : undefined
+          }
+        />
       )}
     </motion.div>
   );

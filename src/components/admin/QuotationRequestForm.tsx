@@ -8,7 +8,6 @@ import { useState } from 'react';
 import {
   Box,
   Typography,
-  TextField,
   Button,
   MenuItem,
   Stack,
@@ -19,6 +18,7 @@ import {
   Card,
   CardContent,
 } from '@mui/material';
+import { TextField } from '../../design-system/components/TextField';
 
 // Helper to format number with Colombian thousands separator (dots)
 const formatPriceCOP = (value: number): string => {
@@ -85,24 +85,30 @@ function generateTempRequestId(): string {
 export default function QuotationRequestForm() {
   const navigate = useNavigate();
   const { user } = useGoogleAuth();
-  const [formData, setFormData] = useState<QuotationRequestFormData>(initialFormData);
+  const [formData, setFormData] =
+    useState<QuotationRequestFormData>(initialFormData);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   // Temporary ID for media uploads (generated once per form session)
   const [tempRequestId] = useState<string>(() => generateTempRequestId());
   // Display value for budget input (formatted with dots)
-  const [budgetDisplay, setBudgetDisplay] = useState(() => formatPriceCOP(initialFormData.budgetMax));
+  const [budgetDisplay, setBudgetDisplay] = useState(() =>
+    formatPriceCOP(initialFormData.budgetMax),
+  );
 
-  const handleChange = (field: keyof QuotationRequestFormData, value: unknown) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleChange = (
+    field: keyof QuotationRequestFormData,
+    value: unknown,
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
     setError(null);
   };
 
   // Handle budget input with thousands formatting
   const handleBudgetChange = (inputValue: string) => {
     const numericValue = parsePriceCOP(inputValue);
-    setFormData(prev => ({ ...prev, budgetMax: numericValue }));
+    setFormData((prev) => ({ ...prev, budgetMax: numericValue }));
     setBudgetDisplay(formatPriceCOP(numericValue));
     setError(null);
   };
@@ -167,7 +173,16 @@ export default function QuotationRequestForm() {
 
   if (success) {
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', p: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '60vh',
+          p: 3,
+        }}
+      >
         <Box
           sx={{
             width: 80,
@@ -185,7 +200,10 @@ export default function QuotationRequestForm() {
         <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
           Solicitud Creada
         </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center' }}>
+        <Typography
+          variant="body2"
+          sx={{ color: 'text.secondary', textAlign: 'center' }}
+        >
           La solicitud de cotizacion ha sido enviada al proveedor.
         </Typography>
       </Box>
@@ -196,10 +214,7 @@ export default function QuotationRequestForm() {
     <Box sx={{ p: 2, pb: 10 }}>
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-        <Button
-          onClick={() => navigate(-1)}
-          sx={{ minWidth: 'auto', p: 1 }}
-        >
+        <Button onClick={() => navigate(-1)} sx={{ minWidth: 'auto', p: 1 }}>
           <ArrowLeft size={20} />
         </Button>
         <Box>
@@ -235,7 +250,9 @@ export default function QuotationRequestForm() {
             label="Peso Minimo (ct)"
             type="number"
             value={formData.weightMin || ''}
-            onChange={(e) => handleChange('weightMin', parseFloat(e.target.value) || 0)}
+            onChange={(e) =>
+              handleChange('weightMin', parseFloat(e.target.value) || 0)
+            }
             fullWidth
             InputProps={{
               endAdornment: <InputAdornment position="end">ct</InputAdornment>,
@@ -246,7 +263,9 @@ export default function QuotationRequestForm() {
             label="Peso Maximo (ct)"
             type="number"
             value={formData.weightMax || ''}
-            onChange={(e) => handleChange('weightMax', parseFloat(e.target.value) || 0)}
+            onChange={(e) =>
+              handleChange('weightMax', parseFloat(e.target.value) || 0)
+            }
             fullWidth
             InputProps={{
               endAdornment: <InputAdornment position="end">ct</InputAdornment>,
@@ -290,7 +309,9 @@ export default function QuotationRequestForm() {
           label="Cantidad"
           type="number"
           value={formData.quantity || 1}
-          onChange={(e) => handleChange('quantity', parseInt(e.target.value) || 1)}
+          onChange={(e) =>
+            handleChange('quantity', parseInt(e.target.value) || 1)
+          }
           fullWidth
           inputProps={{ min: 1 }}
           helperText="Número de piezas que necesitas"
@@ -311,21 +332,34 @@ export default function QuotationRequestForm() {
         />
 
         {/* Reference Media Upload */}
-        <Card sx={{ bgcolor: alpha(emeraldCore.primary, 0.04), border: 'none', boxShadow: 'none' }}>
+        <Card
+          sx={{
+            bgcolor: alpha(emeraldCore.primary, 0.04),
+            border: 'none',
+            boxShadow: 'none',
+          }}
+        >
           <CardContent sx={{ py: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}
+            >
               <ImagePlus size={18} color={emeraldCore.primary} />
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                 Fotos de Referencia (Opcional)
               </Typography>
             </Box>
-            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 2 }}>
+            <Typography
+              variant="caption"
+              sx={{ color: 'text.secondary', display: 'block', mb: 2 }}
+            >
               Sube imagenes, GIFs o videos de referencia para el proveedor
             </Typography>
             <QuotationMediaUpload
               quotationId={tempRequestId}
               uploadedUrls={formData.referencePhotoUrls || []}
-              onUploadComplete={(urls) => handleChange('referencePhotoUrls', urls)}
+              onUploadComplete={(urls) =>
+                handleChange('referencePhotoUrls', urls)
+              }
               maxFiles={5}
               disabled={submitting}
             />
@@ -354,7 +388,13 @@ export default function QuotationRequestForm() {
         <Button
           variant="contained"
           size="large"
-          startIcon={submitting ? <CircularProgress size={20} color="inherit" /> : <Send size={20} />}
+          startIcon={
+            submitting ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              <Send size={20} />
+            )
+          }
           onClick={handleSubmit}
           disabled={submitting}
           sx={{

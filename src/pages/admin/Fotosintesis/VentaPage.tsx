@@ -30,7 +30,7 @@ import { FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
 import { fotoPaneSx, fotoPageMinHeight } from './components/paneStyles';
 import { StepPills } from './components/StepPills';
 import { spanishText } from './utils/fieldLang';
-import { SegmentedControl } from './components/SegmentedControl';
+import { SegmentedControl } from '../../../design-system/components/SegmentedControl';
 import { FieldLabel } from './components/FieldLabel';
 import { NumberInputWithCalc } from './components/NumberInputWithCalc';
 import { KbdKey } from './components/KbdKey';

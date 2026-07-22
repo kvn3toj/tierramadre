@@ -1,10 +1,11 @@
 /**
- * Tierra Madre Design System - Button Component
+ * Tierra Madre Design System v3 — Button Component
  *
- * 4 variants (primary, secondary, tertiary, danger) x 3 sizes (sm, md, lg)
- * Built on Material-UI with Tierra Madre brand styling.
+ * The ONE button (DS3 §0, §6.1, addendum §B3/§C). Absorbs `IOSButton`,
+ * atelier/foto inline buttons, and `disabledButton`.
  *
- * Designed by ARIA - Capitana del Concilio de Creación
+ * 5 variants (primary · tinted · plain · outlined · danger) x 3 sizes
+ * (sm, md, lg). Borders-first, no gradients, no gold. `--tm-*` only.
  */
 
 import React from 'react';
@@ -14,20 +15,19 @@ import {
   CircularProgress,
   styled,
 } from '@mui/material';
-import { gradients } from '../../tokens/gradients';
-import { shadows } from '../../tokens/shadows';
 import { spacing, componentHeights } from '../../tokens/spacing';
-import { goldAccent } from '../../tokens/colors';
-import { emeraldAlpha, goldAlpha, errorAlpha } from '../../utils/colorUtils';
 import { fontSizes } from '../../tokens/typography';
-import { cssTransition } from '../../tokens/motion';
-import { radius } from '../../tokens/layout';
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
-export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'danger';
+export type ButtonVariant =
+  | 'primary'
+  | 'tinted'
+  | 'plain'
+  | 'outlined'
+  | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends Omit<MuiButtonProps, 'variant' | 'size'> {
@@ -43,6 +43,12 @@ export interface ButtonProps extends Omit<MuiButtonProps, 'variant' | 'size'> {
   endIcon?: React.ReactNode;
   /** Full width button */
   fullWidth?: boolean;
+  /**
+   * The full emerald-cut octagon (DS3 addendum §E1, item 4). Reserve for the
+   * ONE brand CTA per view (Cotizar, Cerrar lote, Registrar venta) — only
+   * meaningful on `variant="primary"`. Everything else stays soft-radius.
+   */
+  bevel?: boolean;
   /**
    * Accessible label — required for icon-only buttons.
    * When children is only an icon (no visible text), you MUST provide aria-label.
@@ -60,19 +66,26 @@ const sizeStyles = {
   sm: {
     height: componentHeights.button.sm,
     padding: `${spacing.xs}px ${spacing.md}px`,
-    fontSize: fontSizes.md,      // 13px footnote
+    fontSize: fontSizes.md, // 13px footnote
   },
   md: {
     height: componentHeights.button.md,
     padding: `${spacing.sm}px ${spacing.lg}px`,
-    fontSize: fontSizes.lg,      // 15px subheadline
+    fontSize: fontSizes.lg, // 15px subheadline
   },
   lg: {
     height: componentHeights.button.lg,
     padding: `${spacing.md}px ${spacing.xl}px`,
-    fontSize: fontSizes.xl,      // 16px callout
+    fontSize: fontSizes.xl, // 16px callout
   },
 };
+
+// Emerald step-cut octagon (§E1 item 4) — chamfers all four corners so a
+// bevel-primary button reads as a table-cut emerald, not a rounded pill.
+// clip-path erases the box-shadow/border at the diagonals by design (§E1
+// discipline note) — the bevel lives on filled elements only.
+const BEVEL_CLIP =
+  'polygon(var(--tm-bevel) 0, calc(100% - var(--tm-bevel)) 0, 100% var(--tm-bevel), 100% calc(100% - var(--tm-bevel)), calc(100% - var(--tm-bevel)) 100%, var(--tm-bevel) 100%, 0 calc(100% - var(--tm-bevel)), 0 var(--tm-bevel))';
 
 // =============================================================================
 // STYLED BUTTON
@@ -80,87 +93,92 @@ const sizeStyles = {
 
 const StyledButton = styled(MuiButton, {
   shouldForwardProp: (prop) =>
-    !['variant', 'buttonSize', 'loading'].includes(prop as string),
+    !['buttonVariant', 'buttonSize', 'loading', 'bevel'].includes(
+      prop as string,
+    ),
 })<{
   buttonVariant: ButtonVariant;
   buttonSize: ButtonSize;
   loading?: boolean;
-}>(({ buttonVariant, buttonSize, loading }) => {
+  bevel?: boolean;
+}>(({ buttonVariant, buttonSize, loading, bevel }) => {
   const size = sizeStyles[buttonSize];
+  const beveled = bevel && buttonVariant === 'primary';
 
   const baseStyles = {
     height: size.height,
     padding: size.padding,
     fontSize: size.fontSize,
     fontWeight: 600,
-    borderRadius: radius.md,
+    borderRadius: beveled ? 0 : 'var(--tm-radius-control)',
+    ...(beveled ? { clipPath: BEVEL_CLIP, WebkitClipPath: BEVEL_CLIP } : {}),
     textTransform: 'none' as const,
-    transition: cssTransition.default,
+    // DS3 §4: transition color/border/opacity only — never layout-shifting props.
+    transition:
+      'background-color var(--tm-fast) var(--tm-ease), border-color var(--tm-fast) var(--tm-ease), opacity var(--tm-fast) var(--tm-ease)',
     opacity: loading ? 0.7 : 1,
-    pointerEvents: loading ? 'none' as const : 'auto' as const,
+    pointerEvents: loading ? ('none' as const) : ('auto' as const),
     '&:focus-visible': {
       outline: 'none',
-      boxShadow: shadows.focus.default,
+      boxShadow: 'var(--tm-focus-ring)',
     },
+    // §6.1: active/press = opacity dim, never a layout-shifting scale.
     '&:active': {
-      transform: 'scale(0.98)',
+      opacity: 0.85,
     },
     '&:disabled': {
-      opacity: 0.5,
+      opacity: 0.45,
+      cursor: 'not-allowed',
     },
   };
 
   const variantStyles = {
     primary: {
-      background: gradients.button.primary,
-      color: '#FFFFFF',
-      boxShadow: shadows.emerald.primary,
-      border: 'none',
-      '&:hover': {
-        background: gradients.button.primaryHover,
-        boxShadow: shadows.emerald.lg,
-      },
-      '&:active': {
-        background: gradients.button.primaryActive,
-      },
-    },
-    secondary: {
-      background: 'transparent',
-      color: goldAccent.primary,
-      border: `2px solid ${goldAccent.primary}`,
-      boxShadow: 'none',
-      '&:hover': {
-        background: goldAlpha(0.08),
-        borderColor: goldAccent.light,
-        boxShadow: shadows.gold.sm,
-      },
-      '&:active': {
-        background: goldAlpha(0.15),
-      },
-    },
-    tertiary: {
-      background: 'transparent',
-      color: 'var(--brand-primary)',
+      backgroundColor: 'var(--tm-accent-strong)',
+      color: 'var(--tm-on-accent)',
       border: 'none',
       boxShadow: 'none',
       '&:hover': {
-        background: emeraldAlpha(0.08),
+        opacity: 0.92,
+      },
+    },
+    tinted: {
+      backgroundColor: 'var(--tm-accent-wash)',
+      color: 'var(--tm-accent)',
+      border: 'none',
+      boxShadow: 'none',
+      '&:hover': {
+        backgroundColor: 'var(--tm-accent-wash-strong)',
+      },
+    },
+    plain: {
+      backgroundColor: 'transparent',
+      color: 'var(--tm-accent)',
+      border: 'none',
+      boxShadow: 'none',
+      '&:hover': {
+        backgroundColor: 'var(--tm-well)',
+      },
+    },
+    outlined: {
+      backgroundColor: 'transparent',
+      color: 'var(--tm-text)',
+      border: '1px solid var(--tm-border)',
+      boxShadow: 'none',
+      '&:hover': {
+        borderColor: 'var(--tm-accent)',
       },
       '&:active': {
-        background: emeraldAlpha(0.15),
+        backgroundColor: 'var(--tm-well)',
       },
     },
     danger: {
-      background: gradients.button.danger,
-      color: '#FFFFFF',
+      backgroundColor: 'var(--tm-danger)',
+      color: 'var(--tm-on-accent)',
       border: 'none',
-      boxShadow: shadows.semantic.error,
+      boxShadow: 'none',
       '&:hover': {
-        background: gradients.button.dangerHover,
-        boxShadow: `0 6px 20px ${errorAlpha(0.4)}`,
-      },
-      '&:active': {
-        background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
+        opacity: 0.92,
       },
     },
   };
@@ -184,11 +202,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       startIcon,
       endIcon,
       fullWidth = false,
+      bevel = false,
       disabled,
       children,
       ...props
     },
-    ref
+    ref,
   ) => {
     return (
       <StyledButton
@@ -196,6 +215,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         buttonVariant={variant}
         buttonSize={size}
         loading={loading}
+        bevel={bevel}
         disabled={disabled || loading}
         fullWidth={fullWidth}
         startIcon={
@@ -214,7 +234,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {children}
       </StyledButton>
     );
-  }
+  },
 );
 
 Button.displayName = 'Button';

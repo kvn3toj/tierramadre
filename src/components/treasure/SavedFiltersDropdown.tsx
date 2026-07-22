@@ -34,7 +34,13 @@ import {
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { FilterPreset } from '../../hooks/useSavedFilters';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { TreasureItem } from '../../types';
+import { useCurrencyFormat } from '../../contexts/CurrencyContext';
+import {
+  emeraldCore,
+  surfacesLight,
+  surfacesDark,
+} from '../../design-system/tokens/colors';
 
 interface SavedFiltersDropdownProps {
   /** List of saved filter presets */
@@ -51,6 +57,14 @@ interface SavedFiltersDropdownProps {
   hasActiveFilters: boolean;
   /** Compact mode for smaller screens */
   compact?: boolean;
+  /**
+   * Recently-viewed pieces, surfaced inside this dropdown rather than as a
+   * standalone strip above the grid — mirroring how the mobile search sheet
+   * already presents them.
+   */
+  recentItems?: TreasureItem[];
+  onRecentClick?: (item: TreasureItem) => void;
+  onClearRecent?: () => void;
 }
 
 export default function SavedFiltersDropdown({
@@ -61,8 +75,12 @@ export default function SavedFiltersDropdown({
   onDeletePreset,
   hasActiveFilters,
   compact = false,
+  recentItems,
+  onRecentClick,
+  onClearRecent,
 }: SavedFiltersDropdownProps) {
   const { t } = useLanguage();
+  const { formatCurrency } = useCurrencyFormat();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
 
@@ -143,8 +161,12 @@ export default function SavedFiltersDropdown({
         startIcon={<Bookmark size={16} />}
         endIcon={<ChevronDown size={14} />}
         sx={{
-          borderColor: isLight ? surfacesLight.border.default : surfacesDark.border.default,
-          color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
+          borderColor: isLight
+            ? surfacesLight.border.default
+            : surfacesDark.border.default,
+          color: isLight
+            ? surfacesLight.text.secondary
+            : surfacesDark.text.secondary,
           textTransform: 'none',
           fontWeight: 500,
           minWidth: compact ? 'auto' : 160,
@@ -154,7 +176,9 @@ export default function SavedFiltersDropdown({
           },
         }}
       >
-        {compact ? '' : `Búsquedas (${presets.length})`}
+        {compact
+          ? ''
+          : `Búsquedas${presets.length > 0 ? ` (${presets.length})` : ''}`}
       </Button>
 
       {/* Dropdown Menu */}
@@ -166,9 +190,13 @@ export default function SavedFiltersDropdown({
           sx: {
             minWidth: 280,
             maxHeight: 400,
-            bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
+            bgcolor: isLight
+              ? surfacesLight.background.primary
+              : surfacesDark.background.primary,
             border: '1px solid',
-            borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.default,
+            borderColor: isLight
+              ? surfacesLight.border.light
+              : surfacesDark.border.default,
             boxShadow: isLight
               ? '0 4px 20px rgba(0, 0, 0, 0.1)'
               : '0 4px 20px rgba(0, 0, 0, 0.4)',
@@ -176,7 +204,14 @@ export default function SavedFiltersDropdown({
         }}
       >
         {/* Header */}
-        <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Box
+          sx={{
+            px: 2,
+            py: 1.5,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
           <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
             Mis Búsquedas Guardadas
           </Typography>
@@ -206,7 +241,9 @@ export default function SavedFiltersDropdown({
           </ListItemIcon>
           <ListItemText
             primary={t.treasure.savedFilters.saveSearch}
-            secondary={hasActiveFilters ? 'Crear nuevo preset' : 'Sin filtros activos'}
+            secondary={
+              hasActiveFilters ? 'Crear nuevo preset' : 'Sin filtros activos'
+            }
             primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
             secondaryTypographyProps={{ variant: 'caption' }}
           />
@@ -215,11 +252,15 @@ export default function SavedFiltersDropdown({
         {/* Presets List */}
         {presets.length === 0 ? (
           <Box sx={{ py: 4, textAlign: 'center' }}>
-            <Filter size={32} color={isLight ? surfacesLight.text.disabled : surfacesDark.text.disabled} />
-            <Typography
-              variant="body2"
-              sx={{ mt: 1, color: 'text.secondary' }}
-            >
+            <Filter
+              size={32}
+              color={
+                isLight
+                  ? surfacesLight.text.disabled
+                  : surfacesDark.text.disabled
+              }
+            />
+            <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
               No tienes búsquedas guardadas
             </Typography>
           </Box>
@@ -310,6 +351,103 @@ export default function SavedFiltersDropdown({
             </MenuItem>
           ))
         )}
+
+        {/* Recently viewed — lives here rather than as a standing strip above
+            the grid, so it costs no vertical space until asked for. */}
+        {recentItems && recentItems.length > 0 && (
+          <Box>
+            <Box
+              sx={{
+                px: 2,
+                py: 1,
+                borderTop: '1px solid',
+                borderColor: 'divider',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 1,
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 600,
+                  color: 'var(--tm-muted)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                }}
+              >
+                Visto recientemente ({recentItems.length})
+              </Typography>
+              {onClearRecent && (
+                <Tooltip title="Limpiar vistos recientemente">
+                  <IconButton
+                    size="small"
+                    aria-label="Limpiar vistos recientemente"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClearRecent();
+                    }}
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      color: 'var(--tm-muted)',
+                      '&:hover': { color: 'var(--tm-danger)' },
+                    }}
+                  >
+                    <X size={14} />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Box>
+            {recentItems.slice(0, 6).map((item) => {
+              const displayName = item.nombre
+                .replace(/^L:.*?\s/, '')
+                .replace(/^L:/, '')
+                .trim();
+              return (
+                <MenuItem
+                  key={item.item}
+                  onClick={() => {
+                    onRecentClick?.(item);
+                    handleCloseMenu();
+                  }}
+                  sx={{ gap: 1.25, py: 1 }}
+                >
+                  <Box
+                    component="img"
+                    src={item.thumbnailUrl || item.imagen}
+                    alt=""
+                    loading="lazy"
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      flexShrink: 0,
+                      objectFit: 'cover',
+                      borderRadius: 'var(--tm-radius-well)',
+                      bgcolor: 'var(--tm-well)',
+                    }}
+                  />
+                  <ListItemText
+                    primary={displayName}
+                    secondary={formatCurrency(item.precioCOP)}
+                    primaryTypographyProps={{
+                      noWrap: true,
+                      sx: { fontSize: '0.8125rem', fontWeight: 500 },
+                    }}
+                    secondaryTypographyProps={{
+                      sx: {
+                        fontSize: '0.75rem',
+                        color: 'var(--tm-accent)',
+                        fontVariantNumeric: 'tabular-nums',
+                      },
+                    }}
+                  />
+                </MenuItem>
+              );
+            })}
+          </Box>
+        )}
       </Menu>
 
       {/* Save Dialog */}
@@ -331,7 +469,8 @@ export default function SavedFiltersDropdown({
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-            Dale un nombre a esta combinación de filtros para encontrarla fácilmente.
+            Dale un nombre a esta combinación de filtros para encontrarla
+            fácilmente.
           </Typography>
           <TextField
             autoFocus

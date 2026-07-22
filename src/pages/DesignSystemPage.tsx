@@ -37,7 +37,12 @@ import { gradients } from '../design-system/tokens/gradients';
 
 // Design System Component Imports
 import { Button } from '../design-system/components/Button';
-import { Card, CardHeader, CardContent, CardFooter } from '../design-system/components/Card';
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+} from '../design-system/components/Card';
 import { VStack, HStack, Container } from '../design-system/components/Layout';
 
 // =============================================================================
@@ -114,7 +119,8 @@ const DesignSystemPage: React.FC = () => {
             Tierra Madre Design System
           </Typography>
           <Typography variant="h6" color="text.secondary">
-            iOS HIG compliant tokens and components for Colombian emerald commerce
+            iOS HIG compliant tokens and components for Colombian emerald
+            commerce
           </Typography>
           <HStack spacing={2} justify="center" sx={{ mt: 2 }}>
             <Chip label="100% iOS HIG" color="primary" size="small" />
@@ -137,13 +143,37 @@ const DesignSystemPage: React.FC = () => {
             Emerald Palette
           </Typography>
           <HStack spacing={3} wrap sx={{ mb: 4 }}>
-            <ColorSwatch color={emeraldCore.lightest} name="lightest" value="#E6F7F1" />
-            <ColorSwatch color={emeraldCore.lighter} name="lighter" value="#66D4AE" />
-            <ColorSwatch color={emeraldCore.light} name="light" value="#33C194" />
-            <ColorSwatch color={emeraldCore.primary} name="primary" value="#00AE7A" />
+            <ColorSwatch
+              color={emeraldCore.lightest}
+              name="lightest"
+              value="#E6F7F1"
+            />
+            <ColorSwatch
+              color={emeraldCore.lighter}
+              name="lighter"
+              value="#66D4AE"
+            />
+            <ColorSwatch
+              color={emeraldCore.light}
+              name="light"
+              value="#33C194"
+            />
+            <ColorSwatch
+              color={emeraldCore.primary}
+              name="primary"
+              value="#00AE7A"
+            />
             <ColorSwatch color={emeraldCore.dark} name="dark" value="#008C61" />
-            <ColorSwatch color={emeraldCore.darker} name="darker" value="#006A48" />
-            <ColorSwatch color={emeraldCore.darkest} name="darkest" value="#004830" />
+            <ColorSwatch
+              color={emeraldCore.darker}
+              name="darker"
+              value="#006A48"
+            />
+            <ColorSwatch
+              color={emeraldCore.darkest}
+              name="darkest"
+              value="#004830"
+            />
           </HStack>
 
           {/* Gold Palette */}
@@ -151,11 +181,27 @@ const DesignSystemPage: React.FC = () => {
             Gold Accent
           </Typography>
           <HStack spacing={3} wrap sx={{ mb: 4 }}>
-            <ColorSwatch color={goldAccent.lightest} name="lightest" value="#FDF8E8" />
-            <ColorSwatch color={goldAccent.light} name="light" value="#E5C866" />
-            <ColorSwatch color={goldAccent.primary} name="primary" value="#D4AF37" />
+            <ColorSwatch
+              color={goldAccent.lightest}
+              name="lightest"
+              value="#FDF8E8"
+            />
+            <ColorSwatch
+              color={goldAccent.light}
+              name="light"
+              value="#E5C866"
+            />
+            <ColorSwatch
+              color={goldAccent.primary}
+              name="primary"
+              value="#D4AF37"
+            />
             <ColorSwatch color={goldAccent.dark} name="dark" value="#B8941F" />
-            <ColorSwatch color={goldAccent.darkest} name="darkest" value="#665210" />
+            <ColorSwatch
+              color={goldAccent.darkest}
+              name="darkest"
+              value="#665210"
+            />
           </HStack>
 
           {/* Quality Tiers */}
@@ -210,10 +256,26 @@ const DesignSystemPage: React.FC = () => {
             Semantic Colors
           </Typography>
           <HStack spacing={3} wrap>
-            <ColorSwatch color={semanticColors.success.main} name="success" value={semanticColors.success.main} />
-            <ColorSwatch color={semanticColors.warning.main} name="warning" value={semanticColors.warning.main} />
-            <ColorSwatch color={semanticColors.error.main} name="error" value={semanticColors.error.main} />
-            <ColorSwatch color={semanticColors.info.main} name="info" value={semanticColors.info.main} />
+            <ColorSwatch
+              color={semanticColors.success.main}
+              name="success"
+              value={semanticColors.success.main}
+            />
+            <ColorSwatch
+              color={semanticColors.warning.main}
+              name="warning"
+              value={semanticColors.warning.main}
+            />
+            <ColorSwatch
+              color={semanticColors.error.main}
+              name="error"
+              value={semanticColors.error.main}
+            />
+            <ColorSwatch
+              color={semanticColors.info.main}
+              name="info"
+              value={semanticColors.info.main}
+            />
           </HStack>
         </Section>
 
@@ -228,40 +290,78 @@ const DesignSystemPage: React.FC = () => {
         >
           <VStack spacing={3} align="start">
             <Box>
-              <Typography variant="caption" color="text.secondary">largeTitle - 34px / 700</Typography>
-              <Typography sx={{ ...typography.largeTitle }}>The quick brown fox</Typography>
+              <Typography variant="caption" color="text.secondary">
+                largeTitle - 34px / 700
+              </Typography>
+              <Typography sx={{ ...typography.largeTitle }}>
+                The quick brown fox
+              </Typography>
             </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary">title1 - 28px / 700</Typography>
-              <Typography sx={{ ...typography.title1 }}>The quick brown fox</Typography>
+              <Typography variant="caption" color="text.secondary">
+                title1 - 28px / 700
+              </Typography>
+              <Typography sx={{ ...typography.title1 }}>
+                The quick brown fox
+              </Typography>
             </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary">title2 - 22px / 700</Typography>
-              <Typography sx={{ ...typography.title2 }}>The quick brown fox</Typography>
+              <Typography variant="caption" color="text.secondary">
+                title2 - 22px / 700
+              </Typography>
+              <Typography sx={{ ...typography.title2 }}>
+                The quick brown fox
+              </Typography>
             </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary">title3 - 20px / 600</Typography>
-              <Typography sx={{ ...typography.title3 }}>The quick brown fox</Typography>
+              <Typography variant="caption" color="text.secondary">
+                title3 - 20px / 600
+              </Typography>
+              <Typography sx={{ ...typography.title3 }}>
+                The quick brown fox
+              </Typography>
             </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary">headline - 17px / 600</Typography>
-              <Typography sx={{ ...typography.headline }}>The quick brown fox</Typography>
+              <Typography variant="caption" color="text.secondary">
+                headline - 17px / 600
+              </Typography>
+              <Typography sx={{ ...typography.headline }}>
+                The quick brown fox
+              </Typography>
             </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary">body - 17px / 400</Typography>
-              <Typography sx={{ ...typography.body }}>The quick brown fox</Typography>
+              <Typography variant="caption" color="text.secondary">
+                body - 17px / 400
+              </Typography>
+              <Typography sx={{ ...typography.body }}>
+                The quick brown fox
+              </Typography>
             </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary">footnote - 13px / 400</Typography>
-              <Typography sx={{ ...typography.footnote }}>The quick brown fox</Typography>
+              <Typography variant="caption" color="text.secondary">
+                footnote - 13px / 400
+              </Typography>
+              <Typography sx={{ ...typography.footnote }}>
+                The quick brown fox
+              </Typography>
             </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary">caption1 - 12px / 400</Typography>
-              <Typography sx={{ ...typography.caption1 }}>The quick brown fox</Typography>
+              <Typography variant="caption" color="text.secondary">
+                caption1 - 12px / 400
+              </Typography>
+              <Typography sx={{ ...typography.caption1 }}>
+                The quick brown fox
+              </Typography>
             </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary">price (monospace)</Typography>
-              <Typography sx={{ ...typography.price, color: emeraldCore.primary }}>$1,234,567 COP</Typography>
+              <Typography variant="caption" color="text.secondary">
+                price (monospace)
+              </Typography>
+              <Typography
+                sx={{ ...typography.price, color: emeraldCore.primary }}
+              >
+                $1,234,567 COP
+              </Typography>
             </Box>
           </VStack>
         </Section>
@@ -276,20 +376,26 @@ const DesignSystemPage: React.FC = () => {
           description="8pt grid system with golden ratio proportions"
         >
           <HStack spacing={4} wrap align="end">
-            {Object.entries(spacing).slice(0, 8).map(([name, value]) => (
-              <VStack key={name} spacing={1} align="center">
-                <Box
-                  sx={{
-                    width: value,
-                    height: value,
-                    bgcolor: emeraldCore.primary,
-                    borderRadius: 1,
-                  }}
-                />
-                <Typography variant="caption" sx={{ fontWeight: 600 }}>{name}</Typography>
-                <Typography variant="caption" color="text.secondary">{value}px</Typography>
-              </VStack>
-            ))}
+            {Object.entries(spacing)
+              .slice(0, 8)
+              .map(([name, value]) => (
+                <VStack key={name} spacing={1} align="center">
+                  <Box
+                    sx={{
+                      width: value,
+                      height: value,
+                      bgcolor: emeraldCore.primary,
+                      borderRadius: 1,
+                    }}
+                  />
+                  <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                    {name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {value}px
+                  </Typography>
+                </VStack>
+              ))}
           </HStack>
         </Section>
 
@@ -311,10 +417,13 @@ const DesignSystemPage: React.FC = () => {
                     height: 80,
                     bgcolor: 'background.paper',
                     borderRadius: 2,
-                    boxShadow: shadows.default[size as keyof typeof shadows.default],
+                    boxShadow:
+                      shadows.default[size as keyof typeof shadows.default],
                   }}
                 />
-                <Typography variant="caption" sx={{ fontWeight: 600 }}>{size}</Typography>
+                <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                  {size}
+                </Typography>
               </VStack>
             ))}
           </HStack>
@@ -331,10 +440,13 @@ const DesignSystemPage: React.FC = () => {
                     height: 80,
                     bgcolor: 'background.paper',
                     borderRadius: 2,
-                    boxShadow: shadows.emerald[size as keyof typeof shadows.emerald],
+                    boxShadow:
+                      shadows.emerald[size as keyof typeof shadows.emerald],
                   }}
                 />
-                <Typography variant="caption" sx={{ fontWeight: 600 }}>{size}</Typography>
+                <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                  {size}
+                </Typography>
               </VStack>
             ))}
           </HStack>
@@ -374,7 +486,10 @@ const DesignSystemPage: React.FC = () => {
                         ...glassEffect,
                       }}
                     >
-                      <Typography variant="caption" sx={{ fontWeight: 600, color: 'white' }}>
+                      <Typography
+                        variant="caption"
+                        sx={{ fontWeight: 600, color: 'white' }}
+                      >
                         {variant}
                       </Typography>
                     </Box>
@@ -392,7 +507,7 @@ const DesignSystemPage: React.FC = () => {
         ================================================================= */}
         <Section
           title="Buttons"
-          description="4 variants (primary, secondary, tertiary, danger) x 3 sizes"
+          description="5 variants (primary, tinted, plain, outlined, danger) x 3 sizes"
         >
           {/* Variants */}
           <Typography variant="subtitle2" sx={{ mb: 2 }}>
@@ -400,9 +515,20 @@ const DesignSystemPage: React.FC = () => {
           </Typography>
           <HStack spacing={2} wrap sx={{ mb: 4 }}>
             <Button variant="primary">Primary</Button>
-            <Button variant="secondary">Secondary</Button>
-            <Button variant="tertiary">Tertiary</Button>
+            <Button variant="tinted">Tinted</Button>
+            <Button variant="plain">Plain</Button>
+            <Button variant="outlined">Outlined</Button>
             <Button variant="danger">Danger</Button>
+          </HStack>
+
+          {/* Bevel — the emerald-cut brand CTA (DS3 addendum §E1) */}
+          <Typography variant="subtitle2" sx={{ mb: 2 }}>
+            Bevel — one brand CTA per view
+          </Typography>
+          <HStack spacing={2} wrap sx={{ mb: 4 }}>
+            <Button variant="primary" bevel>
+              Cotizar
+            </Button>
           </HStack>
 
           {/* Sizes */}
@@ -421,8 +547,12 @@ const DesignSystemPage: React.FC = () => {
           </Typography>
           <HStack spacing={2} wrap sx={{ mb: 4 }}>
             <Button startIcon={<AddIcon />}>Add Item</Button>
-            <Button variant="secondary" endIcon={<SendIcon />}>Send</Button>
-            <Button variant="danger" startIcon={<DeleteIcon />}>Delete</Button>
+            <Button variant="outlined" endIcon={<SendIcon />}>
+              Send
+            </Button>
+            <Button variant="danger" startIcon={<DeleteIcon />}>
+              Delete
+            </Button>
           </HStack>
 
           {/* States */}
@@ -443,7 +573,7 @@ const DesignSystemPage: React.FC = () => {
         ================================================================= */}
         <Section
           title="Cards"
-          description="3 variants (elevated, outlined, filled) with compound pattern"
+          description="3 variants (outlined, elevated, well) with compound pattern"
         >
           <HStack spacing={4} wrap align="start">
             {/* Elevated Card */}
@@ -451,47 +581,53 @@ const DesignSystemPage: React.FC = () => {
               <CardHeader
                 title="Elevated Card"
                 subtitle="With shadow"
-                avatar={<Avatar sx={{ bgcolor: emeraldCore.primary }}><DiamondIcon /></Avatar>}
+                avatar={
+                  <Avatar sx={{ bgcolor: emeraldCore.primary }}>
+                    <DiamondIcon />
+                  </Avatar>
+                }
               />
               <CardContent>
                 <Typography variant="body2" color="text.secondary">
-                  Cards elevados usan sombras sutiles para crear profundidad visual.
+                  Cards elevados usan sombras sutiles para crear profundidad
+                  visual.
                 </Typography>
               </CardContent>
               <CardFooter>
-                <Button size="sm" variant="tertiary">Action</Button>
+                <Button size="sm" variant="plain">
+                  Action
+                </Button>
               </CardFooter>
             </Card>
 
             {/* Outlined Card */}
             <Card variant="outlined" sx={{ width: 280 }}>
-              <CardHeader
-                title="Outlined Card"
-                subtitle="With border"
-              />
+              <CardHeader title="Outlined Card" subtitle="With border" />
               <CardContent>
                 <Typography variant="body2" color="text.secondary">
-                  Cards con borde son ideales para listas y contenido secundario.
+                  Cards con borde son ideales para listas y contenido
+                  secundario.
                 </Typography>
               </CardContent>
               <CardFooter>
-                <Button size="sm" variant="tertiary">Action</Button>
+                <Button size="sm" variant="plain">
+                  Action
+                </Button>
               </CardFooter>
             </Card>
 
-            {/* Filled Card */}
-            <Card variant="filled" sx={{ width: 280 }}>
-              <CardHeader
-                title="Filled Card"
-                subtitle="Solid background"
-              />
+            {/* Well Card */}
+            <Card variant="well" sx={{ width: 280 }}>
+              <CardHeader title="Well Card" subtitle="Inset vitrine floor" />
               <CardContent>
                 <Typography variant="body2" color="text.secondary">
                   Cards rellenos usan un fondo sólido para destacar secciones.
                 </Typography>
               </CardContent>
               <CardFooter>
-                <Button size="sm" variant="tertiary">Action</Button>
+                <Button size="sm" variant="plain">
+                  Action
+                </Button>
               </CardFooter>
             </Card>
 
@@ -504,11 +640,16 @@ const DesignSystemPage: React.FC = () => {
             >
               <CardHeader
                 title="Clickable Card"
-                action={<IconButton size="small"><FavoriteIcon /></IconButton>}
+                action={
+                  <IconButton size="small">
+                    <FavoriteIcon />
+                  </IconButton>
+                }
               />
               <CardContent>
                 <Typography variant="body2" color="text.secondary">
-                  Haz click en esta card. El efecto hover y focus son automáticos.
+                  Haz click en esta card. El efecto hover y focus son
+                  automáticos.
                 </Typography>
               </CardContent>
             </Card>
@@ -528,11 +669,46 @@ const DesignSystemPage: React.FC = () => {
           <Typography variant="subtitle2" sx={{ mb: 2 }}>
             VStack (Vertical Stack)
           </Typography>
-          <Box sx={{ bgcolor: surfacesLight.background.tertiary, p: 2, borderRadius: 2, mb: 4, maxWidth: 200 }}>
+          <Box
+            sx={{
+              bgcolor: surfacesLight.background.tertiary,
+              p: 2,
+              borderRadius: 2,
+              mb: 4,
+              maxWidth: 200,
+            }}
+          >
             <VStack spacing={2}>
-              <Box sx={{ p: 2, bgcolor: emeraldCore.light, borderRadius: 1, color: 'white' }}>Item 1</Box>
-              <Box sx={{ p: 2, bgcolor: emeraldCore.primary, borderRadius: 1, color: 'white' }}>Item 2</Box>
-              <Box sx={{ p: 2, bgcolor: emeraldCore.dark, borderRadius: 1, color: 'white' }}>Item 3</Box>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: emeraldCore.light,
+                  borderRadius: 1,
+                  color: 'white',
+                }}
+              >
+                Item 1
+              </Box>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: emeraldCore.primary,
+                  borderRadius: 1,
+                  color: 'white',
+                }}
+              >
+                Item 2
+              </Box>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: emeraldCore.dark,
+                  borderRadius: 1,
+                  color: 'white',
+                }}
+              >
+                Item 3
+              </Box>
             </VStack>
           </Box>
 
@@ -540,11 +716,45 @@ const DesignSystemPage: React.FC = () => {
           <Typography variant="subtitle2" sx={{ mb: 2 }}>
             HStack (Horizontal Stack)
           </Typography>
-          <Box sx={{ bgcolor: surfacesLight.background.tertiary, p: 2, borderRadius: 2, mb: 4 }}>
+          <Box
+            sx={{
+              bgcolor: surfacesLight.background.tertiary,
+              p: 2,
+              borderRadius: 2,
+              mb: 4,
+            }}
+          >
             <HStack spacing={2} justify="space-between">
-              <Box sx={{ p: 2, bgcolor: emeraldCore.light, borderRadius: 1, color: 'white' }}>Left</Box>
-              <Box sx={{ p: 2, bgcolor: emeraldCore.primary, borderRadius: 1, color: 'white' }}>Center</Box>
-              <Box sx={{ p: 2, bgcolor: emeraldCore.dark, borderRadius: 1, color: 'white' }}>Right</Box>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: emeraldCore.light,
+                  borderRadius: 1,
+                  color: 'white',
+                }}
+              >
+                Left
+              </Box>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: emeraldCore.primary,
+                  borderRadius: 1,
+                  color: 'white',
+                }}
+              >
+                Center
+              </Box>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: emeraldCore.dark,
+                  borderRadius: 1,
+                  color: 'white',
+                }}
+              >
+                Right
+              </Box>
             </HStack>
           </Box>
 
@@ -552,10 +762,25 @@ const DesignSystemPage: React.FC = () => {
           <Typography variant="subtitle2" sx={{ mb: 2 }}>
             Container (Max-width)
           </Typography>
-          <Box sx={{ bgcolor: surfacesLight.background.tertiary, p: 2, borderRadius: 2 }}>
+          <Box
+            sx={{
+              bgcolor: surfacesLight.background.tertiary,
+              p: 2,
+              borderRadius: 2,
+            }}
+          >
             <Container maxWidth="sm">
-              <Box sx={{ p: 2, bgcolor: emeraldCore.lightest, borderRadius: 1, textAlign: 'center' }}>
-                <Typography variant="body2">Container maxWidth="sm" (600px)</Typography>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: emeraldCore.lightest,
+                  borderRadius: 1,
+                  textAlign: 'center',
+                }}
+              >
+                <Typography variant="body2">
+                  Container maxWidth="sm" (600px)
+                </Typography>
               </Box>
             </Container>
           </Box>
@@ -582,7 +807,9 @@ const DesignSystemPage: React.FC = () => {
                     boxShadow: shadows.default.sm,
                   }}
                 />
-                <Typography variant="caption" sx={{ fontWeight: 600 }}>{name}</Typography>
+                <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                  {name}
+                </Typography>
               </VStack>
             ))}
           </HStack>
@@ -598,11 +825,14 @@ const DesignSystemPage: React.FC = () => {
                     width: 120,
                     height: 40,
                     borderRadius: 2,
-                    background: gradients.button[name as keyof typeof gradients.button],
+                    background:
+                      gradients.button[name as keyof typeof gradients.button],
                     boxShadow: shadows.default.sm,
                   }}
                 />
-                <Typography variant="caption" sx={{ fontWeight: 600 }}>{name}</Typography>
+                <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                  {name}
+                </Typography>
               </VStack>
             ))}
           </HStack>

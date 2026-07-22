@@ -18,12 +18,13 @@
  * show — so lote bundle cards and legacy items self-hide with no layout shift.
  */
 
-import React from "react";
-import { Box, Typography, useTheme } from "@mui/material";
-import { Boxes, Scale } from "lucide-react";
-import { TreasureItem } from "../../../../types";
-import { SpecRow } from "./SpecRow";
-import { SyncStatusBadge } from "../../../../components/shared/SyncStatusBadge";
+import React from 'react';
+import { Box, Typography, useTheme } from '@mui/material';
+import { Boxes, Scale } from 'lucide-react';
+import { TreasureItem } from '../../../../types';
+import { SpecRow } from './SpecRow';
+import { Badge } from '../../../../design-system';
+import { getSyncStatusBadge } from '../../../../utils/syncStatus';
 
 interface ProvenanceSectionProps {
   product: TreasureItem;
@@ -36,10 +37,10 @@ export const ProvenanceSection: React.FC<ProvenanceSectionProps> = ({
   isAdmin,
 }) => {
   const theme = useTheme();
-  const isLight = theme.palette.mode === "light";
+  const isLight = theme.palette.mode === 'light';
   const secondaryTextColor = isLight
-    ? "rgba(60, 60, 67, 0.6)"
-    : "rgba(235, 235, 245, 0.6)";
+    ? 'rgba(60, 60, 67, 0.6)'
+    : 'rgba(235, 235, 245, 0.6)';
 
   // Hard guard: never render provenance internals to non-admins, even if the
   // parent forgets to gate.
@@ -47,7 +48,7 @@ export const ProvenanceSection: React.FC<ProvenanceSectionProps> = ({
 
   const loteId = product.loteId?.trim();
   const hasPreponderancia =
-    typeof product.preponderancia === "number" &&
+    typeof product.preponderancia === 'number' &&
     Number.isFinite(product.preponderancia);
   const syncStatus = product.syncStatus;
 
@@ -60,26 +61,26 @@ export const ProvenanceSection: React.FC<ProvenanceSectionProps> = ({
     <Box sx={{ mb: 2 }}>
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           gap: 1,
           mb: 0.5,
         }}
       >
         <Typography
           sx={{
-            fontSize: "13px",
+            fontSize: '13px',
             fontWeight: 600,
             color: secondaryTextColor,
-            letterSpacing: "0.02em",
-            textTransform: "uppercase",
+            letterSpacing: '0.02em',
+            textTransform: 'uppercase',
           }}
         >
           Trazabilidad
         </Typography>
         {syncStatus && (
-          <SyncStatusBadge status={syncStatus} error={product.syncError} />
+          <Badge {...getSyncStatusBadge(syncStatus, product.syncError)} />
         )}
       </Box>
 

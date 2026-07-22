@@ -17,14 +17,13 @@ import {
   styled,
   CardProps as MuiCardProps,
 } from '@mui/material';
-import { shadows } from '../../tokens/shadows';
 import { spacing } from '../../tokens/spacing';
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
-export type CardVariant = 'elevated' | 'outlined' | 'filled';
+export type CardVariant = 'elevated' | 'outlined' | 'well';
 
 export interface CardProps extends Omit<MuiCardProps, 'variant'> {
   /** Card style variant */
@@ -79,59 +78,49 @@ const StyledCard = styled(MuiCard, {
   isDisabled?: boolean;
 }>(({ cardVariant, interactive, isDisabled }) => {
   const baseStyles = {
-    borderRadius: 12,
+    borderRadius: 'var(--tm-radius-card)',
     overflow: 'hidden',
-    transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+    // DS3 §4: transition color/border only — never layout-shifting props.
+    transition:
+      'border-color var(--tm-fast) var(--tm-ease), background-color var(--tm-fast) var(--tm-ease), box-shadow var(--tm-fast) var(--tm-ease)',
     cursor: isDisabled ? 'not-allowed' : interactive ? 'pointer' : 'default',
     opacity: isDisabled ? 0.5 : 1,
-    pointerEvents: isDisabled ? 'none' as const : 'auto' as const,
+    pointerEvents: isDisabled ? ('none' as const) : ('auto' as const),
     '&:focus-visible': {
       outline: 'none',
-      boxShadow: shadows.focus.default,
+      boxShadow: 'var(--tm-focus-ring)',
     },
   };
 
+  // DS3 depth is borders-first (§3.3): a hairline on the surface, no shadow at
+  // rest. Hover emphasizes the border / steps the surface — it never translates.
   const variantStyles = {
-    elevated: {
-      backgroundColor: 'var(--card-bg)',
-      boxShadow: shadows.card.resting,
-      border: 'none',
-      ...(interactive && {
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: shadows.card.hover,
-        },
-        '&:active': {
-          transform: 'translateY(-2px)',
-          boxShadow: shadows.card.active,
-        },
-      }),
-    },
     outlined: {
-      backgroundColor: 'var(--card-bg)',
+      backgroundColor: 'var(--tm-surface)',
       boxShadow: 'none',
-      border: '1px solid var(--card-border)',
+      border: '1px solid var(--tm-border)',
       ...(interactive && {
-        '&:hover': {
-          borderColor: 'var(--brand-primary)',
-          boxShadow: shadows.emerald.sm,
-        },
-        '&:active': {
-          borderColor: 'var(--brand-primary-hover)',
-        },
+        '&:hover': { borderColor: 'var(--tm-accent)' },
+        '&:active': { backgroundColor: 'var(--tm-well)' },
       }),
     },
-    filled: {
-      backgroundColor: 'var(--surface-secondary)',
-      boxShadow: 'none',
+    // The one editorial shadow — reserved for true floating layers.
+    elevated: {
+      backgroundColor: 'var(--tm-surface)',
+      boxShadow: 'var(--tm-shadow)',
       border: 'none',
       ...(interactive && {
-        '&:hover': {
-          backgroundColor: 'var(--border-default)',
-        },
-        '&:active': {
-          backgroundColor: 'var(--border-strong)',
-        },
+        '&:hover': { backgroundColor: 'var(--tm-well)' },
+      }),
+    },
+    // The vitrine floor: an inset neutral well for image wells / quiet insets.
+    well: {
+      backgroundColor: 'var(--tm-well)',
+      boxShadow: 'none',
+      border: '1px solid var(--tm-border)',
+      borderRadius: 'var(--tm-radius-well)',
+      ...(interactive && {
+        '&:hover': { borderColor: 'var(--tm-accent)' },
       }),
     },
   };
@@ -180,10 +169,10 @@ const StyledCardFooter = styled(MuiCardActions, {
     footerAlign === 'space-between'
       ? 'space-between'
       : footerAlign === 'center'
-      ? 'center'
-      : footerAlign === 'right'
-      ? 'flex-end'
-      : 'flex-start',
+        ? 'center'
+        : footerAlign === 'right'
+          ? 'flex-end'
+          : 'flex-start',
   gap: spacing.sm,
 }));
 
@@ -263,7 +252,18 @@ export const CardFooter: React.FC<CardFooterProps> = ({
 // =============================================================================
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ variant = 'elevated', interactive, disabled, onClick, 'aria-label': ariaLabel, children, ...props }, ref) => {
+  (
+    {
+      variant = 'outlined',
+      interactive,
+      disabled,
+      onClick,
+      'aria-label': ariaLabel,
+      children,
+      ...props
+    },
+    ref,
+  ) => {
     const isInteractive = !disabled && (interactive ?? !!onClick);
 
     return (
@@ -292,7 +292,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         {children}
       </StyledCard>
     );
-  }
+  },
 ) as React.ForwardRefExoticComponent<
   CardProps & React.RefAttributes<HTMLDivElement>
 > & {

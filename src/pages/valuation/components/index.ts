@@ -4,7 +4,6 @@
  * Extracted from ValuationPage.tsx for better maintainability.
  */
 
-export { StatCard } from './StatCard';
 export { TimeRangeSlider } from './TimeRangeSlider';
 export { OriginComparisonTable } from './OriginComparisonTable';
 export { ChartLegend } from './ChartLegend';

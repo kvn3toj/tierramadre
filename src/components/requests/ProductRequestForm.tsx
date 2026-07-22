@@ -9,7 +9,6 @@ import { useState } from 'react';
 import {
   Box,
   Typography,
-  TextField,
   Button,
   MenuItem,
   Stack,
@@ -21,6 +20,7 @@ import {
   CardContent,
   Divider,
 } from '@mui/material';
+import { TextField } from '../../design-system/components/TextField';
 
 // Helper to format number with Colombian thousands separator (dots)
 const formatPriceCOP = (value: number | undefined): string => {
@@ -33,7 +33,14 @@ const parsePriceCOP = (value: string): number => {
   const numericString = value.replace(/\./g, '').replace(/[^\d]/g, '');
   return parseInt(numericString, 10) || 0;
 };
-import { Send, ArrowLeft, CheckCircle, ImagePlus, User, Calendar } from 'lucide-react';
+import {
+  Send,
+  ArrowLeft,
+  CheckCircle,
+  ImagePlus,
+  User,
+  Calendar,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { emeraldCore } from '../../design-system/tokens/colors';
@@ -94,31 +101,37 @@ function generateTempRequestId(): string {
 export default function ProductRequestForm() {
   const navigate = useNavigate();
   const { user } = useGoogleAuth();
-  const [formData, setFormData] = useState<ProductRequestFormData>(initialFormData);
+  const [formData, setFormData] =
+    useState<ProductRequestFormData>(initialFormData);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [tempRequestId] = useState<string>(() => generateTempRequestId());
   // Display values for budget inputs (formatted with dots)
   const [budgetMinDisplay, setBudgetMinDisplay] = useState('');
-  const [budgetMaxDisplay, setBudgetMaxDisplay] = useState(() => formatPriceCOP(initialFormData.budgetMax));
+  const [budgetMaxDisplay, setBudgetMaxDisplay] = useState(() =>
+    formatPriceCOP(initialFormData.budgetMax),
+  );
 
-  const handleChange = (field: keyof ProductRequestFormData, value: unknown) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleChange = (
+    field: keyof ProductRequestFormData,
+    value: unknown,
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
     setError(null);
   };
 
   // Handle budget input with thousands formatting
   const handleBudgetMinChange = (inputValue: string) => {
     const numericValue = parsePriceCOP(inputValue);
-    setFormData(prev => ({ ...prev, budgetMin: numericValue || undefined }));
+    setFormData((prev) => ({ ...prev, budgetMin: numericValue || undefined }));
     setBudgetMinDisplay(formatPriceCOP(numericValue || undefined));
     setError(null);
   };
 
   const handleBudgetMaxChange = (inputValue: string) => {
     const numericValue = parsePriceCOP(inputValue);
-    setFormData(prev => ({ ...prev, budgetMax: numericValue }));
+    setFormData((prev) => ({ ...prev, budgetMax: numericValue }));
     setBudgetMaxDisplay(formatPriceCOP(numericValue));
     setError(null);
   };
@@ -189,7 +202,16 @@ export default function ProductRequestForm() {
 
   if (success) {
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', p: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '60vh',
+          p: 3,
+        }}
+      >
         <Box
           sx={{
             width: 80,
@@ -207,9 +229,12 @@ export default function ProductRequestForm() {
         <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
           Solicitud Enviada
         </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center' }}>
-          Tu solicitud ha sido enviada al equipo de Tierra Madre.
-          Te notificaremos cuando haya una respuesta.
+        <Typography
+          variant="body2"
+          sx={{ color: 'text.secondary', textAlign: 'center' }}
+        >
+          Tu solicitud ha sido enviada al equipo de Tierra Madre. Te
+          notificaremos cuando haya una respuesta.
         </Typography>
       </Box>
     );
@@ -219,10 +244,7 @@ export default function ProductRequestForm() {
     <Box sx={{ p: 2, pb: 10 }}>
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-        <Button
-          onClick={() => navigate(-1)}
-          sx={{ minWidth: 'auto', p: 1 }}
-        >
+        <Button onClick={() => navigate(-1)} sx={{ minWidth: 'auto', p: 1 }}>
           <ArrowLeft size={20} />
         </Button>
         <Box>
@@ -257,7 +279,9 @@ export default function ProductRequestForm() {
           label="Cantidad"
           type="number"
           value={formData.quantity || 1}
-          onChange={(e) => handleChange('quantity', parseInt(e.target.value) || 1)}
+          onChange={(e) =>
+            handleChange('quantity', parseInt(e.target.value) || 1)
+          }
           fullWidth
           inputProps={{ min: 1 }}
           helperText="Número de piezas que necesitas"
@@ -281,7 +305,9 @@ export default function ProductRequestForm() {
             label="Peso Mínimo (ct)"
             type="number"
             value={formData.weightMin || ''}
-            onChange={(e) => handleChange('weightMin', parseFloat(e.target.value) || 0)}
+            onChange={(e) =>
+              handleChange('weightMin', parseFloat(e.target.value) || 0)
+            }
             fullWidth
             InputProps={{
               endAdornment: <InputAdornment position="end">ct</InputAdornment>,
@@ -292,7 +318,9 @@ export default function ProductRequestForm() {
             label="Peso Máximo (ct)"
             type="number"
             value={formData.weightMax || ''}
-            onChange={(e) => handleChange('weightMax', parseFloat(e.target.value) || 0)}
+            onChange={(e) =>
+              handleChange('weightMax', parseFloat(e.target.value) || 0)
+            }
             fullWidth
             InputProps={{
               endAdornment: <InputAdornment position="end">ct</InputAdornment>,
@@ -340,7 +368,9 @@ export default function ProductRequestForm() {
             fullWidth
             placeholder="5.000.000"
             InputProps={{
-              startAdornment: <InputAdornment position="start">$</InputAdornment>,
+              startAdornment: (
+                <InputAdornment position="start">$</InputAdornment>
+              ),
             }}
             inputProps={{ inputMode: 'numeric' }}
           />
@@ -351,7 +381,9 @@ export default function ProductRequestForm() {
             fullWidth
             placeholder="10.000.000"
             InputProps={{
-              startAdornment: <InputAdornment position="start">$</InputAdornment>,
+              startAdornment: (
+                <InputAdornment position="start">$</InputAdornment>
+              ),
             }}
             inputProps={{ inputMode: 'numeric' }}
             required
@@ -361,9 +393,17 @@ export default function ProductRequestForm() {
         <Divider sx={{ my: 1 }} />
 
         {/* Client Info Section */}
-        <Card sx={{ bgcolor: alpha(emeraldCore.primary, 0.04), border: 'none', boxShadow: 'none' }}>
+        <Card
+          sx={{
+            bgcolor: alpha(emeraldCore.primary, 0.04),
+            border: 'none',
+            boxShadow: 'none',
+          }}
+        >
           <CardContent sx={{ py: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}
+            >
               <User size={18} color={emeraldCore.primary} />
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                 Información del Cliente (Opcional)
@@ -375,7 +415,7 @@ export default function ProductRequestForm() {
                 value={formData.clientName || ''}
                 onChange={(e) => handleChange('clientName', e.target.value)}
                 fullWidth
-                size="small"
+                size="sm"
                 placeholder="Nombre o referencia del cliente"
               />
               <TextField
@@ -383,7 +423,7 @@ export default function ProductRequestForm() {
                 value={formData.clientNotes || ''}
                 onChange={(e) => handleChange('clientNotes', e.target.value)}
                 fullWidth
-                size="small"
+                size="sm"
                 multiline
                 rows={2}
                 placeholder="Preferencias especiales, ocasion, etc..."
@@ -415,27 +455,45 @@ export default function ProductRequestForm() {
             fullWidth
             InputLabelProps={{ shrink: true }}
             InputProps={{
-              startAdornment: <InputAdornment position="start"><Calendar size={16} /></InputAdornment>,
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Calendar size={16} />
+                </InputAdornment>
+              ),
             }}
           />
         </Stack>
 
         {/* Reference Media Upload */}
-        <Card sx={{ bgcolor: alpha(emeraldCore.primary, 0.04), border: 'none', boxShadow: 'none' }}>
+        <Card
+          sx={{
+            bgcolor: alpha(emeraldCore.primary, 0.04),
+            border: 'none',
+            boxShadow: 'none',
+          }}
+        >
           <CardContent sx={{ py: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}
+            >
               <ImagePlus size={18} color={emeraldCore.primary} />
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                 Fotos de Referencia (Opcional)
               </Typography>
             </Box>
-            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 2 }}>
-              Sube imagenes de referencia para ayudarnos a entender mejor lo que buscas
+            <Typography
+              variant="caption"
+              sx={{ color: 'text.secondary', display: 'block', mb: 2 }}
+            >
+              Sube imagenes de referencia para ayudarnos a entender mejor lo que
+              buscas
             </Typography>
             <QuotationMediaUpload
               quotationId={tempRequestId}
               uploadedUrls={formData.referencePhotoUrls || []}
-              onUploadComplete={(urls) => handleChange('referencePhotoUrls', urls)}
+              onUploadComplete={(urls) =>
+                handleChange('referencePhotoUrls', urls)
+              }
               maxFiles={5}
               disabled={submitting}
             />
@@ -464,7 +522,13 @@ export default function ProductRequestForm() {
         <Button
           variant="contained"
           size="large"
-          startIcon={submitting ? <CircularProgress size={20} color="inherit" /> : <Send size={20} />}
+          startIcon={
+            submitting ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              <Send size={20} />
+            )
+          }
           onClick={handleSubmit}
           disabled={submitting}
           sx={{

@@ -8,7 +8,7 @@
  * REFACTORED: Props grouped into logical objects to reduce prop drilling.
  */
 
-import { memo } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Box,
   Typography,
@@ -19,21 +19,15 @@ import {
   Select,
   MenuItem,
   alpha,
-  Collapse,
-  Button,
+  Popover,
   Tooltip,
 } from '@mui/material';
+import { Button } from '../../design-system/components/Button';
+import { SegmentedControl } from '../../design-system/components/SegmentedControl';
 import { LogRangeSlider } from '../shared/LogRangeSlider';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { Theme } from '@mui/material/styles';
-import {
-  Search,
-  ChevronDown,
-  ChevronUp,
-  SlidersHorizontal,
-  ArrowUpDown,
-  Layers,
-} from 'lucide-react';
+import { Search, SlidersHorizontal, ArrowUpDown, Layers } from 'lucide-react';
 import {
   type StatusFilter,
   type TypeFilter,
@@ -156,6 +150,85 @@ export interface FilterContentProps {
   compact?: boolean;
 }
 
+// =============================================================================
+// SCROLL FADE — shared by every horizontal-scroll chip/pill row in this file
+// (and MobileSearchBar's quick-access carousel). Modeled on
+// RecentlyViewedCarousel, the one place this pattern was already correct.
+// =============================================================================
+
+export function useScrollFade<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const update = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    update();
+    el.addEventListener('scroll', update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener('scroll', update);
+      ro.disconnect();
+    };
+  }, [update]);
+
+  return { ref, canScrollLeft, canScrollRight };
+}
+
+export function ScrollFadeEdges({
+  canScrollLeft,
+  canScrollRight,
+}: {
+  canScrollLeft: boolean;
+  canScrollRight: boolean;
+}) {
+  return (
+    <>
+      {canScrollLeft && (
+        <Box
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            bottom: 0,
+            width: 24,
+            zIndex: 1,
+            pointerEvents: 'none',
+            background:
+              'linear-gradient(to right, var(--tm-surface), transparent)',
+          }}
+        />
+      )}
+      {canScrollRight && (
+        <Box
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: 24,
+            zIndex: 1,
+            pointerEvents: 'none',
+            background:
+              'linear-gradient(to left, var(--tm-surface), transparent)',
+          }}
+        />
+      )}
+    </>
+  );
+}
+
 export const FilterContent = memo(function FilterContent({
   search,
   setSearch,
@@ -205,22 +278,52 @@ export const FilterContent = memo(function FilterContent({
   const { t } = useLanguage();
   const hidePriceFilter = !shouldShowPrices;
 
+  // Scroll-fade state for the two horizontal-scroll pill rows below (category,
+  // shape/quality/cantidad). Called unconditionally — Rules of Hooks — even
+  // though only the compact branch renders them.
+  const categoryScroll = useScrollFade<HTMLDivElement>();
+  const moreFiltersScroll = useScrollFade<HTMLDivElement>();
+
+  // Anchor for the desktop "Filtros" popover (Categoría/Tipo/Cantidad/Color/
+  // Talla/Calidad/Colección/Precio/Quilates) — open state stays driven by the
+  // existing showAdvancedFilters prop, this ref just positions the panel.
+  const filtersButtonRef = useRef<HTMLButtonElement>(null);
+  const advancedActiveCount = [
+    statusFilter !== 'all',
+    categoriaFilter !== 'all',
+    typeFilter !== 'all',
+    cantidadFilter !== 'all',
+    colorFilter !== 'all',
+    shapeFilter !== 'all',
+    qualityFilter !== 'all',
+    coleccionFilter !== 'all',
+    priceRange[0] !== priceMinMax.min || priceRange[1] !== priceMinMax.max,
+    caratMinMax.max > 0 &&
+      (caratRange[0] !== caratMinMax.min || caratRange[1] !== caratMinMax.max),
+  ].filter(Boolean).length;
+
   // Compact mode: Beautiful modern pill-based filters (mobile)
   if (compact) {
-    // Common pill styles
+    // Common pill styles — minHeight 44 is the WCAG touch-target floor; the
+    // visible chip stays compact (fontSize/gap unchanged), only the hit area
+    // grows, via alignItems:center centering the label inside the taller box.
     const pillBase = {
-      borderRadius: '20px',
+      borderRadius: 'var(--tm-radius-pill)',
       fontSize: '0.75rem',
       fontWeight: 500,
       cursor: 'pointer',
       transition: cssTransition.default,
       border: '1px solid',
-      px: 1.5,
-      py: 0.5,
+      minHeight: 44,
+      px: 1.75,
       display: 'inline-flex',
       alignItems: 'center',
       gap: 0.5,
       whiteSpace: 'nowrap' as const,
+      '&:focus-visible': {
+        outline: 'none',
+        boxShadow: 'var(--tm-focus-ring)',
+      },
     };
 
     const pillActive = {
@@ -241,6 +344,35 @@ export const FilterContent = memo(function FilterContent({
         bgcolor: alpha(emeraldCore.primary, 0.05),
       },
     };
+
+    // Accessible pill — role="button" + keyboard activation + aria-pressed,
+    // matching the interaction contract IOSFilterSheet's FilterRow already
+    // had (this row-family didn't).
+    const Pill = ({
+      active,
+      onClick,
+      children,
+    }: {
+      active: boolean;
+      onClick: () => void;
+      children: React.ReactNode;
+    }) => (
+      <Box
+        role="button"
+        tabIndex={0}
+        aria-pressed={active}
+        onClick={onClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick();
+          }
+        }}
+        sx={{ ...pillBase, ...(active ? pillActive : pillInactive) }}
+      >
+        {children}
+      </Box>
+    );
 
     // Price tier options
     const priceTiers = [
@@ -265,92 +397,54 @@ export const FilterContent = memo(function FilterContent({
 
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        {/* Row 1: Status segmented control (iOS-style) with educational tooltips */}
-        <Box
-          sx={{
-            display: 'flex',
-            bgcolor: isLight
-              ? surfacesLight.background.secondary
-              : surfacesDark.background.tertiary,
-            borderRadius: '24px',
-            p: 0.4,
-            gap: 0.25,
-          }}
-        >
-          {[
+        {/* Row 1: Status segmented control, with educational tooltips per segment */}
+        <SegmentedControl
+          ariaLabel="Filtrar por estado"
+          block
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={[
             {
               value: 'available' as StatusFilter,
-              label: t.treasure.filter.available,
-              dot: emeraldCore.primary,
               tooltip: t.treasure.filter.availableHint,
-            },
-            {
-              value: 'sold' as StatusFilter,
-              label: t.treasure.filter.sold,
-              dot: semanticColors.error.main,
-              tooltip: t.treasure.filter.soldHint,
-            },
-            {
-              value: 'all' as StatusFilter,
-              label: t.treasure.filter.all,
-              dot: null,
-              tooltip: t.treasure.filter.allHint,
-            },
-          ].map((option) => (
-            <Tooltip
-              key={option.value}
-              title={option.tooltip}
-              arrow
-              enterDelay={400}
-              placement="top"
-            >
-              <Box
-                onClick={() => setStatusFilter(option.value)}
-                sx={{
-                  flex: 1,
-                  textAlign: 'center',
-                  py: 0.75,
-                  px: 1,
-                  borderRadius: '20px',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: cssTransition.default,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 0.5,
-                  ...(statusFilter === option.value
-                    ? {
-                        bgcolor: isLight
-                          ? 'white'
-                          : surfacesDark.background.secondary,
-                        color: emeraldCore.dark,
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
-                      }
-                    : {
-                        color: theme.palette.text.secondary,
-                        '&:hover': {
-                          bgcolor: alpha(emeraldCore.primary, 0.05),
-                        },
-                      }),
-                }}
-              >
-                {option.dot && (
+              label: (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Box
                     sx={{
                       width: 6,
                       height: 6,
                       borderRadius: '50%',
-                      bgcolor: option.dot,
+                      bgcolor: 'var(--tm-accent-pure)',
                     }}
                   />
-                )}
-                {option.label}
-              </Box>
-            </Tooltip>
-          ))}
-        </Box>
+                  {t.treasure.filter.available}
+                </Box>
+              ),
+            },
+            {
+              value: 'sold' as StatusFilter,
+              tooltip: t.treasure.filter.soldHint,
+              label: (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Box
+                    sx={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      bgcolor: 'var(--tm-danger)',
+                    }}
+                  />
+                  {t.treasure.filter.sold}
+                </Box>
+              ),
+            },
+            {
+              value: 'all' as StatusFilter,
+              tooltip: t.treasure.filter.allHint,
+              label: t.treasure.filter.all,
+            },
+          ]}
+        />
 
         {/* Row 2: Type + Sort in pill format */}
         <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
@@ -366,16 +460,13 @@ export const FilterContent = memo(function FilterContent({
               label: `💍 ${t.treasure.filter.jewelry}`,
             },
           ].map((option) => (
-            <Box
+            <Pill
               key={option.value}
+              active={typeFilter === option.value}
               onClick={() => setTypeFilter(option.value)}
-              sx={{
-                ...pillBase,
-                ...(typeFilter === option.value ? pillActive : pillInactive),
-              }}
             >
               {option.label}
-            </Box>
+            </Pill>
           ))}
 
           {/* Sort pill */}
@@ -384,7 +475,7 @@ export const FilterContent = memo(function FilterContent({
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
               sx={{
-                borderRadius: '20px',
+                borderRadius: 'var(--tm-radius-pill)',
                 fontSize: '0.75rem',
                 '& .MuiSelect-select': { py: 0.6, px: 1.5 },
                 '& .MuiOutlinedInput-notchedOutline': {
@@ -420,41 +511,42 @@ export const FilterContent = memo(function FilterContent({
             >
               {t.treasure.filter.category}
             </Typography>
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 0.5,
-                overflowX: 'auto',
-                pb: 0.5,
-                mx: -1,
-                px: 1,
-                '&::-webkit-scrollbar': { display: 'none' },
-                scrollbarWidth: 'none',
-              }}
-            >
+            <Box sx={{ position: 'relative' }}>
+              <ScrollFadeEdges
+                canScrollLeft={categoryScroll.canScrollLeft}
+                canScrollRight={categoryScroll.canScrollRight}
+              />
               <Box
-                onClick={() => setCategoriaFilter('all')}
+                ref={categoryScroll.ref}
                 sx={{
-                  ...pillBase,
-                  ...(categoriaFilter === 'all' ? pillActive : pillInactive),
+                  display: 'flex',
+                  gap: 0.5,
+                  overflowX: 'auto',
+                  pb: 0.5,
+                  mx: -1,
+                  px: 1,
+                  '&::-webkit-scrollbar': { display: 'none' },
+                  scrollbarWidth: 'none',
                 }}
               >
-                {t.treasure.filter.allCategories}
-              </Box>
-              {categorias.map((cat) => (
-                <Box
-                  key={cat}
-                  onClick={() =>
-                    setCategoriaFilter(categoriaFilter === cat ? 'all' : cat)
-                  }
-                  sx={{
-                    ...pillBase,
-                    ...(categoriaFilter === cat ? pillActive : pillInactive),
-                  }}
+                <Pill
+                  active={categoriaFilter === 'all'}
+                  onClick={() => setCategoriaFilter('all')}
                 >
-                  {cat}
-                </Box>
-              ))}
+                  {t.treasure.filter.allCategories}
+                </Pill>
+                {categorias.map((cat) => (
+                  <Pill
+                    key={cat}
+                    active={categoriaFilter === cat}
+                    onClick={() =>
+                      setCategoriaFilter(categoriaFilter === cat ? 'all' : cat)
+                    }
+                  >
+                    {cat}
+                  </Pill>
+                ))}
+              </Box>
             </Box>
           </Box>
         )}
@@ -472,25 +564,20 @@ export const FilterContent = memo(function FilterContent({
             {t.treasure.filter.color}
           </Typography>
           <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-            <Box
+            <Pill
+              active={colorFilter === 'all'}
               onClick={() => setColorFilter('all')}
-              sx={{
-                ...pillBase,
-                ...(colorFilter === 'all' ? pillActive : pillInactive),
-              }}
             >
               {t.treasure.filter.allColors}
-            </Box>
+            </Pill>
             {colors.slice(0, 6).map((color) => (
-              <Box
+              <Pill
                 key={color}
+                active={colorFilter === color}
                 onClick={() => setColorFilter(color)}
-                sx={{
-                  ...pillBase,
-                  ...(colorFilter === color ? pillActive : pillInactive),
-                }}
               >
                 <Box
+                  aria-hidden
                   sx={{
                     width: 10,
                     height: 10,
@@ -500,7 +587,7 @@ export const FilterContent = memo(function FilterContent({
                   }}
                 />
                 {color.replace('Verde ', '')}
-              </Box>
+              </Pill>
             ))}
           </Box>
         </Box>
@@ -520,18 +607,13 @@ export const FilterContent = memo(function FilterContent({
             </Typography>
             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
               {priceTiers.map((tier) => (
-                <Box
+                <Pill
                   key={tier.label}
+                  active={currentPriceTier === tier.label}
                   onClick={() => setPriceRange([tier.min, tier.max])}
-                  sx={{
-                    ...pillBase,
-                    ...(currentPriceTier === tier.label
-                      ? pillActive
-                      : pillInactive),
-                  }}
                 >
                   {tier.label}
-                </Box>
+                </Pill>
               ))}
             </Box>
           </Box>
@@ -565,16 +647,13 @@ export const FilterContent = memo(function FilterContent({
                 const isActive =
                   caratRange[0] === tier.min && caratRange[1] === tier.max;
                 return (
-                  <Box
+                  <Pill
                     key={tier.label}
+                    active={isActive}
                     onClick={() => setCaratRange([tier.min, tier.max])}
-                    sx={{
-                      ...pillBase,
-                      ...(isActive ? pillActive : pillInactive),
-                    }}
                   >
                     {tier.label}
-                  </Box>
+                  </Pill>
                 );
               })}
             </Box>
@@ -582,61 +661,59 @@ export const FilterContent = memo(function FilterContent({
         )}
 
         {/* Row 5: Additional filters (horizontal scroll) */}
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 0.75,
-            overflowX: 'auto',
-            pb: 0.5,
-            mx: -1,
-            px: 1,
-            '&::-webkit-scrollbar': { display: 'none' },
-            scrollbarWidth: 'none',
-          }}
-        >
-          {/* Shape pills */}
-          {shapes.slice(0, 4).map((shape) => (
-            <Box
-              key={shape}
-              onClick={() =>
-                setShapeFilter(shapeFilter === shape ? 'all' : shape)
-              }
-              sx={{
-                ...pillBase,
-                ...(shapeFilter === shape ? pillActive : pillInactive),
-              }}
-            >
-              {shape}
-            </Box>
-          ))}
-
-          {/* Quality pills */}
-          {qualities.slice(0, 3).map((quality) => (
-            <Box
-              key={quality}
-              onClick={() =>
-                setQualityFilter(qualityFilter === quality ? 'all' : quality)
-              }
-              sx={{
-                ...pillBase,
-                ...(qualityFilter === quality ? pillActive : pillInactive),
-              }}
-            >
-              {quality}
-            </Box>
-          ))}
-
-          {/* Cantidad */}
+        <Box sx={{ position: 'relative' }}>
+          <ScrollFadeEdges
+            canScrollLeft={moreFiltersScroll.canScrollLeft}
+            canScrollRight={moreFiltersScroll.canScrollRight}
+          />
           <Box
-            onClick={() =>
-              setCantidadFilter(cantidadFilter === '2+' ? 'all' : '2+')
-            }
+            ref={moreFiltersScroll.ref}
             sx={{
-              ...pillBase,
-              ...(cantidadFilter === '2+' ? pillActive : pillInactive),
+              display: 'flex',
+              gap: 0.75,
+              overflowX: 'auto',
+              pb: 0.5,
+              mx: -1,
+              px: 1,
+              '&::-webkit-scrollbar': { display: 'none' },
+              scrollbarWidth: 'none',
             }}
           >
-            {t.treasure.filter.lots}
+            {/* Shape pills */}
+            {shapes.slice(0, 4).map((shape) => (
+              <Pill
+                key={shape}
+                active={shapeFilter === shape}
+                onClick={() =>
+                  setShapeFilter(shapeFilter === shape ? 'all' : shape)
+                }
+              >
+                {shape}
+              </Pill>
+            ))}
+
+            {/* Quality pills */}
+            {qualities.slice(0, 3).map((quality) => (
+              <Pill
+                key={quality}
+                active={qualityFilter === quality}
+                onClick={() =>
+                  setQualityFilter(qualityFilter === quality ? 'all' : quality)
+                }
+              >
+                {quality}
+              </Pill>
+            ))}
+
+            {/* Cantidad */}
+            <Pill
+              active={cantidadFilter === '2+'}
+              onClick={() =>
+                setCantidadFilter(cantidadFilter === '2+' ? 'all' : '2+')
+              }
+            >
+              {t.treasure.filter.lots}
+            </Pill>
           </Box>
         </Box>
 
@@ -648,7 +725,7 @@ export const FilterContent = memo(function FilterContent({
             onClick={handleClearFilters}
             sx={{
               alignSelf: 'flex-start',
-              borderRadius: '16px',
+              borderRadius: 'var(--tm-radius-pill)',
               bgcolor: alpha(semanticColors.error.main, 0.08),
               color: semanticColors.error.dark,
               fontWeight: 600,
@@ -671,9 +748,12 @@ export const FilterContent = memo(function FilterContent({
         sx={{
           display: 'flex',
           gap: 2,
-          flexWrap: 'wrap',
+          // Search + Filtros are one unit: keep them on the same line and don't
+          // let the row shrink the box (which would wrap Filtros under search).
+          // The whole unit still wraps as a block via the parent's flexWrap.
+          flexWrap: 'nowrap',
+          flexShrink: 0,
           alignItems: 'center',
-          mb: showAdvancedFilters ? 2 : 0,
         }}
       >
         {/* Search */}
@@ -692,8 +772,10 @@ export const FilterContent = memo(function FilterContent({
           inputRef={searchInputRef}
           inputProps={{ 'aria-label': t.treasure.search.ariaLabel }}
           sx={{
-            minWidth: 200,
-            flex: 1,
+            // Search is the core-loop anchor: give it a real, fixed presence
+            // (~320px) instead of shrinking to a token pill. The whole
+            // search+Filtros unit wraps as a block on narrow desktops.
+            flex: '0 0 320px',
             '& .MuiOutlinedInput-root': {
               borderRadius: 2,
               bgcolor: isLight
@@ -710,185 +792,19 @@ export const FilterContent = memo(function FilterContent({
           }}
         />
 
-        {/* Status filter with tooltip */}
-        <Tooltip
-          title={t.treasure.filter.statusTooltip}
-          arrow
-          enterDelay={600}
-          placement="top"
-        >
-          <FormControl size="small" sx={{ minWidth: 130 }}>
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-              displayEmpty
-              aria-label="Filtrar por estado"
-              sx={{ borderRadius: 2 }}
-            >
-              <MenuItem value="available">
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: emeraldCore.primary,
-                    }}
-                  />
-                  {t.treasure.filter.available}
-                </Box>
-              </MenuItem>
-              <MenuItem value="sold">
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: semanticColors.error.main,
-                    }}
-                  />
-                  {t.treasure.filter.sold}
-                </Box>
-              </MenuItem>
-              <MenuItem value="all">
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: surfacesLight.text.secondary,
-                    }}
-                  />
-                  {t.treasure.filter.all}
-                </Box>
-              </MenuItem>
-            </Select>
-          </FormControl>
-        </Tooltip>
-
-        {/* Sort dropdown */}
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <Select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortOption)}
-            displayEmpty
-            aria-label="Ordenar productos"
-            startAdornment={
-              <InputAdornment position="start">
-                <ArrowUpDown size={16} color={emeraldCore.primary} />
-              </InputAdornment>
-            }
-            sx={{
-              borderRadius: 2,
-              bgcolor: alpha(emeraldCore.primary, 0.05),
-              '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.1) },
-              '& .MuiSelect-select': { fontWeight: 500 },
-            }}
-          >
-            <MenuItem value="newest">{t.treasure.sort.newest}</MenuItem>
-            {!hidePriceFilter && (
-              <MenuItem value="price-desc">
-                {t.treasure.sort.priceDesc}
-              </MenuItem>
-            )}
-            {!hidePriceFilter && (
-              <MenuItem value="price-asc">{t.treasure.sort.priceAsc}</MenuItem>
-            )}
-            <MenuItem value="name-asc">{t.treasure.sort.nameAsc}</MenuItem>
-            <MenuItem value="name-desc">{t.treasure.sort.nameDesc}</MenuItem>
-            <MenuItem value="quality-premium">
-              {t.treasure.sort.bestQuality}
-            </MenuItem>
-            <MenuItem value="item-number">
-              {t.treasure.sort.itemNumber}
-            </MenuItem>
-            <MenuItem value="most-searched">
-              {t.treasure.sort.mostSearched}
-            </MenuItem>
-          </Select>
-        </FormControl>
-
-        {/* Category filter (Column K from inventory) */}
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <Select
-            value={categoriaFilter}
-            onChange={(e) => setCategoriaFilter(e.target.value)}
-            displayEmpty
-            aria-label="Filtrar por categoría"
-            sx={{
-              borderRadius: 2,
-              bgcolor:
-                categoriaFilter !== 'all'
-                  ? alpha(emeraldCore.primary, 0.1)
-                  : 'transparent',
-            }}
-          >
-            <MenuItem value="all">{t.treasure.filter.category}</MenuItem>
-            {categorias.map((cat) => (
-              <MenuItem key={cat} value={cat}>
-                {cat}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* Type filter */}
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <Select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
-            displayEmpty
-            aria-label="Filtrar por tipo"
-            sx={{ borderRadius: 2 }}
-          >
-            <MenuItem value="all">{t.treasure.filter.type}</MenuItem>
-            <MenuItem value="loose">{t.treasure.filter.looseStones}</MenuItem>
-            <MenuItem value="jewelry">{t.treasure.filter.jewelry}</MenuItem>
-          </Select>
-        </FormControl>
-
-        {/* Cantidad filter */}
-        <FormControl size="small" sx={{ minWidth: 130 }}>
-          <Select
-            value={cantidadFilter}
-            onChange={(e) => setCantidadFilter(e.target.value)}
-            displayEmpty
-            aria-label="Filtrar por cantidad"
-            startAdornment={
-              <InputAdornment position="start">
-                <Layers size={14} color={theme.palette.text.secondary} />
-              </InputAdornment>
-            }
-            sx={{ borderRadius: 2 }}
-          >
-            <MenuItem value="all">{t.treasure.filter.quantity}</MenuItem>
-            <MenuItem value="1">{t.treasure.filter.singleUnit}</MenuItem>
-            <MenuItem value="2+">{t.treasure.filter.lots}</MenuItem>
-          </Select>
-        </FormControl>
-
-        {/* Advanced Filters Toggle */}
+        {/* Filtros — opens a popover with Estado/Ordenar/Categoría/Tipo/
+            Cantidad/Color/Talla/Calidad/Colección/Precio/Quilates, keeping
+            this row to one line beside the page title instead of wrapping. */}
         <Button
-          size="small"
+          ref={filtersButtonRef}
+          variant={advancedActiveCount > 0 ? 'tinted' : 'plain'}
+          size="sm"
           onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           aria-expanded={showAdvancedFilters}
           startIcon={<SlidersHorizontal size={16} />}
-          endIcon={
-            showAdvancedFilters ? (
-              <ChevronUp size={14} />
-            ) : (
-              <ChevronDown size={14} />
-            )
-          }
-          sx={{
-            color: theme.palette.text.secondary,
-            textTransform: 'none',
-            fontWeight: 500,
-          }}
         >
           {t.treasure.filter.moreFilters}
+          {advancedActiveCount > 0 ? ` (${advancedActiveCount})` : ''}
         </Button>
 
         {/* Clear filters */}
@@ -907,22 +823,199 @@ export const FilterContent = memo(function FilterContent({
         )}
       </Box>
 
-      {/* Advanced Filters */}
-      <Collapse in={showAdvancedFilters}>
+      {/* Filtros popover — Categoría/Tipo/Cantidad/Color/Talla/Calidad/
+          Colección/Precio/Quilates. A popover rather than an inline Collapse
+          so opening it never shifts the grid below. */}
+      <Popover
+        open={showAdvancedFilters}
+        anchorEl={filtersButtonRef.current}
+        onClose={() => setShowAdvancedFilters(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 1,
+              p: 2,
+              maxWidth: 480,
+              borderRadius: 'var(--tm-radius-card)',
+              border: '1px solid var(--tm-border)',
+              boxShadow: 'var(--tm-shadow)',
+            },
+          },
+        }}
+      >
         <Box
           sx={{
             display: 'flex',
             gap: 2,
             flexWrap: 'wrap',
             alignItems: 'center',
-            mt: 2,
-            pt: 2,
-            borderTop: '1px solid',
-            borderColor: isLight
-              ? surfacesLight.border.light
-              : surfacesDark.border.default,
           }}
         >
+          {/* Status filter with tooltip */}
+          <Tooltip
+            title={t.treasure.filter.statusTooltip}
+            arrow
+            enterDelay={600}
+            placement="top"
+          >
+            <FormControl size="small" sx={{ minWidth: 130 }}>
+              <Select
+                value={statusFilter}
+                onChange={(e) =>
+                  setStatusFilter(e.target.value as StatusFilter)
+                }
+                displayEmpty
+                aria-label="Filtrar por estado"
+                sx={{ borderRadius: 2 }}
+              >
+                <MenuItem value="available">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        bgcolor: emeraldCore.primary,
+                      }}
+                    />
+                    {t.treasure.filter.available}
+                  </Box>
+                </MenuItem>
+                <MenuItem value="sold">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        bgcolor: semanticColors.error.main,
+                      }}
+                    />
+                    {t.treasure.filter.sold}
+                  </Box>
+                </MenuItem>
+                <MenuItem value="all">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        bgcolor: surfacesLight.text.secondary,
+                      }}
+                    />
+                    {t.treasure.filter.all}
+                  </Box>
+                </MenuItem>
+              </Select>
+            </FormControl>
+          </Tooltip>
+
+          {/* Sort dropdown */}
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <Select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              displayEmpty
+              aria-label="Ordenar productos"
+              startAdornment={
+                <InputAdornment position="start">
+                  <ArrowUpDown size={16} color={emeraldCore.primary} />
+                </InputAdornment>
+              }
+              sx={{
+                borderRadius: 2,
+                bgcolor: alpha(emeraldCore.primary, 0.05),
+                '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.1) },
+                '& .MuiSelect-select': { fontWeight: 500 },
+              }}
+            >
+              <MenuItem value="newest">{t.treasure.sort.newest}</MenuItem>
+              {!hidePriceFilter && (
+                <MenuItem value="price-desc">
+                  {t.treasure.sort.priceDesc}
+                </MenuItem>
+              )}
+              {!hidePriceFilter && (
+                <MenuItem value="price-asc">
+                  {t.treasure.sort.priceAsc}
+                </MenuItem>
+              )}
+              <MenuItem value="name-asc">{t.treasure.sort.nameAsc}</MenuItem>
+              <MenuItem value="name-desc">{t.treasure.sort.nameDesc}</MenuItem>
+              <MenuItem value="quality-premium">
+                {t.treasure.sort.bestQuality}
+              </MenuItem>
+              <MenuItem value="item-number">
+                {t.treasure.sort.itemNumber}
+              </MenuItem>
+              <MenuItem value="most-searched">
+                {t.treasure.sort.mostSearched}
+              </MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* Category filter (Column K from inventory) */}
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <Select
+              value={categoriaFilter}
+              onChange={(e) => setCategoriaFilter(e.target.value)}
+              displayEmpty
+              aria-label="Filtrar por categoría"
+              sx={{
+                borderRadius: 2,
+                bgcolor:
+                  categoriaFilter !== 'all'
+                    ? alpha(emeraldCore.primary, 0.1)
+                    : 'transparent',
+              }}
+            >
+              <MenuItem value="all">{t.treasure.filter.category}</MenuItem>
+              {categorias.map((cat) => (
+                <MenuItem key={cat} value={cat}>
+                  {cat}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Type filter */}
+          <FormControl size="small" sx={{ minWidth: 120 }}>
+            <Select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
+              displayEmpty
+              aria-label="Filtrar por tipo"
+              sx={{ borderRadius: 2 }}
+            >
+              <MenuItem value="all">{t.treasure.filter.type}</MenuItem>
+              <MenuItem value="loose">{t.treasure.filter.looseStones}</MenuItem>
+              <MenuItem value="jewelry">{t.treasure.filter.jewelry}</MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* Cantidad filter */}
+          <FormControl size="small" sx={{ minWidth: 130 }}>
+            <Select
+              value={cantidadFilter}
+              onChange={(e) => setCantidadFilter(e.target.value)}
+              displayEmpty
+              aria-label="Filtrar por cantidad"
+              startAdornment={
+                <InputAdornment position="start">
+                  <Layers size={14} color={theme.palette.text.secondary} />
+                </InputAdornment>
+              }
+              sx={{ borderRadius: 2 }}
+            >
+              <MenuItem value="all">{t.treasure.filter.quantity}</MenuItem>
+              <MenuItem value="1">{t.treasure.filter.singleUnit}</MenuItem>
+              <MenuItem value="2+">{t.treasure.filter.lots}</MenuItem>
+            </Select>
+          </FormControl>
+
           {/* Color filter */}
           <FormControl size="small" sx={{ minWidth: 140 }}>
             <Select
@@ -1049,7 +1142,9 @@ export const FilterContent = memo(function FilterContent({
               valueLabelFormat={(value) =>
                 formatCurrency(convertPrice(value), currency)
               }
-              aria-label="Rango de precio"
+              getAriaLabel={(index) =>
+                index === 0 ? 'Precio mínimo' : 'Precio máximo'
+              }
               getAriaValueText={(value) =>
                 formatCurrency(convertPrice(value), currency)
               }
@@ -1100,7 +1195,9 @@ export const FilterContent = memo(function FilterContent({
               roundTo={0.1}
               valueLabelDisplay="auto"
               valueLabelFormat={(value) => `${value.toFixed(1)} ct`}
-              aria-label={t.treasure.filter.caratRange}
+              getAriaLabel={(index) =>
+                index === 0 ? 'Quilates mínimo' : 'Quilates máximo'
+              }
               getAriaValueText={(value) => `${value.toFixed(1)} ct`}
               sx={{
                 color: emeraldCore.dark,
@@ -1116,7 +1213,7 @@ export const FilterContent = memo(function FilterContent({
             />
           </Box>
         )}
-      </Collapse>
+      </Popover>
     </>
   );
 });

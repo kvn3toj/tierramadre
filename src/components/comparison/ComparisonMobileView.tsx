@@ -4,15 +4,35 @@
  */
 import { useState } from 'react';
 import { Box, Typography, Chip, alpha, Collapse } from '@mui/material';
-import { BarChart3, Radar as RadarIcon, TrendingUp, DollarSign, Gem, Award, ChevronDown, ChevronUp, Info } from 'lucide-react';
+import {
+  BarChart3,
+  Radar as RadarIcon,
+  TrendingUp,
+  DollarSign,
+  Gem,
+  Award,
+  ChevronDown,
+  ChevronUp,
+  Info,
+} from 'lucide-react';
 import { TreasureItem } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { getColorDot, getQualityBadge, formatCarats } from '../../utils/formatting';
+import {
+  getColorDot,
+  getQualityBadge,
+  formatCarats,
+} from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
-import { surfacesLight, surfacesDark, emeraldCore } from '../../design-system/tokens/colors';
-import { accentColors } from '../../design-system';
-import { cssTransition } from '../../design-system';
+import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import {
+  accentColors,
+  cssTransition,
+  Badge,
+  getQuietEmerald,
+  qeAccent,
+  whiteAlpha,
+} from '../../design-system';
 import ProductHeader from './ProductHeader';
 import AttributeCard from './AttributeCard';
 import RadarChart from './RadarChart';
@@ -30,21 +50,29 @@ interface ComparisonMobileViewProps {
 type VisualMode = 'radar' | 'matrix';
 
 // Priority options with educational descriptions
-type ComparisonPriority = 'best_value' | 'best_investment' | 'largest_size' | 'premium_quality';
+type ComparisonPriority =
+  | 'best_value'
+  | 'best_investment'
+  | 'largest_size'
+  | 'premium_quality';
 
-const priorityConfig: Record<ComparisonPriority, {
-  label: string;
-  icon: typeof TrendingUp;
-  criteria: RecommendationCriteria;
-  description: string;
-  gradient: string;
-}> = {
+const priorityConfig: Record<
+  ComparisonPriority,
+  {
+    label: string;
+    icon: typeof TrendingUp;
+    criteria: RecommendationCriteria;
+    description: string;
+    gradient: string;
+  }
+> = {
   best_value: {
     label: 'Mejor Valor',
     icon: Gem,
     criteria: 'best_value',
     description: 'Alta calidad a precio razonable • Compra inteligente HOY',
-    gradient: `linear-gradient(135deg, ${emeraldCore.primary} 0%, ${emeraldCore.dark} 100%)`,
+    // static context: no theme mode available (module-level config, outside React render)
+    gradient: `linear-gradient(135deg, ${qeAccent.light.pure} 0%, ${qeAccent.light.accent} 100%)`,
   },
   best_investment: {
     label: 'Inversión',
@@ -69,11 +97,14 @@ const priorityConfig: Record<ComparisonPriority, {
   },
 };
 
-export default function ComparisonMobileView({ items }: ComparisonMobileViewProps) {
+export default function ComparisonMobileView({
+  items,
+}: ComparisonMobileViewProps) {
   const { t } = useLanguage();
   const { formatCurrency } = useCurrencyFormat();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const qe = getQuietEmerald(mode);
   const [visualMode, setVisualMode] = useState<VisualMode>('radar');
   const [priority, setPriority] = useState<ComparisonPriority>('best_value');
   const [attributesExpanded, setAttributesExpanded] = useState(false);
@@ -81,7 +112,7 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
 
   // Check if any item has price per carat (loose stones)
   const hasLooseStones = items.some(
-    (i) => !i.isJewelry && typeof i.peso === 'number' && i.peso > 0
+    (i) => !i.isJewelry && typeof i.peso === 'number' && i.peso > 0,
   );
 
   // Calculate price per carat for display
@@ -93,7 +124,10 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
   });
 
   // Generate recommendation based on selected priority
-  const currentRecommendation = generateRecommendation(items, priorityConfig[priority].criteria);
+  const currentRecommendation = generateRecommendation(
+    items,
+    priorityConfig[priority].criteria,
+  );
 
   // Helper: Render attribute card by key
   const renderAttribute = (key: string) => {
@@ -115,7 +149,7 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
             values={items.map((item) =>
               typeof item.peso === 'number'
                 ? `${formatCarats(item.peso)} ct`
-                : item.metalType || '-'
+                : item.metalType || '-',
             )}
             type="numeric"
           />
@@ -177,18 +211,10 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
             values={items.map((item) => {
               const quality = getQualityBadge(item.calidad);
               return (
-                <Chip
+                <Badge
                   key={item.item}
+                  tone={quality.tone}
                   label={quality.label}
-                  size="small"
-                  sx={{
-                    bgcolor: quality.bg,
-                    color: quality.color,
-                    border: `1px solid ${quality.border}`,
-                    fontWeight: 600,
-                    fontSize: '0.6rem',
-                    height: 20,
-                  }}
                 />
               );
             })}
@@ -209,7 +235,9 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
           <AttributeCard
             key="medidas"
             label="Medidas"
-            values={items.map((item) => item.medidasValores || item.medidas || '-')}
+            values={items.map(
+              (item) => item.medidasValores || item.medidas || '-',
+            )}
             type="text"
           />
         );
@@ -219,7 +247,15 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
   };
 
   // All attributes for details view
-  const allAttributes = ['precio', 'peso', 'precioquilate', 'color', 'calidad', 'talla', 'medidas'];
+  const allAttributes = [
+    'precio',
+    'peso',
+    'precioquilate',
+    'color',
+    'calidad',
+    'talla',
+    'medidas',
+  ];
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -243,13 +279,22 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
             sx={{
               p: 1.5,
               borderBottom: '1px solid',
-              borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+              borderColor: isLight
+                ? surfacesLight.border.light
+                : surfacesDark.border.light,
               bgcolor: isLight
                 ? surfacesLight.background.primary
                 : surfacesDark.background.secondary,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 1,
+              }}
+            >
               <Typography
                 sx={{
                   fontSize: '0.6rem',
@@ -263,7 +308,7 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
               </Typography>
               <Info
                 size={14}
-                color={emeraldCore.primary}
+                color={qe.accent} // Jewelry-Not-Paint: icon carries its own onClick (interactive control)
                 style={{ cursor: 'pointer' }}
                 onClick={() => setShowPriorityHelp(!showPriorityHelp)}
               />
@@ -276,64 +321,97 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
                   mb: 1,
                   p: 1,
                   borderRadius: 1.5,
-                  bgcolor: alpha(emeraldCore.primary, 0.08),
-                  border: `1px solid ${alpha(emeraldCore.primary, 0.2)}`,
+                  bgcolor: alpha(qe.accentPure, 0.08),
+                  border: `1px solid ${alpha(qe.accentPure, 0.2)}`,
                 }}
               >
-                <Typography sx={{ fontSize: '0.6rem', color: emeraldCore.dark, lineHeight: 1.4, mb: 0.5, fontWeight: 600 }}>
+                <Typography
+                  sx={{
+                    fontSize: '0.6rem',
+                    color: qe.accent,
+                    lineHeight: 1.4,
+                    mb: 0.5,
+                    fontWeight: 600,
+                  }}
+                >
                   Mejor Valor vs Inversión:
                 </Typography>
-                <Typography sx={{ fontSize: '0.55rem', color: 'text.secondary', lineHeight: 1.4 }}>
-                  <strong>Mejor Valor:</strong> Compra inteligente HOY. Alta calidad a precio razonable (60% calidad + 40% precio bajo).<br/>
-                  <strong>Inversión:</strong> Apreciación FUTURA. Rareza y potencial (40% calidad + 30% color + 20% tamaño + 10% certificación).
+                <Typography
+                  sx={{
+                    fontSize: '0.55rem',
+                    color: 'text.secondary',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  <strong>Mejor Valor:</strong> Compra inteligente HOY. Alta
+                  calidad a precio razonable (60% calidad + 40% precio bajo).
+                  <br />
+                  <strong>Inversión:</strong> Apreciación FUTURA. Rareza y
+                  potencial (40% calidad + 30% color + 20% tamaño + 10%
+                  certificación).
                 </Typography>
               </Box>
             </Collapse>
 
             {/* Priority Chips */}
             <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-              {(Object.keys(priorityConfig) as ComparisonPriority[]).map((key) => {
-                const config = priorityConfig[key];
-                const Icon = config.icon;
-                const isActive = priority === key;
-                return (
-                  <Box key={key} sx={{ position: 'relative', flex: key === 'best_value' || key === 'best_investment' ? '1 1 45%' : '0 1 auto' }}>
-                    <Chip
-                      icon={<Icon size={13} />}
-                      label={config.label}
-                      onClick={() => setPriority(key)}
+              {(Object.keys(priorityConfig) as ComparisonPriority[]).map(
+                (key) => {
+                  const config = priorityConfig[key];
+                  const Icon = config.icon;
+                  const isActive = priority === key;
+                  return (
+                    <Box
+                      key={key}
                       sx={{
-                        width: '100%',
-                        background: isActive ? config.gradient : 'transparent',
-                        color: isActive ? '#fff' : 'text.primary',
-                        border: isActive ? 'none' : `1px solid ${alpha(emeraldCore.primary, 0.3)}`,
-                        fontWeight: 600,
-                        fontSize: '0.65rem',
-                        height: 28,
-                        cursor: 'pointer',
-                        transition: cssTransition.default,
-                        '&:hover': {
-                          transform: 'translateY(-1px)',
-                          boxShadow: `0 2px 8px ${alpha(emeraldCore.primary, 0.2)}`,
-                        },
+                        position: 'relative',
+                        flex:
+                          key === 'best_value' || key === 'best_investment'
+                            ? '1 1 45%'
+                            : '0 1 auto',
                       }}
-                    />
-                    {isActive && (
-                      <Typography
+                    >
+                      <Chip
+                        icon={<Icon size={13} />}
+                        label={config.label}
+                        onClick={() => setPriority(key)}
                         sx={{
-                          fontSize: '0.5rem',
-                          color: 'text.secondary',
-                          textAlign: 'center',
-                          mt: 0.25,
-                          lineHeight: 1.2,
+                          width: '100%',
+                          background: isActive
+                            ? config.gradient
+                            : 'transparent',
+                          color: isActive ? whiteAlpha(1) : 'text.primary',
+                          border: isActive
+                            ? 'none'
+                            : `1px solid ${alpha(qe.accent, 0.3)}`, // Jewelry-Not-Paint: border on a clickable chip
+                          fontWeight: 600,
+                          fontSize: '0.65rem',
+                          height: 28,
+                          cursor: 'pointer',
+                          transition: cssTransition.default,
+                          '&:hover': {
+                            transform: 'translateY(-1px)',
+                            boxShadow: `0 2px 8px ${alpha(qe.accent, 0.2)}`, // Jewelry-Not-Paint: hover shadow on a clickable chip
+                          },
                         }}
-                      >
-                        {config.description}
-                      </Typography>
-                    )}
-                  </Box>
-                );
-              })}
+                      />
+                      {isActive && (
+                        <Typography
+                          sx={{
+                            fontSize: '0.5rem',
+                            color: 'text.secondary',
+                            textAlign: 'center',
+                            mt: 0.25,
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {config.description}
+                        </Typography>
+                      )}
+                    </Box>
+                  );
+                },
+              )}
             </Box>
           </Box>
 
@@ -345,7 +423,9 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
             sx={{
               p: 1.5,
               borderBottom: '1px solid',
-              borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+              borderColor: isLight
+                ? surfacesLight.border.light
+                : surfacesDark.border.light,
               bgcolor: isLight
                 ? surfacesLight.background.primary
                 : surfacesDark.background.secondary,
@@ -370,14 +450,18 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
                 onClick={() => setVisualMode('radar')}
                 sx={{
                   flex: 1,
-                  bgcolor: visualMode === 'radar' ? emeraldCore.primary : 'transparent',
-                  color: visualMode === 'radar' ? '#fff' : emeraldCore.primary,
-                  border: `1px solid ${emeraldCore.primary}`,
+                  // Jewelry-Not-Paint: bgcolor/color/border on a clickable chip
+                  bgcolor: visualMode === 'radar' ? qe.accent : 'transparent',
+                  color: visualMode === 'radar' ? whiteAlpha(1) : qe.accent,
+                  border: `1px solid ${qe.accent}`,
                   fontWeight: 600,
                   fontSize: '0.65rem',
                   cursor: 'pointer',
                   '&:hover': {
-                    bgcolor: visualMode === 'radar' ? emeraldCore.dark : alpha(emeraldCore.primary, 0.08),
+                    bgcolor:
+                      visualMode === 'radar'
+                        ? qe.accentStrong
+                        : alpha(qe.accent, 0.08),
                   },
                 }}
               />
@@ -387,14 +471,18 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
                 onClick={() => setVisualMode('matrix')}
                 sx={{
                   flex: 1,
-                  bgcolor: visualMode === 'matrix' ? emeraldCore.primary : 'transparent',
-                  color: visualMode === 'matrix' ? '#fff' : emeraldCore.primary,
-                  border: `1px solid ${emeraldCore.primary}`,
+                  // Jewelry-Not-Paint: bgcolor/color/border on a clickable chip
+                  bgcolor: visualMode === 'matrix' ? qe.accent : 'transparent',
+                  color: visualMode === 'matrix' ? whiteAlpha(1) : qe.accent,
+                  border: `1px solid ${qe.accent}`,
                   fontWeight: 600,
                   fontSize: '0.65rem',
                   cursor: 'pointer',
                   '&:hover': {
-                    bgcolor: visualMode === 'matrix' ? emeraldCore.dark : alpha(emeraldCore.primary, 0.08),
+                    bgcolor:
+                      visualMode === 'matrix'
+                        ? qe.accentStrong
+                        : alpha(qe.accent, 0.08),
                   },
                 }}
               />
@@ -412,7 +500,9 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
           <Box
             sx={{
               borderTop: '1px solid',
-              borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+              borderColor: isLight
+                ? surfacesLight.border.light
+                : surfacesDark.border.light,
             }}
           >
             <Box
@@ -427,7 +517,7 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
                   ? surfacesLight.background.primary
                   : surfacesDark.background.secondary,
                 '&:hover': {
-                  bgcolor: alpha(emeraldCore.primary, 0.04),
+                  bgcolor: alpha(qe.accent, 0.04), // Jewelry-Not-Paint: hover fill on a clickable row
                 },
               }}
             >
@@ -442,7 +532,11 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
               >
                 Todos los Atributos ({allAttributes.length})
               </Typography>
-              {attributesExpanded ? <ChevronUp size={16} color={emeraldCore.primary} /> : <ChevronDown size={16} color={emeraldCore.primary} />}
+              {attributesExpanded ? (
+                <ChevronUp size={16} color={qe.accentPure} />
+              ) : (
+                <ChevronDown size={16} color={qe.accentPure} />
+              )}
             </Box>
 
             <Collapse in={attributesExpanded}>
@@ -473,7 +567,8 @@ export default function ComparisonMobileView({ items }: ComparisonMobileViewProp
           variant="caption"
           sx={{ color: 'text.secondary', fontSize: '0.55rem' }}
         >
-          Comparación inteligente basada en análisis multidimensional • Cada esmeralda es única
+          Comparación inteligente basada en análisis multidimensional • Cada
+          esmeralda es única
         </Typography>
       </Box>
     </Box>

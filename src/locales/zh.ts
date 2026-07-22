@@ -380,7 +380,7 @@ export const zh = {
       carat: '克拉',
       caratRange: '克拉范围',
       allCarats: '全部',
-      moreFilters: '更多筛选',
+      moreFilters: '筛选',
       clear: '清除',
       clearFilters: '清除筛选',
       statusTooltip: '按销售状态筛选',

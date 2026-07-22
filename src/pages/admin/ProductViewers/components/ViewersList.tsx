@@ -7,7 +7,11 @@ import React from 'react';
 import { Box, Typography, Paper, Chip, alpha } from '@mui/material';
 import { Users, UserCheck, User, Clock } from 'lucide-react';
 import { emeraldCore } from '../../../../design-system/tokens/colors';
-import { formatTimeAgo, getRoleLabel, getRoleColor } from '../../../../utils/formatting';
+import {
+  formatTimeAgo,
+  getRoleLabel,
+  getRoleColor,
+} from '../../../../utils/formatting';
 import type { Viewer } from '../types';
 import { DeviceIcon } from './DeviceIcon';
 
@@ -16,7 +20,10 @@ interface ViewersListProps {
   isLight: boolean;
 }
 
-export const ViewersList: React.FC<ViewersListProps> = ({ viewers, isLight }) => {
+export const ViewersList: React.FC<ViewersListProps> = ({
+  viewers,
+  isLight,
+}) => {
   if (viewers.length === 0) {
     return null;
   }
@@ -32,12 +39,23 @@ export const ViewersList: React.FC<ViewersListProps> = ({ viewers, isLight }) =>
         mb: 3,
       }}
     >
-      <Box sx={{ px: 2.5, py: 1.5, borderBottom: `1px solid ${alpha('#000', 0.06)}` }}>
+      <Box
+        sx={{
+          px: 2.5,
+          py: 1.5,
+          borderBottom: `1px solid ${alpha('#000', 0.06)}`,
+        }}
+      >
         <Typography
           variant="body2"
-          sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
+          sx={{
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
         >
-          <Users size={16} color="#8B5CF6" />
+          <Users size={16} color={emeraldCore.primary} />
           Quién vio este producto ({viewers.length})
         </Typography>
       </Box>
@@ -50,7 +68,10 @@ export const ViewersList: React.FC<ViewersListProps> = ({ viewers, isLight }) =>
             gap: 1.5,
             px: 2.5,
             py: 1.5,
-            borderBottom: idx < viewers.length - 1 ? `1px solid ${alpha('#000', 0.06)}` : 'none',
+            borderBottom:
+              idx < viewers.length - 1
+                ? `1px solid ${alpha('#000', 0.06)}`
+                : 'none',
           }}
         >
           <Box
@@ -58,7 +79,10 @@ export const ViewersList: React.FC<ViewersListProps> = ({ viewers, isLight }) =>
               width: 36,
               height: 36,
               borderRadius: '50%',
-              bgcolor: alpha(viewer.isLoggedIn ? emeraldCore.primary : '#6B7280', 0.12),
+              bgcolor: alpha(
+                viewer.isLoggedIn ? emeraldCore.primary : '#6B7280',
+                0.12,
+              ),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -96,7 +120,9 @@ export const ViewersList: React.FC<ViewersListProps> = ({ viewers, isLight }) =>
                 />
               )}
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}
+            >
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 {viewer.views} {viewer.views === 1 ? 'vista' : 'vistas'}
               </Typography>

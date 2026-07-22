@@ -18,8 +18,15 @@ import { Scale, Trash2 } from 'lucide-react';
 import { TreasureItem } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { blurValues, cssTransition, zIndex } from '../../design-system';
+import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import {
+  blurValues,
+  cssTransition,
+  zIndex,
+  getQuietEmerald,
+  errorAlpha,
+  blackAlpha,
+} from '../../design-system';
 
 interface ComparisonBarProps {
   selectedItems: TreasureItem[];
@@ -37,6 +44,7 @@ export default function ComparisonBar({
   const { t } = useLanguage();
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const qe = getQuietEmerald(mode);
   const count = selectedItems.length;
   const canCompare = count >= 2;
 
@@ -59,11 +67,11 @@ export default function ComparisonBar({
           backdropFilter: `blur(${blurValues.md})`,
           border: '1px solid',
           borderColor: isLight
-            ? alpha(emeraldCore.primary, 0.2)
-            : alpha(emeraldCore.primary, 0.15),
+            ? alpha(qe.accentPure, 0.2)
+            : alpha(qe.accentPure, 0.15),
           boxShadow: isLight
-            ? '0 4px 20px rgba(0, 0, 0, 0.1)'
-            : '0 4px 20px rgba(0, 0, 0, 0.3)',
+            ? `0 4px 20px ${blackAlpha(0.1)}`
+            : `0 4px 20px ${blackAlpha(0.3)}`,
         }}
         role="region"
         aria-label="Esmeraldas seleccionadas para comparar"
@@ -84,7 +92,7 @@ export default function ComparisonBar({
               flexShrink: 0,
             }}
           >
-            <Scale size={20} color={emeraldCore.primary} />
+            <Scale size={20} color={qe.accentPure} />
             <Typography
               variant="body2"
               sx={{
@@ -107,14 +115,20 @@ export default function ComparisonBar({
             }}
           >
             {selectedItems.map((item) => (
-              <Tooltip key={item.item} title={item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim()}>
+              <Tooltip
+                key={item.item}
+                title={item.nombre
+                  .replace(/^L:.*?\s/, '')
+                  .replace(/^L:/, '')
+                  .trim()}
+              >
                 <Avatar
                   src={item.thumbnailUrl || item.imagen}
                   sx={{
                     width: 40,
                     height: 40,
                     border: '2px solid',
-                    borderColor: emeraldCore.primary,
+                    borderColor: qe.accent, // Jewelry-Not-Paint: border on a clickable (removable) avatar
                     cursor: 'pointer',
                     transition: cssTransition.fast,
                     '&:hover': {
@@ -138,7 +152,7 @@ export default function ComparisonBar({
               color: 'text.secondary',
               '&:hover': {
                 color: 'error.main',
-                bgcolor: alpha('#ef4444', 0.1),
+                bgcolor: errorAlpha(0.1),
               },
             }}
             aria-label={t.comparison.clearSelection}
@@ -153,7 +167,7 @@ export default function ComparisonBar({
             disabled={!canCompare}
             size="medium"
             sx={{
-              bgcolor: emeraldCore.primary,
+              bgcolor: qe.accent, // Jewelry-Not-Paint: fill on the Compare button
               color: 'white',
               textTransform: 'none',
               fontWeight: 600,
@@ -162,7 +176,9 @@ export default function ComparisonBar({
               minWidth: 'auto',
               borderRadius: 2,
               fontSize: '0.875rem',
-              '&:hover': { bgcolor: emeraldCore.dark },
+              // JnP-shifted fills darken to the stronger emerald step on hover
+              // (base qe.accent → qe.accentStrong) so hover feedback survives.
+              '&:hover': { bgcolor: qe.accentStrong },
               '&:disabled': {
                 opacity: 0.45,
               },

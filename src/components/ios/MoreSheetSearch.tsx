@@ -463,6 +463,10 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
               roundTo={1000}
               valueLabelDisplay="auto"
               valueLabelFormat={(value) => formatCurrency(value)}
+              getAriaLabel={(index) =>
+                index === 0 ? 'Precio mínimo' : 'Precio máximo'
+              }
+              getAriaValueText={(value) => formatCurrency(value)}
               sx={{
                 color: primitiveColors.emerald[500],
                 '& .MuiSlider-thumb': { width: 20, height: 20 },

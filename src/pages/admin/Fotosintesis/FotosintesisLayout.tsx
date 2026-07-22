@@ -204,6 +204,9 @@ export default function FotosintesisLayout() {
     if (path === '/admin/fotosintesis') {
       return [{ label: 'Inicio' }];
     }
+    if (path.startsWith('/admin/fotosintesis/items')) {
+      return [base, { label: 'Items' }];
+    }
     if (path === '/admin/fotosintesis/lots') {
       return [base, { label: 'Lotes' }];
     }

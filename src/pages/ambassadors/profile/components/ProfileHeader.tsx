@@ -12,19 +12,10 @@ import {
   IconButton,
   Tooltip,
   CircularProgress,
-  alpha,
-  useTheme,
 } from "@mui/material";
 import { Share2, Camera, Edit3, Star, Gem, DollarSign } from "lucide-react";
 import { Asesor } from "../../../../hooks/useAsesores";
-import {
-  emeraldCore,
-  goldAccent,
-  cssTransition,
-  fontFamilies,
-  surfacesLight,
-  surfacesDark,
-} from "../../../../design-system";
+import { qeFont, qeType, zIndex } from "../../../../design-system";
 import { deriveRating, formatCurrency } from "../../../../utils/formatting";
 
 export interface ProfileStats {
@@ -62,12 +53,8 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
     photoUrl,
     isUploadingPhoto,
   }) => {
-    const theme = useTheme();
-    const isLight = theme.palette.mode === "light";
-
     const isAdmin = (asesor.role || "").toLowerCase().includes("admin");
     const rating = deriveRating(totalProducts);
-    const accentColor = isAdmin ? goldAccent.primary : emeraldCore.primary;
 
     // Shared elegant pill base (full rounded, hairline border, airy tracking)
     const pillBase = {
@@ -77,7 +64,7 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
       height: 24,
       px: 1.15,
       borderRadius: "999px",
-      fontSize: "0.6rem",
+      fontSize: "0.6875rem",
       fontWeight: 600,
       letterSpacing: "0.14em",
       textTransform: "uppercase" as const,
@@ -95,7 +82,7 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
             right: 0,
             display: "flex",
             gap: 0.5,
-            zIndex: 1,
+            zIndex: zIndex.base + 1,
           }}
         >
           <Tooltip title="Compartir perfil">
@@ -104,11 +91,11 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
               aria-label="Compartir perfil"
               size="small"
               sx={{
-                color: "text.secondary",
-                bgcolor: isLight ? alpha("#000", 0.03) : alpha("#fff", 0.04),
+                color: "var(--tm-muted)",
+                bgcolor: "var(--tm-well)",
                 "&:hover": {
-                  bgcolor: alpha(emeraldCore.primary, 0.08),
-                  color: emeraldCore.primary,
+                  bgcolor: "var(--tm-accent-wash)",
+                  color: "var(--tm-accent)",
                 },
               }}
             >
@@ -122,11 +109,11 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
                 aria-label="Editar perfil"
                 size="small"
                 sx={{
-                  color: "text.secondary",
-                  bgcolor: isLight ? alpha("#000", 0.03) : alpha("#fff", 0.04),
+                  color: "var(--tm-muted)",
+                  bgcolor: "var(--tm-well)",
                   "&:hover": {
-                    bgcolor: alpha(emeraldCore.primary, 0.08),
-                    color: emeraldCore.primary,
+                    bgcolor: "var(--tm-accent-wash)",
+                    color: "var(--tm-accent)",
                   },
                 }}
               >
@@ -139,24 +126,14 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
         {/* Centered Avatar with decorative ring */}
         <Box sx={{ display: "flex", justifyContent: "center", mb: 1.5 }}>
           <Box sx={{ position: "relative" }}>
-            {/* Ambient glow — matches the directory calling cards */}
-            <Box
-              sx={{
-                position: "absolute",
-                inset: -16,
-                borderRadius: "50%",
-                background: `radial-gradient(circle, ${alpha(accentColor, 0.12)} 0%, transparent 68%)`,
-                pointerEvents: "none",
-              }}
-            />
             {/* Outer decorative ring */}
             <Box
               sx={{
                 position: "absolute",
                 inset: -6,
                 borderRadius: "50%",
-                border: "1.5px solid",
-                borderColor: alpha(accentColor, 0.2),
+                border: "1px solid",
+                borderColor: "var(--tm-border)",
               }}
             />
             <Avatar
@@ -164,14 +141,14 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
               sx={{
                 width: { xs: 104, sm: 120, md: 130 },
                 height: { xs: 104, sm: 120, md: 130 },
-                bgcolor: accentColor,
+                bgcolor: "var(--tm-accent-strong)",
+                color: "var(--tm-on-accent)",
                 fontSize: "2.5rem",
                 fontWeight: 700,
                 opacity: isUploadingPhoto ? 0.6 : 1,
-                transition: cssTransition.default,
-                border: "3px solid",
-                borderColor: accentColor,
-                boxShadow: `0 4px 20px ${alpha(accentColor, 0.25)}`,
+                transition: "opacity var(--tm-base) var(--tm-ease)",
+                border: "1px solid",
+                borderColor: "var(--tm-border)",
               }}
             >
               {asesor.name.charAt(0).toUpperCase()}
@@ -186,7 +163,7 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
                   left: "50%",
                   mt: "-14px",
                   ml: "-14px",
-                  color: accentColor,
+                  color: "var(--tm-accent)",
                 }}
               />
             )}
@@ -202,19 +179,16 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
                   right: 2,
                   width: 30,
                   height: 30,
-                  bgcolor: accentColor,
-                  color: "#fff",
-                  border: "2.5px solid",
-                  borderColor: isLight
-                    ? "#fff"
-                    : surfacesDark.background.secondary,
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                  bgcolor: "var(--tm-accent-strong)",
+                  color: "var(--tm-on-accent)",
+                  border: "2px solid",
+                  borderColor: "var(--tm-surface)",
                   "&:hover": {
-                    bgcolor: isAdmin ? goldAccent.dark : emeraldCore.dark,
+                    bgcolor: "var(--tm-accent)",
                   },
                   "&.Mui-disabled": {
-                    bgcolor: alpha(accentColor, 0.5),
-                    color: "#fff",
+                    bgcolor: "var(--tm-border)",
+                    color: "var(--tm-subtle)",
                   },
                 }}
               >
@@ -228,7 +202,7 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
         <Typography
           variant="h5"
           sx={{
-            fontFamily: fontFamilies.display,
+            fontFamily: qeFont.serif,
             fontWeight: 600,
             mb: 0.85,
             fontSize: { xs: "1.6rem", sm: "1.8rem", md: "1.95rem" },
@@ -251,9 +225,9 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
           <Box
             sx={{
               ...pillBase,
-              bgcolor: alpha(emeraldCore.primary, 0.08),
-              borderColor: alpha(emeraldCore.primary, 0.22),
-              color: emeraldCore.primary,
+              bgcolor: "var(--tm-accent-wash)",
+              borderColor: "var(--tm-border)",
+              color: "var(--tm-accent)",
             }}
           >
             <Box
@@ -261,7 +235,7 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
                 width: 4,
                 height: 4,
                 borderRadius: "50%",
-                bgcolor: emeraldCore.primary,
+                bgcolor: "var(--tm-accent-pure)",
               }}
             />
             Embajador
@@ -270,9 +244,9 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
             <Box
               sx={{
                 ...pillBase,
-                bgcolor: alpha(goldAccent.primary, 0.1),
-                borderColor: alpha(goldAccent.primary, 0.3),
-                color: isLight ? goldAccent.dark : goldAccent.light,
+                bgcolor: "var(--tm-well)",
+                borderColor: "var(--tm-border)",
+                color: "var(--tm-muted)",
               }}
             >
               <Box
@@ -280,7 +254,7 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
                   width: 4,
                   height: 4,
                   borderRadius: "50%",
-                  bgcolor: goldAccent.primary,
+                  bgcolor: "var(--tm-muted)",
                 }}
               />
               Elite
@@ -294,33 +268,28 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
             display: "flex",
             alignItems: "stretch",
             mx: { xs: 1, sm: 2, md: 3 },
-            borderRadius: "16px",
+            borderRadius: "var(--tm-radius-card)",
             overflow: "hidden",
-            bgcolor: isLight
-              ? surfacesLight.surface.default
-              : surfacesDark.background.secondary,
+            bgcolor: "var(--tm-surface)",
             border: "1px solid",
-            borderColor: isLight
-              ? surfacesLight.border.light
-              : surfacesDark.border.light,
-            boxShadow: isLight
-              ? "0 1px 6px rgba(0,0,0,0.05)"
-              : "0 2px 12px rgba(0,0,0,0.28)",
+            borderColor: "var(--tm-border)",
           }}
         >
           {[
             {
-              icon: <Gem size={15} color={emeraldCore.primary} />,
+              icon: <Gem size={15} style={{ color: "var(--tm-accent)" }} />,
               value: String(totalProducts),
               label: "Tesoros",
             },
             {
-              icon: <DollarSign size={15} color={goldAccent.primary} />,
+              icon: (
+                <DollarSign size={15} style={{ color: "var(--tm-muted)" }} />
+              ),
               value: formatCurrency(stats.totalValue),
               label: "Valor",
             },
             {
-              icon: <Star size={15} color={goldAccent.primary} />,
+              icon: <Star size={15} style={{ color: "var(--tm-muted)" }} />,
               value: rating ? String(rating) : "—",
               label: "Rating",
             },
@@ -347,9 +316,7 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
                     top: "20%",
                     bottom: "20%",
                     width: "1px",
-                    bgcolor: isLight
-                      ? surfacesLight.border.light
-                      : surfacesDark.border.light,
+                    bgcolor: "var(--tm-hairline)",
                   },
                 }),
               }}
@@ -357,12 +324,9 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
               {stat.icon}
               <Typography
                 sx={{
-                  fontFamily: fontFamilies.display,
-                  fontWeight: 600,
+                  ...qeType.data,
                   fontSize: { xs: "1.15rem", sm: "1.3rem" },
                   lineHeight: 1.05,
-                  letterSpacing: "0.01em",
-                  fontVariantNumeric: "lining-nums tabular-nums",
                   whiteSpace: "nowrap",
                 }}
               >
@@ -370,9 +334,9 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
               </Typography>
               <Typography
                 sx={{
-                  fontSize: "0.55rem",
+                  fontSize: "0.6875rem",
                   fontWeight: 600,
-                  color: "text.secondary",
+                  color: "var(--tm-muted)",
                   textTransform: "uppercase",
                   letterSpacing: "0.08em",
                 }}
@@ -389,7 +353,7 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
             sx={{
               mt: 2,
               color: "text.secondary",
-              fontFamily: fontFamilies.display,
+              fontFamily: qeFont.serif,
               fontSize: { xs: "1.02rem", sm: "1.1rem" },
               lineHeight: 1.55,
               maxWidth: { xs: 340, sm: 420 },

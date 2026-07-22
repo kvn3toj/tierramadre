@@ -28,10 +28,17 @@ import {
   Info,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { emeraldCore, goldAccent } from '../../design-system/tokens/colors';
-import { cssTransition, zIndex } from '../../design-system';
-import { glassDark, glassLight, applyGlass } from '../../design-system/tokens/glass';
-import { staggerContainer, staggerItem } from '../../design-system/tokens/motion';
+import { emeraldCore } from '../../design-system/tokens/colors';
+import { cssTransition, zIndex, MetricCard } from '../../design-system';
+import {
+  glassDark,
+  glassLight,
+  applyGlass,
+} from '../../design-system/tokens/glass';
+import {
+  staggerContainer,
+  staggerItem,
+} from '../../design-system/tokens/motion';
 import {
   EMERALD_VALUATION_DATA,
   ZAMBIAN_VALUATION_DATA,
@@ -51,7 +58,6 @@ import {
   ChartConfig,
 } from '../../utils/chart-helpers';
 import {
-  StatCard,
   TimeRangeSlider,
   OriginComparisonTable,
   ChartLegend,
@@ -97,30 +103,48 @@ const ValuationPage: React.FC = () => {
   const startYear = Math.max(MIN_YEAR, CURRENT_YEAR - yearsBack);
 
   const allOriginData = useMemo(
-    () => [EMERALD_VALUATION_DATA, ZAMBIAN_VALUATION_DATA, BRAZILIAN_VALUATION_DATA],
-    []
+    () => [
+      EMERALD_VALUATION_DATA,
+      ZAMBIAN_VALUATION_DATA,
+      BRAZILIAN_VALUATION_DATA,
+    ],
+    [],
   );
 
   const chartPointsMulti = useMemo(
-    () => calculateChartPointsMulti(allOriginData, startYear, endYear, CHART_CONFIG),
-    [allOriginData, startYear, endYear]
+    () =>
+      calculateChartPointsMulti(
+        allOriginData,
+        startYear,
+        endYear,
+        CHART_CONFIG,
+      ),
+    [allOriginData, startYear, endYear],
   );
 
   const colombianFiltered = useMemo(
     () => filterDataByYearRange(EMERALD_VALUATION_DATA, startYear, endYear),
-    [startYear, endYear]
+    [startYear, endYear],
   );
-  const appreciation = useMemo(() => calculateAppreciation(colombianFiltered), [colombianFiltered]);
+  const appreciation = useMemo(
+    () => calculateAppreciation(colombianFiltered),
+    [colombianFiltered],
+  );
 
   const maxPrice = useMemo(() => {
     const allPrices = allOriginData.flatMap((data) =>
-      data.filter((d) => d.year >= startYear && d.year <= endYear).map((d) => d.price)
+      data
+        .filter((d) => d.year >= startYear && d.year <= endYear)
+        .map((d) => d.price),
     );
     return Math.max(...allPrices) * 1.1;
   }, [allOriginData, startYear, endYear]);
 
   const yAxisTicks = useMemo(() => calculateYAxisTicks(maxPrice), [maxPrice]);
-  const xAxisTicks = useMemo(() => calculateXAxisTicks(startYear, endYear), [startYear, endYear]);
+  const xAxisTicks = useMemo(
+    () => calculateXAxisTicks(startYear, endYear),
+    [startYear, endYear],
+  );
 
   const handleSliderChange = (_: Event, newValue: number | number[]) => {
     setYearsBack(newValue as number);
@@ -131,9 +155,14 @@ const ValuationPage: React.FC = () => {
   const chartWidth = width - padding.left - padding.right;
 
   // Calculate CAGR
-  const cagr = appreciation.years > 0
-    ? (Math.pow(1 + appreciation.percentage / 100, 1 / appreciation.years) * 100 - 100).toFixed(1)
-    : '0';
+  const cagr =
+    appreciation.years > 0
+      ? (
+          Math.pow(1 + appreciation.percentage / 100, 1 / appreciation.years) *
+            100 -
+          100
+        ).toFixed(1)
+      : '0';
 
   return (
     <Box
@@ -153,7 +182,11 @@ const ValuationPage: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', px: 2, py: 1.5 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Volver" sx={{ mr: 1 }}>
+          <IconButton
+            onClick={() => navigate(-1)}
+            aria-label="Volver"
+            sx={{ mr: 1 }}
+          >
             <ArrowBack />
           </IconButton>
           <Typography variant="h6" sx={{ fontWeight: 600, flex: 1 }}>
@@ -173,7 +206,14 @@ const ValuationPage: React.FC = () => {
         <motion.div variants={staggerItem}>
           <Card sx={{ ...applyGlass(glassEffect), borderRadius: 4, mb: 2 }}>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                  mb: 2,
+                }}
+              >
                 <Box>
                   <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
                     Comparación de Precios
@@ -183,7 +223,11 @@ const ValuationPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Tooltip title="CAGR = Tasa de Crecimiento Anual Compuesta. El retorno anual promedio si el crecimiento fuera perfectamente uniforme cada año.">
-                  <IconButton size="small" aria-label="Información sobre CAGR" sx={{ mt: -0.5 }}>
+                  <IconButton
+                    size="small"
+                    aria-label="Información sobre CAGR"
+                    sx={{ mt: -0.5 }}
+                  >
                     <Info sx={{ fontSize: 18, color: 'text.secondary' }} />
                   </IconButton>
                 </Tooltip>
@@ -215,12 +259,18 @@ const ValuationPage: React.FC = () => {
                     y={padding.top}
                     width={chartWidth}
                     height={chartHeight}
-                    fill={isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)'}
+                    fill={
+                      isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)'
+                    }
                   />
 
                   {/* Y-axis grid lines and labels */}
                   {yAxisTicks.map((tick, index) => {
-                    const y = padding.top + chartHeight - (tick / (yAxisTicks[yAxisTicks.length - 1] || 1)) * chartHeight;
+                    const y =
+                      padding.top +
+                      chartHeight -
+                      (tick / (yAxisTicks[yAxisTicks.length - 1] || 1)) *
+                        chartHeight;
                     return (
                       <g key={`y-${index}`}>
                         <line
@@ -228,7 +278,11 @@ const ValuationPage: React.FC = () => {
                           y1={y}
                           x2={padding.left + chartWidth}
                           y2={y}
-                          stroke={isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}
+                          stroke={
+                            isDarkMode
+                              ? 'rgba(255,255,255,0.08)'
+                              : 'rgba(0,0,0,0.06)'
+                          }
                           strokeWidth={1}
                           strokeDasharray={index === 0 ? 'none' : '3 3'}
                         />
@@ -236,7 +290,11 @@ const ValuationPage: React.FC = () => {
                           x={padding.left - 10}
                           y={y + 4}
                           textAnchor="end"
-                          fill={isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'}
+                          fill={
+                            isDarkMode
+                              ? 'rgba(255,255,255,0.6)'
+                              : 'rgba(0,0,0,0.5)'
+                          }
                           fontSize={10}
                           fontFamily="system-ui, -apple-system, sans-serif"
                         >
@@ -248,14 +306,21 @@ const ValuationPage: React.FC = () => {
 
                   {/* X-axis labels */}
                   {xAxisTicks.map((year) => {
-                    const x = padding.left + ((year - startYear) / (endYear - startYear || 1)) * chartWidth;
+                    const x =
+                      padding.left +
+                      ((year - startYear) / (endYear - startYear || 1)) *
+                        chartWidth;
                     return (
                       <text
                         key={`x-${year}`}
                         x={x}
                         y={height - 10}
                         textAnchor="middle"
-                        fill={isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'}
+                        fill={
+                          isDarkMode
+                            ? 'rgba(255,255,255,0.6)'
+                            : 'rgba(0,0,0,0.5)'
+                        }
                         fontSize={10}
                         fontFamily="system-ui, -apple-system, sans-serif"
                       >
@@ -270,7 +335,8 @@ const ValuationPage: React.FC = () => {
                     if (!points || points.length < 2) return null;
                     const path = createLinePath(points);
                     const isHovered = hoveredOrigin === origin.origin;
-                    const isOtherHovered = hoveredOrigin && hoveredOrigin !== origin.origin;
+                    const isOtherHovered =
+                      hoveredOrigin && hoveredOrigin !== origin.origin;
 
                     return (
                       <motion.path
@@ -278,13 +344,29 @@ const ValuationPage: React.FC = () => {
                         d={path}
                         fill="none"
                         stroke={origin.color}
-                        strokeWidth={origin.origin === 'Colombia' ? CHART_CONFIG.lineWidth + 1 : CHART_CONFIG.lineWidth}
+                        strokeWidth={
+                          origin.origin === 'Colombia'
+                            ? CHART_CONFIG.lineWidth + 1
+                            : CHART_CONFIG.lineWidth
+                        }
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        opacity={isOtherHovered ? 0.3 : isHovered ? 1 : origin.origin === 'Colombia' ? 1 : 0.7}
+                        opacity={
+                          isOtherHovered
+                            ? 0.3
+                            : isHovered
+                              ? 1
+                              : origin.origin === 'Colombia'
+                                ? 1
+                                : 0.7
+                        }
                         initial={{ pathLength: 0 }}
                         animate={{ pathLength: 1 }}
-                        transition={{ duration: 1.5, ease: 'easeOut', delay: originIndex * 0.2 }}
+                        transition={{
+                          duration: 1.5,
+                          ease: 'easeOut',
+                          delay: originIndex * 0.2,
+                        }}
                         style={{ cursor: 'pointer' }}
                         onMouseEnter={() => setHoveredOrigin(origin.origin)}
                         onMouseLeave={() => setHoveredOrigin(null)}
@@ -351,7 +433,9 @@ const ValuationPage: React.FC = () => {
                     y1={padding.top}
                     x2={padding.left}
                     y2={padding.top + chartHeight}
-                    stroke={isDarkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'}
+                    stroke={
+                      isDarkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'
+                    }
                     strokeWidth={1}
                   />
                   <line
@@ -359,7 +443,9 @@ const ValuationPage: React.FC = () => {
                     y1={padding.top + chartHeight}
                     x2={padding.left + chartWidth}
                     y2={padding.top + chartHeight}
-                    stroke={isDarkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'}
+                    stroke={
+                      isDarkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'
+                    }
                     strokeWidth={1}
                   />
                 </svg>
@@ -382,25 +468,21 @@ const ValuationPage: React.FC = () => {
                   gap: 2,
                   p: 2,
                   borderRadius: 2,
-                  bgcolor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                  bgcolor: isDarkMode
+                    ? 'rgba(255,255,255,0.03)'
+                    : 'rgba(0,0,0,0.02)',
                 }}
               >
-                <StatCard
+                <MetricCard
                   label="Retorno Colombia"
-                  value={`+${appreciation.percentage}`}
-                  color={emeraldCore.primary}
-                  suffix="%"
+                  value={`+${appreciation.percentage}%`}
+                  compact
                 />
-                <StatCard
-                  label="CAGR"
-                  value={cagr}
-                  color={isDarkMode ? goldAccent.light : goldAccent.dark}
-                  suffix="%"
-                />
-                <StatCard
+                <MetricCard label="CAGR" value={`${cagr}%`} compact />
+                <MetricCard
                   label="Periodo"
-                  value={appreciation.years}
-                  suffix=" años"
+                  value={`${appreciation.years} años`}
+                  compact
                 />
               </Box>
             </CardContent>
@@ -416,7 +498,9 @@ const ValuationPage: React.FC = () => {
         <motion.div variants={staggerItem}>
           <Card sx={{ ...applyGlass(glassSubtle), borderRadius: 4, mb: 2 }}>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <Box
+                sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}
+              >
                 <Info sx={{ color: emeraldCore.primary }} />
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                   Entendiendo los Datos
@@ -424,38 +508,90 @@ const ValuationPage: React.FC = () => {
               </Box>
 
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Estos precios representan <strong>resultados de subastas de primer nivel</strong> para esmeraldas
-                grado inversión, compilados de datos de ventas de Christie's, Sotheby's y análisis de mercado de Piat.
+                Estos precios representan{' '}
+                <strong>resultados de subastas de primer nivel</strong> para
+                esmeraldas grado inversión, compilados de datos de ventas de
+                Christie's, Sotheby's y análisis de mercado de Piat.
               </Typography>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: isDarkMode ? 'rgba(0,174,122,0.1)' : 'rgba(0,174,122,0.05)' }}>
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: emeraldCore.primary }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 2,
+                    bgcolor: isDarkMode
+                      ? 'rgba(0,174,122,0.1)'
+                      : 'rgba(0,174,122,0.05)',
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{ fontWeight: 600, color: emeraldCore.primary }}
+                  >
                     ¿Qué es "Grado Inversión"?
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                    Color excepcional, alta claridad, mínimo tratamiento, excelente corte y procedencia verificada.
-                    Típicamente 3+ quilates con documentación de GIA o laboratorios similares.
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mt: 0.5 }}
+                  >
+                    Color excepcional, alta claridad, mínimo tratamiento,
+                    excelente corte y procedencia verificada. Típicamente 3+
+                    quilates con documentación de GIA o laboratorios similares.
                   </Typography>
                 </Box>
 
-                <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }}>
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 2,
+                    bgcolor: isDarkMode
+                      ? 'rgba(255,255,255,0.05)'
+                      : 'rgba(0,0,0,0.02)',
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{ fontWeight: 600, color: 'text.primary' }}
+                  >
                     ¿Por qué el Premium Colombiano?
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                    Las esmeraldas colombianas tienen precios 2-4x mayores debido a su único efecto óptico "gota de aceite",
-                    su tono verde-amarillo cálido, y siglos de prestigio en joyería fina.
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mt: 0.5 }}
+                  >
+                    Las esmeraldas colombianas tienen precios 2-4x mayores
+                    debido a su único efecto óptico "gota de aceite", su tono
+                    verde-amarillo cálido, y siglos de prestigio en joyería
+                    fina.
                   </Typography>
                 </Box>
 
-                <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }}>
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 2,
+                    bgcolor: isDarkMode
+                      ? 'rgba(255,255,255,0.05)'
+                      : 'rgba(0,0,0,0.02)',
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{ fontWeight: 600, color: 'text.primary' }}
+                  >
                     Precio de Mercado vs Retail
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                    Los precios de joyería retail incluyen márgenes significativos (50-300%). Estos precios de subasta
-                    reflejan valores de mercado mayorista para piedras sueltas excepcionales.
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mt: 0.5 }}
+                  >
+                    Los precios de joyería retail incluyen márgenes
+                    significativos (50-300%). Estos precios de subasta reflejan
+                    valores de mercado mayorista para piedras sueltas
+                    excepcionales.
                   </Typography>
                 </Box>
               </Box>
@@ -467,7 +603,9 @@ const ValuationPage: React.FC = () => {
         <motion.div variants={staggerItem}>
           <Card sx={{ ...applyGlass(glassSubtle), borderRadius: 4, mb: 2 }}>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <Box
+                sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}
+              >
                 <Timeline sx={{ color: emeraldCore.primary }} />
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                   Eventos Históricos
@@ -489,14 +627,23 @@ const ValuationPage: React.FC = () => {
                     }`,
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      mb: 0.5,
+                    }}
+                  >
                     <Chip
                       label={event.year}
                       size="small"
                       sx={{
                         fontSize: '0.7rem',
                         height: 20,
-                        bgcolor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                        bgcolor: isDarkMode
+                          ? 'rgba(255,255,255,0.1)'
+                          : 'rgba(0,0,0,0.05)',
                       }}
                     />
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -514,7 +661,10 @@ const ValuationPage: React.FC = () => {
 
         {/* Auction Records */}
         <motion.div variants={staggerItem}>
-          <AuctionRecordsCard glassEffect={glassSubtle} isDarkMode={isDarkMode} />
+          <AuctionRecordsCard
+            glassEffect={glassSubtle}
+            isDarkMode={isDarkMode}
+          />
         </motion.div>
 
         {/* Sources with Links */}
@@ -525,7 +675,11 @@ const ValuationPage: React.FC = () => {
                 Fuentes y Metodología
               </Typography>
 
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', mb: 2 }}
+              >
                 {VALUATION_METADATA.disclaimer}
               </Typography>
 
@@ -549,7 +703,9 @@ const ValuationPage: React.FC = () => {
                       borderRadius: 1,
                       transition: cssTransition.default,
                       '&:hover': {
-                        bgcolor: isDarkMode ? 'rgba(0,174,122,0.1)' : 'rgba(0,174,122,0.05)',
+                        bgcolor: isDarkMode
+                          ? 'rgba(0,174,122,0.1)'
+                          : 'rgba(0,174,122,0.05)',
                         textDecoration: 'underline',
                       },
                     }}

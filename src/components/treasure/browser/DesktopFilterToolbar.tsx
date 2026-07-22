@@ -1,20 +1,15 @@
-import {
-  Box,
-  Chip,
-  ToggleButton,
-  ToggleButtonGroup,
-  alpha,
-} from "@mui/material";
-import { LayoutGrid, List, Gem, Crown } from "lucide-react";
-import { emeraldCore } from "../../../design-system/tokens/colors";
-import SavedFiltersDropdown from "../SavedFiltersDropdown";
-import type { FilterPreset, FilterState } from "../../../hooks/useSavedFilters";
+import { Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { LayoutGrid, List } from 'lucide-react';
+import { getQuietEmerald } from '../../../design-system';
+import SavedFiltersDropdown from '../SavedFiltersDropdown';
+import type { FilterPreset, FilterState } from '../../../hooks/useSavedFilters';
+import type { TreasureItem } from '../../../types';
 import type {
   TreasureFilters,
   StatusFilter,
   SortOption,
   TypeFilter,
-} from "../../../hooks/useTreasureFiltering";
+} from '../../../hooks/useTreasureFiltering';
 
 interface UseSavedFiltersApi {
   presets: FilterPreset[];
@@ -23,10 +18,8 @@ interface UseSavedFiltersApi {
 }
 
 interface DesktopFilterToolbarProps {
-  shouldShowPrices: boolean;
-  stats: { looseStones: number; jewelry: number };
-  viewMode: "grid" | "list";
-  onViewModeChange: (mode: "grid" | "list") => void;
+  viewMode: 'grid' | 'list';
+  onViewModeChange: (mode: 'grid' | 'list') => void;
   savedFilters: UseSavedFiltersApi;
   hasFilters: boolean;
   filters: TreasureFilters;
@@ -39,13 +32,21 @@ interface DesktopFilterToolbarProps {
   setPriceRange: (v: [number, number]) => void;
   setSortBy: (v: SortOption) => void;
   setCantidadFilter: (v: string) => void;
-  trackViewModeChange: (mode: "grid" | "list") => void;
+  trackViewModeChange: (mode: 'grid' | 'list') => void;
   isLight: boolean;
+  /** Rendered in place of the row's flex spacer — keeps the results count on
+   * the same row as saved-filters/view-toggle instead of a separate block. */
+  resultsSummary?: React.ReactNode;
+  /** Drops the top border/margin — for when this renders inline beside the
+   * page title instead of as its own row below. */
+  dense?: boolean;
+  /** Recently-viewed pieces, surfaced inside the Búsquedas dropdown. */
+  recentItems?: TreasureItem[];
+  onRecentClick?: (item: TreasureItem) => void;
+  onClearRecent?: () => void;
 }
 
 export default function DesktopFilterToolbar({
-  shouldShowPrices,
-  stats,
   viewMode,
   onViewModeChange,
   savedFilters,
@@ -62,51 +63,38 @@ export default function DesktopFilterToolbar({
   setCantidadFilter,
   trackViewModeChange,
   isLight,
+  resultsSummary,
+  dense = false,
+  recentItems,
+  onRecentClick,
+  onClearRecent,
 }: DesktopFilterToolbarProps) {
+  // Theme is data: resolve the Quiet Emerald token set from the mode instead of
+  // hand-rolling hex/rgba here.
+  const qe = getQuietEmerald(isLight ? 'light' : 'dark');
   return (
     <Box
       sx={{
-        display: "flex",
+        display: 'flex',
         gap: 2,
-        alignItems: "center",
-        mt: 2,
-        pt: 2,
-        borderTop: "1px solid",
-        borderColor: isLight ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.06)",
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        // Span the trailing area so the flexible gap below can push the
+        // personal/view cluster to the right edge of the header row.
+        flex: 1,
+        minWidth: 0,
+        ...(dense
+          ? {}
+          : {
+              mt: 1,
+              pt: 1,
+              borderTop: '1px solid',
+              borderColor: qe.hairline,
+            }),
       }}
     >
-      {shouldShowPrices && (
-        <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-          <Chip
-            size="small"
-            icon={<Gem size={12} />}
-            label={stats.looseStones}
-            sx={{
-              bgcolor: alpha(emeraldCore.primary, 0.1),
-              color: emeraldCore.primary,
-              fontWeight: 600,
-              fontSize: "0.7rem",
-              height: 24,
-              "& .MuiChip-icon": { color: emeraldCore.primary },
-            }}
-          />
-          <Chip
-            size="small"
-            icon={<Crown size={12} />}
-            label={stats.jewelry}
-            sx={{
-              // Quiet Emerald: emerald is the only saturated color — jewelry
-              // reads as neutral ink, not gold.
-              bgcolor: isLight ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.08)",
-              color: isLight ? "#5C6360" : "#9AA09D",
-              fontWeight: 600,
-              fontSize: "0.7rem",
-              height: 24,
-              "& .MuiChip-icon": { color: isLight ? "#5C6360" : "#9AA09D" },
-            }}
-          />
-        </Box>
-      )}
+      {/* Find cluster: saved searches sits right after Search/Filtros (which
+          render just before this component) — all three narrow the catalog. */}
       <SavedFiltersDropdown
         presets={savedFilters.presets}
         onSavePreset={(name) =>
@@ -137,8 +125,24 @@ export default function DesktopFilterToolbar({
         }}
         onDeletePreset={savedFilters.deletePreset}
         hasActiveFilters={hasFilters}
+        recentItems={recentItems}
+        onRecentClick={onRecentClick}
+        onClearRecent={onClearRecent}
       />
-      <Box sx={{ flex: 1 }} />
+
+      {/* Flexible gap — the honest break between the "narrow the catalog" find
+          cluster (search · filtros · búsquedas) and the personal/view cluster.
+          minWidth keeps a real gap even when the row is tight. */}
+      <Box sx={{ flex: 1, minWidth: 24 }} />
+
+      {/* Personal/view cluster: Favoritos — a distinct concept from "narrow the
+          catalog", right-aligned. Inventory summary (total value + stat chips)
+          lives in the header's identity zone, not here, so this row stays a
+          stable single line whether or not prices are shown. */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        {resultsSummary}
+      </Box>
+
       <ToggleButtonGroup
         value={viewMode}
         exclusive

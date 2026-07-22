@@ -5,8 +5,8 @@
 import { Box, Avatar, Typography, alpha } from '@mui/material';
 import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { zIndex, defaultShadows } from '../../design-system';
+import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { zIndex, defaultShadows, getQuietEmerald } from '../../design-system';
 
 interface ProductHeaderProps {
   items: TreasureItem[];
@@ -15,6 +15,7 @@ interface ProductHeaderProps {
 export default function ProductHeader({ items }: ProductHeaderProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const qe = getQuietEmerald(mode);
 
   return (
     <Box
@@ -22,9 +23,13 @@ export default function ProductHeader({ items }: ProductHeaderProps) {
         position: 'sticky',
         top: 0,
         zIndex: zIndex.base,
-        bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
+        bgcolor: isLight
+          ? surfacesLight.background.primary
+          : surfacesDark.background.primary,
         borderBottom: '1px solid',
-        borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+        borderColor: isLight
+          ? surfacesLight.border.light
+          : surfacesDark.border.light,
         px: 2,
         py: 1.25,
         boxShadow: defaultShadows.sm,
@@ -61,8 +66,8 @@ export default function ProductHeader({ items }: ProductHeaderProps) {
                   height: 44,
                   mx: 'auto',
                   border: '2px solid',
-                  borderColor: emeraldCore.primary,
-                  bgcolor: alpha(emeraldCore.primary, 0.1),
+                  borderColor: qe.accentPure,
+                  bgcolor: alpha(qe.accentPure, 0.1),
                   fontSize: '0.9rem',
                   fontWeight: 600,
                 }}
@@ -75,7 +80,9 @@ export default function ProductHeader({ items }: ProductHeaderProps) {
                   fontWeight: 600,
                   display: 'block',
                   mt: 0.5,
-                  color: isLight ? surfacesLight.text.primary : surfacesDark.text.primary,
+                  color: isLight
+                    ? surfacesLight.text.primary
+                    : surfacesDark.text.primary,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',

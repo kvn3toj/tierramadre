@@ -195,9 +195,7 @@ export {
   studioColors,
   studioGradients,
   studioShadows,
-  studioCardStyles,
   animation,
-  disabledButton,
 } from './tokens/legacy-compat';
 
 // =============================================================================
@@ -248,6 +246,51 @@ export {
   type CardContentProps,
   type CardFooterProps,
 } from './components/Card';
+
+// Badge — the ONE status/label chip (dot/icon + label, never color-only).
+export { Badge, type BadgeProps, type BadgeTone } from './components/Badge';
+
+// MetricCard — the ONE stat tile (Card + Badge composition).
+export { MetricCard, type MetricCardProps } from './components/MetricCard';
+
+// TextField — the ONE text input.
+export {
+  TextField,
+  type TextFieldProps,
+  type TextFieldSize,
+} from './components/TextField';
+
+// Field — label[for] + help + error wrapper for non-self-labeled controls.
+export { Field, type FieldProps } from './components/Field';
+
+// SegmentedControl — the ONE bounded exclusive-choice switch.
+export {
+  SegmentedControl,
+  type SegmentedControlProps,
+  type SegmentedOption,
+} from './components/SegmentedControl';
+
+// Sheet — the ONE overlay (desktop modal / mobile bottom-sheet split).
+export { Sheet, type SheetProps } from './components/Sheet';
+
+// EmptyState — the ONE "nothing here" shell.
+export { EmptyState, type EmptyStateProps } from './components/EmptyState';
+
+// ErrorState — the ONE "something broke" shell.
+export { ErrorState, type ErrorStateProps } from './components/ErrorState';
+
+// Skeleton — the ONE loading placeholder.
+export { Skeleton, type SkeletonProps } from './components/Skeleton';
+
+// FilterSheet — the ONE filter overlay.
+export { FilterSheet, type FilterSheetProps } from './components/FilterSheet';
+
+// PieceCard — the ONE catalog piece card (well + serif name + mono spec/price + Nº).
+export {
+  PieceCard,
+  type PieceCardProps,
+  type PieceCardVariant,
+} from './components/PieceCard';
 
 // Layout
 export {

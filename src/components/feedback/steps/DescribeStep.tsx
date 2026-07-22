@@ -4,10 +4,11 @@
  * Text input for describing the problem.
  */
 
-import { Box, Typography, Button, Stack, TextField, Alert, CircularProgress } from '@mui/material';
+import { Box, Typography, Stack, TextField, Alert } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SendIcon from '@mui/icons-material/Send';
 import { alpha } from '@mui/material/styles';
+import { Button } from '../../../design-system/components/Button';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 
@@ -82,7 +83,8 @@ export default function DescribeStep({
       {/* Character count hint */}
       <Typography
         sx={{
-          color: description.length < 10 ? alpha('#fff', 0.4) : emeraldCore.light,
+          color:
+            description.length < 10 ? alpha('#fff', 0.4) : emeraldCore.light,
           fontSize: '0.75rem',
           textAlign: 'right',
         }}
@@ -102,32 +104,19 @@ export default function DescribeStep({
       {/* Action buttons */}
       <Stack direction="row" spacing={1} justifyContent="space-between">
         <Button
+          variant="plain"
           startIcon={<ArrowBackIcon />}
           onClick={onBack}
           disabled={isSubmitting}
-          sx={{ color: alpha('#fff', 0.7) }}
         >
           Atrás
         </Button>
         <Button
-          variant="contained"
-          endIcon={
-            isSubmitting ? (
-              <CircularProgress size={18} color="inherit" />
-            ) : (
-              <SendIcon />
-            )
-          }
+          variant="primary"
+          endIcon={<SendIcon />}
           onClick={onSubmit}
-          disabled={!canSubmit || isSubmitting}
-          sx={{
-            bgcolor: emeraldCore.primary,
-            '&:hover': { bgcolor: emeraldCore.dark },
-            '&:disabled': {
-              bgcolor: alpha(emeraldCore.primary, 0.3),
-              color: alpha('#fff', 0.5),
-            },
-          }}
+          disabled={!canSubmit}
+          loading={isSubmitting}
         >
           {isSubmitting ? t.feedback.submitting : t.feedback.send}
         </Button>

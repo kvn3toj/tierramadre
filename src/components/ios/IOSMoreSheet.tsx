@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import FocusTrap from '@mui/material/Unstable_TrapFocus';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -554,453 +555,460 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
         }}
       />
 
-      <Box
-        role="dialog"
-        aria-modal="true"
-        aria-label={t.nav.more}
-        sx={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: zIndex.sheetContent,
-          ...sheetStyles,
-          borderTopLeftRadius: radius.xl,
-          borderTopRightRadius: radius.xl,
-          // Dynamic viewport height so the sheet never runs past the visible
-          // area on iOS Safari. With `85vh` the address bar was counted in the
-          // height, pushing the bottom rows (Settings / Feedback / price
-          // slider) below the fold where overflow scroll could not reach them.
-          maxHeight: '85dvh',
-          '@supports not (height: 100dvh)': {
-            maxHeight: '85vh',
-          },
-          overflowY: 'auto',
-          // Keep scroll momentum inside the sheet and stop it chaining to the
-          // page behind it when it hits the top/bottom.
-          overscrollBehavior: 'contain',
-          WebkitOverflowScrolling: 'touch',
-          transform: open ? 'translateY(0)' : 'translateY(100%)',
-          visibility: open ? 'visible' : 'hidden',
-          pointerEvents: open ? 'auto' : 'none',
-          transition: effectiveConfig.animations
-            ? `transform ${durations.liquidNormal} ${easingCurves.liquidSpring}, visibility ${durations.liquidNormal}`
-            : `${cssTransition.slow}, visibility 0.3s`,
-          paddingBottom: 'env(safe-area-inset-bottom)',
-          willChange: 'transform',
-          ...headerSpecularStyles,
-
-          '@supports not (backdrop-filter: blur(10px))': {
-            backgroundColor: 'var(--surface-secondary)',
-          },
-          '@media (prefers-reduced-motion: reduce)': {
-            transition: cssTransition.default,
-          },
-        }}
-      >
-        {/* Header */}
+      <FocusTrap open={open}>
         <Box
+          role="dialog"
+          aria-modal="true"
+          aria-label={t.nav.more}
+          tabIndex={-1}
           sx={{
-            position: 'sticky',
-            top: 0,
-            // Must be fully opaque so scrolling content doesn't bleed through
-            // the translucent sheet behind the sticky header
-            backgroundColor: 'rgb(var(--surface-secondary-rgb))',
-            zIndex: zIndex.sticky,
-            paddingTop: spacing.sm,
-            paddingX: spacing.md,
-            paddingBottom: spacing.sm,
-            borderBottom: '0.5px solid var(--border-default)',
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: zIndex.sheetContent,
+            ...sheetStyles,
+            borderTopLeftRadius: radius.xl,
+            borderTopRightRadius: radius.xl,
+            // Dynamic viewport height so the sheet never runs past the visible
+            // area on iOS Safari. With `85vh` the address bar was counted in the
+            // height, pushing the bottom rows (Settings / Feedback / price
+            // slider) below the fold where overflow scroll could not reach them.
+            maxHeight: '85dvh',
+            '@supports not (height: 100dvh)': {
+              maxHeight: '85vh',
+            },
+            overflowY: 'auto',
+            // Keep scroll momentum inside the sheet and stop it chaining to the
+            // page behind it when it hits the top/bottom.
+            overscrollBehavior: 'contain',
+            WebkitOverflowScrolling: 'touch',
+            transform: open ? 'translateY(0)' : 'translateY(100%)',
+            visibility: open ? 'visible' : 'hidden',
+            pointerEvents: open ? 'auto' : 'none',
+            transition: effectiveConfig.animations
+              ? `transform ${durations.liquidNormal} ${easingCurves.liquidSpring}, visibility ${durations.liquidNormal}`
+              : `${cssTransition.slow}, visibility 0.3s`,
+            paddingBottom: 'env(safe-area-inset-bottom)',
+            willChange: 'transform',
+            ...headerSpecularStyles,
+
+            '@supports not (backdrop-filter: blur(10px))': {
+              backgroundColor: 'var(--surface-secondary)',
+            },
+            '@media (prefers-reduced-motion: reduce)': {
+              transition: cssTransition.default,
+            },
           }}
         >
-          {/* Handle Bar */}
+          {/* Header */}
           <Box
             sx={{
-              width: '36px',
-              height: '5px',
-              backgroundColor: 'var(--border-default)',
-              borderRadius: '2.5px',
-              margin: '0 auto',
-              marginBottom: spacing.sm,
-            }}
-          />
-
-          {/* Title and Actions */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              mb: isStaff && asesor ? 1.5 : 2,
+              position: 'sticky',
+              top: 0,
+              // Must be fully opaque so scrolling content doesn't bleed through
+              // the translucent sheet behind the sticky header
+              backgroundColor: 'rgb(var(--surface-secondary-rgb))',
+              zIndex: zIndex.sticky,
+              paddingTop: spacing.sm,
+              paddingX: spacing.md,
+              paddingBottom: spacing.sm,
+              borderBottom: '0.5px solid var(--border-default)',
             }}
           >
-            <Typography
-              variant="h2"
-              sx={{
-                fontFamily: qeFont.serif,
-                fontSize: iosTypographyScale.title2,
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-              }}
-            >
-              {t.nav.more}
-            </Typography>
-
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {/* Theme Toggle */}
-              <IconButton
-                onClick={handleThemeToggle}
-                aria-label={
-                  mode === 'dark' ? t.settings.lightMode : t.settings.darkMode
-                }
-                sx={{
-                  color: brand.emerald[500],
-                  backgroundColor: `${brand.emerald[500]}15`,
-                  '&:hover': { backgroundColor: `${brand.emerald[500]}25` },
-                }}
-              >
-                {mode === 'dark' ? <LightMode /> : <DarkMode />}
-              </IconButton>
-
-              <IconButton
-                onClick={onClose}
-                aria-label={t.actions.close}
-                sx={{
-                  color: 'var(--text-secondary)',
-                  '&:hover': { backgroundColor: 'var(--surface-tertiary)' },
-                }}
-              >
-                <Close />
-              </IconButton>
-            </Box>
-          </Box>
-
-          {/* Profile Card (staff only) */}
-          {isStaff && asesor && (
+            {/* Handle Bar */}
             <Box
-              role="button"
-              tabIndex={0}
-              onClick={handleProfileClick}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') handleProfileClick();
+              sx={{
+                width: '36px',
+                height: '5px',
+                backgroundColor: 'var(--border-default)',
+                borderRadius: '2.5px',
+                margin: '0 auto',
+                marginBottom: spacing.sm,
               }}
+            />
+
+            {/* Title and Actions */}
+            <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: spacing.sm,
-                p: spacing.sm,
-                mb: spacing.xs,
-                borderRadius: radius.lg,
-                bgcolor: 'var(--surface-primary)',
-                border: `1px solid ${alpha(roleColor, 0.15)}`,
-                cursor: 'pointer',
-                transition: cssTransition.default,
-                '&:hover': { bgcolor: 'var(--surface-tertiary)' },
+                justifyContent: 'space-between',
+                mb: isStaff && asesor ? 1.5 : 2,
               }}
             >
-              <Avatar
-                src={photoUrl || undefined}
-                alt={asesor.name}
-                sx={{
-                  width: 44,
-                  height: 44,
-                  border: `2px solid ${alpha(roleColor, 0.25)}`,
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  bgcolor: alpha(roleColor, 0.15),
-                  color: roleColor,
-                }}
-              >
-                {asesor.name?.charAt(0).toUpperCase()}
-              </Avatar>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                  <Typography
-                    sx={{
-                      fontSize: iosTypographyScale.body,
-                      fontWeight: 600,
-                      color: 'var(--text-primary)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {asesor.name}
-                  </Typography>
-                  <Chip
-                    label={asesor.role || 'Asesor'}
-                    size="small"
-                    sx={{
-                      height: 18,
-                      fontSize: '0.6rem',
-                      fontWeight: 700,
-                      bgcolor: alpha(roleColor, 0.12),
-                      color: roleColor,
-                      border: `1px solid ${alpha(roleColor, 0.25)}`,
-                      flexShrink: 0,
-                    }}
-                  />
-                </Box>
-                <Typography
-                  sx={{
-                    fontSize: iosTypographyScale.caption1,
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  {t.menu.profileSubtitle}
-                </Typography>
-              </Box>
-              <ChevronRight
-                size={18}
-                style={{ color: roleColor, opacity: 0.5, flexShrink: 0 }}
-              />
-            </Box>
-          )}
-        </Box>
-
-        {/* Quick Settings (toggles + slider) - right after profile for easy access */}
-        {(canToggle || canToggleCurrency) && (
-          <Box sx={{ borderBottom: '0.5px solid var(--border-default)' }}>
-            {/* Price Share Toggle Row - Only for staff */}
-            {canToggle && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingX: spacing.md,
-                  paddingY: spacing.sm,
-                  borderBottom: '0.5px solid var(--border-default)',
-                }}
-              >
-                <Box>
-                  <Typography
-                    sx={{
-                      fontSize: iosTypographyScale.body,
-                      fontWeight: 500,
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    {t.settings.viewPrices}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: iosTypographyScale.caption1,
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    {showPrices
-                      ? t.settings.pricesShared
-                      : t.settings.pricesPrivate}
-                  </Typography>
-                </Box>
-                <Switch
-                  checked={showPrices}
-                  onChange={handlePriceToggle}
-                  inputProps={{ 'aria-label': t.settings.viewPrices }}
-                  sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: primitiveColors.system.green.light,
-                      '&:hover': {
-                        backgroundColor: 'rgba(52, 199, 89, 0.08)',
-                      },
-                    },
-                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                      backgroundColor: primitiveColors.system.green.light,
-                    },
-                  }}
-                />
-              </Box>
-            )}
-
-            {/* Currency Toggle Row - Only for authorized user */}
-            {canToggleCurrency && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingX: spacing.md,
-                  paddingY: spacing.sm,
-                  borderBottom: '0.5px solid var(--border-default)',
-                }}
-              >
-                <Box>
-                  <Typography
-                    sx={{
-                      fontSize: iosTypographyScale.body,
-                      fontWeight: 500,
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    {t.settings.currencyMode}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: iosTypographyScale.caption1,
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    {currency === 'USD'
-                      ? t.settings.currencyUSDActive
-                      : t.settings.currencyCOPActive}
-                  </Typography>
-                </Box>
-                <Switch
-                  checked={currency === 'USD'}
-                  onChange={handleCurrencyToggle}
-                  inputProps={{ 'aria-label': t.settings.currencyMode }}
-                  sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: emeraldCore.dark,
-                      '&:hover': {
-                        backgroundColor: 'rgba(46, 125, 50, 0.08)',
-                      },
-                    },
-                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                      backgroundColor: emeraldCore.dark,
-                    },
-                  }}
-                />
-              </Box>
-            )}
-          </Box>
-        )}
-
-        {/* Grouped Tool Sections */}
-        <Box sx={{ padding: spacing.md }}>
-          {menuSections.map((section) => (
-            <Box key={section.id} sx={{ mb: spacing.md }}>
-              {/* Section Header */}
               <Typography
+                variant="h2"
                 sx={{
-                  fontFamily: qeFont.mono,
-                  fontSize: '0.6rem',
-                  fontWeight: 500,
-                  letterSpacing: '0.16em',
-                  textTransform: 'uppercase',
-                  color: qe.subtle,
-                  mb: 1,
-                  display: 'block',
-                  px: spacing.xs,
+                  fontFamily: qeFont.serif,
+                  fontSize: iosTypographyScale.title2,
+                  fontWeight: 700,
+                  color: 'var(--text-primary)',
                 }}
               >
-                {section.title}
+                {t.nav.more}
               </Typography>
 
-              <Box
-                sx={{
-                  backgroundColor: qe.surface,
-                  border: `1px solid ${qe.border}`,
-                  borderRadius: radius.md,
-                  overflow: 'hidden',
-                  '& > *:not(:first-of-type)': {
-                    borderTop: `1px solid ${qe.hairline}`,
-                  },
-                }}
-              >
-                {section.tools.map((tool) => renderToolRow(tool))}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {/* Theme Toggle */}
+                <IconButton
+                  onClick={handleThemeToggle}
+                  aria-label={
+                    mode === 'dark' ? t.settings.lightMode : t.settings.darkMode
+                  }
+                  sx={{
+                    color: brand.emerald[500],
+                    backgroundColor: `${brand.emerald[500]}15`,
+                    '&:hover': { backgroundColor: `${brand.emerald[500]}25` },
+                  }}
+                >
+                  {mode === 'dark' ? <LightMode /> : <DarkMode />}
+                </IconButton>
+
+                <IconButton
+                  onClick={onClose}
+                  aria-label={t.actions.close}
+                  sx={{
+                    color: 'var(--text-secondary)',
+                    '&:hover': { backgroundColor: 'var(--surface-tertiary)' },
+                  }}
+                >
+                  <Close />
+                </IconButton>
               </Box>
             </Box>
-          ))}
 
-          {/* Divider */}
-          <Box
-            sx={{
-              height: '0.5px',
-              bgcolor: 'var(--border-default)',
-              my: spacing.sm,
-            }}
-          />
-
-          {/* Bottom Items (Settings + Feedback) */}
-          <Box sx={{ display: 'grid', gap: spacing.xs }}>
-            {bottomTools.map(renderToolRow)}
-          </Box>
-
-          {/* Price Multiplier - at bottom, only for currency-authorized */}
-          {canToggleCurrency && (
-            <>
+            {/* Profile Card (staff only) */}
+            {isStaff && asesor && (
               <Box
-                sx={{
-                  height: '0.5px',
-                  bgcolor: 'var(--border-default)',
-                  my: spacing.sm,
+                role="button"
+                tabIndex={0}
+                onClick={handleProfileClick}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') handleProfileClick();
                 }}
-              />
-              <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingY: spacing.sm,
-                  paddingX: spacing.xs,
+                  gap: spacing.sm,
+                  p: spacing.sm,
+                  mb: spacing.xs,
+                  borderRadius: radius.lg,
+                  bgcolor: 'var(--surface-primary)',
+                  border: `1px solid ${alpha(roleColor, 0.15)}`,
+                  cursor: 'pointer',
+                  transition: cssTransition.default,
+                  '&:hover': { bgcolor: 'var(--surface-tertiary)' },
                 }}
               >
-                <Box>
-                  <Typography
-                    sx={{
-                      fontSize: iosTypographyScale.body,
-                      fontWeight: 500,
-                      color: 'var(--text-primary)',
-                    }}
+                <Avatar
+                  src={photoUrl || undefined}
+                  alt={asesor.name}
+                  sx={{
+                    width: 44,
+                    height: 44,
+                    border: `2px solid ${alpha(roleColor, 0.25)}`,
+                    fontSize: '1rem',
+                    fontWeight: 700,
+                    bgcolor: alpha(roleColor, 0.15),
+                    color: roleColor,
+                  }}
+                >
+                  {asesor.name?.charAt(0).toUpperCase()}
+                </Avatar>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Box
+                    sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}
                   >
-                    {t.settings.currencyMultiplier}
-                  </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: iosTypographyScale.body,
+                        fontWeight: 600,
+                        color: 'var(--text-primary)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {asesor.name}
+                    </Typography>
+                    <Chip
+                      label={asesor.role || 'Asesor'}
+                      size="small"
+                      sx={{
+                        height: 18,
+                        fontSize: '0.6rem',
+                        fontWeight: 700,
+                        bgcolor: alpha(roleColor, 0.12),
+                        color: roleColor,
+                        border: `1px solid ${alpha(roleColor, 0.25)}`,
+                        flexShrink: 0,
+                      }}
+                    />
+                  </Box>
                   <Typography
                     sx={{
                       fontSize: iosTypographyScale.caption1,
                       color: 'var(--text-secondary)',
                     }}
                   >
-                    {t.settings.currencyMultiplierHint}
+                    {t.menu.profileSubtitle}
                   </Typography>
                 </Box>
+                <ChevronRight
+                  size={18}
+                  style={{ color: roleColor, opacity: 0.5, flexShrink: 0 }}
+                />
+              </Box>
+            )}
+          </Box>
+
+          {/* Quick Settings (toggles + slider) - right after profile for easy access */}
+          {(canToggle || canToggleCurrency) && (
+            <Box sx={{ borderBottom: '0.5px solid var(--border-default)' }}>
+              {/* Price Share Toggle Row - Only for staff */}
+              {canToggle && (
                 <Box
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 1.5,
-                    minWidth: 180,
+                    justifyContent: 'space-between',
+                    paddingX: spacing.md,
+                    paddingY: spacing.sm,
+                    borderBottom: '0.5px solid var(--border-default)',
                   }}
                 >
-                  <Slider
-                    value={multiplier}
-                    onChange={(_e, val) => {
-                      if ('vibrate' in navigator) navigator.vibrate(10);
-                      setMultiplier(val as number);
-                    }}
-                    min={1}
-                    max={4}
-                    step={0.1}
-                    valueLabelDisplay="auto"
-                    valueLabelFormat={(v) => `x${v}`}
-                    aria-label={t.settings.currencyMultiplier}
+                  <Box>
+                    <Typography
+                      sx={{
+                        fontSize: iosTypographyScale.body,
+                        fontWeight: 500,
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      {t.settings.viewPrices}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: iosTypographyScale.caption1,
+                        color: 'var(--text-secondary)',
+                      }}
+                    >
+                      {showPrices
+                        ? t.settings.pricesShared
+                        : t.settings.pricesPrivate}
+                    </Typography>
+                  </Box>
+                  <Switch
+                    checked={showPrices}
+                    onChange={handlePriceToggle}
+                    inputProps={{ 'aria-label': t.settings.viewPrices }}
                     sx={{
-                      color: emeraldCore.dark,
-                      '& .MuiSlider-thumb': { width: 20, height: 20 },
-                      '& .MuiSlider-valueLabel': {
-                        fontSize: iosTypographyScale.footnote,
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: primitiveColors.system.green.light,
+                        '&:hover': {
+                          backgroundColor: 'rgba(52, 199, 89, 0.08)',
+                        },
                       },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track':
+                        {
+                          backgroundColor: primitiveColors.system.green.light,
+                        },
                     }}
                   />
-                  <Typography
+                </Box>
+              )}
+
+              {/* Currency Toggle Row - Only for authorized user */}
+              {canToggleCurrency && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingX: spacing.md,
+                    paddingY: spacing.sm,
+                    borderBottom: '0.5px solid var(--border-default)',
+                  }}
+                >
+                  <Box>
+                    <Typography
+                      sx={{
+                        fontSize: iosTypographyScale.body,
+                        fontWeight: 500,
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      {t.settings.currencyMode}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: iosTypographyScale.caption1,
+                        color: 'var(--text-secondary)',
+                      }}
+                    >
+                      {currency === 'USD'
+                        ? t.settings.currencyUSDActive
+                        : t.settings.currencyCOPActive}
+                    </Typography>
+                  </Box>
+                  <Switch
+                    checked={currency === 'USD'}
+                    onChange={handleCurrencyToggle}
+                    inputProps={{ 'aria-label': t.settings.currencyMode }}
                     sx={{
-                      fontSize: iosTypographyScale.footnote,
-                      fontWeight: 600,
-                      color: emeraldCore.dark,
-                      minWidth: 28,
-                      textAlign: 'right',
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: emeraldCore.dark,
+                        '&:hover': {
+                          backgroundColor: 'rgba(46, 125, 50, 0.08)',
+                        },
+                      },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track':
+                        {
+                          backgroundColor: emeraldCore.dark,
+                        },
                     }}
-                  >
-                    x{multiplier}
-                  </Typography>
+                  />
+                </Box>
+              )}
+            </Box>
+          )}
+
+          {/* Grouped Tool Sections */}
+          <Box sx={{ padding: spacing.md }}>
+            {menuSections.map((section) => (
+              <Box key={section.id} sx={{ mb: spacing.md }}>
+                {/* Section Header */}
+                <Typography
+                  sx={{
+                    fontFamily: qeFont.mono,
+                    fontSize: '0.6rem',
+                    fontWeight: 500,
+                    letterSpacing: '0.16em',
+                    textTransform: 'uppercase',
+                    color: qe.subtle,
+                    mb: 1,
+                    display: 'block',
+                    px: spacing.xs,
+                  }}
+                >
+                  {section.title}
+                </Typography>
+
+                <Box
+                  sx={{
+                    backgroundColor: qe.surface,
+                    border: `1px solid ${qe.border}`,
+                    borderRadius: radius.md,
+                    overflow: 'hidden',
+                    '& > *:not(:first-of-type)': {
+                      borderTop: `1px solid ${qe.hairline}`,
+                    },
+                  }}
+                >
+                  {section.tools.map((tool) => renderToolRow(tool))}
                 </Box>
               </Box>
-            </>
-          )}
+            ))}
+
+            {/* Divider */}
+            <Box
+              sx={{
+                height: '0.5px',
+                bgcolor: 'var(--border-default)',
+                my: spacing.sm,
+              }}
+            />
+
+            {/* Bottom Items (Settings + Feedback) */}
+            <Box sx={{ display: 'grid', gap: spacing.xs }}>
+              {bottomTools.map(renderToolRow)}
+            </Box>
+
+            {/* Price Multiplier - at bottom, only for currency-authorized */}
+            {canToggleCurrency && (
+              <>
+                <Box
+                  sx={{
+                    height: '0.5px',
+                    bgcolor: 'var(--border-default)',
+                    my: spacing.sm,
+                  }}
+                />
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingY: spacing.sm,
+                    paddingX: spacing.xs,
+                  }}
+                >
+                  <Box>
+                    <Typography
+                      sx={{
+                        fontSize: iosTypographyScale.body,
+                        fontWeight: 500,
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      {t.settings.currencyMultiplier}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: iosTypographyScale.caption1,
+                        color: 'var(--text-secondary)',
+                      }}
+                    >
+                      {t.settings.currencyMultiplierHint}
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                      minWidth: 180,
+                    }}
+                  >
+                    <Slider
+                      value={multiplier}
+                      onChange={(_e, val) => {
+                        if ('vibrate' in navigator) navigator.vibrate(10);
+                        setMultiplier(val as number);
+                      }}
+                      min={1}
+                      max={4}
+                      step={0.1}
+                      valueLabelDisplay="auto"
+                      valueLabelFormat={(v) => `x${v}`}
+                      aria-label={t.settings.currencyMultiplier}
+                      sx={{
+                        color: emeraldCore.dark,
+                        '& .MuiSlider-thumb': { width: 20, height: 20 },
+                        '& .MuiSlider-valueLabel': {
+                          fontSize: iosTypographyScale.footnote,
+                        },
+                      }}
+                    />
+                    <Typography
+                      sx={{
+                        fontSize: iosTypographyScale.footnote,
+                        fontWeight: 600,
+                        color: emeraldCore.dark,
+                        minWidth: 28,
+                        textAlign: 'right',
+                      }}
+                    >
+                      x{multiplier}
+                    </Typography>
+                  </Box>
+                </Box>
+              </>
+            )}
+          </Box>
         </Box>
-      </Box>
+      </FocusTrap>
 
       {/* Feedback Wizard - Staff only */}
       <FeedbackWizard

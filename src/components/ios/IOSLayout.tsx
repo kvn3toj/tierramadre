@@ -228,11 +228,27 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   // bar. Selection is by permission (not path), same as the old IOSTabBar.
   const isProvider = useIsProvider();
 
-  // Bóveda / Esmereogénesis is a cinematic desktop scope — the old bar hid
-  // itself there at ≥ desktop width so the chrome never breaks the immersion.
+  // Bóveda / Esmereogénesis is a cinematic desktop scope: at ≥ desktop width it
+  // hands navigation to its slim left side-nav, so the bottom bar AUTO-HIDES
+  // (stays mounted, slides off) and reveals on demand — mouse to the bottom
+  // edge or keyboard focus. Preserves the old IOSTabBar behavior exactly.
   const isDesktop = useMediaQuery(`(min-width:${layoutBreakpoints.desktop}px)`);
-  const hideBarForVaultDesktop =
+  const barAutoHide =
     isDesktop && location.pathname.startsWith('/esmereogenesis');
+  const [barRevealed, setBarRevealed] = useState(false);
+
+  useEffect(() => {
+    if (!barAutoHide) {
+      setBarRevealed(false);
+      return;
+    }
+    const onMove = (e: MouseEvent) => {
+      // Reveal when the pointer nears the bottom edge (matches the old bar).
+      setBarRevealed(e.clientY >= window.innerHeight - 100);
+    };
+    window.addEventListener('mousemove', onMove);
+    return () => window.removeEventListener('mousemove', onMove);
+  }, [barAutoHide]);
 
   // Publish the measured height of <main> as --app-main-height so pages can
   // size panes from the real scrollport instead of guessing calc(100vh - N).
@@ -419,6 +435,11 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
             ? 0
             : bottomBarClearance(appShell.tabBarReserve),
           overflowY: 'auto',
+          // <main> scrolls vertically only (DS3 §5.4). Pinning overflow-x to
+          // hidden stops the scrollbar-width overcount of .tm-full-bleed
+          // (width:100vw) from producing a phantom horizontal scrollbar, and
+          // guards against any accidental horizontal overflow in page content.
+          overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch',
           // iOS HIG: Improve scroll performance and touch handling
           position: 'relative',
@@ -449,14 +470,23 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
       </Box>
 
       {/* One unified TabBar (DS v3). Fotosíntesis renders its own via
-          FotosintesisLayout, so the shell suppresses this bar on Foto routes. */}
-      {!isFotoRoute && !hideBarForVaultDesktop && (
-        <TabBar
-          slots={isProvider ? PROVIDER_SLOTS : STOREFRONT_SLOTS}
-          theme={storefrontTabTheme(mode)}
-          onAction={() => setMoreSheetOpen(true)}
-          actionOpen={moreSheetOpen}
-        />
+          FotosintesisLayout, so the shell suppresses this bar on Foto routes.
+          The wrapper owns the vault auto-hide reveal-on-focus (React re-bubbles
+          the portaled bar's focus events to this React ancestor). */}
+      {!isFotoRoute && (
+        <Box
+          onFocus={() => barAutoHide && setBarRevealed(true)}
+          onBlur={() => barAutoHide && setBarRevealed(false)}
+          sx={{ display: 'contents' }}
+        >
+          <TabBar
+            slots={isProvider ? PROVIDER_SLOTS : STOREFRONT_SLOTS}
+            theme={storefrontTabTheme(mode)}
+            onAction={() => setMoreSheetOpen(true)}
+            actionOpen={moreSheetOpen}
+            hidden={barAutoHide && !barRevealed}
+          />
+        </Box>
       )}
 
       <IOSMoreSheet

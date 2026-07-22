@@ -22,9 +22,12 @@ import {
   blurValues,
   zIndex,
   cssTransition,
+  blackAlpha,
+  whiteAlpha,
 } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { ActiveFilterChips } from '../';
+import { useScrollFade, ScrollFadeEdges } from '../FilterContent';
 import { useCurrencyFormat } from '../../../contexts/CurrencyContext';
 import { usePriceShare } from '../../../contexts/PriceShareContext';
 import type {
@@ -110,7 +113,7 @@ export default function MobileSearchBar({
   const theme = useTheme();
   const [quickAccessOpen, setQuickAccessOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<QuickAccessTab>('recent');
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const quickAccessScroll = useScrollFade<HTMLDivElement>();
   const { formatCurrency } = useCurrencyFormat();
   const { shouldShowPrices } = usePriceShare();
 
@@ -448,8 +451,8 @@ export default function MobileSearchBar({
                       : 'transparent',
                   transition: cssTransition.fast,
                   '&:focus-visible': {
-                    outline: `2px solid ${emeraldCore.primary}`,
-                    outlineOffset: -2,
+                    outline: 'none',
+                    boxShadow: 'var(--tm-focus-ring)',
                   },
                 }}
               >
@@ -503,8 +506,8 @@ export default function MobileSearchBar({
                       : 'transparent',
                   transition: cssTransition.fast,
                   '&:focus-visible': {
-                    outline: `2px solid ${emeraldCore.primary}`,
-                    outlineOffset: -2,
+                    outline: 'none',
+                    boxShadow: 'var(--tm-focus-ring)',
                   },
                 }}
               >
@@ -567,8 +570,8 @@ export default function MobileSearchBar({
                       borderRadius: 1,
                       '&:hover': { color: accentColors.error.light },
                       '&:focus-visible': {
-                        outline: `2px solid ${emeraldCore.primary}`,
-                        outlineOffset: 2,
+                        outline: 'none',
+                        boxShadow: 'var(--tm-focus-ring)',
                       },
                     }}
                   >
@@ -602,8 +605,8 @@ export default function MobileSearchBar({
                     borderRadius: 1,
                     '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.08) },
                     '&:focus-visible': {
-                      outline: `2px solid ${emeraldCore.primary}`,
-                      outlineOffset: 2,
+                      outline: 'none',
+                      boxShadow: 'var(--tm-focus-ring)',
                     },
                   }}
                 >
@@ -617,32 +620,38 @@ export default function MobileSearchBar({
 
           {/* Horizontal scroll carousel */}
           {quickAccessItems.length > 0 ? (
-            <Box
-              ref={scrollRef}
-              sx={{
-                display: 'flex',
-                gap: '6px',
-                overflowX: 'auto',
-                scrollSnapType: 'x mandatory',
-                scrollbarWidth: 'none',
-                '&::-webkit-scrollbar': { display: 'none' },
-                WebkitOverflowScrolling: 'touch',
-                pb: 0.25,
-              }}
-            >
-              {quickAccessItems.slice(0, 10).map((item) => (
-                <QuickAccessCard
-                  key={item.item}
-                  item={item}
-                  onClick={() => {
-                    onRecentItemClick?.(item);
-                    setQuickAccessOpen(false);
-                  }}
-                  isLight={isLight}
-                  hidePrice={!shouldShowPrices}
-                  formatCurrency={formatCurrency}
-                />
-              ))}
+            <Box sx={{ position: 'relative' }}>
+              <ScrollFadeEdges
+                canScrollLeft={quickAccessScroll.canScrollLeft}
+                canScrollRight={quickAccessScroll.canScrollRight}
+              />
+              <Box
+                ref={quickAccessScroll.ref}
+                sx={{
+                  display: 'flex',
+                  gap: '6px',
+                  overflowX: 'auto',
+                  scrollSnapType: 'x mandatory',
+                  scrollbarWidth: 'none',
+                  '&::-webkit-scrollbar': { display: 'none' },
+                  WebkitOverflowScrolling: 'touch',
+                  pb: 0.25,
+                }}
+              >
+                {quickAccessItems.slice(0, 10).map((item) => (
+                  <QuickAccessCard
+                    key={item.item}
+                    item={item}
+                    onClick={() => {
+                      onRecentItemClick?.(item);
+                      setQuickAccessOpen(false);
+                    }}
+                    isLight={isLight}
+                    hidePrice={!shouldShowPrices}
+                    formatCurrency={formatCurrency}
+                  />
+                ))}
+              </Box>
             </Box>
           ) : (
             <Box sx={{ py: 2, textAlign: 'center' }}>
@@ -739,7 +748,7 @@ function QuickAccessCard({
               position: 'absolute',
               bottom: 2,
               right: 2,
-              bgcolor: 'rgba(0, 0, 0, 0.5)',
+              bgcolor: blackAlpha(0.5),
               borderRadius: '3px',
               px: 0.3,
               py: 0.1,
@@ -748,7 +757,7 @@ function QuickAccessCard({
             <Typography
               sx={{
                 fontSize: '0.5rem',
-                color: 'rgba(255, 255, 255, 0.85)',
+                color: whiteAlpha(0.85),
                 fontWeight: 500,
               }}
             >

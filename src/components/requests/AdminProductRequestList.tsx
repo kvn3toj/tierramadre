@@ -22,9 +22,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   MenuItem,
 } from '@mui/material';
+import { TextField } from '../../design-system/components/TextField';
 import {
   FileText,
   Clock,
@@ -45,17 +45,28 @@ import {
   PRODUCT_REQUEST_STATUS_LABELS,
   PRIORITY_LABELS,
 } from '../../types/provider';
-import type { ProductRequest, ProductRequestStatus, RequestPriority } from '../../types/provider';
+import type {
+  ProductRequest,
+  ProductRequestStatus,
+  RequestPriority,
+} from '../../types/provider';
 
 export default function AdminProductRequestList() {
   const navigate = useNavigate();
   const { user } = useGoogleAuth();
   const [requests, setRequests] = useState<ProductRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'all' | ProductRequestStatus>('all');
-  const [selectedRequest, setSelectedRequest] = useState<ProductRequest | null>(null);
+  const [activeTab, setActiveTab] = useState<'all' | ProductRequestStatus>(
+    'all',
+  );
+  const [selectedRequest, setSelectedRequest] = useState<ProductRequest | null>(
+    null,
+  );
   const [responseDialogOpen, setResponseDialogOpen] = useState(false);
-  const [responseData, setResponseData] = useState({ status: '', adminResponse: '' });
+  const [responseData, setResponseData] = useState({
+    status: '',
+    adminResponse: '',
+  });
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
@@ -79,37 +90,53 @@ export default function AdminProductRequestList() {
     }
   };
 
-  const filteredRequests = activeTab === 'all'
-    ? requests
-    : requests.filter(r => r.status === activeTab);
+  const filteredRequests =
+    activeTab === 'all'
+      ? requests
+      : requests.filter((r) => r.status === activeTab);
 
   const getStatusColor = (status: ProductRequestStatus) => {
     switch (status) {
-      case 'pendiente': return accentColors.warning.light;
-      case 'aprobada': return emeraldCore.primary;
-      case 'enviada_proveedor': return accentColors.info.light;
-      case 'rechazada': return accentColors.error.light;
-      case 'completada': return accentColors.success.light;
-      default: return primitiveColors.metallic.silver[500];
+      case 'pendiente':
+        return accentColors.warning.light;
+      case 'aprobada':
+        return emeraldCore.primary;
+      case 'enviada_proveedor':
+        return accentColors.info.light;
+      case 'rechazada':
+        return accentColors.error.light;
+      case 'completada':
+        return accentColors.success.light;
+      default:
+        return primitiveColors.metallic.silver[500];
     }
   };
 
   const getStatusIcon = (status: ProductRequestStatus) => {
     switch (status) {
-      case 'pendiente': return Clock;
-      case 'aprobada': return CheckCircle;
-      case 'enviada_proveedor': return Send;
-      case 'rechazada': return XCircle;
-      case 'completada': return CheckCircle;
-      default: return FileText;
+      case 'pendiente':
+        return Clock;
+      case 'aprobada':
+        return CheckCircle;
+      case 'enviada_proveedor':
+        return Send;
+      case 'rechazada':
+        return XCircle;
+      case 'completada':
+        return CheckCircle;
+      default:
+        return FileText;
     }
   };
 
   const getPriorityColor = (priority: RequestPriority) => {
     switch (priority) {
-      case 'muy_urgente': return accentColors.error.light;
-      case 'urgente': return accentColors.warning.light;
-      default: return primitiveColors.metallic.silver[500];
+      case 'muy_urgente':
+        return accentColors.error.light;
+      case 'urgente':
+        return accentColors.warning.light;
+      default:
+        return primitiveColors.metallic.silver[500];
     }
   };
 
@@ -133,7 +160,10 @@ export default function AdminProductRequestList() {
 
   const handleOpenResponse = (request: ProductRequest) => {
     setSelectedRequest(request);
-    setResponseData({ status: request.status, adminResponse: request.adminResponse || '' });
+    setResponseData({
+      status: request.status,
+      adminResponse: request.adminResponse || '',
+    });
     setResponseDialogOpen(true);
   };
 
@@ -144,7 +174,10 @@ export default function AdminProductRequestList() {
     try {
       const response = await fetch('/api/product-requests', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'x-requester-email': user?.email ?? '' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-requester-email': user?.email ?? '',
+        },
         body: JSON.stringify({
           id: selectedRequest.id,
           status: responseData.status,
@@ -156,11 +189,18 @@ export default function AdminProductRequestList() {
       const data = await response.json();
 
       if (data.success) {
-        setRequests(prev => prev.map(r =>
-          r.id === selectedRequest.id
-            ? { ...r, status: responseData.status as ProductRequestStatus, adminResponse: responseData.adminResponse, respondedBy: user?.email }
-            : r
-        ));
+        setRequests((prev) =>
+          prev.map((r) =>
+            r.id === selectedRequest.id
+              ? {
+                  ...r,
+                  status: responseData.status as ProductRequestStatus,
+                  adminResponse: responseData.adminResponse,
+                  respondedBy: user?.email,
+                }
+              : r,
+          ),
+        );
         setResponseDialogOpen(false);
       }
     } catch (error) {
@@ -188,13 +228,23 @@ export default function AdminProductRequestList() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <CircularProgress aria-label="Cargando" sx={{ color: emeraldCore.primary }} />
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '50vh',
+        }}
+      >
+        <CircularProgress
+          aria-label="Cargando"
+          sx={{ color: emeraldCore.primary }}
+        />
       </Box>
     );
   }
 
-  const pendingCount = requests.filter(r => r.status === 'pendiente').length;
+  const pendingCount = requests.filter((r) => r.status === 'pendiente').length;
 
   return (
     <Box sx={{ pb: 10 }}>
@@ -212,7 +262,8 @@ export default function AdminProductRequestList() {
               Solicitudes de Asesores
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {requests.length} solicitud{requests.length !== 1 ? 'es' : ''} recibida{requests.length !== 1 ? 's' : ''}
+              {requests.length} solicitud{requests.length !== 1 ? 'es' : ''}{' '}
+              recibida{requests.length !== 1 ? 's' : ''}
               {pendingCount > 0 && (
                 <Chip
                   label={`${pendingCount} pendiente${pendingCount !== 1 ? 's' : ''}`}
@@ -253,7 +304,10 @@ export default function AdminProductRequestList() {
         }}
       >
         <Tab label={`Todas (${requests.length})`} value="all" />
-        <Tab label={`Pendientes (${requests.filter(r => r.status === 'pendiente').length})`} value="pendiente" />
+        <Tab
+          label={`Pendientes (${requests.filter((r) => r.status === 'pendiente').length})`}
+          value="pendiente"
+        />
         <Tab label="Aprobadas" value="aprobada" />
         <Tab label="Enviadas" value="enviada_proveedor" />
         <Tab label="Completadas" value="completada" />
@@ -262,11 +316,24 @@ export default function AdminProductRequestList() {
       {/* Request List */}
       <Box sx={{ p: 2 }}>
         {filteredRequests.length === 0 ? (
-          <Card sx={{ bgcolor: alpha(emeraldCore.primary, 0.04), border: 'none', boxShadow: 'none' }}>
+          <Card
+            sx={{
+              bgcolor: alpha(emeraldCore.primary, 0.04),
+              border: 'none',
+              boxShadow: 'none',
+            }}
+          >
             <CardContent sx={{ textAlign: 'center', py: 6 }}>
-              <FileText size={48} color={emeraldCore.primary} style={{ marginBottom: 16, opacity: 0.5 }} />
+              <FileText
+                size={48}
+                color={emeraldCore.primary}
+                style={{ marginBottom: 16, opacity: 0.5 }}
+              />
               <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                No hay solicitudes {activeTab !== 'all' ? PRODUCT_REQUEST_STATUS_LABELS[activeTab].toLowerCase() + 's' : ''}
+                No hay solicitudes{' '}
+                {activeTab !== 'all'
+                  ? PRODUCT_REQUEST_STATUS_LABELS[activeTab].toLowerCase() + 's'
+                  : ''}
               </Typography>
             </CardContent>
           </Card>
@@ -280,24 +347,52 @@ export default function AdminProductRequestList() {
                   key={request.id}
                   sx={{
                     border: '1px solid',
-                    borderColor: request.status === 'pendiente' ? alpha(accentColors.warning.light, 0.3) : 'divider',
+                    borderColor:
+                      request.status === 'pendiente'
+                        ? alpha(accentColors.warning.light, 0.3)
+                        : 'divider',
                     boxShadow: 'none',
-                    bgcolor: request.status === 'pendiente' ? alpha(accentColors.warning.light, 0.02) : 'background.paper',
+                    bgcolor:
+                      request.status === 'pendiente'
+                        ? alpha(accentColors.warning.light, 0.02)
+                        : 'background.paper',
                   }}
                 >
                   <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                     {/* Header */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        mb: 1.5,
+                      }}
+                    >
                       <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{ fontWeight: 700 }}
+                        >
                           {PRODUCT_TYPE_LABELS[request.productType]}
                         </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                          }}
+                        >
                           <User size={12} />
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: 'text.secondary' }}
+                          >
                             {request.requesterName} ({request.requesterRole})
                           </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: 'text.disabled' }}
+                          >
                             | {formatDate(request.createdAt)}
                           </Typography>
                         </Box>
@@ -309,7 +404,10 @@ export default function AdminProductRequestList() {
                             label={PRIORITY_LABELS[request.priority]}
                             size="small"
                             sx={{
-                              bgcolor: alpha(getPriorityColor(request.priority), 0.1),
+                              bgcolor: alpha(
+                                getPriorityColor(request.priority),
+                                0.1,
+                              ),
                               color: getPriorityColor(request.priority),
                               fontWeight: 600,
                               '& .MuiChip-icon': { color: 'inherit' },
@@ -345,7 +443,12 @@ export default function AdminProductRequestList() {
                     </Typography>
 
                     {/* Specs */}
-                    <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 1.5, gap: 0.5 }}>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      flexWrap="wrap"
+                      sx={{ mb: 1.5, gap: 0.5 }}
+                    >
                       <Chip
                         label={`${request.weightMin}-${request.weightMax} ct`}
                         size="small"
@@ -387,25 +490,51 @@ export default function AdminProductRequestList() {
 
                     {/* Client Info */}
                     {request.clientName && (
-                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.secondary',
+                          display: 'block',
+                          mb: 1,
+                        }}
+                      >
                         Cliente: {request.clientName}
                       </Typography>
                     )}
 
                     {/* Needed By */}
                     {request.neededBy && (
-                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.secondary',
+                          display: 'block',
+                          mb: 1,
+                        }}
+                      >
                         Necesario para: {formatDate(request.neededBy)}
                       </Typography>
                     )}
 
                     {/* Admin Response */}
                     {request.adminResponse && (
-                      <Box sx={{ mt: 1, p: 1.5, bgcolor: alpha(emeraldCore.primary, 0.05), borderRadius: 1 }}>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                      <Box
+                        sx={{
+                          mt: 1,
+                          p: 1.5,
+                          bgcolor: alpha(emeraldCore.primary, 0.05),
+                          borderRadius: 1,
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{ color: 'text.secondary', display: 'block' }}
+                        >
                           Respuesta de {request.respondedBy}:
                         </Typography>
-                        <Typography variant="body2">{request.adminResponse}</Typography>
+                        <Typography variant="body2">
+                          {request.adminResponse}
+                        </Typography>
                       </Box>
                     )}
 
@@ -433,7 +562,9 @@ export default function AdminProductRequestList() {
                           onClick={() => handleForwardToProvider(request)}
                           sx={{
                             bgcolor: emeraldCore.primary,
-                            '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.87) },
+                            '&:hover': {
+                              bgcolor: alpha(emeraldCore.primary, 0.87),
+                            },
                             textTransform: 'none',
                             fontWeight: 600,
                           }}
@@ -451,7 +582,12 @@ export default function AdminProductRequestList() {
       </Box>
 
       {/* Response Dialog */}
-      <Dialog open={responseDialogOpen} onClose={() => setResponseDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={responseDialogOpen}
+        onClose={() => setResponseDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Responder Solicitud</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
@@ -459,10 +595,16 @@ export default function AdminProductRequestList() {
               select
               label="Estado"
               value={responseData.status}
-              onChange={(e) => setResponseData(prev => ({ ...prev, status: e.target.value }))}
+              onChange={(e) =>
+                setResponseData((prev) => ({ ...prev, status: e.target.value }))
+              }
               fullWidth
             >
-              {(Object.keys(PRODUCT_REQUEST_STATUS_LABELS) as ProductRequestStatus[]).map((status) => (
+              {(
+                Object.keys(
+                  PRODUCT_REQUEST_STATUS_LABELS,
+                ) as ProductRequestStatus[]
+              ).map((status) => (
                 <MenuItem key={status} value={status}>
                   {PRODUCT_REQUEST_STATUS_LABELS[status]}
                 </MenuItem>
@@ -471,7 +613,12 @@ export default function AdminProductRequestList() {
             <TextField
               label="Respuesta / Comentario"
               value={responseData.adminResponse}
-              onChange={(e) => setResponseData(prev => ({ ...prev, adminResponse: e.target.value }))}
+              onChange={(e) =>
+                setResponseData((prev) => ({
+                  ...prev,
+                  adminResponse: e.target.value,
+                }))
+              }
               fullWidth
               multiline
               rows={4}

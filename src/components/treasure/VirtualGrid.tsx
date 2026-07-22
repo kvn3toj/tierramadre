@@ -27,6 +27,7 @@ import { Grid, type GridImperativeAPI } from 'react-window';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import { TreasureItem } from '../../types';
 import { usePriceShare } from '../../contexts/PriceShareContext';
+import { layoutConstants } from '../../design-system';
 import {
   saveScrollPos,
   readScrollPos,
@@ -88,10 +89,6 @@ const MOBILE_COL_GAP = 12;
 const MOBILE_ROW_GAP = 18;
 const WIDE_COL_GAP = 24;
 const WIDE_ROW_GAP = 30;
-
-// Floor for the measured grid height — never collapse below this even on the
-// shortest viewports (replaces the old fixed minHeight: 600 that hid rows).
-const MIN_GRID_HEIGHT = 280;
 
 // Cell props passed via cellProps in react-window 2.x
 interface GridCellProps {
@@ -188,7 +185,9 @@ function CellRenderer({
  * - xs (< 600px): 2 columns - iPhone
  * - sm (600-900px): 2 columns - iPhone landscape / small tablets
  * - md (900-1200px): 3 columns - iPad
- * - lg (> 1200px): 4 columns - Desktop / large tablets
+ * - lg (1200-1536px): 4 columns - Desktop
+ * - xl (> 1536px): 5 columns - large monitors (keeps cards ~300px, adds a column
+ *   instead of fattening cards, so the back-office team sees more stones per row)
  */
 export default function VirtualGrid({
   items,
@@ -215,13 +214,6 @@ export default function VirtualGrid({
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(
     typeof window !== 'undefined' ? document.documentElement.clientWidth : 390,
-  );
-  // Measured height so the grid ends exactly above the tab bar (single effective
-  // scroller). Seeded with a rough first-paint guess, corrected on mount.
-  const [containerHeight, setContainerHeight] = useState(() =>
-    typeof window !== 'undefined'
-      ? Math.max(MIN_GRID_HEIGHT, window.innerHeight - 280)
-      : 600,
   );
 
   // Track scroll position for direction detection
@@ -289,32 +281,15 @@ export default function VirtualGrid({
     };
   }, [gridApi, scrollRestorationKey, restoreScroll]);
 
-  // Observe container width (for card math) AND derive the grid height from the
-  // measured shell (DS3 §5.4.3). Height = <main>'s bottom minus its reserved
-  // bottom padding (tab-bar clearance) minus the grid's own top, so the grid
-  // ends exactly above the tab bar → one effective scroller (kills the old
-  // "two scrollbars fighting" feel from HEADER_OFFSET=280 + minHeight:600).
-  // Measured on layout changes only (ResizeObserver + window resize), never on
-  // scroll, so the grid never resizes mid-scroll.
+  // Observe container width for the card math. Height is measured separately
+  // by the availableHeight effect below — that one supersedes the earlier
+  // shell-derived measurement (Phase 1) because it also tracks changes in the
+  // header stack above the grid, not just the shell's own bounds.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const main = document.getElementById('main-content');
 
-    const measureHeight = () => {
-      const gridTop = el.getBoundingClientRect().top;
-      const bottom = main
-        ? main.getBoundingClientRect().bottom -
-          (parseFloat(getComputedStyle(main).paddingBottom) || 0)
-        : window.innerHeight;
-      setContainerHeight(
-        Math.max(MIN_GRID_HEIGHT, Math.round(bottom - gridTop)),
-      );
-    };
-
-    // Initial measurement
     setContainerWidth(el.clientWidth);
-    measureHeight();
 
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -324,14 +299,37 @@ export default function VirtualGrid({
           entry.contentBoxSize?.[0]?.inlineSize ?? entry.contentRect.width;
         setContainerWidth(width);
       }
-      measureHeight();
     });
     ro.observe(el);
-    if (main) ro.observe(main);
-    window.addEventListener('resize', measureHeight);
+    return () => ro.disconnect();
+  }, []);
+
+  // Measure the actual available height (viewport minus everything above the
+  // grid minus the fixed bottom tab bar), instead of the fixed HEADER_OFFSET
+  // magic number this used to subtract from 100vh — that guess didn't track
+  // the real desktop header stack (filters/summary/recently-viewed) and left
+  // dead space or clipped the last row depending on how tall that stack was.
+  const [availableHeight, setAvailableHeight] = useState<number | null>(null);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => {
+      const top = el.getBoundingClientRect().top;
+      const viewportHeight =
+        window.visualViewport?.height ?? window.innerHeight;
+      setAvailableHeight(
+        Math.max(300, viewportHeight - top - layoutConstants.tabBarClearance),
+      );
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    // Re-measure when anything above the grid (filters, summary, carousel)
+    // changes height, not just on window resize.
+    const ro = new ResizeObserver(measure);
+    ro.observe(document.body);
     return () => {
+      window.removeEventListener('resize', measure);
       ro.disconnect();
-      window.removeEventListener('resize', measureHeight);
     };
   }, []);
 
@@ -339,6 +337,7 @@ export default function VirtualGrid({
   const isXs = useMediaQuery(theme.breakpoints.down('sm')); // < 600px
   const isSm = useMediaQuery(theme.breakpoints.between('sm', 'md')); // 600-900px
   const isMd = useMediaQuery(theme.breakpoints.between('md', 'lg')); // 900-1200px
+  const isXl = useMediaQuery(theme.breakpoints.up('xl')); // >= 1536px
 
   // Calculate column count based on breakpoints
   // iOS HIG: 2 columns is optimal for scanning on mobile
@@ -346,8 +345,9 @@ export default function VirtualGrid({
     if (isXs) return 2; // iPhone - 2 columns
     if (isSm) return 2; // iPhone landscape / small tablet - 2 columns
     if (isMd) return 3; // iPad - 3 columns
-    return 4; // Desktop / large screens - 4 columns
-  }, [isXs, isSm, isMd]);
+    if (isXl) return 5; // large monitor - 5 columns (keeps cards ~300px)
+    return 4; // Desktop - 4 columns
+  }, [isXs, isSm, isMd, isXl]);
 
   const columnCount = getColumnCount();
 
@@ -382,13 +382,18 @@ export default function VirtualGrid({
     const imageAspect = isMobile ? 1.06 : 1.04;
     const imageHeight = Math.round(cardInnerWidth * imageAspect);
 
-    // Content area breakdown (vertical layout):
-    // - Padding: ~12px top + 12px bottom
-    // - Name (up to 2 lines @ 16/19px × 1.12 lineHeight): ~36-43px
-    // - Spec line (mono, single line): ~13px
-    // - Price (single line): ~17px
-    // Total: ~66px mobile, ~74px desktop (measured); generous to avoid clipping.
-    const contentHeight = isMobile ? 68 : 76;
+    // Footer height budget (PieceCard text block), vertical breakdown:
+    //   padding      10+10 mobile / 12+12 desktop      = 20 / 24
+    //   name         ONE line @ 17/20px × 1.2          = 20 / 24
+    //   stone line   mt 3/5 + 16px glyph row           = 19 / 21
+    //   value row    mt 4/6 + ~16/18px                 = 20 / 24
+    //                                             total ≈ 79 / 93
+    // The name is a single line now, so this is a real measurement rather than
+    // the old 2-line guess (68/76) — that number under-counted the footer, and
+    // since the footer is flex-shrink:0 and the well is flex:1, every card was
+    // silently paying for it by squeezing the image well below its 1/1.04
+    // target. Budgeting the true height gives the stone its full near-square well.
+    const contentHeight = isMobile ? 79 : 93;
 
     // Card border adds 2px (top + bottom) to the total card height
     return imageHeight + contentHeight + 2;
@@ -468,9 +473,9 @@ export default function VirtualGrid({
     <Box
       ref={containerRef}
       sx={{
-        // Measured height (see effect above): ends just above the tab bar so the
-        // grid is the single effective scroller — no HEADER_OFFSET guess, no vh.
-        height: containerHeight,
+        // Measured (see the availableHeight effect above) — falls back to a
+        // sane floor until the first measurement lands, avoiding a 0-height flash.
+        height: availableHeight ?? 480,
         width: '100%',
         // Responsive horizontal padding
         px: { xs: 1, sm: 1, md: 2, lg: 0 },
