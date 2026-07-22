@@ -11,19 +11,11 @@ import {
   IconButton,
   TextField,
   InputAdornment,
-  alpha,
-  useTheme,
 } from '@mui/material';
 import { ArrowLeft, Search, X, Plus, Pencil } from 'lucide-react';
 import { Reorder } from 'framer-motion';
 import { useLanguage } from '../../../../contexts/LanguageContext';
-import {
-  emeraldCore,
-  blurValues,
-  surfacesLight,
-  surfacesDark,
-  semanticColors,
-} from '../../../../design-system';
+import { zIndex } from '../../../../design-system';
 import ProgressiveImage from '../../../../components/shared/ProgressiveImage';
 import type { TreasureItem } from '../../../../types';
 import { useAmbassadorOverrides } from '../../../../hooks/useAmbassadorOverrides';
@@ -49,9 +41,7 @@ export function ManageFavoritesView({
   onReorderFavorites,
   asesorSlug,
 }: ManageFavoritesViewProps) {
-  const theme = useTheme();
   const { t } = useLanguage();
-  const isLight = theme.palette.mode === 'light';
   const [searchQuery, setSearchQuery] = useState('');
 
   // T4: per-ambassador overrides (custom name / price)
@@ -95,8 +85,9 @@ export function ManageFavoritesView({
           onClick={onBack}
           aria-label={t.actions.back}
           sx={{
-            bgcolor: isLight ? alpha('#000', 0.04) : alpha('#fff', 0.06),
-            backdropFilter: `blur(${blurValues.md})`,
+            bgcolor: 'var(--tm-well)',
+            border: '1px solid var(--tm-border)',
+            color: 'var(--tm-text)',
             width: 36,
             height: 36,
           }}
@@ -111,12 +102,13 @@ export function ManageFavoritesView({
           size="small"
           onClick={onBack}
           sx={{
-            bgcolor: emeraldCore.primary,
-            '&:hover': { bgcolor: emeraldCore.dark },
+            bgcolor: 'var(--tm-accent-strong)',
+            color: 'var(--tm-on-accent)',
+            '&:hover': { bgcolor: 'var(--tm-accent)' },
             textTransform: 'none',
             fontWeight: 600,
             fontSize: '0.78rem',
-            borderRadius: 2,
+            borderRadius: 'var(--tm-radius-control)',
           }}
         >
           {t.ambassador.museum?.done ?? 'Listo'}
@@ -165,10 +157,11 @@ export function ManageFavoritesView({
                       sx={{
                         width: 64,
                         height: 64,
-                        borderRadius: 2,
+                        borderRadius: 'var(--tm-radius-well)',
                         overflow: 'hidden',
-                        border: '2px solid',
-                        borderColor: emeraldCore.primary,
+                        bgcolor: 'var(--tm-well)',
+                        border: '1px solid',
+                        borderColor: 'var(--tm-border)',
                       }}
                     >
                       <ProgressiveImage
@@ -192,10 +185,10 @@ export function ManageFavoritesView({
                         right: -6,
                         width: 20,
                         height: 20,
-                        bgcolor: semanticColors.error.main,
-                        color: semanticColors.error.contrastText,
-                        '&:hover': { bgcolor: semanticColors.error.dark },
-                        zIndex: 1,
+                        bgcolor: 'var(--tm-danger)',
+                        color: 'var(--tm-on-accent)',
+                        '&:hover': { bgcolor: 'var(--tm-danger)' },
+                        zIndex: zIndex.base + 1,
                       }}
                     >
                       <X size={12} />
@@ -211,13 +204,16 @@ export function ManageFavoritesView({
                           right: -6,
                           width: 20,
                           height: 20,
-                          bgcolor: emeraldCore.primary,
-                          color: '#fff',
-                          '&:hover': { bgcolor: emeraldCore.dark ?? emeraldCore.primary },
-                          zIndex: 1,
-                          ...(getOverride(id) ? {
-                            boxShadow: `0 0 0 2px #fff, 0 0 0 3px ${emeraldCore.primary}`,
-                          } : {}),
+                          bgcolor: 'var(--tm-accent-strong)',
+                          color: 'var(--tm-on-accent)',
+                          '&:hover': { bgcolor: 'var(--tm-accent)' },
+                          zIndex: zIndex.base + 1,
+                          ...(getOverride(id)
+                            ? {
+                                boxShadow:
+                                  '0 0 0 2px var(--tm-surface), 0 0 0 3px var(--tm-accent)',
+                              }
+                            : {}),
                         }}
                       >
                         <Pencil size={11} />
@@ -267,8 +263,8 @@ export function ManageFavoritesView({
         sx={{
           mb: 1.5,
           '& .MuiOutlinedInput-root': {
-            borderRadius: 2.5,
-            bgcolor: isLight ? alpha('#000', 0.015) : alpha('#fff', 0.025),
+            borderRadius: 'var(--tm-radius-control)',
+            bgcolor: 'var(--tm-well)',
             fontSize: '0.82rem',
           },
         }}
@@ -284,12 +280,21 @@ export function ManageFavoritesView({
               alignItems: 'center',
               gap: 1.5,
               p: 1,
-              borderRadius: 2,
+              borderRadius: 'var(--tm-radius-control)',
               border: '1px solid',
-              borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+              borderColor: 'var(--tm-border)',
             }}
           >
-            <Box sx={{ width: 44, height: 44, borderRadius: 1.5, overflow: 'hidden', flexShrink: 0 }}>
+            <Box
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: 'var(--tm-radius-well)',
+                bgcolor: 'var(--tm-well)',
+                overflow: 'hidden',
+                flexShrink: 0,
+              }}
+            >
               <ProgressiveImage
                 src={item.thumbnailUrl || item.imagen}
                 alt={item.nombre}
@@ -316,9 +321,9 @@ export function ManageFavoritesView({
               sx={{
                 width: 30,
                 height: 30,
-                bgcolor: alpha(emeraldCore.primary, 0.1),
-                color: emeraldCore.primary,
-                '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.2) },
+                bgcolor: 'var(--tm-accent-wash)',
+                color: 'var(--tm-accent)',
+                '&:hover': { bgcolor: 'var(--tm-accent-wash-strong)' },
               }}
             >
               <Plus size={16} />
