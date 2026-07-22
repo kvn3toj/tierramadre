@@ -12,12 +12,11 @@ import { Gem, Crown } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import CertificationUpload from './CertificationUpload';
 import { ComparisonBar, ComparisonModal } from '../comparison';
-import { zIndex, FilterSheet, getQuietEmerald } from '../../design-system';
+import { FilterSheet, getQuietEmerald } from '../../design-system';
 import { TreasureItem } from '../../types';
 import ListRow from './ListRow';
 import VirtualGrid from './VirtualGrid';
 import { ActiveFilterChips } from './ActiveFilterChips';
-import RecentlyViewedCarousel from './RecentlyViewedCarousel';
 import { FilterContent } from './FilterContent';
 import RedesignVariantToggle from '../redesign/RedesignVariantToggle';
 import {
@@ -284,6 +283,9 @@ export default function TreasureBrowser({
               <FilterContent {...filterContentProps} />
               <DesktopFilterToolbar
                 dense
+                recentItems={recentlyViewedItems}
+                onRecentClick={handleItemClick}
+                onClearRecent={clearRecent}
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
                 savedFilters={savedFilters}
@@ -423,22 +425,6 @@ export default function TreasureBrowser({
               setCaratRange([caratMinMax.min, caratMinMax.max])
             }
             caratMinMax={caratMinMax}
-          />
-        </Box>
-      )}
-
-      {!isMobile && recentlyViewedItems.length > 0 && (
-        <Box
-          sx={{
-            position: 'sticky',
-            top: 0,
-            zIndex: zIndex.base,
-          }}
-        >
-          <RecentlyViewedCarousel
-            items={recentlyViewedItems}
-            onItemClick={handleItemClick}
-            onClear={clearRecent}
           />
         </Box>
       )}
