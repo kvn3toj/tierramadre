@@ -68,3 +68,31 @@ Con eso, sin más cambios de código:
   (`productViews` ya existe) en vez de la hoja — menos I/O de Sheets. Dejar en el companion por ahora.
 - ⏭️ **Recomendado:** unificar `Invitations`/`ProductViews` hoja↔Convex (hoy hay ambas) — elegir una
   fuente para evitar doble escritura.
+
+---
+
+## Verificación de mapeo para la migración (2026-07-21)
+
+Re-analicé el SOT v3 simulando el adaptador del catálogo. Campos que la app muestra
+(item, nombre, peso, color, calidad, talla, medidas, categoría, ubicación, estado,
+QR, colección, caja) → **mapean bien por nombre de header** (0 desalineados).
+
+⚠️ **Gap detectado y corregido — el PRECIO.** El SOT v3 solo tenía
+`precioEmbajadorCOP` en 101/513 ítems → el catálogo habría mostrado 412 ítems SIN
+precio. **Backfill aplicado** en el SOT v3 (col M), coalesciendo:
+`precioEmbajadorCOP` (101, preservado) → **legacy `Precio COP`** (306) → Modelo-Precios
+PFU → **costo × 2.6** (45). Resultado: **453/513 con precio**; los ~60 restantes son
+insumos/topitos/componentes sin precio de venta unitario (correcto).
+
+> Nota semántica: para los 352 ítems backfilleados, `precioEmbajadorCOP` pasa a ser
+> el "precio público del catálogo" (no una tarifa de embajador fijada a mano). Es
+> consistente con el diseño ("el precio público es la tarifa embajador").
+
+## Respaldos / versiones
+
+Carpeta **TM-Backups** (junto al SOT v3): copias fechadas de ambos libros.
+- `SOT-v3 · Backup 2026-07-21`
+- `TM-App-Data · Backup 2026-07-21`
+
+Recomendado: correr una copia fechada antes de cada cambio grande (o un backup
+programado en Convex para los datos que vivan ahí).
