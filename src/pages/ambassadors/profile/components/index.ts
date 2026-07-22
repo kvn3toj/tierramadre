@@ -25,7 +25,6 @@ export { CategoryGrid } from './CategoryGrid';
 export { FavoritesRow } from './FavoritesRow';
 export { CategoryDetailView } from './CategoryDetailView';
 export { ProductListCard } from './ProductListCard';
-export { FavoriteDetailView } from './FavoriteDetailView';
 export { ManageFavoritesView } from './ManageFavoritesView';
 export { EditProfileView } from './EditProfileView';
 export { AmbassadorProductDetail } from './AmbassadorProductDetail';

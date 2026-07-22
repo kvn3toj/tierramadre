@@ -37,7 +37,6 @@ import {
   CategoryGrid,
   FavoritesRow,
   CategoryDetailView,
-  FavoriteDetailView,
   ManageFavoritesView,
   EditProfileView,
   AmbassadorProductDetail,
@@ -52,7 +51,6 @@ import type { ProfileStats } from "./components";
 type ProfileView =
   | "museum"
   | "category"
-  | "favoriteDetail"
   | "productDetail"
   | "edit"
   | "manageFavorites";
@@ -233,10 +231,7 @@ export default function AsesorProfilePage() {
         setSelectedProduct(found);
         setActiveView("productDetail");
       }
-    } else if (
-      activeView === "productDetail" ||
-      activeView === "favoriteDetail"
-    ) {
+    } else if (activeView === "productDetail") {
       // URL no longer has itemId (back navigation) — return to museum
       setActiveView("museum");
       setSelectedProduct(null);
@@ -259,12 +254,6 @@ export default function AsesorProfilePage() {
     [navigate, slug],
   );
 
-  const handleFavoriteItemClick = useCallback(
-    (item: TreasureItem) => {
-      navigate(`/ambassadors/${slug}/product/${item.item}`);
-    },
-    [navigate, slug],
-  );
 
   const handleShare = useCallback(async () => {
     if (!asesor) return;
@@ -680,7 +669,7 @@ export default function AsesorProfilePage() {
             {/* Favorites Row */}
             <FavoritesRow
               items={favoriteItems}
-              onItemClick={handleFavoriteItemClick}
+              onItemClick={handleProductClick}
               onViewAll={isProfileOwner ? handleManageFavorites : undefined}
             />
           </motion.div>
@@ -693,16 +682,6 @@ export default function AsesorProfilePage() {
             category={selectedCategory}
             onBack={handleBackToMuseum}
             onProductClick={handleProductClick}
-          />
-        )}
-
-        {/* Favorite Detail View */}
-        {activeView === "favoriteDetail" && selectedProduct && (
-          <FavoriteDetailView
-            key="favoriteDetail"
-            item={selectedProduct}
-            asesor={asesor}
-            onBack={handleBackToMuseum}
           />
         )}
 

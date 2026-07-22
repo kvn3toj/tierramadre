@@ -1,6 +1,6 @@
 /**
  * FavoritesRow Component
- * Horizontal scrolling row of circular favorite product thumbnails.
+ * Horizontal scrolling row of favorite product thumbnails.
  * Bottom panel in the museum profile view with refined styling.
  */
 
@@ -146,7 +146,7 @@ export const FavoritesRow = React.memo(function FavoritesRow({
               sx={{
                 width: thumbSize,
                 height: thumbSize,
-                borderRadius: '50%',
+                borderRadius: 'var(--tm-radius-well)',
                 overflow: 'hidden',
                 bgcolor: 'var(--tm-well)',
                 border: '1px solid',
