@@ -56,8 +56,10 @@ function ListRow({
     .trim();
   const quality = getQualityBadge(item.calidad);
   const colorDot = getColorDot(item.color);
+  // Never render "0.00 ct": a real carat weight only for a loose stone with
+  // peso > 0; joyas / insumos fall back to the metal type (or nothing).
   const weight =
-    typeof item.peso === 'number'
+    typeof item.peso === 'number' && item.peso > 0
       ? `${formatCarats(item.peso)} ct`
       : item.metalType;
   const origin = (item.procedencia || item.mina)?.trim();
