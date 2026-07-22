@@ -11,8 +11,6 @@ import {
   Typography,
   Chip,
   IconButton,
-  alpha,
-  useTheme,
   CircularProgress,
   Button,
 } from "@mui/material";
@@ -28,18 +26,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import {
-  emeraldCore,
-  goldAccent,
-  semanticColors,
-  blurValues,
-  surfacesLight,
-  surfacesDark,
-  fontFamilies,
-  brand,
-  cssTransition,
-  zIndex,
-} from "../../../../design-system";
+import { qeFont, qeGray, zIndex } from "../../../../design-system";
 import { formatFullCurrency, formatCarats } from "../../../../utils/formatting";
 import { useLanguage } from "../../../../contexts/LanguageContext";
 import { useReducedMotion } from "../../../../hooks/useReducedMotion";
@@ -61,9 +48,7 @@ export function AmbassadorProductDetail({
   item,
   onBack,
 }: AmbassadorProductDetailProps) {
-  const theme = useTheme();
   const { t } = useLanguage();
-  const isLight = theme.palette.mode === "light";
   const prefersReducedMotion = useReducedMotion();
 
   const [gallerySlides, setGallerySlides] = useState<MediaSlide[]>([]);
@@ -179,12 +164,14 @@ export function AmbassadorProductDetail({
           onClick={onBack}
           aria-label={t.actions.back}
           sx={{
-            bgcolor: isLight ? alpha("#000", 0.04) : alpha("#fff", 0.06),
-            backdropFilter: `blur(${blurValues.md})`,
+            bgcolor: "var(--tm-well)",
+            border: "1px solid var(--tm-border)",
+            color: "var(--tm-text)",
             width: 38,
             height: 38,
             "&:hover": {
-              bgcolor: isLight ? alpha("#000", 0.08) : alpha("#fff", 0.1),
+              bgcolor: "var(--tm-well)",
+              borderColor: "var(--tm-accent)",
             },
           }}
         >
@@ -195,13 +182,11 @@ export function AmbassadorProductDetail({
       {/* Hero Gallery Carousel */}
       <Box
         sx={{
-          borderRadius: "18px",
+          borderRadius: "var(--tm-radius-card)",
           overflow: "hidden",
           mb: 2.5,
           position: "relative",
-          boxShadow: isLight
-            ? "0 4px 20px rgba(0,0,0,0.1)"
-            : "0 4px 20px rgba(0,0,0,0.3)",
+          border: "1px solid var(--tm-border)",
         }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -222,7 +207,7 @@ export function AmbassadorProductDetail({
                     minWidth: "100%",
                     aspectRatio: "4/3",
                     position: "relative",
-                    bgcolor: isLight ? "#f5f5f5" : "#1a1a1a",
+                    bgcolor: "var(--tm-well)",
                   }}
                 >
                   {slide.type === "video" ? (
@@ -266,16 +251,16 @@ export function AmbassadorProductDetail({
                   position: "absolute",
                   top: 12,
                   right: 12,
-                  bgcolor: "rgba(0,0,0,0.5)",
-                  backdropFilter: "blur(4px)",
-                  borderRadius: 1.5,
+                  // On-photo chrome: rides over the gallery image.
+                  bgcolor: "var(--tm-scrim)",
+                  borderRadius: "var(--tm-radius-well)",
                   px: 1,
                   py: 0.3,
                   zIndex: zIndex.base,
                 }}
               >
                 <Typography
-                  sx={{ color: "#fff", fontSize: "0.7rem", fontWeight: 600 }}
+                  sx={{ color: qeGray[0], fontSize: "0.7rem", fontWeight: 600 }}
                 >
                   {activeSlide + 1} / {slideCount}
                 </Typography>
@@ -290,9 +275,8 @@ export function AmbassadorProductDetail({
                   bottom: 12,
                   left: "50%",
                   transform: "translateX(-50%)",
-                  bgcolor: "rgba(0,0,0,0.5)",
-                  backdropFilter: "blur(4px)",
-                  borderRadius: 2,
+                  bgcolor: "var(--tm-scrim)",
+                  borderRadius: "var(--tm-radius-control)",
                   px: 1.5,
                   py: 0.5,
                   display: "flex",
@@ -301,8 +285,8 @@ export function AmbassadorProductDetail({
                   zIndex: zIndex.base,
                 }}
               >
-                <CircularProgress size={14} sx={{ color: "#fff" }} />
-                <Typography sx={{ color: "#fff", fontSize: "0.7rem" }}>
+                <CircularProgress size={14} sx={{ color: qeGray[0] }} />
+                <Typography sx={{ color: qeGray[0], fontSize: "0.7rem" }}>
                   Loading gallery...
                 </Typography>
               </Box>
@@ -319,9 +303,9 @@ export function AmbassadorProductDetail({
                       left: 8,
                       top: "50%",
                       transform: "translateY(-50%)",
-                      bgcolor: "rgba(0,0,0,0.5)",
-                      color: "#fff",
-                      "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+                      bgcolor: "var(--tm-scrim)",
+                      color: qeGray[0],
+                      "&:hover": { bgcolor: "var(--tm-scrim)" },
                       zIndex: zIndex.base,
                     }}
                   >
@@ -336,9 +320,9 @@ export function AmbassadorProductDetail({
                       right: 8,
                       top: "50%",
                       transform: "translateY(-50%)",
-                      bgcolor: "rgba(0,0,0,0.5)",
-                      color: "#fff",
-                      "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+                      bgcolor: "var(--tm-scrim)",
+                      color: qeGray[0],
+                      "&:hover": { bgcolor: "var(--tm-scrim)" },
                       zIndex: zIndex.base,
                     }}
                   >
@@ -369,12 +353,10 @@ export function AmbassadorProductDetail({
                       width: activeSlide === i ? 18 : 8,
                       height: 8,
                       borderRadius: 4,
-                      bgcolor:
-                        activeSlide === i
-                          ? brand.emerald[400]
-                          : "rgba(255,255,255,0.5)",
+                      // On-photo chrome: the dots sit over the gallery image.
+                      bgcolor: activeSlide === i ? "var(--tm-accent-pure)" : qeGray[300],
                       cursor: "pointer",
-                      transition: cssTransition.fast,
+                      transition: "width var(--tm-fast) var(--tm-ease)",
                     }}
                   />
                 ))}
@@ -385,7 +367,7 @@ export function AmbassadorProductDetail({
           <Box
             sx={{
               aspectRatio: "4/3",
-              bgcolor: isLight ? "#f5f5f5" : "#1a1a1a",
+              bgcolor: "var(--tm-well)",
             }}
           />
         )}
@@ -405,11 +387,11 @@ export function AmbassadorProductDetail({
       </Typography>
       <Typography
         sx={{
-          fontFamily: fontFamilies.display,
+          fontFamily: qeFont.serif,
           fontWeight: 600,
           fontSize: "1.5rem",
           letterSpacing: "0.01em",
-          color: emeraldCore.primary,
+          color: "var(--tm-accent)",
           fontVariantNumeric: "lining-nums tabular-nums",
           mb: 2,
         }}
@@ -424,12 +406,12 @@ export function AmbassadorProductDetail({
             label="JOYA"
             size="small"
             sx={{
-              bgcolor: alpha(goldAccent.primary, 0.1),
-              color: isLight ? goldAccent.dark : goldAccent.light,
+              bgcolor: "var(--tm-well)",
+              color: "var(--tm-muted)",
               fontWeight: 700,
               fontSize: "0.58rem",
               letterSpacing: "0.04em",
-              borderRadius: "6px",
+              borderRadius: "var(--tm-radius-well)",
             }}
           />
         )}
@@ -438,12 +420,12 @@ export function AmbassadorProductDetail({
             label={item.categoria}
             size="small"
             sx={{
-              bgcolor: alpha(emeraldCore.primary, 0.08),
-              color: emeraldCore.primary,
+              bgcolor: "var(--tm-accent-wash)",
+              color: "var(--tm-accent)",
               fontWeight: 700,
               fontSize: "0.58rem",
               letterSpacing: "0.04em",
-              borderRadius: "6px",
+              borderRadius: "var(--tm-radius-well)",
             }}
           />
         )}
@@ -452,12 +434,12 @@ export function AmbassadorProductDetail({
             label="VENDIDA"
             size="small"
             sx={{
-              bgcolor: alpha(semanticColors.error.main, 0.1),
-              color: semanticColors.error.main,
+              bgcolor: "var(--tm-well)",
+              color: "var(--tm-danger)",
               fontWeight: 700,
               fontSize: "0.58rem",
               letterSpacing: "0.04em",
-              borderRadius: "6px",
+              borderRadius: "var(--tm-radius-well)",
             }}
           />
         )}
@@ -471,14 +453,10 @@ export function AmbassadorProductDetail({
           gap: 1.5,
           mb: 2.5,
           p: 2,
-          borderRadius: "14px",
-          bgcolor: isLight
-            ? surfacesLight.surface.default
-            : surfacesDark.background.secondary,
+          borderRadius: "var(--tm-radius-card)",
+          bgcolor: "var(--tm-surface)",
           border: "1px solid",
-          borderColor: isLight
-            ? surfacesLight.border.light
-            : surfacesDark.border.light,
+          borderColor: "var(--tm-border)",
         }}
       >
         <SpecCell
@@ -525,14 +503,14 @@ export function AmbassadorProductDetail({
         variant="contained"
         startIcon={<MessageCircle size={18} />}
         sx={{
-          bgcolor: emeraldCore.primary,
-          color: "#fff",
-          borderRadius: "14px",
+          bgcolor: "var(--tm-accent-strong)",
+          color: "var(--tm-on-accent)",
+          borderRadius: "var(--tm-radius-control)",
           py: 1.5,
           fontWeight: 600,
           textTransform: "none",
           fontSize: "0.95rem",
-          "&:hover": { bgcolor: emeraldCore.dark },
+          "&:hover": { bgcolor: "var(--tm-accent)" },
         }}
       >
         Contactar Embajador
