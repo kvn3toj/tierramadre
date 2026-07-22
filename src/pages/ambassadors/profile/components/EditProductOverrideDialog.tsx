@@ -21,7 +21,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   Button,
   Typography,
   Box,
@@ -33,6 +32,7 @@ import {
   OVERRIDE_LIMITS,
 } from '../../../../types/ambassadorOverride';
 import { validateOverride } from '../../../../hooks/useAmbassadorOverrides';
+import { TextField } from '../../../../design-system';
 
 interface EditProductOverrideDialogProps {
   open: boolean;
@@ -132,7 +132,6 @@ export const EditProductOverrideDialog: React.FC<EditProductOverrideDialogProps>
             value={name}
             onChange={(e) => setName(e.target.value)}
             fullWidth
-            size="small"
             inputProps={{ maxLength: OVERRIDE_LIMITS.NAME_MAX_LENGTH + 5 }}
             helperText={
               nameError
@@ -146,7 +145,6 @@ export const EditProductOverrideDialog: React.FC<EditProductOverrideDialogProps>
             value={priceText}
             onChange={(e) => setPriceText(e.target.value)}
             fullWidth
-            size="small"
             inputMode="numeric"
             placeholder={typeof basePrice === 'number' ? `Ej: ${formatCOP(basePrice)}` : 'Ej: 1000000'}
             helperText={

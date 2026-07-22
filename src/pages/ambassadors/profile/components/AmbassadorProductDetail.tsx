@@ -9,7 +9,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Box,
   Typography,
-  Chip,
   IconButton,
   CircularProgress,
   Button,
@@ -26,7 +25,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { qeGray, qeType, zIndex } from "../../../../design-system";
+import { Badge, qeGray, qeType, zIndex } from "../../../../design-system";
 import { formatFullCurrency, formatCarats } from "../../../../utils/formatting";
 import { useLanguage } from "../../../../contexts/LanguageContext";
 import { useReducedMotion } from "../../../../hooks/useReducedMotion";
@@ -167,8 +166,8 @@ export function AmbassadorProductDetail({
             bgcolor: "var(--tm-well)",
             border: "1px solid var(--tm-border)",
             color: "var(--tm-text)",
-            width: 38,
-            height: 38,
+            width: 44,
+            height: 44,
             "&:hover": {
               bgcolor: "var(--tm-well)",
               borderColor: "var(--tm-accent)",
@@ -397,47 +396,10 @@ export function AmbassadorProductDetail({
 
       {/* Tags */}
       <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mb: 2 }}>
-        {item.isJewelry && (
-          <Chip
-            label="JOYA"
-            size="small"
-            sx={{
-              bgcolor: "var(--tm-well)",
-              color: "var(--tm-muted)",
-              fontWeight: 700,
-              fontSize: "0.6875rem",
-              letterSpacing: "0.04em",
-              borderRadius: "var(--tm-radius-well)",
-            }}
-          />
-        )}
-        {item.categoria && (
-          <Chip
-            label={item.categoria}
-            size="small"
-            sx={{
-              bgcolor: "var(--tm-accent-wash)",
-              color: "var(--tm-accent)",
-              fontWeight: 700,
-              fontSize: "0.6875rem",
-              letterSpacing: "0.04em",
-              borderRadius: "var(--tm-radius-well)",
-            }}
-          />
-        )}
+        {item.isJewelry && <Badge tone="neutral" label="Joya" />}
+        {item.categoria && <Badge tone="accent" label={item.categoria} />}
         {item.estado === "VENDIDA" && (
-          <Chip
-            label="VENDIDA"
-            size="small"
-            sx={{
-              bgcolor: "var(--tm-well)",
-              color: "var(--tm-danger)",
-              fontWeight: 700,
-              fontSize: "0.6875rem",
-              letterSpacing: "0.04em",
-              borderRadius: "var(--tm-radius-well)",
-            }}
-          />
+          <Badge tone="danger" label="Vendida" />
         )}
       </Box>
 

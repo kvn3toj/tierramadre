@@ -4,10 +4,11 @@
  */
 
 import { useState, useMemo } from 'react';
-import { Box, Typography, Chip, IconButton } from '@mui/material';
+import { Box, Typography, IconButton } from '@mui/material';
 import { ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../../../contexts/LanguageContext';
+import { SegmentedControl } from '../../../../design-system';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import { getQualityTiers } from '../../../../utils/productCategories';
 import { ProductListCard } from './ProductListCard';
@@ -55,8 +56,8 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
             bgcolor: 'var(--tm-well)',
             border: '1px solid var(--tm-border)',
             color: 'var(--tm-text)',
-            width: 36,
-            height: 36,
+            width: 44,
+            height: 44,
             '&:hover': {
               bgcolor: 'var(--tm-well)',
               borderColor: 'var(--tm-accent)',
@@ -73,63 +74,18 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
         </Typography>
       </Box>
 
-      {/* Filter Chips */}
+      {/* Quality filter — one control, one selected state (DS3 §canonical) */}
       {qualityTiers.length > 1 && (
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 0.75,
-            mb: 2,
-            overflowX: 'auto',
-            pb: 0.5,
-            scrollbarWidth: 'none',
-            '&::-webkit-scrollbar': { display: 'none' },
-          }}
-        >
-          <Chip
-            label={t.common.all}
-            size="small"
-            onClick={() => setActiveFilter('all')}
-            sx={{
-              fontWeight: 600,
-              fontSize: '0.72rem',
-              transition: 'background-color var(--tm-base) var(--tm-ease)',
-              ...(activeFilter === 'all'
-                ? {
-                    bgcolor: 'var(--tm-accent-strong)',
-                    color: 'var(--tm-on-accent)',
-                    '&:hover': { bgcolor: 'var(--tm-accent)' },
-                  }
-                : {
-                    bgcolor: 'var(--tm-accent-wash)',
-                    color: 'var(--tm-accent)',
-                  }),
-            }}
+        <Box sx={{ mb: 2 }}>
+          <SegmentedControl
+            ariaLabel='Calidad'
+            value={activeFilter}
+            onChange={setActiveFilter}
+            options={[
+              { value: 'all', label: t.common.all },
+              ...qualityTiers.map((tier) => ({ value: tier, label: tier })),
+            ]}
           />
-          {qualityTiers.map((tier) => (
-            <Chip
-              key={tier}
-              label={tier}
-              size="small"
-              onClick={() => setActiveFilter(tier)}
-              sx={{
-                fontWeight: 600,
-                fontSize: '0.72rem',
-                flexShrink: 0,
-                transition: 'background-color var(--tm-base) var(--tm-ease)',
-                ...(activeFilter === tier
-                  ? {
-                      bgcolor: 'var(--tm-accent-strong)',
-                      color: 'var(--tm-on-accent)',
-                      '&:hover': { bgcolor: 'var(--tm-accent)' },
-                    }
-                  : {
-                      bgcolor: 'var(--tm-well)',
-                      color: 'var(--tm-muted)',
-                    }),
-              }}
-            />
-          ))}
         </Box>
       )}
 

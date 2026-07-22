@@ -7,12 +7,12 @@ import { useState } from 'react';
 import {
   Box,
   Typography,
-  TextField,
   Button,
   Avatar,
   IconButton,
   CircularProgress,
 } from '@mui/material';
+import { TextField } from '../../../../design-system';
 import { ArrowLeft, Camera, Save } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useNotification } from '../../../../contexts/NotificationContext';
@@ -68,8 +68,8 @@ export function EditProfileView({
             bgcolor: 'var(--tm-well)',
             border: '1px solid var(--tm-border)',
             color: 'var(--tm-text)',
-            width: 36,
-            height: 36,
+            width: 44,
+            height: 44,
           }}
         >
           <ArrowLeft size={18} />
@@ -119,8 +119,8 @@ export function EditProfileView({
               position: 'absolute',
               bottom: 0,
               right: 0,
-              width: 32,
-              height: 32,
+              width: 44,
+              height: 44,
               bgcolor: 'var(--tm-accent-strong)',
               color: 'var(--tm-on-accent)',
               border: '2px solid',
@@ -140,8 +140,6 @@ export function EditProfileView({
           value={asesor.name}
           disabled
           fullWidth
-          size="small"
-          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 'var(--tm-radius-control)' } }}
         />
 
         <TextField
@@ -149,11 +147,9 @@ export function EditProfileView({
           value={especialidad}
           onChange={(e) => setEspecialidad(e.target.value)}
           fullWidth
-          size="small"
           multiline
           minRows={2}
           placeholder="Esmeraldas colombianas de alta calidad..."
-          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 'var(--tm-radius-control)' } }}
         />
 
         <TextField
@@ -161,9 +157,7 @@ export function EditProfileView({
           value={whatsapp}
           onChange={(e) => setWhatsapp(e.target.value)}
           fullWidth
-          size="small"
           placeholder="+57 300 123 4567"
-          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 'var(--tm-radius-control)' } }}
         />
 
         <TextField
@@ -171,8 +165,6 @@ export function EditProfileView({
           value={asesor.email || ''}
           disabled
           fullWidth
-          size="small"
-          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 'var(--tm-radius-control)' } }}
         />
 
         <Button

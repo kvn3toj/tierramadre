@@ -9,13 +9,12 @@ import {
   Typography,
   Button,
   IconButton,
-  TextField,
   InputAdornment,
 } from '@mui/material';
 import { ArrowLeft, Search, X, Plus, Pencil } from 'lucide-react';
 import { Reorder } from 'framer-motion';
 import { useLanguage } from '../../../../contexts/LanguageContext';
-import { zIndex } from '../../../../design-system';
+import { TextField } from '../../../../design-system';
 import ProgressiveImage from '../../../../components/shared/ProgressiveImage';
 import type { TreasureItem } from '../../../../types';
 import { useAmbassadorOverrides } from '../../../../hooks/useAmbassadorOverrides';
@@ -88,8 +87,8 @@ export function ManageFavoritesView({
             bgcolor: 'var(--tm-well)',
             border: '1px solid var(--tm-border)',
             color: 'var(--tm-text)',
-            width: 36,
-            height: 36,
+            width: 44,
+            height: 44,
           }}
         >
           <ArrowLeft size={18} />
@@ -148,77 +147,37 @@ export function ManageFavoritesView({
                   <Box
                     sx={{
                       position: 'relative',
-                      width: 64,
+                      width: 96,
                       cursor: 'grab',
                       '&:active': { cursor: 'grabbing' },
                     }}
                   >
                     <Box
                       sx={{
-                        width: 64,
-                        height: 64,
+                        width: 96,
+                        height: 96,
                         borderRadius: 'var(--tm-radius-well)',
                         overflow: 'hidden',
                         bgcolor: 'var(--tm-well)',
                         border: '1px solid',
-                        borderColor: 'var(--tm-border)',
+                        // An override is announced on the well itself rather
+                        // than by a ring on a 20px button.
+                        borderColor: getOverride(id)
+                          ? 'var(--tm-accent)'
+                          : 'var(--tm-border)',
                       }}
                     >
                       <ProgressiveImage
                         src={item.thumbnailUrl || item.imagen}
                         alt={item.nombre}
-                        width={64}
-                        height={64}
+                        width={96}
+                        height={96}
                         layout="thumbnail"
                         quality="eco"
                         enableLQIP={false}
                         showPlaceholderIcon={false}
                       />
                     </Box>
-                    <IconButton
-                      onClick={() => onRemoveFavorite(id)}
-                      aria-label={`${t.actions.delete} ${item.nombre}`}
-                      size="small"
-                      sx={{
-                        position: 'absolute',
-                        top: -6,
-                        right: -6,
-                        width: 20,
-                        height: 20,
-                        bgcolor: 'var(--tm-danger)',
-                        color: 'var(--tm-on-accent)',
-                        '&:hover': { bgcolor: 'var(--tm-danger)' },
-                        zIndex: zIndex.base + 1,
-                      }}
-                    >
-                      <X size={12} />
-                    </IconButton>
-                    {asesorSlug && (
-                      <IconButton
-                        onClick={() => setEditingProduct(item)}
-                        aria-label={`Editar nombre y precio de ${item.nombre}`}
-                        size="small"
-                        sx={{
-                          position: 'absolute',
-                          bottom: 18,
-                          right: -6,
-                          width: 20,
-                          height: 20,
-                          bgcolor: 'var(--tm-accent-strong)',
-                          color: 'var(--tm-on-accent)',
-                          '&:hover': { bgcolor: 'var(--tm-accent)' },
-                          zIndex: zIndex.base + 1,
-                          ...(getOverride(id)
-                            ? {
-                                boxShadow:
-                                  '0 0 0 2px var(--tm-surface), 0 0 0 3px var(--tm-accent)',
-                              }
-                            : {}),
-                        }}
-                      >
-                        <Pencil size={11} />
-                      </IconButton>
-                    )}
                     <Typography
                       sx={{
                         fontSize: '0.6875rem',
@@ -227,13 +186,61 @@ export function ManageFavoritesView({
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        color: 'text.secondary',
+                        color: 'var(--tm-muted)',
                       }}
                     >
                       {item.nombre}
                     </Typography>
+                    {/* Actions sit below the piece, at full target size and
+                        8px apart, so the destructive one is no longer a 20px
+                        neighbour of the edit control. */}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: 1,
+                        mt: 0.5,
+                      }}
+                    >
+                      {asesorSlug && (
+                        <IconButton
+                          onClick={() => setEditingProduct(item)}
+                          aria-label={`Editar nombre y precio de ${item.nombre}`}
+                          sx={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 'var(--tm-radius-control)',
+                            border: '1px solid var(--tm-border)',
+                            color: 'var(--tm-muted)',
+                            '&:hover': {
+                              color: 'var(--tm-accent)',
+                              borderColor: 'var(--tm-accent)',
+                            },
+                          }}
+                        >
+                          <Pencil size={16} />
+                        </IconButton>
+                      )}
+                      <IconButton
+                        onClick={() => onRemoveFavorite(id)}
+                        aria-label={`${t.actions.delete} ${item.nombre}`}
+                        sx={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 'var(--tm-radius-control)',
+                          border: '1px solid var(--tm-border)',
+                          color: 'var(--tm-muted)',
+                          '&:hover': {
+                            color: 'var(--tm-danger)',
+                            borderColor: 'var(--tm-danger)',
+                          },
+                        }}
+                      >
+                        <X size={16} />
+                      </IconButton>
+                    </Box>
                   </Box>
-                </Reorder.Item>
+                                </Reorder.Item>
               );
             })}
           </Reorder.Group>
@@ -252,7 +259,6 @@ export function ManageFavoritesView({
         placeholder={t.ambassador.searchCatalog}
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        size="small"
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
@@ -260,14 +266,7 @@ export function ManageFavoritesView({
             </InputAdornment>
           ),
         }}
-        sx={{
-          mb: 1.5,
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 'var(--tm-radius-control)',
-            bgcolor: 'var(--tm-well)',
-            fontSize: '0.82rem',
-          },
-        }}
+        sx={{ mb: 1.5 }}
       />
 
       {/* Available Products */}
@@ -319,8 +318,8 @@ export function ManageFavoritesView({
               aria-label={`${t.actions.add} ${item.nombre}`}
               size="small"
               sx={{
-                width: 30,
-                height: 30,
+                width: 44,
+                height: 44,
                 bgcolor: 'var(--tm-accent-wash)',
                 color: 'var(--tm-accent)',
                 '&:hover': { bgcolor: 'var(--tm-accent-wash-strong)' },

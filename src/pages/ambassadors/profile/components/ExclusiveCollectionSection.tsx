@@ -81,17 +81,7 @@ export const ExclusiveCollectionSection: React.FC<
           <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
             {collectionName}
           </Typography>
-          <Chip
-            label={`${products.length}`}
-            size="small"
-            sx={{
-              height: 22,
-              fontSize: '0.75rem',
-              bgcolor: 'var(--tm-accent-wash)',
-              color: 'var(--tm-accent)',
-              fontWeight: 600,
-            }}
-          />
+          <Badge tone="accent" label={`${products.length}`} />
         </Box>
         {onShare && (
           <IconButton

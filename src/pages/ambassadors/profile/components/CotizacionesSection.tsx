@@ -4,11 +4,11 @@
  */
 
 import React from 'react';
-import { Box, Typography, Paper, Chip } from '@mui/material';
+import { Box, Typography, Paper } from '@mui/material';
 import { FileText } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { SavedCotizacion } from '../../../../hooks/useCotizacionHistory';
-import { Skeleton } from '../../../../design-system';
+import { Badge, Skeleton } from '../../../../design-system';
 import { CotizacionCard } from './CotizacionCard';
 
 interface CotizacionesSectionProps {
@@ -77,14 +77,9 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
             </Box>
           </Box>
           {cotizaciones.length > 0 && (
-            <Chip
-              size="small"
+            <Badge
+              tone="accent"
               label={`${cotizaciones.length} cotizaciones`}
-              sx={{
-                bgcolor: 'var(--tm-accent-wash)',
-                color: 'var(--tm-accent)',
-                fontWeight: 600,
-              }}
             />
           )}
         </Box>

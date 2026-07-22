@@ -5,8 +5,8 @@
  */
 
 import React from 'react';
-import { Box, Typography, Chip } from '@mui/material';
-import { qeType } from '../../../../design-system';
+import { Box, Typography } from '@mui/material';
+import { Badge, qeType } from '../../../../design-system';
 import { formatCurrency, formatCarats } from '../../../../utils/formatting';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import ProgressiveImage from '../../../../components/shared/ProgressiveImage';
@@ -112,19 +112,9 @@ export const ProductListCard = React.memo(function ProductListCard({
           )}
         </Box>
         {item.calidad && (
-          <Chip
-            label={item.calidad}
-            size="small"
-            sx={{
-              height: 18,
-              mt: 0.5,
-              fontSize: '0.6875rem',
-              fontWeight: 600,
-              bgcolor: 'var(--tm-accent-wash)',
-              color: 'var(--tm-accent)',
-              borderRadius: 'var(--tm-radius-well)',
-            }}
-          />
+          <Box sx={{ mt: 0.5 }}>
+            <Badge tone="accent" label={item.calidad} />
+          </Box>
         )}
       </Box>
 

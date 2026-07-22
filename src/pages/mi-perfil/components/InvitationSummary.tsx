@@ -7,13 +7,22 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, Chip, alpha, IconButton,
-  Popover, Slider, Button, Dialog, DialogTitle,
+  Box, Typography, IconButton,
+  Popover, Slider, Dialog, DialogTitle,
   DialogContent, DialogContentText, DialogActions,
-  TextField, InputAdornment, ToggleButton, ToggleButtonGroup,
+  InputAdornment, ToggleButton, ToggleButtonGroup,
 } from '@mui/material';
 import { Link2, CheckCircle, Clock, XCircle, Send, Ban, Archive, Search, ArrowUpDown } from 'lucide-react';
-import { iosTypographyScale, primitiveSpacing as spacing, radius, qeFont } from '../../../design-system';
+import {
+  Badge,
+  Button,
+  type BadgeTone,
+  TextField,
+  iosTypographyScale,
+  primitiveSpacing as spacing,
+  radius,
+  qeFont,
+} from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { SectionHeading } from './SectionHeading';
@@ -33,10 +42,13 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
 }
 
-const STATUS_CONFIG = {
-  active: { label: 'Activa', color: 'var(--tm-accent)', icon: CheckCircle },
-  pending: { label: 'Pendiente', color: 'var(--tm-warning)', icon: Clock },
-  expired: { label: 'Expirada', color: 'var(--tm-danger)', icon: XCircle },
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; tone: BadgeTone; icon: React.ElementType }
+> = {
+  active: { label: 'Activa', tone: 'accent', icon: CheckCircle },
+  pending: { label: 'Pendiente', tone: 'warn', icon: Clock },
+  expired: { label: 'Expirada', tone: 'danger', icon: XCircle },
 };
 
 export function InvitationSummary({
@@ -127,6 +139,7 @@ export function InvitationSummary({
     { label: t.profile.active, value: metrics.active, icon: CheckCircle, color: 'var(--tm-accent)' },
     { label: t.profile.pending, value: metrics.pending, icon: Clock, color: 'var(--tm-warning)' },
     ...(metrics.expired > 0 ? [{ label: t.profile.expired ?? 'Expiradas', value: metrics.expired, icon: XCircle, color: 'var(--tm-danger)' }] : []),
+
   ];
 
   return (
@@ -141,8 +154,8 @@ export function InvitationSummary({
             sx={{
               p: 1.5,
               borderRadius: radius.md,
-              bgcolor: alpha(color, 0.06),
-              border: `1px solid ${alpha(color, 0.12)}`,
+              bgcolor: 'var(--tm-well)',
+              border: '1px solid var(--tm-border)',
               textAlign: 'center',
             }}
           >
@@ -170,7 +183,7 @@ export function InvitationSummary({
       {invitations.length > 2 && (
         <Box sx={{ display: 'flex', gap: spacing.xs, mb: spacing.xs, alignItems: 'center' }}>
           <TextField
-            size="small"
+            size="sm"
             placeholder="Buscar invitado…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -183,16 +196,7 @@ export function InvitationSummary({
                 ),
               },
             }}
-            sx={{
-              flex: 1,
-              '& .MuiInputBase-root': {
-                borderRadius: radius.md,
-                fontSize: iosTypographyScale.footnote,
-                height: 32,
-                bgcolor: 'var(--surface-primary)',
-              },
-              '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--tm-accent-wash)' },
-            }}
+            sx={{ flex: 1 }}
           />
           <ToggleButtonGroup
             size="small"
@@ -257,12 +261,12 @@ export function InvitationSummary({
                 sx={{
                   width: 28, height: 28,
                   borderRadius: radius.sm,
-                  bgcolor: alpha(statusConf.color, 0.1),
+                  bgcolor: 'var(--tm-well)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <Send size={12} style={{ color: statusConf.color }} />
+                <Send size={12} style={{ color: 'var(--tm-muted)' }} />
               </Box>
 
               <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -303,44 +307,41 @@ export function InvitationSummary({
                 )}
               </Box>
 
-              {/* Multiplier chip */}
-              <Chip
-                label={`x${(inv.guestMultiplier ?? 1).toFixed(1)}`}
-                size="small"
-                onClick={isEditable ? (e) => handleEditOpen(e, inv) : undefined}
-                sx={{
-                  height: 20, fontSize: '0.6875rem', fontWeight: 700,
-                  bgcolor: isEditable ? 'var(--tm-accent-wash)' : 'var(--tm-well)',
-                  color: isEditable ? 'var(--tm-accent)' : 'var(--text-tertiary)',
-                  border: '1px solid var(--tm-border)',
-                  cursor: isEditable ? 'pointer' : 'default',
-                  '&:hover': isEditable ? { bgcolor: 'var(--tm-accent-wash)' } : {},
-                }}
-              />
+              {/* Multiplier. When it can be edited it is a real button at a
+                  real target size, not a 20px clickable chip. */}
+              {isEditable ? (
+                <Button
+                  variant="tinted"
+                  size="sm"
+                  onClick={(e) => handleEditOpen(e, inv)}
+                  aria-label={`Editar multiplicador de ${inv.guestName || inv.shortCode}`}
+                  sx={{ flexShrink: 0, minWidth: 0, fontVariantNumeric: 'tabular-nums' }}
+                >
+                  {`x${(inv.guestMultiplier ?? 1).toFixed(1)}`}
+                </Button>
+              ) : (
+                <Badge
+                  tone="neutral"
+                  label={`x${(inv.guestMultiplier ?? 1).toFixed(1)}`}
+                />
+              )}
 
-              <Chip
-                label={statusConf.label}
-                size="small"
-                sx={{
-                  height: 20, fontSize: '0.6875rem', fontWeight: 600,
-                  bgcolor: alpha(statusConf.color, 0.1),
-                  color: statusConf.color,
-                  border: `1px solid ${alpha(statusConf.color, 0.2)}`,
-                }}
-              />
+              <Badge tone={statusConf.tone} label={statusConf.label} />
 
               {isEditable && (
                 <IconButton
-                  size="small"
                   disabled={isMutating}
                   onClick={() => setExpireCode(inv.shortCode)}
+                  aria-label={`Expirar invitación ${inv.shortCode}`}
                   sx={{
-                    width: 24, height: 24, p: 0,
+                    width: 44,
+                    height: 44,
+                    flexShrink: 0,
                     color: 'var(--text-tertiary)',
                     '&:hover': { color: 'var(--tm-danger)' },
                   }}
                 >
-                  <Ban size={13} />
+                  <Ban size={16} />
                 </IconButton>
               )}
 
@@ -376,17 +377,14 @@ export function InvitationSummary({
           sx={{ color: 'var(--tm-accent)', '& .MuiSlider-thumb': { width: 16, height: 16 } }}
         />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 1 }}>
-          <Button size="small" onClick={() => setEditAnchor(null)} sx={{ textTransform: 'none', fontSize: '0.75rem' }}>
+          <Button variant="plain" size="sm" onClick={() => setEditAnchor(null)}>
             {t.profile.cancel}
           </Button>
           <Button
-            size="small" variant="contained"
+            variant="primary"
+            size="sm"
             disabled={editCode ? mutatingCodes.has(editCode) : false}
             onClick={handleEditSave}
-            sx={{
-              textTransform: 'none', fontSize: '0.75rem',
-              bgcolor: 'var(--tm-accent)', '&:hover': { bgcolor: 'var(--tm-accent-strong)' },
-            }}
           >
             {t.profile.save}
           </Button>
@@ -408,15 +406,10 @@ export function InvitationSummary({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setExpireCode(null)} sx={{ textTransform: 'none' }}>
+          <Button variant="plain" onClick={() => setExpireCode(null)}>
             {t.profile.cancel}
           </Button>
-          <Button
-            onClick={handleExpireConfirm}
-            color="error"
-            variant="contained"
-            sx={{ textTransform: 'none' }}
-          >
+          <Button variant="danger" onClick={handleExpireConfirm}>
             {t.profile.expire}
           </Button>
         </DialogActions>

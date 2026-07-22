@@ -9,9 +9,11 @@
  */
 
 import { useRef, useState, useEffect } from 'react';
-import { Box, Typography, Chip, Avatar, alpha } from '@mui/material';
+import { Box, Typography, Avatar } from '@mui/material';
 import { Shield, Star, Award } from 'lucide-react';
 import {
+  Badge,
+  type BadgeTone,
   iosTypographyScale,
   primitiveSpacing as spacing,
   radius,
@@ -26,11 +28,11 @@ interface MyProfileHeaderProps {
 
 const ROLE_CONFIG: Record<
   string,
-  { label: string; icon: React.ElementType; color: string }
+  { label: string; icon: React.ElementType; tone: BadgeTone }
 > = {
-  Admin: { label: 'Admin', icon: Shield, color: 'var(--tm-subtle)' },
-  Embajador: { label: 'Embajador', icon: Star, color: 'var(--tm-accent-strong)' },
-  Asesor: { label: 'Asesor', icon: Award, color: 'var(--tm-accent)' },
+  Admin: { label: 'Admin', icon: Shield, tone: 'neutral' },
+  Embajador: { label: 'Embajador', icon: Star, tone: 'accent' },
+  Asesor: { label: 'Asesor', icon: Award, tone: 'accent' },
 };
 
 export function MyProfileHeader({
@@ -97,11 +99,11 @@ export function MyProfileHeader({
             sx={{
               width: 30,
               height: 30,
-              border: `1.5px solid ${alpha(config.color, 0.3)}`,
+              border: '1.5px solid var(--tm-border)',
               fontSize: '0.75rem',
               fontWeight: 700,
-              bgcolor: alpha(config.color, 0.15),
-              color: config.color,
+              bgcolor: 'var(--tm-well)',
+              color: 'var(--tm-accent)',
             }}
           >
             {asesor.name?.charAt(0).toUpperCase()}
@@ -122,20 +124,10 @@ export function MyProfileHeader({
             {asesor.name}
           </Typography>
 
-          <Chip
+          <Badge
+            tone={config.tone}
             icon={<Icon size={10} />}
             label={config.label}
-            size="small"
-            sx={{
-              height: 20,
-              fontSize: '0.6875rem',
-              fontWeight: 600,
-              bgcolor: alpha(config.color, 0.12),
-              color: config.color,
-              border: `1px solid ${alpha(config.color, 0.25)}`,
-              '& .MuiChip-icon': { color: config.color },
-              flexShrink: 0,
-            }}
           />
         </Box>
       </Box>
@@ -166,7 +158,7 @@ export function MyProfileHeader({
             fontSize: '1.3rem',
             fontWeight: 700,
             bgcolor: 'var(--tm-well)',
-            color: config.color,
+            color: 'var(--tm-accent)',
             flexShrink: 0,
           }}
         >
@@ -192,21 +184,10 @@ export function MyProfileHeader({
             >
               {asesor.name}
             </Typography>
-            <Chip
+            <Badge
+              tone={config.tone}
               icon={<Icon size={11} />}
               label={config.label}
-              size="small"
-              sx={{
-                height: 20,
-                fontSize: '0.6875rem',
-                fontWeight: 600,
-                bgcolor: alpha(config.color, 0.14),
-                color: config.color,
-                border: `1px solid ${alpha(config.color, 0.28)}`,
-                '& .MuiChip-icon': { color: config.color, ml: 0.5, mr: -0.25 },
-                '& .MuiChip-label': { px: 0.75 },
-                flexShrink: 0,
-              }}
             />
           </Box>
 

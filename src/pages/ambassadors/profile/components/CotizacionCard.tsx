@@ -7,13 +7,12 @@ import React, { useState } from 'react';
 import {
   Box,
   Typography,
-  Chip,
   IconButton,
   CircularProgress,
 } from '@mui/material';
 import { User, Calendar, Trash2, Eye, Copy } from 'lucide-react';
 import { SavedCotizacion } from '../../../../hooks/useCotizacionHistory';
-import { qeFont, qeGray } from '../../../../design-system';
+import { Badge, qeFont, qeGray } from '../../../../design-system';
 
 // Format currency helper
 function formatCurrency(value: number): string {
@@ -175,17 +174,12 @@ export const CotizacionCard = React.memo<CotizacionCardProps>(({
         </Box>
 
         {/* Products Count */}
-        <Chip
-          size="small"
-          label={`${cotizacion.productsCount} producto${cotizacion.productsCount !== 1 ? 's' : ''}`}
-          sx={{
-            mt: 1,
-            height: 20,
-            fontSize: '0.6875rem',
-            bgcolor: 'var(--tm-well)',
-            color: 'var(--tm-muted)',
-          }}
-        />
+        <Box sx={{ mt: 1 }}>
+          <Badge
+            tone="neutral"
+            label={`${cotizacion.productsCount} producto${cotizacion.productsCount !== 1 ? 's' : ''}`}
+          />
+        </Box>
 
         {/* Action Buttons */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5, mt: 1 }}>

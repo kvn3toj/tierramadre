@@ -18,11 +18,9 @@ import {
   Box,
   Typography,
   Skeleton,
-  alpha,
   Popover,
   Slider,
   Button,
-  Chip,
   Avatar,
   Divider,
 } from '@mui/material';
@@ -52,12 +50,13 @@ import {
   primitiveSpacing as spacing,
   radius,
   qeFont,
+  Badge,
 } from '../../design-system';
 
 const STATUS_META = {
-  active: { label: 'Activa', color: 'var(--tm-accent)', icon: CheckCircle },
-  pending: { label: 'Pendiente', color: 'var(--tm-warning)', icon: CircleDashed },
-  expired: { label: 'Expirada', color: 'var(--tm-danger)', icon: XCircle },
+  active: { label: 'Activa', tone: 'accent', icon: CheckCircle },
+  pending: { label: 'Pendiente', tone: 'warn', icon: CircleDashed },
+  expired: { label: 'Expirada', tone: 'danger', icon: XCircle },
 } as const;
 
 function formatDate(iso: string | null): string {
@@ -217,21 +216,10 @@ export default function GuestDetailPage() {
                 {guestName || 'Invitado'}
               </Typography>
               {statusConf && StatusIcon && (
-                <Chip
-                  icon={<StatusIcon size={10} style={{ color: statusConf.color }} />}
+                <Badge
+                  tone={statusConf.tone}
+                  icon={<StatusIcon size={10} />}
                   label={statusConf.label}
-                  size="small"
-                  sx={{
-                    height: 20,
-                    fontSize: '0.6875rem',
-                    fontWeight: 600,
-                    bgcolor: alpha(statusConf.color, 0.12),
-                    color: statusConf.color,
-                    border: `1px solid ${alpha(statusConf.color, 0.28)}`,
-                    '& .MuiChip-icon': { ml: 0.5, mr: -0.25 },
-                    '& .MuiChip-label': { px: 0.75 },
-                    flexShrink: 0,
-                  }}
                 />
               )}
             </Box>

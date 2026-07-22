@@ -8,7 +8,6 @@ import { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
-  TextField,
   InputAdornment,
   CircularProgress,
   Alert,
@@ -21,7 +20,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useAsesores, Asesor } from '../../hooks/useAsesores';
 import { useTreasure } from '../../hooks/useTreasure';
 import AsesorCard from './AsesorCard';
-import { qeFont } from '../../design-system/index';
+import { TextField, qeFont } from '../../design-system/index';
 import {
   staggerContainer,
   staggerItem,
@@ -191,7 +190,6 @@ export default function AmbassadorDirectory({
           placeholder={t.ambassador.searchPlaceholder}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          size="small"
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -199,25 +197,7 @@ export default function AmbassadorDirectory({
               </InputAdornment>
             ),
           }}
-          sx={{
-            mb: 2,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 'var(--tm-radius-control)',
-              bgcolor: 'var(--tm-well)',
-              fontSize: '0.8rem',
-              '& fieldset': {
-                borderColor: 'var(--tm-border)',
-                transition: 'border-color var(--tm-base) var(--tm-ease)',
-              },
-              '&:hover fieldset': {
-                borderColor: 'var(--tm-muted)',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: 'var(--tm-accent)',
-                borderWidth: '1px !important',
-              },
-            },
-          }}
+          sx={{ mb: 2 }}
         />
       )}
 
