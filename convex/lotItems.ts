@@ -4,6 +4,7 @@ import { api, internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
 import { bumpInventoryTotal } from './products';
 import { preponderanciaSum, balancesTo100 } from './_lib/lotMath';
+import { computePrecioFinal } from './_lib/pricing';
 import { withPublishStamp } from './_lib/publishState';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
@@ -327,8 +328,8 @@ export const _create = internalMutation({
       formulaGema: args.formulaGema,
       formulaJoya: args.formulaJoya,
       rangoDescuento: args.rangoDescuento,
-      precioEmbajadorCOP: args.precioEmbajadorCOP,
-      precioConscienteCOP: args.precioConscienteCOP,
+      // DERIVED single final price (2026-07-21 refactor); replaces the tiers.
+      precioFinalCOP: computePrecioFinal(costoBaseCOP),
       lastPulledAt: now,
       syncStatus: 'pending' as const,
     });
@@ -605,6 +606,7 @@ export const _updatePreponderancia = internalMutation({
       await ctx.db.patch(product._id, {
         preponderancia,
         costoBaseCOP,
+        precioFinalCOP: computePrecioFinal(costoBaseCOP),
         syncStatus: 'pending' as const,
       });
       const auditId = await ctx.db.insert('productEdits', {
@@ -844,16 +846,9 @@ export const _updateGemaFields = internalMutation({
       patch.rendimientoEsperado,
       product.rendimientoEsperado,
     );
-    compareNumber(
-      'precioEmbajadorCOP',
-      patch.precioEmbajadorCOP,
-      product.precioEmbajadorCOP,
-    );
-    compareNumber(
-      'precioConscienteCOP',
-      patch.precioConscienteCOP,
-      product.precioConscienteCOP,
-    );
+    // Price tiers removed (2026-07-21): precioFinalCOP is derived from
+    // costoBaseCOP, not set directly here. Any tier fields still in the patch
+    // are ignored.
 
     if (patch.minerales !== undefined) {
       const prev = product.minerales ?? [];
@@ -923,6 +918,7 @@ export const _updateGemaFields = internalMutation({
     ) {
       productPatch.preponderancia = nextPreponderancia;
       productPatch.costoBaseCOP = nextCostoBaseCOP;
+      productPatch.precioFinalCOP = computePrecioFinal(nextCostoBaseCOP);
       changes.push({
         field: 'preponderancia',
         before: lotItem.preponderancia,

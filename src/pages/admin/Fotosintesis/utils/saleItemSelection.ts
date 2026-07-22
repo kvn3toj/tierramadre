@@ -60,44 +60,39 @@ export function sumSuggested(list: SelectableItem[]): number {
   return list.reduce(
     (acc, x) =>
       acc +
-      (typeof x.precioCop === "number" && !Number.isNaN(x.precioCop)
+      (typeof x.precioCop === 'number' && !Number.isNaN(x.precioCop)
         ? x.precioCop
         : 0),
     0,
   );
 }
 
-/** Buyer tier for a sale. "embajador" pays the ambassador price; everyone
- *  else ("final" / custom write-ins) pays the consumer (consciente) price. */
-export type CompradorTier = "embajador" | "final";
+/** Buyer type recorded on a sale. Kept as a label for the comprobante; it no
+ *  longer changes the price — after the 2026-07-21 refactor every buyer pays the
+ *  single derived precioFinalCOP. */
+export type CompradorTier = 'embajador' | 'final';
 
 /** Minimal price shape returned by the Convex product queries
  *  (products.list / products.getManyByItemIds) — uppercase COP fields. */
 export interface TierPricedCop {
   precioCOP?: number;
-  precioEmbajadorCOP?: number;
-  precioConscienteCOP?: number;
+  precioFinalCOP?: number;
 }
 
 /**
- * Resolve the per-item price to suggest for a buyer tier, with fallbacks so a
- * partially-priced item still yields a number instead of undefined:
- *   embajador -> precioEmbajadorCOP ?? precioConscienteCOP ?? precioCOP
- *   final     -> precioConscienteCOP ?? precioEmbajadorCOP ?? precioCOP
- * Returns undefined only when the item carries no price at all. Legacy
- * precioCOP is last because its Sheets column was retired (audit 2026-05-29)
- * and it is empty for ~82% of items.
+ * Resolve the per-item price to suggest. After the 2026-07-21 price refactor
+ * there is ONE price for every buyer: precioFinalCOP (= costoBaseCOP × 2.6).
+ * The `tier` arg is retained for call-site compatibility but no longer affects
+ * the price. Legacy precioCOP is the fallback (its Sheets column was retired
+ * 2026-05-29 and it is empty for ~82% of items). Returns undefined only when the
+ * item carries no price at all.
  */
 export function pickTierPrice(
   item: TierPricedCop,
-  tier: CompradorTier,
+  _tier: CompradorTier,
 ): number | undefined {
-  const order =
-    tier === "embajador"
-      ? [item.precioEmbajadorCOP, item.precioConscienteCOP, item.precioCOP]
-      : [item.precioConscienteCOP, item.precioEmbajadorCOP, item.precioCOP];
-  for (const p of order) {
-    if (typeof p === "number" && !Number.isNaN(p)) return p;
+  for (const p of [item.precioFinalCOP, item.precioCOP]) {
+    if (typeof p === 'number' && !Number.isNaN(p)) return p;
   }
   return undefined;
 }

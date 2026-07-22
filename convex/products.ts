@@ -89,8 +89,8 @@ export const list = query({
     // `/admin/products`, the Fotosíntesis Home, and the ⌘K spotlight, so it
     // re-runs on every productInventory write and ships the whole list each
     // time. Full docs carry 40+ fields — heavy/internal ones the list never
-    // reads (costoBaseCOP, precioEmbajadorCOP, precioPotencialCOP,
-    // precioConscienteCOP, formulaGema/formulaJoya, minerales, complementos,
+    // reads (costoBaseCOP, precioPotencialCOP,
+    // formulaGema/formulaJoya, minerales, complementos,
     // medidasValores, procedencia, observacion, preponderancia, tipoEsmeralda,
     // subtipoForm, tipoJoya, tecnicaJoya, qr, asesor, asesorActual,
     // estadoAsesor, certificadoUrl, nivelRareza, calificacion, lastPulledAt,
@@ -101,11 +101,10 @@ export const list = query({
     //     (toDrawerProduct, fed FROM this list array via props, NOT a
     //     separate products.get) + Bandeja inspector.
     //   * Fotosíntesis HomePage → only `estado`.
-    //   * ProductoSpotlight → itemId, nombre, fotoUrl, loteId, estado, and the
-    //     tier prices (precioEmbajadorCOP/precioConscienteCOP) shown as the
-    //     per-item price hint in the multi-item venta picker. Legacy `precioCOP`
-    //     lost its Sheets column (audit 2026-05-29) and is ~82% empty, so the
-    //     picker can't rely on it alone — the two tier prices ride along.
+    //   * ProductoSpotlight → itemId, nombre, fotoUrl, loteId, estado, and
+    //     precioFinalCOP shown as the per-item price hint in the multi-item
+    //     venta picker. Legacy `precioCOP` lost its Sheets column (audit
+    //     2026-05-29) and is ~82% empty, so the picker uses precioFinalCOP.
     // The edit drawer never touches the heavy fields; saveEdit/pushToSheet
     // re-read the full row server-side, so the push is unaffected.
     return sorted.map((row) => ({
@@ -121,8 +120,7 @@ export const list = query({
       medidas: row.medidas,
       categoria: row.categoria,
       precioCOP: row.precioCOP,
-      precioEmbajadorCOP: row.precioEmbajadorCOP,
-      precioConscienteCOP: row.precioConscienteCOP,
+      precioFinalCOP: row.precioFinalCOP,
       ubicacion: row.ubicacion,
       coleccion: row.coleccion,
       caja: row.caja,
@@ -180,8 +178,7 @@ export const getManyByItemIds = query({
       loteId?: string;
       estado: string;
       precioCOP?: number;
-      precioEmbajadorCOP?: number;
-      precioConscienteCOP?: number;
+      precioFinalCOP?: number;
     }> = [];
     for (const itemId of itemIds) {
       const row = await ctx.db
@@ -200,8 +197,7 @@ export const getManyByItemIds = query({
         loteId: row.loteId,
         estado: row.estado,
         precioCOP: row.precioCOP,
-        precioEmbajadorCOP: row.precioEmbajadorCOP,
-        precioConscienteCOP: row.precioConscienteCOP,
+        precioFinalCOP: row.precioFinalCOP,
       });
     }
     return out;
@@ -271,7 +267,7 @@ export const getPublicByItem = query({
       medidas: row.medidas,
       medidasValores: row.medidasValores,
       categoria: row.categoria,
-      precioEmbajadorCOP: row.precioEmbajadorCOP,
+      precioFinalCOP: row.precioFinalCOP,
       estado: row.estado,
       qr: row.qr,
       coleccion: row.coleccion,
@@ -359,10 +355,9 @@ export const publishedCatalog = query({
 
     // Project ONLY the fields the customer catalog consumes (see
     // useFotosintesisCatalog.PublishedRow). The public catalog price is the
-    // ambassador tier (precioEmbajadorCOP, sheet column M) — explicit policy
-    // choice; costoBaseCOP (L) and precioConscienteCOP (N) are intentionally NOT
-    // projected so the public can't see cost or the consciente tier.
-    // precioPotencialCOP, sync metadata and rowIndex stay internal. The
+    // derived final price (precioFinalCOP = costoBaseCOP × 2.6, sheet column M);
+    // costoBaseCOP (L) is intentionally NOT projected so the public can't see
+    // cost. precioPotencialCOP, sync metadata and rowIndex stay internal. The
     // Fotosíntesis characteristics block below is surfaced publicly per product
     // decision 2026-06-30 (gem grade, origin, treatment, jewelry detail).
     return published.map((row) => {
@@ -378,7 +373,7 @@ export const publishedCatalog = query({
         medidas: row.medidas,
         medidasValores: row.medidasValores,
         categoria: row.categoria,
-        precioEmbajadorCOP: row.precioEmbajadorCOP,
+        precioFinalCOP: row.precioFinalCOP,
         ubicacion: row.ubicacion,
         asesor: row.asesor,
         estado: row.estado,
@@ -416,8 +411,8 @@ export const publishedCatalog = query({
  *   - Sublote group: subLotes.estado === "activa" && subLotes.mostrarComoLote
  *
  * Returns a uniform shape so the frontend renders both the same way. Per-item
- * price = precioEmbajadorCOP ?? 0 (matches publishedCatalog's policy of
- * surfacing only the ambassador tier publicly); totalPriceCOP = sum. The
+ * price = precioFinalCOP ?? 0 (the derived final price, matching
+ * publishedCatalog); totalPriceCOP = sum. The
  * frontend emits one card per group and excludes member items from the
  * individual-item catalog (`publishedCatalog`).
  *
@@ -443,7 +438,7 @@ export const publishedGroups = query({
         itemId: p.itemId,
         nombre: p.nombre ?? '',
         fotoUrl: p.fotoUrl,
-        precioCOP: p.precioEmbajadorCOP ?? 0,
+        precioCOP: p.precioFinalCOP ?? 0,
         color: p.color,
         calidad: p.calidad,
         peso: p.peso,
@@ -949,8 +944,9 @@ export const pushToSheet = action({
             formulaGema: row.formulaGema ?? '',
             formulaJoya: row.formulaJoya ?? '',
             rangoDescuento: row.rangoDescuento ?? '',
-            precioEmbajadorCOP: row.precioEmbajadorCOP ?? '',
-            precioConscienteCOP: row.precioConscienteCOP ?? '',
+            // DERIVED final price → column M. Column N is now reserved/empty
+            // ("(sin uso)"), so no tier key is emitted for it.
+            precioFinalCOP: row.precioFinalCOP ?? '',
           },
         }),
       });

@@ -305,8 +305,8 @@ function toGemaFieldsPatch(
   set('nivelRareza', numOpt(a.nivelRareza));
   set('calificacion', numOpt(a.calificacion));
   set('precioPublicoCOP', numOpt(a.precioPublicoCOP));
-  set('precioEmbajadorCOP', numOpt(a.precioEmbajadorCOP));
-  set('precioConscienteCOP', numOpt(a.precioConscienteCOP));
+  // Price tiers removed (2026-07-21): precioFinalCOP is derived in Convex from
+  // costoBaseCOP, so the copilot can no longer set a price tier directly.
   if (Array.isArray(a.minerales)) set('minerales', strArr(a.minerales));
   if (Array.isArray(a.complementos))
     set('complementos', strArr(a.complementos));

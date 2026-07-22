@@ -76,8 +76,13 @@ const INVENTORY: TableSpec = {
   // precioCOP (legacy "Precio COP" / column L) was retired from the SOT mirror
   // on 2026-05-29 — no sheet column means nothing to pull. The Convex field is
   // kept app-only; see api/_lib/fotosintesis-inventory-columns.js.
-  precioEmbajadorCOP: { coerce: 'num' },
-  precioConscienteCOP: { coerce: 'num' },
+  //
+  // PRICE REFACTOR (2026-07-21): the tier fields (precioEmbajadorCOP col M /
+  // precioConscienteCOP col N) are gone. The new price is precioFinalCOP —
+  // DERIVED (costoBaseCOP × 2.6, column M), so it is DELIBERATELY NOT writable:
+  // a sheet edit must never overwrite a Convex-computed figure (same rule as
+  // costoBaseCOP / preponderancia). Column N is now reserved/empty. Nothing to
+  // pull for the price block.
   ubicacion: { coerce: 'str' },
   asesor: { coerce: 'str' },
   estado: { coerce: 'estadoInv' },

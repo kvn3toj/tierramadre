@@ -127,21 +127,25 @@ export default defineSchema({
     medidasValores: v.optional(v.string()),
     categoria: v.optional(v.string()),
     // ── Price block — grouped to mirror the SOT "Inventario" tab layout
-    // (Sheets columns L–N). costoBaseCOP = lot.costoTotalCOP × preponderancia%;
-    // the embajador/consciente tiers are the x1–x4 prices.
+    // (Sheets columns L–N). costoBaseCOP = lot.costoTotalCOP × preponderancia%.
+    // PRICE MODEL (2026-07-21 refactor): the single final price is
+    // `precioFinalCOP = round(costoBaseCOP × TM_MARKUP_DEFAULT)` (2.6). It is
+    // DERIVED (computed here alongside costoBaseCOP, pushed to Sheets col M) and
+    // replaces the former embajador/consciente x1–x4 tiers.
     // APP-ONLY (audit 2026-05-29): `precioCOP` lost its Sheets column ("Precio
     // COP" / former column L, ~82% empty). It is still written by the capture
     // UI and read by the patrones analytics, but is NO LONGER mirrored to or
     // pulled from the SOT sheet. Kept optional for existing docs.
     precioCOP: v.optional(v.number()),
-    costoBaseCOP: v.optional(v.number()), // L
-    precioEmbajadorCOP: v.optional(v.number()), // M
-    // DEPRECATED (audit F4): no Sheets column, no UI writer, never pushed or
-    // pulled. The create + updateGemaFields write surfaces were removed; the
-    // field is retained (optional) ONLY so any pre-existing docs validate.
-    // Do not write to it — remove via a data migration if ever cleaned up.
+    costoBaseCOP: v.optional(v.number()), // L — costoTotalCOP × preponderancia%
+    precioFinalCOP: v.optional(v.number()), // M — DERIVED: round(costoBaseCOP × 2.6)
+    // DEPRECATED (2026-07-21 price refactor + audit F4): superseded by
+    // precioFinalCOP. No UI writer, no Sheets column, never pushed or pulled.
+    // Retained (optional) ONLY so pre-existing docs validate; strip via a data
+    // migration in a later cleanup pass.
+    precioEmbajadorCOP: v.optional(v.number()),
     precioPotencialCOP: v.optional(v.number()),
-    precioConscienteCOP: v.optional(v.number()), // N
+    precioConscienteCOP: v.optional(v.number()),
     ubicacion: v.optional(v.string()),
     asesor: v.optional(v.string()),
     // 10 values: the 4 we always handled + 5 inherited from the legacy

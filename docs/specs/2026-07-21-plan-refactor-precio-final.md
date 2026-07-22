@@ -1,7 +1,26 @@
 # Plan · Refactor de precio final (costoBase × 2.6)
 
-**Fecha:** 2026-07-21 · **Estado:** pendiente — ejecutar en el **cutover** al SOT v3 +
-Convex nuevo, NO antes (la app en vivo aún usa los tiers).
+**Fecha:** 2026-07-21 · **Estado:** ✅ EJECUTADO (2026-07-22) junto al cutover SOT v3 +
+Convex prod (grand-hippopotamus-162).
+
+## Resumen de ejecución
+
+- Precio único DERIVADO `precioFinalCOP = round(costoBaseCOP × 2.6)` — helper
+  `convex/_lib/pricing.ts` (`computePrecioFinal`, `PRECIO_FINAL_MULTIPLIER`).
+- Convex: computado en `lotItems` (create + ambos recomputes de preponderancia),
+  proyectado en todos los readers de `products.ts`, empujado a hoja col M,
+  EXCLUIDO del pull (derivado). Tiers marcados deprecated-optional en schema (sin
+  strip de docs para no arriesgar prod; limpiar en pase posterior).
+- Sheet mirror: col M = precioFinalCOP, col N = "(sin uso)" reservada (sin shift).
+- Frontend: readers → precioFinalCOP; editores (EditItemDrawer, LoteResumenPage)
+  ahora muestran el precio final READ-ONLY (costo × 2.6), sin campos de tier.
+- Migración `migrations:backfillPrecioFinal` corrida en dev + prod → 445/513 docs.
+- Validado: dev + prod convex `products.list` → 445 con precioFinalCOP; Rey Midas
+  = 635.001. Lint app+api limpio (2 errores pre-existentes ajenos).
+
+---
+
+**(plan original abajo)**
 
 ## Objetivo
 

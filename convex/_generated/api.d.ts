@@ -19,6 +19,7 @@ import type * as _lib_commission from "../_lib/commission.js";
 import type * as _lib_fotosintesisVocab from "../_lib/fotosintesisVocab.js";
 import type * as _lib_ghlConversations from "../_lib/ghlConversations.js";
 import type * as _lib_lotMath from "../_lib/lotMath.js";
+import type * as _lib_pricing from "../_lib/pricing.js";
 import type * as _lib_productSearch from "../_lib/productSearch.js";
 import type * as _lib_publishState from "../_lib/publishState.js";
 import type * as _lib_publishedGroups from "../_lib/publishedGroups.js";
@@ -65,6 +66,7 @@ declare const fullApi: ApiFromModules<{
   "_lib/fotosintesisVocab": typeof _lib_fotosintesisVocab;
   "_lib/ghlConversations": typeof _lib_ghlConversations;
   "_lib/lotMath": typeof _lib_lotMath;
+  "_lib/pricing": typeof _lib_pricing;
   "_lib/productSearch": typeof _lib_productSearch;
   "_lib/publishState": typeof _lib_publishState;
   "_lib/publishedGroups": typeof _lib_publishedGroups;

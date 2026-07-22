@@ -43,7 +43,7 @@ export interface PublishedRow {
   medidas?: string;
   medidasValores?: string;
   categoria?: string;
-  precioEmbajadorCOP?: number;
+  precioFinalCOP?: number;
   ubicacion?: string;
   asesor?: string;
   estado?: string;
@@ -105,11 +105,10 @@ export function mapRowToTreasureItem(row: PublishedRow): TreasureItem {
     row.peso,
     row.categoria,
   );
-  // Catalog price: the ambassador tier (Sheets column M). By policy the public
-  // catalog never shows the costoBaseCOP (L) or precioConscienteCOP (N) tiers —
-  // those are scrubbed in publishedCatalog. Items without M render at 0; set
-  // precioEmbajadorCOP to give them a visible price.
-  const precioCOP = row.precioEmbajadorCOP ?? 0;
+  // Catalog price: the derived final price (precioFinalCOP = costoBaseCOP × 2.6,
+  // Sheets column M). By policy the public catalog never shows costoBaseCOP (L);
+  // it is scrubbed in publishedCatalog. Items without a base cost render at 0.
+  const precioCOP = row.precioFinalCOP ?? 0;
 
   return {
     item: parseInt(row.itemId, 10),
