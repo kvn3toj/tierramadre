@@ -25,6 +25,10 @@ export interface CatalogHeaderProps {
   /** Desktop-only search/filter controls, rendered on the same row as the
    * title instead of a separate row below — saves a full row of height. */
   trailingContent?: React.ReactNode;
+  /** Summary data (total value, inventory counts) shown under the subtitle —
+   * the identity/summary zone, so price-dependent content never crowds the
+   * control row and the layout stays stable whether or not prices are shown. */
+  summary?: React.ReactNode;
 }
 
 export function CatalogHeader({
@@ -35,6 +39,7 @@ export function CatalogHeader({
   activeOrigin,
   onOriginChange,
   trailingContent,
+  summary,
 }: CatalogHeaderProps) {
   const { mode } = useThemeMode();
   const qe = getQuietEmerald(mode);
@@ -87,6 +92,9 @@ export function CatalogHeader({
           >
             {count} {count === 1 ? 'PIEZA' : 'PIEZAS'} · {subtitle}
           </Typography>
+          {summary && (
+            <Box sx={{ mt: { xs: '8px', md: '10px' } }}>{summary}</Box>
+          )}
         </Box>
 
         {tabs.length > 1 && (

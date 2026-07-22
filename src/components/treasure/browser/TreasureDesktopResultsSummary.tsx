@@ -1,5 +1,6 @@
 /**
- * Desktop results row: count text, favorites chip, optional total value.
+ * Desktop results row: list-view count text + favorites toggle chip.
+ * (Total value + inventory counts live in the header's identity zone.)
  */
 
 import { Box, Typography, Chip, alpha } from '@mui/material';
@@ -7,7 +8,6 @@ import { Heart } from 'lucide-react';
 import type { Theme } from '@mui/material/styles';
 import { accentColors, getQuietEmerald } from '../../../design-system';
 import {
-  emeraldCore,
   surfacesLight,
   surfacesDark,
 } from '../../../design-system/tokens/colors';
@@ -23,9 +23,6 @@ export interface TreasureDesktopResultsSummaryProps {
   /** Current view — grid renders all filtered items, list paginates. */
   viewMode: 'grid' | 'list';
   isProviderMode: boolean;
-  shouldShowPrices: boolean;
-  formatFullCurrency: (n: number) => string;
-  filteredStatsTotalValue: number;
   showFavoritesOnly: boolean;
   favoritesCount: number;
   onToggleFavoritesOnly: () => void;
@@ -39,9 +36,6 @@ export default function TreasureDesktopResultsSummary({
   visibleItemsLength,
   viewMode,
   isProviderMode,
-  shouldShowPrices,
-  formatFullCurrency,
-  filteredStatsTotalValue,
   showFavoritesOnly,
   favoritesCount,
   onToggleFavoritesOnly,
@@ -116,14 +110,6 @@ export default function TreasureDesktopResultsSummary({
           />
         )}
       </Box>
-      {!isProviderMode && shouldShowPrices && (
-        <Typography
-          variant="body2"
-          sx={{ color: emeraldCore.dark, fontWeight: fontWeights.semibold }}
-        >
-          {formatFullCurrency(filteredStatsTotalValue)} total
-        </Typography>
-      )}
     </Box>
   );
 }

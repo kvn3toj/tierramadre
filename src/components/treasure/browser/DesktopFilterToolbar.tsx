@@ -1,11 +1,5 @@
-import {
-  Box,
-  Chip,
-  ToggleButton,
-  ToggleButtonGroup,
-  alpha,
-} from '@mui/material';
-import { LayoutGrid, List, Gem, Crown } from 'lucide-react';
+import { Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { LayoutGrid, List } from 'lucide-react';
 import { getQuietEmerald } from '../../../design-system';
 import SavedFiltersDropdown from '../SavedFiltersDropdown';
 import type { FilterPreset, FilterState } from '../../../hooks/useSavedFilters';
@@ -23,8 +17,6 @@ interface UseSavedFiltersApi {
 }
 
 interface DesktopFilterToolbarProps {
-  shouldShowPrices: boolean;
-  stats: { looseStones: number; jewelry: number };
   viewMode: 'grid' | 'list';
   onViewModeChange: (mode: 'grid' | 'list') => void;
   savedFilters: UseSavedFiltersApi;
@@ -50,8 +42,6 @@ interface DesktopFilterToolbarProps {
 }
 
 export default function DesktopFilterToolbar({
-  shouldShowPrices,
-  stats,
   viewMode,
   onViewModeChange,
   savedFilters,
@@ -134,42 +124,12 @@ export default function DesktopFilterToolbar({
           minWidth keeps a real gap even when the row is tight. */}
       <Box sx={{ flex: 1, minWidth: 24 }} />
 
-      {/* Personal/info cluster: Favoritos + stat chips + total value — a
-          distinct concept from "narrow the catalog", right-aligned. */}
+      {/* Personal/view cluster: Favoritos — a distinct concept from "narrow the
+          catalog", right-aligned. Inventory summary (total value + stat chips)
+          lives in the header's identity zone, not here, so this row stays a
+          stable single line whether or not prices are shown. */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         {resultsSummary}
-        {shouldShowPrices && (
-          <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-            <Chip
-              size="small"
-              icon={<Gem size={12} />}
-              label={stats.looseStones}
-              sx={{
-                bgcolor: alpha(qe.accent, 0.1),
-                color: qe.accent,
-                fontWeight: 600,
-                fontSize: '0.7rem',
-                height: 24,
-                '& .MuiChip-icon': { color: qe.accent },
-              }}
-            />
-            <Chip
-              size="small"
-              icon={<Crown size={12} />}
-              label={stats.jewelry}
-              sx={{
-                // Quiet Emerald: emerald is the only saturated color —
-                // jewelry reads as neutral ink, not gold.
-                bgcolor: alpha(qe.muted, 0.12),
-                color: qe.muted,
-                fontWeight: 600,
-                fontSize: '0.7rem',
-                height: 24,
-                '& .MuiChip-icon': { color: qe.muted },
-              }}
-            />
-          </Box>
-        )}
       </Box>
 
       <ToggleButtonGroup

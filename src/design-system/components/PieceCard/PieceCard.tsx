@@ -69,11 +69,14 @@ export const PieceCard: React.FC<PieceCardProps> = ({
         minWidth: 0,
       }}
     >
+      {/* Identity row: name + item number. The Nº is short (~40px) so it never
+          forces the name to wrap the way a full price would — the text block
+          stays a constant 2 lines whether or not a price is shown, so the image
+          well above never changes height. */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'baseline',
-          justifyContent: 'space-between',
           gap: 1,
         }}
       >
@@ -94,10 +97,22 @@ export const PieceCard: React.FC<PieceCardProps> = ({
         >
           {name}
         </Typography>
-        {price && (
-          <Box sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}>{price}</Box>
+        {itemNumber !== undefined && (
+          <Typography
+            sx={{
+              fontFamily: 'var(--tm-font-mono)',
+              fontSize: '0.6875rem',
+              color: 'var(--tm-subtle)',
+              flexShrink: 0,
+            }}
+          >
+            Nº {itemNumber}
+          </Typography>
         )}
       </Box>
+      {/* Detail row: spec + price. Price is nowrap on the right; the spec keeps
+          the full left column, so a short spec ("Plata", "Oro 18k") is never
+          truncated by the price. */}
       <Box
         sx={{
           display: 'flex',
@@ -117,21 +132,13 @@ export const PieceCard: React.FC<PieceCardProps> = ({
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
             minWidth: 0,
+            flex: 1,
           }}
         >
           {specLine}
         </Typography>
-        {itemNumber !== undefined && (
-          <Typography
-            sx={{
-              fontFamily: 'var(--tm-font-mono)',
-              fontSize: '0.6875rem',
-              color: 'var(--tm-subtle)',
-              flexShrink: 0,
-            }}
-          >
-            Nº {itemNumber}
-          </Typography>
+        {price && (
+          <Box sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}>{price}</Box>
         )}
       </Box>
     </Box>

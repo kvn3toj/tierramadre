@@ -7,7 +7,8 @@
 
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
-import { Box, Chip, alpha, useTheme } from '@mui/material';
+import { Box, Chip, Typography, alpha, useTheme } from '@mui/material';
+import { Gem, Crown } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import CertificationUpload from './CertificationUpload';
 import { ComparisonBar, ComparisonModal } from '../comparison';
@@ -194,6 +195,64 @@ export default function TreasureBrowser({
     urlSync.handleClearFilters();
   };
 
+  // Inventory summary (total value + loose-stone/jewelry counts) — lives in the
+  // header's identity zone under the subtitle, NOT in the control row, so the
+  // controls stay a stable single row whether or not prices are shown.
+  const chipBase = {
+    fontWeight: 600,
+    fontSize: '0.7rem',
+    height: 22,
+  } as const;
+  const inventorySummary =
+    !isMobile && shouldShowPrices ? (
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.25,
+          flexWrap: 'wrap',
+        }}
+      >
+        <Typography
+          sx={{
+            fontFamily: 'var(--tm-font-mono)',
+            fontWeight: 600,
+            fontSize: 13,
+            letterSpacing: '0.01em',
+            color: qe.accent,
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          {formatFullCurrency(filteredStats.totalValue)}
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+          <Chip
+            size="small"
+            icon={<Gem size={12} />}
+            label={stats.looseStones}
+            sx={{
+              ...chipBase,
+              bgcolor: alpha(qe.accent, 0.1),
+              color: qe.accent,
+              '& .MuiChip-icon': { color: qe.accent },
+            }}
+          />
+          <Chip
+            size="small"
+            icon={<Crown size={12} />}
+            label={stats.jewelry}
+            sx={{
+              ...chipBase,
+              // Quiet Emerald: jewelry reads as neutral ink, not gold.
+              bgcolor: alpha(qe.muted, 0.12),
+              color: qe.muted,
+              '& .MuiChip-icon': { color: qe.muted },
+            }}
+          />
+        </Box>
+      </Box>
+    ) : undefined;
+
   return (
     <Box
       sx={{
@@ -207,6 +266,7 @@ export default function TreasureBrowser({
         origins={originOptions}
         activeOrigin={originTab}
         onOriginChange={setOriginTab}
+        summary={inventorySummary}
         trailingContent={
           !isMobile ? (
             <Box
@@ -224,8 +284,6 @@ export default function TreasureBrowser({
               <FilterContent {...filterContentProps} />
               <DesktopFilterToolbar
                 dense
-                shouldShowPrices={shouldShowPrices}
-                stats={stats}
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
                 savedFilters={savedFilters}
@@ -251,9 +309,6 @@ export default function TreasureBrowser({
                     visibleItemsLength={visibleItems.length}
                     viewMode={viewMode}
                     isProviderMode={providerMode}
-                    shouldShowPrices={shouldShowPrices}
-                    formatFullCurrency={formatFullCurrency}
-                    filteredStatsTotalValue={filteredStats.totalValue}
                     showFavoritesOnly={showFavoritesOnly}
                     favoritesCount={favoritesCount}
                     onToggleFavoritesOnly={() =>
