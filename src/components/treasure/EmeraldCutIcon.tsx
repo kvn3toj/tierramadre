@@ -203,11 +203,15 @@ export function EmeraldCutIcon({ cut, size = 14 }: EmeraldCutIconProps) {
       aria-hidden="true"
       style={{ display: 'block', flexShrink: 0 }}
     >
+      {/* Grayscale (currentColor) gem — a neutral graphite silhouette so the cut
+          badge never competes with the one green that matters, the actual
+          emerald in the photo. The facet highlights below keep it dimensional.
+          currentColor follows the badge tone, so it stays theme-aware. */}
       <defs>
         <linearGradient id={uid} x1="0" y1="0" x2="0.4" y2="1">
-          <stop offset="0" stopColor="#5CE9C0" />
-          <stop offset=".45" stopColor="#0C9068" />
-          <stop offset="1" stopColor="#00503B" />
+          <stop offset="0" stopColor="currentColor" stopOpacity={0.45} />
+          <stop offset=".45" stopColor="currentColor" stopOpacity={0.72} />
+          <stop offset="1" stopColor="currentColor" stopOpacity={0.95} />
         </linearGradient>
       </defs>
       {GEMS[cutShapeKey(cut)](`url(#${uid})`)}
