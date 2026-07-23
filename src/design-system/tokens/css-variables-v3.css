@@ -13,17 +13,24 @@
   /* ---- Surfaces (light) ------------------------------------------------ */
   /* "La Vitrina" depth: the gallery wall (bg) sits a real step below the lit
      card (surface) so a piece reads as an object resting in light, not ink on
-     a white sheet. All neutrals carry a faint emerald tint (OKLCH H166, chroma
-     ~0.006) — no clinical #fff, per the One Voice / tinted-neutral rule.
-     Ordering by lightness: well (deepest inset) < bg (wall) < surface (card).
-       bg      oklch(0.934 0.006 166)   surface oklch(0.992 0.004 166)
-       well    oklch(0.921 0.008 166)   border  oklch(0.884 0.011 166)
-       hairline oklch(0.914 0.007 166) */
-  --tm-bg: #e6eae8;
-  --tm-surface: #fafdfc;
-  --tm-well: #e0e7e4;
-  --tm-border: #d2dbd7;
-  --tm-hairline: #dee4e1;
+     a white sheet. Ordering by lightness: well (deepest inset) < bg (wall) <
+     surface (card). The step is carried by LIGHTNESS, never by hue.
+
+     These neutrals are achromatic (chroma 0). They previously carried a faint
+     emerald tint (OKLCH H166, chroma ~0.006) under the tinted-neutral rule,
+     which is now retired in light mode for one reason: the tint is the same
+     hue as the product. A green wall behind green stones flattens them, while
+     a neutral wall makes them read greener by simultaneous contrast. The
+     background's job here is to disappear so the emeralds do the talking —
+     the standard "neutral background, let the work shine" gallery model.
+
+     Dark mode keeps its near-black neutrals unchanged; the problem was
+     specific to a large, light, product-coloured field. */
+  --tm-bg: #efefef;
+  --tm-surface: #ffffff;
+  --tm-well: #e8e8e8;
+  --tm-border: #dcdcdc;
+  --tm-hairline: #e6e6e6;
 
   /* ---- Text ------------------------------------------------------------ */
   --tm-text: #14181a;

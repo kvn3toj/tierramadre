@@ -83,17 +83,17 @@ export const qeGray = {
 
 export const qeLight = {
   // Kept in lockstep with qeTokens.light and css-variables-v3.css — see the
-  // note on qeTokens.light for why these are the vitrine values.
+  // note on qeTokens.light for why these are achromatic.
   /** App background */
-  base: '#E6EAE8',
+  base: '#EFEFEF',
   /** Card / raised surface */
-  surface: '#FAFDFC',
-  /** Image "well" behind a piece (--surface-2) — soft neutral so the emerald pops */
-  well: '#E0E7E4',
+  surface: '#FFFFFF',
+  /** Image "well" behind a piece (--surface-2) — neutral so the emerald pops */
+  well: '#E8E8E8',
   /** 1px component borders / thumb outline (--border) */
-  border: '#D2DBD7',
+  border: '#DCDCDC',
   /** 1px row dividers / section rules (--hairline) */
-  hairline: '#DEE4E1',
+  hairline: '#E6E6E6',
   /** Primary text — near-black */
   text: '#14181A',
   /** Secondary text, body copy (--muted) */
@@ -147,16 +147,18 @@ export const qeTokens = {
   light: {
     // "La Vitrina" surfaces — these MUST stay in lockstep with
     // css-variables-v3.css (--tm-bg / --tm-surface / --tm-well / --tm-border /
-    // --tm-hairline). They were previously the pre-vitrine ramp
-    // (#F7F8F8 / #FFFFFF / #F1F2F2 / #E4E7E5 / #EBEDEC), which meant anything
-    // reading getQuietEmerald() — including the MUI palette that paints
-    // <body> — rendered one step lighter than the CSS vars, flattening the
-    // surface step the whole system depends on. Dark mode already matched.
-    bg: '#E6EAE8',
-    surface: '#FAFDFC',
-    surface2: '#E0E7E4',
-    border: '#D2DBD7',
-    hairline: '#DEE4E1',
+    // --tm-hairline). Anything reading getQuietEmerald() — including the MUI
+    // palette that paints <body> — renders from here, so a divergence between
+    // the two files flattens the surface step the whole system depends on.
+    //
+    // Achromatic by design: the emerald tint these once carried was the same
+    // hue as the product, which flattens the stones. See the rationale in
+    // css-variables-v3.css.
+    bg: '#EFEFEF',
+    surface: '#FFFFFF',
+    surface2: '#E8E8E8',
+    border: '#DCDCDC',
+    hairline: '#E6E6E6',
     text: '#14181A',
     muted: '#5C6360',
     subtle: '#8C928F',
