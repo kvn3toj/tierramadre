@@ -21,7 +21,15 @@ import type {
   TreasureStatus,
 } from '../types';
 
-/** Categorías that imply jewelry even when peso is a numeric carat value. */
+/**
+ * Categorías that imply jewelry even when peso is a numeric carat value.
+ *
+ * Keys are accent-stripped + lowercased (see `normalizeCategoria`) so a sheet
+ * or Convex row spelled "Joyería Artesanal" / "joyeria artesanal" both match.
+ * The list covers the CATEGORIAS vocabulary AND the free-form values already
+ * living in Convex ("Joyería Artesanal" is the label the Fotosíntesis wizard
+ * writes for every finished piece — 28 published items as of 2026-07-22).
+ */
 const JEWELRY_CATEGORIES = new Set([
   'anillo en plata',
   'aretes',
@@ -29,7 +37,14 @@ const JEWELRY_CATEGORIES = new Set([
   'pulsera',
   'dije',
   'anillo en oro',
+  'joyeria artesanal',
+  'joyas',
 ]);
+
+/** Lowercase + strip diacritics so category matching is spelling-tolerant. */
+function normalizeCategoria(categoria: string): string {
+  return categoria.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
 
 /** Shape of a published productInventory row coming back from Convex. */
 export interface PublishedRow {
@@ -94,7 +109,7 @@ function derivePeso(
   const num = parseFloat(raw.replace(',', '.'));
   const pesoValue: string | number = Number.isFinite(num) ? num : raw;
   const isJewelry = categoria
-    ? JEWELRY_CATEGORIES.has(categoria.toLowerCase().trim())
+    ? JEWELRY_CATEGORIES.has(normalizeCategoria(categoria))
     : false;
   return { pesoValue, isJewelry };
 }
