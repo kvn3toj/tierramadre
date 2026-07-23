@@ -93,7 +93,15 @@ const INVENTARIO_HEADERS = {
   FOTO_URL: 'fotourl', // SOT v3 col AL — Fotosíntesis-captured photo (Drive file)
 };
 
-// Jewelry subcategory values from Column K (synced with CATEGORY_SUBCATEGORIES.joyas in gallery-constants.ts)
+// Jewelry subcategory values from Column K. Three other copies of this list
+// exist and must stay in step: JEWELRY_CATEGORIES in
+// src/hooks/useFotosintesisCatalog.ts (Convex-backed catalog items),
+// isJewelryDoc in src/pages/admin/ProductManagement/ProductManagementPage.tsx,
+// and CATEGORY_SUBCATEGORIES.joyas in gallery-constants.ts.
+//
+// Keys are accent-stripped + lowercased (see `normalizeCategoria`). "Joyería
+// Artesanal" is the label the Fotosíntesis wizard writes for EVERY finished
+// piece, so omitting it made aretes/chokers/pulseras render as loose gems.
 const JEWELRY_CATEGORIES = new Set([
   'anillo en plata',
   'aretes',
@@ -101,7 +109,14 @@ const JEWELRY_CATEGORIES = new Set([
   'pulsera',
   'dije',
   'anillo en oro',
+  'joyeria artesanal',
+  'joyas',
 ]);
+
+/** Lowercase + strip diacritics so category matching is spelling-tolerant. */
+function normalizeCategoria(categoria: string): string {
+  return categoria.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
 
 /**
  * Map row data to treasure item using exact header matching
@@ -208,7 +223,7 @@ function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
   if (
     !item.isJewelry &&
     item.categoria &&
-    JEWELRY_CATEGORIES.has(item.categoria.toLowerCase().trim())
+    JEWELRY_CATEGORIES.has(normalizeCategoria(item.categoria))
   ) {
     item.isJewelry = true;
   }

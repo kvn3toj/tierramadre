@@ -108,12 +108,20 @@ const JEWELRY_CATEGORIES = new Set([
   'pulsera',
   'dije',
   'anillo en oro',
+  // "Joyería Artesanal" is the label the Fotosíntesis wizard writes for every
+  // finished piece; accent-stripped here so both spellings match.
+  'joyeria artesanal',
+  'joyas',
 ]);
 
 function isJewelryDoc(doc: { peso?: string; categoria?: string }): boolean {
   const peso = (doc.peso ?? '').toLowerCase().trim();
   if (peso === 'plata' || peso.includes('oro')) return true;
-  const cat = (doc.categoria ?? '').toLowerCase().trim();
+  const cat = (doc.categoria ?? '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim();
   return JEWELRY_CATEGORIES.has(cat);
 }
 
