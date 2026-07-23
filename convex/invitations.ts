@@ -1,5 +1,11 @@
-import { query, mutation, action, internalMutation } from './_generated/server';
-import { v } from 'convex/values';
+import {
+  query,
+  mutation,
+  action,
+  internalMutation,
+  type MutationCtx,
+} from './_generated/server';
+import { v, ConvexError } from 'convex/values';
 import { internal } from './_generated/api';
 import { requireAccessLevel } from './_lib/authz';
 
@@ -105,14 +111,120 @@ function sanitizeMultiplier(value: number): number {
   return Math.round(clamped * 10) / 10;
 }
 
+/**
+ * Trusted-proxy gate for server-to-server calls. The Convex deployment URL is
+ * public (VITE_CONVEX_URL ships in the client bundle), so a public mutation
+ * with no gate could be called directly by anyone to mint invitations. When
+ * identity is verified upstream (the Vercel /api/invitations layer, which owns
+ * the Google OAuth client — Convex needs no OAuth client of its own for this),
+ * this shared secret proves the caller is that trusted backend, not a guest.
+ * Reuses ADMIN_SYNC_TOKEN — already provisioned on both Vercel and Convex —
+ * exactly like convex/ghl.ts. Fail closed if unconfigured.
+ */
+function requireServerSecret(secret: string): void {
+  const expected = process.env.ADMIN_SYNC_TOKEN;
+  if (!expected || secret !== expected) {
+    throw new ConvexError('No autorizado.');
+  }
+}
+
+/** Shape of a fully-resolved invitation ready to persist. */
+interface InvitationInsertArgs {
+  creatorEmail: string;
+  creatorName: string;
+  creatorRole?: string;
+  pricingMode?: string;
+  guestName?: string;
+  guestContact?: string;
+  contactType?: string;
+  guestCurrencyMode?: string;
+  guestMultiplier?: number;
+  pin: string;
+  shortCode: string;
+}
+
+/**
+ * The actual insert, shared by every entry point. Assumes the caller has
+ * already been authorized (either via requireAccessLevel in the legacy action
+ * or requireServerSecret in the Vercel-verified path) — this function trusts
+ * `creatorEmail`/`creatorName`/`creatorRole` as given.
+ */
+async function insertInvitationRow(
+  ctx: MutationCtx,
+  args: InvitationInsertArgs,
+) {
+  const invitationId = `inv_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  const safeMultiplier =
+    args.guestMultiplier != null
+      ? sanitizeMultiplier(args.guestMultiplier)
+      : undefined;
+
+  await ctx.db.insert('invitations', {
+    invitationId,
+    shortCode: args.shortCode,
+    creatorEmail: args.creatorEmail.toLowerCase().trim(),
+    creatorName: args.creatorName,
+    creatorRole: args.creatorRole ?? 'Asesor',
+    guestName: args.guestName,
+    guestContact: args.guestContact,
+    contactType: args.contactType,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    pricingMode: args.pricingMode ?? 'with_prices',
+    durationHours: 24 * 365, // 12 months
+    guestCurrencyMode: args.guestCurrencyMode,
+    guestMultiplier: safeMultiplier,
+    pin: args.pin,
+  });
+
+  return {
+    invitationId,
+    shortCode: args.shortCode,
+    pin: args.pin,
+    creatorEmail: args.creatorEmail.toLowerCase().trim(),
+    creatorName: args.creatorName,
+    creatorRole: args.creatorRole ?? 'Asesor',
+    pricingMode: args.pricingMode ?? 'with_prices',
+    guestCurrencyMode: args.guestCurrencyMode ?? null,
+    guestMultiplier: safeMultiplier ?? null,
+  };
+}
+
+/**
+ * Create a new invitation on behalf of a caller the Vercel API layer has
+ * ALREADY verified (Google ID token / app session → roster role). Convex only
+ * checks the shared server secret here — it does not perform Google OAuth, so
+ * generating a guest link no longer depends on any Convex-side OAuth config.
+ * Replaces the identity-verifying `generate` action for the live flow.
+ */
+export const createFromServer = mutation({
+  args: {
+    secret: v.string(),
+    creatorEmail: v.string(),
+    creatorName: v.string(),
+    creatorRole: v.optional(v.string()),
+    pricingMode: v.optional(v.string()),
+    guestName: v.optional(v.string()),
+    guestContact: v.optional(v.string()),
+    contactType: v.optional(v.string()),
+    guestCurrencyMode: v.optional(v.string()),
+    guestMultiplier: v.optional(v.float64()),
+    pin: v.string(),
+    shortCode: v.string(),
+  },
+  handler: async (ctx, { secret, ...args }) => {
+    requireServerSecret(secret);
+    return insertInvitationRow(ctx, args);
+  },
+});
+
 // ─── Mutations ──────────────────────────────────────────────────────
 
 /**
- * Internal: the actual insert. Only reachable via the `generate` action
- * below, which verifies the caller is staff server-side first — see
- * convex/_lib/authz.ts. `creatorEmail`/`creatorName`/`creatorRole` come from
- * the verified caller, never from client-supplied args, so a guest can't
- * mint an invitation impersonating another advisor.
+ * @deprecated Legacy insert for the `generate` action below. The live flow now
+ * goes through `createFromServer` (identity verified upstream in Vercel). Kept
+ * only so a mid-deploy Vercel build calling the old action doesn't break;
+ * prune once `createFromServer` is confirmed stable in production.
  */
 export const _generate = internalMutation({
   args: {
@@ -128,48 +240,15 @@ export const _generate = internalMutation({
     pin: v.string(),
     shortCode: v.string(),
   },
-  handler: async (ctx, args) => {
-    const invitationId = `inv_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
-    const safeMultiplier =
-      args.guestMultiplier != null
-        ? sanitizeMultiplier(args.guestMultiplier)
-        : undefined;
-
-    await ctx.db.insert('invitations', {
-      invitationId,
-      shortCode: args.shortCode,
-      creatorEmail: args.creatorEmail.toLowerCase().trim(),
-      creatorName: args.creatorName,
-      creatorRole: args.creatorRole ?? 'Asesor',
-      guestName: args.guestName,
-      guestContact: args.guestContact,
-      contactType: args.contactType,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      pricingMode: args.pricingMode ?? 'with_prices',
-      durationHours: 24 * 365, // 12 months
-      guestCurrencyMode: args.guestCurrencyMode,
-      guestMultiplier: safeMultiplier,
-      pin: args.pin,
-    });
-
-    return {
-      invitationId,
-      shortCode: args.shortCode,
-      pin: args.pin,
-      creatorEmail: args.creatorEmail.toLowerCase().trim(),
-      creatorName: args.creatorName,
-      creatorRole: args.creatorRole ?? 'Asesor',
-      pricingMode: args.pricingMode ?? 'with_prices',
-      guestCurrencyMode: args.guestCurrencyMode ?? null,
-      guestMultiplier: safeMultiplier ?? null,
-    };
-  },
+  handler: async (ctx, args) => insertInvitationRow(ctx, args),
 });
 
 /**
- * Create a new invitation.
- * Replaces: POST /api/invitations?action=generate
+ * @deprecated Superseded by `createFromServer`. This action verifies the Google
+ * ID token inside Convex (requires GOOGLE_OAUTH_CLIENT_ID), which the live flow
+ * no longer needs — the Vercel /api/invitations layer verifies identity and
+ * calls `createFromServer` with the shared secret instead. Kept transiently for
+ * zero-downtime deploys; safe to remove after the new path is live.
  */
 export const generate = action({
   args: {

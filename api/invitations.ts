@@ -24,6 +24,7 @@ import {
   generateShortCode,
 } from './_lib/index.js';
 import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
+import { isSessionToken, verifySessionToken } from './_lib/sessionToken.js';
 import { api } from '../convex/_generated/api.js';
 
 type Sheets = sheets_v4.Sheets;
@@ -238,67 +239,138 @@ async function findInvitationByCode(sheets: Sheets, shortCode: string) {
   return null;
 }
 
+/** A caller whose identity was verified server-side (see resolveInvitationCaller). */
+interface VerifiedInvitationCaller {
+  email: string;
+  name: string;
+  role: string;
+}
+
+/** Fully-resolved invitation, ready to persist identically to Sheets + Convex. */
+interface ResolvedInvitation {
+  shortCode: string;
+  pin: string;
+  createdAt: string;
+  creator: VerifiedInvitationCaller;
+  pricingMode: string;
+  guestName?: string;
+  guestContact?: string;
+  contactType?: string;
+  guestCurrencyMode?: string;
+  guestMultiplier: number | null;
+}
+
 /**
- * Generate a new invitation (POST)
+ * Verify the caller's identity ON THE VERCEL SIDE (this layer owns the Google
+ * OAuth client — Convex needs none), then resolve their roster role. Accepts a
+ * fresh Google ID token or a 30-day app session token. Returns null when the
+ * token is invalid/expired or the email isn't an authorized staff/provider —
+ * i.e. anyone who may not mint invitations. No client-supplied email is ever
+ * trusted; identity comes only from a cryptographically verified token.
  */
-async function generateInvitation(sheets: Sheets, body: ApiBody) {
-  const {
-    creatorEmail,
-    creatorName,
-    creatorRole,
-    pricingMode = 'with_prices',
-    guestName,
-    guestContact,
-    contactType,
-    guestCurrencyMode,
-    guestMultiplier,
-  } = body as ApiBody & {
-    creatorEmail?: string;
-    creatorName?: string;
-    creatorRole?: string;
-    pricingMode?: string;
-    guestName?: string;
-    guestContact?: string;
-    contactType?: string;
-    guestCurrencyMode?: string;
-    guestMultiplier?: unknown;
-  };
-
-  if (!creatorEmail || !creatorName) {
-    return { success: false, error: 'Creator email and name are required' };
+async function resolveInvitationCaller(
+  idToken: string,
+): Promise<VerifiedInvitationCaller | null> {
+  // 1. Token → verified email.
+  let email: string | null = null;
+  if (isSessionToken(idToken)) {
+    email = verifySessionToken(idToken)?.email ?? null;
+  } else {
+    email = await verifyGoogleIdTokenEmail(idToken);
   }
+  if (!email) return null;
 
-  let shortCode = generateShortCode();
-  let attempts = 0;
-  while ((await findInvitationByCode(sheets, shortCode)) && attempts < 5) {
-    shortCode = generateShortCode();
-    attempts++;
+  // 2. Verified email → roster role, via the same /api/validate the rest of the
+  // app trusts as the source of truth (reuses its Sheets logic, no duplication).
+  const appUrl = process.env.APP_URL || 'https://tierramadre.app';
+  try {
+    const res = await fetch(
+      `${appUrl}/api/validate?email=${encodeURIComponent(email)}&type=both`,
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      success?: boolean;
+      isAuthorized?: boolean;
+      isProvider?: boolean;
+      user?: { name?: string; role?: string };
+      provider?: { name?: string };
+    };
+    if (data.success && data.isAuthorized) {
+      return {
+        email,
+        name: data.user?.name || email.split('@')[0],
+        role: data.user?.role || 'Asesor',
+      };
+    }
+    if (data.success && data.isProvider) {
+      return {
+        email,
+        name: data.provider?.name || email.split('@')[0],
+        role: 'Proveedor',
+      };
+    }
+    return null; // guest / not on any roster → not authorized to invite
+  } catch {
+    return null;
   }
+}
 
+/**
+ * Verify a Google ID token → verified lowercase email, or null. Same
+ * google-auth-library pattern as api/validate.ts / api/vitrina.ts (lazy import
+ * so cold starts of other paths pay nothing).
+ */
+async function verifyGoogleIdTokenEmail(token: string): Promise<string | null> {
+  const audiences = [
+    process.env.GOOGLE_OAUTH_CLIENT_ID,
+    process.env.VITE_GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_ID,
+  ].filter((a): a is string => !!a && a.trim().length > 0);
+  if (audiences.length === 0) return null;
+  try {
+    const { OAuth2Client } = await import('google-auth-library');
+    const client = new OAuth2Client();
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: audiences,
+    });
+    const payload = ticket.getPayload();
+    return payload?.email && payload.email_verified
+      ? payload.email.toLowerCase().trim()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Append the invitation row to the Google Sheet. Uses the SAME shortCode/pin
+ * as the Convex copy so both stores stay consistent.
+ */
+async function writeInvitationToSheet(
+  sheets: Sheets,
+  inv: ResolvedInvitation,
+): Promise<void> {
   const invitationId = `inv_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
-  const createdAt = new Date().toISOString();
-  const pin = generatePin();
-  const safeMultiplier = sanitizeMultiplier(guestMultiplier);
-
   const row = [
     invitationId,
-    shortCode,
-    creatorEmail,
-    creatorName,
-    creatorRole || 'Asesor',
-    guestName || '',
-    guestContact || '',
-    contactType || '',
-    createdAt,
+    inv.shortCode,
+    inv.creator.email,
+    inv.creator.name,
+    inv.creator.role || 'Asesor',
+    inv.guestName || '',
+    inv.guestContact || '',
+    inv.contactType || '',
+    inv.createdAt,
     '',
     '',
-    pricingMode,
+    inv.pricingMode,
     INVITATION_DURATION_HOURS,
     'pending',
-    pin,
+    inv.pin,
     '',
-    guestCurrencyMode || '',
-    safeMultiplier != null ? String(safeMultiplier) : '',
+    inv.guestCurrencyMode || '',
+    inv.guestMultiplier != null ? String(inv.guestMultiplier) : '',
   ];
 
   await sheets.spreadsheets.values.append({
@@ -307,30 +379,6 @@ async function generateInvitation(sheets: Sheets, body: ApiBody) {
     valueInputOption: 'RAW',
     requestBody: { values: [row] },
   });
-
-  // Always use production URL for invitation links (not preview URLs)
-  const baseUrl = 'https://tierramadre.app';
-
-  return {
-    success: true,
-    invitation: {
-      token: shortCode,
-      url: `${baseUrl}/invite/${shortCode}`,
-      shortCode,
-      shortUrl: null,
-      pin,
-      createdAt,
-      durationHours: INVITATION_DURATION_HOURS,
-      pricingMode,
-      guestCurrencyMode: guestCurrencyMode || null,
-      guestMultiplier: safeMultiplier,
-      createdBy: {
-        email: creatorEmail,
-        name: creatorName,
-        role: creatorRole || 'Asesor',
-      },
-    },
-  };
 }
 
 /**
@@ -763,71 +811,105 @@ export default withApiHandler(
     await ensureHeaders(sheets);
 
     // POST - Generate invitation
+    //
+    // Identity is verified HERE, on the Vercel side (this layer owns the Google
+    // OAuth client) — Convex requires no OAuth config of its own. The resolved
+    // creator/guest data is then persisted to BOTH stores with the same
+    // shortCode/pin: Convex (the read/validation path when enabled) and Google
+    // Sheets (the mirror). creatorEmail/name/role come only from the verified
+    // token → roster lookup, never from the request body.
     if (req.method === 'POST' && action === 'generate') {
+      const body = (req.body as ApiBody) || {};
+      const idToken = body.idToken as string | undefined;
+      if (!idToken) return sendError(res, 401, 'idToken is required');
+
+      const creator = await resolveInvitationCaller(String(idToken));
+      if (!creator) {
+        return sendError(res, 403, 'No autorizado para generar invitaciones');
+      }
+
+      // Unique short code (collision-checked against the sheet).
+      let shortCode = generateShortCode();
+      let attempts = 0;
+      while ((await findInvitationByCode(sheets, shortCode)) && attempts < 5) {
+        shortCode = generateShortCode();
+        attempts++;
+      }
+
+      const resolved: ResolvedInvitation = {
+        shortCode,
+        pin: generatePin(),
+        createdAt: new Date().toISOString(),
+        creator,
+        pricingMode: (body.pricingMode as string) || 'with_prices',
+        guestName: body.guestName ? String(body.guestName) : undefined,
+        guestContact: body.guestContact ? String(body.guestContact) : undefined,
+        contactType: body.contactType ? String(body.contactType) : undefined,
+        guestCurrencyMode: body.guestCurrencyMode
+          ? String(body.guestCurrencyMode)
+          : undefined,
+        guestMultiplier: sanitizeMultiplier(body.guestMultiplier),
+      };
+
+      // 1) Convex — the validation path reads from here when enabled, so this
+      // write must succeed for the guest link to work. Identity is already
+      // verified above, so the mutation is gated only by the shared secret.
       if (isConvexEnabled && convexClient) {
-        const body = (req.body as ApiBody) || {};
-        const {
-          idToken,
-          pricingMode,
-          guestName,
-          guestContact,
-          contactType,
-          guestCurrencyMode,
-          guestMultiplier,
-        } = body as Record<string, unknown>;
-        if (!idToken) return sendError(res, 401, 'idToken is required');
-        const shortCode = generateShortCode();
-        const pin = generatePin();
-        const safeMultiplier = sanitizeMultiplier(guestMultiplier);
-        // creatorEmail/creatorName/creatorRole are derived server-side from the
-        // VERIFIED Google identity inside the Convex action — never trusted
-        // from the request body (see convex/_lib/authz.ts).
-        let invitation;
         try {
-          invitation = await convexClient.action(api.invitations.generate, {
-            idToken: String(idToken),
-            pricingMode: pricingMode ? String(pricingMode) : undefined,
-            guestName: guestName ? String(guestName) : undefined,
-            guestContact: guestContact ? String(guestContact) : undefined,
-            contactType: contactType ? String(contactType) : undefined,
-            guestCurrencyMode: guestCurrencyMode
-              ? String(guestCurrencyMode)
-              : undefined,
-            guestMultiplier: safeMultiplier ?? undefined,
-            pin,
-            shortCode,
+          await convexClient.mutation(api.invitations.createFromServer, {
+            secret: process.env.ADMIN_SYNC_TOKEN ?? '',
+            creatorEmail: creator.email,
+            creatorName: creator.name,
+            creatorRole: creator.role,
+            pricingMode: resolved.pricingMode,
+            guestName: resolved.guestName,
+            guestContact: resolved.guestContact,
+            contactType: resolved.contactType,
+            guestCurrencyMode: resolved.guestCurrencyMode,
+            guestMultiplier: resolved.guestMultiplier ?? undefined,
+            pin: resolved.pin,
+            shortCode: resolved.shortCode,
           });
         } catch (err: unknown) {
-          const msg = convexErrorMessage(err);
-          return sendError(res, 403, msg);
+          return sendError(res, 502, convexErrorMessage(err));
         }
-        const baseUrl = 'https://tierramadre.app';
-        return res.status(200).json({
-          success: true,
-          invitation: {
-            token: shortCode,
-            url: `${baseUrl}/invite/${shortCode}`,
-            shortCode,
-            shortUrl: null,
-            pin,
-            createdAt: new Date().toISOString(),
-            durationHours: INVITATION_DURATION_HOURS,
-            pricingMode: invitation.pricingMode,
-            guestCurrencyMode: invitation.guestCurrencyMode,
-            guestMultiplier: invitation.guestMultiplier,
-            createdBy: {
-              email: invitation.creatorEmail,
-              name: invitation.creatorName,
-              role: invitation.creatorRole,
-            },
-          },
-        });
       }
-      const result = await generateInvitation(
-        sheets,
-        (req.body as ApiBody) || {},
-      );
-      return res.status(200).json(result);
+
+      // 2) Google Sheets — the mirror. When Convex is enabled it already holds
+      // the record the link validates against, so a Sheets hiccup shouldn't
+      // fail an otherwise-working link; log and continue. When Convex is
+      // disabled, Sheets IS the source of truth, so surface any failure.
+      try {
+        await writeInvitationToSheet(sheets, resolved);
+      } catch (err) {
+        if (!isConvexEnabled) throw err;
+        console.error(
+          '[Invitations] Sheets mirror failed:',
+          err instanceof Error ? err.message : err,
+        );
+      }
+
+      const baseUrl = 'https://tierramadre.app';
+      return res.status(200).json({
+        success: true,
+        invitation: {
+          token: resolved.shortCode,
+          url: `${baseUrl}/invite/${resolved.shortCode}`,
+          shortCode: resolved.shortCode,
+          shortUrl: null,
+          pin: resolved.pin,
+          createdAt: resolved.createdAt,
+          durationHours: INVITATION_DURATION_HOURS,
+          pricingMode: resolved.pricingMode,
+          guestCurrencyMode: resolved.guestCurrencyMode || null,
+          guestMultiplier: resolved.guestMultiplier,
+          createdBy: {
+            email: creator.email,
+            name: creator.name,
+            role: creator.role,
+          },
+        },
+      });
     }
 
     // POST - Verify PIN + device token binding
