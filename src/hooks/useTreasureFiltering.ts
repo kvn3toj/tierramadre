@@ -279,6 +279,28 @@ export function useTreasureFiltering({
       // available.
       const isExplicitItem =
         itemsFilter.length > 0 && itemsFilter.includes(item.item);
+
+      // Hide priceless rows from the browse grid (2026-07-23).
+      //
+      // The SOT v3 inventory deliberately zeroes the cost of parent records so
+      // the same money isn't counted twice: a lote's parent row (#339 "Jardín
+      // Secreto", lote C-006) and a pair that was split into stones (#363
+      // "Igualdad" → #467-470) are RETIRED to 0, with the live cost sitting on
+      // the individual pieces. Those parents are correctly hidden from the
+      // Convex catalog (`mostrarEnCatalogo: false`), but that flag gates ONLY
+      // the Convex path — the Sheets reader returns every row — so they used to
+      // surface here rendering "$ 0".
+      //
+      // The gate is the PRICE, not `mostrarEnCatalogo`: that flag means
+      // "published through the Fotosíntesis wizard" and is false for the whole
+      // legacy catalog (#1 Rey Midas, #50, #150 …), so filtering on it would
+      // hide 397 of 513 items. A row with no price cannot be sold or compared,
+      // and self-heals the moment a cost is captured.
+      //
+      // `isExplicitItem` still wins, so a QR/quotation deep link to a priceless
+      // item resolves instead of going blank.
+      if (!isExplicitItem && !(item.precioCOP > 0)) return false;
+
       const itemEstado = item.estado?.toUpperCase() || '';
       const matchesStatus =
         isExplicitItem ||

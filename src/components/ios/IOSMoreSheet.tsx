@@ -555,7 +555,10 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
         }}
       />
 
-      <FocusTrap open={open}>
+      {/* The trap must yield while a child modal (invitation / feedback) is
+          open — otherwise it pulls focus back out of the portaled dialog and
+          its inputs become impossible to type into. */}
+      <FocusTrap open={open && !invitationOpen && !feedbackOpen}>
         <Box
           role="dialog"
           aria-modal="true"
