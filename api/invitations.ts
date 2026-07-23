@@ -262,17 +262,40 @@ interface ResolvedInvitation {
   guestMultiplier: number | null;
 }
 
+/** Is this VERIFIED email listed in ADMIN_EMAILS? */
+function isAdminEmail(email: string): boolean {
+  return (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+    .includes(email.toLowerCase());
+}
+
+/**
+ * Outcome of caller verification. Distinguishing these matters: a bad token
+ * means "sign in again" (the UI can offer re-login), while a roster miss means
+ * "your account may not invite" — collapsing both into one generic 403 hid
+ * which was which.
+ */
+type CallerResolution =
+  | { ok: true; caller: VerifiedInvitationCaller }
+  | { ok: false; reason: 'invalid_token' | 'not_authorized' | 'lookup_failed' };
+
 /**
  * Verify the caller's identity ON THE VERCEL SIDE (this layer owns the Google
- * OAuth client — Convex needs none), then resolve their roster role. Accepts a
- * fresh Google ID token or a 30-day app session token. Returns null when the
- * token is invalid/expired or the email isn't an authorized staff/provider —
- * i.e. anyone who may not mint invitations. No client-supplied email is ever
- * trusted; identity comes only from a cryptographically verified token.
+ * OAuth client — Convex needs none), then resolve their authorization.
+ * Accepts a fresh Google ID token or a 30-day app session token.
+ *
+ * Authorized to invite = ANY active member of the Asesores sheet (every
+ * accessLevel: admin/embajador/asesor/invitado_especial), OR a registered
+ * provider, OR an ADMIN_EMAILS admin. That last case matters because admins
+ * are not necessarily rows in the Asesores sheet, so a sheet-only check locked
+ * them out. No client-supplied email is ever trusted — identity comes only
+ * from a cryptographically verified token.
  */
 async function resolveInvitationCaller(
   idToken: string,
-): Promise<VerifiedInvitationCaller | null> {
+): Promise<CallerResolution> {
   // 1. Token → verified email.
   let email: string | null = null;
   if (isSessionToken(idToken)) {
@@ -280,7 +303,9 @@ async function resolveInvitationCaller(
   } else {
     email = await verifyGoogleIdTokenEmail(idToken);
   }
-  if (!email) return null;
+  if (!email) return { ok: false, reason: 'invalid_token' };
+
+  const envAdmin = isAdminEmail(email);
 
   // 2. Verified email → roster role, via the same /api/validate the rest of the
   // app trusts as the source of truth (reuses its Sheets logic, no duplication).
@@ -289,7 +314,22 @@ async function resolveInvitationCaller(
     const res = await fetch(
       `${appUrl}/api/validate?email=${encodeURIComponent(email)}&type=both`,
     );
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Roster unreachable: an ADMIN_EMAILS admin still gets through; anyone
+      // else is a transient failure, not a definitive "no".
+      if (envAdmin) {
+        return {
+          ok: true,
+          caller: {
+            email,
+            name: email.split('@')[0],
+            role: 'Admin',
+            isAdmin: true,
+          },
+        };
+      }
+      return { ok: false, reason: 'lookup_failed' };
+    }
     const data = (await res.json()) as {
       success?: boolean;
       isAuthorized?: boolean;
@@ -299,24 +339,79 @@ async function resolveInvitationCaller(
     };
     if (data.success && data.isAuthorized) {
       return {
-        email,
-        name: data.user?.name || email.split('@')[0],
-        role: data.user?.role || 'Asesor',
-        isAdmin: data.user?.accessLevel === 'admin',
+        ok: true,
+        caller: {
+          email,
+          name: data.user?.name || email.split('@')[0],
+          role: data.user?.role || 'Asesor',
+          isAdmin: data.user?.accessLevel === 'admin' || envAdmin,
+        },
       };
     }
     if (data.success && data.isProvider) {
       return {
-        email,
-        name: data.provider?.name || email.split('@')[0],
-        role: 'Proveedor',
-        isAdmin: false,
+        ok: true,
+        caller: {
+          email,
+          name: data.provider?.name || email.split('@')[0],
+          role: 'Proveedor',
+          isAdmin: envAdmin,
+        },
       };
     }
-    return null; // guest / not on any roster → not authorized to invite
+    // Not on any roster — still allowed if they're a configured admin.
+    if (envAdmin) {
+      return {
+        ok: true,
+        caller: {
+          email,
+          name: email.split('@')[0],
+          role: 'Admin',
+          isAdmin: true,
+        },
+      };
+    }
+    return { ok: false, reason: 'not_authorized' };
   } catch {
-    return null;
+    if (envAdmin) {
+      return {
+        ok: true,
+        caller: {
+          email,
+          name: email.split('@')[0],
+          role: 'Admin',
+          isAdmin: true,
+        },
+      };
+    }
+    return { ok: false, reason: 'lookup_failed' };
   }
+}
+
+/** Map a failed resolution to an HTTP response with an actionable message. */
+function sendCallerError(
+  res: VercelResponse,
+  reason: 'invalid_token' | 'not_authorized' | 'lookup_failed',
+) {
+  if (reason === 'invalid_token') {
+    return sendError(
+      res,
+      401,
+      'Tu sesión expiró. Vuelve a iniciar sesión con Google.',
+    );
+  }
+  if (reason === 'lookup_failed') {
+    return sendError(
+      res,
+      503,
+      'No se pudo verificar tu rol en este momento. Intenta de nuevo.',
+    );
+  }
+  return sendError(
+    res,
+    403,
+    'Tu cuenta no está autorizada para generar invitaciones. Verifica que tu correo esté activo en la hoja de Asesores.',
+  );
 }
 
 /**
@@ -827,10 +922,9 @@ export default withApiHandler(
       const idToken = body.idToken as string | undefined;
       if (!idToken) return sendError(res, 401, 'idToken is required');
 
-      const creator = await resolveInvitationCaller(String(idToken));
-      if (!creator) {
-        return sendError(res, 403, 'No autorizado para generar invitaciones');
-      }
+      const resolution = await resolveInvitationCaller(String(idToken));
+      if (!resolution.ok) return sendCallerError(res, resolution.reason);
+      const creator = resolution.caller;
 
       // Unique short code (collision-checked against the sheet).
       let shortCode = generateShortCode();
@@ -979,8 +1073,9 @@ export default withApiHandler(
           .status(200)
           .json({ success: false, error: 'No fields to update' });
 
-      const caller = await resolveInvitationCaller(String(idToken));
-      if (!caller) return sendError(res, 403, 'No autorizado');
+      const resolution = await resolveInvitationCaller(String(idToken));
+      if (!resolution.ok) return sendCallerError(res, resolution.reason);
+      const caller = resolution.caller;
       const multiplier = Number(fields.guestMultiplier);
 
       // Convex — authoritative read/validation path; ownership + admin bypass
@@ -1038,8 +1133,9 @@ export default withApiHandler(
       if (!shortCode || !idToken)
         return sendError(res, 400, 'shortCode and idToken are required');
 
-      const caller = await resolveInvitationCaller(String(idToken));
-      if (!caller) return sendError(res, 403, 'No autorizado');
+      const resolution = await resolveInvitationCaller(String(idToken));
+      if (!resolution.ok) return sendCallerError(res, resolution.reason);
+      const caller = resolution.caller;
 
       if (isConvexEnabled && convexClient) {
         try {
