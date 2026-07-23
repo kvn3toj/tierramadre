@@ -127,8 +127,15 @@ export default function InvitationGenerator({
 
     setFormError('');
 
-    // A doomed request is guaranteed without an identity token — surface the
-    // inline re-login instead of firing it.
+    // A logged-in user with a valid 30-day app session should never have to
+    // redo Google OAuth. The short-lived Google token dies ~1h after sign-in,
+    // but ensureAppSession() rolls the long-lived session token forward from
+    // itself — so if the fresh token has lapsed, try a silent refresh before
+    // giving up. The inline Google re-login is the last resort, only when no
+    // session can be recovered at all (session fully expired > 30 days).
+    if (!readFreshAuthToken()) {
+      await ensureAppSession();
+    }
     if (!readFreshAuthToken()) {
       setNeedsRenew(true);
       return;

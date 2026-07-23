@@ -13,6 +13,7 @@
 
 import type { sheets_v4 } from '@googleapis/sheets';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { ConvexError } from 'convex/values';
 import {
   withApiHandler,
   sendError,
@@ -50,6 +51,23 @@ const HEADERS = [
   'guestCurrencyMode',
   'guestMultiplier',
 ];
+
+/**
+ * Extract a human-readable message from an error thrown by a Convex call.
+ *
+ * Convex sanitizes plain `Error` throws to a generic "[Request ID: …] Server
+ * Error" for production HTTP clients — only a `ConvexError`'s `.data` survives
+ * intact. The authz layer (convex/_lib/authz.ts) throws `ConvexError` with the
+ * real reason ("No autorizado…", "sesión inválida…", etc.), so reading
+ * `err.message` here would surface the opaque "Server Error" the user saw
+ * instead of the actionable cause. Prefer `.data`, mirroring ghl-create-order.ts.
+ */
+function convexErrorMessage(err: unknown): string {
+  if (err instanceof ConvexError) {
+    return typeof err.data === 'string' ? err.data : String(err.data);
+  }
+  return err instanceof Error ? err.message : 'Unknown error';
+}
 
 /**
  * Generate a 4-digit PIN code
@@ -780,7 +798,7 @@ export default withApiHandler(
             shortCode,
           });
         } catch (err: unknown) {
-          const msg = err instanceof Error ? err.message : 'Unknown error';
+          const msg = convexErrorMessage(err);
           return sendError(res, 403, msg);
         }
         const baseUrl = 'https://tierramadre.app';
@@ -852,7 +870,7 @@ export default withApiHandler(
           );
           return res.status(200).json(result);
         } catch (err: unknown) {
-          const msg = err instanceof Error ? err.message : 'Unknown error';
+          const msg = convexErrorMessage(err);
           return res.status(200).json({ success: false, error: msg });
         }
       }
@@ -883,7 +901,7 @@ export default withApiHandler(
             );
             return res.status(200).json({ success: true, invitation: result });
           } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Unknown error';
+            const msg = convexErrorMessage(err);
             return res.status(200).json({ success: false, error: msg });
           }
         }
@@ -913,7 +931,7 @@ export default withApiHandler(
           });
           return res.status(200).json(result);
         } catch (err: unknown) {
-          const msg = err instanceof Error ? err.message : 'Unknown error';
+          const msg = convexErrorMessage(err);
           return res.status(200).json({ success: false, error: msg });
         }
       }
