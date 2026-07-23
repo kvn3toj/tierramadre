@@ -244,6 +244,8 @@ interface VerifiedInvitationCaller {
   email: string;
   name: string;
   role: string;
+  /** true when the roster access level is admin — allows editing others' invites. */
+  isAdmin: boolean;
 }
 
 /** Fully-resolved invitation, ready to persist identically to Sheets + Convex. */
@@ -292,7 +294,7 @@ async function resolveInvitationCaller(
       success?: boolean;
       isAuthorized?: boolean;
       isProvider?: boolean;
-      user?: { name?: string; role?: string };
+      user?: { name?: string; role?: string; accessLevel?: string };
       provider?: { name?: string };
     };
     if (data.success && data.isAuthorized) {
@@ -300,6 +302,7 @@ async function resolveInvitationCaller(
         email,
         name: data.user?.name || email.split('@')[0],
         role: data.user?.role || 'Asesor',
+        isAdmin: data.user?.accessLevel === 'admin',
       };
     }
     if (data.success && data.isProvider) {
@@ -307,6 +310,7 @@ async function resolveInvitationCaller(
         email,
         name: data.provider?.name || email.split('@')[0],
         role: 'Proveedor',
+        isAdmin: false,
       };
     }
     return null; // guest / not on any roster → not authorized to invite
@@ -961,67 +965,113 @@ export default withApiHandler(
     }
 
     // POST - Update invitation (multiplier, etc.)
+    // Identity + admin status verified on the Vercel side; the Convex mutation
+    // is gated only by the shared secret (no Convex-side Google OAuth).
     if (req.method === 'POST' && action === 'update') {
-      if (isConvexEnabled && convexClient) {
-        const body = (req.body as ApiBody) || {};
-        const shortCode = body.shortCode as string | undefined;
-        const idToken = body.idToken as string | undefined;
-        const fields = body.fields as { guestMultiplier?: unknown } | undefined;
-        if (!shortCode || !idToken)
-          return sendError(res, 400, 'shortCode and idToken are required');
-        if (fields?.guestMultiplier !== undefined) {
-          try {
-            // Ownership is checked server-side inside the Convex action
-            // against the VERIFIED caller — never a client-supplied email.
-            const result = await convexClient.action(
-              api.invitations.updateMultiplier,
-              {
-                shortCode: String(shortCode),
-                idToken: String(idToken),
-                guestMultiplier: Number(fields.guestMultiplier),
-              },
-            );
-            return res.status(200).json({ success: true, invitation: result });
-          } catch (err: unknown) {
-            const msg = convexErrorMessage(err);
-            return res.status(200).json({ success: false, error: msg });
-          }
-        }
+      const body = (req.body as ApiBody) || {};
+      const shortCode = body.shortCode as string | undefined;
+      const idToken = body.idToken as string | undefined;
+      const fields = body.fields as { guestMultiplier?: unknown } | undefined;
+      if (!shortCode || !idToken)
+        return sendError(res, 400, 'shortCode and idToken are required');
+      if (fields?.guestMultiplier === undefined)
         return res
           .status(200)
           .json({ success: false, error: 'No fields to update' });
+
+      const caller = await resolveInvitationCaller(String(idToken));
+      if (!caller) return sendError(res, 403, 'No autorizado');
+      const multiplier = Number(fields.guestMultiplier);
+
+      // Convex — authoritative read/validation path; ownership + admin bypass
+      // enforced inside against the VERIFIED caller (never a client email).
+      if (isConvexEnabled && convexClient) {
+        try {
+          await convexClient.mutation(
+            api.invitations.updateMultiplierFromServer,
+            {
+              secret: process.env.ADMIN_SYNC_TOKEN ?? '',
+              shortCode: String(shortCode),
+              creatorEmail: caller.email,
+              isAdmin: caller.isAdmin,
+              guestMultiplier: multiplier,
+            },
+          );
+        } catch (err: unknown) {
+          return res
+            .status(200)
+            .json({ success: false, error: convexErrorMessage(err) });
+        }
       }
-      const result = await updateInvitation(
-        sheets,
-        (req.body as ApiBody) || {},
-      );
-      return res.status(200).json(result);
+
+      // Sheets mirror (best-effort when Convex is enabled; authoritative when
+      // it isn't). Passes the VERIFIED caller email, never the request body's.
+      try {
+        const sheetResult = await updateInvitation(sheets, {
+          shortCode: String(shortCode),
+          creatorEmail: caller.email,
+          fields: { guestMultiplier: multiplier },
+        });
+        if (!isConvexEnabled) return res.status(200).json(sheetResult);
+      } catch (err) {
+        if (!isConvexEnabled) throw err;
+        console.error(
+          '[Invitations] Sheets update mirror failed:',
+          err instanceof Error ? err.message : err,
+        );
+      }
+
+      return res.status(200).json({
+        success: true,
+        invitation: {
+          shortCode: String(shortCode),
+          guestMultiplier: sanitizeMultiplier(multiplier),
+        },
+      });
     }
 
     // POST - Expire/revoke invitation
     if (req.method === 'POST' && action === 'expire') {
+      const body = (req.body as ApiBody) || {};
+      const shortCode = body.shortCode as string | undefined;
+      const idToken = body.idToken as string | undefined;
+      if (!shortCode || !idToken)
+        return sendError(res, 400, 'shortCode and idToken are required');
+
+      const caller = await resolveInvitationCaller(String(idToken));
+      if (!caller) return sendError(res, 403, 'No autorizado');
+
       if (isConvexEnabled && convexClient) {
-        const body = (req.body as ApiBody) || {};
-        const shortCode = body.shortCode as string | undefined;
-        const idToken = body.idToken as string | undefined;
-        if (!shortCode || !idToken)
-          return sendError(res, 400, 'shortCode and idToken are required');
         try {
-          const result = await convexClient.action(api.invitations.expire, {
+          await convexClient.mutation(api.invitations.expireFromServer, {
+            secret: process.env.ADMIN_SYNC_TOKEN ?? '',
             shortCode: String(shortCode),
-            idToken: String(idToken),
+            creatorEmail: caller.email,
+            isAdmin: caller.isAdmin,
           });
-          return res.status(200).json(result);
         } catch (err: unknown) {
-          const msg = convexErrorMessage(err);
-          return res.status(200).json({ success: false, error: msg });
+          return res
+            .status(200)
+            .json({ success: false, error: convexErrorMessage(err) });
         }
       }
-      const result = await expireInvitationAction(
-        sheets,
-        (req.body as ApiBody) || {},
-      );
-      return res.status(200).json(result);
+
+      // Sheets mirror (best-effort when Convex enabled; authoritative otherwise).
+      try {
+        const sheetResult = await expireInvitationAction(sheets, {
+          shortCode: String(shortCode),
+          creatorEmail: caller.email,
+        });
+        if (!isConvexEnabled) return res.status(200).json(sheetResult);
+      } catch (err) {
+        if (!isConvexEnabled) throw err;
+        console.error(
+          '[Invitations] Sheets expire mirror failed:',
+          err instanceof Error ? err.message : err,
+        );
+      }
+
+      return res.status(200).json({ success: true });
     }
 
     // GET - Validate invitation

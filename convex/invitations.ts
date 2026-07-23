@@ -287,10 +287,123 @@ export const generate = action({
 });
 
 /**
- * Internal: the actual patch. Only reachable via the `updateMultiplier`
- * action below, which verifies the caller server-side first. `creatorEmail`
- * is the VERIFIED caller (from the token), never a client-supplied string —
- * ownership can no longer be spoofed by guessing another advisor's email.
+ * Core patch, shared by every entry point. Ownership/status failures throw
+ * ConvexError so their real message survives to the HTTP caller (a plain Error
+ * would sanitize to "Server Error"). Assumes the caller is already authorized;
+ * `creatorEmail`/`isAdmin` come from a VERIFIED identity, never a raw client
+ * string.
+ */
+async function patchMultiplier(
+  ctx: MutationCtx,
+  {
+    shortCode,
+    creatorEmail,
+    isAdmin,
+    guestMultiplier,
+  }: {
+    shortCode: string;
+    creatorEmail: string;
+    isAdmin: boolean;
+    guestMultiplier: number;
+  },
+) {
+  const invitation = await ctx.db
+    .query('invitations')
+    .withIndex('by_shortCode', (q) => q.eq('shortCode', shortCode))
+    .first();
+  if (!invitation) throw new ConvexError('Invitación no encontrada');
+  if (
+    !isAdmin &&
+    invitation.creatorEmail.toLowerCase() !== creatorEmail.toLowerCase()
+  ) {
+    throw new ConvexError('No tienes permiso para editar esta invitación');
+  }
+  if (invitation.status !== 'active' && invitation.status !== 'pending') {
+    throw new ConvexError(
+      'Solo se pueden editar invitaciones activas o pendientes',
+    );
+  }
+  const safe = sanitizeMultiplier(guestMultiplier);
+  await ctx.db.patch(invitation._id, { guestMultiplier: safe });
+  return { shortCode, guestMultiplier: safe };
+}
+
+/**
+ * Core revoke, shared by every entry point. See patchMultiplier for the
+ * authorization/ConvexError contract.
+ */
+async function revokeInvitation(
+  ctx: MutationCtx,
+  {
+    shortCode,
+    creatorEmail,
+    isAdmin,
+  }: { shortCode: string; creatorEmail: string; isAdmin: boolean },
+) {
+  const invitation = await ctx.db
+    .query('invitations')
+    .withIndex('by_shortCode', (q) => q.eq('shortCode', shortCode))
+    .first();
+  if (!invitation) throw new ConvexError('Invitación no encontrada');
+  if (
+    !isAdmin &&
+    invitation.creatorEmail.toLowerCase() !== creatorEmail.toLowerCase()
+  ) {
+    throw new ConvexError('No tienes permiso para expirar esta invitación');
+  }
+  if (invitation.status === 'expired') return { success: true };
+  if (invitation.status !== 'active' && invitation.status !== 'pending') {
+    throw new ConvexError(
+      'Solo se pueden expirar invitaciones activas o pendientes',
+    );
+  }
+  await ctx.db.patch(invitation._id, {
+    status: 'expired' as const,
+    expiresAt: new Date().toISOString(),
+  });
+  return { success: true };
+}
+
+/**
+ * Update the guest multiplier — for a caller the Vercel API layer has ALREADY
+ * verified (identity + ownership inputs). Gated only by the shared server
+ * secret; no Convex-side Google OAuth. Replaces the `updateMultiplier` action.
+ */
+export const updateMultiplierFromServer = mutation({
+  args: {
+    secret: v.string(),
+    shortCode: v.string(),
+    creatorEmail: v.string(),
+    isAdmin: v.boolean(),
+    guestMultiplier: v.float64(),
+  },
+  handler: async (ctx, { secret, ...args }) => {
+    requireServerSecret(secret);
+    return patchMultiplier(ctx, args);
+  },
+});
+
+/**
+ * Expire/revoke an invitation — Vercel-verified caller, shared-secret gated.
+ * Replaces the `expire` action. No Convex-side Google OAuth.
+ */
+export const expireFromServer = mutation({
+  args: {
+    secret: v.string(),
+    shortCode: v.string(),
+    creatorEmail: v.string(),
+    isAdmin: v.boolean(),
+  },
+  handler: async (ctx, { secret, ...args }) => {
+    requireServerSecret(secret);
+    return revokeInvitation(ctx, args);
+  },
+});
+
+/**
+ * @deprecated Legacy patch behind the OAuth-verifying `updateMultiplier`
+ * action. The live flow uses `updateMultiplierFromServer`. Kept transiently for
+ * zero-downtime deploys; prune once the new path is confirmed stable.
  */
 export const _updateMultiplier = internalMutation({
   args: {
@@ -299,32 +412,13 @@ export const _updateMultiplier = internalMutation({
     isAdmin: v.boolean(),
     guestMultiplier: v.float64(),
   },
-  handler: async (
-    ctx,
-    { shortCode, creatorEmail, isAdmin, guestMultiplier },
-  ) => {
-    const invitation = await ctx.db
-      .query('invitations')
-      .withIndex('by_shortCode', (q) => q.eq('shortCode', shortCode))
-      .first();
-    if (!invitation) throw new Error('Invitacion no encontrada');
-    if (!isAdmin && invitation.creatorEmail.toLowerCase() !== creatorEmail) {
-      throw new Error('No tienes permiso para editar esta invitacion');
-    }
-    if (invitation.status !== 'active' && invitation.status !== 'pending') {
-      throw new Error(
-        'Solo se pueden editar invitaciones activas o pendientes',
-      );
-    }
-    const safe = sanitizeMultiplier(guestMultiplier);
-    await ctx.db.patch(invitation._id, { guestMultiplier: safe });
-    return { shortCode, guestMultiplier: safe };
-  },
+  handler: async (ctx, args) => patchMultiplier(ctx, args),
 });
 
 /**
- * Update the guest multiplier for an invitation.
- * Replaces: POST /api/invitations?action=update
+ * @deprecated Superseded by `updateMultiplierFromServer`. Verifies the Google
+ * token inside Convex (needs GOOGLE_OAUTH_CLIENT_ID), which the live flow no
+ * longer requires. Kept transiently for zero-downtime deploys.
  */
 export const updateMultiplier = action({
   args: {
@@ -347,7 +441,8 @@ export const updateMultiplier = action({
 });
 
 /**
- * Internal: the actual revoke. Only reachable via the `expire` action below.
+ * @deprecated Legacy revoke behind the OAuth-verifying `expire` action. The
+ * live flow uses `expireFromServer`. Kept transiently for zero-downtime deploys.
  */
 export const _expire = internalMutation({
   args: {
@@ -355,32 +450,13 @@ export const _expire = internalMutation({
     creatorEmail: v.string(),
     isAdmin: v.boolean(),
   },
-  handler: async (ctx, { shortCode, creatorEmail, isAdmin }) => {
-    const invitation = await ctx.db
-      .query('invitations')
-      .withIndex('by_shortCode', (q) => q.eq('shortCode', shortCode))
-      .first();
-    if (!invitation) throw new Error('Invitacion no encontrada');
-    if (!isAdmin && invitation.creatorEmail.toLowerCase() !== creatorEmail) {
-      throw new Error('No tienes permiso para expirar esta invitacion');
-    }
-    if (invitation.status === 'expired') return { success: true };
-    if (invitation.status !== 'active' && invitation.status !== 'pending') {
-      throw new Error(
-        'Solo se pueden expirar invitaciones activas o pendientes',
-      );
-    }
-    await ctx.db.patch(invitation._id, {
-      status: 'expired' as const,
-      expiresAt: new Date().toISOString(),
-    });
-    return { success: true };
-  },
+  handler: async (ctx, args) => revokeInvitation(ctx, args),
 });
 
 /**
- * Expire/revoke an invitation.
- * Replaces: POST /api/invitations?action=expire
+ * @deprecated Superseded by `expireFromServer`. Verifies the Google token
+ * inside Convex (needs GOOGLE_OAUTH_CLIENT_ID). Kept transiently for
+ * zero-downtime deploys.
  */
 export const expire = action({
   args: { idToken: v.string(), shortCode: v.string() },
