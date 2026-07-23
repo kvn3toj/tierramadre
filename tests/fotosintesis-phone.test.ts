@@ -13,7 +13,8 @@ vi.mock('../src/lib/convex-safe', () => ({
   useConvexQuery: () => undefined,
   useConvexMutation: () => async () => ({}),
   useConvexAction: () => async () => ({}),
-  // The drawer creates providers through the authed action wrapper.
+  // ProveedorNuevoDrawer moved onto the authed variant; like useConvexAction
+  // it is a hook returning an async callback, so the mock mirrors that shape.
   useAuthedConvexAction: () => async () => ({}),
 }));
 

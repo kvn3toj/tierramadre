@@ -8,13 +8,8 @@ import { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
-  TextField,
   InputAdornment,
   CircularProgress,
-  Alert,
-  alpha,
-  useTheme,
-  Button,
 } from '@mui/material';
 import { Search, Gem } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -24,12 +19,10 @@ import { useAsesores, Asesor } from '../../hooks/useAsesores';
 import { useTreasure } from '../../hooks/useTreasure';
 import AsesorCard from './AsesorCard';
 import {
-  emeraldCore,
-  goldAccent,
-  fontFamilies,
-  cssTransition,
-  surfacesLight,
-  surfacesDark,
+  EmptyState,
+  ErrorState,
+  TextField,
+  qeFont,
 } from '../../design-system/index';
 import {
   staggerContainer,
@@ -50,8 +43,6 @@ export default function AmbassadorDirectory({
   maxVisible,
 }: AmbassadorDirectoryProps) {
   const { t } = useLanguage();
-  const theme = useTheme();
-  const isLight = theme.palette.mode === 'light';
   const prefersReducedMotion = useReducedMotion();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -100,13 +91,13 @@ export default function AmbassadorDirectory({
           <CircularProgress
             size={14}
             aria-label={t.loading.general}
-            sx={{ color: emeraldCore.primary }}
+            sx={{ color: 'var(--tm-accent)' }}
           />
           <Typography
             sx={{
-              color: 'text.secondary',
-              fontFamily: fontFamilies.system,
-              fontSize: '0.65rem',
+              color: 'var(--tm-muted)',
+              fontFamily: qeFont.ui,
+              fontSize: '0.6875rem',
               fontWeight: 600,
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
@@ -115,17 +106,13 @@ export default function AmbassadorDirectory({
             {t.loading.ambassadors}
           </Typography>
         </Box>
-        <AmbassadorDirectorySkeleton isLight={isLight} />
+        <AmbassadorDirectorySkeleton />
       </Box>
     );
   }
 
   if (error) {
-    return (
-      <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
-        {t.ambassador.loadError}
-      </Alert>
-    );
+    return <ErrorState message={t.ambassador.loadError} />;
   }
 
   return (
@@ -134,7 +121,7 @@ export default function AmbassadorDirectory({
       <Box sx={{ textAlign: 'center', mb: { xs: 2, sm: 2.5 }, mt: 0.5 }}>
         <Typography
           sx={{
-            fontFamily: fontFamilies.display,
+            fontFamily: qeFont.serif,
             fontStyle: 'italic',
             fontSize: { xs: '1.15rem', sm: '1.28rem' },
             lineHeight: 1.35,
@@ -161,15 +148,17 @@ export default function AmbassadorDirectory({
             sx={{
               height: '1px',
               width: 32,
-              background: `linear-gradient(90deg, transparent, ${alpha(goldAccent.primary, 0.45)})`,
+              background:
+                'linear-gradient(90deg, transparent, var(--tm-border))',
             }}
           />
-          <Gem size={11} style={{ color: goldAccent.primary, opacity: 0.75 }} />
+          <Gem size={11} style={{ color: 'var(--tm-subtle)' }} />
           <Box
             sx={{
               height: '1px',
               width: 32,
-              background: `linear-gradient(90deg, ${alpha(goldAccent.primary, 0.45)}, transparent)`,
+              background:
+                'linear-gradient(90deg, var(--tm-border), transparent)',
             }}
           />
         </Box>
@@ -179,7 +168,7 @@ export default function AmbassadorDirectory({
           <Typography
             sx={{
               mt: 1.25,
-              fontSize: '0.62rem',
+              fontSize: '0.6875rem',
               fontWeight: 600,
               color: 'text.secondary',
               letterSpacing: '0.08em',
@@ -200,7 +189,6 @@ export default function AmbassadorDirectory({
           placeholder={t.ambassador.searchPlaceholder}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          size="small"
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -208,107 +196,29 @@ export default function AmbassadorDirectory({
               </InputAdornment>
             ),
           }}
-          sx={{
-            mb: 2,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '12px',
-              bgcolor: isLight ? alpha('#000', 0.02) : alpha('#fff', 0.03),
-              fontSize: '0.8rem',
-              '& fieldset': {
-                borderColor: isLight
-                  ? alpha('#000', 0.05)
-                  : alpha('#fff', 0.05),
-                transition: cssTransition.default,
-              },
-              '&:hover fieldset': {
-                borderColor: isLight ? alpha('#000', 0.1) : alpha('#fff', 0.1),
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: alpha(emeraldCore.primary, 0.35),
-                borderWidth: '1px !important',
-              },
-            },
-          }}
+          sx={{ mb: 2 }}
         />
       )}
 
       {/* Grid */}
       {filteredAsesores.length === 0 ? (
-        <Box
-          sx={{
-            textAlign: 'center',
-            py: 8,
-            px: 4,
-            borderRadius: '16px',
-            border: '1px solid',
-            borderColor: isLight ? alpha('#000', 0.04) : alpha('#fff', 0.04),
-          }}
-        >
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              borderRadius: '50%',
-              border: '1px solid',
-              borderColor: alpha(goldAccent.primary, 0.15),
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mx: 'auto',
-              mb: 2,
-            }}
-          >
-            <Gem
-              size={20}
-              strokeWidth={1}
-              style={{ color: alpha(goldAccent.primary, 0.4) }}
-            />
-          </Box>
-          <Typography
-            sx={{
-              color: 'text.secondary',
-              fontWeight: 500,
-              fontSize: '0.9rem',
-              mb: 0.5,
-            }}
-          >
-            {t.ambassador.noResults}
-          </Typography>
-          <Typography
-            sx={{
-              color: 'text.secondary',
-              fontSize: '0.75rem',
-              opacity: 0.6,
-              mb: 2.5,
-            }}
-          >
-            {hasActiveFilters
+        <EmptyState
+          icon={Gem}
+          title={t.ambassador.noResults}
+          subtitle={
+            hasActiveFilters
               ? t.ambassador.tryOtherCriteria
-              : t.ambassador.noAmbassadors}
-          </Typography>
-          {hasActiveFilters && (
-            <Button
-              variant="outlined"
-              onClick={() => setSearchQuery('')}
-              sx={{
-                textTransform: 'none',
-                borderColor: alpha(goldAccent.primary, 0.2),
-                color: isLight ? goldAccent.dark : goldAccent.light,
-                fontSize: '0.75rem',
-                fontWeight: 500,
-                px: 2.5,
-                py: 0.5,
-                borderRadius: '10px',
-                '&:hover': {
-                  borderColor: goldAccent.primary,
-                  bgcolor: alpha(goldAccent.primary, 0.04),
-                },
-              }}
-            >
-              {t.ambassador.clearFilters}
-            </Button>
-          )}
-        </Box>
+              : t.ambassador.noAmbassadors
+          }
+          action={
+            hasActiveFilters
+              ? {
+                  label: t.ambassador.clearFilters,
+                  onClick: () => setSearchQuery(''),
+                }
+              : undefined
+          }
+        />
       ) : (
         <motion.div
           variants={staggerContainer}
@@ -339,11 +249,7 @@ export default function AmbassadorDirectory({
 }
 
 /** Skeleton */
-export function AmbassadorDirectorySkeleton({
-  isLight = false,
-}: {
-  isLight?: boolean;
-}) {
+export function AmbassadorDirectorySkeleton() {
   return (
     <Box
       sx={{
@@ -356,14 +262,10 @@ export function AmbassadorDirectorySkeleton({
         <Box
           key={i}
           sx={{
-            borderRadius: '18px',
-            bgcolor: isLight
-              ? surfacesLight.surface.default
-              : surfacesDark.background.secondary,
+            borderRadius: 'var(--tm-radius-card)',
+            bgcolor: 'var(--tm-surface)',
             border: '1px solid',
-            borderColor: isLight
-              ? surfacesLight.border.light
-              : surfacesDark.border.light,
+            borderColor: 'var(--tm-border)',
             overflow: 'hidden',
           }}
         >

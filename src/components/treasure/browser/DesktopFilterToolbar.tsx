@@ -3,6 +3,7 @@ import { LayoutGrid, List } from 'lucide-react';
 import { getQuietEmerald } from '../../../design-system';
 import SavedFiltersDropdown from '../SavedFiltersDropdown';
 import type { FilterPreset, FilterState } from '../../../hooks/useSavedFilters';
+import type { TreasureItem } from '../../../types';
 import type {
   TreasureFilters,
   StatusFilter,
@@ -39,6 +40,10 @@ interface DesktopFilterToolbarProps {
   /** Drops the top border/margin — for when this renders inline beside the
    * page title instead of as its own row below. */
   dense?: boolean;
+  /** Recently-viewed pieces, surfaced inside the Búsquedas dropdown. */
+  recentItems?: TreasureItem[];
+  onRecentClick?: (item: TreasureItem) => void;
+  onClearRecent?: () => void;
 }
 
 export default function DesktopFilterToolbar({
@@ -60,6 +65,9 @@ export default function DesktopFilterToolbar({
   isLight,
   resultsSummary,
   dense = false,
+  recentItems,
+  onRecentClick,
+  onClearRecent,
 }: DesktopFilterToolbarProps) {
   // Theme is data: resolve the Quiet Emerald token set from the mode instead of
   // hand-rolling hex/rgba here.
@@ -117,6 +125,9 @@ export default function DesktopFilterToolbar({
         }}
         onDeletePreset={savedFilters.deletePreset}
         hasActiveFilters={hasFilters}
+        recentItems={recentItems}
+        onRecentClick={onRecentClick}
+        onClearRecent={onClearRecent}
       />
 
       {/* Flexible gap — the honest break between the "narrow the catalog" find

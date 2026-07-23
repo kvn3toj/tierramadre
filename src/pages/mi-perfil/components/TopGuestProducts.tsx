@@ -6,9 +6,9 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, alpha } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { TrendingUp } from 'lucide-react';
-import { emeraldCore, iosTypographyScale, primitiveSpacing as spacing, radius, cssTransition, fontFamilies } from '../../../design-system';
+import { iosTypographyScale, primitiveSpacing as spacing, radius, qeFont } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { SectionHeading } from './SectionHeading';
 
@@ -54,7 +54,7 @@ export function TopGuestProducts({ topProducts }: TopGuestProductsProps) {
                 p: spacing.sm,
                 borderRadius: radius.md,
                 cursor: 'pointer',
-                transition: cssTransition.default,
+                transition: 'background-color var(--tm-base) var(--tm-ease)',
                 '&:hover': { bgcolor: 'var(--surface-secondary)' },
               }}
             >
@@ -64,7 +64,7 @@ export function TopGuestProducts({ topProducts }: TopGuestProductsProps) {
                   width: 18,
                   textAlign: 'center',
                   fontWeight: 700,
-                  fontFamily: fontFamilies.mono,
+                  fontFamily: qeFont.mono,
                   color: 'var(--text-tertiary)',
                   fontSize: iosTypographyScale.caption2,
                 }}
@@ -91,7 +91,7 @@ export function TopGuestProducts({ topProducts }: TopGuestProductsProps) {
                   sx={{
                     height: 4,
                     borderRadius: 2,
-                    bgcolor: alpha(emeraldCore.primary, 0.1),
+                    bgcolor: 'var(--tm-accent-wash)',
                     overflow: 'hidden',
                   }}
                 >
@@ -100,21 +100,21 @@ export function TopGuestProducts({ topProducts }: TopGuestProductsProps) {
                       width: barWidth,
                       height: '100%',
                       borderRadius: 2,
-                      bgcolor: emeraldCore.primary,
-                      transition: cssTransition.slow,
+                      bgcolor: 'var(--tm-accent)',
+                      transition: 'width var(--tm-slow) var(--tm-ease)',
                     }}
                   />
                 </Box>
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-                <TrendingUp size={12} style={{ color: emeraldCore.primary }} />
+                <TrendingUp size={12} style={{ color: 'var(--tm-accent)' }} />
                 <Typography
                   variant="caption"
                   sx={{
-                    fontFamily: fontFamilies.mono,
+                    fontFamily: qeFont.mono,
                     fontWeight: 600,
-                    color: emeraldCore.primary,
+                    color: 'var(--tm-accent)',
                     fontSize: iosTypographyScale.caption2,
                   }}
                 >

@@ -2,15 +2,15 @@
 name: Tierra Madre — Quiet Emerald (DS3)
 description: The one design system for Tierra Madre's Colombian emerald catalog and sales platform — theme is data, never a fork.
 colors:
-  bg-gallery-wall: '#F7F8F8'
+  bg-gallery-wall: '#E6EAE8'
   bg-gallery-wall-dark: '#0E1110'
-  surface-raised: '#FFFFFF'
+  surface-raised: '#FAFDFC'
   surface-raised-dark: '#15191A'
-  well-vitrine-floor: '#F1F2F2'
+  well-vitrine-floor: '#E0E7E4'
   well-vitrine-floor-dark: '#1B1F1F'
-  border-hairline: '#E4E7E5'
+  border-hairline: '#D2DBD7'
   border-hairline-dark: '#272C2B'
-  divider: '#EBEDEC'
+  divider: '#DEE4E1'
   divider-dark: '#222726'
   text-primary: '#14181A'
   text-primary-dark: '#EAEDEB'
@@ -32,44 +32,44 @@ colors:
   warning-dark: '#D9A94E'
 typography:
   display:
-    fontFamily: 'Cormorant Garamond, Cormorant, Georgia, serif'
+    fontFamily: 'EB Garamond, Cormorant Garamond, Georgia, serif'
     fontSize: 'clamp(2.25rem, 5vw, 3.5rem)'
     fontWeight: 500
     lineHeight: 1.05
     letterSpacing: '-0.01em'
   title-1:
-    fontFamily: 'Cormorant Garamond, Cormorant, Georgia, serif'
+    fontFamily: 'EB Garamond, Cormorant Garamond, Georgia, serif'
     fontSize: '1.75rem'
     fontWeight: 500
     lineHeight: 1.15
   title-2:
-    fontFamily: 'Cormorant Garamond, Cormorant, Georgia, serif'
+    fontFamily: 'EB Garamond, Cormorant Garamond, Georgia, serif'
     fontSize: '1.375rem'
     fontWeight: 500
     lineHeight: 1.2
   headline:
-    fontFamily: 'Hanken Grotesk, system-ui, sans-serif'
+    fontFamily: 'Libre Franklin, system-ui, sans-serif'
     fontSize: '1.0625rem'
     fontWeight: 600
     lineHeight: 1.3
   body:
-    fontFamily: 'Hanken Grotesk, system-ui, sans-serif'
+    fontFamily: 'Libre Franklin, system-ui, sans-serif'
     fontSize: '1.0625rem'
     fontWeight: 400
     lineHeight: 1.55
   footnote:
-    fontFamily: 'Hanken Grotesk, system-ui, sans-serif'
+    fontFamily: 'Libre Franklin, system-ui, sans-serif'
     fontSize: '0.8125rem'
     fontWeight: 400
     lineHeight: 1.45
   overline:
-    fontFamily: 'DM Mono, SF Mono, monospace'
+    fontFamily: 'Libre Franklin, system-ui, sans-serif'
     fontSize: '0.6875rem'
     fontWeight: 500
     letterSpacing: '0.14em'
     lineHeight: 1.4
   data:
-    fontFamily: 'DM Mono, SF Mono, monospace'
+    fontFamily: 'Libre Franklin, system-ui, sans-serif'
     fontWeight: 500
     fontVariationSettings: 'tabular-nums'
 rounded:
@@ -131,7 +131,7 @@ The system explicitly rejects its own predecessor, "Emerald iOS v1": silver meta
 - One saturated hue in the entire product — the emerald. Everything else is a cool, green-tinted grayscale.
 - Depth is borders-first: hairlines and surface steps, not drop shadows. One editorial shadow exists, reserved for true floating layers.
 - Theme is data, never a fork: "Quiet Emerald," "Foto," and "Atelier" are token presets passed into one canonical component set, not separate component libraries.
-- Serif (Cormorant) is a display voice for piece names and titles; sans (Hanken Grotesk) carries every functional surface; mono (DM Mono) is reserved for gemology and money — carats, prices, item numbers — always tabular.
+- Serif (EB Garamond) is a display voice for piece names and titles; sans (Libre Franklin) carries every functional surface _including_ gemology and money — carats, prices, item numbers — set in tabular figures. There is no monospace in the system.
 
 ## 2. Colors
 
@@ -145,11 +145,11 @@ A cool, green-tinted neutral scale carrying almost the entire surface, with the 
 
 ### Neutral
 
-- **Gallery Wall** (`#F7F8F8` light / `#0E1110` dark): app background.
-- **Surface** (`#FFFFFF` light / `#15191A` dark): cards and raised chrome.
-- **Vitrine Floor** (`#F1F2F2` light / `#1B1F1F` dark): the image well behind a piece — the one surface a stone photograph sits on.
-- **Hairline Border** (`#E4E7E5` light / `#272C2B` dark): 1px component borders.
-- **Divider** (`#EBEDEC` light / `#222726` dark): 1px row/section rules, one step quieter than a border.
+- **Gallery Wall** (`#E6EAE8` light / `#0E1110` dark): app background. In light it sits a real lightness step below the card so a piece reads as a lit object resting on it, not ink on a white sheet (all light neutrals carry a faint emerald tint, OKLCH H166 chroma ~0.006 — no clinical `#fff`).
+- **Surface** (`#FAFDFC` light / `#15191A` dark): cards and raised chrome — the brightest surface, the lit pedestal.
+- **Vitrine Floor** (`#E0E7E4` light / `#1B1F1F` dark): the image well behind a piece — the one surface a stone photograph sits on; the deepest of the three light surfaces so the well reads as an inset.
+- **Hairline Border** (`#D2DBD7` light / `#272C2B` dark): 1px component borders.
+- **Divider** (`#DEE4E1` light / `#222726` dark): 1px row/section rules, one step quieter than a border.
 - **Text Primary / Muted / Subtle** (`#14181A` / `#5C6360` / `#8C928F` light; `#EAEDEB` / `#9AA09D` / `#6B726F` dark): the four-level text hierarchy (a fourth, disabled, sits at 45% opacity of primary). A screen using only two levels has flat hierarchy.
 
 ### Semantic
@@ -165,11 +165,12 @@ A cool, green-tinted neutral scale carrying almost the entire surface, with the 
 
 ## 3. Typography
 
-**Display Font:** Cormorant Garamond (fallback: Cormorant, Georgia, serif)
-**Body Font:** Hanken Grotesk (fallback: system sans-serif)
-**Label/Mono Font:** DM Mono (fallback: SF Mono, monospace)
+**Display Font:** EB Garamond (fallback: Cormorant Garamond, Georgia, serif)
+**Body / Label / Data Font:** Libre Franklin (fallback: system sans-serif)
 
-**Character:** An editorial serif for the pieces themselves — names, titles, anything the eye should linger on — paired with a plain functional sans for everything the hand operates, and a tabular mono for anything measured in carats or pesos. Three families, three jobs, no fourth.
+**Character:** The "auction catalogue" pairing — an open Garamond for the pieces themselves (the register of a Sotheby's or Brilliant Earth catalogue: provenance and calm authority, not runway drama) over Libre Franklin, the open equivalent of Benton Sans, for every functional surface. Two families, and the sans also carries the numbers.
+
+**No monospace.** High-jewelry catalogues (Sotheby's, Net-a-Porter, 1stDibs, Brilliant Earth, Blue Nile) set prices in the _same_ sans as the card metadata, distinguished by weight — never in a monospace. Fixed-width digit cells read mechanical, like code or a receipt, which is the opposite of hand-craft. Alignment comes from the OpenType `tnum` (tabular figures) feature applied to a proportional face, not from a monospaced font.
 
 ### Hierarchy
 
@@ -179,14 +180,16 @@ A cool, green-tinted neutral scale carrying almost the entire surface, with the 
 - **Headline** (sans 600, 1.0625rem, line-height 1.3): emphasized rows, sheet titles.
 - **Body** (sans 400, 1.0625rem, line-height 1.55): default copy — 17px minimum on mobile, never smaller. Cap line length at 65-75ch.
 - **Footnote** (sans 400, 0.8125rem, line-height 1.45): metadata.
-- **Overline** (mono 500, 0.6875rem, +0.14em, uppercase, line-height 1.4): section labels, eyebrows.
-- **Data** (mono 500, tabular-nums, any size): prices, carats, quantities, item numbers — so columns and tickers never jitter.
+- **Overline** (sans 500, 0.6875rem, +0.14em, uppercase, line-height 1.4): section labels, eyebrows, grade stamps.
+- **Data** (sans 500, tabular-nums, any size): prices, carats, quantities, item numbers — so columns and tickers never jitter.
 
 ### Named Rules
 
 **The Display-Voice Rule.** Serif is a display voice, never a paragraph voice. If it wraps past 3 lines, it should have been Body.
 
-**The Tabular-Nums Rule.** Any number a user compares against another number — a price, a weight, an item count — renders in Data (mono, tabular). Proportional-width digits in a price column is a bug, not a style choice.
+**The Tabular-Nums Rule.** Any number a user compares against another number — a price, a weight, an item count — renders in Data (sans, `tnum`). Proportional-width digits in a price column is a bug, not a style choice. The inverse is also a bug: reaching for a _monospace_ to get that alignment. Tabular figures give aligned digits inside an elegant proportional face; a mono gives you a receipt.
+
+**The One-Line-Name Rule.** A piece name on a card is a single line, ellipsised, with the full name on `title`/`aria-label`. Reserving a second line to keep image wells uniform leaves dead space under every short name; one line keeps the wells just as uniform and buys the name a larger, more editorial size.
 
 ## 4. Elevation
 

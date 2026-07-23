@@ -1115,16 +1115,14 @@ export default withApiHandler(
         req.query?.quotationNumber as string | string[] | undefined,
       );
 
-      // Public view — fetch one cotización + products by number (no auth).
+      // Public view DESACTIVADO por seguridad (IDOR): devolvía cualquier
+      // cotización — nombre y teléfono del cliente + precios — por su número,
+      // que es enumerable (TM-AAAA-NNNN), sin token ni auth. Cualquiera podía
+      // recorrer los números y cosechar los datos de todos los clientes.
+      // No se reactiva hasta ligar un token de alta entropía al registro y
+      // exigirlo aquí (comparación timing-safe) + en la URL del QR y en /c/.
       if (action === 'public' && quotationNumber) {
-        const data = await getCotizacionByQuotationNumber(
-          sheets,
-          quotationNumber,
-        );
-        if (!data) {
-          return sendError(res, 404, 'Cotización no encontrada');
-        }
-        return sendSuccess(res, data);
+        return sendError(res, 404, 'Cotización no encontrada');
       }
 
       // Stats endpoint for analytics dashboard

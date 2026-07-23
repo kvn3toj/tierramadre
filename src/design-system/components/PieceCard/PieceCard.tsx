@@ -27,9 +27,18 @@ export interface PieceCardProps {
   overlays?: React.ReactNode;
   name: string;
   specLine: string;
+  /** Caller-rendered grade/quality node shown on the value row, LEFT of the
+   * price. When provided it replaces `specLine` on that row — grades are short
+   * (e.g. "C. Superior", "F2") so the price never truncates the way a full
+   * grade·carat·mine spec line does. `specLine` remains the fallback for
+   * callers that don't split identity from grade. */
+  grade?: React.ReactNode;
   /** Caller-rendered price node (e.g. PriceDisplay) — positioned, not restyled;
    * price formatting/typography stays the caller's own opinionated concern. */
   price?: React.ReactNode;
+  /** Caller-rendered cut indicator (gem glyph + cut name) shown in the footer,
+   * under the name — keeps the image well clean (no on-photo badge). */
+  cut?: React.ReactNode;
   itemNumber?: string | number;
   onClick?: () => void;
   ariaLabel?: string;
@@ -49,7 +58,9 @@ export const PieceCard: React.FC<PieceCardProps> = ({
   overlays,
   name,
   specLine,
+  grade,
   price,
+  cut,
   itemNumber,
   onClick,
   ariaLabel,
@@ -81,18 +92,24 @@ export const PieceCard: React.FC<PieceCardProps> = ({
         }}
       >
         <Typography
+          title={name}
           sx={{
             fontFamily: 'var(--tm-font-serif)',
             fontWeight: 500,
-            fontSize: compact ? '1rem' : '1.1875rem',
-            lineHeight: 1.15,
+            fontSize: compact ? '1.0625rem' : '1.25rem',
+            lineHeight: 1.2,
             color: 'var(--tm-text)',
             minWidth: 0,
             flex: 1,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
+            // ONE line, ellipsised. The old two-line reserve kept every image
+            // well the same height, but it left a blank second line under every
+            // short name — dead space on most cards. A single line keeps the
+            // wells just as uniform (every name is exactly one line now), drops
+            // the gap, and buys the piece name a larger, more editorial size.
+            // The full name stays reachable via `title` and the card's aria-label.
+            whiteSpace: 'nowrap',
             overflow: 'hidden',
+            textOverflow: 'ellipsis',
           }}
         >
           {name}
@@ -110,9 +127,14 @@ export const PieceCard: React.FC<PieceCardProps> = ({
           </Typography>
         )}
       </Box>
-      {/* Detail row: spec + price. Price is nowrap on the right; the spec keeps
-          the full left column, so a short spec ("Plata", "Oro 18k") is never
-          truncated by the price. */}
+      {/* Cut row: the gem glyph + cut name, in the footer (not on the photo). */}
+      {cut && <Box sx={{ mt: compact ? '3px' : '5px' }}>{cut}</Box>}
+      {/* Value row: grade (or spec) on the left, price nowrap on the right.
+          When the caller supplies a `grade` node it takes the left slot — a
+          short grade stamp ("C. Superior", "F2") that never truncates the
+          price. Callers that don't split identity from grade fall back to the
+          `specLine`, which keeps the full left column so a short spec
+          ("Plata", "Oro 18k") is never truncated by the price. */}
       <Box
         sx={{
           display: 'flex',
@@ -122,21 +144,25 @@ export const PieceCard: React.FC<PieceCardProps> = ({
           mt: compact ? '4px' : '6px',
         }}
       >
-        <Typography
-          sx={{
-            fontFamily: 'var(--tm-font-mono)',
-            fontSize: '0.59rem',
-            letterSpacing: '0.05em',
-            color: 'var(--tm-subtle)',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            minWidth: 0,
-            flex: 1,
-          }}
-        >
-          {specLine}
-        </Typography>
+        <Box sx={{ minWidth: 0, flex: 1, display: 'flex', overflow: 'hidden' }}>
+          {grade ?? (
+            <Typography
+              sx={{
+                fontFamily: 'var(--tm-font-mono)',
+                fontSize: '0.59rem',
+                letterSpacing: '0.05em',
+                color: 'var(--tm-subtle)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                minWidth: 0,
+                flex: 1,
+              }}
+            >
+              {specLine}
+            </Typography>
+          )}
+        </Box>
         {price && (
           <Box sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}>{price}</Box>
         )}

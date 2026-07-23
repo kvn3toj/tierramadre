@@ -16,7 +16,8 @@ import {
   Skeleton,
   IconButton,
 } from '@mui/material';
-import { ChevronLeft, Package, Heart, Share2 } from 'lucide-react';
+import { ChevronLeft, Package, Heart, Share2, Scale } from 'lucide-react';
+import { useComparisonContext } from '../../../contexts/ComparisonContext';
 
 import { useShare } from '../../../hooks/useShare';
 import { useHaptics } from '../../../hooks/useHaptics';
@@ -88,6 +89,10 @@ export default function ProductDetail() {
   const { shouldShowPrices } = usePriceShare();
   const { isLiteral, isFaithful } = useRedesignVariant();
   const qe = getQuietEmerald(mode);
+  // Comparison now lives on the product page (removed from the grid cards to keep
+  // the vitrine image clean). Shared via context so the bottom bar/modal in the
+  // catalog reflect what's added here.
+  const comparison = useComparisonContext();
   const { isFavorite, toggleFavorite } = useFavorites();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -697,6 +702,38 @@ export default function ProductDetail() {
                 fill={isFav ? qe.accent : 'none'}
                 strokeWidth={isFav ? 0 : 1.6}
               />
+            </IconButton>
+          )}
+          {shouldShowPrices && !isProvider && (
+            <IconButton
+              onClick={() => {
+                const wasSelected = comparison.isSelected(product.item);
+                comparison.toggleComparison(product);
+                triggerHaptic('light');
+                setSnackbarMessage(
+                  wasSelected
+                    ? 'Quitada de comparación'
+                    : 'Añadida a comparación',
+                );
+                setSnackbarOpen(true);
+              }}
+              disabled={
+                !comparison.isSelected(product.item) && !comparison.canAddMore
+              }
+              aria-label={
+                comparison.isSelected(product.item)
+                  ? 'Quitar de comparación'
+                  : 'Agregar a comparación'
+              }
+              sx={{
+                color: comparison.isSelected(product.item)
+                  ? qe.accent
+                  : qe.muted,
+                width: 36,
+                height: 36,
+              }}
+            >
+              <Scale size={17} />
             </IconButton>
           )}
         </Box>

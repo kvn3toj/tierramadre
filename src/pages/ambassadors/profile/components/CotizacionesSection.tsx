@@ -4,15 +4,15 @@
  */
 
 import React from 'react';
-import { Box, Typography, Paper, Chip, alpha, useTheme } from '@mui/material';
+import { Box, Typography, Paper } from '@mui/material';
 import { FileText } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { SavedCotizacion } from '../../../../hooks/useCotizacionHistory';
 import {
-  emeraldCore,
-  surfacesLight,
-  surfacesDark,
+  Badge,
+  EmptyState,
   Skeleton,
+  containedScrollX,
 } from '../../../../design-system';
 import { CotizacionCard } from './CotizacionCard';
 
@@ -32,9 +32,7 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
     onDeleteCotizacion,
     onDuplicateCotizacion,
   }) => {
-    const theme = useTheme();
     const { t } = useLanguage();
-    const isLight = theme.palette.mode === 'light';
 
     return (
       <Paper
@@ -42,14 +40,10 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
         sx={{
           p: 3,
           mb: 3,
-          borderRadius: 3,
-          bgcolor: isLight
-            ? surfacesLight.surface.default
-            : surfacesDark.background.secondary,
+          borderRadius: 'var(--tm-radius-card)',
+          bgcolor: 'var(--tm-surface)',
           border: '1px solid',
-          borderColor: isLight
-            ? surfacesLight.border.light
-            : surfacesDark.border.light,
+          borderColor: 'var(--tm-border)',
         }}
       >
         <Box
@@ -65,14 +59,14 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
               sx={{
                 width: 36,
                 height: 36,
-                borderRadius: 2,
-                bgcolor: alpha(emeraldCore.primary, 0.1),
+                borderRadius: 'var(--tm-radius-control)',
+                bgcolor: 'var(--tm-accent-wash)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <FileText size={20} color={emeraldCore.primary} />
+              <FileText size={20} style={{ color: 'var(--tm-accent)' }} />
             </Box>
             <Box>
               <Typography
@@ -88,21 +82,16 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
             </Box>
           </Box>
           {cotizaciones.length > 0 && (
-            <Chip
-              size="small"
+            <Badge
+              tone="accent"
               label={`${cotizaciones.length} cotizaciones`}
-              sx={{
-                bgcolor: alpha(emeraldCore.primary, 0.1),
-                color: emeraldCore.primary,
-                fontWeight: 600,
-              }}
             />
           )}
         </Box>
 
         {/* Cotizaciones Loading */}
         {isLoading && (
-          <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 1 }}>
+          <Box sx={{ display: 'flex', gap: 2, ...containedScrollX, pb: 1 }}>
             {[1, 2, 3].map((i) => (
               <Box key={i} sx={{ flexShrink: 0 }}>
                 <Skeleton variant="rect" width={200} height={280} />
@@ -113,29 +102,17 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
 
         {/* Cotizaciones Empty State */}
         {!isLoading && cotizaciones.length === 0 && (
-          <Box
-            sx={{
-              textAlign: 'center',
-              py: 4,
-              bgcolor: alpha(emeraldCore.primary, 0.02),
-              borderRadius: 2,
-              border: `1px dashed ${alpha(emeraldCore.primary, 0.3)}`,
-            }}
-          >
-            <FileText
-              size={40}
-              color={theme.palette.text.secondary}
-              style={{ marginBottom: 12 }}
-            />
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-              {t.ambassador.museum?.noSavedQuotations ??
-                'Aún no tienes cotizaciones guardadas'}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              {t.ambassador.museum?.quotationsWillAppear ??
-                'Las cotizaciones que exportes aparecerán aquí'}
-            </Typography>
-          </Box>
+          <EmptyState
+            icon={FileText}
+            title={
+              t.ambassador.museum?.noSavedQuotations ??
+              'Aún no tienes cotizaciones guardadas'
+            }
+            subtitle={
+              t.ambassador.museum?.quotationsWillAppear ??
+              'Las cotizaciones que exportes aparecerán aquí'
+            }
+          />
         )}
 
         {/* Cotizaciones Gallery */}
@@ -144,14 +121,14 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
             sx={{
               display: 'flex',
               gap: 2,
-              overflowX: 'auto',
+              ...containedScrollX,
               pb: 1,
               mx: -1,
               px: 1,
               '&::-webkit-scrollbar': { height: 6 },
               '&::-webkit-scrollbar-thumb': {
-                bgcolor: alpha(emeraldCore.primary, 0.3),
-                borderRadius: 3,
+                bgcolor: 'var(--tm-border)',
+                borderRadius: 'var(--tm-radius-pill)',
               },
             }}
           >
@@ -166,7 +143,6 @@ export const CotizacionesSection = React.memo<CotizacionesSectionProps>(
                     ? () => onDuplicateCotizacion(cot)
                     : undefined
                 }
-                isLight={isLight}
               />
             ))}
           </Box>

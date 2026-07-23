@@ -7,13 +7,22 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, Chip, alpha, IconButton,
-  Popover, Slider, Button, Dialog, DialogTitle,
+  Box, Typography, IconButton,
+  Popover, Slider, Dialog, DialogTitle,
   DialogContent, DialogContentText, DialogActions,
-  TextField, InputAdornment, ToggleButton, ToggleButtonGroup,
+  InputAdornment, ToggleButton, ToggleButtonGroup,
 } from '@mui/material';
 import { Link2, CheckCircle, Clock, XCircle, Send, Ban, Archive, Search, ArrowUpDown } from 'lucide-react';
-import { emeraldCore, accentColors, iosTypographyScale, primitiveSpacing as spacing, radius, fontFamilies } from '../../../design-system';
+import {
+  Badge,
+  Button,
+  type BadgeTone,
+  TextField,
+  iosTypographyScale,
+  primitiveSpacing as spacing,
+  radius,
+  qeFont,
+} from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { SectionHeading } from './SectionHeading';
@@ -33,10 +42,13 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
 }
 
-const STATUS_CONFIG = {
-  active: { label: 'Activa', color: accentColors.success.light, icon: CheckCircle },
-  pending: { label: 'Pendiente', color: accentColors.warning.light, icon: Clock },
-  expired: { label: 'Expirada', color: accentColors.error?.light || '#f44336', icon: XCircle },
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; tone: BadgeTone; icon: React.ElementType }
+> = {
+  active: { label: 'Activa', tone: 'accent', icon: CheckCircle },
+  pending: { label: 'Pendiente', tone: 'warn', icon: Clock },
+  expired: { label: 'Expirada', tone: 'danger', icon: XCircle },
 };
 
 export function InvitationSummary({
@@ -108,12 +120,12 @@ export function InvitationSummary({
           sx={{
             p: spacing.lg,
             borderRadius: radius.lg,
-            bgcolor: alpha(emeraldCore.primary, 0.04),
-            border: `1px dashed ${alpha(emeraldCore.primary, 0.2)}`,
+            bgcolor: 'var(--tm-accent-wash)',
+            border: '1px dashed var(--tm-border)',
             textAlign: 'center',
           }}
         >
-          <Archive size={32} style={{ color: emeraldCore.primary, marginBottom: 8, opacity: 0.4 }} />
+          <Archive size={32} style={{ color: 'var(--tm-accent)', marginBottom: 8, opacity: 0.4 }} />
           <Typography variant="body2" sx={{ color: 'var(--text-secondary)', fontSize: iosTypographyScale.footnote }}>
             {t.profile.noInvitations ?? 'No hay invitaciones aún'}
           </Typography>
@@ -123,10 +135,11 @@ export function InvitationSummary({
   }
 
   const metricCards = [
-    { label: t.profile.total, value: metrics.total, icon: Link2, color: emeraldCore.primary },
-    { label: t.profile.active, value: metrics.active, icon: CheckCircle, color: accentColors.success.light },
-    { label: t.profile.pending, value: metrics.pending, icon: Clock, color: accentColors.warning.light },
-    ...(metrics.expired > 0 ? [{ label: t.profile.expired ?? 'Expiradas', value: metrics.expired, icon: XCircle, color: accentColors.error?.light || '#f44336' }] : []),
+    { label: t.profile.total, value: metrics.total, icon: Link2, color: 'var(--tm-accent)' },
+    { label: t.profile.active, value: metrics.active, icon: CheckCircle, color: 'var(--tm-accent)' },
+    { label: t.profile.pending, value: metrics.pending, icon: Clock, color: 'var(--tm-warning)' },
+    ...(metrics.expired > 0 ? [{ label: t.profile.expired ?? 'Expiradas', value: metrics.expired, icon: XCircle, color: 'var(--tm-danger)' }] : []),
+
   ];
 
   return (
@@ -141,8 +154,8 @@ export function InvitationSummary({
             sx={{
               p: 1.5,
               borderRadius: radius.md,
-              bgcolor: alpha(color, 0.06),
-              border: `1px solid ${alpha(color, 0.12)}`,
+              bgcolor: 'var(--tm-well)',
+              border: '1px solid var(--tm-border)',
               textAlign: 'center',
             }}
           >
@@ -150,7 +163,7 @@ export function InvitationSummary({
             <Typography
               variant="h6"
               sx={{
-                fontFamily: fontFamilies.mono,
+                fontFamily: qeFont.mono,
                 fontWeight: 700,
                 fontSize: '1.1rem',
                 color,
@@ -170,7 +183,7 @@ export function InvitationSummary({
       {invitations.length > 2 && (
         <Box sx={{ display: 'flex', gap: spacing.xs, mb: spacing.xs, alignItems: 'center' }}>
           <TextField
-            size="small"
+            size="sm"
             placeholder="Buscar invitado…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -183,16 +196,7 @@ export function InvitationSummary({
                 ),
               },
             }}
-            sx={{
-              flex: 1,
-              '& .MuiInputBase-root': {
-                borderRadius: radius.md,
-                fontSize: iosTypographyScale.footnote,
-                height: 32,
-                bgcolor: 'var(--surface-primary)',
-              },
-              '& .MuiOutlinedInput-notchedOutline': { borderColor: alpha(emeraldCore.primary, 0.15) },
-            }}
+            sx={{ flex: 1 }}
           />
           <ToggleButtonGroup
             size="small"
@@ -205,10 +209,10 @@ export function InvitationSummary({
                 px: 1, py: 0,
                 fontSize: iosTypographyScale.caption2,
                 fontWeight: 600,
-                border: `1px solid ${alpha(emeraldCore.primary, 0.15)}`,
+                border: '1px solid var(--tm-border)',
                 color: 'var(--text-secondary)',
                 textTransform: 'none',
-                '&.Mui-selected': { bgcolor: alpha(emeraldCore.primary, 0.1), color: emeraldCore.primary },
+                '&.Mui-selected': { bgcolor: 'var(--tm-accent-wash)', color: 'var(--tm-accent)' },
               },
             }}
           >
@@ -257,12 +261,12 @@ export function InvitationSummary({
                 sx={{
                   width: 28, height: 28,
                   borderRadius: radius.sm,
-                  bgcolor: alpha(statusConf.color, 0.1),
+                  bgcolor: 'var(--tm-well)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <Send size={12} style={{ color: statusConf.color }} />
+                <Send size={12} style={{ color: 'var(--tm-muted)' }} />
               </Box>
 
               <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -281,7 +285,7 @@ export function InvitationSummary({
                       display: 'block',
                       fontSize: iosTypographyScale.footnote,
                       fontWeight: 600,
-                      color: emeraldCore.primary,
+                      color: 'var(--tm-accent)',
                       cursor: 'pointer',
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                       '&:hover': { textDecoration: 'underline' },
@@ -303,44 +307,41 @@ export function InvitationSummary({
                 )}
               </Box>
 
-              {/* Multiplier chip */}
-              <Chip
-                label={`x${(inv.guestMultiplier ?? 1).toFixed(1)}`}
-                size="small"
-                onClick={isEditable ? (e) => handleEditOpen(e, inv) : undefined}
-                sx={{
-                  height: 20, fontSize: '0.6rem', fontWeight: 700,
-                  bgcolor: alpha(emeraldCore.primary, isEditable ? 0.1 : 0.05),
-                  color: isEditable ? emeraldCore.primary : 'var(--text-tertiary)',
-                  border: `1px solid ${alpha(emeraldCore.primary, isEditable ? 0.2 : 0.08)}`,
-                  cursor: isEditable ? 'pointer' : 'default',
-                  '&:hover': isEditable ? { bgcolor: alpha(emeraldCore.primary, 0.15) } : {},
-                }}
-              />
+              {/* Multiplier. When it can be edited it is a real button at a
+                  real target size, not a 20px clickable chip. */}
+              {isEditable ? (
+                <Button
+                  variant="tinted"
+                  size="sm"
+                  onClick={(e) => handleEditOpen(e, inv)}
+                  aria-label={`Editar multiplicador de ${inv.guestName || inv.shortCode}`}
+                  sx={{ flexShrink: 0, minWidth: 0, fontVariantNumeric: 'tabular-nums' }}
+                >
+                  {`x${(inv.guestMultiplier ?? 1).toFixed(1)}`}
+                </Button>
+              ) : (
+                <Badge
+                  tone="neutral"
+                  label={`x${(inv.guestMultiplier ?? 1).toFixed(1)}`}
+                />
+              )}
 
-              <Chip
-                label={statusConf.label}
-                size="small"
-                sx={{
-                  height: 20, fontSize: '0.6rem', fontWeight: 600,
-                  bgcolor: alpha(statusConf.color, 0.1),
-                  color: statusConf.color,
-                  border: `1px solid ${alpha(statusConf.color, 0.2)}`,
-                }}
-              />
+              <Badge tone={statusConf.tone} label={statusConf.label} />
 
               {isEditable && (
                 <IconButton
-                  size="small"
                   disabled={isMutating}
                   onClick={() => setExpireCode(inv.shortCode)}
+                  aria-label={`Expirar invitación ${inv.shortCode}`}
                   sx={{
-                    width: 24, height: 24, p: 0,
+                    width: 44,
+                    height: 44,
+                    flexShrink: 0,
                     color: 'var(--text-tertiary)',
-                    '&:hover': { color: accentColors.error?.light || '#f44336' },
+                    '&:hover': { color: 'var(--tm-danger)' },
                   }}
                 >
-                  <Ban size={13} />
+                  <Ban size={16} />
                 </IconButton>
               )}
 
@@ -373,20 +374,17 @@ export function InvitationSummary({
           min={1} max={4} step={0.1}
           valueLabelDisplay="auto"
           valueLabelFormat={(v) => `x${v}`}
-          sx={{ color: emeraldCore.primary, '& .MuiSlider-thumb': { width: 16, height: 16 } }}
+          sx={{ color: 'var(--tm-accent)', '& .MuiSlider-thumb': { width: 16, height: 16 } }}
         />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 1 }}>
-          <Button size="small" onClick={() => setEditAnchor(null)} sx={{ textTransform: 'none', fontSize: '0.75rem' }}>
+          <Button variant="plain" size="sm" onClick={() => setEditAnchor(null)}>
             {t.profile.cancel}
           </Button>
           <Button
-            size="small" variant="contained"
+            variant="primary"
+            size="sm"
             disabled={editCode ? mutatingCodes.has(editCode) : false}
             onClick={handleEditSave}
-            sx={{
-              textTransform: 'none', fontSize: '0.75rem',
-              bgcolor: emeraldCore.primary, '&:hover': { bgcolor: emeraldCore.dark },
-            }}
           >
             {t.profile.save}
           </Button>
@@ -408,15 +406,10 @@ export function InvitationSummary({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setExpireCode(null)} sx={{ textTransform: 'none' }}>
+          <Button variant="plain" onClick={() => setExpireCode(null)}>
             {t.profile.cancel}
           </Button>
-          <Button
-            onClick={handleExpireConfirm}
-            color="error"
-            variant="contained"
-            sx={{ textTransform: 'none' }}
-          >
+          <Button variant="danger" onClick={handleExpireConfirm}>
             {t.profile.expire}
           </Button>
         </DialogActions>
