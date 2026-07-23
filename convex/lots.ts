@@ -328,11 +328,13 @@ export const update = action({
 });
 
 /**
- * Set the catalog-grouping fields (`fotoLoteUrl`, `mostrarComoLote`). These
- * are Convex-only display fields, so unlike `update` this:
- *   - works regardless of lot estado (grouping is decided at/after close), and
- *   - does NOT flip syncStatus or push to Sheets (the fields aren't synced).
- * Omitting a field leaves it unchanged; pass `fotoLoteUrl: ""` to clear it.
+ * Set the catalog-grouping fields (`fotoLoteUrl`, `mostrarComoLote`). Unlike
+ * `update` this works regardless of lot estado (grouping is decided at/after
+ * close). `fotoLoteUrl` is Convex-only; `mostrarComoLote` IS a synced sheet
+ * column (Lotes!U), so changing it flips syncStatus and pushes so the sheet
+ * reflects the flag — and the reverse edit (sheet → Convex) is allowlisted in
+ * sheetPullMaps.ts. Omitting a field leaves it unchanged; pass `fotoLoteUrl: ""`
+ * to clear it.
  */
 const setLoteDisplayArgs = {
   id: v.id('lots'),
@@ -351,7 +353,18 @@ export const _setLoteDisplay = internalMutation({
     if (fotoLoteUrl !== undefined) patch.fotoLoteUrl = fotoLoteUrl;
     if (mostrarComoLote !== undefined) patch.mostrarComoLote = mostrarComoLote;
     if (Object.keys(patch).length === 0) return { id, changed: false };
+    // mostrarComoLote is a synced sheet column (U) — push so the sheet reflects it.
+    if (mostrarComoLote !== undefined) {
+      patch.syncStatus = 'pending';
+      patch.syncError = undefined;
+    }
     await ctx.db.patch(id, patch);
+    if (mostrarComoLote !== undefined) {
+      await ctx.scheduler.runAfter(0, api.lots._pushToSheet, {
+        id,
+        mode: 'patch',
+      });
+    }
     return { id, changed: true };
   },
 });

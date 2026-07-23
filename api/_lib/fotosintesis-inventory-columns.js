@@ -42,56 +42,60 @@
 
 export const FOTO_INVENTARIO_COLUMNS = [
   // ── Identity + descriptive block (A–K) ──
-  { header: "Item", key: "item", id: true }, // A — natural key (itemId)
-  { header: "FECHA INGRESO INVENTARIO", key: "fechaIngreso", preserve: true }, // B
-  { header: "Nombre", key: "nombre" }, // C
-  { header: "Peso (ct)", key: "peso" }, // D
-  { header: "Color", key: "color" }, // E
-  { header: "Calidad", key: "calidad" }, // F
-  { header: "Cant.", key: "cantidad", numeric: true }, // G
-  { header: "Talla", key: "talla" }, // H
-  { header: "Medidas", key: "medidas" }, // I
-  { header: "Medidas (valores)", key: "medidasValores" }, // J
-  { header: "Categoría", key: "categoria" }, // K
+  { header: 'Item', key: 'item', id: true }, // A — natural key (itemId)
+  { header: 'FECHA INGRESO INVENTARIO', key: 'fechaIngreso', preserve: true }, // B
+  { header: 'Nombre', key: 'nombre' }, // C
+  { header: 'Peso (ct)', key: 'peso' }, // D
+  { header: 'Color', key: 'color' }, // E
+  { header: 'Calidad', key: 'calidad' }, // F
+  { header: 'Cant.', key: 'cantidad', numeric: true }, // G
+  { header: 'Talla', key: 'talla' }, // H
+  { header: 'Medidas', key: 'medidas' }, // I
+  { header: 'Medidas (valores)', key: 'medidasValores' }, // J
+  { header: 'Categoría', key: 'categoria' }, // K
   // ── Price block (L–N) — kept consecutive for at-a-glance pricing ──
   // NOTE: the legacy "Precio COP" (precioCOP) column was retired from this SOT
-  // mirror on 2026-05-29 (audit: column was ~82% empty; the public price is the
-  // ambassador tier in `precioEmbajadorCOP`). The `precioCOP` field still exists
-  // in Convex (productInventory) as an app-only value — it is no longer mirrored
-  // to or pulled from this sheet. See scripts/delete-fotosintesis-column-l.mjs.
-  { header: "costoBaseCOP", key: "costoBaseCOP", numeric: true }, // L — costoTotalCOP × preponderancia%
-  { header: "precioEmbajadorCOP", key: "precioEmbajadorCOP", numeric: true }, // M — x1–x4 tier
-  { header: "precioConscienteCOP", key: "precioConscienteCOP", numeric: true }, // N — x1–x4 tier
+  // mirror on 2026-05-29 (audit: column was ~82% empty). The `precioCOP` field
+  // still exists in Convex (productInventory) as an app-only value — it is no
+  // longer mirrored to or pulled from this sheet.
+  // PRICE REFACTOR (2026-07-21): the two x1–x4 tiers were collapsed into ONE
+  // derived final price. M = precioFinalCOP (= costoBaseCOP × 2.6, computed in
+  // Convex and pushed here — see convex/_lib/pricing.ts). N is now a reserved
+  // empty column ("(sin uso)") so the positional mirror (O onward) is preserved
+  // without a moveDimension migration.
+  { header: 'costoBaseCOP', key: 'costoBaseCOP', numeric: true }, // L — costoTotalCOP × preponderancia%
+  { header: 'precioFinalCOP', key: 'precioFinalCOP', numeric: true }, // M — DERIVED: costoBaseCOP × 2.6
+  { header: '(sin uso)', key: '_sinUso', preserve: true }, // N — reserved/empty (was precioConscienteCOP)
   // ── Inventory / status descriptive fields (O–W) ──
-  { header: "UBICACIÓN", key: "ubicacion" }, // O
-  { header: "ASESOR", key: "asesor" }, // P
-  { header: "ESTADO", key: "estado" }, // Q
-  { header: "QR", key: "qr" }, // R
-  { header: "Colección", key: "coleccion" }, // S
-  { header: "CAJA", key: "caja" }, // T
-  { header: "preponderancia", key: "preponderancia", numeric: true }, // U — % of lot (Fotosíntesis)
-  { header: "ASESOR ACTUAL", key: "asesorActual" }, // V
-  { header: "ESTADO ASESOR", key: "estadoAsesor" }, // W
+  { header: 'UBICACIÓN', key: 'ubicacion' }, // O
+  { header: 'ASESOR', key: 'asesor' }, // P
+  { header: 'ESTADO', key: 'estado' }, // Q
+  { header: 'QR', key: 'qr' }, // R
+  { header: 'Colección', key: 'coleccion' }, // S
+  { header: 'CAJA', key: 'caja' }, // T
+  { header: 'preponderancia', key: 'preponderancia', numeric: true }, // U — % of lot (Fotosíntesis)
+  { header: 'ASESOR ACTUAL', key: 'asesorActual' }, // V
+  { header: 'ESTADO ASESOR', key: 'estadoAsesor' }, // W
   // ── Fotosíntesis v2 extension (X onward) ──
-  { header: "loteId", key: "loteId" }, // X — owning lot
-  { header: "mostrarEnCatalogo", key: "mostrarEnCatalogo" }, // Y
-  { header: "procedencia", key: "procedencia" }, // Z
-  { header: "observacion", key: "observacion" }, // AA
-  { header: "rendimientoEsperado", key: "rendimientoEsperado", numeric: true }, // AB — bruto
-  { header: "cantidadEstimada", key: "cantidadEstimada", numeric: true }, // AC — bruto
-  { header: "nivelRareza", key: "nivelRareza", numeric: true }, // AD
-  { header: "calificacion", key: "calificacion", numeric: true }, // AE
-  { header: "tipoEsmeralda", key: "tipoEsmeralda" }, // AF
-  { header: "subtipoForm", key: "subtipoForm" }, // AG — 9-subtype selector
-  { header: "tipoJoya", key: "tipoJoya" }, // AH
-  { header: "tecnicaJoya", key: "tecnicaJoya" }, // AI
-  { header: "minerales", key: "minerales" }, // AJ — comma-joined
-  { header: "complementos", key: "complementos" }, // AK — comma-joined
-  { header: "fotoUrl", key: "fotoUrl" }, // AL
-  { header: "certificadoUrl", key: "certificadoUrl" }, // AM
-  { header: "formulaGema", key: "formulaGema" }, // AN
-  { header: "formulaJoya", key: "formulaJoya" }, // AO
-  { header: "rangoDescuento", key: "rangoDescuento" }, // AP
+  { header: 'loteId', key: 'loteId' }, // X — owning lot
+  { header: 'mostrarEnCatalogo', key: 'mostrarEnCatalogo' }, // Y
+  { header: 'procedencia', key: 'procedencia' }, // Z
+  { header: 'observacion', key: 'observacion' }, // AA
+  { header: 'rendimientoEsperado', key: 'rendimientoEsperado', numeric: true }, // AB — bruto
+  { header: 'cantidadEstimada', key: 'cantidadEstimada', numeric: true }, // AC — bruto
+  { header: 'nivelRareza', key: 'nivelRareza', numeric: true }, // AD
+  { header: 'calificacion', key: 'calificacion', numeric: true }, // AE
+  { header: 'tipoEsmeralda', key: 'tipoEsmeralda' }, // AF
+  { header: 'subtipoForm', key: 'subtipoForm' }, // AG — 9-subtype selector
+  { header: 'tipoJoya', key: 'tipoJoya' }, // AH
+  { header: 'tecnicaJoya', key: 'tecnicaJoya' }, // AI
+  { header: 'minerales', key: 'minerales' }, // AJ — comma-joined
+  { header: 'complementos', key: 'complementos' }, // AK — comma-joined
+  { header: 'fotoUrl', key: 'fotoUrl' }, // AL
+  { header: 'certificadoUrl', key: 'certificadoUrl' }, // AM
+  { header: 'formulaGema', key: 'formulaGema' }, // AN
+  { header: 'formulaJoya', key: 'formulaJoya' }, // AO
+  { header: 'rangoDescuento', key: 'rangoDescuento' }, // AP
 ];
 
 /** Ordered header labels (row 1 of the Inventario tab). */
@@ -102,7 +106,7 @@ export const FOTO_INVENTARIO_HEADERS = FOTO_INVENTARIO_COLUMNS.map(
 /** Convert a 0-based column index to its A1 letter (0→A, 25→Z, 26→AA…). */
 export function columnIndexToLetter(index) {
   let n = index;
-  let letter = "";
+  let letter = '';
   do {
     letter = String.fromCharCode((n % 26) + 65) + letter;
     n = Math.floor(n / 26) - 1;

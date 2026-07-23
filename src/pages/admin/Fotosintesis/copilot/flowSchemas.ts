@@ -38,46 +38,46 @@ import {
   normalizeCalidad,
   normalizeColor,
   sanitizeSedeCode,
-} from "../../../../data/vocabularies.js";
-import type { AccessLevel } from "../../../../types/auth.js";
+} from '../../../../data/vocabularies.js';
+import type { AccessLevel } from '../../../../types/auth.js';
 import {
   buildPath,
   canAccess,
   firstMissingParam,
   getRouteById,
   navRoutesForLevel,
-} from "../../../../config/adminNavMap.js";
+} from '../../../../config/adminNavMap.js';
 
 // ─── Flow taxonomy ───────────────────────────────────────────────────
 
 export type GuidedFlow =
-  | "item-gema"
-  | "item-joya"
-  | "item-insumo"
-  | "lote"
-  | "venta"
-  | "provider"
-  | "client"
-  | "edit-existing"
-  | "batch-edit"
-  | "advisory";
+  | 'item-gema'
+  | 'item-joya'
+  | 'item-insumo'
+  | 'lote'
+  | 'venta'
+  | 'provider'
+  | 'client'
+  | 'edit-existing'
+  | 'batch-edit'
+  | 'advisory';
 
 export const GUIDED_FLOWS: readonly GuidedFlow[] = [
-  "item-gema",
-  "item-joya",
-  "item-insumo",
-  "lote",
-  "venta",
-  "provider",
-  "client",
-  "edit-existing",
-  "batch-edit",
-  "advisory",
+  'item-gema',
+  'item-joya',
+  'item-insumo',
+  'lote',
+  'venta',
+  'provider',
+  'client',
+  'edit-existing',
+  'batch-edit',
+  'advisory',
 ] as const;
 
 export function isGuidedFlow(value: unknown): value is GuidedFlow {
   return (
-    typeof value === "string" &&
+    typeof value === 'string' &&
     (GUIDED_FLOWS as readonly string[]).includes(value)
   );
 }
@@ -137,14 +137,14 @@ export interface GuidedEnvelope {
 /** Map a capture flow to the operator-facing subtipo radio value. */
 export function flowToSubtipo(
   flow: GuidedFlow,
-): "gema" | "joya" | "insumo" | null {
+): 'gema' | 'joya' | 'insumo' | null {
   switch (flow) {
-    case "item-gema":
-      return "gema";
-    case "item-joya":
-      return "joya";
-    case "item-insumo":
-      return "insumo";
+    case 'item-gema':
+      return 'gema';
+    case 'item-joya':
+      return 'joya';
+    case 'item-insumo':
+      return 'insumo';
     default:
       return null;
   }
@@ -158,112 +158,112 @@ export function flowToSubtipo(
 // AI-set on edits); photos/cert are never present (no File over the wire).
 
 const GEMA_KEYS = [
-  "nombre",
-  "peso",
-  "color",
-  "calidad",
-  "procedencia",
-  "preponderancia",
-  "precioPublicoCOP",
-  "cantidad",
-  "tipoEsmeralda",
-  "corte",
-  "medidasAncho",
-  "medidasAlto",
-  "medidasCono",
-  "nivelRareza",
-  "calificacion",
+  'nombre',
+  'peso',
+  'color',
+  'calidad',
+  'procedencia',
+  'preponderancia',
+  'precioPublicoCOP',
+  'cantidad',
+  'tipoEsmeralda',
+  'corte',
+  'medidasAncho',
+  'medidasAlto',
+  'medidasCono',
+  'nivelRareza',
+  'calificacion',
   // Routing-only hint (NOT a form field): the target lot when Maritza names
   // it explicitly. The Copilot panel strips it before seeding the form.
-  "loteId",
+  'loteId',
 ] as const;
 
 const JOYA_KEYS = [
-  "nombre",
-  "descripcion",
-  "cantidad",
-  "pesoValor",
-  "pesoUnidad",
-  "tipoJoya",
-  "tecnica",
-  "minerales",
-  "complementos",
-  "preponderancia",
-  "precioPublicoCOP",
-  "loteId",
+  'nombre',
+  'descripcion',
+  'cantidad',
+  'pesoValor',
+  'pesoUnidad',
+  'tipoJoya',
+  'tecnica',
+  'minerales',
+  'complementos',
+  'preponderancia',
+  'precioPublicoCOP',
+  'loteId',
 ] as const;
 
 const INSUMO_KEYS = [
-  "nombre",
-  "categoria",
-  "cantidad",
-  "preponderancia",
-  "precioPublicoCOP",
-  "loteId",
+  'nombre',
+  'categoria',
+  'cantidad',
+  'preponderancia',
+  'precioPublicoCOP',
+  'loteId',
 ] as const;
 
 const LOTE_KEYS = [
-  "sede",
-  "providerId",
-  "providerName",
-  "fechaRecepcion",
-  "costoTotalCOP",
-  "unidadesDeclaradas",
-  "formaPago",
-  "metodoContado",
-  "renombreLote",
-  "tratamiento",
-  "mina",
-  "pesoTotalQuilates",
-  "notas",
-  "creditoFechaVenc",
-  "creditoCuotas",
+  'sede',
+  'providerId',
+  'providerName',
+  'fechaRecepcion',
+  'costoTotalCOP',
+  'unidadesDeclaradas',
+  'formaPago',
+  'metodoContado',
+  'renombreLote',
+  'tratamiento',
+  'mina',
+  'pesoTotalQuilates',
+  'notas',
+  'creditoFechaVenc',
+  'creditoCuotas',
   // UI-only on purpose: collected + shown in CapturaLotePage but NOT forwarded
   // to lots.create (no column yet — see CapturaLotePage "tasaInteres UI-only"
   // note). Kept here so the copilot still captures it for the operator.
-  "creditoTasa",
+  'creditoTasa',
 ] as const;
 
 const VENTA_KEYS = [
-  "itemId",
-  "clientId",
-  "clienteFinalData",
-  "sede",
-  "compradorTipo",
-  "formaPago",
-  "metodoContado",
-  "precioAcordado",
-  "descuentoCOP",
-  "adicionales",
-  "creditoFechaVenc",
-  "creditoCuotas",
-  "creditoTasa",
-  "esmereoPlazo",
-  "esmereoCuotas",
-  "esmereoFechaVenc",
-  "esmereoNotas",
+  'itemId',
+  'clientId',
+  'clienteFinalData',
+  'sede',
+  'compradorTipo',
+  'formaPago',
+  'metodoContado',
+  'precioAcordado',
+  'descuentoCOP',
+  'adicionales',
+  'creditoFechaVenc',
+  'creditoCuotas',
+  'creditoTasa',
+  'esmereoPlazo',
+  'esmereoCuotas',
+  'esmereoFechaVenc',
+  'esmereoNotas',
 ] as const;
 
 const PROVIDER_KEYS = [
-  "nombreORazonSocial",
-  "tipo",
-  "tipoDocumento",
-  "documento",
-  "telefono",
-  "email",
-  "direccion",
-  "notas",
+  'nombreORazonSocial',
+  'tipo',
+  'tipoDocumento',
+  'documento',
+  'telefono',
+  'email',
+  'direccion',
+  'notas',
 ] as const;
 
 const CLIENT_KEYS = [
-  "nombre",
-  "tipo",
-  "tipoDocumento",
-  "documento",
-  "direccion",
-  "telefono",
-  "email",
-  "asesorId",
+  'nombre',
+  'tipo',
+  'tipoDocumento',
+  'documento',
+  'direccion',
+  'telefono',
+  'email',
+  'asesorId',
 ] as const;
 
 /**
@@ -272,46 +272,44 @@ const CLIENT_KEYS = [
  * excluded — preponderancia is lot-derived and photos can't ride over JSON.
  */
 export const EDIT_PATCH_KEYS = [
-  "nombre",
-  "peso",
-  "color",
-  "calidad",
-  "procedencia",
-  "observacion",
-  "corte",
-  "medidasAncho",
-  "medidasAlto",
-  "medidasCono",
-  "cantidad",
-  "tipoEsmeralda",
-  "nivelRareza",
-  "calificacion",
-  "precioPublicoCOP",
-  "precioEmbajadorCOP",
-  "precioConscienteCOP",
-  "mostrarEnCatalogo",
-  "tipoJoya",
-  "tecnica",
-  "minerales",
-  "complementos",
-  "descripcion",
-  "categoria",
-  "pesoValor",
-  "pesoUnidad",
+  'nombre',
+  'peso',
+  'color',
+  'calidad',
+  'procedencia',
+  'observacion',
+  'corte',
+  'medidasAncho',
+  'medidasAlto',
+  'medidasCono',
+  'cantidad',
+  'tipoEsmeralda',
+  'nivelRareza',
+  'calificacion',
+  'precioPublicoCOP',
+  'mostrarEnCatalogo',
+  'tipoJoya',
+  'tecnica',
+  'minerales',
+  'complementos',
+  'descripcion',
+  'categoria',
+  'pesoValor',
+  'pesoUnidad',
 ] as const;
 
 export const FLOW_ALLOWED_KEYS: Record<GuidedFlow, readonly string[]> = {
-  "item-gema": GEMA_KEYS,
-  "item-joya": JOYA_KEYS,
-  "item-insumo": INSUMO_KEYS,
+  'item-gema': GEMA_KEYS,
+  'item-joya': JOYA_KEYS,
+  'item-insumo': INSUMO_KEYS,
   lote: LOTE_KEYS,
   venta: VENTA_KEYS,
   provider: PROVIDER_KEYS,
   client: CLIENT_KEYS,
   // edit-existing carries the patch keys plus a target hint; handled below.
-  "edit-existing": [...EDIT_PATCH_KEYS, "itemHint", "targetItemId"],
+  'edit-existing': [...EDIT_PATCH_KEYS, 'itemHint', 'targetItemId'],
   // batch-edit carries only `edits`; each edit.patch is whitelisted to EDIT_PATCH_KEYS.
-  "batch-edit": ["edits"],
+  'batch-edit': ['edits'],
   advisory: [],
 };
 
@@ -323,27 +321,27 @@ export const FLOW_ALLOWED_KEYS: Record<GuidedFlow, readonly string[]> = {
 type RequiredSpec = (string | string[])[];
 
 const FLOW_REQUIRED_KEYS: Record<GuidedFlow, RequiredSpec> = {
-  "item-gema": ["nombre", "peso", "preponderancia"],
-  "item-joya": ["nombre", "tipoJoya", "preponderancia"],
-  "item-insumo": ["nombre", "categoria", "cantidad", "preponderancia"],
+  'item-gema': ['nombre', 'peso', 'preponderancia'],
+  'item-joya': ['nombre', 'tipoJoya', 'preponderancia'],
+  'item-insumo': ['nombre', 'categoria', 'cantidad', 'preponderancia'],
   lote: [
-    "sede",
-    ["providerId", "providerName"],
-    "costoTotalCOP",
-    "unidadesDeclaradas",
-    "formaPago",
+    'sede',
+    ['providerId', 'providerName'],
+    'costoTotalCOP',
+    'unidadesDeclaradas',
+    'formaPago',
   ],
   venta: [
-    "sede",
-    "itemId",
-    ["clientId", "clienteFinalData"],
-    "precioAcordado",
-    "formaPago",
+    'sede',
+    'itemId',
+    ['clientId', 'clienteFinalData'],
+    'precioAcordado',
+    'formaPago',
   ],
-  provider: ["nombreORazonSocial", "tipo", "documento"],
-  client: ["nombre", "tipo", "documento", "direccion"],
-  "edit-existing": [], // handled specially: needs a target + ≥1 change
-  "batch-edit": [], // handled specially: needs ≥1 edit
+  provider: ['nombreORazonSocial', 'tipo', 'documento'],
+  client: ['nombre', 'tipo', 'documento', 'direccion'],
+  'edit-existing': [], // handled specially: needs a target + ≥1 change
+  'batch-edit': [], // handled specially: needs ≥1 edit
   advisory: [],
 };
 
@@ -354,19 +352,19 @@ const FLOW_REQUIRED_KEYS: Record<GuidedFlow, RequiredSpec> = {
 // the interview never re-asks an inferable value.
 
 const FLOW_DEFAULTS: Record<GuidedFlow, Record<string, unknown>> = {
-  "item-gema": { calidad: DEFAULT_CALIDAD, procedencia: "Boyacá", cantidad: 1 },
-  "item-joya": { cantidad: 1, pesoUnidad: "gr" },
-  "item-insumo": {},
-  lote: { formaPago: "contado", metodoContado: "transferencia" },
+  'item-gema': { calidad: DEFAULT_CALIDAD, procedencia: 'Boyacá', cantidad: 1 },
+  'item-joya': { cantidad: 1, pesoUnidad: 'gr' },
+  'item-insumo': {},
+  lote: { formaPago: 'contado', metodoContado: 'transferencia' },
   venta: {
-    compradorTipo: "embajador",
-    formaPago: "contado",
-    metodoContado: "efectivo",
+    compradorTipo: 'embajador',
+    formaPago: 'contado',
+    metodoContado: 'efectivo',
   },
-  provider: { tipo: "gemas" },
-  client: { tipo: "final" },
-  "edit-existing": {},
-  "batch-edit": {},
+  provider: { tipo: 'gemas' },
+  client: { tipo: 'final' },
+  'edit-existing': {},
+  'batch-edit': {},
   advisory: {},
 };
 
@@ -378,10 +376,10 @@ export function flowDefaults(flow: GuidedFlow): Record<string, unknown> {
 
 function hasValue(v: unknown): boolean {
   if (v === undefined || v === null) return false;
-  if (typeof v === "string") return v.trim().length > 0;
-  if (typeof v === "number") return Number.isFinite(v);
+  if (typeof v === 'string') return v.trim().length > 0;
+  if (typeof v === 'number') return Number.isFinite(v);
   if (Array.isArray(v)) return v.length > 0;
-  if (typeof v === "object") return Object.keys(v).length > 0;
+  if (typeof v === 'object') return Object.keys(v).length > 0;
   return true;
 }
 
@@ -404,8 +402,8 @@ export function whitelistDraft(
   flow: GuidedFlow,
   draft: GuidedDraft,
 ): GuidedDraft {
-  if (!draft || typeof draft !== "object") return {};
-  if (flow === "batch-edit") {
+  if (!draft || typeof draft !== 'object') return {};
+  if (flow === 'batch-edit') {
     const edits = Array.isArray(draft.edits) ? (draft.edits as unknown[]) : [];
     return {
       edits: edits
@@ -413,10 +411,10 @@ export function whitelistDraft(
         .filter((e): e is BatchEditPatch => e !== null),
     };
   }
-  if (flow === "edit-existing") {
+  if (flow === 'edit-existing') {
     const out = pick(draft, [...EDIT_PATCH_KEYS]);
-    if (typeof draft.itemHint === "string") out.itemHint = draft.itemHint;
-    if (typeof draft.targetItemId === "string")
+    if (typeof draft.itemHint === 'string') out.itemHint = draft.itemHint;
+    if (typeof draft.targetItemId === 'string')
       out.targetItemId = draft.targetItemId;
     return out;
   }
@@ -424,16 +422,16 @@ export function whitelistDraft(
 }
 
 function sanitizeEdit(raw: unknown): BatchEditPatch | null {
-  if (!raw || typeof raw !== "object") return null;
+  if (!raw || typeof raw !== 'object') return null;
   const e = raw as Record<string, unknown>;
   const patch =
-    e.patch && typeof e.patch === "object"
+    e.patch && typeof e.patch === 'object'
       ? pick(e.patch as GuidedDraft, [...EDIT_PATCH_KEYS])
       : {};
   if (Object.keys(patch).length === 0) return null;
   const out: BatchEditPatch = { patch };
-  if (typeof e.itemHint === "string") out.itemHint = e.itemHint;
-  if (typeof e.targetItemId === "string") out.targetItemId = e.targetItemId;
+  if (typeof e.itemHint === 'string') out.itemHint = e.itemHint;
+  if (typeof e.targetItemId === 'string') out.targetItemId = e.targetItemId;
   if (!out.itemHint && !out.targetItemId) return null;
   return out;
 }
@@ -445,29 +443,27 @@ function sanitizeEdit(raw: unknown): BatchEditPatch | null {
 // guards (e.g. canSave). Coerce a numeric string to a real number. `peso` is
 // deliberately absent: it is free text ("3.2 ct" / "Plata").
 const NUMERIC_FIELDS = new Set<string>([
-  "preponderancia",
-  "precioPublicoCOP",
-  "precioEmbajadorCOP",
-  "precioConscienteCOP",
-  "cantidad",
-  "nivelRareza",
-  "calificacion",
-  "pesoValor",
-  "costoTotalCOP",
-  "unidadesDeclaradas",
-  "pesoTotalQuilates",
-  "creditoCuotas",
-  "creditoTasa",
-  "precioAcordado",
-  "descuentoCOP",
-  "esmereoPlazo",
-  "esmereoCuotas",
+  'preponderancia',
+  'precioPublicoCOP',
+  'cantidad',
+  'nivelRareza',
+  'calificacion',
+  'pesoValor',
+  'costoTotalCOP',
+  'unidadesDeclaradas',
+  'pesoTotalQuilates',
+  'creditoCuotas',
+  'creditoTasa',
+  'precioAcordado',
+  'descuentoCOP',
+  'esmereoPlazo',
+  'esmereoCuotas',
 ]);
 
 function coerceNumericStrings(draft: GuidedDraft): void {
   for (const key of NUMERIC_FIELDS) {
     const v = draft[key];
-    if (typeof v !== "string") continue;
+    if (typeof v !== 'string') continue;
     const trimmed = v.trim();
     if (!trimmed) continue;
     const n = Number(trimmed);
@@ -476,7 +472,7 @@ function coerceNumericStrings(draft: GuidedDraft): void {
 }
 
 function coerceEnum(value: unknown, allowed: readonly string[]): string | null {
-  if (typeof value !== "string") return null;
+  if (typeof value !== 'string') return null;
   const s = value.trim();
   if (!s) return null;
   const exact = allowed.find((a) => a === s);
@@ -490,9 +486,9 @@ const FLOW_ENUM_FIELDS: Record<
   GuidedFlow,
   Record<string, readonly string[]>
 > = {
-  "item-gema": { corte: CORTES, tipoEsmeralda: TIPOS_ESMERALDA },
-  "item-joya": { tipoJoya: TIPOS_JOYA },
-  "item-insumo": {},
+  'item-gema': { corte: CORTES, tipoEsmeralda: TIPOS_ESMERALDA },
+  'item-joya': { tipoJoya: TIPOS_JOYA },
+  'item-insumo': {},
   lote: { formaPago: FORMA_PAGO, metodoContado: METODO_CONTADO },
   venta: {
     formaPago: FORMA_PAGO_VENTA,
@@ -501,12 +497,12 @@ const FLOW_ENUM_FIELDS: Record<
   },
   provider: { tipo: PROVIDER_TIPOS },
   client: { tipo: CLIENT_TIPOS },
-  "edit-existing": {
+  'edit-existing': {
     corte: CORTES,
     tipoEsmeralda: TIPOS_ESMERALDA,
     tipoJoya: TIPOS_JOYA,
   },
-  "batch-edit": {},
+  'batch-edit': {},
   advisory: {},
 };
 
@@ -514,8 +510,8 @@ const FLOW_ENUM_FIELDS: Record<
 const FLOW_ARRAY_ENUM_FIELDS: Partial<
   Record<GuidedFlow, Record<string, readonly string[]>>
 > = {
-  "item-joya": { minerales: MINERALES, complementos: COMPLEMENTOS },
-  "edit-existing": { minerales: MINERALES, complementos: COMPLEMENTOS },
+  'item-joya': { minerales: MINERALES, complementos: COMPLEMENTOS },
+  'edit-existing': { minerales: MINERALES, complementos: COMPLEMENTOS },
 };
 
 function coerceDraftFields(
@@ -529,38 +525,38 @@ function coerceDraftFields(
   };
 
   // calidad / color — normalizers that PRESERVE write-ins.
-  if (typeof out.calidad === "string" && out.calidad.trim()) {
+  if (typeof out.calidad === 'string' && out.calidad.trim()) {
     const norm = normalizeCalidad(out.calidad);
     if (norm !== out.calidad) {
       out.calidad = norm;
-      flag("calidad");
+      flag('calidad');
     }
   }
-  if (typeof out.color === "string" && out.color.trim()) {
+  if (typeof out.color === 'string' && out.color.trim()) {
     const norm = normalizeColor(out.color);
     if (norm !== out.color) {
       out.color = norm;
-      flag("color");
+      flag('color');
     }
   }
 
   // sede — ID-safe token.
-  if (typeof out.sede === "string" && out.sede.trim()) {
+  if (typeof out.sede === 'string' && out.sede.trim()) {
     const norm = sanitizeSedeCode(out.sede);
     if (norm !== out.sede) {
       out.sede = norm;
-      flag("sede");
+      flag('sede');
     }
   }
 
   // pesoUnidad — strict gr|ct, default gr.
   if (
-    "pesoUnidad" in out &&
-    out.pesoUnidad !== "gr" &&
-    out.pesoUnidad !== "ct"
+    'pesoUnidad' in out &&
+    out.pesoUnidad !== 'gr' &&
+    out.pesoUnidad !== 'ct'
   ) {
-    out.pesoUnidad = "gr";
-    flag("pesoUnidad");
+    out.pesoUnidad = 'gr';
+    flag('pesoUnidad');
   }
 
   // Strict single-value enums — coerce to canonical or drop + flag.
@@ -616,14 +612,14 @@ export function coerceVocabulary(
   flow: GuidedFlow,
   draft: GuidedDraft,
 ): { draft: GuidedDraft; coercedKeys: string[] } {
-  if (flow === "batch-edit") {
+  if (flow === 'batch-edit') {
     const edits = Array.isArray(draft.edits)
       ? (draft.edits as BatchEditPatch[])
       : [];
     const coercedKeys: string[] = [];
     const nextEdits = edits.map((e, i) => {
       const { draft: patch, coercedKeys: ck } = coerceDraftFields(
-        "edit-existing",
+        'edit-existing',
         e.patch ?? {},
       );
       ck.forEach((k) => coercedKeys.push(`edits[${i}].${k}`));
@@ -643,19 +639,19 @@ export function coerceVocabulary(
  * satisfied by any member.
  */
 export function computeMissing(flow: GuidedFlow, draft: GuidedDraft): string[] {
-  if (flow === "advisory") return [];
+  if (flow === 'advisory') return [];
 
-  if (flow === "batch-edit") {
+  if (flow === 'batch-edit') {
     const edits = Array.isArray(draft.edits) ? draft.edits : [];
-    return edits.length > 0 ? [] : ["edits"];
+    return edits.length > 0 ? [] : ['edits'];
   }
 
-  if (flow === "edit-existing") {
+  if (flow === 'edit-existing') {
     const hasTarget = hasValue(draft.itemHint) || hasValue(draft.targetItemId);
     const hasChange = [...EDIT_PATCH_KEYS].some((k) => k in draft);
     const missing: string[] = [];
-    if (!hasTarget) missing.push("itemHint");
-    if (!hasChange) missing.push("changes");
+    if (!hasTarget) missing.push('itemHint');
+    if (!hasChange) missing.push('changes');
     return missing;
   }
 
@@ -666,7 +662,7 @@ export function computeMissing(flow: GuidedFlow, draft: GuidedDraft): string[] {
   const missing: string[] = [];
   for (const spec of FLOW_REQUIRED_KEYS[flow]) {
     if (Array.isArray(spec)) {
-      if (!spec.some((k) => satisfied(k))) missing.push(spec.join("|"));
+      if (!spec.some((k) => satisfied(k))) missing.push(spec.join('|'));
     } else if (!satisfied(spec)) {
       missing.push(spec);
     }
@@ -678,8 +674,8 @@ export function computeMissing(flow: GuidedFlow, draft: GuidedDraft): string[] {
 
 function fmtRequired(spec: RequiredSpec): string {
   return spec
-    .map((s) => (Array.isArray(s) ? `(${s.join(" o ")})` : s))
-    .join(", ");
+    .map((s) => (Array.isArray(s) ? `(${s.join(' o ')})` : s))
+    .join(', ');
 }
 
 /**
@@ -689,57 +685,57 @@ function fmtRequired(spec: RequiredSpec): string {
  */
 export function buildFlowSchemaText(): string {
   const lines: string[] = [];
-  lines.push("FLUJOS Y CAMPOS (devuelve JSON con la forma indicada):");
+  lines.push('FLUJOS Y CAMPOS (devuelve JSON con la forma indicada):');
 
   const describe = (flow: GuidedFlow, label: string) => {
     const required = fmtRequired(FLOW_REQUIRED_KEYS[flow]);
     const defaults = Object.entries(FLOW_DEFAULTS[flow])
       .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
-      .join(", ");
-    const allowed = FLOW_ALLOWED_KEYS[flow].join(", ");
+      .join(', ');
+    const allowed = FLOW_ALLOWED_KEYS[flow].join(', ');
     lines.push(
-      `- ${flow} (${label}): obligatorios → ${required || "—"}; ` +
-        `defaults (NO los preguntes) → ${defaults || "—"}; ` +
+      `- ${flow} (${label}): obligatorios → ${required || '—'}; ` +
+        `defaults (NO los preguntes) → ${defaults || '—'}; ` +
         `campos permitidos → ${allowed}`,
     );
   };
 
-  describe("item-gema", "registrar gema/piedra en un lote");
-  describe("item-joya", "registrar joya en un lote");
-  describe("item-insumo", "registrar insumo en un lote");
-  describe("lote", "crear lote nuevo");
-  describe("venta", "registrar venta");
-  describe("provider", "crear proveedor");
-  describe("client", "crear cliente/embajador");
+  describe('item-gema', 'registrar gema/piedra en un lote');
+  describe('item-joya', 'registrar joya en un lote');
+  describe('item-insumo', 'registrar insumo en un lote');
+  describe('lote', 'crear lote nuevo');
+  describe('venta', 'registrar venta');
+  describe('provider', 'crear proveedor');
+  describe('client', 'crear cliente/embajador');
   lines.push(
     `- edit-existing (editar un ítem): draft con { itemHint, ${EDIT_PATCH_KEYS.join(
-      ", ",
+      ', ',
     )} }; NUNCA incluyas preponderancia ni fotos.`,
   );
   lines.push(
     `- batch-edit (editar varios ítems del mismo lote): draft con { edits: [{ itemHint, patch: {…campos editables} }] }; NUNCA preponderancia.`,
   );
-  lines.push("- advisory (responder una pregunta): draft vacío.");
+  lines.push('- advisory (responder una pregunta): draft vacío.');
 
-  lines.push("");
+  lines.push('');
   lines.push(
-    "VOCABULARIOS CONTROLADOS (usa SOLO estos valores en estos campos):",
+    'VOCABULARIOS CONTROLADOS (usa SOLO estos valores en estos campos):',
   );
-  lines.push(`- calidad: ${CALIDADES.join(" | ")}`);
-  lines.push(`- color: ${COLORS.join(" | ")}`);
-  lines.push(`- corte: ${CORTES.join(" | ")}`);
-  lines.push(`- tipoEsmeralda: ${TIPOS_ESMERALDA.join(" | ")}`);
-  lines.push(`- tipoJoya: ${TIPOS_JOYA.join(" | ")}`);
-  lines.push(`- minerales: ${MINERALES.join(" | ")}`);
-  lines.push(`- complementos: ${COMPLEMENTOS.join(" | ")}`);
-  lines.push(`- formaPago (lote): ${FORMA_PAGO.join(" | ")}`);
-  lines.push(`- formaPago (venta): ${FORMA_PAGO_VENTA.join(" | ")}`);
-  lines.push(`- metodoContado (lote): ${METODO_CONTADO.join(" | ")}`);
-  lines.push(`- metodoContado (venta): ${METODO_RECEPCION.join(" | ")}`);
-  lines.push(`- provider.tipo: ${PROVIDER_TIPOS.join(" | ")}`);
-  lines.push(`- client.tipo / compradorTipo: ${CLIENT_TIPOS.join(" | ")}`);
+  lines.push(`- calidad: ${CALIDADES.join(' | ')}`);
+  lines.push(`- color: ${COLORS.join(' | ')}`);
+  lines.push(`- corte: ${CORTES.join(' | ')}`);
+  lines.push(`- tipoEsmeralda: ${TIPOS_ESMERALDA.join(' | ')}`);
+  lines.push(`- tipoJoya: ${TIPOS_JOYA.join(' | ')}`);
+  lines.push(`- minerales: ${MINERALES.join(' | ')}`);
+  lines.push(`- complementos: ${COMPLEMENTOS.join(' | ')}`);
+  lines.push(`- formaPago (lote): ${FORMA_PAGO.join(' | ')}`);
+  lines.push(`- formaPago (venta): ${FORMA_PAGO_VENTA.join(' | ')}`);
+  lines.push(`- metodoContado (lote): ${METODO_CONTADO.join(' | ')}`);
+  lines.push(`- metodoContado (venta): ${METODO_RECEPCION.join(' | ')}`);
+  lines.push(`- provider.tipo: ${PROVIDER_TIPOS.join(' | ')}`);
+  lines.push(`- client.tipo / compradorTipo: ${CLIENT_TIPOS.join(' | ')}`);
 
-  return lines.join("\n");
+  return lines.join('\n');
 }
 
 // ─── Navigation (route map) ──────────────────────────────────────────
@@ -750,7 +746,7 @@ export function buildFlowSchemaText(): string {
  * are client-only, so the server leaves them for client resolution via
  * `resolveItemHint` against the live candidate list.
  */
-const DIRECT_FILL_RESOLVERS = new Set(["loteId", "guestName", "none"]);
+const DIRECT_FILL_RESOLVERS = new Set(['loteId', 'guestName', 'none']);
 const MAX_PARAM_LEN = 80;
 
 /**
@@ -761,15 +757,15 @@ const MAX_PARAM_LEN = 80;
 export function buildNavCatalogText(level: AccessLevel): string {
   const lines: string[] = [];
   lines.push(
-    "CATÁLOGO DE PANTALLAS (id · pantalla · palabras clave · parámetro):",
+    'CATÁLOGO DE PANTALLAS (id · pantalla · palabras clave · parámetro):',
   );
   for (const e of navRoutesForLevel(level)) {
     const param = e.params?.length
-      ? ` · parámetro: ${e.params.map((p) => `${p.name} (${p.label})`).join(", ")}`
-      : "";
-    lines.push(`- ${e.id} · ${e.label} · ${e.keywords.join(", ")}${param}`);
+      ? ` · parámetro: ${e.params.map((p) => `${p.name} (${p.label})`).join(', ')}`
+      : '';
+    lines.push(`- ${e.id} · ${e.label} · ${e.keywords.join(', ')}${param}`);
   }
-  return lines.join("\n");
+  return lines.join('\n');
 }
 
 function sanitizeParams(
@@ -777,12 +773,12 @@ function sanitizeParams(
   allowed: readonly string[],
 ): Record<string, string> {
   const out: Record<string, string> = {};
-  if (!raw || typeof raw !== "object") return out;
+  if (!raw || typeof raw !== 'object') return out;
   for (const key of allowed) {
     const value = (raw as Record<string, unknown>)[key];
-    if (typeof value === "string" && value.trim()) {
+    if (typeof value === 'string' && value.trim()) {
       out[key] = value.trim().slice(0, MAX_PARAM_LEN);
-    } else if (typeof value === "number" && Number.isFinite(value)) {
+    } else if (typeof value === 'number' && Number.isFinite(value)) {
       out[key] = String(value);
     }
   }
@@ -806,9 +802,9 @@ export function resolveNavigate(
   level: AccessLevel,
   resolvedParams: Record<string, string> = {},
 ): NavigateAction | null {
-  if (!raw || typeof raw !== "object") return null;
+  if (!raw || typeof raw !== 'object') return null;
   const routeId = (raw as Record<string, unknown>).routeId;
-  if (typeof routeId !== "string") return null;
+  if (typeof routeId !== 'string') return null;
 
   const entry = getRouteById(routeId);
   if (!entry) return null;
@@ -816,7 +812,7 @@ export function resolveNavigate(
 
   const reasonRaw = (raw as Record<string, unknown>).reason;
   const reason =
-    typeof reasonRaw === "string" && reasonRaw.trim()
+    typeof reasonRaw === 'string' && reasonRaw.trim()
       ? reasonRaw.trim().slice(0, 240)
       : undefined;
 
@@ -883,85 +879,85 @@ export function resolveNavigate(
 
 /** Entity classes the client resolves a name hint to (a Convex Id or natural key). */
 export type RefKind =
-  | "provider"
-  | "client"
-  | "lot"
-  | "sublote"
-  | "sale"
-  | "item";
+  | 'provider'
+  | 'client'
+  | 'lot'
+  | 'sublote'
+  | 'sale'
+  | 'item';
 
 /** Every committable operation. Single mutation per kind (see actionRegistry.ts client-side). */
 export type ActionKind =
   // items (Convex lot items)
-  | "item.createGema"
-  | "item.createJoya"
-  | "item.createInsumo"
-  | "item.editFields"
-  | "item.editPreponderancia"
-  | "item.setMedia"
-  | "item.remove"
+  | 'item.createGema'
+  | 'item.createJoya'
+  | 'item.createInsumo'
+  | 'item.editFields'
+  | 'item.editPreponderancia'
+  | 'item.setMedia'
+  | 'item.remove'
   // lots
-  | "lot.create"
-  | "lot.update"
-  | "lot.close"
-  | "lot.cancel"
-  | "lot.publish"
-  | "lot.reopen"
-  | "lot.setDisplay"
+  | 'lot.create'
+  | 'lot.update'
+  | 'lot.close'
+  | 'lot.cancel'
+  | 'lot.publish'
+  | 'lot.reopen'
+  | 'lot.setDisplay'
   // sales
-  | "sale.create"
-  | "sale.cancel"
-  | "sale.updatePrice"
-  | "sale.setCertificadoUrl"
-  | "sale.setCarnetUrl"
+  | 'sale.create'
+  | 'sale.cancel'
+  | 'sale.updatePrice'
+  | 'sale.setCertificadoUrl'
+  | 'sale.setCarnetUrl'
   // sublotes
-  | "sublote.create"
-  | "sublote.addItems"
-  | "sublote.removeItems"
-  | "sublote.updateMeta"
-  | "sublote.setEstado"
-  | "sublote.setDisplay"
+  | 'sublote.create'
+  | 'sublote.addItems'
+  | 'sublote.removeItems'
+  | 'sublote.updateMeta'
+  | 'sublote.setEstado'
+  | 'sublote.setDisplay'
   // directory
-  | "provider.create"
-  | "provider.update"
-  | "client.create"
-  | "client.update";
+  | 'provider.create'
+  | 'provider.update'
+  | 'client.create'
+  | 'client.update';
 
 export const ACTION_KINDS: readonly ActionKind[] = [
-  "item.createGema",
-  "item.createJoya",
-  "item.createInsumo",
-  "item.editFields",
-  "item.editPreponderancia",
-  "item.setMedia",
-  "item.remove",
-  "lot.create",
-  "lot.update",
-  "lot.close",
-  "lot.cancel",
-  "lot.publish",
-  "lot.reopen",
-  "lot.setDisplay",
-  "sale.create",
-  "sale.cancel",
-  "sale.updatePrice",
-  "sale.setCertificadoUrl",
-  "sale.setCarnetUrl",
-  "sublote.create",
-  "sublote.addItems",
-  "sublote.removeItems",
-  "sublote.updateMeta",
-  "sublote.setEstado",
-  "sublote.setDisplay",
-  "provider.create",
-  "provider.update",
-  "client.create",
-  "client.update",
+  'item.createGema',
+  'item.createJoya',
+  'item.createInsumo',
+  'item.editFields',
+  'item.editPreponderancia',
+  'item.setMedia',
+  'item.remove',
+  'lot.create',
+  'lot.update',
+  'lot.close',
+  'lot.cancel',
+  'lot.publish',
+  'lot.reopen',
+  'lot.setDisplay',
+  'sale.create',
+  'sale.cancel',
+  'sale.updatePrice',
+  'sale.setCertificadoUrl',
+  'sale.setCarnetUrl',
+  'sublote.create',
+  'sublote.addItems',
+  'sublote.removeItems',
+  'sublote.updateMeta',
+  'sublote.setEstado',
+  'sublote.setDisplay',
+  'provider.create',
+  'provider.update',
+  'client.create',
+  'client.update',
 ] as const;
 
 export function isActionKind(value: unknown): value is ActionKind {
   return (
-    typeof value === "string" &&
+    typeof value === 'string' &&
     (ACTION_KINDS as readonly string[]).includes(value)
   );
 }
@@ -983,7 +979,7 @@ export interface GuidedAction {
   summary: string;
   confirmLabel: string;
   /** "direct" → commit via the kind→mutation registry; "handoff" → open the form (complex flows). */
-  mode: "direct" | "handoff";
+  mode: 'direct' | 'handoff';
   /** Irreversible / financial → the card demands a typed 2-step gesture before committing. */
   destructive: boolean;
   twoStep: boolean;
@@ -1006,8 +1002,8 @@ interface ActionRefSpec {
 
 interface ActionSpec {
   label: string;
-  group: RefKind | "item";
-  mode: "direct" | "handoff";
+  group: RefKind | 'item';
+  mode: 'direct' | 'handoff';
   /** Reuse a capture flow's whitelist + vocabulary coercion + (for creates) required logic. */
   coerceFlow?: GuidedFlow;
   /** Explicit arg allow-list for kinds without a coerceFlow. */
@@ -1031,328 +1027,328 @@ interface ActionSpec {
 // re-fans costoBaseCOP across every member item, too blunt for an AI patch) and
 // the provider link (re-pointing a lot's provider is out of the copilot's scope).
 const LOT_UPDATE_KEYS = [
-  "fechaRecepcion",
-  "renombreLote",
-  "tratamiento",
-  "mina",
-  "pesoTotalQuilates",
-  "unidadesDeclaradas",
-  "formaPago",
-  "metodoContado",
-  "fechaVencimiento",
-  "numeroCuotas",
-  "numeroFactura",
-  "urlFactura",
-  "notas",
+  'fechaRecepcion',
+  'renombreLote',
+  'tratamiento',
+  'mina',
+  'pesoTotalQuilates',
+  'unidadesDeclaradas',
+  'formaPago',
+  'metodoContado',
+  'fechaVencimiento',
+  'numeroCuotas',
+  'numeroFactura',
+  'urlFactura',
+  'notas',
 ] as const;
 
 const ACTION_REGISTRY: Record<ActionKind, ActionSpec> = {
   // ── items ──────────────────────────────────────────────────────────
-  "item.createGema": {
-    label: "Crear gema",
-    group: "item",
-    mode: "direct",
-    coerceFlow: "item-gema",
+  'item.createGema': {
+    label: 'Crear gema',
+    group: 'item',
+    mode: 'direct',
+    coerceFlow: 'item-gema',
     refs: [],
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "item.createJoya": {
-    label: "Crear joya",
-    group: "item",
-    mode: "direct",
-    coerceFlow: "item-joya",
+  'item.createJoya': {
+    label: 'Crear joya',
+    group: 'item',
+    mode: 'direct',
+    coerceFlow: 'item-joya',
     refs: [],
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "item.createInsumo": {
-    label: "Crear insumo",
-    group: "item",
-    mode: "direct",
-    coerceFlow: "item-insumo",
+  'item.createInsumo': {
+    label: 'Crear insumo',
+    group: 'item',
+    mode: 'direct',
+    coerceFlow: 'item-insumo',
     refs: [],
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "item.editFields": {
+  'item.editFields': {
     // C3: coerceFlow edit-existing → EDIT_PATCH_KEYS, which EXCLUDES preponderancia
     // + costoBaseCOP. Preponderancia edits only flow through item.editPreponderancia.
-    label: "Editar ítem",
-    group: "item",
-    mode: "direct",
-    coerceFlow: "edit-existing",
+    label: 'Editar ítem',
+    group: 'item',
+    mode: 'direct',
+    coerceFlow: 'edit-existing',
     wrapPatch: true,
-    refs: [{ field: "targetItemId", refKind: "item", hintField: "itemHint" }],
+    refs: [{ field: 'targetItemId', refKind: 'item', hintField: 'itemHint' }],
     requiresChange: true,
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "item.editPreponderancia": {
-    label: "Ajustar preponderancia",
-    group: "item",
-    mode: "direct",
-    argKeys: ["preponderancia"],
-    refs: [{ field: "targetItemId", refKind: "item", hintField: "itemHint" }],
-    required: ["preponderancia"],
+  'item.editPreponderancia': {
+    label: 'Ajustar preponderancia',
+    group: 'item',
+    mode: 'direct',
+    argKeys: ['preponderancia'],
+    refs: [{ field: 'targetItemId', refKind: 'item', hintField: 'itemHint' }],
+    required: ['preponderancia'],
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "item.setMedia": {
-    label: "Adjuntar foto/certificado",
-    group: "item",
-    mode: "direct",
-    argKeys: ["fotoUrl", "certificadoUrl"],
-    refs: [{ field: "targetItemId", refKind: "item", hintField: "itemHint" }],
+  'item.setMedia': {
+    label: 'Adjuntar foto/certificado',
+    group: 'item',
+    mode: 'direct',
+    argKeys: ['fotoUrl', 'certificadoUrl'],
+    refs: [{ field: 'targetItemId', refKind: 'item', hintField: 'itemHint' }],
     requiresChange: true,
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "item.remove": {
-    label: "Quitar ítem del lote",
-    group: "item",
-    mode: "direct",
+  'item.remove': {
+    label: 'Quitar ítem del lote',
+    group: 'item',
+    mode: 'direct',
     argKeys: [],
-    refs: [{ field: "targetItemId", refKind: "item", hintField: "itemHint" }],
+    refs: [{ field: 'targetItemId', refKind: 'item', hintField: 'itemHint' }],
     destructive: true,
     twoStep: true,
     syncsToSheet: false, // orphaning is intentionally not pushed to Sheets
-    minLevel: "admin",
+    minLevel: 'admin',
   },
   // ── lots ───────────────────────────────────────────────────────────
-  "lot.create": {
-    label: "Registrar compra (lote)",
-    group: "lot",
-    mode: "direct",
-    coerceFlow: "lote",
+  'lot.create': {
+    label: 'Registrar compra (lote)',
+    group: 'lot',
+    mode: 'direct',
+    coerceFlow: 'lote',
     refs: [
-      { field: "providerId", refKind: "provider", hintField: "providerName" },
+      { field: 'providerId', refKind: 'provider', hintField: 'providerName' },
     ],
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "lot.update": {
-    label: "Editar lote",
-    group: "lot",
-    mode: "direct",
+  'lot.update': {
+    label: 'Editar lote',
+    group: 'lot',
+    mode: 'direct',
     argKeys: LOT_UPDATE_KEYS,
-    dropKeys: ["costoTotalCOP", "providerId", "providerName"],
+    dropKeys: ['costoTotalCOP', 'providerId', 'providerName'],
     wrapPatch: true,
-    refs: [{ field: "id", refKind: "lot", hintField: "loteId" }],
+    refs: [{ field: 'id', refKind: 'lot', hintField: 'loteId' }],
     requiresChange: true,
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "lot.close": {
-    label: "Cerrar lote",
-    group: "lot",
-    mode: "direct",
+  'lot.close': {
+    label: 'Cerrar lote',
+    group: 'lot',
+    mode: 'direct',
     argKeys: [],
-    refs: [{ field: "id", refKind: "lot", hintField: "loteId" }],
+    refs: [{ field: 'id', refKind: 'lot', hintField: 'loteId' }],
     twoStep: true,
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "lot.cancel": {
-    label: "Cancelar lote",
-    group: "lot",
-    mode: "direct",
-    argKeys: ["reason"],
-    refs: [{ field: "id", refKind: "lot", hintField: "loteId" }],
+  'lot.cancel': {
+    label: 'Cancelar lote',
+    group: 'lot',
+    mode: 'direct',
+    argKeys: ['reason'],
+    refs: [{ field: 'id', refKind: 'lot', hintField: 'loteId' }],
     destructive: true,
     twoStep: true,
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "lot.publish": {
-    label: "Publicar lote al catálogo",
-    group: "lot",
-    mode: "direct",
+  'lot.publish': {
+    label: 'Publicar lote al catálogo',
+    group: 'lot',
+    mode: 'direct',
     argKeys: [],
-    refs: [{ field: "id", refKind: "lot", hintField: "loteId" }],
+    refs: [{ field: 'id', refKind: 'lot', hintField: 'loteId' }],
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "lot.reopen": {
-    label: "Reabrir lote",
-    group: "lot",
-    mode: "direct",
-    argKeys: ["reason"],
-    refs: [{ field: "id", refKind: "lot", hintField: "loteId" }],
+  'lot.reopen': {
+    label: 'Reabrir lote',
+    group: 'lot',
+    mode: 'direct',
+    argKeys: ['reason'],
+    refs: [{ field: 'id', refKind: 'lot', hintField: 'loteId' }],
     destructive: true,
     twoStep: true,
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "lot.setDisplay": {
-    label: "Mostrar lote como tarjeta",
-    group: "lot",
-    mode: "direct",
-    argKeys: ["fotoLoteUrl", "mostrarComoLote"],
-    refs: [{ field: "id", refKind: "lot", hintField: "loteId" }],
+  'lot.setDisplay': {
+    label: 'Mostrar lote como tarjeta',
+    group: 'lot',
+    mode: 'direct',
+    argKeys: ['fotoLoteUrl', 'mostrarComoLote'],
+    refs: [{ field: 'id', refKind: 'lot', hintField: 'loteId' }],
     syncsToSheet: false, // Convex-only display fields
-    minLevel: "admin",
+    minLevel: 'admin',
   },
   // ── sales ──────────────────────────────────────────────────────────
-  "sale.create": {
+  'sale.create': {
     // Promoted to a DIRECT in-chat commit for the COMMON case (single inventory
     // item · known/new client · contado-or-simple forma de pago). The execute
     // layer REFUSES the complex cases (esmereogénesis trade-in, multiple items,
     // commission tiers) and hands those back to the venta form, so a money write
     // only commits in-chat when it can faithfully replicate VentaPage's mapping.
     // A money write is two-step (deliberate typed confirm) even when not destructive.
-    label: "Registrar venta",
-    group: "sale",
-    mode: "direct",
-    coerceFlow: "venta",
-    refs: [{ field: "clientId", refKind: "client", hintField: "clientId" }],
+    label: 'Registrar venta',
+    group: 'sale',
+    mode: 'direct',
+    coerceFlow: 'venta',
+    refs: [{ field: 'clientId', refKind: 'client', hintField: 'clientId' }],
     twoStep: true,
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "sale.cancel": {
-    label: "Cancelar venta",
-    group: "sale",
-    mode: "direct",
-    argKeys: ["reason"],
-    refs: [{ field: "id", refKind: "sale", hintField: "saleId" }],
+  'sale.cancel': {
+    label: 'Cancelar venta',
+    group: 'sale',
+    mode: 'direct',
+    argKeys: ['reason'],
+    refs: [{ field: 'id', refKind: 'sale', hintField: 'saleId' }],
     destructive: true,
     twoStep: true,
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "sale.updatePrice": {
-    label: "Actualizar precio de venta",
-    group: "sale",
-    mode: "direct",
-    argKeys: ["precioAcordadoCOP", "totalCOP", "descuentoCOP"],
-    refs: [{ field: "id", refKind: "sale", hintField: "saleId" }],
-    required: ["precioAcordadoCOP"],
+  'sale.updatePrice': {
+    label: 'Actualizar precio de venta',
+    group: 'sale',
+    mode: 'direct',
+    argKeys: ['precioAcordadoCOP', 'totalCOP', 'descuentoCOP'],
+    refs: [{ field: 'id', refKind: 'sale', hintField: 'saleId' }],
+    required: ['precioAcordadoCOP'],
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "sale.setCertificadoUrl": {
-    label: "Adjuntar certificado a la venta",
-    group: "sale",
-    mode: "direct",
-    argKeys: ["certificadoUrl"],
-    refs: [{ field: "id", refKind: "sale", hintField: "saleId" }],
-    required: ["certificadoUrl"],
+  'sale.setCertificadoUrl': {
+    label: 'Adjuntar certificado a la venta',
+    group: 'sale',
+    mode: 'direct',
+    argKeys: ['certificadoUrl'],
+    refs: [{ field: 'id', refKind: 'sale', hintField: 'saleId' }],
+    required: ['certificadoUrl'],
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "sale.setCarnetUrl": {
-    label: "Adjuntar carnet a la venta",
-    group: "sale",
-    mode: "direct",
-    argKeys: ["carnetUrl"],
-    refs: [{ field: "id", refKind: "sale", hintField: "saleId" }],
-    required: ["carnetUrl"],
+  'sale.setCarnetUrl': {
+    label: 'Adjuntar carnet a la venta',
+    group: 'sale',
+    mode: 'direct',
+    argKeys: ['carnetUrl'],
+    refs: [{ field: 'id', refKind: 'sale', hintField: 'saleId' }],
+    required: ['carnetUrl'],
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
   // ── sublotes ───────────────────────────────────────────────────────
-  "sublote.create": {
-    label: "Crear sublote",
-    group: "sublote",
-    mode: "direct",
-    argKeys: ["nombre", "notas", "itemIds"],
+  'sublote.create': {
+    label: 'Crear sublote',
+    group: 'sublote',
+    mode: 'direct',
+    argKeys: ['nombre', 'notas', 'itemIds'],
     refs: [
-      { field: "parentLoteId", refKind: "lot", hintField: "parentLoteId" },
+      { field: 'parentLoteId', refKind: 'lot', hintField: 'parentLoteId' },
     ],
-    required: ["nombre"],
+    required: ['nombre'],
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "sublote.addItems": {
-    label: "Agregar ítems al sublote",
-    group: "sublote",
-    mode: "direct",
-    argKeys: ["itemIds"],
-    refs: [{ field: "subLoteId", refKind: "sublote", hintField: "subLoteId" }],
-    required: ["itemIds"],
+  'sublote.addItems': {
+    label: 'Agregar ítems al sublote',
+    group: 'sublote',
+    mode: 'direct',
+    argKeys: ['itemIds'],
+    refs: [{ field: 'subLoteId', refKind: 'sublote', hintField: 'subLoteId' }],
+    required: ['itemIds'],
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "sublote.removeItems": {
-    label: "Quitar ítems del sublote",
-    group: "sublote",
-    mode: "direct",
-    argKeys: ["itemIds"],
-    refs: [{ field: "subLoteId", refKind: "sublote", hintField: "subLoteId" }],
-    required: ["itemIds"],
+  'sublote.removeItems': {
+    label: 'Quitar ítems del sublote',
+    group: 'sublote',
+    mode: 'direct',
+    argKeys: ['itemIds'],
+    refs: [{ field: 'subLoteId', refKind: 'sublote', hintField: 'subLoteId' }],
+    required: ['itemIds'],
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "sublote.updateMeta": {
-    label: "Editar sublote",
-    group: "sublote",
-    mode: "direct",
-    argKeys: ["nombre", "notas"],
-    refs: [{ field: "subLoteId", refKind: "sublote", hintField: "subLoteId" }],
+  'sublote.updateMeta': {
+    label: 'Editar sublote',
+    group: 'sublote',
+    mode: 'direct',
+    argKeys: ['nombre', 'notas'],
+    refs: [{ field: 'subLoteId', refKind: 'sublote', hintField: 'subLoteId' }],
     requiresChange: true,
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "sublote.setEstado": {
-    label: "Archivar/reactivar sublote",
-    group: "sublote",
-    mode: "direct",
-    argKeys: ["estado"],
-    refs: [{ field: "subLoteId", refKind: "sublote", hintField: "subLoteId" }],
-    required: ["estado"],
+  'sublote.setEstado': {
+    label: 'Archivar/reactivar sublote',
+    group: 'sublote',
+    mode: 'direct',
+    argKeys: ['estado'],
+    refs: [{ field: 'subLoteId', refKind: 'sublote', hintField: 'subLoteId' }],
+    required: ['estado'],
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "sublote.setDisplay": {
-    label: "Mostrar sublote como tarjeta",
-    group: "sublote",
-    mode: "direct",
-    argKeys: ["fotoUrl", "mostrarComoLote"],
-    refs: [{ field: "subLoteId", refKind: "sublote", hintField: "subLoteId" }],
+  'sublote.setDisplay': {
+    label: 'Mostrar sublote como tarjeta',
+    group: 'sublote',
+    mode: 'direct',
+    argKeys: ['fotoUrl', 'mostrarComoLote'],
+    refs: [{ field: 'subLoteId', refKind: 'sublote', hintField: 'subLoteId' }],
     syncsToSheet: false, // Convex-only display fields
-    minLevel: "admin",
+    minLevel: 'admin',
   },
   // ── directory ──────────────────────────────────────────────────────
-  "provider.create": {
-    label: "Crear proveedor",
-    group: "provider",
-    mode: "direct",
-    coerceFlow: "provider",
+  'provider.create': {
+    label: 'Crear proveedor',
+    group: 'provider',
+    mode: 'direct',
+    coerceFlow: 'provider',
     refs: [],
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "provider.update": {
-    label: "Editar proveedor",
-    group: "provider",
-    mode: "direct",
-    coerceFlow: "provider",
+  'provider.update': {
+    label: 'Editar proveedor',
+    group: 'provider',
+    mode: 'direct',
+    coerceFlow: 'provider',
     wrapPatch: true,
-    refs: [{ field: "id", refKind: "provider", hintField: "providerName" }],
+    refs: [{ field: 'id', refKind: 'provider', hintField: 'providerName' }],
     requiresChange: true,
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "client.create": {
-    label: "Crear cliente/embajador",
-    group: "client",
-    mode: "direct",
-    coerceFlow: "client",
+  'client.create': {
+    label: 'Crear cliente/embajador',
+    group: 'client',
+    mode: 'direct',
+    coerceFlow: 'client',
     refs: [],
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
-  "client.update": {
-    label: "Editar cliente",
-    group: "client",
-    mode: "direct",
-    coerceFlow: "client",
+  'client.update': {
+    label: 'Editar cliente',
+    group: 'client',
+    mode: 'direct',
+    coerceFlow: 'client',
     wrapPatch: true,
-    refs: [{ field: "id", refKind: "client", hintField: "clientName" }],
+    refs: [{ field: 'id', refKind: 'client', hintField: 'clientName' }],
     requiresChange: true,
     syncsToSheet: true,
-    minLevel: "admin",
+    minLevel: 'admin',
   },
 };
 
@@ -1360,7 +1356,7 @@ const ACTION_REGISTRY: Record<ActionKind, ActionSpec> = {
 export function getActionSpec(kind: ActionKind): {
   label: string;
   group: string;
-  mode: "direct" | "handoff";
+  mode: 'direct' | 'handoff';
   destructive: boolean;
   twoStep: boolean;
   syncsToSheet: boolean;
@@ -1403,18 +1399,18 @@ export function actionAllowedForLevel(
  */
 export function looksLikeConvexId(value: unknown): boolean {
   return (
-    typeof value === "string" && value.length >= 16 && /^[a-z0-9]+$/.test(value)
+    typeof value === 'string' && value.length >= 16 && /^[a-z0-9]+$/.test(value)
   );
 }
 
 const CREATE_KINDS = new Set<ActionKind>([
-  "item.createGema",
-  "item.createJoya",
-  "item.createInsumo",
-  "lot.create",
-  "sale.create",
-  "provider.create",
-  "client.create",
+  'item.createGema',
+  'item.createJoya',
+  'item.createInsumo',
+  'lot.create',
+  'sale.create',
+  'provider.create',
+  'client.create',
 ]);
 
 function dataChangeKeys(spec: ActionSpec, data: GuidedDraft): string[] {
@@ -1442,7 +1438,7 @@ export function computeActionMissing(
   // Every ref must have either a resolved-looking Id or a name hint to resolve.
   for (const ref of spec.refs) {
     const idVal = data[ref.field];
-    const hasId = typeof idVal === "string" && looksLikeConvexId(idVal);
+    const hasId = typeof idVal === 'string' && looksLikeConvexId(idVal);
     const hasHint = needsRefs.some((r) => r.field === ref.field);
     if (!hasId && !hasHint) missing.push(ref.hintField);
   }
@@ -1454,7 +1450,7 @@ export function computeActionMissing(
 
   // Edit kinds need at least one data field.
   if (spec.requiresChange && dataChangeKeys(spec, data).length === 0) {
-    missing.push("changes");
+    missing.push('changes');
   }
 
   // Extra explicit required keys (defaults from the coerceFlow count as present).
@@ -1464,7 +1460,7 @@ export function computeActionMissing(
   for (const req of spec.required ?? []) {
     if (Array.isArray(req)) {
       if (!req.some((k) => hasValue(data[k]) || hasValue(defaults[k]))) {
-        missing.push(req.join("|"));
+        missing.push(req.join('|'));
       }
     } else if (!(hasValue(data[req]) || hasValue(defaults[req]))) {
       missing.push(req);
@@ -1479,10 +1475,10 @@ function summarizeChanges(data: GuidedDraft, exclude: Set<string>): string {
   for (const [k, v] of Object.entries(data)) {
     if (exclude.has(k)) continue;
     if (!hasValue(v)) continue;
-    const val = Array.isArray(v) ? v.join(", ") : String(v);
+    const val = Array.isArray(v) ? v.join(', ') : String(v);
     parts.push(`${k}: ${val.length > 40 ? `${val.slice(0, 40)}…` : val}`);
   }
-  return parts.join(" · ");
+  return parts.join(' · ');
 }
 
 /** Server-authored, human-readable description of exactly what the action writes. */
@@ -1492,86 +1488,86 @@ export function buildActionSummary(
 ): string {
   const spec = ACTION_REGISTRY[kind];
   const refKeys = new Set<string>(spec.refs.map((r) => r.hintField));
-  const name = (k: string) => (hasValue(data[k]) ? String(data[k]) : "");
+  const name = (k: string) => (hasValue(data[k]) ? String(data[k]) : '');
   switch (kind) {
-    case "item.createGema":
-    case "item.createJoya":
-    case "item.createInsumo": {
+    case 'item.createGema':
+    case 'item.createJoya':
+    case 'item.createInsumo': {
       const bits = [
-        name("nombre") && `«${name("nombre")}»`,
-        name("peso"),
-        name("preponderancia") && `prepon. ${name("preponderancia")}%`,
-        name("loteId") && `lote ${name("loteId")}`,
+        name('nombre') && `«${name('nombre')}»`,
+        name('peso'),
+        name('preponderancia') && `prepon. ${name('preponderancia')}%`,
+        name('loteId') && `lote ${name('loteId')}`,
       ].filter(Boolean);
-      return `${spec.label}: ${bits.join(" · ")}`;
+      return `${spec.label}: ${bits.join(' · ')}`;
     }
-    case "item.editFields": {
+    case 'item.editFields': {
       const patch = (data.patch as GuidedDraft) ?? data;
-      return `Editar ${name("itemHint") || "ítem"} → ${summarizeChanges(patch, new Set(["itemHint", "targetItemId"]))}`;
+      return `Editar ${name('itemHint') || 'ítem'} → ${summarizeChanges(patch, new Set(['itemHint', 'targetItemId']))}`;
     }
-    case "item.editPreponderancia":
-      return `Ajustar preponderancia de ${name("itemHint") || "ítem"} a ${name("preponderancia")}%`;
-    case "item.setMedia":
-      return `Adjuntar ${[name("fotoUrl") && "foto", name("certificadoUrl") && "certificado"].filter(Boolean).join(" + ")} a ${name("itemHint") || "ítem"}`;
-    case "item.remove":
-      return `Quitar ${name("itemHint") || "ítem"} de su lote (lo libera al inventario)`;
-    case "lot.create":
-      return `${spec.label}: ${name("sede") ? `bóveda ${name("sede")}` : ""} · ${name("providerName") || "proveedor"} · ${name("costoTotalCOP") ? `$${name("costoTotalCOP")}` : ""} · ${name("unidadesDeclaradas") || "?"} uds`;
-    case "lot.update":
-      return `Editar lote ${name("loteId")} → ${summarizeChanges((data.patch as GuidedDraft) ?? data, refKeys)}`;
-    case "lot.close":
-      return `Cerrar lote ${name("loteId")} (valida preponderancia 100% + conteo de unidades)`;
-    case "lot.cancel":
-      return `Cancelar lote ${name("loteId")}${name("reason") ? ` — ${name("reason")}` : ""}`;
-    case "lot.publish":
-      return `Publicar lote ${name("loteId")} al catálogo`;
-    case "lot.reopen":
-      return `Reabrir lote ${name("loteId")}${name("reason") ? ` — ${name("reason")}` : ""}`;
-    case "lot.setDisplay":
-      return `Lote ${name("loteId")}: ${data.mostrarComoLote ? "mostrar" : "ocultar"} como tarjeta de catálogo`;
-    case "sale.create": {
+    case 'item.editPreponderancia':
+      return `Ajustar preponderancia de ${name('itemHint') || 'ítem'} a ${name('preponderancia')}%`;
+    case 'item.setMedia':
+      return `Adjuntar ${[name('fotoUrl') && 'foto', name('certificadoUrl') && 'certificado'].filter(Boolean).join(' + ')} a ${name('itemHint') || 'ítem'}`;
+    case 'item.remove':
+      return `Quitar ${name('itemHint') || 'ítem'} de su lote (lo libera al inventario)`;
+    case 'lot.create':
+      return `${spec.label}: ${name('sede') ? `bóveda ${name('sede')}` : ''} · ${name('providerName') || 'proveedor'} · ${name('costoTotalCOP') ? `$${name('costoTotalCOP')}` : ''} · ${name('unidadesDeclaradas') || '?'} uds`;
+    case 'lot.update':
+      return `Editar lote ${name('loteId')} → ${summarizeChanges((data.patch as GuidedDraft) ?? data, refKeys)}`;
+    case 'lot.close':
+      return `Cerrar lote ${name('loteId')} (valida preponderancia 100% + conteo de unidades)`;
+    case 'lot.cancel':
+      return `Cancelar lote ${name('loteId')}${name('reason') ? ` — ${name('reason')}` : ''}`;
+    case 'lot.publish':
+      return `Publicar lote ${name('loteId')} al catálogo`;
+    case 'lot.reopen':
+      return `Reabrir lote ${name('loteId')}${name('reason') ? ` — ${name('reason')}` : ''}`;
+    case 'lot.setDisplay':
+      return `Lote ${name('loteId')}: ${data.mostrarComoLote ? 'mostrar' : 'ocultar'} como tarjeta de catálogo`;
+    case 'sale.create': {
       // clientId carries either a resolved client id or a NAME hint (its own
       // ref hintField); clienteFinalData names a brand-new buyer to be created.
       const buyer =
-        name("clientId") ||
+        name('clientId') ||
         (data.clienteFinalData &&
-        typeof data.clienteFinalData === "object" &&
+        typeof data.clienteFinalData === 'object' &&
         typeof (data.clienteFinalData as Record<string, unknown>).nombre ===
-          "string"
+          'string'
           ? String((data.clienteFinalData as Record<string, unknown>).nombre)
-          : "") ||
-        "cliente";
-      const precio = name("precioAcordado");
-      return `Vender ${name("itemId") || "ítem"} a ${buyer}${precio ? ` por $${precio}` : ""}`;
+          : '') ||
+        'cliente';
+      const precio = name('precioAcordado');
+      return `Vender ${name('itemId') || 'ítem'} a ${buyer}${precio ? ` por $${precio}` : ''}`;
     }
-    case "sale.cancel":
-      return `Cancelar venta ${name("saleId")} (restaura los ítems a disponible)`;
-    case "sale.updatePrice":
-      return `Venta ${name("saleId")}: precio → $${name("precioAcordadoCOP")}`;
-    case "sale.setCertificadoUrl":
-      return `Adjuntar certificado a la venta ${name("saleId")}`;
-    case "sale.setCarnetUrl":
-      return `Adjuntar carnet a la venta ${name("saleId")}`;
-    case "sublote.create":
-      return `Crear sublote «${name("nombre")}» en ${name("parentLoteId")}`;
-    case "sublote.addItems":
-      return `Agregar ${Array.isArray(data.itemIds) ? (data.itemIds as unknown[]).length : 0} ítem(s) al sublote ${name("subLoteId")}`;
-    case "sublote.removeItems":
-      return `Quitar ${Array.isArray(data.itemIds) ? (data.itemIds as unknown[]).length : 0} ítem(s) del sublote ${name("subLoteId")}`;
-    case "sublote.updateMeta":
-      return `Editar sublote ${name("subLoteId")} → ${summarizeChanges(data, refKeys)}`;
-    case "sublote.setEstado":
-      return `Sublote ${name("subLoteId")} → ${name("estado")}`;
-    case "sublote.setDisplay":
-      return `Sublote ${name("subLoteId")}: ${data.mostrarComoLote ? "mostrar" : "ocultar"} como tarjeta`;
-    case "provider.create":
-      return `${spec.label}: ${name("nombreORazonSocial")}`;
-    case "provider.update":
-      return `Editar proveedor ${name("providerName")} → ${summarizeChanges((data.patch as GuidedDraft) ?? data, refKeys)}`;
-    case "client.create":
-      return `${spec.label}: ${name("nombre")} (${name("tipo") || "final"})`;
-    case "client.update":
-      return `Editar cliente ${name("clientName")} → ${summarizeChanges((data.patch as GuidedDraft) ?? data, refKeys)}`;
+    case 'sale.cancel':
+      return `Cancelar venta ${name('saleId')} (restaura los ítems a disponible)`;
+    case 'sale.updatePrice':
+      return `Venta ${name('saleId')}: precio → $${name('precioAcordadoCOP')}`;
+    case 'sale.setCertificadoUrl':
+      return `Adjuntar certificado a la venta ${name('saleId')}`;
+    case 'sale.setCarnetUrl':
+      return `Adjuntar carnet a la venta ${name('saleId')}`;
+    case 'sublote.create':
+      return `Crear sublote «${name('nombre')}» en ${name('parentLoteId')}`;
+    case 'sublote.addItems':
+      return `Agregar ${Array.isArray(data.itemIds) ? (data.itemIds as unknown[]).length : 0} ítem(s) al sublote ${name('subLoteId')}`;
+    case 'sublote.removeItems':
+      return `Quitar ${Array.isArray(data.itemIds) ? (data.itemIds as unknown[]).length : 0} ítem(s) del sublote ${name('subLoteId')}`;
+    case 'sublote.updateMeta':
+      return `Editar sublote ${name('subLoteId')} → ${summarizeChanges(data, refKeys)}`;
+    case 'sublote.setEstado':
+      return `Sublote ${name('subLoteId')} → ${name('estado')}`;
+    case 'sublote.setDisplay':
+      return `Sublote ${name('subLoteId')}: ${data.mostrarComoLote ? 'mostrar' : 'ocultar'} como tarjeta`;
+    case 'provider.create':
+      return `${spec.label}: ${name('nombreORazonSocial')}`;
+    case 'provider.update':
+      return `Editar proveedor ${name('providerName')} → ${summarizeChanges((data.patch as GuidedDraft) ?? data, refKeys)}`;
+    case 'client.create':
+      return `${spec.label}: ${name('nombre')} (${name('tipo') || 'final'})`;
+    case 'client.update':
+      return `Editar cliente ${name('clientName')} → ${summarizeChanges((data.patch as GuidedDraft) ?? data, refKeys)}`;
     default:
       return spec.label;
   }
@@ -1588,7 +1584,7 @@ export function hardenAction(
   raw: unknown,
   level: AccessLevel,
 ): GuidedAction | null {
-  if (!raw || typeof raw !== "object") return null;
+  if (!raw || typeof raw !== 'object') return null;
   const kind = (raw as Record<string, unknown>).kind;
   if (!isActionKind(kind)) return null;
   if (!actionAllowedForLevel(kind, level)) return null;
@@ -1596,7 +1592,7 @@ export function hardenAction(
   const spec = ACTION_REGISTRY[kind];
   const rawArgsValue = (raw as Record<string, unknown>).args;
   const rawArgs: GuidedDraft =
-    rawArgsValue && typeof rawArgsValue === "object"
+    rawArgsValue && typeof rawArgsValue === 'object'
       ? (rawArgsValue as GuidedDraft)
       : {};
 
@@ -1606,7 +1602,7 @@ export function hardenAction(
     const wl = whitelistDraft(spec.coerceFlow, rawArgs);
     // Keep ref hint fields the flow whitelist might not include (e.g. providerName).
     for (const r of spec.refs) {
-      if (typeof rawArgs[r.hintField] === "string") {
+      if (typeof rawArgs[r.hintField] === 'string') {
         wl[r.hintField] = rawArgs[r.hintField];
       }
     }
@@ -1628,15 +1624,15 @@ export function hardenAction(
   const needsRefs: ActionUnresolvedRef[] = [];
   for (const ref of spec.refs) {
     const idVal = data[ref.field];
-    if (typeof idVal === "string" && looksLikeConvexId(idVal)) continue; // trust real Id
+    if (typeof idVal === 'string' && looksLikeConvexId(idVal)) continue; // trust real Id
     if (ref.field in data) delete data[ref.field]; // strip fabricated Id
     const hintRaw = rawArgs[ref.hintField];
     const hint =
-      typeof hintRaw === "string"
+      typeof hintRaw === 'string'
         ? hintRaw.trim()
-        : typeof hintRaw === "number"
+        : typeof hintRaw === 'number'
           ? String(hintRaw)
-          : "";
+          : '';
     if (hint) {
       data[ref.hintField] = hint;
       needsRefs.push({ field: ref.field, refKind: ref.refKind, hint });
@@ -1647,11 +1643,11 @@ export function hardenAction(
   if (Array.isArray(data.itemIds)) {
     data.itemIds = (data.itemIds as unknown[])
       .map((x) =>
-        typeof x === "string"
+        typeof x === 'string'
           ? x.trim()
-          : typeof x === "number"
+          : typeof x === 'number'
             ? String(x)
-            : "",
+            : '',
       )
       .filter(Boolean);
   }
@@ -1664,7 +1660,7 @@ export function hardenAction(
     summary: buildActionSummary(kind, data),
     confirmLabel: spec.destructive
       ? `Sí, ${spec.label.toLowerCase()}`
-      : "Confirmar y guardar",
+      : 'Confirmar y guardar',
     mode: spec.mode,
     destructive: !!spec.destructive,
     twoStep: !!spec.twoStep,
@@ -1696,10 +1692,10 @@ export function buildActionCatalogText(level: AccessLevel): string {
     const hints = spec.refs.map((r) => `${r.hintField} (${r.refKind})`);
     const argHint = spec.coerceFlow
       ? `campos de ${spec.coerceFlow}`
-      : (spec.argKeys ?? []).join(", ") || "—";
+      : (spec.argKeys ?? []).join(', ') || '—';
     lines.push(
-      `- ${kind} · ${spec.label} · args: ${argHint}${hints.length ? ` · referencia por: ${hints.join(", ")}` : ""}${spec.destructive ? " · (destructiva)" : ""}`,
+      `- ${kind} · ${spec.label} · args: ${argHint}${hints.length ? ` · referencia por: ${hints.join(', ')}` : ''}${spec.destructive ? ' · (destructiva)' : ''}`,
     );
   }
-  return lines.join("\n");
+  return lines.join('\n');
 }

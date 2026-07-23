@@ -399,11 +399,13 @@ const setDisplayArgs = {
 };
 
 /**
- * Set the catalog-grouping fields (`fotoUrl`, `mostrarComoLote`). These are
- * Convex-only display fields (NOT in COLUMN_MAPS.subLotes), so this does NOT
- * flip syncStatus or push to Sheets. When `mostrarComoLote` is true and the
- * sublote is `activa`, the customer catalog shows it as one grouped card.
- * Omitting a field leaves it unchanged; pass `fotoUrl: ""` to clear it.
+ * Set the catalog-grouping fields (`fotoUrl`, `mostrarComoLote`). `fotoUrl` is
+ * Convex-only; `mostrarComoLote` IS a synced sheet column (Sublotes!K), so
+ * changing it flips syncStatus and pushes so the sheet reflects the flag — and
+ * the reverse edit (sheet → Convex) is allowlisted in sheetPullMaps.ts. When
+ * `mostrarComoLote` is true and the sublote is `activa`, the customer catalog
+ * shows it as one grouped card. Omitting a field leaves it unchanged; pass
+ * `fotoUrl: ""` to clear it.
  */
 export const _setDisplay = internalMutation({
   args: setDisplayArgs,
@@ -413,7 +415,18 @@ export const _setDisplay = internalMutation({
     if (fotoUrl !== undefined) patch.fotoUrl = fotoUrl;
     if (mostrarComoLote !== undefined) patch.mostrarComoLote = mostrarComoLote;
     if (Object.keys(patch).length === 0) return { subLoteId, changed: false };
+    // mostrarComoLote is a synced sheet column (K) — push so the sheet reflects it.
+    if (mostrarComoLote !== undefined) {
+      patch.syncStatus = 'pending';
+      patch.syncError = undefined;
+    }
     await ctx.db.patch(sub._id, patch);
+    if (mostrarComoLote !== undefined) {
+      await ctx.scheduler.runAfter(0, api.subLotes._pushToSheet, {
+        id: sub._id,
+        mode: 'patch',
+      });
+    }
     return { subLoteId, changed: true };
   },
 });

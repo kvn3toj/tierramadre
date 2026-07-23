@@ -183,8 +183,7 @@ export default function MovimientosKardexPage() {
     | Array<{
         itemId: string;
         nombre: string;
-        precioEmbajadorCOP?: number;
-        precioConscienteCOP?: number;
+        precioFinalCOP?: number;
         precioCOP?: number;
       }>
     | undefined;
@@ -218,8 +217,7 @@ export default function MovimientosKardexPage() {
     | Array<{
         itemId: string;
         nombre: string;
-        precioEmbajadorCOP?: number;
-        precioConscienteCOP?: number;
+        precioFinalCOP?: number;
         precioCOP?: number;
       }>
     | undefined;
@@ -230,8 +228,7 @@ export default function MovimientosKardexPage() {
     | Array<{
         itemId: string;
         nombre: string;
-        precioEmbajadorCOP?: number;
-        precioConscienteCOP?: number;
+        precioFinalCOP?: number;
         precioCOP?: number;
       }>
     | undefined;
@@ -256,8 +253,7 @@ export default function MovimientosKardexPage() {
       return (disponibles ?? []).map((p) => ({
         itemId: p.itemId,
         nombre: p.nombre,
-        precioSugerido:
-          p.precioEmbajadorCOP ?? p.precioConscienteCOP ?? p.precioCOP,
+        precioSugerido: p.precioFinalCOP ?? p.precioCOP,
       }));
     }
     return [...(enAsesor ?? []), ...(enConsignacion ?? [])]
@@ -265,8 +261,7 @@ export default function MovimientosKardexPage() {
       .map((p) => ({
         itemId: p.itemId,
         nombre: p.nombre,
-        precioSugerido:
-          p.precioEmbajadorCOP ?? p.precioConscienteCOP ?? p.precioCOP,
+        precioSugerido: p.precioFinalCOP ?? p.precioCOP,
       }));
   }, [mode, disponibles, enAsesor, enConsignacion, currentlyHeldItemIds]);
 

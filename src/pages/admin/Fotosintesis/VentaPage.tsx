@@ -246,11 +246,10 @@ export default function FotosintesisVentaPage({
           item.itemId,
           batchThumbs,
         ),
-        // Picker hint only — mirrors ProductoSpotlight's tier fallback (legacy
-        // precioCOP is ~82% empty). The authoritative per-item price still comes
-        // from `priceByItemId` once `getManyByItemIds` resolves.
-        precioCop:
-          item.precioEmbajadorCOP ?? item.precioConscienteCOP ?? item.precioCOP,
+        // Picker hint only — the derived final price (legacy precioCOP is ~82%
+        // empty). The authoritative per-item price still comes from
+        // `priceByItemId` once `getManyByItemIds` resolves.
+        precioCop: item.precioFinalCOP ?? item.precioCOP,
         loteId: item.loteId,
         estado: item.estado as string | undefined,
       };
@@ -265,8 +264,8 @@ export default function FotosintesisVentaPage({
     itemIds.length ? { itemIds } : 'skip',
   );
 
-  // Buyer tier: an embajador buyer pays the ambassador price; everyone else
-  // ("final" / custom write-ins) pays the consciente price.
+  // Buyer type — recorded on the sale as a label. After the 2026-07-21 price
+  // refactor it no longer changes the price (every buyer pays precioFinalCOP).
   const tier: CompradorTier =
     compradorTipo === 'embajador' ? 'embajador' : 'final';
 

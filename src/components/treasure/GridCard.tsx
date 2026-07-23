@@ -67,7 +67,9 @@ function buildSpecLine(item: TreasureItem): string {
   const quality = abbreviateQuality(item.calidad);
   if (quality) parts.push(quality);
   const isLoose = !item.isJewelry;
-  if (isLoose && typeof item.peso === 'number') {
+  // Only show the carat weight for a loose stone with a real weight — never
+  // "0.00 ct" (joyas / insumos / unweighed items have peso 0 or blank).
+  if (isLoose && typeof item.peso === 'number' && item.peso > 0) {
     parts.push(`${formatCarats(item.peso)} ct`);
   }
   if (item.isJewelry && item.metalType) parts.push(item.metalType);

@@ -8,6 +8,36 @@ import type { Id } from './_generated/dataModel';
 import { v } from 'convex/values';
 import { bumpInventoryTotal } from './products';
 import { withPublishStamp } from './_lib/publishState';
+import { computePrecioFinal } from './_lib/pricing';
+
+/**
+ * Backfill the DERIVED `precioFinalCOP` (= round(costoBaseCOP × 2.6)) for every
+ * existing inventory doc, part of the 2026-07-21 price refactor that replaced
+ * the embajador/consciente tiers with a single derived final price. New/edited
+ * items compute it in lotItems; this catches the docs captured before the
+ * refactor.
+ *
+ * Idempotent: a doc whose stored precioFinalCOP already equals the computed
+ * value is skipped, so re-running (or running after normal edits) is harmless.
+ * Docs with no/zero costoBaseCOP get no price (computePrecioFinal → undefined).
+ *
+ *   npx convex run --prod migrations:backfillPrecioFinal '{}'
+ */
+export const backfillPrecioFinal = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db.query('productInventory').collect();
+    let updated = 0;
+    for (const row of rows) {
+      const next = computePrecioFinal(row.costoBaseCOP);
+      if (next !== row.precioFinalCOP) {
+        await ctx.db.patch(row._id, { precioFinalCOP: next });
+        updated += 1;
+      }
+    }
+    return { scanned: rows.length, updated };
+  },
+});
 
 /**
  * Backfill `publishedAt` for Fotosíntesis items published BEFORE the Estrenos
@@ -1252,20 +1282,53 @@ export const migrateChatonesToC065 = internalAction({
       providerId: PROVIDER,
     });
     const out: Array<Record<string, unknown>> = [];
-    for (const it of ['449', '454', '456', '458', '460', '463', '464', '465', '466']) {
-      out.push(await ctx.runMutation(internal.migrations._moveItemToLote, { itemId: it, toLoteId: 'C-065' }));
+    for (const it of [
+      '449',
+      '454',
+      '456',
+      '458',
+      '460',
+      '463',
+      '464',
+      '465',
+      '466',
+    ]) {
+      out.push(
+        await ctx.runMutation(internal.migrations._moveItemToLote, {
+          itemId: it,
+          toLoteId: 'C-065',
+        }),
+      );
     }
-    const news: Array<{ itemId: string; nombre: string; costoBaseCOP: number }> = [
+    const news: Array<{
+      itemId: string;
+      nombre: string;
+      costoBaseCOP: number;
+    }> = [
       { itemId: '477', nombre: 'Chatones Redondos 5mm', costoBaseCOP: 22400 },
-      { itemId: '481', nombre: 'Chatones de Mariposa 4 mm', costoBaseCOP: 140000 },
-      { itemId: '520', nombre: 'Chatones de Mariposa 3,5mm', costoBaseCOP: 225000 },
+      {
+        itemId: '481',
+        nombre: 'Chatones de Mariposa 4 mm',
+        costoBaseCOP: 140000,
+      },
+      {
+        itemId: '520',
+        nombre: 'Chatones de Mariposa 3,5mm',
+        costoBaseCOP: 225000,
+      },
       { itemId: '521', nombre: 'Chatones Redondos 2mm', costoBaseCOP: 14800 },
     ];
     for (const n of news) {
-      out.push(await ctx.runMutation(internal.migrations._createItemExplicit, {
-        itemId: n.itemId, loteId: 'C-065', nombre: n.nombre,
-        tipo: 'insumo', categoria: 'Insumo', costoBaseCOP: n.costoBaseCOP,
-      }));
+      out.push(
+        await ctx.runMutation(internal.migrations._createItemExplicit, {
+          itemId: n.itemId,
+          loteId: 'C-065',
+          nombre: n.nombre,
+          tipo: 'insumo',
+          categoria: 'Insumo',
+          costoBaseCOP: n.costoBaseCOP,
+        }),
+      );
     }
     return out;
   },

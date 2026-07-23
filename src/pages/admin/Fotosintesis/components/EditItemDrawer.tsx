@@ -35,7 +35,6 @@ import {
 } from './InsumoFields';
 import { KbdKey } from './KbdKey';
 import { PhotoDropzone, type DropzonePhoto } from './PhotoDropzone';
-import { PriceMultiplierField } from './PriceMultiplierField';
 import { spanishText } from '../utils/fieldLang';
 import {
   inferItemTipo,
@@ -45,12 +44,10 @@ import {
   joyaPatchFromDraft,
   insumoDraftFromProduct,
   insumoPatchFromDraft,
-  tierPricePatch,
   type EditableTipo,
-  type ItemPricingDraft,
 } from '../utils/buildLotItemPayload';
 import {
-  uploadFotosintesisImages,
+  uploadItemImages,
   uploadFotosintesisCertificado,
 } from '../utils/uploadItemMedia';
 import { convertToProxyUrl } from '../../../../utils/driveUrl';
@@ -73,14 +70,11 @@ interface ProductInventoryRow {
   procedencia?: string;
   observacion?: string;
   precioCOP?: number;
-  // Catalog tiers — the prices the public catalog actually reads.
-  // precioEmbajadorCOP (sheet col N) is the public price; precioConscienteCOP
-  // (col O) is the preferential tier. products.get returns the full doc, so
-  // these always exist at runtime — the interface just under-declared them.
-  precioEmbajadorCOP?: number;
-  precioConscienteCOP?: number;
-  // Cost basis (lot cost × preponderancia, sheet col M) — base for the tier
-  // multipliers when in-session preponderancia is 0/empty.
+  // Derived final price (precioFinalCOP = costoBaseCOP × 2.6, sheet col M) —
+  // computed in Convex and shown read-only here (2026-07-21 refactor).
+  precioFinalCOP?: number;
+  // Cost basis (lot cost × preponderancia, sheet col L) — the input the final
+  // price is derived from; drives the live read-only preview below.
   costoBaseCOP?: number;
   mostrarEnCatalogo?: boolean;
   cantidad?: number;
@@ -260,14 +254,6 @@ export function EditItemDrawer({
   );
   const [observacion, setObservacion] = useState('');
   const [mostrarEnCatalogo, setMostrarEnCatalogo] = useState(false);
-  // Catalog tiers (Goal F2) — a SHARED value (sibling of observación /
-  // mostrarEnCatalogo), not a sub-form draft. Seeded from the product in the
-  // hydrate effect and folded into the dirty baseline so any tier edit arms the
-  // discard guard. Insumos never render these, so they stay ""/"".
-  const [pricing, setPricing] = useState<ItemPricingDraft>({
-    precioEmbajadorCOP: '',
-    precioConscienteCOP: '',
-  });
   // Item photo (hero). Seeded from the saved Drive URL; a freshly dropped file
   // carries `file` so submit knows to upload it. Photos are editable in any lot
   // estado — see the `updateMedia` mutation.
@@ -364,13 +350,6 @@ export function EditItemDrawer({
     // `descripcion`, so the shared observación textarea is hidden + left empty.
     let seededObservacion = t === 'joya' ? '' : (product.observacion ?? '');
     let seededMostrar = product.mostrarEnCatalogo ?? false;
-    // F2 — seed the catalog tiers from the persisted product. An unset tier
-    // hydrates as "" (not 0) so the omit-on-blank submit rule never re-sends a
-    // price the operator didn't touch.
-    const seededPricing: ItemPricingDraft = {
-      precioEmbajadorCOP: product.precioEmbajadorCOP ?? '',
-      precioConscienteCOP: product.precioConscienteCOP ?? '',
-    };
     // Fotosynthia v2 — merge an AI edit patch ON TOP of the hydrated values,
     // BEFORE the baseline is captured below so dirty detection stays correct.
     // preponderancia (lot-derived) and photos are never touched.
@@ -385,13 +364,9 @@ export function EditItemDrawer({
         seededMostrar = o.mostrarEnCatalogo;
       }
       delete o.mostrarEnCatalogo;
-      if (typeof o.precioEmbajadorCOP === 'number') {
-        seededPricing.precioEmbajadorCOP = o.precioEmbajadorCOP;
-      }
+      // Price tiers were removed (2026-07-21): precioFinalCOP is derived in
+      // Convex, so strip any legacy tier keys before they reach the sub-form.
       delete o.precioEmbajadorCOP;
-      if (typeof o.precioConscienteCOP === 'number') {
-        seededPricing.precioConscienteCOP = o.precioConscienteCOP;
-      }
       delete o.precioConscienteCOP;
       // Remaining keys belong to the active sub-form draft. Re-set it so the
       // form reflects the merge (last setState wins over the seed above).
@@ -417,14 +392,12 @@ export function EditItemDrawer({
     }
     setObservacion(seededObservacion);
     setMostrarEnCatalogo(seededMostrar);
-    setPricing(seededPricing);
     // C4 — capture the dirty baseline from the same seeded values so it can
     // never drift from what we just hydrated into the form.
     baselineRef.current = JSON.stringify({
       draft: seededActive,
       observacion: seededObservacion,
       mostrarEnCatalogo: seededMostrar,
-      pricing: seededPricing,
     });
     setPhotos((prev) => {
       revokeLocalPreviews(prev);
@@ -506,7 +479,6 @@ export function EditItemDrawer({
     draft: activeDraft,
     observacion,
     mostrarEnCatalogo,
-    pricing,
   });
   const fieldsDirty =
     baselineRef.current !== null && editSnapshot !== baselineRef.current;
@@ -540,10 +512,11 @@ export function EditItemDrawer({
       // 1. Resolve the next photo URL: upload a dropped file, or clear it.
       let nextFotoUrl: string | undefined;
       if (pendingPhotoFile) {
-        nextFotoUrl = await uploadFotosintesisImages(
+        // Unified location: products/{item} - {nombre}/ (the catalog gallery).
+        nextFotoUrl = await uploadItemImages(
           [pendingPhotoFile],
-          loteId,
           itemId,
+          activeNombre,
         );
       } else if (photoRemoved) {
         nextFotoUrl = ''; // empty string clears the field server-side
@@ -572,19 +545,9 @@ export function EditItemDrawer({
                   mostrarEnCatalogo,
                 )
               : gemaPatchFromDraft(draft, observacion, mostrarEnCatalogo);
-        // F2 — fold in the catalog tiers (precioEmbajadorCOP /
-        // precioConscienteCOP). tierPricePatch omits blank tiers so a no-op
-        // never clears a stored price; insumos never expose the editors and
-        // keep ""/"", so we also gate the merge as belt-and-suspenders.
-        if (tipo !== 'insumo') {
-          Object.assign(
-            patch,
-            tierPricePatch(
-              pricing.precioEmbajadorCOP,
-              pricing.precioConscienteCOP,
-            ),
-          );
-        }
+        // Price tiers removed (2026-07-21): the price is DERIVED in Convex
+        // (precioFinalCOP = costoBaseCOP × 2.6), so there is nothing to fold in
+        // here — the drawer no longer edits price.
         if (nextFotoUrl !== undefined) patch.fotoUrl = nextFotoUrl;
         if (nextCertificadoUrl !== undefined)
           patch.certificadoUrl = nextCertificadoUrl;
@@ -984,15 +947,14 @@ export function EditItemDrawer({
               />
             )}
 
-            {/* F2 — Precios del catálogo. ONE shared tier editor for every
-                item kind except insumos (internal supplies never reach the
-                public catalog). The base/col-L price stays in the sub-form
-                above; these two tiers are the ones the customer actually sees.
-                Hidden in read-only media-only sessions so we never surface a
-                non-functional slider. */}
-            {editable && tipo !== 'insumo' ? (
+            {/* Precio final (2026-07-21 refactor): a single DERIVED price
+                (precioFinalCOP = costoBaseCOP × 2.6), computed in Convex — no
+                longer editable here. Shown read-only as a live preview that
+                follows the in-session preponderancia / lot cost. Insumos never
+                reach the public catalog, so they hide it. */}
+            {tipo !== 'insumo' ? (
               <Box>
-                <FieldLabel>Precios del catálogo</FieldLabel>
+                <FieldLabel>Precio final (catálogo)</FieldLabel>
                 <Box
                   sx={{
                     fontSize: 11.5,
@@ -1002,53 +964,44 @@ export function EditItemDrawer({
                     lineHeight: 1.45,
                   }}
                 >
-                  El cliente paga el{' '}
+                  Se calcula automáticamente:{' '}
                   <Box
                     component="span"
                     sx={{ fontWeight: 600, color: foto.ink.secondary }}
                   >
-                    precio embajador
+                    costo base × 2.6
                   </Box>
-                  . El precio base de arriba es solo referencia interna.
+                  . No es editable — cambia con el costo del lote y la
+                  preponderancia del ítem.
                 </Box>
                 <Box
                   sx={{
-                    display: 'grid',
-                    gridTemplateColumns: {
-                      xs: '1fr',
-                      sm: 'minmax(0, 1fr) minmax(0, 1fr)',
-                    },
-                    gap: '16px',
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    gap: '8px',
+                    fontVariantNumeric: 'tabular-nums',
                   }}
                 >
-                  <PriceMultiplierField
-                    label="Precio embajador"
-                    optional="público"
-                    baseCOP={liveCostoBaseCOP}
-                    defaultMultiplier={2.5}
-                    value={pricing.precioEmbajadorCOP}
-                    onChange={(next) =>
-                      setPricing((prev) => ({
-                        ...prev,
-                        precioEmbajadorCOP: next,
-                      }))
-                    }
-                    ariaLabel="Precio embajador en COP — precio público"
-                  />
-                  <PriceMultiplierField
-                    label="Precio consciente"
-                    optional="consciente"
-                    baseCOP={liveCostoBaseCOP}
-                    defaultMultiplier={3}
-                    value={pricing.precioConscienteCOP}
-                    onChange={(next) =>
-                      setPricing((prev) => ({
-                        ...prev,
-                        precioConscienteCOP: next,
-                      }))
-                    }
-                    ariaLabel="Precio clientes conscientes en COP"
-                  />
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: 22,
+                      fontWeight: 600,
+                      color: foto.ink.secondary,
+                    }}
+                  >
+                    {liveCostoBaseCOP > 0
+                      ? `$${Math.round(liveCostoBaseCOP * 2.6).toLocaleString('es-CO')}`
+                      : '—'}
+                  </Box>
+                  <Box
+                    component="span"
+                    sx={{ fontSize: 12, color: foto.ink.tertiary }}
+                  >
+                    {liveCostoBaseCOP > 0
+                      ? `COP · base $${Math.round(liveCostoBaseCOP).toLocaleString('es-CO')}`
+                      : 'COP'}
+                  </Box>
                 </Box>
               </Box>
             ) : null}

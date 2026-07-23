@@ -1,13 +1,54 @@
-# Dependencies
+# ── Vercel deploy ignore ─────────────────────────────────────────────────
+# Goal: upload ONLY what the build needs (src, public, api, convex, the 3 build
+# scripts + configs). Everything below is dead weight that bloated the archive
+# to ~2.8 GB / 17k+ files and forced slow --archive=tgz deploys.
+
+# Dependencies (Vercel installs its own)
 node_modules
 
 # Build outputs
 release
+dist
 
-# Documentation
+# Documentation (~1.5 GB)
 docs
 
-# Development files
+# VCS metadata (~694 MB) — never needed at build
+.git
+
+# Claude Code metadata + agent worktrees (~13,071 files — the #1 bloat source)
+.claude
+
+# Stale local build output (Vercel builds fresh)
+dist
+
+# Label-printing + marketing DATA dirs (print inventories, QR images, reels) —
+# not imported by the app bundle; includes a 2nd Python venv (.qrvenv)
+etiquetas-niimbot
+etiquetas-thermal
+etiquetas-tiras
+etiquetas-t75
+marketing
+items QRs
+
+# Python virtualenv + caches under scripts/ (~3,951 files) — not used by the
+# build (build:vercel only runs update-version / generate-thumbnails-seed /
+# build-app). Keep the .mjs/.ts build scripts + scripts/lib.
+scripts/venv
+scripts/tests
+scripts/.analysis-runs
+scripts/.backups
+scripts/reconciliacion/out
+**/__pycache__
+**/*.pyc
+
+# GoHighLevel spec/audit docs (not part of the app bundle; the code lives in api/ + convex/)
+GHL
+
+# Scratch / working dirs
+scratch-convex
+
+# Dev files
 .env.local
 .env.*.local
 *.log

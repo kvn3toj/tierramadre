@@ -18,7 +18,6 @@ import { useNotification } from '../../../contexts/NotificationContext';
 import type { Id } from '../../../../convex/_generated/dataModel';
 import { TicketHeader } from './components/TicketHeader';
 import { FieldLabel } from './components/FieldLabel';
-import { PriceMultiplierField } from './components/PriceMultiplierField';
 import { PhotoDropzone, type DropzonePhoto } from './components/PhotoDropzone';
 import { EditLotDrawer } from './components/EditLotDrawer';
 import ConfirmDialog from '../../../components/shared/ConfirmDialog';
@@ -141,15 +140,6 @@ export default function FotosintesisLoteResumenPage() {
   // Catalog grouping: hero photo + "show as one card" toggle.
   const [heroPhoto, setHeroPhoto] = useState<DropzonePhoto[]>([]);
   const [mostrarComoLote, setMostrarComoLote] = useState(false);
-  const [pricingByItemId, setPricingByItemId] = useState<
-    Record<
-      string,
-      {
-        precioEmbajadorCOP: number | '';
-        precioConscienteCOP: number | '';
-      }
-    >
-  >({});
   const [closing, setClosing] = useState(false);
   // C1 — reopen flow + the lot-header editor (only reachable here once reopened).
   const [editLotOpen, setEditLotOpen] = useState(false);
@@ -176,17 +166,11 @@ export default function FotosintesisLoteResumenPage() {
   useEffect(() => {
     if (!lotItems || !products) return;
     const nextPub: Record<string, boolean> = {};
-    const nextPricing: typeof pricingByItemId = {};
     for (const li of lotItems) {
       const p = products.find((row) => row.itemId === li.itemId);
       nextPub[li.itemId] = p?.mostrarEnCatalogo ?? false;
-      nextPricing[li.itemId] = {
-        precioEmbajadorCOP: p?.precioEmbajadorCOP ?? '',
-        precioConscienteCOP: p?.precioConscienteCOP ?? '',
-      };
     }
     setPubByItemId(nextPub);
-    setPricingByItemId(nextPricing);
   }, [lotItems, products]);
 
   // Seed the grouping controls from the lot (only the persisted hero/flag).
@@ -275,20 +259,17 @@ export default function FotosintesisLoteResumenPage() {
     });
   };
 
-  // Flush every item's panel pricing (precioEmbajadorCOP / precioConscienteCOP)
-  // and publish/reserva toggle to Convex. Shared by all three submit handlers so
-  // the per-item edits persist in EVERY lot estado — previously only handleClose
-  // (estado === "abierto") ran this loop, so editing the public price on an
-  // already cerrado/publicado lot silently dropped the change (F1).
+  // Flush every item's publish/reserva toggle to Convex. Shared by all three
+  // submit handlers so the per-item visibility edits persist in EVERY lot estado
+  // (previously only handleClose ran this loop — F1). Price is DERIVED in Convex
+  // (precioFinalCOP = costoBaseCOP × 2.6) since the 2026-07-21 refactor, so this
+  // only persists the publish/reserva toggle — never a price.
   const flushItemPricing = async () => {
     if (!lotItems) return;
     for (const li of lotItems) {
       await updateGemaFields({
         lotItemId: li._id as Id<'lotItems'>,
-        patch: buildItemPricingPatch(
-          pubByItemId[li.itemId] ?? false,
-          pricingByItemId[li.itemId],
-        ),
+        patch: buildItemPricingPatch(pubByItemId[li.itemId] ?? false),
       });
     }
   };
@@ -705,10 +686,12 @@ export default function FotosintesisLoteResumenPage() {
               {lotItems.map((li) => {
                 const product = products.find((p) => p.itemId === li.itemId);
                 const pubOn = pubByItemId[li.itemId] ?? false;
-                const pricing = pricingByItemId[li.itemId] ?? {
-                  precioEmbajadorCOP: '',
-                  precioConscienteCOP: '',
-                };
+                // DERIVED final price (2026-07-21 refactor) — read-only.
+                const precioFinal =
+                  product?.precioFinalCOP ??
+                  (product?.costoBaseCOP
+                    ? Math.round(product.costoBaseCOP * 2.6)
+                    : undefined);
                 return (
                   <Box
                     component="li"
@@ -852,42 +835,37 @@ export default function FotosintesisLoteResumenPage() {
                     </Box>
                     <Box
                       sx={{
-                        display: 'grid',
-                        gridTemplateColumns: {
-                          xs: '1fr',
-                          sm: 'minmax(0, 1fr) minmax(0, 1fr)',
-                        },
-                        gap: '16px',
+                        display: 'flex',
+                        alignItems: 'baseline',
+                        flexWrap: 'wrap',
+                        gap: '8px',
+                        fontVariantNumeric: 'tabular-nums',
                       }}
                     >
-                      <PriceMultiplierField
-                        label="Precio embajador"
-                        optional="embajador"
-                        baseCOP={li.costoBaseCOP}
-                        defaultMultiplier={2.5}
-                        value={pricing.precioEmbajadorCOP}
-                        onChange={(v) =>
-                          setPricingByItemId((prev) => ({
-                            ...prev,
-                            [li.itemId]: { ...pricing, precioEmbajadorCOP: v },
-                          }))
-                        }
-                        ariaLabel="Precio embajador"
-                      />
-                      <PriceMultiplierField
-                        label="Precio consciente"
-                        optional="consciente"
-                        baseCOP={li.costoBaseCOP}
-                        defaultMultiplier={3}
-                        value={pricing.precioConscienteCOP}
-                        onChange={(v) =>
-                          setPricingByItemId((prev) => ({
-                            ...prev,
-                            [li.itemId]: { ...pricing, precioConscienteCOP: v },
-                          }))
-                        }
-                        ariaLabel="Precio clientes conscientes"
-                      />
+                      <Box
+                        component="span"
+                        sx={{ fontSize: 11.5, color: foto.ink.tertiary }}
+                      >
+                        Precio final
+                      </Box>
+                      <Box
+                        component="span"
+                        sx={{
+                          fontSize: 16,
+                          fontWeight: 600,
+                          color: foto.ink.secondary,
+                        }}
+                      >
+                        {precioFinal != null
+                          ? `$${precioFinal.toLocaleString('es-CO')} COP`
+                          : '—'}
+                      </Box>
+                      <Box
+                        component="span"
+                        sx={{ fontSize: 11, color: foto.ink.tertiary }}
+                      >
+                        (costo × 2.6, automático)
+                      </Box>
                     </Box>
                   </Box>
                 );

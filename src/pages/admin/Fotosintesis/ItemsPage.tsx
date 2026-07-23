@@ -71,21 +71,16 @@ const formatCOP = (n: number): string => COP_FORMATTER.format(n);
 /**
  * The one place this page decides what "the price" of an item is.
  *
- * Today that's the tier price (embajador → consciente), falling back to the
- * legacy `precioCOP` (col L, ~82% empty since the 2026-05-29 audit). The SOT v3
- * cutover replaces both tiers with a single derived `precioFinalCOP`
- * (= costoBase × 2.6) — see docs/specs/2026-07-21-plan-refactor-precio-final.md.
- * That refactor is deliberately NOT done here (the live app still sells on the
- * tiers), so this helper is the seam: when `precioFinalCOP` lands in the
- * `products.list` projection, prepend it to the chain and every consumer on
- * this page follows, with no other edit.
+ * Since the 2026-07-21 price refactor that's the single derived `precioFinalCOP`
+ * (= costoBaseCOP × 2.6), falling back to the legacy `precioCOP` (col L, ~82%
+ * empty since the 2026-05-29 audit) — see
+ * docs/specs/2026-07-21-plan-refactor-precio-final.md.
  */
 function resolveItemPrice(item: {
-  precioEmbajadorCOP?: number;
-  precioConscienteCOP?: number;
+  precioFinalCOP?: number;
   precioCOP?: number;
 }): number | undefined {
-  return item.precioEmbajadorCOP ?? item.precioConscienteCOP ?? item.precioCOP;
+  return item.precioFinalCOP ?? item.precioCOP;
 }
 
 interface ItemRow {
@@ -101,8 +96,7 @@ interface ItemRow {
   medidas?: string;
   categoria?: string;
   precioCOP?: number;
-  precioEmbajadorCOP?: number;
-  precioConscienteCOP?: number;
+  precioFinalCOP?: number;
   ubicacion?: string;
   coleccion?: string;
   caja?: string;

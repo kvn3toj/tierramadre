@@ -80,6 +80,8 @@ const INVENTARIO_HEADERS = {
   MEDIDAS: 'medidas',
   CATEGORIA: 'categoría',
   PRECIO_COP: 'precio cop',
+  PRECIO_FINAL: 'preciofinalcop', // SOT v3: precio final = costoBase × 2.6
+  PRECIO_EMBAJADOR: 'precioembajadorcop', // compat SOT v2 (deprecado)
   UBICACION: 'ubicación',
   ASESOR: 'asesor',
   ESTADO: 'estado',
@@ -88,9 +90,18 @@ const INVENTARIO_HEADERS = {
   CAJA: 'caja',
   ASESOR_ACTUAL: 'asesor actual', // Column T (index 19)
   ESTADO_ASESOR: 'estado asesor', // Column U (index 20)
+  FOTO_URL: 'fotourl', // SOT v3 col AL — Fotosíntesis-captured photo (Drive file)
 };
 
-// Jewelry subcategory values from Column K (synced with CATEGORY_SUBCATEGORIES.joyas in gallery-constants.ts)
+// Jewelry subcategory values from Column K. Three other copies of this list
+// exist and must stay in step: JEWELRY_CATEGORIES in
+// src/hooks/useFotosintesisCatalog.ts (Convex-backed catalog items),
+// isJewelryDoc in src/pages/admin/ProductManagement/ProductManagementPage.tsx,
+// and CATEGORY_SUBCATEGORIES.joyas in gallery-constants.ts.
+//
+// Keys are accent-stripped + lowercased (see `normalizeCategoria`). "Joyería
+// Artesanal" is the label the Fotosíntesis wizard writes for EVERY finished
+// piece, so omitting it made aretes/chokers/pulseras render as loose gems.
 const JEWELRY_CATEGORIES = new Set([
   'anillo en plata',
   'aretes',
@@ -98,7 +109,14 @@ const JEWELRY_CATEGORIES = new Set([
   'pulsera',
   'dije',
   'anillo en oro',
+  'joyeria artesanal',
+  'joyas',
 ]);
+
+/** Lowercase + strip diacritics so category matching is spelling-tolerant. */
+function normalizeCategoria(categoria: string): string {
+  return categoria.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
 
 /**
  * Map row data to treasure item using exact header matching
@@ -157,8 +175,15 @@ function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
       getByIndex(10) ||
       ''
     ).trim(),
+    // Adaptador SOT v3 (2026-07-21): la legacy tenía "Precio COP"; el SOT v3 usa
+    // `precioFinalCOP` (= costoBase × 2.6). Orden: precio cop (legacy) →
+    // precioFinalCOP (SOT v3) → precioEmbajadorCOP (SOT v2, deprecado) →
+    // posicional (solo legacy; en el SOT el índice 11 es costoBaseCOP).
     precioCOP: parsePrice(
-      getValue(INVENTARIO_HEADERS.PRECIO_COP) || getByIndex(11),
+      getValue(INVENTARIO_HEADERS.PRECIO_COP) ||
+        getValue(INVENTARIO_HEADERS.PRECIO_FINAL) ||
+        getValue(INVENTARIO_HEADERS.PRECIO_EMBAJADOR) ||
+        getByIndex(11),
     ),
     precioInternacional: 0,
     ubicacion: getValue(INVENTARIO_HEADERS.UBICACION) || getByIndex(12) || '',
@@ -182,11 +207,23 @@ function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
     ...(pesoData.metalType ? { metalType: pesoData.metalType } : {}),
   };
 
+  // Fotosíntesis-captured photo (SOT col AL "fotoUrl"): an individual Drive file
+  // stored OUTSIDE the `products/{item}/` folder that get-batch-thumbnails scans.
+  // Surface it as imagen + thumbnailUrl so the catalog's thumbnail fallback
+  // (useTreasure.ts) renders it when there is no folder-scan thumbnail. Without
+  // this, joyas captured via Fotosíntesis (whose products/ folder is empty) show
+  // a placeholder even though they have a photo. (2026-07-22 cutover fix.)
+  const fotoUrl = getValue(INVENTARIO_HEADERS.FOTO_URL);
+  if (fotoUrl) {
+    item.imagen = fotoUrl;
+    item.thumbnailUrl = fotoUrl;
+  }
+
   // Also flag as jewelry if categoria matches a known jewelry subcategory (e.g. items with numeric peso)
   if (
     !item.isJewelry &&
     item.categoria &&
-    JEWELRY_CATEGORIES.has(item.categoria.toLowerCase().trim())
+    JEWELRY_CATEGORIES.has(normalizeCategoria(item.categoria))
   ) {
     item.isJewelry = true;
   }
@@ -197,7 +234,8 @@ function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
 type PricingRow = { precioCOP: number; precioInternacional: number };
 
 /**
- * Fetch pricing data from CUALIFICACION-PRECIO sheet
+ * Fetch pricing data from the Modelo-Precios sheet (ex "CUALIFICACION -PRECIO",
+ * renombrada al centralizar en SOT v3 el 2026-07-21).
  */
 async function fetchPricingData(
   sheets: sheets_v4.Sheets,
@@ -205,7 +243,7 @@ async function fetchPricingData(
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: "'CUALIFICACION -PRECIO'!A:J",
+      range: "'Modelo-Precios'!A:J",
     });
 
     const rows = response.data.values;
@@ -253,8 +291,11 @@ export default withApiHandler(
     // Fetch treasure and pricing data in parallel
     const [treasureResponse, pricingMap] = await Promise.all([
       sheets.spreadsheets.values.get({
+        // A:AP covers the full SOT v3 Inventario layout — notably col AL
+        // `fotoUrl` (was cut off by the old A:Z, so Fotosíntesis-captured photos
+        // never reached the catalog). See FOTO_INVENTARIO_COLUMNS.
         spreadsheetId: SPREADSHEET_ID,
-        range: `${targetSheet}!A:Z`,
+        range: `${targetSheet}!A:AP`,
       }),
       fetchPricingData(sheets),
     ]);

@@ -21,11 +21,11 @@
  *      U estadoAsesor
  *
  *  • FOTOSÍNTESIS SOT (target="fotosintesis") — full layout driven by
- *    api/_lib/fotosintesis-inventory-columns.js (A:AQ today). The price
- *    fields are grouped right after Precio COP (L): costoBaseCOP (M),
- *    precioEmbajadorCOP (N), precioConscienteCOP (O); the remaining
- *    Fotosíntesis form fields (preponderancia, loteId, photos, minerals,
- *    etc.) follow from V onward. Run scripts/extend-fotosintesis-headers.mjs
+ *    api/_lib/fotosintesis-inventory-columns.js (A:AQ today). The price block
+ *    is: costoBaseCOP (L), precioFinalCOP (M, derived = costoBase × 2.6),
+ *    (sin uso) (N, reserved/empty after the 2026-07-21 tier collapse); the
+ *    remaining Fotosíntesis form fields (preponderancia, loteId, photos,
+ *    minerals, etc.) follow from O/V onward. Run scripts/extend-fotosintesis-headers.mjs
  *    to widen a fresh sheet, or scripts/reorder-fotosintesis-price-columns.mjs
  *    to migrate an existing one after a column-order change.
  *
@@ -118,8 +118,8 @@ interface UpdateBody {
     formulaGema?: string;
     formulaJoya?: string;
     rangoDescuento?: string;
-    precioEmbajadorCOP?: string | number;
-    precioConscienteCOP?: string | number;
+    // DERIVED final price → column M (replaces the former x1–x4 tiers).
+    precioFinalCOP?: string | number;
   };
 }
 

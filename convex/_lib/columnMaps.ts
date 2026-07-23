@@ -56,6 +56,7 @@ export const COLUMN_MAPS: Record<FotoTable, readonly string[]> = {
     'sede', // R — bóveda / loteId prefix
     'operadorNombre', // S
     'operadorRol', // T
+    'mostrarComoLote', // U — vender el lote entero como 1 card de catálogo (bool)
   ],
   clients: [
     'nombre', // A — natural key
@@ -95,6 +96,7 @@ export const COLUMN_MAPS: Record<FotoTable, readonly string[]> = {
     'estado', // H
     'notas', // I
     'createdAt', // J
+    'mostrarComoLote', // K — mostrar el sublote como 1 card de catálogo (bool)
   ],
   // Kardex de movimientos con asesores — append-only, never patched (see
   // convex/asesorMovements.ts). movimientoId is synthetic (itemId + ms epoch),

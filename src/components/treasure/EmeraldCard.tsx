@@ -20,7 +20,13 @@ import { Emerald, EmeraldStatus } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import MediaPreview from '../shared/MediaPreview';
 // Design System Tokens
-import { emeraldCore, goldAccent, semanticColors, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import {
+  emeraldCore,
+  goldAccent,
+  semanticColors,
+  surfacesLight,
+  surfacesDark,
+} from '../../design-system/tokens/colors';
 import { cardShadows } from '../../design-system/tokens/shadows';
 import { cssTransition } from '../../design-system';
 
@@ -100,7 +106,14 @@ export default function EmeraldCard({
     >
       <Box sx={{ position: 'relative' }}>
         {emerald.mediaType === 'video' ? (
-          <Box sx={{ height: 200, overflow: 'hidden', bgcolor: 'background.default', position: 'relative' }}>
+          <Box
+            sx={{
+              height: 200,
+              overflow: 'hidden',
+              bgcolor: 'background.default',
+              position: 'relative',
+            }}
+          >
             <MediaPreview
               mediaUrl={emerald.mediaData}
               mediaType="video"
@@ -120,7 +133,9 @@ export default function EmeraldCard({
                 pointerEvents: 'none',
               }}
             >
-              <VideoIcon sx={{ fontSize: 48, color: 'rgba(255,255,255,0.8)' }} />
+              <VideoIcon
+                sx={{ fontSize: 48, color: 'rgba(255,255,255,0.8)' }}
+              />
             </Box>
           </Box>
         ) : (
@@ -180,14 +195,16 @@ export default function EmeraldCard({
           {emerald.name}
         </Typography>
         <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
-          {emerald.weightCarats && (
+          {Number(emerald.weightCarats) > 0 && (
             <Chip
               label={`${emerald.weightCarats} ct`}
               size="small"
               variant="outlined"
               sx={{
-                borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-                color: theme.palette.text.primary
+                borderColor: isLight
+                  ? surfacesLight.border.light
+                  : surfacesDark.border.light,
+                color: theme.palette.text.primary,
               }}
             />
           )}
@@ -197,8 +214,10 @@ export default function EmeraldCard({
               size="small"
               variant="outlined"
               sx={{
-                borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-                color: theme.palette.text.primary
+                borderColor: isLight
+                  ? surfacesLight.border.light
+                  : surfacesDark.border.light,
+                color: theme.palette.text.primary,
               }}
             />
           )}

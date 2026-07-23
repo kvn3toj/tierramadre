@@ -3,15 +3,18 @@
 // Reconciliación Fase 1, Task 1: descarga las 4 fuentes de inventario a JSON
 // local bajo out/ (git-ignored). No escribe NADA a Convex, Sheets, ni prod.
 //
-// Convex: SIEMPRE el deployment PROD wonderful-tortoise-984
-// (https://wonderful-tortoise-984.convex.cloud). Nunca el dev deployment.
+// Convex: SIEMPRE el deployment PROD grand-hippopotamus-162
+// (https://grand-hippopotamus-162.convex.cloud). Nunca el dev deployment.
+// Se puede sobreescribir con CONVEX_URL para apuntar a otro deployment.
 import { ConvexHttpClient } from 'convex/browser';
 import { writeFileSync, mkdirSync } from 'node:fs';
 
 mkdirSync('scripts/reconciliacion/out', { recursive: true });
 const OUT = 'scripts/reconciliacion/out';
 
-const cx = new ConvexHttpClient('https://wonderful-tortoise-984.convex.cloud');
+const cx = new ConvexHttpClient(
+  process.env.CONVEX_URL ?? 'https://grand-hippopotamus-162.convex.cloud',
+);
 
 // lotItems:search queries the `productInventory` table (not a `lotItems`
 // table — the name is legacy). minCantidad: 0 skips the handler's quantity

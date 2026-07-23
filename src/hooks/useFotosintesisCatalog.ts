@@ -21,7 +21,15 @@ import type {
   TreasureStatus,
 } from '../types';
 
-/** Categorías that imply jewelry even when peso is a numeric carat value. */
+/**
+ * Categorías that imply jewelry even when peso is a numeric carat value.
+ *
+ * Keys are accent-stripped + lowercased (see `normalizeCategoria`) so a sheet
+ * or Convex row spelled "Joyería Artesanal" / "joyeria artesanal" both match.
+ * The list covers the CATEGORIAS vocabulary AND the free-form values already
+ * living in Convex ("Joyería Artesanal" is the label the Fotosíntesis wizard
+ * writes for every finished piece — 28 published items as of 2026-07-22).
+ */
 const JEWELRY_CATEGORIES = new Set([
   'anillo en plata',
   'aretes',
@@ -29,7 +37,14 @@ const JEWELRY_CATEGORIES = new Set([
   'pulsera',
   'dije',
   'anillo en oro',
+  'joyeria artesanal',
+  'joyas',
 ]);
+
+/** Lowercase + strip diacritics so category matching is spelling-tolerant. */
+function normalizeCategoria(categoria: string): string {
+  return categoria.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
 
 /** Shape of a published productInventory row coming back from Convex. */
 export interface PublishedRow {
@@ -43,7 +58,7 @@ export interface PublishedRow {
   medidas?: string;
   medidasValores?: string;
   categoria?: string;
-  precioEmbajadorCOP?: number;
+  precioFinalCOP?: number;
   ubicacion?: string;
   asesor?: string;
   estado?: string;
@@ -94,7 +109,7 @@ function derivePeso(
   const num = parseFloat(raw.replace(',', '.'));
   const pesoValue: string | number = Number.isFinite(num) ? num : raw;
   const isJewelry = categoria
-    ? JEWELRY_CATEGORIES.has(categoria.toLowerCase().trim())
+    ? JEWELRY_CATEGORIES.has(normalizeCategoria(categoria))
     : false;
   return { pesoValue, isJewelry };
 }
@@ -105,11 +120,10 @@ export function mapRowToTreasureItem(row: PublishedRow): TreasureItem {
     row.peso,
     row.categoria,
   );
-  // Catalog price: the ambassador tier (Sheets column M). By policy the public
-  // catalog never shows the costoBaseCOP (L) or precioConscienteCOP (N) tiers —
-  // those are scrubbed in publishedCatalog. Items without M render at 0; set
-  // precioEmbajadorCOP to give them a visible price.
-  const precioCOP = row.precioEmbajadorCOP ?? 0;
+  // Catalog price: the derived final price (precioFinalCOP = costoBaseCOP × 2.6,
+  // Sheets column M). By policy the public catalog never shows costoBaseCOP (L);
+  // it is scrubbed in publishedCatalog. Items without a base cost render at 0.
+  const precioCOP = row.precioFinalCOP ?? 0;
 
   return {
     item: parseInt(row.itemId, 10),
