@@ -192,3 +192,7 @@ src/assets/esmereogenesis/characters/_source/
 etiquetas-niimbot/
 docs/JOY-ART/
 *.patch
+
+# Local operational backups/artifacts (no versionar)
+scripts/.backup-*.json
+scripts/.propuesta-*.csv
