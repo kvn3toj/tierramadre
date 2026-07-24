@@ -923,7 +923,20 @@ export const pushToSheet = action({
             estadoAsesor: row.estadoAsesor ?? '',
             // ── Fotosíntesis v2 fields (written only on the SOT Inventario
             // tab; the legacy treasure sheet ignores them) ──
-            preponderancia: row.preponderancia ?? '',
+            //
+            // PUSH-ONLY FIELD — do NOT collapse this to `?? ''`. preponderancia
+            // is the one field we push but never pull: it is deliberately
+            // EXCLUDED from WRITABLE.inventory (see convex/_lib/sheetPullMaps.ts),
+            // so an undefined mirror value means "Convex never learned it", NOT
+            // "the operator cleared it". api/admin-product-update.ts:257 writes
+            // any key that is present-and-defined, so sending '' would blank
+            // column U — the ONLY place that number lives — and the pull could
+            // never bring it back. Omitting the key preserves the sheet cell.
+            // Every other field here is round-tripped by the pull, so for those
+            // `?? ''` genuinely means "empty on both sides" and is safe.
+            ...(row.preponderancia !== undefined
+              ? { preponderancia: row.preponderancia }
+              : {}),
             loteId: row.loteId ?? '',
             costoBaseCOP: row.costoBaseCOP ?? '',
             mostrarEnCatalogo: row.mostrarEnCatalogo ? 'TRUE' : 'FALSE',
