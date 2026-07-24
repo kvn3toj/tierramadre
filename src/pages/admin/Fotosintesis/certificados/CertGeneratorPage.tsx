@@ -50,7 +50,6 @@ import {
 } from 'lucide-react';
 import { getFoto } from '../../../../design-system';
 import { useNotification } from '../../../../contexts/NotificationContext';
-import { useGoogleAuth } from '../../../../contexts/GoogleAuthContext';
 import {
   useConvexClient,
   useAuthedConvexAction,
@@ -125,7 +124,6 @@ function asesorToCarnet(a: Asesor): CarnetDraft {
 
 export default function CertGeneratorPage() {
   const { notify } = useNotification();
-  const { user } = useGoogleAuth();
   const convexClient = useConvexClient();
   const { treasure } = useTreasure();
   const { asesores } = useAsesores();
@@ -424,7 +422,6 @@ export default function CertGeneratorPage() {
         filename: `TierraMadre_origen_${nameForFile}.png`,
         loteId: selectedPiece.loteId,
         itemId: String(selectedPiece.item),
-        editorEmail: user?.email,
       });
       console.info('[CertGenerator] cert linked to product', {
         item: selectedPiece.item,
@@ -442,7 +439,7 @@ export default function CertGeneratorPage() {
     } finally {
       setBusy(false);
     }
-  }, [legalApproved, convexClient, selectedPiece, nameForFile, user, notify]);
+  }, [legalApproved, convexClient, selectedPiece, nameForFile, notify]);
 
   // ── photo upload (object/data URL) ───────────────────────────────────────
   const onUploadPhoto = useCallback(

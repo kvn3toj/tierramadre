@@ -1333,3 +1333,86 @@ export const migrateChatonesToC065 = internalAction({
     return out;
   },
 });
+
+/**
+ * Raise lot-sequence high-water marks so the allocator can never mint a loteId
+ * that already exists in the sheet.
+ *
+ * WHY THIS IS NEEDED: lotes created by hand directly in the SOT Lotes tab never
+ * pass through `sequences.allocateNext`, so the counter does not advance with
+ * them. As of 2026-07-24 the sheet holds C-089 and MED-026 while prod
+ * `sequences` still reads `lot:C` = 77 and `lot:MED` = 25 — the next
+ * `lots.create` for Cali would mint C-077, which already exists. `lots` has no
+ * unique index and both `lots.getByLoteId` and fotoSync's `findByKey` resolve
+ * with `.first()`, so the duplicate would not error: the older doc would simply
+ * shadow the new one and the sheet would gain a second C-077 row.
+ *
+ * The values are supplied by the caller rather than derived, because the
+ * authoritative maximum lives in the SHEET and a Convex mutation cannot read it.
+ * Derive them from the Lotes tab, then pass them in.
+ *
+ * MONOTONIC BY CONSTRUCTION: a sequence is only ever raised, never lowered, so
+ * re-running is harmless and a stale/low argument is ignored rather than
+ * reissuing numbers that are already spoken for. A name with no existing row is
+ * created, which is how a brand-new sede bootstraps.
+ *
+ *   npx convex run --prod migrations:raiseLotSequences '{"raises":[
+ *     {"name":"lot:C","minNextValue":90},
+ *     {"name":"lot:MED","minNextValue":27}]}'
+ */
+export const raiseLotSequences = internalMutation({
+  args: {
+    raises: v.array(
+      v.object({ name: v.string(), minNextValue: v.number() }),
+    ),
+  },
+  handler: async (ctx, { raises }) => {
+    const out: Array<{
+      name: string;
+      before: number | null;
+      after: number;
+      action: 'raised' | 'created' | 'unchanged';
+    }> = [];
+
+    for (const { name, minNextValue } of raises) {
+      if (!Number.isInteger(minNextValue) || minNextValue < 1) {
+        throw new Error(
+          `minNextValue inválido para "${name}": ${minNextValue}`,
+        );
+      }
+      const row = await ctx.db
+        .query('sequences')
+        .withIndex('by_name', (q) => q.eq('name', name))
+        .first();
+
+      if (!row) {
+        await ctx.db.insert('sequences', { name, nextValue: minNextValue });
+        out.push({
+          name,
+          before: null,
+          after: minNextValue,
+          action: 'created',
+        });
+        continue;
+      }
+      if (row.nextValue >= minNextValue) {
+        out.push({
+          name,
+          before: row.nextValue,
+          after: row.nextValue,
+          action: 'unchanged',
+        });
+        continue;
+      }
+      await ctx.db.patch(row._id, { nextValue: minNextValue });
+      out.push({
+        name,
+        before: row.nextValue,
+        after: minNextValue,
+        action: 'raised',
+      });
+    }
+
+    return out;
+  },
+});

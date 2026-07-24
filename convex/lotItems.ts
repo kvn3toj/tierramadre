@@ -1,7 +1,12 @@
-import { query, internalMutation, action } from './_generated/server';
+import {
+  query,
+  internalMutation,
+  action,
+  type MutationCtx,
+} from './_generated/server';
 import { v, ConvexError } from 'convex/values';
 import { api, internal } from './_generated/api';
-import type { Id } from './_generated/dataModel';
+import type { Doc, Id } from './_generated/dataModel';
 import { bumpInventoryTotal } from './products';
 import { preponderanciaSum, balancesTo100 } from './_lib/lotMath';
 import { computePrecioFinal } from './_lib/pricing';
@@ -1001,6 +1006,80 @@ export const updateGemaFields = action({
  * Pass an empty string to clear a field. Only fields that actually change
  * produce an audit entry + Sheets push; a no-op returns early.
  */
+/**
+ * Shared core for every media update. Takes the ALREADY-RESOLVED
+ * productInventory row, because the two entry points reach it differently:
+ * `_updateMedia` hops through a lotItems join row, `_updateMediaByItem` looks
+ * the item up directly.
+ *
+ * Note what this does NOT touch: `lotItems`. Media has always lived on the
+ * productInventory row — the join row was only ever an ADDRESSING handle, never
+ * a destination. That is why an itemId-keyed entry point is not a workaround
+ * but the more honest key: an item with no lote still has a photo and can still
+ * earn a certificate.
+ */
+async function applyMediaToProduct(
+  ctx: MutationCtx,
+  product: Doc<'productInventory'>,
+  opts: {
+    fotoUrl?: string;
+    certificadoUrl?: string;
+    editorEmail?: string;
+  },
+): Promise<{ changed: boolean; changedFields?: string[] }> {
+  type Change = {
+    field: string;
+    before: string | number | null;
+    after: string | number | null;
+  };
+  const changes: Change[] = [];
+  const productPatch: Record<string, unknown> = {};
+
+  const applyMedia = (
+    field: 'fotoUrl' | 'certificadoUrl',
+    next: string | undefined,
+    current: string | undefined,
+  ) => {
+    if (next === undefined) return;
+    const normalized = next.trim();
+    const finalValue = normalized.length === 0 ? undefined : normalized;
+    if (finalValue === current) return;
+    productPatch[field] = finalValue;
+    changes.push({
+      field,
+      before: current ?? null,
+      after: finalValue ?? null,
+    });
+  };
+
+  applyMedia('fotoUrl', opts.fotoUrl, product.fotoUrl);
+  applyMedia('certificadoUrl', opts.certificadoUrl, product.certificadoUrl);
+
+  if (changes.length === 0) return { changed: false };
+
+  await ctx.db.patch(product._id, {
+    ...productPatch,
+    syncStatus: 'pending' as const,
+    syncError: undefined,
+  });
+
+  const now = new Date().toISOString();
+  const auditId = await ctx.db.insert('productEdits', {
+    itemId: product.itemId,
+    editorEmail: opts.editorEmail ?? 'fotosintesis-media',
+    editedAt: now,
+    changes,
+    status: 'pending' as const,
+  });
+  await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
+    itemId: product.itemId,
+    auditId,
+    mode: 'patch',
+  });
+
+  return { changed: true, changedFields: changes.map((c) => c.field) };
+}
+
 export const _updateMedia = internalMutation({
   args: {
     lotItemId: v.id('lotItems'),
@@ -1020,63 +1099,44 @@ export const _updateMedia = internalMutation({
       throw new Error(`productInventory para ${lotItem.itemId} no encontrado`);
     }
 
-    type Change = {
-      field: string;
-      before: string | number | null;
-      after: string | number | null;
-    };
-    const changes: Change[] = [];
-    const productPatch: Record<string, unknown> = {};
+    const result = await applyMediaToProduct(ctx, product, {
+      fotoUrl,
+      certificadoUrl,
+      editorEmail,
+    });
+    return { lotItemId, ...result };
+  },
+});
 
-    const applyMedia = (
-      field: 'fotoUrl' | 'certificadoUrl',
-      next: string | undefined,
-      current: string | undefined,
-    ) => {
-      if (next === undefined) return;
-      const normalized = next.trim();
-      const finalValue = normalized.length === 0 ? undefined : normalized;
-      if (finalValue === current) return;
-      productPatch[field] = finalValue;
-      changes.push({
-        field,
-        before: current ?? null,
-        after: finalValue ?? null,
-      });
-    };
-
-    applyMedia('fotoUrl', fotoUrl, product.fotoUrl);
-    applyMedia('certificadoUrl', certificadoUrl, product.certificadoUrl);
-
-    if (changes.length === 0) {
-      return { lotItemId, changed: false };
+/**
+ * itemId-keyed twin of `_updateMedia`. Exists because requiring a `lotItemId`
+ * made the certificate flow depend on the Convex-only `lotItems` join, which
+ * the Sheets pull does not create (375 of 513 items have no join row today).
+ * Since media lands on productInventory either way, the join hop bought nothing
+ * and blocked every lote-less item.
+ */
+export const _updateMediaByItem = internalMutation({
+  args: {
+    itemId: v.string(),
+    fotoUrl: v.optional(v.string()),
+    certificadoUrl: v.optional(v.string()),
+    editorEmail: v.optional(v.string()),
+  },
+  handler: async (ctx, { itemId, fotoUrl, certificadoUrl, editorEmail }) => {
+    const product = await ctx.db
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+      .first();
+    if (!product) {
+      throw new Error(`productInventory para ${itemId} no encontrado`);
     }
 
-    await ctx.db.patch(product._id, {
-      ...productPatch,
-      syncStatus: 'pending' as const,
-      syncError: undefined,
+    const result = await applyMediaToProduct(ctx, product, {
+      fotoUrl,
+      certificadoUrl,
+      editorEmail,
     });
-
-    const now = new Date().toISOString();
-    const auditId = await ctx.db.insert('productEdits', {
-      itemId: product.itemId,
-      editorEmail: editorEmail ?? 'fotosintesis-media',
-      editedAt: now,
-      changes,
-      status: 'pending' as const,
-    });
-    await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
-      itemId: product.itemId,
-      auditId,
-      mode: 'patch',
-    });
-
-    return {
-      lotItemId,
-      changed: true,
-      changedFields: changes.map((c) => c.field),
-    };
+    return { itemId, ...result };
   },
 });
 
@@ -1098,6 +1158,36 @@ export const updateMedia = action({
     const caller = await requireAccessLevel(idToken, ['admin']);
     return await ctx.runMutation(internal.lotItems._updateMedia, {
       lotItemId,
+      fotoUrl,
+      certificadoUrl,
+      editorEmail: caller.email,
+    });
+  },
+});
+
+/**
+ * Public, itemId-keyed media update — same admin gate as `updateMedia`. The
+ * certificate generator uses this so it never has to resolve a join row that
+ * may not exist.
+ */
+export const updateMediaByItem = action({
+  args: {
+    idToken: v.string(),
+    itemId: v.string(),
+    fotoUrl: v.optional(v.string()),
+    certificadoUrl: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    { idToken, itemId, fotoUrl, certificadoUrl },
+  ): Promise<{
+    itemId: string;
+    changed: boolean;
+    changedFields?: string[];
+  }> => {
+    const caller = await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.lotItems._updateMediaByItem, {
+      itemId,
       fotoUrl,
       certificadoUrl,
       editorEmail: caller.email,

@@ -23,24 +23,25 @@
  * it gates `exportCertificado`: a legally-unapproved cert is never persisted.
  */
 
-import { uploadFotosintesisCertificado } from "../utils/uploadItemMedia";
-import { isCertificadoApproved } from "../exportCertificado";
+import { uploadFotosintesisCertificado } from '../utils/uploadItemMedia';
+import { isCertificadoApproved } from '../exportCertificado';
 import {
   exportCertPdf,
   renderCertPngBlob,
   type CertExportSize,
-} from "./exportCert";
-import { convexApi } from "../../../../lib/convex-safe";
-import type { ConvexReactClient } from "convex/react";
+} from './exportCert';
+import { convexApi } from '../../../../lib/convex-safe';
+import { requireAuthTokenOrLogout } from '../../../../utils/sessionToken';
+import type { ConvexReactClient } from 'convex/react';
 
 /** Thrown when the legal copy (Q-6) is not yet approved — caller surfaces it. */
 export class CertNotApprovedError extends Error {
   constructor() {
     super(
-      "Certificado pendiente: la copia legal (Q-6) aún no fue aprobada. " +
-        "Activá VITE_CERT_LEGAL_APPROVED=true para guardar/enlazar el certificado.",
+      'Certificado pendiente: la copia legal (Q-6) aún no fue aprobada. ' +
+        'Activá VITE_CERT_LEGAL_APPROVED=true para guardar/enlazar el certificado.',
     );
-    this.name = "CertNotApprovedError";
+    this.name = 'CertNotApprovedError';
   }
 }
 
@@ -53,18 +54,26 @@ export { isCertificadoApproved };
 // re-declare the mutation signatures. A wrong arg surfaces as a Convex runtime
 // rejection (caught + shown), never silent.
 type Client = ConvexReactClient;
-function runQuery<T>(client: Client, ref: unknown, args: unknown): Promise<T> {
-  return (client.query as (r: unknown, a: unknown) => Promise<unknown>)(
-    ref,
-    args,
-  ) as Promise<T>;
-}
 function runMutation<T>(
   client: Client,
   ref: unknown,
   args: unknown,
 ): Promise<T> {
   return (client.mutation as (r: unknown, a: unknown) => Promise<unknown>)(
+    ref,
+    args,
+  ) as Promise<T>;
+}
+/**
+ * Actions must be dispatched with `client.action`, not `client.mutation` —
+ * Convex routes by function type and rejects the mismatch at runtime. The
+ * staff-only `lotItems.*` actions additionally verify a fresh Google ID token
+ * server-side (requireAccessLevel), so every call has to carry one; this module
+ * is a plain function rather than a hook, so it reads the token directly
+ * instead of going through `useAuthedConvexAction`.
+ */
+function runAction<T>(client: Client, ref: unknown, args: unknown): Promise<T> {
+  return (client.action as (r: unknown, a: unknown) => Promise<unknown>)(
     ref,
     args,
   ) as Promise<T>;
@@ -78,10 +87,13 @@ function runMutation<T>(
  * download. The `.png` extension is forced regardless of the caller's filename
  * so the hosted URL is always an image.
  */
-async function captureCertFile(node: HTMLElement, filename: string): Promise<File> {
+async function captureCertFile(
+  node: HTMLElement,
+  filename: string,
+): Promise<File> {
   const blob = await renderCertPngBlob(node, { pixelRatio: 3 });
-  const pngName = filename.replace(/\.[^./\\]+$/, "") + ".png";
-  return new File([blob], pngName, { type: "image/png" });
+  const pngName = filename.replace(/\.[^./\\]+$/, '') + '.png';
+  return new File([blob], pngName, { type: 'image/png' });
 }
 
 export interface PersistToProductArgs {
@@ -97,61 +109,61 @@ export interface PersistToProductArgs {
   loteId: string;
   /** The selected product's itemId (TreasureItem.item, a number → string). */
   itemId: string;
-  editorEmail?: string;
 }
 
 export interface PersistResult {
   url: string;
-  /** The lotItems join-row id we linked the cert to. */
-  lotItemId: string;
 }
 
 /**
- * ORIGEN flow → link the certificate to a Fotosíntesis lot product.
+ * ORIGEN flow → link the certificate to a Fotosíntesis product.
  *
  * 1. Gate on legal approval (mirrors exportCertificado).
  * 2. Capture + upload the cert → hosted Drive URL.
- * 3. Resolve the product's `lotItemId` from its `loteId` via
- *    `lotItems.listByLote`, matching `itemId`.
- * 4. Persist with `lotItems.updateMedia({ lotItemId, certificadoUrl, ... })`,
- *    which mirrors to `productInventory.certificadoUrl` → the product-detail
- *    page's `certificateUrl`.
+ * 3. Persist with `lotItems.updateMediaByItem({ itemId, certificadoUrl })`,
+ *    which writes `productInventory.certificadoUrl` → the product-detail page's
+ *    `certificateUrl` → and schedules the Sheets push.
  *
- * Throws a clear, human message when the item is not part of a lot (no
- * lotItem row) so the caller can surface it without crashing.
+ * HISTORY (2026-07-24): this used to resolve a `lotItemId` first, via
+ * `lotItems.listByLote(loteId)` matched on `itemId`, and threw when the item had
+ * no join row. That gate was wrong twice over. It was unnecessary — the media
+ * write always landed on productInventory, never on `lotItems`, so the join row
+ * was pure indirection. And it was unsatisfiable for most of the catalog: the
+ * Sheets pull mirrors `loteId` onto productInventory but never creates the
+ * Convex-only join row, so 375 of 513 items have none. Keying on `itemId`
+ * removes the hop entirely.
+ *
+ * The call also had three defects that made it fail even WITH a join row:
+ * `updateMedia` is an action (dispatched here as a mutation), its required
+ * `idToken` was never passed, and it was handed an `editorEmail` its validator
+ * does not accept. The editor is now derived server-side from the token.
  */
 export async function persistCertToProduct(
   args: PersistToProductArgs,
 ): Promise<PersistResult> {
   if (!isCertificadoApproved()) throw new CertNotApprovedError();
 
-  const { client, node, filename, loteId, itemId, editorEmail } = args;
+  const { client, node, filename, loteId, itemId } = args;
 
-  // Upload first so a Convex resolution failure doesn't leave us having
-  // claimed success with no hosted file.
-  const file = await captureCertFile(node, filename);
-  const url = await uploadFotosintesisCertificado(file, loteId, itemId);
-
-  // Resolve itemId → lotItemId via the lot's join rows.
-  const rows = await runQuery<Array<{ _id: string; itemId: string }>>(
-    client,
-    convexApi.lotItems.listByLote,
-    { loteId },
-  );
-  const found = rows.find((r) => r.itemId === itemId);
-  if (!found) {
+  const idToken = requireAuthTokenOrLogout();
+  if (!idToken) {
     throw new Error(
-      `No encontré el ítem ${itemId} en el lote ${loteId}; no puedo enlazar el certificado.`,
+      'No autenticado. Volvé a iniciar sesión e intentá de nuevo.',
     );
   }
 
-  await runMutation(client, convexApi.lotItems.updateMedia, {
-    lotItemId: found._id,
+  // Upload first so a Convex failure doesn't leave us having claimed success
+  // with no hosted file.
+  const file = await captureCertFile(node, filename);
+  const url = await uploadFotosintesisCertificado(file, loteId, itemId);
+
+  await runAction(client, convexApi.lotItems.updateMediaByItem, {
+    idToken,
+    itemId,
     certificadoUrl: url,
-    ...(editorEmail ? { editorEmail } : {}),
   });
 
-  return { url, lotItemId: found._id };
+  return { url };
 }
 
 export interface PersistToSaleArgs {
@@ -179,28 +191,28 @@ export interface PersistToSaleArgs {
  * entry point and call `persistCertToSale` from the page's "Guardar" action.
  */
 export async function persistCertToSale(
-  args: PersistToSaleArgs & { kind: "certificado" | "carnet" },
+  args: PersistToSaleArgs & { kind: 'certificado' | 'carnet' },
 ): Promise<{ url: string }> {
   if (!isCertificadoApproved()) throw new CertNotApprovedError();
 
   const { client, node, size, filename, saleId, subPath, kind } = args;
 
   const blob = await exportCertPdf(node, size, filename, { download: false });
-  const file = new File([blob], filename, { type: "application/pdf" });
+  const file = new File([blob], filename, { type: 'application/pdf' });
 
   // Sale documents live under `ventas/YYYY/MM`; the caller may override.
-  const { uploadVentaDocument } = await import("../utils/uploadItemMedia");
+  const { uploadVentaDocument } = await import('../utils/uploadItemMedia');
   const url = await uploadVentaDocument(
     file,
     subPath ? { subPath } : undefined,
   );
 
   const ref =
-    kind === "carnet"
+    kind === 'carnet'
       ? convexApi.sales.setCarnetUrl
       : convexApi.sales.setCertificadoUrl;
   const payload =
-    kind === "carnet"
+    kind === 'carnet'
       ? { id: saleId, carnetUrl: url }
       : { id: saleId, certificadoUrl: url };
 
