@@ -88,8 +88,9 @@ function formatFecha(fecha: string | undefined): string {
  * pattern as `KardexPreview` (`captureNodeToPdf`).
  *
  * Replaces the "hoja manuscrita" paper record: date, who delivered, who
- * received, the shared condición, an item table, and a total (Σ precio ×
- * cantidad, defaulting cantidad to 1 when the row omits it).
+ * received, the shared condición, an item table, and a total (Σ precio — under
+ * SOT v3 `precio` is the whole item's price, so it is NOT multiplied by
+ * cantidad; see the lineTotals comment below).
  */
 export function MovimientoKardexPreview({
   rows,
@@ -113,6 +114,9 @@ export function MovimientoKardexPreview({
   const condicionValue = first?.condicion;
   const fechaValue = formatFecha(first?.fecha);
 
+  // SOT v3: `precio` is the price of the WHOLE item (all its stones), so the
+  // line subtotal IS the price — never precio × cantidad. `cantidad` is printed
+  // on the comprobante as a count of pieces handed over, not as a multiplier.
   const lineTotals = rows.map((r) => {
     const cantidad =
       typeof r.cantidad === 'number' && !Number.isNaN(r.cantidad)
@@ -120,7 +124,7 @@ export function MovimientoKardexPreview({
         : 1;
     const precio =
       typeof r.precio === 'number' && !Number.isNaN(r.precio) ? r.precio : 0;
-    return { row: r, cantidad, subtotal: cantidad * precio };
+    return { row: r, cantidad, subtotal: precio };
   });
   const total = lineTotals.reduce((acc, l) => acc + l.subtotal, 0);
 

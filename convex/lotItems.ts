@@ -169,14 +169,13 @@ async function nextItemId(ctx: {
 
 /**
  * Create one item in a lot. This:
- *   1. Reads the lot to obtain costoTotalCOP and validate state.
+ *   1. Reads the lot to validate state.
  *   2. Allocates the next itemId in productInventory.
- *   3. Computes costoBaseCOP = lot.costoTotalCOP × (preponderancia / 100).
+ *   3. Starts costoBaseCOP at 0 — cost is sheet-owned (2026-07-24), typed into
+ *      column L by hand and pulled back later; no derivation from the lote.
  *   4. Inserts the productInventory row directly (mostrarEnCatalogo:false).
  *   5. Inserts the lotItems row.
  *   6. Schedules the productInventory push (mode: append).
- *
- * BR-5 (costoBaseCOP calculated, never user-editable) is enforced here.
  */
 const createArgs = {
   loteId: v.string(),
@@ -281,9 +280,11 @@ export const _create = internalMutation({
       );
     }
 
-    const costoBaseCOP = Math.round(
-      lot.costoTotalCOP * (args.preponderancia / 100),
-    );
+    // COST OWNERSHIP (2026-07-24): costoBaseCOP is sheet-owned. A new item starts
+    // at 0; a human types the real item cost into column L of the sheet and it is
+    // pulled back into Convex. The old preponderancia-based derivation
+    // (lot.costoTotalCOP × preponderancia%) is fully deactivated.
+    const costoBaseCOP = 0;
 
     const itemId = await nextItemId(ctx);
     const now = new Date().toISOString();
@@ -533,10 +534,11 @@ export const _attachExistingToLote = internalMutation({
 });
 
 /**
- * Patch the preponderancia of an existing lot item. The linked
- * productInventory row's `costoBaseCOP` is recomputed from the lot's
- * current `costoTotalCOP` so the Sheets row stays consistent, and a
- * push is scheduled with an audit row.
+ * Patch the preponderancia of an existing lot item. Cost is DECOUPLED from
+ * preponderancia (2026-07-24): `costoBaseCOP` is sheet-owned and is NOT touched
+ * here — only the item's share (preponderancia) is updated on both the lotItems
+ * join and the productInventory mirror, and a push is scheduled with an audit
+ * row for that field.
  *
  * BR-2 (sum ≤ 100) is re-validated server-side against the *other*
  * items in the lot so the operator can drop one ítem's share and
@@ -594,8 +596,8 @@ export const _updatePreponderancia = internalMutation({
       );
     }
 
-    const costoBaseCOP = Math.round(lot.costoTotalCOP * (preponderancia / 100));
-    await ctx.db.patch(lotItemId, { preponderancia, costoBaseCOP });
+    // Cost is sheet-owned (2026-07-24) — patch ONLY the share, never costoBaseCOP.
+    await ctx.db.patch(lotItemId, { preponderancia });
 
     const product = await ctx.db
       .query('productInventory')
@@ -605,8 +607,6 @@ export const _updatePreponderancia = internalMutation({
       const now = new Date().toISOString();
       await ctx.db.patch(product._id, {
         preponderancia,
-        costoBaseCOP,
-        precioFinalCOP: computePrecioFinal(costoBaseCOP),
         syncStatus: 'pending' as const,
       });
       const auditId = await ctx.db.insert('productEdits', {
@@ -619,11 +619,6 @@ export const _updatePreponderancia = internalMutation({
             before: existing.preponderancia,
             after: preponderancia,
           },
-          {
-            field: 'costoBaseCOP',
-            before: existing.costoBaseCOP,
-            after: costoBaseCOP,
-          },
         ],
         status: 'pending' as const,
       });
@@ -634,7 +629,9 @@ export const _updatePreponderancia = internalMutation({
       });
     }
 
-    return { lotItemId, preponderancia, costoBaseCOP };
+    // costoBaseCOP is unchanged by a preponderancia edit; echo the existing
+    // sheet-owned value to keep the action's return shape stable.
+    return { lotItemId, preponderancia, costoBaseCOP: existing.costoBaseCOP };
   },
 });
 
@@ -664,8 +661,9 @@ export const updatePreponderancia = action({
 /**
  * Patch a lot item's gema metadata. Accepts any subset of editable
  * fields and writes them to the linked productInventory row. If
- * `preponderancia` is in the patch, the lotItems row and the product's
- * `costoBaseCOP` are recomputed and updated atomically (BR-2 + BR-5).
+ * `preponderancia` is in the patch, the share is re-validated (BR-2) and
+ * updated on both the lotItems join and the productInventory mirror —
+ * `costoBaseCOP` is sheet-owned (2026-07-24) and is NOT recomputed or touched.
  *
  * A single productEdits audit row captures every changed field with
  * before/after values. Sheets push is scheduled once at the end so a
@@ -743,8 +741,9 @@ export const _updateGemaFields = internalMutation({
     }
 
     // Re-validate preponderancia against siblings (BR-2) before any writes.
+    // Cost is DECOUPLED (2026-07-24): a preponderancia edit no longer derives
+    // costoBaseCOP — cost is sheet-owned.
     let nextPreponderancia: number | undefined;
-    let nextCostoBaseCOP: number | undefined;
     if (patch.preponderancia !== undefined) {
       const p = patch.preponderancia;
       if (p <= 0 || p > 100) {
@@ -764,7 +763,6 @@ export const _updateGemaFields = internalMutation({
         );
       }
       nextPreponderancia = p;
-      nextCostoBaseCOP = Math.round(lot.costoTotalCOP * (p / 100));
     }
 
     // Compute the diff vs current product/lotItem state so we audit only
@@ -912,22 +910,15 @@ export const _updateGemaFields = internalMutation({
 
     if (
       nextPreponderancia !== undefined &&
-      nextCostoBaseCOP !== undefined &&
-      (nextPreponderancia !== lotItem.preponderancia ||
-        nextCostoBaseCOP !== lotItem.costoBaseCOP)
+      nextPreponderancia !== lotItem.preponderancia
     ) {
+      // Cost is sheet-owned (2026-07-24): update ONLY the share, never
+      // costoBaseCOP, and never re-derive the price from it.
       productPatch.preponderancia = nextPreponderancia;
-      productPatch.costoBaseCOP = nextCostoBaseCOP;
-      productPatch.precioFinalCOP = computePrecioFinal(nextCostoBaseCOP);
       changes.push({
         field: 'preponderancia',
         before: lotItem.preponderancia,
         after: nextPreponderancia,
-      });
-      changes.push({
-        field: 'costoBaseCOP',
-        before: lotItem.costoBaseCOP,
-        after: nextCostoBaseCOP,
       });
     }
 
@@ -941,11 +932,12 @@ export const _updateGemaFields = internalMutation({
       syncStatus: 'pending' as const,
       syncError: undefined,
     });
-    if (nextPreponderancia !== undefined && nextCostoBaseCOP !== undefined) {
-      await ctx.db.patch(lotItemId, {
-        preponderancia: nextPreponderancia,
-        costoBaseCOP: nextCostoBaseCOP,
-      });
+    if (
+      nextPreponderancia !== undefined &&
+      nextPreponderancia !== lotItem.preponderancia
+    ) {
+      // Only the share is written back to the join — costoBaseCOP is sheet-owned.
+      await ctx.db.patch(lotItemId, { preponderancia: nextPreponderancia });
     }
 
     // 2. Audit + scheduled sheet push.
@@ -967,7 +959,9 @@ export const _updateGemaFields = internalMutation({
       lotItemId,
       changed: true,
       changedFields: changes.map((c) => c.field),
-      costoBaseCOP: nextCostoBaseCOP ?? lotItem.costoBaseCOP,
+      // costoBaseCOP is sheet-owned and unchanged by this edit; echo the
+      // existing value to keep the action's return shape stable.
+      costoBaseCOP: lotItem.costoBaseCOP,
     };
   },
 });

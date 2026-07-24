@@ -408,11 +408,15 @@ export default function MovimientosKardexPage() {
 
   const total = useMemo(
     () =>
+      // SOT v3: `precio` is seeded from precioFinalCOP, which is the price of
+      // the WHOLE item (all its stones) — not a per-unit price. So the line
+      // total IS the price; multiplying by `cantidad` double-counted. `cantidad`
+      // is still captured and persisted on the movement as a record of how many
+      // pieces changed hands, but it is not a price multiplier.
       rows.reduce((sum, r) => {
         const precio = Number(r.precio);
         if (!Number.isFinite(precio) || precio <= 0) return sum;
-        const cantidad = r.cantidad ? Number(r.cantidad) : 1;
-        return sum + precio * (Number.isFinite(cantidad) ? cantidad : 1);
+        return sum + precio;
       }, 0),
     [rows],
   );

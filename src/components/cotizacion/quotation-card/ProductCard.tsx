@@ -63,8 +63,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const fmt =
     formatPrice ?? ((cop: number) => formatCotizacionCurrency(cop, 'COP'));
   const cantidad = product.cantidad ?? 1;
-  const unit = product.precioCOP;
-  const total = unit * cantidad;
+  // SOT v3: `precioCOP` (← precioFinalCOP) is the price of the WHOLE item —
+  // every stone in it — not a per-unit price. It must NOT be multiplied by
+  // `cantidad`. The old `unit * cantidad` came from the pre-v3 format where the
+  // price was per unit; on a 2-stone item it charged double, and up to 48× on
+  // item 360. `cantidad` stays on the card as information (how many stones the
+  // piece contains), never as a multiplier.
+  const precioItem = product.precioCOP;
   // Hero images: explicit override, else the product's own distinct images.
   const ownImages = Array.from(
     new Set(
@@ -256,13 +261,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   color: qeTokens.light.text,
                 }}
               >
-                {fmt(total)}
+                {fmt(precioItem)}
               </Typography>
             </Box>
           </Box>
         </Box>
 
-        {/* Right column — unit price, C.O., QR */}
+        {/* Right column — piece price, C.O., QR */}
         <Box
           sx={{
             width: 372,
@@ -272,7 +277,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             gap: '32px',
           }}
         >
-          {/* Unit price */}
+          {/* Piece price. Labelled by piece count — saying "unitario" on a
+              multi-stone item invited the reader to multiply it by Cantidad,
+              which is exactly the error this card used to make itself. */}
           <Box sx={{ textAlign: 'right' }}>
             <Typography
               sx={{
@@ -284,7 +291,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 mb: '6px',
               }}
             >
-              Precio unitario
+              {cantidad > 1 ? 'Precio del conjunto' : 'Precio de la pieza'}
             </Typography>
             <Typography
               sx={{
@@ -295,7 +302,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 color: qeTokens.light.text,
               }}
             >
-              {fmt(unit)}
+              {fmt(precioItem)}
             </Typography>
           </Box>
 
