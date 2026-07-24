@@ -127,18 +127,30 @@ export default defineSchema({
     medidasValores: v.optional(v.string()),
     categoria: v.optional(v.string()),
     // ── Price block — grouped to mirror the SOT "Inventario" tab layout
-    // (Sheets columns L–N). costoBaseCOP = lot.costoTotalCOP × preponderancia%.
+    // (Sheets columns L–N). costoBaseCOP (col L) is SHEET-OWNED (2026-07-24): a
+    // human types the item cost into the sheet and it is pulled back; the old
+    // lot.costoTotalCOP × preponderancia% derivation is fully deactivated.
     // PRICE MODEL (2026-07-21 refactor): the single final price is
-    // `precioFinalCOP = round(costoBaseCOP × TM_MARKUP_DEFAULT)` (2.6). It is
-    // DERIVED (computed here alongside costoBaseCOP, pushed to Sheets col M) and
-    // replaces the former embajador/consciente x1–x4 tiers.
+    // `precioFinalCOP = round(costoBaseCOP × TM_MARKUP_DEFAULT)` (2.6). It
+    // replaced the former embajador/consciente x1–x4 tiers.
+    // PRICE OWNERSHIP (2026-07-23): precioFinalCOP is no longer purely derived.
+    // cost × 2.6 is the SEED for a new item; after that the sheet owns the value
+    // (column M is in the WRITABLE allowlist — see convex/_lib/sheetPullMaps.ts)
+    // because the official price list is not a fixed multiple of cost. When the
+    // sheet supplies a price, `precioFinalManual` is stamped true and the lote
+    // re-fan stops repricing that row. costoBaseCOP is now sheet-owned too (see
+    // the block header above) — it is no longer derived from the lote.
     // APP-ONLY (audit 2026-05-29): `precioCOP` lost its Sheets column ("Precio
     // COP" / former column L, ~82% empty). It is still written by the capture
     // UI and read by the patrones analytics, but is NO LONGER mirrored to or
     // pulled from the SOT sheet. Kept optional for existing docs.
     precioCOP: v.optional(v.number()),
-    costoBaseCOP: v.optional(v.number()), // L — costoTotalCOP × preponderancia%
-    precioFinalCOP: v.optional(v.number()), // M — DERIVED: round(costoBaseCOP × 2.6)
+    costoBaseCOP: v.optional(v.number()), // L — sheet-owned item cost (manual; no longer derived)
+    precioFinalCOP: v.optional(v.number()), // M — seeded costoBaseCOP × 2.6, then sheet-owned
+    // TRUE once a human set the price (sheet pull or admin edit): the lote
+    // re-fan must not reset it to costoBaseCOP × 2.6. Absent/false ⇒ the row is
+    // still tracking the seed formula.
+    precioFinalManual: v.optional(v.boolean()),
     // DEPRECATED (2026-07-21 price refactor + audit F4): superseded by
     // precioFinalCOP. No UI writer, no Sheets column, never pushed or pulled.
     // Retained (optional) ONLY so pre-existing docs validate; strip via a data
@@ -200,7 +212,7 @@ export default defineSchema({
     // Bruto (rough/unworked parcel) metadata — populated only for tipo "bruto"
     // lotItems. `cantidadEstimada` is a rough piece-count; `rendimientoEsperado`
     // is the % yield Maritza expects after sorting. Both informational only;
-    // costoBaseCOP still derives from lot.costoTotalCOP × preponderancia.
+    // costoBaseCOP is sheet-owned (manual), not derived from the lote.
     rendimientoEsperado: v.optional(v.number()),
     cantidadEstimada: v.optional(v.number()),
 

@@ -25,6 +25,7 @@ export default defineConfig({
       ['tests/fotosintesis-phone.test.ts', 'jsdom'],
       ['tests/kardexPreview.test.ts', 'jsdom'],
       ['tests/movimientoKardexPreview.test.ts', 'jsdom'],
+      ['tests/precioNoPorCantidad.test.ts', 'jsdom'],
     ],
   },
 });

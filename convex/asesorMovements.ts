@@ -377,6 +377,105 @@ export const _registerReturn = internalMutation({
   },
 });
 
+/**
+ * BACKFILL (one-off) — reconstruct historical kardex movement records lost in
+ * the 2026-07-22 SOT v3 cutover (the asesorMovements rows did not migrate to the
+ * new Convex deployment, so the ledger came up empty even though the items were
+ * already in their post-movement estado).
+ *
+ * UNLIKE _registerHandoff/_registerReturn this does NOT enforce the forward-only
+ * estado guard and does NOT patch productInventory.estado — the estado is
+ * already correct (pulled from the sheet); we only re-create the audit rows so
+ * the ledger + comprobante lookup work again. `estadoAnterior/estadoNuevo` are
+ * passed in from the historical record (the signed hoja). Idempotent by
+ * `movimientoId`: re-running skips rows already present. Not pushed to Sheets
+ * (syncStatus 'synced') — these are historical, the paper/PDF is the origin.
+ */
+export const _backfillMovements = internalMutation({
+  args: {
+    editorEmail: v.string(),
+    movements: v.array(
+      v.object({
+        itemId: v.string(),
+        tipo: v.union(v.literal('entrega'), v.literal('devolucion')),
+        asesorNombre: v.string(),
+        asesorId: v.optional(v.string()),
+        cantidad: v.optional(v.number()),
+        precio: v.optional(v.number()),
+        fecha: v.string(),
+        notas: v.optional(v.string()),
+        condicion: v.optional(v.string()),
+        kardexEventId: v.optional(v.string()),
+        entregadoPorNombre: v.optional(v.string()),
+        estadoAnterior: v.string(),
+        estadoNuevo: v.string(),
+        comprobanteUrl: v.optional(v.string()),
+        movimientoId: v.string(),
+      }),
+    ),
+  },
+  handler: async (ctx, { editorEmail, movements }) => {
+    const all = await ctx.db.query('asesorMovements').collect();
+    const seen = new Set(all.map((r) => r.movimientoId));
+    let maxRow = all.reduce((m, r) => Math.max(m, r.rowIndex), 1);
+    const now = new Date().toISOString();
+    const out: Array<{
+      itemId: string;
+      movimientoId: string;
+      skipped: boolean;
+    }> = [];
+    for (const m of movements) {
+      if (seen.has(m.movimientoId)) {
+        out.push({
+          itemId: m.itemId,
+          movimientoId: m.movimientoId,
+          skipped: true,
+        });
+        continue;
+      }
+      const product = await ctx.db
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', m.itemId))
+        .first();
+      maxRow += 1;
+      await ctx.db.insert('asesorMovements', {
+        itemId: m.itemId,
+        itemNombre: product?.nombre,
+        tipo: m.tipo,
+        asesorNombre: m.asesorNombre,
+        asesorId: m.asesorId,
+        cantidad: m.cantidad,
+        precio: m.precio,
+        fecha: m.fecha,
+        notas: m.notas,
+        condicion: m.condicion,
+        kardexEventId: m.kardexEventId,
+        entregadoPorNombre: m.entregadoPorNombre,
+        registradoPorEmail: editorEmail,
+        registradoPorNombre: 'backfill-kardex',
+        estadoAnterior: m.estadoAnterior,
+        estadoNuevo: m.estadoNuevo,
+        movimientoId: m.movimientoId,
+        comprobanteUrl: m.comprobanteUrl,
+        rowIndex: maxRow,
+        lastPulledAt: now,
+        syncStatus: 'synced' as const,
+      });
+      seen.add(m.movimientoId);
+      out.push({
+        itemId: m.itemId,
+        movimientoId: m.movimientoId,
+        skipped: false,
+      });
+    }
+    return {
+      inserted: out.filter((o) => !o.skipped).length,
+      skipped: out.filter((o) => o.skipped).length,
+      out,
+    };
+  },
+});
+
 // =============================================================================
 // ACTIONS — public entry points (verify the caller, then delegate)
 // =============================================================================

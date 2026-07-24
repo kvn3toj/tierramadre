@@ -17,7 +17,7 @@ import {
   parseLoteId,
   reclaimIfTail,
 } from './sequences';
-import { canReopenLot, deriveCostoBaseCOP } from './_lib/lotMath';
+import { canReopenLot } from './_lib/lotMath';
 import { withPublishStamp } from './_lib/publishState';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
@@ -239,7 +239,10 @@ const updateArgs = {
  */
 export const _update = internalMutation({
   args: updateArgs,
-  handler: async (ctx, { id, patch, editorEmail }) => {
+  // editorEmail stays in updateArgs (callers/fotoSync still pass it) but is no
+  // longer read here: with the cost re-fan removed there is no item-level audit
+  // to attribute. The lote-row patch itself is not per-field audited.
+  handler: async (ctx, { id, patch }) => {
     const existing = await ctx.db.get(id);
     if (!existing) throw new Error(`Lot ${id} not found`);
     if (existing.estado !== 'abierto')
@@ -254,59 +257,14 @@ export const _update = internalMutation({
       mode: 'patch',
     });
 
-    // Re-fan costoBaseCOP when the lot cost changes. costoBaseCOP is a stone's
-    // share of the lot cost (costoTotalCOP × preponderancia / 100), derived per
-    // item at capture. `update` used to patch only the lot row, leaving every
-    // item's costoBaseCOP stale — so fixing a miskeyed costoTotalCOP (the whole
-    // point of reopening a lot) silently failed to correct the item costs.
-    // Now the new cost fans out to all member items, each as its own audited
-    // push. Items keep their loteId, so the push routes to the SOT tab. (C1.)
-    let refanned = 0;
-    if (
-      patch.costoTotalCOP !== undefined &&
-      patch.costoTotalCOP !== existing.costoTotalCOP
-    ) {
-      const newTotal = patch.costoTotalCOP;
-      const items = await ctx.db
-        .query('lotItems')
-        .withIndex('by_loteId', (q) => q.eq('loteId', existing.loteId))
-        .collect();
-      const now = new Date().toISOString();
-      for (const li of items) {
-        const nextCosto = deriveCostoBaseCOP(newTotal, li.preponderancia);
-        if (nextCosto === li.costoBaseCOP) continue;
-        await ctx.db.patch(li._id, { costoBaseCOP: nextCosto });
-        const product = await ctx.db
-          .query('productInventory')
-          .withIndex('by_itemId', (q) => q.eq('itemId', li.itemId))
-          .first();
-        if (!product) continue;
-        await ctx.db.patch(product._id, {
-          costoBaseCOP: nextCosto,
-          syncStatus: 'pending' as const,
-          syncError: undefined,
-        });
-        const auditId = await ctx.db.insert('productEdits', {
-          itemId: product.itemId,
-          editorEmail: editorEmail ?? 'fotosintesis-lote',
-          editedAt: now,
-          changes: [
-            {
-              field: 'costoBaseCOP',
-              before: li.costoBaseCOP ?? null,
-              after: nextCosto,
-            },
-          ],
-          status: 'pending' as const,
-        });
-        await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
-          itemId: product.itemId,
-          auditId,
-          mode: 'patch',
-        });
-        refanned++;
-      }
-    }
+    // costoBaseCOP is SHEET-OWNED since 2026-07-24: the preponderancia-based
+    // derivation is fully deactivated, so changing a lote's costoTotalCOP no
+    // longer re-fans any member item's cost. `update` patches only the lote row
+    // (above). Item costs are typed into column L of the sheet by hand and
+    // pulled back into Convex; nothing here recomputes or overwrites them.
+    // `refanned` is kept in the return shape (always 0 now) so callers and tests
+    // keep compiling against the same contract.
+    const refanned = 0;
 
     return { id, refanned };
   },

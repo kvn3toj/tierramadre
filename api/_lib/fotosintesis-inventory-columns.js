@@ -14,9 +14,9 @@
  * column in this list. The reverse direction (Sheet → Convex) is handled by the
  * bound Apps Script + convex/fotoSync.ts: an edit is captured per-cell and
  * synced back, restricted to the WRITABLE allowlist in convex/_lib/sheetPullMaps.ts.
- * That allowlist intentionally EXCLUDES the derived columns `costoBaseCOP` (L)
- * and `preponderancia` (U) — a sheet edit must never overwrite a figure Convex
- * computes — and treats `loteId` (X) as a FLAG field (the mirror is updated but
+ * That allowlist includes `costoBaseCOP` (L) — SHEET-OWNED since 2026-07-24, the
+ * item cost is typed by hand and pulled back — but still EXCLUDES `preponderancia`
+ * (U), a figure Convex owns, and treats `loteId` (X) as a FLAG field (the mirror is updated but
  * lot membership is reconciled in the app). Everything else in A–AP does sync
  * back. (Audit F6, superseded by the delta sync.)
  *
@@ -63,7 +63,7 @@ export const FOTO_INVENTARIO_COLUMNS = [
   // Convex and pushed here — see convex/_lib/pricing.ts). N is now a reserved
   // empty column ("(sin uso)") so the positional mirror (O onward) is preserved
   // without a moveDimension migration.
-  { header: 'costoBaseCOP', key: 'costoBaseCOP', numeric: true }, // L — costoTotalCOP × preponderancia%
+  { header: 'costoBaseCOP', key: 'costoBaseCOP', numeric: true }, // L — sheet-owned item cost (manual; two-way sync since 2026-07-24)
   { header: 'precioFinalCOP', key: 'precioFinalCOP', numeric: true }, // M — DERIVED: costoBaseCOP × 2.6
   { header: '(sin uso)', key: '_sinUso', preserve: true }, // N — reserved/empty (was precioConscienteCOP)
   // ── Inventory / status descriptive fields (O–W) ──
