@@ -28,6 +28,7 @@ import {
 import { postToVercel } from './_lib/sheetSync';
 import { requireAccessLevel } from './_lib/authz';
 import { withPublishStamp } from './_lib/publishState';
+import { precioEspecialDeObservacion } from './_lib/precioEspecial';
 
 // =============================================================================
 // QUERIES — read the mirror
@@ -217,7 +218,13 @@ export const getByItem = query({
       .query('productInventory')
       .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
-    return row ?? null;
+    if (!row) return null;
+    // `precioEspecial` se DERIVA de la observación (ver _lib/precioEspecial.ts);
+    // no existe como columna. Ausente cuando no aplica o ya venció.
+    return {
+      ...row,
+      precioEspecial: precioEspecialDeObservacion(row.observacion),
+    };
   },
 });
 
@@ -283,6 +290,8 @@ export const getPublicByItem = query({
       minerales: row.minerales,
       complementos: row.complementos,
       observacion: row.observacion,
+      // Promoción de cierre de temporada, derivada de `observacion`.
+      precioEspecial: precioEspecialDeObservacion(row.observacion),
       mina,
       tratamiento,
     };
@@ -395,6 +404,9 @@ export const publishedCatalog = query({
         minerales: row.minerales,
         complementos: row.complementos,
         observacion: row.observacion,
+        // Promoción de cierre de temporada, derivada de `observacion` (no es
+        // columna; ver _lib/precioEspecial.ts). Ausente si venció o no aplica.
+        precioEspecial: precioEspecialDeObservacion(row.observacion),
         // Lot-level provenance, denormalized from the `lots` table.
         mina: prov?.mina,
         tratamiento: prov?.tratamiento,
