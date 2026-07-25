@@ -13,18 +13,18 @@
  * Provides a unified API for treasure data with media merged in.
  */
 
-import { useMemo } from "react";
-import { TreasureItem } from "../types";
-import { treasureData as defaultTreasureData } from "../data/treasure";
-import { useSheetsTreasure } from "./useSheetsTreasure";
-import { useTreasureMedia } from "./useTreasureMedia";
-import { useBatchThumbnails } from "./useBatchThumbnails";
-import { usePrevious } from "./usePrevious";
+import { useMemo } from 'react';
+import { TreasureItem } from '../types';
+import { treasureData as defaultTreasureData } from '../data/treasure';
+import { useSheetsTreasure } from './useSheetsTreasure';
+import { useTreasureMedia } from './useTreasureMedia';
+import { useBatchThumbnails } from './useBatchThumbnails';
+import { usePrevious } from './usePrevious';
 import {
   useFotosintesisCatalog,
   useFotosintesisGroups,
-} from "./useFotosintesisCatalog";
-import { convertToProxyUrl } from "../utils/driveUrl";
+} from './useFotosintesisCatalog';
+import { convertToProxyUrl } from '../utils/driveUrl';
 
 export function useTreasure() {
   // Google Sheets data
@@ -84,7 +84,21 @@ export function useTreasure() {
         ? [...sheetsBase, ...individuals, ...lotes]
         : sheetsBase;
 
-    return baseTreasure.map((item) => {
+    // `precioEspecial` sólo existe en la rama Convex: se deriva de `observacion`
+    // en las queries (convex/_lib/precioEspecial.ts), y /api/get-treasure-sheets
+    // devuelve la hoja cruda sin ese cálculo. Como el merge de arriba descarta
+    // el ítem de Convex cuando su id ya vino de Sheets — y casi todos vienen de
+    // ambas — la promoción se perdía justo en los ítems del catálogo legacy.
+    // Superponerla por id la devuelve sin alterar qué fuente gana el resto.
+    const precioEspecialPorItem = new Map(
+      fotosintesisItems
+        .filter((i) => i.precioEspecial)
+        .map((i) => [i.item, i.precioEspecial]),
+    );
+
+    return baseTreasure.map((base) => {
+      const promo = precioEspecialPorItem.get(base.item);
+      const item = promo ? { ...base, precioEspecial: promo } : base;
       const itemMedia = legacyMedia[item.item];
       const gallery = galleries[item.item] || [];
       const batchThumb = batchThumbnails[item.item];
@@ -108,8 +122,8 @@ export function useTreasure() {
       const mediaType =
         mainMedia?.type ||
         itemMedia?.mediaType ||
-        (isVideoOnly ? "video" : item.mediaType) ||
-        "image";
+        (isVideoOnly ? 'video' : item.mediaType) ||
+        'image';
 
       return {
         ...item,
