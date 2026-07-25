@@ -22,6 +22,7 @@ import { prefetchRoute } from '../../utils/routePrefetch';
 import { TreasureItem } from '../../types';
 import { abbreviateQuality, formatCarats } from '../../utils/formatting';
 import { EmeraldCutIcon } from './EmeraldCutIcon';
+import PrecioEspecialBadge from './PrecioEspecialBadge';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
 import ProgressiveImage from '../shared/ProgressiveImage';
 import { getQuietEmerald, PieceCard } from '../../design-system';
@@ -218,6 +219,31 @@ function GridCard({
     <ProgressiveImage src={undefined} alt={altText} aspectRatio="1 / 1.06" />
   );
 
+  // ---- Precio especial (BOTH variants) ----------------------------------
+  // El indicador de promoción temporal no es cromo funcional del catálogo: es
+  // información del precio. Por eso viaja también en la variante `literal`,
+  // que descarta el resto de overlays — un visitante no puede quedarse sin
+  // saber que el precio que está viendo vence. Arriba a la derecha: abajo
+  // viven galería/lote y arriba a la izquierda el contador de vistas (admin).
+  const precioEspecialOverlay = item.precioEspecial ? (
+    <Box
+      sx={{
+        position: 'absolute',
+        top: 6,
+        right: 6,
+        maxWidth: 'calc(100% - 12px)',
+      }}
+    >
+      <PrecioEspecialBadge
+        precioEspecial={item.precioEspecial}
+        compact
+        // La tarjeta lleva cromo de 18px y tipografía de 9-10px; el Badge se
+        // ajusta a esa escala sin forzar una variante nueva en el DS.
+        style={{ height: 20, fontSize: '0.6875rem' }}
+      />
+    </Box>
+  ) : null;
+
   // ---- Functional overlays (faithful variant only) ----------------------
   const overlays = item.imagen ? (
     <>
@@ -288,6 +314,8 @@ function GridCard({
           }}
         />
       )}
+
+      {precioEspecialOverlay}
     </>
   ) : null;
 
@@ -321,7 +349,7 @@ function GridCard({
     <PieceCard
       variant={isLiteral ? 'frameless' : 'well'}
       media={imageWell}
-      overlays={isLiteral ? undefined : overlays}
+      overlays={isLiteral ? precioEspecialOverlay : overlays}
       name={displayName}
       specLine={isLiteral ? specLine : ''}
       grade={isLiteral ? undefined : gradeNode}
@@ -350,6 +378,12 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.item.cantidad === nextProps.item.cantidad &&
     prevProps.item.procedencia === nextProps.item.procedencia &&
     prevProps.item.mina === nextProps.item.mina &&
+    // La promoción entra y sale sola (vence por fecha en el backend): si no se
+    // compara, la tarjeta seguiría mostrando un precio "especial" ya vencido.
+    prevProps.item.precioEspecial?.etiqueta ===
+      nextProps.item.precioEspecial?.etiqueta &&
+    prevProps.item.precioEspecial?.hasta ===
+      nextProps.item.precioEspecial?.hasta &&
     prevProps.isFavorite === nextProps.isFavorite &&
     prevProps.isMobile === nextProps.isMobile &&
     prevProps.isLoadingThumbnails === nextProps.isLoadingThumbnails &&

@@ -19,6 +19,7 @@ import type {
   EmeraldColor,
   EmeraldQuality,
   TreasureStatus,
+  PrecioEspecial,
 } from '../types';
 
 /**
@@ -80,6 +81,9 @@ export interface PublishedRow {
   minerales?: string[];
   complementos?: string[];
   observacion?: string;
+  // Precio promocional temporal, ya resuelto por la query pública: presente
+  // solo mientras la promoción está vigente (ver types/PrecioEspecial).
+  precioEspecial?: PrecioEspecial;
   // Lot-level provenance, denormalized onto the row by publishedCatalog.
   mina?: string;
   tratamiento?: string;
@@ -168,6 +172,8 @@ export function mapRowToTreasureItem(row: PublishedRow): TreasureItem {
         : undefined,
     mina: row.mina || undefined,
     tratamiento: row.tratamiento || undefined,
+    // Promoción temporal: se pasa tal cual llega (ausente = no vigente).
+    precioEspecial: row.precioEspecial,
     // Evocative copy: the capture-time `observacion` doubles as the public
     // product description (the field exists on TreasureItem but legacy/Sheets
     // catalog rows never populate it).

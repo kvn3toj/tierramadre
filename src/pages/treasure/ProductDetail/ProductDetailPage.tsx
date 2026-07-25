@@ -36,6 +36,7 @@ import { MemberBenefitsTeaser } from '../../../components/guest';
 import { MediaGallery } from '../../../components/media';
 import type { MediaItem } from '../../../components/media/types';
 import { PriceDisplay } from '../../../components/price-simulator/PriceDisplay';
+import PrecioEspecialBadge from '../../../components/treasure/PrecioEspecialBadge';
 import { createLogger } from '../../../utils/logger';
 import { convertToProxyUrl } from '../../../utils/driveUrl';
 import { surfacesLight } from '../../../design-system/tokens/colors';
@@ -193,6 +194,10 @@ export default function ProductDetail() {
         medidasValores: publicDoc.medidasValores || p.medidasValores,
         talla: publicDoc.talla || p.talla,
         categoria: publicDoc.categoria || p.categoria,
+        // La promoción temporal la deriva Convex por lectura, así que el doc
+        // público es su ÚNICA fuente: se asigna directo (sin `||`) para que un
+        // vencimiento la borre de la ficha en vez de dejarla pegada.
+        precioEspecial: publicDoc.precioEspecial,
       };
     }
     if (adminDoc) {
@@ -845,6 +850,15 @@ export default function ProductDetail() {
                     cantidad={product.cantidad}
                   />
                 </>
+              )}
+              {/* Bajo el precio, no sobre la foto: aquí califica la cifra que
+                  el visitante acaba de leer. */}
+              {enrichedProduct?.precioEspecial && (
+                <Box sx={{ mt: '12px' }}>
+                  <PrecioEspecialBadge
+                    precioEspecial={enrichedProduct.precioEspecial}
+                  />
+                </Box>
               )}
             </Box>
           )}

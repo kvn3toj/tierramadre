@@ -23,5 +23,7 @@ export type { ActiveFilterChipsProps } from './ActiveFilterChips';
 export { default as SavedFiltersDropdown } from './SavedFiltersDropdown';
 
 // Supporting components
+export { default as PrecioEspecialBadge } from './PrecioEspecialBadge';
+export type { PrecioEspecialBadgeProps } from './PrecioEspecialBadge';
 export { default as RecentlyViewedCarousel } from './RecentlyViewedCarousel';
 export { default as CertificationUpload } from './CertificationUpload';

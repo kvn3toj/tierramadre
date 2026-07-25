@@ -38,6 +38,7 @@ import {
   RelatoBlock,
   TrustCard,
 } from "../treasure/ProductDetail/gemSheet/GemSheetParts";
+import PrecioEspecialBadge from "../../components/treasure/PrecioEspecialBadge";
 import { useThemeMode } from "../../contexts/ThemeContext";
 import { getQuietEmerald, qeFont } from "../../design-system";
 import { formatCarats } from "../../utils/formatting";
@@ -280,6 +281,14 @@ export function PublicProductView({
       >
         {priceLabel}
       </Typography>
+      {/* La promoción vive PEGADA al precio: es lo que la califica. Aquí se
+          muestra completa (etiqueta + vigencia legible), no en su forma
+          compacta de tarjeta — la ficha sí tiene el ancho para decirlo. */}
+      {product.precioEspecial && (
+        <Box sx={{ mt: "10px" }}>
+          <PrecioEspecialBadge precioEspecial={product.precioEspecial} />
+        </Box>
+      )}
     </Box>
   ) : null;
 

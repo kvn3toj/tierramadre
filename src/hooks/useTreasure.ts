@@ -169,7 +169,13 @@ export function useTreasure() {
         prevItem.certificateUrl === item.certificateUrl &&
         prevItem.syncStatus === item.syncStatus &&
         prevItem.procedencia === item.procedencia &&
-        prevItem.preponderancia === item.preponderancia
+        prevItem.preponderancia === item.preponderancia &&
+        // `precioEspecial` aparece y desaparece solo (Convex lo deriva y deja
+        // de emitirlo cuando la promoción vence). Sin vigilarlo, una promoción
+        // recién vencida seguiría marcada en la tarjeta hasta que cambiara
+        // cualquier otro campo.
+        prevItem.precioEspecial?.etiqueta === item.precioEspecial?.etiqueta &&
+        prevItem.precioEspecial?.hasta === item.precioEspecial?.hasta
       ) {
         // URLs unchanged - reuse previous object reference
         // This prevents GridCard re-render due to memo comparison
