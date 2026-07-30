@@ -1,6 +1,6 @@
 # Spec: Mobile UX/UI Remediation — Treasure Catalog & Product Detail
 
-**Version:** 1.3 · **Date:** 2026-07-30 · **Author:** UX audit (Claude) + Kevin
+**Version:** 1.5 · **Date:** 2026-07-30 · **Author:** UX audit (Claude) + Kevin
 **Surfaces:** `/treasure`, `/product/:id`, filter sheet, recents panel, Menú sheet,
 Embajadores catalog (added in v1.2)
 **Status:** P0 shipped (PR #71) and confirmed on a real iPhone — see Status and
@@ -12,6 +12,11 @@ device (`minmax(0, 1fr)` fix, prices intact at 402px, custody field removed
 from the ubicación slot); retracts v1.2's "canonical quality ladder" conclusion
 and reopens OQ-2 pending the calidad-column scan; notes the lot-code prefixes
 (P1.9) were a contributing cause of the P0.6 overflow, not just cosmetic.
+v1.4: checkboxes mean **verified**, not shipped (16 ticked, 13 not, each with a
+reason); OQ-2 closed by the calidad scan. v1.5: **P0 arc merged to `main`**
+(PR #72) and re-driven against live production — see Production Pass; desktop +
+`[data-foto-admin]` coverage added; OQ-3 closed, then **corrected the same day**
+when production showed the origin facet already exists.
 
 ---
 
@@ -32,7 +37,7 @@ sub-11px text nodes, zero unprotected images.
 | — Data guards (`0.00 ct`, SpecRow)         | ✅                                                         | `55b61f7`, `9648324` |
 | — Image save protection (not in this spec) | ✅                                                         | `b1a697f`            |
 
-Regression coverage went from 0 to **60 e2e cases**: 14 checks × 4 phone
+Regression coverage went from 0 to **64 e2e cases**: 15 checks × 4 phone
 viewports, plus a 4-case `desktop regression @ 1280×800` block (box-model reset,
 two overflow routes, and the `[data-foto-admin]` coexistence check).
 Every assertion is negative-tested: reverting its fix makes it fail — and fails
@@ -98,11 +103,15 @@ only its own case.
   first, by design. What remains behind those empty env vars is a growing pile
   of work already built, tested and paid for, doing nothing:
 
-  | Shipped and dormant                      | Activates when `SPREADSHEET_ID` → SOT v3 |
-  | ---------------------------------------- | ---------------------------------------- |
-  | `procedencia` mapping (`3ae7e59`)        | Origen cell starts resolving             |
-  | 89 filled origin rows                    | OQ-3's facet becomes buildable           |
-  | header-only `ubicacion` read (`3af7f0e`) | survives the 2-column shift by design    |
+  | Shipped and dormant                      | Activates when `SPREADSHEET_ID` → SOT v3    |
+  | ---------------------------------------- | ------------------------------------------- |
+  | `procedencia` mapping (`3ae7e59`)        | Origen cell resolves on the **Sheets** path |
+  | header-only `ubicacion` read (`3af7f0e`) | survives the 2-column shift by design       |
+
+  ⚠️ A third row here originally read _"89 filled origin rows → OQ-3's facet
+  becomes buildable"_. **Struck** — the facet is already built and live, and it
+  is fed by the **Convex** half of `useTreasure`, so it never depended on this
+  cutover at all (see OQ-3). The cutover widens the _Sheets_ path only.
 
   Each of these is inert against the legacy book and correct against v3. The
   cutover is no longer a risky migration to be deferred — it is the switch that
@@ -126,6 +135,44 @@ only its own case.
   P1.2 now waits only on the 10-row `FINA COMERCIAL` ruling. OQ-3 (Chivor as an
   Origen facet) remains a product decision, and now has a real home: the
   ambassador detail's Origen cell reads `procedencia`.
+
+---
+
+## Production Pass — v1.5 (2026-07-30, live `tierramadre.app`, build `2026.07.30.1290`)
+
+Driven in Chrome against **production after the PR #72 merge** — not a preview.
+
+| Check                                | Result                                        |
+| ------------------------------------ | --------------------------------------------- |
+| `html` / `body` box-sizing           | `border-box`                                  |
+| `body` margin · x · width            | `0px` · `0` · `= innerWidth`                  |
+| Shell container `margin-right`       | **`0px`** (was `−32px` — RC-A)                |
+| `/treasure` `main` overflow          | **0**                                         |
+| Ambassador `c/gemas` `main` overflow | **0**                                         |
+| Grid tracks on that route            | `357.333px × 3`                               |
+| Custody values in the category list  | **none** — no `EMBAJADOR`/`ASESOR`/`OFI.`     |
+| Origen on the ambassador detail      | **absent** — `PESO · CALIDAD · TALLA · COLOR` |
+
+The grid-track figure is the load-bearing one: under the old bare `1fr` the
+tracks would be floored at the card's min-content (~455px measured). At
+357.333px they are **below that floor**, so `minmax(0, 1fr)` is demonstrably in
+effect, not merely deployed.
+
+⚠️ **Scope limit — read before trusting this table.** Chrome's extension
+`resize_window` reported success but never reached the page (`innerWidth` stuck
+at 2560, `outerWidth` 0; two attempts, then stopped). **Every measurement above
+is at 2560px desktop**, and P0.6 was a _mobile-width_ defect. The track evidence
+generalises across widths; the 360–430px magnitudes do not. The iPhone pass
+remains the real confirmation, and the installed-PWA and long-press checks are
+unreachable from any desktop browser by construction.
+
+**Open items confirmed still live, exactly as specified:** the quality chip row
+renders `COMERCIAL FINA` _and_ `FINA COMERCIAL` as separate filters plus
+`Morralla Fina` (P1.2), and `L:A-104 Lalala` still carries its lot prefix
+(P1.9).
+
+**And it overturned OQ-3 within the hour** — the origin facet turned out to be
+already live on `/treasure`. See OQ-3.
 
 ---
 
@@ -560,9 +607,36 @@ affordance per screen; ladder labels share one casing.
 
 3. **(Product)** ~~Should `Chivor` become an "Origen" facet?~~ **ANSWERED — closed 2026-07-30.** Not a hypothesis: the data already treats it as one. `procedencia` in SOT v3 reads `Boyacá×61 · Muzo×16 · **Chivor×11** · Cali×1`, and the ambassador detail's Origen cell now reads that field (`3ae7e59`).
 
-   **The facet itself is P1 work, gated on the SOT v3 cutover.** Against the legacy book the column does not exist at all, and even on v3 it is 89 of 513 rows — so the filter should render **only when the data can support it**, the same hide-when-empty discipline as the Origen cell, one level up. Shipping a facet that is empty for 83% of inventory would repeat the RC-C mistake (a colour filter that communicated nothing).
+   ⚠️ **CORRECTION, same day, after driving production.** This entry first said
+   _"the facet itself is P1 work, gated on the SOT v3 cutover"_. **Wrong — the
+   facet already exists and is live.** `TreasureBrowser.tsx:149-165` renders an
+   origin tab strip (`Todas · Muzo · Chivor`, canonical list
+   `['Muzo','Chivor','Coscuez']`), keyed off `item.procedencia || item.mina`.
+   Confirmed rendering on production `tierramadre.app/treasure` at build
+   `2026.07.30.1290`, with **Chivor as a live option**.
+
+   It already implements the discipline this entry was about to prescribe:
+   `originOptions` filters the canonical list down to mines actually present in
+   `allTreasure`, so an absent mine never becomes a dead chip. Hide-when-empty,
+   one level up — already shipped.
+
+   **Nor is it gated on the cutover.** Neither `procedencia` nor `mina` is
+   mapped in `get-treasure-sheets.ts`, so that data reaches the strip through
+   the **Convex / Fotosíntesis** half of `useTreasure`, not the Sheets half.
+   The catalog surface is already fed.
+
+   **What actually remains** is narrower than the original question: should the
+   **ambassador** surface get the same origin strip that `/treasure` has? That
+   is a scoping call, not a data question — and it is P1 at most, since the
+   ambassador detail's Origen cell (`3ae7e59`) already surfaces the mine
+   per-item.
 
    **One-cell source fix while someone is in the book:** `Cali×1` is an _office_, not a mine — the `ubicacion` story in miniature, caught at n=1 instead of n=320.
+
+   > Third inversion of this taxonomy in one session, and the pattern is
+   > consistent: every claim made by reading code or screenshots was wrong, and
+   > every claim made by driving the thing or scanning the data held. The
+   > lesson is not about emeralds.
 
 4. **(Engineering)** Does mounting full `<CssBaseline />` cause regressions in Esmereogenesis/Fotosíntesis themes that assumed content-box quirks (cf. the `[data-foto-admin]` patch)? Decide CssBaseline vs. minimal CSS reset during implementation; the minimal reset is the lower-risk default.
 5. **(Design)** DS3 token for the new ≥11px caption size — reuse an existing `ios-typography` step or add one?
