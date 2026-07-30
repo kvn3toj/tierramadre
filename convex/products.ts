@@ -207,12 +207,6 @@ export const getManyByItemIds = query({
 });
 
 /**
- * Resolve ONE inventory item by its itemId — the shared resolver behind the QR
- * scanner (PWA camera + anima-bot Telegram bridge both call this). Returns the
- * full row for the admin ficha, or null when the code points at an unknown /
- * not-yet-registered item.
- */
-/**
  * Las 14 columnas AQ→BE del SOT, proyectadas A PROPÓSITO.
  *
  * `omitFotosintesisOnly` las saca de `getByItem` y de `lotItems:search` porque
@@ -274,6 +268,12 @@ export const fotosintesisFields = query({
   },
 });
 
+/**
+ * Resolve ONE inventory item by its itemId — the shared resolver behind the QR
+ * scanner (PWA camera + anima-bot Telegram bridge both call this). Returns the
+ * full row for the admin ficha, or null when the code points at an unknown /
+ * not-yet-registered item.
+ */
 export const getByItem = query({
   args: { itemId: v.string() },
   handler: async (ctx, { itemId }) => {
