@@ -67,8 +67,8 @@ export const LINEAS = [
 export const NOTAS = [
   'Los precios incluyen materiales de mecanismos y módulos.',
   'Para joyería en oro 18 k: el peso y el quilataje están especificados por ítem.',
-  'Tiempo de entrega: a confirmar según disponibilidad de materiales.',
-  'Forma de pago: 90 % anticipo, 10 % contra entrega.',
+  'Tiempo de producción: 30 días a partir del anticipo del 60 %.',
+  'Forma de pago: 60 % anticipo, 40 % contra entrega.',
 ];
 
 export const TOTAL_UNIDADES = LINEAS.reduce((a, l) => a + l.unidades, 0); // 217
