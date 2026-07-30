@@ -7,7 +7,7 @@ import {
   internalAction,
   type MutationCtx,
 } from './_generated/server';
-import { v } from 'convex/values';
+import { v, ConvexError } from 'convex/values';
 import { api, internal } from './_generated/api';
 import {
   qualityBucket,
@@ -203,6 +203,68 @@ export const getManyByItemIds = query({
       });
     }
     return out;
+  },
+});
+
+/**
+ * Las 14 columnas AQ→BE del SOT, proyectadas A PROPÓSITO.
+ *
+ * `omitFotosintesisOnly` las saca de `getByItem` y de `lotItems:search` porque
+ * esas dos alimentan la ficha de producto y al anima-bot. El efecto lateral era
+ * que quedaban sin NINGUNA vía de lectura: datos sincronizados que nadie podía
+ * mirar, ni siquiera Fotosíntesis, que es para quien son.
+ *
+ * Ésta es esa vía. Proyecta por nombre —no hace spread— así que una columna
+ * nueva del esquema no se cuela sola: hay que agregarla acá a mano, que es
+ * justo lo que se quiere para datos con plata y nombres de compradores adentro.
+ *
+ * SÓLO para las pantallas de /admin/Fotosintesis y para verificar sincros.
+ * NO la consumas desde la ficha de producto, la vitrina ni nada que lea un
+ * comercial: seis de estos campos son costo, plata o dato personal de un
+ * tercero (ver convex/_lib/saleSafe.ts).
+ *
+ * CERRADA CON SECRETO DE SERVIDOR, y no es precaución de más: en Convex
+ * `query({})` es PÚBLICA y la URL del deployment viaja en el bundle del cliente
+ * (VITE_CONVEX_URL). La primera versión no pedía nada, y con un
+ * `new ConvexHttpClient(url).query('products:fotosintesisFields', {})` —sin
+ * credencial ninguna— devolvía las 513 filas con nombres de compradores, saldos
+ * y montos pagados. Verificado, no hipotético.
+ *
+ * Mismo `ADMIN_SYNC_TOKEN` que ghl.ts usa como secreto de proxy confiable, y
+ * falla cerrado si no está configurado. `itemId` sigue siendo opcional a
+ * propósito: el barrido completo es lo que necesita la verificación de sincros,
+ * y con el token ya no es una superficie anónima.
+ */
+export const fotosintesisFields = query({
+  args: { secret: v.string(), itemId: v.optional(v.string()) },
+  handler: async (ctx, { secret, itemId }) => {
+    const expected = process.env.ADMIN_SYNC_TOKEN;
+    if (!expected || secret !== expected)
+      throw new ConvexError('No autorizado.');
+    const rows = itemId
+      ? await ctx.db
+          .query('productInventory')
+          .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+          .collect()
+      : await ctx.db.query('productInventory').collect();
+    return rows.map((r) => ({
+      itemId: r.itemId,
+      nombre: r.nombre,
+      pesoGr: r.pesoGr,
+      costoLoteCOP: r.costoLoteCOP,
+      precioObjetivoCOP: r.precioObjetivoCOP,
+      cajaPrecioVentaCOP: r.cajaPrecioVentaCOP,
+      cajaValorPagadoCOP: r.cajaValorPagadoCOP,
+      cajaSaldoCOP: r.cajaSaldoCOP,
+      cajaComprador: r.cajaComprador,
+      cajaEstadoContable: r.cajaEstadoContable,
+      subLote: r.subLote,
+      productoUrl: r.productoUrl,
+      carpetaFotosUrl: r.carpetaFotosUrl,
+      animaNotas: r.animaNotas,
+      fuentes: r.fuentes,
+      notasConflictos: r.notasConflictos,
+    }));
   },
 });
 
