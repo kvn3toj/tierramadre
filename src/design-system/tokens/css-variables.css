@@ -234,6 +234,26 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* === BOX MODEL RESET === */
+/* The app shipped without one: MUI's <CssBaseline /> was dropped in 5eeb6fc, */
+/* so every element computed as content-box. That is what made the app-shell  */
+/* container (IOSLayout.tsx, width:100% + px:2 + mx:auto) overflow its parent */
+/* by 32px and resolve margin-right:auto to -32px — the shifted grid, the     */
+/* clipped filter button and the truncated counter on mobile.                  */
+/* Inherit-based on purpose: a subtree opts back out with one declaration     */
+/* (see the pagination dots in HeroGallery/ImageLightbox). The universal      */
+/* selector carries zero specificity, so this neither wins nor loses against  */
+/* emotion's runtime styles regardless of <head> injection order.             */
+html {
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
 html {
   /* iOS smooth scrolling */
   scroll-behavior: smooth;
@@ -254,6 +274,11 @@ textarea {
 }
 
 body {
+  /* The UA default is 8px. The standalone-PWA block below already zeroes it; */
+  /* without this line every browser-tab session ran 8px offset and 16px      */
+  /* narrower than the viewport. */
+  margin: 0;
+
   /* Safe area support (iPhone notch, home indicator) */
   padding-top: env(safe-area-inset-top);
   padding-right: env(safe-area-inset-right);
@@ -296,6 +321,11 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  /* Pairs with `scroll-behavior: smooth` on <html> above. */
+  html {
+    scroll-behavior: auto;
   }
 }
 
