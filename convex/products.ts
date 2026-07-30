@@ -144,14 +144,47 @@ export const list = query({
 
 /**
  * Get a single product by itemId.
+ *
+ * Filtrada como `getByItem`, y por la misma razón: devolvía `.first()` pelado,
+ * o sea el documento entero. Cuando se sincronizaron las 14 columnas AQ→BE, el
+ * filtro se le puso a `getByItem` y a `lotItems:search` y a ésta NO — un olvido,
+ * no una decisión: el header de _lib/saleSafe.ts ni la menciona.
+ *
+ * Lo que devolvía, verificado contra producción el 2026-07-30 con un POST
+ * anónimo a /api/query (sin credencial ninguna): 53 campos, entre ellos
+ * `cajaComprador` con el nombre de un comprador real, `cajaValorPagadoCOP`,
+ * `cajaPrecioVentaCOP` y `cajaEstadoContable`. Dato personal de un tercero y la
+ * plata de una venta, a quien preguntara.
+ *
+ * La ficha de producto NO era el vector: ProductDetailPage pide este doc sólo
+ * si `isAdmin` y manda 'skip' si no. Pero eso es la app absteniéndose de
+ * preguntar, no el servidor negándose a contestar; en Convex `query({})` es
+ * pública, la URL del deployment viaja en el bundle y `products:list` reparte
+ * los 513 itemId sin pedir nada. Enumerar era trivial.
+ *
+ * Ninguno de los seis consumidores (EditItemDrawer, AsesorMovementPanel,
+ * VentaPage, VentaDetailPage, CommitLogRow, ProductDetailPage) lee una sola de
+ * las 14 — se verificó campo por campo antes de filtrar. Y si mañana alguna
+ * quiere una, el `Omit<>` de omitFotosintesisOnly lo rompe en compilación, no
+ * en producción.
+ *
+ * OJO — lo que esto NO tapa: `costoBaseCOP` y `preponderancia` siguen saliendo,
+ * porque EditItemDrawer los necesita de verdad para el preview de precio. No se
+ * arregla con una proyección: no hay identidad de cliente en estas queries (por
+ * eso `fotosintesisFields` se cerró con un secreto de SERVIDOR), así que
+ * "alcanzable desde el browser" y "alcanzable por cualquiera" son el mismo
+ * conjunto. Sacarlos exige mover esas lecturas a un endpoint de api/ que valide
+ * el JWT. Es decisión de diseño aparte, y está sin tomar.
  */
 export const get = query({
   args: { itemId: v.string() },
   handler: async (ctx, { itemId }) => {
-    return await ctx.db
+    const row = await ctx.db
       .query('productInventory')
       .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
+    // `.first()` devuelve null cuando no existe, y null no se filtra: se pasa.
+    return row ? omitFotosintesisOnly(row) : null;
   },
 });
 
