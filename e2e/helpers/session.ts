@@ -77,7 +77,12 @@ export const CATALOG_FIXTURE = Array.from({ length: 24 }, (_, i) => {
     color: ['Verde', 'Aguamarina', 'Azul', 'Chivor'][i % 4],
     calidad: i % 3 === 0 ? 'C. SuperFina' : 'F2',
     talla: 'Esmeralda',
-    procedencia: 'MUZO',
+    // Deliberately NOT set on every row. Production's reality is the opposite
+    // of a rich fixture: the legacy book has no `procedencia` column at all,
+    // and SOT v3 fills only 89 of 513. A fixture where every item has one
+    // hides the empty-state path entirely — which is how the "Origen shows -
+    // for every item" defect got past a green suite once already.
+    ...(i % 3 === 0 ? { procedencia: 'MUZO' } : {}),
     estado: 'DISPONIBLE',
     cantidad: i % 7 === 0 ? 12 : 1,
     isJewelry,

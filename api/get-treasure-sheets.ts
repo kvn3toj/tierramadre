@@ -90,6 +90,14 @@ const INVENTARIO_HEADERS = {
   CAJA: 'caja',
   ASESOR_ACTUAL: 'asesor actual', // Column T (index 19)
   ESTADO_ASESOR: 'estado asesor', // Column U (index 20)
+  // Mine of origin (Muzo, Chivor, Coscuez, Boyacá…). NOT present on the legacy
+  // book, whose A:U layout is deliberately FROZEN — it is the push-only mirror
+  // `admin-product-update.ts` writes positionally, so a column can never be
+  // inserted or reordered there (Anima:
+  // TierraMadre/decisions/2026-05-25-fotosintesis-sheet-schema-sync). Reading
+  // it by header is a no-op today and starts resolving the moment
+  // SPREADSHEET_ID points at SOT v3, where it lives at index 25.
+  PROCEDENCIA: 'procedencia',
   FOTO_URL: 'fotourl', // SOT v3 col AL — Fotosíntesis-captured photo (Drive file)
 };
 
@@ -201,6 +209,12 @@ function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
     // the legacy sheet (idx -1), so its `getByIndex(13)` IS load-bearing
     // there and must stay, even though the same index is
     // `precioconscientecop` on the Fotosíntesis layout.
+    // Header lookup ONLY — deliberately no `getByIndex` fallback, for exactly
+    // the reason P0.3 removed ubicación's: the positional defaults encode the
+    // legacy layout, and against any other layout they return a neighbouring
+    // column's value. Left undefined when absent so the UI can hide the row
+    // rather than print a placeholder.
+    procedencia: getValue(INVENTARIO_HEADERS.PROCEDENCIA) || undefined,
     ubicacion: getValue(INVENTARIO_HEADERS.UBICACION) || '',
     asesor: getValue(INVENTARIO_HEADERS.ASESOR) || getByIndex(13) || '',
     estado: (

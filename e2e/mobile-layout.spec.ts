@@ -305,6 +305,23 @@ for (const vp of VIEWPORTS) {
       ).toHaveText('MUZO');
     });
 
+    test('the ambassador detail hides Origen when there is no mine', async ({
+      page,
+    }) => {
+      // Item 401 has no `procedencia` — the COMMON case in production, where
+      // the legacy book has no such column at all and SOT v3 fills 89 of 513.
+      // Before this guard the cell rendered a bare "-" for every item; the
+      // suite went green only because the fixture gave every row a mine.
+      await page.goto(`/ambassadors/${AMBASSADOR.slug}/product/401`);
+      await waitForAppReady(page);
+      await page.waitForTimeout(1_500);
+
+      // Positive anchor: the spec grid rendered, so this is a real absence
+      // and not an unmounted page.
+      await expect(page.getByText('Calidad', { exact: true })).toBeVisible();
+      await expect(page.getByText('Origen', { exact: true })).toHaveCount(0);
+    });
+
     test('no persistent text renders below the 11px floor', async ({
       page,
     }) => {
