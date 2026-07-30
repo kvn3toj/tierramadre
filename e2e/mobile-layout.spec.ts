@@ -420,6 +420,46 @@ for (const vp of VIEWPORTS) {
       expect(visibleAfter).toBe('hidden');
     });
 
+    test('images resist casual saving', async ({ page }) => {
+      await page.goto('/treasure');
+      await waitForAppReady(page);
+      await page.waitForTimeout(1_500);
+
+      const report = await page.evaluate(() => {
+        const imgs = [...document.querySelectorAll('img')];
+        const unprotected: string[] = [];
+        for (const img of imgs) {
+          if (img.closest('.tm-saveable')) continue; // opted out on purpose
+          const s = getComputedStyle(img) as unknown as Record<string, string>;
+          // NOTE: `-webkit-touch-callout` is deliberately NOT asserted here.
+          // It is a Safari/iOS-only property; Chromium does not expose it in
+          // computed style, so checking it would always fail in this runner.
+          // Its presence is covered by the stylesheet check below instead.
+          if (s.webkitUserDrag !== 'none' || s.userSelect !== 'none') {
+            unprotected.push(
+              `${img.src.slice(-40)} drag=${s.webkitUserDrag} select=${s.userSelect}`,
+            );
+          }
+        }
+        return { total: imgs.length, unprotected };
+      });
+
+      expect(report.total).toBeGreaterThan(0);
+      expect(
+        report.unprotected,
+        `Images without save protection:\n${report.unprotected.join('\n')}`,
+      ).toEqual([]);
+
+      // The iOS long-press guard (`-webkit-touch-callout: none`) is NOT
+      // asserted, and deliberately so. Chromium does not implement it: it is
+      // absent from computed style AND stripped from the rule's own cssText
+      // at parse time (verified — a rule authored with both properties reads
+      // back as `img { -webkit-user-drag: none; }`). There is no way to
+      // observe it from this runner, so any assertion here would be
+      // decorative. It needs a real iOS Safari check: long-press a catalog
+      // photo and confirm no "Save Image" sheet appears.
+    });
+
     test('the tab bar sits fully inside the viewport', async ({ page }) => {
       await page.goto('/treasure');
       await waitForAppReady(page);

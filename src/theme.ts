@@ -290,20 +290,10 @@ export const theme = createTheme({
           // iOS overscroll behavior
           overscrollBehavior: 'none',
         },
-        // Screenshot Deterrent: Global image protections
-        'img, video': {
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-          MozUserSelect: 'none',
-          msUserSelect: 'none',
-          WebkitUserDrag: 'none',
-          WebkitTouchCallout: 'none',
-          pointerEvents: 'auto', // Keep interactions, just prevent drag
-        },
-        // Prevent drag on all images globally
-        'img': {
-          draggable: 'false',
-        },
+        // NOTE: the `img, video` protection that used to live here moved to
+        // src/design-system/tokens/css-variables.css. It never ran from this
+        // file — nothing imports this theme, and <CssBaseline /> is not
+        // mounted, so these styleOverrides are inert. Do not re-add it here.
       },
     },
     // Button with iOS styling

@@ -301,6 +301,52 @@ body {
   overflow: hidden;
 }
 
+/* === IMAGE PROTECTION === */
+/* Deterrent against casually saving product photography: no native image
+ * drag, no iOS long-press "Save Image" callout, no selection.
+ *
+ * This lived in `theme.ts` as a MuiCssBaseline styleOverride and was dead
+ * twice over — nothing imports that theme, and <CssBaseline /> is not
+ * mounted — so in practice only four components hand-rolled it and every
+ * other image in the catalog, product detail and vitrina was freely
+ * saveable. Moving it here makes it actually apply.
+ *
+ * Deliberately NOT setting `pointer-events` (the old block forced `auto`,
+ * which would override components that intentionally disable pointers).
+ * The old block also had `img { draggable: false }`, which was never valid
+ * CSS — `draggable` is an HTML attribute; the CSS equivalent is
+ * `-webkit-user-drag`, below, plus `draggable={false}` on ProgressiveImage
+ * for Firefox, which does not support the non-standard property.
+ *
+ * Verified safe for the drag-based UIs: react-easy-crop (ImageCropper) and
+ * the feedback annotator both work on pointer events, not native HTML5
+ * drag. Blocking the native drag actually helps the annotator, which would
+ * otherwise lose a draw gesture to an image drag. Certificate and label
+ * exports are unaffected — they download programmatically rather than by
+ * long-press.
+ */
+img,
+video {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+/* Escape hatch, mirroring `.tm-full-bleed`: opt an image back into native
+ * save/drag when a user legitimately owns the content. Nothing needs it
+ * today (exports are programmatic), but a blanket rule with no way out is
+ * how the next person ends up fighting the design system. */
+.tm-saveable,
+.tm-saveable img,
+.tm-saveable video {
+  user-select: auto;
+  -webkit-user-select: auto;
+  -webkit-user-drag: auto;
+  -webkit-touch-callout: default;
+}
+
 /* === SELECTION STYLES === */
 ::selection {
   background-color: rgba(0, 175, 132, 0.3);
