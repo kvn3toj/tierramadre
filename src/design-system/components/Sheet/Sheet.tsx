@@ -1,9 +1,23 @@
 /**
  * Tierra Madre Design System v3 — Sheet Component
  *
- * The ONE overlay (DS3 §5.4/§5.5, addendum §C). Absorbs `BottomSheetShell`,
- * `IOSMoreSheet`, `IOSSettingsSheet`, and the esmereo sheets (`ClaimSheet`,
- * `EsmereoCreationSheet`, `EsmereoExplainerSheet`).
+ * The intended ONE overlay (DS3 §5.4/§5.5, addendum §C).
+ *
+ * MIGRATION NOT DONE. This was meant to absorb `BottomSheetShell`,
+ * `IOSMoreSheet`, `IOSSettingsSheet` and the esmereo sheets (`ClaimSheet`,
+ * `EsmereoCreationSheet`, `EsmereoExplainerSheet`) — but all six are still
+ * live and none of them import this component. Current real consumers are
+ * `ConfirmDialog`, `FilterSheet`, `CotizacionPreviewDialog`,
+ * `CollectionProductDialog` and `EditProductOverrideDialog`.
+ *
+ * That matters because the a11y win described below is therefore NOT yet in
+ * effect for `IOSMoreSheet` + `IOSSettingsSheet` (~1,635 LOC), which still
+ * lack focus-restore and Escape-to-dismiss. Do not read this header as a
+ * finished migration.
+ *
+ * Note `BottomSheetShell` is currently the more featureful of the two shared
+ * primitives (it has `keepMounted`); decide which one wins before extending
+ * either.
  *
  * Built on MUI `Dialog`/`Drawer` (both wrap `Modal`) rather than a hand-rolled
  * `Backdrop` + fixed `Box` — this gets focus-trap, focus-restore-on-close, and

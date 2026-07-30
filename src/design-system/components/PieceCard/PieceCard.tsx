@@ -11,7 +11,8 @@
  * A/B-style redesign toggles stay one canonical component parameterized by
  * a prop, never a fork.
  *
- * Absorbs: GridCard's two variants, TreasureCard.
+ * INTENDED to absorb (NOT done yet — GridCard still owns both variants
+ * and imports this component): GridCard's two variants, TreasureCard.
  */
 import React from 'react';
 import { Box, Typography } from '@mui/material';

@@ -115,11 +115,17 @@ export const pricePerCaratCOP = (
 };
 
 /**
- * Format currency with abbreviated notation for large values.
- * Supports COP and USD modes.
+ * Format a currency value in full. Supports COP and USD modes.
+ *
+ * NOTE: despite its name and a long-standing docblock that promised
+ * "$1.5M" / "$300K" output, this function does NOT abbreviate — it returns
+ * the full grouped number. Callers that want K/M notation must abbreviate
+ * themselves. Corrected here because the old comment invited swaps that
+ * would have changed every price over 1000.
+ *
  * @param value - The numeric value to format
  * @param currency - Currency mode (default: COP)
- * @returns Formatted string like "$1.5M", "$300K", "US$9.5K"
+ * @returns Formatted string like "$1.500.000" / "US$9.524"
  */
 export const formatCurrency = (
   value: number,
