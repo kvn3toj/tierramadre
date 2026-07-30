@@ -1,5 +1,5 @@
 /**
- * Contenido canónico de la Cotización Soul — 28 de julio de 2026.
+ * Contenido canónico de la Cotización Soul — 29 de julio de 2026.
  * Fuente única de verdad para el script que edita la presentación.
  *
  * Formato de cifras: se respeta el estilo de la casa del deck original
@@ -8,7 +8,7 @@
 
 export const ENCABEZADO = {
   titulo: 'Cotización Formal',
-  fecha: '28 de julio de 2026',
+  fecha: '29 de julio de 2026',
   ciudad: 'Bogotá, Colombia',
   validez: '15 días',
   moneda: 'COP · Pesos colombianos',
