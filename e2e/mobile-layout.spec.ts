@@ -532,3 +532,174 @@ for (const vp of VIEWPORTS) {
     });
   });
 }
+
+/**
+ * Desktop regression for the shared-root fixes.
+ *
+ * P0.1's acceptance criteria asked for a desktop pass, and the spec claimed
+ * the mobile sweep covered it. It did not: every `describe` above pins a
+ * phone viewport, so a desktop-only regression in the global box-model reset
+ * would have shipped green. RC-A/RC-B live in `css-variables.css` at document
+ * scope — they are not mobile-only code, and the spec's own Non-Goals allow
+ * shared-root fixes to touch desktop *provided they are regression-checked
+ * there*. This is that check.
+ *
+ * Deliberately a subset: the phone blocks assert things that are meaningless
+ * or actively different at 1280 (bottom tab bar geometry, sheet anchoring,
+ * 44px touch targets). Only the shared-root invariants belong here.
+ */
+test.describe('desktop regression @ 1280×800', () => {
+  test.use({
+    viewport: { width: 1280, height: 800 },
+    isMobile: false,
+    hasTouch: false,
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await primeAdminSession(page);
+    await seedCatalog(page);
+    await seedAmbassador(page);
+  });
+
+  test('the box-model reset holds at desktop width', async ({ page }) => {
+    await page.goto('/treasure');
+    await waitForAppReady(page);
+
+    const box = await page.evaluate(() => ({
+      html: getComputedStyle(document.documentElement).boxSizing,
+      body: getComputedStyle(document.body).boxSizing,
+      bodyMargin: getComputedStyle(document.body).margin,
+      bodyX: document.body.getBoundingClientRect().x,
+      bodyWidth: document.body.getBoundingClientRect().width,
+      innerWidth: window.innerWidth,
+    }));
+
+    expect(box.html).toBe('border-box');
+    expect(box.body).toBe('border-box');
+    expect(box.bodyMargin).toBe('0px');
+    expect(box.bodyX).toBe(0);
+    expect(box.bodyWidth).toBe(box.innerWidth);
+  });
+
+  for (const route of ['/treasure', '/product/401']) {
+    test(`${route} has no horizontal overflow at desktop`, async ({ page }) => {
+      await page.goto(route);
+      await waitForAppReady(page);
+      await page.waitForTimeout(1_500);
+
+      await expect(
+        page.getByText('Cargando tesoros', { exact: false }),
+      ).toHaveCount(0);
+
+      const metrics = await page.evaluate(() => {
+        const main = document.getElementById('main-content');
+        return {
+          innerWidth: window.innerWidth,
+          docScrollWidth: document.documentElement.scrollWidth,
+          mainScrollWidth: main?.scrollWidth ?? null,
+          mainClientWidth: main?.clientWidth ?? null,
+        };
+      });
+
+      expect(metrics.docScrollWidth).toBeLessThanOrEqual(
+        metrics.innerWidth + 1,
+      );
+      // <main> clips rather than scrolls, so this is the assertion that can
+      // actually see content wider than its container (see P0.6).
+      if (
+        metrics.mainScrollWidth !== null &&
+        metrics.mainClientWidth !== null
+      ) {
+        expect(metrics.mainScrollWidth).toBeLessThanOrEqual(
+          metrics.mainClientWidth + 1,
+        );
+      }
+
+      const overflowing = await findOverflowingElements(
+        page,
+        OVERFLOW_ALLOWLIST,
+      );
+      expect(
+        overflowing,
+        `Elements escaping the 1280px viewport:\n${JSON.stringify(overflowing, null, 2)}`,
+      ).toEqual([]);
+    });
+  }
+
+  /**
+   * The `[data-foto-admin]` coexistence check (P0.1 AC #4).
+   *
+   * WHAT THIS COVERS: that the global reset and the Fotosíntesis scoped patch
+   * do not fight. `css-variables.css` sets `html { border-box }` +
+   * `*,::before,::after { box-sizing: inherit }` globally, while
+   * `[data-foto-admin] input|textarea|select` separately pins `border-box`
+   * and `min-width: 0`. The worry the AC names is "double-application
+   * breakage": a form control inside the marker must end up border-box with
+   * a zero min-width, and a `width:100%` + padding field must NOT exceed its
+   * container — which is the original Fotosíntesis bug the scoped patch was
+   * written for.
+   *
+   * WHY A DOM FIXTURE AND NOT THE REAL ROUTE: `/admin/fotosintesis` cannot be
+   * driven under `VITE_TEST_MODE` today. `CopilotPanel.tsx:43` imports
+   * `useQuery` directly from `convex/react` instead of going through
+   * `convex-safe` (which `vite.config.ts` aliases to the in-memory stub), so
+   * the page issues a live `fotosintesisAi:workspaceSnapshot` query, the
+   * server errors, and the error boundary replaces the whole layout — the
+   * marker never mounts. Routing CopilotPanel through `convex-safe` would
+   * make the real route testable; until then this asserts the CSS contract
+   * against the real stylesheet, which is the part P0.1 actually asks about.
+   */
+  test('the foto-admin box-sizing patch survives the global reset', async ({
+    page,
+  }) => {
+    await page.goto('/treasure');
+    await waitForAppReady(page);
+
+    const result = await page.evaluate(() => {
+      const host = document.createElement('div');
+      host.setAttribute('data-foto-admin', '');
+      // A NARROW GRID CELL is the shape that matters. `1fr` is
+      // minmax(auto, 1fr), and an `auto` minimum floors the track at the
+      // item's min-content width — for an <input> that is its default
+      // ~20-character intrinsic size, far wider than 120px. Without
+      // `min-width: 0` the track inflates and the field escapes its cell.
+      // (Same mechanism as P0.6, one layer down.)
+      host.style.cssText =
+        'width:120px;display:grid;grid-template-columns:1fr;position:fixed;top:-9999px;left:0';
+      host.innerHTML = `
+        <input style="width:100%;padding:8px;border:1px solid #000" />
+        <textarea style="width:100%;padding:8px;border:1px solid #000"></textarea>
+        <select style="width:100%;padding:8px;border:1px solid #000"></select>`;
+      document.body.appendChild(host);
+
+      const read = (sel: string) => {
+        const el = host.querySelector(sel) as HTMLElement;
+        const cs = getComputedStyle(el);
+        return {
+          boxSizing: cs.boxSizing,
+          minWidth: cs.minWidth,
+          outerWidth: el.getBoundingClientRect().width,
+        };
+      };
+      const out = {
+        hostWidth: host.getBoundingClientRect().width,
+        input: read('input'),
+        textarea: read('textarea'),
+        select: read('select'),
+      };
+      host.remove();
+      return out;
+    });
+
+    for (const field of ['input', 'textarea', 'select'] as const) {
+      expect(result[field].boxSizing, `${field} box-sizing`).toBe('border-box');
+      expect(result[field].minWidth, `${field} min-width`).toBe('0px');
+      // The regression itself: border-box means padding+border are inside
+      // the 100%, so the field never grows past its 320px cell.
+      expect(
+        result[field].outerWidth,
+        `${field} escapes its container`,
+      ).toBeLessThanOrEqual(result.hostWidth);
+    }
+  });
+});

@@ -32,8 +32,11 @@ sub-11px text nodes, zero unprotected images.
 | — Data guards (`0.00 ct`, SpecRow)         | ✅                                                         | `55b61f7`, `9648324` |
 | — Image save protection (not in this spec) | ✅                                                         | `b1a697f`            |
 
-Regression coverage went from 0 to **40 e2e cases** (10 checks × 4 viewports).
-Every assertion was negative-tested: reverting its fix makes it fail.
+Regression coverage went from 0 to **60 e2e cases**: 14 checks × 4 phone
+viewports, plus a 4-case `desktop regression @ 1280×800` block (box-model reset,
+two overflow routes, and the `[data-foto-admin]` coexistence check).
+Every assertion is negative-tested: reverting its fix makes it fail — and fails
+only its own case.
 
 ### Claims in this document that turned out to be WRONG
 
@@ -267,8 +270,34 @@ Shipped ≠ verified.)
 - [x] `getComputedStyle(shellContainer).boxSizing === 'border-box'`; computed margin-right is `0`, not `−32px`. — e2e _"the box-model reset is in effect"_ + _"gutters are symmetric"_ (asserts `marginRight === '0px'`), 4 viewports.
 - [x] At 390px: search row, filter button, results counter, detail-page value column, CTA buttons, and recents carousel are fully inside the viewport with symmetric gutters. — e2e overflow sweep (no element escapes) + gutter symmetry ≤1px; filter button and "477 esmeraldas" confirmed on iPhone.
 - [x] `document.body` has zero margin in browser-tab mode (not just standalone). — e2e asserts `bodyMargin === '0px'`, `bodyX === 0`, `bodyWidth === innerWidth`, running in a real browser tab.
-- [ ] Regression pass on desktop widths and on Fotosíntesis admin (which self-patched box-sizing): no double-application breakage of `[data-foto-admin]` rules.
-      ⚠️ **NOT verified.** `mobile-layout.spec.ts` runs four _mobile_ viewports only — it contains no desktop viewport. `[data-foto-admin]` has no test anywhere. The sole desktop coverage is `admin-products.spec.ts` (Atelier, not Fotosíntesis), which currently has 2 pre-existing failures.
+- [x] Regression pass on **desktop widths** — added 2026-07-30: a
+      `desktop regression @ 1280×800` block asserting the box-model reset holds
+      and `/treasure` + `/product/401` have no horizontal overflow there.
+      Negative-tested. (Was unticked in v1.4: the suite genuinely had no
+      desktop viewport, contrary to what v1.3 claimed.)
+- [x] No double-application breakage of the `[data-foto-admin]` rules —
+      e2e _"the foto-admin box-sizing patch survives the global reset"_.
+      ⓘ **The first version of this test was vacuous and was rewritten.** It
+      asserted `min-width: 0px` on a plain block child — but that is the CSS
+      _initial_ value, so it passed with the scoped rule deleted. `min-width:
+  auto` only bites on **grid/flex items**, which is precisely the case the
+      rule's own comment describes ("width:100% + padding overflows the grid
+      cell"). The fixture now places the fields in a 120px `1fr` grid track —
+      `minmax(auto, 1fr)` floored by an `<input>`'s ~20-character intrinsic
+      min-content, the same mechanism as P0.6 one layer down. Deleting the rule
+      now fails the test with `Expected "0px" / Received "auto"`.
+      ⓘ Worth knowing: the global reset made the rule's `box-sizing` half
+      **redundant** — inputs inherit `border-box` anyway. Its load-bearing
+      remainder is `min-width: 0`. "Double application" is harmless because
+      both declare the same value.
+- [ ] The **real** `/admin/fotosintesis` route is still not swept. It cannot be
+      driven under `VITE_TEST_MODE`: `CopilotPanel.tsx:43` imports `useQuery`
+      straight from `convex/react` instead of `convex-safe` (which
+      `vite.config.ts` aliases to the in-memory stub), so the page fires a live
+      `fotosintesisAi:workspaceSnapshot` query, the server errors, and the
+      error boundary replaces the whole layout — `[data-foto-admin]` never
+      mounts. Routing that one import through `convex-safe` would unlock
+      sweeping the actual admin surface.
 
   The last bullet was four claims in one box. Split, so each can be true or false on its own:
 
