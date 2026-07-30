@@ -77,6 +77,25 @@ function buildSpecLine(item: TreasureItem): string {
   return parts.length > 0 ? parts.join(' · ') : item.color;
 }
 
+/** Shared geometry for the image-well overlay chips.
+ *
+ *  All three previously sat at `fontSize: 9`, under the 11px legibility floor
+ *  — and one of them ("Lote · 12 piezas") carries real words, not a glyph.
+ *  11px is `iosTypographyScale.caption2` / `qeType.spec.fontSize`; the height
+ *  goes 18 -> 20 to keep the label vertically centred at the larger size,
+ *  matching the precioEspecial badge already rendered in the same well.
+ */
+const OVERLAY_CHIP_SX = {
+  position: 'absolute' as const,
+  height: 20,
+  fontSize: '0.6875rem',
+  '& .MuiChip-label': { px: 0.5 },
+};
+
+/** Bottom offset for the gallery chip when the quantity chip sits below it.
+ *  Tracks OVERLAY_CHIP_SX.height + the 6px gutter + 4px breathing room. */
+const STACKED_CHIP_BOTTOM = 30;
+
 function GridCard({
   item,
   onItemClick,
@@ -143,7 +162,14 @@ function GridCard({
       <Typography
         sx={{
           fontFamily: 'var(--tm-font-mono)',
-          fontSize: '0.62rem',
+          // 11px floor (qeType.spec / iosTypographyScale.caption2). Was
+          // 0.62rem = 9.92px.
+          fontSize: '0.6875rem',
+          // Pinned: neither line set a lineHeight, so raising the font grew
+          // the line box while VirtualGrid's `contentHeight` stays fixed.
+          // The footer is flex-shrink:0 against a flex:1 image well, so that
+          // growth is paid for by the photograph (VirtualGrid.tsx:390-394).
+          lineHeight: 1.4,
           letterSpacing: '0.03em',
           color: 'var(--tm-muted)',
           whiteSpace: 'nowrap',
@@ -164,12 +190,16 @@ function GridCard({
     <Typography
       sx={{
         fontFamily: 'var(--tm-font-mono)',
-        // Tight enough that the longest real grades ("Fina Esencial",
-        // "C. Superior") still sit beside an 8-digit price without ellipsising.
-        fontSize: '0.575rem',
+        // 11px floor, up from 0.575rem = 9.2px — the smallest real text on
+        // the card. `textTransform: uppercase` is deliberately dropped rather
+        // than kept: caps cost ~12% width, which is roughly what the larger
+        // size needs back, so the longest grade ("C. SuperFina") still sits
+        // beside an 8-digit price without ellipsising. Sentence case is the
+        // trade that pays for legibility here.
+        fontSize: '0.6875rem',
+        lineHeight: 1.4,
         fontWeight: 500,
-        letterSpacing: '0.045em',
-        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
         color: 'var(--tm-muted)',
         whiteSpace: 'nowrap',
         overflow: 'hidden',
@@ -248,20 +278,17 @@ function GridCard({
       {/* Gallery count badge — bottom right */}
       {(item.galleryCount ?? 0) > 1 && !item.isLote && (
         <Chip
-          icon={<Images size={10} />}
+          icon={<Images size={12} />}
           label={item.galleryCount}
           size="small"
           sx={{
-            position: 'absolute',
-            bottom: item.cantidad > 1 ? 28 : 6,
+            ...OVERLAY_CHIP_SX,
+            bottom: item.cantidad > 1 ? STACKED_CHIP_BOTTOM : 6,
             right: 6,
             bgcolor: 'rgba(0,0,0,0.62)',
             color: 'white',
-            fontSize: 9,
             fontWeight: 600,
-            height: 18,
             '& .MuiChip-icon': { color: 'rgba(255,255,255,0.8)', ml: 0.5 },
-            '& .MuiChip-label': { px: 0.5 },
           }}
         />
       )}
@@ -276,16 +303,13 @@ function GridCard({
           }
           size="small"
           sx={{
-            position: 'absolute',
+            ...OVERLAY_CHIP_SX,
             bottom: 6,
             right: 6,
-            height: 18,
-            fontSize: 9,
             fontWeight: 700,
             letterSpacing: '0.02em',
             bgcolor: item.isLote ? qe.accentStrong : 'rgba(0,0,0,0.62)',
             color: item.isLote ? qe.onAccent : 'white',
-            '& .MuiChip-label': { px: 0.5 },
           }}
         />
       )}
@@ -293,22 +317,19 @@ function GridCard({
       {/* View count badge — top left (Admin only) */}
       {isAdmin && viewCount !== undefined && viewCount > 0 && (
         <Chip
-          icon={<Eye size={10} />}
+          icon={<Eye size={12} />}
           label={
             viewCount > 999 ? `${(viewCount / 1000).toFixed(1)}k` : viewCount
           }
           size="small"
           sx={{
-            position: 'absolute',
+            ...OVERLAY_CHIP_SX,
             top: 6,
             left: 6,
-            height: 18,
-            fontSize: 9,
             fontWeight: 500,
             bgcolor: 'rgba(0,0,0,0.52)',
             color: 'rgba(255,255,255,0.9)',
             '& .MuiChip-icon': { color: 'rgba(255,255,255,0.7)', ml: 0.5 },
-            '& .MuiChip-label': { px: 0.5 },
           }}
         />
       )}

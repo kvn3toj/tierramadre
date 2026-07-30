@@ -124,6 +124,9 @@ export {
   bottomBarClearance,
 } from './mixins/scrollMixins';
 
+// Touch-target mixins (grow the tap area, not the painted control)
+export { hitSlop } from './mixins/touchMixins';
+
 // CSS Transition helpers & Microinteraction tokens
 export { cssTransition, microinteraction } from './tokens/motion';
 

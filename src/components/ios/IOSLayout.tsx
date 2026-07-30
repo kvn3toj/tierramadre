@@ -38,6 +38,7 @@ import {
   bottomBarClearance,
   layoutBreakpoints,
   TabBar,
+  hitSlop,
 } from '../../design-system';
 import {
   STOREFRONT_SLOTS,
@@ -398,6 +399,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
                 }
                 size="small"
                 sx={{
+                  ...hitSlop(),
                   color: 'var(--brand-primary)',
                   padding: '6px',
                   opacity: 0.7,

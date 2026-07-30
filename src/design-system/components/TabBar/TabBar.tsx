@@ -117,7 +117,8 @@ const PILL_RADIUS = 30;
 const PILL_PADDING = 4;
 const TAB_RADIUS = 26;
 const ICON_SIZE = 20;
-const LABEL_SIZE = 10;
+/** 11px legibility floor (DS3 caption2). Was 10. */
+const LABEL_SIZE = 11;
 const BEVEL = 9; // emerald step-cut chamfer (px)
 
 /** DS v3 calm tween — near-critically-damped, no bounce (§4 no-spring rule). */
@@ -328,7 +329,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                         borderRadius: '8px',
                         backgroundColor: 'var(--tm-danger, #B3403A)',
                         color: '#fff',
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: 600,
                         lineHeight: '16px',
                         textAlign: 'center',

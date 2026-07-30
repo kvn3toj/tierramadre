@@ -150,7 +150,9 @@ export const PieceCard: React.FC<PieceCardProps> = ({
             <Typography
               sx={{
                 fontFamily: 'var(--tm-font-mono)',
-                fontSize: '0.59rem',
+                // 11px floor (qeType.spec). Was 0.59rem = 9.44px.
+                fontSize: '0.6875rem',
+                lineHeight: 1.4,
                 letterSpacing: '0.05em',
                 color: 'var(--tm-subtle)',
                 overflow: 'hidden',

@@ -5,6 +5,7 @@ import {
   TextField,
   InputAdornment,
   IconButton,
+  ButtonBase,
   alpha,
   useTheme,
   Collapse,
@@ -24,6 +25,7 @@ import {
   cssTransition,
   blackAlpha,
   whiteAlpha,
+  hitSlop,
 } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { ActiveFilterChips } from '../';
@@ -184,7 +186,9 @@ export default function MobileSearchBar({
                     size="small"
                     onClick={() => setSearch('')}
                     aria-label={t.treasure.search.clearAriaLabel}
-                    sx={{ width: 36, height: 36 }}
+                    // 36x36 painted inside a 38px-tall field — a real 44px
+                    // box will not fit, so grow only the tap area.
+                    sx={{ width: 36, height: 36, ...hitSlop() }}
                   >
                     <X size={14} />
                   </IconButton>
@@ -221,6 +225,7 @@ export default function MobileSearchBar({
               }
               aria-expanded={quickAccessOpen}
               sx={{
+                ...hitSlop(),
                 width: 38,
                 height: 38,
                 borderRadius: 2.5,
@@ -299,6 +304,7 @@ export default function MobileSearchBar({
             onClick={() => setFilterSheetOpen(!filterSheetOpen)}
             aria-label="Filtros"
             sx={{
+              ...hitSlop(),
               width: 38,
               height: 38,
               borderRadius: 2.5,
@@ -440,9 +446,12 @@ export default function MobileSearchBar({
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
+                  // py grown (was 0.75) for a >=44px row. Deliberately NOT
+                  // hitSlop(): these tabs sit in a `gap: 0` flex row, where
+                  // overlapping slops would steal each other's presses.
+                  py: 1.75,
                   gap: 0.5,
                   px: 1.5,
-                  py: 0.75,
                   cursor: 'pointer',
                   borderBottom: '2px solid',
                   borderColor:
@@ -495,9 +504,12 @@ export default function MobileSearchBar({
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
+                  // py grown (was 0.75) for a >=44px row. Deliberately NOT
+                  // hitSlop(): these tabs sit in a `gap: 0` flex row, where
+                  // overlapping slops would steal each other's presses.
+                  py: 1.75,
                   gap: 0.5,
                   px: 1.5,
-                  py: 0.75,
                   cursor: 'pointer',
                   borderBottom: '2px solid',
                   borderColor:
@@ -551,23 +563,24 @@ export default function MobileSearchBar({
               {activeTab === 'recent' &&
                 onClearRecent &&
                 recentlyViewedItems.length > 0 && (
-                  <Typography
-                    role="button"
-                    tabIndex={0}
+                  <ButtonBase
                     onClick={onClearRecent}
-                    onKeyDown={(e: React.KeyboardEvent) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        onClearRecent();
-                      }
-                    }}
+                    disableRipple
                     sx={{
-                      fontSize: '0.65rem',
+                      // Real button: ButtonBase brings Enter/Space, focus and
+                      // disabled semantics, so the hand-rolled tabIndex +
+                      // onKeyDown that shadowed them are gone. `font:
+                      // 'inherit'` is required — ButtonBase sets no
+                      // font-family, so it would otherwise fall back to the
+                      // UA button font.
+                      font: 'inherit',
+                      fontSize: '0.6875rem',
                       color: theme.palette.text.secondary,
                       cursor: 'pointer',
                       px: 1,
                       py: 0.5,
                       borderRadius: 1,
+                      ...hitSlop(),
                       '&:hover': { color: accentColors.error.light },
                       '&:focus-visible': {
                         outline: 'none',
@@ -576,25 +589,19 @@ export default function MobileSearchBar({
                     }}
                   >
                     {t.treasure.filter.clear}
-                  </Typography>
+                  </ButtonBase>
                 )}
               {activeTab === 'favorites' && favoritesCount > 0 && (
-                <Typography
-                  role="button"
-                  tabIndex={0}
+                <ButtonBase
                   onClick={() => {
                     setShowFavoritesOnly(!showFavoritesOnly);
                     setQuickAccessOpen(false);
                   }}
-                  onKeyDown={(e: React.KeyboardEvent) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setShowFavoritesOnly(!showFavoritesOnly);
-                      setQuickAccessOpen(false);
-                    }
-                  }}
+                  disableRipple
+                  aria-pressed={showFavoritesOnly}
                   sx={{
-                    fontSize: '0.65rem',
+                    font: 'inherit',
+                    fontSize: '0.6875rem',
                     color: showFavoritesOnly
                       ? accentColors.error.light
                       : emeraldCore.primary,
@@ -603,6 +610,7 @@ export default function MobileSearchBar({
                     px: 1,
                     py: 0.5,
                     borderRadius: 1,
+                    ...hitSlop(),
                     '&:hover': { bgcolor: alpha(emeraldCore.primary, 0.08) },
                     '&:focus-visible': {
                       outline: 'none',
@@ -613,7 +621,7 @@ export default function MobileSearchBar({
                   {showFavoritesOnly
                     ? t.actions.viewAll
                     : t.actions.favoritesOnly}
-                </Typography>
+                </ButtonBase>
               )}
             </Box>
           </Box>

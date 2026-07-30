@@ -252,6 +252,94 @@ for (const vp of VIEWPORTS) {
       await expect(page.getByText(/0[.,]00\s*ct/i)).toHaveCount(0);
     });
 
+    test('no persistent text renders below the 11px floor', async ({
+      page,
+    }) => {
+      await page.goto('/treasure');
+      await waitForAppReady(page);
+      await page.waitForTimeout(1_500);
+
+      const tooSmall = await page.evaluate(() => {
+        const offenders: { text: string; size: number; cls: string }[] = [];
+        for (const el of Array.from(document.querySelectorAll('*'))) {
+          // Only leaf nodes with their own visible text.
+          const ownText = Array.from(el.childNodes)
+            .filter((n) => n.nodeType === Node.TEXT_NODE)
+            .map((n) => n.textContent?.trim() ?? '')
+            .join('')
+            .trim();
+          if (!ownText) continue;
+
+          // DEV-only affordances never reach a user (see
+          // RedesignVariantToggle's import.meta.env.DEV guard), so they are
+          // exempt from the floor rather than silently dragging it down.
+          if (el.closest('[data-dev-only]')) continue;
+
+          const style = getComputedStyle(el);
+          if (
+            style.visibility === 'hidden' ||
+            style.display === 'none' ||
+            Number(style.opacity) === 0
+          )
+            continue;
+
+          const rect = el.getBoundingClientRect();
+          if (rect.width === 0 || rect.height === 0) continue;
+
+          const size = parseFloat(style.fontSize);
+          if (size < 11) {
+            offenders.push({
+              text: ownText.slice(0, 40),
+              size,
+              cls:
+                (typeof el.className === 'string' ? el.className : '').slice(
+                  0,
+                  50,
+                ) || el.tagName.toLowerCase(),
+            });
+          }
+        }
+        return offenders;
+      });
+
+      expect(
+        tooSmall,
+        `Text below 11px at ${vp.width}px:\n${JSON.stringify(tooSmall, null, 2)}`,
+      ).toEqual([]);
+    });
+
+    test('catalog controls have a 44px tap area', async ({ page }) => {
+      await page.goto('/treasure');
+      await waitForAppReady(page);
+      await page.waitForTimeout(1_500);
+
+      // Named controls rather than "every button": these are the ones the
+      // audit measured at 26-38px. A blanket sweep would drag in chips and
+      // decorative roles and turn red for reasons unrelated to reachability.
+      const labels = ['Filtros', 'Cerrar aviso'];
+
+      for (const label of labels) {
+        const control = page.getByRole('button', { name: label });
+        if ((await control.count()) === 0) continue;
+
+        // Measure the union of the control and its ::after slop, which is
+        // what actually receives the press.
+        const reach = await control.first().evaluate((el) => {
+          const own = el.getBoundingClientRect();
+          const after = getComputedStyle(el, '::after');
+          const w = parseFloat(after.width) || 0;
+          const h = parseFloat(after.height) || 0;
+          return {
+            width: Math.max(own.width, w),
+            height: Math.max(own.height, h),
+          };
+        });
+
+        expect(reach.width, `${label} tap width`).toBeGreaterThanOrEqual(44);
+        expect(reach.height, `${label} tap height`).toBeGreaterThanOrEqual(44);
+      }
+    });
+
     test('the tab bar sits fully inside the viewport', async ({ page }) => {
       await page.goto('/treasure');
       await waitForAppReady(page);

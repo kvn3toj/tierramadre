@@ -9,7 +9,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { Alert, Collapse, Box, IconButton } from '@mui/material';
 import { WifiOff, X } from 'lucide-react';
-import { zIndex } from '../design-system';
+import { zIndex, hitSlop } from '../design-system';
 
 interface NetworkStatusContextValue {
   isOnline: boolean;
@@ -55,7 +55,12 @@ export function NetworkStatusProvider({ children }: { children: ReactNode }) {
             severity="warning"
             icon={<WifiOff size={18} />}
             action={
-              <IconButton size="small" onClick={handleDismiss} aria-label="Cerrar aviso">
+              <IconButton
+                size="small"
+                onClick={handleDismiss}
+                sx={hitSlop()}
+                aria-label="Cerrar aviso"
+              >
                 <X size={16} />
               </IconButton>
             }
