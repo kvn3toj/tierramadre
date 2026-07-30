@@ -21,46 +21,46 @@
 // =============================================================================
 
 export const SCENES = {
-  "ring-woman": {
+  'ring-woman': {
     piece:
-      "a refined cocktail ring with the emerald as the single hero centre stone, held in a secure four-prong setting on a slim, elegant band",
+      'a refined cocktail ring with the emerald as the single hero centre stone, held in a secure four-prong setting on a slim, elegant band',
     subject:
       "worn on the ring finger of a graceful woman's hand, soft natural skin and a tasteful neutral manicure, fingers gently and naturally curved",
     framing:
-      "intimate close-up of the hand at a flattering three-quarter angle",
+      'intimate close-up of the hand at a flattering three-quarter angle',
     anatomy:
-      "The hand is anatomically correct, with exactly five natural fingers and realistic, flawless skin",
+      'The hand is anatomically correct, with exactly five natural fingers and realistic, flawless skin',
   },
-  "ring-man": {
+  'ring-man': {
     piece:
       "a substantial men's signet-style ring with the emerald as the bold centre stone in a clean bezel setting on a solid polished band",
     subject:
-      "worn on the hand of a refined, well-groomed man in a natural, confident pose",
-    framing: "close-up of the hand at a three-quarter angle",
+      'worn on the hand of a refined, well-groomed man in a natural, confident pose',
+    framing: 'close-up of the hand at a three-quarter angle',
     anatomy:
-      "The hand is anatomically correct, with exactly five natural fingers and realistic skin",
+      'The hand is anatomically correct, with exactly five natural fingers and realistic skin',
   },
   necklace: {
     piece:
-      "an elegant pendant on a fine, delicate chain, the emerald as the hanging hero stone framed by a subtle halo of tiny pavé diamonds",
+      'an elegant pendant on a fine, delicate chain, the emerald as the hanging hero stone framed by a subtle halo of tiny pavé diamonds',
     subject:
       "resting just below the collarbone on a woman's bare décolletage, smooth natural skin",
-    framing: "front-on beauty crop from the collarbone to the upper chest",
-    anatomy: "Skin is natural and realistic under flattering soft lighting",
+    framing: 'front-on beauty crop from the collarbone to the upper chest',
+    anatomy: 'Skin is natural and realistic under flattering soft lighting',
   },
   earrings: {
     piece:
-      "a perfectly matched symmetrical pair of drop earrings, each with an emerald as the hero stone above a small accent diamond",
+      'a perfectly matched symmetrical pair of drop earrings, each with an emerald as the hero stone above a small accent diamond',
     subject:
-      "worn by an elegant woman, shown on her ear with hair tucked back to reveal the side of her face",
-    framing: "side-profile close-up of the ear and jawline",
-    anatomy: "The ear and skin are natural, realistic and flawless",
+      'worn by an elegant woman, shown on her ear with hair tucked back to reveal the side of her face',
+    framing: 'side-profile close-up of the ear and jawline',
+    anatomy: 'The ear and skin are natural, realistic and flawless',
   },
 };
 
 export const METALS = {
-  gold: "warm 18k yellow gold",
-  silver: "bright polished sterling silver (925)",
+  gold: 'warm 18k yellow gold',
+  silver: 'bright polished sterling silver (925)',
 };
 
 // — Spanish (catalog) spec values → clean English gemological descriptors ——
@@ -71,30 +71,30 @@ export const METALS = {
 export const CUT_MAP = [
   [
     /baguett?e|bagu[eé]t/i,
-    "a baguette-cut (long, narrow rectangular step-cut) emerald",
+    'a baguette-cut (long, narrow rectangular step-cut) emerald',
   ],
-  [/esmeralda|emerald|octag/i, "an emerald-cut (rectangular step-cut) emerald"],
-  [/coj[ií]n|cushion/i, "a cushion-cut emerald"],
-  [/oval/i, "an oval-cut emerald"],
-  [/pera|pear|gota|l[áa]grima|teardrop/i, "a pear-cut (teardrop) emerald"],
-  [/redond|round|brillante/i, "a round brilliant-cut emerald"],
-  [/princes/i, "a princess-cut (square brilliant) emerald"],
-  [/cuadrad|square|carr[ée]/i, "a square step-cut (carré) emerald"],
-  [/marqu|navette/i, "a marquise-cut emerald"],
-  [/coraz[óo]n|heart/i, "a heart-cut emerald"],
-  [/asscher/i, "an Asscher-cut emerald"],
-  [/trill?[íi]?[óo]n|triangle|trillion/i, "a trillion-cut emerald"],
+  [/esmeralda|emerald|octag/i, 'an emerald-cut (rectangular step-cut) emerald'],
+  [/coj[ií]n|cushion/i, 'a cushion-cut emerald'],
+  [/oval/i, 'an oval-cut emerald'],
+  [/pera|pear|gota|l[áa]grima|teardrop/i, 'a pear-cut (teardrop) emerald'],
+  [/redond|round|brillante/i, 'a round brilliant-cut emerald'],
+  [/princes/i, 'a princess-cut (square brilliant) emerald'],
+  [/cuadrad|square|carr[ée]/i, 'a square step-cut (carré) emerald'],
+  [/marqu|navette/i, 'a marquise-cut emerald'],
+  [/coraz[óo]n|heart/i, 'a heart-cut emerald'],
+  [/asscher/i, 'an Asscher-cut emerald'],
+  [/trill?[íi]?[óo]n|triangle|trillion/i, 'a trillion-cut emerald'],
   [
     /trapich/i,
-    "a trapiche emerald cabochon — a fixed six-rayed black carbon star radiating from a green hexagonal core, six green sectors split by dark carbon spokes, domed and unfaceted (never a plain green cabochon or a faceted stone)",
+    'a trapiche emerald cabochon — a fixed six-rayed black carbon star radiating from a green hexagonal core, six green sectors split by dark carbon spokes, domed and unfaceted (never a plain green cabochon or a faceted stone)',
   ],
   [
     /\biris\b/i,
-    "an Iris-cut emerald slice — a thin, flat polished cross-section of trapiche-pattern rough showing a fixed six-rayed black carbon star radiating from a green hexagonal core, six green sectors split by dark carbon spokes; flat and unfaceted, like a thin polished window pane (never a plain green cabochon, a domed trapiche cabochon, or a faceted stone)",
+    'an Iris-cut emerald slice — a thin, flat polished cross-section of trapiche-pattern rough showing a fixed six-rayed black carbon star radiating from a green hexagonal core, six green sectors split by dark carbon spokes; flat and unfaceted, like a thin polished window pane (never a plain green cabochon, a domed trapiche cabochon, or a faceted stone)',
   ],
   [
     /morralla|cabuj[óo]n|cabochon|pulid|tumbled|\bgola\b/i,
-    "a polished cabochon (smooth-domed, unfaceted) emerald",
+    'a polished cabochon (smooth-domed, unfaceted) emerald',
   ],
 ];
 
@@ -102,35 +102,35 @@ export function describeCut(cut) {
   if (cut) {
     for (const [re, label] of CUT_MAP) if (re.test(cut)) return label;
   }
-  return "an emerald-cut (rectangular step-cut) emerald";
+  return 'an emerald-cut (rectangular step-cut) emerald';
 }
 
 export function describeColor(color) {
-  const c = (color || "").toLowerCase();
+  const c = (color || '').toLowerCase();
   // Anchor the exact hue so e.g. "Verde Limón" doesn't drift to deep blue-green.
   if (/lim[óo]n|limon|\blima\b|lime/.test(c))
-    return "a bright lime, slightly yellowish green (NOT a deep blue-green)";
-  if (/menta|mint/.test(c)) return "a light, fresh mint green";
+    return 'a bright lime, slightly yellowish green (NOT a deep blue-green)';
+  if (/menta|mint/.test(c)) return 'a light, fresh mint green';
   if (/muzo/.test(c))
-    return "a deep, slightly bluish Muzo green (rich, not brightened or yellowed)";
-  if (/chivor/.test(c)) return "a deep, slightly bluish Chivor green";
-  if (/azul/.test(c)) return "a vivid, slightly bluish Colombian green";
+    return 'a deep, slightly bluish Muzo green (rich, not brightened or yellowed)';
+  if (/chivor/.test(c)) return 'a deep, slightly bluish Chivor green';
+  if (/azul/.test(c)) return 'a vivid, slightly bluish Colombian green';
   if (/oscuro|intens|profund|deep|fuerte|v[íi]vid/.test(c))
-    return "a deep, richly saturated Colombian green";
+    return 'a deep, richly saturated Colombian green';
   if (/claro|light|p[áa]lid|suave/.test(c))
-    return "a bright, lively light Colombian green";
-  return "a vivid, saturated Colombian green";
+    return 'a bright, lively light Colombian green';
+  return 'a vivid, saturated Colombian green';
 }
 
 export function describeQuality(quality) {
-  const q = (quality || "").toLowerCase();
+  const q = (quality || '').toLowerCase();
   if (/aaa|fina|premium|excele|exception|gota|insignif/.test(q))
-    return "with exceptional eye-clean transparency and a luminous internal glow";
+    return 'with exceptional eye-clean transparency and a luminous internal glow';
   if (/\baa\b|alta|high/.test(q))
-    return "with high clarity and bright, glassy transparency";
+    return 'with high clarity and bright, glassy transparency';
   if (/comercial|\ba\b|natural|baja|incl/.test(q))
-    return "with natural transparency and characteristic fine jardín inclusions";
-  return "with glassy transparency and natural depth";
+    return 'with natural transparency and characteristic fine jardín inclusions';
+  return 'with glassy transparency and natural depth';
 }
 
 // ── Professional (visualizer) descriptors ───────────────────────────────────
@@ -145,17 +145,17 @@ function cap(s) {
 /** True when the cut denotes a non-faceted, domed/flat stone (bezel-friendly): morralla/cabochon/trapiche/iris/gola. */
 export function isCabochonCut(cut) {
   return /morralla|cabuj[óo]n|cabochon|tumbled|pulid|trapich|\biris\b|\bgola\b/i.test(
-    cut || "",
+    cut || '',
   );
 }
 
 /** Cut-appropriate setting: bezel hugs a cabochon, flush-frames a flat iris slice; claws show off a faceted gem. */
 export function describeSetting(cut) {
-  if (/\biris\b/i.test(cut || ""))
-    return "in a smooth, flush bezel setting that frames the thin polished slice";
+  if (/\biris\b/i.test(cut || ''))
+    return 'in a smooth, flush bezel setting that frames the thin polished slice';
   return isCabochonCut(cut)
-    ? "in a smooth, polished bezel setting that hugs the domed stone"
-    : "held in a secure, fine four-prong claw setting that lifts and shows off the faceted stone";
+    ? 'in a smooth, polished bezel setting that hugs the domed stone'
+    : 'held in a secure, fine four-prong claw setting that lifts and shows off the faceted stone';
 }
 
 /**
@@ -164,28 +164,28 @@ export function describeSetting(cut) {
  * promising glass-clean perfection that a natural emerald never has.
  */
 export function describeQualityPro(quality) {
-  const q = (quality || "").toLowerCase();
+  const q = (quality || '').toLowerCase();
   if (/morralla/.test(q))
-    return "a translucent commercial stone — keep its real milky zones and visible jardín inclusions; do NOT idealize into a clean gemmy stone";
+    return 'a translucent commercial stone — keep its real milky zones and visible jardín inclusions; do NOT idealize into a clean gemmy stone';
   if (
     /extrafina|extra fina|sublime|premium|excele|exception|insignif|\baaa\b/.test(
       q,
     )
   )
-    return "with exceptional, near eye-clean transparency, vivid saturation and a luminous internal glow";
+    return 'with exceptional, near eye-clean transparency, vivid saturation and a luminous internal glow';
   if (/comercial/.test(q))
-    return "a transparent but visibly included natural emerald — keep its real milky zones and fine jardín (garden) inclusions; do NOT idealize into a flawless gemmy stone, and avoid an exaggerated luminous glow";
+    return 'a transparent but visibly included natural emerald — keep its real milky zones and fine jardín (garden) inclusions; do NOT idealize into a flawless gemmy stone, and avoid an exaggerated luminous glow';
   if (/\baa\b|\balta\b|\bfina\b|high/.test(q))
-    return "with high clarity, bright glassy transparency and only minor natural inclusions";
-  return "transparent with the characteristic fine jardín inclusions of a natural Colombian emerald, not flawless";
+    return 'with high clarity, bright glassy transparency and only minor natural inclusions';
+  return 'transparent with the characteristic fine jardín inclusions of a natural Colombian emerald, not flawless';
 }
 
 /** Strip unit words / stray punctuation from a carat value. */
 export function cleanCarats(carats) {
   return String(carats)
-    .replace(/\s*(cts?|ct\.|quilates?|carats?|kt)\b/gi, "")
-    .replace(/[^\d.,]/g, "")
-    .replace(/[.,]$/, "")
+    .replace(/\s*(cts?|ct\.|quilates?|carats?|kt)\b/gi, '')
+    .replace(/[^\d.,]/g, '')
+    .replace(/[.,]$/, '')
     .trim();
 }
 
@@ -206,8 +206,8 @@ export function parseMeasures(medidasValores) {
   const nums = (
     String(medidasValores)
       .toLowerCase()
-      .replace(/mm|mil[ií]metros?/g, " ")
-      .replace(/(\d),(\d)/g, "$1.$2") // comma decimals → dot (only between digits)
+      .replace(/mm|mil[ií]metros?/g, ' ')
+      .replace(/(\d),(\d)/g, '$1.$2') // comma decimals → dot (only between digits)
       .match(/\d+(?:\.\d+)?/g) || []
   )
     .map(Number)
@@ -221,52 +221,133 @@ export function parseMeasures(medidasValores) {
 }
 
 /**
+ * Approximate the stone's largest face dimension from its weight, for the
+ * items whose catalog row carries carats but no mm (most of them).
+ *
+ * A round brilliant of 1 ct sits at ~6.5 mm and the face scales with the cube
+ * root of the weight; faceted emerald cuts land close enough to that for a
+ * scale anchor. Deliberately rough — it exists so the tier logic below always
+ * has a number to reason about, never to be quoted as a measurement.
+ */
+function estimateMaxMmFromCarats(caratNum) {
+  if (!caratNum || caratNum <= 0) return 0;
+  return 6.5 * Math.cbrt(caratNum);
+}
+
+/**
+ * Body part each scene puts the stone against, for the size comparison.
+ *
+ * `necklace` is deliberately absent: a pendant reads against the chain and the
+ * hollow of the throat, not against the width of the neck, so a ratio there
+ * came out as "well under a fifth" — technically true and useless as guidance.
+ * That scene falls back to the absolute comparator below.
+ */
+const SCENE_SCALE_ANCHOR = {
+  'ring-woman': { part: 'the finger it is worn on', widthMm: 16 },
+  'ring-man': { part: 'the finger it is worn on', widthMm: 19 },
+  bracelet: { part: 'the wrist it rests on', widthMm: 55 },
+  earrings: { part: 'the earlobe it hangs from', widthMm: 18 },
+};
+
+/**
  * Build an explicit, true-to-life scale clause from parsed mm + carats.
  * Empty string when nothing is parseable (so the prompt never says
- * "undefined mm"). Scene-agnostic on purpose — proportion-to-body is
- * handled separately in the main template.
+ * "undefined mm").
  *
- * @param {{ measures?: string, carats?: (string|number) }} args
+ * Pass `scene` to get the anchor that actually works: a ratio against a body
+ * part visible in the same frame. Abstract comparators ("an adult fingernail
+ * is ~12 mm wide") do not survive the model's strong engagement-ring prior —
+ * measured against the shipped batch, stones came out around twice their real
+ * size. A ratio the model can check inside its own composition does hold.
+ *
+ * @param {{ measures?: string, carats?: (string|number), scene?: string }} args
  * @returns {string}
  */
-export function buildRealSizeCue({ measures, carats } = {}) {
+export function buildRealSizeCue({ measures, carats, scene } = {}) {
   const { lengthMm, widthMm, depthMm } = parseMeasures(measures);
-  const caratNum = parseFloat(String(carats ?? "").replace(",", "."));
-  const ct = caratNum > 0 ? cleanCarats(carats) : "";
+  const caratNum = parseFloat(String(carats ?? '').replace(',', '.'));
+  const ct = caratNum > 0 ? cleanCarats(carats) : '';
 
-  if (!lengthMm && !widthMm && !ct) return "";
+  if (!lengthMm && !widthMm && !ct) return '';
+
+  // Fall back to the weight-derived estimate so carat-only rows still get a
+  // tier. Previously every tier but the last required real mm, so a 0.95 ct
+  // stone with no measurements got the generic sentence and no anchor at all.
+  const measuredMm = Math.max(lengthMm || 0, widthMm || 0);
+  const maxMm = measuredMm || estimateMaxMmFromCarats(caratNum);
 
   const dims = [];
   if (lengthMm) dims.push(`${lengthMm} mm long`);
   if (widthMm) dims.push(`${widthMm} mm wide`);
   if (depthMm) dims.push(`${depthMm} mm deep`);
-  const dimText = dims.length ? dims.join(" by ") : "";
+  // A figure in millimetres does far more work than the carat weight, which
+  // the model has no physical intuition for — side-by-side regenerations of
+  // the same stone came out visibly smaller once the mm were stated. So when
+  // the catalog has no measurements, say the estimate out loud rather than
+  // only using it internally. Hedged, because it is derived from the weight.
+  if (!dims.length && maxMm) dims.push(`roughly ${maxMm.toFixed(1)} mm across`);
+  const dimText = dims.length ? dims.join(' by ') : '';
 
   const caratText = ct
-    ? `${dims.length ? ", " : ""}approximately ${ct} carats`
-    : "";
+    ? `${dims.length ? ', ' : ''}approximately ${ct} carats`
+    : '';
 
-  // Tiered, comparator-based anchor — a bare "fingernail ≈ 12 mm" note wasn't
-  // enough to stop the model enlarging sub-carat stones into hero gems.
-  const maxMm = Math.max(lengthMm || 0, widthMm || 0);
-  let tier = "";
-  if ((maxMm && maxMm < 4.5) || (caratNum && caratNum < 0.3))
+  let tier = '';
+  if (maxMm && maxMm < 4.5)
     tier =
-      " This is a VERY SMALL accent stone — no larger than a lentil and clearly under half a fingernail's width (an adult fingernail is ~12 mm wide). Render it petite and discreet on the body; never a large hero stone.";
-  else if ((maxMm && maxMm < 7) || (caratNum && caratNum < 0.7))
+      ' This is a VERY SMALL accent stone — no larger than a lentil. Render it petite and discreet on the body; never a large hero stone.';
+  else if (maxMm && maxMm < 7)
     tier =
-      " This is a small, modest stone — well under a fingernail's width (an adult fingernail is ~12 mm wide). Keep it dainty and realistically wearable, not enlarged.";
+      ' This is a small, modest stone. Keep it dainty and realistically wearable, not enlarged.';
   else if (maxMm && maxMm <= 12)
     tier =
-      " This is a modest mid-size stone (an adult fingernail is ~12 mm wide); keep it comfortably wearable, never oversized.";
+      ' This is a modest mid-size stone; keep it comfortably wearable, never oversized.';
   else if (maxMm)
     tier =
-      " This is a substantial statement stone; still render it in believable proportion to the body.";
+      ' This is a substantial statement stone; still render it in believable proportion to the body.';
+
+  // The in-frame ratio. This is the part that actually holds the size down.
+  const anchor = SCENE_SCALE_ANCHOR[scene];
+  let ratioText = '';
+  if (anchor && maxMm) {
+    const r = maxMm / anchor.widthMm;
+    // Only small and mid stones need talking down; a genuine statement stone
+    // does cover much of the finger, and telling the model it must not would
+    // contradict the tier above and shrink it wrongly.
+    if (r < 0.5) {
+      const fraction =
+        r < 0.18
+          ? 'well under a fifth'
+          : r < 0.3
+            ? 'about a quarter'
+            : r < 0.42
+              ? 'about a third'
+              : 'about half';
+      ratioText =
+        ` Judge its size against ${anchor.part}: the stone must span only ${fraction}` +
+        ` of that width, with bare skin clearly visible on either side of it.` +
+        ` It is an everyday wearable piece, NOT a statement cocktail piece and NOT an engagement-ring hero gem.`;
+    } else {
+      ratioText =
+        ` Judge its size against ${anchor.part}: the stone spans roughly` +
+        ` ${r < 0.75 ? 'two thirds' : 'the full width'} of it — large, but still a real` +
+        ` wearable piece rather than a prop.`;
+    }
+  } else if (scene === 'necklace' && maxMm) {
+    ratioText =
+      ` Scale the pendant against the chain and the hollow of the throat: the stone is` +
+      ` ${maxMm < 8 ? 'smaller than a shirt button' : maxMm < 14 ? 'about the size of a shirt button' : 'a little larger than a shirt button'},` +
+      ` a delicate everyday pendant and not a large statement medallion.`;
+  }
+
+  const lead = ratioText
+    ? 'TRUE-TO-LIFE SCALE IS THE MOST IMPORTANT CONSTRAINT AND THE MOST COMMON FAILURE:'
+    : 'True-to-life scale is critical:';
 
   return (
-    `True-to-life scale is critical: the emerald measures ${dimText}${caratText}. ` +
+    `${lead} the emerald measures ${dimText}${caratText}. ` +
     `Render the stone at its exact physical size in correct proportion to the surrounding body and metal setting — ` +
-    `neither enlarged for drama nor shrunk.${tier}`
+    `neither enlarged for drama nor shrunk.${tier}${ratioText}`
   );
 }
 
@@ -280,18 +361,18 @@ export function buildRealSizeCue({ measures, carats } = {}) {
  */
 export function buildSilhouetteCue({ measures, cut } = {}) {
   const { lengthMm, widthMm } = parseMeasures(measures);
-  if (!lengthMm || !widthMm) return "";
+  if (!lengthMm || !widthMm) return '';
   const ratio = lengthMm / widthMm;
-  if (ratio < 1.5) return "";
+  if (ratio < 1.5) return '';
   const r = ratio.toFixed(1);
-  const c = (cut || "").toLowerCase();
+  const c = (cut || '').toLowerCase();
   const shape = /baguett/.test(c)
-    ? "baguette"
+    ? 'baguette'
     : /pera|pear|gota|l[áa]grima/.test(c)
-      ? "pear/teardrop"
+      ? 'pear/teardrop'
       : /marqu|navette/.test(c)
-        ? "marquise"
-        : "stone";
+        ? 'marquise'
+        : 'stone';
   return (
     `Silhouette is critical: this is a slender, elongated ${shape}, about ${r}x longer than wide ` +
     `(${lengthMm} x ${widthMm} mm) — keep that exact long, narrow proportion; do NOT widen it into a blocky, square or rounder shape.`
@@ -307,14 +388,14 @@ export function buildSilhouetteCue({ measures, cut } = {}) {
  * image governs the real gem; in `specs` mode it is painted from catalog data.
  */
 export function buildPrompt({ scene, metal, mode, specs = {}, productName }) {
-  const s = SCENES[scene] || SCENES["ring-woman"];
+  const s = SCENES[scene] || SCENES['ring-woman'];
   const metalText = METALS[metal] || METALS.gold;
 
   let stone;
-  if (mode === "photo") {
+  if (mode === 'photo') {
     stone =
-      "The centre stone is the exact Colombian emerald from the provided reference photograph — " +
-      "faithfully preserve its real colour, saturation, cut, proportions and natural inclusions; do not invent a different gem.";
+      'The centre stone is the exact Colombian emerald from the provided reference photograph — ' +
+      'faithfully preserve its real colour, saturation, cut, proportions and natural inclusions; do not invent a different gem.';
   } else {
     const sizeBits = [];
     if (specs.carats) {
@@ -322,82 +403,82 @@ export function buildPrompt({ scene, metal, mode, specs = {}, productName }) {
       if (ct) sizeBits.push(`approximately ${ct} carats`);
     }
     if (specs.measures) sizeBits.push(`measuring about ${specs.measures} mm`);
-    const size = sizeBits.length ? `, ${sizeBits.join(", ")}` : "";
+    const size = sizeBits.length ? `, ${sizeBits.join(', ')}` : '';
     stone =
       `The centre stone is ${describeCut(specs.cut)}${size}, ` +
       `${describeColor(specs.color)} ${describeQuality(specs.quality)}, ` +
-      "with crisp step facets and bright, realistic light reflections.";
+      'with crisp step facets and bright, realistic light reflections.';
   }
 
-  const name = productName ? `Inspired by the "${productName}" emerald.` : "";
+  const name = productName ? `Inspired by the "${productName}" emerald.` : '';
 
   return [
-    "Professional luxury jewelry product photography, hyper-realistic, editorial catalog quality.",
+    'Professional luxury jewelry product photography, hyper-realistic, editorial catalog quality.',
     `${s.framing}: ${s.piece}, set in ${metalText}, ${s.subject}.`,
     stone,
-    "The piece is in natural, believable proportion to the body — refined and comfortably wearable, not oversized.",
+    'The piece is in natural, believable proportion to the body — refined and comfortably wearable, not oversized.',
     name,
     `${s.anatomy}.`,
-    "Shot on an 85mm macro lens at f/2.8, soft diffused studio softbox lighting, gentle highlights on the metal, shallow depth of field with the emerald in razor-sharp focus, clean softly-blurred neutral background.",
-    "Square 1:1 composition. No text, no watermark, no logos, no extra jewelry.",
+    'Shot on an 85mm macro lens at f/2.8, soft diffused studio softbox lighting, gentle highlights on the metal, shallow depth of field with the emerald in razor-sharp focus, clean softly-blurred neutral background.',
+    'Square 1:1 composition. No text, no watermark, no logos, no extra jewelry.',
   ]
     .filter(Boolean)
-    .join(" ");
+    .join(' ');
 }
 
 // Decoupled scenes for the visualizer: pieceBase carries NO setting word (the
 // setting is derived from the cut via describeSetting), so faceted gems get
 // claws and cabochons get a bezel. "studio" is a clean, model-free product shot.
 const VISUALIZER_SCENES = {
-  "ring-woman": {
+  'ring-woman': {
     pieceBase:
-      "a refined solitaire ring with the emerald as the single hero centre stone on a slim, elegant polished band",
+      'a refined solitaire ring with the emerald as the single hero centre stone on a slim, elegant polished band',
     subject:
       "worn on the ring finger of an elegant woman's hand, soft natural skin and a neat neutral manicure, fingers gently and naturally curved",
-    framing: "an intimate three-quarter close-up of the hand",
+    framing: 'an intimate three-quarter close-up of the hand',
     anatomy:
-      "the hand is anatomically correct, with exactly five natural fingers and realistic, flawless skin",
+      'the hand is anatomically correct, with exactly five natural fingers and realistic, flawless skin',
   },
-  "ring-man": {
+  'ring-man': {
     pieceBase:
       "a substantial men's ring with the emerald as the bold centre stone on a solid, polished band",
     subject:
-      "worn on the hand of a refined, well-groomed man in a natural, confident pose",
-    framing: "a three-quarter close-up of the hand",
+      'worn on the hand of a refined, well-groomed man in a natural, confident pose',
+    framing: 'a three-quarter close-up of the hand',
     anatomy:
-      "the hand is anatomically correct, with exactly five natural fingers and realistic skin",
+      'the hand is anatomically correct, with exactly five natural fingers and realistic skin',
   },
   necklace: {
     pieceBase:
-      "an elegant pendant on a fine, delicate chain, the emerald as the single hanging hero stone",
+      'an elegant pendant on a fine, delicate chain, the emerald as the single hanging hero stone',
     subject:
       "resting just below the collarbone on a woman's décolletage, smooth natural skin",
-    framing: "a front-on beauty crop from the collarbone to the upper chest",
-    anatomy: "the skin is natural and realistic under soft lighting",
+    framing: 'a front-on beauty crop from the collarbone to the upper chest',
+    anatomy: 'the skin is natural and realistic under soft lighting',
   },
   bracelet: {
     pieceBase:
-      "a delicate chain bracelet with the emerald as a single hero station, the stone set alone on a fine, polished link chain",
+      'a delicate chain bracelet with the emerald as a single hero station, the stone set alone on a fine, polished link chain',
     subject:
       "worn on a woman's wrist, soft natural skin, the wrist relaxed and gently turned",
-    framing: "a three-quarter close-up of the wrist and lower forearm",
-    anatomy: "the wrist, hand and skin are natural and realistic",
+    framing: 'a three-quarter close-up of the wrist and lower forearm',
+    anatomy: 'the wrist, hand and skin are natural and realistic',
   },
   earrings: {
     pieceBase:
-      "a perfectly matched, symmetrical pair of drop earrings, each with an emerald as the single hero stone",
+      'a perfectly matched, symmetrical pair of drop earrings, each with an emerald as the single hero stone',
     subject:
-      "worn by an elegant woman, shown on her ear with hair tucked back to reveal the side of her face",
-    framing: "a side-profile close-up of the ear and jawline",
-    anatomy: "the ear and skin are natural and realistic",
+      'worn by an elegant woman, shown on her ear with hair tucked back to reveal the side of her face',
+    framing: 'a side-profile close-up of the ear and jawline',
+    anatomy: 'the ear and skin are natural and realistic',
   },
   studio: {
     pieceBase:
-      "a refined solitaire ring with the emerald as the single hero centre stone on a slim, polished band",
+      'a refined solitaire ring with the emerald as the single hero centre stone on a slim, polished band',
     subject:
-      "presented on its own on a clean, matte neutral surface — no hands or models, a pure catalog product shot",
-    framing: "a crisp three-quarter product close-up of the piece",
-    anatomy: "",
+      'presented on its own on a clean, matte neutral surface — no hands or models, a pure catalog product shot',
+    framing: 'a crisp three-quarter product close-up of the piece',
+    anatomy: '',
   },
 };
 
@@ -432,12 +513,27 @@ export function buildVisualizerPrompt({
   realSizeCue,
   pair = false,
 }) {
-  const s = VISUALIZER_SCENES[scene] || VISUALIZER_SCENES["ring-woman"];
+  const s = VISUALIZER_SCENES[scene] || VISUALIZER_SCENES['ring-woman'];
   const metalText = METALS[metal] || METALS.gold;
   const setting = describeSetting(specs.cut);
+  // En un lote PAR el peso del catálogo es el TOTAL de las dos piedras, así que
+  // pasarlo tal cual hace que la cláusula de escala dimensione CADA piedra como
+  // si pesara lo de las dos juntas. Para el tamaño se usa el peso por piedra;
+  // el total se sigue diciendo aparte, abajo, para no perder el dato.
+  const ctTotales = parseFloat(String(specs.carats ?? '').replace(',', '.'));
+  const caratsParaEscala =
+    pair && ctTotales > 0 ? String(ctTotales / 2) : specs.carats;
   const cue =
     realSizeCue ??
-    buildRealSizeCue({ measures: specs.measures, carats: specs.carats });
+    buildRealSizeCue({
+      measures: specs.measures,
+      carats: caratsParaEscala,
+      scene,
+    });
+  const pesoTotal =
+    pair && ctTotales > 0
+      ? ` The ${cleanCarats(specs.carats)} ct figure in the catalog is the TOTAL for both stones together, so each individual stone is only about half that weight — size each one accordingly.`
+      : '';
   const silhouette = buildSilhouetteCue({
     measures: specs.measures,
     cut: specs.cut,
@@ -445,13 +541,13 @@ export function buildVisualizerPrompt({
 
   // Catalog spec line: exact size + cut + colour + grade-accurate clarity.
   const sizeBits = [];
-  const caratNum = parseFloat(String(specs.carats ?? "").replace(",", "."));
+  const caratNum = parseFloat(String(specs.carats ?? '').replace(',', '.'));
   if (caratNum > 0) {
     const ct = cleanCarats(specs.carats);
     if (ct) sizeBits.push(`${ct} ct`);
   }
   if (specs.measures) sizeBits.push(`${specs.measures} mm`);
-  const sizeText = sizeBits.length ? `${sizeBits.join(", ")}; ` : "";
+  const sizeText = sizeBits.length ? `${sizeBits.join(', ')}; ` : '';
 
   // The real stone — the authoritative visual read leads; fidelity is mandatory.
   // Earrings are already a natural two-piece pair (one stone per ear), so a PAR
@@ -459,15 +555,15 @@ export function buildVisualizerPrompt({
   // as a solitaire. Combining both stones into one earring reads as incoherent
   // (mismatched double-stone clutter on one ear), so only ring/necklace/bracelet
   // scenes get the "combine both stones into one piece" instruction.
-  const combinePairInScene = pair && scene !== "earrings";
+  const combinePairInScene = pair && scene !== 'earrings';
   const lead = combinePairInScene
-    ? "The hero is a MATCHED PAIR of two well-matched emeralds shown in the reference photograph"
+    ? 'The hero is a MATCHED PAIR of two well-matched emeralds shown in the reference photograph'
     : pair
-      ? "The reference photograph shows a closely matched pair of loose stones; this piece is set with one of that matched pair"
-      : "The single hero centre stone is the REAL Colombian emerald shown in its reference photograph";
+      ? 'The reference photograph shows a closely matched pair of loose stones; this piece is set with one of that matched pair'
+      : 'The single hero centre stone is the REAL Colombian emerald shown in its reference photograph';
   const pairTail = combinePairInScene
-    ? " Render BOTH stones as a symmetric matched pair — keep it a two-stone pair, never a single solitaire."
-    : "";
+    ? ' Render BOTH stones as a symmetric matched pair — keep it a two-stone pair, never a single solitaire.'
+    : '';
   const stone =
     visualRead && visualRead.trim()
       ? `${lead}: ${visualRead.trim()}. ` +
@@ -479,21 +575,21 @@ export function buildVisualizerPrompt({
     `${describeColor(specs.color)}, ${describeQualityPro(specs.quality)}.`;
 
   const piece = `${s.pieceBase}, ${setting}, in ${metalText}`;
-  const subjectClause = s.subject ? `, ${s.subject}` : "";
-  const anatomy = s.anatomy ? ` ${cap(s.anatomy)}.` : "";
-  const name = productName ? ` Inspired by the "${productName}" emerald.` : "";
+  const subjectClause = s.subject ? `, ${s.subject}` : '';
+  const anatomy = s.anatomy ? ` ${cap(s.anatomy)}.` : '';
+  const name = productName ? ` Inspired by the "${productName}" emerald.` : '';
 
   return [
-    "Professional fine-jewelry catalog photograph of a single Colombian emerald set in jewelry — hyper-realistic, editorial quality, colour-accurate.",
+    'Professional fine-jewelry catalog photograph of a single Colombian emerald set in jewelry — hyper-realistic, editorial quality, colour-accurate.',
     `${cap(s.framing)}: ${piece}${subjectClause}.`,
     stone,
     catalog,
     silhouette,
-    cue,
+    cue + pesoTotal,
     `The piece is in natural, believable proportion to the body and comfortably wearable, never oversized.${name}${anatomy}`,
-    "Lit with soft, diffused studio lighting; 85mm macro lens at f/4; the emerald in razor-sharp focus with true-to-life colour; gentle highlights on the polished metal; clean, softly blurred neutral background; balanced 1:1 square composition.",
+    'Lit with soft, diffused studio lighting; 85mm macro lens at f/4; the emerald in razor-sharp focus with true-to-life colour; gentle highlights on the polished metal; clean, softly blurred neutral background; balanced 1:1 square composition.',
     "Avoid: any text, watermark or logo; extra gemstones, halos or added sparkle the real stone does not have; turning a faceted gem into a cabochon or vice-versa; over-cleaning a commercial stone into a flawless gem; plastic, glassy-fake or over-saturated results. Preserve the emerald's authentic natural character.",
   ]
     .filter(Boolean)
-    .join(" ");
+    .join(' ');
 }
