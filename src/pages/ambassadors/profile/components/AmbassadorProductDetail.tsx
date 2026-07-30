@@ -32,7 +32,10 @@ import {
   qeType,
   zIndex,
 } from '../../../../design-system';
-import { formatFullCurrency, formatWeightLabel } from '../../../../utils/formatting';
+import {
+  formatFullCurrency,
+  formatWeightLabel,
+} from '../../../../utils/formatting';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import type { Asesor } from '../../../../hooks/useAsesores';
@@ -473,11 +476,26 @@ export function AmbassadorProductDetail({
           label="Peso"
           value={weightDisplay}
         />
-        <SpecCell
-          icon={<MapPin size={16} />}
-          label="Origen"
-          value={item.ubicacion || '-'}
-        />
+        {/* Origen is the MINE (`procedencia`: Muzo, Chivor, Coscuez, Boyacá…),
+            never `ubicacion`. `ubicacion` is internal custody — Anima's
+            2026-05-22 decision records it as "operational, derived, view-only
+            in ADMIN tables", with a 9-value domain (BOVEDA, OFI.BOGOTA,
+            OFI.CALI, ASESOR, EMBAJADOR, CLIENTE, EN PRODUCCION,
+            EN CERTIFICACION, RETORNADO). This cell was telling clients
+            "Origen: OFI.CALI".
+
+            Hidden rather than rendered as "-" when absent, and absent is the
+            common case today: the legacy book production reads has no
+            `procedencia` column at all, and even in SOT v3 only 89 of 513 rows
+            carry one. Same rule as P0.3's SpecRow guard — an omitted row reads
+            better than an empty one. */}
+        {item.procedencia && (
+          <SpecCell
+            icon={<MapPin size={16} />}
+            label="Origen"
+            value={item.procedencia}
+          />
+        )}
         <SpecCell
           icon={<Award size={16} />}
           label="Calidad"
