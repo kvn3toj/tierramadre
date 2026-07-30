@@ -65,7 +65,7 @@ describe('frontera Fotosíntesis ↔ ficha de producto', () => {
     expect(out.precioCOP).toBe(830116);
   });
 
-  it('las dos queries que devuelven la fila entera aplican el filtro', () => {
+  it('las tres queries que devuelven la fila entera aplican el filtro', () => {
     // Chequeo sobre el fuente a propósito: montar convex-test para esto es
     // desproporcionado, y lo que se quiere evitar es que alguien reemplace el
     // `.map(omitFotosintesisOnly)` por un return pelado.
@@ -96,6 +96,21 @@ describe('frontera Fotosíntesis ↔ ficha de producto', () => {
       bloque(lotItems, 'search'),
       'lotItems:search devuelve la fila sin filtrar',
     ).toContain('omitFotosintesisOnly');
+    // `get` es la tercera, y estuvo sin filtro hasta 2026-07-30. Devolvía el
+    // documento crudo —53 campos— a cualquiera: verificado contra producción
+    // con un POST anónimo a /api/query, que contestó con cajaComprador (nombre
+    // de un comprador real), cajaValorPagadoCOP y costoBaseCOP. La ficha de
+    // producto se salvaba sola porque ProductDetailPage pasa 'skip' cuando el
+    // viewer no es admin — pero eso es la app absteniéndose de preguntar, no el
+    // servidor negándose a contestar, y la URL del deployment viaja en el
+    // bundle.
+    //
+    // `get = query` desambigua: `get` a secas también prefijea a `getByItem` y
+    // `getManyByItemIds`.
+    expect(
+      bloque(products, 'get = query'),
+      'products:get devuelve la fila sin filtrar',
+    ).toContain('omitFotosintesisOnly');
   });
 });
 
@@ -110,6 +125,9 @@ describe('mostrarEnCatalogo lo maneja Convex, no la hoja', () => {
   it('sigue siendo columna del espejo y SIN preserve, para que el push la escriba', () => {
     const col = COLS.find((c) => c.key === 'mostrarEnCatalogo');
     expect(col, 'mostrarEnCatalogo salió del espejo posicional').toBeTruthy();
-    expect(col!.preserve, 'con preserve el push dejaría de reflejarla').toBeFalsy();
+    expect(
+      col!.preserve,
+      'con preserve el push dejaría de reflejarla',
+    ).toBeFalsy();
   });
 });
