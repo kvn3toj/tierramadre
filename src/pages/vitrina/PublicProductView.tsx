@@ -41,7 +41,7 @@ import {
 import PrecioEspecialBadge from "../../components/treasure/PrecioEspecialBadge";
 import { useThemeMode } from "../../contexts/ThemeContext";
 import { getQuietEmerald, qeFont } from "../../design-system";
-import { formatCarats } from "../../utils/formatting";
+import { formatWeightLabel } from "../../utils/formatting";
 import { useTRM } from "../../hooks/useTRM";
 import { VitrinaPricing, formatVitrinaPrice } from "../../utils/vitrinaPrice";
 
@@ -98,9 +98,7 @@ export function PublicProductView({
   const specLine = useMemo(
     () =>
       [
-        typeof product.peso === "number"
-          ? `${formatCarats(product.peso)} ct`
-          : "",
+        formatWeightLabel(product),
         product.talla,
         product.procedencia || product.mina,
       ]

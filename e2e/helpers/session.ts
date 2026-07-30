@@ -23,18 +23,29 @@ export const ADMIN_USER = {
 /**
  * Deterministic catalog fixture.
  *
- * `item` 400 is deliberately a joya with `peso: 0` — that is the row the
- * "no 0.00 ct" assertion depends on. Do not give it a weight.
- * `item` 401 carries a real carat weight so the same spec can assert a
- * positive match first and avoid passing vacuously when virtualization
- * scrolls the fixture out of the DOM.
+ * Three shapes matter, and each exists on purpose:
+ *
+ *  - UNWEIGHED GEM (`isJewelry: false`, `peso: 0`) — the ONLY shape that
+ *    reproduced "Gema · 0.00 ct". The old catalog branch checked just
+ *    `typeof peso === 'number'`, so a gem with 0 fell straight into
+ *    `formatCarats(0)`. A joya does NOT reproduce it: it takes the metal
+ *    branch. Remove this shape and the regression test passes vacuously.
+ *  - JOYA (`isJewelry: true`, `metalType` set) — must show its metal.
+ *  - WEIGHED GEM — a real carat weight, so the spec can assert a positive
+ *    match before asserting an absence.
  */
 export const CATALOG_FIXTURE = Array.from({ length: 24 }, (_, i) => {
   const isJewelry = i % 4 === 0;
+  // Every 4th non-joya is an unweighed gem — the 0.00 ct reproducer.
+  const isUnweighedGem = !isJewelry && i % 4 === 1;
   return {
     item: String(400 + i),
-    nombre: isJewelry ? `Joya ${400 + i}` : `Esmeralda ${400 + i}`,
-    peso: isJewelry ? 0 : Number((2.4 + i * 0.13).toFixed(2)),
+    nombre: isJewelry
+      ? `Joya ${400 + i}`
+      : isUnweighedGem
+        ? `Insumo ${400 + i}`
+        : `Esmeralda ${400 + i}`,
+    peso: isJewelry || isUnweighedGem ? 0 : Number((2.4 + i * 0.13).toFixed(2)),
     precioCOP: 1_500_000 + i * 25_000,
     categoria: isJewelry ? 'Joya' : 'Gema',
     color: ['Verde', 'Aguamarina', 'Azul', 'Chivor'][i % 4],

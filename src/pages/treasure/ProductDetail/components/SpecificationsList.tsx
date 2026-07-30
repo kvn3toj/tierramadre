@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { TreasureItem } from "../../../../types";
 import { SpecRow } from "./SpecRow";
-import { formatCarats } from "../../../../utils/formatting";
+import { formatWeightLabel } from "../../../../utils/formatting";
 
 interface SpecificationsListProps {
   product: TreasureItem;
@@ -34,7 +34,13 @@ export const SpecificationsList: React.FC<SpecificationsListProps> = ({
     ? "rgba(60, 60, 67, 0.6)"
     : "rgba(235, 235, 245, 0.6)";
 
-  const hasGemWeight = typeof product.peso === "number";
+  // Derived from the shared helper so a peso of 0 (joyas, insumos,
+  // unweighed pieces) no longer opens a "0.00 ct" row. `typeof peso ===
+  // "number"` admitted 0 and was the source of that bug.
+  const gemWeightLabel = formatWeightLabel(product, {
+    jewelryPrefers: "carats",
+  });
+  const hasGemWeight = gemWeightLabel !== "";
   const hasTalla =
     product.talla &&
     product.talla !== "-" &&
@@ -55,8 +61,11 @@ export const SpecificationsList: React.FC<SpecificationsListProps> = ({
       ? medidasTrimmed
       : `${medidasTrimmed.replace(/\n/g, " x ")} mm`
     : "";
-  const hasMaterial = Boolean(product.metalType);
-  const hasColeccion = Boolean(product.coleccion);
+  // Trimmed to match `isEmptySpecValue` in SpecRow. A whitespace-only
+  // value would otherwise pass Boolean(), draw a divider, and then be
+  // dropped by the row itself — leaving an orphaned separator line.
+  const hasMaterial = Boolean(product.metalType?.trim());
+  const hasColeccion = Boolean(product.coleccion?.trim());
 
   // ── Fotosíntesis gem-grade fields (absent-safe) ──
   const tipoEsmeralda = product.tipoEsmeralda?.trim();
@@ -105,7 +114,7 @@ export const SpecificationsList: React.FC<SpecificationsListProps> = ({
         <SpecRow
           icon={<Gem size={18} />}
           label="Gema (Ct)"
-          value={`${formatCarats(product.peso)} ct`}
+          value={gemWeightLabel}
         />
       )}
 

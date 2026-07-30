@@ -20,7 +20,7 @@ import { usePriceShare } from '../../contexts/PriceShareContext';
 import { useRedesignVariant } from '../../hooks/useRedesignVariant';
 import { prefetchRoute } from '../../utils/routePrefetch';
 import { TreasureItem } from '../../types';
-import { abbreviateQuality, formatCarats } from '../../utils/formatting';
+import { abbreviateQuality, formatWeightLabel } from '../../utils/formatting';
 import { EmeraldCutIcon } from './EmeraldCutIcon';
 import PrecioEspecialBadge from './PrecioEspecialBadge';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
@@ -67,13 +67,11 @@ function buildSpecLine(item: TreasureItem): string {
   const parts: string[] = [];
   const quality = abbreviateQuality(item.calidad);
   if (quality) parts.push(quality);
-  const isLoose = !item.isJewelry;
-  // Only show the carat weight for a loose stone with a real weight — never
-  // "0.00 ct" (joyas / insumos / unweighed items have peso 0 or blank).
-  if (isLoose && typeof item.peso === 'number' && item.peso > 0) {
-    parts.push(`${formatCarats(item.peso)} ct`);
-  }
-  if (item.isJewelry && item.metalType) parts.push(item.metalType);
+  // Weight for a loose stone, metal for a joya — never "0.00 ct" (joyas /
+  // insumos / unweighed items have peso 0 or blank). `metal-only` keeps a
+  // metal-less joya showing nothing, as it always has.
+  const weight = formatWeightLabel(item, { jewelryPrefers: 'metal-only' });
+  if (weight) parts.push(weight);
   const mine = (item.procedencia || item.mina || '').trim();
   if (mine) parts.push(mine.toUpperCase());
   return parts.length > 0 ? parts.join(' · ') : item.color;
@@ -118,12 +116,12 @@ function GridCard({
   //      description). It owns the full width and never competes with the price.
   //   2. Value row — the grade stamp (below) on the left, price on the right.
   const cutLabel = item.talla?.trim() || 'Gema';
-  const caratOrMetal =
-    !item.isJewelry && typeof item.peso === 'number'
-      ? `${formatCarats(item.peso)} ct`
-      : item.isJewelry && item.metalType
-        ? item.metalType
-        : '';
+  // Shares `buildSpecLine`'s rule. This branch previously checked only
+  // `typeof peso === 'number'`, with no `> 0`, so every joya and unweighed
+  // piece in the default catalog rendered "Gema · 0.00 ct".
+  const caratOrMetal = formatWeightLabel(item, {
+    jewelryPrefers: 'metal-only',
+  });
   const mineLabel = (item.procedencia || item.mina || '').trim();
   const stoneLine = [cutLabel, caratOrMetal, mineLabel]
     .filter(Boolean)

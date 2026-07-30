@@ -241,6 +241,23 @@ for (const vp of VIEWPORTS) {
       expect(Math.abs(gutters.left - gutters.right)).toBeLessThanOrEqual(1);
     });
 
+    test('no piece renders a 0.00 ct weight', async ({ page }) => {
+      await page.goto('/treasure');
+      await waitForAppReady(page);
+      await page.waitForTimeout(1_500);
+
+      // Positive anchor first: prove the fixture actually rendered, so a
+      // virtualized-away or empty grid cannot satisfy the absence check.
+      await expect(
+        page.getByText('Cargando tesoros', { exact: false }),
+      ).toHaveCount(0);
+      await expect(page.getByText(/ct\b/).first()).toBeVisible();
+
+      // The fixture seeds joyas with peso: 0 (item 400, 404, ...), which
+      // used to render "Gema · 0.00 ct" on the default catalog card.
+      await expect(page.getByText(/0[.,]00\s*ct/i)).toHaveCount(0);
+    });
+
     test('the tab bar sits fully inside the viewport', async ({ page }) => {
       await page.goto('/treasure');
       await waitForAppReady(page);

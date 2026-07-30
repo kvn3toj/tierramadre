@@ -32,7 +32,7 @@ import { useThemeMode } from '../../contexts/ThemeContext';
 import {
   getColorDot,
   getQualityBadge,
-  formatCarats,
+  formatWeightLabel,
 } from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import {
@@ -292,10 +292,9 @@ export default function ComparisonModal({
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>Peso</TableCell>
                   {items.map((item, idx) => {
-                    const weight =
-                      typeof item.peso === 'number'
-                        ? `${formatCarats(item.peso)} ct`
-                        : item.metalType || '-';
+                    const weight = formatWeightLabel(item, {
+                      fallback: '-',
+                    });
                     return (
                       <ComparisonCell
                         key={item.item}
