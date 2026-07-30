@@ -91,6 +91,23 @@ only its own case.
   `cleanEnvId('')` is falsy and `constants.js` falls back. The SOT v3 cutover
   was started but never completed. **The `ubicacion` fix above must land before
   those vars are filled**, or every row's Ubicación would render a price.
+
+  **↳ Update (2026-07-30): the cutover has flipped from risk to multiplier, and
+  probably deserves scheduling rather than sitting in ambient backlog.** The
+  ordering constraint above is now satisfied — the collision fixes landed
+  first, by design. What remains behind those empty env vars is a growing pile
+  of work already built, tested and paid for, doing nothing:
+
+  | Shipped and dormant                      | Activates when `SPREADSHEET_ID` → SOT v3 |
+  | ---------------------------------------- | ---------------------------------------- |
+  | `procedencia` mapping (`3ae7e59`)        | Origen cell starts resolving             |
+  | 89 filled origin rows                    | OQ-3's facet becomes buildable           |
+  | header-only `ubicacion` read (`3af7f0e`) | survives the 2-column shift by design    |
+
+  Each of these is inert against the legacy book and correct against v3. The
+  cutover is no longer a risky migration to be deferred — it is the switch that
+  turns already-merged work on.
+
 - **Image save protection was inert.** The `img, video` guard in `theme.ts` was
   dead twice over, so every catalog, detail and vitrina photo was drag- and
   long-press-saveable. Now global.
@@ -541,7 +558,12 @@ affordance per screen; ladder labels share one casing.
    - **`SOT v3 → Calidades` is not a source of truth.** It declared 19 grades with price factors, but nothing read it: 0 code references, 0 formulas in Inventario (of 665 formula cells), 0 of 11.307 data-validation rules, 0 named ranges, 0 cross-tab formulas. Live pricing is a flat `costoBaseCOP × 2.6` for **every** grade — verified numerically across two different grades. The tab even contradicted production on its own markup (declared 3, live 2.6). **Its `Factor precio` column and `Markup base` row were deleted on 2026-07-30**; the 19 grade names remain as vocabulary. `scripts/auto-fill-factor-calidad.mjs`, the last artifact able to resurrect grade-based pricing (with a _third_, conflicting factor set), was deleted the same day.
    - **Still open:** the `FINA COMERCIAL` (10 rows) vs `COMERCIAL FINA` ruling — see P1.2. Business call; the data leans misspelling but cannot prove it.
 
-3. **(Product)** Should `Chivor` become an "Origen" facet (it's a mine/origin, and a selling point)? Non-blocking.
+3. **(Product)** ~~Should `Chivor` become an "Origen" facet?~~ **ANSWERED — closed 2026-07-30.** Not a hypothesis: the data already treats it as one. `procedencia` in SOT v3 reads `Boyacá×61 · Muzo×16 · **Chivor×11** · Cali×1`, and the ambassador detail's Origen cell now reads that field (`3ae7e59`).
+
+   **The facet itself is P1 work, gated on the SOT v3 cutover.** Against the legacy book the column does not exist at all, and even on v3 it is 89 of 513 rows — so the filter should render **only when the data can support it**, the same hide-when-empty discipline as the Origen cell, one level up. Shipping a facet that is empty for 83% of inventory would repeat the RC-C mistake (a colour filter that communicated nothing).
+
+   **One-cell source fix while someone is in the book:** `Cali×1` is an _office_, not a mine — the `ubicacion` story in miniature, caught at n=1 instead of n=320.
+
 4. **(Engineering)** Does mounting full `<CssBaseline />` cause regressions in Esmereogenesis/Fotosíntesis themes that assumed content-box quirks (cf. the `[data-foto-admin]` patch)? Decide CssBaseline vs. minimal CSS reset during implementation; the minimal reset is the lower-risk default.
 5. **(Design)** DS3 token for the new ≥11px caption size — reuse an existing `ios-typography` step or add one?
 
