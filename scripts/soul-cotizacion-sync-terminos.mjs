@@ -41,6 +41,13 @@ const CAMBIOS = [
     buscar: 'Forma de pago: 90 % anticipo, 10 % contra entrega.',
     poner: 'Forma de pago: 60 % anticipo, 40 % contra entrega.',
   },
+  {
+    // La portada ya decía 29 y la lámina de condiciones 28. La de emisión es
+    // el 29, que es la que manda para los 15 días de validez.
+    que: 'condiciones · fecha de emisión al 29',
+    buscar: '28 de julio de 2026',
+    poner: '29 de julio de 2026',
+  },
 ];
 
 async function getAccessToken() {
@@ -108,19 +115,27 @@ if (!APLICAR) {
   process.exit(0);
 }
 
-const requests = CAMBIOS.filter((c) =>
+// Se guarda el cambio junto a su request: la lista va filtrada, así que el
+// índice de la respuesta no corresponde al de CAMBIOS y las etiquetas del
+// reporte saldrían cruzadas.
+const pendientes = CAMBIOS.filter((c) =>
   trozos.some((x) => x.t.includes(c.buscar)),
 ).map((c) => ({
-  replaceAllText: {
-    containsText: { text: c.buscar, matchCase: true },
-    replaceText: c.poner,
+  cambio: c,
+  request: {
+    replaceAllText: {
+      containsText: { text: c.buscar, matchCase: true },
+      replaceText: c.poner,
+    },
   },
 }));
 
-if (!requests.length) {
+if (!pendientes.length) {
   console.log('\nNada que aplicar.');
   process.exit(0);
 }
+
+const requests = pendientes.map((p) => p.request);
 
 const res = await fetch(
   `https://slides.googleapis.com/v1/presentations/${PRESENTATION_ID}:batchUpdate`,
@@ -140,5 +155,7 @@ const out = await res.json();
 console.log('\nAplicado:');
 for (const [i, r] of (out.replies || []).entries()) {
   const n = r.replaceAllText?.occurrencesChanged ?? 0;
-  console.log(`  ${CAMBIOS[i]?.que ?? `cambio ${i}`} → ${n} ocurrencia(s)`);
+  console.log(
+    `  ${pendientes[i]?.cambio.que ?? `cambio ${i}`} → ${n} ocurrencia(s)`,
+  );
 }
