@@ -226,6 +226,10 @@
       "destination": "/cotizacion-soul.html"
     },
     {
+      "source": "/cotizacion-soul-plan",
+      "destination": "/cotizacion-soul-plan.html"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/:path*"
     },

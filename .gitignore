@@ -196,3 +196,6 @@ docs/JOY-ART/
 # Local operational backups/artifacts (no versionar)
 scripts/.backup-*.json
 scripts/.propuesta-*.csv
+
+# Scratch de la cotización Soul (pptx exportado + miniaturas)
+scripts/.soul/
