@@ -29,6 +29,7 @@ import { postToVercel } from './_lib/sheetSync';
 import { requireAccessLevel } from './_lib/authz';
 import { withPublishStamp } from './_lib/publishState';
 import { precioEspecialDeObservacion } from './_lib/precioEspecial';
+import { omitFotosintesisOnly } from './_lib/saleSafe';
 
 // =============================================================================
 // QUERIES — read the mirror
@@ -221,8 +222,14 @@ export const getByItem = query({
     if (!row) return null;
     // `precioEspecial` se DERIVA de la observación (ver _lib/precioEspecial.ts);
     // no existe como columna. Ausente cuando no aplica o ya venció.
+    //
+    // El spread manda la fila ENTERA, así que toda columna nueva del SOT sale
+    // por acá sin que nadie lo decida. Esta query alimenta la ficha de producto,
+    // y las 14 columnas AQ→BE son de Fotosíntesis: gramaje de taller, costos de
+    // lote, contabilidad de caja, notas internas. Ninguna se muestra al cliente.
+    // Ver convex/_lib/saleSafe.ts.
     return {
-      ...row,
+      ...omitFotosintesisOnly(row),
       precioEspecial: precioEspecialDeObservacion(row.observacion),
     };
   },
@@ -316,11 +323,25 @@ export const listByLote = query({
  *
  * This is the bridge that lets the customer-facing Treasure Browser show
  * Fotosíntesis-captured items. They live in a separate spreadsheet from the
- * legacy catalog (`get-treasure-sheets` reads the legacy sheet only), and
- * the `mostrarEnCatalogo` publish flag is Convex-only — never synced to
- * Sheets — so Convex is the only authority that knows what's published.
+ * legacy catalog (`get-treasure-sheets` reads the legacy sheet only).
  * Items kept "en reserva" (mostrarEnCatalogo false) are intentionally
  * excluded so the publish/reserve decision is honored.
+ *
+ * QUIÉN MANDA SOBRE `mostrarEnCatalogo`: Convex. En un solo sentido.
+ *
+ * Este bloque decía que la bandera era "Convex-only — never synced to Sheets".
+ * Era falso: estaba en el allowlist de pull, así que cada sync la pisaba con la
+ * columna Y. Y como la publicación se administra desde la app y la hoja sólo se
+ * entera por push, las dos caras se separaron — Convex con 416 publicadas, la
+ * hoja con 131. El sync habría ocultado 285 piezas de cara al cliente.
+ *
+ * Resuelto el 2026-07-30 sacándola del pull (ver sheetPullMaps.ts): ahora el
+ * docstring es cierto. Convex es dueño de la bandera y del sello `publishedAt`
+ * (ver convex/fotoSync.ts); la hoja recibe el valor por push y no lo devuelve.
+ *
+ * Publicar desde el SOT NO está soportado: editar la columna Y a mano no hace
+ * nada, y el próximo push la sobrescribe. Si se quiere habilitar, hace falta un
+ * canal de eventos, no reactivar el pull.
  */
 export const publishedCatalog = query({
   args: {},
