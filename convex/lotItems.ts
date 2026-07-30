@@ -8,6 +8,7 @@ import { v, ConvexError } from 'convex/values';
 import { api, internal } from './_generated/api';
 import type { Doc, Id } from './_generated/dataModel';
 import { bumpInventoryTotal } from './products';
+import { omitFotosintesisOnly } from './_lib/saleSafe';
 import { preponderanciaSum, balancesTo100 } from './_lib/lotMath';
 import { computePrecioFinal } from './_lib/pricing';
 import { withPublishStamp } from './_lib/publishState';
@@ -122,11 +123,16 @@ export const search = query({
       return true;
     });
 
-    return filtered.sort((a, b) => {
-      const cantDiff = (b.cantidad ?? 0) - (a.cantidad ?? 0);
-      if (cantDiff !== 0) return cantDiff;
-      return (a.nombre ?? '').localeCompare(b.nombre ?? '', 'es');
-    });
+    // Devuelve el documento completo, así que toda columna nueva del SOT sale
+    // por acá sola. El anima-bot consume esta query (ver asesorMovements.ts):
+    // las 14 columnas de Fotosíntesis no le corresponden. Ver _lib/saleSafe.ts.
+    return filtered
+      .sort((a, b) => {
+        const cantDiff = (b.cantidad ?? 0) - (a.cantidad ?? 0);
+        if (cantDiff !== 0) return cantDiff;
+        return (a.nombre ?? '').localeCompare(b.nombre ?? '', 'es');
+      })
+      .map(omitFotosintesisOnly);
   },
 });
 
