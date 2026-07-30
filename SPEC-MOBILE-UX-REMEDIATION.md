@@ -280,7 +280,7 @@ Shipped ≠ verified.)
       ⓘ **The first version of this test was vacuous and was rewritten.** It
       asserted `min-width: 0px` on a plain block child — but that is the CSS
       _initial_ value, so it passed with the scoped rule deleted. `min-width:
-  auto` only bites on **grid/flex items**, which is precisely the case the
+auto` only bites on **grid/flex items**, which is precisely the case the
       rule's own comment describes ("width:100% + padding overflows the grid
       cell"). The fixture now places the fields in a 120px `1fr` grid track —
       `minmax(auto, 1fr)` floored by an `<input>`'s ~20-character intrinsic
@@ -290,14 +290,18 @@ Shipped ≠ verified.)
       **redundant** — inputs inherit `border-box` anyway. Its load-bearing
       remainder is `min-width: 0`. "Double application" is harmless because
       both declare the same value.
-- [ ] The **real** `/admin/fotosintesis` route is still not swept. It cannot be
-      driven under `VITE_TEST_MODE`: `CopilotPanel.tsx:43` imports `useQuery`
-      straight from `convex/react` instead of `convex-safe` (which
-      `vite.config.ts` aliases to the in-memory stub), so the page fires a live
-      `fotosintesisAi:workspaceSnapshot` query, the server errors, and the
-      error boundary replaces the whole layout — `[data-foto-admin]` never
-      mounts. Routing that one import through `convex-safe` would unlock
-      sweeping the actual admin surface.
+- [ ] The **real** `/admin/fotosintesis` route is not swept — **and will not be
+      under this spec (decided 2026-07-30).** It cannot be driven under
+      `VITE_TEST_MODE`: `CopilotPanel.tsx:43` imports `useQuery` straight from
+      `convex/react` instead of `convex-safe` (which `vite.config.ts` aliases to
+      the in-memory stub), so the page fires a live
+      `fotosintesisAi:workspaceSnapshot` query, the server errors, and the error
+      boundary replaces the whole layout before `[data-foto-admin]` mounts.
+      Routing that import through `convex-safe` would unlock it, but Copilot is
+      out of scope here — this is a mobile-UX remediation spec, and that change
+      belongs to whoever owns Fotosíntesis. **Not queued. Do not treat this box
+      as pending work.** The CSS contract it would have covered is already
+      verified by the fixture-based case above.
 
   The last bullet was four claims in one box. Split, so each can be true or false on its own:
 
