@@ -340,6 +340,86 @@ for (const vp of VIEWPORTS) {
       }
     });
 
+    test('the menu sheet never exposes the scrim at the bottom edge', async ({
+      page,
+    }) => {
+      await page.goto('/treasure');
+      await waitForAppReady(page);
+      await page.waitForTimeout(1_500);
+
+      await page
+        .getByRole('button', { name: /Men/i })
+        .first()
+        .click();
+
+      // Sampled through the enter animation, not just at rest. The enter
+      // curve overshoots (control point > 1), so `translateY` goes negative
+      // mid-flight and a `bottom: 0` sheet lifts off the bottom edge —
+      // measured at -31.4px on a 701px viewport before the padding bleed,
+      // which showed the dark backdrop as a band along the bottom.
+      for (const delay of [0, 60, 100, 160, 220, 400]) {
+        await page.waitForTimeout(delay === 0 ? 0 : 60);
+        const gap = await page.evaluate(() => {
+          const sheet = document.querySelector('[role="dialog"]');
+          if (!sheet) return null;
+          const rect = sheet.getBoundingClientRect();
+          return Math.round((window.innerHeight - rect.bottom) * 10) / 10;
+        });
+        expect(gap, `scrim gap at ~${delay}ms`).not.toBeNull();
+        expect(gap!, `scrim gap at ~${delay}ms`).toBeLessThanOrEqual(0);
+      }
+
+      // And it must still come to rest in the right place: the bleed is
+      // compensated in max-height, so the visible sheet is unchanged.
+      await page.waitForTimeout(600);
+      const rest = await page.evaluate(() => {
+        const sheet = document.querySelector('[role="dialog"]');
+        const rect = sheet!.getBoundingClientRect();
+        const style = getComputedStyle(sheet!);
+        return {
+          top: Math.round(rect.top),
+          paddingBottom: style.paddingBottom,
+          contentHeight: Math.round(rect.height - parseFloat(style.paddingBottom)),
+          viewport: window.innerHeight,
+        };
+      });
+      // 85dvh of usable content, unchanged by the bleed.
+      expect(rest.contentHeight).toBeLessThanOrEqual(
+        Math.ceil(rest.viewport * 0.85) + 2,
+      );
+      expect(rest.contentHeight).toBeGreaterThan(rest.viewport * 0.5);
+    });
+
+    test('the menu sheet closes on Escape', async ({ page }) => {
+      await page.goto('/treasure');
+      await waitForAppReady(page);
+      await page.waitForTimeout(1_500);
+
+      await page
+        .getByRole('button', { name: /Men/i })
+        .first()
+        .click();
+      await page.waitForTimeout(600);
+
+      const visibleNow = await page.evaluate(
+        () =>
+          getComputedStyle(document.querySelector('[role="dialog"]')!)
+            .visibility,
+      );
+      expect(visibleNow).toBe('visible');
+
+      // WCAG 2.1.2 — the sheet had no key handler at all before this.
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(600);
+
+      const visibleAfter = await page.evaluate(
+        () =>
+          getComputedStyle(document.querySelector('[role="dialog"]')!)
+            .visibility,
+      );
+      expect(visibleAfter).toBe('hidden');
+    });
+
     test('the tab bar sits fully inside the viewport', async ({ page }) => {
       await page.goto('/treasure');
       await waitForAppReady(page);
