@@ -9,7 +9,7 @@
  * Refactored: Extracted reusable SettingToggleItem component
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import FocusTrap from '@mui/material/Unstable_TrapFocus';
 import {
   Box,
@@ -194,6 +194,20 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({
     (opt) => opt.code === language,
   );
 
+  // WCAG 2.1.2 — Escape-to-dismiss. No child modals here, so it is
+  // unconditional while open.
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open, onClose]);
+
   return (
     <>
       <Backdrop
@@ -223,9 +237,14 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({
             boxShadow: 'var(--shadow-lg)',
             // Dynamic viewport height: on iOS `85vh` counted the address bar and
             // hid the lowest settings rows behind the tab bar / home indicator.
-            maxHeight: '85dvh',
+            // +96px compensates the bleed below. Under the global border-box
+            // reset `max-height` INCLUDES padding, so bleeding 96px without
+            // this would silently cost the sheet 96px of usable content
+            // height (measured: content 595.85 -> 499.85). The visible extent
+            // above the fold stays 85dvh.
+            maxHeight: 'calc(85dvh + 96px)',
             '@supports not (height: 100dvh)': {
-              maxHeight: '85vh',
+              maxHeight: 'calc(85vh + 96px)',
             },
             overflowY: 'auto',
             overscrollBehavior: 'contain',
@@ -235,7 +254,12 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({
             pointerEvents: open ? 'auto' : 'none',
             transition:
               'transform 0.4s cubic-bezier(0.5, 1.25, 0.75, 1.25), visibility 0.4s',
-            paddingBottom: 'env(safe-area-inset-bottom)',
+            // See IOSMoreSheet: the enter curve overshoots negative
+            // (cubic-bezier(0.5, 1.25, 0.75, 1.25) peaks at ~1.13, so this
+            // sheet lifts further than More does), exposing the scrim along
+            // the bottom edge mid-animation. Bleed then pull back.
+            paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)',
+            marginBottom: '-96px',
           }}
         >
           {/* Header */}

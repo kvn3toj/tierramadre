@@ -434,6 +434,11 @@ export default function ImageLightbox({
                         }
                       }}
                       sx={{
+                        // Opts out of the global border-box reset — see the
+                        // matching dot in HeroGallery. The visible dot is the
+                        // content box, so the 19px touch-target padding would
+                        // otherwise clamp it to zero. Leaf element, safe.
+                        boxSizing: 'content-box',
                         width: index === currentIndex ? 16 : 6,
                         height: 6,
                         borderRadius: 3,

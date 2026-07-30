@@ -21,7 +21,7 @@ import { useThemeMode } from '../../contexts/ThemeContext';
 import {
   getColorDot,
   getQualityBadge,
-  formatCarats,
+  formatWeightLabel,
 } from '../../utils/formatting';
 import { useCurrencyFormat } from '../../contexts/CurrencyContext';
 import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
@@ -147,9 +147,7 @@ export default function ComparisonMobileView({
             key="peso"
             label="Peso"
             values={items.map((item) =>
-              typeof item.peso === 'number'
-                ? `${formatCarats(item.peso)} ct`
-                : item.metalType || '-',
+              formatWeightLabel(item, { fallback: '-' }),
             )}
             type="numeric"
           />

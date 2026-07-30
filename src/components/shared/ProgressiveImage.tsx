@@ -219,6 +219,7 @@ export default function ProgressiveImage({
           >
             <Box
               component="img"
+              draggable={false}
               src={logoPlaceholder}
               alt=""
               sx={{
@@ -243,6 +244,7 @@ export default function ProgressiveImage({
       {enableLQIP && lqipSrc && lqipLoaded && !fullyLoaded && (
         <Box
           component="img"
+          draggable={false}
           src={lqipSrc}
           alt=""
           aria-hidden="true"
@@ -284,6 +286,7 @@ export default function ProgressiveImage({
       {shouldLoad && !error && (
         <Box
           component="img"
+          draggable={false}
           src={
             retryCount > 0
               ? `${optimizedSrc}${optimizedSrc.includes('?') ? '&' : '?'}retry=${retryCount}`
@@ -335,6 +338,7 @@ export default function ProgressiveImage({
         >
           <Box
             component="img"
+            draggable={false}
             src={logoPlaceholder}
             alt=""
             sx={{

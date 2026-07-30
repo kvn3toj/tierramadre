@@ -11,7 +11,8 @@
  * A/B-style redesign toggles stay one canonical component parameterized by
  * a prop, never a fork.
  *
- * Absorbs: GridCard's two variants, TreasureCard.
+ * INTENDED to absorb (NOT done yet — GridCard still owns both variants
+ * and imports this component): GridCard's two variants, TreasureCard.
  */
 import React from 'react';
 import { Box, Typography } from '@mui/material';
@@ -149,7 +150,9 @@ export const PieceCard: React.FC<PieceCardProps> = ({
             <Typography
               sx={{
                 fontFamily: 'var(--tm-font-mono)',
-                fontSize: '0.59rem',
+                // 11px floor (qeType.spec). Was 0.59rem = 9.44px.
+                fontSize: '0.6875rem',
+                lineHeight: 1.4,
                 letterSpacing: '0.05em',
                 color: 'var(--tm-subtle)',
                 overflow: 'hidden',

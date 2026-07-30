@@ -7,7 +7,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { Badge, Card, qeType } from '../../../../design-system';
-import { formatCurrency, formatCarats } from '../../../../utils/formatting';
+import { formatCurrency, formatWeightLabel } from '../../../../utils/formatting';
 import ProgressiveImage from '../../../../components/shared/ProgressiveImage';
 import type { TreasureItem } from '../../../../types';
 
@@ -20,10 +20,7 @@ export const ProductListCard = React.memo(function ProductListCard({
   item,
   onClick,
 }: ProductListCardProps) {
-  const weightDisplay =
-    typeof item.peso === 'number'
-      ? `${formatCarats(item.peso)} ct`
-      : item.peso || '';
+  const weightDisplay = formatWeightLabel(item);
 
   return (
     <Card

@@ -12,7 +12,7 @@ import { TreasureItem } from '../../types';
 import {
   getColorDot,
   getQualityBadge,
-  formatCarats,
+  formatWeightLabel,
 } from '../../utils/formatting';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
 import { emeraldCore, semanticColors } from '../../design-system/tokens/colors';
@@ -55,10 +55,7 @@ function ListRow({
   const colorDot = getColorDot(item.color);
   // Never render "0.00 ct": a real carat weight only for a loose stone with
   // peso > 0; joyas / insumos fall back to the metal type (or nothing).
-  const weight =
-    typeof item.peso === 'number' && item.peso > 0
-      ? `${formatCarats(item.peso)} ct`
-      : item.metalType;
+  const weight = formatWeightLabel(item);
   const origin = (item.procedencia || item.mina)?.trim();
 
   const handleItemClick = useCallback(() => {

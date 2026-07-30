@@ -11,6 +11,7 @@
     "build": "node scripts/update-version.mjs && node scripts/generate-thumbnails-seed.mjs && tsc -b && vite build",
     "build:vercel": "node scripts/update-version.mjs && node scripts/generate-thumbnails-seed.mjs && node scripts/build-app.mjs",
     "preview": "vite preview",
+    "preview:alias": "node scripts/preview-alias.mjs",
     "lint": "tsc --noEmit && tsc --noEmit -p api/tsconfig.json",
     "lint:ds3": "eslint \"src/**/*.{ts,tsx}\" \"eslint-fixtures/**/*.{ts,tsx}\"",
     "lint:all": "npm run lint && npm run lint:ds3",

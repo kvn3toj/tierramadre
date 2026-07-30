@@ -84,7 +84,8 @@ export function CatalogHeader({
           <Typography
             sx={{
               fontFamily: qeFont.mono,
-              fontSize: 10,
+              // 11px legibility floor (was 10).
+              fontSize: 11,
               letterSpacing: '0.08em',
               color: qe.subtle,
               mt: { xs: '6px', md: '9px' },

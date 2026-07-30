@@ -32,7 +32,7 @@ import {
   qeType,
   zIndex,
 } from '../../../../design-system';
-import { formatFullCurrency, formatCarats } from '../../../../utils/formatting';
+import { formatFullCurrency, formatWeightLabel } from '../../../../utils/formatting';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import type { Asesor } from '../../../../hooks/useAsesores';
@@ -87,10 +87,7 @@ export function AmbassadorProductDetail({
   // Bumped by the retry button to re-run the gallery fetch.
   const [galleryReloadKey, setGalleryReloadKey] = useState(0);
 
-  const weightDisplay =
-    typeof item.peso === 'number'
-      ? `${formatCarats(item.peso)} ct`
-      : item.peso || '-';
+  const weightDisplay = formatWeightLabel(item, { fallback: '-' });
 
   // Fetch gallery from Drive API
   useEffect(() => {

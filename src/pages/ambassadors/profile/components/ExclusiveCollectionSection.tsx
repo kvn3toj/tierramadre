@@ -15,16 +15,15 @@ import {
 import { Gem, Share2, ExternalLink, Images } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TreasureItem } from '../../../../types';
-import { getQualityBadge, formatCarats } from '../../../../utils/formatting';
+import { getQualityBadge, formatWeightLabel } from '../../../../utils/formatting';
 import { PriceDisplay } from '../../../../components/price-simulator/PriceDisplay';
 import { Badge, PieceCard, Skeleton, qeGray } from '../../../../design-system';
 
 function buildSpecLine(item: TreasureItem): string {
-  if (!item.isJewelry && typeof item.peso === 'number') {
-    return `${formatCarats(item.peso)} ct`;
-  }
-  if (item.isJewelry && item.metalType) return item.metalType;
-  return item.color;
+  return formatWeightLabel(item, {
+    jewelryPrefers: 'metal-only',
+    fallback: item.color,
+  });
 }
 
 interface ExclusiveCollectionSectionProps {

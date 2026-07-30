@@ -14,6 +14,21 @@ interface SpecRowProps {
   showBorder?: boolean;
 }
 
+/**
+ * A spec value is "empty" when there is genuinely nothing to display.
+ *
+ * `0` is deliberately NOT empty — a zero measurement is data. Strings are
+ * trimmed so a whitespace-only cell from the sheet counts as empty; callers
+ * that gate on their own truthiness (e.g. `SpecificationsList`'s
+ * `Boolean(product.coleccion)`) must trim too, or they draw a border for a
+ * row this then removes, leaving an orphaned divider.
+ */
+export const isEmptySpecValue = (value: React.ReactNode): boolean => {
+  if (value === null || value === undefined || value === false) return true;
+  if (typeof value === 'string') return value.trim() === '';
+  return false;
+};
+
 export const SpecRow: React.FC<SpecRowProps> = ({
   icon,
   label,
@@ -24,6 +39,12 @@ export const SpecRow: React.FC<SpecRowProps> = ({
   const isLight = theme.palette.mode === 'light';
   const separatorColor = isLight ? iosSeparators.default.light : iosSeparators.default.dark;
   const secondaryTextColor = isLight ? iosLabels.secondary.light : iosLabels.secondary.dark;
+
+  // Drop the row entirely when there is nothing to show, rather than
+  // rendering a labelled row with a blank right side and a divider.
+  // Placed AFTER the hooks above — an early return before them would be a
+  // conditional hook call. Numeric 0 counts as a value (0 is data, "" is not).
+  if (isEmptySpecValue(value)) return null;
 
   return (
     <Box

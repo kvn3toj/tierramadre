@@ -234,6 +234,26 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* === BOX MODEL RESET === */
+/* The app shipped without one: MUI's <CssBaseline /> was dropped in 5eeb6fc, */
+/* so every element computed as content-box. That is what made the app-shell  */
+/* container (IOSLayout.tsx, width:100% + px:2 + mx:auto) overflow its parent */
+/* by 32px and resolve margin-right:auto to -32px — the shifted grid, the     */
+/* clipped filter button and the truncated counter on mobile.                  */
+/* Inherit-based on purpose: a subtree opts back out with one declaration     */
+/* (see the pagination dots in HeroGallery/ImageLightbox). The universal      */
+/* selector carries zero specificity, so this neither wins nor loses against  */
+/* emotion's runtime styles regardless of <head> injection order.             */
+html {
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
 html {
   /* iOS smooth scrolling */
   scroll-behavior: smooth;
@@ -254,6 +274,11 @@ textarea {
 }
 
 body {
+  /* The UA default is 8px. The standalone-PWA block below already zeroes it; */
+  /* without this line every browser-tab session ran 8px offset and 16px      */
+  /* narrower than the viewport. */
+  margin: 0;
+
   /* Safe area support (iPhone notch, home indicator) */
   padding-top: env(safe-area-inset-top);
   padding-right: env(safe-area-inset-right);
@@ -274,6 +299,52 @@ body {
 
   /* Prevent document-level scroll — only <main> scrolls */
   overflow: hidden;
+}
+
+/* === IMAGE PROTECTION === */
+/* Deterrent against casually saving product photography: no native image
+ * drag, no iOS long-press "Save Image" callout, no selection.
+ *
+ * This lived in `theme.ts` as a MuiCssBaseline styleOverride and was dead
+ * twice over — nothing imports that theme, and <CssBaseline /> is not
+ * mounted — so in practice only four components hand-rolled it and every
+ * other image in the catalog, product detail and vitrina was freely
+ * saveable. Moving it here makes it actually apply.
+ *
+ * Deliberately NOT setting `pointer-events` (the old block forced `auto`,
+ * which would override components that intentionally disable pointers).
+ * The old block also had `img { draggable: false }`, which was never valid
+ * CSS — `draggable` is an HTML attribute; the CSS equivalent is
+ * `-webkit-user-drag`, below, plus `draggable={false}` on ProgressiveImage
+ * for Firefox, which does not support the non-standard property.
+ *
+ * Verified safe for the drag-based UIs: react-easy-crop (ImageCropper) and
+ * the feedback annotator both work on pointer events, not native HTML5
+ * drag. Blocking the native drag actually helps the annotator, which would
+ * otherwise lose a draw gesture to an image drag. Certificate and label
+ * exports are unaffected — they download programmatically rather than by
+ * long-press.
+ */
+img,
+video {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+/* Escape hatch, mirroring `.tm-full-bleed`: opt an image back into native
+ * save/drag when a user legitimately owns the content. Nothing needs it
+ * today (exports are programmatic), but a blanket rule with no way out is
+ * how the next person ends up fighting the design system. */
+.tm-saveable,
+.tm-saveable img,
+.tm-saveable video {
+  user-select: auto;
+  -webkit-user-select: auto;
+  -webkit-user-drag: auto;
+  -webkit-touch-callout: default;
 }
 
 /* === SELECTION STYLES === */
@@ -297,6 +368,7 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+
 }
 
 /* === DARK MODE AUTO-DETECTION — Quiet Emerald === */

@@ -26,6 +26,67 @@ export const parseCarats = (peso: string | number): number | null => {
   return Number.isFinite(n) && n > 0 ? n : null;
 };
 
+/** Minimal shape needed to label a piece's weight/material. */
+export interface WeightLabelSource {
+  /** Optional: `ReceiptProduct` and lote members declare it optional. */
+  peso?: string | number;
+  isJewelry?: boolean;
+  metalType?: string;
+}
+
+export interface WeightLabelOptions {
+  /**
+   * What a joya should show.
+   *   - `'metal'` (default): metal name, else its carat weight.
+   *   - `'metal-only'`: metal name or nothing. Use where a joya has never
+   *     displayed a carat weight and this change must not introduce one
+   *     (the catalog card — some Fotosíntesis joyería carries a numeric
+   *     peso with no metalType recorded).
+   *   - `'carats'`: for gem-weight-only columns such as "Gema (Ct)",
+   *     which must NEVER show a metal name.
+   */
+  jewelryPrefers?: 'metal' | 'metal-only' | 'carats';
+  /** Returned when there is nothing truthful to show. Defaults to `''`. */
+  fallback?: string;
+}
+
+/**
+ * Single source of truth for the "4.20 ct" / "Oro 18k" label.
+ *
+ * Exists because the `peso > 0` guard was duplicated inconsistently across
+ * the app: `ListRow` had it, the catalog card's live branch did not, so
+ * joyas and unweighed pieces rendered "Gema · 0.00 ct" to clients.
+ * `formatCarats` is a bare `toFixed(2)`, so `peso: 0` formats as "0.00" —
+ * the guard has to happen before it, which is what `parseCarats` does.
+ *
+ * Note `jewelryPrefers: 'carats'` deliberately falls back to `fallback`
+ * and NOT to the metal name: the ingestion layer coerces a joya's peso
+ * via `parseDecimal('Plata') → 0`, so returning the metal there would
+ * render "Gema (Ct): Plata" and duplicate the Material row.
+ */
+export const formatWeightLabel = (
+  source: WeightLabelSource,
+  options: WeightLabelOptions = {},
+): string => {
+  const { jewelryPrefers = 'metal', fallback = '' } = options;
+  const { peso, isJewelry, metalType } = source;
+
+  const carats = peso === undefined || peso === null ? null : parseCarats(peso);
+  const metal = typeof metalType === 'string' ? metalType.trim() : '';
+
+  if (jewelryPrefers === 'carats') {
+    return carats === null ? fallback : `${formatCarats(carats)} ct`;
+  }
+
+  if (isJewelry) {
+    if (metal) return metal;
+    if (jewelryPrefers === 'metal-only') return fallback;
+  }
+
+  if (carats !== null) return `${formatCarats(carats)} ct`;
+  return fallback;
+};
+
 /**
  * Price-per-carat in COP — the RAW (un-converted) base value.
  *
@@ -54,11 +115,17 @@ export const pricePerCaratCOP = (
 };
 
 /**
- * Format currency with abbreviated notation for large values.
- * Supports COP and USD modes.
+ * Format a currency value in full. Supports COP and USD modes.
+ *
+ * NOTE: despite its name and a long-standing docblock that promised
+ * "$1.5M" / "$300K" output, this function does NOT abbreviate — it returns
+ * the full grouped number. Callers that want K/M notation must abbreviate
+ * themselves. Corrected here because the old comment invited swaps that
+ * would have changed every price over 1000.
+ *
  * @param value - The numeric value to format
  * @param currency - Currency mode (default: COP)
- * @returns Formatted string like "$1.5M", "$300K", "US$9.5K"
+ * @returns Formatted string like "$1.500.000" / "US$9.524"
  */
 export const formatCurrency = (
   value: number,
@@ -117,14 +184,37 @@ export const formatPercent = (value: number): string => {
 
 /**
  * Emerald color name to hex color mapping.
+ *
+ * Keys are normalized (see `normalizeColorName`) so accent, case and spacing
+ * variants from the sheet resolve to the same swatch — "Verde Limón",
+ * "verde limon" and "VERDE  LIMON" all match.
+ *
+ * Deliberately NOT extended with the other values seen in the live `color`
+ * column: `Chivor` is a mine, `Cristal` a transparency grade and `Intenso` a
+ * saturation modifier. Assigning them a hue would invent information the data
+ * does not carry; they stay neutral until they are migrated to `mina` /
+ * `calidad`, which is a data change rather than a display one.
  */
 const COLOR_MAP: Record<string, string> = {
-  'Verde Vivido': '#059669',
-  'Verde Muzo': '#065F46',
-  'Verde Limón': '#84CC16',
-  'Verde Menta': '#34D399',
-  'Verde Natural': '#22C55E',
+  'verde vivido': '#059669',
+  'verde muzo': '#065F46',
+  'verde limon': '#84CC16',
+  'verde menta': '#34D399',
+  'verde natural': '#22C55E',
 };
+
+/**
+ * Lowercase, strip diacritics and collapse whitespace, mirroring
+ * `normalizeCollection`. Without this the map missed on every casing or
+ * accent variant and silently fell through to the neutral swatch.
+ */
+const normalizeColorName = (color: string): string =>
+  color
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
 
 /**
  * Get the hex color for an emerald color name.
@@ -132,8 +222,12 @@ const COLOR_MAP: Record<string, string> = {
  * @returns Hex color string
  */
 export const getColorDot = (color: string): string => {
-  return COLOR_MAP[color] || '#6B7280';
+  if (!color) return UNCLASSIFIED_COLOR_DOT;
+  return COLOR_MAP[normalizeColorName(color)] || UNCLASSIFIED_COLOR_DOT;
 };
+
+/** Neutral swatch for values that are not a colour we can render. */
+export const UNCLASSIFIED_COLOR_DOT = '#6B7280';
 
 /**
  * Quality badge tone + label, rendered via the design-system `<Badge>`.

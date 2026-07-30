@@ -148,7 +148,11 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
       {/* Top Bar */}
       <Box
         sx={{
-          height: '44px',
+          // minHeight, not height: under the global border-box reset a fixed
+          // 44px height would subtract the notch inset + 2px from the content
+          // box, collapsing the bar's contents to zero on any device with a
+          // safe-area top. minHeight yields max(44, content + inset + 2).
+          minHeight: '44px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',

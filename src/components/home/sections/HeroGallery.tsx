@@ -198,6 +198,12 @@ export const HeroGallery: React.FC = () => {
                   }
                 }}
                 sx={{
+                  // Opts out of the global border-box reset: the visible dot
+                  // IS the content box (backgroundClip below), and the 19px
+                  // padding forming the 44px touch target would otherwise
+                  // clamp it to zero and render nothing. Safe because this is
+                  // a leaf element — box-sizing:inherit has nothing to reach.
+                  boxSizing: 'content-box',
                   width: idx === currentIndex ? 20 : 6,
                   height: 6,
                   borderRadius: 3,
