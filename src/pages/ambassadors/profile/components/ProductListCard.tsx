@@ -7,7 +7,10 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { Badge, Card, qeType } from '../../../../design-system';
-import { formatCurrency, formatWeightLabel } from '../../../../utils/formatting';
+import {
+  formatCurrency,
+  formatWeightLabel,
+} from '../../../../utils/formatting';
 import ProgressiveImage from '../../../../components/shared/ProgressiveImage';
 import type { TreasureItem } from '../../../../types';
 
@@ -71,12 +74,12 @@ export const ProductListCard = React.memo(function ProductListCard({
         >
           {item.nombre}
         </Typography>
+        {/* `ubicacion` deliberately NOT rendered here: it is internal custody
+            (ASESOR · OFI.CALI · OFI.BOGOTA · EMBAJADOR · RETORNADO), not
+            product information, and this card is client-facing. It used to
+            print "EMBAJADOR"/"ASESOR" under every name. Mine origin lives in
+            `procedencia` and is shown on the detail view. */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-          {item.ubicacion && (
-            <Typography sx={{ fontSize: '0.6875rem', color: 'text.secondary' }}>
-              {item.ubicacion}
-            </Typography>
-          )}
           {weightDisplay && (
             <Typography sx={{ fontSize: '0.6875rem', color: 'text.secondary' }}>
               {weightDisplay}

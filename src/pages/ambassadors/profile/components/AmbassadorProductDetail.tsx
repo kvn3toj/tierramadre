@@ -32,7 +32,10 @@ import {
   qeType,
   zIndex,
 } from '../../../../design-system';
-import { formatFullCurrency, formatWeightLabel } from '../../../../utils/formatting';
+import {
+  formatFullCurrency,
+  formatWeightLabel,
+} from '../../../../utils/formatting';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import type { Asesor } from '../../../../hooks/useAsesores';
@@ -473,10 +476,15 @@ export function AmbassadorProductDetail({
           label="Peso"
           value={weightDisplay}
         />
+        {/* Origen is the MINE (`procedencia`: Muzo, Chivor, Coscuez…), never
+            `ubicacion`. `ubicacion` is internal custody — a read-only scan of
+            all three inventory books shows its whole domain is
+            ASESOR · OFI.CALI · OFI.BOGOTA · EMBAJADOR · RETORNADO — so this
+            cell was telling clients "Origen: OFI.CALI". */}
         <SpecCell
           icon={<MapPin size={16} />}
           label="Origen"
-          value={item.ubicacion || '-'}
+          value={item.procedencia || '-'}
         />
         <SpecCell
           icon={<Award size={16} />}

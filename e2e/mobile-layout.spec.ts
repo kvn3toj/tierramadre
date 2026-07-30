@@ -17,7 +17,12 @@
  */
 
 import { test, expect, type Page } from '@playwright/test';
-import { primeAdminSession, seedCatalog } from './helpers/session';
+import {
+  AMBASSADOR,
+  primeAdminSession,
+  seedAmbassador,
+  seedCatalog,
+} from './helpers/session';
 
 const VIEWPORTS = [
   { width: 360, height: 800, label: '360 — small Android' },
@@ -129,6 +134,7 @@ for (const vp of VIEWPORTS) {
     test.beforeEach(async ({ page }) => {
       await primeAdminSession(page);
       await seedCatalog(page);
+      await seedAmbassador(page);
     });
 
     test('the box-model reset is in effect', async ({ page }) => {
@@ -152,7 +158,17 @@ for (const vp of VIEWPORTS) {
       expect(box.bodyWidth).toBe(box.innerWidth);
     });
 
-    for (const route of ['/treasure', '/product/401']) {
+    // The sweep only protects surfaces it VISITS. The ambassador category
+    // list proved that the hard way: it shipped a 455px-wide card inside a
+    // 358px container for as long as it existed, invisible to this file
+    // because no case ever navigated there. Add routes here, not comments.
+    const OVERFLOW_ROUTES: { path: string; anchor?: RegExp }[] = [
+      { path: '/treasure' },
+      { path: '/product/401' },
+      { path: `/ambassadors/${AMBASSADOR.slug}/c/joyas`, anchor: /Collar/ },
+    ];
+
+    for (const { path: route, anchor } of OVERFLOW_ROUTES) {
       test(`${route} has no horizontal overflow`, async ({ page }) => {
         await page.goto(route);
         await waitForAppReady(page);
@@ -165,6 +181,9 @@ for (const vp of VIEWPORTS) {
         await expect(
           page.getByText('Cargando tesoros', { exact: false }),
         ).toHaveCount(0);
+        // Routes whose loader text is not "Cargando tesoros" pin their own
+        // positive anchor, so an empty render cannot pass the negative below.
+        if (anchor) await expect(page.getByText(anchor).first()).toBeVisible();
 
         const metrics = await page.evaluate(() => {
           const main = document.getElementById('main-content');
@@ -250,6 +269,40 @@ for (const vp of VIEWPORTS) {
       // The fixture seeds joyas with peso: 0 (item 400, 404, ...), which
       // used to render "Gema · 0.00 ct" on the default catalog card.
       await expect(page.getByText(/0[.,]00\s*ct/i)).toHaveCount(0);
+    });
+
+    test('the ambassador catalog never leaks the custody field', async ({
+      page,
+    }) => {
+      await page.goto(`/ambassadors/${AMBASSADOR.slug}/c/joyas`);
+      await waitForAppReady(page);
+      await page.waitForTimeout(1_500);
+
+      // Positive anchor first — an empty list satisfies any absence check.
+      await expect(page.getByText(/Collar/).first()).toBeVisible();
+
+      // `ubicacion` is internal custody, not product information. Verified
+      // read-only across all three inventory books: its entire domain is
+      // ASESOR · OFI.CALI · OFI.BOGOTA · EMBAJADOR · RETORNADO. The card
+      // used to print it under every product name, so a client browsing an
+      // ambassador's catalog read "EMBAJADOR" as if it were a spec.
+      await expect(page.getByText(/^\s*(EMBAJADOR|ASESOR|OFI\.)/)).toHaveCount(
+        0,
+      );
+    });
+
+    test('the ambassador detail shows the MINE as Origen', async ({ page }) => {
+      await page.goto(`/ambassadors/${AMBASSADOR.slug}/product/400`);
+      await waitForAppReady(page);
+      await page.waitForTimeout(1_500);
+
+      // The Origen cell read `ubicacion`, so it told clients
+      // "Origen: OFI.CALI". The mine lives in `procedencia`.
+      const origenLabel = page.getByText('Origen', { exact: true }).first();
+      await expect(origenLabel).toBeVisible();
+      await expect(
+        origenLabel.locator('xpath=following-sibling::*[1]'),
+      ).toHaveText('MUZO');
     });
 
     test('no persistent text renders below the 11px floor', async ({
@@ -347,10 +400,7 @@ for (const vp of VIEWPORTS) {
       await waitForAppReady(page);
       await page.waitForTimeout(1_500);
 
-      await page
-        .getByRole('button', { name: /Men/i })
-        .first()
-        .click();
+      await page.getByRole('button', { name: /Men/i }).first().click();
 
       // Sampled through the enter animation, not just at rest. The enter
       // curve overshoots (control point > 1), so `translateY` goes negative
@@ -379,7 +429,9 @@ for (const vp of VIEWPORTS) {
         return {
           top: Math.round(rect.top),
           paddingBottom: style.paddingBottom,
-          contentHeight: Math.round(rect.height - parseFloat(style.paddingBottom)),
+          contentHeight: Math.round(
+            rect.height - parseFloat(style.paddingBottom),
+          ),
           viewport: window.innerHeight,
         };
       });
@@ -395,10 +447,7 @@ for (const vp of VIEWPORTS) {
       await waitForAppReady(page);
       await page.waitForTimeout(1_500);
 
-      await page
-        .getByRole('button', { name: /Men/i })
-        .first()
-        .click();
+      await page.getByRole('button', { name: /Men/i }).first().click();
       await page.waitForTimeout(600);
 
       const visibleNow = await page.evaluate(
