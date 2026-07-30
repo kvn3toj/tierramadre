@@ -47,19 +47,23 @@ async function waitForAppReady(page: Page) {
 }
 
 /**
- * Returns the outermost elements that are VISIBLY escaping the viewport.
+ * Returns the outermost elements OUTSIDE the page scroller that are visibly
+ * escaping the viewport — portals, fixed overlays, the bottom nav.
  *
- * Three filters keep this from crying wolf:
- *  - Outermost-only, so one over-wide container doesn't report every
- *    descendant and bury the actual cause.
- *  - Invisible elements are ignored. MUI's Switch ships a deliberately
- *    oversized `opacity:0` input as its touch target; that is not overflow.
- *  - Elements clipped by an ancestor with `overflow: hidden|clip|auto` are
- *    ignored. Decorative bleeds (the Esmereogenesis `anim-loop` glow at
- *    `EsmereogenesisCTA.tsx:247`) intentionally exceed the viewport and are
- *    clipped by <main>, which pins `overflowX:'hidden'`. What matters for
- *    those is the `mainScrollWidth <= mainClientWidth` assertion, not their
- *    raw rect.
+ * Deliberately scoped to non-`#main-content` content. Everything inside
+ * <main> is governed by the `mainScrollWidth <= mainClientWidth` assertion
+ * instead, because <main> pins `overflowX:'hidden'` (IOSLayout.tsx:442) and
+ * therefore clips its descendants: a per-element rect check there would
+ * report decorative bleeds that are intentionally wider than the viewport
+ * (the Esmereogenesis `anim-loop` glow, `EsmereogenesisCTA.tsx:247`) while
+ * adding nothing the scroll-width check doesn't already catch.
+ *
+ * Stating that as an explicit containment test rather than a generic
+ * "is any ancestor clipping?" walk keeps the split visible in the code —
+ * the walk did the same job, but read like broad coverage it never had.
+ *
+ * Invisible elements are also ignored: MUI's Switch ships a deliberately
+ * oversized `opacity:0` input as its touch target, which is not overflow.
  */
 async function findOverflowingElements(page: Page, allowlist: string[]) {
   return page.evaluate((allow) => {
@@ -81,18 +85,7 @@ async function findOverflowingElements(page: Page, allowlist: string[]) {
       );
     };
 
-    const clips = (v: string) =>
-      v === 'hidden' || v === 'clip' || v === 'auto' || v === 'scroll';
-
-    const isClippedByAncestor = (el: Element) => {
-      let parent = el.parentElement;
-      while (parent && parent !== document.documentElement) {
-        const s = getComputedStyle(parent);
-        if (clips(s.overflowX) || clips(s.overflow)) return true;
-        parent = parent.parentElement;
-      }
-      return false;
-    };
+    const main = document.getElementById('main-content');
 
     for (const el of Array.from(document.querySelectorAll('*'))) {
       const rect = el.getBoundingClientRect();
@@ -106,7 +99,8 @@ async function findOverflowingElements(page: Page, allowlist: string[]) {
       if (!overflowsLeft && !overflowsRight) continue;
 
       if (isInvisible(el)) continue;
-      if (isClippedByAncestor(el)) continue;
+      // Covered by the mainScrollWidth assertion — see the docblock.
+      if (main && (el === main || main.contains(el))) continue;
 
       // Skip if an already-recorded ancestor explains this one.
       if (escaped.some((ancestor) => ancestor.contains(el))) continue;

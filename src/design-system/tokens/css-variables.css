@@ -323,10 +323,6 @@ body {
     transition-duration: 0.01ms !important;
   }
 
-  /* Pairs with `scroll-behavior: smooth` on <html> above. */
-  html {
-    scroll-behavior: auto;
-  }
 }
 
 /* === DARK MODE AUTO-DETECTION — Quiet Emerald === */

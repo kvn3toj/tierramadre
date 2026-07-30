@@ -98,7 +98,11 @@ export function PublicProductView({
   const specLine = useMemo(
     () =>
       [
-        formatWeightLabel(product),
+        // 'carats' so a joya never puts its metal here: SpecGroups renders
+        // a "Tipo" row with the same value further down the page
+        // (GemSheetParts.tsx), and this line previously showed a weight or
+        // nothing — never a metal name.
+        formatWeightLabel(product, { jewelryPrefers: 'carats' }),
         product.talla,
         product.procedencia || product.mina,
       ]
