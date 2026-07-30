@@ -186,7 +186,22 @@ function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
         getByIndex(11),
     ),
     precioInternacional: 0,
-    ubicacion: getValue(INVENTARIO_HEADERS.UBICACION) || getByIndex(12) || '',
+    // NO positional fallback here. The `getByIndex` defaults encode the
+    // LEGACY 21-column layout, but the Fotosíntesis book inserts
+    // `precioembajadorcop` + `precioconscientecop` at 12-13 and pushes
+    // everything down by two — so index 12 there is a PRICE. That is the
+    // "Ubicación: 150820" report: a price rendered as a location.
+    //
+    // Verified read-only on both books: the `ubicación` header is present in
+    // each (legacy idx 12, Fotosíntesis idx 14), so `getValue` always
+    // resolves and this fallback could never fire usefully — it could only
+    // ever leak a price. Dropping it is a no-op today and closes that path.
+    //
+    // NOTE the sibling fields are NOT equally safe: `asesor` has no header on
+    // the legacy sheet (idx -1), so its `getByIndex(13)` IS load-bearing
+    // there and must stay, even though the same index is
+    // `precioconscientecop` on the Fotosíntesis layout.
+    ubicacion: getValue(INVENTARIO_HEADERS.UBICACION) || '',
     asesor: getValue(INVENTARIO_HEADERS.ASESOR) || getByIndex(13) || '',
     estado: (
       getValue(INVENTARIO_HEADERS.ESTADO) ||
