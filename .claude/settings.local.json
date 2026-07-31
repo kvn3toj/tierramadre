@@ -122,7 +122,11 @@
       "Bash(sed -n '/## Procedencia/,$p' /Users/kevinp/Movies/coomunity-universe/Obsidian/Anima/Wings/Projects/TierraMadre/inventario/item-467-guardianas-gemelas-piedra-1.md)",
       "Bash(sed -n '/## Procedencia/,$p' /Users/kevinp/Movies/coomunity-universe/Obsidian/Anima/Wings/Projects/TierraMadre/inventario/item-471-guardianas-gemelas.md)",
       "Read(//Users/kevinp/.convex/**)",
-      "Bash(git pull *)"
+      "Bash(git pull *)",
+      "Bash(sed -i.bak \"s|from './lib/heic.mjs'|from './lib/image.mjs'|\" scripts/jewelry-visualizer.mjs)",
+      "Bash(node scripts/visualizer-mirror-fotos.mjs --items 233,311)",
+      "Bash(python3 -)",
+      "Bash(node --input-type=module -e ' *)"
     ],
     "deny": [],
     "ask": []

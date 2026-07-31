@@ -265,9 +265,19 @@ export default function ProductDetail() {
   // onto the bundle so the detail below matches the image; otherwise we show
   // the bundle itself. Pricing breakdown, QR, favorites and cart actions stay
   // bundle-scoped (the lote is bought as one), so they keep using `product`.
+  // Built from `enrichedProduct`, NOT `product`: `resolveLoteDetail` returns its
+  // input unchanged on the hero view, so `detail` is defined whenever `product`
+  // is — which made the `detail ?? enrichedProduct` fallback below unreachable
+  // and silently dropped the whole Convex overlay from every descriptive
+  // section. That is why a Fotosíntesis item rendered the sheet's `medidas`
+  // column (the FORMAT label, "Largo x Ancho") instead of its measurements, and
+  // why mina/rareza/calificación never appeared.
   const detail = useMemo(
-    () => (product ? resolveLoteDetail(product, activeLoteItem) : undefined),
-    [product, activeLoteItem],
+    () =>
+      enrichedProduct
+        ? resolveLoteDetail(enrichedProduct, activeLoteItem)
+        : undefined,
+    [enrichedProduct, activeLoteItem],
   );
 
   // Cleaned title for the piece (or bundle) currently in view.

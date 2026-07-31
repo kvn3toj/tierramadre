@@ -143,22 +143,25 @@ export async function listProductFolders(
 
 /**
  * Find product folder by item number (folder name format: "32 - Venus")
+ *
+ * Goes through `listProductFolders` rather than its own `files.list`. A direct
+ * `name contains '<n> -'` query is tokenized by Drive, so for a low item number
+ * it matches every folder with a token starting with that digit ("1 - Rey Midas",
+ * "10 - ...", "132 - ...", names carrying their own numbers) — hundreds of hits,
+ * silently truncated to the unpaginated 100-row default. The exact match then
+ * falls off page one and the item reads as "not found": items 1-4 were invisible
+ * to every caller of this helper, including the live catalog's product detail.
+ * The shared listing paginates, caches, and is already warm for other callers.
+ *
  * @param {object} drive - Google Drive client
  * @param {string} parentFolderId - Parent folder ID
  * @param {string|number} itemNumber - Product item number
  * @returns {Promise<string|null>} Folder ID or null if not found
  */
 export async function getProductFolderById(drive, parentFolderId, itemNumber) {
-  const response = await drive.files.list({
-    q: `name contains '${itemNumber} -' and mimeType='application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed=false`,
-    fields: 'files(id, name)',
-    supportsAllDrives: true,
-    includeItemsFromAllDrives: true,
-  });
+  const folders = await listProductFolders(drive, parentFolderId);
 
-  const exactMatch = response.data.files?.find((f) =>
-    f.name.startsWith(`${itemNumber} - `),
-  );
+  const exactMatch = folders.find((f) => f.name.startsWith(`${itemNumber} - `));
 
   return exactMatch?.id || null;
 }
