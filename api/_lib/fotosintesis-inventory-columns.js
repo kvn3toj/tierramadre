@@ -96,6 +96,62 @@ export const FOTO_INVENTARIO_COLUMNS = [
   { header: 'formulaGema', key: 'formulaGema' }, // AN
   { header: 'formulaJoya', key: 'formulaJoya' }, // AO
   { header: 'rangoDescuento', key: 'rangoDescuento' }, // AP
+  // ── Bloque hoja-primero (AQ–BE) — TODO `preserve: true` ──
+  // Estas 15 columnas las mantiene una persona en la hoja, no la app. Existían
+  // desde antes pero eran invisibles para Convex: el rango que se lee sale de
+  // `FOTO_INVENTARIO_LAST_COL`, que se deriva del largo de este array, así que
+  // parar en AP recortaba la lectura en AP. Sumarlas acá ensancha la lectura.
+  //
+  // `preserve: true` en TODAS no es decorativo: el merge de
+  // api/admin-product-update.ts arranca de `existingRow` y sólo pisa las claves
+  // sin preserve. Sin el flag, cualquier PATCH de la app reconstruiría la fila
+  // entera y borraría 513 filas de dato humano (Fuentes, notas de Anima) y la
+  // contabilidad de caja. Se leen; no se escriben nunca.
+  //
+  // Los `header` son los textos REALES de la fila 1 (leídos del SOT el
+  // 2026-07-30). AS está vacía de verdad — es un hueco posicional, y ponerle
+  // texto haría que extend-fotosintesis-headers.mjs escribiera en una celda que
+  // hoy está en blanco. Igual que N, existe sólo para que AT en adelante no se
+  // corra una columna.
+  { header: 'Peso (gr)', key: 'pesoGr', numeric: true, preserve: true }, // AQ
+  {
+    header: 'Costo lote (fórmula)',
+    key: 'costoLoteCOP',
+    numeric: true,
+    preserve: true,
+  }, // AR — COSTO
+  { header: '', key: '_sinUso2', preserve: true }, // AS — hueco posicional, sin encabezado
+  {
+    header: 'Precio objetivo (modelo)',
+    key: 'precioObjetivoCOP',
+    numeric: true,
+    preserve: true,
+  }, // AT — COSTO
+  {
+    header: 'Caja: precio venta',
+    key: 'cajaPrecioVentaCOP',
+    numeric: true,
+    preserve: true,
+  }, // AU
+  {
+    header: 'Caja: valor pagado',
+    key: 'cajaValorPagadoCOP',
+    numeric: true,
+    preserve: true,
+  }, // AV — PLATA
+  { header: 'Caja: saldo', key: 'cajaSaldoCOP', numeric: true, preserve: true }, // AW — PLATA
+  { header: 'Caja: comprador', key: 'cajaComprador', preserve: true }, // AX — DATO PERSONAL
+  {
+    header: 'Caja: estado contable',
+    key: 'cajaEstadoContable',
+    preserve: true,
+  }, // AY — PLATA
+  { header: 'subLote (grupo)', key: 'subLote', preserve: true }, // AZ
+  { header: 'Producto (URL)', key: 'productoUrl', preserve: true }, // BA
+  { header: 'Carpeta fotos (Drive)', key: 'carpetaFotosUrl', preserve: true }, // BB
+  { header: 'Anima: notas relacionadas', key: 'animaNotas', preserve: true }, // BC
+  { header: 'Fuentes', key: 'fuentes', preserve: true }, // BD
+  { header: 'Notas / conflictos', key: 'notasConflictos', preserve: true }, // BE
 ];
 
 /** Ordered header labels (row 1 of the Inventario tab). */

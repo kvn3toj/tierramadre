@@ -230,6 +230,41 @@ export default defineSchema({
     formulaGema: v.optional(v.string()),
     formulaJoya: v.optional(v.string()),
     rangoDescuento: v.optional(v.string()),
+    // ── Bloque hoja-primero (AQ–BE del SOT v3) ──
+    // Los mantiene una persona en la hoja; la app los lee y NUNCA los escribe
+    // (`preserve: true` en api/_lib/fotosintesis-inventory-columns.js).
+    // SENSIBLES — no pueden salir por una query que lea un comercial:
+    // costoLoteCOP y precioObjetivoCOP son COSTO; cajaValorPagadoCOP,
+    // cajaSaldoCOP, cajaEstadoContable son PLATA; cajaComprador es dato
+    // personal de un tercero. Ver convex/_lib/saleSafe.ts.
+    /** AQ — gramaje real de la pieza (el cotizador lo conjeturaba) */
+    pesoGr: v.optional(v.number()),
+    /** AR — COSTO, no exponer a comercial */
+    costoLoteCOP: v.optional(v.number()),
+    /** AT — COSTO, no exponer a comercial */
+    precioObjetivoCOP: v.optional(v.number()),
+    /** AU — precio al cliente según la decisión del 2026-07-23 */
+    cajaPrecioVentaCOP: v.optional(v.number()),
+    /** AV — PLATA, no exponer a comercial */
+    cajaValorPagadoCOP: v.optional(v.number()),
+    /** AW — PLATA, no exponer a comercial */
+    cajaSaldoCOP: v.optional(v.number()),
+    /** AX — DATO PERSONAL de un tercero, no exponer a comercial */
+    cajaComprador: v.optional(v.string()),
+    /** AY — PLATA, no exponer a comercial */
+    cajaEstadoContable: v.optional(v.string()),
+    /** AZ — qué se vende JUNTO (p. ej. C-042-G1 "Guardianas Gemelas") */
+    subLote: v.optional(v.string()),
+    /** BA — URL pública del producto */
+    productoUrl: v.optional(v.string()),
+    /** BB — carpeta de fotos en Drive (la buena; NO products/<item> - <nombre>) */
+    carpetaFotosUrl: v.optional(v.string()),
+    /** BC — notas relacionadas en Anima */
+    animaNotas: v.optional(v.string()),
+    /** BD — procedencia del dato */
+    fuentes: v.optional(v.string()),
+    /** BE — notas / conflictos detectados */
+    notasConflictos: v.optional(v.string()),
     /** ISO timestamp of last successful pull from Sheets */
     lastPulledAt: v.string(),
     /** ISO timestamp of last successful push to Sheets (null if never edited) */

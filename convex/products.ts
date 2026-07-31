@@ -7,7 +7,7 @@ import {
   internalAction,
   type MutationCtx,
 } from './_generated/server';
-import { v } from 'convex/values';
+import { v, ConvexError } from 'convex/values';
 import { api, internal } from './_generated/api';
 import {
   qualityBucket,
@@ -29,6 +29,7 @@ import { postToVercel } from './_lib/sheetSync';
 import { requireAccessLevel } from './_lib/authz';
 import { withPublishStamp } from './_lib/publishState';
 import { precioEspecialDeObservacion } from './_lib/precioEspecial';
+import { omitFotosintesisOnly } from './_lib/saleSafe';
 
 // =============================================================================
 // QUERIES — read the mirror
@@ -143,14 +144,47 @@ export const list = query({
 
 /**
  * Get a single product by itemId.
+ *
+ * Filtrada como `getByItem`, y por la misma razón: devolvía `.first()` pelado,
+ * o sea el documento entero. Cuando se sincronizaron las 14 columnas AQ→BE, el
+ * filtro se le puso a `getByItem` y a `lotItems:search` y a ésta NO — un olvido,
+ * no una decisión: el header de _lib/saleSafe.ts ni la menciona.
+ *
+ * Lo que devolvía, verificado contra producción el 2026-07-30 con un POST
+ * anónimo a /api/query (sin credencial ninguna): 53 campos, entre ellos
+ * `cajaComprador` con el nombre de un comprador real, `cajaValorPagadoCOP`,
+ * `cajaPrecioVentaCOP` y `cajaEstadoContable`. Dato personal de un tercero y la
+ * plata de una venta, a quien preguntara.
+ *
+ * La ficha de producto NO era el vector: ProductDetailPage pide este doc sólo
+ * si `isAdmin` y manda 'skip' si no. Pero eso es la app absteniéndose de
+ * preguntar, no el servidor negándose a contestar; en Convex `query({})` es
+ * pública, la URL del deployment viaja en el bundle y `products:list` reparte
+ * los 513 itemId sin pedir nada. Enumerar era trivial.
+ *
+ * Ninguno de los seis consumidores (EditItemDrawer, AsesorMovementPanel,
+ * VentaPage, VentaDetailPage, CommitLogRow, ProductDetailPage) lee una sola de
+ * las 14 — se verificó campo por campo antes de filtrar. Y si mañana alguna
+ * quiere una, el `Omit<>` de omitFotosintesisOnly lo rompe en compilación, no
+ * en producción.
+ *
+ * OJO — lo que esto NO tapa: `costoBaseCOP` y `preponderancia` siguen saliendo,
+ * porque EditItemDrawer los necesita de verdad para el preview de precio. No se
+ * arregla con una proyección: no hay identidad de cliente en estas queries (por
+ * eso `fotosintesisFields` se cerró con un secreto de SERVIDOR), así que
+ * "alcanzable desde el browser" y "alcanzable por cualquiera" son el mismo
+ * conjunto. Sacarlos exige mover esas lecturas a un endpoint de api/ que valide
+ * el JWT. Es decisión de diseño aparte, y está sin tomar.
  */
 export const get = query({
   args: { itemId: v.string() },
   handler: async (ctx, { itemId }) => {
-    return await ctx.db
+    const row = await ctx.db
       .query('productInventory')
       .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
+    // `.first()` devuelve null cuando no existe, y null no se filtra: se pasa.
+    return row ? omitFotosintesisOnly(row) : null;
   },
 });
 
@@ -206,6 +240,68 @@ export const getManyByItemIds = query({
 });
 
 /**
+ * Las 14 columnas AQ→BE del SOT, proyectadas A PROPÓSITO.
+ *
+ * `omitFotosintesisOnly` las saca de `getByItem` y de `lotItems:search` porque
+ * esas dos alimentan la ficha de producto y al anima-bot. El efecto lateral era
+ * que quedaban sin NINGUNA vía de lectura: datos sincronizados que nadie podía
+ * mirar, ni siquiera Fotosíntesis, que es para quien son.
+ *
+ * Ésta es esa vía. Proyecta por nombre —no hace spread— así que una columna
+ * nueva del esquema no se cuela sola: hay que agregarla acá a mano, que es
+ * justo lo que se quiere para datos con plata y nombres de compradores adentro.
+ *
+ * SÓLO para las pantallas de /admin/Fotosintesis y para verificar sincros.
+ * NO la consumas desde la ficha de producto, la vitrina ni nada que lea un
+ * comercial: seis de estos campos son costo, plata o dato personal de un
+ * tercero (ver convex/_lib/saleSafe.ts).
+ *
+ * CERRADA CON SECRETO DE SERVIDOR, y no es precaución de más: en Convex
+ * `query({})` es PÚBLICA y la URL del deployment viaja en el bundle del cliente
+ * (VITE_CONVEX_URL). La primera versión no pedía nada, y con un
+ * `new ConvexHttpClient(url).query('products:fotosintesisFields', {})` —sin
+ * credencial ninguna— devolvía las 513 filas con nombres de compradores, saldos
+ * y montos pagados. Verificado, no hipotético.
+ *
+ * Mismo `ADMIN_SYNC_TOKEN` que ghl.ts usa como secreto de proxy confiable, y
+ * falla cerrado si no está configurado. `itemId` sigue siendo opcional a
+ * propósito: el barrido completo es lo que necesita la verificación de sincros,
+ * y con el token ya no es una superficie anónima.
+ */
+export const fotosintesisFields = query({
+  args: { secret: v.string(), itemId: v.optional(v.string()) },
+  handler: async (ctx, { secret, itemId }) => {
+    const expected = process.env.ADMIN_SYNC_TOKEN;
+    if (!expected || secret !== expected)
+      throw new ConvexError('No autorizado.');
+    const rows = itemId
+      ? await ctx.db
+          .query('productInventory')
+          .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+          .collect()
+      : await ctx.db.query('productInventory').collect();
+    return rows.map((r) => ({
+      itemId: r.itemId,
+      nombre: r.nombre,
+      pesoGr: r.pesoGr,
+      costoLoteCOP: r.costoLoteCOP,
+      precioObjetivoCOP: r.precioObjetivoCOP,
+      cajaPrecioVentaCOP: r.cajaPrecioVentaCOP,
+      cajaValorPagadoCOP: r.cajaValorPagadoCOP,
+      cajaSaldoCOP: r.cajaSaldoCOP,
+      cajaComprador: r.cajaComprador,
+      cajaEstadoContable: r.cajaEstadoContable,
+      subLote: r.subLote,
+      productoUrl: r.productoUrl,
+      carpetaFotosUrl: r.carpetaFotosUrl,
+      animaNotas: r.animaNotas,
+      fuentes: r.fuentes,
+      notasConflictos: r.notasConflictos,
+    }));
+  },
+});
+
+/**
  * Resolve ONE inventory item by its itemId — the shared resolver behind the QR
  * scanner (PWA camera + anima-bot Telegram bridge both call this). Returns the
  * full row for the admin ficha, or null when the code points at an unknown /
@@ -221,8 +317,14 @@ export const getByItem = query({
     if (!row) return null;
     // `precioEspecial` se DERIVA de la observación (ver _lib/precioEspecial.ts);
     // no existe como columna. Ausente cuando no aplica o ya venció.
+    //
+    // El spread manda la fila ENTERA, así que toda columna nueva del SOT sale
+    // por acá sin que nadie lo decida. Esta query alimenta la ficha de producto,
+    // y las 14 columnas AQ→BE son de Fotosíntesis: gramaje de taller, costos de
+    // lote, contabilidad de caja, notas internas. Ninguna se muestra al cliente.
+    // Ver convex/_lib/saleSafe.ts.
     return {
-      ...row,
+      ...omitFotosintesisOnly(row),
       precioEspecial: precioEspecialDeObservacion(row.observacion),
     };
   },
@@ -316,11 +418,25 @@ export const listByLote = query({
  *
  * This is the bridge that lets the customer-facing Treasure Browser show
  * Fotosíntesis-captured items. They live in a separate spreadsheet from the
- * legacy catalog (`get-treasure-sheets` reads the legacy sheet only), and
- * the `mostrarEnCatalogo` publish flag is Convex-only — never synced to
- * Sheets — so Convex is the only authority that knows what's published.
+ * legacy catalog (`get-treasure-sheets` reads the legacy sheet only).
  * Items kept "en reserva" (mostrarEnCatalogo false) are intentionally
  * excluded so the publish/reserve decision is honored.
+ *
+ * QUIÉN MANDA SOBRE `mostrarEnCatalogo`: Convex. En un solo sentido.
+ *
+ * Este bloque decía que la bandera era "Convex-only — never synced to Sheets".
+ * Era falso: estaba en el allowlist de pull, así que cada sync la pisaba con la
+ * columna Y. Y como la publicación se administra desde la app y la hoja sólo se
+ * entera por push, las dos caras se separaron — Convex con 416 publicadas, la
+ * hoja con 131. El sync habría ocultado 285 piezas de cara al cliente.
+ *
+ * Resuelto el 2026-07-30 sacándola del pull (ver sheetPullMaps.ts): ahora el
+ * docstring es cierto. Convex es dueño de la bandera y del sello `publishedAt`
+ * (ver convex/fotoSync.ts); la hoja recibe el valor por push y no lo devuelve.
+ *
+ * Publicar desde el SOT NO está soportado: editar la columna Y a mano no hace
+ * nada, y el próximo push la sobrescribe. Si se quiere habilitar, hace falta un
+ * canal de eventos, no reactivar el pull.
  */
 export const publishedCatalog = query({
   args: {},
