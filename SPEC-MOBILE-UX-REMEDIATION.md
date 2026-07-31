@@ -16,7 +16,8 @@ v1.4: checkboxes mean **verified**, not shipped (16 ticked, 13 not, each with a
 reason); OQ-2 closed by the calidad scan. v1.5: **P0 arc merged to `main`**
 (PR #72) and re-driven against live production — see Production Pass; desktop +
 `[data-foto-admin]` coverage added; OQ-3 closed, then **corrected the same day**
-when production showed the origin facet already exists.
+when production showed the origin facet already exists — and corrected AGAIN
+when a scan showed that facet ignores 69% of its own column.
 
 ---
 
@@ -116,6 +117,20 @@ only its own case.
   Each of these is inert against the legacy book and correct against v3. The
   cutover is no longer a risky migration to be deferred — it is the switch that
   turns already-merged work on.
+
+  **↳ But it now has its own gating condition, and it is not in this spec's
+  scope to clear.** Measured by the Fotosíntesis/cotizador stream on
+  2026-07-30: of **270 sellable items** (DISPONIBLE with stock), only **98
+  carry `costoBaseCOP`**. Since `precioFinalCOP = costoBaseCOP × 2.6`, the
+  other **172 cannot be priced at all** — the quoting engine can offer them but
+  not calculate them. Flipping `SPREADSHEET_ID` while that gap is open trades
+  one problem for another.
+
+  So the cutover should be scheduled **with** that stream, not around it. The
+  ordering is: close the `costoBaseCOP` gap → flip the env vars → the dormant
+  work above activates. Recording the 98/270 figure here because it is the real
+  gating condition for the biggest available lever, and it otherwise lives only
+  in a chat log.
 
 - **Image save protection was inert.** The `img, video` guard in `theme.ts` was
   dead twice over, so every catalog, detail and vitrina photo was drag- and
@@ -625,11 +640,72 @@ affordance per screen; ladder labels share one casing.
    the **Convex / Fotosíntesis** half of `useTreasure`, not the Sheets half.
    The catalog surface is already fed.
 
-   **What actually remains** is narrower than the original question: should the
-   **ambassador** surface get the same origin strip that `/treasure` has? That
-   is a scoping call, not a data question — and it is P1 at most, since the
-   ambassador detail's Origen cell (`3ae7e59`) already surfaces the mine
-   per-item.
+   ### ⚠️ Second correction — "already live" is true, "working" is not
+
+   The paragraph above says the strip works. It works **on the minority of its
+   own data.** `CANONICAL_MINES` is `['Muzo','Chivor','Coscuez']`, and
+   **`Boyacá` is not in it** — yet `Boyacá` is **61 of the 89 filled
+   `procedencia` rows, 69%**. The strip silently ignores more than two thirds
+   of the column it filters on. That is why production renders only
+   `Todas · Muzo · Chivor`.
+
+   The cause is a **granularity mismatch, not a missing entry**: Boyacá is a
+   _department_, and Muzo, Chivor and Coscuez are all mines _inside_ it. One
+   column is carrying three levels at once —
+
+   | level               | values       | rows |
+   | ------------------- | ------------ | ---- |
+   | mine                | Muzo, Chivor | 27   |
+   | department / region | Boyacá       | 61   |
+   | city / office       | Cali         | 1    |
+
+   Same shape as every other data defect in this document: `ubicacion` holding
+   custody under an "Origen" label, `calidad` mixing a clarity axis with a
+   quality axis. **One column, more than one meaning.**
+
+   ### The gate: a semantic decision, not a project
+
+   **Does `procedencia` mean the mine, or the region?** Two minutes to decide,
+   and everything downstream follows:
+   - **Mine** → `Boyacá` is under-specified. Map each row down to its actual
+     mine where known; what cannot be resolved stays blank rather than being
+     promoted to a pseudo-mine.
+   - **Region** → add a region tier _above_ the mine tier, so `Boyacá` is a
+     valid value at its own level and Muzo/Chivor roll up into it.
+
+   Either answer makes the existing `/treasure` strip stop hiding 69% of its
+   data. Neither requires new UI.
+
+   **Pair it with the capture side or it will not stick:** make `procedencia`
+   **required in the Fotosíntesis capture flow**. At 89 of 513 filled (17%),
+   coverage otherwise accrues only by backfill, forever. Same argument as the
+   empty `fecha ingreso` / `proveedor` columns above — a field nobody is forced
+   to fill cannot answer questions later.
+
+   ### The Embajadores strip — DESCARTADO, not pending
+
+   The original "what remains" question was: should the **ambassador** surface
+   get the same strip? **Answer: no. Not queued. Do not treat this as pending
+   work.** It is downstream of the semantic decision above, and the per-
+   ambassador data cannot support it today:
+
+   | ambassador                                            | items         | with a mine | which                         |
+   | ----------------------------------------------------- | ------------- | ----------- | ----------------------------- |
+   | Isa la Negra Vikinga Warrior Portocarrero             | 59            | 16          | Boyacá×14 · Muzo×1 · Chivor×1 |
+   | M.Campuzano                                           | 117           | 3           | Boyacá×2 · Chivor×1           |
+   | L.A.Ospina · M.Ruiz · A.Molano · M.Gómez · Paola Daza | 14·14·13·11·9 | **0**       | —                             |
+
+   For most ambassadors the strip renders nothing. For Isa it would render
+   `Todas · Muzo · Chivor` — where tapping **Muzo narrows 59 items to 1**, and
+   Chivor likewise. A control that looks like a filter and narrows to one row
+   is the **RC-C failure mode** repeated: a facet that communicates nothing.
+
+   Revisit only if the semantic decision lands _and_ coverage rises. An unbuilt
+   thing that sounds plausible is exactly the box someone ticks into existence
+   in six months.
+
+   The per-item Origen cell (`3ae7e59`) already surfaces the mine where one
+   exists, which is the part that carries real value today.
 
    **One-cell source fix while someone is in the book:** `Cali×1` is an _office_, not a mine — the `ubicacion` story in miniature, caught at n=1 instead of n=320.
 
@@ -647,6 +723,31 @@ affordance per screen; ladder labels share one casing.
 - **Phase 2 (P1, next sprint):** taxonomy + a11y + restoration items; P1.1/P1.2 depend on answers to OQ-2/OQ-3.
 - **Phase 3 (P2):** schedule with the DS3 convergence track.
 - **Dependency note:** none of this blocks, or is blocked by, the Sheets→Convex migration — but P0.3's mapping fix should land wherever the detail endpoint currently reads (check per-endpoint, per `CLAUDE.md`).
+
+### Recommended order after P0 (added v1.5, 2026-07-30)
+
+P0 is merged to `main`. What follows, ranked by value over effort:
+
+1. **P1.9 — strip the `L:` lot prefixes.** Smallest, most client-visible, zero
+   dependencies. Every client browsing an ambassador catalog sees
+   `L:A-104 Lalala` today. It is also **corrective, not cosmetic**: long
+   unbreakable names were a contributing cause of the P0.6 overflow, so this
+   removes pressure from a class of bug rather than tidying appearances.
+2. **P1.8 — tab-bar label fit.** Tiny, and `EMBAJADO…` is on every screen.
+3. **P1.2 — PARKED until the 10-row `FINA COMERCIAL` ruling.** The alias table
+   is small once the ruling exists; shipping merge logic first is the one move
+   here that cannot be undone (see the implementer warning under P1.2).
+4. **`procedencia` semantics — a decision, not a build.** Mine or region (see
+   OQ-3). Costs two minutes, unblocks the `/treasure` strip's missing 69%, and
+   requires no new UI. Pair with making the field required at capture.
+5. **SOT v3 cutover — biggest lever, scheduled WITH the cotizador stream.**
+   Gated on the `costoBaseCOP` gap (98 of 270 sellable items priced — see the
+   cutover note in §Status). Not a gap to discover after flipping the switch.
+
+**Not queued, explicitly:** the Embajadores origin strip (OQ-3 — descartado,
+downstream of the semantic decision) and the `/admin/fotosintesis` e2e sweep
+(P0.1 AC — Copilot is out of scope). Both are recorded as decisions so they are
+not mistaken for pending work.
 
 ---
 
