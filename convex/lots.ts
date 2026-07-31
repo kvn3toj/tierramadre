@@ -9,6 +9,7 @@ import { v } from 'convex/values';
 import { api, internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
 import { pushTableRowToVercel, requireAppUrl } from './_lib/sheetSync';
+import { normalizeLotEstado } from './_lib/sheetPullMaps';
 import { COLUMN_MAPS } from './_lib/columnMaps';
 import {
   allocateNext,
@@ -794,14 +795,31 @@ export const retryPush = action({
 // natural key in column A, and the very value the push guard validates — and
 // rewrite rowIndex to the sheet's truth.
 //
-// Deliberately NOT reconciling membership. Lots present on only one side
-// (Convex-only cancelled/MED lots, sheet-only LC/C-07x rows) are counted and
-// returned for a human to judge; creating or deleting lots is not a repair.
+// The pull also INSERTS lots the sheet has and Convex lacks — but only rows it
+// can represent faithfully. As of the audit, 28 of the 30 missing rows are
+// `estado: "reconstruido"` with an empty provider: retroactive groupings built
+// on 2026-07-23 from legacy collections ("Fénix", "Madres", …), not real
+// purchases. `reconstruido` is outside the estado union and `providerId` is
+// required, so those rows CANNOT enter the table without either widening the
+// schema or inventing a provider. Both are product decisions, so they are
+// skipped WITH A REASON instead of coerced — a silently defaulted provider
+// would attribute someone else's stones to a real supplier.
+//
+// Field-level sync is deliberately NOT duplicated here: `_lib/sheetPullMaps`
+// (LOTS allowlist + planRowPatch, applied by fotoSync) already owns that
+// policy. This pull does only what nothing else does — rowIndex truth and
+// missing-lot insertion. Deletion is never performed.
 
 type LotRelinkChange = {
   loteId: string;
   from: number;
   to: number;
+};
+
+type LotSkip = {
+  loteId: string;
+  sheetRow: number;
+  reason: string;
 };
 
 export const _applyRowIndexRelink = internalMutation({
@@ -827,6 +845,105 @@ export const _applyRowIndexRelink = internalMutation({
   },
 });
 
+/**
+ * Insert lots the sheet has and Convex lacks. Returns what it created and what
+ * it refused to create, so a caller never has to infer silence.
+ *
+ * Inserted rows land as `syncStatus: "synced"`: the sheet row already exists
+ * and is the source of these values, so there is nothing to push back. Marking
+ * them `pending` would queue a redundant write against a row we just read.
+ */
+export const _insertMissingFromSheet = internalMutation({
+  args: {
+    candidates: v.array(
+      v.object({
+        loteId: v.string(),
+        rowIndex: v.number(),
+        providerNombre: v.string(),
+        estado: v.string(),
+        fechaRecepcion: v.string(),
+        costoTotalCOP: v.number(),
+        unidadesDeclaradas: v.number(),
+        formaPago: v.string(),
+        sede: v.optional(v.string()),
+        renombreLote: v.optional(v.string()),
+        mina: v.optional(v.string()),
+        tratamiento: v.optional(v.string()),
+        notas: v.optional(v.string()),
+      }),
+    ),
+  },
+  handler: async (ctx, { candidates }) => {
+    const created: string[] = [];
+    const skipped: LotSkip[] = [];
+
+    for (const c of candidates) {
+      const already = await ctx.db
+        .query('lots')
+        .withIndex('by_loteId', (q) => q.eq('loteId', c.loteId))
+        .first();
+      if (already) continue;
+
+      const estado = normalizeLotEstado(c.estado);
+      if (estado === null) {
+        skipped.push({
+          loteId: c.loteId,
+          sheetRow: c.rowIndex,
+          reason: `estado "${c.estado}" no existe en el modelo (abierto|cerrado|publicado|cancelado)`,
+        });
+        continue;
+      }
+
+      // Resolve the provider by name rather than defaulting one. `providerId`
+      // is a real FK: guessing it would credit a purchase to a supplier who
+      // never made it, and that error is invisible once stored.
+      const nombre = c.providerNombre.trim();
+      if (!nombre) {
+        skipped.push({
+          loteId: c.loteId,
+          sheetRow: c.rowIndex,
+          reason: 'sin proveedor en la hoja; providerId es obligatorio',
+        });
+        continue;
+      }
+      const provider = await ctx.db
+        .query('providers')
+        .withIndex('by_nombre', (q) => q.eq('nombreORazonSocial', nombre))
+        .first();
+      if (!provider) {
+        skipped.push({
+          loteId: c.loteId,
+          sheetRow: c.rowIndex,
+          reason: `proveedor "${nombre}" no existe en Convex; créalo antes de importar el lote`,
+        });
+        continue;
+      }
+
+      await ctx.db.insert('lots', {
+        loteId: c.loteId,
+        rowIndex: c.rowIndex,
+        providerId: provider._id,
+        estado: estado as 'abierto' | 'cerrado' | 'publicado' | 'cancelado',
+        fechaRecepcion: c.fechaRecepcion,
+        costoTotalCOP: c.costoTotalCOP,
+        unidadesDeclaradas: c.unidadesDeclaradas,
+        formaPago: c.formaPago,
+        sede: c.sede,
+        renombreLote: c.renombreLote,
+        mina: c.mina,
+        tratamiento: c.tratamiento,
+        notas: c.notas,
+        mostrarComoLote: false,
+        syncStatus: 'synced' as const,
+        lastPulledAt: new Date().toISOString(),
+      });
+      created.push(c.loteId);
+    }
+
+    return { created, skipped };
+  },
+});
+
 export const _relinkRowIndexFromSheet = internalAction({
   args: { dryRun: v.optional(v.boolean()) },
   handler: async (
@@ -839,6 +956,9 @@ export const _relinkRowIndexFromSheet = internalAction({
     changes: LotRelinkChange[];
     convexOnly: string[];
     sheetOnly: string[];
+    importable: number;
+    created: string[];
+    skipped: LotSkip[];
   }> => {
     const appUrl = requireAppUrl();
     const token = process.env.ADMIN_SYNC_TOKEN;
@@ -901,6 +1021,41 @@ export const _relinkRowIndexFromSheet = internalAction({
         }))
       : await ctx.runMutation(internal.lots._applyRowIndexRelink, { updates });
 
+    // Sheet-only rows: try to import them, but only those the model can hold.
+    const rowByLote = new Map(
+      rows.map((r) => [String(r.loteId ?? '').trim(), r]),
+    );
+    const candidates = sheetOnly.map((loteId) => {
+      const r = rowByLote.get(loteId) ?? {};
+      const num = (x: unknown) => {
+        // Sheet money/counts arrive as display strings ("1,234"); strip the
+        // thousands separators before Number() turns them into NaN.
+        const n = Number(String(x ?? '').replace(/[^\d.-]/g, ''));
+        return Number.isFinite(n) ? n : 0;
+      };
+      return {
+        loteId,
+        rowIndex: sheetRowByLote.get(loteId) as number,
+        providerNombre: String(r.providerNombre ?? ''),
+        estado: String(r.estado ?? ''),
+        fechaRecepcion: String(r.fechaRecepcion ?? ''),
+        costoTotalCOP: num(r.costoTotalCOP),
+        unidadesDeclaradas: num(r.unidadesDeclaradas),
+        formaPago: String(r.formaPago ?? ''),
+        sede: String(r.sede ?? '') || undefined,
+        renombreLote: String(r.renombreLote ?? '') || undefined,
+        mina: String(r.mina ?? '') || undefined,
+        tratamiento: String(r.tratamiento ?? '') || undefined,
+        notas: String(r.notas ?? '') || undefined,
+      };
+    });
+
+    const imported: { created: string[]; skipped: LotSkip[] } = dryRun
+      ? { created: [], skipped: [] }
+      : await ctx.runMutation(internal.lots._insertMissingFromSheet, {
+          candidates,
+        });
+
     return {
       dryRun: Boolean(dryRun),
       sheetRows: rows.length,
@@ -908,6 +1063,9 @@ export const _relinkRowIndexFromSheet = internalAction({
       changes,
       convexOnly,
       sheetOnly,
+      importable: candidates.length,
+      created: imported.created,
+      skipped: imported.skipped,
     };
   },
 });
@@ -936,6 +1094,9 @@ export const relinkRowIndexFromSheet = action({
     changes: LotRelinkChange[];
     convexOnly: string[];
     sheetOnly: string[];
+    importable: number;
+    created: string[];
+    skipped: LotSkip[];
   }> => {
     await requireAccessLevel(idToken, ['admin']);
     return await ctx.runAction(internal.lots._relinkRowIndexFromSheet, {
