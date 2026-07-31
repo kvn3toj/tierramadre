@@ -56,6 +56,7 @@ export const SHEETS = {
   QUOTATION_REQUESTS: 'SolicitudesCotizacion',
   PRODUCT_REQUESTS: 'SolicitudesProducto',
   USER_PREFERENCES: 'UserPreferences',
+  AMBASSADOR_HANDLES: 'AmbassadorHandles',
   FEEDBACK: 'Feedback',
   COTIZACION_REPORTS: 'CotizacionReports',
 };

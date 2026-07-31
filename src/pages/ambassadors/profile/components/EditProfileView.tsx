@@ -3,7 +3,7 @@
  * Form to edit ambassador profile: name, bio, specialty, social links.
  */
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Typography,
@@ -16,23 +16,38 @@ import { TextField } from '../../../../design-system';
 import { ArrowLeft, Camera, Save } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useNotification } from '../../../../contexts/NotificationContext';
-import {
-} from '../../../../design-system';
+import {} from '../../../../design-system';
 import type { Asesor } from '../../../../hooks/useAsesores';
+import {
+  HANDLE_REJECTION_MESSAGES,
+  normalizeHandle,
+  recommendHandle,
+  validateHandle,
+} from '../../../../utils/ambassadorHandle';
+
+/** Bare host the vanity handle hangs off, shown in the field preview. */
+const HANDLE_DOMAIN = 'tierramadre.app';
 
 interface EditProfileViewProps {
   asesor: Asesor;
   photoUrl?: string;
   isUploadingPhoto?: boolean;
+  /** Current vanity handle, or undefined while it is still loading. */
+  handle?: string;
   onPhotoEdit: () => void;
   onBack: () => void;
-  onSave: (data: { especialidad?: string; whatsapp?: string }) => Promise<void>;
+  onSave: (data: {
+    especialidad?: string;
+    whatsapp?: string;
+    handle?: string;
+  }) => Promise<void>;
 }
 
 export function EditProfileView({
   asesor,
   photoUrl,
   isUploadingPhoto,
+  handle,
   onPhotoEdit,
   onBack,
   onSave,
@@ -44,14 +59,52 @@ export function EditProfileView({
   const [whatsapp, setWhatsapp] = useState(asesor.whatsapp || '');
   const [isSaving, setIsSaving] = useState(false);
 
+  // Pre-fill with the saved handle, or recommend one from the display name
+  // ("Andres Mauricio Escobar Ramirez" → "andres") so the field is never a
+  // blank box the ambassador has to invent an answer for.
+  const recommended = useMemo(
+    () => recommendHandle(asesor.name),
+    [asesor.name],
+  );
+  const [handleDraft, setHandleDraft] = useState(handle ?? recommended);
+  const [handleTouched, setHandleTouched] = useState(false);
+
+  // The saved handle is fetched after mount, so the initializer above may
+  // have run with `undefined`. Adopt it when it lands — but never over
+  // something the ambassador has already typed.
+  useEffect(() => {
+    if (handle && !handleTouched) setHandleDraft(handle);
+  }, [handle, handleTouched]);
+
+  // Only surface an error once they have typed something — an empty field
+  // on first paint should read as optional, not as a mistake.
+  const handleError = useMemo(() => {
+    if (!handleDraft) return null;
+    const result = validateHandle(handleDraft);
+    return result.valid ? null : HANDLE_REJECTION_MESSAGES[result.reason];
+  }, [handleDraft]);
+
   const handleSave = async () => {
+    if (handleError) {
+      notify(handleError, 'error');
+      return;
+    }
     setIsSaving(true);
     try {
-      await onSave({ especialidad, whatsapp });
+      await onSave({
+        especialidad,
+        whatsapp,
+        // Omit rather than send empty: an absent handle means "leave it
+        // alone", which keeps this form from clearing a handle set elsewhere.
+        ...(handleDraft ? { handle: handleDraft } : {}),
+      });
       notify(t.common.success, 'success');
       onBack();
-    } catch {
-      notify(t.ambassador.profile.saveError, 'error');
+    } catch (err) {
+      // The handle store answers 409 with a human message when the name is
+      // taken; show it instead of the generic failure copy.
+      const message = err instanceof Error ? err.message : '';
+      notify(message || t.ambassador.profile.saveError, 'error');
     } finally {
       setIsSaving(false);
     }
@@ -135,12 +188,7 @@ export function EditProfileView({
 
       {/* Form */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-        <TextField
-          label="Nombre"
-          value={asesor.name}
-          disabled
-          fullWidth
-        />
+        <TextField label="Nombre" value={asesor.name} disabled fullWidth />
 
         <TextField
           label="Especialidad / Bio"
@@ -160,6 +208,40 @@ export function EditProfileView({
           placeholder="+57 300 123 4567"
         />
 
+        <Box>
+          <TextField
+            label="Tu enlace personal"
+            value={handleDraft}
+            onChange={(e) => {
+              setHandleTouched(true);
+              // Normalize as they type so the preview below is always the
+              // real URL, never something that would be silently rewritten
+              // on save.
+              setHandleDraft(normalizeHandle(e.target.value));
+            }}
+            fullWidth
+            error={Boolean(handleError)}
+            placeholder={recommended}
+            inputProps={{
+              autoCapitalize: 'none',
+              autoCorrect: 'off',
+              spellCheck: false,
+            }}
+          />
+          <Typography
+            variant="caption"
+            sx={{
+              display: 'block',
+              mt: 0.75,
+              px: 0.5,
+              color: handleError ? 'var(--tm-danger)' : 'var(--tm-text-muted)',
+            }}
+          >
+            {handleError ??
+              `${handleDraft || recommended}.${HANDLE_DOMAIN} lleva a tu perfil`}
+          </Typography>
+        </Box>
+
         <TextField
           label="Email"
           value={asesor.email || ''}
@@ -170,7 +252,13 @@ export function EditProfileView({
         <Button
           variant="contained"
           fullWidth
-          startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : <Save size={18} />}
+          startIcon={
+            isSaving ? (
+              <CircularProgress size={16} color="inherit" />
+            ) : (
+              <Save size={18} />
+            )
+          }
           onClick={handleSave}
           disabled={isSaving}
           sx={{
@@ -184,7 +272,9 @@ export function EditProfileView({
             mt: 1,
           }}
         >
-          {isSaving ? (t.actions.saving || 'Guardando...') : (t.ambassador.museum?.save ?? 'Guardar')}
+          {isSaving
+            ? t.actions.saving || 'Guardando...'
+            : (t.ambassador.museum?.save ?? 'Guardar')}
         </Button>
       </Box>
     </Box>

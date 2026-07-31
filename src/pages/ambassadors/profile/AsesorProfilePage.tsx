@@ -36,6 +36,7 @@ import { qeFont, zIndex } from '../../../design-system';
 import { useAsesorCollection } from '../../../hooks/useAsesorCollection';
 import { useAmbassadorPhoto } from '../../../hooks/useAmbassadorPhoto';
 import { useAmbassadorOverrides } from '../../../hooks/useAmbassadorOverrides';
+import { requireAuthTokenOrLogout } from '../../../utils/sessionToken';
 import { applyAmbassadorOverrides } from '../../../utils/applyAmbassadorOverride';
 import {
   ProfileHeader,
@@ -142,6 +143,10 @@ export default function AsesorProfilePage() {
   // Ambassador per-product overrides (custom name / price) — T4 MVP
   const { overrides: ambassadorOverrides } = useAmbassadorOverrides(slug);
 
+  // Vanity handle powering <handle>.tierramadre.app. Loaded lazily and only
+  // for the profile owner, since it is only ever shown in the edit form.
+  const [vanityHandle, setVanityHandle] = useState<string | undefined>();
+
   // Notify on photo upload result
   const prevUploadingRef = useRef(false);
   useEffect(() => {
@@ -187,6 +192,28 @@ export default function AsesorProfilePage() {
       cotizacionHistory.fetchCotizaciones(googleUser.email);
     }
   }, [isProfileOwner, googleUser?.email]);
+
+  // Load the saved vanity handle for the edit form. Owner-only: nobody else
+  // can edit it, and this avoids a request on every profile view.
+  useEffect(() => {
+    if (!isProfileOwner || !asesor?.email) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/ambassador-handle?email=${encodeURIComponent(asesor.email!)}`,
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled && data?.handle) setVanityHandle(data.handle);
+      } catch {
+        // Non-fatal: the form falls back to recommending one from the name.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isProfileOwner, asesor?.email]);
 
   // Get products for this asesor
   const allProducts = useMemo(() => {
@@ -381,16 +408,50 @@ export default function AsesorProfilePage() {
   const handleProductDetailBack = goBackOrProfile;
 
   const handleEditSave = useCallback(
-    async (data: { especialidad?: string; whatsapp?: string }) => {
-      const res = await fetch('/api/user-prefs', {
+    async (data: {
+      especialidad?: string;
+      whatsapp?: string;
+      handle?: string;
+    }) => {
+      const email = asesor?.email;
+      if (!email) throw new Error('Save failed');
+
+      const { handle, ...prefs } = data;
+
+      // /api/user-prefs takes { userId, preferences } — it was previously
+      // called with a flat { email, ...fields } body, which meant every save
+      // from this form 400'd on "userId and preferences required".
+      const prefsRes = await fetch('/api/user-prefs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: asesor?.email,
-          ...data,
-        }),
+        body: JSON.stringify({ userId: email, preferences: prefs }),
       });
-      if (!res.ok) throw new Error('Save failed');
+      if (!prefsRes.ok) throw new Error('Save failed');
+
+      if (!handle) return;
+
+      // The handle mutation is identity-bound server-side (it writes to the
+      // verified token's row), so it needs the same bearer proof as the other
+      // privileged mutations. Null → fully expired session; the helper
+      // already fired the sign-out redirect, so just stop here.
+      const token = requireAuthTokenOrLogout();
+      if (!token) return;
+
+      // Separate store, separate failure mode: a taken handle answers 409
+      // with copy meant for the ambassador, so surface it verbatim.
+      const handleRes = await fetch('/api/ambassador-handle', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email, handle }),
+      });
+      if (!handleRes.ok) {
+        const body = await handleRes.json().catch(() => null);
+        throw new Error(body?.error || 'Save failed');
+      }
+      setVanityHandle(handle);
     },
     [asesor?.email],
   );
@@ -728,6 +789,7 @@ export default function AsesorProfilePage() {
             asesor={asesor}
             photoUrl={localPhotoUrl || undefined}
             isUploadingPhoto={isUploadingPhoto}
+            handle={vanityHandle}
             onPhotoEdit={handlePhotoEditClick}
             onBack={handleBackToMuseum}
             onSave={handleEditSave}
