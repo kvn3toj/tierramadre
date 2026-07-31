@@ -1,0 +1,1584 @@
+{
+  "version": "2.14",
+  "children": [
+    {
+      "type": "frame",
+      "id": "C309",
+      "x": 0,
+      "y": 0,
+      "name": "Card 309 Grandiosidad · 4 tipos",
+      "clip": true,
+      "width": 1024,
+      "fill": "#F7F7F5",
+      "cornerRadius": 16,
+      "layout": "vertical",
+      "gap": 18,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "sp309",
+          "name": "Specs",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "#309 · Grandiosidad · 1.22 ct · Lágrima · Verde Chivor · FINA SUBLIME — 4 tipos",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "top309",
+          "name": "Top",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "fc309",
+              "name": "Foto real col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "lf309",
+                  "name": "L",
+                  "fill": "#6B6B6B",
+                  "content": "FOTO REAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "hero309",
+                  "name": "Hero-309",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "work/309/hero-clean.jpg",
+                    "mode": "fill"
+                  },
+                  "width": 460,
+                  "height": 460
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nc309",
+              "name": "Nota col",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ia309",
+                  "name": "IA",
+                  "fill": "#1B7A52",
+                  "content": "VISUALIZACIÓN IA · 4 TIPOS (REFERENCIAL)",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "no309",
+                  "name": "Nota",
+                  "fill": "#6B6B6B",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "La misma gema real montada en anillo, collar, pulsera y aretes — a escala fiel, con engaste acorde a la talla.",
+                  "lineHeight": 1.4,
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "g309",
+          "name": "Grid",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "r1_309",
+              "name": "R1",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "fANILLO309",
+                  "name": "ANILLO-309",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TANILLO309",
+                      "name": "T-ANILLO-309",
+                      "fill": "#1A1A1A",
+                      "content": "ANILLO",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RANILLO309",
+                      "name": "R-ANILLO-309",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1785378379183.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fCOLLAR309",
+                  "name": "COLLAR-309",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TCOLLAR309",
+                      "name": "T-COLLAR-309",
+                      "fill": "#1A1A1A",
+                      "content": "COLLAR",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RCOLLAR309",
+                      "name": "R-COLLAR-309",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1785378378709.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "r2_309",
+              "name": "R2",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "fPULSERA309",
+                  "name": "PULSERA-309",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TPULSERA309",
+                      "name": "T-PULSERA-309",
+                      "fill": "#1A1A1A",
+                      "content": "PULSERA",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RPULSERA309",
+                      "name": "R-PULSERA-309",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1785378378365.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fARETES309",
+                  "name": "ARETES-309",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TARETES309",
+                      "name": "T-ARETES-309",
+                      "fill": "#1A1A1A",
+                      "content": "ARETES",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RARETES309",
+                      "name": "R-ARETES-309",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "images/generated-1785380004428.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "C311",
+      "x": 1104,
+      "y": 0,
+      "name": "Card 311 Vida · 4 tipos",
+      "clip": true,
+      "width": 1024,
+      "fill": "#F7F7F5",
+      "cornerRadius": 16,
+      "layout": "vertical",
+      "gap": 18,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "sp311",
+          "name": "Specs",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "#311 · Vida · 0.54 ct · 6.5 x 4.5 mm · Lágrima · Verde Chivor · F2 — 4 tipos",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "top311",
+          "name": "Top",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "fc311",
+              "name": "Foto real col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "lf311",
+                  "name": "L",
+                  "fill": "#6B6B6B",
+                  "content": "FOTO REAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "hero311",
+                  "name": "Hero-311",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "work/311/hero-clean.jpg",
+                    "mode": "fill"
+                  },
+                  "width": 460,
+                  "height": 460
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nc311",
+              "name": "Nota col",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ia311",
+                  "name": "IA",
+                  "fill": "#1B7A52",
+                  "content": "VISUALIZACIÓN IA · 4 TIPOS (REFERENCIAL)",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "no311",
+                  "name": "Nota",
+                  "fill": "#6B6B6B",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "La misma gema real montada en anillo, collar, pulsera y aretes — a escala fiel, con engaste acorde a la talla.",
+                  "lineHeight": 1.4,
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "g311",
+          "name": "Grid",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "r1_311",
+              "name": "R1",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "fANILLO311",
+                  "name": "ANILLO-311",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TANILLO311",
+                      "name": "T-ANILLO-311",
+                      "fill": "#1A1A1A",
+                      "content": "ANILLO",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RANILLO311",
+                      "name": "R-ANILLO-311",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "images/generated-1785380103246.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fCOLLAR311",
+                  "name": "COLLAR-311",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TCOLLAR311",
+                      "name": "T-COLLAR-311",
+                      "fill": "#1A1A1A",
+                      "content": "COLLAR",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RCOLLAR311",
+                      "name": "R-COLLAR-311",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "images/generated-1785380120416.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "r2_311",
+              "name": "R2",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "fPULSERA311",
+                  "name": "PULSERA-311",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TPULSERA311",
+                      "name": "T-PULSERA-311",
+                      "fill": "#1A1A1A",
+                      "content": "PULSERA",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RPULSERA311",
+                      "name": "R-PULSERA-311",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "images/generated-1785380113674.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fARETES311",
+                  "name": "ARETES-311",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TARETES311",
+                      "name": "T-ARETES-311",
+                      "fill": "#1A1A1A",
+                      "content": "ARETES",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RARETES311",
+                      "name": "R-ARETES-311",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "images/generated-1785380116549.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "C240",
+      "x": 2208,
+      "y": 0,
+      "name": "Card 240 Despertar · 4 tipos",
+      "clip": true,
+      "width": 1024,
+      "fill": "#F7F7F5",
+      "cornerRadius": 16,
+      "layout": "vertical",
+      "gap": 18,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "sp240",
+          "name": "Specs",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "#240 · Despertar · 1.66 ct · Varias · Verde Limón · COMERCIAL FINA — 4 tipos",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "top240",
+          "name": "Top",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "fc240",
+              "name": "Foto real col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "lf240",
+                  "name": "L",
+                  "fill": "#6B6B6B",
+                  "content": "FOTO REAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "hero240",
+                  "name": "Hero-240",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "work/240/hero-clean.jpg",
+                    "mode": "fill"
+                  },
+                  "width": 460,
+                  "height": 460
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nc240",
+              "name": "Nota col",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ia240",
+                  "name": "IA",
+                  "fill": "#1B7A52",
+                  "content": "VISUALIZACIÓN IA · 4 TIPOS (REFERENCIAL)",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "no240",
+                  "name": "Nota",
+                  "fill": "#6B6B6B",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "La misma gema real montada en anillo, collar, pulsera y aretes — a escala fiel, con engaste acorde a la talla.",
+                  "lineHeight": 1.4,
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "g240",
+          "name": "Grid",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "r1_240",
+              "name": "R1",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "fANILLO240",
+                  "name": "ANILLO-240",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TANILLO240",
+                      "name": "T-ANILLO-240",
+                      "fill": "#1A1A1A",
+                      "content": "ANILLO",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RANILLO240",
+                      "name": "R-ANILLO-240",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "images/generated-1785380106664.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fCOLLAR240",
+                  "name": "COLLAR-240",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TCOLLAR240",
+                      "name": "T-COLLAR-240",
+                      "fill": "#1A1A1A",
+                      "content": "COLLAR",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RCOLLAR240",
+                      "name": "R-COLLAR-240",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "images/generated-1785380092417.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "r2_240",
+              "name": "R2",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "fPULSERA240",
+                  "name": "PULSERA-240",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TPULSERA240",
+                      "name": "T-PULSERA-240",
+                      "fill": "#1A1A1A",
+                      "content": "PULSERA",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RPULSERA240",
+                      "name": "R-PULSERA-240",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1785379261666.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fARETES240",
+                  "name": "ARETES-240",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TARETES240",
+                      "name": "T-ARETES-240",
+                      "fill": "#1A1A1A",
+                      "content": "ARETES",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RARETES240",
+                      "name": "R-ARETES-240",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "images/generated-1785380120445.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "C233",
+      "x": 3312,
+      "y": 0,
+      "name": "Card 233 Invierno · 4 tipos",
+      "clip": true,
+      "width": 1024,
+      "fill": "#F7F7F5",
+      "cornerRadius": 16,
+      "layout": "vertical",
+      "gap": 18,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "sp233",
+          "name": "Specs",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "#233 · Invierno · 0.95 ct · Cuadrada · Verde Limón · COMERCIAL FINA — 4 tipos",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "top233",
+          "name": "Top",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "fc233",
+              "name": "Foto real col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "lf233",
+                  "name": "L",
+                  "fill": "#6B6B6B",
+                  "content": "FOTO REAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "hero233",
+                  "name": "Hero-233",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "work/233/hero-clean.jpg",
+                    "mode": "fill"
+                  },
+                  "width": 460,
+                  "height": 460
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nc233",
+              "name": "Nota col",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ia233",
+                  "name": "IA",
+                  "fill": "#1B7A52",
+                  "content": "VISUALIZACIÓN IA · 4 TIPOS (REFERENCIAL)",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "no233",
+                  "name": "Nota",
+                  "fill": "#6B6B6B",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "La misma gema real montada en anillo, collar, pulsera y aretes — a escala fiel, con engaste acorde a la talla.",
+                  "lineHeight": 1.4,
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "g233",
+          "name": "Grid",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "r1_233",
+              "name": "R1",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "fANILLO233",
+                  "name": "ANILLO-233",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TANILLO233",
+                      "name": "T-ANILLO-233",
+                      "fill": "#1A1A1A",
+                      "content": "ANILLO",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RANILLO233",
+                      "name": "R-ANILLO-233",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "images/generated-1785380089226.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fCOLLAR233",
+                  "name": "COLLAR-233",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TCOLLAR233",
+                      "name": "T-COLLAR-233",
+                      "fill": "#1A1A1A",
+                      "content": "COLLAR",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RCOLLAR233",
+                      "name": "R-COLLAR-233",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "images/generated-1785380114096.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "r2_233",
+              "name": "R2",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "fPULSERA233",
+                  "name": "PULSERA-233",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TPULSERA233",
+                      "name": "T-PULSERA-233",
+                      "fill": "#1A1A1A",
+                      "content": "PULSERA",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RPULSERA233",
+                      "name": "R-PULSERA-233",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "images/generated-1785380112563.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fARETES233",
+                  "name": "ARETES-233",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TARETES233",
+                      "name": "T-ARETES-233",
+                      "fill": "#1A1A1A",
+                      "content": "ARETES",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RARETES233",
+                      "name": "R-ARETES-233",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1785379306802.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "C251",
+      "x": 4416,
+      "y": 0,
+      "name": "Card 251 Divina presencia · 4 tipos",
+      "clip": true,
+      "width": 1024,
+      "fill": "#F7F7F5",
+      "cornerRadius": 16,
+      "layout": "vertical",
+      "gap": 18,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "sp251",
+          "name": "Specs",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "#251 · Divina presencia · 0.55 ct · Baguette · Verde Limón · COMERCIAL FINA — 4 tipos",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "top251",
+          "name": "Top",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "fc251",
+              "name": "Foto real col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "lf251",
+                  "name": "L",
+                  "fill": "#6B6B6B",
+                  "content": "FOTO REAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "hero251",
+                  "name": "Hero-251",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "work/251/hero-clean.jpg",
+                    "mode": "fill"
+                  },
+                  "width": 460,
+                  "height": 460
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nc251",
+              "name": "Nota col",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ia251",
+                  "name": "IA",
+                  "fill": "#1B7A52",
+                  "content": "VISUALIZACIÓN IA · 4 TIPOS (REFERENCIAL)",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "no251",
+                  "name": "Nota",
+                  "fill": "#6B6B6B",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "La misma gema real montada en anillo, collar, pulsera y aretes — a escala fiel, con engaste acorde a la talla.",
+                  "lineHeight": 1.4,
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "g251",
+          "name": "Grid",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "r1_251",
+              "name": "R1",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "fANILLO251",
+                  "name": "ANILLO-251",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TANILLO251",
+                      "name": "T-ANILLO-251",
+                      "fill": "#1A1A1A",
+                      "content": "ANILLO",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RANILLO251",
+                      "name": "R-ANILLO-251",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1785379300920.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fCOLLAR251",
+                  "name": "COLLAR-251",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TCOLLAR251",
+                      "name": "T-COLLAR-251",
+                      "fill": "#1A1A1A",
+                      "content": "COLLAR",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RCOLLAR251",
+                      "name": "R-COLLAR-251",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "images/generated-1785380102594.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "r2_251",
+              "name": "R2",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "fPULSERA251",
+                  "name": "PULSERA-251",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TPULSERA251",
+                      "name": "T-PULSERA-251",
+                      "fill": "#1A1A1A",
+                      "content": "PULSERA",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RPULSERA251",
+                      "name": "R-PULSERA-251",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "images/generated-1785380094573.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fARETES251",
+                  "name": "ARETES-251",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TARETES251",
+                      "name": "T-ARETES-251",
+                      "fill": "#1A1A1A",
+                      "content": "ARETES",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "RARETES251",
+                      "name": "R-ARETES-251",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1785379302413.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "l7grx0",
+      "x": 5520,
+      "y": 0,
+      "name": "Card 4 Los Robles (PAR) · 4 tipos",
+      "clip": true,
+      "width": 1024,
+      "fill": "#F7F7F5",
+      "cornerRadius": 16,
+      "layout": "vertical",
+      "gap": 18,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "NhfKm",
+          "name": "Specs",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "#4 · Los Robles · 1.56 ct · Esmeralda · Verde Natural · Comercial Fina — 4 tipos",
+          "fontFamily": "Inter",
+          "fontSize": 20,
+          "fontWeight": "600"
+        },
+        {
+          "type": "frame",
+          "id": "c0SGha",
+          "name": "Top",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "H5xJXN",
+              "name": "Foto real col",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "DJUbo",
+                  "name": "L",
+                  "fill": "#6B6B6B",
+                  "content": "FOTO REAL",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 12,
+                  "id": "TovAo",
+                  "name": "Hero-4",
+                  "fill": {
+                    "type": "image",
+                    "enabled": true,
+                    "url": "work/4/hero-clean.jpg",
+                    "mode": "fill"
+                  },
+                  "width": 460,
+                  "height": 460
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "U8pizk",
+              "name": "Nota col",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "HruVz",
+                  "name": "IA",
+                  "fill": "#1B7A52",
+                  "content": "VISUALIZACIÓN IA · 4 TIPOS (REFERENCIAL)",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "FdkiL",
+                  "name": "Nota",
+                  "fill": "#6B6B6B",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "El mismo PAR de gemas reales montado en anillo, collar, pulsera y aretes — a escala fiel, con engaste acorde a la talla.",
+                  "lineHeight": 1.4,
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "izCMF",
+          "name": "Grid",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "EIkOu",
+              "name": "R1",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Y62zZ",
+                  "name": "ANILLO-4",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "g7vsih",
+                      "name": "T-ANILLO-4",
+                      "fill": "#1A1A1A",
+                      "content": "ANILLO",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "TxL4q",
+                      "name": "R-ANILLO-4",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1785381627149.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "AK6MK",
+                  "name": "COLLAR-4",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "h6PBd",
+                      "name": "T-COLLAR-4",
+                      "fill": "#1A1A1A",
+                      "content": "COLLAR",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "R0qdx",
+                      "name": "R-COLLAR-4",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "images/generated-1785381638579.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "c181S",
+              "name": "R2",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "HUEVU",
+                  "name": "PULSERA-4",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "p9T1V",
+                      "name": "T-PULSERA-4",
+                      "fill": "#1A1A1A",
+                      "content": "PULSERA",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "juRJy",
+                      "name": "R-PULSERA-4",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "./images/generated-1785381635523.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "BCd2p",
+                  "name": "ARETES-4",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "GkQX5",
+                      "name": "T-ARETES-4",
+                      "fill": "#1A1A1A",
+                      "content": "ARETES",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 12,
+                      "id": "OS9Mb",
+                      "name": "R-ARETES-4",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "images/generated-1785381630825.png",
+                        "mode": "fill"
+                      },
+                      "width": 460,
+                      "height": 460
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "fileToken": "ee2a39d4-4b1f-4456-910c-05e8ce3af609"
+}

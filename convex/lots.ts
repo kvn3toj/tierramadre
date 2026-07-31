@@ -8,7 +8,7 @@ import {
 import { v } from 'convex/values';
 import { api, internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
-import { pushTableRowToVercel } from './_lib/sheetSync';
+import { pushTableRowToVercel, requireAppUrl } from './_lib/sheetSync';
 import { COLUMN_MAPS } from './_lib/columnMaps';
 import {
   allocateNext,
@@ -776,5 +776,170 @@ export const retryPush = action({
     const row = await ctx.runQuery(internal.lots._getInternal, { id });
     if (!row) return { ok: false, message: 'Lot not found' };
     return await ctx.runAction(api.lots._pushToSheet, { id, mode: 'patch' });
+  },
+});
+
+// ── rowIndex relink (Lotes) ────────────────────────────────────────────────
+//
+// `_create` assigns rowIndex as `maxRow + 1` — a counter that is never
+// reconciled against the sheet. Insert or delete a row in Lotes and every
+// stored pointer below it silently means a different row. As of the 2026-07-31
+// audit ALL 79 matchable lots were off (uniformly +2 across the C series);
+// only C-009 surfaced it, because it was the only lot edited since the drift
+// and the column-A guard in /api/admin-table-update caught the mismatch.
+//
+// This is the same defect `products._pullFromSheet` already fixed by consuming
+// the API's authoritative physical row instead of an array position. Lots has
+// no pull at all, so the repair is a dedicated relink: match on loteId — the
+// natural key in column A, and the very value the push guard validates — and
+// rewrite rowIndex to the sheet's truth.
+//
+// Deliberately NOT reconciling membership. Lots present on only one side
+// (Convex-only cancelled/MED lots, sheet-only LC/C-07x rows) are counted and
+// returned for a human to judge; creating or deleting lots is not a repair.
+
+type LotRelinkChange = {
+  loteId: string;
+  from: number;
+  to: number;
+};
+
+export const _applyRowIndexRelink = internalMutation({
+  args: {
+    updates: v.array(v.object({ loteId: v.string(), rowIndex: v.number() })),
+  },
+  handler: async (ctx, { updates }) => {
+    const changes: LotRelinkChange[] = [];
+    for (const { loteId, rowIndex } of updates) {
+      const lot = await ctx.db
+        .query('lots')
+        .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
+        .first();
+      if (!lot || lot.rowIndex === rowIndex) continue;
+      // rowIndex only — never touch syncStatus here. A lot parked in `error`
+      // because of the drift stays in `error` until its next push actually
+      // succeeds; silently flipping it to `synced` would claim the sheet row
+      // was written when nothing was pushed.
+      await ctx.db.patch(lot._id, { rowIndex });
+      changes.push({ loteId, from: lot.rowIndex, to: rowIndex });
+    }
+    return changes;
+  },
+});
+
+export const _relinkRowIndexFromSheet = internalAction({
+  args: { dryRun: v.optional(v.boolean()) },
+  handler: async (
+    ctx,
+    { dryRun },
+  ): Promise<{
+    dryRun: boolean;
+    sheetRows: number;
+    matched: number;
+    changes: LotRelinkChange[];
+    convexOnly: string[];
+    sheetOnly: string[];
+  }> => {
+    const appUrl = requireAppUrl();
+    const token = process.env.ADMIN_SYNC_TOKEN;
+    if (!token)
+      throw new Error('ADMIN_SYNC_TOKEN missing on Convex deployment');
+
+    const res = await fetch(`${appUrl}/api/get-table?table=lots`, {
+      headers: { 'x-admin-sync-token': token },
+    });
+    if (!res.ok) {
+      throw new Error(`Lotes sheet fetch failed: HTTP ${res.status}`);
+    }
+    const payload = (await res.json()) as {
+      data?: { rows?: Array<Record<string, string>> };
+      rows?: Array<Record<string, string>>;
+    };
+    const rows = payload.data?.rows ?? payload.rows ?? [];
+    if (rows.length === 0) {
+      // An empty read would relink nothing but still look "successful"; treat
+      // it as a transport failure rather than reporting a clean no-op.
+      throw new Error('Lotes sheet returned 0 rows — refusing to relink');
+    }
+
+    // `__rowIndex` is the physical 1-based sheet row stamped by /api/get-table,
+    // not a position in a compacted array — that distinction is the whole fix.
+    const sheetRowByLote = new Map<string, number>();
+    for (const row of rows) {
+      const loteId = String(row.loteId ?? '').trim();
+      if (!loteId) continue;
+      const physical = Number(row.__rowIndex);
+      if (!Number.isFinite(physical)) continue;
+      // First occurrence wins: a duplicated loteId in the sheet is a data bug,
+      // and pointing at the first row keeps the guard's column-A check honest.
+      if (!sheetRowByLote.has(loteId)) sheetRowByLote.set(loteId, physical);
+    }
+
+    const lots = await ctx.runQuery(internal.lots._listAllForRelink, {});
+    const updates: Array<{ loteId: string; rowIndex: number }> = [];
+    const convexOnly: string[] = [];
+    for (const lot of lots) {
+      const physical = sheetRowByLote.get(lot.loteId);
+      if (physical === undefined) {
+        convexOnly.push(lot.loteId);
+        continue;
+      }
+      if (physical !== lot.rowIndex)
+        updates.push({ loteId: lot.loteId, rowIndex: physical });
+    }
+
+    const convexIds = new Set(lots.map((l) => l.loteId));
+    const sheetOnly = [...sheetRowByLote.keys()].filter(
+      (id) => !convexIds.has(id),
+    );
+
+    const changes: LotRelinkChange[] = dryRun
+      ? updates.map((u) => ({
+          loteId: u.loteId,
+          from: lots.find((l) => l.loteId === u.loteId)?.rowIndex ?? -1,
+          to: u.rowIndex,
+        }))
+      : await ctx.runMutation(internal.lots._applyRowIndexRelink, { updates });
+
+    return {
+      dryRun: Boolean(dryRun),
+      sheetRows: rows.length,
+      matched: lots.length - convexOnly.length,
+      changes,
+      convexOnly,
+      sheetOnly,
+    };
+  },
+});
+
+export const _listAllForRelink = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const lots = await ctx.db.query('lots').collect();
+    return lots.map((l) => ({ loteId: l.loteId, rowIndex: l.rowIndex }));
+  },
+});
+
+/**
+ * Admin entry point for "Reparar índices de fila (Lotes)". Pass `dryRun: true`
+ * to see exactly what would change before writing anything.
+ */
+export const relinkRowIndexFromSheet = action({
+  args: { idToken: v.string(), dryRun: v.optional(v.boolean()) },
+  handler: async (
+    ctx,
+    { idToken, dryRun },
+  ): Promise<{
+    dryRun: boolean;
+    sheetRows: number;
+    matched: number;
+    changes: LotRelinkChange[];
+    convexOnly: string[];
+    sheetOnly: string[];
+  }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runAction(internal.lots._relinkRowIndexFromSheet, {
+      dryRun,
+    });
   },
 });

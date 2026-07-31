@@ -1,0 +1,157 @@
+{
+  "exportadoEl": "2026-07-30T20:40:47Z",
+  "origen": "https://wonderful-tortoise-984.convex.cloud",
+  "motivo": "Filas presentes sólo en wonderful-tortoise-984. Producción (grand-hippopotamus-162) tiene 513 filas y ninguna con itemId alfabético; el SOT v3 tampoco. Respaldo previo a repuntar CONVEX_URL de anima-bot.",
+  "advertencia": "Cada fila conserva un rowIndex que hoy apunta a OTRO ítem del SOT. Un push desde esta base hacia la hoja sobrescribiría los ítems listados en colisionEnHoja.",
+  "filas": [
+    {
+      "itemId": "93A",
+      "doc": {
+        "_creationTime": 1783731221156.321,
+        "_id": "k1780edztpb6560bvbk6wwa26h8abp6n",
+        "calidad": "Comercial Fina",
+        "cantidad": 1,
+        "categoria": "Gema",
+        "coleccion": "COLECCION Secretos del Bosque",
+        "color": "Verde Limón",
+        "estado": "DISPONIBLE",
+        "itemId": "93A",
+        "lastPulledAt": "2026-07-11T01:00:11.107Z",
+        "lastPushedAt": "2026-07-11T01:00:22.000Z",
+        "medidas": "Largo x Ancho",
+        "nombre": "Romeo",
+        "peso": "0.87",
+        "precioCOP": 986859,
+        "rowIndex": 443,
+        "syncStatus": "synced",
+        "talla": "Ovalo",
+        "ubicacion": "OFI.CALI"
+      },
+      "existeEnProduccion": false,
+      "colisionEnHoja": {
+        "fila": 443,
+        "item": "443",
+        "nombre": "Luz del Sol"
+      },
+      "equivalenteEnSotV3": "93",
+      "resolucion": "Romeo — la división 93A/93B se consolidó de vuelta en el ítem 93 «Julieta» (1.74 ct = 2 × 0.87). Notas en Anima/inventario/legacy-pre-sot-v3/."
+    },
+    {
+      "itemId": "93B",
+      "doc": {
+        "_creationTime": 1783731227832.657,
+        "_id": "k175rhfbfbg7p42yg2d7p2kt9n8aa46a",
+        "calidad": "Comercial Fina",
+        "cantidad": 1,
+        "categoria": "Gema",
+        "coleccion": "COLECCION Secretos del Bosque",
+        "color": "Verde Limón",
+        "estado": "DISPONIBLE",
+        "itemId": "93B",
+        "lastPulledAt": "2026-07-11T01:00:12.884Z",
+        "lastPushedAt": "2026-07-11T01:00:24.530Z",
+        "medidas": "Largo x Ancho",
+        "nombre": "Julieta",
+        "peso": "0.87",
+        "precioCOP": 986858,
+        "rowIndex": 444,
+        "syncStatus": "synced",
+        "talla": "Ovalo",
+        "ubicacion": "OFI.CALI"
+      },
+      "existeEnProduccion": false,
+      "colisionEnHoja": {
+        "fila": 444,
+        "item": "444",
+        "nombre": "Aurora Escondida"
+      },
+      "equivalenteEnSotV3": "93",
+      "resolucion": "Julieta — ídem. El ítem 93 vigente en SOT v3 y en prod lleva el peso combinado."
+    },
+    {
+      "itemId": "495A",
+      "doc": {
+        "_creationTime": 1784146567369.7532,
+        "_id": "k1720bqxte25x6m2jbnfn9bybn8akwag",
+        "categoria": "Joya",
+        "costoBaseCOP": 0,
+        "estado": "DISPONIBLE",
+        "itemId": "495A",
+        "lastPulledAt": "2026-07-15T20:16:07.369Z",
+        "lastPushedAt": "2026-07-15T20:16:08.724Z",
+        "loteId": "C-054",
+        "mostrarEnCatalogo": false,
+        "nombre": "Anillos Producidos Joyero Cali (Juan)",
+        "preponderancia": 0,
+        "rowIndex": 460,
+        "syncStatus": "synced",
+        "tipo": "joya"
+      },
+      "existeEnProduccion": false,
+      "colisionEnHoja": {
+        "fila": 460,
+        "item": "460",
+        "nombre": "Topos Redondos 3mm (par)"
+      },
+      "equivalenteEnSotV3": "495",
+      "resolucion": "4 anillos de plata producidos. El SOT v3 los consolidó en el ítem 495 (cantidad 5). Su costoBaseCOP era 0 también acá."
+    },
+    {
+      "itemId": "495B",
+      "doc": {
+        "_creationTime": 1784146567455.1777,
+        "_id": "k17f8jk4nekdf323r9dmzmfrzd8aka09",
+        "categoria": "Joya",
+        "costoBaseCOP": 1279000,
+        "estado": "DISPONIBLE",
+        "itemId": "495B",
+        "lastPulledAt": "2026-07-15T20:16:07.455Z",
+        "lastPushedAt": "2026-07-15T20:16:08.783Z",
+        "loteId": "C-054",
+        "mostrarEnCatalogo": false,
+        "nombre": "Anillo de Oro producido Cali",
+        "preponderancia": 0,
+        "rowIndex": 461,
+        "syncStatus": "synced",
+        "tipo": "joya"
+      },
+      "existeEnProduccion": false,
+      "colisionEnHoja": {
+        "fila": 461,
+        "item": "461",
+        "nombre": "Topos Redondos 5mm (par)"
+      },
+      "equivalenteEnSotV3": "495",
+      "resolucion": "ANILLO DE ORO — costoBaseCOP 1.279.000. El ítem 495 consolidado quedó con costoBaseCOP 0, así que ESTE COSTO NO SOBREVIVIÓ a la consolidación. Es el único dato con valor real del export."
+    },
+    {
+      "itemId": "502A",
+      "doc": {
+        "_creationTime": 1784414957076.2363,
+        "_id": "k17fjx0nspejmn73hqc8kwcx5s8aspdv",
+        "asesor": "Mauricio Echeverry Naranjo",
+        "calidad": "Variada",
+        "cantidad": 1,
+        "categoria": "Gema Facetada",
+        "estado": "VENDIDA",
+        "itemId": "502A",
+        "lastPulledAt": "2026-07-18T22:49:17.076Z",
+        "lastPushedAt": "2026-07-18T22:49:26.802Z",
+        "nombre": "Baguette (corte C-068, pos. A)",
+        "precioCOP": 367500,
+        "rowIndex": 470,
+        "syncStatus": "synced"
+      },
+      "existeEnProduccion": false,
+      "colisionEnHoja": {
+        "fila": 470,
+        "item": "470",
+        "nombre": "Mellizas del Alba — Piedra 4"
+      },
+      "equivalenteEnSotV3": "502",
+      "resolucion": "Renumerado a ítem 502 en SOT v3 (fila 493). Mismo nombre, VENDIDA, 367.500, asesor Mauricio Echeverry Naranjo. Nada perdido."
+    }
+  ],
+  "CORRECCION_2026_07_30": "Una versión anterior de este archivo marcaba 93A/93B/502A como «única copia». ERA FALSO. Las notas de Anima (Wings/Projects/TierraMadre/inventario/) muestran que los itemId con letra fueron una convención PRE-SOT-v3: la migración a v3 los renumeró (502A→502) o los consolidó (93A+93B→93). Los cinco tienen equivalente vivo en el SOT v3 y en producción. Verificado ítem por ítem contra grand-hippopotamus-162.",
+  "unicoDatoQueNoSOBREVIVIO": "495B «Anillo de Oro producido Cali» traía costoBaseCOP = 1.279.000. El ítem 495 consolidado (cantidad 5) quedó con costoBaseCOP = 0 y sin precio final — es uno de los 19 ítems vendibles sin costo. Ese costo del anillo de oro sólo existe acá."
+}

@@ -199,3 +199,8 @@ scripts/.propuesta-*.csv
 
 # Scratch de la cotización Soul (pptx exportado + miniaturas)
 scripts/.soul/
+
+# Certificados de origen: el harness/ (vite + componentes de producción) SÍ es
+# fuente y se versiona; out/ son los PNG que regenera scripts/generar-certificados.mjs
+# — 2.7 GB de render, nunca al repo.
+scripts/certificados/out/
