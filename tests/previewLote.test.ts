@@ -167,6 +167,49 @@ describe('el precio por unidad — lo que de verdad se va a cotizar', () => {
   });
 });
 
+describe('un lote sin costo capturado NO cotiza', () => {
+  // El caso C-085 del SOT vivo: costo 0 y cotizando igual. Su precio salía de
+  // dividir SOLO el gasto fijo, o sea que el objetivo era 100% estructura y 0%
+  // mercancía — un número que parece un precio y no lo es. Dictamen de Kevin
+  // (2026-08-01): el motor devuelve el aviso, nunca el precio.
+  const sinCosto = {
+    costoCompraCOP: 0,
+    categoriaFiscal: 'gema' as const,
+    costoFijoUnitarioCOP: FIJO,
+    fecha: YA_OBJETIVO,
+    config: CFG,
+  };
+
+  it('no devuelve precio', () => {
+    const p = construirPreviewLote(sinCosto);
+    expect(p.cotizable).toBe(false);
+    expect(p.precioCOP).toBeUndefined();
+    expect(p.pisoCOP).toBeUndefined();
+  });
+
+  it('lo dice con un aviso, en vez de reventar', () => {
+    // Reventar dejaría al operador sin pantalla; devolver 0 sería peor todavía.
+    const p = construirPreviewLote(sinCosto);
+    const aviso = p.advertencias.find((a) => a.codigo === 'SIN_COSTO_CAPTURADO');
+    expect(aviso).toBeDefined();
+    expect(aviso?.nivel).toBe('alerta');
+    expect(aviso?.texto).toMatch(/sin costo capturado/i);
+  });
+
+  it('tampoco cotiza con costo negativo o ausente', () => {
+    for (const c of [-1, Number.NaN]) {
+      expect(construirPreviewLote({ ...sinCosto, costoCompraCOP: c }).cotizable)
+        .toBe(false);
+    }
+  });
+
+  it('con costo capturado vuelve a cotizar normal', () => {
+    expect(
+      construirPreviewLote({ ...sinCosto, costoCompraCOP: 931_931 }).cotizable,
+    ).toBe(true);
+  });
+});
+
 describe('el preview de un lote mixto', () => {
   it('no cotiza: pide resolver la categoría casilla por casilla', () => {
     const p = construirPreviewLote({

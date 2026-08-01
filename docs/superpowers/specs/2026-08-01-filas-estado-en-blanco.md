@@ -1,6 +1,18 @@
 # Las 25 filas con ESTADO en blanco — SOT v3, leídas el 2026-08-01
 
-> **Para dictamen de Kevin.** No se resuelven eligiendo un criterio: son un dato que
+> ## ✅ DICTAMINADO — Kevin, 2026-08-01
+>
+> **Las 25 filas son INVENTARIO VIVO** (carga incompleta). En la migración de
+> Fase 2 se convierten en **casillas `PENDIENTE_CLASIFICAR`** de sus lotes — que
+> es exactamente el estado que v4 tiene para esto: una pieza que existe y todavía
+> no se clasificó.
+>
+> Consecuencia directa: el divisor se cuenta con **criterio A**. Hoy son 88 lotes
+> activos y $382.407 de gasto fijo por lote.
+>
+> ---
+>
+> **Contexto original (para dictamen de Kevin).** No se resuelven eligiendo un criterio: son un dato que
 > falta. Con estas 25 dictaminadas, el divisor es criterio A sobre datos limpios.
 
 ## El patrón, antes de la lista

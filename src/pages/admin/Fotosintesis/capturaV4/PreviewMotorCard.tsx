@@ -41,7 +41,8 @@ export type PreviewMotor =
       disponible: true;
       costoFijoUnitarioCOP: number;
       lotesActivos: number;
-      K: number;
+      /** Ausente cuando el lote no tiene costo capturado: no hay K que mostrar. */
+      K?: number;
       cotizable: boolean;
       enRemate: boolean;
       pesoDelFijoPct: number;
@@ -139,12 +140,14 @@ export function PreviewMotorCard({
           gap: '12px',
         }}
       >
-        <Cifra
-          testId="preview-k"
-          etiqueta="K · costo absorbido"
-          valor={COP.format(preview.K)}
-          nota="Vender aquí pierde plata"
-        />
+        {preview.K !== undefined ? (
+          <Cifra
+            testId="preview-k"
+            etiqueta="K · costo absorbido"
+            valor={COP.format(preview.K)}
+            nota="Vender aquí pierde plata"
+          />
+        ) : null}
         {preview.pisoCOP !== undefined ? (
           <Cifra
             testId="preview-piso"

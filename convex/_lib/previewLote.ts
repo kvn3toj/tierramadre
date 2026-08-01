@@ -30,7 +30,8 @@ export interface Advertencia {
     | 'REMATE_VIGENTE'
     | 'FIJO_PESA_MAS'
     | 'REPARTO_REFERENCIAL'
-    | 'MIXTA_SIN_PRECIO';
+    | 'MIXTA_SIN_PRECIO'
+    | 'SIN_COSTO_CAPTURADO';
   nivel: NivelAdvertencia;
   texto: string;
 }
@@ -47,8 +48,11 @@ export interface PreviewLoteInput {
 }
 
 export interface PreviewLote {
-  /** Costo + variables + fijo. Existe siempre: no depende del régimen fiscal. */
-  K: number;
+  /**
+   * Costo + variables + fijo. Ausente cuando no hay costo capturado: sin
+   * mercancía que absorber, `K` sería el gasto fijo disfrazado de costo.
+   */
+  K?: number;
   /** false para un lote `mixta`: no hay un divisor único que aplicarle. */
   cotizable: boolean;
   enRemate: boolean;
@@ -80,13 +84,40 @@ export function construirPreviewLote(input: PreviewLoteInput): PreviewLote {
     unidadesDeclaradas,
   } = input;
 
+  const enRemate = fecha <= config.remateHasta;
+
+  // Un lote sin costo capturado NO cotiza (dictamen de Kevin, 2026-08-01, caso
+  // C-085 del SOT vivo: costo 0 y cotizando igual). Su «precio» salía de dividir
+  // solo el gasto fijo, o sea 100% estructura y 0% mercancía — un número con
+  // forma de precio que no lo es. Se avisa en vez de reventar: reventar dejaría
+  // al operador sin pantalla, y devolver 0 sería peor todavía.
+  if (
+    typeof costoCompraCOP !== 'number' ||
+    !Number.isFinite(costoCompraCOP) ||
+    costoCompraCOP <= 0
+  ) {
+    return {
+      cotizable: false,
+      enRemate,
+      pesoDelFijoPct: 100,
+      advertencias: [
+        {
+          codigo: 'SIN_COSTO_CAPTURADO',
+          nivel: 'alerta',
+          texto:
+            'Lote sin costo capturado: no se puede cotizar. Un precio calculado ' +
+            'solo sobre el gasto fijo sería 100% estructura y 0% mercancía — ' +
+            'parece un precio y no lo es. Capturá el costo de compra primero.',
+        },
+      ],
+    };
+  }
+
   const K = calcularK({
     costoCompraCOP,
     costosVariablesCOP,
     costoFijoUnitarioCOP,
   });
-
-  const enRemate = fecha <= config.remateHasta;
   const pesoDelFijoPct = (costoFijoUnitarioCOP / K) * 100;
   const advertencias: Advertencia[] = [];
 

@@ -42,7 +42,24 @@ Los 5 casos del handoff reproducen byte a byte, pinneados en
 **2.306.348** · lote 14 → **3.282.620** · ítem 295 oro **3.438.059** y plata
 **1.502.059** · equilibrio real gema K/0,90 y joya K/0,71.
 
-## ⚠️ El divisor del gasto fijo — CORREGIDO, y pendiente de dictamen
+## ✅ El divisor del gasto fijo — APROBADO (Kevin, 2026-08-01)
+
+> **Lo aprobado es la REGLA, no la cifra:** activo = todo lote con al menos una
+> unidad ≠ VENDIDA, contado **en vivo desde la tabla**. El número es dinámico y va
+> a derivar con cada alta y cada venta; esa es justamente la diferencia con el
+> `B6` escrito a mano.
+>
+> Hoy la regla da **88 lotes activos / $382.407** por lote. La consecuencia
+> —fijo −13,6%, mediana −5,7% de caída del objetivo por lote— queda registrada
+> como **esperada**, no como un problema a investigar.
+>
+> Las 25 filas con estado en blanco quedaron dictaminadas como inventario vivo
+> (ver `2026-08-01-filas-estado-en-blanco.md`), así que el criterio A corre sobre
+> datos ya interpretados, sin ambigüedad.
+>
+> **El divisor queda FIRME.** Desbloquea: refresco de dev → merge → doble corrida.
+
+### Cómo se llegó (y el error del camino)
 
 > **El «+27%» que reporté el 2026-08-01 era FALSO.** Salía de contar el inventario de
 > dev, congelado al 22-23 de julio. Contra el SOT v3 vivo el efecto va en la
@@ -70,6 +87,17 @@ con hipótesis por fila, en `2026-08-01-filas-estado-en-blanco.md`.
 **Lección de método:** calcular un número de negocio sobre un deployment de
 pruebas y reportarlo como hecho. La foto de dev tenía 10 días y 34 piezas menos
 en DISPONIBLE. Los números que deciden se leen de la fuente viva.
+
+### Dos filas que la lectura destapó
+
+- **`C-085` cotizaba con costo 0.** Su «precio» era 100% gasto fijo y 0%
+  mercancía. **Cerrado:** el motor ya no cotiza un lote sin costo capturado —
+  devuelve el aviso `SIN_COSTO_CAPTURADO`, nunca un precio
+  (`_lib/previewLote.ts`, con test).
+- **`LC-03` declara $1.233.703.846.** Puede ser un lote de colección real o el
+  total del lote metido en la fila de un ítem. **NO se corrige por cuenta
+  propia** (dictamen de Kevin): va al **reporte de excepciones de la migración**
+  para auditar con Kevin ANTES de que la Fase 2 lo tome como verdad.
 
 ## Desviaciones del plan (y por qué)
 

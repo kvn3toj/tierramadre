@@ -145,6 +145,37 @@ describe('PreviewMotorCard — el lote mixto no inventa precio', () => {
   });
 });
 
+describe('PreviewMotorCard — lote sin costo capturado', () => {
+  it('no muestra K ni precio, solo el aviso', () => {
+    // C-085: mostrar un K que es puro gasto fijo sería mostrar estructura
+    // disfrazada de costo de mercancía.
+    renderWithTheme(
+      <PreviewMotorCard
+        preview={{
+          disponible: true,
+          costoFijoUnitarioCOP: 442_787,
+          lotesActivos: 88,
+          cotizable: false,
+          enRemate: false,
+          pesoDelFijoPct: 100,
+          advertencias: [
+            {
+              codigo: 'SIN_COSTO_CAPTURADO',
+              nivel: 'alerta',
+              texto: 'Lote sin costo capturado: no se puede cotizar.',
+            },
+          ],
+        }}
+      />,
+    );
+    expect(screen.queryByTestId('preview-k')).toBeNull();
+    expect(screen.queryByTestId('preview-precio')).toBeNull();
+    expect(
+      screen.getByTestId('advertencia-SIN_COSTO_CAPTURADO').textContent,
+    ).toMatch(/sin costo capturado/i);
+  });
+});
+
 describe('PreviewMotorCard — cuando el motor no puede responder', () => {
   it('explica por qué en vez de mostrar ceros', () => {
     // Un cero aquí sería indistinguible de «gratis» y es exactamente el defecto
