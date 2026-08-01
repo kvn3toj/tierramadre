@@ -48,6 +48,23 @@ export const CABECERAS_CASILLAS = [
   'rangoVentaEsperadoCOP',
 ] as const;
 
+/** Las cabeceras de la pestaña Movimientos (W3). */
+export const CABECERAS_MOVIMIENTOS = [
+  'movimientoId',
+  'kardexEventId',
+  'tipo',
+  'fecha',
+  'items',
+  'entregadoPor',
+  'recibidoPor',
+  'cliente',
+  'precioVentaRealCOP',
+  'comisionPct',
+  'formaPago',
+  'origenKardexEventId',
+  'condicion',
+] as const;
+
 export interface FilaLote {
   loteId: string;
   fechaRecepcion: string;

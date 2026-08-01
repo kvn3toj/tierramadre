@@ -461,6 +461,69 @@ export default defineSchema({
     motivo: v.optional(v.string()),
   }).index('by_ts', ['ts']),
 
+  // ─── SOT v4 · W3, el ledger de movimientos ───────────────────────
+  //
+  // Todo lo que le pasa a una pieza después de existir es un movimiento, y la
+  // venta es uno de ellos. Hoy son dos rieles separados (`sales.create` y
+  // `asesorMovements`) que se parecen mucho, y por esa separación el caso real
+  // del ítem 5 de Pablo Loaiza —vendido, cobro pendiente— nunca entró como
+  // venta.
+  //
+  // Append-only: un movimiento no se edita, se compensa con otro. Es un libro
+  // contable, no un estado.
+  movimientos: defineTable({
+    movimientoId: v.string(),
+    kardexEventId: v.string(), // agrupa N ítems bajo una misma entrega
+    tipo: v.union(
+      v.literal('VENTA'),
+      v.literal('CONSIGNACION'),
+      v.literal('DEVOLUCION'),
+      v.literal('ASESOR'),
+    ),
+    fecha: v.string(),
+    itemIds: v.array(v.string()),
+    entregadoPor: v.string(),
+    recibidoPor: v.string(),
+    condicion: v.optional(v.string()),
+    notas: v.optional(v.string()),
+    /** Solo en VENTA. `precioVentaRealCOP` es obligatorio dentro del bloque. */
+    venta: v.optional(
+      v.object({
+        cliente: v.string(),
+        precioVentaRealCOP: v.number(),
+        comisionPct: v.optional(v.number()),
+        pagoComisionesA: v.optional(v.string()),
+        formaPago: v.string(),
+        efectivo: v.optional(
+          v.object({
+            numeroRecibo: v.string(),
+            recibidoPor: v.string(),
+            ubicacion: v.optional(v.string()),
+          }),
+        ),
+        transferencia: v.optional(
+          v.object({
+            numeroCuenta: v.string(),
+            titular: v.string(),
+            banco: v.string(),
+            numeroTransaccion: v.string(),
+          }),
+        ),
+        credito: v.optional(
+          v.object({ fechaInicio: v.string(), fechaPago: v.string() }),
+        ),
+      }),
+    ),
+    /** La cadena consignación → venta, trazada. */
+    origenKardexEventId: v.optional(v.string()),
+    registradoPor: v.string(),
+    ts: v.number(),
+  })
+    .index('by_movimientoId', ['movimientoId'])
+    .index('by_kardexEventId', ['kardexEventId'])
+    .index('by_tipo', ['tipo'])
+    .index('by_ts', ['ts']),
+
   // ─── SOT v4 · El espejo push-only ────────────────────────────────
   //
   // La cola hacia el libro «SOT v4 · Espejo (PRUEBAS)». A diferencia del riel
@@ -705,6 +768,13 @@ export default defineSchema({
     rangoVentaEsperadoCOP: v.optional(v.number()),
     clasificadaPor: v.optional(v.string()),
     clasificadaEn: v.optional(v.number()),
+    /**
+     * Modalidades de venta mutuamente excluyentes sobre la MISMA mercancía —
+     * el caso C-010, escrito hoy en tres filas (el bulto completo y sus dos
+     * partes, las mismas 6 piezas). Vender una modalidad bloquea a sus
+     * hermanas: hoy nada lo impide y se puede vender dos veces lo mismo.
+     */
+    modalidadGrupo: v.optional(v.string()),
   })
     .index('by_loteId', ['loteId'])
     .index('by_itemId', ['itemId']),

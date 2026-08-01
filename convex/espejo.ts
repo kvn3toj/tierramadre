@@ -18,7 +18,11 @@ import {
   internalQuery,
 } from './_generated/server';
 import { internal } from './_generated/api';
-import { CABECERAS_CASILLAS, CABECERAS_LOTES } from './_lib/espejoFilas';
+import {
+  CABECERAS_CASILLAS,
+  CABECERAS_LOTES,
+  CABECERAS_MOVIMIENTOS,
+} from './_lib/espejoFilas';
 import {
   asegurarPestana,
   columnaA1,
@@ -33,6 +37,7 @@ import { planificarUpsert } from './_lib/espejoUpsert';
 const CABECERAS_POR_PESTANA: Record<string, readonly string[]> = {
   Lotes: CABECERAS_LOTES,
   Casillas: CABECERAS_CASILLAS,
+  Movimientos: CABECERAS_MOVIMIENTOS,
 };
 
 export const _pendientes = internalQuery({
