@@ -56,6 +56,7 @@ import type * as invitations from "../invitations.js";
 import type * as lotItems from "../lotItems.js";
 import type * as lots from "../lots.js";
 import type * as lotsV4 from "../lotsV4.js";
+import type * as mantenimientoV4 from "../mantenimientoV4.js";
 import type * as migrations from "../migrations.js";
 import type * as movimientos from "../movimientos.js";
 import type * as precios from "../precios.js";
@@ -122,6 +123,7 @@ declare const fullApi: ApiFromModules<{
   lotItems: typeof lotItems;
   lots: typeof lots;
   lotsV4: typeof lotsV4;
+  mantenimientoV4: typeof mantenimientoV4;
   migrations: typeof migrations;
   movimientos: typeof movimientos;
   precios: typeof precios;
