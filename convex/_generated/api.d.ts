@@ -20,6 +20,7 @@ import type * as _lib_columnMaps from "../_lib/columnMaps.js";
 import type * as _lib_commission from "../_lib/commission.js";
 import type * as _lib_derivaEspejo from "../_lib/derivaEspejo.js";
 import type * as _lib_destinoEscritura from "../_lib/destinoEscritura.js";
+import type * as _lib_espejoEmpujeMasivo from "../_lib/espejoEmpujeMasivo.js";
 import type * as _lib_espejoFilas from "../_lib/espejoFilas.js";
 import type * as _lib_espejoSheets from "../_lib/espejoSheets.js";
 import type * as _lib_espejoUpsert from "../_lib/espejoUpsert.js";
@@ -93,6 +94,7 @@ declare const fullApi: ApiFromModules<{
   "_lib/commission": typeof _lib_commission;
   "_lib/derivaEspejo": typeof _lib_derivaEspejo;
   "_lib/destinoEscritura": typeof _lib_destinoEscritura;
+  "_lib/espejoEmpujeMasivo": typeof _lib_espejoEmpujeMasivo;
   "_lib/espejoFilas": typeof _lib_espejoFilas;
   "_lib/espejoSheets": typeof _lib_espejoSheets;
   "_lib/espejoUpsert": typeof _lib_espejoUpsert;
