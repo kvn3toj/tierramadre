@@ -20,7 +20,7 @@ import {
   type CasillaW2,
 } from './_lib/casillaW2';
 import { filaCasillaParaEspejo, filaLoteParaEspejo } from './_lib/espejoFilas';
-import { preciosPorItemDb } from './precios';
+import { motorDelLoteDb, preciosPorItemDb } from './precios';
 import type { Id } from './_generated/dataModel';
 import type { MutationCtx } from './_generated/server';
 
@@ -59,6 +59,7 @@ async function encolarLote(ctx: MutationCtx, id: Id<'lots'>): Promise<void> {
       renombreLote: lote.renombreLote,
       costosVariables: lote.costosVariables,
       joya: lote.joya,
+      motor: await motorDelLoteDb(ctx, lote),
     }),
     estado: 'pendiente',
     intentos: 0,

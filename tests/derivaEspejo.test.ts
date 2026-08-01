@@ -129,3 +129,75 @@ describe('detectarDeriva', () => {
     expect(Object.keys(r)).not.toContain('parche');
   });
 });
+
+describe('los sellos de tiempo no son deriva', () => {
+  // `recalculadoEn` y `actualizadoEn` se estampan con el reloj cada vez que la
+  // fila se reconstruye, así que NUNCA coinciden con lo que quedó escrito en la
+  // hoja. Compararlos reportaría deriva en cada corrida, en cada fila — y un
+  // reporte que siempre grita deja de leerse, que es como se pierde la señal
+  // real de que alguien editó un precio a mano.
+  const base = {
+    cabeceras: ['loteId', 'precioObjetivoCOP', 'recalculadoEn'],
+    idCabecera: 'loteId',
+  };
+
+  it('una diferencia SOLO en el sello no se reporta', () => {
+    const r = detectarDeriva({
+      ...base,
+      filasEspejo: [
+        {
+          loteId: 'B-001',
+          precioObjetivoCOP: '2306348',
+          recalculadoEn: '2026-08-01T10:00:00.000Z',
+        },
+      ],
+      filasConvex: [
+        {
+          loteId: 'B-001',
+          precioObjetivoCOP: '2306348',
+          recalculadoEn: '2026-08-01T18:30:00.000Z',
+        },
+      ],
+    });
+    expect(r.derivas).toEqual([]);
+    expect(r.sinDeriva).toBe(1);
+  });
+
+  it('pero un precio editado a mano SÍ se reporta, sello aparte', () => {
+    const r = detectarDeriva({
+      ...base,
+      filasEspejo: [
+        {
+          loteId: 'B-001',
+          precioObjetivoCOP: '999999',
+          recalculadoEn: '2026-08-01T10:00:00.000Z',
+        },
+      ],
+      filasConvex: [
+        {
+          loteId: 'B-001',
+          precioObjetivoCOP: '2306348',
+          recalculadoEn: '2026-08-01T18:30:00.000Z',
+        },
+      ],
+    });
+    expect(r.derivas).toEqual([
+      {
+        id: 'B-001',
+        campo: 'precioObjetivoCOP',
+        enEspejo: '999999',
+        enConvex: '2306348',
+      },
+    ]);
+  });
+
+  it('`actualizadoEn` del Tablero recibe el mismo trato', () => {
+    const r = detectarDeriva({
+      cabeceras: ['periodo', 'actualizadoEn'],
+      idCabecera: 'periodo',
+      filasEspejo: [{ periodo: '2026-08', actualizadoEn: 'ayer' }],
+      filasConvex: [{ periodo: '2026-08', actualizadoEn: 'hoy' }],
+    });
+    expect(r.derivas).toEqual([]);
+  });
+});

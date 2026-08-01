@@ -64,6 +64,30 @@ export const diagnosticoEstados = internalQuery({
     // migración de ensayo viene a mover, así que el diagnóstico tiene que
     // decirlo: sin él hay que deducirlo de otras tres cifras, y una cifra
     // deducida a ojo es exactamente cómo se llegó al «+27%» que era falso.
+    // Las piezas más caras del inventario activo. `inventarioActivoCOP` del
+    // Tablero es su suma, y en la primera corrida dio $1.777M contra los $71,8M
+    // que midió la auditoría — 25×. Ver las de arriba es lo que permite decir si
+    // eso es una pieza de colección real o el total de un lote metido en la fila
+    // de un ítem, que es la hipótesis de LC-03.
+    const activas = (await ctx.db.query('lotItems').collect()).filter(
+      (c) => c.estadoCasilla && c.estadoCasilla !== 'VENDIDA',
+    );
+    const inventarioActivoCOP = activas.reduce(
+      (a, c) => a + (c.costoUnitarioRealCOP ?? 0),
+      0,
+    );
+    const masCaras = activas
+      .filter((c) => c.costoUnitarioRealCOP)
+      .sort(
+        (a, b) => (b.costoUnitarioRealCOP ?? 0) - (a.costoUnitarioRealCOP ?? 0),
+      )
+      .slice(0, 12)
+      .map((c) => ({
+        itemId: c.itemId,
+        loteId: c.loteId,
+        costoUnitarioRealCOP: c.costoUnitarioRealCOP,
+      }));
+
     const { lotesActivos, unidadesActivas } = await contarLotesActivosDb(ctx);
     const config = await configVigente(
       ctx,
@@ -82,6 +106,9 @@ export const diagnosticoEstados = internalQuery({
       // El divisor vigente (D2) y su consecuencia.
       lotesActivos,
       unidadesActivas,
+      inventarioActivoCOP,
+      casillasSinCosto: activas.filter((c) => !c.costoUnitarioRealCOP).length,
+      masCaras,
       gastosFijosMensualesCOP: config.gastosFijosMensualesCOP,
       costoFijoUnitarioCOP:
         lotesActivos > 0

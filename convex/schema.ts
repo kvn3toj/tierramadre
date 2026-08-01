@@ -444,6 +444,13 @@ export default defineSchema({
     remateHasta: v.string(), // último día del remate, ISO
     multRemateGema: v.number(),
     multRemateJoya: v.number(),
+    /**
+     * Ventas estimadas del mes — el `B11` del xlsx, que era `=B4*2,5` (un
+     * multiplicador hardcodeado que nadie decidió). Ahora es un DATO DE ENTRADA
+     * que Kevin dicta cada mes, versionado por período igual que los gastos
+     * fijos. Ausente ⇒ la brecha del Tablero va vacía, nunca en cero.
+     */
+    ventasEstimadasMesCOP: v.optional(v.number()),
     notas: v.optional(v.string()),
   }).index('by_vigenteDesde', ['vigenteDesde']),
 

@@ -61,6 +61,17 @@ export interface ConfigPrecios {
   /** Multiplicadores sobre `K` mientras el remate está vigente. */
   multRemateGema: number;
   multRemateJoya: number;
+  /**
+   * Ventas estimadas del mes (`B11`), **dictadas**, no derivadas.
+   *
+   * En el xlsx era `=B4*2,5`: un multiplicador hardcodeado que nadie decidió y
+   * que hacía que la «brecha» del Tablero fuera un número sin dueño. Acá es un
+   * dato de entrada versionado por período, igual que los gastos fijos.
+   *
+   * Opcional a propósito: mientras Kevin no lo dicte, la brecha va **vacía** en
+   * la hoja. Un cero inventado sería el mismo defecto con otra cara.
+   */
+  ventasEstimadasMesCOP?: number;
 }
 
 /**

@@ -32,6 +32,13 @@ import {
 } from './_lib/motorPrecios';
 import { construirPreviewLote } from './_lib/previewLote';
 import { preciosDelLote, type PrecioUnidad } from './_lib/motorUnidad';
+import { metricasDelLote } from './_lib/motorLote';
+import {
+  configDelPeriodo,
+  construirTablero,
+  type VentaDelPeriodo,
+} from './_lib/tablero';
+import type { FilaTablero, MotorParaEspejo } from './_lib/espejoFilas';
 import { agruparUnidadesPorLote, loteEstaActivo } from './_lib/recalculo';
 
 /** Lee las reglas de la tabla y elige la vigente para `fecha`. */
@@ -56,6 +63,7 @@ export async function configVigente(
       remateHasta: f.remateHasta,
       multRemateGema: f.multRemateGema,
       multRemateJoya: f.multRemateJoya,
+      ventasEstimadasMesCOP: f.ventasEstimadasMesCOP,
     })),
     fecha,
   );
@@ -218,6 +226,171 @@ export async function preciosPorItemDb(
   }
 
   return salida;
+}
+
+/**
+ * Las trece del motor para la fila de UN lote, o `undefined` si no cotiza.
+ *
+ * Mismo criterio de un-solo-camino que `preciosPorItemDb`: lo llaman el enqueuer
+ * y la reconstrucción del job de deriva, así que no pueden divergir.
+ *
+ * No cotiza cuando falta el costo capturado (el caso C-085, cuyo «precio» era
+ * 100% gasto fijo), cuando el lote es `mixta` (se resuelve casilla por casilla)
+ * o cuando no tiene categoría fiscal — que es el estado en que la migración de
+ * ensayo deja a los 28 lotes reconstruidos, a propósito: no se les inventa.
+ */
+export async function motorDelLoteDb(
+  ctx: QueryCtx | MutationCtx,
+  lote: {
+    fechaRecepcion: string;
+    categoriaFiscal?: 'gema' | 'joya' | 'mixta';
+    costoCompraCOP?: number;
+    costoTotalCOP: number;
+    unidadesDeclaradas: number;
+    costosVariables?: { concepto: string; montoCOP: number }[];
+  },
+  contexto?: { configs: ConfigPrecios[]; lotesActivos: number },
+): Promise<MotorParaEspejo | undefined> {
+  if (lote.categoriaFiscal !== 'gema' && lote.categoriaFiscal !== 'joya') {
+    return undefined;
+  }
+  const costoCompraCOP = lote.costoCompraCOP ?? lote.costoTotalCOP;
+  if (!Number.isFinite(costoCompraCOP) || costoCompraCOP <= 0) return undefined;
+
+  const configs =
+    contexto?.configs ??
+    (await ctx.db.query('configPrecios').collect()).map((f) => ({
+      vigenteDesde: f.vigenteDesde,
+      gastosFijosMensualesCOP: f.gastosFijosMensualesCOP,
+      comisionPct: f.comisionPct,
+      ivaJoyaPct: f.ivaJoyaPct,
+      margenNetoDeseadoPct: f.margenNetoDeseadoPct,
+      remateHasta: f.remateHasta,
+      multRemateGema: f.multRemateGema,
+      multRemateJoya: f.multRemateJoya,
+      ventasEstimadasMesCOP: f.ventasEstimadasMesCOP,
+    }));
+  if (!configs.length) return undefined;
+
+  const lotesActivos =
+    contexto?.lotesActivos ?? (await contarLotesActivosDb(ctx)).lotesActivos;
+  if (lotesActivos <= 0) return undefined;
+
+  let config: ConfigPrecios;
+  try {
+    config = configVigenteEn(configs, lote.fechaRecepcion);
+  } catch {
+    return undefined;
+  }
+
+  const m = metricasDelLote({
+    costoCompraCOP,
+    costosVariablesCOP: (lote.costosVariables ?? []).reduce(
+      (a, c) => a + c.montoCOP,
+      0,
+    ),
+    costoFijoUnitarioCOP: costoFijoUnitario(
+      config.gastosFijosMensualesCOP,
+      lotesActivos,
+    ),
+    unidadesDeclaradas: lote.unidadesDeclaradas,
+    categoriaFiscal: lote.categoriaFiscal,
+    config,
+    fecha: lote.fechaRecepcion,
+  });
+
+  return { ...m, recalculadoEn: new Date().toISOString() };
+}
+
+/**
+ * El Tablero de un período, calculado desde la base.
+ *
+ * `inventarioActivoCOP` suma **solo costos CAPTURADOS** de casillas no vendidas.
+ * Las piezas del riel viejo sin `costoUnitarioRealCOP` no contribuyen, así que es
+ * un PISO del inventario, no su total — el Léeme lo dice. Derivarlo del costo del
+ * lote sería el prorrateo que D6 prohíbe.
+ */
+export async function tableroDelPeriodoDb(
+  ctx: QueryCtx | MutationCtx,
+  periodo: string,
+): Promise<FilaTablero | undefined> {
+  const configs = await ctx.db.query('configPrecios').collect();
+  if (!configs.length) return undefined;
+
+  let config: ConfigPrecios;
+  try {
+    config = configDelPeriodo(
+      configs.map((f) => ({
+        vigenteDesde: f.vigenteDesde,
+        gastosFijosMensualesCOP: f.gastosFijosMensualesCOP,
+        comisionPct: f.comisionPct,
+        ivaJoyaPct: f.ivaJoyaPct,
+        margenNetoDeseadoPct: f.margenNetoDeseadoPct,
+        remateHasta: f.remateHasta,
+        multRemateGema: f.multRemateGema,
+        multRemateJoya: f.multRemateJoya,
+        ventasEstimadasMesCOP: f.ventasEstimadasMesCOP,
+      })),
+      periodo,
+    );
+  } catch {
+    return undefined;
+  }
+
+  const { lotesActivos } = await contarLotesActivosDb(ctx);
+  const precios = await preciosPorItemDb(ctx);
+
+  let inventarioActivoCOP = 0;
+  const kPorItem = new Map<string, number>();
+  for (const c of await ctx.db.query('lotItems').collect()) {
+    if (!c.estadoCasilla) continue;
+    const k = precios.get(c.itemId);
+    if (k) kPorItem.set(c.itemId, k.KUnidadCOP);
+    if (c.estadoCasilla !== 'VENDIDA' && c.costoUnitarioRealCOP) {
+      inventarioActivoCOP += c.costoUnitarioRealCOP;
+    }
+  }
+
+  // Las ventas del período, del ledger de W3. Solo las que se pueden medir: una
+  // venta cuya pieza no tiene K no puede aportar margen, y estimárselo sería
+  // inventar el número que este Tablero existe para dejar de inventar.
+  const ventas: VentaDelPeriodo[] = [];
+  for (const mov of await ctx.db.query('movimientos').collect()) {
+    if (mov.tipo !== 'VENTA' || !mov.venta) continue;
+    if (mov.fecha.slice(0, 7) !== periodo) continue;
+    for (const itemId of mov.itemIds) {
+      const K = kPorItem.get(itemId);
+      const casilla = await ctx.db
+        .query('lotItems')
+        .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+        .first();
+      const categoria =
+        casilla?.categoriaFiscal ?? precios.get(itemId)?.categoriaFiscal;
+      if (K === undefined || !categoria) continue;
+      ventas.push({
+        // El precio del movimiento es del EVENTO, que puede cubrir varias
+        // piezas. Se reparte por peso del K, el mismo criterio del motor.
+        precioVentaRealCOP:
+          mov.venta.precioVentaRealCOP *
+          (K / mov.itemIds.reduce((a, id) => a + (kPorItem.get(id) ?? 0), 0)),
+        KUnidadCOP: K,
+        categoriaFiscal: categoria,
+      });
+    }
+  }
+
+  const t = construirTablero({
+    periodo,
+    config,
+    lotesActivos,
+    inventarioActivoCOP,
+    ventas,
+  });
+  return {
+    ...t,
+    ventasMesCOP: Math.round(t.ventasMesCOP),
+    actualizadoEn: new Date().toISOString(),
+  };
 }
 
 /**

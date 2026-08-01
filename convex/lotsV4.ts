@@ -25,7 +25,7 @@ import { allocateNext, formatLotId, lotSequenceName } from './sequences';
 import { validarLoteV4 } from './_lib/loteV4';
 import { planificarCasillas, siguienteItemIdNumerico } from './_lib/casillasV4';
 import { planificarRecalculo } from './_lib/recalculo';
-import { configVigente, contarLotesActivosDb } from './precios';
+import { configVigente, contarLotesActivosDb, motorDelLoteDb } from './precios';
 import { filaLoteParaEspejo } from './_lib/espejoFilas';
 
 const costoVariableValidator = v.object({
@@ -215,6 +215,17 @@ export const _create = internalMutation({
         renombreLote: args.renombreLote,
         costosVariables: args.costosVariables,
         joya: args.joya,
+        // Se calcula DESPUÉS del recálculo del paso 5: el alta de este lote ya
+        // movió el divisor, y el motor tiene que reflejar el fijo nuevo, no el
+        // que regía hace tres líneas.
+        motor: await motorDelLoteDb(ctx, {
+          fechaRecepcion: args.fechaRecepcion,
+          categoriaFiscal: validado.categoriaFiscal,
+          costoCompraCOP: validado.costoCompraCOP,
+          costoTotalCOP: validado.costoTotalCOP,
+          unidadesDeclaradas: validado.unidadesDeclaradas,
+          costosVariables: args.costosVariables,
+        }),
       }),
       estado: 'pendiente',
       intentos: 0,

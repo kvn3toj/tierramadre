@@ -32,6 +32,7 @@ export const CABECERAS_LOTES = [
   'tipoJoya',
   'mineralJoya',
   'gramajeJoya',
+  'cantidadJoyas',
   'costoPorGramoCOP',
   'presupuestoJoyaCOP',
   'abonoCOP',
@@ -40,6 +41,53 @@ export const CABECERAS_LOTES = [
   'estado',
   'sede',
   'renombre',
+  // ── Motor de precios · SOLO LECTURA, escritas por el recálculo ──
+  //
+  // Vacías cuando el lote no cotiza (sin costo capturado, o `mixta`, o sin
+  // categoría fiscal). `precioEquilibrioCOP` es **K**, que NO es el punto de
+  // equilibrio: vender ahí pierde plata, porque la comisión y el IVA salen del
+  // precio. El piso de verdad es `equilibrioRealCOP`.
+  //
+  // Las cuatro últimas se calculan sobre el OBJETIVO aunque `reglaVigente` diga
+  // `remate`: es lo que la fórmula E10–E12 dice. El Léeme lo aclara.
+  'costoFijoUnitarioCOP',
+  'costoVariableUnitarioCOP',
+  'precioEquilibrioCOP',
+  'equilibrioRealCOP',
+  'precioObjetivoCOP',
+  'multiplicadorMinimo',
+  'multiplicadorObjetivo',
+  'margenBrutoEstimadoCOP',
+  'utilidadNetaEstimadaCOP',
+  'puntoEquilibrioUnidades',
+  'reglaVigente',
+  'recalculadoEn',
+] as const;
+
+/**
+ * Las cabeceras de la pestaña Tablero — el motor agregado, una fila por mes.
+ *
+ * `periodo` va primero porque es la clave del upsert: sin una columna donde
+ * buscar el id, la fila no se puede ubicar. Son 13 contra las 12 del canon, y la
+ * diferencia es exactamente esa clave.
+ *
+ * `brechaVsVentasEstimadasCOP` vive ACÁ y no en Lotes: por lote nunca tuvo
+ * sentido — en el xlsx era modelo-global (E13).
+ */
+export const CABECERAS_TABLERO = [
+  'periodo',
+  'gastosFijosMesCOP',
+  'lotesActivos',
+  'costoFijoUnitarioCOP',
+  'inventarioActivoCOP',
+  'ventasMesCOP',
+  'margenBrutoMesCOP',
+  'utilidadNetaEstimadaCOP',
+  'puntoEquilibrioUnidades',
+  'ventasEstimadasMesCOP',
+  'brechaVsVentasEstimadasCOP',
+  'reglaVigente',
+  'actualizadoEn',
 ] as const;
 
 /** Las cabeceras de la pestaña Casillas. */
@@ -171,8 +219,34 @@ export interface FilaLote {
     mineral: string;
     gramaje: number;
     costoPorGramoCOP: number;
+    cantidadJoyas?: number;
     presupuestoJoyaCOP?: number;
   };
+  /**
+   * Las trece del motor. **Ausente ⇒ todas las celdas vacías**: el lote no
+   * cotiza (sin costo capturado, `mixta`, o sin categoría fiscal). Vacío se lee
+   * como pendiente; un número a medias se lee como precio.
+   */
+  motor?: MotorParaEspejo;
+}
+
+/** Lo que el motor aporta a la fila del lote. Ver `_lib/motorLote.ts`. */
+export interface MotorParaEspejo {
+  costoFijoUnitarioCOP: number;
+  costoVariableUnitarioCOP: number;
+  /** `K`. NO es el punto de equilibrio — vender ahí pierde la comisión. */
+  precioEquilibrioCOP: number;
+  /** El piso real: `K/0,90` gema · `K/0,71` joya. */
+  equilibrioRealCOP: number;
+  precioObjetivoCOP: number;
+  multiplicadorMinimo: number;
+  multiplicadorObjetivo: number;
+  margenBrutoEstimadoCOP: number;
+  utilidadNetaEstimadaCOP: number;
+  puntoEquilibrioUnidades?: number;
+  reglaVigente: 'remate' | 'objetivo';
+  /** ISO. Cuándo se calculó esta fila. */
+  recalculadoEn: string;
 }
 
 const texto = (v: unknown): string =>
@@ -196,6 +270,7 @@ export function filaLoteParaEspejo(lote: FilaLote): Record<string, string> {
     tipoJoya: texto(lote.joya?.tipoJoya),
     mineralJoya: texto(lote.joya?.mineral),
     gramajeJoya: texto(lote.joya?.gramaje),
+    cantidadJoyas: texto(lote.joya?.cantidadJoyas),
     costoPorGramoCOP: texto(lote.joya?.costoPorGramoCOP),
     presupuestoJoyaCOP: texto(lote.joya?.presupuestoJoyaCOP),
     abonoCOP: texto(lote.abonoCOP),
@@ -204,6 +279,69 @@ export function filaLoteParaEspejo(lote: FilaLote): Record<string, string> {
     estado: texto(lote.estado),
     sede: texto(lote.sede),
     renombre: texto(lote.renombreLote),
+    // Los multiplicadores van con dos decimales: son ratios, no pesos, y
+    // `2,4501×` dice algo que `2×` esconde.
+    costoFijoUnitarioCOP: texto(lote.motor?.costoFijoUnitarioCOP),
+    costoVariableUnitarioCOP: texto(lote.motor?.costoVariableUnitarioCOP),
+    precioEquilibrioCOP: texto(lote.motor?.precioEquilibrioCOP),
+    equilibrioRealCOP: texto(lote.motor?.equilibrioRealCOP),
+    precioObjetivoCOP: texto(lote.motor?.precioObjetivoCOP),
+    multiplicadorMinimo: decimales(lote.motor?.multiplicadorMinimo),
+    multiplicadorObjetivo: decimales(lote.motor?.multiplicadorObjetivo),
+    margenBrutoEstimadoCOP: texto(lote.motor?.margenBrutoEstimadoCOP),
+    utilidadNetaEstimadaCOP: texto(lote.motor?.utilidadNetaEstimadaCOP),
+    puntoEquilibrioUnidades: decimales(lote.motor?.puntoEquilibrioUnidades),
+    reglaVigente: texto(lote.motor?.reglaVigente),
+    recalculadoEn: texto(lote.motor?.recalculadoEn),
+  };
+}
+
+/** Un ratio con dos decimales. Ausente ⇒ celda vacía, nunca «0,00». */
+function decimales(v?: number): string {
+  return v === undefined || v === null || !Number.isFinite(v)
+    ? ''
+    : v.toFixed(2);
+}
+
+export interface FilaTablero {
+  periodo: string;
+  gastosFijosMesCOP: number;
+  lotesActivos: number;
+  costoFijoUnitarioCOP?: number;
+  inventarioActivoCOP: number;
+  ventasMesCOP: number;
+  margenBrutoMesCOP: number;
+  utilidadNetaEstimadaCOP: number;
+  puntoEquilibrioUnidades?: number;
+  ventasEstimadasMesCOP?: number;
+  brechaVsVentasEstimadasCOP?: number;
+  reglaVigente: string;
+  actualizadoEn: string;
+}
+
+/**
+ * El Tablero del período.
+ *
+ * `ventasEstimadasMesCOP` y `brechaVsVentasEstimadasCOP` van VACÍAS mientras
+ * Kevin no dicte la estimada del mes. El `B11` del xlsx la derivaba con un ×2,5
+ * hardcodeado y por eso la brecha era un número sin dueño; un cero acá sería el
+ * mismo defecto con otra cara.
+ */
+export function filaTableroParaEspejo(t: FilaTablero): Record<string, string> {
+  return {
+    periodo: texto(t.periodo),
+    gastosFijosMesCOP: texto(t.gastosFijosMesCOP),
+    lotesActivos: texto(t.lotesActivos),
+    costoFijoUnitarioCOP: texto(t.costoFijoUnitarioCOP),
+    inventarioActivoCOP: texto(t.inventarioActivoCOP),
+    ventasMesCOP: texto(t.ventasMesCOP),
+    margenBrutoMesCOP: texto(t.margenBrutoMesCOP),
+    utilidadNetaEstimadaCOP: texto(t.utilidadNetaEstimadaCOP),
+    puntoEquilibrioUnidades: decimales(t.puntoEquilibrioUnidades),
+    ventasEstimadasMesCOP: texto(t.ventasEstimadasMesCOP),
+    brechaVsVentasEstimadasCOP: texto(t.brechaVsVentasEstimadasCOP),
+    reglaVigente: texto(t.reglaVigente),
+    actualizadoEn: texto(t.actualizadoEn),
   };
 }
 

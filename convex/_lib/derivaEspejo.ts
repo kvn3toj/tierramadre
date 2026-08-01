@@ -51,6 +51,23 @@ export interface ReporteDeriva {
   sinDeriva: number;
 }
 
+/**
+ * Columnas que se ESCRIBEN pero no se comparan: sellos de tiempo.
+ *
+ * `recalculadoEn` y `actualizadoEn` se estampan con el reloj cada vez que la
+ * fila se reconstruye, así que nunca coinciden con lo que quedó en la hoja.
+ * Compararlos reportaría deriva en cada corrida y en cada fila, y un reporte que
+ * siempre grita deja de leerse — que es exactamente como se pierde la señal real
+ * de que alguien editó un precio a mano.
+ *
+ * Son ignorados en la COMPARACIÓN, no en la escritura: la hoja los sigue
+ * mostrando, que para eso están.
+ */
+export const CAMPOS_SIN_COMPARAR: readonly string[] = [
+  'recalculadoEn',
+  'actualizadoEn',
+];
+
 export interface DetectarDerivaInput {
   /** Las columnas que el espejo gobierna. El resto se ignora. */
   cabeceras: string[];
@@ -78,6 +95,7 @@ export function detectarDeriva(input: DetectarDerivaInput): ReporteDeriva {
     for (const campo of input.cabeceras) {
       // Solo las columnas que el espejo gobierna. Una columna de notas que
       // agregó el equipo no es deriva: el espejo nunca dijo nada sobre ella.
+      if (CAMPOS_SIN_COMPARAR.includes(campo)) continue;
       const enEspejo = filaEspejo[campo] ?? '';
       const enConvex = filaConvex[campo] ?? '';
       if (enEspejo !== enConvex) {
