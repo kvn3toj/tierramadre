@@ -168,6 +168,11 @@ const FotosintesisCasillaW2 = lazyWithRetry(
   () => import('./pages/admin/Fotosintesis/CasillaW2Page'),
   'FotosintesisCasillaW2',
 );
+// W3 — venta, consignación, devolución y asesor en una sola pantalla.
+const FotosintesisMovimientoV4 = lazyWithRetry(
+  () => import('./pages/admin/Fotosintesis/MovimientoV4Page'),
+  'FotosintesisMovimientoV4',
+);
 const FotosintesisLoteResumen = lazyWithRetry(
   () => import('./pages/admin/Fotosintesis/LoteResumenPage'),
   'FotosintesisLoteResumen',
@@ -778,6 +783,12 @@ function AppContent() {
                   <Route
                     path="lots/:loteId/casillas/:itemId"
                     element={<FotosintesisCasillaW2 />}
+                  />
+                ) : null}
+                {CAPTURA_V4_ENABLED ? (
+                  <Route
+                    path="movimientos-v4"
+                    element={<FotosintesisMovimientoV4 />}
                   />
                 ) : null}
                 <Route

@@ -170,6 +170,27 @@ export const ADMIN_NAV_MAP: readonly AdminRouteEntry[] = [
     showInMap: false,
   },
   {
+    id: 'fotosintesis.movimiento.v4',
+    path: '/admin/fotosintesis/movimientos-v4',
+    label: 'Movimiento (v4)',
+    group: 'Inventario',
+    iconName: 'ArrowLeftRight',
+    description:
+      'W3: venta, consignación, devolución y entrega a asesor en una sola ' +
+      'pantalla. La venta exige precio real.',
+    keywords: [
+      'movimiento',
+      'venta',
+      'consignación',
+      'devolución',
+      'graduar',
+      'w3',
+    ],
+    roles: ADMIN,
+    dynamic: false,
+    showInMap: false,
+  },
+  {
     id: 'fotosintesis.lote.casillas',
     path: '/admin/fotosintesis/lots/:loteId/casillas',
     label: 'Clasificar casillas',
