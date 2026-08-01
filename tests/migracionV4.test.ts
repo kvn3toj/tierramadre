@@ -20,6 +20,10 @@
 import { describe, it, expect } from 'vitest';
 import {
   ESTADO_PENDIENTE_CLASIFICAR,
+  formatearReporteExcepciones,
+  mapearFilasInventario,
+  mapearLotesHoja,
+  numeroDeHoja,
   planificarMigracion,
 } from '../convex/_lib/migracionV4';
 
@@ -295,5 +299,280 @@ describe('el resumen — lo que se lee antes de decidir si se aplica', () => {
     });
     expect(segundo.lotesACrear).toHaveLength(0);
     expect(segundo.casillasACrear).toHaveLength(0);
+  });
+});
+
+describe('numeroDeHoja — las cifras llegan como texto de display', () => {
+  // Sheets devuelve «1,234,567» o «$ 931.931»; `Number()` sobre eso da NaN, y un
+  // NaN en `costoTotalCOP` se propaga hasta el motor.
+  it('quita separadores de miles y símbolos de moneda', () => {
+    expect(numeroDeHoja('931,931')).toBe(931931);
+    expect(numeroDeHoja('$ 1,383,809')).toBe(1_383_809);
+    expect(numeroDeHoja('735000')).toBe(735000);
+  });
+
+  it('un negativo conserva el signo', () => {
+    expect(numeroDeHoja('-25,000')).toBe(-25000);
+  });
+
+  it('vacío, basura y ausente caen a 0 — nunca a NaN', () => {
+    expect(numeroDeHoja('')).toBe(0);
+    expect(numeroDeHoja('   ')).toBe(0);
+    expect(numeroDeHoja(undefined)).toBe(0);
+    expect(numeroDeHoja('n/a')).toBe(0);
+  });
+});
+
+describe('formatearReporteExcepciones — lo que Kevin lee antes de aplicar', () => {
+  const PLAN = planificarMigracion({
+    lotesHoja: [
+      LOTE_HOJA,
+      {
+        ...LOTE_HOJA,
+        loteId: 'LC-03',
+        providerNombre: 'Proveedor Uno',
+        costoTotalCOP: 1_233_703_846,
+      },
+    ],
+    lotesConvex: [],
+    filasHoja: [
+      FILA,
+      { itemId: '497', loteId: 'LC-03', estado: '', costoBaseCOP: 1_000_000 },
+      { itemId: '498', loteId: 'C-999', estado: '', costoBaseCOP: 5000 },
+      { itemId: '499', loteId: 'C-068', estado: '', costoBaseCOP: 0 },
+    ],
+    casillasConvex: [],
+  });
+
+  it('pone primero lo que requiere auditoría', () => {
+    const reporte = formatearReporteExcepciones(PLAN);
+    const auditar = reporte.indexOf('REQUIEREN AUDITORÍA');
+    const informativas = reporte.indexOf('INFORMATIVAS');
+    expect(auditar).toBeGreaterThanOrEqual(0);
+    expect(informativas).toBeGreaterThan(auditar);
+  });
+
+  it('nombra a LC-03 con sus dos cifras, para poder dictaminarlo', () => {
+    // Dictamen de Kevin: LC-03 no se corrige por cuenta propia; se audita ANTES
+    // de que la Fase 2 lo tome por verdad. Para eso el reporte tiene que
+    // mostrarle los dos números enfrentados.
+    const reporte = formatearReporteExcepciones(PLAN);
+    expect(reporte).toContain('LC-03');
+    expect(reporte).toContain('1233703846');
+  });
+
+  it('nombra cada código con su conteo', () => {
+    const reporte = formatearReporteExcepciones(PLAN);
+    expect(reporte).toContain('COSTO_INCONSISTENTE');
+    expect(reporte).toContain('CASILLA_SIN_LOTE');
+    expect(reporte).toContain('CASILLA_SIN_COSTO');
+    expect(reporte).toContain('LOTE_SIN_PROVEEDOR');
+  });
+
+  it('un plan limpio lo dice, en vez de devolver vacío', () => {
+    // Un reporte en blanco se lee como «no corrió». Tiene que decir que corrió y
+    // no encontró nada.
+    const limpio = planificarMigracion({
+      lotesHoja: [{ ...LOTE_HOJA, providerNombre: 'Proveedor Uno' }],
+      lotesConvex: [],
+      filasHoja: [{ ...FILA, costoBaseCOP: 735_000 }],
+      casillasConvex: [],
+    });
+    expect(limpio.excepciones).toHaveLength(0);
+    expect(formatearReporteExcepciones(limpio)).toContain('sin excepciones');
+  });
+});
+
+describe('mapear la hoja — y no dejar que un mapeo roto parezca un plan limpio', () => {
+  // El defecto real, encontrado corriendo el ensayo: la pestaña Inventario trae
+  // el id de la pieza en la columna `item`, no `itemId`. Leyendo la clave
+  // equivocada, las 513 filas se caían al filtro y el plan reportaba «0 casillas
+  // a crear» — un cero con forma de hecho, que es exactamente el defecto que
+  // este proyecto vino a matar.
+  it('lee el id de la pieza de la columna `item`', () => {
+    const filas = mapearFilasInventario([
+      {
+        item: '496',
+        loteId: 'C-068',
+        estado: '',
+        costoBaseCOP: '153,125',
+        nombre: 'Baguette',
+      },
+    ]);
+    expect(filas).toEqual([
+      {
+        itemId: '496',
+        loteId: 'C-068',
+        estado: '',
+        costoBaseCOP: 153_125,
+        nombre: 'Baguette',
+      },
+    ]);
+  });
+
+  it('revienta si TODAS las filas se caen: es un mapeo roto, no un inventario vacío', () => {
+    expect(() =>
+      mapearFilasInventario([{ itemId: '496', loteId: 'C-068' }]),
+    ).toThrow(/item/);
+  });
+
+  it('una hoja de verdad vacía no revienta — no hay nada que mapear mal', () => {
+    expect(mapearFilasInventario([])).toEqual([]);
+  });
+
+  it('deja pasar el resto cuando solo algunas filas no tienen id', () => {
+    const filas = mapearFilasInventario([
+      { item: '496', loteId: 'C-068', costoBaseCOP: '100' },
+      { item: '   ', loteId: 'C-068', costoBaseCOP: '200' },
+    ]);
+    expect(filas.map((f) => f.itemId)).toEqual(['496']);
+  });
+
+  it('los lotes se leen por `loteId`, con las cifras destextualizadas', () => {
+    const lotes = mapearLotesHoja([
+      {
+        loteId: 'C-068',
+        estado: 'reconstruido',
+        costoTotalCOP: '$ 735,000',
+        unidadesDeclaradas: '10',
+      },
+    ]);
+    expect(lotes[0]).toMatchObject({
+      loteId: 'C-068',
+      estado: 'reconstruido',
+      costoTotalCOP: 735_000,
+      unidadesDeclaradas: 10,
+    });
+  });
+
+  it('los lotes también revientan si el mapeo se cae entero', () => {
+    expect(() => mapearLotesHoja([{ lote: 'C-068' }])).toThrow(/loteId/);
+  });
+});
+
+describe('LOTE_SIN_PIEZAS — el punto ciego que dejaba escapar a LC-03', () => {
+  // `COSTO_INCONSISTENTE` compara el costo declarado contra la suma de las
+  // piezas, y se salta el lote que no tiene ninguna: sin piezas no hay con qué
+  // comparar. El agujero es que un lote que declara $1.233M y no tiene NI UNA
+  // pieza enlazada pasa en silencio — justo la forma de LC-03, la fila que
+  // Kevin dictaminó que hay que auditar ANTES de que la Fase 2 la tome por
+  // verdad. Sin este código, el reporte no la nombraba.
+  const SIN_PIEZAS = {
+    ...LOTE_HOJA,
+    loteId: 'LC-03',
+    costoTotalCOP: 1_233_703_846,
+  };
+
+  it('reporta el lote que declara un costo y no tiene ni una pieza', () => {
+    const plan = planificarMigracion({
+      lotesHoja: [SIN_PIEZAS],
+      lotesConvex: [],
+      filasHoja: [],
+      casillasConvex: [],
+    });
+    const exc = plan.excepciones.find((e) => e.codigo === 'LOTE_SIN_PIEZAS');
+    expect(exc?.referencia).toBe('LC-03');
+    expect(exc?.requiereAuditoria).toBe(true);
+    expect(exc?.detalle).toContain('1233703846');
+  });
+
+  it('el lote se crea igual: reportar no es corregir', () => {
+    const plan = planificarMigracion({
+      lotesHoja: [SIN_PIEZAS],
+      lotesConvex: [],
+      filasHoja: [],
+      casillasConvex: [],
+    });
+    expect(plan.lotesACrear.map((l) => l.loteId)).toEqual(['LC-03']);
+  });
+
+  it('un lote sin costo declarado y sin piezas no es anómalo', () => {
+    // Un lote recién abierto, todavía sin inventario cargado. Reportarlo sería
+    // ruido, y el ruido es lo que hace que nadie lea el reporte.
+    const plan = planificarMigracion({
+      lotesHoja: [{ ...LOTE_HOJA, costoTotalCOP: 0 }],
+      lotesConvex: [],
+      filasHoja: [],
+      casillasConvex: [],
+    });
+    expect(plan.excepciones.some((e) => e.codigo === 'LOTE_SIN_PIEZAS')).toBe(
+      false,
+    );
+  });
+
+  it('un lote CON piezas no lo dispara — para eso está COSTO_INCONSISTENTE', () => {
+    const plan = planificarMigracion({
+      lotesHoja: [SIN_PIEZAS],
+      lotesConvex: [],
+      filasHoja: [
+        { itemId: '1', loteId: 'LC-03', estado: '', costoBaseCOP: 500_000 },
+      ],
+      casillasConvex: [],
+    });
+    expect(plan.excepciones.some((e) => e.codigo === 'LOTE_SIN_PIEZAS')).toBe(
+      false,
+    );
+    expect(
+      plan.excepciones.some((e) => e.codigo === 'COSTO_INCONSISTENTE'),
+    ).toBe(true);
+  });
+
+  it('sigue reportándose aunque Convex ya tenga el lote', () => {
+    // La anomalía es una propiedad del DATO, no de esta corrida. Si se callara
+    // al segundo ensayo, el reporte diría «limpio» y alguien concluiría que se
+    // resolvió — la misma forma de silencio que se lee como hecho. Se calla
+    // cuando Kevin la dictamine y el dato cambie, no antes. (Mismo criterio que
+    // `COSTO_INCONSISTENTE`, que tampoco mira si el lote ya existe.)
+    const plan = planificarMigracion({
+      lotesHoja: [SIN_PIEZAS],
+      lotesConvex: [{ loteId: 'LC-03' }],
+      filasHoja: [],
+      casillasConvex: [],
+    });
+    expect(plan.lotesACrear).toHaveLength(0);
+    expect(plan.excepciones.some((e) => e.codigo === 'LOTE_SIN_PIEZAS')).toBe(
+      true,
+    );
+  });
+});
+
+describe('el reporte muestra lo que va a crear, para poder revisarlo a ojo', () => {
+  // `dryRun` existe para que un humano mire el plan antes de que toque la base.
+  // Un plan que solo dice «28 lotes» no se puede revisar: hay que ver CUÁLES, y
+  // con qué cifras.
+  const PLAN = planificarMigracion({
+    lotesHoja: [
+      LOTE_HOJA,
+      {
+        ...LOTE_HOJA,
+        loteId: 'S-001',
+        providerNombre: 'Proveedor Uno',
+        costoTotalCOP: 378_000_000,
+        unidadesDeclaradas: 1,
+      },
+    ],
+    lotesConvex: [],
+    filasHoja: [],
+    casillasConvex: [],
+  });
+
+  it('lista cada lote con su costo declarado y sus unidades', () => {
+    const reporte = formatearReporteExcepciones(PLAN);
+    expect(reporte).toContain('LOTES A CREAR');
+    expect(reporte).toMatch(/C-068.*735000.*10/);
+    expect(reporte).toMatch(/S-001.*378000000.*1/);
+  });
+
+  it('dice a qué proveedor va cada uno — el centinela se ve', () => {
+    const reporte = formatearReporteExcepciones(PLAN);
+    expect(reporte).toMatch(/C-068.*centinela/i);
+    expect(reporte).toMatch(/S-001.*Proveedor Uno/);
+  });
+
+  it('los ordena por costo declarado, de mayor a menor', () => {
+    // Lo que hay que mirar primero es lo más caro: un lote que declara $378M es
+    // el que puede mover el inventario entero si el número está mal.
+    const reporte = formatearReporteExcepciones(PLAN);
+    expect(reporte.indexOf('S-001')).toBeLessThan(reporte.indexOf('C-068'));
   });
 });

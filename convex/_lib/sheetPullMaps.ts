@@ -33,12 +33,7 @@
  */
 
 export type FotoSyncTable =
-  | 'inventory'
-  | 'providers'
-  | 'lots'
-  | 'clients'
-  | 'sales'
-  | 'subLotes';
+  'inventory' | 'providers' | 'lots' | 'clients' | 'sales' | 'subLotes';
 
 export const FOTO_SYNC_TABLES: FotoSyncTable[] = [
   'inventory',
@@ -327,6 +322,13 @@ export const normalizeLotEstado = normalizeFrom([
   'cerrado',
   'publicado',
   'cancelado',
+  // Agrupación retroactiva armada el 2026-07-23 desde colecciones legadas
+  // («Fénix», «Madres», …), no una compra. Estuvo fuera de la unión hasta el
+  // 2026-08-01, y ese `null` es por lo que 28 lotes de la hoja no podían entrar
+  // a Convex (`804458e`): sus piezas quedaban invisibles para el conteo de
+  // lotes activos, que es el divisor del gasto fijo. Mapearlo a «abierto» lo
+  // volvería indistinguible de una compra real, así que gana su propio valor.
+  'reconstruido',
 ]);
 export const normalizeSaleEstado = normalizeFrom([
   'reservada',

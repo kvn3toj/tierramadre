@@ -24,7 +24,16 @@ import { FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
  * Spec: docs/specs/2026-05-21-fotosintesis-v2-handoff.md §4.1
  */
 
-type EstadoKey = 'abierto' | 'cerrado' | 'publicado' | 'cancelado';
+type EstadoKey =
+  | 'abierto'
+  | 'cerrado'
+  | 'publicado'
+  | 'cancelado'
+  /**
+   * Agrupación retroactiva armada desde colecciones legadas, no una compra.
+   * Los crea la migración de ensayo v3 → v4, nunca el wizard.
+   */
+  | 'reconstruido';
 type TabKey = 'todos' | EstadoKey;
 
 const COP_FORMATTER = new Intl.NumberFormat('es-CO', {
@@ -110,6 +119,7 @@ export default function FotosintesisLotesPage() {
       cerrado: 0,
       publicado: 0,
       cancelado: 0,
+      reconstruido: 0,
     };
     for (const r of rows) c[r.estado] += 1;
     return c;
@@ -306,6 +316,13 @@ export default function FotosintesisLotesPage() {
           onClick={() => setTab('cancelado')}
           label="Cancelados"
           count={lots === undefined ? undefined : counts.cancelado}
+          foto={foto}
+        />
+        <TabButton
+          active={tab === 'reconstruido'}
+          onClick={() => setTab('reconstruido')}
+          label="Reconstruidos"
+          count={lots === undefined ? undefined : counts.reconstruido}
           foto={foto}
         />
       </Box>
@@ -661,6 +678,14 @@ function estadoMeta(estado: EstadoKey, foto: FotoT): EstadoMeta {
         label: 'Cancelado',
         descriptor: 'Lote cancelado',
         color: foto.status.sold,
+      };
+    case 'reconstruido':
+      return {
+        label: 'Reconstruido',
+        // El descriptor dice el hecho que importa: no hay compra detrás, así
+        // que su costo y su proveedor no salieron de una factura.
+        descriptor: 'Sin dato de compra',
+        color: foto.ink.secondary,
       };
   }
 }

@@ -44,7 +44,11 @@ interface LotRow {
   numeroFactura?: string;
   urlFactura?: string;
   notas?: string;
-  estado: 'abierto' | 'cerrado' | 'publicado' | 'cancelado';
+  // `reconstruido` es una agrupación retroactiva armada desde colecciones
+  // legadas, no una compra. Cae del lado NO editable —`editable` exige
+  // `abierto`—, que es lo correcto: su encabezado no salió de una factura, y
+  // corregirlo acá inventaría un dato de compra que nunca existió.
+  estado: 'abierto' | 'cerrado' | 'publicado' | 'cancelado' | 'reconstruido';
 }
 
 interface EditLotDrawerProps {

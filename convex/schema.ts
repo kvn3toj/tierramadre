@@ -593,6 +593,16 @@ export default defineSchema({
     tipo: v.string(),
     notas: v.optional(v.string()),
     /**
+     * La fila centinela de las agrupaciones reconstruidas — ver
+     * `_lib/proveedorCentinela.ts`. No es un proveedor: es el lugar donde
+     * apuntan los lotes cuyo proveedor real todavía no se sabe, para no
+     * atribuirle piedras ajenas a alguien que nunca las vendió.
+     *
+     * Sale de los pickers y de los reportes de proveedores (`providers.list`),
+     * pero SÍ se ve en la ficha del lote: que el nombre aparezca es el punto.
+     */
+    centinela: v.optional(v.boolean()),
+    /**
      * Set when a rename is in flight: holds the prior natural-key value so
      * the Sheets safety check can validate column A against the OLD name
      * before overwriting it. Cleared on successful push.
@@ -645,6 +655,19 @@ export default defineSchema({
       v.literal('cerrado'),
       v.literal('publicado'),
       v.literal('cancelado'),
+      /**
+       * Agrupación retroactiva armada el 2026-07-23 desde colecciones legadas
+       * («Fénix», «Madres», …), no una compra. Entró a la unión el 2026-08-01
+       * (decisión de Kevin) porque sin ella los 28 lotes que la hoja tiene y
+       * Convex no, no cabían en la tabla — y sus piezas quedaban invisibles
+       * para el conteo de lotes activos, que es el divisor del gasto fijo.
+       *
+       * Cuenta como ACTIVO si tiene ≥1 unidad no vendida, igual que cualquier
+       * otro: D2 no mira `lots.estado`, así que no hay conflicto. Y NO es
+       * `abierto` — mapearlo allá lo volvería indistinguible de una compra
+       * real, además de dejarlo editable por el wizard viejo.
+       */
+      v.literal('reconstruido'),
     ),
     // Catalog grouping. `fotoLoteUrl` is Convex-only; `mostrarComoLote` IS
     // synced (COLUMN_MAPS.lots col U + WRITABLE.lots) so it can be toggled from
@@ -677,6 +700,8 @@ export default defineSchema({
         mineral: v.string(),
         gramaje: v.number(),
         costoPorGramoCOP: v.number(),
+        /** Cuántas piezas trae el lote de joya. La pedía el canon y faltaba. */
+        cantidadJoyas: v.optional(v.number()),
         presupuestoJoyaCOP: v.optional(v.number()),
       }),
     ),

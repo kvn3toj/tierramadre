@@ -17,6 +17,7 @@
 import { describe, it, expect } from 'vitest';
 import { CONFIG_PRECIOS_2026_07 } from '../convex/_lib/motorPrecios';
 import {
+  agruparUnidadesPorLote,
   contarLotesActivos,
   loteEstaActivo,
   planificarRecalculo,
@@ -195,5 +196,96 @@ describe('unidadesAReprecificar — el candado de lo ya vendido', () => {
     const copia = [...inventario];
     unidadesAReprecificar(inventario);
     expect(inventario).toEqual(copia);
+  });
+});
+
+describe('agruparUnidadesPorLote — los dos rieles, sin contar dos veces', () => {
+  // Hoy los dos rieles no se pisan: las casillas v4 no tienen fila en
+  // `productInventory`. Después de la migración de ensayo SÍ — las casillas se
+  // crean sobre ítems que ya existen ahí—, y sin deduplicar cada pieza se
+  // contaría dos veces en `unidadesActivas`, que es el número que `recalculos`
+  // traza como auditoría del criterio alterno de D2.
+  const LOTES = ['C-068', 'C-077'];
+
+  it('una pieza con fila en los dos rieles cuenta UNA vez', () => {
+    const porLote = agruparUnidadesPorLote({
+      lotesVivos: LOTES,
+      inventario: [{ itemId: '496', loteId: 'C-068', estado: 'DISPONIBLE' }],
+      casillas: [
+        { itemId: '496', loteId: 'C-068', estadoCasilla: 'DISPONIBLE' },
+      ],
+    });
+    expect(porLote.get('C-068')).toEqual(['DISPONIBLE']);
+  });
+
+  it('cuando difieren, manda la casilla: es el estado de v4', () => {
+    // El riel viejo puede estar viejo. Si la casilla dice VENDIDA y el
+    // inventario todavía dice DISPONIBLE, contar la vieja mantendría vivo un
+    // lote agotado y le seguiría asignando gasto fijo.
+    const porLote = agruparUnidadesPorLote({
+      lotesVivos: LOTES,
+      inventario: [{ itemId: '496', loteId: 'C-068', estado: 'DISPONIBLE' }],
+      casillas: [{ itemId: '496', loteId: 'C-068', estadoCasilla: 'VENDIDA' }],
+    });
+    expect(porLote.get('C-068')).toEqual(['VENDIDA']);
+  });
+
+  it('si los dos rieles la ubican en lotes distintos, gana el de la casilla', () => {
+    const porLote = agruparUnidadesPorLote({
+      lotesVivos: LOTES,
+      inventario: [{ itemId: '496', loteId: 'C-077', estado: 'DISPONIBLE' }],
+      casillas: [
+        { itemId: '496', loteId: 'C-068', estadoCasilla: 'DISPONIBLE' },
+      ],
+    });
+    expect(porLote.get('C-068')).toEqual(['DISPONIBLE']);
+    expect(porLote.get('C-077')).toEqual([]);
+  });
+
+  it('una pieza cuyo lote no existe como fila queda fuera', () => {
+    // El mecanismo exacto del subconteo 66 vs 88: `loteEstaActivo` no puede ver
+    // piezas cuyo lote Convex nunca conoció. No es un criterio distinto, es dato
+    // incompleto — y lo repara la migración creando los lotes, no este conteo.
+    const porLote = agruparUnidadesPorLote({
+      lotesVivos: LOTES,
+      inventario: [{ itemId: '999', loteId: 'C-999', estado: 'DISPONIBLE' }],
+      casillas: [],
+    });
+    expect(porLote.has('C-999')).toBe(false);
+    expect([...porLote.values()].flat()).toEqual([]);
+  });
+
+  it('una casilla sin estado todavía no cuenta como unidad', () => {
+    const porLote = agruparUnidadesPorLote({
+      lotesVivos: LOTES,
+      inventario: [],
+      casillas: [{ itemId: '496', loteId: 'C-068' }],
+    });
+    expect(porLote.get('C-068')).toEqual([]);
+  });
+
+  it('un ítem de inventario sin loteId no se le atribuye a nadie', () => {
+    const porLote = agruparUnidadesPorLote({
+      lotesVivos: LOTES,
+      inventario: [{ itemId: '496', estado: 'DISPONIBLE' }],
+      casillas: [],
+    });
+    expect([...porLote.values()].flat()).toEqual([]);
+  });
+
+  it('cada lote vivo aparece como clave, aunque no tenga piezas', () => {
+    // Un lote recién creado, con las casillas aún sin llenar, tiene que poder
+    // reportarse como NO activo — y para eso su clave tiene que existir.
+    const porLote = agruparUnidadesPorLote({
+      lotesVivos: LOTES,
+      inventario: [],
+      casillas: [],
+    });
+    expect([...porLote.keys()].sort()).toEqual(['C-068', 'C-077']);
+    expect(
+      contarLotesActivos(
+        [...porLote.values()].map((u) => u.map((estado) => ({ estado }))),
+      ),
+    ).toBe(0);
   });
 });

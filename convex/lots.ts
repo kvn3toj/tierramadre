@@ -728,7 +728,11 @@ export const reopen = action({
   ): Promise<{
     id: Id<'lots'>;
     loteId: string;
-    reopenedFrom: 'abierto' | 'cerrado' | 'publicado' | 'cancelado';
+    // El tipo sigue al de `lots.estado`, aunque en la práctica `canReopenLot`
+    // solo deja pasar `cerrado` y `publicado`: un `reconstruido` cae en
+    // `not-closeable` antes de llegar acá.
+    reopenedFrom:
+      'abierto' | 'cerrado' | 'publicado' | 'cancelado' | 'reconstruido';
     demotedFromCatalog: number;
   }> => {
     const caller = await requireAccessLevel(idToken, ['admin']);
@@ -967,7 +971,8 @@ export const _insertMissingFromSheet = internalMutation({
         loteId: c.loteId,
         rowIndex: c.rowIndex,
         providerId: provider._id,
-        estado: estado as 'abierto' | 'cerrado' | 'publicado' | 'cancelado',
+        estado: estado as
+          'abierto' | 'cerrado' | 'publicado' | 'cancelado' | 'reconstruido',
         fechaRecepcion: c.fechaRecepcion,
         costoTotalCOP: c.costoTotalCOP,
         unidadesDeclaradas: c.unidadesDeclaradas,

@@ -1,8 +1,17 @@
 # Cierre — Fase 1 de W1–W3 + SOT v4
 
-- **Fecha:** 2026-08-01 · **Rama:** `feat/w1-w3-sot-v4` (18 commits, sin mergear)
+> **Protocolo de sesión (obligatorio).** Este doc es la **única memoria compartida** entre
+> sesiones de W1–W3 + SOT v4. Hay varias trabajando el mismo frente con estados distintos.
+>
+> Antes de tocar nada: leelo **COMPLETO** —incluidas las últimas secciones, que son las más
+> nuevas— y leé `git log --oneline main..HEAD`. Tu contexto puede estar desfasado respecto a
+> él. Escribirle sin leerlo entero es editarlo a ciegas.
+>
+> Cuando termines, escribile de vuelta: lo que no queda acá, la próxima sesión no lo sabe.
+
+- **Fecha:** 2026-08-01 · **Rama:** `feat/w1-w3-sot-v4` (31 commits, sin mergear)
 - **Deployment:** Convex dev `flexible-wolverine-803` · **Prod intacto**
-- **Suite:** 914 tests en 99 archivos (línea base 700/85 → **+214 tests**)
+- **Suite:** 914 tests en 99 archivos al cierre de la primera ronda
 
 ## Qué quedó funcionando
 
@@ -67,12 +76,12 @@ Los 5 casos del handoff reproducen byte a byte, pinneados en
 
 Leído del SOT v3 vivo (gratis, sin tocar Convex prod):
 
-| Divisor | Lotes activos | Fijo por lote | vs la hoja |
-| --- | --- | --- | --- |
-| La hoja (`B6`, a mano) | 76 | $442.787 | — |
-| **A** · las 25 filas en blanco son inventario vivo | **88** | **$382.407** | −13,6% |
-| **B** · las 25 son vendidas sin marcar | 81 | $415.455 | −6,2% |
-| ~~dev (obsoleto, 22-23 julio)~~ | ~~60~~ | ~~$560.864~~ | ~~+26,7%~~ |
+| Divisor                                            | Lotes activos | Fijo por lote | vs la hoja |
+| -------------------------------------------------- | ------------- | ------------- | ---------- |
+| La hoja (`B6`, a mano)                             | 76            | $442.787      | —          |
+| **A** · las 25 filas en blanco son inventario vivo | **88**        | **$382.407**  | −13,6%     |
+| **B** · las 25 son vendidas sin marcar             | 81            | $415.455      | −6,2%      |
+| ~~dev (obsoleto, 22-23 julio)~~                    | ~~60~~        | ~~$560.864~~  | ~~+26,7%~~ |
 
 **Las dos cotas quedan por encima de 76**, así que el gasto fijo por lote BAJA en
 ambos casos y los precios objetivo bajan con él. La dirección no depende del
@@ -191,14 +200,14 @@ costos, clasificados:
 
 ### Riel v4 (esta rama) - todos cerrados
 
-| Endpoint | Antes | Ahora |
-| --- | --- | --- |
-| `precios.previewLote` | query publica con el fijo vigente, K, piso y margen | action + `ROLES_COSTOS` |
-| `casillas.estadoDelLote` | query publica con el costo de cada casilla | action + `ROLES_COSTOS` |
-| `casillas.porItemId` | query publica con el costo de la pieza | action + `ROLES_COSTOS` |
-| `movimientos.enConsignacion` | query publica, `lotItems` enteros | action + recorte a 4 campos |
-| `movimientos.porItem` | query publica con **numero de cuenta y titular del cliente** | **BORRADA** (no la usaba nadie) |
-| `lotsV4.casillasDeLote` | query publica con el costo de cada casilla | **BORRADA** (no la usaba nadie) |
+| Endpoint                     | Antes                                                        | Ahora                           |
+| ---------------------------- | ------------------------------------------------------------ | ------------------------------- |
+| `precios.previewLote`        | query publica con el fijo vigente, K, piso y margen          | action + `ROLES_COSTOS`         |
+| `casillas.estadoDelLote`     | query publica con el costo de cada casilla                   | action + `ROLES_COSTOS`         |
+| `casillas.porItemId`         | query publica con el costo de la pieza                       | action + `ROLES_COSTOS`         |
+| `movimientos.enConsignacion` | query publica, `lotItems` enteros                            | action + recorte a 4 campos     |
+| `movimientos.porItem`        | query publica con **numero de cuenta y titular del cliente** | **BORRADA** (no la usaba nadie) |
+| `lotsV4.casillasDeLote`      | query publica con el costo de cada casilla                   | **BORRADA** (no la usaba nadie) |
 
 Hoy `convex/{precios,casillas,movimientos,lotsV4}.ts` no exportan **ni una**
 query publica. Lo pinnea `tests/previewLoteGate.test.ts`.
@@ -207,14 +216,14 @@ query publica. Lo pinnea `tests/previewLoteGate.test.ts`.
 
 Verificado contra `main`: ya estaba asi antes de esta rama.
 
-| Endpoint | Que expone | Nota |
-| --- | --- | --- |
-| `products.list` | `costoBaseCOP` de cada item, sin `saleSafe` | Sin `idToken` |
-| `products.publishedCatalog` | `costoBaseCOP` | Es la query del catalogo de cara al cliente |
-| `products.getManyByItemIds`, `fotosintesisFields`, `getPublicByItem`, `patrones*` | precios | Sin `saleSafe` |
-| `lots.list` / `get` / `getByLoteId` | `costoTotalCOP`, y ahora tambien `costoCompraCOP`, `abonoCOP`, `saldoCOP`, `costosVariables[]` | El desglose v4 es exposicion **nueva** sobre una query vieja |
-| `lotItems.getByItemId` / `listByLote` | ahora incluyen `costoUnitarioRealCOP` | idem |
-| `ghl.searchProducts`, `fotosintesisAi.workspaceSnapshot` | precios | Sin `idToken` |
+| Endpoint                                                                          | Que expone                                                                                     | Nota                                                         |
+| --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `products.list`                                                                   | `costoBaseCOP` de cada item, sin `saleSafe`                                                    | Sin `idToken`                                                |
+| `products.publishedCatalog`                                                       | `costoBaseCOP`                                                                                 | Es la query del catalogo de cara al cliente                  |
+| `products.getManyByItemIds`, `fotosintesisFields`, `getPublicByItem`, `patrones*` | precios                                                                                        | Sin `saleSafe`                                               |
+| `lots.list` / `get` / `getByLoteId`                                               | `costoTotalCOP`, y ahora tambien `costoCompraCOP`, `abonoCOP`, `saldoCOP`, `costosVariables[]` | El desglose v4 es exposicion **nueva** sobre una query vieja |
+| `lotItems.getByItemId` / `listByLote`                                             | ahora incluyen `costoUnitarioRealCOP`                                                          | idem                                                         |
+| `ghl.searchProducts`, `fotosintesisAi.workspaceSnapshot`                          | precios                                                                                        | Sin `idToken`                                                |
 
 **No las gatee, a proposito.** Son de `main`, las consume medio frontend, y cada
 conversion cuesta la suscripcion reactiva - el costo de UI que ya se pago tres

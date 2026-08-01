@@ -212,4 +212,14 @@ describe('estado normalizers', () => {
     expect(normalizeSubLoteEstado('Archivada')).toBe('archivada');
     expect(normalizeSubLoteEstado('borrador')).toBeNull();
   });
+
+  // `reconstruido` describe una agrupación retroactiva armada desde colecciones
+  // legadas, no una compra. Que devolviera `null` es exactamente por lo que los
+  // 28 lotes se omitieron en `804458e`, y por lo que dev reparte el gasto fijo
+  // entre menos lotes de los que existen.
+  it('lot: `reconstruido` ya es un estado del modelo', () => {
+    expect(normalizeLotEstado('reconstruido')).toBe('reconstruido');
+    expect(normalizeLotEstado('Reconstruido')).toBe('reconstruido');
+    expect(normalizeLotEstado('  RECONSTRUIDO  ')).toBe('reconstruido');
+  });
 });

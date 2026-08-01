@@ -9,35 +9,50 @@
  * Pure so it is unit-testable (tests/itemEstadoCopy.test.ts). `tone` maps to the
  * banner's accent in the drawer (emerald = live/public, neutral = closed).
  */
-export type LotEstado = "abierto" | "cerrado" | "publicado" | "cancelado";
+export type LotEstado =
+  | 'abierto'
+  | 'cerrado'
+  | 'publicado'
+  | 'cancelado'
+  /** Agrupación retroactiva armada desde colecciones legadas, no una compra. */
+  | 'reconstruido';
 
 export interface ItemEstadoCopy {
   subtitle: string;
   banner: string | null;
-  tone: "emerald" | "neutral";
+  tone: 'emerald' | 'neutral';
 }
 
 export function itemEstadoCopy(estado: LotEstado): ItemEstadoCopy {
   const subtitle =
-    "Los cambios se guardan en Convex y se sincronizan a la planilla.";
+    'Los cambios se guardan en Convex y se sincronizan a la planilla.';
 
-  if (estado === "publicado") {
+  if (estado === 'publicado') {
     return {
       subtitle,
       banner:
-        "Lote publicado · este ítem está en el catálogo — los cambios se reflejan al instante",
-      tone: "emerald",
+        'Lote publicado · este ítem está en el catálogo — los cambios se reflejan al instante',
+      tone: 'emerald',
     };
   }
 
-  if (estado === "cerrado") {
+  if (estado === 'cerrado') {
     return {
       subtitle,
       banner:
-        "Lote cerrado · podés corregir cualquier dato de este ítem; el encabezado contable del lote queda fijo.",
-      tone: "neutral",
+        'Lote cerrado · podés corregir cualquier dato de este ítem; el encabezado contable del lote queda fijo.',
+      tone: 'neutral',
     };
   }
 
-  return { subtitle, banner: null, tone: "neutral" };
+  if (estado === 'reconstruido') {
+    return {
+      subtitle,
+      banner:
+        'Lote reconstruido · agrupación retroactiva armada desde colecciones legadas, no una compra: el costo y el proveedor del encabezado no salieron de una factura.',
+      tone: 'neutral',
+    };
+  }
+
+  return { subtitle, banner: null, tone: 'neutral' };
 }

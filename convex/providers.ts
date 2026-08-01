@@ -11,6 +11,7 @@ import { pushTableRowToVercel } from './_lib/sheetSync';
 import { marshalRow } from './_lib/columnMaps';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
+import { filtrarCentinelas } from './_lib/proveedorCentinela';
 
 const tipoValidator = v.union(
   v.literal('gemas'),
@@ -30,10 +31,18 @@ const providerPatchValidator = v.object({
   notas: v.optional(v.string()),
 });
 
+/**
+ * El listado que alimenta los pickers y los reportes de proveedores.
+ *
+ * Excluye la fila centinela de las agrupaciones reconstruidas: no es un
+ * proveedor, y ofrecerla al capturar un lote invitaría a atribuirle una compra.
+ * `get` (por id) NO la filtra — en la ficha del lote el nombre tiene que verse,
+ * que es justamente para lo que existe.
+ */
 export const list = query({
   args: { search: v.optional(v.string()) },
   handler: async (ctx, { search }) => {
-    const all = await ctx.db.query('providers').collect();
+    const all = filtrarCentinelas(await ctx.db.query('providers').collect());
     const filtered = search
       ? all.filter((row) => {
           const s = search.toLowerCase();

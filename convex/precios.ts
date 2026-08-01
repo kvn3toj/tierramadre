@@ -31,7 +31,7 @@ import {
   type ConfigPrecios,
 } from './_lib/motorPrecios';
 import { construirPreviewLote } from './_lib/previewLote';
-import { loteEstaActivo, type EstadoUnidad } from './_lib/recalculo';
+import { agruparUnidadesPorLote, loteEstaActivo } from './_lib/recalculo';
 
 /** Lee las reglas de la tabla y elige la vigente para `fecha`. */
 export async function configVigente(
@@ -76,21 +76,20 @@ export async function contarLotesActivosDb(
   ctx: QueryCtx | MutationCtx,
 ): Promise<{ lotesActivos: number; unidadesActivas: number }> {
   const lots = await ctx.db.query('lots').collect();
-  const vivos = lots.filter((l) => l.estado !== 'cancelado');
 
-  const porLote = new Map<string, EstadoUnidad[]>();
-  for (const l of vivos) porLote.set(l.loteId, []);
-
-  for (const item of await ctx.db.query('productInventory').collect()) {
-    if (!item.loteId) continue;
-    porLote.get(item.loteId)?.push(item.estado);
-  }
-
-  // Casillas v4: viven solo en lotItems hasta que W2 las complete.
-  for (const casilla of await ctx.db.query('lotItems').collect()) {
-    if (!casilla.estadoCasilla) continue;
-    porLote.get(casilla.loteId)?.push(casilla.estadoCasilla);
-  }
+  // La unión de los dos rieles vive en `_lib/recalculo`, deduplicada por
+  // itemId. Antes se hacía acá con dos `push` sobre el mismo array, y eso
+  // funcionaba solo mientras una casilla v4 NO tuviera fila en
+  // `productInventory`. La migración de ensayo crea las casillas sobre ítems
+  // que ya existen ahí, así que a partir de ella cada pieza aparecía dos veces
+  // y `unidadesActivas` salía al doble.
+  const porLote = agruparUnidadesPorLote({
+    lotesVivos: lots
+      .filter((l) => l.estado !== 'cancelado')
+      .map((l) => l.loteId),
+    inventario: await ctx.db.query('productInventory').collect(),
+    casillas: await ctx.db.query('lotItems').collect(),
+  });
 
   let lotesActivos = 0;
   let unidadesActivas = 0;

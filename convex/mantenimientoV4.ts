@@ -17,6 +17,8 @@
 import { v } from 'convex/values';
 import { internalMutation, internalQuery } from './_generated/server';
 import { exigeDeploymentDeDesarrollo } from './_lib/destinoEscritura';
+import { configVigente, contarLotesActivosDb } from './precios';
+import { costoFijoUnitario } from './_lib/motorPrecios';
 
 /**
  * Cuántas piezas hay por estado, y cuántos lotes se mantienen activos SOLO por
@@ -58,6 +60,16 @@ export const diagnosticoEstados = internalQuery({
     // así que esos lotes los crea la migración de Fase 2.
     const lotes = await ctx.db.query('lots').collect();
 
+    // El divisor de D2 y el gasto fijo que sale de él. Es el número que la
+    // migración de ensayo viene a mover, así que el diagnóstico tiene que
+    // decirlo: sin él hay que deducirlo de otras tres cifras, y una cifra
+    // deducida a ojo es exactamente cómo se llegó al «+27%» que era falso.
+    const { lotesActivos, unidadesActivas } = await contarLotesActivosDb(ctx);
+    const config = await configVigente(
+      ctx,
+      new Date().toISOString().slice(0, 10),
+    );
+
     return {
       porEstado,
       lotesEnTablaLots: lotes.length,
@@ -67,6 +79,14 @@ export const diagnosticoEstados = internalQuery({
       lotesConPiezas: porLote.size,
       activosSoloPorEstadoVacio: activosSoloPorVacio.length,
       ejemplos: activosSoloPorVacio.slice(0, 10),
+      // El divisor vigente (D2) y su consecuencia.
+      lotesActivos,
+      unidadesActivas,
+      gastosFijosMensualesCOP: config.gastosFijosMensualesCOP,
+      costoFijoUnitarioCOP:
+        lotesActivos > 0
+          ? costoFijoUnitario(config.gastosFijosMensualesCOP, lotesActivos)
+          : undefined,
     };
   },
 });
