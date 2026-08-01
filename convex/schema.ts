@@ -461,6 +461,37 @@ export default defineSchema({
     motivo: v.optional(v.string()),
   }).index('by_ts', ['ts']),
 
+  // ─── SOT v4 · El espejo push-only ────────────────────────────────
+  //
+  // La cola hacia el libro «SOT v4 · Espejo (PRUEBAS)». A diferencia del riel
+  // viejo —que guarda el estado de sync en la propia fila de dominio— el espejo
+  // v4 usa una cola explícita, por dos razones: la escritura NO puede reventar
+  // la mutation de origen (Convex es la verdad; la hoja es una vista), y un
+  // evento puede tocar varias pestañas a la vez.
+  //
+  // La fila se ubica en la hoja BUSCANDO el id en su columna, nunca por un
+  // contador: `rowIndex = maxRow + 1` ya causó deriva real en el riel viejo y
+  // tiene una reparación dedicada (`convex/lots.ts:947-1096`).
+  espejoOutbox: defineTable({
+    /** Pestaña destino: Lotes | Casillas | Movimientos. */
+    pestana: v.string(),
+    /** Id natural de la fila (loteId, itemId, movimientoId) — la clave del upsert. */
+    idFila: v.string(),
+    /** La fila ya marshalada: { cabecera nombrada -> valor en texto }. */
+    campos: v.record(v.string(), v.string()),
+    estado: v.union(
+      v.literal('pendiente'),
+      v.literal('enviado'),
+      v.literal('error'),
+    ),
+    intentos: v.number(),
+    ultimoError: v.optional(v.string()),
+    creadoEn: v.number(),
+    enviadoEn: v.optional(v.number()),
+  })
+    .index('by_estado', ['estado'])
+    .index('by_pestana_idFila', ['pestana', 'idFila']),
+
   // ─── Idempotency · Commit tokens ─────────────────────────────────
   //
   // MONEY-CRITICAL: the four "create" mutations (lots/lotItems/sales/subLotes)
