@@ -552,6 +552,50 @@ export default defineSchema({
     // per-item gallery) instead of one card per item.
     fotoLoteUrl: v.optional(v.string()),
     mostrarComoLote: v.optional(v.boolean()),
+
+    // ─── SOT v4 · W1 «Cerebro Racional» ────────────────────────────
+    //
+    // Aditivos y OPCIONALES a nivel schema, para no romper las filas legacy
+    // que nunca los tuvieron. La obligatoriedad vive en la validación del
+    // camino v4 (`_lib/loteV4.ts`), no aquí: el schema describe lo que puede
+    // existir; el wizard describe lo que hay que capturar.
+
+    /**
+     * El campo que decide el régimen fiscal: gema (divisor 0,60) o joya
+     * (0,41). `mixta` es legítimo a nivel lote y significa «se resuelve
+     * casilla por casilla» — el motor NO cotiza un lote mixto como bloque.
+     * Cotizar con el divisor equivocado mueve el precio 46%.
+     */
+    categoriaFiscal: v.optional(
+      v.union(v.literal('gema'), v.literal('joya'), v.literal('mixta')),
+    ),
+    /** Bloque de joyería. Obligatorio en v4 cuando la categoría es `joya`. */
+    joya: v.optional(
+      v.object({
+        tipoJoya: v.string(),
+        mineral: v.string(),
+        gramaje: v.number(),
+        costoPorGramoCOP: v.number(),
+        presupuestoJoyaCOP: v.optional(v.number()),
+      }),
+    ),
+    /**
+     * Landed cost como documentos que ajustan (viáticos, packing, domicilio),
+     * no como un campo editable: así se puede decir DE QUÉ fue el ajuste. Un
+     * monto suelto dentro del costo es indistinguible de un dedazo.
+     */
+    costosVariables: v.optional(
+      v.array(v.object({ concepto: v.string(), montoCOP: v.number() })),
+    ),
+    abonoCOP: v.optional(v.number()),
+    saldoCOP: v.optional(v.number()),
+    /**
+     * Marca el lote como capturado con el modelo nuevo. El wizard viejo debe
+     * RECHAZAR abrirlo: sus reglas (preponderancia sumando 100, costo por
+     * prorrateo) contradicen las de v4, y mezclarlas corrompería el costo.
+     */
+    origenModelo: v.optional(v.literal('v4')),
+
     ...syncFields,
   })
     .index('by_loteId', ['loteId'])
