@@ -191,8 +191,33 @@ export const _filasEsperadas = internalQuery({
 });
 
 /**
- * Drena la cola. Manual en dev (el plan no enciende crons: este proyecto ya
- * apagó los suyos por ancho de banda).
+ * El rescate: drena lo que el camino por evento no logró.
+ *
+ * El modelo es HÍBRIDO. El drenaje normal se agenda con `runAfter(0)` apenas se
+ * encola, así que el costo es proporcional a los eventos reales —decenas al día,
+ * no el barrido de 513 filas que apagó los crons de v3—. Este cron es el
+ * segundo piso: recoge lo que quedó atascado porque Sheets estaba caído, el
+ * token venció, o la acción agendada murió.
+ *
+ * Apagado por defecto (`ESPEJO_CRON`), el mismo idioma que `INVENTORY_PULL_CRON`
+ * y `FOTO_RECONCILE_CRON`. Encenderlo en prod es una decisión con medición
+ * detrás, no un default.
+ */
+export const rescatar = internalAction({
+  args: {},
+  handler: async (ctx): Promise<{ drenadas: number; fallidas: number }> => {
+    if (process.env.ESPEJO_CRON !== 'on') {
+      return { drenadas: 0, fallidas: 0 };
+    }
+    return await ctx.runAction(internal.espejo.drenar, { limite: 50 });
+  },
+});
+
+/**
+ * Drena la cola.
+ *
+ * Se agenda sola con `runAfter(0)` desde cada mutación que encola, y el cron de
+ * rescate la vuelve a llamar cada 30 minutos para lo que haya quedado atascado.
  */
 export const drenar = internalAction({
   args: { limite: v.optional(v.number()) },

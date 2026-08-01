@@ -61,6 +61,7 @@ async function encolarLote(ctx: MutationCtx, id: Id<'lots'>): Promise<void> {
     intentos: 0,
     creadoEn: Date.now(),
   });
+  await ctx.scheduler.runAfter(0, internal.espejo.drenar, { limite: 25 });
 }
 
 const patchArgs = {
@@ -134,6 +135,8 @@ export const _guardar = internalMutation({
       intentos: 0,
       creadoEn: Date.now(),
     });
+
+    await ctx.scheduler.runAfter(0, internal.espejo.drenar, { limite: 25 });
 
     return { itemId, completa: faltantes.length === 0, faltantes };
   },

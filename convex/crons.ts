@@ -68,6 +68,27 @@ crons.interval(
   {},
 );
 
+// ─── SOT v4 · Rescate del espejo ──────────────────────────────────────────
+//
+// El espejo v4 drena por EVENTO: cada mutación que encola agenda su propio
+// `espejo:drenar` con `runAfter(0)`, así que el costo es proporcional a los
+// eventos reales (decenas al día), no al barrido de 513 filas que apagó los
+// crons de v3.
+//
+// Este cron es el segundo piso, no el motor: recoge lo que quedó atascado
+// porque Sheets estaba caído, el token venció o la acción agendada murió. Cada
+// fallo incrementa `intentos` en la fila, así que un atasco permanente queda
+// visible en vez de reintentarse en silencio para siempre.
+//
+// Sale APAGADO (`ESPEJO_CRON`), igual que los otros dos. Encenderlo en prod es
+// una decisión con medición detrás — el consumo se mide en la doble corrida.
+crons.interval(
+  'rescate del espejo v4',
+  { minutes: 30 },
+  internal.espejo.rescatar,
+  {},
+);
+
 // ─── GHL commerce · Áreas 2 & 4 scheduler ────────────────────────────────
 //
 // Replaces the spec's Cloudflare `scheduler` worker: Convex crons run natively,

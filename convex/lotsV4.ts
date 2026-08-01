@@ -197,6 +197,10 @@ export const _create = internalMutation({
       creadoEn: Date.now(),
     });
 
+    // Drenaje por evento: el espejo se pone al día solo, sin cron de barrido.
+    // Si falla, la fila queda en cola y el cron de rescate la recoge.
+    await ctx.scheduler.runAfter(0, internal.espejo.drenar, { limite: 25 });
+
     return {
       id: lotId,
       loteId,

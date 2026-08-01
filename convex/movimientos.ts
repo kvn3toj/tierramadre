@@ -209,6 +209,10 @@ export const _registrar = internalMutation({
       creadoEn: ts,
     });
 
+    // Una sola vez por movimiento, no por casilla: el drenaje toma la cola
+    // entera y agendar N veces solo multiplica trabajo idéntico.
+    await ctx.scheduler.runAfter(0, internal.espejo.drenar, { limite: 25 });
+
     return {
       movimientoId,
       kardexEventId,
