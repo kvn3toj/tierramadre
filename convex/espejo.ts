@@ -22,7 +22,10 @@ import {
   CABECERAS_CASILLAS,
   CABECERAS_LOTES,
   CABECERAS_MOVIMIENTOS,
+  filaCasillaParaEspejo,
+  filaLoteParaEspejo,
 } from './_lib/espejoFilas';
+import { detectarDeriva } from './_lib/derivaEspejo';
 import {
   asegurarPestana,
   columnaA1,
@@ -93,6 +96,97 @@ export const escribirLeeme = internalAction({
       TEXTO_LEEME.map((f) => [...f]),
     );
     return { ok: true };
+  },
+});
+
+/**
+ * Compara el espejo contra Convex y REPORTA lo que se editó a mano.
+ *
+ * No corrige nada. Absorber la edición reintroduciría el pull —con su
+ * incapacidad de distinguir «alguien lo puso a propósito» de «nunca se
+ * escribió», el incidente de `mostrarEnCatalogo` que casi saca 285 piezas de la
+ * vitrina—, y pisarla en silencio le haría perder el trabajo a quien la hizo.
+ * Reportar deja la decisión donde debe estar: en un humano.
+ *
+ * Manual en dev, como pide el plan.
+ */
+export const reportarDeriva = internalAction({
+  args: { pestana: v.string() },
+  handler: async (ctx, { pestana }) => {
+    const cabeceras = CABECERAS_POR_PESTANA[pestana];
+    if (!cabeceras) throw new Error(`pestaña desconocida "${pestana}".`);
+
+    const token = await obtenerAccessToken();
+    const libro = espejoSpreadsheetId();
+
+    const filas = await leerRango(token, libro, `${pestana}!A1:ZZ`);
+    const [cabeceraHoja = [], ...cuerpo] = filas;
+    const filasEspejo = cuerpo.map((fila) =>
+      Object.fromEntries(cabeceraHoja.map((c, i) => [c, fila[i] ?? ''])),
+    );
+
+    const filasConvex: Record<string, string>[] = await ctx.runQuery(
+      internal.espejo._filasEsperadas,
+      { pestana },
+    );
+
+    return detectarDeriva({
+      cabeceras: [...cabeceras],
+      idCabecera: cabeceras[0],
+      filasEspejo,
+      filasConvex,
+    });
+  },
+});
+
+/**
+ * Lo que el espejo DEBERÍA tener hoy, reconstruido desde Convex. Se usa solo
+ * para comparar: no se escribe.
+ */
+export const _filasEsperadas = internalQuery({
+  args: { pestana: v.string() },
+  handler: async (ctx, { pestana }) => {
+    if (pestana === 'Lotes') {
+      const lotes = await ctx.db.query('lots').collect();
+      const porId = new Map(
+        (await ctx.db.query('providers').collect()).map((p) => [
+          p._id,
+          p.nombreORazonSocial,
+        ]),
+      );
+      return lotes
+        .filter((l) => l.origenModelo === 'v4')
+        .map((l) =>
+          filaLoteParaEspejo({
+            loteId: l.loteId,
+            fechaRecepcion: l.fechaRecepcion,
+            proveedor: porId.get(l.providerId) ?? '',
+            categoriaFiscal: l.categoriaFiscal ?? '',
+            costoCompraCOP: l.costoCompraCOP ?? l.costoTotalCOP,
+            costosVariablesCOP: (l.costosVariables ?? []).reduce(
+              (a, c) => a + c.montoCOP,
+              0,
+            ),
+            costoTotalCOP: l.costoTotalCOP,
+            unidadesDeclaradas: l.unidadesDeclaradas,
+            abonoCOP: l.abonoCOP ?? 0,
+            saldoCOP: l.saldoCOP ?? 0,
+            formaPago: l.formaPago,
+            estado: l.estado,
+            sede: l.sede,
+            renombreLote: l.renombreLote,
+          }),
+        );
+    }
+
+    if (pestana === 'Casillas') {
+      const casillas = await ctx.db.query('lotItems').collect();
+      return casillas
+        .filter((c) => c.estadoCasilla)
+        .map((c) => filaCasillaParaEspejo(c as never));
+    }
+
+    return [];
   },
 });
 

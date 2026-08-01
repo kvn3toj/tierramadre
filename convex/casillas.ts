@@ -19,7 +19,49 @@ import {
   conciliarCostos,
   type CasillaW2,
 } from './_lib/casillaW2';
-import { filaCasillaParaEspejo } from './_lib/espejoFilas';
+import { filaCasillaParaEspejo, filaLoteParaEspejo } from './_lib/espejoFilas';
+import type { Id } from './_generated/dataModel';
+import type { MutationCtx } from './_generated/server';
+
+/**
+ * Re-encola la fila del lote al espejo.
+ *
+ * Existe porque el job de deriva encontró que publicar cambiaba el estado en
+ * Convex y dejaba la hoja diciendo «abierto». No era una edición a mano: era el
+ * espejo quedándose viejo. Toda mutación que cambie un campo espejado tiene que
+ * volver a encolar, o el espejo miente en silencio.
+ */
+async function encolarLote(ctx: MutationCtx, id: Id<'lots'>): Promise<void> {
+  const lote = await ctx.db.get(id);
+  if (!lote) return;
+  const proveedor = await ctx.db.get(lote.providerId);
+  await ctx.db.insert('espejoOutbox', {
+    pestana: 'Lotes',
+    idFila: lote.loteId,
+    campos: filaLoteParaEspejo({
+      loteId: lote.loteId,
+      fechaRecepcion: lote.fechaRecepcion,
+      proveedor: proveedor?.nombreORazonSocial ?? '',
+      categoriaFiscal: lote.categoriaFiscal ?? '',
+      costoCompraCOP: lote.costoCompraCOP ?? lote.costoTotalCOP,
+      costosVariablesCOP: (lote.costosVariables ?? []).reduce(
+        (a, c) => a + c.montoCOP,
+        0,
+      ),
+      costoTotalCOP: lote.costoTotalCOP,
+      unidadesDeclaradas: lote.unidadesDeclaradas,
+      abonoCOP: lote.abonoCOP ?? 0,
+      saldoCOP: lote.saldoCOP ?? 0,
+      formaPago: lote.formaPago,
+      estado: lote.estado,
+      sede: lote.sede,
+      renombreLote: lote.renombreLote,
+    }),
+    estado: 'pendiente',
+    intentos: 0,
+    creadoEn: Date.now(),
+  });
+}
 
 const patchArgs = {
   itemId: v.string(),
@@ -204,10 +246,12 @@ export const _publicar = internalMutation({
           casillasIncompletas: score.incompletas,
         },
       });
+      await encolarLote(ctx, lote._id);
       return { publicado: true, parcial: true, faltantes: score.incompletas };
     }
 
     await ctx.db.patch(lote._id, { estado: 'publicado' });
+    await encolarLote(ctx, lote._id);
     return { publicado: true, parcial: false, faltantes: [] };
   },
 });
