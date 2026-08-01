@@ -60,6 +60,19 @@ export const CABECERAS_CASILLAS = [
   'tipoJoya',
   'gramaje',
   'rangoVentaEsperadoCOP',
+  // ── Motor por unidad · SOLO LECTURA ──
+  //
+  // Vacías cuando la casilla no tiene costo capturado o el lote no pasó la
+  // conciliación (regla de Kevin, 2026-08-01). Una celda vacía se lee como
+  // «pendiente»; un número calculado sobre datos incompletos se lee como precio.
+  //
+  // `equilibrioReal*` es el PISO real (K/0,90 gema · K/0,71 joya), no K. La
+  // nomenclatura es carga estructural: `precioEquilibrio*` significa K y solo
+  // existe a nivel lote. K disfrazado de «equilibrio» fue el habilitador del
+  // defecto ③ de la hoja —el lote 14 ofrecido a $27.080 de perder plata— y no
+  // vuelve, así que K_unidad NO tiene columna acá.
+  'equilibrioRealUnidadCOP',
+  'precioObjetivoUnidadCOP',
 ] as const;
 
 /**
@@ -318,6 +331,12 @@ export interface FilaCasilla {
   renombreLote?: string;
   tipoJoya?: string;
   gramaje?: number;
+  /**
+   * Del motor por unidad. **Ausentes ⇒ celda vacía**, nunca cero: el lote no
+   * conciliaba o a la casilla le falta el costo. Ver `_lib/motorUnidad.ts`.
+   */
+  equilibrioRealUnidadCOP?: number;
+  precioObjetivoUnidadCOP?: number;
 }
 
 export function filaCasillaParaEspejo(
@@ -340,5 +359,7 @@ export function filaCasillaParaEspejo(
     tipoJoya: texto(casilla.tipoJoya),
     gramaje: texto(casilla.gramaje),
     rangoVentaEsperadoCOP: texto(casilla.rangoVentaEsperadoCOP),
+    equilibrioRealUnidadCOP: texto(casilla.equilibrioRealUnidadCOP),
+    precioObjetivoUnidadCOP: texto(casilla.precioObjetivoUnidadCOP),
   };
 }

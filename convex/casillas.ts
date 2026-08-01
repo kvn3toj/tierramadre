@@ -20,6 +20,7 @@ import {
   type CasillaW2,
 } from './_lib/casillaW2';
 import { filaCasillaParaEspejo, filaLoteParaEspejo } from './_lib/espejoFilas';
+import { preciosPorItemDb } from './precios';
 import type { Id } from './_generated/dataModel';
 import type { MutationCtx } from './_generated/server';
 
@@ -64,6 +65,64 @@ async function encolarLote(ctx: MutationCtx, id: Id<'lots'>): Promise<void> {
     creadoEn: Date.now(),
   });
   await ctx.scheduler.runAfter(0, internal.espejo.drenar, { limite: 25 });
+}
+
+/**
+ * Re-encola TODAS las casillas del lote, con sus precios por unidad.
+ *
+ * **Todas, no solo la que se tocó.** El reparto del gasto fijo es POR PESO del
+ * costo capturado, así que cambiar el costo de una casilla mueve el peso —y con
+ * él el precio— de todas sus hermanas. Encolar solo la editada dejaría a las
+ * otras en la hoja con precios calculados contra un reparto que ya no existe, y
+ * el job de deriva lo denunciaría como edición humana.
+ *
+ * Los precios se escriben SOLO si el lote cotiza (costo capturado en todas +
+ * conciliación Σ≈costo). Si no, van vacíos: una casilla PENDIENTE sin precio se
+ * lee como pendiente; un número calculado a medias se lee como precio.
+ */
+async function encolarCasillasDelLote(
+  ctx: MutationCtx,
+  loteId: string,
+): Promise<void> {
+  const lote = await ctx.db
+    .query('lots')
+    .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
+    .first();
+  if (!lote) return;
+
+  const casillas = (
+    await ctx.db
+      .query('lotItems')
+      .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
+      .collect()
+  )
+    .filter((c) => c.estadoCasilla)
+    .sort((a, b) => a.ordenEnLote - b.ordenEnLote);
+  if (!casillas.length) return;
+
+  // El MISMO resolver que usa `espejo._filasEsperadas` para reconstruir la fila.
+  // Si los dos no dieran idéntico, el job de deriva denunciaría como edición
+  // humana una columna que el espejo acaba de escribir bien.
+  const precios = await preciosPorItemDb(ctx);
+
+  const ahora = Date.now();
+  for (const casilla of casillas) {
+    const p = precios.get(casilla.itemId);
+    await ctx.db.insert('espejoOutbox', {
+      pestana: 'Casillas',
+      idFila: casilla.itemId,
+      campos: filaCasillaParaEspejo({
+        ...casilla,
+        renombreLote: lote.renombreLote,
+        equilibrioRealUnidadCOP: p?.equilibrioRealUnidadCOP,
+        precioObjetivoUnidadCOP: p?.precioObjetivoUnidadCOP,
+      } as never),
+      estado: 'pendiente',
+      intentos: 0,
+      creadoEn: ahora,
+    });
+  }
+  await ctx.scheduler.runAfter(0, internal.espejo.drenar, { limite: 50 });
 }
 
 const patchArgs = {
@@ -136,27 +195,10 @@ export const _guardar = internalMutation({
 
     await ctx.db.patch(casilla._id, patch);
 
-    const loteDeLaCasilla = await ctx.db
-      .query('lots')
-      .withIndex('by_loteId', (q) => q.eq('loteId', casilla.loteId))
-      .first();
-
-    await ctx.db.insert('espejoOutbox', {
-      pestana: 'Casillas',
-      idFila: itemId,
-      // `renombreLote` viene del lote, denormalizado: quien lee la hoja no
-      // tiene por qué hacer el join a mano para saber de qué lote es la pieza.
-      campos: filaCasillaParaEspejo({
-        ...casilla,
-        ...patch,
-        renombreLote: loteDeLaCasilla?.renombreLote,
-      } as never),
-      estado: 'pendiente',
-      intentos: 0,
-      creadoEn: Date.now(),
-    });
-
-    await ctx.scheduler.runAfter(0, internal.espejo.drenar, { limite: 25 });
+    // Se encola el lote ENTERO, no solo esta casilla: el gasto fijo se reparte
+    // por peso del costo, así que tocar un costo mueve el precio de todas las
+    // hermanas. Ver `encolarCasillasDelLote`.
+    await encolarCasillasDelLote(ctx, casilla.loteId);
 
     return { itemId, completa: faltantes.length === 0, faltantes };
   },

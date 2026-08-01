@@ -36,10 +36,20 @@ export interface PlanUpsert {
   filaHoja?: number;
   /** Alineados a `filaCabecera`. `null` = no tocar esa celda. */
   valores: (string | null)[];
-  /** Cabeceras que el espejo quiere escribir y la hoja no tiene. */
+  /**
+   * Cabeceras que el espejo quiere escribir y la hoja no tenía. **Ya están
+   * incluidas en `filaCabeceraFinal` y en `valores`**; se reportan para que el
+   * llamador sepa que tiene que reescribir la fila 1.
+   */
   cabecerasFaltantes: string[];
   /** La pestaña está en blanco: hay que escribir la fila de cabeceras. */
   necesitaCabeceras: boolean;
+  /**
+   * El layout definitivo, contra el que están alineados `valores`: el de la hoja
+   * más las cabeceras nuevas AL FINAL. Nunca reordena ni renombra lo existente —
+   * el orden de la hoja sigue siendo de la hoja.
+   */
+  filaCabeceraFinal: string[];
 }
 
 export function planificarUpsert(input: PlanificarUpsertInput): PlanUpsert {
@@ -56,7 +66,14 @@ export function planificarUpsert(input: PlanificarUpsertInput): PlanUpsert {
 
   const cabecerasFaltantes = input.cabeceras.filter((c) => !layout.includes(c));
 
-  const valores = layout.map((cabecera) =>
+  // Una cabecera nueva se AGREGA a la derecha en vez de reventar la fila. El
+  // canon lo pide así —«agregar cabeceras es aditivo, y el orden es libre»— y
+  // sin esto cada columna nueva del motor exigía editar el libro a mano antes de
+  // que ninguna fila se pudiera escribir. Nunca reordena ni pisa lo que ya está:
+  // el orden de la hoja sigue siendo de la hoja.
+  const filaCabeceraFinal = [...layout, ...cabecerasFaltantes];
+
+  const valores = filaCabeceraFinal.map((cabecera) =>
     Object.prototype.hasOwnProperty.call(input.campos, cabecera)
       ? (input.campos[cabecera] ?? '')
       : null,
@@ -69,6 +86,7 @@ export function planificarUpsert(input: PlanificarUpsertInput): PlanUpsert {
       valores,
       cabecerasFaltantes,
       necesitaCabeceras,
+      filaCabeceraFinal,
     };
   }
 
@@ -79,5 +97,6 @@ export function planificarUpsert(input: PlanificarUpsertInput): PlanUpsert {
     valores,
     cabecerasFaltantes,
     necesitaCabeceras,
+    filaCabeceraFinal,
   };
 }

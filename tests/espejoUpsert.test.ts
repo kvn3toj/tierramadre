@@ -124,3 +124,76 @@ describe('planificarUpsert — validación', () => {
     ).toThrow(/idFila/i);
   });
 });
+
+describe('planificarUpsert — una cabecera nueva se AGREGA, no rompe la fila', () => {
+  // El canon lo dice: «agregar cabeceras es aditivo — el upsert por cabecera
+  // nombrada no rompe con columnas nuevas, y el orden es libre». Antes, una
+  // cabecera que el código tenía y la hoja no reventaba la fila entera, así que
+  // cada columna nueva del motor exigía editar el libro a mano antes de que
+  // nada se pudiera escribir.
+  //
+  // Se agrega A LA DERECHA y nunca se reordena ni se pisa lo existente: el orden
+  // de la hoja sigue siendo de la hoja.
+  const base = {
+    cabeceras: ['loteId', 'costoTotalCOP', 'precioObjetivoCOP'],
+    filaCabecera: ['loteId', 'costoTotalCOP'],
+    idsExistentes: ['B-001'],
+    idFila: 'B-001',
+    campos: {
+      loteId: 'B-001',
+      costoTotalCOP: '100',
+      precioObjetivoCOP: '250',
+    },
+  };
+
+  it('devuelve la fila de cabeceras ampliada, con la nueva al final', () => {
+    const plan = planificarUpsert(base);
+    expect(plan.filaCabeceraFinal).toEqual([
+      'loteId',
+      'costoTotalCOP',
+      'precioObjetivoCOP',
+    ]);
+  });
+
+  it('los valores se alinean a la fila ampliada, así el dato SÍ se escribe', () => {
+    const plan = planificarUpsert(base);
+    expect(plan.valores).toEqual(['B-001', '100', '250']);
+  });
+
+  it('sigue reportando cuáles agregó, para poder escribir la cabecera', () => {
+    expect(planificarUpsert(base).cabecerasFaltantes).toEqual([
+      'precioObjetivoCOP',
+    ]);
+  });
+
+  it('una columna ajena de la hoja sigue intacta y conserva su lugar', () => {
+    const plan = planificarUpsert({
+      ...base,
+      filaCabecera: ['loteId', 'notasDelEquipo', 'costoTotalCOP'],
+    });
+    expect(plan.filaCabeceraFinal).toEqual([
+      'loteId',
+      'notasDelEquipo',
+      'costoTotalCOP',
+      'precioObjetivoCOP',
+    ]);
+    // `null` = no tocar: que el equipo agregue una columna de notas no es deriva.
+    expect(plan.valores).toEqual(['B-001', null, '100', '250']);
+  });
+
+  it('sin cabeceras faltantes, la fila final es la de la hoja', () => {
+    const plan = planificarUpsert({
+      ...base,
+      cabeceras: ['loteId', 'costoTotalCOP'],
+      campos: { loteId: 'B-001', costoTotalCOP: '100' },
+    });
+    expect(plan.cabecerasFaltantes).toEqual([]);
+    expect(plan.filaCabeceraFinal).toEqual(['loteId', 'costoTotalCOP']);
+  });
+
+  it('con la pestaña en blanco, la fila final es el layout del código', () => {
+    const plan = planificarUpsert({ ...base, filaCabecera: [], idsExistentes: [] });
+    expect(plan.necesitaCabeceras).toBe(true);
+    expect(plan.filaCabeceraFinal).toEqual(base.cabeceras);
+  });
+});

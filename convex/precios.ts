@@ -31,6 +31,7 @@ import {
   type ConfigPrecios,
 } from './_lib/motorPrecios';
 import { construirPreviewLote } from './_lib/previewLote';
+import { preciosDelLote, type PrecioUnidad } from './_lib/motorUnidad';
 import { agruparUnidadesPorLote, loteEstaActivo } from './_lib/recalculo';
 
 /** Lee las reglas de la tabla y elige la vigente para `fecha`. */
@@ -144,6 +145,79 @@ export async function costoFijoUnitarioVigente(
     ),
     lotesActivos,
   };
+}
+
+/**
+ * Los precios por unidad de todas las casillas v4, en una sola pasada.
+ *
+ * **Existe para que haya UN solo camino.** Los precios se calculan en dos
+ * lugares —al encolar la fila del espejo, y al reconstruir la fila esperada para
+ * el job de deriva— y si los dos no dan idéntico, el job denuncia como edición
+ * humana una columna que el espejo escribió bien. Ya pasó con `renombreLote`, y
+ * el comentario que lo documenta está en `espejo._filasEsperadas`.
+ *
+ * El gasto fijo unitario es UNO solo (sale del conteo global de lotes activos),
+ * pero la CONFIG depende de la fecha de cada lote: una regla nueva no reprecia
+ * retroactivamente un lote de julio. Por eso se cuenta una vez y se resuelve la
+ * config por lote.
+ */
+export async function preciosPorItemDb(
+  ctx: QueryCtx | MutationCtx,
+): Promise<Map<string, PrecioUnidad>> {
+  const salida = new Map<string, PrecioUnidad>();
+
+  const configs = await ctx.db.query('configPrecios').collect();
+  if (!configs.length) return salida;
+
+  const { lotesActivos } = await contarLotesActivosDb(ctx);
+  if (lotesActivos <= 0) return salida;
+
+  const casillasPorLote = new Map<string, typeof casillas>();
+  const casillas = await ctx.db.query('lotItems').collect();
+  for (const c of casillas) {
+    if (!c.estadoCasilla) continue;
+    casillasPorLote.set(c.loteId, [
+      ...(casillasPorLote.get(c.loteId) ?? []),
+      c,
+    ]);
+  }
+
+  for (const lote of await ctx.db.query('lots').collect()) {
+    const delLote = casillasPorLote.get(lote.loteId);
+    if (!delLote?.length) continue;
+
+    let config: ConfigPrecios;
+    try {
+      config = configVigenteEn(configs, lote.fechaRecepcion);
+    } catch {
+      // Un lote con fecha anterior a toda la configuración conocida no se
+      // cotiza. Caer a la config más nueva sería inventarle un régimen.
+      continue;
+    }
+
+    const { cotiza, porItem } = preciosDelLote({
+      costoCompraLoteCOP: lote.costoCompraCOP ?? lote.costoTotalCOP,
+      casillas: delLote.map((c) => ({
+        itemId: c.itemId,
+        costoUnitarioRealCOP: c.costoUnitarioRealCOP,
+        categoriaFiscal: c.categoriaFiscal,
+      })),
+      categoriaFiscalLote: lote.categoriaFiscal,
+      costosVariablesLoteCOP: (lote.costosVariables ?? []).reduce(
+        (a, c) => a + c.montoCOP,
+        0,
+      ),
+      costoFijoUnitarioLoteCOP: costoFijoUnitario(
+        config.gastosFijosMensualesCOP,
+        lotesActivos,
+      ),
+      config,
+    });
+    if (!cotiza) continue;
+    for (const [itemId, precio] of porItem) salida.set(itemId, precio);
+  }
+
+  return salida;
 }
 
 /**

@@ -29,6 +29,7 @@ import type * as _lib_lotMath from "../_lib/lotMath.js";
 import type * as _lib_loteV4 from "../_lib/loteV4.js";
 import type * as _lib_migracionV4 from "../_lib/migracionV4.js";
 import type * as _lib_motorPrecios from "../_lib/motorPrecios.js";
+import type * as _lib_motorUnidad from "../_lib/motorUnidad.js";
 import type * as _lib_movimientoW3 from "../_lib/movimientoW3.js";
 import type * as _lib_precioEspecial from "../_lib/precioEspecial.js";
 import type * as _lib_previewLote from "../_lib/previewLote.js";
@@ -99,6 +100,7 @@ declare const fullApi: ApiFromModules<{
   "_lib/loteV4": typeof _lib_loteV4;
   "_lib/migracionV4": typeof _lib_migracionV4;
   "_lib/motorPrecios": typeof _lib_motorPrecios;
+  "_lib/motorUnidad": typeof _lib_motorUnidad;
   "_lib/movimientoW3": typeof _lib_movimientoW3;
   "_lib/precioEspecial": typeof _lib_precioEspecial;
   "_lib/previewLote": typeof _lib_previewLote;
