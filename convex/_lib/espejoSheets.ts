@@ -19,6 +19,8 @@
  * pero nada de lo que lee vuelve a Convex como dato. La hoja es una vista.
  */
 
+import { exigeDeploymentDelEspejo } from './destinoEscritura';
+
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const SHEETS_API = 'https://sheets.googleapis.com/v4/spreadsheets';
 
@@ -43,8 +45,14 @@ export function espejoSpreadsheetId(): string {
  * No se cachea entre invocaciones: cada acción de Convex es un proceso efímero,
  * y un token guardado en memoria global sobreviviría de forma impredecible. El
  * costo es una llamada extra por drenaje, no por fila.
+ *
+ * **Acá vive el candado del espejo**, y no en cada acción que escribe: sin token
+ * no hay forma de tocar el libro, así que un camino nuevo hereda el permiso solo.
+ * Un guard por acción se olvida; este no se puede saltear.
  */
 export async function obtenerAccessToken(): Promise<string> {
+  exigeDeploymentDelEspejo(process.env.CONVEX_CLOUD_URL);
+
   const body = new URLSearchParams({
     client_id: requiereEnv('GOOGLE_OAUTH_CLIENT_ID'),
     client_secret: requiereEnv('GOOGLE_OAUTH_CLIENT_SECRET'),

@@ -16,7 +16,7 @@
  */
 import { v } from 'convex/values';
 import { internalMutation, internalQuery } from './_generated/server';
-import { esDeploymentDeProduccion } from './_lib/destinoEscritura';
+import { exigeDeploymentDeDesarrollo } from './_lib/destinoEscritura';
 
 /**
  * Cuántas piezas hay por estado, y cuántos lotes se mantienen activos SOLO por
@@ -61,8 +61,9 @@ export const diagnosticoEstados = internalQuery({
     return {
       porEstado,
       lotesEnTablaLots: lotes.length,
-      lotesEnTablaLotsNoCancelados: lotes.filter((l) => l.estado !== 'cancelado')
-        .length,
+      lotesEnTablaLotsNoCancelados: lotes.filter(
+        (l) => l.estado !== 'cancelado',
+      ).length,
       lotesConPiezas: porLote.size,
       activosSoloPorEstadoVacio: activosSoloPorVacio.length,
       ejemplos: activosSoloPorVacio.slice(0, 10),
@@ -73,12 +74,10 @@ export const diagnosticoEstados = internalQuery({
 export const limpiarLotesDePrueba = internalMutation({
   args: { loteIds: v.array(v.string()) },
   handler: async (ctx, { loteIds }) => {
-    if (esDeploymentDeProduccion(process.env.CONVEX_CLOUD_URL)) {
-      throw new Error(
-        'Esta utilidad es de dev. En producción no se borran lotes: se cancelan ' +
-          'por el flujo normal, que deja rastro.',
-      );
-    }
+    // Allowlist, no lista negra: antes bastaba con «no ser producción» para
+    // borrar, así que un deployment sin identificar tenía permiso por descarte.
+    exigeDeploymentDeDesarrollo(process.env.CONVEX_CLOUD_URL);
+
     if (!loteIds.length) {
       throw new Error('Pasá los loteIds a borrar. No existe «borrá todo».');
     }
