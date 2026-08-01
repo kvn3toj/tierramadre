@@ -42,46 +42,34 @@ Los 5 casos del handoff reproducen byte a byte, pinneados en
 **2.306.348** · lote 14 → **3.282.620** · ítem 295 oro **3.438.059** y plata
 **1.502.059** · equilibrio real gema K/0,90 y joya K/0,71.
 
-## ⚠️ El divisor del gasto fijo — REQUIERE VISTO BUENO DE KEVIN
+## ⚠️ El divisor del gasto fijo — CORREGIDO, y pendiente de dictamen
 
-> **Antes de comparar precios en la doble corrida, esta sección tiene que estar
-> resuelta.** No la resolvió esta sesión y no debe resolverla quien implemente:
-> es una decisión de negocio con consecuencias sobre todo el catálogo.
+> **El «+27%» que reporté el 2026-08-01 era FALSO.** Salía de contar el inventario de
+> dev, congelado al 22-23 de julio. Contra el SOT v3 vivo el efecto va en la
+> dirección CONTRARIA. Queda registrado como artefacto de datos viejos.
 
-El motor corriendo contra los datos reales de dev cuenta **60 lotes activos**,
-no los **76** que declara la hoja. Con la definición de D2 (activo = lote con ≥1
-unidad no vendida), el gasto fijo por lote queda en **$560.864** en vez de
-**$442.787** — un **27% más alto**, y todos los precios suben con él.
+Leído del SOT v3 vivo (gratis, sin tocar Convex prod):
 
-|                     | La hoja (`Fijacion_Precios!B6`) | v4 derivado de los datos        |
-| ------------------- | ------------------------------- | ------------------------------- |
-| Divisor             | 76 (escrito a mano)             | **60** (COUNT de lotes activos) |
-| Gasto fijo por lote | $442.787                        | **$560.864**                    |
-| Lote 10 → objetivo  | $2.306.348                      | **$2.503.143**                  |
+| Divisor | Lotes activos | Fijo por lote | vs la hoja |
+| --- | --- | --- | --- |
+| La hoja (`B6`, a mano) | 76 | $442.787 | — |
+| **A** · las 25 filas en blanco son inventario vivo | **88** | **$382.407** | −13,6% |
+| **B** · las 25 son vendidas sin marcar | 81 | $415.455 | −6,2% |
+| ~~dev (obsoleto, 22-23 julio)~~ | ~~60~~ | ~~$560.864~~ | ~~+26,7%~~ |
 
-**Lo que esto NO es:** un bug del port. Los tests de paridad pasan el fijo
-explícito y reproducen los números de la hoja byte a byte. La diferencia está en
-el insumo, no en la aritmética.
+**Las dos cotas quedan por encima de 76**, así que el gasto fijo por lote BAJA en
+ambos casos y los precios objetivo bajan con él. La dirección no depende del
+dictamen de las 25 filas; solo la magnitud.
 
-**Lo que sí es:** la primera vez que el divisor deja de ser una celda escrita a
-mano. La auditoría del 25/07 ya había dejado abiertos cuatro conteos que no
-coinciden —76 declarados · 63 filas · 62 lotes con piezas en EQUIVALENTES · 235
-piezas— y anotó que con 62 el fijo sube a $542.771. El número que sale de Convex
-(60) cae en ese rango y confirma que el 76 de la hoja no describe el inventario
-real.
+Efecto medido por lote (no en agregado — tres lotes de más de $50M ahogan
+cualquier suma): **mediana −5,7%**, y 51 de 88 lotes caen más de 5%.
 
-**Las tres preguntas que hay que responder antes de la doble corrida:**
+Detalle en `2026-08-01-tabla-comparativa-divisor.md`. Las 25 filas a dictaminar,
+con hipótesis por fila, en `2026-08-01-filas-estado-en-blanco.md`.
 
-1. ¿Los 60 son correctos, o hay lotes que deberían contar como activos y hoy no
-   (por estado mal marcado, o por no tener piezas cargadas en dev)?
-2. ¿Los datos de dev representan el inventario real, o están incompletos frente
-   a prod? El conteo se hace sobre lo que dev tiene.
-3. Si 60 es el número bueno: **el catálogo entero se reprecia +27%**. Eso es una
-   decisión comercial, no un efecto secundario de una migración.
-
-Mientras no esté resuelta, comparar precios v4 contra precios v3 en la doble
-corrida va a dar diferencias en TODAS las filas, y no se va a poder distinguir
-«el motor está mal» de «el divisor cambió».
+**Lección de método:** calcular un número de negocio sobre un deployment de
+pruebas y reportarlo como hecho. La foto de dev tenía 10 días y 34 piezas menos
+en DISPONIBLE. Los números que deciden se leen de la fuente viva.
 
 ## Desviaciones del plan (y por qué)
 
@@ -219,6 +207,18 @@ que es lo que las hace usables.
   (`GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REFRESH_TOKEN`,
   `ESPEJO_SPREADSHEET_ID`). Prod necesitará las suyas, apuntando a otro libro.
 - Encender `ESPEJO_CRON` en prod, con la medición de consumo hecha.
+- **P0 con presupuesto propio de UI, primera tarea tras el merge:** cerrar la
+  exposición de costo de `products.publishedCatalog` y `products.list` (es de
+  `main`, no de esta rama, pero `publishedCatalog` es la query de cara al
+  cliente). Enfoque aprobado: **extender `_lib/saleSafe.ts`**, que recorta el
+  payload y conserva la reactividad, en vez de convertir a actions. En el mismo
+  trabajo entran los campos v4 que salen por `lots.list` y
+  `lotItems.listByLote` (`costoCompraCOP`, `abonoCOP`, `saldoCOP`,
+  `costosVariables[]`, `costoUnitarioRealCOP`).
+- **Refrescar dev con un pull UNA vez**, después de que el divisor esté firme y
+  antes de arrancar la doble corrida — no en medio de nada. Dev quedó congelado
+  al 22-23 de julio y su deriva contra el SOT vivo ya está medida (34 piezas
+  menos en DISPONIBLE, ASESOR 0 contra 14, 25 filas en blanco que dev no tiene).
 - Actualizar la CLI de Convex (1.35.1 → 1.43.0). Se dejó fuera a propósito:
   cambiar la versión a mitad de una rama sin mergear mezcla dos riesgos.
 - Revisión adversarial de la rama antes del merge.
