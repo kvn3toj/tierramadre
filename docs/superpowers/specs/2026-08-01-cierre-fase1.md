@@ -9,9 +9,10 @@
 >
 > Cuando termines, escribile de vuelta: lo que no queda acá, la próxima sesión no lo sabe.
 
-- **Fecha:** 2026-08-01 · **Rama:** `feat/w1-w3-sot-v4` (31 commits, sin mergear)
+- **Fecha:** 2026-08-01 · **Rama:** `feat/w1-w3-sot-v4` (37 commits, sin mergear)
 - **Deployment:** Convex dev `flexible-wolverine-803` · **Prod intacto**
-- **Suite:** 914 tests en 99 archivos al cierre de la primera ronda
+- **Suite:** 914 tests / 99 archivos al cierre de la primera ronda →
+  **1137 / 109** al cierre de la segunda (ver «Segunda jornada» al final)
 
 ## Qué quedó funcionando
 
@@ -107,6 +108,10 @@ en DISPONIBLE. Los números que deciden se leen de la fuente viva.
   total del lote metido en la fila de un ítem. **NO se corrige por cuenta
   propia** (dictamen de Kevin): va al **reporte de excepciones de la migración**
   para auditar con Kevin ANTES de que la Fase 2 lo tome como verdad.
+  > ⚠️ **Actualizado la tarde del 2026-08-01.** La cifra de arriba está VIEJA: la
+  > hoja hoy dice **$1.069.210.000**. Y la hipótesis del «total en la fila de un
+  > ítem» no alcanza — LC-03 es internamente coherente, sus piezas suman lo que
+  > declara. Ver «El inventario declarado es 25× el auditado» al final.
 
 ## Desviaciones del plan (y por qué)
 
@@ -266,3 +271,181 @@ Nada mergeado a `main`, nada desplegado a prod, ningún daemon tocado, ninguna e
 var de Vercel modificada, y el SOT v3 vivo sin una sola escritura desde este
 trabajo. W4, la migración v3→v4, la Mini App y la limpieza de tiers deprecados
 siguen fuera de alcance.
+
+---
+
+# Segunda jornada — 2026-08-01 (tarde)
+
+Cinco commits sobre lo anterior: `96dec30` migración · `2d5c54a` motor por unidad ·
+`7cd8d87` motor de lotes + Tablero · `49f80b0` captura W1/W3 · este doc.
+
+> **Otra sesión commiteó en esta misma rama mientras esta jornada corría:** `6104947`
+> (`fix(catalogo)`, 13:29). No hubo conflicto y no hizo falta integración inversa —`main` no se
+> movió—, pero es exactamente el escenario que el Protocolo de sesión del tope viene a cubrir.
+> Si vas a abrir una sesión en paralelo, releé el `git log` antes de asumir tu punto de partida.
+Suite **1137 tests en 109 archivos** (de 1040/106). `tsc` de convex limpio; `npm run lint`
+sigue con los dos TS7016 preexistentes de `main`.
+
+## La reconciliación del divisor — cerrada
+
+### 1. Cronología de los números
+
+| Cifra | Qué era | Estado |
+| --- | --- | --- |
+| **60** | dev congelado al 22-23 de julio | **MUERTA** — el refresco + import ya lo llevó a 66 |
+| **66** | prod y dev, por D2 sobre el enlace de ese momento | superada por la migración |
+| **88** | el SOT vivo, con las 25 filas dictaminadas | **es la cifra, y dev ya la reproduce** |
+
+El **+27% sigue tachado**. No se recalculó repricing sobre el 66 en ningún momento.
+
+### 2. Por qué 66 ≠ 88 — el mecanismo exacto, leído del código
+
+Subconteo por linkage roto: 138 de 513 ítems tenían fila en `lotItems`, 290 eran huérfanos
+(`804458e`). El mecanismo preciso está en `contarLotesActivosDb` (`convex/precios.ts`):
+siembra su mapa **solo con filas de `lots`** y después hace `porLote.get(item.loteId)?.push(…)`.
+Una pieza cuyo lote Convex nunca conoció se descarta en silencio — el `?.` es literalmente
+donde se perdían.
+
+**No era un criterio distinto: era dato incompleto.** Los 28 lotes no cabían en la tabla por
+dos razones concretas, y las dos se cerraron: `reconstruido` estaba fuera de la unión de
+`estado`, y no traen proveedor.
+
+### 3. Conclusión operativa — ya no es una espera
+
+D2 está aprobada y es la misma en todos lados. La migración de ensayo corrió en dev el
+2026-08-01 y **el conteo convergió exacto**:
+
+```
+lotesActivos: 88 · costoFijoUnitarioCOP: $382.407 · unidadesActivas: 320
+```
+
+No «cerca de 88»: **88**, la misma cifra que el SOT vivo. Dev ya reparte el gasto fijo como la
+operación, así que la doble corrida tiene con qué comparar. La regla sigue siendo que **todo
+número de divisor se reporta con su fuente y su fecha**.
+
+### 4. Gotcha para el handoff
+
+`superb-ocelot-537` / `coomunity-sim` son de **otro proyecto hermano**. Los deployments de ESTE
+repo son solo `flexible-wolverine-803` (dev) y `grand-hippopotamus-162` (prod), y las URLs están
+leídas del deployment real, no deducidas por convención (`_lib/destinoEscritura.ts`). Que nadie
+vuelva a inferir nombres.
+
+### 5. Política de lectura de prod
+
+La lectura de prod que se hizo queda registrada como **one-off autorizado retroactivamente**
+(dumps de tablas, sin escritura). La política sigue: prod no se lee por rutina. **El SOT es la
+fuente gratuita para conteos**; Convex prod solo con autorización explícita y acotada.
+
+## Lo que la migración destapó — para Kevin, sin corregir
+
+### ⚠️ El inventario declarado es 25× el auditado
+
+El Tablero reporta `inventarioActivoCOP` = **$1.777.030.371**. La auditoría del 25/07 midió
+**$71.769.301**. La diferencia no está repartida: son unas pocas piezas de los lotes `LC-*`.
+
+| ítem | lote | costo declarado |
+| --- | --- | --- |
+| 193 | LC-03 | **$357.923.077** |
+| 192 | LC-03 | $318.807.692 |
+| 194 | LC-03 | $235.038.462 |
+| 195 | LC-03 | $162.750.000 |
+| 203 | LC-01 | $98.076.923 |
+| 191 | LC-03 | $87.692.308 |
+
+**LC-03 es internamente COHERENTE**: sus piezas suman los $1.069.210.000 que declara el lote,
+así que pasa la conciliación. La hipótesis vieja —«el total del lote metido en la fila de un
+ítem»— **no alcanza a explicarlo**: la hoja las declara así, una por una.
+
+Si son piezas de colección reales, el número está bien y el Tablero solo lo está mostrando por
+primera vez. Si es un error de escala, el titular del Tablero está 25× arriba. **Es tu llamada:
+el código no toca ninguna.**
+
+### La cifra de LC-03 del doc estaba vieja
+
+Este doc decía que LC-03 declaraba **$1.233.703.846**. La hoja hoy dice **$1.069.210.000**.
+No es una contradicción a resolver: el dato cambió. Queda anotado para que nadie compare contra
+la cifra vieja.
+
+### Seis lotes declaran costo y no tienen ni una pieza enlazada
+
+`COSTO_INCONSISTENTE` no podía verlos: se salta el lote sin piezas, porque sin ellas no hay con
+qué comparar — y ese `continue` dejaba pasar en silencio justo la forma que había que auditar.
+El código nuevo `LOTE_SIN_PIEZAS` los reporta: **C-017 y S-001 declaran $378.000.000 cada uno**,
+más C-039, C-054, MED-001 y MED-012.
+
+### Los 28 lotes reconstruidos no tienen categoría fiscal
+
+Consecuencia buscada, no defecto: la migración **no se la inventa**. Sin ella el motor no
+cotiza, así que sus 375 casillas tienen las celdas de precio **vacías** en el espejo. Llenar
+`categoriaFiscal` es trabajo de la Fase 2, y hasta entonces vacío es la respuesta honesta.
+
+## Decisiones de Kevin implementadas en esta jornada
+
+- **El fijo por unidad se reparte POR PESO DEL COSTO CAPTURADO**, con un solo fijo por lote
+  (D2 intacto). No viola D6 —el costo capturado es el insumo, solo el overhead se asigna— y es
+  el método con que la auditoría validó el lote 10. Bonus estructural: vender el lote completo
+  o por partes suma exactamente un fijo, así que el +18% accidental de las modalidades muere
+  por diseño.
+- **`equilibrioRealUnidadCOP`**, no `precioEquilibrioUnidadCOP`. Regla de nombres fijada:
+  `equilibrioReal*` = piso real siempre; `precioEquilibrio*` = K, y solo a nivel lote. K_unidad
+  **no gana columna** — K disfrazado de «equilibrio» habilitó el defecto ③ de la hoja.
+- **Las cuatro fórmulas de Lotes** (E5, E10, E11, E12 adaptada), y
+  `brechaVsVentasEstimadasCOP` **mudada al Tablero**.
+- **Tablero, una fila por mes** (`AAAA-MM`), con la frontera del mes en `America/Bogota`.
+  `ventasEstimadasMesCOP` es dato de entrada de `configPrecios`; el `=B4*2,5` del xlsx murió.
+- **`reconstruido`** en la unión de `lots.estado` + **proveedor centinela**.
+- Los seis campos de captura de W1/W3.
+
+## La contradicción del redondeo, y quién la desempató
+
+El dictado decía «el residuo va a la última casilla para que Σ K_unidad = K_lote» y a la vez
+pinneaba #372 = **$665.681**. Las dos cosas no salen del mismo cálculo: `399.408 / 0,60` da
+**665.680**, y la suma se pasaría un peso.
+
+Lo desempató **la auditoría, no yo**: §5.2 de `tierramadre-modelo-fijacion-precios-v2` lista
+K_unidad #372 = $399.408 **y** objetivo #372 = $665.681 en la misma fila, o sea derivó el
+objetivo del K **sin redondear**. Implementado así, con su propio test para que nadie lo
+«arregle». El test de paridad es autoverificable por tres sumas, no por cuatro números sueltos:
+
+| Σ | Da | Que es |
+| --- | --- | --- |
+| K_unidad | $1.383.809 | K del lote 10 |
+| equilibrioRealUnidadCOP | $1.537.566 | el equilibrio real del lote |
+| precioObjetivoUnidadCOP | $2.306.348 | el objetivo del lote |
+
+## Defectos encontrados CORRIENDO, no razonando
+
+1. **El mapeo leía `itemId` de una columna que se llama `item`.** Las 513 filas se caían al
+   filtro y el plan reportaba «0 casillas a crear» — un cero con forma de hecho. Ahora el mapeo
+   revienta si se cae ENTERO, nombrando las columnas que sí encontró.
+2. **`recalculadoEn` habría reportado deriva en cada fila, para siempre.** Es un sello que se
+   estampa al reconstruir. `CAMPOS_SIN_COMPARAR` lo excluye de la comparación, no de la
+   escritura.
+3. **El Léeme tenía `A1:A20` escrito a mano** y la Sheets API rechaza la escritura ENTERA al
+   pasar de 20 líneas. Ahora sale del largo del texto.
+4. **`unidadesActivas` se habría duplicado.** Los dos rieles se unían con dos `push` sobre el
+   mismo array, y eso funcionaba solo mientras una casilla v4 no tuviera fila en
+   `productInventory` — que es exactamente lo que la migración deja de ser cierto.
+5. **El job de deriva denunció 8 falsos positivos** cuando el enqueuer y la reconstrucción
+   calculaban los precios por caminos distintos. Se unificaron en `preciosPorItemDb`.
+
+## Cambios de comportamiento del espejo
+
+- **Una cabecera nueva se AGREGA a la derecha** en vez de reventar la fila. Antes había que
+  editar el libro a mano antes de que ninguna fila se pudiera escribir. Nunca reordena ni pisa
+  lo existente.
+- **Guardar una casilla re-encola el LOTE ENTERO.** El reparto es por peso, así que tocar un
+  costo mueve el precio de todas las hermanas.
+- **Cuarta pestaña: Tablero.**
+
+## Deuda que esta jornada deja anotada
+
+- **5 filas huérfanas en el libro de PRUEBAS** (B-008 y sus casillas 525-528). El espejo es
+  push-only y **nunca borra**, por diseño; limpiarlas es a mano o con un camino de borrado que
+  hoy no existe.
+- **Las 375 casillas migradas nunca se empujaron al espejo** (`soloEnConvex: 375`). La migración
+  no encola. Empujarlas es una operación masiva con su propio presupuesto de cuota de Sheets.
+- **Los precios del espejo quedan a la fecha de su último recálculo.** El fijo cambia con cada
+  alta y cada venta, y re-encolar las ~88 filas con todas sus casillas en cada evento no cabe.
+  `recalculadoEn` lo dice en la propia fila y el Léeme lo explica.
+- **`_publicarTablero` no se llama solo.** Hay que invocarlo; no está enganchado al recálculo.

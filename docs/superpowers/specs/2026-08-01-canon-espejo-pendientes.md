@@ -1,5 +1,22 @@
 # Canon de cabeceras — lo que entró y lo que quedó bloqueado
 
+> ✅ **RESUELTO el 2026-08-01 (tarde).** Kevin dictó las tres decisiones y las tres están
+> implementadas. Este doc queda como el registro de POR QUÉ se paró antes de escribirlas, que
+> sigue siendo la parte que vale: ocho columnas con número y cinco vacías se leen como «el motor
+> falló», y una fórmula plausible puesta a dedo es exactamente el defecto que este proyecto vino
+> a matar.
+>
+> Qué se decidió y cómo quedó: ver «Segunda jornada» en
+> [`2026-08-01-cierre-fase1.md`](2026-08-01-cierre-fase1.md).
+>
+> - **El fijo por unidad** → hay una CUARTA salida, y ninguna de las tres de abajo: el lote
+>   absorbe UN solo fijo y se reparte entre las casillas **por peso del costo capturado**.
+> - **Las cinco definiciones** → cuatro con fórmula auditada (E5, E10, E11, E12), y
+>   `brechaVsVentasEstimadasCOP` mudada al Tablero.
+> - **`nombre` vs `renombre` y `fechaPago` vs `fechaVencimiento`** → **son dos cosas cada par**,
+>   no sinónimos. Los cuatro se capturan ahora.
+> - Los seis «el dato no existe» de la tabla de abajo ya se capturan.
+
 - **Fecha:** 2026-08-01 · **Estado:** reporte, requiere decisiones de Kevin
 - **Contra:** [`2026-08-01-cabeceras-canonicas-sot-v4.md`](2026-08-01-cabeceras-canonicas-sot-v4.md)
 - **Commits:** `d33b352` (Movimientos) · `2f48bfb` (Lotes + Casillas)

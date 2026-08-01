@@ -32,7 +32,11 @@ piedras | lotes de joyas → resuelve régimen fiscal) · `sede` · `renombre` �
 `costoFijoUnitarioCOP` · `costoVariableUnitarioCOP` · `precioEquilibrioCOP` (K) ·
 `equilibrioRealCOP` · `precioObjetivoCOP` · `multiplicadorMinimo` · `multiplicadorObjetivo` ·
 `margenBrutoEstimadoCOP` · `utilidadNetaEstimadaCOP` · `puntoEquilibrioUnidades` ·
-`brechaVsVentasEstimadasCOP` · `reglaVigente` (remate | objetivo) · `recalculadoEn`
+`reglaVigente` (remate | objetivo) · `recalculadoEn`
+
+> **Corregido 2026-08-01 (Kevin).** `brechaVsVentasEstimadasCOP` **sale de Lotes y se muda al
+> Tablero**: por lote nunca tuvo sentido — en el xlsx era modelo-global (E13) y necesita las
+> ventas estimadas del mes, que son un dato de la operación, no del lote.
 
 **Info proveedor**
 `proveedor` · `formaPago` · `fechaPago` · `abonoCOP` · `saldoCOP`
@@ -45,7 +49,18 @@ piedras | lotes de joyas → resuelve régimen fiscal) · `sede` · `renombre` �
 `tipo` · `color` · `corte` · `ct` · `gradoRareza` · `tipoJoya` · `gramaje` ·
 `costoUnitarioRealCOP` · `rangoVentaEsperadoCOP`
 
-**Motor por unidad — SOLO LECTURA:** `precioEquilibrioUnidadCOP` · `precioObjetivoUnidadCOP`
+**Motor por unidad — SOLO LECTURA:** `equilibrioRealUnidadCOP` · `precioObjetivoUnidadCOP`
+
+> **Corregido 2026-08-01 (Kevin).** La primera columna se llamaba
+> `precioEquilibrioUnidadCOP` y se renombró. **Regla de nombres, fijada:**
+> `equilibrioReal*` = el PISO real (`K/0,90` gema · `K/0,71` joya) SIEMPRE;
+> `precioEquilibrio*` = `K`, y solo existe a nivel lote. **K_unidad NO gana columna acá**: K
+> disfrazado de «equilibrio» fue el habilitador del defecto ③ de la hoja —el lote 14 ofrecido a
+> $27.080 de perder plata creyendo tener 30% de margen— y no vuelve.
+>
+> Las dos celdas van **vacías** cuando la casilla no tiene costo capturado o el lote no pasó la
+> conciliación. O cotizan todas las casillas del lote, o ninguna: el fijo se reparte por peso
+> del costo, así que sin el costo de una hermana los pesos de TODAS están mal.
 
 ## Pestaña MOVIMIENTOS — W3/W5
 
@@ -70,6 +85,16 @@ nombre sí, cuenta enmascarada.
 `gastosFijosMesCOP` · `lotesActivos` · `costoFijoUnitarioCOP` · `inventarioActivoCOP` ·
 `ventasMesCOP` · `margenBrutoMesCOP` · `utilidadNetaEstimadaCOP` · `puntoEquilibrioUnidades` ·
 `brechaVsVentasEstimadasCOP` · `ventasEstimadasMesCOP` · `reglaVigente` · `actualizadoEn`
+
+> **Precisado 2026-08-01 (Kevin).** **Una fila por MES**, `idFila = AAAA-MM`, y la frontera del
+> mes es `America/Bogota` (offset fijo −05:00): un recálculo a las 23:00 del 31 cae en el mes
+> viejo. Eso obliga a una columna **`periodo`** como primera cabecera —el upsert necesita dónde
+> buscar el id—, así que la pestaña tiene **13** columnas, no 12.
+>
+> `ventasEstimadasMesCOP` es **dato de ENTRADA** de `configPrecios`, dictado por Kevin y
+> versionado por período igual que los gastos fijos. El `B11` del xlsx era `=B4*2,5`, un
+> multiplicador hardcodeado que nadie decidió, y muere. Mientras no se dicte, ella y la brecha
+> van **vacías** — un cero inventado es el mismo defecto con otra cara.
 
 ## Qué NO es pestaña del SOT
 
