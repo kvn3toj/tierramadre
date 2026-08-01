@@ -28,6 +28,16 @@
  */
 export const TOLERANCIA_RELATIVA = 0.005;
 
+/**
+ * Techo absoluto de la tolerancia. Sin él, el 0,5% relativo se vuelve absurdo en
+ * la cola alta: sobre un lote de $100.000.000 dejaría pasar $500.000 de
+ * descuadre como «redondeo», y este módulo existe justamente para no esconder
+ * descuadres. $20.000 es holgado para el redondeo real observado (el peor caso
+ * medido es el lote 50, con $3.000) y muy por debajo de las diferencias reales
+ * (la menor es el lote 15, con $110.000).
+ */
+export const TOLERANCIA_TOPE_COP = 20_000;
+
 export type CategoriaFiscalCasilla = 'gema' | 'joya';
 
 export interface CasillaW2 {
@@ -146,7 +156,22 @@ export function conciliarCostos(
   const sinCosto = costosUnitarios.length - capturados.length;
   const suma = capturados.reduce((acc, c) => acc + c, 0);
   const diferencia = suma - costoLoteCOP;
-  const margen = Math.abs(costoLoteCOP * TOLERANCIA_RELATIVA);
+  const margen = Math.min(
+    Math.abs(costoLoteCOP * TOLERANCIA_RELATIVA),
+    TOLERANCIA_TOPE_COP,
+  );
+
+  // Un lote sin casillas todavía no tiene nada que conciliar. Reportar «suman 0
+  // contra $X» sería inventar un descuadre del tamaño del lote entero.
+  if (costosUnitarios.length === 0) {
+    return {
+      suma: 0,
+      diferencia: 0,
+      cuadra: false,
+      sinCosto: 0,
+      aviso: 'el lote todavía no tiene casillas que conciliar.',
+    };
+  }
 
   if (sinCosto > 0) {
     return {

@@ -170,6 +170,33 @@ export interface VeredictoVenta {
 }
 
 /**
+ * `VENDIDA` es TERMINAL. Ningún movimiento la saca de ahí.
+ *
+ * Sin esta regla, registrar una `DEVOLUCION` sobre una pieza vendida la devolvía
+ * a `DISPONIBLE`: la venta quedaba revertida sin movimiento compensatorio, con
+ * su `precioVentaRealCOP` y su comisión intactos, y el lote volvía a contar como
+ * activo sin disparar recálculo (porque `DEVOLUCION` no está entre los eventos
+ * que mueven el divisor). Se vendía dos veces la misma pieza por la puerta de
+ * atrás.
+ *
+ * El ledger es append-only: un error de venta se compensa con otro movimiento
+ * que lo diga, no borrando el estado.
+ */
+export function puedeAplicarseSobre(
+  tipo: TipoMovimiento,
+  casilla: { itemId: string; estadoCasilla: string },
+): VeredictoVenta {
+  if (casilla.estadoCasilla !== 'VENDIDA') return { ok: true };
+  return {
+    ok: false,
+    motivo:
+      `el ítem ${casilla.itemId} está VENDIDA y ese estado es terminal: ` +
+      `un ${tipo} lo revertiría sin dejar rastro de la venta. Si la venta fue ` +
+      `un error, compensala con un movimiento que lo diga.`,
+  };
+}
+
+/**
  * Si una pieza se puede vender.
  *
  * Una pieza EN_CONSIGNACION **sí** se puede vender: eso es exactamente la

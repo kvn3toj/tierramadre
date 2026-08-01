@@ -213,7 +213,9 @@ export default function CapturaLoteV4Page() {
         `Lote ${res.loteId} creado con ${res.casillas.length} casillas por clasificar`,
         'success',
       );
-      navigate(`/admin/fotosintesis/lots/${res.loteId}`);
+      // A la grilla de casillas, NO a `/lots/:id`: esa es la página vieja, que
+      // ahora rechaza los lotes v4 — guardar terminaba en un cartel sin salida.
+      navigate(`/admin/fotosintesis/lots/${res.loteId}/casillas`);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'No se pudo guardar el lote',

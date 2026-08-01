@@ -13,17 +13,13 @@
  * La graduación (W5) entra por `?itemId=&origen=`: un tap desde la consignación
  * abre esta pantalla en modo VENTA con la pieza puesta.
  */
-import { useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Box } from '@mui/material';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 import { getFoto, fontFamilies } from '../../../design-system';
 import { SegmentedControl } from '../../../design-system/components/SegmentedControl';
-import {
-  useConvexQuery,
-  useAuthedConvexAction,
-  convexApi,
-} from '../../../lib/convex-safe';
+import { useAuthedConvexAction, convexApi } from '../../../lib/convex-safe';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { FieldLabel } from './components/FieldLabel';
 import { NumberInputWithCalc } from './components/NumberInputWithCalc';
@@ -35,7 +31,6 @@ const hoyIso = () => new Date().toISOString().slice(0, 10);
 
 export default function MovimientoV4Page() {
   const foto = getFoto('light');
-  const navigate = useNavigate();
   const [params] = useSearchParams();
   const { notify } = useNotification();
 
@@ -65,11 +60,25 @@ export default function MovimientoV4Page() {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const enConsignacion = useConvexQuery(
+  // `enConsignacion` es action gateada: la bandeja se pide al montar y tras
+  // registrar, en vez de suscribirse.
+  const pedirConsignacion = useAuthedConvexAction(
     convexApi.movimientos.enConsignacion,
-    {},
   );
   const registrar = useAuthedConvexAction(convexApi.movimientos.registrar);
+  const [enConsignacion, setEnConsignacion] = useState<
+    { itemId: string; loteId: string; renombre?: string }[]
+  >([]);
+
+  const recargarConsignacion = useCallback(() => {
+    pedirConsignacion({})
+      .then((r) => setEnConsignacion(r ?? []))
+      .catch(() => setEnConsignacion([]));
+  }, [pedirConsignacion]);
+
+  useEffect(() => {
+    recargarConsignacion();
+  }, [recargarConsignacion]);
 
   const origenKardexEventId = params.get('origen') ?? undefined;
 
@@ -146,9 +155,25 @@ export default function MovimientoV4Page() {
             : undefined,
       });
       notify(`${tipo} registrada · ${res.movimientoId}`, 'success');
-      navigate('/admin/fotosintesis/movimientos-v4');
+      // Limpiar TODO el bloque de pago, no solo ítems y precio. El `navigate` a
+      // la misma ruta no remonta nada, así que los datos del movimiento
+      // anterior se arrastraban: la venta B quedaba grabada con el recibo y el
+      // cliente de la venta A, y la validación no lo veía porque los campos
+      // estaban llenos.
       setItemsTexto('');
       setPrecio('');
+      setCliente('');
+      setNumeroRecibo('');
+      setRecibidoEfectivoPor('');
+      setNumeroCuenta('');
+      setTitular('');
+      setBanco('');
+      setNumeroTransaccion('');
+      setFechaInicio('');
+      setFechaPago('');
+      setCondicion('');
+      setPagoComisionesA('');
+      recargarConsignacion();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo registrar');
     } finally {

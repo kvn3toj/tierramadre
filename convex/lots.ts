@@ -238,6 +238,33 @@ const updateArgs = {
  * verified) or directly via internal.lots._update from fotoSync.ts's
  * out-of-band sheet-sync side effects (system sentinel editorEmail).
  */
+
+/**
+ * El riel viejo no toca lotes v4.
+ *
+ * Los dos modelos se contradicen y mezclarlos destruye datos. Casos medidos:
+ * `_cancel` borra las filas de `lotItems` del lote — que en v4 SON las casillas,
+ * con el costo capturado, la calidad y la categoría fiscal, y sin copia en
+ * `productInventory` que las respalde. `_close` exige preponderancia sumando 100
+ * y las casillas v4 nacen en 0, así que nunca cierra. `_update` cambia
+ * `costoTotalCOP` sin re-encolar al espejo ni ajustar `costoCompraCOP`, con lo
+ * que la conciliación de W2 empieza a comparar contra un número viejo.
+ *
+ * El guardarraíl visual de `CapturaLotePage` no alcanza: `HomePage`,
+ * `LoteResumenPage` y el copiloto llegan a estas mutations por otros caminos.
+ */
+function exigeLoteLegacy(
+  lote: { loteId: string; origenModelo?: string },
+  operacion: string,
+): void {
+  if (lote.origenModelo === 'v4') {
+    throw new Error(
+      `${lote.loteId} es un lote del modelo v4: ${operacion} desde el riel ` +
+        `viejo destruiría sus casillas o su costo. Usá el flujo de v4.`,
+    );
+  }
+}
+
 export const _update = internalMutation({
   args: updateArgs,
   // editorEmail stays in updateArgs (callers/fotoSync still pass it) but is no
@@ -246,6 +273,7 @@ export const _update = internalMutation({
   handler: async (ctx, { id, patch }) => {
     const existing = await ctx.db.get(id);
     if (!existing) throw new Error(`Lot ${id} not found`);
+    exigeLoteLegacy(existing, 'actualizarlo');
     if (existing.estado !== 'abierto')
       throw new Error('Sólo se pueden editar lotes abiertos');
     await ctx.db.patch(id, {
@@ -306,6 +334,7 @@ export const _setLoteDisplay = internalMutation({
   handler: async (ctx, { id, fotoLoteUrl, mostrarComoLote }) => {
     const lot = await ctx.db.get(id);
     if (!lot) throw new Error(`Lot ${id} not found`);
+    exigeLoteLegacy(lot, 'cambiar su visualización');
     if (lot.estado === 'cancelado')
       throw new Error('No se puede configurar un lote cancelado');
     const patch: Record<string, unknown> = {};
@@ -351,6 +380,7 @@ export const _close = internalMutation({
   handler: async (ctx, { id }) => {
     const lot = await ctx.db.get(id);
     if (!lot) throw new Error(`Lot ${id} not found`);
+    exigeLoteLegacy(lot, 'cerrarlo');
     if (lot.estado !== 'abierto')
       throw new Error('El lote ya está cerrado o publicado');
 
@@ -417,6 +447,7 @@ export const _cancel = internalMutation({
   handler: async (ctx, { id, reason }) => {
     const lot = await ctx.db.get(id);
     if (!lot) throw new Error(`Lot ${id} not found`);
+    exigeLoteLegacy(lot, 'cancelarlo');
     if (lot.estado !== 'abierto')
       throw new Error('Sólo se pueden cancelar lotes abiertos');
 
@@ -605,6 +636,7 @@ export const _reopen = internalMutation({
   handler: async (ctx, { id, editorEmail, reason }) => {
     const lot = await ctx.db.get(id);
     if (!lot) throw new Error(`Lot ${id} not found`);
+    exigeLoteLegacy(lot, 'reabrirlo');
 
     const items = await ctx.db
       .query('lotItems')

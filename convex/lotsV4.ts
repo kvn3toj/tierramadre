@@ -16,11 +16,11 @@
  * Toda la lógica branchy vive en módulos puros testeados (`_lib/loteV4`,
  * `_lib/casillasV4`, `_lib/recalculo`); aquí solo hay `ctx.db`.
  */
-import { action, internalMutation, query } from './_generated/server';
+import { action, internalMutation } from './_generated/server';
 import { v } from 'convex/values';
 import { internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
-import { requireAccessLevel } from './_lib/authz';
+import { requireAccessLevel, ROLES_COSTOS } from './_lib/authz';
 import { allocateNext, formatLotId, lotSequenceName } from './sequences';
 import { validarLoteV4 } from './_lib/loteV4';
 import { planificarCasillas, siguienteItemIdNumerico } from './_lib/casillasV4';
@@ -224,21 +224,11 @@ export const create = action({
     casillas: string[];
     recalculo?: { valorAnterior: number; valorNuevo: number };
   }> => {
-    await requireAccessLevel(idToken, ['admin']);
+    await requireAccessLevel(idToken, [...ROLES_COSTOS]);
     return await ctx.runMutation(internal.lotsV4._create, args);
   },
 });
 
-/** Las casillas de un lote v4, para la grilla de W2. */
-export const casillasDeLote = query({
-  args: { loteId: v.string() },
-  handler: async (ctx, { loteId }) => {
-    const casillas = await ctx.db
-      .query('lotItems')
-      .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
-      .collect();
-    return casillas
-      .filter((c) => c.estadoCasilla)
-      .sort((a, b) => a.ordenEnLote - b.ordenEnLote);
-  },
-});
+// `casillasDeLote` se retiró: query PÚBLICA que devolvía cada casilla entera,
+// con su `costoUnitarioRealCOP`. Nadie la consumía — la grilla de W2 usa
+// `casillas.estadoDelLote`. Duplicaba la exposición sin dar nada.

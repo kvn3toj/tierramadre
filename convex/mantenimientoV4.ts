@@ -15,8 +15,50 @@
  * Es `internalMutation`: no es invocable desde ningún cliente.
  */
 import { v } from 'convex/values';
-import { internalMutation } from './_generated/server';
+import { internalMutation, internalQuery } from './_generated/server';
 import { esDeploymentDeProduccion } from './_lib/destinoEscritura';
+
+/**
+ * Cuántas piezas hay por estado, y cuántos lotes se mantienen activos SOLO por
+ * piezas con el estado en blanco.
+ *
+ * El schema admite `estado: ''` para filas legacy que llegaron de la hoja con la
+ * celda vacía. Como «activo» se define por negación (`!== 'VENDIDA'`), una pieza
+ * vendida cuya celda quedó vacía cuenta como viva e infla el divisor, que baja
+ * el gasto fijo por lote y subcotiza todo el catálogo. Este diagnóstico dice si
+ * eso es teórico o real.
+ */
+export const diagnosticoEstados = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const porEstado: Record<string, number> = {};
+    const porLote = new Map<string, string[]>();
+
+    for (const item of await ctx.db.query('productInventory').collect()) {
+      const estado = item.estado ?? '(ausente)';
+      porEstado[estado] = (porEstado[estado] ?? 0) + 1;
+      if (item.loteId) {
+        porLote.set(item.loteId, [...(porLote.get(item.loteId) ?? []), estado]);
+      }
+    }
+
+    // Lotes cuya única razón de estar activos son piezas con estado en blanco.
+    const activosSoloPorVacio: string[] = [];
+    for (const [loteId, estados] of porLote) {
+      const noVendidas = estados.filter((e) => e !== 'VENDIDA');
+      if (noVendidas.length > 0 && noVendidas.every((e) => e === '')) {
+        activosSoloPorVacio.push(loteId);
+      }
+    }
+
+    return {
+      porEstado,
+      lotesConPiezas: porLote.size,
+      activosSoloPorEstadoVacio: activosSoloPorVacio.length,
+      ejemplos: activosSoloPorVacio.slice(0, 10),
+    };
+  },
+});
 
 export const limpiarLotesDePrueba = internalMutation({
   args: { loteIds: v.array(v.string()) },
@@ -36,7 +78,6 @@ export const limpiarLotesDePrueba = internalMutation({
       casillas: 0,
       movimientos: 0,
       outbox: 0,
-      recalculos: 0,
     };
 
     for (const loteId of loteIds) {
@@ -83,14 +124,15 @@ export const limpiarLotesDePrueba = internalMutation({
       borrado.lotes.push(loteId);
     }
 
-    // Los recálculos de las altas de prueba también se van: `costoFijoUnitarioVigente`
-    // lee el ÚLTIMO, así que dejarlos serviría un divisor calculado sobre
-    // mercancía que ya no existe. Sin ellos, el próximo evento real lo recalcula
-    // contando el inventario de verdad.
-    for (const r of await ctx.db.query('recalculos').collect()) {
-      await ctx.db.delete(r._id);
-      borrado.recalculos++;
-    }
+    // Los recálculos NO se borran. Antes esta función barría la tabla entera,
+    // fuera del loop y sin filtro: si ningún loteId existía igual la vaciaba, y
+    // se llevaba puesta la traza de lotes que nadie tocó. `recalculos` es el
+    // registro de por qué cambió un precio; borrarlo deja esa pregunta sin
+    // respuesta.
+    //
+    // Ya no hace falta para lo que se usaba: `costoFijoUnitarioVigente` dejó de
+    // leer el último recálculo como caché y ahora cuenta el inventario real, así
+    // que una traza vieja no puede servir un divisor equivocado.
 
     return borrado;
   },

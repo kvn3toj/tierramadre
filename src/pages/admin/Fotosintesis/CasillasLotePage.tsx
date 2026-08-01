@@ -10,18 +10,43 @@
  * fuentes; un botón de «ajustar» las escondería, que es exactamente cómo
  * llevaban meses sin que nadie las viera.
  */
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, Check } from 'lucide-react';
 
 import { getFoto, fontFamilies } from '../../../design-system';
-import {
-  useConvexQuery,
-  useAuthedConvexAction,
-  convexApi,
-} from '../../../lib/convex-safe';
+import { useAuthedConvexAction, convexApi } from '../../../lib/convex-safe';
 import { useNotification } from '../../../contexts/NotificationContext';
+
+interface CasillaVista {
+  itemId: string;
+  loteId: string;
+  ordenEnLote: number;
+  renombre?: string;
+  calidad?: string;
+  costoUnitarioRealCOP?: number;
+}
+
+interface EstadoLote {
+  loteId: string;
+  estado: string;
+  categoriaFiscalLote?: string;
+  costoTotalCOP: number;
+  completeness: {
+    completas: number;
+    total: number;
+    pct: number;
+    listoParaPublicar: boolean;
+    incompletas: string[];
+  };
+  conciliacion: { suma: number; aviso: string };
+  publicacionParcial?: {
+    motivo: string;
+    casillasIncompletas: string[];
+  };
+  casillas: CasillaVista[];
+}
 
 const COP = new Intl.NumberFormat('es-CO', {
   style: 'currency',
@@ -35,12 +60,23 @@ export default function CasillasLotePage() {
   const { loteId } = useParams<{ loteId: string }>();
   const { notify } = useNotification();
 
-  const estado = useConvexQuery(
-    convexApi.casillas.estadoDelLote,
-    loteId ? { loteId } : 'skip',
-  );
+  // `estadoDelLote` es una action gateada por rol (devuelve el costo por pieza),
+  // así que no es reactiva: se pide al montar y se vuelve a pedir tras publicar.
+  const pedirEstado = useAuthedConvexAction(convexApi.casillas.estadoDelLote);
   const publicar = useAuthedConvexAction(convexApi.casillas.publicar);
   const [publicando, setPublicando] = useState(false);
+  const [estado, setEstado] = useState<EstadoLote | null | undefined>(undefined);
+
+  const recargar = useCallback(() => {
+    if (!loteId) return;
+    pedirEstado({ loteId })
+      .then((r) => setEstado(r as EstadoLote | null))
+      .catch(() => setEstado(null));
+  }, [loteId, pedirEstado]);
+
+  useEffect(() => {
+    recargar();
+  }, [recargar]);
 
   if (estado === undefined) {
     return (
@@ -80,6 +116,7 @@ export default function CasillasLotePage() {
           : 'Lote publicado',
         res.parcial ? 'warning' : 'success',
       );
+      recargar();
     } catch (err) {
       notify(
         err instanceof Error ? err.message : 'No se pudo publicar',

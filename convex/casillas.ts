@@ -9,9 +9,13 @@
  * pushes legacy — ver la cabecera de `lotsV4.ts`.
  */
 import { v } from 'convex/values';
-import { action, internalMutation, query } from './_generated/server';
+import {
+  action,
+  internalMutation,
+  internalQuery,
+} from './_generated/server';
 import { internal } from './_generated/api';
-import { requireAccessLevel } from './_lib/authz';
+import { requireAccessLevel, ROLES_COSTOS } from './_lib/authz';
 import {
   casillaEstaCompleta,
   camposFaltantes,
@@ -77,6 +81,13 @@ const patchArgs = {
   tipoJoya: v.optional(v.string()),
   gramaje: v.optional(v.number()),
   rangoVentaEsperadoCOP: v.optional(v.number()),
+} as const;
+
+// `clasificadaPor` NO está en `patchArgs` a propósito: si el caller pudiera
+// mandarlo, podría atribuirle la clasificación a cualquier email. Lo pone la
+// action desde el caller ya verificado, igual que `publicar` hace con `por`.
+const guardarArgs = {
+  ...patchArgs,
   clasificadaPor: v.optional(v.string()),
 } as const;
 
@@ -85,7 +96,7 @@ const ESTADO_COMPLETA = 'DISPONIBLE';
 const ESTADO_PENDIENTE = 'PENDIENTE_CLASIFICAR';
 
 export const _guardar = internalMutation({
-  args: patchArgs,
+  args: guardarArgs,
   handler: async (ctx, { itemId, clasificadaPor, ...campos }) => {
     const casilla = await ctx.db
       .query('lotItems')
@@ -148,10 +159,12 @@ export const guardar = action({
     ctx,
     { idToken, ...args },
   ): Promise<{ itemId: string; completa: boolean; faltantes: string[] }> => {
-    const caller = await requireAccessLevel(idToken, ['admin']);
+    const caller = await requireAccessLevel(idToken, [...ROLES_COSTOS]);
+    // El email sale del caller VERIFICADO, no de los args: el rastro de
+    // auditoría no puede ser un campo que el propio caller elige.
     return await ctx.runMutation(internal.casillas._guardar, {
       ...args,
-      clasificadaPor: args.clasificadaPor ?? caller.email,
+      clasificadaPor: caller.email,
     });
   },
 });
@@ -160,7 +173,7 @@ export const guardar = action({
  * El estado de clasificación de un lote: score, conciliación de costos y qué
  * casillas faltan. Es lo que alimenta la grilla de W2.
  */
-export const estadoDelLote = query({
+export const _estadoDelLote = internalQuery({
   args: { loteId: v.string() },
   handler: async (ctx, { loteId }) => {
     const lote = await ctx.db
@@ -270,7 +283,7 @@ export const publicar = action({
     ctx,
     { idToken, ...args },
   ): Promise<{ publicado: boolean; parcial: boolean; faltantes: string[] }> => {
-    const caller = await requireAccessLevel(idToken, ['admin']);
+    const caller = await requireAccessLevel(idToken, [...ROLES_COSTOS]);
     return await ctx.runMutation(internal.casillas._publicar, {
       ...args,
       por: caller.email,
@@ -279,7 +292,7 @@ export const publicar = action({
 });
 
 /** Resuelve un QR de ítem a su casilla (entrada directa de W2). */
-export const porItemId = query({
+export const _porItemId = internalQuery({
   args: { itemId: v.string() },
   handler: async (ctx, { itemId }) => {
     const casilla = await ctx.db
@@ -292,5 +305,32 @@ export const porItemId = query({
       completa: casillaEstaCompleta(casilla as CasillaW2),
       faltantes: camposFaltantes(casilla as CasillaW2),
     };
+  },
+});
+
+/**
+ * Las dos lecturas de W2, gateadas por rol.
+ *
+ * Devuelven `costoUnitarioRealCOP` de cada pieza y la conciliación contra el
+ * costo del lote: es exactamente la estructura de costos que `previewLote` vino
+ * a cerrar. Con el costo por pieza y el precio público del catálogo, el margen
+ * sale por resta — no hace falta el preview para deducirlo.
+ *
+ * Mismo costo asumido que en `previewLote`: se pierde la reactividad. La grilla
+ * de W2 vuelve a pedir tras publicar, y la casilla tras guardar.
+ */
+export const estadoDelLote = action({
+  args: { idToken: v.string(), loteId: v.string() },
+  handler: async (ctx, { idToken, loteId }): Promise<unknown> => {
+    await requireAccessLevel(idToken, [...ROLES_COSTOS]);
+    return await ctx.runQuery(internal.casillas._estadoDelLote, { loteId });
+  },
+});
+
+export const porItemId = action({
+  args: { idToken: v.string(), itemId: v.string() },
+  handler: async (ctx, { idToken, itemId }): Promise<unknown> => {
+    await requireAccessLevel(idToken, [...ROLES_COSTOS]);
+    return await ctx.runQuery(internal.casillas._porItemId, { itemId });
   },
 });

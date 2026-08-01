@@ -10,11 +10,16 @@
  * efectos, recalcular y encolar al espejo.
  */
 import { v } from 'convex/values';
-import { action, internalMutation, query } from './_generated/server';
+import {
+  action,
+  internalMutation,
+  internalQuery,
+} from './_generated/server';
 import { internal } from './_generated/api';
-import { requireAccessLevel } from './_lib/authz';
+import { requireAccessLevel, ROLES_COSTOS } from './_lib/authz';
 import {
   efectoSobreCasilla,
+  puedeAplicarseSobre,
   puedeVenderse,
   validarMovimiento,
   type MovimientoInput,
@@ -64,11 +69,17 @@ const registrarArgs = {
   notas: v.optional(v.string()),
   venta: v.optional(ventaValidator),
   origenKardexEventId: v.optional(v.string()),
+} as const;
+
+// `registradoPor` fuera del validator público: quién registró una venta no
+// puede ser un campo que el propio caller elige.
+const registrarInternoArgs = {
+  ...registrarArgs,
   registradoPor: v.optional(v.string()),
 } as const;
 
 export const _registrar = internalMutation({
-  args: registrarArgs,
+  args: registrarInternoArgs,
   handler: async (ctx, args) => {
     const { registradoPor = 'sistema', ...movimiento } = args;
     validarMovimiento(movimiento as MovimientoInput);
@@ -88,7 +99,18 @@ export const _registrar = internalMutation({
       casillas.push(casilla);
     }
 
-    // El candado anti doble-venta, ANTES de escribir nada.
+    // `VENDIDA` es terminal para CUALQUIER tipo, no solo frente a otra venta:
+    // una devolución sobre una pieza vendida la devolvía a DISPONIBLE y
+    // revertía la venta sin dejar rastro ni disparar recálculo.
+    for (const casilla of casillas) {
+      const veredicto = puedeAplicarseSobre(args.tipo, {
+        itemId: casilla.itemId,
+        estadoCasilla: casilla.estadoCasilla!,
+      });
+      if (!veredicto.ok) throw new Error(veredicto.motivo);
+    }
+
+    // El candado anti doble-venta por modalidad, ANTES de escribir nada.
     if (args.tipo === 'VENTA') {
       for (const casilla of casillas) {
         const hermanas = casilla.modalidadGrupo
@@ -232,33 +254,51 @@ export const registrar = action({
     kardexEventId: string;
     nuevoEstado: string;
   }> => {
-    const caller = await requireAccessLevel(idToken, ['admin']);
+    const caller = await requireAccessLevel(idToken, [...ROLES_COSTOS]);
     return await ctx.runMutation(internal.movimientos._registrar, {
       ...args,
-      registradoPor: args.registradoPor ?? caller.email,
+      registradoPor: caller.email,
     });
   },
 });
 
-/** El historial de una pieza — la cadena consignación → venta, trazada. */
-export const porItem = query({
-  args: { itemId: v.string() },
-  handler: async (ctx, { itemId }) => {
-    const todos = await ctx.db
-      .query('movimientos')
-      .withIndex('by_ts')
-      .collect();
-    return todos
-      .filter((m) => m.itemIds.includes(itemId))
-      .sort((a, b) => b.ts - a.ts);
-  },
-});
+// `porItem` (el historial de una pieza) se RETIRÓ. Era una query PÚBLICA que
+// devolvía el documento entero del movimiento, incluyendo `venta.transferencia`
+// con número de cuenta y titular del cliente. Los itemIds son secuenciales, así
+// que enumerar el ledger completo era un `for`. No la consumía nadie. Cuando la
+// UI necesite el historial, vuelve como action gateada.
 
-/** Las piezas hoy en consignación — la bandeja de graduación de W5. */
-export const enConsignacion = query({
+/**
+ * Las piezas hoy en consignación — la bandeja de graduación de W5.
+ *
+ * Interna: un `lotItems` entero trae `costoUnitarioRealCOP`. Se sirve por la
+ * action `enConsignacionSeguro`, que además recorta a lo que la bandeja
+ * necesita.
+ */
+export const _enConsignacion = internalQuery({
   args: {},
   handler: async (ctx) => {
     const casillas = await ctx.db.query('lotItems').collect();
-    return casillas.filter((c) => c.estadoCasilla === 'EN_CONSIGNACION');
+    return casillas
+      .filter((c) => c.estadoCasilla === 'EN_CONSIGNACION')
+      .map((c) => ({
+        itemId: c.itemId,
+        loteId: c.loteId,
+        renombre: c.renombre,
+        ordenEnLote: c.ordenEnLote,
+      }));
+  },
+});
+
+export const enConsignacion = action({
+  args: { idToken: v.string() },
+  handler: async (
+    ctx,
+    { idToken },
+  ): Promise<
+    { itemId: string; loteId: string; renombre?: string; ordenEnLote: number }[]
+  > => {
+    await requireAccessLevel(idToken, [...ROLES_COSTOS]);
+    return await ctx.runQuery(internal.movimientos._enConsignacion, {});
   },
 });

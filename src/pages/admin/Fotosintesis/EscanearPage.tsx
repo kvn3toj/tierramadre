@@ -32,6 +32,7 @@ import { FotoTopbar, FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
 import {
   convexApi,
   convexReady,
+  useAuthedConvexAction,
   useConvexQuery,
 } from '../../../lib/convex-safe';
 import { parseTmQr } from '../../../lib/qr/parseTmQr';
@@ -107,10 +108,34 @@ export default function EscanearPage() {
   // pieza, así que escanearlo es la forma natural de abrir su casilla —
   // clasificar es corregir defaults, y buscar el ítem a mano es la fricción
   // que hace que no se clasifique.
-  const casilla = useConvexQuery(
-    convexApi.casillas.porItemId,
-    scannedItemId ? { itemId: scannedItemId } : 'skip',
-  );
+  //
+  // Es una action gateada por rol (la casilla trae su costo capturado), así que
+  // se pide al resolver el escaneo en vez de suscribirse.
+  const pedirCasilla = useAuthedConvexAction(convexApi.casillas.porItemId);
+  const [casilla, setCasilla] = useState<{
+    itemId: string;
+    loteId: string;
+    completa: boolean;
+    faltantes: string[];
+  } | null>(null);
+
+  useEffect(() => {
+    if (!scannedItemId) {
+      setCasilla(null);
+      return;
+    }
+    let vivo = true;
+    pedirCasilla({ itemId: scannedItemId })
+      .then((r: unknown) => {
+        if (vivo) setCasilla(r as never);
+      })
+      .catch(() => {
+        if (vivo) setCasilla(null);
+      });
+    return () => {
+      vivo = false;
+    };
+  }, [scannedItemId, pedirCasilla]);
 
   const submitManual = useCallback(() => {
     const parsed = parseTmQr(manual);

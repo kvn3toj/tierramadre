@@ -15,14 +15,30 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { getFoto, fontFamilies } from '../../../design-system';
 import { SegmentedControl } from '../../../design-system/components/SegmentedControl';
-import {
-  useConvexQuery,
-  useAuthedConvexAction,
-  convexApi,
-} from '../../../lib/convex-safe';
+import { useAuthedConvexAction, convexApi } from '../../../lib/convex-safe';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { FieldLabel } from './components/FieldLabel';
 import { NumberInputWithCalc } from './components/NumberInputWithCalc';
+
+interface CasillaVista {
+  itemId: string;
+  loteId: string;
+  ordenEnLote: number;
+  estadoCasilla: string;
+  categoriaFiscal?: 'gema' | 'joya';
+  costoUnitarioRealCOP?: number;
+  renombre?: string;
+  calidad?: string;
+  color?: string;
+  corte?: string;
+  ct?: number;
+  gradoRareza?: string;
+  tipoJoya?: string;
+  gramaje?: number;
+  rangoVentaEsperadoCOP?: number;
+  completa: boolean;
+  faltantes: string[];
+}
 
 const CALIDADES = [
   'comercial',
@@ -39,15 +55,32 @@ export default function CasillaW2Page() {
   const { loteId, itemId } = useParams<{ loteId: string; itemId: string }>();
   const { notify } = useNotification();
 
-  const casilla = useConvexQuery(
-    convexApi.casillas.porItemId,
-    itemId ? { itemId } : 'skip',
-  );
-  const estadoLote = useConvexQuery(
-    convexApi.casillas.estadoDelLote,
-    loteId ? { loteId } : 'skip',
-  );
+  // Las dos lecturas son actions gateadas por rol (traen el costo por pieza),
+  // así que se piden una vez al montar en vez de suscribirse.
+  const pedirCasilla = useAuthedConvexAction(convexApi.casillas.porItemId);
+  const pedirEstadoLote = useAuthedConvexAction(convexApi.casillas.estadoDelLote);
   const guardar = useAuthedConvexAction(convexApi.casillas.guardar);
+
+  const [casilla, setCasilla] = useState<CasillaVista | null | undefined>(
+    undefined,
+  );
+  const [estadoLote, setEstadoLote] = useState<
+    { categoriaFiscalLote?: string; completeness: { total: number; completas: number } } | null
+  >(null);
+
+  useEffect(() => {
+    if (!itemId) return;
+    pedirCasilla({ itemId })
+      .then((r) => setCasilla(r as CasillaVista | null))
+      .catch(() => setCasilla(null));
+  }, [itemId, pedirCasilla]);
+
+  useEffect(() => {
+    if (!loteId) return;
+    pedirEstadoLote({ loteId })
+      .then((r) => setEstadoLote(r as never))
+      .catch(() => setEstadoLote(null));
+  }, [loteId, pedirEstadoLote]);
 
   const [costoUnitarioRealCOP, setCosto] = useState<number | ''>('');
   const [categoriaFiscal, setCategoria] = useState<'gema' | 'joya' | ''>('');

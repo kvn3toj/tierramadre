@@ -166,12 +166,21 @@ export const sumPreponderancia = query({
  * highest numeric itemId and return next + 1 as a string.
  */
 async function nextItemId(ctx: {
-  db: { query: (table: 'productInventory') => any };
+  db: { query: (table: 'productInventory' | 'lotItems') => any };
 }): Promise<string> {
   // NOTE: itemId allocation relies on Convex OCC serializing this table scan. clientToken (above) closes the AI-retry replay path; a concurrency test should prove the distinct-create path before any allocator change.
-  const all = await ctx.db.query('productInventory').collect();
+  //
+  // Mira LOS DOS rieles (2026-08-01). Las casillas v4 viven solo en `lotItems`
+  // y no tienen fila en `productInventory`, así que un allocator que escaneara
+  // solo el inventario les asignaría a los ítems nuevos un número ya usado por
+  // una casilla. No es una carrera: pasa determinísticamente en la primera
+  // captura vieja después del primer lote v4 — o sea, en la doble corrida.
+  // Como los QR impresos referencian `#NNN`, un choque son dos piedras
+  // distintas con la misma etiqueta física.
+  const inventario = await ctx.db.query('productInventory').collect();
+  const casillas = await ctx.db.query('lotItems').collect();
   let max = 0;
-  for (const p of all) {
+  for (const p of [...inventario, ...casillas]) {
     const n = Number(p.itemId);
     if (Number.isFinite(n) && n > max) max = n;
   }

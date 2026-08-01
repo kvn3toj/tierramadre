@@ -157,8 +157,12 @@ export function configVigenteEn(
         `(${configs.length} regla(s) conocida(s)).`,
     );
   }
+  // `>=` y no `>`: ante dos reglas con la MISMA `vigenteDesde` gana la última
+  // de la lista, que en el orden de creación de Convex es la insertada después
+  // — o sea, la corrección. Con `>` ganaba la vieja y la corrección se ignoraba
+  // en silencio, que es la dirección peligrosa del empate.
   return vigentes.reduce((mejor, c) =>
-    c.vigenteDesde > mejor.vigenteDesde ? c : mejor,
+    c.vigenteDesde >= mejor.vigenteDesde ? c : mejor,
   );
 }
 
@@ -250,9 +254,20 @@ export function pisoReal(
 ): number {
   exigePositivo(K, 'K');
   exigeCategoriaFiscal(categoria);
-  return Math.round(
-    K / (1 - config.comisionPct - impuestosDe(categoria, config)),
-  );
+  const retenido = 1 - config.comisionPct - impuestosDe(categoria, config);
+  if (retenido <= 0) {
+    // Sin esta guarda, una config con `comisionPct: 10` (queriendo decir 10% y
+    // no 0,10 — el dedazo clásico de una tabla de parámetros) devolvía un piso
+    // NEGATIVO y la tarjeta mostraba un equilibrio real bajo cero sin que nada
+    // se quejara. `divisorObjetivo` ya se protegía; esto le da el mismo trato a
+    // la misma aritmética.
+    throw new Error(
+      `comisión + impuestos consumen el precio entero (retenido = ${retenido}) ` +
+        `para ${categoria}: revisá configPrecios, los porcentajes van en ` +
+        `fracción (0,1 = 10%).`,
+    );
+  }
+  return Math.round(K / retenido);
 }
 
 /**

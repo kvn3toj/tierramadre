@@ -104,30 +104,38 @@ export async function contarLotesActivosDb(
 }
 
 /**
- * El gasto fijo unitario vigente: el `valorNuevo` del último recálculo.
+ * El gasto fijo unitario vigente: se CALCULA, siempre, con la config vigente y
+ * el conteo real de lotes activos.
  *
- * Si todavía no hay ninguno (base recién sembrada), lo calcula una vez contando
- * el inventario. Devuelve `undefined` si no hay lotes activos — no hay entre qué
- * repartir, y devolver 0 haría cotizar todo sin absorber estructura, que es
- * exactamente el defecto `E6 = 0` de la hoja.
+ * Antes leía el `valorNuevo` del último recálculo, como caché. Esa versión tenía
+ * tres agujeros que la revisión adversarial destapó, y los tres nacían de servir
+ * un número guardado en vez del número verdadero:
+ *
+ *  1. **Ignoraba la config.** Dar de alta una `configPrecios` nueva (subir los
+ *     gastos fijos) no cambiaba ningún precio hasta que alguien diera de alta o
+ *     vendiera un lote v4. Toda la maquinaria de `vigenteDesde` quedaba muerta.
+ *  2. **Un evento retroactivo reprecia el presente.** El recálculo elige config
+ *     por la fecha de NEGOCIO del evento pero se ordena por `ts` de reloj: cargar
+ *     hoy un lote con fecha de julio dejaba el catálogo entero cotizando con el
+ *     gasto fijo de julio.
+ *  3. **El riel viejo movía el divisor sin dejar traza.** `planificarRecalculo`
+ *     solo lo llaman los caminos v4; agotar diez lotes legacy por `sales.create`
+ *     cambiaba el conteo real y el número servido seguía igual.
+ *
+ * El costo de calcular siempre son dos barridos de tabla. Es asumible porque
+ * esto ya no cuelga de una query reactiva: `previewLote` es una action gateada y
+ * con debounce, así que corre por interacción, no por tecla. `recalculos` queda
+ * como lo que dice ser —la traza de auditoría de por qué cambió un precio—, no
+ * como caché.
+ *
+ * Devuelve `undefined` si no hay lotes activos: no hay entre qué repartir, y
+ * devolver 0 haría cotizar todo sin absorber estructura, que es exactamente el
+ * defecto `E6 = 0` de la hoja.
  */
 export async function costoFijoUnitarioVigente(
   ctx: QueryCtx,
   config: ConfigPrecios,
 ): Promise<{ costoFijoUnitarioCOP?: number; lotesActivos: number }> {
-  const ultimo = await ctx.db
-    .query('recalculos')
-    .withIndex('by_ts')
-    .order('desc')
-    .first();
-
-  if (ultimo) {
-    return {
-      costoFijoUnitarioCOP: ultimo.valorNuevo,
-      lotesActivos: ultimo.divisorUsado,
-    };
-  }
-
   const { lotesActivos } = await contarLotesActivosDb(ctx);
   if (lotesActivos <= 0) return { lotesActivos: 0 };
   return {
