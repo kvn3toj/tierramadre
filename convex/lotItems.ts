@@ -8,7 +8,7 @@ import { v, ConvexError } from 'convex/values';
 import { api, internal } from './_generated/api';
 import type { Doc, Id } from './_generated/dataModel';
 import { bumpInventoryTotal } from './products';
-import { omitFotosintesisOnly } from './_lib/saleSafe';
+import { omitFotosintesisOnly, omitInternosV4 } from './_lib/saleSafe';
 import { preponderanciaSum, balancesTo100 } from './_lib/lotMath';
 import { computePrecioFinal } from './_lib/pricing';
 import { withPublishStamp } from './_lib/publishState';
@@ -55,8 +55,11 @@ export const listByLote = query({
           .query('productInventory')
           .withIndex('by_itemId', (q) => q.eq('itemId', item.itemId))
           .first();
+        // El spread arrastra lo que la casilla v4 sumó al documento: el costo
+        // unitario capturado y el rango de venta esperado. Ver `_lib/saleSafe.ts`
+        // — las pantallas W2 leen por `casillas.*`, que sí está gateada por rol.
         return {
-          ...item,
+          ...omitInternosV4(item),
           nombre: product?.nombre,
           tipoEsmeralda: product?.tipoEsmeralda,
         };

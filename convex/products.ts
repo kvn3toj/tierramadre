@@ -401,7 +401,16 @@ export const getPublicByItem = query({
   },
 });
 
-/** All productInventory rows for a Fotosíntesis lote (close/resumen UI). */
+/**
+ * All productInventory rows for a Fotosíntesis lote (close/resumen UI).
+ *
+ * Filtrada, y se le pasó al barrido de 2026-07-30 por la misma vía que a
+ * `products:get`: devolvía `rows.sort(...)` pelado, o sea el documento entero —
+ * incluido `cajaComprador`, el nombre de un comprador real— a cualquiera que
+ * supiera un loteId. Ninguna de las dos pantallas que la consumen
+ * (`LoteResumenPage`, `SubLotesPage`) lee esas columnas; se verificó antes de
+ * filtrarlas. Ver `_lib/saleSafe.ts`.
+ */
 export const listByLote = query({
   args: { loteId: v.string() },
   handler: async (ctx, { loteId }) => {
@@ -409,7 +418,9 @@ export const listByLote = query({
       .query('productInventory')
       .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
       .collect();
-    return rows.sort((a, b) => a.itemId.localeCompare(b.itemId, 'es'));
+    return rows
+      .sort((a, b) => a.itemId.localeCompare(b.itemId, 'es'))
+      .map(omitFotosintesisOnly);
   },
 });
 

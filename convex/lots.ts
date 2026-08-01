@@ -19,6 +19,7 @@ import {
   reclaimIfTail,
 } from './sequences';
 import { canReopenLot } from './_lib/lotMath';
+import { omitInternosV4 } from './_lib/saleSafe';
 import { withPublishStamp } from './_lib/publishState';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
@@ -74,22 +75,33 @@ export const list = query({
           .withIndex('by_estado', (q) => q.eq('estado', estado))
           .collect()
       : await ctx.db.query('lots').collect();
-    return rows.sort((a, b) => b._creationTime - a._creationTime);
+    // Sin el filtro esta query pública devuelve el costo de compra, el desglose
+    // de variables y el SALDO CON EL PROVEEDOR de cada lote v4 — no porque
+    // alguien lo decidiera, sino porque el documento ensanchó y el return siguió
+    // igual. Ver `_lib/saleSafe.ts`.
+    return rows
+      .sort((a, b) => b._creationTime - a._creationTime)
+      .map(omitInternosV4);
   },
 });
 
 export const get = query({
   args: { id: v.id('lots') },
-  handler: async (ctx, { id }) => ctx.db.get(id),
+  handler: async (ctx, { id }) => {
+    const row = await ctx.db.get(id);
+    return row ? omitInternosV4(row) : null;
+  },
 });
 
 export const getByLoteId = query({
   args: { loteId: v.string() },
-  handler: async (ctx, { loteId }) =>
-    ctx.db
+  handler: async (ctx, { loteId }) => {
+    const row = await ctx.db
       .query('lots')
       .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
-      .first(),
+      .first();
+    return row ? omitInternosV4(row) : null;
+  },
 });
 
 /**

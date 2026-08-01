@@ -12,8 +12,10 @@ import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import {
+  CAMPOS_INTERNOS_V4,
   FOTOSINTESIS_ONLY_FIELDS,
   omitFotosintesisOnly,
+  omitInternosV4,
 } from '../convex/_lib/saleSafe';
 import { WRITABLE } from '../convex/_lib/sheetPullMaps';
 import { FOTO_INVENTARIO_COLUMNS } from '../api/_lib/fotosintesis-inventory-columns.js';
@@ -111,6 +113,101 @@ describe('frontera Fotosíntesis ↔ ficha de producto', () => {
       bloque(products, 'get = query'),
       'products:get devuelve la fila sin filtrar',
     ).toContain('omitFotosintesisOnly');
+  });
+});
+
+/**
+ * La misma frontera, para los campos que agregó el SOT v4.
+ *
+ * `lots.list`, `lots.get`, `lots.getByLoteId` y `lotItems.listByLote` son
+ * queries PÚBLICAS que devuelven el documento entero. Eso no era grave cuando
+ * `lots` guardaba una fecha y un costo total; con v4 esas mismas filas cargan el
+ * costo de compra, el desglose de variables, el abono y el SALDO CON EL
+ * PROVEEDOR. Ninguna línea de código las publica: salen porque el documento
+ * ensanchó y el return sigue siendo el mismo.
+ *
+ * Las superficies v4 no las pierden: leen por `casillas.*` y `lotsV4.*`, que son
+ * actions gateadas por rol.
+ */
+describe('frontera v4 ↔ queries públicas de lotes', () => {
+  const raiz = path.resolve(__dirname, '..');
+  const leer = (rel: string) => fs.readFileSync(path.join(raiz, rel), 'utf8');
+
+  it('cubre costo, deuda con el proveedor e identidad de quien clasificó', () => {
+    for (const campo of [
+      'costoCompraCOP',
+      'costosVariables',
+      'abonoCOP',
+      'saldoCOP',
+      'joya', // lleva costoPorGramoCOP y presupuestoJoyaCOP adentro
+      'costoUnitarioRealCOP',
+      'rangoVentaEsperadoCOP',
+      'clasificadaPor',
+      'publicacionParcial', // lleva `por`: quién autorizó publicar incompleto
+    ]) {
+      expect(CAMPOS_INTERNOS_V4 as readonly string[], campo).toContain(campo);
+    }
+  });
+
+  it('NO se lleva `origenModelo`: es el marcador que protege al wizard viejo', () => {
+    // `CapturaLotePage` pregunta `origenModelo === 'v4'` para negarse a abrir un
+    // lote v4 con el formulario legacy. Filtrarlo apagaría ese guard en
+    // silencio, que es peor que el dato que se quería esconder — y no esconde
+    // nada: es un marcador, no un número.
+    expect(CAMPOS_INTERNOS_V4 as readonly string[]).not.toContain(
+      'origenModelo',
+    );
+  });
+
+  it('omitInternosV4 los saca y no toca el resto', () => {
+    const lote = {
+      loteId: 'C-090',
+      fechaRecepcion: '2026-08-01',
+      costoTotalCOP: 931_931,
+      origenModelo: 'v4',
+      ...Object.fromEntries(CAMPOS_INTERNOS_V4.map((k) => [k, 'X'])),
+    };
+    const out = omitInternosV4(lote) as Record<string, unknown>;
+    for (const k of CAMPOS_INTERNOS_V4) expect(out).not.toHaveProperty(k);
+    expect(out.loteId).toBe('C-090');
+    expect(out.costoTotalCOP).toBe(931_931); // preexistente: no se empeora ni se mejora
+    expect(out.origenModelo).toBe('v4');
+  });
+
+  it('las cuatro queries públicas de lote aplican el filtro', () => {
+    const bloque = (src: string, nombre: string) => {
+      const i = src.indexOf(`export const ${nombre}`);
+      expect(i, `no se encontró ${nombre}`).toBeGreaterThan(-1);
+      const resto = src.slice(i + 10);
+      const j = resto.indexOf('\nexport const ');
+      return j === -1 ? resto : resto.slice(0, j);
+    };
+    const lots = leer('convex/lots.ts');
+    const lotItems = leer('convex/lotItems.ts');
+
+    for (const nombre of ['list = query', 'get = query', 'getByLoteId']) {
+      expect(bloque(lots, nombre), `lots:${nombre} sin filtro`).toContain(
+        'omitInternosV4',
+      );
+    }
+    expect(
+      bloque(lotItems, 'listByLote'),
+      'lotItems:listByLote sin filtro',
+    ).toContain('omitInternosV4');
+  });
+
+  it('products:listByLote filtra las 14 de Fotosíntesis', () => {
+    // Se le pasó al barrido de 2026-07-30 igual que a `products:get`: devuelve
+    // `rows.sort(...)` pelado, o sea el documento entero con `cajaComprador`
+    // adentro. Ninguna pantalla lee esas columnas — se verificó antes de
+    // filtrarlas.
+    const products = leer('convex/products.ts');
+    const i = products.indexOf('export const listByLote');
+    const resto = products.slice(i + 10);
+    const j = resto.indexOf('\nexport const ');
+    expect(j === -1 ? resto : resto.slice(0, j)).toContain(
+      'omitFotosintesisOnly',
+    );
   });
 });
 

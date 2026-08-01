@@ -78,3 +78,67 @@ export function omitFotosintesisOnly<T extends Record<string, unknown>>(
   for (const k of FOTOSINTESIS_ONLY_FIELDS) delete out[k];
   return out as Omit<T, FotosintesisOnly>;
 }
+
+/**
+ * Lo mismo, un modelo después: los campos que agregó el SOT v4 a `lots` y a
+ * `lotItems`.
+ *
+ * El mecanismo del defecto es idéntico y por eso vale repetir el remedio.
+ * `lots.list`, `lots.get`, `lots.getByLoteId` y `lotItems.listByLote` son
+ * queries PÚBLICAS que devuelven el documento entero. Eso era casi inofensivo
+ * cuando un lote guardaba una fecha, un costo total y un estado. Con v4 esas
+ * mismas filas cargan el costo de compra, el desglose de costos variables, el
+ * abono y el **saldo con el proveedor** — cuánto le debe la empresa a un tercero
+ * identificable. Nadie decidió publicarlo: el documento ensanchó y el `return`
+ * siguió igual. Es el mismo camino por el que las 14 columnas AQ→BE estuvieron
+ * saliendo por la ficha de producto.
+ *
+ * Tres clases de dato, un solo criterio —lo que no le corresponde a quien
+ * consulta un lote sin ser de costos—:
+ *
+ *   · COSTO      costoCompraCOP · costosVariables · joya{costoPorGramoCOP,
+ *                presupuestoJoyaCOP} · costoUnitarioRealCOP
+ *   · DEUDA      abonoCOP · saldoCOP  (plata que se le debe a un proveedor)
+ *   · COMERCIAL  rangoVentaEsperadoCOP  (lo que se espera sacar por la pieza)
+ *   · IDENTIDAD  clasificadaPor · publicacionParcial.por  (quién hizo qué)
+ *
+ * Las superficies v4 no pierden nada: leen por `casillas.*` y `lotsV4.*`, que
+ * son actions gateadas por rol (`ROLES_COSTOS` en `_lib/authz.ts`).
+ *
+ * **`origenModelo` NO está en la lista, a propósito.** `CapturaLotePage`
+ * pregunta `origenModelo === 'v4'` para negarse a abrir un lote v4 con el
+ * formulario legacy. Filtrarlo apagaría ese guard en silencio —peor que el dato
+ * que se quería esconder—, y además no esconde nada: es un marcador, no un
+ * número. Mismo criterio para `costoTotalCOP` y `costoBaseCOP`, que ya salían
+ * antes de v4: este módulo se compromete a no EMPEORAR la frontera, no a
+ * arreglar la deuda que encontró.
+ */
+export const CAMPOS_INTERNOS_V4 = [
+  // lots
+  'costoCompraCOP',
+  'costosVariables',
+  'abonoCOP',
+  'saldoCOP',
+  'joya',
+  'publicacionParcial',
+  // lotItems
+  'costoUnitarioRealCOP',
+  'rangoVentaEsperadoCOP',
+  'clasificadaPor',
+] as const;
+
+type InternoV4 = (typeof CAMPOS_INTERNOS_V4)[number];
+
+/**
+ * Devuelve el documento sin los campos internos de v4.
+ *
+ * Como su gemela, el tipo de retorno los excluye: leer `lote.saldoCOP` río abajo
+ * falla en compilación y no en producción.
+ */
+export function omitInternosV4<T extends Record<string, unknown>>(
+  row: T,
+): Omit<T, InternoV4> {
+  const out = { ...row };
+  for (const k of CAMPOS_INTERNOS_V4) delete out[k];
+  return out as Omit<T, InternoV4>;
+}
