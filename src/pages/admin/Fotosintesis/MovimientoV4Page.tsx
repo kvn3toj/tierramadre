@@ -49,6 +49,7 @@ export default function MovimientoV4Page() {
   const [pagoComisionesA, setPagoComisionesA] = useState('');
   const [formaPago, setFormaPago] = useState<FormaPago>('efectivo');
   const [numeroRecibo, setNumeroRecibo] = useState('');
+  const [fechaIngresoCaja, setFechaIngresoCaja] = useState('');
   const [recibidoEfectivoPor, setRecibidoEfectivoPor] = useState('');
   const [numeroCuenta, setNumeroCuenta] = useState('');
   const [titular, setTitular] = useState('');
@@ -141,7 +142,14 @@ export default function MovimientoV4Page() {
                 formaPago,
                 efectivo:
                   formaPago === 'efectivo'
-                    ? { numeroRecibo, recibidoPor: recibidoEfectivoPor }
+                    ? {
+                        numeroRecibo,
+                        recibidoPor: recibidoEfectivoPor,
+                        // Opcional: el recibo se hace en la venta y la plata
+                        // puede llegar a caja después. Exigirla impediría
+                        // registrar la venta el día que ocurrió.
+                        fechaIngresoCaja: fechaIngresoCaja || undefined,
+                      }
                     : undefined,
                 transferencia:
                   formaPago === 'transferencia'
@@ -426,6 +434,21 @@ export default function MovimientoV4Page() {
                   value={recibidoEfectivoPor}
                   onChange={(e) =>
                     setRecibidoEfectivoPor((e.target as HTMLInputElement).value)
+                  }
+                  sx={inputSx}
+                />
+              </Box>
+              <Box>
+                <FieldLabel htmlFor="m-fecha-caja">
+                  Fecha de ingreso a caja (opcional)
+                </FieldLabel>
+                <Box
+                  component="input"
+                  id="m-fecha-caja"
+                  type="date"
+                  value={fechaIngresoCaja}
+                  onChange={(e) =>
+                    setFechaIngresoCaja((e.target as HTMLInputElement).value)
                   }
                   sx={inputSx}
                 />

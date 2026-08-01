@@ -59,6 +59,9 @@ async function encolarLote(ctx: MutationCtx, id: Id<'lots'>): Promise<void> {
       renombreLote: lote.renombreLote,
       costosVariables: lote.costosVariables,
       joya: lote.joya,
+      gema: lote.gema,
+      nombre: lote.nombre,
+      fechaPago: lote.fechaPago,
       motor: await motorDelLoteDb(ctx, lote),
     }),
     estado: 'pendiente',
@@ -136,6 +139,8 @@ const patchArgs = {
   corte: v.optional(v.string()),
   ct: v.optional(v.number()),
   gradoRareza: v.optional(v.string()),
+  /** El tipo de gema de la pieza. Nace heredado del lote y se corrige acá. */
+  tipo: v.optional(v.string()),
   tipoJoya: v.optional(v.string()),
   gramaje: v.optional(v.number()),
   rangoVentaEsperadoCOP: v.optional(v.number()),

@@ -33,6 +33,7 @@ interface CasillaVista {
   corte?: string;
   ct?: number;
   gradoRareza?: string;
+  tipo?: string;
   tipoJoya?: string;
   gramaje?: number;
   rangoVentaEsperadoCOP?: number;
@@ -90,6 +91,7 @@ export default function CasillaW2Page() {
   const [corte, setCorte] = useState('');
   const [ct, setCt] = useState<number | ''>('');
   const [gradoRareza, setGradoRareza] = useState('');
+  const [tipo, setTipo] = useState('');
   const [tipoJoya, setTipoJoya] = useState('');
   const [gramaje, setGramaje] = useState<number | ''>('');
   const [rangoVentaEsperadoCOP, setRango] = useState<number | ''>('');
@@ -109,6 +111,7 @@ export default function CasillaW2Page() {
     setCorte(casilla.corte ?? '');
     setCt(casilla.ct ?? '');
     setGradoRareza(casilla.gradoRareza ?? '');
+    setTipo(casilla.tipo ?? '');
     setTipoJoya(casilla.tipoJoya ?? '');
     setGramaje(casilla.gramaje ?? '');
     setRango(casilla.rangoVentaEsperadoCOP ?? '');
@@ -134,6 +137,7 @@ export default function CasillaW2Page() {
         corte: corte || undefined,
         ct: typeof ct === 'number' ? ct : undefined,
         gradoRareza: gradoRareza || undefined,
+        tipo: tipo || undefined,
         tipoJoya: tipoJoya || undefined,
         gramaje: typeof gramaje === 'number' ? gramaje : undefined,
         rangoVentaEsperadoCOP:
@@ -331,6 +335,18 @@ export default function CasillaW2Page() {
             onChange={(e) =>
               setGradoRareza((e.target as HTMLInputElement).value)
             }
+            sx={inputSx}
+          />
+        </Box>
+        <Box>
+          {/* Nace heredado del bloque Gema del lote: clasificar es CORREGIR
+              defaults, no digitar de cero. */}
+          <FieldLabel htmlFor="c-tipo">Tipo de gema</FieldLabel>
+          <Box
+            component="input"
+            id="c-tipo"
+            value={tipo}
+            onChange={(e) => setTipo((e.target as HTMLInputElement).value)}
             sx={inputSx}
           />
         </Box>

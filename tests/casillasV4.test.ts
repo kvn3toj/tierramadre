@@ -105,3 +105,39 @@ describe('planificarCasillas', () => {
     ).toThrow(/loteId/i);
   });
 });
+
+describe('la casilla hereda el tipo de gema del lote', () => {
+  // Clasificar es corregir defaults heredados, no digitar de cero. Si el lote
+  // declara «Murralla», sus casillas nacen Murralla y quien clasifica corrige la
+  // que sea de otro tipo — que es el caso raro, no el normal.
+  it('nace con el `tipo` del bloque Gema', () => {
+    const casillas = planificarCasillas({
+      loteId: 'B-009',
+      unidadesDeclaradas: 2,
+      primerItemIdNumerico: 500,
+      categoriaFiscalLote: 'gema',
+      tipoGemaLote: 'Murralla',
+    });
+    expect(casillas.map((c) => c.tipo)).toEqual(['Murralla', 'Murralla']);
+  });
+
+  it('sin bloque Gema no se le inventa un tipo', () => {
+    const casillas = planificarCasillas({
+      loteId: 'B-009',
+      unidadesDeclaradas: 1,
+      primerItemIdNumerico: 500,
+      categoriaFiscalLote: 'gema',
+    });
+    expect(casillas[0].tipo).toBeUndefined();
+  });
+
+  it('un lote de joya no hereda tipo de gema', () => {
+    const casillas = planificarCasillas({
+      loteId: 'B-009',
+      unidadesDeclaradas: 1,
+      primerItemIdNumerico: 500,
+      categoriaFiscalLote: 'joya',
+    });
+    expect(casillas[0].tipo).toBeUndefined();
+  });
+});

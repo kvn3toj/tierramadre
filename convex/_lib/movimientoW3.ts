@@ -33,7 +33,13 @@ export interface BloqueVenta {
   comisionPct?: number;
   pagoComisionesA?: string;
   formaPago: FormaPagoVenta;
-  efectivo?: { numeroRecibo: string; recibidoPor: string; ubicacion?: string };
+  efectivo?: {
+    numeroRecibo: string;
+    recibidoPor: string;
+    /** Cuándo entró la plata a caja. Opcional: puede entrar días después. */
+    fechaIngresoCaja?: string;
+    ubicacion?: string;
+  };
   transferencia?: {
     numeroCuenta: string;
     titular: string;

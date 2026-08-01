@@ -16,6 +16,9 @@
 /** Las cabeceras de la pestaña Lotes, en el orden en que se crean. */
 export const CABECERAS_LOTES = [
   'loteId',
+  // Descripción de COMPRA (W1). `renombre` es el nombre comercial (W2): son dos
+  // cosas, y el canon las lista aparte a propósito.
+  'nombre',
   'fecha',
   'proveedor',
   'categoriaFiscal',
@@ -28,6 +31,15 @@ export const CABECERAS_LOTES = [
   'costosVariablesCOP',
   'costoTotalCOP',
   'unidades',
+  // Bloque Gema. Vacío en un lote de joya. De acá hereda la casilla su `tipo`.
+  'tipoGema',
+  'cantidadGemas',
+  'corteGema',
+  'pesoTotalCt',
+  'calidadPromedio',
+  'medidaPromedio',
+  'pesoGemaPromedioCt',
+  'costoPorCtCOP',
   // Bloque Joya. Vacío en un lote de gema.
   'tipoJoya',
   'mineralJoya',
@@ -37,6 +49,8 @@ export const CABECERAS_LOTES = [
   'presupuestoJoyaCOP',
   'abonoCOP',
   'saldoCOP',
+  // Cuándo se PAGÓ. `fechaVencimiento` (cuándo se debe) es otra cosa.
+  'fechaPago',
   'formaPago',
   'estado',
   'sede',
@@ -105,6 +119,8 @@ export const CABECERAS_CASILLAS = [
   'corte',
   'ct',
   'gradoRareza',
+  // El tipo de gema de la pieza, heredado del bloque Gema del lote.
+  'tipo',
   'tipoJoya',
   'gramaje',
   'rangoVentaEsperadoCOP',
@@ -165,11 +181,10 @@ export function desglosaCostosVariables(
  * Los condicionales de pago viajan **enmascarados**. Ver la regla completa en
  * `filaMovimientoParaEspejo`.
  *
- * `fechaIngresoCaja`, que el canon pide en el bloque de efectivo, todavía no
- * existe: W3 no la captura. No se agrega la columna vacía a propósito — una
- * columna que nunca se llena invita a llenarla a mano, y el espejo es push-only:
- * esa edición se reporta como deriva y el próximo cambio la borra. Entra cuando
- * la capture el wizard.
+ * `fechaIngresoCaja` entró el 2026-08-01, cuando W3 empezó a capturarla. Hasta
+ * ese día la columna NO existía a propósito: una que nunca se llena invita a
+ * llenarla a mano, y el espejo es push-only — esa edición se reporta como deriva
+ * y el próximo cambio la borra. La regla sigue en pie para las que falten.
  */
 export const CABECERAS_MOVIMIENTOS = [
   'movimientoId',
@@ -191,6 +206,7 @@ export const CABECERAS_MOVIMIENTOS = [
   'refTransaccion',
   'reciboCaja',
   'quienRecibio',
+  'fechaIngresoCaja',
   'ubicacionEfectivo',
   // ─────────────────────────────────────
   'origenKardexEventId',
@@ -199,7 +215,11 @@ export const CABECERAS_MOVIMIENTOS = [
 
 export interface FilaLote {
   loteId: string;
+  /** Descripción de compra (W1). Distinta de `renombreLote` (W2). */
+  nombre?: string;
   fechaRecepcion: string;
+  /** Cuándo se pagó. Distinta de `fechaVencimiento`. */
+  fechaPago?: string;
   proveedor: string;
   categoriaFiscal: string;
   costoCompraCOP: number;
@@ -214,6 +234,16 @@ export interface FilaLote {
   renombreLote?: string;
   /** El desglose sale de acá; el total sigue viniendo en `costosVariablesCOP`. */
   costosVariables?: { concepto: string; montoCOP: number }[];
+  gema?: {
+    tipoGema: string;
+    cantidadGemas: number;
+    corteGema: string;
+    pesoTotalCt: number;
+    calidadPromedio: string;
+    medidaPromedio: string;
+    pesoGemaPromedioCt: number;
+    costoPorCtCOP: number;
+  };
   joya?: {
     tipoJoya: string;
     mineral: string;
@@ -256,6 +286,7 @@ export function filaLoteParaEspejo(lote: FilaLote): Record<string, string> {
   const desglose = desglosaCostosVariables(lote.costosVariables);
   return {
     loteId: texto(lote.loteId),
+    nombre: texto(lote.nombre),
     fecha: texto(lote.fechaRecepcion),
     proveedor: texto(lote.proveedor),
     categoriaFiscal: texto(lote.categoriaFiscal),
@@ -267,6 +298,14 @@ export function filaLoteParaEspejo(lote: FilaLote): Record<string, string> {
     costosVariablesCOP: texto(lote.costosVariablesCOP),
     costoTotalCOP: texto(lote.costoTotalCOP),
     unidades: texto(lote.unidadesDeclaradas),
+    tipoGema: texto(lote.gema?.tipoGema),
+    cantidadGemas: texto(lote.gema?.cantidadGemas),
+    corteGema: texto(lote.gema?.corteGema),
+    pesoTotalCt: texto(lote.gema?.pesoTotalCt),
+    calidadPromedio: texto(lote.gema?.calidadPromedio),
+    medidaPromedio: texto(lote.gema?.medidaPromedio),
+    pesoGemaPromedioCt: texto(lote.gema?.pesoGemaPromedioCt),
+    costoPorCtCOP: texto(lote.gema?.costoPorCtCOP),
     tipoJoya: texto(lote.joya?.tipoJoya),
     mineralJoya: texto(lote.joya?.mineral),
     gramajeJoya: texto(lote.joya?.gramaje),
@@ -275,6 +314,7 @@ export function filaLoteParaEspejo(lote: FilaLote): Record<string, string> {
     presupuestoJoyaCOP: texto(lote.joya?.presupuestoJoyaCOP),
     abonoCOP: texto(lote.abonoCOP),
     saldoCOP: texto(lote.saldoCOP),
+    fechaPago: texto(lote.fechaPago),
     formaPago: texto(lote.formaPago),
     estado: texto(lote.estado),
     sede: texto(lote.sede),
@@ -412,6 +452,7 @@ export function filaMovimientoParaEspejo(
     refTransaccion: enmascaraCola(t?.numeroTransaccion),
     reciboCaja: texto(e?.numeroRecibo),
     quienRecibio: texto(e?.recibidoPor),
+    fechaIngresoCaja: texto(e?.fechaIngresoCaja),
     ubicacionEfectivo: texto(e?.ubicacion),
 
     origenKardexEventId: texto(mov.origenKardexEventId),
@@ -438,6 +479,7 @@ export interface FilaMovimiento {
     efectivo?: {
       numeroRecibo: string;
       recibidoPor: string;
+      fechaIngresoCaja?: string;
       ubicacion?: string;
     };
     /** Se lee `banco` y `numeroTransaccion`. Lo demás se queda en Convex. */
@@ -464,6 +506,8 @@ export interface FilaCasilla {
   corte?: string;
   ct?: number;
   gradoRareza?: string;
+  /** Tipo de gema de la pieza. Nace heredado del lote. */
+  tipo?: string;
   rangoVentaEsperadoCOP?: number;
   /** Del lote, denormalizado: la hoja se lee sin hacer el join a mano. */
   renombreLote?: string;
@@ -494,6 +538,7 @@ export function filaCasillaParaEspejo(
     corte: texto(casilla.corte),
     ct: texto(casilla.ct),
     gradoRareza: texto(casilla.gradoRareza),
+    tipo: texto(casilla.tipo),
     tipoJoya: texto(casilla.tipoJoya),
     gramaje: texto(casilla.gramaje),
     rangoVentaEsperadoCOP: texto(casilla.rangoVentaEsperadoCOP),

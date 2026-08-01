@@ -505,6 +505,8 @@ export default defineSchema({
           v.object({
             numeroRecibo: v.string(),
             recibidoPor: v.string(),
+            /** Cuándo entró la plata a caja. La pedía el canon y faltaba. */
+            fechaIngresoCaja: v.optional(v.string()),
             ubicacion: v.optional(v.string()),
           }),
         ),
@@ -700,6 +702,34 @@ export default defineSchema({
     categoriaFiscal: v.optional(
       v.union(v.literal('gema'), v.literal('joya'), v.literal('mixta')),
     ),
+    /**
+     * Descripción de COMPRA — el «Cerebro Racional» de W1. Es OTRA cosa que
+     * `renombreLote`, que es el nombre comercial/creativo de W2. El canon las
+     * lista aparte a propósito: una dice qué se compró, la otra cómo se vende.
+     */
+    nombre: v.optional(v.string()),
+    /**
+     * Cuándo se PAGÓ el lote. Distinta de `fechaVencimiento`, que es cuándo se
+     * DEBE pagar. Se autocompleta con la fecha del abono que lleva el saldo a 0
+     * (`_lib/loteV4.fechaPagoPorAbonos`) y también se puede capturar a mano.
+     */
+    fechaPago: v.optional(v.string()),
+    /**
+     * Bloque de gemas. OPCIONAL, al revés que el de joya: es descriptivo, no un
+     * insumo del costo. De acá hereda la casilla su `tipo`.
+     */
+    gema: v.optional(
+      v.object({
+        tipoGema: v.string(),
+        cantidadGemas: v.number(),
+        corteGema: v.string(),
+        pesoTotalCt: v.number(),
+        calidadPromedio: v.string(),
+        medidaPromedio: v.string(),
+        pesoGemaPromedioCt: v.number(),
+        costoPorCtCOP: v.number(),
+      }),
+    ),
     /** Bloque de joyería. Obligatorio en v4 cuando la categoría es `joya`. */
     joya: v.optional(
       v.object({
@@ -801,6 +831,12 @@ export default defineSchema({
     corte: v.optional(v.string()),
     ct: v.optional(v.number()),
     gradoRareza: v.optional(v.string()),
+    /**
+     * El tipo de gema de ESTA pieza (Murralla, Gola, Raíz…). Nace heredado del
+     * bloque Gema del lote y quien clasifica lo corrige si la pieza es de otro
+     * tipo — clasificar es corregir defaults, no digitar de cero.
+     */
+    tipo: v.optional(v.string()),
     tipoJoya: v.optional(v.string()),
     gramaje: v.optional(v.number()),
     /** Intención comercial, no dato de la pieza. */

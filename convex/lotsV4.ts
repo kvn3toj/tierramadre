@@ -38,7 +38,19 @@ const joyaValidator = v.object({
   mineral: v.string(),
   gramaje: v.number(),
   costoPorGramoCOP: v.number(),
+  cantidadJoyas: v.optional(v.number()),
   presupuestoJoyaCOP: v.optional(v.number()),
+});
+
+const gemaValidator = v.object({
+  tipoGema: v.string(),
+  cantidadGemas: v.number(),
+  corteGema: v.string(),
+  pesoTotalCt: v.number(),
+  calidadPromedio: v.string(),
+  medidaPromedio: v.string(),
+  pesoGemaPromedioCt: v.number(),
+  costoPorCtCOP: v.number(),
 });
 
 const createArgs = {
@@ -60,6 +72,11 @@ const createArgs = {
   costosVariables: v.optional(v.array(costoVariableValidator)),
   abonoCOP: v.optional(v.number()),
   joya: v.optional(joyaValidator),
+  gema: v.optional(gemaValidator),
+  /** Descripción de COMPRA (W1). `renombreLote` es el comercial (W2). */
+  nombre: v.optional(v.string()),
+  /** Cuándo se PAGÓ. `fechaVencimiento` (cuándo se debe) es otra cosa. */
+  fechaPago: v.optional(v.string()),
   renombreLote: v.optional(v.string()),
   tratamiento: v.optional(v.string()),
   mina: v.optional(v.string()),
@@ -107,6 +124,7 @@ export const _create = internalMutation({
       costosVariables: args.costosVariables,
       abonoCOP: args.abonoCOP,
       joya: args.joya,
+      gema: args.gema,
     });
 
     const provider = await ctx.db.get(args.providerId);
@@ -145,6 +163,9 @@ export const _create = internalMutation({
 
       categoriaFiscal: validado.categoriaFiscal,
       joya: validado.joya,
+      gema: validado.gema,
+      nombre: args.nombre,
+      fechaPago: args.fechaPago,
       costoCompraCOP: validado.costoCompraCOP,
       costosVariables: args.costosVariables,
       abonoCOP: validado.abonoCOP,
@@ -174,6 +195,7 @@ export const _create = internalMutation({
       unidadesDeclaradas: validado.unidadesDeclaradas,
       primerItemIdNumerico,
       categoriaFiscalLote: validado.categoriaFiscal,
+      tipoGemaLote: validado.gema?.tipoGema,
     });
     for (const casilla of casillas) await ctx.db.insert('lotItems', casilla);
 
@@ -215,6 +237,9 @@ export const _create = internalMutation({
         renombreLote: args.renombreLote,
         costosVariables: args.costosVariables,
         joya: args.joya,
+        gema: args.gema,
+        nombre: args.nombre,
+        fechaPago: args.fechaPago,
         // Se calcula DESPUÉS del recálculo del paso 5: el alta de este lote ya
         // movió el divisor, y el motor tiene que reflejar el fijo nuevo, no el
         // que regía hace tres líneas.

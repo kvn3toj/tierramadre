@@ -89,6 +89,23 @@ export default function CapturaLoteV4Page() {
   const [mineral, setMineral] = useState('');
   const [gramaje, setGramaje] = useState<number | ''>('');
   const [costoPorGramoCOP, setCostoPorGramoCOP] = useState<number | ''>('');
+  const [cantidadJoyas, setCantidadJoyas] = useState<number | ''>('');
+
+  // Bloque gema — OPCIONAL, al revés que el de joya: es descriptivo, no un
+  // insumo del costo. De acá hereda cada casilla su `tipo`.
+  const [tipoGema, setTipoGema] = useState('');
+  const [cantidadGemas, setCantidadGemas] = useState<number | ''>('');
+  const [corteGema, setCorteGema] = useState('');
+  const [pesoTotalCt, setPesoTotalCt] = useState<number | ''>('');
+  const [calidadPromedio, setCalidadPromedio] = useState('');
+  const [medidaPromedio, setMedidaPromedio] = useState('');
+  const [pesoGemaPromedioCt, setPesoGemaPromedioCt] = useState<number | ''>('');
+  const [costoPorCtCOP, setCostoPorCtCOP] = useState<number | ''>('');
+
+  // Descripción de COMPRA. `renombreLote` es el alias comercial de W2: son dos.
+  const [nombre, setNombre] = useState('');
+  // Cuándo se PAGÓ. `fechaVencimiento` (cuándo se debe) es otra cosa.
+  const [fechaPago, setFechaPago] = useState('');
 
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -154,6 +171,22 @@ export default function CapturaLoteV4Page() {
     pedirPreview,
   ]);
 
+  // El bloque gema entra solo si está entero. Es opcional a nivel modelo, así
+  // que «a medias» significa «no lo capturaron», no «error».
+  const gemaCompleta =
+    categoriaFiscal !== 'joya' &&
+    !!tipoGema &&
+    !!corteGema &&
+    !!calidadPromedio &&
+    typeof cantidadGemas === 'number' &&
+    cantidadGemas > 0 &&
+    typeof pesoTotalCt === 'number' &&
+    pesoTotalCt > 0 &&
+    typeof pesoGemaPromedioCt === 'number' &&
+    pesoGemaPromedioCt > 0 &&
+    typeof costoPorCtCOP === 'number' &&
+    costoPorCtCOP > 0;
+
   const joyaCompleta =
     categoriaFiscal !== 'joya' ||
     (!!tipoJoya &&
@@ -204,8 +237,27 @@ export default function CapturaLoteV4Page() {
                 mineral,
                 gramaje: gramaje as number,
                 costoPorGramoCOP: costoPorGramoCOP as number,
+                cantidadJoyas:
+                  typeof cantidadJoyas === 'number' ? cantidadJoyas : undefined,
               }
             : undefined,
+        // Solo si está COMPLETO: el bloque es opcional, pero a medias no
+        // valida — y mandar la mitad haría reventar la mutation con un error
+        // que el operador no pidió.
+        gema: gemaCompleta
+          ? {
+              tipoGema,
+              cantidadGemas: cantidadGemas as number,
+              corteGema,
+              pesoTotalCt: pesoTotalCt as number,
+              calidadPromedio,
+              medidaPromedio,
+              pesoGemaPromedioCt: pesoGemaPromedioCt as number,
+              costoPorCtCOP: costoPorCtCOP as number,
+            }
+          : undefined,
+        nombre: nombre || undefined,
+        fechaPago: fechaPago || undefined,
         renombreLote: renombreLote || undefined,
         operadorNombre: user?.name ?? undefined,
       });
@@ -415,6 +467,39 @@ export default function CapturaLoteV4Page() {
                   sx={inputSx}
                 />
               </Box>
+              <Box>
+                {/* Qué se COMPRÓ. El alias de arriba es cómo se vende: el canon
+                    las lista aparte porque son dos cosas distintas. */}
+                <FieldLabel htmlFor="v4-nombre">
+                  Nombre de compra (opcional)
+                </FieldLabel>
+                <Box
+                  component="input"
+                  id="v4-nombre"
+                  value={nombre}
+                  onChange={(e) =>
+                    setNombre((e.target as HTMLInputElement).value)
+                  }
+                  sx={inputSx}
+                />
+              </Box>
+              <Box>
+                {/* Cuándo se PAGÓ, distinto de cuándo vence. Se autocompleta
+                    solo cuando los abonos saldan el lote. */}
+                <FieldLabel htmlFor="v4-fechapago">
+                  Fecha de pago (opcional)
+                </FieldLabel>
+                <Box
+                  component="input"
+                  id="v4-fechapago"
+                  type="date"
+                  value={fechaPago}
+                  onChange={(e) =>
+                    setFechaPago((e.target as HTMLInputElement).value)
+                  }
+                  sx={inputSx}
+                />
+              </Box>
             </Box>
 
             {/* Bloque joya condicional */}
@@ -488,6 +573,155 @@ export default function CapturaLoteV4Page() {
                       step={1000}
                       min={0}
                       ariaLabel="Costo por gramo en COP"
+                    />
+                  </Box>
+                  <Box>
+                    <FieldLabel htmlFor="v4-cantjoyas">
+                      Cantidad de joyas
+                    </FieldLabel>
+                    <NumberInputWithCalc
+                      id="v4-cantjoyas"
+                      value={cantidadJoyas}
+                      onChange={setCantidadJoyas}
+                      format="integer"
+                      step={1}
+                      min={1}
+                      ariaLabel="Cantidad de joyas del lote"
+                    />
+                  </Box>
+                </Box>
+              </Box>
+            ) : null}
+
+            {/* Bloque gema condicional. OPCIONAL: describe la mercancía, no
+                arma el costo. Entra al guardar solo si está completo. */}
+            {categoriaFiscal !== 'joya' ? (
+              <Box
+                data-testid="bloque-gema"
+                sx={{
+                  display: 'grid',
+                  gap: '12px',
+                  padding: '14px',
+                  borderRadius: '12px',
+                  border: `1px solid ${foto.surfaces.edge}`,
+                }}
+              >
+                <Box sx={{ fontSize: '13px', color: foto.ink.secondary }}>
+                  Bloque gema · opcional
+                </Box>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                    gap: '14px',
+                  }}
+                >
+                  <Box>
+                    <FieldLabel htmlFor="v4-tipogema">Tipo de gema</FieldLabel>
+                    <Box
+                      component="input"
+                      id="v4-tipogema"
+                      value={tipoGema}
+                      onChange={(e) =>
+                        setTipoGema((e.target as HTMLInputElement).value)
+                      }
+                      sx={inputSx}
+                    />
+                  </Box>
+                  <Box>
+                    <FieldLabel htmlFor="v4-cantgemas">
+                      Cantidad de gemas
+                    </FieldLabel>
+                    <NumberInputWithCalc
+                      id="v4-cantgemas"
+                      value={cantidadGemas}
+                      onChange={setCantidadGemas}
+                      format="integer"
+                      step={1}
+                      min={1}
+                      ariaLabel="Cantidad de gemas del lote"
+                    />
+                  </Box>
+                  <Box>
+                    <FieldLabel htmlFor="v4-cortegema">Corte</FieldLabel>
+                    <Box
+                      component="input"
+                      id="v4-cortegema"
+                      value={corteGema}
+                      onChange={(e) =>
+                        setCorteGema((e.target as HTMLInputElement).value)
+                      }
+                      sx={inputSx}
+                    />
+                  </Box>
+                  <Box>
+                    <FieldLabel htmlFor="v4-calidadprom">
+                      Calidad promedio
+                    </FieldLabel>
+                    <Box
+                      component="input"
+                      id="v4-calidadprom"
+                      value={calidadPromedio}
+                      onChange={(e) =>
+                        setCalidadPromedio((e.target as HTMLInputElement).value)
+                      }
+                      sx={inputSx}
+                    />
+                  </Box>
+                  <Box>
+                    <FieldLabel htmlFor="v4-pesototal">
+                      Peso total (ct)
+                    </FieldLabel>
+                    <NumberInputWithCalc
+                      id="v4-pesototal"
+                      value={pesoTotalCt}
+                      onChange={setPesoTotalCt}
+                      format="decimal"
+                      step={0.1}
+                      min={0}
+                      ariaLabel="Peso total en quilates"
+                    />
+                  </Box>
+                  <Box>
+                    <FieldLabel htmlFor="v4-pesoprom">
+                      Peso promedio por gema (ct)
+                    </FieldLabel>
+                    <NumberInputWithCalc
+                      id="v4-pesoprom"
+                      value={pesoGemaPromedioCt}
+                      onChange={setPesoGemaPromedioCt}
+                      format="decimal"
+                      step={0.01}
+                      min={0}
+                      ariaLabel="Peso promedio por gema en quilates"
+                    />
+                  </Box>
+                  <Box>
+                    <FieldLabel htmlFor="v4-medidaprom">
+                      Medida promedio
+                    </FieldLabel>
+                    <Box
+                      component="input"
+                      id="v4-medidaprom"
+                      value={medidaPromedio}
+                      onChange={(e) =>
+                        setMedidaPromedio((e.target as HTMLInputElement).value)
+                      }
+                      sx={inputSx}
+                    />
+                  </Box>
+                  <Box>
+                    <FieldLabel htmlFor="v4-costoct">
+                      Costo por ct (COP)
+                    </FieldLabel>
+                    <NumberInputWithCalc
+                      id="v4-costoct"
+                      value={costoPorCtCOP}
+                      onChange={setCostoPorCtCOP}
+                      format="currency"
+                      step={1000}
+                      min={0}
+                      ariaLabel="Costo por quilate en COP"
                     />
                   </Box>
                 </Box>

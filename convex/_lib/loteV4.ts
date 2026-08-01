@@ -35,7 +35,61 @@ export interface BloqueJoya {
   mineral: string;
   gramaje: number;
   costoPorGramoCOP: number;
+  /** Cuántas piezas trae. Opcional: los lotes viejos no la tienen. */
+  cantidadJoyas?: number;
   presupuestoJoyaCOP?: number;
+}
+
+/**
+ * El bloque de gemas, obligatorio cuando el lote es de gemas.
+ *
+ * Simétrico al de joya, y por el mismo motivo: sin él, el canon del espejo tiene
+ * ocho columnas que nadie puede llenar, y la casilla no tiene de dónde heredar
+ * su `tipo`. En la hoja vieja estas cuatro columnas quedaron VACÍAS en las 102
+ * filas porque sus desplegables apuntaban a `#REF!`.
+ */
+export interface BloqueGema {
+  /** Murralla · Piedra Cristal · Gola · Raíz · Faceteada · Rarezas. */
+  tipoGema: string;
+  cantidadGemas: number;
+  /** redondas · cuadradas · baguette · esmeralda · variado… */
+  corteGema: string;
+  pesoTotalCt: number;
+  /** comercial · fina · extrafina. */
+  calidadPromedio: string;
+  medidaPromedio: string;
+  pesoGemaPromedioCt: number;
+  costoPorCtCOP: number;
+}
+
+/** Un abono al proveedor, para resolver `fechaPago`. */
+export interface AbonoProveedor {
+  /** ISO `AAAA-MM-DD`. */
+  fecha: string;
+  montoCOP: number;
+}
+
+/**
+ * Cuándo se terminó de pagar el lote: la fecha del abono que llevó el saldo a 0.
+ *
+ * **`fechaPago` ≠ `fechaVencimiento`.** Una dice cuándo se PAGÓ y la otra cuándo
+ * se DEBE pagar; el canon las pide separadas y confundirlas convierte una cuenta
+ * por pagar en una pagada.
+ *
+ * Ausente mientras quede saldo: no se pagó todavía, y una fecha ahí sería una
+ * afirmación falsa sobre una deuda viva.
+ *
+ * Toma el último abono POR FECHA, no por orden de captura: los abonos se pueden
+ * registrar fuera de orden, y lo que importa es cuál saldó la cuenta.
+ */
+export function fechaPagoPorAbonos(
+  costoCompraCOP: number,
+  abonos: readonly AbonoProveedor[],
+): string | undefined {
+  if (!abonos.length) return undefined;
+  const pagado = abonos.reduce((a, x) => a + x.montoCOP, 0);
+  if (pagado < costoCompraCOP) return undefined;
+  return abonos.reduce((max, x) => (x.fecha > max ? x.fecha : max), '');
 }
 
 export interface LoteV4Input {
@@ -50,6 +104,11 @@ export interface LoteV4Input {
   costosVariables?: CostoVariable[];
   abonoCOP?: number;
   joya?: BloqueJoya;
+  gema?: BloqueGema;
+  /** Descripción de COMPRA (W1). Distinta de `renombre`, que es comercial (W2). */
+  nombre?: string;
+  /** Cuándo se PAGÓ. Distinta de `fechaVencimiento`, que es cuándo se debe. */
+  fechaPago?: string;
 }
 
 export interface LoteV4Validado {
@@ -64,6 +123,7 @@ export interface LoteV4Validado {
   abonoCOP: number;
   saldoCOP: number;
   joya?: BloqueJoya;
+  gema?: BloqueGema;
   /** Marca el lote como del modelo nuevo: el wizard viejo debe rechazarlo. */
   origenModelo: 'v4';
 }
@@ -172,6 +232,63 @@ export function validarLoteV4(input: LoteV4Input): LoteV4Validado {
   if (input.joya) {
     exigePositivo(input.joya.gramaje, 'gramaje');
     exigePositivo(input.joya.costoPorGramoCOP, 'costoPorGramoCOP');
+    if (input.joya.cantidadJoyas !== undefined) {
+      if (
+        !Number.isInteger(input.joya.cantidadJoyas) ||
+        input.joya.cantidadJoyas < 1
+      ) {
+        throw new Error(
+          `cantidadJoyas debe ser un entero de al menos 1 (recibí ` +
+            `${input.joya.cantidadJoyas}).`,
+        );
+      }
+    }
+  }
+
+  // El bloque Gema es **opcional**, a diferencia del de joya. La asimetría es
+  // deliberada y vale explicarla, porque la simetría era lo intuitivo:
+  //
+  //  - el bloque JOYA es obligatorio porque `gramaje` y `costoPorGramoCOP` son
+  //    los insumos con los que se arma el costo de una joya; sin ellos no hay
+  //    con qué cotizarla;
+  //  - el bloque GEMA es descriptivo. El costo de un lote de gemas se captura
+  //    directo, y `costoPorCtCOP` es una derivada informativa. Exigirlo
+  //    bloquearía la captura de un lote cuya piedra todavía no se pesó, y
+  //    dejaría sin poder validar a los lotes de gema que ya existen.
+  //
+  // Lo que SÍ se exige es coherencia: la categoría y los datos no se pueden
+  // contradecir. `mixta` acepta los dos — significa literalmente que vienen las
+  // dos cosas.
+  if (categoriaFiscal === 'joya' && input.gema) {
+    throw new Error(
+      'un lote de categoría "joya" no puede traer bloque gema: la categoría y ' +
+        'los datos se contradicen.',
+    );
+  }
+  if (input.gema) {
+    if (!input.gema.tipoGema?.trim()) {
+      throw new Error(
+        'tipoGema es obligatorio: es lo que cada casilla hereda como su `tipo`.',
+      );
+    }
+    if (!input.gema.corteGema?.trim()) {
+      throw new Error('corteGema es obligatorio.');
+    }
+    if (!input.gema.calidadPromedio?.trim()) {
+      throw new Error('calidadPromedio es obligatoria.');
+    }
+    if (
+      !Number.isInteger(input.gema.cantidadGemas) ||
+      input.gema.cantidadGemas < 1
+    ) {
+      throw new Error(
+        `cantidadGemas debe ser un entero de al menos 1 (recibí ` +
+          `${input.gema.cantidadGemas}).`,
+      );
+    }
+    exigePositivo(input.gema.pesoTotalCt, 'pesoTotalCt');
+    exigePositivo(input.gema.pesoGemaPromedioCt, 'pesoGemaPromedioCt');
+    exigePositivo(input.gema.costoPorCtCOP, 'costoPorCtCOP');
   }
 
   const costoCompraCOP = exigePositivo(input.costoCompraCOP, 'costoCompraCOP');
@@ -218,6 +335,7 @@ export function validarLoteV4(input: LoteV4Input): LoteV4Validado {
     // Contra el costo de COMPRA, no el landed: la deuda es con el proveedor.
     saldoCOP: saldoProveedor(costoCompraCOP, abonoCOP),
     joya: input.joya,
+    gema: input.gema,
     origenModelo: 'v4',
   };
 }

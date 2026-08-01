@@ -27,6 +27,8 @@ export interface CasillaPlan {
   costoUnitarioRealCOP?: number;
   /** Heredada del lote; ausente cuando el lote es `mixta`. */
   categoriaFiscal?: 'gema' | 'joya';
+  /** El tipo de gema, heredado del bloque Gema del lote. */
+  tipo?: string;
 }
 
 /**
@@ -55,6 +57,12 @@ export interface PlanificarCasillasInput {
   unidadesDeclaradas: number;
   primerItemIdNumerico: number;
   categoriaFiscalLote: CategoriaFiscalLote;
+  /**
+   * El `tipoGema` del bloque Gema del lote, si lo tiene. Cada casilla nace con
+   * él: clasificar es CORREGIR defaults heredados, no digitar de cero. Ausente
+   * ⇒ no se le inventa uno.
+   */
+  tipoGemaLote?: string;
 }
 
 /** Los documentos de casilla a insertar para un lote recién guardado. */
@@ -87,6 +95,7 @@ export function planificarCasillas(
     loteId: input.loteId,
     itemId: String(input.primerItemIdNumerico + i),
     ordenEnLote: i + 1,
+    tipo: input.tipoGemaLote?.trim() || undefined,
     estadoCasilla: ESTADO_CASILLA_INICIAL,
     preponderancia: 0,
     costoBaseCOP: 0,

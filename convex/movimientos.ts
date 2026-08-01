@@ -39,6 +39,12 @@ const ventaValidator = v.object({
     v.object({
       numeroRecibo: v.string(),
       recibidoPor: v.string(),
+      /**
+       * Cuándo entró la plata a caja. Opcional: el recibo se hace en el
+       * momento de la venta y la plata puede llegar a caja días después, así
+       * que exigirla bloquearía registrar la venta el día que ocurrió.
+       */
+      fechaIngresoCaja: v.optional(v.string()),
       ubicacion: v.optional(v.string()),
     }),
   ),

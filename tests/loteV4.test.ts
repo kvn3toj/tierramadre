@@ -13,6 +13,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   costosVariablesTotal,
+  fechaPagoPorAbonos,
   saldoProveedor,
   validarLoteV4,
   type LoteV4Input,
@@ -249,5 +250,166 @@ describe('validarLoteV4 — las validaciones que ya exigía el riel viejo', () =
     expect(() =>
       validarLoteV4({ ...BASE, fechaRecepcion: '01/08/2026' }),
     ).toThrow(/AAAA-MM-DD/);
+  });
+});
+
+describe('el bloque Gema — simétrico al de joya', () => {
+  const GEMA = {
+    tipoGema: 'Murralla',
+    cantidadGemas: 4,
+    corteGema: 'baguette',
+    pesoTotalCt: 12.5,
+    calidadPromedio: 'fina',
+    medidaPromedio: '6x4mm',
+    pesoGemaPromedioCt: 3.125,
+    costoPorCtCOP: 74_554,
+  };
+  const BASE = {
+    categoriaFiscal: 'gema' as const,
+    costoCompraCOP: 931_931,
+    unidadesDeclaradas: 4,
+    formaPago: 'contado',
+    metodoContado: 'efectivo',
+    fechaRecepcion: '2026-08-01',
+  };
+
+  it('es OPCIONAL, al revés que el de joya — y la asimetría es deliberada', () => {
+    // El bloque joya es obligatorio porque `gramaje` y `costoPorGramoCOP` son
+    // los insumos con los que se arma el costo de la pieza. El de gema es
+    // DESCRIPTIVO: el costo del lote se captura directo. Exigirlo bloquearía la
+    // captura de un lote cuya piedra todavía no se pesó, y dejaría sin poder
+    // validar a los lotes de gema que ya existen.
+    expect(() => validarLoteV4(BASE)).not.toThrow();
+    expect(validarLoteV4(BASE).gema).toBeUndefined();
+  });
+
+  it('con el bloque completo valida y lo devuelve', () => {
+    const v = validarLoteV4({ ...BASE, gema: GEMA });
+    expect(v.gema).toEqual(GEMA);
+  });
+
+  it('un lote de joya no puede traer bloque gema', () => {
+    expect(() =>
+      validarLoteV4({
+        ...BASE,
+        categoriaFiscal: 'joya',
+        joya: {
+          tipoJoya: 'anillo',
+          mineral: 'oro',
+          gramaje: 3,
+          costoPorGramoCOP: 250_000,
+        },
+        gema: GEMA,
+      }),
+    ).toThrow(/contradic/i);
+  });
+
+  it('un lote mixto puede traer los dos bloques', () => {
+    // «Mixta» significa literalmente que vienen las dos cosas.
+    const v = validarLoteV4({
+      ...BASE,
+      categoriaFiscal: 'mixta',
+      gema: GEMA,
+      joya: {
+        tipoJoya: 'anillo',
+        mineral: 'oro',
+        gramaje: 3,
+        costoPorGramoCOP: 250_000,
+      },
+    });
+    expect(v.gema).toEqual(GEMA);
+    expect(v.joya).toBeDefined();
+  });
+
+  it('rechaza cantidades y pesos no positivos', () => {
+    expect(() =>
+      validarLoteV4({ ...BASE, gema: { ...GEMA, cantidadGemas: 0 } }),
+    ).toThrow(/cantidadGemas/);
+    expect(() =>
+      validarLoteV4({ ...BASE, gema: { ...GEMA, pesoTotalCt: 0 } }),
+    ).toThrow(/pesoTotalCt/);
+  });
+
+  it('exige el tipo de gema: es lo que la casilla hereda', () => {
+    expect(() =>
+      validarLoteV4({ ...BASE, gema: { ...GEMA, tipoGema: '  ' } }),
+    ).toThrow(/tipoGema/);
+  });
+});
+
+describe('cantidadJoyas', () => {
+  const BASE_JOYA = {
+    categoriaFiscal: 'joya' as const,
+    costoCompraCOP: 893_996,
+    unidadesDeclaradas: 9,
+    formaPago: 'contado',
+    metodoContado: 'efectivo',
+    fechaRecepcion: '2026-08-01',
+    joya: {
+      tipoJoya: 'anillo',
+      mineral: 'oro',
+      gramaje: 27,
+      costoPorGramoCOP: 33_111,
+      cantidadJoyas: 9,
+    },
+  };
+
+  it('viaja en el bloque joya cuando se captura', () => {
+    expect(validarLoteV4(BASE_JOYA).joya?.cantidadJoyas).toBe(9);
+  });
+
+  it('es opcional: un lote viejo sin ella sigue validando', () => {
+    const sin = {
+      ...BASE_JOYA,
+      joya: { ...BASE_JOYA.joya, cantidadJoyas: undefined },
+    };
+    expect(validarLoteV4(sin).joya?.cantidadJoyas).toBeUndefined();
+  });
+
+  it('si viene, tiene que ser un entero positivo', () => {
+    expect(() =>
+      validarLoteV4({
+        ...BASE_JOYA,
+        joya: { ...BASE_JOYA.joya, cantidadJoyas: 0 },
+      }),
+    ).toThrow(/cantidadJoyas/);
+  });
+});
+
+describe('fechaPago — cuándo se PAGÓ, distinto de cuándo se debe pagar', () => {
+  it('se autocompleta con la fecha del último abono cuando el saldo llega a 0', () => {
+    expect(
+      fechaPagoPorAbonos(931_931, [
+        { fecha: '2026-07-10', montoCOP: 400_000 },
+        { fecha: '2026-07-28', montoCOP: 531_931 },
+      ]),
+    ).toBe('2026-07-28');
+  });
+
+  it('con saldo pendiente queda ausente: todavía no se pagó', () => {
+    expect(
+      fechaPagoPorAbonos(931_931, [{ fecha: '2026-07-10', montoCOP: 400_000 }]),
+    ).toBeUndefined();
+  });
+
+  it('un sobrepago también la completa — el saldo llegó a 0 igual', () => {
+    expect(
+      fechaPagoPorAbonos(100_000, [{ fecha: '2026-07-10', montoCOP: 150_000 }]),
+    ).toBe('2026-07-10');
+  });
+
+  it('toma la fecha del último abono POR FECHA, no por orden de captura', () => {
+    // Los abonos se pueden registrar fuera de orden. La fecha de pago es la del
+    // que efectivamente saldó, no la del que se digitó al final.
+    expect(
+      fechaPagoPorAbonos(100_000, [
+        { fecha: '2026-07-28', montoCOP: 60_000 },
+        { fecha: '2026-07-10', montoCOP: 40_000 },
+      ]),
+    ).toBe('2026-07-28');
+  });
+
+  it('sin abonos queda ausente', () => {
+    expect(fechaPagoPorAbonos(100_000, [])).toBeUndefined();
   });
 });
