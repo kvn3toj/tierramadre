@@ -198,6 +198,7 @@ export const _previewLote = internalQuery({
         fecha: args.fecha,
         config,
         unidadesDeclaradas: args.unidadesDeclaradas,
+        lotesActivos,
       }),
     };
   },

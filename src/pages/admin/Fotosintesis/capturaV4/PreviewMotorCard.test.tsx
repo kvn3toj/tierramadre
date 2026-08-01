@@ -91,6 +91,40 @@ describe('PreviewMotorCard — las advertencias', () => {
     expect(aviso.getAttribute('data-nivel')).toBe('alerta');
   });
 
+  it('marca el fijo como pre-migración en la línea del número', () => {
+    // El aviso completo va abajo, pero la marca tiene que estar PEGADA a la
+    // cifra: quien mira el número de reojo no lee el párrafo.
+    renderWithTheme(
+      <PreviewMotorCard
+        preview={{
+          ...LOTE_10,
+          costoFijoUnitarioCOP: 509_876,
+          lotesActivos: 66,
+          advertencias: [
+            {
+              codigo: 'DIVISOR_PRE_MIGRACION',
+              nivel: 'alerta',
+              texto: 'dev pre-migración: … $382.407 / 88 lotes del SOT …',
+            },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByTestId('preview-fijo').textContent).toMatch(
+      /pre-migración/i,
+    );
+    expect(
+      screen.getByTestId('advertencia-DIVISOR_PRE_MIGRACION').textContent,
+    ).toContain('382.407');
+  });
+
+  it('sin el aviso, la línea del fijo no lleva marca', () => {
+    renderWithTheme(<PreviewMotorCard preview={LOTE_10} />);
+    expect(screen.getByTestId('preview-fijo').textContent).not.toMatch(
+      /pre-migración/i,
+    );
+  });
+
   it('marca REMATE vigente cuando la regla es remate', () => {
     renderWithTheme(
       <PreviewMotorCard

@@ -31,10 +31,36 @@ export interface Advertencia {
     | 'FIJO_PESA_MAS'
     | 'REPARTO_REFERENCIAL'
     | 'MIXTA_SIN_PRECIO'
-    | 'SIN_COSTO_CAPTURADO';
+    | 'SIN_COSTO_CAPTURADO'
+    | 'DIVISOR_PRE_MIGRACION';
   nivel: NivelAdvertencia;
   texto: string;
 }
+
+/**
+ * El inventario vigente según el SOT v3, leído el 2026-08-01.
+ *
+ * Existe porque dev **no lo reproduce**: le faltan los 28 lotes `reconstruido`
+ * que el pull no puede insertar (no tienen proveedor ni un estado del modelo),
+ * así que reparte el mismo gasto fijo entre menos lotes y le sale un fijo
+ * unitario más alto. La brecha es de datos, no de aritmética: el motor da el
+ * mismo número que el SOT cuando se le da el mismo conteo.
+ *
+ * La cura es de SECUENCIA —la migración de ensayo de la Fase 2 crea esos lotes y
+ * recién ahí arranca la doble corrida—, no de pull. Mientras tanto el número se
+ * muestra etiquetado.
+ */
+export const REFERENCIA_SOT = {
+  fecha: '2026-08-01',
+  lotesActivos: 88,
+  costoFijoUnitarioCOP: 382_407,
+} as const;
+
+const COP = new Intl.NumberFormat('es-CO', {
+  style: 'currency',
+  currency: 'COP',
+  maximumFractionDigits: 0,
+});
 
 export interface PreviewLoteInput {
   costoCompraCOP: number;
@@ -45,6 +71,11 @@ export interface PreviewLoteInput {
   fecha: string;
   config: ConfigPrecios;
   unidadesDeclaradas?: number;
+  /**
+   * Entre cuántos lotes se repartió el gasto fijo. Solo sirve para etiquetar el
+   * número mientras dev no tenga el inventario completo (ver `REFERENCIA_SOT`).
+   */
+  lotesActivos?: number;
 }
 
 export interface PreviewLote {
@@ -82,9 +113,32 @@ export function construirPreviewLote(input: PreviewLoteInput): PreviewLote {
     fecha,
     config,
     unidadesDeclaradas,
+    lotesActivos,
   } = input;
 
   const enRemate = fecha <= config.remateHasta;
+
+  // Va PRIMERO y por los tres caminos de salida: el gasto fijo se muestra en
+  // pantalla aunque el lote no cotice, así que la etiqueta tiene que viajar con
+  // él siempre. Y se retira sola —la condición es el síntoma, no un flag que
+  // alguien tenga que acordarse de apagar cuando la migración lo cierre.
+  const advertencias: Advertencia[] = [];
+  if (
+    lotesActivos !== undefined &&
+    lotesActivos < REFERENCIA_SOT.lotesActivos
+  ) {
+    advertencias.push({
+      codigo: 'DIVISOR_PRE_MIGRACION',
+      nivel: 'alerta',
+      texto:
+        `dev pre-migración: este gasto fijo se repartió entre ${lotesActivos} ` +
+        `lotes, no entre los ${REFERENCIA_SOT.lotesActivos} del inventario ` +
+        `real. El vigente operativo es ` +
+        `${COP.format(REFERENCIA_SOT.costoFijoUnitarioCOP)} / ` +
+        `${REFERENCIA_SOT.lotesActivos} lotes del SOT (${REFERENCIA_SOT.fecha}). ` +
+        `Acá no se cotiza: la brecha la cierra la migración de la Fase 2.`,
+    });
+  }
 
   // Un lote sin costo capturado NO cotiza (dictamen de Kevin, 2026-08-01, caso
   // C-085 del SOT vivo: costo 0 y cotizando igual). Su «precio» salía de dividir
@@ -96,21 +150,15 @@ export function construirPreviewLote(input: PreviewLoteInput): PreviewLote {
     !Number.isFinite(costoCompraCOP) ||
     costoCompraCOP <= 0
   ) {
-    return {
-      cotizable: false,
-      enRemate,
-      pesoDelFijoPct: 100,
-      advertencias: [
-        {
-          codigo: 'SIN_COSTO_CAPTURADO',
-          nivel: 'alerta',
-          texto:
-            'Lote sin costo capturado: no se puede cotizar. Un precio calculado ' +
-            'solo sobre el gasto fijo sería 100% estructura y 0% mercancía — ' +
-            'parece un precio y no lo es. Capturá el costo de compra primero.',
-        },
-      ],
-    };
+    advertencias.push({
+      codigo: 'SIN_COSTO_CAPTURADO',
+      nivel: 'alerta',
+      texto:
+        'Lote sin costo capturado: no se puede cotizar. Un precio calculado ' +
+        'solo sobre el gasto fijo sería 100% estructura y 0% mercancía — ' +
+        'parece un precio y no lo es. Capturá el costo de compra primero.',
+    });
+    return { cotizable: false, enRemate, pesoDelFijoPct: 100, advertencias };
   }
 
   const K = calcularK({
@@ -119,7 +167,6 @@ export function construirPreviewLote(input: PreviewLoteInput): PreviewLote {
     costoFijoUnitarioCOP,
   });
   const pesoDelFijoPct = (costoFijoUnitarioCOP / K) * 100;
-  const advertencias: Advertencia[] = [];
 
   if (enRemate) {
     advertencias.push({

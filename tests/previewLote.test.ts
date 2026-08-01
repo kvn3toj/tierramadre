@@ -190,7 +190,9 @@ describe('un lote sin costo capturado NO cotiza', () => {
   it('lo dice con un aviso, en vez de reventar', () => {
     // Reventar dejaría al operador sin pantalla; devolver 0 sería peor todavía.
     const p = construirPreviewLote(sinCosto);
-    const aviso = p.advertencias.find((a) => a.codigo === 'SIN_COSTO_CAPTURADO');
+    const aviso = p.advertencias.find(
+      (a) => a.codigo === 'SIN_COSTO_CAPTURADO',
+    );
     expect(aviso).toBeDefined();
     expect(aviso?.nivel).toBe('alerta');
     expect(aviso?.texto).toMatch(/sin costo capturado/i);
@@ -198,8 +200,9 @@ describe('un lote sin costo capturado NO cotiza', () => {
 
   it('tampoco cotiza con costo negativo o ausente', () => {
     for (const c of [-1, Number.NaN]) {
-      expect(construirPreviewLote({ ...sinCosto, costoCompraCOP: c }).cotizable)
-        .toBe(false);
+      expect(
+        construirPreviewLote({ ...sinCosto, costoCompraCOP: c }).cotizable,
+      ).toBe(false);
     }
   });
 
@@ -207,6 +210,76 @@ describe('un lote sin costo capturado NO cotiza', () => {
     expect(
       construirPreviewLote({ ...sinCosto, costoCompraCOP: 931_931 }).cotizable,
     ).toBe(true);
+  });
+});
+
+describe('el divisor de dev antes de la migración', () => {
+  // Dictamen de Kevin (2026-08-01): dev no reproduce el divisor del SOT porque
+  // le faltan lotes, y eso se cura con la migración de la Fase 2, no con un
+  // pull. Mientras tanto el número se muestra ETIQUETADO: nadie cotiza desde
+  // dev, pero nadie debe confundirse tampoco.
+  const enDev = {
+    costoCompraCOP: 931_931,
+    categoriaFiscal: 'gema' as const,
+    costoFijoUnitarioCOP: 509_876,
+    fecha: YA_OBJETIVO,
+    config: CFG,
+  };
+
+  it('avisa cuando dev tiene menos lotes activos que el SOT', () => {
+    const p = construirPreviewLote({ ...enDev, lotesActivos: 66 });
+    const aviso = p.advertencias.find(
+      (a) => a.codigo === 'DIVISOR_PRE_MIGRACION',
+    );
+    expect(aviso).toBeDefined();
+    expect(aviso?.nivel).toBe('alerta');
+  });
+
+  it('el aviso dice cuál es la cifra operativa de verdad', () => {
+    const p = construirPreviewLote({ ...enDev, lotesActivos: 66 });
+    const aviso = p.advertencias.find(
+      (a) => a.codigo === 'DIVISOR_PRE_MIGRACION',
+    );
+    expect(aviso?.texto).toContain('382.407');
+    expect(aviso?.texto).toContain('88');
+    expect(aviso?.texto).toMatch(/pre-migración/i);
+  });
+
+  it('se retira solo cuando la migración cierra la brecha', () => {
+    // La condición es el síntoma, no un flag que alguien tenga que acordarse de
+    // apagar: con el inventario completo el aviso desaparece sin tocar código.
+    for (const lotes of [88, 91]) {
+      expect(
+        construirPreviewLote({
+          ...enDev,
+          lotesActivos: lotes,
+        }).advertencias.some((a) => a.codigo === 'DIVISOR_PRE_MIGRACION'),
+        String(lotes),
+      ).toBe(false);
+    }
+  });
+
+  it('sin conteo no inventa el aviso', () => {
+    expect(
+      construirPreviewLote(enDev).advertencias.some(
+        (a) => a.codigo === 'DIVISOR_PRE_MIGRACION',
+      ),
+    ).toBe(false);
+  });
+
+  it('acompaña también a un lote que no cotiza', () => {
+    // El fijo se muestra en pantalla aunque no haya precio, así que la etiqueta
+    // tiene que viajar con él por los tres caminos: sin costo, mixto y normal.
+    for (const caso of [
+      { costoCompraCOP: 0 },
+      { categoriaFiscal: 'mixta' as const },
+    ]) {
+      const p = construirPreviewLote({ ...enDev, ...caso, lotesActivos: 66 });
+      expect(
+        p.advertencias.some((a) => a.codigo === 'DIVISOR_PRE_MIGRACION'),
+        JSON.stringify(caso),
+      ).toBe(true);
+    }
   });
 });
 

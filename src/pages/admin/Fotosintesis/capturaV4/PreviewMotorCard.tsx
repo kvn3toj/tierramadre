@@ -184,6 +184,19 @@ export function PreviewMotorCard({
           Gasto fijo absorbido: {COP.format(preview.costoFijoUnitarioCOP)} ·
           repartido entre {preview.lotesActivos} lotes activos ·{' '}
           {NUM.format(preview.pesoDelFijoPct)}% de K
+          {/* La marca va pegada a la cifra, no solo en el aviso de abajo: quien
+              mira el número de reojo no lee el párrafo. */}
+          {preview.advertencias.some(
+            (a) => a.codigo === 'DIVISOR_PRE_MIGRACION',
+          ) ? (
+            <Box
+              component="span"
+              sx={{ color: foto.accent.deep, fontWeight: 600 }}
+            >
+              {' '}
+              · dev pre-migración
+            </Box>
+          ) : null}
         </Box>
         {preview.multiplicador !== undefined ? (
           <Box data-testid="preview-multiplicador">
