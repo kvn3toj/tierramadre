@@ -37,6 +37,7 @@ import { useViewportHeight } from './hooks/useViewportHeight';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 import { STORAGE_KEYS } from './constants/storage-keys';
 import { getFeatureFlag } from './utils/featureFlags';
+import { CAPTURA_V4_ENABLED } from './pages/admin/Fotosintesis/capturaV4/featureFlag';
 
 /**
  * Localized Loading Component
@@ -150,6 +151,13 @@ const FotosintesisHome = lazyWithRetry(
 const FotosintesisCapturaLote = lazyWithRetry(
   () => import('./pages/admin/Fotosintesis/CapturaLotePage'),
   'FotosintesisCapturaLote',
+);
+// W1 «Cerebro Racional» — el wizard del modelo SOT v4, en ruta propia detrás de
+// `VITE_CAPTURA_V4`. No reemplaza a la captura actual: los dos modelos se
+// contradicen en cómo llega el costo a la pieza (capturado contra prorrateado).
+const FotosintesisCapturaLoteV4 = lazyWithRetry(
+  () => import('./pages/admin/Fotosintesis/CapturaLoteV4Page'),
+  'FotosintesisCapturaLoteV4',
 );
 const FotosintesisLoteResumen = lazyWithRetry(
   () => import('./pages/admin/Fotosintesis/LoteResumenPage'),
@@ -744,6 +752,13 @@ function AppContent() {
                 <Route index element={<FotosintesisHome />} />
                 <Route path="items" element={<FotosintesisItems />} />
                 <Route path="lots" element={<FotosintesisLotes />} />
+                {/* Antes de `lots/:loteId`, si no el param se traga "new-v4". */}
+                {CAPTURA_V4_ENABLED ? (
+                  <Route
+                    path="lots/new-v4"
+                    element={<FotosintesisCapturaLoteV4 />}
+                  />
+                ) : null}
                 <Route
                   path="lots/:loteId"
                   element={<FotosintesisCapturaLote />}

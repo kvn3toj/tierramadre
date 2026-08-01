@@ -459,11 +459,7 @@ function TypeSelector({ value, onChange }: TypeSelectorProps) {
 // -----------------------------------------------------------------------------
 
 type FormaPago =
-  | 'contado'
-  | 'esmereogenesis'
-  | 'credito'
-  | 'bajo_pedido'
-  | 'consignacion';
+  'contado' | 'esmereogenesis' | 'credito' | 'bajo_pedido' | 'consignacion';
 type MetodoContado = 'efectivo' | 'transferencia';
 
 function formaPagoShort(formaPago: string, metodoContado?: string): string {
@@ -506,8 +502,7 @@ function NewLotIntro({
   // the parent so the EntityPicker can render the list as options instead of
   // forcing the operator to retype a name they've already registered.
   const providers = useConvexQuery(convexApi.providers.list, { search: '' }) as
-    | ProviderRow[]
-    | undefined;
+    ProviderRow[] | undefined;
 
   // Local form state
   const [providerId, setProviderId] = useState<string | null>(null);
@@ -2292,6 +2287,36 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
         }}
       >
         Cargando lote {loteId}…
+      </Box>
+    );
+  }
+
+  // Un lote v4 NO se abre acá ---------------------------------------------------
+  //
+  // Los dos modelos se contradicen en cómo llega el costo a la pieza: v4 lo
+  // captura por casilla; esta página lo deriva prorrateando por preponderancia.
+  // Capturar ítems de un lote v4 desde acá le pondría costos prorrateados a
+  // piezas cuyo costo real todavía no se capturó — el error de $52.500 de
+  // «Choker + Piedra», reintroducido de una forma difícil de detectar.
+  if ((lot as { origenModelo?: string }).origenModelo === 'v4') {
+    return (
+      <Box
+        data-testid="lote-v4-no-editable-aqui"
+        sx={{
+          padding: '36px 28px',
+          display: 'grid',
+          gap: '10px',
+          maxWidth: 560,
+        }}
+      >
+        <Box sx={{ fontSize: 15, fontWeight: 600, color: foto.ink.primary }}>
+          {loteId} es un lote del modelo v4
+        </Box>
+        <Box sx={{ fontSize: 13, color: foto.ink.secondary, lineHeight: 1.6 }}>
+          Sus piezas se clasifican casilla por casilla, con el costo real de
+          cada una. Esta página reparte el costo del lote por preponderancia, y
+          mezclar los dos modelos corrompería el costo de las piezas.
+        </Box>
       </Box>
     );
   }

@@ -36,12 +36,7 @@ export const GROUP_ORDER: readonly NavGroup[] = [
 
 /** How the NL layer turns a human phrase into a concrete param value. */
 export type ParamResolver =
-  | 'loteId'
-  | 'itemId'
-  | 'saleId'
-  | 'lotItemId'
-  | 'guestName'
-  | 'none';
+  'loteId' | 'itemId' | 'saleId' | 'lotItemId' | 'guestName' | 'none';
 
 export interface RouteParamSpec {
   /** Param name as it appears in `path` (e.g. "loteId"). */
@@ -158,6 +153,21 @@ export const ADMIN_NAV_MAP: readonly AdminRouteEntry[] = [
     ],
     roles: ADMIN,
     dynamic: false,
+  },
+  {
+    id: 'fotosintesis.lote.nuevo.v4',
+    path: '/admin/fotosintesis/lots/new-v4',
+    label: 'Nuevo lote (v4)',
+    group: 'Inventario',
+    iconName: 'Gem',
+    description:
+      'W1 Cerebro Racional: datos financieros del lote con preview del motor. ' +
+      'Al guardar crea las casillas por clasificar.',
+    keywords: ['lote', 'nuevo', 'v4', 'compra', 'motor', 'precio', 'categoría'],
+    roles: ADMIN,
+    dynamic: false,
+    // Detrás de VITE_CAPTURA_V4: la ruta solo se monta con el flag encendido.
+    showInMap: false,
   },
   {
     id: 'fotosintesis.lote',
