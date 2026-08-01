@@ -422,6 +422,45 @@ export default defineSchema({
     nextValue: v.number(),
   }).index('by_name', ['name']),
 
+  // ─── SOT v4 · Motor de precios (Modelo v2) ───────────────────────
+  //
+  // Los supuestos del modelo, versionados por fecha — el equivalente de
+  // `Fijacion_Precios!B4:B12` del xlsx, pero sin celdas sueltas. Que tenga
+  // `vigenteDesde` es lo que impide el defecto más caro de una tabla de
+  // parámetros: cambiar la tasa este mes y repreciar retroactivamente lo que
+  // ya se vendió con la tasa vieja. El motor (`_lib/motorPrecios.ts`) recibe
+  // siempre la config que corresponde a la fecha de la cotización, nunca la
+  // más nueva por defecto.
+  //
+  // El gasto fijo unitario NO se guarda aquí: se deriva como
+  // `gastosFijosMensualesCOP ÷ COUNT(lotes activos)` (decisión D2), para que
+  // el divisor no pueda quedar desactualizado como el `B6` escrito a mano.
+  configPrecios: defineTable({
+    vigenteDesde: v.string(), // ISO AAAA-MM-DD, inclusive
+    gastosFijosMensualesCOP: v.number(),
+    comisionPct: v.number(),
+    ivaJoyaPct: v.number(), // las gemas sueltas no lo pagan
+    margenNetoDeseadoPct: v.number(), // sobre el PRECIO, no markup sobre costo
+    remateHasta: v.string(), // último día del remate, ISO
+    multRemateGema: v.number(),
+    multRemateJoya: v.number(),
+    notas: v.optional(v.string()),
+  }).index('by_vigenteDesde', ['vigenteDesde']),
+
+  // La traza de cada recálculo del gasto fijo unitario. Existe para poder
+  // responder después «¿por qué cambió este precio?» sin reconstruirlo de
+  // memoria — hoy en la hoja ese recálculo es manual y no deja rastro.
+  // El planner que decide qué evento recalcula vive en `_lib/recalculo.ts`.
+  recalculos: defineTable({
+    ts: v.number(),
+    evento: v.string(), // ALTA_LOTE | VENTA | CANCELACION_LOTE
+    divisorUsado: v.number(), // lotes activos — el divisor de D2
+    unidadesActivas: v.number(), // piezas no vendidas: auditoría, NO divisor
+    valorAnterior: v.number(),
+    valorNuevo: v.number(),
+    motivo: v.optional(v.string()),
+  }).index('by_ts', ['ts']),
+
   // ─── Idempotency · Commit tokens ─────────────────────────────────
   //
   // MONEY-CRITICAL: the four "create" mutations (lots/lotItems/sales/subLotes)
