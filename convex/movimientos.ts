@@ -19,6 +19,7 @@ import {
   validarMovimiento,
   type MovimientoInput,
 } from './_lib/movimientoW3';
+import { filaCasillaParaEspejo } from './_lib/espejoFilas';
 import { planificarRecalculo } from './_lib/recalculo';
 import { configVigente, contarLotesActivosDb } from './precios';
 
@@ -126,6 +127,21 @@ export const _registrar = internalMutation({
 
     for (const casilla of casillas) {
       await ctx.db.patch(casilla._id, { estadoCasilla: nuevoEstado });
+      // Re-encolar la casilla: su estado es un campo espejado. Sin esto la
+      // hoja sigue diciendo DISPONIBLE sobre una pieza ya vendida — el mismo
+      // defecto que el job de deriva encontró al publicar un lote. La regla es
+      // general: toda mutación que cambie un campo espejado vuelve a encolar.
+      await ctx.db.insert('espejoOutbox', {
+        pestana: 'Casillas',
+        idFila: casilla.itemId,
+        campos: filaCasillaParaEspejo({
+          ...casilla,
+          estadoCasilla: nuevoEstado,
+        } as never),
+        estado: 'pendiente',
+        intentos: 0,
+        creadoEn: ts,
+      });
     }
 
     const movimientoId = `MOV-${ts}`;
