@@ -10,11 +10,7 @@
  * efectos, recalcular y encolar al espejo.
  */
 import { v } from 'convex/values';
-import {
-  action,
-  internalMutation,
-  internalQuery,
-} from './_generated/server';
+import { action, internalMutation, internalQuery } from './_generated/server';
 import { internal } from './_generated/api';
 import { requireAccessLevel, ROLES_COSTOS } from './_lib/authz';
 import {
@@ -24,7 +20,10 @@ import {
   validarMovimiento,
   type MovimientoInput,
 } from './_lib/movimientoW3';
-import { filaCasillaParaEspejo } from './_lib/espejoFilas';
+import {
+  filaCasillaParaEspejo,
+  filaMovimientoParaEspejo,
+} from './_lib/espejoFilas';
 import { planificarRecalculo } from './_lib/recalculo';
 import { configVigente, contarLotesActivosDb } from './precios';
 import { allocateNext } from './sequences';
@@ -250,25 +249,22 @@ export const _registrar = internalMutation({
     await ctx.db.insert('espejoOutbox', {
       pestana: 'Movimientos',
       idFila: movimientoId,
-      campos: {
+      // Armada en `_lib/espejoFilas.ts` y no acá: ahí vive la regla de datos
+      // sensibles del canon —la cuenta y el titular no viajan— y se puede
+      // testear sin arnés. Inline, esa regla dependía de que cada quien que
+      // tocara este objeto se acordara de ella.
+      campos: filaMovimientoParaEspejo({
         movimientoId,
         kardexEventId,
         tipo: args.tipo,
         fecha: args.fecha,
-        items: args.itemIds.join(', '),
+        itemIds: args.itemIds,
         entregadoPor: args.entregadoPor,
         recibidoPor: args.recibidoPor,
-        cliente: args.venta?.cliente ?? '',
-        precioVentaRealCOP: args.venta
-          ? String(args.venta.precioVentaRealCOP)
-          : '',
-        comisionPct: args.venta?.comisionPct
-          ? String(args.venta.comisionPct)
-          : '',
-        formaPago: args.venta?.formaPago ?? '',
-        origenKardexEventId: args.origenKardexEventId ?? '',
-        condicion: args.condicion ?? '',
-      },
+        condicion: args.condicion,
+        origenKardexEventId: args.origenKardexEventId,
+        venta: args.venta,
+      }),
       estado: 'pendiente',
       intentos: 0,
       creadoEn: ts,
