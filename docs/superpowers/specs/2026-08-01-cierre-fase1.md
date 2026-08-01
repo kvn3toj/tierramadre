@@ -1,8 +1,8 @@
 # Cierre — Fase 1 de W1–W3 + SOT v4
 
-- **Fecha:** 2026-08-01 · **Rama:** `feat/w1-w3-sot-v4` (11 commits, sin mergear)
+- **Fecha:** 2026-08-01 · **Rama:** `feat/w1-w3-sot-v4` (18 commits, sin mergear)
 - **Deployment:** Convex dev `flexible-wolverine-803` · **Prod intacto**
-- **Suite:** 885 tests en 95 archivos (línea base 700/85 → **+185 tests**)
+- **Suite:** 914 tests en 99 archivos (línea base 700/85 → **+214 tests**)
 
 ## Qué quedó funcionando
 
@@ -42,6 +42,47 @@ Los 5 casos del handoff reproducen byte a byte, pinneados en
 **2.306.348** · lote 14 → **3.282.620** · ítem 295 oro **3.438.059** y plata
 **1.502.059** · equilibrio real gema K/0,90 y joya K/0,71.
 
+## ⚠️ El divisor del gasto fijo — REQUIERE VISTO BUENO DE KEVIN
+
+> **Antes de comparar precios en la doble corrida, esta sección tiene que estar
+> resuelta.** No la resolvió esta sesión y no debe resolverla quien implemente:
+> es una decisión de negocio con consecuencias sobre todo el catálogo.
+
+El motor corriendo contra los datos reales de dev cuenta **60 lotes activos**,
+no los **76** que declara la hoja. Con la definición de D2 (activo = lote con ≥1
+unidad no vendida), el gasto fijo por lote queda en **$560.864** en vez de
+**$442.787** — un **27% más alto**, y todos los precios suben con él.
+
+|                     | La hoja (`Fijacion_Precios!B6`) | v4 derivado de los datos        |
+| ------------------- | ------------------------------- | ------------------------------- |
+| Divisor             | 76 (escrito a mano)             | **60** (COUNT de lotes activos) |
+| Gasto fijo por lote | $442.787                        | **$560.864**                    |
+| Lote 10 → objetivo  | $2.306.348                      | **$2.503.143**                  |
+
+**Lo que esto NO es:** un bug del port. Los tests de paridad pasan el fijo
+explícito y reproducen los números de la hoja byte a byte. La diferencia está en
+el insumo, no en la aritmética.
+
+**Lo que sí es:** la primera vez que el divisor deja de ser una celda escrita a
+mano. La auditoría del 25/07 ya había dejado abiertos cuatro conteos que no
+coinciden —76 declarados · 63 filas · 62 lotes con piezas en EQUIVALENTES · 235
+piezas— y anotó que con 62 el fijo sube a $542.771. El número que sale de Convex
+(60) cae en ese rango y confirma que el 76 de la hoja no describe el inventario
+real.
+
+**Las tres preguntas que hay que responder antes de la doble corrida:**
+
+1. ¿Los 60 son correctos, o hay lotes que deberían contar como activos y hoy no
+   (por estado mal marcado, o por no tener piezas cargadas en dev)?
+2. ¿Los datos de dev representan el inventario real, o están incompletos frente
+   a prod? El conteo se hace sobre lo que dev tiene.
+3. Si 60 es el número bueno: **el catálogo entero se reprecia +27%**. Eso es una
+   decisión comercial, no un efecto secundario de una migración.
+
+Mientras no esté resuelta, comparar precios v4 contra precios v3 en la doble
+corrida va a dar diferencias en TODAS las filas, y no se va a poder distinguir
+«el motor está mal» de «el divisor cambió».
+
 ## Desviaciones del plan (y por qué)
 
 1. **Las casillas v4 no crean filas en `productInventory`.** Crearlas dispararía
@@ -65,20 +106,23 @@ Los 5 casos del handoff reproducen byte a byte, pinneados en
 - **Espejo por Sheets API directo** desde Convex, con las credenciales OAuth que
   el repo ya usa. Hallazgo: el libro se compartió con la service account, pero
   este repo **no la usa** — autentica con refresh token de cuenta personal.
-- **Divisor derivado, no fijado.** Los datos reales de dev dan **62 lotes
-  activos** y un fijo de **$542.771**, no los 76/$442.787 de la hoja. Kevin
-  decidió seguir con el número derivado (D2 ya lo pedía). Consecuencia esperada:
-  los precios de v4 **no van a coincidir** con los de la hoja.
+- **Divisor derivado, no fijado.** Kevin decidió seguir con el número que sale de
+  contar (D2 ya lo pedía) en vez de fijar el 76 de la hoja. El número y sus
+  consecuencias quedaron abiertos para su visto bueno — ver la sección ⚠️ de
+  arriba.
 - **W1 en ruta nueva con flag** (`VITE_CAPTURA_V4`), no evolucionando la página
   actual.
-- **`APP_URL` de dev se deja como está**, solo documentado.
+- **`APP_URL` de dev**: en la primera ronda se dejó solo documentado; en la
+  segunda Kevin pidió arreglarlo, y quedó cerrado con un candado por dirección
+  (ver «Cerrado en la segunda ronda»).
 
 ## Defectos encontrados (dos míos, uno del terreno)
 
 1. **`APP_URL` del deployment de dev apunta a `https://tierramadre.app`.**
-   Capturar por la página vieja en dev **escribe en el SOT v3 vivo**. Es
-   pre-existente e independiente de este trabajo; ningún camino v4 lo toca.
-   Queda como riesgo operativo abierto.
+   Capturar por la página vieja en dev **escribía en el SOT v3 vivo**. Es
+   pre-existente e independiente de este trabajo. **CERRADO** en la segunda
+   ronda: un deployment que no es producción ya no le escribe a un host de
+   producción (`_lib/destinoEscritura.ts`).
 2. **Conciliación contra el costo equivocado** (mío): comparaba Σ casillas contra
    el landed cost, inventando un descuadre igual a los costos variables. Ahora
    `lots.costoCompraCOP` guarda el costo puro.
@@ -99,17 +143,36 @@ Los 5 casos del handoff reproducen byte a byte, pinneados en
 - El bloque AQ–BE del inventario espera la decisión #4 (ver
   `2026-08-01-writable-inventory.md`).
 
+## Cerrado en la segunda ronda (decisiones de Kevin, 2026-08-01)
+
+- **`previewLote` gateado.** Dejó de ser query pública: ahora es una action que
+  verifica identidad y rol (`ROLES_COSTOS = ['admin']`) antes de tocar la base.
+  Verificado contra el servidor: sin `idToken` rechaza en el validator, con token
+  inválido rechaza en authz, y ninguno filtra un dato. Costo asumido: el preview
+  perdió la reactividad y ahora se pide con debounce de 350 ms.
+- **Drenaje híbrido.** Cada mutación que encola agenda su `espejo:drenar` con
+  `runAfter(0)` — verificado: un lote nuevo llega a la hoja sin drenar a mano — y
+  un cron de rescate cada 30 min recoge lo atascado. El cron sale **apagado**
+  (`ESPEJO_CRON`), mismo idioma que los otros dos; encenderlo en prod exige la
+  medición de la doble corrida.
+- **Dev ya no puede escribir al SOT v3.** Candado por dirección: un deployment
+  que no es producción no le escribe a un host de producción. No se resolvió
+  vaciando `APP_URL` porque esa variable también sirve las lecturas de `authz.ts`
+  (sin ella dev se queda sin autenticación). Verificado en vivo: `lots:retryPush`
+  responde BLOQUEADO. Prod intacto.
+- **Dev limpio.** Borrados B-002…B-005 con sus casillas, movimientos, cola y
+  recálculos; el libro de PRUEBAS quedó con las tres pestañas vacías y las
+  cabeceras puestas. Dev volvió a **60 lotes activos / $560.864**.
+
 ## Pendientes antes de prod (no bloquean la Fase 2)
 
-- **Gatear `precios.previewLote` por rol.** Hoy es una query pública de Convex
-  que expone el gasto fijo vigente y el conteo de lotes activos. Solo la consume
-  la ruta de admin, pero eso es una convención del frontend, no un candado.
 - Las credenciales OAuth quedaron como env vars del deployment dev
   (`GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REFRESH_TOKEN`,
   `ESPEJO_SPREADSHEET_ID`). Prod necesitará las suyas, apuntando a otro libro.
-- El drenaje del espejo es **manual** (`espejo:drenar`). En prod hay que decidir
-  si va por scheduler tras cada mutación o por cron — y medir el consumo, que es
-  lo que apagó los crons de v3.
+- Encender `ESPEJO_CRON` en prod, con la medición de consumo hecha.
+- Actualizar la CLI de Convex (1.35.1 → 1.43.0). Se dejó fuera a propósito:
+  cambiar la versión a mitad de una rama sin mergear mezcla dos riesgos.
+- Revisión adversarial de la rama antes del merge.
 
 ## Lo que NO se hizo, a propósito
 
