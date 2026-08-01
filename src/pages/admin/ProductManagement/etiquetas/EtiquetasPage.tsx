@@ -19,7 +19,13 @@
  */
 
 import { useMemo, useRef, useState } from 'react';
-import { Box, ButtonBase, CircularProgress, InputBase } from '@mui/material';
+import {
+  Box,
+  ButtonBase,
+  CircularProgress,
+  Dialog,
+  InputBase,
+} from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 
@@ -46,6 +52,14 @@ import {
   type LabelItem,
 } from '../../Fotosintesis/labels/downloadLabelsZip';
 import { downloadLabelsSpreadsheet } from '../../Fotosintesis/labels/downloadLabelsSpreadsheet';
+import {
+  LABEL_SIZE_LIST,
+  fitsPrinter,
+  printScaleFor,
+  printableMm,
+  resolveLabelSize,
+  type LabelSizeId,
+} from '../../Fotosintesis/labels/labelSizes';
 import { useLogoDataUri } from './useLogoDataUri';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -70,6 +84,9 @@ interface GalleryItem extends LabelItem {
 /** How many upcoming (not-yet-created) item numbers to offer for pre-printing. */
 const PROXIMOS_DEFAULT = 50;
 const PROXIMOS_MAX = 300;
+
+/** Labels are printed in batches; re-picking the stock every visit is friction. */
+const SIZE_STORAGE_KEY = 'tm.etiquetas.labelSize';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -117,6 +134,34 @@ export default function EtiquetasPage() {
   const [kind, setKind] = useState<KindFilter>('todo');
   const [search, setSearch] = useState('');
   const [proximosCount, setProximosCount] = useState(PROXIMOS_DEFAULT);
+
+  // Read synchronously so the first paint already shows the operator's stock —
+  // an effect-based read would render 12mm tape then snap to 15×30.
+  const [sizeId, setSizeId] = useState<LabelSizeId>(
+    () => resolveLabelSize(localStorage.getItem(SIZE_STORAGE_KEY)).id,
+  );
+  const stock = resolveLabelSize(sizeId);
+
+  function chooseSize(id: LabelSizeId) {
+    setSizeId(id);
+    try {
+      localStorage.setItem(SIZE_STORAGE_KEY, id);
+    } catch {
+      // Private mode / quota — the choice still applies for this session.
+    }
+  }
+
+  // Advisory only: niimbluelib's model detection is documented as unreliable,
+  // so this WARNS about stock wider than the head but never disables printing.
+  const headWarning =
+    niimbot.head && !fitsPrinter(stock, niimbot.head)
+      ? `El rollo de ${stock.label} supera el cabezal de ${printableMm(niimbot.head).toFixed(0)} mm que reporta esta impresora — puede salir recortado.`
+      : null;
+
+  // Per-print name override. Affects ONLY the printed label — never writes to
+  // Convex — and is dropped when the dialog closes.
+  const [printDialog, setPrintDialog] = useState<GalleryItem | null>(null);
+  const [nombreOverride, setNombreOverride] = useState('');
 
   // Highest numeric itemId in stock — the "Próximos" tab starts one above this.
   const maxItemId = useMemo(() => {
@@ -225,8 +270,13 @@ export default function EtiquetasPage() {
     if (busy) return;
     setBusy(true);
     try {
+      // Connect first: the raster scale depends on the head's DPI, which is
+      // only known once a device answers.
+      await niimbot.connect();
       const node = await renderItemNode(item);
-      const canvas = await renderLabelCanvas(node);
+      const canvas = await renderLabelCanvas(node, {
+        scale: printScaleFor(niimbot.head),
+      });
       await niimbot.printLabel(canvas);
       notify(`Etiqueta ${item.itemId} enviada a la impresora`, 'success');
     } catch (err) {
@@ -238,6 +288,27 @@ export default function EtiquetasPage() {
       setBusy(false);
       setLabelRenderItem(null);
     }
+  }
+
+  function openPrintDialog(item: GalleryItem) {
+    if (busy) return;
+    setNombreOverride(item.nombre ?? '');
+    setPrintDialog(item);
+  }
+
+  function closePrintDialog() {
+    setPrintDialog(null);
+    setNombreOverride('');
+  }
+
+  /** Print with the dialog's edited text. The override never leaves this
+   *  render — no mutation, so the inventory record is untouched. */
+  async function confirmPrintDialog() {
+    const item = printDialog;
+    if (!item) return;
+    const trimmed = nombreOverride.trim();
+    closePrintDialog();
+    await handleItemPrint({ ...item, nombre: trimmed || undefined });
   }
 
   // ── Batch actions (operate on the current filtered set) ─────────────────────
@@ -293,7 +364,9 @@ export default function EtiquetasPage() {
       await niimbot.connect();
       for (let i = 0; i < items.length; i++) {
         const node = await renderItemNode(items[i]);
-        const canvas = await renderLabelCanvas(node);
+        const canvas = await renderLabelCanvas(node, {
+          scale: printScaleFor(niimbot.head),
+        });
         await niimbot.printLabel(canvas);
         setPrintProgress({ done: i + 1, total: items.length });
       }
@@ -332,6 +405,7 @@ export default function EtiquetasPage() {
             itemId={labelRenderItem.itemId}
             nombre={labelRenderItem.nombre}
             peso={labelRenderItem.peso}
+            size={sizeId}
             qrLogoSrc={logoDataUri ?? undefined}
           />
         )}
@@ -505,6 +579,91 @@ export default function EtiquetasPage() {
           )}
         </Box>
 
+        {/* Stock size selector */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 1,
+            alignItems: 'center',
+            mb: headWarning ? 1 : 2,
+          }}
+        >
+          <Box
+            sx={{
+              fontFamily: fontFamilies.system,
+              fontSize: '11px',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              color: foto.ink.tertiary,
+            }}
+          >
+            Rollo
+          </Box>
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            {LABEL_SIZE_LIST.map((s) => {
+              const active = sizeId === s.id;
+              return (
+                <ButtonBase
+                  key={s.id}
+                  onClick={() => chooseSize(s.id)}
+                  disableRipple
+                  sx={{
+                    px: '14px',
+                    py: '7px',
+                    borderRadius: '9px',
+                    fontFamily: fontFamilies.system,
+                    fontSize: '12px',
+                    fontWeight: active ? 600 : 500,
+                    color: active ? foto.ink.inverse : foto.ink.secondary,
+                    backgroundColor: active
+                      ? foto.accent.primary
+                      : 'transparent',
+                    border: `1px solid ${active ? foto.accent.primary : foto.surfaces.edgeStrong}`,
+                    transition: 'background-color 120ms ease, color 120ms ease',
+                    '&:focus-visible': {
+                      outline: `2px solid ${foto.accent.primary}`,
+                      outlineOffset: '2px',
+                    },
+                  }}
+                >
+                  {s.label}
+                </ButtonBase>
+              );
+            })}
+          </Box>
+          {stock.stockCode && (
+            <Box
+              sx={{
+                fontFamily: fontFamilies.mono,
+                fontSize: '11px',
+                color: foto.ink.tertiary,
+              }}
+            >
+              {stock.stockCode}
+            </Box>
+          )}
+        </Box>
+
+        {headWarning && (
+          <Box
+            role="status"
+            sx={{
+              mb: 2,
+              px: '12px',
+              py: '9px',
+              borderRadius: '9px',
+              border: `1px solid ${foto.surfaces.edgeStrong}`,
+              fontFamily: fontFamilies.system,
+              fontSize: '12px',
+              lineHeight: 1.45,
+              color: foto.ink.secondary,
+            }}
+          >
+            {headWarning}
+          </Box>
+        )}
+
         {/* Batch action bar */}
         <Box
           sx={{
@@ -587,16 +746,110 @@ export default function EtiquetasPage() {
                 key={item.itemId}
                 foto={foto}
                 item={item}
+                size={sizeId}
                 logoDataUri={logoDataUri}
                 niimbotSupported={niimbot.supported}
                 disabled={busy}
                 onPng={() => void handleItemPng(item)}
-                onPrint={() => void handleItemPrint(item)}
+                onPrint={() => openPrintDialog(item)}
               />
             ))}
           </Box>
         )}
       </Box>
+
+      {/* Pre-print polish. Edits here affect ONLY the label being printed —
+          nothing is written back to the inventory record. */}
+      <Dialog
+        open={printDialog !== null}
+        onClose={closePrintDialog}
+        maxWidth="xs"
+        fullWidth
+      >
+        <Box
+          sx={{
+            p: 2.5,
+            backgroundColor: foto.surfaces.panel,
+            color: foto.ink.primary,
+          }}
+        >
+          <Box
+            sx={{
+              fontFamily: fontFamilies.serif,
+              fontSize: '20px',
+              fontWeight: 600,
+              mb: 0.5,
+            }}
+          >
+            Imprimir {printDialog?.itemId}
+          </Box>
+          <Box
+            sx={{
+              fontFamily: fontFamilies.system,
+              fontSize: '12px',
+              color: foto.ink.tertiary,
+              mb: 2,
+            }}
+          >
+            {stock.label} · el texto editado aquí no modifica el inventario.
+          </Box>
+
+          {printDialog && (
+            <Box
+              sx={{
+                background: '#FFFFFF',
+                borderRadius: '8px',
+                p: 0.5,
+                mb: 2,
+                ...containedScrollX,
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              <LabelPreview
+                itemId={printDialog.itemId}
+                nombre={nombreOverride.trim() || undefined}
+                peso={printDialog.peso}
+                size={sizeId}
+                qrLogoSrc={logoDataUri ?? undefined}
+              />
+            </Box>
+          )}
+
+          <InputBase
+            value={nombreOverride}
+            onChange={(e) => setNombreOverride(e.target.value)}
+            placeholder="Nombre en la etiqueta (opcional)"
+            autoFocus
+            inputProps={{ 'aria-label': 'Nombre a imprimir en la etiqueta' }}
+            sx={{
+              width: '100%',
+              px: '12px',
+              py: '8px',
+              borderRadius: '9px',
+              border: `1px solid ${foto.surfaces.edgeStrong}`,
+              fontFamily: fontFamilies.system,
+              fontSize: '13px',
+              color: foto.ink.primary,
+              mb: 2,
+            }}
+          />
+
+          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+            <ActionButton foto={foto} onClick={closePrintDialog}>
+              Cancelar
+            </ActionButton>
+            <ActionButton
+              foto={foto}
+              primary
+              disabled={busy}
+              onClick={() => void confirmPrintDialog()}
+            >
+              Imprimir
+            </ActionButton>
+          </Box>
+        </Box>
+      </Dialog>
     </Box>
   );
 }
@@ -648,6 +901,7 @@ function ActionButton({
 function LabelCard({
   foto,
   item,
+  size,
   logoDataUri,
   niimbotSupported,
   disabled,
@@ -656,6 +910,7 @@ function LabelCard({
 }: {
   foto: ReturnType<typeof getFoto>;
   item: GalleryItem;
+  size: LabelSizeId;
   logoDataUri: string | null;
   niimbotSupported: boolean;
   disabled: boolean;
@@ -694,6 +949,7 @@ function LabelCard({
           itemId={item.itemId}
           nombre={item.nombre}
           peso={item.peso}
+          size={size}
           qrLogoSrc={logoDataUri ?? undefined}
         />
       </Box>

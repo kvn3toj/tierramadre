@@ -36,11 +36,28 @@ import {
 
 const PRINTER_MODEL = PrinterModel.D11_H;
 
+/** What the CONNECTED device reports about its print head — advisory only. */
+export interface DetectedHead {
+  dpi: number;
+  printheadPixels: number;
+}
+
 export interface UseNiimbotPrinterReturn {
   supported: boolean;
   connected: boolean;
   connecting: boolean;
   printing: boolean;
+  /**
+   * Head geometry read off the connected printer, or `null` when nothing is
+   * connected or the library could not identify the device.
+   *
+   * ADVISORY ONLY. The library's model auto-detection is unreliable (see the
+   * file header — it is why PRINTER_MODEL is hardcoded), so callers may use
+   * this to WARN about stock that looks too wide, and to scale the raster to
+   * the reported DPI, but must never use it to block a print. A misdetected
+   * printer must not stop the operator from printing on hardware they can see.
+   */
+  head: DetectedHead | null;
   connect: () => Promise<void>;
   printLabel: (canvas: HTMLCanvasElement, quantity?: number) => Promise<void>;
 }
@@ -52,16 +69,33 @@ export function useNiimbotPrinter(): UseNiimbotPrinterReturn {
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [printing, setPrinting] = useState(false);
+  const [head, setHead] = useState<DetectedHead | null>(null);
 
   const connect = useCallback(async () => {
     if (!supported || connected || connecting) return;
     setConnecting(true);
     try {
       const client = new NiimbotBluetoothClient();
-      client.on('disconnect', () => setConnected(false));
+      client.on('disconnect', () => {
+        setConnected(false);
+        setHead(null);
+      });
       await client.connect();
       clientRef.current = client;
       setConnected(true);
+      // Wrapped: this is a nice-to-have for the size warning and the raster
+      // scale. A library that cannot identify the device must not turn a
+      // working connection into a failed one.
+      try {
+        const meta = client.getModelMetadata();
+        setHead(
+          meta?.dpi && meta?.printheadPixels
+            ? { dpi: meta.dpi, printheadPixels: meta.printheadPixels }
+            : null,
+        );
+      } catch {
+        setHead(null);
+      }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'NotFoundError') {
         // User cancelled the Bluetooth device picker — not a real error,
@@ -110,5 +144,13 @@ export function useNiimbotPrinter(): UseNiimbotPrinterReturn {
     [supported, connect],
   );
 
-  return { supported, connected, connecting, printing, connect, printLabel };
+  return {
+    supported,
+    connected,
+    connecting,
+    printing,
+    head,
+    connect,
+    printLabel,
+  };
 }
