@@ -76,6 +76,7 @@ import { useCurrency } from '../../contexts/CurrencyContext';
 import { useCurrentAsesor } from '../../hooks/useCurrentAsesor';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { getFeatureFlag } from '../../utils/featureFlags';
+import { useSheetPresence } from '../../hooks/useSheetPresence';
 
 export interface MoreToolConfig {
   id: string;
@@ -328,6 +329,12 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
   } = useCurrency();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [invitationOpen, setInvitationOpen] = useState(false);
+
+  // A closed sheet must leave layout entirely: `visibility: hidden` alone
+  // leaves its box a full sheet-height below the fold, which makes the
+  // document scrollable and paints the whole fixed shell off-screen.
+  // See useSheetPresence for the full story.
+  const { mounted, entered } = useSheetPresence(open);
 
   // Profile card data (staff only)
   const { asesor } = useCurrentAsesor();
@@ -607,8 +614,12 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
             // page behind it when it hits the top/bottom.
             overscrollBehavior: 'contain',
             WebkitOverflowScrolling: 'touch',
-            transform: open ? 'translateY(0)' : 'translateY(100%)',
-            visibility: open ? 'visible' : 'hidden',
+            // Out of layout once the exit transition has finished — a closed
+            // `position: fixed` sheet translated 100% down still occupies a
+            // box below the viewport and makes the document scrollable.
+            display: mounted ? undefined : 'none',
+            transform: entered ? 'translateY(0)' : 'translateY(100%)',
+            visibility: entered ? 'visible' : 'hidden',
             pointerEvents: open ? 'auto' : 'none',
             transition: effectiveConfig.animations
               ? `transform ${durations.liquidNormal} ${easingCurves.liquidSpring}, visibility ${durations.liquidNormal}`

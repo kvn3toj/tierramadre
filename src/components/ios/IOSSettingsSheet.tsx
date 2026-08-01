@@ -49,6 +49,7 @@ import { useCurrency } from '../../contexts/CurrencyContext';
 import MeditationReminderSetting from '../settings/MeditationReminderSetting';
 import { UserProfileCard } from '../auth';
 import { InstallButton } from '../pwa';
+import { useSheetPresence } from '../../hooks/useSheetPresence';
 
 // =============================================================================
 // TYPES
@@ -188,6 +189,12 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({
     setMultiplier,
   } = useCurrency();
 
+  // A closed sheet must leave layout entirely: `visibility: hidden` alone
+  // leaves its box a full sheet-height below the fold, which makes the
+  // document scrollable and paints the whole fixed shell off-screen.
+  // See useSheetPresence for the full story.
+  const { mounted, entered } = useSheetPresence(open);
+
   const isDarkMode = mode === 'dark';
   const isUSD = currency === 'USD';
   const currentLangOption = LANGUAGE_OPTIONS.find(
@@ -249,8 +256,12 @@ const IOSSettingsSheet: React.FC<IOSSettingsSheetProps> = ({
             overflowY: 'auto',
             overscrollBehavior: 'contain',
             WebkitOverflowScrolling: 'touch',
-            transform: open ? 'translateY(0)' : 'translateY(100%)',
-            visibility: open ? 'visible' : 'hidden',
+            // Out of layout once the exit transition has finished — a closed
+            // `position: fixed` sheet translated 100% down still occupies a
+            // box below the viewport and makes the document scrollable.
+            display: mounted ? undefined : 'none',
+            transform: entered ? 'translateY(0)' : 'translateY(100%)',
+            visibility: entered ? 'visible' : 'hidden',
             pointerEvents: open ? 'auto' : 'none',
             transition:
               'transform 0.4s cubic-bezier(0.5, 1.25, 0.75, 1.25), visibility 0.4s',
