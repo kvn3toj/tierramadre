@@ -339,6 +339,71 @@ qué comparar — y ese `continue` dejaba pasar en silencio justo la forma que h
 El código nuevo `LOTE_SIN_PIEZAS` los reporta: **C-017 y S-001 declaran $378.000.000 cada uno**,
 más C-039, C-054, MED-001 y MED-012.
 
+#### C-039, C-054, MED-001, MED-012 — la tabla de decisión (SOT-V4-FASE1, punto 6)
+
+C-017 y S-001 ya quedan cubiertos por el dictamen del punto 5 (son parte de la misma escala de
+25× — $378.000.000 cada uno, comparable a LC-01/LC-03). Estos otros cuatro son una escala
+completamente distinta: montos de cuatro a siete cifras, no de nueve. Les falta su propia tabla
+porque nadie se la armó todavía — quedaban mencionados de pasada, sin evidencia ni recomendación.
+
+**Evidencia**, leída de `migracionV4:ensayo` (dry-run, dev, 2026-08-01 — mismo mecanismo que
+generó el número de C-017/S-001, sin volver a leer Convex prod):
+
+| Lote    | Costo declarado | Piezas enlazadas en la hoja |
+| ------- | --------------: | --------------------------- |
+| C-039   |        $291.500 | 0                           |
+| C-054   |      $1.279.000 | 0                           |
+| MED-001 |         $22.400 | 0                           |
+| MED-012 |      $2.071.050 | 0                           |
+
+Los cuatro comparten el mismo código de excepción (`LOTE_SIN_PIEZAS`) y el mismo texto genérico
+("puede ser un lote de colección real o el total del lote metido en la fila de un ítem"). No
+alcancé a leer la hoja del SOT v3 para nombre/proveedor/sede de estos cuatro (el endpoint
+`/api/get-table` respondió `success:false` con el `ADMIN_SYNC_TOKEN` de `.env.local` — puede ser
+que el token de prod haya rotado; no insistí porque la evidencia que ya hay alcanza para la
+recomendación de abajo). Si hace falta ese contexto para decidir, es la primera pregunta a
+resolver antes de dictaminar.
+
+**Por qué esta escala es distinta de C-017/S-001, en números:** el Tablero declara
+`inventarioActivoCOP` = $1.777.030.371. Los cuatro juntos suman **$3.663.950** — el 0,2% de ese
+total. Aunque los cuatro resultaran ser errores de captura completos, mover el titular del
+Tablero un 0,2% no es la clase de hallazgo que justifica pausar nada.
+
+**Los candados YA aprobados para C-017/S-001 (punto 5) protegen a estos cuatro gratis, sin
+código nuevo:**
+
+- `loteEstaActivo` exige al menos una unidad — un lote con 0 piezas nunca es activo, así que
+  **ninguno de los cuatro entra al divisor D2** hoy ni entrará mientras sigan sin piezas.
+- `inventarioActivoCOP` suma costo capturado de CASILLAS, no de lotes — sin casillas, los cuatro
+  aportan **$0** al Tablero, sea cual sea su costo declarado.
+- `preciosDelLote` devuelve `cotiza:false` con motivo "el lote todavía no tiene casillas" — no
+  hay camino por el que se vaya a cotizar nada sobre estos cuatro.
+
+O sea: el riesgo numérico de dejarlos exactamente como están hoy es **cero**, ya medido por el
+mismo mecanismo que protege a C-017/S-001. Lo único pendiente es la interpretación del dato, no
+su impacto en ningún número que ya esté circulando.
+
+**Opciones:**
+
+1. **(Recomendada) Migrar tal cual, sin candado nuevo.** Es lo que ya pasa. Los tres guardas de
+   arriba ya los excluyen de precio y del divisor; agregar un candado explícito solo repetiría
+   una protección que ya existe. Quedan visibles en el reporte de excepciones de la migración
+   (`requierenAuditoria`) para quien quiera revisarlos con más tiempo — no desaparecen del radar,
+   solo dejan de bloquear nada.
+2. **Pedir que se enlacen sus piezas en el SOT v3 antes de Fase 2.** Permitiría correr
+   `COSTO_INCONSISTENTE` sobre los cuatro, igual que a C-006/C-065/LC-05/LC-11. Tiene sentido si
+   son lotes de colección activos que van a necesitar cotizar en algún momento; no lo tiene si ya
+   están agotados o son costos administrativos sin pieza física que capturar.
+3. **Marcarlos "sin piezas, aceptado" en un registro aparte** para que el reporte de excepciones
+   deje de repetirlos en cada corrida. Es la única opción que agrega código (un allowlist de
+   loteIds a silenciar), y a esta escala de riesgo ($3,66M sobre $1.777M) no parece que valga la
+   inversión frente a la opción 1.
+
+Mi recomendación es la 1, precisamente porque a diferencia de C-017/S-001 acá no hay una decisión
+de negocio urgente escondida (no hay "25× el inventario auditado" en juego) — es una pregunta de
+higiene de datos que puede esperar a que alguien tenga tiempo de mirar la hoja fila por fila, sin
+que eso bloquee nada de Fase 2.
+
 ### Los 28 lotes reconstruidos no tienen categoría fiscal
 
 Consecuencia buscada, no defecto: la migración **no se la inventa**. Sin ella el motor no
@@ -415,3 +480,98 @@ objetivo del K **sin redondear**. Implementado así, con su propio test para que
   alta y cada venta, y re-encolar las ~88 filas con todas sus casillas en cada evento no cabe.
   `recalculadoEn` lo dice en la propia fila y el Léeme lo explica.
 - **`_publicarTablero` no se llama solo.** Hay que invocarlo; no está enganchado al recálculo.
+
+---
+
+# Tercera jornada — 2026-08-01 (noche) — SOT-V4-FASE1, bloque A completo
+
+Cuatro deudas de la segunda jornada, cerradas en orden (A.1→A.4 del hand-off), más el punto 6
+del bloque B. Suite en 1148/110 (de 1137/109). `tsc -p convex` limpio. Sin mergear, sin pushear.
+
+## A.1 — Revisión adversarial de la rama
+
+Agente dedicado sobre las 8 áreas pedidas (pago enmascarado, gate de costos, candado de
+escritura, motor, migración, convenciones D6/nomenclatura, tests, concurrencia/timezone). Un
+hallazgo real, confirmado y corregido:
+
+- **`lotItems.getByItemId` regalaba `costoUnitarioRealCOP`.** Gemela de `listByLote`, que sí
+  tenía `omitInternosV4`; a esta se le olvidó en la misma revisión que cerró la otra. Query
+  pública sin `idToken`, consumida por el scanner QR (`EscanearPage`) — cualquiera con la URL del
+  deployment podía pedir el costo exacto de cualquier pieza por su itemId. El test que cubría las
+  otras cuatro queries públicas de lote no incluía esta, que es justo cómo pasó desapercibido.
+  Corregido con test primero (`tests/saleSafe.test.ts`), commit `018ec25`.
+
+Todo lo demás: sin hallazgos que reporten riesgo real (ver el detalle completo del agente si hace
+falta releerlo — no se copia acá para no duplicar). El único ítem que el review marcó como
+pendiente es el propio gate de "no mergear todavía", que ya estaba anotado en
+`protocolo-sot-v4.md` y no es nuevo.
+
+## A.2 — `_publicarTablero` enganchado al drenaje
+
+Se agenda 1:1 en los cuatro puntos que ya agendaban `drenar` (alta de lote, guardar casilla,
+publicar lote, movimiento) — ahí vive todo lo que el Tablero refleja: `lotesActivos`,
+`inventarioActivoCOP`, `ventasMesCOP`. Nunca dentro de `drenar` mismo (bucle: `_publicarTablero`
+encola y reagenda `drenar`). Sin período explícito, sale de `periodoDeBogota(Date.now())` — el
+default que la función ya tenía. Pinneado en `tests/espejoDrenajeHibrido.test.ts`. Commit
+`1c917d2`.
+
+## A.3 — Empuje masivo de las 375 casillas migradas
+
+Medido antes de tocar Sheets: `reportarDeriva('Casillas')` en vivo contra dev confirmó
+`soloEnConvex: 375`, exacto. `drenar` lee la pestaña ENTERA por fila procesada, así que un
+`drenar({limite:375})` de una sola vez habría disparado ~1125 llamadas a la Sheets API sin
+pausa — la forma de agotar la cuota de 60 req/min de una cuenta personal.
+
+Construido `planificarDrenajeEscalonado` (puro, testeado — `tests/espejoEmpujeMasivo.test.ts`) +
+`espejo:empujarSoloEnConvex` (con `soloMedir` para presupuestar sin escribir). Medido: 38 pasos,
+~1125 llamadas, ~57 min de punta a punta — costo razonable, autorizado y ejecutado. **Verificado
+en vivo: `soloEnConvex` volvió a 0, `sinDeriva: 375`.** Commit `07714f0`.
+
+Idempotente y reanudable por construcción: `soloEnConvex` se recalcula contra la hoja real en
+cada llamada, nunca contra la cola, así que una corrida repetida o interrumpida a la mitad solo
+encola lo que de verdad sigue faltando.
+
+## A.4 — Limpieza de filas huérfanas (6, no 5)
+
+**El doc decía 5 filas huérfanas; la hoja tenía 6.** Además de B-008 (documentado, "VERIF motor
+por unidad", sus casillas 525-528 verificadas — los mismos cuatro costos del lote 10:
+268.983 · 353.210 · 81.510 · 228.228), apareció **B-009** ("Compra Murralla julio"), no mencionado
+en ningún lado. Antes de tocar nada se leyó el contenido crudo de las tres filas: mismo proveedor
+placeholder que B-008, mismos montos de costo/abono/saldo — debris de la misma sesión de
+verificación del motor por unidad/lote, simplemente no listado en el resumen de la segunda
+jornada. Se decidió con Kevin (pregunta explícita) tratarlo igual que B-008 en vez de asumirlo
+por cuenta propia.
+
+Limpieza a mano (opción elegida sobre construir un camino de borrado): dos llamadas
+`batchUpdate.deleteDimension` directas a la Sheets API, fuera del código committeado — el espejo
+sigue siendo push-only por diseño, sin nueva capacidad de borrado agregada. B-008/B-009 se
+borraron primero (pestaña Lotes, no tocada por el empuje masivo en curso); las 4 casillas se
+esperaron a que A.3 terminara de drenar del todo antes de tocar la pestaña Casillas, para no
+competir con el drenaje concurrente sobre la misma pestaña. **Verificado: las dos pestañas dan
+`soloEnEspejo: []` y `derivas: 0`.**
+
+## Bloque B, punto 6 — la tabla de C-039/C-054/MED-001/MED-012
+
+Armada la tabla de evidencia/opciones/recomendación que faltaba (C-017/S-001 ya estaban cubiertos
+por el punto 5). Diferencia clave con esos dos: acá los montos son 4-7 cifras, no 9 — los cuatro
+juntos suman $3.663.950, el 0,2% del `inventarioActivoCOP` declarado. Los tres guardas que ya
+protegen a C-017/S-001 (`loteEstaActivo`, la suma de `inventarioActivoCOP` sobre casillas, y
+`preciosDelLote` rechazando lotes sin casillas) protegen a estos cuatro GRATIS, sin código nuevo:
+el riesgo numérico de dejarlos tal cual es cero, ya medido. Recomendación: migrar tal cual (opción
+1 de 3), ver la sección completa arriba de "Los 28 lotes reconstruidos" para el detalle.
+
+No se pudo enriquecer la tabla con nombre/proveedor/sede del SOT v3: `/api/get-table` respondió
+`success:false` con el `ADMIN_SYNC_TOKEN` de `.env.local` contra `tierramadre.app`. No insistí —la
+evidencia de `migracionV4:ensayo` alcanzaba para la recomendación— pero si alguien necesita ese
+contexto, el token vale la pena revisarlo primero.
+
+## Lo que queda para la próxima sesión
+
+- **Bloque B, puntos 7 y 8, sin tocar** — 7 necesita criterio de negocio por lote (Kevin, no
+  código); 8 (la doble corrida ítem por ítem) es la pieza más grande que queda: el divisor ya está
+  firme y dev ya lo reproduce, así que técnicamente está desbloqueada, pero comparar ~513 ítems
+  contra el SOT v3 vivo es su propio trabajo dedicado, no algo para sumar al final de esta jornada.
+- El punto 5 (25× el inventario) y el punto 6 (ahora completo) tienen su material de decisión
+  listo. Lo único que falta de los dos es el dictamen de Kevin.
+- Nada mergeado, nada pusheado, ningún env var tocado, Convex prod sin una sola lectura ni
+  escritura desde esta jornada — todo lo medido salió del SOT v3 vivo (gratis) o del propio dev.
