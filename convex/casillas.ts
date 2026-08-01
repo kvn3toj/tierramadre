@@ -69,6 +69,10 @@ async function encolarLote(ctx: MutationCtx, id: Id<'lots'>): Promise<void> {
     creadoEn: Date.now(),
   });
   await ctx.scheduler.runAfter(0, internal.espejo.drenar, { limite: 25 });
+  // Cambiar el estado del lote (abierto → cerrado, publicación) mueve
+  // `lotesActivos` e `inventarioActivoCOP`: el Tablero del período corriente
+  // tiene que reflejarlo, no quedarse a la fecha del último recálculo.
+  await ctx.scheduler.runAfter(0, internal.espejo._publicarTablero, {});
 }
 
 /**
@@ -127,6 +131,10 @@ async function encolarCasillasDelLote(
     });
   }
   await ctx.scheduler.runAfter(0, internal.espejo.drenar, { limite: 50 });
+  // El costo capturado de una casilla es insumo directo de
+  // `inventarioActivoCOP` — sin esto el Tablero quedaba a la fecha del
+  // último recálculo del gasto fijo, no de la última clasificación.
+  await ctx.scheduler.runAfter(0, internal.espejo._publicarTablero, {});
 }
 
 const patchArgs = {

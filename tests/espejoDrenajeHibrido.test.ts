@@ -49,6 +49,53 @@ describe('toda encolada agenda su drenaje', () => {
   }
 });
 
+describe('el Tablero se republica junto con el drenaje', () => {
+  // `_publicarTablero` no se llamaba solo — había que invocarlo a mano (deuda
+  // anotada en `cierre-fase1.md`). El Tablero depende de casi todo lo que
+  // agenda un drenaje (lotesActivos, inventarioActivoCOP, ventasMesCOP), así
+  // que se engancha en el MISMO punto donde cada mutación ya agenda su
+  // drenaje — nunca dentro de `drenar` mismo, porque `_publicarTablero`
+  // encola y vuelve a agendar `drenar`, y llamarlo desde adentro de `drenar`
+  // sería un bucle que nunca termina de agendarse a sí mismo.
+  for (const archivo of CONVEX) {
+    it(`${archivo} agenda _publicarTablero 1:1 con cada agenda de drenaje`, () => {
+      const fuente = leer(archivo);
+      const agendasDrenar = (
+        fuente.match(
+          /ctx\.scheduler\.runAfter\(0, internal\.espejo\.drenar/g,
+        ) ?? []
+      ).length;
+      const agendasTablero = (
+        fuente.match(
+          /ctx\.scheduler\.runAfter\(0, internal\.espejo\._publicarTablero/g,
+        ) ?? []
+      ).length;
+
+      expect(agendasDrenar).toBeGreaterThan(0);
+      expect(agendasTablero).toBe(agendasDrenar);
+    });
+  }
+
+  it('_publicarTablero nunca se agenda desde dentro de drenar (evita el bucle)', () => {
+    const espejo = leer('convex/espejo.ts');
+    const bloqueDrenar = espejo.slice(
+      espejo.indexOf('export const drenar'),
+      espejo.indexOf('export const drenar') +
+        espejo.slice(espejo.indexOf('export const drenar')).indexOf('\n});') +
+        4,
+    );
+    expect(bloqueDrenar).not.toMatch(/_publicarTablero/);
+  });
+
+  it('sin período explícito: sale de periodoDeBogota(Date.now()), no del reloj UTC del servidor', () => {
+    const espejo = leer('convex/espejo.ts');
+    const bloque = espejo.slice(
+      espejo.indexOf('export const _publicarTablero'),
+    );
+    expect(bloque).toMatch(/periodoDeBogota\(Date\.now\(\)\)/);
+  });
+});
+
 describe('el cron de rescate', () => {
   const crons = leer('convex/crons.ts');
   const espejo = leer('convex/espejo.ts');

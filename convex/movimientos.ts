@@ -292,6 +292,12 @@ export const _registrar = internalMutation({
     // Una sola vez por movimiento, no por casilla: el drenaje toma la cola
     // entera y agendar N veces solo multiplica trabajo idéntico.
     await ctx.scheduler.runAfter(0, internal.espejo.drenar, { limite: 25 });
+    // Una VENTA mueve `ventasMesCOP` y saca la pieza de `inventarioActivoCOP`
+    // aunque no haya recalculado el divisor (el lote puede seguir con
+    // hermanas vivas). Consignación/devolución no cambian ningún número del
+    // Tablero, pero republicar es idempotente — más simple que discriminar
+    // por tipo acá.
+    await ctx.scheduler.runAfter(0, internal.espejo._publicarTablero, {});
 
     const resultado = {
       movimientoId,

@@ -260,6 +260,9 @@ export const _create = internalMutation({
     // Drenaje por evento: el espejo se pone al día solo, sin cron de barrido.
     // Si falla, la fila queda en cola y el cron de rescate la recoge.
     await ctx.scheduler.runAfter(0, internal.espejo.drenar, { limite: 25 });
+    // El alta puede haber movido `lotesActivos` (paso 5): el Tablero del
+    // período corriente tiene que reflejar el fijo nuevo, no el de ayer.
+    await ctx.scheduler.runAfter(0, internal.espejo._publicarTablero, {});
 
     const resultado = {
       id: lotId,
