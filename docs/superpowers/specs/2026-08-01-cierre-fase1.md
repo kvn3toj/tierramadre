@@ -7,9 +7,14 @@
 > nuevas— y leé `git log --oneline main..HEAD`. Tu contexto puede estar desfasado respecto a
 > él. Escribirle sin leerlo entero es editarlo a ciegas.
 >
+> Las reglas/nombres/comandos que **no cambian de jornada a jornada** (invariantes de proceso,
+> deployments, comandos utilitarios, env vars, inventario de endpoints) viven en
+> `protocolo-sot-v4.md`, no acá — leelo también. Este doc es el log operativo: qué pasó hoy, qué
+> quedó bloqueado.
+>
 > Cuando termines, escribile de vuelta: lo que no queda acá, la próxima sesión no lo sabe.
 
-- **Fecha:** 2026-08-01 · **Rama:** `feat/w1-w3-sot-v4` (37 commits, sin mergear)
+- **Fecha:** 2026-08-01 · **Rama:** `feat/w1-w3-sot-v4` (38 commits, sin mergear)
 - **Deployment:** Convex dev `flexible-wolverine-803` · **Prod intacto**
 - **Suite:** 914 tests / 99 archivos al cierre de la primera ronda →
   **1137 / 109** al cierre de la segunda (ver «Segunda jornada» al final)
@@ -200,54 +205,14 @@ Regla que sale del propio hallazgo: blindar `previewLote` no servia de nada
 mientras cinco vecinas regalaban lo mismo. Antes de dar por cerrado un gate hay
 que enumerar TODAS las puertas, no solo la que se esta cerrando.
 
-**139 endpoints publicos** en el deployment. Los que devuelven estructura de
-costos, clasificados:
-
-### Riel v4 (esta rama) - todos cerrados
-
-| Endpoint                     | Antes                                                        | Ahora                           |
-| ---------------------------- | ------------------------------------------------------------ | ------------------------------- |
-| `precios.previewLote`        | query publica con el fijo vigente, K, piso y margen          | action + `ROLES_COSTOS`         |
-| `casillas.estadoDelLote`     | query publica con el costo de cada casilla                   | action + `ROLES_COSTOS`         |
-| `casillas.porItemId`         | query publica con el costo de la pieza                       | action + `ROLES_COSTOS`         |
-| `movimientos.enConsignacion` | query publica, `lotItems` enteros                            | action + recorte a 4 campos     |
-| `movimientos.porItem`        | query publica con **numero de cuenta y titular del cliente** | **BORRADA** (no la usaba nadie) |
-| `lotsV4.casillasDeLote`      | query publica con el costo de cada casilla                   | **BORRADA** (no la usaba nadie) |
-
-Hoy `convex/{precios,casillas,movimientos,lotsV4}.ts` no exportan **ni una**
-query publica. Lo pinnea `tests/previewLoteGate.test.ts`.
-
-### Riel viejo - exposicion PRE-EXISTENTE, no tocada aqui
-
-Verificado contra `main`: ya estaba asi antes de esta rama.
-
-| Endpoint                                                                          | Que expone                                                                                     | Nota                                                         |
-| --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `products.list`                                                                   | `costoBaseCOP` de cada item, sin `saleSafe`                                                    | Sin `idToken`                                                |
-| `products.publishedCatalog`                                                       | `costoBaseCOP`                                                                                 | Es la query del catalogo de cara al cliente                  |
-| `products.getManyByItemIds`, `fotosintesisFields`, `getPublicByItem`, `patrones*` | precios                                                                                        | Sin `saleSafe`                                               |
-| `lots.list` / `get` / `getByLoteId`                                               | `costoTotalCOP`, y ahora tambien `costoCompraCOP`, `abonoCOP`, `saldoCOP`, `costosVariables[]` | El desglose v4 es exposicion **nueva** sobre una query vieja |
-| `lotItems.getByItemId` / `listByLote`                                             | ahora incluyen `costoUnitarioRealCOP`                                                          | idem                                                         |
-| `ghl.searchProducts`, `fotosintesisAi.workspaceSnapshot`                          | precios                                                                                        | Sin `idToken`                                                |
-
-**No las gatee, a proposito.** Son de `main`, las consume medio frontend, y cada
-conversion cuesta la suscripcion reactiva - el costo de UI que ya se pago tres
-veces en esta rama. Cerrarlas es un trabajo propio con su propio presupuesto.
-
-Lo que si es responsabilidad de esta rama y queda anotado: **los campos v4
-nuevos viajan por queries viejas que nadie gateo**, asi que el desglose de
-compra, los abonos y el costo por pieza salen por `lots.list` y
-`lotItems.listByLote` aunque sus endpoints v4 esten cerrados.
-
-Recomendacion para ese trabajo: extender `_lib/saleSafe.ts` a estas queries en
-vez de convertirlas en actions - recorta el payload y conserva la reactividad,
-que es lo que las hace usables.
+El inventario completo (139 endpoints, las tablas "Riel v4"/"Riel viejo" y la
+recomendación de extender `_lib/saleSafe.ts`) vive en `protocolo-sot-v4.md` §5
+— se actualiza ahí a medida que aparecen endpoints nuevos, no acá.
 
 ## Pendientes antes de prod (no bloquean la Fase 2)
 
-- Las credenciales OAuth quedaron como env vars del deployment dev
-  (`GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REFRESH_TOKEN`,
-  `ESPEJO_SPREADSHEET_ID`). Prod necesitará las suyas, apuntando a otro libro.
+- Las credenciales OAuth quedaron como env vars del deployment dev (nombres en
+  `protocolo-sot-v4.md` §4). Prod necesitará las suyas, apuntando a otro libro.
 - Encender `ESPEJO_CRON` en prod, con la medición de consumo hecha.
 - **P0 con presupuesto propio de UI, primera tarea tras el merge:** cerrar la
   exposición de costo de `products.publishedCatalog` y `products.list` (es de
@@ -283,6 +248,7 @@ Cinco commits sobre lo anterior: `96dec30` migración · `2d5c54a` motor por uni
 > (`fix(catalogo)`, 13:29). No hubo conflicto y no hizo falta integración inversa —`main` no se
 > movió—, pero es exactamente el escenario que el Protocolo de sesión del tope viene a cubrir.
 > Si vas a abrir una sesión en paralelo, releé el `git log` antes de asumir tu punto de partida.
+
 Suite **1137 tests en 109 archivos** (de 1040/106). `tsc` de convex limpio; `npm run lint`
 sigue con los dos TS7016 preexistentes de `main`.
 
@@ -290,11 +256,11 @@ sigue con los dos TS7016 preexistentes de `main`.
 
 ### 1. Cronología de los números
 
-| Cifra | Qué era | Estado |
-| --- | --- | --- |
-| **60** | dev congelado al 22-23 de julio | **MUERTA** — el refresco + import ya lo llevó a 66 |
-| **66** | prod y dev, por D2 sobre el enlace de ese momento | superada por la migración |
-| **88** | el SOT vivo, con las 25 filas dictaminadas | **es la cifra, y dev ya la reproduce** |
+| Cifra  | Qué era                                           | Estado                                             |
+| ------ | ------------------------------------------------- | -------------------------------------------------- |
+| **60** | dev congelado al 22-23 de julio                   | **MUERTA** — el refresco + import ya lo llevó a 66 |
+| **66** | prod y dev, por D2 sobre el enlace de ese momento | superada por la migración                          |
+| **88** | el SOT vivo, con las 25 filas dictaminadas        | **es la cifra, y dev ya la reproduce**             |
 
 El **+27% sigue tachado**. No se recalculó repricing sobre el 66 en ningún momento.
 
@@ -343,14 +309,14 @@ fuente gratuita para conteos**; Convex prod solo con autorización explícita y 
 El Tablero reporta `inventarioActivoCOP` = **$1.777.030.371**. La auditoría del 25/07 midió
 **$71.769.301**. La diferencia no está repartida: son unas pocas piezas de los lotes `LC-*`.
 
-| ítem | lote | costo declarado |
-| --- | --- | --- |
-| 193 | LC-03 | **$357.923.077** |
-| 192 | LC-03 | $318.807.692 |
-| 194 | LC-03 | $235.038.462 |
-| 195 | LC-03 | $162.750.000 |
-| 203 | LC-01 | $98.076.923 |
-| 191 | LC-03 | $87.692.308 |
+| ítem | lote  | costo declarado  |
+| ---- | ----- | ---------------- |
+| 193  | LC-03 | **$357.923.077** |
+| 192  | LC-03 | $318.807.692     |
+| 194  | LC-03 | $235.038.462     |
+| 195  | LC-03 | $162.750.000     |
+| 203  | LC-01 | $98.076.923      |
+| 191  | LC-03 | $87.692.308      |
 
 **LC-03 es internamente COHERENTE**: sus piezas suman los $1.069.210.000 que declara el lote,
 así que pasa la conciliación. La hipótesis vieja —«el total del lote metido en la fila de un
@@ -407,11 +373,11 @@ K_unidad #372 = $399.408 **y** objetivo #372 = $665.681 en la misma fila, o sea 
 objetivo del K **sin redondear**. Implementado así, con su propio test para que nadie lo
 «arregle». El test de paridad es autoverificable por tres sumas, no por cuatro números sueltos:
 
-| Σ | Da | Que es |
-| --- | --- | --- |
-| K_unidad | $1.383.809 | K del lote 10 |
+| Σ                       | Da         | Que es                      |
+| ----------------------- | ---------- | --------------------------- |
+| K_unidad                | $1.383.809 | K del lote 10               |
 | equilibrioRealUnidadCOP | $1.537.566 | el equilibrio real del lote |
-| precioObjetivoUnidadCOP | $2.306.348 | el objetivo del lote |
+| precioObjetivoUnidadCOP | $2.306.348 | el objetivo del lote        |
 
 ## Defectos encontrados CORRIENDO, no razonando
 
