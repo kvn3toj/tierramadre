@@ -149,7 +149,7 @@ describe('costosVariablesTotal — landed cost como documentos que ajustan', () 
   });
 });
 
-describe('saldoProveedor — abono y saldo vivo', () => {
+describe('saldoProveedor — la deuda es con el proveedor, no con los terceros', () => {
   it('el saldo es lo que falta por pagar', () => {
     expect(saldoProveedor(1_000_000, 300_000)).toBe(700_000);
   });
@@ -168,15 +168,43 @@ describe('saldoProveedor — abono y saldo vivo', () => {
     expect(() => saldoProveedor(1_000_000, 1_500_000)).toThrow(/abono/i);
   });
 
-  it('el lote calcula su saldo incluyendo los costos variables', () => {
+  it('los costos variables NO entran en la deuda con el proveedor', () => {
+    // Son landed cost: capitalizan al costo del lote para el precio, pero se le
+    // pagan a la transportadora y a quien empaca, no al dueño de la piedra.
+    // Antes esto daba 850.000 y dejaba un saldo fantasma de $50.000.
     const lote = validarLoteV4({
       ...BASE,
       costoCompraCOP: 1_000_000,
       costosVariables: [{ concepto: 'viáticos', montoCOP: 50_000 }],
       abonoCOP: 200_000,
     });
-    expect(lote.costoTotalCOP).toBe(1_050_000);
-    expect(lote.saldoCOP).toBe(850_000);
+    expect(lote.costoTotalCOP).toBe(1_050_000); // el landed sí los suma
+    expect(lote.saldoCOP).toBe(800_000); // la deuda, no
+  });
+
+  it('pagarle todo al proveedor deja saldo CERO aunque haya variables', () => {
+    // El caso que delataba el error: el proveedor está saldado y el lote seguía
+    // mostrando deuda por el monto exacto de los viáticos.
+    const lote = validarLoteV4({
+      ...BASE,
+      costoCompraCOP: 1_000_000,
+      costosVariables: [{ concepto: 'domicilio', montoCOP: 50_000 }],
+      abonoCOP: 1_000_000,
+    });
+    expect(lote.saldoCOP).toBe(0);
+  });
+
+  it('un abono que excede la compra falla aunque quepa en el landed', () => {
+    // $1.020.000 sobre una compra de $1.000.000 con $50.000 de variables: antes
+    // pasaba como válido porque cabía en el total. Es un error de captura.
+    expect(() =>
+      validarLoteV4({
+        ...BASE,
+        costoCompraCOP: 1_000_000,
+        costosVariables: [{ concepto: 'viáticos', montoCOP: 50_000 }],
+        abonoCOP: 1_020_000,
+      }),
+    ).toThrow(/abono/i);
   });
 });
 

@@ -545,12 +545,19 @@ export default defineSchema({
     estado: v.union(
       v.literal('pendiente'),
       v.literal('enviado'),
+      // Dead-letter: agotó los intentos. Se aparta para que no bloquee la cola,
+      // pero NO se borra ni se silencia — `espejo:apartadas` la lista y el
+      // reporte de deriva la nombra. Un tope silencioso convertiría «se dejó de
+      // intentar» en «se sincronizó».
+      v.literal('apartada'),
       v.literal('error'),
     ),
     intentos: v.number(),
     ultimoError: v.optional(v.string()),
     creadoEn: v.number(),
     enviadoEn: v.optional(v.number()),
+    /** Backoff: no se reintenta antes de este instante. */
+    proximoIntentoEn: v.optional(v.number()),
   })
     .index('by_estado', ['estado'])
     .index('by_pestana_idFila', ['pestana', 'idFila']),

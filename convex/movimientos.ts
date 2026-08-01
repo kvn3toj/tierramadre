@@ -27,6 +27,8 @@ import {
 import { filaCasillaParaEspejo } from './_lib/espejoFilas';
 import { planificarRecalculo } from './_lib/recalculo';
 import { configVigente, contarLotesActivosDb } from './precios';
+import { allocateNext } from './sequences';
+import type { Id } from './_generated/dataModel';
 
 const ventaValidator = v.object({
   cliente: v.string(),
@@ -69,6 +71,12 @@ const registrarArgs = {
   notas: v.optional(v.string()),
   venta: v.optional(ventaValidator),
   origenKardexEventId: v.optional(v.string()),
+  /**
+   * Idempotencia: un reintento con el mismo token devuelve el movimiento ya
+   * creado en vez de registrar la venta dos veces. El schema declara los
+   * `create` como MONEY-CRITICAL y este lo es tanto como los demás.
+   */
+  clientToken: v.optional(v.string()),
 } as const;
 
 // `registradoPor` fuera del validator público: quién registró una venta no
@@ -81,7 +89,28 @@ const registrarInternoArgs = {
 export const _registrar = internalMutation({
   args: registrarInternoArgs,
   handler: async (ctx, args) => {
-    const { registradoPor = 'sistema', ...movimiento } = args;
+    const { registradoPor = 'sistema', clientToken, ...movimiento } = args;
+
+    // Replay: mismo token, mismo resultado. Sin esto, un doble clic o un
+    // reintento del cliente registran la venta dos veces.
+    if (clientToken) {
+      const prior = await ctx.db
+        .query('commitTokens')
+        .withIndex('by_token', (q) => q.eq('token', clientToken))
+        .unique();
+      if (prior) {
+        const sigue = await ctx.db.get(prior.primaryId as Id<'movimientos'>);
+        if (sigue) {
+          return JSON.parse(prior.result) as {
+            movimientoId: string;
+            kardexEventId: string;
+            nuevoEstado: string;
+          };
+        }
+        await ctx.db.delete(prior._id);
+      }
+    }
+
     validarMovimiento(movimiento as MovimientoInput);
 
     const casillas = [];
@@ -141,10 +170,23 @@ export const _registrar = internalMutation({
       }
     }
 
-    const lotesAntes = await contarLotesActivosDb(ctx);
+    // Solo la VENTA puede apagar un lote; consignación, devolución y asesor no
+    // mueven el divisor POR TIPO (`_lib/recalculo`). Contar el inventario para
+    // ellos eran dos barridos de tres tablas garantizadamente inútiles, en el
+    // mismo proyecto que apagó sus crons por ancho de banda.
+    const recalculaPorTipo = args.tipo === 'VENTA';
+    const lotesAntes = recalculaPorTipo
+      ? await contarLotesActivosDb(ctx)
+      : { lotesActivos: 0, unidadesActivas: 0 };
 
     const ts = Date.now();
-    const kardexEventId = `KE-${ts}`;
+    // El id NO sale de `Date.now()` solo: dos registros en el mismo
+    // milisegundo producían `MOV-x` idéntico, y como el espejo hace upsert por
+    // id, uno de los dos movimientos desaparecía de la hoja aunque existiera en
+    // Convex. La secuencia lo hace único; el ts queda como dato, no como clave.
+    const n = await allocateNext(ctx, 'movimientos');
+    const movimientoId = `MOV-${String(n).padStart(6, '0')}`;
+    const kardexEventId = `KE-${String(n).padStart(6, '0')}`;
     const nuevoEstado = efectoSobreCasilla(args.tipo);
 
     for (const casilla of casillas) {
@@ -166,8 +208,7 @@ export const _registrar = internalMutation({
       });
     }
 
-    const movimientoId = `MOV-${ts}`;
-    await ctx.db.insert('movimientos', {
+    const movId = await ctx.db.insert('movimientos', {
       movimientoId,
       kardexEventId,
       tipo: args.tipo,
@@ -183,25 +224,27 @@ export const _registrar = internalMutation({
       ts,
     });
 
-    // Recálculo: solo la venta puede apagar un lote. Consignación y devolución
-    // no mueven el divisor — la pieza sigue viva en el inventario.
-    const config = await configVigente(ctx, args.fecha);
-    const lotesDespues = await contarLotesActivosDb(ctx);
-    const plan = planificarRecalculo({
-      evento:
-        args.tipo === 'VENTA'
-          ? 'VENTA'
-          : args.tipo === 'DEVOLUCION'
-            ? 'DEVOLUCION'
-            : 'CONSIGNACION',
-      config,
-      lotesActivosAntes: lotesAntes.lotesActivos,
-      lotesActivosDespues: lotesDespues.lotesActivos,
-      unidadesActivas: lotesDespues.unidadesActivas,
-      ts,
-    });
-    if (plan.recalcula && plan.traza) {
-      await ctx.db.insert('recalculos', { ...plan.traza, motivo: plan.motivo });
+    // La config se lee PEREZOSAMENTE, solo si el tipo puede recalcular. Antes
+    // se leía siempre y `configVigenteEn` lanza si no hay regla para esa fecha:
+    // un backfill de kardex con fecha anterior al 2026-07-01 no se podía
+    // registrar, aunque una devolución no toque ningún precio.
+    if (recalculaPorTipo) {
+      const config = await configVigente(ctx, args.fecha);
+      const lotesDespues = await contarLotesActivosDb(ctx);
+      const plan = planificarRecalculo({
+        evento: 'VENTA',
+        config,
+        lotesActivosAntes: lotesAntes.lotesActivos,
+        lotesActivosDespues: lotesDespues.lotesActivos,
+        unidadesActivas: lotesDespues.unidadesActivas,
+        ts,
+      });
+      if (plan.recalcula && plan.traza) {
+        await ctx.db.insert('recalculos', {
+          ...plan.traza,
+          motivo: plan.motivo,
+        });
+      }
     }
 
     await ctx.db.insert('espejoOutbox', {
@@ -235,12 +278,23 @@ export const _registrar = internalMutation({
     // entera y agendar N veces solo multiplica trabajo idéntico.
     await ctx.scheduler.runAfter(0, internal.espejo.drenar, { limite: 25 });
 
-    return {
+    const resultado = {
       movimientoId,
       kardexEventId,
       nuevoEstado,
-      recalculo: plan.recalcula ? plan.traza : undefined,
     };
+
+    if (clientToken) {
+      await ctx.db.insert('commitTokens', {
+        token: clientToken,
+        kind: 'movimientos.registrar',
+        primaryId: movId,
+        result: JSON.stringify(resultado),
+        createdAt: new Date().toISOString(),
+      });
+    }
+
+    return resultado;
   },
 });
 

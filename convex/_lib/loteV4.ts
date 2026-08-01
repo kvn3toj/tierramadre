@@ -104,27 +104,41 @@ export function costosVariablesTotal(
 }
 
 /**
- * Lo que falta por pagarle al proveedor.
+ * Lo que falta por pagarle al PROVEEDOR: `costo de compra − abonos`.
+ *
+ * Los costos variables **no entran**. Son landed cost: capitalizan al costo del
+ * lote para efectos de precio, pero se le pagan a terceros —la transportadora,
+ * quien empaca—, no al proveedor de la piedra. Sumarlos infla la cuenta por
+ * pagar con plata que se le debe a otro, o que ya se pagó de contado.
+ *
+ * (Antes recibía el landed cost y por eso un abono que saldaba al proveedor
+ * dejaba un saldo fantasma igual a los viáticos.)
+ *
+ * Si algún día un proveedor cobra él mismo el domicilio, eso se modela
+ * agregando un `acreedor` opcional al costo variable — NO volviendo a sumarlo
+ * todo al saldo. Punto de extensión documentado, no construido.
  *
  * Un abono mayor al costo daría saldo negativo — un dato imposible que después
  * nadie sabe leer. O el abono está mal o el costo lo está; que lo resuelva quien
  * captura, no un `Math.max(0, …)` que esconde el problema.
  */
 export function saldoProveedor(
-  costoTotalCOP: number,
+  costoCompraCOP: number,
   abonoCOP: number | undefined,
 ): number {
   const abono = abonoCOP ?? 0;
   if (!Number.isFinite(abono) || abono < 0) {
     throw new Error(`abonoCOP inválido (recibí ${abono}).`);
   }
-  if (abono > costoTotalCOP) {
+  if (abono > costoCompraCOP) {
     throw new Error(
-      `el abono (${abono}) supera el costo total del lote (${costoTotalCOP}): ` +
-        `revisá cuál de los dos está mal antes de guardar.`,
+      `el abono (${abono}) supera el costo de compra del lote ` +
+        `(${costoCompraCOP}): revisá cuál de los dos está mal antes de ` +
+        `guardar. Los costos variables no cuentan acá — se le pagan a ` +
+        `terceros, no al proveedor.`,
     );
   }
-  return costoTotalCOP - abono;
+  return costoCompraCOP - abono;
 }
 
 /**
@@ -201,7 +215,8 @@ export function validarLoteV4(input: LoteV4Input): LoteV4Validado {
     costoTotalCOP,
     unidadesDeclaradas: input.unidadesDeclaradas,
     abonoCOP,
-    saldoCOP: saldoProveedor(costoTotalCOP, abonoCOP),
+    // Contra el costo de COMPRA, no el landed: la deuda es con el proveedor.
+    saldoCOP: saldoProveedor(costoCompraCOP, abonoCOP),
     joya: input.joya,
     origenModelo: 'v4',
   };

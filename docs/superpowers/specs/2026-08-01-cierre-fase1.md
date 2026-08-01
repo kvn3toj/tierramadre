@@ -164,6 +164,55 @@ corrida va a dar diferencias en TODAS las filas, y no se va a poder distinguir
   recálculos; el libro de PRUEBAS quedó con las tres pestañas vacías y las
   cabeceras puestas. Dev volvió a **60 lotes activos / $560.864**.
 
+## Inventario de endpoints publicos - el barrido inverso
+
+Regla que sale del propio hallazgo: blindar `previewLote` no servia de nada
+mientras cinco vecinas regalaban lo mismo. Antes de dar por cerrado un gate hay
+que enumerar TODAS las puertas, no solo la que se esta cerrando.
+
+**139 endpoints publicos** en el deployment. Los que devuelven estructura de
+costos, clasificados:
+
+### Riel v4 (esta rama) - todos cerrados
+
+| Endpoint | Antes | Ahora |
+| --- | --- | --- |
+| `precios.previewLote` | query publica con el fijo vigente, K, piso y margen | action + `ROLES_COSTOS` |
+| `casillas.estadoDelLote` | query publica con el costo de cada casilla | action + `ROLES_COSTOS` |
+| `casillas.porItemId` | query publica con el costo de la pieza | action + `ROLES_COSTOS` |
+| `movimientos.enConsignacion` | query publica, `lotItems` enteros | action + recorte a 4 campos |
+| `movimientos.porItem` | query publica con **numero de cuenta y titular del cliente** | **BORRADA** (no la usaba nadie) |
+| `lotsV4.casillasDeLote` | query publica con el costo de cada casilla | **BORRADA** (no la usaba nadie) |
+
+Hoy `convex/{precios,casillas,movimientos,lotsV4}.ts` no exportan **ni una**
+query publica. Lo pinnea `tests/previewLoteGate.test.ts`.
+
+### Riel viejo - exposicion PRE-EXISTENTE, no tocada aqui
+
+Verificado contra `main`: ya estaba asi antes de esta rama.
+
+| Endpoint | Que expone | Nota |
+| --- | --- | --- |
+| `products.list` | `costoBaseCOP` de cada item, sin `saleSafe` | Sin `idToken` |
+| `products.publishedCatalog` | `costoBaseCOP` | Es la query del catalogo de cara al cliente |
+| `products.getManyByItemIds`, `fotosintesisFields`, `getPublicByItem`, `patrones*` | precios | Sin `saleSafe` |
+| `lots.list` / `get` / `getByLoteId` | `costoTotalCOP`, y ahora tambien `costoCompraCOP`, `abonoCOP`, `saldoCOP`, `costosVariables[]` | El desglose v4 es exposicion **nueva** sobre una query vieja |
+| `lotItems.getByItemId` / `listByLote` | ahora incluyen `costoUnitarioRealCOP` | idem |
+| `ghl.searchProducts`, `fotosintesisAi.workspaceSnapshot` | precios | Sin `idToken` |
+
+**No las gatee, a proposito.** Son de `main`, las consume medio frontend, y cada
+conversion cuesta la suscripcion reactiva - el costo de UI que ya se pago tres
+veces en esta rama. Cerrarlas es un trabajo propio con su propio presupuesto.
+
+Lo que si es responsabilidad de esta rama y queda anotado: **los campos v4
+nuevos viajan por queries viejas que nadie gateo**, asi que el desglose de
+compra, los abonos y el costo por pieza salen por `lots.list` y
+`lotItems.listByLote` aunque sus endpoints v4 esten cerrados.
+
+Recomendacion para ese trabajo: extender `_lib/saleSafe.ts` a estas queries en
+vez de convertirlas en actions - recorta el payload y conserva la reactividad,
+que es lo que las hace usables.
+
 ## Pendientes antes de prod (no bloquean la Fase 2)
 
 - Las credenciales OAuth quedaron como env vars del deployment dev

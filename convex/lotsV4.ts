@@ -67,11 +67,33 @@ const createArgs = {
   numeroFactura: v.optional(v.string()),
   notas: v.optional(v.string()),
   operadorNombre: v.optional(v.string()),
+  /** Idempotencia, igual que `lots.create`: un reintento no crea dos lotes. */
+  clientToken: v.optional(v.string()),
 } as const;
 
 export const _create = internalMutation({
   args: createArgs,
   handler: async (ctx, args) => {
+    // 0. Replay: mismo token, mismo lote. Sin esto un doble clic crea dos lotes
+    //    con dos juegos de casillas y quema dos números de secuencia.
+    if (args.clientToken) {
+      const prior = await ctx.db
+        .query('commitTokens')
+        .withIndex('by_token', (q) => q.eq('token', args.clientToken!))
+        .unique();
+      if (prior) {
+        const sigue = await ctx.db.get(prior.primaryId as Id<'lots'>);
+        if (sigue) {
+          return JSON.parse(prior.result) as {
+            id: Id<'lots'>;
+            loteId: string;
+            casillas: string[];
+          };
+        }
+        await ctx.db.delete(prior._id);
+      }
+    }
+
     // 1. Las reglas duras, antes de tocar la base.
     const validado = validarLoteV4({
       categoriaFiscal: args.categoriaFiscal,
@@ -201,12 +223,24 @@ export const _create = internalMutation({
     // Si falla, la fila queda en cola y el cron de rescate la recoge.
     await ctx.scheduler.runAfter(0, internal.espejo.drenar, { limite: 25 });
 
-    return {
+    const resultado = {
       id: lotId,
       loteId,
       casillas: casillas.map((c) => c.itemId),
       recalculo: plan.recalcula ? plan.traza : undefined,
     };
+
+    if (args.clientToken) {
+      await ctx.db.insert('commitTokens', {
+        token: args.clientToken,
+        kind: 'lotsV4.create',
+        primaryId: lotId,
+        result: JSON.stringify(resultado),
+        createdAt: new Date().toISOString(),
+      });
+    }
+
+    return resultado;
   },
 });
 

@@ -130,6 +130,29 @@ export async function leerRango(
   return data.values ?? [];
 }
 
+/**
+ * Agrega una fila al final de la pestaña, dejando que Google resuelva CUÁL es
+ * el final.
+ *
+ * Calcular la fila del lado del cliente (`filas.length + 2`) es el mismo error
+ * que el `rowIndex = maxRow + 1` del riel viejo: el rango leído omite filas
+ * finales vacías en la columna consultada, así que una fila con una nota suelta
+ * al final se sobrescribía.
+ */
+export async function agregarFila(
+  token: string,
+  spreadsheetId: string,
+  pestana: string,
+  valores: (string | null)[],
+): Promise<void> {
+  await sheetsFetch(
+    token,
+    `${spreadsheetId}/values/${encodeURIComponent(pestana)}:append` +
+      `?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+    { method: 'POST', body: JSON.stringify({ values: [valores] }) },
+  );
+}
+
 export async function escribirRango(
   token: string,
   spreadsheetId: string,

@@ -85,6 +85,9 @@ describe('el fallo no revienta la mutación de origen', () => {
   });
 
   it('el error incrementa intentos en vez de perder la fila', () => {
-    expect(espejo).toMatch(/intentos: intentos \+ 1/);
+    // La cuenta se lleva; lo que cambia con el tope es a dónde va la fila
+    // cuando se agota (ver `tests/espejoCola.test.ts`).
+    expect(espejo).toMatch(/const nuevos = intentos \+ 1/);
+    expect(espejo).toMatch(/intentos: nuevos/);
   });
 });
