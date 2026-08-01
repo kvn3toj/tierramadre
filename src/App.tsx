@@ -159,6 +159,15 @@ const FotosintesisCapturaLoteV4 = lazyWithRetry(
   () => import('./pages/admin/Fotosintesis/CapturaLoteV4Page'),
   'FotosintesisCapturaLoteV4',
 );
+// W2 «Cerebro Creativo» — la grilla de casillas y la casilla suelta.
+const FotosintesisCasillasLote = lazyWithRetry(
+  () => import('./pages/admin/Fotosintesis/CasillasLotePage'),
+  'FotosintesisCasillasLote',
+);
+const FotosintesisCasillaW2 = lazyWithRetry(
+  () => import('./pages/admin/Fotosintesis/CasillaW2Page'),
+  'FotosintesisCasillaW2',
+);
 const FotosintesisLoteResumen = lazyWithRetry(
   () => import('./pages/admin/Fotosintesis/LoteResumenPage'),
   'FotosintesisLoteResumen',
@@ -757,6 +766,18 @@ function AppContent() {
                   <Route
                     path="lots/new-v4"
                     element={<FotosintesisCapturaLoteV4 />}
+                  />
+                ) : null}
+                {CAPTURA_V4_ENABLED ? (
+                  <Route
+                    path="lots/:loteId/casillas"
+                    element={<FotosintesisCasillasLote />}
+                  />
+                ) : null}
+                {CAPTURA_V4_ENABLED ? (
+                  <Route
+                    path="lots/:loteId/casillas/:itemId"
+                    element={<FotosintesisCasillaW2 />}
                   />
                 ) : null}
                 <Route

@@ -103,6 +103,15 @@ export default function EscanearPage() {
     scannedItemId ? { itemId: scannedItemId } : 'skip',
   );
 
+  // Casilla v4: el puente físico→digital de W2. El QR ya está impreso en la
+  // pieza, así que escanearlo es la forma natural de abrir su casilla —
+  // clasificar es corregir defaults, y buscar el ítem a mano es la fricción
+  // que hace que no se clasifique.
+  const casilla = useConvexQuery(
+    convexApi.casillas.porItemId,
+    scannedItemId ? { itemId: scannedItemId } : 'skip',
+  );
+
   const submitManual = useCallback(() => {
     const parsed = parseTmQr(manual);
     if (parsed.kind === 'item') {
@@ -512,6 +521,51 @@ export default function EscanearPage() {
                 >
                   REGISTRAR MOVIMIENTO
                 </Typography>
+                {/* Casilla v4 — la entrada directa de W2. Va ARRIBA de las
+                    acciones de siempre porque, cuando existe, es lo que se
+                    viene a hacer: la pieza está en la mano, sin clasificar. */}
+                {casilla ? (
+                  <Box
+                    component="button"
+                    type="button"
+                    data-testid="ir-a-casilla"
+                    onClick={() =>
+                      navigate(
+                        `/admin/fotosintesis/lots/${casilla.loteId}/casillas/${casilla.itemId}`,
+                      )
+                    }
+                    sx={{
+                      display: 'grid',
+                      gap: '4px',
+                      textAlign: 'left',
+                      padding: '12px 14px',
+                      marginBottom: 1,
+                      borderRadius: '12px',
+                      border: `1px solid ${foto.accent.primary}`,
+                      background: foto.surfaces.inset,
+                      cursor: 'pointer',
+                      width: '100%',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: foto.ink.primary,
+                      }}
+                    >
+                      {casilla.completa
+                        ? 'Ver casilla'
+                        : 'Clasificar esta pieza'}
+                    </Box>
+                    <Box sx={{ fontSize: 11, color: foto.ink.secondary }}>
+                      {casilla.completa
+                        ? `Lote ${casilla.loteId} · clasificada`
+                        : `Lote ${casilla.loteId} · falta: ${casilla.faltantes.join(', ')}`}
+                    </Box>
+                  </Box>
+                ) : null}
+
                 <Box
                   sx={{
                     display: 'grid',

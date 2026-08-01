@@ -618,6 +618,16 @@ export default defineSchema({
     costosVariables: v.optional(
       v.array(v.object({ concepto: v.string(), montoCOP: v.number() })),
     ),
+    /**
+     * El costo de compra PURO, sin los variables. `costoTotalCOP` guarda el
+     * landed cost (compra + variables) porque es lo que el motor absorbe, pero
+     * la conciliación contra la suma de las casillas tiene que usar este:
+     * los viáticos y el packing son del lote y no le pertenecen a ninguna
+     * pieza, así que compararlos contra Σ costos unitarios inventa una
+     * diferencia que no existe. Es la misma columna `F` de la auditoría,
+     * distinta de `F + J`.
+     */
+    costoCompraCOP: v.optional(v.number()),
     abonoCOP: v.optional(v.number()),
     saldoCOP: v.optional(v.number()),
     /**
@@ -626,6 +636,20 @@ export default defineSchema({
      * prorrateo) contradicen las de v4, y mezclarlas corrompería el costo.
      */
     origenModelo: v.optional(v.literal('v4')),
+    /**
+     * Queda escrito cuando alguien publica un lote con casillas incompletas.
+     * El override existe —la operación real a veces necesita publicar antes de
+     * terminar de clasificar— pero no puede ser invisible: sin registro, «se
+     * publicó parcial» se vuelve el estado normal y nadie sabe qué falta.
+     */
+    publicacionParcial: v.optional(
+      v.object({
+        ts: v.number(),
+        por: v.string(),
+        motivo: v.string(),
+        casillasIncompletas: v.array(v.string()),
+      }),
+    ),
 
     ...syncFields,
   })
@@ -663,6 +687,24 @@ export default defineSchema({
     costoUnitarioRealCOP: v.optional(v.number()),
     /** Solo cuando el lote es `mixta`: cada casilla declara su régimen. */
     categoriaFiscal: v.optional(v.union(v.literal('gema'), v.literal('joya'))),
+
+    // Los campos que W2 captura. Todos opcionales en el schema: la casilla nace
+    // vacía a propósito y se llena de a poco, posiblemente en varias sesiones.
+    // Cuáles son obligatorios para considerarla COMPLETA lo decide
+    // `_lib/casillaW2.ts`, no el schema — codificarlo en el validator
+    // impediría guardar el trabajo a medias, que es el caso normal.
+    renombre: v.optional(v.string()),
+    calidad: v.optional(v.string()),
+    color: v.optional(v.string()),
+    corte: v.optional(v.string()),
+    ct: v.optional(v.number()),
+    gradoRareza: v.optional(v.string()),
+    tipoJoya: v.optional(v.string()),
+    gramaje: v.optional(v.number()),
+    /** Intención comercial, no dato de la pieza. */
+    rangoVentaEsperadoCOP: v.optional(v.number()),
+    clasificadaPor: v.optional(v.string()),
+    clasificadaEn: v.optional(v.number()),
   })
     .index('by_loteId', ['loteId'])
     .index('by_itemId', ['itemId']),

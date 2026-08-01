@@ -123,6 +123,7 @@ export const _create = internalMutation({
 
       categoriaFiscal: validado.categoriaFiscal,
       joya: validado.joya,
+      costoCompraCOP: validado.costoCompraCOP,
       costosVariables: args.costosVariables,
       abonoCOP: validado.abonoCOP,
       saldoCOP: validado.saldoCOP,

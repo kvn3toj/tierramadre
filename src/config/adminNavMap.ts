@@ -170,6 +170,56 @@ export const ADMIN_NAV_MAP: readonly AdminRouteEntry[] = [
     showInMap: false,
   },
   {
+    id: 'fotosintesis.lote.casillas',
+    path: '/admin/fotosintesis/lots/:loteId/casillas',
+    label: 'Clasificar casillas',
+    group: 'Inventario',
+    iconName: 'LayoutGrid',
+    description:
+      'W2 Cerebro Creativo: score de clasificación, conciliación de costos y ' +
+      'gate de publicación del lote.',
+    keywords: ['casillas', 'clasificar', 'w2', 'publicar', 'completeness'],
+    roles: ADMIN,
+    params: [
+      {
+        name: 'loteId',
+        resolver: 'loteId',
+        label: 'lote (ej. B-001)',
+        required: true,
+      },
+    ],
+    dynamic: true,
+    showInMap: false,
+  },
+  {
+    id: 'fotosintesis.lote.casilla',
+    path: '/admin/fotosintesis/lots/:loteId/casillas/:itemId',
+    label: 'Casilla',
+    group: 'Inventario',
+    iconName: 'Gem',
+    description:
+      'Clasificar una pieza: costo unitario real capturado, calidad, color, ' +
+      'corte y rareza. Entrada directa por QR.',
+    keywords: ['casilla', 'clasificar', 'pieza', 'costo unitario', 'qr'],
+    roles: ADMIN,
+    params: [
+      {
+        name: 'loteId',
+        resolver: 'loteId',
+        label: 'lote (ej. B-001)',
+        required: true,
+      },
+      {
+        name: 'itemId',
+        resolver: 'itemId',
+        label: 'ítem (ej. 525)',
+        required: true,
+      },
+    ],
+    dynamic: true,
+    showInMap: false,
+  },
+  {
     id: 'fotosintesis.lote',
     path: '/admin/fotosintesis/lots/:loteId',
     label: 'Lote',
