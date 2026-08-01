@@ -611,6 +611,27 @@ export default defineSchema({
     preponderancia: v.number(),
     costoBaseCOP: v.number(),
     ordenEnLote: v.number(),
+
+    // ─── SOT v4 · W2 «Cerebro Creativo», la casilla ────────────────
+    //
+    // Una casilla v4 nace aquí y NO tiene fila en `productInventory`: crearla
+    // dispararía el push al SOT v3 vivo (el APP_URL del deployment de dev
+    // apunta a producción — ver reconocimiento §5.5) y sembraría un precio con
+    // el multiplicador plano 2,6× que este modelo erradica.
+    //
+    // Por eso `preponderancia` y `costoBaseCOP` quedan en 0 en las casillas v4:
+    // son campos del riel viejo. El costo autoritativo es
+    // `costoUnitarioRealCOP`, CAPTURADO — jamás prorrateado (regla §4.2, el
+    // error de $52.500 de «Choker + Piedra»).
+    estadoCasilla: v.optional(v.string()),
+    /**
+     * El costo real de ESTA pieza, capturado por quien la clasifica. Es el
+     * campo nuevo que reemplaza a `costoBaseCOP` en v4: aquel nace en cero, es
+     * propiedad de la hoja, y el helper que lo llenaba prorrateaba el lote.
+     */
+    costoUnitarioRealCOP: v.optional(v.number()),
+    /** Solo cuando el lote es `mixta`: cada casilla declara su régimen. */
+    categoriaFiscal: v.optional(v.union(v.literal('gema'), v.literal('joya'))),
   })
     .index('by_loteId', ['loteId'])
     .index('by_itemId', ['itemId']),
