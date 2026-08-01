@@ -188,6 +188,18 @@ export const _registrar = internalMutation({
     const kardexEventId = `KE-${String(n).padStart(6, '0')}`;
     const nuevoEstado = efectoSobreCasilla(args.tipo);
 
+    // El renombre del lote viaja denormalizado en la fila de la casilla. Se
+    // resuelve una vez por lote y no una por casilla: un movimiento de 20 piezas
+    // del mismo lote haría 20 lecturas idénticas.
+    const renombrePorLote = new Map<string, string | undefined>();
+    for (const loteId of new Set(casillas.map((c) => c.loteId))) {
+      const l = await ctx.db
+        .query('lots')
+        .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
+        .first();
+      renombrePorLote.set(loteId, l?.renombreLote);
+    }
+
     for (const casilla of casillas) {
       await ctx.db.patch(casilla._id, { estadoCasilla: nuevoEstado });
       // Re-encolar la casilla: su estado es un campo espejado. Sin esto la
@@ -200,6 +212,7 @@ export const _registrar = internalMutation({
         campos: filaCasillaParaEspejo({
           ...casilla,
           estadoCasilla: nuevoEstado,
+          renombreLote: renombrePorLote.get(casilla.loteId),
         } as never),
         estado: 'pendiente',
         intentos: 0,

@@ -213,6 +213,8 @@ export const _create = internalMutation({
         estado: 'abierto',
         sede: args.sede,
         renombreLote: args.renombreLote,
+        costosVariables: args.costosVariables,
+        joya: args.joya,
       }),
       estado: 'pendiente',
       intentos: 0,

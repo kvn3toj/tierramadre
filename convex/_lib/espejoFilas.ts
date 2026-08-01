@@ -20,9 +20,20 @@ export const CABECERAS_LOTES = [
   'proveedor',
   'categoriaFiscal',
   'costoCompraCOP',
+  // Desglose informativo. El total sigue siendo `costosVariablesCOP`.
+  'viaticosCOP',
+  'packingCOP',
+  'domicilioCOP',
+  'otrosVariablesCOP',
   'costosVariablesCOP',
   'costoTotalCOP',
   'unidades',
+  // Bloque Joya. Vacío en un lote de gema.
+  'tipoJoya',
+  'mineralJoya',
+  'gramajeJoya',
+  'costoPorGramoCOP',
+  'presupuestoJoyaCOP',
   'abonoCOP',
   'saldoCOP',
   'formaPago',
@@ -36,6 +47,7 @@ export const CABECERAS_CASILLAS = [
   'itemId',
   'loteId',
   'orden',
+  'renombreLote',
   'estadoCasilla',
   'categoriaFiscal',
   'costoUnitarioRealCOP',
@@ -45,8 +57,46 @@ export const CABECERAS_CASILLAS = [
   'corte',
   'ct',
   'gradoRareza',
+  'tipoJoya',
+  'gramaje',
   'rangoVentaEsperadoCOP',
 ] as const;
+
+/**
+ * Reparte los costos variables en los tres conceptos nombrados del canon, más
+ * un cajón para el resto.
+ *
+ * El mapeo por palabra clave no es una adivinanza: `CostosVariablesEditor`
+ * ofrece exactamente «Viáticos · Packing · Domicilio» como sugerencias, así que
+ * son los mismos tres. Lo que el operador escriba a mano cae en `otros`.
+ *
+ * El desglose es INFORMATIVO y siempre suma el total: si una clasificación
+ * fallara, `costosVariablesCOP` sigue siendo la cifra autoritativa y no se mueve.
+ */
+export function desglosaCostosVariables(
+  costos?: { concepto: string; montoCOP: number }[],
+): {
+  viaticosCOP: number;
+  packingCOP: number;
+  domicilioCOP: number;
+  otrosVariablesCOP: number;
+} {
+  const out = {
+    viaticosCOP: 0,
+    packingCOP: 0,
+    domicilioCOP: 0,
+    otrosVariablesCOP: 0,
+  };
+  for (const { concepto, montoCOP } of costos ?? []) {
+    // Sin tildes ni mayúsculas: «Viáticos», «viaticos» y «VIÁTICOS» son uno.
+    const c = concepto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    if (c.includes('viatico')) out.viaticosCOP += montoCOP;
+    else if (c.includes('packing')) out.packingCOP += montoCOP;
+    else if (c.includes('domicilio')) out.domicilioCOP += montoCOP;
+    else out.otrosVariablesCOP += montoCOP;
+  }
+  return out;
+}
 
 /**
  * Las cabeceras de la pestaña Movimientos (W3).
@@ -101,21 +151,40 @@ export interface FilaLote {
   estado: string;
   sede?: string;
   renombreLote?: string;
+  /** El desglose sale de acá; el total sigue viniendo en `costosVariablesCOP`. */
+  costosVariables?: { concepto: string; montoCOP: number }[];
+  joya?: {
+    tipoJoya: string;
+    mineral: string;
+    gramaje: number;
+    costoPorGramoCOP: number;
+    presupuestoJoyaCOP?: number;
+  };
 }
 
 const texto = (v: unknown): string =>
   v === undefined || v === null ? '' : String(v);
 
 export function filaLoteParaEspejo(lote: FilaLote): Record<string, string> {
+  const desglose = desglosaCostosVariables(lote.costosVariables);
   return {
     loteId: texto(lote.loteId),
     fecha: texto(lote.fechaRecepcion),
     proveedor: texto(lote.proveedor),
     categoriaFiscal: texto(lote.categoriaFiscal),
     costoCompraCOP: texto(lote.costoCompraCOP),
+    viaticosCOP: texto(desglose.viaticosCOP),
+    packingCOP: texto(desglose.packingCOP),
+    domicilioCOP: texto(desglose.domicilioCOP),
+    otrosVariablesCOP: texto(desglose.otrosVariablesCOP),
     costosVariablesCOP: texto(lote.costosVariablesCOP),
     costoTotalCOP: texto(lote.costoTotalCOP),
     unidades: texto(lote.unidadesDeclaradas),
+    tipoJoya: texto(lote.joya?.tipoJoya),
+    mineralJoya: texto(lote.joya?.mineral),
+    gramajeJoya: texto(lote.joya?.gramaje),
+    costoPorGramoCOP: texto(lote.joya?.costoPorGramoCOP),
+    presupuestoJoyaCOP: texto(lote.joya?.presupuestoJoyaCOP),
     abonoCOP: texto(lote.abonoCOP),
     saldoCOP: texto(lote.saldoCOP),
     formaPago: texto(lote.formaPago),
@@ -245,6 +314,10 @@ export interface FilaCasilla {
   ct?: number;
   gradoRareza?: string;
   rangoVentaEsperadoCOP?: number;
+  /** Del lote, denormalizado: la hoja se lee sin hacer el join a mano. */
+  renombreLote?: string;
+  tipoJoya?: string;
+  gramaje?: number;
 }
 
 export function filaCasillaParaEspejo(
@@ -254,6 +327,7 @@ export function filaCasillaParaEspejo(
     itemId: texto(casilla.itemId),
     loteId: texto(casilla.loteId),
     orden: texto(casilla.ordenEnLote),
+    renombreLote: texto(casilla.renombreLote),
     estadoCasilla: texto(casilla.estadoCasilla),
     categoriaFiscal: texto(casilla.categoriaFiscal),
     costoUnitarioRealCOP: texto(casilla.costoUnitarioRealCOP),
@@ -263,6 +337,8 @@ export function filaCasillaParaEspejo(
     corte: texto(casilla.corte),
     ct: texto(casilla.ct),
     gradoRareza: texto(casilla.gradoRareza),
+    tipoJoya: texto(casilla.tipoJoya),
+    gramaje: texto(casilla.gramaje),
     rangoVentaEsperadoCOP: texto(casilla.rangoVentaEsperadoCOP),
   };
 }

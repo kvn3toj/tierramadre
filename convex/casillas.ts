@@ -9,11 +9,7 @@
  * pushes legacy — ver la cabecera de `lotsV4.ts`.
  */
 import { v } from 'convex/values';
-import {
-  action,
-  internalMutation,
-  internalQuery,
-} from './_generated/server';
+import { action, internalMutation, internalQuery } from './_generated/server';
 import { internal } from './_generated/api';
 import { requireAccessLevel, ROLES_COSTOS } from './_lib/authz';
 import {
@@ -60,6 +56,8 @@ async function encolarLote(ctx: MutationCtx, id: Id<'lots'>): Promise<void> {
       estado: lote.estado,
       sede: lote.sede,
       renombreLote: lote.renombreLote,
+      costosVariables: lote.costosVariables,
+      joya: lote.joya,
     }),
     estado: 'pendiente',
     intentos: 0,
@@ -138,10 +136,21 @@ export const _guardar = internalMutation({
 
     await ctx.db.patch(casilla._id, patch);
 
+    const loteDeLaCasilla = await ctx.db
+      .query('lots')
+      .withIndex('by_loteId', (q) => q.eq('loteId', casilla.loteId))
+      .first();
+
     await ctx.db.insert('espejoOutbox', {
       pestana: 'Casillas',
       idFila: itemId,
-      campos: filaCasillaParaEspejo({ ...casilla, ...patch } as never),
+      // `renombreLote` viene del lote, denormalizado: quien lee la hoja no
+      // tiene por qué hacer el join a mano para saber de qué lote es la pieza.
+      campos: filaCasillaParaEspejo({
+        ...casilla,
+        ...patch,
+        renombreLote: loteDeLaCasilla?.renombreLote,
+      } as never),
       estado: 'pendiente',
       intentos: 0,
       creadoEn: Date.now(),
