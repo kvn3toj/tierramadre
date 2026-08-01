@@ -7,7 +7,13 @@
  *  2. El motor cotiza mientras se escribe, con sus advertencias.
  */
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -20,19 +26,17 @@ vi.mock('../../../../lib/convex-safe', () => ({
     precios: { previewLote: 'precios.previewLote' },
     lotsV4: { create: 'lotsV4.create' },
   },
-  useConvexQuery: (ref: string) =>
-    ref === 'precios.previewLote'
-      ? previewMock.current
-      : [
-          {
-            _id: 'p1',
-            nombreORazonSocial: 'Minas del Chivor',
-            tipo: 'gemas',
-          },
-        ],
+  useConvexQuery: () => [
+    { _id: 'p1', nombreORazonSocial: 'Minas del Chivor', tipo: 'gemas' },
+  ],
   useConvexMutation: () => async () => ({}),
   useConvexAction: () => async () => ({}),
-  useAuthedConvexAction: () => async () => ({ loteId: 'B-009', casillas: [] }),
+  // El preview dejó de ser query reactiva: ahora es una action gateada por rol,
+  // así que el mock tiene que distinguir cuál action le están pidiendo.
+  useAuthedConvexAction: (ref: string) =>
+    ref === 'precios.previewLote'
+      ? async () => previewMock.current
+      : async () => ({ loteId: 'B-009', casillas: [] }),
 }));
 
 vi.mock('../../../../contexts/NotificationContext', () => ({
@@ -125,7 +129,7 @@ describe('el preview del motor', () => {
     expect(screen.queryByTestId('preview-precio')).toBeNull();
   });
 
-  it('con los datos completos muestra K, equilibrio y objetivo', () => {
+  it('con los datos completos muestra K, equilibrio y objetivo', async () => {
     previewMock.current = {
       disponible: true,
       costoFijoUnitarioCOP: 442_787,
@@ -146,15 +150,18 @@ describe('el preview del motor', () => {
     fireEvent.change(screen.getByLabelText('Costo de compra del lote en COP'), {
       target: { value: '931931' },
     });
-    expect(screen.getByTestId('preview-precio').textContent).toContain(
-      '2.306.348',
+    // 350ms de debounce + la resolución de la action.
+    await waitFor(() =>
+      expect(screen.getByTestId('preview-precio').textContent).toContain(
+        '2.306.348',
+      ),
     );
     expect(screen.getByTestId('preview-piso').textContent).toContain(
       '1.537.566',
     );
   });
 
-  it('muestra la alerta de que el fijo pesa más que la pieza', () => {
+  it('muestra la alerta de que el fijo pesa más que la pieza', async () => {
     previewMock.current = {
       disponible: true,
       costoFijoUnitarioCOP: 442_787,
@@ -181,7 +188,9 @@ describe('el preview del motor', () => {
     fireEvent.change(screen.getByLabelText('Costo de compra del lote en COP'), {
       target: { value: '300000' },
     });
-    expect(screen.getByTestId('advertencia-FIJO_PESA_MAS')).toBeTruthy();
+    await waitFor(() =>
+      expect(screen.getByTestId('advertencia-FIJO_PESA_MAS')).toBeTruthy(),
+    );
   });
 });
 

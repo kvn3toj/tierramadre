@@ -9,15 +9,20 @@
  * handlers (ver reconocimiento §5.2).
  *
  * ¿Por qué el fijo unitario NO se recuenta en cada lectura? Porque el preview de
- * W1 es una query reactiva: se re-ejecuta con cada tecla mientras el operador
- * escribe el costo. Recontar el inventario ahí serían dos barridos de tabla por
- * pulsación, sobre un proyecto que ya apagó sus crons por ancho de banda. El
- * conteo caro se hace cuando el inventario CAMBIA (alta o venta, `_lib/recalculo`)
- * y deja su resultado en `recalculos`; leer el vigente es una query indexada que
- * devuelve una fila.
+ * W1 se pide mientras el operador escribe el costo. Recontar el inventario ahí
+ * serían dos barridos de tabla por pulsación, sobre un proyecto que ya apagó sus
+ * crons por ancho de banda. El conteo caro se hace cuando el inventario CAMBIA
+ * (alta o venta, `_lib/recalculo`) y deja su resultado en `recalculos`; leer el
+ * vigente es una query indexada que devuelve una fila.
+ *
+ * El preview es una **action gateada por rol**, no una query pública: devuelve
+ * la estructura de costos (fijo vigente, lotes activos, K, piso, margen) y eso
+ * no puede quedar detrás de una convención del frontend. Ver `previewLote`.
  */
 import { v } from 'convex/values';
-import { internalMutation, query } from './_generated/server';
+import { action, internalMutation, internalQuery } from './_generated/server';
+import { internal } from './_generated/api';
+import { requireAccessLevel, ROLES_COSTOS } from './_lib/authz';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import {
   CONFIG_PRECIOS_2026_07,
@@ -140,12 +145,13 @@ export async function costoFijoUnitarioVigente(
  * Recibe lo que el operador está escribiendo y devuelve K, el equilibrio real,
  * el objetivo y las advertencias. No escribe nada.
  *
- * NOTA DE ALCANCE: expone el gasto fijo vigente y el conteo de lotes activos, que
- * son datos de costo. Hoy solo lo consume la ruta de admin (detrás de
- * `AdminRoute`), pero es una query pública de Convex. Gatearla por rol antes de
- * prod está anotado en el doc de cierre.
+ * **Interna a propósito.** Devuelve datos de COSTO —el gasto fijo vigente, el
+ * conteo de lotes activos, K, el piso y el margen—, así que no puede ser una
+ * query pública: cualquiera con la URL del deployment podría llamarla. El único
+ * camino de entrada es la action `previewLote`, que verifica identidad y rol
+ * antes de llegar acá. `AdminRoute` esconde botones; no protege el backend.
  */
-export const previewLote = query({
+export const _previewLote = internalQuery({
   args: {
     costoCompraCOP: v.number(),
     costosVariablesCOP: v.optional(v.number()),
@@ -186,6 +192,37 @@ export const previewLote = query({
         unidadesDeclaradas: args.unidadesDeclaradas,
       }),
     };
+  },
+});
+
+/**
+ * La puerta del preview: verifica identidad y rol ANTES de tocar los datos.
+ *
+ * Es una action y no una query porque `requireAccessLevel` necesita `fetch`
+ * (verifica el token contra Google y el rol contra el roster). El costo de
+ * perder la reactividad es deliberado: un endpoint reactivo que devuelve la
+ * estructura de costos es un endpoint público que devuelve la estructura de
+ * costos, y `AdminRoute` solo esconde botones.
+ *
+ * `ROLES_COSTOS` vive en `_lib/authz.ts` para que la frontera tenga un dueño
+ * solo, en vez de repetirse endpoint por endpoint.
+ */
+export const previewLote = action({
+  args: {
+    idToken: v.string(),
+    costoCompraCOP: v.number(),
+    costosVariablesCOP: v.optional(v.number()),
+    categoriaFiscal: v.union(
+      v.literal('gema'),
+      v.literal('joya'),
+      v.literal('mixta'),
+    ),
+    unidadesDeclaradas: v.optional(v.number()),
+    fecha: v.string(),
+  },
+  handler: async (ctx, { idToken, ...args }): Promise<unknown> => {
+    await requireAccessLevel(idToken, [...ROLES_COSTOS]);
+    return await ctx.runQuery(internal.precios._previewLote, args);
   },
 });
 

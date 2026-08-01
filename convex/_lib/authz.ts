@@ -23,12 +23,33 @@ import { ConvexError } from 'convex/values';
 import { isSessionToken, verifySessionToken } from './sessionToken';
 
 export type AccessLevel =
-  | 'admin'
-  | 'asesor'
-  | 'embajador'
-  | 'provider'
-  | 'invitado_especial'
-  | 'guest';
+  'admin' | 'asesor' | 'embajador' | 'provider' | 'invitado_especial' | 'guest';
+
+/**
+ * Los roles que pueden ver DATOS DE COSTO: el gasto fijo vigente, el conteo de
+ * lotes activos, K, el piso real y el margen.
+ *
+ * No es lo mismo que «puede ver el precio». Un asesor cotiza y vende: necesita
+ * el precio final, no la estructura que lo produce. Mostrarle K y el margen le
+ * dice exactamente cuánto hay para descontar — es la misma frontera que
+ * `_lib/saleSafe.ts` ya defiende del lado del inventario.
+ *
+ * Hoy solo `admin`. Si aparece un rol financiero propio, se agrega ACÁ y no en
+ * cada endpoint, para que la frontera siga teniendo un solo dueño.
+ */
+export const ROLES_COSTOS: readonly AccessLevel[] = ['admin'];
+
+/**
+ * La decisión pura de autorización, extraída de `requireAccessLevel` para poder
+ * testearla sin red. La verificación de identidad (Google / sesión de app)
+ * sigue necesitando `fetch` y por eso vive en la action.
+ */
+export function esAutorizado(
+  accessLevel: AccessLevel,
+  allowed: readonly AccessLevel[],
+): boolean {
+  return allowed.includes(accessLevel);
+}
 
 export interface VerifiedCaller {
   email: string;
@@ -157,7 +178,7 @@ export async function requireAccessLevel(
 ): Promise<VerifiedCaller> {
   const { email, name } = await verifyCallerIdentity(idToken);
   const { accessLevel, rosterName, rosterRole } = await fetchRosterEntry(email);
-  if (!allowed.includes(accessLevel)) {
+  if (!esAutorizado(accessLevel, allowed)) {
     throw new ConvexError('No autorizado para esta acción.');
   }
   return { email, name, accessLevel, rosterName, rosterRole };

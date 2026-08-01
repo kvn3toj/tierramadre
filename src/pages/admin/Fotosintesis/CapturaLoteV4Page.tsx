@@ -18,7 +18,7 @@
  *
  * Guardar no captura piezas: crea las casillas y manda a clasificarlas (W2).
  */
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
@@ -34,7 +34,10 @@ import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
 import { FieldLabel } from './components/FieldLabel';
 import { NumberInputWithCalc } from './components/NumberInputWithCalc';
 import { EntityPicker } from './components/EntityPicker';
-import { PreviewMotorCard } from './capturaV4/PreviewMotorCard';
+import {
+  PreviewMotorCard,
+  type PreviewMotor,
+} from './capturaV4/PreviewMotorCard';
 import { CostosVariablesEditor } from './capturaV4/CostosVariablesEditor';
 import type { CostoVariable } from './capturaV4/CostosVariablesEditor';
 import {
@@ -99,22 +102,57 @@ export default function CapturaLoteV4Page() {
     [costosVariables],
   );
 
-  // El preview solo se pide cuando hay con qué cotizar. Pedirlo antes daría un
-  // número que cambia bajo los pies mientras se escribe.
-  const previewArgs =
-    categoriaFiscal && typeof costoCompraCOP === 'number' && costoCompraCOP > 0
-      ? {
-          costoCompraCOP,
-          costosVariablesCOP,
-          categoriaFiscal,
-          unidadesDeclaradas:
-            typeof unidadesDeclaradas === 'number' && unidadesDeclaradas > 0
-              ? unidadesDeclaradas
-              : undefined,
-          fecha: fechaRecepcion,
-        }
-      : 'skip';
-  const preview = useConvexQuery(convexApi.precios.previewLote, previewArgs);
+  // El preview es una ACTION gateada por rol, no una query reactiva: devuelve la
+  // estructura de costos y eso no puede quedar detrás de una convención del
+  // frontend. Como no es reactivo, se pide a mano y se debouncea — si no, cada
+  // tecla sería una verificación de token contra Google.
+  const pedirPreview = useAuthedConvexAction(convexApi.precios.previewLote);
+  const [preview, setPreview] = useState<PreviewMotor | undefined>(undefined);
+
+  const listoParaCotizar =
+    !!categoriaFiscal &&
+    typeof costoCompraCOP === 'number' &&
+    costoCompraCOP > 0;
+
+  useEffect(() => {
+    if (!listoParaCotizar) {
+      setPreview(undefined);
+      return;
+    }
+    let cancelado = false;
+    const t = setTimeout(() => {
+      pedirPreview({
+        costoCompraCOP: costoCompraCOP as number,
+        costosVariablesCOP,
+        categoriaFiscal: categoriaFiscal as CategoriaFiscal,
+        unidadesDeclaradas:
+          typeof unidadesDeclaradas === 'number' && unidadesDeclaradas > 0
+            ? unidadesDeclaradas
+            : undefined,
+        fecha: fechaRecepcion,
+      })
+        .then((r) => {
+          // Descartar respuestas de un tecleo anterior: sin esto, una respuesta
+          // lenta puede pisar a una más nueva y mostrar el precio equivocado.
+          if (!cancelado) setPreview(r as PreviewMotor);
+        })
+        .catch(() => {
+          if (!cancelado) setPreview(undefined);
+        });
+    }, 350);
+    return () => {
+      cancelado = true;
+      clearTimeout(t);
+    };
+  }, [
+    listoParaCotizar,
+    costoCompraCOP,
+    costosVariablesCOP,
+    categoriaFiscal,
+    unidadesDeclaradas,
+    fechaRecepcion,
+    pedirPreview,
+  ]);
 
   const joyaCompleta =
     categoriaFiscal !== 'joya' ||
@@ -548,9 +586,7 @@ export default function CapturaLoteV4Page() {
           <Box
             sx={{ display: 'grid', gap: '14px', position: 'sticky', top: 16 }}
           >
-            <PreviewMotorCard
-              preview={previewArgs === 'skip' ? undefined : (preview as never)}
-            />
+            <PreviewMotorCard preview={preview} />
 
             {error ? (
               <Box
