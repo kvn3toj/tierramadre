@@ -51,8 +51,18 @@ export const diagnosticoEstados = internalQuery({
       }
     }
 
+    // Cuántos lotes existen como FILA en `lots` — que es la base desde la que
+    // cuenta `contarLotesActivosDb`. Si es menor que `lotesConPiezas`, el
+    // divisor va a salir corto: hay mercancía cuyo lote no existe como registro.
+    // El pull no puede arreglarlo (`fotoSync` solo inserta providers/clients),
+    // así que esos lotes los crea la migración de Fase 2.
+    const lotes = await ctx.db.query('lots').collect();
+
     return {
       porEstado,
+      lotesEnTablaLots: lotes.length,
+      lotesEnTablaLotsNoCancelados: lotes.filter((l) => l.estado !== 'cancelado')
+        .length,
       lotesConPiezas: porLote.size,
       activosSoloPorEstadoVacio: activosSoloPorVacio.length,
       ejemplos: activosSoloPorVacio.slice(0, 10),
