@@ -174,7 +174,7 @@ describe('frontera v4 ↔ queries públicas de lotes', () => {
     expect(out.origenModelo).toBe('v4');
   });
 
-  it('las cuatro queries públicas de lote aplican el filtro', () => {
+  it('las cinco queries públicas de lote aplican el filtro', () => {
     const bloque = (src: string, nombre: string) => {
       const i = src.indexOf(`export const ${nombre}`);
       expect(i, `no se encontró ${nombre}`).toBeGreaterThan(-1);
@@ -190,10 +190,16 @@ describe('frontera v4 ↔ queries públicas de lotes', () => {
         'omitInternosV4',
       );
     }
-    expect(
-      bloque(lotItems, 'listByLote'),
-      'lotItems:listByLote sin filtro',
-    ).toContain('omitInternosV4');
+    // `getByItemId` es la gemela de `listByLote`: misma tabla, mismo campo
+    // nuevo (`costoUnitarioRealCOP`), pero el filtro se aplicó solo en una de
+    // las dos — la QR scanner (EscanearPage) llama a esta y quedó regalando
+    // el costo capturado de la pieza sin gate de rol.
+    for (const nombre of ['getByItemId', 'listByLote']) {
+      expect(
+        bloque(lotItems, nombre),
+        `lotItems:${nombre} sin filtro`,
+      ).toContain('omitInternosV4');
+    }
   });
 
   it('products:listByLote filtra las 14 de Fotosíntesis', () => {

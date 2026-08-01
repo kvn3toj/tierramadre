@@ -33,7 +33,9 @@ export const getByItemId = query({
       .query('lotItems')
       .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
-    return row ?? null;
+    // Gemela de `listByLote`: mismo `costoUnitarioRealCOP` capturado en v4,
+    // misma query pública sin `idToken`. Ver `_lib/saleSafe.ts`.
+    return row ? omitInternosV4(row) : null;
   },
 });
 
