@@ -26,6 +26,7 @@ import {
   type ShownLot,
 } from './_lib/publishedGroups';
 import { postToVercel } from './_lib/sheetSync';
+import { verificaDestinoDeEscritura } from './_lib/destinoEscritura';
 import { requireAccessLevel } from './_lib/authz';
 import { withPublishStamp } from './_lib/publishState';
 import { precioEspecialDeObservacion } from './_lib/precioEspecial';
@@ -992,6 +993,21 @@ export const pushToSheet = action({
     const syncToken: string | undefined = process.env.ADMIN_SYNC_TOKEN;
     if (!appUrl || !syncToken) {
       const msg = 'APP_URL or ADMIN_SYNC_TOKEN missing on Convex deployment';
+      await ctx.runMutation(internal.products._markPushFailed, {
+        itemId,
+        auditId,
+        error: msg,
+      });
+      return { ok: false, message: msg };
+    }
+
+    // Mismo candado que en `_lib/sheetSync.ts`: dev no le escribe al SOT v3.
+    const destino = verificaDestinoDeEscritura({
+      convexCloudUrl: process.env.CONVEX_CLOUD_URL,
+      appUrl,
+    });
+    if (!destino.permitido) {
+      const msg = destino.motivo ?? 'destino de escritura no permitido';
       await ctx.runMutation(internal.products._markPushFailed, {
         itemId,
         auditId,

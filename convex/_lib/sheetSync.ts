@@ -1,5 +1,6 @@
 import type { ActionCtx } from "../_generated/server";
 import type { FotoTable } from "./columnMaps";
+import { verificaDestinoDeEscritura } from "./destinoEscritura";
 
 /**
  * EXACT hosts we will forward the admin sync token to across a redirect. The
@@ -124,6 +125,17 @@ export async function pushTableRowToVercel(args: {
       ok: false,
       message: "APP_URL or ADMIN_SYNC_TOKEN missing on Convex deployment",
     };
+  }
+
+  // Un deployment que no es producción no le escribe a la hoja viva. Ver
+  // `_lib/destinoEscritura.ts`: el APP_URL de dev apunta a tierramadre.app, así
+  // que sin esto capturar en dev toca datos reales de la operación.
+  const destino = verificaDestinoDeEscritura({
+    convexCloudUrl: process.env.CONVEX_CLOUD_URL,
+    appUrl,
+  });
+  if (!destino.permitido) {
+    return { ok: false, message: destino.motivo ?? "destino de escritura no permitido" };
   }
 
   try {
