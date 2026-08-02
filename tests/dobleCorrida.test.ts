@@ -26,6 +26,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   compararPreciosItemV3vsV4,
+  mapearInventarioParaComparar,
   resumirComparacion,
 } from '../convex/_lib/dobleCorrida';
 
@@ -123,6 +124,42 @@ describe('compararPreciosItemV3vsV4', () => {
     expect(salida.map((c) => c.itemId).sort()).toEqual(
       ['372', '373', '374', '375', '999'].sort(),
     );
+  });
+});
+
+describe('mapearInventarioParaComparar', () => {
+  it('lee el id de la columna `item`, no `itemId` — el mismo defecto de la migración', () => {
+    const filas = [{ item: '372', precioFinalCOP: '700000' }];
+    expect(mapearInventarioParaComparar(filas)).toEqual([
+      { itemId: '372', precioFinalCOP: 700_000 },
+    ]);
+  });
+
+  it('parsea el formato con comas de miles que sirve Sheets (numeroDeHoja)', () => {
+    const filas = [{ item: '372', precioFinalCOP: '$ 700,000' }];
+    expect(mapearInventarioParaComparar(filas)[0].precioFinalCOP).toBe(700_000);
+  });
+
+  it('un precioFinalCOP ausente o 0 sale como undefined, no como 0', () => {
+    const filas = [
+      { item: '372', precioFinalCOP: '' },
+      { item: '373', precioFinalCOP: '0' },
+    ];
+    const out = mapearInventarioParaComparar(filas);
+    expect(out[0].precioFinalCOP).toBeUndefined();
+    expect(out[1].precioFinalCOP).toBeUndefined();
+  });
+
+  it('revienta si se leyeron filas y ninguna trae `item` — mapeo roto, no hoja vacía', () => {
+    expect(() =>
+      mapearInventarioParaComparar([
+        { itemId: '372', precioFinalCOP: '700000' },
+      ]),
+    ).toThrow(/item/);
+  });
+
+  it('una hoja de verdad vacía no revienta', () => {
+    expect(mapearInventarioParaComparar([])).toEqual([]);
   });
 });
 

@@ -13,6 +13,7 @@
  *
  * Puro: sin IO. La lectura de la hoja y de Convex vive en `convex/dobleCorrida.ts`.
  */
+import { numeroDeHoja } from './migracionV4';
 
 export interface FilaV3Item {
   itemId: string;
@@ -34,6 +35,39 @@ export interface ComparacionItem {
   diferenciaPct?: number;
   /** Por qué no se pudo comparar. Ausente cuando sí hay diferencia. */
   motivo?: string;
+}
+
+/** Una fila cruda de `/api/get-inventory-rows`: `{ cabecera -> texto }`. */
+export type FilaCruda = Record<string, unknown>;
+
+/**
+ * La pestaña Inventario, mapeada para la comparación.
+ *
+ * **El id de la pieza vive en la columna `item`, no `itemId`** — el mismo
+ * defecto que `_lib/migracionV4.ts` encontró corriendo el ensayo: leer la
+ * clave equivocada tira las 513 filas al filtro y el resultado se ve como una
+ * hoja vacía, no como un mapeo roto. Revienta si se leyeron filas y ninguna
+ * quedó usable; una hoja de verdad vacía no revienta.
+ */
+export function mapearInventarioParaComparar(
+  filas: readonly FilaCruda[],
+): FilaV3Item[] {
+  const texto = (v: unknown): string => String(v ?? '').trim();
+  const out = filas
+    .filter((f) => texto(f.item))
+    .map((f) => ({
+      itemId: texto(f.item),
+      precioFinalCOP: numeroDeHoja(f.precioFinalCOP) || undefined,
+    }));
+
+  if (filas.length > 0 && out.length === 0) {
+    throw new Error(
+      `Se leyeron ${filas.length} fila(s) y ninguna trae "item": el mapeo ` +
+        `está roto, no la hoja vacía. Columnas de la primera fila: ` +
+        `${Object.keys(filas[0] ?? {}).join(', ')}`,
+    );
+  }
+  return out;
 }
 
 /**

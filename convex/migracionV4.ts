@@ -48,7 +48,14 @@ function requiereAppUrl(): string {
   return appUrl.replace(/\/$/, '');
 }
 
-async function leerTabla(ruta: string): Promise<Array<Record<string, string>>> {
+/**
+ * Exportada para que `convex/dobleCorrida.ts` (punto 8) lea la pestaña
+ * Inventario por el mismo camino — mismo token, misma guarda de 0 filas — en
+ * vez de duplicar el fetch.
+ */
+export async function leerTabla(
+  ruta: string,
+): Promise<Array<Record<string, string>>> {
   const token = process.env.ADMIN_SYNC_TOKEN;
   if (!token) throw new Error('ADMIN_SYNC_TOKEN missing on Convex deployment');
 
@@ -195,7 +202,11 @@ export const _aplicarPlan = internalMutation({
         // El estado viaja como viene de la hoja. `normalizeLotEstado` ya lo
         // validó contra la unión antes de que llegara acá.
         estado: lote.estado as
-          'abierto' | 'cerrado' | 'publicado' | 'cancelado' | 'reconstruido',
+          | 'abierto'
+          | 'cerrado'
+          | 'publicado'
+          | 'cancelado'
+          | 'reconstruido',
         fechaRecepcion: lote.fechaRecepcion ?? '',
         costoTotalCOP: lote.costoTotalCOP,
         unidadesDeclaradas: lote.unidadesDeclaradas,
