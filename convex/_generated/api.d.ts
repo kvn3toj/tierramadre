@@ -45,6 +45,7 @@ import type * as _lib_publishState from "../_lib/publishState.js";
 import type * as _lib_publishedGroups from "../_lib/publishedGroups.js";
 import type * as _lib_recalculo from "../_lib/recalculo.js";
 import type * as _lib_saleSafe from "../_lib/saleSafe.js";
+import type * as _lib_segmentoLote from "../_lib/segmentoLote.js";
 import type * as _lib_sessionToken from "../_lib/sessionToken.js";
 import type * as _lib_sheetPullMaps from "../_lib/sheetPullMaps.js";
 import type * as _lib_sheetSync from "../_lib/sheetSync.js";
@@ -124,6 +125,7 @@ declare const fullApi: ApiFromModules<{
   "_lib/publishedGroups": typeof _lib_publishedGroups;
   "_lib/recalculo": typeof _lib_recalculo;
   "_lib/saleSafe": typeof _lib_saleSafe;
+  "_lib/segmentoLote": typeof _lib_segmentoLote;
   "_lib/sessionToken": typeof _lib_sessionToken;
   "_lib/sheetPullMaps": typeof _lib_sheetPullMaps;
   "_lib/sheetSync": typeof _lib_sheetSync;

@@ -1,10 +1,10 @@
 # La doble corrida ítem por ítem (SOT-V4-FASE1, punto 8)
 
-> Primera corrida el 2026-08-01: **0 de 513 comparables**, por dos precondiciones del motor que
-> no se cumplían para NINGÚN lote de dev (detalle en la sección «Historial» al final). Kevin
-> dictaminó las dos el 2026-08-02, se implementaron y se corrieron contra dev — sección
-> siguiente. Al aplicarlas apareció un **tercer bloqueo, nuevo y no dictaminado**, que deja el
-> resultado en **4 de 513 comparables**. Reportado, no resuelto.
+> Primera corrida el 2026-08-01: **0 de 513 comparables** (detalle en «Historial» al final).
+> Kevin dictaminó los puntos 5, 6 y 7 el 2026-08-02; las tres decisiones están implementadas y
+> corridas contra dev. Resultado final: **4 de 513 comparables** — el mecanismo entero funciona
+> de punta a punta, pero la cobertura sigue topada por un **tercer bloqueo, nuevo y no
+> dictaminado**, ajeno a las tres decisiones de hoy. Reportado, no resuelto.
 
 ## Qué compara y con qué columnas
 
@@ -14,7 +14,7 @@
   detalle en `tests/dobleCorrida.test.ts`.
 - **v4 — lo que el motor recomendaría:** `precioObjetivoUnidadCOP` (piso + 30% de margen neto).
 
-## Las dos decisiones de Kevin (2026-08-02), implementadas
+## Las tres decisiones de Kevin (2026-08-02), implementadas
 
 ### Decisión 1 — normalizar `fechaRecepcion` en la frontera
 
@@ -70,32 +70,76 @@ corrigió es la frontera Sheet→Convex, en tres puntos:
   cubren los puntos 5 y 6 (C-017, S-001, C-039, C-054, MED-001, MED-012 y compañía). No se
   tocaron: sin ítems no hay nombre del que inferir.
 
-## El resultado tras aplicar las dos: 4 de 513 comparables (no 0, pero tampoco los 104 esperables)
+### Decisión 3 — punto 5: segmento operacional / colección, con el divisor recalculado
+
+**Evidencia:** ítem 193 "Secretos del Sol" (`LC-03`), 20,68 ct Fina Esencial, colección Finas
+29-Ene, Bogotá/M.Campuzano, costo $310M — el modelo histórico EXCLUÍA Bogotá por diseño.
+Dictamen: **REALES, segmento COLECCIÓN**. Es OTRO negocio, no una variante del operacional:
+precio individual negociado, y NUNCA absorbe el gasto fijo mensual ni cuenta en el divisor D2
+(así era el modelo histórico — por eso `B6` decía 76 y no más).
+
+- **Schema:** `lots.segmento: 'operacional' | 'coleccion'` (ausente ⇒ operacional).
+- **`convex/_lib/segmentoLote.ts`** (puro, TDD, 3 casos): la regla es el prefijo `LC-` del
+  `loteId` — la convención de nombres que el propio SOT v3 ya usaba, no un criterio nuevo.
+- **El motor** (`_lib/motorUnidad.ts:preciosDelLote`, `precios.ts:motorDelLoteDb`) corta ANTES
+  de mirar categoría, costo o conciliación cuando `segmento === 'coleccion'`: motivo
+  `SEGMENTO_COLECCION`, nunca K/equilibrio/objetivo.
+- **El divisor D2** (`contarLotesActivosDb`) excluye colección de `lotesActivos` y
+  `unidadesActivas`.
+- **El Tablero** (`_lib/tablero.ts`, `precios.ts:tableroDelPeriodoDb`) separa
+  `inventarioActivoCOP` de un nuevo `inventarioColeccionCOP` — dos negocios, dos celdas, nunca
+  sumadas.
+- **`C-017`/`S-001`** ($378M c/u, sin piezas) NO entran a colección: siguen **EN AUDITORÍA** —
+  qué son sigue sin respuesta (ni Kevin ni esta sesión tienen la evidencia), y ya están
+  excluidos de precio y divisor por `LOTE_SIN_PIEZAS`, sin cambios.
+
+**Ejecutado en dev** (`migracionV4:_sembrarSegmentoEnDev`): `sembrados: 15` — exactamente
+`LC-01`..`LC-15`. El divisor recalculado, verificado en vivo:
+
+```
+ANTES:    lotesActivos: 88  · costoFijoUnitarioCOP: $382.407
+DESPUÉS:  lotesActivos: 73  · costoFijoUnitarioCOP: $460.984   (33.651.815 ÷ 73, exacto)
+```
+
+Y el Tablero, verificado en vivo para 2026-08: `inventarioActivoCOP: $53.613.946` +
+`inventarioColeccionCOP: $1.723.416.425` = **$1.777.030.371** — la misma suma combinada de
+antes, ahora partida en sus dos negocios sin perder ni un peso.
+
+### Puntos 6 y 7 — reconfirmados, sin código nuevo
+
+- **Punto 6** (C-039, C-054, MED-001, MED-012): Kevin endosó la propuesta de migrar tal cual —
+  los guardas existentes (`loteEstaActivo`, `inventarioActivoCOP` sobre casillas,
+  `preciosDelLote` rechazando lotes sin casillas) ya los excluyen de precio y divisor sin código
+  nuevo. Sin cambios esta jornada.
+- **Punto 7** (categoriaFiscal por inferencia): ya ejecutado la jornada anterior — ver «Decisión
+  2» arriba. Reconfirmado.
+
+## El resultado final: 4 de 513 comparables, con el divisor ya recalculado
 
 ```
 filasHojaLeidas: 513
 comparables: 4
-medianaDiferenciaPct: +3.36%
-sobre5Pct: 1 · sobre10Pct: 0
-paraRevisarInferencia: []   ← ninguno de los 4 divergió >30% (bonus de detección, §2d)
+medianaDiferenciaPct: +11.4%        (subió de +3.36% — el divisor 73/$460.984 pesa más por lote)
+sobre5Pct: 3 · sobre10Pct: 3         (subieron de 1 y 0)
+paraRevisarInferencia: []           ← ninguno de los 4 divergió >30% (bonus de detección, §2d)
 sinComparar:
   - 476 · "v4 no cotiza el ítem (sin casilla, sin costo capturado, o lote sin categoría fiscal)"
   -  33 · "sin precioFinalCOP en el SOT v3"
 ```
 
-Los cuatro ítems comparables, completos (todos del mismo bloque de lotes MED-004..MED-007, uno
-cada uno):
+Los cuatro ítems comparables (todos del mismo bloque de lotes `MED-004`..`MED-007`, uno cada
+uno — ninguno es colección, la segmentación no cambió CUÁLES cotizan, solo CUÁNTO):
 
-| itemId | precio v3 (`precioFinalCOP`) | precio v4 (`precioObjetivoUnidadCOP`) |     Δ COP |       Δ % |
-| ------ | ---------------------------: | ------------------------------------: | --------: | --------: |
-| 487    |                   $2.054.421 |                            $1.954.282 | −$100.139 |     −4.9% |
-| 490    |                   $1.537.224 |                            $1.622.745 |  +$85.521 | **+5.6%** |
-| 491    |                   $1.637.789 |                            $1.687.210 |  +$49.421 |     +3.0% |
-| 492    |                   $1.609.057 |                            $1.668.792 |  +$59.735 |     +3.7% |
+| itemId | precio v3 (`precioFinalCOP`) | precio v4 (`precioObjetivoUnidadCOP`) |     Δ COP |        Δ % |
+| ------ | ---------------------------: | ------------------------------------: | --------: | ---------: |
+| 487    |                   $2.054.421 |                            $2.085.243 |  +$30.822 |      +1.5% |
+| 490    |                   $1.537.224 |                            $1.753.707 | +$216.483 | **+14.1%** |
+| 491    |                   $1.637.789 |                            $1.818.172 | +$180.383 |     +11.0% |
+| 492    |                   $1.609.057 |                            $1.668.792 |  +$59.735 |      +3.7% |
 
-Sin patrón claro con solo 4 puntos — dos suben, uno baja, ninguno se dispara. No alcanza para
-sacar una conclusión de negocio; alcanza para confirmar que el mecanismo entero (leer la hoja,
-leer dev, comparar, agregar) funciona de punta a punta con datos reales.
+Los cuatro subieron (antes había uno que bajaba) — consistente con un divisor más alto: cada
+lote operacional absorbe más gasto fijo ahora que colección ya no lo diluye. Sigue sin alcanzar
+para una lectura de negocio: son 4 ítems de un mismo lote, no una muestra del catálogo.
 
 ## El tercer bloqueo — nuevo, no dictaminado, no corregido
 
@@ -124,10 +168,11 @@ decisión 1 arriba). **Solo 4 lotes** (`MED-004`..`MED-007`) tienen, a la vez: c
 comparables — no es una coincidencia, es la intersección exacta de las tres condiciones.
 
 **No se corrige acá.** Es exactamente la situación que el protocolo de sesión pide parar y
-reportar: la premisa de esta sesión («con las dos decisiones de Kevin, la doble corrida corre
-de verdad») era cierta para el MECANISMO, pero la COBERTURA real depende de un tercer factor
-que nadie había medido — cuántos `lotItems` tienen los campos v4 completos. Es una pregunta de
-alcance de la migración/clasificación, no un bug de esta rama.
+reportar: la premisa de esta sesión («con las decisiones de Kevin, la doble corrida corre de
+verdad») era cierta para el MECANISMO, pero la COBERTURA real depende de un tercer factor que
+nadie había medido — cuántos `lotItems` tienen los campos v4 completos. Es una pregunta de
+alcance de la migración/clasificación, no un bug de esta rama. La segmentación (decisión 3) no
+lo toca: mueve CUÁNTO cotizan los 4 lotes que ya cotizaban, no CUÁLES.
 
 ## Qué falta para subir la cobertura más allá de 4/513
 
@@ -146,10 +191,14 @@ alcance de la migración/clasificación, no un bug de esta rama.
   `paraRevisarInferencia`). 22 tests.
 - `convex/_lib/categoriaFiscalInferencia.ts` — inferencia + gate de Fase 3. 10 tests.
 - `convex/_lib/fechaSheet.ts` — normalización de fecha. 7 tests.
+- `convex/_lib/segmentoLote.ts` — regla operacional/colección. 3 tests. Motor, divisor y Tablero
+  actualizados con TDD propio (`motorUnidad.test.ts`, `tablero.test.ts`,
+  `espejoFilasCanon.test.ts`).
 - `convex/dobleCorrida.ts`, `convex/categoriaFiscalInferencia.ts`, `convex/migracionV4.ts` — IO,
-  solo lectura salvo los dos backfills explícitamente autorizados (fechas y categoría), ambos
-  dev-only y verificados en vivo.
-- Corrido en vivo tres veces contra dev y el SOT v3 en total (0 → 4 comparables), reproducible.
+  solo lectura salvo los tres backfills explícitamente autorizados (fechas, categoría,
+  segmento), todos dev-only y verificados en vivo.
+- Corrido en vivo cuatro veces contra dev y el SOT v3 en total (0 → 4 → 4, con el divisor
+  recalculado), reproducible.
 
 ## Historial
 
