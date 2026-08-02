@@ -722,6 +722,18 @@ export default defineSchema({
       ),
     ),
     /**
+     * El negocio que es este lote (dictamen de Kevin, punto 5, 2026-08-02).
+     * `'operacional'` es el default implícito: absorbe el gasto fijo de la
+     * comercializadora (D2/divisor) y se precifica por absorción (K +
+     * escalones). `'coleccion'` es OTRO negocio — piezas reales, precio
+     * individual y negociado, NUNCA absorbe el fijo mensual ni cuenta en el
+     * divisor (así era el modelo histórico: por eso `B6` decía 76 y no más).
+     * Ausente ⇒ operacional, para no forzar el campo en cada lote legacy.
+     */
+    segmento: v.optional(
+      v.union(v.literal('operacional'), v.literal('coleccion')),
+    ),
+    /**
      * Descripción de COMPRA — el «Cerebro Racional» de W1. Es OTRA cosa que
      * `renombreLote`, que es el nombre comercial/creativo de W2. El canon las
      * lista aparte a propósito: una dice qué se compró, la otra cómo se vende.
