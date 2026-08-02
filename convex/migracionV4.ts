@@ -31,6 +31,7 @@ import {
 import { internal } from './_generated/api';
 import { exigeDeploymentDeDesarrollo } from './_lib/destinoEscritura';
 import { normalizarFechaRecepcion } from './_lib/fechaSheet';
+import { inferirSegmentoLote } from './_lib/segmentoLote';
 import { NOMBRE_PROVEEDOR_CENTINELA } from './_lib/proveedorCentinela';
 import {
   formatearReporteExcepciones,
@@ -297,6 +298,34 @@ export const _normalizarFechasEnDev = internalMutation({
     }
 
     return { totalLots: lots.length, normalizados, sinNormalizar };
+  },
+});
+
+/**
+ * Backfill de una sola vez: marca `segmento: 'coleccion'` en los lotes
+ * `LC-*` de dev (punto 5, dictamen de Kevin, 2026-08-02). Nunca pisa un
+ * `segmento` ya marcado — corre de nuevo sin duplicar nada. No escribe
+ * `'operacional'` en los demás: es el default implícito (`_lib/segmentoLote.ts`),
+ * y marcar 113 filas cuando alcanza con las ~15 de colección sería ruido.
+ */
+export const _sembrarSegmentoEnDev = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    exigeDeploymentDeDesarrollo(process.env.CONVEX_CLOUD_URL);
+
+    const lots = await ctx.db.query('lots').collect();
+    let sembrados = 0;
+    const marcados: string[] = [];
+
+    for (const lote of lots) {
+      if (lote.segmento) continue;
+      if (inferirSegmentoLote(lote.loteId) !== 'coleccion') continue;
+      await ctx.db.patch(lote._id, { segmento: 'coleccion' });
+      sembrados++;
+      marcados.push(lote.loteId);
+    }
+
+    return { totalLots: lots.length, sembrados, marcados };
   },
 });
 
