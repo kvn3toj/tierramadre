@@ -78,6 +78,15 @@ Dictamen: **REALES, segmento COLECCIÓN**. Es OTRO negocio, no una variante del 
 precio individual negociado, y NUNCA absorbe el gasto fijo mensual ni cuenta en el divisor D2
 (así era el modelo histórico — por eso `B6` decía 76 y no más).
 
+> **Matiz de Anima, que REFUERZA el dictamen, no lo contradice.** La nota
+> `2026-07-24-reconciliacion-costos-3-rondas-y-precio-sheet-owned.md` §8 ya había marcado el
+> mismo ítem 193: su valor lleva flag `AVALUO_PESO_x_TARIFA` / `TOTAL_REDONDO_ESTIMADO` — es una
+> **tasación por peso×tarifa, no una factura** — y esa misma nota exige _"captura contra factura
+> antes de cualquier uso contable/fiscal"_. Real y valuado no es lo mismo que facturado: es una
+> razón más, no una objeción, para que el segmento colección quede FUERA del modelo operativo
+> (no absorbe fijo, no cuenta en el divisor, precio individual negociado) hasta que esa captura
+> exista — precisamente lo que este dictamen ya hace.
+
 - **Schema:** `lots.segmento: 'operacional' | 'coleccion'` (ausente ⇒ operacional).
 - **`convex/_lib/segmentoLote.ts`** (puro, TDD, 3 casos): la regla es el prefijo `LC-` del
   `loteId` — la convención de nombres que el propio SOT v3 ya usaba, no un criterio nuevo.
