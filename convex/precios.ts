@@ -93,8 +93,11 @@ export async function contarLotesActivosDb(
   // que ya existen ahí, así que a partir de ella cada pieza aparecía dos veces
   // y `unidadesActivas` salía al doble.
   const porLote = agruparUnidadesPorLote({
+    // `coleccion` es OTRO negocio (punto 5, 2026-08-02): nunca absorbe el
+    // gasto fijo de la comercializadora, así que no cuenta en D2 — ni como
+    // lote activo ni en `unidadesActivas`. Así era el modelo histórico.
     lotesVivos: lots
-      .filter((l) => l.estado !== 'cancelado')
+      .filter((l) => l.estado !== 'cancelado' && l.segmento !== 'coleccion')
       .map((l) => l.loteId),
     inventario: await ctx.db.query('productInventory').collect(),
     casillas: await ctx.db.query('lotItems').collect(),
