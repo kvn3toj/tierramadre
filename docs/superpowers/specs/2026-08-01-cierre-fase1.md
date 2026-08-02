@@ -639,3 +639,87 @@ resueltas, `npx convex run dobleCorrida:ejecutar '{}'` produce la tabla real sin
   solo número, y la migración a Fase 2 tampoco puede asumir precios sobre el catálogo migrado.
 - Nada mergeado, nada pusheado, ningún env var tocado, Convex prod sin una sola lectura ni
   escritura desde esta jornada.
+
+---
+
+# Quinta jornada — 2026-08-02 — los dos bloqueos del punto 8, dictaminados y ejecutados
+
+Kevin resolvió los dos bloqueos que dejó la cuarta jornada (fecha y categoría fiscal) con
+decisiones concretas, ejecutables de inmediato. Se implementaron, se corrieron contra dev, y al
+hacerlo apareció un **tercer bloqueo nuevo**, reportado sin corregir. Ocho commits. Suite
+1165→**1196 tests**, `tsc -p convex` limpio en cada uno. Sin mergear, sin pushear.
+
+## Decisión 1 — normalizar `fechaRecepcion` en la frontera, ejecutada
+
+El motor no se afloja: `configVigenteEn` sigue exigiendo `AAAA-MM-DD` exacto. Se normaliza en
+tres puntos de entrada (`_lib/fechaSheet.ts`, `_lib/sheetPullMaps.ts` con un `coerce: 'fecha'`
+nuevo, `_lib/migracionV4.ts:mapearLotesHoja`) más un backfill de una sola vez
+(`migracionV4:_normalizarFechasEnDev`) para los 128 lotes que ya existían en dev.
+
+**Corrido en vivo:** `normalizados: 67 · sinNormalizar: 55`. Los 55 no son un fallo de la
+normalización — son lotes con `fechaRecepcion` genuinamente VACÍA (texto `""`), no mal
+formateada. No se les inventó una fecha.
+
+## Decisión 2 — sembrar `categoriaFiscal` por inferencia, con origen marcado, ejecutada
+
+La lista de palabras clave es la misma que ya usó la auditoría del 25/07 para clasificar por
+nombre (pregunta abierta #2 de `tierramadre-modelo-fijacion-precios-v2`), codificada hoy por
+primera vez sin cambiarla. `lots.categoriaFiscalOrigen` nuevo (`'capturada' | 'inferida' |
+'revisada'`); lo sembrado por inferencia sale marcado `'inferida'`, nunca `'capturada'`. El
+candado del motor sigue igual (solo exige que la categoría EXISTA), pero cada precio de un lote
+`'inferida'` viaja con el aviso `CATEGORIA_INFERIDA` (`_lib/motorUnidad.ts`), el espejo lo
+muestra con sufijo (`_lib/espejoFilas.ts`), y `lotesPendientesDeRevision`
+(`_lib/categoriaFiscalInferencia.ts`) es el **gate duro de Fase 3**: prod no corta con ningún
+lote ahí.
+
+**Corrido en vivo, con autorización explícita de Kevin para escribir:**
+`lotesSembrados: 104 · casillasSembradas: 200` (78 gema, 18 joya, 8 mixta). Los 24 lotes que no
+se pudieron inferir son los mismos sin piezas enlazadas que ya cubren los puntos 5 y 6.
+
+**Bonus de detección (§2d), también construido:** `compararPreciosItemV3vsV4` ahora marca
+`revisarInferencia: true` cuando un ítem de un lote `'inferida'` diverge más de 30% contra el
+precio real — la propia doble corrida detectando sus inferencias sospechosas, sin que nadie
+tenga que leer las 513 filas a mano.
+
+## El resultado: 0 → 4 de 513 comparables, y un tercer bloqueo nuevo
+
+Con las dos decisiones aplicadas, la doble corrida subió de 0 a **4 comparables** (mediana
++3,4%, 1 ítem sobre 5%, ninguno sobre 10%, ninguno marcado para revisión de inferencia). No los
+~300-400 que cabía esperar de 104 lotes sembrados.
+
+**Por qué:** de los 513 `lotItems` en dev, solo **375 tienen los campos v4**
+(`estadoCasilla`, `costoUnitarioRealCOP`) — exactamente los que creó la migración del
+2026-08-01. Los otros **138 son del riel viejo**: tienen `loteId`/`itemId` (por eso alimentaron
+la inferencia, que solo necesita el nombre) pero les faltan los campos que
+`preciosPorItemDb` exige para cotizar, y nunca los van a tener hasta que alguien los clasifique
+por W2. De los 375 que sí podrían, la mayoría pertenece a lotes con `fechaRecepcion` vacía (los
+reconstruidos, decisión 1). La intersección de las tres condiciones —categoría, fecha, campos
+v4— da exactamente 4 lotes (`MED-004`..`MED-007`).
+
+**No se corrigió.** Es la misma regla de siempre: la premisa de la sesión («con las dos
+decisiones, la doble corrida corre de verdad») era cierta para el mecanismo, pero la cobertura
+depende de un tercer factor que nadie había medido. Documentado completo, con la tabla de los 4
+ítems comparables, en `2026-08-01-doble-corrida-item-por-item.md` — reescrito para esta
+jornada, con el resultado de la primera corrida preservado en un `<details>` al final.
+
+## Artifacts
+
+Commits: `2bdf44a` (fecha, TDD+wiring+backfill) · `8980b32` (categoría, schema+TDD+motor+espejo)
+· `d6d7854` (wiring de la siembra) · `3d1ab10` (bonus de detección). Los dos backfills
+(`migracionV4:_normalizarFechasEnDev`, `categoriaFiscalInferencia:ejecutar` con
+`dryRun: false`) se corrieron contra dev con autorización explícita de Kevin en la propia
+decisión — verificados en vivo, no simulados.
+
+## Lo que queda para la próxima sesión
+
+- **Tercer bloqueo, sin dictamen:** ¿vale la pena clasificar por W2 los 138 `lotItems` del riel
+  viejo para que puedan entrar a la doble corrida? ¿o se acepta que mientras tanto la doble
+  corrida solo puede medir lo que migró el 2026-08-01?
+- **`fechaRecepcion` vacía en lotes reconstruidos** sigue sin fuente: no hay dato que normalizar
+  porque no hay dato.
+- Puntos 5 y 6 siguen esperando dictamen — sin cambios esta jornada.
+- **Fase 3, cuando llegue:** correr `lotesPendientesDeRevision` antes de cualquier cutover. Hoy
+  devolvería 104 lotes — ninguno graduado a `'revisada'` todavía.
+- Nada mergeado, nada pusheado, ningún env var tocado. Convex prod sin una sola lectura ni
+  escritura. Las dos escrituras a dev (fechas, categoría) fueron explícitamente autorizadas por
+  Kevin en la decisión de esta jornada.
