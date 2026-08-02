@@ -222,6 +222,12 @@ export interface FilaLote {
   fechaPago?: string;
   proveedor: string;
   categoriaFiscal: string;
+  /**
+   * De dónde salió `categoriaFiscal` (decisión de Kevin, 2026-08-02). Solo
+   * `'inferida'` cambia el texto que ve el espejo — nadie confunde una
+   * hipótesis por palabras clave con un dictamen.
+   */
+  categoriaFiscalOrigen?: 'capturada' | 'inferida' | 'revisada';
   costoCompraCOP: number;
   costosVariablesCOP: number;
   costoTotalCOP: number;
@@ -282,6 +288,19 @@ export interface MotorParaEspejo {
 const texto = (v: unknown): string =>
   v === undefined || v === null ? '' : String(v);
 
+/**
+ * `'joya (inferida)'`, nunca `'joya (capturada)'` ni `'joya (revisada)'`: el
+ * sufijo existe para marcar una HIPÓTESIS, no para narrar todo el ciclo de
+ * vida del campo.
+ */
+const conSufijoInferida = (
+  categoriaFiscal: unknown,
+  origen: 'capturada' | 'inferida' | 'revisada' | undefined,
+): string => {
+  const base = texto(categoriaFiscal);
+  return origen === 'inferida' && base ? `${base} (inferida)` : base;
+};
+
 export function filaLoteParaEspejo(lote: FilaLote): Record<string, string> {
   const desglose = desglosaCostosVariables(lote.costosVariables);
   return {
@@ -289,7 +308,10 @@ export function filaLoteParaEspejo(lote: FilaLote): Record<string, string> {
     nombre: texto(lote.nombre),
     fecha: texto(lote.fechaRecepcion),
     proveedor: texto(lote.proveedor),
-    categoriaFiscal: texto(lote.categoriaFiscal),
+    categoriaFiscal: conSufijoInferida(
+      lote.categoriaFiscal,
+      lote.categoriaFiscalOrigen,
+    ),
     costoCompraCOP: texto(lote.costoCompraCOP),
     viaticosCOP: texto(desglose.viaticosCOP),
     packingCOP: texto(desglose.packingCOP),
@@ -499,6 +521,8 @@ export interface FilaCasilla {
   ordenEnLote: number;
   estadoCasilla: string;
   categoriaFiscal?: string;
+  /** Del lote, denormalizado — mismo criterio que `renombreLote` abajo. */
+  categoriaFiscalOrigen?: 'capturada' | 'inferida' | 'revisada';
   costoUnitarioRealCOP?: number;
   renombre?: string;
   calidad?: string;
@@ -530,7 +554,10 @@ export function filaCasillaParaEspejo(
     orden: texto(casilla.ordenEnLote),
     renombreLote: texto(casilla.renombreLote),
     estadoCasilla: texto(casilla.estadoCasilla),
-    categoriaFiscal: texto(casilla.categoriaFiscal),
+    categoriaFiscal: conSufijoInferida(
+      casilla.categoriaFiscal,
+      casilla.categoriaFiscalOrigen,
+    ),
     costoUnitarioRealCOP: texto(casilla.costoUnitarioRealCOP),
     renombre: texto(casilla.renombre),
     calidad: texto(casilla.calidad),

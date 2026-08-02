@@ -211,6 +211,7 @@ export async function preciosPorItemDb(
         categoriaFiscal: c.categoriaFiscal,
       })),
       categoriaFiscalLote: lote.categoriaFiscal,
+      categoriaFiscalOrigen: lote.categoriaFiscalOrigen,
       costosVariablesLoteCOP: (lote.costosVariables ?? []).reduce(
         (a, c) => a + c.montoCOP,
         0,

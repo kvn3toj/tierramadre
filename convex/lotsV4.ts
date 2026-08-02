@@ -162,6 +162,10 @@ export const _create = internalMutation({
       estado: 'abierto',
 
       categoriaFiscal: validado.categoriaFiscal,
+      // W1 la pide con un desplegable: un humano la escribió. Distinto de la
+      // inferencia por palabras clave (`categoriaFiscalInferencia.ts`), que
+      // marca 'inferida' y necesita revisión antes de Fase 3.
+      categoriaFiscalOrigen: 'capturada',
       joya: validado.joya,
       gema: validado.gema,
       nombre: args.nombre,
@@ -225,6 +229,7 @@ export const _create = internalMutation({
         fechaRecepcion: args.fechaRecepcion,
         proveedor: provider.nombreORazonSocial,
         categoriaFiscal: validado.categoriaFiscal,
+        categoriaFiscalOrigen: 'capturada',
         costoCompraCOP: validado.costoCompraCOP,
         costosVariablesCOP: validado.costosVariablesCOP,
         costoTotalCOP: validado.costoTotalCOP,

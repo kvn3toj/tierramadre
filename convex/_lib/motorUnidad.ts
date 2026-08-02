@@ -92,6 +92,13 @@ export interface PrecioUnidad {
   equilibrioRealUnidadCOP: number;
   /** `K/0,60` gema · `K/0,41` joya. Supervivencia + el 30% de margen neto. */
   precioObjetivoUnidadCOP: number;
+  /**
+   * `['CATEGORIA_INFERIDA']` cuando el lote cotizó con una `categoriaFiscal`
+   * que nadie capturó — sembrada por palabras clave (decisión de Kevin,
+   * 2026-08-02). Ausente en cualquier otro caso: el candado del motor solo
+   * exige que la categoría EXISTA, este aviso es lo que dice de dónde salió.
+   */
+  avisos?: string[];
 }
 
 /**
@@ -215,6 +222,12 @@ export interface PreciosDelLoteInput {
   costosVariablesLoteCOP: number;
   costoFijoUnitarioLoteCOP: number;
   config: ConfigPrecios;
+  /**
+   * De dónde salió `categoriaFiscalLote`. `'inferida'` estampa
+   * `CATEGORIA_INFERIDA` en cada precio que sale (decisión de Kevin,
+   * 2026-08-02) — el candado de arriba no distingue, este campo sí.
+   */
+  categoriaFiscalOrigen?: 'capturada' | 'inferida' | 'revisada';
 }
 
 export interface PreciosDelLote {
@@ -243,7 +256,10 @@ export interface PreciosDelLote {
  * heredar «gema» cotizaría una joya 46% por debajo.
  */
 export function preciosDelLote(input: PreciosDelLoteInput): PreciosDelLote {
-  const vacio = { cotiza: false as const, porItem: new Map<string, PrecioUnidad>() };
+  const vacio = {
+    cotiza: false as const,
+    porItem: new Map<string, PrecioUnidad>(),
+  };
 
   if (input.casillas.length === 0) {
     return { ...vacio, motivo: 'el lote todavía no tiene casillas.' };
@@ -263,7 +279,8 @@ export function preciosDelLote(input: PreciosDelLoteInput): PreciosDelLote {
   for (const c of input.casillas) {
     const categoria =
       c.categoriaFiscal ??
-      (input.categoriaFiscalLote === 'gema' || input.categoriaFiscalLote === 'joya'
+      (input.categoriaFiscalLote === 'gema' ||
+      input.categoriaFiscalLote === 'joya'
         ? input.categoriaFiscalLote
         : undefined);
     if (!categoria) {
@@ -276,7 +293,10 @@ export function preciosDelLote(input: PreciosDelLoteInput): PreciosDelLote {
       };
     }
     if (c.costoUnitarioRealCOP === undefined) {
-      return { ...vacio, motivo: `la casilla ${c.itemId} no tiene costo capturado.` };
+      return {
+        ...vacio,
+        motivo: `la casilla ${c.itemId} no tiene costo capturado.`,
+      };
     }
     resueltas.push({
       itemId: c.itemId,
@@ -292,5 +312,13 @@ export function preciosDelLote(input: PreciosDelLoteInput): PreciosDelLote {
     config: input.config,
   });
 
-  return { cotiza: true, porItem: new Map(precios.map((p) => [p.itemId, p])) };
+  const conAvisos =
+    input.categoriaFiscalOrigen === 'inferida'
+      ? precios.map((p) => ({ ...p, avisos: ['CATEGORIA_INFERIDA'] }))
+      : precios;
+
+  return {
+    cotiza: true,
+    porItem: new Map(conAvisos.map((p) => [p.itemId, p])),
+  };
 }

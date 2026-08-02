@@ -130,6 +130,33 @@ describe('filaLoteParaEspejo — el delta del canon', () => {
   it('la fila trae exactamente las cabeceras declaradas', () => {
     expect(Object.keys(fila).sort()).toEqual([...CABECERAS_LOTES].sort());
   });
+
+  it('una categoría inferida sale con sufijo — nadie la confunde con un dictamen', () => {
+    // Decisión de Kevin, 2026-08-02, §2b: "El espejo muestra la categoría con
+    // sufijo (p. ej. joya (inferida))".
+    const inferida = filaLoteParaEspejo({
+      ...LOTE_BASE,
+      categoriaFiscal: 'joya',
+      categoriaFiscalOrigen: 'inferida',
+    });
+    expect(inferida.categoriaFiscal).toBe('joya (inferida)');
+  });
+
+  it('capturada, revisada o ausente no llevan sufijo — solo inferida lo pide', () => {
+    expect(
+      filaLoteParaEspejo({
+        ...LOTE_BASE,
+        categoriaFiscalOrigen: 'capturada',
+      }).categoriaFiscal,
+    ).toBe('joya');
+    expect(
+      filaLoteParaEspejo({
+        ...LOTE_BASE,
+        categoriaFiscalOrigen: 'revisada',
+      }).categoriaFiscal,
+    ).toBe('joya');
+    expect(filaLoteParaEspejo(LOTE_BASE).categoriaFiscal).toBe('joya');
+  });
 });
 
 describe('filaCasillaParaEspejo — el delta del canon', () => {
@@ -151,5 +178,17 @@ describe('filaCasillaParaEspejo — el delta del canon', () => {
 
   it('la fila trae exactamente las cabeceras declaradas', () => {
     expect(Object.keys(fila).sort()).toEqual([...CABECERAS_CASILLAS].sort());
+  });
+
+  it('hereda el sufijo "(inferida)" del lote, denormalizado igual que renombreLote', () => {
+    const inferida = filaCasillaParaEspejo({
+      itemId: '295',
+      loteId: 'C-090',
+      ordenEnLote: 1,
+      estadoCasilla: 'DISPONIBLE',
+      categoriaFiscal: 'joya',
+      categoriaFiscalOrigen: 'inferida',
+    });
+    expect(inferida.categoriaFiscal).toBe('joya (inferida)');
   });
 });

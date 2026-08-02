@@ -362,3 +362,57 @@ describe('preciosDelLote — la regla de escritura al espejo', () => {
     expect(r.porItem.size).toBe(0);
   });
 });
+
+describe('avisos — CATEGORIA_INFERIDA (decisión de Kevin, 2026-08-02)', () => {
+  // El candado del motor solo exige que categoriaFiscal EXISTA — no distingue
+  // si alguien la escribió o si salió de una inferencia por palabras clave.
+  // La distinción viaja en el precio, no en si cotiza o no.
+  const BASE = {
+    costoCompraLoteCOP: 931_931,
+    categoriaFiscalLote: 'gema' as const,
+    costosVariablesLoteCOP: 9_091,
+    costoFijoUnitarioLoteCOP: 442_787,
+    config: CFG,
+  };
+  const CUATRO = [
+    { itemId: '372', costoUnitarioRealCOP: 268_983 },
+    { itemId: '373', costoUnitarioRealCOP: 353_210 },
+    { itemId: '374', costoUnitarioRealCOP: 81_510 },
+    { itemId: '375', costoUnitarioRealCOP: 228_228 },
+  ];
+
+  it('un lote `inferida` marca CATEGORIA_INFERIDA en CADA precio que sale, no solo en uno', () => {
+    const r = preciosDelLote({
+      ...BASE,
+      casillas: CUATRO,
+      categoriaFiscalOrigen: 'inferida',
+    });
+    expect(r.cotiza).toBe(true);
+    for (const [, precio] of r.porItem) {
+      expect(precio.avisos).toEqual(['CATEGORIA_INFERIDA']);
+    }
+  });
+
+  it('un lote `capturada` no lleva el aviso', () => {
+    const r = preciosDelLote({
+      ...BASE,
+      casillas: CUATRO,
+      categoriaFiscalOrigen: 'capturada',
+    });
+    expect(r.porItem.get('372')?.avisos ?? []).toEqual([]);
+  });
+
+  it('sin origen (lote legacy, de antes de que el campo existiera) no lleva el aviso', () => {
+    const r = preciosDelLote({ ...BASE, casillas: CUATRO });
+    expect(r.porItem.get('372')?.avisos ?? []).toEqual([]);
+  });
+
+  it('el resto del precio no cambia por llevar el aviso — mismos números de siempre', () => {
+    const r = preciosDelLote({
+      ...BASE,
+      casillas: CUATRO,
+      categoriaFiscalOrigen: 'inferida',
+    });
+    expect(r.porItem.get('372')?.precioObjetivoUnidadCOP).toBe(665_681);
+  });
+});

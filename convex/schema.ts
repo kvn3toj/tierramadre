@@ -703,6 +703,25 @@ export default defineSchema({
       v.union(v.literal('gema'), v.literal('joya'), v.literal('mixta')),
     ),
     /**
+     * De dónde salió `categoriaFiscal` (decisión de Kevin, 2026-08-02).
+     * `capturada` — alguien la escribió por W1/W2. `inferida` — la sembró
+     * `_lib/categoriaFiscalInferencia.ts` por palabras clave del nombre; el
+     * motor cotiza igual (el candado solo exige que EXISTA), pero cada precio
+     * que sale de un lote `inferida` viaja con el aviso `CATEGORIA_INFERIDA`,
+     * y el espejo la muestra con sufijo («joya (inferida)»). `revisada` —
+     * Kevin la graduó tras mirarla. **Gate duro de Fase 3**
+     * (`lotesPendientesDeRevision`): prod no corta con NINGÚN lote en
+     * `inferida`. Ausente = capturada de un lote legacy, de antes de que este
+     * campo existiera.
+     */
+    categoriaFiscalOrigen: v.optional(
+      v.union(
+        v.literal('capturada'),
+        v.literal('inferida'),
+        v.literal('revisada'),
+      ),
+    ),
+    /**
      * Descripción de COMPRA — el «Cerebro Racional» de W1. Es OTRA cosa que
      * `renombreLote`, que es el nombre comercial/creativo de W2. El canon las
      * lista aparte a propósito: una dice qué se compró, la otra cómo se vende.

@@ -44,6 +44,7 @@ async function encolarLote(ctx: MutationCtx, id: Id<'lots'>): Promise<void> {
       fechaRecepcion: lote.fechaRecepcion,
       proveedor: proveedor?.nombreORazonSocial ?? '',
       categoriaFiscal: lote.categoriaFiscal ?? '',
+      categoriaFiscalOrigen: lote.categoriaFiscalOrigen,
       costoCompraCOP: lote.costoCompraCOP ?? lote.costoTotalCOP,
       costosVariablesCOP: (lote.costosVariables ?? []).reduce(
         (a, c) => a + c.montoCOP,
@@ -122,6 +123,7 @@ async function encolarCasillasDelLote(
       campos: filaCasillaParaEspejo({
         ...casilla,
         renombreLote: lote.renombreLote,
+        categoriaFiscalOrigen: lote.categoriaFiscalOrigen,
         equilibrioRealUnidadCOP: p?.equilibrioRealUnidadCOP,
         precioObjetivoUnidadCOP: p?.precioObjetivoUnidadCOP,
       } as never),

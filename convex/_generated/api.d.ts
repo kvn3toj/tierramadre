@@ -25,6 +25,7 @@ import type * as _lib_espejoEmpujeMasivo from "../_lib/espejoEmpujeMasivo.js";
 import type * as _lib_espejoFilas from "../_lib/espejoFilas.js";
 import type * as _lib_espejoSheets from "../_lib/espejoSheets.js";
 import type * as _lib_espejoUpsert from "../_lib/espejoUpsert.js";
+import type * as _lib_fechaSheet from "../_lib/fechaSheet.js";
 import type * as _lib_fotosintesisVocab from "../_lib/fotosintesisVocab.js";
 import type * as _lib_ghlConversations from "../_lib/ghlConversations.js";
 import type * as _lib_lotMath from "../_lib/lotMath.js";
@@ -101,6 +102,7 @@ declare const fullApi: ApiFromModules<{
   "_lib/espejoFilas": typeof _lib_espejoFilas;
   "_lib/espejoSheets": typeof _lib_espejoSheets;
   "_lib/espejoUpsert": typeof _lib_espejoUpsert;
+  "_lib/fechaSheet": typeof _lib_fechaSheet;
   "_lib/fotosintesisVocab": typeof _lib_fotosintesisVocab;
   "_lib/ghlConversations": typeof _lib_ghlConversations;
   "_lib/lotMath": typeof _lib_lotMath;
