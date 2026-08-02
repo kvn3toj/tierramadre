@@ -228,6 +228,14 @@ export interface PreciosDelLoteInput {
    * 2026-08-02) — el candado de arriba no distingue, este campo sí.
    */
   categoriaFiscalOrigen?: 'capturada' | 'inferida' | 'revisada';
+  /**
+   * `'coleccion'` es OTRO negocio (dictamen de Kevin, punto 5, 2026-08-02):
+   * precio individual negociado, nunca por absorción. Corta ANTES de mirar
+   * categoría fiscal, costo o conciliación — ninguna de esas preguntas
+   * aplica a una pieza de colección. Ausente o `'operacional'` ⇒ el camino
+   * de siempre, sin cambios.
+   */
+  segmento?: 'operacional' | 'coleccion';
 }
 
 export interface PreciosDelLote {
@@ -260,6 +268,15 @@ export function preciosDelLote(input: PreciosDelLoteInput): PreciosDelLote {
     cotiza: false as const,
     porItem: new Map<string, PrecioUnidad>(),
   };
+
+  if (input.segmento === 'coleccion') {
+    return {
+      ...vacio,
+      motivo:
+        'SEGMENTO_COLECCION: es otro negocio — precio individual y ' +
+        'negociado, no se precifica por absorción del gasto fijo.',
+    };
+  }
 
   if (input.casillas.length === 0) {
     return { ...vacio, motivo: 'el lote todavía no tiene casillas.' };

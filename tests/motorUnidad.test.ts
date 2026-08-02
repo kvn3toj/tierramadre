@@ -416,3 +416,50 @@ describe('avisos — CATEGORIA_INFERIDA (decisión de Kevin, 2026-08-02)', () =>
     expect(r.porItem.get('372')?.precioObjetivoUnidadCOP).toBe(665_681);
   });
 });
+
+describe('segmento colección — no se precifica por absorción (punto 5, dictamen de Kevin)', () => {
+  // "Otro negocio": precio individual negociado, nunca K/equilibrio/objetivo.
+  // El candado corta ANTES de mirar categoría fiscal, costo o conciliación —
+  // ninguna de esas preguntas aplica a una pieza de colección.
+  const BASE = {
+    costoCompraLoteCOP: 931_931,
+    categoriaFiscalLote: 'gema' as const,
+    costosVariablesLoteCOP: 9_091,
+    costoFijoUnitarioLoteCOP: 442_787,
+    config: CFG,
+  };
+  const CUATRO = [
+    { itemId: '372', costoUnitarioRealCOP: 268_983 },
+    { itemId: '373', costoUnitarioRealCOP: 353_210 },
+    { itemId: '374', costoUnitarioRealCOP: 81_510 },
+    { itemId: '375', costoUnitarioRealCOP: 228_228 },
+  ];
+
+  it('un lote `coleccion` no cotiza — el motivo nombra SEGMENTO_COLECCION', () => {
+    const r = preciosDelLote({
+      ...BASE,
+      casillas: CUATRO,
+      segmento: 'coleccion',
+    });
+    expect(r.cotiza).toBe(false);
+    expect(r.porItem.size).toBe(0);
+    expect(r.motivo).toMatch(/SEGMENTO_COLECCION/);
+  });
+
+  it('corta ANTES que la conciliación — un lote de colección descuadrado no revienta con "concilia"', () => {
+    const r = preciosDelLote({
+      ...BASE,
+      casillas: CUATRO.map((c) => ({ ...c, costoUnitarioRealCOP: 1 })), // descuadra a propósito
+      segmento: 'coleccion',
+    });
+    expect(r.motivo).toMatch(/SEGMENTO_COLECCION/);
+  });
+
+  it('un lote `operacional` (o sin segmento) cotiza normal — el default no cambió nada', () => {
+    expect(
+      preciosDelLote({ ...BASE, casillas: CUATRO, segmento: 'operacional' })
+        .cotiza,
+    ).toBe(true);
+    expect(preciosDelLote({ ...BASE, casillas: CUATRO }).cotiza).toBe(true);
+  });
+});

@@ -212,6 +212,7 @@ export async function preciosPorItemDb(
       })),
       categoriaFiscalLote: lote.categoriaFiscal,
       categoriaFiscalOrigen: lote.categoriaFiscalOrigen,
+      segmento: lote.segmento,
       costosVariablesLoteCOP: (lote.costosVariables ?? []).reduce(
         (a, c) => a + c.montoCOP,
         0,
@@ -249,9 +250,12 @@ export async function motorDelLoteDb(
     costoTotalCOP: number;
     unidadesDeclaradas: number;
     costosVariables?: { concepto: string; montoCOP: number }[];
+    /** `'coleccion'` no se precifica por absorción (punto 5, 2026-08-02). */
+    segmento?: 'operacional' | 'coleccion';
   },
   contexto?: { configs: ConfigPrecios[]; lotesActivos: number },
 ): Promise<MotorParaEspejo | undefined> {
+  if (lote.segmento === 'coleccion') return undefined;
   if (lote.categoriaFiscal !== 'gema' && lote.categoriaFiscal !== 'joya') {
     return undefined;
   }
