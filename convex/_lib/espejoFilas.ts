@@ -94,6 +94,7 @@ export const CABECERAS_TABLERO = [
   'lotesActivos',
   'costoFijoUnitarioCOP',
   'inventarioActivoCOP',
+  'inventarioColeccionCOP',
   'ventasMesCOP',
   'margenBrutoMesCOP',
   'utilidadNetaEstimadaCOP',
@@ -371,6 +372,8 @@ export interface FilaTablero {
   lotesActivos: number;
   costoFijoUnitarioCOP?: number;
   inventarioActivoCOP: number;
+  /** Otro negocio, otra celda — nunca sumado al operativo (punto 5). */
+  inventarioColeccionCOP: number;
   ventasMesCOP: number;
   margenBrutoMesCOP: number;
   utilidadNetaEstimadaCOP: number;
@@ -396,6 +399,7 @@ export function filaTableroParaEspejo(t: FilaTablero): Record<string, string> {
     lotesActivos: texto(t.lotesActivos),
     costoFijoUnitarioCOP: texto(t.costoFijoUnitarioCOP),
     inventarioActivoCOP: texto(t.inventarioActivoCOP),
+    inventarioColeccionCOP: texto(t.inventarioColeccionCOP),
     ventasMesCOP: texto(t.ventasMesCOP),
     margenBrutoMesCOP: texto(t.margenBrutoMesCOP),
     utilidadNetaEstimadaCOP: texto(t.utilidadNetaEstimadaCOP),

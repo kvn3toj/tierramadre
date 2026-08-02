@@ -68,6 +68,20 @@ describe('las columnas computables', () => {
     expect(t.margenBrutoMesCOP).toBe(0);
   });
 
+  it('el inventario de colección es OTRA celda — no se suma al operativo (punto 5)', () => {
+    // Ausente ⇒ 0, igual que inventarioActivoCOP: es una Σ que naturalmente
+    // es cero sin datos, no un valor fabricado.
+    expect(construirTablero(BASE).inventarioColeccionCOP).toBe(0);
+    const t = construirTablero({
+      ...BASE,
+      inventarioColeccionCOP: 1_777_030_371,
+    });
+    expect(t.inventarioColeccionCOP).toBe(1_777_030_371);
+    // Y el operativo no se mueve por tener un valor de colección: son dos
+    // negocios, dos celdas — el titular deja de medir los dos en una sola.
+    expect(t.inventarioActivoCOP).toBe(71_769_301);
+  });
+
   it('sin ventas, el punto de equilibrio queda AUSENTE, no en cero', () => {
     // Un 0 se leería como «el mes ya se cubrió». Vacío se lee como lo que es.
     expect(construirTablero(BASE).puntoEquilibrioUnidades).toBeUndefined();

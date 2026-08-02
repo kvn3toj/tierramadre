@@ -348,14 +348,27 @@ export async function tableroDelPeriodoDb(
   const { lotesActivos } = await contarLotesActivosDb(ctx);
   const precios = await preciosPorItemDb(ctx);
 
+  // Otro negocio, otra celda (punto 5): un lote 'coleccion' no absorbe el
+  // fijo y su costo no puede sumarse al inventario operativo — es justo el
+  // defecto que infló `inventarioActivoCOP` "25× arriba", midiendo los dos
+  // negocios en una sola vara.
+  const segmentoPorLote = new Map(
+    (await ctx.db.query('lots').collect()).map((l) => [l.loteId, l.segmento]),
+  );
+
   let inventarioActivoCOP = 0;
+  let inventarioColeccionCOP = 0;
   const kPorItem = new Map<string, number>();
   for (const c of await ctx.db.query('lotItems').collect()) {
     if (!c.estadoCasilla) continue;
     const k = precios.get(c.itemId);
     if (k) kPorItem.set(c.itemId, k.KUnidadCOP);
     if (c.estadoCasilla !== 'VENDIDA' && c.costoUnitarioRealCOP) {
-      inventarioActivoCOP += c.costoUnitarioRealCOP;
+      if (segmentoPorLote.get(c.loteId) === 'coleccion') {
+        inventarioColeccionCOP += c.costoUnitarioRealCOP;
+      } else {
+        inventarioActivoCOP += c.costoUnitarioRealCOP;
+      }
     }
   }
 
@@ -392,6 +405,7 @@ export async function tableroDelPeriodoDb(
     config,
     lotesActivos,
     inventarioActivoCOP,
+    inventarioColeccionCOP,
     ventas,
   });
   return {

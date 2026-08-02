@@ -54,8 +54,15 @@ export interface ConstruirTableroInput {
   periodo: string;
   config: ConfigPrecios;
   lotesActivos: number;
-  /** Σ costos CAPTURADOS de las casillas no vendidas. */
+  /** Σ costos CAPTURADOS de las casillas OPERACIONALES no vendidas. */
   inventarioActivoCOP: number;
+  /**
+   * Σ costos CAPTURADOS de las casillas de COLECCIÓN no vendidas (punto 5,
+   * 2026-08-02). Es OTRA celda, no una nota al pie de la operacional: son
+   * dos negocios, y sumarlos en uno solo es justo el defecto que infló el
+   * titular «25× arriba» — medía los dos con una sola vara.
+   */
+  inventarioColeccionCOP?: number;
   ventas: readonly VentaDelPeriodo[];
 }
 
@@ -65,6 +72,8 @@ export interface Tablero {
   lotesActivos: number;
   costoFijoUnitarioCOP?: number;
   inventarioActivoCOP: number;
+  /** Otro negocio, otra celda — nunca sumado al operativo (punto 5). */
+  inventarioColeccionCOP: number;
   ventasMesCOP: number;
   margenBrutoMesCOP: number;
   utilidadNetaEstimadaCOP: number;
@@ -78,7 +87,14 @@ export interface Tablero {
 }
 
 export function construirTablero(input: ConstruirTableroInput): Tablero {
-  const { periodo, config, lotesActivos, inventarioActivoCOP, ventas } = input;
+  const {
+    periodo,
+    config,
+    lotesActivos,
+    inventarioActivoCOP,
+    inventarioColeccionCOP = 0,
+    ventas,
+  } = input;
 
   const ventasMesCOP = ventas.reduce((a, v) => a + v.precioVentaRealCOP, 0);
 
@@ -125,6 +141,7 @@ export function construirTablero(input: ConstruirTableroInput): Tablero {
         ? costoFijoUnitario(config.gastosFijosMensualesCOP, lotesActivos)
         : undefined,
     inventarioActivoCOP,
+    inventarioColeccionCOP,
     ventasMesCOP,
     margenBrutoMesCOP,
     utilidadNetaEstimadaCOP,

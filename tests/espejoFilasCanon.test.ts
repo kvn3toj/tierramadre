@@ -10,9 +10,11 @@ import { describe, it, expect } from 'vitest';
 import {
   CABECERAS_CASILLAS,
   CABECERAS_LOTES,
+  CABECERAS_TABLERO,
   desglosaCostosVariables,
   filaCasillaParaEspejo,
   filaLoteParaEspejo,
+  filaTableroParaEspejo,
 } from '../convex/_lib/espejoFilas';
 
 const LOTE_BASE = {
@@ -190,5 +192,29 @@ describe('filaCasillaParaEspejo — el delta del canon', () => {
       categoriaFiscalOrigen: 'inferida',
     });
     expect(inferida.categoriaFiscal).toBe('joya (inferida)');
+  });
+});
+
+describe('filaTableroParaEspejo — inventarioColeccionCOP es otra celda (punto 5)', () => {
+  const fila = filaTableroParaEspejo({
+    periodo: '2026-08',
+    gastosFijosMesCOP: 33_651_815,
+    lotesActivos: 88,
+    inventarioActivoCOP: 71_769_301,
+    inventarioColeccionCOP: 1_777_030_371,
+    ventasMesCOP: 0,
+    margenBrutoMesCOP: 0,
+    utilidadNetaEstimadaCOP: 0,
+    reglaVigente: 'objetivo',
+    actualizadoEn: '2026-08-02T00:00:00.000Z',
+  });
+
+  it('manda las dos celdas por separado, sin sumarlas', () => {
+    expect(fila.inventarioActivoCOP).toBe('71769301');
+    expect(fila.inventarioColeccionCOP).toBe('1777030371');
+  });
+
+  it('la fila trae exactamente las cabeceras declaradas', () => {
+    expect(Object.keys(fila).sort()).toEqual([...CABECERAS_TABLERO].sort());
   });
 });
