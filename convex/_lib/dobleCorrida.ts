@@ -23,7 +23,17 @@ export interface FilaV3Item {
 
 export interface PrecioV4Item {
   precioObjetivoUnidadCOP: number;
+  /**
+   * De dónde salió la `categoriaFiscal` del lote de este ítem (decisión de
+   * Kevin, 2026-08-02). Habilita el bonus de detección §2d: una inferencia
+   * mal hecha diverge fuerte contra el precio real, y esa divergencia es la
+   * señal — no hace falta un matching de palabras clave más fino.
+   */
+  categoriaFiscalOrigen?: 'capturada' | 'inferida' | 'revisada';
 }
+
+/** |diferenciaPct| por encima de esto, en un ítem `inferida`, pide revisión. */
+const UMBRAL_REVISION_INFERENCIA = 0.3;
 
 export interface ComparacionItem {
   itemId: string;
@@ -35,6 +45,14 @@ export interface ComparacionItem {
   diferenciaPct?: number;
   /** Por qué no se pudo comparar. Ausente cuando sí hay diferencia. */
   motivo?: string;
+  categoriaFiscalOrigen?: 'capturada' | 'inferida' | 'revisada';
+  /**
+   * `true` solo cuando `categoriaFiscalOrigen === 'inferida'` Y
+   * `|diferenciaPct| > 30%`. La propia doble corrida es el detector de
+   * inferencias equivocadas (decisión de Kevin, §2d) — no hace falta que
+   * alguien lea las 513 filas para encontrarlas.
+   */
+  revisarInferencia: boolean;
 }
 
 /** Una fila cruda de `/api/get-inventory-rows`: `{ cabecera -> texto }`. */
@@ -93,7 +111,9 @@ export function compararPreciosItemV3vsV4(
       salida.push({
         itemId: fila.itemId,
         precioV4COP: v4?.precioObjetivoUnidadCOP,
+        categoriaFiscalOrigen: v4?.categoriaFiscalOrigen,
         motivo: 'sin precioFinalCOP en el SOT v3',
+        revisarInferencia: false,
       });
       continue;
     }
@@ -105,17 +125,23 @@ export function compararPreciosItemV3vsV4(
         motivo:
           'v4 no cotiza el ítem (sin casilla, sin costo capturado, o lote ' +
           'sin categoría fiscal)',
+        revisarInferencia: false,
       });
       continue;
     }
 
     const diferenciaCOP = v4.precioObjetivoUnidadCOP - v3;
+    const diferenciaPct = diferenciaCOP / v3;
     salida.push({
       itemId: fila.itemId,
       precioV3COP: v3,
       precioV4COP: v4.precioObjetivoUnidadCOP,
       diferenciaCOP,
-      diferenciaPct: diferenciaCOP / v3,
+      diferenciaPct,
+      categoriaFiscalOrigen: v4.categoriaFiscalOrigen,
+      revisarInferencia:
+        v4.categoriaFiscalOrigen === 'inferida' &&
+        Math.abs(diferenciaPct) > UMBRAL_REVISION_INFERENCIA,
     });
   }
 
@@ -127,6 +153,8 @@ export function compararPreciosItemV3vsV4(
     salida.push({
       itemId,
       precioV4COP: v4.precioObjetivoUnidadCOP,
+      categoriaFiscalOrigen: v4.categoriaFiscalOrigen,
+      revisarInferencia: false,
       motivo: 'ítem en v4 sin fila correspondiente en la hoja v3',
     });
   }
@@ -149,6 +177,12 @@ export interface ResumenComparacion {
   sobre10Pct: number;
   /** Por qué un ítem no entró a la mediana, agrupado y contado. */
   sinComparar: { motivo: string; cantidad: number }[];
+  /**
+   * `itemId`s con `revisarInferencia: true` — el bonus de detección de la
+   * decisión de Kevin, §2d. Van directo a la lista de revisión, no perdidos
+   * dentro de la mediana.
+   */
+  paraRevisarInferencia: string[];
 }
 
 function mediana(valores: readonly number[]): number {
@@ -185,5 +219,8 @@ export function resumirComparacion(
       motivo,
       cantidad,
     })),
+    paraRevisarInferencia: comparaciones
+      .filter((c) => c.revisarInferencia)
+      .map((c) => c.itemId),
   };
 }

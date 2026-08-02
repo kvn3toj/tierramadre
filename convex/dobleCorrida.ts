@@ -40,6 +40,12 @@ export const _preciosV4 = internalQuery({
     return [...porItem.entries()].map(([itemId, p]) => ({
       itemId,
       precioObjetivoUnidadCOP: p.precioObjetivoUnidadCOP,
+      // El único origen que le importa al bonus de detección (§2d) es
+      // 'inferida' — se lee del aviso que ya estampa `preciosDelLote`
+      // (`_lib/motorUnidad.ts`), sin un join aparte a `lots`.
+      categoriaFiscalOrigen: p.avisos?.includes('CATEGORIA_INFERIDA')
+        ? ('inferida' as const)
+        : undefined,
     }));
   },
 });
@@ -67,7 +73,10 @@ export const ejecutar = internalAction({
     const preciosV4 = new Map(
       preciosV4Array.map((p) => [
         p.itemId,
-        { precioObjetivoUnidadCOP: p.precioObjetivoUnidadCOP },
+        {
+          precioObjetivoUnidadCOP: p.precioObjetivoUnidadCOP,
+          categoriaFiscalOrigen: p.categoriaFiscalOrigen,
+        },
       ]),
     );
 

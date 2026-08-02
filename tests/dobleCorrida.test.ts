@@ -260,4 +260,84 @@ describe('resumirComparacion', () => {
   it('con cero comparables la mediana es 0, no NaN', () => {
     expect(resumirComparacion([]).medianaDiferenciaPct).toBe(0);
   });
+
+  it('junta los itemIds de `revisarInferencia` en su propia lista, sin filtrarlos de la mediana', () => {
+    const comparaciones = [
+      {
+        itemId: 'a',
+        precioV3COP: 100,
+        precioV4COP: 90,
+        diferenciaCOP: -10,
+        diferenciaPct: -0.1,
+        revisarInferencia: false,
+      },
+      {
+        itemId: 'b',
+        precioV3COP: 100,
+        precioV4COP: 145,
+        diferenciaCOP: 45,
+        diferenciaPct: 0.45,
+        revisarInferencia: true,
+      },
+    ];
+    const resumen = resumirComparacion(comparaciones);
+    expect(resumen.comparables).toBe(2); // sigue contando las dos
+    expect(resumen.paraRevisarInferencia).toEqual(['b']);
+  });
+});
+
+describe('compararPreciosItemV3vsV4 — divergencia en lotes con categoría inferida', () => {
+  // Decisión de Kevin, 2026-08-02, §2d: «donde la inferencia esté mal, la
+  // comparación v3-vs-v4 va a divergir fuerte... divergencias >30% en lotes
+  // 'inferida' van directo a la lista de revisión de Kevin.»
+  const PRECIOS_V4_ORIGEN = new Map([
+    [
+      '372',
+      {
+        precioObjetivoUnidadCOP: 665_681,
+        categoriaFiscalOrigen: 'inferida' as const,
+      },
+    ],
+    [
+      '900',
+      {
+        precioObjetivoUnidadCOP: 1_000_000,
+        categoriaFiscalOrigen: 'capturada' as const,
+      },
+    ],
+  ]);
+
+  it('un ítem `inferida` que diverge >30% se marca para revisión', () => {
+    // v3 cobra 400.000, v4 (inferido como gema) recomienda 665.681: +66%.
+    const [c] = compararPreciosItemV3vsV4(
+      [{ itemId: '372', precioFinalCOP: 400_000 }],
+      PRECIOS_V4_ORIGEN,
+    );
+    expect(c.categoriaFiscalOrigen).toBe('inferida');
+    expect(c.revisarInferencia).toBe(true);
+  });
+
+  it('un ítem `inferida` que NO diverge no se marca — la inferencia probablemente acertó', () => {
+    const [c] = compararPreciosItemV3vsV4(
+      [{ itemId: '372', precioFinalCOP: 690_000 }],
+      PRECIOS_V4_ORIGEN,
+    );
+    expect(c.revisarInferencia).toBe(false);
+  });
+
+  it('un ítem `capturada` nunca se marca, sin importar cuánto diverja', () => {
+    const [c] = compararPreciosItemV3vsV4(
+      [{ itemId: '900', precioFinalCOP: 100_000 }], // +900%, pero es capturada
+      PRECIOS_V4_ORIGEN,
+    );
+    expect(c.categoriaFiscalOrigen).toBe('capturada');
+    expect(c.revisarInferencia).toBe(false);
+  });
+
+  it('un ítem que no se pudo comparar no se marca — no hay con qué medir la divergencia', () => {
+    const [c] = compararPreciosItemV3vsV4([], PRECIOS_V4_ORIGEN).filter(
+      (x) => x.itemId === '372',
+    );
+    expect(c.revisarInferencia).toBe(false);
+  });
 });
