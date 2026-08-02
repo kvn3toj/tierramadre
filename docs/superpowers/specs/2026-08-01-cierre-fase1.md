@@ -575,3 +575,67 @@ contexto, el token vale la pena revisarlo primero.
   listo. Lo único que falta de los dos es el dictamen de Kevin.
 - Nada mergeado, nada pusheado, ningún env var tocado, Convex prod sin una sola lectura ni
   escritura desde esta jornada — todo lo medido salió del SOT v3 vivo (gratis) o del propio dev.
+
+---
+
+# Cuarta jornada — 2026-08-01 (noche, continuación) — punto 8, blocked
+
+**Punto 0 primero:** releído el final de esta misma jornada anterior y el ECHO de
+`constructor.md` — sin dictamen nuevo de Kevin sobre los puntos 5, 6 o 7. Siguen como
+quedaron: 5 y 6 con material de decisión armado, 7 esperando el criterio de negocio por lote.
+No se tocó ninguno.
+
+Tres commits: `2fd6144` (función pura + TDD) · `9ddbb7b` (wiring de IO en Convex) · `9aba87b`
+(el reporte). Suite 1148→**1160 tests / 111 archivos** (+12 de `tests/dobleCorrida.test.ts`,
+después +5 más al sumar el mapeo de la hoja → **1165/111**). `tsc -p convex` limpio en cada
+commit. Sin mergear, sin pushear.
+
+## El punto 8 — herramienta lista, datos no
+
+Construida y corrida en vivo dos veces contra el SOT v3 (solo lectura) y Convex dev
+(`flexible-wolverine-803`, cero escritura). **Resultado: 0 de 513 ítems comparables**, y no
+por un defecto del comparador — verificado antes de aceptarlo como respuesta, no después.
+Detalle completo, con la evidencia y las dos causas independientes, en
+`2026-08-01-doble-corrida-item-por-item.md`. Resumen:
+
+- **`precioFinalCOP`** (v3, columna M, SHEET-OWNED desde 2026-07-23) vs
+  **`precioObjetivoUnidadCOP`** (v4) es la comparación correcta — confirmado antes de escribir
+  código, descartando `AT` («Precio objetivo (modelo)», el xlsx viejo que v4 reemplaza) y `AU`
+  («Caja: precio venta», una transacción de caja, no un precio de lista).
+- **0 comparables** porque `preciosPorItemDb` no le calcula precio a NINGÚN lote de dev, por
+  dos motivos independientes:
+  1. **0 de 128 lotes tienen `categoriaFiscal`.** Ya se sabía del punto 7 y de los 28
+     reconstruidos; lo que este diagnóstico agrega es que **no son 28, son los 128** — tampoco
+     los lotes viejos, pre-migración. El punto 7 no bloquea una porción de la doble corrida:
+     la bloquea entera.
+  2. **Hallazgo nuevo, no documentado antes:** 122 de 128 lotes traen `fechaRecepcion` con
+     sufijo de hora («2026-05-25 00:00:00», ni siquiera el padding consistente —
+     «2026-05-26 0:00:00»), y `configVigenteEn` exige `AAAA-MM-DD` exacto o revienta, ANTES
+     de mirar la categoría fiscal. `_lib/sheetPullMaps.ts:192` trae `fechaRecepcion` como texto
+     tal cual, sin truncar la celda de Sheets. Consecuencia: aunque el punto 7 se resolviera
+     mañana para los 128 lotes, 122 seguirían sin cotizar por este segundo motivo.
+
+**No corregí ninguna de las dos** — es la misma regla que gobernó toda esta rama: el punto 7 es
+criterio de negocio de Kevin, y tocar `configVigenteEn` (motor central, paridad pinneada contra
+la auditoría del 25/07) sin que alguien decida CÓMO tolerar el formato de fecha es exactamente
+el tipo de corrección por cuenta propia que el protocolo de sesión prohíbe. Contradicción entre
+spec («el divisor firme desbloquea la doble corrida») y realidad (el divisor agregado no
+necesita ni categoría fiscal ni fecha parseable — el precio POR ÍTEM sí) → parada y reportada,
+no resuelta.
+
+Lo que queda construido y verificado, listo para correr apenas se resuelvan las dos
+precondiciones: `convex/_lib/dobleCorrida.ts` (puro, 17 tests, los mismos casos pinneados de
+`motorUnidad.test.ts` como fixture) + `convex/dobleCorrida.ts:ejecutar` (internalAction, solo
+lectura, reutiliza `migracionV4:leerTabla` en vez de duplicar el fetch a la hoja). Con las dos
+resueltas, `npx convex run dobleCorrida:ejecutar '{}'` produce la tabla real sin tocar código.
+
+## Lo que queda para la próxima sesión
+
+- **Punto 8 técnicamente completo como herramienta, bloqueado como resultado.** Necesita: (a)
+  el dictamen del punto 7, y (b) una decisión sobre `fechaRecepcion` (normalizar en el pull, en
+  el motor, o en la migración — las tres son de diseño, ninguna es obvia).
+- Puntos 5 y 6 siguen con material de decisión armado, esperando a Kevin.
+- Punto 7 sigue siendo el bloqueador real de esta fase: sin él, ni el punto 8 puede producir un
+  solo número, y la migración a Fase 2 tampoco puede asumir precios sobre el catálogo migrado.
+- Nada mergeado, nada pusheado, ningún env var tocado, Convex prod sin una sola lectura ni
+  escritura desde esta jornada.
