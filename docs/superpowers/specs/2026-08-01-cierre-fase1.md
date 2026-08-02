@@ -723,3 +723,74 @@ decisión — verificados en vivo, no simulados.
 - Nada mergeado, nada pusheado, ningún env var tocado. Convex prod sin una sola lectura ni
   escritura. Las dos escrituras a dev (fechas, categoría) fueron explícitamente autorizadas por
   Kevin en la decisión de esta jornada.
+
+---
+
+# Sexta jornada — 2026-08-02 (continuación) — punto 5 dictaminado: segmento colección
+
+Kevin dictaminó los puntos 5, 6 y 7 en un solo mensaje. El 7 ya estaba ejecutado (quinta
+jornada); el 6 se reconfirma sin código nuevo (los guardas existentes ya bastan); el 5 es
+trabajo nuevo — segmentación operacional/colección — implementado y corrido esta jornada. Cinco
+commits. Suite 1196→**1205 tests**, `tsc -p convex` limpio en cada uno. Sin mergear, sin
+pushear.
+
+## El dictamen del punto 5
+
+**Evidencia:** ítem 193 "Secretos del Sol" (`LC-03`), 20,68 ct Fina Esencial, colección Finas
+29-Ene, Bogotá/M.Campuzano, costo $310M — el modelo histórico EXCLUÍA Bogotá por diseño.
+Dictamen: **REALES, segmento COLECCIÓN**. Es OTRO negocio: precio individual negociado, nunca
+absorbe el gasto fijo mensual ni cuenta en el divisor D2 — así era el modelo histórico (por eso
+`B6` decía 76 y no más). `C-017`/`S-001` NO entran: siguen **EN AUDITORÍA**, qué son sigue sin
+respuesta.
+
+## Lo implementado
+
+- `lots.segmento: 'operacional' | 'coleccion'` (schema). `_lib/segmentoLote.ts`: la regla es el
+  prefijo `LC-` del `loteId` — la convención de nombres que el SOT v3 ya usaba, no un criterio
+  inventado. TDD, 3 tests.
+- **Motor:** `preciosDelLote` y `motorDelLoteDb` cortan ANTES de mirar categoría, costo o
+  conciliación cuando el segmento es colección — motivo `SEGMENTO_COLECCION`, nunca
+  K/equilibrio/objetivo. 3 tests nuevos.
+- **Divisor D2:** `contarLotesActivosDb` excluye colección de `lotesActivos` y
+  `unidadesActivas`.
+- **Tablero:** `inventarioActivoCOP` e `inventarioColeccionCOP` separados — dos negocios, dos
+  celdas, nunca sumadas. Nueva columna en el espejo. TDD en `tablero.test.ts` +
+  `espejoFilasCanon.test.ts` (que no tenía cobertura para `filaTableroParaEspejo` — se agregó).
+- `migracionV4:_sembrarSegmentoEnDev` — backfill dev-only, un patch por lote `LC-*`.
+
+## Corrido en vivo, verificado dos veces
+
+**El divisor:**
+
+```
+ANTES:    lotesActivos: 88  · costoFijoUnitarioCOP: $382.407
+DESPUÉS:  lotesActivos: 73  · costoFijoUnitarioCOP: $460.984   (33.651.815 ÷ 73, exacto)
+```
+
+**El Tablero de 2026-08**, leído en vivo con una query temporal (borrada antes de commitear):
+`inventarioActivoCOP: $53.613.946` + `inventarioColeccionCOP: $1.723.416.425` =
+**$1.777.030.371** — la misma suma combinada de antes de la segmentación, ahora partida en sus
+dos negocios sin perder ni un peso. Confirma que el split no perdió ni duplicó nada.
+
+**La doble corrida**, re-corrida con el nuevo divisor: sigue en **4/513 comparables** (la
+segmentación es ortogonal al tercer bloqueo de la quinta jornada — mueve CUÁNTO cotizan los 4
+lotes que ya cotizaban, no CUÁLES), pero la mediana subió de +3,36% a **+11,4%** (3 de 4 ítems
+ahora sobre 10%, antes ninguno) — consistente con un divisor más alto: cada lote operacional
+absorbe más gasto fijo ahora que colección ya no lo diluye. Detalle completo, con la tabla de
+los 4 ítems antes/después, en `2026-08-01-doble-corrida-item-por-item.md`.
+
+## Artifacts
+
+Commits: `dbe988b` (schema+regla) · `6b6f86c` (motor) · `1ac4fd6` (divisor) · `e65ec89`
+(Tablero) · `dbfa298` (backfill) · `3434edd` (docs).
+
+## Lo que queda para la próxima sesión
+
+- **El tercer bloqueo de la quinta jornada sigue abierto y sin dictamen:** ¿clasificar por W2
+  los 138 `lotItems` legacy? ¿aceptar que la doble corrida solo mide lo migrado? La
+  segmentación no lo resuelve — es un factor distinto.
+- Punto 6 reconfirmado, sin trabajo pendiente. Punto 7 ejecutado la jornada anterior.
+- **Fase 3, cuando llegue:** correr `lotesPendientesDeRevision` (104 lotes hoy) Y verificar que
+  ningún lote `'coleccion'` se cotice por absorción — los dos gates son independientes.
+- Nada mergeado, nada pusheado, ningún env var tocado. Las tres escrituras a dev (fechas,
+  categoría, segmento) fueron explícitamente autorizadas por Kevin en sus decisiones.
