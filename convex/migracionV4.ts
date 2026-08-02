@@ -30,6 +30,7 @@ import {
 } from './_generated/server';
 import { internal } from './_generated/api';
 import { exigeDeploymentDeDesarrollo } from './_lib/destinoEscritura';
+import { normalizarFechaRecepcion } from './_lib/fechaSheet';
 import { NOMBRE_PROVEEDOR_CENTINELA } from './_lib/proveedorCentinela';
 import {
   formatearReporteExcepciones,
@@ -256,6 +257,46 @@ export const _aplicarPlan = internalMutation({
       ejemploLotes: lotesCreados.slice(0, 10),
       ejemploCasillas: casillasCreadas.slice(0, 10),
     };
+  },
+});
+
+/**
+ * Backfill de una sola vez: trunca el sufijo de hora de `lots.fechaRecepcion`
+ * en los lotes que YA existen en dev (decisión de Kevin, 2026-08-02, bloqueo
+ * #1 de la doble corrida). `_lib/sheetPullMaps.ts` y `mapearLotesHoja` ya
+ * normalizan la entrada nueva; esto arregla los 122 de 128 lotes que entraron
+ * ANTES de ese cambio. No relee la hoja — el valor ya está en Convex, solo
+ * mal formateado; truncar en el lugar alcanza.
+ *
+ * Idempotente: un lote ya normalizado no cambia (`normalizarFechaRecepcion`
+ * es estable sobre su propia salida).
+ */
+export const _normalizarFechasEnDev = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    exigeDeploymentDeDesarrollo(process.env.CONVEX_CLOUD_URL);
+
+    const lots = await ctx.db.query('lots').collect();
+    let normalizados = 0;
+    const sinNormalizar: string[] = [];
+
+    for (const lote of lots) {
+      const nueva = normalizarFechaRecepcion(lote.fechaRecepcion);
+      if (nueva === lote.fechaRecepcion) continue;
+      await ctx.db.patch(lote._id, { fechaRecepcion: nueva });
+      normalizados++;
+    }
+
+    // Lo que sigue sin matchear AAAA-MM-DD tras normalizar no es basura
+    // truncada a la fuerza — es una fecha genuinamente distinta que alguien
+    // tiene que mirar, no adivinar.
+    for (const lote of await ctx.db.query('lots').collect()) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(lote.fechaRecepcion)) {
+        sinNormalizar.push(lote.loteId);
+      }
+    }
+
+    return { totalLots: lots.length, normalizados, sinNormalizar };
   },
 });
 

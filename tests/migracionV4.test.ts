@@ -448,6 +448,23 @@ describe('mapear la hoja — y no dejar que un mapeo roto parezca un plan limpio
   it('los lotes también revientan si el mapeo se cae entero', () => {
     expect(() => mapearLotesHoja([{ lote: 'C-068' }])).toThrow(/loteId/);
   });
+
+  it('fechaRecepcion sale sin el sufijo de hora que sirve Sheets (decisión Kevin 2026-08-02)', () => {
+    // El defecto que bloqueó el punto 8 entero: `configVigenteEn` exige
+    // AAAA-MM-DD exacto, y 122 de 128 lotes de dev traían la celda datetime
+    // tal cual. `mapearLotesHoja` normaliza en la frontera; el motor sigue
+    // sin aflojarse.
+    const lotes = mapearLotesHoja([
+      {
+        loteId: 'C-001',
+        estado: 'abierto',
+        costoTotalCOP: '500000',
+        unidadesDeclaradas: '1',
+        fechaRecepcion: '2026-05-25 00:00:00',
+      },
+    ]);
+    expect(lotes[0].fechaRecepcion).toBe('2026-05-25');
+  });
 });
 
 describe('LOTE_SIN_PIEZAS — el punto ciego que dejaba escapar a LC-03', () => {

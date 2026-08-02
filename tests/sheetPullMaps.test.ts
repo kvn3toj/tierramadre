@@ -184,6 +184,17 @@ describe('coerceCell', () => {
     expect(coerceCell('csv', '')).toEqual({ skip: false, value: [] });
   });
 
+  it('fecha trunca el sufijo de hora que sirve Sheets sobre una celda datetime', () => {
+    expect(coerceCell('fecha', '2026-05-25 00:00:00')).toEqual({
+      skip: false,
+      value: '2026-05-25',
+    });
+    expect(coerceCell('fecha', '2026-07-01')).toEqual({
+      skip: false,
+      value: '2026-07-01',
+    });
+  });
+
   it('estado normalizers route through coerce', () => {
     expect(coerceCell('estadoSale', 'Cancelada')).toEqual({
       skip: false,

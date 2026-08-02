@@ -22,6 +22,7 @@
  *  3. **Idempotente.** Correr el ensayo dos veces no duplica nada, porque lo que
  *     ya existe en Convex no se planifica.
  */
+import { normalizarFechaRecepcion } from './fechaSheet';
 
 /** El estado de una pieza que existe y todavía no se clasificó. */
 export const ESTADO_PENDIENTE_CLASIFICAR = 'PENDIENTE_CLASIFICAR';
@@ -97,7 +98,10 @@ export function mapearLotesHoja(filas: readonly FilaCruda[]): LoteHoja[] {
       loteId: texto(f.loteId),
       estado: texto(f.estado),
       providerNombre: texto(f.providerNombre),
-      fechaRecepcion: texto(f.fechaRecepcion),
+      // Trunca el sufijo de hora que sirve Sheets sobre una celda datetime
+      // (`_lib/fechaSheet.ts`) — sin esto, `configVigenteEn` revienta y el
+      // lote nunca cotiza (decisión de Kevin, 2026-08-02).
+      fechaRecepcion: normalizarFechaRecepcion(texto(f.fechaRecepcion)),
       costoTotalCOP: numeroDeHoja(f.costoTotalCOP),
       unidadesDeclaradas: numeroDeHoja(f.unidadesDeclaradas),
       formaPago: texto(f.formaPago),

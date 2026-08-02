@@ -32,8 +32,15 @@
  *                                    ⇒ FLAG  (mirror is updated; reconcile in app)
  */
 
+import { normalizarFechaRecepcion } from './fechaSheet';
+
 export type FotoSyncTable =
-  'inventory' | 'providers' | 'lots' | 'clients' | 'sales' | 'subLotes';
+  | 'inventory'
+  | 'providers'
+  | 'lots'
+  | 'clients'
+  | 'sales'
+  | 'subLotes';
 
 export const FOTO_SYNC_TABLES: FotoSyncTable[] = [
   'inventory',
@@ -49,6 +56,7 @@ type Coerce =
   | 'num'
   | 'csv'
   | 'bool'
+  | 'fecha'
   | 'estadoInv'
   | 'estadoLot'
   | 'estadoSale'
@@ -189,7 +197,7 @@ const PROVIDERS: TableSpec = {
 };
 
 const LOTS: TableSpec = {
-  fechaRecepcion: { coerce: 'str' },
+  fechaRecepcion: { coerce: 'fecha' },
   pesoTotalQuilates: { coerce: 'num' },
   // AUTO: route costoTotalCOP through lots.update (patches the lote row; never
   // patched here directly). Item costoBaseCOP is sheet-owned since 2026-07-24,
@@ -365,6 +373,11 @@ export function coerceCell(
   switch (coerce) {
     case 'str':
       return { skip: false, value: String(raw).trim() };
+    case 'fecha':
+      // Trunca el sufijo de hora que sirve `FORMATTED_VALUE` sobre una celda
+      // datetime — ver `_lib/fechaSheet.ts`. `configVigenteEn` no se afloja;
+      // esto evita que la deriva del formato vuelva a bloquear el motor.
+      return { skip: false, value: normalizarFechaRecepcion(String(raw)) };
     case 'num': {
       const t = String(raw).trim();
       if (t === '') return { skip: true }; // never clear a number from a blanked cell
