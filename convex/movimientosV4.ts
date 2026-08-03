@@ -8,8 +8,10 @@ import { action, internalMutation } from './_generated/server';
 import { internal } from './_generated/api';
 import { requireBotSecret } from './_lib/botAuth';
 import {
+  debeRecalcular,
   puedeAplicarseSobre,
   puedeVenderse,
+  validarMotivoRechazo,
   validarMovimiento,
   type MovimientoInput,
 } from './_lib/movimientoW3';
@@ -184,6 +186,174 @@ export const _registrarPendiente = internalMutation({
       });
     }
 
+    return resultado;
+  },
+});
+
+/**
+ * Fase 2 del maker-checker: resolver un pendiente. Ambas mutations comparten
+ * esta lectura porque las dos exigen lo mismo antes de tocar nada: que el
+ * movimiento exista y que siga POR_CONFIRMAR -- resolverlo dos veces (una
+ * confirmación tardía sobre un rechazo ya aplicado, o viceversa) revertiría o
+ * duplicaría efectos ya aplicados sobre la casilla.
+ */
+async function cargarPorMovimientoId(ctx: any, movimientoId: string) {
+  const mov = await ctx.db
+    .query('movimientos')
+    .filter((q: any) => q.eq(q.field('movimientoId'), movimientoId))
+    .first();
+  if (!mov) throw new Error(`Movimiento ${movimientoId} no existe.`);
+  if (mov.estadoMovimiento !== 'POR_CONFIRMAR') {
+    throw new Error(
+      `Movimiento ${movimientoId} ya está ${mov.estadoMovimiento ?? 'CONFIRMADO'}; no se puede resolver dos veces.`,
+    );
+  }
+  return mov;
+}
+
+export const _confirmar = internalMutation({
+  args: {
+    movimientoId: v.string(),
+    resueltoPor: v.string(),
+    clientToken: v.optional(v.string()),
+  },
+  handler: async (ctx, { movimientoId, resueltoPor, clientToken }) => {
+    if (clientToken) {
+      const prior = await ctx.db
+        .query('commitTokens')
+        .withIndex('by_token', (q) => q.eq('token', clientToken))
+        .unique();
+      if (prior)
+        return JSON.parse(prior.result) as { estadoMovimiento: 'CONFIRMADO' };
+    }
+
+    const mov = await cargarPorMovimientoId(ctx, movimientoId);
+
+    const casillas = [];
+    for (const itemId of mov.itemIds) {
+      const casilla = await ctx.db
+        .query('lotItems')
+        .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+        .first();
+      if (casilla) casillas.push(casilla);
+    }
+
+    const lotesAntes = debeRecalcular(mov.tipo)
+      ? await contarLotesActivosDb(ctx)
+      : { lotesActivos: 0, unidadesActivas: 0 };
+
+    const renombrePorLote = new Map<string, string | undefined>();
+    for (const loteId of new Set(casillas.map((c) => c.loteId))) {
+      const l = await ctx.db
+        .query('lots')
+        .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
+        .first();
+      renombrePorLote.set(loteId, l?.renombreLote);
+    }
+
+    await aplicarEfectosConfirmacion(ctx, {
+      tipo: mov.tipo,
+      casillas: casillas as never,
+      movimientoId: mov.movimientoId,
+      kardexEventId: mov.kardexEventId,
+      fecha: mov.fecha,
+      itemIds: mov.itemIds,
+      entregadoPor: mov.entregadoPor,
+      recibidoPor: mov.recibidoPor,
+      condicion: mov.condicion,
+      origenKardexEventId: mov.origenKardexEventId,
+      venta: mov.venta,
+      renombrePorLote,
+      ts: Date.now(),
+    });
+
+    if (debeRecalcular(mov.tipo)) {
+      const config = await configVigente(ctx, mov.fecha);
+      const lotesDespues = await contarLotesActivosDb(ctx);
+      const plan = planificarRecalculo({
+        evento: 'VENTA',
+        config,
+        lotesActivosAntes: lotesAntes.lotesActivos,
+        lotesActivosDespues: lotesDespues.lotesActivos,
+        unidadesActivas: lotesDespues.unidadesActivas,
+        ts: Date.now(),
+      });
+      if (plan.recalcula && plan.traza) {
+        await ctx.db.insert('recalculos', {
+          ...plan.traza,
+          motivo: plan.motivo,
+        });
+      }
+    }
+
+    await ctx.db.patch(mov._id, {
+      estadoMovimiento: 'CONFIRMADO',
+      resueltoPor,
+      resueltoEn: Date.now(),
+    });
+
+    const resultado = { estadoMovimiento: 'CONFIRMADO' as const };
+    if (clientToken) {
+      await ctx.db.insert('commitTokens', {
+        token: clientToken,
+        kind: 'movimientosV4.confirmar',
+        primaryId: mov._id,
+        result: JSON.stringify(resultado),
+        createdAt: new Date().toISOString(),
+      });
+    }
+    return resultado;
+  },
+});
+
+export const _rechazar = internalMutation({
+  args: {
+    movimientoId: v.string(),
+    resueltoPor: v.string(),
+    motivo: v.string(),
+    clientToken: v.optional(v.string()),
+  },
+  handler: async (ctx, { movimientoId, resueltoPor, motivo, clientToken }) => {
+    validarMotivoRechazo(motivo);
+
+    if (clientToken) {
+      const prior = await ctx.db
+        .query('commitTokens')
+        .withIndex('by_token', (q) => q.eq('token', clientToken))
+        .unique();
+      if (prior)
+        return JSON.parse(prior.result) as { estadoMovimiento: 'RECHAZADO' };
+    }
+
+    const mov = await cargarPorMovimientoId(ctx, movimientoId);
+
+    for (const itemId of mov.itemIds) {
+      const casilla = await ctx.db
+        .query('lotItems')
+        .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+        .first();
+      if (casilla)
+        await ctx.db.patch(casilla._id, { estadoCasilla: 'DISPONIBLE' });
+      // Sin espejoOutbox: el espejo nunca vio la reserva, así que no hay nada que corregir.
+    }
+
+    await ctx.db.patch(mov._id, {
+      estadoMovimiento: 'RECHAZADO',
+      motivoRechazo: motivo.trim(),
+      resueltoPor,
+      resueltoEn: Date.now(),
+    });
+
+    const resultado = { estadoMovimiento: 'RECHAZADO' as const };
+    if (clientToken) {
+      await ctx.db.insert('commitTokens', {
+        token: clientToken,
+        kind: 'movimientosV4.rechazar',
+        primaryId: mov._id,
+        result: JSON.stringify(resultado),
+        createdAt: new Date().toISOString(),
+      });
+    }
     return resultado;
   },
 });
