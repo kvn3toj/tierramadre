@@ -385,3 +385,84 @@ export const _rechazar = internalMutation({
     return resultado;
   },
 });
+
+/**
+ * anima-bot bridge — fase 1 (reserva) vía Telegram, con secreto compartido en
+ * vez del token de Google Sign-In (ver `_lib/botAuth.ts`). Reusa `_registrarPendiente`
+ * sin cambios; `autoConfirmar` es solo azúcar para llamadores que ya tienen
+ * potestad de confirmación (p.ej. el propio dueño resolviendo su venta al
+ * vuelo) -- sigue pasando por las DOS mutations internas, así que el
+ * candado de re-verificación de `_confirmar` (ver comentario sobre
+ * `cargarCasillasReservadas`) sigue aplicando igual.
+ */
+export const registrarViaBot = action({
+  args: {
+    botSecret: v.string(),
+    telegramUserId: v.number(),
+    autoConfirmar: v.optional(v.boolean()),
+    ...registrarPendienteArgs,
+  },
+  handler: async (
+    ctx,
+    { botSecret, telegramUserId, autoConfirmar, ...args },
+  ): Promise<{
+    movimientoId: string;
+    kardexEventId: string;
+    estadoMovimiento: 'POR_CONFIRMAR' | 'CONFIRMADO';
+  }> => {
+    requireBotSecret(botSecret);
+    const pendiente = await ctx.runMutation(
+      internal.movimientosV4._registrarPendiente,
+      {
+        ...args,
+        registradoPor: `telegram:${telegramUserId}`,
+      },
+    );
+    if (!autoConfirmar) return pendiente;
+    const confirmado = await ctx.runMutation(
+      internal.movimientosV4._confirmar,
+      {
+        movimientoId: pendiente.movimientoId,
+        resueltoPor: `telegram:${telegramUserId}`,
+      },
+    );
+    return { ...pendiente, estadoMovimiento: confirmado.estadoMovimiento };
+  },
+});
+
+/**
+ * anima-bot bridge — fase 2 (confirmar/rechazar) vía Telegram. Reusa
+ * `_confirmar`/`_rechazar` sin cambios; `motivo` se normaliza a `''` cuando
+ * no viene, porque `validarMotivoRechazo` (Tarea 5), dentro de `_rechazar`,
+ * ya rechaza un motivo vacío -- así que no hace falta duplicar esa
+ * validación acá.
+ */
+export const resolverViaBot = action({
+  args: {
+    botSecret: v.string(),
+    telegramUserId: v.number(),
+    movimientoId: v.string(),
+    accion: v.union(v.literal('confirmar'), v.literal('rechazar')),
+    motivo: v.optional(v.string()),
+    clientToken: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    { botSecret, telegramUserId, movimientoId, accion, motivo, clientToken },
+  ): Promise<{ estadoMovimiento: 'CONFIRMADO' | 'RECHAZADO' }> => {
+    requireBotSecret(botSecret);
+    if (accion === 'confirmar') {
+      return await ctx.runMutation(internal.movimientosV4._confirmar, {
+        movimientoId,
+        resueltoPor: `telegram:${telegramUserId}`,
+        clientToken,
+      });
+    }
+    return await ctx.runMutation(internal.movimientosV4._rechazar, {
+      movimientoId,
+      resueltoPor: `telegram:${telegramUserId}`,
+      motivo: motivo ?? '',
+      clientToken,
+    });
+  },
+});
