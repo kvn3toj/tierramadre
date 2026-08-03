@@ -4,7 +4,7 @@
  * este archivo es SOLO el camino del bot.
  */
 import { v } from 'convex/values';
-import { action, internalMutation } from './_generated/server';
+import { action, internalMutation, internalQuery } from './_generated/server';
 import { internal } from './_generated/api';
 import { requireBotSecret } from './_lib/botAuth';
 import {
@@ -16,6 +16,10 @@ import {
   type MovimientoInput,
 } from './_lib/movimientoW3';
 import { aplicarEfectosConfirmacion } from './_lib/movimientoEfectos';
+import {
+  aResumenPendiente,
+  type PendienteResumen,
+} from './_lib/resumenPendiente';
 import { configVigente, contarLotesActivosDb } from './precios';
 import { planificarRecalculo } from './_lib/recalculo';
 import { allocateNext } from './sequences';
@@ -464,5 +468,41 @@ export const resolverViaBot = action({
       motivo: motivo ?? '',
       clientToken,
     });
+  },
+});
+
+/**
+ * Briefing diario del bot — pendientes que llevan más de `masHorasQue`
+ * esperando confirmación. Deliberadamente NO devuelve `venta` ni ningún dato
+ * de pago: `aResumenPendiente` (pura, en `_lib/resumenPendiente.ts`) es quien
+ * decide la forma exacta de lo que sale de acá, y se testea aparte para
+ * probar esa ausencia sin necesitar un movimiento real en base.
+ */
+export const listarPendientesViaBot = action({
+  args: { botSecret: v.string(), masHorasQue: v.number() },
+  handler: async (
+    ctx,
+    { botSecret, masHorasQue },
+  ): Promise<PendienteResumen[]> => {
+    requireBotSecret(botSecret);
+    const corte = Date.now() - masHorasQue * 3600 * 1000;
+    const todos = await ctx.runQuery(
+      internal.movimientosV4._listarPendientesInterno,
+      {},
+    );
+    const ahora = Date.now();
+    return todos
+      .filter((m) => m.ts <= corte)
+      .map((m) => aResumenPendiente(m, ahora));
+  },
+});
+
+export const _listarPendientesInterno = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query('movimientos')
+      .filter((q) => q.eq(q.field('estadoMovimiento'), 'POR_CONFIRMAR'))
+      .collect();
   },
 });
