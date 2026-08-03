@@ -80,10 +80,19 @@ function buildSpecLine(item: TreasureItem): string {
 /** Shared geometry for the image-well overlay chips.
  *
  *  All three previously sat at `fontSize: 9`, under the 11px legibility floor
- *  — and one of them ("Lote · 12 piezas") carries real words, not a glyph.
+ *  — and one of them ("Lote · 12") carries a real word, not just a glyph.
  *  11px is `iosTypographyScale.caption2` / `qeType.spec.fontSize`; the height
  *  goes 18 -> 20 to keep the label vertically centred at the larger size,
  *  matching the precioEspecial badge already rendered in the same well.
+ *
+ *  Los tres son VELO OSCURO sobre la foto (2026-08-03). El de lote era el
+ *  único con relleno esmeralda sólido y gritaba por encima de la pieza, que es
+ *  lo que el cliente vino a ver. Ahora se distingue por el COLOR DEL TEXTO
+ *  (`accentPure`) y por la palabra "Lote" — nunca sólo por color, que es lo que
+ *  pide §DS3 del Badge. El sustantivo "piezas" salió de la etiqueta visible y
+ *  vive en `title` + `aria-label`, el mismo recurso que ya usa
+ *  `PrecioEspecialBadge` en su densidad `compact`: el chip encoge ~40% sin que
+ *  el lector de pantalla pierda la frase completa.
  */
 const OVERLAY_CHIP_SX = {
   position: 'absolute' as const,
@@ -296,20 +305,25 @@ function GridCard({
       {/* Quantity / lote badge — bottom right */}
       {(item.isLote || item.cantidad > 1) && (
         <Chip
-          label={
+          label={item.isLote ? `Lote · ${item.cantidad}` : `×${item.cantidad}`}
+          title={
             item.isLote
               ? `Lote · ${item.cantidad} ${item.cantidad === 1 ? 'pieza' : 'piezas'}`
-              : `×${item.cantidad}`
+              : `${item.cantidad} piezas`
+          }
+          aria-label={
+            item.isLote
+              ? `Lote de ${item.cantidad} ${item.cantidad === 1 ? 'pieza' : 'piezas'}`
+              : `${item.cantidad} piezas`
           }
           size="small"
           sx={{
             ...OVERLAY_CHIP_SX,
             bottom: 6,
             right: 6,
-            fontWeight: 700,
-            letterSpacing: '0.02em',
-            bgcolor: item.isLote ? qe.accentStrong : 'rgba(0,0,0,0.62)',
-            color: item.isLote ? qe.onAccent : 'white',
+            fontWeight: 600,
+            bgcolor: 'rgba(0,0,0,0.55)',
+            color: item.isLote ? qe.accentPure : 'white',
           }}
         />
       )}
