@@ -1416,3 +1416,78 @@ export const raiseLotSequences = internalMutation({
     return out;
   },
 });
+
+/**
+ * Rellena la columna `qr` de los 10 sublotes creados el 2026-08-03.
+ *
+ * `lotItems._create` no escribe `qr`, así que los ítems nuevos nacen sin él
+ * mientras que 511 de las 511 filas que lo tienen siguen exactamente el mismo
+ * patrón: `https://tierramadre.app/p/<su propio itemId>`. Cero excepciones en
+ * toda la hoja — la convención no se deduce, se copia.
+ *
+ * No es funcional: la etiqueta física arma su QR desde una constante
+ * (`LabelPreview.tsx#QR_TARGET_BASE`), no desde este campo. Es consistencia del
+ * espejo, para que nadie que lea el SOT vea diez huecos sin motivo.
+ *
+ * Va por Convex y no por la hoja a propósito: `qr` se empuja como
+ * `row.qr ?? ''`, así que un valor puesto sólo en la hoja lo borra el siguiente
+ * push del ítem. El dato tiene que vivir en el espejo para quedarse.
+ *
+ * Idempotente: salta el que ya tenga el valor correcto.
+ *
+ *   npx convex run --prod migrations:backfillQrSublotes '{"dryRun":true}'
+ */
+export const backfillQrSublotes = internalMutation({
+  args: { dryRun: v.optional(v.boolean()) },
+  handler: async (ctx, { dryRun }) => {
+    const ITEMS = [
+      '525', '526', '527', '528', '529',
+      '530', '531', '532', '533', '534',
+    ];
+    const out: Array<{
+      itemId: string;
+      antes: string | null;
+      despues: string;
+      accion: 'escrito' | 'sin-cambio' | 'plan';
+    }> = [];
+
+    for (const itemId of ITEMS) {
+      const row = await ctx.db
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+        .first();
+      if (!row) throw new Error(`productInventory ${itemId} no encontrado`);
+
+      const qr = `https://tierramadre.app/p/${itemId}`;
+      if (row.qr === qr) {
+        out.push({ itemId, antes: row.qr, despues: qr, accion: 'sin-cambio' });
+        continue;
+      }
+      if (dryRun) {
+        out.push({ itemId, antes: row.qr ?? null, despues: qr, accion: 'plan' });
+        continue;
+      }
+
+      await ctx.db.patch(row._id, {
+        qr,
+        syncStatus: 'pending' as const,
+        syncError: undefined,
+      });
+      const auditId = await ctx.db.insert('productEdits', {
+        itemId,
+        editorEmail: 'migration:backfillQrSublotes',
+        editedAt: new Date().toISOString(),
+        changes: [{ field: 'qr', before: row.qr ?? null, after: qr }],
+        status: 'pending' as const,
+      });
+      await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
+        itemId,
+        auditId,
+        mode: 'patch' as const,
+      });
+      out.push({ itemId, antes: row.qr ?? null, despues: qr, accion: 'escrito' });
+    }
+
+    return out;
+  },
+});
