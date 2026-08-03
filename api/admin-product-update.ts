@@ -54,6 +54,7 @@ import {
   FOTO_INVENTARIO_COLUMNS,
   FOTO_INVENTARIO_LAST_COL,
 } from './_lib/fotosintesis-inventory-columns.js';
+import { resolveRowTarget } from './_lib/sheet-row-target.js';
 
 type FotoColumn = {
   header: string;
@@ -126,6 +127,43 @@ interface UpdateBody {
 function s(v: unknown): string {
   if (v === null || v === undefined) return '';
   return String(v);
+}
+
+/**
+ * Estira el grid de la pestaña si la fila destino cae fuera. `values.update`
+ * sobre un rango que excede el grid falla; `values.append` lo hacía solo, y era
+ * lo único bueno que tenía.
+ */
+async function ensureRowCapacity(
+  sheets: sheets_v4.Sheets,
+  spreadsheetId: string,
+  sheetTitle: string,
+  needed: number,
+): Promise<void> {
+  const meta = await sheets.spreadsheets.get({
+    spreadsheetId,
+    fields: 'sheets.properties(sheetId,title,gridProperties.rowCount)',
+  });
+  const props = (meta.data.sheets ?? [])
+    .map((sh) => sh.properties)
+    .find((p) => p?.title === sheetTitle);
+  if (!props?.gridProperties) return;
+  const current = props.gridProperties.rowCount ?? 0;
+  if (current >= needed) return;
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: {
+      requests: [
+        {
+          appendDimension: {
+            sheetId: props.sheetId,
+            dimension: 'ROWS',
+            length: needed - current,
+          },
+        },
+      ],
+    },
+  });
 }
 
 export default withApiHandler(
@@ -201,18 +239,11 @@ export default withApiHandler(
       range: `${targetSheet}!A:A`,
     });
     const colA = (colAResp.data.values ?? []) as string[][];
-    let foundRow = 0; // 1-based physical row of the match; 0 = not found
-    for (let i = 0; i < colA.length; i++) {
-      // colA[i] is physical row i + 1 (row 1 is the header — it holds the
-      // literal "item" label, so it can never match a real itemId). We take
-      // the FIRST match; itemId is assumed unique in column A.
-      if (s(colA[i]?.[0]).trim() === String(itemId)) {
-        foundRow = i + 1;
-        break;
-      }
-    }
-
-    const willAppend = foundRow === 0;
+    // Localización + fila destino en un helper puro (api/_lib/sheet-row-target.js)
+    // para poder testear el objetivo sin hablar con Sheets. El test de regresión
+    // del incidente 2026-08-03 vive ahí: lo que se verifica es la FILA EN A, no
+    // que el endpoint devuelva 200.
+    const { foundRow, targetRow, willAppend } = resolveRowTarget(colA, itemId);
 
     // When updating, read the located row first so we PRESERVE every column we
     // don't explicitly touch (notably fechaIngreso in column B). Appends start
@@ -327,21 +358,39 @@ export default withApiHandler(
 
     let writtenRow: number;
     if (willAppend) {
-      // REAL append — the itemId wasn't found in column A, so this is a NEW
-      // row. INSERT_ROWS makes Sheets add cells after the last data row rather
-      // than overwrite anything, and we never write at a guessed rowIndex.
-      const appendResp = await sheets.spreadsheets.values.append({
+      // NUEVA fila. NO `values.append` (2026-08-03): con un rango abierto Sheets
+      // decide dónde ancla la "tabla" y puede escribir corrido. En Inventario
+      // —102 columnas de grid contra las 57 del mapa— ancló en AT, la columna A
+      // quedó vacía, y como el itemId no estaba en A el push siguiente volvía a
+      // appendear: 21 filas basura por 10 ítems. Fila calculada + rango CERRADO.
+      const targetRange = `${targetSheet}!A${targetRow}:${lastCol}${targetRow}`;
+
+      // La fila destino tiene que estar vacía. Esta ruta toca plata: si hay algo
+      // ahí, abortamos en vez de pisarlo.
+      const occupiedResp = await sheets.spreadsheets.values.get({
         spreadsheetId,
-        range: `${targetSheet}!A:${lastCol}`,
+        range: targetRange,
+      });
+      const occupied = (occupiedResp.data.values?.[0] ?? []) as string[];
+      if (occupied.some((c) => s(c).trim() !== '')) {
+        return sendError(
+          res,
+          409,
+          `Row ${targetRow} is not empty; refusing to overwrite it with new item "${itemId}". The sheet changed mid-write. Retry.`,
+        );
+      }
+
+      // El grid puede ser más corto que la fila destino; `values.update` falla
+      // fuera de rango, así que lo estiramos antes.
+      await ensureRowCapacity(sheets, spreadsheetId, targetSheet, targetRow);
+
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: targetRange,
         valueInputOption: 'USER_ENTERED', // lets numbers/dates stay typed
-        insertDataOption: 'INSERT_ROWS',
         requestBody: { values: [merged] },
       });
-      // updatedRange looks like "Inventario!A123:U123" — parse the row number
-      // back out so the caller can cache the ACTUAL physical row written.
-      const updatedRange = appendResp.data.updates?.updatedRange ?? '';
-      const rowMatch = updatedRange.match(/![A-Z]+(\d+)/);
-      writtenRow = rowMatch ? parseInt(rowMatch[1], 10) : 0;
+      writtenRow = targetRow;
     } else {
       // UPDATE the located row in place (regardless of the passed rowIndex).
       const writeRange = `${targetSheet}!A${foundRow}:${lastCol}${foundRow}`;
