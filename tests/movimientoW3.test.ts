@@ -15,6 +15,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   efectoSobreCasilla,
+  puedeAplicarseSobre,
   puedeVenderse,
   validarMovimiento,
   type MovimientoInput,
@@ -227,5 +228,35 @@ describe('puedeVenderse — el candado anti doble-venta (caso C-010)', () => {
         { itemId: '901', estadoCasilla: 'EN_CONSIGNACION' },
       ]).ok,
     ).toBe(true);
+  });
+});
+
+describe('puedeAplicarseSobre — RESERVADA', () => {
+  it('rechaza cualquier movimiento sobre una pieza RESERVADA', () => {
+    const veredicto = puedeAplicarseSobre("VENTA", {
+      itemId: "515",
+      estadoCasilla: "RESERVADA",
+    });
+    expect(veredicto.ok).toBe(false);
+    expect(veredicto.motivo).toContain("515");
+    expect(veredicto.motivo?.toLowerCase()).toContain("reservada");
+    expect(veredicto.motivo?.toLowerCase()).not.toContain("vendida");
+  });
+
+  it("sigue rechazando VENDIDA con el mensaje de terminal existente", () => {
+    const veredicto = puedeAplicarseSobre("DEVOLUCION", {
+      itemId: "292",
+      estadoCasilla: "VENDIDA",
+    });
+    expect(veredicto.ok).toBe(false);
+    expect(veredicto.motivo?.toLowerCase()).toContain("vendida");
+  });
+
+  it("permite un movimiento sobre una pieza DISPONIBLE", () => {
+    const veredicto = puedeAplicarseSobre("CONSIGNACION", {
+      itemId: "600",
+      estadoCasilla: "DISPONIBLE",
+    });
+    expect(veredicto.ok).toBe(true);
   });
 });

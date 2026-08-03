@@ -192,14 +192,24 @@ export function puedeAplicarseSobre(
   tipo: TipoMovimiento,
   casilla: { itemId: string; estadoCasilla: string },
 ): VeredictoVenta {
-  if (casilla.estadoCasilla !== 'VENDIDA') return { ok: true };
-  return {
-    ok: false,
-    motivo:
-      `el ítem ${casilla.itemId} está VENDIDA y ese estado es terminal: ` +
-      `un ${tipo} lo revertiría sin dejar rastro de la venta. Si la venta fue ` +
-      `un error, compensala con un movimiento que lo diga.`,
-  };
+  if (casilla.estadoCasilla === "VENDIDA") {
+    return {
+      ok: false,
+      motivo:
+        `el ítem ${casilla.itemId} está VENDIDA y ese estado es terminal: ` +
+        `un ${tipo} lo revertiría sin dejar rastro de la venta. Si la venta fue ` +
+        `un error, compensala con un movimiento que lo diga.`,
+    };
+  }
+  if (casilla.estadoCasilla === "RESERVADA") {
+    return {
+      ok: false,
+      motivo:
+        `el ítem ${casilla.itemId} está RESERVADA — otro registro está ` +
+        `esperando confirmación o rechazo. Resolvé ese primero.`,
+    };
+  }
+  return { ok: true };
 }
 
 /**
