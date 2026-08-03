@@ -64,6 +64,16 @@ export interface MovimientoInput {
 
 const FECHA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 
+/**
+ * Solo la VENTA puede apagar o reactivar un lote -- consignación, devolución
+ * y asesor no mueven el divisor (`_lib/recalculo`). Es la misma invariante
+ * que protege `puedeAplicarseSobre` contra devolver una VENDIDA: si esa
+ * regla se aflojara, esta dejaría de ser cierta en el mismo instante.
+ */
+export function debeRecalcular(tipo: TipoMovimiento): boolean {
+  return tipo === 'VENTA';
+}
+
 /** El estado en que queda la pieza según el tipo de movimiento. */
 export function efectoSobreCasilla(tipo: TipoMovimiento): string {
   switch (tipo) {

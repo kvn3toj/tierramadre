@@ -14,6 +14,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
+  debeRecalcular,
   efectoSobreCasilla,
   puedeAplicarseSobre,
   puedeVenderse,
@@ -260,3 +261,13 @@ describe('puedeAplicarseSobre — RESERVADA', () => {
     expect(veredicto.ok).toBe(true);
   });
 });
+
+describe('debeRecalcular — quién mueve el divisor', () => {
+  it('solo VENTA recalcula el fijo', () => {
+    expect(debeRecalcular('VENTA')).toBe(true);
+    expect(debeRecalcular('CONSIGNACION')).toBe(false);
+    expect(debeRecalcular('DEVOLUCION')).toBe(false);
+    expect(debeRecalcular('ASESOR')).toBe(false);
+  });
+});
+
