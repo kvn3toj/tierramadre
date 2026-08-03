@@ -256,16 +256,31 @@ products/
 
 Use `npm run migrate:convex:dry` / `npm run migrate:convex` (backed by `scripts/migrate-sheets-to-convex.ts`) to move data from Google Sheets into Convex table-by-table. Some `api/` endpoints already read/write Convex directly (see "API Endpoints" above); others still hit Sheets — check the individual endpoint before assuming which store it uses.
 
-### 🔒 CANDADO ACTIVO (2026-08-03) — no correr pulls manuales
+### ✅ Candado de pulls — LEVANTADO el 2026-08-03
 
-**PROHIBIDO ejecutar `scripts/sync-sot-convex.mjs` ni ningún otro pull manual Sheets→Convex
-hasta que esté desplegado el fix del default `F1`** (`convex/_lib/fotosintesisVocab.ts#normalizeCalidadForSheet`).
+Estuvo puesto unas horas: `normalizeCalidadForSheet` devolvía `"F1"` para un ítem sin calidad y
+`calidad` está en el allowlist de pull, así que un `sync-sot-convex.mjs` habría estampado el dato
+inventado dentro de Convex. **El fix ya está en prod** (PR #79, `convex deploy` desde `main` 1575007) y verificado empujando un ítem de calidad vacía y comprobando que la hoja la respeta.
+Los pulls manuales vuelven a estar permitidos.
 
-Ese `if (!s) return "F1"` inventa una calidad cuando el ítem no tiene ninguna, y `calidad` está
-en el allowlist de pull: un pull estamparía F1 encima de los ítems que un humano dejó en blanco
-a propósito. Los crons están verificados en `off` (`INVENTORY_PULL_CRON`, `FOTO_RECONCILE_CRON`),
-así que hoy el único camino de contaminación es una persona corriendo el script — y una persona
-con un script es un cron con dedos. Quitar este candado sólo cuando el fix esté en prod.
+Queda el criterio, que sobrevive al incidente: **un default que rellena un campo vacío es un dato
+inventado con forma de dato**, y si ese campo se sincroniza de vuelta, a las 24 horas ya no se
+distingue de uno medido.
+
+### ⚠️ Migraciones de un solo uso vivas en prod
+
+`convex/migrations.ts` viaja entero a producción, así que toda migración ya corrida sigue
+disparable con `npx convex run --prod`. Auditado el 2026-08-03:
+
+| Función                | Guard                                                                                  |
+| ---------------------- | -------------------------------------------------------------------------------------- |
+| `seedInsumosMarketing` | `clientToken` — re-correrla es inofensiva                                              |
+| `seedToposSubdivision` | dedup por `nombre` — re-correrla es inofensiva                                         |
+| `attachToposToC039`    | `_attachExistingToLote` ya es idempotente                                              |
+| **`seedBucketC`**      | **NINGUNO** — su propio doc dice "idempotent via `clientToken` (unlike `seedBucketC`)" |
+
+`seedBucketC` re-disparada crearía lotes e ítems duplicados. Antes de borrar una migración
+cumplida, o de añadir una nueva sin `clientToken`, tener esto presente.
 
 ### Migración quirúrgica = rama desde `main`
 
