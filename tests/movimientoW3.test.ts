@@ -18,6 +18,7 @@ import {
   efectoSobreCasilla,
   puedeAplicarseSobre,
   puedeVenderse,
+  validarMotivoRechazo,
   validarMovimiento,
   type MovimientoInput,
 } from '../convex/_lib/movimientoW3';
@@ -234,29 +235,29 @@ describe('puedeVenderse — el candado anti doble-venta (caso C-010)', () => {
 
 describe('puedeAplicarseSobre — RESERVADA', () => {
   it('rechaza cualquier movimiento sobre una pieza RESERVADA', () => {
-    const veredicto = puedeAplicarseSobre("VENTA", {
-      itemId: "515",
-      estadoCasilla: "RESERVADA",
+    const veredicto = puedeAplicarseSobre('VENTA', {
+      itemId: '515',
+      estadoCasilla: 'RESERVADA',
     });
     expect(veredicto.ok).toBe(false);
-    expect(veredicto.motivo).toContain("515");
-    expect(veredicto.motivo?.toLowerCase()).toContain("reservada");
-    expect(veredicto.motivo?.toLowerCase()).not.toContain("vendida");
+    expect(veredicto.motivo).toContain('515');
+    expect(veredicto.motivo?.toLowerCase()).toContain('reservada');
+    expect(veredicto.motivo?.toLowerCase()).not.toContain('vendida');
   });
 
-  it("sigue rechazando VENDIDA con el mensaje de terminal existente", () => {
-    const veredicto = puedeAplicarseSobre("DEVOLUCION", {
-      itemId: "292",
-      estadoCasilla: "VENDIDA",
+  it('sigue rechazando VENDIDA con el mensaje de terminal existente', () => {
+    const veredicto = puedeAplicarseSobre('DEVOLUCION', {
+      itemId: '292',
+      estadoCasilla: 'VENDIDA',
     });
     expect(veredicto.ok).toBe(false);
-    expect(veredicto.motivo?.toLowerCase()).toContain("vendida");
+    expect(veredicto.motivo?.toLowerCase()).toContain('vendida');
   });
 
-  it("permite un movimiento sobre una pieza DISPONIBLE", () => {
-    const veredicto = puedeAplicarseSobre("CONSIGNACION", {
-      itemId: "600",
-      estadoCasilla: "DISPONIBLE",
+  it('permite un movimiento sobre una pieza DISPONIBLE', () => {
+    const veredicto = puedeAplicarseSobre('CONSIGNACION', {
+      itemId: '600',
+      estadoCasilla: 'DISPONIBLE',
     });
     expect(veredicto.ok).toBe(true);
   });
@@ -271,3 +272,11 @@ describe('debeRecalcular — quién mueve el divisor', () => {
   });
 });
 
+describe('validarMotivoRechazo', () => {
+  it('exige un motivo no vacío', () => {
+    expect(() => validarMotivoRechazo(undefined)).toThrow(/motivo/i);
+    expect(() => validarMotivoRechazo('')).toThrow(/motivo/i);
+    expect(() => validarMotivoRechazo('   ')).toThrow(/motivo/i);
+    expect(() => validarMotivoRechazo('Cliente se arrepintió')).not.toThrow();
+  });
+});

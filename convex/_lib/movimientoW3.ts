@@ -202,7 +202,7 @@ export function puedeAplicarseSobre(
   tipo: TipoMovimiento,
   casilla: { itemId: string; estadoCasilla: string },
 ): VeredictoVenta {
-  if (casilla.estadoCasilla === "VENDIDA") {
+  if (casilla.estadoCasilla === 'VENDIDA') {
     return {
       ok: false,
       motivo:
@@ -211,7 +211,7 @@ export function puedeAplicarseSobre(
         `un error, compensala con un movimiento que lo diga.`,
     };
   }
-  if (casilla.estadoCasilla === "RESERVADA") {
+  if (casilla.estadoCasilla === 'RESERVADA') {
     return {
       ok: false,
       motivo:
@@ -253,4 +253,14 @@ export function puedeVenderse(
   }
 
   return { ok: true };
+}
+
+/**
+ * `_rechazar` (fase 2 del maker-checker) exige un motivo: sin él, la casilla
+ * vuelve a DISPONIBLE sin que quede rastro de por qué el pendiente no se
+ * confirmó -- el mismo vacío de trazabilidad que el ledger append-only
+ * intenta evitar en todos los demás casos.
+ */
+export function validarMotivoRechazo(motivo: string | undefined): void {
+  if (!motivo?.trim()) throw new Error('El motivo del rechazo es obligatorio.');
 }
