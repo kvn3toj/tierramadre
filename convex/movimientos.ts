@@ -14,16 +14,14 @@ import { action, internalMutation, internalQuery } from './_generated/server';
 import { internal } from './_generated/api';
 import { requireAccessLevel, ROLES_COSTOS } from './_lib/authz';
 import {
+  debeRecalcular,
   efectoSobreCasilla,
   puedeAplicarseSobre,
   puedeVenderse,
   validarMovimiento,
   type MovimientoInput,
 } from './_lib/movimientoW3';
-import {
-  filaCasillaParaEspejo,
-  filaMovimientoParaEspejo,
-} from './_lib/espejoFilas';
+import { aplicarEfectosConfirmacion } from './_lib/movimientoEfectos';
 import { planificarRecalculo } from './_lib/recalculo';
 import { configVigente, contarLotesActivosDb } from './precios';
 import { allocateNext } from './sequences';
@@ -179,7 +177,7 @@ export const _registrar = internalMutation({
     // mueven el divisor POR TIPO (`_lib/recalculo`). Contar el inventario para
     // ellos eran dos barridos de tres tablas garantizadamente inútiles, en el
     // mismo proyecto que apagó sus crons por ancho de banda.
-    const recalculaPorTipo = args.tipo === 'VENTA';
+    const recalculaPorTipo = debeRecalcular(args.tipo);
     const lotesAntes = recalculaPorTipo
       ? await contarLotesActivosDb(ctx)
       : { lotesActivos: 0, unidadesActivas: 0 };
@@ -206,25 +204,25 @@ export const _registrar = internalMutation({
       renombrePorLote.set(loteId, l?.renombreLote);
     }
 
-    for (const casilla of casillas) {
-      await ctx.db.patch(casilla._id, { estadoCasilla: nuevoEstado });
-      // Re-encolar la casilla: su estado es un campo espejado. Sin esto la
-      // hoja sigue diciendo DISPONIBLE sobre una pieza ya vendida — el mismo
-      // defecto que el job de deriva encontró al publicar un lote. La regla es
-      // general: toda mutación que cambie un campo espejado vuelve a encolar.
-      await ctx.db.insert('espejoOutbox', {
-        pestana: 'Casillas',
-        idFila: casilla.itemId,
-        campos: filaCasillaParaEspejo({
-          ...casilla,
-          estadoCasilla: nuevoEstado,
-          renombreLote: renombrePorLote.get(casilla.loteId),
-        } as never),
-        estado: 'pendiente',
-        intentos: 0,
-        creadoEn: ts,
-      });
-    }
+    // Estado de casilla + espejo (Casillas y Movimientos) + drenaje del
+    // espejo: ver `_lib/movimientoEfectos.ts`. El recálculo del fijo NO va
+    // adentro del helper -- sigue abajo, porque necesita leer `lotesActivos`
+    // DESPUÉS de que la casilla ya quedó patcheada.
+    await aplicarEfectosConfirmacion(ctx, {
+      tipo: args.tipo,
+      casillas,
+      movimientoId,
+      kardexEventId,
+      fecha: args.fecha,
+      itemIds: args.itemIds,
+      entregadoPor: args.entregadoPor,
+      recibidoPor: args.recibidoPor,
+      condicion: args.condicion,
+      origenKardexEventId: args.origenKardexEventId,
+      venta: args.venta,
+      renombrePorLote,
+      ts,
+    });
 
     const movId = await ctx.db.insert('movimientos', {
       movimientoId,
@@ -264,40 +262,6 @@ export const _registrar = internalMutation({
         });
       }
     }
-
-    await ctx.db.insert('espejoOutbox', {
-      pestana: 'Movimientos',
-      idFila: movimientoId,
-      // Armada en `_lib/espejoFilas.ts` y no acá: ahí vive la regla de datos
-      // sensibles del canon —la cuenta y el titular no viajan— y se puede
-      // testear sin arnés. Inline, esa regla dependía de que cada quien que
-      // tocara este objeto se acordara de ella.
-      campos: filaMovimientoParaEspejo({
-        movimientoId,
-        kardexEventId,
-        tipo: args.tipo,
-        fecha: args.fecha,
-        itemIds: args.itemIds,
-        entregadoPor: args.entregadoPor,
-        recibidoPor: args.recibidoPor,
-        condicion: args.condicion,
-        origenKardexEventId: args.origenKardexEventId,
-        venta: args.venta,
-      }),
-      estado: 'pendiente',
-      intentos: 0,
-      creadoEn: ts,
-    });
-
-    // Una sola vez por movimiento, no por casilla: el drenaje toma la cola
-    // entera y agendar N veces solo multiplica trabajo idéntico.
-    await ctx.scheduler.runAfter(0, internal.espejo.drenar, { limite: 25 });
-    // Una VENTA mueve `ventasMesCOP` y saca la pieza de `inventarioActivoCOP`
-    // aunque no haya recalculado el divisor (el lote puede seguir con
-    // hermanas vivas). Consignación/devolución no cambian ningún número del
-    // Tablero, pero republicar es idempotente — más simple que discriminar
-    // por tipo acá.
-    await ctx.scheduler.runAfter(0, internal.espejo._publicarTablero, {});
 
     const resultado = {
       movimientoId,

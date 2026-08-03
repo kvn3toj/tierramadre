@@ -22,16 +22,32 @@ import { join } from 'node:path';
 const raiz = join(__dirname, '..');
 const leer = (rel: string) => readFileSync(join(raiz, rel), 'utf8');
 
+/**
+ * `fuentes` es un array porque `movimientos.ts` dejó de ser el único
+ * archivo con el bloque de efectos (Tarea 2 del plan maker-checker vía
+ * Telegram, 2026-08-02): el patch de casilla, los inserts a `espejoOutbox`
+ * y los dos `scheduler.runAfter` se extrajeron a
+ * `_lib/movimientoEfectos.ts` para que el próximo flujo (confirmar un
+ * movimiento en un momento distinto al de registrarlo) los reuse sin
+ * duplicar el cuerpo. El invariante que este archivo vigila -- toda
+ * encolada agenda su drenaje -- sigue viviendo en el mismo movimiento,
+ * solo que repartido en dos archivos; concatenarlos es lo que mantiene la
+ * vigilancia real en vez de aprobarla en falso por buscar en el lugar
+ * equivocado.
+ */
 const CONVEX = [
-  'convex/lotsV4.ts',
-  'convex/casillas.ts',
-  'convex/movimientos.ts',
+  { archivo: 'convex/lotsV4.ts', fuentes: ['convex/lotsV4.ts'] },
+  { archivo: 'convex/casillas.ts', fuentes: ['convex/casillas.ts'] },
+  {
+    archivo: 'convex/movimientos.ts',
+    fuentes: ['convex/movimientos.ts', 'convex/_lib/movimientoEfectos.ts'],
+  },
 ];
 
 describe('toda encolada agenda su drenaje', () => {
-  for (const archivo of CONVEX) {
+  for (const { archivo, fuentes } of CONVEX) {
     it(`${archivo} agenda el drenaje tantas veces como encola`, () => {
-      const fuente = leer(archivo);
+      const fuente = fuentes.map(leer).join('\n');
       const encoladas = (fuente.match(/ctx\.db\.insert\('espejoOutbox'/g) ?? [])
         .length;
       const agendas = (
@@ -57,9 +73,9 @@ describe('el Tablero se republica junto con el drenaje', () => {
   // drenaje — nunca dentro de `drenar` mismo, porque `_publicarTablero`
   // encola y vuelve a agendar `drenar`, y llamarlo desde adentro de `drenar`
   // sería un bucle que nunca termina de agendarse a sí mismo.
-  for (const archivo of CONVEX) {
+  for (const { archivo, fuentes } of CONVEX) {
     it(`${archivo} agenda _publicarTablero 1:1 con cada agenda de drenaje`, () => {
-      const fuente = leer(archivo);
+      const fuente = fuentes.map(leer).join('\n');
       const agendasDrenar = (
         fuente.match(
           /ctx\.scheduler\.runAfter\(0, internal\.espejo\.drenar/g,
