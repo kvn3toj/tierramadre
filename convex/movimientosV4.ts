@@ -211,6 +211,45 @@ async function cargarPorMovimientoId(ctx: any, movimientoId: string) {
   return mov;
 }
 
+/**
+ * Reverifica, justo antes de tocar nada, que cada casilla del movimiento
+ * siga RESERVADA. La reserva de `_registrarPendiente` NO es un candado
+ * exclusivo: `casillas._guardar` (el guardado W2 del Cerebro Creativo)
+ * fuerza `estadoCasilla` a `PENDIENTE_CLASIFICAR` sin mirar el estado
+ * actual cuando el patch deja incompleto un campo requerido -- eso puede
+ * clobberear una RESERVADA mientras este pendiente todavía espera
+ * confirmación o rechazo, dejándola libre para que otro movimiento la
+ * venda. Confirmar o rechazar ciegamente sobre esa casilla revertiría esa
+ * venta nueva sin dejar rastro (el mismo hueco que el candado terminal de
+ * `puedeAplicarseSobre` existe para cerrar).
+ *
+ * Por eso ambas mutations recargan el estado real de cada casilla antes de
+ * aplicar cualquier efecto o patch, y si alguna ya no está RESERVADA (o ya
+ * no existe), abortan sin tocar ni una sola casilla ni el movimiento: es un
+ * conflicto real que alguien tiene que investigar, no algo que deba
+ * resolverse solo en silencio.
+ */
+async function cargarCasillasReservadas(ctx: any, itemIds: string[]) {
+  const casillas = [];
+  for (const itemId of itemIds) {
+    const casilla = await ctx.db
+      .query('lotItems')
+      .withIndex('by_itemId', (q: any) => q.eq('itemId', itemId))
+      .first();
+    const estadoActual =
+      casilla?.estadoCasilla ?? 'SIN_CASILLA (fue eliminada)';
+    if (estadoActual !== 'RESERVADA') {
+      throw new Error(
+        `El ítem ${itemId} ya no está RESERVADA (estado actual: ${estadoActual}); ` +
+          `algo más la tocó mientras este movimiento esperaba resolución. No se ` +
+          `aplicó ningún efecto -- hay que investigar antes de confirmar o rechazar.`,
+      );
+    }
+    casillas.push(casilla);
+  }
+  return casillas;
+}
+
 export const _confirmar = internalMutation({
   args: {
     movimientoId: v.string(),
@@ -229,14 +268,7 @@ export const _confirmar = internalMutation({
 
     const mov = await cargarPorMovimientoId(ctx, movimientoId);
 
-    const casillas = [];
-    for (const itemId of mov.itemIds) {
-      const casilla = await ctx.db
-        .query('lotItems')
-        .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
-        .first();
-      if (casilla) casillas.push(casilla);
-    }
+    const casillas = await cargarCasillasReservadas(ctx, mov.itemIds);
 
     const lotesAntes = debeRecalcular(mov.tipo)
       ? await contarLotesActivosDb(ctx)
@@ -327,13 +359,9 @@ export const _rechazar = internalMutation({
 
     const mov = await cargarPorMovimientoId(ctx, movimientoId);
 
-    for (const itemId of mov.itemIds) {
-      const casilla = await ctx.db
-        .query('lotItems')
-        .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
-        .first();
-      if (casilla)
-        await ctx.db.patch(casilla._id, { estadoCasilla: 'DISPONIBLE' });
+    const casillas = await cargarCasillasReservadas(ctx, mov.itemIds);
+    for (const casilla of casillas) {
+      await ctx.db.patch(casilla._id, { estadoCasilla: 'DISPONIBLE' });
       // Sin espejoOutbox: el espejo nunca vio la reserva, así que no hay nada que corregir.
     }
 
