@@ -527,6 +527,21 @@ export default defineSchema({
     origenKardexEventId: v.optional(v.string()),
     registradoPor: v.string(),
     ts: v.number(),
+    /**
+     * Ciclo de vida maker-checker (2026-08-02). Ausente = fila del riel web
+     * anterior a este campo, ya CONFIRMADA de hecho (sus efectos se aplicaron
+     * en el mismo `_registrar` que la creó). Additive, nunca backfilleado.
+     */
+    estadoMovimiento: v.optional(
+      v.union(
+        v.literal('POR_CONFIRMAR'),
+        v.literal('CONFIRMADO'),
+        v.literal('RECHAZADO'),
+      ),
+    ),
+    motivoRechazo: v.optional(v.string()),
+    resueltoPor: v.optional(v.string()),
+    resueltoEn: v.optional(v.number()),
   })
     .index('by_movimientoId', ['movimientoId'])
     .index('by_kardexEventId', ['kardexEventId'])
