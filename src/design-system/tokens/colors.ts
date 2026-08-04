@@ -6,11 +6,11 @@
  */
 
 // =============================================================================
-// PRIMARY EMERALD PALETTE (from logo #00AE7A)
+// PRIMARY EMERALD PALETTE (from logo #00C992)
 // =============================================================================
 
 export const emeraldCore = {
-  primary: '#00AF84', // QE accent-pure
+  primary: '#00C992', // QE accent-pure
   light: '#34C99B', // QE dark-mode accent / light tint
   lighter: '#6FDFBE', // derived lighter
   lightest: '#E6F7F1', // unchanged mist (still reads fine on light)
@@ -43,17 +43,17 @@ export const goldAccent = {
 export const qualityTiers = {
   estandar: {
     primary: '#33C194',
-    secondary: '#00AE7A',
-    gradient: 'linear-gradient(135deg, #33C194 0%, #00AE7A 100%)',
+    secondary: '#00C992',
+    gradient: 'linear-gradient(135deg, #33C194 0%, #00C992 100%)',
     glow: 'rgba(51, 193, 148, 0.3)',
     frequency: '396Hz',
     chakra: 'Root',
     symbolism: 'Earth Foundation',
   },
   fina: {
-    primary: '#00AE7A',
+    primary: '#00C992',
     secondary: '#008C61',
-    gradient: 'linear-gradient(135deg, #00AE7A 0%, #008C61 100%)',
+    gradient: 'linear-gradient(135deg, #00C992 0%, #008C61 100%)',
     glow: 'rgba(0, 174, 122, 0.4)',
     frequency: '528Hz',
     chakra: 'Heart',
@@ -72,7 +72,7 @@ export const qualityTiers = {
     primary: '#006A48',
     secondary: '#004830',
     gradient: 'linear-gradient(135deg, #006A48 0%, #004830 100%)',
-    accent: '#00AF84',
+    accent: '#00C992',
     glow: 'rgba(0, 106, 72, 0.6)',
     frequency: '852Hz',
     chakra: 'Third Eye',
@@ -86,7 +86,7 @@ export const qualityTiers = {
 
 export const originColors = {
   muzo: {
-    primary: '#00AE7A',
+    primary: '#00C992',
     secondary: '#006A48',
     name: 'Muzo',
     description: 'Classic emerald green',
@@ -123,7 +123,7 @@ export const originColors = {
 
 export const semanticColors = {
   success: {
-    main: '#00AE7A',
+    main: '#00C992',
     light: '#E6F7F1',
     dark: '#006A48',
     contrastText: '#FFFFFF',
@@ -261,7 +261,7 @@ export const insightColors = {
     bg: 'rgba(0, 174, 122, 0.08)',
     bgDark: 'rgba(0, 174, 122, 0.15)',
     border: 'rgba(0, 174, 122, 0.2)',
-    icon: '#00AE7A',
+    icon: '#00C992',
     text: '#006A48',
     textDark: '#33C194',
   },

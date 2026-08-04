@@ -25,7 +25,7 @@ Every element serves a purpose. We achieve premium feel through refinement, not 
 
 ### 2. Emerald as Accent
 
-The emerald green `#00AE7A` is powerful—use it sparingly for maximum impact.
+The emerald green `#00C992` is powerful—use it sparingly for maximum impact.
 
 - **Primary Actions**: Emerald signals the next step
 - **Brand Moments**: Emerald appears in hero sections, CTAs, success states
@@ -56,7 +56,7 @@ Animations feel organic, never mechanical.
 **Emerald Green** (Primary Brand)
 
 ```
-emerald-500: #00AE7A  ← Main brand color (preserved from original)
+emerald-500: #00C992  ← Main brand color (preserved from original)
 emerald-400: #33FFBF  ← Bright accent (dark mode)
 emerald-600: #008C62  ← Deep variant
 emerald-50:  #E6FFF7  ← Subtle tint

@@ -22,6 +22,9 @@ import { zIndex } from '../../design-system';
 
 const SLIDE_WIDTH = 1920;
 const SLIDE_HEIGHT = 1080;
+// Deliberately the bare MARK, not the lockup: this is a 55px corner watermark.
+// The lockup's slogan band is 6.3% of its height, so it needs ≥80px to stay
+// legible — at 55px it would render the slogan as an illegible smear.
 const LOGO_PATH = '/logo-tierra-madre.png';
 
 // Luxury Color Palette
@@ -45,30 +48,84 @@ const COLORS = {
 
 // Typography Scale
 const TYPOGRAPHY = {
-  h1: { fontSize: 96, fontWeight: 700, lineHeight: 1.1, fontFamily: '"Cormorant Garamond", serif' },
-  h2: { fontSize: 72, fontWeight: 600, lineHeight: 1.15, fontFamily: '"Cormorant Garamond", serif' },
-  h3: { fontSize: 56, fontWeight: 500, lineHeight: 1.2, fontFamily: '"Cormorant Garamond", serif' },
-  h4: { fontSize: 42, fontWeight: 500, lineHeight: 1.3, fontFamily: '"Cormorant Garamond", serif' },
-  body: { fontSize: 28, fontWeight: 400, lineHeight: 1.6, fontFamily: '"Montserrat", sans-serif' },
-  bodySmall: { fontSize: 22, fontWeight: 400, lineHeight: 1.5, fontFamily: '"Montserrat", sans-serif' },
-  caption: { fontSize: 18, fontWeight: 500, lineHeight: 1.4, fontFamily: '"Montserrat", sans-serif', letterSpacing: '0.15em', textTransform: 'uppercase' as const },
-  number: { fontSize: 120, fontWeight: 700, lineHeight: 1, fontFamily: '"Cinzel", serif' },
+  h1: {
+    fontSize: 96,
+    fontWeight: 700,
+    lineHeight: 1.1,
+    fontFamily: '"Cormorant Garamond", serif',
+  },
+  h2: {
+    fontSize: 72,
+    fontWeight: 600,
+    lineHeight: 1.15,
+    fontFamily: '"Cormorant Garamond", serif',
+  },
+  h3: {
+    fontSize: 56,
+    fontWeight: 500,
+    lineHeight: 1.2,
+    fontFamily: '"Cormorant Garamond", serif',
+  },
+  h4: {
+    fontSize: 42,
+    fontWeight: 500,
+    lineHeight: 1.3,
+    fontFamily: '"Cormorant Garamond", serif',
+  },
+  body: {
+    fontSize: 28,
+    fontWeight: 400,
+    lineHeight: 1.6,
+    fontFamily: '"Montserrat", sans-serif',
+  },
+  bodySmall: {
+    fontSize: 22,
+    fontWeight: 400,
+    lineHeight: 1.5,
+    fontFamily: '"Montserrat", sans-serif',
+  },
+  caption: {
+    fontSize: 18,
+    fontWeight: 500,
+    lineHeight: 1.4,
+    fontFamily: '"Montserrat", sans-serif',
+    letterSpacing: '0.15em',
+    textTransform: 'uppercase' as const,
+  },
+  number: {
+    fontSize: 120,
+    fontWeight: 700,
+    lineHeight: 1,
+    fontFamily: '"Cinzel", serif',
+  },
 };
 
 // Image prompts for each slide type
 const IMAGE_PROMPTS = {
-  cover: 'single stunning colombian emerald gemstone floating with sparkles and light rays on pure black background, luxury jewelry photography, dramatic spotlight',
-  highValue: 'multiple emerald gemstones arranged on black velvet with golden price tags, museum quality display, dramatic spotlight lighting, investment concept',
-  globalDemand: 'elegant dark world map with golden connection lines between continents, emerald green accents on sophisticated dark background, luxury travel concept',
-  colombia: 'macro photography of colombian emerald crystal showing beautiful internal gardens and inclusions, scientific documentation style, dramatic lighting on dark background',
-  margins: 'luxurious emerald jewelry pieces on display pedestals in high-end boutique setting, golden accents, dramatic cinematic lighting',
-  diversified: 'comparison display of raw emerald rough stone, precision cut emerald, and finished emerald jewelry piece, educational luxury display, dark elegant background',
-  compact: 'elegant emerald collection in velvet-lined wooden box, safe deposit aesthetic, dramatic spotlight on black background, security and value concept',
-  luxury: 'red carpet glamour setting with emerald necklace on display stand, paparazzi lights effect, luxury fashion photography, dramatic spotlight',
-  appreciation: 'vintage antique emerald jewelry next to modern emerald piece showing timeless value, museum display aesthetic, dramatic lighting',
-  flexibility: 'colombian emerald mine landscape at golden hour sunrise, workers silhouettes, misty mountains, documentary photography style, inspiring',
-  barrier: 'professional gemologist examining emerald with loupe in sophisticated laboratory, warm accent lighting on dark background, expertise concept',
-  conclusion: 'single large emerald with tropical colombian flowers arrangement, gratitude concept, elegant dark background with soft emerald green glow',
+  cover:
+    'single stunning colombian emerald gemstone floating with sparkles and light rays on pure black background, luxury jewelry photography, dramatic spotlight',
+  highValue:
+    'multiple emerald gemstones arranged on black velvet with golden price tags, museum quality display, dramatic spotlight lighting, investment concept',
+  globalDemand:
+    'elegant dark world map with golden connection lines between continents, emerald green accents on sophisticated dark background, luxury travel concept',
+  colombia:
+    'macro photography of colombian emerald crystal showing beautiful internal gardens and inclusions, scientific documentation style, dramatic lighting on dark background',
+  margins:
+    'luxurious emerald jewelry pieces on display pedestals in high-end boutique setting, golden accents, dramatic cinematic lighting',
+  diversified:
+    'comparison display of raw emerald rough stone, precision cut emerald, and finished emerald jewelry piece, educational luxury display, dark elegant background',
+  compact:
+    'elegant emerald collection in velvet-lined wooden box, safe deposit aesthetic, dramatic spotlight on black background, security and value concept',
+  luxury:
+    'red carpet glamour setting with emerald necklace on display stand, paparazzi lights effect, luxury fashion photography, dramatic spotlight',
+  appreciation:
+    'vintage antique emerald jewelry next to modern emerald piece showing timeless value, museum display aesthetic, dramatic lighting',
+  flexibility:
+    'colombian emerald mine landscape at golden hour sunrise, workers silhouettes, misty mountains, documentary photography style, inspiring',
+  barrier:
+    'professional gemologist examining emerald with loupe in sophisticated laboratory, warm accent lighting on dark background, expertise concept',
+  conclusion:
+    'single large emerald with tropical colombian flowers arrangement, gratitude concept, elegant dark background with soft emerald green glow',
 };
 
 // ============================================================================
@@ -94,11 +151,11 @@ const SlideContainer: React.FC<{ id?: string; children: React.ReactNode }> = ({
   </Box>
 );
 
-const BackgroundImage: React.FC<{ src: string; opacity?: number; brightness?: number }> = ({
-  src,
-  opacity = 1,
-  brightness = 0.4,
-}) => (
+const BackgroundImage: React.FC<{
+  src: string;
+  opacity?: number;
+  brightness?: number;
+}> = ({ src, opacity = 1, brightness = 0.4 }) => (
   <Box
     component="img"
     src={src}
@@ -116,14 +173,17 @@ const BackgroundImage: React.FC<{ src: string; opacity?: number; brightness?: nu
   />
 );
 
-const GradientOverlay: React.FC<{ direction?: 'bottom' | 'left' | 'right' | 'radial' }> = ({
-  direction = 'bottom',
-}) => {
+const GradientOverlay: React.FC<{
+  direction?: 'bottom' | 'left' | 'right' | 'radial';
+}> = ({ direction = 'bottom' }) => {
   const gradients = {
-    bottom: 'linear-gradient(to bottom, rgba(10,10,10,0.2) 0%, rgba(10,10,10,0.9) 100%)',
+    bottom:
+      'linear-gradient(to bottom, rgba(10,10,10,0.2) 0%, rgba(10,10,10,0.9) 100%)',
     left: 'linear-gradient(to right, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.6) 50%, transparent 100%)',
-    right: 'linear-gradient(to left, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.6) 50%, transparent 100%)',
-    radial: 'radial-gradient(ellipse at center, transparent 20%, rgba(10,10,10,0.8) 100%)',
+    right:
+      'linear-gradient(to left, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.6) 50%, transparent 100%)',
+    radial:
+      'radial-gradient(ellipse at center, transparent 20%, rgba(10,10,10,0.8) 100%)',
   };
 
   return (
@@ -140,7 +200,9 @@ const GradientOverlay: React.FC<{ direction?: 'bottom' | 'left' | 'right' | 'rad
   );
 };
 
-const EmeraldAccent: React.FC<{ position?: 'left' | 'top' | 'bottom' }> = ({ position = 'left' }) => {
+const EmeraldAccent: React.FC<{ position?: 'left' | 'top' | 'bottom' }> = ({
+  position = 'left',
+}) => {
   const styles = {
     left: { left: 0, top: 0, width: 6, height: SLIDE_HEIGHT },
     top: { left: 0, top: 0, width: SLIDE_WIDTH, height: 6 },
@@ -160,7 +222,9 @@ const EmeraldAccent: React.FC<{ position?: 'left' | 'top' | 'bottom' }> = ({ pos
 };
 
 const Logo: React.FC = () => (
-  <Box sx={{ position: 'absolute', bottom: 50, right: 60, zIndex: zIndex.base }}>
+  <Box
+    sx={{ position: 'absolute', bottom: 50, right: 60, zIndex: zIndex.base }}
+  >
     <Box
       component="img"
       src={LOGO_PATH}
@@ -202,7 +266,9 @@ export const DynamicCoverSlide: React.FC<DynamicCoverProps> = ({
   subtitle = 'Oportunidad de inversión en gemas colombianas',
   imageUrl,
 }) => {
-  const imgSrc = imageUrl || `https://image.pollinations.ai/prompt/${encodeURIComponent(IMAGE_PROMPTS.cover + ', ultra detailed 8K')}?width=1920&height=1080&nologo=true&seed=2024`;
+  const imgSrc =
+    imageUrl ||
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(IMAGE_PROMPTS.cover + ', ultra detailed 8K')}?width=1920&height=1080&nologo=true&seed=2024`;
 
   return (
     <SlideContainer id={id}>
@@ -212,7 +278,16 @@ export const DynamicCoverSlide: React.FC<DynamicCoverProps> = ({
       <EmeraldAccent position="bottom" />
 
       {/* Title */}
-      <Box sx={{ position: 'absolute', top: 280, left: 0, width: SLIDE_WIDTH, textAlign: 'center', px: 10 }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 280,
+          left: 0,
+          width: SLIDE_WIDTH,
+          textAlign: 'center',
+          px: 10,
+        }}
+      >
         <Typography
           sx={{
             ...TYPOGRAPHY.h2,
@@ -239,7 +314,15 @@ export const DynamicCoverSlide: React.FC<DynamicCoverProps> = ({
       />
 
       {/* Subtitle */}
-      <Box sx={{ position: 'absolute', bottom: 220, left: 0, width: SLIDE_WIDTH, textAlign: 'center' }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 220,
+          left: 0,
+          width: SLIDE_WIDTH,
+          textAlign: 'center',
+        }}
+      >
         <Typography
           sx={{
             ...TYPOGRAPHY.body,
@@ -279,7 +362,9 @@ export const DynamicKeyPointSlide: React.FC<DynamicKeyPointProps> = ({
   imageUrl,
   imagePosition = 'right',
 }) => {
-  const imgSrc = imageUrl || `https://image.pollinations.ai/prompt/${encodeURIComponent(IMAGE_PROMPTS.highValue + ', ultra detailed 8K')}?width=1920&height=1080&nologo=true&seed=${2024 + Number(number) * 100}`;
+  const imgSrc =
+    imageUrl ||
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(IMAGE_PROMPTS.highValue + ', ultra detailed 8K')}?width=1920&height=1080&nologo=true&seed=${2024 + Number(number) * 100}`;
   const isLeft = imagePosition === 'left';
 
   return (
@@ -370,10 +455,18 @@ export const DynamicListSlide: React.FC<DynamicListProps> = ({
   id = 'dynamic-list',
   number = '3',
   title = 'Demanda Internacional Estable',
-  items = ['Estados Unidos - Joyería de lujo', 'Hong Kong y China - Alta joyería', 'Europa - Mercado exclusivo', 'Dubái y Medio Oriente - Joyerías VIP', 'India - Gran demanda cultural'],
+  items = [
+    'Estados Unidos - Joyería de lujo',
+    'Hong Kong y China - Alta joyería',
+    'Europa - Mercado exclusivo',
+    'Dubái y Medio Oriente - Joyerías VIP',
+    'India - Gran demanda cultural',
+  ],
   imageUrl,
 }) => {
-  const imgSrc = imageUrl || `https://image.pollinations.ai/prompt/${encodeURIComponent(IMAGE_PROMPTS.globalDemand + ', ultra detailed 8K')}?width=1920&height=1080&nologo=true&seed=${2024 + Number(number) * 100}`;
+  const imgSrc =
+    imageUrl ||
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(IMAGE_PROMPTS.globalDemand + ', ultra detailed 8K')}?width=1920&height=1080&nologo=true&seed=${2024 + Number(number) * 100}`;
 
   return (
     <SlideContainer id={id}>
@@ -383,7 +476,15 @@ export const DynamicListSlide: React.FC<DynamicListProps> = ({
       <SlideNumber number={number} />
 
       {/* Content */}
-      <Box sx={{ position: 'absolute', top: 180, left: 100, width: 850, zIndex: zIndex.base }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 180,
+          left: 100,
+          width: 850,
+          zIndex: zIndex.base,
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 4 }}>
           <Box sx={{ width: 60, height: 3, bgcolor: COLORS.emeraldGlow }} />
           <Typography sx={{ ...TYPOGRAPHY.caption, color: COLORS.emeraldGlow }}>
@@ -405,7 +506,10 @@ export const DynamicListSlide: React.FC<DynamicListProps> = ({
         {/* List Items */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           {items.map((item, idx) => (
-            <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <Box
+              key={idx}
+              sx={{ display: 'flex', alignItems: 'center', gap: 3 }}
+            >
               <Box
                 sx={{
                   width: 12,
@@ -444,10 +548,19 @@ export const DynamicFlowSlide: React.FC<DynamicFlowProps> = ({
   id = 'dynamic-flow',
   number = '10',
   title = 'Flexibilidad en el Negocio',
-  steps = ['Comprar en mina', 'Intermediar', 'Tallar', 'Certificar', 'Exportar', 'Vender retail'],
+  steps = [
+    'Comprar en mina',
+    'Intermediar',
+    'Tallar',
+    'Certificar',
+    'Exportar',
+    'Vender retail',
+  ],
   imageUrl,
 }) => {
-  const imgSrc = imageUrl || `https://image.pollinations.ai/prompt/${encodeURIComponent(IMAGE_PROMPTS.flexibility + ', ultra detailed 8K')}?width=1920&height=1080&nologo=true&seed=${2024 + Number(number) * 100}`;
+  const imgSrc =
+    imageUrl ||
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(IMAGE_PROMPTS.flexibility + ', ultra detailed 8K')}?width=1920&height=1080&nologo=true&seed=${2024 + Number(number) * 100}`;
 
   return (
     <SlideContainer id={id}>
@@ -457,8 +570,18 @@ export const DynamicFlowSlide: React.FC<DynamicFlowProps> = ({
       <SlideNumber number={number} />
 
       {/* Title */}
-      <Box sx={{ position: 'absolute', top: 150, left: 0, width: SLIDE_WIDTH, textAlign: 'center' }}>
-        <Typography sx={{ ...TYPOGRAPHY.caption, color: COLORS.emeraldGlow, mb: 2 }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 150,
+          left: 0,
+          width: SLIDE_WIDTH,
+          textAlign: 'center',
+        }}
+      >
+        <Typography
+          sx={{ ...TYPOGRAPHY.caption, color: COLORS.emeraldGlow, mb: 2 }}
+        >
           RAZÓN {number}
         </Typography>
         <Typography
@@ -496,12 +619,24 @@ export const DynamicFlowSlide: React.FC<DynamicFlowProps> = ({
                 borderRadius: 2,
               }}
             >
-              <Typography sx={{ ...TYPOGRAPHY.bodySmall, color: COLORS.white, fontWeight: 600 }}>
+              <Typography
+                sx={{
+                  ...TYPOGRAPHY.bodySmall,
+                  color: COLORS.white,
+                  fontWeight: 600,
+                }}
+              >
                 {step}
               </Typography>
             </Box>
             {idx < steps.length - 1 && (
-              <Box sx={{ display: 'flex', alignItems: 'center', color: COLORS.emeraldGlow }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: COLORS.emeraldGlow,
+                }}
+              >
                 <Typography sx={{ fontSize: 32 }}>→</Typography>
               </Box>
             )}
@@ -510,7 +645,15 @@ export const DynamicFlowSlide: React.FC<DynamicFlowProps> = ({
       </Box>
 
       {/* Bottom benefit */}
-      <Box sx={{ position: 'absolute', bottom: 100, left: 0, width: SLIDE_WIDTH, textAlign: 'center' }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 100,
+          left: 0,
+          width: SLIDE_WIDTH,
+          textAlign: 'center',
+        }}
+      >
         <Typography sx={{ ...TYPOGRAPHY.body, color: COLORS.textMuted }}>
           Oportunidades en todos los niveles con diferentes capitales
         </Typography>
@@ -546,7 +689,9 @@ export const DynamicConclusionSlide: React.FC<DynamicConclusionProps> = ({
   ],
   imageUrl,
 }) => {
-  const imgSrc = imageUrl || `https://image.pollinations.ai/prompt/${encodeURIComponent(IMAGE_PROMPTS.conclusion + ', ultra detailed 8K')}?width=1920&height=1080&nologo=true&seed=2024999`;
+  const imgSrc =
+    imageUrl ||
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(IMAGE_PROMPTS.conclusion + ', ultra detailed 8K')}?width=1920&height=1080&nologo=true&seed=2024999`;
 
   return (
     <SlideContainer id={id}>
@@ -556,7 +701,15 @@ export const DynamicConclusionSlide: React.FC<DynamicConclusionProps> = ({
       <EmeraldAccent position="bottom" />
 
       {/* Title */}
-      <Box sx={{ position: 'absolute', top: 100, left: 0, width: SLIDE_WIDTH, textAlign: 'center' }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 100,
+          left: 0,
+          width: SLIDE_WIDTH,
+          textAlign: 'center',
+        }}
+      >
         <Typography
           sx={{
             ...TYPOGRAPHY.h2,
@@ -593,7 +746,9 @@ export const DynamicConclusionSlide: React.FC<DynamicConclusionProps> = ({
                 border: `1px solid ${COLORS.emerald}`,
               }}
             >
-              <Typography sx={{ fontSize: 28, color: COLORS.emeraldGlow }}>✓</Typography>
+              <Typography sx={{ fontSize: 28, color: COLORS.emeraldGlow }}>
+                ✓
+              </Typography>
               <Typography sx={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
                 {item}
               </Typography>
@@ -603,7 +758,15 @@ export const DynamicConclusionSlide: React.FC<DynamicConclusionProps> = ({
       </Box>
 
       {/* CTA */}
-      <Box sx={{ position: 'absolute', bottom: 100, left: 0, width: SLIDE_WIDTH, textAlign: 'center' }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 100,
+          left: 0,
+          width: SLIDE_WIDTH,
+          textAlign: 'center',
+        }}
+      >
         <Typography
           sx={{
             ...TYPOGRAPHY.h4,

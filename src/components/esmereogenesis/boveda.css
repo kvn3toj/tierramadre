@@ -9,7 +9,7 @@
  * Theme = `data-theme="dark|light"` on the `.bov-root` wrapper, toggled by the
  * feature-local EsmereoThemeContext. Dark is the default; light is a cool
  * brushed-platinum showroom (never warm cream). Note the Bóveda emerald greens
- * Palette now aligned with app-wide emeraldCore (#00AE7A / #33C194 / #008C61)
+ * Palette now aligned with app-wide emeraldCore (#00C992 / #33C194 / #008C61)
  * and goldAccent (#D4AF37 / #E5C866) for visual consistency across the app.
  */
 
@@ -27,7 +27,7 @@
   --ink: #f2f7f4;
   --ink-soft: rgba(228, 240, 234, 0.62);
   --ink-faint: rgba(228, 240, 234, 0.34);
-  --em: #00ae7a;
+  --em: #00c992;
   --em-deep: #008c61;
   --em-bright: #33c194;
   --gold: #d4af37;
@@ -96,7 +96,7 @@
   --ink-faint: #586a6c;
   --em: #008c61;
   --em-deep: #006a48;
-  --em-bright: #00ae7a;
+  --em-bright: #00c992;
   --gold: #8b6914;
   --gold-bright: #b8941f;
   --accent-bg: rgba(212, 175, 55, 0.12);

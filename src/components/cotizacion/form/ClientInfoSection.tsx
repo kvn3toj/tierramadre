@@ -292,7 +292,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
             <Avatar
               src={
                 googleUser
-                  ? `https://ui-avatars.com/api/?name=${encodeURIComponent(asesorName || googleUser.name)}&background=00AE7A&color=fff`
+                  ? `https://ui-avatars.com/api/?name=${encodeURIComponent(asesorName || googleUser.name)}&background=00C992&color=fff`
                   : undefined
               }
               sx={{

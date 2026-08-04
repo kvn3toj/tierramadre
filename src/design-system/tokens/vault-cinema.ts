@@ -18,7 +18,7 @@ export const vaultCinema = {
     champagneBright: '#dfc383',
 
     // Gem
-    emerald: '#00AE7A',
+    emerald: '#00C992',
     emeraldLight: '#4de0b0',
     emeraldDeep: '#004a33',
 

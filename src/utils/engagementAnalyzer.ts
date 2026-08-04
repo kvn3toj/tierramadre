@@ -33,7 +33,7 @@ export const FEATURE_AREAS: FeatureArea[] = [
       'comparison_viewed',
       'filter_saved',
     ],
-    color: '#00AE7A',
+    color: '#00C992',
   },
   {
     id: 'cotizacion',

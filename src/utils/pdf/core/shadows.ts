@@ -129,7 +129,7 @@ export function drawIOSShadow(
   layers.forEach(layer => {
     // Set shadow color
     if (emeraldGlow || style === 'emerald') {
-      // Emerald glow: #00AE7A
+      // Emerald glow: #00C992
       pdf.setFillColor(0, 174, 122);
     } else {
       // Standard shadow: black

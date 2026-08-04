@@ -67,32 +67,17 @@ const ContentContainer = styled(Box)({
 
 // Logo with refined styling
 const LogoImage = styled('img')({
-  height: '100px',
-  marginBottom: '50px',
+  // Full lockup — carries the wordmark and slogan itself, so this slide no
+  // longer renders them as separate text. Needs ≥80px for a legible slogan.
+  height: '140px',
+  // Absorbs the spacing the removed BrandText/Tagline used to contribute
+  marginBottom: '100px',
   filter: 'brightness(1.05) drop-shadow(0 10px 30px rgba(0, 0, 0, 0.4))',
 });
 
-// Brand text with luxury typography
-const BrandText = styled(Typography)({
-  fontSize: '28px',
-  fontWeight: 500,
-  color: COLORS.textLight,
-  letterSpacing: '0.25em',
-  fontFamily: '"Inter", sans-serif',
-  textTransform: 'uppercase',
-  marginBottom: '12px',
-});
-
-// Tagline with gold accent
-const Tagline = styled(Typography)({
-  fontSize: '18px',
-  fontWeight: 300,
-  color: COLORS.gold,
-  letterSpacing: '0.35em',
-  fontFamily: '"Inter", sans-serif',
-  textTransform: 'uppercase',
-  marginBottom: '70px',
-});
+// NOTE: BrandText ("TIERRA MADRE") and Tagline ("ESMERALDAS CON ADN DE PAZ")
+// used to sit under the logo. The brand lockup now carries both, so rendering
+// them again would print the wordmark and slogan twice.
 
 // Thank you message - luxurious serif typography
 const ThankYouMessage = styled(Typography)({
@@ -124,7 +109,8 @@ const LeafOverlay = styled(Box)({
   left: 0,
   right: 0,
   bottom: 0,
-  background: 'radial-gradient(circle at center, transparent 35%, rgba(8, 20, 18, 0.5) 100%)',
+  background:
+    'radial-gradient(circle at center, transparent 35%, rgba(8, 20, 18, 0.5) 100%)',
   pointerEvents: 'none',
 });
 
@@ -168,7 +154,7 @@ export default function ThankYouTemplate({
   id = 'thank-you-slide',
   message = 'GRACIAS.',
   website = 'www.tierramadre.co',
-  logoUrl = '/logo-tierra-madre.png',
+  logoUrl = '/logo-brand.png',
   backgroundImage = '/masterclass/11-thankyou.jpg',
 }: ThankYouTemplateProps) {
   return (
@@ -187,16 +173,9 @@ export default function ThankYouTemplate({
       {/* Main Content - Centered */}
       <ContentContainer>
         <Stack alignItems="center" spacing={0}>
-          {/* Logo */}
-          {logoUrl && (
-            <LogoImage src={logoUrl} alt="Tierra Madre" />
-          )}
-
-          {/* Brand name */}
-          <BrandText>TIERRA MADRE</BrandText>
-
-          {/* Tagline */}
-          <Tagline>ESMERALDAS CON ADN DE PAZ</Tagline>
+          {/* Logo — the lockup already carries the wordmark and the slogan,
+              so they are no longer rendered as separate text below it. */}
+          {logoUrl && <LogoImage src={logoUrl} alt="Tierra Mädre" />}
 
           {/* Thank you message */}
           <ThankYouMessage>{message}</ThankYouMessage>

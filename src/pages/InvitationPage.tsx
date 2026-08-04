@@ -95,7 +95,7 @@ const emeraldBtnSx = {
   fontWeight: fontWeights.semibold,
   fontFamily: vault.system,
   textTransform: 'none' as const,
-  background: qeAccent.dark.strong, // #00AF84 solid, no gradient
+  background: qeAccent.dark.strong, // #00C992 solid, no gradient
   color: qeAccent.dark.on, // #06140E
   border: 'none',
   boxShadow: 'none',
