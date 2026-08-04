@@ -219,7 +219,13 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
                 src={logoUrl}
                 alt={title}
                 sx={{
-                  height: 44,
+                  // The símbolo alone, sized to sit with the bar's type rather
+                  // than fill it. It stands in for the headline title (17px),
+                  // so it reads at the same optical weight at ~1.5× that size.
+                  // It was 44px — exactly the bar's own minHeight, which left
+                  // the mark running edge to edge with no breathing room.
+                  height: 26,
+                  width: 'auto',
                   objectFit: 'contain',
                 }}
               />

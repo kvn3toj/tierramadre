@@ -1,10 +1,18 @@
 /**
  * CatalogHeader — Quiet Emerald editorial header for the Catálogo screen.
  *
- * Cormorant title + DM Mono piece-count ("48 PIEZAS · ESMERALDAS DE COLOMBIA")
- * and the origin tab strip (Todas / Muzo / Chivor / Coscuez) with the emerald
- * active-underline. Responsive: 30px title on phone, 40px on tablet/desktop
- * (CatalogNew.dc.html / CatalogWide.dc.html).
+ * Two bands, in reading order:
+ *   1. Identity (serif title + piece-count + summary) on the left, the
+ *      search/filter cluster on the right, top-aligned.
+ *   2. The origin tab strip (Todas / Muzo / Chivor / Coscuez) on its own
+ *      hairline rule, with the emerald active-underline.
+ *
+ * The tabs used to share band 1, centred against a three-line identity block,
+ * which left them floating between the title and the search box with no clear
+ * owner. Separating the bands gives each one register: what you are looking
+ * at, how to search it, which origin.
+ *
+ * Responsive: 30px title on phone, 40px on tablet/desktop.
  */
 import { Box, Typography, ButtonBase } from '@mui/material';
 import { useThemeMode } from '../../../contexts/ThemeContext';
@@ -55,15 +63,16 @@ export function CatalogHeader({
         pb: { xs: '12px', md: '16px' },
       }}
     >
+      {/* Band 1 — identity on the left, controls on the right.
+          Top-aligned, not centred: the identity block is three lines tall and
+          the control cluster is one, so centring floated the controls at the
+          identity block's midpoint instead of reading as a header band. */}
       <Box
         sx={{
           display: 'flex',
-          // Center the control cluster against the whole title block so the
-          // controls read as one clean band instead of floating in the
-          // whitespace beside the title (was flex-end, which left an L-gap).
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'space-between',
-          gap: 2,
+          gap: { xs: 2, md: 3 },
           flexWrap: 'wrap',
         }}
       >
@@ -98,47 +107,63 @@ export function CatalogHeader({
           )}
         </Box>
 
-        {tabs.length > 1 && (
-          <Box
-            role="tablist"
-            aria-label="Filtrar por origen"
-            sx={{
-              display: 'flex',
-              gap: { xs: '18px', md: '22px' },
-              alignItems: 'baseline',
-            }}
-          >
-            {tabs.map((o) => {
-              const active = activeOrigin === o;
-              return (
-                <ButtonBase
-                  key={o}
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => onOriginChange(o)}
-                  sx={{
-                    pb: '6px',
-                    borderBottom: `1.5px solid ${active ? qe.accent : 'transparent'}`,
-                    color: active ? qe.accent : qe.muted,
-                    fontFamily: qeFont.ui,
-                    fontWeight: active ? 600 : 500,
-                    fontSize: { xs: 12, md: 12.5 },
-                    letterSpacing: 0,
-                    lineHeight: 1,
-                    transition: 'color 160ms, border-color 160ms',
-                  }}
-                >
-                  {labelFor(o)}
-                </ButtonBase>
-              );
-            })}
-          </Box>
-        )}
-
         {trailingContent && (
           <Box sx={{ flex: 1, minWidth: 0 }}>{trailingContent}</Box>
         )}
       </Box>
+
+      {/* Band 2 — origin tabs as a real tab strip on its own rule.
+          Previously these sat inline between the title and the search box,
+          vertically centred against a three-line block, which read as floating
+          text rather than navigation. A full-width strip on a hairline is the
+          familiar affordance and gives the origin filter its own register. */}
+      {tabs.length > 1 && (
+        <Box
+          role="tablist"
+          aria-label="Filtrar por origen"
+          sx={{
+            display: 'flex',
+            gap: { xs: '20px', md: '26px' },
+            alignItems: 'stretch',
+            mt: { xs: '14px', md: '18px' },
+            borderBottom: `1px solid ${qe.hairline}`,
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': { display: 'none' },
+          }}
+        >
+          {tabs.map((o) => {
+            const active = activeOrigin === o;
+            return (
+              <ButtonBase
+                key={o}
+                role="tab"
+                aria-selected={active}
+                onClick={() => onOriginChange(o)}
+                sx={{
+                  flexShrink: 0,
+                  // ≥44px touch target (PRODUCT.md); the strip's own hairline
+                  // sits 1px below, so the tab underline overlaps it exactly.
+                  minHeight: 44,
+                  px: '2px',
+                  mb: '-1px',
+                  borderBottom: `1.5px solid ${active ? qe.accent : 'transparent'}`,
+                  color: active ? qe.accent : qe.muted,
+                  fontFamily: qeFont.ui,
+                  fontWeight: active ? 600 : 500,
+                  fontSize: { xs: 12.5, md: 13 },
+                  letterSpacing: 0,
+                  lineHeight: 1,
+                  transition: 'color 160ms, border-color 160ms',
+                  '&:hover': { color: active ? qe.accent : qe.text },
+                }}
+              >
+                {labelFor(o)}
+              </ButtonBase>
+            );
+          })}
+        </Box>
+      )}
     </Box>
   );
 }

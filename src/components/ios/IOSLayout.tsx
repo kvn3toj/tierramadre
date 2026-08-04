@@ -93,8 +93,8 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
   '/treasure': {
     title: t.pages.treasure.title,
     mode: 'compact',
-    logoUrl: '/images/logo-horizontal-green.png',
-    forceLogoUrl: '/images/logo-horizontal-green.png',
+    logoUrl: '/logo-symbol.png',
+    forceLogoUrl: '/logo-symbol.png',
   },
   '/ambassadors': {
     title: t.pages.ambassadors.title,
@@ -103,8 +103,8 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
   '/home': {
     title: 'Tierra Mädre',
     mode: 'compact',
-    logoUrl: '/images/logo-horizontal-green.png',
-    forceLogoUrl: '/images/logo-horizontal-green.png',
+    logoUrl: '/logo-symbol.png',
+    forceLogoUrl: '/logo-symbol.png',
   },
   '/catalog': {
     title: t.pages.catalog.title,
@@ -383,8 +383,8 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
             pageConfig.forceLogoUrl ||
             (pageConfig.logoUrl
               ? isLight
-                ? '/images/logo-horizontal-dark.png'
-                : '/images/logo-horizontal-white.png'
+                ? '/logo-symbol.png'
+                : '/logo-symbol-white.png'
               : undefined)
           }
           showBackButton={pageConfig.showBackButton}
