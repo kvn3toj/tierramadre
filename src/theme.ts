@@ -6,7 +6,7 @@ import { primitiveColors } from './design-system/tokens/primitives/colors';
 // Uses primitiveColors as single source of truth
 // ============================================
 
-// Tierra Madre brand colors - Based on logo green #00AE7A
+// Tierra Madre brand colors - Based on logo green #00C992
 export const brandColors = {
   // Primary emerald palette (from logo) - using primitives
   emeraldGreen: primitiveColors.emerald[500],      // Logo green - primary

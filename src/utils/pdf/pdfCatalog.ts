@@ -25,9 +25,13 @@ import {
   getImageDimensions,
   calculateAspectRatioFit,
   loadLogoBase64,
+  loadLockupBase64,
 } from './pdfCommon';
 import type { Emerald, CatalogOptions } from './pdfCommon';
-import { addHorizontalCoverPage, addHorizontalCarouselLayout } from './pdfSlide';
+import {
+  addHorizontalCoverPage,
+  addHorizontalCarouselLayout,
+} from './pdfSlide';
 
 // =============================================================================
 // MAIN CATALOG GENERATOR
@@ -35,7 +39,7 @@ import { addHorizontalCoverPage, addHorizontalCarouselLayout } from './pdfSlide'
 
 export async function generateCatalog(
   emeralds: Emerald[],
-  options: CatalogOptions
+  options: CatalogOptions,
 ): Promise<jsPDF> {
   const { default: jsPDF } = await ensureJsPDFLoaded();
 
@@ -60,22 +64,64 @@ export async function generateCatalog(
 
   const theme = options.theme || 'dark';
 
+  // The cover draws at 32mm, so it carries the full lockup (wordmark + slogan).
+  // Page headers stay on the square mark — at 12–14mm the slogan is illegible.
+  const lockupBase64 = await loadLockupBase64(theme === 'dark');
+
   // Cover Page
   if (isCarousel) {
-    await addHorizontalCoverPage(pdf, pageWidth, pageHeight, options.title, emeralds.length, logoBase64, theme);
+    await addHorizontalCoverPage(
+      pdf,
+      pageWidth,
+      pageHeight,
+      options.title,
+      emeralds.length,
+      lockupBase64,
+      theme,
+    );
   } else {
     addCoverPage(pdf, pageWidth, pageHeight, options.title);
   }
 
   // Content Pages
   if (isCarousel) {
-    await addHorizontalCarouselLayout(pdf, emeralds, options, margin, contentWidth, pageWidth, pageHeight, logoBase64, theme);
+    await addHorizontalCarouselLayout(
+      pdf,
+      emeralds,
+      options,
+      margin,
+      contentWidth,
+      pageWidth,
+      pageHeight,
+      logoBase64,
+      theme,
+    );
   } else {
     pdf.addPage();
     if (options.layout === 'grid') {
-      await addGridLayout(pdf, emeralds, options, margin, contentWidth, pageWidth, logoBase64, theme, pageHeight);
+      await addGridLayout(
+        pdf,
+        emeralds,
+        options,
+        margin,
+        contentWidth,
+        pageWidth,
+        logoBase64,
+        theme,
+        pageHeight,
+      );
     } else {
-      await addListLayout(pdf, emeralds, options, margin, contentWidth, pageWidth, pageHeight, logoBase64, theme);
+      await addListLayout(
+        pdf,
+        emeralds,
+        options,
+        margin,
+        contentWidth,
+        pageWidth,
+        pageHeight,
+        logoBase64,
+        theme,
+      );
     }
   }
 
@@ -90,7 +136,7 @@ function addCoverPage(
   pdf: jsPDF,
   pageWidth: number,
   pageHeight: number,
-  title?: string
+  title?: string,
 ) {
   setFillFromHex(pdf, BRAND.darkBg);
   pdf.rect(0, 0, pageWidth, pageHeight, 'F');
@@ -98,11 +144,15 @@ function addCoverPage(
   setTextFromHex(pdf, BRAND.emeraldGreen);
   pdf.setFontSize(36);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('TIERRA MADRE', pageWidth / 2, pageHeight / 2 - 20, { align: 'center' });
+  pdf.text('TIERRA MADRE', pageWidth / 2, pageHeight / 2 - 20, {
+    align: 'center',
+  });
 
   setTextFromHex(pdf, BRAND.silver);
   pdf.setFontSize(14);
-  pdf.text('ESMERALDAS CON ADN DE PAZ', pageWidth / 2, pageHeight / 2, { align: 'center' });
+  pdf.text('ESMERALDAS CON ADN DE PAZ', pageWidth / 2, pageHeight / 2, {
+    align: 'center',
+  });
 
   if (title) {
     setTextFromHex(pdf, BRAND.white);
@@ -112,7 +162,10 @@ function addCoverPage(
 
   setTextFromHex(pdf, BRAND.mediumGray);
   pdf.setFontSize(10);
-  const date = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long' });
+  const date = new Date().toLocaleDateString('es-CO', {
+    year: 'numeric',
+    month: 'long',
+  });
   pdf.text(date, pageWidth / 2, pageHeight - 20, { align: 'center' });
 }
 
@@ -129,7 +182,7 @@ async function addGridLayout(
   pageWidth: number,
   logoBase64?: string,
   themeParam?: 'dark' | 'light',
-  pageHeight?: number
+  pageHeight?: number,
 ) {
   const theme = themeParam || options.theme || 'dark';
   const iosColors = getIOSThemeColors(theme as ThemeMode);
@@ -165,16 +218,26 @@ async function addGridLayout(
         logoDims.width,
         logoDims.height,
         undefined,
-        'MEDIUM'
+        'MEDIUM',
       );
     }
 
     // Title at top-left - iOS headline
-    applyIOSTextStyle(pdf, 'headline', iosColors.textPrimary, theme as ThemeMode);
+    applyIOSTextStyle(
+      pdf,
+      'headline',
+      iosColors.textPrimary,
+      theme as ThemeMode,
+    );
     pdf.text(options.title || 'COLECCIÓN', iosMargin, iosMargin + 5);
 
     // Subtitle - iOS caption
-    applyIOSTextStyle(pdf, 'caption1', iosColors.textTertiary, theme as ThemeMode);
+    applyIOSTextStyle(
+      pdf,
+      'caption1',
+      iosColors.textTertiary,
+      theme as ThemeMode,
+    );
     const subtitle = `${emeralds.length} piezas • Vista cuadrícula`;
     pdf.text(subtitle, iosMargin, iosMargin + 11);
 
@@ -197,7 +260,12 @@ async function addGridLayout(
     pdf.line(iosMargin, footerY - 6, pageWidth - iosMargin, footerY - 6);
 
     // Page number
-    applyIOSTextStyle(pdf, 'caption1', iosColors.textTertiary, theme as ThemeMode);
+    applyIOSTextStyle(
+      pdf,
+      'caption1',
+      iosColors.textTertiary,
+      theme as ThemeMode,
+    );
     pdf.text(`${pageNumber}`, pageWidth / 2, footerY, { align: 'center' });
   };
 
@@ -216,12 +284,28 @@ async function addGridLayout(
 
     // Card background
     setFillColor(pdf, iosColors.card);
-    pdf.roundedRect(currentX, currentY, cardWidth, cardHeight, BORDER_RADIUS_MM.md, BORDER_RADIUS_MM.md, 'F');
+    pdf.roundedRect(
+      currentX,
+      currentY,
+      cardWidth,
+      cardHeight,
+      BORDER_RADIUS_MM.md,
+      BORDER_RADIUS_MM.md,
+      'F',
+    );
 
     // Card border
     setStrokeColor(pdf, iosColors.border);
     pdf.setLineWidth(0.2);
-    pdf.roundedRect(currentX, currentY, cardWidth, cardHeight, BORDER_RADIUS_MM.md, BORDER_RADIUS_MM.md, 'S');
+    pdf.roundedRect(
+      currentX,
+      currentY,
+      cardWidth,
+      cardHeight,
+      BORDER_RADIUS_MM.md,
+      BORDER_RADIUS_MM.md,
+      'S',
+    );
 
     // Image area with rounded top corners
     const imageAreaHeight = imageHeight;
@@ -233,12 +317,13 @@ async function addGridLayout(
           imgDimensions.width,
           imgDimensions.height,
           cardWidth - 2,
-          imageAreaHeight - 2
+          imageAreaHeight - 2,
         );
 
         // Center the image
         const centeredX = currentX + (cardWidth - fitDimensions.width) / 2;
-        const centeredY = currentY + (imageAreaHeight - fitDimensions.height) / 2;
+        const centeredY =
+          currentY + (imageAreaHeight - fitDimensions.height) / 2;
 
         pdf.addImage(
           emerald.mediaData,
@@ -248,12 +333,18 @@ async function addGridLayout(
           fitDimensions.width,
           fitDimensions.height,
           undefined,
-          'MEDIUM'
+          'MEDIUM',
         );
       } catch {
         // Placeholder for failed images
         setFillColor(pdf, iosColors.backgroundSecondary);
-        pdf.rect(currentX + 1, currentY + 1, cardWidth - 2, imageAreaHeight - 2, 'F');
+        pdf.rect(
+          currentX + 1,
+          currentY + 1,
+          cardWidth - 2,
+          imageAreaHeight - 2,
+          'F',
+        );
 
         // Placeholder icon (emerald diamond shape)
         const cx = currentX + cardWidth / 2;
@@ -268,7 +359,12 @@ async function addGridLayout(
     // Separator line below image
     setStrokeColor(pdf, iosColors.border);
     pdf.setLineWidth(0.1);
-    pdf.line(currentX + 2, currentY + imageAreaHeight, currentX + cardWidth - 2, currentY + imageAreaHeight);
+    pdf.line(
+      currentX + 2,
+      currentY + imageAreaHeight,
+      currentX + cardWidth - 2,
+      currentY + imageAreaHeight,
+    );
 
     // Text content area
     const textY = currentY + imageAreaHeight + textPadding + 3;
@@ -276,14 +372,27 @@ async function addGridLayout(
     const textWidth = cardWidth - textPadding * 2;
 
     // Name - iOS footnote bold, truncated
-    applyIOSTextStyle(pdf, 'footnote', iosColors.textPrimary, theme as ThemeMode);
+    applyIOSTextStyle(
+      pdf,
+      'footnote',
+      iosColors.textPrimary,
+      theme as ThemeMode,
+    );
     pdf.setFont('helvetica', 'bold');
-    const displayName = emerald.name.length > 18 ? emerald.name.substring(0, 16) + '...' : emerald.name;
+    const displayName =
+      emerald.name.length > 18
+        ? emerald.name.substring(0, 16) + '...'
+        : emerald.name;
     pdf.text(displayName, textX, textY, { maxWidth: textWidth });
 
     // Details row - iOS caption
     let detailY = textY + 5;
-    applyCustomTextStyle(pdf, 'caption2', iosColors.textSecondary, theme as ThemeMode);
+    applyCustomTextStyle(
+      pdf,
+      'caption2',
+      iosColors.textSecondary,
+      theme as ThemeMode,
+    );
 
     // Weight (if enabled)
     if (options.showWeights && emerald.weightCarats) {
@@ -307,21 +416,36 @@ async function addGridLayout(
       pdf.setGState(new (getGState())({ opacity: 1 }));
 
       // Pill text
-      applyCustomTextStyle(pdf, 'caption2', iosColors.emeraldPrimary, theme as ThemeMode);
+      applyCustomTextStyle(
+        pdf,
+        'caption2',
+        iosColors.emeraldPrimary,
+        theme as ThemeMode,
+      );
       pdf.text(categoryShort, pillX + 1.5, detailY);
     }
 
     // Price (if enabled) - right side
     if (options.showPrices && emerald.priceCOP) {
       const displayCurrency = options.currency || 'COP';
-      const priceValue = options.convertPrice ? options.convertPrice(emerald.priceCOP) : emerald.priceCOP;
-      const price = new Intl.NumberFormat(displayCurrency === 'USD' ? 'en-US' : 'es-CO', {
-        style: 'currency',
-        currency: displayCurrency,
-        maximumFractionDigits: 0,
-      }).format(priceValue);
+      const priceValue = options.convertPrice
+        ? options.convertPrice(emerald.priceCOP)
+        : emerald.priceCOP;
+      const price = new Intl.NumberFormat(
+        displayCurrency === 'USD' ? 'en-US' : 'es-CO',
+        {
+          style: 'currency',
+          currency: displayCurrency,
+          maximumFractionDigits: 0,
+        },
+      ).format(priceValue);
 
-      applyCustomTextStyle(pdf, 'caption2', iosColors.emeraldPrimary, theme as ThemeMode);
+      applyCustomTextStyle(
+        pdf,
+        'caption2',
+        iosColors.emeraldPrimary,
+        theme as ThemeMode,
+      );
       pdf.setFont('helvetica', 'bold');
       const priceWidth = pdf.getTextWidth(price);
       pdf.text(price, currentX + cardWidth - textPadding - priceWidth, textY);
@@ -362,7 +486,7 @@ async function addListLayout(
   pageWidth: number,
   pageHeight: number,
   logoBase64?: string,
-  themeParam?: 'dark' | 'light'
+  themeParam?: 'dark' | 'light',
 ) {
   const theme = themeParam || options.theme || 'dark';
   const iosColors = getIOSThemeColors(theme as ThemeMode);
@@ -390,7 +514,7 @@ async function addListLayout(
         logoDims.width,
         logoDims.height,
         undefined,
-        'MEDIUM'
+        'MEDIUM',
       );
     }
 
@@ -399,7 +523,12 @@ async function addListLayout(
     pdf.text(options.title || 'CATÁLOGO', iosMargin, iosMargin + 5);
 
     // Item count - iOS caption
-    applyIOSTextStyle(pdf, 'caption1', iosColors.textTertiary, theme as ThemeMode);
+    applyIOSTextStyle(
+      pdf,
+      'caption1',
+      iosColors.textTertiary,
+      theme as ThemeMode,
+    );
     const countText = `${emeralds.length} ${emeralds.length === 1 ? 'pieza' : 'piezas'}`;
     pdf.text(countText, iosMargin, iosMargin + 12);
 
@@ -422,7 +551,12 @@ async function addListLayout(
     pdf.line(iosMargin, footerY - 6, pageWidth - iosMargin, footerY - 6);
 
     // Page number (left)
-    applyIOSTextStyle(pdf, 'caption1', iosColors.textTertiary, theme as ThemeMode);
+    applyIOSTextStyle(
+      pdf,
+      'caption1',
+      iosColors.textTertiary,
+      theme as ThemeMode,
+    );
     pdf.text(`Página ${pageNumber}`, iosMargin, footerY);
 
     // Website (center)
@@ -431,7 +565,9 @@ async function addListLayout(
 
     // Tagline (right)
     setTextColor(pdf, iosColors.textTertiary);
-    pdf.text('Esmeraldas 100% Naturales', pageWidth - iosMargin, footerY, { align: 'right' });
+    pdf.text('Esmeraldas 100% Naturales', pageWidth - iosMargin, footerY, {
+      align: 'right',
+    });
   };
 
   // Add initial header
@@ -467,13 +603,31 @@ async function addListLayout(
     }
 
     // Card background
-    setFillColor(pdf, itemsOnPage % 2 === 0 ? iosColors.card : iosColors.backgroundSecondary);
-    pdf.roundedRect(cardX, cardY, cardWidth, cardHeight, BORDER_RADIUS_MM.sm, BORDER_RADIUS_MM.sm, 'F');
+    setFillColor(
+      pdf,
+      itemsOnPage % 2 === 0 ? iosColors.card : iosColors.backgroundSecondary,
+    );
+    pdf.roundedRect(
+      cardX,
+      cardY,
+      cardWidth,
+      cardHeight,
+      BORDER_RADIUS_MM.sm,
+      BORDER_RADIUS_MM.sm,
+      'F',
+    );
 
     // Subtle border
     setStrokeColor(pdf, iosColors.border);
     pdf.setLineWidth(0.15);
-    pdf.roundedRect(cardX, cardY, cardWidth, cardHeight, BORDER_RADIUS_MM.sm, BORDER_RADIUS_MM.sm);
+    pdf.roundedRect(
+      cardX,
+      cardY,
+      cardWidth,
+      cardHeight,
+      BORDER_RADIUS_MM.sm,
+      BORDER_RADIUS_MM.sm,
+    );
 
     // Left emerald accent bar
     setFillColor(pdf, iosColors.emeraldPrimary);
@@ -485,7 +639,15 @@ async function addListLayout(
 
     // Image container with rounded corners
     setFillColor(pdf, iosColors.backgroundSecondary);
-    pdf.roundedRect(imageX, imageY, imageSize, imageSize, BORDER_RADIUS_MM.sm, BORDER_RADIUS_MM.sm, 'F');
+    pdf.roundedRect(
+      imageX,
+      imageY,
+      imageSize,
+      imageSize,
+      BORDER_RADIUS_MM.sm,
+      BORDER_RADIUS_MM.sm,
+      'F',
+    );
 
     if (emerald.mediaData) {
       try {
@@ -494,7 +656,7 @@ async function addListLayout(
           imgDimensions.width,
           imgDimensions.height,
           imageSize - 2,
-          imageSize - 2
+          imageSize - 2,
         );
 
         const centeredX = imageX + (imageSize - fitDimensions.width) / 2;
@@ -508,11 +670,18 @@ async function addListLayout(
           fitDimensions.width,
           fitDimensions.height,
           undefined,
-          'MEDIUM'
+          'MEDIUM',
         );
       } catch {
-        applyIOSTextStyle(pdf, 'caption2', iosColors.textTertiary, theme as ThemeMode);
-        pdf.text('Sin imagen', imageX + imageSize / 2, imageY + imageSize / 2, { align: 'center' });
+        applyIOSTextStyle(
+          pdf,
+          'caption2',
+          iosColors.textTertiary,
+          theme as ThemeMode,
+        );
+        pdf.text('Sin imagen', imageX + imageSize / 2, imageY + imageSize / 2, {
+          align: 'center',
+        });
       }
     }
 
@@ -521,7 +690,12 @@ async function addListLayout(
     const badgeY = imageY + 2;
     setFillColor(pdf, iosColors.emeraldPrimary);
     pdf.roundedRect(badgeX, badgeY, 10, 6, 3, 3, 'F');
-    applyIOSTextStyle(pdf, 'caption2', iosColors.textOnEmerald, theme as ThemeMode);
+    applyIOSTextStyle(
+      pdf,
+      'caption2',
+      iosColors.textOnEmerald,
+      theme as ThemeMode,
+    );
     pdf.setFont('helvetica', 'bold');
     pdf.text(`${i + 1}`, badgeX + 5, badgeY + 4.5, { align: 'center' });
 
@@ -531,7 +705,12 @@ async function addListLayout(
     let contentY = cardY + SPACING_MM.sm + 2;
 
     // Product name - iOS headline
-    applyIOSTextStyle(pdf, 'headline', iosColors.textPrimary, theme as ThemeMode);
+    applyIOSTextStyle(
+      pdf,
+      'headline',
+      iosColors.textPrimary,
+      theme as ThemeMode,
+    );
     const nameLines = pdf.splitTextToSize(emerald.name, contentColWidth);
     pdf.text(nameLines[0], contentX, contentY);
     contentY += 6;
@@ -545,7 +724,12 @@ async function addListLayout(
     };
     const category = categoryLabels[emerald.category] || 'Esmeralda';
 
-    applyIOSTextStyle(pdf, 'caption2', iosColors.emeraldPrimary, theme as ThemeMode);
+    applyIOSTextStyle(
+      pdf,
+      'caption2',
+      iosColors.emeraldPrimary,
+      theme as ThemeMode,
+    );
     const categoryWidth = pdf.getTextWidth(category) + 4;
     setFillColor(pdf, iosColors.emeraldPrimary);
     pdf.setGState(new (getGState())({ opacity: 0.12 }));
@@ -558,8 +742,15 @@ async function addListLayout(
 
     // Description - iOS footnote
     if (emerald.aiDescription) {
-      applyIOSTextStyle(pdf, 'caption1', iosColors.textTertiary, theme as ThemeMode);
-      const description = emerald.aiDescription.substring(0, 80) + (emerald.aiDescription.length > 80 ? '...' : '');
+      applyIOSTextStyle(
+        pdf,
+        'caption1',
+        iosColors.textTertiary,
+        theme as ThemeMode,
+      );
+      const description =
+        emerald.aiDescription.substring(0, 80) +
+        (emerald.aiDescription.length > 80 ? '...' : '');
       const descLines = pdf.splitTextToSize(description, contentColWidth);
       pdf.text(descLines.slice(0, 2), contentX, contentY);
     }
@@ -570,7 +761,12 @@ async function addListLayout(
 
     // Details with iOS styling
     const addDetail = (label: string, value: string, highlight = false) => {
-      applyIOSTextStyle(pdf, 'caption2', iosColors.textTertiary, theme as ThemeMode);
+      applyIOSTextStyle(
+        pdf,
+        'caption2',
+        iosColors.textTertiary,
+        theme as ThemeMode,
+      );
       pdf.text(label, rightColX, rightY);
 
       if (highlight) {
@@ -596,7 +792,11 @@ async function addListLayout(
       sold: 'Vendida',
       reserved: 'Reservada',
     };
-    addDetail('Estado', statusLabels[emerald.status] || 'Disponible', emerald.status === 'available');
+    addDetail(
+      'Estado',
+      statusLabels[emerald.status] || 'Disponible',
+      emerald.status === 'available',
+    );
 
     // Price box - iOS prominent style
     if (options.showPrices && emerald.priceCOP) {
@@ -605,22 +805,49 @@ async function addListLayout(
       const priceBoxHeight = 12;
 
       setFillColor(pdf, iosColors.backgroundSecondary);
-      pdf.roundedRect(rightColX, rightY - 2, priceBoxWidth, priceBoxHeight, BORDER_RADIUS_MM.sm, BORDER_RADIUS_MM.sm, 'F');
+      pdf.roundedRect(
+        rightColX,
+        rightY - 2,
+        priceBoxWidth,
+        priceBoxHeight,
+        BORDER_RADIUS_MM.sm,
+        BORDER_RADIUS_MM.sm,
+        'F',
+      );
 
       setStrokeColor(pdf, iosColors.emeraldPrimary);
       pdf.setLineWidth(0.4);
-      pdf.roundedRect(rightColX, rightY - 2, priceBoxWidth, priceBoxHeight, BORDER_RADIUS_MM.sm, BORDER_RADIUS_MM.sm);
+      pdf.roundedRect(
+        rightColX,
+        rightY - 2,
+        priceBoxWidth,
+        priceBoxHeight,
+        BORDER_RADIUS_MM.sm,
+        BORDER_RADIUS_MM.sm,
+      );
 
-      applyIOSTextStyle(pdf, 'callout', iosColors.textPrimary, theme as ThemeMode);
+      applyIOSTextStyle(
+        pdf,
+        'callout',
+        iosColors.textPrimary,
+        theme as ThemeMode,
+      );
       pdf.setFont('helvetica', 'bold');
       const displayCurrency = options.currency || 'COP';
-      const priceValue = options.convertPrice ? options.convertPrice(emerald.priceCOP) : emerald.priceCOP;
-      const price = new Intl.NumberFormat(displayCurrency === 'USD' ? 'en-US' : 'es-CO', {
-        style: 'currency',
-        currency: displayCurrency,
-        maximumFractionDigits: 0,
-      }).format(priceValue);
-      pdf.text(price, rightColX + priceBoxWidth / 2, rightY + 6, { align: 'center' });
+      const priceValue = options.convertPrice
+        ? options.convertPrice(emerald.priceCOP)
+        : emerald.priceCOP;
+      const price = new Intl.NumberFormat(
+        displayCurrency === 'USD' ? 'en-US' : 'es-CO',
+        {
+          style: 'currency',
+          currency: displayCurrency,
+          maximumFractionDigits: 0,
+        },
+      ).format(priceValue);
+      pdf.text(price, rightColX + priceBoxWidth / 2, rightY + 6, {
+        align: 'center',
+      });
     }
 
     currentY += rowHeight;

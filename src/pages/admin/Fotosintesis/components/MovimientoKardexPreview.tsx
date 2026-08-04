@@ -168,10 +168,11 @@ export function MovimientoKardexPreview({
       >
         <Box
           component="img"
-          src="/logo-tierra-madre.png"
-          alt="Tierra Madre"
+          src="/logo-brand.png"
+          alt="Tierra Mädre"
           sx={{
-            height: 50,
+            // Full lockup: ≥80px keeps the slogan legible
+            height: 90,
             width: 'auto',
             objectFit: 'contain',
             display: 'inline-block',

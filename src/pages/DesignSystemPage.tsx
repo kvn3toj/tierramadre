@@ -161,7 +161,7 @@ const DesignSystemPage: React.FC = () => {
             <ColorSwatch
               color={emeraldCore.primary}
               name="primary"
-              value="#00AE7A"
+              value="#00C992"
             />
             <ColorSwatch color={emeraldCore.dark} name="dark" value="#008C61" />
             <ColorSwatch

@@ -117,7 +117,7 @@ export const cardShadows = {
 
 export const focusShadows = {
   /** Default focus ring */
-  default: `0 0 0 2px #FFFFFF, 0 0 0 4px #00AE7A`,
+  default: `0 0 0 2px #FFFFFF, 0 0 0 4px #00C992`,
   /** Error focus ring */
   error: `0 0 0 2px #FFFFFF, 0 0 0 4px #EF4444`,
   /** Subtle focus (for dark backgrounds) */

@@ -114,12 +114,12 @@ export const chartTokens = {
 export const chartColors = {
   /** Emerald theme (default) */
   emerald: {
-    line: '#00AE7A',
+    line: '#00C992',
     lineGradientStart: '#33C194',
     lineGradientEnd: '#008C61',
     area: `rgba(0, 174, 122, ${opacity.medium})`,
     areaGradientEnd: `rgba(0, 174, 122, ${opacity.whisper})`,
-    point: '#00AE7A',
+    point: '#00C992',
     pointHover: '#008C61',
     grid: `rgba(255, 255, 255, ${opacity.guide})`,
     gridDark: `rgba(0, 0, 0, ${opacity.guide})`,
@@ -148,7 +148,7 @@ export const chartBadge = {
   positive: {
     bg: `rgba(0, 174, 122, ${opacity.elevated})`,
     bgLight: `rgba(0, 174, 122, ${opacity.guide})`,
-    text: '#00AE7A',
+    text: '#00C992',
     border: 'transparent',
   },
 

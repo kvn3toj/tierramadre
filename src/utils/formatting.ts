@@ -353,7 +353,7 @@ export const getRoleColor = (role: string): string => {
   const r = role.toLowerCase();
   if (r === 'admin' || r.includes('admin')) return '#C69C6D'; // goldAccent.primary
   if (r === 'embajador' || r === 'ambassador') return '#5C6360'; // neutral graphite (medalColors.bronze)
-  if (r === 'full' || r === 'asesor') return '#00AE7A'; // emeraldCore.primary
+  if (r === 'full' || r === 'asesor') return '#00C992'; // emeraldCore.primary
   if (r === 'provider' || r === 'proveedor') return '#3B82F6'; // Blue
   if (
     r === 'invitado_especial' ||
