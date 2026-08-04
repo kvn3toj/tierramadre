@@ -21,6 +21,7 @@ import { v } from 'convex/values';
 import { internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
 import { requireAccessLevel, ROLES_COSTOS } from './_lib/authz';
+import { requireBotSecret } from './_lib/botAuth';
 import { allocateNext, formatLotId, lotSequenceName } from './sequences';
 import { validarLoteV4 } from './_lib/loteV4';
 import { planificarCasillas, siguienteItemIdNumerico } from './_lib/casillasV4';
@@ -306,6 +307,49 @@ export const create = action({
   }> => {
     await requireAccessLevel(idToken, [...ROLES_COSTOS]);
     return await ctx.runMutation(internal.lotsV4._create, args);
+  },
+});
+
+/**
+ * `operadorNombre` sale de la identidad del llamador, NO de los args — por eso
+ * se quita del validador del bot en vez de dejarlo entrar y pisarlo. Mismo
+ * criterio que `casillas.guardar`, que toma el email del caller verificado:
+ * *el rastro de auditoría no puede ser un campo que el propio caller elige.*
+ * Aceptarlo y sobreescribirlo funcionaría igual, pero dejaría en el contrato un
+ * campo que se ignora en silencio, y eso es una trampa para quien lo llame.
+ */
+const { operadorNombre: _operadorLoDaElBot, ...createArgsViaBot } = createArgs;
+
+/**
+ * W1 «Cerebro Racional» desde Telegram.
+ *
+ * Cáscara pura: verifica el secreto y delega en el MISMO `_create` que usa la
+ * web. Ninguna regla de negocio se duplica ni se relaja — la validación del
+ * lote, la creación de casillas, el recálculo del fijo y el encolado al espejo
+ * siguen viviendo en un solo lugar. Ver `_lib/botAuth.ts` para por qué el bot
+ * no puede autenticarse con el token de Google que exige `requireAccessLevel`.
+ */
+export const crearViaBot = action({
+  args: {
+    botSecret: v.string(),
+    telegramUserId: v.number(),
+    ...createArgsViaBot,
+  },
+  // Misma anotación manual que `create`, y por la misma razón (TS7022).
+  handler: async (
+    ctx,
+    { botSecret, telegramUserId, ...args },
+  ): Promise<{
+    id: Id<'lots'>;
+    loteId: string;
+    casillas: string[];
+    recalculo?: { valorAnterior: number; valorNuevo: number };
+  }> => {
+    requireBotSecret(botSecret);
+    return await ctx.runMutation(internal.lotsV4._create, {
+      ...args,
+      operadorNombre: `telegram:${telegramUserId}`,
+    });
   },
 });
 

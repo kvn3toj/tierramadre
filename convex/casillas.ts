@@ -12,6 +12,7 @@ import { v } from 'convex/values';
 import { action, internalMutation, internalQuery } from './_generated/server';
 import { internal } from './_generated/api';
 import { requireAccessLevel, ROLES_COSTOS } from './_lib/authz';
+import { requireBotSecret } from './_lib/botAuth';
 import {
   casillaEstaCompleta,
   camposFaltantes,
@@ -398,6 +399,72 @@ export const porItemId = action({
   args: { idToken: v.string(), itemId: v.string() },
   handler: async (ctx, { idToken, itemId }): Promise<unknown> => {
     await requireAccessLevel(idToken, [...ROLES_COSTOS]);
+    return await ctx.runQuery(internal.casillas._porItemId, { itemId });
+  },
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * W2 «Cerebro Creativo» desde Telegram.
+ *
+ * Las cuatro cáscaras de abajo son el mismo trato que hicieron las de
+ * `movimientosV4`: `requireBotSecret` y delegación a los internals YA probados.
+ * Cero lógica nueva — si una regla de clasificación cambia, cambia en un solo
+ * lugar y las dos superficies la heredan.
+ *
+ * Las dos de lectura devuelven **costo unitario real y conciliación de costos**,
+ * así que valen la misma advertencia que `precios.previewLoteViaBot`: el bot es
+ * un solo llamador para todos sus usuarios, y quién puede mirar lo decide la
+ * capacidad del lado del bot (`casillas:clasificar`) antes de llamar acá.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+export const guardarViaBot = action({
+  args: { botSecret: v.string(), telegramUserId: v.number(), ...patchArgs },
+  handler: async (
+    ctx,
+    { botSecret, telegramUserId, ...args },
+  ): Promise<{ itemId: string; completa: boolean; faltantes: string[] }> => {
+    requireBotSecret(botSecret);
+    // Igual que la web toma el email del caller verificado: la identidad del
+    // clasificador no es un campo que el llamador elija.
+    return await ctx.runMutation(internal.casillas._guardar, {
+      ...args,
+      clasificadaPor: `telegram:${telegramUserId}`,
+    });
+  },
+});
+
+export const publicarViaBot = action({
+  args: {
+    botSecret: v.string(),
+    telegramUserId: v.number(),
+    loteId: v.string(),
+    forzarParcial: v.optional(v.boolean()),
+    motivo: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    { botSecret, telegramUserId, ...args },
+  ): Promise<{ publicado: boolean; parcial: boolean; faltantes: string[] }> => {
+    requireBotSecret(botSecret);
+    return await ctx.runMutation(internal.casillas._publicar, {
+      ...args,
+      por: `telegram:${telegramUserId}`,
+    });
+  },
+});
+
+export const estadoDelLoteViaBot = action({
+  args: { botSecret: v.string(), loteId: v.string() },
+  handler: async (ctx, { botSecret, loteId }): Promise<unknown> => {
+    requireBotSecret(botSecret);
+    return await ctx.runQuery(internal.casillas._estadoDelLote, { loteId });
+  },
+});
+
+export const porItemIdViaBot = action({
+  args: { botSecret: v.string(), itemId: v.string() },
+  handler: async (ctx, { botSecret, itemId }): Promise<unknown> => {
+    requireBotSecret(botSecret);
     return await ctx.runQuery(internal.casillas._porItemId, { itemId });
   },
 });

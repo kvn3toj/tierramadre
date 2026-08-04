@@ -23,6 +23,7 @@ import { v } from 'convex/values';
 import { action, internalMutation, internalQuery } from './_generated/server';
 import { internal } from './_generated/api';
 import { requireAccessLevel, ROLES_COSTOS } from './_lib/authz';
+import { requireBotSecret } from './_lib/botAuth';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import {
   CONFIG_PRECIOS_2026_07,
@@ -499,6 +500,35 @@ export const previewLote = action({
   },
   handler: async (ctx, { idToken, ...args }): Promise<unknown> => {
     await requireAccessLevel(idToken, [...ROLES_COSTOS]);
+    return await ctx.runQuery(internal.precios._previewLote, args);
+  },
+});
+
+/**
+ * El mismo preview, para el W1 de Telegram.
+ *
+ * **Devuelve datos de COSTO** —gasto fijo vigente, conteo de lotes activos, K,
+ * piso y margen—, exactamente como la puerta web de arriba. Que el secreto del
+ * bot alcance acá NO significa que cualquiera del chat pueda verlo: el bot es
+ * **un solo llamador para todos sus usuarios**, así que la capacidad se decide
+ * del lado del bot (`lotes:crear`, los roles de costos) ANTES de llamar. Este
+ * gate protege el deployment; aquél protege de quién puede ver el número.
+ */
+export const previewLoteViaBot = action({
+  args: {
+    botSecret: v.string(),
+    costoCompraCOP: v.number(),
+    costosVariablesCOP: v.optional(v.number()),
+    categoriaFiscal: v.union(
+      v.literal('gema'),
+      v.literal('joya'),
+      v.literal('mixta'),
+    ),
+    unidadesDeclaradas: v.optional(v.number()),
+    fecha: v.string(),
+  },
+  handler: async (ctx, { botSecret, ...args }): Promise<unknown> => {
+    requireBotSecret(botSecret);
     return await ctx.runQuery(internal.precios._previewLote, args);
   },
 });
