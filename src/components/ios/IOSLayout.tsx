@@ -58,7 +58,9 @@ import { useThemeMode } from '../../contexts/ThemeContext';
  * - `wordmark` — símbolo + "tierra mädre", sin eslogan. The name renders
  *                LARGER than in the lockup at a shorter logo height (26px vs
  *                22px), because it stops sharing the height with the slogan.
- *                The quieter option for working screens.
+ *                Not currently used by any route: the brand is shown whole
+ *                everywhere. Kept because the asset ships and it is the right
+ *                answer for any future bar too short for the slogan.
  */
 type NavBrand = 'lockup' | 'wordmark';
 
@@ -128,8 +130,7 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
   '/treasure': {
     title: t.pages.treasure.title,
     mode: 'compact',
-    // Working screen: the quieter wordmark, and the bar stays at 44px.
-    navBrand: 'wordmark',
+    navBrand: 'lockup',
   },
   '/ambassadors': {
     title: t.pages.ambassadors.title,
@@ -138,7 +139,6 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
   '/home': {
     title: 'Tierra Mädre',
     mode: 'compact',
-    // Landing: the full lockup with the slogan, in a taller bar.
     navBrand: 'lockup',
   },
   '/catalog': {
@@ -355,17 +355,16 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   /**
    * Which brand treatment the bar wears.
    *
-   * On desktop every branded screen shows the full lockup — there is room for
-   * it and the slogan reads comfortably. On phones each page decides: the
-   * landing keeps the lockup, working screens drop to the quieter wordmark so
-   * the bar stays at 44px and the name still renders large.
+   * The same one everywhere: every branded screen shows the full lockup, on
+   * every device. The treatment no longer varies by route or by breakpoint —
+   * one mark, one size, so the brand reads identically wherever it appears.
    *
    * Pages that never carry the brand are untouched; they keep their text title.
    */
-  const navBrand = useMemo(() => {
-    if (!pageConfig.navBrand) return undefined;
-    return NAV_BRAND[isDesktop ? 'lockup' : pageConfig.navBrand];
-  }, [pageConfig.navBrand, isDesktop]);
+  const navBrand = useMemo(
+    () => (pageConfig.navBrand ? NAV_BRAND[pageConfig.navBrand] : undefined),
+    [pageConfig.navBrand],
+  );
 
   return (
     <Box
