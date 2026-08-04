@@ -36,6 +36,11 @@ export interface IOSNavigationBarProps {
   title: string;
   subtitle?: string;
   logoUrl?: string;
+  /** Rendered logo height in px. Kept below `barMinHeight` so the mark sits
+   *  inside the bar rather than filling it. Default 32. */
+  logoHeight?: number;
+  /** Minimum height of the top bar in px. Default 44. */
+  barMinHeight?: number;
   showBackButton?: boolean;
   onBackClick?: () => void;
   leadingActions?: NavigationAction[];
@@ -51,6 +56,8 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
   title,
   subtitle,
   logoUrl,
+  logoHeight = 32,
+  barMinHeight = 44,
   showBackButton = false,
   onBackClick,
   leadingActions = [],
@@ -149,10 +156,10 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
       <Box
         sx={{
           // minHeight, not height: under the global border-box reset a fixed
-          // 44px height would subtract the notch inset + 2px from the content
-          // box, collapsing the bar's contents to zero on any device with a
-          // safe-area top. minHeight yields max(44, content + inset + 2).
-          minHeight: '44px',
+          // height would subtract the notch inset + 2px from the content box,
+          // collapsing the bar's contents to zero on any device with a
+          // safe-area top. minHeight yields max(n, content + inset + 2).
+          minHeight: `${barMinHeight}px`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -219,12 +226,11 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
                 src={logoUrl}
                 alt={title}
                 sx={{
-                  // The símbolo alone, sized to sit with the bar's type rather
-                  // than fill it. It stands in for the headline title (17px),
-                  // so it reads at the same optical weight at ~1.5× that size.
-                  // It was 44px — exactly the bar's own minHeight, which left
-                  // the mark running edge to edge with no breathing room.
-                  height: 26,
+                  // Sized by the caller (see NAV_BRAND in IOSLayout), always
+                  // below the bar's own minHeight. It used to be a hardcoded
+                  // 44 — exactly the bar height — so the logo *was* the bar,
+                  // with no breathing room above or below.
+                  height: logoHeight,
                   width: 'auto',
                   objectFit: 'contain',
                 }}

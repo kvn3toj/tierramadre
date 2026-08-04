@@ -49,6 +49,39 @@ import { useIsProvider } from '../../hooks/usePermissions';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 
+/**
+ * How a page wears the brand in the nav bar.
+ *
+ * - `lockup`   — símbolo + "tierra mädre" + "ESMERALDAS CON ADN DE PAZ".
+ *                The full brand moment; needs a taller bar so the slogan
+ *                clears its ~5px legibility floor.
+ * - `wordmark` — símbolo + "tierra mädre", sin eslogan. The name renders
+ *                LARGER than in the lockup at a shorter logo height (26px vs
+ *                22px), because it stops sharing the height with the slogan.
+ *                The quieter option for working screens.
+ */
+type NavBrand = 'lockup' | 'wordmark';
+
+/**
+ * Asset + sizing per treatment. The logo height is deliberately under the bar
+ * height: it used to equal it, so the mark filled the bar edge to edge.
+ */
+const NAV_BRAND: Record<
+  NavBrand,
+  { url: string; logoHeight: number; barMinHeight: number }
+> = {
+  lockup: {
+    url: '/images/logo-horizontal-green.png',
+    logoHeight: 36,
+    barMinHeight: 52,
+  },
+  wordmark: {
+    url: '/images/logo-wordmark-green.png',
+    logoHeight: 26,
+    barMinHeight: 44,
+  },
+};
+
 interface PageConfig {
   title: string;
   mode: NavigationBarMode;
@@ -61,6 +94,8 @@ interface PageConfig {
   backgroundColor?: string;
   /** Force a specific logo regardless of theme */
   forceLogoUrl?: string;
+  /** Brand treatment for the nav bar; sets the asset and its sizing. */
+  navBrand?: NavBrand;
 }
 
 const getPageConfigs = (t: any): Record<string, PageConfig> => ({
@@ -93,8 +128,8 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
   '/treasure': {
     title: t.pages.treasure.title,
     mode: 'compact',
-    logoUrl: '/logo-symbol.png',
-    forceLogoUrl: '/logo-symbol.png',
+    // Working screen: the quieter wordmark, and the bar stays at 44px.
+    navBrand: 'wordmark',
   },
   '/ambassadors': {
     title: t.pages.ambassadors.title,
@@ -103,8 +138,8 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
   '/home': {
     title: 'Tierra Mädre',
     mode: 'compact',
-    logoUrl: '/logo-symbol.png',
-    forceLogoUrl: '/logo-symbol.png',
+    // Landing: the full lockup with the slogan, in a taller bar.
+    navBrand: 'lockup',
   },
   '/catalog': {
     title: t.pages.catalog.title,
@@ -317,6 +352,21 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
     };
   }, [location.pathname, t, isLight]);
 
+  /**
+   * Which brand treatment the bar wears.
+   *
+   * On desktop every branded screen shows the full lockup — there is room for
+   * it and the slogan reads comfortably. On phones each page decides: the
+   * landing keeps the lockup, working screens drop to the quieter wordmark so
+   * the bar stays at 44px and the name still renders large.
+   *
+   * Pages that never carry the brand are untouched; they keep their text title.
+   */
+  const navBrand = useMemo(() => {
+    if (!pageConfig.navBrand) return undefined;
+    return NAV_BRAND[isDesktop ? 'lockup' : pageConfig.navBrand];
+  }, [pageConfig.navBrand, isDesktop]);
+
   return (
     <Box
       sx={{
@@ -380,13 +430,16 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
           title={pageConfig.title}
           subtitle={pageConfig.subtitle}
           logoUrl={
+            navBrand?.url ||
             pageConfig.forceLogoUrl ||
             (pageConfig.logoUrl
               ? isLight
-                ? '/logo-symbol.png'
-                : '/logo-symbol-white.png'
+                ? '/images/logo-horizontal-dark.png'
+                : '/images/logo-horizontal-white.png'
               : undefined)
           }
+          logoHeight={navBrand?.logoHeight}
+          barMinHeight={navBrand?.barMinHeight}
           showBackButton={pageConfig.showBackButton}
           leadingActions={pageConfig.leadingActions}
           trailingActions={pageConfig.trailingActions}
