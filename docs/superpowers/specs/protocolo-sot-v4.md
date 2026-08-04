@@ -27,6 +27,16 @@ test:unit` (`vitest run`), y `npx tsc --noEmit -p convex/tsconfig.json` (`npm ru
 - **Datos de pago viajan al espejo ENMASCARADOS** (banco + últimos 4 / # recibo); cuenta completa
   y titular solo en Convex tras gate de rol. El test negativo que barre toda la fila por leakage
   no se debilita — es una decisión de seguridad, no un detalle a simplificar.
+- **El único hogar vivo del backend de movimientos (MOVIMIENTOS-V4 / maker-checker) es `dev`,
+  hasta la Fase 3.** Dictamen de Kevin, 2026-08-03. La Parte A (Tasks 1–7, hoy 11 commits en esta
+  rama) **NO se cherry-pickea a `main`**, por autocontenida que parezca: no vive sola —escribe
+  `estadoCasilla`/`RESERVADA`, encola al espejo y toca el schema v4— y por la regla de arriba un
+  push a `main` **es deploy a prod**. Adelantarla sería la Fase 3 por la puerta de atrás, sin sus
+  gates (doble corrida, dictámenes pendientes). Backend y consumidor (el `MovimientosWizard` de
+  anima-bot) **viajan juntos en el merge de Fase 3**, con `MOVIMIENTOS_V4_ENABLED` apagado en prod
+  hasta entonces. Que la Parte B de anima-bot no esté contra ningún `main` **es el diseño, no un
+  hueco**: prueba contra `dev` (`flexible-wolverine-803`), el deployment al que apunta el perfil de
+  prueba del bot. Si una sesión futura siente el impulso de «ayudar» adelantando esos commits — no.
 
 ## 2. Deployments Convex de este repo
 
