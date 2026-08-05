@@ -10,6 +10,7 @@ import { TreasureItem } from '../types';
 import { LEGACY_KEYS } from '../constants/storage-keys';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
 import { catalogRequestInit, catalogUrl } from '../utils/catalogAuthHeaders';
+import { ensureAppSession } from '../utils/sessionToken';
 import { useSyncCacheState } from './useSyncCache';
 import { treasureCacheKey } from './treasureCacheKey';
 
@@ -111,10 +112,14 @@ function setCachedData(data: TreasureItem[], vitrinaToken?: string): void {
 /**
  * Fetch treasure from Google Sheets API
  * @param notifyOnFailure - show snackbar if all retries fail (use true when user has no cache or forced refresh)
+ * @param isRetry - internal: true only on the single session-refresh retry
+ *   triggered by `tokenRejected` (see below). Guards against a permanently
+ *   dead session looping forever.
  */
 async function fetchFromSheets(
   notifyOnFailure = false,
   vitrinaToken?: string,
+  isRetry = false,
 ): Promise<TreasureItem[]> {
   const response = await fetchWithRetry(
     catalogUrl('/api/get-treasure-sheets', vitrinaToken),
@@ -134,6 +139,16 @@ async function fetchFromSheets(
   const result = await response.json();
   if (!result.success || !result.treasure) {
     throw new Error('Invalid response from Google Sheets API');
+  }
+
+  // The server saw a bearer token that failed to verify (session expired,
+  // forged, or clock-skewed) — as opposed to no credential at all. Refresh
+  // the session once and retry, so an asesor's price visibility recovers
+  // silently instead of looking like the app is broken. isRetry stops this
+  // from looping if the refresh doesn't fix it.
+  if (result.tokenRejected && !isRetry) {
+    await ensureAppSession(); // src/utils/sessionToken.ts
+    return fetchFromSheets(notifyOnFailure, vitrinaToken, true);
   }
 
   // Auto-sync Drive product folders in background (fire-and-forget)

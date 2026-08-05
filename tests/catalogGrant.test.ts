@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { resolveGrant } from '../api/_lib/catalogGrant';
+import { resolveGrant, bearerWasRejected } from '../api/_lib/catalogGrant';
 import { mintSessionToken } from '../api/_lib/sessionToken';
 
 process.env.ADMIN_SYNC_TOKEN = 'test-secret-for-grants';
@@ -116,5 +116,37 @@ describe('resolveGrant', () => {
       { lookupVitrina: neverCalled },
     );
     expect(g).toEqual({ kind: 'anon' });
+  });
+});
+
+describe('bearerWasRejected', () => {
+  it('is false when no token was ever offered', async () => {
+    const r = req();
+    expect(
+      bearerWasRejected(
+        r,
+        await resolveGrant(r, { lookupVitrina: neverCalled }),
+      ),
+    ).toBe(false);
+  });
+
+  it('is true when a token was offered and refused', async () => {
+    const r = req({ authorization: 'Bearer expired-or-forged' });
+    expect(
+      bearerWasRejected(
+        r,
+        await resolveGrant(r, { lookupVitrina: neverCalled }),
+      ),
+    ).toBe(true);
+  });
+
+  it('is false for a token that verified', async () => {
+    const r = req({ authorization: `Bearer ${mintSessionToken('a@b.co')}` });
+    expect(
+      bearerWasRejected(
+        r,
+        await resolveGrant(r, { lookupVitrina: neverCalled }),
+      ),
+    ).toBe(false);
   });
 });

@@ -81,3 +81,13 @@ export async function resolveGrant(
 
   return { kind: 'anon' };
 }
+
+/**
+ * True when the caller DID present a bearer token and it did not verify.
+ * Distinguishes "never signed in" (fine, stay anonymous) from "session died"
+ * (recoverable — the client should refresh and retry).
+ */
+export function bearerWasRejected(req: VercelRequest, grant: Grant): boolean {
+  if (grant.kind === 'staff') return false;
+  return extractBearer(req.headers?.authorization) !== null;
+}
