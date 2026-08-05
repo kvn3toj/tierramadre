@@ -1,5 +1,5 @@
 /**
- * The catalog cache is keyed by grant, and cleared on logout.
+ * The catalog cache is keyed by grant, and cleared on logout/sign-out.
  *
  * Without both, the server-side projection is defeated locally: the
  * full-fidelity payload an asesor cached would still be sitting in
@@ -12,33 +12,37 @@
  * cached under `anon` and served to the very next plain anonymous visitor on
  * that device. Two different vitrina tokens get two different buckets too,
  * so one vitrina's grant never leaks into another's.
+ *
+ * An id-list token (e.g. "368" or "368,412") is NOT a vitrina grant — it
+ * doesn't prove anything, and catalogUrl() (catalogAuthHeaders.ts) already
+ * treats it as anonymous and never sends it to the server. treasureCacheKey
+ * imports the same ID_LIST_RE so an id-list maps to the `anon` bucket too;
+ * otherwise it would get its own `:vitrina:<idlist>` bucket holding data
+ * that is, in fact, anonymous — two functions silently disagreeing about
+ * the same input.
  */
 import { readFreshAuthToken } from '../utils/sessionToken';
-import { STORAGE_KEYS, LEGACY_KEYS } from '../constants/storage-keys';
+import { ID_LIST_RE } from '../utils/catalogAuthHeaders';
+import {
+  TREASURE_CACHE_BASE,
+  clearTreasureCaches,
+} from '../utils/treasureCacheStorage';
 
-const BASE = STORAGE_KEYS.TREASURE_SHEETS_CACHE;
+const BASE = TREASURE_CACHE_BASE;
 
 export function treasureCacheKey(vitrinaToken?: string): string {
   if (readFreshAuthToken()) return `${BASE}:staff`;
-  if (vitrinaToken) return `${BASE}:vitrina:${vitrinaToken}`;
+  if (vitrinaToken && !ID_LIST_RE.test(vitrinaToken)) {
+    return `${BASE}:vitrina:${vitrinaToken}`;
+  }
   return `${BASE}:anon`;
 }
 
-/**
- * Removes every grant-scoped cache (staff, anon, and every vitrina token),
- * plus the pre-grant unscoped key and the pre-rename legacy key — both hold
- * the same full-fidelity data (prices, asesor, ubicación) and predate access
- * control entirely, so neither can be trusted to belong to any one grant.
- */
-export function clearTreasureCaches(): void {
-  try {
-    for (const key of Object.keys(localStorage)) {
-      if (key === BASE || key.startsWith(`${BASE}:`)) {
-        localStorage.removeItem(key);
-      }
-    }
-    localStorage.removeItem(LEGACY_KEYS.INVENTORY_SHEETS_CACHE);
-  } catch {
-    /* storage unavailable — nothing to clear */
-  }
-}
+// Re-exported so existing callers (AuthContext.tsx, GoogleAuthContext.tsx)
+// keep importing it from here. The implementation lives in
+// treasureCacheStorage.ts — a leaf module with no dependency on
+// sessionToken.ts — so that sessionToken.ts's handleSessionExpired() can
+// import it directly without closing an import cycle
+// (sessionToken -> treasureCacheKey -> sessionToken). See that module's
+// top comment for the full explanation.
+export { clearTreasureCaches };

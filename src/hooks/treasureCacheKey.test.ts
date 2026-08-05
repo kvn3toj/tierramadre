@@ -10,6 +10,7 @@ vi.mock('../utils/sessionToken', () => ({
 }));
 
 import { treasureCacheKey, clearTreasureCaches } from './treasureCacheKey';
+import { catalogUrl } from '../utils/catalogAuthHeaders';
 import { STORAGE_KEYS, LEGACY_KEYS } from '../constants/storage-keys';
 
 describe('treasureCacheKey', () => {
@@ -48,6 +49,33 @@ describe('treasureCacheKey', () => {
     expect(treasureCacheKey('AB3K9P2Q4R7S')).toBe(
       treasureCacheKey('AB3K9P2Q4R7S'),
     );
+  });
+
+  it('an id-list token is not a vitrina grant — it maps to the anon bucket', () => {
+    // catalogUrl (catalogAuthHeaders.ts) never forwards an id-list as
+    // ?vitrina=, so the server returns the anonymous payload for it. The
+    // cache key must land on the SAME bucket, or an id-list would get its
+    // own :vitrina:<idlist> bucket holding data that is, in fact, anonymous.
+    const anon = treasureCacheKey();
+    expect(treasureCacheKey('368')).toBe(anon);
+    expect(treasureCacheKey('368,412')).toBe(anon);
+    expect(treasureCacheKey('368-412')).toBe(anon);
+  });
+
+  it('agrees with catalogUrl on exactly what counts as a vitrina token', () => {
+    // Same ID_LIST_RE import on both sides — this pins the two functions
+    // together so they can't silently drift apart on the next edit.
+    const anon = treasureCacheKey();
+
+    expect(catalogUrl('/api/get-treasure-sheets', '368')).toBe(
+      '/api/get-treasure-sheets',
+    );
+    expect(treasureCacheKey('368')).toBe(anon);
+
+    expect(catalogUrl('/api/get-treasure-sheets', 'AB3K9P2Q4R7S')).toBe(
+      '/api/get-treasure-sheets?vitrina=AB3K9P2Q4R7S',
+    );
+    expect(treasureCacheKey('AB3K9P2Q4R7S')).not.toBe(anon);
   });
 
   it('clears every treasure cache, whatever the grant', () => {

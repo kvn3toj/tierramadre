@@ -26,6 +26,10 @@ import { googleLogout } from '@react-oauth/google';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 import { readFreshGoogleIdToken } from './googleIdToken';
 import { createLogger } from './logger';
+// Imported from the leaf module directly (NOT '../hooks/treasureCacheKey',
+// which imports readFreshAuthToken from THIS file) — that would close an
+// import cycle. See treasureCacheStorage.ts's top comment.
+import { clearTreasureCaches } from './treasureCacheStorage';
 
 const log = createLogger('AppSession');
 
@@ -129,6 +133,9 @@ export function handleSessionExpired(): void {
   } catch {
     /* storage unavailable — reload still lands on the login gate */
   }
+  // The catalog cache outlives the session otherwise — see
+  // .superpowers/sdd/2026-08-05-control-de-acceso-al-catalogo/task-5-report.md
+  clearTreasureCaches();
   window.location.assign('/');
 }
 

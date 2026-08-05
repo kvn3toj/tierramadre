@@ -12,8 +12,13 @@ export function catalogRequestInit(): RequestInit | undefined {
   return { headers: { Authorization: `Bearer ${token}` } };
 }
 
-/** Mirrors ID_LIST_RE in VitrinaPage.tsx:57 — id-lists prove nothing. */
-const ID_LIST_RE = /^\d+([-,]\d+)*$/;
+/**
+ * Mirrors ID_LIST_RE in VitrinaPage.tsx:57 — id-lists prove nothing.
+ * Exported so treasureCacheKey() (hooks/treasureCacheKey.ts) applies the
+ * exact same rule for what counts as a vitrina token: an id-list must map
+ * to the same cache bucket it fetches from (anon), not a bucket of its own.
+ */
+export const ID_LIST_RE = /^\d+([-,]\d+)*$/;
 
 /**
  * Appends `?vitrina=<token>` for stateful share tokens only. Filtering
