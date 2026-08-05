@@ -50,8 +50,20 @@ function cacheKeys(): { data: string; ts: string } {
   };
 }
 
-/** Shared in-flight promise — dedupes concurrent fetches from multiple hook mounts. */
-let inflightFetch: Promise<Asesor[]> | null = null;
+/**
+ * Shared in-flight promises — dedupes concurrent fetches from multiple hook
+ * mounts. Keyed by the SAME cache key the response will be written under, not
+ * a single shared slot (same shape as useSheetsTreasure.ts's `inflightFetches`).
+ *
+ * A single slot handed whatever grant started the fetch to whoever awaited it
+ * next: sign-out doesn't reload the page (GoogleAuthContext.signOut() only
+ * clears caches), so a staff roster fetch can still be in flight when a public
+ * consumer mounts this hook (useWhatsAppContact, AmbassadorDirectory,
+ * VitrinaPage's useSenderPhone). That consumer computed the `:anon` key,
+ * awaited the STAFF promise, and wrote the full roster — `email`, `vaultCode` —
+ * into the `:anon` bucket, which every later anonymous visitor then reads.
+ */
+const inflightFetches = new Map<string, Promise<Asesor[]>>();
 
 export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
   const [asesores, setAsesores] = useState<Asesor[]>(() => {
@@ -93,9 +105,11 @@ export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
         }
       }
 
-      // Deduplicate concurrent fetches across hook instances.
-      if (!inflightFetch) {
-        inflightFetch = (async () => {
+      // Deduplicate concurrent fetches across hook instances — per grant, so a
+      // caller only ever awaits a request made under its OWN grant.
+      let promise = inflightFetches.get(keys.data);
+      if (!promise) {
+        promise = (async () => {
           const response = await fetchWithRetry(
             '/api/get-asesores',
             catalogRequestInit(),
@@ -113,11 +127,14 @@ export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
           }
           return dedupeAsesores(result.asesores);
         })().finally(() => {
-          inflightFetch = null;
+          // Released on success AND failure, so a rejected fetch can't wedge
+          // the key permanently.
+          inflightFetches.delete(keys.data);
         });
+        inflightFetches.set(keys.data, promise);
       }
 
-      const deduped = await inflightFetch;
+      const deduped = await promise;
       setAsesores(deduped);
       try {
         localStorage.setItem(keys.data, JSON.stringify(deduped));

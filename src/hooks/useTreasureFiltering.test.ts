@@ -52,15 +52,17 @@ function pricedItem(item: number, precioCOP: number): TreasureItem {
 }
 
 /**
- * A row shaped like what an anon/guest caller gets: `precioCOP` AND
- * `estado` are genuinely ABSENT (not present as keys at all — both are
- * WITHHELD_KEYS, withheld together), mirroring what `toPublicItem` produces
- * and what a guest's browser receives over the wire — `JSON.stringify`
- * drops undefined-valued keys, so both read `undefined` at runtime despite
- * TreasureItem's type saying `number`/`TreasureStatus`.
+ * A row shaped like what an anon/guest caller gets: `precioCOP`, `estado`
+ * AND `cantidad` are genuinely ABSENT (not present as keys at all — all three
+ * are WITHHELD_KEYS, withheld together), mirroring what `toPublicItem`
+ * produces and what a guest's browser receives over the wire —
+ * `JSON.stringify` drops undefined-valued keys, so all three read `undefined`
+ * at runtime despite TreasureItem's type saying `number`/`TreasureStatus`.
+ * `city` is withheld too and is simply never set here (it's optional on
+ * TreasureItem and no producer populates it).
  */
 function priceFreeItem(item: number): TreasureItem {
-  const { estado: _estado, ...rest } = baseFields();
+  const { estado: _estado, cantidad: _cantidad, ...rest } = baseFields();
   return { item, ...rest } as unknown as TreasureItem;
 }
 

@@ -127,6 +127,22 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
     },
   );
 
+  // "N tesoros disponibles" — the same withheld-vs-known rule
+  // useTreasureFiltering applies to `estado` (a withheld field must never
+  // remove a row), applied here because this count is computed inline,
+  // outside the hook. `estado` is absent for an anon/guest read, so the plain
+  // `estado === 'DISPONIBLE'` test read "0 tesoros disponibles" to every
+  // guest, in the very sheet whose results the estado guard had just restored.
+  const disponiblesCount = useMemo(
+    () =>
+      treasure.filter(
+        (i) =>
+          typeof i.estado !== 'string' ||
+          i.estado.toUpperCase() === 'DISPONIBLE',
+      ).length,
+    [treasure],
+  );
+
   // Custom hasFilters check - exclude statusFilter since 'available' is our default
   const hasActiveFilters = useMemo(() => {
     return (
@@ -548,17 +564,17 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
             ) : (
               <>
                 <strong style={{ color: 'var(--text-primary)' }}>
-                  {
-                    treasure.filter(
-                      (i) => i.estado?.toUpperCase() === 'DISPONIBLE',
-                    ).length
-                  }
+                  {disponiblesCount}
                 </strong>{' '}
                 tesoros disponibles
               </>
             )}
           </Typography>
-          {hasActiveFilters && (
+          {/* No total when no filtered row carries a known price (a guest —
+              precioCOP is withheld). Summing them rendered "$ NaN"; summing
+              them as zeroes would render "$ 0" over hundreds of stones, which
+              is a worse claim than saying nothing. */}
+          {hasActiveFilters && filteredStats.pricedCount > 0 && (
             <Typography
               variant="caption"
               sx={{ color: primitiveColors.emerald[600], fontWeight: 600 }}

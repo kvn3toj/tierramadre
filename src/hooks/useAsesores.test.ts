@@ -79,3 +79,91 @@ describe('useAsesores — grant-scoped cache', () => {
     expect(result.current.asesores).toEqual([]);
   });
 });
+
+describe('useAsesores — grant-keyed in-flight promise', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    auth.token = null;
+    fetchWithRetryMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('does NOT hand an anon consumer the in-flight STAFF promise (signOut does not reload the page)', async () => {
+    const staffRoster = [
+      {
+        id: 'a1',
+        name: 'Maria',
+        slug: 'maria',
+        email: 'm@x.co',
+        vaultCode: 'A-7',
+      },
+    ];
+    const anonRoster = [{ id: 'a1', name: 'Maria', slug: 'maria' }];
+
+    let releaseStaff: (r: Response) => void = () => {};
+    const staffInFlight = new Promise<Response>((resolve) => {
+      releaseStaff = resolve;
+    });
+
+    fetchWithRetryMock
+      .mockImplementationOnce(() => staffInFlight)
+      .mockImplementationOnce(async () =>
+        jsonResponse({ success: true, asesores: anonRoster }),
+      );
+
+    // A staff roster fetch starts and stays in flight.
+    auth.token = 'tms1.abc.def';
+    const staff = renderHook(() => useAsesores());
+
+    // The user signs out mid-flight — GoogleAuthContext.signOut() clears
+    // caches but does NOT reload, so the staff promise survives — and a
+    // public consumer (useWhatsAppContact / AmbassadorDirectory /
+    // VitrinaPage) mounts the hook.
+    auth.token = null;
+    const anon = renderHook(() => useAsesores());
+
+    // The anon mount issued its OWN request instead of awaiting the staff one.
+    await waitFor(() => expect(fetchWithRetryMock).toHaveBeenCalledTimes(2));
+
+    releaseStaff(jsonResponse({ success: true, asesores: staffRoster }));
+
+    await waitFor(() => {
+      expect(anon.result.current.asesores).toEqual(anonRoster);
+    });
+    await waitFor(() => {
+      expect(staff.result.current.asesores).toEqual(staffRoster);
+    });
+
+    // The `:anon` bucket never receives email/vaultCode.
+    expect(localStorage.getItem(`${STORAGE_KEYS.ASESORES_CACHE}:anon`)).toBe(
+      JSON.stringify(anonRoster),
+    );
+    expect(localStorage.getItem(`${STORAGE_KEYS.ASESORES_CACHE}:staff`)).toBe(
+      JSON.stringify(staffRoster),
+    );
+  });
+
+  it('releases the key on failure, so a rejected fetch does not wedge the grant forever', async () => {
+    fetchWithRetryMock.mockRejectedValueOnce(new Error('network down'));
+
+    const first = renderHook(() => useAsesores());
+    await waitFor(() => expect(first.result.current.error).not.toBeNull());
+
+    // A later mount under the SAME grant re-fetches rather than re-awaiting
+    // the settled (rejected) promise.
+    fetchWithRetryMock.mockResolvedValueOnce(
+      jsonResponse({
+        success: true,
+        asesores: [{ id: 'a1', name: 'Maria', slug: 'maria' }],
+      }),
+    );
+    const second = renderHook(() => useAsesores());
+    await waitFor(() => {
+      expect(second.result.current.asesores).toHaveLength(1);
+    });
+    expect(fetchWithRetryMock).toHaveBeenCalledTimes(2);
+  });
+});
