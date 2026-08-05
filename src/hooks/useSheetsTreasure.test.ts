@@ -18,6 +18,15 @@ vi.mock('../utils/fetchWithRetry', () => ({
   fetchWithRetry: fetchWithRetryMock,
 }));
 
+// Mocked (never vi.spyOn — these are ESM named exports) so the
+// tokenRejected-retry tests below can assert call counts without actually
+// minting a session or touching readFreshAuthToken's real Google-token path.
+const ensureAppSessionMock = vi.hoisted(() => vi.fn(async () => {}));
+vi.mock('../utils/sessionToken', () => ({
+  ensureAppSession: ensureAppSessionMock,
+  readFreshAuthToken: vi.fn(() => null),
+}));
+
 import { useSheetsTreasure } from './useSheetsTreasure';
 
 interface Deferred<T> {
@@ -41,6 +50,7 @@ describe('useSheetsTreasure — in-flight fetch dedup', () => {
   beforeEach(() => {
     localStorage.clear();
     fetchWithRetryMock.mockReset();
+    ensureAppSessionMock.mockClear();
     // Fire-and-forget Drive folder sync in fetchFromSheets — keep it inert.
     vi.stubGlobal(
       'fetch',
@@ -100,5 +110,77 @@ describe('useSheetsTreasure — in-flight fetch dedup', () => {
     await act(async () => {
       deferred.resolve(jsonResponse({ success: true, treasure: [] }));
     });
+  });
+});
+
+describe('useSheetsTreasure — tokenRejected retry', () => {
+  // Deferred from Task 6 (unreachable before the server-side projection
+  // shipped: bearerWasRejected only starts firing once a real caller
+  // presents an expired/forged bearer against a grant-aware endpoint). An
+  // asesor's 30-day session token can die silently; the server flags
+  // `tokenRejected: true` instead of just degrading to `anon`, so the
+  // client can call ensureAppSession() and retry once — recovering price
+  // visibility instead of looking broken. `isRetry` must stop this from
+  // looping if the refresh doesn't help.
+  beforeEach(() => {
+    localStorage.clear();
+    fetchWithRetryMock.mockReset();
+    ensureAppSessionMock.mockClear();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(jsonResponse({ success: true })),
+    );
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+    vi.unstubAllGlobals();
+  });
+
+  it('triggers exactly one ensureAppSession() call and one retry', async () => {
+    fetchWithRetryMock
+      .mockResolvedValueOnce(
+        jsonResponse({ success: true, treasure: [], tokenRejected: true }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          success: true,
+          treasure: [{ item: 1, nombre: 'Rey Midas' }],
+        }),
+      );
+
+    const { result } = renderHook(() => useSheetsTreasure());
+
+    await waitFor(() => {
+      expect(result.current.sheetsTreasure).toEqual([
+        { item: 1, nombre: 'Rey Midas' },
+      ]);
+    });
+
+    expect(fetchWithRetryMock).toHaveBeenCalledTimes(2);
+    expect(ensureAppSessionMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does NOT loop when the retry is ALSO tokenRejected', async () => {
+    fetchWithRetryMock
+      .mockResolvedValueOnce(
+        jsonResponse({ success: true, treasure: [], tokenRejected: true }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({ success: true, treasure: [], tokenRejected: true }),
+      );
+
+    const { result } = renderHook(() => useSheetsTreasure());
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    // Exactly the initial call + the single session-refresh retry — a third
+    // call would mean the tokenRejected branch looped instead of stopping
+    // once isRetry is true.
+    expect(fetchWithRetryMock).toHaveBeenCalledTimes(2);
+    expect(ensureAppSessionMock).toHaveBeenCalledTimes(1);
+    expect(result.current.sheetsTreasure).toEqual([]);
   });
 });

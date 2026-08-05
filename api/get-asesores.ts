@@ -5,9 +5,9 @@
  * and returns them as JSON for the ambassadors page.
  */
 
-import type { sheets_v4 } from "@googleapis/sheets";
-import type { drive_v3 } from "@googleapis/drive";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { sheets_v4 } from '@googleapis/sheets';
+import type { drive_v3 } from '@googleapis/drive';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   sendSuccess,
   SPREADSHEET_ID,
@@ -18,7 +18,9 @@ import {
   findColumnIndex,
   formatDisplayName,
   DRIVE_FOLDERS,
-} from "./_lib/index.js";
+} from './_lib/index.js';
+import { resolveGrant } from './_lib/catalogGrant.js';
+import { lookupVitrina } from './_lib/vitrinaLookup.js';
 
 type Sheets = sheets_v4.Sheets;
 type Drive = drive_v3.Drive;
@@ -39,10 +41,19 @@ export interface GetAsesoresRow {
 
 export default withApiHandler(
   async (
-    _req: VercelRequest,
+    req: VercelRequest,
     res: VercelResponse,
     context: Record<string, unknown>,
   ) => {
+    // The asesor directory is sensitive on its own — an anonymous caller
+    // should not be able to enumerate the sales force (name, whatsapp,
+    // email, photo). Gate BEFORE any Sheets/Drive read so every branch below
+    // is staff-only and byte-identical to what staff got before this change.
+    const grant = await resolveGrant(req, { lookupVitrina });
+    if (grant.kind !== 'staff') {
+      return sendSuccess(res, { asesores: [] });
+    }
+
     const sheets = context.sheets as Sheets;
     const drive = context.drive as Drive;
     const sharedDriveId = context.sharedDriveId as string | undefined;
@@ -51,7 +62,7 @@ export default withApiHandler(
     // Locate the asesores sheet by name first; fall back to legacy index 2.
     // Pattern-first survives sheet reordering (e.g. when "Proveedores" lands at index 2).
     const asesoresSheet =
-      findSheetByPattern(sheetNames, ["asesor", "embajador", "ambassador"]) ||
+      findSheetByPattern(sheetNames, ['asesor', 'embajador', 'ambassador']) ||
       sheetNames[2] ||
       sheetNames[0];
 
@@ -65,7 +76,7 @@ export default withApiHandler(
     if (!rows || rows.length === 0) {
       return sendSuccess(res, {
         asesores: [],
-        message: "No data found in asesores sheet",
+        message: 'No data found in asesores sheet',
         sheetName: asesoresSheet,
         availableSheets: sheetNames,
       });
@@ -73,16 +84,16 @@ export default withApiHandler(
 
     const headers = rows[0];
     const nameColumnIndex = findColumnIndex(headers, [
-      "nombre",
-      "name",
-      "asesor",
-      "vendedor",
+      'nombre',
+      'name',
+      'asesor',
+      'vendedor',
     ]);
 
     if (nameColumnIndex === -1) {
       return sendSuccess(res, {
         asesores: [],
-        message: "No name column found in sheet",
+        message: 'No name column found in sheet',
         headers: rows[0],
         availableSheets: sheetNames,
       });
@@ -90,31 +101,31 @@ export default withApiHandler(
 
     // Find optional columns
     const roleIndex = findColumnIndex(headers, [
-      "datos",
-      "rol",
-      "role",
-      "tipo",
+      'datos',
+      'rol',
+      'role',
+      'tipo',
     ]);
     const whatsappIndex = findColumnIndex(headers, [
-      "whatsapp",
-      "telefono",
-      "phone",
+      'whatsapp',
+      'telefono',
+      'phone',
     ]);
     const especialidadIndex = findColumnIndex(headers, [
-      "especialidad",
-      "specialty",
+      'especialidad',
+      'specialty',
     ]);
     const instagramIndex = findColumnIndex(headers, [
-      "instagram",
-      "ig",
-      "email",
+      'instagram',
+      'ig',
+      'email',
     ]);
-    const estadoIndex = findColumnIndex(headers, ["estado", "status"]);
+    const estadoIndex = findColumnIndex(headers, ['estado', 'status']);
     const vaultCodeIndex = findColumnIndex(headers, [
-      "vaultcode",
-      "vault_code",
-      "codigo_boveda",
-      "boveda",
+      'vaultcode',
+      'vault_code',
+      'codigo_boveda',
+      'boveda',
     ]);
 
     const dataRows = rows.slice(1);
@@ -122,12 +133,12 @@ export default withApiHandler(
 
     dataRows.forEach((row, index) => {
       const name = row[nameColumnIndex];
-      if (!name || String(name).trim() === "") return;
+      if (!name || String(name).trim() === '') return;
 
       // Check if asesor is active
       if (estadoIndex !== -1) {
-        const estado = String(row[estadoIndex] || "").toLowerCase();
-        if (estado === "inactivo" || estado === "inactive") return;
+        const estado = String(row[estadoIndex] || '').toLowerCase();
+        if (estado === 'inactivo' || estado === 'inactive') return;
       }
 
       const displayName = formatDisplayName(name);
@@ -142,12 +153,12 @@ export default withApiHandler(
         id: `asesor_${index + 1}`,
         name: displayName,
         slug: displayName
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
           .toLowerCase()
-          .replace(/\s+/g, "-")
-          .replace(/[^a-z0-9-]/g, ""),
-        role: roleIndex !== -1 ? (row[roleIndex] || "Asesor").trim() : "Asesor",
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, ''),
+        role: roleIndex !== -1 ? (row[roleIndex] || 'Asesor').trim() : 'Asesor',
         whatsapp: whatsappIndex !== -1 ? row[whatsappIndex] || null : null,
         especialidad:
           especialidadIndex !== -1 ? row[especialidadIndex] || null : null,
@@ -161,14 +172,14 @@ export default withApiHandler(
       });
     });
 
-    asesoresData.sort((a, b) => a.name.localeCompare(b.name, "es"));
+    asesoresData.sort((a, b) => a.name.localeCompare(b.name, 'es'));
 
     // Scan Drive ambassadors/ folder for profile photos
     if (drive && sharedDriveId) {
       try {
         const folderResponse = await drive.files.list({
           q: `name='${DRIVE_FOLDERS.AMBASSADORS}' and mimeType='application/vnd.google-apps.folder' and '${sharedDriveId}' in parents and trashed=false`,
-          fields: "files(id)",
+          fields: 'files(id)',
           supportsAllDrives: true,
           includeItemsFromAllDrives: true,
         });
@@ -177,7 +188,7 @@ export default withApiHandler(
         if (ambassadorsFolderId) {
           const photosResponse = await drive.files.list({
             q: `'${ambassadorsFolderId}' in parents and (mimeType='image/jpeg' or mimeType='image/png' or mimeType='image/webp') and trashed=false`,
-            fields: "files(id, name)",
+            fields: 'files(id, name)',
             supportsAllDrives: true,
             includeItemsFromAllDrives: true,
             pageSize: 100,
@@ -186,7 +197,7 @@ export default withApiHandler(
           const photoMap: Record<string, string> = {};
           for (const file of photosResponse.data.files || []) {
             if (!file.name || !file.id) continue;
-            const slug = file.name.replace(/\.(jpg|jpeg|png|webp)$/i, "");
+            const slug = file.name.replace(/\.(jpg|jpeg|png|webp)$/i, '');
             photoMap[slug] = file.id;
           }
 
@@ -201,7 +212,7 @@ export default withApiHandler(
       } catch (photoError: unknown) {
         const msg =
           photoError instanceof Error ? photoError.message : String(photoError);
-        console.warn("[GetAsesores] Could not scan ambassador photos:", msg);
+        console.warn('[GetAsesores] Could not scan ambassador photos:', msg);
       }
     }
 
@@ -216,6 +227,6 @@ export default withApiHandler(
     cache: CACHE.NONE,
     provideSheets: true,
     provideDrive: true,
-    errorPrefix: "GetAsesores",
+    errorPrefix: 'GetAsesores',
   },
 );

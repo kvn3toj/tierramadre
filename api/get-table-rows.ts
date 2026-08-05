@@ -24,8 +24,8 @@
  *   { table, sheetName, rows: [{ rowIndex, colA, cells: { <fieldKey>: <string> } }] }
  */
 
-import type { sheets_v4 } from "@googleapis/sheets";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { sheets_v4 } from '@googleapis/sheets';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   withApiHandler,
   FOTOSINTESIS_SPREADSHEET_ID,
@@ -33,12 +33,14 @@ import {
   sendSuccess,
   getSheetNames,
   findSheetByPattern,
-} from "./_lib/index.js";
-import { TABLE_CONFIGS, isFotoTable } from "./_lib/admin-table-config.js";
+} from './_lib/index.js';
+import { TABLE_CONFIGS, isFotoTable } from './_lib/admin-table-config.js';
 import {
   FOTO_INVENTARIO_COLUMNS,
   FOTO_INVENTARIO_LAST_COL,
-} from "./_lib/fotosintesis-inventory-columns.js";
+} from './_lib/fotosintesis-inventory-columns.js';
+import { resolveGrant } from './_lib/catalogGrant.js';
+import { lookupVitrina } from './_lib/vitrinaLookup.js';
 
 const SPREADSHEET_ID = FOTOSINTESIS_SPREADSHEET_ID;
 
@@ -59,11 +61,11 @@ function layoutFor(table: string): {
   lastCol: string;
   patterns: string[];
 } | null {
-  if (table === "inventory") {
+  if (table === 'inventory') {
     return {
       keys: (FOTO_INVENTARIO_COLUMNS as FotoColumn[]).map((c) => c.key),
       lastCol: FOTO_INVENTARIO_LAST_COL,
-      patterns: ["inventario", "inventory"],
+      patterns: ['inventario', 'inventory'],
     };
   }
   if (isFotoTable(table)) {
@@ -85,17 +87,27 @@ export default withApiHandler(
   ) => {
     const expectedToken = process.env.ADMIN_SYNC_TOKEN;
     const providedToken =
-      (req.headers["x-admin-sync-token"] as string | undefined) ?? undefined;
+      (req.headers['x-admin-sync-token'] as string | undefined) ?? undefined;
     if (!expectedToken) {
-      return sendError(res, 500, "ADMIN_SYNC_TOKEN not configured on server");
+      return sendError(res, 500, 'ADMIN_SYNC_TOKEN not configured on server');
     }
     if (!providedToken || providedToken !== expectedToken) {
-      return sendError(res, 401, "Unauthorized");
+      return sendError(res, 401, 'Unauthorized');
     }
+
+    // Resolved (not applied to the payload) — same reasoning as
+    // get-inventory-rows.ts / get-table.ts: server-to-server only, already
+    // gated above by ADMIN_SYNC_TOKEN. Convex, the only caller, never
+    // presents browser credentials, so resolveGrant would always answer
+    // `anon` here; gating on it would truncate the delta-sync rows the
+    // Sheets->Convex mirror depends on. Resolved only so this endpoint is
+    // classified/audited by tests/catalogEndpointsProjection.test.ts.
+    const grant = await resolveGrant(req, { lookupVitrina });
+    void grant;
 
     const body = (req.body ?? {}) as RowsBody;
     const table = body.table;
-    if (!table) return sendError(res, 400, "Missing table");
+    if (!table) return sendError(res, 400, 'Missing table');
     const layout = layoutFor(table);
     if (!layout) {
       return sendError(
@@ -132,7 +144,7 @@ export default withApiHandler(
       return sendError(
         res,
         404,
-        `Sheet tab not found for "${table}". Expected one of: ${layout.patterns.join(", ")}`,
+        `Sheet tab not found for "${table}". Expected one of: ${layout.patterns.join(', ')}`,
       );
     }
 
@@ -154,12 +166,12 @@ export default withApiHandler(
     for (let i = 0; i < rowNumbers.length; i++) {
       const rowIndex = rowNumbers[i];
       const rowValues = (valueRanges[i]?.values?.[0] ?? []) as unknown[];
-      const colA = String(rowValues[0] ?? "").trim();
+      const colA = String(rowValues[0] ?? '').trim();
       const cells: Record<string, string> = {};
       for (const ci of byRow.get(rowIndex)!) {
         const key = layout.keys[ci];
         if (!key) continue;
-        cells[key] = String(rowValues[ci] ?? "");
+        cells[key] = String(rowValues[ci] ?? '');
       }
       rows.push({ rowIndex, colA, cells });
     }
@@ -167,8 +179,8 @@ export default withApiHandler(
     return sendSuccess(res, { table, sheetName: targetSheet, rows });
   },
   {
-    methods: ["POST", "OPTIONS"],
+    methods: ['POST', 'OPTIONS'],
     provideSheets: true,
-    errorPrefix: "GetTableRows",
+    errorPrefix: 'GetTableRows',
   },
 );
