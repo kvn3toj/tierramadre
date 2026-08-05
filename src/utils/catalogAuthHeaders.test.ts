@@ -8,7 +8,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // vi.spyOn on an ESM named export does NOT reliably intercept — use this.
 const auth = vi.hoisted(() => ({ token: null as string | null }));
 vi.mock('./sessionToken', () => ({
-  readFreshAuthToken: () => auth.token,
+  // catalogRequestInit sends ONLY the tms1 session token (2026-08 fix
+  // round) — never the raw Google ID token, since api/_lib/catalogGrant.ts
+  // no longer accepts it for the staff grant.
+  readFreshSessionToken: () => auth.token,
 }));
 
 import { catalogRequestInit, catalogUrl } from './catalogAuthHeaders';

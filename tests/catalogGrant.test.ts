@@ -2,27 +2,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { resolveGrant, bearerWasRejected } from '../api/_lib/catalogGrant';
 import { mintSessionToken } from '../api/_lib/sessionToken';
 
-process.env.ADMIN_SYNC_TOKEN = 'test-secret-for-grants';
-// resolveGrant only reaches the Google ID token branch when at least one
-// audience is configured — set one so the mocked google-auth-library path
-// below actually gets exercised instead of short-circuiting to null first.
-process.env.GOOGLE_OAUTH_CLIENT_ID = 'test-google-client-id';
-
-// google-auth-library is loaded via dynamic `await import(...)` inside
-// resolveGrant's Google ID token branch (never for session tokens or the
-// no-credentials/vitrina-id-list paths already covered above). Mock it so
-// the "staff via Google ID token" tests never hit the real network — vi.mock
-// factories are hoisted above imports by vitest's transform (including above
-// the static `resolveGrant` import), and the mock applies to dynamic imports
-// of the same module id, not just static ones.
-const { mockVerifyIdToken } = vi.hoisted(() => ({
-  mockVerifyIdToken: vi.fn(),
-}));
-vi.mock('google-auth-library', () => ({
-  OAuth2Client: vi.fn().mockImplementation(() => ({
-    verifyIdToken: mockVerifyIdToken,
-  })),
-}));
+const SYNC_SECRET = 'test-admin-sync-token';
+process.env.ADMIN_SYNC_TOKEN = SYNC_SECRET;
 
 const req = (headers = {}, query = {}) => ({ headers, query }) as never;
 
@@ -96,26 +77,74 @@ describe('resolveGrant', () => {
     expect(g).toEqual({ kind: 'staff' });
   });
 
-  it('is staff for a raw Google ID token with a verified email', async () => {
-    mockVerifyIdToken.mockResolvedValueOnce({
-      getPayload: () => ({ email: 'a@b.co', email_verified: true }),
-    });
-    const g = await resolveGrant(
-      req({ authorization: 'Bearer raw-google-id-token' }),
-      { lookupVitrina: neverCalled },
-    );
-    expect(g).toEqual({ kind: 'staff' });
-  });
-
-  it('is anon for a raw Google ID token with an UNverified email — an unverified email must never unlock staff-level catalog data', async () => {
-    mockVerifyIdToken.mockResolvedValueOnce({
-      getPayload: () => ({ email: 'a@b.co', email_verified: false }),
-    });
+  // 2026-08 fix round: the Google-ID-token path was removed entirely. It
+  // only ever proved "some Google account with the right audience" — not
+  // roster membership, since the OAuth client ID is public (ships in the
+  // frontend bundle). Any Gmail user could mint one and read the
+  // unprojected catalog. Only a `tms1` session token (proof of a verified
+  // mint-session roster check) or the ADMIN_SYNC_TOKEN service grant now
+  // resolve `staff`.
+  it('is anon for a raw Google ID token — Google tokens no longer grant staff, whatever their shape', async () => {
     const g = await resolveGrant(
       req({ authorization: 'Bearer raw-google-id-token' }),
       { lookupVitrina: neverCalled },
     );
     expect(g).toEqual({ kind: 'anon' });
+  });
+
+  it('never calls out to Google at all — no network dependency left in the staff check', async () => {
+    // If catalogGrant.ts still imported google-auth-library, an unmocked
+    // import in this test file would either throw or attempt real network
+    // I/O. Reaching `anon` cleanly and synchronously-ish proves the path is
+    // gone, not just failing to verify.
+    const g = await resolveGrant(
+      req({ authorization: 'Bearer ya29.a0-fake-google-access-token-shape' }),
+      { lookupVitrina: neverCalled },
+    );
+    expect(g).toEqual({ kind: 'anon' });
+  });
+
+  describe('service grant (ADMIN_SYNC_TOKEN)', () => {
+    it('is staff when the bearer exactly matches ADMIN_SYNC_TOKEN', async () => {
+      const g = await resolveGrant(
+        req({ authorization: `Bearer ${SYNC_SECRET}` }),
+        { lookupVitrina: neverCalled },
+      );
+      expect(g).toEqual({ kind: 'staff' });
+    });
+
+    it('is anon for a near-miss — not a substring/prefix match', async () => {
+      const g = await resolveGrant(
+        req({ authorization: `Bearer ${SYNC_SECRET}-extra` }),
+        { lookupVitrina: neverCalled },
+      );
+      expect(g).toEqual({ kind: 'anon' });
+    });
+
+    it('is anon when ADMIN_SYNC_TOKEN is not configured on the server', async () => {
+      const saved = process.env.ADMIN_SYNC_TOKEN;
+      delete process.env.ADMIN_SYNC_TOKEN;
+      try {
+        const g = await resolveGrant(
+          req({ authorization: `Bearer ${SYNC_SECRET}` }),
+          { lookupVitrina: neverCalled },
+        );
+        expect(g).toEqual({ kind: 'anon' });
+      } finally {
+        process.env.ADMIN_SYNC_TOKEN = saved;
+      }
+    });
+
+    it('wins even without a session token — this is how the Convex sync authenticates', async () => {
+      const g = await resolveGrant(
+        req(
+          { authorization: `Bearer ${SYNC_SECRET}` },
+          { vitrina: 'AB3K9P2Q4R7S' },
+        ),
+        { lookupVitrina: neverCalled },
+      );
+      expect(g).toEqual({ kind: 'staff' });
+    });
   });
 });
 

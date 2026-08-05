@@ -22,11 +22,23 @@ import {
 } from './_lib/index.js';
 import { resolveGrant } from './_lib/catalogGrant.js';
 import { lookupVitrina } from './_lib/vitrinaLookup.js';
-import { projectForGrant } from './_lib/catalogProjection.js';
 
 export default withApiHandler(
   async (req, res, { drive, sharedDriveId }) => {
+    // Resolved (not applied to the payload) — DELIBERATE, product decision,
+    // not an oversight. `/c/:folder` collection links are a sales tool: the
+    // asesor shares a link and the client sees prices. The design for a
+    // signed per-collection token (like a vitrina's `/v/<token>`, so a
+    // shared link keeps its price for the recipient while a stranger who
+    // finds the URL gets none) is a separate, not-yet-built task. Until that
+    // exists, projecting this endpoint would break the sales tool with no
+    // way to restore prices for the people it's meant for — so it stays
+    // unprojected. Do NOT "fix" this by wiring projectForGrant back in
+    // without that signed-token mechanism landing first; see
+    // .superpowers/sdd/2026-08-05-control-de-acceso-al-catalogo/task-7-report.md
+    // (fix round 2, F7) for the ruling.
     const grant = await resolveGrant(req, { lookupVitrina });
+    void grant;
     const folder = req.query.folder;
     if (!folder || typeof folder !== 'string') {
       return sendError(res, 400, 'Missing ?folder= parameter');
@@ -158,19 +170,9 @@ export default withApiHandler(
       };
     });
 
-    // collection.json items are shaped like TreasureItem (item, nombre,
-    // peso, precioCOP, precioInternacional, talla — see
-    // scripts/UPDATE_COLLECTION_JSON.md's template) and this page is public
-    // (`/c/:folder`, no auth guard in App.tsx), so projectForGrant applies
-    // exactly like the treasure endpoint: it strips price/ubicación/asesor
-    // for anon/vitrina-excluded items. The media fields
-    // (imagen/mediaType/thumbnailUrl/videoUrl/posterUrl) are PUBLIC_KEYS —
-    // deliberately promoted there (see catalogProjection.ts) because they're
-    // already served publicly through the Drive proxy regardless of grant —
-    // so projectForGrant alone produces the right shape; no re-attachment
-    // needed (a prior version index-coupled a re-spread here, which bypassed
-    // the allowlist unseen by the exhaustiveness check — removed).
-    const products = projectForGrant(mergedProducts, grant);
+    // NOT projected — see the comment on `resolveGrant` above. `products`
+    // is `mergedProducts` as-is, unprojected, same as before Task 7.
+    const products = mergedProducts;
 
     return sendSuccess(res, {
       collection: {
@@ -183,7 +185,12 @@ export default withApiHandler(
   },
   {
     methods: ['GET', 'OPTIONS'],
-    cache: CACHE.SHORT,
+    // NOT CACHE.SHORT. setCacheHeaders' Vary list (Accept, Accept-Encoding,
+    // Origin) doesn't include Authorization, so a shared CDN cache entry
+    // would not distinguish a staff response from an anonymous one — a
+    // priced payload could serve to an anonymous visitor for up to 90s.
+    // Matches get-treasure-sheets.ts / get-asesores.ts.
+    cache: CACHE.NONE,
     provideDrive: true,
     requireDriveId: true,
     errorPrefix: 'GetCollection',

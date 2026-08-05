@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { PUBLIC_KEYS, toPublicItem } from '../api/_lib/catalogProjection';
+import {
+  PUBLIC_KEYS,
+  toPublicItem,
+  PUBLIC_ASESOR_KEYS,
+  toPublicAsesor,
+  type AsesorRecord,
+} from '../api/_lib/catalogProjection';
 import type { TreasureItem } from '../src/types/index.ts';
 
 const SENSITIVE = [
@@ -118,6 +124,56 @@ describe('PUBLIC_KEYS', () => {
     const out = toPublicItem(row) as Record<string, unknown>;
     expect(out.imagen).toBe('/api/serve-drive-image?fileId=abc123');
     expect(out.thumbnailUrl).toBe('/api/serve-drive-image?fileId=abc123');
+  });
+});
+
+describe('PUBLIC_ASESOR_KEYS (F5, 2026-08 fix round)', () => {
+  const ROW: AsesorRecord = {
+    id: 'asesor_1',
+    name: 'Maria Campuzano',
+    slug: 'maria-campuzano',
+    role: 'Asesor',
+    whatsapp: '+573001234567',
+    especialidad: 'Esmeraldas',
+    email: 'maria@tierramadre.co',
+    photoFileId: 'abc123',
+    photoUrl: '/api/serve-drive-image?fileId=abc123',
+    vaultCode: 'BOVEDA-42',
+  };
+
+  it("never overlaps email or vaultCode — the human ruling's withheld set", () => {
+    expect(PUBLIC_ASESOR_KEYS).not.toContain('email');
+    expect(PUBLIC_ASESOR_KEYS).not.toContain('vaultCode');
+  });
+
+  it('is exactly the 8 fields ruled public — id, name, slug, role, especialidad, photo, and whatsapp (deviation, documented on toPublicAsesor)', () => {
+    expect([...PUBLIC_ASESOR_KEYS].sort()).toEqual(
+      [
+        'id',
+        'name',
+        'slug',
+        'role',
+        'especialidad',
+        'whatsapp',
+        'photoFileId',
+        'photoUrl',
+      ].sort(),
+    );
+  });
+
+  it('toPublicAsesor withholds email and vaultCode but keeps whatsapp', () => {
+    const out = toPublicAsesor(ROW) as Record<string, unknown>;
+    expect(out.email).toBeUndefined();
+    expect(out.vaultCode).toBeUndefined();
+    expect(out.whatsapp).toBe('+573001234567');
+    expect(out.name).toBe('Maria Campuzano');
+    expect(out.slug).toBe('maria-campuzano');
+  });
+
+  it('does not mutate its input', () => {
+    const before = JSON.stringify(ROW);
+    toPublicAsesor(ROW);
+    expect(JSON.stringify(ROW)).toBe(before);
   });
 });
 

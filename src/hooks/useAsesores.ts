@@ -3,6 +3,8 @@ import { TreasureItem } from '../types';
 import { normalizeName, matchesAsesorName } from '../utils/asesorNameUtils';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
 import { catalogRequestInit } from '../utils/catalogAuthHeaders';
+import { readFreshSessionToken } from '../utils/sessionToken';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 import { parseVaultCode } from '../utils/parseVaultCode';
 import type { VaultCombination } from '../types/vault';
 
@@ -32,9 +34,24 @@ interface UseAsesoresReturn {
   ambassadorVaultCodes: Map<string, VaultCombination>;
 }
 
-const CACHE_KEY = 'tm-asesores';
-const CACHE_TS_KEY = 'tm-asesores-ts';
 const CACHE_TTL_MS = 5 * 60 * 1000;
+
+/**
+ * Grant-scoped cache keys (discovered alongside F6, 2026-08 fix round: same
+ * leak class as useAsesorCollection's cache — get-asesores.ts now withholds
+ * email/vaultCode from anon, so a staff device's full roster cache must not
+ * survive logout to paint for the next anonymous visitor). Cleared by
+ * clearTreasureCaches() (treasureCacheStorage.ts). readFreshSessionToken(),
+ * not readFreshAuthToken() — must mirror catalogRequestInit()'s
+ * session-token-only signal.
+ */
+function cacheKeys(): { data: string; ts: string } {
+  const grant = readFreshSessionToken() ? 'staff' : 'anon';
+  return {
+    data: `${STORAGE_KEYS.ASESORES_CACHE}:${grant}`,
+    ts: `${STORAGE_KEYS.ASESORES_CACHE_TS}:${grant}`,
+  };
+}
 
 /** Shared in-flight promise — dedupes concurrent fetches from multiple hook mounts. */
 let inflightFetch: Promise<Asesor[]> | null = null;
@@ -42,7 +59,7 @@ let inflightFetch: Promise<Asesor[]> | null = null;
 export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
   const [asesores, setAsesores] = useState<Asesor[]>(() => {
     try {
-      const cached = localStorage.getItem(CACHE_KEY);
+      const cached = localStorage.getItem(cacheKeys().data);
       return cached ? JSON.parse(cached) : [];
     } catch {
       return [];
@@ -67,9 +84,11 @@ export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
       setIsLoading(true);
       setError(null);
 
+      const keys = cacheKeys();
+
       // Skip fetch if cache is fresh (unless forced).
       if (!force) {
-        const tsRaw = localStorage.getItem(CACHE_TS_KEY);
+        const tsRaw = localStorage.getItem(keys.ts);
         const ts = tsRaw ? Number(tsRaw) : 0;
         if (ts && Date.now() - ts < CACHE_TTL_MS && asesores.length > 0) {
           setIsLoading(false);
@@ -104,8 +123,8 @@ export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
       const deduped = await inflightFetch;
       setAsesores(deduped);
       try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify(deduped));
-        localStorage.setItem(CACHE_TS_KEY, String(Date.now()));
+        localStorage.setItem(keys.data, JSON.stringify(deduped));
+        localStorage.setItem(keys.ts, String(Date.now()));
       } catch {
         // Storage full — non-critical
       }

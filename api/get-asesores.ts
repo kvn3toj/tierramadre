@@ -21,6 +21,7 @@ import {
 } from './_lib/index.js';
 import { resolveGrant } from './_lib/catalogGrant.js';
 import { lookupVitrina } from './_lib/vitrinaLookup.js';
+import { projectAsesoresForGrant } from './_lib/catalogProjection.js';
 
 type Sheets = sheets_v4.Sheets;
 type Drive = drive_v3.Drive;
@@ -45,14 +46,17 @@ export default withApiHandler(
     res: VercelResponse,
     context: Record<string, unknown>,
   ) => {
-    // The asesor directory is sensitive on its own — an anonymous caller
-    // should not be able to enumerate the sales force (name, whatsapp,
-    // email, photo). Gate BEFORE any Sheets/Drive read so every branch below
-    // is staff-only and byte-identical to what staff got before this change.
+    // F5 (2026-08 fix round — ruling supersedes the original "empty list for
+    // non-staff" approach): the asesor directory is sensitive as a whole
+    // (an anonymous caller should not enumerate the full sales force with
+    // email + internal vault code), but per-asesor public fields (name,
+    // slug, role, especialidad, photo, whatsapp — see the DEVIATION note on
+    // toPublicAsesor in catalogProjection.ts) are what public/guest pages
+    // (ambassador profiles, the invitation flow, vitrina contact CTAs)
+    // legitimately need. Project instead of emptying — see
+    // projectAsesoresForGrant below, applied to every branch that carries
+    // asesor data.
     const grant = await resolveGrant(req, { lookupVitrina });
-    if (grant.kind !== 'staff') {
-      return sendSuccess(res, { asesores: [] });
-    }
 
     const sheets = context.sheets as Sheets;
     const drive = context.drive as Drive;
@@ -75,10 +79,15 @@ export default withApiHandler(
 
     if (!rows || rows.length === 0) {
       return sendSuccess(res, {
-        asesores: [],
+        // Already empty — projected anyway so this branch can't become the
+        // one that forgets, if it ever stops being empty.
+        asesores: projectAsesoresForGrant([], grant),
         message: 'No data found in asesores sheet',
-        sheetName: asesoresSheet,
-        availableSheets: sheetNames,
+        // sheetName/availableSheets describe internal spreadsheet layout —
+        // staff only, same rule as get-treasure-sheets.ts.
+        ...(grant.kind === 'staff'
+          ? { sheetName: asesoresSheet, availableSheets: sheetNames }
+          : {}),
       });
     }
 
@@ -92,10 +101,13 @@ export default withApiHandler(
 
     if (nameColumnIndex === -1) {
       return sendSuccess(res, {
-        asesores: [],
+        asesores: projectAsesoresForGrant([], grant),
         message: 'No name column found in sheet',
-        headers: rows[0],
-        availableSheets: sheetNames,
+        // headers/availableSheets describe internal spreadsheet layout —
+        // staff only.
+        ...(grant.kind === 'staff'
+          ? { headers: rows[0], availableSheets: sheetNames }
+          : {}),
       });
     }
 
@@ -217,9 +229,9 @@ export default withApiHandler(
     }
 
     return sendSuccess(res, {
-      asesores: asesoresData,
+      asesores: projectAsesoresForGrant(asesoresData, grant),
       count: asesoresData.length,
-      sheetName: asesoresSheet,
+      ...(grant.kind === 'staff' ? { sheetName: asesoresSheet } : {}),
       lastUpdated: new Date().toISOString(),
     });
   },

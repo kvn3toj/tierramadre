@@ -6,7 +6,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 // Same hoisting rule as catalogAuthHeaders.test.ts — see the note there.
 const auth = vi.hoisted(() => ({ token: null as string | null }));
 vi.mock('../utils/sessionToken', () => ({
-  readFreshAuthToken: () => auth.token,
+  // treasureCacheKey() reads readFreshSessionToken() (2026-08 fix round —
+  // must mirror catalogRequestInit()'s session-token-only signal).
+  readFreshSessionToken: () => auth.token,
 }));
 
 import { treasureCacheKey, clearTreasureCaches } from './treasureCacheKey';
@@ -91,6 +93,19 @@ describe('treasureCacheKey', () => {
     );
     localStorage.setItem(STORAGE_KEYS.TREASURE_SHEETS_CACHE, '1');
     localStorage.setItem(LEGACY_KEYS.INVENTORY_SHEETS_CACHE, '1');
+    // F6 (2026-08 fix round): the grant-scoped asesor-collection cache
+    // (useAsesorCollection.ts) is cleared by this same function.
+    localStorage.setItem(
+      `${STORAGE_KEYS.ASESOR_COLLECTION_CACHE}:staff:ceo-coomunity`,
+      '1',
+    );
+    localStorage.setItem(
+      `${STORAGE_KEYS.ASESOR_COLLECTION_CACHE}:anon:ceo-coomunity`,
+      '1',
+    );
+    // useAsesores' roster cache, discovered alongside F6 — same treatment.
+    localStorage.setItem(`${STORAGE_KEYS.ASESORES_CACHE}:staff`, '1');
+    localStorage.setItem(`${STORAGE_KEYS.ASESORES_CACHE_TS}:staff`, '1');
     localStorage.setItem('unrelated-key', 'keep me');
 
     clearTreasureCaches();
@@ -113,6 +128,22 @@ describe('treasureCacheKey', () => {
     ).toBeNull();
     expect(localStorage.getItem(STORAGE_KEYS.TREASURE_SHEETS_CACHE)).toBeNull();
     expect(localStorage.getItem(LEGACY_KEYS.INVENTORY_SHEETS_CACHE)).toBeNull();
+    expect(
+      localStorage.getItem(
+        `${STORAGE_KEYS.ASESOR_COLLECTION_CACHE}:staff:ceo-coomunity`,
+      ),
+    ).toBeNull();
+    expect(
+      localStorage.getItem(
+        `${STORAGE_KEYS.ASESOR_COLLECTION_CACHE}:anon:ceo-coomunity`,
+      ),
+    ).toBeNull();
+    expect(
+      localStorage.getItem(`${STORAGE_KEYS.ASESORES_CACHE}:staff`),
+    ).toBeNull();
+    expect(
+      localStorage.getItem(`${STORAGE_KEYS.ASESORES_CACHE_TS}:staff`),
+    ).toBeNull();
     expect(localStorage.getItem('unrelated-key')).toBe('keep me');
   });
 });

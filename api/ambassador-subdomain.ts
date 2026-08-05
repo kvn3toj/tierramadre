@@ -83,8 +83,18 @@ export default withApiHandler(
 
     // The ambassador roster and the handle map are two independent reads;
     // neither is large and both are CDN-cacheable.
+    //
+    // get-asesores now withholds `email` from anon/guest callers (F5,
+    // 2026-08 fix round) — this resolver's custom-handle lookup (step 2
+    // below) has no fallback, it matches ONLY on email. Authenticate as the
+    // service grant (api/_lib/catalogGrant.ts) with the shared
+    // ADMIN_SYNC_TOKEN, same pattern as the Convex sync (convex/products.ts,
+    // convex/clients.ts), so this server-to-server call gets the full roster.
+    const syncToken = process.env.ADMIN_SYNC_TOKEN;
     const [asesoresRes, handlesRes] = await Promise.all([
-      fetch(`${APP_ORIGIN}/api/get-asesores`),
+      fetch(`${APP_ORIGIN}/api/get-asesores`, {
+        headers: syncToken ? { Authorization: `Bearer ${syncToken}` } : {},
+      }),
       fetch(`${APP_ORIGIN}/api/ambassador-handle`),
     ]);
 

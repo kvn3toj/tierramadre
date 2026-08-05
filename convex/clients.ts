@@ -380,7 +380,12 @@ export const _upsertManyAsesores = internalMutation({
  * Daily pull: read the legacy Asesores tab via the existing `/api/get-asesores`
  * endpoint (which already drops inactive rows + cleans emails) and upsert into
  * `clients`. Mirrors `products.pullFromSheet` — the Vercel side owns Sheets
- * access, Convex owns the data. No auth needed: get-asesores is public-read.
+ * access, Convex owns the data.
+ *
+ * Auth required as of the 2026-08 fix round (F5): get-asesores now withholds
+ * `email` from anon callers (api/_lib/catalogProjection.ts's
+ * toPublicAsesor), and this cron needs it. Same ADMIN_SYNC_TOKEN service
+ * grant `products._pullFromSheet` uses.
  */
 export const pullAsesoresFromSheet = action({
   args: {},
@@ -394,10 +399,16 @@ export const pullAsesoresFromSheet = action({
     skipped: number;
   }> => {
     const appUrl: string | undefined = process.env.APP_URL;
+    const syncToken: string | undefined = process.env.ADMIN_SYNC_TOKEN;
     if (!appUrl) {
       throw new Error('APP_URL missing on Convex deployment');
     }
-    const res = await fetch(`${appUrl}/api/get-asesores`);
+    if (!syncToken) {
+      throw new Error('ADMIN_SYNC_TOKEN missing on Convex deployment');
+    }
+    const res = await fetch(`${appUrl}/api/get-asesores`, {
+      headers: { Authorization: `Bearer ${syncToken}` },
+    });
     if (!res.ok) {
       throw new Error(`get-asesores fetch failed: HTTP ${res.status}`);
     }

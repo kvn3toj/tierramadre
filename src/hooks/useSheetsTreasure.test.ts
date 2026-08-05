@@ -20,11 +20,15 @@ vi.mock('../utils/fetchWithRetry', () => ({
 
 // Mocked (never vi.spyOn — these are ESM named exports) so the
 // tokenRejected-retry tests below can assert call counts without actually
-// minting a session or touching readFreshAuthToken's real Google-token path.
+// minting a session. readFreshAuthToken (treasureCacheKey.ts) and
+// readFreshSessionToken (catalogAuthHeaders.ts) both live in this module and
+// both get exercised by mounting the hook, so both need a stub here even
+// though these tests don't assert on either directly.
 const ensureAppSessionMock = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock('../utils/sessionToken', () => ({
   ensureAppSession: ensureAppSessionMock,
   readFreshAuthToken: vi.fn(() => null),
+  readFreshSessionToken: vi.fn(() => null),
 }));
 
 import { useSheetsTreasure } from './useSheetsTreasure';

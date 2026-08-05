@@ -7,6 +7,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { TreasureItem } from '../types';
 import { catalogRequestInit } from '../utils/catalogAuthHeaders';
+import { readFreshSessionToken } from '../utils/sessionToken';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 interface CollectionInfo {
   name: string;
@@ -29,8 +31,20 @@ interface UseAsesorCollectionReturn {
 
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
+/**
+ * Grant-scoped (F6, 2026-08 fix round): the un-scoped `collection_v2_<folder>`
+ * key predates access control and let a staff device's cached collection
+ * payload survive logout to paint for the next anonymous visitor on that
+ * device — the same leak Task 5 closed for the main treasure cache
+ * (treasureCacheKey.ts), reopened here because this cache was never
+ * touched. Cleared alongside the others by clearTreasureCaches()
+ * (treasureCacheStorage.ts). `readFreshSessionToken()`, not
+ * readFreshAuthToken() — must mirror catalogRequestInit()'s session-token-
+ * only signal, same reasoning as treasureCacheKey.ts.
+ */
 function getCacheKey(folder: string) {
-  return `collection_v2_${folder}`; // v2: Added videoUrl/posterUrl support
+  const grant = readFreshSessionToken() ? 'staff' : 'anon';
+  return `${STORAGE_KEYS.ASESOR_COLLECTION_CACHE}:${grant}:${folder}`;
 }
 
 function readCache(folder: string): CollectionCache | null {

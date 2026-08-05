@@ -17,19 +17,32 @@
 import { STORAGE_KEYS, LEGACY_KEYS } from '../constants/storage-keys';
 
 export const TREASURE_CACHE_BASE = STORAGE_KEYS.TREASURE_SHEETS_CACHE;
+// useAsesorCollection's /c/:folder cache (F6, 2026-08 fix round) — same
+// grant-scoping and same clear-on-logout requirement as the main treasure
+// cache, so it's purged by the same function rather than needing its own
+// wiring into AuthContext/GoogleAuthContext/sessionToken's sign-out paths.
+export const ASESOR_COLLECTION_CACHE_BASE =
+  STORAGE_KEYS.ASESOR_COLLECTION_CACHE;
+// useAsesores' roster cache — same reasoning, found alongside F6.
+export const ASESORES_CACHE_BASE = STORAGE_KEYS.ASESORES_CACHE;
+export const ASESORES_CACHE_TS_BASE = STORAGE_KEYS.ASESORES_CACHE_TS;
 
 /**
  * Removes every grant-scoped cache (staff, anon, and every vitrina token),
  * plus the pre-grant unscoped key and the pre-rename legacy key — both hold
  * the same full-fidelity data (prices, asesor, ubicación) and predate access
  * control entirely, so neither can be trusted to belong to any one grant.
+ * Also removes every grant-scoped asesor-collection cache (F6).
  */
 export function clearTreasureCaches(): void {
   try {
     for (const key of Object.keys(localStorage)) {
       if (
         key === TREASURE_CACHE_BASE ||
-        key.startsWith(`${TREASURE_CACHE_BASE}:`)
+        key.startsWith(`${TREASURE_CACHE_BASE}:`) ||
+        key.startsWith(`${ASESOR_COLLECTION_CACHE_BASE}:`) ||
+        key.startsWith(`${ASESORES_CACHE_BASE}:`) ||
+        key.startsWith(`${ASESORES_CACHE_TS_BASE}:`)
       ) {
         localStorage.removeItem(key);
       }

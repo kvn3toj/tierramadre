@@ -9,7 +9,7 @@
  * Only an unguessable stateful Convex token grants price visibility.
  */
 import type { VercelRequest } from '@vercel/node';
-import { extractBearer } from './bearer.js';
+import { extractBearer, bearerMatches } from './bearer.js';
 import { isSessionToken, verifySessionToken } from './sessionToken.js';
 import type { Grant } from './catalogProjection.js';
 
@@ -24,34 +24,24 @@ export interface ResolveGrantDeps {
   lookupVitrina: VitrinaLookup;
 }
 
-/** Accepts a `tms1` session token OR a raw Google ID token (api/vitrina.ts:42). */
-async function verifiedEmail(
-  authHeader?: string | string[],
-): Promise<string | null> {
+/**
+ * Verifies a `tms1` app session token and returns its email, or null.
+ *
+ * ONLY session tokens — a prior version also accepted a raw Google ID token
+ * verified purely against `audience`. That is NOT a roster check: the OAuth
+ * client ID is public (it ships in the frontend bundle), so any Gmail user
+ * could obtain a token with the right audience and pass as staff, reading
+ * the unprojected catalog. A session token is already proof of roster
+ * membership — `/api/validate?action=mint-session` only issues one after
+ * verifying the caller against Asesores/Proveedores — so restricting to this
+ * token type makes the roster check free (no network call) instead of
+ * absent. Removed 2026-08 fix round; see
+ * .superpowers/sdd/2026-08-05-control-de-acceso-al-catalogo/task-7-report.md.
+ */
+function verifiedSessionEmail(authHeader?: string | string[]): string | null {
   const token = extractBearer(authHeader);
-  if (!token) return null;
-  if (isSessionToken(token)) {
-    return verifySessionToken(token)?.email ?? null;
-  }
-  const audiences = [
-    process.env.GOOGLE_OAUTH_CLIENT_ID,
-    process.env.VITE_GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_ID,
-  ].filter((a): a is string => !!a && a.trim().length > 0);
-  if (audiences.length === 0) return null;
-  try {
-    const { OAuth2Client } = await import('google-auth-library');
-    const ticket = await new OAuth2Client().verifyIdToken({
-      idToken: token,
-      audience: audiences,
-    });
-    const payload = ticket.getPayload();
-    return payload?.email && payload.email_verified
-      ? payload.email.toLowerCase().trim()
-      : null;
-  } catch {
-    return null;
-  }
+  if (!token || !isSessionToken(token)) return null;
+  return verifySessionToken(token)?.email ?? null;
 }
 
 export async function resolveGrant(
@@ -59,7 +49,19 @@ export async function resolveGrant(
   deps: ResolveGrantDeps,
 ): Promise<Grant> {
   try {
-    if (await verifiedEmail(req.headers?.authorization)) {
+    // Service grant: server-to-server callers (the Convex inventory sync)
+    // present the ADMIN_SYNC_TOKEN shared secret as a bearer token instead of
+    // a per-user session — a credential at least as strong as any asesor's,
+    // since it already gates direct Sheets writes elsewhere. Same
+    // `Authorization: Bearer <secret>` + constant-time bearerMatches()
+    // pattern api/ghl-*.ts uses. Checked first: it's a cheap compare with no
+    // I/O, and it must win over a stale/absent session on the same request.
+    if (
+      bearerMatches(req.headers?.authorization, process.env.ADMIN_SYNC_TOKEN)
+    ) {
+      return { kind: 'staff' };
+    }
+    if (verifiedSessionEmail(req.headers?.authorization)) {
       return { kind: 'staff' };
     }
   } catch {

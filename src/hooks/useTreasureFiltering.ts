@@ -280,6 +280,17 @@ export function useTreasureFiltering({
       const isExplicitItem =
         itemsFilter.length > 0 && itemsFilter.includes(item.item);
 
+      // `precioCOP` is absent (not zero — `typeof` is not `'number'`) for a
+      // catalog read the server withheld the price on: an anonymous/guest
+      // visitor (control-de-acceso-al-catalogo, api/_lib/catalogProjection.ts
+      // — TreasureItem's non-optional `precioCOP: number` type does not
+      // survive a projection that never sends the key). Withheld is not the
+      // same claim as "priced at zero" below, and must not be treated the
+      // same: a guest's whole catalog is priceless by design, and gating
+      // display on that would render an empty grid for every invited guest
+      // (an asesor's invitation link landing the client on a blank browser).
+      const priceKnown = typeof item.precioCOP === 'number';
+
       // Hide priceless rows from the browse grid (2026-07-23).
       //
       // The SOT v3 inventory deliberately zeroes the cost of parent records so
@@ -298,8 +309,10 @@ export function useTreasureFiltering({
       // and self-heals the moment a cost is captured.
       //
       // `isExplicitItem` still wins, so a QR/quotation deep link to a priceless
-      // item resolves instead of going blank.
-      if (!isExplicitItem && !(item.precioCOP > 0)) return false;
+      // item resolves instead of going blank. `priceKnown` also wins — this
+      // gate only applies when the server actually told us the price was
+      // zero, not when it withheld the price entirely.
+      if (!isExplicitItem && priceKnown && !(item.precioCOP > 0)) return false;
 
       const itemEstado = item.estado?.toUpperCase() || '';
       const matchesStatus =
@@ -328,7 +341,12 @@ export function useTreasureFiltering({
         (typeFilter === 'loose' && !item.isJewelry) ||
         (typeFilter === 'jewelry' && item.isJewelry);
       const matchesShape = shapeFilter === 'all' || item.talla === shapeFilter;
+      // Same `priceKnown` reasoning as the priceless-row gate above: a
+      // withheld price can't be compared against a numeric range at all
+      // (every comparison against `undefined` is false), so a price-range
+      // filter must not exclude what it cannot evaluate.
       const matchesPrice =
+        !priceKnown ||
         item.precioCOP === 0 ||
         (item.precioCOP >= priceRange[0] && item.precioCOP <= priceRange[1]);
       const itemCarats =
