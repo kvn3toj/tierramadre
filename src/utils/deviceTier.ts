@@ -5,7 +5,7 @@
  * for optimal performance across different hardware.
  */
 
-import type { DeviceTier } from "../design-system/tokens/liquid-glass";
+import type { DeviceTier } from '../design-system/tokens/liquid-glass';
 
 // =============================================================================
 // TYPES
@@ -85,23 +85,23 @@ export const getDeviceCapabilities = (): DeviceCapabilities => {
 
   // High refresh rate detection (approximate)
   const hasProMotion =
-    window.matchMedia("(min-resolution: 120dpi)").matches ||
-    window.matchMedia("(prefers-color-scheme)").matches; // Proxy for modern device
+    window.matchMedia('(min-resolution: 120dpi)').matches ||
+    window.matchMedia('(prefers-color-scheme)').matches; // Proxy for modern device
 
   // Reduced motion preference
   const prefersReducedMotion = window.matchMedia(
-    "(prefers-reduced-motion: reduce)",
+    '(prefers-reduced-motion: reduce)',
   ).matches;
 
   // GPU info (WebGL)
   let gpuRenderer: string | null = null;
   try {
-    const canvas = document.createElement("canvas");
+    const canvas = document.createElement('canvas');
     const gl =
-      canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+      canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
     if (gl) {
       const debugInfo = (gl as WebGLRenderingContext).getExtension(
-        "WEBGL_debug_renderer_info",
+        'WEBGL_debug_renderer_info',
       );
       if (debugInfo) {
         gpuRenderer = (gl as WebGLRenderingContext).getParameter(
@@ -115,12 +115,12 @@ export const getDeviceCapabilities = (): DeviceCapabilities => {
 
   // Touch device
   const isTouchDevice =
-    "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
   // Backdrop filter support
   const supportsBackdropFilter =
-    CSS.supports("backdrop-filter", "blur(10px)") ||
-    CSS.supports("-webkit-backdrop-filter", "blur(10px)");
+    CSS.supports('backdrop-filter', 'blur(10px)') ||
+    CSS.supports('-webkit-backdrop-filter', 'blur(10px)');
 
   return {
     cores,
@@ -189,12 +189,12 @@ export const detectDeviceTier = (): DeviceTier => {
 
   // Always return low if user prefers reduced motion
   if (capabilities.prefersReducedMotion) {
-    return "low";
+    return 'low';
   }
 
   // No backdrop filter support = low tier
   if (!capabilities.supportsBackdropFilter) {
-    return "low";
+    return 'low';
   }
 
   // Score-based evaluation
@@ -227,9 +227,9 @@ export const detectDeviceTier = (): DeviceTier => {
   if (capabilities.hasProMotion) score += 1;
 
   // Determine tier
-  if (score >= 7) return "high";
-  if (score >= 4) return "medium";
-  return "low";
+  if (score >= 7) return 'high';
+  if (score >= 4) return 'medium';
+  return 'low';
 };
 
 /**
@@ -243,9 +243,9 @@ export const getTierConfig = (tier: DeviceTier): TierConfig => {
  * Get tier with override support
  */
 export const getEffectiveTier = (
-  override: DeviceTier | "auto" = "auto",
+  override: DeviceTier | 'auto' = 'auto',
 ): DeviceTier => {
-  if (override !== "auto") return override;
+  if (override !== 'auto') return override;
   return detectDeviceTier();
 };
 
@@ -302,7 +302,7 @@ export interface BrowserInfo {
  * These browsers have issues with Google OAuth popups/redirects
  */
 export const detectBrowser = (): BrowserInfo => {
-  const ua = navigator.userAgent || "";
+  const ua = navigator.userAgent || '';
 
   // Telegram WebView detection
   const isTelegram =
@@ -311,7 +311,7 @@ export const detectBrowser = (): BrowserInfo => {
     /Telegram/i.test(ua) ||
     // Additional Telegram detection via window object
     typeof (window as unknown as { TelegramWebviewProxy?: unknown })
-      .TelegramWebviewProxy !== "undefined";
+      .TelegramWebviewProxy !== 'undefined';
 
   // Other in-app browsers that have OAuth issues
   const isInstagram = /Instagram/i.test(ua);
@@ -358,20 +358,20 @@ export const detectBrowser = (): BrowserInfo => {
 
   // Determine browser name for user-friendly message
   let browserName: string | null = null;
-  if (isTelegram) browserName = "Telegram";
-  else if (isInstagram) browserName = "Instagram";
-  else if (isFacebook) browserName = "Facebook";
-  else if (isSnapchat) browserName = "Snapchat";
-  else if (isTwitter) browserName = "Twitter/X";
-  else if (isLinkedIn) browserName = "LinkedIn";
-  else if (isLine) browserName = "Line";
-  else if (isWeChat) browserName = "WeChat";
-  else if (isTikTok) browserName = "TikTok";
-  else if (isPinterest) browserName = "Pinterest";
-  else if (isDiscord) browserName = "Discord";
-  else if (isKakaoTalk) browserName = "KakaoTalk";
-  else if (isWhatsApp) browserName = "WhatsApp";
-  else if (isAndroidWebView || isIOSWebView) browserName = "WebView";
+  if (isTelegram) browserName = 'Telegram';
+  else if (isInstagram) browserName = 'Instagram';
+  else if (isFacebook) browserName = 'Facebook';
+  else if (isSnapchat) browserName = 'Snapchat';
+  else if (isTwitter) browserName = 'Twitter/X';
+  else if (isLinkedIn) browserName = 'LinkedIn';
+  else if (isLine) browserName = 'Line';
+  else if (isWeChat) browserName = 'WeChat';
+  else if (isTikTok) browserName = 'TikTok';
+  else if (isPinterest) browserName = 'Pinterest';
+  else if (isDiscord) browserName = 'Discord';
+  else if (isKakaoTalk) browserName = 'KakaoTalk';
+  else if (isWhatsApp) browserName = 'WhatsApp';
+  else if (isAndroidWebView || isIOSWebView) browserName = 'WebView';
 
   return {
     isTelegram,

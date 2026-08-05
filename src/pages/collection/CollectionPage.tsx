@@ -20,12 +20,32 @@ import {
   alpha,
   useTheme,
 } from '@mui/material';
-import { Gem, MessageCircle, Play, ShieldCheck, Clock, ExternalLink, Copy, CheckCircle } from 'lucide-react';
+import {
+  Gem,
+  MessageCircle,
+  Play,
+  ShieldCheck,
+  Clock,
+  ExternalLink,
+  Copy,
+  CheckCircle,
+} from 'lucide-react';
 import { useAsesorCollection } from '../../hooks/useAsesorCollection';
 import { CollectionProductDialog } from '../ambassadors/profile/components/CollectionProductDialog';
 import CollectionSplashScreen from '../../components/shared/CollectionSplashScreen';
 import { TreasureItem } from '../../types';
-import { brand, lightTokens, darkTokens, legacyTypography as typography, legacyGradients as gradients, cssTransition, zIndex, fontWeights, emeraldShadows, defaultShadows } from '../../design-system';
+import {
+  brand,
+  lightTokens,
+  darkTokens,
+  legacyTypography as typography,
+  legacyGradients as gradients,
+  cssTransition,
+  zIndex,
+  fontWeights,
+  emeraldShadows,
+  defaultShadows,
+} from '../../design-system';
 import { getCachedBrowserInfo } from '../../utils/deviceTier';
 import { formatCarats } from '../../utils/formatting';
 
@@ -41,54 +61,127 @@ const BLOCKED_SLUGS = new Set(['ceo-coomunity']);
 const CEO_STATIC_PRODUCTS: TreasureItem[] = [
   // --- Certified products first ---
   {
-    item: 916, nombre: 'Emerald Whisper', peso: 1.26, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Emerald', medidas: '',
-    precioCOP: 0, precioInternacional: 23000, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
-    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
-    videoUrl: '/images/CEO/916/6) 1.26 Cts.mov', imagen: '/images/CEO/916/6) 1.26 Cts.mov',
+    item: 916,
+    nombre: 'Emerald Whisper',
+    peso: 1.26,
+    color: 'Intense Green' as TreasureItem['color'],
+    calidad: 'AAA' as TreasureItem['calidad'],
+    cantidad: 1,
+    talla: 'Emerald',
+    medidas: '',
+    precioCOP: 0,
+    precioInternacional: 23000,
+    ubicacion: '',
+    asesor: '',
+    estado: 'Disponible' as TreasureItem['estado'],
+    fechaIngreso: '',
+    isJewelry: false,
+    mediaType: 'video' as TreasureItem['mediaType'],
+    videoUrl: '/images/CEO/916/6) 1.26 Cts.mov',
+    imagen: '/images/CEO/916/6) 1.26 Cts.mov',
     certificateUrl: '/images/CEO/916/6)Certificate1.26 Cts.png',
-    description: 'A quiet fire trapped in emerald glass. Its precision cut lets the light speak in soft, knowing tones.',
+    description:
+      'A quiet fire trapped in emerald glass. Its precision cut lets the light speak in soft, knowing tones.',
   },
   {
-    item: 917, nombre: 'Verdant Crown', peso: 2.20, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Cushion', medidas: '',
-    precioCOP: 0, precioInternacional: 28257, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
-    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
-    videoUrl: '/images/CEO/917/7) 2.20 Cts.mp4', imagen: '/images/CEO/917/7) 2.20 Cts.mp4',
+    item: 917,
+    nombre: 'Verdant Crown',
+    peso: 2.2,
+    color: 'Intense Green' as TreasureItem['color'],
+    calidad: 'AAA' as TreasureItem['calidad'],
+    cantidad: 1,
+    talla: 'Cushion',
+    medidas: '',
+    precioCOP: 0,
+    precioInternacional: 28257,
+    ubicacion: '',
+    asesor: '',
+    estado: 'Disponible' as TreasureItem['estado'],
+    fechaIngreso: '',
+    isJewelry: false,
+    mediaType: 'video' as TreasureItem['mediaType'],
+    videoUrl: '/images/CEO/917/7) 2.20 Cts.mp4',
+    imagen: '/images/CEO/917/7) 2.20 Cts.mp4',
     certificateUrl: '/images/CEO/917/7) Certificate 2.20Cts.png',
-    description: 'Born to reign. A generous cushion silhouette crowned with deep Colombian green — the kind of stone that commands a room.',
+    description:
+      'Born to reign. A generous cushion silhouette crowned with deep Colombian green — the kind of stone that commands a room.',
   },
   {
-    item: 913, nombre: 'Forest Hug', peso: 1.04, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Emerald', medidas: '',
-    precioCOP: 0, precioInternacional: 30857, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
-    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
-    videoUrl: '/images/CEO/913/3-1.04Cts.mp4', imagen: '/images/CEO/913/3-1.04Cts.mp4',
+    item: 913,
+    nombre: 'Forest Hug',
+    peso: 1.04,
+    color: 'Intense Green' as TreasureItem['color'],
+    calidad: 'AAA' as TreasureItem['calidad'],
+    cantidad: 1,
+    talla: 'Emerald',
+    medidas: '',
+    precioCOP: 0,
+    precioInternacional: 30857,
+    ubicacion: '',
+    asesor: '',
+    estado: 'Disponible' as TreasureItem['estado'],
+    fechaIngreso: '',
+    isJewelry: false,
+    mediaType: 'video' as TreasureItem['mediaType'],
+    videoUrl: '/images/CEO/913/3-1.04Cts.mp4',
+    imagen: '/images/CEO/913/3-1.04Cts.mp4',
     certificateUrl: '/images/CEO/913/3)Certificate-1.04.png',
-    description: 'Warm as the canopy at dawn. A heart-shaped stone that carries the tenderness of the Colombian highlands in every facet.',
+    description:
+      'Warm as the canopy at dawn. A heart-shaped stone that carries the tenderness of the Colombian highlands in every facet.',
   },
   {
-    item: 914, nombre: 'Light Echo', peso: 0.67, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Emerald', medidas: '',
-    precioCOP: 0, precioInternacional: 15429, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
-    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
-    videoUrl: '/images/CEO/914/4-0.67-Cts.mp4', imagen: '/images/CEO/914/4-0.67-Cts.mp4',
+    item: 914,
+    nombre: 'Light Echo',
+    peso: 0.67,
+    color: 'Intense Green' as TreasureItem['color'],
+    calidad: 'AAA' as TreasureItem['calidad'],
+    cantidad: 1,
+    talla: 'Emerald',
+    medidas: '',
+    precioCOP: 0,
+    precioInternacional: 15429,
+    ubicacion: '',
+    asesor: '',
+    estado: 'Disponible' as TreasureItem['estado'],
+    fechaIngreso: '',
+    isJewelry: false,
+    mediaType: 'video' as TreasureItem['mediaType'],
+    videoUrl: '/images/CEO/914/4-0.67-Cts.mp4',
+    imagen: '/images/CEO/914/4-0.67-Cts.mp4',
     certificateUrl: '/images/CEO/914/4) Certificate 0.67 Cts.jpg',
-    description: 'Small but unforgettable. This emerald-cut gem catches light like a memory you can\'t quite let go of.',
+    description:
+      "Small but unforgettable. This emerald-cut gem catches light like a memory you can't quite let go of.",
   },
   // --- Being issued ---
   {
-    item: 911, nombre: 'Song of the River', peso: 1.825, color: 'Intense Green' as TreasureItem['color'],
-    calidad: 'AAA' as TreasureItem['calidad'], cantidad: 1, talla: 'Heart', medidas: '',
-    precioCOP: 0, precioInternacional: 22857, ubicacion: '', asesor: '', estado: 'Disponible' as TreasureItem['estado'],
-    fechaIngreso: '', isJewelry: false, mediaType: 'video' as TreasureItem['mediaType'],
-    videoUrl: '/images/CEO/911/1-1.825Cts.mp4', imagen: '/images/CEO/911/1-1.825Cts.mp4',
-    description: 'Shaped like a heart, moved like water. This stone hums with the rhythm of Boyacá\'s hidden rivers.',
+    item: 911,
+    nombre: 'Song of the River',
+    peso: 1.825,
+    color: 'Intense Green' as TreasureItem['color'],
+    calidad: 'AAA' as TreasureItem['calidad'],
+    cantidad: 1,
+    talla: 'Heart',
+    medidas: '',
+    precioCOP: 0,
+    precioInternacional: 22857,
+    ubicacion: '',
+    asesor: '',
+    estado: 'Disponible' as TreasureItem['estado'],
+    fechaIngreso: '',
+    isJewelry: false,
+    mediaType: 'video' as TreasureItem['mediaType'],
+    videoUrl: '/images/CEO/911/1-1.825Cts.mp4',
+    imagen: '/images/CEO/911/1-1.825Cts.mp4',
+    description:
+      "Shaped like a heart, moved like water. This stone hums with the rhythm of Boyacá's hidden rivers.",
   },
 ];
 
 // Map collection folders to WhatsApp contact info
-const COLLECTION_CONTACTS: Record<string, { name: string; phone: string; title?: string; subtitle?: string }> = {
+const COLLECTION_CONTACTS: Record<
+  string,
+  { name: string; phone: string; title?: string; subtitle?: string }
+> = {
   'ceo-tierra-madre': {
     name: 'Andres',
     phone: '573183578265',
@@ -109,28 +202,49 @@ function formatUSD(value: number): string {
 
 /** Add missing Spanish accent marks to common words in product names */
 const ACCENT_MAP: Record<string, string> = {
-  'Corazon': 'Coraz\u00f3n', 'corazon': 'coraz\u00f3n',
-  'Coleccion': 'Colecci\u00f3n', 'coleccion': 'colecci\u00f3n',
-  'Edicion': 'Edici\u00f3n', 'edicion': 'edici\u00f3n',
-  'Pasion': 'Pasi\u00f3n', 'pasion': 'pasi\u00f3n',
-  'Ilusion': 'Ilusi\u00f3n', 'ilusion': 'ilusi\u00f3n',
-  'Fenix': 'F\u00e9nix', 'fenix': 'f\u00e9nix',
-  'Angel': '\u00c1ngel', 'angel': '\u00e1ngel',
-  'Jardin': 'Jard\u00edn', 'jardin': 'jard\u00edn',
-  'Arbol': '\u00c1rbol', 'arbol': '\u00e1rbol',
-  'Oceano': 'Oc\u00e9ano', 'oceano': 'oc\u00e9ano',
-  'Diamante': 'Diamante',
-  'Aguila': '\u00c1guila', 'aguila': '\u00e1guila',
-  'Unico': '\u00danico', 'unico': '\u00fanico',
-  'Unica': '\u00danica', 'unica': '\u00fanica',
-  'Magico': 'M\u00e1gico', 'magico': 'm\u00e1gico',
-  'Magica': 'M\u00e1gica', 'magica': 'm\u00e1gica',
-  'Raiz': 'Ra\u00edz', 'raiz': 'ra\u00edz',
-  'Genesis': 'G\u00e9nesis', 'genesis': 'g\u00e9nesis',
-  'Espiritu': 'Esp\u00edritu', 'espiritu': 'esp\u00edritu',
-  'Exotico': 'Ex\u00f3tico', 'exotico': 'ex\u00f3tico',
-  'Exotica': 'Ex\u00f3tica', 'exotica': 'ex\u00f3tica',
-  'Avalon': 'Aval\u00f3n', 'avalon': 'aval\u00f3n',
+  Corazon: 'Coraz\u00f3n',
+  corazon: 'coraz\u00f3n',
+  Coleccion: 'Colecci\u00f3n',
+  coleccion: 'colecci\u00f3n',
+  Edicion: 'Edici\u00f3n',
+  edicion: 'edici\u00f3n',
+  Pasion: 'Pasi\u00f3n',
+  pasion: 'pasi\u00f3n',
+  Ilusion: 'Ilusi\u00f3n',
+  ilusion: 'ilusi\u00f3n',
+  Fenix: 'F\u00e9nix',
+  fenix: 'f\u00e9nix',
+  Angel: '\u00c1ngel',
+  angel: '\u00e1ngel',
+  Jardin: 'Jard\u00edn',
+  jardin: 'jard\u00edn',
+  Arbol: '\u00c1rbol',
+  arbol: '\u00e1rbol',
+  Oceano: 'Oc\u00e9ano',
+  oceano: 'oc\u00e9ano',
+  Diamante: 'Diamante',
+  Aguila: '\u00c1guila',
+  aguila: '\u00e1guila',
+  Unico: '\u00danico',
+  unico: '\u00fanico',
+  Unica: '\u00danica',
+  unica: '\u00fanica',
+  Magico: 'M\u00e1gico',
+  magico: 'm\u00e1gico',
+  Magica: 'M\u00e1gica',
+  magica: 'm\u00e1gica',
+  Raiz: 'Ra\u00edz',
+  raiz: 'ra\u00edz',
+  Genesis: 'G\u00e9nesis',
+  genesis: 'g\u00e9nesis',
+  Espiritu: 'Esp\u00edritu',
+  espiritu: 'esp\u00edritu',
+  Exotico: 'Ex\u00f3tico',
+  exotico: 'ex\u00f3tico',
+  Exotica: 'Ex\u00f3tica',
+  exotica: 'ex\u00f3tica',
+  Avalon: 'Aval\u00f3n',
+  avalon: 'aval\u00f3n',
 };
 export function accentuate(name: string): string {
   return name.replace(/\b\w+\b/g, (word) => ACCENT_MAP[word] || word);
@@ -154,20 +268,29 @@ function ProductCard({
         cursor: 'pointer',
         borderRadius: 3,
         overflow: 'hidden',
-        bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
+        bgcolor: isLight
+          ? lightTokens.background.surface
+          : darkTokens.background.surface,
         border: '1px solid',
-        borderColor: isLight ? lightTokens.border.default : darkTokens.border.default,
+        borderColor: isLight
+          ? lightTokens.border.default
+          : darkTokens.border.default,
         transition: cssTransition.default,
         '&:hover': {
           transform: 'translateY(-2px)',
-          boxShadow: isLight
-            ? emeraldShadows.md
-            : defaultShadows.lg,
+          boxShadow: isLight ? emeraldShadows.md : defaultShadows.lg,
         },
       }}
     >
       {/* Media — lightweight thumbnail; video plays only in dialog */}
-      <Box sx={{ position: 'relative', aspectRatio: '1/1', overflow: 'hidden', bgcolor: '#000' }}>
+      <Box
+        sx={{
+          position: 'relative',
+          aspectRatio: '1/1',
+          overflow: 'hidden',
+          bgcolor: '#000',
+        }}
+      >
         {isVideo ? (
           // Use a video element with preload="metadata" to show first frame without buffering full file
           <video
@@ -175,7 +298,13 @@ function ProductCard({
             preload="metadata"
             muted
             playsInline
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', pointerEvents: 'none' }}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+              pointerEvents: 'none',
+            }}
           />
         ) : posterSrc ? (
           <Box
@@ -183,10 +312,23 @@ function ProductCard({
             src={posterSrc}
             alt={item.nombre}
             loading="lazy"
-            sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            sx={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+            }}
           />
         ) : (
-          <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             <Gem size={40} style={{ color: brand.emerald[300] }} />
           </Box>
         )}
@@ -228,16 +370,44 @@ function ProductCard({
             {accentuate(item.nombre)}
           </Typography>
           {item.certificateUrl ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, flexShrink: 0 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.3,
+                flexShrink: 0,
+              }}
+            >
               <ShieldCheck size={12} color={brand.emerald[500]} />
-              <Typography sx={{ fontSize: '0.55rem', color: brand.emerald[600], fontWeight: fontWeights.semibold, lineHeight: 1 }}>
+              <Typography
+                sx={{
+                  fontSize: '0.55rem',
+                  color: brand.emerald[600],
+                  fontWeight: fontWeights.semibold,
+                  lineHeight: 1,
+                }}
+              >
                 Certified
               </Typography>
             </Box>
           ) : (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, flexShrink: 0 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.3,
+                flexShrink: 0,
+              }}
+            >
               <Clock size={11} color="#D4A017" />
-              <Typography sx={{ fontSize: '0.55rem', color: '#B8941F', fontWeight: fontWeights.medium, lineHeight: 1 }}>
+              <Typography
+                sx={{
+                  fontSize: '0.55rem',
+                  color: '#B8941F',
+                  fontWeight: fontWeights.medium,
+                  lineHeight: 1,
+                }}
+              >
                 Being issued
               </Typography>
             </Box>
@@ -245,16 +415,34 @@ function ProductCard({
         </Box>
         <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 0.5 }}>
           {typeof item.peso === 'number' && (
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'text.secondary',
+                fontSize: { xs: '0.65rem', sm: '0.75rem' },
+              }}
+            >
               {formatCarats(item.peso)} ct
             </Typography>
           )}
           {item.talla && (
             <>
-              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                }}
+              >
                 ·
               </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                }}
+              >
                 {item.talla}
               </Typography>
             </>
@@ -273,19 +461,26 @@ function ProductCard({
             {formatUSD(item.precioInternacional || item.precioCOP)} USD
           </Typography>
         )}
-        {(item.precioInternacional || item.precioCOP) && typeof item.peso === 'number' && item.peso > 0 && (
-          <Typography
-            variant="caption"
-            sx={{
-              color: 'text.secondary',
-              fontFamily: typography.fontFamily.mono,
-              fontSize: { xs: '0.65rem', sm: '0.75rem' },
-              fontFeatureSettings: '"tnum"',
-            }}
-          >
-            {formatUSD(Math.round((item.precioInternacional || item.precioCOP) / item.peso))}/ct
-          </Typography>
-        )}
+        {(item.precioInternacional || item.precioCOP) &&
+          typeof item.peso === 'number' &&
+          item.peso > 0 && (
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'text.secondary',
+                fontFamily: typography.fontFamily.mono,
+                fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                fontFeatureSettings: '"tnum"',
+              }}
+            >
+              {formatUSD(
+                Math.round(
+                  (item.precioInternacional || item.precioCOP) / item.peso,
+                ),
+              )}
+              /ct
+            </Typography>
+          )}
       </Box>
     </Box>
   );
@@ -299,16 +494,23 @@ export default function CollectionPage() {
 
   const isBlocked = folder ? BLOCKED_SLUGS.has(folder) : false;
   const isCeoCollection = folder === 'ceo-tierra-madre';
-  const driveFolder = folder ? (FOLDER_ALIASES[folder] || folder) : null;
+  const driveFolder = folder ? FOLDER_ALIASES[folder] || folder : null;
 
   // Detect in-app browsers (Telegram, Instagram, etc.) that break video/media
   const browserInfo = useMemo(() => getCachedBrowserInfo(), []);
   const [urlCopied, setUrlCopied] = useState(false);
-  const { products: apiProducts, collectionInfo, isLoading: apiLoading, error: apiError } = useAsesorCollection(isCeoCollection ? null : driveFolder);
+  const {
+    products: apiProducts,
+    collectionInfo,
+    isLoading: apiLoading,
+    error: apiError,
+  } = useAsesorCollection(isCeoCollection ? null : driveFolder);
 
   // Only show splash once per browser session per collection
   const splashSessionKey = `tm_collection_splash_${folder}`;
-  const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem(splashSessionKey));
+  const [showSplash, setShowSplash] = useState(
+    () => !sessionStorage.getItem(splashSessionKey),
+  );
 
   const handleSplashComplete = useCallback(() => {
     sessionStorage.setItem(splashSessionKey, '1');
@@ -322,13 +524,16 @@ export default function CollectionPage() {
   const selectedProduct = useMemo(() => {
     if (!itemId) return null;
     const id = parseInt(itemId, 10);
-    return products.find(p => p.item === id) || null;
+    return products.find((p) => p.item === id) || null;
   }, [itemId, products]);
 
   // Navigate to product detail URL
-  const handleProductClick = useCallback((item: TreasureItem) => {
-    navigate(`/c/${folder}/${item.item}`);
-  }, [navigate, folder]);
+  const handleProductClick = useCallback(
+    (item: TreasureItem) => {
+      navigate(`/c/${folder}/${item.item}`);
+    },
+    [navigate, folder],
+  );
 
   // Close dialog by navigating back to collection grid
   const handleCloseDialog = useCallback(() => {
@@ -344,25 +549,48 @@ export default function CollectionPage() {
   const handleWhatsApp = () => {
     if (!contact) return;
     const text = `Hi ${contact.name}, I saw your exclusive collection on Tierra Madre and I'd like to know more.`;
-    window.open(`https://wa.me/${contact.phone}?text=${encodeURIComponent(text)}`, '_blank');
+    window.open(
+      `https://wa.me/${contact.phone}?text=${encodeURIComponent(text)}`,
+      '_blank',
+    );
   };
 
-  const handleProductShare = useCallback(async (product: TreasureItem) => {
-    const url = `${window.location.origin}/c/${folder}/${product.item}`;
-    const text = `${product.nombre} - ${formatCarats(product.peso)} ct Colombian Emerald`;
-    if (navigator.share) {
-      try { await navigator.share({ title: 'Tierra Madre', text, url }); } catch { /* user cancelled */ }
-    } else {
-      await navigator.clipboard.writeText(url);
-    }
-  }, [folder]);
+  const handleProductShare = useCallback(
+    async (product: TreasureItem) => {
+      const url = `${window.location.origin}/c/${folder}/${product.item}`;
+      const text = `${product.nombre} - ${formatCarats(product.peso)} ct Colombian Emerald`;
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'Tierra Madre', text, url });
+        } catch {
+          /* user cancelled */
+        }
+      } else {
+        await navigator.clipboard.writeText(url);
+      }
+    },
+    [folder],
+  );
 
   // Block restricted slugs
   if (isBlocked) {
     return (
-      <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: isLight ? lightTokens.background.page : darkTokens.background.app }}>
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: isLight
+            ? lightTokens.background.page
+            : darkTokens.background.app,
+        }}
+      >
         <Box sx={{ textAlign: 'center' }}>
-          <Gem size={48} style={{ color: brand.emerald[300], marginBottom: 16 }} />
+          <Gem
+            size={48}
+            style={{ color: brand.emerald[300], marginBottom: 16 }}
+          />
           <Typography variant="h6">Collection not found</Typography>
         </Box>
       </Box>
@@ -395,25 +623,40 @@ export default function CollectionPage() {
         try {
           window.location.href = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;action=android.intent.action.VIEW;end`;
           return;
-        } catch { /* fall through */ }
+        } catch {
+          /* fall through */
+        }
       }
 
       if (isIOS) {
         try {
-          window.location.href = url.replace(/^https:\/\//, 'x-safari-https://');
+          window.location.href = url.replace(
+            /^https:\/\//,
+            'x-safari-https://',
+          );
           setTimeout(() => {
             if (navigator.share) {
-              navigator.share({ title: 'Tierra Madre', url }).catch(() => handleCopyUrl());
+              navigator
+                .share({ title: 'Tierra Madre', url })
+                .catch(() => handleCopyUrl());
             } else {
               handleCopyUrl();
             }
           }, 500);
           return;
-        } catch { /* fall through */ }
+        } catch {
+          /* fall through */
+        }
       }
 
       if (navigator.share) {
-        navigator.share({ title: 'Tierra Madre Collection', text: 'View this emerald collection in your browser', url }).catch(() => handleCopyUrl());
+        navigator
+          .share({
+            title: 'Tierra Madre Collection',
+            text: 'View this emerald collection in your browser',
+            url,
+          })
+          .catch(() => handleCopyUrl());
       } else {
         handleCopyUrl();
       }
@@ -450,15 +693,27 @@ export default function CollectionPage() {
         >
           <Typography
             variant="subtitle2"
-            sx={{ color: brand.emerald[300], mb: 1, textAlign: 'center', fontWeight: fontWeights.medium }}
+            sx={{
+              color: brand.emerald[300],
+              mb: 1,
+              textAlign: 'center',
+              fontWeight: fontWeights.medium,
+            }}
           >
             This collection deserves a better window
           </Typography>
           <Typography
             variant="body2"
-            sx={{ color: alpha('#fff', 0.6), mb: 3, textAlign: 'center', lineHeight: 1.5 }}
+            sx={{
+              color: alpha('#fff', 0.6),
+              mb: 3,
+              textAlign: 'center',
+              lineHeight: 1.5,
+            }}
           >
-            {browserInfo.browserName || 'This browser'} can't display our emeralds the way they were meant to be seen. Open in Safari or Chrome to experience the full collection.
+            {browserInfo.browserName || 'This browser'} can't display our
+            emeralds the way they were meant to be seen. Open in Safari or
+            Chrome to experience the full collection.
           </Typography>
           <Stack spacing={1.5}>
             <Button
@@ -480,7 +735,9 @@ export default function CollectionPage() {
             <Button
               variant="text"
               size="small"
-              startIcon={urlCopied ? <CheckCircle size={16} /> : <Copy size={16} />}
+              startIcon={
+                urlCopied ? <CheckCircle size={16} /> : <Copy size={16} />
+              }
               onClick={handleCopyUrl}
               sx={{
                 color: urlCopied ? brand.emerald[400] : alpha('#fff', 0.4),
@@ -512,7 +769,9 @@ export default function CollectionPage() {
         height: '100vh',
         overflowY: 'auto',
         WebkitOverflowScrolling: 'touch',
-        bgcolor: isLight ? lightTokens.background.page : darkTokens.background.app,
+        bgcolor: isLight
+          ? lightTokens.background.page
+          : darkTokens.background.app,
       }}
     >
       {/* Branded Header */}
@@ -525,7 +784,14 @@ export default function CollectionPage() {
           textAlign: 'center',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mb: 1,
+          }}
+        >
           <Box
             component="img"
             src="/images/logo-horizontal-white.png"
@@ -546,11 +812,22 @@ export default function CollectionPage() {
       </Box>
 
       {/* Content */}
-      <Box sx={{ maxWidth: { xs: '100%', md: 960, lg: 1200 }, mx: 'auto', px: { xs: 1.5, sm: 2, md: 3 }, py: { xs: 2, sm: 3 } }}>
+      <Box
+        sx={{
+          maxWidth: { xs: '100%', md: 960, lg: 1200 },
+          mx: 'auto',
+          px: { xs: 1.5, sm: 2, md: 3 },
+          py: { xs: 2, sm: 3 },
+        }}
+      >
         {(contact?.subtitle || collectionInfo?.description) && (
           <Typography
             variant="body2"
-            sx={{ color: 'text.secondary', textAlign: 'center', mb: { xs: 2, sm: 3 } }}
+            sx={{
+              color: 'text.secondary',
+              textAlign: 'center',
+              mb: { xs: 2, sm: 3 },
+            }}
           >
             {contact?.subtitle || collectionInfo?.description}
           </Typography>
@@ -561,7 +838,10 @@ export default function CollectionPage() {
           <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }}>
             {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
               <Grid item xs={6} sm={4} md={3} key={i}>
-                <Skeleton variant="rounded" sx={{ width: '100%', aspectRatio: '1/1', borderRadius: 3 }} />
+                <Skeleton
+                  variant="rounded"
+                  sx={{ width: '100%', aspectRatio: '1/1', borderRadius: 3 }}
+                />
                 <Box sx={{ mt: 1 }}>
                   <Skeleton width="70%" height={18} />
                   <Skeleton width="40%" height={14} sx={{ mt: 0.5 }} />
@@ -574,7 +854,10 @@ export default function CollectionPage() {
         {/* Error */}
         {error && !isLoading && (
           <Box sx={{ textAlign: 'center', py: 8 }}>
-            <Gem size={48} style={{ color: brand.emerald[300], marginBottom: 16 }} />
+            <Gem
+              size={48}
+              style={{ color: brand.emerald[300], marginBottom: 16 }}
+            />
             <Typography variant="h6" sx={{ mb: 1 }}>
               Collection unavailable
             </Typography>
@@ -602,10 +885,11 @@ export default function CollectionPage() {
         {/* Empty State */}
         {!isLoading && !error && products.length === 0 && (
           <Box sx={{ textAlign: 'center', py: 8 }}>
-            <Gem size={48} style={{ color: brand.emerald[300], marginBottom: 16 }} />
-            <Typography variant="h6">
-              No products in this collection
-            </Typography>
+            <Gem
+              size={48}
+              style={{ color: brand.emerald[300], marginBottom: 16 }}
+            />
+            <Typography variant="h6">No products in this collection</Typography>
           </Box>
         )}
       </Box>
