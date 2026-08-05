@@ -7,15 +7,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { TreasureItem } from '../types';
-import { STORAGE_KEYS, LEGACY_KEYS } from '../constants/storage-keys';
+import { LEGACY_KEYS } from '../constants/storage-keys';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
 import { catalogRequestInit, catalogUrl } from '../utils/catalogAuthHeaders';
 import { useSyncCacheState } from './useSyncCache';
+import { treasureCacheKey } from './treasureCacheKey';
 
-// Cache configuration (new treasure namespace)
-const SHEETS_CACHE_KEY = STORAGE_KEYS.TREASURE_SHEETS_CACHE;
-
-// Old cache key for migration
+// Pre-rename legacy cache key, predating this namespace entirely.
 const OLD_SHEETS_CACHE_KEY = LEGACY_KEYS.INVENTORY_SHEETS_CACHE;
 
 interface SheetsCache {
@@ -40,27 +38,26 @@ interface UseSheetsTreasureReturn {
 export type UseSheetsInventoryReturn = UseSheetsTreasureReturn;
 
 /**
- * Migrate data from old storage key to new one (run once)
+ * Purge the pre-rename legacy cache key. It predates access control entirely
+ * — unscoped by grant — so unlike a normal key-rename migration it cannot be
+ * safely carried forward into any one grant's bucket; it is deleted instead.
+ * clearTreasureCaches() (treasureCacheKey.ts) removes it again on logout as
+ * a belt-and-suspenders guard, in case this purge hasn't run yet on a tab.
  */
-function migrateStorageKey(oldKey: string, newKey: string): void {
+function purgeLegacyCache(): void {
   try {
-    const oldData = localStorage.getItem(oldKey);
-    if (oldData && !localStorage.getItem(newKey)) {
-      localStorage.setItem(newKey, oldData);
-      localStorage.removeItem(oldKey);
-      // Migration complete
-    }
+    localStorage.removeItem(OLD_SHEETS_CACHE_KEY);
   } catch (error) {
-    console.warn('Storage migration error:', error);
+    console.warn('Error purging legacy sheets cache:', error);
   }
 }
 
 /**
  * Get cached data regardless of TTL (for instant initial render)
  */
-function getCachedData(): TreasureItem[] | null {
+function getCachedData(vitrinaToken?: string): TreasureItem[] | null {
   try {
-    const cached = localStorage.getItem(SHEETS_CACHE_KEY);
+    const cached = localStorage.getItem(treasureCacheKey(vitrinaToken));
     if (!cached) return null;
 
     const { data }: SheetsCache = JSON.parse(cached);
@@ -72,9 +69,9 @@ function getCachedData(): TreasureItem[] | null {
 }
 
 /** How recently the cached data was written (ms epoch), or 0 if missing/invalid. */
-function getCachedTimestamp(): number {
+function getCachedTimestamp(vitrinaToken?: string): number {
   try {
-    const cached = localStorage.getItem(SHEETS_CACHE_KEY);
+    const cached = localStorage.getItem(treasureCacheKey(vitrinaToken));
     if (!cached) return 0;
     const { timestamp }: SheetsCache = JSON.parse(cached);
     return typeof timestamp === 'number' ? timestamp : 0;
@@ -86,19 +83,26 @@ function getCachedTimestamp(): number {
 /** Skip background refetch if cache is newer than this. */
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
-/** Shared in-flight promise — dedupes concurrent calls from multiple hooks. */
-let inflightFetch: Promise<TreasureItem[]> | null = null;
+/**
+ * Shared in-flight promises — dedupes concurrent calls from multiple hooks.
+ * Keyed by the same grant identity as treasureCacheKey(), NOT just a single
+ * shared slot: two hooks fetching for different vitrina tokens (e.g.
+ * navigating back/forward between two vitrina links while VitrinaContent
+ * stays mounted) must never be handed each other's in-flight promise — that
+ * would be one client receiving another client's grant.
+ */
+const inflightFetches = new Map<string, Promise<TreasureItem[]>>();
 
 /**
  * Save data to cache
  */
-function setCachedData(data: TreasureItem[]): void {
+function setCachedData(data: TreasureItem[], vitrinaToken?: string): void {
   try {
     const cache: SheetsCache = {
       data,
       timestamp: Date.now(),
     };
-    localStorage.setItem(SHEETS_CACHE_KEY, JSON.stringify(cache));
+    localStorage.setItem(treasureCacheKey(vitrinaToken), JSON.stringify(cache));
   } catch (error) {
     console.warn('Error writing sheets cache:', error);
   }
@@ -141,10 +145,10 @@ async function fetchFromSheets(
 /**
  * Get initial sheets data synchronously to prevent URL changes causing image blinks
  */
-function getInitialSheetsData(): TreasureItem[] | null {
-  // Run storage migration first (synchronous)
-  migrateStorageKey(OLD_SHEETS_CACHE_KEY, SHEETS_CACHE_KEY);
-  return getCachedData();
+function getInitialSheetsData(vitrinaToken?: string): TreasureItem[] | null {
+  // Purge the legacy key first (synchronous) — see purgeLegacyCache().
+  purgeLegacyCache();
+  return getCachedData(vitrinaToken);
 }
 
 /**
@@ -161,17 +165,20 @@ export function useSheetsTreasure(
     isLoading,
     setIsLoading,
   } = useSyncCacheState<TreasureItem[] | null>(
-    getInitialSheetsData,
+    () => getInitialSheetsData(vitrinaToken),
     (v) => v === null,
   );
   const [error, setError] = useState<string | null>(null);
 
   // Background-fetch only when the cache is missing or older than CACHE_TTL_MS.
-  // Concurrent calls (multiple hooks mounting simultaneously) share a single in-flight
-  // promise, so we never hammer the Sheets API during navigation.
+  // Concurrent calls (multiple hooks mounting simultaneously) share a single
+  // in-flight promise PER GRANT (see inflightFetches), so we never hammer the
+  // Sheets API during navigation, and never hand one grant's response to a
+  // caller waiting on a different one.
   useEffect(() => {
+    const cacheKey = treasureCacheKey(vitrinaToken);
     const hasCachedData = sheetsTreasure !== null;
-    const cacheAge = Date.now() - getCachedTimestamp();
+    const cacheAge = Date.now() - getCachedTimestamp(vitrinaToken);
     const cacheIsFresh = hasCachedData && cacheAge < CACHE_TTL_MS;
 
     if (cacheIsFresh) {
@@ -181,15 +188,17 @@ export function useSheetsTreasure(
 
     const loadFromSheets = async () => {
       try {
-        if (!inflightFetch) {
-          inflightFetch = fetchFromSheets(!hasCachedData, vitrinaToken).finally(
+        let promise = inflightFetches.get(cacheKey);
+        if (!promise) {
+          promise = fetchFromSheets(!hasCachedData, vitrinaToken).finally(
             () => {
-              inflightFetch = null;
+              inflightFetches.delete(cacheKey);
             },
           );
+          inflightFetches.set(cacheKey, promise);
         }
-        const treasure = await inflightFetch;
-        setCachedData(treasure);
+        const treasure = await promise;
+        setCachedData(treasure, vitrinaToken);
         setSheetsTreasure((prev) => {
           if (!prev) return treasure;
           const prevJson = JSON.stringify(prev);
@@ -218,7 +227,7 @@ export function useSheetsTreasure(
     try {
       const treasure = await fetchFromSheets(true, vitrinaToken);
       setSheetsTreasure(treasure);
-      setCachedData(treasure);
+      setCachedData(treasure, vitrinaToken);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
