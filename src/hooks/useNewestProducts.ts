@@ -12,6 +12,7 @@ import { TreasureItem } from '../types';
 import { createLogger } from '../utils/logger';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
+import { catalogRequestInit } from '../utils/catalogAuthHeaders';
 import { mergeNewestCandidates } from '../utils/newestProductsMerge';
 
 const log = createLogger('NewestProducts');
@@ -106,7 +107,7 @@ async function fetchNewestProducts(
   try {
     const response = await fetchWithRetry(
       `/api/get-newest-products?limit=${limit}`,
-      undefined,
+      catalogRequestInit(),
       {
         retries: 3,
         notifyOnFailure,

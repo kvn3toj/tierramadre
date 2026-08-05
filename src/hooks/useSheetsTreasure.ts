@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { TreasureItem } from '../types';
 import { STORAGE_KEYS, LEGACY_KEYS } from '../constants/storage-keys';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
+import { catalogRequestInit } from '../utils/catalogAuthHeaders';
 import { useSyncCacheState } from './useSyncCache';
 
 // Cache configuration (new treasure namespace)
@@ -107,13 +108,19 @@ function setCachedData(data: TreasureItem[]): void {
  * Fetch treasure from Google Sheets API
  * @param notifyOnFailure - show snackbar if all retries fail (use true when user has no cache or forced refresh)
  */
-async function fetchFromSheets(notifyOnFailure = false): Promise<TreasureItem[]> {
-  const response = await fetchWithRetry('/api/get-treasure-sheets', undefined, {
-    retries: 3,
-    onRetry: (attempt) => console.warn(`[Sheets] Retry ${attempt}/3...`),
-    notifyOnFailure,
-    failureMessage: 'No se pudo cargar el inventario. Intenta de nuevo.',
-  });
+async function fetchFromSheets(
+  notifyOnFailure = false,
+): Promise<TreasureItem[]> {
+  const response = await fetchWithRetry(
+    '/api/get-treasure-sheets',
+    catalogRequestInit(),
+    {
+      retries: 3,
+      onRetry: (attempt) => console.warn(`[Sheets] Retry ${attempt}/3...`),
+      notifyOnFailure,
+      failureMessage: 'No se pudo cargar el inventario. Intenta de nuevo.',
+    },
+  );
 
   if (!response.ok) {
     throw new Error('Failed to fetch treasure from Google Sheets');
@@ -148,7 +155,10 @@ export function useSheetsTreasure(): UseSheetsTreasureReturn {
     setValue: setSheetsTreasure,
     isLoading,
     setIsLoading,
-  } = useSyncCacheState<TreasureItem[] | null>(getInitialSheetsData, (v) => v === null);
+  } = useSyncCacheState<TreasureItem[] | null>(
+    getInitialSheetsData,
+    (v) => v === null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   // Background-fetch only when the cache is missing or older than CACHE_TTL_MS.
@@ -173,7 +183,7 @@ export function useSheetsTreasure(): UseSheetsTreasureReturn {
         }
         const treasure = await inflightFetch;
         setCachedData(treasure);
-        setSheetsTreasure(prev => {
+        setSheetsTreasure((prev) => {
           if (!prev) return treasure;
           const prevJson = JSON.stringify(prev);
           const nextJson = JSON.stringify(treasure);

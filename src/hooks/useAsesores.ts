@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { TreasureItem } from '../types';
 import { normalizeName, matchesAsesorName } from '../utils/asesorNameUtils';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
+import { catalogRequestInit } from '../utils/catalogAuthHeaders';
 import { parseVaultCode } from '../utils/parseVaultCode';
 import type { VaultCombination } from '../types/vault';
 
@@ -53,7 +54,7 @@ export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
   // Deduplicate asesores on frontend (backup in case API doesn't dedupe properly)
   const dedupeAsesores = (asesoresList: Asesor[]): Asesor[] => {
     const seen = new Set<string>();
-    return asesoresList.filter(asesor => {
+    return asesoresList.filter((asesor) => {
       const normalized = normalizeName(asesor.name);
       if (seen.has(normalized)) return false;
       seen.add(normalized);
@@ -79,11 +80,16 @@ export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
       // Deduplicate concurrent fetches across hook instances.
       if (!inflightFetch) {
         inflightFetch = (async () => {
-          const response = await fetchWithRetry('/api/get-asesores', undefined, {
-            retries: 3,
-            notifyOnFailure: true,
-            failureMessage: 'No se pudieron cargar los asesores. Intenta de nuevo.',
-          });
+          const response = await fetchWithRetry(
+            '/api/get-asesores',
+            catalogRequestInit(),
+            {
+              retries: 3,
+              notifyOnFailure: true,
+              failureMessage:
+                'No se pudieron cargar los asesores. Intenta de nuevo.',
+            },
+          );
           if (!response.ok) throw new Error('Failed to fetch asesores');
           const result = await response.json();
           if (!result.success || !result.asesores) {
@@ -120,11 +126,13 @@ export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
   const enrichedAsesores = useMemo(() => {
     if (!treasure || treasure.length === 0) return asesores;
 
-    return asesores.map(asesor => {
+    return asesores.map((asesor) => {
       // Match asesor name with treasure items (handles abbreviated names like "JM.Escobar")
-      const matchingProducts = treasure.filter(item => {
-        const isOriginalAsesor = item.asesor && matchesAsesorName(item.asesor, asesor.name);
-        const isCurrentOwner = item.asesorActual?.trim() &&
+      const matchingProducts = treasure.filter((item) => {
+        const isOriginalAsesor =
+          item.asesor && matchesAsesorName(item.asesor, asesor.name);
+        const isCurrentOwner =
+          item.asesorActual?.trim() &&
           matchesAsesorName(item.asesorActual.trim(), asesor.name);
         return isOriginalAsesor || isCurrentOwner;
       });
