@@ -95,15 +95,27 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
 const inflightFetches = new Map<string, Promise<TreasureItem[]>>();
 
 /**
- * Save data to cache
+ * Save data to cache, under a cache key the CALLER computed — never
+ * recomputed here from `vitrinaToken` (N2/N3, 2026-08 fix round 3).
+ *
+ * `treasureCacheKey()` reads the CURRENT session-token state, which can
+ * change during the `await` a fetch spans (a fire-and-forget session mint
+ * landing mid-request, or a sign-out's `clearTreasureCaches()` racing an
+ * in-flight staff read). Recomputing the key at write time targets whatever
+ * bucket is current NOW, not the one the request actually authenticated
+ * as — writing an anon-projected payload into the `:staff` bucket (masking
+ * missing prices for 5 minutes via `cacheIsFresh`), or a staff payload into
+ * `:anon` after logout (painting priced data for the next visitor). Callers
+ * must compute the key ONCE, before the request, and pass the same value
+ * here.
  */
-function setCachedData(data: TreasureItem[], vitrinaToken?: string): void {
+function setCachedData(data: TreasureItem[], cacheKey: string): void {
   try {
     const cache: SheetsCache = {
       data,
       timestamp: Date.now(),
     };
-    localStorage.setItem(treasureCacheKey(vitrinaToken), JSON.stringify(cache));
+    localStorage.setItem(cacheKey, JSON.stringify(cache));
   } catch (error) {
     console.warn('Error writing sheets cache:', error);
   }
@@ -191,17 +203,34 @@ export function useSheetsTreasure(
   // Sheets API during navigation, and never hand one grant's response to a
   // caller waiting on a different one.
   useEffect(() => {
-    const cacheKey = treasureCacheKey(vitrinaToken);
-    const hasCachedData = sheetsTreasure !== null;
-    const cacheAge = Date.now() - getCachedTimestamp(vitrinaToken);
-    const cacheIsFresh = hasCachedData && cacheAge < CACHE_TTL_MS;
-
-    if (cacheIsFresh) {
-      setIsLoading(false);
-      return;
-    }
-
     const loadFromSheets = async () => {
+      // N2 (2026-08 fix round 3): AWAIT the session mint before computing
+      // the cache key or firing the request — not the fire-and-forget
+      // `void ensureAppSession()` GoogleAuthContext's sign-in already
+      // triggered. Without this, a staff member's first catalog read after
+      // sign-in raced that mint: it read `anon` (no bearer offered yet, so
+      // `tokenRejected` — the existing recovery path — never fires either),
+      // and `cacheIsFresh` then hid the price-free result for 5 minutes.
+      // Cheap when there's nothing to do: ensureAppSession() no-ops
+      // synchronously-ish for a true anonymous visitor or an
+      // already-fresh session.
+      await ensureAppSession();
+
+      // Computed ONCE, after the await above settles auth state, and
+      // reused for both the fetch dedup key and the cache write below —
+      // never recomputed after a later await (that recomputation was the
+      // N2/N3 bug: it targets whatever bucket is current at write time,
+      // not the one this fetch actually authenticated as).
+      const cacheKey = treasureCacheKey(vitrinaToken);
+      const hasCachedData = sheetsTreasure !== null;
+      const cacheAge = Date.now() - getCachedTimestamp(vitrinaToken);
+      const cacheIsFresh = hasCachedData && cacheAge < CACHE_TTL_MS;
+
+      if (cacheIsFresh) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         let promise = inflightFetches.get(cacheKey);
         if (!promise) {
@@ -213,7 +242,7 @@ export function useSheetsTreasure(
           inflightFetches.set(cacheKey, promise);
         }
         const treasure = await promise;
-        setCachedData(treasure, vitrinaToken);
+        setCachedData(treasure, cacheKey);
         setSheetsTreasure((prev) => {
           if (!prev) return treasure;
           const prevJson = JSON.stringify(prev);
@@ -240,9 +269,13 @@ export function useSheetsTreasure(
     setError(null);
 
     try {
+      // Same reasoning as the effect above: settle the session first, then
+      // compute the cache key ONCE and reuse it for the write.
+      await ensureAppSession();
+      const cacheKey = treasureCacheKey(vitrinaToken);
       const treasure = await fetchFromSheets(true, vitrinaToken);
       setSheetsTreasure(treasure);
-      setCachedData(treasure, vitrinaToken);
+      setCachedData(treasure, cacheKey);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {

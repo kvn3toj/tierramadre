@@ -314,10 +314,20 @@ export function useTreasureFiltering({
       // zero, not when it withheld the price entirely.
       if (!isExplicitItem && priceKnown && !(item.precioCOP > 0)) return false;
 
+      // Same priceKnown-style distinction as above, for `estado` (N4,
+      // 2026-08 fix round 3): withheld for anon/guest (undefined) is not
+      // the same claim as "no estado value on this staff row" (`''`, rare
+      // legacy rows). Without `estadoKnown`, any statusFilter other than
+      // 'all' silently dropped every row for a guest — including
+      // src/components/ios/MoreSheetSearch.tsx, which hard-codes
+      // `statusFilter: 'available'` for the global search sheet, so a
+      // guest's search always returned zero results, for any query.
+      const estadoKnown = typeof item.estado === 'string';
       const itemEstado = item.estado?.toUpperCase() || '';
       const matchesStatus =
         isExplicitItem ||
         statusFilter === 'all' ||
+        !estadoKnown ||
         (statusFilter === 'available' && itemEstado === 'DISPONIBLE') ||
         (statusFilter === 'sold' && itemEstado === 'VENDIDA');
 

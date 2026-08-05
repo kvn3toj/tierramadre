@@ -52,14 +52,16 @@ function pricedItem(item: number, precioCOP: number): TreasureItem {
 }
 
 /**
- * A row shaped like what an anon/guest caller gets: `precioCOP` is
- * genuinely ABSENT (not present as a key at all), mirroring what
- * `toPublicItem` produces and what a guest's browser receives over the
- * wire — `JSON.stringify` drops undefined-valued keys, so `item.precioCOP`
- * reads `undefined` at runtime despite TreasureItem's type saying `number`.
+ * A row shaped like what an anon/guest caller gets: `precioCOP` AND
+ * `estado` are genuinely ABSENT (not present as keys at all — both are
+ * WITHHELD_KEYS, withheld together), mirroring what `toPublicItem` produces
+ * and what a guest's browser receives over the wire — `JSON.stringify`
+ * drops undefined-valued keys, so both read `undefined` at runtime despite
+ * TreasureItem's type saying `number`/`TreasureStatus`.
  */
 function priceFreeItem(item: number): TreasureItem {
-  return { item, ...baseFields() } as unknown as TreasureItem;
+  const { estado: _estado, ...rest } = baseFields();
+  return { item, ...rest } as unknown as TreasureItem;
 }
 
 describe('useTreasureFiltering — priceless rows (F4)', () => {
@@ -114,5 +116,45 @@ describe('useTreasureFiltering — priceless rows (F4)', () => {
       }),
     );
     expect(result.current.filteredTreasure).toHaveLength(1);
+  });
+});
+
+describe('useTreasureFiltering — withheld estado (N4, 2026-08 fix round 3)', () => {
+  it('a guest row (estado withheld) passes statusFilter: "available" — MoreSheetSearch.tsx hard-codes this and returned zero results for every guest query before this fix', () => {
+    const { result } = renderHook(() =>
+      useTreasureFiltering({
+        treasure: [priceFreeItem(1)],
+        initialFilters: { statusFilter: 'available' },
+        inactivityTimeoutMinutes: 0,
+      }),
+    );
+    expect(result.current.filteredTreasure).toHaveLength(1);
+  });
+
+  it('a guest row (estado withheld) passes statusFilter: "sold" too — withheld means "cannot evaluate", not "fails every filter"', () => {
+    const { result } = renderHook(() =>
+      useTreasureFiltering({
+        treasure: [priceFreeItem(1)],
+        initialFilters: { statusFilter: 'sold' },
+        inactivityTimeoutMinutes: 0,
+      }),
+    );
+    expect(result.current.filteredTreasure).toHaveLength(1);
+  });
+
+  it('a staff row (estado known) is still correctly filtered by statusFilter — the fix does not disable status filtering for staff', () => {
+    const disponible = pricedItem(1, 100);
+    const vendida = {
+      ...pricedItem(2, 200),
+      estado: 'VENDIDA',
+    } as TreasureItem;
+    const { result } = renderHook(() =>
+      useTreasureFiltering({
+        treasure: [disponible, vendida],
+        initialFilters: { statusFilter: 'available' },
+        inactivityTimeoutMinutes: 0,
+      }),
+    );
+    expect(result.current.filteredTreasure.map((i) => i.item)).toEqual([1]);
   });
 });

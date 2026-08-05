@@ -7,7 +7,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { TreasureItem } from '../types';
 import { catalogRequestInit } from '../utils/catalogAuthHeaders';
-import { readFreshSessionToken } from '../utils/sessionToken';
+import { readFreshSessionToken, ensureAppSession } from '../utils/sessionToken';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 
 interface CollectionInfo {
@@ -73,6 +73,13 @@ export function useAsesorCollection(
     setIsLoading(true);
     setError(null);
     try {
+      // Settle the session BEFORE reading the cache key or firing the
+      // request, same reasoning as useSheetsTreasure.ts (N2, 2026-08 fix
+      // round 3) — a fire-and-forget session mint landing mid-request must
+      // not leave the cache key computed at write time out of sync with
+      // what the request actually authenticated as.
+      await ensureAppSession();
+      const cacheKey = getCacheKey(folder);
       const response = await fetch(
         `/api/get-collection?folder=${encodeURIComponent(folder)}`,
         catalogRequestInit(),
@@ -86,7 +93,11 @@ export function useAsesorCollection(
         products: json.products,
         timestamp: Date.now(),
       };
-      localStorage.setItem(getCacheKey(folder), JSON.stringify(cache));
+      // `cacheKey` computed ONCE, above — never recomputed after the awaits
+      // this function spans (N3: the same write-after-await bug that could
+      // paint a staff-cached, priced payload for the next anonymous
+      // visitor after a sign-out race).
+      localStorage.setItem(cacheKey, JSON.stringify(cache));
       setData(cache);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error loading collection');

@@ -7,11 +7,13 @@
  * paints for the next anonymous visitor on that device.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 
 const auth = vi.hoisted(() => ({ token: null as string | null }));
+const ensureAppSessionMock = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock('../utils/sessionToken', () => ({
   readFreshSessionToken: () => auth.token,
+  ensureAppSession: ensureAppSessionMock,
 }));
 
 import { useAsesorCollection } from './useAsesorCollection';
@@ -25,6 +27,8 @@ describe('useAsesorCollection — grant-scoped cache', () => {
   beforeEach(() => {
     localStorage.clear();
     auth.token = null;
+    ensureAppSessionMock.mockReset();
+    ensureAppSessionMock.mockImplementation(async () => {});
   });
 
   afterEach(() => {
@@ -85,5 +89,69 @@ describe('useAsesorCollection — grant-scoped cache', () => {
     // come back empty — it reads the `:anon:` key, which was never
     // written — never the `:staff:` key's priced data.
     expect(result.current.products).toEqual([]);
+  });
+});
+
+interface Deferred<T> {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+}
+function createDeferred<T>(): Deferred<T> {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((res) => {
+    resolve = res;
+  });
+  return { promise, resolve };
+}
+
+describe('useAsesorCollection — write-time cache key (N2/N3, 2026-08 fix round 3)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    auth.token = null;
+    ensureAppSessionMock.mockReset();
+    ensureAppSessionMock.mockImplementation(async () => {});
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('N2(a)/N3: a sign-out mid-flight does NOT write the staff (priced) response into the anon bucket', async () => {
+    auth.token = 'tms1.staff-session';
+    const deferred = createDeferred<Response>();
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(deferred.promise));
+
+    renderHook(() => useAsesorCollection('ceo-coomunity'));
+
+    await waitFor(() => {
+      expect(ensureAppSessionMock).toHaveBeenCalled();
+    });
+
+    // Sign out WHILE the staff-authenticated request is still in flight.
+    auth.token = null;
+
+    await act(async () => {
+      deferred.resolve(
+        jsonResponse({
+          collection: { name: 'CEO', description: '', asesorEmail: '' },
+          products: [{ item: 1, precioCOP: 15000000 }],
+        }),
+      );
+    });
+
+    // The write must still target `:staff:` — the bucket THIS fetch
+    // actually authenticated as when it was sent — not `:anon:`.
+    await waitFor(() => {
+      expect(
+        localStorage.getItem(
+          `${STORAGE_KEYS.ASESOR_COLLECTION_CACHE}:staff:ceo-coomunity`,
+        ),
+      ).not.toBeNull();
+    });
+    expect(
+      localStorage.getItem(
+        `${STORAGE_KEYS.ASESOR_COLLECTION_CACHE}:anon:ceo-coomunity`,
+      ),
+    ).toBeNull();
   });
 });

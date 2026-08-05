@@ -22,6 +22,7 @@ import {
 import { resolveGrant } from './_lib/catalogGrant.js';
 import { lookupVitrina } from './_lib/vitrinaLookup.js';
 import { projectAsesoresForGrant } from './_lib/catalogProjection.js';
+import { slugifyAsesorName } from './_lib/asesorSlug.js';
 
 type Sheets = sheets_v4.Sheets;
 type Drive = drive_v3.Drive;
@@ -164,12 +165,7 @@ export default withApiHandler(
       asesoresData.push({
         id: `asesor_${index + 1}`,
         name: displayName,
-        slug: displayName
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .toLowerCase()
-          .replace(/\s+/g, '-')
-          .replace(/[^a-z0-9-]/g, ''),
+        slug: slugifyAsesorName(displayName),
         role: roleIndex !== -1 ? (row[roleIndex] || 'Asesor').trim() : 'Asesor',
         whatsapp: whatsappIndex !== -1 ? row[whatsappIndex] || null : null,
         especialidad:

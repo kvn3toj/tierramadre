@@ -32,7 +32,14 @@ export const ASESORES_CACHE_TS_BASE = STORAGE_KEYS.ASESORES_CACHE_TS;
  * plus the pre-grant unscoped key and the pre-rename legacy key — both hold
  * the same full-fidelity data (prices, asesor, ubicación) and predate access
  * control entirely, so neither can be trusted to belong to any one grant.
- * Also removes every grant-scoped asesor-collection cache (F6).
+ * Also removes every grant-scoped asesor-collection and asesores-roster
+ * cache (F6), AND their pre-fix unscoped forms (N7, 2026-08 fix round 3):
+ * `tm-asesores` / `tm-asesores-ts` (full roster, including email and
+ * vaultCode) and `collection_v2_<folder>` (priced) predate grant-scoping
+ * exactly like `LEGACY_KEYS.INVENTORY_SHEETS_CACHE` does for the main
+ * treasure cache — without this, those two families would sit on every
+ * device that used the app before this fix landed and survive logout
+ * forever, since a `:`-suffix match alone never touches them.
  */
 export function clearTreasureCaches(): void {
   try {
@@ -41,7 +48,12 @@ export function clearTreasureCaches(): void {
         key === TREASURE_CACHE_BASE ||
         key.startsWith(`${TREASURE_CACHE_BASE}:`) ||
         key.startsWith(`${ASESOR_COLLECTION_CACHE_BASE}:`) ||
+        // Pre-fix unscoped format: `collection_v2_<folder>` (underscore,
+        // no grant segment) — see useAsesorCollection.ts's history.
+        key.startsWith(`${ASESOR_COLLECTION_CACHE_BASE}_`) ||
+        key === ASESORES_CACHE_BASE ||
         key.startsWith(`${ASESORES_CACHE_BASE}:`) ||
+        key === ASESORES_CACHE_TS_BASE ||
         key.startsWith(`${ASESORES_CACHE_TS_BASE}:`)
       ) {
         localStorage.removeItem(key);
