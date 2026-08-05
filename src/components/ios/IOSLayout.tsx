@@ -260,6 +260,12 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
     location.pathname.startsWith('/esmereogenesis');
   const isFullWidthScope = isFotoRoute || isAtelierRoute || isCinematicRoute;
 
+  // The catalog gets the browse-dense container tier (--maxw-wide) instead of
+  // the reading tier. It is the one contained route whose job is scanning a
+  // 486-piece grid, not reading a page, and 1160 was costing it a third of the
+  // monitor. Still contained — it opts into a wider band, not out of the shell.
+  const isBrowseScope = location.pathname.startsWith('/treasure');
+
   // Providers get their own direct-place bar; everyone else gets the storefront
   // bar. Selection is by permission (not path), same as the old IOSTabBar.
   const isProvider = useIsProvider();
@@ -511,7 +517,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         ) : (
           <Box
             sx={{
-              maxWidth: 'var(--maxw)',
+              maxWidth: isBrowseScope ? 'var(--maxw-wide)' : 'var(--maxw)',
               mx: 'auto',
               width: '100%',
               // DS3 §3.1 edge padding: 16 phone · 24 tablet · 32 desktop.
