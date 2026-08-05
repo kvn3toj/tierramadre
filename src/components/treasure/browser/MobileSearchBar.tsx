@@ -79,11 +79,6 @@ export interface MobileSearchBarProps {
    * narrowed nothing, and a count that never changes is decoration.
    */
   originCount?: number;
-  /** Available origin mines (e.g. ["Muzo","Chivor"]); "Todas" is prepended. */
-  origins?: string[];
-  /** Active origin — "all" or a mine name. */
-  activeOrigin?: string;
-  onOriginChange?: (origin: string) => void;
   // Recently viewed items (merged)
   recentlyViewedItems?: TreasureItem[];
   onRecentItemClick?: (item: TreasureItem) => void;
@@ -119,9 +114,6 @@ export default function MobileSearchBar({
   isProviderMode,
   filteredCount,
   originCount,
-  origins = [],
-  activeOrigin = 'all',
-  onOriginChange,
   recentlyViewedItems = [],
   onRecentItemClick,
   onClearRecent,
@@ -168,13 +160,6 @@ export default function MobileSearchBar({
     setQuickAccessOpen((prev) => !prev);
   }, []);
 
-  // Origin tabs used to be a 44px strip inside CatalogHeader, which on the phone
-  // wrapped the header into two rows. They ride in this bar's single row now, as
-  // chips — a chip reads as a filter you can switch off, which is what they are,
-  // and it survives being squeezed better than an underlined text tab.
-  const originTabs = origins.length > 0 ? ['all', ...origins] : [];
-  const originLabel = (o: string) => (o === 'all' ? 'Todas' : o);
-
   return (
     <>
       {/* Search Bar + Quick Actions - Sticky */}
@@ -198,10 +183,13 @@ export default function MobileSearchBar({
           pb: 0.5,
         }}
       >
-        {/* The single row: search · origin chips · quick access · filters.
-            Everything that is not the brand lockup lives here. The field and the
-            chip strip both flex, so on a 320px phone the field gives ground
-            rather than pushing the chips off the edge. */}
+        {/* The single row: search · quick access · filters.
+            Origin used to sit here as a chip strip, and it was a mistake: a
+            horizontally-scrolling strip wedged between a text field and two
+            buttons has no axis lock, so dragging it dragged the whole row and
+            fought the vertical scroll of the grid underneath. Origin is a filter
+            like any other and now lives in the filter sheet with the rest; the
+            search field takes the width that buys. */}
         <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center' }}>
           <TextField
             fullWidth
@@ -253,69 +241,6 @@ export default function MobileSearchBar({
               },
             }}
           />
-
-          {/* Origin chips — the old CatalogHeader tab strip, now inline. */}
-          {originTabs.length > 1 && onOriginChange && (
-            <Box
-              role="tablist"
-              aria-label="Filtrar por origen"
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-                // Shrinks before the search field does, and scrolls once the
-                // origins outgrow what is left — four mines on a 320px screen
-                // will not fit however the row is divided.
-                flex: '0 1 auto',
-                minWidth: 0,
-                overflowX: 'auto',
-                scrollbarWidth: 'none',
-                '&::-webkit-scrollbar': { display: 'none' },
-                WebkitOverflowScrolling: 'touch',
-              }}
-            >
-              {originTabs.map((o) => {
-                const active = activeOrigin === o;
-                return (
-                  <ButtonBase
-                    key={o}
-                    role="tab"
-                    aria-selected={active}
-                    onClick={() => onOriginChange(o)}
-                    sx={{
-                      flexShrink: 0,
-                      font: 'inherit',
-                      fontSize: 12,
-                      fontWeight: active ? 700 : 500,
-                      lineHeight: 1,
-                      height: 30,
-                      px: 1.25,
-                      borderRadius: 15,
-                      whiteSpace: 'nowrap',
-                      // 30px painted inside a 38px row — a real 44px box does not
-                      // fit here, so the tap area grows instead of the chip.
-                      ...hitSlop(),
-                      color: active ? '#fff' : theme.palette.text.secondary,
-                      bgcolor: active ? emeraldCore.primary : 'transparent',
-                      border: '1px solid',
-                      borderColor: active
-                        ? emeraldCore.primary
-                        : isLight
-                          ? surfacesLight.border.light
-                          : surfacesDark.border.light,
-                      transition: cssTransition.fast,
-                      '&:focus-visible': {
-                        outline: 'none',
-                        boxShadow: 'var(--tm-focus-ring)',
-                      },
-                    }}
-                  >
-                    {originLabel(o)}
-                  </ButtonBase>
-                );
-              })}
-            </Box>
-          )}
 
           {/* Quick access toggle (heart/clock) - combines recent + favs */}
           {!isProviderMode && hasQuickAccessContent && (

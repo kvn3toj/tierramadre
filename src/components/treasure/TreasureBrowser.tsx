@@ -7,17 +7,16 @@
 
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
-import { Box, Chip, alpha, useTheme } from '@mui/material';
+import { Box, Chip, Typography, alpha, useTheme } from '@mui/material';
 import { useLanguage } from '../../contexts/LanguageContext';
 import CertificationUpload from './CertificationUpload';
 import { ComparisonBar, ComparisonModal } from '../comparison';
-import { FilterSheet, getQuietEmerald } from '../../design-system';
+import { FilterSheet, getQuietEmerald, qeFont } from '../../design-system';
 import { TreasureItem } from '../../types';
 import ListRow from './ListRow';
 import VirtualGrid from './VirtualGrid';
 import { ActiveFilterChips } from './ActiveFilterChips';
 import { FilterContent } from './FilterContent';
-import RedesignVariantToggle from '../redesign/RedesignVariantToggle';
 import {
   MobileSearchBar,
   TreasureEmptyState,
@@ -302,11 +301,6 @@ export default function TreasureBrowser({
             // The header's own count, so the bar can tell whether repeating a
             // number says anything. Same source as CatalogHeader's `count`.
             originCount={headerCount}
-            // Origin tabs live in this bar's row on the phone; CatalogHeader is
-            // desktop-only now, so nothing else is rendering them.
-            origins={originOptions}
-            activeOrigin={originTab}
-            onOriginChange={setOriginTab}
             recentlyViewedItems={recentlyViewedItems}
             onRecentItemClick={handleItemClick}
             onClearRecent={clearRecent}
@@ -318,10 +312,71 @@ export default function TreasureBrowser({
             onClose={() => setFilterSheetOpen(false)}
             title="Filtros"
             resultCount={filteredTreasure.length}
-            activeFilterCount={activeFilterCount}
-            onClear={urlSync.handleClearFilters}
+            activeFilterCount={
+              activeFilterCount + (originTab !== 'all' ? 1 : 0)
+            }
+            // Origin lives in this sheet now, so "limpiar" has to clear it too —
+            // urlSync.handleClearFilters alone would leave a mine selected with
+            // nothing on screen saying so.
+            onClear={handleClearAll}
             onApply={() => setFilterSheetOpen(false)}
           >
+            {/* Origen — first, because it is the coarsest cut in the catalogue
+                and the one the house talks in. It was a chip strip beside the
+                search field until that strip turned out to hijack drag. */}
+            {originOptions.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography
+                  sx={{
+                    fontFamily: qeFont.ui,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: qe.subtle,
+                    mb: 1,
+                  }}
+                >
+                  Origen
+                </Typography>
+                <Box
+                  role="group"
+                  aria-label="Filtrar por origen"
+                  sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}
+                >
+                  {['all', ...originOptions].map((o) => {
+                    const active = originTab === o;
+                    return (
+                      <Chip
+                        key={o}
+                        label={o === 'all' ? 'Todas' : o}
+                        size="small"
+                        onClick={() => setOriginTab(o)}
+                        aria-pressed={active}
+                        sx={{
+                          // Wraps instead of scrolling: four mines fit on two
+                          // lines of a 320px sheet, and a wrapped row cannot
+                          // steal a drag from the sheet it sits in.
+                          flexShrink: 0,
+                          minHeight: 36,
+                          fontSize: '0.75rem',
+                          fontWeight: active ? 700 : 500,
+                          color: active ? qe.onAccent : qe.text,
+                          bgcolor: active ? qe.accent : 'transparent',
+                          border: `1px solid ${active ? qe.accent : qe.border}`,
+                          '&:hover': {
+                            bgcolor: active
+                              ? qe.accent
+                              : alpha(qe.accent, 0.08),
+                          },
+                        }}
+                      />
+                    );
+                  })}
+                </Box>
+              </Box>
+            )}
+
             {savedFilters.presets.length > 0 && (
               <Box
                 sx={{
@@ -489,8 +544,6 @@ export default function TreasureBrowser({
       <ScrollToTop
         scrollContainer={viewMode === 'grid' ? gridScrollEl : null}
       />
-
-      <RedesignVariantToggle />
     </Box>
   );
 }

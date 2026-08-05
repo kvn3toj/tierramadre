@@ -311,10 +311,16 @@ export default function VirtualGrid({
   }, []);
 
   // Measure the actual available height (viewport minus everything above the
-  // grid minus the fixed bottom tab bar), instead of the fixed HEADER_OFFSET
-  // magic number this used to subtract from 100vh — that guess didn't track
-  // the real desktop header stack (filters/summary/recently-viewed) and left
-  // dead space or clipped the last row depending on how tall that stack was.
+  // grid), instead of the fixed HEADER_OFFSET magic number this used to subtract
+  // from 100vh — that guess didn't track the real desktop header stack
+  // (filters/summary/recently-viewed) and left dead space or clipped the last
+  // row depending on how tall that stack was.
+  //
+  // It no longer subtracts the tab bar either. Stopping the grid 80px short of
+  // the screen cut the last visible row with a hard edge and wasted the strip
+  // behind a bar that is mostly transparent anyway. The grid now runs to the
+  // bottom and the cards pass UNDER the pill; the clearance comes back as
+  // scroll padding below, so the final row can still be brought into the clear.
   const [availableHeight, setAvailableHeight] = useState<number | null>(null);
   useEffect(() => {
     const el = containerRef.current;
@@ -323,9 +329,7 @@ export default function VirtualGrid({
       const top = el.getBoundingClientRect().top;
       const viewportHeight =
         window.visualViewport?.height ?? window.innerHeight;
-      setAvailableHeight(
-        Math.max(300, viewportHeight - top - layoutConstants.tabBarClearance),
-      );
+      setAvailableHeight(Math.max(300, viewportHeight - top));
     };
     measure();
     window.addEventListener('resize', measure);
@@ -464,6 +468,24 @@ export default function VirtualGrid({
   // Calculate row count based on items and columns
   const rowCount = Math.ceil(items.length / columnCount);
 
+  // One extra, empty row at the end: the clearance the grid height stopped
+  // subtracting when the cards began passing under the tab bar.
+  //
+  // It has to be a row, not padding. `padding-bottom` on react-window's scroll
+  // container is not counted in its scroll extent — measured: at the very end of
+  // the scroll the last card still sat 72px beneath the pill, permanently
+  // unreadable. A spacer row is inside the virtualizer's own height maths, so it
+  // actually scrolls.
+  const SPACER_ROW = 1;
+  const totalRowCount = rowCount + SPACER_ROW;
+  const rowHeightFor = useCallback(
+    (index: number) =>
+      index === rowCount
+        ? layoutConstants.tabBarClearance
+        : cardHeight + rowGap,
+    [rowCount, cardHeight, rowGap],
+  );
+
   // Column width as percentage
   const columnWidth = `${100 / columnCount}%`;
 
@@ -507,8 +529,8 @@ export default function VirtualGrid({
         cellProps={cellProps}
         columnCount={columnCount}
         columnWidth={columnWidth}
-        rowCount={rowCount}
-        rowHeight={cardHeight + rowGap}
+        rowCount={totalRowCount}
+        rowHeight={rowHeightFor}
         overscanCount={3}
         onScroll={handleScroll}
         style={{
