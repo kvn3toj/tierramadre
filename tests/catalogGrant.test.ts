@@ -3,6 +3,26 @@ import { resolveGrant } from '../api/_lib/catalogGrant';
 import { mintSessionToken } from '../api/_lib/sessionToken';
 
 process.env.ADMIN_SYNC_TOKEN = 'test-secret-for-grants';
+// resolveGrant only reaches the Google ID token branch when at least one
+// audience is configured — set one so the mocked google-auth-library path
+// below actually gets exercised instead of short-circuiting to null first.
+process.env.GOOGLE_OAUTH_CLIENT_ID = 'test-google-client-id';
+
+// google-auth-library is loaded via dynamic `await import(...)` inside
+// resolveGrant's Google ID token branch (never for session tokens or the
+// no-credentials/vitrina-id-list paths already covered above). Mock it so
+// the "staff via Google ID token" tests never hit the real network — vi.mock
+// factories are hoisted above imports by vitest's transform (including above
+// the static `resolveGrant` import), and the mock applies to dynamic imports
+// of the same module id, not just static ones.
+const { mockVerifyIdToken } = vi.hoisted(() => ({
+  mockVerifyIdToken: vi.fn(),
+}));
+vi.mock('google-auth-library', () => ({
+  OAuth2Client: vi.fn().mockImplementation(() => ({
+    verifyIdToken: mockVerifyIdToken,
+  })),
+}));
 
 const req = (headers = {}, query = {}) => ({ headers, query }) as never;
 
@@ -74,5 +94,27 @@ describe('resolveGrant', () => {
       { lookupVitrina: neverCalled },
     );
     expect(g).toEqual({ kind: 'staff' });
+  });
+
+  it('is staff for a raw Google ID token with a verified email', async () => {
+    mockVerifyIdToken.mockResolvedValueOnce({
+      getPayload: () => ({ email: 'a@b.co', email_verified: true }),
+    });
+    const g = await resolveGrant(
+      req({ authorization: 'Bearer raw-google-id-token' }),
+      { lookupVitrina: neverCalled },
+    );
+    expect(g).toEqual({ kind: 'staff' });
+  });
+
+  it('is anon for a raw Google ID token with an UNverified email — an unverified email must never unlock staff-level catalog data', async () => {
+    mockVerifyIdToken.mockResolvedValueOnce({
+      getPayload: () => ({ email: 'a@b.co', email_verified: false }),
+    });
+    const g = await resolveGrant(
+      req({ authorization: 'Bearer raw-google-id-token' }),
+      { lookupVitrina: neverCalled },
+    );
+    expect(g).toEqual({ kind: 'anon' });
   });
 });

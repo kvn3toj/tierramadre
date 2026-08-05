@@ -45,7 +45,10 @@ async function verifiedEmail(
       idToken: token,
       audience: audiences,
     });
-    return ticket.getPayload()?.email?.toLowerCase() ?? null;
+    const payload = ticket.getPayload();
+    return payload?.email && payload.email_verified
+      ? payload.email.toLowerCase().trim()
+      : null;
   } catch {
     return null;
   }
