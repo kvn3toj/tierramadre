@@ -15,21 +15,10 @@ import {
   Grid,
   Skeleton,
   IconButton,
-  Button,
-  Stack,
   alpha,
   useTheme,
 } from '@mui/material';
-import {
-  Gem,
-  MessageCircle,
-  Play,
-  ShieldCheck,
-  Clock,
-  ExternalLink,
-  Copy,
-  CheckCircle,
-} from 'lucide-react';
+import { Gem, MessageCircle, Play, ShieldCheck, Clock } from 'lucide-react';
 import { useAsesorCollection } from '../../hooks/useAsesorCollection';
 import { CollectionProductDialog } from '../ambassadors/profile/components/CollectionProductDialog';
 import CollectionSplashScreen from '../../components/shared/CollectionSplashScreen';
@@ -46,7 +35,6 @@ import {
   emeraldShadows,
   defaultShadows,
 } from '../../design-system';
-import { getCachedBrowserInfo } from '../../utils/deviceTier';
 import { formatCarats } from '../../utils/formatting';
 
 // Map URL slug to actual Drive folder name (when they differ)
@@ -77,8 +65,8 @@ const CEO_STATIC_PRODUCTS: TreasureItem[] = [
     fechaIngreso: '',
     isJewelry: false,
     mediaType: 'video' as TreasureItem['mediaType'],
-    videoUrl: '/images/CEO/916/6) 1.26 Cts.mov',
-    imagen: '/images/CEO/916/6) 1.26 Cts.mov',
+    videoUrl: '/images/CEO/916/6) 1.26 Cts.mp4',
+    imagen: '/images/CEO/916/6) 1.26 Cts.mp4',
     certificateUrl: '/images/CEO/916/6)Certificate1.26 Cts.png',
     description:
       'A quiet fire trapped in emerald glass. Its precision cut lets the light speak in soft, knowing tones.',
@@ -496,9 +484,6 @@ export default function CollectionPage() {
   const isCeoCollection = folder === 'ceo-tierra-madre';
   const driveFolder = folder ? FOLDER_ALIASES[folder] || folder : null;
 
-  // Detect in-app browsers (Telegram, Instagram, etc.) that break video/media
-  const browserInfo = useMemo(() => getCachedBrowserInfo(), []);
-  const [urlCopied, setUrlCopied] = useState(false);
   const {
     products: apiProducts,
     collectionInfo,
@@ -592,162 +577,6 @@ export default function CollectionPage() {
             style={{ color: brand.emerald[300], marginBottom: 16 }}
           />
           <Typography variant="h6">Collection not found</Typography>
-        </Box>
-      </Box>
-    );
-  }
-
-  // Gate: in-app browsers (Telegram, Instagram, etc.) can't render videos properly
-  if (browserInfo.isInAppBrowser) {
-    const handleCopyUrl = async () => {
-      try {
-        await navigator.clipboard.writeText(window.location.href);
-      } catch {
-        const ta = document.createElement('textarea');
-        ta.value = window.location.href;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-      }
-      setUrlCopied(true);
-      setTimeout(() => setUrlCopied(false), 2000);
-    };
-
-    const handleOpenExternal = () => {
-      const url = window.location.href;
-      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-      const isAndroid = /Android/i.test(navigator.userAgent);
-
-      if (isAndroid) {
-        try {
-          window.location.href = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;action=android.intent.action.VIEW;end`;
-          return;
-        } catch {
-          /* fall through */
-        }
-      }
-
-      if (isIOS) {
-        try {
-          window.location.href = url.replace(
-            /^https:\/\//,
-            'x-safari-https://',
-          );
-          setTimeout(() => {
-            if (navigator.share) {
-              navigator
-                .share({ title: 'Tierra Madre', url })
-                .catch(() => handleCopyUrl());
-            } else {
-              handleCopyUrl();
-            }
-          }, 500);
-          return;
-        } catch {
-          /* fall through */
-        }
-      }
-
-      if (navigator.share) {
-        navigator
-          .share({
-            title: 'Tierra Madre Collection',
-            text: 'View this emerald collection in your browser',
-            url,
-          })
-          .catch(() => handleCopyUrl());
-      } else {
-        handleCopyUrl();
-      }
-    };
-
-    return (
-      <Box
-        sx={{
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: darkTokens.background.app,
-          background: `radial-gradient(ellipse at 50% 30%, #0d1a14 0%, ${darkTokens.background.app} 50%, #050505 100%)`,
-          px: 3,
-        }}
-      >
-        <Box
-          component="img"
-          src="/images/logo-horizontal-white.png"
-          alt="Tierra Madre"
-          sx={{ height: 48, objectFit: 'contain', mb: 4 }}
-        />
-        <Box
-          sx={{
-            maxWidth: 360,
-            width: '100%',
-            p: 3,
-            borderRadius: 3,
-            bgcolor: alpha(brand.emerald[500], 0.08),
-            border: `1px solid ${alpha(brand.emerald[500], 0.2)}`,
-          }}
-        >
-          <Typography
-            variant="subtitle2"
-            sx={{
-              color: brand.emerald[300],
-              mb: 1,
-              textAlign: 'center',
-              fontWeight: fontWeights.medium,
-            }}
-          >
-            This collection deserves a better window
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: alpha('#fff', 0.6),
-              mb: 3,
-              textAlign: 'center',
-              lineHeight: 1.5,
-            }}
-          >
-            {browserInfo.browserName || 'This browser'} can't display our
-            emeralds the way they were meant to be seen. Open in Safari or
-            Chrome to experience the full collection.
-          </Typography>
-          <Stack spacing={1.5}>
-            <Button
-              variant="contained"
-              fullWidth
-              startIcon={<ExternalLink size={18} />}
-              onClick={handleOpenExternal}
-              sx={{
-                bgcolor: brand.emerald[500],
-                color: '#000',
-                textTransform: 'none',
-                py: 1.2,
-                fontWeight: fontWeights.medium,
-                '&:hover': { bgcolor: brand.emerald[400] },
-              }}
-            >
-              View Collection
-            </Button>
-            <Button
-              variant="text"
-              size="small"
-              startIcon={
-                urlCopied ? <CheckCircle size={16} /> : <Copy size={16} />
-              }
-              onClick={handleCopyUrl}
-              sx={{
-                color: urlCopied ? brand.emerald[400] : alpha('#fff', 0.4),
-                textTransform: 'none',
-                '&:hover': { color: alpha('#fff', 0.6) },
-              }}
-            >
-              {urlCopied ? 'Copied' : 'Copy link'}
-            </Button>
-          </Stack>
         </Box>
       </Box>
     );

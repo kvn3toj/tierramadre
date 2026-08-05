@@ -293,23 +293,28 @@ export interface BrowserInfo {
   isTelegram: boolean;
   /** Is any in-app browser (Instagram, Facebook, etc.) */
   isInAppBrowser: boolean;
+  /** True when the app runs as an installed PWA (iOS home screen / Android TWA) */
+  isStandalone: boolean;
   /** Browser name for display */
   browserName: string | null;
 }
 
 /**
- * Detect if running in Telegram or other in-app browsers
- * These browsers have issues with Google OAuth popups/redirects
+ * Detect if running in Telegram or other in-app browsers.
+ *
+ * This is DIAGNOSTIC ONLY — do not gate features on it. It exists so the
+ * ?debug=auth panel can report what a user reporting trouble is actually
+ * running. Gating on it cost us real users: the iOS "no Safari token"
+ * heuristic below also matches an installed home-screen PWA, which locked
+ * our own installed users out of sign-in. Let features fail for real and
+ * recover (see WelcomeScreen's popup watchdog) instead of pre-judging a UA.
  */
 export const detectBrowser = (): BrowserInfo => {
   const ua = navigator.userAgent || '';
 
-  // Telegram WebView detection
+  // Telegram injects this bridge object into its WebView. The UA is NOT a
+  // usable signal — neither Telegram iOS nor Android puts "Telegram" in it.
   const isTelegram =
-    /TelegramBot|Telegram/i.test(ua) ||
-    // Telegram iOS/Android WebView
-    /Telegram/i.test(ua) ||
-    // Additional Telegram detection via window object
     typeof (window as unknown as { TelegramWebviewProxy?: unknown })
       .TelegramWebviewProxy !== 'undefined';
 
@@ -331,13 +336,22 @@ export const detectBrowser = (): BrowserInfo => {
   // can't complete the GIS popup → postMessage handshake.
   const isAndroidWebView = /Android/i.test(ua) && /; wv\)/i.test(ua);
 
+  // An installed PWA is NOT an in-app browser, but it looks exactly like one
+  // by UA on iOS (home-screen apps drop the "Safari/" token). Detect it first
+  // and subtract it, or we flag our own installed users.
+  const isStandalone =
+    (typeof window.matchMedia === 'function' &&
+      window.matchMedia('(display-mode: standalone)').matches) ||
+    (navigator as unknown as { standalone?: boolean }).standalone === true;
+
   // Generic iOS WKWebView heuristic: iOS device but no Safari token
   // (real Safari includes "Safari/" while WKWebView usually doesn't).
   // Excludes Chrome/Firefox/Edge on iOS which have their own tokens.
   const isIOS = /iPhone|iPad|iPod/i.test(ua);
   const hasSafari = /Safari\//i.test(ua);
   const hasIOSChromeOrFF = /CriOS|FxiOS|EdgiOS/i.test(ua);
-  const isIOSWebView = isIOS && !hasSafari && !hasIOSChromeOrFF;
+  const isIOSWebView =
+    isIOS && !hasSafari && !hasIOSChromeOrFF && !isStandalone;
 
   const isInAppBrowser =
     isTelegram ||
@@ -372,10 +386,12 @@ export const detectBrowser = (): BrowserInfo => {
   else if (isKakaoTalk) browserName = 'KakaoTalk';
   else if (isWhatsApp) browserName = 'WhatsApp';
   else if (isAndroidWebView || isIOSWebView) browserName = 'WebView';
+  else if (isStandalone) browserName = 'PWA';
 
   return {
     isTelegram,
     isInAppBrowser,
+    isStandalone,
     browserName,
   };
 };
