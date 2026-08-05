@@ -73,11 +73,17 @@ export interface MobileSearchBarProps {
   // Results count, after every filter (search, colour, quality, …)
   filteredCount: number;
   /**
-   * The count the page header is already showing — the origin-filtered total.
-   * Used only to decide whether repeating a number here says anything: when the
-   * two match, the header two rows above is already saying it.
+   * The origin-filtered total. On desktop the header prints it; on the phone
+   * nothing does, by design. Either way it is the baseline this bar compares
+   * against to decide whether a number is worth showing: equal means the filters
+   * narrowed nothing, and a count that never changes is decoration.
    */
   originCount?: number;
+  /** Available origin mines (e.g. ["Muzo","Chivor"]); "Todas" is prepended. */
+  origins?: string[];
+  /** Active origin — "all" or a mine name. */
+  activeOrigin?: string;
+  onOriginChange?: (origin: string) => void;
   // Recently viewed items (merged)
   recentlyViewedItems?: TreasureItem[];
   onRecentItemClick?: (item: TreasureItem) => void;
@@ -113,6 +119,9 @@ export default function MobileSearchBar({
   isProviderMode,
   filteredCount,
   originCount,
+  origins = [],
+  activeOrigin = 'all',
+  onOriginChange,
   recentlyViewedItems = [],
   onRecentItemClick,
   onClearRecent,
@@ -159,6 +168,13 @@ export default function MobileSearchBar({
     setQuickAccessOpen((prev) => !prev);
   }, []);
 
+  // Origin tabs used to be a 44px strip inside CatalogHeader, which on the phone
+  // wrapped the header into two rows. They ride in this bar's single row now, as
+  // chips — a chip reads as a filter you can switch off, which is what they are,
+  // and it survives being squeezed better than an underlined text tab.
+  const originTabs = origins.length > 0 ? ['all', ...origins] : [];
+  const originLabel = (o: string) => (o === 'all' ? 'Todas' : o);
+
   return (
     <>
       {/* Search Bar + Quick Actions - Sticky */}
@@ -172,13 +188,20 @@ export default function MobileSearchBar({
             : alpha(surfacesDark.background.primary, 0.92),
           backdropFilter: `blur(${blurValues.lg})`,
           WebkitBackdropFilter: `blur(${blurValues.lg})`,
-          mx: -1,
-          px: 1,
+          // Negative margin cancels the shell's 16px edge so the translucent
+          // band reaches the screen edges, then px puts the controls back on the
+          // same 16px line the grid starts at. Was -1/1 when TreasureBrowser
+          // still added 8px of its own; that padding is gone, so this follows.
+          mx: -2,
+          px: 2,
           pt: 0.75,
           pb: 0.5,
         }}
       >
-        {/* Row 1: Search + Filter + Quick Access toggle */}
+        {/* The single row: search · origin chips · quick access · filters.
+            Everything that is not the brand lockup lives here. The field and the
+            chip strip both flex, so on a 320px phone the field gives ground
+            rather than pushing the chips off the edge. */}
         <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center' }}>
           <TextField
             fullWidth
@@ -209,6 +232,10 @@ export default function MobileSearchBar({
               ),
             }}
             sx={{
+              // Shares the row with the chip strip: allowed to shrink, but never
+              // past the point where the placeholder stops being readable.
+              flex: '1 1 auto',
+              minWidth: 104,
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2.5,
                 height: 38,
@@ -226,6 +253,69 @@ export default function MobileSearchBar({
               },
             }}
           />
+
+          {/* Origin chips — the old CatalogHeader tab strip, now inline. */}
+          {originTabs.length > 1 && onOriginChange && (
+            <Box
+              role="tablist"
+              aria-label="Filtrar por origen"
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                // Shrinks before the search field does, and scrolls once the
+                // origins outgrow what is left — four mines on a 320px screen
+                // will not fit however the row is divided.
+                flex: '0 1 auto',
+                minWidth: 0,
+                overflowX: 'auto',
+                scrollbarWidth: 'none',
+                '&::-webkit-scrollbar': { display: 'none' },
+                WebkitOverflowScrolling: 'touch',
+              }}
+            >
+              {originTabs.map((o) => {
+                const active = activeOrigin === o;
+                return (
+                  <ButtonBase
+                    key={o}
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => onOriginChange(o)}
+                    sx={{
+                      flexShrink: 0,
+                      font: 'inherit',
+                      fontSize: 12,
+                      fontWeight: active ? 700 : 500,
+                      lineHeight: 1,
+                      height: 30,
+                      px: 1.25,
+                      borderRadius: 15,
+                      whiteSpace: 'nowrap',
+                      // 30px painted inside a 38px row — a real 44px box does not
+                      // fit here, so the tap area grows instead of the chip.
+                      ...hitSlop(),
+                      color: active ? '#fff' : theme.palette.text.secondary,
+                      bgcolor: active ? emeraldCore.primary : 'transparent',
+                      border: '1px solid',
+                      borderColor: active
+                        ? emeraldCore.primary
+                        : isLight
+                          ? surfacesLight.border.light
+                          : surfacesDark.border.light,
+                      transition: cssTransition.fast,
+                      '&:focus-visible': {
+                        outline: 'none',
+                        boxShadow: 'var(--tm-focus-ring)',
+                      },
+                    }}
+                  >
+                    {originLabel(o)}
+                  </ButtonBase>
+                );
+              })}
+            </Box>
+          )}
 
           {/* Quick access toggle (heart/clock) - combines recent + favs */}
           {!isProviderMode && hasQuickAccessContent && (
@@ -442,8 +532,9 @@ export default function MobileSearchBar({
       <Collapse in={quickAccessOpen} timeout={200} unmountOnExit>
         <Box
           sx={{
-            mx: -1,
-            px: 1,
+            // Matches the sticky band above — same bleed, same content line.
+            mx: -2,
+            px: 2,
             pb: 1,
             bgcolor: isLight
               ? alpha(emeraldCore.lightest, 0.2)

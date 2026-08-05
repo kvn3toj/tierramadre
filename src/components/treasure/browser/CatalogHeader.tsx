@@ -19,8 +19,16 @@
  * bottom hairline IS the rule, so an underline would float mid-row. Active state
  * is carried by accent colour + weight instead.
  *
- * Below `md` the row wraps into identity / tabs, since a phone cannot hold the
- * band and mobile renders its own search bar underneath anyway.
+ * DESKTOP ONLY (`md` and up). Below that this component renders nothing: a phone
+ * cannot hold the band, and wrapping it into identity + tabs cost 86px on top of
+ * MobileSearchBar's own 48 — 187px of chrome before the first stone, a fifth of
+ * an iPhone SE screen. The phone now puts search, origin chips and filters in
+ * ONE 46px row inside MobileSearchBar, under the untouched brand lockup.
+ *
+ * The title and the count do not reappear there, deliberately. "Catálogo" is what
+ * the active tab already says (TESOROS), and the piece total was a number nobody
+ * acts on — it now shows only when a filter has actually narrowed the set, which
+ * is the only moment it means anything.
  */
 import { Box, Typography, ButtonBase } from '@mui/material';
 import { useThemeMode } from '../../../contexts/ThemeContext';
@@ -60,20 +68,15 @@ export function CatalogHeader({
   return (
     <Box
       sx={{
-        display: 'flex',
+        // Desktop only. The phone renders this band's contents inside
+        // MobileSearchBar's single row instead — see the note at the top.
+        display: { xs: 'none', md: 'flex' },
         alignItems: 'center',
-        gap: { xs: 1.5, md: 2 },
-        rowGap: 1,
-        // One band on desktop; wraps to identity / tabs on phones.
-        flexWrap: { xs: 'wrap', md: 'nowrap' },
-        minHeight: { md: 56 },
-        py: { xs: 0.5, md: 0 },
-        // On phones MobileSearchBar sits directly underneath with its own
-        // translucent background, so a hairline here would be a second rule
-        // against a surface change — two separators doing one job. Desktop has
-        // no such bar, so it keeps the rule.
-        borderBottom: { xs: 'none', md: `1px solid ${qe.hairline}` },
-        mb: { xs: 0, md: '14px' },
+        gap: 2,
+        flexWrap: 'nowrap',
+        minHeight: 56,
+        borderBottom: `1px solid ${qe.hairline}`,
+        mb: '14px',
       }}
     >
       <Typography
@@ -84,7 +87,7 @@ export function CatalogHeader({
           color: qe.text,
           lineHeight: 1,
           letterSpacing: '0.2px',
-          fontSize: { xs: 22, md: 24 },
+          fontSize: 24,
           flexShrink: 0,
         }}
       >
@@ -113,8 +116,8 @@ export function CatalogHeader({
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: { xs: '16px', md: '20px' },
-            ml: { md: '6px' },
+            gap: '20px',
+            ml: '6px',
             minWidth: 0,
             overflowX: 'auto',
             scrollbarWidth: 'none',

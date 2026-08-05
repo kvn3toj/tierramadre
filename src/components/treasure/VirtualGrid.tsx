@@ -475,8 +475,11 @@ export default function VirtualGrid({
         // sane floor until the first measurement lands, avoiding a 0-height flash.
         height: availableHeight ?? 480,
         width: '100%',
-        // Responsive horizontal padding
-        px: { xs: 1, sm: 1, md: 2, lg: 0 },
+        // Responsive horizontal padding. ZERO on phones on purpose: the shell
+        // already applies the DS3 §3.1 edge (16px), and this box plus
+        // TreasureBrowser were each adding 8 more on top of it — 32px a side,
+        // 17% of a 375px screen spent on margin, for an edge the spec puts at 16.
+        px: { xs: 0, sm: 1, md: 2, lg: 0 },
         boxSizing: 'border-box',
         position: 'relative',
         isolation: 'isolate',

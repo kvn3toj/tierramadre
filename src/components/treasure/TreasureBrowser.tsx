@@ -193,22 +193,28 @@ export default function TreasureBrowser({
   // subtitle, the total inventory value, and gem/jewelry count chips. All three
   // are gone — see CatalogHeader's own note for what each cost and why. The
   // header is now a single 56px band instead of 178px of mostly-empty rows.
+  //
+  // On the phone it is not rendered at all: the brand lockup keeps its band
+  // untouched, and search, origin chips and filters share one 46px row inside
+  // MobileSearchBar. 187px of chrome down to 98.
 
   return (
     <Box
       sx={{
         maxWidth: 1536,
         mx: 'auto',
-        px: { xs: 1, sm: 2, md: 3, lg: 3, xl: 4 },
+        // xs is 0 because the shell's 16px is the phone edge (DS3 §3.1); this
+        // box used to add 8 and VirtualGrid another 8, stacking to 32 a side.
+        px: { xs: 0, sm: 2, md: 3, lg: 3, xl: 4 },
       }}
     >
-      <CatalogHeader
-        count={headerCount}
-        origins={originOptions}
-        activeOrigin={originTab}
-        onOriginChange={setOriginTab}
-        trailingContent={
-          !isMobile ? (
+      {!isMobile && (
+        <CatalogHeader
+          count={headerCount}
+          origins={originOptions}
+          activeOrigin={originTab}
+          onOriginChange={setOriginTab}
+          trailingContent={
             <Box
               sx={{
                 display: 'flex',
@@ -261,9 +267,9 @@ export default function TreasureBrowser({
                 }
               />
             </Box>
-          ) : undefined
-        }
-      />
+          }
+        />
+      )}
 
       {isMobile && (
         <>
@@ -296,6 +302,11 @@ export default function TreasureBrowser({
             // The header's own count, so the bar can tell whether repeating a
             // number says anything. Same source as CatalogHeader's `count`.
             originCount={headerCount}
+            // Origin tabs live in this bar's row on the phone; CatalogHeader is
+            // desktop-only now, so nothing else is rendering them.
+            origins={originOptions}
+            activeOrigin={originTab}
+            onOriginChange={setOriginTab}
             recentlyViewedItems={recentlyViewedItems}
             onRecentItemClick={handleItemClick}
             onClearRecent={clearRecent}
