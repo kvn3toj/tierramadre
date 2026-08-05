@@ -747,13 +747,15 @@ export const FilterContent = memo(function FilterContent({
       <Box
         sx={{
           display: 'flex',
-          gap: 2,
-          // Search + Filtros are one unit: keep them on the same line and don't
-          // let the row shrink the box (which would wrap Filtros under search).
-          // The whole unit still wraps as a block via the parent's flexWrap.
+          gap: 1.5,
+          // Search + Filtros are one unit and never wrap. The unit DOES shrink
+          // now (it was flexShrink: 0): in the single-line band the search field
+          // is the elastic member, so a narrower window squeezes the field
+          // instead of breaking the row onto another baseline.
           flexWrap: 'nowrap',
-          flexShrink: 0,
           alignItems: 'center',
+          minWidth: 0,
+          flexShrink: 1,
         }}
       >
         {/* Search */}
@@ -772,10 +774,13 @@ export const FilterContent = memo(function FilterContent({
           inputRef={searchInputRef}
           inputProps={{ 'aria-label': t.treasure.search.ariaLabel }}
           sx={{
-            // Search is the core-loop anchor: give it a real, fixed presence
-            // (~320px) instead of shrinking to a token pill. The whole
-            // search+Filtros unit wraps as a block on narrow desktops.
-            flex: '0 0 320px',
+            // Search is the core-loop anchor, so it keeps the largest share of
+            // the band — but elastic, not fixed. It was `0 0 320px`, which is
+            // what forced the whole cluster onto extra rows the moment the
+            // window narrowed. It now grows to 320 and gives way to 180.
+            flex: '1 1 320px',
+            minWidth: 180,
+            maxWidth: 320,
             '& .MuiOutlinedInput-root': {
               borderRadius: 2,
               bgcolor: isLight
@@ -795,16 +800,45 @@ export const FilterContent = memo(function FilterContent({
         {/* Filtros — opens a popover with Estado/Ordenar/Categoría/Tipo/
             Cantidad/Color/Talla/Calidad/Colección/Precio/Quilates, keeping
             this row to one line beside the page title instead of wrapping. */}
+        {/* Outlined, like every other control in the band. It used to be a
+            `plain` button — bare emerald text between two bordered pills, i.e.
+            three styles for four sibling actions, and emerald-as-link-text is
+            on DESIGN.md's retired "Emerald iOS v1" list. The emerald now earns
+            its place on the count badge instead: colour that says how many
+            filters are on, rather than colour as decoration. */}
         <Button
           ref={filtersButtonRef}
-          variant={advancedActiveCount > 0 ? 'tinted' : 'plain'}
+          variant="outlined"
           size="sm"
           onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           aria-expanded={showAdvancedFilters}
           startIcon={<SlidersHorizontal size={16} />}
+          sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}
         >
           {t.treasure.filter.moreFilters}
-          {advancedActiveCount > 0 ? ` (${advancedActiveCount})` : ''}
+          {advancedActiveCount > 0 && (
+            <Box
+              component="span"
+              aria-label={`${advancedActiveCount} filtros activos`}
+              sx={{
+                ml: 0.75,
+                minWidth: 17,
+                height: 17,
+                px: '5px',
+                borderRadius: '999px',
+                bgcolor: 'var(--tm-accent-strong)',
+                color: 'var(--tm-on-accent)',
+                fontSize: 10,
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {advancedActiveCount}
+            </Box>
+          )}
         </Button>
 
         {/* Clear filters */}

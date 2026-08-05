@@ -76,13 +76,15 @@ export default function DesktopFilterToolbar({
     <Box
       sx={{
         display: 'flex',
-        gap: 2,
+        gap: 1.5,
         alignItems: 'center',
-        flexWrap: 'wrap',
-        // Span the trailing area so the flexible gap below can push the
-        // personal/view cluster to the right edge of the header row.
-        flex: 1,
-        minWidth: 0,
+        // Content-sized and non-wrapping. It used to be `flex: 1` with
+        // `flexWrap: 'wrap'` and its own flexible spacer inside — which is
+        // exactly how the cluster ended up on three baselines: once it wrapped,
+        // the spacer collapsed and the parts landed wherever. The single gap now
+        // lives in CatalogHeader, above this component.
+        flexWrap: 'nowrap',
+        flexShrink: 0,
         ...(dense
           ? {}
           : {
@@ -95,7 +97,15 @@ export default function DesktopFilterToolbar({
     >
       {/* Find cluster: saved searches sits right after Search/Filtros (which
           render just before this component) — all three narrow the catalog. */}
+      {/* Icon-only in the band. With its full label it measures 160px, and the
+          five controls then total 943px inside a 769px slot — 7px of slack after
+          gaps, which is the "fits by luck" state the old header was in. At 38px
+          the band keeps ~129px of real slack.
+          Relocating it into the Filtros popover (a saved filter IS a filter)
+          would buy another 40px, but that means threading a dozen saved-filter
+          props through FilterContent — worth doing, not worth bundling here. */}
       <SavedFiltersDropdown
+        compact={dense}
         presets={savedFilters.presets}
         onSavePreset={(name) =>
           savedFilters.savePreset(name, {
@@ -130,16 +140,10 @@ export default function DesktopFilterToolbar({
         onClearRecent={onClearRecent}
       />
 
-      {/* Flexible gap — the honest break between the "narrow the catalog" find
-          cluster (search · filtros · búsquedas) and the personal/view cluster.
-          minWidth keeps a real gap even when the row is tight. */}
-      <Box sx={{ flex: 1, minWidth: 24 }} />
-
       {/* Personal/view cluster: Favoritos — a distinct concept from "narrow the
-          catalog", right-aligned. Inventory summary (total value + stat chips)
-          lives in the header's identity zone, not here, so this row stays a
-          stable single line whether or not prices are shown. */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          catalog". The flexible gap that used to separate the two clusters now
+          lives in CatalogHeader, so there is nothing here that can collapse. */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
         {resultsSummary}
       </Box>
 

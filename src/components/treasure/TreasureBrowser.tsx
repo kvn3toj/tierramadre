@@ -8,7 +8,6 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
 import { Box, Chip, alpha, useTheme } from '@mui/material';
-import { Gem, Crown } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import CertificationUpload from './CertificationUpload';
 import { ComparisonBar, ComparisonModal } from '../comparison';
@@ -108,7 +107,6 @@ export default function TreasureBrowser({
     recentlyViewedItems,
     favoriteMappedItems,
     clearRecent,
-    stats,
     priceMinMax,
     caratMinMax,
     certDialogOpen,
@@ -191,53 +189,10 @@ export default function TreasureBrowser({
     urlSync.handleClearFilters();
   };
 
-  // Composition summary (loose-stone / jewelry counts) — lives in the header's
-  // identity zone under the subtitle, NOT in the control row, so the controls
-  // stay a stable single row.
-  //
-  // The total inventory value used to lead this row. It was removed: an asesor
-  // opens this screen in front of a client, and a running valuation of the whole
-  // inventory is not theirs to see. It was also the loudest thing on a screen
-  // whose whole premise is that the stone speaks and the chrome whispers —
-  // emerald at display size on a piece of chrome, which is the Jewelry-Not-Paint
-  // rule inverted (DESIGN.md §2).
-  //
-  // Gated on `!isMobile` alone, not on `shouldShowPrices`: these are counts, not
-  // money. The piece total is already public in the subtitle ("486 PIEZAS"), so
-  // there is nothing here to hide behind the price toggle now that the value is
-  // gone.
-  const chipBase = {
-    fontWeight: 600,
-    fontSize: '0.7rem',
-    height: 22,
-  } as const;
-  const inventorySummary = !isMobile ? (
-    <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-      <Chip
-        size="small"
-        icon={<Gem size={12} />}
-        label={stats.looseStones}
-        sx={{
-          ...chipBase,
-          bgcolor: alpha(qe.accent, 0.1),
-          color: qe.accent,
-          '& .MuiChip-icon': { color: qe.accent },
-        }}
-      />
-      <Chip
-        size="small"
-        icon={<Crown size={12} />}
-        label={stats.jewelry}
-        sx={{
-          ...chipBase,
-          // Quiet Emerald: jewelry reads as neutral ink, not gold.
-          bgcolor: alpha(qe.muted, 0.12),
-          color: qe.muted,
-          '& .MuiChip-icon': { color: qe.muted },
-        }}
-      />
-    </Box>
-  ) : undefined;
+  // The header's identity zone used to carry, stacked under the title: a
+  // subtitle, the total inventory value, and gem/jewelry count chips. All three
+  // are gone — see CatalogHeader's own note for what each cost and why. The
+  // header is now a single 56px band instead of 178px of mostly-empty rows.
 
   return (
     <Box
@@ -252,19 +207,18 @@ export default function TreasureBrowser({
         origins={originOptions}
         activeOrigin={originTab}
         onOriginChange={setOriginTab}
-        summary={inventorySummary}
         trailingContent={
           !isMobile ? (
             <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 2,
-                flexWrap: 'wrap',
-                // Find cluster (search + filtros) hugs the left; the toolbar's
-                // own flexible spacer pushes the personal/view cluster right.
-                justifyContent: 'flex-start',
-                width: '100%',
+                gap: 1.5,
+                // NEVER wraps: the band is one line by construction. The single
+                // flexible gap lives in CatalogHeader, so this cluster can no
+                // longer collapse it and scatter itself across three baselines.
+                flexWrap: 'nowrap',
+                minWidth: 0,
               }}
             >
               <FilterContent {...filterContentProps} />

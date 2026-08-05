@@ -79,15 +79,24 @@ export default function TreasureDesktopResultsSummary({
                 color={showFavoritesOnly ? accentColors.error.light : qe.subtle}
               />
             }
-            label={
+            // Icon-only in the single-line band: the heart is a conventional,
+            // well-understood mark and the label cost ~50px of a row that has
+            // none to spare. The count still shows when there are favourites,
+            // because a bare number reads fine beside a heart. aria-label and
+            // title carry the name (PRODUCT.md).
+            label={favoritesCount > 0 ? favoritesCount : ''}
+            aria-label={
               favoritesCount > 0
                 ? `${t.treasure.favorites} (${favoritesCount})`
                 : t.treasure.favorites
             }
+            aria-pressed={showFavoritesOnly}
+            title={t.treasure.favorites}
             size="small"
             onClick={onToggleFavoritesOnly}
             sx={{
               cursor: 'pointer',
+              '& .MuiChip-label': favoritesCount > 0 ? {} : { pr: 0.5, pl: 0 },
               bgcolor: showFavoritesOnly
                 ? alpha(accentColors.error.light, 0.1)
                 : 'transparent',
