@@ -16,42 +16,42 @@
  * token's senderSlug, the ?a=<slug>/?wa=<phone> query, or the house number.
  */
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo } from 'react';
 import {
   useParams,
   useNavigate,
   useLocation,
   useSearchParams,
-} from "react-router-dom";
+} from 'react-router-dom';
 import {
   Box,
   Skeleton,
   Typography,
   useMediaQuery,
   useTheme,
-} from "@mui/material";
-import { Gem } from "lucide-react";
-import { useTreasure } from "../../hooks/useTreasure";
-import { useAsesores } from "../../hooks/useAsesores";
-import { useTRM } from "../../hooks/useTRM";
-import { useConvexQuery, convexApi, convexReady } from "../../lib/convex-safe";
-import { TreasureItem } from "../../types";
-import GridCard from "../../components/treasure/GridCard";
-import { PublicProductView } from "./PublicProductView";
+} from '@mui/material';
+import { Gem } from 'lucide-react';
+import { useTreasure } from '../../hooks/useTreasure';
+import { useAsesores } from '../../hooks/useAsesores';
+import { useTRM } from '../../hooks/useTRM';
+import { useConvexQuery, convexApi, convexReady } from '../../lib/convex-safe';
+import { TreasureItem } from '../../types';
+import GridCard from '../../components/treasure/GridCard';
+import { PublicProductView } from './PublicProductView';
 import {
   VitrinaPricing,
   DEFAULT_VITRINA_PRICING,
   formatVitrinaPrice,
-} from "../../utils/vitrinaPrice";
+} from '../../utils/vitrinaPrice';
 import {
   brand,
   lightTokens,
   darkTokens,
   legacyGradients as gradients,
   legacyTypography as typography,
-} from "../../design-system";
+} from '../../design-system';
 
-const HOUSE_WHATSAPP = "573113052755";
+const HOUSE_WHATSAPP = '573113052755';
 
 /** A bare item-number or dash/comma-separated list — the stateless form. */
 const ID_LIST_RE = /^\d+([-,]\d+)*$/;
@@ -73,16 +73,16 @@ function parseIds(raw: string): number[] {
 function useSenderPhone(explicitSlug?: string): string {
   const [params] = useSearchParams();
   const { asesores } = useAsesores();
-  const wa = params.get("wa");
-  const slug = explicitSlug || params.get("a") || undefined;
+  const wa = params.get('wa');
+  const slug = explicitSlug || params.get('a') || undefined;
   return useMemo(() => {
     if (wa) {
-      const digits = wa.replace(/\D/g, "");
+      const digits = wa.replace(/\D/g, '');
       if (digits.length >= 10) return digits;
     }
     if (slug) {
       const found = asesores.find((x) => x.slug === slug);
-      const digits = found?.whatsapp?.replace(/\D/g, "");
+      const digits = found?.whatsapp?.replace(/\D/g, '');
       if (digits && digits.length >= 10) return digits;
     }
     return HOUSE_WHATSAPP;
@@ -91,13 +91,13 @@ function useSenderPhone(explicitSlug?: string): string {
 
 function VitrinaShell({ children }: { children: React.ReactNode }) {
   const theme = useTheme();
-  const isLight = theme.palette.mode === "light";
+  const isLight = theme.palette.mode === 'light';
   return (
     <Box
       sx={{
         // dvh, not vh: on mobile Safari/Chrome the toolbar makes 100vh taller
         // than the visible area, which is what produced the scroll "jump".
-        minHeight: "100dvh",
+        minHeight: '100dvh',
         bgcolor: isLight
           ? lightTokens.background.page
           : darkTokens.background.app,
@@ -114,21 +114,21 @@ function LoadingState() {
       <Box
         sx={{
           maxWidth: 1120,
-          mx: "auto",
+          mx: 'auto',
           px: { xs: 1.5, sm: 2.5, md: 3 },
           py: 3,
         }}
       >
         <Box
           sx={{
-            display: "grid",
+            display: 'grid',
             gridTemplateColumns: {
-              xs: "repeat(2, minmax(0, 1fr))",
-              sm: "repeat(auto-fit, minmax(190px, 232px))",
+              xs: 'repeat(2, minmax(0, 1fr))',
+              sm: 'repeat(auto-fit, minmax(190px, 232px))',
             },
-            justifyContent: "center",
-            columnGap: { xs: "12px", sm: "22px" },
-            rowGap: { xs: "20px", sm: "34px" },
+            justifyContent: 'center',
+            columnGap: { xs: '12px', sm: '22px' },
+            rowGap: { xs: '20px', sm: '34px' },
           }}
         >
           {[0, 1, 2, 3].map((i) => (
@@ -136,9 +136,9 @@ function LoadingState() {
               <Skeleton
                 variant="rounded"
                 sx={{
-                  width: "100%",
-                  aspectRatio: "1/1.06",
-                  borderRadius: "6px",
+                  width: '100%',
+                  aspectRatio: '1/1.06',
+                  borderRadius: '6px',
                 }}
               />
               <Skeleton width="70%" height={18} sx={{ mt: 1 }} />
@@ -156,13 +156,13 @@ function NotFoundState() {
     <VitrinaShell>
       <Box
         sx={{
-          minHeight: "100dvh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
+          minHeight: '100dvh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
           px: 3,
-          textAlign: "center",
+          textAlign: 'center',
         }}
       >
         <Gem
@@ -172,7 +172,7 @@ function NotFoundState() {
         <Typography variant="h6" sx={{ mb: 0.5 }}>
           Enlace no disponible
         </Typography>
-        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           Este enlace ya no está activo. Escríbenos y con gusto te ayudamos.
         </Typography>
       </Box>
@@ -185,26 +185,27 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const { treasure, isLoadingSheets } = useTreasure();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isIdList = ID_LIST_RE.test(code);
+  const { treasure, isLoadingSheets } = useTreasure({
+    vitrinaToken: isIdList ? undefined : code,
+  });
   const { trmRate } = useTRM();
   const [searchParams] = useSearchParams();
   // Present only on links minted by WF-04 (convex/ghl.ts `searchProducts`
   // embeds `?cid=`) — lets the product page tell GHL directly which contact
   // picked which SKU (see PublicProductView + /api/vitrina-select). Absent on
   // staff's manual "Compartir con cliente" links — those just skip that call.
-  const contactId = searchParams.get("cid") || undefined;
-
-  const isIdList = ID_LIST_RE.test(code);
+  const contactId = searchParams.get('cid') || undefined;
 
   // Stateful token → Convex; stateless id-list → skip the query.
   const tokenDoc = useConvexQuery(
     convexApi.vitrinas.getByToken,
-    !isIdList && convexReady ? { token: code } : "skip",
+    !isIdList && convexReady ? { token: code } : 'skip',
   ) as
     | {
         itemIds: number[];
-        currency: "COP" | "USD";
+        currency: 'COP' | 'USD';
         multiplier: number;
         senderSlug?: string;
       }
@@ -243,8 +244,8 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
     const { style } = document.body;
     const prevOverflowY = style.overflowY;
     const prevOverflowX = style.overflowX;
-    style.overflowY = "auto";
-    style.overflowX = "hidden";
+    style.overflowY = 'auto';
+    style.overflowX = 'hidden';
     return () => {
       style.overflowY = prevOverflowY;
       style.overflowX = prevOverflowX;
@@ -257,7 +258,7 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
   useEffect(() => {
     // instant, not smooth: html sets scroll-behavior:smooth, and we want the
     // new view to appear at the top, not animate up through it.
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [itemId]);
 
   // Token still resolving, or catalog still loading.
@@ -296,24 +297,24 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
         sx={{
           background: gradients.header,
           px: { xs: 2, sm: 3 },
-          pt: "max(env(safe-area-inset-top, 16px), 16px)",
+          pt: 'max(env(safe-area-inset-top, 16px), 16px)',
           pb: { xs: 2.5, sm: 3 },
-          textAlign: "center",
+          textAlign: 'center',
         }}
       >
         <Box
           component="img"
           src="/images/logo-horizontal-white.png"
           alt="Tierra Mädre"
-          sx={{ height: { xs: 44, sm: 56 }, objectFit: "contain" }}
+          sx={{ height: { xs: 44, sm: 56 }, objectFit: 'contain' }}
         />
         <Typography
           sx={{
             mt: 1,
             fontSize: { xs: typography.size.xs, sm: typography.size.sm },
-            color: "rgba(255,255,255,0.7)",
+            color: 'rgba(255,255,255,0.7)',
             letterSpacing: typography.letterSpacing.wider,
-            textTransform: "uppercase",
+            textTransform: 'uppercase',
           }}
         >
           Selección para ti · {products.length} piezas
@@ -322,31 +323,31 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
       <Box
         sx={{
           maxWidth: 1120,
-          mx: "auto",
+          mx: 'auto',
           px: { xs: 1.5, sm: 2.5, md: 3 },
           py: { xs: 2, sm: 3.5 },
         }}
       >
         <Box
           sx={{
-            display: "grid",
+            display: 'grid',
             // Phones fill the row with 2 columns. From sm up, fixed-width tracks
             // (auto-fit collapses the empty ones) so a small curated selection
             // stays centered and intentional instead of clustering left — and
             // iPad portrait naturally lands on 3 columns, not a sparse 2.
             gridTemplateColumns: {
-              xs: "repeat(2, minmax(0, 1fr))",
-              sm: "repeat(auto-fit, minmax(190px, 232px))",
+              xs: 'repeat(2, minmax(0, 1fr))',
+              sm: 'repeat(auto-fit, minmax(190px, 232px))',
             },
-            justifyContent: "center",
-            columnGap: { xs: "12px", sm: "22px" },
-            rowGap: { xs: "20px", sm: "34px" },
+            justifyContent: 'center',
+            columnGap: { xs: '12px', sm: '22px' },
+            rowGap: { xs: '20px', sm: '34px' },
           }}
         >
           {products.map((item) => (
             <Box
               key={item.item}
-              sx={{ aspectRatio: { xs: "1 / 1.44", sm: "1 / 1.4" } }}
+              sx={{ aspectRatio: { xs: '1 / 1.44', sm: '1 / 1.4' } }}
             >
               <GridCard
                 item={item}
@@ -369,12 +370,12 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
 
 /** Route: /v/:code/:itemId? */
 export default function VitrinaPage() {
-  const { code = "", itemId } = useParams<{ code: string; itemId?: string }>();
+  const { code = '', itemId } = useParams<{ code: string; itemId?: string }>();
   return <VitrinaContent code={code} itemId={itemId} />;
 }
 
 /** Route: /product/:itemId — logged-out only, single product, default pricing. */
 export function PublicProductPage() {
-  const { itemId = "" } = useParams<{ itemId: string }>();
+  const { itemId = '' } = useParams<{ itemId: string }>();
   return <VitrinaContent code={itemId} itemId={itemId} />;
 }

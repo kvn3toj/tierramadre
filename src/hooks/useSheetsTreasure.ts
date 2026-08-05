@@ -9,7 +9,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { TreasureItem } from '../types';
 import { STORAGE_KEYS, LEGACY_KEYS } from '../constants/storage-keys';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
-import { catalogRequestInit } from '../utils/catalogAuthHeaders';
+import { catalogRequestInit, catalogUrl } from '../utils/catalogAuthHeaders';
 import { useSyncCacheState } from './useSyncCache';
 
 // Cache configuration (new treasure namespace)
@@ -110,9 +110,10 @@ function setCachedData(data: TreasureItem[]): void {
  */
 async function fetchFromSheets(
   notifyOnFailure = false,
+  vitrinaToken?: string,
 ): Promise<TreasureItem[]> {
   const response = await fetchWithRetry(
-    '/api/get-treasure-sheets',
+    catalogUrl('/api/get-treasure-sheets', vitrinaToken),
     catalogRequestInit(),
     {
       retries: 3,
@@ -148,8 +149,12 @@ function getInitialSheetsData(): TreasureItem[] | null {
 
 /**
  * Hook to fetch and manage treasure data from Google Sheets
+ * @param vitrinaToken - stateful vitrina share token, so the server can
+ *   resolve the grant and return curated prices (see catalogUrl).
  */
-export function useSheetsTreasure(): UseSheetsTreasureReturn {
+export function useSheetsTreasure(
+  vitrinaToken?: string,
+): UseSheetsTreasureReturn {
   const {
     value: sheetsTreasure,
     setValue: setSheetsTreasure,
@@ -177,9 +182,11 @@ export function useSheetsTreasure(): UseSheetsTreasureReturn {
     const loadFromSheets = async () => {
       try {
         if (!inflightFetch) {
-          inflightFetch = fetchFromSheets(!hasCachedData).finally(() => {
-            inflightFetch = null;
-          });
+          inflightFetch = fetchFromSheets(!hasCachedData, vitrinaToken).finally(
+            () => {
+              inflightFetch = null;
+            },
+          );
         }
         const treasure = await inflightFetch;
         setCachedData(treasure);
@@ -200,7 +207,8 @@ export function useSheetsTreasure(): UseSheetsTreasureReturn {
     };
 
     loadFromSheets();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vitrinaToken]);
 
   // Force refresh (ignores cache)
   const refresh = useCallback(async () => {
@@ -208,7 +216,7 @@ export function useSheetsTreasure(): UseSheetsTreasureReturn {
     setError(null);
 
     try {
-      const treasure = await fetchFromSheets(true);
+      const treasure = await fetchFromSheets(true, vitrinaToken);
       setSheetsTreasure(treasure);
       setCachedData(treasure);
     } catch (err) {
@@ -216,7 +224,7 @@ export function useSheetsTreasure(): UseSheetsTreasureReturn {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [vitrinaToken]);
 
   return {
     sheetsTreasure,

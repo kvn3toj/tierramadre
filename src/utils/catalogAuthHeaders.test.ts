@@ -11,7 +11,7 @@ vi.mock('./sessionToken', () => ({
   readFreshAuthToken: () => auth.token,
 }));
 
-import { catalogRequestInit } from './catalogAuthHeaders';
+import { catalogRequestInit, catalogUrl } from './catalogAuthHeaders';
 
 describe('catalogRequestInit', () => {
   beforeEach(() => {
@@ -27,5 +27,28 @@ describe('catalogRequestInit', () => {
     expect(catalogRequestInit()).toEqual({
       headers: { Authorization: 'Bearer tms1.abc.def' },
     });
+  });
+});
+
+describe('catalogUrl — vitrina passthrough', () => {
+  it('appends the token so the server can resolve the grant', () => {
+    expect(catalogUrl('/api/get-treasure-sheets', 'AB3K9P2Q4R7S')).toBe(
+      '/api/get-treasure-sheets?vitrina=AB3K9P2Q4R7S',
+    );
+  });
+
+  it('leaves the URL alone with no vitrina token', () => {
+    expect(catalogUrl('/api/get-treasure-sheets')).toBe(
+      '/api/get-treasure-sheets',
+    );
+  });
+
+  it('does not forward an id-list — a number is not a credential', () => {
+    expect(catalogUrl('/api/get-treasure-sheets', '368')).toBe(
+      '/api/get-treasure-sheets',
+    );
+    expect(catalogUrl('/api/get-treasure-sheets', '368,412')).toBe(
+      '/api/get-treasure-sheets',
+    );
   });
 });
