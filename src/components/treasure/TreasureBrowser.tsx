@@ -7,7 +7,7 @@
 
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
-import { Box, Chip, Typography, alpha, useTheme } from '@mui/material';
+import { Box, Chip, alpha, useTheme } from '@mui/material';
 import { Gem, Crown } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import CertificationUpload from './CertificationUpload';
@@ -81,9 +81,7 @@ export default function TreasureBrowser({
   const qe = getQuietEmerald(c.isLight ? 'light' : 'dark');
 
   const {
-    formatFullCurrency,
     isLight,
-    shouldShowPrices,
     isProviderMode: providerMode,
     isMobile,
     allTreasure,
@@ -92,7 +90,6 @@ export default function TreasureBrowser({
     isLoadingSheets,
     filters,
     filteredTreasure,
-    filteredStats,
     deferredFilteredTreasure,
     visibleItems,
     hasFilters,
@@ -194,63 +191,53 @@ export default function TreasureBrowser({
     urlSync.handleClearFilters();
   };
 
-  // Inventory summary (total value + loose-stone/jewelry counts) — lives in the
-  // header's identity zone under the subtitle, NOT in the control row, so the
-  // controls stay a stable single row whether or not prices are shown.
+  // Composition summary (loose-stone / jewelry counts) — lives in the header's
+  // identity zone under the subtitle, NOT in the control row, so the controls
+  // stay a stable single row.
+  //
+  // The total inventory value used to lead this row. It was removed: an asesor
+  // opens this screen in front of a client, and a running valuation of the whole
+  // inventory is not theirs to see. It was also the loudest thing on a screen
+  // whose whole premise is that the stone speaks and the chrome whispers —
+  // emerald at display size on a piece of chrome, which is the Jewelry-Not-Paint
+  // rule inverted (DESIGN.md §2).
+  //
+  // Gated on `!isMobile` alone, not on `shouldShowPrices`: these are counts, not
+  // money. The piece total is already public in the subtitle ("486 PIEZAS"), so
+  // there is nothing here to hide behind the price toggle now that the value is
+  // gone.
   const chipBase = {
     fontWeight: 600,
     fontSize: '0.7rem',
     height: 22,
   } as const;
-  const inventorySummary =
-    !isMobile && shouldShowPrices ? (
-      <Box
+  const inventorySummary = !isMobile ? (
+    <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+      <Chip
+        size="small"
+        icon={<Gem size={12} />}
+        label={stats.looseStones}
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.25,
-          flexWrap: 'wrap',
+          ...chipBase,
+          bgcolor: alpha(qe.accent, 0.1),
+          color: qe.accent,
+          '& .MuiChip-icon': { color: qe.accent },
         }}
-      >
-        <Typography
-          sx={{
-            fontFamily: 'var(--tm-font-mono)',
-            fontWeight: 600,
-            fontSize: 13,
-            letterSpacing: '0.01em',
-            color: qe.accent,
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
-          {formatFullCurrency(filteredStats.totalValue)}
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-          <Chip
-            size="small"
-            icon={<Gem size={12} />}
-            label={stats.looseStones}
-            sx={{
-              ...chipBase,
-              bgcolor: alpha(qe.accent, 0.1),
-              color: qe.accent,
-              '& .MuiChip-icon': { color: qe.accent },
-            }}
-          />
-          <Chip
-            size="small"
-            icon={<Crown size={12} />}
-            label={stats.jewelry}
-            sx={{
-              ...chipBase,
-              // Quiet Emerald: jewelry reads as neutral ink, not gold.
-              bgcolor: alpha(qe.muted, 0.12),
-              color: qe.muted,
-              '& .MuiChip-icon': { color: qe.muted },
-            }}
-          />
-        </Box>
-      </Box>
-    ) : undefined;
+      />
+      <Chip
+        size="small"
+        icon={<Crown size={12} />}
+        label={stats.jewelry}
+        sx={{
+          ...chipBase,
+          // Quiet Emerald: jewelry reads as neutral ink, not gold.
+          bgcolor: alpha(qe.muted, 0.12),
+          color: qe.muted,
+          '& .MuiChip-icon': { color: qe.muted },
+        }}
+      />
+    </Box>
+  ) : undefined;
 
   return (
     <Box
