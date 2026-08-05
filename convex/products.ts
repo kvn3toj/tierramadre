@@ -1505,11 +1505,24 @@ export const _pullFromSheet = internalAction({
     ctx,
   ): Promise<{ pulled: number; upserted: number; rebased: number }> => {
     const appUrl: string | undefined = process.env.APP_URL;
+    const syncToken: string | undefined = process.env.ADMIN_SYNC_TOKEN;
     if (!appUrl) {
       throw new Error('APP_URL missing on Convex deployment');
     }
+    if (!syncToken) {
+      throw new Error('ADMIN_SYNC_TOKEN missing on Convex deployment');
+    }
 
-    const res = await fetch(`${appUrl}/api/get-treasure-sheets`);
+    // Without this header, the request resolves to the `anon` grant and
+    // /api/get-treasure-sheets returns the 18-field public projection — no
+    // precio/ubicacion/asesor/caja, and `estado` absent entirely (so the
+    // reconcile below would flip every VENDIDA stone back to DISPONIBLE via
+    // normalizeEstado's default). The ADMIN_SYNC_TOKEN service grant
+    // (api/_lib/catalogGrant.ts) makes this call resolve `staff`, same as a
+    // signed-in asesor — the full, unprojected row this reconcile needs.
+    const res = await fetch(`${appUrl}/api/get-treasure-sheets`, {
+      headers: { Authorization: `Bearer ${syncToken}` },
+    });
     if (!res.ok) {
       throw new Error(`Sheet fetch failed: HTTP ${res.status}`);
     }

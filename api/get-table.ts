@@ -12,8 +12,8 @@
  * Response: { headers: string[], rows: Array<Record<string, string>> }
  */
 
-import type { sheets_v4 } from "@googleapis/sheets";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { sheets_v4 } from '@googleapis/sheets';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   withApiHandler,
   FOTOSINTESIS_SPREADSHEET_ID,
@@ -21,8 +21,10 @@ import {
   sendSuccess,
   getSheetNames,
   findSheetByPattern,
-} from "./_lib/index.js";
-import { TABLE_CONFIGS, isFotoTable } from "./_lib/admin-table-config.js";
+} from './_lib/index.js';
+import { TABLE_CONFIGS, isFotoTable } from './_lib/admin-table-config.js';
+import { resolveGrant } from './_lib/catalogGrant.js';
+import { lookupVitrina } from './_lib/vitrinaLookup.js';
 
 // Fotosíntesis SOT v2 is its own spreadsheet so that the legacy catalog
 // (productInventory in SPREADSHEET_ID) stays untouched. Override via env
@@ -37,13 +39,23 @@ export default withApiHandler(
   ) => {
     const expectedToken = process.env.ADMIN_SYNC_TOKEN;
     const providedToken =
-      (req.headers["x-admin-sync-token"] as string | undefined) ?? undefined;
+      (req.headers['x-admin-sync-token'] as string | undefined) ?? undefined;
     if (!expectedToken) {
-      return sendError(res, 500, "ADMIN_SYNC_TOKEN not configured on server");
+      return sendError(res, 500, 'ADMIN_SYNC_TOKEN not configured on server');
     }
     if (!providedToken || providedToken !== expectedToken) {
-      return sendError(res, 401, "Unauthorized");
+      return sendError(res, 401, 'Unauthorized');
     }
+
+    // Resolved (not applied to the payload) — same reasoning as
+    // get-inventory-rows.ts: this is a server-to-server route, already
+    // gated above by ADMIN_SYNC_TOKEN, whose only caller (Convex) never
+    // presents browser credentials. Gating on resolveGrant's `anon` result
+    // would truncate the full-tab reads Convex pull actions depend on.
+    // Resolved only so this endpoint is classified/audited by
+    // tests/catalogEndpointsProjection.test.ts.
+    const grant = await resolveGrant(req, { lookupVitrina });
+    void grant;
 
     const tableParam = req.query.table;
     const table = Array.isArray(tableParam) ? tableParam[0] : tableParam;
@@ -66,7 +78,7 @@ export default withApiHandler(
       return sendError(
         res,
         404,
-        `Sheet tab not found for table "${table}". Expected one of: ${config.sheetTabPatterns.join(", ")}`,
+        `Sheet tab not found for table "${table}". Expected one of: ${config.sheetTabPatterns.join(', ')}`,
       );
     }
 
@@ -90,7 +102,7 @@ export default withApiHandler(
       const row = values[i];
       const obj: Record<string, string> = { __rowIndex: String(i + 1) };
       for (let j = 0; j < headers.length; j++) {
-        obj[headers[j]] = row?.[j] ?? "";
+        obj[headers[j]] = row?.[j] ?? '';
       }
       rows.push(obj);
     }
@@ -98,8 +110,8 @@ export default withApiHandler(
     return sendSuccess(res, { table, sheetName: targetSheet, headers, rows });
   },
   {
-    methods: ["GET", "OPTIONS"],
+    methods: ['GET', 'OPTIONS'],
     provideSheets: true,
-    errorPrefix: "GetTable",
+    errorPrefix: 'GetTable',
   },
 );

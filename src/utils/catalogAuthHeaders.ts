@@ -3,11 +3,21 @@
  *
  * Returns `undefined` when there is nothing to send, so anonymous requests
  * stay byte-identical to what they were before access control landed.
+ *
+ * Sends the `tms1` APP session token ONLY — never the raw Google ID token.
+ * `api/_lib/catalogGrant.ts` stopped accepting Google ID tokens for the
+ * catalog's staff grant (2026-08 fix round: a Google token only proves "some
+ * Gmail account", not roster membership, since the OAuth client ID is public
+ * and ships in this bundle). Sending it here would just mean the server
+ * silently degrades every asesor to `anon` until their session token mints.
+ * `ensureAppSession()` mints/refreshes that session token; the `tokenRejected`
+ * retry path in useSheetsTreasure.ts is what closes the gap for a caller who
+ * currently only has a fresh Google token.
  */
-import { readFreshAuthToken } from './sessionToken';
+import { readFreshSessionToken } from './sessionToken';
 
 export function catalogRequestInit(): RequestInit | undefined {
-  const token = readFreshAuthToken();
+  const token = readFreshSessionToken();
   if (!token) return undefined;
   return { headers: { Authorization: `Bearer ${token}` } };
 }

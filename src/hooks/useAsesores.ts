@@ -3,8 +3,8 @@ import { TreasureItem } from '../types';
 import { normalizeName, matchesAsesorName } from '../utils/asesorNameUtils';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
 import { catalogRequestInit } from '../utils/catalogAuthHeaders';
-import { parseVaultCode } from '../utils/parseVaultCode';
-import type { VaultCombination } from '../types/vault';
+import { readFreshSessionToken } from '../utils/sessionToken';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 // Re-export for backwards compatibility
 export { matchesAsesorName } from '../utils/asesorNameUtils';
@@ -29,20 +29,46 @@ interface UseAsesoresReturn {
   isLoading: boolean;
   error: string | null;
   refreshAsesores: () => Promise<void>;
-  ambassadorVaultCodes: Map<string, VaultCombination>;
 }
 
-const CACHE_KEY = 'tm-asesores';
-const CACHE_TS_KEY = 'tm-asesores-ts';
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
-/** Shared in-flight promise — dedupes concurrent fetches from multiple hook mounts. */
-let inflightFetch: Promise<Asesor[]> | null = null;
+/**
+ * Grant-scoped cache keys (discovered alongside F6, 2026-08 fix round: same
+ * leak class as useAsesorCollection's cache — get-asesores.ts now withholds
+ * email/vaultCode from anon, so a staff device's full roster cache must not
+ * survive logout to paint for the next anonymous visitor). Cleared by
+ * clearTreasureCaches() (treasureCacheStorage.ts). readFreshSessionToken(),
+ * not readFreshAuthToken() — must mirror catalogRequestInit()'s
+ * session-token-only signal.
+ */
+function cacheKeys(): { data: string; ts: string } {
+  const grant = readFreshSessionToken() ? 'staff' : 'anon';
+  return {
+    data: `${STORAGE_KEYS.ASESORES_CACHE}:${grant}`,
+    ts: `${STORAGE_KEYS.ASESORES_CACHE_TS}:${grant}`,
+  };
+}
+
+/**
+ * Shared in-flight promises — dedupes concurrent fetches from multiple hook
+ * mounts. Keyed by the SAME cache key the response will be written under, not
+ * a single shared slot (same shape as useSheetsTreasure.ts's `inflightFetches`).
+ *
+ * A single slot handed whatever grant started the fetch to whoever awaited it
+ * next: sign-out doesn't reload the page (GoogleAuthContext.signOut() only
+ * clears caches), so a staff roster fetch can still be in flight when a public
+ * consumer mounts this hook (useWhatsAppContact, AmbassadorDirectory,
+ * VitrinaPage's useSenderPhone). That consumer computed the `:anon` key,
+ * awaited the STAFF promise, and wrote the full roster — `email`, `vaultCode` —
+ * into the `:anon` bucket, which every later anonymous visitor then reads.
+ */
+const inflightFetches = new Map<string, Promise<Asesor[]>>();
 
 export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
   const [asesores, setAsesores] = useState<Asesor[]>(() => {
     try {
-      const cached = localStorage.getItem(CACHE_KEY);
+      const cached = localStorage.getItem(cacheKeys().data);
       return cached ? JSON.parse(cached) : [];
     } catch {
       return [];
@@ -67,9 +93,11 @@ export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
       setIsLoading(true);
       setError(null);
 
+      const keys = cacheKeys();
+
       // Skip fetch if cache is fresh (unless forced).
       if (!force) {
-        const tsRaw = localStorage.getItem(CACHE_TS_KEY);
+        const tsRaw = localStorage.getItem(keys.ts);
         const ts = tsRaw ? Number(tsRaw) : 0;
         if (ts && Date.now() - ts < CACHE_TTL_MS && asesores.length > 0) {
           setIsLoading(false);
@@ -77,9 +105,11 @@ export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
         }
       }
 
-      // Deduplicate concurrent fetches across hook instances.
-      if (!inflightFetch) {
-        inflightFetch = (async () => {
+      // Deduplicate concurrent fetches across hook instances — per grant, so a
+      // caller only ever awaits a request made under its OWN grant.
+      let promise = inflightFetches.get(keys.data);
+      if (!promise) {
+        promise = (async () => {
           const response = await fetchWithRetry(
             '/api/get-asesores',
             catalogRequestInit(),
@@ -97,15 +127,18 @@ export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
           }
           return dedupeAsesores(result.asesores);
         })().finally(() => {
-          inflightFetch = null;
+          // Released on success AND failure, so a rejected fetch can't wedge
+          // the key permanently.
+          inflightFetches.delete(keys.data);
         });
+        inflightFetches.set(keys.data, promise);
       }
 
-      const deduped = await inflightFetch;
+      const deduped = await promise;
       setAsesores(deduped);
       try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify(deduped));
-        localStorage.setItem(CACHE_TS_KEY, String(Date.now()));
+        localStorage.setItem(keys.data, JSON.stringify(deduped));
+        localStorage.setItem(keys.ts, String(Date.now()));
       } catch {
         // Storage full — non-critical
       }
@@ -145,21 +178,19 @@ export function useAsesores(treasure?: TreasureItem[]): UseAsesoresReturn {
     });
   }, [asesores, treasure]);
 
-  const ambassadorVaultCodes = useMemo(() => {
-    const map = new Map<string, VaultCombination>();
-    for (const a of asesores) {
-      const combo = parseVaultCode(a.vaultCode ?? null);
-      if (combo) map.set(a.slug, combo);
-    }
-    return map;
-  }, [asesores]);
+  // Ambassador-specific vault combinations used to be derived here (a
+  // `Map<slug, VaultCombination>` built from every asesor's raw
+  // `vaultCode`), consumed only by VaultPage.tsx. Removed (N5, 2026-08 fix
+  // round 3): get-asesores.ts withholds `vaultCode` from anon/guest callers
+  // now (shipping every code to every visitor WAS the leak), and
+  // verification moved server-side to api/vault-unlock.ts, which never
+  // returns the code list at all.
 
   return {
     asesores: enrichedAsesores,
     isLoading,
     error,
     refreshAsesores: () => loadAsesores(true),
-    ambassadorVaultCodes,
   };
 }
 

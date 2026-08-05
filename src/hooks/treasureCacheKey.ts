@@ -20,8 +20,19 @@
  * otherwise it would get its own `:vitrina:<idlist>` bucket holding data
  * that is, in fact, anonymous — two functions silently disagreeing about
  * the same input.
+ *
+ * Uses readFreshSessionToken(), NOT readFreshAuthToken() (2026-08 fix round,
+ * alongside catalogAuthHeaders.ts's identical change): catalogRequestInit()
+ * — what actually decides what the SERVER sees — now sends only the `tms1`
+ * session token, never the raw Google ID token (api/_lib/catalogGrant.ts
+ * stopped accepting it for the staff grant). If this cache key used
+ * readFreshAuthToken() it could read `:staff` from a fresh Google token
+ * while the request that filled the cache was actually sent anonymous
+ * (no session token yet) — caching an `anon`-projected payload under the
+ * `:staff` bucket, then serving it to that bucket's next reader as if it
+ * were the full-fidelity response.
  */
-import { readFreshAuthToken } from '../utils/sessionToken';
+import { readFreshSessionToken } from '../utils/sessionToken';
 import { ID_LIST_RE } from '../utils/catalogAuthHeaders';
 import {
   TREASURE_CACHE_BASE,
@@ -31,7 +42,7 @@ import {
 const BASE = TREASURE_CACHE_BASE;
 
 export function treasureCacheKey(vitrinaToken?: string): string {
-  if (readFreshAuthToken()) return `${BASE}:staff`;
+  if (readFreshSessionToken()) return `${BASE}:staff`;
   if (vitrinaToken && !ID_LIST_RE.test(vitrinaToken)) {
     return `${BASE}:vitrina:${vitrinaToken}`;
   }

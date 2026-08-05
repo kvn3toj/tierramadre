@@ -21,6 +21,7 @@ import {
 } from './_lib/index.js';
 import { resolveGrant, bearerWasRejected } from './_lib/catalogGrant.js';
 import { lookupVitrina } from './_lib/vitrinaLookup.js';
+import { projectForGrant } from './_lib/catalogProjection.js';
 
 type PesoParsed =
   | { value: number | string; isJewelry: true; metalType: 'Plata' | 'Oro 18k' }
@@ -337,7 +338,9 @@ export default withApiHandler(
 
     if (!rows || rows.length === 0) {
       return sendSuccess(res, {
-        treasure: [],
+        // Empty array either way — projected here anyway so this branch
+        // never becomes the one that forgets, if it ever stops being empty.
+        treasure: projectForGrant([], grant),
         message: 'No data found in spreadsheet',
         ...(bearerWasRejected(req, grant) ? { tokenRejected: true } : {}),
       });
@@ -381,12 +384,14 @@ export default withApiHandler(
       Boolean(req.query.debug) && process.env.NODE_ENV !== 'production';
 
     return sendSuccess(res, {
-      treasure,
+      treasure: projectForGrant(treasure, grant),
       count: treasure.length,
-      sheetName: targetSheet,
+      // sheetName + _debug describe the internal spreadsheet layout — staff
+      // only. Non-staff (anon/vitrina) never had a reason to receive it.
+      ...(grant.kind === 'staff' ? { sheetName: targetSheet } : {}),
       lastUpdated: new Date().toISOString(),
       ...(bearerWasRejected(req, grant) ? { tokenRejected: true } : {}),
-      ...(includeDebug
+      ...(includeDebug && grant.kind === 'staff'
         ? {
             _debug: {
               headers: headers.map(
