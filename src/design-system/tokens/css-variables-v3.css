@@ -108,6 +108,15 @@
      breakpoint. Applied by IOSLayout to storefront + provider routes; dense
      admin (Fotosíntesis/Atelier) is exempt (see DS3-MIGRATION-PRD §5 Fase 1). */
   --maxw: 1160px;
+
+  /* Browse-dense tier. The 1160 above is tuned for reading — a profile, a
+     product page, a form — where a longer measure actively hurts. The catalog
+     is not read, it is scanned, and capping a 486-piece grid at tablet width
+     left a third of a desktop monitor empty while the cards inside shrank to
+     187px. Wide enough for five ~263px cards, still a contained band rather
+     than a full-bleed sheet. Applied by IOSLayout to the catalog only; every
+     other storefront route keeps --maxw. */
+  --maxw-wide: 1536px;
 }
 
 [data-theme='dark'] {
