@@ -67,9 +67,13 @@ export function CatalogHeader({
         // One band on desktop; wraps to identity / tabs on phones.
         flexWrap: { xs: 'wrap', md: 'nowrap' },
         minHeight: { md: 56 },
-        py: { xs: 1, md: 0 },
-        borderBottom: `1px solid ${qe.hairline}`,
-        mb: { xs: '12px', md: '14px' },
+        py: { xs: 0.5, md: 0 },
+        // On phones MobileSearchBar sits directly underneath with its own
+        // translucent background, so a hairline here would be a second rule
+        // against a surface change — two separators doing one job. Desktop has
+        // no such bar, so it keeps the rule.
+        borderBottom: { xs: 'none', md: `1px solid ${qe.hairline}` },
+        mb: { xs: 0, md: '14px' },
       }}
     >
       <Typography

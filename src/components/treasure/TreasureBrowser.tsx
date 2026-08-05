@@ -293,6 +293,9 @@ export default function TreasureBrowser({
             favoritesCount={favoritesCount}
             isProviderMode={providerMode}
             filteredCount={filteredTreasure.length}
+            // The header's own count, so the bar can tell whether repeating a
+            // number says anything. Same source as CatalogHeader's `count`.
+            originCount={headerCount}
             recentlyViewedItems={recentlyViewedItems}
             onRecentItemClick={handleItemClick}
             onClearRecent={clearRecent}

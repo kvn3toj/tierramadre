@@ -70,8 +70,14 @@ export interface MobileSearchBarProps {
   setShowFavoritesOnly: (v: boolean) => void;
   favoritesCount: number;
   isProviderMode: boolean;
-  // Results count
+  // Results count, after every filter (search, colour, quality, …)
   filteredCount: number;
+  /**
+   * The count the page header is already showing — the origin-filtered total.
+   * Used only to decide whether repeating a number here says anything: when the
+   * two match, the header two rows above is already saying it.
+   */
+  originCount?: number;
   // Recently viewed items (merged)
   recentlyViewedItems?: TreasureItem[];
   onRecentItemClick?: (item: TreasureItem) => void;
@@ -106,6 +112,7 @@ export default function MobileSearchBar({
   favoritesCount,
   isProviderMode,
   filteredCount,
+  originCount,
   recentlyViewedItems = [],
   onRecentItemClick,
   onClearRecent,
@@ -118,6 +125,12 @@ export default function MobileSearchBar({
   const quickAccessScroll = useScrollFade<HTMLDivElement>();
   const { formatCurrency } = useCurrencyFormat();
   const { shouldShowPrices } = usePriceShare();
+
+  // Only worth printing a count here if it differs from the one the header is
+  // already showing. When `originCount` is not supplied we cannot compare, so
+  // fall back to the old always-on behaviour rather than silently hiding data.
+  const showNarrowedCount =
+    originCount === undefined || filteredCount !== originCount;
 
   // Determine which items to show based on active tab
   const quickAccessItems =
@@ -357,8 +370,16 @@ export default function MobileSearchBar({
           </IconButton>
         </Box>
 
-        {/* Row 2: Compact info row - filter chips + count (only when not in filter sheet) */}
-        {!filterSheetOpen && (
+        {/* Row 2: filter chips + narrowed count.
+            Renders ONLY when it has something to say. It used to render always,
+            reserving 24px + margin under the search on every screen, and its
+            count repeated the header's: with no filters on, "486 esmeraldas en
+            total" sat two rows under "Catálogo · 486 PIEZAS". Same number,
+            twice, ~100px apart.
+            The count now appears only when filters actually narrowed the set,
+            which is the only time it differs from the header and the only time
+            it tells you anything. */}
+        {!filterSheetOpen && (hasFilters || showNarrowedCount) && (
           <Box
             sx={{
               display: 'flex',
@@ -397,18 +418,22 @@ export default function MobileSearchBar({
               </Box>
             )}
 
-            {/* Tesoros count - always visible, pushed right */}
-            <Typography
-              sx={{
-                color: theme.palette.text.secondary,
-                fontSize: '0.7rem',
-                ml: 'auto',
-                flexShrink: 0,
-                letterSpacing: '0.01em',
-              }}
-            >
-              {filteredCount} {t.treasure.totalEmeralds}
-            </Typography>
+            {/* Narrowed count — only when the filters changed the number the
+                header is already showing. */}
+            {showNarrowedCount && (
+              <Typography
+                sx={{
+                  color: theme.palette.text.secondary,
+                  fontSize: '0.7rem',
+                  ml: 'auto',
+                  flexShrink: 0,
+                  letterSpacing: '0.01em',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {filteredCount} {t.treasure.totalEmeralds}
+              </Typography>
+            )}
           </Box>
         )}
       </Box>

@@ -30,7 +30,10 @@ describe('Quiet Emerald shim', () => {
   });
 
   it('keeps emeraldCore on the QE emerald', () => {
-    expect(emeraldCore.primary.toUpperCase()).toBe('#00AF84');
+    // #00C992 since the 2026 "renovación" rebrand — read from the vector fills
+    // of the brand manual (docs/brand/renovacion-2026/). It was #00AF84, the
+    // green of the superseded mark.
+    expect(emeraldCore.primary.toUpperCase()).toBe('#00C992');
   });
 
   it('flattens every glass variant (no backdrop blur)', () => {
