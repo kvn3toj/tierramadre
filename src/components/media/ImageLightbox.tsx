@@ -21,7 +21,13 @@ import FocusTrap from '@mui/material/Unstable_TrapFocus';
 import { X, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
 import { motion, AnimatePresence, PanInfo, useAnimation } from 'framer-motion';
 import { triggerHaptic } from '../../hooks/useHaptics';
-import { lightTokens, darkTokens, cssTransition, blurValues, zIndex } from '../../design-system';
+import {
+  lightTokens,
+  darkTokens,
+  cssTransition,
+  blurValues,
+  zIndex,
+} from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import ProtectedContent from '../shared/ProtectedContent';
 
@@ -40,6 +46,17 @@ interface ImageLightboxProps {
 const SWIPE_THRESHOLD = 50; // Minimum swipe distance to trigger navigation
 const DISMISS_THRESHOLD = 100; // Minimum swipe down to dismiss
 const DOUBLE_TAP_DELAY = 300; // Max ms between taps for double-tap
+
+/**
+ * Local stacking order inside the overlay.
+ *
+ * The image layer (`ProtectedContent`) is a full-bleed `position: relative`
+ * flex child that comes AFTER the chrome in DOM order, so at an equal z-index
+ * it paints — and, more to the point, hit-tests — on top of the close/share
+ * buttons and the dot indicators, swallowing their taps. The chrome has to
+ * outrank it explicitly; `zIndex.base` (0) did not.
+ */
+const CHROME_Z = 1;
 
 export default function ImageLightbox({
   images,
@@ -74,7 +91,7 @@ export default function ImageLightbox({
   const goToPrevious = useCallback(() => {
     if (currentIndex > 0) {
       triggerHaptic('selection');
-      setCurrentIndex(prev => prev - 1);
+      setCurrentIndex((prev) => prev - 1);
       setScale(1);
     }
   }, [currentIndex]);
@@ -82,7 +99,7 @@ export default function ImageLightbox({
   const goToNext = useCallback(() => {
     if (currentIndex < images.length - 1) {
       triggerHaptic('selection');
-      setCurrentIndex(prev => prev + 1);
+      setCurrentIndex((prev) => prev + 1);
       setScale(1);
     }
   }, [currentIndex, images.length]);
@@ -93,7 +110,7 @@ export default function ImageLightbox({
     if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
       // Double tap detected
       triggerHaptic('medium');
-      setScale(prev => prev === 1 ? 2 : 1);
+      setScale((prev) => (prev === 1 ? 2 : 1));
       lastTapTime.current = 0;
     } else {
       lastTapTime.current = now;
@@ -101,44 +118,51 @@ export default function ImageLightbox({
   }, []);
 
   // Handle pinch-to-zoom
-  const handleTouchStart = useCallback((e: TouchEvent) => {
-    if (e.touches.length === 2) {
-      // Pinch start
-      const touch1 = e.touches[0];
-      const touch2 = e.touches[1];
-      initialDistance.current = Math.hypot(
-        touch2.clientX - touch1.clientX,
-        touch2.clientY - touch1.clientY
-      );
-      initialScale.current = scale;
-    } else if (e.touches.length === 1) {
-      touchStartY.current = e.touches[0].clientY;
-    }
-  }, [scale]);
-
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (e.touches.length === 2) {
-      // Pinch move
-      const touch1 = e.touches[0];
-      const touch2 = e.touches[1];
-      const currentDistance = Math.hypot(
-        touch2.clientX - touch1.clientX,
-        touch2.clientY - touch1.clientY
-      );
-
-      if (initialDistance.current > 0) {
-        const newScale = initialScale.current * (currentDistance / initialDistance.current);
-        // Clamp scale between 0.5 and 4
-        setScale(Math.min(Math.max(newScale, 0.5), 4));
+  const handleTouchStart = useCallback(
+    (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        // Pinch start
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        initialDistance.current = Math.hypot(
+          touch2.clientX - touch1.clientX,
+          touch2.clientY - touch1.clientY,
+        );
+        initialScale.current = scale;
+      } else if (e.touches.length === 1) {
+        touchStartY.current = e.touches[0].clientY;
       }
-    } else if (e.touches.length === 1 && scale === 1) {
-      // Swipe down to dismiss (only when not zoomed)
-      const deltaY = e.touches[0].clientY - touchStartY.current;
-      if (deltaY > 0) {
-        setTranslateY(deltaY);
+    },
+    [scale],
+  );
+
+  const handleTouchMove = useCallback(
+    (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        // Pinch move
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const currentDistance = Math.hypot(
+          touch2.clientX - touch1.clientX,
+          touch2.clientY - touch1.clientY,
+        );
+
+        if (initialDistance.current > 0) {
+          const newScale =
+            initialScale.current * (currentDistance / initialDistance.current);
+          // Clamp scale between 0.5 and 4
+          setScale(Math.min(Math.max(newScale, 0.5), 4));
+        }
+      } else if (e.touches.length === 1 && scale === 1) {
+        // Swipe down to dismiss (only when not zoomed)
+        const deltaY = e.touches[0].clientY - touchStartY.current;
+        if (deltaY > 0) {
+          setTranslateY(deltaY);
+        }
       }
-    }
-  }, [scale]);
+    },
+    [scale],
+  );
 
   const handleTouchEnd = useCallback(() => {
     initialDistance.current = 0;
@@ -153,15 +177,21 @@ export default function ImageLightbox({
   }, [translateY, onClose]);
 
   // Handle horizontal swipe for navigation
-  const handleDragEnd = useCallback((_: never, info: PanInfo) => {
-    if (scale > 1) return; // Don't navigate when zoomed
+  const handleDragEnd = useCallback(
+    (_: never, info: PanInfo) => {
+      if (scale > 1) return; // Don't navigate when zoomed
 
-    if (info.offset.x < -SWIPE_THRESHOLD && currentIndex < images.length - 1) {
-      goToNext();
-    } else if (info.offset.x > SWIPE_THRESHOLD && currentIndex > 0) {
-      goToPrevious();
-    }
-  }, [scale, currentIndex, images.length, goToNext, goToPrevious]);
+      if (
+        info.offset.x < -SWIPE_THRESHOLD &&
+        currentIndex < images.length - 1
+      ) {
+        goToNext();
+      } else if (info.offset.x > SWIPE_THRESHOLD && currentIndex > 0) {
+        goToPrevious();
+      }
+    },
+    [scale, currentIndex, images.length, goToNext, goToPrevious],
+  );
 
   // Handle share
   const handleShare = useCallback(() => {
@@ -197,6 +227,38 @@ export default function ImageLightbox({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, goToPrevious, goToNext, onClose]);
 
+  /**
+   * The viewer behaves like a screen, so Back has to dismiss it.
+   *
+   * Without an entry of its own, an iOS edge-swipe (or the browser Back button)
+   * while the viewer is open pops the *page* — the user lands back in the
+   * catalog instead of on the product they were looking at. Opening pushes a
+   * throwaway entry; Back consumes that entry and only closes the viewer, and
+   * closing any other way (X, Escape, swipe-down) pops the entry back off so
+   * history doesn't accumulate dead steps.
+   */
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    window.history.pushState({ lightbox: true }, '');
+
+    const handlePopState = () => closeRef.current();
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      // Only unwind our own entry: if the pop already happened (Back) or the
+      // app navigated elsewhere, the marker is gone and going back would
+      // undo a real navigation.
+      if (window.history.state?.lightbox) {
+        window.history.back();
+      }
+    };
+  }, [isOpen]);
+
   if (!isOpen || images.length === 0) return null;
 
   const currentImage = images[currentIndex];
@@ -207,287 +269,315 @@ export default function ImageLightbox({
       <AnimatePresence>
         {isOpen && (
           <FocusTrap open={isOpen}>
-          <motion.div
-            ref={dialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Visor de imágenes - ${currentIndex + 1} de ${images.length}`}
-            tabIndex={-1}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: zIndex.modal,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              outline: 'none',
-            }}
-          >
-            {/* Backdrop */}
-            <Box
-              onClick={handleClose}
-              sx={{
-                position: 'absolute',
+            <motion.div
+              ref={dialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Visor de imágenes - ${currentIndex + 1} de ${images.length}`}
+              tabIndex={-1}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              style={{
+                position: 'fixed',
                 inset: 0,
-                bgcolor: alpha(darkTokens.background.app, opacity * 0.95),
-                transition: cssTransition.fast,
-              }}
-            />
-
-            {/* Header - Close and Share buttons */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
+                zIndex: zIndex.modal,
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
-                p: 2,
-                pt: 'calc(env(safe-area-inset-top) + 16px)',
-                zIndex: zIndex.base,
+                justifyContent: 'center',
+                outline: 'none',
               }}
             >
-              <IconButton
+              {/* Backdrop */}
+              <Box
                 onClick={handleClose}
-                aria-label="Cerrar visor"
                 sx={{
-                  width: 44,
-                  height: 44,
-                  color: lightTokens.text.inverse,
-                  bgcolor: alpha(lightTokens.background.surface, 0.1),
-                  backdropFilter: `blur(${blurValues.sm})`,
-                  '&:hover': { bgcolor: alpha(lightTokens.background.surface, 0.2) },
+                  position: 'absolute',
+                  inset: 0,
+                  bgcolor: alpha(darkTokens.background.app, opacity * 0.95),
+                  transition: cssTransition.fast,
+                }}
+              />
+
+              {/* Header - Close and Share buttons */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  p: 2,
+                  pt: 'calc(env(safe-area-inset-top) + 16px)',
+                  zIndex: CHROME_Z,
                 }}
               >
-                <X size={24} />
-              </IconButton>
-
-              {onShare && (
                 <IconButton
-                  onClick={handleShare}
-                  aria-label="Compartir imagen"
+                  onClick={handleClose}
+                  aria-label="Cerrar visor"
                   sx={{
                     width: 44,
                     height: 44,
                     color: lightTokens.text.inverse,
                     bgcolor: alpha(lightTokens.background.surface, 0.1),
                     backdropFilter: `blur(${blurValues.sm})`,
-                    '&:hover': { bgcolor: alpha(lightTokens.background.surface, 0.2) },
+                    '&:hover': {
+                      bgcolor: alpha(lightTokens.background.surface, 0.2),
+                    },
                   }}
                 >
-                  <Share2 size={24} />
+                  <X size={24} />
                 </IconButton>
-              )}
-            </Box>
 
-            {/* Main Image Container - Wrapped with ProtectedContent for screenshot deterrent */}
-            <ProtectedContent blurIntensity={30}>
-              <motion.div
-                drag={scale === 1 ? 'x' : false}
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.2}
-                onDragEnd={handleDragEnd}
-                animate={controls}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transform: `translateY(${translateY}px)`,
-                }}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-                onClick={handleTap}
-              >
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentIndex}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.2 }}
-                    style={{
-                      position: 'relative',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      maxWidth: '100%',
-                      maxHeight: '90vh',
+                {onShare && (
+                  <IconButton
+                    onClick={handleShare}
+                    aria-label="Compartir imagen"
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      color: lightTokens.text.inverse,
+                      bgcolor: alpha(lightTokens.background.surface, 0.1),
+                      backdropFilter: `blur(${blurValues.sm})`,
+                      '&:hover': {
+                        bgcolor: alpha(lightTokens.background.surface, 0.2),
+                      },
                     }}
                   >
-                    <img
-                      src={currentImage.url}
-                      alt={currentImage.alt || `Image ${currentIndex + 1}`}
-                      onContextMenu={(e) => e.preventDefault()}
+                    <Share2 size={24} />
+                  </IconButton>
+                )}
+              </Box>
+
+              {/* Main Image Container - Wrapped with ProtectedContent for screenshot deterrent */}
+              <ProtectedContent blurIntensity={30}>
+                <motion.div
+                  drag={scale === 1 ? 'x' : false}
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.2}
+                  onDragEnd={handleDragEnd}
+                  animate={controls}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transform: `translateY(${translateY}px)`,
+                  }}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  onClick={handleTap}
+                >
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentIndex}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.2 }}
                       style={{
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         maxWidth: '100%',
                         maxHeight: '90vh',
-                        objectFit: 'contain',
-                        transform: `scale(${scale})`,
-                        transition: cssTransition.default,
-                        touchAction: 'none',
-                        userSelect: 'none',
-                        WebkitUserDrag: 'none',
-                        WebkitTouchCallout: 'none',
-                        pointerEvents: 'none',
-                      } as React.CSSProperties}
-                      draggable={false}
-                    />
-                  </motion.div>
-                </AnimatePresence>
-              </motion.div>
-            </ProtectedContent>
-
-            {/* Navigation Arrows */}
-            {images.length > 1 && (
-              <>
-                {/* Previous */}
-                {currentIndex > 0 && (
-                  <IconButton
-                    onClick={goToPrevious}
-                    aria-label={t.accessibility.previousImage}
-                    sx={{
-                      position: 'absolute',
-                      left: 16,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      width: 44,
-                      height: 44,
-                      color: lightTokens.text.inverse,
-                      bgcolor: alpha(lightTokens.background.surface, 0.1),
-                      backdropFilter: `blur(${blurValues.sm})`,
-                      '&:hover': { bgcolor: alpha(lightTokens.background.surface, 0.2) },
-                    }}
-                  >
-                    <ChevronLeft size={28} />
-                  </IconButton>
-                )}
-
-                {/* Next */}
-                {currentIndex < images.length - 1 && (
-                  <IconButton
-                    onClick={goToNext}
-                    aria-label={t.accessibility.nextImage}
-                    sx={{
-                      position: 'absolute',
-                      right: 16,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      width: 44,
-                      height: 44,
-                      color: lightTokens.text.inverse,
-                      bgcolor: alpha(lightTokens.background.surface, 0.1),
-                      backdropFilter: `blur(${blurValues.sm})`,
-                      '&:hover': { bgcolor: alpha(lightTokens.background.surface, 0.2) },
-                    }}
-                  >
-                    <ChevronRight size={28} />
-                  </IconButton>
-                )}
-              </>
-            )}
-
-            {/* Footer - Progress indicator */}
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                pb: 'calc(env(safe-area-inset-bottom) + 24px)',
-                zIndex: zIndex.base,
-              }}
-            >
-              {/* Dot indicators */}
-              {images.length > 1 && images.length <= 10 && (
-                <Box role="tablist" aria-label="Indicadores de imagen" sx={{ display: 'flex', gap: 0.75, mb: 1 }}>
-                  {images.map((_, index) => (
-                    <Box
-                      key={index}
-                      role="tab"
-                      tabIndex={0}
-                      aria-selected={index === currentIndex}
-                      aria-label={`Imagen ${index + 1} de ${images.length}`}
-                      onClick={() => { setCurrentIndex(index); setScale(1); }}
-                      onKeyDown={(e: React.KeyboardEvent) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          setCurrentIndex(index);
-                          setScale(1);
-                        } else if (e.key === 'ArrowRight' && index < images.length - 1) {
-                          e.preventDefault();
-                          (e.currentTarget.nextElementSibling as HTMLElement)?.focus();
-                        } else if (e.key === 'ArrowLeft' && index > 0) {
-                          e.preventDefault();
-                          (e.currentTarget.previousElementSibling as HTMLElement)?.focus();
-                        }
                       }}
+                    >
+                      <img
+                        src={currentImage.url}
+                        alt={currentImage.alt || `Image ${currentIndex + 1}`}
+                        onContextMenu={(e) => e.preventDefault()}
+                        style={
+                          {
+                            maxWidth: '100%',
+                            maxHeight: '90vh',
+                            objectFit: 'contain',
+                            transform: `scale(${scale})`,
+                            transition: cssTransition.default,
+                            touchAction: 'none',
+                            userSelect: 'none',
+                            WebkitUserDrag: 'none',
+                            WebkitTouchCallout: 'none',
+                            pointerEvents: 'none',
+                          } as React.CSSProperties
+                        }
+                        draggable={false}
+                      />
+                    </motion.div>
+                  </AnimatePresence>
+                </motion.div>
+              </ProtectedContent>
+
+              {/* Navigation Arrows */}
+              {images.length > 1 && (
+                <>
+                  {/* Previous */}
+                  {currentIndex > 0 && (
+                    <IconButton
+                      onClick={goToPrevious}
+                      aria-label={t.accessibility.previousImage}
                       sx={{
-                        // Opts out of the global border-box reset — see the
-                        // matching dot in HeroGallery. The visible dot is the
-                        // content box, so the 19px touch-target padding would
-                        // otherwise clamp it to zero. Leaf element, safe.
-                        boxSizing: 'content-box',
-                        width: index === currentIndex ? 16 : 6,
-                        height: 6,
-                        borderRadius: 3,
-                        bgcolor: index === currentIndex
-                          ? lightTokens.text.inverse
-                          : alpha(lightTokens.text.inverse, 0.4),
-                        transition: cssTransition.default,
-                        cursor: 'pointer',
-                        // 44px touch target via padding
-                        p: '19px',
-                        m: '-19px',
-                        backgroundClip: 'content-box',
-                        '&:focus-visible': {
-                          outline: `2px solid ${lightTokens.text.inverse}`,
-                          outlineOffset: 2,
+                        position: 'absolute',
+                        left: 16,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        zIndex: CHROME_Z,
+                        width: 44,
+                        height: 44,
+                        color: lightTokens.text.inverse,
+                        bgcolor: alpha(lightTokens.background.surface, 0.1),
+                        backdropFilter: `blur(${blurValues.sm})`,
+                        '&:hover': {
+                          bgcolor: alpha(lightTokens.background.surface, 0.2),
                         },
                       }}
-                    />
-                  ))}
-                </Box>
+                    >
+                      <ChevronLeft size={28} />
+                    </IconButton>
+                  )}
+
+                  {/* Next */}
+                  {currentIndex < images.length - 1 && (
+                    <IconButton
+                      onClick={goToNext}
+                      aria-label={t.accessibility.nextImage}
+                      sx={{
+                        position: 'absolute',
+                        right: 16,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        zIndex: CHROME_Z,
+                        width: 44,
+                        height: 44,
+                        color: lightTokens.text.inverse,
+                        bgcolor: alpha(lightTokens.background.surface, 0.1),
+                        backdropFilter: `blur(${blurValues.sm})`,
+                        '&:hover': {
+                          bgcolor: alpha(lightTokens.background.surface, 0.2),
+                        },
+                      }}
+                    >
+                      <ChevronRight size={28} />
+                    </IconButton>
+                  )}
+                </>
               )}
 
-              {/* Counter for many images */}
-              {images.length > 10 && (
-                <Typography
-                  sx={{
-                    color: alpha(lightTokens.text.inverse, 0.7),
-                    fontSize: '14px',
-                    fontWeight: 500,
-                  }}
-                >
-                  {currentIndex + 1} / {images.length}
-                </Typography>
-              )}
+              {/* Footer - Progress indicator */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  pb: 'calc(env(safe-area-inset-bottom) + 24px)',
+                  zIndex: CHROME_Z,
+                }}
+              >
+                {/* Dot indicators */}
+                {images.length > 1 && images.length <= 10 && (
+                  <Box
+                    role="tablist"
+                    aria-label="Indicadores de imagen"
+                    sx={{ display: 'flex', gap: 0.75, mb: 1 }}
+                  >
+                    {images.map((_, index) => (
+                      <Box
+                        key={index}
+                        role="tab"
+                        tabIndex={0}
+                        aria-selected={index === currentIndex}
+                        aria-label={`Imagen ${index + 1} de ${images.length}`}
+                        onClick={() => {
+                          setCurrentIndex(index);
+                          setScale(1);
+                        }}
+                        onKeyDown={(e: React.KeyboardEvent) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setCurrentIndex(index);
+                            setScale(1);
+                          } else if (
+                            e.key === 'ArrowRight' &&
+                            index < images.length - 1
+                          ) {
+                            e.preventDefault();
+                            (
+                              e.currentTarget.nextElementSibling as HTMLElement
+                            )?.focus();
+                          } else if (e.key === 'ArrowLeft' && index > 0) {
+                            e.preventDefault();
+                            (
+                              e.currentTarget
+                                .previousElementSibling as HTMLElement
+                            )?.focus();
+                          }
+                        }}
+                        sx={{
+                          // Opts out of the global border-box reset — see the
+                          // matching dot in HeroGallery. The visible dot is the
+                          // content box, so the 19px touch-target padding would
+                          // otherwise clamp it to zero. Leaf element, safe.
+                          boxSizing: 'content-box',
+                          width: index === currentIndex ? 16 : 6,
+                          height: 6,
+                          borderRadius: 3,
+                          bgcolor:
+                            index === currentIndex
+                              ? lightTokens.text.inverse
+                              : alpha(lightTokens.text.inverse, 0.4),
+                          transition: cssTransition.default,
+                          cursor: 'pointer',
+                          // 44px touch target via padding
+                          p: '19px',
+                          m: '-19px',
+                          backgroundClip: 'content-box',
+                          '&:focus-visible': {
+                            outline: `2px solid ${lightTokens.text.inverse}`,
+                            outlineOffset: 2,
+                          },
+                        }}
+                      />
+                    ))}
+                  </Box>
+                )}
 
-              {/* Zoom hint */}
-              {scale === 1 && (
-                <Typography
-                  sx={{
-                    color: alpha(lightTokens.text.inverse, 0.5),
-                    fontSize: '12px',
-                    mt: 1,
-                  }}
-                >
-                  Doble tap para zoom
-                </Typography>
-              )}
-            </Box>
-          </motion.div>
+                {/* Counter for many images */}
+                {images.length > 10 && (
+                  <Typography
+                    sx={{
+                      color: alpha(lightTokens.text.inverse, 0.7),
+                      fontSize: '14px',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {currentIndex + 1} / {images.length}
+                  </Typography>
+                )}
+
+                {/* Zoom hint */}
+                {scale === 1 && (
+                  <Typography
+                    sx={{
+                      color: alpha(lightTokens.text.inverse, 0.5),
+                      fontSize: '12px',
+                      mt: 1,
+                    }}
+                  >
+                    Doble tap para zoom
+                  </Typography>
+                )}
+              </Box>
+            </motion.div>
           </FocusTrap>
         )}
       </AnimatePresence>

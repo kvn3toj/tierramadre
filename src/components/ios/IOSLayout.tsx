@@ -176,10 +176,24 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
     mode: 'compact',
     showBackButton: true,
   },
+  // The three routes that all render ProductDetail. The page carries its own
+  // FICHA header (back arrow + código + acciones), so the shell bar above it is
+  // pure brand — the mark, not the name spelled out. `/p/` keeps the trailing
+  // slash on purpose: bare `/p` would also swallow `/provider`.
   '/product': {
     title: t.pages.gallery.title,
     mode: 'compact',
-    showBackButton: true,
+    navBrand: 'lockup',
+  },
+  '/p/': {
+    title: t.pages.gallery.title,
+    mode: 'compact',
+    navBrand: 'lockup',
+  },
+  '/grupo/': {
+    title: t.pages.gallery.title,
+    mode: 'compact',
+    navBrand: 'lockup',
   },
   '/cuentas/cotizaciones': {
     title: t.pages.cotizacion.title,
