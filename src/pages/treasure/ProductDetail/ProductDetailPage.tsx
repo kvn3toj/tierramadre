@@ -61,7 +61,6 @@ import { scrollMainTo } from '../../../utils/mainScroll';
 import { activeLotePiece, resolveLoteDetail } from './loteDetail';
 import { getQuietEmerald, qeFont } from '../../../design-system';
 import { useRedesignVariant } from '../../../hooks/useRedesignVariant';
-import RedesignVariantToggle from '../../../components/redesign/RedesignVariantToggle';
 import { formatCarats } from '../../../utils/formatting';
 import {
   FormulaPanel,
@@ -938,8 +937,6 @@ export default function ProductDetail() {
           },
         }}
       />
-
-      <RedesignVariantToggle />
     </Box>
   );
 }
