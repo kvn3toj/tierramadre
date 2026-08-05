@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { PUBLIC_KEYS } from '../api/_lib/catalogProjection';
+import { PUBLIC_KEYS, toPublicItem } from '../api/_lib/catalogProjection';
+import type { TreasureItem } from '../src/types/index.ts';
 
 const SENSITIVE = [
   'precioCOP',
@@ -23,7 +24,14 @@ describe('PUBLIC_KEYS', () => {
     }
   });
 
-  it('is exactly the 11 fields the spec approved', () => {
+  it('is exactly the 18 fields the spec approved (11 catalog + 7 media)', () => {
+    // The 7 media fields (imagen, mediaType, thumbnailUrl, videoUrl,
+    // posterUrl, galleryCount, tinyThumb) were deliberately promoted from
+    // WITHHELD_KEYS in the Task 7 fix round: they're images/video already
+    // served publicly through the Drive proxy and thumbnail endpoints
+    // (get-batch-thumbnails, get-drive-images), so withholding them from
+    // the catalog projection protected nothing while breaking public pages
+    // (get-collection.js's `/c/:folder`) that need them to render a card.
     expect([...PUBLIC_KEYS].sort()).toEqual(
       [
         'calidad',
@@ -37,8 +45,79 @@ describe('PUBLIC_KEYS', () => {
         'nombre',
         'peso',
         'talla',
+        'imagen',
+        'mediaType',
+        'thumbnailUrl',
+        'videoUrl',
+        'posterUrl',
+        'galleryCount',
+        'tinyThumb',
       ].sort(),
     );
+  });
+
+  it('does not change get-treasure-sheets: its rows never populate the media fields, so the projected payload is unchanged', () => {
+    // get-treasure-sheets.ts's own doc comment lists its rows as one of 23
+    // named keys, none of them media — this fixture mirrors that shape (no
+    // imagen/thumbnailUrl/etc). Widening PUBLIC_KEYS to include media only
+    // changes output when a source item actually HAS a media value; on a
+    // row that never sets one, toPublicItem assigns `imagen: undefined`
+    // etc, and JSON.stringify (what actually goes over the wire) drops
+    // undefined-valued keys — so the HTTP response is byte-identical.
+    const row = {
+      item: 1,
+      nombre: 'Rey Midas',
+      peso: 1.47,
+      color: 'Verde Natural',
+      calidad: 'COMERCIAL FINA',
+      talla: 'Esmeralda',
+      medidas: '',
+      medidasValores: '',
+      categoria: 'Gema',
+      coleccion: '#4000',
+      isJewelry: false,
+      // No imagen/mediaType/thumbnailUrl/videoUrl/posterUrl/galleryCount/
+      // tinyThumb — matches what mapRowToTreasureItem produces when the SOT
+      // row has no Fotosíntesis-captured fotoUrl.
+    } as unknown as TreasureItem;
+
+    const out = toPublicItem(row);
+    const overWire = JSON.parse(JSON.stringify(out));
+    expect(Object.keys(overWire).sort()).toEqual(
+      [
+        'item',
+        'nombre',
+        'peso',
+        'color',
+        'calidad',
+        'talla',
+        'medidas',
+        'medidasValores',
+        'categoria',
+        'coleccion',
+        'isJewelry',
+      ].sort(),
+    );
+  });
+
+  it('DOES surface a media field once populated (the intended widening, not a regression)', () => {
+    // The one case where get-treasure-sheets' output actually changes:
+    // mapRowToTreasureItem sets `imagen`/`thumbnailUrl` when the SOT row
+    // carries a Fotosíntesis-captured `fotoUrl` (get-treasure-sheets.ts,
+    // "Fotosíntesis-captured photo" block). Before this fix that photo was
+    // stripped from anon/vitrina-excluded rows; now it is shown — safe, per
+    // the same reasoning that already exempts get-batch-thumbnails/
+    // get-drive-images from gating.
+    const row = {
+      item: 1,
+      nombre: 'Rey Midas',
+      imagen: '/api/serve-drive-image?fileId=abc123',
+      thumbnailUrl: '/api/serve-drive-image?fileId=abc123',
+    } as unknown as TreasureItem;
+
+    const out = toPublicItem(row) as Record<string, unknown>;
+    expect(out.imagen).toBe('/api/serve-drive-image?fileId=abc123');
+    expect(out.thumbnailUrl).toBe('/api/serve-drive-image?fileId=abc123');
   });
 });
 

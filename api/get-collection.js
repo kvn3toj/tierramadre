@@ -142,7 +142,7 @@ export default withApiHandler(
     }
 
     // 5. Merge thumbnail URLs into product data
-    const rawProducts = (collectionData.products || []).map((product) => {
+    const mergedProducts = (collectionData.products || []).map((product) => {
       const thumb = thumbnails[product.item];
       return {
         ...product,
@@ -162,20 +162,15 @@ export default withApiHandler(
     // peso, precioCOP, precioInternacional, talla — see
     // scripts/UPDATE_COLLECTION_JSON.md's template) and this page is public
     // (`/c/:folder`, no auth guard in App.tsx), so projectForGrant applies
-    // exactly like the treasure endpoint. But projectForGrant/toPublicItem
-    // also strips videoUrl/posterUrl/imagen/mediaType — they're classified
-    // WITHHELD_KEYS on TreasureItem, yet here they're plain Drive-proxy
-    // media URLs (not commercially sensitive; same treatment the design
-    // gives get-batch-thumbnails/get-drive-images), and the page cannot
-    // render a card without them. Re-attach from the pre-projection copy.
-    const projectedProducts = projectForGrant(rawProducts, grant);
-    const products = projectedProducts.map((product, i) => ({
-      ...product,
-      videoUrl: rawProducts[i].videoUrl,
-      posterUrl: rawProducts[i].posterUrl,
-      imagen: rawProducts[i].imagen,
-      mediaType: rawProducts[i].mediaType,
-    }));
+    // exactly like the treasure endpoint: it strips price/ubicación/asesor
+    // for anon/vitrina-excluded items. The media fields
+    // (imagen/mediaType/thumbnailUrl/videoUrl/posterUrl) are PUBLIC_KEYS —
+    // deliberately promoted there (see catalogProjection.ts) because they're
+    // already served publicly through the Drive proxy regardless of grant —
+    // so projectForGrant alone produces the right shape; no re-attachment
+    // needed (a prior version index-coupled a re-spread here, which bypassed
+    // the allowlist unseen by the exhaustiveness check — removed).
+    const products = projectForGrant(mergedProducts, grant);
 
     return sendSuccess(res, {
       collection: {

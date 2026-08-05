@@ -10,7 +10,19 @@
  */
 import type { TreasureItem } from '../../src/types/index.ts';
 
-/** The only fields an anonymous caller ever sees. */
+/**
+ * The only fields an anonymous caller ever sees.
+ *
+ * Includes the seven media fields (imagen, mediaType, thumbnailUrl,
+ * videoUrl, posterUrl, galleryCount, tinyThumb) — deliberately promoted from
+ * WITHHELD_KEYS on 2026-08-05 (Task 7 fix round). They are images/video
+ * already served publicly through the Drive proxy and thumbnail endpoints
+ * (get-batch-thumbnails, get-drive-images — never gated), so withholding
+ * them here protected nothing while breaking public pages that need them to
+ * render a card (e.g. get-collection.js's `/c/:folder`). Do not promote
+ * anything else this way without the same reasoning: "already public
+ * elsewhere, unconditionally."
+ */
 export const PUBLIC_KEYS = [
   'item',
   'nombre',
@@ -23,18 +35,6 @@ export const PUBLIC_KEYS = [
   'categoria',
   'coleccion',
   'isJewelry',
-] as const;
-
-/**
- * Everything else on TreasureItem. Listed explicitly so the exhaustiveness
- * check below can prove no field is unclassified. Several of these
- * (procedencia, mina, tipoEsmeralda, tratamiento, certificateUrl, the media
- * fields) are plausible future public fields — promote them deliberately by
- * moving them to PUBLIC_KEYS, never by loosening the projection.
- */
-export const WITHHELD_KEYS = [
-  'fechaIngreso',
-  'cantidad',
   'imagen',
   'mediaType',
   'thumbnailUrl',
@@ -42,6 +42,18 @@ export const WITHHELD_KEYS = [
   'posterUrl',
   'galleryCount',
   'tinyThumb',
+] as const;
+
+/**
+ * Everything else on TreasureItem. Listed explicitly so the exhaustiveness
+ * check below can prove no field is unclassified. Several of these
+ * (procedencia, mina, tipoEsmeralda, tratamiento, certificateUrl) are
+ * plausible future public fields — promote them deliberately by moving them
+ * to PUBLIC_KEYS, never by loosening the projection.
+ */
+export const WITHHELD_KEYS = [
+  'fechaIngreso',
+  'cantidad',
   'costoTM',
   'precioCOP',
   'precioInternacional',
@@ -117,6 +129,13 @@ export function toPublicItem(item: TreasureItem): PublicItem {
     categoria: item.categoria,
     coleccion: item.coleccion,
     isJewelry: item.isJewelry,
+    imagen: item.imagen,
+    mediaType: item.mediaType,
+    thumbnailUrl: item.thumbnailUrl,
+    videoUrl: item.videoUrl,
+    posterUrl: item.posterUrl,
+    galleryCount: item.galleryCount,
+    tinyThumb: item.tinyThumb,
   };
 }
 
