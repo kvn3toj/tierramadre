@@ -26,7 +26,7 @@ import {
 } from './useFotosintesisCatalog';
 import { convertToProxyUrl } from '../utils/driveUrl';
 
-export function useTreasure() {
+export function useTreasure({ vitrinaToken }: { vitrinaToken?: string } = {}) {
   // Google Sheets data
   const {
     sheetsTreasure,
@@ -34,7 +34,7 @@ export function useTreasure() {
     error: sheetsError,
     refresh: refreshFromSheets,
     isUsingSheets,
-  } = useSheetsTreasure();
+  } = useSheetsTreasure(vitrinaToken);
 
   // Media management (legacy + gallery)
   const {

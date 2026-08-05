@@ -19,6 +19,8 @@ import {
   parsePrice,
   parseDecimal,
 } from './_lib/index.js';
+import { resolveGrant, bearerWasRejected } from './_lib/catalogGrant.js';
+import { lookupVitrina } from './_lib/vitrinaLookup.js';
 
 type PesoParsed =
   | { value: number | string; isJewelry: true; metalType: 'Plata' | 'Oro 18k' }
@@ -312,6 +314,8 @@ export default withApiHandler(
     ctx: Record<string, unknown>,
   ) => {
     const { sheets } = ctx as { sheets: sheets_v4.Sheets };
+    const grant = await resolveGrant(req, { lookupVitrina });
+    console.log('[catalog] grant', grant.kind);
     const sheetNames = await getSheetNames(sheets);
     const targetSheet =
       findSheetByPattern(sheetNames, ['inventario', 'inventory']) ||
@@ -335,6 +339,7 @@ export default withApiHandler(
       return sendSuccess(res, {
         treasure: [],
         message: 'No data found in spreadsheet',
+        ...(bearerWasRejected(req, grant) ? { tokenRejected: true } : {}),
       });
     }
 
@@ -380,6 +385,7 @@ export default withApiHandler(
       count: treasure.length,
       sheetName: targetSheet,
       lastUpdated: new Date().toISOString(),
+      ...(bearerWasRejected(req, grant) ? { tokenRejected: true } : {}),
       ...(includeDebug
         ? {
             _debug: {

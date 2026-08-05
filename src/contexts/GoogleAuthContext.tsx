@@ -24,6 +24,7 @@ import {
 } from '../utils/sessionToken';
 import type { AccessLevel } from '../types/auth';
 import { STORAGE_KEYS } from '../constants/storage-keys';
+import { clearTreasureCaches } from '../hooks/treasureCacheKey';
 
 const log = createLogger('Auth');
 
@@ -191,6 +192,9 @@ export function GoogleAuthProvider({
               localStorage.removeItem(GOOGLE_PREFS_KEY);
               localStorage.removeItem(GOOGLE_TOKEN_KEY);
               clearAppSession();
+              // The catalog cache outlives the session otherwise — see
+              // .superpowers/sdd/2026-08-05-control-de-acceso-al-catalogo/task-5-report.md
+              clearTreasureCaches();
               setUser(null);
               setPreferences({});
               setIsAuthorized(false);
@@ -494,6 +498,9 @@ export function GoogleAuthProvider({
     localStorage.removeItem(GOOGLE_PREFS_KEY);
     localStorage.removeItem(GOOGLE_TOKEN_KEY);
     clearAppSession();
+    // The catalog cache outlives the session otherwise — see
+    // .superpowers/sdd/2026-08-05-control-de-acceso-al-catalogo/task-5-report.md
+    clearTreasureCaches();
     onSignedOut?.();
   }, [onSignedOut]);
 

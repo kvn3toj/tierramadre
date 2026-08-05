@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { TreasureItem } from '../types';
+import { catalogRequestInit } from '../utils/catalogAuthHeaders';
 
 interface CollectionInfo {
   name: string;
@@ -44,7 +45,9 @@ function readCache(folder: string): CollectionCache | null {
   }
 }
 
-export function useAsesorCollection(collectionFolder: string | null): UseAsesorCollectionReturn {
+export function useAsesorCollection(
+  collectionFolder: string | null,
+): UseAsesorCollectionReturn {
   const [data, setData] = useState<CollectionCache | null>(() => {
     if (!collectionFolder) return null;
     return readCache(collectionFolder);
@@ -56,7 +59,10 @@ export function useAsesorCollection(collectionFolder: string | null): UseAsesorC
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/get-collection?folder=${encodeURIComponent(folder)}`);
+      const response = await fetch(
+        `/api/get-collection?folder=${encodeURIComponent(folder)}`,
+        catalogRequestInit(),
+      );
       if (!response.ok) {
         throw new Error(`Failed to fetch collection (${response.status})`);
       }
