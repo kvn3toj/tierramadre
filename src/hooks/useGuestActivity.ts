@@ -65,12 +65,20 @@ export function useGuestActivity(
     }));
   }, [convexData]);
 
-  // REST fallback: always fetch from Sheets API for historical data
+  // REST fallback: always fetch from Sheets API for historical data.
+  // action=by-inviter is session-gated (2026-08-06, PII lockdown) — read the
+  // token fresh at call time (never at module scope).
   const fetchRest = useCallback(() => {
     if (!inviterName) return;
     setRestLoading(true);
+    const sessionToken = readFreshSessionToken();
     fetch(
       `/api/product-views?action=by-inviter&inviterName=${encodeURIComponent(inviterName)}&limit=${limit}`,
+      {
+        headers: sessionToken
+          ? { Authorization: `Bearer ${sessionToken}` }
+          : undefined,
+      },
     )
       .then((r) => r.json())
       .then((data) => {

@@ -34,7 +34,7 @@
     "api/product-requests.js": {
       "maxDuration": 30
     },
-    "api/product-views.js": {
+    "api/product-views.ts": {
       "maxDuration": 30
     },
     "api/drive-diagnostics.js": {
