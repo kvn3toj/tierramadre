@@ -6,7 +6,11 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import type { CreatorInvitation, ListByCreatorResponse } from '../types/creatorInvitations';
+import type {
+  CreatorInvitation,
+  ListByCreatorResponse,
+} from '../types/creatorInvitations';
+import { ensureAppSession, readFreshSessionToken } from '../utils/sessionToken';
 
 interface UseCreatorInvitationsReturn {
   invitations: CreatorInvitation[];
@@ -18,7 +22,7 @@ interface UseCreatorInvitationsReturn {
 }
 
 export function useCreatorInvitations(
-  creatorEmail: string | null | undefined
+  creatorEmail: string | null | undefined,
 ): UseCreatorInvitationsReturn {
   const [invitations, setInvitations] = useState<CreatorInvitation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -34,8 +38,19 @@ export function useCreatorInvitations(
     setError(null);
 
     try {
+      // 2026-08-06, PII lockdown item 3: the endpoint now requires a `tms1`
+      // session token. AWAIT the mint (not the fire-and-forget
+      // `void ensureAppSession()` GoogleAuthContext's sign-in already
+      // triggered) — otherwise this hook's first fetch after sign-in can
+      // race it and get a 401 (same race useSheetsTreasure.ts's N2 fix
+      // covers). Cheap when there's nothing to do.
+      await ensureAppSession();
+      const sessionToken = readFreshSessionToken();
       const response = await fetch(
-        `/api/invitations?action=list-by-creator&creatorEmail=${encodeURIComponent(creatorEmail)}`
+        `/api/invitations?action=list-by-creator&creatorEmail=${encodeURIComponent(creatorEmail)}`,
+        sessionToken
+          ? { headers: { Authorization: `Bearer ${sessionToken}` } }
+          : undefined,
       );
       const data: ListByCreatorResponse = await response.json();
 
@@ -63,10 +78,10 @@ export function useCreatorInvitations(
       if (!name || name.length < 2) return false;
       const normalizedName = name.toLowerCase().trim();
       return invitations.some(
-        (inv) => inv.guestName?.toLowerCase().trim() === normalizedName
+        (inv) => inv.guestName?.toLowerCase().trim() === normalizedName,
       );
     },
-    [invitations]
+    [invitations],
   );
 
   const findInvitationByName = useCallback(
@@ -74,10 +89,10 @@ export function useCreatorInvitations(
       if (!name || name.length < 2) return undefined;
       const normalizedName = name.toLowerCase().trim();
       return invitations.find(
-        (inv) => inv.guestName?.toLowerCase().trim() === normalizedName
+        (inv) => inv.guestName?.toLowerCase().trim() === normalizedName,
       );
     },
-    [invitations]
+    [invitations],
   );
 
   return {

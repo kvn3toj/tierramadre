@@ -50,8 +50,23 @@ const providerPatchValidator = v.object({
  * matching your stated `{_id, nombreORazonSocial}` shape: `nit` is a business
  * tax id (public-register information in Colombia), not a personal cédula,
  * and the bot's own code already depends on it to disambiguate providers
- * with the same name. If you want it blanked too, add `nit: undefined` to
- * the redaction below — one line.
+ * with the same name. If you want it blanked too, add it to the constructed
+ * projection below — one line.
+ *
+ * PII lockdown item 2 (2026-08-06) fixed two more holes in the bot path:
+ *
+ * 1. `search` used to run against `row.cedula`/`row.email` BEFORE the bot
+ *    redaction — a bot-secret caller could use it as a substring oracle
+ *    (probe one character, see which provider still appears in the result)
+ *    and recover a supplier's full cédula in ~10 calls per character even
+ *    though the OUTPUT was redacted. The bot branch now matches only
+ *    `nombreORazonSocial`/`nit`; the staff branch is unchanged.
+ * 2. The redaction was `{ ...p, cedula: undefined, ... }` — a spread that
+ *    ships every future schema field to the bot by default (fail OPEN: add
+ *    a new PII column later and it leaks silently). Replaced with a
+ *    constructed object that NAMES every field explicitly (fail closed: a
+ *    new column simply doesn't appear until someone deliberately adds it
+ *    here). Staff still get the full, unprojected document.
  */
 export const list = query({
   args: {
@@ -64,9 +79,17 @@ export const list = query({
     const bot = !staff && isBotSecret(botSecret);
     if (!staff && !bot) return [];
     const all = await ctx.db.query('providers').collect();
-    const filtered = search
+    const s = search?.toLowerCase();
+    const filtered = s
       ? all.filter((row) => {
-          const s = search.toLowerCase();
+          if (bot) {
+            // Public-register fields only — never cedula/email, or `search`
+            // becomes a PII substring oracle for a bot-secret caller.
+            return (
+              row.nombreORazonSocial.toLowerCase().includes(s) ||
+              (row.nit ?? '').toLowerCase().includes(s)
+            );
+          }
           return (
             row.nombreORazonSocial.toLowerCase().includes(s) ||
             (row.nit ?? '').toLowerCase().includes(s) ||
@@ -79,8 +102,19 @@ export const list = query({
       a.nombreORazonSocial.localeCompare(b.nombreORazonSocial),
     );
     if (bot) {
+      // Constructed projection, not a spread — see doc comment above.
       return sorted.map((p) => ({
-        ...p,
+        _id: p._id,
+        _creationTime: p._creationTime,
+        nombreORazonSocial: p.nombreORazonSocial,
+        nit: p.nit,
+        tipo: p.tipo,
+        rowIndex: p.rowIndex,
+        lastPulledAt: p.lastPulledAt,
+        lastPushedAt: p.lastPushedAt,
+        syncStatus: p.syncStatus,
+        syncError: p.syncError,
+        pendingPreviousIdValue: p.pendingPreviousIdValue,
         cedula: undefined,
         direccion: undefined,
         telefono: undefined,

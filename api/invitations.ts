@@ -25,7 +25,24 @@ import {
 } from './_lib/index.js';
 import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
 import { isSessionToken, verifySessionToken } from './_lib/sessionToken.js';
+import { extractBearer } from './_lib/bearer.js';
 import { api } from '../convex/_generated/api.js';
+
+/**
+ * Verifies a `tms1` app session token from the `Authorization: Bearer …`
+ * header and returns its email, or null. Exported for tests. Same contract
+ * as `verifiedSessionEmail` in api/vitrina.ts — a raw Google ID token,
+ * whatever its shape, is not a session token and returns null here, which
+ * the `list-by-creator` handler below turns into a 401. (2026-08-06, PII
+ * lockdown item 3.)
+ */
+export function verifiedSessionEmail(
+  authHeader?: string | string[],
+): string | null {
+  const token = extractBearer(authHeader);
+  if (!token || !isSessionToken(token)) return null;
+  return verifySessionToken(token)?.email ?? null;
+}
 
 type Sheets = sheets_v4.Sheets;
 /** POST bodies use loose JSON shapes */
@@ -1260,9 +1277,15 @@ export default withApiHandler(
         return sendError(res, 400, 'guestContact is required');
       }
       if (isConvexEnabled && convexClient) {
+        // Server-to-server secret, not a browser credential — this REST
+        // action stays intentionally public (a guest checks their own
+        // history pre-registration, before they have any session). The
+        // secret proves to CONVEX that this Vercel layer is the trusted
+        // proxy, closing direct internet access to the deployment URL. See
+        // convex/invitations.ts's checkGuestHistory doc comment.
         const result = await convexClient.query(
           api.invitations.checkGuestHistory,
-          { guestContact },
+          { guestContact, secret: process.env.ADMIN_SYNC_TOKEN ?? '' },
         );
         return res.status(200).json({ success: true, ...result });
       }
@@ -1272,6 +1295,18 @@ export default withApiHandler(
 
     // GET - List invitations by creator
     if (req.method === 'GET' && action === 'list-by-creator') {
+      // Session-token gated (2026-08-06, PII lockdown item 3): this endpoint
+      // used to return `guestName`/`guestContact` (customer phone numbers
+      // and emails) to ANY request, unauthenticated — confirmed returning
+      // HTTP 200 to an anonymous request in production. A `tms1` session
+      // token (same as api/vitrina.ts's `verifiedSessionEmail`) is required
+      // now; it does not need to match `creatorEmail` — any authenticated
+      // staff member may look up any advisor's invitations, consistent with
+      // convex/invitations.ts's `listByCreator` gate.
+      const email = verifiedSessionEmail(req.headers['authorization']);
+      if (!email) {
+        return sendError(res, 401, 'Inicia sesión para ver invitaciones.');
+      }
       const rawCreator = req.query.creatorEmail;
       const creatorEmail = Array.isArray(rawCreator)
         ? rawCreator[0]
@@ -1280,9 +1315,11 @@ export default withApiHandler(
         return sendError(res, 400, 'creatorEmail is required');
       }
       if (isConvexEnabled && convexClient) {
+        const sessionToken =
+          extractBearer(req.headers['authorization']) ?? undefined;
         const invitations = await convexClient.query(
           api.invitations.listByCreator,
-          { creatorEmail },
+          { creatorEmail, sessionToken },
         );
         return res.status(200).json({
           success: true,
