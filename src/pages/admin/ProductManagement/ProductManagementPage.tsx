@@ -42,7 +42,10 @@ import {
 } from '../../../lib/convex-safe';
 import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
 import { useNotification } from '../../../contexts/NotificationContext';
-import { requireAuthTokenOrLogout } from '../../../utils/sessionToken';
+import {
+  requireAuthTokenOrLogout,
+  readFreshSessionToken,
+} from '../../../utils/sessionToken';
 
 import {
   AdminToolbar,
@@ -271,7 +274,12 @@ export default function ProductManagementPage() {
 
   const products = useConvexQuery(
     convexApi.products.list,
-    convexReady ? { estado: filterToEstado(filter) ?? undefined } : 'skip',
+    convexReady
+      ? {
+          estado: filterToEstado(filter) ?? undefined,
+          sessionToken: readFreshSessionToken() ?? undefined,
+        }
+      : 'skip',
   );
 
   // Deep-link: /admin/products?item=<itemId> opens the Bandeja inspector for

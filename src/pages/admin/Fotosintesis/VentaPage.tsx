@@ -25,6 +25,7 @@ import {
 } from '../../../lib/convex-safe';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 import { TicketHeader } from './components/TicketHeader';
 import { FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
 import { fotoPaneSx, fotoPageMinHeight } from './components/paneStyles';
@@ -324,14 +325,26 @@ export default function FotosintesisVentaPage({
 
   const lot = useConvexQuery(
     convexApi.lots.getByLoteId,
-    item?.loteId ? { loteId: item.loteId } : 'skip',
+    item?.loteId
+      ? {
+          loteId: item.loteId,
+          sessionToken: readFreshSessionToken() ?? undefined,
+        }
+      : 'skip',
   );
   const provider = useConvexQuery(
     convexApi.providers.get,
-    lot?.providerId ? { id: lot.providerId } : 'skip',
+    lot?.providerId
+      ? {
+          id: lot.providerId,
+          sessionToken: readFreshSessionToken() ?? undefined,
+        }
+      : 'skip',
   );
   // `clients.list` doesn't accept `tipo` — filter client-side.
-  const allClients = useConvexQuery(convexApi.clients.list, {});
+  const allClients = useConvexQuery(convexApi.clients.list, {
+    sessionToken: readFreshSessionToken() ?? undefined,
+  });
   const embajadores = useMemo(
     () => (allClients ?? []).filter((c) => c.tipo === 'embajador'),
     [allClients],
@@ -339,7 +352,9 @@ export default function FotosintesisVentaPage({
 
   const peeked = useConvexQuery(
     convexApi.sales.peekNextSaleId,
-    sede ? { sede } : 'skip',
+    sede
+      ? { sede, sessionToken: readFreshSessionToken() ?? undefined }
+      : 'skip',
   );
   const peekedSaleId = peeked?.preview ?? (sede ? `V${sede}-NEW` : 'V—');
 

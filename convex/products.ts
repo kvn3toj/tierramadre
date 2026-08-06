@@ -27,6 +27,7 @@ import {
 } from './_lib/publishedGroups';
 import { postToVercel } from './_lib/sheetSync';
 import { requireAccessLevel } from './_lib/authz';
+import { isStaffSession } from './_lib/requireStaffSession';
 import { withPublishStamp } from './_lib/publishState';
 import { precioEspecialDeObservacion } from './_lib/precioEspecial';
 import { omitFotosintesisOnly } from './_lib/saleSafe';
@@ -56,8 +57,10 @@ export const list = query({
       ),
     ),
     search: v.optional(v.string()),
+    sessionToken: v.optional(v.string()),
   },
-  handler: async (ctx, { estado, search }) => {
+  handler: async (ctx, { estado, search, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const rows = estado
       ? await ctx.db
           .query('productInventory')

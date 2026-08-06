@@ -10,6 +10,7 @@ import { pushTableRowToVercel } from './_lib/sheetSync';
 import { marshalRow } from './_lib/columnMaps';
 import { planAsesorUpsert } from './_lib/asesorSync';
 import { requireAccessLevel } from './_lib/authz';
+import { isStaffSession } from './_lib/requireStaffSession';
 import type { Id } from './_generated/dataModel';
 
 // Free text (canonical: embajador | final). The custom "Otro…" buyer type from
@@ -28,8 +29,12 @@ const clientPatchValidator = v.object({
 });
 
 export const list = query({
-  args: { search: v.optional(v.string()) },
-  handler: async (ctx, { search }) => {
+  args: {
+    search: v.optional(v.string()),
+    sessionToken: v.optional(v.string()),
+  },
+  handler: async (ctx, { search, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const all = await ctx.db.query('clients').collect();
     const filtered = search
       ? all.filter((row) => {
@@ -47,8 +52,11 @@ export const list = query({
 });
 
 export const get = query({
-  args: { id: v.id('clients') },
-  handler: async (ctx, { id }) => ctx.db.get(id),
+  args: { id: v.id('clients'), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { id, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
+    return ctx.db.get(id);
+  },
 });
 
 const createArgs = {

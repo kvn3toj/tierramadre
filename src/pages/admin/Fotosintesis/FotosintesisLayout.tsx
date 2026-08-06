@@ -12,6 +12,7 @@ import {
   fotoTabTheme,
 } from '../../../components/navigation/tabBarConfig';
 import { convexApi, useConvexClient } from '../../../lib/convex-safe';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 import { FotoTopbar, type Crumb } from './components/FotoTopbar';
 import { FotoRouteMenu } from './components/FotoRouteMenu';
 import { useFotosintesisHotkeys } from './hooks/useFotosintesisHotkeys';
@@ -73,7 +74,10 @@ export default function FotosintesisLayout() {
     (product: { itemId: string; loteId?: string }) => {
       if (!convexClient) return;
       convexClient
-        .query(convexApi.lotItems.getByItemId, { itemId: product.itemId })
+        .query(convexApi.lotItems.getByItemId, {
+          itemId: product.itemId,
+          sessionToken: readFreshSessionToken() ?? undefined,
+        })
         .then((lotItem) => {
           if (lotItem) {
             navigate(

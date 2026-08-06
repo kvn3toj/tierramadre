@@ -1,7 +1,7 @@
-import { useDeferredValue, useMemo, useState } from "react";
-import { Box, IconButton } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import { Link } from "react-router-dom";
+import { useDeferredValue, useMemo, useState } from 'react';
+import { Box, IconButton } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { Link } from 'react-router-dom';
 import {
   Search,
   X,
@@ -14,15 +14,16 @@ import {
   ExternalLink,
   Ban,
   CheckCircle2,
-} from "lucide-react";
-import { getFoto, fontFamilies } from "../../../design-system";
-import { useConvexQuery, convexApi } from "../../../lib/convex-safe";
-import { FOTO_TOPBAR_HEIGHT } from "./components/FotoTopbar";
-import { BOVEDAS } from "../../../data/vocabularies";
-import { resolveItemThumbnail } from "./utils/resolveThumbnail";
-import { driveDocViewUrl } from "./utils/uploadItemMedia";
-import { useBatchThumbnails } from "../../../hooks/useBatchThumbnails";
-import type { Doc } from "../../../../convex/_generated/dataModel";
+} from 'lucide-react';
+import { getFoto, fontFamilies } from '../../../design-system';
+import { useConvexQuery, convexApi } from '../../../lib/convex-safe';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
+import { FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
+import { BOVEDAS } from '../../../data/vocabularies';
+import { resolveItemThumbnail } from './utils/resolveThumbnail';
+import { driveDocViewUrl } from './utils/uploadItemMedia';
+import { useBatchThumbnails } from '../../../hooks/useBatchThumbnails';
+import type { Doc } from '../../../../convex/_generated/dataModel';
 
 /**
  * Fotosíntesis · Ventas — the sales summary dashboard.
@@ -40,80 +41,80 @@ import type { Doc } from "../../../../convex/_generated/dataModel";
 
 // ─── Local COP / date / label helpers (self-contained) ───────────────────
 
-const COP_FORMATTER = new Intl.NumberFormat("es-CO", {
-  style: "currency",
-  currency: "COP",
+const COP_FORMATTER = new Intl.NumberFormat('es-CO', {
+  style: 'currency',
+  currency: 'COP',
   maximumFractionDigits: 0,
 });
 
 /** es-CO COP. Returns "—" for non-numbers so it is never called mid-loading. */
 function formatCop(value: number | undefined | null): string {
-  if (typeof value !== "number" || Number.isNaN(value)) return "—";
+  if (typeof value !== 'number' || Number.isNaN(value)) return '—';
   return COP_FORMATTER.format(value);
 }
 
 function formatDateShort(iso: string | undefined | null): string {
-  if (!iso) return "—";
+  if (!iso) return '—';
   try {
     const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return "—";
-    return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short" });
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' });
   } catch {
-    return "—";
+    return '—';
   }
 }
 
 function formatDateLong(iso: string | undefined | null): string {
-  if (!iso) return "—";
+  if (!iso) return '—';
   try {
     const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return "—";
-    return d.toLocaleDateString("es-CO", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('es-CO', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
     });
   } catch {
-    return "—";
+    return '—';
   }
 }
 
 function formaPagoLabel(formaPago: string): string {
   switch (formaPago) {
-    case "contado":
-      return "Contado";
-    case "credito":
-      return "Crédito";
-    case "esmereogenesis":
-      return "Esmereogénesis";
-    case "canje":
-      return "Canje";
-    case "bajo_pedido":
-      return "Bajo pedido";
-    case "consignacion":
-      return "Consignación";
+    case 'contado':
+      return 'Contado';
+    case 'credito':
+      return 'Crédito';
+    case 'esmereogenesis':
+      return 'Esmereogénesis';
+    case 'canje':
+      return 'Canje';
+    case 'bajo_pedido':
+      return 'Bajo pedido';
+    case 'consignacion':
+      return 'Consignación';
     default:
       return formaPago;
   }
 }
 
 const FORMA_PAGO_ORDER = [
-  "contado",
-  "credito",
-  "esmereogenesis",
-  "canje",
-  "bajo_pedido",
-  "consignacion",
+  'contado',
+  'credito',
+  'esmereogenesis',
+  'canje',
+  'bajo_pedido',
+  'consignacion',
 ] as const;
 
 function estadoLabel(estado: string): string {
   switch (estado) {
-    case "confirmada":
-      return "Confirmada";
-    case "reservada":
-      return "Reservada";
-    case "cancelada":
-      return "Cancelada";
+    case 'confirmada':
+      return 'Confirmada';
+    case 'reservada':
+      return 'Reservada';
+    case 'cancelada':
+      return 'Cancelada';
     default:
       return estado;
   }
@@ -125,20 +126,20 @@ function estadoLabel(estado: string): string {
  * inputs: "vc-1", "VC-001", "VC0001", "v-1" → "VC-0001" / "V-0001".
  */
 function normalizeSaleCode(raw: string): string {
-  const t = (raw ?? "").trim().toUpperCase().replace(/\s+/g, "");
-  if (!t) return "";
+  const t = (raw ?? '').trim().toUpperCase().replace(/\s+/g, '');
+  if (!t) return '';
   // V, optional sede letters, optional dash, optional leading zeros, digits.
   const m = t.match(/^V([A-Z]*)-?0*(\d+)$/);
   if (!m) return t; // leave unrecognised input as-is (uppercased) → no match
   const sede = m[1];
-  const num = m[2].padStart(4, "0");
+  const num = m[2].padStart(4, '0');
   return sede ? `V${sede}-${num}` : `V-${num}`;
 }
 
 type FotoT = ReturnType<typeof getFoto>;
-type Sale = Doc<"sales">;
-type Client = Doc<"clients">;
-type Ambassador = Doc<"ambassadors">;
+type Sale = Doc<'sales'>;
+type Client = Doc<'clients'>;
+type Ambassador = Doc<'ambassadors'>;
 
 /** A sale joined with its buyer + ambassador display fields for the ledger. */
 interface SaleRow {
@@ -161,18 +162,19 @@ const MS_WEEK = 7 * 24 * 60 * 60 * 1000;
  * excluded from every money/activity aggregate (KPIs, ranking, ritmo, forma).
  * `reservada` still appears in the ledger so operators can find pending orders.
  */
-const isRealizedSale = (estado: Sale["estado"]): boolean =>
-  estado === "confirmada";
+const isRealizedSale = (estado: Sale['estado']): boolean =>
+  estado === 'confirmada';
 
 // ============================================================================
 
 export default function FotosintesisSalesPage() {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const { thumbnails: batchThumbs } = useBatchThumbnails();
 
   // --- Data ----------------------------------------------------------------
-  const sales = useConvexQuery(convexApi.sales.list, {});
-  const clients = useConvexQuery(convexApi.clients.list, {});
+  const sessionToken = readFreshSessionToken() ?? undefined;
+  const sales = useConvexQuery(convexApi.sales.list, { sessionToken });
+  const clients = useConvexQuery(convexApi.clients.list, { sessionToken });
   const ambassadors = useConvexQuery(convexApi.ambassadors.list, {});
 
   const salesLoading = sales === undefined;
@@ -200,8 +202,8 @@ export default function FotosintesisSalesPage() {
         ? ambassadorById.get(sale.ambassadorId)
         : undefined;
       const overdue =
-        sale.formaPago === "credito" &&
-        sale.estado !== "cancelada" &&
+        sale.formaPago === 'credito' &&
+        sale.estado !== 'cancelada' &&
         !!sale.fechaVencimiento &&
         (() => {
           const due = new Date(sale.fechaVencimiento as string);
@@ -209,15 +211,15 @@ export default function FotosintesisSalesPage() {
         })();
       return {
         sale,
-        buyerName: client?.nombre ?? "Cliente —",
-        buyerTipo: client?.tipo === "embajador" ? "Embajador" : "Cliente final",
+        buyerName: client?.nombre ?? 'Cliente —',
+        buyerTipo: client?.tipo === 'embajador' ? 'Embajador' : 'Cliente final',
         ambassadorName: ambassador?.nombre ?? null,
         itemCount:
           (sale.itemIds?.length ?? 0) + (sale.manualItems?.length ?? 0),
-        missingKardex: sale.estado !== "cancelada" && !sale.carnetUrl,
-        missingCert: sale.estado !== "cancelada" && !sale.certificadoUrl,
+        missingKardex: sale.estado !== 'cancelada' && !sale.carnetUrl,
+        missingCert: sale.estado !== 'cancelada' && !sale.certificadoUrl,
         overdue,
-        needsSync: sale.syncStatus !== "synced",
+        needsSync: sale.syncStatus !== 'synced',
       };
     });
   }, [sales, clientById, ambassadorById, now]);
@@ -242,7 +244,7 @@ export default function FotosintesisSalesPage() {
       if (isRealizedSale(s.estado)) {
         allActiveCount += 1;
         allActiveSum += s.totalCOP ?? 0;
-        if (s.formaPago === "credito" || s.formaPago === "esmereogenesis") {
+        if (s.formaPago === 'credito' || s.formaPago === 'esmereogenesis') {
           receivable += s.totalCOP ?? 0;
         }
         const d = new Date(s.fechaVenta);
@@ -299,7 +301,7 @@ export default function FotosintesisSalesPage() {
     return [...acc.entries()]
       .map(([id, v]) => ({
         id,
-        name: ambassadorById.get(id)?.nombre ?? "Embajador —",
+        name: ambassadorById.get(id)?.nombre ?? 'Embajador —',
         count: v.count,
         sum: v.sum,
       }))
@@ -347,29 +349,29 @@ export default function FotosintesisSalesPage() {
   }, [rows]);
 
   // --- Ledger filters ------------------------------------------------------
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const deferredSearch = useDeferredValue(search);
   const [estadoFilter, setEstadoFilter] = useState<
-    "activa" | "cancelada" | "todas"
-  >("activa");
-  const [sedeFilter, setSedeFilter] = useState("");
-  const [formaFilter, setFormaFilter] = useState("");
-  const [embajadorFilter, setEmbajadorFilter] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+    'activa' | 'cancelada' | 'todas'
+  >('activa');
+  const [sedeFilter, setSedeFilter] = useState('');
+  const [formaFilter, setFormaFilter] = useState('');
+  const [embajadorFilter, setEmbajadorFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   const filteredRows = useMemo(() => {
     const q = deferredSearch.trim().toLowerCase();
     return rows.filter((r) => {
       const s = r.sale;
-      if (estadoFilter === "activa" && s.estado === "cancelada") return false;
-      if (estadoFilter === "cancelada" && s.estado !== "cancelada")
+      if (estadoFilter === 'activa' && s.estado === 'cancelada') return false;
+      if (estadoFilter === 'cancelada' && s.estado !== 'cancelada')
         return false;
-      if (sedeFilter && (s.sede ?? "") !== sedeFilter) return false;
+      if (sedeFilter && (s.sede ?? '') !== sedeFilter) return false;
       if (formaFilter && s.formaPago !== formaFilter) return false;
       if (embajadorFilter && s.ambassadorId !== embajadorFilter) return false;
       if (dateFrom || dateTo) {
-        const day = (s.fechaVenta ?? "").slice(0, 10);
+        const day = (s.fechaVenta ?? '').slice(0, 10);
         if (dateFrom && day < dateFrom) return false;
         if (dateTo && day > dateTo) return false;
       }
@@ -392,7 +394,7 @@ export default function FotosintesisSalesPage() {
 
   const hasActiveFilters =
     !!deferredSearch.trim() ||
-    estadoFilter !== "activa" ||
+    estadoFilter !== 'activa' ||
     !!sedeFilter ||
     !!formaFilter ||
     !!embajadorFilter ||
@@ -400,17 +402,17 @@ export default function FotosintesisSalesPage() {
     !!dateTo;
 
   const clearFilters = () => {
-    setSearch("");
-    setEstadoFilter("activa");
-    setSedeFilter("");
-    setFormaFilter("");
-    setEmbajadorFilter("");
-    setDateFrom("");
-    setDateTo("");
+    setSearch('');
+    setEstadoFilter('activa');
+    setSedeFilter('');
+    setFormaFilter('');
+    setEmbajadorFilter('');
+    setDateFrom('');
+    setDateTo('');
   };
 
   // --- Single-sale summary -------------------------------------------------
-  const [saleCodeInput, setSaleCodeInput] = useState("VC-0001");
+  const [saleCodeInput, setSaleCodeInput] = useState('VC-0001');
   const activeCode = useMemo(
     () => normalizeSaleCode(saleCodeInput),
     [saleCodeInput],
@@ -424,11 +426,11 @@ export default function FotosintesisSalesPage() {
     convexApi.products.getManyByItemIds,
     matchedSale && matchedSale.itemIds.length
       ? { itemIds: matchedSale.itemIds }
-      : "skip",
+      : 'skip',
   );
   const matchedCommission = useConvexQuery(
     convexApi.commissions.getBySale,
-    matchedSale ? { saleId: matchedSale.saleId } : "skip",
+    matchedSale ? { saleId: matchedSale.saleId } : 'skip',
   );
   const matchedBuyer = matchedSale
     ? clientById.get(matchedSale.clientId)
@@ -437,39 +439,39 @@ export default function FotosintesisSalesPage() {
   // --- Shared styled tokens ------------------------------------------------
   const monoSx = {
     fontFamily: fontFamilies.mono,
-    fontVariantNumeric: "tabular-nums" as const,
-    letterSpacing: "-0.005em",
+    fontVariantNumeric: 'tabular-nums' as const,
+    letterSpacing: '-0.005em',
   } as const;
 
   const panelSx = {
     background: foto.surfaces.canvas,
     border: `1px solid ${foto.surfaces.rule}`,
-    borderRadius: "14px",
-    padding: "20px 22px",
+    borderRadius: '14px',
+    padding: '20px 22px',
   } as const;
 
   const panelHeadSx = {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "baseline",
-    marginBottom: "14px",
-    gap: "12px",
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: '14px',
+    gap: '12px',
   } as const;
 
   const panelHeadTitleSx = {
-    fontSize: "9px",
-    letterSpacing: "0.2em",
-    textTransform: "uppercase" as const,
+    fontSize: '9px',
+    letterSpacing: '0.2em',
+    textTransform: 'uppercase' as const,
     color: foto.ink.tertiary,
     fontWeight: 500,
     margin: 0,
   } as const;
 
   const emptyStateSx = {
-    padding: "24px 8px",
-    textAlign: "center" as const,
+    padding: '24px 8px',
+    textAlign: 'center' as const,
     color: foto.ink.tertiary,
-    fontSize: "12px",
+    fontSize: '12px',
     lineHeight: 1.55,
   } as const;
 
@@ -487,7 +489,7 @@ export default function FotosintesisSalesPage() {
       <Box
         component="section"
         sx={{
-          padding: { xs: "28px 16px 20px", md: "32px 28px 24px" },
+          padding: { xs: '28px 16px 20px', md: '32px 28px 24px' },
           borderBottom: `1px solid ${foto.surfaces.rule}`,
           background: `linear-gradient(180deg, ${foto.surfaces.canvas} 0%, ${foto.surfaces.panel} 100%)`,
         }}
@@ -495,19 +497,19 @@ export default function FotosintesisSalesPage() {
         <Box
           sx={{
             maxWidth: 1320,
-            margin: "0 auto",
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "1fr auto" },
-            gap: "24px",
-            alignItems: "end",
+            margin: '0 auto',
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr auto' },
+            gap: '24px',
+            alignItems: 'end',
           }}
         >
           <Box>
             <Box
               sx={{
-                fontSize: "9px",
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
+                fontSize: '9px',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
                 fontWeight: 500,
                 color: foto.ink.tertiary,
               }}
@@ -517,10 +519,10 @@ export default function FotosintesisSalesPage() {
             <Box
               component="h1"
               sx={{
-                marginTop: "8px",
-                fontSize: { xs: "28px", sm: "32px" },
+                marginTop: '8px',
+                fontSize: { xs: '28px', sm: '32px' },
                 fontWeight: 600,
-                letterSpacing: "-0.03em",
+                letterSpacing: '-0.03em',
                 lineHeight: 1.1,
                 color: foto.ink.primary,
               }}
@@ -530,8 +532,8 @@ export default function FotosintesisSalesPage() {
             <Box
               component="p"
               sx={{
-                marginTop: "10px",
-                fontSize: "13.5px",
+                marginTop: '10px',
+                fontSize: '13.5px',
                 color: foto.ink.secondary,
                 maxWidth: 560,
                 lineHeight: 1.5,
@@ -547,25 +549,25 @@ export default function FotosintesisSalesPage() {
             component={Link}
             to="/admin/fotosintesis/sales/new"
             sx={{
-              justifySelf: { xs: "start", md: "end" },
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "11px 18px",
-              borderRadius: "10px",
+              justifySelf: { xs: 'start', md: 'end' },
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '11px 18px',
+              borderRadius: '10px',
               background: foto.accent.primary,
               color: foto.ink.inverse,
-              fontSize: "13px",
+              fontSize: '13px',
               fontWeight: 600,
-              letterSpacing: "-0.005em",
-              textDecoration: "none",
-              transition: "background 120ms ease, transform 120ms ease",
-              "&:hover": {
+              letterSpacing: '-0.005em',
+              textDecoration: 'none',
+              transition: 'background 120ms ease, transform 120ms ease',
+              '&:hover': {
                 background: foto.accent.deep,
-                transform: "translateY(-1px)",
+                transform: 'translateY(-1px)',
               },
-              "&:focus-visible": {
-                outline: "none",
+              '&:focus-visible': {
+                outline: 'none',
                 boxShadow: `0 0 0 3px ${foto.accent.glow}`,
               },
             }}
@@ -581,42 +583,42 @@ export default function FotosintesisSalesPage() {
           aria-label="Indicadores de ventas"
           sx={{
             maxWidth: 1320,
-            margin: "22px auto 0",
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
-            gap: "12px",
+            margin: '22px auto 0',
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+            gap: '12px',
           }}
         >
           <KpiCard
             loading={salesLoading}
             label="Ventas del mes"
             value={String(kpis.monthCount)}
-            sub={salesLoading ? "" : formatCop(kpis.monthSum)}
+            sub={salesLoading ? '' : formatCop(kpis.monthSum)}
             foto={foto}
           />
           <KpiCard
             loading={salesLoading}
             label="Ticket promedio"
             value={
-              salesLoading || !kpis.hasTicket ? "—" : formatCop(kpis.ticketAvg)
+              salesLoading || !kpis.hasTicket ? '—' : formatCop(kpis.ticketAvg)
             }
-            sub={kpis.hasTicket ? "por venta activa" : "sin ventas aún"}
+            sub={kpis.hasTicket ? 'por venta activa' : 'sin ventas aún'}
             foto={foto}
           />
           <KpiCard
             loading={salesLoading}
             label="Por sincronizar"
             value={String(kpis.pendingSync)}
-            sub={kpis.pendingSync > 0 ? "requieren push" : "todo al día"}
-            tone={kpis.pendingSync > 0 ? "alert" : undefined}
+            sub={kpis.pendingSync > 0 ? 'requieren push' : 'todo al día'}
+            tone={kpis.pendingSync > 0 ? 'alert' : undefined}
             foto={foto}
           />
           <KpiCard
             loading={salesLoading}
             label="Saldo por cobrar"
-            value={salesLoading ? "—" : formatCop(kpis.receivable)}
+            value={salesLoading ? '—' : formatCop(kpis.receivable)}
             sub="crédito + esmereogénesis"
-            tone={kpis.receivable > 0 ? "warn" : undefined}
+            tone={kpis.receivable > 0 ? 'warn' : undefined}
             foto={foto}
           />
         </Box>
@@ -626,11 +628,11 @@ export default function FotosintesisSalesPage() {
       <Box
         sx={{
           maxWidth: 1320,
-          margin: "0 auto",
-          padding: { xs: "20px 16px 0", md: "24px 28px 0" },
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", lg: "1.6fr 1fr" },
-          gap: "20px",
+          margin: '0 auto',
+          padding: { xs: '20px 16px 0', md: '24px 28px 0' },
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: '1.6fr 1fr' },
+          gap: '20px',
         }}
       >
         <SingleSaleBlock
@@ -667,11 +669,11 @@ export default function FotosintesisSalesPage() {
       <Box
         sx={{
           maxWidth: 1320,
-          margin: "0 auto",
-          padding: { xs: "20px 16px 48px", md: "24px 28px 60px" },
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", lg: "1.6fr 1fr" },
-          gap: "24px",
+          margin: '0 auto',
+          padding: { xs: '20px 16px 48px', md: '24px 28px 60px' },
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: '1.6fr 1fr' },
+          gap: '24px',
         }}
       >
         {/* LEDGER */}
@@ -680,18 +682,18 @@ export default function FotosintesisSalesPage() {
             sx={{
               background: foto.surfaces.canvas,
               border: `1px solid ${foto.surfaces.rule}`,
-              borderRadius: "14px",
-              overflow: "hidden",
+              borderRadius: '14px',
+              overflow: 'hidden',
             }}
           >
             {/* Search */}
             <Box
               sx={{
-                padding: "14px 18px",
+                padding: '14px 18px',
                 borderBottom: `1px solid ${foto.surfaces.edge}`,
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
               }}
             >
               <Search size={16} strokeWidth={1.8} color={foto.ink.tertiary} />
@@ -707,19 +709,19 @@ export default function FotosintesisSalesPage() {
                 sx={{
                   flex: 1,
                   minWidth: 0,
-                  border: "none",
-                  outline: "none",
-                  background: "transparent",
-                  fontSize: "14px",
-                  fontFamily: "inherit",
+                  border: 'none',
+                  outline: 'none',
+                  background: 'transparent',
+                  fontSize: '14px',
+                  fontFamily: 'inherit',
                   color: foto.ink.primary,
-                  "&::placeholder": { color: foto.ink.mute },
+                  '&::placeholder': { color: foto.ink.mute },
                 }}
               />
               {search ? (
                 <IconButton
                   size="small"
-                  onClick={() => setSearch("")}
+                  onClick={() => setSearch('')}
                   aria-label="Limpiar búsqueda"
                   sx={{ color: foto.ink.tertiary }}
                 >
@@ -731,27 +733,27 @@ export default function FotosintesisSalesPage() {
             {/* Filters */}
             <Box
               sx={{
-                padding: "12px 18px",
+                padding: '12px 18px',
                 borderBottom: `1px solid ${foto.surfaces.edge}`,
                 background: foto.surfaces.panel,
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "10px",
-                alignItems: "center",
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '10px',
+                alignItems: 'center',
               }}
             >
               <FilterSelect
                 label="Estado"
                 value={estadoFilter}
                 onChange={(v) =>
-                  setEstadoFilter(v as "activa" | "cancelada" | "todas")
+                  setEstadoFilter(v as 'activa' | 'cancelada' | 'todas')
                 }
                 options={[
-                  { value: "activa", label: "Activas" },
-                  { value: "cancelada", label: "Canceladas" },
-                  { value: "todas", label: "Todas" },
+                  { value: 'activa', label: 'Activas' },
+                  { value: 'cancelada', label: 'Canceladas' },
+                  { value: 'todas', label: 'Todas' },
                 ]}
-                active={estadoFilter !== "activa"}
+                active={estadoFilter !== 'activa'}
                 foto={foto}
               />
               <FilterSelect
@@ -759,7 +761,7 @@ export default function FotosintesisSalesPage() {
                 value={sedeFilter}
                 onChange={setSedeFilter}
                 options={[
-                  { value: "", label: "Todas las sedes" },
+                  { value: '', label: 'Todas las sedes' },
                   ...BOVEDAS.map((b) => ({
                     value: b.code,
                     label: b.label,
@@ -785,7 +787,7 @@ export default function FotosintesisSalesPage() {
                 value={formaFilter}
                 onChange={setFormaFilter}
                 options={[
-                  { value: "", label: "Todas las formas" },
+                  { value: '', label: 'Todas las formas' },
                   ...FORMA_PAGO_ORDER.map((f) => ({
                     value: f,
                     label: formaPagoLabel(f),
@@ -799,7 +801,7 @@ export default function FotosintesisSalesPage() {
                 value={embajadorFilter}
                 onChange={setEmbajadorFilter}
                 options={[
-                  { value: "", label: "Todos los embajadores" },
+                  { value: '', label: 'Todos los embajadores' },
                   ...(ambassadors ?? []).map((a) => ({
                     value: a._id,
                     label: a.nombre,
@@ -826,23 +828,23 @@ export default function FotosintesisSalesPage() {
                   type="button"
                   onClick={clearFilters}
                   sx={{
-                    appearance: "none",
-                    border: "none",
-                    background: "transparent",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    fontSize: "11.5px",
+                    appearance: 'none',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontSize: '11.5px',
                     fontWeight: 600,
                     color: foto.accent.deep,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    padding: "6px 4px",
-                    "&:hover": { color: foto.accent.primary },
-                    "&:focus-visible": {
-                      outline: "none",
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '6px 4px',
+                    '&:hover': { color: foto.accent.primary },
+                    '&:focus-visible': {
+                      outline: 'none',
                       boxShadow: `0 0 0 3px ${foto.accent.glow}`,
-                      borderRadius: "4px",
+                      borderRadius: '4px',
                     },
                   }}
                 >
@@ -854,17 +856,17 @@ export default function FotosintesisSalesPage() {
             {/* Column headers (desktop) */}
             <Box
               sx={{
-                display: { xs: "none", md: "grid" },
+                display: { xs: 'none', md: 'grid' },
                 gridTemplateColumns:
-                  "70px 82px minmax(0, 1.3fr) 44px 116px 112px 118px",
-                gap: "12px",
-                alignItems: "center",
-                padding: "10px 18px",
-                boxSizing: "border-box",
+                  '70px 82px minmax(0, 1.3fr) 44px 116px 112px 118px',
+                gap: '12px',
+                alignItems: 'center',
+                padding: '10px 18px',
+                boxSizing: 'border-box',
                 borderBottom: `1px solid ${foto.surfaces.edge}`,
-                fontSize: "9px",
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
+                fontSize: '9px',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
                 color: foto.ink.tertiary,
                 fontWeight: 500,
                 background: foto.surfaces.panel,
@@ -873,10 +875,10 @@ export default function FotosintesisSalesPage() {
               <span>Venta</span>
               <span>Fecha</span>
               <span>Comprador</span>
-              <span style={{ textAlign: "right" }}>Ítems</span>
-              <span style={{ textAlign: "right" }}>Total</span>
+              <span style={{ textAlign: 'right' }}>Ítems</span>
+              <span style={{ textAlign: 'right' }}>Total</span>
               <span>Forma</span>
-              <span style={{ textAlign: "right" }}>Estado</span>
+              <span style={{ textAlign: 'right' }}>Estado</span>
             </Box>
 
             {/* Rows */}
@@ -898,14 +900,14 @@ export default function FotosintesisSalesPage() {
                       component={Link}
                       to="/admin/fotosintesis/sales/new"
                       sx={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        marginTop: "10px",
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        marginTop: '10px',
                         color: foto.accent.deep,
                         fontWeight: 600,
-                        textDecoration: "none",
-                        "&:hover": { color: foto.accent.primary },
+                        textDecoration: 'none',
+                        '&:hover': { color: foto.accent.primary },
                       }}
                     >
                       <Plus size={12} /> Registrar primera venta
@@ -932,10 +934,10 @@ export default function FotosintesisSalesPage() {
           {!salesLoading && filteredRows.length > 0 ? (
             <Box
               sx={{
-                marginTop: "10px",
-                fontSize: "11px",
+                marginTop: '10px',
+                fontSize: '11px',
                 color: foto.ink.tertiary,
-                textAlign: "right",
+                textAlign: 'right',
                 ...monoSx,
               }}
             >
@@ -945,14 +947,14 @@ export default function FotosintesisSalesPage() {
         </Box>
 
         {/* ANALYTICS (right) */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Ventas por embajador */}
           <Box sx={panelSx}>
             <Box sx={panelHeadSx}>
               <Box component="h2" sx={panelHeadTitleSx}>
                 Ventas por embajador
               </Box>
-              <Box sx={{ fontSize: "11px", color: foto.ink.tertiary }}>
+              <Box sx={{ fontSize: '11px', color: foto.ink.tertiary }}>
                 acumulado
               </Box>
             </Box>
@@ -964,7 +966,7 @@ export default function FotosintesisSalesPage() {
               </Box>
             ) : (
               <Box
-                sx={{ display: "flex", flexDirection: "column", gap: "2px" }}
+                sx={{ display: 'flex', flexDirection: 'column', gap: '2px' }}
               >
                 {embajadorRanking.slice(0, 6).map((e, idx) => {
                   const isActive = embajadorFilter === e.id;
@@ -975,25 +977,25 @@ export default function FotosintesisSalesPage() {
                       type="button"
                       aria-pressed={isActive}
                       aria-label={`Filtrar ventas por ${e.name}: ${e.count} ventas, ${formatCop(e.sum)}`}
-                      onClick={() => setEmbajadorFilter(isActive ? "" : e.id)}
+                      onClick={() => setEmbajadorFilter(isActive ? '' : e.id)}
                       sx={{
-                        appearance: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        textAlign: "left",
-                        fontFamily: "inherit",
-                        display: "grid",
-                        gridTemplateColumns: "auto 1fr auto",
-                        gap: "10px",
-                        alignItems: "center",
-                        padding: "9px 8px",
-                        marginX: "-8px",
-                        borderRadius: "8px",
-                        background: isActive ? foto.accent.soft : "transparent",
-                        transition: "background 120ms ease",
-                        "&:hover": { background: foto.surfaces.inset },
-                        "&:focus-visible": {
-                          outline: "none",
+                        appearance: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        fontFamily: 'inherit',
+                        display: 'grid',
+                        gridTemplateColumns: 'auto 1fr auto',
+                        gap: '10px',
+                        alignItems: 'center',
+                        padding: '9px 8px',
+                        marginX: '-8px',
+                        borderRadius: '8px',
+                        background: isActive ? foto.accent.soft : 'transparent',
+                        transition: 'background 120ms ease',
+                        '&:hover': { background: foto.surfaces.inset },
+                        '&:focus-visible': {
+                          outline: 'none',
                           boxShadow: `0 0 0 3px ${foto.accent.glow}`,
                         },
                       }}
@@ -1002,10 +1004,10 @@ export default function FotosintesisSalesPage() {
                         sx={{
                           ...monoSx,
                           width: 20,
-                          fontSize: "11px",
+                          fontSize: '11px',
                           fontWeight: 600,
                           color: foto.ink.tertiary,
-                          textAlign: "center",
+                          textAlign: 'center',
                         }}
                       >
                         {idx + 1}
@@ -1013,14 +1015,14 @@ export default function FotosintesisSalesPage() {
                       <Box sx={{ minWidth: 0 }}>
                         <Box
                           sx={{
-                            fontSize: "13px",
+                            fontSize: '13px',
                             fontWeight: 600,
                             color: isActive
                               ? foto.accent.deep
                               : foto.ink.primary,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
                           }}
                         >
                           {e.name}
@@ -1028,22 +1030,22 @@ export default function FotosintesisSalesPage() {
                         <Box
                           sx={{
                             ...monoSx,
-                            fontSize: "11px",
+                            fontSize: '11px',
                             color: foto.ink.tertiary,
-                            marginTop: "1px",
+                            marginTop: '1px',
                           }}
                         >
-                          {e.count} {e.count === 1 ? "venta" : "ventas"}
+                          {e.count} {e.count === 1 ? 'venta' : 'ventas'}
                         </Box>
                       </Box>
                       <Box
                         sx={{
                           ...monoSx,
-                          fontSize: "12.5px",
+                          fontSize: '12.5px',
                           fontWeight: 600,
                           color: foto.ink.primary,
-                          textAlign: "right",
-                          whiteSpace: "nowrap",
+                          textAlign: 'right',
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         {formatCop(e.sum)}
@@ -1061,7 +1063,7 @@ export default function FotosintesisSalesPage() {
               <Box component="h2" sx={panelHeadTitleSx}>
                 Ritmo semanal
               </Box>
-              <Box sx={{ fontSize: "11px", color: foto.ink.tertiary }}>
+              <Box sx={{ fontSize: '11px', color: foto.ink.tertiary }}>
                 últimas 8 semanas
               </Box>
             </Box>
@@ -1074,14 +1076,14 @@ export default function FotosintesisSalesPage() {
                 role="img"
                 aria-label={`Ventas por semana en las últimas 8 semanas: ${ritmo.buckets
                   .map((b) => b.count)
-                  .join(", ")}`}
+                  .join(', ')}`}
                 sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(8, 1fr)",
-                  gap: "6px",
-                  alignItems: "end",
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(8, 1fr)',
+                  gap: '6px',
+                  alignItems: 'end',
                   height: 96,
-                  paddingTop: "4px",
+                  paddingTop: '4px',
                 }}
               >
                 {ritmo.buckets.map((b, i) => {
@@ -1091,29 +1093,29 @@ export default function FotosintesisSalesPage() {
                     <Box
                       key={i}
                       sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "flex-end",
-                        height: "100%",
-                        gap: "4px",
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                        height: '100%',
+                        gap: '4px',
                       }}
                     >
                       <Box
                         sx={{
                           ...monoSx,
-                          fontSize: "10px",
+                          fontSize: '10px',
                           color: foto.ink.tertiary,
                           lineHeight: 1,
                         }}
                       >
-                        {b.count || ""}
+                        {b.count || ''}
                       </Box>
                       <Box
                         sx={{
-                          width: "100%",
+                          width: '100%',
                           height: `${h}px`,
-                          borderRadius: "4px 4px 2px 2px",
+                          borderRadius: '4px 4px 2px 2px',
                           background: isCurrent
                             ? foto.accent.primary
                             : b.count > 0
@@ -1134,7 +1136,7 @@ export default function FotosintesisSalesPage() {
               <Box component="h2" sx={panelHeadTitleSx}>
                 Forma de pago
               </Box>
-              <Box sx={{ fontSize: "11px", color: foto.ink.tertiary }}>
+              <Box sx={{ fontSize: '11px', color: foto.ink.tertiary }}>
                 ventas activas
               </Box>
             </Box>
@@ -1144,7 +1146,7 @@ export default function FotosintesisSalesPage() {
               <Box sx={emptyStateSx}>Aún no hay ventas activas.</Box>
             ) : (
               <Box
-                sx={{ display: "flex", flexDirection: "column", gap: "10px" }}
+                sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
               >
                 {formaBreakdown.rows
                   .filter((f) => f.count > 0)
@@ -1154,15 +1156,15 @@ export default function FotosintesisSalesPage() {
                       <Box key={f.key}>
                         <Box
                           sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "baseline",
-                            marginBottom: "5px",
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'baseline',
+                            marginBottom: '5px',
                           }}
                         >
                           <Box
                             sx={{
-                              fontSize: "12px",
+                              fontSize: '12px',
                               fontWeight: 500,
                               color: foto.ink.secondary,
                             }}
@@ -1172,7 +1174,7 @@ export default function FotosintesisSalesPage() {
                           <Box
                             sx={{
                               ...monoSx,
-                              fontSize: "11.5px",
+                              fontSize: '11.5px',
                               color: foto.ink.tertiary,
                             }}
                           >
@@ -1182,16 +1184,16 @@ export default function FotosintesisSalesPage() {
                         <Box
                           sx={{
                             height: 6,
-                            borderRadius: "999px",
+                            borderRadius: '999px',
                             background: foto.surfaces.inset,
-                            overflow: "hidden",
+                            overflow: 'hidden',
                           }}
                         >
                           <Box
                             sx={{
                               width: `${Math.max(2, share * 100)}%`,
-                              height: "100%",
-                              borderRadius: "999px",
+                              height: '100%',
+                              borderRadius: '999px',
                               background: foto.accent.primary,
                             }}
                           />
@@ -1217,15 +1219,15 @@ interface KpiCardProps {
   label: string;
   value: string;
   sub?: string;
-  tone?: "warn" | "alert";
+  tone?: 'warn' | 'alert';
   foto: FotoT;
 }
 
 function KpiCard({ loading, label, value, sub, tone, foto }: KpiCardProps) {
   const valueColor =
-    tone === "alert"
+    tone === 'alert'
       ? foto.status.sold
-      : tone === "warn"
+      : tone === 'warn'
         ? foto.status.consigned
         : foto.ink.primary;
   return (
@@ -1233,19 +1235,19 @@ function KpiCard({ loading, label, value, sub, tone, foto }: KpiCardProps) {
       sx={{
         background: foto.surfaces.canvas,
         border: `1px solid ${foto.surfaces.rule}`,
-        borderRadius: "12px",
-        padding: "14px 16px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "4px",
+        borderRadius: '12px',
+        padding: '14px 16px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '4px',
         minWidth: 0,
       }}
     >
       <Box
         sx={{
-          fontSize: "9px",
-          letterSpacing: "0.16em",
-          textTransform: "uppercase",
+          fontSize: '9px',
+          letterSpacing: '0.16em',
+          textTransform: 'uppercase',
           fontWeight: 500,
           color: foto.ink.tertiary,
         }}
@@ -1256,10 +1258,10 @@ function KpiCard({ loading, label, value, sub, tone, foto }: KpiCardProps) {
         <Box
           aria-label="Cargando"
           sx={{
-            marginTop: "4px",
+            marginTop: '4px',
             width: 64,
             height: 24,
-            borderRadius: "6px",
+            borderRadius: '6px',
             background: foto.surfaces.inset,
           }}
         />
@@ -1267,15 +1269,15 @@ function KpiCard({ loading, label, value, sub, tone, foto }: KpiCardProps) {
         <Box
           sx={{
             fontFamily: fontFamilies.mono,
-            fontVariantNumeric: "tabular-nums",
-            fontSize: "24px",
+            fontVariantNumeric: 'tabular-nums',
+            fontSize: '24px',
             fontWeight: 300,
-            letterSpacing: "-0.035em",
+            letterSpacing: '-0.035em',
             lineHeight: 1,
             color: valueColor,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
         >
           {value}
@@ -1284,13 +1286,13 @@ function KpiCard({ loading, label, value, sub, tone, foto }: KpiCardProps) {
       {sub && !loading ? (
         <Box
           sx={{
-            fontSize: "10.5px",
+            fontSize: '10.5px',
             color: foto.ink.tertiary,
             fontFamily: fontFamilies.mono,
-            fontVariantNumeric: "tabular-nums",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            fontVariantNumeric: 'tabular-nums',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
         >
           {sub}
@@ -1307,26 +1309,26 @@ interface EstadoChipProps {
 
 function EstadoChip({ estado, foto }: EstadoChipProps) {
   const color =
-    estado === "confirmada"
+    estado === 'confirmada'
       ? foto.status.available
-      : estado === "cancelada"
+      : estado === 'cancelada'
         ? foto.status.sold
         : foto.status.consigned;
   return (
     <Box
       component="span"
       sx={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "5px",
-        padding: "3px 9px",
-        borderRadius: "999px",
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '5px',
+        padding: '3px 9px',
+        borderRadius: '999px',
         background: alpha(color, 0.1),
         color,
-        fontSize: "10.5px",
+        fontSize: '10.5px',
         fontWeight: 600,
-        letterSpacing: "0.01em",
-        whiteSpace: "nowrap",
+        letterSpacing: '0.01em',
+        whiteSpace: 'nowrap',
       }}
     >
       <Box
@@ -1334,7 +1336,7 @@ function EstadoChip({ estado, foto }: EstadoChipProps) {
         sx={{
           width: 6,
           height: 6,
-          borderRadius: "50%",
+          borderRadius: '50%',
           background: color,
           flexShrink: 0,
         }}
@@ -1390,32 +1392,32 @@ function LedgerRow({ row, foto, monoSx }: LedgerRowProps) {
       role="listitem"
       aria-label={`Venta ${sale.saleId}, ${row.buyerName}, ${formatCop(sale.totalCOP)}, ${estadoLabel(sale.estado)}`}
       sx={{
-        width: "100%",
-        boxSizing: "border-box",
-        textDecoration: "none",
+        width: '100%',
+        boxSizing: 'border-box',
+        textDecoration: 'none',
         background: foto.surfaces.canvas,
         borderBottom: `1px solid ${foto.surfaces.edge}`,
-        padding: "14px 18px",
-        display: "grid",
+        padding: '14px 18px',
+        display: 'grid',
         gridTemplateColumns: {
-          xs: "70px minmax(0, 1fr) auto",
-          md: "70px 82px minmax(0, 1.3fr) 44px 116px 112px 118px",
+          xs: '70px minmax(0, 1fr) auto',
+          md: '70px 82px minmax(0, 1.3fr) 44px 116px 112px 118px',
         },
-        gap: "12px",
-        alignItems: "center",
+        gap: '12px',
+        alignItems: 'center',
         color: foto.ink.primary,
-        fontFamily: "inherit",
-        transition: "background 120ms ease",
-        "& .saleId": {
-          transition: "background 120ms ease, color 120ms ease",
+        fontFamily: 'inherit',
+        transition: 'background 120ms ease',
+        '& .saleId': {
+          transition: 'background 120ms ease, color 120ms ease',
         },
-        "&:hover": { background: foto.surfaces.panel },
-        "&:hover .saleId": {
+        '&:hover': { background: foto.surfaces.panel },
+        '&:hover .saleId': {
           background: foto.accent.primary,
           color: foto.ink.inverse,
         },
-        "&:focus-visible": {
-          outline: "none",
+        '&:focus-visible': {
+          outline: 'none',
           boxShadow: `inset 0 0 0 2px ${foto.accent.glow}`,
         },
       }}
@@ -1426,12 +1428,12 @@ function LedgerRow({ row, foto, monoSx }: LedgerRowProps) {
         sx={{
           ...monoSx,
           width: 62,
-          padding: "6px 0",
-          textAlign: "center",
+          padding: '6px 0',
+          textAlign: 'center',
           background: foto.accent.soft,
           color: foto.accent.deep,
-          borderRadius: "7px",
-          fontSize: "11px",
+          borderRadius: '7px',
+          fontSize: '11px',
           fontWeight: 600,
         }}
       >
@@ -1441,9 +1443,9 @@ function LedgerRow({ row, foto, monoSx }: LedgerRowProps) {
       {/* Fecha (desktop) */}
       <Box
         sx={{
-          display: { xs: "none", md: "block" },
+          display: { xs: 'none', md: 'block' },
           ...monoSx,
-          fontSize: "12px",
+          fontSize: '12px',
           color: foto.ink.secondary,
         }}
       >
@@ -1454,32 +1456,32 @@ function LedgerRow({ row, foto, monoSx }: LedgerRowProps) {
       <Box sx={{ minWidth: 0 }}>
         <Box
           sx={{
-            fontSize: "13.5px",
+            fontSize: '13.5px',
             fontWeight: 600,
             color: foto.ink.primary,
-            letterSpacing: "-0.01em",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            letterSpacing: '-0.01em',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
         >
           {row.buyerName}
         </Box>
         <Box
           sx={{
-            fontSize: "11.5px",
+            fontSize: '11.5px',
             color: foto.ink.tertiary,
-            marginTop: "2px",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            marginTop: '2px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
         >
           {row.buyerTipo}
-          {row.ambassadorName ? ` · ${row.ambassadorName}` : ""}
+          {row.ambassadorName ? ` · ${row.ambassadorName}` : ''}
           {/* Mobile: fold total + forma into the sub-line */}
-          <Box component="span" sx={{ display: { xs: "inline", md: "none" } }}>
-            {" · "}
+          <Box component="span" sx={{ display: { xs: 'inline', md: 'none' } }}>
+            {' · '}
             <Box component="span" sx={{ ...monoSx, color: foto.ink.secondary }}>
               {formatCop(sale.totalCOP)}
             </Box>
@@ -1490,11 +1492,11 @@ function LedgerRow({ row, foto, monoSx }: LedgerRowProps) {
       {/* Ítems (desktop) */}
       <Box
         sx={{
-          display: { xs: "none", md: "block" },
+          display: { xs: 'none', md: 'block' },
           ...monoSx,
-          fontSize: "12.5px",
+          fontSize: '12.5px',
           color: foto.ink.secondary,
-          textAlign: "right",
+          textAlign: 'right',
         }}
       >
         {row.itemCount}
@@ -1503,12 +1505,12 @@ function LedgerRow({ row, foto, monoSx }: LedgerRowProps) {
       {/* Total (desktop) */}
       <Box
         sx={{
-          display: { xs: "none", md: "block" },
+          display: { xs: 'none', md: 'block' },
           ...monoSx,
-          fontSize: "12.5px",
+          fontSize: '12.5px',
           fontWeight: 600,
           color: foto.ink.primary,
-          textAlign: "right",
+          textAlign: 'right',
         }}
       >
         {formatCop(sale.totalCOP)}
@@ -1517,12 +1519,12 @@ function LedgerRow({ row, foto, monoSx }: LedgerRowProps) {
       {/* Forma (desktop) */}
       <Box
         sx={{
-          display: { xs: "none", md: "block" },
-          fontSize: "12px",
+          display: { xs: 'none', md: 'block' },
+          fontSize: '12px',
           color: foto.ink.secondary,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         }}
       >
         {formaPagoLabel(sale.formaPago)}
@@ -1531,20 +1533,20 @@ function LedgerRow({ row, foto, monoSx }: LedgerRowProps) {
       {/* Estado + flags (desktop) */}
       <Box
         sx={{
-          display: { xs: "none", md: "flex" },
-          flexDirection: "column",
-          alignItems: "flex-end",
-          gap: "5px",
+          display: { xs: 'none', md: 'flex' },
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: '5px',
         }}
       >
         <EstadoChip estado={sale.estado} foto={foto} />
         {flags.length > 0 ? (
           <Box
             sx={{
-              display: "flex",
-              gap: "4px",
-              flexWrap: "wrap",
-              justifyContent: "flex-end",
+              display: 'flex',
+              gap: '4px',
+              flexWrap: 'wrap',
+              justifyContent: 'flex-end',
             }}
           >
             {flags}
@@ -1556,9 +1558,9 @@ function LedgerRow({ row, foto, monoSx }: LedgerRowProps) {
       <Box
         aria-hidden="true"
         sx={{
-          display: { xs: "inline-flex", md: "none" },
-          alignItems: "center",
-          justifyContent: "center",
+          display: { xs: 'inline-flex', md: 'none' },
+          alignItems: 'center',
+          justifyContent: 'center',
           color: foto.ink.mute,
         }}
       >
@@ -1580,15 +1582,15 @@ function FlagPill({ tone, title, children }: FlagPillProps) {
       component="span"
       title={title}
       sx={{
-        fontSize: "9px",
+        fontSize: '9px',
         fontWeight: 600,
-        letterSpacing: "0.04em",
-        textTransform: "uppercase",
-        padding: "2px 6px",
-        borderRadius: "5px",
+        letterSpacing: '0.04em',
+        textTransform: 'uppercase',
+        padding: '2px 6px',
+        borderRadius: '5px',
         background: alpha(tone, 0.1),
         color: tone,
-        whiteSpace: "nowrap",
+        whiteSpace: 'nowrap',
       }}
     >
       {children}
@@ -1616,17 +1618,17 @@ function FilterSelect({
   return (
     <Box
       component="label"
-      sx={{ display: "inline-flex", flexDirection: "column", gap: "3px" }}
+      sx={{ display: 'inline-flex', flexDirection: 'column', gap: '3px' }}
     >
       <Box
         component="span"
         sx={{
-          fontSize: "8.5px",
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
+          fontSize: '8.5px',
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
           fontWeight: 500,
           color: foto.ink.tertiary,
-          paddingLeft: "2px",
+          paddingLeft: '2px',
         }}
       >
         {label}
@@ -1635,26 +1637,26 @@ function FilterSelect({
         component="select"
         value={value}
         aria-label={label}
-        aria-current={active ? "true" : undefined}
+        aria-current={active ? 'true' : undefined}
         onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
           onChange(e.target.value)
         }
         sx={{
-          appearance: "none",
-          fontFamily: "inherit",
-          fontSize: "12px",
+          appearance: 'none',
+          fontFamily: 'inherit',
+          fontSize: '12px',
           fontWeight: 500,
-          padding: "7px 26px 7px 10px",
-          borderRadius: "8px",
+          padding: '7px 26px 7px 10px',
+          borderRadius: '8px',
           border: `1px solid ${active ? foto.accent.primary : foto.surfaces.edgeStrong}`,
           background: active ? foto.accent.soft : foto.surfaces.canvas,
           color: active ? foto.accent.deep : foto.ink.secondary,
-          cursor: "pointer",
+          cursor: 'pointer',
           backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235F6764' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "right 8px center",
-          "&:focus-visible": {
-            outline: "none",
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'right 8px center',
+          '&:focus-visible': {
+            outline: 'none',
             boxShadow: `0 0 0 3px ${foto.accent.glow}`,
           },
         }}
@@ -1681,17 +1683,17 @@ function DateField({ label, value, onChange, foto }: DateFieldProps) {
   return (
     <Box
       component="label"
-      sx={{ display: "inline-flex", flexDirection: "column", gap: "3px" }}
+      sx={{ display: 'inline-flex', flexDirection: 'column', gap: '3px' }}
     >
       <Box
         component="span"
         sx={{
-          fontSize: "8.5px",
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
+          fontSize: '8.5px',
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
           fontWeight: 500,
           color: foto.ink.tertiary,
-          paddingLeft: "2px",
+          paddingLeft: '2px',
         }}
       >
         {label}
@@ -1701,21 +1703,21 @@ function DateField({ label, value, onChange, foto }: DateFieldProps) {
         type="date"
         value={value}
         aria-label={`${label} (fecha de venta)`}
-        aria-current={active ? "true" : undefined}
+        aria-current={active ? 'true' : undefined}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
           onChange(e.target.value)
         }
         sx={{
-          fontFamily: "inherit",
-          fontSize: "12px",
+          fontFamily: 'inherit',
+          fontSize: '12px',
           fontWeight: 500,
-          padding: "6px 10px",
-          borderRadius: "8px",
+          padding: '6px 10px',
+          borderRadius: '8px',
           border: `1px solid ${active ? foto.accent.primary : foto.surfaces.edgeStrong}`,
           background: active ? foto.accent.soft : foto.surfaces.canvas,
           color: active ? foto.accent.deep : foto.ink.secondary,
-          "&:focus-visible": {
-            outline: "none",
+          '&:focus-visible': {
+            outline: 'none',
             boxShadow: `0 0 0 3px ${foto.accent.glow}`,
           },
         }}
@@ -1761,7 +1763,7 @@ function AttentionPanel({
           Requieren atención
         </Box>
         {!loading ? (
-          <Box sx={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <SummaryTag
               icon={<Clock size={12} strokeWidth={2} />}
               count={attention.overdueCount}
@@ -1790,10 +1792,10 @@ function AttentionPanel({
       {loading ? (
         <Box
           sx={{
-            padding: "20px 8px",
-            textAlign: "center",
+            padding: '20px 8px',
+            textAlign: 'center',
             color: foto.ink.tertiary,
-            fontSize: "12px",
+            fontSize: '12px',
           }}
         >
           Cargando…
@@ -1801,12 +1803,12 @@ function AttentionPanel({
       ) : totalAttention === 0 ? (
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            padding: "14px 8px",
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '14px 8px',
             color: foto.status.available,
-            fontSize: "12.5px",
+            fontSize: '12.5px',
             fontWeight: 500,
           }}
         >
@@ -1814,33 +1816,33 @@ function AttentionPanel({
           Todo al día — sin ventas pendientes.
         </Box>
       ) : (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           {attention.list.map((r) => {
             const reasons: string[] = [];
-            if (r.overdue) reasons.push("Crédito vencido");
-            if (r.missingKardex) reasons.push("Falta Kardex");
-            if (r.missingCert) reasons.push("Falta certificado");
+            if (r.overdue) reasons.push('Crédito vencido');
+            if (r.missingKardex) reasons.push('Falta Kardex');
+            if (r.missingCert) reasons.push('Falta certificado');
             const tone = r.overdue ? foto.status.sold : foto.status.consigned;
             return (
               <Box
                 key={r.sale._id}
                 component={Link}
                 to={`/admin/fotosintesis/sales/${r.sale.saleId}`}
-                aria-label={`Venta ${r.sale.saleId} — ${reasons.join(", ")}`}
+                aria-label={`Venta ${r.sale.saleId} — ${reasons.join(', ')}`}
                 sx={{
-                  display: "grid",
-                  gridTemplateColumns: "auto 1fr auto",
-                  gap: "10px",
-                  alignItems: "center",
-                  padding: "10px 8px",
-                  marginX: "-8px",
-                  borderRadius: "8px",
-                  textDecoration: "none",
-                  color: "inherit",
-                  transition: "background 120ms ease",
-                  "&:hover": { background: foto.surfaces.inset },
-                  "&:focus-visible": {
-                    outline: "none",
+                  display: 'grid',
+                  gridTemplateColumns: 'auto 1fr auto',
+                  gap: '10px',
+                  alignItems: 'center',
+                  padding: '10px 8px',
+                  marginX: '-8px',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  transition: 'background 120ms ease',
+                  '&:hover': { background: foto.surfaces.inset },
+                  '&:focus-visible': {
+                    outline: 'none',
                     boxShadow: `0 0 0 3px ${foto.accent.glow}`,
                   },
                 }}
@@ -1850,7 +1852,7 @@ function AttentionPanel({
                   sx={{
                     width: 8,
                     height: 8,
-                    borderRadius: "50%",
+                    borderRadius: '50%',
                     background: tone,
                   }}
                 />
@@ -1858,7 +1860,7 @@ function AttentionPanel({
                   <Box
                     sx={{
                       ...monoSx,
-                      fontSize: "12px",
+                      fontSize: '12px',
                       fontWeight: 600,
                       color: foto.ink.primary,
                     }}
@@ -1867,14 +1869,14 @@ function AttentionPanel({
                   </Box>
                   <Box
                     sx={{
-                      fontSize: "11px",
+                      fontSize: '11px',
                       color: foto.ink.tertiary,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}
                   >
-                    {reasons.join(" · ")}
+                    {reasons.join(' · ')}
                   </Box>
                 </Box>
                 <ArrowRight
@@ -1905,15 +1907,15 @@ function SummaryTag({ icon, count, tone, label, foto }: SummaryTagProps) {
   return (
     <Box
       sx={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "5px",
-        fontSize: "11px",
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '5px',
+        fontSize: '11px',
         fontWeight: 600,
         color: on ? tone : foto.ink.mute,
       }}
     >
-      <Box sx={{ display: "inline-flex", color: on ? tone : foto.ink.mute }}>
+      <Box sx={{ display: 'inline-flex', color: on ? tone : foto.ink.mute }}>
         {icon}
       </Box>
       <Box component="span" sx={{ fontFamily: fontFamilies.mono }}>
@@ -1947,7 +1949,7 @@ interface SingleSaleBlockProps {
         fotoUrl?: string;
       }>
     | undefined;
-  commission: Doc<"commissions"> | undefined;
+  commission: Doc<'commissions'> | undefined;
   ambassadorName: string | null;
   batchThumbs: Record<number, { url: string }>;
 }
@@ -1966,9 +1968,9 @@ function SingleSaleBlock({
   ambassadorName,
   batchThumbs,
 }: SingleSaleBlockProps) {
-  const isCancelled = sale?.estado === "cancelada";
+  const isCancelled = sale?.estado === 'cancelada';
   const descuento =
-    sale && typeof sale.descuentoCOP === "number"
+    sale && typeof sale.descuentoCOP === 'number'
       ? sale.descuentoCOP
       : sale
         ? Math.max(0, sale.precioAcordadoCOP - sale.totalCOP)
@@ -1979,20 +1981,20 @@ function SingleSaleBlock({
       sx={{
         background: foto.surfaces.canvas,
         border: `1px solid ${foto.surfaces.rule}`,
-        borderRadius: "16px",
-        overflow: "hidden",
+        borderRadius: '16px',
+        overflow: 'hidden',
         minWidth: 0,
       }}
     >
       {/* Head with code input */}
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "12px",
-          flexWrap: "wrap",
-          padding: "16px 20px",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '12px',
+          flexWrap: 'wrap',
+          padding: '16px 20px',
           borderBottom: `1px solid ${foto.surfaces.edge}`,
           background: foto.surfaces.panel,
         }}
@@ -2000,9 +2002,9 @@ function SingleSaleBlock({
         <Box
           component="h2"
           sx={{
-            fontSize: "9px",
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
+            fontSize: '9px',
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
             fontWeight: 500,
             color: foto.ink.tertiary,
             margin: 0,
@@ -2013,10 +2015,10 @@ function SingleSaleBlock({
         <Box
           component="label"
           sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            fontSize: "11px",
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '11px',
             color: foto.ink.tertiary,
           }}
         >
@@ -2034,15 +2036,15 @@ function SingleSaleBlock({
             sx={{
               ...monoSx,
               width: 110,
-              padding: "7px 10px",
-              borderRadius: "8px",
+              padding: '7px 10px',
+              borderRadius: '8px',
               border: `1px solid ${foto.surfaces.edgeStrong}`,
               background: foto.surfaces.canvas,
               color: foto.ink.primary,
-              fontSize: "12.5px",
+              fontSize: '12.5px',
               fontWeight: 600,
-              outline: "none",
-              "&:focus-visible": {
+              outline: 'none',
+              '&:focus-visible': {
                 borderColor: foto.accent.primary,
                 boxShadow: `0 0 0 3px ${foto.accent.glow}`,
               },
@@ -2055,10 +2057,10 @@ function SingleSaleBlock({
       {loading ? (
         <Box
           sx={{
-            padding: "40px 20px",
-            textAlign: "center",
+            padding: '40px 20px',
+            textAlign: 'center',
             color: foto.ink.tertiary,
-            fontSize: "13px",
+            fontSize: '13px',
           }}
         >
           Cargando venta…
@@ -2066,63 +2068,63 @@ function SingleSaleBlock({
       ) : !sale ? (
         <Box
           sx={{
-            padding: "36px 20px",
-            textAlign: "center",
+            padding: '36px 20px',
+            textAlign: 'center',
             color: foto.ink.secondary,
-            fontSize: "13.5px",
+            fontSize: '13.5px',
             lineHeight: 1.6,
           }}
         >
-          No encontramos la venta{" "}
+          No encontramos la venta{' '}
           <Box
             component="span"
             sx={{ ...monoSx, fontWeight: 600, color: foto.ink.primary }}
           >
-            {activeCode || "—"}
+            {activeCode || '—'}
           </Box>
           .
           <br />
           <Box
             component="span"
-            sx={{ fontSize: "12px", color: foto.ink.tertiary }}
+            sx={{ fontSize: '12px', color: foto.ink.tertiary }}
           >
             Escribe otro código arriba (ej. VC-0001).
           </Box>
         </Box>
       ) : (
-        <Box sx={{ padding: "18px 20px 20px" }}>
+        <Box sx={{ padding: '18px 20px 20px' }}>
           {/* Header row: id + fecha + estado */}
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              gap: "12px",
-              flexWrap: "wrap",
-              marginBottom: "16px",
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              gap: '12px',
+              flexWrap: 'wrap',
+              marginBottom: '16px',
             }}
           >
             <Box>
               <Box
                 sx={{
                   ...monoSx,
-                  fontSize: "22px",
+                  fontSize: '22px',
                   fontWeight: 600,
                   color: foto.ink.primary,
-                  letterSpacing: "-0.02em",
+                  letterSpacing: '-0.02em',
                 }}
               >
                 {sale.saleId}
               </Box>
               <Box
                 sx={{
-                  fontSize: "12px",
+                  fontSize: '12px',
                   color: foto.ink.tertiary,
-                  marginTop: "3px",
+                  marginTop: '3px',
                 }}
               >
                 {formatDateLong(sale.fechaVenta)}
-                {sale.sede ? ` · Sede ${sale.sede}` : ""}
+                {sale.sede ? ` · Sede ${sale.sede}` : ''}
               </Box>
             </Box>
             <EstadoChip estado={sale.estado} foto={foto} />
@@ -2131,13 +2133,13 @@ function SingleSaleBlock({
           {/* Money grid */}
           <Box
             sx={{
-              display: "grid",
+              display: 'grid',
               gridTemplateColumns: {
-                xs: "repeat(2, 1fr)",
-                sm: "repeat(4, 1fr)",
+                xs: 'repeat(2, 1fr)',
+                sm: 'repeat(4, 1fr)',
               },
-              gap: "10px",
-              marginBottom: "18px",
+              gap: '10px',
+              marginBottom: '18px',
             }}
           >
             <MoneyCell
@@ -2162,11 +2164,11 @@ function SingleSaleBlock({
             <MoneyCell
               label="Comisión"
               value={
-                typeof sale.comisionCOP === "number"
+                typeof sale.comisionCOP === 'number'
                   ? formatCop(sale.comisionCOP)
                   : commission
                     ? formatCop(commission.amountCOP)
-                    : "—"
+                    : '—'
               }
               foto={foto}
               monoSx={monoSx}
@@ -2176,51 +2178,51 @@ function SingleSaleBlock({
           {/* Buyer + forma de pago */}
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-              gap: "10px",
-              marginBottom: "16px",
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+              gap: '10px',
+              marginBottom: '16px',
             }}
           >
             <InfoBox foto={foto}>
               <InfoLabel foto={foto}>Comprador</InfoLabel>
               <Box
                 sx={{
-                  fontSize: "13.5px",
+                  fontSize: '13.5px',
                   fontWeight: 600,
                   color: foto.ink.primary,
                 }}
               >
-                {buyer?.nombre ?? "—"}
+                {buyer?.nombre ?? '—'}
               </Box>
               <Box
                 sx={{
-                  fontSize: "11.5px",
+                  fontSize: '11.5px',
                   color: foto.ink.tertiary,
-                  marginTop: "2px",
+                  marginTop: '2px',
                 }}
               >
-                {buyer?.tipo === "embajador" ? "Embajador" : "Cliente final"}
-                {ambassadorName ? ` · ${ambassadorName}` : ""}
+                {buyer?.tipo === 'embajador' ? 'Embajador' : 'Cliente final'}
+                {ambassadorName ? ` · ${ambassadorName}` : ''}
               </Box>
             </InfoBox>
             <InfoBox foto={foto}>
               <InfoLabel foto={foto}>Forma de pago</InfoLabel>
               <Box
                 sx={{
-                  fontSize: "13.5px",
+                  fontSize: '13.5px',
                   fontWeight: 600,
                   color: foto.ink.primary,
                 }}
               >
                 {formaPagoLabel(sale.formaPago)}
               </Box>
-              {sale.formaPago === "credito" && sale.fechaVencimiento ? (
+              {sale.formaPago === 'credito' && sale.fechaVencimiento ? (
                 <Box
                   sx={{
-                    fontSize: "11.5px",
+                    fontSize: '11.5px',
                     color: foto.ink.tertiary,
-                    marginTop: "2px",
+                    marginTop: '2px',
                   }}
                 >
                   Vence {formatDateLong(sale.fechaVencimiento)}
@@ -2234,7 +2236,7 @@ function SingleSaleBlock({
             sx={{
               marginBottom:
                 sale.carnetUrl || sale.certificadoUrl || isCancelled
-                  ? "16px"
+                  ? '16px'
                   : 0,
             }}
           >
@@ -2243,14 +2245,14 @@ function SingleSaleBlock({
             </InfoLabel>
             <Box
               sx={{
-                display: "flex",
-                gap: "8px",
-                flexWrap: "wrap",
-                marginTop: "8px",
+                display: 'flex',
+                gap: '8px',
+                flexWrap: 'wrap',
+                marginTop: '8px',
               }}
             >
               {items === undefined && sale.itemIds.length > 0 ? (
-                <Box sx={{ fontSize: "12px", color: foto.ink.tertiary }}>
+                <Box sx={{ fontSize: '12px', color: foto.ink.tertiary }}>
                   Cargando ítems…
                 </Box>
               ) : (
@@ -2265,22 +2267,22 @@ function SingleSaleBlock({
                       <Box
                         key={it.itemId}
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          padding: "5px 10px 5px 5px",
-                          borderRadius: "9px",
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '5px 10px 5px 5px',
+                          borderRadius: '9px',
                           border: `1px solid ${foto.surfaces.edge}`,
                           background: foto.surfaces.panel,
-                          maxWidth: "100%",
+                          maxWidth: '100%',
                         }}
                       >
                         <Box
                           sx={{
                             width: 30,
                             height: 30,
-                            borderRadius: "6px",
-                            overflow: "hidden",
+                            borderRadius: '6px',
+                            overflow: 'hidden',
                             flexShrink: 0,
                             background: foto.surfaces.inset,
                           }}
@@ -2291,10 +2293,10 @@ function SingleSaleBlock({
                               src={thumb}
                               alt=""
                               sx={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                                display: "block",
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                display: 'block',
                               }}
                             />
                           ) : null}
@@ -2302,12 +2304,12 @@ function SingleSaleBlock({
                         <Box sx={{ minWidth: 0 }}>
                           <Box
                             sx={{
-                              fontSize: "11.5px",
+                              fontSize: '11.5px',
                               fontWeight: 600,
                               color: foto.ink.primary,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
                               maxWidth: 140,
                             }}
                           >
@@ -2316,12 +2318,12 @@ function SingleSaleBlock({
                           <Box
                             sx={{
                               ...monoSx,
-                              fontSize: "10px",
+                              fontSize: '10px',
                               color: foto.ink.tertiary,
                             }}
                           >
                             #{it.itemId}
-                            {it.peso ? ` · ${it.peso}` : ""}
+                            {it.peso ? ` · ${it.peso}` : ''}
                           </Box>
                         </Box>
                       </Box>
@@ -2331,14 +2333,14 @@ function SingleSaleBlock({
                     <Box
                       key={`manual-${i}`}
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        padding: "8px 10px",
-                        borderRadius: "9px",
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '8px 10px',
+                        borderRadius: '9px',
                         border: `1px dashed ${foto.surfaces.edgeStrong}`,
                         background: foto.surfaces.panel,
-                        fontSize: "11.5px",
+                        fontSize: '11.5px',
                         fontWeight: 600,
                         color: foto.ink.secondary,
                       }}
@@ -2349,7 +2351,7 @@ function SingleSaleBlock({
                   {items &&
                   items.length === 0 &&
                   (sale.manualItems?.length ?? 0) === 0 ? (
-                    <Box sx={{ fontSize: "12px", color: foto.ink.tertiary }}>
+                    <Box sx={{ fontSize: '12px', color: foto.ink.tertiary }}>
                       Sin ítems de inventario.
                     </Box>
                   ) : null}
@@ -2362,10 +2364,10 @@ function SingleSaleBlock({
           {sale.carnetUrl || sale.certificadoUrl ? (
             <Box
               sx={{
-                display: "flex",
-                gap: "8px",
-                flexWrap: "wrap",
-                marginBottom: isCancelled ? "16px" : 0,
+                display: 'flex',
+                gap: '8px',
+                flexWrap: 'wrap',
+                marginBottom: isCancelled ? '16px' : 0,
               }}
             >
               {sale.carnetUrl ? (
@@ -2390,23 +2392,23 @@ function SingleSaleBlock({
             <Box
               role="status"
               sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "5px",
-                padding: "12px 14px",
-                borderRadius: "10px",
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '5px',
+                padding: '12px 14px',
+                borderRadius: '10px',
                 border: `1px solid ${alpha(foto.status.sold, 0.4)}`,
                 background: alpha(foto.status.sold, 0.06),
                 color: foto.status.sold,
-                fontSize: "12px",
+                fontSize: '12px',
                 lineHeight: 1.5,
               }}
             >
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "7px",
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '7px',
                   fontWeight: 600,
                 }}
               >
@@ -2419,11 +2421,11 @@ function SingleSaleBlock({
                 </Box>
               ) : null}
               {sale.cancelledBy ? (
-                <Box sx={{ color: foto.ink.tertiary, fontSize: "11.5px" }}>
+                <Box sx={{ color: foto.ink.tertiary, fontSize: '11.5px' }}>
                   por {sale.cancelledBy}
                   {sale.cancelledAt
                     ? ` · ${formatDateLong(sale.cancelledAt)}`
-                    : ""}
+                    : ''}
                 </Box>
               ) : null}
             </Box>
@@ -2432,29 +2434,29 @@ function SingleSaleBlock({
           {/* Footer link to full detail */}
           <Box
             sx={{
-              marginTop: "16px",
-              paddingTop: "14px",
+              marginTop: '16px',
+              paddingTop: '14px',
               borderTop: `1px solid ${foto.surfaces.edge}`,
-              display: "flex",
-              justifyContent: "flex-end",
+              display: 'flex',
+              justifyContent: 'flex-end',
             }}
           >
             <Box
               component={Link}
               to={`/admin/fotosintesis/sales/${sale.saleId}`}
               sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                fontSize: "12.5px",
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '12.5px',
                 fontWeight: 600,
                 color: foto.accent.deep,
-                textDecoration: "none",
-                "&:hover": { color: foto.accent.primary },
-                "&:focus-visible": {
-                  outline: "none",
+                textDecoration: 'none',
+                '&:hover': { color: foto.accent.primary },
+                '&:focus-visible': {
+                  outline: 'none',
                   boxShadow: `0 0 0 3px ${foto.accent.glow}`,
-                  borderRadius: "4px",
+                  borderRadius: '4px',
                 },
               }}
             >
@@ -2480,8 +2482,8 @@ function MoneyCell({ label, value, foto, monoSx, strong }: MoneyCellProps) {
   return (
     <Box
       sx={{
-        padding: "10px 12px",
-        borderRadius: "10px",
+        padding: '10px 12px',
+        borderRadius: '10px',
         background: strong ? foto.accent.soft : foto.surfaces.panel,
         border: `1px solid ${strong ? alpha(foto.accent.primary, 0.25) : foto.surfaces.edge}`,
         minWidth: 0,
@@ -2489,9 +2491,9 @@ function MoneyCell({ label, value, foto, monoSx, strong }: MoneyCellProps) {
     >
       <Box
         sx={{
-          fontSize: "8.5px",
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
+          fontSize: '8.5px',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
           fontWeight: 500,
           color: foto.ink.tertiary,
         }}
@@ -2501,13 +2503,13 @@ function MoneyCell({ label, value, foto, monoSx, strong }: MoneyCellProps) {
       <Box
         sx={{
           ...monoSx,
-          marginTop: "4px",
-          fontSize: strong ? "16px" : "13.5px",
+          marginTop: '4px',
+          fontSize: strong ? '16px' : '13.5px',
           fontWeight: 600,
           color: strong ? foto.accent.deep : foto.ink.primary,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         }}
       >
         {value}
@@ -2526,8 +2528,8 @@ function InfoBox({
   return (
     <Box
       sx={{
-        padding: "12px 14px",
-        borderRadius: "10px",
+        padding: '12px 14px',
+        borderRadius: '10px',
         border: `1px solid ${foto.surfaces.edge}`,
         background: foto.surfaces.panel,
         minWidth: 0,
@@ -2548,12 +2550,12 @@ function InfoLabel({
   return (
     <Box
       sx={{
-        fontSize: "8.5px",
-        letterSpacing: "0.14em",
-        textTransform: "uppercase",
+        fontSize: '8.5px',
+        letterSpacing: '0.14em',
+        textTransform: 'uppercase',
         fontWeight: 500,
         color: foto.ink.tertiary,
-        marginBottom: "4px",
+        marginBottom: '4px',
       }}
     >
       {children}
@@ -2576,20 +2578,20 @@ function DocLink({ label, url, foto }: DocLinkProps) {
       target="_blank"
       rel="noopener noreferrer"
       sx={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "6px",
-        padding: "7px 12px",
-        borderRadius: "8px",
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '7px 12px',
+        borderRadius: '8px',
         border: `1px solid ${foto.accent.primary}`,
         background: foto.accent.soft,
         color: foto.accent.deep,
-        fontSize: "12px",
+        fontSize: '12px',
         fontWeight: 600,
-        textDecoration: "none",
-        "&:hover": { background: alpha(foto.accent.primary, 0.12) },
-        "&:focus-visible": {
-          outline: "none",
+        textDecoration: 'none',
+        '&:hover': { background: alpha(foto.accent.primary, 0.12) },
+        '&:focus-visible': {
+          outline: 'none',
           boxShadow: `0 0 0 3px ${foto.accent.glow}`,
         },
       }}

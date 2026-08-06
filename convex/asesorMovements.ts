@@ -49,6 +49,7 @@ import type { Id } from './_generated/dataModel';
 import { pushTableRowToVercel } from './_lib/sheetSync';
 import { COLUMN_MAPS } from './_lib/columnMaps';
 import { requireAccessLevel } from './_lib/authz';
+import { isStaffSession } from './_lib/requireStaffSession';
 
 const registerArgs = {
   itemId: v.string(),
@@ -105,8 +106,13 @@ function todayISODate(): string {
 
 /** Last N movements for one item — powers the drawer's "Historial" panel. */
 export const listByItem = query({
-  args: { itemId: v.string(), limit: v.optional(v.number()) },
-  handler: async (ctx, { itemId, limit }) => {
+  args: {
+    itemId: v.string(),
+    limit: v.optional(v.number()),
+    sessionToken: v.optional(v.string()),
+  },
+  handler: async (ctx, { itemId, limit, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const rows = await ctx.db
       .query('asesorMovements')
       .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
@@ -118,8 +124,13 @@ export const listByItem = query({
 
 /** Full history for one asesor — that asesor's own kardex. */
 export const listByAsesor = query({
-  args: { asesorNombre: v.string(), limit: v.optional(v.number()) },
-  handler: async (ctx, { asesorNombre, limit }) => {
+  args: {
+    asesorNombre: v.string(),
+    limit: v.optional(v.number()),
+    sessionToken: v.optional(v.string()),
+  },
+  handler: async (ctx, { asesorNombre, limit, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const rows = await ctx.db
       .query('asesorMovements')
       .withIndex('by_asesorNombre', (q) => q.eq('asesorNombre', asesorNombre))
@@ -131,8 +142,12 @@ export const listByAsesor = query({
 
 /** Most recent movements across every asesor — for a global ledger view. */
 export const listRecent = query({
-  args: { limit: v.optional(v.number()) },
-  handler: async (ctx, { limit }) => {
+  args: {
+    limit: v.optional(v.number()),
+    sessionToken: v.optional(v.string()),
+  },
+  handler: async (ctx, { limit, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     return await ctx.db
       .query('asesorMovements')
       .order('desc')
@@ -616,8 +631,12 @@ export const registerReturnBatch = action({
 
 /** All movements from one multi-item event — powers the PDF comprobante. */
 export const listByKardexEventId = query({
-  args: { kardexEventId: v.string() },
-  handler: async (ctx, { kardexEventId }) => {
+  args: {
+    kardexEventId: v.string(),
+    sessionToken: v.optional(v.string()),
+  },
+  handler: async (ctx, { kardexEventId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     return await ctx.db
       .query('asesorMovements')
       .withIndex('by_kardexEventId', (q) =>
@@ -691,14 +710,22 @@ export const setComprobanteUrl = action({
   },
 });
 
-/** Comprobante + event summary for one kardex event. Plain read, no auth gate —
- *  mirrors `lots:list` / `lotItems:search`, the queries the anima-bot already
- *  calls unauthenticated (see anima-bot/src/fotosintesis/client.ts). Returns
- *  null when the event doesn't exist; `comprobanteUrl` is undefined when the
- *  PDF was never generated. */
+/** Comprobante + event summary for one kardex event.
+ *
+ * GATED (2026-08-05, F7): was "plain read, no auth gate — mirrors
+ * `lots:list` / `lotItems:search`, the queries the anima-bot already calls
+ * unauthenticated" — that was the vulnerability, not a design to preserve.
+ * Now requires a verified staff session (see `_lib/requireStaffSession.ts`);
+ * anima-bot's unauthenticated calls to this (see
+ * anima-bot/src/fotosintesis/client.ts) now get `null` back until it has a
+ * way to prove staff (out of scope here — flagged, not fixed).
+ *
+ * Returns null when the event doesn't exist OR the caller isn't staff;
+ * `comprobanteUrl` is undefined when the PDF was never generated. */
 export const getComprobante = query({
-  args: { kardexEventId: v.string() },
-  handler: async (ctx, { kardexEventId }) => {
+  args: { kardexEventId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { kardexEventId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
     const rows = await ctx.db
       .query('asesorMovements')
       .withIndex('by_kardexEventId', (q) =>

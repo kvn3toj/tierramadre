@@ -14,6 +14,7 @@ import { computePrecioFinal } from './_lib/pricing';
 import { withPublishStamp } from './_lib/publishState';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
+import { isStaffSession } from './_lib/requireStaffSession';
 
 const tipoItemValidator = v.union(
   v.literal('gema'),
@@ -27,8 +28,9 @@ const tipoItemValidator = v.union(
  *  QR scanner to jump straight to an item's edit view without the operator
  *  needing to know which lote it lives in. */
 export const getByItemId = query({
-  args: { itemId: v.string() },
-  handler: async (ctx, { itemId }) => {
+  args: { itemId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { itemId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
     const row = await ctx.db
       .query('lotItems')
       .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
@@ -38,8 +40,9 @@ export const getByItemId = query({
 });
 
 export const listByLote = query({
-  args: { loteId: v.string() },
-  handler: async (ctx, { loteId }) => {
+  args: { loteId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { loteId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const items = await ctx.db
       .query('lotItems')
       .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
@@ -84,7 +87,15 @@ function normalizeMedidas(s: string): string {
  * here, matching products.publishedCatalog's own convention (lotItems.create
  * always sets both together; _remove clears loteId on the orphaned row).
  *
- * No auth gate — public read, same as lots.list / providers.list.
+ * GATED (2026-08-05, F7): was "no auth gate — public read", but the same
+ * unauthenticated-POST audit that closed products.list/clients.list/etc.
+ * showed this returns full productInventory rows (via omitFotosintesisOnly,
+ * not a public projection) to anyone holding the Convex deployment URL.
+ * Now requires a verified staff session — see `_lib/requireStaffSession.ts`.
+ * KNOWN BREAKAGE: the anima-bot Telegram bridge (external repo, no staff
+ * session mechanism) called this unauthenticated for its stock-search
+ * feature; that call now gets an empty array back until anima-bot is given
+ * a way to prove staff (out of scope here — flagged, not fixed).
  */
 export const search = query({
   args: {
@@ -92,8 +103,13 @@ export const search = query({
     medidas: v.optional(v.string()),
     minCantidad: v.optional(v.number()),
     loteId: v.optional(v.string()),
+    sessionToken: v.optional(v.string()),
   },
-  handler: async (ctx, { tipo, medidas, minCantidad, loteId }) => {
+  handler: async (
+    ctx,
+    { tipo, medidas, minCantidad, loteId, sessionToken },
+  ) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     // by_loteId is the only relevant index available — tipo has none, so it
     // (like medidas) is filtered in memory below regardless.
     const rows = loteId
@@ -142,8 +158,11 @@ export const search = query({
  * created/edited.
  */
 export const sumPreponderancia = query({
-  args: { loteId: v.string() },
-  handler: async (ctx, { loteId }) => {
+  args: { loteId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { loteId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) {
+      return { sum: 0, count: 0, remaining: 100, overflow: 0 };
+    }
     const items = await ctx.db
       .query('lotItems')
       .withIndex('by_loteId', (q) => q.eq('loteId', loteId))

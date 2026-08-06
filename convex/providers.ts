@@ -11,6 +11,7 @@ import { pushTableRowToVercel } from './_lib/sheetSync';
 import { marshalRow } from './_lib/columnMaps';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
+import { isStaffSession } from './_lib/requireStaffSession';
 
 const tipoValidator = v.union(
   v.literal('gemas'),
@@ -31,8 +32,12 @@ const providerPatchValidator = v.object({
 });
 
 export const list = query({
-  args: { search: v.optional(v.string()) },
-  handler: async (ctx, { search }) => {
+  args: {
+    search: v.optional(v.string()),
+    sessionToken: v.optional(v.string()),
+  },
+  handler: async (ctx, { search, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const all = await ctx.db.query('providers').collect();
     const filtered = search
       ? all.filter((row) => {
@@ -52,8 +57,11 @@ export const list = query({
 });
 
 export const get = query({
-  args: { id: v.id('providers') },
-  handler: async (ctx, { id }) => ctx.db.get(id),
+  args: { id: v.id('providers'), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { id, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
+    return ctx.db.get(id);
+  },
 });
 
 const createArgs = {

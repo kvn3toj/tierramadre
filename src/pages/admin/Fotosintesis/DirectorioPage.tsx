@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, X, ChevronRight, Plus } from 'lucide-react';
 import { getFoto, fontFamilies, paneHeight } from '../../../design-system';
 import { useConvexQuery, convexApi } from '../../../lib/convex-safe';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 import { FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
 import { fotoPaneSx } from './components/paneStyles';
 import { WORKBENCH_ENABLED } from './workbench/featureFlag';
@@ -64,8 +65,9 @@ export default function FotosintesisDirectorioPage() {
     setSelectedId(null);
   }, [tab]);
 
-  const providers = useConvexQuery(convexApi.providers.list, {});
-  const clients = useConvexQuery(convexApi.clients.list, {});
+  const sessionToken = readFreshSessionToken() ?? undefined;
+  const providers = useConvexQuery(convexApi.providers.list, { sessionToken });
+  const clients = useConvexQuery(convexApi.clients.list, { sessionToken });
 
   const embajadores = useMemo(
     () => (clients ?? []).filter((c) => c.tipo === 'embajador'),

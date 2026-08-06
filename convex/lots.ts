@@ -22,6 +22,7 @@ import { canReopenLot } from './_lib/lotMath';
 import { withPublishStamp } from './_lib/publishState';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
+import { isStaffSession } from './_lib/requireStaffSession';
 
 // Free text (canonical: B | C | S | M). The capture UI sanitizes a custom
 // write-in to an uppercase, dash-free token before it reaches here, so it stays
@@ -66,8 +67,10 @@ export const list = query({
         v.literal('cancelado'),
       ),
     ),
+    sessionToken: v.optional(v.string()),
   },
-  handler: async (ctx, { estado }) => {
+  handler: async (ctx, { estado, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const rows = estado
       ? await ctx.db
           .query('lots')
@@ -79,17 +82,22 @@ export const list = query({
 });
 
 export const get = query({
-  args: { id: v.id('lots') },
-  handler: async (ctx, { id }) => ctx.db.get(id),
+  args: { id: v.id('lots'), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { id, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
+    return ctx.db.get(id);
+  },
 });
 
 export const getByLoteId = query({
-  args: { loteId: v.string() },
-  handler: async (ctx, { loteId }) =>
-    ctx.db
+  args: { loteId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { loteId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
+    return ctx.db
       .query('lots')
       .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
-      .first(),
+      .first();
+  },
 });
 
 /**
@@ -97,8 +105,11 @@ export const getByLoteId = query({
  * preview "B-008" / "C-001" before submit. Does NOT consume the sequence.
  */
 export const peekNextLoteId = query({
-  args: { sede: sedeValidator },
-  handler: async (ctx, { sede }) => {
+  args: { sede: sedeValidator, sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { sede, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) {
+      return { nextValue: 0, preview: '' };
+    }
     const seq = await ctx.db
       .query('sequences')
       .withIndex('by_name', (q) => q.eq('name', lotSequenceName(sede)))

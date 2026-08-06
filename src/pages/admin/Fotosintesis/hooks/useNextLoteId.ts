@@ -1,5 +1,6 @@
-import { useConvexQuery, convexApi } from "../../../../lib/convex-safe";
-import type { Sede } from "../../../../data/vocabularies";
+import { useConvexQuery, convexApi } from '../../../../lib/convex-safe';
+import { readFreshSessionToken } from '../../../../utils/sessionToken';
+import type { Sede } from '../../../../data/vocabularies';
 
 export type { Sede };
 
@@ -14,7 +15,9 @@ export type { Sede };
 export function useNextLoteId(sede: Sede | null): string | null {
   const result = useConvexQuery(
     convexApi.lots.peekNextLoteId,
-    sede ? { sede } : "skip",
+    sede
+      ? { sede, sessionToken: readFreshSessionToken() ?? undefined }
+      : 'skip',
   );
   if (!result) return null;
   return result.preview;

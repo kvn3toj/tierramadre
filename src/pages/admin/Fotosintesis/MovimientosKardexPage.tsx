@@ -58,6 +58,7 @@ import { FotoTopbar, FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
 import { useAsesores } from '../../../hooks/useAsesores';
 import { matchesAsesorName } from '../../../utils/asesorNameUtils';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 import { MovimientoKardexPreview } from './components/MovimientoKardexPreview';
 import { resolveItemThumbnail } from './utils/resolveThumbnail';
 import { exportAndUploadMovimientoKardexPdf } from './exportMovimientoKardexPdf';
@@ -138,6 +139,9 @@ export default function MovimientosKardexPage() {
   // pre-fills row 1 with this item once its candidate data resolves — same
   // "enrich a deep-linked stub" pattern VentaPage.tsx uses for the same param.
   const seedItemId = searchParams.get('itemId')?.trim() || null;
+  // Read once per render — every Convex query on this page is internal-only
+  // (F7 lockdown) and requires proof of a staff session.
+  const sessionToken = readFreshSessionToken() ?? undefined;
 
   const [mode, setMode] = useState<Mode>('entrega');
   const [asesorNombre, setAsesorNombre] = useState('');
@@ -178,7 +182,9 @@ export default function MovimientosKardexPage() {
   // typed text) rather than one reactive query per row.
   const disponibles = useConvexQuery(
     convexApi.products.list,
-    convexReady && mode === 'entrega' ? { estado: 'DISPONIBLE' } : 'skip',
+    convexReady && mode === 'entrega'
+      ? { estado: 'DISPONIBLE', sessionToken }
+      : 'skip',
   ) as
     | Array<{
         itemId: string;
@@ -198,7 +204,7 @@ export default function MovimientosKardexPage() {
   const asesorMovementHistory = useConvexQuery(
     convexApi.asesorMovements.listByAsesor,
     convexReady && mode === 'devolucion' && asesorTrimmed
-      ? { asesorNombre: asesorTrimmed, limit: 300 }
+      ? { asesorNombre: asesorTrimmed, limit: 300, sessionToken }
       : 'skip',
   ) as
     | Array<{
@@ -212,7 +218,9 @@ export default function MovimientosKardexPage() {
   // internal asesor OR an external comercializador's consignment.
   const enAsesor = useConvexQuery(
     convexApi.products.list,
-    convexReady && mode === 'devolucion' ? { estado: 'ASESOR' } : 'skip',
+    convexReady && mode === 'devolucion'
+      ? { estado: 'ASESOR', sessionToken }
+      : 'skip',
   ) as
     | Array<{
         itemId: string;
@@ -223,7 +231,9 @@ export default function MovimientosKardexPage() {
     | undefined;
   const enConsignacion = useConvexQuery(
     convexApi.products.list,
-    convexReady && mode === 'devolucion' ? { estado: 'CONSIGNACION' } : 'skip',
+    convexReady && mode === 'devolucion'
+      ? { estado: 'CONSIGNACION', sessionToken }
+      : 'skip',
   ) as
     | Array<{
         itemId: string;
@@ -293,7 +303,7 @@ export default function MovimientosKardexPage() {
   const kardexEventRows = useConvexQuery(
     convexApi.asesorMovements.listByKardexEventId,
     convexReady && activeKardexEventId
-      ? { kardexEventId: activeKardexEventId }
+      ? { kardexEventId: activeKardexEventId, sessionToken }
       : 'skip',
   ) as
     | Array<{
