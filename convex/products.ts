@@ -27,7 +27,10 @@ import {
 } from './_lib/publishedGroups';
 import { postToVercel } from './_lib/sheetSync';
 import { requireAccessLevel } from './_lib/authz';
-import { isStaffOrBotSession } from './_lib/requireStaffSession';
+import {
+  isStaffSession,
+  isStaffOrBotSession,
+} from './_lib/requireStaffSession';
 import { withPublishStamp } from './_lib/publishState';
 import { precioEspecialDeObservacion } from './_lib/precioEspecial';
 import { omitFotosintesisOnly } from './_lib/saleSafe';
@@ -409,15 +412,33 @@ export const getPublicByItem = query({
   },
 });
 
-/** All productInventory rows for a Fotosíntesis lote (close/resumen UI). */
+/**
+ * All productInventory rows for a Fotosíntesis lote (close/resumen UI).
+ *
+ * GATED (2026-08-05, C2): shipped raw rows — including the 14 Fotosíntesis-
+ * only columns `_lib/saleSafe.ts` exists to contain (costoLoteCOP,
+ * precioObjetivoCOP, cajaSaldoCOP, cajaComprador — a third party's name —
+ * and friends) — unlike its siblings `get`/`getByItem`, which already
+ * `omitFotosintesisOnly()`. `loteId` is publicly discoverable through the
+ * open catalog (`publishedGroups`, `getManyByItemIds`), so this was a
+ * working chain from the public catalog straight to a lot's cost
+ * accounting. Now requires a verified staff session (both callers —
+ * LoteResumenPage.tsx, SubLotesPage.tsx — are `/admin/Fotosintesis` pages)
+ * AND applies the same `omitFotosintesisOnly` filter as `get`/`getByItem`:
+ * neither consumer reads any of the 14 fields, so nothing regresses, and it
+ * closes the gap for good instead of only gating the transport.
+ */
 export const listByLote = query({
-  args: { loteId: v.string() },
-  handler: async (ctx, { loteId }) => {
+  args: { loteId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { loteId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const rows = await ctx.db
       .query('productInventory')
       .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
       .collect();
-    return rows.sort((a, b) => a.itemId.localeCompare(b.itemId, 'es'));
+    return rows
+      .sort((a, b) => a.itemId.localeCompare(b.itemId, 'es'))
+      .map(omitFotosintesisOnly);
   },
 });
 
@@ -675,10 +696,15 @@ export const publishedGroups = query({
 
 /**
  * Recent edit history for an item (last 20).
+ *
+ * GATED (2026-08-05, I3): `productEdits` rows carry `editorEmail` and
+ * before/after values — including prices — for anyone. Now requires a
+ * verified staff session.
  */
 export const editHistory = query({
-  args: { itemId: v.string() },
-  handler: async (ctx, { itemId }) => {
+  args: { itemId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { itemId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const all = await ctx.db
       .query('productEdits')
       .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
@@ -2161,10 +2187,14 @@ export const patronesGlobalTop = query({
 /**
  * N most recent edits across all products. Powers the
  * Bandeja "Historial reciente" card.
+ *
+ * GATED (2026-08-05, I3): same rationale as `editHistory` above — requires a
+ * verified staff session.
  */
 export const recentEdits = query({
-  args: { limit: v.optional(v.number()) },
-  handler: async (ctx, { limit }) => {
+  args: { limit: v.optional(v.number()), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { limit, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const cap = Math.min(limit ?? 5, 50);
     const edits = await ctx.db.query('productEdits').order('desc').take(cap);
     return edits;

@@ -22,19 +22,18 @@ export default function FotosintesisSubLotesPage() {
   const { loteId: loteIdParam } = useParams();
   const loteId = loteIdParam ?? '';
 
+  const sessionToken = readFreshSessionToken() ?? undefined;
   const lot = useConvexQuery(
     convexApi.lots.getByLoteId,
-    loteId
-      ? { loteId, sessionToken: readFreshSessionToken() ?? undefined }
-      : 'skip',
+    loteId ? { loteId, sessionToken } : 'skip',
   );
   const subLotes = useConvexQuery(
     convexApi.subLotes.listByParent,
-    loteId ? { parentLoteId: loteId } : 'skip',
+    loteId ? { parentLoteId: loteId, sessionToken } : 'skip',
   );
   const products = useConvexQuery(
     convexApi.products.listByLote,
-    loteId ? { loteId } : 'skip',
+    loteId ? { loteId, sessionToken } : 'skip',
   );
 
   const [drawerOpen, setDrawerOpen] = useState(false);

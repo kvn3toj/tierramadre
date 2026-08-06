@@ -126,7 +126,7 @@ export default function FotosintesisLoteResumenPage() {
   );
   const products = useConvexQuery(
     convexApi.products.listByLote,
-    loteId ? { loteId } : 'skip',
+    loteId ? { loteId, sessionToken } : 'skip',
   );
 
   const closeLot = useAuthedConvexAction(convexApi.lots.close);

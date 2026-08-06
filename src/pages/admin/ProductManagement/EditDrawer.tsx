@@ -44,6 +44,7 @@ import { useDirtyGuard } from '../../../hooks/useDirtyGuard';
 import ConfirmDialog from '../../../components/shared/ConfirmDialog';
 import { StatusPip, type EstadoValue } from './StatusPip';
 import { AsesorMovementPanel } from './AsesorMovementPanel';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 // Phase G — create mode: typed payload for the "+ Nueva piedra" flow.
 import type { NewProductInput } from '../../../utils/createProduct-validate';
 
@@ -1416,7 +1417,9 @@ function HistorialBlock({
   const [showAll, setShowAll] = useState(false);
   const history = useConvexQuery(
     convexApi.products.editHistory,
-    convexReady ? { itemId } : 'skip',
+    convexReady
+      ? { itemId, sessionToken: readFreshSessionToken() ?? undefined }
+      : 'skip',
   ) as Array<HistoryEntry> | undefined;
 
   if (!convexReady) {

@@ -59,6 +59,7 @@ export default function FotosintesisHomePage() {
   const inventory = useConvexQuery(convexApi.products.list, { sessionToken });
   const recentEdits = useConvexQuery(convexApi.products.recentEdits, {
     limit: 5,
+    sessionToken,
   });
 
   // --- Mutations -----------------------------------------------------------

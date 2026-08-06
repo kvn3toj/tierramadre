@@ -175,7 +175,9 @@ export default function FotosintesisSalesPage() {
   const sessionToken = readFreshSessionToken() ?? undefined;
   const sales = useConvexQuery(convexApi.sales.list, { sessionToken });
   const clients = useConvexQuery(convexApi.clients.list, { sessionToken });
-  const ambassadors = useConvexQuery(convexApi.ambassadors.list, {});
+  const ambassadors = useConvexQuery(convexApi.ambassadors.list, {
+    sessionToken,
+  });
 
   const salesLoading = sales === undefined;
 
@@ -430,7 +432,7 @@ export default function FotosintesisSalesPage() {
   );
   const matchedCommission = useConvexQuery(
     convexApi.commissions.getBySale,
-    matchedSale ? { saleId: matchedSale.saleId } : 'skip',
+    matchedSale ? { saleId: matchedSale.saleId, sessionToken } : 'skip',
   );
   const matchedBuyer = matchedSale
     ? clientById.get(matchedSale.clientId)
