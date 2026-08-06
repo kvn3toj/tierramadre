@@ -15,6 +15,7 @@ import {
   convexApi,
 } from '../../../lib/convex-safe';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 import type { Id } from '../../../../convex/_generated/dataModel';
 import { TicketHeader } from './components/TicketHeader';
 import { FieldLabel } from './components/FieldLabel';
@@ -114,17 +115,18 @@ export default function FotosintesisLoteResumenPage() {
   const { loteId: loteIdParam } = useParams();
   const loteId = loteIdParam ?? '';
 
+  const sessionToken = readFreshSessionToken() ?? undefined;
   const lot = useConvexQuery(
     convexApi.lots.getByLoteId,
-    loteId ? { loteId } : 'skip',
+    loteId ? { loteId, sessionToken } : 'skip',
   );
   const lotItems = useConvexQuery(
     convexApi.lotItems.listByLote,
-    loteId ? { loteId } : 'skip',
+    loteId ? { loteId, sessionToken } : 'skip',
   );
   const products = useConvexQuery(
     convexApi.products.listByLote,
-    loteId ? { loteId } : 'skip',
+    loteId ? { loteId, sessionToken } : 'skip',
   );
 
   const closeLot = useAuthedConvexAction(convexApi.lots.close);

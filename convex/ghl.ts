@@ -470,13 +470,27 @@ export const flagGhlSyncPending = mutation({
 
 // ─── client ↔ GHL contact link (used by ghl-sync-contact) ──────────────────
 
+/**
+ * GATED (2026-08-05, C1): returned a full `clients` document — nombre, nit,
+ * cedula, direccion, telefono, email, leadScore, totalCompradoCOP — to any
+ * caller who guessed a phone number, which is not a secret. Its only caller
+ * is `api/ghl-sync-contact.ts`, itself server-to-server behind
+ * `GHL_API_SECRET`, via `ConvexHttpClient` — never the browser — so this
+ * takes the same `requireServerSecret` gate as every other GHL mutation in
+ * this file (recordVitrinaSelection, createOrder, markOrderPaid, …), reusing
+ * `ADMIN_SYNC_TOKEN`. Throws (not empty-form) on purpose: this is a one-shot
+ * server call, not a reactive browser subscription, so there's no "broken
+ * screen" risk — matches every other secret-gated function here.
+ */
 export const getClientByPhone = query({
-  args: { celular: v.string() },
-  handler: async (ctx, { celular }) =>
-    ctx.db
+  args: { celular: v.string(), secret: v.string() },
+  handler: async (ctx, { celular, secret }) => {
+    requireServerSecret(secret);
+    return ctx.db
       .query('clients')
       .withIndex('by_telefono', (q) => q.eq('telefono', celular))
-      .first(),
+      .first();
+  },
 });
 
 export const linkGhlContact = mutation({

@@ -24,6 +24,7 @@ import {
 } from '../../../lib/convex-safe';
 import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 import ConfirmDialog from '../../../components/shared/ConfirmDialog';
 import { WORKBENCH_ENABLED } from './workbench/featureFlag';
 import type { Id } from '../../../../convex/_generated/dataModel';
@@ -52,11 +53,13 @@ export default function FotosintesisHomePage() {
   const firstName = user?.givenName || user?.name?.split(' ')[0] || 'Operador';
 
   // --- Data ----------------------------------------------------------------
-  const lots = useConvexQuery(convexApi.lots.list, {});
-  const recentSales = useConvexQuery(convexApi.sales.list, {});
-  const inventory = useConvexQuery(convexApi.products.list, {});
+  const sessionToken = readFreshSessionToken() ?? undefined;
+  const lots = useConvexQuery(convexApi.lots.list, { sessionToken });
+  const recentSales = useConvexQuery(convexApi.sales.list, { sessionToken });
+  const inventory = useConvexQuery(convexApi.products.list, { sessionToken });
   const recentEdits = useConvexQuery(convexApi.products.recentEdits, {
     limit: 5,
+    sessionToken,
   });
 
   // --- Mutations -----------------------------------------------------------

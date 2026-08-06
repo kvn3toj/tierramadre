@@ -23,7 +23,10 @@ import {
 } from '../../../lib/convex-safe';
 import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
 import { useNotification } from '../../../contexts/NotificationContext';
-import { requireAuthTokenOrLogout } from '../../../utils/sessionToken';
+import {
+  requireAuthTokenOrLogout,
+  readFreshSessionToken,
+} from '../../../utils/sessionToken';
 import { useFotosintesisLayout } from './FotosintesisLayoutContext';
 import { FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
 import {
@@ -127,7 +130,9 @@ export default function FotosintesisItemsPage() {
   // less than five parallel filtered subscriptions.
   const items = useConvexQuery(
     convexApi.products.list,
-    convexReady ? {} : 'skip',
+    convexReady
+      ? { sessionToken: readFreshSessionToken() ?? undefined }
+      : 'skip',
   ) as ItemRow[] | undefined;
 
   const saveEdit = useConvexAction(convexApi.products.saveEdit);

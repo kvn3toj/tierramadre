@@ -30,6 +30,7 @@ import {
   convexApi,
 } from '../../../lib/convex-safe';
 import { STORAGE_KEYS } from '../../../constants/storage-keys';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 
 import { TicketHeader, type TicketMeta } from './components/TicketHeader';
 import { FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
@@ -505,9 +506,10 @@ function NewLotIntro({
   // Provider directory — already loaded by the drawer below; surface it at
   // the parent so the EntityPicker can render the list as options instead of
   // forcing the operator to retype a name they've already registered.
-  const providers = useConvexQuery(convexApi.providers.list, { search: '' }) as
-    | ProviderRow[]
-    | undefined;
+  const providers = useConvexQuery(convexApi.providers.list, {
+    search: '',
+    sessionToken: readFreshSessionToken() ?? undefined,
+  }) as ProviderRow[] | undefined;
 
   // Local form state
   const [providerId, setProviderId] = useState<string | null>(null);
@@ -1638,12 +1640,19 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
   } = useFotosintesisLayout();
 
   // Reactive data --------------------------------------------------------------
-  const lot = useConvexQuery(convexApi.lots.getByLoteId, { loteId });
-  const items = useConvexQuery(convexApi.lotItems.listByLote, { loteId });
+  const sessionToken = readFreshSessionToken() ?? undefined;
+  const lot = useConvexQuery(convexApi.lots.getByLoteId, {
+    loteId,
+    sessionToken,
+  });
+  const items = useConvexQuery(convexApi.lotItems.listByLote, {
+    loteId,
+    sessionToken,
+  });
   const prepTotal = usePreponderanciaTotal(loteId);
   const provider = useConvexQuery(
     convexApi.providers.get,
-    lot?.providerId ? { id: lot.providerId } : 'skip',
+    lot?.providerId ? { id: lot.providerId, sessionToken } : 'skip',
   );
 
   // Mutations ------------------------------------------------------------------

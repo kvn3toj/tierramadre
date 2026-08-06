@@ -10,7 +10,8 @@ import type { Id } from './_generated/dataModel';
 import { pushTableRowToVercel } from './_lib/sheetSync';
 import { marshalRow } from './_lib/columnMaps';
 import { requireAccessLevel } from './_lib/authz';
-import { requireBotSecret } from './_lib/botAuth';
+import { requireBotSecret, isBotSecret } from './_lib/botAuth';
+import { isStaffSession } from './_lib/requireStaffSession';
 
 const tipoValidator = v.union(
   v.literal('gemas'),
@@ -30,9 +31,38 @@ const providerPatchValidator = v.object({
   notas: v.optional(v.string()),
 });
 
+/**
+ * Also read by anima-bot's `listProviders` (anima-bot/src/fotosintesis/
+ * client.ts) for a name picker in the Telegram wizard — it needs a provider's
+ * `_id` + `nombreORazonSocial`, not its `cedula`/`direccion`/`telefono`/
+ * `email`. Having `createViaBot` (below) does not justify handing the bot
+ * blanket read of every supplier's ID document (I2, 2026-08-05 review) — a
+ * supplier's cédula is regulated the same as a client's. So a bot-secret
+ * caller gets every row with the PII fields blanked to `undefined`
+ * (`cedula`, `direccion`, `telefono`, `email`, `notas`) — same `Doc<'providers'>`
+ * shape the staff path already returns (so nothing downstream has to special-
+ * case a narrower type), just redacted. A staff session still gets the full
+ * document, unchanged.
+ *
+ * NOTE for the coordinator: anima-bot's `listProviders` also reads `r.nit`
+ * (client.ts maps `nit: r.nit ? String(r.nit) : undefined`) — `nit` is NOT
+ * blanked below, so the bot keeps seeing it. Flagged rather than silently
+ * matching your stated `{_id, nombreORazonSocial}` shape: `nit` is a business
+ * tax id (public-register information in Colombia), not a personal cédula,
+ * and the bot's own code already depends on it to disambiguate providers
+ * with the same name. If you want it blanked too, add `nit: undefined` to
+ * the redaction below — one line.
+ */
 export const list = query({
-  args: { search: v.optional(v.string()) },
-  handler: async (ctx, { search }) => {
+  args: {
+    search: v.optional(v.string()),
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
+  },
+  handler: async (ctx, { search, sessionToken, botSecret }) => {
+    const staff = await isStaffSession(sessionToken);
+    const bot = !staff && isBotSecret(botSecret);
+    if (!staff && !bot) return [];
     const all = await ctx.db.query('providers').collect();
     const filtered = search
       ? all.filter((row) => {
@@ -45,15 +75,29 @@ export const list = query({
           );
         })
       : all;
-    return filtered.sort((a, b) =>
+    const sorted = filtered.sort((a, b) =>
       a.nombreORazonSocial.localeCompare(b.nombreORazonSocial),
     );
+    if (bot) {
+      return sorted.map((p) => ({
+        ...p,
+        cedula: undefined,
+        direccion: undefined,
+        telefono: undefined,
+        email: undefined,
+        notas: undefined,
+      }));
+    }
+    return sorted;
   },
 });
 
 export const get = query({
-  args: { id: v.id('providers') },
-  handler: async (ctx, { id }) => ctx.db.get(id),
+  args: { id: v.id('providers'), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { id, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
+    return ctx.db.get(id);
+  },
 });
 
 const createArgs = {

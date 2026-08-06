@@ -22,6 +22,10 @@ import { canReopenLot } from './_lib/lotMath';
 import { withPublishStamp } from './_lib/publishState';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
+import {
+  isStaffSession,
+  isStaffOrBotSession,
+} from './_lib/requireStaffSession';
 
 // Free text (canonical: B | C | S | M). The capture UI sanitizes a custom
 // write-in to an uppercase, dash-free token before it reaches here, so it stays
@@ -56,6 +60,13 @@ const lotPatchValidator = v.object({
   notas: v.optional(v.string()),
 });
 
+// `list` and `peekNextLoteId` below are also read by the anima-bot Telegram
+// bridge (listOpenLots / peekNextLoteId in
+// anima-bot/src/fotosintesis/client.ts), which cannot obtain a staff session
+// — hence the `botSecret` arg and `isStaffOrBotSession` gate instead of the
+// staff-only `isStaffSession` used everywhere else in this file. See
+// `_lib/requireStaffSession.ts` for the full rationale and the exact list of
+// which queries in this lockdown accept a bot secret (this is one of only 7).
 export const list = query({
   args: {
     estado: v.optional(
@@ -66,8 +77,11 @@ export const list = query({
         v.literal('cancelado'),
       ),
     ),
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
   },
-  handler: async (ctx, { estado }) => {
+  handler: async (ctx, { estado, sessionToken, botSecret }) => {
+    if (!(await isStaffOrBotSession({ sessionToken, botSecret }))) return [];
     const rows = estado
       ? await ctx.db
           .query('lots')
@@ -79,26 +93,40 @@ export const list = query({
 });
 
 export const get = query({
-  args: { id: v.id('lots') },
-  handler: async (ctx, { id }) => ctx.db.get(id),
+  args: { id: v.id('lots'), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { id, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
+    return ctx.db.get(id);
+  },
 });
 
 export const getByLoteId = query({
-  args: { loteId: v.string() },
-  handler: async (ctx, { loteId }) =>
-    ctx.db
+  args: { loteId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { loteId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
+    return ctx.db
       .query('lots')
       .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
-      .first(),
+      .first();
+  },
 });
 
 /**
  * Read-only peek at the next lot ID for the chosen sede. Lets the form
  * preview "B-008" / "C-001" before submit. Does NOT consume the sequence.
+ * Also read by anima-bot (see the `list` comment above) — accepts a bot
+ * secret too.
  */
 export const peekNextLoteId = query({
-  args: { sede: sedeValidator },
-  handler: async (ctx, { sede }) => {
+  args: {
+    sede: sedeValidator,
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
+  },
+  handler: async (ctx, { sede, sessionToken, botSecret }) => {
+    if (!(await isStaffOrBotSession({ sessionToken, botSecret }))) {
+      return { nextValue: 0, preview: '' };
+    }
     const seq = await ctx.db
       .query('sequences')
       .withIndex('by_name', (q) => q.eq('name', lotSequenceName(sede)))

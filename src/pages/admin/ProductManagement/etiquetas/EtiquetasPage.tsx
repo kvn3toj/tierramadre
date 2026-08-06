@@ -41,6 +41,7 @@ import {
   convexReady,
 } from '../../../../lib/convex-safe';
 import { useNotification } from '../../../../contexts/NotificationContext';
+import { readFreshSessionToken } from '../../../../utils/sessionToken';
 import { useNiimbotPrinter } from '../../../../hooks/useNiimbotPrinter';
 import { LabelPreview } from '../../Fotosintesis/labels/LabelPreview';
 import {
@@ -128,7 +129,9 @@ export default function EtiquetasPage() {
 
   const products = useConvexQuery(
     convexApi.products.list,
-    convexReady ? {} : 'skip',
+    convexReady
+      ? { sessionToken: readFreshSessionToken() ?? undefined }
+      : 'skip',
   ) as ProductListRow[] | undefined;
 
   const [kind, setKind] = useState<KindFilter>('todo');

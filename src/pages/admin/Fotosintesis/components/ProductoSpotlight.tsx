@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, X, Clock, Check } from 'lucide-react';
 import { getFoto, fontFamilies, emeraldCore } from '../../../../design-system';
 import { useConvexQuery, convexApi } from '../../../../lib/convex-safe';
+import { readFreshSessionToken } from '../../../../utils/sessionToken';
 import type { SpotlightProduct } from '../FotosintesisLayoutContext';
 import { KbdKey } from './KbdKey';
 import { useBatchThumbnails } from '../../../../hooks/useBatchThumbnails';
@@ -159,24 +160,29 @@ export function ProductoSpotlight({
   // it stable). CONSIGNACION items are just as sellable as ASESOR ones — see
   // BR-6 in `sales.create` — so a consignment "graduates" straight from
   // here too, not only via AsesorMovementPanel's prefill shortcut.
+  const sessionToken = readFreshSessionToken() ?? undefined;
   const disponibles = useConvexQuery(
     convexApi.products.list,
-    open ? { estado: 'DISPONIBLE', search: deferredQuery } : 'skip',
+    open
+      ? { estado: 'DISPONIBLE', search: deferredQuery, sessionToken }
+      : 'skip',
   );
   const asesor = useConvexQuery(
     convexApi.products.list,
-    open ? { estado: 'ASESOR', search: deferredQuery } : 'skip',
+    open ? { estado: 'ASESOR', search: deferredQuery, sessionToken } : 'skip',
   );
   const consignacion = useConvexQuery(
     convexApi.products.list,
-    open ? { estado: 'CONSIGNACION', search: deferredQuery } : 'skip',
+    open
+      ? { estado: 'CONSIGNACION', search: deferredQuery, sessionToken }
+      : 'skip',
   );
   // Sold items — fetched ONLY for the global search, never the venta picker
   // (`!multiSelect`). A sold piece can be looked up for history but not re-sold.
   const vendida = useConvexQuery(
     convexApi.products.list,
     open && !multiSelect
-      ? { estado: 'VENDIDA', search: deferredQuery }
+      ? { estado: 'VENDIDA', search: deferredQuery, sessionToken }
       : 'skip',
   );
 

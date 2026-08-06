@@ -1,11 +1,12 @@
-import { Box } from "@mui/material";
-import { ChevronLeft } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Box } from '@mui/material';
+import { ChevronLeft } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 
-import { getFoto, fontFamilies } from "../../../design-system";
-import { useConvexQuery, convexApi } from "../../../lib/convex-safe";
-import type { Id } from "../../../../convex/_generated/dataModel";
-import { EditItemDrawer } from "./components/EditItemDrawer";
+import { getFoto, fontFamilies } from '../../../design-system';
+import { useConvexQuery, convexApi } from '../../../lib/convex-safe';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
+import type { Id } from '../../../../convex/_generated/dataModel';
+import { EditItemDrawer } from './components/EditItemDrawer';
 
 /**
  * Dedicated, routed page for editing a single captured ítem — the full-page
@@ -26,25 +27,26 @@ import { EditItemDrawer } from "./components/EditItemDrawer";
  * requires a data router (the app uses <BrowserRouter>). Tracked as a follow-up.
  */
 export default function EditItemPage() {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const navigate = useNavigate();
   const { loteId: loteIdParam, lotItemId: lotItemIdParam } = useParams();
-  const loteId = loteIdParam ?? "";
-  const lotItemId = lotItemIdParam ?? "";
+  const loteId = loteIdParam ?? '';
+  const lotItemId = lotItemIdParam ?? '';
 
+  const sessionToken = readFreshSessionToken() ?? undefined;
   const lot = useConvexQuery(
     convexApi.lots.getByLoteId,
-    loteId ? { loteId } : "skip",
+    loteId ? { loteId, sessionToken } : 'skip',
   );
   const lotItems = useConvexQuery(
     convexApi.lotItems.listByLote,
-    loteId ? { loteId } : "skip",
+    loteId ? { loteId, sessionToken } : 'skip',
   );
 
   // Where "Volver" / save / delete return: abierto lots live in the capture
   // screen, closed/published lots in the resumen.
   const backTo =
-    lot?.estado === "abierto"
+    lot?.estado === 'abierto'
       ? `/admin/fotosintesis/lots/${loteId}`
       : `/admin/fotosintesis/lots/${loteId}/close`;
   const goBack = () => navigate(backTo);
@@ -52,7 +54,7 @@ export default function EditItemPage() {
   if (lot === undefined || lotItems === undefined) {
     return (
       <Box
-        sx={{ padding: "36px 28px", color: foto.ink.tertiary, fontSize: 13 }}
+        sx={{ padding: '36px 28px', color: foto.ink.tertiary, fontSize: 13 }}
       >
         Cargando ítem…
       </Box>
@@ -63,24 +65,24 @@ export default function EditItemPage() {
 
   if (!lot || !editingItem) {
     return (
-      <Box sx={{ maxWidth: 820, margin: "0 auto", padding: "20px 26px" }}>
+      <Box sx={{ maxWidth: 820, margin: '0 auto', padding: '20px 26px' }}>
         <Box
           component="button"
           type="button"
           onClick={goBack}
           sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            border: "none",
-            background: "transparent",
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            border: 'none',
+            background: 'transparent',
             color: foto.ink.secondary,
             fontFamily: fontFamilies.system,
             fontSize: 12.5,
             fontWeight: 600,
-            cursor: "pointer",
-            padding: "6px 8px",
-            marginLeft: "-8px",
+            cursor: 'pointer',
+            padding: '6px 8px',
+            marginLeft: '-8px',
           }}
         >
           <ChevronLeft size={15} strokeWidth={2} />
@@ -88,7 +90,7 @@ export default function EditItemPage() {
         </Box>
         <Box
           role="alert"
-          sx={{ marginTop: "18px", fontSize: 13, color: foto.status.sold }}
+          sx={{ marginTop: '18px', fontSize: 13, color: foto.status.sold }}
         >
           No encontramos este ítem en el lote {loteId}.
         </Box>
@@ -110,11 +112,11 @@ export default function EditItemPage() {
       onClose={goBack}
       itemId={editingItem.itemId}
       loteId={loteId}
-      lotItemId={editingItem._id as Id<"lotItems">}
+      lotItemId={editingItem._id as Id<'lotItems'>}
       currentPreponderancia={editingItem.preponderancia}
       lotCostoTotalCOP={lot.costoTotalCOP}
       siblingPreponderanciaSum={siblingSum}
-      ticketLabel={`${loteId} · ${String(editingIndex + 1).padStart(3, "0")}`}
+      ticketLabel={`${loteId} · ${String(editingIndex + 1).padStart(3, '0')}`}
       lotEstado={lot.estado}
       editable
     />

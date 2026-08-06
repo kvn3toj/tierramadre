@@ -7,14 +7,15 @@
  * Global mode: backed by `products.recentEdits` (limit 5), read-only.
  */
 
-import { Box, Typography } from "@mui/material";
-import { useState } from "react";
-import { fontFamilies, type FotoTokens } from "../../../design-system";
+import { Box, Typography } from '@mui/material';
+import { useState } from 'react';
+import { fontFamilies, type FotoTokens } from '../../../design-system';
 import {
   useConvexQuery,
   convexApi,
   convexReady,
-} from "../../../lib/convex-safe";
+} from '../../../lib/convex-safe';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 
 const SANS = fontFamilies.system;
 
@@ -36,16 +37,16 @@ interface AuditRow {
     before: string | number | null;
     after: string | number | null;
   }>;
-  status: "saved" | "pending" | "failed";
+  status: 'saved' | 'pending' | 'failed';
 }
 
 function summarizeChanges(
   changes: Array<{ field: string; before: unknown; after: unknown }>,
 ): string {
-  if (changes.length === 0) return "sin cambios";
+  if (changes.length === 0) return 'sin cambios';
   if (changes.length === 1) {
     const c = changes[0];
-    if (c.field === "estado") return `→ estado: ${String(c.after)}`;
+    if (c.field === 'estado') return `→ estado: ${String(c.after)}`;
     return `editó ${c.field}`;
   }
   return `editó ${changes.length} campos`;
@@ -56,7 +57,7 @@ function relDays(iso: string): string {
   const days = Math.round(diff / 86400000);
   if (days < 1) {
     const hours = Math.round(diff / 3600000);
-    return hours < 1 ? "hace minutos" : `hace ${hours} h`;
+    return hours < 1 ? 'hace minutos' : `hace ${hours} h`;
   }
   return `hace ${days} d`;
 }
@@ -66,13 +67,14 @@ export function HistorialCard({ foto, itemId }: HistorialCardProps) {
   // Selected mode: per-itemId history (up to 20). Global mode: latest
   // 5 across the whole catalog. Hooks are called unconditionally so
   // React's call order stays stable across the no-selection toggle.
+  const sessionToken = readFreshSessionToken() ?? undefined;
   const itemHistory = useConvexQuery(
     convexApi.products.editHistory,
-    convexReady && itemId ? { itemId } : "skip",
+    convexReady && itemId ? { itemId, sessionToken } : 'skip',
   ) as AuditRow[] | undefined;
   const globalHistory = useConvexQuery(
     convexApi.products.recentEdits,
-    convexReady && !itemId ? { limit: 5 } : "skip",
+    convexReady && !itemId ? { limit: 5, sessionToken } : 'skip',
   ) as AuditRow[] | undefined;
   const history = itemId ? itemHistory : globalHistory;
   const allowExpand = !!itemId;
@@ -83,8 +85,8 @@ export function HistorialCard({ foto, itemId }: HistorialCardProps) {
     <Box
       sx={{
         border: `1px solid ${foto.surfaces.rule}`,
-        borderRadius: "11px",
-        p: "13px 15px",
+        borderRadius: '11px',
+        p: '13px 15px',
         backgroundColor: foto.surfaces.canvas,
       }}
     >
@@ -93,14 +95,14 @@ export function HistorialCard({ foto, itemId }: HistorialCardProps) {
         sx={{
           fontFamily: SANS,
           fontSize: 9,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
           color: foto.ink.tertiary,
           fontWeight: 500,
           mb: 1,
         }}
       >
-        {itemId ? "Historial" : "Actividad reciente"}
+        {itemId ? 'Historial' : 'Actividad reciente'}
       </Typography>
       {history === undefined && (
         <Typography
@@ -113,7 +115,7 @@ export function HistorialCard({ foto, itemId }: HistorialCardProps) {
         <Typography
           sx={{ fontFamily: SANS, fontSize: 10, color: foto.ink.tertiary }}
         >
-          {itemId ? "Sin historial todavía" : "Sin actividad reciente"}
+          {itemId ? 'Sin historial todavía' : 'Sin actividad reciente'}
         </Typography>
       )}
       {visible &&
@@ -122,8 +124,8 @@ export function HistorialCard({ foto, itemId }: HistorialCardProps) {
           <Box
             key={h._id}
             sx={{
-              display: "grid",
-              gridTemplateColumns: "1fr auto",
+              display: 'grid',
+              gridTemplateColumns: '1fr auto',
               py: 0.5,
               fontFamily: SANS,
               fontSize: 10,
@@ -144,9 +146,9 @@ export function HistorialCard({ foto, itemId }: HistorialCardProps) {
           type="button"
           onClick={() => setExpanded(true)}
           sx={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
             color: foto.accent.primary,
             fontFamily: SANS,
             fontSize: 10,

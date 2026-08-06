@@ -20,10 +20,10 @@ import {
   useMemo,
   useRef,
   useState,
-} from "react";
-import { Box, IconButton, Tooltip } from "@mui/material";
-import { alpha, keyframes } from "@mui/material/styles";
-import { useLocation, useNavigate } from "react-router-dom";
+} from 'react';
+import { Box, IconButton, Tooltip } from '@mui/material';
+import { alpha, keyframes } from '@mui/material/styles';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
   ArrowRight,
@@ -39,10 +39,10 @@ import {
   StopCircle,
   Users,
   WifiOff,
-} from "lucide-react";
-import { useQuery } from "convex/react";
-import { fontFamilies, getFoto } from "../../../../design-system";
-import { useGoogleAuth } from "../../../../contexts/GoogleAuthContext";
+} from 'lucide-react';
+import { useQuery } from 'convex/react';
+import { fontFamilies, getFoto } from '../../../../design-system';
+import { useGoogleAuth } from '../../../../contexts/GoogleAuthContext';
 import {
   BOVEDAS,
   CALIDADES,
@@ -53,34 +53,35 @@ import {
   METODO_RECEPCION,
   TIPOS_ESMERALDA,
   TIPOS_JOYA,
-} from "../../../../data/vocabularies";
-import { useAppNavigator } from "../../../../contexts/AppNavigatorContext";
-import { api } from "../../../../../convex/_generated/api";
-import { ITEM_SCAN_CAP } from "../../../../../convex/_lib/aiCaps";
+} from '../../../../data/vocabularies';
+import { useAppNavigator } from '../../../../contexts/AppNavigatorContext';
+import { api } from '../../../../../convex/_generated/api';
+import { ITEM_SCAN_CAP } from '../../../../../convex/_lib/aiCaps';
 import {
   useFotosynthiaChat,
   type UseFotosynthiaChatResult,
-} from "../hooks/useFotosynthiaChat";
-import { FLOW_LABELS, fieldLabel, formatDraftValue } from "../utils/flowLabels";
-import { useFotosintesisLayoutSafe } from "../FotosintesisLayoutContext";
+} from '../hooks/useFotosynthiaChat';
+import { FLOW_LABELS, fieldLabel, formatDraftValue } from '../utils/flowLabels';
+import { useFotosintesisLayoutSafe } from '../FotosintesisLayoutContext';
 import type {
   BatchEditPatch,
   GuidedFlow,
   NavigateAction,
-} from "../copilot/flowSchemas";
-import { resolveItemHint, hintMissMessage } from "../copilot/resolveItemHint";
-import { buildPath, getRouteById } from "../../../../config/adminNavMap";
-import { CopilotEmptyState } from "../copilot-rail/CopilotEmptyState";
-import { CommitReviewCard } from "./CommitReviewCard";
-import { CommitLogRow } from "./CommitLogRow";
-import type { CommitEntity } from "../copilot/executeAction";
-import { spanishText } from "../utils/fieldLang";
+} from '../copilot/flowSchemas';
+import { resolveItemHint, hintMissMessage } from '../copilot/resolveItemHint';
+import { buildPath, getRouteById } from '../../../../config/adminNavMap';
+import { CopilotEmptyState } from '../copilot-rail/CopilotEmptyState';
+import { CommitReviewCard } from './CommitReviewCard';
+import { CommitLogRow } from './CommitLogRow';
+import type { CommitEntity } from '../copilot/executeAction';
+import { spanishText } from '../utils/fieldLang';
+import { readFreshSessionToken } from '../../../../utils/sessionToken';
 
 // Convex provider is only mounted when VITE_CONVEX_URL is set in main.tsx.
 // We mirror that gate here so `useQuery` isn't called in environments
 // without a provider (it would throw).
 const HAS_CONVEX =
-  typeof import.meta !== "undefined" &&
+  typeof import.meta !== 'undefined' &&
   !!(import.meta.env?.VITE_CONVEX_URL as string | undefined);
 
 const snapshotRef = (
@@ -110,12 +111,12 @@ interface ChipSet {
 }
 
 const FORMA_PAGO_DISPLAY: Record<string, string> = {
-  contado: "Contado",
-  credito: "Crédito",
-  esmereogenesis: "Esmereogénesis",
-  bajo_pedido: "Bajo pedido",
-  consignacion: "Consignación",
-  canje: "Canje / Trueque",
+  contado: 'Contado',
+  credito: 'Crédito',
+  esmereogenesis: 'Esmereogénesis',
+  bajo_pedido: 'Bajo pedido',
+  consignacion: 'Consignación',
+  canje: 'Canje / Trueque',
 };
 
 /**
@@ -130,65 +131,65 @@ function getAnswerChips(
   if (!flow || !missing.length) return null;
   for (const field of missing) {
     switch (field) {
-      case "sede":
+      case 'sede':
         return {
           field,
-          headerLabel: "Bóveda",
+          headerLabel: 'Bóveda',
           options: BOVEDAS.map((b) => ({ label: b.label, value: b.label })),
         };
-      case "formaPago":
+      case 'formaPago':
         return {
           field,
-          headerLabel: "Forma de pago",
-          options: (flow === "venta" ? FORMA_PAGO_VENTA : FORMA_PAGO).map(
+          headerLabel: 'Forma de pago',
+          options: (flow === 'venta' ? FORMA_PAGO_VENTA : FORMA_PAGO).map(
             (f) => ({
               label: FORMA_PAGO_DISPLAY[f] ?? f,
               value: FORMA_PAGO_DISPLAY[f] ?? f,
             }),
           ),
         };
-      case "metodoContado":
+      case 'metodoContado':
         return {
           field,
-          headerLabel: "Método de pago",
-          options: (flow === "venta" ? METODO_RECEPCION : METODO_CONTADO).map(
+          headerLabel: 'Método de pago',
+          options: (flow === 'venta' ? METODO_RECEPCION : METODO_CONTADO).map(
             (m) => ({
               label: m.charAt(0).toUpperCase() + m.slice(1),
               value: m.charAt(0).toUpperCase() + m.slice(1),
             }),
           ),
         };
-      case "compradorTipo":
+      case 'compradorTipo':
         return {
           field,
-          headerLabel: "Comprador",
+          headerLabel: 'Comprador',
           options: [
-            { label: "Embajador", value: "Embajador" },
-            { label: "Cliente final", value: "Cliente final" },
+            { label: 'Embajador', value: 'Embajador' },
+            { label: 'Cliente final', value: 'Cliente final' },
           ],
         };
-      case "calidad":
+      case 'calidad':
         return {
           field,
-          headerLabel: "Calidad",
+          headerLabel: 'Calidad',
           options: CALIDADES.slice(0, 10).map((c) => ({ label: c, value: c })),
         };
-      case "tipoJoya":
+      case 'tipoJoya':
         return {
           field,
-          headerLabel: "Tipo de joya",
+          headerLabel: 'Tipo de joya',
           options: TIPOS_JOYA.map((t) => ({ label: t, value: t })),
         };
-      case "tipoEsmeralda":
+      case 'tipoEsmeralda':
         return {
           field,
-          headerLabel: "Tipo de esmeralda",
+          headerLabel: 'Tipo de esmeralda',
           options: TIPOS_ESMERALDA.map((t) => ({ label: t, value: t })),
         };
-      case "corte":
+      case 'corte':
         return {
           field,
-          headerLabel: "Corte",
+          headerLabel: 'Corte',
           options: CORTES.slice(0, 10).map((c) => ({ label: c, value: c })),
         };
       default:
@@ -212,79 +213,79 @@ function getContextActions(route: string): QuickAction[] {
   if (isLotDetail) {
     return [
       {
-        label: "Nueva gema",
-        prompt: "Registrar una gema nueva en este lote",
+        label: 'Nueva gema',
+        prompt: 'Registrar una gema nueva en este lote',
         icon: <Sparkles size={12} strokeWidth={2} />,
       },
       {
-        label: "Nueva joya",
-        prompt: "Registrar una joya nueva en este lote",
+        label: 'Nueva joya',
+        prompt: 'Registrar una joya nueva en este lote',
         icon: <PackagePlus size={12} strokeWidth={2} />,
       },
       {
-        label: "Nuevo insumo",
-        prompt: "Registrar un insumo nuevo en este lote",
+        label: 'Nuevo insumo',
+        prompt: 'Registrar un insumo nuevo en este lote',
         icon: <PackagePlus size={12} strokeWidth={2} />,
       },
       {
-        label: "Editar lote",
-        prompt: "Quiero editar los datos de este lote",
+        label: 'Editar lote',
+        prompt: 'Quiero editar los datos de este lote',
         icon: <Compass size={12} strokeWidth={2} />,
       },
     ];
   }
-  if (route.includes("/sales/")) {
+  if (route.includes('/sales/')) {
     return [
       {
-        label: "Registrar venta",
-        prompt: "Registrar una venta",
+        label: 'Registrar venta',
+        prompt: 'Registrar una venta',
         icon: <ShoppingBag size={12} strokeWidth={2} />,
       },
       {
-        label: "Nuevo cliente",
-        prompt: "Crear un cliente final nuevo",
+        label: 'Nuevo cliente',
+        prompt: 'Crear un cliente final nuevo',
         icon: <Users size={12} strokeWidth={2} />,
       },
       {
-        label: "Nueva gema",
-        prompt: "Registrar una gema nueva",
+        label: 'Nueva gema',
+        prompt: 'Registrar una gema nueva',
         icon: <Sparkles size={12} strokeWidth={2} />,
       },
     ];
   }
-  if (route.includes("/lots/new")) {
+  if (route.includes('/lots/new')) {
     return [
       {
-        label: "Nuevo lote",
-        prompt: "Crear un lote nuevo",
+        label: 'Nuevo lote',
+        prompt: 'Crear un lote nuevo',
         icon: <PackagePlus size={12} strokeWidth={2} />,
       },
       {
-        label: "Nuevo proveedor",
-        prompt: "Crear un proveedor nuevo",
+        label: 'Nuevo proveedor',
+        prompt: 'Crear un proveedor nuevo',
         icon: <Users size={12} strokeWidth={2} />,
       },
     ];
   }
   return [
     {
-      label: "Nuevo lote",
-      prompt: "Crear un lote nuevo",
+      label: 'Nuevo lote',
+      prompt: 'Crear un lote nuevo',
       icon: <PackagePlus size={12} strokeWidth={2} />,
     },
     {
-      label: "Registrar venta",
-      prompt: "Registrar una venta",
+      label: 'Registrar venta',
+      prompt: 'Registrar una venta',
       icon: <ShoppingBag size={12} strokeWidth={2} />,
     },
     {
-      label: "Analytics",
-      prompt: "Llévame a Analytics",
+      label: 'Analytics',
+      prompt: 'Llévame a Analytics',
       icon: <BarChart2 size={12} strokeWidth={2} />,
     },
     {
-      label: "Directorio",
-      prompt: "Llévame al directorio de clientes",
+      label: 'Directorio',
+      prompt: 'Llévame al directorio de clientes',
       icon: <Users size={12} strokeWidth={2} />,
     },
   ];
@@ -297,80 +298,80 @@ function getContextActions(route: string): QuickAction[] {
  */
 function getWorkbenchActions(flow: string | undefined): QuickAction[] {
   switch (flow) {
-    case "venta":
+    case 'venta':
       return [
         {
-          label: "Registrar venta",
-          prompt: "Quiero registrar una venta",
+          label: 'Registrar venta',
+          prompt: 'Quiero registrar una venta',
           icon: <ShoppingBag size={12} strokeWidth={2} />,
         },
         {
-          label: "Elegir pieza",
-          prompt: "Ayudame a elegir la pieza para esta venta",
+          label: 'Elegir pieza',
+          prompt: 'Ayudame a elegir la pieza para esta venta',
           icon: <Sparkles size={12} strokeWidth={2} />,
         },
         {
-          label: "Comprador nuevo",
-          prompt: "El comprador es un cliente nuevo",
+          label: 'Comprador nuevo',
+          prompt: 'El comprador es un cliente nuevo',
           icon: <Users size={12} strokeWidth={2} />,
         },
       ];
-    case "lote":
+    case 'lote':
       return [
         {
-          label: "Datos del lote",
+          label: 'Datos del lote',
           prompt:
-            "Empecemos con los datos del lote: proveedor, costo y unidades",
+            'Empecemos con los datos del lote: proveedor, costo y unidades',
           icon: <PackagePlus size={12} strokeWidth={2} />,
         },
         {
-          label: "Agregar gema",
-          prompt: "Registrar una gema nueva en este lote",
+          label: 'Agregar gema',
+          prompt: 'Registrar una gema nueva en este lote',
           icon: <Sparkles size={12} strokeWidth={2} />,
         },
         {
-          label: "Agregar joya",
-          prompt: "Registrar una joya nueva en este lote",
+          label: 'Agregar joya',
+          prompt: 'Registrar una joya nueva en este lote',
           icon: <PackagePlus size={12} strokeWidth={2} />,
         },
       ];
-    case "provider":
+    case 'provider':
       return [
         {
-          label: "Datos del proveedor",
-          prompt: "Te paso los datos del proveedor",
+          label: 'Datos del proveedor',
+          prompt: 'Te paso los datos del proveedor',
           icon: <Users size={12} strokeWidth={2} />,
         },
       ];
-    case "client":
+    case 'client':
       return [
         {
-          label: "Datos del cliente",
-          prompt: "Te paso los datos del cliente",
+          label: 'Datos del cliente',
+          prompt: 'Te paso los datos del cliente',
           icon: <Users size={12} strokeWidth={2} />,
         },
       ];
-    case "item-gema":
+    case 'item-gema':
       return [
         {
-          label: "Nueva gema",
-          prompt: "Registrar una gema nueva en este lote",
+          label: 'Nueva gema',
+          prompt: 'Registrar una gema nueva en este lote',
           icon: <Sparkles size={12} strokeWidth={2} />,
         },
       ];
-    case "item-joya":
+    case 'item-joya':
       return [
         {
-          label: "Nueva joya",
-          prompt: "Registrar una joya nueva en este lote",
+          label: 'Nueva joya',
+          prompt: 'Registrar una joya nueva en este lote',
           icon: <PackagePlus size={12} strokeWidth={2} />,
         },
       ];
-    case "item-insumo":
+    case 'item-insumo':
       return [
         {
-          label: "Nuevo insumo",
-          prompt: "Registrar un insumo nuevo en este lote",
+          label: 'Nuevo insumo',
+          prompt: 'Registrar un insumo nuevo en este lote',
           icon: <PackagePlus size={12} strokeWidth={2} />,
         },
       ];
@@ -389,23 +390,23 @@ function WorkbenchGreeting({
   onSuggested: (prompt: string) => void;
   disabled: boolean;
 }) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const actions = getWorkbenchActions(flow);
   return (
     <Box>
       <Box
         sx={{
-          fontSize: "12.5px",
+          fontSize: '12.5px',
           color: foto.ink.secondary,
           lineHeight: 1.55,
-          marginBottom: "14px",
+          marginBottom: '14px',
         }}
       >
         Soy <strong>Fotosynthia</strong>. Dictame los datos y los voy llenando
         en el lienzo — o empezá con una de estas.
       </Box>
       {actions.length > 0 && (
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
           {actions.map((action) => (
             <Box
               key={action.prompt}
@@ -415,36 +416,36 @@ function WorkbenchGreeting({
               disabled={disabled}
               title={action.prompt}
               sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                padding: "6px 12px",
-                borderRadius: "10px",
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '6px 12px',
+                borderRadius: '10px',
                 border: `1px solid ${foto.surfaces.rule}`,
                 background: foto.surfaces.canvas,
                 color: foto.ink.primary,
-                fontSize: "12px",
+                fontSize: '12px',
                 fontWeight: 500,
-                fontFamily: "inherit",
-                cursor: "pointer",
+                fontFamily: 'inherit',
+                cursor: 'pointer',
                 transition:
-                  "background 120ms ease, border-color 120ms ease, color 120ms ease",
-                "&:hover": {
+                  'background 120ms ease, border-color 120ms ease, color 120ms ease',
+                '&:hover': {
                   background: foto.accent.soft,
                   borderColor: foto.accent.primary,
                   color: foto.accent.deep,
                 },
-                "&:disabled": {
+                '&:disabled': {
                   opacity: 0.5,
-                  cursor: "not-allowed",
-                  "&:hover": {
+                  cursor: 'not-allowed',
+                  '&:hover': {
                     background: foto.surfaces.canvas,
                     borderColor: foto.surfaces.rule,
                     color: foto.ink.primary,
                   },
                 },
-                "&:focus-visible": {
-                  outline: "none",
+                '&:focus-visible': {
+                  outline: 'none',
                   boxShadow: `0 0 0 3px ${foto.accent.glow}`,
                 },
               }}
@@ -460,9 +461,9 @@ function WorkbenchGreeting({
 }
 
 const ITEM_FLOWS: ReadonlyArray<GuidedFlow> = [
-  "item-gema",
-  "item-joya",
-  "item-insumo",
+  'item-gema',
+  'item-joya',
+  'item-insumo',
 ];
 
 interface LoteContext {
@@ -497,10 +498,10 @@ function TypingDots({ color }: { color: string }) {
       role="status"
       aria-label="Fotosynthia está escribiendo"
       sx={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "4px",
-        height: "1.55em",
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '4px',
+        height: '1.55em',
       }}
     >
       {[0, 1, 2].map((i) => (
@@ -511,12 +512,12 @@ function TypingDots({ color }: { color: string }) {
           sx={{
             width: 6,
             height: 6,
-            borderRadius: "50%",
+            borderRadius: '50%',
             background: color,
             animation: `${typingPulse} 1.2s ${i * 0.16}s infinite ease-in-out`,
             // Respect reduced-motion: hold dots steady instead of pulsing.
-            "@media (prefers-reduced-motion: reduce)": {
-              animation: "none",
+            '@media (prefers-reduced-motion: reduce)': {
+              animation: 'none',
               opacity: 0.5,
             },
           }}
@@ -538,7 +539,11 @@ function SnapshotSource({
   active: boolean;
   onSnapshot: (s: unknown) => void;
 }) {
-  const data = useQuery(snapshotRef, active ? {} : "skip");
+  const sessionToken = readFreshSessionToken();
+  const data = useQuery(
+    snapshotRef,
+    active ? { sessionToken: sessionToken ?? undefined } : 'skip',
+  );
   useEffect(() => {
     onSnapshot(data);
   }, [data, onSnapshot]);
@@ -564,28 +569,28 @@ export interface CopilotPanelBodyProps {
    * "rail" (default) keeps the form hand-off + in-panel commit + auto-route.
    * "workbench" suppresses those surfaces — the canvas + commit bar own them.
    */
-  mode?: "rail" | "workbench";
+  mode?: 'rail' | 'workbench';
 }
 
 export function CopilotPanelBody({
   active,
   chat,
-  mode = "rail",
+  mode = 'rail',
 }: CopilotPanelBodyProps) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const location = useLocation();
   const navigate = useNavigate();
   const route = location.pathname;
-  const onFotoRoute = route.startsWith("/admin/fotosintesis");
+  const onFotoRoute = route.startsWith('/admin/fotosintesis');
   // In the workbench the route's trailing segment IS the active flow; the
   // greeting + quick actions key off it (H4).
   const workbenchFlow =
-    mode === "workbench" ? route.split("/").filter(Boolean).pop() : undefined;
+    mode === 'workbench' ? route.split('/').filter(Boolean).pop() : undefined;
   const { user } = useGoogleAuth();
   const layout = useFotosintesisLayoutSafe();
   const { accessLevel, navigateTo } = useAppNavigator();
   const listRef = useRef<HTMLDivElement | null>(null);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [snapshot, setSnapshot] = useState<unknown>(undefined);
 
   // In-copilot approval log: each committed action, newest first, with its
@@ -636,15 +641,15 @@ export function CopilotPanelBody({
   // Network awareness: block sending while offline (the request would only
   // fail and surface as an error) and tell Maritza why the composer is locked.
   const [online, setOnline] = useState<boolean>(() =>
-    typeof navigator === "undefined" ? true : navigator.onLine,
+    typeof navigator === 'undefined' ? true : navigator.onLine,
   );
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
     return () => {
-      window.removeEventListener("online", update);
-      window.removeEventListener("offline", update);
+      window.removeEventListener('online', update);
+      window.removeEventListener('offline', update);
     };
   }, []);
 
@@ -668,7 +673,7 @@ export function CopilotPanelBody({
   const loteContext = useMemo<LoteContext | undefined>(() => {
     const m = route.match(/^\/admin\/fotosintesis\/lots\/([^/]+)/);
     const seg = m?.[1];
-    if (!seg || seg === "new") return undefined;
+    if (!seg || seg === 'new') return undefined;
     const loteId = decodeURIComponent(seg);
     const lots = (snapshot as { recentLots?: Array<Record<string, unknown>> })
       ?.recentLots;
@@ -695,7 +700,7 @@ export function CopilotPanelBody({
   // Chat-level error = the last turn ended in an error (vs. mid-history ones).
   const lastMessage = messages[messages.length - 1];
   const chatError =
-    lastMessage && lastMessage.role === "assistant" && lastMessage.error
+    lastMessage && lastMessage.role === 'assistant' && lastMessage.error
       ? lastMessage.error
       : null;
 
@@ -716,12 +721,12 @@ export function CopilotPanelBody({
     e?.preventDefault();
     if (!canSend) return;
     const text = input.trim();
-    setInput("");
+    setInput('');
     dispatchGuided(text);
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
     }
@@ -736,21 +741,21 @@ export function CopilotPanelBody({
   // The panel computes the target route from the envelope + lot context; the
   // layout bus carries the draft and the form seeds itself on mount.
   const env = latestEnvelope;
-  const showCard = !!env && env.flow !== "advisory";
+  const showCard = !!env && env.flow !== 'advisory';
 
   // A server-hardened, ready-to-commit action → the AI executes it directly on
   // one approval (the CommitReviewCard). `handoff`-mode actions (e.g. venta) and
   // actionless envelopes fall through to the existing form hand-off card below.
   const commitAction =
-    mode !== "workbench" &&
+    mode !== 'workbench' &&
     env?.action &&
-    env.action.mode === "direct" &&
+    env.action.mode === 'direct' &&
     env.action.ready
       ? env.action
       : null;
   const commitCtx = useMemo(
     () => ({
-      editorEmail: user?.email ?? "",
+      editorEmail: user?.email ?? '',
       operatorName: user?.name,
       activeLoteId: loteContext?.loteId,
       candidateItems,
@@ -759,12 +764,12 @@ export function CopilotPanelBody({
   );
 
   const handoff = useMemo(() => {
-    if (!env || env.flow === "advisory") {
-      return { kind: "none" as const };
+    if (!env || env.flow === 'advisory') {
+      return { kind: 'none' as const };
     }
-    if (env.flow === "batch-edit" || env.flow === "edit-existing") {
+    if (env.flow === 'batch-edit' || env.flow === 'edit-existing') {
       const edits: BatchEditPatch[] =
-        env.flow === "batch-edit"
+        env.flow === 'batch-edit'
           ? (env.edits ?? [])
           : (() => {
               const { itemHint, targetItemId, ...patch } = env.draft as Record<
@@ -773,9 +778,9 @@ export function CopilotPanelBody({
               >;
               return [
                 {
-                  itemHint: typeof itemHint === "string" ? itemHint : undefined,
+                  itemHint: typeof itemHint === 'string' ? itemHint : undefined,
                   targetItemId:
-                    typeof targetItemId === "string" ? targetItemId : undefined,
+                    typeof targetItemId === 'string' ? targetItemId : undefined,
                   patch,
                 },
               ];
@@ -789,19 +794,19 @@ export function CopilotPanelBody({
             candidateItems,
             CANDIDATE_ITEM_CAP,
           );
-          if (res.status === "resolved" && res.item.loteId) {
+          if (res.status === 'resolved' && res.item.loteId) {
             loteId = res.item.loteId;
             break;
           }
         }
       }
-      if (edits.length === 0) return { kind: "none" as const };
+      if (edits.length === 0) return { kind: 'none' as const };
       if (!loteId) {
         // No lot to land on: explain WHY (ambiguous / not-found / off-cap /
         // offline) so Maritza can recover instead of hitting a silent dead end.
         const firstHint = edits.find((e) => e.itemHint)?.itemHint;
         return {
-          kind: "blocked" as const,
+          kind: 'blocked' as const,
           reason: hintMissMessage(
             firstHint,
             resolveItemHint(firstHint, candidateItems, CANDIDATE_ITEM_CAP),
@@ -809,73 +814,73 @@ export function CopilotPanelBody({
         };
       }
       return {
-        kind: "batch" as const,
+        kind: 'batch' as const,
         edits,
         target: `/admin/fotosintesis/lots/${encodeURIComponent(loteId)}`,
       };
     }
     if (ITEM_FLOWS.includes(env.flow)) {
       const draft = { ...(env.draft as Record<string, unknown>) };
-      const hint = typeof draft.loteId === "string" ? draft.loteId : undefined;
+      const hint = typeof draft.loteId === 'string' ? draft.loteId : undefined;
       delete draft.loteId; // routing-only — keep the form draft clean
       const loteId = hint || loteContext?.loteId;
       if (!loteId) {
         return {
-          kind: "blocked" as const,
-          reason: "Abrí o nombrá el lote para precargar el ítem.",
+          kind: 'blocked' as const,
+          reason: 'Abrí o nombrá el lote para precargar el ítem.',
         };
       }
       return {
-        kind: "form" as const,
+        kind: 'form' as const,
         flow: env.flow,
         data: draft,
         target: `/admin/fotosintesis/lots/${encodeURIComponent(loteId)}`,
       };
     }
-    if (env.flow === "lote") {
+    if (env.flow === 'lote') {
       return {
-        kind: "form" as const,
+        kind: 'form' as const,
         flow: env.flow,
         data: env.draft,
-        target: "/admin/fotosintesis/lots/new",
+        target: '/admin/fotosintesis/lots/new',
       };
     }
-    if (env.flow === "venta") {
+    if (env.flow === 'venta') {
       const itemId =
-        typeof (env.draft as Record<string, unknown>).itemId === "string"
+        typeof (env.draft as Record<string, unknown>).itemId === 'string'
           ? (env.draft as Record<string, string>).itemId
           : undefined;
       return {
-        kind: "form" as const,
+        kind: 'form' as const,
         flow: env.flow,
         data: env.draft,
         target: itemId
           ? `/admin/fotosintesis/sales/new?itemId=${encodeURIComponent(itemId)}`
-          : "/admin/fotosintesis/sales/new",
+          : '/admin/fotosintesis/sales/new',
       };
     }
-    if (env.flow === "provider") {
+    if (env.flow === 'provider') {
       // ProveedorNuevoDrawer lives on the new-lot page.
       return {
-        kind: "form" as const,
+        kind: 'form' as const,
         flow: env.flow,
         data: env.draft,
-        target: "/admin/fotosintesis/lots/new",
+        target: '/admin/fotosintesis/lots/new',
       };
     }
-    if (env.flow === "client") {
+    if (env.flow === 'client') {
       // ClienteFinalForm lives on the new-sale page.
       return {
-        kind: "form" as const,
+        kind: 'form' as const,
         flow: env.flow,
         data: env.draft,
-        target: "/admin/fotosintesis/sales/new",
+        target: '/admin/fotosintesis/sales/new',
       };
     }
-    return { kind: "none" as const };
+    return { kind: 'none' as const };
   }, [env, loteContext, candidateItems]);
 
-  const canHandoff = !!env && env.ready && handoff.kind !== "blocked";
+  const canHandoff = !!env && env.ready && handoff.kind !== 'blocked';
 
   const runHandoff = () => {
     if (!env || !env.ready) return;
@@ -883,15 +888,15 @@ export function CopilotPanelBody({
       // Off a /admin/fotosintesis/* route the capture bus isn't mounted. Route
       // INTO Fotosíntesis; the rail (and this envelope) persist, so the button
       // re-enables on arrival and seeds the form on the second click.
-      if (handoff.kind === "form" || handoff.kind === "batch") {
+      if (handoff.kind === 'form' || handoff.kind === 'batch') {
         navigate(handoff.target);
       }
       return;
     }
-    if (handoff.kind === "form") {
+    if (handoff.kind === 'form') {
       layout.openDraftForm(handoff.flow, handoff.data, handoff.target);
       clearEnvelope();
-    } else if (handoff.kind === "batch") {
+    } else if (handoff.kind === 'batch') {
       layout.enqueueEdits(handoff.edits);
       navigate(handoff.target);
       clearEnvelope();
@@ -899,10 +904,10 @@ export function CopilotPanelBody({
   };
 
   const handoffLabel = !layout
-    ? "Ir a Fotosíntesis"
-    : env?.flow === "batch-edit" || env?.flow === "edit-existing"
-      ? "Aplicar ediciones"
-      : "Abrir formulario";
+    ? 'Ir a Fotosíntesis'
+    : env?.flow === 'batch-edit' || env?.flow === 'edit-existing'
+      ? 'Aplicar ediciones'
+      : 'Abrir formulario';
 
   // ─── Natural-language navigation ──────────────────────────────────
   // The envelope may carry a server-validated `navigate`. Static routes arrive
@@ -910,14 +915,14 @@ export function CopilotPanelBody({
   // client to resolve against the live candidate list. A clear single match
   // auto-routes; ambiguity surfaces a chip instead of a silent dead end.
   type NavPlan =
-    | { kind: "ready"; action: NavigateAction; label: string }
-    | { kind: "blocked"; label: string; message: string };
+    | { kind: 'ready'; action: NavigateAction; label: string }
+    | { kind: 'blocked'; label: string; message: string };
 
   const navPlan = useMemo<NavPlan | null>(() => {
     const nav = env?.navigate;
     if (!nav) return null;
     if (!nav.needsParam)
-      return { kind: "ready", action: nav, label: nav.label };
+      return { kind: 'ready', action: nav, label: nav.label };
     const entry = getRouteById(nav.routeId);
     if (!entry) return null;
     const needs = nav.needsParam;
@@ -925,32 +930,32 @@ export function CopilotPanelBody({
     const hint = nav.params?.[needs.name];
     if (
       spec &&
-      (spec.resolver === "itemId" ||
-        spec.resolver === "lotItemId" ||
-        spec.resolver === "saleId")
+      (spec.resolver === 'itemId' ||
+        spec.resolver === 'lotItemId' ||
+        spec.resolver === 'saleId')
     ) {
       const res = resolveItemHint(hint, candidateItems, CANDIDATE_ITEM_CAP);
-      if (res.status === "resolved") {
+      if (res.status === 'resolved') {
         const built = buildPath(entry, {
           ...(nav.params ?? {}),
           [spec.name]: res.item.itemId,
         });
         if (built) {
           return {
-            kind: "ready",
+            kind: 'ready',
             action: { ...nav, path: built, needsParam: undefined },
             label: nav.label,
           };
         }
       }
       return {
-        kind: "blocked",
+        kind: 'blocked',
         label: nav.label,
         message: hintMissMessage(hint, res),
       };
     }
     return {
-      kind: "blocked",
+      kind: 'blocked',
       label: nav.label,
       message: `Necesito ${needs.label} para abrir ${nav.label}.`,
     };
@@ -960,8 +965,8 @@ export function CopilotPanelBody({
   const handledNavRef = useRef<unknown>(null);
   useEffect(() => {
     // In the workbench the conversation must not yank the user off the canvas.
-    if (mode === "workbench") return;
-    if (!env?.navigate || navPlan?.kind !== "ready") return;
+    if (mode === 'workbench') return;
+    if (!env?.navigate || navPlan?.kind !== 'ready') return;
     if (handledNavRef.current === env) return;
     handledNavRef.current = env;
     navigateTo(navPlan.action);
@@ -969,10 +974,10 @@ export function CopilotPanelBody({
 
   const snapshotStatus = useMemo(() => {
     if (!HAS_CONVEX)
-      return "Convex offline · Fotosynthia responde sin datos vivos.";
-    if (snapshot === undefined) return "Cargando contexto…";
+      return 'Convex offline · Fotosynthia responde sin datos vivos.';
+    if (snapshot === undefined) return 'Cargando contexto…';
     if (snapshot === null)
-      return "Sin acceso a Convex — Fotosynthia responde sin datos vivos.";
+      return 'Sin acceso a Convex — Fotosynthia responde sin datos vivos.';
     const s = snapshot as {
       counts?: { lots?: number; sales?: number; ambassadors?: number };
       syncErrors?: {
@@ -983,7 +988,7 @@ export function CopilotPanelBody({
       };
     };
     const c = s.counts;
-    if (!c) return "Snapshot listo";
+    if (!c) return 'Snapshot listo';
     const base = `Snapshot · ${c.lots ?? 0} lotes · ${c.sales ?? 0} ventas · ${c.ambassadors ?? 0} embajadores`;
     // Surface sheet-sync health deterministically in the rail chrome instead of
     // relying on the model honoring the system-prompt rule to mention it.
@@ -992,16 +997,16 @@ export function CopilotPanelBody({
       ? (e.lots ?? 0) + (e.sales ?? 0) + (e.providers ?? 0) + (e.clients ?? 0)
       : 0;
     return totalErr > 0
-      ? `${base} · ⚠ ${totalErr} ${totalErr === 1 ? "error" : "errores"} de sync`
+      ? `${base} · ⚠ ${totalErr} ${totalErr === 1 ? 'error' : 'errores'} de sync`
       : base;
   }, [snapshot]);
 
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
         color: foto.ink.primary,
       }}
     >
@@ -1014,22 +1019,22 @@ export function CopilotPanelBody({
       {/* Snapshot strip */}
       <Box
         sx={{
-          padding: "10px 26px",
+          padding: '10px 26px',
           borderBottom: `1px solid ${foto.surfaces.rule}`,
           background: foto.surfaces.panel,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "10px",
-          fontSize: "10.5px",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '10px',
+          fontSize: '10.5px',
           color: foto.ink.tertiary,
         }}
       >
         <Box
           sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
             minWidth: 0,
           }}
         >
@@ -1037,16 +1042,16 @@ export function CopilotPanelBody({
           <Box
             component="span"
             sx={{
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
             title={`Thread ${threadId.slice(0, 8)}…`}
           >
             {snapshotStatus}
           </Box>
         </Box>
-        <Box sx={{ display: "inline-flex", gap: "4px" }}>
+        <Box sx={{ display: 'inline-flex', gap: '4px' }}>
           {isStreaming && (
             <Tooltip title="Detener" arrow placement="left">
               <IconButton
@@ -1057,7 +1062,7 @@ export function CopilotPanelBody({
                   width: 26,
                   height: 26,
                   color: foto.ink.secondary,
-                  "&:hover": { color: foto.status.sold },
+                  '&:hover': { color: foto.status.sold },
                 }}
               >
                 <StopCircle size={14} strokeWidth={1.8} />
@@ -1068,14 +1073,14 @@ export function CopilotPanelBody({
             <IconButton
               size="small"
               onClick={() => {
-                listRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+                listRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               aria-label="Ir al inicio del hilo"
               sx={{
                 width: 26,
                 height: 26,
                 color: foto.ink.secondary,
-                "&:hover": { color: foto.ink.primary },
+                '&:hover': { color: foto.ink.primary },
               }}
             >
               <RefreshCcw size={13} strokeWidth={1.8} />
@@ -1091,8 +1096,8 @@ export function CopilotPanelBody({
                 width: 26,
                 height: 26,
                 color: foto.ink.secondary,
-                "&:hover": { color: foto.ink.primary },
-                "&.Mui-disabled": { color: foto.ink.mute },
+                '&:hover': { color: foto.ink.primary },
+                '&.Mui-disabled': { color: foto.ink.mute },
               }}
             >
               <Eraser size={13} strokeWidth={1.8} />
@@ -1104,14 +1109,14 @@ export function CopilotPanelBody({
       {/* Quick context actions — one-click shortcuts when no flow is active.
           Suppressed in the workbench: its greeting owns the flow-specific
           starters (H4), so the generic Analytics/Directorio chips never show. */}
-      {messages.length === 0 && mode !== "workbench" && (
+      {messages.length === 0 && mode !== 'workbench' && (
         <Box
           sx={{
-            padding: "8px 14px",
+            padding: '8px 14px',
             borderBottom: `1px solid ${foto.surfaces.rule}`,
-            display: "flex",
-            gap: "6px",
-            flexWrap: "wrap",
+            display: 'flex',
+            gap: '6px',
+            flexWrap: 'wrap',
             background: foto.surfaces.panel,
           }}
         >
@@ -1124,35 +1129,35 @@ export function CopilotPanelBody({
               disabled={isStreaming || !online}
               title={action.prompt}
               sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                padding: "5px 10px",
-                borderRadius: "8px",
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '5px 10px',
+                borderRadius: '8px',
                 border: `1px solid ${foto.surfaces.rule}`,
                 background: foto.surfaces.canvas,
                 color: foto.ink.secondary,
-                fontSize: "11.5px",
+                fontSize: '11.5px',
                 fontWeight: 500,
-                cursor: "pointer",
+                cursor: 'pointer',
                 transition:
-                  "background 120ms ease, border-color 120ms ease, color 120ms ease",
-                "&:hover": {
+                  'background 120ms ease, border-color 120ms ease, color 120ms ease',
+                '&:hover': {
                   background: foto.accent.soft,
                   borderColor: foto.accent.primary,
                   color: foto.accent.deep,
                 },
-                "&:disabled": {
+                '&:disabled': {
                   opacity: 0.5,
-                  cursor: "not-allowed",
-                  "&:hover": {
+                  cursor: 'not-allowed',
+                  '&:hover': {
                     background: foto.surfaces.canvas,
                     borderColor: foto.surfaces.rule,
                     color: foto.ink.secondary,
                   },
                 },
-                "&:focus-visible": {
-                  outline: "none",
+                '&:focus-visible': {
+                  outline: 'none',
                   boxShadow: `0 0 0 3px ${foto.accent.glow}`,
                 },
               }}
@@ -1169,18 +1174,18 @@ export function CopilotPanelBody({
         ref={listRef}
         sx={{
           flex: 1,
-          overflowY: "auto",
-          padding: "18px 26px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px",
+          overflowY: 'auto',
+          padding: '18px 26px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
         }}
         role="log"
         aria-live="polite"
         aria-label="Conversación con Fotosynthia"
       >
         {messages.length === 0 ? (
-          mode === "workbench" ? (
+          mode === 'workbench' ? (
             <WorkbenchGreeting
               flow={workbenchFlow}
               onSuggested={handleSuggested}
@@ -1199,42 +1204,42 @@ export function CopilotPanelBody({
               <Box
                 key={m.id}
                 sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: m.role === "user" ? "flex-end" : "flex-start",
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: m.role === 'user' ? 'flex-end' : 'flex-start',
                 }}
               >
                 <Box
                   sx={{
-                    fontSize: "9px",
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
+                    fontSize: '9px',
+                    letterSpacing: '0.18em',
+                    textTransform: 'uppercase',
                     color: foto.ink.tertiary,
-                    marginBottom: "4px",
-                    paddingX: "2px",
+                    marginBottom: '4px',
+                    paddingX: '2px',
                   }}
                 >
-                  {m.role === "user" ? "Tú" : "Fotosynthia"}
+                  {m.role === 'user' ? 'Tú' : 'Fotosynthia'}
                 </Box>
                 <Box
                   sx={{
-                    maxWidth: "86%",
+                    maxWidth: '86%',
                     background:
-                      m.role === "user"
+                      m.role === 'user'
                         ? alpha(foto.accent.primary, 0.06)
                         : foto.surfaces.canvas,
                     border: `1px solid ${
-                      m.role === "user"
+                      m.role === 'user'
                         ? alpha(foto.accent.primary, 0.18)
                         : foto.surfaces.rule
                     }`,
-                    borderRadius: "12px",
-                    padding: "10px 12px",
-                    fontSize: "13px",
+                    borderRadius: '12px',
+                    padding: '10px 12px',
+                    fontSize: '13px',
                     lineHeight: 1.55,
                     color: foto.ink.primary,
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
                   }}
                 >
                   {m.content ? (
@@ -1247,8 +1252,8 @@ export function CopilotPanelBody({
                   {m.error && !isLast && (
                     <Box
                       sx={{
-                        marginTop: "8px",
-                        fontSize: "11px",
+                        marginTop: '8px',
+                        fontSize: '11px',
                         color: foto.status.sold,
                       }}
                     >
@@ -1263,32 +1268,32 @@ export function CopilotPanelBody({
       </Box>
 
       {/* Navigation chip — confirms an auto-route or surfaces an unresolved hint */}
-      {navPlan && mode !== "workbench" && (
+      {navPlan && mode !== 'workbench' && (
         <Box
           sx={{
-            margin: "0 18px 2px",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "9px 12px",
-            borderRadius: "10px",
+            margin: '0 18px 2px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '9px 12px',
+            borderRadius: '10px',
             border: `1px solid ${
-              navPlan.kind === "ready"
+              navPlan.kind === 'ready'
                 ? alpha(foto.accent.primary, 0.25)
                 : foto.surfaces.rule
             }`,
             background:
-              navPlan.kind === "ready" ? foto.accent.soft : foto.surfaces.panel,
-            fontSize: "11.5px",
+              navPlan.kind === 'ready' ? foto.accent.soft : foto.surfaces.panel,
+            fontSize: '11.5px',
             lineHeight: 1.45,
             color:
-              navPlan.kind === "ready" ? foto.accent.deep : foto.ink.secondary,
+              navPlan.kind === 'ready' ? foto.accent.deep : foto.ink.secondary,
           }}
           role="status"
         >
           <Compass size={13} strokeWidth={2} />
           <Box component="span">
-            {navPlan.kind === "ready"
+            {navPlan.kind === 'ready'
               ? `Te llevé a ${navPlan.label}`
               : navPlan.message}
           </Box>
@@ -1310,10 +1315,10 @@ export function CopilotPanelBody({
       {commitLog.length > 0 && (
         <Box
           sx={{
-            margin: "0 18px 2px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "4px",
+            margin: '0 18px 2px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
           }}
           aria-label="Acciones guardadas"
         >
@@ -1330,36 +1335,36 @@ export function CopilotPanelBody({
 
       {/* Review card — pinned above the composer when a draft is in progress.
           Suppressed in the workbench: the canvas + commit bar replace it. */}
-      {showCard && env && !commitAction && mode !== "workbench" && (
+      {showCard && env && !commitAction && mode !== 'workbench' && (
         <Box
           sx={{
-            margin: "0 18px",
+            margin: '0 18px',
             border: `1px solid ${foto.accent.primary}`,
             background: foto.accent.soft,
-            borderRadius: "12px",
-            padding: "12px 14px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "8px",
+            borderRadius: '12px',
+            padding: '12px 14px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
           }}
         >
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "8px",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '8px',
             }}
           >
             <Box
               sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                fontSize: "9px",
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '9px',
                 fontWeight: 600,
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
                 color: foto.accent.deep,
               }}
             >
@@ -1369,39 +1374,39 @@ export function CopilotPanelBody({
             {env.coercedKeys.length > 0 && (
               <Box
                 sx={{
-                  fontSize: "10px",
+                  fontSize: '10px',
                   color: foto.ink.tertiary,
                 }}
-                title={`Ajustado al vocabulario: ${env.coercedKeys.join(", ")}`}
+                title={`Ajustado al vocabulario: ${env.coercedKeys.join(', ')}`}
               >
                 ⚠ {env.coercedKeys.length} ajuste
-                {env.coercedKeys.length > 1 ? "s" : ""}
+                {env.coercedKeys.length > 1 ? 's' : ''}
               </Box>
             )}
           </Box>
 
           {/* Batch-edit: numbered checklist preview */}
-          {(env.flow === "batch-edit" || env.flow === "edit-existing") &&
-          handoff.kind === "batch" ? (
+          {(env.flow === 'batch-edit' || env.flow === 'edit-existing') &&
+          handoff.kind === 'batch' ? (
             <Box
               component="ol"
               sx={{
                 margin: 0,
-                paddingLeft: "18px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "4px",
-                fontSize: "11.5px",
+                paddingLeft: '18px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px',
+                fontSize: '11.5px',
                 color: foto.ink.secondary,
               }}
             >
               {handoff.edits.map((e, i) => (
                 <Box component="li" key={i}>
-                  <strong>{e.itemHint ?? e.targetItemId ?? "ítem"}</strong>
-                  {" → "}
+                  <strong>{e.itemHint ?? e.targetItemId ?? 'ítem'}</strong>
+                  {' → '}
                   {Object.entries(e.patch)
                     .map(([k, v]) => `${fieldLabel(k)}: ${formatDraftValue(v)}`)
-                    .join(" · ")}
+                    .join(' · ')}
                 </Box>
               ))}
             </Box>
@@ -1409,17 +1414,17 @@ export function CopilotPanelBody({
             // Single-record drafts: field list
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: "auto 1fr",
-                rowGap: "3px",
-                columnGap: "10px",
-                fontSize: "11.5px",
+                display: 'grid',
+                gridTemplateColumns: 'auto 1fr',
+                rowGap: '3px',
+                columnGap: '10px',
+                fontSize: '11.5px',
               }}
             >
               {Object.entries(env.draft as Record<string, unknown>)
-                .filter(([k]) => k !== "loteId")
+                .filter(([k]) => k !== 'loteId')
                 .map(([k, v]) => (
-                  <Box key={k} sx={{ display: "contents" }}>
+                  <Box key={k} sx={{ display: 'contents' }}>
                     <Box sx={{ color: foto.ink.tertiary }}>{fieldLabel(k)}</Box>
                     <Box
                       sx={{
@@ -1430,7 +1435,7 @@ export function CopilotPanelBody({
                       }}
                     >
                       {formatDraftValue(v)}
-                      {env.coercedKeys.includes(k) ? " ⚠" : ""}
+                      {env.coercedKeys.includes(k) ? ' ⚠' : ''}
                     </Box>
                   </Box>
                 ))}
@@ -1438,13 +1443,13 @@ export function CopilotPanelBody({
           )}
 
           {env.missing.length > 0 && (
-            <Box sx={{ fontSize: "10.5px", color: foto.ink.tertiary }}>
-              Faltan: {env.missing.map(fieldLabel).join(", ")}
+            <Box sx={{ fontSize: '10.5px', color: foto.ink.tertiary }}>
+              Faltan: {env.missing.map(fieldLabel).join(', ')}
             </Box>
           )}
 
-          {handoff.kind === "blocked" && (
-            <Box sx={{ fontSize: "10.5px", color: foto.status.sold }}>
+          {handoff.kind === 'blocked' && (
+            <Box sx={{ fontSize: '10.5px', color: foto.status.sold }}>
               {handoff.reason}
             </Box>
           )}
@@ -1455,22 +1460,22 @@ export function CopilotPanelBody({
               type="button"
               onClick={runHandoff}
               sx={{
-                alignSelf: "flex-end",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                border: "none",
-                borderRadius: "9px",
-                padding: "8px 14px",
+                alignSelf: 'flex-end',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                border: 'none',
+                borderRadius: '9px',
+                padding: '8px 14px',
                 background: foto.accent.primary,
                 color: foto.ink.inverse,
-                fontSize: "12px",
+                fontSize: '12px',
                 fontWeight: 600,
-                cursor: "pointer",
-                transition: "background 120ms ease, transform 120ms ease",
-                "&:hover": {
+                cursor: 'pointer',
+                transition: 'background 120ms ease, transform 120ms ease',
+                '&:hover': {
                   background: foto.accent.deep,
-                  transform: "translateY(-1px)",
+                  transform: 'translateY(-1px)',
                 },
               }}
             >
@@ -1487,15 +1492,15 @@ export function CopilotPanelBody({
         <Box
           role="alert"
           sx={{
-            margin: "0 18px 2px",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            padding: "9px 12px",
-            borderRadius: "10px",
+            margin: '0 18px 2px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '9px 12px',
+            borderRadius: '10px',
             border: `1px solid ${alpha(foto.status.sold, 0.35)}`,
             background: alpha(foto.status.sold, 0.06),
-            fontSize: "11.5px",
+            fontSize: '11.5px',
             lineHeight: 1.4,
             color: foto.status.sold,
           }}
@@ -1515,24 +1520,24 @@ export function CopilotPanelBody({
             onClick={retryLast}
             disabled={!online}
             sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "5px",
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
               flexShrink: 0,
               border: `1px solid ${alpha(foto.status.sold, 0.4)}`,
-              borderRadius: "8px",
-              padding: "5px 9px",
-              background: "transparent",
+              borderRadius: '8px',
+              padding: '5px 9px',
+              background: 'transparent',
               color: foto.status.sold,
-              fontSize: "11px",
+              fontSize: '11px',
               fontWeight: 600,
-              cursor: "pointer",
-              transition: "background 120ms ease",
-              "&:hover": { background: alpha(foto.status.sold, 0.1) },
-              "&:disabled": {
+              cursor: 'pointer',
+              transition: 'background 120ms ease',
+              '&:hover': { background: alpha(foto.status.sold, 0.1) },
+              '&:disabled': {
                 opacity: 0.5,
-                cursor: "not-allowed",
-                "&:hover": { background: "transparent" },
+                cursor: 'not-allowed',
+                '&:hover': { background: 'transparent' },
               },
             }}
           >
@@ -1547,15 +1552,15 @@ export function CopilotPanelBody({
         <Box
           role="status"
           sx={{
-            margin: "0 18px 2px",
-            display: "flex",
-            alignItems: "center",
-            gap: "9px",
-            padding: "9px 12px",
-            borderRadius: "10px",
+            margin: '0 18px 2px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '9px',
+            padding: '9px 12px',
+            borderRadius: '10px',
             border: `1px solid ${foto.surfaces.rule}`,
             background: foto.surfaces.panel,
-            fontSize: "11.5px",
+            fontSize: '11.5px',
             lineHeight: 1.4,
             color: foto.ink.secondary,
           }}
@@ -1575,24 +1580,24 @@ export function CopilotPanelBody({
           return (
             <Box
               sx={{
-                padding: "10px 18px 4px",
+                padding: '10px 18px 4px',
                 borderTop: `1px solid ${foto.surfaces.rule}`,
                 background: foto.surfaces.panel,
               }}
             >
               <Box
                 sx={{
-                  fontSize: "9.5px",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.12em",
+                  fontSize: '9.5px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em',
                   color: foto.ink.tertiary,
-                  marginBottom: "7px",
+                  marginBottom: '7px',
                   fontWeight: 600,
                 }}
               >
                 {chips.headerLabel}
               </Box>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                 {chips.options.map((opt) => (
                   <Box
                     key={opt.value}
@@ -1604,32 +1609,32 @@ export function CopilotPanelBody({
                     }}
                     disabled={!online}
                     sx={{
-                      padding: "4px 11px",
-                      borderRadius: "20px",
+                      padding: '4px 11px',
+                      borderRadius: '20px',
                       border: `1px solid ${alpha(foto.accent.primary, 0.3)}`,
                       background: foto.accent.soft,
                       color: foto.accent.deep,
-                      fontSize: "11.5px",
+                      fontSize: '11.5px',
                       fontWeight: 500,
-                      cursor: "pointer",
+                      cursor: 'pointer',
                       transition:
-                        "background 120ms ease, color 120ms ease, border-color 120ms ease",
-                      "&:hover": {
+                        'background 120ms ease, color 120ms ease, border-color 120ms ease',
+                      '&:hover': {
                         background: foto.accent.primary,
                         color: foto.ink.inverse,
-                        borderColor: "transparent",
+                        borderColor: 'transparent',
                       },
-                      "&:disabled": {
+                      '&:disabled': {
                         opacity: 0.45,
-                        cursor: "not-allowed",
-                        "&:hover": {
+                        cursor: 'not-allowed',
+                        '&:hover': {
                           background: foto.accent.soft,
                           color: foto.accent.deep,
                           borderColor: alpha(foto.accent.primary, 0.3),
                         },
                       },
-                      "&:focus-visible": {
-                        outline: "none",
+                      '&:focus-visible': {
+                        outline: 'none',
                         boxShadow: `0 0 0 3px ${foto.accent.glow}`,
                       },
                     }}
@@ -1647,13 +1652,13 @@ export function CopilotPanelBody({
         component="form"
         onSubmit={handleSubmit}
         sx={{
-          padding: "14px 26px 16px",
+          padding: '14px 26px 16px',
           borderTop: `1px solid ${foto.surfaces.rule}`,
           background: foto.surfaces.panel,
-          display: "grid",
-          gridTemplateColumns: "1fr auto",
-          gap: "10px",
-          alignItems: "end",
+          display: 'grid',
+          gridTemplateColumns: '1fr auto',
+          gap: '10px',
+          alignItems: 'end',
         }}
       >
         <Box
@@ -1667,25 +1672,25 @@ export function CopilotPanelBody({
           onKeyDown={handleKeyDown}
           aria-label="Mensaje a Fotosynthia"
           sx={{
-            resize: "none",
+            resize: 'none',
             minHeight: 36,
             maxHeight: 140,
-            width: "100%",
-            fontFamily: "inherit",
-            fontSize: "13px",
+            width: '100%',
+            fontFamily: 'inherit',
+            fontSize: '13px',
             lineHeight: 1.5,
             color: foto.ink.primary,
             background: foto.surfaces.canvas,
             border: `1px solid ${foto.surfaces.rule}`,
-            borderRadius: "10px",
-            padding: "9px 12px",
-            outline: "none",
-            transition: "border-color 120ms ease, box-shadow 120ms ease",
-            "&:focus": {
+            borderRadius: '10px',
+            padding: '9px 12px',
+            outline: 'none',
+            transition: 'border-color 120ms ease, box-shadow 120ms ease',
+            '&:focus': {
               borderColor: foto.surfaces.edgeStrong,
               boxShadow: `0 0 0 3px ${foto.accent.glow}`,
             },
-            "&::placeholder": {
+            '&::placeholder': {
               color: foto.ink.mute,
               fontFamily: fontFamilies.system,
             },
@@ -1698,15 +1703,15 @@ export function CopilotPanelBody({
           sx={{
             width: 36,
             height: 36,
-            borderRadius: "10px",
+            borderRadius: '10px',
             background: canSend ? foto.accent.primary : foto.surfaces.inset,
             color: canSend ? foto.ink.inverse : foto.ink.mute,
-            border: `1px solid ${canSend ? "transparent" : foto.surfaces.rule}`,
-            transition: "background 120ms ease",
-            "&:hover": {
+            border: `1px solid ${canSend ? 'transparent' : foto.surfaces.rule}`,
+            transition: 'background 120ms ease',
+            '&:hover': {
               background: canSend ? foto.accent.deep : foto.surfaces.inset,
             },
-            "&.Mui-disabled": {
+            '&.Mui-disabled': {
               background: foto.surfaces.inset,
               color: foto.ink.mute,
             },
