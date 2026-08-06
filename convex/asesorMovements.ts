@@ -715,10 +715,15 @@ export const setComprobanteUrl = action({
  * GATED (2026-08-05, F7): was "plain read, no auth gate — mirrors
  * `lots:list` / `lotItems:search`, the queries the anima-bot already calls
  * unauthenticated" — that was the vulnerability, not a design to preserve.
- * Now requires a verified staff session (see `_lib/requireStaffSession.ts`);
- * anima-bot's unauthenticated calls to this (see
- * anima-bot/src/fotosintesis/client.ts) now get `null` back until it has a
- * way to prove staff (out of scope here — flagged, not fixed).
+ * Now requires a verified staff session (see `_lib/requireStaffSession.ts`).
+ * Staff-only, NOT staff-or-bot: unlike `lots.list`/`lotItems.search`/
+ * `lotItems.sumPreponderancia`/`lotItems.getByItemId`/`providers.list`/
+ * `products.list`, a full read of anima-bot/src/fotosintesis/client.ts
+ * (2026-08-05) found no call to this query or to `kardexEventId` anywhere in
+ * that repo — the bot's kardex movements go through the separate
+ * `movimientosV4:*ViaBot` actions (a different Convex module, already
+ * bot-secret gated), not through `asesorMovements`. If that changes, extend
+ * this the same way the other six queries were extended, not before.
  *
  * Returns null when the event doesn't exist OR the caller isn't staff;
  * `comprobanteUrl` is undefined when the PDF was never generated. */

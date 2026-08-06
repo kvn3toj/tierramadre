@@ -13,23 +13,44 @@
  * registration_impl.js — `dontCallDirectly` still runs the real handler, it
  * only warns) with no `sessionToken`, and must return the empty form ([])
  * without ever touching `ctx.db`.
+ *
+ * F7b (2026-08-05): a confirmed subset of these queries — `lots.list`,
+ * `lots.peekNextLoteId`, `lotItems.search`, `lotItems.sumPreponderancia`,
+ * `lotItems.getByItemId`, `providers.list`, `products.list` — is also read
+ * directly by the anima-bot Telegram bridge, which has no staff session but
+ * already holds `ANIMA_BOT_SECRET`. `isBotSecret` (convex/_lib/botAuth.ts) is
+ * the non-throwing check for that secret, and `isStaffOrBotSession` is the
+ * combined either/or gate those 7 queries use instead of `isStaffSession`
+ * alone. The third/fourth describe blocks cover both, plus one query
+ * (`providers.list`) proven end-to-end.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mintSessionToken } from '../api/_lib/sessionToken';
-import { isStaffSession } from '../convex/_lib/requireStaffSession';
+import {
+  isStaffSession,
+  isStaffOrBotSession,
+} from '../convex/_lib/requireStaffSession';
+import { isBotSecret } from '../convex/_lib/botAuth';
 import { list as clientsList } from '../convex/clients';
+import { list as providersList } from '../convex/providers';
 
 const SECRET = 'test-admin-sync-token';
+const BOT_SECRET = 'test-anima-bot-secret';
 let savedSecret: string | undefined;
+let savedBotSecret: string | undefined;
 
 beforeEach(() => {
   savedSecret = process.env.ADMIN_SYNC_TOKEN;
   process.env.ADMIN_SYNC_TOKEN = SECRET;
+  savedBotSecret = process.env.ANIMA_BOT_SECRET;
+  process.env.ANIMA_BOT_SECRET = BOT_SECRET;
 });
 
 afterEach(() => {
   if (savedSecret === undefined) delete process.env.ADMIN_SYNC_TOKEN;
   else process.env.ADMIN_SYNC_TOKEN = savedSecret;
+  if (savedBotSecret === undefined) delete process.env.ANIMA_BOT_SECRET;
+  else process.env.ANIMA_BOT_SECRET = savedBotSecret;
 });
 
 describe('isStaffSession', () => {
@@ -117,6 +138,110 @@ describe('internal-only query gate wired end-to-end (clients.list)', () => {
         args: { sessionToken?: string },
       ) => Promise<unknown>
     )(fakeCtx, { sessionToken: `tms1.${b64}.${sig}` });
+    expect(result).toEqual([]);
+  });
+});
+
+describe('isBotSecret', () => {
+  it('true for the correct ANIMA_BOT_SECRET', () => {
+    expect(isBotSecret(BOT_SECRET)).toBe(true);
+  });
+
+  it('false for a wrong secret', () => {
+    expect(isBotSecret('not-the-right-secret')).toBe(false);
+    // Also false for a wrong secret of the SAME length — proves it's a real
+    // byte-compare, not just a length check.
+    expect(isBotSecret('x'.repeat(BOT_SECRET.length))).toBe(false);
+  });
+
+  it('false when absent', () => {
+    expect(isBotSecret(undefined)).toBe(false);
+    expect(isBotSecret('')).toBe(false);
+  });
+
+  it('never throws even when ANIMA_BOT_SECRET is unset (fails closed)', () => {
+    delete process.env.ANIMA_BOT_SECRET;
+    expect(() => isBotSecret(BOT_SECRET)).not.toThrow();
+    expect(isBotSecret(BOT_SECRET)).toBe(false);
+  });
+});
+
+describe('isStaffOrBotSession (either/or gate)', () => {
+  it('true with a valid staff session and no bot secret', async () => {
+    const token = mintSessionToken('staff@tierramadre.app')!;
+    expect(
+      await isStaffOrBotSession({ sessionToken: token, botSecret: undefined }),
+    ).toBe(true);
+  });
+
+  it('true with a valid bot secret and no staff session', async () => {
+    expect(
+      await isStaffOrBotSession({
+        sessionToken: undefined,
+        botSecret: BOT_SECRET,
+      }),
+    ).toBe(true);
+  });
+
+  it('false when both credentials are wrong/absent', async () => {
+    expect(
+      await isStaffOrBotSession({
+        sessionToken: 'garbage',
+        botSecret: 'also garbage',
+      }),
+    ).toBe(false);
+    expect(
+      await isStaffOrBotSession({
+        sessionToken: undefined,
+        botSecret: undefined,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('bot-or-staff query gate wired end-to-end (providers.list)', () => {
+  const fakeProviderRow = {
+    _id: 'provider_1',
+    nombreORazonSocial: 'Esmeraldas del Oriente',
+    nit: '900123456-7',
+  };
+  const fakeCtxWithData = {
+    db: {
+      query: () => ({
+        collect: async () => [fakeProviderRow],
+      }),
+    },
+  } as never;
+
+  it('a valid bot secret returns the real data', async () => {
+    const result = await (
+      providersList as unknown as (
+        ctx: never,
+        args: { search?: string; sessionToken?: string; botSecret?: string },
+      ) => Promise<unknown>
+    )(fakeCtxWithData, { botSecret: BOT_SECRET });
+    expect(result).toEqual([fakeProviderRow]);
+  });
+
+  it('a wrong bot secret gets [] and never touches ctx.db', async () => {
+    const fakeCtxNoDb = {} as never;
+    const result = await (
+      providersList as unknown as (
+        ctx: never,
+        args: { search?: string; sessionToken?: string; botSecret?: string },
+      ) => Promise<unknown>
+    )(fakeCtxNoDb, { botSecret: 'wrong-secret' });
+    expect(result).toEqual([]);
+  });
+
+  it('no credential at all gets [] and never touches ctx.db', async () => {
+    const fakeCtxNoDb = {} as never;
+    const result = await (
+      providersList as unknown as (
+        ctx: never,
+        args: { search?: string; sessionToken?: string; botSecret?: string },
+      ) => Promise<unknown>
+    )(fakeCtxNoDb, {});
     expect(result).toEqual([]);
   });
 });

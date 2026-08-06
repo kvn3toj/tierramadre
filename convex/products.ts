@@ -27,7 +27,7 @@ import {
 } from './_lib/publishedGroups';
 import { postToVercel } from './_lib/sheetSync';
 import { requireAccessLevel } from './_lib/authz';
-import { isStaffSession } from './_lib/requireStaffSession';
+import { isStaffOrBotSession } from './_lib/requireStaffSession';
 import { withPublishStamp } from './_lib/publishState';
 import { precioEspecialDeObservacion } from './_lib/precioEspecial';
 import { omitFotosintesisOnly } from './_lib/saleSafe';
@@ -39,6 +39,11 @@ import { omitFotosintesisOnly } from './_lib/saleSafe';
 /**
  * List all products in the inventory mirror.
  * Returns rows ordered by itemId numerically.
+ *
+ * Also read by anima-bot's `listProducts` (anima-bot/src/fotosintesis/
+ * client.ts — the whole-catalog complement to `lotItems.search`'s
+ * current-lot-only stock view). Accepts either a staff session or the bot
+ * secret; see `_lib/requireStaffSession.ts`'s `isStaffOrBotSession`.
  */
 export const list = query({
   args: {
@@ -58,9 +63,10 @@ export const list = query({
     ),
     search: v.optional(v.string()),
     sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
   },
-  handler: async (ctx, { estado, search, sessionToken }) => {
-    if (!(await isStaffSession(sessionToken))) return [];
+  handler: async (ctx, { estado, search, sessionToken, botSecret }) => {
+    if (!(await isStaffOrBotSession({ sessionToken, botSecret }))) return [];
     const rows = estado
       ? await ctx.db
           .query('productInventory')

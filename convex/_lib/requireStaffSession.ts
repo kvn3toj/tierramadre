@@ -25,6 +25,7 @@
  */
 
 import { isSessionToken, verifySessionToken } from './sessionToken';
+import { isBotSecret } from './botAuth';
 
 export async function isStaffSession(sessionToken?: string): Promise<boolean> {
   if (!sessionToken) return false;
@@ -35,4 +36,30 @@ export async function isStaffSession(sessionToken?: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Combined gate for the small subset of internal-only queries the anima-bot
+ * Telegram bridge ALSO reads directly (verified 2026-08-05 against
+ * anima-bot/src/fotosintesis/client.ts: `lots.list`, `lots.peekNextLoteId`,
+ * `lotItems.search`, `lotItems.sumPreponderancia`, `lotItems.getByItemId`,
+ * `providers.list`, `products.list` — no other query in this lockdown has a
+ * confirmed bot caller). The bot cannot obtain a staff session token (that
+ * requires a Google Sign-In roster check it has no UI for), but it already
+ * holds `ANIMA_BOT_SECRET` — the same shared secret `_lib/botAuth.ts`'s
+ * `*ViaBot` mutations/actions accept. Authorized when EITHER credential is
+ * valid; like `isStaffSession`, this never throws — a missing, wrong, or
+ * malformed credential of either kind resolves to `false`.
+ *
+ * Do NOT reuse this for `clients`/`sales`/`asesorMovements`/`fotosintesisAi`
+ * or any other query — those hold customer PII the bot has no evidence of
+ * needing, and a `botSecret` there would hand it blanket read access to
+ * cédulas it never asked for. Use `isStaffSession` alone for those.
+ */
+export async function isStaffOrBotSession(opts: {
+  sessionToken?: string;
+  botSecret?: string;
+}): Promise<boolean> {
+  if (await isStaffSession(opts.sessionToken)) return true;
+  return isBotSecret(opts.botSecret);
 }

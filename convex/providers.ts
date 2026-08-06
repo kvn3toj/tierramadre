@@ -11,7 +11,10 @@ import { pushTableRowToVercel } from './_lib/sheetSync';
 import { marshalRow } from './_lib/columnMaps';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
-import { isStaffSession } from './_lib/requireStaffSession';
+import {
+  isStaffSession,
+  isStaffOrBotSession,
+} from './_lib/requireStaffSession';
 
 const tipoValidator = v.union(
   v.literal('gemas'),
@@ -31,13 +34,19 @@ const providerPatchValidator = v.object({
   notas: v.optional(v.string()),
 });
 
+// Also read by anima-bot's `listProviders` (anima-bot/src/fotosintesis/
+// client.ts) — the bot already has provider-creation access via
+// `createViaBot` below, so extending its read to the same table via the
+// shared secret adds no new exposure. Accepts either a staff session or the
+// bot secret; see `_lib/requireStaffSession.ts`'s `isStaffOrBotSession`.
 export const list = query({
   args: {
     search: v.optional(v.string()),
     sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
   },
-  handler: async (ctx, { search, sessionToken }) => {
-    if (!(await isStaffSession(sessionToken))) return [];
+  handler: async (ctx, { search, sessionToken, botSecret }) => {
+    if (!(await isStaffOrBotSession({ sessionToken, botSecret }))) return [];
     const all = await ctx.db.query('providers').collect();
     const filtered = search
       ? all.filter((row) => {
