@@ -2,7 +2,7 @@
  * Type declarations for ESM `index.js` — used by typed API routes.
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export const SPREADSHEET_ID: string;
 export const APP_SPREADSHEET_ID: string;
@@ -78,6 +78,16 @@ export function listProductFolders(
 ): Promise<Array<{ id: string; name: string }>>;
 
 export function extractItemNumber(folderName: string): number | null;
+
+export function getOrCreateFolder(
+  drive: unknown,
+  parentFolderId: string,
+  folderName: string,
+  sharedDriveId?: string | null,
+  itemNumber?: number | null,
+): Promise<string>;
+
+export function invalidateFolderCache(): void;
 
 export function getFirstImageOrVideoThumbnail(
   drive: unknown,
