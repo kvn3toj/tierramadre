@@ -8,6 +8,7 @@
 
 import { useMemo, useCallback, useEffect, useState } from 'react';
 import { useConvexQuery, convexApi, convexReady } from '../lib/convex-safe';
+import { readFreshSessionToken } from '../utils/sessionToken';
 
 export interface GuestView {
   timestamp: string;
@@ -36,10 +37,20 @@ export function useGuestActivity(
 
   // Convex reactive query (only when ready)
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const convexData = convexReady && useConvexQuery
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    ? useConvexQuery(convexApi.productViews.guestActivity, inviterName ? { inviterName, limit } : 'skip')
-    : undefined;
+  const convexData =
+    convexReady && useConvexQuery
+      ? // eslint-disable-next-line react-hooks/rules-of-hooks
+        useConvexQuery(
+          convexApi.productViews.guestActivity,
+          inviterName
+            ? {
+                inviterName,
+                limit,
+                sessionToken: readFreshSessionToken() ?? undefined,
+              }
+            : 'skip',
+        )
+      : undefined;
 
   const convexViews: GuestView[] = useMemo(() => {
     if (!Array.isArray(convexData)) return [];
@@ -58,18 +69,22 @@ export function useGuestActivity(
   const fetchRest = useCallback(() => {
     if (!inviterName) return;
     setRestLoading(true);
-    fetch(`/api/product-views?action=by-inviter&inviterName=${encodeURIComponent(inviterName)}&limit=${limit}`)
+    fetch(
+      `/api/product-views?action=by-inviter&inviterName=${encodeURIComponent(inviterName)}&limit=${limit}`,
+    )
       .then((r) => r.json())
       .then((data) => {
-        const views: GuestView[] = (data.views ?? []).map((v: Record<string, unknown>) => ({
-          timestamp: String(v.timestamp ?? ''),
-          itemId: Number(v.itemId ?? 0),
-          productName: String(v.productName ?? ''),
-          userName: (v.userName as string) ?? null,
-          userEmail: (v.userEmail as string) ?? null,
-          userRole: String(v.userRole ?? 'Invitado'),
-          inviterName: (v.inviterName as string) ?? null,
-        }));
+        const views: GuestView[] = (data.views ?? []).map(
+          (v: Record<string, unknown>) => ({
+            timestamp: String(v.timestamp ?? ''),
+            itemId: Number(v.itemId ?? 0),
+            productName: String(v.productName ?? ''),
+            userName: (v.userName as string) ?? null,
+            userEmail: (v.userEmail as string) ?? null,
+            userRole: String(v.userRole ?? 'Invitado'),
+            inviterName: (v.inviterName as string) ?? null,
+          }),
+        );
         setRestViews(views);
       })
       .catch(() => setRestViews([]))
@@ -81,32 +96,41 @@ export function useGuestActivity(
 
   useEffect(() => {
     if (inviterName) fetchRest();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inviterName]);
 
   // Merge: prefer Convex (real-time), augment with REST (historical)
   const guestViews: GuestView[] = useMemo(() => {
     const convexIds = new Set(
-      convexViews.map((v) => `${v.timestamp}|${v.itemId}|${v.userName}`)
+      convexViews.map((v) => `${v.timestamp}|${v.itemId}|${v.userName}`),
     );
     const restOnly = restViews.filter(
-      (v) => !convexIds.has(`${v.timestamp}|${v.itemId}|${v.userName}`)
+      (v) => !convexIds.has(`${v.timestamp}|${v.itemId}|${v.userName}`),
     );
     return [...convexViews, ...restOnly].sort(
-      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
     );
   }, [convexViews, restViews]);
 
-  const convexLoading = convexReady && convexData === undefined && !!inviterName;
+  const convexLoading =
+    convexReady && convexData === undefined && !!inviterName;
   const isLoading = convexLoading || (restLoading && !restFetched);
 
   const topProducts = useMemo(() => {
     if (!guestViews.length) return [];
-    const counts: Record<string, { itemId: number; productName: string; viewCount: number }> = {};
+    const counts: Record<
+      string,
+      { itemId: number; productName: string; viewCount: number }
+    > = {};
     for (const view of guestViews) {
       const key = String(view.itemId);
       if (!counts[key]) {
-        counts[key] = { itemId: view.itemId, productName: view.productName, viewCount: 0 };
+        counts[key] = {
+          itemId: view.itemId,
+          productName: view.productName,
+          viewCount: 0,
+        };
       }
       counts[key].viewCount++;
     }
