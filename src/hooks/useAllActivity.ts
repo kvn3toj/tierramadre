@@ -11,6 +11,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { readFreshSessionToken } from '../utils/sessionToken';
 
 // Activity types
 export type ActivityType = 'view' | 'cotizacion';
@@ -87,9 +88,18 @@ export function useAllActivity(): UseAllActivityReturn {
     setError(null);
 
     try {
+      // action=recent is session-gated (2026-08-06, PII lockdown) — this
+      // page (ActivityPage) lives behind AdminRoute, so a session token
+      // should already be minted; read it fresh at call time, never at
+      // module scope (readFreshSessionToken.ts's contract).
+      const sessionToken = readFreshSessionToken();
       // Fetch both sources in parallel
       const [viewsResponse, cotizacionResponse] = await Promise.all([
-        fetch('/api/product-views?action=recent&limit=100'),
+        fetch('/api/product-views?action=recent&limit=100', {
+          headers: sessionToken
+            ? { Authorization: `Bearer ${sessionToken}` }
+            : undefined,
+        }),
         fetch('/api/cotizacion-save?action=stats'),
       ]);
 
@@ -136,8 +146,9 @@ export function useAllActivity(): UseAllActivityReturn {
       }
 
       // Sort by timestamp descending (newest first)
-      combined.sort((a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      combined.sort(
+        (a, b) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
       );
 
       setActivities(combined);

@@ -34,8 +34,19 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { emeraldCore, goldAccent, semanticColors } from '../../design-system/tokens/colors';
-import { accentColors, cssTransition, primitiveColors, primitiveSpacing as spacing, zIndex } from '../../design-system';
+import { readFreshSessionToken } from '../../utils/sessionToken';
+import {
+  emeraldCore,
+  goldAccent,
+  semanticColors,
+} from '../../design-system/tokens/colors';
+import {
+  accentColors,
+  cssTransition,
+  primitiveColors,
+  primitiveSpacing as spacing,
+  zIndex,
+} from '../../design-system';
 
 // =============================================================================
 // TYPES
@@ -88,7 +99,12 @@ interface StatCardProps {
   color: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ label, value, icon: Icon, color }) => {
+const StatCard: React.FC<StatCardProps> = ({
+  label,
+  value,
+  icon: Icon,
+  color,
+}) => {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
 
@@ -117,7 +133,10 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, icon: Icon, color }) 
 // DEVICE ICON HELPER
 // =============================================================================
 
-const DeviceIcon: React.FC<{ device: string; size?: number }> = ({ device, size = 16 }) => {
+const DeviceIcon: React.FC<{ device: string; size?: number }> = ({
+  device,
+  size = 16,
+}) => {
   const deviceLower = device.toLowerCase();
   if (deviceLower === 'mobile') return <Smartphone size={size} />;
   if (deviceLower === 'tablet') return <Tablet size={size} />;
@@ -134,7 +153,10 @@ const formatTimeAgo = (timestamp: string): string => {
   if (diff < 3600000) return `${Math.floor(diff / 60000)}m`;
   if (diff < 86400000) return `${Math.floor(diff / 3600000)}h`;
   if (diff < 604800000) return `${Math.floor(diff / 86400000)}d`;
-  return new Date(timestamp).toLocaleDateString('es-CO', { month: 'short', day: 'numeric' });
+  return new Date(timestamp).toLocaleDateString('es-CO', {
+    month: 'short',
+    day: 'numeric',
+  });
 };
 
 const formatDate = (timestamp: string): string => {
@@ -178,7 +200,15 @@ const UserViewsPage: React.FC = () => {
       if (email) params.set('email', email);
       else if (name) params.set('name', name);
 
-      const response = await fetch(`/api/product-views?${params.toString()}`);
+      // action=user is session-gated (2026-08-06, PII lockdown); this page
+      // renders behind AdminRoute, so a session token should already be
+      // minted — read it fresh at call time, never at module scope.
+      const sessionToken = readFreshSessionToken();
+      const response = await fetch(`/api/product-views?${params.toString()}`, {
+        headers: sessionToken
+          ? { Authorization: `Bearer ${sessionToken}` }
+          : undefined,
+      });
       const result = await response.json();
 
       if (result.success) {
@@ -211,7 +241,8 @@ const UserViewsPage: React.FC = () => {
   const getRoleColor = (role: string): string => {
     const r = role.toLowerCase();
     if (r === 'admin' || r.includes('admin')) return goldAccent.primary;
-    if (r === 'embajador' || r === 'ambassador') return accentColors.purple.light;
+    if (r === 'embajador' || r === 'ambassador')
+      return accentColors.purple.light;
     if (r === 'full' || r === 'asesor') return emeraldCore.primary;
     if (r === 'provider' || r === 'proveedor') return accentColors.info.light;
     return primitiveColors.metallic.silver[500];
@@ -286,9 +317,21 @@ const UserViewsPage: React.FC = () => {
         {/* Loading State */}
         {isLoading && !data && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Skeleton variant="rectangular" height={100} sx={{ borderRadius: 2 }} />
-            <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
-            <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
+            <Skeleton
+              variant="rectangular"
+              height={100}
+              sx={{ borderRadius: 2 }}
+            />
+            <Skeleton
+              variant="rectangular"
+              height={200}
+              sx={{ borderRadius: 2 }}
+            />
+            <Skeleton
+              variant="rectangular"
+              height={300}
+              sx={{ borderRadius: 2 }}
+            />
           </Box>
         )}
 
@@ -344,9 +387,19 @@ const UserViewsPage: React.FC = () => {
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
                       {data.user.email || 'Sin email registrado'}
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        mt: 0.5,
+                      }}
+                    >
                       <Calendar size={12} color={isLight ? '#666' : '#999'} />
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: 'text.secondary' }}
+                      >
                         Primera visita: {formatDate(data.user.firstSeen)}
                       </Typography>
                     </Box>
@@ -390,7 +443,16 @@ const UserViewsPage: React.FC = () => {
                   border: `1px solid ${isLight ? alpha('#000', 0.08) : alpha('#fff', 0.1)}`,
                 }}
               >
-                <Typography variant="body2" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 600,
+                    mb: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
                   <Monitor size={16} color={emeraldCore.primary} />
                   Dispositivos utilizados
                 </Typography>
@@ -425,8 +487,22 @@ const UserViewsPage: React.FC = () => {
                   mb: 3,
                 }}
               >
-                <Box sx={{ px: 2.5, py: 1.5, borderBottom: `1px solid ${alpha('#000', 0.06)}` }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    px: 2.5,
+                    py: 1.5,
+                    borderBottom: `1px solid ${alpha('#000', 0.06)}`,
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                    }}
+                  >
                     <Package size={16} color={goldAccent.primary} />
                     Productos vistos ({data.products.length})
                   </Typography>
@@ -434,14 +510,19 @@ const UserViewsPage: React.FC = () => {
                 {data.products.map((product, idx) => (
                   <Box
                     key={product.itemId}
-                    onClick={() => navigate(`/admin/analytics/item/${product.itemId}`)}
+                    onClick={() =>
+                      navigate(`/admin/analytics/item/${product.itemId}`)
+                    }
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: 1.5,
                       px: 2.5,
                       py: 1.5,
-                      borderBottom: idx < data.products.length - 1 ? `1px solid ${alpha('#000', 0.06)}` : 'none',
+                      borderBottom:
+                        idx < data.products.length - 1
+                          ? `1px solid ${alpha('#000', 0.06)}`
+                          : 'none',
                       cursor: 'pointer',
                       transition: cssTransition.fast,
                       '&:hover': {
@@ -457,7 +538,10 @@ const UserViewsPage: React.FC = () => {
                         width: 32,
                         height: 32,
                         borderRadius: 2,
-                        bgcolor: alpha(goldAccent.primary, idx < 3 ? 0.15 : 0.08),
+                        bgcolor: alpha(
+                          goldAccent.primary,
+                          idx < 3 ? 0.15 : 0.08,
+                        ),
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -480,29 +564,64 @@ const UserViewsPage: React.FC = () => {
                       >
                         {product.productName}
                       </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          mt: 0.25,
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{ color: 'text.secondary' }}
+                        >
                           Última: {formatTimeAgo(product.lastView)}
                         </Typography>
                         {product.devices?.length > 0 && (
                           <>
-                            <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.disabled' }} />
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Box
+                              sx={{
+                                width: 3,
+                                height: 3,
+                                borderRadius: '50%',
+                                bgcolor: 'text.disabled',
+                              }}
+                            />
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                              }}
+                            >
                               {product.devices.slice(0, 2).map((device) => (
-                                <DeviceIcon key={device} device={device} size={12} />
+                                <DeviceIcon
+                                  key={device}
+                                  device={device}
+                                  size={12}
+                                />
                               ))}
                             </Box>
                           </>
                         )}
                       </Box>
                     </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Box
+                      sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                    >
                       <Eye size={14} color={emeraldCore.primary} />
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: emeraldCore.primary }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 600, color: emeraldCore.primary }}
+                      >
                         {product.views}
                       </Typography>
                     </Box>
-                    <ChevronRight size={16} color={alpha(isLight ? '#000' : '#fff', 0.3)} />
+                    <ChevronRight
+                      size={16}
+                      color={alpha(isLight ? '#000' : '#fff', 0.3)}
+                    />
                   </Box>
                 ))}
               </Paper>
@@ -519,8 +638,22 @@ const UserViewsPage: React.FC = () => {
                   overflow: 'hidden',
                 }}
               >
-                <Box sx={{ px: 2.5, py: 1.5, borderBottom: `1px solid ${alpha('#000', 0.06)}` }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    px: 2.5,
+                    py: 1.5,
+                    borderBottom: `1px solid ${alpha('#000', 0.06)}`,
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                    }}
+                  >
                     <Clock size={16} color={semanticColors.info.main} />
                     Actividad Reciente
                   </Typography>
@@ -534,7 +667,10 @@ const UserViewsPage: React.FC = () => {
                       gap: 1.5,
                       px: 2.5,
                       py: 1,
-                      borderBottom: idx < Math.min(data.recentViews.length, 20) - 1 ? `1px solid ${alpha('#000', 0.04)}` : 'none',
+                      borderBottom:
+                        idx < Math.min(data.recentViews.length, 20) - 1
+                          ? `1px solid ${alpha('#000', 0.04)}`
+                          : 'none',
                     }}
                   >
                     <Box
@@ -566,7 +702,10 @@ const UserViewsPage: React.FC = () => {
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <DeviceIcon device={view.deviceType} size={12} />
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: 'text.secondary' }}
+                      >
                         {formatTimeAgo(view.timestamp)}
                       </Typography>
                     </Box>
@@ -589,7 +728,10 @@ const UserViewsPage: React.FC = () => {
                 <Typography variant="body1" sx={{ mt: 2, fontWeight: 600 }}>
                   Sin vistas registradas
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'text.secondary', mt: 0.5 }}
+                >
                   Este usuario no ha visualizado productos
                 </Typography>
               </Paper>

@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { readFreshSessionToken } from '../utils/sessionToken';
 
 interface ViewerInfo {
   name: string;
@@ -92,7 +93,18 @@ export function useProductViews(): UseProductViewsResult {
       const url = forceRefresh
         ? `/api/product-views?action=stats&_t=${Date.now()}`
         : '/api/product-views?action=stats';
-      const response = await fetch(url);
+      // action=stats stays public (anonymous catalog browsing reads `views`
+      // for per-item counts via useTreasureBrowserController), but the
+      // server strips `topViewers`/`recentActivity` (per-user PII) unless a
+      // verified session is attached — send it when available so the staff
+      // Analytics dashboard (useAnalyticsData) keeps the full shape. Read at
+      // call time, never at module scope.
+      const sessionToken = readFreshSessionToken();
+      const response = await fetch(url, {
+        headers: sessionToken
+          ? { Authorization: `Bearer ${sessionToken}` }
+          : undefined,
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch view stats');
       }
@@ -133,7 +145,7 @@ export function useProductViews(): UseProductViewsResult {
     (itemId: number): number => {
       return stats?.views[itemId] || 0;
     },
-    [stats]
+    [stats],
   );
 
   // Memoized top products
