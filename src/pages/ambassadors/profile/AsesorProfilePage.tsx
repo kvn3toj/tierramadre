@@ -16,7 +16,11 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useReducedMotion } from '../../../hooks/useReducedMotion';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useAsesores } from '../../../hooks/useAsesores';
-import { getAsesorProducts } from '../../../utils/asesorProductOwnership';
+import {
+  getAsesorProducts,
+  resolveAsesorProducts,
+} from '../../../utils/asesorProductOwnership';
+import { useAmbassadorProducts } from '../../../hooks/useAmbassadorProducts';
 import { useTreasure } from '../../../hooks/useTreasure';
 import {
   useCotizacionHistory,
@@ -68,9 +72,14 @@ const COLLECTION_FOLDERS: Record<string, string> = {
 const COLLECTION_SLUGS: Record<string, string> = {
   'andres-mauricio-escobar-ramirez': 'ceo-tierra-madre',
 };
+/**
+ * `null` value, not 0. A non-staff visitor never receives `precioCOP`, and
+ * rendering "$0" told them this ambassador's collection was worthless. An
+ * absent number is absent — the header hides the metric instead.
+ */
 const EMPTY_STATS: ProfileStats = {
-  totalValue: 0,
-  avgPrice: 0,
+  totalValue: null,
+  avgPrice: null,
   looseCount: 0,
   jewelryCount: 0,
   disponibleCount: 0,
@@ -215,11 +224,27 @@ export default function AsesorProfilePage() {
     };
   }, [isProfileOwner, asesor?.email]);
 
-  // Get products for this asesor
-  const allProducts = useMemo(() => {
+  // Ownership resolved locally. Works only for staff: `asesor` and
+  // `asesorActual` are WITHHELD_KEYS, so for everyone else this is [].
+  const localProducts = useMemo(() => {
     if (!asesor || !treasure) return [];
     return getAsesorProducts(treasure, asesor.name);
   }, [asesor, treasure]);
+
+  // …so everyone else asks the server which item numbers are this
+  // ambassador's. Skipped entirely when the local pass already worked, both
+  // to save the round trip and because the local objects are richer (prices,
+  // transfer state) than anything this endpoint is allowed to return.
+  const { data: serverProducts } = useAmbassadorProducts(
+    slug,
+    localProducts.length > 0,
+  );
+
+  // Get products for this asesor
+  const allProducts = useMemo(
+    () => resolveAsesorProducts(localProducts, treasure, serverProducts),
+    [localProducts, serverProducts, treasure],
+  );
 
   // Categorize products for museum grid
   const categories = useMemo(
@@ -246,13 +271,18 @@ export default function AsesorProfilePage() {
     const disponible = allProducts.filter(
       (p) => p.effectiveEstado === 'DISPONIBLE',
     );
-    const totalValue = disponible.reduce(
-      (sum, p) => sum + (p.precioCOP || 0),
-      0,
+    // Only staff receive `precioCOP`. For everyone else there is no total to
+    // report — which is different from a total of zero, and the header treats
+    // the two differently.
+    const priced = disponible.filter(
+      (p) => typeof p.precioCOP === 'number' && p.precioCOP > 0,
     );
+    const totalValue = priced.length
+      ? priced.reduce((sum, p) => sum + (p.precioCOP || 0), 0)
+      : null;
     return {
       totalValue,
-      avgPrice: disponible.length ? totalValue / disponible.length : 0,
+      avgPrice: totalValue !== null ? totalValue / priced.length : null,
       looseCount: allProducts.filter((p) => !p.isJewelry).length,
       jewelryCount: allProducts.filter((p) => p.isJewelry).length,
       disponibleCount: disponible.length,
@@ -304,7 +334,14 @@ export default function AsesorProfilePage() {
   const handleShare = useCallback(async () => {
     if (!asesor) return;
     const url = window.location.href;
-    const text = `Mira el catalogo de ${asesor.name} en Tierra Madre - ${stats.disponibleCount} esmeraldas disponibles`;
+    // Never quote a count we do not have. This line used to read "0
+    // esmeraldas disponibles" for every non-staff sharer, because `stats`
+    // was short-circuited to EMPTY_STATS — a lie that left the app and went
+    // out over WhatsApp.
+    const text =
+      stats.disponibleCount > 0
+        ? `Mira el catalogo de ${asesor.name} en Tierra Madre - ${stats.disponibleCount} esmeraldas disponibles`
+        : `Mira el catalogo de ${asesor.name} en Tierra Madre`;
     if (navigator.share) {
       try {
         await navigator.share({

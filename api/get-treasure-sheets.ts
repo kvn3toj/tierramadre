@@ -132,7 +132,19 @@ function normalizeCategoria(categoria: string): string {
 /**
  * Map row data to treasure item using exact header matching
  */
-function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
+/**
+ * Exported (2026-08-11) so `api/ambassador-products.ts` maps inventory rows
+ * with THIS function rather than its own copy of the column resolution.
+ * Duplicating the mapping is how the two drift apart the next time a column
+ * moves — exactly the failure mode A1 just fixed one file over. Exporting is
+ * a two-word diff on a critical endpoint; extracting it into `_lib/` would be
+ * the tidier home, but no test imports this handler, so a 130-line move would
+ * be an unverified one. Left as a follow-up.
+ */
+export function mapRowToTreasureItem(
+  row: string[],
+  headers: string[],
+): TreasureItem {
   const normalizedHeaders = headers.map(normalizeHeader);
 
   // Find column index by exact header match (case-insensitive)

@@ -4,7 +4,7 @@
  * bio text. Action buttons (share/edit) as refined top-right icons.
  */
 
-import React from "react";
+import React from 'react';
 import {
   Box,
   Typography,
@@ -12,15 +12,20 @@ import {
   IconButton,
   Tooltip,
   CircularProgress,
-} from "@mui/material";
-import { Share2, Camera, Edit3, Star, Gem, DollarSign } from "lucide-react";
-import { Asesor } from "../../../../hooks/useAsesores";
-import { qeFont, qeType, zIndex } from "../../../../design-system";
-import { deriveRating, formatCurrency } from "../../../../utils/formatting";
+} from '@mui/material';
+import { Share2, Camera, Edit3, Star, Gem, DollarSign } from 'lucide-react';
+import { Asesor } from '../../../../hooks/useAsesores';
+import { qeFont, qeType, zIndex } from '../../../../design-system';
+import { deriveRating, formatCurrency } from '../../../../utils/formatting';
 
 export interface ProfileStats {
-  totalValue: number;
-  avgPrice: number;
+  /**
+   * `null` when the viewer is not staff: `precioCOP` is a withheld field, so
+   * there is no total to show. Distinct from 0, which would claim the
+   * collection is worth nothing — the metric is hidden instead.
+   */
+  totalValue: number | null;
+  avgPrice: number | null;
   looseCount: number;
   jewelryCount: number;
   disponibleCount: number;
@@ -53,34 +58,34 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
     photoUrl,
     isUploadingPhoto,
   }) => {
-    const isAdmin = (asesor.role || "").toLowerCase().includes("admin");
+    const isAdmin = (asesor.role || '').toLowerCase().includes('admin');
     const rating = deriveRating(totalProducts);
 
     // Shared elegant pill base (full rounded, hairline border, airy tracking)
     const pillBase = {
-      display: "inline-flex",
-      alignItems: "center",
+      display: 'inline-flex',
+      alignItems: 'center',
       gap: 0.55,
       height: 24,
       px: 1.15,
-      borderRadius: "999px",
-      fontSize: "0.6875rem",
+      borderRadius: '999px',
+      fontSize: '0.6875rem',
       fontWeight: 600,
-      letterSpacing: "0.14em",
-      textTransform: "uppercase" as const,
-      border: "1px solid",
-      whiteSpace: "nowrap" as const,
+      letterSpacing: '0.14em',
+      textTransform: 'uppercase' as const,
+      border: '1px solid',
+      whiteSpace: 'nowrap' as const,
     };
 
     return (
-      <Box sx={{ position: "relative", mb: 2, textAlign: "center" }}>
+      <Box sx={{ position: 'relative', mb: 2, textAlign: 'center' }}>
         {/* Top-right action icons */}
         <Box
           sx={{
-            position: "absolute",
+            position: 'absolute',
             top: 0,
             right: 0,
-            display: "flex",
+            display: 'flex',
             gap: 0.5,
             zIndex: zIndex.base + 1,
           }}
@@ -91,11 +96,11 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
               aria-label="Compartir perfil"
               size="small"
               sx={{
-                color: "var(--tm-muted)",
-                bgcolor: "var(--tm-well)",
-                "&:hover": {
-                  bgcolor: "var(--tm-accent-wash)",
-                  color: "var(--tm-accent)",
+                color: 'var(--tm-muted)',
+                bgcolor: 'var(--tm-well)',
+                '&:hover': {
+                  bgcolor: 'var(--tm-accent-wash)',
+                  color: 'var(--tm-accent)',
                 },
               }}
             >
@@ -109,11 +114,11 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
                 aria-label="Editar perfil"
                 size="small"
                 sx={{
-                  color: "var(--tm-muted)",
-                  bgcolor: "var(--tm-well)",
-                  "&:hover": {
-                    bgcolor: "var(--tm-accent-wash)",
-                    color: "var(--tm-accent)",
+                  color: 'var(--tm-muted)',
+                  bgcolor: 'var(--tm-well)',
+                  '&:hover': {
+                    bgcolor: 'var(--tm-accent-wash)',
+                    color: 'var(--tm-accent)',
                   },
                 }}
               >
@@ -124,16 +129,16 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
         </Box>
 
         {/* Centered Avatar with decorative ring */}
-        <Box sx={{ display: "flex", justifyContent: "center", mb: 1.5 }}>
-          <Box sx={{ position: "relative" }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
+          <Box sx={{ position: 'relative' }}>
             {/* Outer decorative ring */}
             <Box
               sx={{
-                position: "absolute",
+                position: 'absolute',
                 inset: -6,
-                borderRadius: "50%",
-                border: "1px solid",
-                borderColor: "var(--tm-border)",
+                borderRadius: '50%',
+                border: '1px solid',
+                borderColor: 'var(--tm-border)',
               }}
             />
             <Avatar
@@ -141,14 +146,14 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
               sx={{
                 width: { xs: 104, sm: 120, md: 130 },
                 height: { xs: 104, sm: 120, md: 130 },
-                bgcolor: "var(--tm-accent-strong)",
-                color: "var(--tm-on-accent)",
-                fontSize: "2.5rem",
+                bgcolor: 'var(--tm-accent-strong)',
+                color: 'var(--tm-on-accent)',
+                fontSize: '2.5rem',
                 fontWeight: 700,
                 opacity: isUploadingPhoto ? 0.6 : 1,
-                transition: "opacity var(--tm-base) var(--tm-ease)",
-                border: "1px solid",
-                borderColor: "var(--tm-border)",
+                transition: 'opacity var(--tm-base) var(--tm-ease)',
+                border: '1px solid',
+                borderColor: 'var(--tm-border)',
               }}
             >
               {asesor.name.charAt(0).toUpperCase()}
@@ -158,12 +163,12 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
                 aria-label="Cargando"
                 size={28}
                 sx={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "50%",
-                  mt: "-14px",
-                  ml: "-14px",
-                  color: "var(--tm-accent)",
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  mt: '-14px',
+                  ml: '-14px',
+                  color: 'var(--tm-accent)',
                 }}
               />
             )}
@@ -174,21 +179,21 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
                 size="small"
                 aria-label="Cambiar foto de perfil"
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   bottom: 2,
                   right: 2,
                   width: 30,
                   height: 30,
-                  bgcolor: "var(--tm-accent-strong)",
-                  color: "var(--tm-on-accent)",
-                  border: "2px solid",
-                  borderColor: "var(--tm-surface)",
-                  "&:hover": {
-                    bgcolor: "var(--tm-accent)",
+                  bgcolor: 'var(--tm-accent-strong)',
+                  color: 'var(--tm-on-accent)',
+                  border: '2px solid',
+                  borderColor: 'var(--tm-surface)',
+                  '&:hover': {
+                    bgcolor: 'var(--tm-accent)',
                   },
-                  "&.Mui-disabled": {
-                    bgcolor: "var(--tm-border)",
-                    color: "var(--tm-subtle)",
+                  '&.Mui-disabled': {
+                    bgcolor: 'var(--tm-border)',
+                    color: 'var(--tm-subtle)',
                   },
                 }}
               >
@@ -205,9 +210,9 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
             fontFamily: qeFont.serif,
             fontWeight: 600,
             mb: 0.85,
-            fontSize: { xs: "1.6rem", sm: "1.8rem", md: "1.95rem" },
+            fontSize: { xs: '1.6rem', sm: '1.8rem', md: '1.95rem' },
             lineHeight: 1.12,
-            letterSpacing: "0.005em",
+            letterSpacing: '0.005em',
           }}
         >
           {asesor.name}
@@ -216,8 +221,8 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
         {/* Badge Row — elegant pills (dot + label), no redundant role text */}
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "center",
+            display: 'flex',
+            justifyContent: 'center',
             gap: 0.85,
             mb: 2.25,
           }}
@@ -225,17 +230,17 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
           <Box
             sx={{
               ...pillBase,
-              bgcolor: "var(--tm-accent-wash)",
-              borderColor: "var(--tm-border)",
-              color: "var(--tm-accent)",
+              bgcolor: 'var(--tm-accent-wash)',
+              borderColor: 'var(--tm-border)',
+              color: 'var(--tm-accent)',
             }}
           >
             <Box
               sx={{
                 width: 4,
                 height: 4,
-                borderRadius: "50%",
-                bgcolor: "var(--tm-accent-pure)",
+                borderRadius: '50%',
+                bgcolor: 'var(--tm-accent-pure)',
               }}
             />
             Embajador
@@ -244,17 +249,17 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
             <Box
               sx={{
                 ...pillBase,
-                bgcolor: "var(--tm-well)",
-                borderColor: "var(--tm-border)",
-                color: "var(--tm-muted)",
+                bgcolor: 'var(--tm-well)',
+                borderColor: 'var(--tm-border)',
+                color: 'var(--tm-muted)',
               }}
             >
               <Box
                 sx={{
                   width: 4,
                   height: 4,
-                  borderRadius: "50%",
-                  bgcolor: "var(--tm-muted)",
+                  borderRadius: '50%',
+                  bgcolor: 'var(--tm-muted)',
                 }}
               />
               Elite
@@ -265,33 +270,43 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
         {/* Stats — unified editorial ledger panel with hairline dividers */}
         <Box
           sx={{
-            display: "flex",
-            alignItems: "stretch",
+            display: 'flex',
+            alignItems: 'stretch',
             mx: { xs: 1, sm: 2, md: 3 },
-            borderRadius: "var(--tm-radius-card)",
-            overflow: "hidden",
-            bgcolor: "var(--tm-surface)",
-            border: "1px solid",
-            borderColor: "var(--tm-border)",
+            borderRadius: 'var(--tm-radius-card)',
+            overflow: 'hidden',
+            bgcolor: 'var(--tm-surface)',
+            border: '1px solid',
+            borderColor: 'var(--tm-border)',
           }}
         >
           {[
             {
-              icon: <Gem size={15} style={{ color: "var(--tm-accent)" }} />,
+              icon: <Gem size={15} style={{ color: 'var(--tm-accent)' }} />,
               value: String(totalProducts),
-              label: "Tesoros",
+              label: 'Tesoros',
             },
+            // Dropped entirely rather than rendered as "$0" when the viewer
+            // is not staff and so never received a price. The strip is flex,
+            // so it lays out fine at two metrics.
+            ...(stats.totalValue !== null
+              ? [
+                  {
+                    icon: (
+                      <DollarSign
+                        size={15}
+                        style={{ color: 'var(--tm-muted)' }}
+                      />
+                    ),
+                    value: formatCurrency(stats.totalValue),
+                    label: 'Valor',
+                  },
+                ]
+              : []),
             {
-              icon: (
-                <DollarSign size={15} style={{ color: "var(--tm-muted)" }} />
-              ),
-              value: formatCurrency(stats.totalValue),
-              label: "Valor",
-            },
-            {
-              icon: <Star size={15} style={{ color: "var(--tm-muted)" }} />,
-              value: rating ? String(rating) : "—",
-              label: "Rating",
+              icon: <Star size={15} style={{ color: 'var(--tm-muted)' }} />,
+              value: rating ? String(rating) : '—',
+              label: 'Rating',
             },
           ].map((stat, i) => (
             <Box
@@ -299,24 +314,24 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
               sx={{
                 flex: 1,
                 minWidth: 0,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: { xs: "4px", sm: "6px" },
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: { xs: '4px', sm: '6px' },
                 py: { xs: 1.5, sm: 1.75 },
                 px: 0.5,
-                position: "relative",
+                position: 'relative',
                 // Hairline divider between columns
                 ...(i > 0 && {
-                  "&::before": {
+                  '&::before': {
                     content: '""',
-                    position: "absolute",
+                    position: 'absolute',
                     left: 0,
-                    top: "20%",
-                    bottom: "20%",
-                    width: "1px",
-                    bgcolor: "var(--tm-hairline)",
+                    top: '20%',
+                    bottom: '20%',
+                    width: '1px',
+                    bgcolor: 'var(--tm-hairline)',
                   },
                 }),
               }}
@@ -325,20 +340,20 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
               <Typography
                 sx={{
                   ...qeType.data,
-                  fontSize: { xs: "1.15rem", sm: "1.3rem" },
+                  fontSize: { xs: '1.15rem', sm: '1.3rem' },
                   lineHeight: 1.05,
-                  whiteSpace: "nowrap",
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {stat.value}
               </Typography>
               <Typography
                 sx={{
-                  fontSize: "0.6875rem",
+                  fontSize: '0.6875rem',
                   fontWeight: 600,
-                  color: "var(--tm-muted)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
+                  color: 'var(--tm-muted)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
                 }}
               >
                 {stat.label}
@@ -352,13 +367,13 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
           <Typography
             sx={{
               mt: 2,
-              color: "text.secondary",
+              color: 'text.secondary',
               fontFamily: qeFont.serif,
-              fontSize: { xs: "1.02rem", sm: "1.1rem" },
+              fontSize: { xs: '1.02rem', sm: '1.1rem' },
               lineHeight: 1.55,
               maxWidth: { xs: 340, sm: 420 },
-              mx: "auto",
-              fontStyle: "italic",
+              mx: 'auto',
+              fontStyle: 'italic',
             }}
           >
             {asesor.especialidad}
@@ -369,6 +384,6 @@ export const ProfileHeader = React.memo<ProfileHeaderProps>(
   },
 );
 
-ProfileHeader.displayName = "ProfileHeader";
+ProfileHeader.displayName = 'ProfileHeader';
 
 export default ProfileHeader;
