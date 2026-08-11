@@ -76,16 +76,27 @@ export interface UseAmbassadorOverridesReturn {
     | { ok: false; errors: ValidationResult['errors'] };
   /** Remove the override entirely (restore canonical values). */
   clearOverride: (itemId: string | number) => void;
+  /**
+   * Resale lives here rather than in a hook of its own because it is the same
+   * act from the ambassador's point of view — a statement about one of their
+   * own pieces — stored in the same row and authorised the same way. The
+   * editor that sets a custom price is where they also decide to offer it.
+   */
+  isForResale: (itemId: string | number) => boolean;
+  setForResale: (itemId: string | number, forResale: boolean) => void;
 }
 
 export function useAmbassadorOverrides(
   slug: string | undefined,
   canWrite = false,
 ): UseAmbassadorOverridesReturn {
-  const { overrides, setOverrideValues, clearOverride } = useAmbassadorCuration(
-    slug,
-    canWrite,
-  );
+  const {
+    overrides,
+    resale,
+    setOverrideValues,
+    clearOverride,
+    setForResale: setForResaleRaw,
+  } = useAmbassadorCuration(slug, canWrite);
 
   const getOverride = useCallback(
     (itemId: string | number) => overrides[String(itemId)],
@@ -141,7 +152,25 @@ export function useAmbassadorOverrides(
     [clearOverride],
   );
 
-  return { overrides, getOverride, setOverride, clearOverride: clear };
+  const isForResale = useCallback(
+    (itemId: string | number) => resale.includes(String(itemId)),
+    [resale],
+  );
+
+  const setForResale = useCallback(
+    (itemId: string | number, value: boolean) =>
+      setForResaleRaw(String(itemId), value),
+    [setForResaleRaw],
+  );
+
+  return {
+    overrides,
+    getOverride,
+    setOverride,
+    clearOverride: clear,
+    isForResale,
+    setForResale,
+  };
 }
 
 export default useAmbassadorOverrides;

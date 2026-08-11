@@ -57,6 +57,7 @@ interface CurationRow {
   slug: string;
   itemId: string;
   isFavorite: boolean;
+  forResale?: boolean;
   sortOrder?: number;
   customName?: string;
   customPriceCOP?: number;
@@ -72,6 +73,12 @@ export interface AmbassadorCurationResponse {
   slug: string;
   /** Item ids in the order the ambassador arranged them. */
   favorites: string[];
+  /**
+   * Item ids the ambassador has offered for resale. Public: the catalog
+   * already publishes these through /api/resale-offers, and the owner's own
+   * editor needs to render the switch in the right position.
+   */
+  resale: string[];
   /** Keyed by item id. `customPriceCOP` is absent unless the grant allows it. */
   overrides: Record<string, CurationOverride>;
 }
@@ -148,7 +155,12 @@ export async function handleAmbassadorCuration(
     // but no CONVEX_URL) degrades to "no curation", never to an error: the
     // profile still renders its pieces, just without the arrangement.
     if (!isConvexEnabled || !convexClient) {
-      return sendSuccess(res, { slug, favorites: [], overrides: {} });
+      return sendSuccess(res, {
+        slug,
+        favorites: [],
+        resale: [],
+        overrides: {},
+      });
     }
 
     const rows = (await convexClient.query(api.ambassadorCuration.listBySlug, {
@@ -179,7 +191,16 @@ export async function handleAmbassadorCuration(
       if (Object.keys(entry).length > 0) overrides[row.itemId] = entry;
     }
 
-    const payload: AmbassadorCurationResponse = { slug, favorites, overrides };
+    const resale = rows
+      .filter((row) => row.forResale === true)
+      .map((row) => row.itemId);
+
+    const payload: AmbassadorCurationResponse = {
+      slug,
+      favorites,
+      resale,
+      overrides,
+    };
     return sendSuccess(res, payload);
   }
 

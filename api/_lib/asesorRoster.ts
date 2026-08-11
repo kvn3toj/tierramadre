@@ -3,7 +3,7 @@
  *
  * Created 2026-08-11 to collapse a coupling PR #91 introduced and flagged:
  * `api/ambassador-products.ts` had to repeat `get-asesores.ts`'s name-column
- * aliases and inactive filter, because that parse lives inline in its handler
+ * aliases and active-row filter, because that parse lives inline in its handler
  * and is not importable. Two copies of a column resolution is precisely how
  * the A1 bug happened (an email column resolved by the wrong alias), so the
  * second copy gets one home before a third appears.
@@ -22,6 +22,7 @@ import {
 } from './index.js';
 import { slugifyAsesorName } from './asesorSlug.js';
 import { resolveEmailColumnIndex, toAsesorEmail } from './asesorEmail.js';
+import { isRosterRowActive } from './rosterStatus.js';
 
 type Sheets = sheets_v4.Sheets;
 
@@ -69,10 +70,13 @@ export async function loadAsesorRoster(
   for (const row of rows.slice(1)) {
     const rawName = row[nameColumnIndex];
     if (!rawName || String(rawName).trim() === '') continue;
-    if (estadoIndex !== -1) {
-      const estado = String(row[estadoIndex] || '').toLowerCase();
-      if (estado === 'inactivo' || estado === 'inactive') continue;
-    }
+    // Allowlist, no denylist — PR #100. La lista negra fallaba ABIERTA:
+    // cualquier valor que no fuera «inactivo»/«inactive» («retirado»,
+    // «suspendido», «baja»…) contaba como activo, así que dar de baja a un
+    // asesor no siempre le quitaba el acceso. Aquí pesa el doble: de este
+    // roster sale la autorización de escritura de /api/ambassador-curation,
+    // o sea quién puede publicar una pieza a la venta con su nombre encima.
+    if (!isRosterRowActive(row[estadoIndex], estadoIndex !== -1)) continue;
     const name = formatDisplayName(rawName);
     roster.push({
       name,
