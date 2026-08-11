@@ -29,6 +29,7 @@ import type * as _lib_sessionToken from "../_lib/sessionToken.js";
 import type * as _lib_sheetPullMaps from "../_lib/sheetPullMaps.js";
 import type * as _lib_sheetSync from "../_lib/sheetSync.js";
 import type * as adminOps from "../adminOps.js";
+import type * as ambassadorCuration from "../ambassadorCuration.js";
 import type * as ambassadors from "../ambassadors.js";
 import type * as asesorMovements from "../asesorMovements.js";
 import type * as clients from "../clients.js";
@@ -78,6 +79,7 @@ declare const fullApi: ApiFromModules<{
   "_lib/sheetPullMaps": typeof _lib_sheetPullMaps;
   "_lib/sheetSync": typeof _lib_sheetSync;
   adminOps: typeof adminOps;
+  ambassadorCuration: typeof ambassadorCuration;
   ambassadors: typeof ambassadors;
   asesorMovements: typeof asesorMovements;
   clients: typeof clients;

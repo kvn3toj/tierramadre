@@ -52,8 +52,16 @@ export function ManageFavoritesView({
   const [searchQuery, setSearchQuery] = useState('');
 
   // T4: per-ambassador overrides (custom name / price)
-  const { getOverride, setOverride, clearOverride } =
-    useAmbassadorOverrides(asesorSlug);
+  //
+  // `canWrite: true` — this view is owner-only by route: AsesorProfilePage
+  // redirects any non-owner away from /ambassadors/:slug/favoritas, so if it
+  // is mounted at all the viewer owns the profile. It is a hint for the write
+  // queue, not a permission: the server re-derives ownership from the
+  // caller's session against the roster and 403s anyone else.
+  const { getOverride, setOverride, clearOverride } = useAmbassadorOverrides(
+    asesorSlug,
+    true,
+  );
   const [editingProduct, setEditingProduct] = useState<TreasureItem | null>(
     null,
   );

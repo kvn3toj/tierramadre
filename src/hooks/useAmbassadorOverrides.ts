@@ -1,57 +1,29 @@
 /**
  * useAmbassadorOverrides
  *
- * MVP: Local-first per-ambassador overrides for product name + price.
- * Persisted in localStorage under key `tm:ambassador-overrides:{slug}`
- * as a `Record<itemId, AmbassadorProductOverride>` blob.
+ * Thin adapter over `useAmbassadorCuration`, which is where overrides now
+ * actually live: `/api/ambassador-curation` is the source of truth, with
+ * localStorage demoted to a mirror cache (anti-blink init, cross-tab sync,
+ * and a durable queue for edits made offline).
  *
- * Anti-blink: state is initialised SYNCHRONOUSLY from localStorage in the
- * useState initializer (see CLAUDE.md "Anti-Blinking Best Practices").
+ * Until 2026-08-11 this hook owned `tm:ambassador-overrides:{slug}` and
+ * nothing else, so a price an ambassador set was visible on exactly one
+ * device — never on their phone, never to their client. The public API is
+ * unchanged so no caller had to move.
  *
- * TODO (v2):
- * - Move persistence to `api/ambassador-product-override` (server-side
- *   validation + Convex/Sheets store) once the Convex migration lands.
- * - Add cross-tab sync via `storage` event.
+ * `setOverride` still validates and returns SYNCHRONOUSLY: the dialog needs an
+ * answer as the user types, and the network write is fire-and-forget behind
+ * the queue. The server re-validates against the canonical price, which is the
+ * check that actually counts — this one is a courtesy to the user.
  */
 
-import { useCallback, useState } from 'react';
-import { STORAGE_KEYS } from '../constants/storage-keys';
-import {
-  AmbassadorProductOverride,
-  OVERRIDE_LIMITS,
-} from '../types/ambassadorOverride';
+import { useCallback } from 'react';
+import { AmbassadorProductOverride } from '../types/ambassadorOverride';
+import { validateOverrideValues } from '../utils/ambassadorOverrideValidation';
 import type { TreasureItem } from '../types';
-import { createLogger } from '../utils/logger';
-
-const log = createLogger('useAmbassadorOverrides');
+import { useAmbassadorCuration } from './useAmbassadorCuration';
 
 type OverridesMap = Record<string, AmbassadorProductOverride>;
-
-function storageKey(slug: string): string {
-  return `${STORAGE_KEYS.AMBASSADOR_OVERRIDES_PREFIX}${slug}`;
-}
-
-function readFromStorage(slug: string): OverridesMap {
-  if (typeof window === 'undefined') return {};
-  try {
-    const raw = window.localStorage.getItem(storageKey(slug));
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    return typeof parsed === 'object' && parsed !== null ? parsed : {};
-  } catch (err) {
-    log.debug('Failed to read overrides from storage', err);
-    return {};
-  }
-}
-
-function writeToStorage(slug: string, value: OverridesMap): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(storageKey(slug), JSON.stringify(value));
-  } catch (err) {
-    log.debug('Failed to write overrides to storage', err);
-  }
-}
 
 export interface ValidateOverrideInput {
   baseProduct: TreasureItem;
@@ -64,58 +36,33 @@ export interface ValidationResult {
   errors: { field: 'customName' | 'customPriceCOP'; message: string }[];
 }
 
-/** Pure validator — exposed for unit tests and the dialog UI. */
+/**
+ * Pure validator — exposed for unit tests and the dialog UI.
+ *
+ * The rules now live in `utils/ambassadorOverrideValidation.ts` so the server
+ * enforces the SAME ones (api/ambassador-curation.ts). This wrapper only
+ * unpacks the product; keeping it means the dialog and its existing tests did
+ * not have to change.
+ */
 export function validateOverride({
   baseProduct,
   customName,
   customPriceCOP,
 }: ValidateOverrideInput): ValidationResult {
-  const errors: ValidationResult['errors'] = [];
-
-  if (customName !== undefined && customName !== null) {
-    const trimmed = customName.trim();
-    if (trimmed.length === 0) {
-      // Empty string treated as "clear override" upstream — not an error here.
-    } else if (trimmed.length > OVERRIDE_LIMITS.NAME_MAX_LENGTH) {
-      errors.push({
-        field: 'customName',
-        message: `El nombre no puede superar ${OVERRIDE_LIMITS.NAME_MAX_LENGTH} caracteres`,
-      });
-    }
-  }
-
-  if (customPriceCOP !== undefined && customPriceCOP !== null) {
-    const base = baseProduct.precioCOP;
-    if (typeof base !== 'number' || base <= 0) {
-      errors.push({
-        field: 'customPriceCOP',
-        message: 'Este producto no tiene precio base; no se puede sobreescribir',
-      });
-    } else {
-      const min = base * OVERRIDE_LIMITS.PRICE_MIN_MULTIPLIER;
-      const max = base * OVERRIDE_LIMITS.PRICE_MAX_MULTIPLIER;
-      if (customPriceCOP < min) {
-        errors.push({
-          field: 'customPriceCOP',
-          message: `El precio no puede ser menor al base (${Math.round(min).toLocaleString('es-CO')} COP)`,
-        });
-      } else if (customPriceCOP > max) {
-        errors.push({
-          field: 'customPriceCOP',
-          message: `El precio no puede ser mayor a 10x el base (${Math.round(max).toLocaleString('es-CO')} COP)`,
-        });
-      }
-    }
-  }
-
-  return { ok: errors.length === 0, errors };
+  return validateOverrideValues({
+    basePriceCOP: baseProduct.precioCOP,
+    customName,
+    customPriceCOP,
+  });
 }
 
 export interface UseAmbassadorOverridesReturn {
   /** Map keyed by itemId (string). */
   overrides: OverridesMap;
   /** Get the override for a single item, if any. */
-  getOverride: (itemId: string | number) => AmbassadorProductOverride | undefined;
+  getOverride: (
+    itemId: string | number,
+  ) => AmbassadorProductOverride | undefined;
   /**
    * Save an override. Pass `undefined` for fields you want to clear.
    * Returns the resulting override on success, or null if validation fails.
@@ -124,15 +71,20 @@ export interface UseAmbassadorOverridesReturn {
     itemId: string | number,
     patch: { customName?: string; customPriceCOP?: number },
     baseProduct: TreasureItem,
-  ) => { ok: true; override: AmbassadorProductOverride } | { ok: false; errors: ValidationResult['errors'] };
+  ) =>
+    | { ok: true; override: AmbassadorProductOverride }
+    | { ok: false; errors: ValidationResult['errors'] };
   /** Remove the override entirely (restore canonical values). */
   clearOverride: (itemId: string | number) => void;
 }
 
-export function useAmbassadorOverrides(slug: string | undefined): UseAmbassadorOverridesReturn {
-  // Synchronous init to avoid post-mount blink (CLAUDE.md anti-blink rule).
-  const [overrides, setOverrides] = useState<OverridesMap>(() =>
-    slug ? readFromStorage(slug) : {},
+export function useAmbassadorOverrides(
+  slug: string | undefined,
+  canWrite = false,
+): UseAmbassadorOverridesReturn {
+  const { overrides, setOverrideValues, clearOverride } = useAmbassadorCuration(
+    slug,
+    canWrite,
   );
 
   const getOverride = useCallback(
@@ -143,7 +95,10 @@ export function useAmbassadorOverrides(slug: string | undefined): UseAmbassadorO
   const setOverride: UseAmbassadorOverridesReturn['setOverride'] = useCallback(
     (itemId, patch, baseProduct) => {
       if (!slug) {
-        return { ok: false, errors: [{ field: 'customName', message: 'No ambassador slug' }] };
+        return {
+          ok: false,
+          errors: [{ field: 'customName', message: 'No ambassador slug' }],
+        };
       }
 
       // Normalise: empty string → undefined (treat as "no override on that field").
@@ -152,59 +107,41 @@ export function useAmbassadorOverrides(slug: string | undefined): UseAmbassadorO
           ? undefined
           : patch.customName?.trim();
       const customPriceCOP =
-        patch.customPriceCOP !== undefined && Number.isFinite(patch.customPriceCOP)
+        patch.customPriceCOP !== undefined &&
+        Number.isFinite(patch.customPriceCOP)
           ? patch.customPriceCOP
           : undefined;
 
-      const validation = validateOverride({
-        baseProduct,
+      const validation = validateOverrideValues({
+        basePriceCOP: baseProduct.precioCOP,
         customName,
         customPriceCOP,
       });
       if (!validation.ok) return { ok: false, errors: validation.errors };
 
       const id = String(itemId);
-      const next: OverridesMap = { ...overrides };
+      setOverrideValues(id, { customName, customPriceCOP });
 
-      // If both fields are empty, treat as clear.
-      if (customName === undefined && customPriceCOP === undefined) {
-        delete next[id];
-      } else {
-        next[id] = {
+      return {
+        ok: true,
+        override: {
           asesorSlug: slug,
           itemId: id,
           customName,
           customPriceCOP,
           updatedAt: new Date().toISOString(),
-        };
-      }
-
-      setOverrides(next);
-      writeToStorage(slug, next);
-
-      return { ok: true, override: next[id] ?? {
-        asesorSlug: slug,
-        itemId: id,
-        updatedAt: new Date().toISOString(),
-      } };
+        },
+      };
     },
-    [overrides, slug],
+    [slug, setOverrideValues],
   );
 
-  const clearOverride = useCallback(
-    (itemId: string | number) => {
-      if (!slug) return;
-      const id = String(itemId);
-      if (!(id in overrides)) return;
-      const next = { ...overrides };
-      delete next[id];
-      setOverrides(next);
-      writeToStorage(slug, next);
-    },
-    [overrides, slug],
+  const clear = useCallback(
+    (itemId: string | number) => clearOverride(String(itemId)),
+    [clearOverride],
   );
 
-  return { overrides, getOverride, setOverride, clearOverride };
+  return { overrides, getOverride, setOverride, clearOverride: clear };
 }
 
 export default useAmbassadorOverrides;
