@@ -163,8 +163,21 @@ async function fetchFromSheets(
     return fetchFromSheets(notifyOnFailure, vitrinaToken, true);
   }
 
-  // Auto-sync Drive product folders in background (fire-and-forget)
-  fetch('/api/create-product-folders?sync=auto').catch(() => {});
+  // Auto-sync Drive product folders in background (fire-and-forget).
+  //
+  // 2026-08-09 lockdown: `?sync=auto` is the endpoint's APPLY path — it
+  // creates and renames Drive folders — and it used to accept anyone, so
+  // every anonymous catalog visitor was silently mutating Drive. The endpoint
+  // now requires a `tms1` staff session, so send one when we have one; a
+  // guest simply doesn't fire the sync any more (the 401 lands in the
+  // existing `.catch`, and guests never had a reason to trigger a Drive
+  // write). Staff hit the catalog constantly, so the auto-sync keeps running
+  // in practice. `catalogRequestInit()` returns undefined when there is no
+  // session, keeping the anonymous request byte-identical to before.
+  const syncInit = catalogRequestInit();
+  if (syncInit) {
+    fetch('/api/create-product-folders?sync=auto', syncInit).catch(() => {});
+  }
 
   return result.treasure;
 }

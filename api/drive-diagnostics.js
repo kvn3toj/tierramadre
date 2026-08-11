@@ -24,7 +24,9 @@ import { getOAuthUserEmail } from './_lib/oauth-drive-client.js';
 
 async function getDriveAboutEmail(drive) {
   try {
-    const { data } = await drive.about.get({ fields: 'user(emailAddress,displayName)' });
+    const { data } = await drive.about.get({
+      fields: 'user(emailAddress,displayName)',
+    });
     return data?.user?.emailAddress || null;
   } catch {
     return null;
@@ -69,7 +71,8 @@ async function checkFolderInfo(drive, folderId) {
     }
   } else {
     result.status = 'warning';
-    result.recommendation = 'This folder is in My Drive (personal). Using OAuth personal account for access.';
+    result.recommendation =
+      'This folder is in My Drive (personal). Using OAuth personal account for access.';
   }
 
   return result;
@@ -188,18 +191,20 @@ async function checkUploadCapability(drive, parentFolderId) {
   }
 
   // Summary
-  const failedChecks = result.checks.filter(c => c.status === 'failed');
-  const warningChecks = result.checks.filter(c => c.status === 'warning');
+  const failedChecks = result.checks.filter((c) => c.status === 'failed');
+  const warningChecks = result.checks.filter((c) => c.status === 'warning');
 
   if (failedChecks.length > 0) {
     result.status = 'error';
-    result.recommendation = 'There are permission issues. Check OAuth account access.';
+    result.recommendation =
+      'There are permission issues. Check OAuth account access.';
   } else if (warningChecks.length > 0) {
     result.status = 'warning';
     result.recommendation = 'Configuration may work but has potential issues.';
   } else {
     result.status = 'ok';
-    result.recommendation = 'Drive configuration looks good. Uploads should work.';
+    result.recommendation =
+      'Drive configuration looks good. Uploads should work.';
   }
 
   return result;
@@ -209,7 +214,27 @@ async function checkUploadCapability(drive, parentFolderId) {
 // MAIN HANDLER
 // =============================================================================
 
-export default withApiHandler(async (req, res, { drive, oauthDrive, sharedDriveId }) => {
+export async function handleDriveDiagnostics(
+  req,
+  res,
+  { drive, sharedDriveId },
+) {
+  // Gate BEFORE any Drive call — an unauthorized caller must cost no Drive
+  // quota. Same server-to-server guard api/get-table.ts and
+  // api/get-inventory-rows.ts already use, for the same reason: this endpoint
+  // has NO caller anywhere in `src/` (grep it) — it is a pure operator tool —
+  // so it needs an operator credential, not a browser session. Before this it
+  // answered HTTP 200 to anyone with Drive folder metadata, shared-drive
+  // ids/names, the service account's e-mail and its capabilities.
+  const expectedToken = process.env.ADMIN_SYNC_TOKEN;
+  const providedToken = req.headers['x-admin-sync-token'];
+  if (!expectedToken) {
+    return sendError(res, 500, 'ADMIN_SYNC_TOKEN not configured on server');
+  }
+  if (!providedToken || providedToken !== expectedToken) {
+    return sendError(res, 401, 'Unauthorized');
+  }
+
   const { folderId, action } = req.query;
   const configuredId = sharedDriveId;
 
@@ -226,7 +251,8 @@ export default withApiHandler(async (req, res, { drive, oauthDrive, sharedDriveI
         status: 'error',
         configured: false,
         authenticatedEmail,
-        recommendation: 'GOOGLE_SHARED_DRIVE_ID environment variable is not set',
+        recommendation:
+          'GOOGLE_SHARED_DRIVE_ID environment variable is not set',
       });
     }
 
@@ -280,4 +306,11 @@ export default withApiHandler(async (req, res, { drive, oauthDrive, sharedDriveI
   }
 
   return sendError(res, 400, 'Invalid action');
-}, { methods: ['GET', 'OPTIONS'], provideDrive: true, provideOAuthDrive: true, errorPrefix: 'DriveDiagnostics' });
+}
+
+export default withApiHandler(handleDriveDiagnostics, {
+  methods: ['GET', 'OPTIONS'],
+  provideDrive: true,
+  provideOAuthDrive: true,
+  errorPrefix: 'DriveDiagnostics',
+});
