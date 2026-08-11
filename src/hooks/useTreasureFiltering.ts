@@ -4,6 +4,8 @@
  * Sub-hooks: useFilterOptions, useTreasureSort, useFilterInactivityTimeout.
  */
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { isPurchasable } from '../utils/productOffer';
+import { useResaleOffers } from './useResaleOffers';
 import { TreasureItem } from '../types';
 import { fuzzyMatch } from '../utils/fuzzySearch';
 import { normalizeCollection } from '../utils/formatting';
@@ -113,6 +115,7 @@ export function useTreasureFiltering({
   initialFilters = {},
   inactivityTimeoutMinutes,
 }: UseTreasureFilteringOptions): UseTreasureFilteringReturn {
+  const { resaleIndex } = useResaleOffers();
   // Compute available filter options from treasure data
   const filterOptions = useFilterOptions(treasure);
   const { priceMinMax, caratMinMax } = filterOptions;
@@ -326,13 +329,18 @@ export function useTreasureFiltering({
       // `statusFilter: 'available'` for the global search sheet, so a
       // guest's search always returned zero results, for any query.
       const estadoKnown = typeof item.estado === 'string';
-      const itemEstado = item.estado?.toUpperCase() || '';
       const matchesStatus =
         isExplicitItem ||
         statusFilter === 'all' ||
         !estadoKnown ||
-        (statusFilter === 'available' && itemEstado === 'DISPONIBLE') ||
-        (statusFilter === 'sold' && itemEstado === 'VENDIDA');
+        // Not `itemEstado === 'DISPONIBLE'`. Sellability is no longer one
+        // field: CONSIGNACION is TM's stock an ambassador merely holds, and a
+        // piece an ambassador bought is purchasable again the moment they
+        // offer it for resale. getOffer owns that decision now.
+        (statusFilter === 'available' &&
+          isPurchasable(item, resaleIndex.get(item.item))) ||
+        (statusFilter === 'sold' &&
+          !isPurchasable(item, resaleIndex.get(item.item)));
 
       if (!matchesStatus) return false;
       if (!matchesHeroCategory(item)) return false;
