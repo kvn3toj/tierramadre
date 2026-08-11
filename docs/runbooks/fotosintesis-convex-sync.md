@@ -12,8 +12,24 @@ para no recargar el ancho de banda de Convex ni los límites de la API de Sheets
   mismo libro. El botón sólo dispara la lectura; quien lee las celdas es
   `api/get-inventory-rows` / `api/get-table-rows`, y usan **esa** variable, no
   la del catálogo (`SPREADSHEET_ID`). Si divergen, se sincroniza el libro
-  equivocado en silencio. Verificá con:
-  > `npx vercel env pull .env.check --environment=production && grep FOTOSINTESIS .env.check`
+  equivocado en silencio.
+  >
+  > **No se puede leer con `vercel env pull`**: está marcada *Sensitive* en
+  > Vercel, o sea write-only, y la API la devuelve vacía (`=""`) igual que a
+  > otras 44. Un `""` ahí NO significa que esté sin configurar — `SPREADSHEET_ID`
+  > también sale vacío y demostrablemente apunta al v3.
+  >
+  > Se deduce midiendo: el pull lee las celdas por `get-inventory-rows`, así que
+  > el contenido de Convex delata el libro de origen. Comparar los `itemId`:
+  >
+  > ```bash
+  > curl -s -X POST "https://grand-hippopotamus-162.convex.cloud/api/query" \
+  >   -H 'content-type: application/json' \
+  >   -d '{"path":"products:publishedCatalog","args":{},"format":"json"}'
+  > ```
+  >
+  > El 2026-08-11: los 424 ítems de Convex están **100% en la SOT v3** y sólo
+  > 30.9% en la v2 (293 ni existen ahí) ⇒ la variable apunta al v3.
 - **Tabs:** Inventario, Proveedores, Lotes, Clientes, Ventas, Sublotes (las 6).
 - **Trigger:** botón de menú manual `🔄 Convex Sync`. Un `onEdit` simple anota
   los cambios en una hoja oculta `_SyncQueue`; el botón los envía.
