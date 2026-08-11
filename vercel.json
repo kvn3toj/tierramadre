@@ -4,6 +4,9 @@
     "api/get-treasure-sheets.ts": {
       "maxDuration": 30
     },
+    "api/ambassador-products.ts": {
+      "maxDuration": 30
+    },
     "api/get-asesores.ts": {
       "maxDuration": 30
     },
