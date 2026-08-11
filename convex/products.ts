@@ -131,6 +131,7 @@ export const list = query({
       calidad: row.calidad,
       cantidad: row.cantidad,
       talla: row.talla,
+      tallaAnillo: row.tallaAnillo,
       medidas: row.medidas,
       categoria: row.categoria,
       precioCOP: row.precioCOP,
@@ -385,6 +386,7 @@ export const getPublicByItem = query({
       calidad: row.calidad,
       cantidad: row.cantidad,
       talla: row.talla,
+      tallaAnillo: row.tallaAnillo,
       medidas: row.medidas,
       medidasValores: row.medidasValores,
       categoria: row.categoria,
@@ -525,6 +527,7 @@ export const publishedCatalog = query({
         calidad: row.calidad,
         cantidad: row.cantidad,
         talla: row.talla,
+        tallaAnillo: row.tallaAnillo,
         medidas: row.medidas,
         medidasValores: row.medidasValores,
         categoria: row.categoria,
@@ -602,6 +605,7 @@ export const publishedGroups = query({
         peso: p.peso,
         categoria: p.categoria,
         talla: p.talla,
+        tallaAnillo: p.tallaAnillo,
         medidas: p.medidas,
         // Per-piece Fotosíntesis characteristics so a lote's per-image detail
         // overlay reflects the exact gem, not just the bundle aggregate.
@@ -790,6 +794,7 @@ const saveEditPatchArgs = v.object({
   calidad: v.optional(v.string()),
   cantidad: v.optional(v.number()),
   talla: v.optional(v.string()),
+  tallaAnillo: v.optional(v.string()),
   medidas: v.optional(v.string()),
   medidasValores: v.optional(v.string()),
   categoria: v.optional(v.string()),
@@ -1070,6 +1075,7 @@ export const pushToSheet = action({
             calidad: normalizeCalidadForSheet(row.calidad),
             cantidad: row.cantidad ?? '',
             talla: row.talla ?? '',
+            tallaAnillo: row.tallaAnillo ?? '',
             medidas: row.medidas ?? '',
             medidasValores: row.medidasValores ?? '',
             categoria: row.categoria ?? row.tipoEsmeralda ?? '',
@@ -1586,6 +1592,7 @@ export const _pullFromSheet = internalAction({
               calidad: nullableStr(item.calidad),
               cantidad: nullableNum(item.cantidad),
               talla: nullableStr(item.talla),
+              tallaAnillo: nullableStr(item.tallaAnillo),
               medidas: nullableStr(item.medidas),
               medidasValores: nullableStr(item.medidasValores),
               categoria: nullableStr(item.categoria),
@@ -1663,6 +1670,7 @@ export const _upsertManyFromSheet = internalMutation({
           calidad: v.union(v.string(), v.null()),
           cantidad: v.union(v.number(), v.null()),
           talla: v.union(v.string(), v.null()),
+          tallaAnillo: v.union(v.string(), v.null()),
           medidas: v.union(v.string(), v.null()),
           medidasValores: v.union(v.string(), v.null()),
           categoria: v.union(v.string(), v.null()),
@@ -1710,6 +1718,7 @@ export const _upsertManyFromSheet = internalMutation({
         calidad: item.fields.calidad ?? undefined,
         cantidad: item.fields.cantidad ?? undefined,
         talla: item.fields.talla ?? undefined,
+        tallaAnillo: item.fields.tallaAnillo ?? undefined,
         medidas: item.fields.medidas ?? undefined,
         medidasValores: item.fields.medidasValores ?? undefined,
         categoria: item.fields.categoria ?? undefined,
@@ -1801,6 +1810,7 @@ export const _upsertFromSheet = internalMutation({
       calidad: v.union(v.string(), v.null()),
       cantidad: v.union(v.number(), v.null()),
       talla: v.union(v.string(), v.null()),
+      tallaAnillo: v.union(v.string(), v.null()),
       medidas: v.union(v.string(), v.null()),
       medidasValores: v.union(v.string(), v.null()),
       categoria: v.union(v.string(), v.null()),
@@ -1840,6 +1850,7 @@ export const _upsertFromSheet = internalMutation({
       calidad: fields.calidad ?? undefined,
       cantidad: fields.cantidad ?? undefined,
       talla: fields.talla ?? undefined,
+      tallaAnillo: fields.tallaAnillo ?? undefined,
       medidas: fields.medidas ?? undefined,
       medidasValores: fields.medidasValores ?? undefined,
       categoria: fields.categoria ?? undefined,
@@ -1971,6 +1982,7 @@ type SheetRow = {
   calidad?: string;
   cantidad?: number | string;
   talla?: string;
+  tallaAnillo?: string;
   medidas?: string;
   medidasValores?: string;
   categoria?: string;
@@ -2229,6 +2241,7 @@ const createProductFieldsArgs = v.object({
   calidad: v.optional(v.string()),
   cantidad: v.optional(v.number()),
   talla: v.optional(v.string()),
+  tallaAnillo: v.optional(v.string()),
   medidas: v.optional(v.string()),
   medidasValores: v.optional(v.string()),
   categoria: v.optional(v.string()),

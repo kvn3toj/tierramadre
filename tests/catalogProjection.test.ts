@@ -16,6 +16,7 @@ const ROW = {
   calidad: 'COMERCIAL FINA',
   cantidad: 1,
   talla: 'Esmeralda',
+  tallaAnillo: '',
   medidas: '',
   medidasValores: '',
   categoria: 'Gema',

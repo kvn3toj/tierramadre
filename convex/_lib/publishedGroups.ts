@@ -25,6 +25,7 @@ export interface ResolvedBundleItem {
   peso?: string;
   categoria?: string;
   talla?: string;
+  tallaAnillo?: string;
   medidas?: string;
   // Per-piece Fotosíntesis characteristics (surfaced publicly 2026-06-30) so a
   // lote's per-image detail overlay reflects the exact gem.

@@ -42,11 +42,17 @@ export const SpecificationsList: React.FC<SpecificationsListProps> = ({
     jewelryPrefers: 'carats',
   });
   const hasGemWeight = gemWeightLabel !== '';
-  const hasTalla =
-    product.talla &&
-    product.talla !== '-' &&
-    product.talla !== '0' &&
-    String(product.talla) !== '0';
+  // `talla` es la FORMA DE TALLA (corte): Redonda, Esmeralda, Lágrima… El aro
+  // del anillo vive aparte en `tallaAnillo` desde el desdoble de la columna H
+  // (2026-08-11). Antes ambos compartían campo y esta pantalla los separaba
+  // adivinando por `isJewelry`, así que un anillo con corte registrado
+  // mostraba su corte bajo la etiqueta "Talla".
+  const isMeaningful = (v: string | undefined) => {
+    const t = (v ?? '').trim();
+    return t !== '' && t !== '-' && t !== '0';
+  };
+  const hasCorte = isMeaningful(product.talla);
+  const hasTallaAnillo = isMeaningful(product.tallaAnillo);
   // Shared with the gem sheet so both surfaces resolve the medidas/medidasValores
   // split identically — including skipping a bare format label ("Largo x Ancho"),
   // which the old `medidasValores || medidas` precedence would happily render.
@@ -79,7 +85,7 @@ export const SpecificationsList: React.FC<SpecificationsListProps> = ({
   const group2Rows = [
     hasMaterial,
     product.isJewelry && hasGemWeight, // Peso for jewelry (total piece weight)
-    product.isJewelry && hasTalla, // Talla (ring size) for jewelry
+    hasTallaAnillo, // Talla (aro) — ya no depende de adivinar por isJewelry
     false, // Longitud - future field
   ];
   const hasGroup2 = group2Rows.some(Boolean);
@@ -147,7 +153,7 @@ export const SpecificationsList: React.FC<SpecificationsListProps> = ({
       )}
 
       {/* Corte */}
-      {hasTalla && !product.isJewelry && (
+      {hasCorte && (
         <SpecRow
           icon={<Diamond size={18} />}
           label="Corte"
@@ -186,12 +192,12 @@ export const SpecificationsList: React.FC<SpecificationsListProps> = ({
             />
           )}
 
-          {/* Talla (ring size for jewelry) */}
-          {product.isJewelry && hasTalla && (
+          {/* Talla (aro del anillo) */}
+          {hasTallaAnillo && (
             <SpecRow
               icon={<Ruler size={18} />}
               label="Talla"
-              value={product.talla!}
+              value={product.tallaAnillo!}
               showBorder={hasColeccion}
             />
           )}

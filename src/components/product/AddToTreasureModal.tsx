@@ -261,10 +261,10 @@ export default function AddToTreasureModal({
               </FormControl>
 
               <FormControl fullWidth disabled={loading}>
-                <InputLabel>Talla</InputLabel>
+                <InputLabel>Corte</InputLabel>
                 <Select
                   value={talla}
-                  label="Talla"
+                  label="Corte"
                   onChange={(e) => setTalla(e.target.value)}
                 >
                   {TALLAS.map((t) => (

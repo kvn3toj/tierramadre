@@ -392,13 +392,25 @@ export default function ComparisonModal({
 
                 {/* Cut/Shape */}
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Talla/Corte</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Corte</TableCell>
                   {items.map((item) => (
                     <TableCell key={item.item} align="center">
                       {item.talla || '-'}
                     </TableCell>
                   ))}
                 </TableRow>
+
+                {/* Aro del anillo — sólo si alguno de los comparados lo trae */}
+                {items.some((item) => item.tallaAnillo) && (
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600 }}>Talla</TableCell>
+                    {items.map((item) => (
+                      <TableCell key={item.item} align="center">
+                        {item.tallaAnillo || '-'}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )}
 
                 {/* Dimensions */}
                 <TableRow>
