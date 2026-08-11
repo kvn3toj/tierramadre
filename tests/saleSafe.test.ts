@@ -23,10 +23,18 @@ const COLS = FOTO_INVENTARIO_COLUMNS as Array<{
   header: string;
   preserve?: boolean;
 }>;
-/** AQ en adelante — el bloque hoja-primero. AS no cuenta: es un hueco sin key real. */
-const SHEET_OWNED = COLS.slice(42)
-  .map((c) => c.key)
-  .filter((k) => k !== '_sinUso2');
+/**
+ * AQ→BE — el bloque hoja-primero. AS no cuenta: es un hueco sin key real.
+ * El corte de la derecha se ancla a `notasConflictos` (BE) y no al final del
+ * array: desde 2026-08-11 hay columnas DESPUÉS del bloque (BF `tallaAnillo`)
+ * que sí son de la app y por tanto no llevan preserve.
+ */
+const AQ_INDEX = 42;
+const BE_INDEX = COLS.findIndex((c) => c.key === 'notasConflictos');
+const SHEET_OWNED_COLS = COLS.slice(AQ_INDEX, BE_INDEX + 1);
+const SHEET_OWNED = SHEET_OWNED_COLS.map((c) => c.key).filter(
+  (k) => k !== '_sinUso2',
+);
 
 describe('frontera Fotosíntesis ↔ ficha de producto', () => {
   it('las 14 columnas AQ→BE están todas en la lista', () => {
@@ -46,7 +54,7 @@ describe('frontera Fotosíntesis ↔ ficha de producto', () => {
   it('ninguna la puede escribir la app: todas van con preserve', () => {
     // Sin `preserve`, el merge de admin-product-update reconstruye la fila y
     // borra 513 filas de dato humano.
-    for (const c of COLS.slice(42)) {
+    for (const c of SHEET_OWNED_COLS) {
       expect(c.preserve, `${c.key} sin preserve`).toBe(true);
     }
   });

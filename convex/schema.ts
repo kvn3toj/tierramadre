@@ -45,15 +45,6 @@ export default defineSchema({
     .index('by_shortCode', ['shortCode'])
     .index('by_status', ['status']),
 
-  // ─── Public "Vitrina" share links ────────────────────────────────
-  //
-  // A staff-generated public share: one short `token` → a set of product
-  // item numbers plus the pricing the client should see (multiplier +
-  // currency, mirroring the invitation guestMultiplier/guestCurrencyMode
-  // model). Convex-only (no Sheets mirror); read with no auth by the public
-  // `/v/:token` route so a client views the products without signing in.
-  // The multiplier is stored HERE (not in the URL) so the chosen markup is
-  // never exposed to — or editable by — the recipient.
   // ─── Ambassador curation (favourites + per-product overrides) ────
   //
   // Before this table, BOTH lived in localStorage — `useAmbassadorFavorites`
@@ -90,6 +81,15 @@ export default defineSchema({
     .index('by_slug_item', ['slug', 'itemId'])
     .index('by_slug', ['slug']),
 
+  // ─── Public "Vitrina" share links ────────────────────────────────
+  //
+  // A staff-generated public share: one short `token` → a set of product
+  // item numbers plus the pricing the client should see (multiplier +
+  // currency, mirroring the invitation guestMultiplier/guestCurrencyMode
+  // model). Convex-only (no Sheets mirror); read with no auth by the public
+  // `/v/:token` route so a client views the products without signing in.
+  // The multiplier is stored HERE (not in the URL) so the chosen markup is
+  // never exposed to — or editable by — the recipient.
   vitrinas: defineTable({
     token: v.string(),
     itemIds: v.array(v.float64()),
@@ -158,7 +158,8 @@ export default defineSchema({
     color: v.optional(v.string()),
     calidad: v.optional(v.string()),
     cantidad: v.optional(v.number()),
-    talla: v.optional(v.string()),
+    talla: v.optional(v.string()), // forma de talla / corte (hoja col H "Corte")
+    tallaAnillo: v.optional(v.string()), // aro del anillo (hoja col BF)
     medidas: v.optional(v.string()),
     medidasValores: v.optional(v.string()),
     categoria: v.optional(v.string()),

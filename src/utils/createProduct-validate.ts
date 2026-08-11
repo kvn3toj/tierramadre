@@ -22,6 +22,7 @@ export interface NewProductInput {
   calidad?: string;
   cantidad?: number;
   talla?: string;
+  tallaAnillo?: string;
   medidas?: string;
   categoria?: string;
   precioCOP?: number;
@@ -38,6 +39,7 @@ export interface ValidatedProduct {
   calidad?: string;
   cantidad?: number;
   talla?: string;
+  tallaAnillo?: string;
   medidas?: string;
   categoria?: string;
   precioCOP?: number;
@@ -76,6 +78,7 @@ export function validateNewProduct(
         ? input.cantidad
         : undefined,
     talla: trimOrUndef(input.talla),
+    tallaAnillo: trimOrUndef(input.tallaAnillo),
     medidas: trimOrUndef(input.medidas),
     categoria: trimOrUndef(input.categoria),
     precioCOP:

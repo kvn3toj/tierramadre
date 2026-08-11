@@ -44,6 +44,7 @@ import {
   findSheetByPattern,
 } from './_lib/index.js';
 import { loadAsesorRoster, findBySlug } from './_lib/asesorRoster.js';
+import { FOTO_INVENTARIO_LAST_COL } from './_lib/fotosintesis-inventory-columns.js';
 import { mapRowToTreasureItem } from './get-treasure-sheets.js';
 import { getAsesorProducts } from '../src/utils/asesorProductOwnership.js';
 
@@ -95,7 +96,9 @@ export async function handleAmbassadorProducts(
     sheetNames[0];
   const inventoryResponse = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${inventorySheet}!A:AP`,
+    // Mismo rango derivado que get-treasure-sheets: comparte `mapRowToTreasureItem`,
+    // así que un rango corto acá deja columnas vacías exactamente igual.
+    range: `${inventorySheet}!A:${FOTO_INVENTARIO_LAST_COL}`,
   });
 
   const rows = inventoryResponse.data.values;

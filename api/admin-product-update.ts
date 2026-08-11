@@ -14,7 +14,7 @@
  *  • LEGACY treasure sheet (target="legacy") — frozen A:U layout, read by
  *    get-treasure-sheets for the public catalog. Do NOT change its columns.
  *      A item       B fechaIngreso       C nombre        D peso (ct)
- *      E color      F calidad            G cantidad      H talla
+ *      E color      F calidad            G cantidad      H corte
  *      I medidas    J medidasValores     K categoría     L precioCOP
  *      M ubicación  N asesor             O estado        P qr
  *      Q colección  R caja               S (unused)      T asesorActual
@@ -84,7 +84,8 @@ interface UpdateBody {
     color?: string;
     calidad?: string;
     cantidad?: string | number;
-    talla?: string;
+    talla?: string; // forma de talla / corte (col H "Corte")
+    tallaAnillo?: string; // aro del anillo (col BF, sólo SOT)
     medidas?: string;
     medidasValores?: string;
     categoria?: string;
@@ -324,7 +325,9 @@ export default withApiHandler(
       if (fields.calidad !== undefined) merged[5] = s(fields.calidad);
       // Column G — cantidad
       if (fields.cantidad !== undefined) merged[6] = s(fields.cantidad);
-      // Column H — talla
+      // Column H — talla/corte. `tallaAnillo` NO se escribe acá: la hoja
+      // legacy es A:U y no tiene la columna BF; sólo existe en el SOT, que se
+      // resuelve por el mapa de columnas en la rama de arriba.
       if (fields.talla !== undefined) merged[7] = s(fields.talla);
       // Column I — medidas
       if (fields.medidas !== undefined) merged[8] = s(fields.medidas);

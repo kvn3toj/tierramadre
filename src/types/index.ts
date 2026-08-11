@@ -308,7 +308,8 @@ export interface TreasureItem {
   color: EmeraldColor;
   calidad: EmeraldQuality;
   cantidad: number;
-  talla: string;
+  talla: string; // forma de talla / corte (hoja col H "Corte")
+  tallaAnillo?: string; // aro del anillo, sólo joyería (hoja col BF)
   medidas: string;
   medidasValores?: string; // Actual measurement values (Largo x Ancho in mm)
   imagen?: string;
@@ -422,6 +423,7 @@ export interface TreasureItem {
     peso?: string | number;
     categoria?: string;
     talla?: string;
+    tallaAnillo?: string;
     medidas?: string;
     isJewelry?: boolean;
     metalType?: 'Plata' | 'Oro 18k';

@@ -40,6 +40,7 @@ import {
   getSheetNames,
   findSheetByPattern,
 } from './_lib/index.js';
+import { FOTO_INVENTARIO_LAST_COL } from './_lib/fotosintesis-inventory-columns.js';
 import { extractBearer } from './_lib/bearer.js';
 import { isSessionToken, verifySessionToken } from './_lib/sessionToken.js';
 import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
@@ -95,7 +96,10 @@ async function readBasePrice(
     sheetNames[0];
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${inventorySheet}!A:AP`,
+    // NOT a hardcoded `A:AP`. Fixing that range in place has already cut the
+    // read twice (A:Z dropped `fotoUrl` in AL; A:AP dropped `tallaAnillo` in
+    // BF on 2026-08-11, PR #93). The constant follows the layout.
+    range: `${inventorySheet}!A:${FOTO_INVENTARIO_LAST_COL}`,
   });
   const rows = response.data.values;
   if (!rows || rows.length === 0) return undefined;
