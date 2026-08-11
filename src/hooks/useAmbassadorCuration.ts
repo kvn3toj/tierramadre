@@ -42,10 +42,12 @@ const LEGACY_OVERRIDES_PREFIX = 'tm:ambassador-overrides:';
 
 export interface CurationState {
   favorites: string[];
+  /** Item ids the ambassador has offered for resale through TM. */
+  resale: string[];
   overrides: Record<string, AmbassadorProductOverride>;
 }
 
-const EMPTY: CurationState = { favorites: [], overrides: {} };
+const EMPTY: CurationState = { favorites: [], resale: [], overrides: {} };
 
 /** One durable write, replayable verbatim. */
 type QueuedOp =
@@ -56,6 +58,7 @@ type QueuedOp =
       customName?: string | null;
       customPriceCOP?: number | null;
     }
+  | { kind: 'resale'; itemId: string; forResale: boolean }
   | { kind: 'remove'; itemId: string };
 
 function readJson<T>(key: string, fallback: T): T {
@@ -88,12 +91,17 @@ function readLegacy(slug: string): CurationState {
     `${LEGACY_OVERRIDES_PREFIX}${slug}`,
     {},
   );
-  return { favorites, overrides };
+  return { favorites, resale: [], overrides };
 }
 
 function readCache(slug: string): CurationState {
   const cached = readJson<CurationState | null>(`${CACHE_PREFIX}${slug}`, null);
-  if (cached && Array.isArray(cached.favorites)) return cached;
+  // `resale` post-dates the first cached shape, so an older blob is missing
+  // it. Defaulted rather than discarded — throwing the cache away would
+  // reintroduce the blink this whole hook exists to avoid.
+  if (cached && Array.isArray(cached.favorites)) {
+    return { ...cached, resale: cached.resale ?? [] };
+  }
   return readLegacy(slug);
 }
 
@@ -104,6 +112,8 @@ export interface UseAmbassadorCurationReturn extends CurationState {
     patch: { customName?: string; customPriceCOP?: number },
   ) => void;
   clearOverride: (itemId: string) => void;
+  /** Offer this piece for resale through TM, or withdraw the offer. */
+  setForResale: (itemId: string, forResale: boolean) => void;
   /** True while at least one queued write has not been accepted yet. */
   isPending: boolean;
 }
@@ -118,12 +128,24 @@ export function useAmbassadorCuration(
   );
   const [isPending, setIsPending] = useState(false);
   const flushing = useRef(false);
+  // Se encoló algo MIENTRAS había un envío en curso. `flushing` impide dos
+  // envíos simultáneos, pero sin esta bandera la operación nueva se quedaba
+  // esperando a un montaje o a un evento `online` que podían no llegar: el
+  // embajador editaba dos cosas seguidas y la segunda no salía nunca.
+  const flushAgain = useRef(false);
+  // Cuenta de escrituras locales. El GET inicial sale ANTES de que el
+  // embajador toque nada; si toca algo mientras viaja, la respuesta que
+  // vuelve es más vieja que su edición y adoptarla se la revierte en la cara.
+  // La cola no alcanza para detectarlo: si el envío ya terminó, la cola está
+  // vacía y la respuesta vieja parecía legítima.
+  const writeCount = useRef(0);
 
   const cacheKey = slug ? `${CACHE_PREFIX}${slug}` : null;
   const queueKey = slug ? `${QUEUE_PREFIX}${slug}` : null;
 
   const persist = useCallback(
     (next: CurationState) => {
+      writeCount.current += 1;
       setState(next);
       if (!cacheKey) return;
       writeJson(cacheKey, next);
@@ -142,7 +164,11 @@ export function useAmbassadorCuration(
 
   /** Replays every queued op in order. Ops that fail stay queued. */
   const flushQueue = useCallback(async () => {
-    if (!slug || !queueKey || !canWrite || flushing.current) return;
+    if (!slug || !queueKey || !canWrite) return;
+    if (flushing.current) {
+      flushAgain.current = true;
+      return;
+    }
     const queue = readJson<QueuedOp[]>(queueKey, []);
     if (queue.length === 0) {
       setIsPending(false);
@@ -160,7 +186,9 @@ export function useAmbassadorCuration(
             ? { slug, favorites: op.favorites }
             : op.kind === 'remove'
               ? { slug, itemId: op.itemId }
-              : {
+              : op.kind === 'resale'
+                ? { slug, itemId: op.itemId, forResale: op.forResale }
+                : {
                   slug,
                   itemId: op.itemId,
                   customName: op.customName,
@@ -194,6 +222,14 @@ export function useAmbassadorCuration(
       writeJson(queueKey, remaining);
       setIsPending(remaining.length > 0);
     }
+
+    // Acotado por las encoladas, no por los reintentos: sólo se repite si
+    // llegó algo nuevo durante el envío, así que un 5xx persistente no gira
+    // en bucle.
+    if (flushAgain.current) {
+      flushAgain.current = false;
+      await flushQueue();
+    }
   }, [slug, queueKey, canWrite]);
 
   const enqueue = useCallback(
@@ -219,6 +255,7 @@ export function useAmbassadorCuration(
     setState(readCache(slug));
 
     (async () => {
+      const writesBefore = writeCount.current;
       // Push anything stranded from a previous session BEFORE reading, so the
       // server copy we adopt already contains those edits.
       await flushQueue();
@@ -247,13 +284,20 @@ export function useAmbassadorCuration(
             updatedAt: new Date().toISOString(),
           };
         }
-        const next: CurationState = { favorites: payload.favorites, overrides };
+        const next: CurationState = {
+          favorites: payload.favorites,
+          resale: Array.isArray(payload.resale) ? payload.resale : [],
+          overrides,
+        };
 
         // Do not clobber local state while writes are still in flight — the
         // server has not seen them yet, so its copy is the older one.
         if (readJson<QueuedOp[]>(`${QUEUE_PREFIX}${slug}`, []).length > 0) {
           return;
         }
+        // Hubo una edición local mientras esta respuesta viajaba: es más
+        // vieja que lo que el embajador ve. Se descarta.
+        if (writeCount.current !== writesBefore) return;
         if (!cancelled) persist(next);
       } catch (err) {
         if (!cancelled) log.debug('Failed to load curation', err);
@@ -348,14 +392,42 @@ export function useAmbassadorCuration(
       const next = { ...state.overrides };
       delete next[id];
       persist({ ...state, overrides: next });
-      enqueue({ kind: 'remove', itemId: id });
+      // NOT a DELETE. `remove` drops the whole curation row, which also
+      // carries `isFavorite` and `forResale` — so clearing a custom name
+      // would silently unfavourite the piece and withdraw it from resale.
+      // Nulls clear exactly the two override fields; Convex's upsert deletes
+      // the row only once it says nothing at all.
+      enqueue({
+        kind: 'override',
+        itemId: id,
+        customName: null,
+        customPriceCOP: null,
+      });
+    },
+    [state, persist, enqueue],
+  );
+
+  const setForResale = useCallback(
+    (itemId: string, forResale: boolean) => {
+      const id = String(itemId);
+      const already = state.resale.includes(id);
+      if (already === forResale) return;
+      persist({
+        ...state,
+        resale: forResale
+          ? [...state.resale, id]
+          : state.resale.filter((x) => x !== id),
+      });
+      enqueue({ kind: 'resale', itemId: id, forResale });
     },
     [state, persist, enqueue],
   );
 
   return {
     favorites: state.favorites,
+    resale: state.resale,
     overrides: state.overrides,
+    setForResale,
     setFavorites,
     setOverrideValues,
     clearOverride,

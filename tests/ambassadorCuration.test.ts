@@ -50,6 +50,8 @@ const ROSTER = [
   ['Nombre', 'Rol', 'Email', 'Estado'],
   ['Álvaro Pelaéz', 'Embajador', 'alvaro@tierramadre.app', 'activo'],
   ['Juan Escobar Ramirez', 'Asesor', 'juan@tierramadre.app', 'activo'],
+  // Dado de baja con una palabra que la lista negra vieja NO cubría.
+  ['Retirada Perez', 'Asesor', 'retirada@tierramadre.app', 'retirado'],
 ];
 
 const INVENTORY = [
@@ -385,5 +387,77 @@ describe('favourites reordering', () => {
     expect(convex.mutations[0].args).toMatchObject({
       itemIds: ['103', '101', '102'],
     });
+  });
+});
+
+
+describe('reventa (forResale)', () => {
+  it('el GET publica qué piezas están ofrecidas', async () => {
+    convex.rows = [
+      { slug: 'alvaro-pelaez', itemId: '101', isFavorite: false, forResale: true, updatedAt: 'x' },
+      { slug: 'alvaro-pelaez', itemId: '102', isFavorite: true, forResale: false, updatedAt: 'x' },
+    ];
+    const res = await call({ method: 'GET', query: { slug: 'alvaro-pelaez' } });
+    expect(data(res).resale).toEqual(['101']);
+  });
+
+  it('el dueño puede ofrecer una pieza', async () => {
+    const res = await call({
+      method: 'PUT',
+      token: alvaro(),
+      body: { slug: 'alvaro-pelaez', itemId: '101', forResale: true },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(convex.mutations[0].args).toMatchObject({
+      itemId: '101',
+      forResale: true,
+    });
+  });
+
+  it('otro embajador NO puede ofrecer una pieza ajena', async () => {
+    // El control más importante: ofrecer una pieza la publica en el catálogo
+    // con el nombre de su dueño encima.
+    const res = await call({
+      method: 'PUT',
+      token: juan(),
+      body: { slug: 'alvaro-pelaez', itemId: '101', forResale: true },
+    });
+    expect(res.statusCode).toBe(403);
+    expect(convex.mutations).toHaveLength(0);
+  });
+
+  it('sin sesión tampoco', async () => {
+    const res = await call({
+      method: 'PUT',
+      body: { slug: 'alvaro-pelaez', itemId: '101', forResale: true },
+    });
+    expect(res.statusCode).toBe(401);
+    expect(convex.mutations).toHaveLength(0);
+  });
+
+  it('se puede retirar la oferta', async () => {
+    const res = await call({
+      method: 'PUT',
+      token: alvaro(),
+      body: { slug: 'alvaro-pelaez', itemId: '101', forResale: false },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(convex.mutations[0].args).toMatchObject({ forResale: false });
+  });
+});
+
+
+describe('un asesor dado de baja no escribe', () => {
+  it('rechaza a quien está «retirado», no sólo a quien dice «inactivo»', async () => {
+    // PR #100: la lista negra fallaba ABIERTA — cualquier valor distinto de
+    // «inactivo» contaba como activo. Aquí eso significaba que un embajador
+    // dado de baja seguía pudiendo publicar piezas a la venta con su nombre.
+    const res = await call({
+      method: 'PUT',
+      token: mintSessionToken('retirada@tierramadre.app'),
+      body: { slug: 'retirada-perez', itemId: '101', forResale: true },
+    });
+    expect(res.statusCode).toBe(401);
+    expect(convex.mutations).toHaveLength(0);
   });
 });
