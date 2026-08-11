@@ -387,3 +387,59 @@ describe('favourites reordering', () => {
     });
   });
 });
+
+
+describe('reventa (forResale)', () => {
+  it('el GET publica qué piezas están ofrecidas', async () => {
+    convex.rows = [
+      { slug: 'alvaro-pelaez', itemId: '101', isFavorite: false, forResale: true, updatedAt: 'x' },
+      { slug: 'alvaro-pelaez', itemId: '102', isFavorite: true, forResale: false, updatedAt: 'x' },
+    ];
+    const res = await call({ method: 'GET', query: { slug: 'alvaro-pelaez' } });
+    expect(data(res).resale).toEqual(['101']);
+  });
+
+  it('el dueño puede ofrecer una pieza', async () => {
+    const res = await call({
+      method: 'PUT',
+      token: alvaro(),
+      body: { slug: 'alvaro-pelaez', itemId: '101', forResale: true },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(convex.mutations[0].args).toMatchObject({
+      itemId: '101',
+      forResale: true,
+    });
+  });
+
+  it('otro embajador NO puede ofrecer una pieza ajena', async () => {
+    // El control más importante: ofrecer una pieza la publica en el catálogo
+    // con el nombre de su dueño encima.
+    const res = await call({
+      method: 'PUT',
+      token: juan(),
+      body: { slug: 'alvaro-pelaez', itemId: '101', forResale: true },
+    });
+    expect(res.statusCode).toBe(403);
+    expect(convex.mutations).toHaveLength(0);
+  });
+
+  it('sin sesión tampoco', async () => {
+    const res = await call({
+      method: 'PUT',
+      body: { slug: 'alvaro-pelaez', itemId: '101', forResale: true },
+    });
+    expect(res.statusCode).toBe(401);
+    expect(convex.mutations).toHaveLength(0);
+  });
+
+  it('se puede retirar la oferta', async () => {
+    const res = await call({
+      method: 'PUT',
+      token: alvaro(),
+      body: { slug: 'alvaro-pelaez', itemId: '101', forResale: false },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(convex.mutations[0].args).toMatchObject({ forResale: false });
+  });
+});
