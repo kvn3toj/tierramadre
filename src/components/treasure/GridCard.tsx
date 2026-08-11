@@ -23,6 +23,8 @@ import { TreasureItem } from '../../types';
 import { abbreviateQuality, formatWeightLabel } from '../../utils/formatting';
 import { EmeraldCutIcon } from './EmeraldCutIcon';
 import PrecioEspecialBadge from './PrecioEspecialBadge';
+import ResaleBadge from './ResaleBadge';
+import { useResaleOffers } from '../../hooks/useResaleOffers';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
 import ProgressiveImage from '../shared/ProgressiveImage';
 import { getQuietEmerald, PieceCard } from '../../design-system';
@@ -109,6 +111,10 @@ function GridCard({
 }: GridCardProps) {
   const { mode } = useThemeMode();
   const { shouldShowPrices } = usePriceShare();
+  // Una petición compartida por toda la página (caché a nivel de módulo), y
+  // la grilla está virtualizada, así que sólo las tarjetas visibles la piden.
+  const { resaleIndex } = useResaleOffers();
+  const resale = resaleIndex.get(item.item);
   const { isLiteral: variantIsLiteral } = useRedesignVariant();
   const isLiteral = variantOverride
     ? variantOverride === 'literal'
@@ -253,7 +259,9 @@ function GridCard({
   // que descarta el resto de overlays — un visitante no puede quedarse sin
   // saber que el precio que está viendo vence. Arriba a la derecha: abajo
   // viven galería/lote y arriba a la izquierda el contador de vistas (admin).
-  const precioEspecialOverlay = item.precioEspecial ? (
+  // La misma esquina lleva los dos sellos: promoción y procedencia. Se
+  // renderiza si hay CUALQUIERA de los dos, no sólo promoción.
+  const precioEspecialOverlay = item.precioEspecial || resale ? (
     <Box
       sx={{
         position: 'absolute',
@@ -267,6 +275,11 @@ function GridCard({
         compact
         // La tarjeta lleva cromo de 18px y tipografía de 9-10px; el Badge se
         // ajusta a esa escala sin forzar una variante nueva en el DS.
+        style={{ height: 20, fontSize: '0.6875rem' }}
+      />
+      <ResaleBadge
+        resale={resale}
+        compact
         style={{ height: 20, fontSize: '0.6875rem' }}
       />
     </Box>

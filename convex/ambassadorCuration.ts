@@ -39,6 +39,7 @@ export const upsert = mutation({
     slug: v.string(),
     itemId: v.string(),
     isFavorite: v.optional(v.boolean()),
+    forResale: v.optional(v.boolean()),
     sortOrder: v.optional(v.union(v.float64(), v.null())),
     customName: v.optional(v.union(v.string(), v.null())),
     customPriceCOP: v.optional(v.union(v.float64(), v.null())),
@@ -57,6 +58,7 @@ export const upsert = mutation({
 
     const patch = {
       isFavorite: args.isFavorite ?? existing?.isFavorite ?? false,
+      forResale: args.forResale ?? existing?.forResale ?? false,
       sortOrder: resolve(args.sortOrder, existing?.sortOrder),
       customName: resolve(args.customName, existing?.customName),
       customPriceCOP: resolve(args.customPriceCOP, existing?.customPriceCOP),
@@ -69,6 +71,7 @@ export const upsert = mutation({
       // empty record, so `listBySlug` stays the set of real statements.
       if (
         !patch.isFavorite &&
+        !patch.forResale &&
         patch.customName === undefined &&
         patch.customPriceCOP === undefined
       ) {
@@ -81,6 +84,7 @@ export const upsert = mutation({
 
     if (
       !patch.isFavorite &&
+      !patch.forResale &&
       patch.customName === undefined &&
       patch.customPriceCOP === undefined
     ) {
@@ -153,7 +157,11 @@ export const setFavorites = mutation({
     // Whatever is left was a favourite and no longer is.
     for (const row of byItem.values()) {
       if (!row.isFavorite) continue;
-      if (row.customName === undefined && row.customPriceCOP === undefined) {
+      if (
+        !row.forResale &&
+        row.customName === undefined &&
+        row.customPriceCOP === undefined
+      ) {
         await ctx.db.delete(row._id);
       } else {
         await ctx.db.patch(row._id, {
@@ -163,5 +171,20 @@ export const setFavorites = mutation({
         });
       }
     }
+  },
+});
+
+/**
+ * Every piece any ambassador is currently offering for resale.
+ *
+ * Public by nature: these are deliberate offers, and the catalog has to show
+ * them. Small by nature too — one row per offered piece across the whole
+ * roster — so a full scan beats maintaining an index on a boolean.
+ */
+export const listResale = query({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db.query('ambassadorCuration').collect();
+    return rows.filter((row) => row.forResale === true);
   },
 });

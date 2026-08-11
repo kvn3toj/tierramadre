@@ -8,6 +8,8 @@
  */
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { isPurchasable } from '../../utils/productOffer';
+import { useResaleOffers } from '../../hooks/useResaleOffers';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -133,13 +135,14 @@ const MoreSheetSearch: React.FC<MoreSheetSearchProps> = ({ onClose }) => {
   // outside the hook. `estado` is absent for an anon/guest read, so the plain
   // `estado === 'DISPONIBLE'` test read "0 tesoros disponibles" to every
   // guest, in the very sheet whose results the estado guard had just restored.
+  const { resaleIndex } = useResaleOffers();
+
   const disponiblesCount = useMemo(
     () =>
-      treasure.filter(
-        (i) =>
-          typeof i.estado !== 'string' ||
-          i.estado.toUpperCase() === 'DISPONIBLE',
-      ).length,
+      // getOffer keeps the same withheld-vs-known rule this count already
+      // encoded (absent estado must never remove a row) and adds the two
+      // cases it was missing: consigned stock and ambassador resale.
+      treasure.filter((i) => isPurchasable(i, resaleIndex.get(i.item))).length,
     [treasure],
   );
 
