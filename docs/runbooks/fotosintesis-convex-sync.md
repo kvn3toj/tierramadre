@@ -4,7 +4,16 @@ Sincroniza ediciones hechas **directamente en la hoja SOT** de vuelta a Convex
 (la app ya empuja Convex → Hoja). Sincroniza **sólo las celdas modificadas**
 para no recargar el ancho de banda de Convex ni los límites de la API de Sheets.
 
-- **SOT spreadsheet:** `18w0DcP_4CO-le9_vt_UPGCHXAVXkQ5sugLF4r_o2bVM`
+- **SOT spreadsheet:** `1oRw1KSh8L1CyjUnD_D1S8a3J3ewJ_V8lN1BFR-7Bv9U` (**SOT v3**)
+  > Hasta 2026-08-11 este runbook decía `18w0…` (SOT v2) y ahí seguía instalado
+  > el script, aunque el libro vivo ya era el v3: el v3 no tenía `_SyncQueue`
+  > ni `_Sync`, o sea que el pull hoja→Convex simplemente no existía para él.
+- **Prerrequisito:** en Vercel, `FOTOSINTESIS_SPREADSHEET_ID` debe apuntar al
+  mismo libro. El botón sólo dispara la lectura; quien lee las celdas es
+  `api/get-inventory-rows` / `api/get-table-rows`, y usan **esa** variable, no
+  la del catálogo (`SPREADSHEET_ID`). Si divergen, se sincroniza el libro
+  equivocado en silencio. Verificá con:
+  > `npx vercel env pull .env.check --environment=production && grep FOTOSINTESIS .env.check`
 - **Tabs:** Inventario, Proveedores, Lotes, Clientes, Ventas, Sublotes (las 6).
 - **Trigger:** botón de menú manual `🔄 Convex Sync`. Un `onEdit` simple anota
   los cambios en una hoja oculta `_SyncQueue`; el botón los envía.
