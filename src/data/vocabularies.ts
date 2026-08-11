@@ -162,10 +162,12 @@ export function suggestedPrecioPublicoCOP(
 
 // ─── Color de gema ───────────────────────────────────────────────────
 //
-// 9 values from the legacy `INVENTARIO Tierra.Madre!Color` dropdown.
-// Free-text in the UI today; this list anchors the SOT setDataValidation
-// and is a candidate for tightening `GemaFields` later (see dropdown
-// coverage 🟡 gap #3).
+// Mirrors the `Listas!color` column of the SOT v3, which is what feeds the
+// sheet's setDataValidation. Free-text in the UI today, and a candidate for
+// tightening `GemaFields` later (see dropdown coverage 🟡 gap #3).
+//
+// Todos van en Title Case: la hoja tenía `Verde claro` / `Verde profundo` en
+// minúscula y se normalizaron, así que comparar por casing vuelve a ser fiable.
 
 export const COLORS = [
   'Verde Chivor',
@@ -181,6 +183,12 @@ export const COLORS = [
   'Verde Menta',
   'Verde Diamantado',
   'Verde Brillante',
+  'Verde',
+  'Verde Aguamarina',
+  'Verde Claro',
+  'Verde Cristal',
+  'Verde Profundo',
+  'Verde Turquesa',
 ] as const;
 
 export type GemaColor = (typeof COLORS)[number];
@@ -218,7 +226,7 @@ export const CORTES = [
   'Cuadrada',
   'Baguette',
   'Lágrima',
-  'Ovalo',
+  'Óvalo',
   'Superman',
   'Trapecio',
   'Rectangular',
@@ -250,7 +258,7 @@ export const TALLAS = [
   '9',
   'Baguette',
   'Brillante',
-  'Cabuchon',
+  'Cabujón',
   'Canutillo',
   'Chispero',
   'Chisperito',
@@ -262,10 +270,10 @@ export const TALLAS = [
   'Gola',
   'Iris',
   'Lágrima',
-  'Marquis',
+  'Lágrima/Pera',
   'Marquise',
   'Morralla-Lapidada',
-  'Ovalo',
+  'Óvalo',
   'Pera',
   'Princesa',
   'Rectangular',

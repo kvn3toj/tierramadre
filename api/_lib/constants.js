@@ -26,15 +26,55 @@ function cleanEnvId(value) {
 //   SPREADSHEET_ID=<SOT v3>   APP_SPREADSHEET_ID=<companion>   FEEDBACK_SPREADSHEET_ID=<companion>
 //   FOTOSINTESIS_SPREADSHEET_ID=<SOT v3>
 
-// Catálogo + Asesores + Modelo-Precios. Antes: legacy #3 hardcodeado. Ahora env-first.
-export const SPREADSHEET_ID =
-  cleanEnvId(process.env.SPREADSHEET_ID) ||
-  '1mghR6aAtLzR0eE4T17yLQhknO9osCvJeRtxmgtl3iNU'; // fallback legacy #3 (retirar)
+/**
+ * Un ID de libro que, si falta, NO puede caer en un default.
+ *
+ * POR QUÉ (2026-08-11)
+ *
+ * Estas dos variables tenían un fallback hardcodeado a un libro DISTINTO del
+ * vivo: `SPREADSHEET_ID` caía en legacy #3 y `FOTOSINTESIS_SPREADSHEET_ID` en
+ * la SOT v2. Con la env vacía la app no fallaba: servía el catálogo del libro
+ * equivocado, sin un solo log. Averiguar cuál estaba leyendo producción costó
+ * media hora de forense —hay que medir el comportamiento, porque las envs son
+ * *Sensitive* en Vercel y la API las devuelve vacías— y ese fue el tercero de
+ * tres fallos del mismo tipo en un día: el rango `A:AP` que recortaba una
+ * columna, el deployment `wonderful-tortoise` que ya no existía, y esto.
+ *
+ * Todos comparten la firma: devuelven algo plausible en vez de un error.
+ *
+ * NO se lanza al cargar el módulo: `_lib/index.js` lo importan 32 endpoints,
+ * incluido `/api/health`, y tumbar el health check es perder justo la
+ * herramienta con la que se diagnostica. En su lugar el valor queda envenenado:
+ * cualquier llamada a Sheets revienta de inmediato con el centinela en el
+ * mensaje, el error se limita al endpoint que de verdad necesitaba ese libro, y
+ * el `console.error` del arranque deja escrito qué variable hay que poner.
+ *
+ * Los fallbacks de FEEDBACK_SPREADSHEET_ID y APP_SPREADSHEET_ID SÍ se
+ * conservan: apuntan al libro companion correcto, así que no pueden mandar la
+ * lectura a otro lado. Sólo eran peligrosos los dos que apuntaban a otro libro.
+ */
+function requireSheetId(name) {
+  const value = cleanEnvId(process.env[name]);
+  if (value) return value;
+  const sentinel = `MISSING_ENV_${name}`;
+  console.error(
+    `[constants] ${name} no está configurada. Antes esto caía en un libro ` +
+      `distinto del vivo y servía datos equivocados en silencio; ahora toda ` +
+      `lectura de Sheets que la use va a fallar con "${sentinel}". ` +
+      `Configurala en Vercel (y en .env.local para desarrollo).`,
+  );
+  return sentinel;
+}
 
-// SOT del inventario Fotosíntesis. Apuntar a SOT v3 (1oRw…) vía env.
-export const FOTOSINTESIS_SPREADSHEET_ID =
-  cleanEnvId(process.env.FOTOSINTESIS_SPREADSHEET_ID) ||
-  '18w0DcP_4CO-le9_vt_UPGCHXAVXkQ5sugLF4r_o2bVM'; // fallback SOT v2 (retirar)
+// Catálogo + Asesores + Modelo-Precios → SOT v3.
+export const SPREADSHEET_ID = requireSheetId('SPREADSHEET_ID');
+
+// SOT del inventario Fotosíntesis → SOT v3 (el MISMO libro donde viva el Apps
+// Script de sync: es esta variable, y no SPREADSHEET_ID, la que decide qué
+// celdas lee el pull hoja→Convex).
+export const FOTOSINTESIS_SPREADSHEET_ID = requireSheetId(
+  'FOTOSINTESIS_SPREADSHEET_ID',
+);
 
 // Logs de app (companion TM-App-Data). Feedback + writable data ahora en el mismo libro.
 export const FEEDBACK_SPREADSHEET_ID =
