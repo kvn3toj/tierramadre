@@ -57,7 +57,23 @@ Las HTTP actions se sirven en `<deployment>.convex.site` (hermano del
 - **Producción:** confirma el slug con `npx convex env list` / `npx convex dashboard`.
   ⚠ `.env.production` muestra un slug `.convex.cloud`; cámbialo a `.convex.site`
   y verifica que sea el deployment donde está desplegado `convex/http.ts`.
-  **Producción (resuelto):** `https://wonderful-tortoise-984.convex.site/sync/foto`
+  **Producción (verificado 2026-08-11):** `https://grand-hippopotamus-162.convex.site/sync/foto`
+  > Este runbook decía `wonderful-tortoise-984`, que ya no es el deployment de
+  > producción: sirve `/sync/foto` y responde 401 igual que el bueno, así que el
+  > error no se nota — sincronizás contra una base muerta y el toast dice que
+  > todo salió bien. Cómo distinguirlos sin adivinar:
+  >
+  > ```bash
+  > # 1. a qué Convex habla el bundle desplegado
+  > curl -s https://tierramadre.app/ | grep -oE '/assets/index-[A-Za-z0-9_-]+\.js' | head -1
+  > curl -s "https://tierramadre.app<ese-js>" | grep -oE 'https://[a-z-]+-[0-9]+\.convex\.cloud' | sort -u
+  > # 2. contrastar con los datos vivos
+  > curl -s -X POST "https://<slug>.convex.cloud/api/query" -H 'content-type: application/json' \
+  >   -d '{"path":"products:publishedCatalog","args":{},"format":"json"}'
+  > ```
+  >
+  > El 2026-08-11: `grand-hippopotamus-162` → 424 ítems (vivo),
+  > `wonderful-tortoise-984` → 114 (muerto), `flexible-wolverine-803` → 138 (dev).
 
 Como la URL vive en Script Properties, corregir un slug equivocado es un cambio
 de 10 segundos (sin redeploy).
