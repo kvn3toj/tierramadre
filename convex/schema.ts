@@ -122,7 +122,8 @@ export default defineSchema({
     color: v.optional(v.string()),
     calidad: v.optional(v.string()),
     cantidad: v.optional(v.number()),
-    talla: v.optional(v.string()),
+    talla: v.optional(v.string()), // forma de talla / corte (hoja col H "Corte")
+    tallaAnillo: v.optional(v.string()), // aro del anillo (hoja col BF)
     medidas: v.optional(v.string()),
     medidasValores: v.optional(v.string()),
     categoria: v.optional(v.string()),

@@ -79,6 +79,7 @@ const INVENTORY: TableSpec = {
   calidad: { coerce: 'str' },
   cantidad: { coerce: 'num' },
   talla: { coerce: 'str' },
+  tallaAnillo: { coerce: 'str' },
   medidas: { coerce: 'str' },
   medidasValores: { coerce: 'str' },
   categoria: { coerce: 'str' },

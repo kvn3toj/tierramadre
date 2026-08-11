@@ -56,7 +56,7 @@ function parsePeso(peso: string | number | null | undefined): PesoParsed {
  * E = Color (4)
  * F = Calidad (5)
  * G = Cant. (6)
- * H = Talla (7)
+ * H = Corte (7) - forma de talla de la gema (antes "Talla")
  * I = Medidas (8)
  * J = Medidas (9) - valores
  * K = Categoría (10) - product category (e.g., Anillo en Plata, Aretes, Topitos)
@@ -79,7 +79,13 @@ const INVENTARIO_HEADERS = {
   COLOR: 'color',
   CALIDAD: 'calidad',
   CANTIDAD: 'cant.',
+  // Columna H. El encabezado pasó de "Talla" a "Corte" el 2026-08-11 (guardaba
+  // la forma de talla, no el aro). Se buscan los dos: el match de encabezado es
+  // EXACTO, así que un libro sin migrar seguiría resolviendo por "talla" —
+  // y "Talla (anillo)" (BF) nunca colisiona con ninguno de los dos.
+  CORTE: 'corte',
   TALLA: 'talla',
+  TALLA_ANILLO: 'talla (anillo)',
   MEDIDAS: 'medidas',
   CATEGORIA: 'categoría',
   PRECIO_COP: 'precio cop',
@@ -190,7 +196,14 @@ export function mapRowToTreasureItem(
       String(getValue(INVENTARIO_HEADERS.CANTIDAD) || getByIndex(6) || '1'),
       10,
     ),
-    talla: getValue(INVENTARIO_HEADERS.TALLA) || getByIndex(7) || '',
+    talla:
+      getValue(INVENTARIO_HEADERS.CORTE) ||
+      getValue(INVENTARIO_HEADERS.TALLA) ||
+      getByIndex(7) ||
+      '',
+    // Sólo por encabezado: BF es una columna añadida al final, y el índice
+    // posicional 57 sería basura en cualquier libro que no la tenga.
+    tallaAnillo: getValue(INVENTARIO_HEADERS.TALLA_ANILLO) || '',
     medidas: getValue(INVENTARIO_HEADERS.MEDIDAS) || getByIndex(8) || '',
     medidasValores: getByIndex(9) || '',
     categoria: (

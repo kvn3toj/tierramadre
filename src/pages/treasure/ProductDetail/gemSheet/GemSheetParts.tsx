@@ -167,7 +167,8 @@ export const SpecGroups: React.FC<{ product: TreasureItem }> = ({
     { k: 'Peso', v: peso },
     { k: 'Color', v: p.color },
     { k: 'Calidad', v: p.calidad },
-    { k: 'Talla', v: p.talla },
+    { k: 'Corte', v: p.talla },
+    { k: 'Talla', v: p.tallaAnillo },
     { k: 'Tipo', v: p.isJewelry ? p.metalType : p.tipoEsmeralda },
     // `p.medidas` alone showed the FORMAT LABEL ("Largo x Ancho") for the 191
     // legacy items that keep their real numbers in `medidasValores`.
