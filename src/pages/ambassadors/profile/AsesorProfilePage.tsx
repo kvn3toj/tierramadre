@@ -21,6 +21,7 @@ import {
   resolveAsesorProducts,
 } from '../../../utils/asesorProductOwnership';
 import { useAmbassadorProducts } from '../../../hooks/useAmbassadorProducts';
+import { useResaleOffers } from '../../../hooks/useResaleOffers';
 import { useTreasure } from '../../../hooks/useTreasure';
 import {
   useCotizacionHistory,
@@ -242,6 +243,10 @@ export default function AsesorProfilePage() {
     slug,
     localProducts.length > 0,
   );
+
+  // Piezas que este embajador compró y volvió a ofrecer. Cambian a quién
+  // habla el CTA de la ficha: nosotros corredamos, no él vende directo.
+  const { resaleIndex } = useResaleOffers();
 
   // Get products for this asesor, with the ambassador's overrides already
   // applied.
@@ -833,6 +838,7 @@ export default function AsesorProfilePage() {
             item={selectedProduct}
             onBack={handleProductDetailBack}
             asesor={asesor}
+            resale={resaleIndex.get(selectedProduct.item)}
           />
         )}
 
