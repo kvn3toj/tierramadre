@@ -29,7 +29,7 @@ import { postToVercel } from './_lib/sheetSync';
 import { requireAccessLevel } from './_lib/authz';
 import {
   isStaffSession,
-  isStaffOrBotSession,
+  requireStaffOrBotSession,
 } from './_lib/requireStaffSession';
 import { withPublishStamp } from './_lib/publishState';
 import { precioEspecialDeObservacion } from './_lib/precioEspecial';
@@ -69,7 +69,9 @@ export const list = query({
     botSecret: v.optional(v.string()),
   },
   handler: async (ctx, { estado, search, sessionToken, botSecret }) => {
-    if (!(await isStaffOrBotSession({ sessionToken, botSecret }))) return [];
+    // Lanza si la credencial vino y no sirve; `[]` solo cuando no vino ninguna.
+    if (!(await requireStaffOrBotSession({ sessionToken, botSecret })))
+      return [];
     const rows = estado
       ? await ctx.db
           .query('productInventory')
