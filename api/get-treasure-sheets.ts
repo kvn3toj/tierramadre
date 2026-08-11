@@ -19,6 +19,7 @@ import {
   parsePrice,
   parseDecimal,
 } from './_lib/index.js';
+import { FOTO_INVENTARIO_LAST_COL } from './_lib/fotosintesis-inventory-columns.js';
 import { resolveGrant, bearerWasRejected } from './_lib/catalogGrant.js';
 import { lookupVitrina } from './_lib/vitrinaLookup.js';
 import { projectForGrant } from './_lib/catalogProjection.js';
@@ -350,11 +351,13 @@ export default withApiHandler(
     // Fetch treasure and pricing data in parallel
     const [treasureResponse, pricingMap] = await Promise.all([
       sheets.spreadsheets.values.get({
-        // A:AP covers the full SOT v3 Inventario layout — notably col AL
-        // `fotoUrl` (was cut off by the old A:Z, so Fotosíntesis-captured photos
-        // never reached the catalog). See FOTO_INVENTARIO_COLUMNS.
+        // El rango sale de FOTO_INVENTARIO_COLUMNS, no de una letra a mano:
+        // fijarlo ya cortó la lectura dos veces (A:Z dejaba fuera `fotoUrl` en
+        // AL; A:AP dejó fuera `tallaAnillo` en BF el 2026-08-11, y el campo
+        // llegaba vacío al catálogo aunque la hoja lo tuviera). Derivarlo hace
+        // que añadir una columna al mapa ensanche la lectura sola.
         spreadsheetId: SPREADSHEET_ID,
-        range: `${targetSheet}!A:AP`,
+        range: `${targetSheet}!A:${FOTO_INVENTARIO_LAST_COL}`,
       }),
       fetchPricingData(sheets),
     ]);
