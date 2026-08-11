@@ -134,9 +134,10 @@ export default function CertGeneratorPage() {
   const [carnet, setCarnet] = useState<CarnetDraft>(EMPTY_CARNET);
   const [busy, setBusy] = useState(false);
   // The full TreasureItem the Origen autofill came from — kept so "Guardar al
-  // producto" can resolve its lot (item + loteId). Cleared when the operator
-  // edits the form by hand to a piece we can no longer attribute. The flat
-  // `origen` draft intentionally drops these internal ids, so we track them here.
+  // producto" can resolve the item (and its lot, when it has one, to pick the
+  // Drive folder). Cleared when the operator edits the form by hand to a piece
+  // we can no longer attribute. The flat `origen` draft intentionally drops
+  // these internal ids, so we track them here.
   const [selectedPiece, setSelectedPiece] = useState<TreasureItem | null>(null);
   const legalApproved = isCertificadoApproved();
 
@@ -404,13 +405,9 @@ export default function CertGeneratorPage() {
       );
       return;
     }
-    if (!selectedPiece.loteId) {
-      notify(
-        'Este ítem no es de un lote Fotosíntesis; no puedo enlazar el certificado automáticamente.',
-        'warning',
-      );
-      return;
-    }
+    // Sin gate por lote: el certificado es del ÍTEM. `loteId` solo elige la
+    // carpeta de Drive (los ítems sin lote van a `sin-lote/`) y el enlace lo
+    // escribe `updateMediaByItem`, que va por `itemId`. Ver persistCert.ts.
 
     setBusy(true);
     try {
