@@ -50,6 +50,8 @@ const ROSTER = [
   ['Nombre', 'Rol', 'Email', 'Estado'],
   ['Álvaro Pelaéz', 'Embajador', 'alvaro@tierramadre.app', 'activo'],
   ['Juan Escobar Ramirez', 'Asesor', 'juan@tierramadre.app', 'activo'],
+  // Dado de baja con una palabra que la lista negra vieja NO cubría.
+  ['Retirada Perez', 'Asesor', 'retirada@tierramadre.app', 'retirado'],
 ];
 
 const INVENTORY = [
@@ -441,5 +443,21 @@ describe('reventa (forResale)', () => {
     });
     expect(res.statusCode).toBe(200);
     expect(convex.mutations[0].args).toMatchObject({ forResale: false });
+  });
+});
+
+
+describe('un asesor dado de baja no escribe', () => {
+  it('rechaza a quien está «retirado», no sólo a quien dice «inactivo»', async () => {
+    // PR #100: la lista negra fallaba ABIERTA — cualquier valor distinto de
+    // «inactivo» contaba como activo. Aquí eso significaba que un embajador
+    // dado de baja seguía pudiendo publicar piezas a la venta con su nombre.
+    const res = await call({
+      method: 'PUT',
+      token: mintSessionToken('retirada@tierramadre.app'),
+      body: { slug: 'retirada-perez', itemId: '101', forResale: true },
+    });
+    expect(res.statusCode).toBe(401);
+    expect(convex.mutations).toHaveLength(0);
   });
 });
