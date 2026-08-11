@@ -23,6 +23,7 @@ import { resolveGrant } from './_lib/catalogGrant.js';
 import { lookupVitrina } from './_lib/vitrinaLookup.js';
 import { projectAsesoresForGrant } from './_lib/catalogProjection.js';
 import { slugifyAsesorName } from './_lib/asesorSlug.js';
+import { resolveEmailColumnIndex, toAsesorEmail } from './_lib/asesorEmail.js';
 
 type Sheets = sheets_v4.Sheets;
 type Drive = drive_v3.Drive;
@@ -128,11 +129,12 @@ export default withApiHandler(
       'especialidad',
       'specialty',
     ]);
-    const instagramIndex = findColumnIndex(headers, [
-      'instagram',
-      'ig',
-      'email',
-    ]);
+    // A1: NOT findColumnIndex. That helper matches on substring, and the old
+    // pattern list here (`['instagram', 'ig', 'email']`) let the two-letter
+    // 'ig' claim Codigo / Origen / Digital / Vigencia, and let an Instagram
+    // column outrank a real Email one. Either way `isProfileOwner` breaks in
+    // silence. See _lib/asesorEmail.ts for the full reasoning.
+    const emailIndex = resolveEmailColumnIndex(headers);
     const estadoIndex = findColumnIndex(headers, ['estado', 'status']);
     const vaultCodeIndex = findColumnIndex(headers, [
       'vaultcode',
@@ -156,11 +158,11 @@ export default withApiHandler(
 
       const displayName = formatDisplayName(name);
 
-      // Clean email by trimming whitespace (common issue from spreadsheet copy/paste)
-      const rawEmail = instagramIndex !== -1 ? row[instagramIndex] : null;
-      const cleanEmail = rawEmail
-        ? String(rawEmail).trim().toLowerCase()
-        : null;
+      // Trims and lowercases (spreadsheet copy/paste carries both), and
+      // returns null for anything that is not actually an address — so a
+      // stray handle or vault code can never travel onward as an email.
+      const cleanEmail =
+        emailIndex !== -1 ? toAsesorEmail(row[emailIndex]) : null;
 
       asesoresData.push({
         id: `asesor_${index + 1}`,
