@@ -1,5 +1,10 @@
 import { TreasureItem, TreasureStatus } from '../types';
-import { matchesAsesorName } from './asesorNameUtils';
+// `.js` extension deliberately. This module is imported by
+// `api/ambassador-products.ts`, and Vercel functions are NOT bundled — they
+// run as real ESM off the filesystem, where an extensionless specifier does
+// not resolve (ERR_MODULE_NOT_FOUND at /var/task/src/utils/asesorNameUtils).
+// TypeScript and Vite both map `.js` → `.ts`, so the frontend is unaffected.
+import { matchesAsesorName } from './asesorNameUtils.js';
 
 const VALID_STATUSES: readonly string[] = [
   'DISPONIBLE',
