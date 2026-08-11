@@ -42,10 +42,8 @@ import {
   withApiHandler,
   getSheetNames,
   findSheetByPattern,
-  findColumnIndex,
-  formatDisplayName,
 } from './_lib/index.js';
-import { slugifyAsesorName } from './_lib/asesorSlug.js';
+import { loadAsesorRoster, findBySlug } from './_lib/asesorRoster.js';
 import { mapRowToTreasureItem } from './get-treasure-sheets.js';
 import { getAsesorProducts } from '../src/utils/asesorProductOwnership.js';
 
@@ -68,55 +66,6 @@ export interface AmbassadorProductsResponse {
   };
 }
 
-/**
- * Resolves a profile slug back to the roster display name.
- *
- * COUPLING, stated rather than hidden: this repeats the name-column aliases
- * and the inactive filter from `get-asesores.ts:93-101,152-155`, because that
- * parse lives inline in its handler and is not importable. Collapse both onto
- * one loader when the roster gets extracted; until then, a change to the
- * aliases there needs the same change here.
- */
-async function resolveAsesorName(
-  sheets: Sheets,
-  sheetNames: string[],
-  slug: string,
-): Promise<string | null> {
-  const asesoresSheet =
-    findSheetByPattern(sheetNames, ['asesor', 'embajador', 'ambassador']) ||
-    sheetNames[2];
-  if (!asesoresSheet) return null;
-
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${asesoresSheet}!A:Z`,
-  });
-  const rows = response.data.values;
-  if (!rows || rows.length === 0) return null;
-
-  const headers = rows[0] as string[];
-  const nameColumnIndex = findColumnIndex(headers, [
-    'nombre',
-    'name',
-    'asesor',
-    'vendedor',
-  ]);
-  if (nameColumnIndex === -1) return null;
-  const estadoIndex = findColumnIndex(headers, ['estado', 'status']);
-
-  for (const row of rows.slice(1)) {
-    const rawName = row[nameColumnIndex];
-    if (!rawName || String(rawName).trim() === '') continue;
-    if (estadoIndex !== -1) {
-      const estado = String(row[estadoIndex] || '').toLowerCase();
-      if (estado === 'inactivo' || estado === 'inactive') continue;
-    }
-    const displayName = formatDisplayName(rawName);
-    if (slugifyAsesorName(displayName) === slug) return displayName;
-  }
-  return null;
-}
-
 /** Exported for tests — same idiom as api/cotizacion-reports.ts. */
 export async function handleAmbassadorProducts(
   req: VercelRequest,
@@ -132,7 +81,8 @@ export async function handleAmbassadorProducts(
   const { sheets } = ctx as { sheets: Sheets };
   const sheetNames = await getSheetNames(sheets);
 
-  const name = await resolveAsesorName(sheets, sheetNames, slug);
+  const roster = await loadAsesorRoster(sheets, sheetNames);
+  const name = findBySlug(roster, slug)?.name ?? null;
   if (!name) {
     // 404 rather than an empty list: "this ambassador does not exist" and
     // "this ambassador has no pieces" are different answers, and the page

@@ -129,6 +129,20 @@ export default function AsesorProfilePage() {
   const cotizacionHistory = useCotizacionHistory();
   const { notify, confirmAction } = useNotification();
 
+  // Find the asesor by slug
+  const asesor = useMemo(() => {
+    if (!slug || !asesores.length) return null;
+    return asesores.find((a) => a.slug === slug) || null;
+  }, [slug, asesores]);
+
+  // Check if current user owns this profile
+  const isProfileOwner = useMemo(() => {
+    if (!googleUser?.email || !asesor?.email) return false;
+    const userEmail = googleUser.email.toLowerCase().trim();
+    const asesorEmail = asesor.email.toLowerCase().trim();
+    return userEmail === asesorEmail;
+  }, [googleUser, asesor]);
+
   // Ambassador photo upload
   const {
     localPhotoUrl,
@@ -147,10 +161,13 @@ export default function AsesorProfilePage() {
     addFavorite,
     removeFavorite,
     reorderFavorites,
-  } = useAmbassadorFavorites(slug);
+  } = useAmbassadorFavorites(slug, isProfileOwner);
 
   // Ambassador per-product overrides (custom name / price) — T4 MVP
-  const { overrides: ambassadorOverrides } = useAmbassadorOverrides(slug);
+  const { overrides: ambassadorOverrides } = useAmbassadorOverrides(
+    slug,
+    isProfileOwner,
+  );
 
   // Vanity handle powering <handle>.tierramadre.app. Loaded lazily and only
   // for the profile owner, since it is only ever shown in the edit form.
@@ -168,20 +185,6 @@ export default function AsesorProfilePage() {
     }
     prevUploadingRef.current = isUploadingPhoto;
   }, [isUploadingPhoto, photoUploadError, localPhotoUrl]);
-
-  // Find the asesor by slug
-  const asesor = useMemo(() => {
-    if (!slug || !asesores.length) return null;
-    return asesores.find((a) => a.slug === slug) || null;
-  }, [slug, asesores]);
-
-  // Check if current user owns this profile
-  const isProfileOwner = useMemo(() => {
-    if (!googleUser?.email || !asesor?.email) return false;
-    const userEmail = googleUser.email.toLowerCase().trim();
-    const asesorEmail = asesor.email.toLowerCase().trim();
-    return userEmail === asesorEmail;
-  }, [googleUser, asesor]);
 
   // Exclusive collection — visible to all visitors, not just owner
   const collectionFolder = asesor

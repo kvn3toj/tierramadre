@@ -54,6 +54,42 @@ export default defineSchema({
   // `/v/:token` route so a client views the products without signing in.
   // The multiplier is stored HERE (not in the URL) so the chosen markup is
   // never exposed to — or editable by — the recipient.
+  // ─── Ambassador curation (favourites + per-product overrides) ────
+  //
+  // Before this table, BOTH lived in localStorage — `useAmbassadorFavorites`
+  // under `tm-ambassador-favorites-{slug}` and `useAmbassadorOverrides` under
+  // `tm:ambassador-overrides:{slug}`. That meant an ambassador's curation
+  // existed only inside the browser that made it: invisible from their phone,
+  // from a second session, and — the point of the feature — to their client.
+  //
+  // ONE table for both, not two. They are the same act (an ambassador saying
+  // something about one of their pieces), keyed the same way, authorised the
+  // same way, and read together on every profile render. Splitting them would
+  // mean two endpoints, two authorisation paths and two caches to keep honest.
+  //
+  // `itemId` is a STRING, matching AmbassadorProductOverride.itemId and the
+  // favourites array, both of which stringify TreasureItem.item.
+  ambassadorCuration: defineTable({
+    /** Profile slug — Asesor.slug, the same one /ambassadors/:slug uses. */
+    slug: v.string(),
+    itemId: v.string(),
+    /** Whether the ambassador pinned this piece to their showcase. */
+    isFavorite: v.boolean(),
+    /** Position within the favourites row; absent for non-favourites. */
+    sortOrder: v.optional(v.float64()),
+    customName: v.optional(v.string()),
+    /**
+     * Validated server-side against [base × 1.0, base × 10.0] before it is
+     * written — the client's own check is a courtesy, not the gate.
+     */
+    customPriceCOP: v.optional(v.float64()),
+    updatedAt: v.string(),
+    /** Verified session email of the writer (audit; never returned publicly). */
+    updatedByEmail: v.optional(v.string()),
+  })
+    .index('by_slug_item', ['slug', 'itemId'])
+    .index('by_slug', ['slug']),
+
   vitrinas: defineTable({
     token: v.string(),
     itemIds: v.array(v.float64()),
