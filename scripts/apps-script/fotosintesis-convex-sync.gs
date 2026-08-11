@@ -17,10 +17,20 @@
  * "pending"/"error") NO se sobrescriben — se reportan como "protegidas".
  *
  * INSTALACIÓN (ver docs/runbooks/fotosintesis-convex-sync.md):
- *  1. Abre la SOT: https://docs.google.com/spreadsheets/d/18w0DcP_4CO-le9_vt_UPGCHXAVXkQ5sugLF4r_o2bVM
+ *  1. Abre la SOT v3: https://docs.google.com/spreadsheets/d/1oRw1KSh8L1CyjUnD_D1S8a3J3ewJ_V8lN1BFR-7Bv9U
+ *     (hasta 2026-08-11 esto apuntaba a la SOT v2 `18w0…`, que es donde
+ *     quedó instalado el script cuando el libro vivo pasó a ser el v3;
+ *     el resultado es que el pull hoja→Convex del v3 no existía.)
  *  2. Extensiones → Apps Script. Pega este archivo y el appsscript.json.
  *  3. Menú "🔄 Convex Sync → ⚙️ Configurar (una sola vez)" y pega URL + token.
  *  4. Autoriza los permisos cuando se soliciten.
+ *
+ * ⚠️ PRERREQUISITO: en Vercel, `FOTOSINTESIS_SPREADSHEET_ID` debe apuntar al
+ * MISMO libro donde esté instalado este script. El botón sólo le avisa a Convex
+ * "mirá estas filas"; quien lee las celdas es `api/get-inventory-rows` /
+ * `api/get-table-rows`, y ambos usan esa variable — NO la del catálogo
+ * (`SPREADSHEET_ID`). Si no coinciden, sincronizás las filas del libro
+ * equivocado sin ningún error visible.
  *
  * SEGURIDAD: el token vive en Script Properties, nunca en el código. Sólo
  * DISPARA una lectura del lado de Convex; no puede escribir en la hoja, así que
