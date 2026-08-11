@@ -47,6 +47,9 @@ import { loadAsesorRoster, findBySlug } from './_lib/asesorRoster.js';
 import { FOTO_INVENTARIO_LAST_COL } from './_lib/fotosintesis-inventory-columns.js';
 import { mapRowToTreasureItem } from './get-treasure-sheets.js';
 import { getAsesorProducts } from '../src/utils/asesorProductOwnership.js';
+import { getOffer, type ResaleOffer } from '../src/utils/productOffer.js';
+import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
+import { api } from '../convex/_generated/api.js';
 
 type Sheets = sheets_v4.Sheets;
 
@@ -121,7 +124,21 @@ export async function handleAmbassadorProducts(
   // The SAME function the profile calls, so server and client can never
   // disagree about who owns what or about how a transfer reads.
   const owned = getAsesorProducts(items, name);
-  const available = owned.filter((p) => p.effectiveEstado === 'DISPONIBLE');
+
+  // Pieces this ambassador bought and has offered back for resale. Without
+  // them the profile would keep answering a DIFFERENT question from the rest
+  // of the app — which is the exact defect PR #98 removed from five call
+  // sites, and which this endpoint still had.
+  const resaleByItem = await loadResaleOffers(slug, name);
+
+  const available = owned.filter(
+    (p) =>
+      // `effectiveEstado`, not `estado`: on a profile the owner-facing state
+      // is what counts, so a piece transferred away reads as sold even when
+      // its own row still says DISPONIBLE.
+      getOffer({ ...p, estado: p.effectiveEstado }, resaleByItem.get(p.item))
+        .purchasable,
+  );
 
   const payload: AmbassadorProductsResponse = {
     slug,
@@ -138,6 +155,42 @@ export async function handleAmbassadorProducts(
   };
 
   return sendSuccess(res, payload);
+}
+
+/**
+ * Resale opt-ins for one ambassador, keyed by item number.
+ *
+ * Empty when Convex is unavailable (every preview deploy) — the profile then
+ * counts only house-sellable stock, which is what it did before resale
+ * existed. Never an error: a missing store must not empty a profile.
+ */
+async function loadResaleOffers(
+  slug: string,
+  name: string,
+): Promise<Map<number, ResaleOffer>> {
+  if (!isConvexEnabled || !convexClient) return new Map();
+  try {
+    const rows = (await convexClient.query(
+      api.ambassadorCuration.listBySlug,
+      { slug },
+    )) as { itemId: string; forResale?: boolean; customPriceCOP?: number }[];
+
+    const offers = new Map<number, ResaleOffer>();
+    for (const row of rows) {
+      if (row.forResale !== true) continue;
+      const itemId = parseInt(row.itemId, 10);
+      if (!Number.isFinite(itemId)) continue;
+      offers.set(itemId, {
+        itemId,
+        asesorSlug: slug,
+        asesorName: name,
+        priceCOP: row.customPriceCOP,
+      });
+    }
+    return offers;
+  } catch {
+    return new Map();
+  }
 }
 
 export default withApiHandler(handleAmbassadorProducts, {

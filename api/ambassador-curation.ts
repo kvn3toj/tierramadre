@@ -208,6 +208,7 @@ export async function handleAmbassadorCuration(
         customName?: string | null;
         customPriceCOP?: number | null;
         isFavorite?: boolean;
+        forResale?: boolean;
       }
     | undefined;
 
@@ -277,6 +278,7 @@ export async function handleAmbassadorCuration(
     slug: targetSlug,
     itemId,
     isFavorite: body?.isFavorite,
+    forResale: body?.forResale,
     customName: body?.customName ?? undefined,
     customPriceCOP: body?.customPriceCOP ?? undefined,
     updatedByEmail: email,

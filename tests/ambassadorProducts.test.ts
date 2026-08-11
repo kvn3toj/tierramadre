@@ -13,8 +13,19 @@
  * does (including transfers), and it does not become a new hole in the PII
  * lockdown the previous nine PRs closed.
  */
-import { describe, it, expect, vi } from 'vitest';
-import { handleAmbassadorProducts } from '../api/ambassador-products';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+/** Resale opt-ins the endpoint reads from Convex; mutable per test. */
+const convex = { enabled: false, rows: [] as Record<string, unknown>[] };
+
+vi.mock('../api/_lib/convex-client.js', () => ({
+  get isConvexEnabled() {
+    return convex.enabled;
+  },
+  convexClient: { query: async () => convex.rows },
+}));
+
+const { handleAmbassadorProducts } = await import('../api/ambassador-products');
 import { WITHHELD_KEYS } from '../api/_lib/catalogProjection';
 
 const ROSTER = [
@@ -114,6 +125,30 @@ const INVENTORY = [
     'Álvaro Pelaéz',
     'DISPONIBLE',
   ],
+  // En consignación: es de TM, Álvaro sólo la tiene en la mano.
+  [
+    '108',
+    'Muzo Consignada',
+    '1.5',
+    'Esmeralda',
+    '8000000',
+    'Álvaro Pelaéz',
+    'CONSIGNACION',
+    '',
+    '',
+  ],
+  // Álvaro la compró: en los libros es VENDIDA y es suya.
+  [
+    '109',
+    'Chivor Personal',
+    '1.9',
+    'Esmeralda',
+    '14000000',
+    'Álvaro Pelaéz',
+    'VENDIDA',
+    '',
+    '',
+  ],
   // Abbreviated owner form — matchesAsesorName resolves "JM.Escobar"
   [
     '107',
@@ -194,7 +229,9 @@ describe('/api/ambassador-products', () => {
     expect(res.statusCode).toBe(200);
     // 101, 102, 103 owned outright; 105 originally his (transferred away, still
     // listed); 106 transferred to him. Never 104 or 107 — those are Juan's.
-    expect(data(res).itemIds).toEqual([101, 102, 103, 105, 106]);
+    // 108 (consignada) y 109 (la que compró) también son suyas: la propiedad
+    // no depende de si están a la venta.
+    expect(data(res).itemIds).toEqual([101, 102, 103, 105, 106, 108, 109]);
   });
 
   it('counts a piece transferred away as sold, matching what the owner sees', async () => {
@@ -202,12 +239,14 @@ describe('/api/ambassador-products', () => {
     const d = data(res);
     // 105 went to Juan, so it is NOT available to Álvaro even though its own
     // estado says DISPONIBLE — getEffectiveEstado's transfer rule.
-    expect(d.availableItemIds).toEqual([101, 103, 106]);
+    // 101 y 103 DISPONIBLE, 106 transferida a él, 108 en consignación (de TM).
+    // 105 se fue con Juan; 102 vendida; 109 la compró y no la ha ofrecido.
+    expect(d.availableItemIds).toEqual([101, 103, 106, 108]);
     expect(d.counts).toEqual({
-      total: 5,
-      disponible: 3,
-      vendida: 2,
-      loose: 4,
+      total: 7,
+      disponible: 4,
+      vendida: 3,
+      loose: 6,
       jewelry: 1,
     });
   });
@@ -258,5 +297,60 @@ describe('/api/ambassador-products', () => {
   it('400s when the slug is missing', async () => {
     const res = await call(undefined);
     expect(res.statusCode).toBe(400);
+  });
+});
+
+
+describe('una sola regla de «disponible» (deuda del #98, cerrada)', () => {
+  beforeEach(() => {
+    convex.enabled = false;
+    convex.rows = [];
+  });
+
+  it('cuenta la pieza en CONSIGNACION como disponible', async () => {
+    // Es de TM; que la tenga un embajador en la mano es logística, no
+    // propiedad. El browser ya la contaba y este endpoint no: dos
+    // definiciones de «disponible» conviviendo, que es justo el defecto que
+    // el #98 quitó de cinco sitios y dejó vivo en éste.
+    const res = await call('alvaro-pelaez');
+    expect(data(res).availableItemIds).toContain(108);
+  });
+
+  it('NO cuenta la que el embajador compró, mientras no la ofrezca', async () => {
+    const res = await call('alvaro-pelaez');
+    expect(data(res).availableItemIds).not.toContain(109);
+  });
+
+  it('la cuenta en cuanto el embajador la ofrece', async () => {
+    convex.enabled = true;
+    convex.rows = [
+      { slug: 'alvaro-pelaez', itemId: '109', forResale: true, isFavorite: false },
+    ];
+    const res = await call('alvaro-pelaez');
+    expect(data(res).availableItemIds).toContain(109);
+  });
+
+  it('ignora una fila de curaduría que no es oferta de reventa', async () => {
+    // Una favorita no es una oferta. Confundirlas pondría a la venta lo que
+    // el embajador sólo quiso destacar.
+    convex.enabled = true;
+    convex.rows = [
+      { slug: 'alvaro-pelaez', itemId: '109', forResale: false, isFavorite: true },
+    ];
+    const res = await call('alvaro-pelaez');
+    expect(data(res).availableItemIds).not.toContain(109);
+  });
+
+  it('una pieza transferida sigue sin contar aunque su fila diga DISPONIBLE', async () => {
+    // effectiveEstado manda en el perfil: la 105 se fue con Juan.
+    const res = await call('alvaro-pelaez');
+    expect(data(res).availableItemIds).not.toContain(105);
+  });
+
+  it('sin Convex el perfil no se vacía: cuenta el stock de la casa', async () => {
+    convex.enabled = false;
+    const res = await call('alvaro-pelaez');
+    expect(data(res).availableItemIds).toContain(101);
+    expect(data(res).availableItemIds).toContain(108);
   });
 });

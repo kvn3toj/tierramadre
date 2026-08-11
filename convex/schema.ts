@@ -68,6 +68,16 @@ export default defineSchema({
     isFavorite: v.boolean(),
     /** Position within the favourites row; absent for non-favourites. */
     sortOrder: v.optional(v.float64()),
+    /**
+     * The ambassador offers this piece for resale through TM.
+     *
+     * Separate from `estado`, deliberately. `estado` is TM's books: a piece an
+     * ambassador bought stays VENDIDA internally and accounting depends on
+     * that. Whether it is OFFERED is the owner's own statement, and it is
+     * never inferred from ownership — inferring it would list the ring
+     * somebody bought for their wife on the public catalog.
+     */
+    forResale: v.optional(v.boolean()),
     customName: v.optional(v.string()),
     /**
      * Validated server-side against [base × 1.0, base × 10.0] before it is

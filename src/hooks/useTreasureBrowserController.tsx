@@ -12,6 +12,8 @@ import {
   useDeferredValue,
 } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { isPurchasable } from '../utils/productOffer';
+import { useResaleOffers } from './useResaleOffers';
 import { useTheme, useMediaQuery } from '@mui/material';
 import { useThemeMode } from '../contexts/ThemeContext';
 import { useAuthContext } from '../contexts/AuthContext';
@@ -222,9 +224,13 @@ export function useTreasureBrowserController({
   const [certDialogOpen, setCertDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TreasureItem | null>(null);
 
+  const { resaleIndex } = useResaleOffers();
+
   const stats = useMemo(() => {
-    const available = allTreasure.filter(
-      (i) => i.estado?.toUpperCase() === 'DISPONIBLE',
+    // CONSIGNACION counts (TM owns it, an ambassador is only holding it) and
+    // so does a piece its ambassador owner has offered for resale.
+    const available = allTreasure.filter((i) =>
+      isPurchasable(i, resaleIndex.get(i.item)),
     );
     return {
       totalItems: available.length,
