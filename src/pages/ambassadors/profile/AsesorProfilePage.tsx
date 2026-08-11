@@ -243,10 +243,22 @@ export default function AsesorProfilePage() {
     localProducts.length > 0,
   );
 
-  // Get products for this asesor
+  // Get products for this asesor, with the ambassador's overrides already
+  // applied.
+  //
+  // Applied HERE, at the source, rather than per-surface. Until now the only
+  // call was on the favourites row, so an ambassador who renamed a piece or
+  // set a price saw it on that one strip and nowhere else — not in the
+  // category list, not on the piece's own screen, and not in the header's
+  // "Valor". Everything downstream derives from this array, so one
+  // application covers all four.
   const allProducts = useMemo(
-    () => resolveAsesorProducts(localProducts, treasure, serverProducts),
-    [localProducts, serverProducts, treasure],
+    () =>
+      applyAmbassadorOverrides(
+        resolveAsesorProducts(localProducts, treasure, serverProducts),
+        ambassadorOverrides,
+      ),
+    [localProducts, serverProducts, treasure, ambassadorOverrides],
   );
 
   // Categorize products for museum grid
@@ -265,8 +277,10 @@ export default function AsesorProfilePage() {
         : (favoriteIds
             .map((id) => allProducts.find((p) => String(p.item) === id))
             .filter(Boolean) as TreasureItem[]);
-    return applyAmbassadorOverrides(baseList, ambassadorOverrides);
-  }, [favoriteIds, allProducts, ambassadorOverrides]);
+    // No applyAmbassadorOverrides here any more: allProducts already carries
+    // them, and applying twice only hid that the other surfaces did not.
+    return baseList;
+  }, [favoriteIds, allProducts]);
 
   // Calculate stats
   const stats: ProfileStats = useMemo(() => {
