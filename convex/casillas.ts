@@ -221,6 +221,59 @@ export const _guardar = internalMutation({
   },
 });
 
+/**
+ * Adjuntar la foto de una casilla. Deliberadamente SEPARADA de `_guardar`:
+ * aquélla estampa `clasificadaPor` / `clasificadaEn`, y adjuntar una foto no es
+ * clasificar — hacerlo por ahí atribuiría la clasificación a quien sacó la foto,
+ * hoy, aunque la pieza la haya clasificado otra persona ayer.
+ *
+ * Por el mismo motivo `fotoUrl` NO entra a `patchArgs`: si entrara,
+ * `guardarViaBot` podría escribirla y el rastro volvería a falsearse.
+ *
+ * Tampoco toca `estadoCasilla`: la foto no es campo de completitud
+ * (`camposFaltantes` no la mira) y una casilla sin foto sigue siendo publicable.
+ */
+export const _adjuntarFoto = internalMutation({
+  args: { itemId: v.string(), fotoUrl: v.string() },
+  handler: async (ctx, { itemId, fotoUrl }) => {
+    const casilla = await ctx.db
+      .query('lotItems')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+      .first();
+
+    if (!casilla) throw new Error(`No existe la casilla ${itemId}.`);
+    if (!casilla.estadoCasilla) {
+      throw new Error(
+        `El ítem ${itemId} es del riel viejo, no una casilla v4: su media es ` +
+          `propiedad de la hoja y escribirla acá la dejaría en dos verdades.`,
+      );
+    }
+
+    // Cadena vacía = borrar. Mismo criterio que `applyMedia` en el riel legacy
+    // (`lotItems.ts:1093-1094`), copiado para que las dos rieles se comporten
+    // igual el día que Fase 2 las junte.
+    const normalizada = fotoUrl.trim();
+    const valor = normalizada.length === 0 ? undefined : normalizada;
+
+    await ctx.db.patch(casilla._id, { fotoUrl: valor });
+    return { itemId, fotoUrl: valor };
+  },
+});
+
+export const adjuntarFotoViaBot = action({
+  args: { botSecret: v.string(), itemId: v.string(), fotoUrl: v.string() },
+  handler: async (
+    ctx,
+    { botSecret, itemId, fotoUrl },
+  ): Promise<{ itemId: string; fotoUrl?: string }> => {
+    requireBotSecret(botSecret);
+    return await ctx.runMutation(internal.casillas._adjuntarFoto, {
+      itemId,
+      fotoUrl,
+    });
+  },
+});
+
 export const guardar = action({
   args: { idToken: v.string(), ...patchArgs },
   handler: async (
