@@ -81,6 +81,83 @@ export const backfillPublishedAt = internalMutation({
 });
 
 /**
+ * Backfill the denormalized `mina` / `tratamiento` for items published BEFORE
+ * Fix 1B (docs/audits/2026-08-12-convex-usage-audit.md §4).
+ *
+ * `products.publishedCatalog` used to resolve lot provenance with a per-lote
+ * point read on every execution, which dragged those `lots` documents into the
+ * public catalog's reactive read set — so any write to a published lot re-ran
+ * the catalog for every connected anonymous visitor. The lookup now happens
+ * once, at publish time, via `withPublishStamp()`.
+ *
+ * Items published before that change never went through the new stamp, and the
+ * catalog query deliberately has NO fallback to `lots` (a fallback would
+ * reinstate the read-set dependency). Without this backfill those items would
+ * render with blank mina/tratamiento.
+ *
+ * ⚠️ RUN THIS BEFORE OR IMMEDIATELY AFTER DEPLOYING Fix 1B — between the deploy
+ * and this migration, already-published items show no provenance.
+ *
+ * Idempotent: only patches rows whose stored value actually differs from the
+ * lot's, so re-running is a no-op. Safe to re-run after new lots are published.
+ *
+ *   npx convex run --prod migrations:backfillLotProvenance '{}'
+ */
+export const backfillLotProvenance = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db
+      .query('productInventory')
+      .withIndex('by_mostrarEnCatalogo', (q) => q.eq('mostrarEnCatalogo', true))
+      .collect();
+
+    // Resolve each distinct lote ONCE — this is a one-shot migration, but there
+    // is no reason to re-read the same lot per item.
+    const lotCache = new Map<
+      string,
+      { mina?: string; tratamiento?: string } | undefined
+    >();
+    const patched: string[] = [];
+    const missingLote: string[] = [];
+
+    for (const row of rows) {
+      if (!row.loteId) continue; // legacy/orphan — excluded from the catalog anyway
+      if (!lotCache.has(row.loteId)) {
+        const lot = await ctx.db
+          .query('lots')
+          .withIndex('by_loteId', (q) => q.eq('loteId', row.loteId!))
+          .first();
+        lotCache.set(
+          row.loteId,
+          lot ? { mina: lot.mina, tratamiento: lot.tratamiento } : undefined,
+        );
+      }
+      const prov = lotCache.get(row.loteId);
+      if (!prov) {
+        missingLote.push(row.itemId);
+        continue;
+      }
+      if (row.mina === prov.mina && row.tratamiento === prov.tratamiento)
+        continue;
+      await ctx.db.patch(row._id, {
+        mina: prov.mina,
+        tratamiento: prov.tratamiento,
+      });
+      patched.push(row.itemId);
+    }
+
+    return {
+      scanned: rows.length,
+      backfilled: patched.length,
+      itemIds: patched,
+      // Published items whose lote no longer resolves — these will render
+      // without provenance. Worth eyeballing rather than failing the run.
+      missingLote,
+    };
+  },
+});
+
+/**
  * Merge the duplicated "Agua Marina" stone.
  *
  * The same 18.8 ct stone was catalogued twice:
@@ -1362,9 +1439,7 @@ export const migrateChatonesToC065 = internalAction({
  */
 export const raiseLotSequences = internalMutation({
   args: {
-    raises: v.array(
-      v.object({ name: v.string(), minNextValue: v.number() }),
-    ),
+    raises: v.array(v.object({ name: v.string(), minNextValue: v.number() })),
   },
   handler: async (ctx, { raises }) => {
     const out: Array<{

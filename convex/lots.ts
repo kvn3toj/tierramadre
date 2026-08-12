@@ -581,7 +581,14 @@ export const _publish = internalMutation({
         .withIndex('by_itemId', (q) => q.eq('itemId', item.itemId))
         .first();
       if (product && product.mostrarEnCatalogo !== true) {
-        await ctx.db.patch(product._id, withPublishStamp(product, true));
+        // Provenance comes from `lot`, already in scope — no extra read.
+        await ctx.db.patch(
+          product._id,
+          withPublishStamp(product, true, {
+            mina: lot.mina,
+            tratamiento: lot.tratamiento,
+          }),
+        );
         flipped++;
       }
     }
