@@ -7,13 +7,13 @@ import React from 'react';
 import {
   Box,
   Typography,
-  TextField,
   Grid,
   Autocomplete,
   Avatar,
   Chip,
   alpha,
 } from '@mui/material';
+import { TextField } from '../../../design-system/components/TextField';
 import { User } from 'lucide-react';
 import { brandColors } from '../constants';
 import type { ClientInfoSectionProps } from '../types';
@@ -221,6 +221,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
             renderInput={(params) => (
               <TextField
                 {...params}
+                size="sm"
                 label="Nombre del Cliente"
                 placeholder="Ej: Juan Perez (o selecciona de la lista)"
                 helperText={
@@ -242,7 +243,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
             type="tel"
             value={clientPhone}
             onChange={(e) => setClientPhone(e.target.value)}
-            size="small"
+            size="sm"
             placeholder="+57 300 123 4567"
             inputProps={{ autoComplete: 'tel' }}
           />
@@ -254,7 +255,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
             type="email"
             value={clientEmail}
             onChange={(e) => setClientEmail(e.target.value)}
-            size="small"
+            size="sm"
             placeholder="cliente@ejemplo.com"
             inputProps={{ autoComplete: 'email' }}
             error={clientEmail !== '' && !clientEmail.includes('@')}
@@ -271,7 +272,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
             label="Documento (Cédula/Pasaporte)"
             value={clientDocument}
             onChange={(e) => setClientDocument(e.target.value)}
-            size="small"
+            size="sm"
             placeholder="Ej: 123456789"
           />
         </Grid>
@@ -291,7 +292,7 @@ export const ClientInfoSection: React.FC<ClientInfoSectionProps> = ({
             <Avatar
               src={
                 googleUser
-                  ? `https://ui-avatars.com/api/?name=${encodeURIComponent(asesorName || googleUser.name)}&background=00AE7A&color=fff`
+                  ? `https://ui-avatars.com/api/?name=${encodeURIComponent(asesorName || googleUser.name)}&background=00C992&color=fff`
                   : undefined
               }
               sx={{

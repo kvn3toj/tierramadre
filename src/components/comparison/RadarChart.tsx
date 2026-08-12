@@ -6,8 +6,8 @@
 import { Box, Typography, alpha } from '@mui/material';
 import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { accentColors } from '../../design-system';
+import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { accentColors, qeAccent, whiteAlpha } from '../../design-system';
 
 interface RadarChartProps {
   items: TreasureItem[];
@@ -20,10 +20,11 @@ interface DataPoint {
 }
 
 // High-contrast color palette for better differentiation
+// static context: no theme mode available (module-level array, outside React render)
 const itemColors = [
-  emeraldCore.primary,  // Emerald green
-  accentColors.error.light,  // Coral red
-  accentColors.cyan.light,  // Turquoise
+  qeAccent.light.pure, // Emerald green
+  accentColors.error.light, // Coral red
+  accentColors.cyan.light, // Turquoise
 ];
 
 /**
@@ -31,12 +32,12 @@ const itemColors = [
  */
 function calculateQualityScore(quality: string): number {
   const qualityMap: Record<string, number> = {
-    'Fina': 100,
+    Fina: 100,
     'Comercial SuperFina': 90,
     'Comercial Fina': 85,
     'Comercial Superior': 75,
     'Comercial Estándar': 65,
-    'Estándar': 50,
+    Estándar: 50,
   };
   return qualityMap[quality] || 60;
 }
@@ -59,37 +60,45 @@ function calculateColorScore(color: string): number {
  * Normalize size to 0-100 scale
  */
 function normalizeSizeScore(items: TreasureItem[]): number[] {
-  const weights = items.map(i => (typeof i.peso === 'number' ? i.peso : 0));
+  const weights = items.map((i) => (typeof i.peso === 'number' ? i.peso : 0));
   const maxWeight = Math.max(...weights, 1);
-  return weights.map(w => (w / maxWeight) * 100);
+  return weights.map((w) => (w / maxWeight) * 100);
 }
 
 /**
  * Calculate investment score (0-100)
  */
-function calculateInvestmentScore(item: TreasureItem, allItems: TreasureItem[]): number {
+function calculateInvestmentScore(
+  item: TreasureItem,
+  allItems: TreasureItem[],
+): number {
   const qualityScore = calculateQualityScore(item.calidad);
   const colorScore = calculateColorScore(item.color);
-  const weights = allItems.map(i => (typeof i.peso === 'number' ? i.peso : 0));
+  const weights = allItems.map((i) =>
+    typeof i.peso === 'number' ? i.peso : 0,
+  );
   const weight = typeof item.peso === 'number' ? item.peso : 0;
   const maxWeight = Math.max(...weights, 1);
   const sizeScore = (weight / maxWeight) * 100;
   const certBonus = item.certifications ? 15 : 0;
 
-  return Math.min(100, qualityScore * 0.4 + colorScore * 0.3 + sizeScore * 0.2 + certBonus * 0.1);
+  return Math.min(
+    100,
+    qualityScore * 0.4 + colorScore * 0.3 + sizeScore * 0.2 + certBonus * 0.1,
+  );
 }
 
 /**
  * Calculate value score (price/quality ratio) - inverted so lower price = better
  */
 function calculateValueScore(items: TreasureItem[]): number[] {
-  const prices = items.map(i => i.precioCOP);
+  const prices = items.map((i) => i.precioCOP);
   const maxPrice = Math.max(...prices);
-  const qualities = items.map(i => calculateQualityScore(i.calidad));
+  const qualities = items.map((i) => calculateQualityScore(i.calidad));
 
   return items.map((item, idx) => {
-    const priceScore = 100 - ((item.precioCOP / maxPrice) * 100);
-    return (qualities[idx] * 0.6) + (priceScore * 0.4);
+    const priceScore = 100 - (item.precioCOP / maxPrice) * 100;
+    return qualities[idx] * 0.6 + priceScore * 0.4;
   });
 }
 
@@ -100,7 +109,7 @@ function polarToCartesian(
   centerX: number,
   centerY: number,
   radius: number,
-  angleInDegrees: number
+  angleInDegrees: number,
 ): { x: number; y: number } {
   const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180;
   return {
@@ -116,7 +125,7 @@ function generateRadarPath(
   values: number[],
   centerX: number,
   centerY: number,
-  maxRadius: number
+  maxRadius: number,
 ): string {
   const angleStep = 360 / values.length;
   const points = values.map((value, idx) => {
@@ -145,16 +154,18 @@ export default function RadarChart({ items, maxItems = 3 }: RadarChartProps) {
   // Prepare data points
   const sizeScores = normalizeSizeScore(displayItems);
   const valueScores = calculateValueScore(displayItems);
-  const investmentScores = displayItems.map(item => calculateInvestmentScore(item, displayItems));
+  const investmentScores = displayItems.map((item) =>
+    calculateInvestmentScore(item, displayItems),
+  );
 
   const dataPoints: DataPoint[] = [
     {
       label: 'Calidad',
-      values: displayItems.map(item => calculateQualityScore(item.calidad)),
+      values: displayItems.map((item) => calculateQualityScore(item.calidad)),
     },
     {
       label: 'Color',
-      values: displayItems.map(item => calculateColorScore(item.color)),
+      values: displayItems.map((item) => calculateColorScore(item.color)),
     },
     {
       label: 'Tamaño',
@@ -213,7 +224,9 @@ export default function RadarChart({ items, maxItems = 3 }: RadarChartProps) {
               cy={centerY}
               r={radius}
               fill="none"
-              stroke={isLight ? surfacesLight.border.light : surfacesDark.border.light}
+              stroke={
+                isLight ? surfacesLight.border.light : surfacesDark.border.light
+              }
               strokeWidth={1}
               opacity={0.3}
             />
@@ -231,7 +244,9 @@ export default function RadarChart({ items, maxItems = 3 }: RadarChartProps) {
               y1={centerY}
               x2={endPoint.x}
               y2={endPoint.y}
-              stroke={isLight ? surfacesLight.border.light : surfacesDark.border.light}
+              stroke={
+                isLight ? surfacesLight.border.light : surfacesDark.border.light
+              }
               strokeWidth={1}
               opacity={0.3}
             />
@@ -240,18 +255,14 @@ export default function RadarChart({ items, maxItems = 3 }: RadarChartProps) {
 
         {/* Data polygons for each item */}
         {displayItems.map((_, itemIdx) => {
-          const values = dataPoints.map(dp => dp.values[itemIdx]);
+          const values = dataPoints.map((dp) => dp.values[itemIdx]);
           const path = generateRadarPath(values, centerX, centerY, maxRadius);
           const color = itemColors[itemIdx % itemColors.length];
 
           return (
             <g key={`item-${itemIdx}`}>
               {/* Fill with subtle transparency */}
-              <path
-                d={path}
-                fill={alpha(color, 0.08)}
-                stroke="none"
-              />
+              <path d={path} fill={alpha(color, 0.08)} stroke="none" />
               {/* Stroke outline with higher visibility */}
               <path
                 d={path}
@@ -259,7 +270,9 @@ export default function RadarChart({ items, maxItems = 3 }: RadarChartProps) {
                 stroke={color}
                 strokeWidth={2.5}
                 strokeLinejoin="round"
-                strokeDasharray={itemIdx === 0 ? '0' : itemIdx === 1 ? '5,3' : '2,2'}
+                strokeDasharray={
+                  itemIdx === 0 ? '0' : itemIdx === 1 ? '5,3' : '2,2'
+                }
               />
               {/* Data points with stronger presence */}
               {values.map((value, pointIdx) => {
@@ -281,7 +294,11 @@ export default function RadarChart({ items, maxItems = 3 }: RadarChartProps) {
                       cy={point.y}
                       r={4}
                       fill={color}
-                      stroke={isLight ? '#fff' : surfacesDark.background.primary}
+                      stroke={
+                        isLight
+                          ? whiteAlpha(1)
+                          : surfacesDark.background.primary
+                      }
                       strokeWidth={2}
                     />
                   </g>
@@ -295,7 +312,12 @@ export default function RadarChart({ items, maxItems = 3 }: RadarChartProps) {
         {dataPoints.map((dp, idx) => {
           const angle = idx * angleStep;
           const labelRadius = maxRadius + 25;
-          const labelPoint = polarToCartesian(centerX, centerY, labelRadius, angle);
+          const labelPoint = polarToCartesian(
+            centerX,
+            centerY,
+            labelRadius,
+            angle,
+          );
 
           return (
             <text
@@ -304,7 +326,9 @@ export default function RadarChart({ items, maxItems = 3 }: RadarChartProps) {
               y={labelPoint.y}
               textAnchor="middle"
               dominantBaseline="middle"
-              fill={isLight ? surfacesLight.text.primary : surfacesDark.text.primary}
+              fill={
+                isLight ? surfacesLight.text.primary : surfacesDark.text.primary
+              }
               fontSize={11}
               fontWeight={600}
             >
@@ -315,11 +339,25 @@ export default function RadarChart({ items, maxItems = 3 }: RadarChartProps) {
       </svg>
 
       {/* Legend */}
-      <Box sx={{ display: 'flex', gap: 1.5, mt: 1.5, flexWrap: 'wrap', justifyContent: 'center' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 1.5,
+          mt: 1.5,
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+        }}
+      >
         {displayItems.map((emerald, idx) => {
-          const displayName = emerald.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
+          const displayName = emerald.nombre
+            .replace(/^L:.*?\s/, '')
+            .replace(/^L:/, '')
+            .trim();
           return (
-            <Box key={emerald.item} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box
+              key={emerald.item}
+              sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+            >
               <Box
                 sx={{
                   width: 12,
@@ -331,7 +369,9 @@ export default function RadarChart({ items, maxItems = 3 }: RadarChartProps) {
               <Typography
                 sx={{
                   fontSize: '0.65rem',
-                  color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
+                  color: isLight
+                    ? surfacesLight.text.secondary
+                    : surfacesDark.text.secondary,
                   maxWidth: 80,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',

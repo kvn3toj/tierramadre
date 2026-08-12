@@ -8,6 +8,36 @@ import type { Id } from './_generated/dataModel';
 import { v } from 'convex/values';
 import { bumpInventoryTotal } from './products';
 import { withPublishStamp } from './_lib/publishState';
+import { computePrecioFinal } from './_lib/pricing';
+
+/**
+ * Backfill the DERIVED `precioFinalCOP` (= round(costoBaseCOP × 2.6)) for every
+ * existing inventory doc, part of the 2026-07-21 price refactor that replaced
+ * the embajador/consciente tiers with a single derived final price. New/edited
+ * items compute it in lotItems; this catches the docs captured before the
+ * refactor.
+ *
+ * Idempotent: a doc whose stored precioFinalCOP already equals the computed
+ * value is skipped, so re-running (or running after normal edits) is harmless.
+ * Docs with no/zero costoBaseCOP get no price (computePrecioFinal → undefined).
+ *
+ *   npx convex run --prod migrations:backfillPrecioFinal '{}'
+ */
+export const backfillPrecioFinal = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db.query('productInventory').collect();
+    let updated = 0;
+    for (const row of rows) {
+      const next = computePrecioFinal(row.costoBaseCOP);
+      if (next !== row.precioFinalCOP) {
+        await ctx.db.patch(row._id, { precioFinalCOP: next });
+        updated += 1;
+      }
+    }
+    return { scanned: rows.length, updated };
+  },
+});
 
 /**
  * Backfill `publishedAt` for Fotosíntesis items published BEFORE the Estrenos
@@ -1252,21 +1282,137 @@ export const migrateChatonesToC065 = internalAction({
       providerId: PROVIDER,
     });
     const out: Array<Record<string, unknown>> = [];
-    for (const it of ['449', '454', '456', '458', '460', '463', '464', '465', '466']) {
-      out.push(await ctx.runMutation(internal.migrations._moveItemToLote, { itemId: it, toLoteId: 'C-065' }));
+    for (const it of [
+      '449',
+      '454',
+      '456',
+      '458',
+      '460',
+      '463',
+      '464',
+      '465',
+      '466',
+    ]) {
+      out.push(
+        await ctx.runMutation(internal.migrations._moveItemToLote, {
+          itemId: it,
+          toLoteId: 'C-065',
+        }),
+      );
     }
-    const news: Array<{ itemId: string; nombre: string; costoBaseCOP: number }> = [
+    const news: Array<{
+      itemId: string;
+      nombre: string;
+      costoBaseCOP: number;
+    }> = [
       { itemId: '477', nombre: 'Chatones Redondos 5mm', costoBaseCOP: 22400 },
-      { itemId: '481', nombre: 'Chatones de Mariposa 4 mm', costoBaseCOP: 140000 },
-      { itemId: '520', nombre: 'Chatones de Mariposa 3,5mm', costoBaseCOP: 225000 },
+      {
+        itemId: '481',
+        nombre: 'Chatones de Mariposa 4 mm',
+        costoBaseCOP: 140000,
+      },
+      {
+        itemId: '520',
+        nombre: 'Chatones de Mariposa 3,5mm',
+        costoBaseCOP: 225000,
+      },
       { itemId: '521', nombre: 'Chatones Redondos 2mm', costoBaseCOP: 14800 },
     ];
     for (const n of news) {
-      out.push(await ctx.runMutation(internal.migrations._createItemExplicit, {
-        itemId: n.itemId, loteId: 'C-065', nombre: n.nombre,
-        tipo: 'insumo', categoria: 'Insumo', costoBaseCOP: n.costoBaseCOP,
-      }));
+      out.push(
+        await ctx.runMutation(internal.migrations._createItemExplicit, {
+          itemId: n.itemId,
+          loteId: 'C-065',
+          nombre: n.nombre,
+          tipo: 'insumo',
+          categoria: 'Insumo',
+          costoBaseCOP: n.costoBaseCOP,
+        }),
+      );
     }
+    return out;
+  },
+});
+
+/**
+ * Raise lot-sequence high-water marks so the allocator can never mint a loteId
+ * that already exists in the sheet.
+ *
+ * WHY THIS IS NEEDED: lotes created by hand directly in the SOT Lotes tab never
+ * pass through `sequences.allocateNext`, so the counter does not advance with
+ * them. As of 2026-07-24 the sheet holds C-089 and MED-026 while prod
+ * `sequences` still reads `lot:C` = 77 and `lot:MED` = 25 — the next
+ * `lots.create` for Cali would mint C-077, which already exists. `lots` has no
+ * unique index and both `lots.getByLoteId` and fotoSync's `findByKey` resolve
+ * with `.first()`, so the duplicate would not error: the older doc would simply
+ * shadow the new one and the sheet would gain a second C-077 row.
+ *
+ * The values are supplied by the caller rather than derived, because the
+ * authoritative maximum lives in the SHEET and a Convex mutation cannot read it.
+ * Derive them from the Lotes tab, then pass them in.
+ *
+ * MONOTONIC BY CONSTRUCTION: a sequence is only ever raised, never lowered, so
+ * re-running is harmless and a stale/low argument is ignored rather than
+ * reissuing numbers that are already spoken for. A name with no existing row is
+ * created, which is how a brand-new sede bootstraps.
+ *
+ *   npx convex run --prod migrations:raiseLotSequences '{"raises":[
+ *     {"name":"lot:C","minNextValue":90},
+ *     {"name":"lot:MED","minNextValue":27}]}'
+ */
+export const raiseLotSequences = internalMutation({
+  args: {
+    raises: v.array(
+      v.object({ name: v.string(), minNextValue: v.number() }),
+    ),
+  },
+  handler: async (ctx, { raises }) => {
+    const out: Array<{
+      name: string;
+      before: number | null;
+      after: number;
+      action: 'raised' | 'created' | 'unchanged';
+    }> = [];
+
+    for (const { name, minNextValue } of raises) {
+      if (!Number.isInteger(minNextValue) || minNextValue < 1) {
+        throw new Error(
+          `minNextValue inválido para "${name}": ${minNextValue}`,
+        );
+      }
+      const row = await ctx.db
+        .query('sequences')
+        .withIndex('by_name', (q) => q.eq('name', name))
+        .first();
+
+      if (!row) {
+        await ctx.db.insert('sequences', { name, nextValue: minNextValue });
+        out.push({
+          name,
+          before: null,
+          after: minNextValue,
+          action: 'created',
+        });
+        continue;
+      }
+      if (row.nextValue >= minNextValue) {
+        out.push({
+          name,
+          before: row.nextValue,
+          after: row.nextValue,
+          action: 'unchanged',
+        });
+        continue;
+      }
+      await ctx.db.patch(row._id, { nextValue: minNextValue });
+      out.push({
+        name,
+        before: row.nextValue,
+        after: minNextValue,
+        action: 'raised',
+      });
+    }
+
     return out;
   },
 });

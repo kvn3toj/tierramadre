@@ -14,9 +14,9 @@
  * column in this list. The reverse direction (Sheet → Convex) is handled by the
  * bound Apps Script + convex/fotoSync.ts: an edit is captured per-cell and
  * synced back, restricted to the WRITABLE allowlist in convex/_lib/sheetPullMaps.ts.
- * That allowlist intentionally EXCLUDES the derived columns `costoBaseCOP` (L)
- * and `preponderancia` (U) — a sheet edit must never overwrite a figure Convex
- * computes — and treats `loteId` (X) as a FLAG field (the mirror is updated but
+ * That allowlist includes `costoBaseCOP` (L) — SHEET-OWNED since 2026-07-24, the
+ * item cost is typed by hand and pulled back — but still EXCLUDES `preponderancia`
+ * (U), a figure Convex owns, and treats `loteId` (X) as a FLAG field (the mirror is updated but
  * lot membership is reconciled in the app). Everything else in A–AP does sync
  * back. (Audit F6, superseded by the delta sync.)
  *
@@ -42,56 +42,130 @@
 
 export const FOTO_INVENTARIO_COLUMNS = [
   // ── Identity + descriptive block (A–K) ──
-  { header: "Item", key: "item", id: true }, // A — natural key (itemId)
-  { header: "FECHA INGRESO INVENTARIO", key: "fechaIngreso", preserve: true }, // B
-  { header: "Nombre", key: "nombre" }, // C
-  { header: "Peso (ct)", key: "peso" }, // D
-  { header: "Color", key: "color" }, // E
-  { header: "Calidad", key: "calidad" }, // F
-  { header: "Cant.", key: "cantidad", numeric: true }, // G
-  { header: "Talla", key: "talla" }, // H
-  { header: "Medidas", key: "medidas" }, // I
-  { header: "Medidas (valores)", key: "medidasValores" }, // J
-  { header: "Categoría", key: "categoria" }, // K
+  { header: 'Item', key: 'item', id: true }, // A — natural key (itemId)
+  { header: 'FECHA INGRESO INVENTARIO', key: 'fechaIngreso', preserve: true }, // B
+  { header: 'Nombre', key: 'nombre' }, // C
+  { header: 'Peso (ct)', key: 'peso' }, // D
+  { header: 'Color', key: 'color' }, // E
+  { header: 'Calidad', key: 'calidad' }, // F
+  { header: 'Cant.', key: 'cantidad', numeric: true }, // G
+  // H — la FORMA DE TALLA de la gema (Redonda, Esmeralda, Lágrima…). El
+  // encabezado decía "Talla" y la columna guardaba dos cosas distintas: la
+  // forma en ~486 filas y el ARO del anillo (5–9) en 37. Renombrada a "Corte"
+  // el 2026-08-11 y los aros movidos a `tallaAnillo` (BF). La clave sigue
+  // siendo `talla` porque en el código ya significaba el corte
+  // (src/components/esmereogenesis/cutCharacters.ts).
+  { header: 'Corte', key: 'talla' }, // H
+  { header: 'Medidas', key: 'medidas' }, // I
+  { header: 'Medidas (valores)', key: 'medidasValores' }, // J
+  { header: 'Categoría', key: 'categoria' }, // K
   // ── Price block (L–N) — kept consecutive for at-a-glance pricing ──
   // NOTE: the legacy "Precio COP" (precioCOP) column was retired from this SOT
-  // mirror on 2026-05-29 (audit: column was ~82% empty; the public price is the
-  // ambassador tier in `precioEmbajadorCOP`). The `precioCOP` field still exists
-  // in Convex (productInventory) as an app-only value — it is no longer mirrored
-  // to or pulled from this sheet. See scripts/delete-fotosintesis-column-l.mjs.
-  { header: "costoBaseCOP", key: "costoBaseCOP", numeric: true }, // L — costoTotalCOP × preponderancia%
-  { header: "precioEmbajadorCOP", key: "precioEmbajadorCOP", numeric: true }, // M — x1–x4 tier
-  { header: "precioConscienteCOP", key: "precioConscienteCOP", numeric: true }, // N — x1–x4 tier
+  // mirror on 2026-05-29 (audit: column was ~82% empty). The `precioCOP` field
+  // still exists in Convex (productInventory) as an app-only value — it is no
+  // longer mirrored to or pulled from this sheet.
+  // PRICE REFACTOR (2026-07-21): the two x1–x4 tiers were collapsed into ONE
+  // derived final price. M = precioFinalCOP (= costoBaseCOP × 2.6, computed in
+  // Convex and pushed here — see convex/_lib/pricing.ts). N is now a reserved
+  // empty column ("(sin uso)") so the positional mirror (O onward) is preserved
+  // without a moveDimension migration.
+  { header: 'costoBaseCOP', key: 'costoBaseCOP', numeric: true }, // L — sheet-owned item cost (manual; two-way sync since 2026-07-24)
+  { header: 'precioFinalCOP', key: 'precioFinalCOP', numeric: true }, // M — DERIVED: costoBaseCOP × 2.6
+  { header: '(sin uso)', key: '_sinUso', preserve: true }, // N — reserved/empty (was precioConscienteCOP)
   // ── Inventory / status descriptive fields (O–W) ──
-  { header: "UBICACIÓN", key: "ubicacion" }, // O
-  { header: "ASESOR", key: "asesor" }, // P
-  { header: "ESTADO", key: "estado" }, // Q
-  { header: "QR", key: "qr" }, // R
-  { header: "Colección", key: "coleccion" }, // S
-  { header: "CAJA", key: "caja" }, // T
-  { header: "preponderancia", key: "preponderancia", numeric: true }, // U — % of lot (Fotosíntesis)
-  { header: "ASESOR ACTUAL", key: "asesorActual" }, // V
-  { header: "ESTADO ASESOR", key: "estadoAsesor" }, // W
+  { header: 'UBICACIÓN', key: 'ubicacion' }, // O
+  { header: 'ASESOR', key: 'asesor' }, // P
+  { header: 'ESTADO', key: 'estado' }, // Q
+  { header: 'QR', key: 'qr' }, // R
+  { header: 'Colección', key: 'coleccion' }, // S
+  { header: 'CAJA', key: 'caja' }, // T
+  { header: 'preponderancia', key: 'preponderancia', numeric: true }, // U — % of lot (Fotosíntesis)
+  { header: 'ASESOR ACTUAL', key: 'asesorActual' }, // V
+  { header: 'ESTADO ASESOR', key: 'estadoAsesor' }, // W
   // ── Fotosíntesis v2 extension (X onward) ──
-  { header: "loteId", key: "loteId" }, // X — owning lot
-  { header: "mostrarEnCatalogo", key: "mostrarEnCatalogo" }, // Y
-  { header: "procedencia", key: "procedencia" }, // Z
-  { header: "observacion", key: "observacion" }, // AA
-  { header: "rendimientoEsperado", key: "rendimientoEsperado", numeric: true }, // AB — bruto
-  { header: "cantidadEstimada", key: "cantidadEstimada", numeric: true }, // AC — bruto
-  { header: "nivelRareza", key: "nivelRareza", numeric: true }, // AD
-  { header: "calificacion", key: "calificacion", numeric: true }, // AE
-  { header: "tipoEsmeralda", key: "tipoEsmeralda" }, // AF
-  { header: "subtipoForm", key: "subtipoForm" }, // AG — 9-subtype selector
-  { header: "tipoJoya", key: "tipoJoya" }, // AH
-  { header: "tecnicaJoya", key: "tecnicaJoya" }, // AI
-  { header: "minerales", key: "minerales" }, // AJ — comma-joined
-  { header: "complementos", key: "complementos" }, // AK — comma-joined
-  { header: "fotoUrl", key: "fotoUrl" }, // AL
-  { header: "certificadoUrl", key: "certificadoUrl" }, // AM
-  { header: "formulaGema", key: "formulaGema" }, // AN
-  { header: "formulaJoya", key: "formulaJoya" }, // AO
-  { header: "rangoDescuento", key: "rangoDescuento" }, // AP
+  { header: 'loteId', key: 'loteId' }, // X — owning lot
+  { header: 'mostrarEnCatalogo', key: 'mostrarEnCatalogo' }, // Y
+  { header: 'procedencia', key: 'procedencia' }, // Z
+  { header: 'observacion', key: 'observacion' }, // AA
+  { header: 'rendimientoEsperado', key: 'rendimientoEsperado', numeric: true }, // AB — bruto
+  { header: 'cantidadEstimada', key: 'cantidadEstimada', numeric: true }, // AC — bruto
+  { header: 'nivelRareza', key: 'nivelRareza', numeric: true }, // AD
+  { header: 'calificacion', key: 'calificacion', numeric: true }, // AE
+  { header: 'tipoEsmeralda', key: 'tipoEsmeralda' }, // AF
+  { header: 'subtipoForm', key: 'subtipoForm' }, // AG — 9-subtype selector
+  { header: 'tipoJoya', key: 'tipoJoya' }, // AH
+  { header: 'tecnicaJoya', key: 'tecnicaJoya' }, // AI
+  { header: 'minerales', key: 'minerales' }, // AJ — comma-joined
+  { header: 'complementos', key: 'complementos' }, // AK — comma-joined
+  { header: 'fotoUrl', key: 'fotoUrl' }, // AL
+  { header: 'certificadoUrl', key: 'certificadoUrl' }, // AM
+  { header: 'formulaGema', key: 'formulaGema' }, // AN
+  { header: 'formulaJoya', key: 'formulaJoya' }, // AO
+  { header: 'rangoDescuento', key: 'rangoDescuento' }, // AP
+  // ── Bloque hoja-primero (AQ–BE) — TODO `preserve: true` ──
+  // Estas 15 columnas las mantiene una persona en la hoja, no la app. Existían
+  // desde antes pero eran invisibles para Convex: el rango que se lee sale de
+  // `FOTO_INVENTARIO_LAST_COL`, que se deriva del largo de este array, así que
+  // parar en AP recortaba la lectura en AP. Sumarlas acá ensancha la lectura.
+  //
+  // `preserve: true` en TODAS no es decorativo: el merge de
+  // api/admin-product-update.ts arranca de `existingRow` y sólo pisa las claves
+  // sin preserve. Sin el flag, cualquier PATCH de la app reconstruiría la fila
+  // entera y borraría 513 filas de dato humano (Fuentes, notas de Anima) y la
+  // contabilidad de caja. Se leen; no se escriben nunca.
+  //
+  // Los `header` son los textos REALES de la fila 1 (leídos del SOT el
+  // 2026-07-30). AS está vacía de verdad — es un hueco posicional, y ponerle
+  // texto haría que extend-fotosintesis-headers.mjs escribiera en una celda que
+  // hoy está en blanco. Igual que N, existe sólo para que AT en adelante no se
+  // corra una columna.
+  { header: 'Peso (gr)', key: 'pesoGr', numeric: true, preserve: true }, // AQ
+  {
+    header: 'Costo lote (fórmula)',
+    key: 'costoLoteCOP',
+    numeric: true,
+    preserve: true,
+  }, // AR — COSTO
+  { header: '', key: '_sinUso2', preserve: true }, // AS — hueco posicional, sin encabezado
+  {
+    header: 'Precio objetivo (modelo)',
+    key: 'precioObjetivoCOP',
+    numeric: true,
+    preserve: true,
+  }, // AT — COSTO
+  {
+    header: 'Caja: precio venta',
+    key: 'cajaPrecioVentaCOP',
+    numeric: true,
+    preserve: true,
+  }, // AU
+  {
+    header: 'Caja: valor pagado',
+    key: 'cajaValorPagadoCOP',
+    numeric: true,
+    preserve: true,
+  }, // AV — PLATA
+  { header: 'Caja: saldo', key: 'cajaSaldoCOP', numeric: true, preserve: true }, // AW — PLATA
+  { header: 'Caja: comprador', key: 'cajaComprador', preserve: true }, // AX — DATO PERSONAL
+  {
+    header: 'Caja: estado contable',
+    key: 'cajaEstadoContable',
+    preserve: true,
+  }, // AY — PLATA
+  { header: 'subLote (grupo)', key: 'subLote', preserve: true }, // AZ
+  { header: 'Producto (URL)', key: 'productoUrl', preserve: true }, // BA
+  { header: 'Carpeta fotos (Drive)', key: 'carpetaFotosUrl', preserve: true }, // BB
+  { header: 'Anima: notas relacionadas', key: 'animaNotas', preserve: true }, // BC
+  { header: 'Fuentes', key: 'fuentes', preserve: true }, // BD
+  { header: 'Notas / conflictos', key: 'notasConflictos', preserve: true }, // BE
+  // ── Aro del anillo (BF) ──
+  // Añadida el 2026-08-11 al desdoblar la vieja columna H, que mezclaba la
+  // forma de talla con el aro. Va APPEND al final —y no junto a H— porque este
+  // array ES el orden posicional de la hoja: insertar en el medio correría
+  // todas las columnas siguientes y desalinearía las 523 filas vivas.
+  // Sin `preserve`: la app sí escribe este valor (a diferencia del bloque
+  // AQ–BE, que mantiene una persona a mano).
+  { header: 'Talla (anillo)', key: 'tallaAnillo' }, // BF
 ];
 
 /** Ordered header labels (row 1 of the Inventario tab). */
@@ -102,7 +176,7 @@ export const FOTO_INVENTARIO_HEADERS = FOTO_INVENTARIO_COLUMNS.map(
 /** Convert a 0-based column index to its A1 letter (0→A, 25→Z, 26→AA…). */
 export function columnIndexToLetter(index) {
   let n = index;
-  let letter = "";
+  let letter = '';
   do {
     letter = String.fromCharCode((n % 26) + 65) + letter;
     n = Math.floor(n / 26) - 1;

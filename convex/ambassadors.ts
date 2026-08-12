@@ -11,6 +11,7 @@ import {
   commissionPercentForNivel,
   type AmbassadorNivel,
 } from './_lib/commission';
+import { isStaffSession } from './_lib/requireStaffSession';
 
 const nivelValidator = v.union(
   v.literal('bronce'),
@@ -19,18 +20,37 @@ const nivelValidator = v.union(
   v.literal('diamante'),
 );
 
+/**
+ * GATED (2026-08-05, I3): every ambassador's `email`/`celular`/
+ * `comisionPercent`/`score` — plus the `ambassadorId`s that in turn unlock
+ * `commissions.listByAmbassador` — to anyone. Now requires a verified staff
+ * session (which, per `_lib/requireStaffSession.ts`, also covers an
+ * ambassador viewing their own record — the roster check behind minting a
+ * session token includes embajadores, not only admin staff).
+ */
 export const list = query({
-  args: {},
-  handler: async (ctx) => ctx.db.query('ambassadors').collect(),
+  args: { sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
+    return ctx.db.query('ambassadors').collect();
+  },
 });
 
+/**
+ * GATED (2026-08-05, I3, defensive): same field exposure as `list` above,
+ * keyed by the ambassador's public `slug` instead of enumeration. No current
+ * caller anywhere in this repo (verified) — gated now so wiring one up later
+ * doesn't silently reopen this.
+ */
 export const getBySlug = query({
-  args: { slug: v.string() },
-  handler: async (ctx, { slug }) =>
-    ctx.db
+  args: { slug: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { slug, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
+    return ctx.db
       .query('ambassadors')
       .withIndex('by_slug', (q) => q.eq('slug', slug))
-      .first(),
+      .first();
+  },
 });
 
 // internalMutation: zero app callers today (no invite flow wires this up

@@ -37,27 +37,28 @@
  * recently generated scene only (kept for backwards compatibility).
  */
 
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-import sharp from "sharp";
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import sharp from 'sharp';
+import { transcodeHeicInPlace } from './lib/image.mjs';
 import {
   buildVisualizerPrompt,
   buildRealSizeCue,
   parseMeasures,
-} from "../api/_lib/jewelry-prompt.js";
+} from '../api/_lib/jewelry-prompt.js';
 
 // ── Paths ───────────────────────────────────────────────────────────────────
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = path.resolve(__dirname, "..");
-const VISUALIZER_DIR = path.join(REPO_ROOT, "docs", "Visualizer");
-const WORK_DIR = path.join(VISUALIZER_DIR, "work");
-const EXPORTS_DIR = path.join(VISUALIZER_DIR, "exports");
-const MANIFEST_PATH = path.join(WORK_DIR, "manifest.json");
+const REPO_ROOT = path.resolve(__dirname, '..');
+const VISUALIZER_DIR = path.join(REPO_ROOT, 'docs', 'Visualizer');
+const WORK_DIR = path.join(VISUALIZER_DIR, 'work');
+const EXPORTS_DIR = path.join(VISUALIZER_DIR, 'exports');
+const MANIFEST_PATH = path.join(WORK_DIR, 'manifest.json');
 
-const DEFAULT_BASE = "https://tierramadre.app";
-const DEFAULT_SCENE = "ring-woman";
-const DEFAULT_METAL = "gold";
+const DEFAULT_BASE = 'https://tierramadre.app';
+const DEFAULT_SCENE = 'ring-woman';
+const DEFAULT_METAL = 'gold';
 const REFERENCIAL_RE = /referencial|visualizacion-ia|vis-ia/i;
 
 // ── CLI parsing ───────────────────────────────────────────────────────────────
@@ -65,14 +66,14 @@ function parseArgs(argv) {
   const args = { _: [], flags: {} };
   for (let i = 0; i < argv.length; i++) {
     const tok = argv[i];
-    if (tok.startsWith("--")) {
-      const eq = tok.indexOf("=");
+    if (tok.startsWith('--')) {
+      const eq = tok.indexOf('=');
       if (eq !== -1) {
         args.flags[tok.slice(2, eq)] = tok.slice(eq + 1);
       } else {
         const key = tok.slice(2);
         const next = argv[i + 1];
-        if (next && !next.startsWith("--")) {
+        if (next && !next.startsWith('--')) {
           args.flags[key] = next;
           i++;
         } else {
@@ -90,7 +91,7 @@ const argv = parseArgs(process.argv.slice(2));
 const COMMAND = argv._[0];
 const FLAGS = argv.flags;
 const flag = (name, dflt) => (FLAGS[name] !== undefined ? FLAGS[name] : dflt);
-const has = (name) => FLAGS[name] === true || FLAGS[name] === "true";
+const has = (name) => FLAGS[name] === true || FLAGS[name] === 'true';
 
 // ── Small utils ───────────────────────────────────────────────────────────────
 function die(msg) {
@@ -101,7 +102,7 @@ function die(msg) {
 function parseItemList(value) {
   if (!value || value === true) return null;
   return String(value)
-    .split(",")
+    .split(',')
     .map((s) => parseInt(s.trim(), 10))
     .filter((n) => Number.isInteger(n) && n > 0);
 }
@@ -109,7 +110,7 @@ function parseItemList(value) {
 async function fetchJson(url) {
   const resp = await fetch(url);
   if (!resp.ok) {
-    const body = await resp.text().catch(() => "");
+    const body = await resp.text().catch(() => '');
     throw new Error(`GET ${url} → ${resp.status} ${body.slice(0, 200)}`);
   }
   return resp.json();
@@ -176,16 +177,16 @@ async function cleanHeroPhoto(inputAbsPath, outputAbsPath) {
 
 function loadManifest() {
   if (!fs.existsSync(MANIFEST_PATH)) return null;
-  return JSON.parse(fs.readFileSync(MANIFEST_PATH, "utf8"));
+  return JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
 }
 
 function saveManifest(manifest) {
   ensureDirs();
-  fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2) + "\n");
+  fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2) + '\n');
 }
 
 function getManifestItem(manifest, item) {
-  if (!manifest) die("No manifest. Run `prepare` first.");
+  if (!manifest) die('No manifest. Run `prepare` first.');
   const found = (manifest.items || []).find((it) => it.item === item);
   if (!found)
     die(`Item ${item} not in manifest. Run \`prepare\` for it first.`);
@@ -194,19 +195,29 @@ function getManifestItem(manifest, item) {
 
 // Fields the agent / upload step fill in — preserved across re-runs of `prepare`.
 const PRESERVED_FIELDS = [
-  "visualRead",
-  "promptUsed",
-  "status",
-  "approvedNodeId",
-  "exportedPath",
-  "uploadedFileId",
-  "uploadedFileName",
+  'visualRead',
+  'promptUsed',
+  'promptsByScene',
+  'status',
+  'approvedNodeId',
+  'exportedPath',
+  'uploadedFileId',
+  'uploadedFileName',
+  // Criterio de montaje, decidido mirando la foto real: cuántas piedras trae de
+  // verdad el producto y por qué la plantilla solitaria aplica o no. El catálogo
+  // no lo sabe (hay "Gema" que son parcelas de 25 piedras en bruto), así que se
+  // pierde para siempre si un `prepare --force` lo pisa.
+  'pair',
+  'piedras',
+  'notaMontaje',
+  // Qué imagen quedó en cada escena y por qué ganó entre sus variantes.
+  'rendersByScene',
 ];
 
 /** Catalog names can carry stray newlines/leading spaces ("\nRayito \nde Luz "). */
 function normalizeName(s) {
-  return String(s || "")
-    .replace(/\s+/g, " ")
+  return String(s || '')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
@@ -215,13 +226,13 @@ function measuresToDisplay(parsed) {
   const dims = [parsed.lengthMm, parsed.widthMm, parsed.depthMm].filter(
     (n) => n != null,
   );
-  return dims.length ? dims.join(" x ") : "";
+  return dims.length ? dims.join(' x ') : '';
 }
 
 /** Whether an item has enough spec to drive a dimension-faithful prompt. */
 function specCompleteness(t) {
   const m = parseMeasures(t.medidasValores);
-  const caratNum = parseFloat(String(t.peso ?? "").replace(",", "."));
+  const caratNum = parseFloat(String(t.peso ?? '').replace(',', '.'));
   const hasMeasures = m.lengthMm != null;
   const hasCarat = caratNum > 0;
   return { hasMeasures, hasCarat, usable: hasMeasures || hasCarat };
@@ -230,7 +241,7 @@ function specCompleteness(t) {
 /** Morralla / polished cabochon (a "stone", not a faceted gem). */
 function isMorralla(t) {
   return /morralla|cabuj[óo]n|cabochon|tumbled|pulid/i.test(
-    `${t.talla || ""} ${t.calidad || ""}`,
+    `${t.talla || ''} ${t.calidad || ''}`,
   );
 }
 
@@ -238,20 +249,20 @@ function isMorralla(t) {
 // prepare
 // ============================================================================
 async function cmdPrepare() {
-  const base = String(flag("base", DEFAULT_BASE)).replace(/\/$/, "");
-  const limit = parseInt(flag("limit", "5"), 10) || 5;
-  const explicitItems = parseItemList(flag("items"));
-  const scenes = String(flag("scenes", DEFAULT_SCENE))
-    .split(",")
+  const base = String(flag('base', DEFAULT_BASE)).replace(/\/$/, '');
+  const limit = parseInt(flag('limit', '5'), 10) || 5;
+  const explicitItems = parseItemList(flag('items'));
+  const scenes = String(flag('scenes', DEFAULT_SCENE))
+    .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
-  const metal = String(flag("metal", DEFAULT_METAL));
-  const includeJewelry = has("include-jewelry");
-  const requireMeasures = has("require-measures");
-  const includeMorralla = has("include-morralla");
-  const reset = has("reset");
-  const dryRun = has("dry-run");
-  const force = has("force");
+  const metal = String(flag('metal', DEFAULT_METAL));
+  const includeJewelry = has('include-jewelry');
+  const requireMeasures = has('require-measures');
+  const includeMorralla = has('include-morralla');
+  const reset = has('reset');
+  const dryRun = has('dry-run');
+  const force = has('force');
 
   console.log(`\n→ Source: ${base}`);
 
@@ -264,14 +275,14 @@ async function cmdPrepare() {
   // 1) Specs for the whole catalog.
   const treasureJson = await fetchJson(`${base}/api/get-treasure-sheets`);
   const treasure = treasureJson.treasure || treasureJson.data?.treasure || [];
-  if (!treasure.length) die("get-treasure-sheets returned no items.");
+  if (!treasure.length) die('get-treasure-sheets returned no items.');
   const byItem = new Map(treasure.map((t) => [Number(t.item), t]));
 
   // 2) Decide which items.
   let targetNumbers;
   if (explicitItems) {
     targetNumbers = explicitItems;
-    console.log(`→ Explicit items: ${targetNumbers.join(", ")}`);
+    console.log(`→ Explicit items: ${targetNumbers.join(', ')}`);
   } else {
     const newestJson = await fetchJson(
       `${base}/api/get-newest-products?limit=50`,
@@ -316,13 +327,13 @@ async function cmdPrepare() {
     }
     targetNumbers = picked;
     console.log(
-      `→ Next faceted ${includeJewelry ? "" : "loose "}gems with ${requireMeasures ? "measures" : "specs"} (limit ${limit}): ${targetNumbers.join(", ") || "(none)"}`,
+      `→ Next faceted ${includeJewelry ? '' : 'loose '}gems with ${requireMeasures ? 'measures' : 'specs'} (limit ${limit}): ${targetNumbers.join(', ') || '(none)'}`,
     );
     console.log(
       `  (${doneNums.size} already in manifest; skipped ${skips.done} done · ${skips.jewelry} jewelry · ${skips.morralla} morralla · ${skips.nospec} no-spec)`,
     );
   }
-  if (!targetNumbers.length) die("No matching items to prepare.");
+  if (!targetNumbers.length) die('No matching items to prepare.');
 
   const items = [];
   for (const num of targetNumbers) {
@@ -351,16 +362,16 @@ async function cmdPrepare() {
       name: im.name,
       type: im.type,
     }));
-    const hero = images.find((im) => im.type === "image") || null;
+    const hero = images.find((im) => im.type === 'image') || null;
     const noPhoto = !hero;
     const hasReferencialAlready = existingFiles.some((f) =>
-      REFERENCIAL_RE.test(f.name || ""),
+      REFERENCIAL_RE.test(f.name || ''),
     );
 
     const heroLocalPath = `./work/${num}/hero.jpg`;
-    const heroAbsPath = path.join(WORK_DIR, String(num), "hero.jpg");
+    const heroAbsPath = path.join(WORK_DIR, String(num), 'hero.jpg');
     const heroCleanLocalPath = `./work/${num}/hero-clean.jpg`;
-    const heroCleanAbsPath = path.join(WORK_DIR, String(num), "hero-clean.jpg");
+    const heroCleanAbsPath = path.join(WORK_DIR, String(num), 'hero-clean.jpg');
 
     // Download the hero bytes via the prod image proxy (no local OAuth needed).
     if (!noPhoto && !dryRun) {
@@ -371,6 +382,8 @@ async function cmdPrepare() {
       if (!imgResp.ok)
         throw new Error(`download hero ${hero.id} → ${imgResp.status}`);
       fs.writeFileSync(heroAbsPath, Buffer.from(await imgResp.arrayBuffer()));
+      if (transcodeHeicInPlace(heroAbsPath))
+        console.log(`    (hero HEIC → JPEG vía sips)`);
       // Cosmetic-only cleanup (white balance + white background + mild sharpen)
       // for the Pencil card reference image. visualRead still reads heroAbsPath.
       await cleanHeroPhoto(heroAbsPath, heroCleanAbsPath);
@@ -395,14 +408,14 @@ async function cmdPrepare() {
       metal,
       specs: specSpecs,
       productName: nombre,
-      visualRead: "__VISUAL_READ__",
+      visualRead: '__VISUAL_READ__',
     });
 
     const prev = prevByItem.get(num);
     const carried = {};
     if (prev && !force) {
       for (const f of PRESERVED_FIELDS) {
-        if (prev[f] !== undefined && prev[f] !== "" && prev[f] !== null)
+        if (prev[f] !== undefined && prev[f] !== '' && prev[f] !== null)
           carried[f] = prev[f];
       }
     }
@@ -410,16 +423,16 @@ async function cmdPrepare() {
     items.push({
       item: num,
       nombre,
-      categoria: t.categoria || "",
-      fechaIngreso: t.fechaIngreso || "",
+      categoria: t.categoria || '',
+      fechaIngreso: t.fechaIngreso || '',
       isJewelry: !!t.isJewelry,
-      estado: t.estado || "",
-      talla: t.talla || "",
-      color: t.color || "",
-      calidad: t.calidad || "",
+      estado: t.estado || '',
+      talla: t.talla || '',
+      color: t.color || '',
+      calidad: t.calidad || '',
       peso: t.peso,
-      medidas: t.medidas || "",
-      medidasValores: t.medidasValores || "",
+      medidas: t.medidas || '',
+      medidasValores: t.medidasValores || '',
       measuresParsed,
       measuresDisplay,
       realSizeCue,
@@ -429,8 +442,8 @@ async function cmdPrepare() {
       heroFileName: hero?.name || null,
       heroLocalPath,
       heroAbsPath,
-      heroCleanLocalPath: noPhoto ? "" : heroCleanLocalPath,
-      heroCleanAbsPath: noPhoto ? "" : heroCleanAbsPath,
+      heroCleanLocalPath: noPhoto ? '' : heroCleanLocalPath,
+      heroCleanAbsPath: noPhoto ? '' : heroCleanAbsPath,
       noPhoto,
       existingFiles,
       hasReferencialAlready,
@@ -438,22 +451,22 @@ async function cmdPrepare() {
       metal,
       promptTemplate,
       // agent-filled (carried over from a previous run when present):
-      visualRead: carried.visualRead || "",
-      promptUsed: carried.promptUsed || "",
-      status: carried.status || "pending",
-      approvedNodeId: carried.approvedNodeId || "",
-      exportedPath: carried.exportedPath || "",
-      uploadedFileId: carried.uploadedFileId || "",
-      uploadedFileName: carried.uploadedFileName || "",
+      visualRead: carried.visualRead || '',
+      promptUsed: carried.promptUsed || '',
+      status: carried.status || 'pending',
+      approvedNodeId: carried.approvedNodeId || '',
+      exportedPath: carried.exportedPath || '',
+      uploadedFileId: carried.uploadedFileId || '',
+      uploadedFileName: carried.uploadedFileName || '',
     });
 
     const tag = noPhoto
-      ? "NO PHOTO"
+      ? 'NO PHOTO'
       : hasReferencialAlready
-        ? "has referencial"
-        : "ok";
+        ? 'has referencial'
+        : 'ok';
     console.log(
-      `  • #${num} ${nombre} — ${t.talla || "?"} · ${t.peso || "?"}ct · ${measuresDisplay || "?"}mm · ${t.color || "?"} · ${t.calidad || "?"}  [${tag}]`,
+      `  • #${num} ${nombre} — ${t.talla || '?'} · ${t.peso || '?'}ct · ${measuresDisplay || '?'}mm · ${t.color || '?'} · ${t.calidad || '?'}  [${tag}]`,
     );
   }
 
@@ -487,30 +500,30 @@ async function cmdPrepare() {
 // prompt
 // ============================================================================
 async function cmdPrompt() {
-  const item = parseInt(flag("item"), 10);
-  if (!item) die("prompt requires --item <number>");
+  const item = parseInt(flag('item'), 10);
+  if (!item) die('prompt requires --item <number>');
   const manifest = loadManifest();
   const it = getManifestItem(manifest, item);
 
   // Reuse the stored visual read when --visual is omitted, so prompts can be
   // regenerated with an updated builder without re-reading every photo.
-  const visualFlag = flag("visual");
+  const visualFlag = flag('visual');
   const visualRead =
-    typeof visualFlag === "string" ? visualFlag : it.visualRead || "";
+    typeof visualFlag === 'string' ? visualFlag : it.visualRead || '';
   if (!visualRead) {
     console.warn(
-      "! No --visual and no stored visualRead — fidelity to the real stone depends on it.",
+      '! No --visual and no stored visualRead — fidelity to the real stone depends on it.',
     );
   }
-  const scene = String(flag("scene", it.scenes?.[0] || DEFAULT_SCENE));
-  const metal = String(flag("metal", it.metal || DEFAULT_METAL));
+  const scene = String(flag('scene', it.scenes?.[0] || DEFAULT_SCENE));
+  const metal = String(flag('metal', it.metal || DEFAULT_METAL));
   // --cut overrides a misleading catalog talla (e.g. a trapiche filed as "Corazón").
   const cut =
-    typeof flag("cut") === "string" ? flag("cut") : it.cutOverride || it.talla;
+    typeof flag('cut') === 'string' ? flag('cut') : it.cutOverride || it.talla;
   // PAR lots → render two matched stones (auto-detected, or --pair / --no-pair; stored flag persists).
   const autoPair =
-    it.pair === true || /\bpar\b/i.test(`${it.nombre || ""} ${it.talla || ""}`);
-  const pair = has("no-pair") ? false : has("pair") ? true : autoPair;
+    it.pair === true || /\bpar\b/i.test(`${it.nombre || ''} ${it.talla || ''}`);
+  const pair = has('no-pair') ? false : has('pair') ? true : autoPair;
 
   const prompt = buildVisualizerPrompt({
     scene,
@@ -518,7 +531,7 @@ async function cmdPrompt() {
     pair,
     specs: {
       cut,
-      measures: it.measuresDisplay || "",
+      measures: it.measuresDisplay || '',
       carats: it.peso,
       color: it.color,
       quality: it.calidad,
@@ -527,14 +540,14 @@ async function cmdPrompt() {
     visualRead,
   });
 
-  if (!has("dry-run")) {
+  if (!has('dry-run')) {
     if (visualRead) it.visualRead = visualRead;
     it.promptUsed = prompt;
     it.promptsByScene = it.promptsByScene || {};
     it.promptsByScene[scene] = prompt;
     it.pair = pair;
-    if (typeof flag("cut") === "string") it.cutOverride = flag("cut");
-    if (flag("scene")) it.scenes = [scene];
+    if (typeof flag('cut') === 'string') it.cutOverride = flag('cut');
+    if (flag('scene')) it.scenes = [scene];
     saveManifest(manifest);
   }
 
@@ -549,16 +562,16 @@ async function cmdPrompt() {
 // approve / reject
 // ============================================================================
 function cmdApprove() {
-  const item = parseInt(flag("item"), 10);
-  if (!item) die("approve requires --item <number>");
+  const item = parseInt(flag('item'), 10);
+  if (!item) die('approve requires --item <number>');
   const manifest = loadManifest();
   const it = getManifestItem(manifest, item);
 
-  it.status = "approved";
-  if (typeof flag("node") === "string") it.approvedNodeId = flag("node");
-  const exp = flag("export");
+  it.status = 'approved';
+  if (typeof flag('node') === 'string') it.approvedNodeId = flag('node');
+  const exp = flag('export');
   it.exportedPath =
-    typeof exp === "string"
+    typeof exp === 'string'
       ? exp
       : path.relative(REPO_ROOT, path.join(EXPORTS_DIR, `${item}.png`));
 
@@ -571,11 +584,11 @@ function cmdApprove() {
 }
 
 function cmdReject() {
-  const item = parseInt(flag("item"), 10);
-  if (!item) die("reject requires --item <number>");
+  const item = parseInt(flag('item'), 10);
+  if (!item) die('reject requires --item <number>');
   const manifest = loadManifest();
   const it = getManifestItem(manifest, item);
-  it.status = "rejected";
+  it.status = 'rejected';
   saveManifest(manifest);
   console.log(`✓ #${item} rejected`);
 }
@@ -589,12 +602,12 @@ function cmdReject() {
 async function postUploadToDrive(base, folderId, absPath, fileName) {
   const bytes = fs.readFileSync(absPath);
   const form = new FormData();
-  form.append("folderId", folderId);
-  form.append("fileName", fileName);
-  form.append("file", new Blob([bytes], { type: "image/png" }), fileName);
+  form.append('folderId', folderId);
+  form.append('fileName', fileName);
+  form.append('file', new Blob([bytes], { type: 'image/png' }), fileName);
 
   const resp = await fetch(`${base}/api/media-upload`, {
-    method: "POST",
+    method: 'POST',
     body: form,
   });
   const json = await resp.json().catch(() => ({}));
@@ -610,26 +623,26 @@ async function postUploadToDrive(base, folderId, absPath, fileName) {
 }
 
 async function cmdUpload() {
-  const base = String(flag("base", DEFAULT_BASE)).replace(/\/$/, "");
-  const onlyItems = parseItemList(flag("items"));
-  const dryRun = has("dry-run");
-  const force = has("force");
+  const base = String(flag('base', DEFAULT_BASE)).replace(/\/$/, '');
+  const onlyItems = parseItemList(flag('items'));
+  const dryRun = has('dry-run');
+  const force = has('force');
 
   const manifest = loadManifest();
-  if (!manifest) die("No manifest. Run `prepare` first.");
+  if (!manifest) die('No manifest. Run `prepare` first.');
 
-  let targets = manifest.items.filter((it) => it.status === "approved");
+  let targets = manifest.items.filter((it) => it.status === 'approved');
   if (onlyItems) targets = targets.filter((it) => onlyItems.includes(it.item));
-  if (!targets.length) die("No approved items to upload.");
+  if (!targets.length) die('No approved items to upload.');
 
   for (const it of targets) {
     const reasonSkip =
-      (it.uploadedFileId && !force && "already uploaded") ||
+      (it.uploadedFileId && !force && 'already uploaded') ||
       (it.hasReferencialAlready &&
         !force &&
-        "folder already has a referencial") ||
-      (!it.folderId && "missing folderId") ||
-      (!it.exportedPath && "missing exportedPath");
+        'folder already has a referencial') ||
+      (!it.folderId && 'missing folderId') ||
+      (!it.exportedPath && 'missing exportedPath');
     if (reasonSkip) {
       console.log(`  • #${it.item} skip — ${reasonSkip}`);
       continue;
@@ -678,7 +691,7 @@ async function cmdUpload() {
       console.log(
         `    order: hero-first=${heroStillFirst} render-last=${renderLast}`,
       );
-      console.log(`    [${names.join(", ")}]`);
+      console.log(`    [${names.join(', ')}]`);
       if (!heroStillFirst)
         console.warn(
           `    ! hero is no longer first for #${it.item} — check filenames`,
@@ -687,7 +700,7 @@ async function cmdUpload() {
       console.warn(`    (verify skipped: ${e.message})`);
     }
   }
-  console.log("");
+  console.log('');
 }
 
 // ============================================================================
@@ -695,26 +708,26 @@ async function cmdUpload() {
 // ============================================================================
 function cmdStatus() {
   const manifest = loadManifest();
-  if (!manifest) die("No manifest. Run `prepare` first.");
-  const onlyItems = parseItemList(flag("items"));
+  if (!manifest) die('No manifest. Run `prepare` first.');
+  const onlyItems = parseItemList(flag('items'));
   console.log(
     `\nManifest: ${manifest.items.length} items (from ${manifest.baseUrl})\n`,
   );
   for (const it of manifest.items) {
     if (onlyItems && !onlyItems.includes(it.item)) continue;
     const flags = [
-      it.noPhoto ? "NO-PHOTO" : "",
-      it.visualRead ? "read" : "",
-      it.exportedPath ? "exported" : "",
-      it.uploadedFileId ? "UPLOADED" : "",
+      it.noPhoto ? 'NO-PHOTO' : '',
+      it.visualRead ? 'read' : '',
+      it.exportedPath ? 'exported' : '',
+      it.uploadedFileId ? 'UPLOADED' : '',
     ]
       .filter(Boolean)
-      .join(" ");
+      .join(' ');
     console.log(
       `  #${it.item} ${String(it.status).padEnd(9)} ${it.nombre}  ${flags}`,
     );
   }
-  console.log("");
+  console.log('');
 }
 
 // ============================================================================
@@ -733,13 +746,15 @@ const run = COMMANDS[COMMAND];
 if (!run) {
   console.log(
     `\nUsage: node scripts/jewelry-visualizer.mjs <command> [flags]\n\n` +
-      `Commands: ${Object.keys(COMMANDS).join(", ")}\n` +
+      `Commands: ${Object.keys(COMMANDS).join(', ')}\n` +
       `See the header of this file for flags.\n`,
   );
   process.exit(COMMAND ? 1 : 0);
 }
 
-run().catch((e) => {
-  console.error("\n✖", e.stack || e.message);
+// Promise.resolve: not every command is async (`status` is plain sync), and
+// calling .catch on its undefined return blew up before it could print anything.
+Promise.resolve(run()).catch((e) => {
+  console.error('\n✖', e.stack || e.message);
   process.exit(1);
 });

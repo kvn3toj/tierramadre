@@ -9,9 +9,18 @@
  * positional drift can't silently mis-route an incoming cell.
  *
  * Field policy (user choice): ALL WRITABLE columns sync back. The guardrails:
- *   - Derived columns (costoBaseCOP, preponderancia, subLotes.unidades /
- *     totalCostoCOP) are NOT in the allowlist — a sheet edit must never
- *     overwrite a figure Convex computes.
+ *   - Derived columns (preponderancia, subLotes.unidades / totalCostoCOP) are
+ *     NOT in the allowlist — a sheet edit must never overwrite a figure Convex
+ *     computes.
+ *   - EXCEPTION (2026-07-23): inventory.precioFinalCOP moved OUT of "derived"
+ *     and INTO the allowlist. The price is a business decision, not a formula;
+ *     cost × 2.6 is only the seed for a new item. Pulling it stamps
+ *     `precioFinalManual: true` so the lote re-fan won't reprice the row.
+ *   - EXCEPTION (2026-07-24): inventory.costoBaseCOP (column L) is now
+ *     SHEET-OWNED too. The item cost is typed by a human into the sheet and
+ *     pulled here; the preponderancia-based derivation is fully deactivated, so
+ *     nothing in Convex recomputes or overwrites it. preponderancia stays
+ *     excluded (kept for the BR-2 sum validation but inert w.r.t. cost).
  *   - Denormalized FK-name columns (lots.providerNombre, sales.clientNombre)
  *     are NOT pulled — relationship changes go through the app so the FK id
  *     (providerId/clientId) is never silently re-pointed.
@@ -70,14 +79,37 @@ const INVENTORY: TableSpec = {
   calidad: { coerce: 'str' },
   cantidad: { coerce: 'num' },
   talla: { coerce: 'str' },
+  tallaAnillo: { coerce: 'str' },
   medidas: { coerce: 'str' },
   medidasValores: { coerce: 'str' },
   categoria: { coerce: 'str' },
   // precioCOP (legacy "Precio COP" / column L) was retired from the SOT mirror
   // on 2026-05-29 — no sheet column means nothing to pull. The Convex field is
   // kept app-only; see api/_lib/fotosintesis-inventory-columns.js.
-  precioEmbajadorCOP: { coerce: 'num' },
-  precioConscienteCOP: { coerce: 'num' },
+  //
+  // PRICE REFACTOR (2026-07-21): the tier fields (precioEmbajadorCOP col M /
+  // precioConscienteCOP col N) collapsed into one price, precioFinalCOP (col M),
+  // originally DERIVED (costoBaseCOP × 2.6) and therefore excluded from here.
+  //
+  // PRICE OWNERSHIP CHANGE (2026-07-23): precioFinalCOP is now SHEET-OWNED. The
+  // business keeps an official price list that is NOT a fixed multiple of cost
+  // (the sheet's own "Caja: precio venta" column AU spans 0.74×–11.76× cost, and
+  // src/data/vocabularies.ts TM_MARKUP_DEFAULT = 3.0 is a second, documented
+  // company multiplier). Column M is therefore writable: a human sets the price
+  // in the sheet and it syncs back here. costoBaseCOP × 2.6 survives only as the
+  // SEED for a brand-new item (convex/_lib/pricing.ts#computePrecioFinal).
+  //
+  // The pull stamps `precioFinalManual: true` alongside the value (see
+  // planRowPatch) so the lote re-fan in lotItems.ts knows not to reprice the row
+  // back to cost × 2.6.
+  precioFinalCOP: { coerce: 'num' },
+  // COST OWNERSHIP CHANGE (2026-07-24): costoBaseCOP (column L) is SHEET-OWNED.
+  // A human types the item cost into the sheet and it syncs back here. The old
+  // preponderancia-based derivation (lot.costoTotalCOP × preponderancia%) is
+  // fully deactivated, so nothing in Convex re-derives or overwrites this value.
+  // It is still the tax and commission base — but that base is now maintained by
+  // hand in the sheet, not computed from the lote.
+  costoBaseCOP: { coerce: 'num' },
   ubicacion: { coerce: 'str' },
   asesor: { coerce: 'str' },
   estado: { coerce: 'estadoInv' },
@@ -86,7 +118,24 @@ const INVENTORY: TableSpec = {
   caja: { coerce: 'str' },
   asesorActual: { coerce: 'str' },
   estadoAsesor: { coerce: 'str' },
-  mostrarEnCatalogo: { coerce: 'bool' },
+  // EXCLUIDA (2026-07-30): mostrarEnCatalogo es de CONVEX, no de la hoja.
+  //
+  // Estuvo en el allowlist y por eso el pull la pisaba con la columna Y en cada
+  // sync. Como la publicación se administra desde la app y la hoja sólo se
+  // entera vía push, las dos caras se separaron: Convex tenía 416 piezas
+  // publicadas y la hoja decía 131. El siguiente sync habría ocultado 285
+  // piezas de la vitrina de cara al cliente.
+  //
+  // El problema de fondo es que un pull masivo lee ESTADO, no intención: no
+  // puede distinguir "alguien puso FALSE a propósito" de "nunca se escribió".
+  // Con 304 FALSE y 78 vacías, ese desempate no existe.
+  //
+  // Sigue siendo columna Y del espejo y el push la escribe (no lleva
+  // `preserve`), así que la dirección queda en un solo sentido: Convex → hoja.
+  // Si algún día se quiere publicar DESDE el SOT, no es cuestión de devolverla
+  // acá: hace falta un canal de eventos (Apps Script onEdit → /sync/foto) que
+  // mande la celda tocada, no otro sincronizador de estado que vuelva a pelear
+  // por el mismo booleano.
   procedencia: { coerce: 'str' },
   observacion: { coerce: 'str' },
   rendimientoEsperado: { coerce: 'num' },
@@ -110,7 +159,28 @@ const INVENTORY: TableSpec = {
     coerce: 'str',
     flag: 'loteId — reasignar lote en la app (membresía + costo)',
   },
-  // EXCLUDED (derived): costoBaseCOP, preponderancia.
+  // EXCLUDED (derived): preponderancia (kept for the BR-2 sum validation but
+  // inert w.r.t. cost — costoBaseCOP is now sheet-owned, see above).
+  // ── Bloque hoja-primero (AQ–BE), incorporado el 2026-07-30 ──
+  // Columnas que ya existían en el SOT y Convex no veía: el rango de lectura se
+  // derivaba del largo de FOTO_INVENTARIO_COLUMNS, que paraba en AP. Son 100%
+  // sheet-owned (`preserve: true` en el espejo posicional), así que entran acá
+  // sólo para BAJAR. La app no las escribe nunca.
+  pesoGr: { coerce: 'num' },
+  costoLoteCOP: { coerce: 'num' },
+  precioObjetivoCOP: { coerce: 'num' },
+  cajaPrecioVentaCOP: { coerce: 'num' },
+  cajaValorPagadoCOP: { coerce: 'num' },
+  cajaSaldoCOP: { coerce: 'num' },
+  cajaComprador: { coerce: 'str' },
+  cajaEstadoContable: { coerce: 'str' },
+  subLote: { coerce: 'str' },
+  productoUrl: { coerce: 'str' },
+  carpetaFotosUrl: { coerce: 'str' },
+  animaNotas: { coerce: 'str' },
+  fuentes: { coerce: 'str' },
+  notasConflictos: { coerce: 'str' },
+  // EXCLUIDA: _sinUso2 (AS) — hueco posicional sin encabezado, no es un campo.
 };
 
 const PROVIDERS: TableSpec = {
@@ -127,7 +197,9 @@ const PROVIDERS: TableSpec = {
 const LOTS: TableSpec = {
   fechaRecepcion: { coerce: 'str' },
   pesoTotalQuilates: { coerce: 'num' },
-  // AUTO: re-fan item costoBaseCOP via lots.update (never patched directly).
+  // AUTO: route costoTotalCOP through lots.update (patches the lote row; never
+  // patched here directly). Item costoBaseCOP is sheet-owned since 2026-07-24,
+  // so this no longer re-fans any member item's cost.
   costoTotalCOP: { coerce: 'num', sideEffect: 'refanLot' },
   // FLAG: capacity ceiling — no safe auto-fix.
   unidadesDeclaradas: {
@@ -148,6 +220,8 @@ const LOTS: TableSpec = {
   sede: { coerce: 'str' },
   operadorNombre: { coerce: 'str' },
   operadorRol: { coerce: 'str' },
+  // Catalog grouping: sell the whole lote as one card. Editable from the sheet.
+  mostrarComoLote: { coerce: 'bool' },
   // EXCLUDED: loteId (key), providerNombre (denormalized FK).
 };
 
@@ -202,6 +276,8 @@ const SUBLOTES: TableSpec = {
   },
   estado: { coerce: 'estadoSub' },
   notas: { coerce: 'str' },
+  // Catalog grouping: show the sublote as one card. Editable from the sheet.
+  mostrarComoLote: { coerce: 'bool' },
   // EXCLUDED: subLoteId (key), unidades / totalCostoCOP (derived), createdAt.
 };
 
@@ -389,7 +465,10 @@ export function planRowPatch(
     }
 
     if (fs.sideEffect === 'refanLot') {
-      // costoTotalCOP is owned by lots.update (patch + re-fan); never patch here.
+      // costoTotalCOP is owned by lots.update (patches the lote row); never patch
+      // here. It no longer re-fans item cost (costoBaseCOP is sheet-owned since
+      // 2026-07-24), but still routes through lots.update to keep the lote total
+      // Convex-authoritative and audited.
       // This is the sibling of the sales money policy: lots.costoTotalCOP stays
       // Convex-authoritative via this side-effect, while sales.totalCOP /
       // comisionCOP stay authoritative via allowlist EXCLUSION (see SALES spec).
@@ -402,6 +481,13 @@ export function planRowPatch(
 
     if (sameValue(value, existing[schemaKey])) continue; // diff-skip
     patch[schemaKey] = value;
+    // The price is sheet-owned (2026-07-23). Stamp the override flag alongside
+    // the value so the lote re-fan in lotItems.ts leaves this row's price alone
+    // instead of resetting it to costoBaseCOP × 2.6. Only a real change reaches
+    // here (diff-skip above), so an untouched row is never flagged manual.
+    if (table === 'inventory' && schemaKey === 'precioFinalCOP') {
+      patch.precioFinalManual = true;
+    }
     if (fs.flag) flags.push(fs.flag);
   }
 

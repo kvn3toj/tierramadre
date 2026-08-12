@@ -12,7 +12,7 @@ Colombian Emeralds Catalog & Sales Platform - "Esmeraldas con ADN de Paz"
 - **Routing**: React Router 7.9
 - **Animations**: Framer Motion 12
 - **PDF Generation**: jsPDF + html2canvas
-- **Storage**: Google Drive (media), Google Sheets (data), LocalStorage (cache)
+- **Storage**: Convex (backend/data), Google Drive (media), Google Sheets (legacy data source, migrating to Convex), LocalStorage (cache)
 - **AI Integration**: Groq API
 - **Email**: Resend
 - **Deployment**: Vercel (serverless)
@@ -20,32 +20,50 @@ Colombian Emeralds Catalog & Sales Platform - "Esmeraldas con ADN de Paz"
 ## Project Structure
 ```
 src/
-├── components/       # 27 feature modules
-├── contexts/         # 11 context providers
-├── hooks/           # 59 custom hooks
-├── pages/           # 4 page components
+├── components/       # feature modules (accounts, admin, ambassador, cotizacion,
+│                     #   esmereogenesis, redesign, treasure, vitrina, etc.)
+├── contexts/         # context providers (Auth, GoogleAuth, Theme, Language,
+│                     #   PriceShare, Tracking, LiquidGlass, ScreenProtection,
+│                     #   Currency, GlobalLoading, Notification, AppNavigator,
+│                     #   AppShellProviders, EsmereoTheme, Esmereogenesis, NetworkStatus)
+├── hooks/           # custom hooks (~80, see src/hooks/ for the full list)
+├── pages/           # page components, organized into subdirs
+│                     #   (admin/, ambassadors/, cuentas/, collection/, esmereogenesis/,
+│                     #   mi-perfil/, public/, staff/, treasure/, valuation/, vitrina/)
 ├── data/            # Static data files
-├── design-system/   # MUI theme tokens
+├── design-system/   # MUI theme tokens + DS3 ("Quiet Emerald") convergence layer
 ├── types/           # TypeScript interfaces
 ├── utils/           # Utility modules
 ├── locales/         # i18n (ES/EN)
 └── assets/          # Static assets
 
-api/                 # 27 Vercel serverless functions
+convex/              # Convex backend (queries, mutations, actions, crons, HTTP)
+                      #   see "Convex Backend" section below
+
+api/                 # Vercel serverless functions (mix of .js and .ts)
 ├── _lib/            # Shared API utilities
-└── [endpoint].js    # API endpoints
+└── [endpoint].{js,ts} # API endpoints — see api/ for the current list
 ```
+
+> Directory contents change often; treat the above as a map of where things live, not an exact inventory. Run `ls src/components`, `ls src/hooks`, `ls convex`, `ls api` for current counts.
 
 ## Commands
 ```bash
-npm run dev           # Development server (localhost:3000)
-npm run dev:api       # Dev + Vercel Functions locally
-npm run build         # Production build (auto-updates version)
-npm run preview       # Preview production build
+npm run dev            # Development server (localhost:3000)
+npm run dev:api        # Dev + Vercel Functions locally
+npm run build          # Production build (auto-updates version)
+npm run build:vercel   # Vercel build (version + thumbnails seed + build-app script)
+npm run preview        # Preview production build
 
-# Utilities
-npm run fix:inventory        # Dry-run inventory consistency check
-npm run fix:inventory:apply  # Apply inventory fixes
+# Quality
+npm run lint            # tsc --noEmit (app + api/tsconfig.json)
+npm run test:unit       # Vitest unit tests
+npm run test:e2e        # Playwright e2e tests
+npm run test:e2e:ui     # Playwright e2e tests, UI mode
+
+# Convex migration (Sheets → Convex)
+npm run migrate:convex       # Run the Sheets→Convex migration
+npm run migrate:convex:dry   # Dry-run, all tables, no writes
 ```
 
 ## Key Features
@@ -79,44 +97,27 @@ npm run fix:inventory:apply  # Apply inventory fixes
 - Image proxy with auto-retry
 - Video GIF preview generation
 
-## API Endpoints (27)
+### Esmereogenesis
+- Separate feature area under `src/pages/esmereogenesis/`, `src/components/esmereogenesis/`, `src/contexts/EsmereogenesisContext.tsx`, with its own theming context (`EsmereoThemeContext`)
+- Own AI/data surface in Convex (`fotosintesisAi.ts`, `fotoSync.ts`) and API (`fotosintesis-ai.ts`)
 
-**Core Data:**
-- `get-treasure-sheets` - Product inventory
-- `get-batch-thumbnails` - Product thumbnails
-- `get-asesores` - Ambassador list
-- `get-newest-products` - New products
-- `get-collection` - Collection data
+### GoHighLevel (GHL) Integration
+- CRM/marketing integration: `convex/ghl.ts`, `api/ghl-*.ts` endpoints, plus a root-level `GHL/` folder of specs, audits, and flow docs (funnel, Supabase, WhatsApp/Meta, web-madre integration)
+- Treat as a distinct subsystem from the catalog/quotation core — consult `GHL/00-INDICE-Y-MAPA.md` before making changes in this area
 
-**Media:**
-- `serve-drive-image` - Proxy image delivery
-- `get-drive-images` - Product media list
-- `media-upload` - Upload to Drive
-- `fast-upload` - Fast upload with GIF generation
-- `cloudinary-upload` - Image processing for manual uploads only
-- `ambassador-photo` - Ambassador photo management
-- `og-product` - Open Graph image generation
-- `create-product-folders` - Drive folder creation
+## API Endpoints
 
-**Quotations:**
-- `cotizacion-save` - Save quotations
-- `cotizacion-reports` - Client validation reports
-- `provider-quotations` - Provider CRUD
-- `quotation-requests` - Admin requests
+Vercel serverless functions live in `api/` (a mix of `.js` and `.ts`, ~40+ files and growing). Rather than enumerate them here (they drift constantly), group by concern and check `api/` directly for the current list:
 
-**Users & Analytics:**
-- `validate` - User validation
-- `invitations` - Guest invitations
-- `user-prefs` - User preferences
-- `product-views` - View tracking
-- `product-requests` - Asesor requests
-- `feedback` - Feedback management
+- **Core Data**: product inventory, thumbnails, ambassador list, newest products, collection/table reads (`get-treasure-sheets`, `get-batch-thumbnails`, `get-asesores`, `get-newest-products`, `get-collection`, `get-table*`, `get-inventory-rows`, `admin-table-update`, `admin-product-update`)
+- **Media**: Drive image proxy/listing, uploads, jewelry preview, OG images, folder creation (`serve-drive-image`, `get-drive-images`, `media-upload`, `fast-upload`, `cloudinary-upload`, `ambassador-photo`, `og-product`, `create-product-folders`, `generate-jewelry-preview`, `serve-drive-doc`)
+- **Quotations**: save/report/deck rendering, provider & admin requests (`cotizacion-save`, `cotizacion-reports`, `cotizacion-deck`, `cotizacion-lamina`, `provider-quotations`, `quotation-requests`)
+- **GoHighLevel (GHL) integration**: `ghl-create-order`, `ghl-search-products`, `ghl-sync-contact` — see "GoHighLevel Integration" note below
+- **Fotosíntesis / AI**: `fotosintesis-ai`
+- **Users & Analytics**: `validate`, `invitations`, `user-prefs`, `product-views`, `product-requests`, `feedback`, `vitrina`, `vitrina-select`
+- **System**: `health`, `send-email`, `drive-diagnostics`, `drive-cleanup`, `mp-webhook`
 
-**System:**
-- `health` - Health check
-- `send-email` - Email notifications
-- `drive-diagnostics` - Drive troubleshooting
-- `drive-cleanup` - Folder cleanup
+A growing subset now read/write through Convex (`convex/`) instead of Google Sheets directly; the migration is in progress, not complete — see "Convex Backend" below.
 
 ## Environment Variables
 
@@ -152,6 +153,9 @@ import { emeraldCore, goldAccent, emeraldAlpha, cssTransition, blurValues } from
 - Legacy compat: `src/design-system/tokens/legacy-compat.ts` (preserves `brand`, `lightTokens`, `darkTokens`)
 - Color utilities: `emeraldAlpha()`, `whiteAlpha()`, `blackAlpha()`, `goldAlpha()` from `utils/colorUtils`
 - **Do NOT** create a `src/design-system.ts` file — it shadows the barrel (module resolution: file > directory)
+
+### DS3 ("Quiet Emerald") convergence — in progress
+`src/design-system/v3.ts` is a composite layer (`ds3`, `getDS3`) that binds the canonical `quiet-emerald` tokens to shell/navigation/scroll foundations — it composes existing tokens, it does not fork them. This is an **active migration**: most recent commits (`feat(ds3): Phase 2 slice N — ...`) are converging existing components (Button, Card, Badge, MetricCard, TextField, Field, SegmentedControl, Sheet, TabBar) onto DS3. Spec lives at `DESIGN-SYSTEM-V3.md` (project root) — read it before touching design-system files or doing large component sweeps, since older components may still be pre-DS3.
 
 ## Development Guidelines
 
@@ -210,6 +214,18 @@ products/
 - Exponential backoff (1s, 2s, 4s)
 - Cache-busting on retries
 
+## Convex Backend
+
+`convex/` is a substantial and growing backend, not an afterthought — it sits alongside (and is progressively replacing) the Google Sheets data source. Root `convex.json` configures the deployment. Key files:
+
+- **Domain data**: `products.ts`, `lots.ts`, `lotItems.ts`, `subLotes.ts`, `sequences.ts`, `clients.ts`, `sales.ts`, `commissions.ts`, `ambassadors.ts`, `asesorMovements.ts`, `providers.ts`, `vitrinas.ts`, `productViews.ts`, `invitations.ts`
+- **Schema**: `schema.ts`
+- **Ops/infra**: `adminOps.ts`, `crons.ts` (scheduled jobs), `http.ts` (HTTP actions), `migrations.ts`
+- **AI/media**: `fotoSync.ts`, `fotosintesisAi.ts`
+- **GoHighLevel (GHL) integration**: `ghl.ts` — see below
+
+Use `npm run migrate:convex:dry` / `npm run migrate:convex` (backed by `scripts/migrate-sheets-to-convex.ts`) to move data from Google Sheets into Convex table-by-table. Some `api/` endpoints already read/write Convex directly (see "API Endpoints" above); others still hit Sheets — check the individual endpoint before assuming which store it uses.
+
 ## Anti-Blinking Best Practices (CRITICAL)
 
 When working with images, follow these rules to prevent flickering:
@@ -264,7 +280,7 @@ useEffect(() => {
 - `ProgressiveImage.tsx` - Retry logic, unique keys, LQIP
 - `MediaGallery.tsx` - Image preloading
 
-## Context Providers (11)
+## Context Providers
 1. **AuthContext** - Authentication & roles
 2. **GoogleAuthContext** - Google OAuth
 3. **ThemeContext** - Light/dark theme
@@ -276,6 +292,13 @@ useEffect(() => {
 9. **CurrencyContext** - USD multiplier (x2/x3/x4) & currency toggle
 10. **GlobalLoadingContext** - App-wide loading states
 11. **NotificationContext** - Toast/notification system
+12. **AppNavigatorContext** - App-level navigation state
+13. **AppShellProviders** - Composes the app shell's provider tree
+14. **EsmereoThemeContext** - Esmereogenesis-specific theming
+15. **EsmereogenesisContext** - Esmereogenesis feature state
+16. **NetworkStatusContext** - Online/offline detection
+
+(Check `src/contexts/` directly — this list grows; treat it as a map, not a fixed count.)
 
 ## Part of CoomUnity Universe
 Built with the CoomUnity agent ecosystem:

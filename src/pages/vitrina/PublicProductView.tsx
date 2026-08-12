@@ -16,6 +16,8 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import type { ResaleOffer } from "../../utils/productOffer";
+import ResaleBadge from "../../components/treasure/ResaleBadge";
 import {
   Box,
   Button,
@@ -38,9 +40,10 @@ import {
   RelatoBlock,
   TrustCard,
 } from "../treasure/ProductDetail/gemSheet/GemSheetParts";
+import PrecioEspecialBadge from "../../components/treasure/PrecioEspecialBadge";
 import { useThemeMode } from "../../contexts/ThemeContext";
 import { getQuietEmerald, qeFont } from "../../design-system";
-import { formatCarats } from "../../utils/formatting";
+import { formatWeightLabel } from "../../utils/formatting";
 import { useTRM } from "../../hooks/useTRM";
 import { VitrinaPricing, formatVitrinaPrice } from "../../utils/vitrinaPrice";
 
@@ -65,6 +68,13 @@ interface PublicProductViewProps {
   contactId?: string;
   /** When provided, shows a back button (inside a multi-product vitrina). */
   onBack?: () => void;
+  /**
+   * Present when the piece belongs to an ambassador who has offered it for
+   * resale. Changes two things the client must not get wrong: the piece is
+   * labelled as theirs, and the CTA is Tierra Mädre brokering — never the
+   * ambassador directly.
+   */
+  resale?: ResaleOffer;
 }
 
 export function PublicProductView({
@@ -73,6 +83,7 @@ export function PublicProductView({
   senderPhone,
   contactId,
   onBack,
+  resale,
 }: PublicProductViewProps) {
   const { mode } = useThemeMode();
   const qe = getQuietEmerald(mode);
@@ -97,9 +108,11 @@ export function PublicProductView({
   const specLine = useMemo(
     () =>
       [
-        typeof product.peso === "number"
-          ? `${formatCarats(product.peso)} ct`
-          : "",
+        // 'carats' so a joya never puts its metal here: SpecGroups renders
+        // a "Tipo" row with the same value further down the page
+        // (GemSheetParts.tsx), and this line previously showed a weight or
+        // nothing — never a metal name.
+        formatWeightLabel(product, { jewelryPrefers: 'carats' }),
         product.talla,
         product.procedencia || product.mina,
       ]
@@ -191,7 +204,11 @@ export function PublicProductView({
 
     const shareUrl = typeof window !== "undefined" ? window.location.href : "";
     const priceLine = priceLabel ? ` — ${priceLabel}` : "";
-    const text = `Hola 💚 Me interesa esta pieza de Tierra Mädre:\n\n${displayName}${priceLine}\n\n${shareUrl}`;
+    // En reventa el mensaje nombra al dueño, para que quien conteste sepa de
+    // entrada que está corredando y con quién.
+    const text = resale
+      ? `Hola 💚 Me interesa esta pieza de la colección de ${resale.asesorName}:\n\n${displayName}${priceLine}\n\n${shareUrl}`
+      : `Hola 💚 Me interesa esta pieza de Tierra Mädre:\n\n${displayName}${priceLine}\n\n${shareUrl}`;
     window.open(
       `https://wa.me/${senderPhone}?text=${encodeURIComponent(text)}`,
       "_blank",
@@ -239,6 +256,13 @@ export function PublicProductView({
       >
         {displayName}
       </Typography>
+      {/* Procedencia antes que la ficha técnica: el cliente tiene que saber
+          de quién es la pieza antes de enamorarse del peso y el color. */}
+      {resale && (
+        <Box sx={{ mt: "10px" }}>
+          <ResaleBadge resale={resale} />
+        </Box>
+      )}
       {specLine && (
         <Typography
           sx={{
@@ -280,6 +304,14 @@ export function PublicProductView({
       >
         {priceLabel}
       </Typography>
+      {/* La promoción vive PEGADA al precio: es lo que la califica. Aquí se
+          muestra completa (etiqueta + vigencia legible), no en su forma
+          compacta de tarjeta — la ficha sí tiene el ancho para decirlo. */}
+      {product.precioEspecial && (
+        <Box sx={{ mt: "10px" }}>
+          <PrecioEspecialBadge precioEspecial={product.precioEspecial} />
+        </Box>
+      )}
     </Box>
   ) : null;
 

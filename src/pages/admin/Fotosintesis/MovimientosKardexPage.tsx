@@ -58,6 +58,7 @@ import { FotoTopbar, FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
 import { useAsesores } from '../../../hooks/useAsesores';
 import { matchesAsesorName } from '../../../utils/asesorNameUtils';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 import { MovimientoKardexPreview } from './components/MovimientoKardexPreview';
 import { resolveItemThumbnail } from './utils/resolveThumbnail';
 import { exportAndUploadMovimientoKardexPdf } from './exportMovimientoKardexPdf';
@@ -138,6 +139,9 @@ export default function MovimientosKardexPage() {
   // pre-fills row 1 with this item once its candidate data resolves — same
   // "enrich a deep-linked stub" pattern VentaPage.tsx uses for the same param.
   const seedItemId = searchParams.get('itemId')?.trim() || null;
+  // Read once per render — every Convex query on this page is internal-only
+  // (F7 lockdown) and requires proof of a staff session.
+  const sessionToken = readFreshSessionToken() ?? undefined;
 
   const [mode, setMode] = useState<Mode>('entrega');
   const [asesorNombre, setAsesorNombre] = useState('');
@@ -178,13 +182,14 @@ export default function MovimientosKardexPage() {
   // typed text) rather than one reactive query per row.
   const disponibles = useConvexQuery(
     convexApi.products.list,
-    convexReady && mode === 'entrega' ? { estado: 'DISPONIBLE' } : 'skip',
+    convexReady && mode === 'entrega'
+      ? { estado: 'DISPONIBLE', sessionToken }
+      : 'skip',
   ) as
     | Array<{
         itemId: string;
         nombre: string;
-        precioEmbajadorCOP?: number;
-        precioConscienteCOP?: number;
+        precioFinalCOP?: number;
         precioCOP?: number;
       }>
     | undefined;
@@ -199,7 +204,7 @@ export default function MovimientosKardexPage() {
   const asesorMovementHistory = useConvexQuery(
     convexApi.asesorMovements.listByAsesor,
     convexReady && mode === 'devolucion' && asesorTrimmed
-      ? { asesorNombre: asesorTrimmed, limit: 300 }
+      ? { asesorNombre: asesorTrimmed, limit: 300, sessionToken }
       : 'skip',
   ) as
     | Array<{
@@ -213,25 +218,27 @@ export default function MovimientosKardexPage() {
   // internal asesor OR an external comercializador's consignment.
   const enAsesor = useConvexQuery(
     convexApi.products.list,
-    convexReady && mode === 'devolucion' ? { estado: 'ASESOR' } : 'skip',
+    convexReady && mode === 'devolucion'
+      ? { estado: 'ASESOR', sessionToken }
+      : 'skip',
   ) as
     | Array<{
         itemId: string;
         nombre: string;
-        precioEmbajadorCOP?: number;
-        precioConscienteCOP?: number;
+        precioFinalCOP?: number;
         precioCOP?: number;
       }>
     | undefined;
   const enConsignacion = useConvexQuery(
     convexApi.products.list,
-    convexReady && mode === 'devolucion' ? { estado: 'CONSIGNACION' } : 'skip',
+    convexReady && mode === 'devolucion'
+      ? { estado: 'CONSIGNACION', sessionToken }
+      : 'skip',
   ) as
     | Array<{
         itemId: string;
         nombre: string;
-        precioEmbajadorCOP?: number;
-        precioConscienteCOP?: number;
+        precioFinalCOP?: number;
         precioCOP?: number;
       }>
     | undefined;
@@ -256,8 +263,7 @@ export default function MovimientosKardexPage() {
       return (disponibles ?? []).map((p) => ({
         itemId: p.itemId,
         nombre: p.nombre,
-        precioSugerido:
-          p.precioEmbajadorCOP ?? p.precioConscienteCOP ?? p.precioCOP,
+        precioSugerido: p.precioFinalCOP ?? p.precioCOP,
       }));
     }
     return [...(enAsesor ?? []), ...(enConsignacion ?? [])]
@@ -265,8 +271,7 @@ export default function MovimientosKardexPage() {
       .map((p) => ({
         itemId: p.itemId,
         nombre: p.nombre,
-        precioSugerido:
-          p.precioEmbajadorCOP ?? p.precioConscienteCOP ?? p.precioCOP,
+        precioSugerido: p.precioFinalCOP ?? p.precioCOP,
       }));
   }, [mode, disponibles, enAsesor, enConsignacion, currentlyHeldItemIds]);
 
@@ -298,7 +303,7 @@ export default function MovimientosKardexPage() {
   const kardexEventRows = useConvexQuery(
     convexApi.asesorMovements.listByKardexEventId,
     convexReady && activeKardexEventId
-      ? { kardexEventId: activeKardexEventId }
+      ? { kardexEventId: activeKardexEventId, sessionToken }
       : 'skip',
   ) as
     | Array<{
@@ -413,11 +418,15 @@ export default function MovimientosKardexPage() {
 
   const total = useMemo(
     () =>
+      // SOT v3: `precio` is seeded from precioFinalCOP, which is the price of
+      // the WHOLE item (all its stones) — not a per-unit price. So the line
+      // total IS the price; multiplying by `cantidad` double-counted. `cantidad`
+      // is still captured and persisted on the movement as a record of how many
+      // pieces changed hands, but it is not a price multiplier.
       rows.reduce((sum, r) => {
         const precio = Number(r.precio);
         if (!Number.isFinite(precio) || precio <= 0) return sum;
-        const cantidad = r.cantidad ? Number(r.cantidad) : 1;
-        return sum + precio * (Number.isFinite(cantidad) ? cantidad : 1);
+        return sum + precio;
       }, 0),
     [rows],
   );

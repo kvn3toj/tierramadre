@@ -124,6 +124,9 @@ export {
   bottomBarClearance,
 } from './mixins/scrollMixins';
 
+// Touch-target mixins (grow the tap area, not the painted control)
+export { hitSlop } from './mixins/touchMixins';
+
 // CSS Transition helpers & Microinteraction tokens
 export { cssTransition, microinteraction } from './tokens/motion';
 
@@ -195,9 +198,7 @@ export {
   studioColors,
   studioGradients,
   studioShadows,
-  studioCardStyles,
   animation,
-  disabledButton,
 } from './tokens/legacy-compat';
 
 // =============================================================================
@@ -249,6 +250,51 @@ export {
   type CardFooterProps,
 } from './components/Card';
 
+// Badge — the ONE status/label chip (dot/icon + label, never color-only).
+export { Badge, type BadgeProps, type BadgeTone } from './components/Badge';
+
+// MetricCard — the ONE stat tile (Card + Badge composition).
+export { MetricCard, type MetricCardProps } from './components/MetricCard';
+
+// TextField — the ONE text input.
+export {
+  TextField,
+  type TextFieldProps,
+  type TextFieldSize,
+} from './components/TextField';
+
+// Field — label[for] + help + error wrapper for non-self-labeled controls.
+export { Field, type FieldProps } from './components/Field';
+
+// SegmentedControl — the ONE bounded exclusive-choice switch.
+export {
+  SegmentedControl,
+  type SegmentedControlProps,
+  type SegmentedOption,
+} from './components/SegmentedControl';
+
+// Sheet — the ONE overlay (desktop modal / mobile bottom-sheet split).
+export { Sheet, type SheetProps } from './components/Sheet';
+
+// EmptyState — the ONE "nothing here" shell.
+export { EmptyState, type EmptyStateProps } from './components/EmptyState';
+
+// ErrorState — the ONE "something broke" shell.
+export { ErrorState, type ErrorStateProps } from './components/ErrorState';
+
+// Skeleton — the ONE loading placeholder.
+export { Skeleton, type SkeletonProps } from './components/Skeleton';
+
+// FilterSheet — the ONE filter overlay.
+export { FilterSheet, type FilterSheetProps } from './components/FilterSheet';
+
+// PieceCard — the ONE catalog piece card (well + serif name + mono spec/price + Nº).
+export {
+  PieceCard,
+  type PieceCardProps,
+  type PieceCardVariant,
+} from './components/PieceCard';
+
 // Layout
 export {
   Stack,
@@ -265,3 +311,19 @@ export {
   type StackJustify,
   type ContainerMaxWidth,
 } from './components/Layout';
+
+// TabBar — the ONE unified bottom navigation (DS v3). Storefront + Fotosíntesis
+// + provider all render this component; only slots + theme differ (see
+// src/components/navigation/tabBarConfig.ts).
+export { TabBar } from './components/TabBar/TabBar';
+export type {
+  TabBarProps,
+  TabSlot,
+  TabBarTheme,
+} from './components/TabBar/TabBar';
+
+// =============================================================================
+// DS v3 COMPOSITE — one object, the whole system (theme-as-data)
+// =============================================================================
+export { ds3, getDS3, ds3Motion, ds3Status, ds3States, ds3Shell } from './v3';
+export type { DS3, DS3Mode, DS3Surfaces } from './v3';

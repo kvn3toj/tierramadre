@@ -24,10 +24,21 @@ const COLOR_LEGACY_ALIAS: Record<string, string> = {
   "Verde Azulado": "Verde Azul",
 };
 
-/** Normalize calidad for Sheets push (canonical form labels). */
+/**
+ * Normalize calidad for Sheets push (canonical form labels).
+ *
+ * VACÍO SE QUEDA VACÍO (2026-08-03). Antes esto devolvía `"F1"` cuando el ítem
+ * no traía calidad, y `calidad` está en el allowlist de pull: el dato inventado
+ * volvía a Convex por la hoja y se volvía indistinguible de uno medido. La
+ * migración de sublotes lo destapó — tres piedras que el dueño dejó
+ * explícitamente en "pendiente de confirmar" llegaron a la hoja como F1.
+ *
+ * Un ítem sin calidad es un hecho: que se vea. `normalizeColorForSheet`, aquí
+ * abajo, siempre lo hizo así.
+ */
 export function normalizeCalidadForSheet(raw: string | undefined | null): string {
   const s = (raw ?? "").trim();
-  if (!s) return "F1";
+  if (!s) return "";
   const aliased = CALIDAD_LEGACY_ALIAS[s];
   if (aliased) return aliased;
   return s;

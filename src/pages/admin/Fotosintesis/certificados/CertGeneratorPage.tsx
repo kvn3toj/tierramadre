@@ -18,7 +18,7 @@ import {
   useMemo,
   useRef,
   useState,
-} from "react";
+} from 'react';
 import {
   Autocomplete,
   Box,
@@ -27,7 +27,7 @@ import {
   Slider,
   TextField,
   Typography,
-} from "@mui/material";
+} from '@mui/material';
 import {
   Award,
   Crop,
@@ -47,16 +47,19 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
-} from "lucide-react";
-import { getFoto } from "../../../../design-system";
-import { useNotification } from "../../../../contexts/NotificationContext";
-import { useGoogleAuth } from "../../../../contexts/GoogleAuthContext";
-import { useConvexClient } from "../../../../lib/convex-safe";
-import { useTreasure } from "../../../../hooks/useTreasure";
-import { useAsesores } from "../../../../hooks/useAsesores";
-import type { TreasureItem } from "../../../../types";
-import type { Asesor } from "../../../../hooks/useAsesores";
-import CertPreview from "./CertPreview";
+} from 'lucide-react';
+import { getFoto } from '../../../../design-system';
+import { useNotification } from '../../../../contexts/NotificationContext';
+import {
+  useConvexClient,
+  useAuthedConvexAction,
+  convexApi,
+} from '../../../../lib/convex-safe';
+import { useTreasure } from '../../../../hooks/useTreasure';
+import { useAsesores } from '../../../../hooks/useAsesores';
+import type { TreasureItem } from '../../../../types';
+import type { Asesor } from '../../../../hooks/useAsesores';
+import CertPreview from './CertPreview';
 import {
   CERT_TEMPLATES,
   CERT_TYPE_ORDER,
@@ -74,12 +77,12 @@ import {
   type EmbajadorDraft,
   type OrigenDraft,
   type PhotoTransform,
-} from "./certTemplates";
-import { exportCertPdf, exportCertPng } from "./exportCert";
-import { computePhotoAutoFit } from "./photoAutoFit";
-import { isCertificadoApproved, persistCertToProduct } from "./persistCert";
+} from './certTemplates';
+import { exportCertPdf, exportCertPng } from './exportCert';
+import { computePhotoAutoFit } from './photoAutoFit';
+import { isCertificadoApproved, persistCertToProduct } from './persistCert';
 
-const foto = getFoto("light");
+const foto = getFoto('light');
 
 const TAB_ICON: Record<CertTypeId, React.ReactNode> = {
   origen: <Award size={15} strokeWidth={2} />,
@@ -90,53 +93,79 @@ const TAB_ICON: Record<CertTypeId, React.ReactNode> = {
 // ── field mapping: existing prod data → cert draft (SPEC §5) ──────────────
 function treasureToOrigen(t: TreasureItem): OrigenDraft {
   return {
-    name: t.nombre ?? "",
-    tipo: t.categoria ?? "",
-    calidad: t.calidad ?? "",
-    color: t.color ?? "",
-    peso: t.peso != null ? String(t.peso) : "",
-    corte: t.talla ?? "",
-    joya: t.metalType ?? (t.isJewelry ? (t.categoria ?? "") : ""),
-    tecnica: "",
-    photo: t.imagen ?? "",
+    name: t.nombre ?? '',
+    tipo: t.categoria ?? '',
+    calidad: t.calidad ?? '',
+    color: t.color ?? '',
+    peso: t.peso != null ? String(t.peso) : '',
+    corte: t.talla ?? '',
+    joya: t.metalType ?? (t.isJewelry ? (t.categoria ?? '') : ''),
+    tecnica: '',
+    photo: t.imagen ?? '',
     // Autofill never invents custom rows; the operator adds those by hand.
     customDetails: [],
   };
 }
 
 function asesorToEmbajador(a: Asesor): EmbajadorDraft {
-  return { name: a.name ?? "", photo: a.photoUrl ?? "" };
+  return { name: a.name ?? '', photo: a.photoUrl ?? '' };
 }
 
 function asesorToCarnet(a: Asesor): CarnetDraft {
   return {
-    name: a.name ?? "",
-    role: a.role ?? "Embajador",
-    id: a.id ?? "",
-    email: a.email ?? "",
-    year: "2026",
-    photo: a.photoUrl ?? "",
+    name: a.name ?? '',
+    role: a.role ?? 'Embajador',
+    id: a.id ?? '',
+    email: a.email ?? '',
+    year: '2026',
+    photo: a.photoUrl ?? '',
   };
 }
 
 export default function CertGeneratorPage() {
   const { notify } = useNotification();
-  const { user } = useGoogleAuth();
   const convexClient = useConvexClient();
   const { treasure } = useTreasure();
   const { asesores } = useAsesores();
 
-  const [type, setType] = useState<CertTypeId>("origen");
+  const [type, setType] = useState<CertTypeId>('origen');
   const [origen, setOrigen] = useState<OrigenDraft>(EMPTY_ORIGEN);
   const [embajador, setEmbajador] = useState<EmbajadorDraft>(EMPTY_EMBAJADOR);
   const [carnet, setCarnet] = useState<CarnetDraft>(EMPTY_CARNET);
   const [busy, setBusy] = useState(false);
   // The full TreasureItem the Origen autofill came from — kept so "Guardar al
-  // producto" can resolve its lot (item + loteId). Cleared when the operator
-  // edits the form by hand to a piece we can no longer attribute. The flat
-  // `origen` draft intentionally drops these internal ids, so we track them here.
+  // producto" can resolve the item (and its lot, when it has one, to pick the
+  // Drive folder). Cleared when the operator edits the form by hand to a piece
+  // we can no longer attribute. The flat `origen` draft intentionally drops
+  // these internal ids, so we track them here.
   const [selectedPiece, setSelectedPiece] = useState<TreasureItem | null>(null);
   const legalApproved = isCertificadoApproved();
+
+  // Bulk-publish every product that already has a certificate so it shows in
+  // the product-page carousel — excluding insumos (handled server-side).
+  const bulkPublishCertificados = useAuthedConvexAction(
+    convexApi.products.bulkPublishCertificados,
+  );
+  const [publishingAll, setPublishingAll] = useState(false);
+  const handlePublishAllCertificados = useCallback(async () => {
+    if (publishingAll) return;
+    setPublishingAll(true);
+    try {
+      const r = await bulkPublishCertificados({});
+      notify(
+        `Certificados publicados: ${r.published} nuevos · ${r.alreadyPublished} ya visibles · ${r.skippedInsumo} insumos excluidos`,
+        'success',
+      );
+    } catch (e) {
+      const msg =
+        e instanceof Error
+          ? e.message
+          : 'No se pudieron publicar los certificados';
+      notify(msg, 'error');
+    } finally {
+      setPublishingAll(false);
+    }
+  }, [publishingAll, bulkPublishCertificados, notify]);
 
   const certNodeRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -157,7 +186,7 @@ export default function CertGeneratorPage() {
   // The active template's photo field, if any (carnet uses a CSS fallback with
   // no overlay photo field → no adjust affordance there).
   const photoField = useMemo(
-    () => CERT_TEMPLATES[type].fields.find((f) => f.kind === "photo"),
+    () => CERT_TEMPLATES[type].fields.find((f) => f.kind === 'photo'),
     [type],
   );
   const templateHasPhoto = !!photoField;
@@ -196,7 +225,7 @@ export default function CertGeneratorPage() {
   const applyAutoFit = useCallback(
     async (targetType: CertTypeId, photo: string) => {
       const field = CERT_TEMPLATES[targetType].fields.find(
-        (f) => f.kind === "photo",
+        (f) => f.kind === 'photo',
       );
       if (!field?.w) return false;
       const t = await computePhotoAutoFit(photo, field.w);
@@ -210,39 +239,43 @@ export default function CertGeneratorPage() {
   // Origen only (gems on light backgrounds auto-frame reliably; portraits don't).
   useEffect(() => {
     const photo = origen.photo;
-    if (!photo || type !== "origen") return;
+    if (!photo || type !== 'origen') return;
     if (autoFramedRef.current.origen === photo) return; // already handled
     autoFramedRef.current.origen = photo; // record up-front (don't retry on fail)
-    void applyAutoFit("origen", photo);
+    void applyAutoFit('origen', photo);
   }, [origen.photo, type, applyAutoFit]);
 
   // Manual "Encuadrar" — re-run detection on demand (e.g. after a hand tweak).
   const handleAutoFit = useCallback(async () => {
     const photo =
-      type === "origen"
+      type === 'origen'
         ? origen.photo
-        : type === "embajador"
+        : type === 'embajador'
           ? embajador.photo
           : carnet.photo;
     if (!photo) return;
     const ok = await applyAutoFit(type, photo);
     if (!ok)
       notify(
-        "No pude detectar el sujeto para encuadrar automáticamente; ajustá con el zoom.",
-        "warning",
+        'No pude detectar el sujeto para encuadrar automáticamente; ajustá con el zoom.',
+        'warning',
       );
   }, [type, origen.photo, embajador.photo, carnet.photo, applyAutoFit, notify]);
 
-  // Only real, individual pieces (exclude grouped lote/sublote cards).
+  // Only real, individual pieces (exclude grouped lote/sublote cards and any
+  // insumo — raw supplies are never certified).
   const pieces = useMemo(
-    () => (treasure ?? []).filter((t) => !t.isLote),
+    () =>
+      (treasure ?? []).filter(
+        (t) => !t.isLote && !/insumo/i.test(t.categoria ?? ''),
+      ),
     [treasure],
   );
 
   // The flat draft consumed by CertPreview for the active type.
   const activeDraft: Record<string, string> = useMemo(() => {
-    if (type === "origen") return origen as unknown as Record<string, string>;
-    if (type === "embajador")
+    if (type === 'origen') return origen as unknown as Record<string, string>;
+    if (type === 'embajador')
       return embajador as unknown as Record<string, string>;
     return carnet as unknown as Record<string, string>;
   }, [type, origen, embajador, carnet]);
@@ -253,14 +286,14 @@ export default function CertGeneratorPage() {
 
   // Roving keyboard navigation across the type tabs (a11y: tablist pattern).
   const onTabKeyDown = useCallback((e: React.KeyboardEvent, index: number) => {
-    if (e.key === "Enter" || e.key === " ") {
+    if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       setType(CERT_TYPE_ORDER[index]);
       return;
     }
     let next = index;
-    if (e.key === "ArrowRight") next = (index + 1) % CERT_TYPE_ORDER.length;
-    else if (e.key === "ArrowLeft")
+    if (e.key === 'ArrowRight') next = (index + 1) % CERT_TYPE_ORDER.length;
+    else if (e.key === 'ArrowLeft')
       next = (index - 1 + CERT_TYPE_ORDER.length) % CERT_TYPE_ORDER.length;
     else return;
     e.preventDefault();
@@ -299,9 +332,9 @@ export default function CertGeneratorPage() {
   // ── exports ────────────────────────────────────────────────────────────
   const nameForFile = useMemo(() => {
     const n =
-      type === "origen"
+      type === 'origen'
         ? origen.name
-        : type === "embajador"
+        : type === 'embajador'
           ? embajador.name
           : carnet.name;
     return slugify(n || type);
@@ -318,10 +351,10 @@ export default function CertGeneratorPage() {
         { w: tpl.print.w, h: tpl.print.h, orientation: tpl.print.orientation },
         `TierraMadre_${type}_${nameForFile}.pdf`,
       );
-      notify("PDF generado ✓", "success");
+      notify('PDF generado ✓', 'success');
     } catch (e) {
-      console.error("[CertGenerator] PDF export failed", e);
-      notify("No se pudo generar el PDF", "error");
+      console.error('[CertGenerator] PDF export failed', e);
+      notify('No se pudo generar el PDF', 'error');
     } finally {
       setBusy(false);
     }
@@ -333,10 +366,10 @@ export default function CertGeneratorPage() {
     setBusy(true);
     try {
       await exportCertPng(node, `TierraMadre_${type}_${nameForFile}.png`);
-      notify("PNG descargado ✓", "success");
+      notify('PNG descargado ✓', 'success');
     } catch (e) {
-      console.error("[CertGenerator] PNG export failed", e);
-      notify("No se pudo generar el PNG", "error");
+      console.error('[CertGenerator] PNG export failed', e);
+      notify('No se pudo generar el PNG', 'error');
     } finally {
       setBusy(false);
     }
@@ -353,32 +386,28 @@ export default function CertGeneratorPage() {
 
     if (!legalApproved) {
       notify(
-        "Certificado pendiente: activá VITE_CERT_LEGAL_APPROVED tras la aprobación legal (Q-6).",
-        "warning",
+        'Certificado pendiente: activá VITE_CERT_LEGAL_APPROVED tras la aprobación legal (Q-6).',
+        'warning',
       );
       return;
     }
     if (!convexClient) {
       notify(
-        "Convex no está configurado; no puedo enlazar el certificado.",
-        "error",
+        'Convex no está configurado; no puedo enlazar el certificado.',
+        'error',
       );
       return;
     }
     if (!selectedPiece) {
       notify(
-        "Elegí una pieza del catálogo para poder enlazar el certificado a un producto.",
-        "warning",
+        'Elegí una pieza del catálogo para poder enlazar el certificado a un producto.',
+        'warning',
       );
       return;
     }
-    if (!selectedPiece.loteId) {
-      notify(
-        "Este ítem no es de un lote Fotosíntesis; no puedo enlazar el certificado automáticamente.",
-        "warning",
-      );
-      return;
-    }
+    // Sin gate por lote: el certificado es del ÍTEM. `loteId` solo elige la
+    // carpeta de Drive (los ítems sin lote van a `sin-lote/`) y el enlace lo
+    // escribe `updateMediaByItem`, que va por `itemId`. Ver persistCert.ts.
 
     setBusy(true);
     try {
@@ -390,25 +419,24 @@ export default function CertGeneratorPage() {
         filename: `TierraMadre_origen_${nameForFile}.png`,
         loteId: selectedPiece.loteId,
         itemId: String(selectedPiece.item),
-        editorEmail: user?.email,
       });
-      console.info("[CertGenerator] cert linked to product", {
+      console.info('[CertGenerator] cert linked to product', {
         item: selectedPiece.item,
         url,
       });
       notify(
         `Certificado guardado y enlazado al ítem #${selectedPiece.item} ✓`,
-        "success",
+        'success',
       );
     } catch (e) {
-      console.error("[CertGenerator] save-to-product failed", e);
+      console.error('[CertGenerator] save-to-product failed', e);
       const msg =
-        e instanceof Error ? e.message : "No se pudo guardar el certificado";
-      notify(msg, "error");
+        e instanceof Error ? e.message : 'No se pudo guardar el certificado';
+      notify(msg, 'error');
     } finally {
       setBusy(false);
     }
-  }, [legalApproved, convexClient, selectedPiece, nameForFile, user, notify]);
+  }, [legalApproved, convexClient, selectedPiece, nameForFile, notify]);
 
   // ── photo upload (object/data URL) ───────────────────────────────────────
   const onUploadPhoto = useCallback(
@@ -416,9 +444,9 @@ export default function CertGeneratorPage() {
       if (!file) return;
       const reader = new FileReader();
       reader.onload = (e) => {
-        const url = String(e.target?.result ?? "");
-        if (type === "origen") setOrigen((d) => ({ ...d, photo: url }));
-        else if (type === "embajador")
+        const url = String(e.target?.result ?? '');
+        if (type === 'origen') setOrigen((d) => ({ ...d, photo: url }));
+        else if (type === 'embajador')
           setEmbajador((d) => ({ ...d, photo: url }));
         else setCarnet((d) => ({ ...d, photo: url }));
       };
@@ -430,9 +458,9 @@ export default function CertGeneratorPage() {
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "column",
-        height: "calc(100vh - 120px)",
+        display: 'flex',
+        flexDirection: 'column',
+        height: 'calc(100vh - 120px)',
         minHeight: 560,
       }}
     >
@@ -440,7 +468,7 @@ export default function CertGeneratorPage() {
       <Box
         role="tablist"
         aria-label="Tipo de certificado"
-        sx={{ display: "flex", gap: "8px", px: 2, pt: 1.5, pb: 0.5 }}
+        sx={{ display: 'flex', gap: '8px', px: 2, pt: 1.5, pb: 0.5 }}
       >
         {CERT_TYPE_ORDER.map((id, index) => {
           const tpl = CERT_TEMPLATES[id];
@@ -457,27 +485,27 @@ export default function CertGeneratorPage() {
               onClick={() => setType(id)}
               onKeyDown={(e) => onTabKeyDown(e, index)}
               sx={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 1,
                 px: 1.75,
                 py: 1,
                 minHeight: 40,
-                borderRadius: "10px",
-                cursor: "pointer",
-                userSelect: "none",
+                borderRadius: '10px',
+                cursor: 'pointer',
+                userSelect: 'none',
                 fontSize: 13,
                 fontWeight: 600,
                 color: active ? foto.ink.primary : foto.ink.tertiary,
-                background: active ? foto.surfaces.inset : "transparent",
-                border: `1px solid ${active ? foto.surfaces.edgeStrong : "transparent"}`,
-                transition: "background 120ms ease, color 120ms ease",
-                "@media (prefers-reduced-motion: reduce)": {
-                  transition: "none",
+                background: active ? foto.surfaces.inset : 'transparent',
+                border: `1px solid ${active ? foto.surfaces.edgeStrong : 'transparent'}`,
+                transition: 'background 120ms ease, color 120ms ease',
+                '@media (prefers-reduced-motion: reduce)': {
+                  transition: 'none',
                 },
-                "&:hover": { background: foto.surfaces.inset },
-                "&:focus-visible": {
-                  outline: "2px solid transparent",
+                '&:hover': { background: foto.surfaces.inset },
+                '&:focus-visible': {
+                  outline: '2px solid transparent',
                   boxShadow: `0 0 0 2px ${foto.surfaces.canvas}, 0 0 0 4px ${foto.accent.primary}`,
                 },
               }}
@@ -486,7 +514,7 @@ export default function CertGeneratorPage() {
                 sx={{
                   width: 11,
                   height: 11,
-                  borderRadius: "3px",
+                  borderRadius: '3px',
                   background: tpl.swatch,
                 }}
               />
@@ -495,12 +523,38 @@ export default function CertGeneratorPage() {
             </Box>
           );
         })}
+
+        {/* Bulk-publish all existing certificates (excludes insumos). */}
+        <Box sx={{ flex: 1 }} />
+        <Button
+          onClick={handlePublishAllCertificados}
+          disabled={publishingAll}
+          startIcon={
+            publishingAll ? (
+              <CircularProgress size={16} color="inherit" />
+            ) : (
+              <Sprout size={16} />
+            )
+          }
+          sx={{
+            alignSelf: 'center',
+            textTransform: 'none',
+            fontWeight: 600,
+            fontSize: 13,
+            borderRadius: '10px',
+            color: foto.ink.primary,
+            border: `1px solid ${foto.surfaces.edgeStrong}`,
+            '&:hover': { background: foto.surfaces.inset },
+          }}
+        >
+          {publishingAll ? 'Publicando…' : 'Publicar todos los certificados'}
+        </Button>
       </Box>
 
       <Box
         sx={{
           flex: 1,
-          display: "flex",
+          display: 'flex',
           minHeight: 0,
           borderTop: `1px solid ${foto.surfaces.rule}`,
         }}
@@ -511,12 +565,12 @@ export default function CertGeneratorPage() {
             width: 360,
             flexShrink: 0,
             borderRight: `1px solid ${foto.surfaces.rule}`,
-            overflowY: "auto",
+            overflowY: 'auto',
             p: 2.5,
             background: foto.surfaces.panel,
           }}
         >
-          {type === "origen" && (
+          {type === 'origen' && (
             <OrigenForm
               draft={origen}
               setDraft={setOrigen}
@@ -535,7 +589,7 @@ export default function CertGeneratorPage() {
               }}
             />
           )}
-          {type === "embajador" && (
+          {type === 'embajador' && (
             <EmbajadorForm
               draft={embajador}
               setDraft={setEmbajador}
@@ -553,7 +607,7 @@ export default function CertGeneratorPage() {
               }}
             />
           )}
-          {type === "carnet" && (
+          {type === 'carnet' && (
             <CarnetForm
               draft={carnet}
               setDraft={setCarnet}
@@ -568,15 +622,15 @@ export default function CertGeneratorPage() {
           sx={{
             flex: 1,
             minWidth: 0,
-            display: "flex",
-            flexDirection: "column",
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           {/* toolbar */}
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1.25,
               px: 2,
               py: 1.25,
@@ -584,7 +638,7 @@ export default function CertGeneratorPage() {
             }}
           >
             <Typography sx={{ fontSize: 12, color: foto.ink.tertiary }}>
-              Vista previa ·{" "}
+              Vista previa ·{' '}
               <Box component="b" sx={{ color: foto.ink.primary }}>
                 {CERT_TEMPLATES[type].label}
               </Box>
@@ -592,11 +646,11 @@ export default function CertGeneratorPage() {
             <Box sx={{ flex: 1 }} />
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 0.5,
                 border: `1px solid ${foto.surfaces.edge}`,
-                borderRadius: "8px",
+                borderRadius: '8px',
                 px: 0.5,
                 py: 0.25,
               }}
@@ -613,7 +667,7 @@ export default function CertGeneratorPage() {
                   fontSize: 11,
                   color: foto.ink.tertiary,
                   minWidth: 42,
-                  textAlign: "center",
+                  textAlign: 'center',
                 }}
               >
                 {Math.round(scale * 100)}%
@@ -648,8 +702,8 @@ export default function CertGeneratorPage() {
               <IconBtn
                 label={
                   photoEdit
-                    ? "Salir del ajuste de la foto"
-                    : "Ajustar la foto (zoom y posición dentro del círculo)"
+                    ? 'Salir del ajuste de la foto'
+                    : 'Ajustar la foto (zoom y posición dentro del círculo)'
                 }
                 active={photoEdit}
                 toggle
@@ -666,7 +720,7 @@ export default function CertGeneratorPage() {
                 <RotateCcw size={15} />
               </IconBtn>
             )}
-            {type === "origen" && (
+            {type === 'origen' && (
               <Button
                 onClick={handleSaveToProduct}
                 disabled={busy || !selectedPiece}
@@ -674,10 +728,10 @@ export default function CertGeneratorPage() {
                 aria-label="Guardar el certificado y enlazarlo al producto"
                 title={
                   !legalApproved
-                    ? "Aprobación legal pendiente (VITE_CERT_LEGAL_APPROVED)"
+                    ? 'Aprobación legal pendiente (VITE_CERT_LEGAL_APPROVED)'
                     : !selectedPiece
-                      ? "Elegí una pieza del catálogo para enlazar"
-                      : "Guardar y enlazar al producto"
+                      ? 'Elegí una pieza del catálogo para enlazar'
+                      : 'Guardar y enlazar al producto'
                 }
                 sx={saveBtnSx}
               >
@@ -689,7 +743,7 @@ export default function CertGeneratorPage() {
               disabled={busy}
               startIcon={
                 busy ? (
-                  <CircularProgress size={14} sx={{ color: "inherit" }} />
+                  <CircularProgress size={14} sx={{ color: 'inherit' }} />
                 ) : (
                   <Download size={15} />
                 )
@@ -704,7 +758,7 @@ export default function CertGeneratorPage() {
               disabled={busy}
               startIcon={
                 busy ? (
-                  <CircularProgress size={14} sx={{ color: "inherit" }} />
+                  <CircularProgress size={14} sx={{ color: 'inherit' }} />
                 ) : (
                   <Printer size={15} />
                 )
@@ -712,7 +766,7 @@ export default function CertGeneratorPage() {
               aria-label="Imprimir o exportar el certificado como PDF"
               sx={primaryBtnSx}
             >
-              {busy ? "Generando…" : "Imprimir / PDF"}
+              {busy ? 'Generando…' : 'Imprimir / PDF'}
             </Button>
           </Box>
 
@@ -720,14 +774,14 @@ export default function CertGeneratorPage() {
           <Box
             ref={stageRef}
             sx={{
-              position: "relative",
+              position: 'relative',
               flex: 1,
-              overflow: "auto",
-              display: "grid",
-              placeItems: "center",
+              overflow: 'auto',
+              display: 'grid',
+              placeItems: 'center',
               p: 3,
               background:
-                "radial-gradient(circle at 30% 20%, #eef3f0, #e3e8e5 70%)",
+                'radial-gradient(circle at 30% 20%, #eef3f0, #e3e8e5 70%)',
             }}
           >
             <CertPreview
@@ -737,7 +791,7 @@ export default function CertGeneratorPage() {
               scale={scale}
               guides={guides}
               customDetails={
-                type === "origen" ? origen.customDetails : undefined
+                type === 'origen' ? origen.customDetails : undefined
               }
               photoTransform={photoTransform}
               photoEdit={photoEdit}
@@ -747,23 +801,23 @@ export default function CertGeneratorPage() {
               <Box
                 role="status"
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   bottom: 16,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  display: "flex",
-                  alignItems: "center",
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 1,
                   px: 1.75,
                   py: 1,
-                  borderRadius: "10px",
+                  borderRadius: '10px',
                   background: foto.surfaces.panel,
                   border: `1px solid ${foto.surfaces.edge}`,
-                  boxShadow: "0 6px 20px rgba(0,0,0,.08)",
+                  boxShadow: '0 6px 20px rgba(0,0,0,.08)',
                   fontSize: 12,
                   color: foto.ink.secondary,
-                  pointerEvents: "none",
-                  maxWidth: "90%",
+                  pointerEvents: 'none',
+                  maxWidth: '90%',
                 }}
               >
                 <Award size={15} strokeWidth={2} style={{ flexShrink: 0 }} />
@@ -775,23 +829,23 @@ export default function CertGeneratorPage() {
               <Box
                 role="status"
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   bottom: 16,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  display: "flex",
-                  alignItems: "center",
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 1,
                   px: 1.75,
                   py: 1,
-                  borderRadius: "10px",
+                  borderRadius: '10px',
                   background: foto.surfaces.panel,
                   border: `1px solid ${foto.accent.primary}`,
-                  boxShadow: "0 6px 20px rgba(0,0,0,.08)",
+                  boxShadow: '0 6px 20px rgba(0,0,0,.08)',
                   fontSize: 12,
                   color: foto.ink.secondary,
-                  pointerEvents: "none",
-                  maxWidth: "90%",
+                  pointerEvents: 'none',
+                  maxWidth: '90%',
                 }}
               >
                 <Move size={15} strokeWidth={2} style={{ flexShrink: 0 }} />
@@ -810,43 +864,43 @@ export default function CertGeneratorPage() {
 // ── small UI helpers ────────────────────────────────────────────────────────
 
 const ghostBtnSx = {
-  textTransform: "none",
+  textTransform: 'none',
   fontWeight: 700,
   fontSize: 12.5,
-  borderRadius: "9px",
+  borderRadius: '9px',
   px: 1.75,
   color: foto.ink.primary,
   background: foto.surfaces.inset,
   border: `1px solid ${foto.surfaces.edge}`,
-  "&:hover": { background: foto.surfaces.inset2 },
+  '&:hover': { background: foto.surfaces.inset2 },
 } as const;
 
 const primaryBtnSx = {
-  textTransform: "none",
+  textTransform: 'none',
   fontWeight: 700,
   fontSize: 12.5,
-  borderRadius: "9px",
+  borderRadius: '9px',
   px: 1.75,
   color: foto.ink.inverse,
   background: foto.accent.primary,
-  "&:hover": { background: foto.accent.deep },
+  '&:hover': { background: foto.accent.deep },
 } as const;
 
 // Persist-to-product action — visually distinct from the export buttons and
 // sized to a 44px touch target (a11y). Disabled state dims rather than hides so
 // the button never causes layout shift when a piece is/ isn't selected.
 const saveBtnSx = {
-  textTransform: "none",
+  textTransform: 'none',
   fontWeight: 700,
   fontSize: 12.5,
-  borderRadius: "9px",
+  borderRadius: '9px',
   px: 1.75,
   minHeight: 44,
   color: foto.ink.primary,
   background: foto.surfaces.inset,
   border: `1px solid ${foto.accent.primary}`,
-  "&:hover": { background: foto.surfaces.inset2 },
-  "&.Mui-disabled": { opacity: 0.5, color: foto.ink.tertiary },
+  '&:hover': { background: foto.surfaces.inset2 },
+  '&.Mui-disabled': { opacity: 0.5, color: foto.ink.tertiary },
 } as const;
 
 function IconBtn({
@@ -872,25 +926,25 @@ function IconBtn({
       onClick={onClick}
       title={label}
       aria-label={label}
-      {...(toggle ? { "aria-pressed": active } : {})}
+      {...(toggle ? { 'aria-pressed': active } : {})}
       sx={{
         width: 30,
         height: 30,
-        display: "grid",
-        placeItems: "center",
-        border: "none",
-        background: active ? foto.accent.soft : "transparent",
-        borderRadius: "6px",
-        cursor: "pointer",
+        display: 'grid',
+        placeItems: 'center',
+        border: 'none',
+        background: active ? foto.accent.soft : 'transparent',
+        borderRadius: '6px',
+        cursor: 'pointer',
         color: active ? foto.accent.deep : foto.ink.tertiary,
-        transition: "background 120ms ease, color 120ms ease",
-        "@media (prefers-reduced-motion: reduce)": { transition: "none" },
-        "&:hover": {
+        transition: 'background 120ms ease, color 120ms ease',
+        '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+        '&:hover': {
           background: foto.surfaces.inset2,
           color: foto.ink.primary,
         },
-        "&:focus-visible": {
-          outline: "2px solid transparent",
+        '&:focus-visible': {
+          outline: '2px solid transparent',
           boxShadow: `0 0 0 2px ${foto.surfaces.canvas}, 0 0 0 4px ${foto.accent.primary}`,
         },
       }}
@@ -906,8 +960,8 @@ function PanelHeader({ title, lead }: { title: string; lead: string }) {
       <Typography
         sx={{
           fontSize: 12,
-          textTransform: "uppercase",
-          letterSpacing: "1.1px",
+          textTransform: 'uppercase',
+          letterSpacing: '1.1px',
           color: foto.accent.deep,
           fontWeight: 700,
           mb: 0.5,
@@ -942,11 +996,11 @@ function Field({
         component="label"
         htmlFor={inputId}
         sx={{
-          display: "block",
+          display: 'block',
           fontSize: 11,
           fontWeight: 600,
-          textTransform: "uppercase",
-          letterSpacing: ".6px",
+          textTransform: 'uppercase',
+          letterSpacing: '.6px',
           color: foto.ink.tertiary,
           mb: 0.75,
         }}
@@ -997,8 +1051,8 @@ function PhotoInput({
         sx={{
           fontSize: 11,
           fontWeight: 600,
-          textTransform: "uppercase",
-          letterSpacing: ".6px",
+          textTransform: 'uppercase',
+          letterSpacing: '.6px',
           color: foto.ink.tertiary,
           mb: 0.75,
         }}
@@ -1008,21 +1062,21 @@ function PhotoInput({
       <Box
         component="label"
         sx={{
-          position: "relative",
-          overflow: "hidden",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           gap: 1,
           background: foto.surfaces.canvas,
           border: `1px dashed ${foto.surfaces.edgeStrong}`,
           color: foto.ink.tertiary,
           py: 1.1,
-          borderRadius: "9px",
+          borderRadius: '9px',
           fontSize: 12,
           fontWeight: 600,
-          cursor: "pointer",
-          "&:hover": {
+          cursor: 'pointer',
+          '&:hover': {
             borderColor: foto.accent.primary,
             color: foto.ink.primary,
           },
@@ -1036,11 +1090,11 @@ function PhotoInput({
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             onUpload(e.target.files?.[0])
           }
-          sx={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
+          sx={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
         />
       </Box>
       <TextField
-        value={value.startsWith("data:") ? "(imagen subida)" : value}
+        value={value.startsWith('data:') ? '(imagen subida)' : value}
         onChange={(e) => onUrl(e.target.value)}
         placeholder="…o URL de imagen"
         aria-label="URL de la imagen"
@@ -1058,9 +1112,9 @@ function PhotoInput({
         <Box sx={{ mt: 1.5 }}>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               mb: 0.25,
             }}
           >
@@ -1070,33 +1124,33 @@ function PhotoInput({
               sx={{
                 fontSize: 11,
                 fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: ".6px",
+                textTransform: 'uppercase',
+                letterSpacing: '.6px',
                 color: foto.ink.tertiary,
               }}
             >
               Zoom de la foto
             </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Box
                 component="button"
                 type="button"
                 onClick={adjust.onAutoFit}
                 sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
+                  display: 'inline-flex',
+                  alignItems: 'center',
                   gap: 0.4,
-                  border: "none",
-                  background: "transparent",
+                  border: 'none',
+                  background: 'transparent',
                   color: foto.accent.deep,
                   fontSize: 11,
                   fontWeight: 700,
-                  cursor: "pointer",
+                  cursor: 'pointer',
                   px: 0.5,
-                  borderRadius: "6px",
-                  "&:hover": { textDecoration: "underline" },
-                  "&:focus-visible": {
-                    outline: "2px solid transparent",
+                  borderRadius: '6px',
+                  '&:hover': { textDecoration: 'underline' },
+                  '&:focus-visible': {
+                    outline: '2px solid transparent',
                     boxShadow: `0 0 0 2px ${foto.surfaces.canvas}, 0 0 0 4px ${foto.accent.primary}`,
                   },
                 }}
@@ -1109,17 +1163,17 @@ function PhotoInput({
                   type="button"
                   onClick={adjust.onReset}
                   sx={{
-                    border: "none",
-                    background: "transparent",
+                    border: 'none',
+                    background: 'transparent',
                     color: foto.ink.tertiary,
                     fontSize: 11,
                     fontWeight: 600,
-                    cursor: "pointer",
+                    cursor: 'pointer',
                     px: 0.5,
-                    borderRadius: "6px",
-                    "&:hover": { textDecoration: "underline" },
-                    "&:focus-visible": {
-                      outline: "2px solid transparent",
+                    borderRadius: '6px',
+                    '&:hover': { textDecoration: 'underline' },
+                    '&:focus-visible': {
+                      outline: '2px solid transparent',
                       boxShadow: `0 0 0 2px ${foto.surfaces.canvas}, 0 0 0 4px ${foto.accent.primary}`,
                     },
                   }}
@@ -1153,14 +1207,14 @@ function LockNote({ text }: { text: string }) {
   return (
     <Box
       sx={{
-        display: "flex",
+        display: 'flex',
         gap: 1,
-        alignItems: "flex-start",
+        alignItems: 'flex-start',
         fontSize: 11,
         color: foto.ink.tertiary,
         background: foto.surfaces.inset,
         border: `1px solid ${foto.surfaces.edge}`,
-        borderRadius: "8px",
+        borderRadius: '8px',
         p: 1.25,
         mt: 1.5,
         lineHeight: 1.5,
@@ -1177,7 +1231,7 @@ function LockNote({ text }: { text: string }) {
 let _customDetailSeq = 0;
 function newCustomDetailId(): string {
   try {
-    if (typeof crypto !== "undefined" && "randomUUID" in crypto)
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
       return crypto.randomUUID();
   } catch {
     /* fall through to the sequence */
@@ -1208,8 +1262,8 @@ function CustomDetailsEditor({
         sx={{
           fontSize: 11,
           fontWeight: 600,
-          textTransform: "uppercase",
-          letterSpacing: ".6px",
+          textTransform: 'uppercase',
+          letterSpacing: '.6px',
           color: foto.ink.tertiary,
           mb: 0.75,
         }}
@@ -1221,7 +1275,7 @@ function CustomDetailsEditor({
           key={item.id}
           sx={{
             border: `1px solid ${foto.surfaces.edge}`,
-            borderRadius: "9px",
+            borderRadius: '9px',
             p: 1.25,
             mb: 1,
             background: foto.surfaces.canvas,
@@ -1229,9 +1283,9 @@ function CustomDetailsEditor({
         >
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               mb: 0.75,
             }}
           >
@@ -1247,19 +1301,19 @@ function CustomDetailsEditor({
               sx={{
                 width: 28,
                 height: 28,
-                display: "grid",
-                placeItems: "center",
-                border: "none",
-                background: "transparent",
-                borderRadius: "6px",
-                cursor: "pointer",
+                display: 'grid',
+                placeItems: 'center',
+                border: 'none',
+                background: 'transparent',
+                borderRadius: '6px',
+                cursor: 'pointer',
                 color: foto.ink.tertiary,
-                "&:hover": {
+                '&:hover': {
                   background: foto.surfaces.inset2,
-                  color: "#b3261e",
+                  color: '#b3261e',
                 },
-                "&:focus-visible": {
-                  outline: "2px solid transparent",
+                '&:focus-visible': {
+                  outline: '2px solid transparent',
                   boxShadow: `0 0 0 2px ${foto.surfaces.canvas}, 0 0 0 4px ${foto.accent.primary}`,
                 },
               }}
@@ -1297,25 +1351,25 @@ function CustomDetailsEditor({
         type="button"
         onClick={onAdd}
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           gap: 0.75,
-          width: "100%",
+          width: '100%',
           py: 1,
           border: `1px dashed ${foto.surfaces.edgeStrong}`,
-          borderRadius: "9px",
-          background: "transparent",
+          borderRadius: '9px',
+          background: 'transparent',
           color: foto.ink.secondary,
           fontSize: 12,
           fontWeight: 600,
-          cursor: "pointer",
-          "&:hover": {
+          cursor: 'pointer',
+          '&:hover': {
             borderColor: foto.accent.primary,
             color: foto.ink.primary,
           },
-          "&:focus-visible": {
-            outline: "2px solid transparent",
+          '&:focus-visible': {
+            outline: '2px solid transparent',
             boxShadow: `0 0 0 2px ${foto.surfaces.canvas}, 0 0 0 4px ${foto.accent.primary}`,
           },
         }}
@@ -1359,7 +1413,7 @@ function OrigenForm({
       ...d,
       customDetails: [
         ...d.customDetails,
-        { id: newCustomDetailId(), label: "", value: "" },
+        { id: newCustomDetailId(), label: '', value: '' },
       ],
     }));
   const updateCustom = (id: string, patch: Partial<CustomDetail>) =>
@@ -1395,7 +1449,7 @@ function OrigenForm({
             placeholder="⚡ Autocompletar desde catálogo"
             inputProps={{
               ...params.inputProps,
-              "aria-label": "Buscar pieza del catálogo",
+              'aria-label': 'Buscar pieza del catálogo',
             }}
             InputProps={{ ...params.InputProps, sx: { fontSize: 13 } }}
           />
@@ -1405,21 +1459,21 @@ function OrigenForm({
       <Field
         label="Nombre de la pieza"
         value={draft.name}
-        onChange={set("name")}
+        onChange={set('name')}
       />
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.25 }}>
-        <Field label="Tipo" value={draft.tipo} onChange={set("tipo")} />
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25 }}>
+        <Field label="Tipo" value={draft.tipo} onChange={set('tipo')} />
         <Field
           label="Calidad"
           value={draft.calidad}
-          onChange={set("calidad")}
+          onChange={set('calidad')}
         />
-        <Field label="Color" value={draft.color} onChange={set("color")} />
-        <Field label="Peso" value={draft.peso} onChange={set("peso")} />
-        <Field label="Corte" value={draft.corte} onChange={set("corte")} />
-        <Field label="Joya" value={draft.joya} onChange={set("joya")} />
+        <Field label="Color" value={draft.color} onChange={set('color')} />
+        <Field label="Peso" value={draft.peso} onChange={set('peso')} />
+        <Field label="Corte" value={draft.corte} onChange={set('corte')} />
+        <Field label="Joya" value={draft.joya} onChange={set('joya')} />
       </Box>
-      <Field label="Técnica" value={draft.tecnica} onChange={set("tecnica")} />
+      <Field label="Técnica" value={draft.tecnica} onChange={set('tecnica')} />
       <CustomDetailsEditor
         items={draft.customDetails}
         onAdd={addCustom}
@@ -1428,7 +1482,7 @@ function OrigenForm({
       />
       <PhotoInput
         value={draft.photo}
-        onUrl={set("photo")}
+        onUrl={set('photo')}
         onUpload={onUploadPhoto}
         adjust={photoAdjust}
       />
@@ -1470,7 +1524,7 @@ function EmbajadorForm({
             placeholder="⚡ Autocompletar desde usuarios"
             inputProps={{
               ...params.inputProps,
-              "aria-label": "Buscar usuario",
+              'aria-label': 'Buscar usuario',
             }}
             InputProps={{ ...params.InputProps, sx: { fontSize: 13 } }}
           />
@@ -1480,11 +1534,11 @@ function EmbajadorForm({
       <Field
         label="Nombre del embajador"
         value={draft.name}
-        onChange={set("name")}
+        onChange={set('name')}
       />
       <PhotoInput
         value={draft.photo}
-        onUrl={set("photo")}
+        onUrl={set('photo')}
         onUpload={onUploadPhoto}
         adjust={photoAdjust}
       />
@@ -1524,7 +1578,7 @@ function CarnetForm({
             placeholder="⚡ Autocompletar desde usuarios"
             inputProps={{
               ...params.inputProps,
-              "aria-label": "Buscar usuario",
+              'aria-label': 'Buscar usuario',
             }}
             InputProps={{ ...params.InputProps, sx: { fontSize: 13 } }}
           />
@@ -1534,16 +1588,16 @@ function CarnetForm({
       <Field
         label="Nombre completo"
         value={draft.name}
-        onChange={set("name")}
+        onChange={set('name')}
       />
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.25 }}>
-        <Field label="Rol" value={draft.role} onChange={set("role")} />
-        <Field label="ID" value={draft.id} onChange={set("id")} />
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25 }}>
+        <Field label="Rol" value={draft.role} onChange={set('role')} />
+        <Field label="ID" value={draft.id} onChange={set('id')} />
       </Box>
-      <Field label="E-mail" value={draft.email} onChange={set("email")} />
+      <Field label="E-mail" value={draft.email} onChange={set('email')} />
       <PhotoInput
         value={draft.photo}
-        onUrl={set("photo")}
+        onUrl={set('photo')}
         onUpload={onUploadPhoto}
       />
     </>

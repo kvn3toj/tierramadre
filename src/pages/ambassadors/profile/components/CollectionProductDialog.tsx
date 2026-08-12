@@ -1,25 +1,29 @@
 /**
  * CollectionProductDialog Component
- * Fullscreen dialog showing detail for an exclusive collection product.
+ * Detail overlay for an exclusive collection product, built on the canonical
+ * DS3 `Sheet` (desktop centered modal / mobile bottom sheet).
  * Fetches full image gallery from Drive API for carousel display.
  * Supports: multiple images, videos, certificate slide.
  */
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useId } from 'react';
+import { Box, CircularProgress, IconButton, Typography } from '@mui/material';
 import {
-  Box,
-  CircularProgress,
-  Dialog,
-  DialogContent,
-  IconButton,
-  Typography,
-  useTheme,
-  useMediaQuery,
-} from '@mui/material';
-import { X, ShieldCheck, ChevronLeft, ChevronRight, Share2, Clock } from 'lucide-react';
+  X,
+  ShieldCheck,
+  ChevronLeft,
+  ChevronRight,
+  Share2,
+  Clock,
+} from 'lucide-react';
 import { TreasureItem } from '../../../../types';
-import { brand, lightTokens, darkTokens, legacyTypography as typography, zIndex, cssTransition } from '../../../../design-system';
-import { emeraldCore, goldAccent } from '../../../../design-system/tokens/colors';
+import {
+  qeFont,
+  qeGray,
+  qeType,
+  zIndex,
+  Sheet,
+} from '../../../../design-system';
 import { PriceDisplay } from '../../../../components/price-simulator/PriceDisplay';
 import { accentuate } from '../../../../pages/collection/CollectionPage';
 import { formatCarats } from '../../../../utils/formatting';
@@ -57,15 +61,10 @@ interface CollectionProductDialogProps {
   onShare?: (product: TreasureItem) => void;
 }
 
-export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = ({
-  product,
-  onClose,
-  showUSD = false,
-  onShare,
-}) => {
-  const theme = useTheme();
-  const isLight = theme.palette.mode === 'light';
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+export const CollectionProductDialog: React.FC<
+  CollectionProductDialogProps
+> = ({ product, onClose, showUSD = false, onShare }) => {
+  const titleId = `collection-product-title-${useId()}`;
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoLoading, setVideoLoading] = useState(true);
   const [certLoading, setCertLoading] = useState(true);
@@ -88,14 +87,16 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
     const controller = new AbortController();
     setActiveSlide(0);
     setVideoLoading(true);
-    if (product.certificateUrl && !product.certificateUrl.endsWith('.pdf')) setCertLoading(true);
+    if (product.certificateUrl && !product.certificateUrl.endsWith('.pdf'))
+      setCertLoading(true);
 
     // Start with the product's existing image as fallback
     const fallbackSlide: MediaSlide = {
       id: `fallback-${product.item}`,
-      url: product.mediaType === 'video'
-        ? (product.videoUrl || getVideoUrl(product.imagen || ''))
-        : (product.imagen || ''),
+      url:
+        product.mediaType === 'video'
+          ? product.videoUrl || getVideoUrl(product.imagen || '')
+          : product.imagen || '',
       type: product.mediaType === 'video' ? 'video' : 'image',
       alt: product.nombre,
     };
@@ -109,7 +110,9 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
     // Fetch full gallery from API
     if (product.item) {
       setGalleryLoading(true);
-      fetch(`/api/get-drive-images?itemNumber=${product.item}`, { signal: controller.signal })
+      fetch(`/api/get-drive-images?itemNumber=${product.item}`, {
+        signal: controller.signal,
+      })
         .then((res) => res.json())
         .then((data) => {
           if (data.success && data.images?.length > 0) {
@@ -122,9 +125,13 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
               })
               .map((img: any) => ({
                 id: img.id,
-                url: img.type === 'video'
-                  ? `/api/serve-drive-image?fileId=${img.id}`
-                  : (img.proxyUrl || img.fullUrl || img.previewUrl || img.thumbnailUrl),
+                url:
+                  img.type === 'video'
+                    ? `/api/serve-drive-image?fileId=${img.id}`
+                    : img.proxyUrl ||
+                      img.fullUrl ||
+                      img.previewUrl ||
+                      img.thumbnailUrl,
                 type: img.type as 'image' | 'video',
                 alt: img.name || `${product.nombre} - ${(img.order ?? 0) + 1}`,
               }));
@@ -132,7 +139,8 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
           }
         })
         .catch((err) => {
-          if (err.name !== 'AbortError') console.warn('Failed to fetch gallery:', err);
+          if (err.name !== 'AbortError')
+            console.warn('Failed to fetch gallery:', err);
           // Keep fallback slide
         })
         .finally(() => setGalleryLoading(false));
@@ -148,24 +156,29 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
   }, []);
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-      if (deltaX < 0 && activeSlide < slideCount - 1) {
-        setActiveSlide((s) => s + 1);
-      } else if (deltaX > 0 && activeSlide > 0) {
-        setActiveSlide((s) => s - 1);
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+      const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+        if (deltaX < 0 && activeSlide < slideCount - 1) {
+          setActiveSlide((s) => s + 1);
+        } else if (deltaX > 0 && activeSlide > 0) {
+          setActiveSlide((s) => s - 1);
+        }
       }
-    }
-  }, [activeSlide, slideCount]);
+    },
+    [activeSlide, slideCount],
+  );
 
   // Keyboard navigation
   useEffect(() => {
     if (!product) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft' && activeSlide > 0) setActiveSlide((s) => s - 1);
-      if (e.key === 'ArrowRight' && activeSlide < slideCount - 1) setActiveSlide((s) => s + 1);
+      if (e.key === 'ArrowLeft' && activeSlide > 0)
+        setActiveSlide((s) => s - 1);
+      if (e.key === 'ArrowRight' && activeSlide < slideCount - 1)
+        setActiveSlide((s) => s + 1);
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -185,34 +198,31 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
   const certSlideIndex = hasCertificate ? gallerySlides.length : -1;
 
   return (
-    <Dialog
+    <Sheet
       open={!!product}
       onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      fullScreen={isMobile}
-      PaperProps={{
-        sx: {
-          borderRadius: isMobile ? 0 : 3,
-          bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
-        },
-      }}
+      ariaLabelledBy={product ? titleId : undefined}
+      ariaLabel={product ? undefined : 'Detalle de pieza'}
+      maxWidth={560}
     >
-      <DialogContent
+      <Box
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        sx={{ p: 0, position: 'relative', ...(isMobile && { overflowY: 'auto' }) }}
+        sx={{ position: 'relative' }}
       >
         <IconButton
           onClick={onClose}
+          aria-label="Cerrar"
           sx={{
             position: 'absolute',
-            top: isMobile ? 'max(env(safe-area-inset-top, 8px), 8px)' : 8,
+            top: 8,
             right: 8,
+            width: 44,
+            height: 44,
             zIndex: zIndex.base,
-            bgcolor: 'rgba(0,0,0,0.5)',
-            color: '#fff',
-            '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+            bgcolor: 'var(--tm-scrim)',
+            color: qeGray[0],
+            '&:hover': { bgcolor: 'var(--tm-scrim)' },
           }}
         >
           <X size={20} />
@@ -225,47 +235,81 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
               <Box
                 sx={{
                   display: 'flex',
-                  transition: 'transform 0.3s ease',
+                  transition: 'transform var(--tm-base) var(--tm-ease)',
                   transform: `translateX(-${activeSlide * 100}%)`,
                 }}
               >
                 {/* Gallery slides */}
                 {gallerySlides.map((slide) => (
-                  <Box key={slide.id} sx={{ minWidth: '100%', aspectRatio: '1/1', position: 'relative' }}>
+                  <Box
+                    key={slide.id}
+                    sx={{
+                      minWidth: '100%',
+                      aspectRatio: '1/1',
+                      position: 'relative',
+                    }}
+                  >
                     {slide.type === 'video' ? (
-                      <Box sx={{ width: '100%', height: '100%', bgcolor: '#000', position: 'relative' }}>
-                        {videoLoading && activeSlide === gallerySlides.indexOf(slide) && (
-                          <Box
-                            sx={{
-                              position: 'absolute',
-                              inset: 0,
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              zIndex: zIndex.base,
-                              gap: 1.5,
-                            }}
-                          >
-                            <CircularProgress size={40} aria-label="Cargando" sx={{ color: brand.emerald[400] }} />
-                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-                              Loading video...
-                            </Typography>
-                          </Box>
-                        )}
+                      <Box
+                        sx={{
+                          width: '100%',
+                          height: '100%',
+                          bgcolor: qeGray[900],
+                          position: 'relative',
+                        }}
+                      >
+                        {videoLoading &&
+                          activeSlide === gallerySlides.indexOf(slide) && (
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                inset: 0,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: zIndex.base,
+                                gap: 1.5,
+                              }}
+                            >
+                              <CircularProgress
+                                size={40}
+                                aria-label="Cargando"
+                                sx={{ color: 'var(--tm-accent)' }}
+                              />
+                              <Typography
+                                variant="caption"
+                                sx={{ color: qeGray[300] }}
+                              >
+                                Loading video...
+                              </Typography>
+                            </Box>
+                          )}
                         <video
-                          ref={activeSlide === gallerySlides.indexOf(slide) ? videoRef : undefined}
+                          ref={
+                            activeSlide === gallerySlides.indexOf(slide)
+                              ? videoRef
+                              : undefined
+                          }
                           key={slide.id}
                           src={`${slide.url}#t=0.001`}
                           poster={product.posterUrl}
-                          autoPlay={activeSlide === gallerySlides.indexOf(slide)}
+                          autoPlay={
+                            activeSlide === gallerySlides.indexOf(slide)
+                          }
                           muted
                           loop
                           playsInline
-                          preload={activeSlide === gallerySlides.indexOf(slide) ? 'auto' : 'none'}
+                          preload={
+                            activeSlide === gallerySlides.indexOf(slide)
+                              ? 'auto'
+                              : 'none'
+                          }
                           onLoadedData={(e) => {
                             setVideoLoading(false);
-                            (e.target as HTMLVideoElement).play().catch(() => {});
+                            (e.target as HTMLVideoElement)
+                              .play()
+                              .catch(() => {});
                           }}
                           style={{
                             width: '100%',
@@ -297,7 +341,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     sx={{
                       minWidth: '100%',
                       aspectRatio: '1/1',
-                      bgcolor: isLight ? '#f5f5f5' : '#1a1a1a',
+                      bgcolor: 'var(--tm-well)',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
@@ -320,11 +364,24 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                           p: 4,
                         }}
                       >
-                        <ShieldCheck size={56} color={brand.emerald[500]} />
-                        <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary', textAlign: 'center' }}>
+                        <ShieldCheck
+                          size={56}
+                          style={{ color: 'var(--tm-accent)' }}
+                        />
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 600,
+                            color: 'text.primary',
+                            textAlign: 'center',
+                          }}
+                        >
                           Authenticity Certificate
                         </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center' }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: 'text.secondary', textAlign: 'center' }}
+                        >
                           Tap to open certificate PDF
                         </Typography>
                         <Box
@@ -332,9 +389,9 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                             mt: 1,
                             px: 3,
                             py: 1,
-                            borderRadius: 2,
-                            bgcolor: brand.emerald[500],
-                            color: '#fff',
+                            borderRadius: 'var(--tm-radius-control)',
+                            bgcolor: 'var(--tm-accent-strong)',
+                            color: 'var(--tm-on-accent)',
                             fontWeight: 600,
                             fontSize: '0.875rem',
                           }}
@@ -357,8 +414,15 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                               gap: 1.5,
                             }}
                           >
-                            <CircularProgress size={40} aria-label="Cargando" sx={{ color: brand.emerald[400] }} />
-                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            <CircularProgress
+                              size={40}
+                              aria-label="Cargando"
+                              sx={{ color: 'var(--tm-accent)' }}
+                            />
+                            <Typography
+                              variant="caption"
+                              sx={{ color: 'text.secondary' }}
+                            >
                               Loading certificate...
                             </Typography>
                           </Box>
@@ -374,7 +438,7 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                             objectFit: 'contain',
                             display: 'block',
                             opacity: certLoading ? 0 : 1,
-                            transition: 'opacity 0.2s ease',
+                            transition: 'opacity var(--tm-fast) var(--tm-ease)',
                           }}
                         />
                       </>
@@ -390,15 +454,20 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     position: 'absolute',
                     top: 12,
                     left: 12,
-                    bgcolor: 'rgba(0,0,0,0.5)',
-                    backdropFilter: 'blur(4px)',
-                    borderRadius: 1.5,
+                    bgcolor: 'var(--tm-scrim)',
+                    borderRadius: 'var(--tm-radius-well)',
                     px: 1,
                     py: 0.3,
                     zIndex: zIndex.base,
                   }}
                 >
-                  <Typography sx={{ color: '#fff', fontSize: '0.7rem', fontWeight: 600 }}>
+                  <Typography
+                    sx={{
+                      color: qeGray[0],
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                    }}
+                  >
                     {activeSlide + 1} / {slideCount}
                   </Typography>
                 </Box>
@@ -412,9 +481,8 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     bottom: 40,
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    bgcolor: 'rgba(0,0,0,0.5)',
-                    backdropFilter: 'blur(4px)',
-                    borderRadius: 2,
+                    bgcolor: 'var(--tm-scrim)',
+                    borderRadius: 'var(--tm-radius-control)',
                     px: 1.5,
                     py: 0.5,
                     display: 'flex',
@@ -423,27 +491,31 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     zIndex: zIndex.base,
                   }}
                 >
-                  <CircularProgress size={14} sx={{ color: '#fff' }} />
-                  <Typography sx={{ color: '#fff', fontSize: '0.7rem' }}>
+                  <CircularProgress size={14} sx={{ color: qeGray[0] }} />
+                  <Typography sx={{ color: qeGray[0], fontSize: '0.7rem' }}>
                     Loading gallery...
                   </Typography>
                 </Box>
               )}
 
-              {/* Carousel Navigation Arrows (desktop) */}
-              {slideCount > 1 && !isMobile && (
+              {/* Carousel Navigation Arrows (desktop; mobile swipes instead) */}
+              {slideCount > 1 && (
                 <>
                   {activeSlide > 0 && (
                     <IconButton
                       onClick={() => setActiveSlide((s) => s - 1)}
+                      aria-label="Anterior"
                       sx={{
+                        display: { xs: 'none', sm: 'inline-flex' },
                         position: 'absolute',
                         left: 8,
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        bgcolor: 'rgba(0,0,0,0.5)',
-                        color: '#fff',
-                        '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                        width: 44,
+                        height: 44,
+                        bgcolor: 'var(--tm-scrim)',
+                        color: qeGray[0],
+                        '&:hover': { bgcolor: 'var(--tm-scrim)' },
                         zIndex: zIndex.base,
                       }}
                     >
@@ -453,14 +525,18 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                   {activeSlide < slideCount - 1 && (
                     <IconButton
                       onClick={() => setActiveSlide((s) => s + 1)}
+                      aria-label="Siguiente"
                       sx={{
+                        display: { xs: 'none', sm: 'inline-flex' },
                         position: 'absolute',
                         right: 8,
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        bgcolor: 'rgba(0,0,0,0.5)',
-                        color: '#fff',
-                        '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                        width: 44,
+                        height: 44,
+                        bgcolor: 'var(--tm-scrim)',
+                        color: qeGray[0],
+                        '&:hover': { bgcolor: 'var(--tm-scrim)' },
                         zIndex: zIndex.base,
                       }}
                     >
@@ -491,11 +567,14 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                         width: activeSlide === i ? 18 : 8,
                         height: 8,
                         borderRadius: 4,
-                        bgcolor: activeSlide === i
-                          ? (i === certSlideIndex ? goldAccent.primary : brand.emerald[400])
-                          : 'rgba(255,255,255,0.5)',
+                        // On-photo chrome. The certificate slide no longer gets
+                        // its own gold dot — one saturated colour (§4).
+                        bgcolor:
+                          activeSlide === i
+                            ? 'var(--tm-accent-pure)'
+                            : qeGray[300],
                         cursor: 'pointer',
-                        transition: cssTransition.fast,
+                        transition: 'width var(--tm-fast) var(--tm-ease)',
                       }}
                     />
                   ))}
@@ -513,17 +592,25 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     display: 'flex',
                     alignItems: 'center',
                     gap: 0.5,
-                    bgcolor: 'rgba(0,0,0,0.6)',
-                    backdropFilter: 'blur(4px)',
-                    borderRadius: 1.5,
+                    bgcolor: 'var(--tm-scrim)',
+                    borderRadius: 'var(--tm-radius-well)',
                     px: 1,
                     py: 0.5,
                     cursor: 'pointer',
-                    zIndex: 1,
+                    zIndex: zIndex.base + 1,
                   }}
                 >
-                  <ShieldCheck size={14} color={brand.emerald[400]} />
-                  <Typography sx={{ color: '#fff', fontSize: '0.7rem', fontWeight: 600 }}>
+                  <ShieldCheck
+                    size={14}
+                    style={{ color: 'var(--tm-accent-pure)' }}
+                  />
+                  <Typography
+                    sx={{
+                      color: qeGray[0],
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                    }}
+                  >
                     Certificate
                   </Typography>
                 </Box>
@@ -533,30 +620,72 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
             {/* Product Info */}
             <Box sx={{ px: { xs: 2, sm: 2.5 }, pt: 2, pb: { xs: 2, sm: 2.5 } }}>
               {/* Name + metadata row */}
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1.5, mb: 1.5 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                  gap: 1.5,
+                  mb: 1.5,
+                }}
+              >
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography
+                    id={titleId}
+                    component="h2"
                     sx={{
-                      fontSize: { xs: '1.35rem', sm: '1.5rem' },
-                      fontWeight: 700,
-                      letterSpacing: '-0.02em',
-                      lineHeight: 1.2,
+                      ...qeType.title,
+                      fontSize: { xs: '1.6rem', sm: '1.8rem' },
                     }}
                   >
                     {accentuate(product.nombre)}
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, mt: 0.5 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.6,
+                      mt: 0.5,
+                    }}
+                  >
                     {product.certificateUrl ? (
-                      <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.3 }}>
-                        <ShieldCheck size={11} color={emeraldCore.primary} />
-                        <Typography sx={{ fontSize: '12px', fontWeight: 600, color: emeraldCore.primary }}>
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 0.3,
+                        }}
+                      >
+                        <ShieldCheck
+                          size={11}
+                          style={{ color: 'var(--tm-accent)' }}
+                        />
+                        <Typography
+                          sx={{
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            color: 'var(--tm-accent)',
+                          }}
+                        >
                           Certified
                         </Typography>
                       </Box>
                     ) : (
-                      <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.3 }}>
-                        <Clock size={11} color={goldAccent.dark} />
-                        <Typography sx={{ fontSize: '12px', fontWeight: 500, color: goldAccent.dark }}>
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 0.3,
+                        }}
+                      >
+                        <Clock size={11} style={{ color: 'var(--tm-muted)' }} />
+                        <Typography
+                          sx={{
+                            fontSize: '12px',
+                            fontWeight: 500,
+                            color: 'var(--tm-muted)',
+                          }}
+                        >
                           Being issued
                         </Typography>
                       </Box>
@@ -569,8 +698,8 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                     size="small"
                     sx={{
                       mt: 0.25,
-                      color: isLight ? 'rgba(60,60,67,0.4)' : 'rgba(235,235,245,0.4)',
-                      '&:hover': { color: emeraldCore.primary },
+                      color: 'var(--tm-subtle)',
+                      '&:hover': { color: 'var(--tm-accent)' },
                     }}
                   >
                     <Share2 size={18} />
@@ -586,71 +715,121 @@ export const CollectionProductDialog: React.FC<CollectionProductDialogProps> = (
                   gap: 1.5,
                 }}
               >
-                {(showUSD && (product.precioInternacional || product.precioCOP)) && (
-                  <Box>
-                    <Typography sx={{ fontSize: '11px', color: 'text.secondary', fontWeight: 500, mb: 0.25 }}>
-                      Price
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: { xs: '1.25rem', sm: '1.35rem' },
-                        fontWeight: 700,
-                        color: emeraldCore.primary,
-                        fontFamily: typography.fontFamily.mono,
-                        fontFeatureSettings: '"tnum"',
-                        lineHeight: 1.2,
-                      }}
-                    >
-                      {formatUSD(product.precioInternacional || product.precioCOP)}
-                    </Typography>
-                  </Box>
-                )}
-                {(showUSD && (product.precioInternacional || product.precioCOP) && typeof product.peso === 'number' && product.peso > 0) && (
-                  <Box>
-                    <Typography sx={{ fontSize: '11px', color: 'text.secondary', fontWeight: 500, mb: 0.25 }}>
-                      Price per Carat
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: { xs: '1.25rem', sm: '1.35rem' },
-                        fontWeight: 700,
-                        fontFamily: typography.fontFamily.mono,
-                        fontFeatureSettings: '"tnum"',
-                        lineHeight: 1.2,
-                      }}
-                    >
-                      {formatUSD(Math.round((product.precioInternacional || product.precioCOP) / product.peso))}
-                    </Typography>
-                  </Box>
-                )}
+                {showUSD &&
+                  (product.precioInternacional || product.precioCOP) && (
+                    <Box>
+                      <Typography
+                        sx={{
+                          ...qeType.overline,
+                          color: 'var(--tm-muted)',
+                          mb: 0.25,
+                        }}
+                      >
+                        Price
+                      </Typography>
+                      <Typography
+                        sx={{
+                          ...qeType.data,
+                          fontSize: { xs: '1.25rem', sm: '1.35rem' },
+                          color: 'var(--tm-accent)',
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {formatUSD(
+                          product.precioInternacional || product.precioCOP,
+                        )}
+                      </Typography>
+                    </Box>
+                  )}
+                {showUSD &&
+                  (product.precioInternacional || product.precioCOP) &&
+                  typeof product.peso === 'number' &&
+                  product.peso > 0 && (
+                    <Box>
+                      <Typography
+                        sx={{
+                          ...qeType.overline,
+                          color: 'var(--tm-muted)',
+                          mb: 0.25,
+                        }}
+                      >
+                        Price per Carat
+                      </Typography>
+                      <Typography
+                        sx={{
+                          ...qeType.data,
+                          fontSize: { xs: '1.25rem', sm: '1.35rem' },
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {formatUSD(
+                          Math.round(
+                            (product.precioInternacional || product.precioCOP) /
+                              product.peso,
+                          ),
+                        )}
+                      </Typography>
+                    </Box>
+                  )}
                 {typeof product.peso === 'number' && (
                   <Box>
-                    <Typography sx={{ fontSize: '11px', color: 'text.secondary', fontWeight: 500, mb: 0.25 }}>
+                    <Typography
+                      sx={{
+                        ...qeType.overline,
+                        color: 'var(--tm-muted)',
+                        mb: 0.25,
+                      }}
+                    >
                       Carats
                     </Typography>
-                    <Typography sx={{ fontSize: { xs: '1.25rem', sm: '1.35rem' }, fontWeight: 700, lineHeight: 1.2 }}>
+                    <Typography
+                      sx={{
+                        ...qeType.data,
+                        fontSize: { xs: '1.25rem', sm: '1.35rem' },
+                        lineHeight: 1.2,
+                      }}
+                    >
                       {formatCarats(product.peso)} ct
                     </Typography>
                   </Box>
                 )}
                 {product.talla && (
                   <Box>
-                    <Typography sx={{ fontSize: '11px', color: 'text.secondary', fontWeight: 500, mb: 0.25 }}>
+                    <Typography
+                      sx={{
+                        ...qeType.overline,
+                        color: 'var(--tm-muted)',
+                        mb: 0.25,
+                      }}
+                    >
                       Cut
                     </Typography>
-                    <Typography sx={{ fontSize: { xs: '1.25rem', sm: '1.35rem' }, fontWeight: 700, lineHeight: 1.2 }}>
+                    <Typography
+                      sx={{
+                        fontFamily: qeFont.ui,
+                        fontSize: { xs: '1.25rem', sm: '1.35rem' },
+                        fontWeight: 500,
+                        lineHeight: 1.2,
+                      }}
+                    >
                       {product.talla}
                     </Typography>
                   </Box>
                 )}
               </Box>
-              {!(showUSD && (product.precioInternacional || product.precioCOP)) && (
-                <PriceDisplay price={product.precioCOP} precioInternacional={product.precioInternacional} />
+              {!(
+                showUSD &&
+                (product.precioInternacional || product.precioCOP)
+              ) && (
+                <PriceDisplay
+                  price={product.precioCOP}
+                  precioInternacional={product.precioInternacional}
+                />
               )}
             </Box>
           </>
         )}
-      </DialogContent>
-    </Dialog>
+      </Box>
+    </Sheet>
   );
 };

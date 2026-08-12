@@ -72,7 +72,7 @@ interface WizardState {
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
-  ref: React.Ref<unknown>
+  ref: React.Ref<unknown>,
 ) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
@@ -81,7 +81,13 @@ const Transition = forwardRef(function Transition(
 // STEP CONFIG
 // =============================================================================
 
-const STEPS: WizardStep[] = ['capture', 'annotate', 'categorize', 'describe', 'success'];
+const STEPS: WizardStep[] = [
+  'capture',
+  'annotate',
+  'categorize',
+  'describe',
+  'success',
+];
 
 const STEP_PROGRESS: Record<WizardStep, number> = {
   capture: 20,
@@ -95,7 +101,11 @@ const STEP_PROGRESS: Record<WizardStep, number> = {
 // COMPONENT
 // =============================================================================
 
-export default function FeedbackWizard({ open, onClose, onCaptureStart }: FeedbackWizardProps) {
+export default function FeedbackWizard({
+  open,
+  onClose,
+  onCaptureStart,
+}: FeedbackWizardProps) {
   const location = useLocation();
   const { user } = useGoogleAuth();
 
@@ -235,7 +245,8 @@ export default function FeedbackWizard({ open, onClose, onCaptureStart }: Feedba
       setState((prev) => ({
         ...prev,
         isSubmitting: false,
-        error: error instanceof Error ? error.message : 'Error al enviar feedback',
+        error:
+          error instanceof Error ? error.message : 'Error al enviar feedback',
       }));
     }
   }, [state, location.pathname, user]);
@@ -330,6 +341,10 @@ export default function FeedbackWizard({ open, onClose, onCaptureStart }: Feedba
       maxWidth="sm"
       fullWidth
       PaperProps={{
+        // Fixed dark glass surface regardless of app theme — scope --tm-*
+        // tokens to dark mode locally so the canonical Button/Badge/etc.
+        // consumed inside resolve correct (AA) colors either way.
+        'data-theme': 'dark',
         sx: {
           borderRadius: 3,
           overflow: 'hidden',
@@ -360,7 +375,9 @@ export default function FeedbackWizard({ open, onClose, onCaptureStart }: Feedba
             gap: 1,
           }}
         >
-          <span role="img" aria-label="bug">🐛</span>
+          <span role="img" aria-label="bug">
+            🐛
+          </span>
           Reportar Problema
         </Typography>
         <IconButton

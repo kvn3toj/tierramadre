@@ -283,6 +283,23 @@ export interface EmeraldImageGallery {
   hasLifestyle: boolean; // Has in-context/hand shot
 }
 
+/**
+ * Precio promocional temporal de un ítem.
+ *
+ * Lo derivan las queries públicas de Convex (`publishedCatalog`,
+ * `getPublicByItem`, `getByItem`) y llega ya resuelto: PRESENTE solo cuando la
+ * promoción está vigente, `undefined` cuando no aplica o ya venció. La UI solo
+ * pregunta si el objeto existe — nunca parsea texto ni calcula vencimientos.
+ * Se declara aquí (en vez de importarlo de `convex/`) para que la capa `src/`
+ * no dependa de la forma interna de un módulo del backend.
+ */
+export interface PrecioEspecial {
+  /** Texto de cara al cliente, listo para mostrar. */
+  etiqueta: string;
+  /** Último día vigente, ISO corto (YYYY-MM-DD). */
+  hasta: string;
+}
+
 export interface TreasureItem {
   item: number;
   fechaIngreso: string;
@@ -291,7 +308,8 @@ export interface TreasureItem {
   color: EmeraldColor;
   calidad: EmeraldQuality;
   cantidad: number;
-  talla: string;
+  talla: string; // forma de talla / corte (hoja col H "Corte")
+  tallaAnillo?: string; // aro del anillo, sólo joyería (hoja col BF)
   medidas: string;
   medidasValores?: string; // Actual measurement values (Largo x Ancho in mm)
   imagen?: string;
@@ -363,6 +381,11 @@ export interface TreasureItem {
   mina?: string; // lot-level origin mine (Muzo, Chivor…)
   tratamiento?: string; // lot-level treatment (none / oil / resin)
 
+  // ── Precio promocional temporal (PUBLIC, 2026-07-25) ──
+  // Denormalizado por las queries públicas de Convex. Presente SOLO mientras
+  // la promoción está vigente; ver `PrecioEspecial` arriba.
+  precioEspecial?: PrecioEspecial;
+
   // ── Sync status (admin-only) ──
   // Mirrors the Convex row's push-to-Sheets state. Sourced from the admin-only
   // `products.get` doc; never present on public/anonymous catalog payloads.
@@ -400,6 +423,7 @@ export interface TreasureItem {
     peso?: string | number;
     categoria?: string;
     talla?: string;
+    tallaAnillo?: string;
     medidas?: string;
     isJewelry?: boolean;
     metalType?: 'Plata' | 'Oro 18k';

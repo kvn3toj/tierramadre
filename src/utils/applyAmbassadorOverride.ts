@@ -11,13 +11,16 @@
 import type { TreasureItem } from '../types';
 import type { AmbassadorProductOverride } from '../types/ambassadorOverride';
 
-export function applyAmbassadorOverride(
-  product: TreasureItem,
+export function applyAmbassadorOverride<T extends TreasureItem>(
+  product: T,
   override: AmbassadorProductOverride | undefined,
-): TreasureItem {
+): T {
   if (!override) return product;
 
-  const next: TreasureItem = { ...product };
+  // Generic so enriched rows survive the round trip: AsesorProduct carries
+  // `effectiveEstado`, and a plain TreasureItem return type would quietly
+  // erase it at every call site that applies overrides to owned products.
+  const next: T = { ...product };
 
   if (override.customName && override.customName.trim().length > 0) {
     next.nombre = override.customName.trim();
@@ -33,10 +36,10 @@ export function applyAmbassadorOverride(
 /**
  * Vectorised version: applies a Map<itemId, override> to a list of products.
  */
-export function applyAmbassadorOverrides(
-  products: TreasureItem[],
+export function applyAmbassadorOverrides<T extends TreasureItem>(
+  products: T[],
   overrides: Record<string, AmbassadorProductOverride>,
-): TreasureItem[] {
+): T[] {
   if (!products.length || Object.keys(overrides).length === 0) return products;
   return products.map((p) => applyAmbassadorOverride(p, overrides[String(p.item)]));
 }

@@ -110,7 +110,10 @@ export interface ProductListSectionProps {
   onEditProduct?: (productId: string) => void;
   editingProductId?: string | null;
   /** Persist updates to a product (used by the AI jewelry visualizer). */
-  updateProduct?: (productId: string, updates: Partial<CotizacionProduct>) => void;
+  updateProduct?: (
+    productId: string,
+    updates: Partial<CotizacionProduct>,
+  ) => void;
   /** Quotation number — groups AI previews in Drive. */
   quotationNumber?: string;
 }
@@ -161,7 +164,11 @@ export interface ActionButtonsProps {
   handleSharePDF: () => void;
   handlePrint: () => void;
   handleNewQuotation: () => void;
+  /** Export/share the 1080×1920 product card(s) as PNG. */
+  handleShareCards?: () => void;
   disabled: boolean;
   isExporting?: boolean;
   isSharing?: boolean;
+  /** True while the PNG card export is running. */
+  isSharingCards?: boolean;
 }

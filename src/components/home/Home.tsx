@@ -14,41 +14,41 @@
  * Refactored by: CoomÜnity Council (Aria, Moksart, Eunoia, Zeno)
  */
 
-import React, { Suspense, lazy, useEffect } from "react";
-import { Box } from "@mui/material";
-import { useTheme as useMuiTheme } from "@mui/material/styles";
-import { ErrorBoundary } from "react-error-boundary";
-import { useTreasure } from "../../hooks/useTreasure";
-import { useNewestProducts } from "../../hooks/useNewestProducts";
+import React, { Suspense, lazy, useEffect } from 'react';
+import { Box } from '@mui/material';
+import { useTheme as useMuiTheme } from '@mui/material/styles';
+import { ErrorBoundary } from 'react-error-boundary';
+import { useTreasure } from '../../hooks/useTreasure';
+import { useNewestProducts } from '../../hooks/useNewestProducts';
 import {
   useGamification,
   AchievementToastAnimated as AchievementToast,
-} from "../gamification";
-import { useAnalytics } from "./hooks";
-import { SectionSkeleton, ErrorFallback } from "./common";
-import { NotificationPermission } from "../pwa";
-import { useNewProductNotification } from "../../hooks/useNewProductNotification";
+} from '../gamification';
+import { useAnalytics } from './hooks';
+import { SectionSkeleton, ErrorFallback } from './common';
+import { NotificationPermission } from '../pwa';
+import { useNewProductNotification } from '../../hooks/useNewProductNotification';
 
 import {
   MAX_PRODUCTS_DISPLAY,
   SKELETON_HEIGHTS,
   ANIMATION_DELAYS,
-} from "./constants";
+} from './constants';
 
 // =============================================================================
 // LAZY LOADED SECTIONS
 // =============================================================================
 
 // Critical sections - load immediately (above the fold)
-import HeroGallery from "./sections/HeroGallery";
-import ProductsSection from "./sections/ProductsSection";
-import OracleSection from "./sections/OracleSection";
+import HeroGallery from './sections/HeroGallery';
+import ProductsSection from './sections/ProductsSection';
+import OracleSection from './sections/OracleSection';
 
 // Below-the-fold sections - lazy load
-const VideoSection = lazy(() => import("./sections/VideoSection"));
-const ValuationSection = lazy(() => import("./sections/ValuationSection"));
+const VideoSection = lazy(() => import('./sections/VideoSection'));
+const ValuationSection = lazy(() => import('./sections/ValuationSection'));
 // KnowledgeSection removed - content consolidated into OracleSection
-const Footer = lazy(() => import("./sections/Footer"));
+const Footer = lazy(() => import('./sections/Footer'));
 
 // Reserved for future use (minimalistic redesign)
 // const MeditationSection = lazy(() => import('./sections/MeditationSection'));
@@ -60,7 +60,7 @@ const Footer = lazy(() => import("./sections/Footer"));
 
 const Home: React.FC = () => {
   const muiTheme = useMuiTheme();
-  const isDarkMode = muiTheme.palette.mode === "dark";
+  const isDarkMode = muiTheme.palette.mode === 'dark';
   const { treasure } = useTreasure();
 
   // Fetch newest products based on image upload date in Google Drive (SOURCE OF TRUTH)
@@ -75,7 +75,7 @@ const Home: React.FC = () => {
   // ==========================================================================
 
   useEffect(() => {
-    analytics.trackPageView("home");
+    analytics.trackPageView('home');
   }, [analytics]);
 
   // Check for new products and notify (uses product IDs for accurate detection)
@@ -89,22 +89,25 @@ const Home: React.FC = () => {
     <Box
       aria-label="Página principal de Tierra Madre"
       sx={{
-        position: "relative",
+        position: 'relative',
         // Prevent overscroll bounce showing black background
-        overscrollBehavior: "contain",
+        overscrollBehavior: 'contain',
       }}
     >
-      {/* Hero + Gallery - Merged with interactive thumbnails */}
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <HeroGallery />
-      </ErrorBoundary>
+      {/* Hero + Gallery - Merged with interactive thumbnails.
+          Full-bleed: breaks out of the shell's --maxw content container. */}
+      <Box className="tm-full-bleed">
+        <ErrorBoundary FallbackComponent={ErrorFallback}>
+          <HeroGallery />
+        </ErrorBoundary>
+      </Box>
 
       {/* Content sections with max-width constraint for wider viewports */}
       <Box
         sx={{
           maxWidth: 640,
-          mx: "auto",
-          width: "100%",
+          mx: 'auto',
+          width: '100%',
         }}
       >
         {/* Estrenos - New products carousel (above fold, critical) */}
@@ -135,30 +138,30 @@ const Home: React.FC = () => {
         {/* Lower sections with background image - starts from chart */}
         <Box
           sx={{
-            position: "relative",
+            position: 'relative',
             mt: 1,
-            "&::before": {
+            '&::before': {
               content: '""',
-              position: "absolute",
+              position: 'absolute',
               inset: 0,
               backgroundImage: isDarkMode
-                ? "url(/images/home-bg.png)"
-                : "url(/images/home-bg-light.png)",
-              backgroundSize: "cover",
-              backgroundPosition: "center top",
-              backgroundRepeat: "no-repeat",
-              backgroundAttachment: "scroll",
+                ? 'url(/images/home-bg.png)'
+                : 'url(/images/home-bg-light.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center top',
+              backgroundRepeat: 'no-repeat',
+              backgroundAttachment: 'scroll',
               opacity: isDarkMode ? 0.2 : 0.15,
               maskImage:
-                "linear-gradient(to bottom, transparent 0%, black 10%)",
+                'linear-gradient(to bottom, transparent 0%, black 10%)',
               WebkitMaskImage:
-                "linear-gradient(to bottom, transparent 0%, black 10%)",
+                'linear-gradient(to bottom, transparent 0%, black 10%)',
               zIndex: 0,
             },
           }}
         >
           {/* Valuation - Emerald appreciation */}
-          <Box sx={{ position: "relative", zIndex: 1 }}>
+          <Box sx={{ position: 'relative', zIndex: 1 }}>
             <ErrorBoundary FallbackComponent={ErrorFallback}>
               <Suspense
                 fallback={
@@ -171,7 +174,7 @@ const Home: React.FC = () => {
           </Box>
 
           {/* Footer - Social links and contact */}
-          <Box sx={{ position: "relative", zIndex: 1, mt: 0.5 }}>
+          <Box sx={{ position: 'relative', zIndex: 1, mt: 0.5 }}>
             <ErrorBoundary FallbackComponent={ErrorFallback}>
               <Suspense
                 fallback={<SectionSkeleton height={SKELETON_HEIGHTS.footer} />}

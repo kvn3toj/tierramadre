@@ -28,56 +28,57 @@
  * reusing the same client the live sync uses (api/_lib/google-clients.js).
  */
 
-import dotenv from "dotenv";
-dotenv.config({ path: ".env" });
-dotenv.config({ path: ".env.local" });
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env' });
+dotenv.config({ path: '.env.local' });
 
-import { getSheetsClient } from "../api/_lib/google-clients.js";
+import { getSheetsClient } from '../api/_lib/google-clients.js';
 import {
   FOTO_INVENTARIO_HEADERS,
   columnIndexToLetter,
-} from "../api/_lib/fotosintesis-inventory-columns.js";
+} from '../api/_lib/fotosintesis-inventory-columns.js';
 
 const SPREADSHEET_ID =
   process.env.FOTOSINTESIS_SPREADSHEET_ID?.trim() ||
-  "18w0DcP_4CO-le9_vt_UPGCHXAVXkQ5sugLF4r_o2bVM";
+  '18w0DcP_4CO-le9_vt_UPGCHXAVXkQ5sugLF4r_o2bVM';
 
-const DRY_RUN = process.argv.includes("--dry-run");
+const DRY_RUN = process.argv.includes('--dry-run');
 
 // Must stay aligned with convex/_lib/columnMaps.ts#lots and
 // api/_lib/admin-table-config.ts#lots.columns.
 const LOTES_HEADERS = [
-  "loteId",
-  "providerNombre",
-  "fechaRecepcion",
-  "pesoTotalQuilates",
-  "costoTotalCOP",
-  "unidadesDeclaradas",
-  "formaPago",
-  "metodoContado",
-  "fechaVencimiento",
-  "numeroCuotas",
-  "numeroFactura",
-  "urlFactura",
-  "notas",
-  "estado",
-  "renombreLote",
-  "tratamiento",
-  "mina",
-  "sede",
-  "operadorNombre",
-  "operadorRol",
+  'loteId',
+  'providerNombre',
+  'fechaRecepcion',
+  'pesoTotalQuilates',
+  'costoTotalCOP',
+  'unidadesDeclaradas',
+  'formaPago',
+  'metodoContado',
+  'fechaVencimiento',
+  'numeroCuotas',
+  'numeroFactura',
+  'urlFactura',
+  'notas',
+  'estado',
+  'renombreLote',
+  'tratamiento',
+  'mina',
+  'sede',
+  'operadorNombre',
+  'operadorRol',
+  'mostrarComoLote',
 ];
 
 const TARGETS = [
-  { patterns: ["inventario", "inventory"], headers: FOTO_INVENTARIO_HEADERS },
-  { patterns: ["lotes", "lots"], headers: LOTES_HEADERS },
+  { patterns: ['inventario', 'inventory'], headers: FOTO_INVENTARIO_HEADERS },
+  { patterns: ['lotes', 'lots'], headers: LOTES_HEADERS },
 ];
 
 async function main() {
   const sheets = getSheetsClient();
   console.log(`Spreadsheet: ${SPREADSHEET_ID}`);
-  if (DRY_RUN) console.log("DRY-RUN — no writes will be made.\n");
+  if (DRY_RUN) console.log('DRY-RUN — no writes will be made.\n');
 
   const meta = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
   const tabs = meta.data.sheets ?? [];
@@ -88,7 +89,7 @@ async function main() {
     );
     if (!tab) {
       console.warn(
-        `⚠ No tab matching [${target.patterns.join(", ")}] — skipping.`,
+        `⚠ No tab matching [${target.patterns.join(', ')}] — skipping.`,
       );
       continue;
     }
@@ -112,7 +113,7 @@ async function main() {
     );
     target.headers.forEach((h, i) => {
       const old = beforeHeaders[i];
-      if (old === undefined || old === "") {
+      if (old === undefined || old === '') {
         console.log(`   + ${columnIndexToLetter(i)}: "${h}" (new)`);
       } else if (old !== h) {
         console.log(`   ~ ${columnIndexToLetter(i)}: "${old}" → "${h}"`);
@@ -133,7 +134,7 @@ async function main() {
                   sheetId,
                   gridProperties: { columnCount: neededCols },
                 },
-                fields: "gridProperties.columnCount",
+                fields: 'gridProperties.columnCount',
               },
             },
           ],
@@ -145,7 +146,7 @@ async function main() {
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
       range: `'${title}'!A1:${lastCol}1`,
-      valueInputOption: "RAW",
+      valueInputOption: 'RAW',
       requestBody: { values: [target.headers] },
     });
 
@@ -164,19 +165,19 @@ async function main() {
                     bold: true,
                     foregroundColor: { red: 1, green: 1, blue: 1 },
                   },
-                  horizontalAlignment: "CENTER",
-                  verticalAlignment: "MIDDLE",
-                  wrapStrategy: "WRAP",
+                  horizontalAlignment: 'CENTER',
+                  verticalAlignment: 'MIDDLE',
+                  wrapStrategy: 'WRAP',
                 },
               },
               fields:
-                "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment,wrapStrategy)",
+                'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment,wrapStrategy)',
             },
           },
           {
             updateSheetProperties: {
               properties: { sheetId, gridProperties: { frozenRowCount: 1 } },
-              fields: "gridProperties.frozenRowCount",
+              fields: 'gridProperties.frozenRowCount',
             },
           },
         ],
@@ -187,11 +188,11 @@ async function main() {
   }
 
   console.log(
-    `\n${DRY_RUN ? "Dry-run complete." : "Done."} View: https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}`,
+    `\n${DRY_RUN ? 'Dry-run complete.' : 'Done.'} View: https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}`,
   );
 }
 
 main().catch((err) => {
-  console.error("Error:", err?.message ?? err);
+  console.error('Error:', err?.message ?? err);
   process.exit(1);
 });

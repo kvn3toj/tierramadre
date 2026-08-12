@@ -7,7 +7,10 @@
 
 import { useState, useCallback, useMemo, useRef } from 'react';
 import { useConvexQuery, convexApi, convexReady } from '../lib/convex-safe';
-import { requireAuthTokenOrLogout } from '../utils/sessionToken';
+import {
+  requireAuthTokenOrLogout,
+  readFreshSessionToken,
+} from '../utils/sessionToken';
 
 export interface Invitation {
   invitationId: string;
@@ -73,7 +76,12 @@ export function useMyInvitations(
       ? // eslint-disable-next-line react-hooks/rules-of-hooks
         useConvexQuery(
           convexApi.invitations.listByCreator,
-          creatorEmail ? { creatorEmail } : 'skip',
+          creatorEmail
+            ? {
+                creatorEmail,
+                sessionToken: readFreshSessionToken() ?? undefined,
+              }
+            : 'skip',
         )
       : undefined;
 

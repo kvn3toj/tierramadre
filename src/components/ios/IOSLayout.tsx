@@ -14,7 +14,7 @@ import React, {
   useRef,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Box, IconButton } from '@mui/material';
+import { Box, IconButton, useMediaQuery } from '@mui/material';
 import {
   Search,
   FilterList,
@@ -22,7 +22,6 @@ import {
   FullscreenExit,
 } from '@mui/icons-material';
 
-import IOSTabBar from './IOSTabBar';
 import IOSNavigationBar, {
   NavigationBarMode,
   NavigationAction,
@@ -37,9 +36,53 @@ import {
   defaultShadows,
   appShell,
   bottomBarClearance,
+  layoutBreakpoints,
+  TabBar,
+  hitSlop,
 } from '../../design-system';
+import {
+  STOREFRONT_SLOTS,
+  PROVIDER_SLOTS,
+  storefrontTabTheme,
+} from '../navigation/tabBarConfig';
+import { useIsProvider } from '../../hooks/usePermissions';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
+
+/**
+ * How a page wears the brand in the nav bar.
+ *
+ * - `lockup`   — símbolo + "tierra mädre" + "ESMERALDAS CON ADN DE PAZ".
+ *                The full brand moment; needs a taller bar so the slogan
+ *                clears its ~5px legibility floor.
+ * - `wordmark` — símbolo + "tierra mädre", sin eslogan. The name renders
+ *                LARGER than in the lockup at a shorter logo height (26px vs
+ *                22px), because it stops sharing the height with the slogan.
+ *                Not currently used by any route: the brand is shown whole
+ *                everywhere. Kept because the asset ships and it is the right
+ *                answer for any future bar too short for the slogan.
+ */
+type NavBrand = 'lockup' | 'wordmark';
+
+/**
+ * Asset + sizing per treatment. The logo height is deliberately under the bar
+ * height: it used to equal it, so the mark filled the bar edge to edge.
+ */
+const NAV_BRAND: Record<
+  NavBrand,
+  { url: string; logoHeight: number; barMinHeight: number }
+> = {
+  lockup: {
+    url: '/images/logo-horizontal-green.png',
+    logoHeight: 36,
+    barMinHeight: 52,
+  },
+  wordmark: {
+    url: '/images/logo-wordmark-green.png',
+    logoHeight: 26,
+    barMinHeight: 44,
+  },
+};
 
 interface PageConfig {
   title: string;
@@ -53,6 +96,8 @@ interface PageConfig {
   backgroundColor?: string;
   /** Force a specific logo regardless of theme */
   forceLogoUrl?: string;
+  /** Brand treatment for the nav bar; sets the asset and its sizing. */
+  navBrand?: NavBrand;
 }
 
 const getPageConfigs = (t: any): Record<string, PageConfig> => ({
@@ -85,8 +130,7 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
   '/treasure': {
     title: t.pages.treasure.title,
     mode: 'compact',
-    logoUrl: '/images/logo-horizontal-green.png',
-    forceLogoUrl: '/images/logo-horizontal-green.png',
+    navBrand: 'lockup',
   },
   '/ambassadors': {
     title: t.pages.ambassadors.title,
@@ -95,8 +139,7 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
   '/home': {
     title: 'Tierra Mädre',
     mode: 'compact',
-    logoUrl: '/images/logo-horizontal-green.png',
-    forceLogoUrl: '/images/logo-horizontal-green.png',
+    navBrand: 'lockup',
   },
   '/catalog': {
     title: t.pages.catalog.title,
@@ -133,10 +176,24 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
     mode: 'compact',
     showBackButton: true,
   },
+  // The three routes that all render ProductDetail. The page carries its own
+  // FICHA header (back arrow + código + acciones), so the shell bar above it is
+  // pure brand — the mark, not the name spelled out. `/p/` keeps the trailing
+  // slash on purpose: bare `/p` would also swallow `/provider`.
   '/product': {
     title: t.pages.gallery.title,
     mode: 'compact',
-    showBackButton: true,
+    navBrand: 'lockup',
+  },
+  '/p/': {
+    title: t.pages.gallery.title,
+    mode: 'compact',
+    navBrand: 'lockup',
+  },
+  '/grupo/': {
+    title: t.pages.gallery.title,
+    mode: 'compact',
+    navBrand: 'lockup',
   },
   '/cuentas/cotizaciones': {
     title: t.pages.cotizacion.title,
@@ -207,6 +264,48 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   // so the shell suppresses the global nav bar there — one top chrome per view.
   const isFotoRoute = location.pathname.startsWith('/admin/fotosintesis');
 
+  // Scopes that fill the viewport width by design opt out of the --maxw content
+  // container: dense back-office (Fotosíntesis + Atelier) and the cinematic
+  // vault/esmereogénesis (§5.2 "exempt"). Storefront + provider get the centered
+  // container (DS3-MIGRATION-PRD §5 Fase 1 decision).
+  const isAtelierRoute = location.pathname.startsWith('/admin/products');
+  const isCinematicRoute =
+    location.pathname.startsWith('/boveda-secreta') ||
+    location.pathname.startsWith('/esmereogenesis');
+  const isFullWidthScope = isFotoRoute || isAtelierRoute || isCinematicRoute;
+
+  // The catalog gets the browse-dense container tier (--maxw-wide) instead of
+  // the reading tier. It is the one contained route whose job is scanning a
+  // 486-piece grid, not reading a page, and 1160 was costing it a third of the
+  // monitor. Still contained — it opts into a wider band, not out of the shell.
+  const isBrowseScope = location.pathname.startsWith('/treasure');
+
+  // Providers get their own direct-place bar; everyone else gets the storefront
+  // bar. Selection is by permission (not path), same as the old IOSTabBar.
+  const isProvider = useIsProvider();
+
+  // Bóveda / Esmereogénesis is a cinematic desktop scope: at ≥ desktop width it
+  // hands navigation to its slim left side-nav, so the bottom bar AUTO-HIDES
+  // (stays mounted, slides off) and reveals on demand — mouse to the bottom
+  // edge or keyboard focus. Preserves the old IOSTabBar behavior exactly.
+  const isDesktop = useMediaQuery(`(min-width:${layoutBreakpoints.desktop}px)`);
+  const barAutoHide =
+    isDesktop && location.pathname.startsWith('/esmereogenesis');
+  const [barRevealed, setBarRevealed] = useState(false);
+
+  useEffect(() => {
+    if (!barAutoHide) {
+      setBarRevealed(false);
+      return;
+    }
+    const onMove = (e: MouseEvent) => {
+      // Reveal when the pointer nears the bottom edge (matches the old bar).
+      setBarRevealed(e.clientY >= window.innerHeight - 100);
+    };
+    window.addEventListener('mousemove', onMove);
+    return () => window.removeEventListener('mousemove', onMove);
+  }, [barAutoHide]);
+
   // Publish the measured height of <main> as --app-main-height so pages can
   // size panes from the real scrollport instead of guessing calc(100vh - N).
   // Imperative (no state) — same pattern as CopilotRail's --copilot-rail-width.
@@ -273,6 +372,20 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
     };
   }, [location.pathname, t, isLight]);
 
+  /**
+   * Which brand treatment the bar wears.
+   *
+   * The same one everywhere: every branded screen shows the full lockup, on
+   * every device. The treatment no longer varies by route or by breakpoint —
+   * one mark, one size, so the brand reads identically wherever it appears.
+   *
+   * Pages that never carry the brand are untouched; they keep their text title.
+   */
+  const navBrand = useMemo(
+    () => (pageConfig.navBrand ? NAV_BRAND[pageConfig.navBrand] : undefined),
+    [pageConfig.navBrand],
+  );
+
   return (
     <Box
       sx={{
@@ -336,6 +449,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
           title={pageConfig.title}
           subtitle={pageConfig.subtitle}
           logoUrl={
+            navBrand?.url ||
             pageConfig.forceLogoUrl ||
             (pageConfig.logoUrl
               ? isLight
@@ -343,6 +457,8 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
                 : '/images/logo-horizontal-white.png'
               : undefined)
           }
+          logoHeight={navBrand?.logoHeight}
+          barMinHeight={navBrand?.barMinHeight}
           showBackButton={pageConfig.showBackButton}
           leadingActions={pageConfig.leadingActions}
           trailingActions={pageConfig.trailingActions}
@@ -355,6 +471,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
                 }
                 size="small"
                 sx={{
+                  ...hitSlop(),
                   color: 'var(--brand-primary)',
                   padding: '6px',
                   opacity: 0.7,
@@ -392,21 +509,59 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
             ? 0
             : bottomBarClearance(appShell.tabBarReserve),
           overflowY: 'auto',
+          // <main> scrolls vertically only (DS3 §5.4). Pinning overflow-x to
+          // hidden stops the scrollbar-width overcount of .tm-full-bleed
+          // (width:100vw) from producing a phantom horizontal scrollbar, and
+          // guards against any accidental horizontal overflow in page content.
+          overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch',
           // iOS HIG: Improve scroll performance and touch handling
           position: 'relative',
           isolation: 'isolate', // Create stacking context
-          // iOS HIG: Ensure smooth scroll momentum
-          scrollBehavior: 'smooth',
-          '@media (prefers-reduced-motion: reduce)': {
-            scrollBehavior: 'auto',
-          },
+          // Smooth scroll lives on <html> ONLY (DS3 §5.4.7) — never on the
+          // scroller itself, where it fights imperative scroll restoration
+          // (ScrollRestoration writes main.scrollTop directly).
         }}
       >
-        {children}
+        {/* Intentional-desktop content container (--maxw), centered. Full-width
+            scopes (dense admin + cinematic) are exempt; full-bleed image heroes
+            inside a contained route opt out with the .tm-full-bleed class. */}
+        {isFullWidthScope ? (
+          children
+        ) : (
+          <Box
+            sx={{
+              maxWidth: isBrowseScope ? 'var(--maxw-wide)' : 'var(--maxw)',
+              mx: 'auto',
+              width: '100%',
+              // DS3 §3.1 edge padding: 16 phone · 24 tablet · 32 desktop.
+              px: { xs: 2, sm: 3, md: 4 },
+            }}
+          >
+            {children}
+          </Box>
+        )}
       </Box>
 
-      <IOSTabBar onMoreClick={() => setMoreSheetOpen(true)} />
+      {/* One unified TabBar (DS v3). Fotosíntesis renders its own via
+          FotosintesisLayout, so the shell suppresses this bar on Foto routes.
+          The wrapper owns the vault auto-hide reveal-on-focus (React re-bubbles
+          the portaled bar's focus events to this React ancestor). */}
+      {!isFotoRoute && (
+        <Box
+          onFocus={() => barAutoHide && setBarRevealed(true)}
+          onBlur={() => barAutoHide && setBarRevealed(false)}
+          sx={{ display: 'contents' }}
+        >
+          <TabBar
+            slots={isProvider ? PROVIDER_SLOTS : STOREFRONT_SLOTS}
+            theme={storefrontTabTheme(mode)}
+            onAction={() => setMoreSheetOpen(true)}
+            actionOpen={moreSheetOpen}
+            hidden={barAutoHide && !barRevealed}
+          />
+        </Box>
+      )}
 
       <IOSMoreSheet
         open={moreSheetOpen}

@@ -42,6 +42,7 @@ export default withApiHandler(
 
     const client = await convexClient.query(api.ghl.getClientByPhone, {
       celular: body.celular,
+      secret: process.env.ADMIN_SYNC_TOKEN ?? '',
     });
     if (!client) return sendError(res, 404, 'Client not found');
 

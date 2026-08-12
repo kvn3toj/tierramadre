@@ -7,24 +7,23 @@
 
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
-import { Box, useTheme } from '@mui/material';
+import { Box, Chip, Typography, alpha, useTheme } from '@mui/material';
 import { useLanguage } from '../../contexts/LanguageContext';
 import CertificationUpload from './CertificationUpload';
 import { ComparisonBar, ComparisonModal } from '../comparison';
-import { zIndex } from '../../design-system';
+import { FilterSheet, getQuietEmerald, qeFont } from '../../design-system';
 import { TreasureItem } from '../../types';
 import ListRow from './ListRow';
 import VirtualGrid from './VirtualGrid';
 import { ActiveFilterChips } from './ActiveFilterChips';
-import RecentlyViewedCarousel from './RecentlyViewedCarousel';
-import IOSFilterSheet from '../ios/IOSFilterSheet';
-import RedesignVariantToggle from '../redesign/RedesignVariantToggle';
+import { FilterContent } from './FilterContent';
 import {
   MobileSearchBar,
   TreasureEmptyState,
-  TreasureDesktopFilterPanel,
-  TreasureDesktopResultsSummary,
   CatalogHeader,
+  CatalogSkeletonGrid,
+  DesktopFilterToolbar,
+  TreasureDesktopResultsSummary,
 } from './browser';
 import TreasureErrorState from './browser/TreasureErrorState';
 import ScrollToTop from '../shared/ScrollToTop';
@@ -76,10 +75,11 @@ export default function TreasureBrowser({
 
   const c = useTreasureBrowserController({ isProviderMode, defaultViewMode });
 
+  // Quiet Emerald tokens (theme is data, not hardcoded hex).
+  const qe = getQuietEmerald(c.isLight ? 'light' : 'dark');
+
   const {
-    formatFullCurrency,
     isLight,
-    shouldShowPrices,
     isProviderMode: providerMode,
     isMobile,
     allTreasure,
@@ -88,12 +88,10 @@ export default function TreasureBrowser({
     isLoadingSheets,
     filters,
     filteredTreasure,
-    filteredStats,
     deferredFilteredTreasure,
     visibleItems,
     hasFilters,
     activeFilterCount,
-    filterOptions,
     filterContentProps,
     urlSync,
     savedFilters,
@@ -108,7 +106,6 @@ export default function TreasureBrowser({
     recentlyViewedItems,
     favoriteMappedItems,
     clearRecent,
-    stats,
     priceMinMax,
     caratMinMax,
     certDialogOpen,
@@ -142,19 +139,6 @@ export default function TreasureBrowser({
     canAddToComparison,
     applySavedPreset,
   } = c;
-
-  const { colors, shapes, qualities, categorias, colecciones } = filterOptions;
-  const {
-    statusFilter,
-    sortBy,
-    typeFilter,
-    categoriaFilter,
-    coleccionFilter,
-    colorFilter,
-    shapeFilter,
-    qualityFilter,
-    priceRange,
-  } = filters;
 
   // Quiet Emerald origin tabs (Todas / Muzo / Chivor / Coscuez). A self-contained
   // quick filter applied on top of the controller's filtered set, keyed off the
@@ -204,18 +188,89 @@ export default function TreasureBrowser({
     urlSync.handleClearFilters();
   };
 
+  // The header's identity zone used to carry, stacked under the title: a
+  // subtitle, the total inventory value, and gem/jewelry count chips. All three
+  // are gone — see CatalogHeader's own note for what each cost and why. The
+  // header is now a single 56px band instead of 178px of mostly-empty rows.
+  //
+  // On the phone it is not rendered at all: the brand lockup keeps its band
+  // untouched, and search, origin chips and filters share one 46px row inside
+  // MobileSearchBar. 187px of chrome down to 98.
+
   return (
     <Box
-      sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 1, sm: 2, md: 3, lg: 2 } }}
+      sx={{
+        maxWidth: 1536,
+        mx: 'auto',
+        // xs is 0 because the shell's 16px is the phone edge (DS3 §3.1); this
+        // box used to add 8 and VirtualGrid another 8, stacking to 32 a side.
+        px: { xs: 0, sm: 2, md: 3, lg: 3, xl: 4 },
+      }}
     >
-      <CatalogHeader
-        count={headerCount}
-        origins={originOptions}
-        activeOrigin={originTab}
-        onOriginChange={setOriginTab}
-      />
+      {!isMobile && (
+        <CatalogHeader
+          count={headerCount}
+          origins={originOptions}
+          activeOrigin={originTab}
+          onOriginChange={setOriginTab}
+          trailingContent={
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                // NEVER wraps: the band is one line by construction. The single
+                // flexible gap lives in CatalogHeader, so this cluster can no
+                // longer collapse it and scatter itself across three baselines.
+                flexWrap: 'nowrap',
+                minWidth: 0,
+              }}
+            >
+              <FilterContent {...filterContentProps} />
+              <DesktopFilterToolbar
+                dense
+                recentItems={recentlyViewedItems}
+                onRecentClick={handleItemClick}
+                onClearRecent={clearRecent}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                savedFilters={savedFilters}
+                hasFilters={hasFilters}
+                filters={filters}
+                setSearch={setSearch}
+                setColorFilter={setColorFilter}
+                setQualityFilter={setQualityFilter}
+                setTypeFilter={setTypeFilter}
+                setStatusFilter={setStatusFilter}
+                setShapeFilter={setShapeFilter}
+                setPriceRange={setPriceRange}
+                setSortBy={setSortBy}
+                setCantidadFilter={setCantidadFilter}
+                trackViewModeChange={analyticsHook.trackViewModeChange}
+                isLight={isLight}
+                resultsSummary={
+                  <TreasureDesktopResultsSummary
+                    theme={theme}
+                    isLight={isLight}
+                    t={t}
+                    filteredTreasureLength={filteredTreasure.length}
+                    visibleItemsLength={visibleItems.length}
+                    viewMode={viewMode}
+                    isProviderMode={providerMode}
+                    showFavoritesOnly={showFavoritesOnly}
+                    favoritesCount={favoritesCount}
+                    onToggleFavoritesOnly={() =>
+                      setShowFavoritesOnly(!showFavoritesOnly)
+                    }
+                  />
+                }
+              />
+            </Box>
+          }
+        />
+      )}
 
-      {isMobile ? (
+      {isMobile && (
         <>
           <MobileSearchBar
             search={filters.search}
@@ -243,73 +298,119 @@ export default function TreasureBrowser({
             favoritesCount={favoritesCount}
             isProviderMode={providerMode}
             filteredCount={filteredTreasure.length}
+            // The header's own count, so the bar can tell whether repeating a
+            // number says anything. Same source as CatalogHeader's `count`.
+            originCount={headerCount}
             recentlyViewedItems={recentlyViewedItems}
             onRecentItemClick={handleItemClick}
             onClearRecent={clearRecent}
             favoriteItems={favoriteMappedItems}
           />
 
-          <IOSFilterSheet
+          <FilterSheet
             open={filterSheetOpen}
             onClose={() => setFilterSheetOpen(false)}
-            statusFilter={statusFilter}
-            sortBy={sortBy}
-            typeFilter={typeFilter}
-            categoriaFilter={categoriaFilter}
-            coleccionFilter={coleccionFilter}
-            colorFilter={colorFilter}
-            shapeFilter={shapeFilter}
-            qualityFilter={qualityFilter}
-            priceRange={priceRange}
-            caratRange={filters.caratRange}
-            cantidadFilter={filters.cantidadFilter}
-            setStatusFilter={setStatusFilter}
-            setSortBy={setSortBy}
-            setTypeFilter={setTypeFilter}
-            setCategoriaFilter={setCategoriaFilter}
-            setColeccionFilter={setColeccionFilter}
-            setColorFilter={setColorFilter}
-            setShapeFilter={setShapeFilter}
-            setQualityFilter={setQualityFilter}
-            setPriceRange={setPriceRange}
-            setCaratRange={setCaratRange}
-            setCantidadFilter={setCantidadFilter}
-            colors={colors}
-            shapes={shapes}
-            qualities={qualities}
-            categorias={categorias}
-            colecciones={colecciones}
-            priceMinMax={priceMinMax}
-            caratMinMax={caratMinMax}
-            hasFilters={hasFilters}
-            onClearFilters={urlSync.handleClearFilters}
+            title="Filtros"
             resultCount={filteredTreasure.length}
-            savedPresets={savedFilters.presets}
-            onApplyPreset={applySavedPreset}
-          />
+            activeFilterCount={
+              activeFilterCount + (originTab !== 'all' ? 1 : 0)
+            }
+            // Origin lives in this sheet now, so "limpiar" has to clear it too —
+            // urlSync.handleClearFilters alone would leave a mine selected with
+            // nothing on screen saying so.
+            onClear={handleClearAll}
+            onApply={() => setFilterSheetOpen(false)}
+          >
+            {/* Origen — first, because it is the coarsest cut in the catalogue
+                and the one the house talks in. It was a chip strip beside the
+                search field until that strip turned out to hijack drag. */}
+            {originOptions.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography
+                  sx={{
+                    fontFamily: qeFont.ui,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: qe.subtle,
+                    mb: 1,
+                  }}
+                >
+                  Origen
+                </Typography>
+                <Box
+                  role="group"
+                  aria-label="Filtrar por origen"
+                  sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}
+                >
+                  {['all', ...originOptions].map((o) => {
+                    const active = originTab === o;
+                    return (
+                      <Chip
+                        key={o}
+                        label={o === 'all' ? 'Todas' : o}
+                        size="small"
+                        onClick={() => setOriginTab(o)}
+                        aria-pressed={active}
+                        sx={{
+                          // Wraps instead of scrolling: four mines fit on two
+                          // lines of a 320px sheet, and a wrapped row cannot
+                          // steal a drag from the sheet it sits in.
+                          flexShrink: 0,
+                          minHeight: 36,
+                          fontSize: '0.75rem',
+                          fontWeight: active ? 700 : 500,
+                          color: active ? qe.onAccent : qe.text,
+                          bgcolor: active ? qe.accent : 'transparent',
+                          border: `1px solid ${active ? qe.accent : qe.border}`,
+                          '&:hover': {
+                            bgcolor: active
+                              ? qe.accent
+                              : alpha(qe.accent, 0.08),
+                          },
+                        }}
+                      />
+                    );
+                  })}
+                </Box>
+              </Box>
+            )}
+
+            {savedFilters.presets.length > 0 && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 0.5,
+                  overflowX: 'auto',
+                  flexWrap: 'wrap',
+                  mb: 1.5,
+                  pb: 0.5,
+                }}
+              >
+                {savedFilters.presets.map((preset) => (
+                  <Chip
+                    key={preset.id}
+                    label={preset.name}
+                    size="small"
+                    onClick={() => applySavedPreset(preset)}
+                    sx={{
+                      flexShrink: 0,
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      minHeight: 32,
+                      bgcolor: alpha(qe.accent, 0.08),
+                      color: qe.accent,
+                      border: `1px solid ${alpha(qe.accent, 0.2)}`,
+                      '&:hover': { bgcolor: alpha(qe.accent, 0.15) },
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
+            <FilterContent {...filterContentProps} compact />
+          </FilterSheet>
         </>
-      ) : (
-        <TreasureDesktopFilterPanel
-          isLight={isLight}
-          filterContentProps={filterContentProps}
-          shouldShowPrices={shouldShowPrices}
-          stats={stats}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          savedFilters={savedFilters}
-          hasFilters={hasFilters}
-          filters={filters}
-          setSearch={setSearch}
-          setColorFilter={setColorFilter}
-          setQualityFilter={setQualityFilter}
-          setTypeFilter={setTypeFilter}
-          setStatusFilter={setStatusFilter}
-          setShapeFilter={setShapeFilter}
-          setPriceRange={setPriceRange}
-          setSortBy={setSortBy}
-          setCantidadFilter={setCantidadFilter}
-          trackViewModeChange={analyticsHook.trackViewModeChange}
-        />
       )}
 
       {!isMobile && hasFilters && (
@@ -338,42 +439,9 @@ export default function TreasureBrowser({
         </Box>
       )}
 
-      {!isMobile && (
-        <TreasureDesktopResultsSummary
-          theme={theme}
-          isLight={isLight}
-          t={t}
-          filteredTreasureLength={filteredTreasure.length}
-          allTreasureLength={allTreasure.length}
-          visibleItemsLength={visibleItems.length}
-          viewMode={viewMode}
-          isProviderMode={providerMode}
-          shouldShowPrices={shouldShowPrices}
-          formatFullCurrency={formatFullCurrency}
-          filteredStatsTotalValue={filteredStats.totalValue}
-          showFavoritesOnly={showFavoritesOnly}
-          favoritesCount={favoritesCount}
-          onToggleFavoritesOnly={() => setShowFavoritesOnly(!showFavoritesOnly)}
-        />
-      )}
-
-      {!isMobile && recentlyViewedItems.length > 0 && (
-        <Box
-          sx={{
-            position: 'sticky',
-            top: 0,
-            zIndex: zIndex.base,
-          }}
-        >
-          <RecentlyViewedCarousel
-            items={recentlyViewedItems}
-            onItemClick={handleItemClick}
-            onClear={clearRecent}
-          />
-        </Box>
-      )}
-
-      {viewMode === 'grid' ? (
+      {isLoadingSheets && allTreasure.length === 0 ? (
+        <CatalogSkeletonGrid />
+      ) : viewMode === 'grid' ? (
         <VirtualGrid
           items={gridItems}
           favorites={favoriteIds}
@@ -425,6 +493,7 @@ export default function TreasureBrowser({
       )}
 
       {!sheetsError &&
+        !(isLoadingSheets && allTreasure.length === 0) &&
         ((viewMode === 'grid'
           ? gridItems.length === 0
           : listItems.length === 0) ||
@@ -475,8 +544,6 @@ export default function TreasureBrowser({
       <ScrollToTop
         scrollContainer={viewMode === 'grid' ? gridScrollEl : null}
       />
-
-      <RedesignVariantToggle />
     </Box>
   );
 }

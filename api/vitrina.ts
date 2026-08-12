@@ -1,28 +1,29 @@
 /**
  * /api/vitrina — mint or correct a public "Vitrina" client-share link (staff only).
  *
- * POST and PATCH, authenticated by the caller's Google ID token
- * (`Authorization: Bearer <google-id-token>`). We verify it server-side with
- * google-auth-library (same pattern as api/fotosintesis-ai) to confirm a real,
- * signed-in Google user, then call the Convex `vitrinas.create`/`vitrinas.update`
- * mutation with the server-only `VITRINA_SHARED_SECRET`. Because the Convex
- * deployment URL is public (and the app has no Convex-native auth), that secret
- * is what makes the mutation reachable ONLY through this proxy — mirroring the
+ * POST and PATCH, authenticated by the caller's `tms1` app session token
+ * (`Authorization: Bearer <session-token>`). We verify it server-side, then
+ * call the Convex `vitrinas.create`/`vitrinas.update` mutation with the
+ * server-only `VITRINA_SHARED_SECRET`. Because the Convex deployment URL is
+ * public (and the app has no Convex-native auth), that secret is what makes
+ * the mutation reachable ONLY through this proxy — mirroring the
  * trusted-proxy model the invitation flow uses, plus the authorization gate
  * invitations lack.
  *
- * POST  body: { itemIds:number[], currency:'COP'|'USD', multiplier:number, senderSlug?:string }
- *       200:  { success:true, token:string }
- *
- * PATCH body: { token:string, itemIds?:number[], currency?:'COP'|'USD', multiplier?:number, senderSlug?:string }
- *       Corrects an already-shared link IN PLACE — same token/URL, new
- *       contents. Only for token-based links (`/v/AB3K9P...`); the stateless
- *       dash-separated id-list links (`/v/193-192-194`) have no backing
- *       record and can't be edited — those must be re-shared as a new link.
- *       200:  { success:true, token:string }
- *       404:  token not found
- *
- * 401:  not signed in / invalid or expired Google token
+ * Session-token-only (2026-08 fix round N1, closing the bypass F1 was meant
+ * to close): this used to also accept a raw Google ID token, verified only
+ * against `audience` — that proves "some Gmail account", not roster
+ * membership, since the OAuth client ID is public (ships in the frontend
+ * bundle). Any Gmail account could mint a vitrina token for up to 50
+ * caller-chosen itemIds and read the FULL unprojected row (precioCOP,
+ * costoTM, ubicacion, caja, asesor, estado) via the ordinary `getByToken`
+ * read path — reachable with ~11 requests for the whole inventory. A
+ * session token is only issued by `/api/validate?action=mint-session` after
+ * checking the caller against Asesores/Proveedores, so requiring it here
+ * closes this with the exact mechanism `api/_lib/catalogGrant.ts` already
+ * uses for the catalog grant — no new concept. The READ path (`getByToken`,
+ * called from `api/vitrinaLookup.ts`/Convex directly) is UNCHANGED: a client
+ * opening a `/v/<token>` share link must never need a token of their own.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -33,41 +34,17 @@ import { isSessionToken, verifySessionToken } from './_lib/sessionToken.js';
 import { api } from '../convex/_generated/api.js';
 
 /**
- * Verify the caller's bearer token → returns the verified email, or null.
- * Accepts either a raw Google ID token (dies ~1h after sign-in) or an
- * app-issued "tms1" session token (30 days, minted by
- * /api/validate?action=mint-session — see api/_lib/sessionToken.ts), so a
- * staff member who signed in days ago can still mint/correct share links.
+ * Verifies a `tms1` app session token and returns its email, or null.
+ * Exported for tests/vitrina.test.ts — this function IS the fix (N1): a raw
+ * Google ID token, whatever its shape, is not a session token and returns
+ * null here, which the handler below turns into a 401.
  */
-async function verifyGoogleEmail(
+export function verifiedSessionEmail(
   authHeader?: string | string[],
-): Promise<string | null> {
+): string | null {
   const token = extractBearer(authHeader);
-  if (!token) return null;
-  if (isSessionToken(token)) {
-    return verifySessionToken(token)?.email ?? null;
-  }
-  const audiences = [
-    process.env.GOOGLE_OAUTH_CLIENT_ID,
-    process.env.VITE_GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_ID,
-  ].filter((a): a is string => !!a && a.trim().length > 0);
-  if (audiences.length === 0) return null;
-  try {
-    const { OAuth2Client } = await import('google-auth-library');
-    const client = new OAuth2Client();
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: audiences,
-    });
-    const payload = ticket.getPayload();
-    return payload?.email && payload.email_verified
-      ? payload.email.toLowerCase().trim()
-      : null;
-  } catch {
-    // Invalid or expired token — treat as unauthenticated.
-    return null;
-  }
+  if (!token || !isSessionToken(token)) return null;
+  return verifySessionToken(token)?.email ?? null;
 }
 
 export default withApiHandler(
@@ -84,7 +61,7 @@ export default withApiHandler(
       return sendError(res, 503, 'Convex backend not configured');
     }
 
-    const email = await verifyGoogleEmail(req.headers['authorization']);
+    const email = verifiedSessionEmail(req.headers['authorization']);
     if (!email) {
       return sendError(res, 401, 'Inicia sesión para generar un enlace.');
     }

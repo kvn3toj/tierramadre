@@ -162,10 +162,12 @@ export function suggestedPrecioPublicoCOP(
 
 // ─── Color de gema ───────────────────────────────────────────────────
 //
-// 9 values from the legacy `INVENTARIO Tierra.Madre!Color` dropdown.
-// Free-text in the UI today; this list anchors the SOT setDataValidation
-// and is a candidate for tightening `GemaFields` later (see dropdown
-// coverage 🟡 gap #3).
+// Mirrors the `Listas!color` column of the SOT v3, which is what feeds the
+// sheet's setDataValidation. Free-text in the UI today, and a candidate for
+// tightening `GemaFields` later (see dropdown coverage 🟡 gap #3).
+//
+// Todos van en Title Case: la hoja tenía `Verde claro` / `Verde profundo` en
+// minúscula y se normalizaron, así que comparar por casing vuelve a ser fiable.
 
 export const COLORS = [
   'Verde Chivor',
@@ -181,6 +183,12 @@ export const COLORS = [
   'Verde Menta',
   'Verde Diamantado',
   'Verde Brillante',
+  'Verde',
+  'Verde Aguamarina',
+  'Verde Claro',
+  'Verde Cristal',
+  'Verde Profundo',
+  'Verde Turquesa',
 ] as const;
 
 export type GemaColor = (typeof COLORS)[number];
@@ -218,7 +226,7 @@ export const CORTES = [
   'Cuadrada',
   'Baguette',
   'Lágrima',
-  'Ovalo',
+  'Óvalo',
   'Superman',
   'Trapecio',
   'Rectangular',
@@ -250,7 +258,7 @@ export const TALLAS = [
   '9',
   'Baguette',
   'Brillante',
-  'Cabuchon',
+  'Cabujón',
   'Canutillo',
   'Chispero',
   'Chisperito',
@@ -262,10 +270,10 @@ export const TALLAS = [
   'Gola',
   'Iris',
   'Lágrima',
-  'Marquis',
+  'Lágrima/Pera',
   'Marquise',
   'Morralla-Lapidada',
-  'Ovalo',
+  'Óvalo',
   'Pera',
   'Princesa',
   'Rectangular',
@@ -336,35 +344,81 @@ export type Ubicacion = (typeof UBICACIONES)[number];
 
 // ─── Colección de catálogo ───────────────────────────────────────────
 //
-// 17 values from the legacy `INVENTARIO Tierra.Madre!Colección` dropdown.
-// These drive the public catalog grouping; Fotosíntesis admin only needs
-// them as a free-text-with-suggestions dropdown when capturing items
-// destined for the website.
+// The 17 real collections present in the inventory, cleaned 2026-07-21 from
+// the SOT (Inventario col S). Names are stripped of the redundant "COLECCIÓN"
+// prefix (the field IS the collection) and grammar/accents fixed. These drive
+// the public catalog grouping; Fotosíntesis admin uses them as a
+// free-text-with-suggestions dropdown when capturing items for the website.
 //
-// TODO(Maritza): re-confirm canonical names — these were dumped from the
-// sheet on 2026-05-21 and may include WIP / deprecated collections.
+// Legacy sheet strings ("COLECCIÓN Fenix", "COLECCION Secretos del Bosque",
+// "Coleccion Circulos de PODER", …) map here via `normalizeColeccion()`.
 
 export const COLECCIONES = [
-  'COLECCION #4000',
-  '11:11',
-  'Fenix',
-  'Secretos del Bosque',
+  'Centro del Universo',
+  'Círculos de Poder',
+  'Comerciales 29-Ene',
+  'Dinastías',
+  'Encanto de la Montaña',
+  'Fénix',
+  'Finas 29-Ene',
+  'Madres',
+  'Mariposas de la Montaña',
+  'Marketing',
   'Princesas',
   'Reinas',
-  'Génesis',
-  'Esencia',
-  'Origen',
-  'Raíces',
-  'Verde Eterno',
-  'Lluvia de Oportunidades',
-  'Encantada',
-  'Sagrada',
-  'Ancestral',
-  'Madre Selva',
-  'Tierra',
+  'Secretos del Bosque',
+  'Sueños de Mina',
+  'Terrícolas',
+  '#4000',
+  '11:11',
 ] as const;
 
 export type Coleccion = (typeof COLECCIONES)[number];
+
+/**
+ * Legacy / prefixed colección strings → canonical clean labels. Strips the
+ * redundant "COLECCIÓN"/"COLECCION"/"Coleccion"/"CColeccion" and "TOPITOS"
+ * prefixes and fixes typos/accents. Unrecognized values round-trip verbatim.
+ */
+const COLECCION_ALIAS: Record<string, Coleccion> = {
+  FENIX: 'Fénix',
+  'SECRETOS DEL BOSQUE': 'Secretos del Bosque',
+  MADRES: 'Madres',
+  PRINCESAS: 'Princesas',
+  REINAS: 'Reinas',
+  'MARIPOSAS DE LA MONTANA': 'Mariposas de la Montaña',
+  'MARIPOSAS DE LA MOTANA': 'Mariposas de la Montaña',
+  'SUENOS DE MINA': 'Sueños de Mina',
+  'CENTRO DEL UNIVERSO': 'Centro del Universo',
+  TERRICOLAS: 'Terrícolas',
+  'ENCANTO DE LA MONTANA': 'Encanto de la Montaña',
+  'CIRCULOS DE PODER': 'Círculos de Poder',
+  DINASTIAS: 'Dinastías',
+  MARKETING: 'Marketing',
+  '29-ENE-COMERCIALES': 'Comerciales 29-Ene',
+  '29-ENE-FINAS': 'Finas 29-Ene',
+  '#4000': '#4000',
+  '11:11': '11:11',
+};
+
+function foldColeccionKey(s: string): string {
+  return s
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toUpperCase()
+    .trim();
+}
+
+export function normalizeColeccion(raw: string | undefined | null): string {
+  const s0 = (raw ?? '').trim();
+  if (!s0) return '';
+  const stripped = s0
+    .replace(/^C?\s*Colecci[oó]n\s+/i, '')
+    .replace(/^TOPITOS\s+/i, '')
+    .trim();
+  if ((COLECCIONES as readonly string[]).includes(stripped)) return stripped;
+  return COLECCION_ALIAS[foldColeccionKey(stripped)] ?? stripped;
+}
 
 // ─── Estado contable (CAJA) ──────────────────────────────────────────
 //

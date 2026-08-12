@@ -9,18 +9,22 @@ import {
   Box,
   Typography,
   Paper,
-  Grid,
-  Skeleton,
   Chip,
   IconButton,
-  alpha,
-  useTheme,
 } from '@mui/material';
-import { Gem, Share2, ExternalLink } from 'lucide-react';
+import { Gem, Share2, ExternalLink, Images } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TreasureItem } from '../../../../types';
-import { TreasureCard } from '../../../../components/treasure/TreasureCard';
-import { brand, lightTokens, darkTokens, cssTransition } from '../../../../design-system';
+import { getQualityBadge, formatWeightLabel } from '../../../../utils/formatting';
+import { PriceDisplay } from '../../../../components/price-simulator/PriceDisplay';
+import { Badge, PieceCard, Skeleton, qeGray } from '../../../../design-system';
+
+function buildSpecLine(item: TreasureItem): string {
+  return formatWeightLabel(item, {
+    jewelryPrefers: 'metal-only',
+    fallback: item.color,
+  });
+}
 
 interface ExclusiveCollectionSectionProps {
   products: TreasureItem[];
@@ -32,7 +36,9 @@ interface ExclusiveCollectionSectionProps {
   onShare?: () => void;
 }
 
-export const ExclusiveCollectionSection: React.FC<ExclusiveCollectionSectionProps> = ({
+export const ExclusiveCollectionSection: React.FC<
+  ExclusiveCollectionSectionProps
+> = ({
   products,
   collectionName,
   collectionDescription,
@@ -41,8 +47,6 @@ export const ExclusiveCollectionSection: React.FC<ExclusiveCollectionSectionProp
   onProductClick,
   onShare,
 }) => {
-  const theme = useTheme();
-  const isLight = theme.palette.mode === 'light';
   const navigate = useNavigate();
 
   // Don't render anything if no products and not loading
@@ -54,40 +58,35 @@ export const ExclusiveCollectionSection: React.FC<ExclusiveCollectionSectionProp
       sx={{
         p: 3,
         mb: 3,
-        borderRadius: 3,
-        bgcolor: isLight ? lightTokens.background.surface : darkTokens.background.surface,
+        borderRadius: 'var(--tm-radius-card)',
+        bgcolor: 'var(--tm-surface)',
         border: '1px solid',
-        borderColor: isLight
-          ? alpha(brand.emerald[500], 0.2)
-          : alpha(brand.emerald[400], 0.15),
+        borderColor: 'var(--tm-border)',
       }}
     >
       {/* Section Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: 2,
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Gem size={20} style={{ color: brand.emerald[500] }} />
+          <Gem size={20} style={{ color: 'var(--tm-accent)' }} />
           <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
             {collectionName}
           </Typography>
-          <Chip
-            label={`${products.length}`}
-            size="small"
-            sx={{
-              height: 22,
-              fontSize: '0.75rem',
-              bgcolor: alpha(brand.emerald[500], 0.12),
-              color: brand.emerald[600],
-              fontWeight: 600,
-            }}
-          />
+          <Badge tone="accent" label={`${products.length}`} />
         </Box>
         {onShare && (
           <IconButton
             onClick={onShare}
             size="small"
             sx={{
-              color: brand.emerald[500],
-              '&:hover': { bgcolor: alpha(brand.emerald[500], 0.08) },
+              color: 'var(--tm-accent)',
+              '&:hover': { bgcolor: 'var(--tm-accent-wash)' },
             }}
             aria-label="Compartir coleccion"
           >
@@ -104,36 +103,127 @@ export const ExclusiveCollectionSection: React.FC<ExclusiveCollectionSectionProp
 
       {/* Loading State */}
       {isLoading && (
-        <Grid container spacing={2}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              md: 'repeat(3, 1fr)',
+            },
+            gap: 2,
+          }}
+        >
           {[0, 1, 2].map((i) => (
-            <Grid item xs={12} sm={6} md={4} key={i}>
-              <Skeleton
-                variant="rounded"
-                sx={{ width: '100%', aspectRatio: '1/1', borderRadius: 3 }}
-              />
-              <Box sx={{ px: 1, mt: 1 }}>
-                <Skeleton width="70%" height={20} />
-                <Skeleton width="40%" height={16} sx={{ mt: 0.5 }} />
+            <Box key={i}>
+              {/* Geometry matches the PieceCard it replaces: square well,
+                  then the name and spec lines — so nothing shifts on load. */}
+              <Box sx={{ width: '100%', aspectRatio: '1/1' }}>
+                <Skeleton variant="rect" width="100%" height="100%" />
               </Box>
-            </Grid>
+              <Box sx={{ px: 1, mt: 1 }}>
+                <Skeleton variant="text" width="70%" height={20} />
+                <Box sx={{ mt: 0.5 }}>
+                  <Skeleton variant="text" width="40%" height={16} />
+                </Box>
+              </Box>
+            </Box>
           ))}
-        </Grid>
+        </Box>
       )}
 
       {/* Products Grid */}
       {!isLoading && products.length > 0 && (
-        <Grid container spacing={2}>
-          {products.map((item) => (
-            <Grid item xs={12} sm={6} md={4} key={item.item}>
-              <TreasureCard
-                item={item}
-                isCompact={false}
-                onCertClick={() => {}}
-                onClick={() => onProductClick(item)}
-              />
-            </Grid>
-          ))}
-        </Grid>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              md: 'repeat(3, 1fr)',
+            },
+            gap: 2,
+          }}
+        >
+          {products.map((item) => {
+            const quality = getQualityBadge(item.calidad);
+            const displayName = item.nombre
+              .replace(/^L:.*?\s/, '')
+              .replace(/^L:/, '')
+              .trim();
+            return (
+              <Box key={item.item}>
+                <PieceCard
+                  variant="well"
+                  media={
+                    item.imagen ? (
+                      <Box
+                        component="img"
+                        src={item.imagen}
+                        alt={`${item.nombre} - ${item.color}`}
+                        loading="lazy"
+                        sx={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        role="img"
+                        aria-label={`${item.nombre} - ${item.color}`}
+                        sx={{ width: '100%', height: '100%' }}
+                      />
+                    )
+                  }
+                  overlays={
+                    <>
+                      <Box sx={{ position: 'absolute', bottom: 8, left: 8 }}>
+                        <Badge
+                          tone={quality.tone}
+                          label={quality.label}
+                          compact
+                        />
+                      </Box>
+                      {(item.galleryCount ?? 0) > 1 && (
+                        <Chip
+                          icon={<Images size={12} />}
+                          label={item.galleryCount}
+                          size="small"
+                          sx={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            // On-photo chrome (same exemption as GridCard's
+                            // badges): scrim + fixed light foreground.
+                            bgcolor: 'var(--tm-scrim)',
+                            color: qeGray[0],
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                            height: 24,
+                            '& .MuiChip-icon': { color: qeGray[0] },
+                          }}
+                        />
+                      )}
+                    </>
+                  }
+                  name={displayName}
+                  specLine={buildSpecLine(item)}
+                  price={
+                    <PriceDisplay
+                      price={item.precioCOP}
+                      precioInternacional={item.precioInternacional}
+                      compact
+                    />
+                  }
+                  itemNumber={item.item}
+                  onClick={() => onProductClick(item)}
+                  ariaLabel={`${item.nombre} - ${item.color}`}
+                />
+              </Box>
+            );
+          })}
+        </Box>
       )}
 
       {/* View Full Collection CTA */}
@@ -156,28 +246,29 @@ export const ExclusiveCollectionSection: React.FC<ExclusiveCollectionSectionProp
             alignItems: 'center',
             justifyContent: 'center',
             gap: 1,
-            borderRadius: 2.5,
+            borderRadius: 'var(--tm-radius-control)',
             cursor: 'pointer',
-            bgcolor: alpha(brand.emerald[500], 0.08),
+            bgcolor: 'var(--tm-accent-wash)',
             border: '1px solid',
-            borderColor: alpha(brand.emerald[500], 0.2),
-            transition: cssTransition.default,
+            borderColor: 'var(--tm-border)',
+            transition:
+              'background-color var(--tm-base) var(--tm-ease), border-color var(--tm-base) var(--tm-ease)',
             '&:hover': {
-              bgcolor: alpha(brand.emerald[500], 0.14),
-              borderColor: alpha(brand.emerald[500], 0.35),
+              bgcolor: 'var(--tm-accent-wash-strong)',
+              borderColor: 'var(--tm-accent)',
             },
             '&:focus-visible': {
-              outline: `2px solid ${brand.emerald[500]}`,
-              outlineOffset: 2,
+              outline: 'none',
+              boxShadow: 'var(--tm-focus-ring)',
             },
           }}
         >
-          <ExternalLink size={16} style={{ color: brand.emerald[600] }} />
+          <ExternalLink size={16} style={{ color: 'var(--tm-accent)' }} />
           <Typography
             sx={{
               fontWeight: 600,
               fontSize: '0.82rem',
-              color: brand.emerald[600],
+              color: 'var(--tm-accent)',
               letterSpacing: '-0.01em',
             }}
           >

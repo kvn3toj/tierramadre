@@ -3,64 +3,108 @@
  * Form to edit ambassador profile: name, bio, specialty, social links.
  */
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Typography,
-  TextField,
   Button,
   Avatar,
   IconButton,
   CircularProgress,
-  alpha,
-  useTheme,
 } from '@mui/material';
+import { TextField } from '../../../../design-system';
 import { ArrowLeft, Camera, Save } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useNotification } from '../../../../contexts/NotificationContext';
-import {
-  emeraldCore,
-  blurValues,
-  surfacesLight,
-  surfacesDark,
-  cssTransition,
-} from '../../../../design-system';
+import {} from '../../../../design-system';
 import type { Asesor } from '../../../../hooks/useAsesores';
+import {
+  HANDLE_REJECTION_MESSAGES,
+  normalizeHandle,
+  recommendHandle,
+  validateHandle,
+} from '../../../../utils/ambassadorHandle';
+
+/** Bare host the vanity handle hangs off, shown in the field preview. */
+const HANDLE_DOMAIN = 'tierramadre.app';
 
 interface EditProfileViewProps {
   asesor: Asesor;
   photoUrl?: string;
   isUploadingPhoto?: boolean;
+  /** Current vanity handle, or undefined while it is still loading. */
+  handle?: string;
   onPhotoEdit: () => void;
   onBack: () => void;
-  onSave: (data: { especialidad?: string; whatsapp?: string }) => Promise<void>;
+  onSave: (data: {
+    especialidad?: string;
+    whatsapp?: string;
+    handle?: string;
+  }) => Promise<void>;
 }
 
 export function EditProfileView({
   asesor,
   photoUrl,
   isUploadingPhoto,
+  handle,
   onPhotoEdit,
   onBack,
   onSave,
 }: EditProfileViewProps) {
-  const theme = useTheme();
   const { t } = useLanguage();
   const { notify } = useNotification();
-  const isLight = theme.palette.mode === 'light';
 
   const [especialidad, setEspecialidad] = useState(asesor.especialidad || '');
   const [whatsapp, setWhatsapp] = useState(asesor.whatsapp || '');
   const [isSaving, setIsSaving] = useState(false);
 
+  // Pre-fill with the saved handle, or recommend one from the display name
+  // ("Andres Mauricio Escobar Ramirez" → "andres") so the field is never a
+  // blank box the ambassador has to invent an answer for.
+  const recommended = useMemo(
+    () => recommendHandle(asesor.name),
+    [asesor.name],
+  );
+  const [handleDraft, setHandleDraft] = useState(handle ?? recommended);
+  const [handleTouched, setHandleTouched] = useState(false);
+
+  // The saved handle is fetched after mount, so the initializer above may
+  // have run with `undefined`. Adopt it when it lands — but never over
+  // something the ambassador has already typed.
+  useEffect(() => {
+    if (handle && !handleTouched) setHandleDraft(handle);
+  }, [handle, handleTouched]);
+
+  // Only surface an error once they have typed something — an empty field
+  // on first paint should read as optional, not as a mistake.
+  const handleError = useMemo(() => {
+    if (!handleDraft) return null;
+    const result = validateHandle(handleDraft);
+    return result.valid ? null : HANDLE_REJECTION_MESSAGES[result.reason];
+  }, [handleDraft]);
+
   const handleSave = async () => {
+    if (handleError) {
+      notify(handleError, 'error');
+      return;
+    }
     setIsSaving(true);
     try {
-      await onSave({ especialidad, whatsapp });
+      await onSave({
+        especialidad,
+        whatsapp,
+        // Omit rather than send empty: an absent handle means "leave it
+        // alone", which keeps this form from clearing a handle set elsewhere.
+        ...(handleDraft ? { handle: handleDraft } : {}),
+      });
       notify(t.common.success, 'success');
       onBack();
-    } catch {
-      notify(t.ambassador.profile.saveError, 'error');
+    } catch (err) {
+      // The handle store answers 409 with a human message when the name is
+      // taken; show it instead of the generic failure copy.
+      const message = err instanceof Error ? err.message : '';
+      notify(message || t.ambassador.profile.saveError, 'error');
     } finally {
       setIsSaving(false);
     }
@@ -74,10 +118,11 @@ export function EditProfileView({
           onClick={onBack}
           aria-label={t.actions.back}
           sx={{
-            bgcolor: isLight ? alpha('#000', 0.04) : alpha('#fff', 0.06),
-            backdropFilter: `blur(${blurValues.md})`,
-            width: 36,
-            height: 36,
+            bgcolor: 'var(--tm-well)',
+            border: '1px solid var(--tm-border)',
+            color: 'var(--tm-text)',
+            width: 44,
+            height: 44,
           }}
         >
           <ArrowLeft size={18} />
@@ -95,11 +140,12 @@ export function EditProfileView({
             sx={{
               width: 96,
               height: 96,
-              bgcolor: emeraldCore.primary,
+              bgcolor: 'var(--tm-accent-strong)',
+              color: 'var(--tm-on-accent)',
               fontSize: '2.5rem',
               fontWeight: 700,
               opacity: isUploadingPhoto ? 0.6 : 1,
-              transition: cssTransition.default,
+              transition: 'opacity var(--tm-base) var(--tm-ease)',
             }}
           >
             {asesor.name.charAt(0).toUpperCase()}
@@ -113,7 +159,7 @@ export function EditProfileView({
                 left: '50%',
                 mt: '-14px',
                 ml: '-14px',
-                color: emeraldCore.primary,
+                color: 'var(--tm-accent)',
               }}
             />
           )}
@@ -126,13 +172,13 @@ export function EditProfileView({
               position: 'absolute',
               bottom: 0,
               right: 0,
-              width: 32,
-              height: 32,
-              bgcolor: emeraldCore.primary,
-              color: '#fff',
+              width: 44,
+              height: 44,
+              bgcolor: 'var(--tm-accent-strong)',
+              color: 'var(--tm-on-accent)',
               border: '2px solid',
-              borderColor: isLight ? surfacesLight.surface.default : surfacesDark.background.secondary,
-              '&:hover': { bgcolor: emeraldCore.dark },
+              borderColor: 'var(--tm-surface)',
+              '&:hover': { bgcolor: 'var(--tm-accent)' },
             }}
           >
             <Camera size={16} />
@@ -142,25 +188,16 @@ export function EditProfileView({
 
       {/* Form */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-        <TextField
-          label="Nombre"
-          value={asesor.name}
-          disabled
-          fullWidth
-          size="small"
-          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-        />
+        <TextField label="Nombre" value={asesor.name} disabled fullWidth />
 
         <TextField
           label="Especialidad / Bio"
           value={especialidad}
           onChange={(e) => setEspecialidad(e.target.value)}
           fullWidth
-          size="small"
           multiline
           minRows={2}
           placeholder="Esmeraldas colombianas de alta calidad..."
-          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
         />
 
         <TextField
@@ -168,37 +205,76 @@ export function EditProfileView({
           value={whatsapp}
           onChange={(e) => setWhatsapp(e.target.value)}
           fullWidth
-          size="small"
           placeholder="+57 300 123 4567"
-          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
         />
+
+        <Box>
+          <TextField
+            label="Tu enlace personal"
+            value={handleDraft}
+            onChange={(e) => {
+              setHandleTouched(true);
+              // Normalize as they type so the preview below is always the
+              // real URL, never something that would be silently rewritten
+              // on save.
+              setHandleDraft(normalizeHandle(e.target.value));
+            }}
+            fullWidth
+            error={Boolean(handleError)}
+            placeholder={recommended}
+            inputProps={{
+              autoCapitalize: 'none',
+              autoCorrect: 'off',
+              spellCheck: false,
+            }}
+          />
+          <Typography
+            variant="caption"
+            sx={{
+              display: 'block',
+              mt: 0.75,
+              px: 0.5,
+              color: handleError ? 'var(--tm-danger)' : 'var(--tm-text-muted)',
+            }}
+          >
+            {handleError ??
+              `${handleDraft || recommended}.${HANDLE_DOMAIN} lleva a tu perfil`}
+          </Typography>
+        </Box>
 
         <TextField
           label="Email"
           value={asesor.email || ''}
           disabled
           fullWidth
-          size="small"
-          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
         />
 
         <Button
           variant="contained"
           fullWidth
-          startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : <Save size={18} />}
+          startIcon={
+            isSaving ? (
+              <CircularProgress size={16} color="inherit" />
+            ) : (
+              <Save size={18} />
+            )
+          }
           onClick={handleSave}
           disabled={isSaving}
           sx={{
-            bgcolor: emeraldCore.primary,
-            '&:hover': { bgcolor: emeraldCore.dark },
+            bgcolor: 'var(--tm-accent-strong)',
+            color: 'var(--tm-on-accent)',
+            '&:hover': { bgcolor: 'var(--tm-accent)' },
             textTransform: 'none',
             fontWeight: 600,
             py: 1.25,
-            borderRadius: 2.5,
+            borderRadius: 'var(--tm-radius-control)',
             mt: 1,
           }}
         >
-          {isSaving ? (t.actions.saving || 'Guardando...') : (t.ambassador.museum?.save ?? 'Guardar')}
+          {isSaving
+            ? t.actions.saving || 'Guardando...'
+            : (t.ambassador.museum?.save ?? 'Guardar')}
         </Button>
       </Box>
     </Box>

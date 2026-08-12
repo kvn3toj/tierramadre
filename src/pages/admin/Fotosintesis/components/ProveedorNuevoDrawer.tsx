@@ -24,8 +24,9 @@ import {
   streetAddress,
   noSpellCheck,
 } from '../utils/fieldLang';
-import { SegmentedControl } from './SegmentedControl';
+import { SegmentedControl } from '../../../../design-system/components/SegmentedControl';
 import { verifyNit } from '../../../../utils/nitVerify';
+import { readFreshSessionToken } from '../../../../utils/sessionToken';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -207,6 +208,7 @@ export function ProveedorNuevoDrawer({
   // ---- Convex wiring ----------------------------------------------------
   const allProviders = useConvexQuery(convexApi.providers.list, {
     search: '',
+    sessionToken: readFreshSessionToken() ?? undefined,
   }) as ProviderRow[] | undefined;
   const createProvider = useAuthedConvexAction(convexApi.providers.create);
 

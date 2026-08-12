@@ -42,7 +42,10 @@ import {
 } from '../../../lib/convex-safe';
 import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
 import { useNotification } from '../../../contexts/NotificationContext';
-import { requireAuthTokenOrLogout } from '../../../utils/sessionToken';
+import {
+  requireAuthTokenOrLogout,
+  readFreshSessionToken,
+} from '../../../utils/sessionToken';
 
 import {
   AdminToolbar,
@@ -72,6 +75,7 @@ import { useChromaSamples } from '../../../hooks/useChromaSamples';
 import { usePatrones, usePatronesGlobalTop } from '../../../hooks/usePatrones';
 import type { EstadoValue } from './StatusPip';
 // Phase G — create flow
+import { parseCarats } from '../../../utils/formatting';
 import {
   validateNewProduct,
   type NewProductInput,
@@ -108,23 +112,21 @@ const JEWELRY_CATEGORIES = new Set([
   'pulsera',
   'dije',
   'anillo en oro',
+  // "Joyería Artesanal" is the label the Fotosíntesis wizard writes for every
+  // finished piece; accent-stripped here so both spellings match.
+  'joyeria artesanal',
+  'joyas',
 ]);
 
 function isJewelryDoc(doc: { peso?: string; categoria?: string }): boolean {
   const peso = (doc.peso ?? '').toLowerCase().trim();
   if (peso === 'plata' || peso.includes('oro')) return true;
-  const cat = (doc.categoria ?? '').toLowerCase().trim();
+  const cat = (doc.categoria ?? '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim();
   return JEWELRY_CATEGORIES.has(cat);
-}
-
-/**
- * Parse `peso` to a numeric carat count when the string is numeric.
- * "Plata" / "Oro 18k" return null (not in carats).
- */
-function parseCarats(peso: string | undefined): number | null {
-  if (!peso) return null;
-  const n = Number(peso.trim());
-  return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 interface ConvexProductDoc {
@@ -272,7 +274,12 @@ export default function ProductManagementPage() {
 
   const products = useConvexQuery(
     convexApi.products.list,
-    convexReady ? { estado: filterToEstado(filter) ?? undefined } : 'skip',
+    convexReady
+      ? {
+          estado: filterToEstado(filter) ?? undefined,
+          sessionToken: readFreshSessionToken() ?? undefined,
+        }
+      : 'skip',
   );
 
   // Deep-link: /admin/products?item=<itemId> opens the Bandeja inspector for
@@ -420,7 +427,7 @@ export default function ProductManagementPage() {
         if (p.precioCOP < minPrice) minPrice = p.precioCOP;
         if (p.precioCOP > maxPrice) maxPrice = p.precioCOP;
       }
-      const carats = parseCarats(p.peso);
+      const carats = p.peso ? parseCarats(p.peso) : null;
       if (carats !== null) {
         if (carats < minCar) minCar = carats;
         if (carats > maxCar) maxCar = carats;
@@ -505,7 +512,7 @@ export default function ProductManagementPage() {
       }
       // Advanced — carat range (only filters items with numeric peso)
       if (advanced.caratRange) {
-        const c = parseCarats(p.peso);
+        const c = p.peso ? parseCarats(p.peso) : null;
         if (c !== null) {
           const [lo, hi] = advanced.caratRange;
           if (c < lo || c > hi) return false;

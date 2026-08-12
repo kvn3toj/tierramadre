@@ -45,6 +45,52 @@ export default defineSchema({
     .index('by_shortCode', ['shortCode'])
     .index('by_status', ['status']),
 
+  // ─── Ambassador curation (favourites + per-product overrides) ────
+  //
+  // Before this table, BOTH lived in localStorage — `useAmbassadorFavorites`
+  // under `tm-ambassador-favorites-{slug}` and `useAmbassadorOverrides` under
+  // `tm:ambassador-overrides:{slug}`. That meant an ambassador's curation
+  // existed only inside the browser that made it: invisible from their phone,
+  // from a second session, and — the point of the feature — to their client.
+  //
+  // ONE table for both, not two. They are the same act (an ambassador saying
+  // something about one of their pieces), keyed the same way, authorised the
+  // same way, and read together on every profile render. Splitting them would
+  // mean two endpoints, two authorisation paths and two caches to keep honest.
+  //
+  // `itemId` is a STRING, matching AmbassadorProductOverride.itemId and the
+  // favourites array, both of which stringify TreasureItem.item.
+  ambassadorCuration: defineTable({
+    /** Profile slug — Asesor.slug, the same one /ambassadors/:slug uses. */
+    slug: v.string(),
+    itemId: v.string(),
+    /** Whether the ambassador pinned this piece to their showcase. */
+    isFavorite: v.boolean(),
+    /** Position within the favourites row; absent for non-favourites. */
+    sortOrder: v.optional(v.float64()),
+    /**
+     * The ambassador offers this piece for resale through TM.
+     *
+     * Separate from `estado`, deliberately. `estado` is TM's books: a piece an
+     * ambassador bought stays VENDIDA internally and accounting depends on
+     * that. Whether it is OFFERED is the owner's own statement, and it is
+     * never inferred from ownership — inferring it would list the ring
+     * somebody bought for their wife on the public catalog.
+     */
+    forResale: v.optional(v.boolean()),
+    customName: v.optional(v.string()),
+    /**
+     * Validated server-side against [base × 1.0, base × 10.0] before it is
+     * written — the client's own check is a courtesy, not the gate.
+     */
+    customPriceCOP: v.optional(v.float64()),
+    updatedAt: v.string(),
+    /** Verified session email of the writer (audit; never returned publicly). */
+    updatedByEmail: v.optional(v.string()),
+  })
+    .index('by_slug_item', ['slug', 'itemId'])
+    .index('by_slug', ['slug']),
+
   // ─── Public "Vitrina" share links ────────────────────────────────
   //
   // A staff-generated public share: one short `token` → a set of product
@@ -122,26 +168,43 @@ export default defineSchema({
     color: v.optional(v.string()),
     calidad: v.optional(v.string()),
     cantidad: v.optional(v.number()),
-    talla: v.optional(v.string()),
+    talla: v.optional(v.string()), // forma de talla / corte (hoja col H "Corte")
+    tallaAnillo: v.optional(v.string()), // aro del anillo (hoja col BF)
     medidas: v.optional(v.string()),
     medidasValores: v.optional(v.string()),
     categoria: v.optional(v.string()),
     // ── Price block — grouped to mirror the SOT "Inventario" tab layout
-    // (Sheets columns L–N). costoBaseCOP = lot.costoTotalCOP × preponderancia%;
-    // the embajador/consciente tiers are the x1–x4 prices.
+    // (Sheets columns L–N). costoBaseCOP (col L) is SHEET-OWNED (2026-07-24): a
+    // human types the item cost into the sheet and it is pulled back; the old
+    // lot.costoTotalCOP × preponderancia% derivation is fully deactivated.
+    // PRICE MODEL (2026-07-21 refactor): the single final price is
+    // `precioFinalCOP = round(costoBaseCOP × TM_MARKUP_DEFAULT)` (2.6). It
+    // replaced the former embajador/consciente x1–x4 tiers.
+    // PRICE OWNERSHIP (2026-07-23): precioFinalCOP is no longer purely derived.
+    // cost × 2.6 is the SEED for a new item; after that the sheet owns the value
+    // (column M is in the WRITABLE allowlist — see convex/_lib/sheetPullMaps.ts)
+    // because the official price list is not a fixed multiple of cost. When the
+    // sheet supplies a price, `precioFinalManual` is stamped true and the lote
+    // re-fan stops repricing that row. costoBaseCOP is now sheet-owned too (see
+    // the block header above) — it is no longer derived from the lote.
     // APP-ONLY (audit 2026-05-29): `precioCOP` lost its Sheets column ("Precio
     // COP" / former column L, ~82% empty). It is still written by the capture
     // UI and read by the patrones analytics, but is NO LONGER mirrored to or
     // pulled from the SOT sheet. Kept optional for existing docs.
     precioCOP: v.optional(v.number()),
-    costoBaseCOP: v.optional(v.number()), // L
-    precioEmbajadorCOP: v.optional(v.number()), // M
-    // DEPRECATED (audit F4): no Sheets column, no UI writer, never pushed or
-    // pulled. The create + updateGemaFields write surfaces were removed; the
-    // field is retained (optional) ONLY so any pre-existing docs validate.
-    // Do not write to it — remove via a data migration if ever cleaned up.
+    costoBaseCOP: v.optional(v.number()), // L — sheet-owned item cost (manual; no longer derived)
+    precioFinalCOP: v.optional(v.number()), // M — seeded costoBaseCOP × 2.6, then sheet-owned
+    // TRUE once a human set the price (sheet pull or admin edit): the lote
+    // re-fan must not reset it to costoBaseCOP × 2.6. Absent/false ⇒ the row is
+    // still tracking the seed formula.
+    precioFinalManual: v.optional(v.boolean()),
+    // DEPRECATED (2026-07-21 price refactor + audit F4): superseded by
+    // precioFinalCOP. No UI writer, no Sheets column, never pushed or pulled.
+    // Retained (optional) ONLY so pre-existing docs validate; strip via a data
+    // migration in a later cleanup pass.
+    precioEmbajadorCOP: v.optional(v.number()),
     precioPotencialCOP: v.optional(v.number()),
-    precioConscienteCOP: v.optional(v.number()), // N
+    precioConscienteCOP: v.optional(v.number()),
     ubicacion: v.optional(v.string()),
     asesor: v.optional(v.string()),
     // 10 values: the 4 we always handled + 5 inherited from the legacy
@@ -196,7 +259,7 @@ export default defineSchema({
     // Bruto (rough/unworked parcel) metadata — populated only for tipo "bruto"
     // lotItems. `cantidadEstimada` is a rough piece-count; `rendimientoEsperado`
     // is the % yield Maritza expects after sorting. Both informational only;
-    // costoBaseCOP still derives from lot.costoTotalCOP × preponderancia.
+    // costoBaseCOP is sheet-owned (manual), not derived from the lote.
     rendimientoEsperado: v.optional(v.number()),
     cantidadEstimada: v.optional(v.number()),
 
@@ -214,6 +277,41 @@ export default defineSchema({
     formulaGema: v.optional(v.string()),
     formulaJoya: v.optional(v.string()),
     rangoDescuento: v.optional(v.string()),
+    // ── Bloque hoja-primero (AQ–BE del SOT v3) ──
+    // Los mantiene una persona en la hoja; la app los lee y NUNCA los escribe
+    // (`preserve: true` en api/_lib/fotosintesis-inventory-columns.js).
+    // SENSIBLES — no pueden salir por una query que lea un comercial:
+    // costoLoteCOP y precioObjetivoCOP son COSTO; cajaValorPagadoCOP,
+    // cajaSaldoCOP, cajaEstadoContable son PLATA; cajaComprador es dato
+    // personal de un tercero. Ver convex/_lib/saleSafe.ts.
+    /** AQ — gramaje real de la pieza (el cotizador lo conjeturaba) */
+    pesoGr: v.optional(v.number()),
+    /** AR — COSTO, no exponer a comercial */
+    costoLoteCOP: v.optional(v.number()),
+    /** AT — COSTO, no exponer a comercial */
+    precioObjetivoCOP: v.optional(v.number()),
+    /** AU — precio al cliente según la decisión del 2026-07-23 */
+    cajaPrecioVentaCOP: v.optional(v.number()),
+    /** AV — PLATA, no exponer a comercial */
+    cajaValorPagadoCOP: v.optional(v.number()),
+    /** AW — PLATA, no exponer a comercial */
+    cajaSaldoCOP: v.optional(v.number()),
+    /** AX — DATO PERSONAL de un tercero, no exponer a comercial */
+    cajaComprador: v.optional(v.string()),
+    /** AY — PLATA, no exponer a comercial */
+    cajaEstadoContable: v.optional(v.string()),
+    /** AZ — qué se vende JUNTO (p. ej. C-042-G1 "Guardianas Gemelas") */
+    subLote: v.optional(v.string()),
+    /** BA — URL pública del producto */
+    productoUrl: v.optional(v.string()),
+    /** BB — carpeta de fotos en Drive (la buena; NO products/<item> - <nombre>) */
+    carpetaFotosUrl: v.optional(v.string()),
+    /** BC — notas relacionadas en Anima */
+    animaNotas: v.optional(v.string()),
+    /** BD — procedencia del dato */
+    fuentes: v.optional(v.string()),
+    /** BE — notas / conflictos detectados */
+    notasConflictos: v.optional(v.string()),
     /** ISO timestamp of last successful pull from Sheets */
     lastPulledAt: v.string(),
     /** ISO timestamp of last successful push to Sheets (null if never edited) */
@@ -455,10 +553,11 @@ export default defineSchema({
       v.literal('publicado'),
       v.literal('cancelado'),
     ),
-    // Catalog grouping (Convex-only, NOT synced to Sheets — see COLUMN_MAPS.lots).
-    // When `mostrarComoLote` is true and the lot is `publicado`, the customer
-    // catalog shows the whole lote as ONE grouped card (hero photo + total
-    // price + per-item gallery) instead of one card per item.
+    // Catalog grouping. `fotoLoteUrl` is Convex-only; `mostrarComoLote` IS
+    // synced (COLUMN_MAPS.lots col U + WRITABLE.lots) so it can be toggled from
+    // the sheet. When true and the lot is `publicado`, the customer catalog
+    // shows the whole lote as ONE grouped card (hero photo + total price +
+    // per-item gallery) instead of one card per item.
     fotoLoteUrl: v.optional(v.string()),
     mostrarComoLote: v.optional(v.boolean()),
     ...syncFields,
@@ -719,9 +818,10 @@ export default defineSchema({
     notas: v.optional(v.string()),
     estado: v.union(v.literal('activa'), v.literal('archivada')),
     createdAt: v.string(),
-    // Catalog grouping (Convex-only, NOT synced to Sheets — see COLUMN_MAPS.subLotes).
-    // When `mostrarComoLote` is true and the sublote is `activa`, the customer
-    // catalog shows this curated subset as ONE grouped card.
+    // Catalog grouping. `fotoUrl` is Convex-only; `mostrarComoLote` IS synced
+    // (COLUMN_MAPS.subLotes col K + WRITABLE.subLotes) so it can be toggled from
+    // the sheet. When true and the sublote is `activa`, the customer catalog
+    // shows this curated subset as ONE grouped card.
     fotoUrl: v.optional(v.string()),
     mostrarComoLote: v.optional(v.boolean()),
     ...syncFields,

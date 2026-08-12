@@ -12,7 +12,6 @@
 import { alpha } from '@mui/material/styles';
 import { defaultShadows } from './shadows';
 import { cssTransition } from './motion';
-import { radius } from './layout';
 
 // =============================================================================
 // BRAND COLOR PALETTES (Immutable)
@@ -25,7 +24,7 @@ export const brand = {
     200: '#80D9C0',
     300: '#4DCAA7',
     400: '#26BE93',
-    500: '#00AE7A',
+    500: '#00C992',
     600: '#009A6C',
     700: '#008A61',
     800: '#006B4D',
@@ -252,47 +251,6 @@ export const studioShadows = {
   gold: `0 4px 14px ${alpha(brand.gold[500], 0.25)}`,
 };
 
-const cardStylesLight = {
-  base: {
-    backgroundColor: lightTokens.background.surface,
-    border: `1px solid ${lightTokens.border.card}`,
-    borderRadius: radius.xl,
-    boxShadow: defaultShadows.sm,
-    transition: cssTransition.default,
-    p: { xs: 2, sm: 2.5, md: 3 },
-  },
-  hover: {
-    boxShadow: defaultShadows.lg,
-    borderColor: alpha(brand.emerald[500], 0.3),
-  },
-};
-
-export const studioCardStyles = {
-  card: {
-    ...cardStylesLight.base,
-    '&:hover': cardStylesLight.hover,
-  },
-  sectionTitle: {
-    fontWeight: legacyTypography.weight.semibold,
-    color: lightTokens.text.primary,
-    fontSize: legacyTypography.size.md,
-    letterSpacing: legacyTypography.letterSpacing.tight,
-  },
-  label: {
-    fontWeight: legacyTypography.weight.medium,
-    color: lightTokens.text.secondary,
-    fontSize: legacyTypography.size.base,
-  },
-  value: {
-    fontWeight: legacyTypography.weight.semibold,
-    color: lightTokens.text.primary,
-  },
-  emeraldAccent: {
-    color: brand.emerald[500],
-    fontWeight: legacyTypography.weight.semibold,
-  },
-};
-
 // =============================================================================
 // LEGACY ANIMATION TOKENS
 // =============================================================================
@@ -320,20 +278,5 @@ export const animation = {
     slow: cssTransition.slow,
     spring: cssTransition.spring,
     colors: cssTransition.colors,
-  },
-} as const;
-
-// =============================================================================
-// LEGACY DISABLED BUTTON STYLES
-// =============================================================================
-
-export const disabledButton = {
-  contained: {
-    opacity: 0.45,
-    pointerEvents: 'none' as const,
-  },
-  outlined: {
-    opacity: 0.4,
-    pointerEvents: 'none' as const,
   },
 } as const;

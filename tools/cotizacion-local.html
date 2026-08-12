@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cotización · Tarjeta 1080×1920 (local)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=DM+Mono:wght@400;500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- QR + PNG export (loaded from CDN; needs internet the first time) -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+      :root {
+        --accent: #00785c;
+        --accent-pure: #00af84;
+        --emerald-dark: #0b3b2e;
+        --text: #14181a;
+        --subtle: #8c928f;
+        --surface: #fff;
+        --surface-muted: #fafafa;
+        --border: rgba(0, 0, 0, 0.08);
+        --bg: #e9ebea;
+        --serif: 'Cormorant', 'Cormorant Garamond', Georgia, serif;
+        --mono: 'DM Mono', 'SF Mono', ui-monospace, monospace;
+        --ui:
+          'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+          Roboto, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: var(--ui);
+        background: var(--bg);
+        color: var(--text);
+      }
+      .app {
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+        padding: 24px;
+        max-width: 1600px;
+        margin: 0 auto;
+      }
+      @media (max-width: 1000px) {
+        .app {
+          flex-direction: column;
+        }
+      }
+
+      /* ---- Form panel ---- */
+      .panel {
+        flex: 0 0 380px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+        position: sticky;
+        top: 24px;
+      }
+      @media (max-width: 1000px) {
+        .panel {
+          position: static;
+          flex: 1 1 auto;
+          width: 100%;
+        }
+      }
+      .panel h1 {
+        font-family: var(--serif);
+        font-weight: 600;
+        font-size: 1.5rem;
+        margin: 0 0 4px;
+      }
+      .panel .sub {
+        color: var(--subtle);
+        font-size: 0.8rem;
+        margin: 0 0 16px;
+      }
+      label {
+        display: block;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--subtle);
+        margin: 14px 0 4px;
+        font-family: var(--mono);
+      }
+      input[type='text'],
+      input[type='number'],
+      textarea,
+      select {
+        width: 100%;
+        padding: 9px 11px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        font: inherit;
+        font-size: 0.9rem;
+        background: #fff;
+        color: var(--text);
+      }
+      textarea {
+        resize: vertical;
+        min-height: 52px;
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+      }
+      .row > * {
+        flex: 1;
+      }
+      .seg {
+        display: flex;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .seg button {
+        flex: 1;
+        padding: 8px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #fff;
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.85rem;
+      }
+      .seg button.active {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(0, 175, 132, 0.06);
+        font-weight: 600;
+      }
+      .filebox {
+        margin-top: 4px;
+        padding: 10px;
+        border: 1px dashed var(--border);
+        border-radius: 9px;
+        font-size: 0.8rem;
+        color: var(--subtle);
+      }
+      .thumbs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .thumbs img {
+        width: 44px;
+        height: 44px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+      }
+      .thumbs .rm {
+        position: relative;
+      }
+      .thumbs .rm span {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        background: #c0392b;
+        color: #fff;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        font-size: 11px;
+        line-height: 16px;
+        text-align: center;
+        cursor: pointer;
+      }
+      .actions {
+        margin-top: 18px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        padding: 11px 14px;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+      }
+      .btn.ghost {
+        background: #fff;
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      .hint {
+        font-size: 0.72rem;
+        color: var(--subtle);
+        margin-top: 10px;
+        line-height: 1.4;
+      }
+
+      /* ---- Preview stage ---- */
+      .stageWrap {
+        flex: 1 1 auto;
+        display: flex;
+        justify-content: center;
+      }
+      #stage {
+        width: 100%;
+        max-width: 540px;
+        position: relative;
+      }
+      #stageInner {
+        transform-origin: top left;
+      }
+
+      /* ---- The 1080×1920 card ---- */
+      #card {
+        width: 1080px;
+        height: 1920px;
+        background: var(--surface);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        font-family: var(--ui);
+        color: var(--text);
+      }
+      #card .accent {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 8px;
+        z-index: 2;
+        background: linear-gradient(90deg, var(--accent), var(--emerald-dark));
+      }
+      #card .hero {
+        height: 576px;
+        flex-shrink: 0;
+        position: relative;
+        overflow: hidden;
+        background: rgba(0, 175, 132, 0.06);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #card .hero .grid {
+        width: 100%;
+        height: 100%;
+        display: grid;
+        gap: 4px;
+        background: var(--surface);
+      }
+      #card .hero .grid .cell {
+        position: relative;
+        overflow: hidden;
+      }
+      #card .hero .grid .cell img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      #card .hero .grid .cell .more {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.5);
+        color: #fff;
+        font-size: 64px;
+        font-weight: 600;
+      }
+      #card .hero .full {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      #card .hero .ph {
+        font-family: var(--serif);
+        font-size: 130px;
+        color: var(--subtle);
+        opacity: 0.5;
+      }
+
+      #card .body {
+        flex: 1;
+        display: flex;
+        min-height: 0;
+        padding: 56px;
+        gap: 48px;
+      }
+      #card .left {
+        flex: 1.35;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      #card .name {
+        font-family: var(--serif);
+        font-size: 72px;
+        font-weight: 500;
+        line-height: 1.02;
+        margin: 0 0 28px;
+      }
+      #card .desc {
+        font-size: 30px;
+        line-height: 1.3;
+        color: var(--subtle);
+        margin: 0 0 28px;
+      }
+      #card .specs {
+        margin-bottom: 40px;
+      }
+      #card .specRow {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+      #card .specRow .k {
+        font-family: var(--mono);
+        font-size: 24px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        min-width: 120px;
+      }
+      #card .specRow .v {
+        font-size: 30px;
+      }
+      #card .meta {
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+      }
+      #card .meta .k {
+        font-family: var(--mono);
+        font-size: 26px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--subtle);
+      }
+      #card .meta .v {
+        font-size: 36px;
+        font-weight: 600;
+      }
+      #card .spacer {
+        flex: 1;
+      }
+      #card .totalLbl {
+        font-family: var(--mono);
+        font-size: 26px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--subtle);
+        margin-bottom: 8px;
+      }
+      #card .totalRow {
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+      }
+      #card .totalRow .dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--accent);
+        flex-shrink: 0;
+      }
+      #card .totalRow .fig {
+        font-family: var(--mono);
+        font-size: 76px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -1px;
+      }
+
+      #card .right {
+        width: 372px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+      #card .unit {
+        text-align: right;
+      }
+      #card .unit .k {
+        font-family: var(--mono);
+        font-size: 24px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--subtle);
+        margin-bottom: 6px;
+      }
+      #card .unit .v {
+        font-family: var(--mono);
+        font-size: 44px;
+        font-weight: 600;
+        line-height: 1;
+      }
+      #card .co {
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        overflow: hidden;
+        background: var(--surface-muted);
+      }
+      #card .co .coimg {
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+        display: block;
+      }
+      #card .co .cin {
+        padding: 24px;
+      }
+      #card .co .ctitle {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      #card .co .ctitle .shield {
+        width: 30px;
+        height: 30px;
+        flex-shrink: 0;
+      }
+      #card .co .ctitle span {
+        font-family: var(--mono);
+        font-size: 22px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+      #card .co .cnum {
+        font-family: var(--mono);
+        font-size: 26px;
+        color: var(--accent);
+        font-weight: 700;
+        margin-bottom: 16px;
+      }
+      #card .co .badge {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+        font-size: 26px;
+      }
+      #card .co .badge .d {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        flex-shrink: 0;
+      }
+      #card .qr {
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 24px;
+        background: var(--surface);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+      }
+      #card .qr img,
+      #card .qr canvas {
+        width: 244px;
+        height: 244px;
+        display: block;
+      }
+      #card .qr .cap {
+        font-family: var(--mono);
+        font-size: 22px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--subtle);
+        text-align: center;
+      }
+      #card .foot {
+        flex-shrink: 0;
+        padding: 24px 56px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      #card .foot .brand {
+        font-family: var(--serif);
+        font-size: 30px;
+        letter-spacing: 0.16em;
+      }
+      #card .foot .num {
+        font-family: var(--mono);
+        font-size: 24px;
+        color: var(--subtle);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <!-- ============ FORM ============ -->
+      <div class="panel">
+        <h1>Cotización · Tarjeta</h1>
+        <p class="sub">1080×1920 · genera el QR y exporta PNG · 100% local</p>
+
+        <label>Número de cotización</label>
+        <input id="f_num" type="text" value="COT-20260716-001" />
+
+        <label>Nombre del producto</label>
+        <input id="f_name" type="text" value="Esmeralda Aurora" />
+
+        <label>Descripción</label>
+        <textarea id="f_desc">
+Esmeralda colombiana natural, corte cojín.</textarea
+        >
+
+        <label>Tipo</label>
+        <div class="seg" id="f_tipo">
+          <button data-tipo="gema" class="active">Gema</button>
+          <button data-tipo="joya">Joya</button>
+        </div>
+
+        <label>Línea gema (peso · color · calidad)</label>
+        <input id="f_gema" type="text" value="3.10 ct · Verde Muzo · AAA" />
+
+        <label>Línea joya (metal · medidas)</label>
+        <input
+          id="f_joya"
+          type="text"
+          value=""
+          placeholder="Oro 18k · Talla 6"
+        />
+
+        <div class="row">
+          <div>
+            <label>Cantidad</label>
+            <input id="f_qty" type="number" min="1" value="1" />
+          </div>
+          <div>
+            <label>Precio unitario (COP)</label>
+            <input id="f_price" type="number" min="0" value="6200000" />
+          </div>
+        </div>
+
+        <label># Certificado de Origen</label>
+        <input id="f_co" type="text" value="TM-CO-001" />
+
+        <label>Fotos del producto (1 o varias → grilla)</label>
+        <input id="f_photos" type="file" accept="image/*" multiple />
+        <div class="thumbs" id="thumbs"></div>
+
+        <label>Imagen del certificado (opcional)</label>
+        <input id="f_cert" type="file" accept="image/*" />
+        <div class="filebox" id="certbox">
+          Sin imagen · se mostrarán los sellos de confianza.
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" id="dl">Descargar PNG 1080×1920</button>
+          <button class="btn ghost" id="reset">Limpiar fotos</button>
+        </div>
+        <p class="hint">
+          El QR apunta a <b>tierramadre.app/cot/&lt;número&gt;</b>. La
+          cotización online sólo carga cuando esté guardada en la app; este HTML
+          es para producir la imagen de la tarjeta.
+        </p>
+      </div>
+
+      <!-- ============ PREVIEW ============ -->
+      <div class="stageWrap">
+        <div id="stage">
+          <div id="stageInner">
+            <div id="card">
+              <div class="accent"></div>
+              <div class="hero" id="c_hero"></div>
+              <div class="body">
+                <div class="left">
+                  <div class="name" id="c_name"></div>
+                  <div class="desc" id="c_desc"></div>
+                  <div class="specs" id="c_specs"></div>
+                  <div class="meta">
+                    <span class="k">Cantidad</span
+                    ><span class="v" id="c_qty"></span>
+                  </div>
+                  <div class="spacer"></div>
+                  <div>
+                    <div class="totalLbl">Total</div>
+                    <div class="totalRow">
+                      <span class="dot"></span
+                      ><span class="fig" id="c_total"></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="right">
+                  <div class="unit">
+                    <div class="k">Precio unitario</div>
+                    <div class="v" id="c_unit"></div>
+                  </div>
+                  <div class="co">
+                    <img
+                      class="coimg"
+                      id="c_coimg"
+                      alt=""
+                      style="display: none"
+                    />
+                    <div class="cin">
+                      <div class="ctitle">
+                        <svg
+                          class="shield"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#00785C"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path
+                            d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+                          />
+                        </svg>
+                        <span>Certificado de Origen</span>
+                      </div>
+                      <div class="cnum" id="c_conum"></div>
+                      <div class="badge">
+                        <span class="d"></span>Esmeralda Colombiana
+                      </div>
+                      <div class="badge">
+                        <span class="d"></span>100% Natural
+                      </div>
+                      <div class="badge"><span class="d"></span>ADN de Paz</div>
+                    </div>
+                  </div>
+                  <div class="qr">
+                    <div id="c_qr"></div>
+                    <div class="cap">Ver cotización online</div>
+                  </div>
+                </div>
+              </div>
+              <div class="foot">
+                <span class="brand">TIERRA MÄDRE</span>
+                <span class="num" id="c_foot"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var state = { tipo: 'gema', photos: [], cert: null };
+        var $ = function (id) {
+          return document.getElementById(id);
+        };
+        var cop = new Intl.NumberFormat('es-CO', {
+          style: 'currency',
+          currency: 'COP',
+          maximumFractionDigits: 0,
+        });
+        var GEM_SVG = '<div class="ph">◆</div>';
+
+        // ---- hero grid (1×1,1×2,2×2,2×3, +N) ----
+        function colsFor(n) {
+          if (n <= 1) return 1;
+          if (n === 2) return 2;
+          if (n === 3) return 3;
+          if (n === 4) return 2;
+          return 3;
+        }
+        function renderHero() {
+          var hero = $('c_hero');
+          var imgs = state.photos;
+          hero.innerHTML = '';
+          if (imgs.length === 0) {
+            hero.innerHTML = GEM_SVG;
+            return;
+          }
+          if (imgs.length === 1) {
+            var i = new Image();
+            i.src = imgs[0];
+            i.className = 'full';
+            i.crossOrigin = 'anonymous';
+            hero.appendChild(i);
+            return;
+          }
+          var tiles = imgs.slice(0, 6),
+            overflow = imgs.length - tiles.length;
+          var cols = colsFor(tiles.length),
+            rows = Math.ceil(tiles.length / cols),
+            rem = tiles.length % cols;
+          var g = document.createElement('div');
+          g.className = 'grid';
+          g.style.gridTemplateColumns = 'repeat(' + cols + ',1fr)';
+          g.style.gridTemplateRows = 'repeat(' + rows + ',1fr)';
+          tiles.forEach(function (src, idx) {
+            var last = idx === tiles.length - 1;
+            var cell = document.createElement('div');
+            cell.className = 'cell';
+            if (last && rem !== 0) {
+              cell.style.gridColumn = 'span ' + (cols - rem + 1);
+            }
+            var im = new Image();
+            im.src = src;
+            im.crossOrigin = 'anonymous';
+            cell.appendChild(im);
+            if (last && overflow > 0) {
+              var m = document.createElement('div');
+              m.className = 'more';
+              m.textContent = '+' + overflow;
+              cell.appendChild(m);
+            }
+            g.appendChild(cell);
+          });
+          hero.appendChild(g);
+        }
+
+        // ---- QR ----
+        function renderQR() {
+          var box = $('c_qr');
+          box.innerHTML = '';
+          var url =
+            'https://tierramadre.app/cot/' +
+            encodeURIComponent($('f_num').value.trim() || 'COT');
+          try {
+            var qr = qrcode(0, 'M');
+            qr.addData(url);
+            qr.make();
+            box.innerHTML = qr.createImgTag(6, 0);
+            var img = box.querySelector('img');
+            if (img) {
+              img.style.width = '244px';
+              img.style.height = '244px';
+              img.style.imageRendering = 'pixelated';
+            }
+          } catch (e) {
+            box.innerHTML =
+              '<div style="width:244px;height:244px;border:1px solid #ccc"></div>';
+          }
+        }
+
+        // ---- specs ----
+        function renderSpecs() {
+          var wrap = $('c_specs');
+          wrap.innerHTML = '';
+          var gem = $('f_gema').value.trim(),
+            joya = $('f_joya').value.trim();
+          function row(k, v) {
+            if (!v) return;
+            var d = document.createElement('div');
+            d.className = 'specRow';
+            d.innerHTML =
+              '<span class="k">' + k + '</span><span class="v"></span>';
+            d.querySelector('.v').textContent = v;
+            wrap.appendChild(d);
+          }
+          row(state.tipo === 'joya' ? 'Gemas' : 'Gema', gem);
+          row('Joya', joya);
+        }
+
+        function render() {
+          $('c_name').textContent = $('f_name').value;
+          var desc = $('f_desc').value.trim();
+          $('c_desc').textContent = desc;
+          $('c_desc').style.display = desc ? 'block' : 'none';
+          renderSpecs();
+          var qty = Math.max(1, parseInt($('f_qty').value || '1', 10));
+          var unit = parseFloat($('f_price').value || '0') || 0;
+          $('c_qty').textContent = String(qty);
+          $('c_unit').textContent = cop.format(unit);
+          $('c_total').textContent = cop.format(unit * qty);
+          var co = $('f_co').value.trim();
+          $('c_conum').textContent = co;
+          $('c_conum').style.display = co ? 'block' : 'none';
+          $('c_foot').textContent = $('f_num').value;
+          // cert image
+          var coimg = $('c_coimg');
+          if (state.cert) {
+            coimg.src = state.cert;
+            coimg.style.display = 'block';
+          } else {
+            coimg.style.display = 'none';
+          }
+          renderHero();
+          renderQR();
+        }
+
+        // ---- scale preview to fit ----
+        function fit() {
+          var stage = $('stage');
+          var inner = $('stageInner');
+          var s = stage.clientWidth / 1080;
+          inner.style.transform = 'scale(' + s + ')';
+          stage.style.height = 1920 * s + 'px';
+        }
+        window.addEventListener('resize', fit);
+
+        // ---- inputs ----
+        [
+          'f_num',
+          'f_name',
+          'f_desc',
+          'f_gema',
+          'f_joya',
+          'f_qty',
+          'f_price',
+          'f_co',
+        ].forEach(function (id) {
+          $(id).addEventListener('input', render);
+        });
+        Array.prototype.forEach.call(
+          document.querySelectorAll('#f_tipo button'),
+          function (b) {
+            b.addEventListener('click', function () {
+              document.querySelectorAll('#f_tipo button').forEach(function (x) {
+                x.classList.remove('active');
+              });
+              b.classList.add('active');
+              state.tipo = b.getAttribute('data-tipo');
+              render();
+            });
+          },
+        );
+        function readFiles(files, cb) {
+          var arr = [],
+            n = files.length,
+            done = 0;
+          if (!n) {
+            cb([]);
+            return;
+          }
+          Array.prototype.forEach.call(files, function (f, i) {
+            var r = new FileReader();
+            r.onload = function (e) {
+              arr[i] = e.target.result;
+              if (++done === n) cb(arr);
+            };
+            r.readAsDataURL(f);
+          });
+        }
+        $('f_photos').addEventListener('change', function (e) {
+          readFiles(e.target.files, function (urls) {
+            state.photos = state.photos.concat(urls);
+            drawThumbs();
+            render();
+          });
+        });
+        function drawThumbs() {
+          var t = $('thumbs');
+          t.innerHTML = '';
+          state.photos.forEach(function (src, i) {
+            var w = document.createElement('div');
+            w.className = 'rm';
+            var im = new Image();
+            im.src = src;
+            w.appendChild(im);
+            var x = document.createElement('span');
+            x.textContent = '×';
+            x.onclick = function () {
+              state.photos.splice(i, 1);
+              drawThumbs();
+              render();
+            };
+            w.appendChild(x);
+            t.appendChild(w);
+          });
+        }
+        $('f_cert').addEventListener('change', function (e) {
+          readFiles(e.target.files, function (urls) {
+            state.cert = urls[0] || null;
+            $('certbox').textContent = state.cert
+              ? 'Imagen del certificado cargada.'
+              : 'Sin imagen · se mostrarán los sellos de confianza.';
+            render();
+          });
+        });
+        $('reset').addEventListener('click', function () {
+          state.photos = [];
+          state.cert = null;
+          drawThumbs();
+          $('certbox').textContent =
+            'Sin imagen · se mostrarán los sellos de confianza.';
+          $('f_photos').value = '';
+          $('f_cert').value = '';
+          render();
+        });
+
+        // ---- export PNG 1080×1920 ----
+        $('dl').addEventListener('click', function () {
+          var btn = this,
+            prev = btn.textContent;
+          btn.textContent = 'Generando…';
+          btn.disabled = true;
+          html2canvas($('card'), {
+            width: 1080,
+            height: 1920,
+            scale: 1,
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            logging: false,
+          })
+            .then(function (canvas) {
+              canvas.toBlob(
+                function (blob) {
+                  var a = document.createElement('a');
+                  var name = ($('f_name').value || 'cotizacion').replace(
+                    /[^a-z0-9]+/gi,
+                    '-',
+                  );
+                  a.href = URL.createObjectURL(blob);
+                  a.download =
+                    'TM-' + ($('f_num').value || 'COT') + '-' + name + '.png';
+                  a.click();
+                  URL.revokeObjectURL(a.href);
+                  btn.textContent = prev;
+                  btn.disabled = false;
+                },
+                'image/png',
+                0.95,
+              );
+            })
+            .catch(function (err) {
+              alert('No se pudo exportar: ' + err);
+              btn.textContent = prev;
+              btn.disabled = false;
+            });
+        });
+
+        render();
+        fit();
+      })();
+    </script>
+  </body>
+</html>

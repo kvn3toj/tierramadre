@@ -16,6 +16,7 @@ import {
   findSheetByPattern,
   findColumnIndex,
 } from './_lib/index.js';
+import { isRosterRowActive } from './_lib/rosterStatus.js';
 import {
   mintSessionToken,
   verifySessionToken,
@@ -123,10 +124,11 @@ async function validateUser(
   const dataRows = rows.slice(1);
 
   for (const row of dataRows) {
-    if (estadoIndex !== -1) {
-      const estado = String(row[estadoIndex] || '').toLowerCase();
-      if (estado === 'inactivo' || estado === 'inactive') continue;
-    }
+    // Lista BLANCA, no negra: sólo "activo" concede acceso. Antes se comparaba
+    // contra 'inactivo'/'inactive' sin `.trim()`, así que "Inactivo " con un
+    // espacio —o "Suspendido", o la celda vacía— dejaba entrar a la persona.
+    // Ver api/_lib/rosterStatus.ts.
+    if (!isRosterRowActive(row[estadoIndex], estadoIndex !== -1)) continue;
 
     const userEmail =
       emailIndex !== -1

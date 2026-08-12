@@ -4,6 +4,7 @@
  */
 
 import { useParams, useNavigate } from 'react-router-dom';
+import { useResaleOffers } from '../../../hooks/useResaleOffers';
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import {
   Box,
@@ -16,7 +17,8 @@ import {
   Skeleton,
   IconButton,
 } from '@mui/material';
-import { ChevronLeft, Package, Heart, Share2 } from 'lucide-react';
+import { ChevronLeft, Package, Heart, Share2, Scale } from 'lucide-react';
+import { useComparisonContext } from '../../../contexts/ComparisonContext';
 
 import { useShare } from '../../../hooks/useShare';
 import { useHaptics } from '../../../hooks/useHaptics';
@@ -35,6 +37,7 @@ import { MemberBenefitsTeaser } from '../../../components/guest';
 import { MediaGallery } from '../../../components/media';
 import type { MediaItem } from '../../../components/media/types';
 import { PriceDisplay } from '../../../components/price-simulator/PriceDisplay';
+import PrecioEspecialBadge from '../../../components/treasure/PrecioEspecialBadge';
 import { createLogger } from '../../../utils/logger';
 import { convertToProxyUrl } from '../../../utils/driveUrl';
 import { surfacesLight } from '../../../design-system/tokens/colors';
@@ -59,7 +62,6 @@ import { scrollMainTo } from '../../../utils/mainScroll';
 import { activeLotePiece, resolveLoteDetail } from './loteDetail';
 import { getQuietEmerald, qeFont } from '../../../design-system';
 import { useRedesignVariant } from '../../../hooks/useRedesignVariant';
-import RedesignVariantToggle from '../../../components/redesign/RedesignVariantToggle';
 import { formatCarats } from '../../../utils/formatting';
 import {
   FormulaPanel,
@@ -88,6 +90,10 @@ export default function ProductDetail() {
   const { shouldShowPrices } = usePriceShare();
   const { isLiteral, isFaithful } = useRedesignVariant();
   const qe = getQuietEmerald(mode);
+  // Comparison now lives on the product page (removed from the grid cards to keep
+  // the vitrine image clean). Shared via context so the bottom bar/modal in the
+  // catalog reflect what's added here.
+  const comparison = useComparisonContext();
   const { isFavorite, toggleFavorite } = useFavorites();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -121,6 +127,26 @@ export default function ProductDetail() {
     convexApi.products.getPublicByItem,
     publicItemId ? { itemId: publicItemId } : 'skip',
   ) as PublishedRow | null | undefined;
+
+  // Reventa del embajador: la ficha vive en SU catálogo, no en el nuestro.
+  //
+  // La pieza es suya —los libros dicen VENDIDA— y nosotros sólo corredamos la
+  // operación, así que la conversación tiene que empezar en su perfil, con su
+  // nombre y su precio. Redirige en `replace` para que el botón "atrás"
+  // vuelva a la grilla y no rebote otra vez contra esta ruta.
+  //
+  // Sólo en la ficha individual: un `groupId` es un lote agrupado, que nunca
+  // es una oferta de reventa de una pieza suelta.
+  const { resaleIndex } = useResaleOffers();
+  const resaleForRoute =
+    !groupId && itemId ? resaleIndex.get(parseInt(itemId, 10)) : undefined;
+
+  useEffect(() => {
+    if (!resaleForRoute || !itemId) return;
+    navigate(`/ambassadors/${resaleForRoute.asesorSlug}/product/${itemId}`, {
+      replace: true,
+    });
+  }, [resaleForRoute, itemId, navigate]);
 
   // Find the product — by groupId for grouped lote/sublote cards, else by item.
   // FALLBACK: when the item isn't in the sheet-derived catalog (e.g. an
@@ -188,6 +214,10 @@ export default function ProductDetail() {
         medidasValores: publicDoc.medidasValores || p.medidasValores,
         talla: publicDoc.talla || p.talla,
         categoria: publicDoc.categoria || p.categoria,
+        // La promoción temporal la deriva Convex por lectura, así que el doc
+        // público es su ÚNICA fuente: se asigna directo (sin `||`) para que un
+        // vencimiento la borre de la ficha en vez de dejarla pegada.
+        precioEspecial: publicDoc.precioEspecial,
       };
     }
     if (adminDoc) {
@@ -255,9 +285,19 @@ export default function ProductDetail() {
   // onto the bundle so the detail below matches the image; otherwise we show
   // the bundle itself. Pricing breakdown, QR, favorites and cart actions stay
   // bundle-scoped (the lote is bought as one), so they keep using `product`.
+  // Built from `enrichedProduct`, NOT `product`: `resolveLoteDetail` returns its
+  // input unchanged on the hero view, so `detail` is defined whenever `product`
+  // is — which made the `detail ?? enrichedProduct` fallback below unreachable
+  // and silently dropped the whole Convex overlay from every descriptive
+  // section. That is why a Fotosíntesis item rendered the sheet's `medidas`
+  // column (the FORMAT label, "Largo x Ancho") instead of its measurements, and
+  // why mina/rareza/calificación never appeared.
   const detail = useMemo(
-    () => (product ? resolveLoteDetail(product, activeLoteItem) : undefined),
-    [product, activeLoteItem],
+    () =>
+      enrichedProduct
+        ? resolveLoteDetail(enrichedProduct, activeLoteItem)
+        : undefined,
+    [enrichedProduct, activeLoteItem],
   );
 
   // Cleaned title for the piece (or bundle) currently in view.
@@ -699,6 +739,38 @@ export default function ProductDetail() {
               />
             </IconButton>
           )}
+          {shouldShowPrices && !isProvider && (
+            <IconButton
+              onClick={() => {
+                const wasSelected = comparison.isSelected(product.item);
+                comparison.toggleComparison(product);
+                triggerHaptic('light');
+                setSnackbarMessage(
+                  wasSelected
+                    ? 'Quitada de comparación'
+                    : 'Añadida a comparación',
+                );
+                setSnackbarOpen(true);
+              }}
+              disabled={
+                !comparison.isSelected(product.item) && !comparison.canAddMore
+              }
+              aria-label={
+                comparison.isSelected(product.item)
+                  ? 'Quitar de comparación'
+                  : 'Agregar a comparación'
+              }
+              sx={{
+                color: comparison.isSelected(product.item)
+                  ? qe.accent
+                  : qe.muted,
+                width: 36,
+                height: 36,
+              }}
+            >
+              <Scale size={17} />
+            </IconButton>
+          )}
         </Box>
       </Box>
 
@@ -809,6 +881,15 @@ export default function ProductDetail() {
                   />
                 </>
               )}
+              {/* Bajo el precio, no sobre la foto: aquí califica la cifra que
+                  el visitante acaba de leer. */}
+              {enrichedProduct?.precioEspecial && (
+                <Box sx={{ mt: '12px' }}>
+                  <PrecioEspecialBadge
+                    precioEspecial={enrichedProduct.precioEspecial}
+                  />
+                </Box>
+              )}
             </Box>
           )}
 
@@ -877,8 +958,6 @@ export default function ProductDetail() {
           },
         }}
       />
-
-      <RedesignVariantToggle />
     </Box>
   );
 }

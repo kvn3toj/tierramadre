@@ -16,7 +16,10 @@
 import { useCallback } from 'react';
 import type { ConvexReactClient } from 'convex/react';
 import { useConvexClient, convexApi } from '../../../../lib/convex-safe';
-import { requireAuthTokenOrLogout } from '../../../../utils/sessionToken';
+import {
+  requireAuthTokenOrLogout,
+  readFreshSessionToken,
+} from '../../../../utils/sessionToken';
 import { serializeMedidas } from '../../../../data/vocabularies';
 import {
   buildGemaPayload,
@@ -89,10 +92,19 @@ function deriveEntity(
 // this one module doesn't have to re-declare 25 mutation signatures. A wrong arg
 // name surfaces as a Convex runtime rejection (caught + shown), never silent.
 type Client = ConvexReactClient;
+// Every query this file dispatches (providers/clients/lots/sales/lotItems
+// reads used for ref resolution) is now internal-only and gated on a
+// verified staff session — see convex/_lib/requireStaffSession.ts. Inject
+// the caller's fresh session token here, once, instead of threading it
+// through all 5 call sites.
 function runQuery<T>(client: Client, ref: unknown, args: unknown): Promise<T> {
+  const argsWithToken = {
+    ...(args as Record<string, unknown>),
+    sessionToken: readFreshSessionToken() ?? undefined,
+  };
   return (client.query as (r: unknown, a: unknown) => Promise<unknown>)(
     ref,
-    args,
+    argsWithToken,
   ) as Promise<T>;
 }
 // Every mutation this file dispatches (sales/lots/lotItems/subLotes/
@@ -305,8 +317,8 @@ function toGemaFieldsPatch(
   set('nivelRareza', numOpt(a.nivelRareza));
   set('calificacion', numOpt(a.calificacion));
   set('precioPublicoCOP', numOpt(a.precioPublicoCOP));
-  set('precioEmbajadorCOP', numOpt(a.precioEmbajadorCOP));
-  set('precioConscienteCOP', numOpt(a.precioConscienteCOP));
+  // Price tiers removed (2026-07-21): precioFinalCOP is derived in Convex from
+  // costoBaseCOP, so the copilot can no longer set a price tier directly.
   if (Array.isArray(a.minerales)) set('minerales', strArr(a.minerales));
   if (Array.isArray(a.complementos))
     set('complementos', strArr(a.complementos));

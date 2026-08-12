@@ -7,7 +7,6 @@ import React from 'react';
 import {
   Box,
   Typography,
-  TextField,
   Paper,
   IconButton,
   Divider,
@@ -16,6 +15,7 @@ import {
 } from '@mui/material';
 import { Settings, RefreshCw } from 'lucide-react';
 import { brandColors } from '../../../../components/cotizacion/constants';
+import { TextField } from '../../../../design-system/components/TextField';
 import type { QuotationData } from './QuotationCertificate';
 
 interface QuotationConfigProps {
@@ -53,7 +53,10 @@ export const QuotationConfig: React.FC<QuotationConfigProps> = ({
 
       {/* Basic Info */}
       <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle2" sx={{ color: brandColors.gray, mb: 1.5, fontWeight: 600 }}>
+        <Typography
+          variant="subtitle2"
+          sx={{ color: brandColors.gray, mb: 1.5, fontWeight: 600 }}
+        >
           Información de Cotización
         </Typography>
 
@@ -62,10 +65,18 @@ export const QuotationConfig: React.FC<QuotationConfigProps> = ({
             fullWidth
             label="No. Cotización"
             value={quotationData.quotationNumber}
-            onChange={(e) => setQuotationData({ ...quotationData, quotationNumber: e.target.value })}
-            size="small"
+            onChange={(e) =>
+              setQuotationData({
+                ...quotationData,
+                quotationNumber: e.target.value,
+              })
+            }
+            size="sm"
           />
-          <IconButton onClick={onRegenerateNumber} sx={{ color: brandColors.emerald }}>
+          <IconButton
+            onClick={onRegenerateNumber}
+            sx={{ color: brandColors.emerald }}
+          >
             <RefreshCw size={18} />
           </IconButton>
         </Box>
@@ -74,8 +85,10 @@ export const QuotationConfig: React.FC<QuotationConfigProps> = ({
           fullWidth
           label="Nombre del Producto"
           value={quotationData.productName}
-          onChange={(e) => setQuotationData({ ...quotationData, productName: e.target.value })}
-          size="small"
+          onChange={(e) =>
+            setQuotationData({ ...quotationData, productName: e.target.value })
+          }
+          size="sm"
           sx={{ mb: 2 }}
         />
 
@@ -83,8 +96,10 @@ export const QuotationConfig: React.FC<QuotationConfigProps> = ({
           fullWidth
           label="Cliente (Opcional)"
           value={quotationData.clientName}
-          onChange={(e) => setQuotationData({ ...quotationData, clientName: e.target.value })}
-          size="small"
+          onChange={(e) =>
+            setQuotationData({ ...quotationData, clientName: e.target.value })
+          }
+          size="sm"
           placeholder="Nombre del cliente"
         />
       </Box>
@@ -93,7 +108,10 @@ export const QuotationConfig: React.FC<QuotationConfigProps> = ({
 
       {/* Pricing */}
       <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle2" sx={{ color: brandColors.gray, mb: 1.5, fontWeight: 600 }}>
+        <Typography
+          variant="subtitle2"
+          sx={{ color: brandColors.gray, mb: 1.5, fontWeight: 600 }}
+        >
           Precios
         </Typography>
 
@@ -112,7 +130,7 @@ export const QuotationConfig: React.FC<QuotationConfigProps> = ({
               profit: newSalePrice - newTotal,
             });
           }}
-          size="small"
+          size="sm"
           sx={{ mb: 2 }}
           InputProps={{
             startAdornment: <InputAdornment position="start">$</InputAdornment>,
@@ -130,10 +148,13 @@ export const QuotationConfig: React.FC<QuotationConfigProps> = ({
               ...quotationData,
               salePrice: newSalePrice,
               profit: newSalePrice - quotationData.totalInvestment,
-              margin: ((newSalePrice - quotationData.totalInvestment) / newSalePrice) * 100,
+              margin:
+                ((newSalePrice - quotationData.totalInvestment) /
+                  newSalePrice) *
+                100,
             });
           }}
-          size="small"
+          size="sm"
           sx={{ mb: 2 }}
           InputProps={{
             startAdornment: <InputAdornment position="start">$</InputAdornment>,
@@ -146,7 +167,9 @@ export const QuotationConfig: React.FC<QuotationConfigProps> = ({
           </Typography>
           <Slider
             value={quotationData.caratWeight}
-            onChange={(_, v) => setQuotationData({ ...quotationData, caratWeight: v as number })}
+            onChange={(_, v) =>
+              setQuotationData({ ...quotationData, caratWeight: v as number })
+            }
             min={0.1}
             max={20}
             step={0.1}
@@ -159,7 +182,10 @@ export const QuotationConfig: React.FC<QuotationConfigProps> = ({
 
       {/* Validity */}
       <Box>
-        <Typography variant="subtitle2" sx={{ color: brandColors.gray, mb: 1.5, fontWeight: 600 }}>
+        <Typography
+          variant="subtitle2"
+          sx={{ color: brandColors.gray, mb: 1.5, fontWeight: 600 }}
+        >
           Validez
         </Typography>
 
@@ -168,8 +194,10 @@ export const QuotationConfig: React.FC<QuotationConfigProps> = ({
           label="Fecha de Emisión"
           type="date"
           value={quotationData.date}
-          onChange={(e) => setQuotationData({ ...quotationData, date: e.target.value })}
-          size="small"
+          onChange={(e) =>
+            setQuotationData({ ...quotationData, date: e.target.value })
+          }
+          size="sm"
           sx={{ mb: 2 }}
           InputLabelProps={{ shrink: true }}
         />
@@ -180,7 +208,9 @@ export const QuotationConfig: React.FC<QuotationConfigProps> = ({
           </Typography>
           <Slider
             value={quotationData.validDays}
-            onChange={(_, v) => setQuotationData({ ...quotationData, validDays: v as number })}
+            onChange={(_, v) =>
+              setQuotationData({ ...quotationData, validDays: v as number })
+            }
             min={3}
             max={60}
             step={1}
@@ -192,8 +222,10 @@ export const QuotationConfig: React.FC<QuotationConfigProps> = ({
           fullWidth
           label="Notas (Opcional)"
           value={quotationData.notes}
-          onChange={(e) => setQuotationData({ ...quotationData, notes: e.target.value })}
-          size="small"
+          onChange={(e) =>
+            setQuotationData({ ...quotationData, notes: e.target.value })
+          }
+          size="sm"
           multiline
           rows={2}
           sx={{ mt: 2 }}

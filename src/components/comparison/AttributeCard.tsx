@@ -5,7 +5,8 @@
 import { Box, Paper, Typography, alpha } from '@mui/material';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { getQuietEmerald, whiteAlpha, blackAlpha } from '../../design-system';
 
 interface AttributeCardProps {
   label: string;
@@ -39,19 +40,23 @@ export default function AttributeCard({
 }: AttributeCardProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const qe = getQuietEmerald(mode);
 
   // Check if values are different (for subtle highlight)
-  const valuesAreDifferent = values.length > 1 &&
-    new Set(values.map(v => String(v))).size > 1;
+  const valuesAreDifferent =
+    values.length > 1 && new Set(values.map((v) => String(v))).size > 1;
 
   // For numeric types, determine highest/lowest
-  const numericValues = type === 'numeric'
-    ? values.map(v => extractNumericValue(v))
-    : [];
+  const numericValues =
+    type === 'numeric' ? values.map((v) => extractNumericValue(v)) : [];
 
-  const hasNumericComparison = numericValues.every(v => v !== null);
-  const maxValue = hasNumericComparison ? Math.max(...numericValues as number[]) : null;
-  const minValue = hasNumericComparison ? Math.min(...numericValues as number[]) : null;
+  const hasNumericComparison = numericValues.every((v) => v !== null);
+  const maxValue = hasNumericComparison
+    ? Math.max(...(numericValues as number[]))
+    : null;
+  const minValue = hasNumericComparison
+    ? Math.min(...(numericValues as number[]))
+    : null;
 
   return (
     <Paper
@@ -60,8 +65,12 @@ export default function AttributeCard({
         mb: 0.75,
         borderRadius: 2,
         border: '1px solid',
-        borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-        bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.secondary,
+        borderColor: isLight
+          ? surfacesLight.border.light
+          : surfacesDark.border.light,
+        bgcolor: isLight
+          ? surfacesLight.background.primary
+          : surfacesDark.background.secondary,
         overflow: 'hidden',
       }}
     >
@@ -71,19 +80,19 @@ export default function AttributeCard({
           px: 1.25,
           py: 0.5,
           bgcolor: isLight
-            ? alpha(emeraldCore.primary, 0.04)
-            : alpha(emeraldCore.primary, 0.06),
+            ? alpha(qe.accentPure, 0.04)
+            : alpha(qe.accentPure, 0.06),
           borderBottom: '1px solid',
           borderColor: isLight
-            ? alpha(emeraldCore.primary, 0.08)
-            : alpha(emeraldCore.primary, 0.1),
+            ? alpha(qe.accentPure, 0.08)
+            : alpha(qe.accentPure, 0.1),
         }}
       >
         <Typography
           variant="subtitle2"
           sx={{
             fontWeight: 600,
-            color: emeraldCore.dark,
+            color: qe.accent,
             textTransform: 'uppercase',
             fontSize: '0.55rem',
             letterSpacing: '0.06em',
@@ -98,19 +107,27 @@ export default function AttributeCard({
         {values.map((value, idx) => {
           // Determine if this value is highest/lowest for numeric comparison
           const numericVal = numericValues[idx];
-          const isHighest = hasNumericComparison && numericVal === maxValue && maxValue !== minValue;
-          const isLowest = hasNumericComparison && numericVal === minValue && maxValue !== minValue;
+          const isHighest =
+            hasNumericComparison &&
+            numericVal === maxValue &&
+            maxValue !== minValue;
+          const isLowest =
+            hasNumericComparison &&
+            numericVal === minValue &&
+            maxValue !== minValue;
 
           // Determine indicator icon and color
           let IndicatorIcon = Minus;
-          let indicatorColor: string = isLight ? surfacesLight.text.tertiary : surfacesDark.text.tertiary;
+          let indicatorColor: string = isLight
+            ? surfacesLight.text.tertiary
+            : surfacesDark.text.tertiary;
 
           if (isHighest) {
             IndicatorIcon = TrendingUp;
-            indicatorColor = emeraldCore.primary; // Emerald green
+            indicatorColor = qe.accentPure; // Emerald green
           } else if (isLowest) {
             IndicatorIcon = TrendingDown;
-            indicatorColor = '#999';
+            indicatorColor = qe.muted;
           }
 
           return (
@@ -123,12 +140,12 @@ export default function AttributeCard({
                 borderRadius: 1.5,
                 // Subtle highlight for highest values
                 bgcolor: isHighest
-                  ? alpha(emeraldCore.primary, 0.08)
+                  ? alpha(qe.accentPure, 0.08)
                   : valuesAreDifferent
-                  ? alpha(emeraldCore.primary, isLight ? 0.04 : 0.06)
-                  : isLight
-                    ? alpha('#000', 0.02)
-                    : alpha('#fff', 0.02),
+                    ? alpha(qe.accentPure, isLight ? 0.04 : 0.06)
+                    : isLight
+                      ? blackAlpha(0.02)
+                      : whiteAlpha(0.02),
                 textAlign: 'center',
                 minHeight: 44, // iOS HIG minimum touch target
                 display: 'flex',
@@ -137,7 +154,9 @@ export default function AttributeCard({
                 justifyContent: 'center',
                 position: 'relative',
                 border: isHighest ? '1px solid' : 'none',
-                borderColor: isHighest ? alpha(emeraldCore.primary, 0.2) : 'transparent',
+                borderColor: isHighest
+                  ? alpha(qe.accentPure, 0.2)
+                  : 'transparent',
               }}
             >
               {/* Subtle indicator for numeric values */}
@@ -150,7 +169,11 @@ export default function AttributeCard({
                     opacity: 0.6,
                   }}
                 >
-                  <IndicatorIcon size={10} color={indicatorColor} strokeWidth={2.5} />
+                  <IndicatorIcon
+                    size={10}
+                    color={indicatorColor}
+                    strokeWidth={2.5}
+                  />
                 </Box>
               )}
               <Typography
@@ -159,7 +182,7 @@ export default function AttributeCard({
                   fontWeight: isHighest ? 600 : 500,
                   fontSize: type === 'numeric' ? '0.8rem' : '0.75rem',
                   color: isHighest
-                    ? emeraldCore.primary
+                    ? qe.accentPure
                     : isLight
                       ? surfacesLight.text.primary
                       : surfacesDark.text.primary,

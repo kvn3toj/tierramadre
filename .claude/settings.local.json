@@ -113,7 +113,21 @@
       "Bash(npx vite *)",
       "Bash(rm -f /tmp/cert_export_test*.png)",
       "Bash(git --no-pager log --oneline -3 origin/main)",
-      "mcp__obsidian__get_vault_file"
+      "mcp__obsidian__get_vault_file",
+      "mcp__obsidian__create_vault_file",
+      "Bash(break)",
+      "Read(//Users/kevinp/Movies/coomunity-universe/Obsidian/Anima/Wings/Projects/TierraMadre/inventario/**)",
+      "Bash(sed -n '/## Procedencia/,$p' item-467-guardianas-gemelas-piedra-1.md)",
+      "Bash(sed -n '/| Categoría/,/| UBICACIÓN/p' item-454-pares-topos-4-4-3mm.md)",
+      "Bash(sed -n '/## Procedencia/,$p' /Users/kevinp/Movies/coomunity-universe/Obsidian/Anima/Wings/Projects/TierraMadre/inventario/item-467-guardianas-gemelas-piedra-1.md)",
+      "Bash(sed -n '/## Procedencia/,$p' /Users/kevinp/Movies/coomunity-universe/Obsidian/Anima/Wings/Projects/TierraMadre/inventario/item-471-guardianas-gemelas.md)",
+      "Read(//Users/kevinp/.convex/**)",
+      "Bash(git pull *)",
+      "Bash(sed -i.bak \"s|from './lib/heic.mjs'|from './lib/image.mjs'|\" scripts/jewelry-visualizer.mjs)",
+      "Bash(node scripts/visualizer-mirror-fotos.mjs --items 233,311)",
+      "Bash(python3 -)",
+      "Bash(node --input-type=module -e ' *)",
+      "mcp__obsidian__vault_read"
     ],
     "deny": [],
     "ask": []

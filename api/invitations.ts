@@ -13,6 +13,7 @@
 
 import type { sheets_v4 } from '@googleapis/sheets';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { ConvexError } from 'convex/values';
 import {
   withApiHandler,
   sendError,
@@ -23,7 +24,25 @@ import {
   generateShortCode,
 } from './_lib/index.js';
 import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
+import { isSessionToken, verifySessionToken } from './_lib/sessionToken.js';
+import { extractBearer } from './_lib/bearer.js';
 import { api } from '../convex/_generated/api.js';
+
+/**
+ * Verifies a `tms1` app session token from the `Authorization: Bearer …`
+ * header and returns its email, or null. Exported for tests. Same contract
+ * as `verifiedSessionEmail` in api/vitrina.ts — a raw Google ID token,
+ * whatever its shape, is not a session token and returns null here, which
+ * the `list-by-creator` handler below turns into a 401. (2026-08-06, PII
+ * lockdown item 3.)
+ */
+export function verifiedSessionEmail(
+  authHeader?: string | string[],
+): string | null {
+  const token = extractBearer(authHeader);
+  if (!token || !isSessionToken(token)) return null;
+  return verifySessionToken(token)?.email ?? null;
+}
 
 type Sheets = sheets_v4.Sheets;
 /** POST bodies use loose JSON shapes */
@@ -50,6 +69,23 @@ const HEADERS = [
   'guestCurrencyMode',
   'guestMultiplier',
 ];
+
+/**
+ * Extract a human-readable message from an error thrown by a Convex call.
+ *
+ * Convex sanitizes plain `Error` throws to a generic "[Request ID: …] Server
+ * Error" for production HTTP clients — only a `ConvexError`'s `.data` survives
+ * intact. The authz layer (convex/_lib/authz.ts) throws `ConvexError` with the
+ * real reason ("No autorizado…", "sesión inválida…", etc.), so reading
+ * `err.message` here would surface the opaque "Server Error" the user saw
+ * instead of the actionable cause. Prefer `.data`, mirroring ghl-create-order.ts.
+ */
+function convexErrorMessage(err: unknown): string {
+  if (err instanceof ConvexError) {
+    return typeof err.data === 'string' ? err.data : String(err.data);
+  }
+  return err instanceof Error ? err.message : 'Unknown error';
+}
 
 /**
  * Generate a 4-digit PIN code
@@ -220,67 +256,237 @@ async function findInvitationByCode(sheets: Sheets, shortCode: string) {
   return null;
 }
 
+/** A caller whose identity was verified server-side (see resolveInvitationCaller). */
+interface VerifiedInvitationCaller {
+  email: string;
+  name: string;
+  role: string;
+  /** true when the roster access level is admin — allows editing others' invites. */
+  isAdmin: boolean;
+}
+
+/** Fully-resolved invitation, ready to persist identically to Sheets + Convex. */
+interface ResolvedInvitation {
+  shortCode: string;
+  pin: string;
+  createdAt: string;
+  creator: VerifiedInvitationCaller;
+  pricingMode: string;
+  guestName?: string;
+  guestContact?: string;
+  contactType?: string;
+  guestCurrencyMode?: string;
+  guestMultiplier: number | null;
+}
+
+/** Is this VERIFIED email listed in ADMIN_EMAILS? */
+function isAdminEmail(email: string): boolean {
+  return (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+    .includes(email.toLowerCase());
+}
+
 /**
- * Generate a new invitation (POST)
+ * Outcome of caller verification. Distinguishing these matters: a bad token
+ * means "sign in again" (the UI can offer re-login), while a roster miss means
+ * "your account may not invite" — collapsing both into one generic 403 hid
+ * which was which.
  */
-async function generateInvitation(sheets: Sheets, body: ApiBody) {
-  const {
-    creatorEmail,
-    creatorName,
-    creatorRole,
-    pricingMode = 'with_prices',
-    guestName,
-    guestContact,
-    contactType,
-    guestCurrencyMode,
-    guestMultiplier,
-  } = body as ApiBody & {
-    creatorEmail?: string;
-    creatorName?: string;
-    creatorRole?: string;
-    pricingMode?: string;
-    guestName?: string;
-    guestContact?: string;
-    contactType?: string;
-    guestCurrencyMode?: string;
-    guestMultiplier?: unknown;
-  };
+type CallerResolution =
+  | { ok: true; caller: VerifiedInvitationCaller }
+  | { ok: false; reason: 'invalid_token' | 'not_authorized' | 'lookup_failed' };
 
-  if (!creatorEmail || !creatorName) {
-    return { success: false, error: 'Creator email and name are required' };
+/**
+ * Verify the caller's identity ON THE VERCEL SIDE (this layer owns the Google
+ * OAuth client — Convex needs none), then resolve their authorization.
+ * Accepts a fresh Google ID token or a 30-day app session token.
+ *
+ * Authorized to invite = ANY active member of the Asesores sheet (every
+ * accessLevel: admin/embajador/asesor/invitado_especial), OR a registered
+ * provider, OR an ADMIN_EMAILS admin. That last case matters because admins
+ * are not necessarily rows in the Asesores sheet, so a sheet-only check locked
+ * them out. No client-supplied email is ever trusted — identity comes only
+ * from a cryptographically verified token.
+ */
+async function resolveInvitationCaller(
+  idToken: string,
+): Promise<CallerResolution> {
+  // 1. Token → verified email.
+  let email: string | null = null;
+  if (isSessionToken(idToken)) {
+    email = verifySessionToken(idToken)?.email ?? null;
+  } else {
+    email = await verifyGoogleIdTokenEmail(idToken);
   }
+  if (!email) return { ok: false, reason: 'invalid_token' };
 
-  let shortCode = generateShortCode();
-  let attempts = 0;
-  while ((await findInvitationByCode(sheets, shortCode)) && attempts < 5) {
-    shortCode = generateShortCode();
-    attempts++;
+  const envAdmin = isAdminEmail(email);
+
+  // 2. Verified email → roster role, via the same /api/validate the rest of the
+  // app trusts as the source of truth (reuses its Sheets logic, no duplication).
+  const appUrl = process.env.APP_URL || 'https://tierramadre.app';
+  try {
+    const res = await fetch(
+      `${appUrl}/api/validate?email=${encodeURIComponent(email)}&type=both`,
+    );
+    if (!res.ok) {
+      // Roster unreachable: an ADMIN_EMAILS admin still gets through; anyone
+      // else is a transient failure, not a definitive "no".
+      if (envAdmin) {
+        return {
+          ok: true,
+          caller: {
+            email,
+            name: email.split('@')[0],
+            role: 'Admin',
+            isAdmin: true,
+          },
+        };
+      }
+      return { ok: false, reason: 'lookup_failed' };
+    }
+    const data = (await res.json()) as {
+      success?: boolean;
+      isAuthorized?: boolean;
+      isProvider?: boolean;
+      user?: { name?: string; role?: string; accessLevel?: string };
+      provider?: { name?: string };
+    };
+    if (data.success && data.isAuthorized) {
+      return {
+        ok: true,
+        caller: {
+          email,
+          name: data.user?.name || email.split('@')[0],
+          role: data.user?.role || 'Asesor',
+          isAdmin: data.user?.accessLevel === 'admin' || envAdmin,
+        },
+      };
+    }
+    if (data.success && data.isProvider) {
+      return {
+        ok: true,
+        caller: {
+          email,
+          name: data.provider?.name || email.split('@')[0],
+          role: 'Proveedor',
+          isAdmin: envAdmin,
+        },
+      };
+    }
+    // Not on any roster — still allowed if they're a configured admin.
+    if (envAdmin) {
+      return {
+        ok: true,
+        caller: {
+          email,
+          name: email.split('@')[0],
+          role: 'Admin',
+          isAdmin: true,
+        },
+      };
+    }
+    return { ok: false, reason: 'not_authorized' };
+  } catch {
+    if (envAdmin) {
+      return {
+        ok: true,
+        caller: {
+          email,
+          name: email.split('@')[0],
+          role: 'Admin',
+          isAdmin: true,
+        },
+      };
+    }
+    return { ok: false, reason: 'lookup_failed' };
   }
+}
 
+/** Map a failed resolution to an HTTP response with an actionable message. */
+function sendCallerError(
+  res: VercelResponse,
+  reason: 'invalid_token' | 'not_authorized' | 'lookup_failed',
+) {
+  if (reason === 'invalid_token') {
+    return sendError(
+      res,
+      401,
+      'Tu sesión expiró. Vuelve a iniciar sesión con Google.',
+    );
+  }
+  if (reason === 'lookup_failed') {
+    return sendError(
+      res,
+      503,
+      'No se pudo verificar tu rol en este momento. Intenta de nuevo.',
+    );
+  }
+  return sendError(
+    res,
+    403,
+    'Tu cuenta no está autorizada para generar invitaciones. Verifica que tu correo esté activo en la hoja de Asesores.',
+  );
+}
+
+/**
+ * Verify a Google ID token → verified lowercase email, or null. Same
+ * google-auth-library pattern as api/validate.ts / api/vitrina.ts (lazy import
+ * so cold starts of other paths pay nothing).
+ */
+async function verifyGoogleIdTokenEmail(token: string): Promise<string | null> {
+  const audiences = [
+    process.env.GOOGLE_OAUTH_CLIENT_ID,
+    process.env.VITE_GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_ID,
+  ].filter((a): a is string => !!a && a.trim().length > 0);
+  if (audiences.length === 0) return null;
+  try {
+    const { OAuth2Client } = await import('google-auth-library');
+    const client = new OAuth2Client();
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: audiences,
+    });
+    const payload = ticket.getPayload();
+    return payload?.email && payload.email_verified
+      ? payload.email.toLowerCase().trim()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Append the invitation row to the Google Sheet. Uses the SAME shortCode/pin
+ * as the Convex copy so both stores stay consistent.
+ */
+async function writeInvitationToSheet(
+  sheets: Sheets,
+  inv: ResolvedInvitation,
+): Promise<void> {
   const invitationId = `inv_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
-  const createdAt = new Date().toISOString();
-  const pin = generatePin();
-  const safeMultiplier = sanitizeMultiplier(guestMultiplier);
-
   const row = [
     invitationId,
-    shortCode,
-    creatorEmail,
-    creatorName,
-    creatorRole || 'Asesor',
-    guestName || '',
-    guestContact || '',
-    contactType || '',
-    createdAt,
+    inv.shortCode,
+    inv.creator.email,
+    inv.creator.name,
+    inv.creator.role || 'Asesor',
+    inv.guestName || '',
+    inv.guestContact || '',
+    inv.contactType || '',
+    inv.createdAt,
     '',
     '',
-    pricingMode,
+    inv.pricingMode,
     INVITATION_DURATION_HOURS,
     'pending',
-    pin,
+    inv.pin,
     '',
-    guestCurrencyMode || '',
-    safeMultiplier != null ? String(safeMultiplier) : '',
+    inv.guestCurrencyMode || '',
+    inv.guestMultiplier != null ? String(inv.guestMultiplier) : '',
   ];
 
   await sheets.spreadsheets.values.append({
@@ -289,30 +495,6 @@ async function generateInvitation(sheets: Sheets, body: ApiBody) {
     valueInputOption: 'RAW',
     requestBody: { values: [row] },
   });
-
-  // Always use production URL for invitation links (not preview URLs)
-  const baseUrl = 'https://tierramadre.app';
-
-  return {
-    success: true,
-    invitation: {
-      token: shortCode,
-      url: `${baseUrl}/invite/${shortCode}`,
-      shortCode,
-      shortUrl: null,
-      pin,
-      createdAt,
-      durationHours: INVITATION_DURATION_HOURS,
-      pricingMode,
-      guestCurrencyMode: guestCurrencyMode || null,
-      guestMultiplier: safeMultiplier,
-      createdBy: {
-        email: creatorEmail,
-        name: creatorName,
-        role: creatorRole || 'Asesor',
-      },
-    },
-  };
 }
 
 /**
@@ -745,71 +927,104 @@ export default withApiHandler(
     await ensureHeaders(sheets);
 
     // POST - Generate invitation
+    //
+    // Identity is verified HERE, on the Vercel side (this layer owns the Google
+    // OAuth client) — Convex requires no OAuth config of its own. The resolved
+    // creator/guest data is then persisted to BOTH stores with the same
+    // shortCode/pin: Convex (the read/validation path when enabled) and Google
+    // Sheets (the mirror). creatorEmail/name/role come only from the verified
+    // token → roster lookup, never from the request body.
     if (req.method === 'POST' && action === 'generate') {
+      const body = (req.body as ApiBody) || {};
+      const idToken = body.idToken as string | undefined;
+      if (!idToken) return sendError(res, 401, 'idToken is required');
+
+      const resolution = await resolveInvitationCaller(String(idToken));
+      if (!resolution.ok) return sendCallerError(res, resolution.reason);
+      const creator = resolution.caller;
+
+      // Unique short code (collision-checked against the sheet).
+      let shortCode = generateShortCode();
+      let attempts = 0;
+      while ((await findInvitationByCode(sheets, shortCode)) && attempts < 5) {
+        shortCode = generateShortCode();
+        attempts++;
+      }
+
+      const resolved: ResolvedInvitation = {
+        shortCode,
+        pin: generatePin(),
+        createdAt: new Date().toISOString(),
+        creator,
+        pricingMode: (body.pricingMode as string) || 'with_prices',
+        guestName: body.guestName ? String(body.guestName) : undefined,
+        guestContact: body.guestContact ? String(body.guestContact) : undefined,
+        contactType: body.contactType ? String(body.contactType) : undefined,
+        guestCurrencyMode: body.guestCurrencyMode
+          ? String(body.guestCurrencyMode)
+          : undefined,
+        guestMultiplier: sanitizeMultiplier(body.guestMultiplier),
+      };
+
+      // 1) Convex — the validation path reads from here when enabled, so this
+      // write must succeed for the guest link to work. Identity is already
+      // verified above, so the mutation is gated only by the shared secret.
       if (isConvexEnabled && convexClient) {
-        const body = (req.body as ApiBody) || {};
-        const {
-          idToken,
-          pricingMode,
-          guestName,
-          guestContact,
-          contactType,
-          guestCurrencyMode,
-          guestMultiplier,
-        } = body as Record<string, unknown>;
-        if (!idToken) return sendError(res, 401, 'idToken is required');
-        const shortCode = generateShortCode();
-        const pin = generatePin();
-        const safeMultiplier = sanitizeMultiplier(guestMultiplier);
-        // creatorEmail/creatorName/creatorRole are derived server-side from the
-        // VERIFIED Google identity inside the Convex action — never trusted
-        // from the request body (see convex/_lib/authz.ts).
-        let invitation;
         try {
-          invitation = await convexClient.action(api.invitations.generate, {
-            idToken: String(idToken),
-            pricingMode: pricingMode ? String(pricingMode) : undefined,
-            guestName: guestName ? String(guestName) : undefined,
-            guestContact: guestContact ? String(guestContact) : undefined,
-            contactType: contactType ? String(contactType) : undefined,
-            guestCurrencyMode: guestCurrencyMode
-              ? String(guestCurrencyMode)
-              : undefined,
-            guestMultiplier: safeMultiplier ?? undefined,
-            pin,
-            shortCode,
+          await convexClient.mutation(api.invitations.createFromServer, {
+            secret: process.env.ADMIN_SYNC_TOKEN ?? '',
+            creatorEmail: creator.email,
+            creatorName: creator.name,
+            creatorRole: creator.role,
+            pricingMode: resolved.pricingMode,
+            guestName: resolved.guestName,
+            guestContact: resolved.guestContact,
+            contactType: resolved.contactType,
+            guestCurrencyMode: resolved.guestCurrencyMode,
+            guestMultiplier: resolved.guestMultiplier ?? undefined,
+            pin: resolved.pin,
+            shortCode: resolved.shortCode,
           });
         } catch (err: unknown) {
-          const msg = err instanceof Error ? err.message : 'Unknown error';
-          return sendError(res, 403, msg);
+          return sendError(res, 502, convexErrorMessage(err));
         }
-        const baseUrl = 'https://tierramadre.app';
-        return res.status(200).json({
-          success: true,
-          invitation: {
-            token: shortCode,
-            url: `${baseUrl}/invite/${shortCode}`,
-            shortCode,
-            shortUrl: null,
-            pin,
-            createdAt: new Date().toISOString(),
-            durationHours: INVITATION_DURATION_HOURS,
-            pricingMode: invitation.pricingMode,
-            guestCurrencyMode: invitation.guestCurrencyMode,
-            guestMultiplier: invitation.guestMultiplier,
-            createdBy: {
-              email: invitation.creatorEmail,
-              name: invitation.creatorName,
-              role: invitation.creatorRole,
-            },
-          },
-        });
       }
-      const result = await generateInvitation(
-        sheets,
-        (req.body as ApiBody) || {},
-      );
-      return res.status(200).json(result);
+
+      // 2) Google Sheets — the mirror. When Convex is enabled it already holds
+      // the record the link validates against, so a Sheets hiccup shouldn't
+      // fail an otherwise-working link; log and continue. When Convex is
+      // disabled, Sheets IS the source of truth, so surface any failure.
+      try {
+        await writeInvitationToSheet(sheets, resolved);
+      } catch (err) {
+        if (!isConvexEnabled) throw err;
+        console.error(
+          '[Invitations] Sheets mirror failed:',
+          err instanceof Error ? err.message : err,
+        );
+      }
+
+      const baseUrl = 'https://tierramadre.app';
+      return res.status(200).json({
+        success: true,
+        invitation: {
+          token: resolved.shortCode,
+          url: `${baseUrl}/invite/${resolved.shortCode}`,
+          shortCode: resolved.shortCode,
+          shortUrl: null,
+          pin: resolved.pin,
+          createdAt: resolved.createdAt,
+          durationHours: INVITATION_DURATION_HOURS,
+          pricingMode: resolved.pricingMode,
+          guestCurrencyMode: resolved.guestCurrencyMode || null,
+          guestMultiplier: resolved.guestMultiplier,
+          createdBy: {
+            email: creator.email,
+            name: creator.name,
+            role: creator.role,
+          },
+        },
+      });
     }
 
     // POST - Verify PIN + device token binding
@@ -852,7 +1067,7 @@ export default withApiHandler(
           );
           return res.status(200).json(result);
         } catch (err: unknown) {
-          const msg = err instanceof Error ? err.message : 'Unknown error';
+          const msg = convexErrorMessage(err);
           return res.status(200).json({ success: false, error: msg });
         }
       }
@@ -861,67 +1076,115 @@ export default withApiHandler(
     }
 
     // POST - Update invitation (multiplier, etc.)
+    // Identity + admin status verified on the Vercel side; the Convex mutation
+    // is gated only by the shared secret (no Convex-side Google OAuth).
     if (req.method === 'POST' && action === 'update') {
-      if (isConvexEnabled && convexClient) {
-        const body = (req.body as ApiBody) || {};
-        const shortCode = body.shortCode as string | undefined;
-        const idToken = body.idToken as string | undefined;
-        const fields = body.fields as { guestMultiplier?: unknown } | undefined;
-        if (!shortCode || !idToken)
-          return sendError(res, 400, 'shortCode and idToken are required');
-        if (fields?.guestMultiplier !== undefined) {
-          try {
-            // Ownership is checked server-side inside the Convex action
-            // against the VERIFIED caller — never a client-supplied email.
-            const result = await convexClient.action(
-              api.invitations.updateMultiplier,
-              {
-                shortCode: String(shortCode),
-                idToken: String(idToken),
-                guestMultiplier: Number(fields.guestMultiplier),
-              },
-            );
-            return res.status(200).json({ success: true, invitation: result });
-          } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Unknown error';
-            return res.status(200).json({ success: false, error: msg });
-          }
-        }
+      const body = (req.body as ApiBody) || {};
+      const shortCode = body.shortCode as string | undefined;
+      const idToken = body.idToken as string | undefined;
+      const fields = body.fields as { guestMultiplier?: unknown } | undefined;
+      if (!shortCode || !idToken)
+        return sendError(res, 400, 'shortCode and idToken are required');
+      if (fields?.guestMultiplier === undefined)
         return res
           .status(200)
           .json({ success: false, error: 'No fields to update' });
+
+      const resolution = await resolveInvitationCaller(String(idToken));
+      if (!resolution.ok) return sendCallerError(res, resolution.reason);
+      const caller = resolution.caller;
+      const multiplier = Number(fields.guestMultiplier);
+
+      // Convex — authoritative read/validation path; ownership + admin bypass
+      // enforced inside against the VERIFIED caller (never a client email).
+      if (isConvexEnabled && convexClient) {
+        try {
+          await convexClient.mutation(
+            api.invitations.updateMultiplierFromServer,
+            {
+              secret: process.env.ADMIN_SYNC_TOKEN ?? '',
+              shortCode: String(shortCode),
+              creatorEmail: caller.email,
+              isAdmin: caller.isAdmin,
+              guestMultiplier: multiplier,
+            },
+          );
+        } catch (err: unknown) {
+          return res
+            .status(200)
+            .json({ success: false, error: convexErrorMessage(err) });
+        }
       }
-      const result = await updateInvitation(
-        sheets,
-        (req.body as ApiBody) || {},
-      );
-      return res.status(200).json(result);
+
+      // Sheets mirror (best-effort when Convex is enabled; authoritative when
+      // it isn't). Passes the VERIFIED caller email, never the request body's.
+      try {
+        const sheetResult = await updateInvitation(sheets, {
+          shortCode: String(shortCode),
+          creatorEmail: caller.email,
+          fields: { guestMultiplier: multiplier },
+        });
+        if (!isConvexEnabled) return res.status(200).json(sheetResult);
+      } catch (err) {
+        if (!isConvexEnabled) throw err;
+        console.error(
+          '[Invitations] Sheets update mirror failed:',
+          err instanceof Error ? err.message : err,
+        );
+      }
+
+      return res.status(200).json({
+        success: true,
+        invitation: {
+          shortCode: String(shortCode),
+          guestMultiplier: sanitizeMultiplier(multiplier),
+        },
+      });
     }
 
     // POST - Expire/revoke invitation
     if (req.method === 'POST' && action === 'expire') {
+      const body = (req.body as ApiBody) || {};
+      const shortCode = body.shortCode as string | undefined;
+      const idToken = body.idToken as string | undefined;
+      if (!shortCode || !idToken)
+        return sendError(res, 400, 'shortCode and idToken are required');
+
+      const resolution = await resolveInvitationCaller(String(idToken));
+      if (!resolution.ok) return sendCallerError(res, resolution.reason);
+      const caller = resolution.caller;
+
       if (isConvexEnabled && convexClient) {
-        const body = (req.body as ApiBody) || {};
-        const shortCode = body.shortCode as string | undefined;
-        const idToken = body.idToken as string | undefined;
-        if (!shortCode || !idToken)
-          return sendError(res, 400, 'shortCode and idToken are required');
         try {
-          const result = await convexClient.action(api.invitations.expire, {
+          await convexClient.mutation(api.invitations.expireFromServer, {
+            secret: process.env.ADMIN_SYNC_TOKEN ?? '',
             shortCode: String(shortCode),
-            idToken: String(idToken),
+            creatorEmail: caller.email,
+            isAdmin: caller.isAdmin,
           });
-          return res.status(200).json(result);
         } catch (err: unknown) {
-          const msg = err instanceof Error ? err.message : 'Unknown error';
-          return res.status(200).json({ success: false, error: msg });
+          return res
+            .status(200)
+            .json({ success: false, error: convexErrorMessage(err) });
         }
       }
-      const result = await expireInvitationAction(
-        sheets,
-        (req.body as ApiBody) || {},
-      );
-      return res.status(200).json(result);
+
+      // Sheets mirror (best-effort when Convex enabled; authoritative otherwise).
+      try {
+        const sheetResult = await expireInvitationAction(sheets, {
+          shortCode: String(shortCode),
+          creatorEmail: caller.email,
+        });
+        if (!isConvexEnabled) return res.status(200).json(sheetResult);
+      } catch (err) {
+        if (!isConvexEnabled) throw err;
+        console.error(
+          '[Invitations] Sheets expire mirror failed:',
+          err instanceof Error ? err.message : err,
+        );
+      }
+
+      return res.status(200).json({ success: true });
     }
 
     // GET - Validate invitation
@@ -1014,9 +1277,15 @@ export default withApiHandler(
         return sendError(res, 400, 'guestContact is required');
       }
       if (isConvexEnabled && convexClient) {
+        // Server-to-server secret, not a browser credential — this REST
+        // action stays intentionally public (a guest checks their own
+        // history pre-registration, before they have any session). The
+        // secret proves to CONVEX that this Vercel layer is the trusted
+        // proxy, closing direct internet access to the deployment URL. See
+        // convex/invitations.ts's checkGuestHistory doc comment.
         const result = await convexClient.query(
           api.invitations.checkGuestHistory,
-          { guestContact },
+          { guestContact, secret: process.env.ADMIN_SYNC_TOKEN ?? '' },
         );
         return res.status(200).json({ success: true, ...result });
       }
@@ -1026,6 +1295,18 @@ export default withApiHandler(
 
     // GET - List invitations by creator
     if (req.method === 'GET' && action === 'list-by-creator') {
+      // Session-token gated (2026-08-06, PII lockdown item 3): this endpoint
+      // used to return `guestName`/`guestContact` (customer phone numbers
+      // and emails) to ANY request, unauthenticated — confirmed returning
+      // HTTP 200 to an anonymous request in production. A `tms1` session
+      // token (same as api/vitrina.ts's `verifiedSessionEmail`) is required
+      // now; it does not need to match `creatorEmail` — any authenticated
+      // staff member may look up any advisor's invitations, consistent with
+      // convex/invitations.ts's `listByCreator` gate.
+      const email = verifiedSessionEmail(req.headers['authorization']);
+      if (!email) {
+        return sendError(res, 401, 'Inicia sesión para ver invitaciones.');
+      }
       const rawCreator = req.query.creatorEmail;
       const creatorEmail = Array.isArray(rawCreator)
         ? rawCreator[0]
@@ -1034,9 +1315,11 @@ export default withApiHandler(
         return sendError(res, 400, 'creatorEmail is required');
       }
       if (isConvexEnabled && convexClient) {
+        const sessionToken =
+          extractBearer(req.headers['authorization']) ?? undefined;
         const invitations = await convexClient.query(
           api.invitations.listByCreator,
-          { creatorEmail },
+          { creatorEmail, sessionToken },
         );
         return res.status(200).json({
           success: true,

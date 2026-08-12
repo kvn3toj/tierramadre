@@ -10,21 +10,32 @@
 export const primitiveColors = {
   /**
    * Emerald Palette - Colombian Emerald Green (Brand Core)
-   * Preserved from original brand identity: #00AE7A
+   *
+   * `500` is #00C992 — the brand green of the 2026 "renovación" identity, read
+   * straight from the vector fills of the brand manual
+   * (docs/brand/renovacion-2026/). It replaced #00AE7A, which predated the
+   * rebrand and never matched the mark it claimed to come from.
+   *
+   * ⚠️ #00C992 is BRIGHT: 1.87:1 on white. It is a brand/fill colour, not a
+   * text colour. For text, links and focus rings on a light ground use the
+   * Quiet Emerald `--tm-accent` (#00785C, 4.75:1) instead.
+   *
+   * NOTE: shades 600–900 below are a Tailwind ramp that predates the rebrand
+   * and is NOT hue-matched to #00C992. Prefer the Quiet Emerald tokens.
    *
    * Scale from 50-900 for consistent UI shading
    */
   emerald: {
-    50: '#ECFDF5',   // Lightest tint
-    100: '#D1FAE5',  // Very light
-    200: '#A7F3D0',  // Light
-    300: '#6EE7B7',  // Light accent
-    400: '#34D399',  // Bright accent
-    500: '#00AE7A',  // Brand Core - Main brand color (Tierra Madre logo)
-    600: '#059669',  // Darker for hover states
-    700: '#047857',  // Deep for contrast
-    800: '#065F46',  // Very dark
-    900: '#064E3B',  // Darkest
+    50: '#ECFDF5', // Lightest tint
+    100: '#D1FAE5', // Very light
+    200: '#A7F3D0', // Light
+    300: '#6EE7B7', // Light accent
+    400: '#34D399', // Bright accent
+    500: '#00C992', // Brand Core - the mark's own green (renovación 2026)
+    600: '#059669', // Darker for hover states
+    700: '#047857', // Deep for contrast
+    800: '#065F46', // Very dark
+    900: '#064E3B', // Darkest
   },
 
   /**
@@ -33,16 +44,16 @@ export const primitiveColors = {
    */
   metallic: {
     silver: {
-      50: '#F8FAFB',   // Platinum Mist
-      100: '#E8ECEF',  // Silver Whisper - Light mode accents
-      200: '#D1D9E0',  // Chrome Light
-      300: '#B4BFC9',  // Sterling
-      400: '#8A99A8',  // Brushed Metal
-      500: '#6B7A8A',  // Titanium - Mid metallic
-      600: '#515F6E',  // Gunmetal
-      700: '#3A4654',  // Slate
-      800: '#252E3B',  // Obsidian
-      900: '#121821',  // Void - Dark mode depth
+      50: '#F8FAFB', // Platinum Mist
+      100: '#E8ECEF', // Silver Whisper - Light mode accents
+      200: '#D1D9E0', // Chrome Light
+      300: '#B4BFC9', // Sterling
+      400: '#8A99A8', // Brushed Metal
+      500: '#6B7A8A', // Titanium - Mid metallic
+      600: '#515F6E', // Gunmetal
+      700: '#3A4654', // Slate
+      800: '#252E3B', // Obsidian
+      900: '#121821', // Void - Dark mode depth
     },
   },
 
@@ -52,14 +63,14 @@ export const primitiveColors = {
    */
   surfaces: {
     light: {
-      primary: '#FFFFFF',      // Pure white (preserved)
-      secondary: '#F2F2F7',    // iOS light secondary background
-      tertiary: '#FAFAFA',     // Subtle off-white
+      primary: '#FFFFFF', // Pure white (preserved)
+      secondary: '#F2F2F7', // iOS light secondary background
+      tertiary: '#FAFAFA', // Subtle off-white
     },
     dark: {
-      primary: '#000000',      // Pure black (preserved)
-      secondary: '#1C1C1E',    // iOS dark secondary background
-      tertiary: '#0A0E13',     // Rich black with blue undertone
+      primary: '#000000', // Pure black (preserved)
+      secondary: '#1C1C1E', // iOS dark secondary background
+      tertiary: '#0A0E13', // Rich black with blue undertone
     },
   },
 

@@ -4,11 +4,12 @@
  * Confirmation that feedback was submitted.
  */
 
-import { Box, Typography, Button, Stack } from '@mui/material';
+import { Box, Typography, Stack } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import CloseIcon from '@mui/icons-material/Close';
 import { alpha } from '@mui/material/styles';
+import { Button } from '../../../design-system/components/Button';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 
 interface SuccessStepProps {
@@ -101,29 +102,13 @@ export default function SuccessStep({
 
       {/* Action buttons */}
       <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-        <Button
-          variant="outlined"
-          startIcon={<CloseIcon />}
-          onClick={onClose}
-          sx={{
-            color: alpha('#fff', 0.7),
-            borderColor: alpha('#fff', 0.3),
-            '&:hover': {
-              borderColor: alpha('#fff', 0.5),
-              bgcolor: alpha('#fff', 0.05),
-            },
-          }}
-        >
+        <Button variant="outlined" startIcon={<CloseIcon />} onClick={onClose}>
           Cerrar
         </Button>
         <Button
-          variant="contained"
+          variant="primary"
           startIcon={<DashboardIcon />}
           onClick={onViewDashboard}
-          sx={{
-            bgcolor: emeraldCore.primary,
-            '&:hover': { bgcolor: emeraldCore.dark },
-          }}
         >
           Ver Dashboard
         </Button>

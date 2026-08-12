@@ -7,7 +7,6 @@ import React from 'react';
 import {
   Box,
   Typography,
-  TextField,
   Button,
   InputAdornment,
   Grid,
@@ -27,11 +26,13 @@ import {
 } from 'lucide-react';
 import { brandColors } from '../constants';
 import { cssTransition } from '../../../design-system';
+import { TextField } from '../../../design-system/components/TextField';
 import type { ManualProductFormProps } from '../types';
 
 /** Format number with dot thousand separators: 542000 → 542.000 */
 const formatThousands = (value: string | number): string => {
-  const str = typeof value === 'number' ? (value > 0 ? value.toString() : '') : value;
+  const str =
+    typeof value === 'number' ? (value > 0 ? value.toString() : '') : value;
   const digits = str.replace(/\D/g, '');
   if (!digits) return '';
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
@@ -53,7 +54,16 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
   isEditing = false,
   onCancelEdit,
 }) => (
-  <Box sx={{ bgcolor: 'action.hover', p: 2, borderRadius: 2, mb: 3, border: '1px solid', borderColor: 'divider' }}>
+  <Box
+    sx={{
+      bgcolor: 'action.hover',
+      p: 2,
+      borderRadius: 2,
+      mb: 3,
+      border: '1px solid',
+      borderColor: 'divider',
+    }}
+  >
     <Grid container spacing={1.5}>
       {/* Image Upload Section */}
       <Grid item xs={12}>
@@ -74,7 +84,9 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               borderRadius: 2,
               border: '2px dashed',
               borderColor: imagePreview ? brandColors.emerald : 'divider',
-              bgcolor: imagePreview ? 'transparent' : alpha(brandColors.emerald, 0.02),
+              bgcolor: imagePreview
+                ? 'transparent'
+                : alpha(brandColors.emerald, 0.02),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -142,7 +154,14 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
           <Box sx={{ flex: 1 }}>
             {isUploadingImage ? (
               <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    mb: 0.5,
+                  }}
+                >
                   <Loader2
                     size={14}
                     color={brandColors.emerald}
@@ -168,7 +187,14 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               </Box>
             ) : imagePreview ? (
               <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    mb: 0.5,
+                  }}
+                >
                   {isVideoPreview ? (
                     <Video size={14} color={brandColors.emerald} />
                   ) : (
@@ -210,7 +236,9 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               </Box>
             ) : (
               <Box>
-                <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                <Typography
+                  sx={{ fontSize: '0.7rem', color: 'text.secondary' }}
+                >
                   Arrastra o haz clic para subir
                 </Typography>
                 <Typography
@@ -234,7 +262,9 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Box
-            onClick={() => setManualProduct({ ...manualProduct, isJewelry: false })}
+            onClick={() =>
+              setManualProduct({ ...manualProduct, isJewelry: false })
+            }
             sx={{
               flex: 1,
               display: 'flex',
@@ -247,7 +277,9 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               borderRadius: 2,
               cursor: 'pointer',
               border: '2px solid',
-              borderColor: !manualProduct.isJewelry ? brandColors.emerald : 'divider',
+              borderColor: !manualProduct.isJewelry
+                ? brandColors.emerald
+                : 'divider',
               bgcolor: !manualProduct.isJewelry
                 ? alpha(brandColors.emerald, 0.08)
                 : 'transparent',
@@ -280,7 +312,9 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               sx={{
                 fontSize: '0.8125rem',
                 fontWeight: !manualProduct.isJewelry ? 600 : 500,
-                color: !manualProduct.isJewelry ? brandColors.emerald : 'text.secondary',
+                color: !manualProduct.isJewelry
+                  ? brandColors.emerald
+                  : 'text.secondary',
               }}
             >
               Esmeralda
@@ -288,7 +322,9 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
           </Box>
 
           <Box
-            onClick={() => setManualProduct({ ...manualProduct, isJewelry: true })}
+            onClick={() =>
+              setManualProduct({ ...manualProduct, isJewelry: true })
+            }
             sx={{
               flex: 1,
               display: 'flex',
@@ -301,7 +337,9 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               borderRadius: 2,
               cursor: 'pointer',
               border: '2px solid',
-              borderColor: manualProduct.isJewelry ? brandColors.gold : 'divider',
+              borderColor: manualProduct.isJewelry
+                ? brandColors.gold
+                : 'divider',
               bgcolor: manualProduct.isJewelry
                 ? alpha(brandColors.gold, 0.08)
                 : 'transparent',
@@ -334,7 +372,9 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               sx={{
                 fontSize: '0.8125rem',
                 fontWeight: manualProduct.isJewelry ? 600 : 500,
-                color: manualProduct.isJewelry ? brandColors.gold : 'text.secondary',
+                color: manualProduct.isJewelry
+                  ? brandColors.gold
+                  : 'text.secondary',
               }}
             >
               Joya
@@ -351,7 +391,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
           onChange={(e) =>
             setManualProduct({ ...manualProduct, name: e.target.value })
           }
-          size="small"
+          size="sm"
           placeholder={
             manualProduct.isJewelry
               ? 'Ej: Anillo Esperanza Oro 18k'
@@ -380,7 +420,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               onChange={(e) =>
                 setManualProduct({ ...manualProduct, peso: e.target.value })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: 2.5"
             />
           </Grid>
@@ -392,7 +432,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               onChange={(e) =>
                 setManualProduct({ ...manualProduct, color: e.target.value })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: Verde Intenso"
             />
           </Grid>
@@ -405,7 +445,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               onChange={(e) =>
                 setManualProduct({ ...manualProduct, calidad: e.target.value })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: AAA"
             />
           </Grid>
@@ -416,9 +456,12 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               type="number"
               value={manualProduct.cantidadGemas}
               onChange={(e) =>
-                setManualProduct({ ...manualProduct, cantidadGemas: e.target.value })
+                setManualProduct({
+                  ...manualProduct,
+                  cantidadGemas: e.target.value,
+                })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: 1"
               inputProps={{ min: 1 }}
             />
@@ -432,7 +475,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               onChange={(e) =>
                 setManualProduct({ ...manualProduct, medida: e.target.value })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: 8x6mm"
             />
           </Grid>
@@ -444,7 +487,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               onChange={(e) =>
                 setManualProduct({ ...manualProduct, diseno: e.target.value })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: Clásico, Moderno"
             />
           </Grid>
@@ -475,9 +518,12 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               label="Tipo de metal"
               value={manualProduct.metalType}
               onChange={(e) =>
-                setManualProduct({ ...manualProduct, metalType: e.target.value })
+                setManualProduct({
+                  ...manualProduct,
+                  metalType: e.target.value,
+                })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: Oro 18k, Plata 925"
             />
           </Grid>
@@ -489,7 +535,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               onChange={(e) =>
                 setManualProduct({ ...manualProduct, talla: e.target.value })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: Talla 7, 45cm"
             />
           </Grid>
@@ -500,9 +546,12 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               label="Calidad del metal"
               value={manualProduct.calidadMetal}
               onChange={(e) =>
-                setManualProduct({ ...manualProduct, calidadMetal: e.target.value })
+                setManualProduct({
+                  ...manualProduct,
+                  calidadMetal: e.target.value,
+                })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: 18k, 14k, 925"
             />
           </Grid>
@@ -514,7 +563,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               onChange={(e) =>
                 setManualProduct({ ...manualProduct, gramaje: e.target.value })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: 5.2"
             />
           </Grid>
@@ -525,9 +574,12 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               label="Peso total (ct)"
               value={manualProduct.pesoTotal}
               onChange={(e) =>
-                setManualProduct({ ...manualProduct, pesoTotal: e.target.value })
+                setManualProduct({
+                  ...manualProduct,
+                  pesoTotal: e.target.value,
+                })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: 3.5"
             />
           </Grid>
@@ -538,13 +590,18 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               label="Precio por CT"
               value={formatThousands(manualProduct.precioPorCt)}
               onChange={(e) =>
-                setManualProduct({ ...manualProduct, precioPorCt: parseThousands(e.target.value) })
+                setManualProduct({
+                  ...manualProduct,
+                  precioPorCt: parseThousands(e.target.value),
+                })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: 500.000"
               inputProps={{ inputMode: 'numeric' }}
               InputProps={{
-                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                startAdornment: (
+                  <InputAdornment position="start">$</InputAdornment>
+                ),
               }}
             />
           </Grid>
@@ -560,7 +617,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               onChange={(e) =>
                 setManualProduct({ ...manualProduct, peso: e.target.value })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: 2.5"
             />
           </Grid>
@@ -572,7 +629,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               onChange={(e) =>
                 setManualProduct({ ...manualProduct, color: e.target.value })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: Verde Intenso"
             />
           </Grid>
@@ -585,7 +642,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               onChange={(e) =>
                 setManualProduct({ ...manualProduct, calidad: e.target.value })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: AAA"
             />
           </Grid>
@@ -597,7 +654,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               onChange={(e) =>
                 setManualProduct({ ...manualProduct, talla: e.target.value })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: Ovalo"
             />
           </Grid>
@@ -609,9 +666,12 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               type="number"
               value={manualProduct.cantidadGemas}
               onChange={(e) =>
-                setManualProduct({ ...manualProduct, cantidadGemas: e.target.value })
+                setManualProduct({
+                  ...manualProduct,
+                  cantidadGemas: e.target.value,
+                })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: 1"
               inputProps={{ min: 1 }}
             />
@@ -624,7 +684,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               onChange={(e) =>
                 setManualProduct({ ...manualProduct, medida: e.target.value })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: 8x6mm"
             />
           </Grid>
@@ -635,9 +695,12 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               label="Peso total (ct)"
               value={manualProduct.pesoTotal}
               onChange={(e) =>
-                setManualProduct({ ...manualProduct, pesoTotal: e.target.value })
+                setManualProduct({
+                  ...manualProduct,
+                  pesoTotal: e.target.value,
+                })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: 3.5"
             />
           </Grid>
@@ -649,7 +712,7 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               onChange={(e) =>
                 setManualProduct({ ...manualProduct, diseno: e.target.value })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: Facetado"
             />
           </Grid>
@@ -660,13 +723,18 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
               label="Precio por CT"
               value={formatThousands(manualProduct.precioPorCt)}
               onChange={(e) =>
-                setManualProduct({ ...manualProduct, precioPorCt: parseThousands(e.target.value) })
+                setManualProduct({
+                  ...manualProduct,
+                  precioPorCt: parseThousands(e.target.value),
+                })
               }
-              size="small"
+              size="sm"
               placeholder="Ej: 500.000"
               inputProps={{ inputMode: 'numeric' }}
               InputProps={{
-                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                startAdornment: (
+                  <InputAdornment position="start">$</InputAdornment>
+                ),
               }}
             />
           </Grid>
@@ -676,19 +744,29 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
         <TextField
           fullWidth
           label="Precio COP *"
-          value={manualProduct.precioCOP > 0 ? formatThousands(manualProduct.precioCOP) : ''}
+          value={
+            manualProduct.precioCOP > 0
+              ? formatThousands(manualProduct.precioCOP)
+              : ''
+          }
           onChange={(e) =>
             setManualProduct({
               ...manualProduct,
               precioCOP: parseInt(parseThousands(e.target.value), 10) || 0,
             })
           }
-          size="small"
+          size="sm"
           placeholder="Ej: 1.500.000"
           inputProps={{ inputMode: 'numeric' }}
-          error={manualProduct.precioCOP !== undefined && manualProduct.precioCOP <= 0 && manualProduct.name !== ''}
+          error={
+            manualProduct.precioCOP !== undefined &&
+            manualProduct.precioCOP <= 0 &&
+            manualProduct.name !== ''
+          }
           helperText={
-            manualProduct.precioCOP !== undefined && manualProduct.precioCOP <= 0 && manualProduct.name !== ''
+            manualProduct.precioCOP !== undefined &&
+            manualProduct.precioCOP <= 0 &&
+            manualProduct.name !== ''
               ? 'Ingresa un precio mayor a 0'
               : ''
           }
@@ -725,7 +803,10 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
         variant="contained"
         startIcon={
           isUploadingImage ? (
-            <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+            <Loader2
+              size={18}
+              style={{ animation: 'spin 1s linear infinite' }}
+            />
           ) : isEditing ? (
             <Check size={18} />
           ) : (
@@ -733,7 +814,11 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
           )
         }
         onClick={handleAddManualProduct}
-        disabled={!manualProduct.name || manualProduct.precioCOP <= 0 || isUploadingImage}
+        disabled={
+          !manualProduct.name ||
+          manualProduct.precioCOP <= 0 ||
+          isUploadingImage
+        }
         sx={{
           bgcolor: isEditing ? brandColors.emerald : brandColors.gold,
           color: '#FFFFFF',
@@ -741,7 +826,9 @@ export const ManualProductForm: React.FC<ManualProductFormProps> = ({
           fontWeight: 600,
           py: 1.25,
           borderRadius: 2,
-          '&:hover': { bgcolor: isEditing ? brandColors.emeraldDark : brandColors.goldDark },
+          '&:hover': {
+            bgcolor: isEditing ? brandColors.emeraldDark : brandColors.goldDark,
+          },
           '&.Mui-disabled': {
             opacity: 0.45,
           },

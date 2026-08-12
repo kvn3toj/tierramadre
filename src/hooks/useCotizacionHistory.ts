@@ -6,12 +6,12 @@
  * Cotizaciones are linked to the asesor who created them.
  */
 
-import { useState, useCallback } from "react";
-import { createLogger } from "../utils/logger";
-import { useGlobalLoading } from "../contexts/GlobalLoadingContext";
-import type { AiJewelryPreview } from "./useCotizacion";
+import { useState, useCallback } from 'react';
+import { createLogger } from '../utils/logger';
+import { useGlobalLoading } from '../contexts/GlobalLoadingContext';
+import type { AiJewelryPreview } from './useCotizacion';
 
-const log = createLogger("CotizacionHistory");
+const log = createLogger('CotizacionHistory');
 
 export interface SavedCotizacion {
   id: string;
@@ -42,6 +42,12 @@ export interface CotizacionProductData {
   aiPreviews?: AiJewelryPreview[];
   /** The AI preview chosen to show in the quotation & PDF. */
   selectedPreviewUrl?: string;
+  // ── Fields for the public online card view (`/c/:quotationNumber`) ──
+  cantidad?: number;
+  descripcion?: string;
+  certificadoUrl?: string;
+  numeroCO?: string;
+  imagen?: string;
 }
 
 export interface SaveCotizacionParams {
@@ -116,12 +122,12 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
           setCotizaciones(data.cotizaciones || []);
           log.info(`Fetched ${data.count} cotizaciones for ${email}`);
         } else {
-          throw new Error(data.error || "Failed to fetch cotizaciones");
+          throw new Error(data.error || 'Failed to fetch cotizaciones');
         }
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "Error fetching cotizaciones";
-        log.error("Fetch error:", err);
+          err instanceof Error ? err.message : 'Error fetching cotizaciones';
+        log.error('Fetch error:', err);
         setError(message);
         setCotizaciones([]);
       } finally {
@@ -139,10 +145,10 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
       startLoading();
 
       try {
-        const response = await fetch("/api/cotizacion-save", {
-          method: "POST",
+        const response = await fetch('/api/cotizacion-save', {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify(params),
         });
@@ -171,7 +177,7 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
             quotationNumber: params.quotationNumber,
             asesorEmail: params.asesorEmail,
             asesorName: params.asesorName,
-            clientName: params.clientName || "",
+            clientName: params.clientName || '',
             clientPhone: params.clientPhone,
             productsCount: params.productsCount,
             total: params.total,
@@ -189,12 +195,12 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
 
           return savedCotizacion;
         } else {
-          throw new Error(data.error || "Failed to save cotización");
+          throw new Error(data.error || 'Failed to save cotización');
         }
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "Error saving cotización";
-        log.error("Save error:", err);
+          err instanceof Error ? err.message : 'Error saving cotización';
+        log.error('Save error:', err);
         setError(message);
         return null;
       } finally {
@@ -222,7 +228,7 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
       try {
         const response = await fetch(
           `/api/cotizacion-save?id=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}`,
-          { method: "DELETE" },
+          { method: 'DELETE' },
         );
 
         if (!response.ok) {
@@ -242,12 +248,12 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
           log.info(`Deleted cotización ${id}`);
           return true;
         } else {
-          throw new Error(data.error || "Failed to delete cotización");
+          throw new Error(data.error || 'Failed to delete cotización');
         }
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "Error deleting cotización";
-        log.error("Delete error:", err);
+          err instanceof Error ? err.message : 'Error deleting cotización';
+        log.error('Delete error:', err);
         setError(message);
         // Rollback: restore the removed item at its original position
         if (removedItem) {

@@ -17,6 +17,7 @@ import {
   parseLoteId,
 } from './sequences';
 import { requireAccessLevel } from './_lib/authz';
+import { isStaffSession } from './_lib/requireStaffSession';
 
 const estadoValidator = v.union(v.literal('activa'), v.literal('archivada'));
 
@@ -99,10 +100,18 @@ async function requireSubLote(ctx: MutationCtx, subLoteId: string) {
 
 // ─── Queries ─────────────────────────────────────────────────────
 
-/** Every sub-lote of a parent lote, newest first. UI filters archived. */
+/**
+ * Every sub-lote of a parent lote, newest first. UI filters archived.
+ *
+ * GATED (2026-08-05, I3): ungated — `totalCostoCOP` and member `itemIds` for
+ * anyone who guessed a `parentLoteId`, which is publicly discoverable via the
+ * open catalog (`publishedGroups`, `getManyByItemIds`). Now requires a
+ * verified staff session. No known anima-bot caller.
+ */
 export const listByParent = query({
-  args: { parentLoteId: v.string() },
-  handler: async (ctx, { parentLoteId }) => {
+  args: { parentLoteId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { parentLoteId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const rows = await ctx.db
       .query('subLotes')
       .withIndex('by_parentLote', (q) => q.eq('parentLoteId', parentLoteId))
@@ -111,19 +120,30 @@ export const listByParent = query({
   },
 });
 
+/** GATED (2026-08-05, I3) — same rationale as `listByParent`. No current
+ *  browser caller; gated defensively so adding one later doesn't reopen this. */
 export const get = query({
-  args: { subLoteId: v.string() },
-  handler: async (ctx, { subLoteId }) =>
-    ctx.db
+  args: { subLoteId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { subLoteId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
+    return ctx.db
       .query('subLotes')
       .withIndex('by_subLoteId', (q) => q.eq('subLoteId', subLoteId))
-      .first(),
+      .first();
+  },
 });
 
-/** Count of active sub-lotes per parent — for the HomePage badge. */
+/**
+ * Count of active sub-lotes per parent — for the HomePage badge.
+ * GATED (2026-08-05, I3, defensive): a bare count leaks little on its own,
+ * but it's keyed by the same publicly-discoverable `parentLoteId` as
+ * `listByParent`/`get` above — gated for consistency. No current browser
+ * caller.
+ */
 export const countByParent = query({
-  args: { parentLoteId: v.string() },
-  handler: async (ctx, { parentLoteId }) => {
+  args: { parentLoteId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { parentLoteId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return 0;
     const rows = await ctx.db
       .query('subLotes')
       .withIndex('by_parentLote', (q) => q.eq('parentLoteId', parentLoteId))
@@ -399,11 +419,13 @@ const setDisplayArgs = {
 };
 
 /**
- * Set the catalog-grouping fields (`fotoUrl`, `mostrarComoLote`). These are
- * Convex-only display fields (NOT in COLUMN_MAPS.subLotes), so this does NOT
- * flip syncStatus or push to Sheets. When `mostrarComoLote` is true and the
- * sublote is `activa`, the customer catalog shows it as one grouped card.
- * Omitting a field leaves it unchanged; pass `fotoUrl: ""` to clear it.
+ * Set the catalog-grouping fields (`fotoUrl`, `mostrarComoLote`). `fotoUrl` is
+ * Convex-only; `mostrarComoLote` IS a synced sheet column (Sublotes!K), so
+ * changing it flips syncStatus and pushes so the sheet reflects the flag — and
+ * the reverse edit (sheet → Convex) is allowlisted in sheetPullMaps.ts. When
+ * `mostrarComoLote` is true and the sublote is `activa`, the customer catalog
+ * shows it as one grouped card. Omitting a field leaves it unchanged; pass
+ * `fotoUrl: ""` to clear it.
  */
 export const _setDisplay = internalMutation({
   args: setDisplayArgs,
@@ -413,7 +435,18 @@ export const _setDisplay = internalMutation({
     if (fotoUrl !== undefined) patch.fotoUrl = fotoUrl;
     if (mostrarComoLote !== undefined) patch.mostrarComoLote = mostrarComoLote;
     if (Object.keys(patch).length === 0) return { subLoteId, changed: false };
+    // mostrarComoLote is a synced sheet column (K) — push so the sheet reflects it.
+    if (mostrarComoLote !== undefined) {
+      patch.syncStatus = 'pending';
+      patch.syncError = undefined;
+    }
     await ctx.db.patch(sub._id, patch);
+    if (mostrarComoLote !== undefined) {
+      await ctx.scheduler.runAfter(0, api.subLotes._pushToSheet, {
+        id: sub._id,
+        mode: 'patch',
+      });
+    }
     return { subLoteId, changed: true };
   },
 });

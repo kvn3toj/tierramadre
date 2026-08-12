@@ -73,9 +73,11 @@ export default function WelcomeScreen() {
     location.pathname.startsWith('/product/') ||
     location.pathname.startsWith('/p/');
 
-  // Detect in-app browsers (Telegram, Instagram, etc.) that have OAuth issues
+  // Diagnostics only — feeds the ?debug=auth panel. We deliberately do NOT
+  // gate sign-in on this: the UA heuristics also match installed PWAs, and a
+  // wrong guess locks a legitimate user out entirely. Google sign-in is
+  // always offered; the popup watchdog below catches the genuine failures.
   const browserInfo = useMemo(() => getCachedBrowserInfo(), []);
-  const isInAppBrowser = browserInfo.isInAppBrowser;
 
   // Cleanup popup timer on unmount
   useEffect(() => {
@@ -327,7 +329,10 @@ export default function WelcomeScreen() {
                   : '(unset)'}
               </div>
               <div>browser: {browserInfo.browserName || 'standard'}</div>
-              <div>isInAppBrowser: {String(isInAppBrowser)}</div>
+              <div>
+                isInAppBrowser: {String(browserInfo.isInAppBrowser)} |
+                standalone: {String(browserInfo.isStandalone)}
+              </div>
               <div>cookies: {String(navigator.cookieEnabled)}</div>
               <div>
                 fedcm:{' '}
@@ -350,64 +355,76 @@ export default function WelcomeScreen() {
           {/* Google Sign-In - Only shown if configured */}
           {isGoogleConfigured && (
             <>
-              {/* In-app browser notice (Telegram, Instagram, etc.) */}
-              {isInAppBrowser ? (
-                <Box
+              {/* Error messages — placed ABOVE the button so users on
+                      small screens can't miss them after a failed attempt. */}
+              {(googleError || authError) && (
+                <Alert
+                  severity="warning"
                   sx={{
-                    p: 2.5,
-                    borderRadius: 3,
-                    bgcolor: alpha(qeEmerald.primary, 0.08),
-                    border: `1px solid ${alpha(qeEmerald.primary, 0.2)}`,
+                    bgcolor: alpha(semanticColors.warning.main, 0.15),
+                    color: semanticColors.warning.main,
+                    border: `1px solid ${alpha(semanticColors.warning.main, 0.3)}`,
+                    '& .MuiAlert-icon': {
+                      color: semanticColors.warning.main,
+                    },
                   }}
                 >
-                  <Typography
-                    variant="subtitle2"
-                    sx={{
-                      color: acc.accent,
-                      mb: 1,
-                      textAlign: 'center',
-                      fontWeight: 500,
-                    }}
-                  >
-                    {t.auth.inAppBrowserTitle || 'Para una mejor experiencia'}
+                  {googleError || authError}
+                </Alert>
+              )}
+
+              {/* Popup-stuck watchdog warning: GIS button was clicked but
+                      no callback fired in time → likely a Safari ITP / 3rd-party
+                      cookie / WebView issue. Surface a redirect fallback. */}
+              {popupStuck && !googleError && !authError && (
+                <Alert
+                  severity="info"
+                  sx={{
+                    bgcolor: alpha(qeEmerald.primary, 0.1),
+                    color: qe.text,
+                    border: `1px solid ${alpha(qeEmerald.primary, 0.25)}`,
+                    '& .MuiAlert-icon': { color: acc.accent },
+                  }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
+                    ¿No avanza?
                   </Typography>
                   <Typography
-                    variant="body2"
+                    variant="caption"
                     sx={{
                       color: qe.textMuted,
-                      mb: 2.5,
-                      textAlign: 'center',
-                      lineHeight: 1.5,
+                      display: 'block',
+                      mb: 1.5,
                     }}
                   >
-                    {t.auth.inAppBrowserMessage ||
-                      'Abre en tu navegador favorito (Chrome, Safari, etc.) para iniciar sesión con Google.'}
+                    Tu navegador puede estar bloqueando el inicio de sesión.
+                    Abre el sitio en Chrome o Safari para continuar.
                   </Typography>
-
-                  <Stack spacing={1.5}>
+                  <Stack direction="row" spacing={1} alignItems="center">
                     <Button
+                      size="small"
                       variant="contained"
-                      fullWidth
                       startIcon={<OpenInNew />}
                       onClick={handleOpenExternal}
                       sx={{
                         bgcolor: acc.strong,
                         color: acc.on,
                         textTransform: 'none',
-                        py: 1.2,
-                        fontWeight: 500,
                         boxShadow: 'none',
                         '&:hover': {
-                          boxShadow: 'none',
                           bgcolor: qeEmerald.light,
+                          boxShadow: 'none',
                         },
                       }}
                     >
                       {t.auth.openInBrowser || 'Abrir en navegador'}
                     </Button>
+                    {/* The open-in-browser deep links fail silently on some
+                        WebViews, so keep an explicit copy affordance next to
+                        it — this Alert is now the only recovery path. */}
                     <Button
-                      variant="text"
                       size="small"
+                      variant="text"
                       startIcon={
                         urlCopied ? <CheckCircleOutline /> : <ContentCopy />
                       }
@@ -415,9 +432,7 @@ export default function WelcomeScreen() {
                       sx={{
                         color: urlCopied ? acc.accent : qe.subtle,
                         textTransform: 'none',
-                        '&:hover': {
-                          color: qe.textMuted,
-                        },
+                        '&:hover': { color: qe.textMuted },
                       }}
                     >
                       {urlCopied
@@ -425,105 +440,34 @@ export default function WelcomeScreen() {
                         : t.auth.copyUrl || 'Copiar enlace'}
                     </Button>
                   </Stack>
-                </Box>
-              ) : (
-                <>
-                  {/* Error messages — placed ABOVE the button so users on
-                      small screens can't miss them after a failed attempt. */}
-                  {(googleError || authError) && (
-                    <Alert
-                      severity="warning"
-                      sx={{
-                        bgcolor: alpha(semanticColors.warning.main, 0.15),
-                        color: semanticColors.warning.main,
-                        border: `1px solid ${alpha(semanticColors.warning.main, 0.3)}`,
-                        '& .MuiAlert-icon': {
-                          color: semanticColors.warning.main,
-                        },
-                      }}
-                    >
-                      {googleError || authError}
-                    </Alert>
-                  )}
-
-                  {/* Popup-stuck watchdog warning: GIS button was clicked but
-                      no callback fired in time → likely a Safari ITP / 3rd-party
-                      cookie / WebView issue. Surface a redirect fallback. */}
-                  {popupStuck && !googleError && !authError && (
-                    <Alert
-                      severity="info"
-                      sx={{
-                        bgcolor: alpha(qeEmerald.primary, 0.1),
-                        color: qe.text,
-                        border: `1px solid ${alpha(qeEmerald.primary, 0.25)}`,
-                        '& .MuiAlert-icon': { color: acc.accent },
-                      }}
-                    >
-                      <Typography
-                        variant="body2"
-                        sx={{ fontWeight: 500, mb: 0.5 }}
-                      >
-                        ¿No avanza?
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: qe.textMuted,
-                          display: 'block',
-                          mb: 1.5,
-                        }}
-                      >
-                        Tu navegador puede estar bloqueando el inicio de sesión.
-                        Abre el sitio en Chrome o Safari para continuar.
-                      </Typography>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        startIcon={<OpenInNew />}
-                        onClick={handleOpenExternal}
-                        sx={{
-                          bgcolor: acc.strong,
-                          color: acc.on,
-                          textTransform: 'none',
-                          boxShadow: 'none',
-                          '&:hover': {
-                            bgcolor: qeEmerald.light,
-                            boxShadow: 'none',
-                          },
-                        }}
-                      >
-                        Abrir en navegador
-                      </Button>
-                    </Alert>
-                  )}
-
-                  {/* Normal Google Sign-In button */}
-                  <Box
-                    onPointerDown={handleButtonAreaPointerDown}
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      '& > div': { width: '100%' },
-                      '& iframe': { colorScheme: 'normal' },
-                    }}
-                  >
-                    <GoogleLogin
-                      key={googleLoginKey}
-                      onSuccess={handleGoogleSuccess}
-                      onError={handleGoogleError}
-                      theme="filled_black"
-                      shape="pill"
-                      text="signin_with"
-                      locale="es"
-                      width="340"
-                      useOneTap={false}
-                    />
-                  </Box>
-                </>
+                </Alert>
               )}
 
+              {/* Normal Google Sign-In button */}
+              <Box
+                onPointerDown={handleButtonAreaPointerDown}
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  '& > div': { width: '100%' },
+                  '& iframe': { colorScheme: 'normal' },
+                }}
+              >
+                <GoogleLogin
+                  key={googleLoginKey}
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  theme="filled_black"
+                  shape="pill"
+                  text="signin_with"
+                  locale="es"
+                  width="340"
+                  useOneTap={false}
+                />
+              </Box>
+
               {/* Try another account button - shown after auth error */}
-              {authError && !isInAppBrowser && (
+              {authError && (
                 <Button
                   variant="outlined"
                   size="small"

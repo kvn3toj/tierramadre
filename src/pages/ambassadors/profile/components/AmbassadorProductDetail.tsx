@@ -5,17 +5,14 @@
  * Hero carousel, name + price, specs grid, description.
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   Typography,
-  Chip,
   IconButton,
-  alpha,
-  useTheme,
   CircularProgress,
   Button,
-} from "@mui/material";
+} from '@mui/material';
 import {
   ArrowLeft,
   Scale,
@@ -26,65 +23,117 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageCircle,
-} from "lucide-react";
-import { motion } from "framer-motion";
+} from 'lucide-react';
+import { motion } from 'framer-motion';
 import {
-  emeraldCore,
-  goldAccent,
-  semanticColors,
-  blurValues,
-  surfacesLight,
-  surfacesDark,
-  fontFamilies,
-  brand,
-  cssTransition,
+  Badge,
+  ErrorState,
+  qeGray,
+  qeType,
   zIndex,
-} from "../../../../design-system";
-import { formatFullCurrency, formatCarats } from "../../../../utils/formatting";
-import { useLanguage } from "../../../../contexts/LanguageContext";
-import { useReducedMotion } from "../../../../hooks/useReducedMotion";
-import type { TreasureItem } from "../../../../types";
+} from '../../../../design-system';
+import {
+  formatFullCurrency,
+  formatWeightLabel,
+} from '../../../../utils/formatting';
+import { useLanguage } from '../../../../contexts/LanguageContext';
+import { useWhatsAppContact } from '../../../../hooks/useWhatsAppContact';
+import type { ResaleOffer } from '../../../../utils/productOffer';
+import { useReducedMotion } from '../../../../hooks/useReducedMotion';
+import type { Asesor } from '../../../../hooks/useAsesores';
+import type { TreasureItem } from '../../../../types';
 
 interface MediaSlide {
   id: string;
   url: string;
-  type: "image" | "video";
+  type: 'image' | 'video';
   alt: string;
 }
 
 interface AmbassadorProductDetailProps {
   item: TreasureItem;
   onBack: () => void;
+  /**
+   * Ambassador whose profile we are inside. Optional so the component still
+   * renders standalone — the contact CTA is disabled when it (or the
+   * WhatsApp number) is missing, rather than rendering an inert button.
+   */
+  asesor?: Pick<Asesor, 'name' | 'whatsapp'>;
+  /**
+   * Present when this piece is one the ambassador OWNS and has offered for
+   * resale. It changes who the CTA talks to: Tierra Madre brokers the deal,
+   * the buyer never negotiates with the ambassador directly.
+   */
+  resale?: ResaleOffer;
 }
 
 export function AmbassadorProductDetail({
   item,
   onBack,
+  asesor,
+  resale,
 }: AmbassadorProductDetailProps) {
-  const theme = useTheme();
   const { t } = useLanguage();
-  const isLight = theme.palette.mode === "light";
   const prefersReducedMotion = useReducedMotion();
+
+  // Reventa: la conversación es con NOSOTROS, no con el embajador.
+  //
+  // La pieza es suya y nosotros corredamos: mandar al cliente directo a su
+  // WhatsApp nos saca de una negociación que tenemos que conducir. Así que
+  // cuando hay oferta de reventa el CTA apunta a un admin de Tierra Madre y
+  // el texto nombra la pieza y a su dueño, para que quien conteste sepa de
+  // entrada qué está corredando.
+  const { admins, fetchAdmins } = useWhatsAppContact();
+  useEffect(() => {
+    if (resale) void fetchAdmins();
+  }, [resale, fetchAdmins]);
+
+  // La etiqueta tiene que decir a quién marca. Con reventa el botón NO
+  // contacta al embajador —lo comprobé contra producción: abre el WhatsApp de
+  // la casa— así que dejarlo en «Contactar Embajador» era el rótulo afirmando
+  // algo falso sobre su propia acción.
+  const contactLabel = resale
+    ? 'Contactar a Tierra Madre'
+    : (t.ambassador.museum?.contactAmbassador ?? 'Contactar Embajador');
+
+  const brokerPhone = resale ? (admins[0]?.whatsapp?.trim() ?? '') : '';
+  const whatsapp = resale ? brokerPhone : (asesor?.whatsapp?.trim() || '');
+  const canContact = whatsapp.length > 0;
+
+  const handleContact = useCallback(() => {
+    if (!canContact) return;
+    const digits = whatsapp.replace(/\D/g, '');
+    const fullNumber = digits.startsWith('57') ? digits : `57${digits}`;
+    const text = resale
+      ? `Hola Tierra Madre, me interesa la esmeralda "${item.nombre}" (Item #${item.item}) de la colección de ${resale.asesorName}`
+      : `Hola ${asesor?.name ?? ''}, me interesa la esmeralda "${item.nombre}" (Item #${item.item})`;
+    window.open(
+      `https://wa.me/${fullNumber}?text=${encodeURIComponent(text)}`,
+      '_blank',
+      'noopener,noreferrer',
+    );
+  }, [canContact, whatsapp, asesor?.name, item.nombre, item.item, resale]);
 
   const [gallerySlides, setGallerySlides] = useState<MediaSlide[]>([]);
   const [activeSlide, setActiveSlide] = useState(0);
   const [galleryLoading, setGalleryLoading] = useState(false);
+  const [galleryError, setGalleryError] = useState(false);
+  // Bumped by the retry button to re-run the gallery fetch.
+  const [galleryReloadKey, setGalleryReloadKey] = useState(0);
 
-  const weightDisplay =
-    typeof item.peso === "number"
-      ? `${formatCarats(item.peso)} ct`
-      : item.peso || "-";
+  const weightDisplay = formatWeightLabel(item, { fallback: '-' });
 
   // Fetch gallery from Drive API
   useEffect(() => {
     const controller = new AbortController();
     setActiveSlide(0);
+    setGalleryError(false);
 
     // Fallback: use existing thumbnail/image
     const fallback: MediaSlide = {
       id: `fallback-${item.item}`,
-      url: item.thumbnailUrl || item.imagen || "",
-      type: item.mediaType === "video" ? "video" : "image",
+      url: item.thumbnailUrl || item.imagen || '',
+      type: item.mediaType === 'video' ? 'video' : 'image',
       alt: item.nombre,
     };
     if (fallback.url) {
@@ -101,34 +150,36 @@ export function AmbassadorProductDetail({
           if (data.success && data.images?.length > 0) {
             const driveSlides: MediaSlide[] = data.images
               .sort((a: any, b: any) => {
-                if (a.type === "image" && b.type === "video") return -1;
-                if (a.type === "video" && b.type === "image") return 1;
+                if (a.type === 'image' && b.type === 'video') return -1;
+                if (a.type === 'video' && b.type === 'image') return 1;
                 return (a.order ?? 0) - (b.order ?? 0);
               })
               .map((img: any) => ({
                 id: img.id,
                 url:
-                  img.type === "video"
+                  img.type === 'video'
                     ? `/api/serve-drive-image?fileId=${img.id}`
                     : img.proxyUrl ||
                       img.fullUrl ||
                       img.previewUrl ||
                       img.thumbnailUrl,
-                type: img.type as "image" | "video",
+                type: img.type as 'image' | 'video',
                 alt: img.name || `${item.nombre} - ${(img.order ?? 0) + 1}`,
               }));
             setGallerySlides(driveSlides);
           }
         })
         .catch((err) => {
-          if (err.name !== "AbortError")
-            console.warn("Failed to fetch gallery:", err);
+          if (err.name !== 'AbortError') {
+            console.warn('Failed to fetch gallery:', err);
+            setGalleryError(true);
+          }
         })
         .finally(() => setGalleryLoading(false));
     }
 
     return () => controller.abort();
-  }, [item.item]);
+  }, [item.item, galleryReloadKey]);
 
   // Swipe handling
   const touchStartX = useRef(0);
@@ -155,13 +206,13 @@ export function AmbassadorProductDetail({
   // Keyboard navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft" && activeSlide > 0)
+      if (e.key === 'ArrowLeft' && activeSlide > 0)
         setActiveSlide((s) => s - 1);
-      if (e.key === "ArrowRight" && activeSlide < gallerySlides.length - 1)
+      if (e.key === 'ArrowRight' && activeSlide < gallerySlides.length - 1)
         setActiveSlide((s) => s + 1);
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, [activeSlide, gallerySlides.length]);
 
   const slideCount = gallerySlides.length;
@@ -179,12 +230,14 @@ export function AmbassadorProductDetail({
           onClick={onBack}
           aria-label={t.actions.back}
           sx={{
-            bgcolor: isLight ? alpha("#000", 0.04) : alpha("#fff", 0.06),
-            backdropFilter: `blur(${blurValues.md})`,
-            width: 38,
-            height: 38,
-            "&:hover": {
-              bgcolor: isLight ? alpha("#000", 0.08) : alpha("#fff", 0.1),
+            bgcolor: 'var(--tm-well)',
+            border: '1px solid var(--tm-border)',
+            color: 'var(--tm-text)',
+            width: 44,
+            height: 44,
+            '&:hover': {
+              bgcolor: 'var(--tm-well)',
+              borderColor: 'var(--tm-accent)',
             },
           }}
         >
@@ -195,13 +248,11 @@ export function AmbassadorProductDetail({
       {/* Hero Gallery Carousel */}
       <Box
         sx={{
-          borderRadius: "18px",
-          overflow: "hidden",
+          borderRadius: 'var(--tm-radius-card)',
+          overflow: 'hidden',
           mb: 2.5,
-          position: "relative",
-          boxShadow: isLight
-            ? "0 4px 20px rgba(0,0,0,0.1)"
-            : "0 4px 20px rgba(0,0,0,0.3)",
+          position: 'relative',
+          border: '1px solid var(--tm-border)',
         }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -210,8 +261,8 @@ export function AmbassadorProductDetail({
           <>
             <Box
               sx={{
-                display: "flex",
-                transition: "transform 0.3s ease",
+                display: 'flex',
+                transition: 'transform var(--tm-base) var(--tm-ease)',
                 transform: `translateX(-${activeSlide * 100}%)`,
               }}
             >
@@ -219,13 +270,13 @@ export function AmbassadorProductDetail({
                 <Box
                   key={slide.id}
                   sx={{
-                    minWidth: "100%",
-                    aspectRatio: "4/3",
-                    position: "relative",
-                    bgcolor: isLight ? "#f5f5f5" : "#1a1a1a",
+                    minWidth: '100%',
+                    aspectRatio: '4/3',
+                    position: 'relative',
+                    bgcolor: 'var(--tm-well)',
                   }}
                 >
-                  {slide.type === "video" ? (
+                  {slide.type === 'video' ? (
                     <video
                       key={slide.id}
                       src={`${slide.url}#t=0.001`}
@@ -233,12 +284,12 @@ export function AmbassadorProductDetail({
                       muted
                       loop
                       playsInline
-                      preload={idx === activeSlide ? "auto" : "none"}
+                      preload={idx === activeSlide ? 'auto' : 'none'}
                       style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        display: "block",
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block',
                       }}
                     />
                   ) : (
@@ -246,12 +297,12 @@ export function AmbassadorProductDetail({
                       component="img"
                       src={slide.url}
                       alt={slide.alt}
-                      loading={idx <= 1 ? "eager" : "lazy"}
+                      loading={idx <= 1 ? 'eager' : 'lazy'}
                       sx={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        display: "block",
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block',
                       }}
                     />
                   )}
@@ -263,19 +314,19 @@ export function AmbassadorProductDetail({
             {slideCount > 1 && (
               <Box
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   top: 12,
                   right: 12,
-                  bgcolor: "rgba(0,0,0,0.5)",
-                  backdropFilter: "blur(4px)",
-                  borderRadius: 1.5,
+                  // On-photo chrome: rides over the gallery image.
+                  bgcolor: 'var(--tm-scrim)',
+                  borderRadius: 'var(--tm-radius-well)',
                   px: 1,
                   py: 0.3,
                   zIndex: zIndex.base,
                 }}
               >
                 <Typography
-                  sx={{ color: "#fff", fontSize: "0.7rem", fontWeight: 600 }}
+                  sx={{ color: qeGray[0], fontSize: '0.7rem', fontWeight: 600 }}
                 >
                   {activeSlide + 1} / {slideCount}
                 </Typography>
@@ -286,23 +337,22 @@ export function AmbassadorProductDetail({
             {galleryLoading && slideCount <= 1 && (
               <Box
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   bottom: 12,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  bgcolor: "rgba(0,0,0,0.5)",
-                  backdropFilter: "blur(4px)",
-                  borderRadius: 2,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  bgcolor: 'var(--tm-scrim)',
+                  borderRadius: 'var(--tm-radius-control)',
                   px: 1.5,
                   py: 0.5,
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 1,
                   zIndex: zIndex.base,
                 }}
               >
-                <CircularProgress size={14} sx={{ color: "#fff" }} />
-                <Typography sx={{ color: "#fff", fontSize: "0.7rem" }}>
+                <CircularProgress size={14} sx={{ color: qeGray[0] }} />
+                <Typography sx={{ color: qeGray[0], fontSize: '0.7rem' }}>
                   Loading gallery...
                 </Typography>
               </Box>
@@ -315,13 +365,13 @@ export function AmbassadorProductDetail({
                   <IconButton
                     onClick={() => setActiveSlide((s) => s - 1)}
                     sx={{
-                      position: "absolute",
+                      position: 'absolute',
                       left: 8,
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      bgcolor: "rgba(0,0,0,0.5)",
-                      color: "#fff",
-                      "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      bgcolor: 'var(--tm-scrim)',
+                      color: qeGray[0],
+                      '&:hover': { bgcolor: 'var(--tm-scrim)' },
                       zIndex: zIndex.base,
                     }}
                   >
@@ -332,13 +382,13 @@ export function AmbassadorProductDetail({
                   <IconButton
                     onClick={() => setActiveSlide((s) => s + 1)}
                     sx={{
-                      position: "absolute",
+                      position: 'absolute',
                       right: 8,
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      bgcolor: "rgba(0,0,0,0.5)",
-                      color: "#fff",
-                      "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      bgcolor: 'var(--tm-scrim)',
+                      color: qeGray[0],
+                      '&:hover': { bgcolor: 'var(--tm-scrim)' },
                       zIndex: zIndex.base,
                     }}
                   >
@@ -352,11 +402,11 @@ export function AmbassadorProductDetail({
             {slideCount > 1 && (
               <Box
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   bottom: 12,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  display: "flex",
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  display: 'flex',
                   gap: 0.8,
                   zIndex: zIndex.base,
                 }}
@@ -369,23 +419,41 @@ export function AmbassadorProductDetail({
                       width: activeSlide === i ? 18 : 8,
                       height: 8,
                       borderRadius: 4,
+                      // On-photo chrome: the dots sit over the gallery image.
                       bgcolor:
                         activeSlide === i
-                          ? brand.emerald[400]
-                          : "rgba(255,255,255,0.5)",
-                      cursor: "pointer",
-                      transition: cssTransition.fast,
+                          ? 'var(--tm-accent-pure)'
+                          : qeGray[300],
+                      cursor: 'pointer',
+                      transition: 'width var(--tm-fast) var(--tm-ease)',
                     }}
                   />
                 ))}
               </Box>
             )}
           </>
+        ) : galleryError ? (
+          <Box
+            sx={{
+              aspectRatio: '4/3',
+              bgcolor: 'var(--tm-well)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <ErrorState
+              compact
+              message="No pudimos cargar las imágenes de esta pieza."
+              onRetry={() => setGalleryReloadKey((k) => k + 1)}
+              retrying={galleryLoading}
+            />
+          </Box>
         ) : (
           <Box
             sx={{
-              aspectRatio: "4/3",
-              bgcolor: isLight ? "#f5f5f5" : "#1a1a1a",
+              aspectRatio: '4/3',
+              bgcolor: 'var(--tm-well)',
             }}
           />
         )}
@@ -395,22 +463,18 @@ export function AmbassadorProductDetail({
       <Typography
         variant="h5"
         sx={{
-          fontWeight: 700,
+          ...qeType.title,
           mb: 0.5,
-          letterSpacing: "-0.02em",
-          fontSize: "1.3rem",
+          fontSize: '1.75rem',
         }}
       >
         {item.nombre}
       </Typography>
       <Typography
         sx={{
-          fontFamily: fontFamilies.display,
-          fontWeight: 600,
-          fontSize: "1.5rem",
-          letterSpacing: "0.01em",
-          color: emeraldCore.primary,
-          fontVariantNumeric: "lining-nums tabular-nums",
+          ...qeType.data,
+          fontSize: '1.35rem',
+          color: 'var(--tm-accent)',
           mb: 2,
         }}
       >
@@ -418,67 +482,24 @@ export function AmbassadorProductDetail({
       </Typography>
 
       {/* Tags */}
-      <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mb: 2 }}>
-        {item.isJewelry && (
-          <Chip
-            label="JOYA"
-            size="small"
-            sx={{
-              bgcolor: alpha(goldAccent.primary, 0.1),
-              color: isLight ? goldAccent.dark : goldAccent.light,
-              fontWeight: 700,
-              fontSize: "0.58rem",
-              letterSpacing: "0.04em",
-              borderRadius: "6px",
-            }}
-          />
-        )}
-        {item.categoria && (
-          <Chip
-            label={item.categoria}
-            size="small"
-            sx={{
-              bgcolor: alpha(emeraldCore.primary, 0.08),
-              color: emeraldCore.primary,
-              fontWeight: 700,
-              fontSize: "0.58rem",
-              letterSpacing: "0.04em",
-              borderRadius: "6px",
-            }}
-          />
-        )}
-        {item.estado === "VENDIDA" && (
-          <Chip
-            label="VENDIDA"
-            size="small"
-            sx={{
-              bgcolor: alpha(semanticColors.error.main, 0.1),
-              color: semanticColors.error.main,
-              fontWeight: 700,
-              fontSize: "0.58rem",
-              letterSpacing: "0.04em",
-              borderRadius: "6px",
-            }}
-          />
-        )}
+      <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mb: 2 }}>
+        {item.isJewelry && <Badge tone="neutral" label="Joya" />}
+        {item.categoria && <Badge tone="accent" label={item.categoria} />}
+        {item.estado === 'VENDIDA' && <Badge tone="danger" label="Vendida" />}
       </Box>
 
       {/* Specs Grid */}
       <Box
         sx={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
           gap: 1.5,
           mb: 2.5,
           p: 2,
-          borderRadius: "14px",
-          bgcolor: isLight
-            ? surfacesLight.surface.default
-            : surfacesDark.background.secondary,
-          border: "1px solid",
-          borderColor: isLight
-            ? surfacesLight.border.light
-            : surfacesDark.border.light,
+          borderRadius: 'var(--tm-radius-card)',
+          bgcolor: 'var(--tm-surface)',
+          border: '1px solid',
+          borderColor: 'var(--tm-border)',
         }}
       >
         <SpecCell
@@ -486,15 +507,30 @@ export function AmbassadorProductDetail({
           label="Peso"
           value={weightDisplay}
         />
-        <SpecCell
-          icon={<MapPin size={16} />}
-          label="Origen"
-          value={item.ubicacion || "-"}
-        />
+        {/* Origen is the MINE (`procedencia`: Muzo, Chivor, Coscuez, Boyacá…),
+            never `ubicacion`. `ubicacion` is internal custody — Anima's
+            2026-05-22 decision records it as "operational, derived, view-only
+            in ADMIN tables", with a 9-value domain (BOVEDA, OFI.BOGOTA,
+            OFI.CALI, ASESOR, EMBAJADOR, CLIENTE, EN PRODUCCION,
+            EN CERTIFICACION, RETORNADO). This cell was telling clients
+            "Origen: OFI.CALI".
+
+            Hidden rather than rendered as "-" when absent, and absent is the
+            common case today: the legacy book production reads has no
+            `procedencia` column at all, and even in SOT v3 only 89 of 513 rows
+            carry one. Same rule as P0.3's SpecRow guard — an omitted row reads
+            better than an empty one. */}
+        {item.procedencia && (
+          <SpecCell
+            icon={<MapPin size={16} />}
+            label="Origen"
+            value={item.procedencia}
+          />
+        )}
         <SpecCell
           icon={<Award size={16} />}
           label="Calidad"
-          value={item.calidad || "-"}
+          value={item.calidad || '-'}
         />
         {item.talla && (
           <SpecCell
@@ -524,26 +560,44 @@ export function AmbassadorProductDetail({
         fullWidth
         variant="contained"
         startIcon={<MessageCircle size={18} />}
+        onClick={handleContact}
+        disabled={!canContact}
+        aria-label={
+          canContact
+            ? `${contactLabel} por WhatsApp sobre ${item.nombre}`
+            : undefined
+        }
+        title={
+          canContact
+            ? undefined
+            : 'Este embajador aún no tiene un WhatsApp registrado'
+        }
         sx={{
-          bgcolor: emeraldCore.primary,
-          color: "#fff",
-          borderRadius: "14px",
+          bgcolor: 'var(--tm-accent-strong)',
+          color: 'var(--tm-on-accent)',
+          borderRadius: 'var(--tm-radius-control)',
           py: 1.5,
+          minHeight: 44,
           fontWeight: 600,
-          textTransform: "none",
-          fontSize: "0.95rem",
-          "&:hover": { bgcolor: emeraldCore.dark },
+          textTransform: 'none',
+          fontSize: '0.95rem',
+          '&:hover': { bgcolor: 'var(--tm-accent)' },
+          '&.Mui-disabled': {
+            bgcolor: 'var(--tm-well)',
+            color: 'var(--tm-subtle)',
+            border: '1px solid var(--tm-border)',
+          },
         }}
       >
-        Contactar Embajador
+        {contactLabel}
       </Button>
 
       {/* Description */}
       {item.description && (
         <Typography
           sx={{
-            color: "text.secondary",
-            fontSize: "0.85rem",
+            color: 'text.secondary',
+            fontSize: '0.85rem',
             lineHeight: 1.6,
             mt: 2,
           }}
@@ -565,30 +619,27 @@ function SpecCell({
   value: string;
 }) {
   return (
-    <Box sx={{ textAlign: "center" }}>
+    <Box sx={{ textAlign: 'center' }}>
       <Box
         sx={{
-          color: "text.secondary",
+          color: 'var(--tm-subtle)',
           mb: 0.5,
-          display: "flex",
-          justifyContent: "center",
+          display: 'flex',
+          justifyContent: 'center',
         }}
       >
         {icon}
       </Box>
       <Typography
         sx={{
-          fontSize: "0.58rem",
-          color: "text.secondary",
+          ...qeType.overline,
+          color: 'var(--tm-muted)',
           mb: 0.25,
-          fontWeight: 500,
-          textTransform: "uppercase",
-          letterSpacing: "0.04em",
         }}
       >
         {label}
       </Typography>
-      <Typography sx={{ fontWeight: 650, fontSize: "0.75rem" }}>
+      <Typography sx={{ ...qeType.data, fontSize: '0.9375rem' }}>
         {value}
       </Typography>
     </Box>

@@ -9,6 +9,7 @@ import {
   containedScrollX,
 } from '../../../design-system';
 import { useConvexQuery, convexApi } from '../../../lib/convex-safe';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 import { FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
 
 /**
@@ -65,8 +66,9 @@ export default function FotosintesisLotesPage() {
   const [search, setSearch] = useState('');
   const deferredSearch = useDeferredValue(search);
 
-  const lots = useConvexQuery(convexApi.lots.list, {});
-  const providers = useConvexQuery(convexApi.providers.list, {});
+  const sessionToken = readFreshSessionToken() ?? undefined;
+  const lots = useConvexQuery(convexApi.lots.list, { sessionToken });
+  const providers = useConvexQuery(convexApi.providers.list, { sessionToken });
 
   const providerNameById = useMemo(() => {
     const map = new Map<string, string>();

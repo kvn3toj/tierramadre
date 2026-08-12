@@ -26,6 +26,7 @@ import {
   qeDark,
   qeAccent,
   qeFont,
+  Card,
 } from '../design-system';
 
 // ═══════════════════════════════════════════════════════════════
@@ -94,7 +95,7 @@ const emeraldBtnSx = {
   fontWeight: fontWeights.semibold,
   fontFamily: vault.system,
   textTransform: 'none' as const,
-  background: qeAccent.dark.strong, // #00AF84 solid, no gradient
+  background: qeAccent.dark.strong, // #00C992 solid, no gradient
   color: qeAccent.dark.on, // #06140E
   border: 'none',
   boxShadow: 'none',
@@ -154,25 +155,30 @@ function PageShell({ children }: { children: React.ReactNode }) {
 }
 
 function GlassCard({ children }: { children: React.ReactNode }) {
+  // Forced-dark immersive vault, regardless of the app-wide theme: scope the
+  // --tm-* runtime vars to dark locally via data-theme, then render the
+  // canonical Card so the vault stays on one Card implementation.
   return (
     <Box
+      data-theme="dark"
       sx={{
         maxWidth: 400,
         width: '100%',
         mx: 'auto',
         position: 'relative',
         zIndex: zIndex.base,
-        p: { xs: 3.5, sm: 4.5 },
-        borderRadius: '20px',
-        bgcolor: vault.card,
-        border: '1px solid',
-        borderColor: vault.cardBorder,
-        backdropFilter: 'none',
-        WebkitBackdropFilter: 'none',
-        boxShadow: '0 20px 46px -26px rgba(0,0,0,0.8)', // qeShadow.dark value (qeDark has no shadow key)
       }}
     >
-      {children}
+      <Card
+        variant="outlined"
+        sx={{
+          p: { xs: 3.5, sm: 4.5 },
+          borderRadius: '20px',
+          boxShadow: 'var(--tm-shadow)',
+        }}
+      >
+        {children}
+      </Card>
     </Box>
   );
 }

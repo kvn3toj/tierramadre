@@ -20,12 +20,23 @@ import {
   Button,
   IconButton,
 } from '@mui/material';
-import { FileText, Plus, Clock, CheckCircle, XCircle, Trash2, ArrowLeft } from 'lucide-react';
+import {
+  FileText,
+  Plus,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Trash2,
+  ArrowLeft,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { emeraldCore } from '../../design-system/tokens/colors';
-import { accentColors, primitiveColors } from '../../design-system';
+import { accentColors, primitiveColors, ErrorState } from '../../design-system';
 import { useNotification } from '../../contexts/NotificationContext';
-import { PRODUCT_TYPE_LABELS, REQUEST_STATUS_LABELS } from '../../types/provider';
+import {
+  PRODUCT_TYPE_LABELS,
+  REQUEST_STATUS_LABELS,
+} from '../../types/provider';
 import type { QuotationRequest, RequestStatus } from '../../types/provider';
 
 export default function QuotationRequestList() {
@@ -34,48 +45,65 @@ export default function QuotationRequestList() {
   const { user } = useGoogleAuth();
   const [requests, setRequests] = useState<QuotationRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | RequestStatus>('all');
 
-  useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const response = await fetch('/api/quotation-requests', {
-          headers: { 'x-requester-email': user?.email ?? '' },
-        });
-        const data = await response.json();
+  const fetchRequests = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/quotation-requests', {
+        headers: { 'x-requester-email': user?.email ?? '' },
+      });
+      const data = await response.json();
 
-        if (data.success) {
-          setRequests(data.requests || []);
-        }
-      } catch (error) {
-        console.error('Error fetching requests:', error);
-      } finally {
-        setLoading(false);
+      if (data.success) {
+        setRequests(data.requests || []);
+      } else {
+        setError(data.error || 'No pudimos cargar las solicitudes.');
       }
-    };
+    } catch (err) {
+      console.error('Error fetching requests:', err);
+      setError(
+        'No pudimos conectar con el servidor. Verifica tu conexión e intenta de nuevo.',
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchRequests();
   }, []);
 
-  const filteredRequests = activeTab === 'all'
-    ? requests
-    : requests.filter(r => r.status === activeTab);
+  const filteredRequests =
+    activeTab === 'all'
+      ? requests
+      : requests.filter((r) => r.status === activeTab);
 
   const getStatusColor = (status: RequestStatus) => {
     switch (status) {
-      case 'pendiente': return accentColors.warning.light;
-      case 'respondida': return emeraldCore.primary;
-      case 'cancelada': return accentColors.error.light;
-      default: return primitiveColors.metallic.silver[500];
+      case 'pendiente':
+        return accentColors.warning.light;
+      case 'respondida':
+        return emeraldCore.primary;
+      case 'cancelada':
+        return accentColors.error.light;
+      default:
+        return primitiveColors.metallic.silver[500];
     }
   };
 
   const getStatusIcon = (status: RequestStatus) => {
     switch (status) {
-      case 'pendiente': return Clock;
-      case 'respondida': return CheckCircle;
-      case 'cancelada': return XCircle;
-      default: return FileText;
+      case 'pendiente':
+        return Clock;
+      case 'respondida':
+        return CheckCircle;
+      case 'cancelada':
+        return XCircle;
+      default:
+        return FileText;
     }
   };
 
@@ -96,7 +124,9 @@ export default function QuotationRequestList() {
   };
 
   const handleDelete = async (id: string) => {
-    const confirmed = await confirmAction('¿Seguro que deseas eliminar esta solicitud?');
+    const confirmed = await confirmAction(
+      '¿Seguro que deseas eliminar esta solicitud?',
+    );
     if (!confirmed) return;
 
     try {
@@ -107,7 +137,7 @@ export default function QuotationRequestList() {
       const data = await response.json();
 
       if (data.success) {
-        setRequests(prev => prev.filter(r => r.id !== id));
+        setRequests((prev) => prev.filter((r) => r.id !== id));
       }
     } catch (error) {
       console.error('Error deleting request:', error);
@@ -116,8 +146,26 @@ export default function QuotationRequestList() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <CircularProgress aria-label="Cargando" sx={{ color: emeraldCore.primary }} />
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '50vh',
+        }}
+      >
+        <CircularProgress
+          aria-label="Cargando"
+          sx={{ color: emeraldCore.primary }}
+        />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <ErrorState message={error} onRetry={fetchRequests} />
       </Box>
     );
   }
@@ -138,7 +186,8 @@ export default function QuotationRequestList() {
               Solicitudes a Proveedores
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {requests.length} solicitud{requests.length !== 1 ? 'es' : ''} enviada{requests.length !== 1 ? 's' : ''}
+              {requests.length} solicitud{requests.length !== 1 ? 'es' : ''}{' '}
+              enviada{requests.length !== 1 ? 's' : ''}
             </Typography>
           </Box>
           <Button
@@ -178,7 +227,10 @@ export default function QuotationRequestList() {
         }}
       >
         <Tab label={`Todas (${requests.length})`} value="all" />
-        <Tab label={`Pendientes (${requests.filter(r => r.status === 'pendiente').length})`} value="pendiente" />
+        <Tab
+          label={`Pendientes (${requests.filter((r) => r.status === 'pendiente').length})`}
+          value="pendiente"
+        />
         <Tab label="Respondidas" value="respondida" />
         <Tab label="Canceladas" value="cancelada" />
       </Tabs>
@@ -186,11 +238,27 @@ export default function QuotationRequestList() {
       {/* Request List */}
       <Box sx={{ p: 2 }}>
         {filteredRequests.length === 0 ? (
-          <Card sx={{ bgcolor: alpha(emeraldCore.primary, 0.04), border: 'none', boxShadow: 'none' }}>
+          <Card
+            sx={{
+              bgcolor: alpha(emeraldCore.primary, 0.04),
+              border: 'none',
+              boxShadow: 'none',
+            }}
+          >
             <CardContent sx={{ textAlign: 'center', py: 6 }}>
-              <FileText size={48} color={emeraldCore.primary} style={{ marginBottom: 16, opacity: 0.5 }} />
-              <Typography variant="body1" sx={{ color: 'text.secondary', mb: 2 }}>
-                No hay solicitudes {activeTab !== 'all' ? REQUEST_STATUS_LABELS[activeTab].toLowerCase() + 's' : ''}
+              <FileText
+                size={48}
+                color={emeraldCore.primary}
+                style={{ marginBottom: 16, opacity: 0.5 }}
+              />
+              <Typography
+                variant="body1"
+                sx={{ color: 'text.secondary', mb: 2 }}
+              >
+                No hay solicitudes{' '}
+                {activeTab !== 'all'
+                  ? REQUEST_STATUS_LABELS[activeTab].toLowerCase() + 's'
+                  : ''}
               </Typography>
               <Button
                 variant="contained"
@@ -223,13 +291,27 @@ export default function QuotationRequestList() {
                 >
                   <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                     {/* Header */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        mb: 1.5,
+                      }}
+                    >
                       <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{ fontWeight: 700 }}
+                        >
                           {PRODUCT_TYPE_LABELS[request.productType]}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          {formatDate(request.createdAt)} | Por: {request.createdBy}
+                        <Typography
+                          variant="caption"
+                          sx={{ color: 'text.secondary' }}
+                        >
+                          {formatDate(request.createdAt)} | Por:{' '}
+                          {request.createdBy}
                         </Typography>
                       </Box>
                       <Stack direction="row" spacing={1} alignItems="center">
@@ -257,7 +339,12 @@ export default function QuotationRequestList() {
                     </Box>
 
                     {/* Specs */}
-                    <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 1.5 }}>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      flexWrap="wrap"
+                      sx={{ mb: 1.5 }}
+                    >
                       <Chip
                         label={`${request.weightMin}-${request.weightMax} ct`}
                         size="small"
@@ -289,7 +376,14 @@ export default function QuotationRequestList() {
 
                     {/* Assigned Provider */}
                     {request.assignedProvider && (
-                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.secondary',
+                          display: 'block',
+                          mb: 1,
+                        }}
+                      >
                         Asignado a: {request.assignedProvider}
                       </Typography>
                     )}
@@ -315,7 +409,11 @@ export default function QuotationRequestList() {
                       <Button
                         variant="outlined"
                         size="small"
-                        onClick={() => navigate(`/cuentas/cotizaciones-proveedor?id=${request.responseId}`)}
+                        onClick={() =>
+                          navigate(
+                            `/cuentas/cotizaciones-proveedor?id=${request.responseId}`,
+                          )
+                        }
                         sx={{
                           mt: 1.5,
                           borderColor: emeraldCore.primary,

@@ -3,10 +3,18 @@
  * Price factor selection with slider and tier chips.
  */
 
-import { Box, Typography, Paper, Slider, Chip, IconButton, Tooltip, alpha } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Slider,
+  Chip,
+  IconButton,
+  Tooltip,
+  alpha,
+} from '@mui/material';
 import { Target, Info } from 'lucide-react';
 import { PRICING_TIERS, PricingTier } from '../../hooks/usePriceCalculation';
-import { studioColors, studioCardStyles, cssTransition } from '../../design-system';
+import { studioColors, cssTransition, Card } from '../../design-system';
 
 export interface FactorSliderProps {
   priceFactor: number;
@@ -20,7 +28,13 @@ export const FactorSlider: React.FC<FactorSliderProps> = ({
   currentTier,
 }) => {
   return (
-    <Paper elevation={0} sx={{ ...studioCardStyles.card, position: 'relative', overflow: 'hidden' }}>
+    <Card
+      variant="outlined"
+      sx={{
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
       <Box
         sx={{
           position: 'absolute',
@@ -33,7 +47,15 @@ export const FactorSlider: React.FC<FactorSliderProps> = ({
         }}
       />
 
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3, position: 'relative' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          mb: 3,
+          position: 'relative',
+        }}
+      >
         <Box
           sx={{
             width: 36,
@@ -48,10 +70,16 @@ export const FactorSlider: React.FC<FactorSliderProps> = ({
           <Target size={18} color={currentTier.color} />
         </Box>
         <Box sx={{ flex: 1 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, color: studioColors.textPrimary }}>
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 600, color: studioColors.textPrimary }}
+          >
             Factor sobre Inversión
           </Typography>
-          <Typography variant="caption" sx={{ color: studioColors.textSecondary }}>
+          <Typography
+            variant="caption"
+            sx={{ color: studioColors.textSecondary }}
+          >
             Multiplicador de precio
           </Typography>
         </Box>
@@ -63,7 +91,15 @@ export const FactorSlider: React.FC<FactorSliderProps> = ({
       </Box>
 
       {/* Large Factor Display */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 3, mb: 2 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          py: 3,
+          mb: 2,
+        }}
+      >
         <Box
           sx={{
             display: 'flex',
@@ -107,7 +143,7 @@ export const FactorSlider: React.FC<FactorSliderProps> = ({
           min={1.5}
           max={4.0}
           step={0.1}
-          marks={PRICING_TIERS.map(tier => ({
+          marks={PRICING_TIERS.map((tier) => ({
             value: tier.factor,
             label: tier.label,
           }))}
@@ -157,23 +193,35 @@ export const FactorSlider: React.FC<FactorSliderProps> = ({
             onClick={() => onFactorChange(tier.factor)}
             sx={{
               cursor: 'pointer',
-              bgcolor: Math.abs(priceFactor - tier.factor) < 0.05 ? tier.color : alpha(tier.color, 0.1),
-              color: Math.abs(priceFactor - tier.factor) < 0.05 ? '#FFFFFF' : tier.color,
+              bgcolor:
+                Math.abs(priceFactor - tier.factor) < 0.05
+                  ? tier.color
+                  : alpha(tier.color, 0.1),
+              color:
+                Math.abs(priceFactor - tier.factor) < 0.05
+                  ? '#FFFFFF'
+                  : tier.color,
               fontWeight: 600,
               fontSize: '0.75rem',
               height: 28,
               border: '1px solid',
-              borderColor: Math.abs(priceFactor - tier.factor) < 0.05 ? tier.color : alpha(tier.color, 0.3),
+              borderColor:
+                Math.abs(priceFactor - tier.factor) < 0.05
+                  ? tier.color
+                  : alpha(tier.color, 0.3),
               transition: cssTransition.default,
               '&:hover': {
-                bgcolor: Math.abs(priceFactor - tier.factor) < 0.05 ? tier.color : alpha(tier.color, 0.15),
+                bgcolor:
+                  Math.abs(priceFactor - tier.factor) < 0.05
+                    ? tier.color
+                    : alpha(tier.color, 0.15),
                 transform: 'translateY(-1px)',
               },
             }}
           />
         ))}
       </Box>
-    </Paper>
+    </Card>
   );
 };
 

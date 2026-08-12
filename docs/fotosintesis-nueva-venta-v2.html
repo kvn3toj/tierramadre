@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fotosíntesis · Nueva venta — v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@500;600&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#FFFFFF;--panel:#FAFAFA;--inset:#F4F5F4;--inset2:#ECEDEA;
+  --row:#FFFFFF;--rowHover:#FAFAFA;--rowActive:rgba(0,92,66,.06);
+  --edge:rgba(11,16,14,.09);--rule:rgba(11,16,14,.13);--edgeStrong:rgba(11,16,14,.20);
+  --ink:#0B100E;--ink2:#4A5251;--ink3:#5F6764;--mute:#9AA09D;--inverse:#FFFFFF;
+  --accent:#008C61;--deep:#006B4A;--soft:rgba(0,92,66,.08);--glow:rgba(0,140,98,.16);
+  --warn:#8A5F1B;--danger:#B33A2F;
+  --serif:'Cormorant',Georgia,serif;--ui:'Hanken Grotesk',-apple-system,sans-serif;--mono:'DM Mono',ui-monospace,monospace;
+  --bevel:8px;
+}
+[data-theme="dark"]{
+  --canvas:#0B0D0C;--panel:#131614;--inset:#1B1F1D;--inset2:#232826;
+  --row:#0B0D0C;--rowHover:#131614;--rowActive:rgba(124,205,169,.08);
+  --edge:rgba(255,255,255,.08);--rule:rgba(255,255,255,.12);--edgeStrong:rgba(255,255,255,.2);
+  --ink:#EFF1EF;--ink2:#B0B6B3;--ink3:#7B807E;--mute:#555A58;--inverse:#0B0D0C;
+  --accent:#33C194;--deep:#5AD3A9;--soft:rgba(124,205,169,.1);--glow:rgba(124,205,169,.18);
+  --warn:#D9A94E;--danger:#D75348;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#D7DDDB;font-family:var(--ui);color:var(--ink);padding:28px 16px 60px;background-image:radial-gradient(circle at 50% 0,#E7ECEA,#C7D0CD)}
+[data-theme="dark"] body{background:#060807;background-image:radial-gradient(circle at 50% 0,#101312,#050605)}
+.head{max-width:1180px;margin:0 auto 20px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.head .ov{font-family:var(--mono);font-size:.625rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.head h1{font-family:var(--serif);font-weight:500;font-size:2rem;line-height:1.04;color:#14181A}
+[data-theme="dark"] .head h1{color:#EAEDEB}
+.head p{color:#5C6360;font-size:.85rem;max-width:56ch;margin-top:2px}
+[data-theme="dark"] .head p{color:#9AA09D}
+.ctrl{font-family:var(--ui);font-weight:600;font-size:.8125rem;border-radius:8px;padding:9px 14px;border:1px solid var(--edge);background:var(--canvas);color:var(--ink);cursor:pointer}
+.win{max-width:1180px;margin:0 auto;border-radius:14px;overflow:hidden;background:var(--canvas);border:1px solid rgba(0,0,0,.12);box-shadow:0 30px 60px -30px rgba(0,0,0,.4)}
+.chrome{height:36px;background:var(--inset);border-bottom:1px solid var(--edge);display:flex;align-items:center;gap:7px;padding:0 13px}
+.chrome i{width:10px;height:10px;border-radius:999px;background:var(--edgeStrong);opacity:.5}
+.chrome .url{margin-left:10px;font-family:var(--mono);font-size:.6875rem;color:var(--ink3);background:var(--canvas);border:1px solid var(--edge);border-radius:6px;padding:3px 11px}
+.app{position:relative;min-height:640px;padding-bottom:88px}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:11px 24px;border-bottom:1px solid var(--edge)}
+.topbar .bc{font-size:.85rem;color:var(--ink3)}.topbar .bc a{color:var(--accent);text-decoration:none}.topbar .bc b{color:var(--ink);font-weight:600}
+.topbar .r{display:flex;gap:8px;align-items:center}
+.sync{font-family:var(--mono);font-size:.5625rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--edge);border-radius:999px;padding:4px 10px;display:flex;align-items:center;gap:5px}
+.sync .d{width:6px;height:6px;border-radius:999px;background:var(--accent)}
+.cont{max-width:1120px;margin:0 auto;padding:16px 24px 0}
+.lhead{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.title{font-family:var(--serif);font-size:2.1rem;font-weight:600;line-height:1}
+.draft{font-family:var(--mono);font-size:.625rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);border:1px solid var(--edge);border-radius:999px;padding:3px 9px}
+.eyebrow{font-family:var(--mono);font-size:.625rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);display:block;margin:4px 0 9px}
+.grid{display:grid;grid-template-columns:1fr 320px;gap:22px;padding:18px 0 24px;align-items:start}
+.card{background:var(--canvas);border:1px solid var(--edge);border-radius:12px;padding:16px}
+/* buyer picker (step 1) */
+.buyer{display:flex;align-items:center;gap:13px;padding:13px 15px;border:1px solid var(--edge);border-radius:12px;background:var(--panel);cursor:pointer}
+.buyer .av{width:44px;height:44px;border-radius:999px;background:linear-gradient(155deg,#2f6b52,#0d3b2c);display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--serif);font-size:1.25rem;flex:0 0 44px}
+.buyer .nm{font-weight:600;font-size:1rem}
+.buyer .sub{font-size:.78rem;color:var(--ink3)}
+.buyer .role{font-family:var(--mono);font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 34%,var(--edge));border-radius:999px;padding:2px 7px;margin-left:7px}
+.buyer .chg{margin-left:auto;font-size:.8rem;color:var(--accent);font-weight:600}
+/* scan/search to add */
+.scan{display:flex;align-items:center;gap:11px;padding:12px 15px;border:1px solid var(--edgeStrong);border-radius:10px;color:var(--ink3);background:var(--inset);margin:10px 0}
+.scan svg{color:var(--accent)}
+.scan kbd{font-family:var(--mono);background:var(--canvas);border:1px solid var(--edge);border-radius:4px;padding:1px 6px;font-size:.7rem;margin-left:auto}
+/* line items */
+.li{display:grid;grid-template-columns:44px 1fr 140px 30px;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--edge);border-radius:10px;margin-bottom:8px;background:var(--row)}
+.li .th{width:44px;height:44px;border-radius:8px;background:var(--inset);display:flex;align-items:center;justify-content:center}
+.li .g{width:22px;height:28px;background:linear-gradient(158deg,#3BD9AB,#00785C 60%,#00543E);clip-path:polygon(21% 0,79% 0,100% 21%,100% 79%,79% 100%,21% 100%,0 79%,0 21%)}
+.li .n .no{font-family:var(--mono);font-size:.5625rem;letter-spacing:.08em;color:var(--ink3)}
+.li .n b{display:block;font-weight:600;font-size:.92rem;margin-top:1px}
+.li .n .sp{font-family:var(--mono);font-size:.6rem;color:var(--ink3);margin-top:1px}
+.field{display:flex;align-items:center;border:1px solid var(--edge);border-radius:8px;background:var(--inset);height:36px;padding-left:10px}
+.field:focus-within{background:var(--canvas);border-color:color-mix(in srgb,var(--accent) 50%,var(--edge))}
+.field .cur{font-family:var(--mono);font-size:.8rem;color:var(--ink3)}
+.field input{width:100%;border:0;background:transparent;font-family:var(--mono);font-size:.85rem;color:var(--ink);font-variant-numeric:tabular-nums;outline:none;padding-left:4px}
+.kebab{border:0;background:transparent;color:var(--ink3);cursor:pointer;font-size:1.1rem}
+/* rail — resumen */
+.rail{display:flex;flex-direction:column;gap:14px;position:sticky;top:16px}
+.sumrow{display:flex;justify-content:space-between;padding:8px 0;font-family:var(--mono);font-size:.85rem;font-variant-numeric:tabular-nums}
+.sumrow .k{color:var(--ink3);font-family:var(--ui);font-size:.85rem}
+.sumrow.total{border-top:1px solid var(--rule);margin-top:4px;padding-top:12px;font-size:1.25rem;font-weight:500}
+.sumrow.total .k{font-family:var(--serif);font-size:1.1rem;color:var(--ink)}
+.seg{display:flex;border:1px solid var(--edge);border-radius:8px;overflow:hidden;margin-top:6px}
+.seg button{flex:1;border:0;background:var(--canvas);color:var(--ink3);font-family:var(--ui);font-size:.8rem;font-weight:600;padding:8px;cursor:pointer}
+.seg button.on{background:var(--deep);color:var(--inverse)}
+.discount{display:flex;align-items:center;gap:8px;margin-top:10px}
+.discount .field{flex:1;height:34px}
+.btn{font-family:var(--ui);font-weight:600;font-size:.9rem;border-radius:9px;padding:12px 16px;border:1px solid transparent;cursor:pointer;width:100%}
+.btn.primary{background:var(--deep);color:var(--inverse);clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.helper{font-size:.72rem;color:var(--ink3);text-align:center;margin-top:8px;line-height:1.4}
+.tabwrap{position:absolute;left:0;right:0;bottom:0;padding:9px 16px 14px;pointer-events:none}
+.tabpill{display:flex;align-items:center;height:56px;max-width:520px;margin:0 auto;border-radius:28px;padding:4px;background:var(--canvas);border:1px solid var(--edge);box-shadow:0 6px 20px -6px rgba(11,16,14,.16);pointer-events:auto}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:100%;border-radius:24px;position:relative;isolation:isolate;border:0;background:0;cursor:pointer}
+.tab .ind{position:absolute;inset:0;background:var(--deep);z-index:0;clip-path:polygon(var(--bevel) 0,calc(100% - var(--bevel)) 0,100% var(--bevel),100% calc(100% - var(--bevel)),calc(100% - var(--bevel)) 100%,var(--bevel) 100%,0 calc(100% - var(--bevel)),0 var(--bevel))}
+.tab svg{width:18px;height:18px;position:relative;z-index:1;stroke:var(--ink3)}
+.tab.on svg{stroke:var(--inverse)}
+.tab .lbl{position:relative;z-index:1;font-size:8.5px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--ink3)}
+.tab.on .lbl{color:var(--inverse);font-weight:600}
+@media(max-width:840px){.grid{grid-template-columns:1fr}.rail{position:static}}
+</style>
+</head>
+<body>
+<div class="head">
+  <div><div class="ov">Fotosíntesis · Nueva venta — v2</div><h1>Registrar una venta, sin fricción</h1>
+  <p>Mismos 5 movimientos que Captura de lote: el objeto (la venta) es el héroe, se agregan piezas escaneando, el precio y el descuento se editan en línea, y «Registrar venta» se ilumina solo cuando está completa.</p></div>
+  <button class="ctrl" id="mode">Modo oscuro</button>
+</div>
+<div class="win"><div class="chrome"><i></i><i></i><i></i><span class="url">tierramadre.app/admin/fotosintesis/sales/new</span></div>
+<div class="app">
+  <div class="topbar"><div class="bc"><a>Fotosíntesis</a> › <b>Nueva venta</b></div>
+    <div class="r"><span class="sync"><span class="d"></span>Guardado como borrador</span></div></div>
+  <div class="cont">
+    <div class="lhead"><span class="title">Nueva venta</span><span class="draft">Borrador · V-0192</span></div>
+
+    <div class="grid">
+      <div>
+        <span class="eyebrow">1 · ¿Para quién?</span>
+        <div class="buyer">
+          <div class="av">M</div>
+          <div><div class="nm">María Restrepo<span class="role">Asesor</span></div><div class="sub">Bogotá · x1.0 · 128 piezas activas</div></div>
+          <span class="chg">Cambiar</span>
+        </div>
+
+        <span class="eyebrow" style="margin-top:18px">2 · Piezas vendidas</span>
+        <div class="scan"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M20 20v.01M17 20v.01M20 17v.01"/></svg>
+          Escanea el QR o busca por número / nombre para agregar una pieza <kbd>⌘K</kbd></div>
+        <div class="li">
+          <div class="th"><div class="g"></div></div>
+          <div class="n"><span class="no">#205 · MUZO</span><b>Venus</b><span class="sp">2.34 CT · VIVID GREEN</span></div>
+          <div class="field"><span class="cur">$</span><input value="4,820,000" aria-label="Precio de venta"></div>
+          <button class="kebab">⋯</button>
+        </div>
+        <div class="li">
+          <div class="th"><div class="g" style="transform:scale(.85) rotate(-6deg)"></div></div>
+          <div class="n"><span class="no">#451 · MUZO</span><b>Guardianas Gemelas</b><span class="sp">0.74 CT · VIVID</span></div>
+          <div class="field"><span class="cur">$</span><input value="2,310,000" aria-label="Precio de venta"></div>
+          <button class="kebab">⋯</button>
+        </div>
+      </div>
+
+      <div class="rail">
+        <div class="card">
+          <span class="eyebrow" style="margin-top:0">Resumen</span>
+          <div class="sumrow"><span class="k">Subtotal · 2 piezas</span><span>$ 7,130,000</span></div>
+          <div class="sumrow"><span class="k">Descuento</span><span style="color:var(--warn)">− $ 130,000</span></div>
+          <div class="discount"><div class="field"><span class="cur" style="color:var(--ink3)">%</span><input value="0" aria-label="Descuento %"></div><span style="font-size:.75rem;color:var(--ink3)">o monto fijo</span></div>
+          <div class="sumrow total"><span class="k">Total</span><span>$ 7,000,000</span></div>
+          <span class="eyebrow" style="margin-top:14px">Pago</span>
+          <div class="seg"><button class="on">Contado</button><button>Crédito</button><button>Mixto</button></div>
+          <span class="eyebrow" style="margin-top:12px">Moneda</span>
+          <div class="seg"><button class="on">COP</button><button>USD</button></div>
+          <button class="btn primary" style="margin-top:14px">Registrar venta</button>
+          <div class="helper">Comprador ✓ · 2 piezas ✓ · total ✓ — listo para registrar. Las piezas pasan a «vendidas».</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabwrap"><div class="tabpill">
+    <button class="tab"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5"/></svg><span class="lbl">Inicio</span></button>
+    <button class="tab"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M3 8l4-2 4 2-4 2zM13 8l4-2 4 2-4 2zM8 16l4-2 4 2-4 2z"/></svg><span class="lbl">Lotes</span></button>
+    <button class="tab on"><span class="ind"></span><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-8"/></svg><span class="lbl">Ventas</span></button>
+    <button class="tab"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/></svg><span class="lbl">Directorio</span></button>
+    <button class="tab"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="lbl">Menú</span></button>
+  </div></div>
+</div></div>
+<script>
+document.getElementById('mode').addEventListener('click',function(){
+  var d=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',d?'light':'dark');this.textContent=d?'Modo oscuro':'Modo claro';
+});
+</script>
+</body>
+</html>

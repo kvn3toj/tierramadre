@@ -10,7 +10,8 @@ import type { Id } from './_generated/dataModel';
 import { pushTableRowToVercel } from './_lib/sheetSync';
 import { marshalRow } from './_lib/columnMaps';
 import { requireAccessLevel } from './_lib/authz';
-import { requireBotSecret } from './_lib/botAuth';
+import { requireBotSecret, isBotSecret } from './_lib/botAuth';
+import { isStaffSession } from './_lib/requireStaffSession';
 
 const tipoValidator = v.union(
   v.literal('gemas'),
@@ -30,13 +31,65 @@ const providerPatchValidator = v.object({
   notas: v.optional(v.string()),
 });
 
+/**
+ * Also read by anima-bot's `listProviders` (anima-bot/src/fotosintesis/
+ * client.ts) for a name picker in the Telegram wizard — it needs a provider's
+ * `_id` + `nombreORazonSocial`, not its `cedula`/`direccion`/`telefono`/
+ * `email`. Having `createViaBot` (below) does not justify handing the bot
+ * blanket read of every supplier's ID document (I2, 2026-08-05 review) — a
+ * supplier's cédula is regulated the same as a client's. So a bot-secret
+ * caller gets every row with the PII fields blanked to `undefined`
+ * (`cedula`, `direccion`, `telefono`, `email`, `notas`) — same `Doc<'providers'>`
+ * shape the staff path already returns (so nothing downstream has to special-
+ * case a narrower type), just redacted. A staff session still gets the full
+ * document, unchanged.
+ *
+ * NOTE for the coordinator: anima-bot's `listProviders` also reads `r.nit`
+ * (client.ts maps `nit: r.nit ? String(r.nit) : undefined`) — `nit` is NOT
+ * blanked below, so the bot keeps seeing it. Flagged rather than silently
+ * matching your stated `{_id, nombreORazonSocial}` shape: `nit` is a business
+ * tax id (public-register information in Colombia), not a personal cédula,
+ * and the bot's own code already depends on it to disambiguate providers
+ * with the same name. If you want it blanked too, add it to the constructed
+ * projection below — one line.
+ *
+ * PII lockdown item 2 (2026-08-06) fixed two more holes in the bot path:
+ *
+ * 1. `search` used to run against `row.cedula`/`row.email` BEFORE the bot
+ *    redaction — a bot-secret caller could use it as a substring oracle
+ *    (probe one character, see which provider still appears in the result)
+ *    and recover a supplier's full cédula in ~10 calls per character even
+ *    though the OUTPUT was redacted. The bot branch now matches only
+ *    `nombreORazonSocial`/`nit`; the staff branch is unchanged.
+ * 2. The redaction was `{ ...p, cedula: undefined, ... }` — a spread that
+ *    ships every future schema field to the bot by default (fail OPEN: add
+ *    a new PII column later and it leaks silently). Replaced with a
+ *    constructed object that NAMES every field explicitly (fail closed: a
+ *    new column simply doesn't appear until someone deliberately adds it
+ *    here). Staff still get the full, unprojected document.
+ */
 export const list = query({
-  args: { search: v.optional(v.string()) },
-  handler: async (ctx, { search }) => {
+  args: {
+    search: v.optional(v.string()),
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
+  },
+  handler: async (ctx, { search, sessionToken, botSecret }) => {
+    const staff = await isStaffSession(sessionToken);
+    const bot = !staff && isBotSecret(botSecret);
+    if (!staff && !bot) return [];
     const all = await ctx.db.query('providers').collect();
-    const filtered = search
+    const s = search?.toLowerCase();
+    const filtered = s
       ? all.filter((row) => {
-          const s = search.toLowerCase();
+          if (bot) {
+            // Public-register fields only — never cedula/email, or `search`
+            // becomes a PII substring oracle for a bot-secret caller.
+            return (
+              row.nombreORazonSocial.toLowerCase().includes(s) ||
+              (row.nit ?? '').toLowerCase().includes(s)
+            );
+          }
           return (
             row.nombreORazonSocial.toLowerCase().includes(s) ||
             (row.nit ?? '').toLowerCase().includes(s) ||
@@ -45,15 +98,40 @@ export const list = query({
           );
         })
       : all;
-    return filtered.sort((a, b) =>
+    const sorted = filtered.sort((a, b) =>
       a.nombreORazonSocial.localeCompare(b.nombreORazonSocial),
     );
+    if (bot) {
+      // Constructed projection, not a spread — see doc comment above.
+      return sorted.map((p) => ({
+        _id: p._id,
+        _creationTime: p._creationTime,
+        nombreORazonSocial: p.nombreORazonSocial,
+        nit: p.nit,
+        tipo: p.tipo,
+        rowIndex: p.rowIndex,
+        lastPulledAt: p.lastPulledAt,
+        lastPushedAt: p.lastPushedAt,
+        syncStatus: p.syncStatus,
+        syncError: p.syncError,
+        pendingPreviousIdValue: p.pendingPreviousIdValue,
+        cedula: undefined,
+        direccion: undefined,
+        telefono: undefined,
+        email: undefined,
+        notas: undefined,
+      }));
+    }
+    return sorted;
   },
 });
 
 export const get = query({
-  args: { id: v.id('providers') },
-  handler: async (ctx, { id }) => ctx.db.get(id),
+  args: { id: v.id('providers'), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { id, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
+    return ctx.db.get(id);
+  },
 });
 
 const createArgs = {

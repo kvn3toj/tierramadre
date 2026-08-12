@@ -25,7 +25,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { TreasureItem } from '../../types';
 import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
 import { cssTransition, blurValues, zIndex, defaultShadows } from '../../design-system';
-import { formatCarats } from '../../utils/formatting';
+import { formatWeightLabel } from '../../utils/formatting';
 
 interface RecentlyViewedCarouselProps {
   /** Array of recently viewed treasure items */
@@ -294,7 +294,7 @@ function RecentItemCard({
 }) {
   const { formatCurrency } = useCurrencyFormat();
   const displayName = item.nombre.replace(/^L:.*?\s/, '').replace(/^L:/, '').trim();
-  const weight = typeof item.peso === 'number' ? `${formatCarats(item.peso)} ct` : item.metalType || '';
+  const weight = formatWeightLabel(item);
 
   return (
     <Tooltip

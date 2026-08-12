@@ -16,13 +16,21 @@ const crons = cronJobs();
  * urgent cases.
  *
  * Every run fetches the whole sheet (Vercel + Sheets bandwidth) and full-table
- * reads the mirror to reconcile (Convex DB bandwidth). At 5 min that was 288
- * pulls/day even when idle; 15 min cuts that ~3× with no customer impact.
+ * reads the mirror to reconcile (Convex DB bandwidth) — the single biggest
+ * recurring Convex-bandwidth consumer.
+ *
+ * FREE-TIER POLICY (spreadsheet-first, 2026-07-21): the SPREADSHEET is the
+ * source of truth and dev reads it directly, so Convex must not burn bandwidth
+ * polling all day. Throttled from 15 min → DAILY (96 pulls/day → 1). Urgent
+ * out-of-band sheet edits are covered by the toolbar's manual "Resync from
+ * sheet" button and the event-driven `/sync/foto` delta endpoint (Apps Script +
+ * "🔄 Convex Sync"). To pause even the daily pull, set env `INVENTORY_PULL_CRON`
+ * to anything other than "on" — `_pullFromSheet` no-ops (see products.ts).
  */
 crons.interval(
   'pull inventory from sheet',
-  { minutes: 15 },
-  internal.products._pullFromSheet,
+  { hours: 24 },
+  internal.products._pullFromSheetCron,
   {},
 );
 

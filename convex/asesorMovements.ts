@@ -49,6 +49,7 @@ import type { Id } from './_generated/dataModel';
 import { pushTableRowToVercel } from './_lib/sheetSync';
 import { COLUMN_MAPS } from './_lib/columnMaps';
 import { requireAccessLevel } from './_lib/authz';
+import { isStaffSession } from './_lib/requireStaffSession';
 
 const registerArgs = {
   itemId: v.string(),
@@ -105,8 +106,13 @@ function todayISODate(): string {
 
 /** Last N movements for one item — powers the drawer's "Historial" panel. */
 export const listByItem = query({
-  args: { itemId: v.string(), limit: v.optional(v.number()) },
-  handler: async (ctx, { itemId, limit }) => {
+  args: {
+    itemId: v.string(),
+    limit: v.optional(v.number()),
+    sessionToken: v.optional(v.string()),
+  },
+  handler: async (ctx, { itemId, limit, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const rows = await ctx.db
       .query('asesorMovements')
       .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
@@ -118,8 +124,13 @@ export const listByItem = query({
 
 /** Full history for one asesor — that asesor's own kardex. */
 export const listByAsesor = query({
-  args: { asesorNombre: v.string(), limit: v.optional(v.number()) },
-  handler: async (ctx, { asesorNombre, limit }) => {
+  args: {
+    asesorNombre: v.string(),
+    limit: v.optional(v.number()),
+    sessionToken: v.optional(v.string()),
+  },
+  handler: async (ctx, { asesorNombre, limit, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const rows = await ctx.db
       .query('asesorMovements')
       .withIndex('by_asesorNombre', (q) => q.eq('asesorNombre', asesorNombre))
@@ -131,8 +142,12 @@ export const listByAsesor = query({
 
 /** Most recent movements across every asesor — for a global ledger view. */
 export const listRecent = query({
-  args: { limit: v.optional(v.number()) },
-  handler: async (ctx, { limit }) => {
+  args: {
+    limit: v.optional(v.number()),
+    sessionToken: v.optional(v.string()),
+  },
+  handler: async (ctx, { limit, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     return await ctx.db
       .query('asesorMovements')
       .order('desc')
@@ -377,6 +392,105 @@ export const _registerReturn = internalMutation({
   },
 });
 
+/**
+ * BACKFILL (one-off) — reconstruct historical kardex movement records lost in
+ * the 2026-07-22 SOT v3 cutover (the asesorMovements rows did not migrate to the
+ * new Convex deployment, so the ledger came up empty even though the items were
+ * already in their post-movement estado).
+ *
+ * UNLIKE _registerHandoff/_registerReturn this does NOT enforce the forward-only
+ * estado guard and does NOT patch productInventory.estado — the estado is
+ * already correct (pulled from the sheet); we only re-create the audit rows so
+ * the ledger + comprobante lookup work again. `estadoAnterior/estadoNuevo` are
+ * passed in from the historical record (the signed hoja). Idempotent by
+ * `movimientoId`: re-running skips rows already present. Not pushed to Sheets
+ * (syncStatus 'synced') — these are historical, the paper/PDF is the origin.
+ */
+export const _backfillMovements = internalMutation({
+  args: {
+    editorEmail: v.string(),
+    movements: v.array(
+      v.object({
+        itemId: v.string(),
+        tipo: v.union(v.literal('entrega'), v.literal('devolucion')),
+        asesorNombre: v.string(),
+        asesorId: v.optional(v.string()),
+        cantidad: v.optional(v.number()),
+        precio: v.optional(v.number()),
+        fecha: v.string(),
+        notas: v.optional(v.string()),
+        condicion: v.optional(v.string()),
+        kardexEventId: v.optional(v.string()),
+        entregadoPorNombre: v.optional(v.string()),
+        estadoAnterior: v.string(),
+        estadoNuevo: v.string(),
+        comprobanteUrl: v.optional(v.string()),
+        movimientoId: v.string(),
+      }),
+    ),
+  },
+  handler: async (ctx, { editorEmail, movements }) => {
+    const all = await ctx.db.query('asesorMovements').collect();
+    const seen = new Set(all.map((r) => r.movimientoId));
+    let maxRow = all.reduce((m, r) => Math.max(m, r.rowIndex), 1);
+    const now = new Date().toISOString();
+    const out: Array<{
+      itemId: string;
+      movimientoId: string;
+      skipped: boolean;
+    }> = [];
+    for (const m of movements) {
+      if (seen.has(m.movimientoId)) {
+        out.push({
+          itemId: m.itemId,
+          movimientoId: m.movimientoId,
+          skipped: true,
+        });
+        continue;
+      }
+      const product = await ctx.db
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', m.itemId))
+        .first();
+      maxRow += 1;
+      await ctx.db.insert('asesorMovements', {
+        itemId: m.itemId,
+        itemNombre: product?.nombre,
+        tipo: m.tipo,
+        asesorNombre: m.asesorNombre,
+        asesorId: m.asesorId,
+        cantidad: m.cantidad,
+        precio: m.precio,
+        fecha: m.fecha,
+        notas: m.notas,
+        condicion: m.condicion,
+        kardexEventId: m.kardexEventId,
+        entregadoPorNombre: m.entregadoPorNombre,
+        registradoPorEmail: editorEmail,
+        registradoPorNombre: 'backfill-kardex',
+        estadoAnterior: m.estadoAnterior,
+        estadoNuevo: m.estadoNuevo,
+        movimientoId: m.movimientoId,
+        comprobanteUrl: m.comprobanteUrl,
+        rowIndex: maxRow,
+        lastPulledAt: now,
+        syncStatus: 'synced' as const,
+      });
+      seen.add(m.movimientoId);
+      out.push({
+        itemId: m.itemId,
+        movimientoId: m.movimientoId,
+        skipped: false,
+      });
+    }
+    return {
+      inserted: out.filter((o) => !o.skipped).length,
+      skipped: out.filter((o) => o.skipped).length,
+      out,
+    };
+  },
+});
+
 // =============================================================================
 // ACTIONS — public entry points (verify the caller, then delegate)
 // =============================================================================
@@ -517,8 +631,12 @@ export const registerReturnBatch = action({
 
 /** All movements from one multi-item event — powers the PDF comprobante. */
 export const listByKardexEventId = query({
-  args: { kardexEventId: v.string() },
-  handler: async (ctx, { kardexEventId }) => {
+  args: {
+    kardexEventId: v.string(),
+    sessionToken: v.optional(v.string()),
+  },
+  handler: async (ctx, { kardexEventId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     return await ctx.db
       .query('asesorMovements')
       .withIndex('by_kardexEventId', (q) =>
@@ -592,14 +710,27 @@ export const setComprobanteUrl = action({
   },
 });
 
-/** Comprobante + event summary for one kardex event. Plain read, no auth gate —
- *  mirrors `lots:list` / `lotItems:search`, the queries the anima-bot already
- *  calls unauthenticated (see anima-bot/src/fotosintesis/client.ts). Returns
- *  null when the event doesn't exist; `comprobanteUrl` is undefined when the
- *  PDF was never generated. */
+/** Comprobante + event summary for one kardex event.
+ *
+ * GATED (2026-08-05, F7): was "plain read, no auth gate — mirrors
+ * `lots:list` / `lotItems:search`, the queries the anima-bot already calls
+ * unauthenticated" — that was the vulnerability, not a design to preserve.
+ * Now requires a verified staff session (see `_lib/requireStaffSession.ts`).
+ * Staff-only, NOT staff-or-bot: unlike `lots.list`/`lotItems.search`/
+ * `lotItems.sumPreponderancia`/`lotItems.getByItemId`/`providers.list`/
+ * `products.list`, a full read of anima-bot/src/fotosintesis/client.ts
+ * (2026-08-05) found no call to this query or to `kardexEventId` anywhere in
+ * that repo — the bot's kardex movements go through the separate
+ * `movimientosV4:*ViaBot` actions (a different Convex module, already
+ * bot-secret gated), not through `asesorMovements`. If that changes, extend
+ * this the same way the other six queries were extended, not before.
+ *
+ * Returns null when the event doesn't exist OR the caller isn't staff;
+ * `comprobanteUrl` is undefined when the PDF was never generated. */
 export const getComprobante = query({
-  args: { kardexEventId: v.string() },
-  handler: async (ctx, { kardexEventId }) => {
+  args: { kardexEventId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { kardexEventId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
     const rows = await ctx.db
       .query('asesorMovements')
       .withIndex('by_kardexEventId', (q) =>

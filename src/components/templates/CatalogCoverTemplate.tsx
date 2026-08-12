@@ -187,7 +187,7 @@ export default function CatalogCoverTemplate({
   subtitle = 'Conecta con tu esencia ancestral',
   date = 'NOV 2025',
   previewImages = [],
-  logoUrl = '/logo-tierra-madre.png',
+  logoUrl = '/logo-brand.png',
 }: CatalogCoverTemplateProps) {
   return (
     <SlideContainer id={id}>
@@ -210,7 +210,8 @@ export default function CatalogCoverTemplate({
             src={logoUrl}
             alt="Tierra Madre"
             sx={{
-              height: 85,
+              // Full lockup: needs ≥80px height for the slogan to stay legible
+              height: 120,
               width: 'auto',
               filter: 'brightness(1.05)',
             }}
@@ -252,7 +253,8 @@ export default function CatalogCoverTemplate({
                   #006B5A 30%,
                   #004D40 60%,
                   #00352D 100%)`,
-                clipPath: 'path("M65 20 C 35 -10, -10 35, 65 105 C 140 35, 95 -10, 65 20")',
+                clipPath:
+                  'path("M65 20 C 35 -10, -10 35, 65 105 C 140 35, 95 -10, 65 20")',
                 boxShadow: `
                   0 0 50px ${COLORS.emerald}30,
                   inset 0 0 30px rgba(255, 255, 255, 0.1)

@@ -8,9 +8,10 @@
  *   admin can review past conversations without keeping full transcripts.
  */
 
-import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
-import { ITEM_SCAN_CAP } from "./_lib/aiCaps";
+import { query, mutation } from './_generated/server';
+import { v } from 'convex/values';
+import { ITEM_SCAN_CAP } from './_lib/aiCaps';
+import { isStaffSession } from './_lib/requireStaffSession';
 
 /**
  * Single source of truth for everything Fotosynthia sees about the atelier.
@@ -37,9 +38,30 @@ const INVITATION_SCAN_CAP = 2000;
 // same value — see that file for the drift rationale.
 
 export const workspaceSnapshot = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { sessionToken }) => {
     const now = new Date().toISOString();
+
+    if (!(await isStaffSession(sessionToken))) {
+      return {
+        generatedAt: now,
+        counts: {
+          lots: 0,
+          sales: 0,
+          providers: 0,
+          ambassadors: 0,
+          finalClients: 0,
+          invitations: 0,
+        },
+        lotsByState: {},
+        salesByState: {},
+        recentLots: [],
+        recentSales: [],
+        syncErrors: { lots: 0, sales: 0, providers: 0, clients: 0 },
+        ambassadorActivity: { active: 0, topInviters: [] },
+        candidateItems: [],
+      };
+    }
 
     // lots / sales / providers / clients are bounded domain tables (the
     // atelier's compras/ventas/proveedores/clientes ledgers). Each one feeds an
@@ -58,12 +80,12 @@ export const workspaceSnapshot = query({
     // any realistic invite volume) instead of growing the read without bound.
     const [lots, sales, providers, clients, invitations, recentItems] =
       await Promise.all([
-        ctx.db.query("lots").collect(),
-        ctx.db.query("sales").collect(),
-        ctx.db.query("providers").collect(),
-        ctx.db.query("clients").collect(),
-        ctx.db.query("invitations").order("desc").take(INVITATION_SCAN_CAP),
-        ctx.db.query("productInventory").order("desc").take(ITEM_SCAN_CAP),
+        ctx.db.query('lots').collect(),
+        ctx.db.query('sales').collect(),
+        ctx.db.query('providers').collect(),
+        ctx.db.query('clients').collect(),
+        ctx.db.query('invitations').order('desc').take(INVITATION_SCAN_CAP),
+        ctx.db.query('productInventory').order('desc').take(ITEM_SCAN_CAP),
       ]);
 
     const lotsByState = lots.reduce<Record<string, number>>((acc, lot) => {
@@ -103,14 +125,14 @@ export const workspaceSnapshot = query({
       }));
 
     const syncErrors = {
-      lots: lots.filter((l) => l.syncStatus === "error").length,
-      sales: sales.filter((s) => s.syncStatus === "error").length,
-      providers: providers.filter((p) => p.syncStatus === "error").length,
-      clients: clients.filter((c) => c.syncStatus === "error").length,
+      lots: lots.filter((l) => l.syncStatus === 'error').length,
+      sales: sales.filter((s) => s.syncStatus === 'error').length,
+      providers: providers.filter((p) => p.syncStatus === 'error').length,
+      clients: clients.filter((c) => c.syncStatus === 'error').length,
     };
 
-    const ambassadors = clients.filter((c) => c.tipo === "embajador");
-    const finalClients = clients.filter((c) => c.tipo === "final");
+    const ambassadors = clients.filter((c) => c.tipo === 'embajador');
+    const finalClients = clients.filter((c) => c.tipo === 'final');
 
     // Ambassador → guests recall (per the mempalace-tracked invitation
     // system). Top creators by active+pending invitation count so
@@ -133,7 +155,7 @@ export const workspaceSnapshot = query({
         active: 0,
       };
       entry.total += 1;
-      if (inv.status === "active" || inv.status === "pending") {
+      if (inv.status === 'active' || inv.status === 'pending') {
         entry.active += 1;
       }
       inviteCounts.set(key, entry);
@@ -149,7 +171,7 @@ export const workspaceSnapshot = query({
       .filter((it) => !!it.loteId)
       .map((it) => ({
         itemId: it.itemId,
-        nombre: it.nombre ?? "",
+        nombre: it.nombre ?? '',
         loteId: it.loteId,
         ...(it.estado ? { estado: it.estado } : {}),
       }));
@@ -171,7 +193,7 @@ export const workspaceSnapshot = query({
       syncErrors,
       ambassadorActivity: {
         active: invitations.filter(
-          (i) => i.status === "active" || i.status === "pending",
+          (i) => i.status === 'active' || i.status === 'pending',
         ).length,
         topInviters,
       },
@@ -198,8 +220,8 @@ export const recordSummary = mutation({
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
-      .query("aiConversations")
-      .withIndex("by_threadId", (q) => q.eq("threadId", args.threadId))
+      .query('aiConversations')
+      .withIndex('by_threadId', (q) => q.eq('threadId', args.threadId))
       .first();
 
     const now = new Date().toISOString();
@@ -218,7 +240,7 @@ export const recordSummary = mutation({
       return existing._id;
     }
 
-    return ctx.db.insert("aiConversations", {
+    return ctx.db.insert('aiConversations', {
       threadId: args.threadId,
       userEmail,
       userName: args.userName,
@@ -239,14 +261,19 @@ export const recordSummary = mutation({
  * consumes it yet.
  */
 export const listMyThreads = query({
-  args: { userEmail: v.string(), limit: v.optional(v.number()) },
-  handler: async (ctx, { userEmail, limit }) => {
+  args: {
+    userEmail: v.string(),
+    limit: v.optional(v.number()),
+    sessionToken: v.optional(v.string()),
+  },
+  handler: async (ctx, { userEmail, limit, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const rows = await ctx.db
-      .query("aiConversations")
-      .withIndex("by_userEmail", (q) =>
-        q.eq("userEmail", userEmail.toLowerCase().trim()),
+      .query('aiConversations')
+      .withIndex('by_userEmail', (q) =>
+        q.eq('userEmail', userEmail.toLowerCase().trim()),
       )
-      .order("desc")
+      .order('desc')
       .collect();
     return rows.slice(0, limit ?? 20);
   },

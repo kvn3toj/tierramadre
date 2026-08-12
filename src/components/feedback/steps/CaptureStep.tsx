@@ -7,10 +7,11 @@
  */
 
 import { useState, useCallback } from 'react';
-import { Box, Typography, Button, CircularProgress } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
 import { alpha } from '@mui/material/styles';
+import { Button } from '../../../design-system/components/Button';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 import { getMainScrollY } from '../../../utils/mainScroll';
 
@@ -25,7 +26,7 @@ export default function CaptureStep({
   onCapture,
   onClose,
   onStartCaptureMode,
-  existingScreenshot
+  existingScreenshot,
 }: CaptureStepProps) {
   const [isCapturing, setIsCapturing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -126,7 +127,9 @@ export default function CaptureStep({
             <>
               Te ayudaré a reportar un problema.
               <br />
-              <strong>Primero, captura la pantalla donde está el problema.</strong>
+              <strong>
+                Primero, captura la pantalla donde está el problema.
+              </strong>
             </>
           )}
         </Typography>
@@ -151,7 +154,8 @@ export default function CaptureStep({
           >
             📸 Al presionar, este menú se cerrará.
             <br />
-            Navega a la pantalla con el problema y presiona el botón flotante para capturar.
+            Navega a la pantalla con el problema y presiona el botón flotante
+            para capturar.
           </Typography>
         </Box>
       )}
@@ -195,72 +199,43 @@ export default function CaptureStep({
       )}
 
       {/* Action buttons */}
-      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 2,
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+        }}
+      >
         {existingScreenshot ? (
           <>
             {/* Continue with existing */}
             <Button
-              variant="contained"
-              size="large"
+              variant="primary"
+              size="lg"
               startIcon={<PhotoLibraryIcon />}
               onClick={() => onCapture(existingScreenshot)}
-              sx={{
-                bgcolor: emeraldCore.primary,
-                px: 3,
-                py: 1.5,
-                borderRadius: 2,
-                fontSize: '0.95rem',
-                '&:hover': {
-                  bgcolor: emeraldCore.dark,
-                },
-              }}
             >
               Usar esta captura
             </Button>
             {/* Capture new */}
             <Button
               variant="outlined"
-              size="large"
-              startIcon={isCapturing ? <CircularProgress size={20} color="inherit" /> : <CameraAltIcon />}
+              size="lg"
+              startIcon={<CameraAltIcon />}
               onClick={handleStartCaptureMode}
-              disabled={isCapturing}
-              sx={{
-                borderColor: alpha('#fff', 0.3),
-                color: 'white',
-                px: 3,
-                py: 1.5,
-                borderRadius: 2,
-                fontSize: '0.95rem',
-                '&:hover': {
-                  borderColor: 'white',
-                  bgcolor: alpha('#fff', 0.05),
-                },
-              }}
+              loading={isCapturing}
             >
               Capturar nueva
             </Button>
           </>
         ) : (
           <Button
-            variant="contained"
-            size="large"
-            startIcon={isCapturing ? <CircularProgress size={20} color="inherit" /> : <CameraAltIcon />}
+            variant="primary"
+            size="lg"
+            startIcon={<CameraAltIcon />}
             onClick={handleStartCaptureMode}
-            disabled={isCapturing}
-            sx={{
-              bgcolor: emeraldCore.primary,
-              px: 4,
-              py: 1.5,
-              borderRadius: 2,
-              fontSize: '1rem',
-              '&:hover': {
-                bgcolor: emeraldCore.dark,
-              },
-              '&:disabled': {
-                bgcolor: alpha(emeraldCore.primary, 0.5),
-                color: 'white',
-              },
-            }}
+            loading={isCapturing}
           >
             {isCapturing ? 'Preparando...' : 'Iniciar Captura'}
           </Button>
@@ -271,7 +246,7 @@ export default function CaptureStep({
       {error && (
         <Typography
           sx={{
-            color: '#f44336',
+            color: 'var(--tm-danger)',
             fontSize: '0.875rem',
           }}
         >
@@ -280,17 +255,7 @@ export default function CaptureStep({
       )}
 
       {/* Cancel option */}
-      <Button
-        variant="text"
-        onClick={onClose}
-        sx={{
-          color: alpha('#fff', 0.5),
-          '&:hover': {
-            color: 'white',
-            bgcolor: 'transparent',
-          },
-        }}
-      >
+      <Button variant="plain" onClick={onClose}>
         Cancelar
       </Button>
     </Box>

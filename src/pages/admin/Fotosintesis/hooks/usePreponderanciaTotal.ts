@@ -1,4 +1,5 @@
-import { useConvexQuery, convexApi } from "../../../../lib/convex-safe";
+import { useConvexQuery, convexApi } from '../../../../lib/convex-safe';
+import { readFreshSessionToken } from '../../../../utils/sessionToken';
 
 export interface PreponderanciaTotal {
   /** Cumulative `preponderancia` across all items in the lot. */
@@ -22,6 +23,7 @@ export interface PreponderanciaTotal {
 export function usePreponderanciaTotal(loteId: string): PreponderanciaTotal {
   const result = useConvexQuery(convexApi.lotItems.sumPreponderancia, {
     loteId,
+    sessionToken: readFreshSessionToken() ?? undefined,
   });
   if (!result) {
     return { sum: 0, count: 0, remaining: 100, overflow: 0 };

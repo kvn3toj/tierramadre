@@ -1,10 +1,19 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Box } from '@mui/material';
-import { getFoto, appShell, bottomBarClearance } from '../../../design-system';
+import {
+  getFoto,
+  appShell,
+  bottomBarClearance,
+  TabBar,
+} from '../../../design-system';
+import {
+  FOTO_SLOTS,
+  fotoTabTheme,
+} from '../../../components/navigation/tabBarConfig';
 import { convexApi, useConvexClient } from '../../../lib/convex-safe';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 import { FotoTopbar, type Crumb } from './components/FotoTopbar';
-import { FotoTabBar } from './components/FotoTabBar';
 import { FotoRouteMenu } from './components/FotoRouteMenu';
 import { useFotosintesisHotkeys } from './hooks/useFotosintesisHotkeys';
 import {
@@ -65,7 +74,10 @@ export default function FotosintesisLayout() {
     (product: { itemId: string; loteId?: string }) => {
       if (!convexClient) return;
       convexClient
-        .query(convexApi.lotItems.getByItemId, { itemId: product.itemId })
+        .query(convexApi.lotItems.getByItemId, {
+          itemId: product.itemId,
+          sessionToken: readFreshSessionToken() ?? undefined,
+        })
         .then((lotItem) => {
           if (lotItem) {
             navigate(
@@ -196,6 +208,9 @@ export default function FotosintesisLayout() {
     if (path === '/admin/fotosintesis') {
       return [{ label: 'Inicio' }];
     }
+    if (path.startsWith('/admin/fotosintesis/items')) {
+      return [base, { label: 'Items' }];
+    }
     if (path === '/admin/fotosintesis/lots') {
       return [base, { label: 'Lotes' }];
     }
@@ -279,9 +294,14 @@ export default function FotosintesisLayout() {
         </Box>
       </Box>
 
-      {/* Fotosíntesis-native bottom bar + full route menu. The global iOS tab
-          bar suppresses itself inside this prefix so these own the chrome. */}
-      <FotoTabBar onMenuClick={() => setMenuOpen(true)} menuOpen={menuOpen} />
+      {/* Unified DS v3 TabBar in the Foto scope (theme-as-data). The global iOS
+          tab bar suppresses itself inside this prefix so these own the chrome. */}
+      <TabBar
+        slots={FOTO_SLOTS}
+        theme={fotoTabTheme('light')}
+        onAction={() => setMenuOpen(true)}
+        actionOpen={menuOpen}
+      />
       <FotoRouteMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <ProductoSpotlight

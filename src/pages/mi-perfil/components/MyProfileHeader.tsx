@@ -9,10 +9,11 @@
  */
 
 import { useRef, useState, useEffect } from 'react';
-import { Box, Typography, Chip, Avatar, alpha } from '@mui/material';
+import { Box, Typography, Avatar } from '@mui/material';
 import { Shield, Star, Award } from 'lucide-react';
 import {
-  emeraldCore,
+  Badge,
+  type BadgeTone,
   iosTypographyScale,
   primitiveSpacing as spacing,
   radius,
@@ -27,11 +28,11 @@ interface MyProfileHeaderProps {
 
 const ROLE_CONFIG: Record<
   string,
-  { label: string; icon: React.ElementType; color: string }
+  { label: string; icon: React.ElementType; tone: BadgeTone }
 > = {
-  Admin: { label: 'Admin', icon: Shield, color: '#8C928F' },
-  Embajador: { label: 'Embajador', icon: Star, color: emeraldCore.dark },
-  Asesor: { label: 'Asesor', icon: Award, color: emeraldCore.primary },
+  Admin: { label: 'Admin', icon: Shield, tone: 'neutral' },
+  Embajador: { label: 'Embajador', icon: Star, tone: 'accent' },
+  Asesor: { label: 'Asesor', icon: Award, tone: 'accent' },
 };
 
 export function MyProfileHeader({
@@ -79,16 +80,16 @@ export function MyProfileHeader({
           zIndex: zIndex.sticky,
           transform: showMiniBar ? 'translateY(0)' : 'translateY(-100%)',
           opacity: showMiniBar ? 1 : 0,
-          transition: `transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease`,
+          transition:
+            'transform var(--tm-base) var(--tm-ease), opacity var(--tm-fast) var(--tm-ease)',
           pointerEvents: showMiniBar ? 'auto' : 'none',
           mx: -spacing.md, // bleed to page edge
           px: spacing.md,
           py: spacing.xs,
-          backdropFilter: 'blur(20px) saturate(1.6)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
-          bgcolor: 'rgba(var(--surface-primary-rgb), 0.82)',
-          borderBottom: '0.5px solid var(--border-default)',
-          boxShadow: showMiniBar ? 'var(--shadow-sm)' : 'none',
+          // In-page sticky bar, not the app top nav — DS3 keeps glass to the
+          // top nav and tab bar, so this is a solid surface with a hairline.
+          bgcolor: 'var(--tm-surface)',
+          borderBottom: '1px solid var(--tm-hairline)',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
@@ -98,11 +99,11 @@ export function MyProfileHeader({
             sx={{
               width: 30,
               height: 30,
-              border: `1.5px solid ${alpha(config.color, 0.3)}`,
+              border: '1.5px solid var(--tm-border)',
               fontSize: '0.75rem',
               fontWeight: 700,
-              bgcolor: alpha(config.color, 0.15),
-              color: config.color,
+              bgcolor: 'var(--tm-well)',
+              color: 'var(--tm-accent)',
             }}
           >
             {asesor.name?.charAt(0).toUpperCase()}
@@ -123,20 +124,10 @@ export function MyProfileHeader({
             {asesor.name}
           </Typography>
 
-          <Chip
+          <Badge
+            tone={config.tone}
             icon={<Icon size={10} />}
             label={config.label}
-            size="small"
-            sx={{
-              height: 20,
-              fontSize: '0.6rem',
-              fontWeight: 600,
-              bgcolor: alpha(config.color, 0.12),
-              color: config.color,
-              border: `1px solid ${alpha(config.color, 0.25)}`,
-              '& .MuiChip-icon': { color: config.color },
-              flexShrink: 0,
-            }}
           />
         </Box>
       </Box>
@@ -151,21 +142,10 @@ export function MyProfileHeader({
           px: 1.75,
           py: 1.75,
           borderRadius: radius.lg,
-          background: `linear-gradient(135deg, ${alpha(config.color, 0.08)} 0%, transparent 65%)`,
-          border: `1px solid ${alpha(config.color, 0.14)}`,
+          bgcolor: 'var(--tm-surface)',
+          border: '1px solid var(--tm-border)',
           position: 'relative',
           overflow: 'hidden',
-          // Decorative corner accent
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            width: 80,
-            height: 80,
-            background: `radial-gradient(circle at top right, ${alpha(config.color, 0.22)} 0%, transparent 70%)`,
-            pointerEvents: 'none',
-          },
         }}
       >
         <Avatar
@@ -174,13 +154,12 @@ export function MyProfileHeader({
           sx={{
             width: 56,
             height: 56,
-            border: `2px solid ${alpha(config.color, 0.35)}`,
+            border: '2px solid var(--tm-border)',
             fontSize: '1.3rem',
             fontWeight: 700,
-            bgcolor: alpha(config.color, 0.15),
-            color: config.color,
+            bgcolor: 'var(--tm-well)',
+            color: 'var(--tm-accent)',
             flexShrink: 0,
-            boxShadow: `0 6px 18px ${alpha(config.color, 0.18)}`,
           }}
         >
           {asesor.name?.charAt(0).toUpperCase()}
@@ -205,21 +184,10 @@ export function MyProfileHeader({
             >
               {asesor.name}
             </Typography>
-            <Chip
+            <Badge
+              tone={config.tone}
               icon={<Icon size={11} />}
               label={config.label}
-              size="small"
-              sx={{
-                height: 20,
-                fontSize: '0.65rem',
-                fontWeight: 600,
-                bgcolor: alpha(config.color, 0.14),
-                color: config.color,
-                border: `1px solid ${alpha(config.color, 0.28)}`,
-                '& .MuiChip-icon': { color: config.color, ml: 0.5, mr: -0.25 },
-                '& .MuiChip-label': { px: 0.75 },
-                flexShrink: 0,
-              }}
             />
           </Box>
 

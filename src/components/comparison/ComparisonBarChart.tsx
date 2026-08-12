@@ -5,23 +5,31 @@
 import { Box, Typography, alpha } from '@mui/material';
 import { TreasureItem } from '../../types';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { cssTransition, accentColors } from '../../design-system';
+import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import {
+  cssTransition,
+  accentColors,
+  getQuietEmerald,
+  qeAccent,
+  whiteAlpha,
+} from '../../design-system';
 
 interface ComparisonBarChartProps {
   items: TreasureItem[];
 }
 
 // High-contrast color palette for better differentiation
+// static context: no theme mode available (module-level array, outside React render)
 const itemColors = [
-  emeraldCore.primary,  // Emerald green
-  accentColors.error.light,  // Coral red
-  accentColors.cyan.light,  // Turquoise
+  qeAccent.light.pure, // Emerald green
+  accentColors.error.light, // Coral red
+  accentColors.cyan.light, // Turquoise
 ];
 
 export default function ComparisonBarChart({ items }: ComparisonBarChartProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const qe = getQuietEmerald(mode);
 
   // Calculate normalized values for chart
   const prices = items.map((i) => i.precioCOP);
@@ -35,14 +43,20 @@ export default function ComparisonBarChart({ items }: ComparisonBarChartProps) {
 
   const maxPrice = Math.max(...prices);
   const maxWeight = Math.max(...weights);
-  const maxPPC = Math.max(...pricePerCarats.filter(p => p > 0));
+  const maxPPC = Math.max(...pricePerCarats.filter((p) => p > 0));
 
   const hasLooseStones = pricePerCarats.some((p) => p > 0);
 
   // Normalize to percentage (0-100)
-  const normalizedPrices = prices.map((p) => (maxPrice > 0 ? (p / maxPrice) * 100 : 0));
-  const normalizedWeights = weights.map((w) => (maxWeight > 0 ? (w / maxWeight) * 100 : 0));
-  const normalizedPPC = pricePerCarats.map((p) => (maxPPC > 0 ? (p / maxPPC) * 100 : 0));
+  const normalizedPrices = prices.map((p) =>
+    maxPrice > 0 ? (p / maxPrice) * 100 : 0,
+  );
+  const normalizedWeights = weights.map((w) =>
+    maxWeight > 0 ? (w / maxWeight) * 100 : 0,
+  );
+  const normalizedPPC = pricePerCarats.map((p) =>
+    maxPPC > 0 ? (p / maxPPC) * 100 : 0,
+  );
 
   // Chart data
   const chartData = [
@@ -57,10 +71,12 @@ export default function ComparisonBarChart({ items }: ComparisonBarChartProps) {
         px: 1.5,
         py: 1,
         borderBottom: '1px solid',
-        borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
+        borderColor: isLight
+          ? surfacesLight.border.light
+          : surfacesDark.border.light,
         bgcolor: isLight
-          ? alpha(emeraldCore.primary, 0.02)
-          : alpha(emeraldCore.primary, 0.04),
+          ? alpha(qe.accentPure, 0.02)
+          : alpha(qe.accentPure, 0.04),
       }}
     >
       {/* Legend */}
@@ -71,7 +87,10 @@ export default function ComparisonBarChart({ items }: ComparisonBarChartProps) {
             .replace(/^L:/, '')
             .trim();
           return (
-            <Box key={item.item} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box
+              key={item.item}
+              sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+            >
               <Box
                 sx={{
                   width: 8,
@@ -83,7 +102,9 @@ export default function ComparisonBarChart({ items }: ComparisonBarChartProps) {
               <Typography
                 sx={{
                   fontSize: '0.6rem',
-                  color: isLight ? surfacesLight.text.secondary : surfacesDark.text.secondary,
+                  color: isLight
+                    ? surfacesLight.text.secondary
+                    : surfacesDark.text.secondary,
                   maxWidth: 60,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -146,7 +167,7 @@ export default function ComparisonBarChart({ items }: ComparisonBarChartProps) {
                         sx={{
                           fontSize: '0.5rem',
                           fontWeight: 700,
-                          color: '#fff',
+                          color: whiteAlpha(1),
                         }}
                       >
                         {initial}
@@ -157,7 +178,10 @@ export default function ComparisonBarChart({ items }: ComparisonBarChartProps) {
                       sx={{
                         height: 10,
                         borderRadius: 5,
-                        bgcolor: alpha(itemColors[idx % itemColors.length], 0.3),
+                        bgcolor: alpha(
+                          itemColors[idx % itemColors.length],
+                          0.3,
+                        ),
                         width: `${Math.max(value, 2)}%`,
                         transition: cssTransition.slow,
                         minWidth: 4,

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fotosíntesis · Inventario — v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@500;600&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#FFFFFF;--panel:#FAFAFA;--inset:#F4F5F4;--inset2:#ECEDEA;
+  --row:#FFFFFF;--rowHover:#F7F8F7;--rowActive:rgba(0,92,66,.06);
+  --edge:rgba(11,16,14,.09);--rule:rgba(11,16,14,.10);--edgeStrong:rgba(11,16,14,.20);
+  --ink:#0B100E;--ink2:#4A5251;--ink3:#5F6764;--mute:#9AA09D;--inverse:#FFFFFF;
+  --accent:#008C61;--deep:#006B4A;--soft:rgba(0,92,66,.08);--glow:rgba(0,140,98,.16);
+  --warn:#8A5F1B;--danger:#B33A2F;--gold:#8A6D1B;
+  --serif:'Cormorant',Georgia,serif;--ui:'Hanken Grotesk',-apple-system,sans-serif;--mono:'DM Mono',ui-monospace,monospace;--bevel:8px;
+}
+[data-theme="dark"]{
+  --canvas:#0B0D0C;--panel:#131614;--inset:#1B1F1D;--inset2:#232826;
+  --row:#0B0D0C;--rowHover:#121514;--rowActive:rgba(124,205,169,.08);
+  --edge:rgba(255,255,255,.08);--rule:rgba(255,255,255,.10);--edgeStrong:rgba(255,255,255,.2);
+  --ink:#EFF1EF;--ink2:#B0B6B3;--ink3:#7B807E;--mute:#555A58;--inverse:#0B0D0C;
+  --accent:#33C194;--deep:#5AD3A9;--soft:rgba(124,205,169,.1);--glow:rgba(124,205,169,.18);
+  --warn:#D9A94E;--danger:#D75348;--gold:#D9B24E;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#D7DDDB;font-family:var(--ui);color:var(--ink);padding:26px 14px 56px;background-image:radial-gradient(circle at 50% 0,#E7ECEA,#C7D0CD)}
+[data-theme="dark"] body{background:#060807;background-image:radial-gradient(circle at 50% 0,#101312,#050605)}
+.head{max-width:1240px;margin:0 auto 18px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.head .ov{font-family:var(--mono);font-size:.625rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.head h1{font-family:var(--serif);font-weight:500;font-size:1.9rem;line-height:1.04;color:#14181A}
+[data-theme="dark"] .head h1{color:#EAEDEB}
+.head p{color:#5C6360;font-size:.85rem;max-width:58ch;margin-top:2px}
+[data-theme="dark"] .head p{color:#9AA09D}
+.ctrl{font-family:var(--ui);font-weight:600;font-size:.8125rem;border-radius:8px;padding:9px 14px;border:1px solid var(--edge);background:var(--canvas);color:var(--ink);cursor:pointer}
+.win{max-width:1240px;margin:0 auto;border-radius:14px;overflow:hidden;background:var(--canvas);border:1px solid rgba(0,0,0,.12);box-shadow:0 30px 60px -30px rgba(0,0,0,.4)}
+.chrome{height:36px;background:var(--inset);border-bottom:1px solid var(--edge);display:flex;align-items:center;gap:7px;padding:0 13px}
+.chrome i{width:10px;height:10px;border-radius:999px;background:var(--edgeStrong);opacity:.5}
+.chrome .url{margin-left:10px;font-family:var(--mono);font-size:.6875rem;color:var(--ink3);background:var(--canvas);border:1px solid var(--edge);border-radius:6px;padding:3px 11px}
+.app{position:relative;min-height:660px;padding-bottom:84px}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 22px;border-bottom:1px solid var(--edge)}
+.topbar .bc{font-size:.82rem;color:var(--ink3)}.topbar .bc b{color:var(--ink);font-weight:600}
+.sync{font-family:var(--mono);font-size:.5625rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--edge);border-radius:999px;padding:4px 10px;display:flex;align-items:center;gap:5px}
+.sync .d{width:6px;height:6px;border-radius:999px;background:var(--accent)}
+.cont{max-width:1180px;margin:0 auto;padding:14px 22px 0}
+/* header */
+.ph{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap}
+.ph .l .ov{font-family:var(--mono);font-size:.5625rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.ph .l h2{font-family:var(--serif);font-weight:600;font-size:1.8rem;line-height:1;margin:2px 0 8px}
+.count{display:flex;align-items:baseline;gap:10px}
+.count .n{font-family:var(--mono);font-weight:500;font-size:2.2rem;line-height:1;font-variant-numeric:tabular-nums}
+.count .u{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+.bars{display:flex;align-items:flex-end;gap:3px;height:26px;margin-left:6px}
+.bars i{width:5px;background:color-mix(in srgb,var(--accent) 30%,var(--inset));border-radius:2px}
+.bars i.hi{background:var(--accent)}
+.ph .r{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.pstats{display:flex;gap:16px}
+.pstat{text-align:right}
+.pstat .v{font-family:var(--mono);font-weight:500;font-size:.95rem;font-variant-numeric:tabular-nums}
+.pstat .k{font-size:.68rem;color:var(--ink3);display:flex;align-items:center;gap:5px;justify-content:flex-end;margin-top:1px}
+.pstat .k .d{width:6px;height:6px;border-radius:999px}
+.d.ok{background:var(--accent)}.d.mid{background:var(--gold)}.d.no{background:var(--danger)}
+.pacts{display:flex;gap:8px}
+.btn{font-family:var(--ui);font-weight:600;font-size:.82rem;border-radius:8px;padding:8px 13px;border:1px solid transparent;cursor:pointer}
+.btn.primary{background:var(--deep);color:var(--inverse);clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.btn.ghost{background:var(--canvas);color:var(--ink);border-color:var(--edge)}
+/* filter row */
+.filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 0 10px}
+.search{display:flex;align-items:center;gap:8px;border:1px solid var(--edge);border-radius:8px;padding:8px 12px;background:var(--inset);color:var(--ink3);font-size:.82rem;min-width:230px}
+.search kbd{font-family:var(--mono);background:var(--canvas);border:1px solid var(--edge);border-radius:4px;padding:0 5px;font-size:.68rem;margin-left:auto}
+.seg{display:flex;border:1px solid var(--edge);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--canvas);color:var(--ink3);font-family:var(--ui);font-size:.72rem;font-weight:600;padding:8px 12px;cursor:pointer;border-right:1px solid var(--edge);white-space:nowrap;display:flex;align-items:center;gap:5px}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--deep);color:var(--inverse)}
+.seg button .d{width:6px;height:6px;border-radius:999px}
+.fchip{font-family:var(--ui);font-size:.75rem;font-weight:500;border:1px solid var(--edge);background:var(--canvas);color:var(--ink3);border-radius:7px;padding:7px 11px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.fchip.on{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,var(--edge));background:var(--soft)}
+/* two columns */
+.grid{display:grid;grid-template-columns:1fr 340px;gap:20px;padding:6px 0 22px;align-items:start}
+/* dense rows (row-not-card) */
+.list{border:1px solid var(--edge);border-radius:12px;overflow:hidden}
+.lrow{display:grid;grid-template-columns:62px 40px 1fr 120px 118px;align-items:center;gap:12px;padding:9px 14px;border-bottom:1px solid var(--rule);cursor:pointer;position:relative;transition:background 100ms}
+.lrow:last-child{border-bottom:0}
+.lrow:hover{background:var(--rowHover)}
+.lrow.sel{background:var(--rowActive)}
+.lrow.sel::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.lrow .ct{font-family:var(--mono);font-size:.85rem;font-variant-numeric:tabular-nums;text-align:right}
+.lrow .ct span{font-size:.6rem;color:var(--ink3)}
+.lrow .th{width:40px;height:40px;border-radius:7px;background:var(--inset);display:flex;align-items:center;justify-content:center}
+.lrow .th .g{width:18px;height:23px;background:linear-gradient(158deg,#3BD9AB,#00785C 60%,#00543E);clip-path:polygon(21% 0,79% 0,100% 21%,100% 79%,79% 100%,21% 100%,0 79%,0 21%)}
+.lrow .nm b{font-weight:600;font-size:.9rem}
+.lrow .nm .meta{font-family:var(--mono);font-size:.6rem;letter-spacing:.02em;color:var(--ink3);margin-top:1px}
+.lrow .pr{font-family:var(--mono);font-size:.85rem;font-variant-numeric:tabular-nums;text-align:right}
+/* status chip = dot + label (not color-only) */
+.stat{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.58rem;letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--edge);border-radius:999px;padding:4px 9px;color:var(--ink3);justify-self:end}
+.stat .d{width:6px;height:6px;border-radius:999px}
+.stat.ok{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 34%,var(--edge))}.stat.ok .d{background:var(--accent)}
+.stat.mid{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 34%,var(--edge))}.stat.mid .d{background:var(--gold)}
+.stat.no{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 34%,var(--edge))}.stat.no .d{background:var(--danger)}
+/* bandeja = inline editor */
+.rail{position:sticky;top:14px;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--canvas);border:1px solid var(--edge);border-radius:12px;padding:15px}
+.eyebrow{font-family:var(--mono);font-size:.5625rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:9px}
+.dhead{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.dhead .big{width:56px;height:56px;border-radius:10px;background:var(--inset);display:flex;align-items:center;justify-content:center;flex:0 0 56px}
+.dhead .big .g{width:26px;height:33px;background:linear-gradient(158deg,#3BD9AB,#00785C 60%,#00543E);clip-path:polygon(21% 0,79% 0,100% 21%,100% 79%,79% 100%,21% 100%,0 79%,0 21%)}
+.dhead .no{font-family:var(--mono);font-size:.58rem;letter-spacing:.06em;color:var(--ink3)}
+.dhead .nm{font-family:var(--serif);font-size:1.4rem;font-weight:600;line-height:1.05}
+.segsm{display:flex;border:1px solid var(--edge);border-radius:7px;overflow:hidden;margin-bottom:12px}
+.segsm button{flex:1;border:0;background:var(--canvas);color:var(--ink3);font-family:var(--ui);font-size:.65rem;font-weight:600;padding:7px 4px;cursor:pointer;border-right:1px solid var(--edge)}
+.segsm button:last-child{border-right:0}
+.segsm button.on{background:var(--deep);color:var(--inverse)}
+.led .lr{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:.8rem}
+.led .lr:last-child{border-bottom:0}
+.led .k{color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;font-size:.6rem}
+.led .v{font-variant-numeric:tabular-nums}
+.led .field{display:flex;align-items:center;border:1px solid var(--edge);border-radius:6px;background:var(--inset);height:30px;padding:0 8px;max-width:130px}
+.led .field:focus-within{background:var(--canvas);border-color:color-mix(in srgb,var(--accent) 50%,var(--edge))}
+.led .field .cur{font-size:.72rem;color:var(--ink3)}
+.led .field input{width:90px;border:0;background:transparent;font-family:var(--mono);font-size:.8rem;color:var(--ink);text-align:right;outline:none;font-variant-numeric:tabular-nums}
+.dacts{display:flex;gap:8px;margin-top:13px}
+.dacts .btn{flex:1;padding:9px}
+.act .ar{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--rule);font-size:.78rem;color:var(--ink2)}
+.act .ar:last-child{border-bottom:0}
+.act .ar .w{font-family:var(--mono);font-size:.68rem;color:var(--ink3)}
+/* tabbar */
+.tabwrap{position:absolute;left:0;right:0;bottom:0;padding:9px 16px 14px;pointer-events:none}
+.tabpill{display:flex;align-items:center;height:54px;max-width:520px;margin:0 auto;border-radius:27px;padding:4px;background:var(--canvas);border:1px solid var(--edge);box-shadow:0 6px 20px -6px rgba(11,16,14,.16);pointer-events:auto}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:100%;border-radius:23px;position:relative;isolation:isolate;border:0;background:0;cursor:pointer}
+.tab .ind{position:absolute;inset:0;background:var(--deep);z-index:0;clip-path:polygon(var(--bevel) 0,calc(100% - var(--bevel)) 0,100% var(--bevel),100% calc(100% - var(--bevel)),calc(100% - var(--bevel)) 100%,var(--bevel) 100%,0 calc(100% - var(--bevel)),0 var(--bevel))}
+.tab svg{width:18px;height:18px;position:relative;z-index:1;stroke:var(--ink3)}
+.tab.on svg{stroke:var(--inverse)}
+.tab .lbl{position:relative;z-index:1;font-size:8.5px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--ink3)}
+.tab.on .lbl{color:var(--inverse);font-weight:600}
+@media(max-width:860px){.grid{grid-template-columns:1fr}.rail{position:static}}
+</style>
+</head>
+<body>
+<div class="head">
+  <div><div class="ov">Fotosíntesis · Inventario — v2</div><h1>La lista como taller: editar sin salir</h1>
+  <p>Filas densas (no tarjetas), estado con punto <em>y</em> etiqueta (no solo color), filtros segmentados, y la bandeja convertida en <strong>editor en línea</strong>: seleccionas una piedra y la editas ahí mismo.</p></div>
+  <button class="ctrl" id="mode">Modo oscuro</button>
+</div>
+<div class="win"><div class="chrome"><i></i><i></i><i></i><span class="url">tierramadre.app/admin/fotosintesis/inventory</span></div>
+<div class="app">
+  <div class="topbar"><div class="bc">Fotosíntesis › <b>Inventario</b></div><span class="sync"><span class="d"></span>Sincronizado · hace 14 min</span></div>
+  <div class="cont">
+    <div class="ph">
+      <div class="l">
+        <div class="ov">Atelier · Inventario</div>
+        <h2>Fotosíntesis</h2>
+        <div class="count"><span class="n">519</span><span class="u">en el espejo</span>
+          <div class="bars"><i style="height:40%"></i><i style="height:55%"></i><i style="height:35%"></i><i class="hi" style="height:80%"></i><i style="height:60%"></i><i class="hi" style="height:95%"></i><i style="height:50%"></i></div>
+        </div>
+      </div>
+      <div class="r">
+        <div class="pstats">
+          <div class="pstat"><div class="v">246</div><div class="k"><span class="d ok"></span>Disponibles</div></div>
+          <div class="pstat"><div class="v">11</div><div class="k"><span class="d mid"></span>Con asesor</div></div>
+          <div class="pstat"><div class="v">181</div><div class="k"><span class="d no"></span>Vendidas</div></div>
+        </div>
+        <div class="pacts"><button class="btn primary">+ Nueva piedra</button><button class="btn ghost">Resincronizar</button><button class="btn ghost">Etiquetas · QR</button></div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>Buscar por número, nombre…<kbd>⌘K</kbd></div>
+      <div class="seg">
+        <button class="on">Todo</button>
+        <button><span class="d ok"></span>Disponibles</button>
+        <button><span class="d mid"></span>Con asesor</button>
+        <button><span class="d mid"></span>Consignación</button>
+        <button><span class="d no"></span>Vendidas</button>
+      </div>
+      <button class="fchip">Colección · Todas ▾</button>
+      <button class="fchip on">Con fotos</button>
+      <button class="fchip">Sin precio</button>
+      <button class="fchip">Más filtros ▾</button>
+    </div>
+
+    <div class="grid">
+      <div class="list" id="list">
+        <div class="lrow sel"><div class="ct">1.47<span> ct</span></div><div class="th"><div class="g"></div></div><div class="nm"><b>Rey Midas</b><div class="meta">0001 · COL #4000 · COMERCIAL FINA</div></div><div class="pr">$ 200,000</div><span class="stat mid"><span class="d"></span>Asesor</span></div>
+        <div class="lrow"><div class="ct">0.43<span> ct</span></div><div class="th"><div class="g" style="transform:scale(.8)"></div></div><div class="nm"><b>Las Niñas</b><div class="meta">0002 · COL #4000 · COMERCIAL FINA</div></div><div class="pr">$ 185,000</div><span class="stat mid"><span class="d"></span>Asesor</span></div>
+        <div class="lrow"><div class="ct">1.36<span> ct</span></div><div class="th"><div class="g" style="transform:scale(.9) rotate(6deg)"></div></div><div class="nm"><b>Las Margaritas</b><div class="meta">0003 · COL #4000 · COMERCIAL FINA</div></div><div class="pr">$ 294,000</div><span class="stat ok"><span class="d"></span>Disponible</span></div>
+        <div class="lrow"><div class="ct">1.56<span> ct</span></div><div class="th"><div class="g" style="transform:scale(1)"></div></div><div class="nm"><b>Los Robles</b><div class="meta">0004 · COL #4000 · COMERCIAL FINA</div></div><div class="pr">$ 674,000</div><span class="stat ok"><span class="d"></span>Disponible</span></div>
+        <div class="lrow"><div class="ct">1.26<span> ct</span></div><div class="th"><div class="g" style="transform:scale(.85) rotate(-4deg)"></div></div><div class="nm"><b>Los Tulipanes</b><div class="meta">0005 · COL #4000 · COMERCIAL SUP.</div></div><div class="pr">$ 499,000</div><span class="stat mid"><span class="d"></span>Asesor</span></div>
+        <div class="lrow"><div class="ct">1.23<span> ct</span></div><div class="th"><div class="g" style="transform:scale(.95)"></div></div><div class="nm"><b>Jardín Escondido</b><div class="meta">0006 · COL #4000 · COMERCIAL SUP.</div></div><div class="pr">$ 443,000</div><span class="stat no"><span class="d"></span>Vendida</span></div>
+        <div class="lrow"><div class="ct">1.43<span> ct</span></div><div class="th"><div class="g" style="transform:scale(.9) rotate(3deg)"></div></div><div class="nm"><b>Trilogía</b><div class="meta">0007 · COL #4000 · COMERCIAL SUP.</div></div><div class="pr">$ 567,000</div><span class="stat ok"><span class="d"></span>Disponible</span></div>
+        <div class="lrow"><div class="ct">0.83<span> ct</span></div><div class="th"><div class="g" style="transform:scale(.75)"></div></div><div class="nm"><b>Bambú</b><div class="meta">0008 · COL #4000 · COMERCIAL SUP.</div></div><div class="pr">$ 299,000</div><span class="stat ok"><span class="d"></span>Disponible</span></div>
+      </div>
+
+      <div class="rail">
+        <div class="card">
+          <span class="eyebrow">Bandeja · editar piedra</span>
+          <div class="dhead"><div class="big"><div class="g"></div></div><div><div class="no">0001 · COL #4000 · #495</div><div class="nm">Rey Midas</div></div></div>
+          <span class="eyebrow">Estado</span>
+          <div class="segsm"><button>Disponible</button><button class="on">Asesor</button><button>Consig.</button><button>Vendida</button></div>
+          <div class="led">
+            <div class="lr"><span class="k">Peso</span><span class="v">1.47 ct</span></div>
+            <div class="lr"><span class="k">Calidad</span><span class="v">Comercial Fina</span></div>
+            <div class="lr"><span class="k">Asesor</span><span class="v">María R.</span></div>
+            <div class="lr"><span class="k">Precio</span><span class="field"><span class="cur">$</span><input value="200,000" aria-label="Precio"></span></div>
+          </div>
+          <div class="dacts"><button class="btn primary" style="flex:1">Guardar</button><button class="btn ghost">Etiqueta QR</button></div>
+        </div>
+        <div class="card act">
+          <span class="eyebrow" style="margin-top:0">Actividad reciente</span>
+          <div class="ar"><span><b>kpp</b> editó precio</span><span class="w">hace 1 h</span></div>
+          <div class="ar"><span><b>Kevin Toj</b> movió a asesor</span><span class="w">hace 1 d</span></div>
+          <div class="ar"><span><b>kpp</b> subió 2 fotos</span><span class="w">hace 2 d</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabwrap"><div class="tabpill">
+    <button class="tab"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5"/></svg><span class="lbl">Inicio</span></button>
+    <button class="tab on"><span class="ind"></span><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M3 8l4-2 4 2-4 2zM13 8l4-2 4 2-4 2zM8 16l4-2 4 2-4 2z"/></svg><span class="lbl">Lotes</span></button>
+    <button class="tab"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-8"/></svg><span class="lbl">Ventas</span></button>
+    <button class="tab"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/></svg><span class="lbl">Directorio</span></button>
+    <button class="tab"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="lbl">Menú</span></button>
+  </div></div>
+</div></div>
+<script>
+document.getElementById('mode').addEventListener('click',function(){
+  var d=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',d?'light':'dark');this.textContent=d?'Modo oscuro':'Modo claro';
+});
+// select row → (in real app) repopulate bandeja
+document.querySelectorAll('.lrow').forEach(function(r){
+  r.addEventListener('click',function(){document.querySelectorAll('.lrow').forEach(function(x){x.classList.remove('sel')});r.classList.add('sel')});
+});
+document.querySelectorAll('.segsm button, .seg button').forEach(function(b){
+  b.addEventListener('click',function(){var p=b.parentElement;p.querySelectorAll('button').forEach(function(x){x.classList.remove('on')});b.classList.add('on')});
+});
+</script>
+</body>
+</html>

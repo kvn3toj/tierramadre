@@ -5,6 +5,10 @@
  * of a single product within their own collection. Changes are persisted
  * via useAmbassadorOverrides (localStorage MVP).
  *
+ * Rendered inside the canonical DS3 `Sheet` (desktop centered modal / mobile
+ * bottom sheet) — focus trap + restore, backdrop/Escape dismissal, 85dvh +
+ * safe-area and the enter/exit timing all come from the overlay.
+ *
  * Validation:
  * - Name: trimmed, ≤ 80 chars (OVERRIDE_LIMITS.NAME_MAX_LENGTH).
  * - Price: between 1.0x and 10.0x of the canonical product price.
@@ -17,15 +21,11 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Button,
   Typography,
   Box,
   Stack,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
 import type { TreasureItem } from '../../../../types';
 import {
@@ -33,7 +33,7 @@ import {
   OVERRIDE_LIMITS,
 } from '../../../../types/ambassadorOverride';
 import { validateOverride } from '../../../../hooks/useAmbassadorOverrides';
-import { emeraldCore } from '../../../../design-system';
+import { TextField, Button, Sheet } from '../../../../design-system';
 
 interface EditProductOverrideDialogProps {
   open: boolean;
@@ -42,19 +42,31 @@ interface EditProductOverrideDialogProps {
   onClose: () => void;
   onSave: (patch: { customName?: string; customPriceCOP?: number }) => void;
   onClear: () => void;
+  /**
+   * Whether the ambassador is offering this piece for resale through TM.
+   * Optional so the dialog still renders where resale does not apply.
+   */
+  forResale?: boolean;
+  onForResaleChange?: (forResale: boolean) => void;
 }
 
 function formatCOP(value: number): string {
   return value.toLocaleString('es-CO');
 }
 
-export const EditProductOverrideDialog: React.FC<EditProductOverrideDialogProps> = ({
+const TITLE_ID = 'edit-product-override-title';
+
+export const EditProductOverrideDialog: React.FC<
+  EditProductOverrideDialogProps
+> = ({
   open,
   product,
   currentOverride,
   onClose,
   onSave,
   onClear,
+  forResale,
+  onForResaleChange,
 }) => {
   const [name, setName] = useState('');
   const [priceText, setPriceText] = useState('');
@@ -78,51 +90,108 @@ export const EditProductOverrideDialog: React.FC<EditProductOverrideDialogProps>
   }, [priceText]);
 
   const validation = useMemo(() => {
-    if (!product) return { ok: false, errors: [] as ReturnType<typeof validateOverride>['errors'] };
+    if (!product)
+      return {
+        ok: false,
+        errors: [] as ReturnType<typeof validateOverride>['errors'],
+      };
     return validateOverride({
       baseProduct: product,
       customName: name,
-      customPriceCOP: parsedPrice === undefined ? undefined : (Number.isNaN(parsedPrice) ? undefined : parsedPrice),
+      customPriceCOP:
+        parsedPrice === undefined
+          ? undefined
+          : Number.isNaN(parsedPrice)
+            ? undefined
+            : parsedPrice,
     });
   }, [product, name, parsedPrice]);
 
   if (!product) return null;
 
   const basePrice = product.precioCOP;
-  const priceMin = typeof basePrice === 'number' ? basePrice * OVERRIDE_LIMITS.PRICE_MIN_MULTIPLIER : null;
-  const priceMax = typeof basePrice === 'number' ? basePrice * OVERRIDE_LIMITS.PRICE_MAX_MULTIPLIER : null;
+  const priceMin =
+    typeof basePrice === 'number'
+      ? basePrice * OVERRIDE_LIMITS.PRICE_MIN_MULTIPLIER
+      : null;
+  const priceMax =
+    typeof basePrice === 'number'
+      ? basePrice * OVERRIDE_LIMITS.PRICE_MAX_MULTIPLIER
+      : null;
 
-  const nameError = validation.errors.find((e) => e.field === 'customName')?.message;
+  const nameError = validation.errors.find(
+    (e) => e.field === 'customName',
+  )?.message;
   const priceError =
     Number.isNaN(parsedPrice as number) && priceText.trim().length > 0
       ? 'Ingresa un número válido'
       : validation.errors.find((e) => e.field === 'customPriceCOP')?.message;
 
-  const canSave = validation.ok && (Number.isFinite(parsedPrice as number) || parsedPrice === undefined);
+  const canSave =
+    validation.ok &&
+    (Number.isFinite(parsedPrice as number) || parsedPrice === undefined);
 
   const handleSave = () => {
     onSave({
       customName: name,
-      customPriceCOP: parsedPrice === undefined || Number.isNaN(parsedPrice) ? undefined : parsedPrice,
+      customPriceCOP:
+        parsedPrice === undefined || Number.isNaN(parsedPrice)
+          ? undefined
+          : parsedPrice,
     });
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ fontWeight: 700 }}>
-        Personalizar producto
-      </DialogTitle>
-      <DialogContent>
-        <Stack spacing={2.5} sx={{ mt: 1 }}>
+    <Sheet
+      open={open}
+      onClose={onClose}
+      maxWidth={440}
+      ariaLabelledBy={TITLE_ID}
+    >
+      <Box sx={{ p: 3 }}>
+        <Typography
+          id={TITLE_ID}
+          component="h2"
+          sx={{
+            fontFamily: 'var(--tm-font-ui)',
+            fontSize: '1.1rem',
+            fontWeight: 700,
+            color: 'var(--tm-text)',
+            mb: 2,
+          }}
+        >
+          Personalizar producto
+        </Typography>
+
+        <Stack spacing={2.5}>
           <Box>
-            <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary', mb: 0.5 }}>
+            <Typography
+              sx={{
+                fontFamily: 'var(--tm-font-ui)',
+                fontSize: '0.78rem',
+                color: 'var(--tm-muted)',
+                mb: 0.5,
+              }}
+            >
               Producto base
             </Typography>
-            <Typography sx={{ fontWeight: 600 }}>
+            <Typography
+              sx={{
+                fontFamily: 'var(--tm-font-ui)',
+                fontWeight: 600,
+                color: 'var(--tm-text)',
+              }}
+            >
               {product.nombre} · #{product.item}
             </Typography>
             {typeof basePrice === 'number' && (
-              <Typography sx={{ fontSize: '0.82rem', color: 'text.secondary' }}>
+              <Typography
+                sx={{
+                  fontFamily: 'var(--tm-font-ui)',
+                  fontSize: '0.82rem',
+                  color: 'var(--tm-muted)',
+                }}
+              >
                 Precio base: ${formatCOP(basePrice)} COP
               </Typography>
             )}
@@ -133,11 +202,10 @@ export const EditProductOverrideDialog: React.FC<EditProductOverrideDialogProps>
             value={name}
             onChange={(e) => setName(e.target.value)}
             fullWidth
-            size="small"
             inputProps={{ maxLength: OVERRIDE_LIMITS.NAME_MAX_LENGTH + 5 }}
             helperText={
-              nameError
-                ?? `${name.trim().length}/${OVERRIDE_LIMITS.NAME_MAX_LENGTH} caracteres`
+              nameError ??
+              `${name.trim().length}/${OVERRIDE_LIMITS.NAME_MAX_LENGTH} caracteres`
             }
             error={Boolean(nameError)}
           />
@@ -147,41 +215,80 @@ export const EditProductOverrideDialog: React.FC<EditProductOverrideDialogProps>
             value={priceText}
             onChange={(e) => setPriceText(e.target.value)}
             fullWidth
-            size="small"
             inputMode="numeric"
-            placeholder={typeof basePrice === 'number' ? `Ej: ${formatCOP(basePrice)}` : 'Ej: 1000000'}
+            placeholder={
+              typeof basePrice === 'number'
+                ? `Ej: ${formatCOP(basePrice)}`
+                : 'Ej: 1000000'
+            }
             helperText={
-              priceError
-                ?? (priceMin !== null && priceMax !== null
-                  ? `Rango permitido: $${formatCOP(Math.round(priceMin))} – $${formatCOP(Math.round(priceMax))} COP`
-                  : 'Sin precio base disponible')
+              priceError ??
+              (priceMin !== null && priceMax !== null
+                ? `Rango permitido: $${formatCOP(Math.round(priceMin))} – $${formatCOP(Math.round(priceMax))} COP`
+                : 'Sin precio base disponible')
             }
             error={Boolean(priceError)}
           />
+
+          {onForResaleChange && (
+            <Box>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={Boolean(forResale)}
+                    onChange={(e) => onForResaleChange(e.target.checked)}
+                  />
+                }
+                label="Ofrecer esta pieza para reventa"
+              />
+              {/* El embajador tiene que entender DOS cosas antes de activar
+                  esto: que la pieza se hace pública en el catálogo con su
+                  nombre encima, y que la negociación la conducimos nosotros.
+                  Un interruptor sin esta frase le haría creer que va a
+                  recibir él los mensajes. */}
+              <Typography
+                sx={{
+                  fontSize: '0.72rem',
+                  lineHeight: 1.45,
+                  color: 'var(--tm-muted)',
+                  mt: 0.25,
+                }}
+              >
+                {forResale
+                  ? 'Aparece en el catálogo como «De tu colección». Quien quiera comprarla nos escribe a nosotros y negociamos contigo.'
+                  : 'Actívalo sólo si quieres venderla. Mientras esté apagado, la pieza es tuya y no se muestra a la venta en ningún lado.'}
+              </Typography>
+            </Box>
+          )}
         </Stack>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1, flexWrap: 'wrap' }}>
-        <Button onClick={onClear} color="inherit" sx={{ textTransform: 'none' }}>
-          Restaurar valores por defecto
-        </Button>
-        <Box sx={{ flex: 1 }} />
-        <Button onClick={onClose} sx={{ textTransform: 'none' }}>
-          Cancelar
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={!canSave}
+
+        <Box
           sx={{
-            textTransform: 'none',
-            bgcolor: emeraldCore.primary,
-            '&:hover': { bgcolor: emeraldCore.dark ?? emeraldCore.primary },
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: 1,
+            mt: 3,
           }}
         >
-          Guardar
-        </Button>
-      </DialogActions>
-    </Dialog>
+          <Button variant="plain" size="lg" onClick={onClear}>
+            Restaurar valores por defecto
+          </Button>
+          <Box sx={{ flex: 1, minWidth: 0 }} />
+          <Button variant="outlined" size="lg" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={handleSave}
+            disabled={!canSave}
+          >
+            Guardar
+          </Button>
+        </Box>
+      </Box>
+    </Sheet>
   );
 };
 

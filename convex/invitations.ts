@@ -1,7 +1,14 @@
-import { query, mutation, action, internalMutation } from './_generated/server';
-import { v } from 'convex/values';
+import {
+  query,
+  mutation,
+  action,
+  internalMutation,
+  type MutationCtx,
+} from './_generated/server';
+import { v, ConvexError } from 'convex/values';
 import { internal } from './_generated/api';
 import { requireAccessLevel } from './_lib/authz';
+import { isStaffSession } from './_lib/requireStaffSession';
 
 /**
  * Access levels allowed to mint/manage guest invitations. This is everyone in
@@ -22,10 +29,25 @@ const INVITE_LEVELS = [
 /**
  * List all invitations by creator email (active, pending, and expired).
  * Replaces: GET /api/invitations?action=list-by-creator&creatorEmail=X
+ *
+ * Staff-session gated (2026-08-06, PII lockdown item 3): `creatorEmail` is a
+ * client-supplied string, not a verified session identity (queries can't
+ * call Google's tokeninfo endpoint — no network access) — so, ungated,
+ * anyone who guesses/knows another advisor's email could call this and get
+ * every guest's `guestName`/`guestContact` (customer phone numbers and
+ * emails) for that advisor, and advisor emails are enumerable. `pin`/
+ * `boundToken` were already stripped (own design, unrelated to this gate —
+ * kept below), but that only protected the guest's ACCESS, not their
+ * CONTACT INFO. `isStaffSession` gate, empty-form ([]) on failure — does not
+ * check that the session's own identity matches `creatorEmail`, same as
+ * every other query this lockdown gated (e.g. `sales.get` doesn't check the
+ * caller owns the sale) — any authenticated staff member may look up any
+ * advisor's invitations, consistent with the rest of this internal tool.
  */
 export const listByCreator = query({
-  args: { creatorEmail: v.string() },
-  handler: async (ctx, { creatorEmail }) => {
+  args: { creatorEmail: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { creatorEmail, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const rows = await ctx.db
       .query('invitations')
       .withIndex('by_creatorEmail', (q) =>
@@ -33,14 +55,9 @@ export const listByCreator = query({
       )
       .order('desc')
       .collect();
-    // `creatorEmail` here is a client-supplied string, not a verified
-    // session identity (queries can't call Google's tokeninfo endpoint — no
-    // network access), so anyone who guesses/knows another advisor's email
-    // can call this today. `guestName`/`guestContact` stay (GuestDetailPage
-    // needs them for the legitimate owner), but the actual access
-    // credentials — PIN and the bound device token — are stripped, so a
-    // guessed email leaks contact metadata at worst, never a working guest
-    // session.
+    // Access credentials — PIN and the bound device token — are stripped
+    // regardless of who's asking; a staff member browsing another advisor's
+    // invitations still has no business seeing those.
     return rows.map(({ pin: _pin, boundToken: _boundToken, ...safe }) => safe);
   },
 });
@@ -71,10 +88,32 @@ export const getByShortCode = query({
 /**
  * Check if a guest contact has previous invitations.
  * Replaces: GET /api/invitations?action=check-guest&guestContact=X
+ *
+ * Server-secret gated (2026-08-06, PII lockdown — flagged in Round 3,
+ * closed here): returns `creatorName`/`creatorEmail` for every invitation
+ * matching a guest contact string, reachable by anyone who supplies a
+ * contact — the same enumerable-PII shape as `listByCreator` above.
+ * Verified before gating (per the task's "report, don't decide blind"
+ * instruction): no browser code calls `convexApi.invitations.checkGuestHistory`
+ * directly (grepped `src/` for `invitations.checkGuestHistory` and
+ * `convexApi.invitations` generally) — the guest-facing flow
+ * (`useWhatsAppContact.ts`) only ever calls the REST wrapper,
+ * `GET /api/invitations?action=check-guest`, which itself stays
+ * intentionally public (a guest checks their own history pre-registration,
+ * with no session of their own yet) and is this query's ONLY caller
+ * (`api/invitations.ts:1262-1266`, server-to-server via `convexClient`).
+ * So a `requireServerSecret` gate — same as `ghl.getClientByPhone` (C1) —
+ * closes direct internet access to the Convex deployment URL without
+ * touching the guest-facing REST behavior at all. Throws on a bad/missing
+ * secret rather than returning an empty form: this is a one-shot server
+ * call, not a reactive browser subscription, so there's no "broken screen"
+ * risk to avoid (same reasoning as every other `requireServerSecret`-gated
+ * function in this codebase).
  */
 export const checkGuestHistory = query({
-  args: { guestContact: v.string() },
-  handler: async (ctx, { guestContact }) => {
+  args: { guestContact: v.string(), secret: v.string() },
+  handler: async (ctx, { guestContact, secret }) => {
+    requireServerSecret(secret);
     const normalized = guestContact.toLowerCase().trim();
     const all = await ctx.db.query('invitations').collect();
     const matching = all.filter(
@@ -105,14 +144,120 @@ function sanitizeMultiplier(value: number): number {
   return Math.round(clamped * 10) / 10;
 }
 
+/**
+ * Trusted-proxy gate for server-to-server calls. The Convex deployment URL is
+ * public (VITE_CONVEX_URL ships in the client bundle), so a public mutation
+ * with no gate could be called directly by anyone to mint invitations. When
+ * identity is verified upstream (the Vercel /api/invitations layer, which owns
+ * the Google OAuth client — Convex needs no OAuth client of its own for this),
+ * this shared secret proves the caller is that trusted backend, not a guest.
+ * Reuses ADMIN_SYNC_TOKEN — already provisioned on both Vercel and Convex —
+ * exactly like convex/ghl.ts. Fail closed if unconfigured.
+ */
+function requireServerSecret(secret: string): void {
+  const expected = process.env.ADMIN_SYNC_TOKEN;
+  if (!expected || secret !== expected) {
+    throw new ConvexError('No autorizado.');
+  }
+}
+
+/** Shape of a fully-resolved invitation ready to persist. */
+interface InvitationInsertArgs {
+  creatorEmail: string;
+  creatorName: string;
+  creatorRole?: string;
+  pricingMode?: string;
+  guestName?: string;
+  guestContact?: string;
+  contactType?: string;
+  guestCurrencyMode?: string;
+  guestMultiplier?: number;
+  pin: string;
+  shortCode: string;
+}
+
+/**
+ * The actual insert, shared by every entry point. Assumes the caller has
+ * already been authorized (either via requireAccessLevel in the legacy action
+ * or requireServerSecret in the Vercel-verified path) — this function trusts
+ * `creatorEmail`/`creatorName`/`creatorRole` as given.
+ */
+async function insertInvitationRow(
+  ctx: MutationCtx,
+  args: InvitationInsertArgs,
+) {
+  const invitationId = `inv_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  const safeMultiplier =
+    args.guestMultiplier != null
+      ? sanitizeMultiplier(args.guestMultiplier)
+      : undefined;
+
+  await ctx.db.insert('invitations', {
+    invitationId,
+    shortCode: args.shortCode,
+    creatorEmail: args.creatorEmail.toLowerCase().trim(),
+    creatorName: args.creatorName,
+    creatorRole: args.creatorRole ?? 'Asesor',
+    guestName: args.guestName,
+    guestContact: args.guestContact,
+    contactType: args.contactType,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    pricingMode: args.pricingMode ?? 'with_prices',
+    durationHours: 24 * 365, // 12 months
+    guestCurrencyMode: args.guestCurrencyMode,
+    guestMultiplier: safeMultiplier,
+    pin: args.pin,
+  });
+
+  return {
+    invitationId,
+    shortCode: args.shortCode,
+    pin: args.pin,
+    creatorEmail: args.creatorEmail.toLowerCase().trim(),
+    creatorName: args.creatorName,
+    creatorRole: args.creatorRole ?? 'Asesor',
+    pricingMode: args.pricingMode ?? 'with_prices',
+    guestCurrencyMode: args.guestCurrencyMode ?? null,
+    guestMultiplier: safeMultiplier ?? null,
+  };
+}
+
+/**
+ * Create a new invitation on behalf of a caller the Vercel API layer has
+ * ALREADY verified (Google ID token / app session → roster role). Convex only
+ * checks the shared server secret here — it does not perform Google OAuth, so
+ * generating a guest link no longer depends on any Convex-side OAuth config.
+ * Replaces the identity-verifying `generate` action for the live flow.
+ */
+export const createFromServer = mutation({
+  args: {
+    secret: v.string(),
+    creatorEmail: v.string(),
+    creatorName: v.string(),
+    creatorRole: v.optional(v.string()),
+    pricingMode: v.optional(v.string()),
+    guestName: v.optional(v.string()),
+    guestContact: v.optional(v.string()),
+    contactType: v.optional(v.string()),
+    guestCurrencyMode: v.optional(v.string()),
+    guestMultiplier: v.optional(v.float64()),
+    pin: v.string(),
+    shortCode: v.string(),
+  },
+  handler: async (ctx, { secret, ...args }) => {
+    requireServerSecret(secret);
+    return insertInvitationRow(ctx, args);
+  },
+});
+
 // ─── Mutations ──────────────────────────────────────────────────────
 
 /**
- * Internal: the actual insert. Only reachable via the `generate` action
- * below, which verifies the caller is staff server-side first — see
- * convex/_lib/authz.ts. `creatorEmail`/`creatorName`/`creatorRole` come from
- * the verified caller, never from client-supplied args, so a guest can't
- * mint an invitation impersonating another advisor.
+ * @deprecated Legacy insert for the `generate` action below. The live flow now
+ * goes through `createFromServer` (identity verified upstream in Vercel). Kept
+ * only so a mid-deploy Vercel build calling the old action doesn't break;
+ * prune once `createFromServer` is confirmed stable in production.
  */
 export const _generate = internalMutation({
   args: {
@@ -128,48 +273,15 @@ export const _generate = internalMutation({
     pin: v.string(),
     shortCode: v.string(),
   },
-  handler: async (ctx, args) => {
-    const invitationId = `inv_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
-    const safeMultiplier =
-      args.guestMultiplier != null
-        ? sanitizeMultiplier(args.guestMultiplier)
-        : undefined;
-
-    await ctx.db.insert('invitations', {
-      invitationId,
-      shortCode: args.shortCode,
-      creatorEmail: args.creatorEmail.toLowerCase().trim(),
-      creatorName: args.creatorName,
-      creatorRole: args.creatorRole ?? 'Asesor',
-      guestName: args.guestName,
-      guestContact: args.guestContact,
-      contactType: args.contactType,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      pricingMode: args.pricingMode ?? 'with_prices',
-      durationHours: 24 * 365, // 12 months
-      guestCurrencyMode: args.guestCurrencyMode,
-      guestMultiplier: safeMultiplier,
-      pin: args.pin,
-    });
-
-    return {
-      invitationId,
-      shortCode: args.shortCode,
-      pin: args.pin,
-      creatorEmail: args.creatorEmail.toLowerCase().trim(),
-      creatorName: args.creatorName,
-      creatorRole: args.creatorRole ?? 'Asesor',
-      pricingMode: args.pricingMode ?? 'with_prices',
-      guestCurrencyMode: args.guestCurrencyMode ?? null,
-      guestMultiplier: safeMultiplier ?? null,
-    };
-  },
+  handler: async (ctx, args) => insertInvitationRow(ctx, args),
 });
 
 /**
- * Create a new invitation.
- * Replaces: POST /api/invitations?action=generate
+ * @deprecated Superseded by `createFromServer`. This action verifies the Google
+ * ID token inside Convex (requires GOOGLE_OAUTH_CLIENT_ID), which the live flow
+ * no longer needs — the Vercel /api/invitations layer verifies identity and
+ * calls `createFromServer` with the shared secret instead. Kept transiently for
+ * zero-downtime deploys; safe to remove after the new path is live.
  */
 export const generate = action({
   args: {
@@ -208,10 +320,123 @@ export const generate = action({
 });
 
 /**
- * Internal: the actual patch. Only reachable via the `updateMultiplier`
- * action below, which verifies the caller server-side first. `creatorEmail`
- * is the VERIFIED caller (from the token), never a client-supplied string —
- * ownership can no longer be spoofed by guessing another advisor's email.
+ * Core patch, shared by every entry point. Ownership/status failures throw
+ * ConvexError so their real message survives to the HTTP caller (a plain Error
+ * would sanitize to "Server Error"). Assumes the caller is already authorized;
+ * `creatorEmail`/`isAdmin` come from a VERIFIED identity, never a raw client
+ * string.
+ */
+async function patchMultiplier(
+  ctx: MutationCtx,
+  {
+    shortCode,
+    creatorEmail,
+    isAdmin,
+    guestMultiplier,
+  }: {
+    shortCode: string;
+    creatorEmail: string;
+    isAdmin: boolean;
+    guestMultiplier: number;
+  },
+) {
+  const invitation = await ctx.db
+    .query('invitations')
+    .withIndex('by_shortCode', (q) => q.eq('shortCode', shortCode))
+    .first();
+  if (!invitation) throw new ConvexError('Invitación no encontrada');
+  if (
+    !isAdmin &&
+    invitation.creatorEmail.toLowerCase() !== creatorEmail.toLowerCase()
+  ) {
+    throw new ConvexError('No tienes permiso para editar esta invitación');
+  }
+  if (invitation.status !== 'active' && invitation.status !== 'pending') {
+    throw new ConvexError(
+      'Solo se pueden editar invitaciones activas o pendientes',
+    );
+  }
+  const safe = sanitizeMultiplier(guestMultiplier);
+  await ctx.db.patch(invitation._id, { guestMultiplier: safe });
+  return { shortCode, guestMultiplier: safe };
+}
+
+/**
+ * Core revoke, shared by every entry point. See patchMultiplier for the
+ * authorization/ConvexError contract.
+ */
+async function revokeInvitation(
+  ctx: MutationCtx,
+  {
+    shortCode,
+    creatorEmail,
+    isAdmin,
+  }: { shortCode: string; creatorEmail: string; isAdmin: boolean },
+) {
+  const invitation = await ctx.db
+    .query('invitations')
+    .withIndex('by_shortCode', (q) => q.eq('shortCode', shortCode))
+    .first();
+  if (!invitation) throw new ConvexError('Invitación no encontrada');
+  if (
+    !isAdmin &&
+    invitation.creatorEmail.toLowerCase() !== creatorEmail.toLowerCase()
+  ) {
+    throw new ConvexError('No tienes permiso para expirar esta invitación');
+  }
+  if (invitation.status === 'expired') return { success: true };
+  if (invitation.status !== 'active' && invitation.status !== 'pending') {
+    throw new ConvexError(
+      'Solo se pueden expirar invitaciones activas o pendientes',
+    );
+  }
+  await ctx.db.patch(invitation._id, {
+    status: 'expired' as const,
+    expiresAt: new Date().toISOString(),
+  });
+  return { success: true };
+}
+
+/**
+ * Update the guest multiplier — for a caller the Vercel API layer has ALREADY
+ * verified (identity + ownership inputs). Gated only by the shared server
+ * secret; no Convex-side Google OAuth. Replaces the `updateMultiplier` action.
+ */
+export const updateMultiplierFromServer = mutation({
+  args: {
+    secret: v.string(),
+    shortCode: v.string(),
+    creatorEmail: v.string(),
+    isAdmin: v.boolean(),
+    guestMultiplier: v.float64(),
+  },
+  handler: async (ctx, { secret, ...args }) => {
+    requireServerSecret(secret);
+    return patchMultiplier(ctx, args);
+  },
+});
+
+/**
+ * Expire/revoke an invitation — Vercel-verified caller, shared-secret gated.
+ * Replaces the `expire` action. No Convex-side Google OAuth.
+ */
+export const expireFromServer = mutation({
+  args: {
+    secret: v.string(),
+    shortCode: v.string(),
+    creatorEmail: v.string(),
+    isAdmin: v.boolean(),
+  },
+  handler: async (ctx, { secret, ...args }) => {
+    requireServerSecret(secret);
+    return revokeInvitation(ctx, args);
+  },
+});
+
+/**
+ * @deprecated Legacy patch behind the OAuth-verifying `updateMultiplier`
+ * action. The live flow uses `updateMultiplierFromServer`. Kept transiently for
+ * zero-downtime deploys; prune once the new path is confirmed stable.
  */
 export const _updateMultiplier = internalMutation({
   args: {
@@ -220,32 +445,13 @@ export const _updateMultiplier = internalMutation({
     isAdmin: v.boolean(),
     guestMultiplier: v.float64(),
   },
-  handler: async (
-    ctx,
-    { shortCode, creatorEmail, isAdmin, guestMultiplier },
-  ) => {
-    const invitation = await ctx.db
-      .query('invitations')
-      .withIndex('by_shortCode', (q) => q.eq('shortCode', shortCode))
-      .first();
-    if (!invitation) throw new Error('Invitacion no encontrada');
-    if (!isAdmin && invitation.creatorEmail.toLowerCase() !== creatorEmail) {
-      throw new Error('No tienes permiso para editar esta invitacion');
-    }
-    if (invitation.status !== 'active' && invitation.status !== 'pending') {
-      throw new Error(
-        'Solo se pueden editar invitaciones activas o pendientes',
-      );
-    }
-    const safe = sanitizeMultiplier(guestMultiplier);
-    await ctx.db.patch(invitation._id, { guestMultiplier: safe });
-    return { shortCode, guestMultiplier: safe };
-  },
+  handler: async (ctx, args) => patchMultiplier(ctx, args),
 });
 
 /**
- * Update the guest multiplier for an invitation.
- * Replaces: POST /api/invitations?action=update
+ * @deprecated Superseded by `updateMultiplierFromServer`. Verifies the Google
+ * token inside Convex (needs GOOGLE_OAUTH_CLIENT_ID), which the live flow no
+ * longer requires. Kept transiently for zero-downtime deploys.
  */
 export const updateMultiplier = action({
   args: {
@@ -268,7 +474,8 @@ export const updateMultiplier = action({
 });
 
 /**
- * Internal: the actual revoke. Only reachable via the `expire` action below.
+ * @deprecated Legacy revoke behind the OAuth-verifying `expire` action. The
+ * live flow uses `expireFromServer`. Kept transiently for zero-downtime deploys.
  */
 export const _expire = internalMutation({
   args: {
@@ -276,32 +483,13 @@ export const _expire = internalMutation({
     creatorEmail: v.string(),
     isAdmin: v.boolean(),
   },
-  handler: async (ctx, { shortCode, creatorEmail, isAdmin }) => {
-    const invitation = await ctx.db
-      .query('invitations')
-      .withIndex('by_shortCode', (q) => q.eq('shortCode', shortCode))
-      .first();
-    if (!invitation) throw new Error('Invitacion no encontrada');
-    if (!isAdmin && invitation.creatorEmail.toLowerCase() !== creatorEmail) {
-      throw new Error('No tienes permiso para expirar esta invitacion');
-    }
-    if (invitation.status === 'expired') return { success: true };
-    if (invitation.status !== 'active' && invitation.status !== 'pending') {
-      throw new Error(
-        'Solo se pueden expirar invitaciones activas o pendientes',
-      );
-    }
-    await ctx.db.patch(invitation._id, {
-      status: 'expired' as const,
-      expiresAt: new Date().toISOString(),
-    });
-    return { success: true };
-  },
+  handler: async (ctx, args) => revokeInvitation(ctx, args),
 });
 
 /**
- * Expire/revoke an invitation.
- * Replaces: POST /api/invitations?action=expire
+ * @deprecated Superseded by `expireFromServer`. Verifies the Google token
+ * inside Convex (needs GOOGLE_OAUTH_CLIENT_ID). Kept transiently for
+ * zero-downtime deploys.
  */
 export const expire = action({
   args: { idToken: v.string(), shortCode: v.string() },

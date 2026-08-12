@@ -25,12 +25,13 @@ import {
 } from '../../../lib/convex-safe';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 import { TicketHeader } from './components/TicketHeader';
 import { FOTO_TOPBAR_HEIGHT } from './components/FotoTopbar';
 import { fotoPaneSx, fotoPageMinHeight } from './components/paneStyles';
 import { StepPills } from './components/StepPills';
 import { spanishText } from './utils/fieldLang';
-import { SegmentedControl } from './components/SegmentedControl';
+import { SegmentedControl } from '../../../design-system/components/SegmentedControl';
 import { FieldLabel } from './components/FieldLabel';
 import { NumberInputWithCalc } from './components/NumberInputWithCalc';
 import { KbdKey } from './components/KbdKey';
@@ -246,11 +247,10 @@ export default function FotosintesisVentaPage({
           item.itemId,
           batchThumbs,
         ),
-        // Picker hint only — mirrors ProductoSpotlight's tier fallback (legacy
-        // precioCOP is ~82% empty). The authoritative per-item price still comes
-        // from `priceByItemId` once `getManyByItemIds` resolves.
-        precioCop:
-          item.precioEmbajadorCOP ?? item.precioConscienteCOP ?? item.precioCOP,
+        // Picker hint only — the derived final price (legacy precioCOP is ~82%
+        // empty). The authoritative per-item price still comes from
+        // `priceByItemId` once `getManyByItemIds` resolves.
+        precioCop: item.precioFinalCOP ?? item.precioCOP,
         loteId: item.loteId,
         estado: item.estado as string | undefined,
       };
@@ -265,8 +265,8 @@ export default function FotosintesisVentaPage({
     itemIds.length ? { itemIds } : 'skip',
   );
 
-  // Buyer tier: an embajador buyer pays the ambassador price; everyone else
-  // ("final" / custom write-ins) pays the consciente price.
+  // Buyer type — recorded on the sale as a label. After the 2026-07-21 price
+  // refactor it no longer changes the price (every buyer pays precioFinalCOP).
   const tier: CompradorTier =
     compradorTipo === 'embajador' ? 'embajador' : 'final';
 
@@ -325,14 +325,26 @@ export default function FotosintesisVentaPage({
 
   const lot = useConvexQuery(
     convexApi.lots.getByLoteId,
-    item?.loteId ? { loteId: item.loteId } : 'skip',
+    item?.loteId
+      ? {
+          loteId: item.loteId,
+          sessionToken: readFreshSessionToken() ?? undefined,
+        }
+      : 'skip',
   );
   const provider = useConvexQuery(
     convexApi.providers.get,
-    lot?.providerId ? { id: lot.providerId } : 'skip',
+    lot?.providerId
+      ? {
+          id: lot.providerId,
+          sessionToken: readFreshSessionToken() ?? undefined,
+        }
+      : 'skip',
   );
   // `clients.list` doesn't accept `tipo` — filter client-side.
-  const allClients = useConvexQuery(convexApi.clients.list, {});
+  const allClients = useConvexQuery(convexApi.clients.list, {
+    sessionToken: readFreshSessionToken() ?? undefined,
+  });
   const embajadores = useMemo(
     () => (allClients ?? []).filter((c) => c.tipo === 'embajador'),
     [allClients],
@@ -340,7 +352,9 @@ export default function FotosintesisVentaPage({
 
   const peeked = useConvexQuery(
     convexApi.sales.peekNextSaleId,
-    sede ? { sede } : 'skip',
+    sede
+      ? { sede, sessionToken: readFreshSessionToken() ?? undefined }
+      : 'skip',
   );
   const peekedSaleId = peeked?.preview ?? (sede ? `V${sede}-NEW` : 'V—');
 

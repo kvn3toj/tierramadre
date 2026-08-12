@@ -52,7 +52,9 @@ export interface PdfExportResult {
  * @param options - Export configuration
  * @returns Promise resolving to success/failure result
  */
-export const exportToPdf = async (options: PdfExportOptions): Promise<PdfExportResult> => {
+export const exportToPdf = async (
+  options: PdfExportOptions,
+): Promise<PdfExportResult> => {
   const {
     element,
     filename,
@@ -74,7 +76,7 @@ export const exportToPdf = async (options: PdfExportOptions): Promise<PdfExportR
     ]);
 
     // Wait for any pending renders
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     // Capture element dimensions
     const rect = element.getBoundingClientRect();
@@ -107,8 +109,8 @@ export const exportToPdf = async (options: PdfExportOptions): Promise<PdfExportR
     const pageHeight = pdf.internal.pageSize.getHeight();
 
     // Calculate image dimensions to fit within margins
-    const maxWidth = pageWidth - (margin * 2);
-    const maxHeight = pageHeight - (margin * 2);
+    const maxWidth = pageWidth - margin * 2;
+    const maxHeight = pageHeight - margin * 2;
 
     const aspectRatio = canvas.width / canvas.height;
     let imgWidth = maxWidth;
@@ -135,7 +137,9 @@ export const exportToPdf = async (options: PdfExportOptions): Promise<PdfExportR
 
     onProgress?.('download');
 
-    const fullFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+    const fullFilename = filename.endsWith('.pdf')
+      ? filename
+      : `${filename}.pdf`;
     const blob = pdf.output('blob');
     pdf.save(fullFilename);
 
@@ -144,7 +148,10 @@ export const exportToPdf = async (options: PdfExportOptions): Promise<PdfExportR
     console.error('PDF export failed:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error during PDF export',
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Unknown error during PDF export',
     };
   }
 };
@@ -159,7 +166,7 @@ export const exportToPdf = async (options: PdfExportOptions): Promise<PdfExportR
 export const exportQuotationToPdf = async (
   element: HTMLElement,
   _quotationNumber: string,
-  onProgress?: (stage: 'capture' | 'generate' | 'download') => void
+  onProgress?: (stage: 'capture' | 'generate' | 'download') => void,
 ): Promise<PdfExportResult> => {
   const now = new Date();
   const day = String(now.getDate()).padStart(2, '0');
@@ -175,6 +182,63 @@ export const exportQuotationToPdf = async (
   });
 };
 
+export interface PngExportResult {
+  success: boolean;
+  filename: string;
+  blob?: Blob;
+  error?: string;
+}
+
+/**
+ * Rasterize a fixed-size DOM node to a PNG blob (no download side effect).
+ * Used for the 1080×1920 cotización product cards. The element must be laid
+ * out at its real pixel size (not CSS-transform-scaled) so html2canvas
+ * captures it at full resolution.
+ */
+export const exportCardToPng = async (
+  element: HTMLElement,
+  filename: string,
+  width = 1080,
+  height = 1920,
+): Promise<PngExportResult> => {
+  const fullFilename = filename.endsWith('.png') ? filename : `${filename}.png`;
+  try {
+    const { default: html2canvas } = await import('html2canvas');
+
+    // Let fonts/images settle before capture.
+    await new Promise((resolve) => setTimeout(resolve, 120));
+
+    const canvas = await html2canvas(element, {
+      scale: 1,
+      backgroundColor: '#FFFFFF',
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      width,
+      height,
+      windowWidth: width,
+      windowHeight: height,
+    });
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), 'image/png', 0.95),
+    );
+    if (!blob) throw new Error('Canvas toBlob returned null');
+
+    return { success: true, filename: fullFilename, blob };
+  } catch (error) {
+    console.error('Card PNG export failed:', error);
+    return {
+      success: false,
+      filename: fullFilename,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Unknown error during PNG export',
+    };
+  }
+};
+
 /**
  * Export a receipt to PDF with elegant styling.
  * Includes shadow effect and border for premium look.
@@ -184,7 +248,7 @@ export const exportReceiptToPdf = async (
   receiptNumber: string,
   documentLabel: string,
   theme: 'dark' | 'light' = 'dark',
-  onProgress?: (stage: 'capture' | 'generate' | 'download') => void
+  onProgress?: (stage: 'capture' | 'generate' | 'download') => void,
 ): Promise<PdfExportResult> => {
   const themeColors = {
     dark: {
@@ -212,7 +276,7 @@ export const exportReceiptToPdf = async (
     ]);
 
     // Wait for renders
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
     const rect = element.getBoundingClientRect();
 
@@ -237,11 +301,11 @@ export const exportReceiptToPdf = async (
 
     // Calculate dimensions
     const aspectRatio = canvas.height / canvas.width;
-    let imgWidth = pageWidth - (margin * 2);
+    let imgWidth = pageWidth - margin * 2;
     let imgHeight = imgWidth * aspectRatio;
 
     // Scale down if too tall
-    const maxHeight = pageHeight - (margin * 2);
+    const maxHeight = pageHeight - margin * 2;
     if (imgHeight > maxHeight) {
       imgHeight = maxHeight;
       imgWidth = imgHeight / aspectRatio;
@@ -288,7 +352,10 @@ export const exportReceiptToPdf = async (
     console.error('Receipt PDF export failed:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error during PDF export',
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Unknown error during PDF export',
     };
   }
 };

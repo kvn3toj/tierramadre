@@ -7,7 +7,7 @@
  * Format carat weight with 2 decimal places (e.g. 0.50, 1.20, 3.00).
  */
 export const formatCarats = (peso: string | number): string => {
-  const n = typeof peso === "number" ? peso : parseFloat(peso);
+  const n = typeof peso === 'number' ? peso : parseFloat(peso);
   return isNaN(n) ? String(peso) : n.toFixed(2);
 };
 
@@ -20,10 +20,71 @@ export const formatCarats = (peso: string | number): string => {
  */
 export const parseCarats = (peso: string | number): number | null => {
   const n =
-    typeof peso === "number"
+    typeof peso === 'number'
       ? peso
-      : parseFloat(String(peso).replace(",", "."));
+      : parseFloat(String(peso).replace(',', '.'));
   return Number.isFinite(n) && n > 0 ? n : null;
+};
+
+/** Minimal shape needed to label a piece's weight/material. */
+export interface WeightLabelSource {
+  /** Optional: `ReceiptProduct` and lote members declare it optional. */
+  peso?: string | number;
+  isJewelry?: boolean;
+  metalType?: string;
+}
+
+export interface WeightLabelOptions {
+  /**
+   * What a joya should show.
+   *   - `'metal'` (default): metal name, else its carat weight.
+   *   - `'metal-only'`: metal name or nothing. Use where a joya has never
+   *     displayed a carat weight and this change must not introduce one
+   *     (the catalog card — some Fotosíntesis joyería carries a numeric
+   *     peso with no metalType recorded).
+   *   - `'carats'`: for gem-weight-only columns such as "Gema (Ct)",
+   *     which must NEVER show a metal name.
+   */
+  jewelryPrefers?: 'metal' | 'metal-only' | 'carats';
+  /** Returned when there is nothing truthful to show. Defaults to `''`. */
+  fallback?: string;
+}
+
+/**
+ * Single source of truth for the "4.20 ct" / "Oro 18k" label.
+ *
+ * Exists because the `peso > 0` guard was duplicated inconsistently across
+ * the app: `ListRow` had it, the catalog card's live branch did not, so
+ * joyas and unweighed pieces rendered "Gema · 0.00 ct" to clients.
+ * `formatCarats` is a bare `toFixed(2)`, so `peso: 0` formats as "0.00" —
+ * the guard has to happen before it, which is what `parseCarats` does.
+ *
+ * Note `jewelryPrefers: 'carats'` deliberately falls back to `fallback`
+ * and NOT to the metal name: the ingestion layer coerces a joya's peso
+ * via `parseDecimal('Plata') → 0`, so returning the metal there would
+ * render "Gema (Ct): Plata" and duplicate the Material row.
+ */
+export const formatWeightLabel = (
+  source: WeightLabelSource,
+  options: WeightLabelOptions = {},
+): string => {
+  const { jewelryPrefers = 'metal', fallback = '' } = options;
+  const { peso, isJewelry, metalType } = source;
+
+  const carats = peso === undefined || peso === null ? null : parseCarats(peso);
+  const metal = typeof metalType === 'string' ? metalType.trim() : '';
+
+  if (jewelryPrefers === 'carats') {
+    return carats === null ? fallback : `${formatCarats(carats)} ct`;
+  }
+
+  if (isJewelry) {
+    if (metal) return metal;
+    if (jewelryPrefers === 'metal-only') return fallback;
+  }
+
+  if (carats !== null) return `${formatCarats(carats)} ct`;
+  return fallback;
 };
 
 /**
@@ -54,27 +115,33 @@ export const pricePerCaratCOP = (
 };
 
 /**
- * Format currency with abbreviated notation for large values.
- * Supports COP and USD modes.
+ * Format a currency value in full. Supports COP and USD modes.
+ *
+ * NOTE: despite its name and a long-standing docblock that promised
+ * "$1.5M" / "$300K" output, this function does NOT abbreviate — it returns
+ * the full grouped number. Callers that want K/M notation must abbreviate
+ * themselves. Corrected here because the old comment invited swaps that
+ * would have changed every price over 1000.
+ *
  * @param value - The numeric value to format
  * @param currency - Currency mode (default: COP)
- * @returns Formatted string like "$1.5M", "$300K", "US$9.5K"
+ * @returns Formatted string like "$1.500.000" / "US$9.524"
  */
 export const formatCurrency = (
   value: number,
-  currency: "COP" | "USD" = "COP",
+  currency: 'COP' | 'USD' = 'COP',
 ): string => {
-  if (currency === "USD") {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
+  if (currency === 'USD') {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
   }
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
@@ -88,19 +155,19 @@ export const formatCurrency = (
  */
 export const formatFullCurrency = (
   value: number,
-  currency: "COP" | "USD" = "COP",
+  currency: 'COP' | 'USD' = 'COP',
 ): string => {
-  if (currency === "USD") {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
+  if (currency === 'USD') {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
   }
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
@@ -117,14 +184,37 @@ export const formatPercent = (value: number): string => {
 
 /**
  * Emerald color name to hex color mapping.
+ *
+ * Keys are normalized (see `normalizeColorName`) so accent, case and spacing
+ * variants from the sheet resolve to the same swatch — "Verde Limón",
+ * "verde limon" and "VERDE  LIMON" all match.
+ *
+ * Deliberately NOT extended with the other values seen in the live `color`
+ * column: `Chivor` is a mine, `Cristal` a transparency grade and `Intenso` a
+ * saturation modifier. Assigning them a hue would invent information the data
+ * does not carry; they stay neutral until they are migrated to `mina` /
+ * `calidad`, which is a data change rather than a display one.
  */
 const COLOR_MAP: Record<string, string> = {
-  "Verde Vivido": "#059669",
-  "Verde Muzo": "#065F46",
-  "Verde Limón": "#84CC16",
-  "Verde Menta": "#34D399",
-  "Verde Natural": "#22C55E",
+  'verde vivido': '#059669',
+  'verde muzo': '#065F46',
+  'verde limon': '#84CC16',
+  'verde menta': '#34D399',
+  'verde natural': '#22C55E',
 };
+
+/**
+ * Lowercase, strip diacritics and collapse whitespace, mirroring
+ * `normalizeCollection`. Without this the map missed on every casing or
+ * accent variant and silently fell through to the neutral swatch.
+ */
+const normalizeColorName = (color: string): string =>
+  color
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
 
 /**
  * Get the hex color for an emerald color name.
@@ -132,26 +222,21 @@ const COLOR_MAP: Record<string, string> = {
  * @returns Hex color string
  */
 export const getColorDot = (color: string): string => {
-  return COLOR_MAP[color] || "#6B7280";
+  if (!color) return UNCLASSIFIED_COLOR_DOT;
+  return COLOR_MAP[normalizeColorName(color)] || UNCLASSIFIED_COLOR_DOT;
 };
 
-/**
- * Quality badge style configuration.
- */
-export interface QualityBadgeStyle {
-  label: string;
-  bg: string;
-  color: string;
-  border: string;
-}
+/** Neutral swatch for values that are not a colour we can render. */
+export const UNCLASSIFIED_COLOR_DOT = '#6B7280';
 
 /**
- * Get quality badge styling based on quality level.
- * Uses warm tones (amber, blue, purple) instead of green to avoid confusion with emerald colors.
- * Label uses the exact calidad value from Google Sheets.
- * @param calidad - The quality string
- * @returns Badge style object
+ * Quality badge tone + label, rendered via the design-system `<Badge>`.
  */
+export interface QualityBadgeStyle {
+  tone: 'neutral';
+  label: string;
+}
+
 /**
  * Format collection name for display in dropdown.
  * Removes redundant "COLECCION" prefix since the dropdown is already labeled "Colección".
@@ -160,8 +245,8 @@ export interface QualityBadgeStyle {
  */
 export const formatCollectionName = (name: string): string => {
   return name
-    .replace(/^COLECCION\s*/i, "") // Remove "COLECCION " prefix
-    .replace(/^Colección\s*/i, "") // Remove "Colección " prefix
+    .replace(/^COLECCION\s*/i, '') // Remove "COLECCION " prefix
+    .replace(/^Colección\s*/i, '') // Remove "Colección " prefix
     .trim();
 };
 
@@ -176,11 +261,11 @@ export const formatCollectionName = (name: string): string => {
 export const normalizeCollection = (
   name: string | null | undefined,
 ): string => {
-  return formatCollectionName(name || "")
+  return formatCollectionName(name || '')
     .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "") // strip diacritics
-    .replace(/\s+/g, " ")
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '') // strip diacritics
+    .replace(/\s+/g, ' ')
     .trim();
 };
 
@@ -214,10 +299,10 @@ export function deriveRating(productCount: number): number | null {
  */
 export const formatTimeAgo = (timestamp: string | number): string => {
   const date =
-    typeof timestamp === "string" ? new Date(timestamp) : new Date(timestamp);
+    typeof timestamp === 'string' ? new Date(timestamp) : new Date(timestamp);
   const diff = Date.now() - date.getTime();
 
-  if (diff < 60000) return "Ahora";
+  if (diff < 60000) return 'Ahora';
   if (diff < 3600000) {
     const mins = Math.floor(diff / 60000);
     return `hace ${mins} min`;
@@ -231,7 +316,7 @@ export const formatTimeAgo = (timestamp: string | number): string => {
     return `hace ${days} d`;
   }
 
-  return date.toLocaleDateString("es-CO", { month: "short", day: "numeric" });
+  return date.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' });
 };
 
 // =============================================================================
@@ -246,12 +331,17 @@ export const formatTimeAgo = (timestamp: string | number): string => {
  */
 export const getRoleLabel = (role: string): string => {
   const r = role.toLowerCase();
-  if (r === "admin" || r.includes("admin")) return "Admin";
-  if (r === "embajador" || r === "ambassador") return "Embajador";
-  if (r === "full" || r === "asesor") return "Asesor";
-  if (r === "provider" || r === "proveedor") return "Proveedor";
-  if (r === "invitado_especial" || r.includes("invitado especial") || r.includes("special guest")) return "Invitado Especial";
-  return "Usuario";
+  if (r === 'admin' || r.includes('admin')) return 'Admin';
+  if (r === 'embajador' || r === 'ambassador') return 'Embajador';
+  if (r === 'full' || r === 'asesor') return 'Asesor';
+  if (r === 'provider' || r === 'proveedor') return 'Proveedor';
+  if (
+    r === 'invitado_especial' ||
+    r.includes('invitado especial') ||
+    r.includes('special guest')
+  )
+    return 'Invitado Especial';
+  return 'Usuario';
 };
 
 /**
@@ -261,12 +351,17 @@ export const getRoleLabel = (role: string): string => {
  */
 export const getRoleColor = (role: string): string => {
   const r = role.toLowerCase();
-  if (r === "admin" || r.includes("admin")) return "#C69C6D"; // goldAccent.primary
-  if (r === "embajador" || r === "ambassador") return "#8B5CF6"; // Purple
-  if (r === "full" || r === "asesor") return "#00AE7A"; // emeraldCore.primary
-  if (r === "provider" || r === "proveedor") return "#3B82F6"; // Blue
-  if (r === "invitado_especial" || r.includes("invitado especial") || r.includes("special guest")) return "#14B8A6"; // Teal
-  return "#6B7280"; // Gray
+  if (r === 'admin' || r.includes('admin')) return '#C69C6D'; // goldAccent.primary
+  if (r === 'embajador' || r === 'ambassador') return '#5C6360'; // neutral graphite (medalColors.bronze)
+  if (r === 'full' || r === 'asesor') return '#00C992'; // emeraldCore.primary
+  if (r === 'provider' || r === 'proveedor') return '#3B82F6'; // Blue
+  if (
+    r === 'invitado_especial' ||
+    r.includes('invitado especial') ||
+    r.includes('special guest')
+  )
+    return '#14B8A6'; // Teal
+  return '#6B7280'; // Gray
 };
 
 // =============================================================================
@@ -274,63 +369,44 @@ export const getRoleColor = (role: string): string => {
 // =============================================================================
 
 export const getQualityBadge = (calidad: string): QualityBadgeStyle => {
-  if (calidad.includes("SuperFina") || calidad === "Fina") {
-    return {
-      label: calidad,
-      bg: "#FEF3C7", // Amber 100
-      color: "#92400E", // Amber 900
-      border: "#F59E0B", // Amber 500
-    };
-  }
-  if (calidad.includes("Superior")) {
-    return {
-      label: calidad,
-      bg: "#DBEAFE", // Blue 100
-      color: "#1E3A8A", // Blue 900
-      border: "#3B82F6", // Blue 500
-    };
-  }
-  if (calidad.includes("Fina")) {
-    return {
-      label: calidad,
-      bg: "#F3E8FF", // Purple 100
-      color: "#6B21A8", // Purple 800
-      border: "#A855F7", // Purple 500
-    };
-  }
-  return {
-    label: calidad || "Comercial",
-    bg: "#F3F4F6", // Gray 100
-    color: "#374151", // Gray 700
-    border: "#9CA3AF", // Gray 400
-  };
+  return { tone: 'neutral', label: calidad || 'Comercial' };
 };
+
+/**
+ * Compact quality label: "Comercial" is always abbreviated to "C." so the tier
+ * reads short ("C. Fina", "C. Estándar") and never spells out "Comercial".
+ */
+export const abbreviateQuality = (calidad?: string): string =>
+  (calidad || '')
+    .replace(/\bComercial\b/gi, 'C.')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 /**
  * Quality abbreviation definitions for tooltips.
  * Maps quality names to their full descriptions.
  */
 const QUALITY_DEFINITIONS: Record<string, string> = {
-  SuperFina: "Gema de color intenso, alta transparencia y minimas inclusiones",
-  Fina: "Gema de buen color y transparencia con pocas inclusiones",
-  "Superior Fina": "Calidad intermedia-alta con buen brillo y color",
-  Superior: "Gema con color medio y transparencia aceptable",
-  Comercial: "Gema de calidad estandar para joyeria comercial",
-  Muzo: "Origen Muzo — reconocido por verde intenso y alto valor",
-  Chivor: "Origen Chivor — tono azul-verdoso caracteristico",
-  Coscuez: "Origen Coscuez — verde profundo con excelente saturacion",
+  SuperFina: 'Gema de color intenso, alta transparencia y minimas inclusiones',
+  Fina: 'Gema de buen color y transparencia con pocas inclusiones',
+  'Superior Fina': 'Calidad intermedia-alta con buen brillo y color',
+  Superior: 'Gema con color medio y transparencia aceptable',
+  Comercial: 'Gema de calidad estandar para joyeria comercial',
+  Muzo: 'Origen Muzo — reconocido por verde intenso y alto valor',
+  Chivor: 'Origen Chivor — tono azul-verdoso caracteristico',
+  Coscuez: 'Origen Coscuez — verde profundo con excelente saturacion',
 };
 
 /**
  * Get a tooltip description for a quality abbreviation.
  */
 export function getQualityTooltip(calidad: string): string {
-  if (!calidad) return "";
+  if (!calidad) return '';
   // Try exact match first
   if (QUALITY_DEFINITIONS[calidad]) return QUALITY_DEFINITIONS[calidad];
   // Try partial match
   for (const [key, value] of Object.entries(QUALITY_DEFINITIONS)) {
     if (calidad.includes(key)) return value;
   }
-  return "";
+  return '';
 }

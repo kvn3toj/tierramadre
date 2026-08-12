@@ -5,8 +5,8 @@
 import { Box, Typography, alpha } from '@mui/material';
 import { TrendingUp, Gem, Award, DollarSign } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { emeraldCore, surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
-import { cssTransition } from '../../design-system';
+import { surfacesLight, surfacesDark } from '../../design-system/tokens/colors';
+import { cssTransition, getQuietEmerald } from '../../design-system';
 
 export type ComparisonPriority = 'todos' | 'inversion' | 'tamano' | 'calidad';
 
@@ -53,6 +53,7 @@ export default function PriorityFilter({
 }: PriorityFilterProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
+  const qe = getQuietEmerald(mode);
 
   return (
     <Box
@@ -60,8 +61,12 @@ export default function PriorityFilter({
         px: 1.5,
         py: 1,
         borderBottom: '1px solid',
-        borderColor: isLight ? surfacesLight.border.light : surfacesDark.border.light,
-        bgcolor: isLight ? surfacesLight.background.primary : surfacesDark.background.primary,
+        borderColor: isLight
+          ? surfacesLight.border.light
+          : surfacesDark.border.light,
+        bgcolor: isLight
+          ? surfacesLight.background.primary
+          : surfacesDark.background.primary,
       }}
     >
       <Typography
@@ -106,25 +111,27 @@ export default function PriorityFilter({
                 transition: cssTransition.default,
                 border: '1px solid',
                 borderColor: isActive
-                  ? emeraldCore.primary
+                  ? qe.accent // Jewelry-Not-Paint: border on a clickable pill
                   : isLight
                     ? surfacesLight.border.default
                     : surfacesDark.border.default,
                 bgcolor: isActive
-                  ? alpha(emeraldCore.primary, isLight ? 0.1 : 0.15)
+                  ? alpha(qe.accent, isLight ? 0.1 : 0.15) // Jewelry-Not-Paint: fill on a clickable pill
                   : 'transparent',
                 flexShrink: 0,
                 minWidth: 70,
                 '&:hover': {
-                  borderColor: emeraldCore.primary,
-                  bgcolor: alpha(emeraldCore.primary, 0.05),
+                  borderColor: qe.accent, // Jewelry-Not-Paint
+                  bgcolor: alpha(qe.accent, 0.05), // Jewelry-Not-Paint
                   transform: 'translateY(-1px)',
                 },
               }}
             >
               <Icon
                 size={14}
-                color={isActive ? emeraldCore.primary : isLight ? '#666' : '#999'}
+                color={
+                  isActive ? qe.accent : qe.muted // Jewelry-Not-Paint: icon color on a clickable pill
+                }
                 strokeWidth={2.5}
               />
               <Typography
@@ -132,7 +139,7 @@ export default function PriorityFilter({
                   fontSize: '0.65rem',
                   fontWeight: isActive ? 700 : 600,
                   color: isActive
-                    ? emeraldCore.primary
+                    ? qe.accent // Jewelry-Not-Paint: label text color on a clickable pill
                     : isLight
                       ? surfacesLight.text.primary
                       : surfacesDark.text.primary,

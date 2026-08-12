@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Cotización Soul · Plan de producción · Tierra Mädre</title>
+    <meta
+      property="og:title"
+      content="Cotización Soul · Plan de producción · Tierra Mädre"
+    />
+    <meta
+      property="og:description"
+      content="217 unidades · 4 líneas de producto · precios en pesos colombianos"
+    />
+    <meta name="theme-color" content="#17110d" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,500;0,600;1,500&family=Montserrat:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --oro: #c9a05c;
+        --oro-hondo: #a8813f;
+        --verde: #1f5130;
+        --verde-hondo: #123320;
+        --papel: #fdf8f0;
+        --vino: #6e1d18;
+        --tinta: #3d2018;
+        --topo: #8a6a5c;
+        --sans:
+          'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          sans-serif;
+        --serif: 'Cormorant', 'Iowan Old Style', Georgia, serif;
+        --ancho: min(94vw, 620px);
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        min-height: 100dvh;
+        background:
+          radial-gradient(
+            60vw 40vw at 82% 0%,
+            rgba(201, 160, 92, 0.1),
+            transparent 60%
+          ),
+          radial-gradient(
+            52vw 40vw at 4% 100%,
+            rgba(31, 81, 48, 0.14),
+            transparent 60%
+          ),
+          #17110d;
+        color: var(--papel);
+        font-family: var(--sans);
+        -webkit-font-smoothing: antialiased;
+        padding: 0 0 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: clamp(18px, 4vw, 28px);
+      }
+
+      header {
+        text-align: center;
+        padding: clamp(30px, 7vw, 52px) 20px 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 9px;
+        width: var(--ancho);
+      }
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: var(--oro);
+      }
+      h1 {
+        font-family: var(--serif);
+        font-weight: 600;
+        font-size: clamp(32px, 8vw, 46px);
+        line-height: 1.02;
+        letter-spacing: -0.01em;
+        color: var(--papel);
+      }
+      header .sub {
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        color: rgba(253, 248, 240, 0.62);
+      }
+
+      /* ---- carta de papel (clona los tokens de las láminas) ---- */
+      .carta {
+        width: var(--ancho);
+        background: #fbf8f2;
+        color: var(--tinta);
+        border-radius: 3px;
+        overflow: hidden;
+        box-shadow: 0 26px 60px -26px rgba(0, 0, 0, 0.8);
+      }
+      .carta-cuerpo {
+        padding: clamp(24px, 6vw, 40px) clamp(22px, 6vw, 42px) 0;
+      }
+      .carta .eyebrow {
+        color: var(--topo);
+      }
+      .carta h2 {
+        font-family: var(--serif);
+        font-weight: 600;
+        font-size: clamp(26px, 6.4vw, 34px);
+        line-height: 0.98;
+        letter-spacing: -0.012em;
+        color: var(--vino);
+        margin-top: 6px;
+      }
+      .carta-sub {
+        font-size: 13px;
+        color: var(--topo);
+        margin-top: 8px;
+        line-height: 1.5;
+      }
+
+      /* Tres filas: rótulo, título, detalle. La cifra ocupa la columna derecha
+         desde la fila del título, así las cuatro líneas anclan su precio a la
+         misma altura sin importar cuánto ocupe el detalle. */
+      .linea {
+        display: grid;
+        grid-template-columns: 60px 1fr auto;
+        gap: 0 14px;
+        padding: 18px 0;
+        border-top: 1px solid #e6d9c6;
+      }
+      .linea:first-of-type {
+        border-top: 1px solid #d8c7b0;
+        margin-top: clamp(20px, 4vw, 30px);
+      }
+      .linea-thumb {
+        grid-area: 1 / 1 / 4 / 2;
+        align-self: start;
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        object-fit: contain;
+        background: #fff;
+        border: 1px solid #eadfcd;
+        box-shadow: 0 2px 8px -3px rgba(61, 32, 24, 0.32);
+      }
+      .linea-tag {
+        grid-area: 1 / 2 / 2 / 3;
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--topo);
+        margin-bottom: 5px;
+      }
+      .linea-n {
+        grid-area: 2 / 2 / 3 / 3;
+        font-family: var(--serif);
+        font-weight: 600;
+        font-size: clamp(19px, 4.6vw, 23px);
+        line-height: 1.08;
+        color: var(--vino);
+      }
+      .linea-desc {
+        grid-area: 3 / 2 / 4 / 3;
+        font-size: 11.5px;
+        line-height: 1.55;
+        color: var(--topo);
+        margin-top: 7px;
+        max-width: 44ch;
+      }
+      .linea-desc b {
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        font-size: 9.5px;
+        color: #a08d7e;
+        margin-right: 5px;
+      }
+      .linea-cifra {
+        grid-area: 2 / 3 / 4 / 4;
+        align-self: start;
+        text-align: right;
+        white-space: nowrap;
+      }
+      .linea-cifra b {
+        display: block;
+        font-size: clamp(16px, 4vw, 20px);
+        font-weight: 700;
+        line-height: 1.1;
+        color: var(--vino);
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.01em;
+      }
+      .linea-cifra em {
+        display: block;
+        font-style: normal;
+        font-size: 13px;
+        color: var(--topo);
+        font-variant-numeric: tabular-nums;
+        margin-top: 5px;
+      }
+
+      .carta-total {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 14px;
+        margin-top: 22px;
+        padding-top: 16px;
+        border-top: 2px solid var(--vino);
+      }
+      .carta-total .k {
+        font-size: 12px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: var(--topo);
+      }
+      .carta-total .v {
+        font-size: clamp(30px, 7.4vw, 44px);
+        font-weight: 700;
+        color: var(--vino);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        letter-spacing: -0.02em;
+        line-height: 1;
+        text-align: right;
+      }
+      /* ---- condiciones ---- */
+      .condiciones {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1px;
+        margin-top: clamp(20px, 4vw, 28px);
+        background: #e6d9c6;
+        border: 1px solid #e6d9c6;
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      /* min-height iguala las celdas de una y dos líneas: sin esto la fila del
+         medio crece sola y la retícula se ve chueca. */
+      .condiciones div {
+        background: #fbf8f2;
+        padding: 13px 14px;
+        min-height: 74px;
+      }
+      .condiciones dt {
+        font-size: 9.5px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: var(--topo);
+      }
+      .condiciones dd {
+        font-family: var(--serif);
+        font-size: 16px;
+        line-height: 1.2;
+        color: var(--vino);
+        margin-top: 5px;
+      }
+
+      /* ---- notas ---- */
+      .notas {
+        margin-top: clamp(22px, 4.4vw, 30px);
+        padding-top: 18px;
+        border-top: 1px solid #e6d9c6;
+        list-style: none;
+        counter-reset: nota;
+        display: flex;
+        flex-direction: column;
+        gap: 11px;
+      }
+      .notas li {
+        counter-increment: nota;
+        display: grid;
+        grid-template-columns: 26px 1fr;
+        gap: 10px;
+        font-size: 12px;
+        line-height: 1.55;
+        color: var(--tinta);
+      }
+      .notas li::before {
+        content: '0' counter(nota);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: var(--oro-hondo);
+        padding-top: 2px;
+      }
+
+      /* ---- aviso de imágenes ---- */
+      /* Sin relleno: la única zona tintada de la carta es la retícula de
+         condiciones. Basta la regla dorada para que el aviso se lea aparte. */
+      .aviso {
+        margin-top: clamp(20px, 4vw, 26px);
+        padding-left: 14px;
+        border-left: 2px solid var(--oro);
+      }
+      .aviso p:first-child {
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: var(--oro-hondo);
+      }
+      .aviso p + p {
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--topo);
+        margin-top: 4px;
+      }
+
+      .carta-pie {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin: 26px clamp(22px, 6vw, 42px) 0;
+        padding: 22px 0 24px;
+        border-top: 1px solid #e6dccc;
+      }
+      .carta-pie .logo-tm {
+        width: 190px;
+        max-width: 46%;
+        aspect-ratio: 1347 / 350;
+        background: url('/logo-cotizacion.png') center / contain no-repeat;
+      }
+      .carta-pie .sellos {
+        display: flex;
+        gap: 10px;
+      }
+      .carta-pie .sellos i {
+        display: block;
+        width: 52px;
+        height: 52px;
+        background-position: center;
+        background-size: contain;
+        background-repeat: no-repeat;
+      }
+      .carta-pie .s1 {
+        background-image: url('/certification-logo-1.png');
+      }
+      .carta-pie .s2 {
+        background-image: url('/certification-logo-2.png');
+      }
+      .carta-pie .s3 {
+        background-image: url('/certification-logo-3.png');
+      }
+      .barra-card {
+        height: 6px;
+        background: linear-gradient(
+          90deg,
+          var(--verde) 0%,
+          var(--verde) 62%,
+          var(--verde-hondo) 62%
+        );
+      }
+
+      footer.pagina {
+        width: var(--ancho);
+        margin-top: clamp(10px, 2vw, 20px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        text-align: center;
+      }
+      .marca {
+        font-family: var(--serif);
+        font-size: 15px;
+        letter-spacing: 0.14em;
+        color: rgba(253, 248, 240, 0.7);
+      }
+      .marca small {
+        display: block;
+        font-family: var(--sans);
+        font-size: 7.5px;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: rgba(253, 248, 240, 0.38);
+        margin-top: 3px;
+      }
+      .nota {
+        font-size: 10px;
+        color: rgba(253, 248, 240, 0.4);
+        line-height: 1.6;
+        max-width: 46ch;
+      }
+      .barra {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 5px;
+        z-index: 5;
+        background: linear-gradient(
+          90deg,
+          var(--verde) 0%,
+          var(--verde) 62%,
+          var(--verde-hondo) 62%
+        );
+      }
+      /* En pantallas angostas la miniatura y el título se quedan sin aire si
+         además cabe la cifra al lado: baja a su propia fila, como un subtotal.
+         El total del plan, que es la cifra más larga, también se apila. */
+      @media (max-width: 520px) {
+        .linea {
+          grid-template-columns: 60px 1fr;
+        }
+        .linea-cifra {
+          grid-area: 4 / 1 / 5 / -1;
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 10px;
+          margin-top: 10px;
+          padding-top: 9px;
+          border-top: 1px dotted #e6d9c6;
+          text-align: left;
+        }
+        .linea-cifra em {
+          margin-top: 0;
+          order: -1;
+        }
+        .carta-total {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 10px;
+        }
+        .carta-total .v {
+          text-align: left;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      @media print {
+        body {
+          background: #fff;
+          padding: 0;
+          gap: 0;
+        }
+        header,
+        footer.pagina,
+        .barra {
+          display: none;
+        }
+        .carta {
+          width: 100%;
+          box-shadow: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <p class="eyebrow">Plan de producción</p>
+      <h1>Cotización Soul</h1>
+      <p class="sub">217 unidades · 4 líneas de producto</p>
+    </header>
+
+    <section class="carta" aria-labelledby="plan-t">
+      <div class="carta-cuerpo">
+        <h2 id="plan-t">Precio por línea</h2>
+        <p class="carta-sub">
+          Cada línea se produce completa; las unidades no se cotizan por
+          separado.
+        </p>
+
+        <div class="linea">
+          <img
+            class="linea-thumb"
+            loading="lazy"
+            alt="Manilla de cuero con mecanismo y módulo SOUL"
+            src="/soul/soul-linea-01-manilla-cuero.jpg"
+          />
+          <p class="linea-tag">Línea 01 · 200 unidades</p>
+          <h3 class="linea-n">
+            Manilla de cuero 100% natural tipo exportación
+          </h3>
+          <p class="linea-desc">
+            <b>Para</b>Hombre y Mujer · 100 hombre + 100 mujer<br />
+            <b>Joya</b>Incluye mecanismo y módulos con aleación y marca SOUL.
+          </p>
+          <p class="linea-cifra"><b>$38’000.000</b><em>200 × $190.000</em></p>
+        </div>
+
+        <div class="linea">
+          <img
+            class="linea-thumb"
+            loading="lazy"
+            alt="Anillo Nexus en oro 18 k con esmeralda talla cuadrada"
+            src="/soul/soul-linea-02-anillo-nexus.jpg"
+          />
+          <p class="linea-tag">Línea 02 · 8 unidades</p>
+          <h3 class="linea-n">Anillo Nexus</h3>
+          <p class="linea-desc">
+            <b>Gemas</b>Esmeralda colombiana F2 · talla cuadrada<br />
+            <b>Joya</b>Montura en Oro 18 k · 3 g
+          </p>
+          <p class="linea-cifra"><b>$32’000.000</b><em>8 × $4’000.000</em></p>
+        </div>
+
+        <div class="linea">
+          <img
+            class="linea-thumb"
+            loading="lazy"
+            alt="Manilla Tenis en oro 18 k con 22 esmeraldas colombianas"
+            src="/soul/soul-linea-03-manilla-tenis.jpg"
+          />
+          <p class="linea-tag">Línea 03 · 8 unidades</p>
+          <h3 class="linea-n">Manilla Tenis</h3>
+          <p class="linea-desc">
+            <b>Gemas</b>22 esmeraldas colombianas<br />
+            <b>Joya</b>Oro 18 k · 6 g
+          </p>
+          <p class="linea-cifra"><b>$44’000.000</b><em>8 × $5’500.000</em></p>
+        </div>
+
+        <div class="linea">
+          <img
+            class="linea-thumb"
+            loading="lazy"
+            alt="Anillo Trinity en oro 18 k con esmeraldas talla redonda"
+            src="/soul/soul-linea-04-anillo-trinity.jpg"
+          />
+          <p class="linea-tag">Línea 04 · 1 unidad</p>
+          <h3 class="linea-n">Anillo Trinity</h3>
+          <p class="linea-desc">
+            <b>Gemas</b>Esmeralda colombiana · talla redonda<br />
+            <b>Joya</b>Montura en Oro 18 k · 3,5 g
+          </p>
+          <p class="linea-cifra"><b>$2’820.000</b><em>1 × $2’820.000</em></p>
+        </div>
+
+        <div class="carta-total">
+          <p class="k">Precio Total</p>
+          <p class="v">$116’820.000</p>
+        </div>
+
+        <dl class="condiciones">
+          <div>
+            <dt>Fecha</dt>
+            <dd>29 de julio de 2026</dd>
+          </div>
+          <div>
+            <dt>Ciudad</dt>
+            <dd>Bogotá, Colombia</dd>
+          </div>
+          <div>
+            <dt>Validez</dt>
+            <dd>15 días</dd>
+          </div>
+          <div>
+            <dt>Moneda</dt>
+            <dd>COP</dd>
+          </div>
+          <div>
+            <dt>IVA</dt>
+            <dd>No incluido</dd>
+          </div>
+          <div>
+            <dt>Pago</dt>
+            <dd>60 % anticipo · 40 % contra entrega</dd>
+          </div>
+        </dl>
+
+        <ol class="notas">
+          <li>Los precios incluyen materiales de mecanismos y módulos.</li>
+          <li>
+            Para joyería en oro 18 k: el peso y el quilataje están especificados
+            por ítem.
+          </li>
+          <li>Tiempo de producción: 30 días a partir del anticipo del 60 %.</li>
+        </ol>
+
+        <aside class="aviso">
+          <p>Imágenes de referencia</p>
+          <p>No corresponden al producto final.</p>
+        </aside>
+      </div>
+
+      <footer class="carta-pie">
+        <i class="logo-tm" role="img" aria-label="Tierra Mädre"></i>
+        <span class="sellos" role="img" aria-label="Certificados de origen">
+          <i class="s1"></i><i class="s2"></i><i class="s3"></i>
+        </span>
+      </footer>
+      <div class="barra-card"></div>
+    </section>
+
+    <footer class="pagina">
+      <div class="marca">
+        TIERRA MÄDRE<small>Esmeraldas con ADN de Paz</small>
+      </div>
+      <p class="nota">Esmeraldas con ADN de Paz · Colombia.</p>
+    </footer>
+
+    <div class="barra"></div>
+  </body>
+</html>

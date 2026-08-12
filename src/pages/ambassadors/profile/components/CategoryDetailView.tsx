@@ -4,15 +4,11 @@
  */
 
 import { useState, useMemo } from 'react';
-import { Box, Typography, Chip, IconButton, alpha, useTheme } from '@mui/material';
-import { ArrowLeft } from 'lucide-react';
+import { Box, Typography, IconButton } from '@mui/material';
+import { ArrowLeft, Gem } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../../../contexts/LanguageContext';
-import {
-  emeraldCore,
-  cssTransition,
-  blurValues,
-} from '../../../../design-system';
+import { EmptyState, SegmentedControl } from '../../../../design-system';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import { getQualityTiers } from '../../../../utils/productCategories';
 import { ProductListCard } from './ProductListCard';
@@ -25,18 +21,23 @@ interface CategoryDetailViewProps {
   onProductClick: (item: TreasureItem) => void;
 }
 
-export function CategoryDetailView({ category, onBack, onProductClick }: CategoryDetailViewProps) {
-  const theme = useTheme();
+export function CategoryDetailView({
+  category,
+  onBack,
+  onProductClick,
+}: CategoryDetailViewProps) {
   const { t } = useLanguage();
-  const isLight = theme.palette.mode === 'light';
   const prefersReducedMotion = useReducedMotion();
   const [activeFilter, setActiveFilter] = useState<string>('all');
 
-  const qualityTiers = useMemo(() => getQualityTiers(category.items), [category.items]);
+  const qualityTiers = useMemo(
+    () => getQualityTiers(category.items),
+    [category.items],
+  );
 
   const filteredItems = useMemo(() => {
     if (activeFilter === 'all') return category.items;
-    return category.items.filter(item => item.calidad === activeFilter);
+    return category.items.filter((item) => item.calidad === activeFilter);
   }, [category.items, activeFilter]);
 
   const categoryLabels: Record<string, string> = {
@@ -54,21 +55,27 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
       transition={{ duration: 0.2 }}
     >
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, px: { xs: 0, sm: 0.5 } }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          mb: 2,
+          px: { xs: 0, sm: 0.5 },
+        }}
+      >
         <IconButton
           onClick={onBack}
           aria-label={t.actions.back}
           sx={{
-            bgcolor: isLight
-              ? alpha('#000', 0.04)
-              : alpha('#fff', 0.06),
-            backdropFilter: `blur(${blurValues.md})`,
-            width: 36,
-            height: 36,
+            bgcolor: 'var(--tm-well)',
+            border: '1px solid var(--tm-border)',
+            color: 'var(--tm-text)',
+            width: 44,
+            height: 44,
             '&:hover': {
-              bgcolor: isLight
-                ? alpha('#000', 0.08)
-                : alpha('#fff', 0.1),
+              bgcolor: 'var(--tm-well)',
+              borderColor: 'var(--tm-accent)',
             },
           }}
         >
@@ -77,80 +84,46 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
         <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem' }}>
           {categoryLabels[category.key] || category.label}
         </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary', ml: 'auto' }}>
+        <Typography
+          variant="body2"
+          sx={{ color: 'text.secondary', ml: 'auto' }}
+        >
           {filteredItems.length} {t.ambassador.museum?.items ?? 'productos'}
         </Typography>
       </Box>
 
-      {/* Filter Chips */}
+      {/* Quality filter — one control, one selected state (DS3 §canonical) */}
       {qualityTiers.length > 1 && (
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 0.75,
-            mb: 2,
-            overflowX: 'auto',
-            pb: 0.5,
-            scrollbarWidth: 'none',
-            '&::-webkit-scrollbar': { display: 'none' },
-          }}
-        >
-          <Chip
-            label={t.common.all}
-            size="small"
-            onClick={() => setActiveFilter('all')}
-            sx={{
-              fontWeight: 600,
-              fontSize: '0.72rem',
-              transition: cssTransition.default,
-              ...(activeFilter === 'all'
-                ? {
-                    bgcolor: emeraldCore.primary,
-                    color: '#fff',
-                    '&:hover': { bgcolor: emeraldCore.dark },
-                  }
-                : {
-                    bgcolor: isLight
-                      ? alpha(emeraldCore.primary, 0.08)
-                      : alpha(emeraldCore.primary, 0.12),
-                    color: emeraldCore.primary,
-                  }),
-            }}
+        <Box sx={{ mb: 2 }}>
+          <SegmentedControl
+            ariaLabel="Calidad"
+            value={activeFilter}
+            onChange={setActiveFilter}
+            options={[
+              { value: 'all', label: t.common.all },
+              ...qualityTiers.map((tier) => ({ value: tier, label: tier })),
+            ]}
           />
-          {qualityTiers.map((tier) => (
-            <Chip
-              key={tier}
-              label={tier}
-              size="small"
-              onClick={() => setActiveFilter(tier)}
-              sx={{
-                fontWeight: 600,
-                fontSize: '0.72rem',
-                flexShrink: 0,
-                transition: cssTransition.default,
-                ...(activeFilter === tier
-                  ? {
-                      bgcolor: emeraldCore.primary,
-                      color: '#fff',
-                      '&:hover': { bgcolor: emeraldCore.dark },
-                    }
-                  : {
-                      bgcolor: isLight
-                        ? alpha('#000', 0.04)
-                        : alpha('#fff', 0.06),
-                      color: 'text.secondary',
-                    }),
-              }}
-            />
-          ))}
         </Box>
       )}
 
-      {/* Product List — responsive grid on wider screens */}
+      {/* Product List — responsive grid on wider screens.
+          Tracks are minmax(0, 1fr), never a bare 1fr: `1fr` is minmax(auto, 1fr),
+          and an `auto` minimum floors the track at the item's min-content width.
+          ProductListCard's title is `white-space: nowrap`, so its min-content is
+          the FULL untruncated name — a lot-prefixed one ("L:II-JA Anna Collar…")
+          blew the track to ~455px inside a 358px container. <main> pins
+          overflow-x:hidden (IOSLayout.tsx:444), so the excess was clipped in
+          silence: the price and quality badge simply vanished off the right edge
+          while documentElement.scrollWidth still equalled innerWidth. */}
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+          gridTemplateColumns: {
+            xs: 'minmax(0, 1fr)',
+            sm: 'repeat(2, minmax(0, 1fr))',
+            md: 'repeat(3, minmax(0, 1fr))',
+          },
           gap: { xs: 1, sm: 1.5 },
         }}
       >
@@ -167,11 +140,15 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
       </Box>
 
       {filteredItems.length === 0 && (
-        <Box sx={{ textAlign: 'center', py: 6 }}>
-          <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
-            {t.common.noResults}
-          </Typography>
-        </Box>
+        <EmptyState
+          icon={Gem}
+          title={t.common.noResults}
+          action={
+            activeFilter !== 'all'
+              ? { label: t.common.all, onClick: () => setActiveFilter('all') }
+              : undefined
+          }
+        />
       )}
     </motion.div>
   );

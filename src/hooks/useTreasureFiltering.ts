@@ -4,6 +4,8 @@
  * Sub-hooks: useFilterOptions, useTreasureSort, useFilterInactivityTimeout.
  */
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { isPurchasable } from '../utils/productOffer';
+import { useResaleOffers } from './useResaleOffers';
 import { TreasureItem } from '../types';
 import { fuzzyMatch } from '../utils/fuzzySearch';
 import { normalizeCollection } from '../utils/formatting';
@@ -89,7 +91,10 @@ export interface UseTreasureFilteringReturn {
   // Stats
   filteredStats: {
     count: number;
+    /** Sum of the filtered rows whose price is KNOWN (withheld prices are skipped). */
     totalValue: number;
+    /** How many filtered rows `totalValue` covers. 0 → show no total at all. */
+    pricedCount: number;
   };
 
   // Filter options derived from treasure
@@ -110,6 +115,7 @@ export function useTreasureFiltering({
   initialFilters = {},
   inactivityTimeoutMinutes,
 }: UseTreasureFilteringOptions): UseTreasureFilteringReturn {
+  const { resaleIndex } = useResaleOffers();
   // Compute available filter options from treasure data
   const filterOptions = useFilterOptions(treasure);
   const { priceMinMax, caratMinMax } = filterOptions;
@@ -279,12 +285,62 @@ export function useTreasureFiltering({
       // available.
       const isExplicitItem =
         itemsFilter.length > 0 && itemsFilter.includes(item.item);
-      const itemEstado = item.estado?.toUpperCase() || '';
+
+      // `precioCOP` is absent (not zero — `typeof` is not `'number'`) for a
+      // catalog read the server withheld the price on: an anonymous/guest
+      // visitor (control-de-acceso-al-catalogo, api/_lib/catalogProjection.ts
+      // — TreasureItem's non-optional `precioCOP: number` type does not
+      // survive a projection that never sends the key). Withheld is not the
+      // same claim as "priced at zero" below, and must not be treated the
+      // same: a guest's whole catalog is priceless by design, and gating
+      // display on that would render an empty grid for every invited guest
+      // (an asesor's invitation link landing the client on a blank browser).
+      const priceKnown = typeof item.precioCOP === 'number';
+
+      // Hide priceless rows from the browse grid (2026-07-23).
+      //
+      // The SOT v3 inventory deliberately zeroes the cost of parent records so
+      // the same money isn't counted twice: a lote's parent row (#339 "Jardín
+      // Secreto", lote C-006) and a pair that was split into stones (#363
+      // "Igualdad" → #467-470) are RETIRED to 0, with the live cost sitting on
+      // the individual pieces. Those parents are correctly hidden from the
+      // Convex catalog (`mostrarEnCatalogo: false`), but that flag gates ONLY
+      // the Convex path — the Sheets reader returns every row — so they used to
+      // surface here rendering "$ 0".
+      //
+      // The gate is the PRICE, not `mostrarEnCatalogo`: that flag means
+      // "published through the Fotosíntesis wizard" and is false for the whole
+      // legacy catalog (#1 Rey Midas, #50, #150 …), so filtering on it would
+      // hide 397 of 513 items. A row with no price cannot be sold or compared,
+      // and self-heals the moment a cost is captured.
+      //
+      // `isExplicitItem` still wins, so a QR/quotation deep link to a priceless
+      // item resolves instead of going blank. `priceKnown` also wins — this
+      // gate only applies when the server actually told us the price was
+      // zero, not when it withheld the price entirely.
+      if (!isExplicitItem && priceKnown && !(item.precioCOP > 0)) return false;
+
+      // Same priceKnown-style distinction as above, for `estado` (N4,
+      // 2026-08 fix round 3): withheld for anon/guest (undefined) is not
+      // the same claim as "no estado value on this staff row" (`''`, rare
+      // legacy rows). Without `estadoKnown`, any statusFilter other than
+      // 'all' silently dropped every row for a guest — including
+      // src/components/ios/MoreSheetSearch.tsx, which hard-codes
+      // `statusFilter: 'available'` for the global search sheet, so a
+      // guest's search always returned zero results, for any query.
+      const estadoKnown = typeof item.estado === 'string';
       const matchesStatus =
         isExplicitItem ||
         statusFilter === 'all' ||
-        (statusFilter === 'available' && itemEstado === 'DISPONIBLE') ||
-        (statusFilter === 'sold' && itemEstado === 'VENDIDA');
+        !estadoKnown ||
+        // Not `itemEstado === 'DISPONIBLE'`. Sellability is no longer one
+        // field: CONSIGNACION is TM's stock an ambassador merely holds, and a
+        // piece an ambassador bought is purchasable again the moment they
+        // offer it for resale. getOffer owns that decision now.
+        (statusFilter === 'available' &&
+          isPurchasable(item, resaleIndex.get(item.item))) ||
+        (statusFilter === 'sold' &&
+          !isPurchasable(item, resaleIndex.get(item.item)));
 
       if (!matchesStatus) return false;
       if (!matchesHeroCategory(item)) return false;
@@ -306,7 +362,12 @@ export function useTreasureFiltering({
         (typeFilter === 'loose' && !item.isJewelry) ||
         (typeFilter === 'jewelry' && item.isJewelry);
       const matchesShape = shapeFilter === 'all' || item.talla === shapeFilter;
+      // Same `priceKnown` reasoning as the priceless-row gate above: a
+      // withheld price can't be compared against a numeric range at all
+      // (every comparison against `undefined` is false), so a price-range
+      // filter must not exclude what it cannot evaluate.
       const matchesPrice =
+        !priceKnown ||
         item.precioCOP === 0 ||
         (item.precioCOP >= priceRange[0] && item.precioCOP <= priceRange[1]);
       const itemCarats =
@@ -317,11 +378,27 @@ export function useTreasureFiltering({
         isNaN(itemCarats) ||
         itemCarats === 0 ||
         (itemCarats >= caratRange[0] && itemCarats <= caratRange[1]);
+      // Same withheld-vs-known distinction as `priceKnown`/`estadoKnown`
+      // above, for the last two WITHHELD_KEYS this filter reads. Both are
+      // absent for an anon/guest read, and both comparisons against
+      // `undefined` are unconditionally false — so before this guard, picking
+      // ANY cantidad or city emptied a guest's catalog outright.
+      const cantidadKnown = typeof item.cantidad === 'number';
       const matchesCantidad =
         cantidadFilter === 'all' ||
+        !cantidadKnown ||
         (cantidadFilter === '1' && item.cantidad === 1) ||
         (cantidadFilter === '2+' && item.cantidad > 1);
-      const matchesCity = cityFilter === 'all' || item.city === cityFilter;
+      // NOTE: `city` is optional even on a staff row (nothing in the current
+      // pipeline populates it — no producer in api/, convex/ or src/ ever
+      // assigns it), so `!cityKnown` currently makes the city filter a no-op
+      // for everyone rather than only for guests. That is the deliberate
+      // reading of the rule: an unknown city cannot be judged, so the row
+      // survives. It replaces the previous behaviour, which was to return an
+      // empty catalog for every caller the moment a city was picked.
+      const cityKnown = typeof item.city === 'string';
+      const matchesCity =
+        cityFilter === 'all' || !cityKnown || item.city === cityFilter;
       const matchesCategoria =
         categoriaFilter === 'all' || item.categoria === categoriaFilter;
       const matchesColeccion =
@@ -367,13 +444,28 @@ export function useTreasureFiltering({
   // Sort using extracted hook
   const sortedTreasure = useTreasureSort(filteredTreasure, sortBy);
 
-  // Calculate filtered stats
+  // Calculate filtered stats.
+  //
+  // `precioCOP` is withheld (absent, so `undefined`) for an anon/guest read —
+  // adding it poisoned the accumulator and every consumer rendered "$ NaN".
+  // Only numeric prices are summed, and `pricedCount` says how many rows the
+  // sum actually covers, so callers can tell a REAL total from a total that
+  // simply had nothing to add. The deliberate ruling: a total of 0 across 500
+  // priceless rows is a lie, so when `pricedCount === 0` the UI must show no
+  // total at all rather than "$ 0" (see MoreSheetSearch.tsx). A partial total
+  // (some rows priced, some not — a vitrina grant, where only the shared items
+  // carry prices) is still shown: it is the true sum of what the caller was
+  // allowed to see.
   const filteredStats = useMemo(() => {
-    const totalValue = filteredTreasure.reduce(
-      (sum, i) => sum + i.precioCOP,
-      0,
-    );
-    return { count: filteredTreasure.length, totalValue };
+    let totalValue = 0;
+    let pricedCount = 0;
+    for (const i of filteredTreasure) {
+      if (typeof i.precioCOP === 'number' && Number.isFinite(i.precioCOP)) {
+        totalValue += i.precioCOP;
+        pricedCount += 1;
+      }
+    }
+    return { count: filteredTreasure.length, totalValue, pricedCount };
   }, [filteredTreasure]);
 
   // Clear all filters (reset to defaults, showing all items)

@@ -1,33 +1,20 @@
 /**
- * useAmbassadorFavorites Hook
- * Manages ambassador-curated favorite products with localStorage persistence.
- * Uses synchronous cache init (anti-blink pattern).
+ * useAmbassadorFavorites
+ *
+ * Thin adapter over `useAmbassadorCuration`, which is where favourites now
+ * actually live (server-backed, localStorage as mirror cache).
+ *
+ * Until 2026-08-11 this hook owned `tm-ambassador-favorites-{slug}` in
+ * localStorage and nothing else — so an ambassador's chosen showcase existed
+ * only in the browser that chose it. The public API is unchanged so no caller
+ * had to move; the persistence underneath it did.
+ *
+ * `canWrite` gates the network side. Reads stay public: a visitor must see the
+ * ambassador's arrangement, that being the entire point of a showcase.
  */
 
-import { useState, useCallback, useEffect } from 'react';
-
-const STORAGE_PREFIX = 'tm-ambassador-favorites-';
-
-function getStorageKey(slug: string): string {
-  return `${STORAGE_PREFIX}${slug}`;
-}
-
-function loadFavorites(slug: string): string[] {
-  try {
-    const stored = localStorage.getItem(getStorageKey(slug));
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveFavorites(slug: string, favorites: string[]): void {
-  try {
-    localStorage.setItem(getStorageKey(slug), JSON.stringify(favorites));
-  } catch {
-    // Storage full or unavailable
-  }
-}
+import { useCallback } from 'react';
+import { useAmbassadorCuration } from './useAmbassadorCuration';
 
 interface UseAmbassadorFavoritesReturn {
   favorites: string[];
@@ -37,45 +24,45 @@ interface UseAmbassadorFavoritesReturn {
   isFavorite: (itemId: string) => boolean;
 }
 
-export function useAmbassadorFavorites(slug?: string): UseAmbassadorFavoritesReturn {
-  // Synchronous cache loading (anti-blink)
-  const [favorites, setFavorites] = useState<string[]>(() =>
-    slug ? loadFavorites(slug) : []
+export function useAmbassadorFavorites(
+  slug?: string,
+  canWrite = false,
+): UseAmbassadorFavoritesReturn {
+  const { favorites, setFavorites } = useAmbassadorCuration(slug, canWrite);
+
+  const addFavorite = useCallback(
+    (itemId: string) => {
+      if (favorites.includes(itemId)) return;
+      setFavorites([...favorites, itemId]);
+    },
+    [favorites, setFavorites],
   );
 
-  // Reload when slug changes (e.g. navigating between profiles)
-  useEffect(() => {
-    setFavorites(slug ? loadFavorites(slug) : []);
-  }, [slug]);
+  const removeFavorite = useCallback(
+    (itemId: string) => {
+      if (!favorites.includes(itemId)) return;
+      setFavorites(favorites.filter((id) => id !== itemId));
+    },
+    [favorites, setFavorites],
+  );
 
-  const addFavorite = useCallback((itemId: string) => {
-    if (!slug) return;
-    setFavorites(prev => {
-      if (prev.includes(itemId)) return prev;
-      const next = [...prev, itemId];
-      saveFavorites(slug, next);
-      return next;
-    });
-  }, [slug]);
+  const reorderFavorites = useCallback(
+    (newOrder: string[]) => setFavorites(newOrder),
+    [setFavorites],
+  );
 
-  const removeFavorite = useCallback((itemId: string) => {
-    if (!slug) return;
-    setFavorites(prev => {
-      const next = prev.filter(id => id !== itemId);
-      saveFavorites(slug, next);
-      return next;
-    });
-  }, [slug]);
+  const isFavorite = useCallback(
+    (itemId: string) => favorites.includes(itemId),
+    [favorites],
+  );
 
-  const reorderFavorites = useCallback((newOrder: string[]) => {
-    if (!slug) return;
-    setFavorites(newOrder);
-    saveFavorites(slug, newOrder);
-  }, [slug]);
-
-  const isFavorite = useCallback((itemId: string) => {
-    return favorites.includes(itemId);
-  }, [favorites]);
-
-  return { favorites, addFavorite, removeFavorite, reorderFavorites, isFavorite };
+  return {
+    favorites,
+    addFavorite,
+    removeFavorite,
+    reorderFavorites,
+    isFavorite,
+  };
 }
+
+export default useAmbassadorFavorites;

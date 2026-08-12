@@ -1,12 +1,24 @@
-import { query, internalMutation, action } from './_generated/server';
+import {
+  query,
+  internalMutation,
+  action,
+  type MutationCtx,
+} from './_generated/server';
 import { v, ConvexError } from 'convex/values';
 import { api, internal } from './_generated/api';
-import type { Id } from './_generated/dataModel';
+import type { Doc, Id } from './_generated/dataModel';
 import { bumpInventoryTotal } from './products';
+import { omitFotosintesisOnly } from './_lib/saleSafe';
 import { preponderanciaSum, balancesTo100 } from './_lib/lotMath';
+import { computePrecioFinal } from './_lib/pricing';
 import { withPublishStamp } from './_lib/publishState';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
+import {
+  isStaffSession,
+  isStaffOrBotSession,
+  requireStaffOrBotSession,
+} from './_lib/requireStaffSession';
 
 const tipoItemValidator = v.union(
   v.literal('gema'),
@@ -18,10 +30,18 @@ const tipoItemValidator = v.union(
 
 /** Resolve a lotItems join row by its productInventory itemId — used by the
  *  QR scanner to jump straight to an item's edit view without the operator
- *  needing to know which lote it lives in. */
+ *  needing to know which lote it lives in. Also read by anima-bot's
+ *  `casillaV4` (anima-bot/src/fotosintesis/client.ts) to resolve a v4 casilla
+ *  state, so it accepts EITHER a staff session or the bot secret — see
+ *  `_lib/requireStaffSession.ts`'s `isStaffOrBotSession`. */
 export const getByItemId = query({
-  args: { itemId: v.string() },
-  handler: async (ctx, { itemId }) => {
+  args: {
+    itemId: v.string(),
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
+  },
+  handler: async (ctx, { itemId, sessionToken, botSecret }) => {
+    if (!(await isStaffOrBotSession({ sessionToken, botSecret }))) return null;
     const row = await ctx.db
       .query('lotItems')
       .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
@@ -31,8 +51,9 @@ export const getByItemId = query({
 });
 
 export const listByLote = query({
-  args: { loteId: v.string() },
-  handler: async (ctx, { loteId }) => {
+  args: { loteId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { loteId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const items = await ctx.db
       .query('lotItems')
       .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
@@ -77,7 +98,18 @@ function normalizeMedidas(s: string): string {
  * here, matching products.publishedCatalog's own convention (lotItems.create
  * always sets both together; _remove clears loteId on the orphaned row).
  *
- * No auth gate — public read, same as lots.list / providers.list.
+ * GATED (2026-08-05, F7): was "no auth gate — public read", but the same
+ * unauthenticated-POST audit that closed products.list/clients.list/etc.
+ * showed this returns full productInventory rows (via omitFotosintesisOnly,
+ * not a public projection) to anyone holding the Convex deployment URL. Now
+ * requires EITHER a verified staff session OR the anima-bot shared secret
+ * (`ANIMA_BOT_SECRET`) — see `_lib/requireStaffSession.ts`'s
+ * `isStaffOrBotSession`. The bot secret path exists because this is exactly
+ * `searchItems`'s stock-search query above, confirmed against
+ * anima-bot/src/fotosintesis/client.ts; the bot's `.env` already carries
+ * `ANIMA_BOT_SECRET` for the existing `*ViaBot` mutations, but its query
+ * calls here don't send it yet — see the report for the client.ts change
+ * needed to keep this feature working.
  */
 export const search = query({
   args: {
@@ -85,8 +117,16 @@ export const search = query({
     medidas: v.optional(v.string()),
     minCantidad: v.optional(v.number()),
     loteId: v.optional(v.string()),
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
   },
-  handler: async (ctx, { tipo, medidas, minCantidad, loteId }) => {
+  handler: async (
+    ctx,
+    { tipo, medidas, minCantidad, loteId, sessionToken, botSecret },
+  ) => {
+    // Lanza si la credencial vino y no sirve; `[]` solo cuando no vino ninguna.
+    if (!(await requireStaffOrBotSession({ sessionToken, botSecret })))
+      return [];
     // by_loteId is the only relevant index available — tipo has none, so it
     // (like medidas) is filtered in memory below regardless.
     const rows = loteId
@@ -116,22 +156,36 @@ export const search = query({
       return true;
     });
 
-    return filtered.sort((a, b) => {
-      const cantDiff = (b.cantidad ?? 0) - (a.cantidad ?? 0);
-      if (cantDiff !== 0) return cantDiff;
-      return (a.nombre ?? '').localeCompare(b.nombre ?? '', 'es');
-    });
+    // Devuelve el documento completo, así que toda columna nueva del SOT sale
+    // por acá sola. El anima-bot consume esta query (ver asesorMovements.ts):
+    // las 14 columnas de Fotosíntesis no le corresponden. Ver _lib/saleSafe.ts.
+    return filtered
+      .sort((a, b) => {
+        const cantDiff = (b.cantidad ?? 0) - (a.cantidad ?? 0);
+        if (cantDiff !== 0) return cantDiff;
+        return (a.nombre ?? '').localeCompare(b.nombre ?? '', 'es');
+      })
+      .map(omitFotosintesisOnly);
   },
 });
 
 /**
  * Cumulative preponderancia for a given lot. Reactive — the wizard
  * subscribes to this so the PreponderanciaTracker updates as items are
- * created/edited.
+ * created/edited. Also read by anima-bot's `preponderanciaState`
+ * (anima-bot/src/fotosintesis/client.ts) — accepts either a staff session or
+ * the bot secret, see `_lib/requireStaffSession.ts`'s `isStaffOrBotSession`.
  */
 export const sumPreponderancia = query({
-  args: { loteId: v.string() },
-  handler: async (ctx, { loteId }) => {
+  args: {
+    loteId: v.string(),
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
+  },
+  handler: async (ctx, { loteId, sessionToken, botSecret }) => {
+    if (!(await isStaffOrBotSession({ sessionToken, botSecret }))) {
+      return { sum: 0, count: 0, remaining: 100, overflow: 0 };
+    }
     const items = await ctx.db
       .query('lotItems')
       .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
@@ -168,14 +222,13 @@ async function nextItemId(ctx: {
 
 /**
  * Create one item in a lot. This:
- *   1. Reads the lot to obtain costoTotalCOP and validate state.
+ *   1. Reads the lot to validate state.
  *   2. Allocates the next itemId in productInventory.
- *   3. Computes costoBaseCOP = lot.costoTotalCOP × (preponderancia / 100).
+ *   3. Starts costoBaseCOP at 0 — cost is sheet-owned (2026-07-24), typed into
+ *      column L by hand and pulled back later; no derivation from the lote.
  *   4. Inserts the productInventory row directly (mostrarEnCatalogo:false).
  *   5. Inserts the lotItems row.
  *   6. Schedules the productInventory push (mode: append).
- *
- * BR-5 (costoBaseCOP calculated, never user-editable) is enforced here.
  */
 const createArgs = {
   loteId: v.string(),
@@ -280,9 +333,11 @@ export const _create = internalMutation({
       );
     }
 
-    const costoBaseCOP = Math.round(
-      lot.costoTotalCOP * (args.preponderancia / 100),
-    );
+    // COST OWNERSHIP (2026-07-24): costoBaseCOP is sheet-owned. A new item starts
+    // at 0; a human types the real item cost into column L of the sheet and it is
+    // pulled back into Convex. The old preponderancia-based derivation
+    // (lot.costoTotalCOP × preponderancia%) is fully deactivated.
+    const costoBaseCOP = 0;
 
     const itemId = await nextItemId(ctx);
     const now = new Date().toISOString();
@@ -327,8 +382,8 @@ export const _create = internalMutation({
       formulaGema: args.formulaGema,
       formulaJoya: args.formulaJoya,
       rangoDescuento: args.rangoDescuento,
-      precioEmbajadorCOP: args.precioEmbajadorCOP,
-      precioConscienteCOP: args.precioConscienteCOP,
+      // DERIVED single final price (2026-07-21 refactor); replaces the tiers.
+      precioFinalCOP: computePrecioFinal(costoBaseCOP),
       lastPulledAt: now,
       syncStatus: 'pending' as const,
     });
@@ -532,10 +587,11 @@ export const _attachExistingToLote = internalMutation({
 });
 
 /**
- * Patch the preponderancia of an existing lot item. The linked
- * productInventory row's `costoBaseCOP` is recomputed from the lot's
- * current `costoTotalCOP` so the Sheets row stays consistent, and a
- * push is scheduled with an audit row.
+ * Patch the preponderancia of an existing lot item. Cost is DECOUPLED from
+ * preponderancia (2026-07-24): `costoBaseCOP` is sheet-owned and is NOT touched
+ * here — only the item's share (preponderancia) is updated on both the lotItems
+ * join and the productInventory mirror, and a push is scheduled with an audit
+ * row for that field.
  *
  * BR-2 (sum ≤ 100) is re-validated server-side against the *other*
  * items in the lot so the operator can drop one ítem's share and
@@ -593,8 +649,8 @@ export const _updatePreponderancia = internalMutation({
       );
     }
 
-    const costoBaseCOP = Math.round(lot.costoTotalCOP * (preponderancia / 100));
-    await ctx.db.patch(lotItemId, { preponderancia, costoBaseCOP });
+    // Cost is sheet-owned (2026-07-24) — patch ONLY the share, never costoBaseCOP.
+    await ctx.db.patch(lotItemId, { preponderancia });
 
     const product = await ctx.db
       .query('productInventory')
@@ -604,7 +660,6 @@ export const _updatePreponderancia = internalMutation({
       const now = new Date().toISOString();
       await ctx.db.patch(product._id, {
         preponderancia,
-        costoBaseCOP,
         syncStatus: 'pending' as const,
       });
       const auditId = await ctx.db.insert('productEdits', {
@@ -617,11 +672,6 @@ export const _updatePreponderancia = internalMutation({
             before: existing.preponderancia,
             after: preponderancia,
           },
-          {
-            field: 'costoBaseCOP',
-            before: existing.costoBaseCOP,
-            after: costoBaseCOP,
-          },
         ],
         status: 'pending' as const,
       });
@@ -632,7 +682,9 @@ export const _updatePreponderancia = internalMutation({
       });
     }
 
-    return { lotItemId, preponderancia, costoBaseCOP };
+    // costoBaseCOP is unchanged by a preponderancia edit; echo the existing
+    // sheet-owned value to keep the action's return shape stable.
+    return { lotItemId, preponderancia, costoBaseCOP: existing.costoBaseCOP };
   },
 });
 
@@ -662,8 +714,9 @@ export const updatePreponderancia = action({
 /**
  * Patch a lot item's gema metadata. Accepts any subset of editable
  * fields and writes them to the linked productInventory row. If
- * `preponderancia` is in the patch, the lotItems row and the product's
- * `costoBaseCOP` are recomputed and updated atomically (BR-2 + BR-5).
+ * `preponderancia` is in the patch, the share is re-validated (BR-2) and
+ * updated on both the lotItems join and the productInventory mirror —
+ * `costoBaseCOP` is sheet-owned (2026-07-24) and is NOT recomputed or touched.
  *
  * A single productEdits audit row captures every changed field with
  * before/after values. Sheets push is scheduled once at the end so a
@@ -741,8 +794,9 @@ export const _updateGemaFields = internalMutation({
     }
 
     // Re-validate preponderancia against siblings (BR-2) before any writes.
+    // Cost is DECOUPLED (2026-07-24): a preponderancia edit no longer derives
+    // costoBaseCOP — cost is sheet-owned.
     let nextPreponderancia: number | undefined;
-    let nextCostoBaseCOP: number | undefined;
     if (patch.preponderancia !== undefined) {
       const p = patch.preponderancia;
       if (p <= 0 || p > 100) {
@@ -762,7 +816,6 @@ export const _updateGemaFields = internalMutation({
         );
       }
       nextPreponderancia = p;
-      nextCostoBaseCOP = Math.round(lot.costoTotalCOP * (p / 100));
     }
 
     // Compute the diff vs current product/lotItem state so we audit only
@@ -844,16 +897,9 @@ export const _updateGemaFields = internalMutation({
       patch.rendimientoEsperado,
       product.rendimientoEsperado,
     );
-    compareNumber(
-      'precioEmbajadorCOP',
-      patch.precioEmbajadorCOP,
-      product.precioEmbajadorCOP,
-    );
-    compareNumber(
-      'precioConscienteCOP',
-      patch.precioConscienteCOP,
-      product.precioConscienteCOP,
-    );
+    // Price tiers removed (2026-07-21): precioFinalCOP is derived from
+    // costoBaseCOP, not set directly here. Any tier fields still in the patch
+    // are ignored.
 
     if (patch.minerales !== undefined) {
       const prev = product.minerales ?? [];
@@ -917,21 +963,15 @@ export const _updateGemaFields = internalMutation({
 
     if (
       nextPreponderancia !== undefined &&
-      nextCostoBaseCOP !== undefined &&
-      (nextPreponderancia !== lotItem.preponderancia ||
-        nextCostoBaseCOP !== lotItem.costoBaseCOP)
+      nextPreponderancia !== lotItem.preponderancia
     ) {
+      // Cost is sheet-owned (2026-07-24): update ONLY the share, never
+      // costoBaseCOP, and never re-derive the price from it.
       productPatch.preponderancia = nextPreponderancia;
-      productPatch.costoBaseCOP = nextCostoBaseCOP;
       changes.push({
         field: 'preponderancia',
         before: lotItem.preponderancia,
         after: nextPreponderancia,
-      });
-      changes.push({
-        field: 'costoBaseCOP',
-        before: lotItem.costoBaseCOP,
-        after: nextCostoBaseCOP,
       });
     }
 
@@ -945,11 +985,12 @@ export const _updateGemaFields = internalMutation({
       syncStatus: 'pending' as const,
       syncError: undefined,
     });
-    if (nextPreponderancia !== undefined && nextCostoBaseCOP !== undefined) {
-      await ctx.db.patch(lotItemId, {
-        preponderancia: nextPreponderancia,
-        costoBaseCOP: nextCostoBaseCOP,
-      });
+    if (
+      nextPreponderancia !== undefined &&
+      nextPreponderancia !== lotItem.preponderancia
+    ) {
+      // Only the share is written back to the join — costoBaseCOP is sheet-owned.
+      await ctx.db.patch(lotItemId, { preponderancia: nextPreponderancia });
     }
 
     // 2. Audit + scheduled sheet push.
@@ -971,7 +1012,9 @@ export const _updateGemaFields = internalMutation({
       lotItemId,
       changed: true,
       changedFields: changes.map((c) => c.field),
-      costoBaseCOP: nextCostoBaseCOP ?? lotItem.costoBaseCOP,
+      // costoBaseCOP is sheet-owned and unchanged by this edit; echo the
+      // existing value to keep the action's return shape stable.
+      costoBaseCOP: lotItem.costoBaseCOP,
     };
   },
 });
@@ -1011,6 +1054,80 @@ export const updateGemaFields = action({
  * Pass an empty string to clear a field. Only fields that actually change
  * produce an audit entry + Sheets push; a no-op returns early.
  */
+/**
+ * Shared core for every media update. Takes the ALREADY-RESOLVED
+ * productInventory row, because the two entry points reach it differently:
+ * `_updateMedia` hops through a lotItems join row, `_updateMediaByItem` looks
+ * the item up directly.
+ *
+ * Note what this does NOT touch: `lotItems`. Media has always lived on the
+ * productInventory row — the join row was only ever an ADDRESSING handle, never
+ * a destination. That is why an itemId-keyed entry point is not a workaround
+ * but the more honest key: an item with no lote still has a photo and can still
+ * earn a certificate.
+ */
+async function applyMediaToProduct(
+  ctx: MutationCtx,
+  product: Doc<'productInventory'>,
+  opts: {
+    fotoUrl?: string;
+    certificadoUrl?: string;
+    editorEmail?: string;
+  },
+): Promise<{ changed: boolean; changedFields?: string[] }> {
+  type Change = {
+    field: string;
+    before: string | number | null;
+    after: string | number | null;
+  };
+  const changes: Change[] = [];
+  const productPatch: Record<string, unknown> = {};
+
+  const applyMedia = (
+    field: 'fotoUrl' | 'certificadoUrl',
+    next: string | undefined,
+    current: string | undefined,
+  ) => {
+    if (next === undefined) return;
+    const normalized = next.trim();
+    const finalValue = normalized.length === 0 ? undefined : normalized;
+    if (finalValue === current) return;
+    productPatch[field] = finalValue;
+    changes.push({
+      field,
+      before: current ?? null,
+      after: finalValue ?? null,
+    });
+  };
+
+  applyMedia('fotoUrl', opts.fotoUrl, product.fotoUrl);
+  applyMedia('certificadoUrl', opts.certificadoUrl, product.certificadoUrl);
+
+  if (changes.length === 0) return { changed: false };
+
+  await ctx.db.patch(product._id, {
+    ...productPatch,
+    syncStatus: 'pending' as const,
+    syncError: undefined,
+  });
+
+  const now = new Date().toISOString();
+  const auditId = await ctx.db.insert('productEdits', {
+    itemId: product.itemId,
+    editorEmail: opts.editorEmail ?? 'fotosintesis-media',
+    editedAt: now,
+    changes,
+    status: 'pending' as const,
+  });
+  await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
+    itemId: product.itemId,
+    auditId,
+    mode: 'patch',
+  });
+
+  return { changed: true, changedFields: changes.map((c) => c.field) };
+}
+
 export const _updateMedia = internalMutation({
   args: {
     lotItemId: v.id('lotItems'),
@@ -1030,63 +1147,44 @@ export const _updateMedia = internalMutation({
       throw new Error(`productInventory para ${lotItem.itemId} no encontrado`);
     }
 
-    type Change = {
-      field: string;
-      before: string | number | null;
-      after: string | number | null;
-    };
-    const changes: Change[] = [];
-    const productPatch: Record<string, unknown> = {};
+    const result = await applyMediaToProduct(ctx, product, {
+      fotoUrl,
+      certificadoUrl,
+      editorEmail,
+    });
+    return { lotItemId, ...result };
+  },
+});
 
-    const applyMedia = (
-      field: 'fotoUrl' | 'certificadoUrl',
-      next: string | undefined,
-      current: string | undefined,
-    ) => {
-      if (next === undefined) return;
-      const normalized = next.trim();
-      const finalValue = normalized.length === 0 ? undefined : normalized;
-      if (finalValue === current) return;
-      productPatch[field] = finalValue;
-      changes.push({
-        field,
-        before: current ?? null,
-        after: finalValue ?? null,
-      });
-    };
-
-    applyMedia('fotoUrl', fotoUrl, product.fotoUrl);
-    applyMedia('certificadoUrl', certificadoUrl, product.certificadoUrl);
-
-    if (changes.length === 0) {
-      return { lotItemId, changed: false };
+/**
+ * itemId-keyed twin of `_updateMedia`. Exists because requiring a `lotItemId`
+ * made the certificate flow depend on the Convex-only `lotItems` join, which
+ * the Sheets pull does not create (375 of 513 items have no join row today).
+ * Since media lands on productInventory either way, the join hop bought nothing
+ * and blocked every lote-less item.
+ */
+export const _updateMediaByItem = internalMutation({
+  args: {
+    itemId: v.string(),
+    fotoUrl: v.optional(v.string()),
+    certificadoUrl: v.optional(v.string()),
+    editorEmail: v.optional(v.string()),
+  },
+  handler: async (ctx, { itemId, fotoUrl, certificadoUrl, editorEmail }) => {
+    const product = await ctx.db
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+      .first();
+    if (!product) {
+      throw new Error(`productInventory para ${itemId} no encontrado`);
     }
 
-    await ctx.db.patch(product._id, {
-      ...productPatch,
-      syncStatus: 'pending' as const,
-      syncError: undefined,
+    const result = await applyMediaToProduct(ctx, product, {
+      fotoUrl,
+      certificadoUrl,
+      editorEmail,
     });
-
-    const now = new Date().toISOString();
-    const auditId = await ctx.db.insert('productEdits', {
-      itemId: product.itemId,
-      editorEmail: editorEmail ?? 'fotosintesis-media',
-      editedAt: now,
-      changes,
-      status: 'pending' as const,
-    });
-    await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
-      itemId: product.itemId,
-      auditId,
-      mode: 'patch',
-    });
-
-    return {
-      lotItemId,
-      changed: true,
-      changedFields: changes.map((c) => c.field),
-    };
+    return { itemId, ...result };
   },
 });
 
@@ -1108,6 +1206,36 @@ export const updateMedia = action({
     const caller = await requireAccessLevel(idToken, ['admin']);
     return await ctx.runMutation(internal.lotItems._updateMedia, {
       lotItemId,
+      fotoUrl,
+      certificadoUrl,
+      editorEmail: caller.email,
+    });
+  },
+});
+
+/**
+ * Public, itemId-keyed media update — same admin gate as `updateMedia`. The
+ * certificate generator uses this so it never has to resolve a join row that
+ * may not exist.
+ */
+export const updateMediaByItem = action({
+  args: {
+    idToken: v.string(),
+    itemId: v.string(),
+    fotoUrl: v.optional(v.string()),
+    certificadoUrl: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    { idToken, itemId, fotoUrl, certificadoUrl },
+  ): Promise<{
+    itemId: string;
+    changed: boolean;
+    changedFields?: string[];
+  }> => {
+    const caller = await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runMutation(internal.lotItems._updateMediaByItem, {
+      itemId,
       fotoUrl,
       certificadoUrl,
       editorEmail: caller.email,

@@ -46,18 +46,40 @@ const SlideContainer = styled(Box)({
 });
 
 // Minimal corner decorations (silver, subtle)
-const CornerDecoration = styled(Box)<{ corner: 'tl' | 'tr' | 'bl' | 'br' }>(({ corner }) => ({
-  position: 'absolute',
-  width: '80px',
-  height: '80px',
-  borderColor: `${COLORS.silver}30`,
-  borderStyle: 'solid',
-  borderWidth: '0',
-  ...(corner === 'tl' && { top: 40, left: 40, borderTopWidth: '1px', borderLeftWidth: '1px' }),
-  ...(corner === 'tr' && { top: 40, right: 40, borderTopWidth: '1px', borderRightWidth: '1px' }),
-  ...(corner === 'bl' && { bottom: 40, left: 40, borderBottomWidth: '1px', borderLeftWidth: '1px' }),
-  ...(corner === 'br' && { bottom: 40, right: 40, borderBottomWidth: '1px', borderRightWidth: '1px' }),
-}));
+const CornerDecoration = styled(Box)<{ corner: 'tl' | 'tr' | 'bl' | 'br' }>(
+  ({ corner }) => ({
+    position: 'absolute',
+    width: '80px',
+    height: '80px',
+    borderColor: `${COLORS.silver}30`,
+    borderStyle: 'solid',
+    borderWidth: '0',
+    ...(corner === 'tl' && {
+      top: 40,
+      left: 40,
+      borderTopWidth: '1px',
+      borderLeftWidth: '1px',
+    }),
+    ...(corner === 'tr' && {
+      top: 40,
+      right: 40,
+      borderTopWidth: '1px',
+      borderRightWidth: '1px',
+    }),
+    ...(corner === 'bl' && {
+      bottom: 40,
+      left: 40,
+      borderBottomWidth: '1px',
+      borderLeftWidth: '1px',
+    }),
+    ...(corner === 'br' && {
+      bottom: 40,
+      right: 40,
+      borderBottomWidth: '1px',
+      borderRightWidth: '1px',
+    }),
+  }),
+);
 
 // Emerald accent bar (the only vibrant element)
 const VerticalAccentBar = styled(Box)({
@@ -71,6 +93,9 @@ const VerticalAccentBar = styled(Box)({
 });
 
 // Logo path constant
+// Deliberately the bare MARK, not the lockup: these are 60px corner watermarks.
+// The lockup's slogan band is 6.3% of its height, so it needs ≥80px to stay
+// legible — at 60px it would render the slogan as an illegible smear.
 const LOGO_PATH = '/logo-tierra-madre.png';
 
 // ============================================================================
@@ -115,7 +140,8 @@ export function BrandCoverTemplate({
           left: 0,
           width: 1920,
           height: 1080,
-          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%)',
+          background:
+            'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%)',
         }}
       />
 
@@ -125,7 +151,16 @@ export function BrandCoverTemplate({
       <CornerDecoration corner="br" />
 
       {/* Title - Top */}
-      <Box sx={{ position: 'absolute', top: 200, left: 0, width: 1920, textAlign: 'center', zIndex: zIndex.base }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 200,
+          left: 0,
+          width: 1920,
+          textAlign: 'center',
+          zIndex: zIndex.base,
+        }}
+      >
         <Typography
           sx={{
             fontSize: 100,
@@ -141,10 +176,28 @@ export function BrandCoverTemplate({
       </Box>
 
       {/* Divider */}
-      <Box sx={{ position: 'absolute', top: 340, left: 760, width: 400, height: 2, background: `linear-gradient(90deg, transparent, ${COLORS.emerald}, transparent)` }} />
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 340,
+          left: 760,
+          width: 400,
+          height: 2,
+          background: `linear-gradient(90deg, transparent, ${COLORS.emerald}, transparent)`,
+        }}
+      />
 
       {/* Contact Info - Bottom */}
-      <Box sx={{ position: 'absolute', bottom: 150, left: 0, width: 1920, textAlign: 'center', zIndex: zIndex.base }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 150,
+          left: 0,
+          width: 1920,
+          textAlign: 'center',
+          zIndex: zIndex.base,
+        }}
+      >
         <Typography
           sx={{
             fontSize: 24,
@@ -159,7 +212,14 @@ export function BrandCoverTemplate({
       </Box>
 
       {/* Logo - Bottom Right */}
-      <Box sx={{ position: 'absolute', bottom: 30, right: 50, zIndex: zIndex.base }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 30,
+          right: 50,
+          zIndex: zIndex.base,
+        }}
+      >
         <Box
           component="img"
           src={LOGO_PATH}
@@ -210,7 +270,8 @@ export function MissionTemplate({
           left: 0,
           width: 1920,
           height: 1080,
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.5) 100%)',
+          background:
+            'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.5) 100%)',
         }}
       />
 
@@ -221,7 +282,15 @@ export function MissionTemplate({
       <CornerDecoration corner="br" />
 
       {/* Mission Quote - Bottom Left */}
-      <Box sx={{ position: 'absolute', bottom: 120, left: 80, maxWidth: 1200, zIndex: 10 }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 120,
+          left: 80,
+          maxWidth: 1200,
+          zIndex: 10,
+        }}
+      >
         <Typography
           sx={{
             fontSize: 48,
@@ -238,7 +307,14 @@ export function MissionTemplate({
       </Box>
 
       {/* Logo - Bottom Right */}
-      <Box sx={{ position: 'absolute', bottom: 30, right: 50, zIndex: zIndex.base }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 30,
+          right: 50,
+          zIndex: zIndex.base,
+        }}
+      >
         <Box
           component="img"
           src={LOGO_PATH}
@@ -269,16 +345,38 @@ export function GlobalValidationTemplate({
   conclusion = 'Demanda crítica insatisfecha detectada, especialmente en Emiratos Árabes por esmeraldas extrafinas de gran tamaño.',
 }: GlobalValidationProps) {
   return (
-    <SlideContainer id={id} sx={{ background: `linear-gradient(135deg, ${COLORS.richBlack}, ${COLORS.darkTeal})` }}>
+    <SlideContainer
+      id={id}
+      sx={{
+        background: `linear-gradient(135deg, ${COLORS.richBlack}, ${COLORS.darkTeal})`,
+      }}
+    >
       {backgroundImage && (
-        <Box sx={{ position: 'absolute', inset: 0, backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.2 }} />
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: 0.2,
+          }}
+        />
       )}
       <VerticalAccentBar />
       <CornerDecoration corner="tr" />
       <CornerDecoration corner="bl" />
 
       <Stack sx={{ height: '100%', p: 10 }} spacing={6}>
-        <Typography sx={{ fontSize: '64px', fontWeight: 600, color: COLORS.gold, textAlign: 'center', fontFamily: '"Cormorant Garamond", serif' }}>
+        <Typography
+          sx={{
+            fontSize: '64px',
+            fontWeight: 600,
+            color: COLORS.gold,
+            textAlign: 'center',
+            fontFamily: '"Cormorant Garamond", serif',
+          }}
+        >
           {title}
         </Typography>
 
@@ -292,10 +390,20 @@ export function GlobalValidationTemplate({
                   background: alpha(COLORS.darkTeal, 0.6),
                   textAlign: 'center',
                   transition: cssTransition.slow,
-                  '&:hover': { borderColor: COLORS.gold, boxShadow: `0 8px 30px ${alpha(COLORS.gold, 0.3)}` },
+                  '&:hover': {
+                    borderColor: COLORS.gold,
+                    boxShadow: `0 8px 30px ${alpha(COLORS.gold, 0.3)}`,
+                  },
                 }}
               >
-                <Typography sx={{ fontSize: '36px', fontWeight: 600, color: COLORS.white, fontFamily: '"Cormorant Garamond", serif' }}>
+                <Typography
+                  sx={{
+                    fontSize: '36px',
+                    fontWeight: 600,
+                    color: COLORS.white,
+                    fontFamily: '"Cormorant Garamond", serif',
+                  }}
+                >
                   {dest}
                 </Typography>
               </Box>
@@ -303,8 +411,22 @@ export function GlobalValidationTemplate({
           ))}
         </Grid>
 
-        <Box sx={{ p: 5, background: alpha(COLORS.gold, 0.1), border: `1px solid ${COLORS.gold}` }}>
-          <Typography sx={{ fontSize: '26px', fontWeight: 400, color: COLORS.white, textAlign: 'center', fontFamily: '"Inter", sans-serif' }}>
+        <Box
+          sx={{
+            p: 5,
+            background: alpha(COLORS.gold, 0.1),
+            border: `1px solid ${COLORS.gold}`,
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '26px',
+              fontWeight: 400,
+              color: COLORS.white,
+              textAlign: 'center',
+              fontFamily: '"Inter", sans-serif',
+            }}
+          >
             {conclusion}
           </Typography>
         </Box>
@@ -332,29 +454,86 @@ export function OpportunityTemplate({
   return (
     <SlideContainer id={id} sx={{ background: COLORS.richBlack }}>
       {backgroundImage && (
-        <Box sx={{ position: 'absolute', inset: 0, backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.3 }} />
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: 0.3,
+          }}
+        />
       )}
 
       <VerticalAccentBar />
       <CornerDecoration corner="tl" />
       <CornerDecoration corner="br" />
 
-      <Stack sx={{ position: 'relative', zIndex: zIndex.base, height: '100%', justifyContent: 'center', px: 12 }} spacing={6}>
-        <Box sx={{ alignSelf: 'flex-start', px: 5, py: 2, background: `linear-gradient(90deg, ${COLORS.gold}, ${COLORS.emerald})`, borderRadius: '30px' }}>
-          <Typography sx={{ fontSize: '22px', fontWeight: 700, color: COLORS.richBlack, letterSpacing: '0.15em', fontFamily: '"Inter", sans-serif' }}>
+      <Stack
+        sx={{
+          position: 'relative',
+          zIndex: zIndex.base,
+          height: '100%',
+          justifyContent: 'center',
+          px: 12,
+        }}
+        spacing={6}
+      >
+        <Box
+          sx={{
+            alignSelf: 'flex-start',
+            px: 5,
+            py: 2,
+            background: `linear-gradient(90deg, ${COLORS.gold}, ${COLORS.emerald})`,
+            borderRadius: '30px',
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '22px',
+              fontWeight: 700,
+              color: COLORS.richBlack,
+              letterSpacing: '0.15em',
+              fontFamily: '"Inter", sans-serif',
+            }}
+          >
             OPORTUNIDAD ÚNICA
           </Typography>
         </Box>
 
-        <Typography sx={{ fontSize: '80px', fontWeight: 600, color: COLORS.white, lineHeight: 1.15, fontFamily: '"Cormorant Garamond", serif' }}>
+        <Typography
+          sx={{
+            fontSize: '80px',
+            fontWeight: 600,
+            color: COLORS.white,
+            lineHeight: 1.15,
+            fontFamily: '"Cormorant Garamond", serif',
+          }}
+        >
           {title}
         </Typography>
 
-        <Typography sx={{ fontSize: '30px', fontWeight: 300, color: COLORS.textMuted, maxWidth: '1000px', lineHeight: 1.6, fontFamily: '"Inter", sans-serif' }}>
+        <Typography
+          sx={{
+            fontSize: '30px',
+            fontWeight: 300,
+            color: COLORS.textMuted,
+            maxWidth: '1000px',
+            lineHeight: 1.6,
+            fontFamily: '"Inter", sans-serif',
+          }}
+        >
           {content}
         </Typography>
 
-        <Box sx={{ width: '500px', height: '4px', background: `linear-gradient(90deg, ${COLORS.gold}, ${COLORS.emerald})` }} />
+        <Box
+          sx={{
+            width: '500px',
+            height: '4px',
+            background: `linear-gradient(90deg, ${COLORS.gold}, ${COLORS.emerald})`,
+          }}
+        />
       </Stack>
     </SlideContainer>
   );
@@ -381,7 +560,12 @@ export function ExpertTemplate({
   expertImage = '/masterclass/05-expert.jpg',
 }: ExpertProps) {
   return (
-    <SlideContainer id={id} sx={{ background: `linear-gradient(135deg, ${COLORS.darkTeal}, ${COLORS.richBlack})` }}>
+    <SlideContainer
+      id={id}
+      sx={{
+        background: `linear-gradient(135deg, ${COLORS.darkTeal}, ${COLORS.richBlack})`,
+      }}
+    >
       <CornerDecoration corner="tl" />
       <CornerDecoration corner="br" />
 
@@ -393,28 +577,76 @@ export function ExpertTemplate({
               backgroundImage: expertImage ? `url(${expertImage})` : 'none',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-              background: expertImage ? undefined : `linear-gradient(135deg, ${COLORS.emeraldDeep}, ${COLORS.darkTeal})`,
-              '&::after': expertImage ? { content: '""', position: 'absolute', inset: 0, background: `linear-gradient(90deg, transparent, ${alpha(COLORS.darkTeal, 0.8)})` } : undefined,
+              background: expertImage
+                ? undefined
+                : `linear-gradient(135deg, ${COLORS.emeraldDeep}, ${COLORS.darkTeal})`,
+              '&::after': expertImage
+                ? {
+                    content: '""',
+                    position: 'absolute',
+                    inset: 0,
+                    background: `linear-gradient(90deg, transparent, ${alpha(COLORS.darkTeal, 0.8)})`,
+                  }
+                : undefined,
             }}
           />
         </Grid>
 
         <Grid item xs={7}>
-          <Stack sx={{ height: '100%', justifyContent: 'center', px: 10, py: 8 }} spacing={5}>
-            <Typography sx={{ fontSize: '52px', fontWeight: 600, color: COLORS.gold, fontFamily: '"Cormorant Garamond", serif' }}>
+          <Stack
+            sx={{ height: '100%', justifyContent: 'center', px: 10, py: 8 }}
+            spacing={5}
+          >
+            <Typography
+              sx={{
+                fontSize: '52px',
+                fontWeight: 600,
+                color: COLORS.gold,
+                fontFamily: '"Cormorant Garamond", serif',
+              }}
+            >
               {title}
             </Typography>
 
-            <Box sx={{ p: 5, border: `2px solid ${COLORS.emerald}`, background: alpha(COLORS.richBlack, 0.5) }}>
-              <Typography sx={{ fontSize: '64px', fontWeight: 600, color: COLORS.white, mb: 2, fontFamily: '"Cormorant Garamond", serif' }}>
+            <Box
+              sx={{
+                p: 5,
+                border: `2px solid ${COLORS.emerald}`,
+                background: alpha(COLORS.richBlack, 0.5),
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: '64px',
+                  fontWeight: 600,
+                  color: COLORS.white,
+                  mb: 2,
+                  fontFamily: '"Cormorant Garamond", serif',
+                }}
+              >
                 {expertName}
               </Typography>
-              <Typography sx={{ fontSize: '26px', fontWeight: 400, color: COLORS.emerald, fontFamily: '"Inter", sans-serif' }}>
+              <Typography
+                sx={{
+                  fontSize: '26px',
+                  fontWeight: 400,
+                  color: COLORS.emerald,
+                  fontFamily: '"Inter", sans-serif',
+                }}
+              >
                 {expertTitle}
               </Typography>
             </Box>
 
-            <Typography sx={{ fontSize: '24px', fontWeight: 300, color: COLORS.textMuted, lineHeight: 1.7, fontFamily: '"Inter", sans-serif' }}>
+            <Typography
+              sx={{
+                fontSize: '24px',
+                fontWeight: 300,
+                color: COLORS.textMuted,
+                lineHeight: 1.7,
+                fontFamily: '"Inter", sans-serif',
+              }}
+            >
               {content}
             </Typography>
           </Stack>
@@ -439,23 +671,64 @@ export function DifferentiatorsTemplate({
   title = '¿Por Qué una Esmeralda Colombiana Vale Más?',
   backgroundImage = '/masterclass/06-differentiators.jpg',
   factors = [
-    { title: 'Color', description: 'Un verde profundo, saturado y único, inigualable en otras partes del mundo.' },
-    { title: 'Brillo', description: 'Una luminosidad excepcional que parece emanar desde el interior de la gema.' },
-    { title: 'Jardines Internos', description: 'La firma inimitable de la naturaleza, una huella digital que garantiza su origen.' },
-    { title: 'Geología Única', description: 'Proceso de formación mucho más lento que otorga características incomparables.' },
+    {
+      title: 'Color',
+      description:
+        'Un verde profundo, saturado y único, inigualable en otras partes del mundo.',
+    },
+    {
+      title: 'Brillo',
+      description:
+        'Una luminosidad excepcional que parece emanar desde el interior de la gema.',
+    },
+    {
+      title: 'Jardines Internos',
+      description:
+        'La firma inimitable de la naturaleza, una huella digital que garantiza su origen.',
+    },
+    {
+      title: 'Geología Única',
+      description:
+        'Proceso de formación mucho más lento que otorga características incomparables.',
+    },
   ],
 }: DifferentiatorsProps) {
   return (
     <SlideContainer id={id} sx={{ background: COLORS.richBlack }}>
       {backgroundImage && (
-        <Box sx={{ position: 'absolute', inset: 0, backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.15 }} />
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: 0.15,
+          }}
+        />
       )}
       <VerticalAccentBar />
       <CornerDecoration corner="tr" />
       <CornerDecoration corner="bl" />
 
-      <Stack sx={{ height: '100%', p: 10, position: 'relative', zIndex: zIndex.base }} spacing={6}>
-        <Typography sx={{ fontSize: '64px', fontWeight: 600, color: COLORS.gold, textAlign: 'center', fontFamily: '"Cormorant Garamond", serif' }}>
+      <Stack
+        sx={{
+          height: '100%',
+          p: 10,
+          position: 'relative',
+          zIndex: zIndex.base,
+        }}
+        spacing={6}
+      >
+        <Typography
+          sx={{
+            fontSize: '64px',
+            fontWeight: 600,
+            color: COLORS.gold,
+            textAlign: 'center',
+            fontFamily: '"Cormorant Garamond", serif',
+          }}
+        >
           {title}
         </Typography>
 
@@ -469,13 +742,37 @@ export function DifferentiatorsTemplate({
                   background: `linear-gradient(135deg, ${alpha(COLORS.darkTeal, 0.8)}, ${alpha(COLORS.richBlack, 0.6)})`,
                   border: `2px solid ${COLORS.emerald}`,
                   position: 'relative',
-                  '&::before': { content: '""', position: 'absolute', top: 0, left: 0, width: '6px', height: '100%', background: COLORS.gold },
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '6px',
+                    height: '100%',
+                    background: COLORS.gold,
+                  },
                 }}
               >
-                <Typography sx={{ fontSize: '44px', fontWeight: 600, color: COLORS.gold, mb: 2, fontFamily: '"Cormorant Garamond", serif' }}>
+                <Typography
+                  sx={{
+                    fontSize: '44px',
+                    fontWeight: 600,
+                    color: COLORS.gold,
+                    mb: 2,
+                    fontFamily: '"Cormorant Garamond", serif',
+                  }}
+                >
                   {factor.title}
                 </Typography>
-                <Typography sx={{ fontSize: '24px', fontWeight: 300, color: COLORS.white, lineHeight: 1.6, fontFamily: '"Inter", sans-serif' }}>
+                <Typography
+                  sx={{
+                    fontSize: '24px',
+                    fontWeight: 300,
+                    color: COLORS.white,
+                    lineHeight: 1.6,
+                    fontFamily: '"Inter", sans-serif',
+                  }}
+                >
                   {factor.description}
                 </Typography>
               </Box>
@@ -506,9 +803,23 @@ export function CelebritiesTemplate({
   backgroundImage = '/masterclass/07-celebrities.jpg',
 }: CelebritiesProps) {
   return (
-    <SlideContainer id={id} sx={{ background: `linear-gradient(135deg, ${COLORS.richBlack}, ${COLORS.darkTeal})` }}>
+    <SlideContainer
+      id={id}
+      sx={{
+        background: `linear-gradient(135deg, ${COLORS.richBlack}, ${COLORS.darkTeal})`,
+      }}
+    >
       {backgroundImage && (
-        <Box sx={{ position: 'absolute', inset: 0, backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.15 }} />
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: 0.15,
+          }}
+        />
       )}
       <CornerDecoration corner="tl" />
       <CornerDecoration corner="tr" />
@@ -516,15 +827,34 @@ export function CelebritiesTemplate({
       <CornerDecoration corner="br" />
 
       <Stack sx={{ height: '100%', p: 10 }} spacing={5}>
-        <Typography sx={{ fontSize: '64px', fontWeight: 600, color: COLORS.gold, textAlign: 'center', fontFamily: '"Cormorant Garamond", serif' }}>
+        <Typography
+          sx={{
+            fontSize: '64px',
+            fontWeight: 600,
+            color: COLORS.gold,
+            textAlign: 'center',
+            fontFamily: '"Cormorant Garamond", serif',
+          }}
+        >
           {title}
         </Typography>
 
-        <Typography sx={{ fontSize: '32px', fontWeight: 300, color: COLORS.white, textAlign: 'center', fontFamily: '"Inter", sans-serif' }}>
+        <Typography
+          sx={{
+            fontSize: '32px',
+            fontWeight: 300,
+            color: COLORS.white,
+            textAlign: 'center',
+            fontFamily: '"Inter", sans-serif',
+          }}
+        >
           {subtitle}
         </Typography>
 
-        <Stack spacing={4} sx={{ flexGrow: 1, justifyContent: 'center', px: 15 }}>
+        <Stack
+          spacing={4}
+          sx={{ flexGrow: 1, justifyContent: 'center', px: 15 }}
+        >
           {celebrities.map((celeb, idx) => (
             <Box
               key={idx}
@@ -534,10 +864,21 @@ export function CelebritiesTemplate({
                 border: `2px solid ${COLORS.gold}`,
                 textAlign: 'center',
                 transition: cssTransition.slow,
-                '&:hover': { background: alpha(COLORS.gold, 0.2), transform: 'translateY(-4px)', boxShadow: `0 8px 30px ${alpha(COLORS.gold, 0.4)}` },
+                '&:hover': {
+                  background: alpha(COLORS.gold, 0.2),
+                  transform: 'translateY(-4px)',
+                  boxShadow: `0 8px 30px ${alpha(COLORS.gold, 0.4)}`,
+                },
               }}
             >
-              <Typography sx={{ fontSize: '48px', fontWeight: 600, color: COLORS.white, fontFamily: '"Cormorant Garamond", serif' }}>
+              <Typography
+                sx={{
+                  fontSize: '48px',
+                  fontWeight: 600,
+                  color: COLORS.white,
+                  fontFamily: '"Cormorant Garamond", serif',
+                }}
+              >
                 {celeb}
               </Typography>
             </Box>
@@ -566,21 +907,41 @@ export function ReasonsTemplate({
     { number: '02', text: 'Es energía de sanación y protección.' },
     { number: '03', text: 'Es símbolo de lujo y poder.' },
     { number: '04', text: 'Es un activo que se valoriza en el tiempo.' },
-    { number: '05', text: 'Es la gema de la meditación que activa el chakra del corazón.' },
+    {
+      number: '05',
+      text: 'Es la gema de la meditación que activa el chakra del corazón.',
+    },
   ],
   backgroundImage = '/masterclass/08-reasons.jpg',
 }: ReasonsProps) {
   return (
     <SlideContainer id={id} sx={{ background: COLORS.richBlack }}>
       {backgroundImage && (
-        <Box sx={{ position: 'absolute', inset: 0, backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.15 }} />
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: 0.15,
+          }}
+        />
       )}
       <VerticalAccentBar />
       <CornerDecoration corner="tr" />
       <CornerDecoration corner="bl" />
 
       <Stack sx={{ height: '100%', p: 10 }} spacing={5}>
-        <Typography sx={{ fontSize: '56px', fontWeight: 600, color: COLORS.gold, textAlign: 'center', fontFamily: '"Cormorant Garamond", serif' }}>
+        <Typography
+          sx={{
+            fontSize: '56px',
+            fontWeight: 600,
+            color: COLORS.gold,
+            textAlign: 'center',
+            fontFamily: '"Cormorant Garamond", serif',
+          }}
+        >
           {title}
         </Typography>
 
@@ -597,10 +958,26 @@ export function ReasonsTemplate({
                 alignItems: 'center',
               }}
             >
-              <Typography sx={{ fontSize: '72px', fontWeight: 700, color: COLORS.gold, lineHeight: 1, minWidth: '120px', fontFamily: '"Cormorant Garamond", serif' }}>
+              <Typography
+                sx={{
+                  fontSize: '72px',
+                  fontWeight: 700,
+                  color: COLORS.gold,
+                  lineHeight: 1,
+                  minWidth: '120px',
+                  fontFamily: '"Cormorant Garamond", serif',
+                }}
+              >
                 {reason.number}
               </Typography>
-              <Typography sx={{ fontSize: '32px', fontWeight: 400, color: COLORS.white, fontFamily: '"Cormorant Garamond", serif' }}>
+              <Typography
+                sx={{
+                  fontSize: '32px',
+                  fontWeight: 400,
+                  color: COLORS.white,
+                  fontFamily: '"Cormorant Garamond", serif',
+                }}
+              >
                 {reason.text}
               </Typography>
             </Box>
@@ -636,31 +1013,85 @@ export function EthicalChainTemplate({
   backgroundImage = '/masterclass/09-ethical.jpg',
 }: EthicalChainProps) {
   return (
-    <SlideContainer id={id} sx={{ background: `linear-gradient(135deg, ${COLORS.darkTeal}, ${COLORS.richBlack})` }}>
+    <SlideContainer
+      id={id}
+      sx={{
+        background: `linear-gradient(135deg, ${COLORS.darkTeal}, ${COLORS.richBlack})`,
+      }}
+    >
       {backgroundImage && (
-        <Box sx={{ position: 'absolute', inset: 0, backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.2 }} />
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: 0.2,
+          }}
+        />
       )}
       <VerticalAccentBar />
       <CornerDecoration corner="tl" />
       <CornerDecoration corner="br" />
 
       <Stack sx={{ height: '100%', p: 10 }} spacing={6}>
-        <Typography sx={{ fontSize: '64px', fontWeight: 600, color: COLORS.gold, textAlign: 'center', lineHeight: 1.2, fontFamily: '"Cormorant Garamond", serif' }}>
+        <Typography
+          sx={{
+            fontSize: '64px',
+            fontWeight: 600,
+            color: COLORS.gold,
+            textAlign: 'center',
+            lineHeight: 1.2,
+            fontFamily: '"Cormorant Garamond", serif',
+          }}
+        >
           {title}
         </Typography>
 
-        <Typography sx={{ fontSize: '36px', fontWeight: 500, color: COLORS.emerald, textAlign: 'center', fontFamily: '"Inter", sans-serif' }}>
+        <Typography
+          sx={{
+            fontSize: '36px',
+            fontWeight: 500,
+            color: COLORS.emerald,
+            textAlign: 'center',
+            fontFamily: '"Inter", sans-serif',
+          }}
+        >
           {subtitle}
         </Typography>
 
         <Grid container spacing={5} sx={{ flexGrow: 1, alignItems: 'center' }}>
           {stats.map((stat, idx) => (
             <Grid item xs={4} key={idx}>
-              <Box sx={{ p: 6, background: alpha(COLORS.richBlack, 0.6), border: `2px solid ${idx === 1 ? COLORS.emerald : COLORS.gold}`, textAlign: 'center' }}>
-                <Typography sx={{ fontSize: '80px', fontWeight: 700, color: idx === 1 ? COLORS.emerald : COLORS.gold, lineHeight: 1, mb: 2, fontFamily: '"Cormorant Garamond", serif' }}>
+              <Box
+                sx={{
+                  p: 6,
+                  background: alpha(COLORS.richBlack, 0.6),
+                  border: `2px solid ${idx === 1 ? COLORS.emerald : COLORS.gold}`,
+                  textAlign: 'center',
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '80px',
+                    fontWeight: 700,
+                    color: idx === 1 ? COLORS.emerald : COLORS.gold,
+                    lineHeight: 1,
+                    mb: 2,
+                    fontFamily: '"Cormorant Garamond", serif',
+                  }}
+                >
                   {stat.value}
                 </Typography>
-                <Typography sx={{ fontSize: '26px', fontWeight: 400, color: COLORS.white, fontFamily: '"Inter", sans-serif' }}>
+                <Typography
+                  sx={{
+                    fontSize: '26px',
+                    fontWeight: 400,
+                    color: COLORS.white,
+                    fontFamily: '"Inter", sans-serif',
+                  }}
+                >
                   {stat.label}
                 </Typography>
               </Box>
@@ -668,8 +1099,23 @@ export function EthicalChainTemplate({
           ))}
         </Grid>
 
-        <Box sx={{ p: 5, background: alpha(COLORS.gold, 0.1), border: `1px solid ${COLORS.gold}` }}>
-          <Typography sx={{ fontSize: '28px', fontWeight: 300, color: COLORS.white, textAlign: 'center', lineHeight: 1.6, fontFamily: '"Inter", sans-serif' }}>
+        <Box
+          sx={{
+            p: 5,
+            background: alpha(COLORS.gold, 0.1),
+            border: `1px solid ${COLORS.gold}`,
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '28px',
+              fontWeight: 300,
+              color: COLORS.white,
+              textAlign: 'center',
+              lineHeight: 1.6,
+              fontFamily: '"Inter", sans-serif',
+            }}
+          >
             {content}
           </Typography>
         </Box>
@@ -692,16 +1138,37 @@ export function CTATemplate({
   id = 'cta',
   title = 'Tu Oportunidad de Invertir',
   products = [
-    { name: 'CORAZÓN TIERRA MADRE', specs: '1.85 ct | Corte Corazón | Calidad Fina', availability: 'Disponible' },
-    { name: 'AMOR PLATÓNICO', specs: '2.63 ct | Corte Cushion | Comercial Súper Fina', availability: 'Disponible' },
-    { name: 'ADÁN Y EVA', specs: '0.95 ct x2 | Corte Cuadrada | Comercial Superior', availability: 'Par Disponible' },
+    {
+      name: 'CORAZÓN TIERRA MADRE',
+      specs: '1.85 ct | Corte Corazón | Calidad Fina',
+      availability: 'Disponible',
+    },
+    {
+      name: 'AMOR PLATÓNICO',
+      specs: '2.63 ct | Corte Cushion | Comercial Súper Fina',
+      availability: 'Disponible',
+    },
+    {
+      name: 'ADÁN Y EVA',
+      specs: '0.95 ct x2 | Corte Cuadrada | Comercial Superior',
+      availability: 'Par Disponible',
+    },
   ],
   backgroundImage = '/masterclass/10-collection.jpg',
 }: CTAProps) {
   return (
     <SlideContainer id={id} sx={{ background: COLORS.richBlack }}>
       {backgroundImage && (
-        <Box sx={{ position: 'absolute', inset: 0, backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.1 }} />
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: 0.1,
+          }}
+        />
       )}
       <CornerDecoration corner="tl" />
       <CornerDecoration corner="tr" />
@@ -709,13 +1176,37 @@ export function CTATemplate({
       <CornerDecoration corner="br" />
 
       <Stack sx={{ height: '100%', p: 10 }} spacing={5}>
-        <Box sx={{ alignSelf: 'center', px: 6, py: 2, background: `linear-gradient(90deg, ${COLORS.gold}, ${COLORS.emerald})`, borderRadius: '30px' }}>
-          <Typography sx={{ fontSize: '24px', fontWeight: 700, color: COLORS.richBlack, letterSpacing: '0.15em', fontFamily: '"Inter", sans-serif' }}>
+        <Box
+          sx={{
+            alignSelf: 'center',
+            px: 6,
+            py: 2,
+            background: `linear-gradient(90deg, ${COLORS.gold}, ${COLORS.emerald})`,
+            borderRadius: '30px',
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '24px',
+              fontWeight: 700,
+              color: COLORS.richBlack,
+              letterSpacing: '0.15em',
+              fontFamily: '"Inter", sans-serif',
+            }}
+          >
             COLECCIÓN FÉNIX
           </Typography>
         </Box>
 
-        <Typography sx={{ fontSize: '64px', fontWeight: 600, color: COLORS.gold, textAlign: 'center', fontFamily: '"Cormorant Garamond", serif' }}>
+        <Typography
+          sx={{
+            fontSize: '64px',
+            fontWeight: 600,
+            color: COLORS.gold,
+            textAlign: 'center',
+            fontFamily: '"Cormorant Garamond", serif',
+          }}
+        >
           {title}
         </Typography>
 
@@ -731,20 +1222,57 @@ export function CTATemplate({
                   display: 'flex',
                   flexDirection: 'column',
                   transition: cssTransition.slow,
-                  '&:hover': { borderColor: COLORS.gold, transform: 'translateY(-8px)', boxShadow: `0 12px 40px ${alpha(COLORS.gold, 0.4)}` },
+                  '&:hover': {
+                    borderColor: COLORS.gold,
+                    transform: 'translateY(-8px)',
+                    boxShadow: `0 12px 40px ${alpha(COLORS.gold, 0.4)}`,
+                  },
                 }}
               >
-                <Typography sx={{ fontSize: '36px', fontWeight: 600, color: COLORS.white, mb: 3, textAlign: 'center', fontFamily: '"Cormorant Garamond", serif' }}>
+                <Typography
+                  sx={{
+                    fontSize: '36px',
+                    fontWeight: 600,
+                    color: COLORS.white,
+                    mb: 3,
+                    textAlign: 'center',
+                    fontFamily: '"Cormorant Garamond", serif',
+                  }}
+                >
                   {product.name}
                 </Typography>
 
-                <Box sx={{ p: 4, background: alpha(COLORS.gold, 0.1), border: `1px solid ${COLORS.gold}`, mb: 3, flexGrow: 1 }}>
-                  <Typography sx={{ fontSize: '22px', fontWeight: 400, color: COLORS.emerald, textAlign: 'center', fontFamily: '"Inter", sans-serif' }}>
+                <Box
+                  sx={{
+                    p: 4,
+                    background: alpha(COLORS.gold, 0.1),
+                    border: `1px solid ${COLORS.gold}`,
+                    mb: 3,
+                    flexGrow: 1,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: '22px',
+                      fontWeight: 400,
+                      color: COLORS.emerald,
+                      textAlign: 'center',
+                      fontFamily: '"Inter", sans-serif',
+                    }}
+                  >
                     {product.specs}
                   </Typography>
                 </Box>
 
-                <Typography sx={{ fontSize: '26px', fontWeight: 600, color: COLORS.gold, textAlign: 'center', fontFamily: '"Inter", sans-serif' }}>
+                <Typography
+                  sx={{
+                    fontSize: '26px',
+                    fontWeight: 600,
+                    color: COLORS.gold,
+                    textAlign: 'center',
+                    fontFamily: '"Inter", sans-serif',
+                  }}
+                >
                   {product.availability}
                 </Typography>
               </Box>
@@ -761,10 +1289,21 @@ export function CTATemplate({
             borderRadius: '50px',
             cursor: 'pointer',
             transition: cssTransition.slow,
-            '&:hover': { transform: 'scale(1.05)', boxShadow: `0 8px 30px ${alpha(COLORS.gold, 0.5)}` },
+            '&:hover': {
+              transform: 'scale(1.05)',
+              boxShadow: `0 8px 30px ${alpha(COLORS.gold, 0.5)}`,
+            },
           }}
         >
-          <Typography sx={{ fontSize: '32px', fontWeight: 700, color: COLORS.richBlack, letterSpacing: '0.1em', fontFamily: '"Inter", sans-serif' }}>
+          <Typography
+            sx={{
+              fontSize: '32px',
+              fontWeight: 700,
+              color: COLORS.richBlack,
+              letterSpacing: '0.1em',
+              fontFamily: '"Inter", sans-serif',
+            }}
+          >
             CONTACTAR AHORA
           </Typography>
         </Box>

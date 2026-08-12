@@ -17,87 +17,8 @@
  * pattern, and the audit log surface.
  */
 
-import { test, expect, type Page } from "@playwright/test";
-
-const ADMIN_USER = {
-  id: "playwright-admin",
-  email: "playwright@tierramadre.test",
-  name: "Playwright Admin",
-  givenName: "Playwright",
-  familyName: "Admin",
-  picture: "",
-  role: "admin",
-  accessLevel: "admin",
-};
-
-/**
- * Pre-seed storage and route mocks before navigation. Both must run
- * before the app's bootstrap in `main.tsx` reads localStorage or fires
- * `/api/validate`, so they live in `beforeEach`.
- */
-async function primeAdminSession(page: Page) {
-  await page.addInitScript((adminUser) => {
-    try {
-      window.localStorage.setItem(
-        "tierramadre-google-user",
-        JSON.stringify(adminUser),
-      );
-      window.sessionStorage.setItem(
-        "tierra-madre-auth",
-        JSON.stringify({ isAuthenticated: true, accessLevel: "admin" }),
-      );
-      // Skip the 4s SplashScreen (App.tsx checks `tm_session_active`
-      // before showing it). Without this, the splash burns the test
-      // timeout before the inventory rows ever render.
-      window.sessionStorage.setItem("tm_session_active", "true");
-      window.localStorage.setItem("tm_last_activity", String(Date.now()));
-    } catch {
-      // Ignore quota or access errors — the mock will fall through and
-      // the test will fail visibly on the AdminRoute gate.
-    }
-  }, ADMIN_USER);
-
-  await page.route("**/api/validate*", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        success: true,
-        isAuthorized: true,
-        user: {
-          email: ADMIN_USER.email,
-          name: ADMIN_USER.name,
-          role: "admin",
-          accessLevel: "admin",
-        },
-      }),
-    });
-  });
-
-  await page.route("**/api/get-drive-images*", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ success: true, folderId: null, images: [] }),
-    });
-  });
-
-  await page.route("**/api/get-batch-thumbnails*", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ success: true, thumbnails: {} }),
-    });
-  });
-
-  await page.route("**/api/health*", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ ok: true }),
-    });
-  });
-}
+import { test, expect } from "@playwright/test";
+import { primeAdminSession } from "./helpers/session";
 
 test.describe("/admin/products — atelier inventory", () => {
   test.beforeEach(async ({ page }) => {

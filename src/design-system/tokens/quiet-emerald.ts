@@ -27,11 +27,36 @@
 
 export const qeEmerald = {
   /** Brightest emerald — dots / trust indicators, brand moments (accent-pure) */
-  primary: "#00AF84",
+  primary: '#00C992',
   /** Accent green — labels, links, active state (light-mode --accent) */
-  dark: "#00785C",
+  dark: '#00785C',
   /** Lighter emerald — dark-mode accent, subtle tints */
-  light: "#34C99B",
+  light: '#34C99B',
+} as const;
+
+/**
+ * The brand manual's five colours ("renovación" 2026), read directly from the
+ * vector fills of docs/brand/renovacion-2026/.
+ *
+ * ⚠️ REFERENCE ONLY — these are NOT UI tokens. DS3 §1.1: "One saturated color
+ * in the entire product: the emerald." Only `primary` (#00C992) enters the UI,
+ * via qeAccent/qeTokens. The other four exist for brand artwork — logo colour
+ * variants and the manual's "fondo color" fields — never for product chrome.
+ *
+ * NOTE: the manual mislabels `deepGreen` as #5b0f00 on its later pages,
+ * duplicating `brown`. #024C2E is the value actually used in the artwork.
+ */
+export const brandPalette = {
+  /** Primary brand emerald */
+  primary: '#00C992',
+  /** Deeper emerald */
+  deep: '#109070',
+  /** Leaf green */
+  leaf: '#54C11F',
+  /** Earth brown */
+  brown: '#5B0F00',
+  /** Darkest forest green */
+  deepGreen: '#024C2E',
 } as const;
 
 /**
@@ -43,16 +68,16 @@ export const qeEmerald = {
  */
 export const qeAccent = {
   light: {
-    accent: "#00785C",
-    strong: "#006F52",
-    pure: "#00AF84",
-    on: "#FFFFFF",
+    accent: '#00785C',
+    strong: '#006F52',
+    pure: '#00C992',
+    on: '#FFFFFF',
   },
   dark: {
-    accent: "#34C99B",
-    strong: "#00AF84",
-    pure: "#34C99B",
-    on: "#06140E",
+    accent: '#34C99B',
+    strong: '#00C992',
+    pure: '#34C99B',
+    on: '#06140E',
   },
 } as const;
 
@@ -62,19 +87,19 @@ export const qeAccent = {
 // =============================================================================
 
 export const qeGray = {
-  0: "#FFFFFF",
-  50: "#F7F8F8",
-  100: "#F1F2F2",
-  150: "#EBEDEC",
-  200: "#E4E7E5",
-  300: "#C9CECB",
-  400: "#9AA09D",
-  500: "#8C928F",
-  600: "#5C6360",
-  700: "#3A403E",
-  800: "#272C2B",
-  900: "#14181A",
-  950: "#0E1110",
+  0: '#FFFFFF',
+  50: '#F7F8F8',
+  100: '#F1F2F2',
+  150: '#EBEDEC',
+  200: '#E4E7E5',
+  300: '#C9CECB',
+  400: '#9AA09D',
+  500: '#8C928F',
+  600: '#5C6360',
+  700: '#3A403E',
+  800: '#272C2B',
+  900: '#14181A',
+  950: '#0E1110',
 } as const;
 
 // =============================================================================
@@ -82,27 +107,29 @@ export const qeGray = {
 // =============================================================================
 
 export const qeLight = {
+  // Kept in lockstep with qeTokens.light and css-variables-v3.css — see the
+  // note on qeTokens.light for why these are achromatic.
   /** App background */
-  base: "#F7F8F8",
+  base: '#EFEFEF',
   /** Card / raised surface */
-  surface: "#FFFFFF",
-  /** Image "well" behind a piece (--surface-2) — soft neutral so the emerald pops */
-  well: "#F1F2F2",
+  surface: '#FFFFFF',
+  /** Image "well" behind a piece (--surface-2) — neutral so the emerald pops */
+  well: '#E8E8E8',
   /** 1px component borders / thumb outline (--border) */
-  border: "#E4E7E5",
+  border: '#DCDCDC',
   /** 1px row dividers / section rules (--hairline) */
-  hairline: "#EBEDEC",
+  hairline: '#E6E6E6',
   /** Primary text — near-black */
-  text: "#14181A",
+  text: '#14181A',
   /** Secondary text, body copy (--muted) */
-  muted: "#5C6360",
+  muted: '#5C6360',
   /** Captions, mono labels, placeholder (--subtle) */
-  subtle: "#8C928F",
+  subtle: '#8C928F',
   // ---- back-compat aliases (previous API) ----
   /** @deprecated use `muted` */
-  textMuted: "#5C6360",
+  textMuted: '#5C6360',
   /** @deprecated use `subtle` */
-  textFaint: "#8C928F",
+  textFaint: '#8C928F',
 } as const;
 
 // =============================================================================
@@ -111,21 +138,21 @@ export const qeLight = {
 
 export const qeDark = {
   /** App background */
-  base: "#0E1110",
+  base: '#0E1110',
   /** Card surface */
-  surface: "#15191A",
+  surface: '#15191A',
   /** Higher surface / image well (--surface-2) */
-  surfaceRaised: "#1B1F1F",
+  surfaceRaised: '#1B1F1F',
   /** 1px component borders (--border) */
-  border: "#272C2B",
+  border: '#272C2B',
   /** 1px dividers (--hairline) */
-  hairline: "#222726",
+  hairline: '#222726',
   /** Primary text on dark */
-  text: "#EAEDEB",
+  text: '#EAEDEB',
   /** Secondary text (--muted) */
-  textMuted: "#9AA09D",
+  textMuted: '#9AA09D',
   /** Captions / placeholder (--subtle) */
-  subtle: "#6B726F",
+  subtle: '#6B726F',
 } as const;
 
 // =============================================================================
@@ -133,8 +160,8 @@ export const qeDark = {
 // =============================================================================
 
 export const qeShadow = {
-  light: "0 18px 40px -24px rgba(13,30,24,0.30)",
-  dark: "0 20px 46px -26px rgba(0,0,0,0.8)",
+  light: '0 18px 40px -24px rgba(13,30,24,0.30)',
+  dark: '0 20px 46px -26px rgba(0,0,0,0.8)',
 } as const;
 
 // =============================================================================
@@ -143,33 +170,42 @@ export const qeShadow = {
 
 export const qeTokens = {
   light: {
-    bg: "#F7F8F8",
-    surface: "#FFFFFF",
-    surface2: "#F1F2F2",
-    border: "#E4E7E5",
-    hairline: "#EBEDEC",
-    text: "#14181A",
-    muted: "#5C6360",
-    subtle: "#8C928F",
-    accent: "#00785C",
-    accentStrong: "#006F52",
-    onAccent: "#FFFFFF",
-    accentPure: "#00AF84",
+    // "La Vitrina" surfaces — these MUST stay in lockstep with
+    // css-variables-v3.css (--tm-bg / --tm-surface / --tm-well / --tm-border /
+    // --tm-hairline). Anything reading getQuietEmerald() — including the MUI
+    // palette that paints <body> — renders from here, so a divergence between
+    // the two files flattens the surface step the whole system depends on.
+    //
+    // Achromatic by design: the emerald tint these once carried was the same
+    // hue as the product, which flattens the stones. See the rationale in
+    // css-variables-v3.css.
+    bg: '#EFEFEF',
+    surface: '#FFFFFF',
+    surface2: '#E8E8E8',
+    border: '#DCDCDC',
+    hairline: '#E6E6E6',
+    text: '#14181A',
+    muted: '#5C6360',
+    subtle: '#8C928F',
+    accent: '#00785C',
+    accentStrong: '#006F52',
+    onAccent: '#FFFFFF',
+    accentPure: '#00C992',
     shadow: qeShadow.light,
   },
   dark: {
-    bg: "#0E1110",
-    surface: "#15191A",
-    surface2: "#1B1F1F",
-    border: "#272C2B",
-    hairline: "#222726",
-    text: "#EAEDEB",
-    muted: "#9AA09D",
-    subtle: "#6B726F",
-    accent: "#34C99B",
-    accentStrong: "#00AF84",
-    onAccent: "#06140E",
-    accentPure: "#34C99B",
+    bg: '#0E1110',
+    surface: '#15191A',
+    surface2: '#1B1F1F',
+    border: '#272C2B',
+    hairline: '#222726',
+    text: '#EAEDEB',
+    muted: '#9AA09D',
+    subtle: '#6B726F',
+    accent: '#34C99B',
+    accentStrong: '#00C992',
+    onAccent: '#06140E',
+    accentPure: '#34C99B',
     shadow: qeShadow.dark,
   },
 } as const;
@@ -180,11 +216,22 @@ export const qeTokens = {
 
 export const qeFont = {
   /** Editorial display serif — piece names, titles ("Una joya en calma") */
-  serif: '"Cormorant", "Cormorant Garamond", Georgia, "Times New Roman", serif',
+  serif:
+    '"EB Garamond", "Cormorant Garamond", Georgia, "Times New Roman", serif',
   /** Functional UI sans — body, nav, buttons, labels */
-  ui: '"Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-  /** Data & gemology monospace — carats, prices, specs, codes */
-  mono: '"DM Mono", "SF Mono", "Fira Code", ui-monospace, monospace',
+  ui: '"Libre Franklin", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  /**
+   * Data & gemology face — carats, prices, specs, codes.
+   *
+   * NOT a monospace. High-jewelry catalogues (Sotheby's, Net-a-Porter, 1stDibs,
+   * Brilliant Earth) set prices in the same sans as the card metadata, never in
+   * a monospace — fixed-width digit cells read mechanical, like code, which is
+   * the opposite of hand-craft. Alignment comes from the OpenType `tnum`
+   * (tabular figures) feature on a proportional face, not from a mono. The key
+   * is kept as `mono` so every existing `qeFont.mono` / `--tm-font-mono`
+   * reference picks up the new face without a rename sweep.
+   */
+  mono: '"Libre Franklin", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 } as const;
 
 /** Type role presets (composable sx fragments). */
@@ -194,45 +241,45 @@ export const qeType = {
     fontFamily: qeFont.serif,
     fontWeight: 500,
     lineHeight: 1.05,
-    letterSpacing: "-0.01em",
+    letterSpacing: '-0.01em',
   },
   /** Piece / card title */
   title: {
     fontFamily: qeFont.serif,
     fontWeight: 500,
     lineHeight: 1.15,
-    letterSpacing: "0",
+    letterSpacing: '0',
   },
   /** Body copy */
   body: {
     fontFamily: qeFont.ui,
     fontWeight: 400,
     lineHeight: 1.55,
-    letterSpacing: "0",
+    letterSpacing: '0',
   },
   /** Overline / section label — uppercase mono, wide tracking */
   overline: {
     fontFamily: qeFont.mono,
     fontWeight: 500,
-    fontSize: "0.6875rem",
+    fontSize: '0.6875rem',
     lineHeight: 1.4,
-    letterSpacing: "0.14em",
-    textTransform: "uppercase" as const,
+    letterSpacing: '0.14em',
+    textTransform: 'uppercase' as const,
   },
   /** Gemology / spec line — mono, muted */
   spec: {
     fontFamily: qeFont.mono,
     fontWeight: 400,
-    fontSize: "0.6875rem",
+    fontSize: '0.6875rem',
     lineHeight: 1.4,
-    letterSpacing: "0.05em",
+    letterSpacing: '0.05em',
   },
   /** Price / numeric data — tabular mono */
   data: {
     fontFamily: qeFont.mono,
     fontWeight: 500,
-    letterSpacing: "0",
-    fontVariantNumeric: "tabular-nums" as const,
+    letterSpacing: '0',
+    fontVariantNumeric: 'tabular-nums' as const,
   },
 } as const;
 
@@ -242,27 +289,27 @@ export const qeType = {
 
 export const qeRadius = {
   /** Image wells / small cards (spec 4–5px) */
-  xs: "5px",
-  sm: "8px",
-  md: "12px",
-  lg: "18px",
-  xl: "24px",
-  pill: "999px",
+  xs: '5px',
+  sm: '8px',
+  md: '12px',
+  lg: '18px',
+  xl: '24px',
+  pill: '999px',
 } as const;
 
 export const qeMotion = {
   /** Quiet, confident easing */
-  ease: "cubic-bezier(0.22, 1, 0.36, 1)",
-  fast: "160ms",
-  base: "240ms",
-  slow: "420ms",
+  ease: 'cubic-bezier(0.22, 1, 0.36, 1)',
+  fast: '160ms',
+  base: '240ms',
+  slow: '420ms',
 } as const;
 
 // =============================================================================
 // MODE-AWARE ACCESSOR
 // =============================================================================
 
-export type QEMode = "light" | "dark";
+export type QEMode = 'light' | 'dark';
 
 export interface QESurfaces {
   /** App background (--bg) */
@@ -334,6 +381,7 @@ export function getQuietEmerald(mode: QEMode): QESurfaces {
 
 export const quietEmerald = {
   emerald: qeEmerald,
+  brandPalette,
   accent: qeAccent,
   gray: qeGray,
   dark: qeDark,

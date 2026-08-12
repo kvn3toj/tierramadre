@@ -6,21 +6,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box } from '@mui/material';
-import {
-  Eye,
-  Users,
-  PieChart,
-} from 'lucide-react';
+import { Eye, Users, PieChart } from 'lucide-react';
 import { emeraldCore } from '../../../../design-system/tokens/colors';
-import { accentColors } from '../../../../design-system';
+import { Card, MetricCard } from '../../../../design-system';
 import { DonutChart } from '../../../../components/analytics/DonutChart';
 import { HorizontalBarChart } from '../../../../components/analytics/HorizontalBarChart';
-import {
-  TabPanel,
-  MetricCard,
-  SectionHeader,
-  GlassCard,
-} from '../../../../components/shared';
+import { TabPanel, SectionHeader } from '../../../../components/shared';
 import type { UserBreakdownSegment } from '../hooks/useAnalyticsData';
 
 interface UsersTabProps {
@@ -49,12 +40,18 @@ export const UsersTab: React.FC<UsersTabProps> = ({
   return (
     <TabPanel value={activeTab} index={2}>
       {/* User Stats Summary */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5, mb: 3 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: 1.5,
+          mb: 3,
+        }}
+      >
         <MetricCard
           label="Viewers"
           value={viewStats?.uniqueViewers || 0}
           icon={Users}
-          color={accentColors.purple.light}
           subtitle="Únicos este mes"
           compact
         />
@@ -66,7 +63,6 @@ export const UsersTab: React.FC<UsersTabProps> = ({
               : 0
           }
           icon={Eye}
-          color={emeraldCore.primary}
           subtitle="Promedio"
           compact
         />
@@ -74,37 +70,48 @@ export const UsersTab: React.FC<UsersTabProps> = ({
 
       {/* User Breakdown Donut */}
       <SectionHeader title="Tipo de Usuarios" icon={PieChart} />
-      <GlassCard>
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-          <DonutChart
-            segments={userBreakdown}
-            size={160}
-            thickness={0.3}
-            centerLabel="Total"
-            centerValue={viewStats?.totalViews || 0}
-            showLegend={true}
-            legendPosition="bottom"
-          />
-        </Box>
-      </GlassCard>
+      <Card variant="outlined">
+        <Card.Content>
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <DonutChart
+              segments={userBreakdown}
+              size={160}
+              thickness={0.3}
+              centerLabel="Total"
+              centerValue={viewStats?.totalViews || 0}
+              showLegend={true}
+              legendPosition="bottom"
+            />
+          </Box>
+        </Card.Content>
+      </Card>
 
       {/* Top Viewers */}
       {topViewers.length > 0 && (
         <Box sx={{ mt: 3 }}>
           <SectionHeader title="Top Viewers" icon={Users} />
-          <GlassCard noPadding>
+          <Card variant="outlined">
             <HorizontalBarChart
-              data={topViewers.map(v => ({
+              data={topViewers.map((v) => ({
                 id: v.email || v.name,
                 label: v.name,
-                sublabel: v.role === 'admin' ? 'Admin' : v.role === 'embajador' ? 'Embajador' : (v.role === 'full' || v.role === 'asesor') ? 'Asesor' : 'Usuario',
+                sublabel:
+                  v.role === 'admin'
+                    ? 'Admin'
+                    : v.role === 'embajador'
+                      ? 'Embajador'
+                      : v.role === 'full' || v.role === 'asesor'
+                        ? 'Asesor'
+                        : 'Usuario',
                 value: v.views,
               }))}
-              color={accentColors.purple.light}
+              color={emeraldCore.primary}
               showMedals={true}
               unit="views"
               onItemClick={(item) => {
-                const viewer = topViewers.find(v => (v.email || v.name) === item.id);
+                const viewer = topViewers.find(
+                  (v) => (v.email || v.name) === item.id,
+                );
                 if (viewer) {
                   const params = new URLSearchParams();
                   if (viewer.email) params.set('email', viewer.email);
@@ -113,7 +120,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                 }
               }}
             />
-          </GlassCard>
+          </Card>
         </Box>
       )}
     </TabPanel>

@@ -1,6 +1,11 @@
 import { Box } from '@mui/material';
 import { QRCodeSVG } from 'qrcode.react';
 import { fontFamilies } from '../../../../design-system';
+import {
+  DEFAULT_LABEL_SIZE_ID,
+  LABEL_SIZES,
+  type LabelSizeId,
+} from './labelSizes';
 
 // QR target. `HTTPS://TIERRAMADRE.APP/P/<id>` (the short `/p/:itemId` alias, in
 // UPPERCASE): uppercase makes the QR encode in *alphanumeric* mode, so even with
@@ -13,15 +18,25 @@ import { fontFamilies } from '../../../../design-system';
 const QR_TARGET_BASE = 'HTTPS://TIERRAMADRE.APP/P/';
 const LOGO_URL = '/logo-symbol.png';
 
-/** 12mm NIIMBOT tape at 203 DPI native resolution. */
+/**
+ * 12mm NIIMBOT tape at 203 DPI native resolution.
+ *
+ * @deprecated Read `LABEL_SIZES[id].heightPx` instead — height now varies by
+ * stock. Kept as the 12mm tape's value for any caller still hardcoding it.
+ */
 export const LABEL_HEIGHT_PX = 96;
-const QR_SIZE_PX = 80;
 const LOGO_SIZE_PX = 56;
 
 export interface LabelPreviewProps {
   itemId: string;
   nombre?: string;
   peso?: string;
+  /**
+   * Which NIIMBOT stock this label is being laid out for. Defaults to the 12mm
+   * continuous tape, so the two callers that predate multi-size support
+   * (EditItemDrawer, LoteResumenPage) render exactly as before.
+   */
+  size?: LabelSizeId;
   /**
    * Gallery mode (Atelier etiquetas). This used to embed the Tierra Mädre mark
    * in the CENTRE of the QR, but that occluded the symbol and forced the dense
@@ -39,38 +54,51 @@ export interface LabelPreviewProps {
  * Convex query inside this component, callers pass data in (matches the
  * KardexPreview/MovimientoKardexPreview convention in this codebase).
  *
- * Landscape strip, fixed 96px height (12mm NIIMBOT tape at 203 DPI), width
- * shrinks to content — the tape is continuous, no fixed length to fill.
+ * Landscape strip sized from the `size` registry. On continuous tape the width
+ * shrinks to content — there is no fixed length to fill. On die-cut stock the
+ * width is FIXED to the physical label and the name ellipsises inside it, since
+ * overflowing a die cut just prints off the edge.
  *
- * Root uses `display: 'inline-flex'` rather than `width: 'max-content'` on a
- * block flex container: html2canvas (which clones the DOM rather than
- * screenshotting a live paint) has documented trouble resolving intrinsic
- * sizing keywords like `max-content`/`fit-content` on nodes rendered
- * off-screen (`position: fixed; left: -9999px`, as every caller here does),
- * producing a malformed/wrongly-sized export. `inline-flex` shrinks to
+ * On continuous tape the root uses `display: 'inline-flex'` rather than
+ * `width: 'max-content'` on a block flex container: html2canvas (which clones
+ * the DOM rather than screenshotting a live paint) has documented trouble
+ * resolving intrinsic sizing keywords like `max-content`/`fit-content` on nodes
+ * rendered off-screen (`position: fixed; left: -9999px`, as every caller here
+ * does), producing a malformed/wrongly-sized export. `inline-flex` shrinks to
  * content by default without relying on that keyword, which html2canvas
- * measures reliably.
+ * measures reliably. Die-cut sizes set an explicit pixel width, which sidesteps
+ * the intrinsic-sizing problem entirely.
  */
 export function LabelPreview({
   itemId,
   nombre,
   peso,
+  size = DEFAULT_LABEL_SIZE_ID,
   qrLogoSrc,
 }: LabelPreviewProps) {
+  const stock = LABEL_SIZES[size];
+  const isDieCut = stock.widthPx !== null;
+  // Two independent reasons to drop the mark: the stock has no room for it, or
+  // the caller is in compact gallery mode.
+  const showLogo = stock.showLogo && !qrLogoSrc;
+
   return (
     <Box
       sx={{
-        display: 'inline-flex',
+        display: isDieCut ? 'flex' : 'inline-flex',
         alignItems: 'center',
         gap: '8px',
-        height: `${LABEL_HEIGHT_PX}px`,
+        ...(isDieCut ? { width: `${stock.widthPx}px` } : null),
+        height: `${stock.heightPx}px`,
         padding: '8px',
         background: '#FFFFFF',
+        // Nothing may spill past a die cut — it would print off the label edge.
+        ...(isDieCut ? { overflow: 'hidden' } : null),
       }}
     >
       <QRCodeSVG
         value={`${QR_TARGET_BASE}${itemId}`}
-        size={QR_SIZE_PX}
+        size={stock.qrPx}
         // NO centre logo, level "M", and the short UPPERCASE target above: this
         // encodes as a version-2 (25×25) alphanumeric symbol — larger modules
         // than the old version-3 `/product/` URL, so it scans off tiny 12mm tape.
@@ -85,6 +113,9 @@ export function LabelPreview({
           flexDirection: 'column',
           justifyContent: 'center',
           minWidth: 0,
+          // On a die cut the text takes whatever the QR leaves and no more, so
+          // a long name is clipped by the column rather than widening the label.
+          ...(isDieCut ? { flex: 1 } : null),
         }}
       >
         <Box
@@ -104,7 +135,10 @@ export function LabelPreview({
               fontFamily: fontFamilies.system,
               fontSize: '13px',
               color: '#000000',
-              maxWidth: '220px',
+              // Continuous tape has no edge to hit, so the name gets a generous
+              // cap before it starts eating tape. A die cut is bounded by the
+              // column above instead.
+              maxWidth: isDieCut ? '100%' : '220px',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
@@ -126,7 +160,7 @@ export function LabelPreview({
           </Box>
         )}
       </Box>
-      {!qrLogoSrc && (
+      {showLogo && (
         <Box
           component="img"
           src={LOGO_URL}

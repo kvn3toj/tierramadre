@@ -11,6 +11,7 @@ import { pushTableRowToVercel } from './_lib/sheetSync';
 import { COLUMN_MAPS } from './_lib/columnMaps';
 import { allocateNext, formatSaleId, saleSequenceName } from './sequences';
 import { requireAccessLevel } from './_lib/authz';
+import { isStaffSession } from './_lib/requireStaffSession';
 
 // Free text (canonical: B | C | S | M). The venta UI sanitizes a custom
 // write-in to an uppercase, dash-free token before it reaches here, so it stays
@@ -35,8 +36,10 @@ export const list = query({
         v.literal('cancelada'),
       ),
     ),
+    sessionToken: v.optional(v.string()),
   },
-  handler: async (ctx, { estado }) => {
+  handler: async (ctx, { estado, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const rows = estado
       ? await ctx.db
           .query('sales')
@@ -48,13 +51,19 @@ export const list = query({
 });
 
 export const get = query({
-  args: { id: v.id('sales') },
-  handler: async (ctx, { id }) => ctx.db.get(id),
+  args: { id: v.id('sales'), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { id, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
+    return ctx.db.get(id);
+  },
 });
 
 export const peekNextSaleId = query({
-  args: { sede: sedeValidator },
-  handler: async (ctx, { sede }) => {
+  args: { sede: sedeValidator, sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { sede, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) {
+      return { nextValue: 0, preview: '' };
+    }
     const seq = await ctx.db
       .query('sequences')
       .withIndex('by_name', (q) => q.eq('name', saleSequenceName(sede)))

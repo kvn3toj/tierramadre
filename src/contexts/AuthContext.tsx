@@ -17,6 +17,7 @@ import React, {
 import type { AuthState, AuthContextType, AccessLevel } from '../types/auth';
 import { useGoogleAuth } from './GoogleAuthContext';
 import { SESSION_KEYS, STORAGE_KEYS } from '../constants/storage-keys';
+import { clearTreasureCaches } from '../hooks/treasureCacheKey';
 
 const STORAGE_KEY = SESSION_KEYS.AUTH;
 
@@ -191,6 +192,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setAuthState({ isAuthenticated: false, accessLevel: 'guest' });
     clearStoredAuth();
     localStorage.removeItem(GUEST_PERSIST_KEY);
+    // The catalog cache outlives the session otherwise — see
+    // .superpowers/sdd/2026-08-05-control-de-acceso-al-catalogo/task-5-brief.md
+    clearTreasureCaches();
   }, []);
 
   const value = useMemo<AuthContextType>(

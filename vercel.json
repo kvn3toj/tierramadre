@@ -4,6 +4,9 @@
     "api/get-treasure-sheets.ts": {
       "maxDuration": 30
     },
+    "api/ambassador-products.ts": {
+      "maxDuration": 30
+    },
     "api/get-asesores.ts": {
       "maxDuration": 30
     },
@@ -34,7 +37,7 @@
     "api/product-requests.js": {
       "maxDuration": 30
     },
-    "api/product-views.js": {
+    "api/product-views.ts": {
       "maxDuration": 30
     },
     "api/drive-diagnostics.js": {
@@ -52,7 +55,7 @@
     "api/cotizacion-save.ts": {
       "maxDuration": 30
     },
-    "api/cotizacion-reports.js": {
+    "api/cotizacion-reports.ts": {
       "maxDuration": 30
     },
     "api/quotation-requests.js": {
@@ -70,7 +73,7 @@
     "api/user-prefs.js": {
       "maxDuration": 15
     },
-    "api/create-product-folders.js": {
+    "api/create-product-folders.ts": {
       "maxDuration": 60
     },
     "api/og-product.js": {
@@ -222,8 +225,22 @@
   ],
   "rewrites": [
     {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?<handle>[^.]+)\\.tierramadre\\.app"
+        }
+      ],
+      "destination": "/api/ambassador-subdomain?handle=:handle&path=:path*"
+    },
+    {
       "source": "/cotizacion-soul",
       "destination": "/cotizacion-soul.html"
+    },
+    {
+      "source": "/cotizacion-soul-plan",
+      "destination": "/cotizacion-soul-plan.html"
     },
     {
       "source": "/api/:path*",

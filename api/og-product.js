@@ -123,7 +123,7 @@ function buildHTML(product, imageUrl) {
 <meta http-equiv="refresh" content="0;url=${esc(url)}">
 </head>
 <body style="margin:0;background:#000;color:#fff;font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh">
-<a href="${esc(url)}" style="color:#00AE7A;font-size:1.2rem">${esc(name)} — Ver producto</a>
+<a href="${esc(url)}" style="color:#00C992;font-size:1.2rem">${esc(name)} — Ver producto</a>
 </body>
 </html>`;
 }
