@@ -2022,6 +2022,7 @@ export const seedAddendum20260812 = internalMutation({
       itemId: string;
       created: boolean;
       publicado?: boolean;
+      loteDocumento?: string;
       reason?: string;
     }> = [];
 
@@ -2035,12 +2036,20 @@ export const seedAddendum20260812 = internalMutation({
         continue;
       }
 
+      // El lote puede NO existir como documento, y no es un error: `LC-10` es
+      // un loteId legacy que sólo vive como string en las filas de inventario.
+      // Ninguno de los 15 `LC-*` está en la tabla `lots` (73 ítems), y el propio
+      // #218 vive así: sin documento de lote, sin fila en `lotItems` y sin
+      // mina/tratamiento denormalizados. Las hijas nacen igual que el padre —
+      // inventarle un lote a LC-10 sería fabricar costo y proveedor que nadie
+      // declaró.
+      //
+      // La primera versión abortaba acá. Que la transacción se cayera entera en
+      // vez de escribir a medias es justamente lo que se buscaba.
       const lot = await ctx.db
         .query('lots')
         .withIndex('by_loteId', (q) => q.eq('loteId', a.loteId))
         .first();
-      if (!lot)
-        throw new Error(`Lote ${a.loteId} no existe (ítem ${a.itemId})`);
 
       await ctx.db.insert('productInventory', {
         itemId: a.itemId,
@@ -2085,10 +2094,12 @@ export const seedAddendum20260812 = internalMutation({
         // argumento desde Fix 1B (PR #111, ya en main). Las hijas nacen con
         // mina/tratamiento denormalizados, así que backfillLotProvenance no
         // hace falta por ellas.
-        ...withPublishStamp(null, a.publicar, {
-          mina: lot.mina,
-          tratamiento: lot.tratamiento,
-        }),
+        // Sin lote no hay procedencia que estampar: el padre tampoco la tiene.
+        ...withPublishStamp(
+          null,
+          a.publicar,
+          lot ? { mina: lot.mina, tratamiento: lot.tratamiento } : undefined,
+        ),
         lastPulledAt: now,
         // 'pending' y NO se agenda pushToSheet: las filas 532–533 ya existen en
         // el SOT y un push en modo append las duplicaría.
@@ -2102,19 +2113,29 @@ export const seedAddendum20260812 = internalMutation({
           mostrarEnCatalogo: true,
         });
 
-      const hermanos = await ctx.db
-        .query('lotItems')
-        .withIndex('by_loteId', (q) => q.eq('loteId', a.loteId))
-        .collect();
-      await ctx.db.insert('lotItems', {
-        loteId: a.loteId,
-        itemId: a.itemId,
-        preponderancia: 0,
-        costoBaseCOP: a.costoBaseCOP,
-        ordenEnLote: hermanos.length + 1,
-      });
+      // `lotItems` sólo si el lote existe: la tabla es la composición de un
+      // lote real. Colgar filas de un loteId fantasma dejaría huérfanos que
+      // ningún rollup sabe leer — y el padre no tiene fila ahí tampoco.
+      if (lot) {
+        const hermanos = await ctx.db
+          .query('lotItems')
+          .withIndex('by_loteId', (q) => q.eq('loteId', a.loteId))
+          .collect();
+        await ctx.db.insert('lotItems', {
+          loteId: a.loteId,
+          itemId: a.itemId,
+          preponderancia: 0,
+          costoBaseCOP: a.costoBaseCOP,
+          ordenEnLote: hermanos.length + 1,
+        });
+      }
 
-      creados.push({ itemId: a.itemId, created: true, publicado: a.publicar });
+      creados.push({
+        itemId: a.itemId,
+        created: true,
+        publicado: a.publicar,
+        loteDocumento: lot ? 'sí' : 'no existe (loteId legacy)',
+      });
     }
 
     // ── 2. El padre sale del catálogo ─────────────────────────────────────
@@ -2306,8 +2327,11 @@ export const seedAddendum20260812 = internalMutation({
         'La medida de #540 sale del manuscrito (5,9 × 3,9), no de la col I del padre: la segunda ' +
           'terna de ahí (5.6 × 7.0 × 5.7) es incompatible con 0,37 ct. Confirmarla contra la ' +
           'piedra cuando vuelva de donde Isa sigue siendo lo prolijo, pero ya no bloquea.',
-        'backfillLotProvenance ya NO hace falta por estas dos: nacen con mina/tratamiento ' +
-          'estampados vía withPublishStamp (Fix 1B). Sigue pendiente para el resto del catálogo.',
+        'LC-10 no existe en la tabla `lots` (ninguno de los 15 LC-* existe; 73 ítems). Las hijas ' +
+          'nacen sin fila en lotItems y sin mina/tratamiento, igual que #218 y #171. ' +
+          'backfillLotProvenance NO puede arreglarlo: salta los ítems cuyo loteId no resuelve. ' +
+          'HALLAZGO MAYOR: 226 de los 429 publicados están en esa situación y renderizan el ' +
+          'catálogo sin procedencia, porque Fix 1B quitó a propósito el fallback a `lots`.',
         'El sublote LC-10-DR no queda registrado en la pestaña Sublotes (mismo alcance que la ' +
           'corrida del 12-ago).',
         '#218 conserva precioEmbajadorCOP $1.730.560 y el bloque de Caja ($1.331.200): dos ' +
