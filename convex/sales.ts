@@ -12,6 +12,7 @@ import { COLUMN_MAPS } from './_lib/columnMaps';
 import { allocateNext, formatSaleId, saleSequenceName } from './sequences';
 import { requireAccessLevel } from './_lib/authz';
 import { isStaffSession } from './_lib/requireStaffSession';
+import { bumpCatalogVersion } from './_lib/catalogVersion';
 
 // Free text (canonical: B | C | S | M). The venta UI sanitizes a custom
 // write-in to an uppercase, dash-free token before it reaches here, so it stays
@@ -221,7 +222,9 @@ export const _create = internalMutation({
     });
 
     // Flip each product to VENDIDA + schedule its push.
+    let touchedPublished = false;
     for (const product of products) {
+      if (product.mostrarEnCatalogo === true) touchedPublished = true;
       await ctx.db.patch(product._id, {
         estado: 'VENDIDA' as const,
         syncStatus: 'pending' as const,
@@ -241,6 +244,19 @@ export const _create = internalMutation({
         mode: 'patch',
       });
     }
+
+    // A sale changes what the PUBLIC catalog renders: `publishedCatalog`
+    // projects `estado` and the client paints availability from it. Without
+    // this bump the sold stone stays "available" in every visitor's cached
+    // catalog until the TTL floor expires — and for one-of-a-kind emeralds that
+    // is two customers believing they can buy the same piece. This is the exact
+    // failure mode Fix 1C was chosen over Fix 1A to avoid, so the sale path is
+    // the one bump that is not optional. See convex/_lib/catalogVersion.ts.
+    //
+    // Guarded on `mostrarEnCatalogo` (not bumped unconditionally) because every
+    // bump invalidates the catalog for EVERY visitor: selling an unpublished
+    // piece must not cost a full re-scan per connected client.
+    if (touchedPublished) await bumpCatalogVersion(ctx);
 
     await ctx.scheduler.runAfter(0, api.sales._pushToSheet, {
       id,
@@ -317,6 +333,7 @@ export const _cancel = internalMutation({
     // restaurado" even when nothing was restored. (ISO-audit C8.)
     let restored = 0;
     let skipped = 0;
+    let touchedPublished = false;
 
     for (const itemId of sale.itemIds) {
       const product = await ctx.db
@@ -336,6 +353,7 @@ export const _cancel = internalMutation({
         skipped++;
         continue;
       }
+      if (product.mostrarEnCatalogo === true) touchedPublished = true;
       await ctx.db.patch(product._id, {
         estado: 'DISPONIBLE' as const,
         syncStatus: 'pending' as const,
@@ -359,6 +377,11 @@ export const _cancel = internalMutation({
       });
       restored++;
     }
+
+    // Mirror of the create path: a cancellation returns stock to DISPONIBLE, so
+    // the piece has to reappear in the public catalog now rather than whenever
+    // the TTL floor happens to expire.
+    if (touchedPublished) await bumpCatalogVersion(ctx);
 
     await ctx.db.patch(id, {
       estado: 'cancelada' as const,

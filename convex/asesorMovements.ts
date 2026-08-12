@@ -50,6 +50,7 @@ import { pushTableRowToVercel } from './_lib/sheetSync';
 import { COLUMN_MAPS } from './_lib/columnMaps';
 import { requireAccessLevel } from './_lib/authz';
 import { isStaffSession } from './_lib/requireStaffSession';
+import { bumpCatalogVersionIfPublished } from './_lib/catalogVersion';
 
 const registerArgs = {
   itemId: v.string(),
@@ -243,6 +244,11 @@ export const _registerHandoff = internalMutation({
       syncStatus: 'pending' as const,
       syncError: undefined,
     });
+    // A handoff moves the piece to ASESOR/CONSIGNACION, and `publishedCatalog`
+    // projects `estado` — so a published piece changes what the public catalog
+    // renders and every visitor's cached copy has to be invalidated now, not at
+    // the TTL floor. `mostrarEnCatalogo` is untouched here, so before === after.
+    await bumpCatalogVersionIfPublished(ctx, product, product);
     await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
       itemId,
       auditId,
@@ -352,6 +358,9 @@ export const _registerReturn = internalMutation({
       syncStatus: 'pending' as const,
       syncError: undefined,
     });
+    // Mirror of the handoff: the piece comes back to DISPONIBLE and has to
+    // reappear in the public catalog immediately.
+    await bumpCatalogVersionIfPublished(ctx, product, product);
     await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
       itemId,
       auditId,
