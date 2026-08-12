@@ -768,10 +768,13 @@ avisos.forEach((a, i) => console.log(`   ${i + 1}. ${a}`));
 
 console.log('\n═══ PENDIENTES DEL ADDENDUM (no se resuelven acá) ═══');
 console.log(
-  '   1. Medida de #540 Felicidad: el papel dice 5,9 × 3,9; la col I del padre traía',
+  '   1. Medida de #540 Felicidad: RESUELTO — vale el 5,9 × 3,9 del papel. El',
 );
 console.log(
-  '      "5.6 × 7.0 × 5.7" para la 2ª piedra. Se usa la del papel — confirmar contra la piedra.',
+  '      "5.6 × 7.0 × 5.7" de la col I del padre es incompatible con 0,37 ct (sería una',
+);
+console.log(
+  '      piedra de más de 1 ct). Confirmarla contra la piedra ya no bloquea.',
 );
 console.log(
   '   2. Color de #171: papel "Chivor" (→ Verde Chivor) vs hoja "Verde Vívido". NO se escribe.',
