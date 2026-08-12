@@ -2081,16 +2081,26 @@ export const seedAddendum20260812 = internalMutation({
         tipo: 'gema',
         // Sin certificadoUrl ni carpetaFotosUrl del padre a propósito: el
         // certificado de #218 ampara el par de piedras, no cada una suelta.
-        // Sin denormalizar mina/tratamiento: `withPublishStamp` todavía no
-        // acepta procedencia en main (vive en perf/convex-db-io-20260812).
-        // Cuando esa rama entre, re-correr migrations:backfillLotProvenance.
-        ...withPublishStamp(null, a.publicar),
+        // La procedencia SÍ se estampa: `withPublishStamp` acepta el tercer
+        // argumento desde Fix 1B (PR #111, ya en main). Las hijas nacen con
+        // mina/tratamiento denormalizados, así que backfillLotProvenance no
+        // hace falta por ellas.
+        ...withPublishStamp(null, a.publicar, {
+          mina: lot.mina,
+          tratamiento: lot.tratamiento,
+        }),
         lastPulledAt: now,
         // 'pending' y NO se agenda pushToSheet: las filas 532–533 ya existen en
         // el SOT y un push en modo append las duplicaría.
         syncStatus: 'pending' as const,
       });
       await bumpInventoryTotal(ctx, 1);
+      // Una pieza nueva publicada CAMBIA lo que renderiza el catálogo público:
+      // hay que invalidar la caché de cada visitante ya, no al vencer el TTL.
+      if (a.publicar)
+        await bumpCatalogVersionIfPublished(ctx, null, {
+          mostrarEnCatalogo: true,
+        });
 
       const hermanos = await ctx.db
         .query('lotItems')
@@ -2120,8 +2130,14 @@ export const seedAddendum20260812 = internalMutation({
       );
     } else {
       const antes = padre.mostrarEnCatalogo;
-      if (antes !== false)
+      if (antes !== false) {
         await ctx.db.patch(padre._id, withPublishStamp(padre, false));
+        // Estaba visible y deja de estarlo: el centinela avisa a los visitantes
+        // en vez de dejarles la pieza retirada en caché hasta el piso de TTL.
+        await bumpCatalogVersionIfPublished(ctx, padre, {
+          mostrarEnCatalogo: false,
+        });
+      }
       despublicado = {
         itemId: ADDENDUM_20260812_PADRE,
         antes,
@@ -2290,8 +2306,8 @@ export const seedAddendum20260812 = internalMutation({
         'La medida de #540 sale del manuscrito (5,9 × 3,9), no de la col I del padre: la segunda ' +
           'terna de ahí (5.6 × 7.0 × 5.7) es incompatible con 0,37 ct. Confirmarla contra la ' +
           'piedra cuando vuelva de donde Isa sigue siendo lo prolijo, pero ya no bloquea.',
-        'Re-correr migrations:backfillLotProvenance cuando entre a main: #540 y #541 se publican sin ' +
-          'mina/tratamiento denormalizados y no hay republish automático que los estampe.',
+        'backfillLotProvenance ya NO hace falta por estas dos: nacen con mina/tratamiento ' +
+          'estampados vía withPublishStamp (Fix 1B). Sigue pendiente para el resto del catálogo.',
         'El sublote LC-10-DR no queda registrado en la pestaña Sublotes (mismo alcance que la ' +
           'corrida del 12-ago).',
         '#218 conserva precioEmbajadorCOP $1.730.560 y el bloque de Caja ($1.331.200): dos ' +
