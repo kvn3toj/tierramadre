@@ -491,26 +491,20 @@ export const publishedCatalog = query({
     // without a loteId are excluded.
     const published = rows.filter((row) => row.loteId !== undefined);
 
-    // Denormalize lot-level provenance (mina + tratamiento) onto each item.
-    // These live on the `lots` table, not productInventory, so we resolve each
-    // distinct lote once and attach. The published set is tiny (a handful of
-    // items across a few lotes), so this adds only a few point reads per call.
-    const loteProvenance = new Map<
-      string,
-      { mina?: string; tratamiento?: string }
-    >();
-    for (const loteId of new Set(
-      published.map((r) => r.loteId).filter((id): id is string => !!id),
-    )) {
-      const lot = await ctx.db
-        .query('lots')
-        .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
-        .first();
-      loteProvenance.set(loteId, {
-        mina: lot?.mina,
-        tratamiento: lot?.tratamiento,
-      });
-    }
+    // BANDWIDTH: lot provenance (mina + tratamiento) is read straight off the
+    // item — it is denormalized at publish time by withPublishStamp()
+    // (convex/_lib/publishState.ts). This query used to point-read the `lots`
+    // table once per distinct lote on EVERY execution. That was cheap in bytes
+    // but expensive in reactivity: those lot documents joined this query's read
+    // set, so any write to a published lot — including the routine
+    // `_markPushed` / `_markPushFailed` after each sheet push — re-ran the whole
+    // public catalog for every connected anonymous visitor.
+    // See docs/audits/2026-08-12-convex-usage-audit.md §4, Fix 1B.
+    //
+    // Deliberately NO fallback to the `lots` table when the denormalized field
+    // is absent: a fallback would reinstate exactly the read-set dependency this
+    // removes. Rows published before this change are backfilled by
+    // migrations.backfillLotProvenance.
 
     // Project ONLY the fields the customer catalog consumes (see
     // useFotosintesisCatalog.PublishedRow). The public catalog price is the
@@ -519,8 +513,13 @@ export const publishedCatalog = query({
     // cost. precioPotencialCOP, sync metadata and rowIndex stay internal. The
     // Fotosíntesis characteristics block below is surfaced publicly per product
     // decision 2026-06-30 (gem grade, origin, treatment, jewelry detail).
+    //
+    // NOTE: this projection shapes the payload sent to the client (Data Egress).
+    // It does NOT reduce Database I/O — Convex bills that on documents SCANNED,
+    // and `.collect()` above already pulled whole 81-field documents. Keep it
+    // (egress and client memory both matter) but do not mistake it for a
+    // bandwidth fix. See docs/audits/2026-08-12-convex-usage-audit.md §3.
     return published.map((row) => {
-      const prov = row.loteId ? loteProvenance.get(row.loteId) : undefined;
       return {
         itemId: row.itemId,
         nombre: row.nombre,
@@ -559,8 +558,8 @@ export const publishedCatalog = query({
         // columna; ver _lib/precioEspecial.ts). Ausente si venció o no aplica.
         precioEspecial: precioEspecialDeObservacion(row.observacion),
         // Lot-level provenance, denormalized from the `lots` table.
-        mina: prov?.mina,
-        tratamiento: prov?.tratamiento,
+        mina: row.mina,
+        tratamiento: row.tratamiento,
       };
     });
   },

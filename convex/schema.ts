@@ -251,6 +251,18 @@ export default defineSchema({
     // mostrarEnCatalogo flips true. Powers the Estrenos "newest" sort for
     // Fotosíntesis items — never cleared or reset by a later unpublish.
     publishedAt: v.optional(v.number()),
+    // ── Denormalized lot provenance ──────────────────────────────────────
+    // Copies of the owning lot's `mina` / `tratamiento`, stamped by
+    // withPublishStamp() every time the item is published. These are NOT the
+    // source of truth — the `lots` row is — they exist purely so
+    // `products.publishedCatalog` can read provenance off the item instead of
+    // point-reading `lots`, which used to drag those lot documents into the
+    // public catalog's reactive read set.
+    // See docs/audits/2026-08-12-convex-usage-audit.md §4, Fix 1B.
+    // Safe to denormalize because a lot is frozen once published:
+    // `lots._update` rejects anything not `abierto` (convex/lots.ts:277).
+    mina: v.optional(v.string()),
+    tratamiento: v.optional(v.string()),
     // Captured at lotItems.create, editable via lotItems.updateGemaFields, and
     // synced to the SOT "Inventario" tab (target="fotosintesis") through the
     // extended layout in api/_lib/fotosintesis-inventory-columns.js.

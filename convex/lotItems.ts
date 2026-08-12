@@ -11,7 +11,7 @@ import { bumpInventoryTotal } from './products';
 import { omitFotosintesisOnly } from './_lib/saleSafe';
 import { preponderanciaSum, balancesTo100 } from './_lib/lotMath';
 import { computePrecioFinal } from './_lib/pricing';
-import { withPublishStamp } from './_lib/publishState';
+import { withPublishStamp, lotProvenance } from './_lib/publishState';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
 import {
@@ -363,7 +363,13 @@ export const _create = internalMutation({
       loteId: args.loteId,
       preponderancia: args.preponderancia,
       costoBaseCOP,
-      ...withPublishStamp(null, args.mostrarEnCatalogo ?? false),
+      ...withPublishStamp(
+        null,
+        args.mostrarEnCatalogo ?? false,
+        args.mostrarEnCatalogo
+          ? await lotProvenance(ctx, args.loteId)
+          : undefined,
+      ),
       tipo: args.tipo,
       procedencia: args.procedencia,
       observacion: args.observacion,
@@ -951,7 +957,13 @@ export const _updateGemaFields = internalMutation({
       if (patch.mostrarEnCatalogo !== (product.mostrarEnCatalogo ?? false)) {
         Object.assign(
           productPatch,
-          withPublishStamp(product, patch.mostrarEnCatalogo),
+          withPublishStamp(
+            product,
+            patch.mostrarEnCatalogo,
+            patch.mostrarEnCatalogo
+              ? await lotProvenance(ctx, product.loteId)
+              : undefined,
+          ),
         );
         changes.push({
           field: 'mostrarEnCatalogo',

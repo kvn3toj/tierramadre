@@ -33,7 +33,7 @@ import {
   type FotoSyncTable,
 } from './_lib/sheetPullMaps';
 import { setInventoryLastPull } from './products';
-import { withPublishStamp } from './_lib/publishState';
+import { withPublishStamp, lotProvenance } from './_lib/publishState';
 
 // ─── per-table metadata ──────────────────────────────────────────────────────
 
@@ -238,9 +238,21 @@ export const upsertTable = internalMutation({
         const stamp = withPublishStamp(
           existing as { mostrarEnCatalogo?: boolean; publishedAt?: number },
           true,
+          await lotProvenance(
+            ctx,
+            (patch.loteId as string | undefined) ??
+              (existing as { loteId?: string }).loteId,
+          ),
         );
         if (stamp.publishedAt !== undefined)
           patch.publishedAt = stamp.publishedAt;
+        // Denormalized lot provenance — see _lib/publishState.ts. Applied even
+        // when `publishedAt` is already set (a re-publish through the sheet must
+        // refresh provenance), and only when the lookup actually resolved, so a
+        // missing lote never blanks a value the item already carries.
+        if (stamp.mina !== undefined) patch.mina = stamp.mina;
+        if (stamp.tratamiento !== undefined)
+          patch.tratamiento = stamp.tratamiento;
       }
       await patchDoc(ctx, existing._id as Id<'productInventory'>, {
         ...patch,
