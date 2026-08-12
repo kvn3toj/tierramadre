@@ -233,6 +233,43 @@ land around **~950 MB** — under the cap, but without margin. Step 3 is what bu
 > Backend changes need a Convex deploy to take effect (`npx convex deploy`). Editing files
 > does nothing until deployed. Per project rules, git/build/deploy stays in Kevin's hands.
 
+### 7.1 Implementation status — branch `perf/convex-db-io-20260812`
+
+| Step | Status         | Where                                                                                                                                          |
+| ---- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | ✅ done        | `HomePage.tsx:59` now passes `estado: 'DISPONIBLE'` → `by_estado` index instead of the full-table branch                                       |
+| 2    | ✅ done        | `withPublishStamp()` stamps `mina`/`tratamiento` at publish; `publishedCatalog` reads them off the row; `lots` reads removed from the read set |
+| 3    | ⏸ not started  | Needs Kevin's sign-off (product behavior) **and** a new hand-off — it reaches into `src/hooks/`, outside this hand-off's fence                 |
+| 4    | ⚠️ **partial** | `EtiquetasPage` → one-shot. **`ItemsPage` deliberately untouched — see below**                                                                 |
+| 5    | ✅ done        | `.env.example` documents leaving `VITE_CONVEX_URL` / `CONVEX_URL` empty in local dev                                                           |
+
+**Step 1 was implemented differently than proposed.** The audit said "counts query."
+A maintained per-estado counter was rejected: `inventoryStats` works precisely because
+`total` is monotonic (rows are never deleted — see the comment at `products.ts:1924`),
+whereas a `disponible` counter moves both ways on every sale, handoff and return. That
+invariant would have to hold across every estado transition in the codebase, and drifts
+silently when it doesn't. Passing `estado` gets most of the saving with zero new invariants.
+
+**Step 4 is partial, and `ItemsPage` should stay as it is for now.** Two reasons, both
+visible in the code: its comment at `ItemsPage.tsx:127-130` explains the estado tabs need
+per-estado counts, so five filtered subscriptions would scan the same union of rows —
+filtering saves nothing there. And unlike `EtiquetasPage` it _mutates_ (`saveEdit`,
+`pullFromSheet` at lines 138-139), so its reactivity carries the edit flow. Converting it
+to one-shot is a real UX change requiring a refetch-after-mutation path — not the low-risk
+cleanup this step was scoped as. Tracked as separate work.
+
+**Deploy ordering — this matters:**
+
+```bash
+npx convex deploy                                          # 1. schema + functions
+npx convex run --prod migrations:backfillLotProvenance '{}'  # 2. IMMEDIATELY after
+```
+
+Between (1) and (2), items published before this change render with **blank
+mina/tratamiento** in the public catalog. The catalog deliberately has no fallback to
+`lots` (a fallback would reinstate the read-set dependency the fix removes), so the
+backfill is what closes the gap. It is idempotent — safe to re-run.
+
 ## 8. Open measurement
 
 The savings above are estimates with stated methodology, derived from the Database I/O
