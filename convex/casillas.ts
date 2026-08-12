@@ -260,20 +260,6 @@ export const _adjuntarFoto = internalMutation({
   },
 });
 
-export const adjuntarFotoViaBot = action({
-  args: { botSecret: v.string(), itemId: v.string(), fotoUrl: v.string() },
-  handler: async (
-    ctx,
-    { botSecret, itemId, fotoUrl },
-  ): Promise<{ itemId: string; fotoUrl?: string }> => {
-    requireBotSecret(botSecret);
-    return await ctx.runMutation(internal.casillas._adjuntarFoto, {
-      itemId,
-      fotoUrl,
-    });
-  },
-});
-
 export const guardar = action({
   args: { idToken: v.string(), ...patchArgs },
   handler: async (
@@ -502,6 +488,20 @@ export const publicarViaBot = action({
     return await ctx.runMutation(internal.casillas._publicar, {
       ...args,
       por: `telegram:${telegramUserId}`,
+    });
+  },
+});
+
+export const adjuntarFotoViaBot = action({
+  args: { botSecret: v.string(), itemId: v.string(), fotoUrl: v.string() },
+  handler: async (
+    ctx,
+    { botSecret, itemId, fotoUrl },
+  ): Promise<{ itemId: string; fotoUrl?: string }> => {
+    requireBotSecret(botSecret);
+    return await ctx.runMutation(internal.casillas._adjuntarFoto, {
+      itemId,
+      fotoUrl,
     });
   },
 });
