@@ -2596,6 +2596,85 @@ export const seedAddendum20260812 = internalMutation({
       };
     }
 
+    // ── 2b. El retiro que la hoja NO logró propagar ───────────────────────
+    //
+    // DESCUBIERTO AL VERIFICAR EL SYNC DEL 12-ago: escribir `0` y vaciar una
+    // celda numérica en la hoja NO llega a Convex. Son dos mecanismos distintos
+    // y los dos son silenciosos:
+    //
+    //   · VACIAR → `coerceCell('num', '')` devuelve `skip:true` a propósito
+    //     («never clear a number from a blanked cell», sheetPullMaps.ts). Por eso
+    //     #218 y #93 conservan su `precioFinalCOP` aunque la col M quedó vacía.
+    //   · PONER 0 → la col L está formateada como contabilidad y renderiza el
+    //     cero como `"-"`. `/api/get-inventory-rows` lee FORMATTED_VALUE, así que
+    //     el pull recibe `"-"`, `Number("-")` es NaN y `coerceCell` lo salta.
+    //     La col G (Cant.) no tiene ese formato: su `0` sí aterrizó.
+    //
+    // No es teórico ni nuevo: los tres padres que la corrida del 12-ago retiró
+    // por hoja (#93, #501, #504) siguen HOY en producción con su costo entero,
+    // mientras que los del 03-ago (#497, #508, #509) —retirados por migración,
+    // Convex primero— están correctamente en 0. La hoja dice una cosa y el
+    // espejo otra desde hace horas, sin que nada avisara.
+    //
+    // Se repara acá porque es exactamente la invariante que el addendum exige:
+    // «Σ hijos == padre», con el padre en 0. Si esto no corre, #218 conserva
+    // $512.000 y $955.962 al mismo tiempo que sus hijas aportan otro tanto.
+    //
+    // Los `lotItems` no están afectados: ninguno de los cuatro padres tiene fila
+    // ahí (verificado en prod), así que los totales por lote no doblan. El dato
+    // sucio vive sólo en `productInventory`.
+    const RETIRADOS_A_SANEAR: Array<{ itemId: string; motivo: string }> = [
+      { itemId: '218', motivo: 'este addendum' },
+      { itemId: '93', motivo: 'corrida del 12-ago (quedó sucio)' },
+      { itemId: '501', motivo: 'corrida del 12-ago (quedó sucio)' },
+      { itemId: '504', motivo: 'corrida del 12-ago (quedó sucio)' },
+    ];
+    const saneados: Array<{
+      itemId: string;
+      costoAntes?: number;
+      precioAntes?: number;
+      cambiado: boolean;
+    }> = [];
+    for (const r of RETIRADOS_A_SANEAR) {
+      const doc = await ctx.db
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', r.itemId))
+        .first();
+      if (!doc) {
+        saneados.push({ itemId: r.itemId, cambiado: false });
+        continue;
+      }
+      // Guardarraíl: sólo se sanea un ítem REALMENTE retirado. Si alguien le
+      // devolvió unidades, este saneo no aplica y no se toca.
+      if ((doc.cantidad ?? 0) !== 0) {
+        saneados.push({ itemId: r.itemId, cambiado: false });
+        continue;
+      }
+      const yaLimpio =
+        (doc.costoBaseCOP ?? 0) === 0 &&
+        doc.precioFinalCOP === undefined &&
+        doc.precioCOP === undefined;
+      if (yaLimpio) {
+        saneados.push({ itemId: r.itemId, cambiado: false });
+        continue;
+      }
+      saneados.push({
+        itemId: r.itemId,
+        costoAntes: doc.costoBaseCOP,
+        precioAntes: doc.precioFinalCOP,
+        cambiado: true,
+      });
+      await ctx.db.patch(doc._id, {
+        costoBaseCOP: 0,
+        // `undefined` BORRA el campo en Convex, que es lo que la col M vacía
+        // quería decir. Con costo 0, `computePrecioFinal` no re-deriva nada, así
+        // que soltar `precioFinalManual` no revive el precio.
+        precioFinalCOP: undefined,
+        precioCOP: undefined,
+        precioFinalManual: undefined,
+      });
+    }
+
     // ── 3. El kardex de Isa ───────────────────────────────────────────────
     // Mismo contrato que `asesorMovements._backfillMovements` (idempotente por
     // movimientoId, sin el guard de estado, sin patchear productInventory, sin
@@ -2667,6 +2746,7 @@ export const seedAddendum20260812 = internalMutation({
     return {
       creados,
       despublicado,
+      saneados,
       kardex: {
         eventId: ADDENDUM_20260812_KARDEX_EVENT,
         insertados: kardex.filter((k) => !k.skipped).length,
@@ -2683,6 +2763,10 @@ export const seedAddendum20260812 = internalMutation({
           'corrida del 12-ago).',
         '#218 conserva precioEmbajadorCOP $1.730.560 y el bloque de Caja ($1.331.200): dos ' +
           'ledgers que siguen apuntando a un ítem con cant 0. Fuera del alcance del addendum.',
+        'DEFECTO DE FONDO, sin arreglar: la hoja no puede poner un número en 0 ni vaciarlo. ' +
+          'Vaciar lo salta coerceCell a propósito; el 0 muere porque la col L renderiza "-" y ' +
+          '/api/get-inventory-rows lee FORMATTED_VALUE. Este paso 2b repara los cuatro casos ' +
+          'conocidos, pero el próximo retiro por hoja volverá a divergir en silencio.',
       ],
       nota:
         'No se empuja a la hoja: las filas 532–533 ya existen en el SOT y el kardex nunca tuvo ' +
