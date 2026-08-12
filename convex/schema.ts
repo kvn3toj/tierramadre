@@ -869,6 +869,31 @@ export default defineSchema({
     lastPull: v.optional(v.string()),
   }),
 
+  // ─── Public catalog invalidation sentinel ────────────────────────────
+  //
+  // A SINGLE row holding a monotonic counter. It exists so the customer
+  // catalog can be served from a client-side cache while still invalidating
+  // within seconds of a real change — without any visitor holding a live
+  // subscription to `products.publishedCatalog`.
+  //
+  // WHY: Convex bills Database I/O on documents SCANNED. `publishedCatalog`
+  // was an anonymously-subscribed reactive query that re-scanned every
+  // published 81-field row on each visitor connect AND on every write into its
+  // read set — 759.76 MB in Aug 2026, 63% of the whole team's quota.
+  // See docs/audits/2026-08-12-convex-usage-audit.md §4, Fix 1C.
+  //
+  // Visitors now subscribe to THIS table instead: one ~100-byte document.
+  // When `v` changes they refetch the heavy catalog once, as a one-shot.
+  //
+  // Cheap to maintain and impossible to drift downward: writers only ever
+  // increment. No index needed — fetch the lone row via `.first()`.
+  catalogVersion: defineTable({
+    /** Monotonic counter. Any change means "refetch the catalog". */
+    v: v.number(),
+    /** ms epoch of the last bump — diagnostics only, never used for control flow. */
+    updatedAt: v.number(),
+  }),
+
   // ─── Fotosynthia · AI copilot summaries ──────────────────────────
   //
   // One row per conversation thread. The full message history lives in

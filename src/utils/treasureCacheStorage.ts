@@ -26,6 +26,11 @@ export const ASESOR_COLLECTION_CACHE_BASE =
 // useAsesores' roster cache — same reasoning, found alongside F6.
 export const ASESORES_CACHE_BASE = STORAGE_KEYS.ASESORES_CACHE;
 export const ASESORES_CACHE_TS_BASE = STORAGE_KEYS.ASESORES_CACHE_TS;
+// The published-catalog cache introduced by Fix 1C (2026-08-12). Unscoped by
+// design — it mirrors the anonymous `products.publishedCatalog` query, so there
+// is no grant to scope it by — but purged here all the same: it carries the
+// same price / asesor / ubicación payload as its neighbours above.
+export const PUBLISHED_CATALOG_CACHE_KEY = STORAGE_KEYS.PUBLISHED_CATALOG_CACHE;
 
 /**
  * Removes every grant-scoped cache (staff, anon, and every vitrina token),
@@ -60,6 +65,7 @@ export function clearTreasureCaches(): void {
       }
     }
     localStorage.removeItem(LEGACY_KEYS.INVENTORY_SHEETS_CACHE);
+    localStorage.removeItem(PUBLISHED_CATALOG_CACHE_KEY);
   } catch {
     /* storage unavailable — nothing to clear */
   }

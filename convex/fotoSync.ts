@@ -34,6 +34,7 @@ import {
 } from './_lib/sheetPullMaps';
 import { setInventoryLastPull } from './products';
 import { withPublishStamp, lotProvenance } from './_lib/publishState';
+import { bumpCatalogVersion } from './_lib/catalogVersion';
 
 // ─── per-table metadata ──────────────────────────────────────────────────────
 
@@ -140,6 +141,9 @@ export const upsertTable = internalMutation({
     let patched = 0;
     let protectedCount = 0;
     let skipped = 0;
+    // Fix 1C — set if this sync rewrote a catalog-visible inventory row;
+    // one bump after the loop, never per row.
+    let touchedPublished = false;
     let flaggedCount = 0;
     let inserted = 0;
     const sideEffects: Array<{
@@ -260,6 +264,17 @@ export const upsertTable = internalMutation({
         lastPulledAt: now,
         syncStatus: 'synced',
       });
+      // Fix 1C — flag only; the single bump happens after the row loop. This
+      // path syncs whole SOT tabs, so bumping per row would invalidate every
+      // visitor's cached catalog dozens of times per sync.
+      if (
+        t === 'inventory' &&
+        ((existing as { mostrarEnCatalogo?: boolean }).mostrarEnCatalogo ===
+          true ||
+          patch.mostrarEnCatalogo === true)
+      ) {
+        touchedPublished = true;
+      }
       patched++;
       for (const se of plan.sideEffects) {
         sideEffects.push({ ...se, id: existing._id });
@@ -272,6 +287,8 @@ export const upsertTable = internalMutation({
     }
 
     if (t === 'inventory') await setInventoryLastPull(ctx, now);
+    // Fix 1C — one invalidation for the whole sync.
+    if (touchedPublished) await bumpCatalogVersion(ctx);
 
     return {
       patched,

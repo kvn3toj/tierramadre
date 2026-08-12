@@ -20,6 +20,7 @@ import {
 } from './sequences';
 import { canReopenLot } from './_lib/lotMath';
 import { withPublishStamp } from './_lib/publishState';
+import { bumpCatalogVersion } from './_lib/catalogVersion';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
 import {
@@ -593,6 +594,10 @@ export const _publish = internalMutation({
       }
     }
 
+    // Fix 1C — publishing a lote adds items to the public catalog. One bump for
+    // the whole lote, not one per item.
+    if (flipped > 0) await bumpCatalogVersion(ctx);
+
     await ctx.db.patch(id, {
       estado: 'publicado' as const,
       syncStatus: 'pending' as const,
@@ -680,6 +685,10 @@ export const _reopen = internalMutation({
         }
       }
     }
+    // Fix 1C — an UNpublish has to invalidate too, or the withdrawn pieces
+    // linger in every visitor's cached catalog until the TTL expires. One bump
+    // for the whole lote.
+    if (demotedFromCatalog > 0) await bumpCatalogVersion(ctx);
 
     const trimmedReason = reason?.trim();
     const reopenNote = `Reabierto${editorEmail ? ` por ${editorEmail}` : ''}${
