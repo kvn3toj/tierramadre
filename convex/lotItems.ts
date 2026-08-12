@@ -11,7 +11,8 @@ import { bumpInventoryTotal } from './products';
 import { omitFotosintesisOnly } from './_lib/saleSafe';
 import { preponderanciaSum, balancesTo100 } from './_lib/lotMath';
 import { computePrecioFinal } from './_lib/pricing';
-import { withPublishStamp } from './_lib/publishState';
+import { withPublishStamp, lotProvenance } from './_lib/publishState';
+import { bumpCatalogVersionIfPublished } from './_lib/catalogVersion';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
 import {
@@ -363,7 +364,13 @@ export const _create = internalMutation({
       loteId: args.loteId,
       preponderancia: args.preponderancia,
       costoBaseCOP,
-      ...withPublishStamp(null, args.mostrarEnCatalogo ?? false),
+      ...withPublishStamp(
+        null,
+        args.mostrarEnCatalogo ?? false,
+        args.mostrarEnCatalogo
+          ? await lotProvenance(ctx, args.loteId)
+          : undefined,
+      ),
       tipo: args.tipo,
       procedencia: args.procedencia,
       observacion: args.observacion,
@@ -393,6 +400,13 @@ export const _create = internalMutation({
     // scanning up to 1000 full productInventory documents. total is
     // monotonic — a new lot item only ever adds to it.
     await bumpInventoryTotal(ctx, 1);
+
+    // Fix 1C — a wizard capture only reaches the public catalog when it is
+    // created already published, which is the uncommon case; the guard keeps
+    // ordinary captures from invalidating anyone's cache.
+    await bumpCatalogVersionIfPublished(ctx, null, {
+      mostrarEnCatalogo: args.mostrarEnCatalogo ?? false,
+    });
 
     // Single audit row captures the wizard creation. The same auditId
     // feeds api.products.pushToSheet so the audit moves from "pending"
@@ -951,7 +965,13 @@ export const _updateGemaFields = internalMutation({
       if (patch.mostrarEnCatalogo !== (product.mostrarEnCatalogo ?? false)) {
         Object.assign(
           productPatch,
-          withPublishStamp(product, patch.mostrarEnCatalogo),
+          withPublishStamp(
+            product,
+            patch.mostrarEnCatalogo,
+            patch.mostrarEnCatalogo
+              ? await lotProvenance(ctx, product.loteId)
+              : undefined,
+          ),
         );
         changes.push({
           field: 'mostrarEnCatalogo',
@@ -984,6 +1004,16 @@ export const _updateGemaFields = internalMutation({
       ...productPatch,
       syncStatus: 'pending' as const,
       syncError: undefined,
+    });
+
+    // Fix 1C — this is the per-item editor: it can flip the publish toggle AND
+    // it rewrites projected fields (precio, foto, the Fotosíntesis
+    // characteristics). Guarded on before/after so an edit to a reserved piece
+    // invalidates nothing, while both a publish and an unpublish do.
+    await bumpCatalogVersionIfPublished(ctx, product, {
+      mostrarEnCatalogo:
+        (productPatch as { mostrarEnCatalogo?: boolean }).mostrarEnCatalogo ??
+        product.mostrarEnCatalogo,
     });
     if (
       nextPreponderancia !== undefined &&

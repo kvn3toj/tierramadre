@@ -13,6 +13,7 @@ import type * as _lib_applyPayment from "../_lib/applyPayment.js";
 import type * as _lib_asesorSync from "../_lib/asesorSync.js";
 import type * as _lib_authz from "../_lib/authz.js";
 import type * as _lib_botAuth from "../_lib/botAuth.js";
+import type * as _lib_catalogVersion from "../_lib/catalogVersion.js";
 import type * as _lib_cidSigning from "../_lib/cidSigning.js";
 import type * as _lib_columnMaps from "../_lib/columnMaps.js";
 import type * as _lib_commission from "../_lib/commission.js";
@@ -64,6 +65,7 @@ declare const fullApi: ApiFromModules<{
   "_lib/asesorSync": typeof _lib_asesorSync;
   "_lib/authz": typeof _lib_authz;
   "_lib/botAuth": typeof _lib_botAuth;
+  "_lib/catalogVersion": typeof _lib_catalogVersion;
   "_lib/cidSigning": typeof _lib_cidSigning;
   "_lib/columnMaps": typeof _lib_columnMaps;
   "_lib/commission": typeof _lib_commission;

@@ -8,6 +8,10 @@ import type { Id } from './_generated/dataModel';
 import { v } from 'convex/values';
 import { bumpInventoryTotal } from './products';
 import { withPublishStamp } from './_lib/publishState';
+import {
+  bumpCatalogVersion,
+  bumpCatalogVersionIfPublished,
+} from './_lib/catalogVersion';
 import { computePrecioFinal } from './_lib/pricing';
 
 /**
@@ -76,6 +80,89 @@ export const backfillPublishedAt = internalMutation({
     return {
       backfilled: eligible.length,
       itemIds: eligible.map((row) => row.itemId),
+    };
+  },
+});
+
+/**
+ * Backfill the denormalized `mina` / `tratamiento` for items published BEFORE
+ * Fix 1B (docs/audits/2026-08-12-convex-usage-audit.md §4).
+ *
+ * `products.publishedCatalog` used to resolve lot provenance with a per-lote
+ * point read on every execution, which dragged those `lots` documents into the
+ * public catalog's reactive read set — so any write to a published lot re-ran
+ * the catalog for every connected anonymous visitor. The lookup now happens
+ * once, at publish time, via `withPublishStamp()`.
+ *
+ * Items published before that change never went through the new stamp, and the
+ * catalog query deliberately has NO fallback to `lots` (a fallback would
+ * reinstate the read-set dependency). Without this backfill those items would
+ * render with blank mina/tratamiento.
+ *
+ * ⚠️ RUN THIS BEFORE OR IMMEDIATELY AFTER DEPLOYING Fix 1B — between the deploy
+ * and this migration, already-published items show no provenance.
+ *
+ * Idempotent: only patches rows whose stored value actually differs from the
+ * lot's, so re-running is a no-op. Safe to re-run after new lots are published.
+ *
+ *   npx convex run --prod migrations:backfillLotProvenance '{}'
+ */
+export const backfillLotProvenance = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db
+      .query('productInventory')
+      .withIndex('by_mostrarEnCatalogo', (q) => q.eq('mostrarEnCatalogo', true))
+      .collect();
+
+    // Resolve each distinct lote ONCE — this is a one-shot migration, but there
+    // is no reason to re-read the same lot per item.
+    const lotCache = new Map<
+      string,
+      { mina?: string; tratamiento?: string } | undefined
+    >();
+    const patched: string[] = [];
+    const missingLote: string[] = [];
+
+    for (const row of rows) {
+      if (!row.loteId) continue; // legacy/orphan — excluded from the catalog anyway
+      if (!lotCache.has(row.loteId)) {
+        const lot = await ctx.db
+          .query('lots')
+          .withIndex('by_loteId', (q) => q.eq('loteId', row.loteId!))
+          .first();
+        lotCache.set(
+          row.loteId,
+          lot ? { mina: lot.mina, tratamiento: lot.tratamiento } : undefined,
+        );
+      }
+      const prov = lotCache.get(row.loteId);
+      if (!prov) {
+        missingLote.push(row.itemId);
+        continue;
+      }
+      if (row.mina === prov.mina && row.tratamiento === prov.tratamiento)
+        continue;
+      await ctx.db.patch(row._id, {
+        mina: prov.mina,
+        tratamiento: prov.tratamiento,
+      });
+      patched.push(row.itemId);
+    }
+
+    // `mina`/`tratamiento` are projected by `publishedCatalog`, so a backfill
+    // changes what visitors see. Every row scanned here is already published
+    // (the index above filters on it), hence the unguarded bump — but only when
+    // something actually moved, so a converged re-run stays free.
+    if (patched.length > 0) await bumpCatalogVersion(ctx);
+
+    return {
+      scanned: rows.length,
+      backfilled: patched.length,
+      itemIds: patched,
+      // Published items whose lote no longer resolves — these will render
+      // without provenance. Worth eyeballing rather than failing the run.
+      missingLote,
     };
   },
 });
@@ -176,6 +263,11 @@ export const mergeAguaMarina = internalMutation({
       syncStatus: 'pending' as const,
       syncError: undefined,
     });
+    // Re-asserting VENDIDA changes what the public catalog renders for this
+    // piece if it is published. One-shot repair, but the sentinel costs one
+    // write and keeps the wiring guard in tests/catalogSentinelWiring.test.ts
+    // unconditional — no allowlist to drift.
+    await bumpCatalogVersionIfPublished(ctx, keep, keep);
 
     // 2. Repoint the lot join → C-007 now counts item 340 at the same 20%.
     await ctx.db.patch(dropJoin._id, { itemId: KEEP });

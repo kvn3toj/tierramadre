@@ -251,6 +251,18 @@ export default defineSchema({
     // mostrarEnCatalogo flips true. Powers the Estrenos "newest" sort for
     // Fotosíntesis items — never cleared or reset by a later unpublish.
     publishedAt: v.optional(v.number()),
+    // ── Denormalized lot provenance ──────────────────────────────────────
+    // Copies of the owning lot's `mina` / `tratamiento`, stamped by
+    // withPublishStamp() every time the item is published. These are NOT the
+    // source of truth — the `lots` row is — they exist purely so
+    // `products.publishedCatalog` can read provenance off the item instead of
+    // point-reading `lots`, which used to drag those lot documents into the
+    // public catalog's reactive read set.
+    // See docs/audits/2026-08-12-convex-usage-audit.md §4, Fix 1B.
+    // Safe to denormalize because a lot is frozen once published:
+    // `lots._update` rejects anything not `abierto` (convex/lots.ts:277).
+    mina: v.optional(v.string()),
+    tratamiento: v.optional(v.string()),
     // Captured at lotItems.create, editable via lotItems.updateGemaFields, and
     // synced to the SOT "Inventario" tab (target="fotosintesis") through the
     // extended layout in api/_lib/fotosintesis-inventory-columns.js.
@@ -855,6 +867,31 @@ export default defineSchema({
   inventoryStats: defineTable({
     total: v.number(),
     lastPull: v.optional(v.string()),
+  }),
+
+  // ─── Public catalog invalidation sentinel ────────────────────────────
+  //
+  // A SINGLE row holding a monotonic counter. It exists so the customer
+  // catalog can be served from a client-side cache while still invalidating
+  // within seconds of a real change — without any visitor holding a live
+  // subscription to `products.publishedCatalog`.
+  //
+  // WHY: Convex bills Database I/O on documents SCANNED. `publishedCatalog`
+  // was an anonymously-subscribed reactive query that re-scanned every
+  // published 81-field row on each visitor connect AND on every write into its
+  // read set — 759.76 MB in Aug 2026, 63% of the whole team's quota.
+  // See docs/audits/2026-08-12-convex-usage-audit.md §4, Fix 1C.
+  //
+  // Visitors now subscribe to THIS table instead: one ~100-byte document.
+  // When `v` changes they refetch the heavy catalog once, as a one-shot.
+  //
+  // Cheap to maintain and impossible to drift downward: writers only ever
+  // increment. No index needed — fetch the lone row via `.first()`.
+  catalogVersion: defineTable({
+    /** Monotonic counter. Any change means "refetch the catalog". */
+    v: v.number(),
+    /** ms epoch of the last bump — diagnostics only, never used for control flow. */
+    updatedAt: v.number(),
   }),
 
   // ─── Fotosynthia · AI copilot summaries ──────────────────────────
