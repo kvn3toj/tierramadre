@@ -444,3 +444,79 @@ export function formatearReporteExcepciones(plan: PlanMigracion): string {
     .join('\n')
     .trimEnd();
 }
+
+/** Una fila del riel viejo ascendida a casilla v4. */
+export interface CasillaAPromover {
+  itemId: string;
+  estadoCasilla: string;
+  /** Ausente cuando la hoja trae 0: se promueve igual, para poder capturarlo. */
+  costoUnitarioRealCOP?: number;
+}
+
+export interface PlanPromocion {
+  aPromover: CasillaAPromover[];
+  /** Ya tenían `estadoCasilla`: la promoción es idempotente. */
+  yaEranV4: number;
+  /** En la hoja pero sin fila en Convex — ésas las CREA `planificarMigracion`. */
+  sinFilaEnConvex: string[];
+  /** Promovidas sin costo, para que alguien lo capture. */
+  sinCosto: string[];
+}
+
+/**
+ * Las filas que YA existen en `lotItems` sin ser casillas v4 → casillas v4.
+ *
+ * `planificarMigracion` las salta a propósito (`if (casillasExistentes.has(...)) continue`)
+ * para no duplicar, y esa guardia es correcta. Pero deja fuera al caso mayoritario: una
+ * pieza que vino del riel viejo ya tiene su fila —con `loteId` y `costoBaseCOP`— y sin
+ * `estadoCasilla` es invisible para W2. Medido en dev el 2026-08-12: **69 lotes figuraban
+ * «sin casillas v4» teniendo sus piezas ahí mismo**, y con ellas 40 lotes que la hoja de
+ * reparto sí cubre.
+ *
+ * Aplica **las mismas dos reglas** que `planificarMigracion` usa al crear, no unas nuevas:
+ * el `estado` de la hoja o `PENDIENTE_CLASIFICAR`, y `costoBaseCOP > 0` como costo
+ * capturado. Duplicar la derivación sería invitar a que las dos diverjan.
+ *
+ * **Por qué ese `costoBaseCOP` vale como costo CAPTURADO** —que es lo que la regla §4.2
+ * exige, prohibiendo el prorrateo—: se midió contra la hoja de reparto (Paso 1) y **no es
+ * proporcional a los quilates en 15 de 19 lotes**, con desvíos de hasta 1137% (C-010:
+ * una pieza de 0,26 ct a $358.785 contra $29.001 proporcionales). Es juicio por pieza
+ * sujeto al total de la compra, no la división mecánica que produjo el error de $52.500
+ * de «Choker + Piedra». Dictamen de Kevin, 2026-08-12; la evidencia y cómo revertirlo
+ * están en `anima-bot/docs/reparto-juzgado-2026-08-12.md`.
+ *
+ * Puro: quién lo aplica y cómo se deshace vive en `convex/migracionV4.ts`.
+ */
+export function planificarPromocion(entrada: {
+  filasHoja: readonly FilaHoja[];
+  casillasConvex: readonly { itemId: string; estadoCasilla?: string }[];
+}): PlanPromocion {
+  const porItemId = new Map(
+    entrada.casillasConvex.map((c) => [c.itemId, c.estadoCasilla]),
+  );
+  const aPromover: CasillaAPromover[] = [];
+  const sinFilaEnConvex: string[] = [];
+  const sinCosto: string[] = [];
+  let yaEranV4 = 0;
+
+  for (const fila of entrada.filasHoja) {
+    if (!porItemId.has(fila.itemId)) {
+      sinFilaEnConvex.push(fila.itemId);
+      continue;
+    }
+    if (porItemId.get(fila.itemId)) {
+      yaEranV4++;
+      continue;
+    }
+    const tieneCosto =
+      Number.isFinite(fila.costoBaseCOP) && fila.costoBaseCOP > 0;
+    if (!tieneCosto) sinCosto.push(fila.itemId);
+    aPromover.push({
+      itemId: fila.itemId,
+      estadoCasilla: fila.estado.trim() || ESTADO_PENDIENTE_CLASIFICAR,
+      ...(tieneCosto ? { costoUnitarioRealCOP: fila.costoBaseCOP } : {}),
+    });
+  }
+
+  return { aPromover, yaEranV4, sinFilaEnConvex, sinCosto };
+}

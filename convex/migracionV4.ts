@@ -34,6 +34,8 @@ import { normalizarFechaRecepcion } from './_lib/fechaSheet';
 import { inferirSegmentoLote } from './_lib/segmentoLote';
 import { NOMBRE_PROVEEDOR_CENTINELA } from './_lib/proveedorCentinela';
 import {
+  planificarPromocion,
+  type PlanPromocion,
   formatearReporteExcepciones,
   mapearFilasInventario,
   mapearLotesHoja,
@@ -87,7 +89,10 @@ export const _estadoActual = internalQuery({
     const casillas = await ctx.db.query('lotItems').collect();
     return {
       lotesConvex: lotes.map((l) => ({ loteId: l.loteId })),
-      casillasConvex: casillas.map((c) => ({ itemId: c.itemId })),
+      casillasConvex: casillas.map((c) => ({
+        itemId: c.itemId,
+        estadoCasilla: c.estadoCasilla,
+      })),
     };
   },
 });
@@ -431,5 +436,131 @@ export const ensayo = internalAction({
     });
 
     return { ...base, aplicado };
+  },
+});
+
+/**
+ * Aplica la promoción y **deja constancia de qué tocó**, que es lo que la vuelve
+ * reversible sin adivinar.
+ *
+ * No hace falta guardar los valores previos: la promoción sólo toca filas donde
+ * `estadoCasilla` está AUSENTE —es su precondición, la verifica `planificarPromocion`—
+ * así que deshacerla es volver a ausentarlos. Lo que sí se guarda es lo que se ESCRIBIÓ,
+ * para que revertir pueda negarse a pisar una casilla que alguien tocó después.
+ */
+export const _aplicarPromocion = internalMutation({
+  args: {
+    fuente: v.string(),
+    aplicadas: v.array(
+      v.object({
+        itemId: v.string(),
+        estadoCasilla: v.string(),
+        costoUnitarioRealCOP: v.optional(v.number()),
+      }),
+    ),
+  },
+  handler: async (ctx, { fuente, aplicadas }) => {
+    const hechas: typeof aplicadas = [];
+    for (const a of aplicadas) {
+      const fila = await ctx.db
+        .query('lotItems')
+        .withIndex('by_itemId', (q) => q.eq('itemId', a.itemId))
+        .first();
+      // La precondición se re-verifica CONTRA LA BASE, no contra el plan: entre
+      // planificar y aplicar pudo pasar cualquier cosa, y pisar una casilla que ya
+      // es v4 le cambiaría el costo a alguien.
+      if (!fila || fila.estadoCasilla) continue;
+      await ctx.db.patch(fila._id, {
+        estadoCasilla: a.estadoCasilla,
+        ...(a.costoUnitarioRealCOP !== undefined
+          ? { costoUnitarioRealCOP: a.costoUnitarioRealCOP }
+          : {}),
+      });
+      hechas.push(a);
+    }
+    const id = await ctx.db.insert('promocionesV4', {
+      ts: Date.now(),
+      fuente,
+      aplicadas: hechas,
+    });
+    return { id, promovidas: hechas.length };
+  },
+});
+
+/**
+ * La promoción de filas del riel viejo a casillas v4. `dryRun: true` por defecto:
+ * hay que pedir explícitamente que escriba, igual que `ensayo`.
+ *
+ * Lee la misma hoja que `ensayo` y usa el mismo planificador de estado, así que las dos
+ * ven exactamente lo mismo.
+ */
+export const promover = internalAction({
+  args: { dryRun: v.optional(v.boolean()) },
+  handler: async (
+    ctx,
+    { dryRun = true },
+  ): Promise<{
+    dryRun: boolean;
+    plan: PlanPromocion;
+    aplicado?: { id: string; promovidas: number };
+  }> => {
+    const filasInventario = await leerTabla('/api/get-inventory-rows');
+    const filasHoja = mapearFilasInventario(filasInventario);
+    const { casillasConvex } = await ctx.runQuery(
+      internal.migracionV4._estadoActual,
+      {},
+    );
+    const plan = planificarPromocion({ filasHoja, casillasConvex });
+    if (dryRun) return { dryRun, plan };
+
+    const aplicado = await ctx.runMutation(
+      internal.migracionV4._aplicarPromocion,
+      {
+        fuente:
+          'reparto juzgado — dictamen 2026-08-12, ver ' +
+          'anima-bot/docs/reparto-juzgado-2026-08-12.md',
+        aplicadas: plan.aPromover,
+      },
+    );
+    return { dryRun, plan, aplicado: { ...aplicado, id: String(aplicado.id) } };
+  },
+});
+
+/**
+ * Deshace una promoción: vuelve a ausentar `estadoCasilla` y `costoUnitarioRealCOP`.
+ *
+ * **Se niega a pisar lo que cambió.** Si una casilla ya no tiene exactamente los valores
+ * que esta promoción le escribió, alguien la clasificó o le corrigió el costo después —
+ * revertirla borraría trabajo humano. Esas se saltan y se devuelven nombradas, para que
+ * quien revierte sepa qué quedó afuera y por qué.
+ */
+export const _revertirPromocion = internalMutation({
+  args: { id: v.id('promocionesV4') },
+  handler: async (ctx, { id }) => {
+    const p = await ctx.db.get(id);
+    if (!p) throw new Error('No existe esa promoción.');
+    const revertidas: string[] = [];
+    const intactas: string[] = [];
+    for (const a of p.aplicadas) {
+      const fila = await ctx.db
+        .query('lotItems')
+        .withIndex('by_itemId', (q) => q.eq('itemId', a.itemId))
+        .first();
+      if (!fila) continue;
+      const igual =
+        fila.estadoCasilla === a.estadoCasilla &&
+        fila.costoUnitarioRealCOP === a.costoUnitarioRealCOP;
+      if (!igual) {
+        intactas.push(a.itemId);
+        continue;
+      }
+      await ctx.db.patch(fila._id, {
+        estadoCasilla: undefined,
+        costoUnitarioRealCOP: undefined,
+      });
+      revertidas.push(a.itemId);
+    }
+    await ctx.db.patch(id, { revertidaEn: Date.now() });
+    return { revertidas: revertidas.length, intactas };
   },
 });

@@ -1261,4 +1261,28 @@ export default defineSchema({
       }),
     ),
   }).index('by_ts', ['ts']),
+
+  /**
+   * El registro de cada promoción de filas del riel viejo a casillas v4.
+   *
+   * Existe para que la decisión sea REVERSIBLE sin adivinar. La promoción sólo toca
+   * filas donde `estadoCasilla` está ausente, así que deshacerla es volver a
+   * ausentarlo; lo que se guarda es lo que se ESCRIBIÓ, para que el revertidor pueda
+   * negarse a pisar una casilla que alguien clasificó después.
+   *
+   * `fuente` dice de dónde salió el criterio — hoy, el reparto juzgado dictaminado el
+   * 2026-08-12. Si ese dictamen se revisa, esta tabla dice exactamente qué revisar.
+   */
+  promocionesV4: defineTable({
+    ts: v.number(),
+    fuente: v.string(),
+    aplicadas: v.array(
+      v.object({
+        itemId: v.string(),
+        estadoCasilla: v.string(),
+        costoUnitarioRealCOP: v.optional(v.number()),
+      }),
+    ),
+    revertidaEn: v.optional(v.number()),
+  }).index('by_ts', ['ts']),
 });

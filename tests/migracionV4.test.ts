@@ -25,6 +25,8 @@ import {
   mapearLotesHoja,
   numeroDeHoja,
   planificarMigracion,
+  planificarPromocion,
+  type FilaHoja,
 } from '../convex/_lib/migracionV4';
 
 const LOTE_HOJA = {
@@ -591,5 +593,87 @@ describe('el reporte muestra lo que va a crear, para poder revisarlo a ojo', () 
     // el que puede mover el inventario entero si el número está mal.
     const reporte = formatearReporteExcepciones(PLAN);
     expect(reporte.indexOf('S-001')).toBeLessThan(reporte.indexOf('C-068'));
+  });
+});
+
+/**
+ * La PROMOCIÓN de filas del riel viejo a casillas v4 — 2026-08-12.
+ *
+ * `planificarMigracion` salta toda pieza que ya tenga fila en `lotItems`
+ * (`if (casillasExistentes.has(fila.itemId)) continue`). Esa guardia es correcta para
+ * no duplicar, pero deja fuera al caso mayoritario: las piezas que vinieron del riel
+ * viejo YA tienen fila —con su `loteId` y su `costoBaseCOP`— y sin `estadoCasilla`
+ * son invisibles para W2. Medido en dev: 69 lotes figuran «sin casillas v4» teniendo
+ * sus piezas ahí mismo.
+ *
+ * La promoción aplica a esas filas **las mismas reglas** que `planificarMigracion` usa
+ * al crear, no unas nuevas: `estado` de la hoja o `PENDIENTE_CLASIFICAR`, y
+ * `costoBaseCOP > 0` como costo capturado. Que ese reparto valga como capturado es
+ * dictamen de Kevin (2026-08-12) y está documentado en
+ * `anima-bot/docs/reparto-juzgado-2026-08-12.md`: se midió que NO es proporcional a
+ * los quilates en 15 de 19 lotes —desvíos de hasta 1137%— así que es juicio por pieza,
+ * no la división mecánica que la regla §4.2 prohíbe.
+ */
+describe('planificarPromocion — las filas del riel viejo que ya existen', () => {
+  const fila = (over: Partial<FilaHoja> = {}): FilaHoja => ({
+    itemId: '323',
+    loteId: 'C-002',
+    estado: '',
+    costoBaseCOP: 540_000,
+    nombre: 'Luna',
+    ...over,
+  });
+
+  it('promueve una fila que existe SIN `estadoCasilla`', () => {
+    const p = planificarPromocion({
+      filasHoja: [fila()],
+      casillasConvex: [{ itemId: '323', estadoCasilla: undefined }],
+    });
+    expect(p.aPromover).toEqual([
+      {
+        itemId: '323',
+        estadoCasilla: 'PENDIENTE_CLASIFICAR',
+        costoUnitarioRealCOP: 540_000,
+      },
+    ]);
+  });
+
+  it('NO toca una que ya es casilla v4: promover dos veces no hace nada la segunda', () => {
+    const p = planificarPromocion({
+      filasHoja: [fila()],
+      casillasConvex: [{ itemId: '323', estadoCasilla: 'DISPONIBLE' }],
+    });
+    expect(p.aPromover).toEqual([]);
+    expect(p.yaEranV4).toBe(1);
+  });
+
+  it('NO inventa filas: una pieza de la hoja sin fila en Convex no se promueve', () => {
+    // Ésa es trabajo de `planificarMigracion`, que la CREA. Acá se promueve, no se crea.
+    const p = planificarPromocion({ filasHoja: [fila()], casillasConvex: [] });
+    expect(p.aPromover).toEqual([]);
+    expect(p.sinFilaEnConvex).toEqual(['323']);
+  });
+
+  it('respeta el estado de la hoja cuando lo trae', () => {
+    const p = planificarPromocion({
+      filasHoja: [fila({ estado: 'VENDIDA' })],
+      casillasConvex: [{ itemId: '323', estadoCasilla: undefined }],
+    });
+    expect(p.aPromover[0].estadoCasilla).toBe('VENDIDA');
+  });
+
+  /**
+   * Un 0 en la hoja significa «no se cargó», no «gratis». Se promueve igual —la casilla
+   * tiene que EXISTIR para que alguien pueda capturarle el costo— pero sin costo y con
+   * excepción, exactamente como hace `planificarMigracion` al crear.
+   */
+  it('promueve sin costo, y lo denuncia, cuando la hoja trae 0', () => {
+    const p = planificarPromocion({
+      filasHoja: [fila({ costoBaseCOP: 0 })],
+      casillasConvex: [{ itemId: '323', estadoCasilla: undefined }],
+    });
+    expect(p.aPromover[0].costoUnitarioRealCOP).toBeUndefined();
+    expect(p.aPromover[0].estadoCasilla).toBe('PENDIENTE_CLASIFICAR');
+    expect(p.sinCosto).toEqual(['323']);
   });
 });

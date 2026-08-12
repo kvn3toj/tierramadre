@@ -232,11 +232,16 @@ export const _porQueNoCotiza = internalQuery({
     let lotesQueCotizan = 0;
     let itemsCotizados = 0;
     let sinConfigVigente = 0;
+    // Los IDs, no sólo las cuentas: sin ellos no se puede cruzar contra una fuente
+    // externa (una hoja, un inventario) para saber si el hueco se puede llenar.
+    const sinCasillas: string[] = [];
+    const anterioresAConfig: string[] = [];
 
     for (const lote of lotes) {
       const delLote = porLote.get(lote.loteId);
       if (!delLote?.length) {
         motivos.push({ motivo: 'el lote no tiene casillas v4', casillas: 0 });
+        sinCasillas.push(lote.loteId);
         continue;
       }
       let config;
@@ -244,6 +249,7 @@ export const _porQueNoCotiza = internalQuery({
         config = configVigenteEn(configs, lote.fechaRecepcion);
       } catch {
         sinConfigVigente++;
+        anterioresAConfig.push(lote.loteId);
         motivos.push({
           motivo: 'el lote es anterior a toda la configuración de precios',
           casillas: delLote.length,
@@ -298,6 +304,8 @@ export const _porQueNoCotiza = internalQuery({
       },
       porMotivo: agruparMotivos(motivos),
       duplicados: duplicados.slice(0, 15),
+      sinCasillas: sinCasillas.sort(),
+      anterioresAConfig: anterioresAConfig.sort(),
       bloqueados: bloqueados.sort((a, b) => b.casillas - a.casillas).slice(0, 10),
     };
   },
