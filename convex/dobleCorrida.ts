@@ -187,9 +187,29 @@ export const _porQueNoCotiza = internalQuery({
       porLote.set(c.loteId, [...(porLote.get(c.loteId) ?? []), c]);
     }
 
+    /**
+     * `loteId` duplicados. Se cuenta acá porque este mismo diagnóstico los delata:
+     * al recorrer `lots` fila por fila, dos documentos con el MISMO `loteId` miran
+     * las mismas casillas y las cuentan dos veces, así que las casillas por motivo
+     * suman más que las que existen. Es la deuda ya conocida — `allocateNext` puede
+     * entregar un `loteId` que ya existe, y el duplicado es silencioso.
+     */
+    const vecesPorLoteId = new Map<string, number>();
+    for (const l of lotes) {
+      vecesPorLoteId.set(l.loteId, (vecesPorLoteId.get(l.loteId) ?? 0) + 1);
+    }
+    const duplicados = [...vecesPorLoteId.entries()]
+      .filter(([, veces]) => veces > 1)
+      .map(([loteId, veces]) => ({ loteId, veces }))
+      .sort((a, b) => b.veces - a.veces);
+
     const conEstado = casillas.filter((c) => c.estadoCasilla);
     const estructura = {
       lotes: lotes.length,
+      loteIdsDistintos: vecesPorLoteId.size,
+      loteIdsDuplicados: duplicados.length,
+      /** Filas de `lots` de más por duplicación: infla toda cuenta por lote. */
+      filasDeMasPorDuplicado: lotes.length - vecesPorLoteId.size,
       lotesConCategoriaFiscal: lotes.filter((l) => l.categoriaFiscal).length,
       lotesConCasillas: [...porLote.keys()].length,
       casillas: casillas.length,
@@ -200,6 +220,9 @@ export const _porQueNoCotiza = internalQuery({
     };
 
     const motivos: { motivo: string; casillas: number }[] = [];
+    // Qué lote está detrás de cada motivo: sin esto no se puede saber si el lote
+    // que más piezas bloquea es una oportunidad real o el C-077 conocido.
+    const bloqueados: { loteId: string; casillas: number; motivo: string }[] = [];
     let lotesQueCotizan = 0;
     let itemsCotizados = 0;
     let sinConfigVigente = 0;
@@ -251,6 +274,11 @@ export const _porQueNoCotiza = internalQuery({
           motivo: motivo ?? 'sin motivo declarado por el motor',
           casillas: delLote.length,
         });
+        bloqueados.push({
+          loteId: lote.loteId,
+          casillas: delLote.length,
+          motivo: motivo ?? 'sin motivo',
+        });
       }
     }
 
@@ -263,6 +291,8 @@ export const _porQueNoCotiza = internalQuery({
         sinConfigVigente,
       },
       porMotivo: agruparMotivos(motivos),
+      duplicados: duplicados.slice(0, 15),
+      bloqueados: bloqueados.sort((a, b) => b.casillas - a.casillas).slice(0, 10),
     };
   },
 });
