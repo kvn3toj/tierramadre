@@ -370,12 +370,22 @@ export const _publicar = internalMutation({
         },
       });
       await encolarLote(ctx, lote._id);
-      return { publicado: true, parcial: true, faltantes: score.incompletas };
+      return {
+        publicado: true,
+        parcial: true,
+        faltantes: score.incompletas,
+        sinFoto: score.sinFoto,
+      };
     }
 
     await ctx.db.patch(lote._id, { estado: 'publicado' });
     await encolarLote(ctx, lote._id);
-    return { publicado: true, parcial: false, faltantes: [] };
+    return {
+      publicado: true,
+      parcial: false,
+      faltantes: [],
+      sinFoto: score.sinFoto,
+    };
   },
 });
 
@@ -389,7 +399,12 @@ export const publicar = action({
   handler: async (
     ctx,
     { idToken, ...args },
-  ): Promise<{ publicado: boolean; parcial: boolean; faltantes: string[] }> => {
+  ): Promise<{
+    publicado: boolean;
+    parcial: boolean;
+    faltantes: string[];
+    sinFoto: string[];
+  }> => {
     const caller = await requireAccessLevel(idToken, [...ROLES_COSTOS]);
     return await ctx.runMutation(internal.casillas._publicar, {
       ...args,
@@ -445,7 +460,7 @@ export const porItemId = action({
 /* ─────────────────────────────────────────────────────────────────────────────
  * W2 «Cerebro Creativo» desde Telegram.
  *
- * Las cuatro cáscaras de abajo son el mismo trato que hicieron las de
+ * Las cinco cáscaras de abajo son el mismo trato que hicieron las de
  * `movimientosV4`: `requireBotSecret` y delegación a los internals YA probados.
  * Cero lógica nueva — si una regla de clasificación cambia, cambia en un solo
  * lugar y las dos superficies la heredan.
