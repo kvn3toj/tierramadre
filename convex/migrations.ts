@@ -1506,3 +1506,844 @@ export const raiseLotSequences = internalMutation({
     return out;
   },
 });
+
+/**
+ * Alta en Convex de los 7 ítems que el inventario manuscrito del 2026-08-12
+ * creó EN LA HOJA, y cierre del retiro de sus 3 padres.
+ *
+ * POR QUÉ HACE FALTA: `scripts/aplicar-inventario-manuscrito-20260812.mjs`
+ * escribió las 7 filas en el SOT, pero el pull NO crea documentos: `fotoSync`
+ * sólo inserta filas nuevas para `providers` y `clients`; en `inventory` las
+ * marca «fila nueva en la hoja — créala desde la app» y las salta. Por eso el
+ * sync del 12-ago reportó `inventory: 523` y no 530.
+ *
+ * La lección estructural: para ALTAS el camino es Convex → hoja (lo que hizo
+ * `seedSublotes508509497` el 03-ago). La hoja sólo sirve para editar lo que ya
+ * existe. Esta migración cierra esa brecha en la dirección correcta.
+ *
+ * ⚠️ NO EMPUJA A LA HOJA. `_createItemExplicit` termina agendando
+ * `products.pushToSheet` con `mode:'append'`; como estas 7 filas YA existen en
+ * el SOT (525–531), usarlo duplicaría filas — el mismo modo de falla que dejó
+ * 21 filas basura el 03-ago. Acá se inserta y punto: el siguiente pull
+ * reconcilia los campos escribibles desde la hoja, que es su dueña.
+ *
+ * Qué hace:
+ *   1. Crea 93A, 93B y 535–539 con sus costos exactos + su fila en `lotItems`.
+ *   2. Publica los 7 hijos (mostrarEnCatalogo:true) con la procedencia del lote.
+ *   3. Despublica #93, #501 y #504 — los padres retirados. `mostrarEnCatalogo`
+ *      está EXCLUIDA del pull desde el 2026-07-30 (va sólo Convex → hoja), así
+ *      que la columna Y de la hoja no puede hacerlo: tiene que ser acá.
+ *   4. `inventoryStats.total` 523 → 530 (vía bumpInventoryTotal, 1 por alta).
+ *
+ * Idempotente: un itemId que ya existe se salta (`created:false`), así que
+ * re-correrla es inofensivo.
+ *
+ *   npx convex run migrations:seedManuscrito20260812 '{}'          # dev
+ *   npx convex run --prod migrations:seedManuscrito20260812 '{}'   # prod
+ */
+const MANUSCRITO_20260812_ALTAS = [
+  {
+    itemId: '93A',
+    rowIndex: 525,
+    nombre: 'Romeo',
+    loteId: 'C-045',
+    subLote: 'C-045-G1',
+    categoria: 'Gema',
+    talla: 'Óvalo',
+    cantidad: 1,
+    peso: '0.83',
+    color: 'Verde Limón',
+    calidad: 'COMERCIAL SÚPER FINA',
+    medidas: '7.4 × 5.6 mm',
+    costoBaseCOP: 223771,
+    estado: 'DISPONIBLE' as const,
+    observacion:
+      'Sublote C-045-G1 de #93 Dos Luciérnagas (subdivisión 12-ago-2026, inventario manuscrito). ' +
+      'Costo repartido por quilataje: 0.83/1.74 × 469.120.',
+  },
+  {
+    itemId: '93B',
+    rowIndex: 526,
+    nombre: 'Julieta',
+    loteId: 'C-045',
+    subLote: 'C-045-G1',
+    categoria: 'Gema',
+    talla: 'Óvalo',
+    cantidad: 1,
+    peso: '0.91',
+    color: 'Verde Limón',
+    calidad: 'COMERCIAL SÚPER FINA',
+    medidas: '7.4 × 5.6 mm',
+    costoBaseCOP: 245349,
+    estado: 'DISPONIBLE' as const,
+    observacion:
+      'Sublote C-045-G1 de #93 Dos Luciérnagas (subdivisión 12-ago-2026, inventario manuscrito). ' +
+      'Costo repartido por quilataje: absorbe el redondeo. Σ hijos = $469.120 exacto.',
+  },
+  {
+    itemId: '535',
+    rowIndex: 527,
+    nombre: 'Amor Prohibido',
+    loteId: 'C-068',
+    subLote: '504-A',
+    categoria: 'Topitos',
+    talla: 'Baguette',
+    cantidad: 1,
+    peso: undefined,
+    color: 'Verde Natural',
+    calidad: 'COMERCIAL FINA',
+    medidas: '5.0 × 3.1 mm',
+    costoBaseCOP: 15313,
+    estado: 'DISPONIBLE' as const,
+    observacion:
+      'Sublote 504-A de #504 Baguette (subdivisión 12-ago-2026, inventario manuscrito). ' +
+      'Costo repartido por unidad — falta pesar: el papel da 0,55 ct del par, no de cada piedra.',
+  },
+  {
+    itemId: '536',
+    rowIndex: 528,
+    nombre: 'Romance Predestinado',
+    loteId: 'C-068',
+    subLote: '504-B',
+    categoria: 'Topitos',
+    talla: 'Baguette',
+    cantidad: 1,
+    peso: undefined,
+    color: 'Verde Natural',
+    calidad: 'COMERCIAL FINA',
+    medidas: '4.9 × 3.0 mm',
+    costoBaseCOP: 15312,
+    estado: 'DISPONIBLE' as const,
+    observacion:
+      'Sublote 504-B de #504 Baguette (subdivisión 12-ago-2026, inventario manuscrito). ' +
+      'Costo repartido por unidad — absorbe el redondeo. Σ hijos = $30.625 exacto.',
+  },
+  {
+    itemId: '537',
+    rowIndex: 529,
+    nombre: 'Dos Amores',
+    loteId: 'C-068',
+    subLote: '501-A',
+    categoria: 'Lote de Gemas',
+    talla: 'Baguette',
+    cantidad: 2,
+    peso: '0.32',
+    color: 'Verde Natural',
+    calidad: 'COMERCIAL SUPERIOR',
+    medidas: '4.2 × 2.9 mm',
+    costoBaseCOP: 26972,
+    estado: 'DISPONIBLE' as const,
+    observacion:
+      'Sublote 501-A de #501 Baguette (subdivisión 12-ago-2026, inventario manuscrito). ' +
+      'Costo repartido por quilataje: 0.32/1.09 × 91.875. ⚠️ Falta la 2ª medida.',
+  },
+  {
+    itemId: '538',
+    rowIndex: 530,
+    nombre: 'Éxitosos',
+    loteId: 'C-068',
+    subLote: '501-B',
+    categoria: 'Lote de Gemas',
+    talla: 'Baguette',
+    cantidad: 2,
+    peso: '0.42',
+    color: 'Verde Natural',
+    calidad: 'COMERCIAL SUPERIOR',
+    medidas: '4.8 × 2.7 mm · 4.6 × 2.7 mm',
+    costoBaseCOP: 35401,
+    estado: 'DISPONIBLE' as const,
+    observacion:
+      'Sublote 501-B de #501 Baguette (subdivisión 12-ago-2026, inventario manuscrito). ' +
+      'Costo repartido por quilataje: 0.42/1.09 × 91.875. Peso del grupo, no por piedra.',
+  },
+  {
+    itemId: '539',
+    rowIndex: 531,
+    nombre: 'Equilibrio',
+    loteId: 'C-068',
+    subLote: '501-C',
+    categoria: 'Lote de Gemas',
+    talla: 'Baguette',
+    cantidad: 2,
+    peso: '0.35',
+    color: 'Verde Natural',
+    calidad: 'COMERCIAL SUPERIOR',
+    medidas: '5.6 × 2.7 mm · 5.3 × 2.5 mm',
+    costoBaseCOP: 29502,
+    estado: 'DISPONIBLE' as const,
+    observacion:
+      'Sublote 501-C de #501 Baguette (subdivisión 12-ago-2026, inventario manuscrito). ' +
+      'Costo repartido por quilataje: absorbe el redondeo. Σ hijos = $91.875 exacto.',
+  },
+];
+
+/** Los tres padres subdivididos: retirados, no borrados. Fila y QR siguen vivos. */
+const MANUSCRITO_20260812_PADRES = ['93', '501', '504'];
+
+export const seedManuscrito20260812 = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = new Date().toISOString();
+    const creados: Array<{
+      itemId: string;
+      created: boolean;
+      reason?: string;
+    }> = [];
+
+    for (const a of MANUSCRITO_20260812_ALTAS) {
+      const existente = await ctx.db
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', a.itemId))
+        .first();
+      if (existente) {
+        creados.push({ itemId: a.itemId, created: false, reason: 'ya existe' });
+        continue;
+      }
+
+      const lot = await ctx.db
+        .query('lots')
+        .withIndex('by_loteId', (q) => q.eq('loteId', a.loteId))
+        .first();
+      if (!lot)
+        throw new Error(`Lote ${a.loteId} no existe (ítem ${a.itemId})`);
+
+      await ctx.db.insert('productInventory', {
+        itemId: a.itemId,
+        rowIndex: a.rowIndex,
+        nombre: a.nombre,
+        peso: a.peso,
+        color: a.color,
+        calidad: a.calidad,
+        cantidad: a.cantidad,
+        talla: a.talla,
+        medidas: a.medidas,
+        categoria: a.categoria,
+        estado: a.estado,
+        qr: `https://tierramadre.app/p/${a.itemId}`,
+        loteId: a.loteId,
+        subLote: a.subLote,
+        // El costo lo posee la hoja desde el 2026-07-24; se siembra igual para
+        // que el ítem nazca correcto y no espere al primer pull.
+        costoBaseCOP: a.costoBaseCOP,
+        // preponderancia 0: ya no deriva costo (2026-07-24) y así no altera la
+        // suma 1,0 del lote, que es la convención de la hoja.
+        preponderancia: 0,
+        observacion: a.observacion,
+        tipo: 'gema',
+        // Publicados, igual que hizo seedSublotes508509497 con los 10 hijos del
+        // 03-ago. Sin denormalizar mina/tratamiento a propósito: el tercer
+        // argumento de `withPublishStamp` (provenance) es de la rama
+        // perf/convex-db-io-20260812 y NO está en main ni en producción, que
+        // todavía resuelve la procedencia por lectura en publishedCatalog.
+        // Cuando esa rama entre, el republish la estampa sola.
+        ...withPublishStamp(null, true),
+        lastPulledAt: now,
+        // 'pending' y NO se agenda pushToSheet: la fila ya existe en el SOT
+        // (525–531) y un push en modo append la duplicaría.
+        syncStatus: 'pending' as const,
+      });
+      await bumpInventoryTotal(ctx, 1);
+
+      const hermanos = await ctx.db
+        .query('lotItems')
+        .withIndex('by_loteId', (q) => q.eq('loteId', a.loteId))
+        .collect();
+      await ctx.db.insert('lotItems', {
+        loteId: a.loteId,
+        itemId: a.itemId,
+        preponderancia: 0,
+        costoBaseCOP: a.costoBaseCOP,
+        ordenEnLote: hermanos.length + 1,
+      });
+
+      creados.push({ itemId: a.itemId, created: true });
+    }
+
+    // Padres retirados fuera del catálogo. publishedCatalog filtra por
+    // mostrarEnCatalogo y loteId, NO por cantidad: con cant 0 seguirían
+    // visibles en la vitrina, que es justo el doble-venta que el retiro evita.
+    const despublicados: Array<{ itemId: string; antes: boolean | undefined }> =
+      [];
+    for (const itemId of MANUSCRITO_20260812_PADRES) {
+      const padre = await ctx.db
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+        .first();
+      if (!padre) {
+        despublicados.push({ itemId, antes: undefined });
+        continue;
+      }
+      const antes = padre.mostrarEnCatalogo;
+      if (antes !== false)
+        await ctx.db.patch(padre._id, withPublishStamp(padre, false));
+      despublicados.push({ itemId, antes });
+    }
+
+    return {
+      creados,
+      despublicados,
+      nota: 'No se empuja a la hoja: las filas 525–531 ya existen en el SOT.',
+    };
+  },
+});
+
+/**
+ * ADDENDUM al inventario manuscrito 2026-08-12 — la mitad que la hoja NO puede
+ * hacer. Hermana de `seedManuscrito20260812`, mismo motivo estructural: para
+ * ALTAS el camino es Convex → hoja, nunca al revés (`fotoSync` salta toda fila
+ * nueva de `inventory` con «fila nueva en la hoja — créala desde la app»).
+ *
+ * ORDEN: primero `scripts/aplicar-addendum-inventario-20260812.mjs --apply`
+ * (crea las filas 532–533 en el SOT y retira #218), después el sync completo,
+ * y recién entonces esta migración. Al revés, los `rowIndex` de abajo apuntan a
+ * filas que todavía no existen.
+ *
+ * Qué hace:
+ *   1. Crea #540 Felicidad y #541 Alegría con su fila en `lotItems`, heredando
+ *      la consignación viva de #218 (nacen en ASESOR, con Isa).
+ *   2. Despublica #218. ESTO NO ESTABA EN EL ADDENDUM y hace falta: #218 está
+ *      hoy `mostrarEnCatalogo:true` y `publishedCatalog` filtra por
+ *      `mostrarEnCatalogo` y `loteId`, **NO por cantidad** — con `cant 0`
+ *      seguiría ofertable en la vitrina, que es justo el doble-venta que el
+ *      retiro evita. Mismo tratamiento que recibieron #93, #501 y #504.
+ *      La columna Y de la hoja no puede hacerlo: está excluida del pull desde
+ *      el 2026-07-30 (va sólo Convex → hoja).
+ *   3. Re-apunta el kardex de Isa: 3 filas nuevas bajo un `kardexEventId`
+ *      propio — ver el bloque de abajo.
+ *
+ * ⚠️ NO EMPUJA A LA HOJA, por partida doble:
+ *   · Las filas 532–533 ya existen en el SOT cuando esto corre; un push en modo
+ *     append las duplicaría (el modo de falla que dejó 21 filas basura el 03-ago).
+ *   · Las filas de kardex nacen `syncStatus:'synced'` como manda el contrato de
+ *     `_backfillMovements`: son históricas, el papel firmado es el origen. (Y de
+ *     todos modos la pestaña "Movimientos Asesor" no existe — las 32 filas de
+ *     `asesorMovements` en prod están en `syncStatus:'error'` por eso mismo.)
+ *
+ * Idempotente en los tres pasos: por `itemId` las altas, por el valor actual de
+ * `mostrarEnCatalogo` el despublicado, y por `movimientoId` el kardex — los
+ * `movimientoId` son deterministas a propósito (nada de `Date.now()`), que es lo
+ * que hace que re-correrla sea inofensiva.
+ *
+ *   npx convex run migrations:seedAddendum20260812 '{}'          # dev
+ *   npx convex run --prod migrations:seedAddendum20260812 '{}'   # prod
+ */
+const ADDENDUM_20260812_ALTAS = [
+  {
+    itemId: '540',
+    rowIndex: 532,
+    nombre: 'Felicidad',
+    loteId: 'LC-10',
+    subLote: 'LC-10-DR',
+    coleccion: 'Dinastías',
+    categoria: 'Gema',
+    talla: 'Lágrima',
+    cantidad: 1,
+    peso: '0.37',
+    color: 'Verde Limón',
+    calidad: 'COMERCIAL FINA',
+    medidas: '5.9 × 3.9 mm',
+    costoBaseCOP: 182154,
+    precioFinalCOP: 340102,
+    ubicacion: 'OFI.CALI',
+    estado: 'ASESOR' as const,
+    asesor: 'Mauricio Echeverry',
+    asesorActual: 'Isa la Negra Vikinga Warrior Portocarrero',
+    estadoAsesor: 'ASESOR',
+    /**
+     * SALE PUBLICADA. Nació sin publicar mientras su medida estaba en disputa
+     * (el papel dice 5,9 × 3,9; la col I del padre traía `5.6 × 7.0 × 5.7` para
+     * la segunda piedra), pero la disputa se resolvió sin tener que re-medir la
+     * piedra —que está donde Isa— porque el propio quilataje la desempata:
+     *
+     *   · 0,37 ct en lágrima ≈ 6 × 4 mm. El 5,9 × 3,9 del papel calza.
+     *   · 5.6 × 7.0 × 5.7 mm sería una piedra de bastante más de 1 ct, no de
+     *     0,37 — y tiene el ancho (7.0) MAYOR que el largo (5.6), que en una
+     *     lágrima no se escribe así.
+     *
+     * Lo mismo del otro lado: el 7,7 × 4,8 del papel para los 0,67 ct de #541
+     * también calza. O sea que el papel es coherente con los dos pesos y la
+     * segunda terna de la col I no lo es con ninguno — el dato corrupto es el
+     * de la hoja, no el del manuscrito. (La col I de #218 se deja como está: el
+     * padre queda retirado y su `observacion` documenta la división.)
+     */
+    publicar: true,
+    observacion:
+      'Sublote LC-10-DR de #218 Dinastía Real (subdivisión 12-ago-2026, inventario manuscrito). ' +
+      'Costo y precio repartidos por quilataje: 0.37/1.04. Nace en ASESOR con Isa la Negra Vikinga ' +
+      'Warrior Portocarrero: hereda la consignación viva del padre (entrega del 27-jul-2026). ' +
+      'Medida tomada del manuscrito (5,9 × 3,9): la segunda terna que traía la col I del padre ' +
+      '(5.6 × 7.0 × 5.7) es incompatible con 0,37 ct — sería una piedra de más de 1 ct.',
+  },
+  {
+    itemId: '541',
+    rowIndex: 533,
+    nombre: 'Alegría',
+    loteId: 'LC-10',
+    subLote: 'LC-10-DR',
+    coleccion: 'Dinastías',
+    categoria: 'Gema',
+    talla: 'Lágrima',
+    cantidad: 1,
+    peso: '0.67',
+    color: 'Verde Limón',
+    calidad: 'COMERCIAL FINA',
+    medidas: '7.7 × 4.7 × 3.7 mm',
+    costoBaseCOP: 329846,
+    precioFinalCOP: 615860,
+    ubicacion: 'OFI.CALI',
+    estado: 'ASESOR' as const,
+    asesor: 'Mauricio Echeverry',
+    asesorActual: 'Isa la Negra Vikinga Warrior Portocarrero',
+    estadoAsesor: 'ASESOR',
+    /** Su medida SÍ calza: el 7,7 × 4,8 del papel coincide con la primera terna
+     *  que ya traía la col I del padre (`7.7 × 4.7 × 3.7`). */
+    publicar: true,
+    observacion:
+      'Sublote LC-10-DR de #218 Dinastía Real (subdivisión 12-ago-2026, inventario manuscrito). ' +
+      'Costo y precio repartidos por quilataje: absorbe el redondeo. Σ hijos = $512.000 en costo y ' +
+      '$955.962 en precio, exacto. Nace en ASESOR con Isa la Negra Vikinga Warrior Portocarrero: ' +
+      'hereda la consignación viva del padre (entrega del 27-jul-2026).',
+  },
+];
+
+/**
+ * El kardex de Isa, re-apuntado. El movimiento vivo de #218 es
+ * `MOV-218-1785178014521` (entrega del 27-jul-2026, precio $955.962) y pertenece
+ * al evento `KDX-1785178014410-d8b0hq`, que cubre CINCO ítems bajo UN comprobante
+ * firmado (#382 Teia, #427 Namek, #218 Dinastía Real, #171 Dinastía Celestial,
+ * #484 Magia · PDF 1JjV3hGPIAEwJ2ilEe6MbCEhZcwL6_R3g).
+ *
+ * POR QUÉ NO SE TOCA ESE EVENTO: el PDF firmado lista 5 ítems. Agregarle filas
+ * haría que `exportMovimientoKardexPdf` regenerara un documento distinto del que
+ * Isa firmó. `asesorMovements` es append-only por diseño y el papel es el origen.
+ * Así que estas 3 filas van bajo un `kardexEventId` PROPIO y referencian el
+ * comprobante original en `notas` en vez de copiar su URL — si alguien regenera
+ * el PDF de este evento nuevo, `_setComprobanteUrl` no pisa el firmado.
+ *
+ * POR QUÉ FUNCIONA: `MovimientosKardexPage` deriva «lo que el asesor tiene en
+ * mano» del ÚLTIMO movimiento por `itemId` (`.order('desc')` sobre
+ * `by_asesorNombre`, primer hit por ítem) y lo cuenta como retenido sólo si
+ * `tipo === 'entrega'`. Estas filas se insertan hoy, así que su `_creationTime`
+ * gana al del 27-jul: #218 sale del selector de devolución y #540/#541 entran,
+ * sin tocar el `estado` de #218 — que sigue en ASESOR, como manda el addendum.
+ *
+ * POR QUÉ NO POR LA APP: `_registerHandoff` exige `estado === 'DISPONIBLE'` y los
+ * hijos nacen en ASESOR; `_registerReturn` forzaría #218 a DISPONIBLE, que es
+ * justo lo que el addendum prohíbe, y registraría una devolución que nunca pasó.
+ *
+ * La suma cierra a cero: 340.102 + 615.860 = 955.962, el precio exacto con el que
+ * #218 salió el 27-jul.
+ */
+const ADDENDUM_20260812_KARDEX_EVENT = 'KDX-SUBDIV-218-20260812';
+const ADDENDUM_20260812_COMPROBANTE_PADRE =
+  'https://drive.google.com/file/d/1JjV3hGPIAEwJ2ilEe6MbCEhZcwL6_R3g/view';
+const ADDENDUM_20260812_MOVIMIENTOS = [
+  {
+    movimientoId: 'MOV-218-20260812-SUBDIV-CIERRE',
+    itemId: '218',
+    tipo: 'devolucion' as const,
+    /** NO es una devolución física: Isa nunca devolvió nada. Es el cierre
+     *  contable de la línea del padre, para que el ledger no muestre un ítem
+     *  con `cant 0` en su mano ni cuente $955.962 dos veces. `devolucion` es el
+     *  único cierre que el esquema admite (`tipo` es entrega | devolucion). */
+    fecha: '2026-08-12',
+    precio: 955962,
+    /** 2, no 1: lo que salió el 27-jul dentro de #218 fueron DOS piedras. La
+     *  entrega original dejó `cantidad` vacía; acá se explicita para que el
+     *  cierre cuadre contra las dos entregas de abajo (1 + 1). */
+    cantidad: 2,
+    /** El estado NO cambia — por eso anterior === nuevo. `_backfillMovements`
+     *  y esta migración no patchean `productInventory.estado`, y el addendum
+     *  exige que #218 siga en ASESOR. */
+    estadoAnterior: 'ASESOR',
+    estadoNuevo: 'ASESOR',
+    notas:
+      'Cierre contable, NO devolución física. #218 se subdividió el 12-ago-2026 en #540 Felicidad ' +
+      '(0.37 ct) y #541 Alegría (0.67 ct), que siguen en manos de Isa. La entrega original es ' +
+      'MOV-218-1785178014521 (27-jul-2026), evento KDX-1785178014410-d8b0hq, comprobante firmado ' +
+      `${ADDENDUM_20260812_COMPROBANTE_PADRE} — ese evento NO se modifica.`,
+  },
+  {
+    movimientoId: 'MOV-540-20260812-SUBDIV',
+    itemId: '540',
+    tipo: 'entrega' as const,
+    /** 27-jul y no 12-ago a propósito: la piedra está físicamente con Isa desde
+     *  la entrega del padre. El kardex mide cuánto lleva una pieza en la mano
+     *  de alguien; fecharla hoy borraría dos semanas de consignación. */
+    fecha: '2026-07-27',
+    precio: 340102,
+    cantidad: 1,
+    estadoAnterior: 'DISPONIBLE',
+    estadoNuevo: 'ASESOR',
+    notas:
+      'Hereda la consignación de #218 Dinastía Real, subdividido el 12-ago-2026. Entregado ' +
+      'físicamente el 27-jul-2026 como parte del padre, evento KDX-1785178014410-d8b0hq, ' +
+      `comprobante firmado ${ADDENDUM_20260812_COMPROBANTE_PADRE} (que lista el padre, no esta pieza).`,
+  },
+  {
+    movimientoId: 'MOV-541-20260812-SUBDIV',
+    itemId: '541',
+    tipo: 'entrega' as const,
+    fecha: '2026-07-27',
+    precio: 615860,
+    cantidad: 1,
+    estadoAnterior: 'DISPONIBLE',
+    estadoNuevo: 'ASESOR',
+    notas:
+      'Hereda la consignación de #218 Dinastía Real, subdividido el 12-ago-2026. Entregado ' +
+      'físicamente el 27-jul-2026 como parte del padre, evento KDX-1785178014410-d8b0hq, ' +
+      `comprobante firmado ${ADDENDUM_20260812_COMPROBANTE_PADRE} (que lista el padre, no esta pieza).`,
+  },
+];
+
+/** El padre subdividido: retirado y despublicado, NO borrado. Fila, nombre y QR
+ *  siguen vivos — «Dinastía Real» sobrevive como el nombre del par, igual que
+ *  «Dos Luciérnagas» en #93. */
+const ADDENDUM_20260812_PADRE = '218';
+
+/** Datos de la entrega original, para que el ledger de Isa quede consistente. */
+const ADDENDUM_20260812_ASESOR = {
+  nombre: 'Isa la Negra Vikinga Warrior Portocarrero',
+  id: 'asesor_8',
+};
+
+export const seedAddendum20260812 = internalMutation({
+  args: {
+    /** Quién queda registrado como autor de las filas de kardex. Por defecto,
+     *  el mismo operador que registró la entrega original del 27-jul. */
+    editorEmail: v.optional(v.string()),
+  },
+  handler: async (ctx, { editorEmail }) => {
+    const now = new Date().toISOString();
+    const autor = editorEmail ?? 'kpp.coomunity@gmail.com';
+
+    // ── 1. Altas ──────────────────────────────────────────────────────────
+    const creados: Array<{
+      itemId: string;
+      created: boolean;
+      publicado?: boolean;
+      loteDocumento?: string;
+      reason?: string;
+    }> = [];
+
+    for (const a of ADDENDUM_20260812_ALTAS) {
+      const existente = await ctx.db
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', a.itemId))
+        .first();
+      if (existente) {
+        creados.push({ itemId: a.itemId, created: false, reason: 'ya existe' });
+        continue;
+      }
+
+      // El lote puede NO existir como documento, y no es un error: `LC-10` es
+      // un loteId legacy que sólo vive como string en las filas de inventario.
+      // Ninguno de los 15 `LC-*` está en la tabla `lots` (73 ítems), y el propio
+      // #218 vive así: sin documento de lote, sin fila en `lotItems` y sin
+      // mina/tratamiento denormalizados. Las hijas nacen igual que el padre —
+      // inventarle un lote a LC-10 sería fabricar costo y proveedor que nadie
+      // declaró.
+      //
+      // La primera versión abortaba acá. Que la transacción se cayera entera en
+      // vez de escribir a medias es justamente lo que se buscaba.
+      const lot = await ctx.db
+        .query('lots')
+        .withIndex('by_loteId', (q) => q.eq('loteId', a.loteId))
+        .first();
+
+      await ctx.db.insert('productInventory', {
+        itemId: a.itemId,
+        rowIndex: a.rowIndex,
+        nombre: a.nombre,
+        peso: a.peso,
+        color: a.color,
+        calidad: a.calidad,
+        cantidad: a.cantidad,
+        talla: a.talla,
+        medidas: a.medidas,
+        categoria: a.categoria,
+        coleccion: a.coleccion,
+        ubicacion: a.ubicacion,
+        estado: a.estado,
+        // El bloque de asesor completo: los hijos heredan la consignación viva
+        // del padre. Sin esto no aparecerían en `enAsesor` y el selector de
+        // devolución no los mostraría aunque el kardex diga que Isa los tiene.
+        asesor: a.asesor,
+        asesorActual: a.asesorActual,
+        estadoAsesor: a.estadoAsesor,
+        qr: `https://tierramadre.app/p/${a.itemId}`,
+        productoUrl: `https://tierramadre.app/product/${a.itemId}`,
+        loteId: a.loteId,
+        subLote: a.subLote,
+        // Costo y precio los posee la hoja, pero se siembran para que el ítem
+        // nazca correcto y no espere al primer pull.
+        costoBaseCOP: a.costoBaseCOP,
+        precioFinalCOP: a.precioFinalCOP,
+        // Crítico: sin esto, un re-fan del lote repricearía con costo × 2,6 y
+        // se perdería el precio de remate que el reparto preserva. El pull lo
+        // estamparía igual, pero para entonces el daño ya podría estar hecho.
+        precioFinalManual: true,
+        // preponderancia 0: ya no deriva costo (2026-07-24) y así no altera la
+        // suma 1,0 del lote, que es la convención de la hoja.
+        preponderancia: 0,
+        observacion: a.observacion,
+        tipo: 'gema',
+        // Sin certificadoUrl ni carpetaFotosUrl del padre a propósito: el
+        // certificado de #218 ampara el par de piedras, no cada una suelta.
+        // La procedencia SÍ se estampa: `withPublishStamp` acepta el tercer
+        // argumento desde Fix 1B (PR #111, ya en main). Las hijas nacen con
+        // mina/tratamiento denormalizados, así que backfillLotProvenance no
+        // hace falta por ellas.
+        // Sin lote no hay procedencia que estampar: el padre tampoco la tiene.
+        ...withPublishStamp(
+          null,
+          a.publicar,
+          lot ? { mina: lot.mina, tratamiento: lot.tratamiento } : undefined,
+        ),
+        lastPulledAt: now,
+        // 'pending' y NO se agenda pushToSheet: las filas 532–533 ya existen en
+        // el SOT y un push en modo append las duplicaría.
+        syncStatus: 'pending' as const,
+      });
+      await bumpInventoryTotal(ctx, 1);
+      // Una pieza nueva publicada CAMBIA lo que renderiza el catálogo público:
+      // hay que invalidar la caché de cada visitante ya, no al vencer el TTL.
+      if (a.publicar)
+        await bumpCatalogVersionIfPublished(ctx, null, {
+          mostrarEnCatalogo: true,
+        });
+
+      // `lotItems` sólo si el lote existe: la tabla es la composición de un
+      // lote real. Colgar filas de un loteId fantasma dejaría huérfanos que
+      // ningún rollup sabe leer — y el padre no tiene fila ahí tampoco.
+      if (lot) {
+        const hermanos = await ctx.db
+          .query('lotItems')
+          .withIndex('by_loteId', (q) => q.eq('loteId', a.loteId))
+          .collect();
+        await ctx.db.insert('lotItems', {
+          loteId: a.loteId,
+          itemId: a.itemId,
+          preponderancia: 0,
+          costoBaseCOP: a.costoBaseCOP,
+          ordenEnLote: hermanos.length + 1,
+        });
+      }
+
+      creados.push({
+        itemId: a.itemId,
+        created: true,
+        publicado: a.publicar,
+        loteDocumento: lot ? 'sí' : 'no existe (loteId legacy)',
+      });
+    }
+
+    // ── 2. El padre sale del catálogo ─────────────────────────────────────
+    const padre = await ctx.db
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', ADDENDUM_20260812_PADRE))
+      .first();
+    let despublicado: { itemId: string; antes?: boolean; cambiado: boolean };
+    if (!padre) {
+      throw new Error(
+        `#${ADDENDUM_20260812_PADRE} no está en el espejo — la hoja tiene que ` +
+          `haberse sincronizado antes de correr esto.`,
+      );
+    } else {
+      const antes = padre.mostrarEnCatalogo;
+      if (antes !== false) {
+        await ctx.db.patch(padre._id, withPublishStamp(padre, false));
+        // Estaba visible y deja de estarlo: el centinela avisa a los visitantes
+        // en vez de dejarles la pieza retirada en caché hasta el piso de TTL.
+        await bumpCatalogVersionIfPublished(ctx, padre, {
+          mostrarEnCatalogo: false,
+        });
+      }
+      despublicado = {
+        itemId: ADDENDUM_20260812_PADRE,
+        antes,
+        cambiado: antes !== false,
+      };
+    }
+
+    // ── 2b. El retiro que la hoja NO logró propagar ───────────────────────
+    //
+    // DESCUBIERTO AL VERIFICAR EL SYNC DEL 12-ago: escribir `0` y vaciar una
+    // celda numérica en la hoja NO llega a Convex. Son dos mecanismos distintos
+    // y los dos son silenciosos:
+    //
+    //   · VACIAR → `coerceCell('num', '')` devuelve `skip:true` a propósito
+    //     («never clear a number from a blanked cell», sheetPullMaps.ts). Por eso
+    //     #218 y #93 conservan su `precioFinalCOP` aunque la col M quedó vacía.
+    //   · PONER 0 → la col L está formateada como contabilidad y renderiza el
+    //     cero como `"-"`. `/api/get-inventory-rows` lee FORMATTED_VALUE, así que
+    //     el pull recibe `"-"`, `Number("-")` es NaN y `coerceCell` lo salta.
+    //     La col G (Cant.) no tiene ese formato: su `0` sí aterrizó.
+    //
+    // No es teórico ni nuevo: los tres padres que la corrida del 12-ago retiró
+    // por hoja (#93, #501, #504) siguen HOY en producción con su costo entero,
+    // mientras que los del 03-ago (#497, #508, #509) —retirados por migración,
+    // Convex primero— están correctamente en 0. La hoja dice una cosa y el
+    // espejo otra desde hace horas, sin que nada avisara.
+    //
+    // Se repara acá porque es exactamente la invariante que el addendum exige:
+    // «Σ hijos == padre», con el padre en 0. Si esto no corre, #218 conserva
+    // $512.000 y $955.962 al mismo tiempo que sus hijas aportan otro tanto.
+    //
+    // Los `lotItems` no están afectados: ninguno de los cuatro padres tiene fila
+    // ahí (verificado en prod), así que los totales por lote no doblan. El dato
+    // sucio vive sólo en `productInventory`.
+    const RETIRADOS_A_SANEAR: Array<{ itemId: string; motivo: string }> = [
+      { itemId: '218', motivo: 'este addendum' },
+      { itemId: '93', motivo: 'corrida del 12-ago (quedó sucio)' },
+      { itemId: '501', motivo: 'corrida del 12-ago (quedó sucio)' },
+      { itemId: '504', motivo: 'corrida del 12-ago (quedó sucio)' },
+    ];
+    const saneados: Array<{
+      itemId: string;
+      costoAntes?: number;
+      precioAntes?: number;
+      cambiado: boolean;
+    }> = [];
+    for (const r of RETIRADOS_A_SANEAR) {
+      const doc = await ctx.db
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', r.itemId))
+        .first();
+      if (!doc) {
+        saneados.push({ itemId: r.itemId, cambiado: false });
+        continue;
+      }
+      // Guardarraíl: sólo se sanea un ítem REALMENTE retirado. Si alguien le
+      // devolvió unidades, este saneo no aplica y no se toca.
+      if ((doc.cantidad ?? 0) !== 0) {
+        saneados.push({ itemId: r.itemId, cambiado: false });
+        continue;
+      }
+      const yaLimpio =
+        (doc.costoBaseCOP ?? 0) === 0 &&
+        doc.precioFinalCOP === undefined &&
+        doc.precioCOP === undefined;
+      if (yaLimpio) {
+        saneados.push({ itemId: r.itemId, cambiado: false });
+        continue;
+      }
+      saneados.push({
+        itemId: r.itemId,
+        costoAntes: doc.costoBaseCOP,
+        precioAntes: doc.precioFinalCOP,
+        cambiado: true,
+      });
+      await ctx.db.patch(doc._id, {
+        costoBaseCOP: 0,
+        // `undefined` BORRA el campo en Convex, que es lo que la col M vacía
+        // quería decir. Con costo 0, `computePrecioFinal` no re-deriva nada, así
+        // que soltar `precioFinalManual` no revive el precio.
+        precioFinalCOP: undefined,
+        precioCOP: undefined,
+        precioFinalManual: undefined,
+      });
+    }
+
+    // ── 3. El kardex de Isa ───────────────────────────────────────────────
+    // Mismo contrato que `asesorMovements._backfillMovements` (idempotente por
+    // movimientoId, sin el guard de estado, sin patchear productInventory, sin
+    // push a la hoja). Inline y no vía runMutation porque una mutation no puede
+    // llamar a otra — y así los tres pasos caen en UNA transacción: o entran las
+    // altas Y el kardex, o no entra nada.
+    const todos = await ctx.db.query('asesorMovements').collect();
+    const vistos = new Set(todos.map((r) => r.movimientoId));
+    let maxRow = todos.reduce((m, r) => Math.max(m, r.rowIndex), 1);
+    const kardex: Array<{
+      movimientoId: string;
+      itemId: string;
+      tipo: string;
+      skipped: boolean;
+    }> = [];
+
+    for (const m of ADDENDUM_20260812_MOVIMIENTOS) {
+      if (vistos.has(m.movimientoId)) {
+        kardex.push({
+          movimientoId: m.movimientoId,
+          itemId: m.itemId,
+          tipo: m.tipo,
+          skipped: true,
+        });
+        continue;
+      }
+      const producto = await ctx.db
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', m.itemId))
+        .first();
+      if (!producto)
+        throw new Error(
+          `No puedo registrar ${m.movimientoId}: el ítem ${m.itemId} no existe.`,
+        );
+      maxRow += 1;
+      await ctx.db.insert('asesorMovements', {
+        itemId: m.itemId,
+        itemNombre: producto.nombre,
+        tipo: m.tipo,
+        asesorNombre: ADDENDUM_20260812_ASESOR.nombre,
+        asesorId: ADDENDUM_20260812_ASESOR.id,
+        cantidad: m.cantidad,
+        precio: m.precio,
+        fecha: m.fecha,
+        notas: m.notas,
+        kardexEventId: ADDENDUM_20260812_KARDEX_EVENT,
+        registradoPorEmail: autor,
+        registradoPorNombre: 'migracion-addendum-20260812',
+        estadoAnterior: m.estadoAnterior,
+        estadoNuevo: m.estadoNuevo,
+        movimientoId: m.movimientoId,
+        // Sin comprobanteUrl: el PDF firmado ampara al padre, no a estas filas.
+        // La referencia vive en `notas` para que regenerar el PDF de ESTE evento
+        // no pise el original.
+        rowIndex: maxRow,
+        lastPulledAt: now,
+        // 'synced' aunque nunca se empuje: históricas, el papel es el origen.
+        syncStatus: 'synced' as const,
+      });
+      vistos.add(m.movimientoId);
+      kardex.push({
+        movimientoId: m.movimientoId,
+        itemId: m.itemId,
+        tipo: m.tipo,
+        skipped: false,
+      });
+    }
+
+    return {
+      creados,
+      despublicado,
+      saneados,
+      kardex: {
+        eventId: ADDENDUM_20260812_KARDEX_EVENT,
+        insertados: kardex.filter((k) => !k.skipped).length,
+        saltados: kardex.filter((k) => k.skipped).length,
+        filas: kardex,
+      },
+      pendientes: [
+        'La medida de #540 sale del manuscrito (5,9 × 3,9), no de la col I del padre: la segunda ' +
+          'terna de ahí (5.6 × 7.0 × 5.7) es incompatible con 0,37 ct. Confirmarla contra la ' +
+          'piedra cuando vuelva de donde Isa sigue siendo lo prolijo, pero ya no bloquea.',
+        'LC-10 no existe en la tabla `lots` (ninguno de los 15 LC-* existe; 73 ítems). Las hijas ' +
+          'nacen sin fila en lotItems y sin mina/tratamiento, igual que #218 y #171. ' +
+          'backfillLotProvenance NO puede arreglarlo: salta los ítems cuyo loteId no resuelve. ' +
+          'HALLAZGO MAYOR: 226 de los 429 publicados están en esa situación y renderizan el ' +
+          'catálogo sin procedencia, porque Fix 1B quitó a propósito el fallback a `lots`.',
+        'El sublote LC-10-DR no queda registrado en la pestaña Sublotes (mismo alcance que la ' +
+          'corrida del 12-ago).',
+        '#218 conserva precioEmbajadorCOP $1.730.560 y el bloque de Caja ($1.331.200): dos ' +
+          'ledgers que siguen apuntando a un ítem con cant 0. Fuera del alcance del addendum.',
+        'DEFECTO DE FONDO, sin arreglar: la hoja no puede poner un número en 0 ni vaciarlo. ' +
+          'Vaciar lo salta coerceCell a propósito; el 0 muere porque la col L renderiza "-" y ' +
+          '/api/get-inventory-rows lee FORMATTED_VALUE. Este paso 2b repara los cuatro casos ' +
+          'conocidos, pero el próximo retiro por hoja volverá a divergir en silencio.',
+      ],
+      nota:
+        'No se empuja a la hoja: las filas 532–533 ya existen en el SOT y el kardex nunca tuvo ' +
+        'pestaña (las 32 filas de asesorMovements en prod están en syncStatus error).',
+    };
+  },
+});

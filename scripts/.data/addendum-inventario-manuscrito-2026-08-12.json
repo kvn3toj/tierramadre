@@ -1,0 +1,184 @@
+{
+  "meta": {
+    "titulo": "Addendum al inventario manuscrito 2026-08-12",
+    "motivo": "El bloque B del manuscrito (las dos Dinastías) se quedó fuera del plan original, y 5 campos del bloque A no se pasaron al payload.",
+    "sot": "1oRw1KSh8L1CyjUnD_D1S8a3J3ewJ_V8lN1BFR-7Bv9U",
+    "tab": "Inventario",
+    "gid": 1819792669,
+    "generado": "2026-08-12",
+    "invariante": "reparto por quilataje dentro del padre, Σhijos = padre exacto, tanto en costo como en precio",
+    "reglaObservacion": "col AA se ANEXA, no se reemplaza"
+  },
+  "updates": [
+    {
+      "itemId": "283",
+      "campo": "Color",
+      "col": "E",
+      "valorActual": "Verde Natural",
+      "valorNuevo": "Verde Limón",
+      "modo": "replace",
+      "fuente": "Papel",
+      "nota": "El manuscrito dice \"limón\". Se saltó en la corrida anterior."
+    },
+    {
+      "itemId": "276",
+      "campo": "Color",
+      "col": "E",
+      "valorActual": "Verde Menta",
+      "valorNuevo": "Verde Limón",
+      "modo": "replace",
+      "fuente": "Papel",
+      "nota": "El manuscrito dice \"limón\". Se saltó en la corrida anterior."
+    },
+    {
+      "itemId": "295",
+      "campo": "Calidad",
+      "col": "F",
+      "valorActual": "COMERCIAL FINA",
+      "valorNuevo": "COMERCIAL SÚPER FINA",
+      "modo": "replace",
+      "fuente": "Decisión 7",
+      "nota": "El manuscrito dice \"C.S. Fina\". Es el único del bloque A al que no se le aplicó la regla."
+    },
+    {
+      "itemId": "93",
+      "campo": "Calidad",
+      "col": "F",
+      "valorActual": "COMERCIAL FINA",
+      "valorNuevo": "COMERCIAL SÚPER FINA",
+      "modo": "replace",
+      "fuente": "Decisión 7",
+      "nota": "Padre retirado, pero 93A y 93B ya quedaron en COMERCIAL SÚPER FINA. Alinear."
+    },
+    {
+      "itemId": "93",
+      "campo": "precioFinalCOP",
+      "col": "M",
+      "valorActual": 1574300,
+      "valorNuevo": "",
+      "modo": "replace",
+      "fuente": "Patrón 03-ago",
+      "nota": "Los otros 5 padres retirados (#497,#501,#504,#508,#509) van sin precio. Un padre con cant 0 y precio vivo puede colarse como ofertable."
+    },
+    {
+      "itemId": "171",
+      "campo": "Nombre",
+      "col": "C",
+      "valorActual": "L:A-101-(1-5) Dinastía Celestial",
+      "valorNuevo": "Dinastía Celestial",
+      "modo": "replace",
+      "fuente": "Papel",
+      "nota": "El manuscrito NO le da nombres nuevos a las piedras: solo re-registra el dúo. Se limpia el prefijo legacy L:A-101-(1-5)."
+    },
+    {
+      "itemId": "171",
+      "campo": "Medidas",
+      "col": "I",
+      "valorActual": "6.4 × 3.5 × 2.3 × 4.7 × 2.9 × 1.9 mm",
+      "valorNuevo": "6.4 × 3.5 × 2.3 mm · 4.7 × 2.9 × 1.9 mm",
+      "modo": "replace",
+      "fuente": "Formato",
+      "nota": "MISMO dato, solo separa las dos piedras con · como el resto del inventario. NO se toman las medidas del papel: ver Pendientes."
+    },
+    {
+      "itemId": "171",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "Precio especial por cierre de temporada",
+      "valorNuevo": "Nombre anterior: L:A-101-(1-5) Dinastía Celestial. Limpiado 12-ago-2026 (inventario manuscrito). · Precio especial por cierre de temporada",
+      "modo": "append",
+      "fuente": "Papel",
+      "nota": ""
+    },
+    {
+      "itemId": "218",
+      "campo": "costoBaseCOP",
+      "col": "L",
+      "valorActual": 512000,
+      "valorNuevo": 0,
+      "modo": "replace",
+      "fuente": "Patrón 03-ago",
+      "nota": "Padre retirado tras dividir. Los dos hijos absorben los $512.000."
+    },
+    {
+      "itemId": "218",
+      "campo": "precioFinalCOP",
+      "col": "M",
+      "valorActual": 955962,
+      "valorNuevo": "",
+      "modo": "replace",
+      "fuente": "Patrón 03-ago",
+      "nota": "El precio se reparte entre los hijos; el padre queda sin precio."
+    },
+    {
+      "itemId": "218",
+      "campo": "Cant.",
+      "col": "G",
+      "valorActual": 2,
+      "valorNuevo": 0,
+      "modo": "replace",
+      "fuente": "Patrón 03-ago",
+      "nota": "La fila y el QR siguen vivos. `estado` NO se toca: sigue en ASESOR."
+    },
+    {
+      "itemId": "218",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "Precio especial por cierre de temporada",
+      "valorNuevo": "DIVIDIDO 12-ago-2026 en #540 Felicidad (0.37 ct) y #541 Alegría (0.67 ct). Antes: Dinastía Real, 1.04 ct, cant 2. Costo ($512.000) y precio ($955.962) repartidos por quilataje. Padre retirado; la fila y el QR siguen vivos. ⚠️ Estaba en ASESOR con Isa la Negra Vikinga Warrior Portocarrero — el movimiento debe re-apuntarse a los hijos. · Precio especial por cierre de temporada",
+      "modo": "append",
+      "fuente": "Patrón 03-ago",
+      "nota": ""
+    }
+  ],
+  "altas": [
+    {
+      "itemId": "540",
+      "nombre": "Felicidad",
+      "padre": "#218 Dinastía Real",
+      "subLote": "LC-10-DR",
+      "cant": "1",
+      "pesoCt": "0.37",
+      "medidas": "5.9 × 3.9 mm",
+      "calidad": "COMERCIAL FINA",
+      "color": "Verde Limón",
+      "corte": "Lágrima",
+      "categoria": "Gema",
+      "coleccion": "Dinastías",
+      "loteId": "LC-10",
+      "ubicacion": "OFI.CALI",
+      "estado": "ASESOR",
+      "asesor": "Mauricio Echeverry",
+      "asesorActual": "Isa la Negra Vikinga Warrior Portocarrero",
+      "estadoAsesor": "ASESOR",
+      "costoBaseCOP": 182154,
+      "precioFinalCOP": 340102,
+      "reparto": "por quilataje: 0.37/1.04",
+      "nota": "La medida viene del papel. El texto que había en la col I del padre (\"5.6 × 7.0 × 5.7\") no coincide — ver Pendientes."
+    },
+    {
+      "itemId": "541",
+      "nombre": "Alegría",
+      "padre": "#218 Dinastía Real",
+      "subLote": "LC-10-DR",
+      "cant": "1",
+      "pesoCt": "0.67",
+      "medidas": "7.7 × 4.7 × 3.7 mm",
+      "calidad": "COMERCIAL FINA",
+      "color": "Verde Limón",
+      "corte": "Lágrima",
+      "categoria": "Gema",
+      "coleccion": "Dinastías",
+      "loteId": "LC-10",
+      "ubicacion": "OFI.CALI",
+      "estado": "ASESOR",
+      "asesor": "Mauricio Echeverry",
+      "asesorActual": "Isa la Negra Vikinga Warrior Portocarrero",
+      "estadoAsesor": "ASESOR",
+      "costoBaseCOP": 329846,
+      "precioFinalCOP": 615860,
+      "reparto": "por quilataje: absorbe el redondeo",
+      "nota": "El 7,7 × 4,8 del papel calza con el 7.7 × 4.7 × 3.7 que ya estaba en la col I del padre ✓"
+    }
+  ]
+}
