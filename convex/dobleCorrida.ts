@@ -211,6 +211,12 @@ export const _porQueNoCotiza = internalQuery({
       /** Filas de `lots` de más por duplicación: infla toda cuenta por lote. */
       filasDeMasPorDuplicado: lotes.length - vecesPorLoteId.size,
       lotesConCategoriaFiscal: lotes.filter((l) => l.categoriaFiscal).length,
+      /**
+       * `origenModelo === 'v4'` es lo que `casillas._publicar` exige para dejar
+       * publicar. Sólo lo estampa `lotsV4._create`: la migración de Fase 2 no lo
+       * pone, así que un lote migrado se puede clasificar pero NO publicar.
+       */
+      lotesMarcadosV4: lotes.filter((l) => l.origenModelo === 'v4').length,
       lotesConCasillas: [...porLote.keys()].length,
       casillas: casillas.length,
       casillasV4: conEstado.length,
