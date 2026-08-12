@@ -304,14 +304,21 @@ export function filaParaGuardar(
  * por ítem, que es la misma nada de la que se venía.
  */
 export function agruparMotivos(
-  motivos: readonly string[],
-): { motivo: string; lotes: number }[] {
-  const cuenta = new Map<string, number>();
-  for (const crudo of motivos) {
-    const clave = crudo.replace(/la casilla \S+/g, 'la casilla ‹id›');
-    cuenta.set(clave, (cuenta.get(clave) ?? 0) + 1);
+  entradas: readonly { motivo: string; casillas: number }[],
+): { motivo: string; lotes: number; casillas: number }[] {
+  const cuenta = new Map<string, { lotes: number; casillas: number }>();
+  for (const { motivo, casillas } of entradas) {
+    const clave = motivo.replace(/la casilla \S+/g, 'la casilla ‹id›');
+    const previo = cuenta.get(clave) ?? { lotes: 0, casillas: 0 };
+    cuenta.set(clave, {
+      lotes: previo.lotes + 1,
+      casillas: previo.casillas + casillas,
+    });
   }
   return [...cuenta.entries()]
-    .map(([motivo, lotes]) => ({ motivo, lotes }))
-    .sort((a, b) => b.lotes - a.lotes);
+    .map(([motivo, c]) => ({ motivo, ...c }))
+    // Por CASILLAS, no por lotes: la pregunta que este diagnóstico contesta es
+    // cuánto inventario destraba cada camino, y un lote de 40 piezas rinde más
+    // que veinte lotes de una.
+    .sort((a, b) => b.casillas - a.casillas);
 }

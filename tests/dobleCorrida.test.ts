@@ -455,28 +455,32 @@ describe('filaParaGuardar — la evidencia que sobrevive a la corrida', () => {
 describe('agruparMotivos — por qué no cotiza, en grupos y no en 484 líneas', () => {
   it('agrupa por causa, no por ítem: el id de la casilla no parte el grupo', () => {
     const grupos = agruparMotivos([
-      'la casilla 487 no declara categoría fiscal y el lote es sin categoría',
-      'la casilla 490 no declara categoría fiscal y el lote es sin categoría',
-      'la casilla 491 no declara categoría fiscal y el lote es sin categoría',
+      { motivo: 'la casilla 487 no declara categoría fiscal y el lote es sin categoría', casillas: 2 },
+      { motivo: 'la casilla 490 no declara categoría fiscal y el lote es sin categoría', casillas: 3 },
+      { motivo: 'la casilla 491 no declara categoría fiscal y el lote es sin categoría', casillas: 5 },
     ]);
     expect(grupos).toHaveLength(1);
     expect(grupos[0].lotes).toBe(3);
+    // Y suma las casillas de los tres lotes: es la unidad que decide prioridad.
+    expect(grupos[0].casillas).toBe(10);
     expect(grupos[0].motivo).toContain('no declara categoría fiscal');
     // El id concreto no sobrevive: sería un grupo por ítem.
     expect(grupos[0].motivo).not.toMatch(/\b(487|490|491)\b/);
   });
 
-  it('mantiene separadas las causas distintas y las ordena por frecuencia', () => {
+  it('ordena por CASILLAS, no por lotes: un lote grande rinde más que muchos chicos', () => {
     const grupos = agruparMotivos([
-      'la casilla 1 no tiene costo capturado',
-      'el lote es de colección',
-      'la casilla 2 no tiene costo capturado',
-      'la casilla 3 no tiene costo capturado',
+      { motivo: 'la casilla 1 no tiene costo capturado', casillas: 1 },
+      { motivo: 'la casilla 2 no tiene costo capturado', casillas: 1 },
+      { motivo: 'la casilla 3 no tiene costo capturado', casillas: 1 },
+      { motivo: 'el lote es de colección', casillas: 40 },
     ]);
     expect(grupos).toHaveLength(2);
-    expect(grupos[0].lotes).toBe(3);
-    expect(grupos[0].motivo).toContain('costo capturado');
-    expect(grupos[1].lotes).toBe(1);
+    // Tres lotes contra uno, pero 40 piezas contra 3: gana el de colección.
+    expect(grupos[0].motivo).toContain('colección');
+    expect(grupos[0].lotes).toBe(1);
+    expect(grupos[0].casillas).toBe(40);
+    expect(grupos[1].casillas).toBe(3);
   });
 
   it('sin motivos devuelve lista vacía, no un grupo de cero', () => {

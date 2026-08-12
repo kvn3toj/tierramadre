@@ -199,7 +199,7 @@ export const _porQueNoCotiza = internalQuery({
       ).length,
     };
 
-    const motivos: string[] = [];
+    const motivos: { motivo: string; casillas: number }[] = [];
     let lotesQueCotizan = 0;
     let itemsCotizados = 0;
     let sinConfigVigente = 0;
@@ -207,7 +207,7 @@ export const _porQueNoCotiza = internalQuery({
     for (const lote of lotes) {
       const delLote = porLote.get(lote.loteId);
       if (!delLote?.length) {
-        motivos.push('el lote no tiene casillas v4');
+        motivos.push({ motivo: 'el lote no tiene casillas v4', casillas: 0 });
         continue;
       }
       let config;
@@ -215,7 +215,10 @@ export const _porQueNoCotiza = internalQuery({
         config = configVigenteEn(configs, lote.fechaRecepcion);
       } catch {
         sinConfigVigente++;
-        motivos.push('el lote es anterior a toda la configuración de precios');
+        motivos.push({
+          motivo: 'el lote es anterior a toda la configuración de precios',
+          casillas: delLote.length,
+        });
         continue;
       }
       const { cotiza, motivo, porItem } = preciosDelLote({
@@ -244,7 +247,10 @@ export const _porQueNoCotiza = internalQuery({
         lotesQueCotizan++;
         itemsCotizados += porItem.size;
       } else {
-        motivos.push(motivo ?? 'sin motivo declarado por el motor');
+        motivos.push({
+          motivo: motivo ?? 'sin motivo declarado por el motor',
+          casillas: delLote.length,
+        });
       }
     }
 
