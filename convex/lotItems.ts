@@ -26,8 +26,37 @@ const tipoItemValidator = v.union(
 /** Resolve a lotItems join row by its productInventory itemId — used by the
  *  QR scanner to jump straight to an item's edit view without the operator
  *  needing to know which lote it lives in. */
+/**
+ * `sessionToken` y `botSecret` se ACEPTAN acá sin usarse todavía, y eso no es un
+ * descuido: es lo que desarma un lockstep entre dos repos.
+ *
+ * `main` ya gateó esta query (`isStaffOrBotSession`) el 2026-08-06 y adaptó sus dos
+ * llamadores web para que manden `sessionToken`. Esta rama no lo tiene, así que al
+ * mergear el gate entra y el ÚNICO llamador que queda afuera es anima-bot:
+ * `FotosintesisClient.casillaV4` llama sin credencial, recibiría `null`, y el wizard
+ * traduce `null` a «no es una casilla v4 — es del riel viejo». O sea, el tap del
+ * tablero y el deep link `cas_` se romperían el día del merge, con un mensaje que
+ * culpa a los datos y no al deploy.
+ *
+ * El problema para arreglarlo antes era que Convex **rechaza argumentos no
+ * declarados** (medido contra dev: `{itemId, botSecret}` daba `Server Error`), así que
+ * el commit de anima-bot no podía aterrizar ni antes ni después del merge — tenía que
+ * ser el mismo día. Declarándolos acá, el bot puede empezar a mandar `botSecret`
+ * cuando quiera: hoy se ignora, y después del merge lo honra el gate que llega de
+ * `main`.
+ *
+ * No se agrega el gate en esta rama a propósito: eso sí rompería a los llamadores que
+ * todavía no mandan credencial. El gate viene con el merge, junto con los llamadores
+ * web ya adaptados.
+ *
+ * Ver `anima-bot/docs/reconciliacion-v4-tierramadre.md` §4.1 F3.
+ */
 export const getByItemId = query({
-  args: { itemId: v.string() },
+  args: {
+    itemId: v.string(),
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
+  },
   handler: async (ctx, { itemId }) => {
     const row = await ctx.db
       .query('lotItems')
