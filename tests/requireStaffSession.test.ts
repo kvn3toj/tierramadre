@@ -29,10 +29,12 @@ import { mintSessionToken } from '../api/_lib/sessionToken';
 import {
   isStaffSession,
   isStaffOrBotSession,
+  requireStaffOrBotSession,
 } from '../convex/_lib/requireStaffSession';
 import { isBotSecret } from '../convex/_lib/botAuth';
 import { list as clientsList } from '../convex/clients';
 import { list as providersList } from '../convex/providers';
+import { list as productsList } from '../convex/products';
 
 const SECRET = 'test-admin-sync-token';
 const BOT_SECRET = 'test-anima-bot-secret';
@@ -243,5 +245,89 @@ describe('bot-or-staff query gate wired end-to-end (providers.list)', () => {
       ) => Promise<unknown>
     )(fakeCtxNoDb, {});
     expect(result).toEqual([]);
+  });
+});
+
+/**
+ * 2026-08-11: `requireStaffOrBotSession` es la variante RUIDOSA del gate.
+ *
+ * Nace de un bug real: `buscar_comparables` (anima-bot) reportó 0 comparables
+ * sobre 523 ítems durante días porque el cliente no mandaba `botSecret`,
+ * `products.list` devolvía `[]`, y nada en la cadena podía distinguir «no
+ * autenticado» de «inventario vacío».
+ *
+ * El corte NO es «autorizado o no», es «¿ofreciste credencial?» — porque la UI
+ * deslogueada manda `undefined` (los tokens vencidos los filtra
+ * `readFreshSessionToken` en el cliente) y ahí `[]` sigue siendo la respuesta
+ * correcta: pantalla vacía, no pantalla rota.
+ */
+describe('requireStaffOrBotSession', () => {
+  it('true con un botSecret válido', async () => {
+    expect(await requireStaffOrBotSession({ botSecret: BOT_SECRET })).toBe(true);
+  });
+
+  it('true con una sesión de staff válida', async () => {
+    const token = mintSessionToken('staff@tierramadre.app')!;
+    expect(await requireStaffOrBotSession({ sessionToken: token })).toBe(true);
+  });
+
+  it('false (NO lanza) cuando no se ofreció ninguna credencial', async () => {
+    expect(await requireStaffOrBotSession({})).toBe(false);
+  });
+
+  it('false cuando ambas credenciales son undefined explícito', async () => {
+    expect(
+      await requireStaffOrBotSession({
+        sessionToken: undefined,
+        botSecret: undefined,
+      }),
+    ).toBe(false);
+  });
+
+  it('LANZA con un botSecret errado — no puede pasar por «no hay datos»', async () => {
+    await expect(
+      requireStaffOrBotSession({ botSecret: 'wrong-secret' }),
+    ).rejects.toThrow(/No autorizado/);
+  });
+
+  it('LANZA con un sessionToken manipulado', async () => {
+    await expect(
+      requireStaffOrBotSession({ sessionToken: 'tms1.garbage.sig' }),
+    ).rejects.toThrow(/No autorizado/);
+  });
+
+  it('el error dice explícitamente que NO es ausencia de datos', async () => {
+    await expect(
+      requireStaffOrBotSession({ botSecret: 'wrong-secret' }),
+    ).rejects.toThrow(/NO significa que no haya datos/);
+  });
+});
+
+/** El gate ruidoso, probado end-to-end sobre la query que causó el bug. */
+describe('products.list — gate ruidoso', () => {
+  const callList = (args: {
+    sessionToken?: string;
+    botSecret?: string;
+  }): Promise<unknown> =>
+    (
+      productsList as unknown as (
+        ctx: never,
+        args: {
+          estado?: string;
+          search?: string;
+          sessionToken?: string;
+          botSecret?: string;
+        },
+      ) => Promise<unknown>
+    )({} as never, args);
+
+  it('sin credencial devuelve [] y no toca ctx.db (UI deslogueada)', async () => {
+    expect(await callList({})).toEqual([]);
+  });
+
+  it('con botSecret errado LANZA en vez de fingir inventario vacío', async () => {
+    await expect(callList({ botSecret: 'wrong-secret' })).rejects.toThrow(
+      /No autorizado/,
+    );
   });
 });

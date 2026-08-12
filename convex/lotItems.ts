@@ -17,6 +17,7 @@ import { requireBotSecret } from './_lib/botAuth';
 import {
   isStaffSession,
   isStaffOrBotSession,
+  requireStaffOrBotSession,
 } from './_lib/requireStaffSession';
 
 const tipoItemValidator = v.union(
@@ -123,7 +124,9 @@ export const search = query({
     ctx,
     { tipo, medidas, minCantidad, loteId, sessionToken, botSecret },
   ) => {
-    if (!(await isStaffOrBotSession({ sessionToken, botSecret }))) return [];
+    // Lanza si la credencial vino y no sirve; `[]` solo cuando no vino ninguna.
+    if (!(await requireStaffOrBotSession({ sessionToken, botSecret })))
+      return [];
     // by_loteId is the only relevant index available — tipo has none, so it
     // (like medidas) is filtered in memory below regardless.
     const rows = loteId
