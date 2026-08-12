@@ -13,12 +13,20 @@
  * downloadLabelsSpreadsheet / useNiimbotPrinter) — this page is a new *surface*
  * over that proven pipeline, not a reimplementation.
  *
- * Data comes from the same reactive `products.list` the Atelier ledger
- * subscribes to (no estado filter → the full inventory), so labels stay in
- * lock-step with edits made elsewhere in the admin.
+ * Data comes from `products.list` with no estado filter — the full inventory,
+ * because a label gallery genuinely needs every row (see the estado-tab note in
+ * ItemsPage for why filtering does not apply here either).
+ *
+ * BANDWIDTH: fetched ONE-SHOT on mount, not as a live subscription. It used to
+ * subscribe reactively, which re-scanned the whole 81-field mirror on every
+ * productInventory write for as long as the page stayed open — and Convex bills
+ * Database I/O on documents SCANNED, so that cost is paid in full regardless of
+ * how few fields the query projects. This page is read-only (it prints labels,
+ * it never mutates), so nothing here depends on live updates; navigating back to
+ * it refetches. See docs/audits/2026-08-12-convex-usage-audit.md §5.
  */
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   ButtonBase,
@@ -36,7 +44,7 @@ import {
   containedScrollX,
 } from '../../../../design-system';
 import {
-  useConvexQuery,
+  useConvexClient,
   convexApi,
   convexReady,
 } from '../../../../lib/convex-safe';
@@ -127,12 +135,35 @@ export default function EtiquetasPage() {
   const niimbot = useNiimbotPrinter();
   const logoDataUri = useLogoDataUri();
 
-  const products = useConvexQuery(
-    convexApi.products.list,
-    convexReady
-      ? { sessionToken: readFreshSessionToken() ?? undefined }
-      : 'skip',
-  ) as ProductListRow[] | undefined;
+  // One-shot read (see the BANDWIDTH note in the file header). `undefined`
+  // keeps the existing loading contract the render path already handles.
+  const convexClient = useConvexClient();
+  const [products, setProducts] = useState<ProductListRow[] | undefined>(
+    undefined,
+  );
+
+  useEffect(() => {
+    if (!convexReady || !convexClient) {
+      setProducts([]);
+      return;
+    }
+    let cancelled = false;
+    convexClient
+      .query(convexApi.products.list, {
+        sessionToken: readFreshSessionToken() ?? undefined,
+      })
+      .then((rows) => {
+        if (!cancelled) setProducts(rows as ProductListRow[]);
+      })
+      .catch(() => {
+        // Same degradation as the old subscription's error path: render the
+        // empty gallery rather than crashing the admin route.
+        if (!cancelled) setProducts([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [convexClient]);
 
   const [kind, setKind] = useState<KindFilter>('todo');
   const [search, setSearch] = useState('');
