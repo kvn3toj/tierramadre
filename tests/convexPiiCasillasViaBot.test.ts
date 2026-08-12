@@ -197,3 +197,44 @@ describe('F1 — porItemIdViaBot deja de ser un spread del documento', () => {
     expect(await llamarItem(null)).toBeNull();
   });
 });
+
+/**
+ * Segunda vuelta (2026-08-12): los campos de clasificación VUELVEN a viajar.
+ *
+ * En la primera versión de la proyección se dejaron afuera porque ningún consumidor
+ * del bot los leía. Eso era el síntoma de un bug, no una economía: `comenzarPieza`
+ * arma un borrador vacío y nunca lee la casilla guardada, así que pide un costo que
+ * ya existe y una casilla migrada no se puede completar ni corregir.
+ *
+ * Estos tests fijan el contrato de hidratación: si alguien vuelve a podar la
+ * proyección «porque nadie los lee», rompe el asistente y se entera acá.
+ */
+describe('la proyección alimenta la hidratación del asistente', () => {
+  it('los campos de clasificación viajan, para poder rehidratar el borrador', async () => {
+    const r = await llamarEstado(estadoCrudo);
+    const casilla = (r!.casillas as Array<Record<string, unknown>>)[0];
+    expect(casilla.costoUnitarioRealCOP).toBe(450000);
+    expect(casilla.calidad).toBe('Fina');
+    expect(casilla.color).toBe('Verde intenso');
+    expect(casilla.corte).toBe('Oval');
+    expect(casilla.ct).toBe(2.3);
+    expect(casilla.tipo).toBe('Murralla');
+    expect(casilla.categoriaFiscal).toBe('gema');
+  });
+
+  it('y sigue fallando CERRADA: la columna que no está en la lista tampoco ahora', async () => {
+    const r = await llamarEstado(estadoCrudo);
+    const casilla = (r!.casillas as Array<Record<string, unknown>>)[0];
+    // Ensanchar la lista no es abrirla: lo que no se nombró sigue sin viajar.
+    expect(casilla).not.toHaveProperty('columnaFuturaConPii');
+    expect(casilla).not.toHaveProperty('preponderancia');
+    expect(casilla).not.toHaveProperty('_id');
+  });
+
+  it('la misma casilla, por la puerta del QR, trae lo mismo', async () => {
+    const r = await llamarItem({ ...casillaCruda, completa: true, faltantes: [] });
+    expect(r!.costoUnitarioRealCOP).toBe(450000);
+    expect(r!.calidad).toBe('Fina');
+    expect(r).not.toHaveProperty('columnaFuturaConPii');
+  });
+});

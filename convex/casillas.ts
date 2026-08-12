@@ -470,26 +470,60 @@ export const publicarViaBot = action({
  * **Viaja a propósito** (decisión de Kevin, 2026-08-12): sirve para decir quién
  * clasificó la pieza. Lo que cambió no es que esté — es que está NOMBRADO.
  *
+ * **Los doce campos de clasificación viajan** (2026-08-12, segunda vuelta). En la
+ * primera versión de esta proyección se dejaron afuera porque ningún consumidor del
+ * bot los leía. Eso resultó ser el síntoma de un bug, no una economía: el asistente
+ * de casillas NUNCA lee la casilla guardada, arma un borrador vacío y por eso pide un
+ * costo que ya existe — con lo cual una casilla migrada (367 de 388 en dev) no se
+ * puede completar ni corregir. Se devuelven para que `comenzarPieza` pueda hidratar.
+ *
+ * Que hiciera falta agregarlos A MANO, uno por uno, es el diseño funcionando: con un
+ * spread habrían estado ahí por accidente junto con todo lo demás.
+ *
  * Lo que se queda afuera, y por qué:
  *
- *  - `costoUnitarioRealCOP` — ningún consumidor del bot lo lee. La advertencia de la
- *    cabecera de esta sección lo daba por expuesto y aceptado; sacarlo achica esa
- *    superficie sin costo. El costo del lote sigue llegando por `conciliacion`, que es
- *    de donde el asistente deriva su sugerencia.
  *  - `_id`, `_creationTime`, `preponderancia`, `costoBaseCOP` — internos de Convex y
  *    campos del riel viejo, que en una casilla v4 valen 0.
+ *  - `loteId` — el asistente ya sabe de qué lote es: lo pidió él.
+ *  - `modalidadGrupo` — no lo lee nadie todavía. Cuando alguien lo necesite, se
+ *    agrega acá y queda dicho quién lo pidió.
  */
 function casillaParaBot(c: {
   itemId: string;
   estadoCasilla?: string;
   clasificadaPor?: string;
   clasificadaEn?: number;
+  costoUnitarioRealCOP?: number;
+  categoriaFiscal?: 'gema' | 'joya';
+  calidad?: string;
+  color?: string;
+  corte?: string;
+  ct?: number;
+  gradoRareza?: string;
+  tipo?: string;
+  tipoJoya?: string;
+  gramaje?: number;
+  rangoVentaEsperadoCOP?: number;
+  renombre?: string;
 }) {
   return {
     itemId: c.itemId,
     estadoCasilla: c.estadoCasilla,
     clasificadaPor: c.clasificadaPor,
     clasificadaEn: c.clasificadaEn,
+    // Los que el asistente necesita para hidratar el borrador al abrir la casilla.
+    costoUnitarioRealCOP: c.costoUnitarioRealCOP,
+    categoriaFiscal: c.categoriaFiscal,
+    calidad: c.calidad,
+    color: c.color,
+    corte: c.corte,
+    ct: c.ct,
+    gradoRareza: c.gradoRareza,
+    tipo: c.tipo,
+    tipoJoya: c.tipoJoya,
+    gramaje: c.gramaje,
+    rangoVentaEsperadoCOP: c.rangoVentaEsperadoCOP,
+    renombre: c.renombre,
   };
 }
 
