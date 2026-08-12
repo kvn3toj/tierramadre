@@ -287,3 +287,31 @@ export function filaParaGuardar(
     comparaciones: [...comparables],
   };
 }
+
+/**
+ * Los motivos de `preciosDelLote`, agrupados por CAUSA y contados.
+ *
+ * Existe porque la doble corrida agrupa 484 ítems bajo un motivo único que junta
+ * tres causas distintas —«sin casilla, sin costo capturado, o lote sin categoría
+ * fiscal»— y con eso no se puede decidir qué proyecto sigue: una inferencia mejor
+ * no arregla lo mismo que clasificar quinientas piezas a mano.
+ *
+ * No clasifica nada por su cuenta: agrupa los motivos que el propio motor emite. Es
+ * lo que garantiza que el diagnóstico mida exactamente lo que el motor descarta.
+ *
+ * La única transformación es normalizar el id de la casilla que los motivos nombran
+ * («la casilla 487 no declara…»): sin eso, agrupar por texto crudo daría un grupo
+ * por ítem, que es la misma nada de la que se venía.
+ */
+export function agruparMotivos(
+  motivos: readonly string[],
+): { motivo: string; lotes: number }[] {
+  const cuenta = new Map<string, number>();
+  for (const crudo of motivos) {
+    const clave = crudo.replace(/la casilla \S+/g, 'la casilla ‹id›');
+    cuenta.set(clave, (cuenta.get(clave) ?? 0) + 1);
+  }
+  return [...cuenta.entries()]
+    .map(([motivo, lotes]) => ({ motivo, lotes }))
+    .sort((a, b) => b.lotes - a.lotes);
+}

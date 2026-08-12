@@ -26,7 +26,11 @@ import { v } from 'convex/values';
 import { internal } from './_generated/api';
 import { leerTabla } from './migracionV4';
 import { preciosPorItemDb } from './precios';
+import { contarLotesActivosDb } from './precios';
+import { configVigenteEn, costoFijoUnitario } from './_lib/motorPrecios';
+import { preciosDelLote } from './_lib/motorUnidad';
 import {
+  agruparMotivos,
   compararPreciosItemV3vsV4,
   filaParaGuardar,
   mapearInventarioParaComparar,
@@ -154,5 +158,105 @@ export const _guardar = internalMutation({
   },
   handler: async (ctx, { fila }) => {
     await ctx.db.insert('dobleCorridas', fila);
+  },
+});
+
+/**
+ * Por qué NO cotiza lo que no cotiza — el diagnóstico que parte el «484» en causas.
+ *
+ * La doble corrida agrupa todo lo no comparable bajo un motivo único que junta tres
+ * cosas distintas: sin casilla, sin costo capturado, o lote sin categoría fiscal. Con
+ * eso no se puede decidir qué sigue, porque una inferencia mejor y clasificar
+ * quinientas piezas a mano son proyectos distintos.
+ *
+ * Camina los mismos datos que `preciosPorItemDb` y le pregunta al MOTOR, en vez de
+ * reimplementar sus reglas: los motivos son los que emite `preciosDelLote`. Sólo
+ * lectura.
+ */
+export const _porQueNoCotiza = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const configs = await ctx.db.query('configPrecios').collect();
+    const { lotesActivos } = await contarLotesActivosDb(ctx);
+    const lotes = await ctx.db.query('lots').collect();
+    const casillas = await ctx.db.query('lotItems').collect();
+
+    const porLote = new Map<string, typeof casillas>();
+    for (const c of casillas) {
+      if (!c.estadoCasilla) continue;
+      porLote.set(c.loteId, [...(porLote.get(c.loteId) ?? []), c]);
+    }
+
+    const conEstado = casillas.filter((c) => c.estadoCasilla);
+    const estructura = {
+      lotes: lotes.length,
+      lotesConCategoriaFiscal: lotes.filter((l) => l.categoriaFiscal).length,
+      lotesConCasillas: [...porLote.keys()].length,
+      casillas: casillas.length,
+      casillasV4: conEstado.length,
+      casillasConCostoCapturado: conEstado.filter(
+        (c) => c.costoUnitarioRealCOP !== undefined,
+      ).length,
+    };
+
+    const motivos: string[] = [];
+    let lotesQueCotizan = 0;
+    let itemsCotizados = 0;
+    let sinConfigVigente = 0;
+
+    for (const lote of lotes) {
+      const delLote = porLote.get(lote.loteId);
+      if (!delLote?.length) {
+        motivos.push('el lote no tiene casillas v4');
+        continue;
+      }
+      let config;
+      try {
+        config = configVigenteEn(configs, lote.fechaRecepcion);
+      } catch {
+        sinConfigVigente++;
+        motivos.push('el lote es anterior a toda la configuración de precios');
+        continue;
+      }
+      const { cotiza, motivo, porItem } = preciosDelLote({
+        costoCompraLoteCOP: lote.costoCompraCOP ?? lote.costoTotalCOP,
+        casillas: delLote.map((c) => ({
+          itemId: c.itemId,
+          costoUnitarioRealCOP: c.costoUnitarioRealCOP,
+          categoriaFiscal: c.categoriaFiscal,
+        })),
+        categoriaFiscalLote: lote.categoriaFiscal,
+        categoriaFiscalOrigen: lote.categoriaFiscalOrigen,
+        segmento: lote.segmento,
+        costosVariablesLoteCOP: (lote.costosVariables ?? []).reduce(
+          (a, c) => a + c.montoCOP,
+          0,
+        ),
+        // El mismo cálculo que `preciosPorItemDb`, para que el diagnóstico no
+        // mida un motor distinto del que descarta los ítems.
+        costoFijoUnitarioLoteCOP: costoFijoUnitario(
+          config.gastosFijosMensualesCOP,
+          lotesActivos,
+        ),
+        config,
+      });
+      if (cotiza) {
+        lotesQueCotizan++;
+        itemsCotizados += porItem.size;
+      } else {
+        motivos.push(motivo ?? 'sin motivo declarado por el motor');
+      }
+    }
+
+    return {
+      estructura,
+      cotizacion: {
+        lotesQueCotizan,
+        lotesQueNo: lotes.length - lotesQueCotizan,
+        itemsCotizados,
+        sinConfigVigente,
+      },
+      porMotivo: agruparMotivos(motivos),
+    };
   },
 });

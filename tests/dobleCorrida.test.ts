@@ -29,6 +29,7 @@ import {
   mapearInventarioParaComparar,
   resumirComparacion,
   filaParaGuardar,
+  agruparMotivos,
 } from '../convex/_lib/dobleCorrida';
 
 // Los mismos cuatro ítems y los mismos `precioObjetivoUnidadCOP` pinneados en
@@ -432,5 +433,53 @@ describe('filaParaGuardar — la evidencia que sobrevive a la corrida', () => {
     // registrarlo la próxima corrida no sabe que ésta ya pasó.
     expect(vacia.comparaciones).toEqual([]);
     expect(vacia.comparablesConCategoriaInferida).toBe(0);
+  });
+});
+
+/**
+ * El diagnóstico de por qué 484 ítems no se pueden comparar — 2026-08-12.
+ *
+ * La doble corrida los agrupa bajo un motivo único («sin casilla, sin costo
+ * capturado, o lote sin categoría fiscal») que junta tres causas distintas, y esa
+ * indistinción es la que impedía saber qué proyecto sigue: ¿una inferencia mejor, o
+ * clasificación humana sobre quinientas piezas?
+ *
+ * `agruparMotivos` no inventa un clasificador: agrupa los motivos que YA emite
+ * `preciosDelLote`. Reusarlos es lo que garantiza que el diagnóstico mida exactamente
+ * lo que el motor descarta, y no algo parecido.
+ *
+ * Lo único que hace falta es normalizar: los motivos nombran la casilla concreta
+ * («la casilla 487 no declara…»), así que agrupar por el texto crudo daría un grupo
+ * por ítem — 484 grupos de uno, que es exactamente la nada que se quiere evitar.
+ */
+describe('agruparMotivos — por qué no cotiza, en grupos y no en 484 líneas', () => {
+  it('agrupa por causa, no por ítem: el id de la casilla no parte el grupo', () => {
+    const grupos = agruparMotivos([
+      'la casilla 487 no declara categoría fiscal y el lote es sin categoría',
+      'la casilla 490 no declara categoría fiscal y el lote es sin categoría',
+      'la casilla 491 no declara categoría fiscal y el lote es sin categoría',
+    ]);
+    expect(grupos).toHaveLength(1);
+    expect(grupos[0].lotes).toBe(3);
+    expect(grupos[0].motivo).toContain('no declara categoría fiscal');
+    // El id concreto no sobrevive: sería un grupo por ítem.
+    expect(grupos[0].motivo).not.toMatch(/\b(487|490|491)\b/);
+  });
+
+  it('mantiene separadas las causas distintas y las ordena por frecuencia', () => {
+    const grupos = agruparMotivos([
+      'la casilla 1 no tiene costo capturado',
+      'el lote es de colección',
+      'la casilla 2 no tiene costo capturado',
+      'la casilla 3 no tiene costo capturado',
+    ]);
+    expect(grupos).toHaveLength(2);
+    expect(grupos[0].lotes).toBe(3);
+    expect(grupos[0].motivo).toContain('costo capturado');
+    expect(grupos[1].lotes).toBe(1);
+  });
+
+  it('sin motivos devuelve lista vacía, no un grupo de cero', () => {
+    expect(agruparMotivos([])).toEqual([]);
   });
 });
