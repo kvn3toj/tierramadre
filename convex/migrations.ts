@@ -1362,9 +1362,7 @@ export const migrateChatonesToC065 = internalAction({
  */
 export const raiseLotSequences = internalMutation({
   args: {
-    raises: v.array(
-      v.object({ name: v.string(), minNextValue: v.number() }),
-    ),
+    raises: v.array(v.object({ name: v.string(), minNextValue: v.number() })),
   },
   handler: async (ctx, { raises }) => {
     const out: Array<{
@@ -1973,5 +1971,285 @@ export const _retirarPadreSubdividido = internalMutation({
     });
 
     return { itemId, retirado: true as const };
+  },
+});
+
+/**
+ * Alta en Convex de los 7 ítems que el inventario manuscrito del 2026-08-12
+ * creó EN LA HOJA, y cierre del retiro de sus 3 padres.
+ *
+ * POR QUÉ HACE FALTA: `scripts/aplicar-inventario-manuscrito-20260812.mjs`
+ * escribió las 7 filas en el SOT, pero el pull NO crea documentos: `fotoSync`
+ * sólo inserta filas nuevas para `providers` y `clients`; en `inventory` las
+ * marca «fila nueva en la hoja — créala desde la app» y las salta. Por eso el
+ * sync del 12-ago reportó `inventory: 523` y no 530.
+ *
+ * La lección estructural: para ALTAS el camino es Convex → hoja (lo que hizo
+ * `seedSublotes508509497` el 03-ago). La hoja sólo sirve para editar lo que ya
+ * existe. Esta migración cierra esa brecha en la dirección correcta.
+ *
+ * ⚠️ NO EMPUJA A LA HOJA. `_createItemExplicit` termina agendando
+ * `products.pushToSheet` con `mode:'append'`; como estas 7 filas YA existen en
+ * el SOT (525–531), usarlo duplicaría filas — el mismo modo de falla que dejó
+ * 21 filas basura el 03-ago. Acá se inserta y punto: el siguiente pull
+ * reconcilia los campos escribibles desde la hoja, que es su dueña.
+ *
+ * Qué hace:
+ *   1. Crea 93A, 93B y 535–539 con sus costos exactos + su fila en `lotItems`.
+ *   2. Publica los 7 hijos (mostrarEnCatalogo:true) con la procedencia del lote.
+ *   3. Despublica #93, #501 y #504 — los padres retirados. `mostrarEnCatalogo`
+ *      está EXCLUIDA del pull desde el 2026-07-30 (va sólo Convex → hoja), así
+ *      que la columna Y de la hoja no puede hacerlo: tiene que ser acá.
+ *   4. `inventoryStats.total` 523 → 530 (vía bumpInventoryTotal, 1 por alta).
+ *
+ * Idempotente: un itemId que ya existe se salta (`created:false`), así que
+ * re-correrla es inofensivo.
+ *
+ *   npx convex run migrations:seedManuscrito20260812 '{}'          # dev
+ *   npx convex run --prod migrations:seedManuscrito20260812 '{}'   # prod
+ */
+const MANUSCRITO_20260812_ALTAS = [
+  {
+    itemId: '93A',
+    rowIndex: 525,
+    nombre: 'Romeo',
+    loteId: 'C-045',
+    subLote: 'C-045-G1',
+    categoria: 'Gema',
+    talla: 'Óvalo',
+    cantidad: 1,
+    peso: '0.83',
+    color: 'Verde Limón',
+    calidad: 'COMERCIAL SÚPER FINA',
+    medidas: '7.4 × 5.6 mm',
+    costoBaseCOP: 223771,
+    estado: 'DISPONIBLE' as const,
+    observacion:
+      'Sublote C-045-G1 de #93 Dos Luciérnagas (subdivisión 12-ago-2026, inventario manuscrito). ' +
+      'Costo repartido por quilataje: 0.83/1.74 × 469.120.',
+  },
+  {
+    itemId: '93B',
+    rowIndex: 526,
+    nombre: 'Julieta',
+    loteId: 'C-045',
+    subLote: 'C-045-G1',
+    categoria: 'Gema',
+    talla: 'Óvalo',
+    cantidad: 1,
+    peso: '0.91',
+    color: 'Verde Limón',
+    calidad: 'COMERCIAL SÚPER FINA',
+    medidas: '7.4 × 5.6 mm',
+    costoBaseCOP: 245349,
+    estado: 'DISPONIBLE' as const,
+    observacion:
+      'Sublote C-045-G1 de #93 Dos Luciérnagas (subdivisión 12-ago-2026, inventario manuscrito). ' +
+      'Costo repartido por quilataje: absorbe el redondeo. Σ hijos = $469.120 exacto.',
+  },
+  {
+    itemId: '535',
+    rowIndex: 527,
+    nombre: 'Amor Prohibido',
+    loteId: 'C-068',
+    subLote: '504-A',
+    categoria: 'Topitos',
+    talla: 'Baguette',
+    cantidad: 1,
+    peso: undefined,
+    color: 'Verde Natural',
+    calidad: 'COMERCIAL FINA',
+    medidas: '5.0 × 3.1 mm',
+    costoBaseCOP: 15313,
+    estado: 'DISPONIBLE' as const,
+    observacion:
+      'Sublote 504-A de #504 Baguette (subdivisión 12-ago-2026, inventario manuscrito). ' +
+      'Costo repartido por unidad — falta pesar: el papel da 0,55 ct del par, no de cada piedra.',
+  },
+  {
+    itemId: '536',
+    rowIndex: 528,
+    nombre: 'Romance Predestinado',
+    loteId: 'C-068',
+    subLote: '504-B',
+    categoria: 'Topitos',
+    talla: 'Baguette',
+    cantidad: 1,
+    peso: undefined,
+    color: 'Verde Natural',
+    calidad: 'COMERCIAL FINA',
+    medidas: '4.9 × 3.0 mm',
+    costoBaseCOP: 15312,
+    estado: 'DISPONIBLE' as const,
+    observacion:
+      'Sublote 504-B de #504 Baguette (subdivisión 12-ago-2026, inventario manuscrito). ' +
+      'Costo repartido por unidad — absorbe el redondeo. Σ hijos = $30.625 exacto.',
+  },
+  {
+    itemId: '537',
+    rowIndex: 529,
+    nombre: 'Dos Amores',
+    loteId: 'C-068',
+    subLote: '501-A',
+    categoria: 'Lote de Gemas',
+    talla: 'Baguette',
+    cantidad: 2,
+    peso: '0.32',
+    color: 'Verde Natural',
+    calidad: 'COMERCIAL SUPERIOR',
+    medidas: '4.2 × 2.9 mm',
+    costoBaseCOP: 26972,
+    estado: 'DISPONIBLE' as const,
+    observacion:
+      'Sublote 501-A de #501 Baguette (subdivisión 12-ago-2026, inventario manuscrito). ' +
+      'Costo repartido por quilataje: 0.32/1.09 × 91.875. ⚠️ Falta la 2ª medida.',
+  },
+  {
+    itemId: '538',
+    rowIndex: 530,
+    nombre: 'Éxitosos',
+    loteId: 'C-068',
+    subLote: '501-B',
+    categoria: 'Lote de Gemas',
+    talla: 'Baguette',
+    cantidad: 2,
+    peso: '0.42',
+    color: 'Verde Natural',
+    calidad: 'COMERCIAL SUPERIOR',
+    medidas: '4.8 × 2.7 mm · 4.6 × 2.7 mm',
+    costoBaseCOP: 35401,
+    estado: 'DISPONIBLE' as const,
+    observacion:
+      'Sublote 501-B de #501 Baguette (subdivisión 12-ago-2026, inventario manuscrito). ' +
+      'Costo repartido por quilataje: 0.42/1.09 × 91.875. Peso del grupo, no por piedra.',
+  },
+  {
+    itemId: '539',
+    rowIndex: 531,
+    nombre: 'Equilibrio',
+    loteId: 'C-068',
+    subLote: '501-C',
+    categoria: 'Lote de Gemas',
+    talla: 'Baguette',
+    cantidad: 2,
+    peso: '0.35',
+    color: 'Verde Natural',
+    calidad: 'COMERCIAL SUPERIOR',
+    medidas: '5.6 × 2.7 mm · 5.3 × 2.5 mm',
+    costoBaseCOP: 29502,
+    estado: 'DISPONIBLE' as const,
+    observacion:
+      'Sublote 501-C de #501 Baguette (subdivisión 12-ago-2026, inventario manuscrito). ' +
+      'Costo repartido por quilataje: absorbe el redondeo. Σ hijos = $91.875 exacto.',
+  },
+];
+
+/** Los tres padres subdivididos: retirados, no borrados. Fila y QR siguen vivos. */
+const MANUSCRITO_20260812_PADRES = ['93', '501', '504'];
+
+export const seedManuscrito20260812 = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = new Date().toISOString();
+    const creados: Array<{
+      itemId: string;
+      created: boolean;
+      reason?: string;
+    }> = [];
+
+    for (const a of MANUSCRITO_20260812_ALTAS) {
+      const existente = await ctx.db
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', a.itemId))
+        .first();
+      if (existente) {
+        creados.push({ itemId: a.itemId, created: false, reason: 'ya existe' });
+        continue;
+      }
+
+      const lot = await ctx.db
+        .query('lots')
+        .withIndex('by_loteId', (q) => q.eq('loteId', a.loteId))
+        .first();
+      if (!lot)
+        throw new Error(`Lote ${a.loteId} no existe (ítem ${a.itemId})`);
+
+      await ctx.db.insert('productInventory', {
+        itemId: a.itemId,
+        rowIndex: a.rowIndex,
+        nombre: a.nombre,
+        peso: a.peso,
+        color: a.color,
+        calidad: a.calidad,
+        cantidad: a.cantidad,
+        talla: a.talla,
+        medidas: a.medidas,
+        categoria: a.categoria,
+        estado: a.estado,
+        qr: `https://tierramadre.app/p/${a.itemId}`,
+        loteId: a.loteId,
+        subLote: a.subLote,
+        // El costo lo posee la hoja desde el 2026-07-24; se siembra igual para
+        // que el ítem nazca correcto y no espere al primer pull.
+        costoBaseCOP: a.costoBaseCOP,
+        // preponderancia 0: ya no deriva costo (2026-07-24) y así no altera la
+        // suma 1,0 del lote, que es la convención de la hoja.
+        preponderancia: 0,
+        observacion: a.observacion,
+        tipo: 'gema',
+        // Publicados, igual que hizo seedSublotes508509497 con los 10 hijos del
+        // 03-ago. Sin denormalizar mina/tratamiento a propósito: el tercer
+        // argumento de `withPublishStamp` (provenance) es de la rama
+        // perf/convex-db-io-20260812 y NO está en main ni en producción, que
+        // todavía resuelve la procedencia por lectura en publishedCatalog.
+        // Cuando esa rama entre, el republish la estampa sola.
+        ...withPublishStamp(null, true),
+        lastPulledAt: now,
+        // 'pending' y NO se agenda pushToSheet: la fila ya existe en el SOT
+        // (525–531) y un push en modo append la duplicaría.
+        syncStatus: 'pending' as const,
+      });
+      await bumpInventoryTotal(ctx, 1);
+
+      const hermanos = await ctx.db
+        .query('lotItems')
+        .withIndex('by_loteId', (q) => q.eq('loteId', a.loteId))
+        .collect();
+      await ctx.db.insert('lotItems', {
+        loteId: a.loteId,
+        itemId: a.itemId,
+        preponderancia: 0,
+        costoBaseCOP: a.costoBaseCOP,
+        ordenEnLote: hermanos.length + 1,
+      });
+
+      creados.push({ itemId: a.itemId, created: true });
+    }
+
+    // Padres retirados fuera del catálogo. publishedCatalog filtra por
+    // mostrarEnCatalogo y loteId, NO por cantidad: con cant 0 seguirían
+    // visibles en la vitrina, que es justo el doble-venta que el retiro evita.
+    const despublicados: Array<{ itemId: string; antes: boolean | undefined }> =
+      [];
+    for (const itemId of MANUSCRITO_20260812_PADRES) {
+      const padre = await ctx.db
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+        .first();
+      if (!padre) {
+        despublicados.push({ itemId, antes: undefined });
+        continue;
+      }
+      const antes = padre.mostrarEnCatalogo;
+      if (antes !== false)
+        await ctx.db.patch(padre._id, withPublishStamp(padre, false));
+      despublicados.push({ itemId, antes });
+    }
+
+    return {
+      creados,
+      despublicados,
+      nota: 'No se empuja a la hoja: las filas 525–531 ya existen en el SOT.',
+    };
   },
 });

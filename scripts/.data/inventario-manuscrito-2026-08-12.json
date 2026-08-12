@@ -1,0 +1,904 @@
+{
+  "meta": {
+    "fuente": "Inventario manuscrito fotografiado, 2026-08-12",
+    "sot": "1oRw1KSh8L1CyjUnD_D1S8a3J3ewJ_V8lN1BFR-7Bv9U",
+    "tab": "Inventario",
+    "gid": 1819792669,
+    "generado": "2026-08-12",
+    "decisionesTomadasPor": "Kevin Toj",
+    "invariante": "reparto por quilataje dentro de cada padre, Σhijos = costo del padre exacto",
+    "reglaObservacion": "col AA se ANEXA, no se reemplaza: texto nuevo + ' · ' + observación previa. Nunca perder 'Cono X mm' ni 'Precio especial por cierre de temporada'."
+  },
+  "updates": [
+    {
+      "itemId": "467",
+      "campo": "Nombre",
+      "col": "C",
+      "valorActual": "Guardianas Gemelas — Piedra 1",
+      "valorNuevo": "Solsticio Lunar",
+      "fuente": "Decisión 1",
+      "nota": "Era \"Guardianas Gemelas — Piedra 1\". Medida 6.1×3.3 = el \"6x3,3\" del papel.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "467",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "Par Guardianas Gemelas (ex Igualdad Dijes, #363). Cono 2.1 mm. Calidad a confirmar (dictado Comercial Superior; #363 tenía Comercial Súper Fina). · Precio especial por cierre de temporada",
+      "valorNuevo": "Antes: Guardianas Gemelas — Piedra 1. Renombrado 12-ago-2026 (inventario manuscrito). Par C-042-G1 pasa a llamarse Bellezas del Alba. · Par Guardianas Gemelas (ex Igualdad Dijes, #363). Cono 2.1 mm. Calidad a confirmar (dictado Comercial Superior; #363 tenía Comercial Súper Fina). · Precio especial por cierre de temporada",
+      "fuente": "Decisión 1",
+      "nota": "",
+      "modo": "append"
+    },
+    {
+      "itemId": "468",
+      "campo": "Nombre",
+      "col": "C",
+      "valorActual": "Guardianas Gemelas — Piedra 2",
+      "valorNuevo": "Despertar del Alma",
+      "fuente": "Decisión 1",
+      "nota": "Era \"Guardianas Gemelas — Piedra 2\". Medida 5.5×3.6 = el \"5,5x3,5\" del papel.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "468",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "Par Guardianas Gemelas (ex Igualdad Dijes, #363). Cono 2.3 mm. · Precio especial por cierre de temporada",
+      "valorNuevo": "Antes: Guardianas Gemelas — Piedra 2. Renombrado 12-ago-2026 (inventario manuscrito). Par C-042-G1 pasa a llamarse Bellezas del Alba. · Par Guardianas Gemelas (ex Igualdad Dijes, #363). Cono 2.3 mm. · Precio especial por cierre de temporada",
+      "fuente": "Decisión 1",
+      "nota": "",
+      "modo": "append"
+    },
+    {
+      "itemId": "471",
+      "campo": "Nombre",
+      "col": "C",
+      "valorActual": "Guardianas Gemelas",
+      "valorNuevo": "Bellezas del Alba",
+      "fuente": "Decisión 1",
+      "nota": "Fila-par de C-042-G1 (0.74 ct). Antes \"Guardianas Gemelas\".",
+      "modo": "replace"
+    },
+    {
+      "itemId": "471",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "Par para dijes (ex 'Igualdad Dijes', #363). 2 gemas facetadas rectangulares: 6.1×3.3mm/0.36ct + 5.5×3.6mm/0.38ct. Un solo QR (par). Calidad a confirmar (dictado Comercial Superior; #363 tenía Comercial Súper Fina). · Precio especial por cierre de temporada",
+      "valorNuevo": "Antes: Guardianas Gemelas (par para dijes, ex Igualdad Dijes #363). Renombrado 12-ago-2026. · Par para dijes (ex 'Igualdad Dijes', #363). 2 gemas facetadas rectangulares: 6.1×3.3mm/0.36ct + 5.5×3.6mm/0.38ct. Un solo QR (par). Calidad a confirmar (dictado Comercial Superior; #363 tenía Comercial Súper Fina). · Precio especial por cierre de temporada",
+      "fuente": "Decisión 1",
+      "nota": "",
+      "modo": "append"
+    },
+    {
+      "itemId": "469",
+      "campo": "Nombre",
+      "col": "C",
+      "valorActual": "Mellizas del Alba — Piedra 3",
+      "valorNuevo": "Guardianas Gemelas — Piedra 1",
+      "fuente": "Decisión 1",
+      "nota": "Era \"Mellizas del Alba — Piedra 3\". Medida 5.3×3.4 = el \"5,3x3,4\" del papel ✓ exacto.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "469",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "Par Mellizas del Alba (ex Igualdad Topitos, #363). Cono 2.5 mm. · Precio especial por cierre de temporada",
+      "valorNuevo": "Antes: Mellizas del Alba — Piedra 3. Renombrado 12-ago-2026. El par C-042-G2 hereda el nombre Guardianas Gemelas. · Par Mellizas del Alba (ex Igualdad Topitos, #363). Cono 2.5 mm. · Precio especial por cierre de temporada",
+      "fuente": "Decisión 1",
+      "nota": "",
+      "modo": "append"
+    },
+    {
+      "itemId": "470",
+      "campo": "Nombre",
+      "col": "C",
+      "valorActual": "Mellizas del Alba — Piedra 4",
+      "valorNuevo": "Guardianas Gemelas — Piedra 2",
+      "fuente": "Decisión 1",
+      "nota": "Era \"Mellizas del Alba — Piedra 4\".",
+      "modo": "replace"
+    },
+    {
+      "itemId": "470",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "Par Mellizas del Alba (ex Igualdad Topitos, #363). Cono 2.3 mm. · Precio especial por cierre de temporada",
+      "valorNuevo": "Antes: Mellizas del Alba — Piedra 4. Renombrado 12-ago-2026. El par C-042-G2 hereda el nombre Guardianas Gemelas. · Par Mellizas del Alba (ex Igualdad Topitos, #363). Cono 2.3 mm. · Precio especial por cierre de temporada",
+      "fuente": "Decisión 1",
+      "nota": "",
+      "modo": "append"
+    },
+    {
+      "itemId": "472",
+      "campo": "Nombre",
+      "col": "C",
+      "valorActual": "Mellizas del Alba",
+      "valorNuevo": "Guardianas Gemelas",
+      "fuente": "Decisión 1",
+      "nota": "Fila-par de C-042-G2 (0.74 ct). Antes \"Mellizas del Alba\". El nombre \"Mellizas del Alba\" desaparece del inventario.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "472",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "Par para topitos (ex 'Igualdad Topitos', #363). 2 gemas: 5.3×3.4mm/0.37ct + 5.3×3.7mm/0.37ct. Un solo QR (par). · Precio especial por cierre de temporada",
+      "valorNuevo": "Antes: Mellizas del Alba (par para topitos, ex Igualdad Topitos #363). Renombrado 12-ago-2026. · Par para topitos (ex 'Igualdad Topitos', #363). 2 gemas: 5.3×3.4mm/0.37ct + 5.3×3.7mm/0.37ct. Un solo QR (par). · Precio especial por cierre de temporada",
+      "fuente": "Decisión 1",
+      "nota": "",
+      "modo": "append"
+    },
+    {
+      "itemId": "C-042-G1",
+      "campo": "nombre (Sublotes)",
+      "col": "D",
+      "valorActual": null,
+      "valorNuevo": "Bellezas del Alba",
+      "fuente": "Decisión 1",
+      "nota": "Pestaña Sublotes, no Inventario.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "C-042-G2",
+      "campo": "nombre (Sublotes)",
+      "col": "D",
+      "valorActual": null,
+      "valorNuevo": "Guardianas Gemelas",
+      "fuente": "Decisión 1",
+      "nota": "Pestaña Sublotes, no Inventario.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "532",
+      "campo": "Nombre",
+      "col": "C",
+      "valorActual": "Alma Pura",
+      "valorNuevo": "Tres Marías",
+      "fuente": "Decisión 4",
+      "nota": "Sublote 497-B. Trío, 3 piedras, 0.60 ct. Las 3 medidas del papel coinciden exactas con la col I. El papel lo rotulaba \"497C\".",
+      "modo": "replace"
+    },
+    {
+      "itemId": "532",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "Sublote 497-B de #497 \"Vuelos del Alba\" (subdivisión 2026-08-03). 0.60 ct en 3 piedras (peso del grupo). Costo repartido por quilataje desde el padre.",
+      "valorNuevo": "Antes: Alma Pura. Renombrado 12-ago-2026. Sublote 497-B de #497 \"Vuelos del Alba\" (subdivisión 2026-08-03). 0.60 ct en 3 piedras (peso del grupo). Costo repartido por quilataje desde el padre.",
+      "fuente": "Decisión 4",
+      "nota": "",
+      "modo": "replace"
+    },
+    {
+      "itemId": "533",
+      "campo": "Nombre",
+      "col": "C",
+      "valorActual": "Esencia del Cóndor",
+      "valorNuevo": "Los Caminos",
+      "fuente": "Decisión 6",
+      "nota": "Sublote 497-C. 2 piedras. El papel lo rotulaba \"497B\" — las letras venían cruzadas.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "533",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "Sublote 497-C de #497 \"Vuelos del Alba\" (subdivisión 2026-08-03). 0.39 ct en 2 piedras (peso del grupo). Costo repartido por quilataje desde el padre.",
+      "valorNuevo": "Antes: Esencia del Cóndor. Renombrado 12-ago-2026. Sublote 497-C de #497 (subdivisión 2026-08-03). 0.39 ct en 2 piedras. Costo repartido por quilataje desde el padre. · Sublote 497-C de #497 \"Vuelos del Alba\" (subdivisión 2026-08-03). 0.39 ct en 2 piedras (peso del grupo). Costo repartido por quilataje desde el padre.",
+      "fuente": "Decisión 6",
+      "nota": "",
+      "modo": "append"
+    },
+    {
+      "itemId": "534",
+      "campo": "Nombre",
+      "col": "C",
+      "valorActual": "Armonía Radiante",
+      "valorNuevo": "Amorcito",
+      "fuente": "Decisión 6",
+      "nota": "Sublote 497-D. 2 piedras, 0.24 ct ✓ coincide exacto con el papel.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "534",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "Sublote 497-D de #497 \"Vuelos del Alba\" (subdivisión 2026-08-03). 0.24 ct en 2 piedras (peso del grupo). Costo repartido por quilataje desde el padre.",
+      "valorNuevo": "Antes: Armonía Radiante. Renombrado 12-ago-2026. Sublote 497-D de #497 (subdivisión 2026-08-03). 0.24 ct en 2 piedras. Costo repartido por quilataje desde el padre. · Sublote 497-D de #497 \"Vuelos del Alba\" (subdivisión 2026-08-03). 0.24 ct en 2 piedras (peso del grupo). Costo repartido por quilataje desde el padre.",
+      "fuente": "Decisión 6",
+      "nota": "",
+      "modo": "append"
+    },
+    {
+      "itemId": "274",
+      "campo": "Nombre",
+      "col": "C",
+      "valorActual": "Cáncer",
+      "valorNuevo": "Autenticidad",
+      "fuente": "Decisión 8",
+      "nota": "Era \"Cáncer\". Se descartó \"Armonía\" para no chocar con #534 (que además pasa a llamarse Amorcito).",
+      "modo": "replace"
+    },
+    {
+      "itemId": "274",
+      "campo": "Medidas",
+      "col": "I",
+      "valorActual": "",
+      "valorNuevo": "5.9 × 3.9 mm",
+      "fuente": "Papel",
+      "nota": "Columna I estaba VACÍA. Cierra un hueco de la §13.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "274",
+      "campo": "Color",
+      "col": "E",
+      "valorActual": "",
+      "valorNuevo": "Verde Menta",
+      "fuente": "Papel",
+      "nota": "Columna E estaba VACÍA.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "274",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "Precio especial por cierre de temporada",
+      "valorNuevo": "Antes: Cáncer. Renombrado 12-ago-2026 (inventario manuscrito). · Precio especial por cierre de temporada",
+      "fuente": "Decisión 8",
+      "nota": "",
+      "modo": "append"
+    },
+    {
+      "itemId": "242",
+      "campo": "Medidas",
+      "col": "I",
+      "valorActual": "",
+      "valorNuevo": "6.6 × 5.0 mm",
+      "fuente": "Papel",
+      "nota": "Col I VACÍA → cierra hueco §13.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "242",
+      "campo": "Peso (ct)",
+      "col": "D",
+      "valorActual": "0.93",
+      "valorNuevo": "0.95",
+      "fuente": "Papel",
+      "nota": "SOT decía 0.93.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "242",
+      "campo": "costoBaseCOP",
+      "col": "L",
+      "valorActual": "550,240",
+      "valorNuevo": "436000",
+      "fuente": "Decisión 10",
+      "nota": "El $436.000 suelto del papel es de Amanecer. SOT tenía $550.240.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "244",
+      "campo": "Medidas",
+      "col": "I",
+      "valorActual": "",
+      "valorNuevo": "6.5 × 4.5 mm",
+      "fuente": "Papel",
+      "nota": "Col I VACÍA → cierra hueco §13.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "233",
+      "campo": "Medidas",
+      "col": "I",
+      "valorActual": "",
+      "valorNuevo": "5.8 × 5.9 mm",
+      "fuente": "Papel",
+      "nota": "Col I VACÍA → cierra hueco §13.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "233",
+      "campo": "Peso (ct)",
+      "col": "D",
+      "valorActual": "0.95",
+      "valorNuevo": "0.96",
+      "fuente": "Papel",
+      "nota": "SOT decía 0.95.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "233",
+      "campo": "Color",
+      "col": "E",
+      "valorActual": "Verde Limón",
+      "valorNuevo": "Verde Menta",
+      "fuente": "Papel",
+      "nota": "SOT decía Verde Limón.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "245",
+      "campo": "Medidas",
+      "col": "I",
+      "valorActual": "",
+      "valorNuevo": "6.0 × 4.8 mm",
+      "fuente": "Papel",
+      "nota": "Col I VACÍA → cierra hueco §13.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "245",
+      "campo": "Peso (ct)",
+      "col": "D",
+      "valorActual": "0.82",
+      "valorNuevo": "0.81",
+      "fuente": "Papel",
+      "nota": "SOT decía 0.82.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "245",
+      "campo": "Color",
+      "col": "E",
+      "valorActual": "Verde Limón",
+      "valorNuevo": "Verde Menta",
+      "fuente": "Papel",
+      "nota": "SOT decía Verde Limón.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "234",
+      "campo": "Medidas",
+      "col": "I",
+      "valorActual": "",
+      "valorNuevo": "6.0 × 6.4 mm",
+      "fuente": "Papel",
+      "nota": "Col I VACÍA → cierra hueco §13.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "234",
+      "campo": "Color",
+      "col": "E",
+      "valorActual": "Verde Limón",
+      "valorNuevo": "Verde Menta",
+      "fuente": "Papel",
+      "nota": "SOT decía Verde Limón.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "236",
+      "campo": "Medidas",
+      "col": "I",
+      "valorActual": "",
+      "valorNuevo": "5.8 × 4.8 mm",
+      "fuente": "Papel",
+      "nota": "Col I VACÍA → cierra hueco §13.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "236",
+      "campo": "Color",
+      "col": "E",
+      "valorActual": "Verde Limón",
+      "valorNuevo": "Verde Menta",
+      "fuente": "Papel",
+      "nota": "SOT decía Verde Limón.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "233",
+      "campo": "Calidad",
+      "col": "F",
+      "valorActual": "COMERCIAL FINA",
+      "valorNuevo": "COMERCIAL SÚPER FINA",
+      "fuente": "Decisión 7",
+      "nota": "\"S. Fina\" del papel = COMERCIAL SÚPER FINA.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "234",
+      "campo": "Calidad",
+      "col": "F",
+      "valorActual": "COMERCIAL FINA",
+      "valorNuevo": "COMERCIAL SÚPER FINA",
+      "fuente": "Decisión 7",
+      "nota": "",
+      "modo": "replace"
+    },
+    {
+      "itemId": "242",
+      "campo": "Calidad",
+      "col": "F",
+      "valorActual": "COMERCIAL FINA",
+      "valorNuevo": "COMERCIAL SÚPER FINA",
+      "fuente": "Decisión 7",
+      "nota": "",
+      "modo": "replace"
+    },
+    {
+      "itemId": "244",
+      "campo": "Calidad",
+      "col": "F",
+      "valorActual": "COMERCIAL FINA",
+      "valorNuevo": "COMERCIAL SÚPER FINA",
+      "fuente": "Decisión 7",
+      "nota": "",
+      "modo": "replace"
+    },
+    {
+      "itemId": "245",
+      "campo": "Calidad",
+      "col": "F",
+      "valorActual": "COMERCIAL FINA",
+      "valorNuevo": "COMERCIAL SÚPER FINA",
+      "fuente": "Decisión 7",
+      "nota": "",
+      "modo": "replace"
+    },
+    {
+      "itemId": "274",
+      "campo": "Calidad",
+      "col": "F",
+      "valorActual": "COMERCIAL FINA",
+      "valorNuevo": "COMERCIAL SÚPER FINA",
+      "fuente": "Decisión 7",
+      "nota": "",
+      "modo": "replace"
+    },
+    {
+      "itemId": "276",
+      "campo": "Calidad",
+      "col": "F",
+      "valorActual": "COMERCIAL FINA",
+      "valorNuevo": "COMERCIAL SÚPER FINA",
+      "fuente": "Decisión 7",
+      "nota": "",
+      "modo": "replace"
+    },
+    {
+      "itemId": "276",
+      "campo": "Medidas",
+      "col": "I",
+      "valorActual": "4.2 × 4.0 × 2.3 mm",
+      "valorNuevo": "4.1 × 4.2 mm",
+      "fuente": "Papel",
+      "nota": "SOT decía 4.2 × 4.0 × 2.3 mm.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "283",
+      "campo": "Calidad",
+      "col": "F",
+      "valorActual": "COMERCIAL SUPERIOR",
+      "valorNuevo": "COMERCIAL SÚPER FINA",
+      "fuente": "Decisión 7",
+      "nota": "",
+      "modo": "replace"
+    },
+    {
+      "itemId": "283",
+      "campo": "costoBaseCOP",
+      "col": "L",
+      "valorActual": "207,692",
+      "valorNuevo": "180000",
+      "fuente": "Decisión 5",
+      "nota": "SOT tenía $207.692. El papel manda.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "283",
+      "campo": "Medidas",
+      "col": "I",
+      "valorActual": "6.8 × 4.5 × 2.9 mm",
+      "valorNuevo": "7.0 × 4.5 mm",
+      "fuente": "Papel",
+      "nota": "SOT decía 6.8 × 4.5 × 2.9 mm.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "100",
+      "campo": "Peso (ct)",
+      "col": "D",
+      "valorActual": "0.60",
+      "valorNuevo": "0.63",
+      "fuente": "Papel",
+      "nota": "SOT decía 0.60. Calidad y medida ya coincidían.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "295",
+      "campo": "Peso (ct)",
+      "col": "D",
+      "valorActual": "1.06",
+      "valorNuevo": "1.07",
+      "fuente": "Papel",
+      "nota": "SOT decía 1.06.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "295",
+      "campo": "Color",
+      "col": "E",
+      "valorActual": "Verde Menta",
+      "valorNuevo": "Verde Limón",
+      "fuente": "Papel",
+      "nota": "SOT decía Verde Menta.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "513",
+      "campo": "Calidad",
+      "col": "F",
+      "valorActual": "COMERCIAL FINA",
+      "valorNuevo": "COMERCIAL SÚPER FINA",
+      "fuente": "Decisión 7",
+      "nota": "SOT decía COMERCIAL FINA.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "513",
+      "campo": "Color",
+      "col": "E",
+      "valorActual": "Verde Claro",
+      "valorNuevo": "Verde Limón",
+      "fuente": "Papel",
+      "nota": "SOT decía Verde Claro.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "530",
+      "campo": "Peso (ct)",
+      "col": "D",
+      "valorActual": "0.25",
+      "valorNuevo": "0.24",
+      "fuente": "Papel",
+      "nota": "SOT decía 0.25 (sublote 509-C).",
+      "modo": "replace"
+    },
+    {
+      "itemId": "528",
+      "campo": "Medidas",
+      "col": "I",
+      "valorActual": "6.4 x 4.1 x 2.5 mm",
+      "valorNuevo": "6.4 × 4.1 mm",
+      "fuente": "Papel",
+      "nota": "Ya coincidía; el papel confirma.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "529",
+      "campo": "Peso (ct)",
+      "col": "D",
+      "valorActual": "0.34",
+      "valorNuevo": "0.33",
+      "fuente": "Papel",
+      "nota": "SOT decía 0.34 (sublote 509-B).",
+      "modo": "replace"
+    },
+    {
+      "itemId": "515",
+      "campo": "Color",
+      "col": "E",
+      "valorActual": "Verde Vívido",
+      "valorNuevo": "",
+      "fuente": "Papel",
+      "nota": "El papel deja la columna Vida en blanco; SOT dice Verde Vívido. NO se toca — vacío no es un dato.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "89",
+      "campo": "Medidas",
+      "col": "I",
+      "valorActual": "5.2 -3.2 5.0-3.4 mm",
+      "valorNuevo": "5.1 × 3.4 mm · 5.3 × 3.3 mm",
+      "fuente": "Papel",
+      "nota": "El SOT tenía el formato roto \"5.2 -3.2 5.0-3.4 mm\".",
+      "modo": "replace"
+    },
+    {
+      "itemId": "89",
+      "campo": "Calidad",
+      "col": "F",
+      "valorActual": "COMERCIAL FINA",
+      "valorNuevo": "COMERCIAL SÚPER FINA",
+      "fuente": "Decisión 7",
+      "nota": "",
+      "modo": "replace"
+    },
+    {
+      "itemId": "498",
+      "campo": "Peso (ct)",
+      "col": "D",
+      "valorActual": "",
+      "valorNuevo": "0.40",
+      "fuente": "Papel",
+      "nota": "Estaba vacío → cierra hueco §13 (lista SIN PESO).",
+      "modo": "replace"
+    },
+    {
+      "itemId": "498",
+      "campo": "Nombre",
+      "col": "C",
+      "valorActual": "Baguette",
+      "valorNuevo": "Perfecta Compañía",
+      "fuente": "Papel",
+      "nota": "Era \"Baguette\". Dúo, cant 2.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "498",
+      "campo": "Medidas",
+      "col": "I",
+      "valorActual": "4.5 × 3.0 mm",
+      "valorNuevo": "4.5 × 2.9 mm · 4.3 × 2.6 mm",
+      "fuente": "Papel",
+      "nota": "El SOT solo tenía una medida (4.5 × 3.0). Confirma que el papel decía 4,5 y no 9,5.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "498",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "",
+      "valorNuevo": "Antes: Baguette (lote C-068). Nombrado 12-ago-2026 desde el inventario manuscrito.",
+      "fuente": "Papel",
+      "nota": "",
+      "modo": "replace"
+    },
+    {
+      "itemId": "498",
+      "campo": "Calidad",
+      "col": "F",
+      "valorActual": "FINA COMERCIAL",
+      "valorNuevo": "COMERCIAL SUPERIOR",
+      "fuente": "Decisión 7",
+      "nota": "El papel dice \"C. Superior\"; SOT decía FINA COMERCIAL.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "452",
+      "campo": "Nombre",
+      "col": "C",
+      "valorActual": "Gemas Pedagógicas Laboratorio (Marketing)",
+      "valorNuevo": "Falsedad",
+      "fuente": "Decisión 3",
+      "nota": "Era \"Gemas Pedagógicas Laboratorio (Marketing)\".",
+      "modo": "replace"
+    },
+    {
+      "itemId": "452",
+      "campo": "Peso (ct)",
+      "col": "D",
+      "valorActual": "4.32",
+      "valorNuevo": "1.06",
+      "fuente": "Decisión 3",
+      "nota": "SOT decía 4.32.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "452",
+      "campo": "Cant.",
+      "col": "G",
+      "valorActual": "4",
+      "valorNuevo": "1",
+      "fuente": "Decisión 3",
+      "nota": "SOT decía 4.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "452",
+      "campo": "Medidas",
+      "col": "I",
+      "valorActual": "7 mm",
+      "valorNuevo": "7.0 × 7.0 mm",
+      "fuente": "Decisión 3",
+      "nota": "SOT decía \"7 mm\".",
+      "modo": "replace"
+    },
+    {
+      "itemId": "452",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "",
+      "valorNuevo": "Antes: Gemas Pedagógicas Laboratorio (Marketing), 4.32 ct, cant 4. Renombrado y recapturado 12-ago-2026 desde el inventario manuscrito.",
+      "fuente": "Decisión 3",
+      "nota": "⚠️ Ver Pendientes: consignación Mario Gómez del 08-ago.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "501",
+      "campo": "costoBaseCOP",
+      "col": "L",
+      "valorActual": "91,875",
+      "valorNuevo": "0",
+      "fuente": "Decisión 2 + patrón 03/08",
+      "nota": "Padre retirado tras subdividir. Los 3 hijos absorben los $91.875.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "501",
+      "campo": "Cant.",
+      "col": "G",
+      "valorActual": "6",
+      "valorNuevo": "0",
+      "fuente": "patrón 03/08",
+      "nota": "Padre retirado; la fila y el QR siguen vivos.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "501",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "",
+      "valorNuevo": "SUBDIVIDIDO 12-ago-2026 en 3 sublotes vendibles individualmente: 501-A Dos Amores, 501-B Éxitosos, 501-C Equilibrio. El costo original ($91.875) se repartió por quilataje entre los hijos.",
+      "fuente": "patrón 03/08",
+      "nota": "",
+      "modo": "replace"
+    },
+    {
+      "itemId": "504",
+      "campo": "costoBaseCOP",
+      "col": "L",
+      "valorActual": "30,625",
+      "valorNuevo": "0",
+      "fuente": "Decisión 9 + patrón 03/08",
+      "nota": "Padre retirado tras subdividir.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "504",
+      "campo": "Cant.",
+      "col": "G",
+      "valorActual": "2",
+      "valorNuevo": "0",
+      "fuente": "patrón 03/08",
+      "nota": "",
+      "modo": "replace"
+    },
+    {
+      "itemId": "504",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "",
+      "valorNuevo": "SUBDIVIDIDO 12-ago-2026 en 2 sublotes: 504-A Amor Prohibido, 504-B Romance Predestinado. El costo original ($30.625) se repartió entre los hijos.",
+      "fuente": "patrón 03/08",
+      "nota": "",
+      "modo": "replace"
+    },
+    {
+      "itemId": "93",
+      "campo": "costoBaseCOP",
+      "col": "L",
+      "valorActual": "759,122",
+      "valorNuevo": "469120",
+      "fuente": "Decisión 5",
+      "nota": "SOT tenía $759.122. El papel manda. Se reparte entre 93A y 93B.",
+      "modo": "replace"
+    },
+    {
+      "itemId": "93",
+      "campo": "Cant.",
+      "col": "G",
+      "valorActual": "2",
+      "valorNuevo": "0",
+      "fuente": "Decisión: retirar el padre",
+      "nota": "",
+      "modo": "replace"
+    },
+    {
+      "itemId": "93",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "Precio especial por cierre de temporada",
+      "valorNuevo": "DIVIDIDO 12-ago-2026 en 93A Romeo (0.83 ct) y 93B Julieta (0.91 ct). Antes: Dos Luciérnagas, 1.74 ct. Padre retirado para evitar doble venta; la fila y el QR siguen vivos. · Precio especial por cierre de temporada",
+      "fuente": "Decisión: retirar el padre",
+      "nota": "⚠️ Tenía precioFinalCOP $1.574.300 — hay que recalcular (ver Pendientes).",
+      "modo": "append"
+    }
+  ],
+  "altas": [
+    {
+      "itemId": "93A",
+      "nombre": "Romeo",
+      "padre": "#93 Dos Luciérnagas",
+      "subLote": "C-045-G1",
+      "cant": "1",
+      "pesoCt": "0.83",
+      "medidas": "7.4 × 5.6 mm",
+      "calidad": "COMERCIAL SÚPER FINA",
+      "color": "Verde Limón",
+      "costoBaseCOP": 223771,
+      "reparto": "por quilataje: 0.83/1.74 × 469.120",
+      "nota": "Numeración 93A/93B ya definida en el vault (31-jul). Peso del papel (0,83) sobre el del vault (0,84)."
+    },
+    {
+      "itemId": "93B",
+      "nombre": "Julieta",
+      "padre": "#93 Dos Luciérnagas",
+      "subLote": "C-045-G1",
+      "cant": "1",
+      "pesoCt": "0.91",
+      "medidas": "7.4 × 5.6 mm",
+      "calidad": "COMERCIAL SÚPER FINA",
+      "color": "Verde Limón",
+      "costoBaseCOP": 245349,
+      "reparto": "por quilataje: absorbe el redondeo",
+      "nota": "Σ hijos = $469.120 exacto ✓"
+    },
+    {
+      "itemId": "535",
+      "nombre": "Amor Prohibido",
+      "padre": "#504 Baguette",
+      "subLote": "504-A",
+      "cant": "1",
+      "pesoCt": "",
+      "medidas": "5.0 × 3.1 mm",
+      "calidad": "COMERCIAL FINA",
+      "color": "Verde Natural",
+      "costoBaseCOP": 15313,
+      "reparto": "por unidad — falta pesar",
+      "nota": "⚠️ El papel da 0,55 ct del par, no de cada piedra. Sin pesos individuales no se puede repartir por quilataje."
+    },
+    {
+      "itemId": "536",
+      "nombre": "Romance Predestinado",
+      "padre": "#504 Baguette",
+      "subLote": "504-B",
+      "cant": "1",
+      "pesoCt": "",
+      "medidas": "4.9 × 3.0 mm",
+      "calidad": "COMERCIAL FINA",
+      "color": "Verde Natural",
+      "costoBaseCOP": 15312,
+      "reparto": "por unidad — absorbe el redondeo",
+      "nota": "Σ hijos = $30.625 exacto ✓"
+    },
+    {
+      "itemId": "537",
+      "nombre": "Dos Amores",
+      "padre": "#501 Baguette",
+      "subLote": "501-A",
+      "cant": "2",
+      "pesoCt": "0.32",
+      "medidas": "4.2 × 2.9 mm",
+      "calidad": "COMERCIAL SUPERIOR",
+      "color": "Verde Natural",
+      "costoBaseCOP": 26972,
+      "reparto": "por quilataje: 0.32/1.09 × 91.875",
+      "nota": "⚠️ Falta la 2ª medida. El nombre implica 2 piedras (patrón de la casa) y así 2+2+2 = las 6 uds de #501."
+    },
+    {
+      "itemId": "538",
+      "nombre": "Éxitosos",
+      "padre": "#501 Baguette",
+      "subLote": "501-B",
+      "cant": "2",
+      "pesoCt": "0.42",
+      "medidas": "4.8 × 2.7 mm · 4.6 × 2.7 mm",
+      "calidad": "COMERCIAL SUPERIOR",
+      "color": "Verde Natural",
+      "costoBaseCOP": 35401,
+      "reparto": "por quilataje: 0.42/1.09 × 91.875",
+      "nota": "Peso del grupo, no por piedra."
+    },
+    {
+      "itemId": "539",
+      "nombre": "Equilibrio",
+      "padre": "#501 Baguette",
+      "subLote": "501-C",
+      "cant": "2",
+      "pesoCt": "0.35",
+      "medidas": "5.6 × 2.7 mm · 5.3 × 2.5 mm",
+      "calidad": "COMERCIAL SUPERIOR",
+      "color": "Verde Natural",
+      "costoBaseCOP": 29502,
+      "reparto": "por quilataje: absorbe el redondeo",
+      "nota": "Σ hijos = $91.875 exacto ✓"
+    }
+  ]
+}
