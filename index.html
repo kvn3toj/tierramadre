@@ -80,7 +80,7 @@
     <!-- CRITICAL: Blocking version check - MUST run before React loads -->
     <script>
       (function () {
-        var APP_VERSION = "2026.08.11.1101";
+        var APP_VERSION = "2026.08.11.1134";
         var VERSION_KEY = 'tm_app_version';
         var RELOAD_KEY = 'tm_reload_pending';
 
@@ -139,57 +139,40 @@
     <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
     <link rel="dns-prefetch" href="https://res.cloudinary.com" />
 
-    <!-- Preload hero carousel images for instant display -->
-    <link
-      rel="preload"
-      as="image"
-      href="https://res.cloudinary.com/dyam6g2os/image/upload/v1765621976/tierramadre/gallery/gems/koso3gazzgfiakzg867r.jpg"
-      fetchpriority="high"
-    />
+    <!-- No hero image is preloaded here on purpose. This used to high-priority
+         preload the first gem image of <CategoryCarousels>, but that component
+         is exported through the home barrel and never actually rendered by any
+         route — so every page load in the whole app fetched a full-size
+         Cloudinary JPEG at fetchpriority="high" that nothing ever displayed
+         ("preloaded using link preload but not used" in the console).
+         If a hero preload comes back, it must point at an image the landing
+         route really paints, and only on that route. -->
   </head>
   <body>
     <div id="root"></div>
 
-    <!-- Screenshot Deterrent: NoPrint.js with error handling -->
-    <script>
-      // Pre-define noCopy and noPrint to prevent ReferenceError from external script
-      if (typeof noCopy === 'undefined') {
-        window.noCopy = function (options) {
-          console.log('[NoPrint] Using fallback protection');
-        };
-      }
-      if (typeof noPrint === 'undefined') {
-        window.noPrint = function (options) {
-          console.log('[NoPrint] Using fallback protection');
-        };
-      }
-    </script>
-    <script
-      src="https://pdfanticopy.com/noprint.js"
-      id="noprint-script"
-      onerror="console.warn('[NoPrint] Failed to load external script')"
-    ></script>
-    <script>
-      try {
-        // The library may expose noPrint OR noCopy - check both
-        var protectionFn =
-          typeof noPrint === 'function'
-            ? noPrint
-            : typeof noCopy === 'function'
-              ? noCopy
-              : null;
-        if (protectionFn) {
-          protectionFn({
-            disablePrint: true,
-            disableCopy: true,
-            disableRightClick: true,
-            autoblur: false,
-          });
-        }
-      } catch (e) {
-        console.warn('[NoPrint] Protection script unavailable:', e.message);
-      }
-    </script>
+    <!-- Screenshot deterrence lives in the app, NOT in a third-party script.
+         `ScreenProtectionProvider` (contexts/ScreenProtectionContext.tsx) +
+         `useScreenshotDetection` cover PrintScreen, Cmd/Win+Shift+3/4/5,
+         visibility change and window blur; per-image right-click/selection
+         blocking is scoped to the components that show media (ImageWatermark,
+         EmeraldCard, MediaGallery, ImageLightbox) and utils/pwa.ts.
+
+         We used to also load https://pdfanticopy.com/noprint.js here. It is not
+         a library — it is a top-level script that reads bare globals (noCopy,
+         noPrint, autoBlur, noScreenshot) at load time and ignores any argument,
+         so the config object passed to it never did anything. Because the shim
+         above it defined noCopy/noPrint as truthy functions, the script ran its
+         full body and then, on every mouseleave/blur, hit
+         `if (autoBlur)` with autoBlur never defined anywhere ->
+         "Uncaught ReferenceError: autoBlur is not defined" on repeat.
+         It also assigned `document.body.style.cssText` wholesale on load AND on
+         every click, wiping MUI's scroll-lock styles and any inline body style
+         React had set; forced `user-select: none` on every div in the app;
+         overwrote document-level DOM0 handlers; blocked the context menu even
+         inside inputs (defeating the editable-field exemption pwa.ts adds on
+         purpose); and inserted a black <span> as body's first child. Net effect
+         in production: a frozen, unusable UI. Do not reintroduce it. -->
 
     <!-- Safari async version check (backup for server-side updates between page loads) -->
     <script>
