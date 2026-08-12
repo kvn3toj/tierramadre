@@ -453,11 +453,67 @@ export const publicarViaBot = action({
   },
 });
 
+/**
+ * La casilla COMO LA VE EL BOT: un objeto que nombra cada campo, jamás un spread del
+ * documento.
+ *
+ * Es la misma regla que `providers.list` aplica desde el blindaje de PII del
+ * 2026-08-06, y por el mismo motivo: un spread manda al bot toda columna futura por
+ * defecto —falla ABIERTA—, así que agregar mañana una columna con datos personales la
+ * filtra en silencio. Acá una columna nueva simplemente no aparece hasta que alguien
+ * la agregue a esta lista a propósito.
+ *
+ * No es hipotético: ya había pasado. `clasificadaPor` se agregó después del patrón y
+ * lleva el EMAIL del staff para toda casilla clasificada desde la web (`guardar`, más
+ * arriba, le pone `caller.email`). Viajaba al bot sin que nadie lo hubiera decidido.
+ *
+ * **Viaja a propósito** (decisión de Kevin, 2026-08-12): sirve para decir quién
+ * clasificó la pieza. Lo que cambió no es que esté — es que está NOMBRADO.
+ *
+ * Lo que se queda afuera, y por qué:
+ *
+ *  - `costoUnitarioRealCOP` — ningún consumidor del bot lo lee. La advertencia de la
+ *    cabecera de esta sección lo daba por expuesto y aceptado; sacarlo achica esa
+ *    superficie sin costo. El costo del lote sigue llegando por `conciliacion`, que es
+ *    de donde el asistente deriva su sugerencia.
+ *  - `_id`, `_creationTime`, `preponderancia`, `costoBaseCOP` — internos de Convex y
+ *    campos del riel viejo, que en una casilla v4 valen 0.
+ */
+function casillaParaBot(c: {
+  itemId: string;
+  estadoCasilla?: string;
+  clasificadaPor?: string;
+  clasificadaEn?: number;
+}) {
+  return {
+    itemId: c.itemId,
+    estadoCasilla: c.estadoCasilla,
+    clasificadaPor: c.clasificadaPor,
+    clasificadaEn: c.clasificadaEn,
+  };
+}
+
 export const estadoDelLoteViaBot = action({
   args: { botSecret: v.string(), loteId: v.string() },
   handler: async (ctx, { botSecret, loteId }): Promise<unknown> => {
     requireBotSecret(botSecret);
-    return await ctx.runQuery(internal.casillas._estadoDelLote, { loteId });
+    const e = await ctx.runQuery(internal.casillas._estadoDelLote, { loteId });
+    // `null` se propaga tal cual: un lote que no existe no puede volverse un objeto a
+    // medias, porque del otro lado eso produce una lista de trabajo equivocada.
+    if (!e) return null;
+    return {
+      loteId: e.loteId,
+      estado: e.estado,
+      categoriaFiscalLote: e.categoriaFiscalLote,
+      costoTotalCOP: e.costoTotalCOP,
+      completeness: e.completeness,
+      conciliacion: e.conciliacion,
+      // Sigue siendo un ARRAY y con la misma longitud: la verificación de W1 sólo usa
+      // `.length`, para comprobar que se crearon tantas casillas como unidades pedidas.
+      casillas: e.casillas.map(casillaParaBot),
+      // `publicacionParcial` NO viaja: lleva `por`, que es el otro email de staff de
+      // este archivo (`publicar` le pone `caller.email`), y nadie lo lee.
+    };
   },
 });
 
@@ -465,6 +521,15 @@ export const porItemIdViaBot = action({
   args: { botSecret: v.string(), itemId: v.string() },
   handler: async (ctx, { botSecret, itemId }): Promise<unknown> => {
     requireBotSecret(botSecret);
-    return await ctx.runQuery(internal.casillas._porItemId, { itemId });
+    const c = await ctx.runQuery(internal.casillas._porItemId, { itemId });
+    if (!c) return null;
+    // El spread es de un objeto CONSTRUIDO por `casillaParaBot`, no del documento: sigue
+    // fallando cerrada. Se usa el helper en vez de repetir la lista para que las dos
+    // lecturas no puedan divergir.
+    return {
+      ...casillaParaBot(c),
+      completa: c.completa,
+      faltantes: c.faltantes,
+    };
   },
 });
