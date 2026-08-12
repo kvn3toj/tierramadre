@@ -136,9 +136,38 @@ lot edit stops re-running the catalog for every connected visitor.
 - **Estimated saving:** modest in direct bytes, but removes an entire re-run trigger. Stacks with 1A.
 - **Risk:** low — same values, resolved once at publish instead of on every read.
 
-**Fix 1C — if 1A is rejected, split the query.** Keep a tiny reactive
-`publishedIndex` (`itemId` + `publishedAt` only) so new items still appear live, and serve
-the 30-field payload one-shot. Preserves the realtime feel at a fraction of the scan.
+**Fix 1C — reactive sentinel + cached payload.** Keeps effectively-realtime behavior at
+1A's price, and is the better fit for a one-of-a-kind inventory (see the sold-item caveat
+below).
+
+> ⚠️ **Correction to an earlier draft of this section.** A previous version proposed a
+> "tiny reactive `publishedIndex` query returning only `itemId` + `publishedAt`". That does
+> not work, for exactly the reason this audit exists: Convex has **no field projection at
+> the database layer**. `.collect()` returns whole documents, so a "narrow" query over the
+> same rows scans identical bytes. Reading less means reading **fewer and smaller
+> documents**, never fewer fields.
+
+The working version needs a **separate one-document table**:
+
+1. Add a `catalogVersion` table holding a single doc (a counter or hash).
+2. Bump it from every write path that can change what the public catalog shows —
+   `_saveEdit`, `_saveEditMany`, `_upsertFromSheet` / `_upsertManyFromSheet`,
+   `_bulkPublishCertificados`, `lots._publish`, and the sale path that flips `estado`.
+3. The frontend subscribes to **that one document** (a single ~100-byte read per re-run
+   instead of the full published set) and refetches the cached one-shot catalog when it bumps.
+
+- **Estimated saving: 600–720 MB**, comparable to 1A.
+- **Risk:** low for customers, medium for engineering — no behavior change, but it adds a
+  write-path invariant. If a future write path forgets to bump the sentinel, the catalog
+  goes stale silently. That invariant needs a test.
+
+### The caveat that decides between 1A and 1C
+
+Under **1A**, a stone that sells stays visible in the catalog for up to the TTL. For
+generic retail that is a rounding error; for **one-of-a-kind emeralds it is not** — two
+customers can both believe the same stone is available, and `publishedCatalog` returns
+`estado` precisely so the UI can reflect that. **1C** invalidates within seconds of the
+sale, so it removes that window. That, not the bandwidth, is the reason to prefer 1C.
 
 - **Risk:** low–medium; more code than 1A.
 
@@ -188,13 +217,14 @@ branch merges and its write volume lands in Prod.
 
 ## 7. Recommended order
 
-| Step | Action                                                                | Saving          | Risk   | Needs sign-off |
-| ---- | --------------------------------------------------------------------- | --------------- | ------ | -------------- |
-| 1    | Fix 1C on `HomePage.tsx:59` — counts query instead of `products.list` | ~80–140 MB      | low    | no             |
-| 2    | Fix 1B — denormalize `mina`/`tratamiento`, drop the `lots` reads      | trigger removal | low    | no             |
-| 3    | Fix 1A — cache the public catalog, drop the live subscription         | ~600–720 MB     | medium | **yes**        |
-| 4    | `estado` / pagination on `ItemsPage`, `EtiquetasPage`                 | ~40–60 MB       | low    | no             |
-| 5    | Point dev at the sheet, not Convex (07-21 spec §2)                    | ~45 MB          | low    | no             |
+| Step  | Action                                                                                                                            | Saving          | Risk    | Needs sign-off |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------- | -------------- |
+| 1     | **Fix 2** on `HomePage.tsx:59` — counts query instead of `products.list`                                                          | ~80–140 MB      | low     | no             |
+| 2     | **Fix 1B** — denormalize `mina`/`tratamiento`, drop the `lots` reads                                                              | trigger removal | low     | no             |
+| 3     | **Fix 1C** — reactive sentinel + cached catalog · _preferred: no sold-item window_                                                | ~600–720 MB     | low–med | **yes**        |
+| 3-alt | **Fix 1A** — plain cached catalog, no sentinel · _cheaper to build, accepts a TTL-length window where a sold stone stays visible_ | ~600–720 MB     | medium  | **yes**        |
+| 4     | `estado` / pagination on `ItemsPage`, `EtiquetasPage`                                                                             | ~40–60 MB       | low     | no             |
+| 5     | Point dev at the sheet, not Convex (07-21 spec §2)                                                                                | ~45 MB          | low     | no             |
 
 **Projected result:** 1.2 GB → **~185–490 MB**, i.e. 18–49% of the free cap, with
 headroom for growth. Steps 1, 2 and 4 alone (no product-behavior change, no sign-off)
