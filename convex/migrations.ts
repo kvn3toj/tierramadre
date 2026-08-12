@@ -8,6 +8,10 @@ import type { Id } from './_generated/dataModel';
 import { v } from 'convex/values';
 import { bumpInventoryTotal } from './products';
 import { withPublishStamp } from './_lib/publishState';
+import {
+  bumpCatalogVersion,
+  bumpCatalogVersionIfPublished,
+} from './_lib/catalogVersion';
 import { computePrecioFinal } from './_lib/pricing';
 
 /**
@@ -146,6 +150,12 @@ export const backfillLotProvenance = internalMutation({
       patched.push(row.itemId);
     }
 
+    // `mina`/`tratamiento` are projected by `publishedCatalog`, so a backfill
+    // changes what visitors see. Every row scanned here is already published
+    // (the index above filters on it), hence the unguarded bump — but only when
+    // something actually moved, so a converged re-run stays free.
+    if (patched.length > 0) await bumpCatalogVersion(ctx);
+
     return {
       scanned: rows.length,
       backfilled: patched.length,
@@ -253,6 +263,11 @@ export const mergeAguaMarina = internalMutation({
       syncStatus: 'pending' as const,
       syncError: undefined,
     });
+    // Re-asserting VENDIDA changes what the public catalog renders for this
+    // piece if it is published. One-shot repair, but the sentinel costs one
+    // write and keeps the wiring guard in tests/catalogSentinelWiring.test.ts
+    // unconditional — no allowlist to drift.
+    await bumpCatalogVersionIfPublished(ctx, keep, keep);
 
     // 2. Repoint the lot join → C-007 now counts item 340 at the same 20%.
     await ctx.db.patch(dropJoin._id, { itemId: KEEP });
