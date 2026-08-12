@@ -63,3 +63,43 @@ export async function isStaffOrBotSession(opts: {
   if (await isStaffSession(opts.sessionToken)) return true;
   return isBotSecret(opts.botSecret);
 }
+
+/**
+ * `isStaffOrBotSession`, pero que GRITA cuando la credencial existe y no sirve.
+ *
+ * El problema que resuelve: un gate que devuelve `[]` es indistinguible de un
+ * inventario vacío. El 2026-08-11 eso costó que `buscar_comparables` (anima-bot)
+ * reportara 0 comparables sobre 523 ítems durante días — el cliente no mandaba
+ * `botSecret`, `products.list` devolvía `[]`, y nada en la cadena podía notar la
+ * diferencia entre «no autenticado» y «no hay nada».
+ *
+ * El corte NO es «autorizado o no», es «¿ofreciste credencial?»:
+ *
+ * - **Ninguna credencial** → `false`. El llamador devuelve `[]` como siempre. Es
+ *   el estado normal de la UI deslogueada: `readFreshSessionToken()` filtra los
+ *   tokens vencidos en el cliente y manda `undefined`, así que una sesión
+ *   expirada llega acá como «ninguna» y sigue mostrando pantalla vacía, no rota.
+ *   Esto es lo que preserva el contrato del docstring de arriba.
+ * - **Credencial presente que no verifica** → lanza. Un `botSecret` errado o
+ *   rotado, un token manipulado, o `ADMIN_SYNC_TOKEN` sin definir en el server:
+ *   ninguno es un estado normal, y todos son exactamente el fallo silencioso que
+ *   este helper existe para volver ruidoso.
+ *
+ * Devuelve `true` autorizado, `false` cuando no hubo credencial que evaluar.
+ */
+export async function requireStaffOrBotSession(opts: {
+  sessionToken?: string;
+  botSecret?: string;
+}): Promise<boolean> {
+  if (await isStaffOrBotSession(opts)) return true;
+  const ofrecio =
+    opts.sessionToken !== undefined || opts.botSecret !== undefined;
+  if (ofrecio) {
+    // Sin decir CUÁL credencial falló ni por qué: esto viaja al cliente.
+    throw new Error(
+      'No autorizado: la credencial suministrada no es válida. ' +
+        'Esto NO significa que no haya datos — es un fallo de autenticación.',
+    );
+  }
+  return false;
+}

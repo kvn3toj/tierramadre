@@ -76,6 +76,33 @@ const GOOGLE_PREFS_KEY = STORAGE_KEYS.GOOGLE_PREFS;
 const GOOGLE_TOKEN_KEY = STORAGE_KEYS.GOOGLE_TOKEN;
 
 // =============================================================================
+// SILENT-REFRESH MODULE STATE (page-lifetime, NOT per-effect)
+// =============================================================================
+
+// GSI's initialize() is a call-ONCE-per-page-load API. These flags therefore
+// live at module scope: a `let` inside the silent-refresh effect resets every
+// time the effect re-runs, and that effect keys off `user`, whose identity
+// changes several times during boot (loadStoredUser sets a freshly parsed
+// object on each re-validation branch). That is what produced
+// "google.accounts.id.initialize() is called multiple times" in production.
+let gsiInitialized = false;
+
+// One in-flight prompt() at a time. Overlapping calls abort each other, which
+// surfaces as "FedCM get() rejects with AbortError: signal is aborted without
+// reason" — the window-focus prompt cancelling the interval prompt.
+let gsiPromptInFlight = false;
+
+// Releases the in-flight latch if a prompt() never reports a moment back.
+let gsiPromptWatchdog: number | null = null;
+
+// FedCM can be switched off by the user (per-site or globally). We cannot turn
+// it back on from JS, so once it has clearly refused, stop asking: unbounded
+// retries only spam the console and feed Google's exponential cooldown. The
+// visible re-auth fallback (Vitrina dialog) still covers the user.
+let gsiConsecutiveFailures = 0;
+const GSI_MAX_CONSECUTIVE_FAILURES = 3;
+
+// =============================================================================
 // CONTEXT
 // =============================================================================
 
@@ -260,6 +287,15 @@ export function GoogleAuthProvider({
       | undefined;
     if (!clientId) return;
 
+    // A prompt() moment. Under FedCM the isNotDisplayed/isSkippedMoment pair is
+    // no longer supported, so every method is optional and called defensively.
+    type GsiPromptMoment = {
+      isDismissedMoment?: () => boolean;
+      getDismissedReason?: () => string;
+      isNotDisplayed?: () => boolean;
+      isSkippedMoment?: () => boolean;
+    };
+
     type GsiIdApi = {
       initialize: (config: {
         client_id: string;
@@ -267,24 +303,37 @@ export function GoogleAuthProvider({
         auto_select?: boolean;
         cancel_on_tap_outside?: boolean;
       }) => void;
-      prompt: () => void;
+      prompt: (
+        momentListener?: (notification: GsiPromptMoment) => void,
+      ) => void;
     };
 
-    let cancelled = false;
     // GSI's `initialize()` is documented as a call-ONCE-per-page-load API: it
     // (re)registers the global client_id/callback pair and resets internal
     // One Tap state (auto-select eligibility, exponential cooldown tracking).
-    // The previous version of this effect called `initialize()` on every
+    // An older version of this effect called `initialize()` on every
     // silent-refresh attempt — on mount, on every window focus, AND every 5
     // minutes for as long as the token stayed stale — which kept resetting
     // that state and also stomped whatever callback @react-oauth/google's
     // <GoogleLogin> had registered for the *visible* sign-in button. Net
     // effect: silent refresh almost never actually renewed the token, so it
     // died at its real ~1h mark, and a manual re-login could silently land on
-    // the wrong callback if this effect had re-initialized after it. Guard
-    // initialize() to run exactly once per mounted session; only `prompt()`
-    // (which is safe to call repeatedly) runs on each retry trigger.
-    let initialized = false;
+    // the wrong callback if this effect had re-initialized after it.
+    //
+    // The guard for that lives at MODULE scope (`gsiInitialized`), not here: an
+    // effect-local flag is recreated whenever the effect re-runs, and this one
+    // keys off `user`, whose identity changes several times while
+    // loadStoredUser() re-validates on boot. That is what still produced
+    // "initialize() is called multiple times" in production.
+    const markFailure = () => {
+      gsiConsecutiveFailures += 1;
+      if (gsiConsecutiveFailures === GSI_MAX_CONSECUTIVE_FAILURES) {
+        log.debug(
+          'Silent token refresh refused repeatedly (FedCM likely disabled) — ' +
+            'standing down, visible re-auth will cover it',
+        );
+      }
+    };
 
     const attemptSilentRefresh = () => {
       // Keep the 30-day app session token minted/refreshed. Self-throttling
@@ -294,6 +343,15 @@ export function GoogleAuthProvider({
 
       // Google token still fresh — nothing more to do.
       if (readFreshGoogleIdToken()) return;
+
+      // FedCM can be off by user/site setting; we cannot re-enable it from JS.
+      // After it has clearly refused this many times, stop asking rather than
+      // reissuing a doomed prompt() every 60s and on every window focus.
+      if (gsiConsecutiveFailures >= GSI_MAX_CONSECUTIVE_FAILURES) return;
+
+      // A second prompt() while one is still open aborts the first, which is
+      // what surfaced as "AbortError: signal is aborted without reason".
+      if (gsiPromptInFlight) return;
 
       const gsi = (
         window as unknown as {
@@ -305,13 +363,20 @@ export function GoogleAuthProvider({
       if (!gsi) return;
 
       try {
-        if (!initialized) {
+        if (!gsiInitialized) {
           gsi.initialize({
             client_id: clientId,
             auto_select: true,
             cancel_on_tap_outside: false,
+            // Deliberately NOT gated on an effect-local `cancelled` flag: this
+            // callback is registered once per page load and outlives any single
+            // mount of this provider, so a flag captured from the mount that
+            // happened to register it would silence every later credential.
+            // Both actions below are idempotent and mount-independent.
             callback: (response) => {
-              if (cancelled || !response?.credential) return;
+              gsiPromptInFlight = false;
+              if (!response?.credential) return;
+              gsiConsecutiveFailures = 0;
               // Re-store the fresh credential WITHOUT a full re-validation flash.
               localStorage.setItem(GOOGLE_TOKEN_KEY, response.credential);
               log.debug('Silently refreshed Google ID token');
@@ -320,11 +385,48 @@ export function GoogleAuthProvider({
               void ensureAppSession();
             },
           });
-          initialized = true;
+          gsiInitialized = true;
         }
-        gsi.prompt();
+
+        gsiPromptInFlight = true;
+        // Safety net: if no moment ever arrives (a hard FedCM NetworkError does
+        // not reliably notify), release the in-flight latch so we are not
+        // wedged shut for the rest of the page's life.
+        if (gsiPromptWatchdog !== null) window.clearTimeout(gsiPromptWatchdog);
+        gsiPromptWatchdog = window.setTimeout(() => {
+          if (gsiPromptInFlight) {
+            gsiPromptInFlight = false;
+            markFailure();
+          }
+        }, 30 * 1000);
+
+        gsi.prompt((notification) => {
+          gsiPromptInFlight = false;
+          try {
+            if (notification?.isDismissedMoment?.()) {
+              if (
+                notification.getDismissedReason?.() === 'credential_returned'
+              ) {
+                gsiConsecutiveFailures = 0;
+              } else {
+                markFailure();
+              }
+            } else if (
+              notification?.isNotDisplayed?.() ||
+              notification?.isSkippedMoment?.()
+            ) {
+              markFailure();
+            }
+            // Anything else (a display moment, or a notification shape we do
+            // not recognise) is not evidence of failure — leave the count be.
+          } catch {
+            markFailure();
+          }
+        });
       } catch {
         // Best-effort only; never disturb the session when renewal fails.
+        gsiPromptInFlight = false;
+        markFailure();
         log.debug(
           'Silent token refresh unavailable, deferring to visible re-auth',
         );
@@ -342,7 +444,6 @@ export function GoogleAuthProvider({
     const interval = window.setInterval(attemptSilentRefresh, 60 * 1000);
 
     return () => {
-      cancelled = true;
       window.removeEventListener('focus', onFocus);
       window.clearInterval(interval);
     };
