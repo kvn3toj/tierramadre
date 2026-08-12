@@ -12,8 +12,14 @@
  * configured) ready to merge with the Google Sheets catalog in `useTreasure`.
  */
 
-import { useMemo } from 'react';
-import { useConvexQuery, convexApi } from '../lib/convex-safe';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  useConvexQuery,
+  useConvexClient,
+  convexApi,
+  convexReady,
+} from '../lib/convex-safe';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 import type {
   TreasureItem,
   EmeraldColor,
@@ -181,14 +187,116 @@ export function mapRowToTreasureItem(row: PublishedRow): TreasureItem {
   };
 }
 
+// ─── Cached catalog (Fix 1C) ────────────────────────────────────────────
+//
+// See docs/audits/2026-08-12-convex-usage-audit.md §4 and
+// convex/_lib/catalogVersion.ts.
+//
+// This hook used to hold a live reactive subscription to
+// `products.publishedCatalog`. That query `.collect()`s every published row —
+// 81-field documents — and Convex bills Database I/O on documents SCANNED, so
+// it re-scanned the whole catalog on every visitor connect AND again, for every
+// connected visitor, on every write into its read set. Cost scaled as
+// `visitors × writes`: 759.76 MB in Aug 2026, 63% of the team's entire quota.
+//
+// Now: subscribe to a ONE-DOCUMENT sentinel (`products.catalogVersion`) and
+// fetch the heavy payload one-shot, cached in localStorage.
+
+// Shared with clearTreasureCaches() so sign-out purges this alongside the other
+// price-bearing caches — see src/utils/treasureCacheStorage.ts.
+const CATALOG_CACHE_KEY = STORAGE_KEYS.PUBLISHED_CATALOG_CACHE;
+
+/**
+ * Freshness floor, independent of the sentinel.
+ *
+ * The sentinel gives seconds-level invalidation for real changes, but it is
+ * maintained by hand across several mutations (see convex/_lib/catalogVersion.ts)
+ * and a future write path could forget to bump it. This TTL is what makes that
+ * a performance nit instead of a correctness bug: worst case the catalog is
+ * stale for five minutes — exactly a plain cached catalog — never forever.
+ */
+export const CATALOG_CACHE_TTL_MS = 5 * 60 * 1000;
+
+interface CachedCatalog {
+  /** Sentinel value this payload was fetched at. */
+  v: number;
+  /** ms epoch of the fetch, for the TTL floor. */
+  fetchedAt: number;
+  rows: PublishedRow[];
+}
+
+function readCatalogCache(): CachedCatalog | null {
+  try {
+    const raw = localStorage.getItem(CATALOG_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CachedCatalog;
+    // Defensive: a truncated or hand-edited entry must not crash the catalog.
+    if (!parsed || !Array.isArray(parsed.rows)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeCatalogCache(entry: CachedCatalog): void {
+  try {
+    localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(entry));
+  } catch {
+    // Quota or private mode — the catalog still works, it just refetches.
+  }
+}
+
 /**
  * Published Fotosíntesis items, mapped to TreasureItem and ready to merge
  * into the Treasure Browser. Empty array while loading / Convex unconfigured.
  */
 export function useFotosintesisCatalog(): TreasureItem[] {
-  const rows = useConvexQuery(convexApi.products.publishedCatalog, {}) as
-    | PublishedRow[]
+  // The ONLY standing subscription: one ~100-byte document.
+  const version = useConvexQuery(convexApi.products.catalogVersion, {}) as
+    | { v: number; updatedAt: number }
     | undefined;
+  const convexClient = useConvexClient();
+
+  // Synchronous cache read in the initializer — per the project's anti-blinking
+  // rule, an effect-based read would paint an empty grid and then snap.
+  const [rows, setRows] = useState<PublishedRow[] | null>(
+    () => readCatalogCache()?.rows ?? null,
+  );
+
+  const seenVersion = version?.v;
+
+  useEffect(() => {
+    if (!convexReady || !convexClient) return;
+    // Sentinel still loading — keep showing whatever the cache gave us.
+    if (seenVersion === undefined) return;
+
+    const cached = readCatalogCache();
+    const isFresh =
+      cached !== null &&
+      cached.v === seenVersion &&
+      Date.now() - cached.fetchedAt < CATALOG_CACHE_TTL_MS;
+    if (isFresh) return;
+
+    let cancelled = false;
+    convexClient
+      .query(convexApi.products.publishedCatalog, {})
+      .then((result) => {
+        if (cancelled) return;
+        const next = result as PublishedRow[];
+        setRows(next);
+        writeCatalogCache({
+          v: seenVersion,
+          fetchedAt: Date.now(),
+          rows: next,
+        });
+      })
+      .catch(() => {
+        // Keep serving the cached catalog rather than blanking the browser.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [convexClient, seenVersion]);
 
   return useMemo(() => {
     if (!rows) return [];
