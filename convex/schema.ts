@@ -1207,4 +1207,58 @@ export default defineSchema({
   })
     .index('by_threadId', ['threadId'])
     .index('by_userEmail', ['userEmail']),
+
+  /**
+   * El archivo de la doble corrida (SOT-V4 Fase 1, punto 8).
+   *
+   * `dobleCorrida:ejecutar` devolvía su reporte y se evaporaba, así que el número
+   * que tiene que sostener el dictamen sobre el modelo de precios existía sólo en
+   * la terminal de quien la corrió. **Un gate cuya evidencia no queda registrada no
+   * es un gate:** no se puede comparar una corrida con la siguiente, ni auditar con
+   * qué datos salió cada número.
+   *
+   * Guarda el resumen y **sólo los ítems comparables** — los que no se pudieron
+   * comparar ya están contados y agrupados por motivo en `sinComparar`, y
+   * archivarlos de a uno sería volumen sin información.
+   *
+   * Es append-only: cada corrida es una fila, y la gracia es poder mirarlas en
+   * serie. Nada la borra.
+   */
+  dobleCorridas: defineTable({
+    ts: v.number(),
+    filasHojaLeidas: v.number(),
+    comparables: v.number(),
+    medianaDiferenciaPct: v.number(),
+    sobre5Pct: v.number(),
+    sobre10Pct: v.number(),
+    sinComparar: v.array(
+      v.object({ motivo: v.string(), cantidad: v.number() }),
+    ),
+    paraRevisarInferencia: v.array(v.string()),
+    /**
+     * Cuántos comparables se apoyan en una categoría fiscal INFERIDA. Decide
+     * cuánta fe tenerle a la mediana: una comparación construida sobre inferencias
+     * mide el motor Y la inferencia a la vez. En la corrida del 2026-08-12 los
+     * cuatro comparables eran inferidos.
+     */
+    comparablesConCategoriaInferida: v.number(),
+    comparaciones: v.array(
+      v.object({
+        itemId: v.string(),
+        precioV3COP: v.optional(v.number()),
+        precioV4COP: v.optional(v.number()),
+        diferenciaCOP: v.optional(v.number()),
+        diferenciaPct: v.optional(v.number()),
+        motivo: v.optional(v.string()),
+        categoriaFiscalOrigen: v.optional(
+          v.union(
+            v.literal('capturada'),
+            v.literal('inferida'),
+            v.literal('revisada'),
+          ),
+        ),
+        revisarInferencia: v.boolean(),
+      }),
+    ),
+  }).index('by_ts', ['ts']),
 });

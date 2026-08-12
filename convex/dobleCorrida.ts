@@ -17,12 +17,18 @@
  * `migracionV4:leerTabla`) y los precios de dev (`preciosPorItemDb`, el mismo
  * cálculo que usa el espejo — no se reinventa).
  */
-import { internalAction, internalQuery } from './_generated/server';
+import {
+  internalAction,
+  internalMutation,
+  internalQuery,
+} from './_generated/server';
+import { v } from 'convex/values';
 import { internal } from './_generated/api';
 import { leerTabla } from './migracionV4';
 import { preciosPorItemDb } from './precios';
 import {
   compararPreciosItemV3vsV4,
+  filaParaGuardar,
   mapearInventarioParaComparar,
   resumirComparacion,
   type ComparacionItem,
@@ -82,10 +88,71 @@ export const ejecutar = internalAction({
 
     const comparaciones = compararPreciosItemV3vsV4(filasV3, preciosV4);
 
-    return {
+    const resultado = {
       filasHojaLeidas: filasInventario.length,
       resumen: resumirComparacion(comparaciones),
       comparaciones,
     };
+
+    /**
+     * Se ARCHIVA antes de devolver. Hasta el 2026-08-12 esta action devolvía el
+     * reporte y no dejaba rastro: el número que tiene que sostener el dictamen
+     * sobre el modelo de precios existía sólo en la terminal de quien la corrió, y
+     * no había forma de comparar una corrida con la siguiente ni de auditar con qué
+     * datos salió cada una.
+     *
+     * El guardado NO puede tumbar la corrida: si la escritura falla, el reporte se
+     * devuelve igual. Perder la copia es malo; perder también la medición que acaba
+     * de leer 530 filas de la hoja es peor.
+     */
+    try {
+      await ctx.runMutation(internal.dobleCorrida._guardar, {
+        fila: filaParaGuardar(resultado, Date.now()),
+      });
+    } catch {
+      // Silencio deliberado: ver arriba. El reporte sigue.
+    }
+
+    return resultado;
+  },
+});
+
+/** El archivo de una corrida. Append-only: nada actualiza ni borra estas filas. */
+export const _guardar = internalMutation({
+  args: {
+    fila: v.object({
+      ts: v.number(),
+      filasHojaLeidas: v.number(),
+      comparables: v.number(),
+      medianaDiferenciaPct: v.number(),
+      sobre5Pct: v.number(),
+      sobre10Pct: v.number(),
+      sinComparar: v.array(
+        v.object({ motivo: v.string(), cantidad: v.number() }),
+      ),
+      paraRevisarInferencia: v.array(v.string()),
+      comparablesConCategoriaInferida: v.number(),
+      comparaciones: v.array(
+        v.object({
+          itemId: v.string(),
+          precioV3COP: v.optional(v.number()),
+          precioV4COP: v.optional(v.number()),
+          diferenciaCOP: v.optional(v.number()),
+          diferenciaPct: v.optional(v.number()),
+          motivo: v.optional(v.string()),
+          categoriaFiscalOrigen: v.optional(
+            v.union(
+              v.literal('capturada'),
+              v.literal('inferida'),
+              v.literal('revisada'),
+            ),
+          ),
+          revisarInferencia: v.boolean(),
+        }),
+      ),
+    }),
+  },
+  handler: async (ctx, { fila }) => {
+    await ctx.db.insert('dobleCorridas', fila);
   },
 });

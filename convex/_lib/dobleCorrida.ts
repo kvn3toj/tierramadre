@@ -224,3 +224,66 @@ export function resumirComparacion(
       .map((c) => c.itemId),
   };
 }
+
+/** Una corrida, tal como se archiva. Ver `filaParaGuardar`. */
+export interface CorridaGuardada {
+  ts: number;
+  filasHojaLeidas: number;
+  comparables: number;
+  medianaDiferenciaPct: number;
+  sobre5Pct: number;
+  sobre10Pct: number;
+  sinComparar: { motivo: string; cantidad: number }[];
+  paraRevisarInferencia: string[];
+  /**
+   * Cuántos de los comparables se apoyan en una categoría fiscal INFERIDA en vez
+   * de capturada por una persona.
+   *
+   * No estaba en `ResumenComparacion` y es el dato que decide cuánta fe tenerle a
+   * la mediana: la categoría fiscal elige el régimen con que se cotiza, así que
+   * una comparación construida sobre inferencias mide el motor Y la inferencia a
+   * la vez. En la corrida del 2026-08-12 los CUATRO comparables eran inferidos, y
+   * ese caveat hubo que descubrirlo leyendo los ítems de a uno.
+   */
+  comparablesConCategoriaInferida: number;
+  /** Sólo los ítems que SÍ se pudieron comparar. */
+  comparaciones: ComparacionItem[];
+}
+
+/**
+ * El reporte → la fila que se archiva.
+ *
+ * Guarda **sólo los comparables**, no las 530 filas leídas: los que no se pudieron
+ * comparar ya están contados y agrupados por motivo en `sinComparar`, así que
+ * archivarlos de a uno es volumen sin información — y este proyecto ya está sobre
+ * los límites de su plan.
+ *
+ * Puro y con `ts` inyectado: una función que leyera el reloj no se podría fijar en
+ * un test, y el resto de este archivo ya sigue esa regla.
+ */
+export function filaParaGuardar(
+  resultado: {
+    filasHojaLeidas: number;
+    resumen: ResumenComparacion;
+    comparaciones: readonly ComparacionItem[];
+  },
+  ts: number,
+): CorridaGuardada {
+  const comparables = resultado.comparaciones.filter(
+    (c) => c.diferenciaPct !== undefined,
+  );
+  return {
+    ts,
+    filasHojaLeidas: resultado.filasHojaLeidas,
+    comparables: resultado.resumen.comparables,
+    medianaDiferenciaPct: resultado.resumen.medianaDiferenciaPct,
+    sobre5Pct: resultado.resumen.sobre5Pct,
+    sobre10Pct: resultado.resumen.sobre10Pct,
+    sinComparar: resultado.resumen.sinComparar,
+    paraRevisarInferencia: resultado.resumen.paraRevisarInferencia,
+    comparablesConCategoriaInferida: comparables.filter(
+      (c) => c.categoriaFiscalOrigen === 'inferida',
+    ).length,
+    comparaciones: [...comparables],
+  };
+}

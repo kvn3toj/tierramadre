@@ -28,6 +28,7 @@ import {
   compararPreciosItemV3vsV4,
   mapearInventarioParaComparar,
   resumirComparacion,
+  filaParaGuardar,
 } from '../convex/_lib/dobleCorrida';
 
 // Los mismos cuatro ítems y los mismos `precioObjetivoUnidadCOP` pinneados en
@@ -339,5 +340,97 @@ describe('compararPreciosItemV3vsV4 — divergencia en lotes con categoría infe
       (x) => x.itemId === '372',
     );
     expect(c.revisarInferencia).toBe(false);
+  });
+});
+
+/**
+ * La corrida que se GUARDA — agregado el 2026-08-12.
+ *
+ * `dobleCorrida:ejecutar` no persistía nada: devolvía el reporte y se evaporaba. Un
+ * gate cuya evidencia no queda registrada no es un gate: no se puede comparar una
+ * corrida con la siguiente, ni auditar con qué datos salió cada número.
+ *
+ * `filaParaGuardar` decide QUÉ se guarda, y las dos decisiones tienen motivo:
+ *
+ *  - **Sólo los comparables**, no las 530 filas. Los no comparables ya están
+ *    contados y agrupados por motivo en el resumen; guardar las 526 restantes es
+ *    volumen sin información, y el proyecto ya está sobre los límites de su plan.
+ *  - **`comparablesConCategoriaInferida`**, que no existía. En la corrida del
+ *    2026-08-12 los CUATRO comparables tenían la categoría fiscal inferida, y esa
+ *    es la razón principal por la que el número no sostiene un dictamen — la
+ *    categoría decide el régimen con que se cotiza. Ese caveat hubo que descubrirlo
+ *    leyendo los ítems uno por uno; contarlo lo pone delante de quien lea el
+ *    resultado.
+ */
+describe('filaParaGuardar — la evidencia que sobrevive a la corrida', () => {
+  const RESUMEN = {
+    comparables: 2,
+    medianaDiferenciaPct: 0.1,
+    sobre5Pct: 2,
+    sobre10Pct: 1,
+    sinComparar: [{ motivo: 'v4 no cotiza el ítem', cantidad: 484 }],
+    paraRevisarInferencia: ['999'],
+  };
+  const COMPARACIONES = [
+    {
+      itemId: '490',
+      precioV3COP: 1_537_224,
+      precioV4COP: 1_743_323,
+      diferenciaCOP: 206_099,
+      diferenciaPct: 0.134,
+      categoriaFiscalOrigen: 'inferida' as const,
+      revisarInferencia: false,
+    },
+    {
+      itemId: '487',
+      precioV3COP: 2_054_421,
+      precioV4COP: 2_074_860,
+      diferenciaCOP: 20_439,
+      diferenciaPct: 0.0099,
+      categoriaFiscalOrigen: 'capturada' as const,
+      revisarInferencia: false,
+    },
+    { itemId: '538', motivo: 'sin precioFinalCOP en el SOT v3' },
+  ];
+
+  const fila = () =>
+    filaParaGuardar(
+      { filasHojaLeidas: 530, resumen: RESUMEN, comparaciones: COMPARACIONES },
+      1_755_000_000_000,
+    );
+
+  it('guarda SÓLO los comparables, no las filas que no se pudieron comparar', () => {
+    expect(fila().comparaciones.map((c) => c.itemId)).toEqual(['490', '487']);
+  });
+
+  it('cuenta cuántos comparables se apoyan en una categoría INFERIDA', () => {
+    // El caveat de la corrida del 2026-08-12, ahora como dato y no como nota al pie.
+    expect(fila().comparablesConCategoriaInferida).toBe(1);
+  });
+
+  it('conserva el resumen entero y estampa el momento de la corrida', () => {
+    const f = fila();
+    expect(f.ts).toBe(1_755_000_000_000);
+    expect(f.filasHojaLeidas).toBe(530);
+    expect(f.medianaDiferenciaPct).toBe(0.1);
+    expect(f.sobre5Pct).toBe(2);
+    expect(f.sobre10Pct).toBe(1);
+    expect(f.sinComparar).toEqual(RESUMEN.sinComparar);
+    expect(f.paraRevisarInferencia).toEqual(['999']);
+  });
+
+  it('una corrida sin ningún comparable se guarda igual, con cero', () => {
+    const vacia = filaParaGuardar(
+      {
+        filasHojaLeidas: 530,
+        resumen: { ...RESUMEN, comparables: 0, medianaDiferenciaPct: 0 },
+        comparaciones: [{ itemId: '538', motivo: 'sin precio' }],
+      },
+      1,
+    );
+    // Guardar el cero importa: «no hubo con qué comparar» es un resultado, y sin
+    // registrarlo la próxima corrida no sabe que ésta ya pasó.
+    expect(vacia.comparaciones).toEqual([]);
+    expect(vacia.comparablesConCategoriaInferida).toBe(0);
   });
 });
