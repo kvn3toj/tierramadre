@@ -83,6 +83,14 @@ const createArgs = {
   mina: v.optional(v.string()),
   pesoTotalQuilates: v.optional(v.number()),
   numeroFactura: v.optional(v.string()),
+  /**
+   * La IMAGEN de la factura (URL de Drive). `numeroFactura` es el número; esto
+   * es el papel. Columna L de la pestaña «Lotes», ya mapeada en
+   * `_lib/columnMaps.ts` y en `api/_lib/admin-table-config.ts` — no hay layout
+   * que tocar. El sync es bidireccional y sin resolución de conflicto: quien
+   * edite la hoja pisa esto, como con toda otra columna de `lots`.
+   */
+  urlFactura: v.optional(v.string()),
   notas: v.optional(v.string()),
   operadorNombre: v.optional(v.string()),
   /** Idempotencia, igual que `lots.create`: un reintento no crea dos lotes. */
@@ -157,6 +165,7 @@ export const _create = internalMutation({
       mina: args.mina,
       pesoTotalQuilates: args.pesoTotalQuilates,
       numeroFactura: args.numeroFactura,
+      urlFactura: args.urlFactura,
       notas: args.notas,
       operadorNombre: args.operadorNombre,
       operadorRol: 'captura',
