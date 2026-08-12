@@ -2317,21 +2317,29 @@ const ADDENDUM_20260812_ALTAS = [
     asesorActual: 'Isa la Negra Vikinga Warrior Portocarrero',
     estadoAsesor: 'ASESOR',
     /**
-     * ⚠️ NACE SIN PUBLICAR, a diferencia de su hermana y de los 7 hijos del
-     * 12-ago. Su medida no está confirmada: el papel dice 5,9 × 3,9 y la col I
-     * del padre traía `5.6 × 7.0 × 5.7` para la segunda piedra — una de las dos
-     * está mal, y la piedra está donde Isa, así que re-medirla no es trivial.
-     * Publicar una medida que sabemos contradicha es un error de cara al
-     * cliente. Cuando se confirme: `lots.publish` / el toggle del catálogo, o
-     * re-correr esto tras cambiar el flag.
+     * SALE PUBLICADA. Nació sin publicar mientras su medida estaba en disputa
+     * (el papel dice 5,9 × 3,9; la col I del padre traía `5.6 × 7.0 × 5.7` para
+     * la segunda piedra), pero la disputa se resolvió sin tener que re-medir la
+     * piedra —que está donde Isa— porque el propio quilataje la desempata:
+     *
+     *   · 0,37 ct en lágrima ≈ 6 × 4 mm. El 5,9 × 3,9 del papel calza.
+     *   · 5.6 × 7.0 × 5.7 mm sería una piedra de bastante más de 1 ct, no de
+     *     0,37 — y tiene el ancho (7.0) MAYOR que el largo (5.6), que en una
+     *     lágrima no se escribe así.
+     *
+     * Lo mismo del otro lado: el 7,7 × 4,8 del papel para los 0,67 ct de #541
+     * también calza. O sea que el papel es coherente con los dos pesos y la
+     * segunda terna de la col I no lo es con ninguno — el dato corrupto es el
+     * de la hoja, no el del manuscrito. (La col I de #218 se deja como está: el
+     * padre queda retirado y su `observacion` documenta la división.)
      */
-    publicar: false,
+    publicar: true,
     observacion:
       'Sublote LC-10-DR de #218 Dinastía Real (subdivisión 12-ago-2026, inventario manuscrito). ' +
       'Costo y precio repartidos por quilataje: 0.37/1.04. Nace en ASESOR con Isa la Negra Vikinga ' +
       'Warrior Portocarrero: hereda la consignación viva del padre (entrega del 27-jul-2026). ' +
-      '⚠️ Medida SIN CONFIRMAR (5,9 × 3,9 del papel vs 5.6 × 7.0 × 5.7 de la col I del padre) — ' +
-      'por eso no sale al catálogo todavía.',
+      'Medida tomada del manuscrito (5,9 × 3,9): la segunda terna que traía la col I del padre ' +
+      '(5.6 × 7.0 × 5.7) es incompatible con 0,37 ct — sería una piedra de más de 1 ct.',
   },
   {
     itemId: '541',
@@ -2666,10 +2674,10 @@ export const seedAddendum20260812 = internalMutation({
         filas: kardex,
       },
       pendientes: [
-        '#540 Felicidad NACE SIN PUBLICAR: su medida (5,9 × 3,9) contradice la que traía la ' +
-          'col I del padre (5.6 × 7.0 × 5.7). Confirmarla contra la piedra —está donde Isa— y ' +
-          'publicarla después.',
-        'Re-correr migrations:backfillLotProvenance cuando entre a main: #541 se publica sin ' +
+        'La medida de #540 sale del manuscrito (5,9 × 3,9), no de la col I del padre: la segunda ' +
+          'terna de ahí (5.6 × 7.0 × 5.7) es incompatible con 0,37 ct. Confirmarla contra la ' +
+          'piedra cuando vuelva de donde Isa sigue siendo lo prolijo, pero ya no bloquea.',
+        'Re-correr migrations:backfillLotProvenance cuando entre a main: #540 y #541 se publican sin ' +
           'mina/tratamiento denormalizados y no hay republish automático que los estampe.',
         'El sublote LC-10-DR no queda registrado en la pestaña Sublotes (mismo alcance que la ' +
           'corrida del 12-ago).',
