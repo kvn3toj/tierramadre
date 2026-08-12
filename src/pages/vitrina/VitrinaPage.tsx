@@ -17,6 +17,7 @@
  */
 
 import { useEffect, useMemo } from 'react';
+import { useResaleOffers } from '../../hooks/useResaleOffers';
 import {
   useParams,
   useNavigate,
@@ -223,9 +224,18 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
       ? { multiplier: tokenDoc.multiplier, currency: tokenDoc.currency }
       : DEFAULT_VITRINA_PRICING;
 
-  const senderPhone = useSenderPhone(
+  const senderPhoneRaw = useSenderPhone(
     !isIdList && tokenDoc ? tokenDoc.senderSlug : undefined,
   );
+
+  // Reventa: la conversación es SIEMPRE con la casa.
+  //
+  // Esta página es la puerta pública — el enlace que un cliente abre desde
+  // WhatsApp sin iniciar sesión. Si la pieza la está revendiendo su dueño,
+  // nosotros corredamos, así que el botón tiene que marcarnos a nosotros
+  // aunque el enlace traiga `?a=<embajador>` o `?wa=<número>`: esos parámetros
+  // los pone quien comparte, y aquí no pueden ganarle a la regla del negocio.
+  const { resaleIndex } = useResaleOffers();
 
   const products = useMemo(
     () =>
@@ -273,6 +283,9 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
       ? products[0]
       : null;
 
+  const selectedResale = selected ? resaleIndex.get(selected.item) : undefined;
+  const senderPhone = selectedResale ? HOUSE_WHATSAPP : senderPhoneRaw;
+
   if (selected) {
     const onBack =
       products.length > 1
@@ -284,6 +297,7 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
           product={selected}
           pricing={pricing}
           senderPhone={senderPhone}
+          resale={selectedResale}
           contactId={contactId}
           onBack={onBack}
         />

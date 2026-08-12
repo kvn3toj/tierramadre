@@ -88,6 +88,14 @@ export function AmbassadorProductDetail({
     if (resale) void fetchAdmins();
   }, [resale, fetchAdmins]);
 
+  // La etiqueta tiene que decir a quién marca. Con reventa el botón NO
+  // contacta al embajador —lo comprobé contra producción: abre el WhatsApp de
+  // la casa— así que dejarlo en «Contactar Embajador» era el rótulo afirmando
+  // algo falso sobre su propia acción.
+  const contactLabel = resale
+    ? 'Contactar a Tierra Madre'
+    : (t.ambassador.museum?.contactAmbassador ?? 'Contactar Embajador');
+
   const brokerPhone = resale ? (admins[0]?.whatsapp?.trim() ?? '') : '';
   const whatsapp = resale ? brokerPhone : (asesor?.whatsapp?.trim() || '');
   const canContact = whatsapp.length > 0;
@@ -556,7 +564,7 @@ export function AmbassadorProductDetail({
         disabled={!canContact}
         aria-label={
           canContact
-            ? `${t.ambassador.museum?.contactAmbassador ?? 'Contactar Embajador'} por WhatsApp sobre ${item.nombre}`
+            ? `${contactLabel} por WhatsApp sobre ${item.nombre}`
             : undefined
         }
         title={
@@ -581,7 +589,7 @@ export function AmbassadorProductDetail({
           },
         }}
       >
-        {t.ambassador.museum?.contactAmbassador ?? 'Contactar Embajador'}
+        {contactLabel}
       </Button>
 
       {/* Description */}
