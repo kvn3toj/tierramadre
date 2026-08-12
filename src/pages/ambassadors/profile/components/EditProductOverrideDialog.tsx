@@ -20,7 +20,13 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Typography, Box, Stack } from '@mui/material';
+import {
+  Typography,
+  Box,
+  Stack,
+  Switch,
+  FormControlLabel,
+} from '@mui/material';
 import type { TreasureItem } from '../../../../types';
 import {
   AmbassadorProductOverride,
@@ -36,6 +42,12 @@ interface EditProductOverrideDialogProps {
   onClose: () => void;
   onSave: (patch: { customName?: string; customPriceCOP?: number }) => void;
   onClear: () => void;
+  /**
+   * Whether the ambassador is offering this piece for resale through TM.
+   * Optional so the dialog still renders where resale does not apply.
+   */
+  forResale?: boolean;
+  onForResaleChange?: (forResale: boolean) => void;
 }
 
 function formatCOP(value: number): string {
@@ -46,7 +58,16 @@ const TITLE_ID = 'edit-product-override-title';
 
 export const EditProductOverrideDialog: React.FC<
   EditProductOverrideDialogProps
-> = ({ open, product, currentOverride, onClose, onSave, onClear }) => {
+> = ({
+  open,
+  product,
+  currentOverride,
+  onClose,
+  onSave,
+  onClear,
+  forResale,
+  onForResaleChange,
+}) => {
   const [name, setName] = useState('');
   const [priceText, setPriceText] = useState('');
 
@@ -208,6 +229,37 @@ export const EditProductOverrideDialog: React.FC<
             }
             error={Boolean(priceError)}
           />
+
+          {onForResaleChange && (
+            <Box>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={Boolean(forResale)}
+                    onChange={(e) => onForResaleChange(e.target.checked)}
+                  />
+                }
+                label="Ofrecer esta pieza para reventa"
+              />
+              {/* El embajador tiene que entender DOS cosas antes de activar
+                  esto: que la pieza se hace pública en el catálogo con su
+                  nombre encima, y que la negociación la conducimos nosotros.
+                  Un interruptor sin esta frase le haría creer que va a
+                  recibir él los mensajes. */}
+              <Typography
+                sx={{
+                  fontSize: '0.72rem',
+                  lineHeight: 1.45,
+                  color: 'var(--tm-muted)',
+                  mt: 0.25,
+                }}
+              >
+                {forResale
+                  ? 'Aparece en el catálogo como «De tu colección». Quien quiera comprarla nos escribe a nosotros y negociamos contigo.'
+                  : 'Actívalo sólo si quieres venderla. Mientras esté apagado, la pieza es tuya y no se muestra a la venta en ningún lado.'}
+              </Typography>
+            </Box>
+          )}
         </Stack>
 
         <Box

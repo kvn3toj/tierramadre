@@ -15,6 +15,7 @@ import { Box, Typography, alpha, IconButton, Skeleton } from '@mui/material';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { useThemeMode } from '../../../contexts/ThemeContext';
 import { useTreasure } from '../../../hooks/useTreasure';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 import { emeraldCore } from '../../../design-system/tokens/colors';
 import { primitiveSpacing as spacing, zIndex } from '../../../design-system';
 import type { ProductDetailViews, ProductCotizaciones } from './types';
@@ -36,7 +37,8 @@ const ProductViewersPage: React.FC = () => {
   const { treasure } = useTreasure();
 
   const [data, setData] = useState<ProductDetailViews | null>(null);
-  const [cotizacionData, setCotizacionData] = useState<ProductCotizaciones | null>(null);
+  const [cotizacionData, setCotizacionData] =
+    useState<ProductCotizaciones | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCotizacionLoading, setIsCotizacionLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +57,18 @@ const ProductViewersPage: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch(`/api/product-views?action=product&itemId=${itemId}`);
+      // action=product is session-gated (2026-08-06, PII lockdown); this
+      // page renders behind AdminRoute, so a session token should already
+      // be minted — read it fresh at call time, never at module scope.
+      const sessionToken = readFreshSessionToken();
+      const response = await fetch(
+        `/api/product-views?action=product&itemId=${itemId}`,
+        {
+          headers: sessionToken
+            ? { Authorization: `Bearer ${sessionToken}` }
+            : undefined,
+        },
+      );
       const result = await response.json();
 
       if (result.success) {
@@ -79,7 +92,7 @@ const ProductViewersPage: React.FC = () => {
 
     try {
       const response = await fetch(
-        `/api/cotizacion-save?action=productCotizaciones&itemId=${itemId}`
+        `/api/cotizacion-save?action=productCotizaciones&itemId=${itemId}`,
       );
       const result = await response.json();
 
@@ -150,7 +163,10 @@ const ProductViewersPage: React.FC = () => {
             disabled={isRefreshing}
             sx={{ color: emeraldCore.primary }}
           >
-            <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
+            <RefreshCw
+              size={18}
+              className={isRefreshing ? 'animate-spin' : ''}
+            />
           </IconButton>
         </Box>
       </Box>
@@ -159,9 +175,21 @@ const ProductViewersPage: React.FC = () => {
         {/* Loading State */}
         {isLoading && !data && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Skeleton variant="rectangular" height={100} sx={{ borderRadius: 2 }} />
-            <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
-            <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
+            <Skeleton
+              variant="rectangular"
+              height={100}
+              sx={{ borderRadius: 2 }}
+            />
+            <Skeleton
+              variant="rectangular"
+              height={200}
+              sx={{ borderRadius: 2 }}
+            />
+            <Skeleton
+              variant="rectangular"
+              height={300}
+              sx={{ borderRadius: 2 }}
+            />
           </Box>
         )}
 
@@ -192,7 +220,10 @@ const ProductViewersPage: React.FC = () => {
             />
 
             {/* Device Breakdown */}
-            <DeviceBreakdown viewsByDevice={data.viewsByDevice} isLight={isLight} />
+            <DeviceBreakdown
+              viewsByDevice={data.viewsByDevice}
+              isLight={isLight}
+            />
 
             {/* Viewers List */}
             <ViewersList viewers={data.viewers} isLight={isLight} />

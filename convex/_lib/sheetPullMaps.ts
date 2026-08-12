@@ -79,6 +79,7 @@ const INVENTORY: TableSpec = {
   calidad: { coerce: 'str' },
   cantidad: { coerce: 'num' },
   talla: { coerce: 'str' },
+  tallaAnillo: { coerce: 'str' },
   medidas: { coerce: 'str' },
   medidasValores: { coerce: 'str' },
   categoria: { coerce: 'str' },
@@ -117,7 +118,24 @@ const INVENTORY: TableSpec = {
   caja: { coerce: 'str' },
   asesorActual: { coerce: 'str' },
   estadoAsesor: { coerce: 'str' },
-  mostrarEnCatalogo: { coerce: 'bool' },
+  // EXCLUIDA (2026-07-30): mostrarEnCatalogo es de CONVEX, no de la hoja.
+  //
+  // Estuvo en el allowlist y por eso el pull la pisaba con la columna Y en cada
+  // sync. Como la publicación se administra desde la app y la hoja sólo se
+  // entera vía push, las dos caras se separaron: Convex tenía 416 piezas
+  // publicadas y la hoja decía 131. El siguiente sync habría ocultado 285
+  // piezas de la vitrina de cara al cliente.
+  //
+  // El problema de fondo es que un pull masivo lee ESTADO, no intención: no
+  // puede distinguir "alguien puso FALSE a propósito" de "nunca se escribió".
+  // Con 304 FALSE y 78 vacías, ese desempate no existe.
+  //
+  // Sigue siendo columna Y del espejo y el push la escribe (no lleva
+  // `preserve`), así que la dirección queda en un solo sentido: Convex → hoja.
+  // Si algún día se quiere publicar DESDE el SOT, no es cuestión de devolverla
+  // acá: hace falta un canal de eventos (Apps Script onEdit → /sync/foto) que
+  // mande la celda tocada, no otro sincronizador de estado que vuelva a pelear
+  // por el mismo booleano.
   procedencia: { coerce: 'str' },
   observacion: { coerce: 'str' },
   rendimientoEsperado: { coerce: 'num' },
@@ -143,6 +161,26 @@ const INVENTORY: TableSpec = {
   },
   // EXCLUDED (derived): preponderancia (kept for the BR-2 sum validation but
   // inert w.r.t. cost — costoBaseCOP is now sheet-owned, see above).
+  // ── Bloque hoja-primero (AQ–BE), incorporado el 2026-07-30 ──
+  // Columnas que ya existían en el SOT y Convex no veía: el rango de lectura se
+  // derivaba del largo de FOTO_INVENTARIO_COLUMNS, que paraba en AP. Son 100%
+  // sheet-owned (`preserve: true` en el espejo posicional), así que entran acá
+  // sólo para BAJAR. La app no las escribe nunca.
+  pesoGr: { coerce: 'num' },
+  costoLoteCOP: { coerce: 'num' },
+  precioObjetivoCOP: { coerce: 'num' },
+  cajaPrecioVentaCOP: { coerce: 'num' },
+  cajaValorPagadoCOP: { coerce: 'num' },
+  cajaSaldoCOP: { coerce: 'num' },
+  cajaComprador: { coerce: 'str' },
+  cajaEstadoContable: { coerce: 'str' },
+  subLote: { coerce: 'str' },
+  productoUrl: { coerce: 'str' },
+  carpetaFotosUrl: { coerce: 'str' },
+  animaNotas: { coerce: 'str' },
+  fuentes: { coerce: 'str' },
+  notasConflictos: { coerce: 'str' },
+  // EXCLUIDA: _sinUso2 (AS) — hueco posicional sin encabezado, no es un campo.
 };
 
 const PROVIDERS: TableSpec = {

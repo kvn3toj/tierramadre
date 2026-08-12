@@ -31,7 +31,7 @@ import React, { useMemo } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, alpha } from '@mui/material';
 import { motion, LayoutGroup } from 'framer-motion';
 import { zIndex } from '../../tokens/layout';
 
@@ -117,7 +117,8 @@ const PILL_RADIUS = 30;
 const PILL_PADDING = 4;
 const TAB_RADIUS = 26;
 const ICON_SIZE = 20;
-const LABEL_SIZE = 10;
+/** 11px legibility floor (DS3 caption2). Was 10. */
+const LABEL_SIZE = 11;
 const BEVEL = 9; // emerald step-cut chamfer (px)
 
 /** DS v3 calm tween — near-critically-damped, no bounce (§4 no-spring rule). */
@@ -234,7 +235,17 @@ export const TabBar: React.FC<TabBarProps> = ({
           padding: `${PILL_PADDING}px`,
           pointerEvents: 'auto',
           position: 'relative',
-          backgroundColor: theme.surface,
+          // Translucent, not opaque: the grid runs to the bottom of the screen
+          // now and the cards pass beneath this pill. An opaque surface would
+          // hide them and the bar would read as a wall again — the blur is what
+          // makes "there is more below" legible while keeping the labels sharp.
+          //
+          // alpha(), not color-mix(): color-mix needs Safari 16.2, and an
+          // unsupported background value computes to transparent — the bar would
+          // simply vanish on an older iPhone rather than degrade.
+          backgroundColor: alpha(theme.surface, 0.78),
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
           border: `1px solid ${theme.border}`,
           boxShadow: theme.shadow,
         }}
@@ -328,7 +339,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                         borderRadius: '8px',
                         backgroundColor: 'var(--tm-danger, #B3403A)',
                         color: '#fff',
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: 600,
                         lineHeight: '16px',
                         textAlign: 'center',

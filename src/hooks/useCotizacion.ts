@@ -9,7 +9,7 @@ import { useCotizacionForm } from './useCotizacionForm';
 import { useCotizacionData } from './useCotizacionData';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 import { useCurrency } from '../contexts/CurrencyContext';
-import { formatCarats } from '../utils/formatting';
+import { formatWeightLabel } from '../utils/formatting';
 
 // AI-generated jewelry visualization scene keys
 export type AiJewelryScene =
@@ -211,9 +211,10 @@ export const getPesoDisplay = (
   if (item.isJewelry) {
     return item.metalType || 'Joya';
   }
-  return typeof item.peso === 'number'
-    ? `${formatCarats(item.peso)} ct`
-    : String(item.peso);
+  // Was `typeof peso === 'number' ? formatCarats(peso) + ' ct' : String(peso)`,
+  // which had no `> 0` guard — so every unweighed gem printed "0.00 ct" on
+  // the quotation, and a junk peso string was rendered verbatim.
+  return formatWeightLabel(item);
 };
 
 /**

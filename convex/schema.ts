@@ -45,6 +45,52 @@ export default defineSchema({
     .index('by_shortCode', ['shortCode'])
     .index('by_status', ['status']),
 
+  // ─── Ambassador curation (favourites + per-product overrides) ────
+  //
+  // Before this table, BOTH lived in localStorage — `useAmbassadorFavorites`
+  // under `tm-ambassador-favorites-{slug}` and `useAmbassadorOverrides` under
+  // `tm:ambassador-overrides:{slug}`. That meant an ambassador's curation
+  // existed only inside the browser that made it: invisible from their phone,
+  // from a second session, and — the point of the feature — to their client.
+  //
+  // ONE table for both, not two. They are the same act (an ambassador saying
+  // something about one of their pieces), keyed the same way, authorised the
+  // same way, and read together on every profile render. Splitting them would
+  // mean two endpoints, two authorisation paths and two caches to keep honest.
+  //
+  // `itemId` is a STRING, matching AmbassadorProductOverride.itemId and the
+  // favourites array, both of which stringify TreasureItem.item.
+  ambassadorCuration: defineTable({
+    /** Profile slug — Asesor.slug, the same one /ambassadors/:slug uses. */
+    slug: v.string(),
+    itemId: v.string(),
+    /** Whether the ambassador pinned this piece to their showcase. */
+    isFavorite: v.boolean(),
+    /** Position within the favourites row; absent for non-favourites. */
+    sortOrder: v.optional(v.float64()),
+    /**
+     * The ambassador offers this piece for resale through TM.
+     *
+     * Separate from `estado`, deliberately. `estado` is TM's books: a piece an
+     * ambassador bought stays VENDIDA internally and accounting depends on
+     * that. Whether it is OFFERED is the owner's own statement, and it is
+     * never inferred from ownership — inferring it would list the ring
+     * somebody bought for their wife on the public catalog.
+     */
+    forResale: v.optional(v.boolean()),
+    customName: v.optional(v.string()),
+    /**
+     * Validated server-side against [base × 1.0, base × 10.0] before it is
+     * written — the client's own check is a courtesy, not the gate.
+     */
+    customPriceCOP: v.optional(v.float64()),
+    updatedAt: v.string(),
+    /** Verified session email of the writer (audit; never returned publicly). */
+    updatedByEmail: v.optional(v.string()),
+  })
+    .index('by_slug_item', ['slug', 'itemId'])
+    .index('by_slug', ['slug']),
+
   // ─── Public "Vitrina" share links ────────────────────────────────
   //
   // A staff-generated public share: one short `token` → a set of product
@@ -122,7 +168,8 @@ export default defineSchema({
     color: v.optional(v.string()),
     calidad: v.optional(v.string()),
     cantidad: v.optional(v.number()),
-    talla: v.optional(v.string()),
+    talla: v.optional(v.string()), // forma de talla / corte (hoja col H "Corte")
+    tallaAnillo: v.optional(v.string()), // aro del anillo (hoja col BF)
     medidas: v.optional(v.string()),
     medidasValores: v.optional(v.string()),
     categoria: v.optional(v.string()),
@@ -230,6 +277,41 @@ export default defineSchema({
     formulaGema: v.optional(v.string()),
     formulaJoya: v.optional(v.string()),
     rangoDescuento: v.optional(v.string()),
+    // ── Bloque hoja-primero (AQ–BE del SOT v3) ──
+    // Los mantiene una persona en la hoja; la app los lee y NUNCA los escribe
+    // (`preserve: true` en api/_lib/fotosintesis-inventory-columns.js).
+    // SENSIBLES — no pueden salir por una query que lea un comercial:
+    // costoLoteCOP y precioObjetivoCOP son COSTO; cajaValorPagadoCOP,
+    // cajaSaldoCOP, cajaEstadoContable son PLATA; cajaComprador es dato
+    // personal de un tercero. Ver convex/_lib/saleSafe.ts.
+    /** AQ — gramaje real de la pieza (el cotizador lo conjeturaba) */
+    pesoGr: v.optional(v.number()),
+    /** AR — COSTO, no exponer a comercial */
+    costoLoteCOP: v.optional(v.number()),
+    /** AT — COSTO, no exponer a comercial */
+    precioObjetivoCOP: v.optional(v.number()),
+    /** AU — precio al cliente según la decisión del 2026-07-23 */
+    cajaPrecioVentaCOP: v.optional(v.number()),
+    /** AV — PLATA, no exponer a comercial */
+    cajaValorPagadoCOP: v.optional(v.number()),
+    /** AW — PLATA, no exponer a comercial */
+    cajaSaldoCOP: v.optional(v.number()),
+    /** AX — DATO PERSONAL de un tercero, no exponer a comercial */
+    cajaComprador: v.optional(v.string()),
+    /** AY — PLATA, no exponer a comercial */
+    cajaEstadoContable: v.optional(v.string()),
+    /** AZ — qué se vende JUNTO (p. ej. C-042-G1 "Guardianas Gemelas") */
+    subLote: v.optional(v.string()),
+    /** BA — URL pública del producto */
+    productoUrl: v.optional(v.string()),
+    /** BB — carpeta de fotos en Drive (la buena; NO products/<item> - <nombre>) */
+    carpetaFotosUrl: v.optional(v.string()),
+    /** BC — notas relacionadas en Anima */
+    animaNotas: v.optional(v.string()),
+    /** BD — procedencia del dato */
+    fuentes: v.optional(v.string()),
+    /** BE — notas / conflictos detectados */
+    notasConflictos: v.optional(v.string()),
     /** ISO timestamp of last successful pull from Sheets */
     lastPulledAt: v.string(),
     /** ISO timestamp of last successful push to Sheets (null if never edited) */

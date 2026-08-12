@@ -139,7 +139,7 @@ export const BRAZILIAN_VALUATION_DATA: ValuationDataPoint[] = [
 
 // Combined data for multi-line chart
 export const ORIGIN_PRICE_HISTORY: OriginPriceHistory[] = [
-  { origin: 'Colombia', data: EMERALD_VALUATION_DATA, color: '#00AE7A' },
+  { origin: 'Colombia', data: EMERALD_VALUATION_DATA, color: '#00C992' },
   { origin: 'Zambia', data: ZAMBIAN_VALUATION_DATA, color: '#3B82F6' },
   { origin: 'Brazil', data: BRAZILIAN_VALUATION_DATA, color: '#F59E0B' },
 ];

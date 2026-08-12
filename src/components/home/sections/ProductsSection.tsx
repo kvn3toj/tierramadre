@@ -32,7 +32,11 @@ import { textOnGlass } from '../../../design-system/utils/colorUtils';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { TreasureItem } from '../../../types';
 import { fadeInUp, staggerContainer, staggerItem, cardVariants, cssTransition } from '../../../design-system/tokens/motion';
-import { formatCarats } from '../../../utils/formatting';
+import {
+  formatCarats,
+  parseCarats,
+  formatWeightLabel,
+} from '../../../utils/formatting';
 
 // =============================================================================
 // TYPES
@@ -188,7 +192,9 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                     role="article"
                     tabIndex={0}
                     aria-label={`${product.nombre || 'Esmeralda'}, ${
-                      typeof product.peso === 'number' ? `${formatCarats(product.peso)} quilates` : product.peso
+                      parseCarats(product.peso) !== null
+                        ? `${formatCarats(product.peso)} quilates`
+                        : ''
                     }`}
                     onClick={() => handleProductClick(product.item)}
                     onKeyDown={(e) => handleProductKeyDown(e, product.item)}
@@ -263,7 +269,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({ products }) =>
                           fontWeight: 500,
                         }}
                       >
-                        {typeof product.peso === 'number' ? `${formatCarats(product.peso)} ct` : product.peso}
+                        {formatWeightLabel(product)}
                       </Typography>
                     </CardContent>
                   </Card>

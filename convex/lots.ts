@@ -8,7 +8,8 @@ import {
 import { v } from 'convex/values';
 import { api, internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
-import { pushTableRowToVercel } from './_lib/sheetSync';
+import { pushTableRowToVercel, requireAppUrl } from './_lib/sheetSync';
+import { normalizeLotEstado } from './_lib/sheetPullMaps';
 import { COLUMN_MAPS } from './_lib/columnMaps';
 import {
   allocateNext,
@@ -21,6 +22,10 @@ import { canReopenLot } from './_lib/lotMath';
 import { withPublishStamp } from './_lib/publishState';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
+import {
+  isStaffSession,
+  isStaffOrBotSession,
+} from './_lib/requireStaffSession';
 
 // Free text (canonical: B | C | S | M). The capture UI sanitizes a custom
 // write-in to an uppercase, dash-free token before it reaches here, so it stays
@@ -55,6 +60,13 @@ const lotPatchValidator = v.object({
   notas: v.optional(v.string()),
 });
 
+// `list` and `peekNextLoteId` below are also read by the anima-bot Telegram
+// bridge (listOpenLots / peekNextLoteId in
+// anima-bot/src/fotosintesis/client.ts), which cannot obtain a staff session
+// — hence the `botSecret` arg and `isStaffOrBotSession` gate instead of the
+// staff-only `isStaffSession` used everywhere else in this file. See
+// `_lib/requireStaffSession.ts` for the full rationale and the exact list of
+// which queries in this lockdown accept a bot secret (this is one of only 7).
 export const list = query({
   args: {
     estado: v.optional(
@@ -65,8 +77,11 @@ export const list = query({
         v.literal('cancelado'),
       ),
     ),
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
   },
-  handler: async (ctx, { estado }) => {
+  handler: async (ctx, { estado, sessionToken, botSecret }) => {
+    if (!(await isStaffOrBotSession({ sessionToken, botSecret }))) return [];
     const rows = estado
       ? await ctx.db
           .query('lots')
@@ -78,26 +93,40 @@ export const list = query({
 });
 
 export const get = query({
-  args: { id: v.id('lots') },
-  handler: async (ctx, { id }) => ctx.db.get(id),
+  args: { id: v.id('lots'), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { id, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
+    return ctx.db.get(id);
+  },
 });
 
 export const getByLoteId = query({
-  args: { loteId: v.string() },
-  handler: async (ctx, { loteId }) =>
-    ctx.db
+  args: { loteId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { loteId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
+    return ctx.db
       .query('lots')
       .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
-      .first(),
+      .first();
+  },
 });
 
 /**
  * Read-only peek at the next lot ID for the chosen sede. Lets the form
  * preview "B-008" / "C-001" before submit. Does NOT consume the sequence.
+ * Also read by anima-bot (see the `list` comment above) — accepts a bot
+ * secret too.
  */
 export const peekNextLoteId = query({
-  args: { sede: sedeValidator },
-  handler: async (ctx, { sede }) => {
+  args: {
+    sede: sedeValidator,
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
+  },
+  handler: async (ctx, { sede, sessionToken, botSecret }) => {
+    if (!(await isStaffOrBotSession({ sessionToken, botSecret }))) {
+      return { nextValue: 0, preview: '' };
+    }
     const seq = await ctx.db
       .query('sequences')
       .withIndex('by_name', (q) => q.eq('name', lotSequenceName(sede)))
@@ -776,5 +805,330 @@ export const retryPush = action({
     const row = await ctx.runQuery(internal.lots._getInternal, { id });
     if (!row) return { ok: false, message: 'Lot not found' };
     return await ctx.runAction(api.lots._pushToSheet, { id, mode: 'patch' });
+  },
+});
+
+// ── rowIndex relink (Lotes) ────────────────────────────────────────────────
+//
+// `_create` assigns rowIndex as `maxRow + 1` — a counter that is never
+// reconciled against the sheet. Insert or delete a row in Lotes and every
+// stored pointer below it silently means a different row. As of the 2026-07-31
+// audit ALL 79 matchable lots were off (uniformly +2 across the C series);
+// only C-009 surfaced it, because it was the only lot edited since the drift
+// and the column-A guard in /api/admin-table-update caught the mismatch.
+//
+// This is the same defect `products._pullFromSheet` already fixed by consuming
+// the API's authoritative physical row instead of an array position. Lots has
+// no pull at all, so the repair is a dedicated relink: match on loteId — the
+// natural key in column A, and the very value the push guard validates — and
+// rewrite rowIndex to the sheet's truth.
+//
+// The pull also INSERTS lots the sheet has and Convex lacks — but only rows it
+// can represent faithfully. As of the audit, 28 of the 30 missing rows are
+// `estado: "reconstruido"` with an empty provider: retroactive groupings built
+// on 2026-07-23 from legacy collections ("Fénix", "Madres", …), not real
+// purchases. `reconstruido` is outside the estado union and `providerId` is
+// required, so those rows CANNOT enter the table without either widening the
+// schema or inventing a provider. Both are product decisions, so they are
+// skipped WITH A REASON instead of coerced — a silently defaulted provider
+// would attribute someone else's stones to a real supplier.
+//
+// Field-level sync is deliberately NOT duplicated here: `_lib/sheetPullMaps`
+// (LOTS allowlist + planRowPatch, applied by fotoSync) already owns that
+// policy. This pull does only what nothing else does — rowIndex truth and
+// missing-lot insertion. Deletion is never performed.
+
+type LotRelinkChange = {
+  loteId: string;
+  from: number;
+  to: number;
+};
+
+type LotSkip = {
+  loteId: string;
+  sheetRow: number;
+  reason: string;
+};
+
+export const _applyRowIndexRelink = internalMutation({
+  args: {
+    updates: v.array(v.object({ loteId: v.string(), rowIndex: v.number() })),
+  },
+  handler: async (ctx, { updates }) => {
+    const changes: LotRelinkChange[] = [];
+    for (const { loteId, rowIndex } of updates) {
+      const lot = await ctx.db
+        .query('lots')
+        .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
+        .first();
+      if (!lot || lot.rowIndex === rowIndex) continue;
+      // rowIndex only — never touch syncStatus here. A lot parked in `error`
+      // because of the drift stays in `error` until its next push actually
+      // succeeds; silently flipping it to `synced` would claim the sheet row
+      // was written when nothing was pushed.
+      await ctx.db.patch(lot._id, { rowIndex });
+      changes.push({ loteId, from: lot.rowIndex, to: rowIndex });
+    }
+    return changes;
+  },
+});
+
+/**
+ * Insert lots the sheet has and Convex lacks. Returns what it created and what
+ * it refused to create, so a caller never has to infer silence.
+ *
+ * Inserted rows land as `syncStatus: "synced"`: the sheet row already exists
+ * and is the source of these values, so there is nothing to push back. Marking
+ * them `pending` would queue a redundant write against a row we just read.
+ */
+export const _insertMissingFromSheet = internalMutation({
+  args: {
+    candidates: v.array(
+      v.object({
+        loteId: v.string(),
+        rowIndex: v.number(),
+        providerNombre: v.string(),
+        estado: v.string(),
+        fechaRecepcion: v.string(),
+        costoTotalCOP: v.number(),
+        unidadesDeclaradas: v.number(),
+        formaPago: v.string(),
+        sede: v.optional(v.string()),
+        renombreLote: v.optional(v.string()),
+        mina: v.optional(v.string()),
+        tratamiento: v.optional(v.string()),
+        notas: v.optional(v.string()),
+      }),
+    ),
+  },
+  handler: async (ctx, { candidates }) => {
+    const created: string[] = [];
+    const skipped: LotSkip[] = [];
+
+    for (const c of candidates) {
+      const already = await ctx.db
+        .query('lots')
+        .withIndex('by_loteId', (q) => q.eq('loteId', c.loteId))
+        .first();
+      if (already) continue;
+
+      const estado = normalizeLotEstado(c.estado);
+      if (estado === null) {
+        skipped.push({
+          loteId: c.loteId,
+          sheetRow: c.rowIndex,
+          reason: `estado "${c.estado}" no existe en el modelo (abierto|cerrado|publicado|cancelado)`,
+        });
+        continue;
+      }
+
+      // Resolve the provider by name rather than defaulting one. `providerId`
+      // is a real FK: guessing it would credit a purchase to a supplier who
+      // never made it, and that error is invisible once stored.
+      const nombre = c.providerNombre.trim();
+      if (!nombre) {
+        skipped.push({
+          loteId: c.loteId,
+          sheetRow: c.rowIndex,
+          reason: 'sin proveedor en la hoja; providerId es obligatorio',
+        });
+        continue;
+      }
+      const provider = await ctx.db
+        .query('providers')
+        .withIndex('by_nombre', (q) => q.eq('nombreORazonSocial', nombre))
+        .first();
+      if (!provider) {
+        skipped.push({
+          loteId: c.loteId,
+          sheetRow: c.rowIndex,
+          reason: `proveedor "${nombre}" no existe en Convex; créalo antes de importar el lote`,
+        });
+        continue;
+      }
+
+      await ctx.db.insert('lots', {
+        loteId: c.loteId,
+        rowIndex: c.rowIndex,
+        providerId: provider._id,
+        estado: estado as 'abierto' | 'cerrado' | 'publicado' | 'cancelado',
+        fechaRecepcion: c.fechaRecepcion,
+        costoTotalCOP: c.costoTotalCOP,
+        unidadesDeclaradas: c.unidadesDeclaradas,
+        formaPago: c.formaPago,
+        sede: c.sede,
+        renombreLote: c.renombreLote,
+        mina: c.mina,
+        tratamiento: c.tratamiento,
+        notas: c.notas,
+        mostrarComoLote: false,
+        syncStatus: 'synced' as const,
+        lastPulledAt: new Date().toISOString(),
+      });
+      created.push(c.loteId);
+    }
+
+    return { created, skipped };
+  },
+});
+
+export const _relinkRowIndexFromSheet = internalAction({
+  args: { dryRun: v.optional(v.boolean()) },
+  handler: async (
+    ctx,
+    { dryRun },
+  ): Promise<{
+    dryRun: boolean;
+    sheetRows: number;
+    matched: number;
+    changes: LotRelinkChange[];
+    convexOnly: string[];
+    sheetOnly: string[];
+    importable: number;
+    created: string[];
+    skipped: LotSkip[];
+  }> => {
+    const appUrl = requireAppUrl();
+    const token = process.env.ADMIN_SYNC_TOKEN;
+    if (!token)
+      throw new Error('ADMIN_SYNC_TOKEN missing on Convex deployment');
+
+    const res = await fetch(`${appUrl}/api/get-table?table=lots`, {
+      headers: { 'x-admin-sync-token': token },
+    });
+    if (!res.ok) {
+      throw new Error(`Lotes sheet fetch failed: HTTP ${res.status}`);
+    }
+    const payload = (await res.json()) as {
+      data?: { rows?: Array<Record<string, string>> };
+      rows?: Array<Record<string, string>>;
+    };
+    const rows = payload.data?.rows ?? payload.rows ?? [];
+    if (rows.length === 0) {
+      // An empty read would relink nothing but still look "successful"; treat
+      // it as a transport failure rather than reporting a clean no-op.
+      throw new Error('Lotes sheet returned 0 rows — refusing to relink');
+    }
+
+    // `__rowIndex` is the physical 1-based sheet row stamped by /api/get-table,
+    // not a position in a compacted array — that distinction is the whole fix.
+    const sheetRowByLote = new Map<string, number>();
+    for (const row of rows) {
+      const loteId = String(row.loteId ?? '').trim();
+      if (!loteId) continue;
+      const physical = Number(row.__rowIndex);
+      if (!Number.isFinite(physical)) continue;
+      // First occurrence wins: a duplicated loteId in the sheet is a data bug,
+      // and pointing at the first row keeps the guard's column-A check honest.
+      if (!sheetRowByLote.has(loteId)) sheetRowByLote.set(loteId, physical);
+    }
+
+    const lots = await ctx.runQuery(internal.lots._listAllForRelink, {});
+    const updates: Array<{ loteId: string; rowIndex: number }> = [];
+    const convexOnly: string[] = [];
+    for (const lot of lots) {
+      const physical = sheetRowByLote.get(lot.loteId);
+      if (physical === undefined) {
+        convexOnly.push(lot.loteId);
+        continue;
+      }
+      if (physical !== lot.rowIndex)
+        updates.push({ loteId: lot.loteId, rowIndex: physical });
+    }
+
+    const convexIds = new Set(lots.map((l) => l.loteId));
+    const sheetOnly = [...sheetRowByLote.keys()].filter(
+      (id) => !convexIds.has(id),
+    );
+
+    const changes: LotRelinkChange[] = dryRun
+      ? updates.map((u) => ({
+          loteId: u.loteId,
+          from: lots.find((l) => l.loteId === u.loteId)?.rowIndex ?? -1,
+          to: u.rowIndex,
+        }))
+      : await ctx.runMutation(internal.lots._applyRowIndexRelink, { updates });
+
+    // Sheet-only rows: try to import them, but only those the model can hold.
+    const rowByLote = new Map(
+      rows.map((r) => [String(r.loteId ?? '').trim(), r]),
+    );
+    const candidates = sheetOnly.map((loteId) => {
+      const r = rowByLote.get(loteId) ?? {};
+      const num = (x: unknown) => {
+        // Sheet money/counts arrive as display strings ("1,234"); strip the
+        // thousands separators before Number() turns them into NaN.
+        const n = Number(String(x ?? '').replace(/[^\d.-]/g, ''));
+        return Number.isFinite(n) ? n : 0;
+      };
+      return {
+        loteId,
+        rowIndex: sheetRowByLote.get(loteId) as number,
+        providerNombre: String(r.providerNombre ?? ''),
+        estado: String(r.estado ?? ''),
+        fechaRecepcion: String(r.fechaRecepcion ?? ''),
+        costoTotalCOP: num(r.costoTotalCOP),
+        unidadesDeclaradas: num(r.unidadesDeclaradas),
+        formaPago: String(r.formaPago ?? ''),
+        sede: String(r.sede ?? '') || undefined,
+        renombreLote: String(r.renombreLote ?? '') || undefined,
+        mina: String(r.mina ?? '') || undefined,
+        tratamiento: String(r.tratamiento ?? '') || undefined,
+        notas: String(r.notas ?? '') || undefined,
+      };
+    });
+
+    const imported: { created: string[]; skipped: LotSkip[] } = dryRun
+      ? { created: [], skipped: [] }
+      : await ctx.runMutation(internal.lots._insertMissingFromSheet, {
+          candidates,
+        });
+
+    return {
+      dryRun: Boolean(dryRun),
+      sheetRows: rows.length,
+      matched: lots.length - convexOnly.length,
+      changes,
+      convexOnly,
+      sheetOnly,
+      importable: candidates.length,
+      created: imported.created,
+      skipped: imported.skipped,
+    };
+  },
+});
+
+export const _listAllForRelink = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const lots = await ctx.db.query('lots').collect();
+    return lots.map((l) => ({ loteId: l.loteId, rowIndex: l.rowIndex }));
+  },
+});
+
+/**
+ * Admin entry point for "Reparar índices de fila (Lotes)". Pass `dryRun: true`
+ * to see exactly what would change before writing anything.
+ */
+export const relinkRowIndexFromSheet = action({
+  args: { idToken: v.string(), dryRun: v.optional(v.boolean()) },
+  handler: async (
+    ctx,
+    { idToken, dryRun },
+  ): Promise<{
+    dryRun: boolean;
+    sheetRows: number;
+    matched: number;
+    changes: LotRelinkChange[];
+    convexOnly: string[];
+    sheetOnly: string[];
+    importable: number;
+    created: string[];
+    skipped: LotSkip[];
+  }> => {
+    await requireAccessLevel(idToken, ['admin']);
+    return await ctx.runAction(internal.lots._relinkRowIndexFromSheet, {
+      dryRun,
+    });
   },
 });

@@ -160,6 +160,15 @@ export default function SavedFiltersDropdown({
         size="small"
         startIcon={<Bookmark size={16} />}
         endIcon={<ChevronDown size={14} />}
+        // `compact` renders no visible label, so the control needs its name
+        // some other way (PRODUCT.md: icon-only buttons always carry an
+        // aria-label). `title` gives sighted mouse users the same name on hover.
+        aria-label={
+          compact
+            ? `Búsquedas guardadas${presets.length > 0 ? ` (${presets.length})` : ''}`
+            : undefined
+        }
+        title={compact ? 'Búsquedas guardadas' : undefined}
         sx={{
           borderColor: isLight
             ? surfacesLight.border.default

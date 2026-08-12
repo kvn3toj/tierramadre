@@ -62,6 +62,7 @@ import {
 import { useAsesores } from '../../../hooks/useAsesores';
 import { matchesAsesorName } from '../../../utils/asesorNameUtils';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 
 interface AsesorMovementPanelProps {
   itemId: string;
@@ -106,7 +107,13 @@ export function AsesorMovementPanel({
 
   const movements = useConvexQuery(
     convexApi.asesorMovements.listByItem,
-    convexReady ? { itemId, limit: 10 } : 'skip',
+    convexReady
+      ? {
+          itemId,
+          limit: 10,
+          sessionToken: readFreshSessionToken() ?? undefined,
+        }
+      : 'skip',
   ) as MovementEntry[] | undefined;
 
   const registerHandoff = useAuthedConvexAction(

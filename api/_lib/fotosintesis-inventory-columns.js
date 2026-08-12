@@ -49,7 +49,13 @@ export const FOTO_INVENTARIO_COLUMNS = [
   { header: 'Color', key: 'color' }, // E
   { header: 'Calidad', key: 'calidad' }, // F
   { header: 'Cant.', key: 'cantidad', numeric: true }, // G
-  { header: 'Talla', key: 'talla' }, // H
+  // H — la FORMA DE TALLA de la gema (Redonda, Esmeralda, Lágrima…). El
+  // encabezado decía "Talla" y la columna guardaba dos cosas distintas: la
+  // forma en ~486 filas y el ARO del anillo (5–9) en 37. Renombrada a "Corte"
+  // el 2026-08-11 y los aros movidos a `tallaAnillo` (BF). La clave sigue
+  // siendo `talla` porque en el código ya significaba el corte
+  // (src/components/esmereogenesis/cutCharacters.ts).
+  { header: 'Corte', key: 'talla' }, // H
   { header: 'Medidas', key: 'medidas' }, // I
   { header: 'Medidas (valores)', key: 'medidasValores' }, // J
   { header: 'Categoría', key: 'categoria' }, // K
@@ -96,6 +102,70 @@ export const FOTO_INVENTARIO_COLUMNS = [
   { header: 'formulaGema', key: 'formulaGema' }, // AN
   { header: 'formulaJoya', key: 'formulaJoya' }, // AO
   { header: 'rangoDescuento', key: 'rangoDescuento' }, // AP
+  // ── Bloque hoja-primero (AQ–BE) — TODO `preserve: true` ──
+  // Estas 15 columnas las mantiene una persona en la hoja, no la app. Existían
+  // desde antes pero eran invisibles para Convex: el rango que se lee sale de
+  // `FOTO_INVENTARIO_LAST_COL`, que se deriva del largo de este array, así que
+  // parar en AP recortaba la lectura en AP. Sumarlas acá ensancha la lectura.
+  //
+  // `preserve: true` en TODAS no es decorativo: el merge de
+  // api/admin-product-update.ts arranca de `existingRow` y sólo pisa las claves
+  // sin preserve. Sin el flag, cualquier PATCH de la app reconstruiría la fila
+  // entera y borraría 513 filas de dato humano (Fuentes, notas de Anima) y la
+  // contabilidad de caja. Se leen; no se escriben nunca.
+  //
+  // Los `header` son los textos REALES de la fila 1 (leídos del SOT el
+  // 2026-07-30). AS está vacía de verdad — es un hueco posicional, y ponerle
+  // texto haría que extend-fotosintesis-headers.mjs escribiera en una celda que
+  // hoy está en blanco. Igual que N, existe sólo para que AT en adelante no se
+  // corra una columna.
+  { header: 'Peso (gr)', key: 'pesoGr', numeric: true, preserve: true }, // AQ
+  {
+    header: 'Costo lote (fórmula)',
+    key: 'costoLoteCOP',
+    numeric: true,
+    preserve: true,
+  }, // AR — COSTO
+  { header: '', key: '_sinUso2', preserve: true }, // AS — hueco posicional, sin encabezado
+  {
+    header: 'Precio objetivo (modelo)',
+    key: 'precioObjetivoCOP',
+    numeric: true,
+    preserve: true,
+  }, // AT — COSTO
+  {
+    header: 'Caja: precio venta',
+    key: 'cajaPrecioVentaCOP',
+    numeric: true,
+    preserve: true,
+  }, // AU
+  {
+    header: 'Caja: valor pagado',
+    key: 'cajaValorPagadoCOP',
+    numeric: true,
+    preserve: true,
+  }, // AV — PLATA
+  { header: 'Caja: saldo', key: 'cajaSaldoCOP', numeric: true, preserve: true }, // AW — PLATA
+  { header: 'Caja: comprador', key: 'cajaComprador', preserve: true }, // AX — DATO PERSONAL
+  {
+    header: 'Caja: estado contable',
+    key: 'cajaEstadoContable',
+    preserve: true,
+  }, // AY — PLATA
+  { header: 'subLote (grupo)', key: 'subLote', preserve: true }, // AZ
+  { header: 'Producto (URL)', key: 'productoUrl', preserve: true }, // BA
+  { header: 'Carpeta fotos (Drive)', key: 'carpetaFotosUrl', preserve: true }, // BB
+  { header: 'Anima: notas relacionadas', key: 'animaNotas', preserve: true }, // BC
+  { header: 'Fuentes', key: 'fuentes', preserve: true }, // BD
+  { header: 'Notas / conflictos', key: 'notasConflictos', preserve: true }, // BE
+  // ── Aro del anillo (BF) ──
+  // Añadida el 2026-08-11 al desdoblar la vieja columna H, que mezclaba la
+  // forma de talla con el aro. Va APPEND al final —y no junto a H— porque este
+  // array ES el orden posicional de la hoja: insertar en el medio correría
+  // todas las columnas siguientes y desalinearía las 523 filas vivas.
+  // Sin `preserve`: la app sí escribe este valor (a diferencia del bloque
+  // AQ–BE, que mantiene una persona a mano).
+  { header: 'Talla (anillo)', key: 'tallaAnillo' }, // BF
 ];
 
 /** Ordered header labels (row 1 of the Inventario tab). */

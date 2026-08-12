@@ -7,9 +7,11 @@
  * - Context-aware titles and actions
  */
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, IconButton } from '@mui/material';
+import { Box, Typography, IconButton, ButtonBase } from '@mui/material';
+import { scrollActivePageToTop } from '../../utils/mainScroll';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { ArrowBack } from '@mui/icons-material';
 import { specularHighlights } from '../../design-system/tokens/liquid-glass';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
@@ -36,6 +38,11 @@ export interface IOSNavigationBarProps {
   title: string;
   subtitle?: string;
   logoUrl?: string;
+  /** Rendered logo height in px. Kept below `barMinHeight` so the mark sits
+   *  inside the bar rather than filling it. Default 32. */
+  logoHeight?: number;
+  /** Minimum height of the top bar in px. Default 44. */
+  barMinHeight?: number;
   showBackButton?: boolean;
   onBackClick?: () => void;
   leadingActions?: NavigationAction[];
@@ -51,6 +58,8 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
   title,
   subtitle,
   logoUrl,
+  logoHeight = 32,
+  barMinHeight = 44,
   showBackButton = false,
   onBackClick,
   leadingActions = [],
@@ -62,6 +71,8 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
   const { effectiveConfig } = useLiquidGlassSafe();
   const isScrolled = useIsScrolled(20);
 
+  const prefersReducedMotion = useReducedMotion();
+
   const handleBackClick = () => {
     if (onBackClick) {
       onBackClick();
@@ -69,6 +80,10 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
       navigate(-1);
     }
   };
+
+  const handleBrandTap = useCallback(() => {
+    scrollActivePageToTop(prefersReducedMotion ? 'auto' : 'smooth');
+  }, [prefersReducedMotion]);
 
   const isLargeMode = mode === 'large';
   const iconColor = 'var(--brand-primary)';
@@ -148,7 +163,11 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
       {/* Top Bar */}
       <Box
         sx={{
-          height: '44px',
+          // minHeight, not height: under the global border-box reset a fixed
+          // height would subtract the notch inset + 2px from the content box,
+          // collapsing the bar's contents to zero on any device with a
+          // safe-area top. minHeight yields max(n, content + inset + 2).
+          minHeight: `${barMinHeight}px`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -210,15 +229,41 @@ const IOSNavigationBar: React.FC<IOSNavigationBarProps> = ({
             }}
           >
             {logoUrl ? (
-              <Box
-                component="img"
-                src={logoUrl}
-                alt={title}
+              // Tapping the lockup sends the screen back to its top — the
+              // status-bar tap every iPhone user already has in their hands. It
+              // is a real button so it answers Enter/Space and takes focus, and
+              // the padding buys a 44px target around a 26–36px mark.
+              <ButtonBase
+                onClick={handleBrandTap}
+                aria-label="Volver al inicio de la página"
                 sx={{
-                  height: 44,
-                  objectFit: 'contain',
+                  borderRadius: 2,
+                  px: 1,
+                  py: 0.5,
+                  transition: 'opacity 160ms',
+                  '&:active': { opacity: 0.6 },
+                  '&:focus-visible': {
+                    outline: 'none',
+                    boxShadow: 'var(--tm-focus-ring)',
+                  },
                 }}
-              />
+              >
+                <Box
+                  component="img"
+                  src={logoUrl}
+                  alt={title}
+                  sx={{
+                    // Sized by the caller (see NAV_BRAND in IOSLayout), always
+                    // below the bar's own minHeight. It used to be a hardcoded
+                    // 44 — exactly the bar height — so the logo *was* the bar,
+                    // with no breathing room above or below.
+                    height: logoHeight,
+                    width: 'auto',
+                    objectFit: 'contain',
+                    display: 'block',
+                  }}
+                />
+              </ButtonBase>
             ) : (
               <Typography
                 component="h1"

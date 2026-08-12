@@ -1,5 +1,6 @@
 import { query, mutation, internalMutation } from './_generated/server';
 import { v } from 'convex/values';
+import { isStaffSession } from './_lib/requireStaffSession';
 
 /**
  * Track a product view.
@@ -82,13 +83,28 @@ export const _normalizeInviterName = internalMutation({
  * Get recent guest activity for a specific inviter.
  * Replaces: GET /api/product-views?action=recent filtered by inviterName
  * Used by useGuestActivity hook in /mi-perfil.
+ *
+ * Staff-session gated (2026-08-06, PII lockdown item 1): returns whole
+ * `productViews` rows — `userEmail`/`userName`/`userRole`/`browser`/
+ * `country`/`deviceType`/`sessionId`/`referrer` — keyed only on
+ * `inviterName`, an advisor's DISPLAY NAME, not a secret. Every one of this
+ * query's three browser callers (MyProfilePage.tsx, AllActivityPage.tsx,
+ * GuestDetailPage.tsx) sources `inviterName` from `useCurrentAsesor()`, which
+ * resolves the signed-in Google email against the Asesores sheet
+ * (useCurrentAsesor.ts) — the exact roster `/api/validate?action=mint-session`
+ * checks before minting a `tms1` token. So every caller who can render these
+ * screens already holds a valid session token; guests never call this query.
+ * `isStaffSession` gate, empty-form ([]) on failure — same pattern as the 49
+ * queries F7/F7b/Round 3 already closed.
  */
 export const guestActivity = query({
   args: {
     inviterName: v.string(),
     limit: v.optional(v.number()),
+    sessionToken: v.optional(v.string()),
   },
-  handler: async (ctx, { inviterName, limit }) => {
+  handler: async (ctx, { inviterName, limit, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     return await ctx.db
       .query('productViews')
       .withIndex('by_inviterName', (q) => q.eq('inviterName', inviterName))
@@ -100,14 +116,21 @@ export const guestActivity = query({
 /**
  * Get all views for a specific guest of a specific inviter.
  * Used by useGuestDetail hook for the guest detail page.
+ *
+ * Staff-session gated (2026-08-06, PII lockdown item 1) — same rationale and
+ * gate as `guestActivity` above; its one browser caller (GuestDetailPage.tsx)
+ * sources `inviterName` from the same `useCurrentAsesor()` roster check, plus
+ * this returns per-guest `sessionId`/`referrer` on top of the same PII shape.
  */
 export const byInviterAndGuest = query({
   args: {
     inviterName: v.string(),
     guestName: v.string(),
     limit: v.optional(v.number()),
+    sessionToken: v.optional(v.string()),
   },
-  handler: async (ctx, { inviterName, guestName, limit }) => {
+  handler: async (ctx, { inviterName, guestName, limit, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     return await ctx.db
       .query('productViews')
       .withIndex('by_inviterName', (q) => q.eq('inviterName', inviterName))

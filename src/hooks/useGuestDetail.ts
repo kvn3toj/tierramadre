@@ -7,6 +7,7 @@
 
 import { useMemo } from 'react';
 import { useConvexQuery, convexApi, convexReady } from '../lib/convex-safe';
+import { readFreshSessionToken } from '../utils/sessionToken';
 
 export interface GuestView {
   timestamp: string;
@@ -58,13 +59,21 @@ export function useGuestDetail(
   const shouldQuery = Boolean(convexReady && inviterName && guestName);
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const convexData = convexReady && useConvexQuery
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    ? useConvexQuery(
-        convexApi.productViews.byInviterAndGuest,
-        shouldQuery ? { inviterName: inviterName!, guestName: guestName!, limit: 500 } : 'skip',
-      )
-    : undefined;
+  const convexData =
+    convexReady && useConvexQuery
+      ? // eslint-disable-next-line react-hooks/rules-of-hooks
+        useConvexQuery(
+          convexApi.productViews.byInviterAndGuest,
+          shouldQuery
+            ? {
+                inviterName: inviterName!,
+                guestName: guestName!,
+                limit: 500,
+                sessionToken: readFreshSessionToken() ?? undefined,
+              }
+            : 'skip',
+        )
+      : undefined;
 
   const views: GuestView[] = useMemo(() => {
     if (!Array.isArray(convexData)) return [];
@@ -96,7 +105,8 @@ export function useGuestDetail(
       const existing = productMap.get(v.itemId);
       if (existing) {
         existing.viewCount++;
-        if (v.timestamp > existing.lastViewedAt) existing.lastViewedAt = v.timestamp;
+        if (v.timestamp > existing.lastViewedAt)
+          existing.lastViewedAt = v.timestamp;
       } else {
         productMap.set(v.itemId, {
           itemId: v.itemId,

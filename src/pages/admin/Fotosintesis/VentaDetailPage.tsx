@@ -28,6 +28,7 @@ import {
   convexApi,
 } from '../../../lib/convex-safe';
 import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { TicketHeader } from './components/TicketHeader';
 import { KardexPreview } from './components/KardexPreview';
@@ -113,7 +114,8 @@ export default function VentaDetailPage() {
   // The route param is the human "V-NNNN" id, but `sales.get` expects the
   // Convex `_id`. Look up by saleId via list+find — list is small and the
   // detail view is rare. Future optimisation: add `sales.getBySaleId`.
-  const allSales = useConvexQuery(convexApi.sales.list, {});
+  const sessionToken = readFreshSessionToken() ?? undefined;
+  const allSales = useConvexQuery(convexApi.sales.list, { sessionToken });
   const saleMatch = useMemo(
     () => (allSales ?? []).find((s) => s.saleId === routeSaleId) ?? null,
     [allSales, routeSaleId],
@@ -142,15 +144,15 @@ export default function VentaDetailPage() {
   );
   const lot = useConvexQuery(
     convexApi.lots.getByLoteId,
-    item?.loteId ? { loteId: item.loteId } : 'skip',
+    item?.loteId ? { loteId: item.loteId, sessionToken } : 'skip',
   );
   const provider = useConvexQuery(
     convexApi.providers.get,
-    lot?.providerId ? { id: lot.providerId } : 'skip',
+    lot?.providerId ? { id: lot.providerId, sessionToken } : 'skip',
   );
   const buyer = useConvexQuery(
     convexApi.clients.get,
-    sale?.clientId ? { id: sale.clientId } : 'skip',
+    sale?.clientId ? { id: sale.clientId, sessionToken } : 'skip',
   );
 
   // The buyer's tier decides which price each line contributes (ambassador vs

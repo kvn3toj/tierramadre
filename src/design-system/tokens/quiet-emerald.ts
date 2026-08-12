@@ -27,11 +27,36 @@
 
 export const qeEmerald = {
   /** Brightest emerald — dots / trust indicators, brand moments (accent-pure) */
-  primary: '#00AF84',
+  primary: '#00C992',
   /** Accent green — labels, links, active state (light-mode --accent) */
   dark: '#00785C',
   /** Lighter emerald — dark-mode accent, subtle tints */
   light: '#34C99B',
+} as const;
+
+/**
+ * The brand manual's five colours ("renovación" 2026), read directly from the
+ * vector fills of docs/brand/renovacion-2026/.
+ *
+ * ⚠️ REFERENCE ONLY — these are NOT UI tokens. DS3 §1.1: "One saturated color
+ * in the entire product: the emerald." Only `primary` (#00C992) enters the UI,
+ * via qeAccent/qeTokens. The other four exist for brand artwork — logo colour
+ * variants and the manual's "fondo color" fields — never for product chrome.
+ *
+ * NOTE: the manual mislabels `deepGreen` as #5b0f00 on its later pages,
+ * duplicating `brown`. #024C2E is the value actually used in the artwork.
+ */
+export const brandPalette = {
+  /** Primary brand emerald */
+  primary: '#00C992',
+  /** Deeper emerald */
+  deep: '#109070',
+  /** Leaf green */
+  leaf: '#54C11F',
+  /** Earth brown */
+  brown: '#5B0F00',
+  /** Darkest forest green */
+  deepGreen: '#024C2E',
 } as const;
 
 /**
@@ -45,12 +70,12 @@ export const qeAccent = {
   light: {
     accent: '#00785C',
     strong: '#006F52',
-    pure: '#00AF84',
+    pure: '#00C992',
     on: '#FFFFFF',
   },
   dark: {
     accent: '#34C99B',
-    strong: '#00AF84',
+    strong: '#00C992',
     pure: '#34C99B',
     on: '#06140E',
   },
@@ -165,7 +190,7 @@ export const qeTokens = {
     accent: '#00785C',
     accentStrong: '#006F52',
     onAccent: '#FFFFFF',
-    accentPure: '#00AF84',
+    accentPure: '#00C992',
     shadow: qeShadow.light,
   },
   dark: {
@@ -178,7 +203,7 @@ export const qeTokens = {
     muted: '#9AA09D',
     subtle: '#6B726F',
     accent: '#34C99B',
-    accentStrong: '#00AF84',
+    accentStrong: '#00C992',
     onAccent: '#06140E',
     accentPure: '#34C99B',
     shadow: qeShadow.dark,
@@ -356,6 +381,7 @@ export function getQuietEmerald(mode: QEMode): QESurfaces {
 
 export const quietEmerald = {
   emerald: qeEmerald,
+  brandPalette,
   accent: qeAccent,
   gray: qeGray,
   dark: qeDark,

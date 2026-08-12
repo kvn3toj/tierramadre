@@ -11,7 +11,7 @@
 // .bov-root ancestor). Matches the prototype's PAL.
 const PAL = {
   bright: "#33C194",
-  mid: "#00AE7A",
+  mid: "#00C992",
   deep: "#006A48",
   spark: "#EAFBF3",
 };

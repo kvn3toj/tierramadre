@@ -8,11 +8,17 @@ import { v, ConvexError } from 'convex/values';
 import { api, internal } from './_generated/api';
 import type { Doc, Id } from './_generated/dataModel';
 import { bumpInventoryTotal } from './products';
+import { omitFotosintesisOnly } from './_lib/saleSafe';
 import { preponderanciaSum, balancesTo100 } from './_lib/lotMath';
 import { computePrecioFinal } from './_lib/pricing';
 import { withPublishStamp } from './_lib/publishState';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
+import {
+  isStaffSession,
+  isStaffOrBotSession,
+  requireStaffOrBotSession,
+} from './_lib/requireStaffSession';
 
 const tipoItemValidator = v.union(
   v.literal('gema'),
@@ -24,10 +30,18 @@ const tipoItemValidator = v.union(
 
 /** Resolve a lotItems join row by its productInventory itemId — used by the
  *  QR scanner to jump straight to an item's edit view without the operator
- *  needing to know which lote it lives in. */
+ *  needing to know which lote it lives in. Also read by anima-bot's
+ *  `casillaV4` (anima-bot/src/fotosintesis/client.ts) to resolve a v4 casilla
+ *  state, so it accepts EITHER a staff session or the bot secret — see
+ *  `_lib/requireStaffSession.ts`'s `isStaffOrBotSession`. */
 export const getByItemId = query({
-  args: { itemId: v.string() },
-  handler: async (ctx, { itemId }) => {
+  args: {
+    itemId: v.string(),
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
+  },
+  handler: async (ctx, { itemId, sessionToken, botSecret }) => {
+    if (!(await isStaffOrBotSession({ sessionToken, botSecret }))) return null;
     const row = await ctx.db
       .query('lotItems')
       .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
@@ -37,8 +51,9 @@ export const getByItemId = query({
 });
 
 export const listByLote = query({
-  args: { loteId: v.string() },
-  handler: async (ctx, { loteId }) => {
+  args: { loteId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { loteId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const items = await ctx.db
       .query('lotItems')
       .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
@@ -83,7 +98,18 @@ function normalizeMedidas(s: string): string {
  * here, matching products.publishedCatalog's own convention (lotItems.create
  * always sets both together; _remove clears loteId on the orphaned row).
  *
- * No auth gate — public read, same as lots.list / providers.list.
+ * GATED (2026-08-05, F7): was "no auth gate — public read", but the same
+ * unauthenticated-POST audit that closed products.list/clients.list/etc.
+ * showed this returns full productInventory rows (via omitFotosintesisOnly,
+ * not a public projection) to anyone holding the Convex deployment URL. Now
+ * requires EITHER a verified staff session OR the anima-bot shared secret
+ * (`ANIMA_BOT_SECRET`) — see `_lib/requireStaffSession.ts`'s
+ * `isStaffOrBotSession`. The bot secret path exists because this is exactly
+ * `searchItems`'s stock-search query above, confirmed against
+ * anima-bot/src/fotosintesis/client.ts; the bot's `.env` already carries
+ * `ANIMA_BOT_SECRET` for the existing `*ViaBot` mutations, but its query
+ * calls here don't send it yet — see the report for the client.ts change
+ * needed to keep this feature working.
  */
 export const search = query({
   args: {
@@ -91,8 +117,16 @@ export const search = query({
     medidas: v.optional(v.string()),
     minCantidad: v.optional(v.number()),
     loteId: v.optional(v.string()),
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
   },
-  handler: async (ctx, { tipo, medidas, minCantidad, loteId }) => {
+  handler: async (
+    ctx,
+    { tipo, medidas, minCantidad, loteId, sessionToken, botSecret },
+  ) => {
+    // Lanza si la credencial vino y no sirve; `[]` solo cuando no vino ninguna.
+    if (!(await requireStaffOrBotSession({ sessionToken, botSecret })))
+      return [];
     // by_loteId is the only relevant index available — tipo has none, so it
     // (like medidas) is filtered in memory below regardless.
     const rows = loteId
@@ -122,22 +156,36 @@ export const search = query({
       return true;
     });
 
-    return filtered.sort((a, b) => {
-      const cantDiff = (b.cantidad ?? 0) - (a.cantidad ?? 0);
-      if (cantDiff !== 0) return cantDiff;
-      return (a.nombre ?? '').localeCompare(b.nombre ?? '', 'es');
-    });
+    // Devuelve el documento completo, así que toda columna nueva del SOT sale
+    // por acá sola. El anima-bot consume esta query (ver asesorMovements.ts):
+    // las 14 columnas de Fotosíntesis no le corresponden. Ver _lib/saleSafe.ts.
+    return filtered
+      .sort((a, b) => {
+        const cantDiff = (b.cantidad ?? 0) - (a.cantidad ?? 0);
+        if (cantDiff !== 0) return cantDiff;
+        return (a.nombre ?? '').localeCompare(b.nombre ?? '', 'es');
+      })
+      .map(omitFotosintesisOnly);
   },
 });
 
 /**
  * Cumulative preponderancia for a given lot. Reactive — the wizard
  * subscribes to this so the PreponderanciaTracker updates as items are
- * created/edited.
+ * created/edited. Also read by anima-bot's `preponderanciaState`
+ * (anima-bot/src/fotosintesis/client.ts) — accepts either a staff session or
+ * the bot secret, see `_lib/requireStaffSession.ts`'s `isStaffOrBotSession`.
  */
 export const sumPreponderancia = query({
-  args: { loteId: v.string() },
-  handler: async (ctx, { loteId }) => {
+  args: {
+    loteId: v.string(),
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
+  },
+  handler: async (ctx, { loteId, sessionToken, botSecret }) => {
+    if (!(await isStaffOrBotSession({ sessionToken, botSecret }))) {
+      return { sum: 0, count: 0, remaining: 100, overflow: 0 };
+    }
     const items = await ctx.db
       .query('lotItems')
       .withIndex('by_loteId', (q) => q.eq('loteId', loteId))

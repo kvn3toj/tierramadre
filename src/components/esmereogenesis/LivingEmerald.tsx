@@ -70,7 +70,7 @@ const SIZE_PX: Record<LivingEmeraldSize, number> = {
 
 const PAL = {
   bright: "#33C194",
-  mid: "#00AE7A",
+  mid: "#00C992",
   deep: "#008C61",
   spark: "#EAFBF3",
 };
@@ -110,7 +110,7 @@ function Ring({
     >
       <defs>
         <linearGradient id={`br-${uid}`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#00AE7A" />
+          <stop offset="0%" stopColor="#00C992" />
           <stop offset="62%" stopColor="#33C194" />
           <stop offset="100%" stopColor="#D4AF37" />
         </linearGradient>
@@ -215,7 +215,7 @@ function Roots({ size, vitality }: { size: number; vitality: number }) {
       <defs>
         <linearGradient id="bov-rootg" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#33C194" stopOpacity="0.7" />
-          <stop offset="55%" stopColor="#00AE7A" stopOpacity="0.42" />
+          <stop offset="55%" stopColor="#00C992" stopOpacity="0.42" />
           <stop offset="100%" stopColor="#008C61" stopOpacity="0" />
         </linearGradient>
       </defs>

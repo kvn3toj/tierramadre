@@ -19,6 +19,10 @@ import {
   parsePrice,
   parseDecimal,
 } from './_lib/index.js';
+import { FOTO_INVENTARIO_LAST_COL } from './_lib/fotosintesis-inventory-columns.js';
+import { resolveGrant, bearerWasRejected } from './_lib/catalogGrant.js';
+import { lookupVitrina } from './_lib/vitrinaLookup.js';
+import { projectForGrant } from './_lib/catalogProjection.js';
 
 type PesoParsed =
   | { value: number | string; isJewelry: true; metalType: 'Plata' | 'Oro 18k' }
@@ -53,7 +57,7 @@ function parsePeso(peso: string | number | null | undefined): PesoParsed {
  * E = Color (4)
  * F = Calidad (5)
  * G = Cant. (6)
- * H = Talla (7)
+ * H = Corte (7) - forma de talla de la gema (antes "Talla")
  * I = Medidas (8)
  * J = Medidas (9) - valores
  * K = Categoría (10) - product category (e.g., Anillo en Plata, Aretes, Topitos)
@@ -76,7 +80,13 @@ const INVENTARIO_HEADERS = {
   COLOR: 'color',
   CALIDAD: 'calidad',
   CANTIDAD: 'cant.',
+  // Columna H. El encabezado pasó de "Talla" a "Corte" el 2026-08-11 (guardaba
+  // la forma de talla, no el aro). Se buscan los dos: el match de encabezado es
+  // EXACTO, así que un libro sin migrar seguiría resolviendo por "talla" —
+  // y "Talla (anillo)" (BF) nunca colisiona con ninguno de los dos.
+  CORTE: 'corte',
   TALLA: 'talla',
+  TALLA_ANILLO: 'talla (anillo)',
   MEDIDAS: 'medidas',
   CATEGORIA: 'categoría',
   PRECIO_COP: 'precio cop',
@@ -90,6 +100,14 @@ const INVENTARIO_HEADERS = {
   CAJA: 'caja',
   ASESOR_ACTUAL: 'asesor actual', // Column T (index 19)
   ESTADO_ASESOR: 'estado asesor', // Column U (index 20)
+  // Mine of origin (Muzo, Chivor, Coscuez, Boyacá…). NOT present on the legacy
+  // book, whose A:U layout is deliberately FROZEN — it is the push-only mirror
+  // `admin-product-update.ts` writes positionally, so a column can never be
+  // inserted or reordered there (Anima:
+  // TierraMadre/decisions/2026-05-25-fotosintesis-sheet-schema-sync). Reading
+  // it by header is a no-op today and starts resolving the moment
+  // SPREADSHEET_ID points at SOT v3, where it lives at index 25.
+  PROCEDENCIA: 'procedencia',
   FOTO_URL: 'fotourl', // SOT v3 col AL — Fotosíntesis-captured photo (Drive file)
 };
 
@@ -121,7 +139,19 @@ function normalizeCategoria(categoria: string): string {
 /**
  * Map row data to treasure item using exact header matching
  */
-function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
+/**
+ * Exported (2026-08-11) so `api/ambassador-products.ts` maps inventory rows
+ * with THIS function rather than its own copy of the column resolution.
+ * Duplicating the mapping is how the two drift apart the next time a column
+ * moves — exactly the failure mode A1 just fixed one file over. Exporting is
+ * a two-word diff on a critical endpoint; extracting it into `_lib/` would be
+ * the tidier home, but no test imports this handler, so a 130-line move would
+ * be an unverified one. Left as a follow-up.
+ */
+export function mapRowToTreasureItem(
+  row: string[],
+  headers: string[],
+): TreasureItem {
   const normalizedHeaders = headers.map(normalizeHeader);
 
   // Find column index by exact header match (case-insensitive)
@@ -167,7 +197,14 @@ function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
       String(getValue(INVENTARIO_HEADERS.CANTIDAD) || getByIndex(6) || '1'),
       10,
     ),
-    talla: getValue(INVENTARIO_HEADERS.TALLA) || getByIndex(7) || '',
+    talla:
+      getValue(INVENTARIO_HEADERS.CORTE) ||
+      getValue(INVENTARIO_HEADERS.TALLA) ||
+      getByIndex(7) ||
+      '',
+    // Sólo por encabezado: BF es una columna añadida al final, y el índice
+    // posicional 57 sería basura en cualquier libro que no la tenga.
+    tallaAnillo: getValue(INVENTARIO_HEADERS.TALLA_ANILLO) || '',
     medidas: getValue(INVENTARIO_HEADERS.MEDIDAS) || getByIndex(8) || '',
     medidasValores: getByIndex(9) || '',
     categoria: (
@@ -186,7 +223,28 @@ function mapRowToTreasureItem(row: string[], headers: string[]): TreasureItem {
         getByIndex(11),
     ),
     precioInternacional: 0,
-    ubicacion: getValue(INVENTARIO_HEADERS.UBICACION) || getByIndex(12) || '',
+    // NO positional fallback here. The `getByIndex` defaults encode the
+    // LEGACY 21-column layout, but the Fotosíntesis book inserts
+    // `precioembajadorcop` + `precioconscientecop` at 12-13 and pushes
+    // everything down by two — so index 12 there is a PRICE. That is the
+    // "Ubicación: 150820" report: a price rendered as a location.
+    //
+    // Verified read-only on both books: the `ubicación` header is present in
+    // each (legacy idx 12, Fotosíntesis idx 14), so `getValue` always
+    // resolves and this fallback could never fire usefully — it could only
+    // ever leak a price. Dropping it is a no-op today and closes that path.
+    //
+    // NOTE the sibling fields are NOT equally safe: `asesor` has no header on
+    // the legacy sheet (idx -1), so its `getByIndex(13)` IS load-bearing
+    // there and must stay, even though the same index is
+    // `precioconscientecop` on the Fotosíntesis layout.
+    // Header lookup ONLY — deliberately no `getByIndex` fallback, for exactly
+    // the reason P0.3 removed ubicación's: the positional defaults encode the
+    // legacy layout, and against any other layout they return a neighbouring
+    // column's value. Left undefined when absent so the UI can hide the row
+    // rather than print a placeholder.
+    procedencia: getValue(INVENTARIO_HEADERS.PROCEDENCIA) || undefined,
+    ubicacion: getValue(INVENTARIO_HEADERS.UBICACION) || '',
     asesor: getValue(INVENTARIO_HEADERS.ASESOR) || getByIndex(13) || '',
     estado: (
       getValue(INVENTARIO_HEADERS.ESTADO) ||
@@ -283,6 +341,8 @@ export default withApiHandler(
     ctx: Record<string, unknown>,
   ) => {
     const { sheets } = ctx as { sheets: sheets_v4.Sheets };
+    const grant = await resolveGrant(req, { lookupVitrina });
+    console.log('[catalog] grant', grant.kind);
     const sheetNames = await getSheetNames(sheets);
     const targetSheet =
       findSheetByPattern(sheetNames, ['inventario', 'inventory']) ||
@@ -291,11 +351,13 @@ export default withApiHandler(
     // Fetch treasure and pricing data in parallel
     const [treasureResponse, pricingMap] = await Promise.all([
       sheets.spreadsheets.values.get({
-        // A:AP covers the full SOT v3 Inventario layout — notably col AL
-        // `fotoUrl` (was cut off by the old A:Z, so Fotosíntesis-captured photos
-        // never reached the catalog). See FOTO_INVENTARIO_COLUMNS.
+        // El rango sale de FOTO_INVENTARIO_COLUMNS, no de una letra a mano:
+        // fijarlo ya cortó la lectura dos veces (A:Z dejaba fuera `fotoUrl` en
+        // AL; A:AP dejó fuera `tallaAnillo` en BF el 2026-08-11, y el campo
+        // llegaba vacío al catálogo aunque la hoja lo tuviera). Derivarlo hace
+        // que añadir una columna al mapa ensanche la lectura sola.
         spreadsheetId: SPREADSHEET_ID,
-        range: `${targetSheet}!A:AP`,
+        range: `${targetSheet}!A:${FOTO_INVENTARIO_LAST_COL}`,
       }),
       fetchPricingData(sheets),
     ]);
@@ -304,8 +366,11 @@ export default withApiHandler(
 
     if (!rows || rows.length === 0) {
       return sendSuccess(res, {
-        treasure: [],
+        // Empty array either way — projected here anyway so this branch
+        // never becomes the one that forgets, if it ever stops being empty.
+        treasure: projectForGrant([], grant),
         message: 'No data found in spreadsheet',
+        ...(bearerWasRejected(req, grant) ? { tokenRejected: true } : {}),
       });
     }
 
@@ -347,11 +412,14 @@ export default withApiHandler(
       Boolean(req.query.debug) && process.env.NODE_ENV !== 'production';
 
     return sendSuccess(res, {
-      treasure,
+      treasure: projectForGrant(treasure, grant),
       count: treasure.length,
-      sheetName: targetSheet,
+      // sheetName + _debug describe the internal spreadsheet layout — staff
+      // only. Non-staff (anon/vitrina) never had a reason to receive it.
+      ...(grant.kind === 'staff' ? { sheetName: targetSheet } : {}),
       lastUpdated: new Date().toISOString(),
-      ...(includeDebug
+      ...(bearerWasRejected(req, grant) ? { tokenRejected: true } : {}),
+      ...(includeDebug && grant.kind === 'staff'
         ? {
             _debug: {
               headers: headers.map(

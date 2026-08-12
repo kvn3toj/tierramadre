@@ -8,7 +8,7 @@
  * - Spring animation + Backdrop dismiss
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import FocusTrap from '@mui/material/Unstable_TrapFocus';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -76,6 +76,7 @@ import { useCurrency } from '../../contexts/CurrencyContext';
 import { useCurrentAsesor } from '../../hooks/useCurrentAsesor';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { getFeatureFlag } from '../../utils/featureFlags';
+import { useSheetPresence } from '../../hooks/useSheetPresence';
 
 export interface MoreToolConfig {
   id: string;
@@ -329,6 +330,12 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [invitationOpen, setInvitationOpen] = useState(false);
 
+  // A closed sheet must leave layout entirely: `visibility: hidden` alone
+  // leaves its box a full sheet-height below the fold, which makes the
+  // document scrollable and paints the whole fixed shell off-screen.
+  // See useSheetPresence for the full story.
+  const { mounted, entered } = useSheetPresence(open);
+
   // Profile card data (staff only)
   const { asesor } = useCurrentAsesor();
   const { user: googleUser } = useGoogleAuth();
@@ -535,6 +542,22 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
     : emeraldCore.primary;
   const photoUrl = asesor?.photoUrl || googleUser?.picture;
 
+  // WCAG 2.1.2: a role="dialog" aria-modal must be dismissable from the
+  // keyboard. Neither sheet had any effect at all, so Escape did nothing.
+  // Guarded on the child modals for the same reason the focus trap is —
+  // while the invitation or feedback dialog is open, Escape belongs to it.
+  useEffect(() => {
+    if (!open || invitationOpen || feedbackOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open, invitationOpen, feedbackOpen, onClose]);
+
   return (
     <>
       <Backdrop
@@ -577,22 +600,40 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
             // area on iOS Safari. With `85vh` the address bar was counted in the
             // height, pushing the bottom rows (Settings / Feedback / price
             // slider) below the fold where overflow scroll could not reach them.
-            maxHeight: '85dvh',
+            // +96px compensates the bleed below. Under the global border-box
+            // reset `max-height` INCLUDES padding, so bleeding 96px without
+            // this would silently cost the sheet 96px of usable content
+            // height (measured: content 595.85 -> 499.85). The visible extent
+            // above the fold stays 85dvh.
+            maxHeight: 'calc(85dvh + 96px)',
             '@supports not (height: 100dvh)': {
-              maxHeight: '85vh',
+              maxHeight: 'calc(85vh + 96px)',
             },
             overflowY: 'auto',
             // Keep scroll momentum inside the sheet and stop it chaining to the
             // page behind it when it hits the top/bottom.
             overscrollBehavior: 'contain',
             WebkitOverflowScrolling: 'touch',
-            transform: open ? 'translateY(0)' : 'translateY(100%)',
-            visibility: open ? 'visible' : 'hidden',
+            // Out of layout once the exit transition has finished — a closed
+            // `position: fixed` sheet translated 100% down still occupies a
+            // box below the viewport and makes the document scrollable.
+            display: mounted ? undefined : 'none',
+            transform: entered ? 'translateY(0)' : 'translateY(100%)',
+            visibility: entered ? 'visible' : 'hidden',
             pointerEvents: open ? 'auto' : 'none',
             transition: effectiveConfig.animations
               ? `transform ${durations.liquidNormal} ${easingCurves.liquidSpring}, visibility ${durations.liquidNormal}`
               : `${cssTransition.slow}, visibility 0.3s`,
-            paddingBottom: 'env(safe-area-inset-bottom)',
+            // The enter curve (liquidSpring / the Settings cubic-bezier) has a
+            // control point above 1, so translateY overshoots NEGATIVE mid
+            // animation — measured at -31.4px on a 701px viewport, ~100ms in.
+            // A `bottom: 0` sheet therefore lifts off the bottom edge and
+            // exposes the scrim as a dark band for ~200ms. Bleeding 96px of
+            // padding below the safe area, then pulling it back with an equal
+            // negative margin, gives the overshoot somewhere to travel that is
+            // still sheet-coloured. Layout position is unchanged.
+            paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)',
+            marginBottom: '-96px',
             willChange: 'transform',
             ...headerSpecularStyles,
 

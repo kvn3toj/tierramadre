@@ -8,7 +8,8 @@
  * Sections:
  *   Header — item stamp, status pip, name, sync indicator
  *   Identity — nombre, coleccion, caja, ubicacion
- *   Specifications — peso, color, calidad, talla, medidas, cantidad, categoria
+ *   Specifications — peso, color, calidad, corte, talla (aro), medidas,
+ *                    cantidad, categoria
  *   Pricing — precioCOP
  *   Status — estado (radio group with status pips)
  *   History — last edits (collapsed accordion)
@@ -44,6 +45,7 @@ import { useDirtyGuard } from '../../../hooks/useDirtyGuard';
 import ConfirmDialog from '../../../components/shared/ConfirmDialog';
 import { StatusPip, type EstadoValue } from './StatusPip';
 import { AsesorMovementPanel } from './AsesorMovementPanel';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 // Phase G — create mode: typed payload for the "+ Nueva piedra" flow.
 import type { NewProductInput } from '../../../utils/createProduct-validate';
 
@@ -79,6 +81,7 @@ export interface EditDrawerProduct {
   calidad?: string;
   cantidad?: number;
   talla?: string;
+  tallaAnillo?: string;
   medidas?: string;
   categoria?: string;
   precioCOP?: number;
@@ -105,6 +108,7 @@ export interface EditDrawerPatch {
   calidad?: string;
   cantidad?: number;
   talla?: string;
+  tallaAnillo?: string;
   medidas?: string;
   categoria?: string;
   precioCOP?: number;
@@ -162,6 +166,7 @@ interface DraftState {
   calidad: string;
   cantidad: string;
   talla: string;
+  tallaAnillo: string;
   medidas: string;
   categoria: string;
   precioCOP: string;
@@ -180,6 +185,7 @@ function toDraft(p: EditDrawerProduct | null): DraftState {
     calidad: p?.calidad ?? '',
     cantidad: p?.cantidad != null ? String(p.cantidad) : '',
     talla: p?.talla ?? '',
+    tallaAnillo: p?.tallaAnillo ?? '',
     medidas: p?.medidas ?? '',
     categoria: p?.categoria ?? '',
     precioCOP: p?.precioCOP != null ? String(p.precioCOP) : '',
@@ -208,6 +214,7 @@ function draftToNewProduct(draft: DraftState): NewProductInput {
         ? cantidadNum
         : undefined,
     talla: draft.talla,
+    tallaAnillo: draft.tallaAnillo,
     medidas: draft.medidas,
     categoria: draft.categoria,
     precioCOP:
@@ -241,6 +248,7 @@ function diffDraft(
   ifChanged('color', draft.color, original.color ?? '');
   ifChanged('calidad', draft.calidad, original.calidad ?? '');
   ifChanged('talla', draft.talla, original.talla ?? '');
+  ifChanged('tallaAnillo', draft.tallaAnillo, original.tallaAnillo ?? '');
   ifChanged('medidas', draft.medidas, original.medidas ?? '');
   ifChanged('categoria', draft.categoria, original.categoria ?? '');
   ifChanged('ubicacion', draft.ubicacion, original.ubicacion ?? '');
@@ -608,9 +616,19 @@ export function EditDrawer({
             </FieldGrid>
             <FieldGrid>
               <Field
-                label="Talla"
+                label="Corte"
                 value={draft.talla}
                 onChange={(v) => setDraft({ ...draft, talla: v })}
+                atelier={atelier}
+                foto={foto}
+                monospace
+              />
+              {/* Aro del anillo — campo propio desde el desdoble de la
+                  columna H (2026-08-11); antes compartía celda con el corte. */}
+              <Field
+                label="Talla (anillo)"
+                value={draft.tallaAnillo}
+                onChange={(v) => setDraft({ ...draft, tallaAnillo: v })}
                 atelier={atelier}
                 foto={foto}
                 monospace
@@ -1416,7 +1434,9 @@ function HistorialBlock({
   const [showAll, setShowAll] = useState(false);
   const history = useConvexQuery(
     convexApi.products.editHistory,
-    convexReady ? { itemId } : 'skip',
+    convexReady
+      ? { itemId, sessionToken: readFreshSessionToken() ?? undefined }
+      : 'skip',
   ) as Array<HistoryEntry> | undefined;
 
   if (!convexReady) {
@@ -1550,7 +1570,8 @@ const FIELD_LABELS: Record<string, string> = {
   color: 'Color',
   calidad: 'Calidad',
   cantidad: 'Cantidad',
-  talla: 'Talla',
+  talla: 'Corte',
+  tallaAnillo: 'Talla (anillo)',
   medidas: 'Medidas',
   categoria: 'Categoría',
   precioCOP: 'Precio COP',

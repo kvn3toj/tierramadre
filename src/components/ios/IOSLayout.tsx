@@ -38,6 +38,7 @@ import {
   bottomBarClearance,
   layoutBreakpoints,
   TabBar,
+  hitSlop,
 } from '../../design-system';
 import {
   STOREFRONT_SLOTS,
@@ -47,6 +48,41 @@ import {
 import { useIsProvider } from '../../hooks/usePermissions';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
+
+/**
+ * How a page wears the brand in the nav bar.
+ *
+ * - `lockup`   — símbolo + "tierra mädre" + "ESMERALDAS CON ADN DE PAZ".
+ *                The full brand moment; needs a taller bar so the slogan
+ *                clears its ~5px legibility floor.
+ * - `wordmark` — símbolo + "tierra mädre", sin eslogan. The name renders
+ *                LARGER than in the lockup at a shorter logo height (26px vs
+ *                22px), because it stops sharing the height with the slogan.
+ *                Not currently used by any route: the brand is shown whole
+ *                everywhere. Kept because the asset ships and it is the right
+ *                answer for any future bar too short for the slogan.
+ */
+type NavBrand = 'lockup' | 'wordmark';
+
+/**
+ * Asset + sizing per treatment. The logo height is deliberately under the bar
+ * height: it used to equal it, so the mark filled the bar edge to edge.
+ */
+const NAV_BRAND: Record<
+  NavBrand,
+  { url: string; logoHeight: number; barMinHeight: number }
+> = {
+  lockup: {
+    url: '/images/logo-horizontal-green.png',
+    logoHeight: 36,
+    barMinHeight: 52,
+  },
+  wordmark: {
+    url: '/images/logo-wordmark-green.png',
+    logoHeight: 26,
+    barMinHeight: 44,
+  },
+};
 
 interface PageConfig {
   title: string;
@@ -60,6 +96,8 @@ interface PageConfig {
   backgroundColor?: string;
   /** Force a specific logo regardless of theme */
   forceLogoUrl?: string;
+  /** Brand treatment for the nav bar; sets the asset and its sizing. */
+  navBrand?: NavBrand;
 }
 
 const getPageConfigs = (t: any): Record<string, PageConfig> => ({
@@ -92,8 +130,7 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
   '/treasure': {
     title: t.pages.treasure.title,
     mode: 'compact',
-    logoUrl: '/images/logo-horizontal-green.png',
-    forceLogoUrl: '/images/logo-horizontal-green.png',
+    navBrand: 'lockup',
   },
   '/ambassadors': {
     title: t.pages.ambassadors.title,
@@ -102,8 +139,7 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
   '/home': {
     title: 'Tierra Mädre',
     mode: 'compact',
-    logoUrl: '/images/logo-horizontal-green.png',
-    forceLogoUrl: '/images/logo-horizontal-green.png',
+    navBrand: 'lockup',
   },
   '/catalog': {
     title: t.pages.catalog.title,
@@ -140,10 +176,24 @@ const getPageConfigs = (t: any): Record<string, PageConfig> => ({
     mode: 'compact',
     showBackButton: true,
   },
+  // The three routes that all render ProductDetail. The page carries its own
+  // FICHA header (back arrow + código + acciones), so the shell bar above it is
+  // pure brand — the mark, not the name spelled out. `/p/` keeps the trailing
+  // slash on purpose: bare `/p` would also swallow `/provider`.
   '/product': {
     title: t.pages.gallery.title,
     mode: 'compact',
-    showBackButton: true,
+    navBrand: 'lockup',
+  },
+  '/p/': {
+    title: t.pages.gallery.title,
+    mode: 'compact',
+    navBrand: 'lockup',
+  },
+  '/grupo/': {
+    title: t.pages.gallery.title,
+    mode: 'compact',
+    navBrand: 'lockup',
   },
   '/cuentas/cotizaciones': {
     title: t.pages.cotizacion.title,
@@ -223,6 +273,12 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
     location.pathname.startsWith('/boveda-secreta') ||
     location.pathname.startsWith('/esmereogenesis');
   const isFullWidthScope = isFotoRoute || isAtelierRoute || isCinematicRoute;
+
+  // The catalog gets the browse-dense container tier (--maxw-wide) instead of
+  // the reading tier. It is the one contained route whose job is scanning a
+  // 486-piece grid, not reading a page, and 1160 was costing it a third of the
+  // monitor. Still contained — it opts into a wider band, not out of the shell.
+  const isBrowseScope = location.pathname.startsWith('/treasure');
 
   // Providers get their own direct-place bar; everyone else gets the storefront
   // bar. Selection is by permission (not path), same as the old IOSTabBar.
@@ -316,6 +372,20 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
     };
   }, [location.pathname, t, isLight]);
 
+  /**
+   * Which brand treatment the bar wears.
+   *
+   * The same one everywhere: every branded screen shows the full lockup, on
+   * every device. The treatment no longer varies by route or by breakpoint —
+   * one mark, one size, so the brand reads identically wherever it appears.
+   *
+   * Pages that never carry the brand are untouched; they keep their text title.
+   */
+  const navBrand = useMemo(
+    () => (pageConfig.navBrand ? NAV_BRAND[pageConfig.navBrand] : undefined),
+    [pageConfig.navBrand],
+  );
+
   return (
     <Box
       sx={{
@@ -379,6 +449,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
           title={pageConfig.title}
           subtitle={pageConfig.subtitle}
           logoUrl={
+            navBrand?.url ||
             pageConfig.forceLogoUrl ||
             (pageConfig.logoUrl
               ? isLight
@@ -386,6 +457,8 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
                 : '/images/logo-horizontal-white.png'
               : undefined)
           }
+          logoHeight={navBrand?.logoHeight}
+          barMinHeight={navBrand?.barMinHeight}
           showBackButton={pageConfig.showBackButton}
           leadingActions={pageConfig.leadingActions}
           trailingActions={pageConfig.trailingActions}
@@ -398,6 +471,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
                 }
                 size="small"
                 sx={{
+                  ...hitSlop(),
                   color: 'var(--brand-primary)',
                   padding: '6px',
                   opacity: 0.7,
@@ -457,7 +531,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
         ) : (
           <Box
             sx={{
-              maxWidth: 'var(--maxw)',
+              maxWidth: isBrowseScope ? 'var(--maxw-wide)' : 'var(--maxw)',
               mx: 'auto',
               width: '100%',
               // DS3 §3.1 edge padding: 16 phone · 24 tablet · 32 desktop.

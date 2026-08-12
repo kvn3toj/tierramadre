@@ -18,7 +18,7 @@ export const brandColors = {
    * Main brand identity, CTAs, primary actions
    */
   primary: {
-    light: primitiveColors.emerald[500],  // #00AE7A
+    light: primitiveColors.emerald[500],  // #00C992
     dark: primitiveColors.emerald[400],   // Slightly brighter for dark mode
   },
 

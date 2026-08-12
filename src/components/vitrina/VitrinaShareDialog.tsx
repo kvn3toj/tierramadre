@@ -10,17 +10,22 @@
  * Pricing controls mirror InvitationGenerator; default multiplier is x1
  * (standard retail) per product decision.
  *
- * Google credential renewal: the GIS credential stored at sign-in lives ~1h,
- * but the app session (validated user) outlives it by days — so a staff member
- * who signed in this morning is "logged in" with a dead ID token, and the mint
- * would 401 forever. We check `exp` client-side and, when stale, first try a
- * *silent* renewal (Google One Tap, auto-selecting the existing session — no
- * click required) via `SilentGoogleRenew` below. Only if that's skipped,
- * dismissed, or errors do we fall back to the visible inline GoogleLogin
- * button. `SilentGoogleRenew` mounts its own `GoogleOAuthProvider` (loading
- * the GIS script) only for the few seconds of the renewal attempt, so we
- * don't pay that cost for the common case of a staff member with a fresh
- * token — mirrors the same per-component provider pattern already used in
+ * Auth: `/api/vitrina` mints ONLY against a `tms1` app session token (2026-08
+ * fix round N1) — a raw Google ID token is no longer accepted, since its
+ * audience-only check proves "some Gmail account", not roster membership.
+ * `getSessionTokenForMint()` below reads the current session token, and
+ * mints/refreshes one via `ensureAppSession()` — AWAITED, unlike the
+ * fire-and-forget `void ensureAppSession()` used at sign-in — when there
+ * isn't one yet. If that still comes up empty (no Google credential fresh
+ * enough to exchange, no existing session), we fall back to getting a fresh
+ * Google credential: first a *silent* renewal (Google One Tap, auto-selecting
+ * the existing session — no click required) via `SilentGoogleRenew` below,
+ * then the visible inline GoogleLogin button. Either path calls `signIn()`
+ * (re-validates + re-mints the session token) and retries from the top.
+ * `SilentGoogleRenew` mounts its own `GoogleOAuthProvider` (loading the GIS
+ * script) only for the few seconds of the renewal attempt, so we don't pay
+ * that cost for the common case of a staff member with a fresh session —
+ * mirrors the same per-component provider pattern already used in
  * `UserProfileCard`.
  */
 
@@ -51,7 +56,10 @@ import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { useTRM } from '../../hooks/useTRM';
 import { VitrinaCurrency, formatVitrinaPrice } from '../../utils/vitrinaPrice';
 import { brand, fontWeights } from '../../design-system';
-import { readFreshAuthToken } from '../../utils/sessionToken';
+import {
+  readFreshSessionToken,
+  ensureAppSession,
+} from '../../utils/sessionToken';
 
 const STUDIO_BASE_URL = 'https://tierramadre.app';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
@@ -68,10 +76,20 @@ function extractToken(raw: string): string {
   return afterSlash.split(/[/?#]/)[0].trim().toUpperCase();
 }
 
-// Google ID token when fresh, else the 30-day app session token (see
-// utils/sessionToken.ts) — /api/vitrina accepts both, so the renewal
-// fallbacks below only trigger when the user hasn't signed in for a month.
-const readFreshIdToken = readFreshAuthToken;
+/**
+ * The session token /api/vitrina now requires, minting/refreshing it first
+ * if there isn't one yet. Awaits `ensureAppSession()` (unlike the
+ * fire-and-forget call at sign-in) so a token minted moments ago is actually
+ * usable here, not just in flight. Returns null only when there was no
+ * Google credential fresh enough to exchange either — the caller's cue to
+ * fall back to a full Google re-login (attemptSilentRenew).
+ */
+async function getSessionTokenForMint(): Promise<string | null> {
+  const existing = readFreshSessionToken();
+  if (existing) return existing;
+  await ensureAppSession();
+  return readFreshSessionToken();
+}
 
 // Silent One Tap renewal (auto_select) is reliably blocked on iOS and in
 // Safari — after Google's One Tap cooldown it never displays, so the silent
@@ -228,21 +246,23 @@ export default function VitrinaShareDialog({
       }
     }
     // Mint/update via the authenticated proxy: it verifies the caller's
-    // Google ID token server-side, then writes to Convex. A stale credential
-    // guarantees a 401, so try a silent renewal first instead of firing a
-    // doomed request.
-    const idToken = readFreshIdToken();
-    if (!idToken) {
+    // session token server-side, then writes to Convex. No session token
+    // (and nothing fresh to mint one from) means a doomed request — get a
+    // fresh Google credential first instead of firing it.
+    const sessionToken = await getSessionTokenForMint();
+    if (!sessionToken) {
       attemptSilentRenew();
       return;
     }
-    await submitWithToken(idToken);
+    await submitWithToken(sessionToken);
   };
 
-  const submitWithToken = async (idToken: string) =>
-    editingExisting ? updateWithToken(idToken) : mintWithToken(idToken);
+  const submitWithToken = async (sessionToken: string) =>
+    editingExisting
+      ? updateWithToken(sessionToken)
+      : mintWithToken(sessionToken);
 
-  const mintWithToken = async (idToken: string) => {
+  const mintWithToken = async (sessionToken: string) => {
     setGenerating(true);
     setError(null);
     try {
@@ -250,7 +270,7 @@ export default function VitrinaShareDialog({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${idToken}`,
+          Authorization: `Bearer ${sessionToken}`,
         },
         body: JSON.stringify({
           itemIds: items.map((i) => i.item),
@@ -298,7 +318,7 @@ export default function VitrinaShareDialog({
   };
 
   /** Correct an already-shared token link in place — same URL, new items. */
-  const updateWithToken = async (idToken: string) => {
+  const updateWithToken = async (sessionToken: string) => {
     const token = extractToken(editTokenInput);
     setGenerating(true);
     setError(null);
@@ -307,7 +327,7 @@ export default function VitrinaShareDialog({
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${idToken}`,
+          Authorization: `Bearer ${sessionToken}`,
         },
         body: JSON.stringify({
           token,
@@ -369,8 +389,18 @@ export default function VitrinaShareDialog({
   const handleSilentCredential = async (credential: string) => {
     setSilentRenewing(false);
     try {
+      // signIn() re-mints the session token via a fire-and-forget
+      // `void ensureAppSession()` — not guaranteed landed yet when it
+      // resolves. getSessionTokenForMint() awaits it properly before the
+      // retry, instead of sending the raw Google credential (rejected now).
       await signIn(credential);
-      await submitWithToken(credential);
+      const sessionToken = await getSessionTokenForMint();
+      if (!sessionToken) {
+        setNeedsRenew(true);
+        setError('No se pudo renovar la sesión. Intenta de nuevo.');
+        return;
+      }
+      await submitWithToken(sessionToken);
     } catch {
       setNeedsRenew(true);
       setError('No se pudo renovar la sesión. Intenta de nuevo.');

@@ -21,16 +21,23 @@ interface CategoryDetailViewProps {
   onProductClick: (item: TreasureItem) => void;
 }
 
-export function CategoryDetailView({ category, onBack, onProductClick }: CategoryDetailViewProps) {
+export function CategoryDetailView({
+  category,
+  onBack,
+  onProductClick,
+}: CategoryDetailViewProps) {
   const { t } = useLanguage();
   const prefersReducedMotion = useReducedMotion();
   const [activeFilter, setActiveFilter] = useState<string>('all');
 
-  const qualityTiers = useMemo(() => getQualityTiers(category.items), [category.items]);
+  const qualityTiers = useMemo(
+    () => getQualityTiers(category.items),
+    [category.items],
+  );
 
   const filteredItems = useMemo(() => {
     if (activeFilter === 'all') return category.items;
-    return category.items.filter(item => item.calidad === activeFilter);
+    return category.items.filter((item) => item.calidad === activeFilter);
   }, [category.items, activeFilter]);
 
   const categoryLabels: Record<string, string> = {
@@ -48,7 +55,15 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
       transition={{ duration: 0.2 }}
     >
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, px: { xs: 0, sm: 0.5 } }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          mb: 2,
+          px: { xs: 0, sm: 0.5 },
+        }}
+      >
         <IconButton
           onClick={onBack}
           aria-label={t.actions.back}
@@ -69,7 +84,10 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
         <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem' }}>
           {categoryLabels[category.key] || category.label}
         </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary', ml: 'auto' }}>
+        <Typography
+          variant="body2"
+          sx={{ color: 'text.secondary', ml: 'auto' }}
+        >
           {filteredItems.length} {t.ambassador.museum?.items ?? 'productos'}
         </Typography>
       </Box>
@@ -78,7 +96,7 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
       {qualityTiers.length > 1 && (
         <Box sx={{ mb: 2 }}>
           <SegmentedControl
-            ariaLabel='Calidad'
+            ariaLabel="Calidad"
             value={activeFilter}
             onChange={setActiveFilter}
             options={[
@@ -89,11 +107,23 @@ export function CategoryDetailView({ category, onBack, onProductClick }: Categor
         </Box>
       )}
 
-      {/* Product List — responsive grid on wider screens */}
+      {/* Product List — responsive grid on wider screens.
+          Tracks are minmax(0, 1fr), never a bare 1fr: `1fr` is minmax(auto, 1fr),
+          and an `auto` minimum floors the track at the item's min-content width.
+          ProductListCard's title is `white-space: nowrap`, so its min-content is
+          the FULL untruncated name — a lot-prefixed one ("L:II-JA Anna Collar…")
+          blew the track to ~455px inside a 358px container. <main> pins
+          overflow-x:hidden (IOSLayout.tsx:444), so the excess was clipped in
+          silence: the price and quality badge simply vanished off the right edge
+          while documentElement.scrollWidth still equalled innerWidth. */}
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+          gridTemplateColumns: {
+            xs: 'minmax(0, 1fr)',
+            sm: 'repeat(2, minmax(0, 1fr))',
+            md: 'repeat(3, minmax(0, 1fr))',
+          },
           gap: { xs: 1, sm: 1.5 },
         }}
       >

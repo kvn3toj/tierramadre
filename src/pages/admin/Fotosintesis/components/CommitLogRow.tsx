@@ -37,6 +37,7 @@ import {
 } from '../../../../lib/convex-safe';
 import type { CommitEntity } from '../copilot/executeAction';
 import type { Id } from '../../../../../convex/_generated/dataModel';
+import { readFreshSessionToken } from '../../../../utils/sessionToken';
 
 export interface CommitLogRowProps {
   summary: string;
@@ -98,6 +99,7 @@ function LotSyncRow({
   // lots.retryPush needs (it takes `id`, not `loteId`).
   const row = useConvexQuery(convexApi.lots.getByLoteId, {
     loteId: entity.key,
+    sessionToken: readFreshSessionToken() ?? undefined,
   }) as SyncRow | null | undefined;
   const retry = useConvexAction(convexApi.lots.retryPush);
   // `entity.key` is the loteId (natural key); lots.retryPush needs the Convex
@@ -131,6 +133,7 @@ function SaleSyncRow({
   const saleId = entity.key as Id<'sales'>;
   const row = useConvexQuery(convexApi.sales.get, {
     id: saleId,
+    sessionToken: readFreshSessionToken() ?? undefined,
   }) as SyncRow | null | undefined;
   const retry = useConvexAction(convexApi.sales.retryPush);
   return (

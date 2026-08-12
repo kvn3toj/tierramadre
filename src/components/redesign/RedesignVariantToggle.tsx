@@ -27,6 +27,10 @@ export const RedesignVariantToggle: React.FC = () => {
 
   return (
     <Box
+      // Never ships (the DEV guard above), so it is exempt from the 11px
+      // legibility floor. Marked explicitly so the e2e sweep can exclude it
+      // by intent rather than by matching its emotion class names.
+      data-dev-only="true"
       sx={{
         position: 'fixed',
         left: 16,

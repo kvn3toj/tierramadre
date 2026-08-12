@@ -24,10 +24,13 @@
 import { snapdom } from '@zumer/snapdom';
 import html2canvas from 'html2canvas';
 
-// 203 DPI is the NIIMBOT D11's native print resolution — matching pixelRatio
-// here keeps the exported PNG crisp at the label's real physical size when
-// imported into NIIMBOT's own template editor.
-const DEFAULT_PIXEL_RATIO = 203 / 96; // native DPI ÷ CSS-px label height
+// ~2.1× OVERSAMPLE for the PNG export path. Despite its `203 / 96` spelling
+// this is not a DPI conversion — the label is authored at 96 CSS px for a 12mm
+// tape, which already IS 203 DPI, so a true DPI match would be 1. The 2.1×
+// is deliberate headroom so the PNG stays crisp when re-imported into NIIMBOT's
+// own template editor at arbitrary zoom. Do not "correct" it to 1.
+// The direct-print path does not use this — see renderLabelCanvas.
+const DEFAULT_PIXEL_RATIO = 203 / 96;
 const IMAGE_LOAD_TIMEOUT_MS = 5000;
 
 function triggerDownload(href: string, filename: string) {
@@ -164,13 +167,15 @@ export async function renderLabelPngBlob(
  * path, which needs an HTMLCanvasElement to hand to niimbluelib's
  * ImageEncoder.encodeCanvas, not a downloadable file.
  *
- * scale: 1 (not the 203/96 DPI-matching scale renderLabelPngBlob uses) is
- * intentional here — the label is authored at 96 CSS px, which already
- * equals the printer head's native ~96 dots for a 12mm label at 203 DPI, so
- * scale:1 gives native print resolution directly. The PNG-export path scales
- * UP instead, because that PNG needs to look crisp when re-imported into
- * NIIMBOT's own template editor at arbitrary zoom levels — a concern that
- * doesn't apply when printing straight to the print head.
+ * Here 1 canvas pixel is 1 printer dot, so `scale` must map the authored size
+ * onto the CONNECTED head's resolution. Labels are authored at 203 DPI (96 CSS
+ * px = 12mm), so a 203 DPI head wants scale 1 and a 300 DPI head wants ~1.478 —
+ * pass `printScaleFor(head)` from labelSizes. The default of 1 keeps the
+ * pre-multi-size behaviour for callers that don't know the head yet.
+ *
+ * The PNG-export path oversamples instead (see DEFAULT_PIXEL_RATIO), because
+ * that PNG must look crisp when re-imported into NIIMBOT's own template editor
+ * at arbitrary zoom — a concern that doesn't apply when driving the head.
  */
 export async function renderLabelCanvas(
   node: HTMLElement,

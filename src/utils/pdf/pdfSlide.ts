@@ -18,7 +18,7 @@ import { SPACING_MM, BORDER_RADIUS_MM } from './core/spacing';
 import { applyIOSTextStyle, applyCustomTextStyle } from './core/typography';
 import { drawIOSShadow, drawCardShadow } from './core/shadows';
 import { getLogoDimensions } from './components/logo';
-import { LOGO_ASPECT_RATIO } from './pdfCommon';
+import { LOCKUP_ASPECT_RATIO } from './pdfCommon';
 import type { Emerald, CatalogOptions } from './pdfCommon';
 
 // =============================================================================
@@ -32,7 +32,7 @@ export async function addHorizontalCoverPage(
   title?: string,
   totalItems?: number,
   logoBase64?: string,
-  theme: 'dark' | 'light' = 'dark'
+  theme: 'dark' | 'light' = 'dark',
 ) {
   await ensureJsPDFLoaded();
   const iosColors = getIOSThemeColors(theme as ThemeMode);
@@ -52,7 +52,7 @@ export async function addHorizontalCoverPage(
     pageHeight - cardMargin * 2,
     BORDER_RADIUS_MM.lg,
     BORDER_RADIUS_MM.lg,
-    'F'
+    'F',
   );
 
   // Emerald accent border (iOS style - thin, subtle)
@@ -64,7 +64,7 @@ export async function addHorizontalCoverPage(
     pageWidth - cardMargin * 2,
     pageHeight - cardMargin * 2,
     BORDER_RADIUS_MM.lg,
-    BORDER_RADIUS_MM.lg
+    BORDER_RADIUS_MM.lg,
   );
 
   const centerX = pageWidth / 2;
@@ -73,8 +73,10 @@ export async function addHorizontalCoverPage(
   // Add Logo Image - iOS HIG centered, with subtle shadow
   if (logoBase64) {
     try {
+      // Cover: 32mm is well above the lockup's 24mm legibility floor,
+      // so this slot carries the full wordmark + slogan.
       const logoHeight = 32;
-      const logoWidth = logoHeight * LOGO_ASPECT_RATIO;
+      const logoWidth = logoHeight * LOCKUP_ASPECT_RATIO;
       const logoX = centerX - logoWidth / 2;
       const logoY = centerY - 35;
 
@@ -89,15 +91,25 @@ export async function addHorizontalCoverPage(
         logoWidth,
         logoHeight,
         undefined,
-        'MEDIUM'
+        'MEDIUM',
       );
     } catch (e) {
       console.error('Failed to add logo to PDF:', e);
-      applyIOSTextStyle(pdf, 'largeTitle', iosColors.emeraldPrimary, theme as ThemeMode);
+      applyIOSTextStyle(
+        pdf,
+        'largeTitle',
+        iosColors.emeraldPrimary,
+        theme as ThemeMode,
+      );
       pdf.text('TIERRA MADRE', centerX, centerY - 10, { align: 'center' });
     }
   } else {
-    applyIOSTextStyle(pdf, 'largeTitle', iosColors.emeraldPrimary, theme as ThemeMode);
+    applyIOSTextStyle(
+      pdf,
+      'largeTitle',
+      iosColors.emeraldPrimary,
+      theme as ThemeMode,
+    );
     pdf.text('TIERRA MADRE', centerX, centerY - 10, { align: 'center' });
   }
 
@@ -107,8 +119,15 @@ export async function addHorizontalCoverPage(
   pdf.line(centerX - 40, centerY + 8, centerX + 40, centerY + 8);
 
   // Tagline - iOS secondary text style
-  applyIOSTextStyle(pdf, 'subheadline', iosColors.textSecondary, theme as ThemeMode);
-  pdf.text('E S E N C I A   Y   P O D E R', centerX, centerY + 20, { align: 'center' });
+  applyIOSTextStyle(
+    pdf,
+    'subheadline',
+    iosColors.textSecondary,
+    theme as ThemeMode,
+  );
+  pdf.text('E S E N C I A   Y   P O D E R', centerX, centerY + 20, {
+    align: 'center',
+  });
 
   // Catalog title - iOS title2
   if (title) {
@@ -118,8 +137,16 @@ export async function addHorizontalCoverPage(
 
   // Collection count - iOS footnote
   if (totalItems) {
-    applyIOSTextStyle(pdf, 'footnote', iosColors.textTertiary, theme as ThemeMode);
-    const piezasText = totalItems === 1 ? '1 pieza exclusiva' : `${totalItems} piezas exclusivas`;
+    applyIOSTextStyle(
+      pdf,
+      'footnote',
+      iosColors.textTertiary,
+      theme as ThemeMode,
+    );
+    const piezasText =
+      totalItems === 1
+        ? '1 pieza exclusiva'
+        : `${totalItems} piezas exclusivas`;
     pdf.text(piezasText, centerX, centerY + 48, { align: 'center' });
   }
 
@@ -131,27 +158,59 @@ export async function addHorizontalCoverPage(
   const badgeHeight = 6;
   setFillColor(pdf, iosColors.emeraldPrimary);
   pdf.setGState(new (getGState())({ opacity: 0.1 }));
-  pdf.roundedRect(centerX - badgeWidth / 2, badgeY - 2, badgeWidth, badgeHeight, 3, 3, 'F');
+  pdf.roundedRect(
+    centerX - badgeWidth / 2,
+    badgeY - 2,
+    badgeWidth,
+    badgeHeight,
+    3,
+    3,
+    'F',
+  );
   pdf.setGState(new (getGState())({ opacity: 1 }));
 
   // Badge text
-  applyCustomTextStyle(pdf, 'pageNumber', iosColors.emeraldPrimary, theme as ThemeMode);
+  applyCustomTextStyle(
+    pdf,
+    'pageNumber',
+    iosColors.emeraldPrimary,
+    theme as ThemeMode,
+  );
   pdf.setFont('helvetica', 'bold');
-  pdf.text('100% ESMERALDAS COLOMBIANAS', centerX, badgeY + 2, { align: 'center' });
+  pdf.text('100% ESMERALDAS COLOMBIANAS', centerX, badgeY + 2, {
+    align: 'center',
+  });
 
   // Sub-badge text
-  applyIOSTextStyle(pdf, 'caption1', iosColors.textTertiary, theme as ThemeMode);
-  pdf.text('Certificadas • Naturales • Exclusivas', centerX, badgeY + 10, { align: 'center' });
+  applyIOSTextStyle(
+    pdf,
+    'caption1',
+    iosColors.textTertiary,
+    theme as ThemeMode,
+  );
+  pdf.text('Certificadas • Naturales • Exclusivas', centerX, badgeY + 10, {
+    align: 'center',
+  });
 
   // Footer - Date and website (iOS footer style)
   const footerY = pageHeight - margin - 3;
 
-  applyIOSTextStyle(pdf, 'caption1', iosColors.textTertiary, theme as ThemeMode);
-  const date = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long' });
+  applyIOSTextStyle(
+    pdf,
+    'caption1',
+    iosColors.textTertiary,
+    theme as ThemeMode,
+  );
+  const date = new Date().toLocaleDateString('es-CO', {
+    year: 'numeric',
+    month: 'long',
+  });
   pdf.text(date.charAt(0).toUpperCase() + date.slice(1), margin + 4, footerY);
 
   setTextColor(pdf, iosColors.emeraldPrimary);
-  pdf.text('tierramadre.co', pageWidth - margin - 4, footerY, { align: 'right' });
+  pdf.text('tierramadre.co', pageWidth - margin - 4, footerY, {
+    align: 'right',
+  });
 }
 
 // =============================================================================
@@ -167,7 +226,7 @@ export async function addHorizontalCarouselLayout(
   pageWidth: number,
   pageHeight: number,
   logoBase64?: string,
-  theme: 'dark' | 'light' = 'dark'
+  theme: 'dark' | 'light' = 'dark',
 ) {
   await ensureJsPDFLoaded();
   const iosColors = getIOSThemeColors(theme as ThemeMode);
@@ -197,12 +256,17 @@ export async function addHorizontalCarouselLayout(
         logoDims.width,
         logoDims.height,
         undefined,
-        'MEDIUM'
+        'MEDIUM',
       );
     }
 
     // Page number at top-left (iOS style)
-    applyIOSTextStyle(pdf, 'footnote', iosColors.textTertiary, theme as ThemeMode);
+    applyIOSTextStyle(
+      pdf,
+      'footnote',
+      iosColors.textTertiary,
+      theme as ThemeMode,
+    );
     pdf.text(`${i + 1} / ${emeralds.length}`, iosMargin, iosMargin + 4);
 
     // Header accent line
@@ -224,12 +288,27 @@ export async function addHorizontalCarouselLayout(
 
     // Image card background
     setFillColor(pdf, iosColors.card);
-    pdf.roundedRect(imageX, imageY, imageWidth, imageHeight, BORDER_RADIUS_MM.md, BORDER_RADIUS_MM.md, 'F');
+    pdf.roundedRect(
+      imageX,
+      imageY,
+      imageWidth,
+      imageHeight,
+      BORDER_RADIUS_MM.md,
+      BORDER_RADIUS_MM.md,
+      'F',
+    );
 
     // Subtle border
     setStrokeColor(pdf, iosColors.border);
     pdf.setLineWidth(0.2);
-    pdf.roundedRect(imageX, imageY, imageWidth, imageHeight, BORDER_RADIUS_MM.md, BORDER_RADIUS_MM.md);
+    pdf.roundedRect(
+      imageX,
+      imageY,
+      imageWidth,
+      imageHeight,
+      BORDER_RADIUS_MM.md,
+      BORDER_RADIUS_MM.md,
+    );
 
     if (emerald.mediaData) {
       try {
@@ -243,13 +322,23 @@ export async function addHorizontalCarouselLayout(
           imageWidth - imgInset * 2,
           imageHeight - imgInset * 2,
           undefined,
-          'MEDIUM'
+          'MEDIUM',
         );
       } catch {
         setFillColor(pdf, iosColors.backgroundSecondary);
         pdf.rect(imageX + 2, imageY + 2, imageWidth - 4, imageHeight - 4, 'F');
-        applyIOSTextStyle(pdf, 'callout', iosColors.textTertiary, theme as ThemeMode);
-        pdf.text('Imagen no disponible', imageX + imageWidth / 2, imageY + imageHeight / 2, { align: 'center' });
+        applyIOSTextStyle(
+          pdf,
+          'callout',
+          iosColors.textTertiary,
+          theme as ThemeMode,
+        );
+        pdf.text(
+          'Imagen no disponible',
+          imageX + imageWidth / 2,
+          imageY + imageHeight / 2,
+          { align: 'center' },
+        );
       }
     }
 
@@ -264,12 +353,27 @@ export async function addHorizontalCarouselLayout(
 
     // Info card background
     setFillColor(pdf, iosColors.card);
-    pdf.roundedRect(infoX, infoY, infoWidth, infoHeight, BORDER_RADIUS_MM.md, BORDER_RADIUS_MM.md, 'F');
+    pdf.roundedRect(
+      infoX,
+      infoY,
+      infoWidth,
+      infoHeight,
+      BORDER_RADIUS_MM.md,
+      BORDER_RADIUS_MM.md,
+      'F',
+    );
 
     // Subtle border
     setStrokeColor(pdf, iosColors.border);
     pdf.setLineWidth(0.2);
-    pdf.roundedRect(infoX, infoY, infoWidth, infoHeight, BORDER_RADIUS_MM.md, BORDER_RADIUS_MM.md);
+    pdf.roundedRect(
+      infoX,
+      infoY,
+      infoWidth,
+      infoHeight,
+      BORDER_RADIUS_MM.md,
+      BORDER_RADIUS_MM.md,
+    );
 
     // Inner padding
     const padding = SPACING_MM.md;
@@ -279,11 +383,16 @@ export async function addHorizontalCarouselLayout(
 
     // Product name - iOS title1
     applyIOSTextStyle(pdf, 'title1', iosColors.textPrimary, theme as ThemeMode);
-    const nameLines = pdf.splitTextToSize(emerald.name.toUpperCase(), innerWidth);
+    const nameLines = pdf.splitTextToSize(
+      emerald.name.toUpperCase(),
+      innerWidth,
+    );
     pdf.text(nameLines[0], innerX + innerWidth / 2, infoY, { align: 'center' });
     if (nameLines[1]) {
       infoY += 8;
-      pdf.text(nameLines[1], innerX + innerWidth / 2, infoY, { align: 'center' });
+      pdf.text(nameLines[1], innerX + innerWidth / 2, infoY, {
+        align: 'center',
+      });
     }
     infoY += 10;
 
@@ -297,11 +406,24 @@ export async function addHorizontalCarouselLayout(
     const category = categoryLabels[emerald.category] || 'Esmeralda Colombiana';
 
     // Pill background
-    applyIOSTextStyle(pdf, 'callout', iosColors.emeraldPrimary, theme as ThemeMode);
+    applyIOSTextStyle(
+      pdf,
+      'callout',
+      iosColors.emeraldPrimary,
+      theme as ThemeMode,
+    );
     const categoryWidth = pdf.getTextWidth(category) + 8;
     setFillColor(pdf, iosColors.emeraldPrimary);
     pdf.setGState(new (getGState())({ opacity: 0.12 }));
-    pdf.roundedRect(innerX + (innerWidth - categoryWidth) / 2, infoY - 4, categoryWidth, 7, 3.5, 3.5, 'F');
+    pdf.roundedRect(
+      innerX + (innerWidth - categoryWidth) / 2,
+      infoY - 4,
+      categoryWidth,
+      7,
+      3.5,
+      3.5,
+      'F',
+    );
     pdf.setGState(new (getGState())({ opacity: 1 }));
 
     setTextColor(pdf, iosColors.emeraldPrimary);
@@ -316,7 +438,12 @@ export async function addHorizontalCarouselLayout(
 
     // Details section - iOS list style
     const addDetail = (label: string, value: string, highlight = false) => {
-      applyIOSTextStyle(pdf, 'footnote', iosColors.textTertiary, theme as ThemeMode);
+      applyIOSTextStyle(
+        pdf,
+        'footnote',
+        iosColors.textTertiary,
+        theme as ThemeMode,
+      );
       pdf.text(label, innerX, infoY);
 
       if (highlight) {
@@ -355,31 +482,68 @@ export async function addHorizontalCarouselLayout(
       // Price box with emerald accent
       drawIOSShadow(pdf, priceBoxX, infoY, priceBoxWidth, priceBoxHeight, 'xs');
       setFillColor(pdf, iosColors.backgroundSecondary);
-      pdf.roundedRect(priceBoxX, infoY, priceBoxWidth, priceBoxHeight, BORDER_RADIUS_MM.sm, BORDER_RADIUS_MM.sm, 'F');
+      pdf.roundedRect(
+        priceBoxX,
+        infoY,
+        priceBoxWidth,
+        priceBoxHeight,
+        BORDER_RADIUS_MM.sm,
+        BORDER_RADIUS_MM.sm,
+        'F',
+      );
 
       setStrokeColor(pdf, iosColors.emeraldPrimary);
       pdf.setLineWidth(0.5);
-      pdf.roundedRect(priceBoxX, infoY, priceBoxWidth, priceBoxHeight, BORDER_RADIUS_MM.sm, BORDER_RADIUS_MM.sm);
+      pdf.roundedRect(
+        priceBoxX,
+        infoY,
+        priceBoxWidth,
+        priceBoxHeight,
+        BORDER_RADIUS_MM.sm,
+        BORDER_RADIUS_MM.sm,
+      );
 
-      applyIOSTextStyle(pdf, 'headline', iosColors.textPrimary, theme as ThemeMode);
+      applyIOSTextStyle(
+        pdf,
+        'headline',
+        iosColors.textPrimary,
+        theme as ThemeMode,
+      );
       const displayCurrency = options.currency || 'COP';
-      const priceValue = options.convertPrice ? options.convertPrice(emerald.priceCOP) : emerald.priceCOP;
-      const price = new Intl.NumberFormat(displayCurrency === 'USD' ? 'en-US' : 'es-CO', {
-        style: 'currency',
-        currency: displayCurrency,
-        maximumFractionDigits: 0,
-      }).format(priceValue);
-      pdf.text(price, priceBoxX + priceBoxWidth / 2, infoY + 13, { align: 'center' });
+      const priceValue = options.convertPrice
+        ? options.convertPrice(emerald.priceCOP)
+        : emerald.priceCOP;
+      const price = new Intl.NumberFormat(
+        displayCurrency === 'USD' ? 'en-US' : 'es-CO',
+        {
+          style: 'currency',
+          currency: displayCurrency,
+          maximumFractionDigits: 0,
+        },
+      ).format(priceValue);
+      pdf.text(price, priceBoxX + priceBoxWidth / 2, infoY + 13, {
+        align: 'center',
+      });
       infoY += priceBoxHeight + 8;
     }
 
     // AI Description - iOS caption style
     if (emerald.aiDescription) {
-      applyIOSTextStyle(pdf, 'caption1', iosColors.textTertiary, theme as ThemeMode);
+      applyIOSTextStyle(
+        pdf,
+        'caption1',
+        iosColors.textTertiary,
+        theme as ThemeMode,
+      );
       pdf.setFont('helvetica', 'italic');
-      const descLines = pdf.splitTextToSize(`"${emerald.aiDescription}"`, innerWidth);
+      const descLines = pdf.splitTextToSize(
+        `"${emerald.aiDescription}"`,
+        innerWidth,
+      );
       const linesToShow = descLines.slice(0, 3);
-      pdf.text(linesToShow, innerX + innerWidth / 2, infoY, { align: 'center' });
+      pdf.text(linesToShow, innerX + innerWidth / 2, infoY, {
+        align: 'center',
+      });
     }
 
     // === FOOTER ===
@@ -387,7 +551,17 @@ export async function addHorizontalCarouselLayout(
 
     // Website in emerald green (centered)
     setTextColor(pdf, iosColors.emeraldPrimary);
-    applyIOSTextStyle(pdf, 'caption1', iosColors.emeraldPrimary, theme as ThemeMode);
-    pdf.text('tierramadre.co • Esmeraldas Colombianas 100% Naturales', pageWidth / 2, footerY, { align: 'center' });
+    applyIOSTextStyle(
+      pdf,
+      'caption1',
+      iosColors.emeraldPrimary,
+      theme as ThemeMode,
+    );
+    pdf.text(
+      'tierramadre.co • Esmeraldas Colombianas 100% Naturales',
+      pageWidth / 2,
+      footerY,
+      { align: 'center' },
+    );
   }
 }
