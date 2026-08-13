@@ -45,36 +45,56 @@ export const HOSTS_PRODUCCION: readonly string[] = [
 
 /** El deployment de Convex que ES producción. */
 export const DEPLOYMENT_PRODUCCION = 'valuable-mule-753';
-/** El deployment de Convex donde se hace la Fase 1 y la doble corrida. */
-export const DEPLOYMENT_DESARROLLO = 'admired-jaguar-376';
+/**
+ * El deployment de Convex donde se hace la Fase 1 y la doble corrida.
+ *
+ * Es `flexible-wolverine-803` —del proyecto ANTERIOR (`dev-tec`/`tm-sot`)— y eso
+ * no es un descuido: **producción se mudó de proyecto el 2026-08-13 y desarrollo
+ * no.** El dev del proyecto nuevo (`admired-jaguar-376`) existe pero está
+ * VACÍO: cero funciones desplegadas. Nombrarlo acá como si fuera el dev es
+ * afirmar algo que todavía no es cierto, y este archivo decide permisos de
+ * escritura a partir de esas afirmaciones.
+ */
+export const DEPLOYMENT_DESARROLLO = 'flexible-wolverine-803';
 
 /**
- * ✅ VENTANA DE MIGRACIÓN CERRADA el 2026-08-13.
+ * ⚖️ LA MIGRACIÓN ES ASIMÉTRICA, Y ESTA LISTA TAMBIÉN.
  *
- * Durante el corte esta lista aceptó también el par del proyecto anterior
- * (`grand-hippopotamus-162` / `flexible-wolverine-803`, equipo `dev-tec`),
- * porque mientras producción la servía el proyecto viejo cualquiera de los dos
- * extremos fallaba en cerrado: este gate no distingue «no autorizado» de «no lo
- * conozco». Verificado el corte —el bundle en vivo de `tierramadre.app`
- * referencia `valuable-mule-753` y ninguno de los slugs viejos—, esas entradas
- * se borraron.
+ * **Producción: cerrada.** Se mudó el 2026-08-13 a `valuable-mule-753` (equipo
+ * `se`/`back-ago`) y está verificado — el bundle en vivo de `tierramadre.app`
+ * lo referencia y no menciona ningún slug viejo. `grand-hippopotamus-162` ya no
+ * es producción y **no vuelve a esta lista**: un deployment de un proyecto que
+ * ya no controlamos es exactamente el `desconocido` que esta función existe
+ * para rechazar.
  *
- * **No se vuelven a agregar.** Un deployment de un proyecto que ya no
- * controlamos no es «uno de los nuestros que está de más»: es exactamente el
- * `desconocido` que esta función existe para rechazar. Si algo necesita
- * escribir desde otro deployment, se nombra acá a propósito y se justifica —
- * nunca se deja una entrada vieja «por si acaso».
+ * **Desarrollo: sigue en el proyecto ANTERIOR.** No migró. Por eso
+ * `flexible-wolverine-803` sigue siendo un `desarrollo` legítimo — no es una
+ * entrada vieja que quedó «por si acaso», es dónde vive el dev hoy.
  *
- * Historial de slugs muertos, por si alguien encuentra uno escrito en un doc:
- * `wonderful-tortoise-984` (prod hasta 2026-07-21), `grand-hippopotamus-162`
- * (prod hasta 2026-08-13), `flexible-wolverine-803` (su dev),
- * `wandering-parrot-148` (anterior a todos). Ninguno es producción.
+ * ⚠️ **Esto se cerró una vez de más y rompió dev.** El 2026-08-13, al cerrar la
+ * ventana de migración, se cerraron las DOS mitades — pero sólo producción se
+ * había mudado. Con `admired-jaguar-376` como único dev aceptado,
+ * `flexible-wolverine-803` pasó a clasificar `desconocido`, y el espejo y las
+ * utilidades de dev fallaron en cerrado durante 11 minutos, hasta que la sesión
+ * que corría el recorrido de W1b lo detectó y redesplegó desde un commit
+ * anterior. **La lección: cerrar la ventana es por mitad, no por fecha.** Cada
+ * entorno se cierra cuando ESE entorno migra, y se verifica antes.
+ *
+ * `admired-jaguar-376` se deja aceptado de antemano —hoy está vacío, cero
+ * funciones— para que el día que dev migre no haga falta tocar este archivo con
+ * prisa. Aceptar un deployment vacío no habilita nada: no hay qué ejecutar ahí.
+ *
+ * 🔒 CÓMO SE CIERRA LA MITAD QUE FALTA: cuando dev viva de verdad en
+ * `admired-jaguar-376` (ver iniciativa TM-CONVEX-DEV-SPLIT), se borra
+ * `flexible-wolverine-803` de abajo y se invierte su caso en el test, igual que
+ * se hizo con producción. **No antes, y no por calendario: por verificación.**
  */
 export const DEPLOYMENTS_PRODUCCION: readonly string[] = [
   DEPLOYMENT_PRODUCCION,
 ];
 export const DEPLOYMENTS_DESARROLLO: readonly string[] = [
   DEPLOYMENT_DESARROLLO,
+  'admired-jaguar-376',
 ];
 
 /**
