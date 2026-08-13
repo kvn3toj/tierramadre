@@ -15,9 +15,10 @@
  * Invertido, cada camino declara QUIÉNES pueden y todo lo demás queda afuera. Si
  * mañana cambia una URL, el candado se equivoca hacia el lado seguro: bloquea.
  *
- * Las dos URLs se leyeron del deployment real el 2026-08-01
- * (`npx convex env get CONVEX_CLOUD_URL [--prod]`), no se dedujeron por
- * convención.
+ * Las URLs no se deducen por convención: se leyeron del deployment real las dos
+ * veces que cambiaron — el 2026-08-01 con `npx convex env get CONVEX_CLOUD_URL`
+ * sobre el proyecto anterior, y el 2026-08-13 al desplegar el nuevo, que
+ * respondió `✔ Deployed Convex functions to https://valuable-mule-753.convex.cloud`.
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -37,10 +38,38 @@ const DEV = URL_DESARROLLO;
 const IMPOSTOR = 'https://grand-hippopotamus-162-preview.convex.cloud';
 const OTRO = 'https://wandering-parrot-148.convex.cloud';
 
+/**
+ * Ventana de migración: abierta y CERRADA el 2026-08-13. Estos dos slugs se
+ * conservan a propósito como casos negativos permanentes — son los deployments
+ * del proyecto anterior, y lo que hay que seguir probando es que ya NO son un
+ * permiso. Aparecen escritos en docs y notas viejas, así que la probabilidad de
+ * que alguien los reintroduzca no es cero.
+ */
+const PROD_ANTERIOR = 'https://grand-hippopotamus-162.convex.cloud';
+const DEV_ANTERIOR = 'https://flexible-wolverine-803.convex.cloud';
+
 describe('clasificaDeployment — identidad exacta, nunca por substring', () => {
   it('reconoce producción y desarrollo', () => {
     expect(clasificaDeployment(PROD)).toBe('produccion');
     expect(clasificaDeployment(DEV)).toBe('desarrollo');
+  });
+
+  it('ventana CERRADA: el proyecto anterior ya no es un permiso', () => {
+    // Durante el corte estos dos clasificaban `produccion` y `desarrollo` a
+    // propósito. Cerrada la ventana, la aserción se invierte — y esta forma es
+    // la que vale: borrar los casos habría dejado de probar que la puerta está
+    // cerrada, sólo que el código se borró. Un deployment de un proyecto que ya
+    // no controlamos es exactamente el `desconocido` que este gate rechaza.
+    expect(clasificaDeployment(PROD_ANTERIOR)).toBe('desconocido');
+    expect(clasificaDeployment(DEV_ANTERIOR)).toBe('desconocido');
+  });
+
+  it('los nombres nuevos y los viejos son distintos — el test no pasa en vacío', () => {
+    // Guarda contra el falso verde: si alguien hubiera "cerrado la ventana"
+    // dejando las constantes viejas como canónicas, el bloque de arriba
+    // seguiría verde probando lo mismo dos veces.
+    expect(PROD).not.toBe(PROD_ANTERIOR);
+    expect(DEV).not.toBe(DEV_ANTERIOR);
   });
 
   it('un deployment que contiene el nombre de prod NO es prod', () => {
