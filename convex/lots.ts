@@ -12,7 +12,8 @@ import { pushTableRowToVercel, requireAppUrl } from './_lib/sheetSync';
 import { normalizeLotEstado } from './_lib/sheetPullMaps';
 import { COLUMN_MAPS } from './_lib/columnMaps';
 import {
-  allocateNext,
+  allocateNextLotId,
+  firstFreeLotNumber,
   formatLotId,
   lotSequenceName,
   parseLoteId,
@@ -137,11 +138,10 @@ export const peekNextLoteId = query({
     if (!(await isStaffOrBotSession({ sessionToken, botSecret }))) {
       return { nextValue: 0, preview: '' };
     }
-    const seq = await ctx.db
-      .query('sequences')
-      .withIndex('by_name', (q) => q.eq('name', lotSequenceName(sede)))
-      .first();
-    const next = seq?.nextValue ?? 1;
+    // firstFreeLotNumber y no el contador crudo: si hay filas importadas por
+    // encima del contador, el contador anuncia un id ya ocupado (MED-025,
+    // 2026-08-13) y create() va a entregar otro — el preview mentiría.
+    const next = await firstFreeLotNumber(ctx, sede);
     return { nextValue: next, preview: formatLotId(next, sede) };
   },
 });
@@ -200,8 +200,7 @@ export const _create = internalMutation({
     const provider = await ctx.db.get(args.providerId);
     if (!provider) throw new Error('Proveedor no encontrado');
 
-    const seqValue = await allocateNext(ctx, lotSequenceName(args.sede));
-    const loteId = formatLotId(seqValue, args.sede);
+    const { loteId } = await allocateNextLotId(ctx, args.sede);
 
     const now = new Date().toISOString();
     const all = await ctx.db.query('lots').collect();
