@@ -39,14 +39,16 @@ const IMPOSTOR = 'https://grand-hippopotamus-162-preview.convex.cloud';
 const OTRO = 'https://wandering-parrot-148.convex.cloud';
 
 /**
- * Ventana de migración: abierta y CERRADA el 2026-08-13. Estos dos slugs se
- * conservan a propósito como casos negativos permanentes — son los deployments
- * del proyecto anterior, y lo que hay que seguir probando es que ya NO son un
- * permiso. Aparecen escritos en docs y notas viejas, así que la probabilidad de
- * que alguien los reintroduzca no es cero.
+ * La migración fue ASIMÉTRICA: producción se mudó el 2026-08-13, desarrollo no.
+ * Por eso estos dos slugs del proyecto anterior tienen destinos OPUESTOS y hay
+ * un test para cada uno — el de prod afirma que ya no es un permiso, el de dev
+ * afirma que todavía lo es. Cerrar los dos a la vez rompió dev durante 11
+ * minutos ese mismo día; el par de abajo existe para que no se repita.
  */
 const PROD_ANTERIOR = 'https://grand-hippopotamus-162.convex.cloud';
-const DEV_ANTERIOR = 'https://flexible-wolverine-803.convex.cloud';
+/** Sigue siendo el dev REAL: no migró. Ver destinoEscritura.ts. */
+const DEV_VIGENTE_PROYECTO_ANTERIOR =
+  'https://flexible-wolverine-803.convex.cloud';
 
 describe('clasificaDeployment — identidad exacta, nunca por substring', () => {
   it('reconoce producción y desarrollo', () => {
@@ -54,14 +56,30 @@ describe('clasificaDeployment — identidad exacta, nunca por substring', () => 
     expect(clasificaDeployment(DEV)).toBe('desarrollo');
   });
 
-  it('ventana CERRADA: el proyecto anterior ya no es un permiso', () => {
-    // Durante el corte estos dos clasificaban `produccion` y `desarrollo` a
-    // propósito. Cerrada la ventana, la aserción se invierte — y esta forma es
-    // la que vale: borrar los casos habría dejado de probar que la puerta está
-    // cerrada, sólo que el código se borró. Un deployment de un proyecto que ya
-    // no controlamos es exactamente el `desconocido` que este gate rechaza.
+  it('la mitad de PROD está cerrada: el prod anterior ya no es un permiso', () => {
+    // Producción migró y está verificado, así que la aserción se invirtió.
+    // Borrar el caso habría dejado de probar que la puerta está cerrada, sólo
+    // que el código se borró — y el slug sigue escrito en docs y notas viejas.
     expect(clasificaDeployment(PROD_ANTERIOR)).toBe('desconocido');
-    expect(clasificaDeployment(DEV_ANTERIOR)).toBe('desconocido');
+  });
+
+  it('la mitad de DEV sigue abierta: dev NO migró, y cerrarla rompe el espejo', () => {
+    // Este test es la cicatriz de un error real. Al cerrar la ventana se
+    // cerraron las dos mitades a la vez, pero sólo producción se había mudado:
+    // `flexible-wolverine-803` pasó a `desconocido`, el espejo y las utilidades
+    // de dev fallaron en cerrado, y dev estuvo roto 11 minutos.
+    // Se cierra cuando dev migre DE VERDAD, no por fecha.
+    expect(clasificaDeployment(DEV_VIGENTE_PROYECTO_ANTERIOR)).toBe(
+      'desarrollo',
+    );
+  });
+
+  it('el dev del proyecto nuevo ya se acepta, aunque hoy esté vacío', () => {
+    // Aceptarlo de antemano no habilita nada —cero funciones desplegadas— y
+    // evita tener que tocar el gate con prisa el día de la mudanza.
+    expect(clasificaDeployment('https://admired-jaguar-376.convex.cloud')).toBe(
+      'desarrollo',
+    );
   });
 
   it('los nombres nuevos y los viejos son distintos — el test no pasa en vacío', () => {
@@ -69,7 +87,8 @@ describe('clasificaDeployment — identidad exacta, nunca por substring', () => 
     // dejando las constantes viejas como canónicas, el bloque de arriba
     // seguiría verde probando lo mismo dos veces.
     expect(PROD).not.toBe(PROD_ANTERIOR);
-    expect(DEV).not.toBe(DEV_ANTERIOR);
+    // DEV sí coincide con el del proyecto anterior, y debe: no migró.
+    expect(DEV).toBe(DEV_VIGENTE_PROYECTO_ANTERIOR);
   });
 
   it('un deployment que contiene el nombre de prod NO es prod', () => {
