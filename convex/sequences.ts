@@ -2,8 +2,9 @@ import {
   internalMutation,
   internalQuery,
   type MutationCtx,
-} from "./_generated/server";
-import { v } from "convex/values";
+  type QueryCtx,
+} from './_generated/server';
+import { v } from 'convex/values';
 
 /**
  * Inline allocator — call from another mutation's handler so the
@@ -21,16 +22,82 @@ export async function allocateNext(
   name: string,
 ): Promise<number> {
   const row = await ctx.db
-    .query("sequences")
-    .withIndex("by_name", (q) => q.eq("name", name))
+    .query('sequences')
+    .withIndex('by_name', (q) => q.eq('name', name))
     .first();
   if (!row) {
-    await ctx.db.insert("sequences", { name, nextValue: 2 });
+    await ctx.db.insert('sequences', { name, nextValue: 2 });
     return 1;
   }
   const value = row.nextValue;
   await ctx.db.patch(row._id, { nextValue: value + 1 });
   return value;
+}
+
+/**
+ * The plain counter above is NOT collision-safe for lot ids: any row that
+ * enters `lots` without going through it (imports, migrations, reconstructed
+ * lots) leaves the counter behind, and from then on every allocation hands
+ * out a loteId that ALREADY EXISTS. A duplicate doesn't error — it aliases:
+ * `lots.getByLoteId` resolves with `.first()` (hides the newer row) and
+ * `casillas._estadoDelLote` merges both lots' items. Observed live twice:
+ * C-077×2 in dev (2026-08-05) and MED-025 about to collide in prod
+ * (2026-08-13, counter at 25 with MED-025 and MED-026 taken).
+ *
+ * `firstFreeLotNumber` scans forward from the counter until it finds a
+ * loteId with no `lots` row. The existence check deliberately ignores
+ * `estado` — a `reconstruido` lot occupies its id exactly like a live one,
+ * which is the half of the bug that produced the C-078 reuse.
+ */
+const MAX_LOT_ID_SKIPS = 500;
+
+export async function firstFreeLotNumber(
+  ctx: QueryCtx,
+  sede: Sede,
+): Promise<number> {
+  const row = await ctx.db
+    .query('sequences')
+    .withIndex('by_name', (q) => q.eq('name', lotSequenceName(sede)))
+    .first();
+  let candidate = row?.nextValue ?? 1;
+  for (let skips = 0; skips <= MAX_LOT_ID_SKIPS; skips++, candidate++) {
+    const taken = await ctx.db
+      .query('lots')
+      .withIndex('by_loteId', (q) =>
+        q.eq('loteId', formatLotId(candidate, sede)),
+      )
+      .first();
+    if (!taken) return candidate;
+  }
+  throw new Error(
+    `sede ${sede}: ${MAX_LOT_ID_SKIPS} loteIds consecutivos ocupados desde el contador — ` +
+      `revisar la fila de sequences y la tabla lots antes de crear más lotes`,
+  );
+}
+
+/**
+ * Collision-safe lot-id allocator. Same transactional contract as
+ * `allocateNext` (call it from inside the domain mutation), but it advances
+ * past occupied ids and leaves the counter one past the id it handed out —
+ * so a counter left behind by an import heals itself on the next alta
+ * instead of aliasing an existing lot.
+ */
+export async function allocateNextLotId(
+  ctx: MutationCtx,
+  sede: Sede,
+): Promise<{ value: number; loteId: string }> {
+  const value = await firstFreeLotNumber(ctx, sede);
+  const name = lotSequenceName(sede);
+  const row = await ctx.db
+    .query('sequences')
+    .withIndex('by_name', (q) => q.eq('name', name))
+    .first();
+  if (row) {
+    await ctx.db.patch(row._id, { nextValue: value + 1 });
+  } else {
+    await ctx.db.insert('sequences', { name, nextValue: value + 1 });
+  }
+  return { value, loteId: formatLotId(value, sede) };
 }
 
 /**
@@ -64,8 +131,8 @@ export async function reclaimIfTail(
   value: number,
 ): Promise<boolean> {
   const row = await ctx.db
-    .query("sequences")
-    .withIndex("by_name", (q) => q.eq("name", name))
+    .query('sequences')
+    .withIndex('by_name', (q) => q.eq('name', name))
     .first();
   if (!row) return false;
   if (row.nextValue !== value + 1) return false;
@@ -82,8 +149,8 @@ export const peek = internalQuery({
   args: { name: v.string() },
   handler: async (ctx, { name }) => {
     const row = await ctx.db
-      .query("sequences")
-      .withIndex("by_name", (q) => q.eq("name", name))
+      .query('sequences')
+      .withIndex('by_name', (q) => q.eq('name', name))
       .first();
     return { value: row?.nextValue ?? 1 };
   },
@@ -91,7 +158,7 @@ export const peek = internalQuery({
 
 // Known sede codes keep autocomplete; a sanitized custom write-in code is also
 // accepted (it just becomes the loteId/saleId prefix + its own sequence key).
-export type Sede = "B" | "C" | "S" | "M" | (string & {});
+export type Sede = 'B' | 'C' | 'S' | 'M' | (string & {});
 
 /**
  * Sequence name for a lot id. Legacy callers used `"lot"` (Bogotá-only);
@@ -99,19 +166,19 @@ export type Sede = "B" | "C" | "S" | "M" | (string & {});
  * and use `"lot:C"` / `"lot:S"` / `"lot:M"` for Cali, Secreta, and Marketing.
  */
 export function lotSequenceName(sede: Sede): string {
-  if (sede === "B") return "lot";
+  if (sede === 'B') return 'lot';
   return `lot:${sede}`;
 }
 
 /** Same migration trick as `lotSequenceName` — preserves the legacy V- counter. */
 export function saleSequenceName(sede: Sede): string {
-  if (sede === "B") return "sale";
+  if (sede === 'B') return 'sale';
   return `sale:${sede}`;
 }
 
 /** "B-001"/"C-001"/"S-001"/"M-001", … */
 export function formatLotId(n: number, sede: Sede): string {
-  return `${sede}-${String(n).padStart(3, "0")}`;
+  return `${sede}-${String(n).padStart(3, '0')}`;
 }
 
 /**
@@ -120,7 +187,7 @@ export function formatLotId(n: number, sede: Sede): string {
  * sede even on legacy rows whose optional `sede` column is unset.
  */
 export function parseLoteId(loteId: string): { sede: Sede; value: number } {
-  const dash = loteId.indexOf("-");
+  const dash = loteId.indexOf('-');
   return {
     sede: loteId.slice(0, dash) as Sede,
     value: Number.parseInt(loteId.slice(dash + 1), 10),
@@ -129,7 +196,7 @@ export function parseLoteId(loteId: string): { sede: Sede; value: number } {
 
 /** "VB-0001"/"VC-0001", … "VB-99999"/"VC-99999". */
 export function formatSaleId(n: number, sede: Sede): string {
-  return `V${sede}-${String(n).padStart(4, "0")}`;
+  return `V${sede}-${String(n).padStart(4, '0')}`;
 }
 
 /**
