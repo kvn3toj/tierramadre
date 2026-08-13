@@ -44,15 +44,47 @@ export const HOSTS_PRODUCCION: readonly string[] = [
 ];
 
 /** El deployment de Convex que ES producción. */
-export const DEPLOYMENT_PRODUCCION = 'grand-hippopotamus-162';
+export const DEPLOYMENT_PRODUCCION = 'valuable-mule-753';
 /** El deployment de Convex donde se hace la Fase 1 y la doble corrida. */
-export const DEPLOYMENT_DESARROLLO = 'flexible-wolverine-803';
+export const DEPLOYMENT_DESARROLLO = 'admired-jaguar-376';
 
 /**
- * Las URLs exactas, **leídas del deployment real** el 2026-08-01 con
- * `npx convex env get CONVEX_CLOUD_URL [--prod]` — no deducidas de la convención
- * `https://<nombre>.convex.cloud`. La diferencia importa: de estas dos cadenas
- * depende que producción siga escribiendo su hoja.
+ * ✅ VENTANA DE MIGRACIÓN CERRADA el 2026-08-13.
+ *
+ * Durante el corte esta lista aceptó también el par del proyecto anterior
+ * (`grand-hippopotamus-162` / `flexible-wolverine-803`, equipo `dev-tec`),
+ * porque mientras producción la servía el proyecto viejo cualquiera de los dos
+ * extremos fallaba en cerrado: este gate no distingue «no autorizado» de «no lo
+ * conozco». Verificado el corte —el bundle en vivo de `tierramadre.app`
+ * referencia `valuable-mule-753` y ninguno de los slugs viejos—, esas entradas
+ * se borraron.
+ *
+ * **No se vuelven a agregar.** Un deployment de un proyecto que ya no
+ * controlamos no es «uno de los nuestros que está de más»: es exactamente el
+ * `desconocido` que esta función existe para rechazar. Si algo necesita
+ * escribir desde otro deployment, se nombra acá a propósito y se justifica —
+ * nunca se deja una entrada vieja «por si acaso».
+ *
+ * Historial de slugs muertos, por si alguien encuentra uno escrito en un doc:
+ * `wonderful-tortoise-984` (prod hasta 2026-07-21), `grand-hippopotamus-162`
+ * (prod hasta 2026-08-13), `flexible-wolverine-803` (su dev),
+ * `wandering-parrot-148` (anterior a todos). Ninguno es producción.
+ */
+export const DEPLOYMENTS_PRODUCCION: readonly string[] = [
+  DEPLOYMENT_PRODUCCION,
+];
+export const DEPLOYMENTS_DESARROLLO: readonly string[] = [
+  DEPLOYMENT_DESARROLLO,
+];
+
+/**
+ * Las URLs exactas. La convención `https://<nombre>.convex.cloud` se verificó
+ * contra el deployment real las dos veces: el 2026-08-01 con
+ * `npx convex env get CONVEX_CLOUD_URL [--prod]` sobre el proyecto anterior, y
+ * el 2026-08-13 al desplegar el nuevo, que respondió
+ * `✔ Deployed Convex functions to https://valuable-mule-753.convex.cloud`.
+ * La diferencia importa: de estas dos cadenas depende que producción siga
+ * escribiendo su hoja.
  */
 export const URL_PRODUCCION = `https://${DEPLOYMENT_PRODUCCION}.convex.cloud`;
 export const URL_DESARROLLO = `https://${DEPLOYMENT_DESARROLLO}.convex.cloud`;
@@ -91,8 +123,12 @@ function nombreDeDeployment(convexCloudUrl?: string): string | null {
  */
 export function clasificaDeployment(convexCloudUrl?: string): ClaseDeployment {
   const nombre = nombreDeDeployment(convexCloudUrl);
-  if (nombre === DEPLOYMENT_PRODUCCION) return 'produccion';
-  if (nombre === DEPLOYMENT_DESARROLLO) return 'desarrollo';
+  if (nombre === null) return 'desconocido';
+  // Listas, no igualdad: durante la ventana de migración cada clase tiene dos
+  // nombres válidos. La comparación sigue siendo por nombre exacto de
+  // deployment, así que `…-preview` sigue sin colar.
+  if (DEPLOYMENTS_PRODUCCION.includes(nombre)) return 'produccion';
+  if (DEPLOYMENTS_DESARROLLO.includes(nombre)) return 'desarrollo';
   return 'desconocido';
 }
 
@@ -145,14 +181,16 @@ export function verificaDestinoDeEscritura(input: {
 /**
  * Los deployments habilitados a tocar el libro del espejo.
  *
- * Hoy es uno solo. **Punto de extensión de la Fase 3:** cuando el cutover mueva
- * el espejo al libro de la operación, se agrega `DEPLOYMENT_PRODUCCION` acá y se
- * cambia `ESPEJO_SPREADSHEET_ID` en prod. Que sean dos actos separados y
- * explícitos es el punto: desplegar el código no habilita el espejo.
+ * Hoy son los deployments de DESARROLLO y nada más — durante la ventana de
+ * migración eso son dos nombres, no uno, pero la clase es la misma. Producción
+ * sigue afuera.
+ *
+ * **Punto de extensión de la Fase 3:** cuando el cutover mueva el espejo al
+ * libro de la operación, se agrega `DEPLOYMENT_PRODUCCION` acá y se cambia
+ * `ESPEJO_SPREADSHEET_ID` en prod. Que sean dos actos separados y explícitos es
+ * el punto: desplegar el código no habilita el espejo.
  */
-export const DEPLOYMENTS_DEL_ESPEJO: readonly string[] = [
-  DEPLOYMENT_DESARROLLO,
-];
+export const DEPLOYMENTS_DEL_ESPEJO: readonly string[] = DEPLOYMENTS_DESARROLLO;
 
 /**
  * Si este deployment puede escribirle al libro «SOT v4 · Espejo (PRUEBAS)».
