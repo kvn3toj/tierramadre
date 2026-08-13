@@ -9,9 +9,15 @@
  *   • export an .xlsx for NIIMBOT's own "Importar desde Excel" flow.
  *
  * The QR + rasterize + NIIMBOT machinery is reused verbatim from the
- * Fotosíntesis labels module (LabelPreview / exportLabel / downloadLabelsZip /
+ * Fotosíntesis labels module (LabelSheet / exportLabel / downloadLabelsZip /
  * downloadLabelsSpreadsheet / useNiimbotPrinter) — this page is a new *surface*
  * over that proven pipeline, not a reimplementation.
+ *
+ * UNIT OF WORK: a LABEL, not an item. Most stocks carry one item per label, but
+ * the 2-up 15 × 30 (`T15X30_DUO`) carries two and gets cut in half, so the
+ * gallery, the counts, the ZIP and the direct-print loop all iterate
+ * `labelGroups` (from `chunkForLabels`) rather than `items`. Reverting any one
+ * of them to `items` would silently print double.
  *
  * Data comes from `products.list` with no estado filter — the full inventory,
  * because a label gallery genuinely needs every row (see the estado-tab note in
@@ -51,18 +57,19 @@ import {
 import { useNotification } from '../../../../contexts/NotificationContext';
 import { readFreshSessionToken } from '../../../../utils/sessionToken';
 import { useNiimbotPrinter } from '../../../../hooks/useNiimbotPrinter';
-import { LabelPreview } from '../../Fotosintesis/labels/LabelPreview';
+import { LabelSheet } from '../../Fotosintesis/labels/LabelSheet';
 import {
   downloadLabelPng,
   renderLabelCanvas,
 } from '../../Fotosintesis/labels/exportLabel';
 import {
-  downloadLabelsZip,
+  downloadLabelGroupsZip,
   type LabelItem,
 } from '../../Fotosintesis/labels/downloadLabelsZip';
 import { downloadLabelsSpreadsheet } from '../../Fotosintesis/labels/downloadLabelsSpreadsheet';
 import {
   LABEL_SIZE_LIST,
+  chunkForLabels,
   fitsPrinter,
   printScaleFor,
   printableMm,
@@ -192,10 +199,11 @@ export default function EtiquetasPage() {
       ? `El rollo de ${stock.label} supera el cabezal de ${printableMm(niimbot.head).toFixed(0)} mm que reporta esta impresora — puede salir recortado.`
       : null;
 
-  // Per-print name override. Affects ONLY the printed label — never writes to
-  // Convex — and is dropped when the dialog closes.
-  const [printDialog, setPrintDialog] = useState<GalleryItem | null>(null);
-  const [nombreOverride, setNombreOverride] = useState('');
+  // Per-print name overrides, one per item on the label being printed (a 2-up
+  // stock puts two items under one dialog). Affects ONLY the printed label —
+  // never writes to Convex — and is dropped when the dialog closes.
+  const [printDialog, setPrintDialog] = useState<GalleryItem[] | null>(null);
+  const [nombreOverrides, setNombreOverrides] = useState<string[]>([]);
 
   // Highest numeric itemId in stock — the "Próximos" tab starts one above this.
   const maxItemId = useMemo(() => {
@@ -207,11 +215,12 @@ export default function EtiquetasPage() {
     return max;
   }, [products]);
 
-  // Off-screen render target — a single hidden LabelPreview re-rendered per
-  // item (batch or single), matching LoteResumenPage's pattern so we never
-  // mount N label nodes at once.
+  // Off-screen render target — a single hidden LabelSheet re-rendered per
+  // LABEL (batch or single), matching LoteResumenPage's pattern so we never
+  // mount N label nodes at once. The unit here is a label, not an item: on a
+  // 2-up stock one node carries two items.
   const labelRenderRef = useRef<HTMLDivElement>(null);
-  const [labelRenderItem, setLabelRenderItem] = useState<GalleryItem | null>(
+  const [labelRenderGroup, setLabelRenderGroup] = useState<LabelItem[] | null>(
     null,
   );
 
@@ -269,11 +278,28 @@ export default function EtiquetasPage() {
     return { total: all.length, insumo, producto: all.length - insumo };
   }, [products]);
 
-  /** Render one item into the shared hidden node and resolve it once React has
+  /**
+   * The filtered items grouped into PHYSICAL labels. On the 1-up stocks this is
+   * one item per group and nothing downstream changes; on the 2-up 15 × 30 it
+   * pairs them in list order (see `chunkForLabels`). Everything below — the
+   * gallery, the counts, the ZIP, the direct print — counts labels through this,
+   * so "Imprimir todo" sends what the printer will actually eat.
+   */
+  const labelGroups = useMemo(
+    () => chunkForLabels(items, stock),
+    [items, stock],
+  );
+
+  /** Filename stem for a label: `497` 1-up, `497+509` on a cut-in-half pair. */
+  function groupStem(group: GalleryItem[]): string {
+    return group.map((it) => it.itemId).join('+');
+  }
+
+  /** Render one LABEL into the shared hidden node and resolve it once React has
    *  committed the new props (one rAF), ready to rasterize. */
-  function renderItemNode(item: GalleryItem): Promise<HTMLElement> {
+  function renderGroupNode(group: LabelItem[]): Promise<HTMLElement> {
     return new Promise<HTMLElement>((resolve, reject) => {
-      setLabelRenderItem(item);
+      setLabelRenderGroup(group);
       requestAnimationFrame(() => {
         if (labelRenderRef.current) resolve(labelRenderRef.current);
         else reject(new Error('No se pudo renderizar la etiqueta'));
@@ -281,14 +307,14 @@ export default function EtiquetasPage() {
     });
   }
 
-  // ── Per-item actions ───────────────────────────────────────────────────────
+  // ── Per-label actions ──────────────────────────────────────────────────────
 
-  async function handleItemPng(item: GalleryItem) {
+  async function handleGroupPng(group: GalleryItem[]) {
     if (busy) return;
     setBusy(true);
     try {
-      const node = await renderItemNode(item);
-      await downloadLabelPng(node, `${item.itemId}.png`);
+      const node = await renderGroupNode(group);
+      await downloadLabelPng(node, `${groupStem(group)}.png`);
     } catch (err) {
       notify(
         `No se pudo exportar la etiqueta: ${err instanceof Error ? err.message : String(err)}`,
@@ -296,23 +322,23 @@ export default function EtiquetasPage() {
       );
     } finally {
       setBusy(false);
-      setLabelRenderItem(null);
+      setLabelRenderGroup(null);
     }
   }
 
-  async function handleItemPrint(item: GalleryItem) {
+  async function handleGroupPrint(group: GalleryItem[]) {
     if (busy) return;
     setBusy(true);
     try {
       // Connect first: the raster scale depends on the head's DPI, which is
       // only known once a device answers.
       await niimbot.connect();
-      const node = await renderItemNode(item);
+      const node = await renderGroupNode(group);
       const canvas = await renderLabelCanvas(node, {
         scale: printScaleFor(niimbot.head),
       });
       await niimbot.printLabel(canvas);
-      notify(`Etiqueta ${item.itemId} enviada a la impresora`, 'success');
+      notify(`Etiqueta ${groupStem(group)} enviada a la impresora`, 'success');
     } catch (err) {
       notify(
         `No se pudo imprimir directo: ${err instanceof Error ? err.message : String(err)}`,
@@ -320,29 +346,32 @@ export default function EtiquetasPage() {
       );
     } finally {
       setBusy(false);
-      setLabelRenderItem(null);
+      setLabelRenderGroup(null);
     }
   }
 
-  function openPrintDialog(item: GalleryItem) {
+  function openPrintDialog(group: GalleryItem[]) {
     if (busy) return;
-    setNombreOverride(item.nombre ?? '');
-    setPrintDialog(item);
+    setNombreOverrides(group.map((it) => it.nombre ?? ''));
+    setPrintDialog(group);
   }
 
   function closePrintDialog() {
     setPrintDialog(null);
-    setNombreOverride('');
+    setNombreOverrides([]);
   }
 
-  /** Print with the dialog's edited text. The override never leaves this
-   *  render — no mutation, so the inventory record is untouched. */
+  /** Print with the dialog's edited text. The overrides never leave this
+   *  render — no mutation, so the inventory records are untouched. */
   async function confirmPrintDialog() {
-    const item = printDialog;
-    if (!item) return;
-    const trimmed = nombreOverride.trim();
+    const group = printDialog;
+    if (!group) return;
+    const edited = group.map((it, i) => ({
+      ...it,
+      nombre: (nombreOverrides[i] ?? '').trim() || undefined,
+    }));
     closePrintDialog();
-    await handleItemPrint({ ...item, nombre: trimmed || undefined });
+    await handleGroupPrint(edited);
   }
 
   // ── Batch actions (operate on the current filtered set) ─────────────────────
@@ -351,12 +380,12 @@ export default function EtiquetasPage() {
     if (busy || items.length === 0) return;
     setBusy(true);
     try {
-      await downloadLabelsZip(
-        items,
-        `etiquetas-atelier-${kind}-${items.length}.zip`,
-        (item) => renderItemNode(item as GalleryItem),
+      await downloadLabelGroupsZip(
+        labelGroups,
+        `etiquetas-atelier-${kind}-${labelGroups.length}.zip`,
+        renderGroupNode,
       );
-      notify(`${items.length} etiqueta(s) exportadas`, 'success');
+      notify(`${labelGroups.length} etiqueta(s) exportadas`, 'success');
     } catch (err) {
       notify(
         `No se pudieron exportar las etiquetas: ${err instanceof Error ? err.message : String(err)}`,
@@ -364,7 +393,7 @@ export default function EtiquetasPage() {
       );
     } finally {
       setBusy(false);
-      setLabelRenderItem(null);
+      setLabelRenderGroup(null);
     }
   }
 
@@ -391,20 +420,20 @@ export default function EtiquetasPage() {
   }
 
   async function handlePrintAllDirect() {
-    if (busy || items.length === 0) return;
+    if (busy || labelGroups.length === 0) return;
     setBusy(true);
-    setPrintProgress({ done: 0, total: items.length });
+    setPrintProgress({ done: 0, total: labelGroups.length });
     try {
       await niimbot.connect();
-      for (let i = 0; i < items.length; i++) {
-        const node = await renderItemNode(items[i]);
+      for (let i = 0; i < labelGroups.length; i++) {
+        const node = await renderGroupNode(labelGroups[i]);
         const canvas = await renderLabelCanvas(node, {
           scale: printScaleFor(niimbot.head),
         });
         await niimbot.printLabel(canvas);
-        setPrintProgress({ done: i + 1, total: items.length });
+        setPrintProgress({ done: i + 1, total: labelGroups.length });
       }
-      notify(`${items.length} etiqueta(s) impresas`, 'success');
+      notify(`${labelGroups.length} etiqueta(s) impresas`, 'success');
     } catch (err) {
       notify(
         `No se pudo imprimir el lote: ${err instanceof Error ? err.message : String(err)}. Usá "Descargar ZIP" como alternativa.`,
@@ -413,7 +442,7 @@ export default function EtiquetasPage() {
     } finally {
       setBusy(false);
       setPrintProgress(null);
-      setLabelRenderItem(null);
+      setLabelRenderGroup(null);
     }
   }
 
@@ -434,13 +463,11 @@ export default function EtiquetasPage() {
         sx={{ position: 'fixed', left: '-9999px', top: 0 }}
         ref={labelRenderRef}
       >
-        {labelRenderItem && (
-          <LabelPreview
-            itemId={labelRenderItem.itemId}
-            nombre={labelRenderItem.nombre}
-            peso={labelRenderItem.peso}
+        {labelRenderGroup && (
+          <LabelSheet
+            items={labelRenderGroup}
             size={sizeId}
-            qrLogoSrc={logoDataUri ?? undefined}
+            logoSrc={logoDataUri}
           />
         )}
       </Box>
@@ -677,6 +704,19 @@ export default function EtiquetasPage() {
               {stock.stockCode}
             </Box>
           )}
+          {/* A 2-up label is not finished when it leaves the printer, and
+              nothing else on screen would say so. */}
+          {stock.hint && (
+            <Box
+              sx={{
+                fontFamily: fontFamilies.system,
+                fontSize: '11px',
+                color: foto.accent.primary,
+              }}
+            >
+              ✂ {stock.hint}
+            </Box>
+          )}
         </Box>
 
         {headWarning && (
@@ -719,7 +759,7 @@ export default function EtiquetasPage() {
             >
               {printProgress
                 ? `Imprimiendo ${printProgress.done}/${printProgress.total}…`
-                : `Imprimir todo (${items.length})`}
+                : `Imprimir todo (${labelGroups.length})`}
             </ActionButton>
           )}
           <ActionButton
@@ -736,6 +776,25 @@ export default function EtiquetasPage() {
           >
             Excel NIIMBOT
           </ActionButton>
+          {/* On a 2-up stock "N ítems" and "N etiquetas" are different numbers,
+              and the operator is about to feed the second one. The odd-tail
+              note is here rather than buried in a tooltip because a half-blank
+              label looks like a bug when it comes out of the printer. */}
+          {stock.itemsPerLabel > 1 && items.length > 0 && (
+            <Box
+              sx={{
+                fontFamily: fontFamilies.system,
+                fontSize: '11px',
+                color: foto.ink.tertiary,
+                ml: 0.5,
+              }}
+            >
+              {labelGroups.length} etiqueta(s) · {items.length} ítem(s)
+              {items.length % stock.itemsPerLabel !== 0
+                ? ' · la última sale con una mitad en blanco'
+                : ''}
+            </Box>
+          )}
           {busy && !printProgress && (
             <CircularProgress
               size={16}
@@ -775,17 +834,17 @@ export default function EtiquetasPage() {
               gap: 1.5,
             }}
           >
-            {items.map((item) => (
+            {labelGroups.map((group) => (
               <LabelCard
-                key={item.itemId}
+                key={groupStem(group)}
                 foto={foto}
-                item={item}
+                group={group}
                 size={sizeId}
                 logoDataUri={logoDataUri}
                 niimbotSupported={niimbot.supported}
                 disabled={busy}
-                onPng={() => void handleItemPng(item)}
-                onPrint={() => openPrintDialog(item)}
+                onPng={() => void handleGroupPng(group)}
+                onPrint={() => openPrintDialog(group)}
               />
             ))}
           </Box>
@@ -815,7 +874,8 @@ export default function EtiquetasPage() {
               mb: 0.5,
             }}
           >
-            Imprimir {printDialog?.itemId}
+            Imprimir{' '}
+            {printDialog ? printDialog.map((it) => it.itemId).join(' + ') : ''}
           </Box>
           <Box
             sx={{
@@ -826,6 +886,7 @@ export default function EtiquetasPage() {
             }}
           >
             {stock.label} · el texto editado aquí no modifica el inventario.
+            {stock.hint ? ` ${stock.hint}.` : ''}
           </Box>
 
           {printDialog && (
@@ -840,34 +901,53 @@ export default function EtiquetasPage() {
                 justifyContent: 'center',
               }}
             >
-              <LabelPreview
-                itemId={printDialog.itemId}
-                nombre={nombreOverride.trim() || undefined}
-                peso={printDialog.peso}
+              <LabelSheet
+                items={printDialog.map((it, i) => ({
+                  ...it,
+                  nombre: (nombreOverrides[i] ?? '').trim() || undefined,
+                }))}
                 size={sizeId}
-                qrLogoSrc={logoDataUri ?? undefined}
+                logoSrc={logoDataUri}
               />
             </Box>
           )}
 
-          <InputBase
-            value={nombreOverride}
-            onChange={(e) => setNombreOverride(e.target.value)}
-            placeholder="Nombre en la etiqueta (opcional)"
-            autoFocus
-            inputProps={{ 'aria-label': 'Nombre a imprimir en la etiqueta' }}
-            sx={{
-              width: '100%',
-              px: '12px',
-              py: '8px',
-              borderRadius: '9px',
-              border: `1px solid ${foto.surfaces.edgeStrong}`,
-              fontFamily: fontFamilies.system,
-              fontSize: '13px',
-              color: foto.ink.primary,
-              mb: 2,
-            }}
-          />
+          {/* One field per item on the label — on a 2-up stock both halves are
+              being printed in the same pass, so both are editable here rather
+              than forcing two trips through the dialog. */}
+          {printDialog?.map((it, i) => (
+            <InputBase
+              key={it.itemId}
+              value={nombreOverrides[i] ?? ''}
+              onChange={(e) =>
+                setNombreOverrides((prev) => {
+                  const next = [...prev];
+                  next[i] = e.target.value;
+                  return next;
+                })
+              }
+              placeholder={
+                printDialog.length > 1
+                  ? `Nombre de ${it.itemId} (opcional)`
+                  : 'Nombre en la etiqueta (opcional)'
+              }
+              autoFocus={i === 0}
+              inputProps={{
+                'aria-label': `Nombre a imprimir para ${it.itemId}`,
+              }}
+              sx={{
+                width: '100%',
+                px: '12px',
+                py: '8px',
+                borderRadius: '9px',
+                border: `1px solid ${foto.surfaces.edgeStrong}`,
+                fontFamily: fontFamilies.system,
+                fontSize: '13px',
+                color: foto.ink.primary,
+                mb: 1.5,
+              }}
+            />
+          ))}
 
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
             <ActionButton foto={foto} onClick={closePrintDialog}>
@@ -932,9 +1012,11 @@ function ActionButton({
   );
 }
 
+/** One card per PHYSICAL label — which is one item on 1-up stock and a
+ *  cut-in-half pair on the 2-up 15 × 30. */
 function LabelCard({
   foto,
-  item,
+  group,
   size,
   logoDataUri,
   niimbotSupported,
@@ -943,7 +1025,7 @@ function LabelCard({
   onPrint,
 }: {
   foto: ReturnType<typeof getFoto>;
-  item: GalleryItem;
+  group: GalleryItem[];
   size: LabelSizeId;
   logoDataUri: string | null;
   niimbotSupported: boolean;
@@ -951,6 +1033,12 @@ function LabelCard({
   onPng: () => void;
   onPrint: () => void;
 }) {
+  // Kind badges only make sense when the whole label agrees — a pair of one
+  // producto and one insumo gets no badge rather than a misleading one.
+  const kind = group.every((it) => it.kind === group[0].kind)
+    ? group[0].kind
+    : null;
+
   return (
     <Box
       sx={{
@@ -979,13 +1067,7 @@ function LabelCard({
           justifyContent: 'center',
         }}
       >
-        <LabelPreview
-          itemId={item.itemId}
-          nombre={item.nombre}
-          peso={item.peso}
-          size={size}
-          qrLogoSrc={logoDataUri ?? undefined}
-        />
+        <LabelSheet items={group} size={size} logoSrc={logoDataUri} />
       </Box>
 
       <Box
@@ -1005,9 +1087,9 @@ function LabelCard({
               color: foto.ink.primary,
             }}
           >
-            {item.itemId}
+            {group.map((it) => it.itemId).join(' + ')}
           </Box>
-          {(item.kind === 'insumo' || item.kind === 'proximo') && (
+          {(kind === 'insumo' || kind === 'proximo') && (
             <Box
               sx={{
                 fontFamily: fontFamilies.system,
@@ -1015,12 +1097,10 @@ function LabelCard({
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
                 color:
-                  item.kind === 'proximo'
-                    ? foto.accent.primary
-                    : foto.ink.tertiary,
+                  kind === 'proximo' ? foto.accent.primary : foto.ink.tertiary,
               }}
             >
-              {item.kind === 'proximo' ? 'Próximo' : 'Insumo'}
+              {kind === 'proximo' ? 'Próximo' : 'Insumo'}
             </Box>
           )}
         </Box>
