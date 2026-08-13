@@ -896,6 +896,18 @@ export default defineSchema({
      * hermanas: hoy nada lo impide y se puede vender dos veces lo mismo.
      */
     modalidadGrupo: v.optional(v.string()),
+    /**
+     * La foto de LA PIEZA, capturada al clasificar por Telegram (W2).
+     *
+     * Vive acá y NO en `productInventory` a propósito: una casilla v4 no tiene
+     * fila de producto (ver la cabecera de `lotsV4.ts`), y escribir allá
+     * agendaría `products.pushToSheet`, que desde dev escribe en el SOT v3 de
+     * producción.
+     *
+     * CONSECUENCIA: esta foto NO llega al catálogo. La materialización de
+     * Fase 2 es la que debe arrastrarla a `productInventory.fotoUrl`.
+     */
+    fotoUrl: v.optional(v.string()),
   })
     .index('by_loteId', ['loteId'])
     .index('by_itemId', ['itemId']),

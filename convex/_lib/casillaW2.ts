@@ -56,6 +56,8 @@ export interface CasillaW2 {
   gramaje?: number;
   /** Una intención comercial, no un dato de la pieza: opcional. */
   rangoVentaEsperadoCOP?: number;
+  /** La foto de la pieza (URL de Drive). NO es campo de completitud. */
+  fotoUrl?: string;
 }
 
 /**
@@ -107,6 +109,13 @@ export interface CompletenessLote {
   listoParaPublicar: boolean;
   /** itemIds de las casillas que faltan, para poder saltar directo a ellas. */
   incompletas: string[];
+  /**
+   * itemIds sin foto. **Informativo: no bloquea nada.** No entra a
+   * `camposFaltantes` ni a `listoParaPublicar` — meterla ahí marcaría
+   * incompletas todas las casillas ya clasificadas y ningún lote existente
+   * podría publicarse.
+   */
+  sinFoto: string[];
 }
 
 /** El score X/N que decide si el lote puede publicarse. */
@@ -117,6 +126,9 @@ export function completenessDelLote(
     .filter((c) => !casillaEstaCompleta(c))
     .map((c) => c.itemId);
   const completas = casillas.length - incompletas.length;
+  const sinFoto = casillas
+    .filter((c) => !c.fotoUrl?.trim())
+    .map((c) => c.itemId);
 
   return {
     completas,
@@ -125,6 +137,7 @@ export function completenessDelLote(
     // Un lote sin casillas no está listo: no hay nada que publicar.
     listoParaPublicar: casillas.length > 0 && incompletas.length === 0,
     incompletas,
+    sinFoto,
   };
 }
 

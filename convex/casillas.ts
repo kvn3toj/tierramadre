@@ -221,6 +221,45 @@ export const _guardar = internalMutation({
   },
 });
 
+/**
+ * Adjuntar la foto de una casilla. Deliberadamente SEPARADA de `_guardar`:
+ * aquélla estampa `clasificadaPor` / `clasificadaEn`, y adjuntar una foto no es
+ * clasificar — hacerlo por ahí atribuiría la clasificación a quien sacó la foto,
+ * hoy, aunque la pieza la haya clasificado otra persona ayer.
+ *
+ * Por el mismo motivo `fotoUrl` NO entra a `patchArgs`: si entrara,
+ * `guardarViaBot` podría escribirla y el rastro volvería a falsearse.
+ *
+ * Tampoco toca `estadoCasilla`: la foto no es campo de completitud
+ * (`camposFaltantes` no la mira) y una casilla sin foto sigue siendo publicable.
+ */
+export const _adjuntarFoto = internalMutation({
+  args: { itemId: v.string(), fotoUrl: v.string() },
+  handler: async (ctx, { itemId, fotoUrl }) => {
+    const casilla = await ctx.db
+      .query('lotItems')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+      .first();
+
+    if (!casilla) throw new Error(`No existe la casilla ${itemId}.`);
+    if (!casilla.estadoCasilla) {
+      throw new Error(
+        `El ítem ${itemId} es del riel viejo, no una casilla v4: su media es ` +
+          `propiedad de la hoja y escribirla acá la dejaría en dos verdades.`,
+      );
+    }
+
+    // Cadena vacía = borrar. Mismo criterio que `applyMedia` en el riel legacy
+    // (`lotItems.ts:1093-1094`), copiado para que las dos rieles se comporten
+    // igual el día que Fase 2 las junte.
+    const normalizada = fotoUrl.trim();
+    const valor = normalizada.length === 0 ? undefined : normalizada;
+
+    await ctx.db.patch(casilla._id, { fotoUrl: valor });
+    return { itemId, fotoUrl: valor };
+  },
+});
+
 export const guardar = action({
   args: { idToken: v.string(), ...patchArgs },
   handler: async (
@@ -335,12 +374,22 @@ export const _publicar = internalMutation({
         },
       });
       await encolarLote(ctx, lote._id);
-      return { publicado: true, parcial: true, faltantes: score.incompletas };
+      return {
+        publicado: true,
+        parcial: true,
+        faltantes: score.incompletas,
+        sinFoto: score.sinFoto,
+      };
     }
 
     await ctx.db.patch(lote._id, { estado: 'publicado' });
     await encolarLote(ctx, lote._id);
-    return { publicado: true, parcial: false, faltantes: [] };
+    return {
+      publicado: true,
+      parcial: false,
+      faltantes: [],
+      sinFoto: score.sinFoto,
+    };
   },
 });
 
@@ -354,7 +403,12 @@ export const publicar = action({
   handler: async (
     ctx,
     { idToken, ...args },
-  ): Promise<{ publicado: boolean; parcial: boolean; faltantes: string[] }> => {
+  ): Promise<{
+    publicado: boolean;
+    parcial: boolean;
+    faltantes: string[];
+    sinFoto: string[];
+  }> => {
     const caller = await requireAccessLevel(idToken, [...ROLES_COSTOS]);
     return await ctx.runMutation(internal.casillas._publicar, {
       ...args,
@@ -410,7 +464,7 @@ export const porItemId = action({
 /* ─────────────────────────────────────────────────────────────────────────────
  * W2 «Cerebro Creativo» desde Telegram.
  *
- * Las cuatro cáscaras de abajo son el mismo trato que hicieron las de
+ * Las cinco cáscaras de abajo son el mismo trato que hicieron las de
  * `movimientosV4`: `requireBotSecret` y delegación a los internals YA probados.
  * Cero lógica nueva — si una regla de clasificación cambia, cambia en un solo
  * lugar y las dos superficies la heredan.
@@ -453,6 +507,20 @@ export const publicarViaBot = action({
     return await ctx.runMutation(internal.casillas._publicar, {
       ...args,
       por: `telegram:${telegramUserId}`,
+    });
+  },
+});
+
+export const adjuntarFotoViaBot = action({
+  args: { botSecret: v.string(), itemId: v.string(), fotoUrl: v.string() },
+  handler: async (
+    ctx,
+    { botSecret, itemId, fotoUrl },
+  ): Promise<{ itemId: string; fotoUrl?: string }> => {
+    requireBotSecret(botSecret);
+    return await ctx.runMutation(internal.casillas._adjuntarFoto, {
+      itemId,
+      fotoUrl,
     });
   },
 });

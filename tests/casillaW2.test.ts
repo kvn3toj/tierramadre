@@ -191,3 +191,44 @@ describe('conciliarCostos — la diferencia se muestra, no se ajusta', () => {
     expect(conciliarCostos(10_000, [10_630]).cuadra).toBe(false);
   });
 });
+
+/** Una casilla de gema mínima y completa, para las pruebas de `sinFoto`. */
+const casillaCompleta = (over: Partial<CasillaW2> = {}): CasillaW2 =>
+  ({
+    itemId: 'X',
+    estadoCasilla: 'DISPONIBLE',
+    costoUnitarioRealCOP: 100_000,
+    categoriaFiscal: 'gema',
+    calidad: 'Fina',
+    ...over,
+  }) as CasillaW2;
+
+describe('sinFoto', () => {
+  it('lista las casillas sin foto, sin afectar la completitud', () => {
+    const casillas = [
+      casillaCompleta({ itemId: '001', fotoUrl: 'https://drive/x' }),
+      casillaCompleta({ itemId: '002' }),
+      casillaCompleta({ itemId: '003', fotoUrl: '' }),
+    ];
+
+    const score = completenessDelLote(casillas);
+
+    expect(score.sinFoto).toEqual(['002', '003']);
+    // Lo que importa: una casilla sin foto SIGUE completa.
+    expect(score.completas).toBe(3);
+    expect(score.incompletas).toEqual([]);
+    expect(score.listoParaPublicar).toBe(true);
+  });
+
+  it('la foto no entra a camposFaltantes', () => {
+    const sinFoto = casillaCompleta({ itemId: '004' });
+    expect(camposFaltantes(sinFoto)).toEqual([]);
+  });
+
+  it('sinFoto queda vacío cuando todas tienen foto', () => {
+    const score = completenessDelLote([
+      casillaCompleta({ itemId: '005', fotoUrl: 'https://drive/a' }),
+    ]);
+    expect(score.sinFoto).toEqual([]);
+  });
+});
