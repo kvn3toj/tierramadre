@@ -23,8 +23,43 @@ const FECHA_ISO = /^\d{4}-\d{2}-\d{2}$/;
  * Si no lo son, devuelve el valor tal cual: no inventa una fecha de un texto
  * que no la tiene.
  */
+const FECHA_COMPACTA = /^(\d{4})(\d{2})(\d{2})$/;
+
+/**
+ * ¿Esa cadena ISO nombra un día que existe?
+ *
+ * No alcanza con que sean ocho dígitos: `20261301` y `20260132` los tienen y no son
+ * fechas. Se construye la fecha y se compara de vuelta — si el motor de `Date` tuvo que
+ * corregir algo, o no pudo parsearla, no era una fecha real y no se toca.
+ *
+ * No lee el reloj: sigue siendo pura.
+ */
+function esDiaReal(iso: string): boolean {
+  const d = new Date(`${iso}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === iso;
+}
+
 export function normalizarFechaRecepcion(valor: string): string {
   const texto = valor.trim();
   const candidato = texto.slice(0, 10);
-  return FECHA_ISO.test(candidato) ? candidato : texto;
+  if (FECHA_ISO.test(candidato)) return candidato;
+
+  /**
+   * La forma COMPACTA `AAAAMMDD`, medida el 2026-08-12 contra la pestaña `Lotes`:
+   * **14 lotes `LC-*` la traen así** (`20260127`, `20251208`). Son los reconstruidos
+   * el 2026-07-23 desde «colección + fecha de ingreso», y entraron con el formato de
+   * origen; el motor exige guiones y los rechaza, así que catorce lotes no cotizan.
+   *
+   * Esto NO contradice el «no inventa una fecha» de arriba: `20260127` y `2026-01-27`
+   * son la misma fecha en otra notación. Inventar sería completar lo que falta — y por
+   * eso `2251207` (siete dígitos, LC-14, origen «07-dic-022», anotado como corrupto en
+   * el vault) se devuelve intacto en vez de adivinarle el dígito ausente. Que falle
+   * ruidoso río abajo es el comportamiento correcto para un dato que nadie sabe leer.
+   */
+  const compacta = FECHA_COMPACTA.exec(texto);
+  if (compacta) {
+    const iso = `${compacta[1]}-${compacta[2]}-${compacta[3]}`;
+    if (esDiaReal(iso)) return iso;
+  }
+  return texto;
 }
