@@ -25,13 +25,30 @@ import ConfirmDialog from '../../../components/shared/ConfirmDialog';
 import { uploadFotosintesisImages } from './utils/uploadItemMedia';
 import { buildItemPricingPatch } from './utils/buildLotItemPayload';
 import { convertToProxyUrl } from '../../../utils/driveUrl';
-import { LabelPreview } from './labels/LabelPreview';
-import { downloadLabelsZip, type LabelItem } from './labels/downloadLabelsZip';
+import { LabelSheet } from './labels/LabelSheet';
+import {
+  downloadLabelGroupsZip,
+  type LabelItem,
+} from './labels/downloadLabelsZip';
 import { downloadLabelsSpreadsheet } from './labels/downloadLabelsSpreadsheet';
 import { renderLabelCanvas } from './labels/exportLabel';
+import {
+  LABEL_SIZE_LIST,
+  chunkForLabels,
+  printScaleFor,
+  resolveLabelSize,
+  type LabelSizeId,
+} from './labels/labelSizes';
 import { useNiimbotPrinter } from '../../../hooks/useNiimbotPrinter';
 
 type PublishMode = 'all' | 'selective' | 'reserve';
+
+/**
+ * Same key EtiquetasPage writes. The stock loaded in the printer is a property
+ * of the SHOP, not of a screen — picking "15 × 30 · 2 ítems" while closing a
+ * lote must not leave the Atelier gallery still laying out for 12 mm tape.
+ */
+const LABEL_SIZE_STORAGE_KEY = 'tm.etiquetas.labelSize';
 
 const formatCOP = (n: number): string =>
   new Intl.NumberFormat('es-CO', {
@@ -149,12 +166,29 @@ export default function FotosintesisLoteResumenPage() {
   const [reopening, setReopening] = useState(false);
 
   // Batch NIIMBOT label export — off-screen render target reused across
-  // items so we don't mount N LabelPreview instances at once.
+  // LABELS so we don't mount N LabelSheet instances at once. The unit is a
+  // label, not an item: a 2-up stock puts two items on one node.
   const labelRenderRef = useRef<HTMLDivElement>(null);
-  const [labelRenderItem, setLabelRenderItem] = useState<LabelItem | null>(
+  const [labelRenderGroup, setLabelRenderGroup] = useState<LabelItem[] | null>(
     null,
   );
   const [printingLabels, setPrintingLabels] = useState(false);
+
+  // Which stock is in the printer. Read synchronously so the first paint is
+  // already correct (an effect-based read would flash the 12 mm default).
+  const [labelSizeId, setLabelSizeId] = useState<LabelSizeId>(
+    () => resolveLabelSize(localStorage.getItem(LABEL_SIZE_STORAGE_KEY)).id,
+  );
+  const labelStock = resolveLabelSize(labelSizeId);
+
+  function chooseLabelSize(id: LabelSizeId) {
+    setLabelSizeId(id);
+    try {
+      localStorage.setItem(LABEL_SIZE_STORAGE_KEY, id);
+    } catch {
+      // Private mode / quota — the choice still applies for this session.
+    }
+  }
 
   // Batch NIIMBOT direct print — reuses labelRenderRef/labelRenderItem
   // above, printing through a single connected client rather than
@@ -384,29 +418,39 @@ export default function FotosintesisLoteResumenPage() {
     }
   };
 
+  /** The lote's items grouped into PHYSICAL labels for the selected stock. */
+  function loteLabelGroups(): LabelItem[][] {
+    const items: LabelItem[] = (products ?? []).map((p) => ({
+      itemId: p.itemId,
+      nombre: p.nombre,
+      peso: p.peso,
+    }));
+    return chunkForLabels(items, labelStock);
+  }
+
+  /** Render one label into the shared hidden node, one frame after React has
+   *  committed the new props, ready to rasterize. */
+  function renderLabelGroupNode(group: LabelItem[]): Promise<HTMLElement> {
+    return new Promise<HTMLElement>((resolve, reject) => {
+      setLabelRenderGroup(group);
+      requestAnimationFrame(() => {
+        if (labelRenderRef.current) resolve(labelRenderRef.current);
+        else reject(new Error('No se pudo renderizar la etiqueta'));
+      });
+    });
+  }
+
   async function handlePrintLoteLabelsExport() {
     if (!products || products.length === 0) return;
     setPrintingLabels(true);
     try {
-      const items: LabelItem[] = products.map((p) => ({
-        itemId: p.itemId,
-        nombre: p.nombre,
-        peso: p.peso,
-      }));
-      await downloadLabelsZip(
-        items,
+      const groups = loteLabelGroups();
+      await downloadLabelGroupsZip(
+        groups,
         `etiquetas-lote-${loteId}.zip`,
-        (item) =>
-          new Promise<HTMLElement>((resolve) => {
-            setLabelRenderItem(item);
-            // Wait one frame so React has committed the new LabelPreview
-            // props to labelRenderRef before we hand the node to html2canvas.
-            requestAnimationFrame(() => {
-              if (labelRenderRef.current) resolve(labelRenderRef.current);
-            });
-          }),
+        renderLabelGroupNode,
       );
-      notify(`${items.length} etiqueta(s) exportadas`, 'success');
+      notify(`${groups.length} etiqueta(s) exportadas`, 'success');
     } catch (err) {
       notify(
         `No se pudieron exportar las etiquetas: ${err instanceof Error ? err.message : String(err)}`,
@@ -414,7 +458,7 @@ export default function FotosintesisLoteResumenPage() {
       );
     } finally {
       setPrintingLabels(false);
-      setLabelRenderItem(null);
+      setLabelRenderGroup(null);
     }
   }
 
@@ -444,24 +488,21 @@ export default function FotosintesisLoteResumenPage() {
 
   async function handlePrintLoteLabelsDirect() {
     if (!products || products.length === 0) return;
-    const items: LabelItem[] = products.map((p) => ({
-      itemId: p.itemId,
-      nombre: p.nombre,
-      peso: p.peso,
-    }));
-    setPrintProgress({ done: 0, total: items.length });
+    const groups = loteLabelGroups();
+    setPrintProgress({ done: 0, total: groups.length });
     try {
       await niimbot.connect();
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        setLabelRenderItem(item);
-        await new Promise((resolve) => requestAnimationFrame(resolve));
-        if (!labelRenderRef.current) continue;
-        const canvas = await renderLabelCanvas(labelRenderRef.current);
+      for (let i = 0; i < groups.length; i++) {
+        const node = await renderLabelGroupNode(groups[i]);
+        // Scale the raster onto the CONNECTED head's DPI — labels are authored
+        // at 203 DPI, so a 300 DPI head needs ~1.478× or it prints undersized.
+        const canvas = await renderLabelCanvas(node, {
+          scale: printScaleFor(niimbot.head),
+        });
         await niimbot.printLabel(canvas);
-        setPrintProgress({ done: i + 1, total: items.length });
+        setPrintProgress({ done: i + 1, total: groups.length });
       }
-      notify(`${items.length} etiqueta(s) impresas`, 'success');
+      notify(`${groups.length} etiqueta(s) impresas`, 'success');
     } catch (err) {
       notify(
         `No se pudo imprimir directo: ${err instanceof Error ? err.message : String(err)}. Usá "Imprimir etiquetas del lote" para exportar el zip.`,
@@ -469,7 +510,7 @@ export default function FotosintesisLoteResumenPage() {
       );
     } finally {
       setPrintProgress(null);
-      setLabelRenderItem(null);
+      setLabelRenderGroup(null);
     }
   }
 
@@ -495,12 +536,8 @@ export default function FotosintesisLoteResumenPage() {
         sx={{ position: 'fixed', left: '-9999px', top: 0 }}
         ref={labelRenderRef}
       >
-        {labelRenderItem && (
-          <LabelPreview
-            itemId={labelRenderItem.itemId}
-            nombre={labelRenderItem.nombre}
-            peso={labelRenderItem.peso}
-          />
+        {labelRenderGroup && (
+          <LabelSheet items={labelRenderGroup} size={labelSizeId} />
         )}
       </Box>
       <TicketHeader
@@ -1107,6 +1144,70 @@ export default function FotosintesisLoteResumenPage() {
                 Editar encabezado del lote
               </Box>
             ) : null}
+            {/* Which stock is loaded in the printer. Shared with the Atelier
+                gallery through localStorage — see LABEL_SIZE_STORAGE_KEY. */}
+            <Box>
+              <Box
+                sx={{
+                  fontFamily: fontFamilies.system,
+                  fontSize: 10,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: foto.ink.tertiary,
+                  marginBottom: '6px',
+                }}
+              >
+                Rollo
+              </Box>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {LABEL_SIZE_LIST.map((s) => {
+                  const active = labelSizeId === s.id;
+                  return (
+                    <Box
+                      key={s.id}
+                      component="button"
+                      type="button"
+                      onClick={() => chooseLabelSize(s.id)}
+                      sx={{
+                        padding: '7px 12px',
+                        borderRadius: '9px',
+                        background: active
+                          ? foto.accent.primary
+                          : 'transparent',
+                        color: active ? foto.ink.inverse : foto.ink.secondary,
+                        border: `1px solid ${active ? foto.accent.primary : foto.surfaces.edgeStrong}`,
+                        fontFamily: fontFamilies.system,
+                        fontSize: 12,
+                        fontWeight: active ? 600 : 500,
+                        cursor: 'pointer',
+                        transition: 'background 120ms ease, color 120ms ease',
+                      }}
+                    >
+                      {s.label}
+                    </Box>
+                  );
+                })}
+              </Box>
+              {/* A 2-up label is not finished when it leaves the printer, and
+                  the counts stop matching the item count. Both facts belong
+                  next to the buttons that act on them. */}
+              {labelStock.itemsPerLabel > 1 && (
+                <Box
+                  sx={{
+                    marginTop: '6px',
+                    fontFamily: fontFamilies.system,
+                    fontSize: 11,
+                    lineHeight: 1.45,
+                    color: foto.ink.tertiary,
+                  }}
+                >
+                  ✂ {labelStock.hint}
+                  {products?.length
+                    ? ` · ${Math.ceil(products.length / labelStock.itemsPerLabel)} etiqueta(s) para ${products.length} ítem(s)`
+                    : ''}
+                </Box>
+              )}
+            </Box>
             <Box
               component="button"
               type="button"
