@@ -273,6 +273,10 @@ export const _estadoDelLote = internalQuery({
         casillas.map((c) => c.costoUnitarioRealCOP),
       ),
       publicacionParcial: lote.publicacionParcial,
+      // Lo exige `_publicar` para dejar publicar, y hasta hoy no salía de acá: el tablero
+      // del bot no tenía cómo saber si el botón iba a servir. Sólo lo estampa
+      // `lotsV4._create` — 2 de 130 lotes en dev.
+      origenModelo: lote.origenModelo,
       casillas,
     };
   },
@@ -540,6 +544,10 @@ export const estadoDelLoteViaBot = action({
       estado: e.estado,
       categoriaFiscalLote: e.categoriaFiscalLote,
       costoTotalCOP: e.costoTotalCOP,
+      // `origenModelo` — lo que `_publicar` exige para dejar publicar. Viaja para que el
+      // tablero del bot NO ofrezca el botón en un lote que el backend va a rechazar: sólo
+      // 2 de 130 lotes en dev lo tienen, así que el 98% de las veces era una oferta falsa.
+      origenModelo: e.origenModelo,
       completeness: e.completeness,
       conciliacion: e.conciliacion,
       // Sigue siendo un ARRAY y con la misma longitud: la verificación de W1 sólo usa
