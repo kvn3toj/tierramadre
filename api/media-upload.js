@@ -19,15 +19,15 @@
  * - GOOGLE_SHARED_DRIVE_ID (folder ID in your Drive)
  */
 
-import formidable from "formidable";
-import fs from "fs";
+import formidable from 'formidable';
+import fs from 'fs';
 
 import {
   withApiHandler,
   sendError,
   sendSuccess,
   DRIVE_FOLDERS,
-} from "./_lib/index.js";
+} from './_lib/index.js';
 
 // Disable body parsing for file uploads
 export const config = {
@@ -42,31 +42,31 @@ export const config = {
 
 const SUPPORTED_MIME_TYPES = {
   // Images
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-  "image/gif": "gif",
-  "image/heic": "heic",
-  "image/heif": "heif",
-  "image/avif": "avif",
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+  'image/heic': 'heic',
+  'image/heif': 'heif',
+  'image/avif': 'avif',
   // Videos
-  "video/mp4": "mp4",
-  "video/quicktime": "mov",
-  "video/webm": "webm",
-  "video/x-msvideo": "avi",
-  "video/x-matroska": "mkv",
-  "video/3gpp": "3gp",
-  "video/x-m4v": "m4v",
+  'video/mp4': 'mp4',
+  'video/quicktime': 'mov',
+  'video/webm': 'webm',
+  'video/x-msvideo': 'avi',
+  'video/x-matroska': 'mkv',
+  'video/3gpp': '3gp',
+  'video/x-m4v': 'm4v',
 };
 
 const VIDEO_MIME_TYPES = [
-  "video/mp4",
-  "video/quicktime",
-  "video/webm",
-  "video/x-msvideo",
-  "video/x-matroska",
-  "video/3gpp",
-  "video/x-m4v",
+  'video/mp4',
+  'video/quicktime',
+  'video/webm',
+  'video/x-msvideo',
+  'video/x-matroska',
+  'video/3gpp',
+  'video/x-m4v',
 ];
 
 // =============================================================================
@@ -80,38 +80,49 @@ const VIDEO_MIME_TYPES = [
  * auto-generated name).
  */
 function sanitizeFileName(name, mimetype) {
-  let base = String(name || "")
+  let base = String(name || '')
     .split(/[\\/]/)
     .pop()
-    .replace(/[^a-zA-Z0-9._-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^[-.]+/, "");
+    .replace(/[^a-zA-Z0-9._-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^[-.]+/, '');
   if (!base) return null;
   if (!/\.[a-z0-9]+$/i.test(base)) {
-    base += `.${SUPPORTED_MIME_TYPES[mimetype] || "bin"}`;
+    base += `.${SUPPORTED_MIME_TYPES[mimetype] || 'bin'}`;
   }
   return base;
 }
 
-async function uploadFileToDrive(drive, folderId, file, index, overrideName) {
-  const originalName = file.originalFilename || file.newFilename || "upload";
+// `makePublic` defaults to true: every caller that predates the flag (the five
+// browser-side upload paths) keeps the "anyone with the link can read" behavior
+// they were written against. Only callers that opt out — today, the invoice step
+// of `/lote`, whose files carry supplier costs — get a private file.
+export async function uploadFileToDrive(
+  drive,
+  folderId,
+  file,
+  index,
+  overrideName,
+  makePublic = true,
+) {
+  const originalName = file.originalFilename || file.newFilename || 'upload';
 
-  const fileExtension = originalName.includes(".")
-    ? originalName.split(".").pop()
-    : SUPPORTED_MIME_TYPES[file.mimetype] || "bin";
+  const fileExtension = originalName.includes('.')
+    ? originalName.split('.').pop()
+    : SUPPORTED_MIME_TYPES[file.mimetype] || 'bin';
 
   const isVideo = VIDEO_MIME_TYPES.includes(file.mimetype);
   const isPdf =
-    file.mimetype === "application/pdf" ||
-    String(fileExtension).toLowerCase() === "pdf";
-  const prefix = isVideo ? "video" : isPdf ? "doc" : "image";
+    file.mimetype === 'application/pdf' ||
+    String(fileExtension).toLowerCase() === 'pdf';
+  const prefix = isVideo ? 'video' : isPdf ? 'doc' : 'image';
   // Optional caller-supplied name (e.g. an order-controlling, labeled
   // visualizer filename). Falls back to the auto-generated name.
   const fileName =
     (overrideName && sanitizeFileName(overrideName, file.mimetype)) ||
     `${prefix}-${index + 1}-${Date.now()}.${fileExtension}`;
 
-  console.log(`[Upload] Uploading ${isVideo ? "video" : "image"}: ${fileName}`);
+  console.log(`[Upload] Uploading ${isVideo ? 'video' : 'image'}: ${fileName}`);
   console.log(`[Upload] Target folder: ${folderId}`);
   console.log(
     `[Upload] File size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`,
@@ -128,7 +139,7 @@ async function uploadFileToDrive(drive, folderId, file, index, overrideName) {
         mimeType: file.mimetype,
         body: fs.createReadStream(file.filepath),
       },
-      fields: "id, webViewLink, webContentLink, thumbnailLink",
+      fields: 'id, webViewLink, webContentLink, thumbnailLink',
     });
 
     console.log(`[Upload] Upload successful. File ID: ${uploadedFile.data.id}`);
@@ -144,14 +155,20 @@ async function uploadFileToDrive(drive, folderId, file, index, overrideName) {
   }
 
   // Set public permissions so anyone can view
-  await drive.permissions.create({
-    fileId: uploadedFile.data.id,
-    requestBody: { role: "reader", type: "anyone" },
-  });
+  if (makePublic) {
+    await drive.permissions.create({
+      fileId: uploadedFile.data.id,
+      requestBody: { role: 'reader', type: 'anyone' },
+    });
 
-  console.log(
-    `[Upload] Public permission set for file ${uploadedFile.data.id}`,
-  );
+    console.log(
+      `[Upload] Public permission set for file ${uploadedFile.data.id}`,
+    );
+  } else {
+    console.log(
+      `[Upload] File ${uploadedFile.data.id} left PRIVATE (public=false)`,
+    );
+  }
 
   const fileId = uploadedFile.data.id;
 
@@ -183,14 +200,19 @@ async function uploadFileToDrive(drive, folderId, file, index, overrideName) {
 /**
  * Find or create a folder using OAuth Drive client
  */
-async function getOrCreateFolderOAuth(drive, parentFolderId, folderName) {
+export async function getOrCreateFolderOAuth(
+  drive,
+  parentFolderId,
+  folderName,
+  makePublic = true,
+) {
   const escapedFolderName = folderName.replace(/'/g, "\\'");
 
   // Search for existing folder
   try {
     const searchResponse = await drive.files.list({
       q: `name='${escapedFolderName}' and '${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-      fields: "files(id, name)",
+      fields: 'files(id, name)',
     });
 
     if (searchResponse.data.files && searchResponse.data.files.length > 0) {
@@ -214,17 +236,21 @@ async function getOrCreateFolderOAuth(drive, parentFolderId, folderName) {
     const folder = await drive.files.create({
       requestBody: {
         name: folderName,
-        mimeType: "application/vnd.google-apps.folder",
+        mimeType: 'application/vnd.google-apps.folder',
         parents: [parentFolderId],
       },
-      fields: "id",
+      fields: 'id',
     });
 
-    // Set public permissions for folder
-    await drive.permissions.create({
-      fileId: folder.data.id,
-      requestBody: { role: "reader", type: "anyone" },
-    });
+    // Set public permissions for folder. A private file inside a public folder
+    // is still reachable by anyone who walks the folder, so the opt-out has to
+    // reach the folder too — not just the file that lands in it.
+    if (makePublic) {
+      await drive.permissions.create({
+        fileId: folder.data.id,
+        requestBody: { role: 'reader', type: 'anyone' },
+      });
+    }
 
     console.log(`[Upload] Created folder "${folderName}": ${folder.data.id}`);
     return folder.data.id;
@@ -258,11 +284,11 @@ export default withApiHandler(
         });
       });
     } catch (formError) {
-      console.error("Formidable parse error:", formError);
+      console.error('Formidable parse error:', formError);
       return sendError(
         res,
         400,
-        "Failed to parse form data",
+        'Failed to parse form data',
         formError.message,
       );
     }
@@ -294,13 +320,24 @@ export default withApiHandler(
       ? fields.fileName[0]
       : fields.fileName;
 
+    // Opt-out of the "anyone with the link can read" grant this endpoint has
+    // always applied. Formidable hands every field back as a string, so only
+    // the literal "false" opts out — an absent, empty, or malformed value keeps
+    // the public default the five browser callers were written against. Failing
+    // *open* is deliberate: a caller that wants privacy has to say so, and a
+    // typo there can't silently un-publish the web capture flow.
+    const publicField = Array.isArray(fields.public)
+      ? fields.public[0]
+      : fields.public;
+    const makePublic = String(publicField) !== 'false';
+
     if (!quotationId && !customFolderId && !subPath) {
-      return sendError(res, 400, "Missing quotationId, folderId, or subPath");
+      return sendError(res, 400, 'Missing quotationId, folderId, or subPath');
     }
 
     let fileList = files.file || files.files;
     if (!fileList) {
-      return sendError(res, 400, "No files uploaded");
+      return sendError(res, 400, 'No files uploaded');
     }
 
     if (!Array.isArray(fileList)) {
@@ -329,21 +366,26 @@ export default withApiHandler(
         // Drive root, creating any missing segments. Used for "ventas/2026/05"
         // so venta PDFs don't end up under cotizaciones/proveedores/.
         const segments = subPath
-          .split("/")
+          .split('/')
           .map((s) => s.trim())
           // Drop empty, "..", and "." segments. Drive has no POSIX-style
           // path traversal (folders are id-keyed, not path-keyed) so this
           // is defensive only — keeps the folder tree predictable.
-          .filter((s) => s && s !== ".." && s !== ".");
+          .filter((s) => s && s !== '..' && s !== '.');
         if (segments.length === 0) {
-          throw new Error("subPath must contain at least one valid segment");
+          throw new Error('subPath must contain at least one valid segment');
         }
         let cursor = parentFolderId;
         for (const segment of segments) {
           console.log(
             `[Upload] subPath: looking for/creating "${segment}" in ${cursor}`,
           );
-          cursor = await getOrCreateFolderOAuth(drive, cursor, segment);
+          cursor = await getOrCreateFolderOAuth(
+            drive,
+            cursor,
+            segment,
+            makePublic,
+          );
         }
         targetFolderId = cursor;
       } else {
@@ -356,6 +398,7 @@ export default withApiHandler(
           drive,
           parentFolderId,
           baseFolderName,
+          makePublic,
         );
         console.log(`[Upload] Cotizaciones folder ID: ${cotizacionesFolderId}`);
 
@@ -364,6 +407,7 @@ export default withApiHandler(
           drive,
           cotizacionesFolderId,
           DRIVE_FOLDERS.COTIZACIONES_PROVEEDORES,
+          makePublic,
         );
         console.log(`[Upload] Proveedores folder ID: ${proveedoresFolderId}`);
 
@@ -372,6 +416,7 @@ export default withApiHandler(
           drive,
           proveedoresFolderId,
           quotationId,
+          makePublic,
         );
         console.log(`[Upload] Target folder ID: ${targetFolderId}`);
       }
@@ -379,24 +424,24 @@ export default withApiHandler(
       // Verify the folder
       const folderCheck = await drive.files.get({
         fileId: targetFolderId,
-        fields: "id, name, parents",
+        fields: 'id, name, parents',
       });
       console.log(
         `[Upload] Folder verification:`,
         JSON.stringify(folderCheck.data, null, 2),
       );
     } catch (folderError) {
-      console.error("[Upload] Folder creation error:", folderError.message);
+      console.error('[Upload] Folder creation error:', folderError.message);
       if (folderError.response?.data) {
         console.error(
-          "[Upload] API error details:",
+          '[Upload] API error details:',
           JSON.stringify(folderError.response.data, null, 2),
         );
       }
       return sendError(
         res,
         500,
-        "Failed to create upload folder",
+        'Failed to create upload folder',
         folderError.message,
       );
     }
@@ -411,7 +456,7 @@ export default withApiHandler(
       const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
 
       console.log(
-        `[Upload] File ${i + 1}/${fileList.length}: "${file.originalFilename}" (${fileSizeMB}MB, ${isVideo ? "VIDEO" : "IMAGE"})`,
+        `[Upload] File ${i + 1}/${fileList.length}: "${file.originalFilename}" (${fileSizeMB}MB, ${isVideo ? 'VIDEO' : 'IMAGE'})`,
       );
 
       try {
@@ -421,6 +466,7 @@ export default withApiHandler(
           file,
           i,
           fileList.length === 1 ? customFileName : null,
+          makePublic,
         );
         console.log(`[Upload] Upload successful: ${result.fileName}`);
         uploadedFiles.push(result);
@@ -431,7 +477,7 @@ export default withApiHandler(
         );
         if (uploadError.response?.data) {
           console.error(
-            "[Upload] API error details:",
+            '[Upload] API error details:',
             JSON.stringify(uploadError.response.data, null, 2),
           );
         }
@@ -451,8 +497,8 @@ export default withApiHandler(
     if (uploadedFiles.length === 0) {
       const errorMsg =
         errors.length > 0
-          ? `Upload failed: ${errors.map((e) => e.error).join(", ")}`
-          : "No files were uploaded successfully";
+          ? `Upload failed: ${errors.map((e) => e.error).join(', ')}`
+          : 'No files were uploaded successfully';
       return sendError(res, 500, errorMsg);
     }
 
@@ -465,8 +511,8 @@ export default withApiHandler(
     });
   },
   {
-    methods: ["POST", "OPTIONS"],
+    methods: ['POST', 'OPTIONS'],
     provideOAuthDrive: true,
-    errorPrefix: "MediaUpload",
+    errorPrefix: 'MediaUpload',
   },
 );
