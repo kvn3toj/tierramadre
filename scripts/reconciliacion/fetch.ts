@@ -3,18 +3,30 @@
 // Reconciliación Fase 1, Task 1: descarga las 4 fuentes de inventario a JSON
 // local bajo out/ (git-ignored). No escribe NADA a Convex, Sheets, ni prod.
 //
-// Convex: SIEMPRE el deployment PROD grand-hippopotamus-162
-// (https://grand-hippopotamus-162.convex.cloud). Nunca el dev deployment.
-// Se puede sobreescribir con CONVEX_URL para apuntar a otro deployment.
+// Convex: SIEMPRE el deployment de PRODUCCIÓN, nunca el de dev.
+//
+// El destino sale de `CONVEX_URL` y NO tiene valor por defecto, a propósito.
+// Antes había uno hardcodeado, y sobrevivió a dos mudanzas de proyecto: al
+// cambiar de deployment este script seguía auditando en silencio la base vieja
+// y reportando números de un sistema que ya nadie usaba. Un fallo ruidoso
+// —correr sin la variable y que reviente— es preferible a una reconciliación
+// que da resultados plausibles sobre datos muertos.
 import { ConvexHttpClient } from 'convex/browser';
 import { writeFileSync, mkdirSync } from 'node:fs';
 
 mkdirSync('scripts/reconciliacion/out', { recursive: true });
 const OUT = 'scripts/reconciliacion/out';
 
-const cx = new ConvexHttpClient(
-  process.env.CONVEX_URL ?? 'https://grand-hippopotamus-162.convex.cloud',
-);
+const CONVEX_URL = process.env.CONVEX_URL?.trim();
+if (!CONVEX_URL) {
+  throw new Error(
+    'Falta CONVEX_URL. Este script audita producción y no adivina el ' +
+      'deployment: un default hardcodeado ya sobrevivió a dos mudanzas ' +
+      'reconciliando contra la base equivocada. Exportala explícitamente.',
+  );
+}
+
+const cx = new ConvexHttpClient(CONVEX_URL);
 
 // lotItems:search queries the `productInventory` table (not a `lotItems`
 // table — the name is legacy). minCantidad: 0 skips the handler's quantity

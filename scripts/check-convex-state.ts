@@ -3,9 +3,9 @@
  * Also compares inviterName distribution.
  *
  * Usage:
- *   CONVEX_URL=https://wandering-parrot-148.convex.cloud \
+ *   CONVEX_URL=https://<tu-deployment>.convex.cloud \
  *     npx tsx scripts/check-convex-state.ts
- *   CONVEX_URL=https://wandering-parrot-148.convex.cloud \
+ *   CONVEX_URL=https://<tu-deployment>.convex.cloud \
  *     npx tsx scripts/check-convex-state.ts --inviter "Kevin Pineda Perez"
  */
 

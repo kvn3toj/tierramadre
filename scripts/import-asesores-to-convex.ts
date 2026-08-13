@@ -12,7 +12,7 @@
  * import, the first sale to "Isa la Negra Vikinga" 404s the client lookup.
  *
  * Usage:
- *   CONVEX_URL=https://wandering-parrot-148.convex.cloud \
+ *   CONVEX_URL=https://<tu-deployment>.convex.cloud \
  *   npx tsx scripts/import-asesores-to-convex.ts             # apply
  *   npx tsx scripts/import-asesores-to-convex.ts --dry-run   # preview only
  *   npx tsx scripts/import-asesores-to-convex.ts --no-push   # insert without pushing rows to SOT

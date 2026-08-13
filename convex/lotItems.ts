@@ -107,10 +107,12 @@ function normalizeMedidas(s: string): string {
  * (`ANIMA_BOT_SECRET`) — see `_lib/requireStaffSession.ts`'s
  * `isStaffOrBotSession`. The bot secret path exists because this is exactly
  * `searchItems`'s stock-search query above, confirmed against
- * anima-bot/src/fotosintesis/client.ts; the bot's `.env` already carries
- * `ANIMA_BOT_SECRET` for the existing `*ViaBot` mutations, but its query
- * calls here don't send it yet — see the report for the client.ts change
- * needed to keep this feature working.
+ * anima-bot/src/fotosintesis/client.ts. The bot's `.env` carries
+ * `ANIMA_BOT_SECRET`, and since 2026-08 its client sends it on EVERY call,
+ * queries included (`client.ts:391-396`) — this docblock used to say "its
+ * query calls don't send it yet", which stopped being true and left anyone
+ * reading it here with the opposite conclusion. `client.ts:371-383` documents
+ * that gap as a past incident.
  */
 export const search = query({
   args: {
