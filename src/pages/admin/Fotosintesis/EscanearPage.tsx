@@ -37,6 +37,7 @@ import {
 } from '../../../lib/convex-safe';
 import { parseTmQr } from '../../../lib/qr/parseTmQr';
 import { useQrScanner } from '../../../hooks/useQrScanner';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 
 const COP = new Intl.NumberFormat('es-CO', {
   style: 'currency',
@@ -101,7 +102,12 @@ export default function EscanearPage() {
 
   const lotItem = useConvexQuery(
     convexApi.lotItems.getByItemId,
-    scannedItemId ? { itemId: scannedItemId } : 'skip',
+    scannedItemId
+      ? {
+          itemId: scannedItemId,
+          sessionToken: readFreshSessionToken() ?? undefined,
+        }
+      : 'skip',
   );
 
   // Casilla v4: el puente físico→digital de W2. El QR ya está impreso en la

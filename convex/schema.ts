@@ -45,6 +45,52 @@ export default defineSchema({
     .index('by_shortCode', ['shortCode'])
     .index('by_status', ['status']),
 
+  // ─── Ambassador curation (favourites + per-product overrides) ────
+  //
+  // Before this table, BOTH lived in localStorage — `useAmbassadorFavorites`
+  // under `tm-ambassador-favorites-{slug}` and `useAmbassadorOverrides` under
+  // `tm:ambassador-overrides:{slug}`. That meant an ambassador's curation
+  // existed only inside the browser that made it: invisible from their phone,
+  // from a second session, and — the point of the feature — to their client.
+  //
+  // ONE table for both, not two. They are the same act (an ambassador saying
+  // something about one of their pieces), keyed the same way, authorised the
+  // same way, and read together on every profile render. Splitting them would
+  // mean two endpoints, two authorisation paths and two caches to keep honest.
+  //
+  // `itemId` is a STRING, matching AmbassadorProductOverride.itemId and the
+  // favourites array, both of which stringify TreasureItem.item.
+  ambassadorCuration: defineTable({
+    /** Profile slug — Asesor.slug, the same one /ambassadors/:slug uses. */
+    slug: v.string(),
+    itemId: v.string(),
+    /** Whether the ambassador pinned this piece to their showcase. */
+    isFavorite: v.boolean(),
+    /** Position within the favourites row; absent for non-favourites. */
+    sortOrder: v.optional(v.float64()),
+    /**
+     * The ambassador offers this piece for resale through TM.
+     *
+     * Separate from `estado`, deliberately. `estado` is TM's books: a piece an
+     * ambassador bought stays VENDIDA internally and accounting depends on
+     * that. Whether it is OFFERED is the owner's own statement, and it is
+     * never inferred from ownership — inferring it would list the ring
+     * somebody bought for their wife on the public catalog.
+     */
+    forResale: v.optional(v.boolean()),
+    customName: v.optional(v.string()),
+    /**
+     * Validated server-side against [base × 1.0, base × 10.0] before it is
+     * written — the client's own check is a courtesy, not the gate.
+     */
+    customPriceCOP: v.optional(v.float64()),
+    updatedAt: v.string(),
+    /** Verified session email of the writer (audit; never returned publicly). */
+    updatedByEmail: v.optional(v.string()),
+  })
+    .index('by_slug_item', ['slug', 'itemId'])
+    .index('by_slug', ['slug']),
+
   // ─── Public "Vitrina" share links ────────────────────────────────
   //
   // A staff-generated public share: one short `token` → a set of product
@@ -122,7 +168,8 @@ export default defineSchema({
     color: v.optional(v.string()),
     calidad: v.optional(v.string()),
     cantidad: v.optional(v.number()),
-    talla: v.optional(v.string()),
+    talla: v.optional(v.string()), // forma de talla / corte (hoja col H "Corte")
+    tallaAnillo: v.optional(v.string()), // aro del anillo (hoja col BF)
     medidas: v.optional(v.string()),
     medidasValores: v.optional(v.string()),
     categoria: v.optional(v.string()),
@@ -204,6 +251,18 @@ export default defineSchema({
     // mostrarEnCatalogo flips true. Powers the Estrenos "newest" sort for
     // Fotosíntesis items — never cleared or reset by a later unpublish.
     publishedAt: v.optional(v.number()),
+    // ── Denormalized lot provenance ──────────────────────────────────────
+    // Copies of the owning lot's `mina` / `tratamiento`, stamped by
+    // withPublishStamp() every time the item is published. These are NOT the
+    // source of truth — the `lots` row is — they exist purely so
+    // `products.publishedCatalog` can read provenance off the item instead of
+    // point-reading `lots`, which used to drag those lot documents into the
+    // public catalog's reactive read set.
+    // See docs/audits/2026-08-12-convex-usage-audit.md §4, Fix 1B.
+    // Safe to denormalize because a lot is frozen once published:
+    // `lots._update` rejects anything not `abierto` (convex/lots.ts:277).
+    mina: v.optional(v.string()),
+    tratamiento: v.optional(v.string()),
     // Captured at lotItems.create, editable via lotItems.updateGemaFields, and
     // synced to the SOT "Inventario" tab (target="fotosintesis") through the
     // extended layout in api/_lib/fotosintesis-inventory-columns.js.
@@ -1188,6 +1247,31 @@ export default defineSchema({
   inventoryStats: defineTable({
     total: v.number(),
     lastPull: v.optional(v.string()),
+  }),
+
+  // ─── Public catalog invalidation sentinel ────────────────────────────
+  //
+  // A SINGLE row holding a monotonic counter. It exists so the customer
+  // catalog can be served from a client-side cache while still invalidating
+  // within seconds of a real change — without any visitor holding a live
+  // subscription to `products.publishedCatalog`.
+  //
+  // WHY: Convex bills Database I/O on documents SCANNED. `publishedCatalog`
+  // was an anonymously-subscribed reactive query that re-scanned every
+  // published 81-field row on each visitor connect AND on every write into its
+  // read set — 759.76 MB in Aug 2026, 63% of the whole team's quota.
+  // See docs/audits/2026-08-12-convex-usage-audit.md §4, Fix 1C.
+  //
+  // Visitors now subscribe to THIS table instead: one ~100-byte document.
+  // When `v` changes they refetch the heavy catalog once, as a one-shot.
+  //
+  // Cheap to maintain and impossible to drift downward: writers only ever
+  // increment. No index needed — fetch the lone row via `.first()`.
+  catalogVersion: defineTable({
+    /** Monotonic counter. Any change means "refetch the catalog". */
+    v: v.number(),
+    /** ms epoch of the last bump — diagnostics only, never used for control flow. */
+    updatedAt: v.number(),
   }),
 
   // ─── Fotosynthia · AI copilot summaries ──────────────────────────

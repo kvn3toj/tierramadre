@@ -105,11 +105,20 @@ export interface PersistToProductArgs {
    */
   size?: CertExportSize;
   filename: string;
-  /** The selected product's lot id (TreasureItem.loteId). */
-  loteId: string;
+  /**
+   * The selected product's lot id (TreasureItem.loteId), used ONLY to choose
+   * the Drive folder. Optional: most of the catalog has no lot (the Sheets
+   * pull mirrors `loteId` but plenty of items never belonged to a Fotosíntesis
+   * lot at all), and a certificate is a property of the ITEM, not of its lot.
+   * Lot-less items file under `SIN_LOTE_FOLDER`.
+   */
+  loteId?: string;
   /** The selected product's itemId (TreasureItem.item, a number → string). */
   itemId: string;
 }
+
+/** Drive folder for certificates of items that belong to no lot. */
+const SIN_LOTE_FOLDER = 'sin-lote';
 
 export interface PersistResult {
   url: string;
@@ -137,6 +146,13 @@ export interface PersistResult {
  * `updateMedia` is an action (dispatched here as a mutation), its required
  * `idToken` was never passed, and it was handed an `editorEmail` its validator
  * does not accept. The editor is now derived server-side from the token.
+ *
+ * HISTORY (2026-08-11): the SAME bug class survived one level up. CertGenerator
+ * refused to save with «Este ítem no es de un lote Fotosíntesis» whenever
+ * `loteId` was empty — but the lot was never load-bearing here: it only names
+ * the Drive folder, while the link itself is written by `updateMediaByItem`,
+ * keyed on `itemId`. A certificate belongs to the ITEM. `loteId` is now
+ * optional and lot-less items file under `sin-lote/`.
  */
 export async function persistCertToProduct(
   args: PersistToProductArgs,
@@ -155,7 +171,11 @@ export async function persistCertToProduct(
   // Upload first so a Convex failure doesn't leave us having claimed success
   // with no hosted file.
   const file = await captureCertFile(node, filename);
-  const url = await uploadFotosintesisCertificado(file, loteId, itemId);
+  const url = await uploadFotosintesisCertificado(
+    file,
+    loteId?.trim() || SIN_LOTE_FOLDER,
+    itemId,
+  );
 
   await runAction(client, convexApi.lotItems.updateMediaByItem, {
     idToken,

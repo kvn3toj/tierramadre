@@ -70,8 +70,15 @@ export interface MobileSearchBarProps {
   setShowFavoritesOnly: (v: boolean) => void;
   favoritesCount: number;
   isProviderMode: boolean;
-  // Results count
+  // Results count, after every filter (search, colour, quality, …)
   filteredCount: number;
+  /**
+   * The origin-filtered total. On desktop the header prints it; on the phone
+   * nothing does, by design. Either way it is the baseline this bar compares
+   * against to decide whether a number is worth showing: equal means the filters
+   * narrowed nothing, and a count that never changes is decoration.
+   */
+  originCount?: number;
   // Recently viewed items (merged)
   recentlyViewedItems?: TreasureItem[];
   onRecentItemClick?: (item: TreasureItem) => void;
@@ -106,6 +113,7 @@ export default function MobileSearchBar({
   favoritesCount,
   isProviderMode,
   filteredCount,
+  originCount,
   recentlyViewedItems = [],
   onRecentItemClick,
   onClearRecent,
@@ -118,6 +126,12 @@ export default function MobileSearchBar({
   const quickAccessScroll = useScrollFade<HTMLDivElement>();
   const { formatCurrency } = useCurrencyFormat();
   const { shouldShowPrices } = usePriceShare();
+
+  // Only worth printing a count here if it differs from the one the header is
+  // already showing. When `originCount` is not supplied we cannot compare, so
+  // fall back to the old always-on behaviour rather than silently hiding data.
+  const showNarrowedCount =
+    originCount === undefined || filteredCount !== originCount;
 
   // Determine which items to show based on active tab
   const quickAccessItems =
@@ -159,13 +173,23 @@ export default function MobileSearchBar({
             : alpha(surfacesDark.background.primary, 0.92),
           backdropFilter: `blur(${blurValues.lg})`,
           WebkitBackdropFilter: `blur(${blurValues.lg})`,
-          mx: -1,
-          px: 1,
+          // Negative margin cancels the shell's 16px edge so the translucent
+          // band reaches the screen edges, then px puts the controls back on the
+          // same 16px line the grid starts at. Was -1/1 when TreasureBrowser
+          // still added 8px of its own; that padding is gone, so this follows.
+          mx: -2,
+          px: 2,
           pt: 0.75,
           pb: 0.5,
         }}
       >
-        {/* Row 1: Search + Filter + Quick Access toggle */}
+        {/* The single row: search · quick access · filters.
+            Origin used to sit here as a chip strip, and it was a mistake: a
+            horizontally-scrolling strip wedged between a text field and two
+            buttons has no axis lock, so dragging it dragged the whole row and
+            fought the vertical scroll of the grid underneath. Origin is a filter
+            like any other and now lives in the filter sheet with the rest; the
+            search field takes the width that buys. */}
         <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center' }}>
           <TextField
             fullWidth
@@ -196,6 +220,10 @@ export default function MobileSearchBar({
               ),
             }}
             sx={{
+              // Shares the row with the chip strip: allowed to shrink, but never
+              // past the point where the placeholder stops being readable.
+              flex: '1 1 auto',
+              minWidth: 104,
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2.5,
                 height: 38,
@@ -357,8 +385,16 @@ export default function MobileSearchBar({
           </IconButton>
         </Box>
 
-        {/* Row 2: Compact info row - filter chips + count (only when not in filter sheet) */}
-        {!filterSheetOpen && (
+        {/* Row 2: filter chips + narrowed count.
+            Renders ONLY when it has something to say. It used to render always,
+            reserving 24px + margin under the search on every screen, and its
+            count repeated the header's: with no filters on, "486 esmeraldas en
+            total" sat two rows under "Catálogo · 486 PIEZAS". Same number,
+            twice, ~100px apart.
+            The count now appears only when filters actually narrowed the set,
+            which is the only time it differs from the header and the only time
+            it tells you anything. */}
+        {!filterSheetOpen && (hasFilters || showNarrowedCount) && (
           <Box
             sx={{
               display: 'flex',
@@ -397,18 +433,22 @@ export default function MobileSearchBar({
               </Box>
             )}
 
-            {/* Tesoros count - always visible, pushed right */}
-            <Typography
-              sx={{
-                color: theme.palette.text.secondary,
-                fontSize: '0.7rem',
-                ml: 'auto',
-                flexShrink: 0,
-                letterSpacing: '0.01em',
-              }}
-            >
-              {filteredCount} {t.treasure.totalEmeralds}
-            </Typography>
+            {/* Narrowed count — only when the filters changed the number the
+                header is already showing. */}
+            {showNarrowedCount && (
+              <Typography
+                sx={{
+                  color: theme.palette.text.secondary,
+                  fontSize: '0.7rem',
+                  ml: 'auto',
+                  flexShrink: 0,
+                  letterSpacing: '0.01em',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {filteredCount} {t.treasure.totalEmeralds}
+              </Typography>
+            )}
           </Box>
         )}
       </Box>
@@ -417,8 +457,9 @@ export default function MobileSearchBar({
       <Collapse in={quickAccessOpen} timeout={200} unmountOnExit>
         <Box
           sx={{
-            mx: -1,
-            px: 1,
+            // Matches the sticky band above — same bleed, same content line.
+            mx: -2,
+            px: 2,
             pb: 1,
             bgcolor: isLight
               ? alpha(emeraldCore.lightest, 0.2)

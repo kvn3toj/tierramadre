@@ -60,6 +60,29 @@ export const STORAGE_KEYS = {
   DRIVE_IMAGES_CACHE: 'tierramadre-drive-images-cache-v2',
   NEWEST_PRODUCTS_CACHE: 'tierramadre-newest-products-cache-v5',
   TREASURE_SHEETS_CACHE: 'tierramadre-treasure-sheets-cache',
+  // Fix 1C (2026-08-12): the published Fotosíntesis catalog, cached client-side
+  // so visitors stop holding a live subscription to `products.publishedCatalog`
+  // — see src/hooks/useFotosintesisCatalog.ts and
+  // docs/audits/2026-08-12-convex-usage-audit.md §4.
+  //
+  // NOT grant-scoped, unlike its neighbours here: `publishedCatalog` is the
+  // anonymous public query and returns the same rows to everyone, so there is
+  // no privilege boundary to scope it by. It is still purged by
+  // clearTreasureCaches() on sign-out, because it holds the same
+  // price/asesor/ubicación payload the rest of this family is purged for — and
+  // if that projection is ever tightened, a surviving cache would keep serving
+  // the older, wider shape.
+  PUBLISHED_CATALOG_CACHE: 'tm.catalog.published.v1',
+  // Grant-scoped base for useAsesorCollection's /c/:folder cache (F6,
+  // 2026-08 fix round). Final key: `${ASESOR_COLLECTION_CACHE}:<grant>:<folder>`.
+  ASESOR_COLLECTION_CACHE: 'collection_v2',
+  // Grant-scoped base for useAsesores' roster cache (discovered alongside
+  // F6, same fix round — same leak, different hook: get-asesores.ts now
+  // withholds email/vaultCode from anon, so a staff-cached full roster must
+  // not survive logout to paint for the next anonymous visitor). Final key:
+  // `${ASESORES_CACHE}:<grant>` / `${ASESORES_CACHE_TS}:<grant>`.
+  ASESORES_CACHE: 'tm-asesores',
+  ASESORES_CACHE_TS: 'tm-asesores-ts',
   NEW_PRODUCT_IMAGES: 'tierramadre-new-product-images',
 
   // =============================================================================

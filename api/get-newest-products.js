@@ -19,81 +19,121 @@ import {
   extractProductName,
   getProxyUrl,
 } from './_lib/index.js';
+import { resolveGrant } from './_lib/catalogGrant.js';
+import { lookupVitrina } from './_lib/vitrinaLookup.js';
 
-export default withApiHandler(async (req, res, { drive, sharedDriveId }) => {
-  // Get limit from query params (default 10, max 50)
-  const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+export default withApiHandler(
+  async (req, res, { drive, sharedDriveId }) => {
+    // Resolved (not applied to the payload): `products` here is a
+    // Drive-folder-scan shape (itemNumber, folderName, productName, imageId,
+    // imageName, imageCreatedTime, proxyUrl) — it shares no field names with
+    // TreasureItem's PUBLIC_KEYS/WITHHELD_KEYS, and none of price, ubicación,
+    // asesor, estado, cantidad or sheetRow are ever present (the frontend
+    // merges this with the already-projected /api/get-treasure-sheets payload
+    // client-side — see src/utils/newestProductsMerge.ts). Running this through
+    // projectForGrant would not remove anything sensitive; it would corrupt
+    // the payload (every PUBLIC_KEYS lookup misses this shape, producing
+    // all-undefined rows). Resolved here only so this endpoint is
+    // classified/audited by tests/catalogEndpointsProjection.test.ts, same as
+    // every other catalog-reading endpoint.
+    const grant = await resolveGrant(req, { lookupVitrina });
+    void grant;
 
-  console.log('Fetching newest products by image upload date...');
+    // Get limit from query params (default 10, max 50)
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
 
-  const productsFolderId = await getProductsFolderId(drive, sharedDriveId);
-  console.log('Products folder ID:', productsFolderId);
+    console.log('Fetching newest products by image upload date...');
 
-  const folders = await listProductFolders(drive, productsFolderId, 'createdTime desc');
-  console.log(`Found ${folders.length} product folders`);
+    const productsFolderId = await getProductsFolderId(drive, sharedDriveId);
+    console.log('Products folder ID:', productsFolderId);
 
-  // Fetch first image from each folder with its creation date
-  const productsWithImages = [];
+    const folders = await listProductFolders(
+      drive,
+      productsFolderId,
+      'createdTime desc',
+    );
+    console.log(`Found ${folders.length} product folders`);
 
-  // Fetch more folders to account for deduplication
-  for (let i = 0; i < folders.length && productsWithImages.length < limit * 5; i += BATCH_SIZE) {
-    const batch = folders.slice(i, i + BATCH_SIZE);
+    // Fetch first image from each folder with its creation date
+    const productsWithImages = [];
 
-    const results = await Promise.all(
-      batch.map(async (folder) => {
-        const itemNumber = extractItemNumber(folder.name);
-        if (!itemNumber) return null;
+    // Fetch more folders to account for deduplication
+    for (
+      let i = 0;
+      i < folders.length && productsWithImages.length < limit * 5;
+      i += BATCH_SIZE
+    ) {
+      const batch = folders.slice(i, i + BATCH_SIZE);
 
-        try {
-          const image = await getFirstImageWithDate(drive, folder.id);
-          if (image) {
-            return {
-              itemNumber,
-              folderName: folder.name,
-              productName: extractProductName(folder.name),
-              imageId: image.id,
-              imageName: image.name,
-              imageCreatedTime: image.createdTime,
-              proxyUrl: getProxyUrl(image.id),
-            };
+      const results = await Promise.all(
+        batch.map(async (folder) => {
+          const itemNumber = extractItemNumber(folder.name);
+          if (!itemNumber) return null;
+
+          try {
+            const image = await getFirstImageWithDate(drive, folder.id);
+            if (image) {
+              return {
+                itemNumber,
+                folderName: folder.name,
+                productName: extractProductName(folder.name),
+                imageId: image.id,
+                imageName: image.name,
+                imageCreatedTime: image.createdTime,
+                proxyUrl: getProxyUrl(image.id),
+              };
+            }
+          } catch (error) {
+            console.warn(
+              `Error fetching image for ${folder.name}:`,
+              error.message,
+            );
           }
-        } catch (error) {
-          console.warn(`Error fetching image for ${folder.name}:`, error.message);
+          return null;
+        }),
+      );
+
+      results.forEach((result) => {
+        if (result) {
+          productsWithImages.push(result);
         }
-        return null;
-      })
+      });
+    }
+
+    // Sort by image creation date (newest first)
+    productsWithImages.sort(
+      (a, b) =>
+        new Date(b.imageCreatedTime).getTime() -
+        new Date(a.imageCreatedTime).getTime(),
     );
 
-    results.forEach((result) => {
-      if (result) {
-        productsWithImages.push(result);
+    // Deduplicate by product name - keep only the newest per name
+    const seenNames = new Set();
+    const uniqueProducts = productsWithImages.filter((product) => {
+      const normalizedName = product.productName.toLowerCase().trim();
+      if (seenNames.has(normalizedName)) {
+        return false;
       }
+      seenNames.add(normalizedName);
+      return true;
     });
-  }
 
-  // Sort by image creation date (newest first)
-  productsWithImages.sort((a, b) =>
-    new Date(b.imageCreatedTime).getTime() - new Date(a.imageCreatedTime).getTime()
-  );
+    const newestProducts = uniqueProducts.slice(0, limit);
 
-  // Deduplicate by product name - keep only the newest per name
-  const seenNames = new Set();
-  const uniqueProducts = productsWithImages.filter((product) => {
-    const normalizedName = product.productName.toLowerCase().trim();
-    if (seenNames.has(normalizedName)) {
-      return false;
-    }
-    seenNames.add(normalizedName);
-    return true;
-  });
+    console.log(`Returning ${newestProducts.length} newest products`);
 
-  const newestProducts = uniqueProducts.slice(0, limit);
-
-  console.log(`Returning ${newestProducts.length} newest products`);
-
-  return sendSuccess(res, {
-    products: newestProducts,
-    count: newestProducts.length,
-    lastUpdated: new Date().toISOString(),
-  });
-}, { methods: ['GET', 'OPTIONS'], cache: CACHE.MEDIUM, provideSheets: true, provideDrive: true, requireDriveId: true, errorPrefix: 'GetNewestProducts' });
+    return sendSuccess(res, {
+      products: newestProducts,
+      count: newestProducts.length,
+      lastUpdated: new Date().toISOString(),
+    });
+  },
+  {
+    methods: ['GET', 'OPTIONS'],
+    cache: CACHE.MEDIUM,
+    provideSheets: true,
+    provideDrive: true,
+    requireDriveId: true,
+    errorPrefix: 'GetNewestProducts',
+  },
+);

@@ -17,7 +17,9 @@
 export function requireBotSecret(botSecret: string): void {
   const expected = process.env.ANIMA_BOT_SECRET;
   if (!expected) {
-    throw new Error('No autorizado: ANIMA_BOT_SECRET no configurado en Convex.');
+    throw new Error(
+      'No autorizado: ANIMA_BOT_SECRET no configurado en Convex.',
+    );
   }
   // Length-then-constant-time-ish compare. Convex has no `crypto.timingSafeEqual`
   // in scope; a mismatched length short-circuits, equal lengths compare fully.
@@ -30,5 +32,26 @@ export function requireBotSecret(botSecret: string): void {
   }
   if (diff !== 0) {
     throw new Error('No autorizado: secreto del bot inválido.');
+  }
+}
+
+/**
+ * Non-throwing counterpart to `requireBotSecret`, for `query`s that accept
+ * EITHER a staff session OR the bot secret (see
+ * `_lib/requireStaffSession.ts`'s `isStaffOrBotSession`). `requireBotSecret`
+ * throws by design for the `*ViaBot` mutations/actions — there, a bad or
+ * missing secret should hard-fail the whole call. A query instead needs a
+ * plain boolean it can OR against the staff-session check without a
+ * try/catch at every call site, and it must never throw (see
+ * requireStaffSession.ts's contract: no credential, bad session, and bad
+ * secret alike resolve to "not authorized", never an exception).
+ */
+export function isBotSecret(botSecret?: string): boolean {
+  if (!botSecret) return false;
+  try {
+    requireBotSecret(botSecret);
+    return true;
+  } catch {
+    return false;
   }
 }

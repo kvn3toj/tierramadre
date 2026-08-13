@@ -16,7 +16,12 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useReducedMotion } from '../../../hooks/useReducedMotion';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useAsesores } from '../../../hooks/useAsesores';
-import { getAsesorProducts } from '../../../utils/asesorProductOwnership';
+import {
+  getAsesorProducts,
+  resolveAsesorProducts,
+} from '../../../utils/asesorProductOwnership';
+import { useAmbassadorProducts } from '../../../hooks/useAmbassadorProducts';
+import { useResaleOffers } from '../../../hooks/useResaleOffers';
 import { useTreasure } from '../../../hooks/useTreasure';
 import {
   useCotizacionHistory,
@@ -68,9 +73,14 @@ const COLLECTION_FOLDERS: Record<string, string> = {
 const COLLECTION_SLUGS: Record<string, string> = {
   'andres-mauricio-escobar-ramirez': 'ceo-tierra-madre',
 };
+/**
+ * `null` value, not 0. A non-staff visitor never receives `precioCOP`, and
+ * rendering "$0" told them this ambassador's collection was worthless. An
+ * absent number is absent — the header hides the metric instead.
+ */
 const EMPTY_STATS: ProfileStats = {
-  totalValue: 0,
-  avgPrice: 0,
+  totalValue: null,
+  avgPrice: null,
   looseCount: 0,
   jewelryCount: 0,
   disponibleCount: 0,
@@ -120,6 +130,20 @@ export default function AsesorProfilePage() {
   const cotizacionHistory = useCotizacionHistory();
   const { notify, confirmAction } = useNotification();
 
+  // Find the asesor by slug
+  const asesor = useMemo(() => {
+    if (!slug || !asesores.length) return null;
+    return asesores.find((a) => a.slug === slug) || null;
+  }, [slug, asesores]);
+
+  // Check if current user owns this profile
+  const isProfileOwner = useMemo(() => {
+    if (!googleUser?.email || !asesor?.email) return false;
+    const userEmail = googleUser.email.toLowerCase().trim();
+    const asesorEmail = asesor.email.toLowerCase().trim();
+    return userEmail === asesorEmail;
+  }, [googleUser, asesor]);
+
   // Ambassador photo upload
   const {
     localPhotoUrl,
@@ -138,10 +162,13 @@ export default function AsesorProfilePage() {
     addFavorite,
     removeFavorite,
     reorderFavorites,
-  } = useAmbassadorFavorites(slug);
+  } = useAmbassadorFavorites(slug, isProfileOwner);
 
   // Ambassador per-product overrides (custom name / price) — T4 MVP
-  const { overrides: ambassadorOverrides } = useAmbassadorOverrides(slug);
+  const { overrides: ambassadorOverrides } = useAmbassadorOverrides(
+    slug,
+    isProfileOwner,
+  );
 
   // Vanity handle powering <handle>.tierramadre.app. Loaded lazily and only
   // for the profile owner, since it is only ever shown in the edit form.
@@ -159,20 +186,6 @@ export default function AsesorProfilePage() {
     }
     prevUploadingRef.current = isUploadingPhoto;
   }, [isUploadingPhoto, photoUploadError, localPhotoUrl]);
-
-  // Find the asesor by slug
-  const asesor = useMemo(() => {
-    if (!slug || !asesores.length) return null;
-    return asesores.find((a) => a.slug === slug) || null;
-  }, [slug, asesores]);
-
-  // Check if current user owns this profile
-  const isProfileOwner = useMemo(() => {
-    if (!googleUser?.email || !asesor?.email) return false;
-    const userEmail = googleUser.email.toLowerCase().trim();
-    const asesorEmail = asesor.email.toLowerCase().trim();
-    return userEmail === asesorEmail;
-  }, [googleUser, asesor]);
 
   // Exclusive collection — visible to all visitors, not just owner
   const collectionFolder = asesor
@@ -215,11 +228,43 @@ export default function AsesorProfilePage() {
     };
   }, [isProfileOwner, asesor?.email]);
 
-  // Get products for this asesor
-  const allProducts = useMemo(() => {
+  // Ownership resolved locally. Works only for staff: `asesor` and
+  // `asesorActual` are WITHHELD_KEYS, so for everyone else this is [].
+  const localProducts = useMemo(() => {
     if (!asesor || !treasure) return [];
     return getAsesorProducts(treasure, asesor.name);
   }, [asesor, treasure]);
+
+  // …so everyone else asks the server which item numbers are this
+  // ambassador's. Skipped entirely when the local pass already worked, both
+  // to save the round trip and because the local objects are richer (prices,
+  // transfer state) than anything this endpoint is allowed to return.
+  const { data: serverProducts } = useAmbassadorProducts(
+    slug,
+    localProducts.length > 0,
+  );
+
+  // Piezas que este embajador compró y volvió a ofrecer. Cambian a quién
+  // habla el CTA de la ficha: nosotros corredamos, no él vende directo.
+  const { resaleIndex } = useResaleOffers();
+
+  // Get products for this asesor, with the ambassador's overrides already
+  // applied.
+  //
+  // Applied HERE, at the source, rather than per-surface. Until now the only
+  // call was on the favourites row, so an ambassador who renamed a piece or
+  // set a price saw it on that one strip and nowhere else — not in the
+  // category list, not on the piece's own screen, and not in the header's
+  // "Valor". Everything downstream derives from this array, so one
+  // application covers all four.
+  const allProducts = useMemo(
+    () =>
+      applyAmbassadorOverrides(
+        resolveAsesorProducts(localProducts, treasure, serverProducts),
+        ambassadorOverrides,
+      ),
+    [localProducts, serverProducts, treasure, ambassadorOverrides],
+  );
 
   // Categorize products for museum grid
   const categories = useMemo(
@@ -237,8 +282,10 @@ export default function AsesorProfilePage() {
         : (favoriteIds
             .map((id) => allProducts.find((p) => String(p.item) === id))
             .filter(Boolean) as TreasureItem[]);
-    return applyAmbassadorOverrides(baseList, ambassadorOverrides);
-  }, [favoriteIds, allProducts, ambassadorOverrides]);
+    // No applyAmbassadorOverrides here any more: allProducts already carries
+    // them, and applying twice only hid that the other surfaces did not.
+    return baseList;
+  }, [favoriteIds, allProducts]);
 
   // Calculate stats
   const stats: ProfileStats = useMemo(() => {
@@ -246,13 +293,18 @@ export default function AsesorProfilePage() {
     const disponible = allProducts.filter(
       (p) => p.effectiveEstado === 'DISPONIBLE',
     );
-    const totalValue = disponible.reduce(
-      (sum, p) => sum + (p.precioCOP || 0),
-      0,
+    // Only staff receive `precioCOP`. For everyone else there is no total to
+    // report — which is different from a total of zero, and the header treats
+    // the two differently.
+    const priced = disponible.filter(
+      (p) => typeof p.precioCOP === 'number' && p.precioCOP > 0,
     );
+    const totalValue = priced.length
+      ? priced.reduce((sum, p) => sum + (p.precioCOP || 0), 0)
+      : null;
     return {
       totalValue,
-      avgPrice: disponible.length ? totalValue / disponible.length : 0,
+      avgPrice: totalValue !== null ? totalValue / priced.length : null,
       looseCount: allProducts.filter((p) => !p.isJewelry).length,
       jewelryCount: allProducts.filter((p) => p.isJewelry).length,
       disponibleCount: disponible.length,
@@ -304,7 +356,14 @@ export default function AsesorProfilePage() {
   const handleShare = useCallback(async () => {
     if (!asesor) return;
     const url = window.location.href;
-    const text = `Mira el catalogo de ${asesor.name} en Tierra Madre - ${stats.disponibleCount} esmeraldas disponibles`;
+    // Never quote a count we do not have. This line used to read "0
+    // esmeraldas disponibles" for every non-staff sharer, because `stats`
+    // was short-circuited to EMPTY_STATS — a lie that left the app and went
+    // out over WhatsApp.
+    const text =
+      stats.disponibleCount > 0
+        ? `Mira el catalogo de ${asesor.name} en Tierra Madre - ${stats.disponibleCount} esmeraldas disponibles`
+        : `Mira el catalogo de ${asesor.name} en Tierra Madre`;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -779,6 +838,7 @@ export default function AsesorProfilePage() {
             item={selectedProduct}
             onBack={handleProductDetailBack}
             asesor={asesor}
+            resale={resaleIndex.get(selectedProduct.item)}
           />
         )}
 

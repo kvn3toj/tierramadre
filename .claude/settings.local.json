@@ -126,7 +126,8 @@
       "Bash(sed -i.bak \"s|from './lib/heic.mjs'|from './lib/image.mjs'|\" scripts/jewelry-visualizer.mjs)",
       "Bash(node scripts/visualizer-mirror-fotos.mjs --items 233,311)",
       "Bash(python3 -)",
-      "Bash(node --input-type=module -e ' *)"
+      "Bash(node --input-type=module -e ' *)",
+      "mcp__obsidian__vault_read"
     ],
     "deny": [],
     "ask": []

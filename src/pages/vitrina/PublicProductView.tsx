@@ -16,6 +16,8 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import type { ResaleOffer } from "../../utils/productOffer";
+import ResaleBadge from "../../components/treasure/ResaleBadge";
 import {
   Box,
   Button,
@@ -66,6 +68,13 @@ interface PublicProductViewProps {
   contactId?: string;
   /** When provided, shows a back button (inside a multi-product vitrina). */
   onBack?: () => void;
+  /**
+   * Present when the piece belongs to an ambassador who has offered it for
+   * resale. Changes two things the client must not get wrong: the piece is
+   * labelled as theirs, and the CTA is Tierra Mädre brokering — never the
+   * ambassador directly.
+   */
+  resale?: ResaleOffer;
 }
 
 export function PublicProductView({
@@ -74,6 +83,7 @@ export function PublicProductView({
   senderPhone,
   contactId,
   onBack,
+  resale,
 }: PublicProductViewProps) {
   const { mode } = useThemeMode();
   const qe = getQuietEmerald(mode);
@@ -194,7 +204,11 @@ export function PublicProductView({
 
     const shareUrl = typeof window !== "undefined" ? window.location.href : "";
     const priceLine = priceLabel ? ` — ${priceLabel}` : "";
-    const text = `Hola 💚 Me interesa esta pieza de Tierra Mädre:\n\n${displayName}${priceLine}\n\n${shareUrl}`;
+    // En reventa el mensaje nombra al dueño, para que quien conteste sepa de
+    // entrada que está corredando y con quién.
+    const text = resale
+      ? `Hola 💚 Me interesa esta pieza de la colección de ${resale.asesorName}:\n\n${displayName}${priceLine}\n\n${shareUrl}`
+      : `Hola 💚 Me interesa esta pieza de Tierra Mädre:\n\n${displayName}${priceLine}\n\n${shareUrl}`;
     window.open(
       `https://wa.me/${senderPhone}?text=${encodeURIComponent(text)}`,
       "_blank",
@@ -242,6 +256,13 @@ export function PublicProductView({
       >
         {displayName}
       </Typography>
+      {/* Procedencia antes que la ficha técnica: el cliente tiene que saber
+          de quién es la pieza antes de enamorarse del peso y el color. */}
+      {resale && (
+        <Box sx={{ mt: "10px" }}>
+          <ResaleBadge resale={resale} />
+        </Box>
+      )}
       {specLine && (
         <Typography
           sx={{

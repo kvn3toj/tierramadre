@@ -21,8 +21,13 @@ import {
 import { canReopenLot } from './_lib/lotMath';
 import { omitInternosV4 } from './_lib/saleSafe';
 import { withPublishStamp } from './_lib/publishState';
+import { bumpCatalogVersion } from './_lib/catalogVersion';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
+import {
+  isStaffSession,
+  isStaffOrBotSession,
+} from './_lib/requireStaffSession';
 
 // Free text (canonical: B | C | S | M). The capture UI sanitizes a custom
 // write-in to an uppercase, dash-free token before it reaches here, so it stays
@@ -57,6 +62,13 @@ const lotPatchValidator = v.object({
   notas: v.optional(v.string()),
 });
 
+// `list` and `peekNextLoteId` below are also read by the anima-bot Telegram
+// bridge (listOpenLots / peekNextLoteId in
+// anima-bot/src/fotosintesis/client.ts), which cannot obtain a staff session
+// — hence the `botSecret` arg and `isStaffOrBotSession` gate instead of the
+// staff-only `isStaffSession` used everywhere else in this file. See
+// `_lib/requireStaffSession.ts` for the full rationale and the exact list of
+// which queries in this lockdown accept a bot secret (this is one of only 7).
 export const list = query({
   args: {
     estado: v.optional(
@@ -67,8 +79,11 @@ export const list = query({
         v.literal('cancelado'),
       ),
     ),
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
   },
-  handler: async (ctx, { estado }) => {
+  handler: async (ctx, { estado, sessionToken, botSecret }) => {
+    if (!(await isStaffOrBotSession({ sessionToken, botSecret }))) return [];
     const rows = estado
       ? await ctx.db
           .query('lots')
@@ -86,16 +101,18 @@ export const list = query({
 });
 
 export const get = query({
-  args: { id: v.id('lots') },
-  handler: async (ctx, { id }) => {
+  args: { id: v.id('lots'), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { id, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
     const row = await ctx.db.get(id);
     return row ? omitInternosV4(row) : null;
   },
 });
 
 export const getByLoteId = query({
-  args: { loteId: v.string() },
-  handler: async (ctx, { loteId }) => {
+  args: { loteId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { loteId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return null;
     const row = await ctx.db
       .query('lots')
       .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
@@ -107,10 +124,19 @@ export const getByLoteId = query({
 /**
  * Read-only peek at the next lot ID for the chosen sede. Lets the form
  * preview "B-008" / "C-001" before submit. Does NOT consume the sequence.
+ * Also read by anima-bot (see the `list` comment above) — accepts a bot
+ * secret too.
  */
 export const peekNextLoteId = query({
-  args: { sede: sedeValidator },
-  handler: async (ctx, { sede }) => {
+  args: {
+    sede: sedeValidator,
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
+  },
+  handler: async (ctx, { sede, sessionToken, botSecret }) => {
+    if (!(await isStaffOrBotSession({ sessionToken, botSecret }))) {
+      return { nextValue: 0, preview: '' };
+    }
     const seq = await ctx.db
       .query('sequences')
       .withIndex('by_name', (q) => q.eq('name', lotSequenceName(sede)))
@@ -596,10 +622,21 @@ export const _publish = internalMutation({
         .withIndex('by_itemId', (q) => q.eq('itemId', item.itemId))
         .first();
       if (product && product.mostrarEnCatalogo !== true) {
-        await ctx.db.patch(product._id, withPublishStamp(product, true));
+        // Provenance comes from `lot`, already in scope — no extra read.
+        await ctx.db.patch(
+          product._id,
+          withPublishStamp(product, true, {
+            mina: lot.mina,
+            tratamiento: lot.tratamiento,
+          }),
+        );
         flipped++;
       }
     }
+
+    // Fix 1C — publishing a lote adds items to the public catalog. One bump for
+    // the whole lote, not one per item.
+    if (flipped > 0) await bumpCatalogVersion(ctx);
 
     await ctx.db.patch(id, {
       estado: 'publicado' as const,
@@ -689,6 +726,10 @@ export const _reopen = internalMutation({
         }
       }
     }
+    // Fix 1C — an UNpublish has to invalidate too, or the withdrawn pieces
+    // linger in every visitor's cached catalog until the TTL expires. One bump
+    // for the whole lote.
+    if (demotedFromCatalog > 0) await bumpCatalogVersion(ctx);
 
     const trimmedReason = reason?.trim();
     const reopenNote = `Reabierto${editorEmail ? ` por ${editorEmail}` : ''}${

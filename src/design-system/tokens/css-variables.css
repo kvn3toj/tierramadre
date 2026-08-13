@@ -18,7 +18,7 @@
   --copilot-rail-width: 0px;
 
   /* === EMERALD BRAND === */
-  --emerald-500: #00ae7a;
+  --emerald-500: #00c992;
   --emerald-400: #33ffbf;
   --emerald-600: #008c62;
   --emerald-50: #e6fff7;
@@ -96,7 +96,7 @@
   /* Brand (qe: accent · accent-strong · accent-pure) */
   --brand-primary: #00785c;
   --brand-primary-hover: #006f52;
-  --brand-accent: #00af84;
+  --brand-accent: #00c992;
 
   /* Borders (qe: border · hairline) */
   --border-default: #e4e7e5;
@@ -172,7 +172,7 @@
 
   /* Brand (qe: accent · accent-strong · accent-pure) */
   --brand-primary: #34c99b;
-  --brand-primary-hover: #00af84;
+  --brand-primary-hover: #00c992;
   --brand-accent: #34c99b;
 
   /* Borders (qe: border · hairline) */
@@ -182,7 +182,7 @@
   --border-focus: #34c99b;
 
   /* Interactive States */
-  --button-primary-bg: #00af84;
+  --button-primary-bg: #00c992;
   --button-primary-text: #06140e;
   --button-secondary-bg: #1b1f1f;
   --button-secondary-text: #34c99b;

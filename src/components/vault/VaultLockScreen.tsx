@@ -7,7 +7,7 @@ import { vaultCinema, vaultDurations, vaultEasing } from '../../design-system';
 import { VAULT_CONFIG, VAULT_STORAGE, VAULT_SYMBOLS } from '../../config/vault';
 import { useVaultUnlock } from '../../hooks/useVaultUnlock';
 import { useVaultReducedMotion } from '../../hooks/useVaultReducedMotion';
-import type { UnlockMethod, VaultCombination } from '../../types/vault';
+import type { UnlockMethod } from '../../types/vault';
 import { VaultDial, type VaultDialItem } from './VaultDial';
 import { VaultDialLabel } from './VaultDialLabel';
 import { VaultDoorFrame } from './cinematic/VaultDoorFrame';
@@ -20,12 +20,11 @@ import { useVaultAudio } from './audio/useVaultAudio';
 
 export interface VaultLockScreenProps {
   onUnlock: (meta: UnlockMethod) => void;
-  ambassadorCodes?: Map<string, VaultCombination>;
 }
 
 const { color, alpha, typography } = vaultCinema;
 
-export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenProps) {
+export function VaultLockScreen({ onUnlock }: VaultLockScreenProps) {
   const {
     outerIdx,
     innerIdx,
@@ -35,7 +34,7 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
     attemptsLeft,
     cooldownSecondsLeft,
     tryUnlock,
-  } = useVaultUnlock({ ambassadorCodes });
+  } = useVaultUnlock();
 
   const { reducedMotion, idleAnimationsAllowed } = useVaultReducedMotion();
   // For idle loops we want to pause when EITHER reduced-motion is on OR the tab is hidden.
@@ -100,17 +99,27 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
   }, []);
 
   const outerItems: VaultDialItem[] = useMemo(
-    () => VAULT_SYMBOLS.map((s) => ({ id: s.id, label: s.name, color: s.color })),
+    () =>
+      VAULT_SYMBOLS.map((s) => ({ id: s.id, label: s.name, color: s.color })),
     [],
   );
   const innerItems: VaultDialItem[] = useMemo(
-    () => Array.from({ length: VAULT_CONFIG.INNER_STEPS }, (_, i) => ({ id: String(i), label: i })),
+    () =>
+      Array.from({ length: VAULT_CONFIG.INNER_STEPS }, (_, i) => ({
+        id: String(i),
+        label: i,
+      })),
     [],
   );
 
   // Render labels: vertical Playfair, opacity from focusMode
   const renderOuterLabel = useCallback(
-    (item: VaultDialItem, i: number, ringRotate: MotionValue<number>, opacity: number) => (
+    (
+      item: VaultDialItem,
+      i: number,
+      ringRotate: MotionValue<number>,
+      opacity: number,
+    ) => (
       <VaultDialLabel
         key={item.id}
         index={i}
@@ -135,9 +144,7 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
                 : `rgba(201, 169, 97, ${alpha.rimMedium})`,
             textAlign: 'center',
             textShadow:
-              opacity === 1
-                ? '0 0 8px rgba(0, 174, 122, 0.5)'
-                : 'none',
+              opacity === 1 ? '0 0 8px rgba(0, 174, 122, 0.5)' : 'none',
             whiteSpace: 'nowrap',
           }}
         >
@@ -149,7 +156,12 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
   );
 
   const renderInnerLabel = useCallback(
-    (item: VaultDialItem, i: number, ringRotate: MotionValue<number>, opacity: number) => (
+    (
+      item: VaultDialItem,
+      i: number,
+      ringRotate: MotionValue<number>,
+      opacity: number,
+    ) => (
       <VaultDialLabel
         key={item.id}
         index={i}
@@ -179,13 +191,13 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
     [],
   );
 
-  const isInteractive =
-    state === 'idle' && sequence.phase === 'idle';
+  const isInteractive = state === 'idle' && sequence.phase === 'idle';
   const isCooldown = state === 'cooldown';
 
   const onConfirmClick = useCallback(() => {
     const now = Date.now();
-    if (now - lastUnlockAttempt.current < vaultDurations.unlockDebounceMs) return;
+    if (now - lastUnlockAttempt.current < vaultDurations.unlockDebounceMs)
+      return;
     lastUnlockAttempt.current = now;
     if (!isInteractive) return;
     (document.activeElement as HTMLElement | null)?.blur?.();
@@ -200,17 +212,27 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
   }, [tryUnlock, isInteractive]);
 
   const isFailure = sequence.phase === 'failure';
-  const isUnlocking = ['anticipate', 'confirm', 'release', 'swing', 'reveal', 'dolly'].includes(
+  const isUnlocking = [
+    'anticipate',
+    'confirm',
+    'release',
+    'swing',
+    'reveal',
+    'dolly',
+  ].includes(sequence.phase);
+  const isCenterHighlighted = ['confirm', 'release'].includes(sequence.phase);
+  const isCardinalActive = ['release', 'swing', 'reveal', 'dolly'].includes(
     sequence.phase,
   );
-  const isCenterHighlighted = ['confirm', 'release'].includes(sequence.phase);
-  const isCardinalActive = ['release', 'swing', 'reveal', 'dolly'].includes(sequence.phase);
   const isInteriorActive = ['reveal', 'dolly'].includes(sequence.phase);
   const isPointerPulsing = sequence.phase === 'confirm';
 
   return (
     <motion.div
-      animate={{ opacity: containerOpacity, scale: containerOpacity === 0 ? 1.06 : 1 }}
+      animate={{
+        opacity: containerOpacity,
+        scale: containerOpacity === 0 ? 1.06 : 1,
+      }}
       transition={{
         duration: vaultDurations.dollyMs / 1000,
         ease: vaultEasing.silk,
@@ -228,7 +250,10 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
     >
       <Box
         // inert is a valid HTML attribute (React 18 supports it via spread); MUI Box types lag behind.
-        {...({ inert: isUnlocking ? '' : undefined } as Record<string, unknown>)}
+        {...({ inert: isUnlocking ? '' : undefined } as Record<
+          string,
+          unknown
+        >)}
         aria-hidden={isUnlocking ? true : undefined}
         sx={{
           position: 'relative',
@@ -285,7 +310,11 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
         >
           <VaultDoorFrame
             ariaLabel={`Combinación: ${outerSymbol.name}, ${innerIdx}`}
-            makerMark={isFailure ? `${attemptsLeft} intentos restantes` : 'Tierra Madre · Esmeraldas con ADN de Paz'}
+            makerMark={
+              isFailure
+                ? `${attemptsLeft} intentos restantes`
+                : 'Tierra Madre · Esmeraldas con ADN de Paz'
+            }
           >
             {/* Dials */}
             <Box
@@ -334,10 +363,16 @@ export function VaultLockScreen({ onUnlock, ambassadorCodes }: VaultLockScreenPr
             />
 
             {/* Cardinal release */}
-            <VaultCardinalRelease active={isCardinalActive} reducedMotion={reducedMotion} />
+            <VaultCardinalRelease
+              active={isCardinalActive}
+              reducedMotion={reducedMotion}
+            />
 
             {/* Interior reveal */}
-            <VaultInterior active={isInteriorActive} reducedMotion={reducedMotion} />
+            <VaultInterior
+              active={isInteriorActive}
+              reducedMotion={reducedMotion}
+            />
 
             {/* Top pointer + gem */}
             <VaultGemPointer

@@ -33,6 +33,7 @@ import { useRecentClients } from '../../hooks/useRecentClients';
 import { useCotizacionHistory } from '../../hooks/useCotizacionHistory';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
 import { useCreatorInvitations } from '../../hooks/useCreatorInvitations';
+import { readFreshSessionToken } from '../../utils/sessionToken';
 import { useIsAdmin } from '../../hooks/usePermissions';
 import { useIsEmbajador } from '../../hooks/useAuth';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -576,9 +577,23 @@ export default function CotizacionGenerator() {
         !isInvitedGuest(clientName) &&
         invitedGuests.length > 0
       ) {
+        // 2026-08-09 PII lockdown: /api/cotizacion-reports now requires a
+        // `tms1` session on BOTH methods — the POST writes customer
+        // name/phone/email into the sheet whose GET was leaking them. Nothing
+        // is lost here: this branch only runs when `invitedGuests.length > 0`,
+        // and that list comes from useCreatorInvitations →
+        // `?action=list-by-creator`, which itself has required a session since
+        // the 2026-08-06 round. So a session token always exists by the time
+        // we get here.
+        const sessionToken = readFreshSessionToken();
         fetch('/api/cotizacion-reports', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(sessionToken
+              ? { Authorization: `Bearer ${sessionToken}` }
+              : {}),
+          },
           body: JSON.stringify({
             asesorEmail: googleUser?.email || '',
             asesorName,

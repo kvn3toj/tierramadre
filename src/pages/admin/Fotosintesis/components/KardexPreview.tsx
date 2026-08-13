@@ -1,9 +1,9 @@
-import { Box } from "@mui/material";
+import { Box } from '@mui/material';
 import {
   fontFamilies,
   emeraldCore,
   goldAccent,
-} from "../../../../design-system";
+} from '../../../../design-system';
 
 // ─── Loose props ────────────────────────────────────────────────────────────
 // We intentionally keep these shapes lightweight — the Kardex consumes data
@@ -74,39 +74,39 @@ interface KardexPreviewProps {
   descuentoCop?: number;
 }
 
-const PAPER_BG = "#FBF8F1";
-const PAPER_INK = "#1A1714";
-const PAPER_INK_SOFT = "#5A4F45";
-const PAPER_INK_MUTE = "#8C7F72";
-const PAPER_RULE = "rgba(26, 23, 20, 0.12)";
-const PAPER_RULE_SOFT = "rgba(26, 23, 20, 0.06)";
+const PAPER_BG = '#FBF8F1';
+const PAPER_INK = '#1A1714';
+const PAPER_INK_SOFT = '#5A4F45';
+const PAPER_INK_MUTE = '#8C7F72';
+const PAPER_RULE = 'rgba(26, 23, 20, 0.12)';
+const PAPER_RULE_SOFT = 'rgba(26, 23, 20, 0.06)';
 
 function formatCop(value: number | undefined): string {
-  if (typeof value !== "number" || Number.isNaN(value)) return "—";
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
+  if (typeof value !== 'number' || Number.isNaN(value)) return '—';
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
     maximumFractionDigits: 0,
   }).format(value);
 }
 
 function formatPago(formaPago?: string, metodoContado?: string): string {
-  if (!formaPago) return "—";
-  if (formaPago === "contado") {
-    return metodoContado ? `Contado · ${metodoContado}` : "Contado";
+  if (!formaPago) return '—';
+  if (formaPago === 'contado') {
+    return metodoContado ? `Contado · ${metodoContado}` : 'Contado';
   }
-  if (formaPago === "esmereogenesis") return "Esmereogénesis";
-  if (formaPago === "credito") return "Crédito";
-  if (formaPago === "bajo_pedido") return "Bajo pedido";
-  if (formaPago === "consignacion") return "Consignación";
+  if (formaPago === 'esmereogenesis') return 'Esmereogénesis';
+  if (formaPago === 'credito') return 'Crédito';
+  if (formaPago === 'bajo_pedido') return 'Bajo pedido';
+  if (formaPago === 'consignacion') return 'Consignación';
   return formaPago;
 }
 
 function buyerLabel(buyer: KardexBuyer | null | undefined): string {
-  if (!buyer) return "—";
+  if (!buyer) return '—';
   const id = buyer.nit ?? buyer.cedula;
-  if (id) return `${buyer.nombre ?? "—"} · ${id}`;
-  return buyer.nombre ?? "—";
+  if (id) return `${buyer.nombre ?? '—'} · ${id}`;
+  return buyer.nombre ?? '—';
 }
 
 /**
@@ -135,7 +135,7 @@ export function KardexPreview({
   descuentoCop,
 }: KardexPreviewProps) {
   const accent = emeraldCore.dark;
-  const accentDeep = "#006B4A";
+  const accentDeep = '#006B4A';
   const gold = goldAccent.primary;
 
   const count = items.length;
@@ -147,17 +147,17 @@ export function KardexPreview({
   const localSum = items.reduce(
     (acc, it) =>
       acc +
-      (typeof it.precioCop === "number" && !Number.isNaN(it.precioCop)
+      (typeof it.precioCop === 'number' && !Number.isNaN(it.precioCop)
         ? it.precioCop
         : 0),
     0,
   );
   const subtotal =
-    typeof subtotalCop === "number" && !Number.isNaN(subtotalCop)
+    typeof subtotalCop === 'number' && !Number.isNaN(subtotalCop)
       ? subtotalCop
       : localSum;
   const descuento =
-    typeof descuentoCop === "number" && !Number.isNaN(descuentoCop)
+    typeof descuentoCop === 'number' && !Number.isNaN(descuentoCop)
       ? descuentoCop
       : 0;
 
@@ -165,9 +165,9 @@ export function KardexPreview({
     <Box
       component="span"
       sx={{
-        fontStyle: "italic",
+        fontStyle: 'italic',
         color: PAPER_INK_MUTE,
-        letterSpacing: "0.01em",
+        letterSpacing: '0.01em',
       }}
     >
       — oculta en versión pública —
@@ -181,22 +181,22 @@ export function KardexPreview({
       component="article"
       aria-label={`Vista previa del Kardex ${sale.id}`}
       sx={{
-        position: "relative",
+        position: 'relative',
         background: PAPER_BG,
-        borderRadius: "6px",
-        padding: "32px 30px 26px",
+        borderRadius: '6px',
+        padding: '32px 30px 26px',
         boxShadow:
-          "0 12px 30px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2)",
+          '0 12px 30px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2)',
         color: PAPER_INK,
         fontFamily: fontFamilies.system,
-        overflow: "hidden",
+        overflow: 'hidden',
       }}
     >
       {/* Top stripe */}
       <Box
         aria-hidden
         sx={{
-          position: "absolute",
+          position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
@@ -211,34 +211,35 @@ export function KardexPreview({
           html2canvas captures it in the exported PDF. */}
       <Box
         sx={{
-          textAlign: "center",
-          paddingBottom: "16px",
-          marginBottom: "18px",
+          textAlign: 'center',
+          paddingBottom: '16px',
+          marginBottom: '18px',
           borderBottom: `2px solid ${accent}`,
         }}
       >
         <Box
           component="img"
-          src="/logo-tierra-madre.png"
-          alt="Tierra Madre"
+          src="/logo-brand.png"
+          alt="Tierra Mädre"
           sx={{
-            height: 50,
-            width: "auto",
-            objectFit: "contain",
-            display: "inline-block",
+            // Full lockup: ≥80px keeps the slogan legible
+            height: 90,
+            width: 'auto',
+            objectFit: 'contain',
+            display: 'inline-block',
           }}
           onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-            e.currentTarget.style.display = "none";
+            e.currentTarget.style.display = 'none';
           }}
         />
         <Box
           sx={{
             fontSize: 9,
             fontWeight: 500,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
             color: PAPER_INK_MUTE,
-            marginTop: "8px",
+            marginTop: '8px',
           }}
         >
           Esmeraldas Colombianas de Origen
@@ -248,12 +249,12 @@ export function KardexPreview({
       {/* Doc title + carnet ID */}
       <Box
         sx={{
-          display: "flex",
-          alignItems: "flex-end",
-          justifyContent: "space-between",
-          gap: "16px",
-          marginBottom: "20px",
-          paddingBottom: "14px",
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'space-between',
+          gap: '16px',
+          marginBottom: '20px',
+          paddingBottom: '14px',
           borderBottom: `1px solid ${PAPER_RULE}`,
         }}
       >
@@ -262,22 +263,22 @@ export function KardexPreview({
             fontFamily: fontFamilies.serif,
             fontSize: 20,
             fontWeight: 500,
-            letterSpacing: "-0.02em",
+            letterSpacing: '-0.02em',
             lineHeight: 1.1,
             color: PAPER_INK,
           }}
         >
           Kardex de venta
         </Box>
-        <Box sx={{ textAlign: "right" }}>
+        <Box sx={{ textAlign: 'right' }}>
           <Box
             sx={{
               fontSize: 9,
               fontWeight: 500,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
               color: PAPER_INK_MUTE,
-              marginBottom: "4px",
+              marginBottom: '4px',
             }}
           >
             Carnet
@@ -285,10 +286,10 @@ export function KardexPreview({
           <Box
             sx={{
               fontFamily: fontFamilies.mono,
-              fontVariantNumeric: "tabular-nums",
+              fontVariantNumeric: 'tabular-nums',
               fontSize: 20,
               fontWeight: 500,
-              letterSpacing: "-0.02em",
+              letterSpacing: '-0.02em',
               color: accentDeep,
             }}
           >
@@ -302,18 +303,18 @@ export function KardexPreview({
         /* Empty placeholder where the product block would be */
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             minHeight: 120,
-            marginBottom: "22px",
-            borderRadius: "4px",
+            marginBottom: '22px',
+            borderRadius: '4px',
             border: `1px dashed ${PAPER_RULE}`,
-            background: "#EFEAE0",
+            background: '#EFEAE0',
             color: PAPER_INK_MUTE,
-            fontStyle: "italic",
+            fontStyle: 'italic',
             fontSize: 13,
-            letterSpacing: "0.02em",
+            letterSpacing: '0.02em',
           }}
         >
           Sin ítems
@@ -324,23 +325,23 @@ export function KardexPreview({
           {/* Product block */}
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: "108px 1fr",
-              gap: "18px",
-              alignItems: "center",
-              marginBottom: "22px",
+              display: 'grid',
+              gridTemplateColumns: '108px 1fr',
+              gap: '18px',
+              alignItems: 'center',
+              marginBottom: '22px',
             }}
           >
             <Box
               sx={{
                 width: 108,
                 height: 108,
-                borderRadius: "4px",
-                background: "#EFEAE0",
+                borderRadius: '4px',
+                background: '#EFEAE0',
                 border: `1px solid ${PAPER_RULE}`,
-                overflow: "hidden",
-                position: "relative",
-                aspectRatio: "1 / 1",
+                overflow: 'hidden',
+                position: 'relative',
+                aspectRatio: '1 / 1',
               }}
             >
               {photoUrl ? (
@@ -350,28 +351,28 @@ export function KardexPreview({
                   alt=""
                   crossOrigin="anonymous"
                   sx={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    display: "block",
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    display: 'block',
                   }}
                 />
               ) : (
                 <Box
                   aria-hidden
                   sx={{
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     color: PAPER_INK_MUTE,
                     fontFamily: fontFamilies.mono,
                     fontSize: 11,
-                    letterSpacing: "0.18em",
+                    letterSpacing: '0.18em',
                   }}
                 >
-                  {single.itemId || (single.isManual ? "Manual" : "—")}
+                  {single.itemId || (single.isManual ? 'Manual' : '—')}
                 </Box>
               )}
             </Box>
@@ -381,27 +382,27 @@ export function KardexPreview({
                   fontFamily: fontFamilies.serif,
                   fontSize: 22,
                   fontWeight: 500,
-                  letterSpacing: "-0.02em",
+                  letterSpacing: '-0.02em',
                   lineHeight: 1.15,
                   color: PAPER_INK,
-                  marginBottom: "6px",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
+                  marginBottom: '6px',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}
               >
-                {single.nombre ?? "Ítem sin nombre"}
+                {single.nombre ?? 'Ítem sin nombre'}
               </Box>
               <Box
                 sx={{
                   fontSize: 12,
                   color: PAPER_INK_SOFT,
-                  letterSpacing: "0.01em",
+                  letterSpacing: '0.01em',
                 }}
               >
                 {[single.color, single.calidad, single.descripcion]
                   .filter(Boolean)
-                  .join(" · ") || "—"}
+                  .join(' · ') || '—'}
               </Box>
             </Box>
           </Box>
@@ -409,24 +410,24 @@ export function KardexPreview({
           {/* Specs grid (2-col, 8 specs) */}
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              rowGap: "12px",
-              columnGap: "24px",
-              paddingTop: "16px",
-              paddingBottom: "16px",
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              rowGap: '12px',
+              columnGap: '24px',
+              paddingTop: '16px',
+              paddingBottom: '16px',
               borderTop: `1px solid ${PAPER_RULE_SOFT}`,
               borderBottom: `1px solid ${PAPER_RULE_SOFT}`,
             }}
           >
-            <SpecRow label="Peso" value={single.peso ?? "—"} />
-            <SpecRow label="Calidad" value={single.calidad ?? "—"} />
-            <SpecRow label="Color" value={single.color ?? "—"} />
-            <SpecRow label="Medidas" value={single.medidas ?? "—"} />
+            <SpecRow label="Peso" value={single.peso ?? '—'} />
+            <SpecRow label="Calidad" value={single.calidad ?? '—'} />
+            <SpecRow label="Color" value={single.color ?? '—'} />
+            <SpecRow label="Medidas" value={single.medidas ?? '—'} />
             <SpecRow label="Comprador" value={compradorValue} />
             <SpecRow
               label="ID interno"
-              value={single.itemId || (single.isManual ? "Manual" : "—")}
+              value={single.itemId || (single.isManual ? 'Manual' : '—')}
               mono
             />
             {/* No discount → keep the clean flat Precio inline. With a discount,
@@ -466,9 +467,9 @@ export function KardexPreview({
           {/* (a) Line-item list */}
           <Box
             sx={{
-              paddingTop: "4px",
+              paddingTop: '4px',
               borderTop: `1px solid ${PAPER_RULE_SOFT}`,
-              marginBottom: "18px",
+              marginBottom: '18px',
             }}
           >
             {items.map((it, idx) => {
@@ -481,15 +482,15 @@ export function KardexPreview({
                 it.descripcion,
               ]
                 .filter(Boolean)
-                .join(" · ");
+                .join(' · ');
               return (
                 <Box
                   key={`${it.itemId}-${idx}`}
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    paddingY: "10px",
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    paddingY: '10px',
                     borderBottom: `1px solid ${PAPER_RULE_SOFT}`,
                   }}
                 >
@@ -499,12 +500,12 @@ export function KardexPreview({
                       width: 48,
                       height: 48,
                       flexShrink: 0,
-                      borderRadius: "3px",
-                      background: "#EFEAE0",
+                      borderRadius: '3px',
+                      background: '#EFEAE0',
                       border: `1px solid ${PAPER_RULE}`,
-                      overflow: "hidden",
-                      position: "relative",
-                      aspectRatio: "1 / 1",
+                      overflow: 'hidden',
+                      position: 'relative',
+                      aspectRatio: '1 / 1',
                     }}
                   >
                     {thumb ? (
@@ -514,31 +515,31 @@ export function KardexPreview({
                         alt=""
                         crossOrigin="anonymous"
                         sx={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          display: "block",
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: 'block',
                         }}
                       />
                     ) : (
                       <Box
                         aria-hidden
                         sx={{
-                          width: "100%",
-                          height: "100%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          width: '100%',
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           color: PAPER_INK_MUTE,
                           fontFamily: fontFamilies.mono,
                           fontSize: 8.5,
-                          letterSpacing: "0.1em",
-                          textAlign: "center",
-                          padding: "2px",
-                          overflow: "hidden",
+                          letterSpacing: '0.1em',
+                          textAlign: 'center',
+                          padding: '2px',
+                          overflow: 'hidden',
                         }}
                       >
-                        {it.itemId || (it.isManual ? "Manual" : "—")}
+                        {it.itemId || (it.isManual ? 'Manual' : '—')}
                       </Box>
                     )}
                   </Box>
@@ -550,28 +551,28 @@ export function KardexPreview({
                         fontFamily: fontFamilies.serif,
                         fontSize: 14.5,
                         fontWeight: 500,
-                        letterSpacing: "-0.01em",
+                        letterSpacing: '-0.01em',
                         lineHeight: 1.25,
                         color: PAPER_INK,
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
                       }}
                     >
-                      {it.nombre ?? "Ítem sin nombre"}
+                      {it.nombre ?? 'Ítem sin nombre'}
                     </Box>
                     <Box
                       sx={{
                         fontSize: 10.5,
                         color: PAPER_INK_SOFT,
-                        letterSpacing: "0.01em",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        marginTop: "2px",
+                        letterSpacing: '0.01em',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        marginTop: '2px',
                       }}
                     >
-                      {specs || "—"}
+                      {specs || '—'}
                     </Box>
                   </Box>
 
@@ -580,12 +581,12 @@ export function KardexPreview({
                     sx={{
                       flexShrink: 0,
                       fontFamily: fontFamilies.mono,
-                      fontVariantNumeric: "tabular-nums",
+                      fontVariantNumeric: 'tabular-nums',
                       fontSize: 12.5,
                       fontWeight: 500,
-                      letterSpacing: "-0.005em",
+                      letterSpacing: '-0.005em',
                       color: PAPER_INK,
-                      textAlign: "right",
+                      textAlign: 'right',
                     }}
                   >
                     {formatCop(it.precioCop)}
@@ -598,11 +599,11 @@ export function KardexPreview({
           {/* (b) Meta: Comprador + Forma de pago */}
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              columnGap: "24px",
-              rowGap: "12px",
-              paddingBottom: "16px",
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              columnGap: '24px',
+              rowGap: '12px',
+              paddingBottom: '16px',
             }}
           >
             <SpecRow label="Comprador" value={compradorValue} />
@@ -625,14 +626,14 @@ export function KardexPreview({
       {/* Lineage footer (provider + lot) */}
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: "16px",
-          marginTop: "14px",
-          marginBottom: "20px",
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: '16px',
+          marginTop: '14px',
+          marginBottom: '20px',
           fontSize: 11,
           color: PAPER_INK_SOFT,
-          letterSpacing: "0.01em",
+          letterSpacing: '0.01em',
         }}
       >
         <Box>
@@ -640,25 +641,25 @@ export function KardexPreview({
             sx={{
               fontSize: 9,
               fontWeight: 500,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
               color: PAPER_INK_MUTE,
-              marginBottom: "2px",
+              marginBottom: '2px',
             }}
           >
             Origen
           </Box>
-          {provider?.nombreORazonSocial ?? "Tierra Madre"}
+          {provider?.nombreORazonSocial ?? 'Tierra Madre'}
         </Box>
-        <Box sx={{ textAlign: "right" }}>
+        <Box sx={{ textAlign: 'right' }}>
           <Box
             sx={{
               fontSize: 9,
               fontWeight: 500,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
               color: PAPER_INK_MUTE,
-              marginBottom: "2px",
+              marginBottom: '2px',
             }}
           >
             Lote
@@ -667,10 +668,10 @@ export function KardexPreview({
             component="span"
             sx={{
               fontFamily: fontFamilies.mono,
-              fontVariantNumeric: "tabular-nums",
+              fontVariantNumeric: 'tabular-nums',
             }}
           >
-            {lot?.loteId ?? "—"}
+            {lot?.loteId ?? '—'}
           </Box>
         </Box>
       </Box>
@@ -678,11 +679,11 @@ export function KardexPreview({
       {/* Cert footer: text + seal + QR placeholder */}
       <Box
         sx={{
-          display: "grid",
-          gridTemplateColumns: "1fr auto auto",
-          gap: "18px",
-          alignItems: "center",
-          paddingTop: "16px",
+          display: 'grid',
+          gridTemplateColumns: '1fr auto auto',
+          gap: '18px',
+          alignItems: 'center',
+          paddingTop: '16px',
           borderTop: `1px solid ${PAPER_RULE}`,
         }}
       >
@@ -691,7 +692,7 @@ export function KardexPreview({
             fontSize: 10,
             lineHeight: 1.5,
             color: PAPER_INK_SOFT,
-            fontStyle: "italic",
+            fontStyle: 'italic',
           }}
         >
           Este Kardex certifica la procedencia y autenticidad del ítem
@@ -705,18 +706,18 @@ export function KardexPreview({
           sx={{
             width: 58,
             height: 58,
-            borderRadius: "50%",
+            borderRadius: '50%',
             border: `1.5px solid ${accent}`,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
             color: accentDeep,
             fontFamily: fontFamilies.serif,
-            background: "rgba(0, 140, 98, 0.04)",
+            background: 'rgba(0, 140, 98, 0.04)',
           }}
         >
-          <Box sx={{ fontSize: 8, letterSpacing: "0.22em", fontWeight: 600 }}>
+          <Box sx={{ fontSize: 8, letterSpacing: '0.22em', fontWeight: 600 }}>
             TM
           </Box>
           <Box
@@ -724,7 +725,7 @@ export function KardexPreview({
               fontFamily: fontFamilies.mono,
               fontSize: 11,
               fontWeight: 500,
-              letterSpacing: "-0.01em",
+              letterSpacing: '-0.01em',
             }}
           >
             2026
@@ -737,7 +738,7 @@ export function KardexPreview({
           sx={{
             width: 58,
             height: 58,
-            borderRadius: "4px",
+            borderRadius: '4px',
             background: `
               repeating-linear-gradient(0deg, ${PAPER_INK} 0 2px, transparent 2px 6px),
               repeating-linear-gradient(90deg, ${PAPER_INK} 0 2px, transparent 2px 6px)
@@ -752,9 +753,9 @@ export function KardexPreview({
       <Box
         aria-hidden
         sx={{
-          marginTop: "18px",
-          display: "flex",
-          justifyContent: "center",
+          marginTop: '18px',
+          display: 'flex',
+          justifyContent: 'center',
         }}
       >
         <Box
@@ -762,7 +763,7 @@ export function KardexPreview({
             width: 8,
             height: 8,
             background: accent,
-            transform: "rotate(45deg)",
+            transform: 'rotate(45deg)',
           }}
         />
       </Box>
@@ -789,10 +790,10 @@ function SpecRow({
         sx={{
           fontSize: 8.5,
           fontWeight: 500,
-          letterSpacing: "0.2em",
-          textTransform: "uppercase",
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
           color: PAPER_INK_MUTE,
-          marginBottom: "3px",
+          marginBottom: '3px',
         }}
       >
         {label}
@@ -800,11 +801,11 @@ function SpecRow({
       <Box
         sx={{
           fontFamily: mono ? fontFamilies.mono : fontFamilies.system,
-          fontVariantNumeric: mono ? "tabular-nums" : undefined,
+          fontVariantNumeric: mono ? 'tabular-nums' : undefined,
           fontSize: emphasis ? 14 : 12.5,
           fontWeight: emphasis ? 600 : 500,
           color: PAPER_INK,
-          letterSpacing: mono ? "-0.005em" : "normal",
+          letterSpacing: mono ? '-0.005em' : 'normal',
           lineHeight: 1.3,
         }}
       >
@@ -846,20 +847,20 @@ function MontosResumen({
   return (
     <Box
       sx={{
-        paddingTop: topRule ? "14px" : "4px",
-        paddingBottom: "4px",
-        borderTop: topRule ? `1px solid ${PAPER_RULE_SOFT}` : "none",
-        marginBottom: "6px",
+        paddingTop: topRule ? '14px' : '4px',
+        paddingBottom: '4px',
+        borderTop: topRule ? `1px solid ${PAPER_RULE_SOFT}` : 'none',
+        marginBottom: '6px',
       }}
     >
       <Box
         sx={{
           fontSize: 8.5,
           fontWeight: 500,
-          letterSpacing: "0.2em",
-          textTransform: "uppercase",
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
           color: PAPER_INK_MUTE,
-          marginBottom: "10px",
+          marginBottom: '10px',
         }}
       >
         Resumen de montos
@@ -868,20 +869,20 @@ function MontosResumen({
       {/* Subtotal */}
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          marginBottom: descuento > 0 ? "6px" : "0",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          marginBottom: descuento > 0 ? '6px' : '0',
         }}
       >
         <Box sx={{ fontSize: 12, color: PAPER_INK_SOFT }}>Subtotal</Box>
         <Box
           sx={{
             fontFamily: fontFamilies.mono,
-            fontVariantNumeric: "tabular-nums",
+            fontVariantNumeric: 'tabular-nums',
             fontSize: 12.5,
             fontWeight: 500,
-            letterSpacing: "-0.005em",
+            letterSpacing: '-0.005em',
             color: PAPER_INK,
           }}
         >
@@ -893,19 +894,19 @@ function MontosResumen({
       {descuento > 0 && (
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "baseline",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'baseline',
           }}
         >
           <Box sx={{ fontSize: 12, color: PAPER_INK_SOFT }}>Descuento</Box>
           <Box
             sx={{
               fontFamily: fontFamilies.mono,
-              fontVariantNumeric: "tabular-nums",
+              fontVariantNumeric: 'tabular-nums',
               fontSize: 12.5,
               fontWeight: 500,
-              letterSpacing: "-0.005em",
+              letterSpacing: '-0.005em',
               color: PAPER_INK_SOFT,
             }}
           >
@@ -918,27 +919,27 @@ function MontosResumen({
       <Box
         aria-hidden
         sx={{
-          height: "1px",
+          height: '1px',
           background: PAPER_RULE,
-          marginTop: "12px",
-          marginBottom: "12px",
+          marginTop: '12px',
+          marginBottom: '12px',
         }}
       />
 
       {/* Total — emphasized */}
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
         }}
       >
         <Box
           sx={{
             fontSize: 11,
             fontWeight: 600,
-            letterSpacing: "0.16em",
-            textTransform: "uppercase",
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
             color: accentDeep,
           }}
         >
@@ -947,10 +948,10 @@ function MontosResumen({
         <Box
           sx={{
             fontFamily: fontFamilies.mono,
-            fontVariantNumeric: "tabular-nums",
+            fontVariantNumeric: 'tabular-nums',
             fontSize: 19,
             fontWeight: 700,
-            letterSpacing: "-0.01em",
+            letterSpacing: '-0.01em',
             color: accentDeep,
           }}
         >

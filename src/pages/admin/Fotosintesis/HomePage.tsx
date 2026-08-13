@@ -24,6 +24,7 @@ import {
 } from '../../../lib/convex-safe';
 import { useGoogleAuth } from '../../../contexts/GoogleAuthContext';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { readFreshSessionToken } from '../../../utils/sessionToken';
 import ConfirmDialog from '../../../components/shared/ConfirmDialog';
 import { WORKBENCH_ENABLED } from './workbench/featureFlag';
 import type { Id } from '../../../../convex/_generated/dataModel';
@@ -52,11 +53,25 @@ export default function FotosintesisHomePage() {
   const firstName = user?.givenName || user?.name?.split(' ')[0] || 'Operador';
 
   // --- Data ----------------------------------------------------------------
-  const lots = useConvexQuery(convexApi.lots.list, {});
-  const recentSales = useConvexQuery(convexApi.sales.list, {});
-  const inventory = useConvexQuery(convexApi.products.list, {});
+  const sessionToken = readFreshSessionToken() ?? undefined;
+  const lots = useConvexQuery(convexApi.lots.list, { sessionToken });
+  const recentSales = useConvexQuery(convexApi.sales.list, { sessionToken });
+  // BANDWIDTH: this page reads `inventory` for exactly ONE number —
+  // `itemsAvailable` (the DISPONIBLE count, below). Called without `estado`,
+  // `products.list` takes its unfiltered branch (convex/products.ts:80) and
+  // scans the WHOLE productInventory mirror — 81-field documents
+  // (convex/schema.ts:159-340) — re-running on every write while this page is
+  // open. Convex bills Database I/O on documents SCANNED, not on the fields
+  // returned, so the query's field projection does nothing for that cost.
+  // Passing `estado` switches it to the `by_estado` index and reads only the
+  // DISPONIBLE rows. See docs/audits/2026-08-12-convex-usage-audit.md §5.
+  const inventory = useConvexQuery(convexApi.products.list, {
+    estado: 'DISPONIBLE',
+    sessionToken,
+  });
   const recentEdits = useConvexQuery(convexApi.products.recentEdits, {
     limit: 5,
+    sessionToken,
   });
 
   // --- Mutations -----------------------------------------------------------
@@ -113,6 +128,9 @@ export default function FotosintesisHomePage() {
     [openLots, closedLots, publishedLots],
   );
 
+  // The `estado` filter is now redundant — the query above is already scoped to
+  // DISPONIBLE — but it is kept deliberately: it keeps this count correct if the
+  // subscription's args are ever widened again, and it costs nothing.
   const itemsAvailable = useMemo(
     () => (inventory ?? []).filter((p) => p.estado === 'DISPONIBLE').length,
     [inventory],

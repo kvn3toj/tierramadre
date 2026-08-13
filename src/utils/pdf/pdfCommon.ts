@@ -36,7 +36,7 @@ export type { Emerald };
 /** Tierra Madre Brand Colors - Premium Jewelry Palette */
 export const BRAND = {
   // Primary emerald green (brand color)
-  emeraldGreen: '#00AE7A',
+  emeraldGreen: '#00C992',
   emeraldDark: '#008F63',
   emeraldLight: '#00C98C',
   emeraldGlow: '#00D4A0',
@@ -63,8 +63,19 @@ export const BRAND = {
 // CONSTANTS
 // =============================================================================
 
-/** Logo aspect ratio: width is approximately 2x height */
-export const LOGO_ASPECT_RATIO = 2.0;
+/**
+ * Logo aspect ratios (width ÷ height).
+ *
+ * The bare mark is SQUARE. This was 2.0 for a 1888×1888 asset, which stretched
+ * the mark 2:1 on every PDF it touched.
+ *
+ * The lockup is the brand manual's "auxiliar" (vertical) lockup — mark above
+ * the wordmark above the slogan — at 1280×682. Its slogan band is 6.7% of its
+ * height, so it only stays legible at ≥24mm in print. Use it on covers, and
+ * keep LOGO_ASPECT_RATIO/the mark for 12–14mm page headers.
+ */
+export const LOGO_ASPECT_RATIO = 1.0;
+export const LOCKUP_ASPECT_RATIO = 1280 / 682; // ≈1.877
 
 // =============================================================================
 // HELPER FUNCTIONS
@@ -95,10 +106,13 @@ export function setTextFromHex(pdf: jsPDF, hex: string) {
 }
 
 /** Load image and get its natural dimensions */
-export async function getImageDimensions(src: string): Promise<{ width: number; height: number }> {
+export async function getImageDimensions(
+  src: string,
+): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onload = () =>
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
     img.onerror = reject;
     img.src = src;
   });
@@ -109,7 +123,7 @@ export function calculateAspectRatioFit(
   srcWidth: number,
   srcHeight: number,
   maxWidth: number,
-  maxHeight: number
+  maxHeight: number,
 ): { width: number; height: number } {
   const ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight);
   return {
@@ -118,10 +132,10 @@ export function calculateAspectRatioFit(
   };
 }
 
-/** Load logo as base64 from public folder */
-export async function loadLogoBase64(): Promise<string> {
+/** Fetch a public asset and return it as a base64 data URI. */
+async function fetchAsBase64(path: string): Promise<string> {
   try {
-    const response = await fetch('/logo-tierra-madre.png');
+    const response = await fetch(path);
     const blob = await response.blob();
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -130,9 +144,22 @@ export async function loadLogoBase64(): Promise<string> {
       reader.readAsDataURL(blob);
     });
   } catch (error) {
-    console.error('Failed to load logo:', error);
+    console.error(`Failed to load logo (${path}):`, error);
     return '';
   }
+}
+
+/** Load the bare square mark as base64. Use at small sizes (page headers). */
+export async function loadLogoBase64(): Promise<string> {
+  return fetchAsBase64('/logo-tierra-madre.png');
+}
+
+/**
+ * Load the full lockup (mark + wordmark + slogan) as base64.
+ * Only legible at ≥24mm — use on covers, not page headers.
+ */
+export async function loadLockupBase64(white = false): Promise<string> {
+  return fetchAsBase64(white ? '/logo-white.png' : '/logo-brand.png');
 }
 
 /** Download a PDF with the given filename */

@@ -1,5 +1,10 @@
 import { TreasureItem, TreasureStatus } from '../types';
-import { matchesAsesorName } from './asesorNameUtils';
+// `.js` extension deliberately. This module is imported by
+// `api/ambassador-products.ts`, and Vercel functions are NOT bundled — they
+// run as real ESM off the filesystem, where an extensionless specifier does
+// not resolve (ERR_MODULE_NOT_FOUND at /var/task/src/utils/asesorNameUtils).
+// TypeScript and Vite both map `.js` → `.ts`, so the frontend is unaffected.
+import { matchesAsesorName } from './asesorNameUtils.js';
 
 const VALID_STATUSES: readonly string[] = [
   'DISPONIBLE',
@@ -64,6 +69,51 @@ export function getEffectiveEstado(
  * - The original asesor (Column N)
  * - The current owner (Column T)
  */
+/** What `/api/ambassador-products` answers with. */
+export interface ServerOwnership {
+  itemIds: number[];
+  availableItemIds: number[];
+}
+
+/**
+ * Picks the best available ownership answer for the ambassador profile.
+ *
+ * Staff get `asesor` / `asesorActual` on their catalog rows, so
+ * `getAsesorProducts` resolves everything locally and its objects are richer
+ * (prices, transfer state). Everyone else gets those fields stripped by the
+ * catalog projection, so the local pass returns [] and the server's item
+ * numbers are the only ownership signal there is.
+ *
+ * Present answer wins — never "whichever source we asked first". A staff
+ * viewer must not be downgraded to the public projection just because the
+ * endpoint also replied.
+ */
+export function resolveAsesorProducts(
+  localProducts: AsesorProduct[],
+  treasure: TreasureItem[],
+  server: ServerOwnership | null,
+): AsesorProduct[] {
+  if (localProducts.length > 0) return localProducts;
+  if (!server || treasure.length === 0) return [];
+
+  const available = new Set(server.availableItemIds);
+  const byId = new Map(treasure.map((t) => [t.item, t]));
+
+  return server.itemIds
+    .map((id) => byId.get(id))
+    .filter((item): item is TreasureItem => Boolean(item))
+    .map((item) => ({
+      ...item,
+      effectiveEstado: available.has(item.item)
+        ? ('DISPONIBLE' as TreasureStatus)
+        : ('VENDIDA' as TreasureStatus),
+      // Owner-facing concept. A piece that left this ambassador's hands reads
+      // as sold to a visitor either way, and the endpoint deliberately does
+      // not publish transfer history.
+      isTransferredAway: false,
+    }));
+}
+
 export function getAsesorProducts(
   treasure: TreasureItem[],
   asesorName: string,

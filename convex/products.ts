@@ -28,7 +28,15 @@ import {
 import { postToVercel } from './_lib/sheetSync';
 import { verificaDestinoDeEscritura } from './_lib/destinoEscritura';
 import { requireAccessLevel } from './_lib/authz';
+import {
+  isStaffSession,
+  requireStaffOrBotSession,
+} from './_lib/requireStaffSession';
 import { withPublishStamp } from './_lib/publishState';
+import {
+  bumpCatalogVersion,
+  bumpCatalogVersionIfPublished,
+} from './_lib/catalogVersion';
 import { precioEspecialDeObservacion } from './_lib/precioEspecial';
 import { omitFotosintesisOnly } from './_lib/saleSafe';
 
@@ -39,6 +47,11 @@ import { omitFotosintesisOnly } from './_lib/saleSafe';
 /**
  * List all products in the inventory mirror.
  * Returns rows ordered by itemId numerically.
+ *
+ * Also read by anima-bot's `listProducts` (anima-bot/src/fotosintesis/
+ * client.ts — the whole-catalog complement to `lotItems.search`'s
+ * current-lot-only stock view). Accepts either a staff session or the bot
+ * secret; see `_lib/requireStaffSession.ts`'s `isStaffOrBotSession`.
  */
 export const list = query({
   args: {
@@ -57,8 +70,13 @@ export const list = query({
       ),
     ),
     search: v.optional(v.string()),
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
   },
-  handler: async (ctx, { estado, search }) => {
+  handler: async (ctx, { estado, search, sessionToken, botSecret }) => {
+    // Lanza si la credencial vino y no sirve; `[]` solo cuando no vino ninguna.
+    if (!(await requireStaffOrBotSession({ sessionToken, botSecret })))
+      return [];
     const rows = estado
       ? await ctx.db
           .query('productInventory')
@@ -120,6 +138,7 @@ export const list = query({
       calidad: row.calidad,
       cantidad: row.cantidad,
       talla: row.talla,
+      tallaAnillo: row.tallaAnillo,
       medidas: row.medidas,
       categoria: row.categoria,
       precioCOP: row.precioCOP,
@@ -374,6 +393,7 @@ export const getPublicByItem = query({
       calidad: row.calidad,
       cantidad: row.cantidad,
       talla: row.talla,
+      tallaAnillo: row.tallaAnillo,
       medidas: row.medidas,
       medidasValores: row.medidasValores,
       categoria: row.categoria,
@@ -404,16 +424,23 @@ export const getPublicByItem = query({
 /**
  * All productInventory rows for a Fotosíntesis lote (close/resumen UI).
  *
- * Filtrada, y se le pasó al barrido de 2026-07-30 por la misma vía que a
- * `products:get`: devolvía `rows.sort(...)` pelado, o sea el documento entero —
- * incluido `cajaComprador`, el nombre de un comprador real— a cualquiera que
- * supiera un loteId. Ninguna de las dos pantallas que la consumen
- * (`LoteResumenPage`, `SubLotesPage`) lee esas columnas; se verificó antes de
- * filtrarlas. Ver `_lib/saleSafe.ts`.
+ * GATED (2026-08-05, C2): shipped raw rows — including the 14 Fotosíntesis-
+ * only columns `_lib/saleSafe.ts` exists to contain (costoLoteCOP,
+ * precioObjetivoCOP, cajaSaldoCOP, cajaComprador — a third party's name —
+ * and friends) — unlike its siblings `get`/`getByItem`, which already
+ * `omitFotosintesisOnly()`. `loteId` is publicly discoverable through the
+ * open catalog (`publishedGroups`, `getManyByItemIds`), so this was a
+ * working chain from the public catalog straight to a lot's cost
+ * accounting. Now requires a verified staff session (both callers —
+ * LoteResumenPage.tsx, SubLotesPage.tsx — are `/admin/Fotosintesis` pages)
+ * AND applies the same `omitFotosintesisOnly` filter as `get`/`getByItem`:
+ * neither consumer reads any of the 14 fields, so nothing regresses, and it
+ * closes the gap for good instead of only gating the transport.
  */
 export const listByLote = query({
-  args: { loteId: v.string() },
-  handler: async (ctx, { loteId }) => {
+  args: { loteId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { loteId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const rows = await ctx.db
       .query('productInventory')
       .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
@@ -450,6 +477,39 @@ export const listByLote = query({
  * nada, y el próximo push la sobrescribe. Si se quiere habilitar, hace falta un
  * canal de eventos, no reactivar el pull.
  */
+/**
+ * Catalog invalidation sentinel — the ONLY query customer surfaces subscribe to.
+ *
+ * Reads a single ~100-byte document (see `catalogVersion` in schema.ts and the
+ * rationale in convex/_lib/catalogVersion.ts). When `v` changes, the client
+ * refetches `publishedCatalog` ONCE as a one-shot.
+ *
+ * This is the whole point of Fix 1C: an anonymous visitor's standing
+ * subscription now costs one tiny document instead of a full scan of every
+ * published 81-field row, and a write re-runs THIS query for connected
+ * visitors rather than the entire catalog.
+ *
+ * Returns `v: 0` before the singleton exists (nothing published yet, or no
+ * mutation has run since deploy) — a valid, stable version like any other.
+ */
+export const catalogVersion = query({
+  args: {},
+  handler: async (ctx) => {
+    const row = await ctx.db.query('catalogVersion').first();
+    return { v: row?.v ?? 0, updatedAt: row?.updatedAt ?? 0 };
+  },
+});
+
+/**
+ * ⚠️ NOT for reactive subscription. Fetch this ONE-SHOT, gated on
+ * `catalogVersion` above (see src/hooks/useFotosintesisCatalog.ts).
+ *
+ * Subscribing to it re-scans every published 81-field document on each
+ * visitor connect and again for every connected visitor on every write into
+ * its read set — the `visitors × writes` blow-up that cost 759.76 MB in
+ * Aug 2026. Convex bills Database I/O on documents SCANNED, so the field
+ * projection below does nothing to soften that.
+ */
 export const publishedCatalog = query({
   args: {},
   handler: async (ctx) => {
@@ -469,26 +529,20 @@ export const publishedCatalog = query({
     // without a loteId are excluded.
     const published = rows.filter((row) => row.loteId !== undefined);
 
-    // Denormalize lot-level provenance (mina + tratamiento) onto each item.
-    // These live on the `lots` table, not productInventory, so we resolve each
-    // distinct lote once and attach. The published set is tiny (a handful of
-    // items across a few lotes), so this adds only a few point reads per call.
-    const loteProvenance = new Map<
-      string,
-      { mina?: string; tratamiento?: string }
-    >();
-    for (const loteId of new Set(
-      published.map((r) => r.loteId).filter((id): id is string => !!id),
-    )) {
-      const lot = await ctx.db
-        .query('lots')
-        .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
-        .first();
-      loteProvenance.set(loteId, {
-        mina: lot?.mina,
-        tratamiento: lot?.tratamiento,
-      });
-    }
+    // BANDWIDTH: lot provenance (mina + tratamiento) is read straight off the
+    // item — it is denormalized at publish time by withPublishStamp()
+    // (convex/_lib/publishState.ts). This query used to point-read the `lots`
+    // table once per distinct lote on EVERY execution. That was cheap in bytes
+    // but expensive in reactivity: those lot documents joined this query's read
+    // set, so any write to a published lot — including the routine
+    // `_markPushed` / `_markPushFailed` after each sheet push — re-ran the whole
+    // public catalog for every connected anonymous visitor.
+    // See docs/audits/2026-08-12-convex-usage-audit.md §4, Fix 1B.
+    //
+    // Deliberately NO fallback to the `lots` table when the denormalized field
+    // is absent: a fallback would reinstate exactly the read-set dependency this
+    // removes. Rows published before this change are backfilled by
+    // migrations.backfillLotProvenance.
 
     // Project ONLY the fields the customer catalog consumes (see
     // useFotosintesisCatalog.PublishedRow). The public catalog price is the
@@ -497,8 +551,13 @@ export const publishedCatalog = query({
     // cost. precioPotencialCOP, sync metadata and rowIndex stay internal. The
     // Fotosíntesis characteristics block below is surfaced publicly per product
     // decision 2026-06-30 (gem grade, origin, treatment, jewelry detail).
+    //
+    // NOTE: this projection shapes the payload sent to the client (Data Egress).
+    // It does NOT reduce Database I/O — Convex bills that on documents SCANNED,
+    // and `.collect()` above already pulled whole 81-field documents. Keep it
+    // (egress and client memory both matter) but do not mistake it for a
+    // bandwidth fix. See docs/audits/2026-08-12-convex-usage-audit.md §3.
     return published.map((row) => {
-      const prov = row.loteId ? loteProvenance.get(row.loteId) : undefined;
       return {
         itemId: row.itemId,
         nombre: row.nombre,
@@ -507,6 +566,7 @@ export const publishedCatalog = query({
         calidad: row.calidad,
         cantidad: row.cantidad,
         talla: row.talla,
+        tallaAnillo: row.tallaAnillo,
         medidas: row.medidas,
         medidasValores: row.medidasValores,
         categoria: row.categoria,
@@ -536,8 +596,8 @@ export const publishedCatalog = query({
         // columna; ver _lib/precioEspecial.ts). Ausente si venció o no aplica.
         precioEspecial: precioEspecialDeObservacion(row.observacion),
         // Lot-level provenance, denormalized from the `lots` table.
-        mina: prov?.mina,
-        tratamiento: prov?.tratamiento,
+        mina: row.mina,
+        tratamiento: row.tratamiento,
       };
     });
   },
@@ -584,6 +644,7 @@ export const publishedGroups = query({
         peso: p.peso,
         categoria: p.categoria,
         talla: p.talla,
+        tallaAnillo: p.tallaAnillo,
         medidas: p.medidas,
         // Per-piece Fotosíntesis characteristics so a lote's per-image detail
         // overlay reflects the exact gem, not just the bundle aggregate.
@@ -678,10 +739,15 @@ export const publishedGroups = query({
 
 /**
  * Recent edit history for an item (last 20).
+ *
+ * GATED (2026-08-05, I3): `productEdits` rows carry `editorEmail` and
+ * before/after values — including prices — for anyone. Now requires a
+ * verified staff session.
  */
 export const editHistory = query({
-  args: { itemId: v.string() },
-  handler: async (ctx, { itemId }) => {
+  args: { itemId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { itemId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const all = await ctx.db
       .query('productEdits')
       .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
@@ -767,6 +833,7 @@ const saveEditPatchArgs = v.object({
   calidad: v.optional(v.string()),
   cantidad: v.optional(v.number()),
   talla: v.optional(v.string()),
+  tallaAnillo: v.optional(v.string()),
   medidas: v.optional(v.string()),
   medidasValores: v.optional(v.string()),
   categoria: v.optional(v.string()),
@@ -851,6 +918,18 @@ export const _saveEdit = internalMutation({
       ...patch,
       syncStatus: 'pending' as const,
       syncError: undefined,
+    });
+
+    // Fix 1C — invalidate the public catalog cache. This is the path a SALE
+    // takes (estado → VENDIDA), so it is the single most important bump: with
+    // the TTL alone a sold stone would stay visible for the length of the
+    // window, and for one-of-a-kind emeralds that means two customers believing
+    // they can buy the same piece. Guarded so edits to unpublished rows — the
+    // overwhelming majority — do not invalidate anything.
+    await bumpCatalogVersionIfPublished(ctx, existing, {
+      mostrarEnCatalogo:
+        (patch as { mostrarEnCatalogo?: boolean }).mostrarEnCatalogo ??
+        existing.mostrarEnCatalogo,
     });
 
     // Insert audit row (status: pending until the action confirms the push)
@@ -1062,6 +1141,7 @@ export const pushToSheet = action({
             calidad: normalizeCalidadForSheet(row.calidad),
             cantidad: row.cantidad ?? '',
             talla: row.talla ?? '',
+            tallaAnillo: row.tallaAnillo ?? '',
             medidas: row.medidas ?? '',
             medidasValores: row.medidasValores ?? '',
             categoria: row.categoria ?? row.tipoEsmeralda ?? '',
@@ -1244,6 +1324,9 @@ export const _saveEditMany = internalMutation({
     let unchangedCount = 0;
     let missingCount = 0;
     let blockedCount = 0;
+    // Fix 1C — set if any touched row is (or becomes) catalog-visible; the
+    // single bump happens after the loop.
+    let touchedPublished = false;
     const editedAt = new Date().toISOString();
 
     // C2 — when this bulk patch moves estado out of VENDIDA, pre-compute the
@@ -1310,6 +1393,17 @@ export const _saveEditMany = internalMutation({
         syncError: undefined,
       });
 
+      // Fix 1C — note whether this row is catalog-visible, but do NOT bump
+      // inside the loop: a bulk edit over N published items must invalidate the
+      // public catalog ONCE, not N times. Each bump costs every active visitor
+      // a full catalog refetch.
+      if (
+        existing.mostrarEnCatalogo === true ||
+        (patch as { mostrarEnCatalogo?: boolean }).mostrarEnCatalogo === true
+      ) {
+        touchedPublished = true;
+      }
+
       const auditId = await ctx.db.insert('productEdits', {
         itemId,
         editorEmail,
@@ -1326,6 +1420,8 @@ export const _saveEditMany = internalMutation({
 
       updatedCount++;
     }
+
+    if (touchedPublished) await bumpCatalogVersion(ctx);
 
     return {
       total: itemIds.length,
@@ -1532,11 +1628,24 @@ export const _pullFromSheet = internalAction({
     ctx,
   ): Promise<{ pulled: number; upserted: number; rebased: number }> => {
     const appUrl: string | undefined = process.env.APP_URL;
+    const syncToken: string | undefined = process.env.ADMIN_SYNC_TOKEN;
     if (!appUrl) {
       throw new Error('APP_URL missing on Convex deployment');
     }
+    if (!syncToken) {
+      throw new Error('ADMIN_SYNC_TOKEN missing on Convex deployment');
+    }
 
-    const res = await fetch(`${appUrl}/api/get-treasure-sheets`);
+    // Without this header, the request resolves to the `anon` grant and
+    // /api/get-treasure-sheets returns the 18-field public projection — no
+    // precio/ubicacion/asesor/caja, and `estado` absent entirely (so the
+    // reconcile below would flip every VENDIDA stone back to DISPONIBLE via
+    // normalizeEstado's default). The ADMIN_SYNC_TOKEN service grant
+    // (api/_lib/catalogGrant.ts) makes this call resolve `staff`, same as a
+    // signed-in asesor — the full, unprojected row this reconcile needs.
+    const res = await fetch(`${appUrl}/api/get-treasure-sheets`, {
+      headers: { Authorization: `Bearer ${syncToken}` },
+    });
     if (!res.ok) {
       throw new Error(`Sheet fetch failed: HTTP ${res.status}`);
     }
@@ -1565,6 +1674,7 @@ export const _pullFromSheet = internalAction({
               calidad: nullableStr(item.calidad),
               cantidad: nullableNum(item.cantidad),
               talla: nullableStr(item.talla),
+              tallaAnillo: nullableStr(item.tallaAnillo),
               medidas: nullableStr(item.medidas),
               medidasValores: nullableStr(item.medidasValores),
               categoria: nullableStr(item.categoria),
@@ -1642,6 +1752,7 @@ export const _upsertManyFromSheet = internalMutation({
           calidad: v.union(v.string(), v.null()),
           cantidad: v.union(v.number(), v.null()),
           talla: v.union(v.string(), v.null()),
+          tallaAnillo: v.union(v.string(), v.null()),
           medidas: v.union(v.string(), v.null()),
           medidasValores: v.union(v.string(), v.null()),
           categoria: v.union(v.string(), v.null()),
@@ -1672,6 +1783,9 @@ export const _upsertManyFromSheet = internalMutation({
   handler: async (ctx, { items }) => {
     let upserted = 0;
     let rebased = 0;
+    // Fix 1C — set if the pull rewrote a catalog-visible row; one bump after
+    // the loop, never per row.
+    let touchedPublished = false;
     const now = new Date().toISOString();
 
     // Fetch all existing items to minimize individual queries
@@ -1689,6 +1803,7 @@ export const _upsertManyFromSheet = internalMutation({
         calidad: item.fields.calidad ?? undefined,
         cantidad: item.fields.cantidad ?? undefined,
         talla: item.fields.talla ?? undefined,
+        tallaAnillo: item.fields.tallaAnillo ?? undefined,
         medidas: item.fields.medidas ?? undefined,
         medidasValores: item.fields.medidasValores ?? undefined,
         categoria: item.fields.categoria ?? undefined,
@@ -1749,6 +1864,14 @@ export const _upsertManyFromSheet = internalMutation({
         ...baseUpdate,
         syncStatus: 'synced' as const,
       });
+      // Fix 1C — the pull cannot change `mostrarEnCatalogo` (it was removed
+      // from the pull allowlist on 2026-07-30, see sheetPullMaps.ts), but it
+      // DOES rewrite projected fields — precio, nombre, estado, fotoUrl — on
+      // rows that are already published. Flag it and bump once after the loop,
+      // mirroring the `bumpInventoryTotal` pattern below: one write per pull,
+      // never per row. The rowIndex-only patch above is skipped on purpose —
+      // neither `rowIndex` nor `lastPulledAt` reaches the public catalog.
+      if (existing.mostrarEnCatalogo === true) touchedPublished = true;
       if (rowIndexShifted) rebased++;
     }
 
@@ -1759,6 +1882,9 @@ export const _upsertManyFromSheet = internalMutation({
     // this batch.)
     if (upserted > 0) await bumpInventoryTotal(ctx, upserted);
     await setInventoryLastPull(ctx, now);
+    // Fix 1C — one invalidation for the whole pull, and only if it actually
+    // rewrote a published row.
+    if (touchedPublished) await bumpCatalogVersion(ctx);
 
     return { upserted, rebased };
   },
@@ -1780,6 +1906,7 @@ export const _upsertFromSheet = internalMutation({
       calidad: v.union(v.string(), v.null()),
       cantidad: v.union(v.number(), v.null()),
       talla: v.union(v.string(), v.null()),
+      tallaAnillo: v.union(v.string(), v.null()),
       medidas: v.union(v.string(), v.null()),
       medidasValores: v.union(v.string(), v.null()),
       categoria: v.union(v.string(), v.null()),
@@ -1819,6 +1946,7 @@ export const _upsertFromSheet = internalMutation({
       calidad: fields.calidad ?? undefined,
       cantidad: fields.cantidad ?? undefined,
       talla: fields.talla ?? undefined,
+      tallaAnillo: fields.tallaAnillo ?? undefined,
       medidas: fields.medidas ?? undefined,
       medidasValores: fields.medidasValores ?? undefined,
       categoria: fields.categoria ?? undefined,
@@ -1950,6 +2078,7 @@ type SheetRow = {
   calidad?: string;
   cantidad?: number | string;
   talla?: string;
+  tallaAnillo?: string;
   medidas?: string;
   medidasValores?: string;
   categoria?: string;
@@ -2166,10 +2295,14 @@ export const patronesGlobalTop = query({
 /**
  * N most recent edits across all products. Powers the
  * Bandeja "Historial reciente" card.
+ *
+ * GATED (2026-08-05, I3): same rationale as `editHistory` above — requires a
+ * verified staff session.
  */
 export const recentEdits = query({
-  args: { limit: v.optional(v.number()) },
-  handler: async (ctx, { limit }) => {
+  args: { limit: v.optional(v.number()), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { limit, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const cap = Math.min(limit ?? 5, 50);
     const edits = await ctx.db.query('productEdits').order('desc').take(cap);
     return edits;
@@ -2204,6 +2337,7 @@ const createProductFieldsArgs = v.object({
   calidad: v.optional(v.string()),
   cantidad: v.optional(v.number()),
   talla: v.optional(v.string()),
+  tallaAnillo: v.optional(v.string()),
   medidas: v.optional(v.string()),
   medidasValores: v.optional(v.string()),
   categoria: v.optional(v.string()),

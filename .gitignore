@@ -1,5 +1,12 @@
 # Dependencies
-node_modules/
+# Sin barra final A PROPÓSITO: `node_modules/` sólo matchea DIRECTORIOS, y en este
+# repo `node_modules` es habitualmente un SYMLINK — cada worktree bajo
+# .claude/worktrees/ lo enlaza al del árbol principal para no reinstalar.
+# Con la barra, git no lo ignoraba, un `git add -A` dentro de un worktree lo
+# commiteaba como symlink, y aplicar ese commit reemplazaba el node_modules REAL
+# por un enlace a sí mismo (circular: "Too many levels of symbolic links"),
+# rompiendo el repo para todas las sesiones a la vez. Pasó el 2026-08-12.
+node_modules
 
 # Build output
 dist/

@@ -8,17 +8,15 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
 import { Box, Chip, Typography, alpha, useTheme } from '@mui/material';
-import { Gem, Crown } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import CertificationUpload from './CertificationUpload';
 import { ComparisonBar, ComparisonModal } from '../comparison';
-import { FilterSheet, getQuietEmerald } from '../../design-system';
+import { FilterSheet, getQuietEmerald, qeFont } from '../../design-system';
 import { TreasureItem } from '../../types';
 import ListRow from './ListRow';
 import VirtualGrid from './VirtualGrid';
 import { ActiveFilterChips } from './ActiveFilterChips';
 import { FilterContent } from './FilterContent';
-import RedesignVariantToggle from '../redesign/RedesignVariantToggle';
 import {
   MobileSearchBar,
   TreasureEmptyState,
@@ -81,9 +79,7 @@ export default function TreasureBrowser({
   const qe = getQuietEmerald(c.isLight ? 'light' : 'dark');
 
   const {
-    formatFullCurrency,
     isLight,
-    shouldShowPrices,
     isProviderMode: providerMode,
     isMobile,
     allTreasure,
@@ -92,7 +88,6 @@ export default function TreasureBrowser({
     isLoadingSheets,
     filters,
     filteredTreasure,
-    filteredStats,
     deferredFilteredTreasure,
     visibleItems,
     hasFilters,
@@ -111,7 +106,6 @@ export default function TreasureBrowser({
     recentlyViewedItems,
     favoriteMappedItems,
     clearRecent,
-    stats,
     priceMinMax,
     caratMinMax,
     certDialogOpen,
@@ -194,90 +188,42 @@ export default function TreasureBrowser({
     urlSync.handleClearFilters();
   };
 
-  // Inventory summary (total value + loose-stone/jewelry counts) — lives in the
-  // header's identity zone under the subtitle, NOT in the control row, so the
-  // controls stay a stable single row whether or not prices are shown.
-  const chipBase = {
-    fontWeight: 600,
-    fontSize: '0.7rem',
-    height: 22,
-  } as const;
-  const inventorySummary =
-    !isMobile && shouldShowPrices ? (
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.25,
-          flexWrap: 'wrap',
-        }}
-      >
-        <Typography
-          sx={{
-            fontFamily: 'var(--tm-font-mono)',
-            fontWeight: 600,
-            fontSize: 13,
-            letterSpacing: '0.01em',
-            color: qe.accent,
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
-          {formatFullCurrency(filteredStats.totalValue)}
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-          <Chip
-            size="small"
-            icon={<Gem size={12} />}
-            label={stats.looseStones}
-            sx={{
-              ...chipBase,
-              bgcolor: alpha(qe.accent, 0.1),
-              color: qe.accent,
-              '& .MuiChip-icon': { color: qe.accent },
-            }}
-          />
-          <Chip
-            size="small"
-            icon={<Crown size={12} />}
-            label={stats.jewelry}
-            sx={{
-              ...chipBase,
-              // Quiet Emerald: jewelry reads as neutral ink, not gold.
-              bgcolor: alpha(qe.muted, 0.12),
-              color: qe.muted,
-              '& .MuiChip-icon': { color: qe.muted },
-            }}
-          />
-        </Box>
-      </Box>
-    ) : undefined;
+  // The header's identity zone used to carry, stacked under the title: a
+  // subtitle, the total inventory value, and gem/jewelry count chips. All three
+  // are gone — see CatalogHeader's own note for what each cost and why. The
+  // header is now a single 56px band instead of 178px of mostly-empty rows.
+  //
+  // On the phone it is not rendered at all: the brand lockup keeps its band
+  // untouched, and search, origin chips and filters share one 46px row inside
+  // MobileSearchBar. 187px of chrome down to 98.
 
   return (
     <Box
       sx={{
         maxWidth: 1536,
         mx: 'auto',
-        px: { xs: 1, sm: 2, md: 3, lg: 3, xl: 4 },
+        // xs is 0 because the shell's 16px is the phone edge (DS3 §3.1); this
+        // box used to add 8 and VirtualGrid another 8, stacking to 32 a side.
+        px: { xs: 0, sm: 2, md: 3, lg: 3, xl: 4 },
       }}
     >
-      <CatalogHeader
-        count={headerCount}
-        origins={originOptions}
-        activeOrigin={originTab}
-        onOriginChange={setOriginTab}
-        summary={inventorySummary}
-        trailingContent={
-          !isMobile ? (
+      {!isMobile && (
+        <CatalogHeader
+          count={headerCount}
+          origins={originOptions}
+          activeOrigin={originTab}
+          onOriginChange={setOriginTab}
+          trailingContent={
             <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 2,
-                flexWrap: 'wrap',
-                // Find cluster (search + filtros) hugs the left; the toolbar's
-                // own flexible spacer pushes the personal/view cluster right.
-                justifyContent: 'flex-start',
-                width: '100%',
+                gap: 1.5,
+                // NEVER wraps: the band is one line by construction. The single
+                // flexible gap lives in CatalogHeader, so this cluster can no
+                // longer collapse it and scatter itself across three baselines.
+                flexWrap: 'nowrap',
+                minWidth: 0,
               }}
             >
               <FilterContent {...filterContentProps} />
@@ -320,9 +266,9 @@ export default function TreasureBrowser({
                 }
               />
             </Box>
-          ) : undefined
-        }
-      />
+          }
+        />
+      )}
 
       {isMobile && (
         <>
@@ -352,6 +298,9 @@ export default function TreasureBrowser({
             favoritesCount={favoritesCount}
             isProviderMode={providerMode}
             filteredCount={filteredTreasure.length}
+            // The header's own count, so the bar can tell whether repeating a
+            // number says anything. Same source as CatalogHeader's `count`.
+            originCount={headerCount}
             recentlyViewedItems={recentlyViewedItems}
             onRecentItemClick={handleItemClick}
             onClearRecent={clearRecent}
@@ -363,10 +312,71 @@ export default function TreasureBrowser({
             onClose={() => setFilterSheetOpen(false)}
             title="Filtros"
             resultCount={filteredTreasure.length}
-            activeFilterCount={activeFilterCount}
-            onClear={urlSync.handleClearFilters}
+            activeFilterCount={
+              activeFilterCount + (originTab !== 'all' ? 1 : 0)
+            }
+            // Origin lives in this sheet now, so "limpiar" has to clear it too —
+            // urlSync.handleClearFilters alone would leave a mine selected with
+            // nothing on screen saying so.
+            onClear={handleClearAll}
             onApply={() => setFilterSheetOpen(false)}
           >
+            {/* Origen — first, because it is the coarsest cut in the catalogue
+                and the one the house talks in. It was a chip strip beside the
+                search field until that strip turned out to hijack drag. */}
+            {originOptions.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography
+                  sx={{
+                    fontFamily: qeFont.ui,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: qe.subtle,
+                    mb: 1,
+                  }}
+                >
+                  Origen
+                </Typography>
+                <Box
+                  role="group"
+                  aria-label="Filtrar por origen"
+                  sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}
+                >
+                  {['all', ...originOptions].map((o) => {
+                    const active = originTab === o;
+                    return (
+                      <Chip
+                        key={o}
+                        label={o === 'all' ? 'Todas' : o}
+                        size="small"
+                        onClick={() => setOriginTab(o)}
+                        aria-pressed={active}
+                        sx={{
+                          // Wraps instead of scrolling: four mines fit on two
+                          // lines of a 320px sheet, and a wrapped row cannot
+                          // steal a drag from the sheet it sits in.
+                          flexShrink: 0,
+                          minHeight: 36,
+                          fontSize: '0.75rem',
+                          fontWeight: active ? 700 : 500,
+                          color: active ? qe.onAccent : qe.text,
+                          bgcolor: active ? qe.accent : 'transparent',
+                          border: `1px solid ${active ? qe.accent : qe.border}`,
+                          '&:hover': {
+                            bgcolor: active
+                              ? qe.accent
+                              : alpha(qe.accent, 0.08),
+                          },
+                        }}
+                      />
+                    );
+                  })}
+                </Box>
+              </Box>
+            )}
+
             {savedFilters.presets.length > 0 && (
               <Box
                 sx={{
@@ -534,8 +544,6 @@ export default function TreasureBrowser({
       <ScrollToTop
         scrollContainer={viewMode === 'grid' ? gridScrollEl : null}
       />
-
-      <RedesignVariantToggle />
     </Box>
   );
 }

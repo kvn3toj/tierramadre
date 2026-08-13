@@ -37,6 +37,8 @@ import {
   formatWeightLabel,
 } from '../../../../utils/formatting';
 import { useLanguage } from '../../../../contexts/LanguageContext';
+import { useWhatsAppContact } from '../../../../hooks/useWhatsAppContact';
+import type { ResaleOffer } from '../../../../utils/productOffer';
 import { useReducedMotion } from '../../../../hooks/useReducedMotion';
 import type { Asesor } from '../../../../hooks/useAsesores';
 import type { TreasureItem } from '../../../../types';
@@ -57,31 +59,60 @@ interface AmbassadorProductDetailProps {
    * WhatsApp number) is missing, rather than rendering an inert button.
    */
   asesor?: Pick<Asesor, 'name' | 'whatsapp'>;
+  /**
+   * Present when this piece is one the ambassador OWNS and has offered for
+   * resale. It changes who the CTA talks to: Tierra Madre brokers the deal,
+   * the buyer never negotiates with the ambassador directly.
+   */
+  resale?: ResaleOffer;
 }
 
 export function AmbassadorProductDetail({
   item,
   onBack,
   asesor,
+  resale,
 }: AmbassadorProductDetailProps) {
   const { t } = useLanguage();
   const prefersReducedMotion = useReducedMotion();
 
-  // Same WhatsApp deep link the (removed) FavoriteDetailView used.
-  const whatsapp = asesor?.whatsapp?.trim() || '';
+  // Reventa: la conversación es con NOSOTROS, no con el embajador.
+  //
+  // La pieza es suya y nosotros corredamos: mandar al cliente directo a su
+  // WhatsApp nos saca de una negociación que tenemos que conducir. Así que
+  // cuando hay oferta de reventa el CTA apunta a un admin de Tierra Madre y
+  // el texto nombra la pieza y a su dueño, para que quien conteste sepa de
+  // entrada qué está corredando.
+  const { admins, fetchAdmins } = useWhatsAppContact();
+  useEffect(() => {
+    if (resale) void fetchAdmins();
+  }, [resale, fetchAdmins]);
+
+  // La etiqueta tiene que decir a quién marca. Con reventa el botón NO
+  // contacta al embajador —lo comprobé contra producción: abre el WhatsApp de
+  // la casa— así que dejarlo en «Contactar Embajador» era el rótulo afirmando
+  // algo falso sobre su propia acción.
+  const contactLabel = resale
+    ? 'Contactar a Tierra Madre'
+    : (t.ambassador.museum?.contactAmbassador ?? 'Contactar Embajador');
+
+  const brokerPhone = resale ? (admins[0]?.whatsapp?.trim() ?? '') : '';
+  const whatsapp = resale ? brokerPhone : (asesor?.whatsapp?.trim() || '');
   const canContact = whatsapp.length > 0;
 
   const handleContact = useCallback(() => {
     if (!canContact) return;
     const digits = whatsapp.replace(/\D/g, '');
     const fullNumber = digits.startsWith('57') ? digits : `57${digits}`;
-    const text = `Hola ${asesor?.name ?? ''}, me interesa la esmeralda "${item.nombre}" (Item #${item.item})`;
+    const text = resale
+      ? `Hola Tierra Madre, me interesa la esmeralda "${item.nombre}" (Item #${item.item}) de la colección de ${resale.asesorName}`
+      : `Hola ${asesor?.name ?? ''}, me interesa la esmeralda "${item.nombre}" (Item #${item.item})`;
     window.open(
       `https://wa.me/${fullNumber}?text=${encodeURIComponent(text)}`,
       '_blank',
       'noopener,noreferrer',
     );
-  }, [canContact, whatsapp, asesor?.name, item.nombre, item.item]);
+  }, [canContact, whatsapp, asesor?.name, item.nombre, item.item, resale]);
 
   const [gallerySlides, setGallerySlides] = useState<MediaSlide[]>([]);
   const [activeSlide, setActiveSlide] = useState(0);
@@ -533,7 +564,7 @@ export function AmbassadorProductDetail({
         disabled={!canContact}
         aria-label={
           canContact
-            ? `${t.ambassador.museum?.contactAmbassador ?? 'Contactar Embajador'} por WhatsApp sobre ${item.nombre}`
+            ? `${contactLabel} por WhatsApp sobre ${item.nombre}`
             : undefined
         }
         title={
@@ -558,7 +589,7 @@ export function AmbassadorProductDetail({
           },
         }}
       >
-        {t.ambassador.museum?.contactAmbassador ?? 'Contactar Embajador'}
+        {contactLabel}
       </Button>
 
       {/* Description */}

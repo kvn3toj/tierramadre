@@ -4,6 +4,7 @@
  */
 
 import { useParams, useNavigate } from 'react-router-dom';
+import { useResaleOffers } from '../../../hooks/useResaleOffers';
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import {
   Box,
@@ -61,7 +62,6 @@ import { scrollMainTo } from '../../../utils/mainScroll';
 import { activeLotePiece, resolveLoteDetail } from './loteDetail';
 import { getQuietEmerald, qeFont } from '../../../design-system';
 import { useRedesignVariant } from '../../../hooks/useRedesignVariant';
-import RedesignVariantToggle from '../../../components/redesign/RedesignVariantToggle';
 import { formatCarats } from '../../../utils/formatting';
 import {
   FormulaPanel,
@@ -127,6 +127,26 @@ export default function ProductDetail() {
     convexApi.products.getPublicByItem,
     publicItemId ? { itemId: publicItemId } : 'skip',
   ) as PublishedRow | null | undefined;
+
+  // Reventa del embajador: la ficha vive en SU catálogo, no en el nuestro.
+  //
+  // La pieza es suya —los libros dicen VENDIDA— y nosotros sólo corredamos la
+  // operación, así que la conversación tiene que empezar en su perfil, con su
+  // nombre y su precio. Redirige en `replace` para que el botón "atrás"
+  // vuelva a la grilla y no rebote otra vez contra esta ruta.
+  //
+  // Sólo en la ficha individual: un `groupId` es un lote agrupado, que nunca
+  // es una oferta de reventa de una pieza suelta.
+  const { resaleIndex } = useResaleOffers();
+  const resaleForRoute =
+    !groupId && itemId ? resaleIndex.get(parseInt(itemId, 10)) : undefined;
+
+  useEffect(() => {
+    if (!resaleForRoute || !itemId) return;
+    navigate(`/ambassadors/${resaleForRoute.asesorSlug}/product/${itemId}`, {
+      replace: true,
+    });
+  }, [resaleForRoute, itemId, navigate]);
 
   // Find the product — by groupId for grouped lote/sublote cards, else by item.
   // FALLBACK: when the item isn't in the sheet-derived catalog (e.g. an
@@ -938,8 +958,6 @@ export default function ProductDetail() {
           },
         }}
       />
-
-      <RedesignVariantToggle />
     </Box>
   );
 }

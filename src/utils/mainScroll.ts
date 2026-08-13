@@ -24,9 +24,30 @@ export function getMainScrollHeight(): number {
   return el ? el.scrollHeight - el.clientHeight : 0;
 }
 
+/**
+ * Send the current screen back to its top — the iOS status-bar tap, bound to the
+ * brand lockup in the nav bar.
+ *
+ * Scrolling <main> is not enough on its own. Virtualized screens (the catalogue
+ * grid) scroll inside react-window's container, so <main> sits at 0 the whole
+ * time and moving it does nothing visible. Rather than teach the shell about
+ * every page's internals, reset whatever is actually scrolled: only `scrollTop`
+ * is touched, so horizontal rails (recently viewed, favourites) keep their place.
+ */
+export function scrollActivePageToTop(
+  behavior: ScrollBehavior = 'smooth',
+): void {
+  const main = getMainScrollContainer();
+  if (!main) return;
+  main.scrollTo({ top: 0, behavior });
+  main.querySelectorAll<HTMLElement>('div').forEach((el) => {
+    if (el.scrollTop > 0) el.scrollTo({ top: 0, behavior });
+  });
+}
+
 export function addMainScrollListener(
   handler: EventListener,
-  options?: AddEventListenerOptions
+  options?: AddEventListenerOptions,
 ): () => void {
   const el = getMainScrollContainer();
   if (!el) return () => {};

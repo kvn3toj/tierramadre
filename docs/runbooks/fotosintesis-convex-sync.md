@@ -4,7 +4,31 @@ Sincroniza ediciones hechas **directamente en la hoja SOT** de vuelta a Convex
 (la app ya empuja Convex → Hoja). Sincroniza **sólo las celdas modificadas**
 para no recargar el ancho de banda de Convex ni los límites de la API de Sheets.
 
-- **SOT spreadsheet:** `18w0DcP_4CO-le9_vt_UPGCHXAVXkQ5sugLF4r_o2bVM`
+- **SOT spreadsheet:** `1oRw1KSh8L1CyjUnD_D1S8a3J3ewJ_V8lN1BFR-7Bv9U` (**SOT v3**)
+  > Hasta 2026-08-11 este runbook decía `18w0…` (SOT v2) y ahí seguía instalado
+  > el script, aunque el libro vivo ya era el v3: el v3 no tenía `_SyncQueue`
+  > ni `_Sync`, o sea que el pull hoja→Convex simplemente no existía para él.
+- **Prerrequisito:** en Vercel, `FOTOSINTESIS_SPREADSHEET_ID` debe apuntar al
+  mismo libro. El botón sólo dispara la lectura; quien lee las celdas es
+  `api/get-inventory-rows` / `api/get-table-rows`, y usan **esa** variable, no
+  la del catálogo (`SPREADSHEET_ID`). Si divergen, se sincroniza el libro
+  equivocado en silencio.
+  > **No se puede leer con `vercel env pull`**: está marcada _Sensitive_ en
+  > Vercel, o sea write-only, y la API la devuelve vacía (`=""`) igual que a
+  > otras 44. Un `""` ahí NO significa que esté sin configurar — `SPREADSHEET_ID`
+  > también sale vacío y demostrablemente apunta al v3.
+  >
+  > Se deduce midiendo: el pull lee las celdas por `get-inventory-rows`, así que
+  > el contenido de Convex delata el libro de origen. Comparar los `itemId`:
+  >
+  > ```bash
+  > curl -s -X POST "https://valuable-mule-753.convex.cloud/api/query" \
+  >   -H 'content-type: application/json' \
+  >   -d '{"path":"products:publishedCatalog","args":{},"format":"json"}'
+  > ```
+  >
+  > El 2026-08-11: los 424 ítems de Convex están **100% en la SOT v3** y sólo
+  > 30.9% en la v2 (293 ni existen ahí) ⇒ la variable apunta al v3.
 - **Tabs:** Inventario, Proveedores, Lotes, Clientes, Ventas, Sublotes (las 6).
 - **Trigger:** botón de menú manual `🔄 Convex Sync`. Un `onEdit` simple anota
   los cambios en una hoja oculta `_SyncQueue`; el botón los envía.
@@ -48,7 +72,31 @@ Las HTTP actions se sirven en `<deployment>.convex.site` (hermano del
 - **Producción:** confirma el slug con `npx convex env list` / `npx convex dashboard`.
   ⚠ `.env.production` muestra un slug `.convex.cloud`; cámbialo a `.convex.site`
   y verifica que sea el deployment donde está desplegado `convex/http.ts`.
-  **Producción (resuelto):** `https://wonderful-tortoise-984.convex.site/sync/foto`
+  **Producción (verificado 2026-08-12):** `https://valuable-mule-753.convex.site/sync/foto`
+  > **Historial de slugs muertos — los dos fallan igual de silenciosos.**
+  > Este runbook decía primero `wonderful-tortoise-984` y después
+  > `grand-hippopotamus-162`; ninguno es ya producción. Un deployment retirado
+  > **sigue sirviendo `/sync/foto` y responde 401 idéntico al bueno**, así que el
+  > error no se nota — sincronizás contra una base muerta y el toast dice que
+  > todo salió bien. Por eso **el toast no es verificación**: la única prueba es
+  > editar una celda y confirmar que el dato aparece en el deployment vivo.
+  > Cómo distinguirlos sin adivinar:
+  >
+  > ```bash
+  > # 1. a qué Convex habla el bundle desplegado
+  > curl -s https://tierramadre.app/ | grep -oE '/assets/index-[A-Za-z0-9_-]+\.js' | head -1
+  > curl -s "https://tierramadre.app<ese-js>" | grep -oE 'https://[a-z-]+-[0-9]+\.convex\.cloud' | sort -u
+  > # 2. contrastar con los datos vivos
+  > curl -s -X POST "https://<slug>.convex.cloud/api/query" -H 'content-type: application/json' \
+  >   -d '{"path":"products:publishedCatalog","args":{},"format":"json"}'
+  > ```
+  >
+  > El 2026-08-12, tras la migración de proyecto: `valuable-mule-753` → 430 ítems
+  > (**vivo, producción**), `grand-hippopotamus-162` → 430 (**el viejo**: quedó
+  > como respaldo de sólo lectura con los mismos datos, así que el conteo NO los
+  > distingue — distinguílos por el bundle en vivo, paso 1),
+  > `wonderful-tortoise-984` → 114 (muerto), `admired-jaguar-376` → dev del
+  > proyecto nuevo (sin funciones desplegadas al 2026-08-12).
 
 Como la URL vive en Script Properties, corregir un slug equivocado es un cambio
 de 10 segundos (sin redeploy).

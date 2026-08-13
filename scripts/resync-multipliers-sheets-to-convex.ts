@@ -4,9 +4,9 @@
  * "env var had trailing \n" bug window.
  *
  * Usage:
- *   CONVEX_URL=https://wandering-parrot-148.convex.cloud \
+ *   CONVEX_URL=https://<tu-deployment>.convex.cloud \
  *     npx tsx scripts/resync-multipliers-sheets-to-convex.ts --dry-run
- *   CONVEX_URL=https://wandering-parrot-148.convex.cloud \
+ *   CONVEX_URL=https://<tu-deployment>.convex.cloud \
  *     npx tsx scripts/resync-multipliers-sheets-to-convex.ts
  *
  * Only touches invitations with status active|pending (matches

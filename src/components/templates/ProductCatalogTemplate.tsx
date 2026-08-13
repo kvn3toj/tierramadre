@@ -239,7 +239,7 @@ export default function ProductCatalogTemplate({
   productImage = '',
   price = '$469,231',
   specs = [],
-  logoUrl = '/logo-tierra-madre.png',
+  logoUrl = '/logo-brand.png',
   logoPosition = 'top-left',
 }: ProductCatalogTemplateProps) {
   // Default specs if none provided (matching PDF structure)
@@ -266,7 +266,8 @@ export default function ProductCatalogTemplate({
               src={logoUrl}
               alt="Tierra Madre"
               sx={{
-                height: 70,
+                // Full lockup: needs ≥80px height for the slogan to stay legible
+                height: 100,
                 width: 'auto',
                 filter: 'brightness(0.95)',
               }}
@@ -288,7 +289,8 @@ export default function ProductCatalogTemplate({
                   ${COLORS.emeraldDeep} 30%,
                   #004D40 70%,
                   #00352D 100%)`,
-                clipPath: 'polygon(50% 0%, 85% 15%, 100% 50%, 85% 85%, 50% 100%, 15% 85%, 0% 50%, 15% 15%)',
+                clipPath:
+                  'polygon(50% 0%, 85% 15%, 100% 50%, 85% 85%, 50% 100%, 15% 85%, 0% 50%, 15% 15%)',
                 boxShadow: `
                   0 0 80px ${COLORS.emerald}40,
                   inset 0 0 40px rgba(255, 255, 255, 0.1)
@@ -298,7 +300,8 @@ export default function ProductCatalogTemplate({
                   content: '""',
                   position: 'absolute',
                   inset: '20%',
-                  background: 'linear-gradient(145deg, rgba(255,255,255,0.2) 0%, transparent 50%)',
+                  background:
+                    'linear-gradient(145deg, rgba(255,255,255,0.2) 0%, transparent 50%)',
                   clipPath: 'inherit',
                 },
               }}

@@ -18,11 +18,13 @@ const BASE_UNIT = 8;
 
 export const colors = {
   // Primary - Logo Emerald Green (Luxury + Nature)
-  // Based on logo-white.png color: #00AE7A
-  emeraldPrimary: primitiveColors.emerald[500],    // Logo green - main brand color
-  emeraldDeep: primitiveColors.emerald[900],       // Deep for high contrast
-  emeraldRich: primitiveColors.emerald[600],       // Rich for hover states
-  emeraldLight: primitiveColors.emerald[400],      // Light variant
+  // #00C992 — the brand green of the 2026 "renovación" identity, read directly
+  // from the vector fills of docs/brand/renovacion-2026/. The UI token and the
+  // mark are the same value now; they used to differ (#00AE7A vs #00AF84).
+  emeraldPrimary: primitiveColors.emerald[500], // UI emerald - main brand color
+  emeraldDeep: primitiveColors.emerald[900], // Deep for high contrast
+  emeraldRich: primitiveColors.emerald[600], // Rich for hover states
+  emeraldLight: primitiveColors.emerald[400], // Light variant
 
   // Tailwind-compatible emerald shades (for UI components)
   emerald: primitiveColors.emerald,
@@ -52,13 +54,13 @@ export const colors = {
 // ═══════════════════════════════════════════════════════════════
 
 export const spacing = {
-  xs: BASE_UNIT * 0.5,    // 4px
-  sm: BASE_UNIT,          // 8px
-  md: BASE_UNIT * 2,      // 16px
-  lg: BASE_UNIT * 3,      // 24px
-  xl: BASE_UNIT * 5,      // 40px
-  xxl: BASE_UNIT * 8,     // 64px
-  xxxl: BASE_UNIT * 13,   // 104px
+  xs: BASE_UNIT * 0.5, // 4px
+  sm: BASE_UNIT, // 8px
+  md: BASE_UNIT * 2, // 16px
+  lg: BASE_UNIT * 3, // 24px
+  xl: BASE_UNIT * 5, // 40px
+  xxl: BASE_UNIT * 8, // 64px
+  xxxl: BASE_UNIT * 13, // 104px
 
   // Semantic
   breathingRoom: BASE_UNIT * 8,
@@ -84,21 +86,21 @@ export const typography = {
 
   // Type Scale (Golden Ratio inspired)
   scale: {
-    micro: '0.75rem',     // 12px
-    small: '0.875rem',    // 14px
-    base: '1rem',         // 16px
-    medium: '1.125rem',   // 18px
-    large: '1.5rem',      // 24px
-    xlarge: '2rem',       // 32px
-    display: '3rem',      // 48px
-    monument: '4.5rem',   // 72px
+    micro: '0.75rem', // 12px
+    small: '0.875rem', // 14px
+    base: '1rem', // 16px
+    medium: '1.125rem', // 18px
+    large: '1.5rem', // 24px
+    xlarge: '2rem', // 32px
+    display: '3rem', // 48px
+    monument: '4.5rem', // 72px
   },
 
   // Line Heights
   leading: {
     tight: 1.2,
     normal: 1.4,
-    relaxed: PHI,         // 1.618
+    relaxed: PHI, // 1.618
     loose: 1.8,
   },
 

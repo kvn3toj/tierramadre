@@ -6,16 +6,10 @@ import {
   LABEL_SIZES,
   type LabelSizeId,
 } from './labelSizes';
+// QR target — see qrTarget.ts for why it is spelled the way it is. Shared with
+// LabelDuoPreview so the two layouts can never drift to different URLs.
+import { QR_TARGET_BASE } from './qrTarget';
 
-// QR target. `HTTPS://TIERRAMADRE.APP/P/<id>` (the short `/p/:itemId` alias, in
-// UPPERCASE): uppercase makes the QR encode in *alphanumeric* mode, so even with
-// the `HTTPS://` scheme the symbol stays a low-density version-2 (25×25) that
-// prints/scans off tiny 12mm tape. The scheme matters — a scheme-less payload
-// (`tierramadre.app/...`) makes some scanners run a Google search instead of
-// opening the link. Resolves the same item (React Router is case-insensitive;
-// parseTmQr lower-cases the `/p/` segment); itemIds are numeric/uppercase so no
-// case is lost.
-const QR_TARGET_BASE = 'HTTPS://TIERRAMADRE.APP/P/';
 const LOGO_URL = '/logo-symbol.png';
 
 /**

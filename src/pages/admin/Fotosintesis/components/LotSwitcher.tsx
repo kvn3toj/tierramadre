@@ -1,9 +1,10 @@
-import { useMemo } from "react";
-import { Box } from "@mui/material";
-import { ChevronDown } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { getFoto, fontFamilies } from "../../../../design-system";
-import { useConvexQuery, convexApi } from "../../../../lib/convex-safe";
+import { useMemo } from 'react';
+import { Box } from '@mui/material';
+import { ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { getFoto, fontFamilies } from '../../../../design-system';
+import { useConvexQuery, convexApi } from '../../../../lib/convex-safe';
+import { readFreshSessionToken } from '../../../../utils/sessionToken';
 
 interface LotSwitcherProps {
   currentLoteId: string;
@@ -21,16 +22,18 @@ interface LotSwitcherProps {
  */
 export function LotSwitcher({
   currentLoteId,
-  homePath = "/admin/fotosintesis/lots",
+  homePath = '/admin/fotosintesis/lots',
 }: LotSwitcherProps) {
-  const foto = getFoto("light");
+  const foto = getFoto('light');
   const navigate = useNavigate();
-  const allLots = useConvexQuery(convexApi.lots.list, {});
+  const allLots = useConvexQuery(convexApi.lots.list, {
+    sessionToken: readFreshSessionToken() ?? undefined,
+  });
 
   const grouped = useMemo(() => {
-    const open = (allLots ?? []).filter((l) => l.estado === "abierto");
-    const closed = (allLots ?? []).filter((l) => l.estado === "cerrado");
-    const published = (allLots ?? []).filter((l) => l.estado === "publicado");
+    const open = (allLots ?? []).filter((l) => l.estado === 'abierto');
+    const closed = (allLots ?? []).filter((l) => l.estado === 'cerrado');
+    const published = (allLots ?? []).filter((l) => l.estado === 'publicado');
     return { open, closed, published };
   }, [allLots]);
 
@@ -40,26 +43,26 @@ export function LotSwitcher({
   return (
     <Box
       sx={{
-        position: "relative",
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "10px",
+        position: 'relative',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '10px',
         minWidth: 0,
       }}
     >
       <Box
         sx={{
           fontFamily: fontFamilies.mono,
-          fontVariantNumeric: "tabular-nums",
+          fontVariantNumeric: 'tabular-nums',
           fontSize: { xs: 32, sm: 38, md: 42 },
           fontWeight: 300,
-          letterSpacing: "-0.055em",
+          letterSpacing: '-0.055em',
           lineHeight: 1,
           color: foto.ink.primary,
-          maxWidth: "100%",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
+          maxWidth: '100%',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         }}
       >
         {currentLoteId}
@@ -68,18 +71,18 @@ export function LotSwitcher({
       <Box
         aria-hidden
         sx={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "4px",
-          padding: "4px 8px",
-          marginTop: { xs: "2px", md: "8px" },
-          borderRadius: "6px",
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          padding: '4px 8px',
+          marginTop: { xs: '2px', md: '8px' },
+          borderRadius: '6px',
           background: foto.surfaces.inset,
           border: `1px solid ${foto.surfaces.edge}`,
           color: foto.ink.secondary,
           fontSize: 10.5,
           fontWeight: 500,
-          letterSpacing: "0.02em",
+          letterSpacing: '0.02em',
         }}
       >
         Cambiar
@@ -96,13 +99,13 @@ export function LotSwitcher({
           navigate(`${homePath}/${next}`);
         }}
         sx={{
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
           opacity: 0,
-          cursor: totalCount > 1 ? "pointer" : "not-allowed",
-          appearance: "none",
-          width: "100%",
-          height: "100%",
+          cursor: totalCount > 1 ? 'pointer' : 'not-allowed',
+          appearance: 'none',
+          width: '100%',
+          height: '100%',
           fontSize: 16, // anti-zoom on iOS Safari
         }}
         disabled={totalCount <= 1}

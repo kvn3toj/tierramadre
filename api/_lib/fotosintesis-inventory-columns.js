@@ -49,7 +49,13 @@ export const FOTO_INVENTARIO_COLUMNS = [
   { header: 'Color', key: 'color' }, // E
   { header: 'Calidad', key: 'calidad' }, // F
   { header: 'Cant.', key: 'cantidad', numeric: true }, // G
-  { header: 'Talla', key: 'talla' }, // H
+  // H — la FORMA DE TALLA de la gema (Redonda, Esmeralda, Lágrima…). El
+  // encabezado decía "Talla" y la columna guardaba dos cosas distintas: la
+  // forma en ~486 filas y el ARO del anillo (5–9) en 37. Renombrada a "Corte"
+  // el 2026-08-11 y los aros movidos a `tallaAnillo` (BF). La clave sigue
+  // siendo `talla` porque en el código ya significaba el corte
+  // (src/components/esmereogenesis/cutCharacters.ts).
+  { header: 'Corte', key: 'talla' }, // H
   { header: 'Medidas', key: 'medidas' }, // I
   { header: 'Medidas (valores)', key: 'medidasValores' }, // J
   { header: 'Categoría', key: 'categoria' }, // K
@@ -152,6 +158,14 @@ export const FOTO_INVENTARIO_COLUMNS = [
   { header: 'Anima: notas relacionadas', key: 'animaNotas', preserve: true }, // BC
   { header: 'Fuentes', key: 'fuentes', preserve: true }, // BD
   { header: 'Notas / conflictos', key: 'notasConflictos', preserve: true }, // BE
+  // ── Aro del anillo (BF) ──
+  // Añadida el 2026-08-11 al desdoblar la vieja columna H, que mezclaba la
+  // forma de talla con el aro. Va APPEND al final —y no junto a H— porque este
+  // array ES el orden posicional de la hoja: insertar en el medio correría
+  // todas las columnas siguientes y desalinearía las 523 filas vivas.
+  // Sin `preserve`: la app sí escribe este valor (a diferencia del bloque
+  // AQ–BE, que mantiene una persona a mano).
+  { header: 'Talla (anillo)', key: 'tallaAnillo' }, // BF
 ];
 
 /** Ordered header labels (row 1 of the Inventario tab). */

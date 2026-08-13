@@ -52,8 +52,19 @@ export function ManageFavoritesView({
   const [searchQuery, setSearchQuery] = useState('');
 
   // T4: per-ambassador overrides (custom name / price)
-  const { getOverride, setOverride, clearOverride } =
-    useAmbassadorOverrides(asesorSlug);
+  //
+  // `canWrite: true` — this view is owner-only by route: AsesorProfilePage
+  // redirects any non-owner away from /ambassadors/:slug/favoritas, so if it
+  // is mounted at all the viewer owns the profile. It is a hint for the write
+  // queue, not a permission: the server re-derives ownership from the
+  // caller's session against the roster and 403s anyone else.
+  const {
+    getOverride,
+    setOverride,
+    clearOverride,
+    isForResale,
+    setForResale,
+  } = useAmbassadorOverrides(asesorSlug, true);
   const [editingProduct, setEditingProduct] = useState<TreasureItem | null>(
     null,
   );
@@ -371,6 +382,23 @@ export function ManageFavoritesView({
         </Box>
       )}
 
+      {/* Todas las piezas del embajador, no sólo las favoritas.
+          El lápiz de cada fila abre el MISMO editor que las favoritas: una
+          pieza que no quiere destacar igual puede necesitar nombre, precio o
+          reventa, y antes no tenía por dónde. */}
+      <Typography
+        sx={{
+          fontSize: '0.6875rem',
+          fontWeight: 700,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: 'var(--tm-subtle)',
+          mb: 1,
+        }}
+      >
+        Todas mis piezas
+      </Typography>
+
       {/* Search Available */}
       <TextField
         fullWidth
@@ -441,6 +469,34 @@ export function ManageFavoritesView({
                 #{item.item}
               </Typography>
             </Box>
+            {isForResale(item.item) && (
+              <Typography
+                sx={{
+                  fontSize: '0.625rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  color: 'var(--tm-accent)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                En reventa
+              </Typography>
+            )}
+            <IconButton
+              onClick={() => setEditingProduct(item)}
+              aria-label={`Editar ${item.nombre}`}
+              size="small"
+              sx={{
+                width: 44,
+                height: 44,
+                border: '1px solid var(--tm-border)',
+                color: 'var(--tm-muted)',
+                '&:hover': { color: 'var(--tm-accent)' },
+              }}
+            >
+              <Pencil size={16} />
+            </IconButton>
             <IconButton
               onClick={() => onAddFavorite(String(item.item))}
               aria-label={`${t.actions.add} ${item.nombre}`}
@@ -466,6 +522,13 @@ export function ManageFavoritesView({
         currentOverride={
           editingProduct ? getOverride(editingProduct.item) : undefined
         }
+        forResale={
+          editingProduct ? isForResale(editingProduct.item) : false
+        }
+        onForResaleChange={(value) => {
+          if (!editingProduct) return;
+          setForResale(editingProduct.item, value);
+        }}
         onClose={() => setEditingProduct(null)}
         onSave={(patch) => {
           if (!editingProduct) return;

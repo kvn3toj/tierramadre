@@ -11,9 +11,15 @@ import { bumpInventoryTotal } from './products';
 import { omitFotosintesisOnly, omitInternosV4 } from './_lib/saleSafe';
 import { preponderanciaSum, balancesTo100 } from './_lib/lotMath';
 import { computePrecioFinal } from './_lib/pricing';
-import { withPublishStamp } from './_lib/publishState';
+import { withPublishStamp, lotProvenance } from './_lib/publishState';
+import { bumpCatalogVersionIfPublished } from './_lib/catalogVersion';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
+import {
+  isStaffSession,
+  isStaffOrBotSession,
+  requireStaffOrBotSession,
+} from './_lib/requireStaffSession';
 
 const tipoItemValidator = v.union(
   v.literal('gema'),
@@ -25,29 +31,25 @@ const tipoItemValidator = v.union(
 
 /** Resolve a lotItems join row by its productInventory itemId — used by the
  *  QR scanner to jump straight to an item's edit view without the operator
- *  needing to know which lote it lives in. */
+ *  needing to know which lote it lives in. Also read by anima-bot's
+ *  `casillaV4` (anima-bot/src/fotosintesis/client.ts) to resolve a v4 casilla
+ *  state, so it accepts EITHER a staff session or the bot secret — see
+ *  `_lib/requireStaffSession.ts`'s `isStaffOrBotSession`. */
 /**
- * `sessionToken` y `botSecret` se ACEPTAN acá sin usarse todavía, y eso no es un
- * descuido: es lo que desarma un lockstep entre dos repos.
+ * EL LOCKSTEP CON anima-bot YA ESTÁ VIVO (merge de `feat/wizards-viabot` a `main`).
  *
- * `main` ya gateó esta query (`isStaffOrBotSession`) el 2026-08-06 y adaptó sus dos
- * llamadores web para que manden `sessionToken`. Esta rama no lo tiene, así que al
- * mergear el gate entra y el ÚNICO llamador que queda afuera es anima-bot:
- * `FotosintesisClient.casillaV4` llama sin credencial, recibiría `null`, y el wizard
- * traduce `null` a «no es una casilla v4 — es del riel viejo». O sea, el tap del
- * tablero y el deep link `cas_` se romperían el día del merge, con un mensaje que
- * culpa a los datos y no al deploy.
+ * La rama de wizards declaraba `sessionToken`/`botSecret` acá SIN gatear, a propósito, para
+ * que anima-bot pudiera empezar a mandar `botSecret` antes del merge: Convex **rechaza
+ * argumentos no declarados**, así que el commit del bot no podía aterrizar antes. Con el merge
+ * llega el gate de `main`, y a partir de ahora **un llamador sin credencial recibe `null`**.
  *
- * El problema para arreglarlo antes era que Convex **rechaza argumentos no
- * declarados** (medido contra dev: `{itemId, botSecret}` daba `Server Error`), así que
- * el commit de anima-bot no podía aterrizar ni antes ni después del merge — tenía que
- * ser el mismo día. Declarándolos acá, el bot puede empezar a mandar `botSecret`
- * cuando quiera: hoy se ignora, y después del merge lo honra el gate que llega de
- * `main`.
+ * Qué se rompe si el bot no lo manda: `casillaV4` recibe `null`, y el wizard traduce `null` a
+ * «no es una casilla v4 — es del riel viejo». O sea que el tap del tablero y el deep link
+ * `cas_` fallan **culpando a los datos y no al deploy**, que es el peor modo de fallo posible.
  *
- * No se agrega el gate en esta rama a propósito: eso sí rompería a los llamadores que
- * todavía no mandan credencial. El gate viene con el merge, junto con los llamadores
- * web ya adaptados.
+ * El commit que lo cierra del lado del bot es `fix/botsecret-queries-gateadas` (`cd7667d`), que
+ * mete un `queryAuthed` y lo usa acá, en `providers:list` y en `products:list`. **Verificado el
+ * 2026-08-13: NO está en `main` de anima-bot.** Tiene que aterrizar junto con este merge.
  *
  * Ver `anima-bot/docs/reconciliacion-v4-tierramadre.md` §4.1 F3.
  */
@@ -57,7 +59,8 @@ export const getByItemId = query({
     sessionToken: v.optional(v.string()),
     botSecret: v.optional(v.string()),
   },
-  handler: async (ctx, { itemId }) => {
+  handler: async (ctx, { itemId, sessionToken, botSecret }) => {
+    if (!(await isStaffOrBotSession({ sessionToken, botSecret }))) return null;
     const row = await ctx.db
       .query('lotItems')
       .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
@@ -69,8 +72,9 @@ export const getByItemId = query({
 });
 
 export const listByLote = query({
-  args: { loteId: v.string() },
-  handler: async (ctx, { loteId }) => {
+  args: { loteId: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { loteId, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const items = await ctx.db
       .query('lotItems')
       .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
@@ -118,7 +122,20 @@ function normalizeMedidas(s: string): string {
  * here, matching products.publishedCatalog's own convention (lotItems.create
  * always sets both together; _remove clears loteId on the orphaned row).
  *
- * No auth gate — public read, same as lots.list / providers.list.
+ * GATED (2026-08-05, F7): was "no auth gate — public read", but the same
+ * unauthenticated-POST audit that closed products.list/clients.list/etc.
+ * showed this returns full productInventory rows (via omitFotosintesisOnly,
+ * not a public projection) to anyone holding the Convex deployment URL. Now
+ * requires EITHER a verified staff session OR the anima-bot shared secret
+ * (`ANIMA_BOT_SECRET`) — see `_lib/requireStaffSession.ts`'s
+ * `isStaffOrBotSession`. The bot secret path exists because this is exactly
+ * `searchItems`'s stock-search query above, confirmed against
+ * anima-bot/src/fotosintesis/client.ts. The bot's `.env` carries
+ * `ANIMA_BOT_SECRET`, and since 2026-08 its client sends it on EVERY call,
+ * queries included (`client.ts:391-396`) — this docblock used to say "its
+ * query calls don't send it yet", which stopped being true and left anyone
+ * reading it here with the opposite conclusion. `client.ts:371-383` documents
+ * that gap as a past incident.
  */
 export const search = query({
   args: {
@@ -126,8 +143,16 @@ export const search = query({
     medidas: v.optional(v.string()),
     minCantidad: v.optional(v.number()),
     loteId: v.optional(v.string()),
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
   },
-  handler: async (ctx, { tipo, medidas, minCantidad, loteId }) => {
+  handler: async (
+    ctx,
+    { tipo, medidas, minCantidad, loteId, sessionToken, botSecret },
+  ) => {
+    // Lanza si la credencial vino y no sirve; `[]` solo cuando no vino ninguna.
+    if (!(await requireStaffOrBotSession({ sessionToken, botSecret })))
+      return [];
     // by_loteId is the only relevant index available — tipo has none, so it
     // (like medidas) is filtered in memory below regardless.
     const rows = loteId
@@ -173,11 +198,20 @@ export const search = query({
 /**
  * Cumulative preponderancia for a given lot. Reactive — the wizard
  * subscribes to this so the PreponderanciaTracker updates as items are
- * created/edited.
+ * created/edited. Also read by anima-bot's `preponderanciaState`
+ * (anima-bot/src/fotosintesis/client.ts) — accepts either a staff session or
+ * the bot secret, see `_lib/requireStaffSession.ts`'s `isStaffOrBotSession`.
  */
 export const sumPreponderancia = query({
-  args: { loteId: v.string() },
-  handler: async (ctx, { loteId }) => {
+  args: {
+    loteId: v.string(),
+    sessionToken: v.optional(v.string()),
+    botSecret: v.optional(v.string()),
+  },
+  handler: async (ctx, { loteId, sessionToken, botSecret }) => {
+    if (!(await isStaffOrBotSession({ sessionToken, botSecret }))) {
+      return { sum: 0, count: 0, remaining: 100, overflow: 0 };
+    }
     const items = await ctx.db
       .query('lotItems')
       .withIndex('by_loteId', (q) => q.eq('loteId', loteId))
@@ -364,7 +398,13 @@ export const _create = internalMutation({
       loteId: args.loteId,
       preponderancia: args.preponderancia,
       costoBaseCOP,
-      ...withPublishStamp(null, args.mostrarEnCatalogo ?? false),
+      ...withPublishStamp(
+        null,
+        args.mostrarEnCatalogo ?? false,
+        args.mostrarEnCatalogo
+          ? await lotProvenance(ctx, args.loteId)
+          : undefined,
+      ),
       tipo: args.tipo,
       procedencia: args.procedencia,
       observacion: args.observacion,
@@ -394,6 +434,13 @@ export const _create = internalMutation({
     // scanning up to 1000 full productInventory documents. total is
     // monotonic — a new lot item only ever adds to it.
     await bumpInventoryTotal(ctx, 1);
+
+    // Fix 1C — a wizard capture only reaches the public catalog when it is
+    // created already published, which is the uncommon case; the guard keeps
+    // ordinary captures from invalidating anyone's cache.
+    await bumpCatalogVersionIfPublished(ctx, null, {
+      mostrarEnCatalogo: args.mostrarEnCatalogo ?? false,
+    });
 
     // Single audit row captures the wizard creation. The same auditId
     // feeds api.products.pushToSheet so the audit moves from "pending"
@@ -952,7 +999,13 @@ export const _updateGemaFields = internalMutation({
       if (patch.mostrarEnCatalogo !== (product.mostrarEnCatalogo ?? false)) {
         Object.assign(
           productPatch,
-          withPublishStamp(product, patch.mostrarEnCatalogo),
+          withPublishStamp(
+            product,
+            patch.mostrarEnCatalogo,
+            patch.mostrarEnCatalogo
+              ? await lotProvenance(ctx, product.loteId)
+              : undefined,
+          ),
         );
         changes.push({
           field: 'mostrarEnCatalogo',
@@ -985,6 +1038,16 @@ export const _updateGemaFields = internalMutation({
       ...productPatch,
       syncStatus: 'pending' as const,
       syncError: undefined,
+    });
+
+    // Fix 1C — this is the per-item editor: it can flip the publish toggle AND
+    // it rewrites projected fields (precio, foto, the Fotosíntesis
+    // characteristics). Guarded on before/after so an edit to a reserved piece
+    // invalidates nothing, while both a publish and an unpublish do.
+    await bumpCatalogVersionIfPublished(ctx, product, {
+      mostrarEnCatalogo:
+        (productPatch as { mostrarEnCatalogo?: boolean }).mostrarEnCatalogo ??
+        product.mostrarEnCatalogo,
     });
     if (
       nextPreponderancia !== undefined &&

@@ -8,9 +8,19 @@
  * - stats: Get overall view statistics (GET)
  * - product: Get detailed views for a specific product (GET, ?itemId=X)
  * - user: Get view history for a specific user (GET, ?email=X or ?name=X)
+ * - by-inviter: Get views for guests of a specific inviter (GET, ?inviterName=X)
  * - recent: Get most recent activity (GET)
+ *
+ * Converted from .js to .ts (2026-08-06, PII lockdown) so the session-token
+ * imports below (`./_lib/bearer.js` / `./_lib/sessionToken.js`, both `.ts`
+ * sources) resolve the same way they already do for the sibling gates in
+ * api/invitations.ts and api/vitrina.ts — a plain `.js` importer does not
+ * get TypeScript's `.js`→`.ts` extension resolution, which is what this
+ * file needs for `verifiedSessionEmail` below.
  */
 
+import type { sheets_v4 } from '@googleapis/sheets';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   sendError,
   APP_SPREADSHEET_ID,
@@ -20,28 +30,64 @@ import {
   withApiHandler,
 } from './_lib/index.js';
 import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
+import { extractBearer } from './_lib/bearer.js';
+import { isSessionToken, verifySessionToken } from './_lib/sessionToken.js';
 import { api } from '../convex/_generated/api.js';
+
+type Sheets = sheets_v4.Sheets;
+/** A raw row from `sheets.spreadsheets.values.get` — cell values are strings. */
+type Row = string[];
+/** POST bodies use loose JSON shapes. */
+type ApiBody = Record<string, unknown>;
 
 const SHEET_NAME = SHEETS.PRODUCT_VIEWS;
 const HEADERS = [
-  'timestamp', 'itemId', 'productName', 'sessionId', 'referrer',
-  'deviceType', 'browser', 'country', 'userName', 'userEmail', 'userRole', 'inviterName'
+  'timestamp',
+  'itemId',
+  'productName',
+  'sessionId',
+  'referrer',
+  'deviceType',
+  'browser',
+  'country',
+  'userName',
+  'userEmail',
+  'userRole',
+  'inviterName',
 ];
+
+/**
+ * Verifies a `tms1` app session token from the `Authorization: Bearer …`
+ * header and returns its email, or null. Same contract as
+ * `verifiedSessionEmail` in api/invitations.ts / api/vitrina.ts — a raw
+ * Google ID token, whatever its shape, is not a session token and returns
+ * null here, which the gated actions below turn into a 401. Exported for
+ * tests. (2026-08-06, PII lockdown — sibling door to
+ * convex/productViews.ts's guestActivity/byInviterAndGuest gate.)
+ */
+export function verifiedSessionEmail(
+  authHeader?: string | string[],
+): string | null {
+  const token = extractBearer(authHeader);
+  if (!token || !isSessionToken(token)) return null;
+  return verifySessionToken(token)?.email ?? null;
+}
 
 /**
  * Detect device type from User-Agent
  */
-function detectDevice(userAgent) {
+function detectDevice(userAgent: string): string {
   const ua = (userAgent || '').toLowerCase();
   if (/ipad|tablet|playbook|silk/.test(ua)) return 'tablet';
-  if (/mobile|android|iphone|ipod|blackberry|opera mini|iemobile/.test(ua)) return 'mobile';
+  if (/mobile|android|iphone|ipod|blackberry|opera mini|iemobile/.test(ua))
+    return 'mobile';
   return 'desktop';
 }
 
 /**
  * Extract browser from User-Agent
  */
-function detectBrowser(userAgent) {
+function detectBrowser(userAgent: string): string {
   const ua = (userAgent || '').toLowerCase();
   if (ua.includes('firefox')) return 'Firefox';
   if (ua.includes('edg/')) return 'Edge';
@@ -51,21 +97,44 @@ function detectBrowser(userAgent) {
   return 'Other';
 }
 
+interface TrackViewBody {
+  itemId?: string | number;
+  productName?: string;
+  sessionId?: string;
+  referrer?: string;
+  userName?: string;
+  userEmail?: string;
+  userRole?: string;
+  country?: string;
+  inviterName?: string;
+}
+
 /**
  * Track a product view (POST)
  */
-async function trackView(sheets, body, headers) {
+async function trackView(
+  sheets: Sheets,
+  body: TrackViewBody,
+  headers: VercelRequest['headers'],
+): Promise<Record<string, unknown>> {
   const {
-    itemId, productName, sessionId, referrer,
-    userName, userEmail, userRole, country, inviterName,
+    itemId,
+    productName,
+    sessionId,
+    referrer,
+    userName,
+    userEmail,
+    userRole,
+    country,
+    inviterName,
   } = body;
 
   if (!itemId) {
     return { success: false, error: 'itemId is required' };
   }
 
-  const userAgent = headers['user-agent'] || '';
-  const row = [
+  const userAgent = (headers['user-agent'] as string) || '';
+  const row: (string | number)[] = [
     new Date().toISOString(),
     itemId,
     productName || '',
@@ -93,13 +162,13 @@ async function trackView(sheets, body, headers) {
 /**
  * Get overall view statistics (GET)
  */
-async function getStats(sheets) {
+async function getStats(sheets: Sheets): Promise<Record<string, unknown>> {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: APP_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!A:L`,
   });
 
-  const rows = response.data.values || [];
+  const rows = (response.data.values || []) as Row[];
   if (rows.length <= 1) {
     return {
       success: true,
@@ -119,23 +188,47 @@ async function getStats(sheets) {
   }
 
   const dataRows = rows.slice(1);
-  const productCounts = {};
-  const deviceCounts = { desktop: 0, mobile: 0, tablet: 0 };
-  const browserCounts = {};
-  const viewerCounts = {}; // Track views per user
+  const productCounts: Record<string, number> = {};
+  const deviceCounts: Record<string, number> = {
+    desktop: 0,
+    mobile: 0,
+    tablet: 0,
+  };
+  const browserCounts: Record<string, number> = {};
+  interface ViewerCount {
+    name: string;
+    email: string | null;
+    role: string;
+    views: number;
+    lastSeen: string;
+  }
+  const viewerCounts: Record<string, ViewerCount> = {}; // Track views per user
 
   // Time boundaries
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const weekStart = todayStart - (7 * 24 * 60 * 60 * 1000);
+  const todayStart = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  ).getTime();
+  const weekStart = todayStart - 7 * 24 * 60 * 60 * 1000;
 
   let todayViews = 0;
   let weekViews = 0;
   let guestViews = 0;
   let loggedInViews = 0;
 
+  interface ActivityEntry {
+    timestamp: string;
+    itemId: number;
+    productName: string;
+    userName: string | null;
+    userEmail: string | null;
+    userRole: string;
+    inviterName: string | null;
+  }
   // Recent activity (collect all, sort later)
-  const allActivity = [];
+  const allActivity: ActivityEntry[] = [];
 
   for (const row of dataRows) {
     const timestamp = row[0];
@@ -186,7 +279,7 @@ async function getStats(sheets) {
     const inviterName = row[11] || null;
     allActivity.push({
       timestamp,
-      itemId: parseInt(itemId),
+      itemId: parseInt(itemId, 10),
       productName,
       userName: userName || null,
       userEmail: userEmail || null,
@@ -199,7 +292,7 @@ async function getStats(sheets) {
   const topProducts = Object.entries(productCounts)
     .map(([key, count]) => {
       const [itemId, productName] = key.split('|');
-      return { itemId: parseInt(itemId), productName, views: count };
+      return { itemId: parseInt(itemId, 10), productName, views: count };
     })
     .sort((a, b) => b.views - a.views)
     .slice(0, 20);
@@ -211,11 +304,14 @@ async function getStats(sheets) {
 
   // Recent activity (sorted by timestamp, newest first)
   const recentActivity = allActivity
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    )
     .slice(0, 50);
 
   // Build views object mapping itemId to view count
-  const views = {};
+  const views: Record<string, number> = {};
   for (const [key, count] of Object.entries(productCounts)) {
     const [itemId] = key.split('|');
     views[itemId] = count;
@@ -243,7 +339,10 @@ async function getStats(sheets) {
 /**
  * Get detailed views for a specific product (GET ?itemId=X)
  */
-async function getProductViews(sheets, itemId) {
+async function getProductViews(
+  sheets: Sheets,
+  itemId: string | undefined,
+): Promise<Record<string, unknown>> {
   if (!itemId) {
     return { success: false, error: 'itemId is required' };
   }
@@ -253,10 +352,10 @@ async function getProductViews(sheets, itemId) {
     range: `'${SHEET_NAME}'!A:L`,
   });
 
-  const rows = response.data.values || [];
+  const rows = (response.data.values || []) as Row[];
   const emptyResponse = {
     success: true,
-    itemId: parseInt(itemId),
+    itemId: parseInt(itemId, 10),
     productName: null,
     totalViews: 0,
     uniqueViewers: 0,
@@ -275,7 +374,7 @@ async function getProductViews(sheets, itemId) {
   }
 
   // Filter rows for this product
-  const productRows = rows.slice(1).filter(row => row[1] === String(itemId));
+  const productRows = rows.slice(1).filter((row) => row[1] === String(itemId));
 
   if (productRows.length === 0) {
     return emptyResponse;
@@ -285,21 +384,30 @@ async function getProductViews(sheets, itemId) {
   const productName = productRows[0][2] || null;
 
   // Aggregation maps
-  const viewerMap = new Map(); // key: email || name || sessionId
-  const deviceCounts = {};
-  const browserCounts = {};
-  const countryCounts = {};
-  const dateCounts = {};
-  let loggedInViewers = 0;
-  let guestViewers = 0;
-  const loggedInViewerSet = new Set();
-  const guestViewerSet = new Set();
+  interface ViewerAgg {
+    name: string;
+    email: string | null;
+    role: string;
+    isLoggedIn: boolean;
+    views: number;
+    firstView: string;
+    lastView: string;
+    devices: Set<string>;
+    browsers: Set<string>;
+    countries: Set<string>;
+  }
+  const viewerMap = new Map<string, ViewerAgg>(); // key: email || name || sessionId
+  const deviceCounts: Record<string, number> = {};
+  const browserCounts: Record<string, number> = {};
+  const countryCounts: Record<string, number> = {};
+  const dateCounts: Record<string, number> = {};
+  const loggedInViewerSet = new Set<string>();
+  const guestViewerSet = new Set<string>();
 
   // Process each view
   for (const row of productRows) {
     const timestamp = row[0];
     const sessionId = row[3] || '';
-    const referrer = row[4] || '';
     const deviceType = row[5] || 'unknown';
     const browser = row[6] || 'unknown';
     const country = row[7] || 'unknown';
@@ -345,7 +453,7 @@ async function getProductViews(sheets, itemId) {
       });
     }
 
-    const viewer = viewerMap.get(viewerKey);
+    const viewer = viewerMap.get(viewerKey)!;
     viewer.views++;
     viewer.devices.add(deviceType);
     viewer.browsers.add(browser);
@@ -362,7 +470,7 @@ async function getProductViews(sheets, itemId) {
 
   // Convert viewer map to array
   const viewers = Array.from(viewerMap.values())
-    .map(v => ({
+    .map((v) => ({
       name: v.name,
       email: v.email,
       role: v.role,
@@ -383,7 +491,7 @@ async function getProductViews(sheets, itemId) {
 
   // Build recent views array
   const recentViews = productRows
-    .map(row => ({
+    .map((row) => ({
       timestamp: row[0],
       userName: row[8] || 'Invitado',
       userEmail: row[9] || null,
@@ -395,12 +503,15 @@ async function getProductViews(sheets, itemId) {
       country: row[7] || '',
       referrer: row[4] || null,
     }))
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    )
     .slice(0, 50);
 
   return {
     success: true,
-    itemId: parseInt(itemId),
+    itemId: parseInt(itemId, 10),
     productName,
     totalViews: productRows.length,
     uniqueViewers: viewerMap.size,
@@ -418,7 +529,11 @@ async function getProductViews(sheets, itemId) {
 /**
  * Get view history for a specific user (GET ?email=X or ?name=X)
  */
-async function getUserViews(sheets, email, name) {
+async function getUserViews(
+  sheets: Sheets,
+  email: string | undefined,
+  name: string | undefined,
+): Promise<Record<string, unknown>> {
   if (!email && !name) {
     return { success: false, error: 'email or name is required' };
   }
@@ -428,11 +543,17 @@ async function getUserViews(sheets, email, name) {
     range: `'${SHEET_NAME}'!A:L`,
   });
 
-  const rows = response.data.values || [];
+  const rows = (response.data.values || []) as Row[];
   if (rows.length <= 1) {
     return {
       success: true,
-      user: { email: email || null, name: name || null, role: 'guest', firstSeen: null, lastSeen: null },
+      user: {
+        email: email || null,
+        name: name || null,
+        role: 'guest',
+        firstSeen: null,
+        lastSeen: null,
+      },
       totalViews: 0,
       uniqueProducts: 0,
       products: [],
@@ -446,13 +567,34 @@ async function getUserViews(sheets, email, name) {
   const normalizedName = name?.toLowerCase().trim();
 
   // Collect all matching views
-  const matchingViews = [];
-  const productMap = {}; // Track per-product stats
-  const deviceCounts = {};
-  const browserCounts = {};
-  let userInfo = { email: null, name: null, role: 'guest' };
-  let firstSeen = null;
-  let lastSeen = null;
+  interface MatchingView {
+    timestamp: string;
+    itemId: number;
+    productName: string;
+    deviceType: string;
+    browser: string;
+    country: string;
+  }
+  const matchingViews: MatchingView[] = [];
+  interface ProductMapEntry {
+    itemId: number;
+    productName: string;
+    views: number;
+    firstView: string;
+    lastView: string;
+    devices: Set<string>;
+    browsers: Set<string>;
+  }
+  const productMap: Record<string, ProductMapEntry> = {}; // Track per-product stats
+  const deviceCounts: Record<string, number> = {};
+  const browserCounts: Record<string, number> = {};
+  let userInfo: { email: string | null; name: string | null; role: string } = {
+    email: null,
+    name: null,
+    role: 'guest',
+  };
+  let firstSeen: string | null = null;
+  let lastSeen: string | null = null;
 
   for (const row of rows.slice(1)) {
     const rowEmail = (row[9] || '').toLowerCase().trim();
@@ -476,7 +618,11 @@ async function getUserViews(sheets, email, name) {
 
     // Update user info (take the most recent)
     if (userName || userEmail) {
-      userInfo = { email: userEmail || null, name: userName || null, role: userRole };
+      userInfo = {
+        email: userEmail || null,
+        name: userName || null,
+        role: userRole,
+      };
     }
 
     // Track first/last seen
@@ -491,7 +637,7 @@ async function getUserViews(sheets, email, name) {
     // Track per-product stats
     if (!productMap[itemId]) {
       productMap[itemId] = {
-        itemId: parseInt(itemId),
+        itemId: parseInt(itemId, 10),
         productName,
         views: 0,
         firstView: timestamp,
@@ -515,12 +661,19 @@ async function getUserViews(sheets, email, name) {
     browserCounts[browser] = (browserCounts[browser] || 0) + 1;
 
     // Collect for recent views
-    matchingViews.push({ timestamp, itemId: parseInt(itemId), productName, deviceType, browser, country });
+    matchingViews.push({
+      timestamp,
+      itemId: parseInt(itemId, 10),
+      productName,
+      deviceType,
+      browser,
+      country,
+    });
   }
 
   // Convert productMap to array and sort by views
   const products = Object.values(productMap)
-    .map(p => ({
+    .map((p) => ({
       ...p,
       devices: Array.from(p.devices),
       browsers: Array.from(p.browsers),
@@ -529,7 +682,10 @@ async function getUserViews(sheets, email, name) {
 
   // Sort recent views by timestamp (newest first)
   const recentViews = matchingViews
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    )
     .slice(0, 100);
 
   return {
@@ -553,7 +709,11 @@ async function getUserViews(sheets, email, name) {
 /**
  * Get views by inviter name (GET ?action=by-inviter&inviterName=X)
  */
-async function getViewsByInviter(sheets, inviterName, limit = 500) {
+async function getViewsByInviter(
+  sheets: Sheets,
+  inviterName: string | undefined,
+  limit = 500,
+): Promise<Record<string, unknown>> {
   if (!inviterName) return { success: true, views: [] };
 
   const response = await sheets.spreadsheets.values.get({
@@ -561,13 +721,14 @@ async function getViewsByInviter(sheets, inviterName, limit = 500) {
     range: `'${SHEET_NAME}'!A:L`,
   });
 
-  const rows = response.data.values || [];
+  const rows = (response.data.values || []) as Row[];
   if (rows.length <= 1) return { success: true, views: [] };
 
   const needle = inviterName.toLowerCase().trim();
-  const views = rows.slice(1)
-    .filter(row => (row[11] || '').toLowerCase().trim() === needle)
-    .map(row => ({
+  const views = rows
+    .slice(1)
+    .filter((row) => (row[11] || '').toLowerCase().trim() === needle)
+    .map((row) => ({
       timestamp: row[0] || '',
       itemId: parseInt(row[1], 10) || 0,
       productName: row[2] || '',
@@ -578,7 +739,10 @@ async function getViewsByInviter(sheets, inviterName, limit = 500) {
       userRole: row[10] || 'Invitado',
       inviterName: row[11] || null,
     }))
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    )
     .slice(0, limit);
 
   return { success: true, views };
@@ -587,13 +751,16 @@ async function getViewsByInviter(sheets, inviterName, limit = 500) {
 /**
  * Get most recent activity (GET ?action=recent)
  */
-async function getRecentActivity(sheets, limit = 50) {
+async function getRecentActivity(
+  sheets: Sheets,
+  limit = 50,
+): Promise<Record<string, unknown>> {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: APP_SPREADSHEET_ID,
     range: `'${SHEET_NAME}'!A:L`,
   });
 
-  const rows = response.data.values || [];
+  const rows = (response.data.values || []) as Row[];
   if (rows.length <= 1) {
     return { success: true, activity: [], totalViews: 0 };
   }
@@ -602,7 +769,7 @@ async function getRecentActivity(sheets, limit = 50) {
 
   // Sort by timestamp descending (most recent first)
   const sorted = dataRows
-    .map(row => ({
+    .map((row) => ({
       timestamp: row[0],
       itemId: row[1],
       productName: row[2],
@@ -614,7 +781,10 @@ async function getRecentActivity(sheets, limit = 50) {
       userRole: row[10],
       inviterName: row[11] || null,
     }))
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    )
     .slice(0, limit);
 
   return {
@@ -625,17 +795,99 @@ async function getRecentActivity(sheets, limit = 50) {
   };
 }
 
-export default withApiHandler(async (req, res, { sheets }) => {
-  const action = req.query.action || req.body?.action || 'stats';
+type ProductViewsAction =
+  | 'track'
+  | 'stats'
+  | 'product'
+  | 'user'
+  | 'by-inviter'
+  | 'recent';
+
+/**
+ * Resolves which action branch a request will actually take, mirroring the
+ * routing precedence below (track > stats > product > user > by-inviter >
+ * recent > 405 not-found). Used BOTH to route the request AND to decide
+ * whether the session gate applies — the two must never disagree, or a query
+ * param combo (e.g. `?action=stats&itemId=5`, which routes to stats, not
+ * product) could reach a PII branch the gate didn't check.
+ */
+function resolveAction(req: VercelRequest): ProductViewsAction | null {
+  const action =
+    (req.query.action as string) ||
+    ((req.body as ApiBody | undefined)?.action as string) ||
+    'stats';
+  if (req.method === 'POST') {
+    return action === 'track' ? 'track' : null;
+  }
+  if (req.method !== 'GET') return null;
+  if (action === 'stats') return 'stats';
+  if (action === 'product' || req.query.itemId) return 'product';
+  if (action === 'user' || req.query.email || req.query.name) return 'user';
+  if (action === 'by-inviter') return 'by-inviter';
+  if (action === 'recent') return 'recent';
+  return null;
+}
+
+/**
+ * These four actions return per-user PII (userEmail, userName, userRole,
+ * plus device/browser/session detail) keyed only on a guessable itemId /
+ * email / name / inviterName — none of them a secret. Session-gated
+ * (2026-08-06, PII lockdown): this REST endpoint served the SAME rows as
+ * convex/productViews.ts's `guestActivity`/`byInviterAndGuest`, which were
+ * already gated on a `tms1` staff session — this file was the sibling door
+ * left open. Every browser caller of these four actions
+ * (ProductViewersPage, UserViewsPage, useAllActivity→ActivityPage,
+ * useGuestActivity→mi-perfil pages) renders behind AdminRoute/StaffRoute, so
+ * a caller who can reach those screens already holds a valid session token
+ * — same reasoning as api/invitations.ts's `list-by-creator` gate. 401, not
+ * an empty body: this is a REST endpoint, not a reactive subscription.
+ */
+const SESSION_GATED_ACTIONS = new Set<ProductViewsAction>([
+  'product',
+  'user',
+  'by-inviter',
+  'recent',
+]);
+
+export async function handleProductViews(
+  req: VercelRequest,
+  res: VercelResponse,
+  context: Record<string, unknown>,
+): Promise<unknown> {
+  const sheets = context.sheets as Sheets;
+  const resolvedAction = resolveAction(req);
+  const sessionEmail = verifiedSessionEmail(req.headers['authorization']);
+
+  // Gate BEFORE any Sheets read (ensureSheet included below) — an
+  // unauthorized caller must cost no Sheets quota.
+  if (
+    resolvedAction &&
+    SESSION_GATED_ACTIONS.has(resolvedAction) &&
+    !sessionEmail
+  ) {
+    return sendError(res, 401, 'Inicia sesión para ver esta información.');
+  }
 
   await ensureSheet(sheets, SHEET_NAME, HEADERS, APP_SPREADSHEET_ID);
 
-  // POST - Track view
-  if (req.method === 'POST' && action === 'track') {
+  // POST - Track view (anonymous — this is the whole point of view
+  // tracking for guests; never gate this path)
+  if (resolvedAction === 'track') {
+    const body = (req.body as TrackViewBody) || {};
     if (isConvexEnabled && convexClient) {
-      const { itemId, productName, sessionId, referrer, userName, userEmail, userRole, country, inviterName } = req.body;
+      const {
+        itemId,
+        productName,
+        sessionId,
+        referrer,
+        userName,
+        userEmail,
+        userRole,
+        country,
+        inviterName,
+      } = body;
       if (!itemId) return sendError(res, 400, 'itemId is required');
-      const userAgent = req.headers['user-agent'] || '';
+      const userAgent = (req.headers['user-agent'] as string) || '';
       await convexClient.mutation(api.productViews.track, {
         itemId: String(itemId),
         productName: productName || undefined,
@@ -649,46 +901,75 @@ export default withApiHandler(async (req, res, { sheets }) => {
         userRole: userRole || undefined,
         inviterName: inviterName || undefined,
       });
-      return res.status(200).json({ success: true, tracked: true, itemId, timestamp: new Date().toISOString() });
+      return res.status(200).json({
+        success: true,
+        tracked: true,
+        itemId,
+        timestamp: new Date().toISOString(),
+      });
     }
-    const result = await trackView(sheets, req.body, req.headers);
+    const result = await trackView(sheets, body, req.headers);
     return res.status(200).json(result);
   }
 
-  // GET - Stats
-  if (req.method === 'GET' && action === 'stats') {
+  // GET - Stats: aggregate view counts, PUBLIC — every catalog visitor's
+  // useProductViews→useTreasureBrowserController call lands here with no
+  // session, and that's fine, it only reads `views` (per-item counts). But
+  // the payload also embeds per-user PII (topViewers: name/email/role;
+  // recentActivity: userName/userEmail) for the staff Analytics dashboard
+  // (useAnalyticsData). Strip those two fields instead of gating the whole
+  // action, so anonymous view-count display keeps working; a caller with a
+  // verified session gets the full shape.
+  if (resolvedAction === 'stats') {
     const result = await getStats(sheets);
+    if (!sessionEmail) {
+      result.topViewers = [];
+      result.recentActivity = [];
+    }
     return res.status(200).json(result);
   }
 
-  // GET - Product views
-  if (req.method === 'GET' && (action === 'product' || req.query.itemId)) {
-    const result = await getProductViews(sheets, req.query.itemId);
+  // GET - Product views (session-gated above)
+  if (resolvedAction === 'product') {
+    const result = await getProductViews(
+      sheets,
+      req.query.itemId as string | undefined,
+    );
     return res.status(200).json(result);
   }
 
-  // GET - User views
-  if (req.method === 'GET' && (action === 'user' || req.query.email || req.query.name)) {
-    const result = await getUserViews(sheets, req.query.email, req.query.name);
+  // GET - User views (session-gated above)
+  if (resolvedAction === 'user') {
+    const result = await getUserViews(
+      sheets,
+      req.query.email as string | undefined,
+      req.query.name as string | undefined,
+    );
     return res.status(200).json(result);
   }
 
-  // GET - Views by inviter (for asesor profile guest activity)
-  if (req.method === 'GET' && action === 'by-inviter') {
-    const limit = parseInt(req.query.limit) || 500;
-    const result = await getViewsByInviter(sheets, req.query.inviterName, limit);
+  // GET - Views by inviter, for asesor profile guest activity (session-gated above)
+  if (resolvedAction === 'by-inviter') {
+    const limit = parseInt(String(req.query.limit ?? ''), 10) || 500;
+    const result = await getViewsByInviter(
+      sheets,
+      req.query.inviterName as string | undefined,
+      limit,
+    );
     return res.status(200).json(result);
   }
 
-  // GET - Recent activity
-  if (req.method === 'GET' && action === 'recent') {
-    const limit = parseInt(req.query.limit) || 50;
+  // GET - Recent activity across all advisors (session-gated above)
+  if (resolvedAction === 'recent') {
+    const limit = parseInt(String(req.query.limit ?? ''), 10) || 50;
     const result = await getRecentActivity(sheets, limit);
     return res.status(200).json(result);
   }
 
   return sendError(res, 405, 'Method not allowed');
-}, {
+}
+
+export default withApiHandler(handleProductViews, {
   methods: ['GET', 'POST', 'OPTIONS'],
   cache: CACHE.SHORT,
   provideSheets: true,

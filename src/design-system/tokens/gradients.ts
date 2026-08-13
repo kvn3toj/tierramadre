@@ -13,15 +13,15 @@ export const emeraldGradients = {
   /** Soft, light emerald gradient */
   light: 'linear-gradient(135deg, #E6F7F1 0%, #B3E6D9 100%)',
   /** Medium emerald gradient */
-  medium: 'linear-gradient(135deg, #66D4AE 0%, #00AE7A 100%)',
+  medium: 'linear-gradient(135deg, #66D4AE 0%, #00C992 100%)',
   /** Deep emerald gradient */
-  deep: 'linear-gradient(135deg, #00AE7A 0%, #006A48 100%)',
+  deep: 'linear-gradient(135deg, #00C992 0%, #006A48 100%)',
   /** Intense emerald gradient */
   intense: 'linear-gradient(135deg, #008C61 0%, #004830 100%)',
   /** Horizontal emerald */
-  horizontal: 'linear-gradient(90deg, #00AE7A 0%, #006A48 100%)',
+  horizontal: 'linear-gradient(90deg, #00C992 0%, #006A48 100%)',
   /** Vertical emerald */
-  vertical: 'linear-gradient(180deg, #00AE7A 0%, #006A48 100%)',
+  vertical: 'linear-gradient(180deg, #00C992 0%, #006A48 100%)',
 } as const;
 
 // =============================================================================
@@ -45,9 +45,9 @@ export const goldGradients = {
 
 export const qualityGradients = {
   /** Estándar - Entry quality */
-  estandar: 'linear-gradient(135deg, #33C194 0%, #00AE7A 100%)',
+  estandar: 'linear-gradient(135deg, #33C194 0%, #00C992 100%)',
   /** Fina - Fine quality */
-  fina: 'linear-gradient(135deg, #00AE7A 0%, #008C61 100%)',
+  fina: 'linear-gradient(135deg, #00C992 0%, #008C61 100%)',
   /** SuperFina - Super fine quality */
   superFina: 'linear-gradient(135deg, #008C61 0%, #006A48 100%)',
   /** Sublime - Highest quality with gold accent */
@@ -70,7 +70,7 @@ export const backgroundGradients = {
   /** Emerald-tinted dark background */
   emeraldDark: 'linear-gradient(180deg, #0F172A 0%, #004830 100%)',
   /** Hero section gradient */
-  hero: 'linear-gradient(135deg, #00AE7A 0%, #006A48 50%, #004830 100%)',
+  hero: 'linear-gradient(135deg, #00C992 0%, #006A48 50%, #004830 100%)',
   /** Subtle emerald tint */
   subtle:
     'linear-gradient(180deg, rgba(0, 174, 122, 0.02) 0%, rgba(0, 174, 122, 0.08) 100%)',
@@ -105,7 +105,7 @@ export const radialGradients = {
 export const conicGradients = {
   /** Emerald spectrum */
   emeraldSpectrum:
-    'conic-gradient(from 0deg, #33C194, #00AE7A, #008C61, #006A48, #004830, #006A48, #008C61, #00AE7A, #33C194)',
+    'conic-gradient(from 0deg, #33C194, #00C992, #008C61, #006A48, #004830, #006A48, #008C61, #00C992, #33C194)',
   /** Gold spectrum */
   goldSpectrum:
     'conic-gradient(from 0deg, #C9CECB, #9AA09D, #8C928F, #5C6360, #3A403E, #5C6360, #8C928F, #9AA09D, #C9CECB)',
@@ -120,9 +120,9 @@ export const conicGradients = {
 
 export const buttonGradients = {
   /** Primary button */
-  primary: 'linear-gradient(135deg, #00AE7A 0%, #008C61 100%)',
+  primary: 'linear-gradient(135deg, #00C992 0%, #008C61 100%)',
   /** Primary button hover */
-  primaryHover: 'linear-gradient(135deg, #00C98C 0%, #00AE7A 100%)',
+  primaryHover: 'linear-gradient(135deg, #3FDCAE 0%, #00C992 100%)',
   /** Primary button active */
   primaryActive: 'linear-gradient(135deg, #008C61 0%, #006A48 100%)',
   /** Secondary (gold) button */
@@ -141,7 +141,7 @@ export const buttonGradients = {
 
 export const originGradients = {
   /** Muzo - Classic green */
-  muzo: 'linear-gradient(135deg, #00AE7A 0%, #006A48 100%)',
+  muzo: 'linear-gradient(135deg, #00C992 0%, #006A48 100%)',
   /** Chivor - Blue-green */
   chivor: 'linear-gradient(135deg, #0099CC 0%, #006699 100%)',
   /** Coscuez - Yellow-green */

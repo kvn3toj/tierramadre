@@ -8,6 +8,10 @@ import type { Id } from './_generated/dataModel';
 import { v } from 'convex/values';
 import { bumpInventoryTotal } from './products';
 import { withPublishStamp } from './_lib/publishState';
+import {
+  bumpCatalogVersion,
+  bumpCatalogVersionIfPublished,
+} from './_lib/catalogVersion';
 import { computePrecioFinal } from './_lib/pricing';
 
 /**
@@ -76,6 +80,89 @@ export const backfillPublishedAt = internalMutation({
     return {
       backfilled: eligible.length,
       itemIds: eligible.map((row) => row.itemId),
+    };
+  },
+});
+
+/**
+ * Backfill the denormalized `mina` / `tratamiento` for items published BEFORE
+ * Fix 1B (docs/audits/2026-08-12-convex-usage-audit.md §4).
+ *
+ * `products.publishedCatalog` used to resolve lot provenance with a per-lote
+ * point read on every execution, which dragged those `lots` documents into the
+ * public catalog's reactive read set — so any write to a published lot re-ran
+ * the catalog for every connected anonymous visitor. The lookup now happens
+ * once, at publish time, via `withPublishStamp()`.
+ *
+ * Items published before that change never went through the new stamp, and the
+ * catalog query deliberately has NO fallback to `lots` (a fallback would
+ * reinstate the read-set dependency). Without this backfill those items would
+ * render with blank mina/tratamiento.
+ *
+ * ⚠️ RUN THIS BEFORE OR IMMEDIATELY AFTER DEPLOYING Fix 1B — between the deploy
+ * and this migration, already-published items show no provenance.
+ *
+ * Idempotent: only patches rows whose stored value actually differs from the
+ * lot's, so re-running is a no-op. Safe to re-run after new lots are published.
+ *
+ *   npx convex run --prod migrations:backfillLotProvenance '{}'
+ */
+export const backfillLotProvenance = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db
+      .query('productInventory')
+      .withIndex('by_mostrarEnCatalogo', (q) => q.eq('mostrarEnCatalogo', true))
+      .collect();
+
+    // Resolve each distinct lote ONCE — this is a one-shot migration, but there
+    // is no reason to re-read the same lot per item.
+    const lotCache = new Map<
+      string,
+      { mina?: string; tratamiento?: string } | undefined
+    >();
+    const patched: string[] = [];
+    const missingLote: string[] = [];
+
+    for (const row of rows) {
+      if (!row.loteId) continue; // legacy/orphan — excluded from the catalog anyway
+      if (!lotCache.has(row.loteId)) {
+        const lot = await ctx.db
+          .query('lots')
+          .withIndex('by_loteId', (q) => q.eq('loteId', row.loteId!))
+          .first();
+        lotCache.set(
+          row.loteId,
+          lot ? { mina: lot.mina, tratamiento: lot.tratamiento } : undefined,
+        );
+      }
+      const prov = lotCache.get(row.loteId);
+      if (!prov) {
+        missingLote.push(row.itemId);
+        continue;
+      }
+      if (row.mina === prov.mina && row.tratamiento === prov.tratamiento)
+        continue;
+      await ctx.db.patch(row._id, {
+        mina: prov.mina,
+        tratamiento: prov.tratamiento,
+      });
+      patched.push(row.itemId);
+    }
+
+    // `mina`/`tratamiento` are projected by `publishedCatalog`, so a backfill
+    // changes what visitors see. Every row scanned here is already published
+    // (the index above filters on it), hence the unguarded bump — but only when
+    // something actually moved, so a converged re-run stays free.
+    if (patched.length > 0) await bumpCatalogVersion(ctx);
+
+    return {
+      scanned: rows.length,
+      backfilled: patched.length,
+      itemIds: patched,
+      // Published items whose lote no longer resolves — these will render
+      // without provenance. Worth eyeballing rather than failing the run.
+      missingLote,
     };
   },
 });
@@ -176,6 +263,11 @@ export const mergeAguaMarina = internalMutation({
       syncStatus: 'pending' as const,
       syncError: undefined,
     });
+    // Re-asserting VENDIDA changes what the public catalog renders for this
+    // piece if it is published. One-shot repair, but the sentinel costs one
+    // write and keeps the wiring guard in tests/catalogSentinelWiring.test.ts
+    // unconditional — no allowlist to drift.
+    await bumpCatalogVersionIfPublished(ctx, keep, keep);
 
     // 2. Repoint the lot join → C-007 now counts item 340 at the same 20%.
     await ctx.db.patch(dropJoin._id, { itemId: KEEP });
@@ -1414,565 +1506,7 @@ export const raiseLotSequences = internalMutation({
     return out;
   },
 });
-// =============================================================================
-// SUBDIVISIÓN DE LOS ÍTEMS-LOTE #508 / #509 / #497 (2026-08-03)
-// =============================================================================
-
-/**
- * Un sublote: una pieza (o un grupito homogéneo de piezas) que hoy vive dentro
- * de un ítem-lote y pasa a ser un ítem vendible por su cuenta, con su propio
- * itemId/QR y su propia foto.
- *
- * `centiCt` son los quilates × 100 en ENTERO. El reparto de costo se hace sobre
- * enteros a propósito: repartir plata con coma flotante deja centavos huérfanos
- * y la suma de los hijos deja de dar el costo del padre.
- */
-type SubloteSpec = {
-  /** Código humano del sublote (508-A…). No es el itemId — ese lo asigna Convex. */
-  code: string;
-  padreItemId: string;
-  loteId: string;
-  nombre: string;
-  /** Quilates × 100. En los grupos es el TOTAL del grupo, no por piedra. */
-  centiCt: number;
-  cantidad: number;
-  medidas: string;
-  talla: string;
-  color: string;
-  /** Ausente = pendiente de confirmar. No se inventa (decisión del dueño). */
-  calidad?: string;
-  procedencia?: string;
-};
-
-/** Orden de los padres = orden en que se reportan y se retiran. */
-const SUBLOTE_PADRES = ['508', '509', '497'] as const;
-
-/**
- * Los 10 sublotes, transcritos de
- * `Anima/Wings/Projects/TierraMadre/decisions/2026-08-03-subdivision-sublotes-508-509-497.md`.
- *
- * Las 14 piedras de los tres padres (3 + 3 + 8) quedan cubiertas por completo:
- * #508 → 3 sublotes de 1, #509 → 3 sublotes de 1, #497 → 1+3+2+2 = 8.
- */
-const SUBLOTES_508_509_497: SubloteSpec[] = [
-  // ── #508 "Cristales del Mar" · C-067 · Baguette · 0,66 ct ────────────────
-  {
-    code: '508-A',
-    padreItemId: '508',
-    loteId: 'C-067',
-    nombre: 'Misterio del Mar',
-    centiCt: 13,
-    cantidad: 1,
-    medidas: '4.2 x 2.2 x 1.8 mm',
-    talla: 'Baguette',
-    color: 'Verde Chivor',
-    calidad: 'FINA ESENCIAL',
-  },
-  {
-    code: '508-B',
-    padreItemId: '508',
-    loteId: 'C-067',
-    nombre: 'Estrella Polar',
-    centiCt: 18,
-    cantidad: 1,
-    medidas: '4.0 x 3.0 x 2.2 mm',
-    talla: 'Baguette',
-    color: 'Verde Vívido',
-    calidad: 'FINA SUBLIME',
-  },
-  {
-    code: '508-C',
-    padreItemId: '508',
-    loteId: 'C-067',
-    nombre: 'Eco del Tiempo',
-    centiCt: 35,
-    cantidad: 1,
-    medidas: '4.9 x 3.5 x 2.7 mm',
-    talla: 'Baguette',
-    color: 'Verde Vívido',
-    calidad: 'FINA SUBLIME',
-  },
-  // ── #509 "Ecos del Río" · C-067 · Lágrima/Pera · 0,99 ct ─────────────────
-  {
-    code: '509-A',
-    padreItemId: '509',
-    loteId: 'C-067',
-    nombre: 'Eco del Río',
-    centiCt: 40,
-    cantidad: 1,
-    medidas: '6.4 x 4.1 x 2.5 mm',
-    talla: 'Lágrima/Pera',
-    color: 'Verde Limón',
-    calidad: 'COMERCIAL SUPERIOR',
-    procedencia: 'Coscuez',
-  },
-  {
-    code: '509-B',
-    padreItemId: '509',
-    loteId: 'C-067',
-    nombre: 'Sueño del Río',
-    centiCt: 34,
-    cantidad: 1,
-    medidas: '6.2 x 3.9 x 2.3 mm',
-    talla: 'Lágrima/Pera',
-    color: 'Verde Menta',
-    procedencia: 'Chivor',
-  },
-  {
-    code: '509-C',
-    padreItemId: '509',
-    loteId: 'C-067',
-    nombre: 'Atlántida',
-    centiCt: 25,
-    cantidad: 1,
-    medidas: '5.0 x 3.4 x 2.5 mm',
-    talla: 'Lágrima/Pera',
-    color: 'Verde Limón',
-    procedencia: 'Chivor',
-  },
-  // ── #497 "Vuelos del Alba" · C-068 · Baguette · Muzo · 1,41 ct ───────────
-  {
-    code: '497-A',
-    padreItemId: '497',
-    loteId: 'C-068',
-    nombre: 'Vuelo del Alba',
-    centiCt: 18,
-    cantidad: 1,
-    medidas: '3.6 x 2.9 x 2.2 mm',
-    talla: 'Baguette',
-    color: 'Verde Vívido',
-    procedencia: 'Muzo',
-  },
-  {
-    code: '497-B',
-    padreItemId: '497',
-    loteId: 'C-068',
-    nombre: 'Alma Pura',
-    centiCt: 60,
-    cantidad: 3,
-    medidas: '4.6 x 3.3 x 1.7 mm · 4.4 x 3.0 x 2.1 mm · 4.0 x 3.0 x 2.3 mm',
-    talla: 'Baguette',
-    color: 'Verde Vívido',
-    calidad: 'COMERCIAL ESTÁNDAR',
-    procedencia: 'Muzo',
-  },
-  {
-    code: '497-C',
-    padreItemId: '497',
-    loteId: 'C-068',
-    nombre: 'Esencia del Cóndor',
-    centiCt: 39,
-    cantidad: 2,
-    medidas: '4.5 x 2.9 x 1.9 mm · 4.7 x 2.6 x 2.1 mm',
-    talla: 'Baguette',
-    color: 'Verde Vívido',
-    calidad: 'FINA COMERCIAL',
-    procedencia: 'Muzo',
-  },
-  {
-    code: '497-D',
-    padreItemId: '497',
-    loteId: 'C-068',
-    nombre: 'Armonía Radiante',
-    centiCt: 24,
-    cantidad: 2,
-    medidas: '2.7 x 1.5 x 2.1 mm · 2.9 x 1.5 x 1.9 mm',
-    talla: 'Baguette',
-    color: 'Verde Vívido',
-    calidad: 'FINA COMERCIAL',
-    procedencia: 'Muzo',
-  },
-];
-
-const round2 = (n: number) => Math.round(n * 100) / 100;
-
-/** Quilates para mostrar/guardar: 13 → "0.13". */
-const ctTexto = (centiCt: number) => (centiCt / 100).toFixed(2);
-
-/**
- * Reparto de plata, puro y testeable a mano: el costo del padre se divide entre
- * sus hijos en proporción al quilataje, y el ÚLTIMO hijo absorbe el resto de la
- * división. Por construcción `Σ hijos === costoPadre`, exacto, sin centavos
- * perdidos ni inventados.
- */
-function repartirPorQuilataje(
-  costoPadreCOP: number,
-  hijos: SubloteSpec[],
-): Map<string, number> {
-  const totalCenti = hijos.reduce((a, h) => a + h.centiCt, 0);
-  const out = new Map<string, number>();
-  let repartido = 0;
-  hijos.forEach((h, i) => {
-    const costo =
-      i === hijos.length - 1
-        ? costoPadreCOP - repartido
-        : Math.round((costoPadreCOP * h.centiCt) / totalCenti);
-    repartido += costo;
-    out.set(h.code, costo);
-  });
-  return out;
-}
-
-/**
- * Subdivide #508, #509 y #497 en los 10 sublotes vendibles individualmente.
- *
- * QUÉ HACE, en orden:
- *   1. Lee el costo real de cada padre en el espejo (no lo asume).
- *   2. Reparte `costoBaseCOP` del padre entre sus hijos POR QUILATAJE
- *      (decisión del dueño, 2026-08-03). El precio sale de la regla canónica
- *      `precioFinalCOP = round(costo × 2.6)` — que es exactamente la relación
- *      que ya tenían #508 y #509 en el espejo, así que el precio total se
- *      conserva salvo el redondeo de ±1 COP por ítem.
- *   3. Crea cada hijo con `lotItems._create` sobre el lote del padre. Es el
- *      camino correcto acá (y NO el standalone `_createProduct` de los topos):
- *      C-067 y C-068 están `abierto`, sin casillas, y `_create` es el único que
- *      pone `loteId` + `mostrarEnCatalogo` — y el catálogo público exige LOS DOS.
- *   4. Estampa costo y precio con `_stampSubloteCosto`, porque `_create` fija
- *      `costoBaseCOP: 0` a propósito (el costo es propiedad de la hoja desde
- *      2026-07-24) y estos ítems tienen que nacer con precio para venderse.
- *   5. Retira al padre: costo 0, sin precio, cantidad 0, fuera del catálogo, con
- *      la observación que dice en qué se convirtió. La fila y su QR sobreviven,
- *      así que escanear la etiqueta vieja sigue resolviendo.
- *
- * QUÉ NO TOCA: el Tablero. `inventarioActivoCOP` suma sólo casillas v4 con
- * `costoUnitarioRealCOP` y `estadoCasilla`, y `_create` no escribe ninguno de
- * los dos; el divisor D2 cuenta LOTES, y no se crea ninguno.
- *
- * PENDIENTE: 509-B, 509-C y 497-A quedan SIN calidad (el dueño pidió no
- * inventarla) pero SÍ publicados. Completar cuando la confirme.
- *
- * Idempotente por `clientToken` (`sublote-508-A`…): re-correrla devuelve los
- * itemId ya asignados sin duplicar nada.
- *
- *   npx convex run --prod migrations:seedSublotes508509497 '{"dryRun":true}'
- *   npx convex run --prod migrations:seedSublotes508509497 '{}'
- */
-export const seedSublotes508509497 = internalAction({
-  args: { dryRun: v.optional(v.boolean()) },
-  handler: async (
-    ctx,
-    { dryRun },
-  ): Promise<{
-    dryRun: boolean;
-    padres: Array<{
-      itemId: string;
-      nombre: string;
-      costoOriginalCOP: number;
-      hijos: number;
-    }>;
-    sublotes: Array<{
-      code: string;
-      itemId: string | null;
-      nombre: string;
-      ct: string;
-      cantidad: number;
-      costoBaseCOP: number;
-      precioFinalCOP: number | undefined;
-      preponderancia: number;
-      calidadPendiente: boolean;
-      creado: boolean;
-    }>;
-    avisos: string[];
-  }> => {
-    const avisos: string[] = [];
-
-    // ── 1. Costo real de cada padre ──────────────────────────────────────
-    const padres = new Map<
-      string,
-      { nombre: string; costoBaseCOP: number; loteId: string }
-    >();
-    for (const padreItemId of SUBLOTE_PADRES) {
-      const row = await ctx.runQuery(api.products.get, { itemId: padreItemId });
-      if (!row) throw new Error(`Padre #${padreItemId} no está en el espejo`);
-      const costoBaseCOP = row.costoBaseCOP ?? 0;
-      if (costoBaseCOP <= 0) {
-        throw new Error(
-          `Padre #${padreItemId} tiene costoBaseCOP ${costoBaseCOP}: no hay nada que repartir. ` +
-            `Si ya se corrió esta migración, los hijos ya existen y el padre ya fue retirado.`,
-        );
-      }
-      padres.set(padreItemId, {
-        nombre: row.nombre ?? `#${padreItemId}`,
-        costoBaseCOP,
-        loteId: row.loteId ?? '',
-      });
-    }
-
-    // ── 2. Reparto por quilataje, dentro de cada padre ────────────────────
-    const costoPorCode = new Map<string, number>();
-    for (const padreItemId of SUBLOTE_PADRES) {
-      const hijos = SUBLOTES_508_509_497.filter(
-        (s) => s.padreItemId === padreItemId,
-      );
-      const padre = padres.get(padreItemId)!;
-      for (const [code, costo] of repartirPorQuilataje(
-        padre.costoBaseCOP,
-        hijos,
-      )) {
-        costoPorCode.set(code, costo);
-      }
-      // El lote declarado del padre y el que usan los hijos tienen que ser el
-      // mismo, o estaríamos colgando las piezas de otro lote sin decirlo.
-      const loteHijos = hijos[0].loteId;
-      if (padre.loteId !== loteHijos) {
-        avisos.push(
-          `#${padreItemId} está en ${padre.loteId || '(sin lote)'} pero sus sublotes se crean en ${loteHijos}.`,
-        );
-      }
-    }
-
-    // ── 3. Preponderancia = participación en el costo DEL LOTE ────────────
-    // `_create` exige (0, 100] y que la suma del lote no pase de 100, así que
-    // la participación es relativa al lote, no al padre (dos padres viven en
-    // C-067 y sus porcentajes internos sumarían 200).
-    const prepPorCode = new Map<string, number>();
-    for (const loteId of [
-      ...new Set(SUBLOTES_508_509_497.map((s) => s.loteId)),
-    ]) {
-      const hijos = SUBLOTES_508_509_497.filter((s) => s.loteId === loteId);
-      const totalLote = hijos.reduce((a, h) => a + costoPorCode.get(h.code)!, 0);
-      let acumulado = 0;
-      hijos.forEach((h, i) => {
-        const p =
-          i === hijos.length - 1
-            ? round2(100 - acumulado)
-            : round2((costoPorCode.get(h.code)! / totalLote) * 100);
-        acumulado = round2(acumulado + p);
-        prepPorCode.set(h.code, p);
-      });
-    }
-
-    const plan = SUBLOTES_508_509_497.map((s) => {
-      const costoBaseCOP = costoPorCode.get(s.code)!;
-      return {
-        code: s.code,
-        itemId: null as string | null,
-        nombre: s.nombre,
-        ct: ctTexto(s.centiCt),
-        cantidad: s.cantidad,
-        costoBaseCOP,
-        precioFinalCOP: computePrecioFinal(costoBaseCOP),
-        preponderancia: prepPorCode.get(s.code)!,
-        calidadPendiente: !s.calidad,
-        creado: false,
-      };
-    });
-
-    const resumenPadres = SUBLOTE_PADRES.map((itemId) => ({
-      itemId,
-      nombre: padres.get(itemId)!.nombre,
-      costoOriginalCOP: padres.get(itemId)!.costoBaseCOP,
-      hijos: SUBLOTES_508_509_497.filter((s) => s.padreItemId === itemId).length,
-    }));
-
-    if (dryRun) {
-      return { dryRun: true, padres: resumenPadres, sublotes: plan, avisos };
-    }
-
-    // ── 4. Crear cada hijo + estampar su costo/precio ─────────────────────
-    const itemIdPorCode = new Map<string, string>();
-    for (const s of SUBLOTES_508_509_497) {
-      const costoBaseCOP = costoPorCode.get(s.code)!;
-      const padre = padres.get(s.padreItemId)!;
-
-      const observacion =
-        `Sublote ${s.code} de #${s.padreItemId} "${padre.nombre}" ` +
-        `(subdivisión 2026-08-03). ${ctTexto(s.centiCt)} ct` +
-        (s.cantidad > 1 ? ` en ${s.cantidad} piedras (peso del grupo)` : '') +
-        `. Costo repartido por quilataje desde el padre.` +
-        (s.calidad ? '' : ' ⚠️ CALIDAD PENDIENTE DE CONFIRMAR.');
-
-      const creado = await ctx.runMutation(internal.lotItems._create, {
-        loteId: s.loteId,
-        tipo: 'gema' as const,
-        nombre: s.nombre,
-        preponderancia: prepPorCode.get(s.code)!,
-        cantidad: s.cantidad,
-        peso: ctTexto(s.centiCt),
-        medidas: s.medidas,
-        talla: s.talla,
-        color: s.color,
-        calidad: s.calidad,
-        procedencia: s.procedencia,
-        categoria: 'Gema',
-        tipoEsmeralda: 'Gema Facetada',
-        mostrarEnCatalogo: true,
-        observacion,
-        clientToken: `sublote-${s.code}`,
-      });
-
-      // `_create` deja el costo en 0 (la hoja es dueña del costo desde
-      // 2026-07-24). Acá sí lo sembramos: el ítem tiene que nacer con precio o
-      // sale al catálogo sin poder venderse.
-      await ctx.runMutation(internal.migrations._stampSubloteCosto, {
-        itemId: creado.itemId,
-        costoBaseCOP,
-      });
-
-      itemIdPorCode.set(s.code, creado.itemId);
-      const fila = plan.find((p) => p.code === s.code)!;
-      fila.itemId = creado.itemId;
-      fila.creado = true;
-    }
-
-    // ── 5. Retirar los padres ─────────────────────────────────────────────
-    for (const padreItemId of SUBLOTE_PADRES) {
-      const padre = padres.get(padreItemId)!;
-      const hijos = SUBLOTES_508_509_497.filter(
-        (s) => s.padreItemId === padreItemId,
-      );
-      const lista = hijos
-        .map((h) => `#${itemIdPorCode.get(h.code)} ${h.nombre} (${h.code})`)
-        .join(', ');
-      await ctx.runMutation(internal.migrations._retirarPadreSubdividido, {
-        itemId: padreItemId,
-        observacion:
-          `SUBDIVIDIDO 2026-08-03 en ${hijos.length} sublotes vendibles individualmente: ${lista}. ` +
-          `El costo original ($${padre.costoBaseCOP.toLocaleString('es-CO')}) se repartió por quilataje ` +
-          `entre los hijos; esta fila queda en costo 0, cantidad 0 y fuera del catálogo. ` +
-          `Su QR sigue resolviendo.`,
-      });
-    }
-
-    avisos.push(
-      'Las fotos NO se cargaron: están en Drive en carpetas con el nombre de cada sublote. ' +
-        'Vincularlas con lotItems.updateMediaByItem (o desde Fotosíntesis) una vez se tengan los fileId.',
-    );
-    avisos.push(
-      'Calidad pendiente y publicada igual (decisión del dueño): 509-B, 509-C y 497-A.',
-    );
-
-    return { dryRun: false, padres: resumenPadres, sublotes: plan, avisos };
-  },
-});
-
-/**
- * Siembra `costoBaseCOP` (y el `precioFinalCOP` que se deriva de él) en un
- * sublote recién creado, en los DOS rieles: el espejo `productInventory` y la
- * casilla `lotItems`, que LoteResumenPage lee para mostrar el costo del lote.
- *
- * Existe porque `lotItems._create` fija el costo en 0 por diseño (la hoja es su
- * dueña desde 2026-07-24) y estos ítems nacen ya repartidos. Deja el push a la
- * hoja agendado: sin él, el próximo pull —que sí trae costo y precio de vuelta—
- * los borraría con el blanco de la hoja.
- *
- * No estampa `precioFinalManual`: el precio ES la regla canónica costo × 2.6,
- * así que un re-fan futuro del lote puede seguir recalculándolo.
- */
-export const _stampSubloteCosto = internalMutation({
-  args: { itemId: v.string(), costoBaseCOP: v.number() },
-  handler: async (ctx, { itemId, costoBaseCOP }) => {
-    if (costoBaseCOP <= 0) {
-      throw new Error(`costoBaseCOP debe ser > 0 (itemId ${itemId})`);
-    }
-    const row = await ctx.db
-      .query('productInventory')
-      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
-      .first();
-    if (!row) throw new Error(`productInventory ${itemId} no encontrado`);
-
-    const precioFinalCOP = computePrecioFinal(costoBaseCOP);
-    if (row.costoBaseCOP === costoBaseCOP && row.precioFinalCOP === precioFinalCOP) {
-      return { itemId, costoBaseCOP, precioFinalCOP, changed: false };
-    }
-
-    await ctx.db.patch(row._id, {
-      costoBaseCOP,
-      precioFinalCOP,
-      syncStatus: 'pending' as const,
-      syncError: undefined,
-    });
-
-    const casilla = await ctx.db
-      .query('lotItems')
-      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
-      .first();
-    if (casilla) await ctx.db.patch(casilla._id, { costoBaseCOP });
-
-    const auditId = await ctx.db.insert('productEdits', {
-      itemId,
-      editorEmail: 'migration:seedSublotes508509497',
-      editedAt: new Date().toISOString(),
-      changes: [
-        {
-          field: 'costoBaseCOP',
-          before: row.costoBaseCOP ?? null,
-          after: costoBaseCOP,
-        },
-        {
-          field: 'precioFinalCOP',
-          before: row.precioFinalCOP ?? null,
-          after: precioFinalCOP ?? null,
-        },
-      ],
-      status: 'pending' as const,
-    });
-    await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
-      itemId,
-      auditId,
-      mode: 'patch' as const,
-    });
-
-    return { itemId, costoBaseCOP, precioFinalCOP, changed: true };
-  },
-});
-
-/**
- * Retira un ítem-lote que acaba de subdividirse: su costo ya vive en los hijos,
- * así que dejárselo lo contaría dos veces (en `unidadesActivas` y en cualquier
- * lectura de la hoja). Baja costo y precios a nada, cantidad a 0, lo saca del
- * catálogo y escribe en qué se convirtió.
- *
- * NO borra la fila ni el QR a propósito: escanear la etiqueta física vieja
- * tiene que seguir resolviendo en la app. Tampoco toca `estado` — sacar la fila
- * de `unidadesActivas` del todo es otra decisión, y se toma aparte.
- */
-export const _retirarPadreSubdividido = internalMutation({
-  args: { itemId: v.string(), observacion: v.string() },
-  handler: async (ctx, { itemId, observacion }) => {
-    const row = await ctx.db
-      .query('productInventory')
-      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
-      .first();
-    if (!row) throw new Error(`productInventory ${itemId} no encontrado`);
-
-    await ctx.db.patch(row._id, {
-      costoBaseCOP: 0,
-      precioFinalCOP: undefined,
-      precioCOP: undefined,
-      cantidad: 0,
-      ...withPublishStamp(row, false),
-      observacion,
-      syncStatus: 'pending' as const,
-      syncError: undefined,
-    });
-
-    const auditId = await ctx.db.insert('productEdits', {
-      itemId,
-      editorEmail: 'migration:seedSublotes508509497',
-      editedAt: new Date().toISOString(),
-      changes: [
-        { field: 'costoBaseCOP', before: row.costoBaseCOP ?? null, after: 0 },
-        { field: 'precioFinalCOP', before: row.precioFinalCOP ?? null, after: null },
-        { field: 'cantidad', before: row.cantidad ?? null, after: 0 },
-        {
-          field: 'mostrarEnCatalogo',
-          before: row.mostrarEnCatalogo ? 'true' : 'false',
-          after: 'false',
-        },
-        { field: 'observacion', before: row.observacion ?? null, after: observacion },
-      ],
-      status: 'pending' as const,
-    });
-    await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
-      itemId,
-      auditId,
-      mode: 'patch' as const,
-    });
-
-    return { itemId, retirado: true as const };
-  },
-});
+// ======================================================================
 
 /**
  * Alta en Convex de los 7 ítems que el inventario manuscrito del 2026-08-12
@@ -2557,19 +2091,28 @@ export const seedAddendum20260812 = internalMutation({
         tipo: 'gema',
         // Sin certificadoUrl ni carpetaFotosUrl del padre a propósito: el
         // certificado de #218 ampara el par de piedras, no cada una suelta.
-        // Sin denormalizar mina/tratamiento: en ESTA rama `withPublishStamp`
-        // sólo acepta dos argumentos — el tercero (procedencia) llegó con Fix
-        // 1B (PR #111), que está en main y no acá. Y para estas dos hijas daría
-        // igual: su loteId es LC-10, que no tiene documento, así que no hay
-        // procedencia que estampar — el padre #218 tampoco la tiene.
-        // Cuando esta rama traiga Fix 1B, re-correr backfillLotProvenance.
-        ...withPublishStamp(null, a.publicar),
+        // La procedencia SÍ se estampa: `withPublishStamp` acepta el tercer
+        // argumento desde Fix 1B (PR #111, ya en main). Las hijas nacen con
+        // mina/tratamiento denormalizados, así que backfillLotProvenance no
+        // hace falta por ellas.
+        // Sin lote no hay procedencia que estampar: el padre tampoco la tiene.
+        ...withPublishStamp(
+          null,
+          a.publicar,
+          lot ? { mina: lot.mina, tratamiento: lot.tratamiento } : undefined,
+        ),
         lastPulledAt: now,
         // 'pending' y NO se agenda pushToSheet: las filas 532–533 ya existen en
         // el SOT y un push en modo append las duplicaría.
         syncStatus: 'pending' as const,
       });
       await bumpInventoryTotal(ctx, 1);
+      // Una pieza nueva publicada CAMBIA lo que renderiza el catálogo público:
+      // hay que invalidar la caché de cada visitante ya, no al vencer el TTL.
+      if (a.publicar)
+        await bumpCatalogVersionIfPublished(ctx, null, {
+          mostrarEnCatalogo: true,
+        });
 
       // `lotItems` sólo si el lote existe: la tabla es la composición de un
       // lote real. Colgar filas de un loteId fantasma dejaría huérfanos que
@@ -2609,8 +2152,14 @@ export const seedAddendum20260812 = internalMutation({
       );
     } else {
       const antes = padre.mostrarEnCatalogo;
-      if (antes !== false)
+      if (antes !== false) {
         await ctx.db.patch(padre._id, withPublishStamp(padre, false));
+        // Estaba visible y deja de estarlo: el centinela avisa a los visitantes
+        // en vez de dejarles la pieza retirada en caché hasta el piso de TTL.
+        await bumpCatalogVersionIfPublished(ctx, padre, {
+          mostrarEnCatalogo: false,
+        });
+      }
       despublicado = {
         itemId: ADDENDUM_20260812_PADRE,
         antes,
@@ -2783,9 +2332,7 @@ export const seedAddendum20260812 = internalMutation({
           'nacen sin fila en lotItems y sin mina/tratamiento, igual que #218 y #171. ' +
           'backfillLotProvenance NO puede arreglarlo: salta los ítems cuyo loteId no resuelve. ' +
           'HALLAZGO MAYOR: 226 de los 429 publicados están en esa situación y renderizan el ' +
-          'catálogo sin procedencia, porque Fix 1B quitó a propósito el fallback a `lots`. ' +
-          'Nota de esta rama: feat/wizards-viabot todavía no tiene Fix 1B, así que acá NINGÚN ' +
-          'ítem nuevo se estampa con procedencia, resuelva o no su loteId.',
+          'catálogo sin procedencia, porque Fix 1B quitó a propósito el fallback a `lots`.',
         'El sublote LC-10-DR no queda registrado en la pestaña Sublotes (mismo alcance que la ' +
           'corrida del 12-ago).',
         '#218 conserva precioEmbajadorCOP $1.730.560 y el bloque de Caja ($1.331.200): dos ' +

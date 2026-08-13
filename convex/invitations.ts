@@ -8,6 +8,7 @@ import {
 import { v, ConvexError } from 'convex/values';
 import { internal } from './_generated/api';
 import { requireAccessLevel } from './_lib/authz';
+import { isStaffSession } from './_lib/requireStaffSession';
 
 /**
  * Access levels allowed to mint/manage guest invitations. This is everyone in
@@ -28,10 +29,25 @@ const INVITE_LEVELS = [
 /**
  * List all invitations by creator email (active, pending, and expired).
  * Replaces: GET /api/invitations?action=list-by-creator&creatorEmail=X
+ *
+ * Staff-session gated (2026-08-06, PII lockdown item 3): `creatorEmail` is a
+ * client-supplied string, not a verified session identity (queries can't
+ * call Google's tokeninfo endpoint — no network access) — so, ungated,
+ * anyone who guesses/knows another advisor's email could call this and get
+ * every guest's `guestName`/`guestContact` (customer phone numbers and
+ * emails) for that advisor, and advisor emails are enumerable. `pin`/
+ * `boundToken` were already stripped (own design, unrelated to this gate —
+ * kept below), but that only protected the guest's ACCESS, not their
+ * CONTACT INFO. `isStaffSession` gate, empty-form ([]) on failure — does not
+ * check that the session's own identity matches `creatorEmail`, same as
+ * every other query this lockdown gated (e.g. `sales.get` doesn't check the
+ * caller owns the sale) — any authenticated staff member may look up any
+ * advisor's invitations, consistent with the rest of this internal tool.
  */
 export const listByCreator = query({
-  args: { creatorEmail: v.string() },
-  handler: async (ctx, { creatorEmail }) => {
+  args: { creatorEmail: v.string(), sessionToken: v.optional(v.string()) },
+  handler: async (ctx, { creatorEmail, sessionToken }) => {
+    if (!(await isStaffSession(sessionToken))) return [];
     const rows = await ctx.db
       .query('invitations')
       .withIndex('by_creatorEmail', (q) =>
@@ -39,14 +55,9 @@ export const listByCreator = query({
       )
       .order('desc')
       .collect();
-    // `creatorEmail` here is a client-supplied string, not a verified
-    // session identity (queries can't call Google's tokeninfo endpoint — no
-    // network access), so anyone who guesses/knows another advisor's email
-    // can call this today. `guestName`/`guestContact` stay (GuestDetailPage
-    // needs them for the legitimate owner), but the actual access
-    // credentials — PIN and the bound device token — are stripped, so a
-    // guessed email leaks contact metadata at worst, never a working guest
-    // session.
+    // Access credentials — PIN and the bound device token — are stripped
+    // regardless of who's asking; a staff member browsing another advisor's
+    // invitations still has no business seeing those.
     return rows.map(({ pin: _pin, boundToken: _boundToken, ...safe }) => safe);
   },
 });
@@ -77,10 +88,32 @@ export const getByShortCode = query({
 /**
  * Check if a guest contact has previous invitations.
  * Replaces: GET /api/invitations?action=check-guest&guestContact=X
+ *
+ * Server-secret gated (2026-08-06, PII lockdown — flagged in Round 3,
+ * closed here): returns `creatorName`/`creatorEmail` for every invitation
+ * matching a guest contact string, reachable by anyone who supplies a
+ * contact — the same enumerable-PII shape as `listByCreator` above.
+ * Verified before gating (per the task's "report, don't decide blind"
+ * instruction): no browser code calls `convexApi.invitations.checkGuestHistory`
+ * directly (grepped `src/` for `invitations.checkGuestHistory` and
+ * `convexApi.invitations` generally) — the guest-facing flow
+ * (`useWhatsAppContact.ts`) only ever calls the REST wrapper,
+ * `GET /api/invitations?action=check-guest`, which itself stays
+ * intentionally public (a guest checks their own history pre-registration,
+ * with no session of their own yet) and is this query's ONLY caller
+ * (`api/invitations.ts:1262-1266`, server-to-server via `convexClient`).
+ * So a `requireServerSecret` gate — same as `ghl.getClientByPhone` (C1) —
+ * closes direct internet access to the Convex deployment URL without
+ * touching the guest-facing REST behavior at all. Throws on a bad/missing
+ * secret rather than returning an empty form: this is a one-shot server
+ * call, not a reactive browser subscription, so there's no "broken screen"
+ * risk to avoid (same reasoning as every other `requireServerSecret`-gated
+ * function in this codebase).
  */
 export const checkGuestHistory = query({
-  args: { guestContact: v.string() },
-  handler: async (ctx, { guestContact }) => {
+  args: { guestContact: v.string(), secret: v.string() },
+  handler: async (ctx, { guestContact, secret }) => {
+    requireServerSecret(secret);
     const normalized = guestContact.toLowerCase().trim();
     const all = await ctx.db.query('invitations').collect();
     const matching = all.filter(
