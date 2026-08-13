@@ -1,0 +1,166 @@
+{
+  "meta": {
+    "titulo": "C-068 · corrección de peso y envío a producción",
+    "sot": "1oRw1KSh8L1CyjUnD_D1S8a3J3ewJ_V8lN1BFR-7Bv9U",
+    "tabInventario": "Inventario",
+    "tabLotes": "Lotes",
+    "gidInventario": 1819792669,
+    "generado": "2026-08-12",
+    "reglaObservacion": "col AA se ANEXA, no se reemplaza",
+    "fuenteDelPeso": "Conteo y pesaje físico de Maritza, 12-ago-2026: 29 topitos = 7.24 ct (medido, sin la piedra de Isa). Las 19 unidades restantes están estimadas en 3.47 ct por DOS métodos distintos, no uno: las 2 de #506 por ÁREA (2 × 11.47 mm² × 0.01703 ct/mm² = 0.39 ct), y las 17 baguettes por la tasa promedio POR UNIDAD (17 × 0.18125 ct/ud = 3.08 ct). Ambas tasas se calibran con los mismos 8 ítems de C-068 que sí tienen peso medido (2.90 ct): 2.90/170.30 mm² = 0.01703 ct/mm² y 2.90/16 uds = 0.18125 ct/ud. Las baguettes NO se estimaron por mm² porque #496, #499 y #500 (24 uds) no tienen medidas cargadas en la hoja."
+  },
+  "fase1_updates": [
+    {
+      "tabla": "Lotes",
+      "clave": "C-068",
+      "campo": "pesoTotalQuilates",
+      "valorActual": 8.2,
+      "valorNuevo": 10.71,
+      "modo": "replace",
+      "nota": "Subvaluado en 2.51 ct (31%). 7.24 medidos en 29 topitos + 3.47 estimados en las 19 unidades restantes. El resultado es robusto: da 10.71 tanto si las 16 piedras ya pesadas del SOT están entre los topitos como si están entre las baguettes."
+    },
+    {
+      "tabla": "Lotes",
+      "clave": "C-068",
+      "campo": "notas",
+      "valorNuevo": "Peso corregido 12-ago-2026 de 8.20 a 10.71 ct. 7.24 ct MEDIDOS en las 29 gemas del envío a topitos; las 19 unidades restantes ESTIMADAS en 3.47 ct, en dos tramos: las 2 de #506 por ÁREA (11.47 mm² c/u × 0.01703 ct/mm² = 0.39 ct el par) y las 17 baguettes a la tasa promedio POR UNIDAD 0.18125 ct/ud (= 2.90 ct / 16 uds ya pesadas del propio C-068), 3.08 ct — las baguettes no tienen medidas registradas, por eso NO se estimaron por mm². Pendiente: pesar físicamente las 17 baguettes de anillo para confirmar. Tarifa resultante $68.627/ct (antes el lote se repartía por unidad a $15.312,50).",
+      "modo": "append",
+      "nota": ""
+    },
+    {
+      "tabla": "Inventario",
+      "clave": "506",
+      "campo": "Cant.",
+      "col": "G",
+      "valorActual": 2,
+      "valorNuevo": 0,
+      "modo": "replace",
+      "nota": "Consumido COMPLETO por el envío a producción de topitos. La fila y el QR siguen vivos."
+    },
+    {
+      "tabla": "Inventario",
+      "clave": "506",
+      "campo": "mostrarEnCatalogo",
+      "col": "Y",
+      "valorNuevo": "FALSE",
+      "modo": "replace",
+      "nota": "⚠️ La col Y es propiedad de CONVEX. Escribirla en la hoja NO despublica. Hay que hacerlo desde la app — es exactamente lo que pasó con las 7 engastadas del 24-jul, que siguen visibles."
+    },
+    {
+      "tabla": "Inventario",
+      "clave": "506",
+      "campo": "observacion",
+      "col": "AA",
+      "valorNuevo": "TRANSFORMADO 12-ago-2026: las 2 gemas (3.7 × 3.1 mm) entran al envío de producción de topitos de C-068. Peso estimado 0.39 ct el par (0.01703 ct/mm²). Consumo total, no parcial. La fila se conserva como traza del costo.",
+      "modo": "append",
+      "nota": ""
+    },
+    {
+      "tabla": "Inventario",
+      "clave": "485",
+      "campo": "Peso (ct)",
+      "col": "D",
+      "valorActual": "0,74 (TEXTO)",
+      "valorNuevo": 0.74,
+      "modo": "replace",
+      "nota": "Está escrito con coma, así que es texto y se cuela en cualquier suma. Limpieza de paso, viene de la hoja del 12-ago."
+    }
+  ],
+  "fase2_recosteo_BLOQUEADO": {
+    "motivo": "Solo 16 de las 48 unidades de C-068 tienen peso medido. Recostear ahora dejaría $535.979 del lote sin repartir y rompería Σ ítems = costo del lote.",
+    "desbloquea": "Pesar las 17 baguettes de anillo (y confirmar las 2 de #506).",
+    "tarifa": 68627,
+    "preview": [
+      {
+        "itemId": "498",
+        "ct": 0.4,
+        "costoActual": 30625,
+        "costoNuevo": 27451,
+        "delta": -3174
+      },
+      {
+        "itemId": "531",
+        "ct": 0.18,
+        "costoActual": 15638,
+        "costoNuevo": 12353,
+        "delta": -3285
+      },
+      {
+        "itemId": "532",
+        "ct": 0.6,
+        "costoActual": 52128,
+        "costoNuevo": 41176,
+        "delta": -10952
+      },
+      {
+        "itemId": "533",
+        "ct": 0.39,
+        "costoActual": 33883,
+        "costoNuevo": 26765,
+        "delta": -7118
+      },
+      {
+        "itemId": "534",
+        "ct": 0.24,
+        "costoActual": 20851,
+        "costoNuevo": 16470,
+        "delta": -4381
+      },
+      {
+        "itemId": "537",
+        "ct": 0.32,
+        "costoActual": 26972,
+        "costoNuevo": 21961,
+        "delta": -5011
+      },
+      {
+        "itemId": "538",
+        "ct": 0.42,
+        "costoActual": 35401,
+        "costoNuevo": 28823,
+        "delta": -6578
+      },
+      {
+        "itemId": "539",
+        "ct": 0.35,
+        "costoActual": 29502,
+        "costoNuevo": 24019,
+        "delta": -5483
+      }
+    ]
+  },
+  "envioProduccion": {
+    "lote": "C-068",
+    "fecha": "2026-08-12",
+    "totalPiezas": 49,
+    "destinos": [
+      {
+        "destino": "Topitos",
+        "piezas": 31,
+        "pesoCt": 7.63,
+        "detalle": "18 rectangulares · 4 ovaladas · 7 redondas (29, 7.24 ct medidos) + las 2 de #506 (0.39 ct estimados)"
+      },
+      {
+        "destino": "Anillo artesanal (baguette)",
+        "piezas": 6,
+        "pesoCt": null,
+        "detalle": "pendiente de pesar"
+      },
+      {
+        "destino": "Anillo en plata — Joshua (baguette)",
+        "piezas": 11,
+        "pesoCt": null,
+        "detalle": "pendiente de pesar. Eran 13; 2 pasaron a topitos con #506 — CONFIRMAR de cuál destino salieron."
+      }
+    ],
+    "materialDeTercero": {
+      "descripcion": "1 gema redonda de la embajadora Isa la Negra Vikinga Warrior Portocarrero",
+      "regla": "NO es un ítem de inventario. No suma unidades ni quilates a C-068, no recibe costoBaseCOP. Solo se registra como línea del envío."
+    },
+    "dijeAparte": {
+      "piezas": 2,
+      "items": ["174", "342"],
+      "detalle": "#174 L:A Lágrima de la Montaña (1.44 ct, C-057) y #342 Brújula Sagrada (6.30 ct, C-007). NO son de C-068. #342 está publicada y hay que despublicarla desde la app."
+    }
+  }
+}
