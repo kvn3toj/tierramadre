@@ -236,12 +236,31 @@ export const _porQueNoCotiza = internalQuery({
     // externa (una hoja, un inventario) para saber si el hueco se puede llenar.
     const sinCasillas: string[] = [];
     const anterioresAConfig: string[] = [];
+    const sinFechaRecepcion: string[] = [];
 
     for (const lote of lotes) {
       const delLote = porLote.get(lote.loteId);
       if (!delLote?.length) {
         motivos.push({ motivo: 'el lote no tiene casillas v4', casillas: 0 });
         sinCasillas.push(lote.loteId);
+        continue;
+      }
+      /**
+       * `configVigenteEn` lanza por DOS motivos —`exigeFecha` rechaza una fecha
+       * inválida, y después no encontrar regla vigente— y agruparlos bajo un solo
+       * mensaje fue un error de este diagnóstico que costó caro: el 2026-08-12
+       * reportó «55 lotes anteriores a toda la configuración de precios» y se
+       * recomendó cargar la config histórica de meses previos. Medido después: los
+       * 55 tenían la **fecha vacía**. Ninguna configuración arregla eso, y la
+       * recomendación mandaba a buscar un dato de negocio que no hacía falta.
+       */
+      const fechaValida = /^\d{4}-\d{2}-\d{2}$/.test(lote.fechaRecepcion ?? '');
+      if (!fechaValida) {
+        sinFechaRecepcion.push(lote.loteId);
+        motivos.push({
+          motivo: 'el lote no tiene fecha de recepción válida',
+          casillas: delLote.length,
+        });
         continue;
       }
       let config;
@@ -306,6 +325,7 @@ export const _porQueNoCotiza = internalQuery({
       duplicados: duplicados.slice(0, 15),
       sinCasillas: sinCasillas.sort(),
       anterioresAConfig: anterioresAConfig.sort(),
+      sinFechaRecepcion: sinFechaRecepcion.sort(),
       bloqueados: bloqueados.sort((a, b) => b.casillas - a.casillas).slice(0, 10),
     };
   },
