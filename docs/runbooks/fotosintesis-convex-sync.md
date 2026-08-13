@@ -13,8 +13,7 @@ para no recargar el ancho de banda de Convex ni los límites de la API de Sheets
   `api/get-inventory-rows` / `api/get-table-rows`, y usan **esa** variable, no
   la del catálogo (`SPREADSHEET_ID`). Si divergen, se sincroniza el libro
   equivocado en silencio.
-  >
-  > **No se puede leer con `vercel env pull`**: está marcada *Sensitive* en
+  > **No se puede leer con `vercel env pull`**: está marcada _Sensitive_ en
   > Vercel, o sea write-only, y la API la devuelve vacía (`=""`) igual que a
   > otras 44. Un `""` ahí NO significa que esté sin configurar — `SPREADSHEET_ID`
   > también sale vacío y demostrablemente apunta al v3.
@@ -23,7 +22,7 @@ para no recargar el ancho de banda de Convex ni los límites de la API de Sheets
   > el contenido de Convex delata el libro de origen. Comparar los `itemId`:
   >
   > ```bash
-  > curl -s -X POST "https://grand-hippopotamus-162.convex.cloud/api/query" \
+  > curl -s -X POST "https://valuable-mule-753.convex.cloud/api/query" \
   >   -H 'content-type: application/json' \
   >   -d '{"path":"products:publishedCatalog","args":{},"format":"json"}'
   > ```
@@ -73,11 +72,15 @@ Las HTTP actions se sirven en `<deployment>.convex.site` (hermano del
 - **Producción:** confirma el slug con `npx convex env list` / `npx convex dashboard`.
   ⚠ `.env.production` muestra un slug `.convex.cloud`; cámbialo a `.convex.site`
   y verifica que sea el deployment donde está desplegado `convex/http.ts`.
-  **Producción (verificado 2026-08-11):** `https://grand-hippopotamus-162.convex.site/sync/foto`
-  > Este runbook decía `wonderful-tortoise-984`, que ya no es el deployment de
-  > producción: sirve `/sync/foto` y responde 401 igual que el bueno, así que el
+  **Producción (verificado 2026-08-12):** `https://valuable-mule-753.convex.site/sync/foto`
+  > **Historial de slugs muertos — los dos fallan igual de silenciosos.**
+  > Este runbook decía primero `wonderful-tortoise-984` y después
+  > `grand-hippopotamus-162`; ninguno es ya producción. Un deployment retirado
+  > **sigue sirviendo `/sync/foto` y responde 401 idéntico al bueno**, así que el
   > error no se nota — sincronizás contra una base muerta y el toast dice que
-  > todo salió bien. Cómo distinguirlos sin adivinar:
+  > todo salió bien. Por eso **el toast no es verificación**: la única prueba es
+  > editar una celda y confirmar que el dato aparece en el deployment vivo.
+  > Cómo distinguirlos sin adivinar:
   >
   > ```bash
   > # 1. a qué Convex habla el bundle desplegado
@@ -88,8 +91,12 @@ Las HTTP actions se sirven en `<deployment>.convex.site` (hermano del
   >   -d '{"path":"products:publishedCatalog","args":{},"format":"json"}'
   > ```
   >
-  > El 2026-08-11: `grand-hippopotamus-162` → 424 ítems (vivo),
-  > `wonderful-tortoise-984` → 114 (muerto), `flexible-wolverine-803` → 138 (dev).
+  > El 2026-08-12, tras la migración de proyecto: `valuable-mule-753` → 430 ítems
+  > (**vivo, producción**), `grand-hippopotamus-162` → 430 (**el viejo**: quedó
+  > como respaldo de sólo lectura con los mismos datos, así que el conteo NO los
+  > distingue — distinguílos por el bundle en vivo, paso 1),
+  > `wonderful-tortoise-984` → 114 (muerto), `admired-jaguar-376` → dev del
+  > proyecto nuevo (sin funciones desplegadas al 2026-08-12).
 
 Como la URL vive en Script Properties, corregir un slug equivocado es un cambio
 de 10 segundos (sin redeploy).
