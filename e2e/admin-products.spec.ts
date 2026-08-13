@@ -10,64 +10,65 @@
  *      ledger updates immediately (the optimistic UI guarantee).
  *   4. Reopening the row surfaces the new audit row in "Historial".
  *
- * The spec does not exercise the real Convex backend — that lives at
- * `wandering-parrot-148.convex.cloud` and is covered by manual smoke
- * tests after every Convex deploy. This spec is a structural guard
+ * The spec does not exercise the real Convex backend — that lives in the
+ * production deployment (whatever `CONVEX_URL` currently names; it has moved
+ * projects three times, so naming it here would only go stale) and is covered
+ * by manual smoke tests after every Convex deploy. This spec is a structural guard
  * against regressions in the page shell, the optimistic mirror patch
  * pattern, and the audit log surface.
  */
 
-import { test, expect } from "@playwright/test";
-import { primeAdminSession } from "./helpers/session";
+import { test, expect } from '@playwright/test';
+import { primeAdminSession } from './helpers/session';
 
-test.describe("/admin/products — atelier inventory", () => {
+test.describe('/admin/products — atelier inventory', () => {
   test.beforeEach(async ({ page }) => {
     await primeAdminSession(page);
   });
 
-  test("renders the seeded inventory rows", async ({ page }) => {
-    await page.goto("/admin/products");
+  test('renders the seeded inventory rows', async ({ page }) => {
+    await page.goto('/admin/products');
 
     // Wait for the seeded inventory to land — three rows render under
     // the "Productos en el espejo" list. We use this as the readiness
     // signal because it's a stronger guarantee than the page title:
     // products only show up once the Convex stub's React subscriptions
     // have settled.
-    const list = page.getByRole("list", {
-      name: "Productos en el espejo",
+    const list = page.getByRole('list', {
+      name: 'Productos en el espejo',
     });
-    await expect(list.getByRole("listitem")).toHaveCount(3, {
+    await expect(list.getByRole('listitem')).toHaveCount(3, {
       timeout: 10_000,
     });
 
     // FotoHero rendered — h1 + "en el espejo" caption + create/resync controls.
     await expect(
-      page.getByRole("heading", {
+      page.getByRole('heading', {
         level: 1,
         name: /Fotosíntesis/i,
       }),
     ).toBeVisible();
-    await expect(page.getByText("en el espejo", { exact: true })).toBeVisible();
-    await expect(page.locator("[data-foto-create]")).toBeVisible();
-    await expect(page.locator("[data-foto-resync]")).toBeVisible();
+    await expect(page.getByText('en el espejo', { exact: true })).toBeVisible();
+    await expect(page.locator('[data-foto-create]')).toBeVisible();
+    await expect(page.locator('[data-foto-resync]')).toBeVisible();
 
     // Workbench split is rendered — Bandeja is visible at desktop widths.
     await expect(
-      page.getByRole("complementary", { name: /Bandeja/i }),
+      page.getByRole('complementary', { name: /Bandeja/i }),
     ).toBeVisible();
     // Each row has a chroma bar (data attribute set in ChromaBar).
-    const chromaBars = page.locator("[data-chroma-bar]");
+    const chromaBars = page.locator('[data-chroma-bar]');
     await expect(chromaBars.first()).toBeVisible();
     expect(await chromaBars.count()).toBeGreaterThan(0);
   });
 
-  test("edits a row via the Bandeja Abrir-editor button", async ({ page }) => {
-    await page.goto("/admin/products");
+  test('edits a row via the Bandeja Abrir-editor button', async ({ page }) => {
+    await page.goto('/admin/products');
 
-    const list = page.getByRole("list", {
-      name: "Productos en el espejo",
+    const list = page.getByRole('list', {
+      name: 'Productos en el espejo',
     });
-    await expect(list.getByRole("listitem")).toHaveCount(3, {
+    await expect(list.getByRole('listitem')).toHaveCount(3, {
       timeout: 10_000,
     });
 
@@ -75,51 +76,51 @@ test.describe("/admin/products — atelier inventory", () => {
     // Bandeja inspector. Drawer no longer opens on row click; the
     // "Abrir editor" button inside the Bandeja's StoneHero (Phase D)
     // is the explicit entry point for the edit flow.
-    const venusRow = list.getByRole("listitem").filter({
-      hasText: "Esmeralda Venus",
+    const venusRow = list.getByRole('listitem').filter({
+      hasText: 'Esmeralda Venus',
     });
     await expect(venusRow).toHaveCount(1);
-    await venusRow.getByText("Esmeralda Venus").click();
+    await venusRow.getByText('Esmeralda Venus').click();
 
-    const bandeja = page.getByRole("complementary", { name: /Bandeja/i });
+    const bandeja = page.getByRole('complementary', { name: /Bandeja/i });
     await expect(bandeja).toBeVisible();
-    const openEditorButton = bandeja.locator("[data-bandeja-open-editor]");
+    const openEditorButton = bandeja.locator('[data-bandeja-open-editor]');
     await expect(openEditorButton).toBeVisible();
     await openEditorButton.click();
 
-    const drawer = page.locator(".MuiDrawer-paper");
+    const drawer = page.locator('.MuiDrawer-paper');
     await expect(drawer).toBeVisible();
-    await expect(drawer.getByText("Sin cambios")).toBeVisible();
+    await expect(drawer.getByText('Sin cambios')).toBeVisible();
 
-    const nombreInput = drawer.getByRole("textbox", { name: "Nombre" });
+    const nombreInput = drawer.getByRole('textbox', { name: 'Nombre' });
     await nombreInput.click();
-    await nombreInput.fill("Esmeralda Venus Renombrada");
-    await expect(nombreInput).toHaveValue("Esmeralda Venus Renombrada");
+    await nombreInput.fill('Esmeralda Venus Renombrada');
+    await expect(nombreInput).toHaveValue('Esmeralda Venus Renombrada');
 
-    await expect(drawer.getByText("1 cambio sin guardar")).toBeVisible();
+    await expect(drawer.getByText('1 cambio sin guardar')).toBeVisible();
 
-    await drawer.getByRole("button", { name: "Guardar" }).click();
+    await drawer.getByRole('button', { name: 'Guardar' }).click();
     await expect(drawer).toHaveCount(0, { timeout: 5_000 });
 
-    await expect(list.getByText("Esmeralda Venus Renombrada")).toBeVisible();
+    await expect(list.getByText('Esmeralda Venus Renombrada')).toBeVisible();
 
     await list
-      .getByRole("listitem")
-      .filter({ hasText: "Esmeralda Venus Renombrada" })
-      .getByText("Esmeralda Venus Renombrada")
+      .getByRole('listitem')
+      .filter({ hasText: 'Esmeralda Venus Renombrada' })
+      .getByText('Esmeralda Venus Renombrada')
       .first()
       .click();
     await expect(openEditorButton).toBeVisible();
     await openEditorButton.click();
-    const reopenedDrawer = page.locator(".MuiDrawer-paper");
+    const reopenedDrawer = page.locator('.MuiDrawer-paper');
     await expect(reopenedDrawer).toBeVisible();
-    await expect(reopenedDrawer.getByText("Historial")).toBeVisible();
+    await expect(reopenedDrawer.getByText('Historial')).toBeVisible();
     await expect(reopenedDrawer.getByText(ADMIN_USER.name)).toBeVisible();
     await expect(
-      reopenedDrawer.getByText("Esmeralda Venus", { exact: true }),
+      reopenedDrawer.getByText('Esmeralda Venus', { exact: true }),
     ).toBeVisible();
     await expect(
-      reopenedDrawer.getByText("Esmeralda Venus Renombrada").first(),
+      reopenedDrawer.getByText('Esmeralda Venus Renombrada').first(),
     ).toBeVisible();
   });
 
@@ -129,33 +130,33 @@ test.describe("/admin/products — atelier inventory", () => {
    * drawer, presses "Crear y sincronizar", and asserts (a) the toast
    * with the new itemId, and (b) the row landing in the espejo list.
    */
-  test("creates a new product via + Nueva piedra", async ({ page }) => {
-    await page.goto("/admin/products");
+  test('creates a new product via + Nueva piedra', async ({ page }) => {
+    await page.goto('/admin/products');
 
-    const list = page.getByRole("list", {
-      name: "Productos en el espejo",
+    const list = page.getByRole('list', {
+      name: 'Productos en el espejo',
     });
     // Wait for the seeded rows so we know the stub has hydrated before
     // we exercise the create mutation.
-    await expect(list.getByRole("listitem")).toHaveCount(3, {
+    await expect(list.getByRole('listitem')).toHaveCount(3, {
       timeout: 10_000,
     });
 
-    await page.locator("[data-foto-create]").click();
+    await page.locator('[data-foto-create]').click();
 
-    const drawer = page.locator(".MuiDrawer-paper");
+    const drawer = page.locator('.MuiDrawer-paper');
     await expect(drawer).toBeVisible();
     await expect(drawer.getByText(/Nueva piedra/i).first()).toBeVisible();
 
-    await drawer.getByLabel(/Número/i).fill("999");
-    await drawer.getByLabel(/Nombre/i).fill("Test E2E");
+    await drawer.getByLabel(/Número/i).fill('999');
+    await drawer.getByLabel(/Nombre/i).fill('Test E2E');
 
-    await drawer.getByRole("button", { name: /Crear y sincronizar/i }).click();
+    await drawer.getByRole('button', { name: /Crear y sincronizar/i }).click();
 
     await expect(page.getByText(/Creada · 999/i)).toBeVisible({
       timeout: 5_000,
     });
-    await expect(list.getByText("Test E2E")).toBeVisible({ timeout: 5_000 });
+    await expect(list.getByText('Test E2E')).toBeVisible({ timeout: 5_000 });
   });
 
   /**
@@ -165,18 +166,18 @@ test.describe("/admin/products — atelier inventory", () => {
    * row's price renders the new COP-formatted amount. The optimistic
    * mirror patch should land in the row within a tick.
    */
-  test("inline-edits price from a row", async ({ page }) => {
-    await page.goto("/admin/products");
+  test('inline-edits price from a row', async ({ page }) => {
+    await page.goto('/admin/products');
 
-    const list = page.getByRole("list", {
-      name: "Productos en el espejo",
+    const list = page.getByRole('list', {
+      name: 'Productos en el espejo',
     });
-    await expect(list.getByRole("listitem")).toHaveCount(3, {
+    await expect(list.getByRole('listitem')).toHaveCount(3, {
       timeout: 10_000,
     });
 
-    const venusRow = list.getByRole("listitem").filter({
-      hasText: "Esmeralda Venus",
+    const venusRow = list.getByRole('listitem').filter({
+      hasText: 'Esmeralda Venus',
     });
     await expect(venusRow).toHaveCount(1);
 
@@ -184,8 +185,8 @@ test.describe("/admin/products — atelier inventory", () => {
     // "Precio de Esmeralda Venus". Use `exact: true` so we don't also
     // match the outer row button (whose accessible name concatenates
     // every cell's label, including the price label).
-    const priceCell = venusRow.getByRole("button", {
-      name: "Precio de Esmeralda Venus",
+    const priceCell = venusRow.getByRole('button', {
+      name: 'Precio de Esmeralda Venus',
       exact: true,
     });
     await expect(priceCell).toBeVisible();
@@ -193,8 +194,8 @@ test.describe("/admin/products — atelier inventory", () => {
 
     const priceInput = venusRow.locator('input[type="number"]');
     await expect(priceInput).toBeVisible();
-    await priceInput.fill("13000000");
-    await priceInput.press("Enter");
+    await priceInput.fill('13000000');
+    await priceInput.press('Enter');
 
     // The InlineEditCell collapses back to display state and the new
     // formatted value lands on the row. Intl.NumberFormat("es-CO") with

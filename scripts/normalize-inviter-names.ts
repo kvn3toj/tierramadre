@@ -18,7 +18,7 @@
  * Falls back to using existing updateMultiplier-style mutations if needed.
  *
  * Usage:
- *   CONVEX_URL=https://wandering-parrot-148.convex.cloud \
+ *   CONVEX_URL=https://<tu-deployment>.convex.cloud \
  *     npx tsx scripts/normalize-inviter-names.ts --dry-run
  */
 

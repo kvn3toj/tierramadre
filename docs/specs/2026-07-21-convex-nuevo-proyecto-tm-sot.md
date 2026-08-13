@@ -1,5 +1,29 @@
 # Nuevo proyecto Convex · TM-SOT (tech.tierramadre@gmail.com)
 
+> ## ⚠️ SUPERSEDIDO el 2026-08-13 — este documento es historia, no instrucciones
+>
+> Los deployments que nombra (`grand-hippopotamus-162` prod, `flexible-wolverine-803`
+> dev, equipo `dev-tec`, proyecto `tm-sot`) **ya no son producción**. El 2026-08-13 se
+> migró otra vez, a equipo **`se`** / proyecto **`back-ago`** — prod
+> **`valuable-mule-753`**, dev **`admired-jaguar-376`**.
+>
+> Se conserva porque **el método sigue siendo bueno** y se reutilizó tal cual: clonar
+> primero (`export` → `import --replace-all`) y sólo después re-sincronizar la hoja,
+> porque hay tablas que existen únicamente en Convex y un re-seed desde la hoja las
+> pierde. Lo que caducó son los slugs, no el procedimiento.
+>
+> Tres correcciones que la mudanza de agosto le hizo a este texto:
+>
+> - **§3 dice 8 variables de entorno; son 10.** Faltaban `ANIMA_BOT_SECRET` y
+>   `GOOGLE_OAUTH_CLIENT_ID`.
+> - **El tope del free tier es por EQUIPO**, sumado sobre todos los proyectos y
+>   deployments — no por proyecto. Un proyecto nuevo dentro del mismo equipo no baja
+>   el consumo ni un byte.
+> - **Los guardarraíles de §2 funcionaron** y aun así se reventó el tope en agosto. La
+>   causa fue otra: Convex cobra Database I/O por documentos **escaneados**, no por
+>   bytes devueltos, así que las proyecciones de campos no ahorran nada. Ver
+>   `docs/audits/2026-08-12-convex-usage-audit.md`.
+
 **Fecha:** 2026-07-21 · Estrategia: **spreadsheet-first, Convex frugal** (no quemar
 free tier). Tú ejecutas los `npx convex` (requieren tu login); yo dejé el código,
 la config y los pasos listos.
