@@ -1307,6 +1307,38 @@ export const updateMediaByItem = action({
   },
 });
 
+/**
+ * anima-bot bridge — gemelo por itemId de `updateMediaViaBot`. Existe porque
+ * 375 de 513 filas de productInventory no tienen fila de join en lotItems
+ * (ítems legacy del SOT v3), así que el bot no puede direccionarlas por
+ * lotItemId. Reusa `_updateMediaByItem` sin cambios (audit + pushToSheet
+ * incluidos).
+ */
+export const updateMediaByItemViaBot = action({
+  args: {
+    botSecret: v.string(),
+    itemId: v.string(),
+    fotoUrl: v.optional(v.string()),
+    certificadoUrl: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    { botSecret, itemId, fotoUrl, certificadoUrl },
+  ): Promise<{
+    itemId: string;
+    changed: boolean;
+    changedFields?: string[];
+  }> => {
+    requireBotSecret(botSecret);
+    return await ctx.runMutation(internal.lotItems._updateMediaByItem, {
+      itemId,
+      fotoUrl,
+      certificadoUrl,
+      editorEmail: 'anima-bot',
+    });
+  },
+});
+
 export const _remove = internalMutation({
   args: { lotItemId: v.id('lotItems'), editorEmail: v.optional(v.string()) },
   handler: async (ctx, { lotItemId, editorEmail }) => {
