@@ -2348,3 +2348,338 @@ export const seedAddendum20260812 = internalMutation({
     };
   },
 });
+
+/**
+ * REMANENTES de la hoja "Inventario 12 Agosto" — la mitad que la hoja NO puede
+ * hacer. Hermana de `seedManuscrito20260812` y `seedAddendum20260812`.
+ *
+ * CORRECCIÓN AL MOTIVO DE LAS HERMANAS (verificado en prod el 15-ago-2026): el
+ * pull HOY SÍ upserta filas nuevas de inventario — `products._pullFromSheet`
+ * inserta y bumpea `inventoryStats` (la nota «fotoSync las salta» quedó vieja).
+ * El sync completo del 15-ago ya creó #542–#554 en prod (total 545), ASÍ QUE en
+ * prod el paso 2 se salta entero por idempotencia (created:false, sin re-bump).
+ * Lo que el pull NO hace es importar un lote sin proveedor:
+ * `lots._insertMissingFromSheet` exige providerId, y por eso C-090 quedó
+ * afuera. En prod, el trabajo real de esta migración es SOLO el paso 1.
+ * Las altas quedan como respaldo idempotente para un deployment donde ese
+ * sync no haya corrido (dev).
+ *
+ * ORDEN: primero `scripts/aplicar-remanentes-12ago.mjs --apply` (corrió el
+ * 15-ago-2026: filas 534–546 en el SOT, C-090 en la pestaña Lotes, +2 cortes en
+ * Listas), después el sync completo, y recién entonces esta migración. Al
+ * revés, los `rowIndex` de abajo apuntan a filas que todavía no existen.
+ *
+ * Qué hace:
+ *   1. Crea el lote C-090 con el patrón "Recuperado" (C-070/C-074, verificado
+ *      en prod): costoTotalCOP 0, sin fecha ni formaPago, estado abierto, y el
+ *      MISMO providerId placeholder que C-070 — se lee de C-070 en vez de
+ *      inventar un proveedor, porque `providerId` es obligatorio en el schema
+ *      y "sin proveedor" es un hecho que el placeholder ya representa.
+ *      rowIndex 111 = su fila real en la pestaña Lotes.
+ *   2. Crea #542–#554 (2 Chivor → C-070, 11 Muzo → C-090). Nacen DISPONIBLE,
+ *      cant 1, OFI.CALI, preponderancia 0, `mostrarEnCatalogo:false` vía
+ *      `withPublishStamp` y SIN costoBaseCOP ni precioFinalCOP: la hoja de
+ *      origen no trae costos y vacío es un hecho, no un hueco. Sin costo,
+ *      `computePrecioFinal` no deriva nada — no ofertables hasta costear.
+ *   3. `inventoryStats.total` 532 → 545 (vía bumpInventoryTotal, 1 por alta).
+ *
+ * SIN filas en `lotItems`, a propósito: los 13 ítems que HOY viven en C-070
+ * tienen cero filas ahí (verificado en prod) — el patrón Recuperado existe
+ * solo como string `loteId` en el inventario. Colgar lotItems únicamente de
+ * las altas dejaría la composición del lote a medias. Cuando C-090 se costee
+ * (proveedor + factura), `lotItems._attachExistingToLote` es el camino.
+ *
+ * SIN bumpCatalogVersion: nada de esto está publicado, el catálogo público no
+ * cambia. Y NO EMPUJA A LA HOJA: las filas 534–546 ya existen en el SOT; un
+ * push en modo append las duplicaría (el modo de falla del 03-ago).
+ *
+ * Idempotente: por `loteId` el lote, por `itemId` cada alta — re-correrla es
+ * inofensivo.
+ *
+ *   npx convex run migrations:seedRemanentes20260812 '{}'          # dev
+ *   npx convex run --prod migrations:seedRemanentes20260812 '{}'   # prod
+ */
+const REMANENTES_20260812_LOTE = {
+  loteId: 'C-090',
+  rowIndex: 111,
+  unidadesDeclaradas: 11,
+  pesoTotalQuilates: 21.21,
+  mina: 'Muzo',
+  notas:
+    'Creado 12-ago-2026 para las 11 gemas Verde Muzo de la hoja "Inventario 12 Agosto". ' +
+    'Falta proveedor, factura, fecha y costo. Mismo patrón que los lotes "Recuperado" (C-070, C-074).',
+};
+
+const REMANENTES_20260812_OBSERVACION =
+  'Alta 12-ago-2026 desde la hoja "Inventario 12 Agosto". Sin costo: la hoja no lo trae. ' +
+  'NO ofertable hasta costear.';
+
+const REMANENTES_20260812_ALTAS = [
+  {
+    itemId: '542',
+    rowIndex: 534,
+    nombre: 'Caja de Sueños',
+    loteId: 'C-070',
+    talla: 'Cuadrada',
+    cantidad: 1,
+    peso: '1.42',
+    color: 'Verde Chivor',
+    calidad: 'F2',
+    medidas: '6.8 × 6.6 mm',
+  },
+  {
+    itemId: '543',
+    rowIndex: 535,
+    nombre: 'Cuarteto de Nos',
+    loteId: 'C-070',
+    talla: 'Semicuadrada',
+    cantidad: 1,
+    peso: '1.08',
+    color: 'Verde Chivor',
+    calidad: 'F2',
+    medidas: '6.6 × 6.2 mm',
+  },
+  {
+    itemId: '544',
+    rowIndex: 536,
+    nombre: 'Viaje Estelar',
+    loteId: 'C-090',
+    talla: 'Octogonal',
+    cantidad: 1,
+    peso: '4.1',
+    color: 'Verde Muzo',
+    calidad: 'F1',
+    medidas: '12.91 × 6.78 mm',
+  },
+  {
+    itemId: '545',
+    rowIndex: 537,
+    nombre: 'Sentir de la Montaña',
+    loteId: 'C-090',
+    talla: 'Octogonal',
+    cantidad: 1,
+    peso: '2.15',
+    color: 'Verde Muzo',
+    calidad: 'F1',
+    medidas: '10.09 × 5.59 mm',
+  },
+  {
+    itemId: '546',
+    rowIndex: 538,
+    nombre: 'Planeta Verde',
+    loteId: 'C-090',
+    talla: 'Octogonal',
+    cantidad: 1,
+    peso: '3.87',
+    color: 'Verde Muzo',
+    calidad: 'F1',
+    medidas: '13.41 × 6.46 mm',
+  },
+  {
+    itemId: '547',
+    rowIndex: 539,
+    nombre: 'Tiempo',
+    loteId: 'C-090',
+    talla: 'Corazón',
+    cantidad: 1,
+    peso: '1.83',
+    color: 'Verde Muzo',
+    calidad: 'F2',
+    medidas: '8.69 × 7.27 mm',
+  },
+  {
+    itemId: '548',
+    rowIndex: 540,
+    nombre: 'Semilla',
+    loteId: 'C-090',
+    talla: 'Cushion',
+    cantidad: 1,
+    peso: '2.2',
+    color: 'Verde Muzo',
+    calidad: 'F1',
+    medidas: '7.99 × 7.49 mm',
+  },
+  {
+    itemId: '549',
+    rowIndex: 541,
+    nombre: 'Luz de la Montaña',
+    loteId: 'C-090',
+    talla: 'Octogonal',
+    cantidad: 1,
+    peso: '2.29',
+    color: 'Verde Muzo',
+    calidad: 'F1',
+    medidas: '9.86 × 5.54 mm',
+  },
+  {
+    itemId: '550',
+    rowIndex: 542,
+    nombre: 'Libertad',
+    loteId: 'C-090',
+    talla: 'Octogonal',
+    cantidad: 1,
+    peso: '1',
+    color: 'Verde Muzo',
+    calidad: 'F1',
+    medidas: '6.78 × 5.44 mm',
+  },
+  {
+    itemId: '551',
+    rowIndex: 543,
+    nombre: 'Latido de la Tierra',
+    loteId: 'C-090',
+    talla: 'Lágrima',
+    cantidad: 1,
+    peso: '1.48',
+    color: 'Verde Muzo',
+    calidad: 'F1',
+    medidas: '9.5 × 7 mm',
+  },
+  {
+    itemId: '552',
+    rowIndex: 544,
+    nombre: 'Corazón Valiente',
+    loteId: 'C-090',
+    talla: 'Corazón',
+    cantidad: 1,
+    peso: '0.56',
+    color: 'Verde Muzo',
+    calidad: 'F2',
+    medidas: '5.46 × 5.02 mm',
+  },
+  {
+    itemId: '553',
+    rowIndex: 545,
+    nombre: 'Alma Ancestral',
+    loteId: 'C-090',
+    talla: 'Trapecio',
+    cantidad: 1,
+    peso: '0.84',
+    color: 'Verde Muzo',
+    calidad: 'F1',
+    medidas: '8.37 × 5.72 mm',
+  },
+  {
+    itemId: '554',
+    rowIndex: 546,
+    nombre: 'Arrecife',
+    loteId: 'C-090',
+    talla: 'Rectangular',
+    cantidad: 1,
+    peso: '0.89',
+    color: 'Verde Muzo',
+    calidad: 'F1',
+    medidas: '9.96 × 5.84 mm',
+  },
+];
+
+export const seedRemanentes20260812 = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = new Date().toISOString();
+
+    // ── 1. El lote C-090, patrón "Recuperado" ────────────────────────────
+    // El providerId placeholder se hereda de C-070 en vez de transcribirse:
+    // los _id difieren entre dev y prod, y C-070 ES el patrón que C-090 sigue.
+    let loteCreado: { loteId: string; created: boolean };
+    const loteExistente = await ctx.db
+      .query('lots')
+      .withIndex('by_loteId', (q) =>
+        q.eq('loteId', REMANENTES_20260812_LOTE.loteId),
+      )
+      .first();
+    if (loteExistente) {
+      loteCreado = { loteId: REMANENTES_20260812_LOTE.loteId, created: false };
+    } else {
+      const c070 = await ctx.db
+        .query('lots')
+        .withIndex('by_loteId', (q) => q.eq('loteId', 'C-070'))
+        .first();
+      if (!c070)
+        throw new Error(
+          'C-070 no existe en `lots` — es la referencia del patrón Recuperado ' +
+            'y la fuente del providerId placeholder. Sin él no se crea C-090.',
+        );
+      await ctx.db.insert('lots', {
+        loteId: REMANENTES_20260812_LOTE.loteId,
+        rowIndex: REMANENTES_20260812_LOTE.rowIndex,
+        providerId: c070.providerId,
+        fechaRecepcion: '',
+        costoTotalCOP: 0,
+        unidadesDeclaradas: REMANENTES_20260812_LOTE.unidadesDeclaradas,
+        pesoTotalQuilates: REMANENTES_20260812_LOTE.pesoTotalQuilates,
+        formaPago: '',
+        estado: 'abierto' as const,
+        mina: REMANENTES_20260812_LOTE.mina,
+        notas: REMANENTES_20260812_LOTE.notas,
+        mostrarComoLote: false,
+        // 'synced' y sin push: la fila 111 ya existe en la pestaña Lotes.
+        syncStatus: 'synced' as const,
+        lastPulledAt: now,
+      });
+      loteCreado = { loteId: REMANENTES_20260812_LOTE.loteId, created: true };
+    }
+
+    // ── 2. Las 13 altas ───────────────────────────────────────────────────
+    const creados: Array<{
+      itemId: string;
+      created: boolean;
+      reason?: string;
+    }> = [];
+    for (const a of REMANENTES_20260812_ALTAS) {
+      const existente = await ctx.db
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', a.itemId))
+        .first();
+      if (existente) {
+        creados.push({ itemId: a.itemId, created: false, reason: 'ya existe' });
+        continue;
+      }
+
+      await ctx.db.insert('productInventory', {
+        itemId: a.itemId,
+        rowIndex: a.rowIndex,
+        nombre: a.nombre,
+        peso: a.peso,
+        color: a.color,
+        calidad: a.calidad,
+        cantidad: a.cantidad,
+        talla: a.talla,
+        medidas: a.medidas,
+        categoria: 'Gema',
+        ubicacion: 'OFI.CALI',
+        estado: 'DISPONIBLE' as const,
+        qr: `https://tierramadre.app/p/${a.itemId}`,
+        productoUrl: `https://tierramadre.app/product/${a.itemId}`,
+        loteId: a.loteId,
+        // SIN costoBaseCOP ni precioFinalCOP: la hoja de origen no trae la
+        // columna de costos llena. Vacío es un hecho, no un hueco — sembrar
+        // cualquiera de los dos sería inventar un dato con forma de dato.
+        // preponderancia 0: ya no deriva costo (2026-07-24) y no altera la
+        // suma del lote.
+        preponderancia: 0,
+        observacion: REMANENTES_20260812_OBSERVACION,
+        tipo: 'gema',
+        // mostrarEnCatalogo:false — el FALSE que la col Y de la hoja no puede
+        // estampar (excluida del pull desde el 2026-07-30). Sin publicar no
+        // hay publishedAt ni procedencia que denormalizar.
+        ...withPublishStamp(null, false),
+        lastPulledAt: now,
+        // 'pending' y NO se agenda pushToSheet: las filas 534–546 ya existen
+        // en el SOT y un push en modo append las duplicaría.
+        syncStatus: 'pending' as const,
+      });
+      await bumpInventoryTotal(ctx, 1);
+      creados.push({ itemId: a.itemId, created: true });
+    }
+
+    return {
+      lote: loteCreado,
+      creados,
+      nota:
+        'No se empuja a la hoja: las filas 534–546 y Lotes f111 ya existen en el SOT ' +
+        '(aplicar-remanentes-12ago.mjs, 15-ago-2026). Sin lotItems a propósito: los 13 ítems ' +
+        'viejos de C-070 tampoco tienen — cuando C-090 se costee, _attachExistingToLote.',
+    };
+  },
+});
