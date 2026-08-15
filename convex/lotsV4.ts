@@ -22,7 +22,7 @@ import { internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
 import { requireAccessLevel, ROLES_COSTOS } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
-import { allocateNext, formatLotId, lotSequenceName } from './sequences';
+import { allocateNextLotId } from './sequences';
 import { validarLoteV4 } from './_lib/loteV4';
 import { planificarCasillas, siguienteItemIdNumerico } from './_lib/casillasV4';
 import { planificarRecalculo } from './_lib/recalculo';
@@ -140,9 +140,10 @@ export const _create = internalMutation({
     if (!provider) throw new Error('El proveedor no existe.');
 
     // 2. Id de lote, por la misma secuencia que el riel viejo: los dos comparten
-    //    numeración, así que no puede haber un B-042 en cada modelo.
-    const n = await allocateNext(ctx, lotSequenceName(args.sede));
-    const loteId = formatLotId(n, args.sede);
+    //    numeración, así que no puede haber un B-042 en cada modelo. El
+    //    allocator salta ids ocupados: un contador dejado atrás por una
+    //    importación NO puede volver a entregar un loteId existente (C-077×2).
+    const { loteId } = await allocateNextLotId(ctx, args.sede);
 
     const lotesAntes = await contarLotesActivosDb(ctx);
 
