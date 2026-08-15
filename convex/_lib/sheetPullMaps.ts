@@ -151,8 +151,30 @@ const INVENTORY: TableSpec = {
   tecnicaJoya: { coerce: 'str' },
   minerales: { coerce: 'csv' },
   complementos: { coerce: 'csv' },
-  fotoUrl: { coerce: 'str' },
-  certificadoUrl: { coerce: 'str' },
+  // EXCLUIDAS (2026-08-15): fotoUrl y certificadoUrl son de CONVEX, no de la hoja.
+  //
+  // Mismo mecanismo que `mostrarEnCatalogo` treinta líneas más arriba, un año
+  // de campos después. Estuvieron en el allowlist, y como `coerce: 'str'`
+  // devuelve `{skip:false, value:''}` para una celda vacía — la ESCRIBE, no la
+  // salta — cada pull pisaba con vacío la foto que Convex acababa de guardar.
+  //
+  // Costó 9 fotos en producción el 2026-08-15: los ítems 544-546 y 549-554,
+  // subidos por el bot entre las 21:05 y las 21:08, borrados por un
+  // `fotoSync:runFull` a las 21:28:23. Sobrevivieron los ítems legacy porque su
+  // `rowIndex` era correcto y el push había llegado a la celda buena, así que
+  // el pull reescribió el mismo valor; las filas creadas por el bot apuntaban a
+  // otra fila, su celda verdadera estaba vacía, y el pull la copió encima.
+  //
+  // Detalle que hizo el diagnóstico más lento: la auditoría marcaba esas
+  // ediciones como `saved`. `saved` dice que el push se ejecutó, NO que el
+  // valor llegó a la celda correcta — ver «Gotchas del espejo a Sheets» en
+  // CLAUDE.md, que ya lo advertía para `syncStatus`.
+  //
+  // El bot es hoy un productor frecuente de fotos y la hoja siempre va a ir
+  // detrás: la dirección queda en un solo sentido, Convex → hoja. El push las
+  // sigue escribiendo, porque vive en otra lista
+  // (`api/_lib/fotosintesis-inventory-columns.js`, columnas AL y AM), igual que
+  // `mostrarEnCatalogo` sigue escribiéndose en la Y estando excluida acá.
   formulaGema: { coerce: 'str' },
   formulaJoya: { coerce: 'str' },
   rangoDescuento: { coerce: 'str' },

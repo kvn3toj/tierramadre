@@ -234,3 +234,42 @@ describe('estado normalizers', () => {
     expect(normalizeLotEstado('  RECONSTRUIDO  ')).toBe('reconstruido');
   });
 });
+
+// El pull no puede ser dueño de un campo que Convex escribe más seguido que la
+// hoja. Estos tres lo demostraron en producción: `mostrarEnCatalogo` habría
+// ocultado 285 piezas de la vitrina (2026-07-30), y `fotoUrl` borró 9 fotos
+// recién subidas por el bot (2026-08-15, ítems 544-546 y 549-554).
+describe('campos propiedad de Convex: fuera del pull, dentro del push', () => {
+  const PROPIEDAD_DE_CONVEX = [
+    'mostrarEnCatalogo',
+    'fotoUrl',
+    'certificadoUrl',
+  ] as const;
+
+  it('ninguno está en el allowlist de pull de inventory', () => {
+    for (const campo of PROPIEDAD_DE_CONVEX) {
+      expect(
+        Object.keys(WRITABLE.inventory),
+        `${campo} volvió al allowlist: un pull con la celda vacía lo borraría`,
+      ).not.toContain(campo);
+    }
+  });
+
+  it('los tres siguen siendo columnas del push (Convex → hoja)', () => {
+    // El push vive en otra lista. Si esto falla, la exclusión de arriba dejó de
+    // ser "un solo sentido" y pasó a ser "ningún sentido": la hoja nunca más se
+    // enteraría del valor.
+    for (const campo of PROPIEDAD_DE_CONVEX) {
+      expect(INVENTORY_KEYS, `${campo} salió del push`).toContain(campo);
+    }
+  });
+
+  it('el motivo: una celda vacía SOBREESCRIBE, no se salta', () => {
+    // Este es el mecanismo entero del incidente. `num` sí salta el vacío; `str`
+    // no. Mientras esto siga así, cualquier campo de texto en el allowlist es
+    // borrable por una celda vacía de la hoja.
+    expect(coerceCell('str', '')).toEqual({ skip: false, value: '' });
+    expect(coerceCell('str', '   ')).toEqual({ skip: false, value: '' });
+    expect(coerceCell('num', '')).toEqual({ skip: true });
+  });
+});
