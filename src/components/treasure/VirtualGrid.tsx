@@ -461,10 +461,6 @@ export default function VirtualGrid({
     [onScrollDirectionChange],
   );
 
-  if (items.length === 0) {
-    return null;
-  }
-
   // Calculate row count based on items and columns
   const rowCount = Math.ceil(items.length / columnCount);
 
@@ -485,6 +481,13 @@ export default function VirtualGrid({
         : cardHeight + rowGap,
     [rowCount, cardHeight, rowGap],
   );
+
+  // Every hook has already run by here: an early return above ANY hook makes
+  // the 0↔N results transition (each keystroke in search) render a different
+  // hook count and crash the whole page with React #300.
+  if (items.length === 0) {
+    return null;
+  }
 
   // Column width as percentage
   const columnWidth = `${100 / columnCount}%`;
