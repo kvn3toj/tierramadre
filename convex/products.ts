@@ -29,6 +29,7 @@ import {
 import { postToVercel } from './_lib/sheetSync';
 import { verificaDestinoDeEscritura } from './_lib/destinoEscritura';
 import { requireAccessLevel } from './_lib/authz';
+import { requireBotSecret } from './_lib/botAuth';
 import {
   isStaffSession,
   requireStaffOrBotSession,
@@ -1007,6 +1008,44 @@ export const saveEdit = action({
       itemId,
       editorEmail: caller.email,
       editorName: caller.name,
+      patch,
+    });
+  },
+});
+
+/**
+ * La MISMA edición, por la puerta del bot (patrón `updateMediaByItemViaBot`,
+ * PR #118): `requireBotSecret` y el mismo `_saveEdit` — patch + audit en
+ * `productEdits` + `pushToSheet` agendado (localiza por columna A y hace
+ * append si la pieza aún no está en la hoja, así que las piezas del
+ * fotoálbum entran sin fila previa).
+ *
+ * El editor queda auditado como `telegram:<userId>` — la misma forma que
+ * estampa el riel v4 de casillas. El allowlist de campos es EL MISMO
+ * `saveEditPatchArgs` de la web: el bot no puede escribir nada que la web
+ * no pueda.
+ */
+export const saveEditViaBot = action({
+  args: {
+    botSecret: v.string(),
+    telegramUserId: v.number(),
+    itemId: v.string(),
+    patch: saveEditPatchArgs,
+  },
+  handler: async (
+    ctx,
+    { botSecret, telegramUserId, itemId, patch },
+  ): Promise<{
+    itemId: string;
+    changesCount: number;
+    message?: string;
+    auditId?: string;
+  }> => {
+    requireBotSecret(botSecret);
+    return await ctx.runMutation(internal.products._saveEdit, {
+      itemId,
+      editorEmail: `telegram:${telegramUserId}`,
+      editorName: 'anima-bot',
       patch,
     });
   },
