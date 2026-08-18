@@ -98,6 +98,26 @@ describe('useTreasureFiltering — priceless rows (F4)', () => {
     expect(result.current.filteredTreasure.map((i) => i.item)).toEqual([2]);
   });
 
+  it('una fila PUBLICADA por Fotosíntesis sin precio SÍ se muestra — "Consultar precio" (2026-08-18)', () => {
+    // El caso C-090: ítems publicados sin costear. Sólo el puente Fotosíntesis
+    // estampa publishedAt, así que su presencia distingue "aún sin costear"
+    // (mostrar, PriceDisplay pinta "Consultar precio") de un padre legacy
+    // retirado a 0 (ocultar, como pina el test de arriba).
+    const publicadaSinPrecio = {
+      ...pricedItem(544, 0),
+      publishedAt: 1787000000000,
+    };
+    const { result } = renderHook(() =>
+      useTreasureFiltering({
+        treasure: [publicadaSinPrecio, pricedItem(2, 635000), pricedItem(3, 0)],
+        inactivityTimeoutMinutes: 0,
+      }),
+    );
+    expect(result.current.filteredTreasure.map((i) => i.item).sort()).toEqual([
+      2, 544,
+    ]);
+  });
+
   it('a price-free row still passes an active price-range filter — the range cannot exclude what it cannot compare', () => {
     const { result } = renderHook(() =>
       useTreasureFiltering({

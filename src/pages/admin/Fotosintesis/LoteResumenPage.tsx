@@ -9,6 +9,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { CheckCircle2, AlertCircle, Pencil } from 'lucide-react';
 import { getFoto, fontFamilies } from '../../../design-system';
+import { loteExigePreponderancia } from '../../../../convex/_lib/cierreLote';
 import {
   useAuthedConvexAction,
   useConvexQuery,
@@ -230,7 +231,10 @@ export default function FotosintesisLoteResumenPage() {
   );
   const itemsCount = lotItems?.length ?? 0;
   const unidades = lot?.unidadesDeclaradas ?? 0;
-  const br2Ok = Math.abs(prepSum - 100) <= 0.01;
+  // BR-2 sólo rige lotes con costo — espejo del candado real en lots._close
+  // (convex/_lib/cierreLote.ts). Sin costo, la preponderancia es opcional.
+  const exigePrep = !!lot && loteExigePreponderancia(lot);
+  const br2Ok = !exigePrep || Math.abs(prepSum - 100) <= 0.01;
   const br3Ok = itemsCount === unidades && unidades > 0;
   const photosOk = useMemo(() => {
     if (!products?.length) return false;
@@ -673,7 +677,11 @@ export default function FotosintesisLoteResumenPage() {
             label="Preponderancia (BR-2)"
             ok={br2Ok}
             value={`${prepSum.toFixed(1)}%`}
-            detail="Debe sumar 100% ± 0.01"
+            detail={
+              exigePrep
+                ? 'Debe sumar 100% ± 0.01'
+                : 'Opcional: lote sin costo, nada que repartir'
+            }
           />
           <ValidationCard
             label="Conteo (BR-3)"

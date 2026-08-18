@@ -7,16 +7,16 @@
  * Diseñado por Aria - Capitana del Concilio de Creación
  * Refactored: Uses design system tokens for iOS HIG compliance
  */
-import { Box, Stack, Typography, useTheme } from "@mui/material";
+import { Box, Stack, Typography, useTheme } from '@mui/material';
 // Design System Tokens
 import {
   iosSemanticColors,
   iosTypographyScale,
   legacyTypography as typography,
   qeFont,
-} from "../../design-system";
-import { usePriceShare } from "../../contexts/PriceShareContext";
-import { useCurrency } from "../../contexts/CurrencyContext";
+} from '../../design-system';
+import { usePriceShare } from '../../contexts/PriceShareContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 export interface PriceDisplayProps {
   /** Precio COP del producto (precio regular/público) */
@@ -35,19 +35,19 @@ export interface PriceDisplayProps {
  */
 const formatCurrencyValue = (
   value: number,
-  currency: "COP" | "USD" = "COP",
+  currency: 'COP' | 'USD' = 'COP',
 ): string => {
-  if (currency === "USD") {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
+  if (currency === 'USD') {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
   }
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
@@ -72,6 +72,12 @@ export const PriceDisplay = ({
     return null;
   }
 
+  // Sin precio ≠ precio $0. Un ítem publicado sin costear (p. ej. los lotes
+  // "Recuperado", costo $0) se muestra igual, con "Consultar precio" en vez de
+  // un cero que parecería regalo — decisión 2026-08-18: el catálogo muestra
+  // siempre los ítems, con o sin precio.
+  const priceOnRequest = rawPrice <= 0;
+
   // Modo compacto para tarjetas - iOS HIG body typography (17px)
   if (compact) {
     return (
@@ -79,40 +85,47 @@ export const PriceDisplay = ({
         variant="body2"
         sx={{
           fontWeight: 500,
-          color: theme.palette.text.primary,
+          color: priceOnRequest
+            ? theme.palette.text.secondary
+            : theme.palette.text.primary,
           fontFamily: qeFont.mono,
           fontSize: compactSize ?? iosTypographyScale.body,
           letterSpacing: 0,
           fontFeatureSettings: '"tnum"',
         }}
       >
-        {formatCurrencyValue(displayPrice, currency)}
+        {priceOnRequest
+          ? 'Consultar precio'
+          : formatCurrencyValue(displayPrice, currency)}
       </Typography>
     );
   }
 
   // iOS HIG-inspired: weight & opacity hierarchy, clean layout
-  const isDark = theme.palette.mode === "dark";
-  const mode = isDark ? "dark" : "light";
+  const isDark = theme.palette.mode === 'dark';
+  const mode = isDark ? 'dark' : 'light';
 
   // iOS semantic colors from design system
   const labelColor = iosSemanticColors.secondaryLabel[mode];
   const primaryTextColor = iosSemanticColors.label[mode];
-  const isUSD = currency === "USD";
+  const isUSD = currency === 'USD';
 
   return (
-    <Stack spacing={0.5} sx={{ width: "100%" }}>
-      {/* Price - Primary (iOS Title style: 28pt bold for compact density) */}
-      {displayPrice > 0 && (
+    <Stack spacing={0.5} sx={{ width: '100%' }}>
+      {/* Price - Primary (iOS Title style: 28pt bold for compact density).
+          Sin precio, el bloque NO desaparece: muestra "Consultar precio" para
+          que un ítem sin costear siga teniendo presencia (y llamada a la
+          acción) en la ficha. */}
+      {priceOnRequest ? (
         <Box>
           <Typography
             sx={{
-              fontSize: "11px",
+              fontSize: '11px',
               fontWeight: 400,
               color: labelColor,
               fontFamily: qeFont.mono,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
               mb: 0.5,
             }}
           >
@@ -120,7 +133,35 @@ export const PriceDisplay = ({
           </Typography>
           <Typography
             sx={{
-              fontSize: "26px",
+              fontSize: '17px',
+              fontWeight: 500,
+              color: labelColor,
+              fontFamily: qeFont.mono,
+              letterSpacing: 0,
+              lineHeight: 1.3,
+            }}
+          >
+            Consultar precio
+          </Typography>
+        </Box>
+      ) : (
+        <Box>
+          <Typography
+            sx={{
+              fontSize: '11px',
+              fontWeight: 400,
+              color: labelColor,
+              fontFamily: qeFont.mono,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              mb: 0.5,
+            }}
+          >
+            Precio
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '26px',
               fontWeight: 500,
               color: primaryTextColor,
               fontFamily: qeFont.mono,
@@ -134,14 +175,14 @@ export const PriceDisplay = ({
           {isUSD && (
             <Typography
               sx={{
-                fontSize: "11px",
+                fontSize: '11px',
                 fontWeight: typography.weight.normal,
                 color: labelColor,
                 mt: 0.5,
                 fontFeatureSettings: '"tnum"',
               }}
             >
-              TRM: {trmRate.toLocaleString("es-CO")}
+              TRM: {trmRate.toLocaleString('es-CO')}
             </Typography>
           )}
         </Box>

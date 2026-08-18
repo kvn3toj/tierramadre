@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 
 import { getFoto, fontFamilies, paneHeight } from '../../../design-system';
+import { loteExigePreponderancia } from '../../../../convex/_lib/cierreLote';
 import {
   useConvexQuery,
   useAuthedConvexAction,
@@ -460,7 +461,11 @@ function TypeSelector({ value, onChange }: TypeSelectorProps) {
 // -----------------------------------------------------------------------------
 
 type FormaPago =
-  'contado' | 'esmereogenesis' | 'credito' | 'bajo_pedido' | 'consignacion';
+  | 'contado'
+  | 'esmereogenesis'
+  | 'credito'
+  | 'bajo_pedido'
+  | 'consignacion';
 type MetodoContado = 'efectivo' | 'transferencia';
 
 function formaPagoShort(formaPago: string, metodoContado?: string): string {
@@ -1334,6 +1339,8 @@ interface LoteCompletePanelProps {
   unidadesDeclaradas: number;
   prepSum: number;
   prepRemaining: number;
+  /** BR-2 sólo rige lotes con costo — sin costo la preponderancia es opcional. */
+  exigePreponderancia: boolean;
   prepOverflow: number;
   canCloseLot: boolean;
   hasProvider: boolean;
@@ -1347,21 +1354,24 @@ function LoteCompletePanel({
   prepSum,
   prepRemaining,
   prepOverflow,
+  exigePreponderancia,
   canCloseLot,
   hasProvider,
   onAddUnit,
   onCloseLot,
 }: LoteCompletePanelProps) {
   const balanced = Math.abs(prepSum - 100) <= 0.01;
-  const prepStatus = balanced
-    ? 'preponderancia balanceada al 100%'
-    : prepRemaining > 0.01
-      ? `falta ${Math.round(prepRemaining * 10) / 10}% de preponderancia`
-      : `${Math.round(prepOverflow * 10) / 10}% de exceso de preponderancia`;
+  const prepStatus = !exigePreponderancia
+    ? 'preponderancia opcional (lote sin costo)'
+    : balanced
+      ? 'preponderancia balanceada al 100%'
+      : prepRemaining > 0.01
+        ? `falta ${Math.round(prepRemaining * 10) / 10}% de preponderancia`
+        : `${Math.round(prepOverflow * 10) / 10}% de exceso de preponderancia`;
   // If closing is blocked, say exactly why — never a dead disabled button.
   const blockReason = !hasProvider
     ? 'Asigná un proveedor al lote antes de cerrarlo.'
-    : !balanced
+    : exigePreponderancia && !balanced
       ? 'Ajustá la preponderancia de los ítems hasta el 100% para poder cerrar el lote.'
       : null;
 
@@ -1422,7 +1432,12 @@ function LoteCompletePanel({
           Capturaste los {unidadesDeclaradas} ítems declarados ·{' '}
           <Box
             component="span"
-            sx={{ color: balanced ? foto.accent.deep : foto.status.sold }}
+            sx={{
+              color:
+                !exigePreponderancia || balanced
+                  ? foto.accent.deep
+                  : foto.status.sold,
+            }}
           >
             {prepStatus}
           </Box>
@@ -1902,12 +1917,16 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
     itemsCount < unidadesDeclaradas &&
     !saving;
 
+  // BR-2 sólo aplica a lotes con costo (espejo del candado real en
+  // lots._close — ver convex/_lib/cierreLote.ts). Un lote sin costo (patrón
+  // "Recuperado": C-070/C-090) cierra sin exigir preponderancia.
+  const exigePrep = !!lot && loteExigePreponderancia(lot);
   const canCloseLot =
     !!lot &&
     lot.estado === 'abierto' &&
     itemsCount > 0 &&
     itemsCount === unidadesDeclaradas &&
-    Math.abs(prepTotal.sum - 100) <= 0.01;
+    (!exigePrep || Math.abs(prepTotal.sum - 100) <= 0.01);
 
   const resetItemDraft = useCallback(() => {
     setGema(EMPTY_GEMA_DRAFT);
@@ -2454,6 +2473,7 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
               prepSum={prepTotal.sum}
               prepRemaining={prepTotal.remaining}
               prepOverflow={prepTotal.overflow}
+              exigePreponderancia={exigePrep}
               canCloseLot={canCloseLot}
               hasProvider={hasProvider}
               onAddUnit={() => void handleAddUnit()}
