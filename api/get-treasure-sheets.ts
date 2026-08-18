@@ -23,6 +23,7 @@ import { FOTO_INVENTARIO_LAST_COL } from './_lib/fotosintesis-inventory-columns.
 import { resolveGrant, bearerWasRejected } from './_lib/catalogGrant.js';
 import { lookupVitrina } from './_lib/vitrinaLookup.js';
 import { projectForGrant } from './_lib/catalogProjection.js';
+import { overlayConvexFotoUrls } from './_lib/convex-foto-overlay.js';
 
 type PesoParsed =
   | { value: number | string; isJewelry: true; metalType: 'Plata' | 'Oro 18k' }
@@ -401,6 +402,11 @@ export default withApiHandler(
       })
       .filter((item) => item.item > 0);
 
+    // Convex manda sobre la foto principal: la columna AL de arriba es el
+    // espejo (va detrás del push); acá se pisa con lo que el bot escribió en
+    // vivo. Best-effort — sin Convex se sirve la hoja tal cual, como siempre.
+    const treasureConFotos = await overlayConvexFotoUrls(treasure);
+
     const sampleRow = dataRows[0] || [];
     const pricingCount = Object.keys(pricingMap).length;
 
@@ -412,8 +418,8 @@ export default withApiHandler(
       Boolean(req.query.debug) && process.env.NODE_ENV !== 'production';
 
     return sendSuccess(res, {
-      treasure: projectForGrant(treasure, grant),
-      count: treasure.length,
+      treasure: projectForGrant(treasureConFotos, grant),
+      count: treasureConFotos.length,
       // sheetName + _debug describe the internal spreadsheet layout — staff
       // only. Non-staff (anon/vitrina) never had a reason to receive it.
       ...(grant.kind === 'staff' ? { sheetName: targetSheet } : {}),
