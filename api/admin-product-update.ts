@@ -55,6 +55,7 @@ import {
   FOTO_INVENTARIO_LAST_COL,
 } from './_lib/fotosintesis-inventory-columns.js';
 import { resolveRowTarget } from './_lib/sheet-row-target.js';
+import { writeNewRowGuarded } from './_lib/sheet-new-row.js';
 
 type FotoColumn = {
   header: string;
@@ -128,43 +129,6 @@ interface UpdateBody {
 function s(v: unknown): string {
   if (v === null || v === undefined) return '';
   return String(v);
-}
-
-/**
- * Estira el grid de la pestaña si la fila destino cae fuera. `values.update`
- * sobre un rango que excede el grid falla; `values.append` lo hacía solo, y era
- * lo único bueno que tenía.
- */
-async function ensureRowCapacity(
-  sheets: sheets_v4.Sheets,
-  spreadsheetId: string,
-  sheetTitle: string,
-  needed: number,
-): Promise<void> {
-  const meta = await sheets.spreadsheets.get({
-    spreadsheetId,
-    fields: 'sheets.properties(sheetId,title,gridProperties.rowCount)',
-  });
-  const props = (meta.data.sheets ?? [])
-    .map((sh) => sh.properties)
-    .find((p) => p?.title === sheetTitle);
-  if (!props?.gridProperties) return;
-  const current = props.gridProperties.rowCount ?? 0;
-  if (current >= needed) return;
-  await sheets.spreadsheets.batchUpdate({
-    spreadsheetId,
-    requestBody: {
-      requests: [
-        {
-          appendDimension: {
-            sheetId: props.sheetId,
-            dimension: 'ROWS',
-            length: needed - current,
-          },
-        },
-      ],
-    },
-  });
 }
 
 export default withApiHandler(
@@ -366,33 +330,22 @@ export default withApiHandler(
       // —102 columnas de grid contra las 57 del mapa— ancló en AT, la columna A
       // quedó vacía, y como el itemId no estaba en A el push siguiente volvía a
       // appendear: 21 filas basura por 10 ítems. Fila calculada + rango CERRADO.
-      const targetRange = `${targetSheet}!A${targetRow}:${lastCol}${targetRow}`;
-
-      // La fila destino tiene que estar vacía. Esta ruta toca plata: si hay algo
-      // ahí, abortamos en vez de pisarlo.
-      const occupiedResp = await sheets.spreadsheets.values.get({
+      // La secuencia (estirar grid → guarda de fila ocupada → update) vive en
+      // _lib/sheet-new-row.ts con su test de regresión (incidente 0571).
+      const written = await writeNewRowGuarded(sheets, {
         spreadsheetId,
-        range: targetRange,
+        sheetTitle: targetSheet,
+        targetRow,
+        lastCol,
+        values: merged,
       });
-      const occupied = (occupiedResp.data.values?.[0] ?? []) as string[];
-      if (occupied.some((c) => s(c).trim() !== '')) {
+      if (written.status === 'occupied') {
         return sendError(
           res,
           409,
           `Row ${targetRow} is not empty; refusing to overwrite it with new item "${itemId}". The sheet changed mid-write. Retry.`,
         );
       }
-
-      // El grid puede ser más corto que la fila destino; `values.update` falla
-      // fuera de rango, así que lo estiramos antes.
-      await ensureRowCapacity(sheets, spreadsheetId, targetSheet, targetRow);
-
-      await sheets.spreadsheets.values.update({
-        spreadsheetId,
-        range: targetRange,
-        valueInputOption: 'USER_ENTERED', // lets numbers/dates stay typed
-        requestBody: { values: [merged] },
-      });
       writtenRow = targetRow;
     } else {
       // UPDATE the located row in place (regardless of the passed rowIndex).

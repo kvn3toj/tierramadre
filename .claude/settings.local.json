@@ -127,7 +127,16 @@
       "Bash(node scripts/visualizer-mirror-fotos.mjs --items 233,311)",
       "Bash(python3 -)",
       "Bash(node --input-type=module -e ' *)",
-      "mcp__obsidian__vault_read"
+      "mcp__obsidian__vault_read",
+      "Bash(npm run *)",
+      "Bash(git -C .claude/worktrees/fix-1c log --oneline -1)",
+      "Bash(ln -s __TRACKED_VAR__/node_modules .claude/worktrees/fix-1c/node_modules)",
+      "Bash(ln -sfn /Users/kevinp/Movies/coomunity-universe/TierraMadre/node_modules /Users/kevinp/Movies/coomunity-universe/TierraMadre/.claude/worktrees/fix-1c/node_modules)",
+      "mcp__obsidian__vault_list",
+      "mcp__obsidian__vault_write",
+      "Bash(git ls-remote *)",
+      "Bash(git -C .claude/worktrees/merge-viabot rev-parse --short HEAD)",
+      "Bash(git -C .claude/worktrees/merge-viabot status --short)"
     ],
     "deny": [],
     "ask": []
