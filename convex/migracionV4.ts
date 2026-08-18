@@ -107,9 +107,17 @@ export const _estadoActual = internalQuery({
  * para que los barridos de reintento del riel legacy no la tomen por pendiente.
  */
 export const _asegurarCentinela = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    exigeDeploymentDeDesarrollo(process.env.CONVEX_CLOUD_URL);
+  args: {
+    // Opt-in EXPLÍCITO para producción (dictamen de Kevin, 2026-08-18): el
+    // ensayo ya corrió y se verificó en dev, y los 28 lotes reconstruidos de
+    // la hoja seguían sin existir en prod — 290 ítems apuntando a lotes
+    // fantasma y Fotosíntesis colgada en «Cargando resumen…». Sin este flag
+    // la guarda de dev sigue mandando, igual que siempre.
+    permitirProd: v.optional(v.boolean()),
+  },
+  handler: async (ctx, { permitirProd }) => {
+    if (!permitirProd)
+      exigeDeploymentDeDesarrollo(process.env.CONVEX_CLOUD_URL);
 
     const existente = await ctx.db
       .query('providers')
@@ -172,9 +180,15 @@ export const _aplicarPlan = internalMutation({
       }),
     ),
     centinelaId: v.id('providers'),
+    // Mismo opt-in explícito que `_asegurarCentinela` — ver el comentario allá.
+    permitirProd: v.optional(v.boolean()),
   },
-  handler: async (ctx, { lotesACrear, casillasACrear, centinelaId }) => {
-    exigeDeploymentDeDesarrollo(process.env.CONVEX_CLOUD_URL);
+  handler: async (
+    ctx,
+    { lotesACrear, casillasACrear, centinelaId, permitirProd },
+  ) => {
+    if (!permitirProd)
+      exigeDeploymentDeDesarrollo(process.env.CONVEX_CLOUD_URL);
 
     const ahora = new Date().toISOString();
     const lotesCreados: string[] = [];
@@ -342,10 +356,16 @@ export const _sembrarSegmentoEnDev = internalMutation({
  * que Kevin lee antes de dictaminar LC-03 y los lotes sin proveedor.
  */
 export const ensayo = internalAction({
-  args: { dryRun: v.optional(v.boolean()) },
+  args: {
+    dryRun: v.optional(v.boolean()),
+    // Aplicar en PRODUCCIÓN exige pedirlo dos veces: `dryRun: false` Y
+    // `permitirProd: true`. El dry-run corre en cualquier deployment sin flag
+    // porque solo lee.
+    permitirProd: v.optional(v.boolean()),
+  },
   handler: async (
     ctx,
-    { dryRun = true },
+    { dryRun = true, permitirProd },
   ): Promise<{
     dryRun: boolean;
     filasHoja: { lotes: number; inventario: number };
@@ -407,7 +427,7 @@ export const ensayo = internalAction({
 
     const { id: centinelaId } = await ctx.runMutation(
       internal.migracionV4._asegurarCentinela,
-      {},
+      { permitirProd },
     );
 
     const aplicado = await ctx.runMutation(internal.migracionV4._aplicarPlan, {
@@ -433,6 +453,7 @@ export const ensayo = internalAction({
         nombre: c.nombre,
       })),
       centinelaId,
+      permitirProd,
     });
 
     return { ...base, aplicado };
