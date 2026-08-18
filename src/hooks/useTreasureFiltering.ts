@@ -318,7 +318,20 @@ export function useTreasureFiltering({
       // item resolves instead of going blank. `priceKnown` also wins — this
       // gate only applies when the server actually told us the price was
       // zero, not when it withheld the price entirely.
-      if (!isExplicitItem && priceKnown && !(item.precioCOP > 0)) return false;
+      //
+      // `publishedAt` also wins (2026-08-18): a row the Fotosíntesis wizard
+      // PUBLISHED (only that bridge stamps publishedAt) went through a
+      // deliberate human decision, so a missing price means "aún sin costear",
+      // not "retirada" — it shows with "Consultar precio" (PriceDisplay)
+      // instead of being hidden. The retired legacy parents this gate exists
+      // for never carry publishedAt, so they stay hidden.
+      if (
+        !isExplicitItem &&
+        item.publishedAt == null &&
+        priceKnown &&
+        !(item.precioCOP > 0)
+      )
+        return false;
 
       // Same priceKnown-style distinction as above, for `estado` (N4,
       // 2026-08 fix round 3): withheld for anon/guest (undefined) is not

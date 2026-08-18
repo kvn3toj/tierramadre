@@ -20,6 +20,7 @@ import {
   reclaimIfTail,
 } from './sequences';
 import { canReopenLot } from './_lib/lotMath';
+import { errorCierrePreponderancia } from './_lib/cierreLote';
 import { omitInternosV4 } from './_lib/saleSafe';
 import { withPublishStamp } from './_lib/publishState';
 import { bumpCatalogVersion } from './_lib/catalogVersion';
@@ -433,12 +434,14 @@ export const _close = internalMutation({
       );
     }
 
+    // BR-2 relajada para lotes SIN costo (2026-08-18): sin costo no hay nada
+    // que la preponderancia reparta, así que exigir 100% era ceremonia — y tuvo
+    // a C-090 (patrón "Recuperado") atascado en "abierto" sin camino al
+    // catálogo. Un lote CON costo la sigue exigiendo. Lógica y test en
+    // convex/_lib/cierreLote.ts.
     const sum = items.reduce((s, it) => s + it.preponderancia, 0);
-    if (Math.abs(sum - 100) > 0.01) {
-      throw new Error(
-        `Preponderancia ${sum.toFixed(2)}% ≠ 100%. Ajusta los ítems antes de cerrar.`,
-      );
-    }
+    const errorPrep = errorCierrePreponderancia(lot, sum);
+    if (errorPrep) throw new Error(errorPrep);
 
     await ctx.db.patch(id, {
       estado: 'cerrado' as const,
@@ -772,7 +775,11 @@ export const reopen = action({
     // solo deja pasar `cerrado` y `publicado`: un `reconstruido` cae en
     // `not-closeable` antes de llegar acá.
     reopenedFrom:
-      'abierto' | 'cerrado' | 'publicado' | 'cancelado' | 'reconstruido';
+      | 'abierto'
+      | 'cerrado'
+      | 'publicado'
+      | 'cancelado'
+      | 'reconstruido';
     demotedFromCatalog: number;
   }> => {
     const caller = await requireAccessLevel(idToken, ['admin']);
@@ -1012,7 +1019,11 @@ export const _insertMissingFromSheet = internalMutation({
         rowIndex: c.rowIndex,
         providerId: provider._id,
         estado: estado as
-          'abierto' | 'cerrado' | 'publicado' | 'cancelado' | 'reconstruido',
+          | 'abierto'
+          | 'cerrado'
+          | 'publicado'
+          | 'cancelado'
+          | 'reconstruido',
         fechaRecepcion: c.fechaRecepcion,
         costoTotalCOP: c.costoTotalCOP,
         unidadesDeclaradas: c.unidadesDeclaradas,
