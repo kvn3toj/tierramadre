@@ -25,6 +25,7 @@ import {
   useFotosintesisGroups,
 } from './useFotosintesisCatalog';
 import { convertToProxyUrl } from '../utils/driveUrl';
+import { pickCardImage } from '../utils/cardImageSource';
 
 export function useTreasure({ vitrinaToken }: { vitrinaToken?: string } = {}) {
   // Google Sheets data
@@ -109,16 +110,23 @@ export function useTreasure({ vitrinaToken }: { vitrinaToken?: string } = {}) {
       // Count gallery items (includes legacy media if no gallery)
       const galleryCount = gallery.length || (itemMedia ? 1 : 0);
 
-      // Image Source: Google Drive `products/` folder via batch thumbnails
-      // Convert any Google Drive URLs to proxy URLs for reliable loading
-      const rawImageUrl =
-        mainMedia?.url || itemMedia?.url || batchThumb?.url || item.imagen;
+      // Fuente de la imagen: galería manual → media legacy → fotoUrl
+      // (item.imagen, la principal que escribe el bot) → carpeta Drive legacy.
+      // El orden vive en pickCardImage con su propio test; el cambio de
+      // 2026-08-18 subió fotoUrl por encima de la carpeta (antes un ítem con
+      // carpeta legacy mostraba su foto vieja para siempre — el caso #97).
+      const picked = pickCardImage({
+        galleryUrl: mainMedia?.url,
+        legacyUrl: itemMedia?.url,
+        fotoUrl: item.imagen,
+        folderThumbUrl: batchThumb?.url,
+        folderThumbIsVideo: batchThumb?.isVideoThumbnail,
+      });
+      const rawImageUrl = picked.url;
       const rawThumbnailUrl =
         mainMedia?.thumbnailUrl || itemMedia?.thumbnailUrl || item.thumbnailUrl;
 
-      // Determine media type: check if batch thumbnail is from a video-only product
-      const isVideoOnly =
-        batchThumb?.isVideoThumbnail && !mainMedia && !itemMedia;
+      const isVideoOnly = picked.isVideoOnly;
       const mediaType =
         mainMedia?.type ||
         itemMedia?.mediaType ||

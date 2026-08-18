@@ -9,6 +9,7 @@ import {
 } from './_generated/server';
 import { v, ConvexError } from 'convex/values';
 import { api, internal } from './_generated/api';
+import { projectFotoUrls } from './_lib/fotoUrls';
 import {
   qualityBucket,
   caratBucket,
@@ -600,6 +601,33 @@ export const publishedCatalog = query({
         tratamiento: row.tratamiento,
       };
     });
+  },
+});
+
+/**
+ * Foto principal de TODO el inventario, proyectada a `{ itemId, fotoUrl }`.
+ *
+ * La consume el overlay server-side de api/get-treasure-sheets: los ítems
+ * legacy del catálogo viajan desde la hoja, cuya columna AL solo se refresca
+ * cuando corre un push Convex→hoja — mientras el bot escribe `fotoUrl` acá al
+ * momento. Sin este puente, una foto recién subida no aparece hasta el
+ * próximo sync (y no hay otra query pública que sirva fotoUrl de ítems no
+ * publicados: publishedCatalog filtra por mostrarEnCatalogo).
+ *
+ * COSTO: barre productInventory entero, así que NO debe suscribirse
+ * reactivamente desde el frontend (re-correría con cada write de cualquier
+ * fila — exactamente lo que el audit 2026-08-12 §4 desarmó en
+ * publishedCatalog). Se llama una vez por request de get-treasure-sheets,
+ * server-side, vía ConvexHttpClient — sin suscripción.
+ *
+ * Proyección: itemId + fotoUrl y nada más (projectFotoUrls, con test propio);
+ * la foto ya es superficie pública — es la imagen que el catálogo pinta.
+ */
+export const fotoUrls = query({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db.query('productInventory').collect();
+    return projectFotoUrls(rows);
   },
 });
 
