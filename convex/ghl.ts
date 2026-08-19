@@ -394,13 +394,14 @@ export const markOrderPaid = mutation({
     paymentId: v.optional(v.string()),
     status: v.optional(v.string()),
     approved: v.optional(v.boolean()),
-    // What the provider actually reports charging (Wompi's transaction, e.g.
-    // `amountInCents`/`currency`), so this mutation can veto BEFORE the state
-    // transition when it disagrees with the sale's own `totalCOP`. Optional
-    // and skipped when absent — the live `mp-webhook.ts` rail does not send
-    // these yet, so omitting them must not change its behavior.
-    expectedAmountInCents: v.optional(v.number()),
-    currency: v.optional(v.string()),
+    // What the provider actually reports charging (e.g. Wompi's
+    // `amountInCents`/`currency`). The mutation compares these RECEIVED values
+    // against the sale's own `totalCOP` to veto the state transition when money
+    // doesn't match. Optional and skipped when absent — the live `mp-webhook.ts`
+    // rail does not send these yet, so omitting them must not change its behavior.
+    // CRITICAL: both must remain v.optional() for deploy-skew safety (see task).
+    receivedAmountInCents: v.optional(v.number()),
+    receivedCurrency: v.optional(v.string()),
     secret: v.string(),
   },
   handler: async (ctx, args) => {
@@ -432,14 +433,18 @@ export const markOrderPaid = mutation({
     // wasn't actually received. Checked before any state change so it stays
     // atomic with the transition it gates.
     if (
-      !amountsMatch(sale.totalCOP, args.expectedAmountInCents, args.currency)
+      !amountsMatch(
+        sale.totalCOP,
+        args.receivedAmountInCents,
+        args.receivedCurrency,
+      )
     ) {
       return {
         updated: false as const,
         reason: 'amount-mismatch' as const,
         expectedAmountInCents: sale.totalCOP * 100,
-        receivedAmountInCents: args.expectedAmountInCents ?? null,
-        receivedCurrency: args.currency ?? null,
+        receivedAmountInCents: args.receivedAmountInCents ?? null,
+        receivedCurrency: args.receivedCurrency ?? null,
       };
     }
 

@@ -94,7 +94,7 @@ export default withApiHandler(
       return sendError(res, 503, 'Convex backend not configured');
     }
 
-    // 5. Idempotent mark-paid. `expectedAmountInCents`/`currency` carry what
+    // 5. Idempotent mark-paid. `receivedAmountInCents`/`receivedCurrency` carry what
     // Wompi actually reports charging so the mutation can veto the state
     // transition when it disagrees with the sale's own total — see
     // convex/ghl.ts markOrderPaid and convex/_lib/applyPayment.ts amountsMatch.
@@ -104,8 +104,8 @@ export default withApiHandler(
       paymentId: transaction.id,
       status: transaction.status,
       approved: true,
-      expectedAmountInCents: transaction.amountInCents,
-      currency: transaction.currency,
+      receivedAmountInCents: transaction.amountInCents,
+      receivedCurrency: transaction.currency,
       secret: process.env.ADMIN_SYNC_TOKEN ?? '',
     });
     if (!result.updated) {
