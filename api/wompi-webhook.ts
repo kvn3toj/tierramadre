@@ -94,16 +94,40 @@ export default withApiHandler(
       return sendError(res, 503, 'Convex backend not configured');
     }
 
-    // 5. Idempotent mark-paid.
+    // 5. Idempotent mark-paid. `expectedAmountInCents`/`currency` carry what
+    // Wompi actually reports charging so the mutation can veto the state
+    // transition when it disagrees with the sale's own total — see
+    // convex/ghl.ts markOrderPaid and convex/_lib/applyPayment.ts amountsMatch.
     const result = await convexClient.mutation(api.ghl.markOrderPaid, {
       saleId,
       provider: 'wompi',
       paymentId: transaction.id,
       status: transaction.status,
       approved: true,
+      expectedAmountInCents: transaction.amountInCents,
+      currency: transaction.currency,
       secret: process.env.ADMIN_SYNC_TOKEN ?? '',
     });
     if (!result.updated) {
+      if (result.reason === 'amount-mismatch') {
+        // An approved Wompi transaction that doesn't match what the sale
+        // expects must never quietly become a paid commission — do NOT mark
+        // the sale paid. 200 so Wompi stops retrying: retrying will not
+        // change the amount that was actually charged.
+        console.error(
+          `[WompiWebhook] amount mismatch for saleId=${saleId} transactionId=${transaction.id}: ` +
+            `expected ${result.expectedAmountInCents} cents, received ${result.receivedAmountInCents} cents ` +
+            `(currency=${result.receivedCurrency})`,
+        );
+      }
+      if (result.reason === 'sale-not-found') {
+        // A real approved payment whose reference matches no sale — silence
+        // here would hide it entirely. Retrying will not conjure the sale,
+        // so still answer 200, but make this visible in logs.
+        console.error(
+          `[WompiWebhook] sale-not-found for saleId=${saleId} transactionId=${transaction.id}`,
+        );
+      }
       return sendSuccess(res, {
         ok: true,
         alreadyProcessed: true,

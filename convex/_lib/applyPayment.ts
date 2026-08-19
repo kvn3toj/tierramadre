@@ -16,6 +16,25 @@ export type SaleEstado = 'reservada' | 'confirmada' | 'cancelada';
 /** Every rail that can mark a sale paid. `breb-manual` lands in phase 4. */
 export type PaymentProvider = 'mercadopago' | 'wompi' | 'breb-manual';
 
+const KNOWN_PAYMENT_PROVIDERS: readonly PaymentProvider[] = [
+  'mercadopago',
+  'wompi',
+  'breb-manual',
+];
+
+/**
+ * Narrow an untyped value (e.g. `args.provider: v.optional(v.string())`) to
+ * `PaymentProvider`. Callers must branch on the `false` case rather than
+ * casting — an unrecognized string must be rejected, not silently trusted,
+ * since phase 4 adds a fourth rail (`breb-manual`) here.
+ */
+export function isPaymentProvider(value: unknown): value is PaymentProvider {
+  return (
+    typeof value === 'string' &&
+    (KNOWN_PAYMENT_PROVIDERS as readonly string[]).includes(value)
+  );
+}
+
 export interface PaymentInfo {
   provider: PaymentProvider;
   /** The provider's payment/transaction id, as a string. */
@@ -84,4 +103,32 @@ export function applyPaymentToSale(
     patch.mpStatus = payment.status;
   }
   return { changed: true, patch };
+}
+
+/**
+ * Guard against paying a real commission on money never actually received.
+ * `markOrderPaid` computes the sale's expected charge as `totalCOP * 100`
+ * (Wompi/most gateways bill in cents) and compares it to what the provider
+ * actually reports having charged — never trusting `sale.totalCOP` alone for
+ * that comparison, and never trusting the webhook body either (the caller is
+ * expected to have re-fetched the real transaction first, same rule as
+ * `applyPaymentToSale`).
+ *
+ * Pure so it is unit-testable without Convex IO — see
+ * `tests/applyPayment.test.ts`.
+ *
+ * Optional: a caller that omits BOTH `receivedAmountInCents` and
+ * `receivedCurrency` (e.g. the live `mp-webhook.ts` rail, which does not yet
+ * send them) skips the check entirely rather than failing closed — adding
+ * this guard must not regress the MercadoPago path that doesn't verify
+ * amount yet.
+ */
+export function amountsMatch(
+  expectedTotalCOP: number,
+  receivedAmountInCents: number | undefined,
+  receivedCurrency: string | undefined,
+): boolean {
+  if (receivedAmountInCents == null && receivedCurrency == null) return true;
+  if (receivedCurrency !== 'COP') return false;
+  return receivedAmountInCents === expectedTotalCOP * 100;
 }

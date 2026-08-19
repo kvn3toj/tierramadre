@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { applyPaymentToSale } from '../convex/_lib/applyPayment';
+import {
+  applyPaymentToSale,
+  isPaymentProvider,
+  amountsMatch,
+} from '../convex/_lib/applyPayment';
 
 const NOW = '2026-05-28T12:00:00.000Z';
 
@@ -95,5 +99,43 @@ describe('applyPaymentToSale', () => {
         NOW,
       ),
     ).toEqual({ changed: false, reason: 'not-approved' });
+  });
+});
+
+describe('isPaymentProvider', () => {
+  it('accepts the three known rails', () => {
+    expect(isPaymentProvider('mercadopago')).toBe(true);
+    expect(isPaymentProvider('wompi')).toBe(true);
+    expect(isPaymentProvider('breb-manual')).toBe(true);
+  });
+
+  it('rejects an unknown or malformed value instead of trusting it', () => {
+    expect(isPaymentProvider('wompy')).toBe(false); // typo
+    expect(isPaymentProvider('')).toBe(false);
+    expect(isPaymentProvider(undefined)).toBe(false);
+    expect(isPaymentProvider(null)).toBe(false);
+    expect(isPaymentProvider(123)).toBe(false);
+  });
+});
+
+describe('amountsMatch', () => {
+  it('passes when the received amount and currency match the expected total, in cents', () => {
+    expect(amountsMatch(50000, 5000000, 'COP')).toBe(true);
+  });
+
+  it('fails when the received amount diverges from the expected total', () => {
+    expect(amountsMatch(50000, 4999900, 'COP')).toBe(false);
+    expect(amountsMatch(50000, 5000100, 'COP')).toBe(false);
+  });
+
+  it('fails on any currency other than COP', () => {
+    expect(amountsMatch(50000, 5000000, 'USD')).toBe(false);
+    expect(amountsMatch(50000, 5000000, undefined)).toBe(false);
+  });
+
+  it('skips the check (passes) when the caller sends neither amount nor currency', () => {
+    // The live mp-webhook.ts rail does not send these yet — omitting both
+    // must not change its behavior.
+    expect(amountsMatch(50000, undefined, undefined)).toBe(true);
   });
 });

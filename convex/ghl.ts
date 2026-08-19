@@ -34,7 +34,11 @@ import {
   type SearchableProduct,
 } from './_lib/productSearch';
 import { isOverLimit, computeCommissionCOP } from './_lib/commission';
-import { applyPaymentToSale, type PaymentProvider } from './_lib/applyPayment';
+import {
+  applyPaymentToSale,
+  isPaymentProvider,
+  amountsMatch,
+} from './_lib/applyPayment';
 import {
   isContactInactive,
   addContactTags,
@@ -390,6 +394,13 @@ export const markOrderPaid = mutation({
     paymentId: v.optional(v.string()),
     status: v.optional(v.string()),
     approved: v.optional(v.boolean()),
+    // What the provider actually reports charging (Wompi's transaction, e.g.
+    // `amountInCents`/`currency`), so this mutation can veto BEFORE the state
+    // transition when it disagrees with the sale's own `totalCOP`. Optional
+    // and skipped when absent — the live `mp-webhook.ts` rail does not send
+    // these yet, so omitting them must not change its behavior.
+    expectedAmountInCents: v.optional(v.number()),
+    currency: v.optional(v.string()),
     secret: v.string(),
   },
   handler: async (ctx, args) => {
@@ -401,13 +412,37 @@ export const markOrderPaid = mutation({
       .first();
     if (!sale) return { updated: false as const, reason: 'sale-not-found' };
 
-    // Resolve the two accepted arg shapes into one.
-    const provider = (args.provider ?? 'mercadopago') as PaymentProvider;
+    // Resolve the two accepted arg shapes into one. `args.provider` is an
+    // untyped `v.optional(v.string())`, so validate it against the known
+    // rails rather than casting — an unrecognized value must be rejected,
+    // not silently trusted (phase 4 adds `breb-manual` traffic here).
+    const providerRaw = args.provider ?? 'mercadopago';
+    if (!isPaymentProvider(providerRaw)) {
+      return { updated: false as const, reason: 'unknown-provider' };
+    }
+    const provider = providerRaw;
     const paymentId = args.paymentId ?? args.mpPaymentId;
     const status = args.status ?? args.mpStatus;
     if (!paymentId || !status) {
       return { updated: false as const, reason: 'missing-payment' };
     }
+
+    // The ambassador commission and the client's lifetime total are computed
+    // from `sale.totalCOP` below — never let that happen for money that
+    // wasn't actually received. Checked before any state change so it stays
+    // atomic with the transition it gates.
+    if (
+      !amountsMatch(sale.totalCOP, args.expectedAmountInCents, args.currency)
+    ) {
+      return {
+        updated: false as const,
+        reason: 'amount-mismatch' as const,
+        expectedAmountInCents: sale.totalCOP * 100,
+        receivedAmountInCents: args.expectedAmountInCents ?? null,
+        receivedCurrency: args.currency ?? null,
+      };
+    }
+
     // Legacy callers send no `approved`; MercadoPago's word for it is
     // "approved", so derive it rather than defaulting to false and silently
     // dropping a real payment.

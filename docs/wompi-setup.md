@@ -79,14 +79,34 @@ neutral por proveedor (`provider`, `paymentId`, `status`, `approved`). Esto no
 es incidental: es lo que hace posible desplegar en dos sistemas separados sin
 una ventana de downtime.
 
-Si Vercel se desplegara **antes** que Convex, el nuevo `api/wompi-webhook.ts`
-(o cualquier llamador que ya use el shape nuevo) enviaría argumentos
-(`provider`, `paymentId`, …) a una mutación de Convex en producción que
-todavía no los acepta — esa llamada fallaría. Desplegando Convex primero, la
-mutación ya acepta ambas formas antes de que exista tráfico que use la forma
-nueva, y el `api/mp-webhook.ts` que sigue en producción sirviendo el riel de
-MercadoPago no se entera de nada: sigue mandando `mpPaymentId`/`mpStatus`
-exactamente como siempre.
+**Si Vercel se desplegara antes que Convex, TODAS las órdenes fallan —
+MercadoPago incluido, no solo Wompi.** No es solo que `api/wompi-webhook.ts`
+enviaría argumentos (`provider`, `paymentId`, …) que la mutación vieja no
+acepta. El problema real está un escalón antes: `api/ghl-create-order.ts`
+manda `forma_pago` de forma **incondicional** en cada llamada a
+`ghl.createOrder` — no solo cuando el proveedor es Wompi — y ese argumento
+solo existe en el validador nuevo de Convex. Con el validador viejo todavía
+en producción, cualquier orden (MercadoPago o Wompi) dispara un
+`ArgumentValidationError`, el handler lo relanza, y `api/_lib/with-api-handler.js`
+lo convierte en un 500. El bot de GHL deja de poder crear órdenes, punto,
+para cualquier proveedor.
+
+Y hay un segundo problema, más serio, en ese mismo 500: el mensaje de
+`ArgumentValidationError` de Convex **incluye el objeto de argumentos
+recibido**, y el handler devuelve `error.message` tal cual en el cuerpo de
+la respuesta. Entre esos argumentos viaja `secret: process.env.ADMIN_SYNC_TOKEN`.
+Es decir: desplegar en el orden equivocado no solo rompe todas las
+órdenes — puede **filtrar `ADMIN_SYNC_TOKEN` en una respuesta 500 que le
+llega directo al bot de GoHighLevel**.
+
+Desplegando Convex primero, la mutación ya acepta el shape nuevo (`provider`,
+`paymentId`, `expectedAmountInCents`, `currency`, …) y el validador de
+`createOrder` ya acepta `forma_pago` antes de que exista tráfico que los
+use, así que ninguna de las dos cosas ocurre. El `api/mp-webhook.ts` que
+sigue en producción sirviendo el riel de MercadoPago no se entera de nada:
+sigue mandando `mpPaymentId`/`mpStatus` exactamente como siempre.
+
+**Convex primero, Vercel después. Siempre. Sin excepciones.**
 
 **Pendiente, una vez que ambos deploys estén en vivo:** un commit de
 seguimiento que elimine `mpPaymentId`/`mpStatus` de `markOrderPaid` — ya

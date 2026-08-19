@@ -61,10 +61,25 @@ export default withApiHandler(
     }
 
     // 'mercadopago' unless explicitly switched — deploying this file must not
-    // change behavior on its own.
-    const provider = (process.env.PAYMENT_PROVIDER ?? 'mercadopago')
+    // change behavior on its own. A typo (e.g. "wompy") must never fall
+    // through to the MercadoPago branch while still stamping the junk value
+    // into Convex/the Sheets mirror as `forma_pago` — that would make the
+    // operator believe the switch happened when it silently didn't, AND
+    // pollute the mirror. So validate against the known allowlist and fall
+    // back to 'mercadopago' for BOTH the branch selection and the value sent
+    // to Convex on anything unrecognized.
+    const KNOWN_PAYMENT_PROVIDERS = ['mercadopago', 'wompi'] as const;
+    const rawProvider = (process.env.PAYMENT_PROVIDER ?? 'mercadopago')
       .trim()
       .toLowerCase();
+    let provider: (typeof KNOWN_PAYMENT_PROVIDERS)[number] = 'mercadopago';
+    if ((KNOWN_PAYMENT_PROVIDERS as readonly string[]).includes(rawProvider)) {
+      provider = rawProvider as (typeof KNOWN_PAYMENT_PROVIDERS)[number];
+    } else {
+      console.error(
+        `[GhlCreateOrder] Unknown PAYMENT_PROVIDER="${rawProvider}" — falling back to "mercadopago" for both the branch and forma_pago.`,
+      );
+    }
 
     let order: { saleId: string; totalCOP: number };
     try {
@@ -183,6 +198,7 @@ export default withApiHandler(
       return sendSuccess(res, {
         order_id: order.saleId,
         total_cop: order.totalCOP,
+        checkout_url: null,
         mp_url: null,
         mp_pending: true,
       });

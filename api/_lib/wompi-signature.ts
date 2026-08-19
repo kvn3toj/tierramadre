@@ -66,9 +66,13 @@ function resolvePath(root: unknown, path: string): unknown {
 
 /**
  * Validate a Wompi webhook against `eventsSecret`. `headerChecksum` is the
- * `X-Event-Checksum` header and takes precedence over the in-body copy — a
- * body-only check would let an attacker supply both the payload and the
- * checksum that "confirms" it.
+ * `X-Event-Checksum` header and, when present, takes precedence over the
+ * in-body copy — it falls back to the in-body `signature.checksum` when the
+ * header is absent, so either alone is sufficient to pass. This does not
+ * weaken the guarantee: forging a valid checksum from either place still
+ * requires knowing `eventsSecret`, which never reaches the browser. Preferring
+ * the header is just a mild hardening (an attacker who can only edit the JSON
+ * body, not add headers, gains nothing), not a requirement for security.
  */
 export function validateWompiChecksum(
   event: WompiEvent,
