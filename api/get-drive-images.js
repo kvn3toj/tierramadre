@@ -114,15 +114,18 @@ export default withApiHandler(
     }
 
     // Fallback 2: bot-captured items without a carpeta pointer; their album
-    // lives in fotosintesis/<loteId>/<itemNumber>/.
+    // lives in fotosintesis/<loteId>/<itemNumber>/. The WHOLE stage is
+    // try/caught: a resolution failure here once 500'd the endpoint for every
+    // item, products/ rail included (corpora:'drive' vs folder id, 2026-08-19)
+    // — a broken fallback must degrade to "no extra photos", never to error.
     if (files.length === 0) {
-      const fotosintesisFolderId = await getFotosintesisItemFolderId(
-        drive,
-        sharedDriveId,
-        item,
-      );
-      if (fotosintesisFolderId && fotosintesisFolderId !== folderId) {
-        try {
+      try {
+        const fotosintesisFolderId = await getFotosintesisItemFolderId(
+          drive,
+          sharedDriveId,
+          item,
+        );
+        if (fotosintesisFolderId && fotosintesisFolderId !== folderId) {
           const fotosintesisFiles = await listMediaFiles(
             drive,
             fotosintesisFolderId,
@@ -132,12 +135,12 @@ export default withApiHandler(
             files = fotosintesisFiles;
             source = 'fotosintesis';
           }
-        } catch (err) {
-          console.warn(
-            `[GetDriveImages] fotosintesis listing failed for ${item}:`,
-            err?.message || err,
-          );
         }
+      } catch (err) {
+        console.warn(
+          `[GetDriveImages] fotosintesis fallback failed for ${item}:`,
+          err?.message || err,
+        );
       }
     }
 

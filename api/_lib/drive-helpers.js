@@ -212,14 +212,17 @@ export async function getFotosintesisItemFolderId(
     return null;
   }
 
+  // SIN driveId/corpora: GOOGLE_SHARED_DRIVE_ID es una CARPETA compartida, no
+  // una unidad compartida real, y Drive responde "Shared drive not found" a
+  // cualquier corpora:'drive' con ese id (500 en prod, 2026-08-19). La
+  // búsqueda va sobre todo lo visible para la credencial y la verificación de
+  // linaje de abajo es la que garantiza que el match sea del árbol correcto.
   const candidatesResponse = await drive.files.list({
     q: `name='${item}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: 'files(id, name, parents)',
     pageSize: 25,
     supportsAllDrives: true,
     includeItemsFromAllDrives: true,
-    driveId: sharedDriveId,
-    corpora: 'drive',
   });
 
   for (const candidate of candidatesResponse.data.files || []) {

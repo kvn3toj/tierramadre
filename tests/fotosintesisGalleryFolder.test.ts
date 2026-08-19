@@ -42,8 +42,23 @@ function fakeDrive(folders: FakeFolder[], hasFotoRoot = true) {
   const byId = new Map(folders.map((f) => [f.id, f]));
   const drive = {
     files: {
-      list: async ({ q }: { q: string }) => {
+      list: async ({
+        q,
+        driveId,
+        corpora,
+      }: {
+        q: string;
+        driveId?: string;
+        corpora?: string;
+      }) => {
         calls.list += 1;
+        // Réplica del comportamiento de prod: GOOGLE_SHARED_DRIVE_ID es una
+        // CARPETA compartida, no una unidad compartida, así que cualquier
+        // consulta con corpora:'drive' revienta — y ese error llegó a tumbar
+        // el endpoint entero (500 para TODOS los ítems, 2026-08-19).
+        if (driveId !== undefined || corpora !== undefined) {
+          throw new Error(`Shared drive not found: ${driveId}`);
+        }
         if (q.includes("name='fotosintesis'")) {
           return {
             data: {
