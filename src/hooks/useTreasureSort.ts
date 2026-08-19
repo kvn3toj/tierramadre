@@ -18,6 +18,16 @@ export type SortOption =
   | 'newest'
   | 'most-searched';
 
+/**
+ * Número de ítem con el que una card ORDENA. Para una card de lote agrupada,
+ * su miembro más nuevo (`newestMemberItem`) — el `item` propio es una clave
+ * sintética en el rango 8M+ que sólo existe para no colisionar con números
+ * reales y no dice nada de recencia.
+ */
+export function rankItem(t: TreasureItem): number {
+  return t.newestMemberItem ?? t.item;
+}
+
 export function useTreasureSort(
   filteredTreasure: TreasureItem[],
   sortBy: SortOption,
@@ -43,11 +53,14 @@ export function useTreasureSort(
           return bScore - aScore;
         }
         case 'item-number':
-          return a.item - b.item;
+          return rankItem(a) - rankItem(b);
         case 'newest':
           // Item numbers are assigned sequentially as products enter the inventario sheet
           // (column A), so the highest item number is the most recently added product.
-          return b.item - a.item;
+          // Grouped lote cards rank by their newest MEMBER (rankItem): their own
+          // `item` is a synthetic 8M-range key that would otherwise beat every
+          // real item and pin all lotes to the top of the grid.
+          return rankItem(b) - rankItem(a);
         case 'most-searched': {
           const aHits = searchHits[a.item] || 0;
           const bHits = searchHits[b.item] || 0;
