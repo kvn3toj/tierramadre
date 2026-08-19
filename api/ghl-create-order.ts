@@ -3,9 +3,11 @@
  *
  * POST, `Authorization: Bearer <GHL_API_SECRET>`. Validates the body, defers the
  * ≤2M gate + price reload + sale creation to Convex `ghl.createOrder` (which
- * throws `OVER_LIMIT_2M` → 409 handoff), then creates a Mercado Pago preference
- * whose `notification_url` is this app's `api/mp-webhook` and `external_reference`
- * is the saleId. Returns `{ order_id, mp_url }`.
+ * throws `OVER_LIMIT_2M` → 409 handoff), then builds a payment link with the
+ * provider named by `PAYMENT_PROVIDER` (`mercadopago` by default, or `wompi`)
+ * whose reference/external_reference is the saleId. Returns
+ * `{ order_id, total_cop, checkout_url }`, plus `mp_url` as a legacy alias of
+ * the same link for the GHL workflow that reads it.
  *
  * If `MP_ACCESS_TOKEN` is not yet configured (build-and-mock scope), the order is
  * still created and returned with `mp_url: null, mp_pending: true` so the flow is
@@ -18,6 +20,7 @@ import { withApiHandler, sendError, sendSuccess } from './_lib/index.js';
 import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
 import { bearerMatches } from './_lib/bearer.js';
 import { buildPreference, createPreference } from './_lib/mp-preference.js';
+import { buildCheckoutUrl } from './_lib/wompi.js';
 import { api } from '../convex/_generated/api.js';
 
 const DEFAULT_APP_URL = 'https://tierra-madre-studio.vercel.app';
@@ -57,6 +60,12 @@ export default withApiHandler(
       return sendError(res, 400, 'items must be a non-empty array');
     }
 
+    // 'mercadopago' unless explicitly switched — deploying this file must not
+    // change behavior on its own.
+    const provider = (process.env.PAYMENT_PROVIDER ?? 'mercadopago')
+      .trim()
+      .toLowerCase();
+
     let order: { saleId: string; totalCOP: number };
     try {
       order = await convexClient.mutation(api.ghl.createOrder, {
@@ -73,6 +82,7 @@ export default withApiHandler(
         shipping_address: body.shipping_address ?? undefined,
         ambassador_slug: body.ambassador_slug ?? undefined,
         canal_origen: body.canal_origen ?? undefined,
+        forma_pago: provider,
         secret: process.env.ADMIN_SYNC_TOKEN ?? '',
       });
     } catch (err) {
@@ -105,6 +115,67 @@ export default withApiHandler(
     const appUrl = (process.env.APP_URL ?? DEFAULT_APP_URL)
       .trim()
       .replace(/\/$/, '');
+
+    if (provider === 'wompi') {
+      const publicKey = process.env.WOMPI_PUBLIC_KEY;
+      const integritySecret = process.env.WOMPI_INTEGRITY_SECRET;
+
+      // Credentials not wired yet → return the order, no link, same graceful
+      // shape the MercadoPago branch uses below.
+      if (!publicKey || !integritySecret) {
+        return sendSuccess(res, {
+          order_id: order.saleId,
+          total_cop: order.totalCOP,
+          checkout_url: null,
+          mp_url: null,
+          mp_pending: true,
+        });
+      }
+
+      // The sale row already exists in Convex at this point, so a failure here
+      // must not surface as an opaque crash and lose the order.
+      try {
+        const checkoutUrl = buildCheckoutUrl(
+          {
+            reference: order.saleId,
+            amountCOP: order.totalCOP,
+            redirectUrl: `${appUrl}/pedido-confirmado/${order.saleId}`,
+            customer: {
+              email: body.contact.email,
+              fullName: body.contact.full_name,
+              phoneNumber: body.contact.celular,
+            },
+          },
+          { publicKey, integritySecret },
+        );
+        return sendSuccess(res, {
+          order_id: order.saleId,
+          total_cop: order.totalCOP,
+          checkout_url: checkoutUrl,
+          // `mp_url` is the field the live GHL workflow already reads and
+          // sends to the customer. It carries whatever link this order should
+          // be paid with, whoever the provider is — the name is legacy, the
+          // meaning is "the pay link". Kept so the workflow needs no edit.
+          mp_url: checkoutUrl,
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('[GhlCreateOrder] Wompi checkout URL failed:', msg);
+        return sendSuccess(
+          res,
+          {
+            order_id: order.saleId,
+            total_cop: order.totalCOP,
+            checkout_url: null,
+            mp_url: null,
+            mp_pending: true,
+            mp_error: msg,
+          },
+          201,
+        );
+      }
+    }
+
     const accessToken = process.env.MP_ACCESS_TOKEN;
 
     // Build-and-mock scope: no live MP token yet → return the order, no link.
@@ -149,6 +220,7 @@ export default withApiHandler(
       return sendSuccess(res, {
         order_id: order.saleId,
         total_cop: order.totalCOP,
+        checkout_url: created.init_point,
         mp_url: created.init_point,
       });
     } catch (err) {
