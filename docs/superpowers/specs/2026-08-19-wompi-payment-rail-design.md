@@ -66,10 +66,21 @@ los mismos nombres relativos, para que quien conoce uno conozca el otro.
 | `api/wompi-webhook.ts`        | `mp-webhook.ts`    | Los mismos 6 pasos del handler.                                                  |
 
 **Reutilización, no duplicación:** `decideWebhookOutcome`
-(`api/_lib/mpWebhookLogic.ts`) ya es agnóstica del proveedor — sus campos
+(`api/_lib/mpWebhookLogic.ts`) es casi agnóstica del proveedor — sus campos
 `type`/`dataId` mapean a `event`/`transaction.id` sin cambios. Se **renombra** el
-archivo a `api/_lib/webhookLogic.ts` y se usa tal cual desde los dos webhooks.
-El test `tests/mpWebhookLogic.test.ts` se renombra con él.
+archivo a `api/_lib/webhookLogic.ts` y el test `tests/mpWebhookLogic.test.ts`
+se renombra con él.
+
+Con una corrección encontrada al escribir el plan: la función **compara contra
+el literal `"payment"`**, que es de MercadoPago. Recibe entonces un parámetro
+aditivo `actionableType`, con default `"payment"`, y Wompi pasa
+`"transaction.updated"`. Al ser un default, el comportamiento de MercadoPago no
+cambia en un solo bit.
+
+Ojo con una asimetría del patrón actual: **ningún handler importa este módulo**
+— cada uno inlinea sus ramas y el módulo existe como tabla de verdad testeable
+(así lo dice `api/mp-webhook.ts:17`). `api/wompi-webhook.ts` sigue esa misma
+convención en vez de cablearlo.
 
 #### `buildIntegritySignature`
 

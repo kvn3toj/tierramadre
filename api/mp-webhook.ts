@@ -14,7 +14,7 @@
  *      post-sale workflow) is best-effort: a failure flags `pendingGhlSync` and
  *      still returns 200 (the sale is committed).
  *
- * The branch table is unit-tested in tests/mpWebhookLogic.test.ts; HMAC in
+ * The branch table is unit-tested in tests/webhookLogic.test.ts; HMAC in
  * tests/mpSignature.test.ts.
  */
 
@@ -102,6 +102,14 @@ export default withApiHandler(
       secret: process.env.ADMIN_SYNC_TOKEN ?? '',
     });
     if (!result.updated) {
+      if (result.reason === 'sale-not-found') {
+        // A real approved payment whose reference matches no sale — silence
+        // here would hide it entirely. Retrying will not conjure the sale,
+        // so still answer 200, but make this visible in logs.
+        console.error(
+          `[MpWebhook] sale-not-found for saleId=${saleId} mpPaymentId=${payment.id}`,
+        );
+      }
       return sendSuccess(res, {
         ok: true,
         alreadyProcessed: true,

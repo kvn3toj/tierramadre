@@ -30,7 +30,7 @@ Convex crons: ambassador-scoring (00:00 Bogotá) · abandoned-cart (18:00 Bogot�
 | `convex/crons.ts`                                                                                       | ambassador-scoring (daily) + abandoned-cart (18:00 Bogotá)                                                                        |
 | `convex/_lib/{productSearch,commission,applyPayment}.ts`                                                | pure, unit-tested logic                                                                                                           |
 | `api/ghl-search-products.ts`, `api/ghl-create-order.ts`, `api/mp-webhook.ts`, `api/ghl-sync-contact.ts` | HTTP surface                                                                                                                      |
-| `api/_lib/{bearer,mp-signature,ghl-client,mp-preference,mpWebhookLogic}.ts`                             | auth + external clients                                                                                                           |
+| `api/_lib/{bearer,mp-signature,ghl-client,mp-preference,webhookLogic}.ts`                               | auth + external clients                                                                                                           |
 
 Idempotency: `markOrderPaid` only flips `reservada → confirmada`; the commission insert
 is guarded by `commissions.by_saleId` (emulates `UNIQUE(order_id)`), so a replayed MP
