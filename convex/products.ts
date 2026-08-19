@@ -29,6 +29,7 @@ import {
 import { postToVercel } from './_lib/sheetSync';
 import { verificaDestinoDeEscritura } from './_lib/destinoEscritura';
 import { requireAccessLevel } from './_lib/authz';
+import { requireBotSecret } from './_lib/botAuth';
 import {
   isStaffSession,
   requireStaffOrBotSession,
@@ -866,6 +867,13 @@ const saveEditPatchArgs = v.object({
   medidasValores: v.optional(v.string()),
   categoria: v.optional(v.string()),
   precioCOP: v.optional(v.number()),
+  // El precio de una fila SOT (columna M). `precioCOP` de arriba es el del
+  // riel LEGACY (columna L del layout viejo, retirada del espejo SOT en
+  // 2026-05-29): mandarlo para una fila SOT deja el valor en un campo que
+  // ninguna query lee y en ninguna celda — le pasó al primer /datos real
+  // (#555, 2026-08-19). Quien escribe ESTE campo recibe además el sello
+  // `precioFinalManual` en _saveEdit, abajo.
+  precioFinalCOP: v.optional(v.number()),
   ubicacion: v.optional(v.string()),
   asesor: v.optional(v.string()),
   coleccion: v.optional(v.string()),
@@ -941,9 +949,14 @@ export const _saveEdit = internalMutation({
       return { itemId, changesCount: 0, message: 'Sin cambios' };
     }
 
-    // Patch the mirror — UI updates immediately
+    // Patch the mirror — UI updates immediately. Un precio puesto a mano lleva
+    // el MISMO sello que estampa el pull (`sheetPull.ts` → planRowPatch): sin
+    // `precioFinalManual`, el re-fan del lote lo devolvería a costo × 2.6.
     await ctx.db.patch(existing._id, {
       ...patch,
+      ...(patch.precioFinalCOP !== undefined
+        ? { precioFinalManual: true }
+        : {}),
       syncStatus: 'pending' as const,
       syncError: undefined,
     });
@@ -1007,6 +1020,44 @@ export const saveEdit = action({
       itemId,
       editorEmail: caller.email,
       editorName: caller.name,
+      patch,
+    });
+  },
+});
+
+/**
+ * La MISMA edición, por la puerta del bot (patrón `updateMediaByItemViaBot`,
+ * PR #118): `requireBotSecret` y el mismo `_saveEdit` — patch + audit en
+ * `productEdits` + `pushToSheet` agendado (localiza por columna A y hace
+ * append si la pieza aún no está en la hoja, así que las piezas del
+ * fotoálbum entran sin fila previa).
+ *
+ * El editor queda auditado como `telegram:<userId>` — la misma forma que
+ * estampa el riel v4 de casillas. El allowlist de campos es EL MISMO
+ * `saveEditPatchArgs` de la web: el bot no puede escribir nada que la web
+ * no pueda.
+ */
+export const saveEditViaBot = action({
+  args: {
+    botSecret: v.string(),
+    telegramUserId: v.number(),
+    itemId: v.string(),
+    patch: saveEditPatchArgs,
+  },
+  handler: async (
+    ctx,
+    { botSecret, telegramUserId, itemId, patch },
+  ): Promise<{
+    itemId: string;
+    changesCount: number;
+    message?: string;
+    auditId?: string;
+  }> => {
+    requireBotSecret(botSecret);
+    return await ctx.runMutation(internal.products._saveEdit, {
+      itemId,
+      editorEmail: `telegram:${telegramUserId}`,
+      editorName: 'anima-bot',
       patch,
     });
   },
