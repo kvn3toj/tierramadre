@@ -1,6 +1,6 @@
 /**
- * Pure truth-table for the Mercado Pago webhook handler (api/mp-webhook.ts),
- * extracted so the branch semantics are unit-testable (tests/mpWebhookLogic.test.ts)
+ * Pure truth-table for the payment webhook handlers (api/mp-webhook.ts, api/wompi-webhook.ts),
+ * extracted so the branch semantics are unit-testable (tests/webhookLogic.test.ts)
  * without spinning up the handler or mocking IO.
  *
  * The handler performs IO between steps (validate signature → fetch payment →
@@ -11,14 +11,20 @@
  */
 
 export type WebhookOutcome =
-  | "invalid-signature"
-  | "ignored"
-  | "already-paid"
-  | "fan-out";
+  | 'invalid-signature'
+  | 'ignored'
+  | 'already-paid'
+  | 'fan-out';
 
 export interface WebhookDecisionInput {
   /** Result of validateMpSignature. */
   signatureValid: boolean;
+  /**
+   * The notification type this provider considers actionable. MercadoPago
+   * sends "payment"; Wompi sends "transaction.updated". Defaults to
+   * MercadoPago's so its call sites are unchanged.
+   */
+  actionableType?: string;
   /** Notification topic — only "payment" is actionable. */
   type?: string;
   /** The MP resource id (data.id) — required to fetch the payment. */
@@ -43,34 +49,34 @@ export function decideWebhookOutcome(input: WebhookDecisionInput): {
   reason?: string;
 } {
   if (!input.signatureValid) {
-    return { httpStatus: 401, outcome: "invalid-signature", fanOut: false };
+    return { httpStatus: 401, outcome: 'invalid-signature', fanOut: false };
   }
-  if (input.type !== "payment" || !input.dataId) {
+  if (input.type !== (input.actionableType ?? 'payment') || !input.dataId) {
     return {
       httpStatus: 200,
-      outcome: "ignored",
+      outcome: 'ignored',
       fanOut: false,
-      reason: "not-payment-notification",
+      reason: 'not-payment-notification',
     };
   }
   if (!input.paymentApproved) {
     return {
       httpStatus: 200,
-      outcome: "ignored",
+      outcome: 'ignored',
       fanOut: false,
-      reason: "payment-not-approved",
+      reason: 'payment-not-approved',
     };
   }
   if (!input.externalReference) {
     return {
       httpStatus: 200,
-      outcome: "ignored",
+      outcome: 'ignored',
       fanOut: false,
-      reason: "no-external-reference",
+      reason: 'no-external-reference',
     };
   }
   if (input.saleUpdated === false) {
-    return { httpStatus: 200, outcome: "already-paid", fanOut: false };
+    return { httpStatus: 200, outcome: 'already-paid', fanOut: false };
   }
-  return { httpStatus: 200, outcome: "fan-out", fanOut: true };
+  return { httpStatus: 200, outcome: 'fan-out', fanOut: true };
 }

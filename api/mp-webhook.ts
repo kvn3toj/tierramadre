@@ -14,7 +14,7 @@
  *      post-sale workflow) is best-effort: a failure flags `pendingGhlSync` and
  *      still returns 200 (the sale is committed).
  *
- * The branch table is unit-tested in tests/mpWebhookLogic.test.ts; HMAC in
+ * The branch table is unit-tested in tests/webhookLogic.test.ts; HMAC in
  * tests/mpSignature.test.ts.
  */
 
