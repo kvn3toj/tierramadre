@@ -118,6 +118,9 @@ export const DRIVE_FOLDERS = {
   FEEDBACK_APP: 'feedback-app',
   // Screenshots subfolder inside feedback-app
   FEEDBACK_SCREENSHOTS: 'screenshots',
+  // Bot/Fotosíntesis album uploads: fotosintesis/<loteId>/<itemId>/ — folders
+  // named by bare id ("TM-001"/"574"), unlike products/ ("574 - Venus").
+  FOTOSINTESIS: 'fotosintesis',
   // Ambassador profile photos
   AMBASSADORS: 'ambassadors',
 };

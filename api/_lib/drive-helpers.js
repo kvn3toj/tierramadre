@@ -167,6 +167,91 @@ export async function getProductFolderById(drive, parentFolderId, itemNumber) {
 }
 
 /**
+ * Find the Drive folder holding a Fotosíntesis item's photos:
+ * `fotosintesis/<loteId>/<itemNumber>/`. Unlike `products/` ("574 - Venus"),
+ * these folders are named by the bare id ("TM-001"/"574") — they're created by
+ * media-upload's `subPath` walker from the bot's album flow, which uploads the
+ * WHOLE album there but only records `urls[0]` as the item's `fotoUrl`. This
+ * lookup is what lets the gallery endpoint reach the other photos.
+ *
+ * One name search across the shared drive plus at most one `files.get` per
+ * candidate to verify LINEAGE (parent or grandparent = the fotosintesis root):
+ * cheaper than walking every lote folder, and the ancestry check keeps an
+ * unrelated folder that happens to be named "574" elsewhere in the drive from
+ * hijacking the gallery.
+ *
+ * @param {object} drive - Google Drive client
+ * @param {string} sharedDriveId - Shared Drive ID
+ * @param {string|number} itemNumber - Product item number (bare id)
+ * @returns {Promise<string|null>} Folder ID or null if not found
+ */
+export async function getFotosintesisItemFolderId(
+  drive,
+  sharedDriveId,
+  itemNumber,
+) {
+  const item = String(itemNumber).trim();
+  // The name goes verbatim into a Drive query string. The bot only creates
+  // plain ids, so anything else is refused outright instead of escaped.
+  if (!/^[A-Za-z0-9_-]+$/.test(item)) return null;
+
+  const cacheKey = `fotosintesisItemFolder:${sharedDriveId}:${item}`;
+  const cached = cacheGet(cacheKey);
+  // `null` ("not found") is a valid cached value — only undefined is a miss.
+  if (cached !== undefined) return cached;
+
+  const rootResponse = await drive.files.list({
+    q: `name='${DRIVE_FOLDERS.FOTOSINTESIS}' and mimeType='application/vnd.google-apps.folder' and '${sharedDriveId}' in parents and trashed=false`,
+    fields: 'files(id, name)',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
+  });
+  const rootId = rootResponse.data.files?.[0]?.id;
+  if (!rootId) {
+    cacheSet(cacheKey, null);
+    return null;
+  }
+
+  const candidatesResponse = await drive.files.list({
+    q: `name='${item}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    fields: 'files(id, name, parents)',
+    pageSize: 25,
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
+    driveId: sharedDriveId,
+    corpora: 'drive',
+  });
+
+  for (const candidate of candidatesResponse.data.files || []) {
+    const parentId = candidate.parents?.[0];
+    if (!parentId) continue;
+    // Direct child of the root ("fotosintesis/574") — no grandparent hop.
+    if (parentId === rootId) {
+      cacheSet(cacheKey, candidate.id);
+      return candidate.id;
+    }
+    // Normal shape: fotosintesis/<lote>/<item> — check the grandparent.
+    try {
+      const parent = await drive.files.get({
+        fileId: parentId,
+        fields: 'id, parents',
+        supportsAllDrives: true,
+      });
+      if (parent.data.parents?.includes(rootId)) {
+        cacheSet(cacheKey, candidate.id);
+        return candidate.id;
+      }
+    } catch {
+      // A candidate whose parent can't be read is just not a match; the next
+      // candidate may still be the real one.
+    }
+  }
+
+  cacheSet(cacheKey, null);
+  return null;
+}
+
+/**
  * Extract item number from folder name (format: "32 - Venus")
  * @param {string} folderName - Folder name
  * @returns {number|null} Item number or null
