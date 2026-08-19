@@ -867,6 +867,13 @@ const saveEditPatchArgs = v.object({
   medidasValores: v.optional(v.string()),
   categoria: v.optional(v.string()),
   precioCOP: v.optional(v.number()),
+  // El precio de una fila SOT (columna M). `precioCOP` de arriba es el del
+  // riel LEGACY (columna L del layout viejo, retirada del espejo SOT en
+  // 2026-05-29): mandarlo para una fila SOT deja el valor en un campo que
+  // ninguna query lee y en ninguna celda — le pasó al primer /datos real
+  // (#555, 2026-08-19). Quien escribe ESTE campo recibe además el sello
+  // `precioFinalManual` en _saveEdit, abajo.
+  precioFinalCOP: v.optional(v.number()),
   ubicacion: v.optional(v.string()),
   asesor: v.optional(v.string()),
   coleccion: v.optional(v.string()),
@@ -942,9 +949,14 @@ export const _saveEdit = internalMutation({
       return { itemId, changesCount: 0, message: 'Sin cambios' };
     }
 
-    // Patch the mirror — UI updates immediately
+    // Patch the mirror — UI updates immediately. Un precio puesto a mano lleva
+    // el MISMO sello que estampa el pull (`sheetPull.ts` → planRowPatch): sin
+    // `precioFinalManual`, el re-fan del lote lo devolvería a costo × 2.6.
     await ctx.db.patch(existing._id, {
       ...patch,
+      ...(patch.precioFinalCOP !== undefined
+        ? { precioFinalManual: true }
+        : {}),
       syncStatus: 'pending' as const,
       syncError: undefined,
     });
