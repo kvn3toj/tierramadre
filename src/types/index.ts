@@ -409,6 +409,14 @@ export interface TreasureItem {
   isLote?: boolean;
   groupKind?: 'lote' | 'sublote';
   groupId?: string;
+  /**
+   * Highest REAL member item number of a grouped card. The synthetic `item`
+   * key lives in the 8M range (collision-free vs. real numbers), which made
+   * every lote card outrank every real item under the "newest = highest item
+   * number" sort — this is the group's true recency: where its newest piece
+   * would have sorted.
+   */
+  newestMemberItem?: number;
   loteItems?: {
     item: number;
     nombre: string;

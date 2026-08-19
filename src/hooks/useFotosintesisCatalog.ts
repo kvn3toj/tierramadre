@@ -421,6 +421,15 @@ export function mapGroupToTreasureItem(
     isLote: true,
     groupKind: group.groupKind,
     groupId: group.groupId,
+    // Recencia REAL del bundle: su miembro más nuevo. El `item` sintético (8M+)
+    // existe para no colisionar, no para ordenar — sin esto, el sort "newest"
+    // (número más alto primero) mandaba todos los lotes al tope del grid.
+    newestMemberItem: (() => {
+      const ids = group.items
+        .map((it) => parseInt(it.itemId, 10))
+        .filter((n) => Number.isFinite(n) && n > 0);
+      return ids.length ? Math.max(...ids) : undefined;
+    })(),
     loteItems: group.items.map((it) => {
       // Derive the same jewelry/peso fields per piece so a single item's
       // detail view renders identically to a standalone catalog item.

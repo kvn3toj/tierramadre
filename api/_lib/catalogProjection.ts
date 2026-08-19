@@ -98,6 +98,7 @@ export const WITHHELD_KEYS = [
   'groupKind',
   'groupId',
   'loteItems',
+  'newestMemberItem',
 ] as const;
 
 export type PublicItem = Pick<TreasureItem, (typeof PUBLIC_KEYS)[number]>;
