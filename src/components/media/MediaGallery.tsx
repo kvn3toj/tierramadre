@@ -20,7 +20,7 @@ import {
   SyntheticEvent,
   useEffect,
   useLayoutEffect,
-} from "react";
+} from 'react';
 import {
   Box,
   IconButton,
@@ -31,9 +31,9 @@ import {
   alpha,
   useTheme,
   useMediaQuery,
-} from "@mui/material";
-import { ChevronLeft, ChevronRight, ZoomIn, Maximize2 } from "lucide-react";
-import { MediaItem, CATEGORY_LABELS } from "./types";
+} from '@mui/material';
+import { ChevronLeft, ChevronRight, ZoomIn, Maximize2 } from 'lucide-react';
+import { MediaItem, CATEGORY_LABELS } from './types';
 import {
   brand,
   darkTokens,
@@ -41,12 +41,12 @@ import {
   cssTransition,
   blurValues,
   zIndex,
-} from "../../design-system";
-import { useLanguage } from "../../contexts/LanguageContext";
-import ImageLightbox from "./ImageLightbox";
-import { triggerHaptic } from "../../hooks/useHaptics";
-import ProtectedContent from "../shared/ProtectedContent";
-import logoPlaceholder from "../../assets/logo-symbol.png";
+} from '../../design-system';
+import { useLanguage } from '../../contexts/LanguageContext';
+import ImageLightbox from './ImageLightbox';
+import { triggerHaptic } from '../../hooks/useHaptics';
+import ProtectedContent from '../shared/ProtectedContent';
+import logoPlaceholder from '../../assets/logo-symbol.png';
 
 // Retry configuration for failed image loads
 const MAX_RETRY_ATTEMPTS = 2;
@@ -71,7 +71,7 @@ export default function MediaGallery({
 }: MediaGalleryProps) {
   const { t } = useLanguage();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [currentIndex, setCurrentIndex] = useState(0);
   const [visibleIndex, setVisibleIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -79,7 +79,7 @@ export default function MediaGallery({
   const [errorIndices, setErrorIndices] = useState<Set<number>>(new Set());
   // Start with index 0 in loadingIndices so the skeleton shows from first paint
   const [loadingIndices, setLoadingIndices] = useState<Set<number>>(() => {
-    if (media.length > 0 && media[0].type === "image") return new Set([0]);
+    if (media.length > 0 && media[0].type === 'image') return new Set([0]);
     return new Set();
   });
 
@@ -113,11 +113,11 @@ export default function MediaGallery({
   const getDisplayUrl = useCallback(
     (index: number, sizeOverride?: string): string => {
       const item = media[index];
-      if (!item) return "";
-      if (item.url.includes("serve-drive-image")) {
+      if (!item) return '';
+      if (item.url.includes('serve-drive-image')) {
         try {
           const url = new URL(item.url, window.location.origin);
-          url.searchParams.set("size", sizeOverride || "medium");
+          url.searchParams.set('size', sizeOverride || 'medium');
           return url.pathname + url.search;
         } catch {
           // Fallback for malformed URLs
@@ -137,7 +137,7 @@ export default function MediaGallery({
   const preloadAndDecode = useCallback(
     (index: number): Promise<void> => {
       const item = media[index];
-      if (!item || item.type !== "image") return Promise.resolve();
+      if (!item || item.type !== 'image') return Promise.resolve();
       if (preloadCache.current.get(index)) return Promise.resolve();
 
       return new Promise<void>((resolve, reject) => {
@@ -145,20 +145,20 @@ export default function MediaGallery({
 
         const attempt = () => {
           const img = new window.Image();
-          img.crossOrigin = "anonymous";
+          img.crossOrigin = 'anonymous';
 
           const url = getDisplayUrl(index);
 
           // Add cache-busting on retry
           img.src =
             retryCount > 0
-              ? `${url}${url.includes("?") ? "&" : "?"}retry=${retryCount}&t=${Date.now()}`
+              ? `${url}${url.includes('?') ? '&' : '?'}retry=${retryCount}&t=${Date.now()}`
               : url;
 
           const timeout = setTimeout(() => {
             img.onload = null;
             img.onerror = null;
-            img.src = "";
+            img.src = '';
             handleFailure();
           }, IMAGE_LOAD_TIMEOUT);
 
@@ -166,7 +166,7 @@ export default function MediaGallery({
             clearTimeout(timeout);
             // decode() ensures the image is fully decoded and ready to paint without jank
             const decodePromise =
-              typeof img.decode === "function"
+              typeof img.decode === 'function'
                 ? img.decode().catch(() => {
                     /* decode failure is non-fatal */
                   })
@@ -265,7 +265,7 @@ export default function MediaGallery({
     if (!item) return;
 
     // Videos: transition immediately (poster provides instant visual)
-    if (item.type === "video") {
+    if (item.type === 'video') {
       setVideoLoading(true);
       videoReadyRef.current = false;
       setVisibleIndex(currentIndex);
@@ -288,28 +288,33 @@ export default function MediaGallery({
     // browser cache and fire onLoad almost instantly — no need to
     // setVisibleIndex here (that caused the blink).
 
-    // Fire-and-forget preload for adjacent slides
-    const nextIdx = (currentIndex + 1) % media.length;
-    const prevIdx = (currentIndex - 1 + media.length) % media.length;
+    // Fire-and-forget preload for the rest of the gallery, nearest slides
+    // first, so navigation never waits on the network (the browser throttles
+    // concurrency; preloadCache dedupes across index changes)
+    const preloadOrder = new Set<number>();
+    for (let offset = 1; offset < media.length; offset++) {
+      preloadOrder.add((currentIndex + offset) % media.length);
+      preloadOrder.add((currentIndex - offset + media.length) % media.length);
+    }
 
-    [nextIdx, prevIdx].forEach((idx) => {
-      const adjacentItem = media[idx];
-      if (adjacentItem?.type === "image" && !preloadCache.current.get(idx)) {
+    preloadOrder.forEach((idx) => {
+      const item = media[idx];
+      if (item?.type === 'image' && !preloadCache.current.get(idx)) {
         preloadAndDecode(idx).catch(() => {
           /* non-critical */
         });
-      } else if (adjacentItem?.type === "video" && adjacentItem.thumbnailUrl) {
+      } else if (item?.type === 'video' && item.thumbnailUrl) {
         // Preload video poster
         const img = new window.Image();
-        img.src = adjacentItem.thumbnailUrl;
+        img.src = item.thumbnailUrl;
       }
     });
   }, [currentIndex, media, preloadAndDecode]);
 
   // Clear cache when media content actually changes (different product or API data arrived)
-  const prevMediaKey = useRef(media.map((m) => m.id).join(","));
+  const prevMediaKey = useRef(media.map((m) => m.id).join(','));
   useEffect(() => {
-    const newKey = media.map((m) => m.id).join(",");
+    const newKey = media.map((m) => m.id).join(',');
     if (prevMediaKey.current !== newKey) {
       prevMediaKey.current = newKey;
       preloadCache.current.clear();
@@ -356,29 +361,29 @@ export default function MediaGallery({
       if (lightboxOpen) return;
 
       switch (e.key) {
-        case "ArrowLeft":
+        case 'ArrowLeft':
           handlePrevious();
           break;
-        case "ArrowRight":
+        case 'ArrowRight':
           handleNext();
           break;
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handlePrevious, handleNext, lightboxOpen]);
 
   const handleThumbnailClick = (index: number) => {
-    triggerHaptic("selection");
+    triggerHaptic('selection');
     setCurrentIndex(index);
   };
 
   const currentMedia = media[currentIndex];
 
   const handleMainClick = () => {
-    if (currentMedia?.type === "image") {
-      triggerHaptic("light");
+    if (currentMedia?.type === 'image') {
+      triggerHaptic('light');
       setLightboxOpen(true);
     }
   };
@@ -387,13 +392,13 @@ export default function MediaGallery({
   // Use size=large (1200px) for fullscreen display instead of raw URL (size=small/400px)
   const lightboxImages = useMemo(() => {
     return media
-      .filter((item) => item.type === "image")
+      .filter((item) => item.type === 'image')
       .map((item) => {
         let url = item.url;
-        if (url.includes("serve-drive-image")) {
+        if (url.includes('serve-drive-image')) {
           try {
             const parsed = new URL(url, window.location.origin);
-            parsed.searchParams.set("size", "large");
+            parsed.searchParams.set('size', 'large');
             url = parsed.pathname + parsed.search;
           } catch {
             // Keep original URL on parse failure
@@ -406,7 +411,7 @@ export default function MediaGallery({
   // Get the lightbox index for current image
   const lightboxInitialIndex = useMemo(() => {
     const imageOnlyIndex =
-      media.slice(0, currentIndex + 1).filter((item) => item.type === "image")
+      media.slice(0, currentIndex + 1).filter((item) => item.type === 'image')
         .length - 1;
     return Math.max(0, imageOnlyIndex);
   }, [media, currentIndex]);
@@ -433,19 +438,19 @@ export default function MediaGallery({
     return (
       <Box
         sx={{
-          width: "100%",
-          aspectRatio: "4/3",
+          width: '100%',
+          aspectRatio: '4/3',
           borderRadius: 3,
           bgcolor: alpha(brand.emerald[500], 0.05),
-          border: "2px dashed",
+          border: '2px dashed',
           borderColor: alpha(brand.emerald[500], 0.3),
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: isEditing ? "pointer" : "default",
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: isEditing ? 'pointer' : 'default',
           transition: cssTransition.slow,
-          "&:hover": isEditing
+          '&:hover': isEditing
             ? {
                 borderColor: brand.emerald[500],
                 bgcolor: alpha(brand.emerald[500], 0.1),
@@ -457,16 +462,16 @@ export default function MediaGallery({
         <ZoomIn size={48} color={brand.emerald[500]} style={{ opacity: 0.5 }} />
         <Typography
           variant="body1"
-          sx={{ mt: 2, color: "text.secondary", textAlign: "center" }}
+          sx={{ mt: 2, color: 'text.secondary', textAlign: 'center' }}
         >
           {isEditing
-            ? "Haz clic para agregar fotos o videos"
-            : "Sin imágenes disponibles"}
+            ? 'Haz clic para agregar fotos o videos'
+            : 'Sin imágenes disponibles'}
         </Typography>
         {isEditing && (
           <Typography
             variant="caption"
-            sx={{ color: "text.disabled", mt: 0.5 }}
+            sx={{ color: 'text.disabled', mt: 0.5 }}
           >
             Máximo 8 archivos (JPG, PNG, MP4)
           </Typography>
@@ -476,21 +481,21 @@ export default function MediaGallery({
   }
 
   return (
-    <Box sx={{ width: "100%" }}>
+    <Box sx={{ width: '100%' }}>
       {/* Main Carousel - Wrapped with ProtectedContent for screenshot deterrent */}
       <ProtectedContent>
         <Box
           sx={{
-            position: "relative",
-            width: "100%",
-            aspectRatio: "4/3",
+            position: 'relative',
+            width: '100%',
+            aspectRatio: '4/3',
             borderRadius: 3,
-            overflow: "hidden",
+            overflow: 'hidden',
             bgcolor: darkTokens.background.app,
-            cursor: currentMedia?.type === "image" ? "zoom-in" : "default",
-            contain: "paint layout",
-            backfaceVisibility: "hidden",
-            WebkitBackfaceVisibility: "hidden",
+            cursor: currentMedia?.type === 'image' ? 'zoom-in' : 'default',
+            contain: 'paint layout',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
           }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -500,9 +505,9 @@ export default function MediaGallery({
           {/* Double-buffer: render visible + incoming slides */}
           <Box
             sx={{
-              position: "relative",
-              width: "100%",
-              height: "100%",
+              position: 'relative',
+              width: '100%',
+              height: '100%',
             }}
           >
             {media.map((item, index) => {
@@ -514,45 +519,45 @@ export default function MediaGallery({
                 index === currentIndex && currentIndex !== visibleIndex;
               const isError = errorIndices.has(index);
 
-              if (item.type === "video") {
+              if (item.type === 'video') {
                 return (
                   <Box
                     key={`slide-${index}`}
                     sx={{
-                      position: "absolute",
+                      position: 'absolute',
                       inset: 0,
                       opacity: isVisible ? 1 : 0,
                       zIndex: isVisible ? 1 : 0,
-                      transform: "translateZ(0)",
+                      transform: 'translateZ(0)',
                     }}
                   >
                     {/* Poster overlay while video buffers — avoids dark flash */}
                     {videoLoading && isVisible && (
                       <Box
                         sx={{
-                          position: "absolute",
+                          position: 'absolute',
                           inset: 0,
                           zIndex: zIndex.base,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                       >
                         <img
                           src={item.thumbnailUrl || logoPlaceholder}
                           alt=""
                           style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
                           }}
                         />
                         <CircularProgress
                           aria-label="Cargando"
                           size={32}
                           sx={{
-                            position: "absolute",
-                            color: "white",
+                            position: 'absolute',
+                            color: 'white',
                             opacity: 0.5,
                           }}
                         />
@@ -585,9 +590,9 @@ export default function MediaGallery({
                         setVideoLoading(false);
                       }}
                       style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
                       }}
                     />
                   </Box>
@@ -599,22 +604,22 @@ export default function MediaGallery({
                 <Box
                   key={`slide-${index}`}
                   sx={{
-                    position: "absolute",
+                    position: 'absolute',
                     inset: 0,
                     opacity: isVisible ? 1 : 0,
                     zIndex: isVisible ? 1 : isIncoming ? 2 : 0,
-                    transform: "translateZ(0)",
-                    WebkitBackfaceVisibility: "hidden",
+                    transform: 'translateZ(0)',
+                    WebkitBackfaceVisibility: 'hidden',
                   }}
                 >
                   {isError ? (
                     <Box
                       sx={{
-                        width: "100%",
-                        height: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         bgcolor: darkTokens.background.app,
                       }}
                     >
@@ -623,9 +628,9 @@ export default function MediaGallery({
                         src={logoPlaceholder}
                         alt=""
                         sx={{
-                          width: "30%",
+                          width: '30%',
                           maxWidth: 80,
-                          height: "auto",
+                          height: 'auto',
                           opacity: 0.4,
                         }}
                       />
@@ -641,12 +646,12 @@ export default function MediaGallery({
                       onContextMenu={(e) => e.preventDefault()}
                       style={
                         {
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          userSelect: "none",
-                          WebkitUserDrag: "none",
-                          pointerEvents: "none",
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          userSelect: 'none',
+                          WebkitUserDrag: 'none',
+                          pointerEvents: 'none',
                         } as React.CSSProperties
                       }
                     />
@@ -656,29 +661,31 @@ export default function MediaGallery({
             })}
           </Box>
 
-          {/* Initial loading skeleton — covers dark bg until first image paints */}
-          {loadingIndices.has(visibleIndex) && (
-            <Skeleton
-              variant="rectangular"
-              animation="wave"
-              sx={{
-                position: "absolute",
-                inset: 0,
-                zIndex: zIndex.base,
-                borderRadius: 3,
-              }}
-            />
-          )}
+          {/* Loading skeleton — sits above the slide and fades out once the
+              image paints, so photos appear with a soft reveal instead of a pop */}
+          <Skeleton
+            variant="rectangular"
+            animation={loadingIndices.has(visibleIndex) ? 'wave' : false}
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 3,
+              borderRadius: 3,
+              opacity: loadingIndices.has(visibleIndex) ? 1 : 0,
+              transition: 'opacity 350ms ease',
+              pointerEvents: 'none',
+            }}
+          />
 
           {/* Loading indicator — overlays visible slide while next image loads */}
           {currentIndex !== visibleIndex &&
             loadingIndices.has(currentIndex) && (
               <Box
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   top: 12,
-                  left: "50%",
-                  transform: "translateX(-50%)",
+                  left: '50%',
+                  transform: 'translateX(-50%)',
                   zIndex: zIndex.base,
                   bgcolor: alpha(darkTokens.background.app, 0.6),
                   borderRadius: 2,
@@ -690,7 +697,7 @@ export default function MediaGallery({
                 <CircularProgress
                   size={20}
                   aria-label="Cargando"
-                  sx={{ color: "white", opacity: 0.7 }}
+                  sx={{ color: 'white', opacity: 0.7 }}
                 />
               </Box>
             )}
@@ -701,19 +708,19 @@ export default function MediaGallery({
               label={CATEGORY_LABELS[currentMedia.category]}
               size="small"
               sx={{
-                position: "absolute",
+                position: 'absolute',
                 bottom: 12,
                 left: 12,
                 bgcolor: alpha(darkTokens.background.app, 0.7),
                 color: lightTokens.text.inverse,
-                fontSize: "0.75rem",
+                fontSize: '0.75rem',
                 backdropFilter: `blur(${blurValues.xs})`,
               }}
             />
           )}
 
           {/* Expand button */}
-          {currentMedia?.type === "image" && (
+          {currentMedia?.type === 'image' && (
             <IconButton
               onClick={(e) => {
                 e.stopPropagation();
@@ -721,12 +728,12 @@ export default function MediaGallery({
               }}
               aria-label="Ampliar imagen"
               sx={{
-                position: "absolute",
+                position: 'absolute',
                 top: 12,
                 right: 12,
                 bgcolor: alpha(darkTokens.background.app, 0.5),
                 color: lightTokens.text.inverse,
-                "&:hover": { bgcolor: alpha(darkTokens.background.app, 0.7) },
+                '&:hover': { bgcolor: alpha(darkTokens.background.app, 0.7) },
               }}
             >
               <Maximize2 size={20} />
@@ -743,12 +750,12 @@ export default function MediaGallery({
                 }}
                 aria-label={t.accessibility.previousImage}
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   left: 12,
-                  top: "50%",
-                  transform: "translateY(-50%)",
+                  top: '50%',
+                  transform: 'translateY(-50%)',
                   bgcolor: alpha(lightTokens.background.surface, 0.9),
-                  "&:hover": { bgcolor: lightTokens.background.surface },
+                  '&:hover': { bgcolor: lightTokens.background.surface },
                 }}
               >
                 <ChevronLeft size={24} />
@@ -760,12 +767,12 @@ export default function MediaGallery({
                 }}
                 aria-label={t.accessibility.nextImage}
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   right: 12,
-                  top: "50%",
-                  transform: "translateY(-50%)",
+                  top: '50%',
+                  transform: 'translateY(-50%)',
                   bgcolor: alpha(lightTokens.background.surface, 0.9),
-                  "&:hover": { bgcolor: lightTokens.background.surface },
+                  '&:hover': { bgcolor: lightTokens.background.surface },
                 }}
               >
                 <ChevronRight size={24} />
@@ -778,24 +785,24 @@ export default function MediaGallery({
             <Box
               onClick={(e) => e.stopPropagation()}
               sx={{
-                position: "absolute",
+                position: 'absolute',
                 bottom: 12,
-                left: "50%",
-                transform: "translateX(-50%)",
+                left: '50%',
+                transform: 'translateX(-50%)',
                 zIndex: zIndex.base + 5,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
                 gap: 0.25,
-                pointerEvents: "auto",
+                pointerEvents: 'auto',
               }}
             >
               <Typography
                 variant="caption"
                 sx={{
-                  color: "rgba(255,255,255,0.9)",
-                  fontSize: "0.6rem",
-                  textShadow: "0 1px 4px rgba(0,0,0,0.6)",
+                  color: 'rgba(255,255,255,0.9)',
+                  fontSize: '0.6rem',
+                  textShadow: '0 1px 4px rgba(0,0,0,0.6)',
                   fontWeight: 600,
                 }}
               >
@@ -805,10 +812,10 @@ export default function MediaGallery({
                 role="tablist"
                 aria-label="Indicadores de imagen"
                 sx={{
-                  display: "flex",
+                  display: 'flex',
                   gap: 0.5,
-                  justifyContent: "center",
-                  bgcolor: "rgba(0,0,0,0.45)",
+                  justifyContent: 'center',
+                  bgcolor: 'rgba(0,0,0,0.45)',
                   backdropFilter: `blur(${blurValues.sm})`,
                   borderRadius: 2,
                   px: 1,
@@ -824,15 +831,15 @@ export default function MediaGallery({
                     aria-label={`Imagen ${index + 1} de ${media.length}`}
                     onClick={() => handleThumbnailClick(index)}
                     onKeyDown={(e: React.KeyboardEvent) => {
-                      if (e.key === "Enter" || e.key === " ") {
+                      if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
                         handleThumbnailClick(index);
-                      } else if (e.key === "ArrowRight") {
+                      } else if (e.key === 'ArrowRight') {
                         e.preventDefault();
                         (
                           e.currentTarget.nextElementSibling as HTMLElement
                         )?.focus();
-                      } else if (e.key === "ArrowLeft") {
+                      } else if (e.key === 'ArrowLeft') {
                         e.preventDefault();
                         (
                           e.currentTarget.previousElementSibling as HTMLElement
@@ -845,18 +852,18 @@ export default function MediaGallery({
                       borderRadius: 3,
                       bgcolor:
                         index === currentIndex
-                          ? "#fff"
-                          : "rgba(255,255,255,0.4)",
+                          ? '#fff'
+                          : 'rgba(255,255,255,0.4)',
                       transition: cssTransition.slow,
-                      cursor: "pointer",
-                      "&:hover": {
+                      cursor: 'pointer',
+                      '&:hover': {
                         bgcolor:
                           index === currentIndex
-                            ? "#fff"
-                            : "rgba(255,255,255,0.6)",
+                            ? '#fff'
+                            : 'rgba(255,255,255,0.6)',
                       },
-                      "&:focus-visible": {
-                        outline: "2px solid #fff",
+                      '&:focus-visible': {
+                        outline: '2px solid #fff',
                         outlineOffset: 2,
                       },
                     }}
@@ -872,13 +879,13 @@ export default function MediaGallery({
       {media.length > 1 && (
         <Box
           sx={{
-            display: "flex",
+            display: 'flex',
             gap: 1,
-            overflowX: "auto",
+            overflowX: 'auto',
             py: 1,
             px: 0.5,
-            "&::-webkit-scrollbar": { height: 4 },
-            "&::-webkit-scrollbar-thumb": {
+            '&::-webkit-scrollbar': { height: 4 },
+            '&::-webkit-scrollbar-thumb': {
               bgcolor: brand.emerald[500],
               borderRadius: 2,
             },
@@ -890,10 +897,10 @@ export default function MediaGallery({
               role="button"
               tabIndex={0}
               aria-label={`Miniatura ${index + 1} de ${media.length}`}
-              aria-current={index === currentIndex ? "true" : undefined}
+              aria-current={index === currentIndex ? 'true' : undefined}
               onClick={() => handleThumbnailClick(index)}
               onKeyDown={(e: React.KeyboardEvent) => {
-                if (e.key === "Enter" || e.key === " ") {
+                if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   handleThumbnailClick(index);
                 }
@@ -902,19 +909,19 @@ export default function MediaGallery({
                 minWidth: 64,
                 height: 64,
                 borderRadius: 1.5,
-                overflow: "hidden",
-                cursor: "pointer",
-                border: "2px solid",
+                overflow: 'hidden',
+                cursor: 'pointer',
+                border: '2px solid',
                 borderColor:
-                  index === currentIndex ? brand.emerald[500] : "transparent",
+                  index === currentIndex ? brand.emerald[500] : 'transparent',
                 opacity: index === currentIndex ? 1 : 0.6,
                 transition: cssTransition.default,
-                position: "relative",
-                "&:hover": {
+                position: 'relative',
+                '&:hover': {
                   opacity: 1,
-                  transform: "scale(1.05)",
+                  transform: 'scale(1.05)',
                 },
-                "&:focus-visible": {
+                '&:focus-visible': {
                   outline: `2px solid ${brand.emerald[500]}`,
                   outlineOffset: 2,
                   opacity: 1,
@@ -925,10 +932,10 @@ export default function MediaGallery({
                 src={(() => {
                   // Use size=thumb (200px) for 64px thumbnail strip instead of size=small (400px)
                   const thumbSrc = item.thumbnailUrl || item.url;
-                  if (thumbSrc.includes("serve-drive-image")) {
+                  if (thumbSrc.includes('serve-drive-image')) {
                     try {
                       const u = new URL(thumbSrc, window.location.origin);
-                      u.searchParams.set("size", "thumb");
+                      u.searchParams.set('size', 'thumb');
                       return u.pathname + u.search;
                     } catch {
                       return thumbSrc;
@@ -942,17 +949,17 @@ export default function MediaGallery({
                 onContextMenu={(e) => e.preventDefault()}
                 onError={(e: SyntheticEvent<HTMLImageElement>) => {
                   e.currentTarget.src = logoPlaceholder;
-                  e.currentTarget.style.objectFit = "contain";
-                  e.currentTarget.style.padding = "12px";
-                  e.currentTarget.style.opacity = "0.4";
+                  e.currentTarget.style.objectFit = 'contain';
+                  e.currentTarget.style.padding = '12px';
+                  e.currentTarget.style.opacity = '0.4';
                 }}
                 style={
                   {
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    userSelect: "none",
-                    WebkitUserDrag: "none",
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    userSelect: 'none',
+                    WebkitUserDrag: 'none',
                   } as React.CSSProperties
                 }
               />
@@ -967,7 +974,7 @@ export default function MediaGallery({
               aria-label="Agregar más imágenes"
               onClick={onAddMedia}
               onKeyDown={(e: React.KeyboardEvent) => {
-                if (e.key === "Enter" || e.key === " ") {
+                if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   onAddMedia?.();
                 }
@@ -976,18 +983,18 @@ export default function MediaGallery({
                 minWidth: 64,
                 height: 64,
                 borderRadius: 1.5,
-                border: "2px dashed",
+                border: '2px dashed',
                 borderColor: alpha(brand.emerald[500], 0.4),
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
                 transition: cssTransition.default,
-                "&:hover": {
+                '&:hover': {
                   borderColor: brand.emerald[500],
                   bgcolor: alpha(brand.emerald[500], 0.1),
                 },
-                "&:focus-visible": {
+                '&:focus-visible': {
                   outline: `2px solid ${brand.emerald[500]}`,
                   outlineOffset: 2,
                 },
