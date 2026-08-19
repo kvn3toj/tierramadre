@@ -26,6 +26,7 @@ import {
 } from './useFotosintesisCatalog';
 import { convertToProxyUrl } from '../utils/driveUrl';
 import { pickCardImage } from '../utils/cardImageSource';
+import { overlayConvexCatalogFields } from '../utils/catalogOverlay';
 
 export function useTreasure({ vitrinaToken }: { vitrinaToken?: string } = {}) {
   // Google Sheets data
@@ -85,21 +86,17 @@ export function useTreasure({ vitrinaToken }: { vitrinaToken?: string } = {}) {
         ? [...sheetsBase, ...individuals, ...lotes]
         : sheetsBase;
 
-    // `precioEspecial` sólo existe en la rama Convex: se deriva de `observacion`
-    // en las queries (convex/_lib/precioEspecial.ts), y /api/get-treasure-sheets
-    // devuelve la hoja cruda sin ese cálculo. Como el merge de arriba descarta
-    // el ítem de Convex cuando su id ya vino de Sheets — y casi todos vienen de
-    // ambas — la promoción se perdía justo en los ítems del catálogo legacy.
-    // Superponerla por id la devuelve sin alterar qué fuente gana el resto.
-    const precioEspecialPorItem = new Map(
-      fotosintesisItems
-        .filter((i) => i.precioEspecial)
-        .map((i) => [i.item, i.precioEspecial]),
+    // El merge de arriba descarta el ítem de Convex cuando su id ya vino de
+    // Sheets — y casi todos vienen de ambas fuentes. Los campos que SÓLO la
+    // rama Convex trae (`precioEspecial`, `publishedAt`) se superponen por id
+    // sobre la fila ganadora — lógica y regresiones en utils/catalogOverlay.ts
+    // (perder `publishedAt` ocultó del grid los ítems publicados de C-090).
+    const conOverlay = overlayConvexCatalogFields(
+      baseTreasure,
+      fotosintesisItems,
     );
 
-    return baseTreasure.map((base) => {
-      const promo = precioEspecialPorItem.get(base.item);
-      const item = promo ? { ...base, precioEspecial: promo } : base;
+    return conOverlay.map((item) => {
       const itemMedia = legacyMedia[item.item];
       const gallery = galleries[item.item] || [];
       const batchThumb = batchThumbnails[item.item];
