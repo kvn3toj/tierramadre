@@ -16,19 +16,22 @@
  *     fields: Record<string, string>             // all column values, keyed by column name
  *   }
  *
- * Strategy mirrors admin-product-update.ts:
+ * Strategy mirrors admin-product-update.ts (parity completed 2026-08-19,
+ * incidente TM-001):
  *   - Resolve target tab via findSheetByPattern.
- *   - Read existing row to detect a row-shift conflict (column A mismatch).
- *   - Build the merged row using TABLE_CONFIGS[table].columns order.
- *   - values.update on `${tab}!A${rowIndex}:${lastColumnLetter}${rowIndex}`.
- *
- * Like admin-product-update, we always use values.update — Sheets
- * auto-extends past the last row, so "append" mode works without a
- * separate values.append call.
+ *   - LOCATE the target row by the natural key in COLUMN A (with rename
+ *     semantics via `previousIdValue`) — NEVER by the caller's `rowIndex`,
+ *     which drifts and, in the old append mode, OVERWROTE whatever row the
+ *     stale hint pointed at (TM-001, pisada por un push de C-090). The hint
+ *     is now an echoed debugging aid only.
+ *   - Existing row → merge preserving untouched cells, closed-range update.
+ *   - New row → first truly free row, via writeNewRowGuarded (stretch grid →
+ *     occupied-row guard → closed-range update; see _lib/sheet-new-row.ts).
+ *   - Respond with the ACTUAL physical row written and the mode taken.
  */
 
-import type { sheets_v4 } from "@googleapis/sheets";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { sheets_v4 } from '@googleapis/sheets';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   withApiHandler,
   FOTOSINTESIS_SPREADSHEET_ID,
@@ -36,8 +39,10 @@ import {
   sendSuccess,
   getSheetNames,
   findSheetByPattern,
-} from "./_lib/index.js";
-import { TABLE_CONFIGS, isFotoTable } from "./_lib/admin-table-config.js";
+} from './_lib/index.js';
+import { TABLE_CONFIGS, isFotoTable } from './_lib/admin-table-config.js';
+import { resolveTableRowTarget } from './_lib/table-row-target.js';
+import { writeNewRowGuarded } from './_lib/sheet-new-row.js';
 
 // Writes go to the Fotosíntesis v2 SOT, not the legacy live-catalog sheet.
 const SPREADSHEET_ID = FOTOSINTESIS_SPREADSHEET_ID;
@@ -45,7 +50,7 @@ const SPREADSHEET_ID = FOTOSINTESIS_SPREADSHEET_ID;
 interface UpdateBody {
   table?: string;
   rowIndex?: number;
-  mode?: "patch" | "append";
+  mode?: 'patch' | 'append';
   idValue?: string;
   /**
    * On a rename, the OLD natural-key value still in column A of the sheet.
@@ -57,7 +62,7 @@ interface UpdateBody {
 }
 
 function s(v: unknown): string {
-  if (v === null || v === undefined) return "";
+  if (v === null || v === undefined) return '';
   return String(v);
 }
 
@@ -69,12 +74,12 @@ export default withApiHandler(
   ) => {
     const expectedToken = process.env.ADMIN_SYNC_TOKEN;
     const providedToken =
-      (req.headers["x-admin-sync-token"] as string | undefined) ?? undefined;
+      (req.headers['x-admin-sync-token'] as string | undefined) ?? undefined;
     if (!expectedToken) {
-      return sendError(res, 500, "ADMIN_SYNC_TOKEN not configured on server");
+      return sendError(res, 500, 'ADMIN_SYNC_TOKEN not configured on server');
     }
     if (!providedToken || providedToken !== expectedToken) {
-      return sendError(res, 401, "Unauthorized");
+      return sendError(res, 401, 'Unauthorized');
     }
 
     const body = (req.body ?? {}) as UpdateBody;
@@ -88,16 +93,16 @@ export default withApiHandler(
       );
     }
     if (!rowIndex || !Number.isInteger(rowIndex) || rowIndex < 2) {
-      return sendError(res, 400, "rowIndex must be an integer ≥ 2");
+      return sendError(res, 400, 'rowIndex must be an integer ≥ 2');
     }
-    if (!fields || typeof fields !== "object") {
-      return sendError(res, 400, "Missing fields object");
+    if (!fields || typeof fields !== 'object') {
+      return sendError(res, 400, 'Missing fields object');
     }
-    if (mode !== "patch" && mode !== "append") {
+    if (mode !== 'patch' && mode !== 'append') {
       return sendError(res, 400, 'mode must be "patch" or "append"');
     }
-    if (typeof idValue !== "string" || idValue.length === 0) {
-      return sendError(res, 400, "Missing idValue");
+    if (typeof idValue !== 'string' || idValue.length === 0) {
+      return sendError(res, 400, 'Missing idValue');
     }
 
     const config = TABLE_CONFIGS[table];
@@ -113,40 +118,53 @@ export default withApiHandler(
       return sendError(
         res,
         500,
-        `Sheet tab not found for table "${table}". Expected one of: ${config.sheetTabPatterns.join(", ")}`,
+        `Sheet tab not found for table "${table}". Expected one of: ${config.sheetTabPatterns.join(', ')}`,
       );
     }
 
-    const range = `${targetSheet}!A${rowIndex}:${config.lastColumnLetter}${rowIndex}`;
-
-    // Read existing row so we can preserve untouched cells (lets the
-    // sheet keep notes/manually-added columns past our last managed
-    // column, and gives us a row-shift safety check on patch).
-    const existing = await sheets.spreadsheets.values.get({
+    // ── Locate the target row by COLUMN A (natural key) — never the hint ──
+    // Incidente TM-001 (2026-08-19): el modo "append" escribía en el rowIndex
+    // del caller sin mirar la columna A y pisó una fila ajena. La localización
+    // (con la vuelta del rename) vive en _lib/table-row-target.ts con su test.
+    const colAResp = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range,
+      range: `${targetSheet}!A:A`,
     });
-    const existingRow = (existing.data.values?.[0] ?? []) as string[];
+    const colA = (colAResp.data.values ?? []) as string[][];
+    const { targetRow, willAppend, matchedKey } = resolveTableRowTarget(
+      colA,
+      idValue,
+      previousIdValue,
+    );
 
-    if (mode === "patch") {
-      // On a rename the sheet still holds the OLD value in column A; validate
-      // against `previousIdValue` (when provided) so the rename can land.
-      // For non-rename patches both sides match, so the fallback is safe.
-      const expectedIdValue = previousIdValue ?? idValue;
+    // Existing row → read it to preserve untouched cells (lets the sheet keep
+    // notes/manually-added columns past our last managed column).
+    let existingRow: string[] = [];
+    if (!willAppend) {
+      const readRange = `${targetSheet}!A${targetRow}:${config.lastColumnLetter}${targetRow}`;
+      const existing = await sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: readRange,
+      });
+      existingRow = (existing.data.values?.[0] ?? []) as string[];
+
+      // Defense in depth: the located row must still read back as the key we
+      // matched. Guards the race between the A:A scan and this read — this
+      // path writes money-adjacent tables and must never hit a foreign row.
       const sheetIdValue = s(existingRow[0]).trim();
-      if (sheetIdValue && sheetIdValue !== expectedIdValue) {
+      if (sheetIdValue && sheetIdValue !== matchedKey) {
         return sendError(
           res,
           409,
-          `Row ${rowIndex} of ${targetSheet} is "${sheetIdValue}", not "${expectedIdValue}". The sheet may have been re-ordered. Resync from sheet before retrying.`,
+          `Row ${targetRow} of ${targetSheet} is "${sheetIdValue}", not "${matchedKey}". The sheet changed mid-write. Retry.`,
         );
       }
     }
 
     // Build the merged row positionally (column A = index 0).
-    const merged: string[] = new Array(config.columns.length).fill("");
+    const merged: string[] = new Array(config.columns.length).fill('');
     for (let i = 0; i < config.columns.length; i++) {
-      merged[i] = s(existingRow[i] ?? "");
+      merged[i] = s(existingRow[i] ?? '');
     }
     for (let i = 0; i < config.columns.length; i++) {
       const col = config.columns[i];
@@ -155,23 +173,52 @@ export default withApiHandler(
       }
     }
 
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID,
-      range,
-      valueInputOption: "USER_ENTERED",
-      requestBody: { values: [merged] },
-    });
+    let writtenRow: number;
+    if (willAppend) {
+      // NUEVA fila: estirar grid → guard de fila ocupada → update cerrado.
+      // Secuencia compartida con admin-product-update (incidente 0571).
+      const written = await writeNewRowGuarded(sheets, {
+        spreadsheetId: SPREADSHEET_ID,
+        sheetTitle: targetSheet,
+        targetRow,
+        lastCol: config.lastColumnLetter,
+        values: merged,
+      });
+      if (written.status === 'occupied') {
+        return sendError(
+          res,
+          409,
+          `Row ${targetRow} of ${targetSheet} is not empty; refusing to overwrite it with new row "${idValue}". The sheet changed mid-write. Retry.`,
+        );
+      }
+      writtenRow = targetRow;
+    } else {
+      const writeRange = `${targetSheet}!A${targetRow}:${config.lastColumnLetter}${targetRow}`;
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: writeRange,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: { values: [merged] },
+      });
+      writtenRow = targetRow;
+    }
 
     return sendSuccess(res, {
       table,
-      rowIndex,
+      // ACTUAL physical row written — differs from the caller's hint when the
+      // sheet drifted. Callers should cache this as the fresh rowIndex.
+      rowIndex: writtenRow,
+      requestedRowIndex: rowIndex,
+      // The mode actually taken; `requestedMode` echoes the body flag.
+      mode: willAppend ? 'appended' : 'updated',
+      requestedMode: mode,
       sheetName: targetSheet,
       updatedAt: new Date().toISOString(),
     });
   },
   {
-    methods: ["POST", "OPTIONS"],
+    methods: ['POST', 'OPTIONS'],
     provideSheets: true,
-    errorPrefix: "AdminTableUpdate",
+    errorPrefix: 'AdminTableUpdate',
   },
 );
