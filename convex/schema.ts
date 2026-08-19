@@ -1165,6 +1165,15 @@ export default defineSchema({
     mpPreferenceId: v.optional(v.string()),
     mpPaymentId: v.optional(v.string()),
     mpStatus: v.optional(v.string()),
+    /**
+     * Provider-neutral payment snapshot. Additive + optional like the mp*
+     * fields above, so legacy Fotosíntesis sales validate untouched. NOT in
+     * COLUMN_MAPS.sales — Convex-only, the Sheets mirror never sees them.
+     * `paymentProvider` is 'mercadopago' | 'wompi' | 'breb-manual'.
+     */
+    paymentProvider: v.optional(v.string()),
+    providerTxId: v.optional(v.string()),
+    providerStatus: v.optional(v.string()),
     paidAt: v.optional(v.string()),
     promotionCode: v.optional(v.string()),
     shippingAddress: v.optional(

@@ -34,7 +34,7 @@ import {
   type SearchableProduct,
 } from './_lib/productSearch';
 import { isOverLimit, computeCommissionCOP } from './_lib/commission';
-import { applyPaymentToSale } from './_lib/applyPayment';
+import { applyPaymentToSale, type PaymentProvider } from './_lib/applyPayment';
 import {
   isContactInactive,
   addContactTags,
@@ -286,6 +286,7 @@ export const createOrder = mutation({
     ),
     ambassador_slug: v.optional(v.string()),
     canal_origen: v.optional(v.string()),
+    forma_pago: v.optional(v.string()),
     secret: v.string(),
   },
   handler: async (ctx, args) => {
@@ -345,7 +346,7 @@ export const createOrder = mutation({
       clientId,
       precioAcordadoCOP: totalCOP,
       totalCOP,
-      formaPago: 'mercadopago',
+      formaPago: args.forma_pago ?? 'mercadopago',
       estado: 'reservada' as const,
       ambassadorId,
       promotionCode: args.promotion_code ?? undefined,
@@ -378,21 +379,43 @@ export const setMpPreference = mutation({
 export const markOrderPaid = mutation({
   args: {
     saleId: v.string(),
-    mpPaymentId: v.string(),
-    mpStatus: v.string(),
+    // Legacy MercadoPago shape. Optional so the new Wompi caller can omit it,
+    // and still ACCEPTED so the currently-deployed api/mp-webhook.ts keeps
+    // working during the window between the Convex and Vercel deploys.
+    // A follow-up commit drops these once both are live.
+    mpPaymentId: v.optional(v.string()),
+    mpStatus: v.optional(v.string()),
+    // Provider-neutral shape.
+    provider: v.optional(v.string()),
+    paymentId: v.optional(v.string()),
+    status: v.optional(v.string()),
+    approved: v.optional(v.boolean()),
     secret: v.string(),
   },
-  handler: async (ctx, { saleId, mpPaymentId, mpStatus, secret }) => {
-    requireServerSecret(secret);
+  handler: async (ctx, args) => {
+    requireServerSecret(args.secret);
+    const { saleId } = args;
     const sale = await ctx.db
       .query('sales')
       .withIndex('by_saleId', (q) => q.eq('saleId', saleId))
       .first();
     if (!sale) return { updated: false as const, reason: 'sale-not-found' };
 
+    // Resolve the two accepted arg shapes into one.
+    const provider = (args.provider ?? 'mercadopago') as PaymentProvider;
+    const paymentId = args.paymentId ?? args.mpPaymentId;
+    const status = args.status ?? args.mpStatus;
+    if (!paymentId || !status) {
+      return { updated: false as const, reason: 'missing-payment' };
+    }
+    // Legacy callers send no `approved`; MercadoPago's word for it is
+    // "approved", so derive it rather than defaulting to false and silently
+    // dropping a real payment.
+    const approved = args.approved ?? status === 'approved';
+
     const decision = applyPaymentToSale(
       { estado: sale.estado },
-      { id: mpPaymentId, status: mpStatus },
+      { provider, id: paymentId, status, approved },
       new Date().toISOString(),
     );
     if (!decision.changed) {
