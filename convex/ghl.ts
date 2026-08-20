@@ -40,6 +40,12 @@ import {
   amountsMatch,
 } from './_lib/applyPayment';
 import {
+  RESERVA_TTL_MS,
+  reservaCutoffISO,
+  reservedItemIds,
+  findReusableSale,
+} from './_lib/reservas';
+import {
   isContactInactive,
   addContactTags,
   type GhlConvConfig,
@@ -291,6 +297,11 @@ export const createOrder = mutation({
     ambassador_slug: v.optional(v.string()),
     canal_origen: v.optional(v.string()),
     forma_pago: v.optional(v.string()),
+    /**
+     * El checkout in-app no lleva techo de 2M (decisión de producto). Opt-in y
+     * opcional, así que el rail del bot conserva su compuerta sin tocarse.
+     */
+    skip_limit: v.optional(v.boolean()),
     secret: v.string(),
   },
   handler: async (ctx, args) => {
@@ -314,7 +325,8 @@ export const createOrder = mutation({
     }
 
     // 2. ≤2M COP server-side gate (golden rule #3). The handler maps this to 409.
-    if (isOverLimit(totalCOP)) throw new ConvexError('OVER_LIMIT_2M');
+    if (!args.skip_limit && isOverLimit(totalCOP))
+      throw new ConvexError('OVER_LIMIT_2M');
 
     // 3. Resolve the ambassador (first-touch) from the referral slug.
     let ambassadorId: Id<'ambassadors'> | undefined;
@@ -334,18 +346,72 @@ export const createOrder = mutation({
       ambassadorId,
     );
 
+    // 4.5 Reserva derivada. Una sola lectura por rango de índice trae solo las
+    // ventas `reservada` de los últimos 30 min — el histórico de carritos
+    // abandonados no encarece esto. Leer aquí e insertar abajo es atómico:
+    // las mutations de Convex son serializables, así que dos createOrder
+    // concurrentes chocan y la que reintenta ya ve la venta de la otra.
+    const now = Date.now();
+    const pendientes = await ctx.db
+      .query('sales')
+      .withIndex('by_estado_fecha', (q) =>
+        q.eq('estado', 'reservada').gte('fechaVenta', reservaCutoffISO(now)),
+      )
+      .collect();
+
+    // Doble clic en «Pagar»: devolver la reserva que este cliente ya tiene por
+    // estos mismos ítems, en vez de chocar contra su propia reserva.
+    const reusable = findReusableSale(
+      pendientes.map((s) => ({
+        clientId: s.clientId as string,
+        itemIds: s.itemIds,
+        fechaVenta: s.fechaVenta,
+        estado: s.estado,
+        saleId: s.saleId,
+        totalCOP: s.totalCOP,
+      })),
+      clientId as string,
+      itemIds,
+      now,
+      RESERVA_TTL_MS,
+    );
+    if (reusable) {
+      return {
+        saleId: reusable.saleId,
+        totalCOP: reusable.totalCOP,
+        reused: true as const,
+      };
+    }
+
+    // Otra persona la tiene apartada.
+    const apartados = reservedItemIds(
+      pendientes.map((s) => ({
+        clientId: s.clientId as string,
+        itemIds: s.itemIds,
+        fechaVenta: s.fechaVenta,
+        estado: s.estado,
+      })),
+      now,
+      RESERVA_TTL_MS,
+    );
+    for (const itemId of itemIds) {
+      if (apartados.has(itemId)) {
+        throw new ConvexError(`ITEM_RESERVED:${itemId}`);
+      }
+    }
+
     // 5. Allocate a race-safe online saleId in the same transaction.
     const seqValue = await allocateNext(ctx, ONLINE_SALE_SEQUENCE);
     const saleId = formatSaleId(seqValue, ONLINE_SEDE);
 
     // 6. Insert the pending sale.
-    const now = new Date().toISOString();
+    const nowIso = new Date(now).toISOString();
     const allSales = await ctx.db.query('sales').collect();
     const rowIndex = allSales.reduce((m, s) => Math.max(m, s.rowIndex), 1) + 1;
     await ctx.db.insert('sales', {
       saleId,
       sede: ONLINE_SEDE,
-      fechaVenta: now,
+      fechaVenta: nowIso,
       itemIds,
       clientId,
       precioAcordadoCOP: totalCOP,
@@ -356,11 +422,11 @@ export const createOrder = mutation({
       promotionCode: args.promotion_code ?? undefined,
       shippingAddress: args.shipping_address,
       rowIndex,
-      lastPulledAt: now,
+      lastPulledAt: nowIso,
       syncStatus: 'pending' as const,
     });
 
-    return { saleId, totalCOP };
+    return { saleId, totalCOP, reused: false as const };
   },
 });
 
