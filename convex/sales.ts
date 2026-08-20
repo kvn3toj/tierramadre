@@ -59,6 +59,28 @@ export const get = query({
   },
 });
 
+/**
+ * Estado de un pedido para la página de confirmación. PÚBLICA a propósito:
+ * quien pagó no tiene sesión. Por eso devuelve el mínimo —estado, número y
+ * total— y NUNCA el cliente, la comisión, el embajador ni los itemIds:
+ * cualquiera con el link la puede llamar, y un saleId es adivinable.
+ */
+export const estadoPublico = query({
+  args: { saleId: v.string() },
+  handler: async (ctx, { saleId }) => {
+    const sale = await ctx.db
+      .query('sales')
+      .withIndex('by_saleId', (q) => q.eq('saleId', saleId))
+      .first();
+    if (!sale) return null;
+    return {
+      saleId: sale.saleId,
+      estado: sale.estado,
+      totalCOP: sale.totalCOP,
+    };
+  },
+});
+
 export const peekNextSaleId = query({
   args: { sede: sedeValidator, sessionToken: v.optional(v.string()) },
   handler: async (ctx, { sede, sessionToken }) => {

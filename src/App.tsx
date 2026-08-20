@@ -319,6 +319,14 @@ const PublicProductPage = lazyWithRetry(
   'PublicProductPage',
 );
 
+// Public post-payment landing — both checkout rails redirect here
+// (see api/_lib/checkoutLink.ts). No app shell, no auth: whoever just paid
+// may have no session at all.
+const PedidoConfirmadoPage = lazyWithRetry(
+  () => import('./pages/PedidoConfirmadoPage'),
+  'PedidoConfirmadoPage',
+);
+
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'treasure' | 'ambassadors';
 
@@ -1048,6 +1056,16 @@ function InvitationRouter() {
           </Suspense>
         }
       />
+      {/* Post-payment landing (e.g. /pedido-confirmado/VB-0001) — both
+          checkout rails redirect here; the customer may have no session. */}
+      <Route
+        path="/pedido-confirmado/:saleId"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <PedidoConfirmadoPage />
+          </Suspense>
+        }
+      />
       <Route path="*" element={<AuthenticatedApp />} />
     </Routes>
   );
@@ -1133,7 +1151,8 @@ function shouldShowSplash(): boolean {
     path.startsWith('/product/') ||
     path.startsWith('/p/') ||
     path.startsWith('/invite/') ||
-    path.startsWith('/g/')
+    path.startsWith('/g/') ||
+    path.startsWith('/pedido-confirmado/')
   ) {
     return false;
   }
