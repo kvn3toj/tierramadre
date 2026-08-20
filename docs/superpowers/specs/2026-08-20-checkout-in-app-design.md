@@ -99,7 +99,7 @@ nunca viaja un multiplicador ni un precio.
   nombre**: esa clave se llama `TOKEN` pero lo que guarda es el **shortCode**
   (`src/pages/InvitationPage.tsx:348` hace
   `[INVITATION_STORAGE_KEYS.TOKEN]: resolvedShortCode`). Se resuelve con el
-  índice `by_shortCode` que ya existe (`convex/schema.ts:28`).
+  índice `by_shortCode` que ya existe (`convex/schema.ts:45`).
 
 Esa discrepancia de nombre es una trampa: `invitations` **no tiene índice por
 `boundToken`**, así que resolver «por token» literalmente sería un full-scan de
