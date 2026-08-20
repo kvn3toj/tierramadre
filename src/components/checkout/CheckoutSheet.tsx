@@ -8,12 +8,22 @@
  * exists, see `mensajesCheckout.ts` for why that is never shown as "error").
  *
  * Wompi collects only in COP, even on a vitrina that displays USD, and the
- * two figures don't round-trip cleanly — so alongside each piece's price
- * label the customer already saw, this shows a COP total before they submit.
- * `piezas` only carries a formatted display string (no raw COP), so the
- * total below is a best-effort estimate (exact for a COP-denominated label,
- * TRM-converted for a USD one) with a disclaimer — see task-5-report.md for
- * why the prop contract doesn't carry a raw price.
+ * two figures don't round-trip cleanly. So the total shown here is computed
+ * with the SAME pure function the server uses to charge —
+ * `precioConMarkup(precioCOP, multiplicador)` from `convex/_lib/precioVitrina`
+ * (dependency-free, no Convex imports, safe to run in the browser) — applied
+ * per piece and summed, exactly like `convex/ghl.ts`'s `createOrder` does.
+ * `precioMostrado` (the label the customer was already looking at, possibly
+ * in USD) stays as a secondary reference per piece; the COP figure computed
+ * here is the one being confirmed.
+ *
+ * SAFETY NOTE: this is presentation only. The server re-resolves the
+ * multiplier itself from the `vitrinas`/`invitations` record — it never
+ * trusts a multiplier sent by the browser (see `resolverMultiplicador` in
+ * `precioVitrina.ts`). So if `multiplicador` here were ever stale or
+ * tampered with client-side, the customer would see a figure that differs
+ * from the real charge — it could never make the server charge LESS than it
+ * would have anyway.
  */
 import { useState } from 'react';
 import {
@@ -39,12 +49,15 @@ import {
   TextField,
 } from '../../design-system';
 import { formatCurrency } from '../../utils/formatting';
-import { useTRM } from '../../hooks/useTRM';
+import { precioConMarkup } from '../../../convex/_lib/precioVitrina';
 import { mensajeDeRespuesta } from './mensajesCheckout';
 
 export interface CheckoutPieza {
   sku: string;
   nombre: string;
+  /** Precio base en COP, sin markup — la entrada de `precioConMarkup`. */
+  precioCOP: number;
+  /** La etiqueta que el cliente ya venía viendo (puede ser COP o USD). */
   precioMostrado: string;
 }
 
@@ -56,32 +69,23 @@ export interface CheckoutOrigen {
 interface CheckoutSheetProps {
   open: boolean;
   piezas: CheckoutPieza[];
+  /** El multiplicador de la vitrina/invitación de origen (x1–x4). Sólo para
+   * mostrar el mismo número que el servidor va a cobrar — ver la nota de
+   * seguridad en el header de este archivo. */
+  multiplicador: number;
   origen: CheckoutOrigen;
   onClose: () => void;
-}
-
-/**
- * `precioMostrado` viene como texto ya formateado, no como número — nunca es
- * exacto para una etiqueta en USD (ver el header del archivo). Se detecta el
- * sufijo " USD" que deja `formatVitrinaPrice`; todo lo demás se asume COP.
- */
-function precioMostradoACOP(precioMostrado: string, trmRate: number): number {
-  const esUSD = /USD\s*$/.test(precioMostrado);
-  const digitos = precioMostrado.replace(/[^\d]/g, '');
-  const numero = digitos ? Number(digitos) : 0;
-  if (!Number.isFinite(numero) || numero <= 0) return 0;
-  return esUSD ? Math.round(numero * trmRate) : numero;
 }
 
 export default function CheckoutSheet({
   open,
   piezas,
+  multiplicador,
   origen,
   onClose,
 }: CheckoutSheetProps) {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
-  const { trmRate } = useTRM();
 
   const [celular, setCelular] = useState('');
   const [fullName, setFullName] = useState('');
@@ -91,9 +95,12 @@ export default function CheckoutSheet({
     typeof mensajeDeRespuesta
   > | null>(null);
 
-  const algunaEnUSD = piezas.some((p) => /USD\s*$/.test(p.precioMostrado));
+  // Por pieza y luego sumado — no sumado y luego multiplicado — porque así
+  // redondea el servidor (`convex/ghl.ts`: `precioConMarkup(base, mult) * qty`
+  // dentro del loop). Divergir del orden de operaciones divergiría del
+  // redondeo.
   const totalCOP = piezas.reduce(
-    (acc, p) => acc + precioMostradoACOP(p.precioMostrado, trmRate),
+    (acc, p) => acc + precioConMarkup(p.precioCOP, multiplicador),
     0,
   );
 
@@ -211,11 +218,20 @@ export default function CheckoutSheet({
                       fontSize: '0.75rem',
                     }}
                   />
-                  <Typography
-                    sx={{ fontWeight: 600, whiteSpace: 'nowrap', ml: 2 }}
-                  >
-                    {pieza.precioMostrado}
-                  </Typography>
+                  <Box sx={{ textAlign: 'right', ml: 2 }}>
+                    <Typography sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
+                      {formatCurrency(
+                        precioConMarkup(pieza.precioCOP, multiplicador),
+                        'COP',
+                      )}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: 'text.disabled', whiteSpace: 'nowrap' }}
+                    >
+                      {pieza.precioMostrado}
+                    </Typography>
+                  </Box>
                 </ListItem>
               ))}
             </List>
@@ -246,15 +262,6 @@ export default function CheckoutSheet({
                   {formatCurrency(totalCOP, 'COP')}
                 </Typography>
               </Box>
-              {algunaEnUSD && (
-                <Typography
-                  variant="caption"
-                  sx={{ color: 'text.disabled', display: 'block', mt: 0.5 }}
-                >
-                  Wompi cobra en pesos colombianos. Este total es aproximado —
-                  el monto exacto se confirma en la pantalla de pago.
-                </Typography>
-              )}
             </Box>
 
             <Box
