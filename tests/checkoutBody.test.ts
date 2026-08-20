@@ -2,7 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { parseCheckoutBody } from '../api/_lib/checkoutBody';
 import { MAX_ITEMS_POR_PEDIDO } from '../convex/_lib/reservas';
 
-const validContact = { celular: '3001234567', full_name: 'Ana', email: 'a@b.com' };
+const validContact = {
+  celular: '3001234567',
+  full_name: 'Ana',
+  email: 'a@b.com',
+};
 
 describe('parseCheckoutBody', () => {
   it('accepts the happy path', () => {
@@ -118,5 +122,57 @@ describe('parseCheckoutBody', () => {
       items: [{ sku: 'C-090', qty: MAX_ITEMS_POR_PEDIDO + 1 }],
     });
     expect(result.ok).toBe(false);
+  });
+
+  it('acepta un origen de vitrina', () => {
+    const r = parseCheckoutBody({
+      contact: { celular: '3001234567' },
+      items: [{ sku: 'C-090', qty: 1 }],
+      origen: { tipo: 'vitrina', token: 'AB3K9P' },
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok)
+      expect(r.value.origen).toEqual({
+        tipo: 'vitrina',
+        token: 'AB3K9P',
+      });
+  });
+
+  it('acepta la ausencia de origen — es el riel del bot', () => {
+    const r = parseCheckoutBody({
+      contact: { celular: '3001234567' },
+      items: [{ sku: 'C-090', qty: 1 }],
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value.origen).toBeUndefined();
+  });
+
+  it('rechaza un tipo de origen desconocido', () => {
+    const r = parseCheckoutBody({
+      contact: { celular: '3001234567' },
+      items: [{ sku: 'C-090', qty: 1 }],
+      origen: { tipo: 'inventado', token: 'X' },
+    });
+    expect(r.ok).toBe(false);
+  });
+
+  it('rechaza un origen sin token utilizable', () => {
+    for (const token of ['', '   ', 5, null, undefined]) {
+      const r = parseCheckoutBody({
+        contact: { celular: '3001234567' },
+        items: [{ sku: 'C-090', qty: 1 }],
+        origen: { tipo: 'vitrina', token },
+      });
+      expect(r.ok).toBe(false);
+    }
+  });
+
+  it('rechaza un origen que no es objeto', () => {
+    const r = parseCheckoutBody({
+      contact: { celular: '3001234567' },
+      items: [{ sku: 'C-090', qty: 1 }],
+      origen: 'vitrina',
+    });
+    expect(r.ok).toBe(false);
   });
 });

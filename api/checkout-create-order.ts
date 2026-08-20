@@ -74,6 +74,7 @@ export default withApiHandler(
         items: body.items.map((i) => ({ sku: i.sku, qty: i.qty })),
         ambassador_slug: body.ambassador_slug ?? undefined,
         canal_origen: body.canal_origen ?? 'checkout-web',
+        origen: body.origen,
         forma_pago: provider,
         skip_limit: true,
         secret: process.env.ADMIN_SYNC_TOKEN ?? '',
@@ -108,6 +109,15 @@ export default withApiHandler(
       }
       if (msg.includes('EMPTY_ITEMS')) {
         return sendError(res, 400, 'items must be a non-empty array');
+      }
+      if (msg.includes('ORIGEN_INVALIDO')) {
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        return res.status(409).json({
+          success: false,
+          error: 'ORIGEN_INVALIDO',
+          message:
+            'El enlace por el que llegaste ya no es válido. Escríbenos y te ayudamos.',
+        });
       }
       // Riel PÚBLICO, sin autenticar: un error de Convex no mapeado no puede
       // salir intacto. `withApiHandler` echoa `error.message` en el body de

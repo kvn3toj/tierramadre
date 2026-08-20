@@ -36,6 +36,7 @@ export interface ParsedCheckoutBody {
   items: CheckoutItem[];
   ambassador_slug?: string;
   canal_origen?: string;
+  origen?: { tipo: 'vitrina' | 'invitacion'; token: string };
 }
 
 export interface CheckoutBodyRejected {
@@ -117,6 +118,22 @@ export function parseCheckoutBody(body: unknown): CheckoutBodyResult {
     return reject(400, 'canal_origen must be a string');
   }
 
+  let origen: { tipo: 'vitrina' | 'invitacion'; token: string } | undefined;
+  if (body.origen !== undefined) {
+    if (!isPlainObject(body.origen)) {
+      return reject(400, 'origen must be an object');
+    }
+    const tipo = body.origen.tipo;
+    if (tipo !== 'vitrina' && tipo !== 'invitacion') {
+      return reject(400, 'origen.tipo must be vitrina or invitacion');
+    }
+    const token = body.origen.token;
+    if (typeof token !== 'string' || token.trim() === '') {
+      return reject(400, 'origen.token must be a non-empty string');
+    }
+    origen = { tipo, token: token.trim() };
+  }
+
   const itemsRaw = body.items;
   if (!Array.isArray(itemsRaw) || itemsRaw.length === 0) {
     return reject(400, 'items must be a non-empty array');
@@ -167,6 +184,7 @@ export function parseCheckoutBody(body: unknown): CheckoutBodyResult {
       items,
       ambassador_slug: body.ambassador_slug as string | undefined,
       canal_origen: body.canal_origen as string | undefined,
+      origen,
     },
   };
 }
