@@ -67,6 +67,29 @@ export function esTurnoRespuesta(j: unknown): j is { estado: string } {
   );
 }
 
+/**
+ * El texto listo para que el WORKFLOW lo envíe tal cual (regla LITERAL sin LLM en el medio):
+ * la `pregunta` de un turno de descubrimiento, o el `mensaje` de una cotización/acuse.
+ * `""` cuando no hay nada que decirle al cliente (`sin_cotizacion` → el lead queda para el
+ * humano) — el workflow lo usa como condición de "no enviar".
+ */
+export function textoParaCliente(r: {
+  estado: string;
+  pregunta?: unknown;
+  mensaje?: unknown;
+}): string {
+  if (r.estado === 'pregunta' && typeof r.pregunta === 'string') {
+    return r.pregunta;
+  }
+  if (
+    (r.estado === 'cotizacion' || r.estado === 'en_revision') &&
+    typeof r.mensaje === 'string'
+  ) {
+    return r.mensaje;
+  }
+  return '';
+}
+
 type FetchLike = (
   input: string,
   init?: {

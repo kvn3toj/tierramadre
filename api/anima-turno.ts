@@ -22,6 +22,7 @@ import {
   FALLBACK_TURNO,
   parseTurno,
   reenviarTurno,
+  textoParaCliente,
 } from './_lib/anima-turno.js';
 
 export default withApiHandler(
@@ -56,9 +57,13 @@ export default withApiHandler(
         : null;
 
     if (respuesta) {
-      // Passthrough crudo, sin el sobre {success:true}: el contrato de la tool ES TurnoRespuesta.
+      // Passthrough crudo, sin el sobre {success:true}: el contrato ES TurnoRespuesta. `texto`
+      // se agrega ENCIMA para que el workflow relele con un solo merge tag y una sola condición
+      // ("texto no vacío → enviar") en vez de una rama por estado.
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
-      return res.status(200).json(respuesta);
+      return res
+        .status(200)
+        .json({ ...respuesta, texto: textoParaCliente(respuesta) });
     }
 
     // anima-bot no contestó. El tag es best-effort: si también falla, el fallback sale igual —
@@ -73,7 +78,9 @@ export default withApiHandler(
     }
 
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    return res.status(200).json(FALLBACK_TURNO);
+    return res
+      .status(200)
+      .json({ ...FALLBACK_TURNO, texto: FALLBACK_TURNO.mensaje });
   },
   {
     methods: ['POST', 'OPTIONS'],
