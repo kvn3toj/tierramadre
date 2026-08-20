@@ -31,6 +31,7 @@ import {
   calcularK,
   divisorObjetivo,
   exigeCategoriaFiscal,
+  impuestosDe,
   pisoReal,
   precioVenta,
   type CategoriaFiscal,
@@ -89,7 +90,7 @@ export function metricasDelLote(input: MetricasDelLoteInput): MetricasDelLote {
   });
 
   const objetivo = Math.round(K / divisorObjetivo(categoria, input.config));
-  const impuestos = categoria === 'joya' ? input.config.ivaJoyaPct : 0;
+  const impuestos = impuestosDe(categoria, input.config);
 
   // E10 — el hecho que la hoja ignoraba: la comisión y el IVA se pagan sobre el
   // PRECIO DE VENTA, no sobre el costo. Se llevan un pedazo de lo que cobrás.

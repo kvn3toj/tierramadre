@@ -13,6 +13,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   CONFIG_PRECIOS_2026_07,
+  CONFIG_PRECIOS_2026_08,
   calcularK,
   configVigenteEn,
   costoFijoUnitario,
@@ -411,5 +412,74 @@ describe('la configuración semilla de julio 2026', () => {
     expect(CFG.multRemateGema).toBe(1.3);
     expect(CFG.multRemateJoya).toBe(1.6);
     expect(CFG.gastosFijosMensualesCOP).toBe(33_651_815);
+  });
+
+  it('NO trae ivaGemaPct: los números pinneados de arriba dependen de gema sin IVA', () => {
+    // Si esto falla, alguien le puso IVA de gema a la config de julio — eso
+    // repreciaría retroactivamente todo lo cotizado bajo esa regla. El régimen
+    // nuevo entra por CONFIG_PRECIOS_2026_08, nunca editando la vieja.
+    expect(CFG.ivaGemaPct).toBeUndefined();
+  });
+});
+
+describe('CONFIG_PRECIOS_2026_08 — gemas gravadas con IVA (responsable de IVA)', () => {
+  // Corrección legal verificada el 2026-08-20: el art. 424 ET no excluye las
+  // piedras preciosas (solo 71.18 monedas), así que la venta NACIONAL de una
+  // gema suelta paga la tarifa general del 19% (art. 468). La exención real es
+  // por canal (exportación / CI, art. 481), no por categoría.
+  const CFG08 = CONFIG_PRECIOS_2026_08;
+
+  it('rige desde el 2026-08-20 y no toca la regla de julio', () => {
+    expect(CFG08.vigenteDesde).toBe('2026-08-20');
+    expect(configVigenteEn([CFG, CFG08], '2026-08-19')).toBe(CFG);
+    expect(configVigenteEn([CFG, CFG08], '2026-08-20')).toBe(CFG08);
+  });
+
+  it('gema y joya quedan con el MISMO divisor: la asimetría fiscal era el error', () => {
+    // 1 − 0,10 − 0,19 − 0,30 = 0,41 para ambas categorías.
+    expect(divisorObjetivo('gema', CFG08)).toBeCloseTo(0.41, 10);
+    expect(divisorObjetivo('joya', CFG08)).toBeCloseTo(0.41, 10);
+  });
+
+  it('el piso real de una gema sube de K/0,90 a K/0,71', () => {
+    // Lote 10: K = $1.383.809. Bajo julio el piso era $1.537.566; con el IVA
+    // que sí se debe, no perder plata exige $1.949.027.
+    expect(pisoReal(1_383_809, 'gema', CFG)).toBe(1_537_566);
+    expect(pisoReal(1_383_809, 'gema', CFG08)).toBe(1_949_027);
+    // La joya no se mueve: siempre pagó su IVA.
+    expect(pisoReal(1_383_809, 'joya', CFG)).toBe(
+      pisoReal(1_383_809, 'joya', CFG08),
+    );
+  });
+
+  it('durante el remate el precio de gema NO cambia (ancla en K, no en divisor)', () => {
+    const conIva = precioVenta({
+      K: 1_383_809,
+      categoria: 'gema',
+      fecha: '2026-08-25',
+      config: CFG08,
+    });
+    expect(conIva.regla).toBe('remate');
+    expect(conIva.precioCOP).toBe(Math.round(1_383_809 * 1.3));
+    // Pero el margen reportado ya descuenta el IVA que se va a pagar.
+    expect(conIva.margenNetoPct).toBeLessThan(
+      precioVenta({
+        K: 1_383_809,
+        categoria: 'gema',
+        fecha: '2026-08-25',
+        config: CFG,
+      }).margenNetoPct,
+    );
+  });
+
+  it('desde el 2026-09-01 una gema se cotiza a K/0,41 — +46% sobre el K/0,60 viejo', () => {
+    const precio = precioVenta({
+      K: 1_383_809,
+      categoria: 'gema',
+      fecha: '2026-09-01',
+      config: CFG08,
+    });
+    expect(precio.regla).toBe('objetivo');
+    expect(precio.precioCOP).toBe(Math.round(1_383_809 / 0.41));
   });
 });
