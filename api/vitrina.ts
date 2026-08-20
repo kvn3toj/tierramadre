@@ -32,6 +32,7 @@ import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
 import { extractBearer } from './_lib/bearer.js';
 import { isSessionToken, verifySessionToken } from './_lib/sessionToken.js';
 import { api } from '../convex/_generated/api.js';
+import { puedeFijarMultiplicador } from '../src/utils/permisosMultiplicador.js';
 
 /**
  * Verifies a `tms1` app session token and returns its email, or null.
@@ -45,6 +46,38 @@ export function verifiedSessionEmail(
   const token = extractBearer(authHeader);
   if (!token || !isSessionToken(token)) return null;
   return verifySessionToken(token)?.email ?? null;
+}
+
+/**
+ * Verified email → roster accessLevel, via the same `/api/validate` the rest
+ * of the app already trusts as the role source of truth — the exact fetch
+ * `api/invitations.ts`'s `resolveInvitationCaller` and
+ * `convex/_lib/authz.ts`'s `fetchRosterEntry` already perform, reused here
+ * rather than a third copy of the roster lookup.
+ *
+ * Fails closed: a roster miss OR an unreachable roster both resolve to `''`,
+ * which `puedeFijarMultiplicador` rejects. This gate decides who fixes a
+ * sale price, so a transient lookup failure must never fail open into
+ * "multiplier allowed".
+ */
+async function accessLevelFor(email: string): Promise<string> {
+  const appUrl = process.env.APP_URL || 'https://tierramadre.app';
+  try {
+    const res = await fetch(
+      `${appUrl}/api/validate?email=${encodeURIComponent(email)}&type=both`,
+    );
+    if (!res.ok) return '';
+    const data = (await res.json()) as {
+      success?: boolean;
+      isAuthorized?: boolean;
+      user?: { accessLevel?: string };
+    };
+    return data.success && data.isAuthorized && data.user?.accessLevel
+      ? data.user.accessLevel
+      : '';
+  } catch {
+    return '';
+  }
 }
 
 export default withApiHandler(
@@ -84,6 +117,21 @@ export default withApiHandler(
             ),
           )
         : undefined;
+
+    // La UI oculta el slider a quien no puede, pero el diálogo es código de
+    // cliente y se puede saltar. Esta es la comprobación que cuenta —
+    // corre para mint (POST) y para corrección (PATCH) por igual.
+    const multiplicadorPedido = Number(body.multiplier ?? 1);
+    if (
+      multiplicadorPedido !== 1 &&
+      !puedeFijarMultiplicador(await accessLevelFor(email))
+    ) {
+      return sendError(
+        res,
+        403,
+        'No autorizado para fijar un multiplicador distinto de 1',
+      );
+    }
 
     if (req.method === 'PATCH') {
       const token = typeof body.token === 'string' ? body.token.trim() : '';

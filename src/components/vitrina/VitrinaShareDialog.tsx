@@ -53,6 +53,7 @@ import {
 } from '@mui/material';
 import { Check, Copy, Link2, MessageCircle, Pencil, X } from 'lucide-react';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
+import { usePermissions } from '../../hooks/usePermissions';
 import { useTRM } from '../../hooks/useTRM';
 import { VitrinaCurrency, formatVitrinaPrice } from '../../utils/vitrinaPrice';
 import { brand, fontWeights } from '../../design-system';
@@ -179,6 +180,11 @@ export default function VitrinaShareDialog({
 }: VitrinaShareDialogProps) {
   const { trmRate } = useTRM();
   const { signIn } = useGoogleAuth();
+  // Sharing and pricing are different permissions (see puedeFijarMultiplicador
+  // in usePermissions.ts). This hides the slider as a courtesy — the request
+  // body below is still pinned at 1 for anyone this is false for, and the
+  // server enforces it regardless of what the client sends.
+  const { canUseMultiplier } = usePermissions();
 
   const [currency, setCurrency] = useState<VitrinaCurrency>('COP');
   const [multiplier, setMultiplier] = useState<number>(1);
@@ -196,6 +202,10 @@ export default function VitrinaShareDialog({
   const [editTokenInput, setEditTokenInput] = useState('');
   const [wasUpdate, setWasUpdate] = useState(false);
 
+  // Pinned at 1 for anyone who can't set it — even if `multiplier` state
+  // somehow drifted, the request body (and the preview) never reflects it.
+  const effectiveMultiplier = canUseMultiplier ? multiplier : 1;
+
   // Live preview off the first priced item, or a 2M sample like the invite UI.
   const previewBaseCOP = useMemo(() => {
     const priced = items.find(
@@ -205,7 +215,7 @@ export default function VitrinaShareDialog({
   }, [items]);
   const previewLabel = formatVitrinaPrice(
     previewBaseCOP,
-    { multiplier, currency },
+    { multiplier: effectiveMultiplier, currency },
     trmRate,
   );
 
@@ -275,7 +285,7 @@ export default function VitrinaShareDialog({
         body: JSON.stringify({
           itemIds: items.map((i) => i.item),
           currency,
-          multiplier,
+          multiplier: effectiveMultiplier,
           senderSlug,
         }),
       });
@@ -333,7 +343,7 @@ export default function VitrinaShareDialog({
           token,
           itemIds: items.map((i) => i.item),
           currency,
-          multiplier,
+          multiplier: effectiveMultiplier,
           senderSlug,
         }),
       });
@@ -552,69 +562,72 @@ export default function VitrinaShareDialog({
                 </ToggleButtonGroup>
               </Box>
 
-              {/* Multiplier */}
-              <Box>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Typography
-                    variant="caption"
+              {/* Multiplier — only for roles that may fix the sale price.
+                  An asesor can still share; their vitrinas go out at x1. */}
+              {canUseMultiplier && (
+                <Box>
+                  <Box
                     sx={{
-                      color: 'text.secondary',
-                      fontWeight: fontWeights.medium,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                     }}
                   >
-                    Multiplicador
-                  </Typography>
-                  <Typography
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: 'text.secondary',
+                        fontWeight: fontWeights.medium,
+                      }}
+                    >
+                      Multiplicador
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontWeight: fontWeights.bold,
+                        color: brand.emerald[700],
+                      }}
+                    >
+                      x{multiplier.toFixed(1)}
+                    </Typography>
+                  </Box>
+                  <Box
                     sx={{
-                      fontWeight: fontWeights.bold,
-                      color: brand.emerald[700],
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                      mt: 0.5,
                     }}
                   >
-                    x{multiplier.toFixed(1)}
-                  </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: 'text.secondary' }}
+                    >
+                      x1
+                    </Typography>
+                    <Slider
+                      value={multiplier}
+                      onChange={(_e, val) => setMultiplier(val as number)}
+                      min={1}
+                      max={4}
+                      step={0.1}
+                      valueLabelDisplay="auto"
+                      valueLabelFormat={(v) => `x${v}`}
+                      aria-label="Multiplicador de precio"
+                      sx={{
+                        color: brand.emerald[700],
+                        '& .MuiSlider-thumb': { width: 18, height: 18 },
+                      }}
+                    />
+                    <Typography
+                      variant="caption"
+                      sx={{ color: 'text.secondary' }}
+                    >
+                      x4
+                    </Typography>
+                  </Box>
                 </Box>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1.5,
-                    mt: 0.5,
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    x1
-                  </Typography>
-                  <Slider
-                    value={multiplier}
-                    onChange={(_e, val) => setMultiplier(val as number)}
-                    min={1}
-                    max={4}
-                    step={0.1}
-                    valueLabelDisplay="auto"
-                    valueLabelFormat={(v) => `x${v}`}
-                    aria-label="Multiplicador de precio"
-                    sx={{
-                      color: brand.emerald[700],
-                      '& .MuiSlider-thumb': { width: 18, height: 18 },
-                    }}
-                  />
-                  <Typography
-                    variant="caption"
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    x4
-                  </Typography>
-                </Box>
-              </Box>
+              )}
 
               {/* Preview */}
               <Box
