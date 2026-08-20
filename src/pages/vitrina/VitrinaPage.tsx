@@ -300,6 +300,7 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
           resale={selectedResale}
           contactId={contactId}
           onBack={onBack}
+          vitrinaToken={isIdList ? undefined : code}
         />
       </VitrinaShell>
     );

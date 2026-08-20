@@ -5,8 +5,8 @@
  * - Guests send to their inviter
  * - Staff select an admin to contact
  */
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -17,40 +17,46 @@ import {
   Divider,
   Alert,
   alpha,
-} from "@mui/material";
+} from '@mui/material';
 import {
   ShoppingCart,
   Trash2,
   ChevronLeft,
+  CreditCard,
   MessageCircle,
   Package,
   X,
   Link2,
-} from "lucide-react";
-import { useLanguage } from "../contexts/LanguageContext";
-import { useCart } from "../hooks/useCart";
-import { useWhatsAppContact } from "../hooks/useWhatsAppContact";
-import { useCurrentAsesor } from "../hooks/useCurrentAsesor";
-import VitrinaShareDialog from "../components/vitrina/VitrinaShareDialog";
-import { useIsGuest, useGuestCanSeePrices } from "../hooks/useAuth";
-import { useCanShareVitrina } from "../hooks/usePermissions";
-import { useThemeMode } from "../contexts/ThemeContext";
-import AdminSelectDialog from "../components/cart/AdminSelectDialog";
+} from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
+import { useCart } from '../hooks/useCart';
+import { useWhatsAppContact } from '../hooks/useWhatsAppContact';
+import { useCurrentAsesor } from '../hooks/useCurrentAsesor';
+import VitrinaShareDialog from '../components/vitrina/VitrinaShareDialog';
+import { useIsGuest, useGuestCanSeePrices } from '../hooks/useAuth';
+import { useCanShareVitrina } from '../hooks/usePermissions';
+import { useThemeMode } from '../contexts/ThemeContext';
+import AdminSelectDialog from '../components/cart/AdminSelectDialog';
 import {
   emeraldCore,
   surfacesLight,
   surfacesDark,
-} from "../design-system/tokens/colors";
-import { buttonGradients } from "../design-system/tokens/gradients";
-import { useCurrencyFormat } from "../contexts/CurrencyContext";
-import { fontWeights } from "../design-system";
+} from '../design-system/tokens/colors';
+import { buttonGradients } from '../design-system/tokens/gradients';
+import { useCurrency, useCurrencyFormat } from '../contexts/CurrencyContext';
+import { fontWeights } from '../design-system';
+import CheckoutSheet, {
+  CheckoutPieza,
+} from '../components/checkout/CheckoutSheet';
+import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 
 export default function CartPage() {
   const { t } = useLanguage();
   const { formatCurrency } = useCurrencyFormat();
+  const { multiplier } = useCurrency();
   const navigate = useNavigate();
   const { mode } = useThemeMode();
-  const isLight = mode === "light";
+  const isLight = mode === 'light';
   const isGuest = useIsGuest();
   const canSeePrices = useGuestCanSeePrices();
   const canShareVitrina = useCanShareVitrina();
@@ -73,14 +79,43 @@ export default function CartPage() {
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const totals = getCartTotal();
+
+  // "Pagar" only for a guest whose session carries an invitation — that's
+  // the server-provable record of which price they were shown. A guest
+  // without one (or staff, who aren't the buyer — their multiplier is only
+  // ever in localStorage, with no server record) keeps WhatsApp only. Also
+  // gated on `canSeePrices`: a `no_prices` guest was never shown a figure,
+  // and CheckoutSheet's whole UI is built around showing one.
+  let invitationToken: string | null = null;
+  if (isGuest) {
+    try {
+      invitationToken = sessionStorage.getItem(INVITATION_STORAGE_KEYS.TOKEN);
+    } catch {
+      invitationToken = null;
+    }
+  }
+  const canPagar =
+    isGuest && canSeePrices && Boolean(invitationToken) && cartCount > 0;
+
+  const piezas: CheckoutPieza[] = useMemo(
+    () =>
+      cartItems.map((item) => ({
+        sku: String(item.item),
+        nombre: item.nombre,
+        precioCOP: item.precioCOP,
+        precioMostrado: formatCurrency(item.precioCOP),
+      })),
+    [cartItems, formatCurrency],
+  );
 
   const handleSendInquiry = async () => {
     setSendError(null);
 
     if (cartItems.length === 0) {
-      setSendError("No hay productos en el carrito");
+      setSendError('No hay productos en el carrito');
       return;
     }
 
@@ -88,7 +123,7 @@ export default function CartPage() {
       // Guest flow - send to inviter
       if (!hasInviter) {
         setSendError(
-          "No se encontro el contacto de tu invitador. Por favor contacta al soporte.",
+          'No se encontro el contacto de tu invitador. Por favor contacta al soporte.',
         );
         return;
       }
@@ -115,20 +150,20 @@ export default function CartPage() {
 
   // iOS HIG colors
   const separatorColor = isLight
-    ? "rgba(60, 60, 67, 0.12)"
-    : "rgba(235, 235, 245, 0.12)";
+    ? 'rgba(60, 60, 67, 0.12)'
+    : 'rgba(235, 235, 245, 0.12)';
 
   return (
     <Box
       sx={{
         maxWidth: 600,
-        mx: "auto",
+        mx: 'auto',
         px: { xs: 2, sm: 3 },
         py: 3,
       }}
     >
       {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <IconButton
           onClick={() => navigate(-1)}
           sx={{
@@ -144,7 +179,7 @@ export default function CartPage() {
             Mi Selección
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {cartCount} {cartCount === 1 ? "producto" : "productos"}
+            {cartCount} {cartCount === 1 ? 'producto' : 'productos'}
           </Typography>
         </Box>
         {cartCount > 0 && (
@@ -176,9 +211,9 @@ export default function CartPage() {
           elevation={0}
           sx={{
             p: 4,
-            textAlign: "center",
+            textAlign: 'center',
             borderRadius: 3,
-            border: "1px solid",
+            border: '1px solid',
             borderColor: separatorColor,
           }}
         >
@@ -200,10 +235,10 @@ export default function CartPage() {
           </Typography>
           <Button
             variant="contained"
-            onClick={() => navigate("/treasure")}
+            onClick={() => navigate('/treasure')}
             sx={{
               background: buttonGradients.primary,
-              color: "#FFFFFF",
+              color: '#FFFFFF',
             }}
           >
             {t.cart.exploreCollection}
@@ -216,9 +251,9 @@ export default function CartPage() {
             elevation={0}
             sx={{
               borderRadius: 3,
-              border: "1px solid",
+              border: '1px solid',
               borderColor: separatorColor,
-              overflow: "hidden",
+              overflow: 'hidden',
               mb: 3,
             }}
           >
@@ -226,8 +261,8 @@ export default function CartPage() {
               <Box key={item.itemId}>
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 2,
                     p: 2,
                   }}
@@ -250,9 +285,9 @@ export default function CartPage() {
                       variant="subtitle2"
                       sx={{
                         fontWeight: 600,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {item.nombre}
@@ -278,9 +313,9 @@ export default function CartPage() {
                     size="small"
                     onClick={() => removeFromCart(item.itemId)}
                     sx={{
-                      color: "error.main",
-                      "&:hover": {
-                        bgcolor: alpha("#ef4444", 0.1),
+                      color: 'error.main',
+                      '&:hover': {
+                        bgcolor: alpha('#ef4444', 0.1),
                       },
                     }}
                   >
@@ -300,16 +335,16 @@ export default function CartPage() {
               sx={{
                 p: 2,
                 borderRadius: 3,
-                border: "1px solid",
+                border: '1px solid',
                 borderColor: separatorColor,
                 mb: 3,
               }}
             >
               <Box
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                 }}
               >
                 <Typography variant="body2" color="text.secondary">
@@ -344,12 +379,12 @@ export default function CartPage() {
             startIcon={<MessageCircle size={20} />}
             sx={{
               background: buttonGradients.primary,
-              color: "#FFFFFF",
+              color: '#FFFFFF',
               py: 1.5,
               fontWeight: 600,
-              fontSize: "1rem",
+              fontSize: '1rem',
               borderRadius: 2,
-              "&:hover": {
+              '&:hover': {
                 background: emeraldCore.dark,
               },
             }}
@@ -360,10 +395,38 @@ export default function CartPage() {
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ display: "block", textAlign: "center", mt: 2 }}
+            sx={{ display: 'block', textAlign: 'center', mt: 2 }}
           >
             Se abrira WhatsApp con tu lista de productos
           </Typography>
+
+          {/* Pagar — only for a guest with an invitation on record (see
+              `canPagar` above); staff and unresolvable guests keep WhatsApp
+              only. */}
+          {canPagar && (
+            <Button
+              variant="outlined"
+              fullWidth
+              size="large"
+              onClick={() => setCheckoutOpen(true)}
+              startIcon={<CreditCard size={20} />}
+              sx={{
+                mt: 2,
+                py: 1.5,
+                fontWeight: 600,
+                fontSize: '1rem',
+                borderRadius: 2,
+                borderColor: emeraldCore.primary,
+                color: emeraldCore.primary,
+                '&:hover': {
+                  borderColor: emeraldCore.dark,
+                  bgcolor: alpha(emeraldCore.primary, 0.06),
+                },
+              }}
+            >
+              Pagar
+            </Button>
+          )}
 
           {/* Staff + special guests: generate a public client link (Vitrina) */}
           {canShareVitrina && (
@@ -383,11 +446,11 @@ export default function CartPage() {
                 sx={{
                   py: 1.5,
                   fontWeight: 600,
-                  fontSize: "1rem",
+                  fontSize: '1rem',
                   borderRadius: 2,
                   borderColor: emeraldCore.primary,
                   color: emeraldCore.primary,
-                  "&:hover": {
+                  '&:hover': {
                     borderColor: emeraldCore.dark,
                     bgcolor: alpha(emeraldCore.primary, 0.06),
                   },
@@ -398,7 +461,7 @@ export default function CartPage() {
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{ display: "block", textAlign: "center", mt: 1 }}
+                sx={{ display: 'block', textAlign: 'center', mt: 1 }}
               >
                 El cliente verá solo estas piezas, sin necesidad de iniciar
                 sesión.
@@ -424,6 +487,17 @@ export default function CartPage() {
         items={cartItems}
         senderSlug={asesor?.slug}
       />
+
+      {/* Guest checkout — only mounted when the invitation token resolved */}
+      {invitationToken && (
+        <CheckoutSheet
+          open={checkoutOpen}
+          piezas={piezas}
+          multiplicador={multiplier}
+          origen={{ tipo: 'invitacion', token: invitationToken }}
+          onClose={() => setCheckoutOpen(false)}
+        />
+      )}
     </Box>
   );
 }
