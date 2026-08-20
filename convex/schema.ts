@@ -498,7 +498,12 @@ export default defineSchema({
     vigenteDesde: v.string(), // ISO AAAA-MM-DD, inclusive
     gastosFijosMensualesCOP: v.number(),
     comisionPct: v.number(),
-    ivaJoyaPct: v.number(), // las gemas sueltas no lo pagan
+    ivaJoyaPct: v.number(),
+    // IVA de gema suelta en venta nacional. Ausente = 0 (las reglas previas al
+    // 2026-08-20 asumían gema exenta; el art. 424 ET no la excluye — ver
+    // motorPrecios.ts). La corrección entra por una regla NUEVA, nunca
+    // editando una vieja: eso repreciaría lo ya cotizado.
+    ivaGemaPct: v.optional(v.number()),
     margenNetoDeseadoPct: v.number(), // sobre el PRECIO, no markup sobre costo
     remateHasta: v.string(), // último día del remate, ISO
     multRemateGema: v.number(),

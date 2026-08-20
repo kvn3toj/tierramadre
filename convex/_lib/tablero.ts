@@ -20,6 +20,7 @@
 import {
   configVigenteEn,
   costoFijoUnitario,
+  impuestosDe,
   type ConfigPrecios,
 } from './motorPrecios';
 
@@ -104,9 +105,7 @@ export function construirTablero(input: ConstruirTableroInput): Tablero {
   const margenBrutoMesCOP = Math.round(
     ventas.reduce((a, v) => {
       const retenido =
-        1 -
-        config.comisionPct -
-        (v.categoriaFiscal === 'joya' ? config.ivaJoyaPct : 0);
+        1 - config.comisionPct - impuestosDe(v.categoriaFiscal, config);
       return a + (v.precioVentaRealCOP * retenido - v.KUnidadCOP);
     }, 0),
   );

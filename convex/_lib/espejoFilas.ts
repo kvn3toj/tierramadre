@@ -131,7 +131,7 @@ export const CABECERAS_CASILLAS = [
   // conciliación (regla de Kevin, 2026-08-01). Una celda vacía se lee como
   // «pendiente»; un número calculado sobre datos incompletos se lee como precio.
   //
-  // `equilibrioReal*` es el PISO real (K/0,90 gema · K/0,71 joya), no K. La
+  // `equilibrioReal*` es el PISO real (K/0,71 con IVA · K/0,90 sin), no K. La
   // nomenclatura es carga estructural: `precioEquilibrio*` significa K y solo
   // existe a nivel lote. K disfrazado de «equilibrio» fue el habilitador del
   // defecto ③ de la hoja —el lote 14 ofrecido a $27.080 de perder plata— y no
