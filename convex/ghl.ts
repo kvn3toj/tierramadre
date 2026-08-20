@@ -50,6 +50,7 @@ import {
   type GhlConvConfig,
 } from './_lib/ghlConversations';
 import { signContactId } from './_lib/cidSigning';
+import { bumpCatalogVersion } from './_lib/catalogVersion';
 
 /** Sequence + sede code for online (bot/web) orders → ids like `VO-0001`. */
 const ONLINE_SEDE = 'O';
@@ -533,6 +534,43 @@ export const markOrderPaid = mutation({
 
     // Flip the sale to confirmada (paid).
     await ctx.db.patch(sale._id, decision.patch);
+
+    // Marcar cada piedra como vendida. Sin esto una venta online PAGADA deja
+    // la esmeralda en DISPONIBLE y se puede volver a vender — sin carrera de
+    // por medio, simplemente porque nadie la marcó.
+    //
+    // `syncStatus: 'pending'` es lo que impide que el siguiente pull de la
+    // hoja lo pise: `_upsertFromSheet` devuelve temprano sin tocar el
+    // contenido de una fila `pending` o `error` (convex/products.ts). Es el
+    // mecanismo que el repo ya usa para toda edición nacida en Convex.
+    //
+    // OJO: nada empuja productInventory de vuelta a Sheets del lado del
+    // servidor (ese push sale de la UI de admin, api/admin-product-update.ts),
+    // así que la hoja NO se entera sola. Convex es lo que bloquea un segundo
+    // pedido, así que la doble venta sí queda cerrada; la reconciliación con
+    // la hoja es manual y está declarada en el spec.
+    //
+    // itemIds repite el sku cuando qty > 1 — de ahí el Set.
+    let touchedPublished = false;
+    for (const itemId of new Set(sale.itemIds)) {
+      const product = await ctx.db
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+        .first();
+      if (!product) {
+        console.warn(
+          `[markOrderPaid] ${saleId}: itemId ${itemId} no está en productInventory`,
+        );
+        continue;
+      }
+      if (product.estado === 'VENDIDA') continue;
+      if (product.mostrarEnCatalogo === true) touchedPublished = true;
+      await ctx.db.patch(product._id, {
+        estado: 'VENDIDA' as const,
+        syncStatus: 'pending' as const,
+      });
+    }
+    if (touchedPublished) await bumpCatalogVersion(ctx);
 
     // Increment the client's lifetime total (Convex-owned; lead_score is GHL-owned).
     let ghlContactId: string | null = null;
