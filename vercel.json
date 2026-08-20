@@ -85,6 +85,9 @@
     "api/ghl-create-order.ts": {
       "maxDuration": 30
     },
+    "api/checkout-create-order.ts": {
+      "maxDuration": 30
+    },
     "api/ghl-search-products.ts": {
       "maxDuration": 15
     },
