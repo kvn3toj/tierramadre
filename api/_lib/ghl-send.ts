@@ -55,7 +55,7 @@ export function tipoDeCanal(canal: string): CanalEnvio | null {
 export async function sendConversationMessage(
   cfg: GhlSendConfig,
   args: { type: CanalEnvio; contactId: string; message: string },
-): Promise<{ ok: boolean; status: number }> {
+): Promise<{ ok: boolean; status: number; error?: string }> {
   const f = cfg.fetchImpl ?? (fetch as unknown as FetchLike);
   try {
     const res = await f(`${GHL_BASE}/conversations/messages`, {
@@ -67,8 +67,17 @@ export async function sendConversationMessage(
       },
       body: JSON.stringify(args),
     });
-    return { ok: res.ok, status: res.status };
-  } catch {
-    return { ok: false, status: 0 };
+    if (res.ok) return { ok: true, status: res.status };
+    // El cuerpo del error de GHL NOMBRA la causa (scope faltante, campo inválido…): sin él,
+    // un 401 de scope y un 401 de token vencido son indistinguibles desde afuera.
+    let error = '';
+    try {
+      error = JSON.stringify(await res.json()).slice(0, 300);
+    } catch {
+      /* cuerpo no-JSON: el status solo tendrá que bastar */
+    }
+    return { ok: false, status: res.status, error };
+  } catch (e) {
+    return { ok: false, status: 0, error: String(e).slice(0, 200) };
   }
 }
