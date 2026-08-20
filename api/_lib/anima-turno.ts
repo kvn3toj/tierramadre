@@ -8,6 +8,30 @@
  *
  * Separado del handler para poder testearlo con fetch inyectado (patrón ghl-client.ts).
  */
+import crypto from 'node:crypto';
+import { bearerMatches } from './bearer.js';
+
+/**
+ * `Authorization` con o sin el esquema `Bearer`.
+ *
+ * El editor de "pills" del Custom Webhook de GHL hace poco confiable anteponer texto al custom
+ * value (2026-08-20: los intentos de escribir "Bearer " delante del pill nunca aterrizaron), así
+ * que este endpoint acepta también el secreto crudo. Misma comparación constante en tiempo;
+ * ningún otro endpoint relaja su chequeo.
+ */
+export function autorizacionValida(
+  header: string | string[] | undefined,
+  secret: string | undefined,
+): boolean {
+  if (!secret) return false;
+  if (bearerMatches(header, secret)) return true;
+  const h = (Array.isArray(header) ? header[0] : header)?.trim() ?? '';
+  if (h.length === 0) return false;
+  const hBuf = Buffer.from(h);
+  const sBuf = Buffer.from(secret);
+  if (hBuf.length !== sBuf.length) return false;
+  return crypto.timingSafeEqual(hBuf, sBuf);
+}
 
 /** El contrato de entrada de anima-bot (`src/http/server.ts` en ese repo). */
 export interface TurnoRequest {

@@ -1,25 +1,32 @@
 /**
- * María (GHL Agent Studio) → anima-bot, el turno del cotizador.
+ * GHL (workflow WF-ANIMA) → anima-bot, el turno del cotizador — Y el envío de vuelta.
  *
- * POST autenticado con `Authorization: Bearer <GHL_API_SECRET>` — el MISMO custom value
- * `internal_api_secret` que WF-04 ya manda a /api/ghl-search-products, así la tool nueva de
- * María es la receta que GHL ya conoce. Este endpoint reenvía el cuerpo TAL CUAL al
- * `/cotizador/turno` de anima-bot (detrás de un túnel que rota: env `ANIMA_TURNO_UPSTREAM`) y
- * devuelve la respuesta SIN envolver — María repite `mensaje` byte a byte (regla LITERAL del
- * spec 2026-07-31-ghl-maria-anima-config.md, repo anima-bot).
+ * POST autenticado con `Authorization: <GHL_API_SECRET>` (con o sin `Bearer` — ver
+ * `autorizacionValida`): el MISMO custom value `internal_api_secret` que WF-04 ya usa. Reenvía
+ * el cuerpo TAL CUAL al `/cotizador/turno` de anima-bot (túnel en `ANIMA_TURNO_UPSTREAM`) y:
  *
- * Si anima-bot no contesta (Mac dormida, túnel caído, timeout): 200 con FALLBACK_TURNO — nunca
- * un error de conexión — y tag `anima-offline` al contacto, para que el lead quede recuperable
- * en una smart list en vez de perderse en silencio.
+ *  1. ENVÍA la respuesta al cliente por la API de conversaciones de GHL (mensaje de sesión,
+ *     texto libre). Esto vive AQUÍ y no en el workflow porque la acción "WhatsApp" de los
+ *     workflows de GHL solo admite plantillas aprobadas por Meta — no hay acción de texto
+ *     libre. La ventana de 24h no es problema: siempre respondemos al mensaje que el cliente
+ *     acaba de mandar. La regla LITERAL queda cumplida por plomería: el texto viaja del
+ *     cotizador al cliente sin ningún modelo en el medio.
+ *  2. Devuelve al workflow `TurnoRespuesta` + `texto` + `enviado`, para observabilidad en el
+ *     historial de ejecuciones.
  *
- * Env: ANIMA_TURNO_UPSTREAM, ANIMA_COTIZADOR_SECRET (+ GHL_TOKEN/GHL_LOCATION_ID para el tag).
+ * Si anima-bot no contesta (Mac dormida, túnel caído, timeout): se le envía al cliente el
+ * fallback («Dame un momento…») y se taggea `anima-offline` para la smart list de relevo
+ * humano. Nada se pierde en silencio.
+ *
+ * Env: ANIMA_TURNO_UPSTREAM, ANIMA_COTIZADOR_SECRET, GHL_TOKEN, GHL_LOCATION_ID.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { withApiHandler, sendError } from './_lib/index.js';
-import { bearerMatches } from './_lib/bearer.js';
 import { addTags } from './_lib/ghl-client.js';
+import { sendConversationMessage, tipoDeCanal } from './_lib/ghl-send.js';
 import {
   FALLBACK_TURNO,
+  autorizacionValida,
   parseTurno,
   reenviarTurno,
   textoParaCliente,
@@ -31,16 +38,19 @@ export default withApiHandler(
       return sendError(res, 500, 'GHL_API_SECRET not configured on server');
     }
     if (
-      !bearerMatches(req.headers['authorization'], process.env.GHL_API_SECRET)
+      !autorizacionValida(
+        req.headers['authorization'],
+        process.env.GHL_API_SECRET,
+      )
     ) {
       return sendError(res, 401, 'Unauthorized');
     }
 
     const turno = parseTurno(req.body);
     if (!turno) {
-      // 400 y no fallback: un cuerpo malformado es un error de CONFIGURACIÓN de la tool de
-      // María (mapeo de {{contact.id}}/{{message.body}}), y eso debe doler en el log del
-      // workflow, no disfrazarse de "ya te escribo".
+      // 400 y no fallback: un cuerpo malformado es un error de CONFIGURACIÓN del workflow
+      // (mapeo de {{contact.id}}/{{message.body}}), y eso debe doler en el log de ejecución,
+      // no disfrazarse de "ya te escribo".
       return sendError(
         res,
         400,
@@ -56,31 +66,36 @@ export default withApiHandler(
         ? await reenviarTurno({ upstream, secret }, turno)
         : null;
 
-    if (respuesta) {
-      // Passthrough crudo, sin el sobre {success:true}: el contrato ES TurnoRespuesta. `texto`
-      // se agrega ENCIMA para que el workflow relele con un solo merge tag y una sola condición
-      // ("texto no vacío → enviar") en vez de una rama por estado.
-      res.setHeader('Content-Type', 'application/json; charset=utf-8');
-      return res
-        .status(200)
-        .json({ ...respuesta, texto: textoParaCliente(respuesta) });
-    }
-
-    // anima-bot no contestó. El tag es best-effort: si también falla, el fallback sale igual —
-    // lo primero es que el cliente reciba UNA respuesta.
     const token = process.env.GHL_TOKEN;
     const locationId = process.env.GHL_LOCATION_ID;
-    if (token && locationId) {
-      // `externalId` ES el contact id de GHL por diseño del spec (la tool manda {{contact.id}}).
+
+    if (!respuesta && token && locationId) {
+      // anima-bot no contestó: el tag deja al lead recuperable en una smart list. Best-effort —
+      // si también falla, el fallback sale igual: lo primero es que el cliente reciba ALGO.
+      // `externalId` ES el contact id de GHL por diseño (el workflow manda {{contact.id}}).
       await addTags({ token, locationId }, turno.externalId, [
         'anima-offline',
       ]).catch(() => {});
     }
 
+    const payload = respuesta
+      ? { ...respuesta, texto: textoParaCliente(respuesta) }
+      : { ...FALLBACK_TURNO, texto: FALLBACK_TURNO.mensaje };
+
+    // El envío al cliente. `sin_cotizacion` produce texto vacío → no se envía nada (el lead
+    // queda para el humano). Un fallo de envío no tumba el turno: queda visible en `enviado`.
+    let enviado = false;
+    const tipo = tipoDeCanal(turno.canal);
+    if (payload.texto !== '' && tipo && token) {
+      const r = await sendConversationMessage(
+        { token },
+        { type: tipo, contactId: turno.externalId, message: payload.texto },
+      );
+      enviado = r.ok;
+    }
+
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    return res
-      .status(200)
-      .json({ ...FALLBACK_TURNO, texto: FALLBACK_TURNO.mensaje });
+    return res.status(200).json({ ...payload, enviado });
   },
   {
     methods: ['POST', 'OPTIONS'],
