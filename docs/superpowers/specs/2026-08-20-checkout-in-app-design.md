@@ -148,8 +148,23 @@ La comprobación en la UI (ocultar o deshabilitar el slider) es cortesía para n
 ofrecer algo que va a fallar. **La del proxy es la que cuenta**, porque el
 diálogo de compartir es código de cliente y se puede saltar.
 
-`usePermissions` gana `canUseMultiplier: isAdmin || isEmbajador`, con la misma
-forma que `canUseManualProduct` ya tiene.
+`usePermissions` gana:
+
+```ts
+canUseMultiplier: isAdmin || isEmbajador || isInvitadoEspecial,
+```
+
+**El asesor queda fuera; el invitado especial queda dentro** — decisión del
+dueño del producto, tomada sabiendo que el invitado especial *no es staff*
+(`accessLevel === 'invitado_especial'`, y `canEdit`/`canUpload`/`canDownload`
+lo excluyen a propósito). Es decir: alguien sin poderes de administración sí
+podrá fijar el precio de venta de una pieza. Queda así por ahora, y queda
+escrito aquí para que sea una decisión visible y no un descuido heredado.
+
+Nótese que esto **no** coincide con `canShareVitrina: isStaff ||
+isInvitadoEspecial`: un asesor puede seguir compartiendo vitrinas, pero salen a
+x1. Compartir y poner precio dejan de ser el mismo permiso, que es justamente
+lo que hoy no se distingue.
 
 ### 4 · Dónde aparece «Pagar»
 
@@ -269,7 +284,7 @@ Existentes que se tocan:
 - `convex/ghl.ts` — `createOrder` resuelve el origen y aplica el multiplicador
 - `api/checkout-create-order.ts` — acepta y reenvía `origen`
 - `api/_lib/checkoutBody.ts` — valida `origen`
-- `api/vitrina.ts` — 403 si un no-admin/embajador pide multiplicador ≠ 1
+- `api/vitrina.ts` — 403 si quien acuña no puede fijar multiplicador ≠ 1
 - `src/hooks/usePermissions.ts` — `canUseMultiplier`
 - `src/pages/CartPage.tsx` — «Pagar» para invitados
 - `src/pages/vitrina/PublicProductView.tsx` — «Pagar»
