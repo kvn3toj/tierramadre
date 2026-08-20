@@ -181,13 +181,20 @@ lo que hoy no se distingue.
 
 | Superficie             | ¿Checkout? | Por qué                                                |
 | ---------------------- | ---------- | ------------------------------------------------------ |
-| `/v/:code`             | **Sí**     | La vitrina lleva su multiplicador y su moneda          |
+| `/v/:code` con **token** | **Sí**   | La vitrina lleva su multiplicador y su moneda          |
+| `/v/:code` lista de ids  | No       | `/v/324-323-370` no tiene registro: pricing por defecto |
 | `/cart` de un invitado | **Sí**     | La invitación lleva `guestMultiplier`                  |
 | `/cart` de staff       | No         | El staff no es el comprador; ya cierra por WhatsApp    |
 | `/p/:itemId` suelto    | No         | No hay markup elegido: no sabes a qué precio ofreciste |
 
-Las dos superficies que quedan fuera conservan el flujo actual de WhatsApp sin
-cambios. `DEFAULT_VITRINA_PRICING` ya documenta esa postura para los links
+**`/v/:code` tiene dos formas y solo una vende.** El `:code` puede ser un token
+de vitrina (hay registro, hay markup elegido) o una **lista de ids sin estado**
+como `/v/324-323-370`, que no tiene registro y usa `DEFAULT_VITRINA_PRICING`
+(`src/pages/vitrina/VitrinaPage.tsx` distingue las dos con `ID_LIST_RE`). El
+botón «Pagar» aparece solo en la primera. La segunda cae en la misma categoría
+que `/p/:itemId`: no sabes a qué precio ofreciste.
+
+Las demás superficies conservan el flujo actual de WhatsApp sin cambios. `DEFAULT_VITRINA_PRICING` ya documenta esa postura para los links
 sueltos: «x1 … no markup is implied where none was chosen».
 
 No es una restricción del negocio: la vitrina **es** el movimiento de venta.
