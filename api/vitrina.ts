@@ -24,6 +24,17 @@
  * uses for the catalog grant — no new concept. The READ path (`getByToken`,
  * called from `api/vitrinaLookup.ts`/Convex directly) is UNCHANGED: a client
  * opening a `/v/<token>` share link must never need a token of their own.
+ *
+ * PATCH ownership (final whole-branch review, checkout-in-app): `update` had
+ * no ownership check at all, and the multiplier gate above only fires when
+ * the REQUESTED multiplier isn't 1 — so any session holder could PATCH
+ * someone else's vitrina down to x1 (Tierra Madre's cost) and it would sail
+ * through, on a branch where the multiplier now decides what a customer is
+ * actually charged. The PATCH branch below now requires the caller to be
+ * either the vitrina's `createdByEmail` or an admin, checked here (where the
+ * caller's identity is already verified) rather than inside the Convex
+ * mutation — same trust model as the rest of this file: Convex enforces the
+ * shared secret, this proxy enforces who's allowed to call it with what.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -126,6 +137,17 @@ export default withApiHandler(
       return sendError(res, 401, 'Inicia sesión para generar un enlace.');
     }
 
+    // Roster access level is resolved lazily and cached per-request: the
+    // multiplier gate below needs it only when the caller asks for anything
+    // other than x1, and the ownership gate (PATCH) needs it only when the
+    // caller isn't the vitrina's own creator. Sharing this avoids a second
+    // roster round-trip when both checks apply to the same non-owner call.
+    let accessLevelCache: AccessLevelLookup | null = null;
+    const resolveAccessLevel = async (): Promise<AccessLevelLookup> => {
+      if (!accessLevelCache) accessLevelCache = await accessLevelFor(email);
+      return accessLevelCache;
+    };
+
     const body = (req.body ?? {}) as {
       token?: unknown;
       itemIds?: unknown;
@@ -150,7 +172,7 @@ export default withApiHandler(
     // corre para mint (POST) y para corrección (PATCH) por igual.
     const multiplicadorPedido = Number(body.multiplier ?? 1);
     if (multiplicadorPedido !== 1) {
-      const { accessLevel, lookupFailed } = await accessLevelFor(email);
+      const { accessLevel, lookupFailed } = await resolveAccessLevel();
       if (!puedeFijarMultiplicador(accessLevel)) {
         if (lookupFailed) {
           return sendError(
@@ -171,6 +193,43 @@ export default withApiHandler(
       const token = typeof body.token === 'string' ? body.token.trim() : '';
       if (!token) {
         return sendError(res, 400, 'token requerido');
+      }
+
+      // Ownership: a caller may only PATCH a vitrina they created, unless
+      // they're an admin. Without this, anyone holding a valid app session
+      // could reprice someone else's vitrina down to x1 (Tierra Madre's
+      // cost) — the multiplier gate above only fires when the REQUESTED
+      // multiplier isn't 1, so setting it TO 1 always sailed through. This
+      // check runs regardless of what's being patched, closing that hole for
+      // every field, not only `multiplier`. `vitrinas.getByToken` is already
+      // a public query (used by the read path), so no new Convex surface.
+      const existing = await convexClient.query(api.vitrinas.getByToken, {
+        token,
+      });
+      if (!existing) {
+        return sendError(res, 404, 'Enlace no encontrado.');
+      }
+      const isOwner = existing.createdByEmail === email;
+      if (!isOwner) {
+        // A record with no `createdByEmail` (legacy, pre-audit-field) has no
+        // provable owner — fail closed and require admin, same posture the
+        // roster-lookup-failure branch below already takes for the
+        // multiplier gate.
+        const { accessLevel, lookupFailed } = await resolveAccessLevel();
+        if (lookupFailed) {
+          return sendError(
+            res,
+            503,
+            'No pudimos verificar tu rol en este momento. Intenta de nuevo en unos segundos.',
+          );
+        }
+        if (accessLevel !== 'admin') {
+          return sendError(
+            res,
+            403,
+            'No autorizado para modificar este enlace.',
+          );
+        }
       }
 
       const itemIds = parseItemIds();

@@ -110,6 +110,18 @@ export default withApiHandler(
       if (msg.includes('EMPTY_ITEMS')) {
         return sendError(res, 400, 'items must be a non-empty array');
       }
+      if (msg.includes('ZERO_TOTAL')) {
+        // One or more pieces resolved to a price of 0 ("Consultar precio") —
+        // never a legitimate charge. `CheckoutSheet` already refuses to offer
+        // payment in this case; this is only reachable by bypassing the UI.
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        return res.status(409).json({
+          success: false,
+          error: 'ZERO_TOTAL',
+          message:
+            'Una o más piezas no tienen precio asignado. Escríbenos y te ayudamos a completar la compra.',
+        });
+      }
       if (msg.includes('ORIGEN_INVALIDO')) {
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         return res.status(409).json({

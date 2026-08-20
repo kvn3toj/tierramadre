@@ -55,6 +55,10 @@ describe('verifiedSessionEmail (api/vitrina.ts)', () => {
 /** Mutable so each test can inspect exactly what reached Convex. */
 const convexMutations: { args: Record<string, unknown> }[] = [];
 
+/** Mutable per-test fixture for `vitrinas.getByToken` — the PATCH ownership
+ *  gate's only Convex read. `undefined` unless a test sets it. */
+let vitrinaFixture: { createdByEmail?: string } | null | undefined;
+
 vi.mock('../api/_lib/convex-client.js', () => ({
   isConvexEnabled: true,
   convexClient: {
@@ -62,6 +66,7 @@ vi.mock('../api/_lib/convex-client.js', () => ({
       convexMutations.push({ args });
       return { token: 'ABCDEFGHIJKL' };
     },
+    query: async () => vitrinaFixture ?? null,
   },
 }));
 
@@ -158,5 +163,106 @@ describe('multiplier gate (api/vitrina.ts default handler)', () => {
     const last = convexMutations.at(-1);
     expect(last?.args.multiplier).toBe(1);
     expect(last?.args.createdByEmail).toBe('asesor-share@tierramadre.app');
+  });
+});
+
+/**
+ * PATCH ownership (final whole-branch review, checkout-in-app): `update` had
+ * no ownership check, and the multiplier gate above only fires when the
+ * REQUESTED multiplier isn't 1 — so PATCHing someone else's vitrina to x1
+ * always sailed through. This is exactly that exploit, reproduced end to
+ * end: an asesor forwarded an admin's x2.6 link PATCHes it to x1.
+ */
+describe('PATCH ownership gate (api/vitrina.ts default handler)', () => {
+  it("SEGURIDAD: a non-owner asesor PATCHing someone else's vitrina to x1 is refused with 403 — nothing patched", async () => {
+    vitrinaFixture = { createdByEmail: 'admin@tierramadre.app' };
+    mockRosterFetch('asesor');
+    const token = mintSessionToken('asesor-outsider@tierramadre.app');
+    const before = convexMutations.length;
+    const res = makeRes();
+
+    await vitrinaHandler(
+      {
+        method: 'PATCH',
+        headers: { authorization: `Bearer ${token}` },
+        body: { token: 'ABCDEFGHIJKL', multiplier: 1 },
+      } as never,
+      res as never,
+    );
+
+    expect(res.statusCode).toBe(403);
+    expect(convexMutations.length).toBe(before);
+  });
+
+  it('the vitrina owner CAN PATCH their own link to x1', async () => {
+    vitrinaFixture = { createdByEmail: 'owner@tierramadre.app' };
+    mockRosterFetch('asesor');
+    const token = mintSessionToken('owner@tierramadre.app');
+    const res = makeRes();
+
+    await vitrinaHandler(
+      {
+        method: 'PATCH',
+        headers: { authorization: `Bearer ${token}` },
+        body: { token: 'ABCDEFGHIJKL', multiplier: 1 },
+      } as never,
+      res as never,
+    );
+
+    expect(res.statusCode).toBe(200);
+  });
+
+  it("an admin CAN PATCH someone else's vitrina", async () => {
+    vitrinaFixture = { createdByEmail: 'owner@tierramadre.app' };
+    mockRosterFetch('admin');
+    const token = mintSessionToken('admin@tierramadre.app');
+    const res = makeRes();
+
+    await vitrinaHandler(
+      {
+        method: 'PATCH',
+        headers: { authorization: `Bearer ${token}` },
+        body: { token: 'ABCDEFGHIJKL', currency: 'USD' },
+      } as never,
+      res as never,
+    );
+
+    expect(res.statusCode).toBe(200);
+  });
+
+  it('a non-owner PATCHing a vitrina with no recorded owner (legacy row) is refused unless admin — fails closed', async () => {
+    vitrinaFixture = {}; // no createdByEmail
+    mockRosterFetch('embajador');
+    const token = mintSessionToken('embajador@tierramadre.app');
+    const res = makeRes();
+
+    await vitrinaHandler(
+      {
+        method: 'PATCH',
+        headers: { authorization: `Bearer ${token}` },
+        body: { token: 'ABCDEFGHIJKL', multiplier: 1 },
+      } as never,
+      res as never,
+    );
+
+    expect(res.statusCode).toBe(403);
+  });
+
+  it('PATCH on a token that does not exist is a 404, not a silent pass', async () => {
+    vitrinaFixture = null;
+    mockRosterFetch('admin');
+    const token = mintSessionToken('admin@tierramadre.app');
+    const res = makeRes();
+
+    await vitrinaHandler(
+      {
+        method: 'PATCH',
+        headers: { authorization: `Bearer ${token}` },
+        body: { token: 'DOESNOTEXIST', multiplier: 1 },
+      } as never,
+      res as never,
+    );
+
+    expect(res.statusCode).toBe(404);
   });
 });

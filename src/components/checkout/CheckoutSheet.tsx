@@ -51,6 +51,7 @@ import {
 import { formatCurrency } from '../../utils/formatting';
 import { precioConMarkup } from '../../../convex/_lib/precioVitrina';
 import { mensajeDeRespuesta } from './mensajesCheckout';
+import { hayPiezaSinPrecio } from './checkoutGuards';
 
 export interface CheckoutPieza {
   sku: string;
@@ -104,6 +105,12 @@ export default function CheckoutSheet({
     0,
   );
 
+  // Fix crítico (revisión final) — ver el header de `checkoutGuards.ts` para
+  // el porqué completo. Bloquea la hoja ENTERA (no sólo descarta la pieza
+  // sin precio): soltar en silencio una pieza que el cliente sí puso en su
+  // carrito sería su propia sorpresa.
+  const piezaSinPrecio = hayPiezaSinPrecio(piezas);
+
   const handleClose = () => {
     if (enviando) return;
     setResultado(null);
@@ -111,6 +118,9 @@ export default function CheckoutSheet({
   };
 
   const handleSubmit = async () => {
+    // Defensivo: el botón ya está deshabilitado/oculto cuando hay una pieza
+    // sin precio, pero handleSubmit no debe depender únicamente de eso.
+    if (piezaSinPrecio) return;
     const celularLimpio = celular.trim();
     if (!celularLimpio || enviando) return;
 
@@ -236,87 +246,112 @@ export default function CheckoutSheet({
               ))}
             </List>
 
-            <Box
-              sx={{
-                mx: 3,
-                mb: 2,
-                p: 2,
-                borderRadius: 2,
-                bgcolor: alpha(emeraldCore.primary, 0.08),
-              }}
-            >
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'baseline',
-                }}
-              >
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  Total a pagar (COP)
-                </Typography>
-                <Typography
-                  variant="h6"
-                  sx={{ fontWeight: 700, color: emeraldCore.dark }}
-                >
-                  {formatCurrency(totalCOP, 'COP')}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box
-              sx={{ px: 3, display: 'flex', flexDirection: 'column', gap: 2 }}
-            >
-              <TextField
-                fullWidth
-                label="Celular / WhatsApp"
-                type="tel"
-                value={celular}
-                onChange={(e) => setCelular(e.target.value)}
-                size="sm"
-                placeholder="+57 300 123 4567"
-                inputProps={{ autoComplete: 'tel' }}
-                disabled={enviando}
-              />
-              <TextField
-                fullWidth
-                label="Nombre completo (opcional)"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                size="sm"
-                inputProps={{ autoComplete: 'name' }}
-                disabled={enviando}
-              />
-              <TextField
-                fullWidth
-                label="Email (opcional)"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                size="sm"
-                inputProps={{ autoComplete: 'email' }}
-                disabled={enviando}
-              />
-
-              {resultado && resultado.tono !== 'exito' && (
-                <Alert
-                  severity={resultado.tono === 'aviso' ? 'warning' : 'error'}
-                >
-                  {resultado.texto}
+            {piezaSinPrecio ? (
+              // Bloquea la hoja entera — ver la nota junto a `piezaSinPrecio`
+              // arriba. Ni total, ni formulario, ni botón de pago: no hay
+              // nada seguro que cobrar mientras una pieza no tenga precio.
+              <Box sx={{ px: 3, pb: 3 }}>
+                <Alert severity="error">
+                  Una o más piezas de tu selección no tienen precio asignado
+                  todavía y no podemos cobrarlas aquí. Escríbenos por WhatsApp y
+                  te ayudamos a completar la compra.
                 </Alert>
-              )}
+              </Box>
+            ) : (
+              <>
+                <Box
+                  sx={{
+                    mx: 3,
+                    mb: 2,
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: alpha(emeraldCore.primary, 0.08),
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'baseline',
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ color: 'text.secondary' }}
+                    >
+                      Total a pagar (COP)
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 700, color: emeraldCore.dark }}
+                    >
+                      {formatCurrency(totalCOP, 'COP')}
+                    </Typography>
+                  </Box>
+                </Box>
 
-              <Button
-                variant="primary"
-                fullWidth
-                loading={enviando}
-                disabled={!celular.trim() || piezas.length === 0}
-                onClick={handleSubmit}
-                sx={{ mb: 3 }}
-              >
-                {`Pagar ${formatCurrency(totalCOP, 'COP')}`}
-              </Button>
-            </Box>
+                <Box
+                  sx={{
+                    px: 3,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                  }}
+                >
+                  <TextField
+                    fullWidth
+                    label="Celular / WhatsApp"
+                    type="tel"
+                    value={celular}
+                    onChange={(e) => setCelular(e.target.value)}
+                    size="sm"
+                    placeholder="+57 300 123 4567"
+                    inputProps={{ autoComplete: 'tel' }}
+                    disabled={enviando}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Nombre completo (opcional)"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    size="sm"
+                    inputProps={{ autoComplete: 'name' }}
+                    disabled={enviando}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Email (opcional)"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    size="sm"
+                    inputProps={{ autoComplete: 'email' }}
+                    disabled={enviando}
+                  />
+
+                  {resultado && resultado.tono !== 'exito' && (
+                    <Alert
+                      severity={
+                        resultado.tono === 'aviso' ? 'warning' : 'error'
+                      }
+                    >
+                      {resultado.texto}
+                    </Alert>
+                  )}
+
+                  <Button
+                    variant="primary"
+                    fullWidth
+                    loading={enviando}
+                    disabled={!celular.trim() || piezas.length === 0}
+                    onClick={handleSubmit}
+                    sx={{ mb: 3 }}
+                  >
+                    {`Pagar ${formatCurrency(totalCOP, 'COP')}`}
+                  </Button>
+                </Box>
+              </>
+            )}
           </>
         )}
       </DialogContent>

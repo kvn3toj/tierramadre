@@ -49,6 +49,15 @@ describe('mensajeDeRespuesta', () => {
     expect(r.texto).toMatch(/vendi/i);
   });
 
+  it('ZERO_TOTAL — pieza sin precio, nunca un cobro legítimo', () => {
+    const r = mensajeDeRespuesta(409, {
+      success: false,
+      error: 'ZERO_TOTAL',
+    });
+    expect(r.tono).toBe('error');
+    expect(r.texto).toMatch(/precio/i);
+  });
+
   it('ORIGEN_INVALIDO no ofrece reintentar sin markup', () => {
     const r = mensajeDeRespuesta(409, {
       success: false,

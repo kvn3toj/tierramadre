@@ -370,6 +370,16 @@ export const createOrder = mutation({
       for (let i = 0; i < qty; i++) itemIds.push(line.sku);
     }
 
+    // 1.5 A total of zero (or less) is never a legitimate emerald sale — it
+    // means at least one line's `precioCOP` was 0/missing ("Consultar
+    // precio"). Client-side (`CheckoutSheet`) already refuses to offer
+    // payment in that case, but this is the rail that actually decides what
+    // gets charged, so it cannot trust the client got there first: without
+    // this, `precioConMarkup(0, m)` on both sides would agree on 0 and the
+    // piece would ship for free. Checked BEFORE the 2M gate and regardless
+    // of `skip_limit` — this isn't a limit, it's a floor.
+    if (totalCOP <= 0) throw new ConvexError('ZERO_TOTAL');
+
     // 2. ≤2M COP server-side gate (golden rule #3). The handler maps this to 409.
     if (!args.skip_limit && isOverLimit(totalCOP))
       throw new ConvexError('OVER_LIMIT_2M');

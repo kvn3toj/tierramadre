@@ -59,6 +59,13 @@ export function mensajeDeRespuesta(
   if (error === 'PRODUCT_UNAVAILABLE') {
     return { tono: 'error', texto: 'Esta pieza ya se vendió.' };
   }
+  if (error === 'ZERO_TOTAL') {
+    return {
+      tono: 'error',
+      texto:
+        'Una o más piezas no tienen precio asignado. Escríbenos y te ayudamos a completar la compra.',
+    };
+  }
   if (error === 'ORIGEN_INVALIDO') {
     return {
       tono: 'error',
