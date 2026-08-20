@@ -37,7 +37,17 @@ describe('buildPreference', () => {
       expirationTime: '2026-08-19T12:30:00.000Z',
     });
     expect(body.expires).toBe(true);
-    expect(body.expiration_date_to).toBe('2026-08-19T12:30:00.000Z');
+    // MP's own docs example (`2016-02-28T17:00:00.000-04:00`) is
+    // offset-bearing, and a bare `Z` is reported to be rejected — with
+    // PAYMENT_PROVIDER unset in prod, MercadoPago is the live rail, so a
+    // rejected preference would break every order. Pin the emitted shape.
+    expect(body.expiration_date_to).toBe('2026-08-19T12:30:00.000+00:00');
+    expect(body.expiration_date_to).not.toContain('Z');
+    expect(String(body.expiration_date_to).endsWith('+00:00')).toBe(true);
+    // Same instant as the input, just re-expressed.
+    expect(Date.parse(String(body.expiration_date_to))).toBe(
+      Date.parse('2026-08-19T12:30:00.000Z'),
+    );
   });
 });
 

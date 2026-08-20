@@ -380,10 +380,16 @@ export const createOrder = mutation({
       RESERVA_TTL_MS,
     );
     if (reusable) {
+      // El link de pago vence CON LA RESERVA (`RESERVA_TTL_MS` desde este
+      // instante), no desde el clic que lo pidió — un doble clic a T+29 no
+      // puede devolver un link válido hasta T+59 mientras la reserva muere a
+      // T+30 (ver `api/_lib/checkoutLink.ts`). `_creationTime` es la fuente
+      // de verdad, la misma que ancla la ventana de reserva arriba.
       return {
         saleId: reusable.saleId,
         totalCOP: reusable.totalCOP,
         reused: true as const,
+        reservedAt: reusable.creationTime,
       };
     }
 
@@ -430,7 +436,10 @@ export const createOrder = mutation({
       syncStatus: 'pending' as const,
     });
 
-    return { saleId, totalCOP, reused: false as const };
+    // `now` is the instant this sale was created — same source the fresh
+    // insert's `_creationTime` will resolve to — so a fresh order's link
+    // expires exactly `RESERVA_TTL_MS` from here too.
+    return { saleId, totalCOP, reused: false as const, reservedAt: now };
   },
 });
 
@@ -563,7 +572,17 @@ export const markOrderPaid = mutation({
         );
         continue;
       }
-      if (product.estado === 'VENDIDA') continue;
+      if (product.estado === 'VENDIDA') {
+        // Un pago confirmado sobre una piedra que YA estaba VENDIDA es una
+        // doble venta silenciosa si esto no grita: la venta se queda
+        // committed (no tocar el control flow — ya es dinero cobrado), pero
+        // alguien tiene que enterarse de que dos ventas apuntan a un mismo
+        // ítem.
+        console.error(
+          `[markOrderPaid] COLISIÓN: pago confirmado sobre stone ya VENDIDA — saleId=${saleId} itemId=${itemId}`,
+        );
+        continue;
+      }
       if (product.mostrarEnCatalogo === true) touchedPublished = true;
       await ctx.db.patch(product._id, {
         estado: 'VENDIDA' as const,

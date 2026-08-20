@@ -25,6 +25,7 @@ import {
   WOMPI_NOT_CONFIGURED,
   MP_NOT_CONFIGURED,
 } from './_lib/checkoutLink.js';
+import { parseCheckoutBody } from './_lib/checkoutBody.js';
 import { api } from '../convex/_generated/api.js';
 
 const DEFAULT_APP_URL = 'https://tierra-madre-studio.vercel.app';
@@ -56,13 +57,20 @@ export default withApiHandler(
       return sendError(res, 503, 'Convex backend not configured');
     }
 
-    const body = (req.body ?? {}) as OrderBody;
-    if (!body.contact?.celular) {
-      return sendError(res, 400, 'Missing contact.celular');
+    // Mismo validador que el checkout público (`checkout-create-order.ts`):
+    // este rail tenía el agujero NaN-qty exacto que el público ya cerró
+    // (`Number(i.qty ?? 1)` sin chequeo — `Number("x")` es `NaN`, y
+    // `NaN > MAX_ITEMS_POR_PEDIDO` es `false`), MÁS ningún tope de ítems en
+    // absoluto. `parseCheckoutBody` cierra ambos. `promotion_code` y
+    // `shipping_address` son específicos de este rail — no forman parte del
+    // hueco que el validador compartido cierra — así que se leen del body
+    // crudo por separado, después de la validación.
+    const rawBody = (req.body ?? {}) as OrderBody;
+    const parsed = parseCheckoutBody(req.body);
+    if (!parsed.ok) {
+      return sendError(res, parsed.status, parsed.message);
     }
-    if (!Array.isArray(body.items) || body.items.length === 0) {
-      return sendError(res, 400, 'items must be a non-empty array');
-    }
+    const body = parsed.value;
 
     // 'mercadopago' unless explicitly switched — deploying this file must not
     // change behavior on its own. A typo (e.g. "wompy") must never fall
@@ -82,7 +90,11 @@ export default withApiHandler(
       );
     }
 
-    let order: { saleId: string; totalCOP: number };
+    let order: {
+      saleId: string;
+      totalCOP: number;
+      reservedAt: number;
+    };
     try {
       order = await convexClient.mutation(api.ghl.createOrder, {
         contact: {
@@ -90,12 +102,9 @@ export default withApiHandler(
           full_name: body.contact.full_name,
           email: body.contact.email,
         },
-        items: body.items.map((i) => ({
-          sku: String(i.sku ?? ''),
-          qty: Number(i.qty ?? 1),
-        })),
-        promotion_code: body.promotion_code ?? undefined,
-        shipping_address: body.shipping_address ?? undefined,
+        items: body.items.map((i) => ({ sku: i.sku, qty: i.qty })),
+        promotion_code: rawBody.promotion_code ?? undefined,
+        shipping_address: rawBody.shipping_address ?? undefined,
         ambassador_slug: body.ambassador_slug ?? undefined,
         canal_origen: body.canal_origen ?? undefined,
         forma_pago: provider,
@@ -137,6 +146,9 @@ export default withApiHandler(
       .trim()
       .replace(/\/$/, '');
 
+    // `now` es `order.reservedAt` — el instante en que arrancó la reserva
+    // (para una venta reusada, la ORIGINAL), no `Date.now()`: ver el mismo
+    // comentario en `checkout-create-order.ts`.
     const link = await buildPaymentLink(
       {
         saleId: order.saleId,
@@ -147,7 +159,7 @@ export default withApiHandler(
           full_name: body.contact.full_name,
           email: body.contact.email,
         },
-        now: Date.now(),
+        now: order.reservedAt,
       },
       provider,
     );

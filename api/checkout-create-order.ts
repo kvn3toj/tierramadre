@@ -58,7 +58,12 @@ export default withApiHandler(
 
     const provider = resolveProvider(process.env.PAYMENT_PROVIDER);
 
-    let order: { saleId: string; totalCOP: number; reused: boolean };
+    let order: {
+      saleId: string;
+      totalCOP: number;
+      reused: boolean;
+      reservedAt: number;
+    };
     try {
       order = await convexClient.mutation(api.ghl.createOrder, {
         contact: {
@@ -104,7 +109,18 @@ export default withApiHandler(
       if (msg.includes('EMPTY_ITEMS')) {
         return sendError(res, 400, 'items must be a non-empty array');
       }
-      throw err;
+      // Riel PÚBLICO, sin autenticar: un error de Convex no mapeado no puede
+      // salir intacto. `withApiHandler` echoa `error.message` en el body de
+      // un 500 (`api/_lib/with-api-handler.js`), y un error de validación de
+      // args de Convex puede llevar la URL del deployment, el path de la
+      // function y un request id — nada de eso es para un llamante anónimo.
+      // El hermano autenticado (`ghl-create-order.ts`) sigue relanzando sin
+      // envolver: está detrás de `GHL_API_SECRET`, no expuesto al público.
+      console.error(
+        '[CheckoutCreateOrder] Unmapped Convex error:',
+        err instanceof Error ? err.message : String(err),
+      );
+      return sendError(res, 500, 'Internal server error');
     }
 
     const appUrl = (process.env.APP_URL ?? DEFAULT_APP_URL)
@@ -112,6 +128,10 @@ export default withApiHandler(
       .replace(/\/$/, '');
 
     // La venta ya existe en Convex: un fallo del proveedor no puede perderla.
+    // `now` es `order.reservedAt` — el instante en que arrancó la reserva
+    // (para una venta reusada, la ORIGINAL), no `Date.now()`: si no, un
+    // doble clic tardío en «Pagar» devolvería un link que vive más que la
+    // reserva y cobraría por una piedra que ya se soltó.
     const link = await buildPaymentLink(
       {
         saleId: order.saleId,
@@ -122,7 +142,7 @@ export default withApiHandler(
           full_name: body.contact.full_name,
           email: body.contact.email,
         },
-        now: Date.now(),
+        now: order.reservedAt,
       },
       provider,
     );
