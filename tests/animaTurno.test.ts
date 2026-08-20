@@ -83,6 +83,29 @@ describe('reenviarTurno — el túnel puede fallar de todas las formas', () => {
   });
 });
 
+describe('textoParaCliente — el único merge tag que el workflow envía', () => {
+  it('pregunta → la pregunta; cotizacion/en_revision → el mensaje', async () => {
+    const { textoParaCliente } = await import('../api/_lib/anima-turno.js');
+    expect(
+      textoParaCliente({ estado: 'pregunta', pregunta: '¿Qué pieza?' }),
+    ).toBe('¿Qué pieza?');
+    expect(
+      textoParaCliente({ estado: 'cotizacion', mensaje: '¡Listo! 💚' }),
+    ).toBe('¡Listo! 💚');
+    expect(
+      textoParaCliente({ estado: 'en_revision', mensaje: 'Dame un momento' }),
+    ).toBe('Dame un momento');
+  });
+
+  it('sin_cotizacion o forma rara → vacío: el workflow NO envía nada', async () => {
+    const { textoParaCliente } = await import('../api/_lib/anima-turno.js');
+    expect(
+      textoParaCliente({ estado: 'sin_cotizacion', mensaje: undefined }),
+    ).toBe('');
+    expect(textoParaCliente({ estado: 'pregunta', pregunta: 42 })).toBe('');
+  });
+});
+
 describe('el fallback que oye María', () => {
   it('es un TurnoRespuesta válido, con estado que ella ya sabe decir', () => {
     expect(esTurnoRespuesta(FALLBACK_TURNO)).toBe(true);
