@@ -91,7 +91,7 @@ describe('reservedItemIds', () => {
     expect(held.size).toBe(0);
   });
 
-  it('ignores a sale with an unparseable date rather than throwing', () => {
+  it('reserves items from a sale with an unparseable date rather than risking a double sell', () => {
     const held = reservedItemIds(
       [
         {
@@ -99,6 +99,21 @@ describe('reservedItemIds', () => {
           itemIds: ['C-090'],
           fechaVenta: 'no es fecha',
           estado: 'reservada',
+        },
+      ],
+      NOW,
+    );
+    expect(held).toEqual(new Set(['C-090']));
+  });
+
+  it('does NOT hold items from a cancelada sale with an unparseable date', () => {
+    const held = reservedItemIds(
+      [
+        {
+          clientId: 'c1',
+          itemIds: ['C-090'],
+          fechaVenta: 'no es fecha',
+          estado: 'cancelada',
         },
       ],
       NOW,
@@ -147,6 +162,24 @@ describe('findReusableSale', () => {
     expect(
       findReusableSale(
         [sale('c1', ['C-090'], RESERVA_TTL_MS + 1)],
+        'c1',
+        ['C-090'],
+        NOW,
+      ),
+    ).toBeNull();
+  });
+
+  it('does NOT reuse a sale with an unparseable date', () => {
+    expect(
+      findReusableSale(
+        [
+          {
+            clientId: 'c1',
+            itemIds: ['C-090'],
+            fechaVenta: 'no es fecha',
+            estado: 'reservada',
+          },
+        ],
         'c1',
         ['C-090'],
         NOW,

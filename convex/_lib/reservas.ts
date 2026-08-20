@@ -15,6 +15,8 @@
  * insertar la nueva dentro de la misma mutation es atómico.
  *
  * Todo aquí es puro (ver tests/reservas.test.ts); la mutation solo aporta el IO.
+ * Una excepción: `reservedItemIds` emite un `console.warn` si una `fechaVenta`
+ * no se parsea, así que una fila corrupta es audible en vez de silenciosa.
  */
 
 /** Cuánto se aparta una piedra entre que empieza el checkout y llega el pago. */
@@ -53,9 +55,14 @@ export function reservaCutoffISO(
 }
 
 /**
- * Los itemIds apartados por las ventas pendientes vigentes. Una fecha
- * ilegible se ignora en vez de lanzar: una fila corrupta no puede tumbar un
- * checkout, y no apartar de más es el lado seguro para el comprador.
+ * Los itemIds apartados por las ventas pendientes vigentes. Falla CERRADA:
+ * una `fechaVenta` ilegible hace que esa venta reserve (conservador). Una
+ * piedra estancada es visible y recuperable — alguien no puede venderla y
+ * alguien la arregla. Una piedra vendida dos veces se descubre solo después
+ * de dos pagos, y un cliente tiene que llevarse el no. Entre "temporalmente
+ * invendible" y "vendida dos veces", esta lógica elige lo primero.
+ * Excepto: una venta con `estado !== 'reservada'` y una fecha rota sigue sin
+ * apartar (e.g. una `cancelada` corrupta no bloquea nada).
  */
 export function reservedItemIds(
   sales: PendingSaleLike[],
@@ -67,7 +74,14 @@ export function reservedItemIds(
   for (const sale of sales) {
     if (sale.estado !== 'reservada') continue;
     const t = Date.parse(sale.fechaVenta);
-    if (!Number.isFinite(t) || t < cutoff) continue;
+    if (Number.isFinite(t)) {
+      if (t < cutoff) continue;
+    } else {
+      // Fecha ilegible en una venta reservada: aparta conservadoramente.
+      console.warn(
+        `[reservas] unparseable fechaVenta in reservada sale: ${sale.fechaVenta}`,
+      );
+    }
     for (const itemId of sale.itemIds) held.add(itemId);
   }
   return held;
@@ -83,6 +97,11 @@ export function orderFingerprint(itemIds: string[]): string {
  * existe. Es lo que hace idempotente un doble clic en «Pagar»: sin esto, el
  * segundo clic chocaría contra la reserva que dejó el primero y el cliente
  * vería que su propia piedra «ya no está disponible».
+ * Una fecha ilegible hace que esa venta NO sea reusable (por contraste con
+ * `reservedItemIds`, que sí aparta). Reusar una venta que no se puede fechar
+ * le daría al cliente una reserva de edad desconocida, y si esa edad se agota
+ * entre que empieza el checkout y que llega el pago, la piedra se suelta sin
+ * aviso.
  */
 export function findReusableSale<T extends PendingSaleLike>(
   sales: T[],
