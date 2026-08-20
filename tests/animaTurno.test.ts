@@ -161,7 +161,9 @@ describe('sendConversationMessage — el envío de sesión a GHL', () => {
       { token: 'tok', fetchImpl },
       { type: 'WhatsApp', contactId: 'c1', message: 'x' },
     );
-    expect(r).toEqual({ ok: false, status: 0 });
+    // Desde el PR #137 el fallo también trae `error` (la causa que GHL nombra).
+    expect(r).toMatchObject({ ok: false, status: 0 });
+    expect(r.error).toContain('ECONNRESET');
   });
 
   it('mapea los canales de anima-bot a los type de GHL', async () => {
