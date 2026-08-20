@@ -11,10 +11,18 @@
  * `skip_limit`). Un llamante anónimo puede crear un pedido arbitrariamente
  * grande; no se mueve plata hasta que pague, pero es basura que alguien
  * limpia. El escudo contra avalanchas es Vercel WAF + BotID en el edge, no
- * código.
+ * código — ver docs/checkout-publico-proteccion.md.
  *
  * Los precios SIEMPRE se recargan en Convex; nada de lo que manda el cliente
  * toca el monto.
+ *
+ * La validación del body (`parseCheckoutBody`) vive aparte, en
+ * `./_lib/checkoutBody.js`, y corre COMPLETA antes de tocar Convex — fix
+ * round 1 de la revisión de seguridad encontró que una versión inline de
+ * este chequeo dejaba pasar un `qty` no numérico (`Number("x")` es `NaN`, y
+ * `NaN > MAX_ITEMS_POR_PEDIDO` es `false`), lo que habría permitido a un
+ * llamante anónimo saltarse el tope de piezas y quemar cientos de consultas
+ * a Convex en una sola llamada.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -27,17 +35,10 @@ import {
   WOMPI_NOT_CONFIGURED,
   MP_NOT_CONFIGURED,
 } from './_lib/checkoutLink.js';
-import { MAX_ITEMS_POR_PEDIDO } from '../convex/_lib/reservas.js';
+import { parseCheckoutBody } from './_lib/checkoutBody.js';
 import { api } from '../convex/_generated/api.js';
 
 const DEFAULT_APP_URL = 'https://tierramadre.app';
-
-interface CheckoutBody {
-  contact?: { celular?: string; full_name?: string; email?: string };
-  items?: Array<{ sku?: string; qty?: number }>;
-  ambassador_slug?: string | null;
-  canal_origen?: string | null;
-}
 
 export default withApiHandler(
   async (req: VercelRequest, res: VercelResponse) => {
@@ -45,27 +46,15 @@ export default withApiHandler(
       return sendError(res, 503, 'Convex backend not configured');
     }
 
-    const body = (req.body ?? {}) as CheckoutBody;
-    if (!body.contact?.celular) {
-      return sendError(res, 400, 'Missing contact.celular');
+    // Validación completa (contacto, forma de items, tope de piezas) ANTES de
+    // cualquier llamada a Convex — ver el header de este archivo y de
+    // `checkoutBody.ts`. Ningún branch de abajo puede alcanzar `convexClient`
+    // sin pasar por acá primero.
+    const parsed = parseCheckoutBody(req.body);
+    if (!parsed.ok) {
+      return sendError(res, parsed.status, parsed.message);
     }
-    if (!Array.isArray(body.items) || body.items.length === 0) {
-      return sendError(res, 400, 'items must be a non-empty array');
-    }
-
-    // Tope antes de tocar Convex: acota el daño de una llamada abusiva sin
-    // gastar el ancho de banda que la política de free-tier raciona.
-    const unidades = body.items.reduce(
-      (n, i) => n + Math.max(1, Math.floor(Number(i.qty ?? 1))),
-      0,
-    );
-    if (unidades > MAX_ITEMS_POR_PEDIDO) {
-      return sendError(
-        res,
-        400,
-        `Máximo ${MAX_ITEMS_POR_PEDIDO} piezas por pedido`,
-      );
-    }
+    const body = parsed.value;
 
     const provider = resolveProvider(process.env.PAYMENT_PROVIDER);
 
@@ -77,10 +66,7 @@ export default withApiHandler(
           full_name: body.contact.full_name,
           email: body.contact.email,
         },
-        items: body.items.map((i) => ({
-          sku: String(i.sku ?? ''),
-          qty: Number(i.qty ?? 1),
-        })),
+        items: body.items.map((i) => ({ sku: i.sku, qty: i.qty })),
         ambassador_slug: body.ambassador_slug ?? undefined,
         canal_origen: body.canal_origen ?? 'checkout-web',
         forma_pago: provider,
