@@ -86,13 +86,27 @@ y aplica su multiplicador.
 
 ```
 POST /api/checkout-create-order
-  { contact, items, origen: { tipo: 'vitrina', token } }   // o { tipo: 'invitacion', shortCode }
+  { contact, items, origen: { tipo: 'vitrina',    token } }
+  { contact, items, origen: { tipo: 'invitacion', token } }
 ```
 
-`ghl.createOrder` recibe el origen, resuelve el multiplicador contra
-`vitrinas.multiplier` o `invitations.guestMultiplier`, y calcula
-`Math.round(precioCOP × multiplicador)` por pieza. Sin origen reconocible, el
-multiplicador es **1** — nunca un valor que haya viajado por la red.
+En los dos casos `token` es un identificador que el cliente **ya tiene**: el de
+la vitrina viene en la URL `/v/:code`; el del invitado vive en su sesión
+(`INVITATION_STORAGE_KEYS.TOKEN`, `src/types/invitation.ts:123`) y el servidor
+lo verifica contra `invitations.boundToken`. Nunca viaja un multiplicador ni un
+precio.
+
+`ghl.createOrder` resuelve el multiplicador contra `vitrinas.multiplier` o
+`invitations.guestMultiplier` y calcula `Math.round(precioCOP × multiplicador)`
+por pieza.
+
+**Origen ausente y origen inválido NO son lo mismo, y confundirlos sería el
+agujero.** Si no viene origen, el multiplicador es 1 (ver abajo). Pero si viene
+un origen que **no resuelve** —token inexistente, vitrina borrada, invitación
+vencida— la orden se **rechaza**, no se cobra a x1. Tratar un token basura como
+«sin markup» convertiría el propio campo en la forma de comprar al costo:
+bastaría mandar `origen: { tipo: 'vitrina', token: 'cualquier-cosa' }`. Un
+origen que se afirma y no se puede probar es un error, nunca un descuento.
 
 Esto conserva intacto el principio que la fase 2 defendió: los precios se
 recargan siempre en el servidor, y nada de lo que manda el cliente toca el
@@ -174,6 +188,7 @@ normal, no el raro.
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `409 ITEM_RESERVED`            | «Alguien más está pagando esta pieza en este momento», nombrando la pieza. Puede reintentar en unos minutos: la reserva dura 30.       |
 | `409 PRODUCT_UNAVAILABLE`      | La pieza ya se vendió. Ofrecer volver al catálogo.                                                                                     |
+| `409 ORIGEN_INVALIDO`         | El link de la vitrina o la invitación ya no es válido. Ofrecer contacto por WhatsApp; **nunca** reintentar sin markup.                  |
 | `400` de validación            | El mensaje del campo, junto al campo.                                                                                                  |
 | `500`                          | Mensaje genérico. La fase 2 ya sanea este cuerpo a propósito.                                                                          |
 | `201` con `checkout_url: null` | El proveedor de pago falló pero **el pedido existe**. Nunca decir «error»: decir que el pedido quedó y que se contactará por WhatsApp. |
