@@ -19,7 +19,12 @@ import { ConvexError } from 'convex/values';
 import { withApiHandler, sendError, sendSuccess } from './_lib/index.js';
 import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
 import { bearerMatches } from './_lib/bearer.js';
-import { resolveProvider, buildPaymentLink } from './_lib/checkoutLink.js';
+import {
+  resolveProvider,
+  buildPaymentLink,
+  WOMPI_NOT_CONFIGURED,
+  MP_NOT_CONFIGURED,
+} from './_lib/checkoutLink.js';
 import { api } from '../convex/_generated/api.js';
 
 const DEFAULT_APP_URL = 'https://tierra-madre-studio.vercel.app';
@@ -148,11 +153,22 @@ export default withApiHandler(
     );
 
     if (link.preferenceId) {
-      await convexClient.mutation(api.ghl.setMpPreference, {
-        saleId: order.saleId,
-        mpPreferenceId: link.preferenceId,
-        secret: process.env.ADMIN_SYNC_TOKEN ?? '',
-      });
+      // Bookkeeping only — persisting the MP preference id must never cost
+      // the customer the payment link they already have. A missing/mismatched
+      // ADMIN_SYNC_TOKEN throws here (`requireServerSecret`), and letting that
+      // escape uncaught would turn a perfectly good `init_point` into a 500.
+      try {
+        await convexClient.mutation(api.ghl.setMpPreference, {
+          saleId: order.saleId,
+          mpPreferenceId: link.preferenceId,
+          secret: process.env.ADMIN_SYNC_TOKEN ?? '',
+        });
+      } catch (err) {
+        console.error(
+          '[GhlCreateOrder] setMpPreference failed (continuing with the link the customer already has):',
+          err instanceof Error ? err.message : String(err),
+        );
+      }
     }
 
     // `mp_url` es el campo que el workflow vivo de GHL ya lee y le manda al
@@ -167,8 +183,7 @@ export default withApiHandler(
       // cambiaría el código de estado que ve el bot en el caso más común
       // (variables de entorno aún no cargadas).
       const notConfigured =
-        link.error === 'WOMPI_NOT_CONFIGURED' ||
-        link.error === 'MP_NOT_CONFIGURED';
+        link.error === WOMPI_NOT_CONFIGURED || link.error === MP_NOT_CONFIGURED;
       if (!notConfigured) {
         console.error(
           `[GhlCreateOrder] ${provider} checkout link failed:`,

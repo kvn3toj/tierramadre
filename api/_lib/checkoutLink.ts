@@ -20,6 +20,18 @@ export type PaymentProviderName = 'mercadopago' | 'wompi';
 const CONOCIDOS: PaymentProviderName[] = ['mercadopago', 'wompi'];
 
 /**
+ * Sentinels que devuelve `buildPaymentLink` cuando el proveedor simplemente
+ * no tiene credenciales cargadas (build-and-mock), a diferencia de una
+ * llamada que sí se intentó y falló. Es un contrato con quien llama —p. ej.
+ * `ghl-create-order.ts` distingue 200 (no configurado) de 201 (falló a media
+ * llamada) comparando contra estas constantes— así que se exportan en vez de
+ * dejarlas como strings sueltos: renombrar el string sin tocar ambos lados
+ * cambiaría en silencio el código de estado que ve el bot en vivo.
+ */
+export const WOMPI_NOT_CONFIGURED = 'WOMPI_NOT_CONFIGURED';
+export const MP_NOT_CONFIGURED = 'MP_NOT_CONFIGURED';
+
+/**
  * Valida `PAYMENT_PROVIDER`. Un typo cae a `mercadopago` en vez de pasar el
  * string crudo: si el valor inválido llegara a `forma_pago`, se estamparía en
  * Convex y en el espejo de Sheets, y el operador creería que cambió de riel
@@ -67,7 +79,7 @@ export async function buildPaymentLink(
       const publicKey = process.env.WOMPI_PUBLIC_KEY;
       const integritySecret = process.env.WOMPI_INTEGRITY_SECRET;
       if (!publicKey || !integritySecret) {
-        return { checkoutUrl: null, error: 'WOMPI_NOT_CONFIGURED' };
+        return { checkoutUrl: null, error: WOMPI_NOT_CONFIGURED };
       }
       return {
         checkoutUrl: buildCheckoutUrl(
@@ -89,7 +101,7 @@ export async function buildPaymentLink(
 
     const accessToken = process.env.MP_ACCESS_TOKEN;
     if (!accessToken) {
-      return { checkoutUrl: null, error: 'MP_NOT_CONFIGURED' };
+      return { checkoutUrl: null, error: MP_NOT_CONFIGURED };
     }
     const pref = buildPreference({
       items: [
@@ -107,6 +119,11 @@ export async function buildPaymentLink(
       orderId: input.saleId,
       notificationUrl: `${input.appUrl}/api/mp-webhook`,
       backUrls: { success: redirectUrl },
+      // El mismo vencimiento que ya recibe Wompi — PAYMENT_PROVIDER está sin
+      // definir en producción, así que esta es la rama viva; sin esto, la
+      // reserva vencería pero el link seguiría cobrando por una piedra que
+      // ya se soltó (o ya se vendió a otro).
+      expirationTime,
     });
     const created = await createPreference(pref, accessToken);
     return { checkoutUrl: created.init_point, preferenceId: created.id };
