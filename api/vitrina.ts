@@ -48,6 +48,20 @@ export function verifiedSessionEmail(
   return verifySessionToken(token)?.email ?? null;
 }
 
+interface AccessLevelLookup {
+  accessLevel: string;
+  /**
+   * True only when the roster lookup itself failed (non-2xx or network
+   * error) — distinct from a genuine roster answer of "not authorized".
+   * Both still reject a non-1 multiplier (fail closed — that policy does
+   * NOT change, fix round 1 confirmed it), but keeping them distinguishable
+   * lets the 403 vs "we couldn't verify you" cases carry different
+   * messages/log lines, so a flaky /api/validate doesn't read to an admin
+   * as "your permission was revoked".
+   */
+  lookupFailed: boolean;
+}
+
 /**
  * Verified email → roster accessLevel, via the same `/api/validate` the rest
  * of the app already trusts as the role source of truth — the exact fetch
@@ -55,28 +69,41 @@ export function verifiedSessionEmail(
  * `convex/_lib/authz.ts`'s `fetchRosterEntry` already perform, reused here
  * rather than a third copy of the roster lookup.
  *
- * Fails closed: a roster miss OR an unreachable roster both resolve to `''`,
- * which `puedeFijarMultiplicador` rejects. This gate decides who fixes a
- * sale price, so a transient lookup failure must never fail open into
- * "multiplier allowed".
+ * Fails closed: a roster miss OR an unreachable roster both resolve to an
+ * `accessLevel` of `''`, which `puedeFijarMultiplicador` rejects. This gate
+ * decides who fixes a sale price, so a transient lookup failure must never
+ * fail open into "multiplier allowed". `lookupFailed` distinguishes the two
+ * so the caller-facing error and the server log can tell them apart —
+ * `api/invitations.ts`'s `resolveInvitationCaller` draws the same
+ * distinction (`'lookup_failed'` vs `'not_authorized'`).
  */
-async function accessLevelFor(email: string): Promise<string> {
+async function accessLevelFor(email: string): Promise<AccessLevelLookup> {
   const appUrl = process.env.APP_URL || 'https://tierramadre.app';
   try {
     const res = await fetch(
       `${appUrl}/api/validate?email=${encodeURIComponent(email)}&type=both`,
     );
-    if (!res.ok) return '';
+    if (!res.ok) {
+      console.warn(
+        `[vitrina] Roster lookup failed for ${email}: /api/validate returned ${res.status}. Failing closed on the multiplier gate.`,
+      );
+      return { accessLevel: '', lookupFailed: true };
+    }
     const data = (await res.json()) as {
       success?: boolean;
       isAuthorized?: boolean;
       user?: { accessLevel?: string };
     };
-    return data.success && data.isAuthorized && data.user?.accessLevel
-      ? data.user.accessLevel
-      : '';
-  } catch {
-    return '';
+    const accessLevel =
+      data.success && data.isAuthorized && data.user?.accessLevel
+        ? data.user.accessLevel
+        : '';
+    return { accessLevel, lookupFailed: false };
+  } catch (err) {
+    console.warn(
+      `[vitrina] Roster lookup threw for ${email}: ${err instanceof Error ? err.message : String(err)}. Failing closed on the multiplier gate.`,
+    );
+    return { accessLevel: '', lookupFailed: true };
   }
 }
 
@@ -122,15 +149,22 @@ export default withApiHandler(
     // cliente y se puede saltar. Esta es la comprobación que cuenta —
     // corre para mint (POST) y para corrección (PATCH) por igual.
     const multiplicadorPedido = Number(body.multiplier ?? 1);
-    if (
-      multiplicadorPedido !== 1 &&
-      !puedeFijarMultiplicador(await accessLevelFor(email))
-    ) {
-      return sendError(
-        res,
-        403,
-        'No autorizado para fijar un multiplicador distinto de 1',
-      );
+    if (multiplicadorPedido !== 1) {
+      const { accessLevel, lookupFailed } = await accessLevelFor(email);
+      if (!puedeFijarMultiplicador(accessLevel)) {
+        if (lookupFailed) {
+          return sendError(
+            res,
+            503,
+            'No pudimos verificar tu rol en este momento. Intenta de nuevo en unos segundos.',
+          );
+        }
+        return sendError(
+          res,
+          403,
+          'No autorizado para fijar un multiplicador distinto de 1',
+        );
+      }
     }
 
     if (req.method === 'PATCH') {
