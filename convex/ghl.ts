@@ -322,18 +322,27 @@ export const createOrder = mutation({
     // Resolver el markup ANTES de sumar, porque decide cada precio.
     let registroOrigen: { multiplicador?: number } | null = null;
     if (args.origen?.tipo === 'vitrina') {
+      // vitrinas.getByToken uppercasea antes de buscar (convex/vitrinas.ts) —
+      // los tokens se guardan en mayúsculas, así que resolver sin foldear el
+      // case rechaza links válidos que el cliente abrió en minúscula.
       const v0 = await ctx.db
         .query('vitrinas')
-        .withIndex('by_token', (q) => q.eq('token', args.origen!.token))
+        .withIndex('by_token', (q) =>
+          q.eq('token', args.origen!.token.toUpperCase()),
+        )
         .first();
       registroOrigen = v0 ? { multiplicador: v0.multiplier } : null;
     } else if (args.origen?.tipo === 'invitacion') {
       // La clave que el invitado guarda como TOKEN contiene el shortCode
       // (InvitationPage.tsx). `invitations` NO tiene índice por boundToken,
       // así que resolver «por token» literalmente sería un full-scan.
+      // invitations.getByShortCode también uppercasea antes de buscar
+      // (convex/invitations.ts) — mismo motivo que arriba.
       const inv = await ctx.db
         .query('invitations')
-        .withIndex('by_shortCode', (q) => q.eq('shortCode', args.origen!.token))
+        .withIndex('by_shortCode', (q) =>
+          q.eq('shortCode', args.origen!.token.toUpperCase()),
+        )
         .first();
       registroOrigen = inv ? { multiplicador: inv.guestMultiplier } : null;
     }
